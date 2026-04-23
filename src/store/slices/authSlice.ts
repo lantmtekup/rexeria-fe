@@ -1,11 +1,14 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
+import { rexerApi } from '@/services/rexer/endpoints';
+import { RxApiError } from '@/services/rexer/client';
+
 export type AuthUser = {
   id: string;
-  username: string;
   email: string;
-  name?: string;
-  role: string;
+  display_name: string;
+  principal_type: string;
+  status: string;
 };
 
 type AuthState = {
@@ -22,32 +25,60 @@ const initialState: AuthState = {
 
 export const loginThunk = createAsyncThunk<
   AuthUser,
-  { username: string; password: string },
+  { email: string; password: string },
   { rejectValue: string }
->('auth/login', async ({ username, password }, { rejectWithValue }) => {
-  const res = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ username, password }),
-  });
-  const json = (await res.json()) as {
-    success: boolean;
-    data?: AuthUser;
-    code?: string;
-  };
-  if (!json.success || !json.data) {
-    return rejectWithValue(json.code ?? 'LOGIN_FAILED');
+>('auth/login', async ({ email, password }, { rejectWithValue }) => {
+  try {
+    const res = await rexerApi.auth.login({ email, password });
+    // Mirror a local signed cookie so the middleware can gate app routes.
+    await fetch('/api/auth/session-set', {
+      method: 'POST',
+      credentials: 'include',
+    });
+    return {
+      id: res.user.id,
+      email: res.user.email,
+      display_name: res.user.display_name,
+      principal_type: res.user.principal_type,
+      status: res.user.status,
+    };
+  } catch (err) {
+    if (err instanceof RxApiError) {
+      return rejectWithValue(err.code || err.message);
+    }
+    return rejectWithValue('LOGIN_FAILED');
   }
-  return json.data;
 });
 
 export const logoutThunk = createAsyncThunk('auth/logout', async () => {
-  await fetch('/api/auth/logout', {
+  try {
+    await rexerApi.auth.logout();
+  } catch {
+    // ignore — still clear local state
+  }
+  await fetch('/api/auth/session-clear', {
     method: 'POST',
     credentials: 'include',
   });
 });
+
+export const fetchMeThunk = createAsyncThunk<AuthUser | null>(
+  'auth/me',
+  async () => {
+    try {
+      const res = await rexerApi.auth.me();
+      return {
+        id: res.user.id,
+        email: res.user.email,
+        display_name: res.user.display_name,
+        principal_type: res.user.principal_type,
+        status: res.user.status,
+      };
+    } catch {
+      return null;
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: 'auth',
@@ -77,6 +108,12 @@ const authSlice = createSlice({
         state.user = null;
         state.status = 'idle';
         state.error = null;
+      })
+      .addCase(fetchMeThunk.fulfilled, (state, action) => {
+        if (action.payload) {
+          state.user = action.payload;
+          state.status = 'succeeded';
+        }
       });
   },
 });

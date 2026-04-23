@@ -3,7 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { constants } from '@/settings/constants';
 
-const protectedRoutes = ['/tai-khoan', '/cms'];
+const protectedRoutes = [
+  '/tai-khoan',
+  '/cms',
+  '/home',
+  '/template',
+  '/product',
+  '/ai-agents',
+  '/notification',
+  '/setting',
+  '/support',
+];
 
 const authRoutes = ['/dang-nhap', '/quen-mat-khau', '/sign-in'];
 
@@ -65,7 +75,17 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/', request.url));
     }
 
-    if (pathnameWithoutLocale.startsWith('/cms')) {
+    const appRoots = [
+      '/cms',
+      '/home',
+      '/template',
+      '/product',
+      '/ai-agents',
+      '/notification',
+      '/setting',
+      '/support',
+    ];
+    if (appRoots.some(p => pathnameWithoutLocale.startsWith(p))) {
       return NextResponse.redirect(new URL('/sign-in', request.url));
     }
 

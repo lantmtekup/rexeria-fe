@@ -1,6 +1,7 @@
 'use client';
 
 import { NextIntlClientProvider } from 'next-intl';
+import { ThemeProvider } from 'next-themes';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
 
@@ -24,7 +25,14 @@ export default function Providers({
         messages={messages}
         timeZone={timezone}
       >
-        {children}
+        <ThemeProvider
+          attribute='class'
+          defaultTheme='light'
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </NextIntlClientProvider>
     </Provider>
   );

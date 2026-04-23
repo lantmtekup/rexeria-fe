@@ -1,13 +1,32 @@
 {
   "auth": {
-    "loginTitle": "Đăng nhập CMS",
-    "loginSubtitle": "Nhập tài khoản quản trị để tiếp tục.",
+    "loginTitle": "Đăng nhập",
+    "registerTitle": "Đăng ký",
+    "loginSubtitle": "",
     "username": "Tên đăng nhập",
     "usernamePlaceholder": "username",
+    "displayName": "Tên hiển thị",
+    "displayNamePlaceholder": "Tên hiển thị",
+    "email": "Email",
+    "emailPlaceholder": "Email",
     "password": "Mật khẩu",
-    "passwordPlaceholder": "••••••••",
+    "passwordPlaceholder": "Mật khẩu",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "confirmPasswordPlaceholder": "Xác nhận mật khẩu",
+    "passwordMismatch": "Mật khẩu không khớp",
     "submit": "Đăng nhập",
+    "signIn": "Đăng nhập",
+    "signUp": "Đăng ký",
     "submitLoading": "Đang đăng nhập…",
-    "loading": "Đang tải…"
+    "registerLoading": "Đang tạo tài khoản…",
+    "loading": "Đang tải…",
+    "or": "Hoặc",
+    "createAccountPrompt": "Tạo tài khoản mới -",
+    "register": "Đăng ký",
+    "alreadyHaveAccount": "Đã có tài khoản?",
+    "login": "Đăng nhập",
+    "continueFacebook": "Tiếp tục với Facebook",
+    "continueGoogle": "Tiếp tục với Google",
+    "continueApple": "Tiếp tục với Apple"
   }
 }

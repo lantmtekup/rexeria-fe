@@ -60,7 +60,10 @@ export default function CmsLoginForm() {
   }, [status, router, searchParams]);
 
   const handleSubmit = form.handleSubmit(async values => {
-    await dispatch(loginThunk(values)).unwrap();
+    // Legacy CMS form uses `username` input, backend expects `email`.
+    await dispatch(
+      loginThunk({ email: values.username, password: values.password })
+    ).unwrap();
   });
 
   const errorMessage =

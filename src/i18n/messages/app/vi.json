@@ -1,0 +1,27 @@
+{
+  "app": {
+    "sidebar": {
+      "ariaNav": "Điều hướng chính",
+      "sectionAccountTeam": "Tài khoản & Nhóm",
+      "teamLabel": "Nhóm",
+      "sectionGeneral": "Chung",
+      "sectionOther": "Khác",
+      "navHome": "Trang chủ",
+      "navTemplate": "Template",
+      "navProduct": "Sản phẩm",
+      "navAiAgents": "AI-Agents",
+      "navNotification": "Thông báo",
+      "navSetting": "Cài đặt",
+      "navSupport": "Trung tâm hỗ trợ",
+      "guest": "Khách",
+      "logout": "Đăng xuất",
+      "basicPlan": "Gói cơ bản"
+    },
+    "home": {
+      "title": "Chào mừng đến với REXER",
+      "description": "Chọn một template có sẵn hoặc tạo sản phẩm mới để bắt đầu.",
+      "browseTemplates": "Xem Template",
+      "createProduct": "Tạo sản phẩm mới"
+    }
+  }
+}
