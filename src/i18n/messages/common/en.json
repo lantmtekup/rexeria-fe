@@ -1,0 +1,9 @@
+{
+  "common": {
+    "hello": "Hello",
+    "locale_en": "EN",
+    "locale_vi": "VN",
+    "a11y_switchToEnglish": "Switch to English",
+    "a11y_switchToVietnamese": "Switch to Vietnamese"
+  }
+}

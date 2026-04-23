@@ -1,0 +1,30 @@
+---
+description: Path alias, Tailwind, naming và coding standards của dự án
+alwaysApply: true
+---
+
+# Quy ước dự án (CME Client)
+
+## Path alias
+- Luôn dùng alias `@/` cho import từ `src/`.
+- Ví dụ: `import { store } from '@/store'`, `import { constants } from '@/settings/constants'`, `import WebClientLayout from '@/components/layouts/WebClient'`.
+
+## Styling
+- Dùng **TailwindCSS** cho mọi style. Không dùng CSS thuần hoặc CSS-in-JS.
+- Merge class động bằng `cn()` từ `@/lib/cn` (clsx + tailwind-merge).
+- Ví dụ: `className={cn('base-class', condition && 'conditional-class')}`.
+
+## TypeScript
+- Bật strict mode. Khai báo type/interface rõ ràng cho props và API.
+- Dùng `const` và arrow function. Đặt type annotation cho tham số khi cần.
+
+## Đọc dễ, ít lồng nhau
+- Ưu tiên **early return** thay vì lồng nhiều `if/else`.
+- Đặt tên biến/hàm rõ ràng; event handler dùng prefix `handle` (vd: `handleClick`, `handleSubmit`).
+
+## Cấu trúc thư mục
+- `src/app/` — App Router (layout, page, route groups).
+- `src/components/` — Component UI và layout.
+- `src/store/` — Redux (slices, store).
+- `src/services/` — Gọi API (base fetchInstance, endpoint).
+- `src/hooks/`, `src/lib/`, `src/helpers/`, `src/settings/`, `src/types/` — hooks, util, config, types.

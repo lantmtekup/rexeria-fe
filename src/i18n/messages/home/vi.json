@@ -1,0 +1,11 @@
+{
+  "home": {
+    "dbConnected": "MongoDB: Đã kết nối",
+    "dbDisconnected": "MongoDB: Mất kết nối",
+    "titleFallback": "Website",
+    "descriptionFallback": "Chưa cấu hình mô tả trong CMS (Cài đặt website).",
+    "logoAlt": "Logo",
+    "welcomeKicker": "Chào mừng bạn",
+    "cmsCta": "Vào trang quản trị"
+  }
+}

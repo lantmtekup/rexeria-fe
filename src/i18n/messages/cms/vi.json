@@ -1,0 +1,15 @@
+{
+  "cms": {
+    "sidebarTitle": "CMS",
+    "navOverview": "Tổng quan",
+    "navSettings": "Cài đặt website",
+    "logout": "Đăng xuất",
+    "overviewTitle": "Tổng quan CMS",
+    "overviewDescription": "Chọn mục trong menu bên trái để quản lý nội dung.",
+    "contactsTitle": "Liên hệ",
+    "contactsDescription": "Module quản lý liên hệ.",
+    "episodesTitle": "Tập phát sóng",
+    "episodesDescription": "Module quản lý tập phát sóng.",
+    "ariaNav": "Menu CMS"
+  }
+}

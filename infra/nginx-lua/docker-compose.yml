@@ -1,0 +1,9 @@
+version: '3'
+services:
+  openresty:
+    build: .
+    ports:
+      - '18080:8080'
+    volumes:
+      - ./nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+    container_name: proxy_ncaa_team_collection

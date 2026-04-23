@@ -1,0 +1,15 @@
+{
+  "cms": {
+    "sidebarTitle": "CMS",
+    "navOverview": "Overview",
+    "navSettings": "Site settings",
+    "logout": "Log out",
+    "overviewTitle": "CMS overview",
+    "overviewDescription": "Choose an item in the left menu to manage content.",
+    "contactsTitle": "Contacts",
+    "contactsDescription": "Contact management module.",
+    "episodesTitle": "Broadcast episodes",
+    "episodesDescription": "Broadcast episode management module.",
+    "ariaNav": "CMS menu"
+  }
+}

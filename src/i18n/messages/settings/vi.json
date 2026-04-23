@@ -1,0 +1,14 @@
+{
+  "settings": {
+    "pageTitle": "Cài đặt website",
+    "pageSubtitle": "Tên ứng dụng, mô tả và logo hiển thị trên trang chủ.",
+    "appName": "Tên ứng dụng",
+    "appNamePlaceholder": "Tên hiển thị",
+    "description": "Mô tả",
+    "descriptionPlaceholder": "Mô tả ngắn",
+    "logo": "Logo",
+    "save": "Lưu",
+    "saving": "Đang lưu…",
+    "loading": "Đang tải cài đặt…"
+  }
+}

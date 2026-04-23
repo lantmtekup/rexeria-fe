@@ -1,0 +1,11 @@
+{
+  "home": {
+    "dbConnected": "MongoDB: Connected",
+    "dbDisconnected": "MongoDB: Disconnected",
+    "titleFallback": "Website",
+    "descriptionFallback": "No description configured yet in CMS (Site settings).",
+    "logoAlt": "Logo",
+    "welcomeKicker": "Welcome",
+    "cmsCta": "Open admin"
+  }
+}

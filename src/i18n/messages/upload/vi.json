@@ -1,0 +1,10 @@
+{
+  "upload": {
+    "pickImageAria": "Chọn ảnh để upload",
+    "changeImageTitle": "Nhấn để đổi ảnh",
+    "selectedImageAlt": "Ảnh đã chọn",
+    "removeImageAria": "Xoá ảnh",
+    "clickToPick": "Nhấn để chọn ảnh",
+    "fileTooLarge": "Ảnh vượt quá dung lượng cho phép. Vui lòng chọn ảnh nhỏ hơn {maxMb} MB."
+  }
+}

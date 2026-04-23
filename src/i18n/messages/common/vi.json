@@ -1,0 +1,9 @@
+{
+  "common": {
+    "hello": "Xin chào",
+    "locale_en": "EN",
+    "locale_vi": "VN",
+    "a11y_switchToEnglish": "Chuyển sang tiếng Anh",
+    "a11y_switchToVietnamese": "Chuyển sang tiếng Việt"
+  }
+}

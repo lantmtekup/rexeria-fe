@@ -1,0 +1,13 @@
+{
+  "auth": {
+    "loginTitle": "Đăng nhập CMS",
+    "loginSubtitle": "Nhập tài khoản quản trị để tiếp tục.",
+    "username": "Tên đăng nhập",
+    "usernamePlaceholder": "username",
+    "password": "Mật khẩu",
+    "passwordPlaceholder": "••••••••",
+    "submit": "Đăng nhập",
+    "submitLoading": "Đang đăng nhập…",
+    "loading": "Đang tải…"
+  }
+}

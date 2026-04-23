@@ -1,0 +1,26 @@
+---
+description: Quy ước React, Next.js App Router và component trong dự án
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+# React & Next.js patterns
+
+## Component
+- Dùng **functional component**. Export **default** cho page, layout và component màn hình.
+- Props có `children` thì type: `{ children: React.ReactNode }`.
+- Ví dụ: `export default function WebClientLayout({ children }: { children: React.ReactNode }) { ... }`.
+
+## Client components
+- Chỉ thêm `'use client'` khi cần state, event, hook trình duyệt hoặc provider (vd: `providers.tsx`, form tương tác).
+- Page/layout mặc định là Server Component; không thêm `'use client'` nếu không cần.
+
+## Layout & page
+- Layout bọc `children` và import layout chung từ `@/components/layouts/`.
+- Page export default function; tên rõ ràng (vd: `HomePage`, `NotFound`).
+
+## Provider
+- Provider gom trong `app/providers.tsx`; wrap Redux, next-intl (và theme nếu có). Root layout import `Providers` và truyền `locale`, `messages`, `timezone` từ server.
+
+## Accessibility
+- Nút/link có `aria-label` khi cần; hỗ trợ keyboard (vd: `onKeyDown` với `key === 'Enter'`).

@@ -1,0 +1,14 @@
+{
+  "settings": {
+    "pageTitle": "Site settings",
+    "pageSubtitle": "App name, description and logo shown on the home page.",
+    "appName": "App name",
+    "appNamePlaceholder": "Display name",
+    "description": "Description",
+    "descriptionPlaceholder": "Short description",
+    "logo": "Logo",
+    "save": "Save",
+    "saving": "Saving…",
+    "loading": "Loading settings…"
+  }
+}

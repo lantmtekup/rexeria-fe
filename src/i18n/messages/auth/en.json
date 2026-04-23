@@ -1,0 +1,13 @@
+{
+  "auth": {
+    "loginTitle": "CMS sign in",
+    "loginSubtitle": "Enter your admin account to continue.",
+    "username": "Username",
+    "usernamePlaceholder": "username",
+    "password": "Password",
+    "passwordPlaceholder": "••••••••",
+    "submit": "Sign in",
+    "submitLoading": "Signing in…",
+    "loading": "Loading…"
+  }
+}

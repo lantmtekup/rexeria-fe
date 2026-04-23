@@ -1,0 +1,6 @@
+{
+  "metadata": {
+    "siteName": "Hello {name}",
+    "description": "Hello {name}"
+  }
+}

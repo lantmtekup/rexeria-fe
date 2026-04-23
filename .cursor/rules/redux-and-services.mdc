@@ -1,0 +1,24 @@
+---
+description: Redux (store, slices) và services (API, fetchInstance)
+globs: "**/store/**/*.ts,**/services/**/*.ts"
+alwaysApply: false
+---
+
+# Redux & Services
+
+## Redux store
+- Store tạo bằng `configureStore` từ `@reduxjs/toolkit`. Export `store`, `RootState`, `AppDispatch` từ `@/store`.
+- Dùng **typed hooks**: `useAppDispatch` và `useAppSelector` từ `@/hooks/useRedux`; không dùng trực tiếp `useDispatch`/`useSelector` không type.
+
+## Slice
+- Mỗi domain một slice: `createSlice` với `name`, `initialState`, `reducers`; có thể có `extraReducers`.
+- Export actions và **default export reducer**. Interface state đặt trong file slice.
+- Ví dụ: `export const { clearError } = slice.actions;` và `export default slice.reducer`.
+
+## API / Services
+- Gọi API qua `fetchInstance` từ `@/services/base/fetchInstance`. Token lấy từ cookie (server) hoặc `webStorageClient` (client).
+- Định nghĩa type: `FetchOptions`, `FetchVariables`, `FetchResults<T>`. Method mặc định `GET`.
+- URL base và hằng (ACCESS_TOKEN, API_URL, …) lấy từ `@/settings/constants`.
+
+## Endpoint & constants
+- Endpoint và config API đặt trong `@/services/endpoint` và `@/settings/constants`; type chung cho query/params trong `@/types/api`.

@@ -1,0 +1,169 @@
+Nếu bạn đang sử dụng một phiên bản Nginx đã được cài đặt từ các kho lưu trữ chính thức của hệ điều hành (như Ubuntu), thì mặc định nó sẽ không bao gồm hỗ trợ Lua. Để sử dụng Lua trong Nginx, bạn cần biên dịch Nginx từ nguồn và bao gồm module Lua.
+
+Dưới đây là các bước để biên dịch Nginx với hỗ trợ Lua từ đầu:
+
+### Bước 1: Cài đặt các gói phụ thuộc
+
+```bash
+sudo apt-get update
+sudo apt-get install build-essential libpcre3 libpcre3-dev zlib1g zlib1g-dev libssl-dev git
+sudo apt-get install -y libxml2-dev libxslt-dev
+sudo apt-get install -y libgd-dev
+sudo apt-get install -y libgeoip-dev
+sudo apt-get install -y libperl-dev
+
+
+```
+
+### Bước 2: Tải LuaJIT và cài đặt
+
+Bạn đã làm điều này ở bước trước, nhưng để chắc chắn, hãy chạy lại các lệnh sau:
+
+```bash
+cd /usr/local/src
+sudo git clone https://github.com/LuaJIT/LuaJIT.git
+cd LuaJIT
+sudo make
+sudo make install
+sudo ln -sf /usr/local/bin/luajit /usr/bin/luajit
+sudo ldconfig
+```
+Bước 2.1: Cấu hình lại Nginx
+Cập nhật biến môi trường để LuaJIT có thể được tìm thấy:
+export LUAJIT_LIB=/usr/local/lib
+export LUAJIT_INC=/usr/local/include/luajit-2.1
+
+
+### Bước 3: Tải Lua-nginx-module
+
+```bash
+cd /usr/local/src
+sudo git clone https://github.com/openresty/lua-nginx-module.git
+cd lua-nginx-module
+```
+
+edit file config va them 2 dong duoi vao dau file
+
+```
+LUAJIT_INC=/usr/local/include/luajit-2.1
+LUAJIT_LIB=/usr/local/lib
+```
+
+### Bước 4: Tải Nginx
+
+```bash
+cd /usr/local/src
+sudo wget http://nginx.org/download/nginx-1.26.1.tar.gz
+sudo tar -xzvf nginx-1.26.1.tar.gz
+cd nginx-1.26.1
+```
+
+### Bước 5: Biên dịch và cài đặt Nginx với Lua module
+
+```bash
+sudo ./configure \
+--prefix=/usr/share/nginx \
+--conf-path=/etc/nginx/nginx.conf \
+--http-log-path=/var/log/nginx/access.log \
+--error-log-path=stderr \
+--lock-path=/var/lock/nginx.lock \
+--pid-path=/run/nginx.pid \
+--modules-path=/usr/lib/nginx/modules \
+--http-client-body-temp-path=/var/lib/nginx/body \
+--http-fastcgi-temp-path=/var/lib/nginx/fastcgi \
+--http-proxy-temp-path=/var/lib/nginx/proxy \
+--http-scgi-temp-path=/var/lib/nginx/scgi \
+--http-uwsgi-temp-path=/var/lib/nginx/uwsgi \
+--with-compat \
+--with-debug \
+--with-pcre-jit \
+--with-http_ssl_module \
+--with-http_stub_status_module \
+--with-http_realip_module \
+--with-http_auth_request_module \
+--with-http_v2_module \
+--with-http_v3_module \
+--with-http_dav_module \
+--with-http_slice_module \
+--with-threads \
+--with-http_addition_module \
+--with-http_flv_module \
+--with-http_gunzip_module \
+--with-http_gzip_static_module \
+--with-http_mp4_module \
+--with-http_random_index_module \
+--with-http_secure_link_module \
+--with-http_sub_module \
+--with-mail_ssl_module \
+--with-stream_ssl_module \
+--with-stream_ssl_preread_module \
+--with-stream_realip_module \
+--with-http_geoip_module=dynamic \
+--with-http_image_filter_module=dynamic \
+--with-http_perl_module=dynamic \
+--with-http_xslt_module=dynamic \
+--with-mail=dynamic \
+--with-stream=dynamic \
+--with-stream_geoip_module=dynamic \
+--add-module=/usr/local/src/lua-nginx-module
+
+sudo make
+sudo make install
+```
+
+### Bước 6: Tạo cấu trúc thư mục cần thiết
+
+```bash
+sudo mkdir -p /var/cache/nginx/client_temp
+sudo mkdir -p /var/cache/nginx/proxy_temp
+sudo mkdir -p /var/cache/nginx/fastcgi_temp
+sudo mkdir -p /var/cache/nginx/uwsgi_temp
+sudo mkdir -p /var/cache/nginx/scgi_temp
+```
+
+### Bước 7: Cấu hình Nginx để sử dụng Lua
+
+Tạo file cấu hình Nginx mới hoặc sửa đổi file hiện có để sử dụng Lua module. Ví dụ:
+
+```nginx
+server {
+    listen 80;
+    server_name example.com;
+
+    location / {
+        access_by_lua_block {
+            local http = require "resty.http"
+            local httpc = http.new()
+
+            local res, err = httpc:request_uri("http://httpbin.org/get", {
+                method = "GET"
+            })
+
+            if not res then
+                ngx.log(ngx.ERR, "request failed: ", err)
+                return ngx.exit(500)
+            end
+
+            ngx.log(ngx.ERR, "response status: ", res.status)
+            ngx.log(ngx.ERR, "response body: ", res.body)
+        }
+    }
+}
+```
+
+### Bước 8: Khởi động lại Nginx
+
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+### Kiểm tra cài đặt LuaRocks và lua-resty-http
+
+Đảm bảo rằng bạn đã cài đặt LuaRocks và lua-resty-http:
+
+```bash
+sudo luarocks install lua-resty-http
+```
+
+Sau khi thực hiện các bước này, Nginx của bạn sẽ được biên dịch với hỗ trợ Lua, và bạn có thể sử dụng Lua trong các block cấu hình của Nginx.

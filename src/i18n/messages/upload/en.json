@@ -1,0 +1,10 @@
+{
+  "upload": {
+    "pickImageAria": "Choose image to upload",
+    "changeImageTitle": "Click to change image",
+    "selectedImageAlt": "Selected image",
+    "removeImageAria": "Remove image",
+    "clickToPick": "Click to choose an image",
+    "fileTooLarge": "Image exceeds the allowed size. Please choose an image smaller than {maxMb} MB."
+  }
+}
