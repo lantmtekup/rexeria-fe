@@ -2,9 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Database, Layers, LayoutTemplate } from 'lucide-react';
 
+import { CanvasTemplateList } from '@/components/modules/CanvasTemplate/CanvasTemplateList';
+import { CollectionList } from '@/components/modules/Collection/CollectionList';
 import { TemplateCard } from '@/components/molecules/TemplateCard';
 import { TemplateCategoryTabs } from '@/components/organisms/TemplateCategoryTabs';
+import { SubTabBar } from '@/components/organisms/SubTabBar';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { useRexer } from '@/services/rexer/use-rexer';
 
@@ -58,7 +62,9 @@ const BG_PALETTE = [
   'linear-gradient(135deg,#121218,#2a2a3a)',
 ];
 
-export default function TemplateListPage() {
+type TopTab = 'landing' | 'data' | 'canvas';
+
+function LandingTemplatesView() {
   const [active, setActive] = useState('fashion');
   const templates = useRexer(() => rexerApi.templates.list(), []);
 
@@ -72,7 +78,7 @@ export default function TemplateListPage() {
     : MOCK_TEMPLATES;
 
   return (
-    <div className='flex h-full flex-1 flex-col'>
+    <div className='flex flex-1 flex-col'>
       <div className='border-border border-b px-6 py-3'>
         <TemplateCategoryTabs
           categories={CATEGORIES}
@@ -101,6 +107,57 @@ export default function TemplateListPage() {
               ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+export default function TemplateListPage() {
+  const [tab, setTab] = useState<TopTab>('landing');
+
+  return (
+    <div className='flex h-full flex-1 flex-col'>
+      <SubTabBar
+        tabs={[
+          {
+            key: 'landing',
+            label: (
+              <span className='inline-flex items-center gap-2'>
+                <LayoutTemplate className='size-3.5' /> Landing templates
+              </span>
+            ),
+          },
+          {
+            key: 'data',
+            label: (
+              <span className='inline-flex items-center gap-2'>
+                <Database className='size-3.5' /> Data collections
+              </span>
+            ),
+          },
+          {
+            key: 'canvas',
+            label: (
+              <span className='inline-flex items-center gap-2'>
+                <Layers className='size-3.5' /> Canvas designs
+              </span>
+            ),
+          },
+        ]}
+        activeKey={tab}
+        onChange={k => setTab(k as TopTab)}
+      />
+
+      {tab === 'landing' && <LandingTemplatesView />}
+      {tab === 'data' && (
+        <div className='flex-1 overflow-y-auto'>
+          <CollectionList />
+        </div>
+      )}
+      {tab === 'canvas' && (
+        <div className='flex-1 overflow-y-auto'>
+          <CanvasTemplateList />
+        </div>
+      )}
     </div>
   );
 }

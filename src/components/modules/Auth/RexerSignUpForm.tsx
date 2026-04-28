@@ -60,7 +60,7 @@ export default function RexerSignUpForm() {
     setApiError(null);
     try {
       await rexerApi.auth.register({
-        display_name: values.display_name,
+        full_name: values.display_name,
         email: values.email,
         password: values.password,
       });

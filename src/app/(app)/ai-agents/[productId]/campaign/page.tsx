@@ -1,92 +1,290 @@
-import { use } from 'react';
-import { MoreVertical, Plus } from 'lucide-react';
+'use client';
 
-import { CampaignAnalyticsDialog } from '@/components/dialogs/CampaignAnalyticsDialog';
-import { FeatureField } from '@/components/molecules/FeatureField';
-import { MarketingDetailShell } from '@/components/modules/Product/MarketingDetailShell';
-import {
-  MARKETINGS,
-  MOCK_DESCRIPTIONS,
-} from '@/components/modules/Product/marketingMocks';
+import * as React from 'react';
+import { use } from 'react';
+import { useRouter } from 'next/navigation';
+import { Check, Rocket, Sparkles, Wand2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+import { Badge } from '@/components/atoms/badge';
+import { Button } from '@/components/atoms/button';
+import { Spinner } from '@/components/atoms/spinner';
+import { Textarea } from '@/components/atoms/textarea';
+import { ProductWorkspaceLayout } from '@/components/templates/ProductWorkspaceLayout';
+import { rexerApi } from '@/services/rexer/endpoints';
+import { RxApiError } from '@/services/rexer/client';
+import type {
+  AICampaignPlanResponse,
+  CampaignObjective,
+} from '@/services/rexer/types';
 
 interface PageProps {
   params: Promise<{ productId: string }>;
 }
 
-const CAMPAIGN_TABS = [{ key: 'c1', label: 'Campaign 01', active: true }];
+const OBJECTIVES: { key: CampaignObjective; label: string; hint: string }[] = [
+  {
+    key: 'awareness',
+    label: 'Awareness',
+    hint: 'Reach new audiences',
+  },
+  {
+    key: 'traffic',
+    label: 'Traffic',
+    hint: 'Drive visitors to landing',
+  },
+  {
+    key: 'conversion',
+    label: 'Conversion',
+    hint: 'Maximise sign-ups / sales',
+  },
+  {
+    key: 'retention',
+    label: 'Retention',
+    hint: 'Re-engage existing users',
+  },
+];
 
-function TemplateThumb({ name }: { name: string }) {
-  return (
-    <div className='bg-background ring-border flex flex-col gap-2 rounded-xl p-4 ring-1'>
-      <div className='flex items-center justify-between text-xs'>
-        <div>
-          <p className='text-foreground font-semibold'>{name}</p>
-          <p className='text-content-muted'>Create: 02.06.2025</p>
-        </div>
-        <MoreVertical className='text-content-muted size-4' />
-      </div>
-      <div className='flex aspect-video items-center justify-center rounded-lg bg-neutral-100 text-sm font-semibold text-neutral-500'>
-        {name}
-      </div>
-      <div className='flex items-center justify-end gap-2 text-xs'>
-        <CampaignAnalyticsDialog
-          campaignName={name.toUpperCase()}
-          trigger={
-            <button className='rounded-pill border-primary text-primary hover:bg-primary/5 cursor-pointer border px-3 py-1'>
-              Analytics
-            </button>
-          }
-        />
-        <button className='rounded-pill text-neutral-0 cursor-pointer bg-neutral-900 px-3 py-1 hover:bg-neutral-800'>
-          Edit
-        </button>
-      </div>
-    </div>
-  );
+function rxErrorMessage(err: unknown): string {
+  if (err instanceof RxApiError) return err.message || err.code;
+  if (err instanceof Error) return err.message;
+  return 'Unexpected error';
 }
 
 export default function AiCampaignPage({ params }: PageProps) {
   const { productId } = use(params);
+  const router = useRouter();
+
+  const [objective, setObjective] =
+    React.useState<CampaignObjective>('conversion');
+  const [budget, setBudget] = React.useState<string>('1000');
+  const [notes, setNotes] = React.useState('');
+  const [plan, setPlan] = React.useState<AICampaignPlanResponse | null>(null);
+  const [planning, setPlanning] = React.useState(false);
+  const [creating, setCreating] = React.useState(false);
+
+  const handlePlan = async () => {
+    setPlanning(true);
+    try {
+      const res = await rexerApi.ai.campaignPlan({
+        product_id: productId,
+        objective,
+        budget: budget ? Number(budget) : undefined,
+      });
+      setPlan(res);
+      toast.success('AI plan ready');
+    } catch (err) {
+      toast.error(`Plan failed: ${rxErrorMessage(err)}`);
+    } finally {
+      setPlanning(false);
+    }
+  };
+
+  const handleLaunch = async () => {
+    if (!plan) return;
+    setCreating(true);
+    try {
+      const created = await rexerApi.campaigns.create({
+        name: plan.name,
+        product_id: productId,
+        objective,
+        channels: plan.channels,
+        kpis: plan.kpis,
+        budget_amount: budget ? Number(budget) : undefined,
+        notes: notes.trim() || undefined,
+      });
+      toast.success(`Campaign "${created.name}" created`);
+      router.push(`/product/${productId}/marketing/${created.id}`);
+    } catch (err) {
+      toast.error(`Create failed: ${rxErrorMessage(err)}`);
+    } finally {
+      setCreating(false);
+    }
+  };
+
   return (
-    <MarketingDetailShell
+    <ProductWorkspaceLayout
       basePath={`/ai-agents/${productId}`}
+      productName='Plan a campaign'
       scope='ai-agents'
-      productName='Samba OG Shoes'
-      marketings={MARKETINGS}
-      activeMarketingId='m1'
-      activeSection='campaign'
-      primaryLabel='Launch'
-      sidebarSections={['discovery', 'concept', 'assets', 'campaign']}
-    >
-      <div className='mb-6 flex items-center gap-2'>
-        <button className='rounded-pill text-foreground inline-flex h-8 items-center gap-1 bg-neutral-100 px-3 text-xs font-semibold hover:bg-neutral-200'>
-          <Plus className='size-3.5' /> Add more campaign
-        </button>
-        {CAMPAIGN_TABS.map(t => (
-          <button
-            key={t.key}
-            className={`rounded-pill h-8 cursor-pointer px-4 text-xs font-semibold ${
-              t.active ? 'text-neutral-0 bg-neutral-900' : 'text-content-muted'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-      <div className='flex flex-col gap-8'>
-        <FeatureField
-          label='Campaign Planning'
-          description={MOCK_DESCRIPTIONS.campaignPlanning}
-          showAddMore
-        />
-        <TemplateThumb name='Delvaux' />
-        <button
-          type='button'
-          className='rounded-pill text-neutral-0 inline-flex h-8 w-fit cursor-pointer items-center gap-1 bg-neutral-900 px-3 text-xs font-semibold hover:bg-neutral-800'
+      section='campaign'
+      actions={
+        <Button
+          variant='ai'
+          size='sm'
+          onClick={handleLaunch}
+          disabled={!plan || creating}
         >
-          <Plus className='size-3.5' /> Add more template
-        </button>
+          {creating ? (
+            <>
+              <Spinner size={14} /> Launching…
+            </>
+          ) : (
+            <>
+              <Rocket className='size-3.5' /> Launch
+            </>
+          )}
+        </Button>
+      }
+    >
+      <div className='mx-auto grid w-full max-w-[1100px] grid-cols-1 gap-5 px-6 pb-10 lg:grid-cols-2'>
+        {/* Left — inputs */}
+        <section className='border-border bg-background flex flex-col gap-4 rounded-xl border p-5'>
+          <header className='flex items-center gap-2'>
+            <Wand2 className='text-primary size-4' />
+            <h3 className='text-foreground text-base font-semibold'>
+              Campaign brief
+            </h3>
+          </header>
+
+          <div className='flex flex-col gap-2'>
+            <span className='text-muted-foreground text-xs font-semibold'>
+              Objective
+            </span>
+            <div className='grid grid-cols-2 gap-2'>
+              {OBJECTIVES.map(o => {
+                const active = o.key === objective;
+                return (
+                  <button
+                    key={o.key}
+                    type='button'
+                    onClick={() => setObjective(o.key)}
+                    className={`rounded-xl border-2 px-3 py-2 text-left transition-colors ${
+                      active
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-neutral-300'
+                    }`}
+                  >
+                    <p className='text-foreground text-sm font-semibold'>
+                      {o.label}
+                    </p>
+                    <p className='text-muted-foreground text-xs'>{o.hint}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className='flex flex-col gap-2'>
+            <label
+              htmlFor='budget'
+              className='text-muted-foreground text-xs font-semibold'
+            >
+              Budget (USD)
+            </label>
+            <input
+              id='budget'
+              type='number'
+              min={0}
+              step={100}
+              value={budget}
+              onChange={e => setBudget(e.target.value)}
+              className='border-input h-10 rounded-md border bg-transparent px-3 text-sm outline-none'
+            />
+          </div>
+
+          <div className='flex flex-col gap-2'>
+            <label
+              htmlFor='notes'
+              className='text-muted-foreground text-xs font-semibold'
+            >
+              Notes (optional)
+            </label>
+            <Textarea
+              id='notes'
+              rows={3}
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder='Channels you prefer, launch date, brand guardrails…'
+            />
+          </div>
+
+          <Button
+            variant='ai'
+            size='md'
+            onClick={handlePlan}
+            disabled={planning}
+          >
+            {planning ? (
+              <>
+                <Spinner size={14} /> Planning…
+              </>
+            ) : (
+              <>
+                <Sparkles className='size-3.5' /> Plan with AI
+              </>
+            )}
+          </Button>
+        </section>
+
+        {/* Right — AI plan */}
+        <section className='border-border bg-background flex flex-col gap-4 rounded-xl border p-5'>
+          <header className='flex items-center gap-2'>
+            <Rocket className='text-primary size-4' />
+            <h3 className='text-foreground text-base font-semibold'>AI plan</h3>
+          </header>
+
+          {!plan ? (
+            <p className='text-muted-foreground text-sm italic'>
+              Configure the brief and click <strong>Plan with AI</strong>.
+            </p>
+          ) : (
+            <>
+              <div>
+                <p className='text-muted-foreground text-xs font-semibold uppercase'>
+                  Suggested name
+                </p>
+                <p className='text-foreground text-lg font-semibold'>
+                  {plan.name}
+                </p>
+              </div>
+
+              <div>
+                <p className='text-muted-foreground mb-1 text-xs font-semibold uppercase'>
+                  Channels
+                </p>
+                <div className='flex flex-wrap gap-1'>
+                  {plan.channels.map(c => (
+                    <Badge key={c} variant='secondary' className='capitalize'>
+                      {c}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className='text-muted-foreground text-xs font-semibold uppercase'>
+                  Suggested duration
+                </p>
+                <p className='text-foreground text-sm'>
+                  {plan.duration_days} day(s)
+                </p>
+              </div>
+
+              <div>
+                <p className='text-muted-foreground mb-1 text-xs font-semibold uppercase'>
+                  KPIs
+                </p>
+                <ul className='flex flex-col gap-1.5'>
+                  {plan.kpis.map(k => (
+                    <li
+                      key={k.name}
+                      className='border-border flex items-center justify-between rounded-md border px-3 py-1.5 text-sm'
+                    >
+                      <span className='inline-flex items-center gap-2'>
+                        <Check className='text-primary size-3.5' /> {k.name}
+                      </span>
+                      <span className='text-muted-foreground'>
+                        {k.target ?? '—'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
+        </section>
       </div>
-    </MarketingDetailShell>
+    </ProductWorkspaceLayout>
   );
 }

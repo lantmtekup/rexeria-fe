@@ -38,6 +38,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.18",
+    "fabric": "^7.3.1",
     "file-type": "^19.6.0",
     "framer-motion": "^12.23.12",
     "input-otp": "^1.4.2",

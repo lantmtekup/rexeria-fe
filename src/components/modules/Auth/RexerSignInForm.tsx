@@ -106,11 +106,22 @@ export default function RexerSignInForm() {
             </p>
           )}
 
+          <div className='mt-2 flex justify-end'>
+            <Link
+              href='/forgot-password'
+              className='text-content-muted hover:text-foreground text-xs'
+            >
+              {t.has('forgotPassword')
+                ? t('forgotPassword')
+                : 'Forgot password?'}
+            </Link>
+          </div>
+
           <Button
             type='submit'
             variant='primary'
             size='lg'
-            className='mt-6 w-full'
+            className='mt-4 w-full'
             disabled={status === 'loading'}
           >
             {status === 'loading' ? t('submitLoading') : t('signIn')}

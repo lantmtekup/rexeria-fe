@@ -18,8 +18,14 @@ export interface ProductWorkspaceLayoutProps {
   productName?: string;
   /** Scope drives top-bar behaviour (stepper in AI-Agents, top tabs in Product) */
   scope: WorkspaceScope;
-  /** Current sub-section — `information | media | marketing | template | campaign` */
-  section: 'information' | 'media' | 'marketing' | 'template' | 'campaign';
+  /** Current sub-section — `information | media | marketing | template | campaign | landing` */
+  section:
+    | 'information'
+    | 'media'
+    | 'marketing'
+    | 'template'
+    | 'campaign'
+    | 'landing';
   /** Extra right-side actions */
   actions?: React.ReactNode;
   /** Body content */
@@ -39,7 +45,7 @@ function ProductWorkspaceLayout({
   actions,
   children,
 }: ProductWorkspaceLayoutProps) {
-  // Product tabs: [Product, Marketing]
+  // Product tabs: [Product, Landing, Marketing]
   const topTabs = [
     {
       key: 'product',
@@ -47,13 +53,22 @@ function ProductWorkspaceLayout({
       href: `${basePath}/information`,
     },
     {
+      key: 'landing',
+      label: 'Landing',
+      href: `${basePath}/landing`,
+    },
+    {
       key: 'marketing',
       label: 'Marketing',
       href: `${basePath}/marketing`,
     },
   ];
-  const topActive: 'product' | 'marketing' =
-    section === 'information' || section === 'media' ? 'product' : 'marketing';
+  const topActive: 'product' | 'landing' | 'marketing' =
+    section === 'information' || section === 'media'
+      ? 'product'
+      : section === 'landing'
+        ? 'landing'
+        : 'marketing';
 
   // Sub tabs only shown on Product top tab (Information | Media)
   const subTabs = [
@@ -74,7 +89,9 @@ function ProductWorkspaceLayout({
     { key: 'campaign', label: 'Campaign' },
   ];
   const wizardActive =
-    section === 'information' || section === 'media' ? 'product' : section;
+    section === 'information' || section === 'media' || section === 'landing'
+      ? 'product'
+      : section;
 
   const isProduct = scope === 'product';
   const showSubTabs =
