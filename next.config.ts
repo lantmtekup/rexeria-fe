@@ -67,6 +67,19 @@ const nextConfig: NextConfig = {
   },
 
   transpilePackages: ['react-markdown', 'remark-gfm'],
+
+  async rewrites() {
+    const be =
+      process.env.NEXT_PUBLIC_REXER_API ??
+      process.env.REXER_API ??
+      'http://75.119.128.96:9090';
+    return [
+      {
+        source: '/api/rexer/:path*',
+        destination: `${be}/v1/:path*`,
+      },
+    ];
+  },
 };
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');

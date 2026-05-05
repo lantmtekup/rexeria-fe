@@ -3,11 +3,21 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { constants } from '@/settings/constants';
 
-const protectedRoutes = ['/tai-khoan', '/cms'];
+const protectedRoutes = [
+  '/tai-khoan',
+  '/cms',
+  '/home',
+  '/template',
+  '/product',
+  '/ai-agents',
+  '/notification',
+  '/setting',
+  '/support',
+];
 
 const authRoutes = ['/dang-nhap', '/quen-mat-khau', '/sign-in'];
 
-const publicRoutes = ['/api', '/_next', '/favicon.ico', '/scan'];
+const publicRoutes = ['/api', '/_next', '/favicon.ico', '/scan', '/p/'];
 
 const isAuthenticated = async (request: NextRequest): Promise<boolean> => {
   const accessToken = request.cookies.get(constants.ACCESS_TOKEN)?.value;
@@ -65,7 +75,17 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/', request.url));
     }
 
-    if (pathnameWithoutLocale.startsWith('/cms')) {
+    const appRoots = [
+      '/cms',
+      '/home',
+      '/template',
+      '/product',
+      '/ai-agents',
+      '/notification',
+      '/setting',
+      '/support',
+    ];
+    if (appRoots.some(p => pathnameWithoutLocale.startsWith(p))) {
       return NextResponse.redirect(new URL('/sign-in', request.url));
     }
 

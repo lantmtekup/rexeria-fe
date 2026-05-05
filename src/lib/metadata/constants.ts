@@ -21,7 +21,7 @@ export const SEO_CONSTANTS = {
   TWITTER_IMAGE_HEIGHT: 600,
 
   // Default images
-  DEFAULT_OG_IMAGE: '/logo.png',
+  DEFAULT_OG_IMAGE: '/brand/rexer-wordmark.svg',
   DEFAULT_IMAGE_ALT: '',
 
   // Site URLs (from environment variables)
@@ -31,7 +31,7 @@ export const SEO_CONSTANTS = {
   ORGANIZATION: {
     name: '',
     url: '',
-    logo: '/logo.png',
+    logo: '/brand/rexer-wordmark.svg',
     description: '',
   },
 

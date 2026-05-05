@@ -1,0 +1,29 @@
+{
+  "app": {
+    "sidebar": {
+      "ariaNav": "Main navigation",
+      "sectionAccountTeam": "Account & Team",
+      "teamLabel": "Team",
+      "sectionGeneral": "General",
+      "sectionOther": "Other",
+      "navHome": "Home",
+      "navTemplate": "Template",
+      "navProduct": "Product",
+      "navMarketing": "Marketing",
+      "navCollections": "Collections",
+      "navAiAgents": "AI-Agents",
+      "navNotification": "Notification",
+      "navSetting": "Setting",
+      "navSupport": "Support center",
+      "guest": "Guest",
+      "logout": "Logout",
+      "basicPlan": "Basic plan"
+    },
+    "home": {
+      "title": "Welcome to REXER",
+      "description": "Pick a template or create a new product to get started.",
+      "browseTemplates": "Browse Templates",
+      "createProduct": "Create new product"
+    }
+  }
+}

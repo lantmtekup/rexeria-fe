@@ -1,5 +1,7 @@
 {
   "validation": {
-    "required": "Bắt buộc"
+    "required": "Bắt buộc",
+    "email": "Email không hợp lệ",
+    "minLength": "Quá ngắn"
   }
 }

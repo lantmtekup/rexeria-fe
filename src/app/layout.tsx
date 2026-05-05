@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { getLocale, getMessages, getTimeZone } from 'next-intl/server';
 // import Script from 'next/script';
 
@@ -15,10 +15,11 @@ import type { LocalizedText } from '@/types/common';
 
 import '../styles/globals.css';
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  variable: '--font-plus-jakarta-sans',
-  subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500', '600', '700', '800'],
+const inter = Inter({
+  variable: '--font-inter',
+  subsets: ['latin', 'latin-ext', 'vietnamese'],
+  weight: ['400', '500', '600', '700', '900'],
+  display: 'swap',
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -51,9 +52,9 @@ export async function generateMetadata(): Promise<Metadata> {
       canonical: SEO_CONSTANTS.SITE_URL,
     },
     icons: {
-      icon: '/logo.png',
-      shortcut: '/logo.png',
-      apple: '/logo.png',
+      icon: '/brand/rexer-wordmark.svg',
+      shortcut: '/brand/rexer-wordmark.svg',
+      apple: '/brand/rexer-wordmark.svg',
     },
     openGraph: {
       type: 'website',
@@ -103,7 +104,7 @@ export default async function RootLayout({
   // const organizationSchema = generateOrganizationSchema();
 
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       {/* <head>
         <Script
           id='organization-schema'
@@ -113,7 +114,7 @@ export default async function RootLayout({
           }}
         />
       </head> */}
-      <body className={`${plusJakartaSans.variable} bg-background antialiased`}>
+      <body className={`${inter.variable} bg-background antialiased`}>
         <Providers locale={locale} messages={messages} timezone={timezone}>
           {children}
           <Toaster position='top-right' />

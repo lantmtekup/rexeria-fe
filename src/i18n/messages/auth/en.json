@@ -1,13 +1,32 @@
 {
   "auth": {
-    "loginTitle": "CMS sign in",
-    "loginSubtitle": "Enter your admin account to continue.",
+    "loginTitle": "Login",
+    "registerTitle": "Register",
+    "loginSubtitle": "",
     "username": "Username",
     "usernamePlaceholder": "username",
+    "displayName": "Display name",
+    "displayNamePlaceholder": "Display name",
+    "email": "Email",
+    "emailPlaceholder": "Email",
     "password": "Password",
-    "passwordPlaceholder": "••••••••",
+    "passwordPlaceholder": "Password",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Confirm password",
+    "passwordMismatch": "Passwords don't match",
     "submit": "Sign in",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
     "submitLoading": "Signing in…",
-    "loading": "Loading…"
+    "registerLoading": "Creating account…",
+    "loading": "Loading…",
+    "or": "Or",
+    "createAccountPrompt": "Create new Account -",
+    "register": "Register",
+    "alreadyHaveAccount": "Already have an account?",
+    "login": "Login",
+    "continueFacebook": "Continue with Facebook",
+    "continueGoogle": "Continue with Google",
+    "continueApple": "Continue with Apple"
   }
 }
