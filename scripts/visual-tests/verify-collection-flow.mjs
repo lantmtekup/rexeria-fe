@@ -36,10 +36,14 @@ const note = (kind, msg) => {
 };
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 const page = await ctx.newPage();
 
-page.on('pageerror', e => note('FAIL', `pageerror: ${e.message?.slice(0, 120)}`));
+page.on('pageerror', e =>
+  note('FAIL', `pageerror: ${e.message?.slice(0, 120)}`)
+);
 
 // ── 1. Login ────────────────────────────────────────────────────────────
 log('1) sign in');
@@ -85,7 +89,10 @@ await page.screenshot({ path: join(OUT, 'col-01-empty.png') });
 
 // ── 3. Create collection "Customers" ────────────────────────────────────
 log('3) create collection "Customers"');
-await page.getByRole('button', { name: /New collection/ }).first().click();
+await page
+  .getByRole('button', { name: /New collection/ })
+  .first()
+  .click();
 await page.waitForSelector('[role=dialog]');
 await page.locator('#c-name').fill('Customers');
 await page.locator('#c-desc').fill('VIP customer database');
@@ -138,7 +145,10 @@ if (!addFirst) {
 } else {
   // ── 5. Define schema (UI: 3 fields with label/key/type) ────────────────
   log('5) define schema via UI');
-  await page.getByRole('button', { name: /Add first field/ }).first().click();
+  await page
+    .getByRole('button', { name: /Add first field/ })
+    .first()
+    .click();
   await page.waitForTimeout(400);
 
   const labelInputs = page.locator('input[placeholder="Field label"]');
@@ -177,7 +187,10 @@ if (!addFirst) {
 
   // Save schema
   log('   click Save');
-  await page.getByRole('button', { name: /Save \*?/ }).first().click();
+  await page
+    .getByRole('button', { name: /Save \*?/ })
+    .first()
+    .click();
   await page.waitForTimeout(2000);
   const savedBtn = await page
     .getByRole('button', { name: /Saved/ })
@@ -230,11 +243,17 @@ note(newRecordBtn ? 'PASS' : 'FAIL', 'Records tab shows "New record" button');
 
 // ── 7. Create first record ──────────────────────────────────────────────
 log('7) create record Acme Corp');
-await page.getByRole('button', { name: /New record/ }).first().click();
+await page
+  .getByRole('button', { name: /New record/ })
+  .first()
+  .click();
 await page.waitForSelector('[role=dialog]');
 // Inside dialog there are inputs for Name (text), Email (email), Tier (select)
 await page.locator('[role=dialog] input[type=text]').first().fill('Acme Corp');
-await page.locator('[role=dialog] input[type=email]').first().fill('hi@acme.com');
+await page
+  .locator('[role=dialog] input[type=email]')
+  .first()
+  .fill('hi@acme.com');
 await page.locator('[role=dialog] select').first().selectOption('VIP');
 await page.locator('[role=dialog] button[type=submit]').click();
 await page.waitForTimeout(2000);
@@ -248,10 +267,16 @@ await page.screenshot({ path: join(OUT, 'col-04-record.png') });
 
 // ── 8. Validation: unique violation ─────────────────────────────────────
 log('8) validation — duplicate email should fail');
-await page.getByRole('button', { name: /New record/ }).first().click();
+await page
+  .getByRole('button', { name: /New record/ })
+  .first()
+  .click();
 await page.waitForSelector('[role=dialog]');
 await page.locator('[role=dialog] input[type=text]').first().fill('Acme #2');
-await page.locator('[role=dialog] input[type=email]').first().fill('hi@acme.com');
+await page
+  .locator('[role=dialog] input[type=email]')
+  .first()
+  .fill('hi@acme.com');
 await page.locator('[role=dialog] select').first().selectOption('Regular');
 await page.locator('[role=dialog] button[type=submit]').click();
 await page.waitForTimeout(3000);
@@ -269,10 +294,16 @@ await page.waitForTimeout(500);
 
 // ── 9. Validation: required missing ─────────────────────────────────────
 log('9) validation — required field missing');
-await page.getByRole('button', { name: /New record/ }).first().click();
+await page
+  .getByRole('button', { name: /New record/ })
+  .first()
+  .click();
 await page.waitForSelector('[role=dialog]');
 // Leave Name empty, fill email only
-await page.locator('[role=dialog] input[type=email]').first().fill('partial@test.com');
+await page
+  .locator('[role=dialog] input[type=email]')
+  .first()
+  .fill('partial@test.com');
 await page.locator('[role=dialog] button[type=submit]').click();
 await page.waitForTimeout(2000);
 const reqError = await page
@@ -280,16 +311,25 @@ const reqError = await page
   .first()
   .isVisible({ timeout: 2000 })
   .catch(() => false);
-note(reqError ? 'PASS' : 'FAIL', 'missing required field surfaces inline error');
+note(
+  reqError ? 'PASS' : 'FAIL',
+  'missing required field surfaces inline error'
+);
 await page.keyboard.press('Escape');
 await page.waitForTimeout(500);
 
 // ── 10. Add second record then search ───────────────────────────────────
 log('10) add 2nd record + search filter');
-await page.getByRole('button', { name: /New record/ }).first().click();
+await page
+  .getByRole('button', { name: /New record/ })
+  .first()
+  .click();
 await page.waitForSelector('[role=dialog]');
 await page.locator('[role=dialog] input[type=text]').first().fill('Beta LLC');
-await page.locator('[role=dialog] input[type=email]').first().fill('hello@beta.io');
+await page
+  .locator('[role=dialog] input[type=email]')
+  .first()
+  .fill('hello@beta.io');
 await page.locator('[role=dialog] select').first().selectOption('Bronze');
 await page.locator('[role=dialog] button[type=submit]').click();
 await page.waitForTimeout(2000);
@@ -327,10 +367,9 @@ const beState = await page.evaluate(async () => {
   const cj = await cr.json();
   const col = cj.items?.[0];
   if (!col) return { collections: 0, records: 0 };
-  const rr = await fetch(
-    `/api/rexer/collections/${col.id}/records?limit=20`,
-    { credentials: 'include' }
-  );
+  const rr = await fetch(`/api/rexer/collections/${col.id}/records?limit=20`, {
+    credentials: 'include',
+  });
   const rj = await rr.json();
   return { collections: cj.items?.length ?? 0, records: rj.items?.length ?? 0 };
 });
@@ -368,9 +407,7 @@ await page.waitForTimeout(500);
 await page.getByRole('tab', { name: /Data collections/ }).click();
 await page.waitForTimeout(500);
 page.once('dialog', d => d.accept());
-const archiveBtn = page.locator(
-  'button[aria-label="Archive collection"]'
-);
+const archiveBtn = page.locator('button[aria-label="Archive collection"]');
 if ((await archiveBtn.count()) > 0) {
   await archiveBtn.first().click();
   await page.waitForTimeout(800);

@@ -3,11 +3,12 @@
 import * as React from 'react';
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Sparkles, Wand2 } from 'lucide-react';
+import { ArrowRight, Package, Sparkles, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
 import { Spinner } from '@/components/atoms/spinner';
+import { ProductPickerDialog } from '@/components/modules/CanvasTemplate/block-editor/ProductPickerDialog';
 import {
   ProductInformationEditor,
   emptyProductInformation,
@@ -58,6 +59,32 @@ export default function AiAgentsInformationPage({ params }: PageProps) {
   const [loading, setLoading] = React.useState(!isNew);
   const [enriching, setEnriching] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
+  const [pickerOpen, setPickerOpen] = React.useState(false);
+  /**
+   * When the user picks an existing product from the library, we PATCH that
+   * product on Continue instead of creating a new one. `null` = no pick yet,
+   * fall back to the URL-based behavior (create when isNew, update otherwise).
+   */
+  const [pickedProductId, setPickedProductId] = React.useState<string | null>(
+    null
+  );
+  const [pickedProductName, setPickedProductName] = React.useState<
+    string | null
+  >(null);
+
+  const handlePickExisting = (p: Product, categoryName?: string) => {
+    setValue(fromProduct(p, categoryName));
+    setPickedProductId(p.id);
+    setPickedProductName(p.name);
+    toast.success(`Đã chọn sản phẩm "${p.name}" — sẽ cập nhật khi tiếp tục`);
+  };
+
+  const handleClearPick = () => {
+    setPickedProductId(null);
+    setPickedProductName(null);
+    setValue(emptyProductInformation);
+    toast.info('Đã bỏ chọn — quay lại tạo sản phẩm mới');
+  };
 
   React.useEffect(() => {
     if (isNew) return;
@@ -123,16 +150,24 @@ export default function AiAgentsInformationPage({ params }: PageProps) {
     }
     setSaving(true);
     try {
-      let nextId = productId;
-      if (isNew) {
+      let nextId: string;
+      if (pickedProductId) {
+        // User picked an existing product → PATCH it (skip create), even if
+        // the URL still says "new-product".
+        await rexerApi.products.update(pickedProductId, toCreatePayload(value));
+        nextId = pickedProductId;
+        toast.success('Đã cập nhật sản phẩm');
+      } else if (isNew) {
         const created = await rexerApi.products.create(toCreatePayload(value));
         nextId = created.product.id;
-        toast.success('Product created');
+        toast.success('Đã tạo sản phẩm');
       } else {
         await rexerApi.products.update(productId, toCreatePayload(value));
-        toast.success('Product saved');
+        nextId = productId;
+        toast.success('Đã lưu');
       }
-      router.push(`/ai-agents/${nextId}/template`);
+      // Stay within "01 Product" step → next sub-tab is Media.
+      router.push(`/ai-agents/${nextId}/media`);
     } catch (err) {
       toast.error(`Save failed: ${rxErrorMessage(err)}`);
     } finally {
@@ -153,11 +188,84 @@ export default function AiAgentsInformationPage({ params }: PageProps) {
           onClick={handleContinue}
           disabled={saving || loading}
         >
-          {saving ? 'Saving…' : 'Continue'} <ArrowRight className='size-3.5' />
+          {saving
+            ? 'Saving…'
+            : pickedProductId
+              ? 'Cập nhật & Continue'
+              : isNew
+                ? 'Tạo & Continue'
+                : 'Lưu & Continue'}
+          <ArrowRight className='size-3.5' />
         </Button>
       }
     >
       <div className='mx-auto mb-4 flex w-full max-w-[1200px] flex-col gap-3 px-6'>
+        {isNew && !pickedProductId && (
+          <div className='border-border bg-muted/40 flex flex-col gap-2 rounded-xl border border-dashed p-3 sm:flex-row sm:items-center sm:justify-between'>
+            <div className='flex items-start gap-2'>
+              <Package className='text-muted-foreground mt-0.5 size-4 shrink-0' />
+              <div>
+                <p className='text-foreground text-sm font-medium'>
+                  Đã có sản phẩm trong thư viện?
+                </p>
+                <p className='text-muted-foreground text-xs'>
+                  Chọn 1 sản phẩm có sẵn — tên, mô tả, size, màu, tiện ích sẽ
+                  được điền tự động.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setPickerOpen(true)}
+              disabled={loading || saving}
+            >
+              <Package className='size-3.5' />
+              Chọn sản phẩm có sẵn
+            </Button>
+          </div>
+        )}
+
+        {isNew && pickedProductId && (
+          <div className='flex flex-col gap-2 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 sm:flex-row sm:items-center sm:justify-between'>
+            <div className='flex items-start gap-2'>
+              <Package className='mt-0.5 size-4 shrink-0 text-emerald-600' />
+              <div>
+                <p className='text-sm font-medium text-emerald-900'>
+                  Đang chỉnh sửa sản phẩm có sẵn:{' '}
+                  <span className='font-semibold'>{pickedProductName}</span>
+                </p>
+                <p className='text-xs text-emerald-700/80'>
+                  Khi nhấn Continue sẽ cập nhật product này (
+                  <span className='font-mono'>
+                    PATCH /products/{pickedProductId.slice(0, 8)}…
+                  </span>
+                  ), không tạo bản mới.
+                </p>
+              </div>
+            </div>
+            <div className='flex items-center gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => setPickerOpen(true)}
+                disabled={loading || saving}
+              >
+                Đổi sản phẩm
+              </Button>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={handleClearPick}
+                disabled={loading || saving}
+                className='text-emerald-700 hover:text-emerald-900'
+              >
+                Bỏ chọn
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className='flex items-center gap-2'>
           <input
             type='text'
@@ -212,6 +320,12 @@ export default function AiAgentsInformationPage({ params }: PageProps) {
         value={value}
         onChange={setValue}
         disabled={loading || saving}
+      />
+
+      <ProductPickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onPick={handlePickExisting}
       />
     </ProductWorkspaceLayout>
   );

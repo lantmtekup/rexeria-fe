@@ -54,6 +54,9 @@ next-env.d.ts
 yarn.lock
 package-lock.json
 
-#
+# claude / agent rules + playwright artifacts
 CLAUDE.md
-.claude/rules/
+.claude/
+tests/e2e/.auth/
+test-results/
+playwright-report/

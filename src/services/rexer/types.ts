@@ -155,6 +155,7 @@ export interface TemplatePreviewResponse {
 export interface Project {
   id: string;
   client_id: string;
+  product_id?: string | null;
   name: string;
   slug: string;
   status: string;
@@ -164,6 +165,19 @@ export interface Project {
   created_at: string;
   updated_at: string;
   created_by: string;
+  /** Joined when BE list returns nested template (eager load). */
+  template?: Pick<
+    Template,
+    | 'id'
+    | 'code'
+    | 'name'
+    | 'description'
+    | 'thumbnail_url'
+    | 'category'
+    | 'status'
+  >;
+  /** Joined when BE list returns nested client. */
+  client?: Pick<Client, 'id' | 'name' | 'status'>;
 }
 
 export interface ProjectListResponse {
@@ -299,6 +313,11 @@ export interface MediaAsset {
   height?: number;
   duration_ms?: number;
   storage_key: string;
+  /**
+   * Public CDN URL for the asset. Added by BE 2026-05 (resolves GAP-17).
+   * Use this for `<img src>`. Falls back undefined for legacy assets.
+   */
+  public_url?: string;
   tags?: string[];
   checksum?: string;
   created_at: string;
@@ -496,6 +515,8 @@ export interface Product {
   certifications?: string[];
   features?: ProductFeature[];
   status?: ProductStatus;
+  /** Public CDN URL for product cover image. Added by BE 2026-05. */
+  thumbnail_url?: string;
   created_at?: string;
   updated_at?: string;
   created_by?: string;
@@ -510,10 +531,19 @@ export interface ProductMediaBinding {
   created_at: string;
 }
 
+/**
+ * BE wraps each product media binding with its hydrated asset (since 2026-05).
+ * No more N+1 `GET /media/{id}` from FE.
+ */
+export interface ProductMediaWithAsset {
+  binding: ProductMediaBinding;
+  asset?: MediaAsset;
+}
+
 export interface ProductResponse {
   product: Product;
   category?: ProductCategory;
-  media?: ProductMediaBinding[];
+  media?: ProductMediaWithAsset[];
 }
 
 export interface ProductListResponse {
@@ -636,6 +666,8 @@ export interface CreateCampaignRequest {
   end_date?: SimpleDate;
   kpis?: CampaignKPI[];
   notes?: string;
+  /** Lifecycle — defaults to `draft` when omitted. */
+  status?: 'draft' | 'active' | 'paused' | 'completed';
 }
 export type UpdateCampaignRequest = Partial<
   Omit<CreateCampaignRequest, 'product_id'>
@@ -705,9 +737,14 @@ export interface AIMediaSuggestRequest {
   product_id: string;
   section_keys: string[];
 }
+/** Per-suggestion item — BE 2026-05 shape (was just `string`). */
+export interface AIMediaSuggestion {
+  media_id: string;
+  source?: string;
+}
 export interface AIMediaSuggestResponse {
-  /** Map of `section_key` → list of suggested asset hints (URLs or descriptions). */
-  suggestions: Record<string, string[]>;
+  /** Map of `section_key` → list of suggestion items (each carries a media_id). */
+  suggestions: Record<string, AIMediaSuggestion[]>;
 }
 
 export interface AICampaignPlanRequest {
@@ -720,6 +757,78 @@ export interface AICampaignPlanResponse {
   channels: string[];
   duration_days: number;
   kpis: CampaignKPI[];
+}
+
+// ── AI Canvas Apply Product (POST /v1/ai/canvas-templates/{id}/apply-product) ─
+// Đặc tả: docs/be-ai-canvas-apply-product-spec.md
+export interface AICanvasApplyProductRequest {
+  product_id: string;
+  lang?: 'vi' | 'en';
+  brief?: string;
+  preserve_user_overrides?: boolean;
+  expected_canvas_etag?: string;
+}
+export interface AICanvasApplyStats {
+  blocks_total: number;
+  blocks_rewritten: number;
+  blocks_skipped: number;
+  fields_rewritten: number;
+  image_bindings_replaced: number;
+  image_bindings_kept: number;
+}
+export interface AICanvasApplyProductResponse {
+  canvas_data: Record<string, unknown>;
+  canvas_etag: string;
+  applied: AICanvasApplyStats;
+  source: 'ai' | 'stub';
+  model: string;
+  usage?: AIBlockContentUsage;
+  request_id: string;
+}
+
+// ── AI Block Content (POST /v1/ai/block-content) ─────────────────────────
+// Đặc tả: docs/be-ai-block-content-spec.md
+export type AIBlockType =
+  | 'hero_split'
+  | 'hero_overlay'
+  | 'feature_section'
+  | 'photo_gallery'
+  | 'booking_form'
+  | 'cta_section';
+
+export interface AIBlockContentRequest {
+  block_type: AIBlockType;
+  prompt: string;
+  lang?: 'vi' | 'en';
+  /**
+   * Full current content of the block (in the language being edited).
+   * Lets BE prompt: "rewrite this — preserve unrelated fields, focus on
+   * `selected_field`". Without it AI generates from scratch.
+   */
+  current_content?: Record<string, unknown>;
+  /**
+   * Field key the user is focused on right now (e.g. `title`, `description`,
+   * `eyebrow`). When set, AI should prioritise rewriting THIS field while
+   * keeping siblings semantically consistent.
+   */
+  selected_field?: string;
+  /** Block display name — extra context for the prompt. */
+  block_name?: string;
+}
+
+export interface AIBlockContentUsage {
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_input_tokens?: number;
+}
+
+export interface AIBlockContentResponse {
+  /** Shape varies by block_type — caller casts to the matching content interface. */
+  content: Record<string, unknown>;
+  source: 'ai' | 'stub';
+  model: string;
+  usage?: AIBlockContentUsage;
+  request_id: string;
 }
 
 // ── Canvas Templates (be-canvas-templates-spec.md) ───────────────────────
@@ -760,6 +869,19 @@ export interface CanvasDataResponse {
   canvas_data: Record<string, unknown>;
   canvas_etag: string;
   version: number;
+}
+/**
+ * Public share-link response (`GET /public/canvas-templates/{id}/canvas`).
+ * No auth required; BE validates `share_token` query param. Returns 404
+ * when canvas is unpublished or token is wrong (avoids enumeration).
+ */
+export interface PublicCanvasResponse {
+  canvas_data: Record<string, unknown>;
+  canvas_etag: string;
+  name?: string;
+  description?: string;
+  published_at?: string;
+  thumbnail_url?: string;
 }
 export interface CreateCanvasTemplateRequest {
   name: string;

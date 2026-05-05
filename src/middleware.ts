@@ -17,7 +17,7 @@ const protectedRoutes = [
 
 const authRoutes = ['/dang-nhap', '/quen-mat-khau', '/sign-in'];
 
-const publicRoutes = ['/api', '/_next', '/favicon.ico', '/scan'];
+const publicRoutes = ['/api', '/_next', '/favicon.ico', '/scan', '/p/'];
 
 const isAuthenticated = async (request: NextRequest): Promise<boolean> => {
   const accessToken = request.cookies.get(constants.ACCESS_TOKEN)?.value;

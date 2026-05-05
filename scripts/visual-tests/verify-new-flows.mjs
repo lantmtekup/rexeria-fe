@@ -116,7 +116,9 @@ async function visit(page, path, name, opts = {}) {
 }
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 const page = await ctx.newPage();
 
 // 1. Sign-in
@@ -293,8 +295,9 @@ for (const r of results) {
   const verdict =
     r.status === 200 &&
     r.pageErrors.length === 0 &&
-    r.notes.filter(n => n.startsWith('navigation error') || n.startsWith('missing text'))
-      .length === 0
+    r.notes.filter(
+      n => n.startsWith('navigation error') || n.startsWith('missing text')
+    ).length === 0
       ? 'PASS'
       : r.status && r.status >= 400
         ? 'FAIL'

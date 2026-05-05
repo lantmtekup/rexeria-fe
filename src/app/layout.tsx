@@ -52,9 +52,9 @@ export async function generateMetadata(): Promise<Metadata> {
       canonical: SEO_CONSTANTS.SITE_URL,
     },
     icons: {
-      icon: '/logo.png',
-      shortcut: '/logo.png',
-      apple: '/logo.png',
+      icon: '/brand/rexer-wordmark.svg',
+      shortcut: '/brand/rexer-wordmark.svg',
+      apple: '/brand/rexer-wordmark.svg',
     },
     openGraph: {
       type: 'website',

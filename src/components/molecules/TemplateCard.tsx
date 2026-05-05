@@ -31,7 +31,7 @@ function TemplateCard({
   return (
     <article className={cn('group flex flex-col gap-3', className)} {...props}>
       <div
-        className='relative w-full overflow-hidden rounded-lg bg-neutral-100'
+        className='relative w-full overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800'
         style={{ aspectRatio: imageAspect, background: imageBg }}
       >
         {imageSrc ? (
@@ -51,7 +51,7 @@ function TemplateCard({
         )}
       </div>
       <div className='flex items-baseline justify-between gap-2 px-1 text-sm'>
-        <span className='text-foreground truncate font-semibold tracking-[-0.02em]'>
+        <span className='text-foreground min-w-0 flex-1 truncate font-semibold tracking-[-0.02em]'>
           {name}
         </span>
         <span className='text-content-muted shrink-0 text-xs'>{author}</span>

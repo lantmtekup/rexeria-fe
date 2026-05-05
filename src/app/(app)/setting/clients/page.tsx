@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Building2, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -11,6 +12,7 @@ import { Spinner } from '@/components/atoms/spinner';
 import { ClientFormDialog } from '@/components/dialogs/ClientFormDialog';
 import { EmptyState } from '@/components/molecules/EmptyState';
 import { SectionHeader } from '@/components/molecules/SectionHeader';
+import { useAuthRole } from '@/hooks/useAuthRole';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type { Client } from '@/services/rexer/types';
@@ -27,10 +29,21 @@ function formatDate(iso?: string) {
 }
 
 export default function ClientsListPage() {
+  const router = useRouter();
+  const { isClientUser, user } = useAuthRole();
+
   const [clients, setClients] = React.useState<Client[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [createOpen, setCreateOpen] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+
+  // Redirect client_user away from this internal-only screen.
+  // Wait until we know the user (auth slice may still be loading on first paint).
+  React.useEffect(() => {
+    if (user && isClientUser) {
+      router.replace('/home');
+    }
+  }, [user, isClientUser, router]);
 
   const reload = React.useCallback(async () => {
     setLoading(true);
@@ -45,8 +58,13 @@ export default function ClientsListPage() {
   }, []);
 
   React.useEffect(() => {
+    if (isClientUser) return;
     reload();
-  }, [reload]);
+  }, [reload, isClientUser]);
+
+  if (isClientUser) {
+    return null;
+  }
 
   const handleCreate = async (values: {
     name: string;

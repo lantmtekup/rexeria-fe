@@ -32,7 +32,9 @@ const TEST_FILE = join(OUT, 'verify-product-media-test.png');
 await writeFile(TEST_FILE, ONE_PX_PNG);
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 const page = await ctx.newPage();
 
 const issues = [];
@@ -72,7 +74,9 @@ await page.waitForURL(/\/home/, { timeout: 15000 });
 // 2) Get a real product id
 log('2) fetch products');
 const productsResp = await page.evaluate(async () => {
-  const r = await fetch('/api/rexer/products?limit=5', { credentials: 'include' });
+  const r = await fetch('/api/rexer/products?limit=5', {
+    credentials: 'include',
+  });
   return r.json();
 });
 const product = productsResp.items?.[0];
@@ -89,7 +93,10 @@ await page.goto(`${BASE}/product/${product.id}/information`, {
   waitUntil: 'domcontentloaded',
 });
 await page.waitForTimeout(1500);
-await page.screenshot({ path: join(OUT, 'pmfix-01-information.png'), fullPage: false });
+await page.screenshot({
+  path: join(OUT, 'pmfix-01-information.png'),
+  fullPage: false,
+});
 
 // Read product name from the workspace top bar (rendered via WorkspaceTopBar `title` prop).
 // The top bar wraps the title in a chip-like element near the top-left.
@@ -118,7 +125,10 @@ if (tabCount === 0) {
   await page.waitForURL(/\/media$/, { timeout: 10000 }).catch(() => {});
   await page.waitForTimeout(2500);
   log('   url after click =', page.url());
-  await page.screenshot({ path: join(OUT, 'pmfix-02-media.png'), fullPage: false });
+  await page.screenshot({
+    path: join(OUT, 'pmfix-02-media.png'),
+    fullPage: false,
+  });
 
   if (page.url().includes(`/product/${product.id}/media`)) {
     note('PASS', `URL navigated to /product/${product.id}/media`);
@@ -133,7 +143,10 @@ if (tabCount === 0) {
     .isVisible({ timeout: 1000 })
     .catch(() => false);
   if (sambaLeak) {
-    note('FAIL', 'Mock string "Samba OG Shoes" still visible — fix did NOT take effect');
+    note(
+      'FAIL',
+      'Mock string "Samba OG Shoes" still visible — fix did NOT take effect'
+    );
   } else {
     note('PASS', 'Mock string "Samba OG Shoes" no longer visible');
   }
@@ -147,7 +160,10 @@ if (tabCount === 0) {
   if (realNameVisible) {
     note('PASS', `Real product name "${expectedName}" visible on Media page`);
   } else {
-    note('FAIL', `Real product name "${expectedName}" not visible on Media page`);
+    note(
+      'FAIL',
+      `Real product name "${expectedName}" not visible on Media page`
+    );
   }
 
   // Check that ProductMediaManager rendered (look for "Product media" header)
@@ -164,10 +180,15 @@ if (tabCount === 0) {
 
   // Check whether GET /products/{id} was called (should be, to load name + bindings)
   const productGetCalls = networkLog.filter(
-    n => n.method === 'GET' && new RegExp(`/api/rexer/products/${product.id}$`).test(n.url)
+    n =>
+      n.method === 'GET' &&
+      new RegExp(`/api/rexer/products/${product.id}$`).test(n.url)
   );
   if (productGetCalls.length >= 1) {
-    note('PASS', `BE called GET /products/${product.id} (${productGetCalls.length} time(s))`);
+    note(
+      'PASS',
+      `BE called GET /products/${product.id} (${productGetCalls.length} time(s))`
+    );
   } else {
     note('FAIL', `Did NOT call GET /products/${product.id}`);
   }
@@ -194,7 +215,10 @@ if (fileInputCount === 0) {
     await page.waitForTimeout(500);
   }
   await page.waitForTimeout(1500);
-  await page.screenshot({ path: join(OUT, 'pmfix-03-after-upload.png'), fullPage: false });
+  await page.screenshot({
+    path: join(OUT, 'pmfix-03-after-upload.png'),
+    fullPage: false,
+  });
 
   const initOk = networkLog.some(
     n => n.url.includes('/media/uploads/init') && n.status === 200
@@ -208,8 +232,14 @@ if (fileInputCount === 0) {
       [200, 201].includes(n.status)
   );
   note(initOk ? 'PASS' : 'FAIL', `upload init → ${initOk ? 'OK' : 'FAIL'}`);
-  note(completeOk ? 'PASS' : 'FAIL', `upload complete → ${completeOk ? 'OK' : 'FAIL'}`);
-  note(bindOk ? 'PASS' : 'FAIL', `product media bind → ${bindOk ? 'OK' : 'FAIL'}`);
+  note(
+    completeOk ? 'PASS' : 'FAIL',
+    `upload complete → ${completeOk ? 'OK' : 'FAIL'}`
+  );
+  note(
+    bindOk ? 'PASS' : 'FAIL',
+    `product media bind → ${bindOk ? 'OK' : 'FAIL'}`
+  );
 }
 
 await browser.close();

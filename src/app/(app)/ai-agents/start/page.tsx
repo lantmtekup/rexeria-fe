@@ -28,19 +28,19 @@ export default function AiAgentsStartPage() {
           title='AI-Agents'
           description={
             <>
-              Select your product or create a new
+              Pick an existing agent or create a new one
               <br />
-              one to get started with AI-Agents.
+              to get started.
             </>
           }
           actions={
             <>
               <Button asChild variant='pill-light' size='md'>
-                <Link href='/product'>Select product</Link>
+                <Link href='/ai-agents'>Browse agents</Link>
               </Button>
               <Button asChild variant='pill' size='md'>
                 <Link href='/ai-agents/new-product/information'>
-                  <Plus className='size-4' /> Create new product
+                  <Plus className='size-4' /> Create new agent
                 </Link>
               </Button>
             </>

@@ -31,10 +31,14 @@ const note = (kind, msg) => {
 };
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 const page = await ctx.newPage();
 
-page.on('pageerror', e => note('FAIL', `pageerror: ${e.message?.slice(0, 200)}`));
+page.on('pageerror', e =>
+  note('FAIL', `pageerror: ${e.message?.slice(0, 200)}`)
+);
 page.on('console', msg => {
   const text = msg.text();
   if (
@@ -50,10 +54,7 @@ page.on('console', msg => {
 const netLog = [];
 page.on('request', req => {
   const url = req.url();
-  if (
-    /\/api\/rexer\/canvas-templates/.test(url) &&
-    req.method() === 'PATCH'
-  ) {
+  if (/\/api\/rexer\/canvas-templates/.test(url) && req.method() === 'PATCH') {
     const body = req.postData() ?? '';
     log(`[REQ PATCH body] ${body.slice(0, 400)}`);
   }
@@ -121,7 +122,10 @@ await page.screenshot({ path: join(OUT, 'cv-01-list.png') });
 
 // ── 3. Create canvas ────────────────────────────────────────────────────
 log('3) create canvas "Hero Test" 800x500');
-await page.getByRole('button', { name: /New canvas/ }).first().click();
+await page
+  .getByRole('button', { name: /New canvas/ })
+  .first()
+  .click();
 await page.waitForSelector('[role=dialog]');
 await page.locator('#ct-name').fill('Hero Test');
 await page.locator('#ct-w').fill('800');
@@ -136,19 +140,18 @@ const canvasId = editorUrl.match(/canvas-templates\/([a-f0-9-]+)/)?.[1];
 log(`   editor opened, id=${canvasId}`);
 
 note(
-  await page
+  (await page
     .getByText(/Hero Test/)
     .first()
     .isVisible()
-    .catch(() => false)
+    .catch(() => false))
     ? 'PASS'
     : 'FAIL',
   'editor header shows "Hero Test"'
 );
 
 // HTML <canvas> element should be mounted
-const canvasMounted =
-  (await page.locator('canvas').count()) > 0;
+const canvasMounted = (await page.locator('canvas').count()) > 0;
 note(canvasMounted ? 'PASS' : 'FAIL', '<canvas> element mounted in DOM');
 await page.screenshot({ path: join(OUT, 'cv-02-empty-editor.png') });
 
@@ -187,7 +190,10 @@ await page.screenshot({ path: join(OUT, 'cv-03-objects.png') });
 
 // ── 5. Save canvas ──────────────────────────────────────────────────────
 log('5) click Save');
-await page.getByRole('button', { name: /Save \*/ }).first().click();
+await page
+  .getByRole('button', { name: /Save \*/ })
+  .first()
+  .click();
 await page.waitForTimeout(2500);
 
 const savedBtn = await page

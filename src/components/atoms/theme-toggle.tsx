@@ -23,7 +23,7 @@ function ThemeToggle({ className, ...props }: ThemeToggleProps) {
       role='radiogroup'
       aria-label='Theme'
       className={cn(
-        'rounded-pill inline-flex items-center gap-1 bg-neutral-100 p-1',
+        'rounded-pill inline-flex items-center gap-1 bg-neutral-100 p-1 dark:bg-neutral-800',
         className
       )}
       {...props}
@@ -36,8 +36,8 @@ function ThemeToggle({ className, ...props }: ThemeToggleProps) {
         className={cn(
           'rounded-pill inline-flex h-7 cursor-pointer items-center gap-1.5 px-3 text-xs font-medium transition-colors',
           current === 'light'
-            ? 'bg-background text-neutral-900 shadow-sm'
-            : 'text-neutral-500 hover:text-neutral-700'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
         )}
       >
         <Sun className='size-3.5' />
@@ -51,8 +51,8 @@ function ThemeToggle({ className, ...props }: ThemeToggleProps) {
         className={cn(
           'rounded-pill inline-flex h-7 cursor-pointer items-center gap-1.5 px-3 text-xs font-medium transition-colors',
           current === 'dark'
-            ? 'bg-background text-neutral-900 shadow-sm'
-            : 'text-neutral-500 hover:text-neutral-700'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200'
         )}
       >
         <Moon className='size-3.5' />

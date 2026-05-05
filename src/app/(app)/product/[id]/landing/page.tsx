@@ -96,11 +96,12 @@ export default function LandingListPage({ params }: PageProps) {
   const { id } = use(params);
   const basePath = `/product/${id}`;
 
-  // BE chưa hỗ trợ filter `?product_id=`. Tạm thời list toàn bộ projects của user.
+  // BE chưa hỗ trợ filter `?product_id=`. Tạm list rồi lọc theo
+  // `product_id` ở client để tránh hiển thị landings của product khác.
   // TODO: thay bằng `rexerApi.projects.list({ product_id: id })` khi BE bổ sung.
   const projects = useRexer(() => rexerApi.projects.list(), []);
 
-  const items = projects.data?.items ?? [];
+  const items = (projects.data?.items ?? []).filter(p => p.product_id === id);
 
   return (
     <ProductWorkspaceLayout
@@ -110,7 +111,7 @@ export default function LandingListPage({ params }: PageProps) {
       section='landing'
       actions={
         <Button variant='pill' size='sm' asChild>
-          <Link href={`/ai-agents/start?product=${id}`}>
+          <Link href={`/ai-agents/${id}/template`}>
             <Plus className='size-3.5' /> New landing
           </Link>
         </Button>
@@ -135,11 +136,11 @@ export default function LandingListPage({ params }: PageProps) {
           <EmptyState
             icon={<Rocket className='size-10' />}
             title='No landings yet'
-            description='Use the AI Agents wizard or pick a template to create your first landing for this product.'
+            description='Pick a template to create the first landing for this product.'
             actions={
               <Button variant='pill' asChild>
-                <Link href={`/ai-agents/start?product=${id}`}>
-                  <Plus className='size-3.5' /> New landing
+                <Link href={`/ai-agents/${id}/template`}>
+                  <Plus className='size-3.5' /> Pick a template
                 </Link>
               </Button>
             }

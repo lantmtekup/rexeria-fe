@@ -21,9 +21,58 @@ import {
 import { Label } from '@/components/atoms/label';
 import { EmptyState } from '@/components/molecules/EmptyState';
 import { SectionHeader } from '@/components/molecules/SectionHeader';
+import { TemplateCategoryTabs } from '@/components/organisms/TemplateCategoryTabs';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type { CanvasTemplate } from '@/services/rexer/types';
+
+const CATEGORY_KEYS = [
+  'all',
+  'my',
+  'fashion',
+  'fnb',
+  'course',
+  'tech',
+  'health',
+  'book',
+  'interior',
+  'other',
+] as const;
+
+type CategoryKey = (typeof CATEGORY_KEYS)[number];
+
+const CATEGORY_LABELS: Record<CategoryKey, string> = {
+  all: 'All',
+  my: 'My Template',
+  fashion: 'Fashion',
+  fnb: 'F&B',
+  course: 'Course',
+  tech: 'Technology',
+  health: 'Health',
+  book: 'Book',
+  interior: 'Interior',
+  other: 'Other',
+};
+
+// Deterministic bucket derived from id until BE returns `category_key`
+// per canvas template.
+function deriveCategory(id: string): Exclude<CategoryKey, 'all' | 'my'> {
+  const keys: Exclude<CategoryKey, 'all' | 'my'>[] = [
+    'fashion',
+    'fnb',
+    'course',
+    'tech',
+    'health',
+    'book',
+    'interior',
+    'other',
+  ];
+  let h = 0;
+  for (let i = 0; i < id.length; i++) {
+    h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  }
+  return keys[h % keys.length]!;
+}
 
 function rxErrorMessage(err: unknown): string {
   if (err instanceof RxApiError) return err.message || err.code;
@@ -69,10 +118,14 @@ function CreateDialog({
         name: name.trim(),
         width,
         height,
+        // BE oneof validator accepts only 'fabric' / '5.3.0'. Our
+        // block_editor schema lives inside canvas_data — engine is just
+        // a capability tag (see GAP / be-issues-master.md).
         engine: 'fabric',
-        engine_version: 'fabric@7.3.1',
-        // Empty Fabric scene — editor populates on first save.
-        canvas_data: { version: '7.3.1', objects: [] },
+        engine_version: '5.3.0',
+        // Empty block-editor canvas — editor seeds blocks on first open.
+        canvas_data: { schema: 'block_editor', version: 1, blocks: [] },
+        is_template: false,
       });
       toast.success(`"${created.name}" created`);
       onCreated(created);
@@ -164,6 +217,8 @@ export function CanvasTemplateList() {
   const [items, setItems] = React.useState<CanvasTemplate[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState('');
+  const [activeCategory, setActiveCategory] =
+    React.useState<CategoryKey>('all');
   const [createOpen, setCreateOpen] = React.useState(false);
 
   const reload = React.useCallback(async () => {
@@ -185,6 +240,37 @@ export function CanvasTemplateList() {
   React.useEffect(() => {
     reload();
   }, [reload]);
+
+  const categorized = React.useMemo(
+    () =>
+      items.map(t => ({
+        ...t,
+        category: deriveCategory(t.id),
+        // Until BE exposes ownership: treat user-drafts (is_template === false)
+        // as "mine". Refine when /me + ownership is wired.
+        isMine: !t.is_template,
+      })),
+    [items]
+  );
+
+  const filteredItems = React.useMemo(() => {
+    if (activeCategory === 'all') return categorized;
+    if (activeCategory === 'my') return categorized.filter(t => t.isMine);
+    return categorized.filter(t => t.category === activeCategory);
+  }, [categorized, activeCategory]);
+
+  const categoryTabs = React.useMemo(
+    () =>
+      CATEGORY_KEYS.map(key => {
+        const label = CATEGORY_LABELS[key];
+        let count: number;
+        if (key === 'all') count = categorized.length;
+        else if (key === 'my') count = categorized.filter(t => t.isMine).length;
+        else count = categorized.filter(t => t.category === key).length;
+        return { key, label, count };
+      }),
+    [categorized]
+  );
 
   const handleDelete = async (t: CanvasTemplate) => {
     if (
@@ -213,31 +299,45 @@ export function CanvasTemplateList() {
         }
       />
 
-      <div className='relative mb-4 max-w-sm'>
-        <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
-        <Input
-          placeholder='Search canvas templates…'
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className='h-9 pl-9'
+      <div className='mb-4 flex flex-col gap-3'>
+        <TemplateCategoryTabs
+          categories={categoryTabs}
+          activeKey={activeCategory}
+          onChange={key => setActiveCategory(key as CategoryKey)}
         />
+        <div className='relative max-w-sm'>
+          <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
+          <Input
+            placeholder='Search canvas templates…'
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className='h-9 pl-9'
+          />
+        </div>
       </div>
 
       {loading ? (
         <div className='text-muted-foreground flex justify-center py-16'>
           <Spinner size={20} />
         </div>
-      ) : items.length === 0 ? (
+      ) : filteredItems.length === 0 ? (
         <EmptyState
           icon={<Layers className='size-10' />}
-          title={search ? 'No matches' : 'No canvas templates yet'}
+          title={
+            search || activeCategory !== 'all'
+              ? 'No matches'
+              : 'No canvas templates yet'
+          }
           description={
             search
               ? 'Try a different search query.'
-              : 'Create your first canvas to start designing reusable layouts.'
+              : activeCategory !== 'all'
+                ? `No canvas templates in category "${CATEGORY_LABELS[activeCategory]}".`
+                : 'Create your first canvas to start designing reusable layouts.'
           }
           actions={
-            !search && (
+            !search &&
+            activeCategory === 'all' && (
               <Button variant='pill' onClick={() => setCreateOpen(true)}>
                 <Plus className='size-3.5' /> New canvas
               </Button>
@@ -246,7 +346,7 @@ export function CanvasTemplateList() {
         />
       ) : (
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-          {items.map(t => (
+          {filteredItems.map(t => (
             <article
               key={t.id}
               className='border-border bg-background hover:border-primary group flex flex-col overflow-hidden rounded-xl border transition-colors'

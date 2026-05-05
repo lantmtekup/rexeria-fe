@@ -1,6 +1,6 @@
 # BE Issues — Master Log
 
-**Owner**: FE team · **Audience**: BE team · **Last updated**: 2026-04-27
+**Owner**: FE team · **Audience**: BE team · **Last updated**: 2026-05-02
 
 Tổng hợp toàn bộ vấn đề BE cần fix, gom từ 3 nguồn:
 - `rexerai-mvp-spec.md` section 11 (API issues phát hiện qua wire FE)
@@ -18,8 +18,8 @@ Mỗi issue có **ID duy nhất**, **repro**, **expected**, **FE workaround hi�
 
 | Severity | Định nghĩa | Open | Closed | Partial |
 |---|---|---|---|---|
-| 🔴 **Critical** | Block MVP flow / security hole | 0 | **7** | 1 |
-| 🟡 **Important** | Cải thiện UX, không block | 8 | **3** | 3 |
+| 🔴 **Critical** | Block MVP flow / security hole | 2 | **7** | 1 |
+| 🟡 **Important** | Cải thiện UX, không block | 12 | **3** | 3 |
 | 🟢 **Nice-to-have** | Phase 2, không gấp | 9 | 0 | 0 |
 
 > **2026-04-27 update**: BE team ship update lớn — đa số bug critical đã đóng. Chi tiết status mỗi issue ghi inline + section 5 change log.
@@ -28,7 +28,7 @@ Mỗi issue có **ID duy nhất**, **repro**, **expected**, **FE workaround hi�
 
 ✅ **Closed (10)**: BUG-01, BUG-02, BUG-03, BUG-04, BUG-05, BUG-06, BUG-07, GAP-04 (Template thumbnail), GAP-08 (Project embed client+template), DX-01 (new resources)
 🟡 **Partial (4)**: GAP-01, GAP-02, DX-01 (old resources), GAP-13
-⏳ **Open (17)**: GAP-03, GAP-05, GAP-06, GAP-07, GAP-09–16, BUG-08, BUG-09, BUG-10, DX-02, DX-03, DX-04, DX-05
+⏳ **Open (22)**: GAP-03, GAP-05, GAP-06, GAP-07, GAP-09–16, GAP-17, GAP-18, GAP-19, BUG-08, BUG-09, BUG-10, BUG-11, **BUG-12** _(canvas save không persist edits — see `be-canvas-save-persistence-issue.md`)_, DX-02, DX-03, DX-04, DX-05 _(GAP-20 endpoint shipped — moved to BUG-11)_
 
 🆕 **2 resource mới ship theo spec**: `canvas_templates` (8 endpoints) + `collections + records` (10 endpoints) — verified Playwright + curl pass.
 
@@ -253,6 +253,95 @@ Mỗi issue có **ID duy nhất**, **repro**, **expected**, **FE workaround hi�
 
 ---
 
+### BUG-11 · `POST /v1/ai/canvas-templates/{id}/apply-product` panic 500 (plain text) cho canvas có blocks
+- **Endpoint**: `POST /v1/ai/canvas-templates/{id}/apply-product` (mới ship 2026-05-02 sau spec GAP-20)
+- **Trigger**: gọi với canvas_template có blocks > 0 (canvas thật, không phải empty).
+- **Repro** (Playwright auth):
+  ```bash
+  POST /api/rexer/ai/canvas-templates/c7fa8c08-dfb7-4d7b-a1c7-315c31b8dd76/apply-product
+  Body: { "product_id": "f67566bf-ab8f-4fde-a74c-4b6d3aef8d15", "lang": "vi" }
+
+  → HTTP 500
+  → Body: "Internal Server Error"  (plain text, KHÔNG phải JSON envelope)
+  ```
+- **Verified với 5 canvas khác nhau**:
+  - 4 canvas có blocks → tất cả `500 "Internal Server Error"` (plain text)
+  - 1 canvas rỗng (`99a50cb7`) → `422 ERR_EMPTY_CANVAS` (JSON đúng) ✅
+  - Khẳng định: bug chỉ xảy ra trên path apply thật, error path khác hoạt động OK.
+- **Phát hiện**: 500 trả plain text "Internal Server Error" thay vì JSON `{code, message, request_id}` envelope chuẩn → đây là **Go panic** chưa được catch bởi error middleware. Nhìn từ FE thì path validation (404, 409, 422) đều trả JSON đúng — chỉ phần xử lý LLM/canvas crash.
+- **Suspect** (BE phải xác định):
+  1. Crash khi parse `canvas_data` (schema khác `block_editor`?)
+  2. Crash khi gọi LLM provider (timeout / retry / nil pointer)
+  3. Crash khi ghép `product.media[]` vào blocks (nil reference khi product không có media)
+  4. Crash khi serialize response (JSONMap deep clone)
+- **FE workaround hiện tại** (`src/components/modules/CanvasTemplate/BlockEditor.tsx` `handleApplyProduct`):
+  - Try BE call → catch → fallback `applyProductToBlocks(blocks, product)` (deterministic mapping client-side, không AI, không match ảnh)
+  - Toast: "AI thất bại (...) — đã fill bằng mapping mặc định"
+  - User vẫn dùng được flow, nhưng kết quả thô (chưa AI rewrite, chưa match ảnh từ product.media)
+- **Severity**: 🔴 **Critical** — endpoint mới ship nhưng broken cho mọi case có ý nghĩa thực tế.
+
+---
+
+### GAP-20 · Thiếu endpoint `POST /v1/ai/canvas-templates/{id}/apply-product` — flow "pick product → AI fill canvas" chưa có (✅ ENDPOINT SHIPPED 2026-05-02 — see BUG-11 cho lỗi runtime)
+- **Endpoint cần thêm**: `POST /v1/ai/canvas-templates/{id}/apply-product`
+- **Spec đầy đủ**: `docs/be-ai-canvas-apply-product-spec.md` (mới tạo 2026-05-02 — 13 sections, request/response, per-block rules, image matching algorithm, AC, FE integration code)
+- **Vấn đề**: Hiện FE flow "pick product để áp lên canvas" (xem `BlockEditor.handleApplyProduct`) chỉ dùng deterministic mapping client-side (`applyProductToBlocks`). Không AI, không match ảnh từ product.media, kết quả thô. 7 endpoint AI hiện có không cái nào fit:
+  - `block-content`: chỉ 1 block, không nhận product_id, không match ảnh
+  - `landing/draft`: cho landing template legacy schema, không phải canvas
+  - `media/suggest`: chỉ suggest media_ids[], không sinh text
+- **Severity**: 🟡 Important — UX flow chính bị tệ, ảnh hưởng giá trị "AI-powered editor".
+
+---
+
+### GAP-19 · `CanvasTemplate.thumbnail_url` không auto-gen khi POST → list `/template` đa số chỉ thấy icon placeholder
+- **Endpoint**: `POST /v1/canvas-templates` (cả create + duplicate flow đều dùng)
+- **Repro**: Tạo bất kỳ canvas template nào qua FE (create dialog hoặc duplicate flow) → `GET /v1/canvas-templates?limit=10` trả về `thumbnail_url: null` cho tất cả. Chỉ DB seeds (Hero Banner, Wonka, Globex) có URL `https://picsum.photos/seed/...`.
+- **Probe FE actual data** (8 templates):
+  - 5 user-created (`is_template: false`, post-2026-04-28): `thumbnail_url: null`
+  - 3 DB seeds (post-2026-04-28): có thumbnail picsum
+- **Vấn đề**: list `/template` của user toàn icon Layers placeholder xám, không phân biệt được template trực quan. Pattern giống **GAP-04** (`Template.thumbnail_url`) đã đóng — cần port.
+- **FE workaround hiện tại**: `CanvasTemplateList.tsx:258-269` fallback `<Layers />` icon khi `thumbnail_url` rỗng. UI không sai, chỉ trống.
+- **Fix BE đề xuất**:
+  1. Khi `POST /v1/canvas-templates` thành công, BE async generate thumbnail từ `canvas_data` (render headless + screenshot 640×320 hoặc 16:9 theo width/height) → upload S3 → set `thumbnail_url`.
+  2. Hoặc đơn giản: BE accept `thumbnail_url` trong `CreateCanvasTemplateRequest` (FE đã có `MediaAsset` upload flow — sau khi BE thêm `MediaAsset.url` per GAP-17, FE có thể tự upload + bind).
+  3. Khi `PATCH update canvas_data` (mỗi lần save), regenerate thumbnail nếu thay đổi đáng kể (`canvas_etag` đổi). Tránh regen mỗi keystroke — chỉ regen khi save commit.
+- **Severity**: 🟡 Important — UX list bị xấu, user khó tìm template, nhưng không break flow.
+
+---
+
+### GAP-18 · `GET /canvas-templates/{id}/canvas` chậm 9.7s ngay cả khi 401 — auth check đặt sau DB/storage lookup
+- **Endpoint**: `GET /v1/canvas-templates/{id}/canvas`
+- **Repro** (không cần auth):
+  ```bash
+  curl -s -o /dev/null -w "%{http_code} · time=%{time_total}s\n" --max-time 30 \
+    'http://75.119.128.96:9090/v1/canvas-templates/e3e3e3e3-0000-0000-0000-000000000003/canvas'
+  # → 401 · time=9.70s
+  ```
+- **So sánh** các endpoint khác cùng resource (probe cùng condition, cùng template id):
+  - `GET /canvas-templates` (list) → 401 · 0.50s
+  - `GET /canvas-templates/{id}` (meta) → 401 · 0.82s
+  - `GET /canvas-templates/{id}/canvas` → 401 · **9.70s** ❌
+- **Vấn đề**: BE đang load full canvas_data (DB query / S3 fetch) TRƯỚC khi chạy auth middleware → 401 vẫn mất ~10s. FE BlockEditor timeout 5s nên user thấy "REXER timeout (5000ms). Đang dùng dữ liệu mẫu — lưu sẽ không hoạt động." mặc dù họ đã login.
+- **FE workaround hiện tại**: Bump `LOAD_TIMEOUT_MS` từ 5000 → 15000 ms ở `src/components/modules/CanvasTemplate/BlockEditor.tsx`. Mỗi lần mở canvas editor user phải chờ ~10s trên BE → UX rất chậm.
+- **Fix BE đề xuất**: Đặt auth middleware TRƯỚC handler load canvas. Cho 401 trả về <100ms như list/meta endpoints. Đồng thời rà các endpoint nặng khác xem có cùng pattern không (load → auth thay vì auth → load).
+- **Severity**: 🟡 Important — không break flow nhưng UX rất tệ + tăng load BE cho mọi unauth probe (lãng phí DB/S3 calls).
+
+---
+
+### GAP-17 · `Product.thumbnail_url` (không có thì card product không có ảnh) — cùng pattern GAP-04 đã đóng cho Template
+- **Endpoint**: `GET /v1/products` (list) + `GET /v1/products/{id}` (detail)
+- **Vấn đề**:
+  1. `ProductListResponse.items: Product[]` không có field thumbnail nào (`Product` shape: `id, name, slug, sku, category_id, client_id, description, sizes, colors, ingredients, certifications, features, status, created_at, updated_at, created_by`).
+  2. `ProductResponse` (detail) có embedded `media: ProductMediaBinding[]` nhưng `ProductMediaBinding` chỉ có `media_id` — phải N+1 gọi `GET /v1/media/{id}` để lấy `MediaAsset`, mà `MediaAsset` cũng **không có public URL** (chỉ `storage_key`).
+  3. Trên `/product` list, FE bỏ trống image vì không có cách nào lấy URL trong 1 round-trip.
+- **Hiện tại FE workaround**: `<ProductCard>` fallback render tên product chữ to xám trên ô vuông neutral (xem `src/components/molecules/ProductCard.tsx:96` + `src/app/(app)/product/page.tsx:32-41`). Tất cả product card trông giống nhau, không phân biệt được visual.
+- **Fix BE đề xuất** (giống GAP-04 đã closed):
+  1. Thêm `thumbnail_url: string` (hoặc `thumbnail_storage_key`) vào `Product` schema, auto-generate từ first bound `media_id` có `media_type === 'image'`. CDN URL kiểu `https://cdn.rexer.ai/products/{id}.png`.
+  2. Hoặc tối thiểu: thêm public URL field vào `MediaAsset` (`url: string` hoặc `public_url`) để FE resolve được — sẽ giải quyết luôn cho canvas template ImagePicker (xem `src/components/modules/CanvasTemplate/block-editor/ImagePicker.tsx` đang phải dùng `presigned_url.split('?')[0]` workaround).
+- **Severity**: 🟡 Important — block UX product list, ảnh hưởng cả Home page khi list product.
+
+---
+
 ## 3. 🟢 Nice-to-have (9 issues — Phase 2)
 
 ### GAP-09 · `Template.category` / `tags`
@@ -330,6 +419,11 @@ GAP-01, GAP-08 — list response trả UUID khiến FE phải gọi thêm 2-3 en
 | 2026-04-26 | + GAP-04 → GAP-16 từ Home page analysis | FE |
 | 2026-04-26 | Consolidated thành master log này | FE |
 | **2026-04-27** | **BE ship update lớn**: closed 7 critical bugs (BUG-01→BUG-07) + 2 gaps (GAP-04, GAP-08). Ship 2 resource mới: `canvas_templates` (per `be-canvas-templates-spec.md`) và `collections + records` (per `be-collections-spec.md`). 304 ETag handshake hoạt động đúng spec. | BE → verified by FE curl |
+| 2026-05-02 | + GAP-17 (`Product.thumbnail_url`) — phát hiện qua `/product` list không có ảnh. Cùng pattern GAP-04 đã đóng cho Template. | FE |
+| 2026-05-02 | + GAP-18 (`/canvas-templates/{id}/canvas` chậm 9.7s) — auth check đặt sau DB load. Phát hiện qua REXER timeout (5000ms) ở canvas editor. | FE |
+| 2026-05-02 | + GAP-19 (`CanvasTemplate.thumbnail_url` không auto-gen) — list `/template` đa số toàn icon placeholder. Cùng pattern GAP-04 đã đóng cho Template. | FE |
+| 2026-05-02 | + GAP-20 (endpoint `POST /v1/ai/canvas-templates/{id}/apply-product`) — flow chính "pick product → AI fill canvas" chưa có. Spec đầy đủ tại `docs/be-ai-canvas-apply-product-spec.md`. | FE |
+| 2026-05-02 | BE ship endpoint `apply-product` theo spec, FE wire xong (types + endpoint wrapper + handler). Phát hiện BUG-11: 500 plain-text panic cho canvas có blocks. FE fallback deterministic mapping → user vẫn dùng được, chờ BE fix. | FE→BE |
 
 ---
 

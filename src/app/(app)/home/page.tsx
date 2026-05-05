@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import { MetricCard } from '@/components/molecules/MetricCard';
 import { ProductCard } from '@/components/molecules/ProductCard';
 import { SectionHeader } from '@/components/molecules/SectionHeader';
@@ -69,25 +71,40 @@ function Dashboard() {
 
 export default function HomePage() {
   const user = useAppSelector(s => s.auth.user);
-  const templates = useRexer(() => rexerApi.templates.list(), []);
-  const projects = useRexer(() => rexerApi.projects.list(), []);
+  // Cards on Home open the canvas editor at /canvas-templates/:id, so we
+  // list canvas templates here (not /templates — a different entity with
+  // no canvas editor route).
+  const templates = useRexer(
+    () => rexerApi.canvasTemplates.list({ is_active: true, limit: 6 }),
+    []
+  );
+  // Section "Product" — dùng resource Product thật (BE thêm `thumbnail_url`
+  // từ 2026-05). Trước đây vô tình lấy từ projects.list nên id click vào
+  // dẫn `/product/{project_id}/information` → 404 (project_id không phải
+  // product_id).
+  const products = useRexer(() => rexerApi.products.list({ limit: 6 }), []);
 
   const templateItems = templates.data?.items?.length
     ? templates.data.items.slice(0, 6).map(t => ({
         id: t.id,
         name: t.name,
-        author: t.code,
-        imageBg: '#f5f3ee',
+        author: `${t.width}×${t.height}`,
+        imageSrc: t.thumbnail_url,
+        imageBg: t.thumbnail_url ? undefined : '#f5f3ee',
       }))
     : MOCK_TEMPLATES;
 
-  const productItems = projects.data?.items?.length
-    ? projects.data.items.slice(0, 6).map(p => ({
+  const productItems = products.data?.items?.length
+    ? products.data.items.slice(0, 6).map(p => ({
         id: p.id,
         name: p.name,
-        price: '—',
-        colors: [],
-        sizes: [],
+        // Product schema không có giá — hiển thị status (draft/active/archived).
+        price: p.status ?? 'draft',
+        priceLabel: 'Status',
+        imageSrc: p.thumbnail_url,
+        imageBg: p.thumbnail_url ? undefined : '#f5f3ee',
+        colors: p.colors ?? [],
+        sizes: p.sizes ?? [],
       }))
     : MOCK_PRODUCTS;
 
@@ -96,9 +113,9 @@ export default function HomePage() {
     : 'Welcome to REXER';
 
   return (
-    <div className='flex h-full flex-1 flex-col overflow-hidden'>
-      <div className='mx-auto w-full max-w-[1400px] px-6 pt-4'>
-        <div className='mb-4 flex items-baseline justify-between'>
+    <div className='flex h-full flex-1 flex-col md:overflow-hidden'>
+      <div className='mx-auto w-full max-w-[1400px] px-4 pt-4 md:px-6'>
+        <div className='mb-4 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between'>
           <h1 className='text-foreground text-xl font-semibold tracking-[-0.02em]'>
             {greeting}
           </h1>
@@ -108,8 +125,8 @@ export default function HomePage() {
         </div>
         <Dashboard />
       </div>
-      <div className='divide-border flex min-h-0 flex-1 divide-x overflow-hidden'>
-        <section className='flex min-w-0 flex-1 flex-col overflow-y-auto px-6'>
+      <div className='md:divide-border flex min-h-0 flex-1 flex-col md:flex-row md:divide-x md:overflow-hidden'>
+        <section className='flex min-w-0 flex-1 flex-col px-4 md:overflow-y-auto md:px-6'>
           <SectionHeader
             title='Template'
             showAllHref='/template'
@@ -124,38 +141,66 @@ export default function HomePage() {
                   />
                 ))
               : templateItems.map(t => (
-                  <TemplateCard
+                  <Link
                     key={t.id}
-                    name={t.name}
-                    author={t.author}
-                    imageBg={t.imageBg}
-                  />
+                    href={`/canvas-templates/${t.id}`}
+                    className='block'
+                  >
+                    <TemplateCard
+                      name={t.name}
+                      author={t.author}
+                      imageSrc={'imageSrc' in t ? t.imageSrc : undefined}
+                      imageBg={t.imageBg}
+                    />
+                  </Link>
                 ))}
           </div>
         </section>
-        <section className='flex min-w-0 flex-1 flex-col overflow-y-auto px-6'>
+        <section className='flex min-w-0 flex-1 flex-col px-4 md:overflow-y-auto md:px-6'>
           <SectionHeader
             title='Product'
             showAllHref='/product'
             showAllLabel='Show All'
           />
           <div className='flex flex-col gap-4 pb-10'>
-            {projects.loading
+            {products.loading
               ? Array.from({ length: 2 }).map((_, i) => (
                   <div
                     key={i}
                     className='bg-muted h-48 animate-pulse rounded-xl'
                   />
                 ))
-              : productItems.map(p => (
-                  <ProductCard
-                    key={p.id}
-                    name={p.name}
-                    price={p.price}
-                    colors={p.colors}
-                    sizes={p.sizes}
-                  />
-                ))}
+              : productItems.map(p => {
+                  const imageSrc =
+                    'imageSrc' in p
+                      ? (p.imageSrc as string | undefined)
+                      : undefined;
+                  const imageBg =
+                    'imageBg' in p
+                      ? (p.imageBg as string | undefined)
+                      : undefined;
+                  const priceLabel =
+                    'priceLabel' in p
+                      ? (p.priceLabel as string | undefined)
+                      : undefined;
+                  return (
+                    <Link
+                      key={p.id}
+                      href={`/product/${p.id}/information`}
+                      className='block'
+                    >
+                      <ProductCard
+                        name={p.name}
+                        price={p.price}
+                        imageSrc={imageSrc}
+                        imageBg={imageBg}
+                        labels={priceLabel ? { price: priceLabel } : undefined}
+                        colors={p.colors}
+                        sizes={p.sizes}
+                      />
+                    </Link>
+                  );
+                })}
           </div>
         </section>
       </div>

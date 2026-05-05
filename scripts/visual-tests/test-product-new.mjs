@@ -29,10 +29,13 @@ const token = await new SignJWT({ sub: 'dev-capture', role: 'admin' })
   .setExpirationTime('2h')
   .sign(new TextEncoder().encode(jwtSecret));
 
-const log = (...a) => console.log(`[${new Date().toISOString().slice(11, 19)}]`, ...a);
+const log = (...a) =>
+  console.log(`[${new Date().toISOString().slice(11, 19)}]`, ...a);
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 await ctx.addCookies([
   { name: '_access_token', value: token, domain: 'localhost', path: '/' },
 ]);
@@ -47,8 +50,12 @@ page.on('response', async res => {
   const url = res.url();
   if (url.includes('/api/products')) {
     let body = '';
-    try { body = await res.text(); } catch {}
-    log(`[network] ${res.request().method()} ${url} → ${res.status()} ${body.slice(0, 200)}`);
+    try {
+      body = await res.text();
+    } catch {}
+    log(
+      `[network] ${res.request().method()} ${url} → ${res.status()} ${body.slice(0, 200)}`
+    );
   }
 });
 
@@ -72,7 +79,9 @@ await page.getByRole('button', { name: 'Fashion', exact: true }).click();
 
 // 3) Description
 log('→ type Description');
-await page.locator('input[placeholder="Describe something"]').fill('A nice shoe');
+await page
+  .locator('input[placeholder="Describe something"]')
+  .fill('A nice shoe');
 
 // 4) SKU
 log('→ type SKU');

@@ -30,6 +30,7 @@ import type {
   CampaignMetrics,
   CampaignObjective,
 } from '@/services/rexer/types';
+import { packNotes, unpackNotes, type WizardState } from '@/lib/wizardStore';
 
 interface PageProps {
   params: Promise<{ id: string; mid: string }>;
@@ -223,6 +224,11 @@ export default function CampaignDetailPage({ params }: PageProps) {
     if (!draft) return;
     setSaving(true);
     try {
+      // Re-pack wizard metadata with the current user notes so the
+      // `@@rexer-wizard:` header isn't lost on save.
+      const { meta, userNotes: currentUserNotes } = unpackNotes(
+        draft.notes ?? undefined
+      );
       const updated = await rexerApi.campaigns.update(mid, {
         name: draft.name,
         objective: draft.objective as CampaignObjective | undefined,
@@ -230,7 +236,9 @@ export default function CampaignDetailPage({ params }: PageProps) {
         kpis: draft.kpis,
         budget_amount: draft.budget_amount,
         budget_currency: draft.budget_currency,
-        notes: draft.notes,
+        notes: meta.template_id
+          ? packNotes(meta, currentUserNotes)
+          : (draft.notes ?? undefined),
         landing_project_id: draft.landing_project_id,
       });
       setCampaign(updated);
@@ -256,6 +264,12 @@ export default function CampaignDetailPage({ params }: PageProps) {
   };
 
   const view = editing ? draft : campaign;
+  const parsed = React.useMemo(
+    () => unpackNotes(view?.notes ?? undefined),
+    [view?.notes]
+  );
+  const wizardMeta: WizardState = parsed.meta;
+  const userNotes = parsed.userNotes;
 
   return (
     <ProductWorkspaceLayout
@@ -512,6 +526,46 @@ export default function CampaignDetailPage({ params }: PageProps) {
                 />
               </div>
 
+              {wizardMeta.template_id && (
+                <div className='flex flex-col gap-2 sm:col-span-2'>
+                  <label className='text-muted-foreground text-xs font-semibold'>
+                    Linked landing / template
+                  </label>
+                  <div className='border-border bg-muted/30 flex items-start justify-between gap-3 rounded-xl border p-3'>
+                    <div className='min-w-0 flex-1'>
+                      <p className='text-foreground truncate text-sm font-medium'>
+                        {wizardMeta.template_name ??
+                          `Template ${wizardMeta.template_id.slice(0, 8)}`}
+                      </p>
+                      <p className='text-muted-foreground mt-0.5 text-xs'>
+                        Saved from wizard ·{' '}
+                        {wizardMeta.template_kind === 'canvas'
+                          ? 'Canvas template'
+                          : 'Landing template'}
+                        {wizardMeta.template_goal
+                          ? ` · goal: ${wizardMeta.template_goal}`
+                          : ''}
+                      </p>
+                    </div>
+                    {wizardMeta.template_kind === 'canvas' && (
+                      <Button asChild variant='outline' size='sm'>
+                        <Link
+                          href={`/canvas-templates/${wizardMeta.template_id}?apply_product=${id}`}
+                        >
+                          <ExternalLink className='size-3.5' />
+                          Mở editor
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+                  {wizardMeta.marketing_brief && (
+                    <p className='text-muted-foreground text-xs italic'>
+                      Brief: {wizardMeta.marketing_brief}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className='flex flex-col gap-2 sm:col-span-2'>
                 <label className='text-muted-foreground text-xs font-semibold'>
                   <CalendarRange className='-mt-0.5 mr-1 inline size-3' />
@@ -519,9 +573,18 @@ export default function CampaignDetailPage({ params }: PageProps) {
                 </label>
                 <Textarea
                   rows={3}
-                  value={view.notes ?? ''}
+                  value={userNotes}
                   onChange={e =>
-                    setDraft(d => (d ? { ...d, notes: e.target.value } : d))
+                    setDraft(d =>
+                      d
+                        ? {
+                            ...d,
+                            notes: wizardMeta.template_id
+                              ? packNotes(wizardMeta, e.target.value)
+                              : e.target.value,
+                          }
+                        : d
+                    )
                   }
                   disabled={!editing}
                 />

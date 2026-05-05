@@ -4,9 +4,6 @@ import type { MarketingInstance } from '@/components/organisms/MarketingSidebar'
 
 export const MARKETINGS: MarketingInstance[] = [
   { id: 'm1', title: 'Marketing 01' },
-  { id: 'm2', title: 'Marketing 02' },
-  { id: 'm3', title: 'Marketing 03' },
-  { id: 'm4', title: 'Marketing 04' },
 ];
 
 export const MOCK_DESCRIPTIONS = {

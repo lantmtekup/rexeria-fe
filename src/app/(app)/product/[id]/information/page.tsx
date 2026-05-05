@@ -55,6 +55,7 @@ export default function ProductInformationPage({ params }: PageProps) {
   );
   const [loading, setLoading] = React.useState(!isNew);
   const [saving, setSaving] = React.useState(false);
+  const [nameError, setNameError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (isNew) return;
@@ -83,9 +84,13 @@ export default function ProductInformationPage({ params }: PageProps) {
 
   const handleSave = async () => {
     if (!value.name.trim()) {
-      toast.error('Product name is required');
+      setNameError('Product name is required');
+      toast.error(
+        'Product name is required — please fill the highlighted field'
+      );
       return;
     }
+    setNameError(null);
     setSaving(true);
     try {
       if (isNew) {
@@ -136,35 +141,47 @@ export default function ProductInformationPage({ params }: PageProps) {
         </>
       }
     >
-      <div className='mx-auto mb-4 flex w-full max-w-[1200px] items-center gap-2 px-6'>
-        <input
-          type='text'
-          value={value.name}
-          onChange={e => setValue(v => ({ ...v, name: e.target.value }))}
-          placeholder='Product Name'
-          disabled={loading}
-          className='bg-muted text-foreground placeholder:text-content-muted flex-1 rounded-lg px-4 py-2 text-sm font-medium outline-none'
-        />
-        <Button
-          variant='pill-light'
-          size='sm'
-          type='button'
-          onClick={() => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.multiple = true;
-            input.click();
-          }}
-        >
-          <Download className='size-3.5' /> Import
-        </Button>
-        <ApiUrlDialog
-          trigger={
-            <Button variant='pill-light' size='sm'>
-              <PaletteIcon className='size-3.5' /> API
-            </Button>
-          }
-        />
+      <div className='mx-auto mb-4 flex w-full max-w-[1200px] flex-col gap-1 px-6'>
+        <div className='flex items-center gap-2'>
+          <input
+            type='text'
+            value={value.name}
+            onChange={e => {
+              setValue(v => ({ ...v, name: e.target.value }));
+              if (nameError) setNameError(null);
+            }}
+            placeholder='Product Name'
+            disabled={loading}
+            aria-invalid={Boolean(nameError)}
+            className={
+              'bg-muted text-foreground placeholder:text-content-muted flex-1 rounded-lg px-4 py-2 text-sm font-medium outline-none ' +
+              (nameError ? 'ring-2 ring-rose-500/60' : '')
+            }
+          />
+          <Button
+            variant='pill-light'
+            size='sm'
+            type='button'
+            onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.multiple = true;
+              input.click();
+            }}
+          >
+            <Download className='size-3.5' /> Import
+          </Button>
+          <ApiUrlDialog
+            trigger={
+              <Button variant='pill-light' size='sm'>
+                <PaletteIcon className='size-3.5' /> API
+              </Button>
+            }
+          />
+        </div>
+        {nameError && (
+          <p className='text-xs font-medium text-rose-500'>{nameError}</p>
+        )}
       </div>
 
       <ProductInformationEditor

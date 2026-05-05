@@ -17,6 +17,11 @@ import type {
   AICampaignPlanResponse,
   CampaignObjective,
 } from '@/services/rexer/types';
+import {
+  clearWizardState,
+  packNotes,
+  readWizardState,
+} from '@/lib/wizardStore';
 
 interface PageProps {
   params: Promise<{ productId: string }>;
@@ -62,6 +67,28 @@ export default function AiCampaignPage({ params }: PageProps) {
   const [plan, setPlan] = React.useState<AICampaignPlanResponse | null>(null);
   const [planning, setPlanning] = React.useState(false);
   const [creating, setCreating] = React.useState(false);
+  // Cache product.client_id so we can scope the campaign to the same client
+  // as the product. Without this BE rejects with ERR_FORBIDDEN
+  // "Product belongs to another client" when the logged-in user (eg admin)
+  // has no client of its own.
+  const [productClientId, setProductClientId] = React.useState<
+    string | null | undefined
+  >(undefined);
+
+  React.useEffect(() => {
+    let alive = true;
+    rexerApi.products
+      .get(productId)
+      .then(res => {
+        if (alive) setProductClientId(res.product.client_id ?? null);
+      })
+      .catch(() => {
+        if (alive) setProductClientId(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [productId]);
 
   const handlePlan = async () => {
     setPlanning(true);
@@ -84,16 +111,29 @@ export default function AiCampaignPage({ params }: PageProps) {
     if (!plan) return;
     setCreating(true);
     try {
+      // Pull wizard picks from sessionStorage so the picked template +
+      // marketing brief travel into campaign.notes. Detail page reads them
+      // back via unpackNotes() so reopening shows linked landing/template.
+      const wizard = readWizardState(productId);
       const created = await rexerApi.campaigns.create({
         name: plan.name,
         product_id: productId,
+        // Scope campaign to the product's client (BE enforces match).
+        // Skip when product has no client (admin-owned).
+        client_id: productClientId ?? undefined,
+        // Persist template binding. BE field expects a Project id but FE
+        // stores template_id directly (no projects.create yet). When
+        // projects.create lands, replace with project_id from `templates ↔
+        // canvas_templates → projects` flow.
+        landing_project_id: wizard.template_id || undefined,
         objective,
         channels: plan.channels,
         kpis: plan.kpis,
         budget_amount: budget ? Number(budget) : undefined,
-        notes: notes.trim() || undefined,
+        notes: packNotes(wizard, notes),
       });
       toast.success(`Campaign "${created.name}" created`);
+      clearWizardState(productId);
       router.push(`/product/${productId}/marketing/${created.id}`);
     } catch (err) {
       toast.error(`Create failed: ${rxErrorMessage(err)}`);

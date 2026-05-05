@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import { SectionHeader } from '@/components/molecules/SectionHeader';
+import { useAuthRole } from '@/hooks/useAuthRole';
 
 interface SettingTile {
   href: string;
@@ -19,6 +20,8 @@ interface SettingTile {
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   available?: boolean;
+  /** When true, only admin/staff see this tile. */
+  internalOnly?: boolean;
 }
 
 const TILES: SettingTile[] = [
@@ -29,39 +32,49 @@ const TILES: SettingTile[] = [
       'Manage client workspaces, invite team members, share landing reports.',
     icon: Building2,
     available: true,
+    internalOnly: true,
   },
   {
     href: '/setting/profile',
     title: 'Profile',
     description: 'Display name, email, password.',
     icon: UserCircle,
+    available: true,
   },
   {
     href: '/setting/theme',
     title: 'Theme',
     description: 'Light / dark mode and brand colors.',
     icon: Palette,
+    available: true,
   },
   {
     href: '/setting/integrations',
     title: 'Integrations',
     description: 'Connect external services — Google Analytics, webhooks.',
     icon: Plug,
+    available: true,
+    internalOnly: true,
   },
   {
     href: '/setting/security',
     title: 'Security',
     description: 'Sessions, two-factor, API keys.',
     icon: ShieldCheck,
+    available: true,
   },
 ];
 
 export default function SettingHubPage() {
+  const { isClientUser } = useAuthRole();
+
+  const visible = TILES.filter(t => !(isClientUser && t.internalOnly));
+
   return (
     <div className='mx-auto w-full max-w-[1100px] px-8 py-6'>
       <SectionHeader title='Settings' />
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-        {TILES.map(t => {
+        {visible.map(t => {
           const Icon = t.icon;
           const tile = (
             <div

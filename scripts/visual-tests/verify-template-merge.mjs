@@ -7,7 +7,8 @@ import { dirname, join } from 'node:path';
 const OUT = join(dirname(fileURLToPath(import.meta.url)), 'out');
 await mkdir(OUT, { recursive: true });
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
-const log = (...a) => console.log(`[${new Date().toISOString().slice(11, 19)}]`, ...a);
+const log = (...a) =>
+  console.log(`[${new Date().toISOString().slice(11, 19)}]`, ...a);
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -43,7 +44,10 @@ await page.screenshot({ path: join(OUT, 'merge-01-template-landing.png') });
 
 // 3) Click Data tab → CollectionList should render
 log('click Data tab');
-await page.getByRole('tab', { name: /Data collections/ }).first().click();
+await page
+  .getByRole('tab', { name: /Data collections/ })
+  .first()
+  .click();
 await page.waitForTimeout(1200);
 const dataHeader = await page
   .getByText(/Collections/)

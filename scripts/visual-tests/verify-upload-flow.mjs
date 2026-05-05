@@ -115,7 +115,9 @@ log('→ projectId =', projectId);
 
 // 3) Pick a product id (for URL only — landing page requires both)
 const products = await page.evaluate(async () => {
-  const r = await fetch('/api/rexer/products?limit=1', { credentials: 'include' });
+  const r = await fetch('/api/rexer/products?limit=1', {
+    credentials: 'include',
+  });
   return r.json();
 });
 const productId =
@@ -127,7 +129,10 @@ const url = `${BASE}/product/${productId}/landing/${projectId}/media`;
 log('→ GOTO', url);
 await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 });
 await page.waitForTimeout(800);
-await page.screenshot({ path: join(OUT, 'upload-01-before.png'), fullPage: false });
+await page.screenshot({
+  path: join(OUT, 'upload-01-before.png'),
+  fullPage: false,
+});
 
 // 5) Capture how many media exist before upload
 const beforeCount = await page
@@ -153,13 +158,10 @@ const startTs = Date.now();
 let lastSeen = '';
 while (Date.now() - startTs < 25000) {
   const completes = events.filter(
-    e =>
-      e.kind === 'response' &&
-      /\/uploads\/complete/.test(e.url ?? '')
+    e => e.kind === 'response' && /\/uploads\/complete/.test(e.url ?? '')
   );
   const binds = events.filter(
-    e =>
-      e.kind === 'response' && /\/media\/bind/.test(e.url ?? '')
+    e => e.kind === 'response' && /\/media\/bind/.test(e.url ?? '')
   );
   const fails = events.filter(
     e =>
@@ -179,7 +181,10 @@ while (Date.now() - startTs < 25000) {
 
 // 8) Wait for any toast to settle
 await page.waitForTimeout(1500);
-await page.screenshot({ path: join(OUT, 'upload-02-after.png'), fullPage: false });
+await page.screenshot({
+  path: join(OUT, 'upload-02-after.png'),
+  fullPage: false,
+});
 
 // 9) Re-fetch GET /projects/{id}/media to confirm BE state
 const mediaAfter = await page.evaluate(async pid => {
@@ -214,9 +219,7 @@ for (const e of events) {
       `[${stepNo}] ${e.at} RES  ${e.method} ${e.url}\n     status=${e.status}\n     body=${e.body?.replace(/\n/g, ' ')}`
     );
   } else if (e.kind === 'requestfailed') {
-    lines.push(
-      `[${stepNo}] ${e.at} FAIL ${e.method} ${e.url}  (${e.error})`
-    );
+    lines.push(`[${stepNo}] ${e.at} FAIL ${e.method} ${e.url}  (${e.error})`);
   } else {
     lines.push(`[${stepNo}] ${e.at} ${e.kind.toUpperCase()} ${e.text}`);
   }
@@ -260,7 +263,9 @@ lines.push(`- complete : ${completeOk ? '✅' : '❌'}`);
 lines.push(`- bind     : ${bindOk ? '✅' : '❌'}`);
 const allOk = initOk && rawOk && completeOk && bindOk;
 lines.push('');
-lines.push(allOk ? 'ALL STEPS OK ✅' : '⚠️  Pipeline incomplete — see events above');
+lines.push(
+  allOk ? 'ALL STEPS OK ✅' : '⚠️  Pipeline incomplete — see events above'
+);
 
 const report = lines.join('\n');
 await writeFile(join(OUT, 'verify-upload-report.md'), report);

@@ -37,9 +37,17 @@ export default function RexerSignInForm() {
     [tVal]
   );
 
+  // Prefill admin credentials in local dev only — `process.env.NODE_ENV` is
+  // statically replaced by Next.js at build time, so this branch gets
+  // dead-code-eliminated in the production bundle (QC bug C-1).
+  const devDefaults =
+    process.env.NODE_ENV !== 'production'
+      ? { email: 'admin@rexer.ai', password: 'Admin1234' }
+      : { email: '', password: '' };
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { email: 'admin@rexer.ai', password: 'Admin1234' },
+    defaultValues: devDefaults,
   });
 
   useEffect(() => {
@@ -55,10 +63,23 @@ export default function RexerSignInForm() {
     ).unwrap();
   });
 
-  const errorMessage =
-    error != null && error !== ''
-      ? (tErrors as (key: string) => string)(error)
-      : null;
+  const errorMessage = useMemo(() => {
+    if (!error) return null;
+    const lookup = tErrors as (key: string) => string;
+    // next-intl returns the namespaced key (e.g. "errors.ERR_FOO") when a key
+    // isn't found. Detect that and fall back to a friendly default rather
+    // than leaking the raw key to the user.
+    const direct = lookup(error);
+    if (direct && !direct.startsWith('errors.')) return direct;
+    // Try without ERR_ prefix (BE may send code like ERR_UNAUTHORIZED while
+    // i18n catalog uses UNAUTHORIZED).
+    const stripped = error.replace(/^ERR_/, '');
+    if (stripped !== error) {
+      const alt = lookup(stripped);
+      if (alt && !alt.startsWith('errors.')) return alt;
+    }
+    return lookup('LOGIN_FAILED');
+  }, [error, tErrors]);
 
   return (
     <div className='flex flex-col gap-8'>

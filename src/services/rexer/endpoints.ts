@@ -10,6 +10,11 @@ import type {
   UpdateRecordDTO,
 } from '@/types/dataCollection';
 import type {
+  AIBlockContentRequest,
+  AICanvasApplyProductRequest,
+  AICanvasApplyProductResponse,
+  PublicCanvasResponse,
+  AIBlockContentResponse,
   AICampaignPlanRequest,
   AICampaignPlanResponse,
   AILandingDraftRequest,
@@ -369,6 +374,19 @@ export const rexerApi = {
         method: 'POST',
         body,
       }),
+    blockContent: (body: AIBlockContentRequest) =>
+      rx<AIBlockContentResponse>('/ai/block-content', {
+        method: 'POST',
+        body,
+      }),
+    canvasApplyProduct: (
+      canvasTemplateId: string,
+      body: AICanvasApplyProductRequest
+    ) =>
+      rx<AICanvasApplyProductResponse>(
+        `/ai/canvas-templates/${canvasTemplateId}/apply-product`,
+        { method: 'POST', body }
+      ),
   },
   releases: {
     get: async (id: string): Promise<Release> => {
@@ -505,6 +523,35 @@ export const rexerApi = {
      * Lazy-load full canvas data with ETag handshake.
      * Pass `etag` from a prior response to opt into 304 short-circuit.
      */
+    /**
+     * Public share-link endpoint — no auth, no cookie. Used by `/p/[id]/[token]`
+     * route to render published canvas to anonymous visitors.
+     */
+    getPublicCanvas: async (
+      id: string,
+      shareToken: string,
+      etag?: string
+    ): Promise<PublicCanvasResponse | null> => {
+      try {
+        return await rx<PublicCanvasResponse>(
+          `/public/canvas-templates/${id}/canvas`,
+          {
+            query: { share_token: shareToken },
+            headers: etag ? { 'If-None-Match': etag } : undefined,
+          }
+        );
+      } catch (err) {
+        if (
+          err &&
+          typeof err === 'object' &&
+          'status' in err &&
+          (err as { status: number }).status === 304
+        ) {
+          return null;
+        }
+        throw err;
+      }
+    },
     getCanvas: async (
       id: string,
       etag?: string

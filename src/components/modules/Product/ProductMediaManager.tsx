@@ -10,16 +10,11 @@ import { Spinner } from '@/components/atoms/spinner';
 import { EmptyState } from '@/components/molecules/EmptyState';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
-import type { MediaAsset, ProductMediaBinding } from '@/services/rexer/types';
+import type { ProductMediaWithAsset } from '@/services/rexer/types';
 import { useUploadAndBind } from '@/services/rexer/use-upload-and-bind';
 
 interface ProductMediaManagerProps {
   productId: string;
-}
-
-interface BindingWithAsset {
-  binding: ProductMediaBinding;
-  asset?: MediaAsset;
 }
 
 function rxErrorMessage(err: unknown): string {
@@ -40,16 +35,25 @@ function MediaTile({
   onUnbind,
   unbinding,
 }: {
-  entry: BindingWithAsset;
-  onUnbind: (entry: BindingWithAsset) => void;
+  entry: ProductMediaWithAsset;
+  onUnbind: (entry: ProductMediaWithAsset) => void;
   unbinding: boolean;
 }) {
   const { binding, asset } = entry;
   const isImage = asset?.media_type === 'image';
+  const previewUrl = asset?.public_url;
   return (
     <div className='border-border bg-background group relative flex flex-col overflow-hidden rounded-xl border'>
-      <div className='bg-muted relative flex aspect-video items-center justify-center'>
-        {isImage ? (
+      <div className='bg-muted relative flex aspect-video items-center justify-center overflow-hidden'>
+        {isImage && previewUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={previewUrl}
+            alt={asset?.original_filename ?? ''}
+            className='size-full object-cover'
+            draggable={false}
+          />
+        ) : isImage ? (
           <ImageIcon className='text-muted-foreground size-10' />
         ) : (
           <span className='text-muted-foreground text-xs uppercase'>
@@ -89,7 +93,7 @@ function MediaTile({
 }
 
 function ProductMediaManager({ productId }: ProductMediaManagerProps) {
-  const [entries, setEntries] = React.useState<BindingWithAsset[]>([]);
+  const [entries, setEntries] = React.useState<ProductMediaWithAsset[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [unbindingId, setUnbindingId] = React.useState<string | null>(null);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
@@ -102,22 +106,13 @@ function ProductMediaManager({ productId }: ProductMediaManagerProps) {
   const load = React.useCallback(async () => {
     setLoading(true);
     try {
-      // BE doesn't expose GET /products/{id}/media — bindings are embedded
-      // in ProductResponse.media. Fetch the product once, then hydrate each
-      // binding's asset metadata in parallel.
+      // BE wraps each binding with its asset since 2026-05 — no more
+      // per-row GET /media/{id} round-trips.
       const res = await rexerApi.products.get(productId);
-      const bindings: ProductMediaBinding[] = res.media ?? [];
-      const hydrated = await Promise.all(
-        bindings.map(async b => {
-          try {
-            const asset = await rexerApi.media.get(b.media_id);
-            return { binding: b, asset };
-          } catch {
-            return { binding: b };
-          }
-        })
-      );
-      setEntries(hydrated);
+      const items: ProductMediaWithAsset[] = res.media ?? [];
+      // Defensive: drop entries missing the binding shape so a stray
+      // legacy item can't crash the page.
+      setEntries(items.filter(e => !!e?.binding?.media_id));
     } catch (err) {
       toast.error(`Failed to load media: ${rxErrorMessage(err)}`);
     } finally {
@@ -151,7 +146,7 @@ function ProductMediaManager({ productId }: ProductMediaManagerProps) {
     }
   };
 
-  const handleUnbind = async (entry: BindingWithAsset) => {
+  const handleUnbind = async (entry: ProductMediaWithAsset) => {
     const label =
       entry.asset?.original_filename ??
       `media ${entry.binding.media_id.slice(0, 8)}`;

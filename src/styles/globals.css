@@ -236,3 +236,40 @@ select {
     opacity: 0;
   }
 }
+
+/* ── Block-editor entrance animations ───────────────────────────────────
+ * Used by the canvas block components (HeroSplit, HeroOverlay, etc.) to
+ * sequence "image first → text reveal" on mount. Pure CSS so it doesn't
+ * replay on edit (React updates textContent without remounting).
+ */
+
+/* Typewriter-style horizontal mask reveal — text "nhả chữ" left → right. */
+@keyframes block-reveal-x {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+.animate-reveal-x {
+  animation: block-reveal-x 1s cubic-bezier(0.65, 0.05, 0.36, 1) both;
+}
+
+/* Soft fade + slight rise — for CTAs and description blocks where a hard
+ * mask reveal feels too aggressive. */
+@keyframes block-soft-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-soft-rise {
+  animation: block-soft-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}

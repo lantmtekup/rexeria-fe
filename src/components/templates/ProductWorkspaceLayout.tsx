@@ -81,11 +81,12 @@ function ProductWorkspaceLayout({
   ];
   const subActive = section === 'media' ? 'media' : 'information';
 
-  // AI-Agents wizard steps
+  // AI-Agents wizard steps — Template must come before Marketing because
+  // the marketing copy depends on which template/canvas is picked.
   const wizardSteps: WizardStep[] = [
     { key: 'product', label: 'Product' },
-    { key: 'marketing', label: 'Marketing' },
     { key: 'template', label: 'Template' },
+    { key: 'marketing', label: 'Marketing' },
     { key: 'campaign', label: 'Campaign' },
   ];
   const wizardActive =
@@ -94,8 +95,9 @@ function ProductWorkspaceLayout({
       : section;
 
   const isProduct = scope === 'product';
-  const showSubTabs =
-    isProduct && (section === 'information' || section === 'media');
+  // Information + Media share the "Product" step in both flows. Show the
+  // sub-tab bar so the user can move between them within the step.
+  const showSubTabs = section === 'information' || section === 'media';
 
   return (
     <div className='flex h-full min-w-0 flex-1 flex-col'>
