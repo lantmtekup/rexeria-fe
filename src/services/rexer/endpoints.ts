@@ -65,6 +65,7 @@ import type {
   CompleteUploadResponse,
   CreateCampaignRequest,
   CreateClientAccessGrantRequest,
+  CloneProductRequest,
   CreateClientRequest,
   CreateClientUserRequest,
   CreateClientUserResponse,
@@ -249,6 +250,12 @@ export const rexerApi = {
       page?: number;
       limit?: number;
       sort?: string;
+      /** V2: filter for templates (default false). */
+      is_template?: boolean;
+      /** V2: filter templates by category. */
+      template_category?: string;
+      /** V2: filter library (true) vs my templates (false). */
+      is_public_template?: boolean;
     }) => rx<ProductListResponse>('/products', { query }),
     get: async (id: string): Promise<ProductResponse> =>
       rx<ProductResponse>(`/products/${id}`),
@@ -264,6 +271,16 @@ export const rexerApi = {
         body,
       });
     },
+    /**
+     * V2: clone a product (or template) — server-side copy of attributes +
+     * media bindings in a single transaction. Used for "Use template" and
+     * "Save as my template" flows. See spec §4.2.
+     */
+    clone: async (
+      id: string,
+      body: CloneProductRequest
+    ): Promise<ProductResponse> =>
+      rx<ProductResponse>(`/products/${id}/clone`, { method: 'POST', body }),
     remove: (id: string) =>
       rx<{ message?: string }>(`/products/${id}`, { method: 'DELETE' }),
     bindMedia: async (

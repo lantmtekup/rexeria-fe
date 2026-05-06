@@ -7,10 +7,13 @@ import { toast } from 'sonner';
 
 import { Spinner } from '@/components/atoms/spinner';
 import { SectionHeader } from '@/components/molecules/SectionHeader';
+import { ProductTemplateList } from '@/components/modules/Product/ProductTemplateList';
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type { Product } from '@/services/rexer/types';
+
+type ProductTab = 'all' | 'templates';
 
 function rxErrorMessage(err: unknown): string {
   if (err instanceof RxApiError) return err.message || err.code;
@@ -119,6 +122,7 @@ function ProductTile({
 }
 
 export default function ProductListPage() {
+  const [tab, setTab] = React.useState<ProductTab>('all');
   const [items, setItems] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
@@ -126,7 +130,12 @@ export default function ProductListPage() {
   const reload = React.useCallback(async () => {
     setLoading(true);
     try {
-      const r = await rexerApi.products.list({ limit: 50 });
+      // Filter out templates from the "Tất cả" view — they live in the
+      // dedicated "Templates" tab so the user's product list stays focused.
+      const r = await rexerApi.products.list({
+        limit: 50,
+        is_template: false,
+      });
       setItems(r.items ?? []);
     } catch (err) {
       toast.error(`Không tải được sản phẩm: ${rxErrorMessage(err)}`);
@@ -158,25 +167,54 @@ export default function ProductListPage() {
     <div className='mx-auto w-full max-w-[1400px] px-6 py-6'>
       <SectionHeader
         title='Product'
-        showAllHref='/product/new/information'
-        showAllLabel='+ Add new product'
+        showAllHref={tab === 'all' ? '/product/new/information' : undefined}
+        showAllLabel={tab === 'all' ? '+ Add new product' : undefined}
       />
-      {loading ? (
-        <div className='text-muted-foreground flex justify-center py-16'>
-          <Spinner size={20} />
-        </div>
+
+      {/* Tab strip */}
+      <div className='mb-4 flex items-center gap-1 border-b border-neutral-200'>
+        {(
+          [
+            ['all', 'Tất cả sản phẩm'],
+            ['templates', 'Templates'],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type='button'
+            onClick={() => setTab(value)}
+            className={cn(
+              '-mb-px cursor-pointer border-b-2 px-3 py-2 text-xs font-semibold tracking-wider uppercase transition-colors',
+              tab === value
+                ? 'border-neutral-900 text-neutral-900'
+                : 'border-transparent text-neutral-400 hover:text-neutral-700'
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'all' ? (
+        loading ? (
+          <div className='text-muted-foreground flex justify-center py-16'>
+            <Spinner size={20} />
+          </div>
+        ) : (
+          <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'>
+            <AddNewProductTile />
+            {items.map(p => (
+              <ProductTile
+                key={p.id}
+                product={p}
+                onDelete={handleDelete}
+                deleting={deletingId === p.id}
+              />
+            ))}
+          </div>
+        )
       ) : (
-        <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'>
-          <AddNewProductTile />
-          {items.map(p => (
-            <ProductTile
-              key={p.id}
-              product={p}
-              onDelete={handleDelete}
-              deleting={deletingId === p.id}
-            />
-          ))}
-        </div>
+        <ProductTemplateList />
       )}
     </div>
   );

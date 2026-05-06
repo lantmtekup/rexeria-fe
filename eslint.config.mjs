@@ -25,6 +25,14 @@ const eslintConfig = [
     },
   },
   {
+    // Node-side scripts (Playwright snaps, seed scripts) — `console.log` is
+    // their primary I/O, so the global `no-console` ban doesn't apply here.
+    files: ['scripts/**/*.{js,mjs,cjs,ts}'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
     // Block templates must use container queries (`@2xl:` / `@4xl:`), not
     // viewport breakpoints (`md:` / `lg:` / etc.) — see
     // docs/canvas-block-responsive-spec.md §R1. Editor pages are exempt.
