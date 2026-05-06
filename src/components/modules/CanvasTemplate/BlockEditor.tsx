@@ -62,6 +62,18 @@ function rxErrorMessage(err: unknown): string {
   return 'Lỗi không xác định';
 }
 
+/**
+ * Pull the first failing field from a BE `details.validation_errors` map so
+ * we can surface it in the toast. BE shape: `{ "blocks[0].contentVi": "..." }`.
+ */
+function extractFirstValidationField(details: unknown): string | null {
+  if (!details || typeof details !== 'object') return null;
+  const ve = (details as { validation_errors?: unknown }).validation_errors;
+  if (!ve || typeof ve !== 'object') return null;
+  const firstKey = Object.keys(ve as Record<string, unknown>)[0];
+  return firstKey ?? null;
+}
+
 // BE `/canvas-templates/{id}/canvas` endpoint is currently slow (~10s even
 // for unauth 401 — see GAP-18 in be-issues-master.md). Keep client timeout
 // generous until BE adds early auth gating.
@@ -97,6 +109,12 @@ export function BlockEditor({
   const [lang, setLang] = React.useState<Lang>('vi');
   const [device, setDevice] = React.useState<Device>('desktop');
   const [zoom, setZoom] = React.useState<number>(100);
+  /**
+   * Distinguish auto-fit zoom (on mount / device change) vs. user manually
+   * adjusting via slider. Once user touches zoom controls, we stop auto-fitting
+   * so their explicit choice persists across re-renders.
+   */
+  const userTouchedZoomRef = React.useRef(false);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [dirty, setDirty] = React.useState(false);
@@ -242,13 +260,14 @@ export function BlockEditor({
     const pub = publishRef.current;
     if (!t || !bs.length || savingRef.current) return;
     setSaving(true);
+    const wireCanvasData = serializeCanvas(
+      bs,
+      aid ?? undefined,
+      pub
+    ) as unknown as Record<string, unknown>;
     try {
       const updated = await rexerApi.canvasTemplates.update(t.id, {
-        canvas_data: serializeCanvas(
-          bs,
-          aid ?? undefined,
-          pub
-        ) as unknown as Record<string, unknown>,
+        canvas_data: wireCanvasData,
         version: t.version,
       });
       setTemplate(updated);
@@ -259,13 +278,60 @@ export function BlockEditor({
       // Stop the autosave retry loop so a single failure doesn't pile up
       // toasts every AUTOSAVE_DELAY_MS. Reset happens on next user mutation.
       setSaveBlocked(true);
-      const isConflict = err instanceof RxApiError && err.status === 409;
+
+      // Dump full payload + error details so user can copy from console for
+      // debugging schema mismatches between FE and BE. Single grouped log
+      // keeps the console tidy.
+      const isRx = err instanceof RxApiError;
+      // eslint-disable-next-line no-console
+      console.groupCollapsed(
+        `%c[canvas save FAILED] ${isRx ? `${err.status} ${err.code}` : 'unknown'}`,
+        'color:#dc2626;font-weight:600'
+      );
+      // eslint-disable-next-line no-console
+      console.log('template.id:', t.id);
+      // eslint-disable-next-line no-console
+      console.log('template.version (etag):', t.version);
+      // eslint-disable-next-line no-console
+      console.log('REQUEST canvas_data:', wireCanvasData);
+      // eslint-disable-next-line no-console
+      console.log(
+        'REQUEST canvas_data (JSON):',
+        JSON.stringify({ canvas_data: wireCanvasData, version: t.version })
+      );
+      if (isRx) {
+        // eslint-disable-next-line no-console
+        console.log('RESPONSE error code:', err.code);
+        // eslint-disable-next-line no-console
+        console.log('RESPONSE error message:', err.message);
+        // eslint-disable-next-line no-console
+        console.log('RESPONSE error details:', err.details);
+        // eslint-disable-next-line no-console
+        console.log('RESPONSE request_id:', err.requestId);
+      } else {
+        // eslint-disable-next-line no-console
+        console.log('error (non-Rx):', err);
+      }
+      // eslint-disable-next-line no-console
+      console.groupEnd();
+
+      const isConflict = isRx && err.status === 409;
       if (isConflict) {
         toast.error(
           'Canvas đã bị thay đổi từ chỗ khác — tải lại trang để đồng bộ trước khi sửa tiếp.'
         );
       } else {
-        toast.error(`Lưu thất bại: ${rxErrorMessage(err)}`);
+        // Surface validation field name in the toast when BE returns one,
+        // so user spots the broken field without opening DevTools.
+        const fieldHint =
+          isRx && err.details && typeof err.details === 'object'
+            ? extractFirstValidationField(err.details)
+            : null;
+        toast.error(
+          fieldHint
+            ? `Lưu thất bại: ${rxErrorMessage(err)} · field: ${fieldHint}`
+            : `Lưu thất bại: ${rxErrorMessage(err)} · xem console (F12) để biết chi tiết`
+        );
       }
     } finally {
       setSaving(false);
@@ -919,7 +985,12 @@ export function BlockEditor({
             null) as MotionConfig | null
         }
         onLangChange={setLang}
-        onDeviceChange={setDevice}
+        onDeviceChange={next => {
+          // Reset the user-touched flag so each device toggle re-fits
+          // (mobile→desktop wants different fit %).
+          userTouchedZoomRef.current = false;
+          setDevice(next);
+        }}
         onAi={() =>
           toast.info('Click 1 element trên canvas để mở popup AI riêng')
         }
@@ -973,6 +1044,10 @@ export function BlockEditor({
               onCommitInlineEdit={handleCommitInlineEdit}
               onCancelInlineEdit={handleCancelInlineEdit}
               motionMode={motionPreviewing ? 'preview' : 'edit'}
+              onAutoFitZoom={pct => {
+                // Only auto-fit if user hasn't manually adjusted zoom yet.
+                if (!userTouchedZoomRef.current) setZoom(pct);
+              }}
             />
           ) : (
             <EmptyState onAdd={() => setAddOpen(true)} />
@@ -986,7 +1061,10 @@ export function BlockEditor({
             onAdd={() => setAddOpen(true)}
             onRemove={handleRemove}
             onReorder={handleReorder}
-            onZoomChange={setZoom}
+            onZoomChange={next => {
+              userTouchedZoomRef.current = true;
+              setZoom(next);
+            }}
           />
         </div>
 

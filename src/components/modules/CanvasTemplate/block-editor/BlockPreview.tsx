@@ -25,6 +25,13 @@ interface BlockPreviewProps {
   onCancelInlineEdit: () => void;
   /** Editor lifecycle for motion subsystem. Default 'edit' (no-op). */
   motionMode?: EditorMode;
+  /**
+   * Fired on mount + whenever `device` changes with the zoom % needed to fit
+   * the device frame fully in the visible canvas surface (clamped 20–100%).
+   * BlockEditor uses this to auto-fit so users don't have to scroll on first
+   * load when the desktop frame (1280px) is wider than the viewport.
+   */
+  onAutoFitZoom?: (percentage: number) => void;
 }
 
 const DEVICE_WIDTH: Record<Device, number> = {
@@ -59,6 +66,7 @@ export function BlockPreview({
   onCommitInlineEdit,
   onCancelInlineEdit,
   motionMode = 'edit',
+  onAutoFitZoom,
 }: BlockPreviewProps) {
   const langContent = lang === 'vi' ? block.contentVi : block.contentEn;
   const content = readVariant(langContent, device) ?? langContent.desktop;
@@ -128,6 +136,45 @@ export function BlockPreview({
     onStartInlineEdit(key);
   };
 
+  // Auto-fit zoom on mount + device change. Calculate `fit %` from current
+  // surface width vs. device frame width. Without this, zoom stays at the
+  // BlockEditor default (100%) and the desktop frame (1280px) overflows the
+  // visible surface on typical laptop viewports → user sees scrollbar instead
+  // of full block. We re-fire whenever `device` changes so toggling Mobile
+  // (390px) → Desktop (1280px) refits properly.
+  React.useEffect(() => {
+    if (!onAutoFitZoom || !surfaceRef.current) return;
+    const surface = surfaceRef.current;
+    // Inner area = surface clientWidth minus the p-8 padding (32px each side).
+    const innerWidth = Math.max(0, surface.clientWidth - 64);
+    if (innerWidth <= 0) return;
+    const fitPct = Math.floor((innerWidth / baseWidth) * 100);
+    const clamped = Math.min(100, Math.max(20, fitPct));
+    onAutoFitZoom(clamped);
+  }, [device, baseWidth, onAutoFitZoom]);
+
+  // Track the inner content's natural (unscaled) height so the outer wrapper
+  // can reserve `scaledWidth × scaledHeight` in layout flow. Without this,
+  // `transform: scale(...)` only shrinks the inner visually while the layout
+  // box stays at the original size — surface horizontal scrollbar still
+  // appears even when the visible artwork fits. ResizeObserver re-fires on
+  // any content change (block switch, lang switch, inline edit, etc).
+  const innerRef = React.useRef<HTMLDivElement>(null);
+  const [innerHeight, setInnerHeight] = React.useState<number>(0);
+  React.useEffect(() => {
+    const el = innerRef.current;
+    if (!el) return;
+    const measure = () => {
+      // Height excluding the transform — read offsetHeight which reflects
+      // the un-transformed layout height of the element.
+      setInnerHeight(el.offsetHeight);
+    };
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    measure();
+    return () => ro.disconnect();
+  }, [block, lang, device]);
+
   // Drive contenteditable via DOM when entering edit mode. Pure DOM manipulation
   // keeps each block component dumb (no editing concerns).
   React.useEffect(() => {
@@ -187,48 +234,63 @@ export function BlockPreview({
       onDoubleClick={handleDoubleClick}
       className='relative flex flex-1 items-center justify-center overflow-auto bg-[#f3f1ec] p-8 [&_[data-inline-editing=true]]:cursor-text [&_[data-inline-editing=true]]:rounded-sm [&_[data-inline-editing=true]]:bg-sky-50/80 [&_[data-inline-editing=true]]:outline [&_[data-inline-editing=true]]:outline-2 [&_[data-inline-editing=true]]:outline-offset-2 [&_[data-inline-editing=true]]:outline-sky-500'
     >
+      {/*
+        Outer wrapper reserves `scaledWidth × scaledHeight` in layout so the
+        surface scrollbar reflects what the user actually sees. Without it,
+        `transform: scale(...)` shrinks the visual but leaves the layout box
+        at the original 1280/834/390 width → horizontal scroll appears even
+        when the rendered artwork fits.
+      */}
       <div
-        // `shrink-0` keeps the declared `width` honoured inside the flex
-        // parent — without it, flex shrinks the frame below 1280/834/390,
-        // which makes container queries (`@2xl:` / `@4xl:`) misfire and
-        // desktop blocks render at tablet text scale.
-        className='@container shrink-0 origin-center transition-transform duration-150'
+        className='shrink-0'
         style={{
-          width: baseWidth,
-          transform: `scale(${scale})`,
+          width: baseWidth * scale,
+          height: innerHeight * scale,
         }}
       >
         <div
-          data-element-key='__background__'
-          className={cn(
-            'w-full overflow-hidden rounded-md bg-white shadow-xl ring-1 ring-black/5',
-            selectedElementKey === '__background__' &&
-              'outline outline-2 outline-offset-2 outline-sky-500'
-          )}
+          ref={innerRef}
+          // `@container` stays on the original-sized element so container
+          // queries (`@2xl:` / `@4xl:`) match the *logical* device width
+          // (1280 / 834 / 390) — independent of the user-controlled zoom.
+          className='@container origin-top-left transition-transform duration-150'
+          style={{
+            width: baseWidth,
+            transform: `scale(${scale})`,
+          }}
         >
-          <MotionProvider
-            mode={effectiveMode}
-            device={device}
-            motion={motionForDevice}
-            scrollerEl={surfaceRef.current}
+          <div
+            data-element-key='__background__'
+            className={cn(
+              'w-full overflow-hidden rounded-md bg-white shadow-xl ring-1 ring-black/5',
+              selectedElementKey === '__background__' &&
+                'outline outline-2 outline-offset-2 outline-sky-500'
+            )}
           >
-            <MotionBlockRoot>
-              {/*
+            <MotionProvider
+              mode={effectiveMode}
+              device={device}
+              motion={motionForDevice}
+              scrollerEl={surfaceRef.current}
+            >
+              <MotionBlockRoot>
+                {/*
                 Re-mount RenderBlock when block/device/lang change so the
                 CSS `animate-in` keyframes fire fresh on every tab switch
                 (otherwise React reconciles same nodes → no animation).
               */}
-              <RenderBlock
-                key={`${block.id}:${device}:${lang}`}
-                block={block}
-                content={content}
-                styles={styles}
-                background={background}
-                order={order}
-                activeKey={selectedElementKey}
-              />
-            </MotionBlockRoot>
-          </MotionProvider>
+                <RenderBlock
+                  key={`${block.id}:${device}:${lang}`}
+                  block={block}
+                  content={content}
+                  styles={styles}
+                  background={background}
+                  order={order}
+                  activeKey={selectedElementKey}
+                />
+              </MotionBlockRoot>
+            </MotionProvider>
+          </div>
         </div>
       </div>
     </div>

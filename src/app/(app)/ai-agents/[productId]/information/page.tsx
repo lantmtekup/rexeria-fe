@@ -18,6 +18,7 @@ import {
 import { ProductWorkspaceLayout } from '@/components/templates/ProductWorkspaceLayout';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
+import { normalizeCertifications } from '@/services/rexer/normalizers';
 import type { Product } from '@/services/rexer/types';
 
 interface PageProps {
@@ -42,7 +43,10 @@ const fromProduct = (
   colors: p.colors ?? [],
   variants: [],
   ingredients: p.ingredients ?? [],
-  certifications: p.certifications ?? [],
+  certifications:
+    (normalizeCertifications(p.certifications as unknown) as
+      | ProductInformationValue['certifications']
+      | undefined) ?? [],
 });
 
 export default function AiAgentsInformationPage({ params }: PageProps) {

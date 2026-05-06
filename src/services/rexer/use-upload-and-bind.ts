@@ -28,6 +28,14 @@ export interface UploadAndBindOptions {
   fieldKey?: string;
   slotKey?: string;
   /**
+   * V2: link product binding to a `Product.colors[].name`. Only meaningful
+   * for `target.kind === 'product'`. Lets the canvas color-swatch UI swap
+   * images per color.
+   */
+  colorName?: string;
+  /** V2: ordering within the same `(field_key, color_name)` group. */
+  sortOrder?: number;
+  /**
    * Owner scope. `library` keeps the asset reusable; `project` scopes it
    * to the landing. Default `library`.
    */
@@ -62,6 +70,8 @@ export function useUploadAndBind({
   target,
   fieldKey = 'gallery',
   slotKey,
+  colorName,
+  sortOrder,
   ownerScope = 'library',
 }: UploadAndBindOptions): UploadAndBindHook {
   const [uploading, setUploading] = React.useState(false);
@@ -137,6 +147,8 @@ export function useUploadAndBind({
             field_key: fieldKey,
             media_id: completed.media_asset.id,
             slot_key: slotKey,
+            ...(colorName ? { color_name: colorName } : {}),
+            ...(typeof sortOrder === 'number' ? { sort_order: sortOrder } : {}),
           };
           const bind = await rexerApi.products.bindMedia(target.productId, {
             items: [item],
@@ -157,7 +169,7 @@ export function useUploadAndBind({
         setUploading(false);
       }
     },
-    [target, fieldKey, slotKey, ownerScope]
+    [target, fieldKey, slotKey, colorName, sortOrder, ownerScope]
   );
 
   return { uploadAndBind, uploading, progress, error };

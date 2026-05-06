@@ -15,9 +15,12 @@ import {
   toCreatePayload,
   type ProductInformationValue,
 } from '@/components/modules/Product/ProductInformationEditor';
+import { SaveAsTemplateDialog } from '@/components/modules/Product/SaveAsTemplateDialog';
 import { ProductWorkspaceLayout } from '@/components/templates/ProductWorkspaceLayout';
+import { BookmarkPlus } from 'lucide-react';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
+import { normalizeCertifications } from '@/services/rexer/normalizers';
 import type { Product, ProductResponse } from '@/services/rexer/types';
 
 interface PageProps {
@@ -42,7 +45,10 @@ const fromDTO = (
   colors: p.colors ?? [],
   variants: [],
   ingredients: p.ingredients ?? [],
-  certifications: p.certifications ?? [],
+  certifications:
+    (normalizeCertifications(p.certifications as unknown) as
+      | ProductInformationValue['certifications']
+      | undefined) ?? [],
 });
 
 export default function ProductInformationPage({ params }: PageProps) {
@@ -56,6 +62,11 @@ export default function ProductInformationPage({ params }: PageProps) {
   const [loading, setLoading] = React.useState(!isNew);
   const [saving, setSaving] = React.useState(false);
   const [nameError, setNameError] = React.useState<string | null>(null);
+  /** Loaded BE product (used as source for "Lưu thành template" dialog). */
+  const [loadedProduct, setLoadedProduct] = React.useState<Product | null>(
+    null
+  );
+  const [saveAsOpen, setSaveAsOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (isNew) return;
@@ -65,6 +76,7 @@ export default function ProductInformationPage({ params }: PageProps) {
       .get(id)
       .then((res: ProductResponse) => {
         if (!alive) return;
+        setLoadedProduct(res.product);
         setValue(fromDTO(res.product, res.category?.name));
       })
       .catch(err => {
@@ -130,6 +142,16 @@ export default function ProductInformationPage({ params }: PageProps) {
               }
             }}
           />
+          {!isNew && loadedProduct && !loadedProduct.is_template && (
+            <Button
+              variant='pill-light'
+              size='sm'
+              type='button'
+              onClick={() => setSaveAsOpen(true)}
+            >
+              <BookmarkPlus className='size-3.5' /> Lưu thành template
+            </Button>
+          )}
           <Button
             variant='primary'
             size='sm'
@@ -188,6 +210,12 @@ export default function ProductInformationPage({ params }: PageProps) {
         value={value}
         onChange={setValue}
         disabled={loading || saving}
+      />
+
+      <SaveAsTemplateDialog
+        open={saveAsOpen}
+        product={loadedProduct}
+        onOpenChange={setSaveAsOpen}
       />
     </ProductWorkspaceLayout>
   );

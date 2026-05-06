@@ -492,14 +492,51 @@ export interface SimpleDate {
 
 export type ProductStatus = 'draft' | 'active' | 'archived';
 
+/**
+ * V2 schema fields — see `docs/product-attributes-and-template-spec.md` §3.
+ * Backwards compat with V1 (`certifications: string[]`) is handled at FE
+ * boundary in `services/rexer/normalizers.ts`.
+ */
 export interface ProductColor {
   name: string;
   hex: string;
+  /** V2: marks the color shown by default on landing pages. Max one per product. */
+  is_default?: boolean;
+  /** V2: ordering for display (smaller first). Default = array index. */
+  sort_order?: number;
 }
+
 export interface ProductFeature {
   label: string;
   description: string;
+  /**
+   * V2: lucide icon name (e.g. "Sparkles", "Shield"). FE renders via the
+   * lucide-react map. Mutually exclusive with `media_id` — UI lets the user
+   * pick one. When neither set, FE falls back to a default icon.
+   */
+  icon_name?: string;
+  /** V2: alternative — uploaded image as the feature illustration. */
+  media_id?: string;
 }
+
+export interface ProductCertification {
+  name: string;
+  /** Logo image (optional). Render falls back to text badge when missing. */
+  media_id?: string;
+  /** Verify-cert URL (optional). */
+  url?: string;
+  description?: string;
+}
+
+/** Field role for product media bindings. See spec §3.2. */
+export type ProductMediaFieldKey =
+  | 'hero'
+  | 'gallery'
+  | 'detail'
+  | 'lifestyle'
+  | 'feature'
+  | 'cert'
+  | 'size_chart';
 
 export interface Product {
   id: string;
@@ -512,11 +549,29 @@ export interface Product {
   sizes?: string[];
   colors?: ProductColor[];
   ingredients?: string[];
-  certifications?: string[];
+  /**
+   * V2: structured certifications. V1 was `string[]` — FE normalizers wrap
+   * legacy values into `{name: <text>}` at load time so the rest of the app
+   * sees a uniform shape.
+   */
+  certifications?: ProductCertification[];
   features?: ProductFeature[];
   status?: ProductStatus;
   /** Public CDN URL for product cover image. Added by BE 2026-05. */
   thumbnail_url?: string;
+
+  // ── Template fields (V2) ────────────────────────────────────────────────
+  /** V2: when true, this row is a reusable template (filtered out of normal lists). */
+  is_template?: boolean;
+  /** V2: free-form category for template browse, e.g. "fmcg" / "fashion" / "f&b". */
+  template_category?: string;
+  /** V2: free-form tags for template search/filter. */
+  template_tags?: string[];
+  /** V2: admin-curated library template (visible to all users). Default false. */
+  is_public_template?: boolean;
+  /** V2: id of the source template if this product was cloned from one. */
+  source_template_id?: string;
+
   created_at?: string;
   updated_at?: string;
   created_by?: string;
@@ -525,8 +580,17 @@ export interface Product {
 export interface ProductMediaBinding {
   id: string;
   product_id: string;
+  /**
+   * Role of this media in the product UI. Loose `string` for forward-compat,
+   * but FE narrows to `ProductMediaFieldKey` when reading.
+   */
   field_key?: string;
+  /** Free-form key (e.g. feature index `feature_0`, cert index `cert_2`). */
   slot_key?: string;
+  /** V2: links to `Product.colors[].name` — the color this image represents. */
+  color_name?: string;
+  /** V2: ordering within the same `(field_key, color_name)` group. Default 0. */
+  sort_order?: number;
   media_id: string;
   created_at: string;
 }
@@ -563,16 +627,58 @@ export interface CreateProductRequest {
   sizes?: string[];
   colors?: ProductColor[];
   ingredients?: string[];
-  certifications?: string[];
+  /**
+   * V2 wire shape — `ProductCertification[]`. BE may also accept legacy
+   * `string[]` during migration window (one sprint per spec §10).
+   */
+  certifications?: ProductCertification[];
   features?: ProductFeature[];
   status?: ProductStatus;
+  thumbnail_url?: string;
+  /**
+   * V2 shortcut: bind existing media library/project assets in the same
+   * round-trip as create. Default `field_key="gallery"`. Use the bind-media
+   * endpoint for tagged bindings (color_name, slot_key, etc.).
+   */
+  media_ids?: string[];
+  // ── Template fields (V2) ──
+  is_template?: boolean;
+  template_category?: string;
+  template_tags?: string[];
+  /** Admin-gated by BE; non-admin requests setting true return 403. */
+  is_public_template?: boolean;
+  source_template_id?: string;
 }
 export type UpdateProductRequest = Partial<CreateProductRequest>;
+
+/** Body for `POST /v1/products/{id}/clone` — creates a copy + media bindings. */
+export interface CloneProductRequest {
+  /** Override name on the clone. Default: BE appends "(copy)". Max 255 chars. */
+  name?: string;
+  /**
+   * When true, the clone is created with `is_template=true` (use case:
+   * "Save current product as my template"). Default false.
+   */
+  as_template?: boolean;
+  /**
+   * Promote to library (admin-gated by BE). Returns 403 if non-admin sets
+   * this true. Only meaningful when `as_template=true`.
+   */
+  is_public_template?: boolean;
+  /** V2 template metadata applied if `as_template=true`. Max 50 chars. */
+  template_category?: string;
+  /** Max 10 items. */
+  template_tags?: string[];
+}
 
 export interface BindProductMediaItem {
   media_id: string;
   field_key?: string;
   slot_key?: string;
+  /** V2: link this binding to a `Product.colors[].name`. */
+  color_name?: string;
+  /** V2: ordering within the same group. */
+  sort_order?: number;
 }
 export interface BindProductMediaRequest {
   items: BindProductMediaItem[];
