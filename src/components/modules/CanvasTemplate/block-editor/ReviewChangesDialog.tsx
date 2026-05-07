@@ -176,7 +176,7 @@ export function ReviewChangesDialog({
         showCloseButton={false}
         className='flex max-h-[88vh] max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl'
       >
-        {/* ─── Hero header ─────────────────────────────────────────────── */}
+        {/* ─── Compact header — eyebrow + heading + actions on one band ── */}
         <div className='relative shrink-0 overflow-hidden border-b border-stone-200 bg-stone-50'>
           {/* Subtle dotted texture for atmosphere — never overpowering. */}
           <div
@@ -189,95 +189,64 @@ export function ReviewChangesDialog({
             }}
           />
 
-          <div className='relative px-8 pt-7 pb-5'>
-            <div className='flex items-start justify-between gap-4'>
-              <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
-                {/* Eyebrow with AI badge — refined, no purple gradient. */}
-                <div className='flex items-center gap-2'>
-                  <span className='inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.18em] text-amber-800 uppercase ring-1 ring-amber-200/80'>
-                    <Sparkles className='size-3' />
-                    Curated by AI
-                  </span>
-                  <span className='text-[10px] tracking-widest text-stone-400 uppercase'>
-                    Review · {progressPct}% accepted
-                  </span>
-                </div>
+          <div className='relative flex items-center gap-4 px-6 py-3'>
+            {/* AI badge */}
+            <span
+              className='inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold tracking-[0.18em] text-amber-800 uppercase ring-1 ring-amber-200/80'
+              title='AI-generated suggestions'
+            >
+              <Sparkles className='size-3' />
+              AI
+            </span>
 
-                {/* Display heading — serif, editorial. */}
-                <DialogTitle asChild>
-                  <h2 className='font-serif text-[28px] leading-[1.15] tracking-tight text-neutral-900'>
-                    <span className='font-mono text-[18px] tracking-[-0.04em] text-stone-400'>
-                      {totalFields}
-                    </span>{' '}
-                    thay đổi từ{' '}
-                    <span className='text-neutral-700 italic'>
-                      “{productName}”
-                    </span>
-                  </h2>
-                </DialogTitle>
-                <p className='max-w-2xl text-sm leading-relaxed text-stone-500'>
-                  AI đã đề xuất nội dung mới cho{' '}
-                  <strong className='font-semibold text-neutral-700'>
-                    {diff.blocks.length} block
-                  </strong>
-                  . Bấm{' '}
-                  <em className='text-emerald-700 not-italic'>
-                    Áp dụng tất cả
-                  </em>{' '}
-                  nếu hài lòng, hoặc tinh chỉnh từng phần bên dưới.
-                </p>
-              </div>
+            {/* Display heading — single tight line */}
+            <DialogTitle asChild>
+              <h2 className='min-w-0 flex-1 truncate font-serif text-[20px] leading-tight tracking-tight text-neutral-900'>
+                <span className='font-mono text-[15px] tracking-[-0.04em] text-stone-400'>
+                  {totalFields}
+                </span>{' '}
+                thay đổi từ{' '}
+                <span className='text-neutral-700 italic'>“{productName}”</span>
+              </h2>
+            </DialogTitle>
 
-              <button
-                type='button'
-                onClick={() => onOpenChange(false)}
-                aria-label='Đóng'
-                className='-mt-1 -mr-2 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-stone-400 transition-colors hover:bg-stone-100 hover:text-neutral-900'
-              >
-                <X className='size-4' />
-              </button>
-            </div>
-
-            {/* Stat chips row — at-a-glance breakdown of change types. */}
-            <ul className='mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4'>
-              <StatChip
-                icon={Type}
-                label='Text'
-                count={tally.text}
-                tone='neutral'
-              />
-              <StatChip
-                icon={ImageIcon}
-                label='Ảnh'
-                count={tally.image}
-                tone='violet'
-              />
-              <StatChip
+            {/* Inline stat pills — replaces the 4-card grid */}
+            <ul
+              className='hidden shrink-0 items-center gap-1 md:flex'
+              aria-label='Thống kê thay đổi'
+            >
+              <InlineStat icon={Type} count={tally.text} title='Text' />
+              <InlineStat icon={ImageIcon} count={tally.image} title='Ảnh' />
+              <InlineStat
                 icon={ListChecks}
-                label='Danh sách'
                 count={tally.list}
-                tone='sky'
+                title='Danh sách'
               />
-              <StatChip
+              <InlineStat
                 icon={MousePointerClick}
-                label='CTA'
                 count={tally.cta}
-                tone='amber'
+                title='CTA'
               />
             </ul>
+
+            <button
+              type='button'
+              onClick={() => onOpenChange(false)}
+              aria-label='Đóng'
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-stone-400 transition-colors hover:bg-stone-100 hover:text-neutral-900'
+            >
+              <X className='size-4' />
+            </button>
           </div>
         </div>
 
-        {/* ─── Decision bar ─────────────────────────────────────────────── */}
-        <div className='shrink-0 border-b border-stone-200 bg-white px-8 py-3'>
+        {/* ─── Decision bar — compact, single row ──────────────────────── */}
+        <div className='shrink-0 border-b border-stone-200 bg-white px-6 py-2'>
           <div className='flex flex-wrap items-center gap-2'>
             <button
               type='button'
               onClick={setAllAccept}
-              className={cn(
-                'group inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full px-4 text-xs font-semibold tracking-tight transition-all duration-150',
-                'bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 hover:shadow-md active:translate-y-[0.5px]'
-              )}
+              className='group inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-emerald-600 px-3.5 text-xs font-semibold tracking-tight text-white shadow-sm transition-all duration-150 hover:bg-emerald-700 hover:shadow-md active:translate-y-[0.5px]'
             >
               <CheckCircle2 className='size-3.5' />
               Áp dụng tất cả
@@ -285,17 +254,14 @@ export function ReviewChangesDialog({
             <button
               type='button'
               onClick={setRejectAll}
-              className='inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3.5 text-xs font-medium text-stone-600 transition-colors hover:border-stone-400 hover:text-neutral-900'
+              className='inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 text-xs font-medium text-stone-600 transition-colors hover:border-stone-400 hover:text-neutral-900'
             >
               <RotateCcw className='size-3.5' />
               Giữ nguyên
             </button>
 
-            <span className='mx-2 h-5 w-px bg-stone-200' aria-hidden />
+            <span className='mx-1 h-4 w-px bg-stone-200' aria-hidden />
 
-            <span className='text-[10px] font-semibold tracking-widest text-stone-400 uppercase'>
-              Lọc
-            </span>
             <FilterPill
               icon={Type}
               label='Text'
@@ -398,46 +364,30 @@ export function ReviewChangesDialog({
   );
 }
 
-// ─── Stat chip (header) ───────────────────────────────────────────────────
+// ─── Inline stat pill (header) ────────────────────────────────────────────
 
-function StatChip({
+function InlineStat({
   icon: Icon,
-  label,
   count,
-  tone,
+  title,
 }: {
   icon: React.ElementType;
-  label: string;
   count: number;
-  tone: 'neutral' | 'violet' | 'sky' | 'amber';
+  title: string;
 }) {
-  const isEmpty = count === 0;
-  // Tone determines the icon ring + counter color. Empty groups are muted.
-  const toneClass = isEmpty
-    ? 'text-stone-400 ring-stone-200 bg-stone-50/60'
-    : {
-        neutral: 'text-neutral-800 ring-neutral-200 bg-white',
-        violet: 'text-violet-700 ring-violet-200 bg-white',
-        sky: 'text-sky-700 ring-sky-200 bg-white',
-        amber: 'text-amber-700 ring-amber-200 bg-white',
-      }[tone];
-
+  const muted = count === 0;
   return (
     <li
+      title={`${count} thay đổi · ${title}`}
       className={cn(
-        'flex items-center gap-2.5 rounded-lg px-3 py-2 ring-1 transition-colors',
-        toneClass
+        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 transition-colors',
+        muted
+          ? 'bg-stone-50 text-stone-300 ring-stone-200'
+          : 'bg-white text-neutral-700 ring-stone-200'
       )}
     >
-      <Icon className='size-4 shrink-0' />
-      <div className='flex min-w-0 flex-1 items-baseline gap-1.5'>
-        <span className='font-mono text-base leading-none font-bold tracking-tight'>
-          {count}
-        </span>
-        <span className='truncate text-[11px] tracking-wide text-stone-500 uppercase'>
-          {label}
-        </span>
-      </div>
+      <Icon className={cn('size-3', muted && 'opacity-60')} />
+      <span className='font-mono tabular-nums'>{count}</span>
     </li>
   );
 }
@@ -500,92 +450,86 @@ function BlockSection({
 
   return (
     <li
-      className='relative px-8 py-6 transition-colors hover:bg-white'
+      className='relative px-6 py-4 transition-colors hover:bg-white'
       data-state={allOn ? 'all' : someOn ? 'some' : 'none'}
     >
-      {/* Chapter header — number marker + block name in serif */}
-      <div className='flex items-start gap-5'>
-        {/* Numbered marker — editorial magazine style. */}
-        <div className='flex shrink-0 flex-col items-center pt-1'>
-          <span
-            className={cn(
-              'font-serif text-3xl leading-none tabular-nums',
-              allOn
-                ? 'text-emerald-600'
-                : someOn
-                  ? 'text-amber-600'
-                  : 'text-stone-300'
-            )}
-          >
-            {String(index).padStart(2, '0')}
-          </span>
-          <span className='mt-1 font-mono text-[9px] tracking-widest text-stone-400 uppercase'>
-            / {String(total).padStart(2, '0')}
-          </span>
-        </div>
-
-        {/* Block info + master toggle */}
-        <div className='flex min-w-0 flex-1 flex-col gap-3'>
-          <div className='flex flex-wrap items-center gap-3'>
-            <button
-              type='button'
-              onClick={() => setOpen(o => !o)}
-              className='group flex flex-1 cursor-pointer items-center gap-2 text-left'
-            >
-              <ChevronDown
-                className={cn(
-                  'size-4 shrink-0 text-stone-400 transition-transform group-hover:text-neutral-900',
-                  !open && '-rotate-90'
-                )}
-              />
-              <h3 className='font-serif text-xl leading-tight tracking-tight text-neutral-900'>
-                {block.blockName}
-              </h3>
-              <span className='inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 font-mono text-[9px] tracking-widest text-stone-500 uppercase'>
-                {block.blockType.replace('_', ' ')}
-              </span>
-              {block.isNew && (
-                <span className='inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-[9px] tracking-widest text-emerald-700 uppercase ring-1 ring-emerald-200/60'>
-                  + Mới
-                </span>
-              )}
-              {block.isRemoved && (
-                <span className='inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 font-mono text-[9px] tracking-widest text-rose-700 uppercase ring-1 ring-rose-200/60'>
-                  − Bị xoá
-                </span>
-              )}
-            </button>
-
-            {totalGroups > 0 && (
-              <div className='flex items-center gap-2'>
-                <span className='font-mono text-[10px] tracking-tight text-stone-500'>
-                  {acceptedCount}/{totalGroups}
-                </span>
-                <Switch
-                  checked={allOn}
-                  indeterminate={someOn}
-                  onClick={onToggleBlock}
-                  ariaLabel={`Toggle ${block.blockName}`}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Groups (collapsible) */}
-          {open && totalGroups > 0 && (
-            <div className='flex flex-col gap-2.5'>
-              {block.groups.map(g => (
-                <GroupCard
-                  key={g.group}
-                  groupDiff={g}
-                  accepted={accepted.has(g.group)}
-                  onToggle={() => onToggleGroup(g.group)}
-                />
-              ))}
-            </div>
+      {/* Chapter header — compact: number + name + chips + toggle on one row */}
+      <div className='flex items-center gap-3'>
+        {/* Numbered marker — smaller but still editorial. */}
+        <span
+          className={cn(
+            'shrink-0 font-serif text-lg leading-none tabular-nums',
+            allOn
+              ? 'text-emerald-600'
+              : someOn
+                ? 'text-amber-600'
+                : 'text-stone-300'
           )}
-        </div>
+          aria-hidden
+        >
+          {String(index).padStart(2, '0')}
+          <span className='ml-0.5 font-mono text-[9px] tracking-widest text-stone-400 uppercase'>
+            /{String(total).padStart(2, '0')}
+          </span>
+        </span>
+
+        <button
+          type='button'
+          onClick={() => setOpen(o => !o)}
+          className='group flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left'
+        >
+          <ChevronDown
+            className={cn(
+              'size-3.5 shrink-0 text-stone-400 transition-transform group-hover:text-neutral-900',
+              !open && '-rotate-90'
+            )}
+          />
+          <h3 className='truncate font-serif text-base leading-tight tracking-tight text-neutral-900'>
+            {block.blockName}
+          </h3>
+          <span className='inline-flex shrink-0 items-center rounded-full bg-stone-100 px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-stone-500 uppercase'>
+            {block.blockType.replace('_', ' ')}
+          </span>
+          {block.isNew && (
+            <span className='inline-flex shrink-0 items-center rounded-full bg-emerald-50 px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-emerald-700 uppercase ring-1 ring-emerald-200/60'>
+              + Mới
+            </span>
+          )}
+          {block.isRemoved && (
+            <span className='inline-flex shrink-0 items-center rounded-full bg-rose-50 px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-rose-700 uppercase ring-1 ring-rose-200/60'>
+              − Xoá
+            </span>
+          )}
+        </button>
+
+        {totalGroups > 0 && (
+          <div className='flex shrink-0 items-center gap-2'>
+            <span className='font-mono text-[10px] text-stone-500 tabular-nums'>
+              {acceptedCount}/{totalGroups}
+            </span>
+            <Switch
+              checked={allOn}
+              indeterminate={someOn}
+              onClick={onToggleBlock}
+              ariaLabel={`Toggle ${block.blockName}`}
+            />
+          </div>
+        )}
       </div>
+
+      {/* Groups (collapsible) — indented under the header */}
+      {open && totalGroups > 0 && (
+        <div className='mt-2.5 flex flex-col gap-2 pl-7'>
+          {block.groups.map(g => (
+            <GroupCard
+              key={g.group}
+              groupDiff={g}
+              accepted={accepted.has(g.group)}
+              onToggle={() => onToggleGroup(g.group)}
+            />
+          ))}
+        </div>
+      )}
     </li>
   );
 }
