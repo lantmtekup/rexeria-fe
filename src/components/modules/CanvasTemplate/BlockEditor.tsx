@@ -808,13 +808,14 @@ export function BlockEditor({
     const toastId = toast.loading(
       `AI đang áp dụng "${product.name}" vào canvas…`
     );
+    const requestBody = {
+      product_id: product.id,
+      lang,
+      preserve_user_overrides: true,
+      expected_canvas_etag: templateRef.current?.canvas_etag,
+    };
     try {
-      const res = await rexerApi.ai.canvasApplyProduct(templateId, {
-        product_id: product.id,
-        lang,
-        preserve_user_overrides: true,
-        expected_canvas_etag: templateRef.current?.canvas_etag,
-      });
+      const res = await rexerApi.ai.canvasApplyProduct(templateId, requestBody);
       const parsed = parseCanvas(res.canvas_data);
       if (!parsed?.blocks.length) {
         throw new Error('BE returned empty canvas_data');
@@ -833,14 +834,84 @@ export function BlockEditor({
         { id: toastId }
       );
     } catch (err) {
+      // Build a full debug payload so the user can paste it into a BE
+      // ticket without opening DevTools. Includes request, ETag, response
+      // error, and the canvas_data we last saved (helps BE reproduce).
+      const isRx = err instanceof RxApiError;
+      const debugPayload = {
+        endpoint: `POST /v1/ai/canvas-templates/${templateId}/apply-product`,
+        request: requestBody,
+        response: isRx
+          ? {
+              status: err.status,
+              code: err.code,
+              message: err.message,
+              details: err.details,
+              request_id: err.requestId,
+            }
+          : { error: err instanceof Error ? err.message : String(err) },
+        context: {
+          template_id: templateId,
+          template_version: templateRef.current?.version,
+          canvas_etag: templateRef.current?.canvas_etag,
+          blocks_in_memory: blocksRef.current.length,
+          active_block_id: activeIdRef.current,
+          product: { id: product.id, name: product.name },
+        },
+        canvas_data_inmemory: serializeCanvas(
+          blocksRef.current,
+          activeIdRef.current ?? undefined,
+          publishRef.current
+        ),
+      };
+
+      // eslint-disable-next-line no-console
+      console.groupCollapsed(
+        `%c[apply-product FAILED] ${isRx ? `${err.status} ${err.code}` : 'unknown'}`,
+        'color:#dc2626;font-weight:600'
+      );
+      // eslint-disable-next-line no-console
+      console.log('Copy this for BE:', debugPayload);
+      // eslint-disable-next-line no-console
+      console.log(
+        'JSON (copy from here):',
+        JSON.stringify(debugPayload, null, 2)
+      );
+      // eslint-disable-next-line no-console
+      console.groupEnd();
+
       // BE call failed — fall back to client-side deterministic mapping so
       // user still gets something rather than nothing. Keep the pushHistory
       // entry so undo works either way.
       setBlocks(prev => applyProductToBlocks(prev, product));
       setDirty(true);
+
       toast.error(
         `AI thất bại (${rxErrorMessage(err)}) — đã fill bằng mapping mặc định`,
-        { id: toastId }
+        {
+          id: toastId,
+          duration: 12000,
+          // Copy the full debug payload to clipboard so user can paste into
+          // a BE ticket without opening DevTools.
+          action: {
+            label: 'Copy debug',
+            onClick: () => {
+              const text = JSON.stringify(debugPayload, null, 2);
+              const done = () => toast.success('Đã copy debug payload');
+              if (navigator.clipboard?.writeText) {
+                navigator.clipboard.writeText(text).then(done, () => {
+                  // eslint-disable-next-line no-console
+                  console.log('Clipboard blocked — payload:', text);
+                  toast.info('Clipboard bị block — payload trong console');
+                });
+              } else {
+                // eslint-disable-next-line no-console
+                console.log(text);
+                toast.info('Payload đã in ra console (F12)');
+              }
+            },
+          },
+        }
       );
     } finally {
       setApplyingProduct(false);
