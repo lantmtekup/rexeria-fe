@@ -49,6 +49,13 @@ export function serializeCanvas(
   publish?: PublishMeta
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {
+    // Keep `schema` + `version` (V1 fields) ALONGSIDE the new `schema_version`
+    // (V2) so BE handlers that haven't migrated yet — notably the AI apply-
+    // product endpoint, which still validates `schema === "block_editor"` —
+    // continue to recognise the canvas. Both fields point at the same shape;
+    // newer BE handlers prefer `schema_version`.
+    schema: LEGACY_SCHEMA,
+    version: 2,
     schema_version: SCHEMA_VERSION,
     blocks,
   };
