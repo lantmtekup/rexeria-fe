@@ -20,7 +20,13 @@ import { ElementToolbar } from './block-editor/ElementToolbar';
 import { PreviewMode } from './block-editor/PreviewMode';
 import { ProductPickerDialog } from './block-editor/ProductPickerDialog';
 import { PublishDialog } from './block-editor/PublishDialog';
+import { ReviewChangesDialog } from './block-editor/ReviewChangesDialog';
 import { applyProductToBlocks } from './block-editor/applyProduct';
+import { diffCanvas, type CanvasDiff } from './block-editor/diffCanvas';
+import {
+  mergeAcceptedChanges,
+  type AcceptMap,
+} from './block-editor/mergeAcceptedChanges';
 import { createBlock } from './block-editor/factory';
 import {
   newShareToken,
@@ -800,39 +806,56 @@ export function BlockEditor({
   };
 
   const [applyingProduct, setApplyingProduct] = React.useState(false);
+  /**
+   * State for the "Review changes" intermediate step (FA-3). When AI returns
+   * a proposed canvas we don't apply directly — instead we open the review
+   * dialog with a diff and let the user accept/reject per (block, group).
+   */
+  const [reviewState, setReviewState] = React.useState<{
+    diff: CanvasDiff;
+    aiBlocks: Block[];
+    originalBlocks: Block[];
+    productName: string;
+  } | null>(null);
 
   const handleApplyProduct = async (product: Product) => {
     if (applyingProduct) return;
-    pushHistory();
     setApplyingProduct(true);
-    const toastId = toast.loading(
-      `AI đang áp dụng "${product.name}" vào canvas…`
-    );
+    const toastId = toast.loading(`AI đang phân tích "${product.name}"…`);
     const requestBody = {
       product_id: product.id,
       lang,
       preserve_user_overrides: true,
       expected_canvas_etag: templateRef.current?.canvas_etag,
     };
+    // Snapshot the user's blocks BEFORE the AI call so the review dialog can
+    // diff against the pristine state. Even though BE persists the AI output
+    // (no dry-run yet), we let the user pick which fields actually land via
+    // mergeAcceptedChanges.
+    const originalBlocks = structuredClone(blocksRef.current);
     try {
       const res = await rexerApi.ai.canvasApplyProduct(templateId, requestBody);
       const parsed = parseCanvas(res.canvas_data);
       if (!parsed?.blocks.length) {
         throw new Error('BE returned empty canvas_data');
       }
-      setBlocks(parsed.blocks);
-      // Move active to the first block of the new layout if current id is gone.
-      if (!parsed.blocks.find(b => b.id === activeIdRef.current)) {
-        setActiveId(parsed.blocks[0]?.id ?? null);
+      // Open the review dialog instead of applying immediately. The actual
+      // setBlocks/save happens inside `handleApplyReviewedChanges` once the
+      // user picks which (block, group) pairs to accept.
+      const diff = diffCanvas(originalBlocks, parsed.blocks, lang);
+      if (diff.totalChanges === 0) {
+        toast.info('AI không đề xuất thay đổi nào — canvas giữ nguyên.', {
+          id: toastId,
+        });
+        return;
       }
-      setDirty(true);
-      const { applied, source } = res;
-      toast.success(
-        source === 'ai'
-          ? `AI rewrote ${applied.blocks_rewritten}/${applied.blocks_total} block · ${applied.image_bindings_replaced} ảnh thay`
-          : `Đã áp dụng "${product.name}" (fallback mẫu — BE chưa nối AI)`,
-        { id: toastId }
-      );
+      setReviewState({
+        diff,
+        aiBlocks: parsed.blocks,
+        originalBlocks,
+        productName: product.name,
+      });
+      toast.dismiss(toastId);
     } catch (err) {
       // Build a full debug payload so the user can paste it into a BE
       // ticket without opening DevTools. Includes request, ETag, response
@@ -881,8 +904,9 @@ export function BlockEditor({
       console.groupEnd();
 
       // BE call failed — fall back to client-side deterministic mapping so
-      // user still gets something rather than nothing. Keep the pushHistory
-      // entry so undo works either way.
+      // user still gets something rather than nothing. Push history first
+      // so undo restores the pre-fallback state.
+      pushHistory();
       setBlocks(prev => applyProductToBlocks(prev, product));
       setDirty(true);
 
@@ -916,6 +940,32 @@ export function BlockEditor({
     } finally {
       setApplyingProduct(false);
     }
+  };
+
+  /**
+   * Called when the user confirms which AI-proposed changes to apply.
+   * Merges per-(block, group) accept map → updates blocks → marks dirty.
+   * Autosave then persists. Pushes history so the entire merge is undoable.
+   */
+  const handleApplyReviewedChanges = (accept: AcceptMap) => {
+    if (!reviewState) return;
+    const { aiBlocks, originalBlocks, productName } = reviewState;
+    const merged = mergeAcceptedChanges(originalBlocks, aiBlocks, accept);
+
+    // Count what actually changed for the success toast.
+    let acceptedFields = 0;
+    for (const [, groups] of accept) acceptedFields += groups.size;
+
+    pushHistory();
+    setBlocks(merged);
+    if (!merged.find(b => b.id === activeIdRef.current)) {
+      setActiveId(merged[0]?.id ?? null);
+    }
+    setDirty(true);
+    setReviewState(null);
+    toast.success(
+      `Đã áp dụng ${acceptedFields} nhóm thay đổi từ "${productName}"`
+    );
   };
 
   const handleDuplicate = () => {
@@ -1213,6 +1263,19 @@ export function BlockEditor({
         saving={duplicating}
         onOpenChange={setDuplicateOpen}
         onConfirm={handleDuplicateConfirm}
+      />
+
+      {/* Intermediate review step for "Áp dụng SP" — opens after AI returns
+          its proposed canvas, lets the user accept/reject per (block, group)
+          before the merge lands. See plan FA-1..FA-3. */}
+      <ReviewChangesDialog
+        open={reviewState !== null}
+        diff={reviewState?.diff ?? null}
+        productName={reviewState?.productName ?? ''}
+        onOpenChange={open => {
+          if (!open) setReviewState(null);
+        }}
+        onApply={handleApplyReviewedChanges}
       />
     </div>
   );
