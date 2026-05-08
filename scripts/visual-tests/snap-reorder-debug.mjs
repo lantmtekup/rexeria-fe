@@ -41,8 +41,13 @@ console.log('eyebrow order=' + before.eyebrow.order, '| top=' + Math.round(befor
 console.log('title   order=' + before.title.order, '| top=' + Math.round(before.title.rectTop), '| text=' + before.title.text);
 
 // === Drag Title row above Eyebrow row in layers sidebar ===
-const titleRow = page.locator('aside [role=button]').filter({ hasText: 'Tiêu đề' }).first();
-const eyebrowRow = page.locator('aside [role=button]').filter({ hasText: 'Eyebrow' }).first();
+// New design: dedicated drag handle button (aria-label="Kéo để sắp xếp <label>").
+const titleRow = page
+  .locator('aside button[aria-label*="Tiêu đề"][aria-label*="Kéo"]')
+  .first();
+const eyebrowRow = page
+  .locator('aside button[aria-label*="Eyebrow"][aria-label*="Kéo"]')
+  .first();
 
 const titleBox = await titleRow.boundingBox();
 const eyebrowBox = await eyebrowRow.boundingBox();

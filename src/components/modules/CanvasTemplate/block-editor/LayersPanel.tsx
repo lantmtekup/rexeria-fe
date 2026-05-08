@@ -4,16 +4,20 @@ import * as React from 'react';
 import {
   closestCenter,
   DndContext,
+  DragOverlay,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
-  PointerSensor,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
+  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
@@ -157,8 +161,15 @@ export function LayersPanel({
     [order, baseElements]
   );
 
+  // Mouse + touch sensors split — TouchSensor needs a small delay to
+  // distinguish drag from scroll on mobile. MouseSensor uses distance so
+  // a quick click stays a click. KeyboardSensor enables a11y reorder.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   // Track drag state for the status banner — gives users a visible cue that
@@ -277,29 +288,60 @@ export function LayersPanel({
           strategy={verticalListSortingStrategy}
         >
           <div className='flex flex-col gap-1.5'>
-            {orderedElements.map(element => (
-              <LayerRow
-                key={element.key}
-                element={element}
-                active={selectedKey === element.key}
-                hasStyle={
-                  element.key === BACKGROUND_LAYER_KEY
-                    ? !!block.background?.desktop
-                    : !!block.elementStyles?.desktop?.[element.key]
-                }
-                color={
-                  element.key === BACKGROUND_LAYER_KEY
-                    ? block.background?.desktop?.color
-                    : block.elementStyles?.desktop?.[element.key]?.color
-                }
-                mobileOverride={hasMobileOverride(block, element.key)}
-                onSelect={() =>
-                  onSelectKey(selectedKey === element.key ? null : element.key)
-                }
-              />
-            ))}
+            {orderedElements.map(element => {
+              const isOver = dragState.overKey === element.key;
+              const overFromAbove =
+                isOver &&
+                dragState.activeKey !== null &&
+                order.indexOf(dragState.activeKey) > order.indexOf(element.key);
+              return (
+                <LayerRow
+                  key={element.key}
+                  element={element}
+                  active={selectedKey === element.key}
+                  isAnyDragging={dragState.activeKey !== null}
+                  dropIndicator={
+                    isOver ? (overFromAbove ? 'above' : 'below') : null
+                  }
+                  hasStyle={
+                    element.key === BACKGROUND_LAYER_KEY
+                      ? !!block.background?.desktop
+                      : !!block.elementStyles?.desktop?.[element.key]
+                  }
+                  color={
+                    element.key === BACKGROUND_LAYER_KEY
+                      ? block.background?.desktop?.color
+                      : block.elementStyles?.desktop?.[element.key]?.color
+                  }
+                  mobileOverride={hasMobileOverride(block, element.key)}
+                  onSelect={() =>
+                    onSelectKey(
+                      selectedKey === element.key ? null : element.key
+                    )
+                  }
+                />
+              );
+            })}
           </div>
         </SortableContext>
+
+        {/* Floating ghost — Figma/Canva style drag preview. */}
+        <DragOverlay
+          dropAnimation={{
+            duration: 180,
+            easing: 'cubic-bezier(0.18, 0.67, 0.6, 1)',
+          }}
+        >
+          {dragState.activeKey
+            ? (() => {
+                const el = baseElements.find(
+                  e => e.key === dragState.activeKey
+                );
+                if (!el) return null;
+                return <DragGhost element={el} />;
+              })()
+            : null}
+        </DragOverlay>
       </DndContext>
       <p className='mt-1 text-[10px] text-neutral-400'>
         Click 1 lớp để mở popup chỉnh sửa. Kéo (≥4px) để sắp xếp lại.
@@ -313,6 +355,8 @@ function LayerRow({
   active,
   color,
   mobileOverride,
+  isAnyDragging,
+  dropIndicator,
   onSelect,
 }: {
   element: LayerElement;
@@ -320,12 +364,17 @@ function LayerRow({
   hasStyle: boolean;
   color?: string;
   mobileOverride?: boolean;
+  /** True when ANY row is being dragged (used to dim non-target rows). */
+  isAnyDragging: boolean;
+  /** Where the drop indicator line should render relative to this row. */
+  dropIndicator: 'above' | 'below' | null;
   onSelect: () => void;
 }) {
   const {
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -344,57 +393,103 @@ function LayerRow({
       style={sortableStyle}
       data-testid={`layer-row-${element.key}`}
       data-layer-key={element.key}
-      // Spread dnd-kit listeners on the whole row so user can grab anywhere
-      // to drag. Click-to-select still works because the PointerSensor's
-      // `activationConstraint: { distance: 4 }` requires 4+ px movement to
-      // trigger a drag — a plain click stays a click.
-      {...attributes}
-      {...listeners}
-      onClick={onSelect}
-      role='button'
-      tabIndex={0}
-      onKeyDown={e => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onSelect();
-        }
-      }}
+      data-dragging={isDragging ? 'true' : undefined}
       className={cn(
-        'group flex cursor-grab touch-none items-center gap-2 rounded-md border bg-white px-2 py-2 transition-colors select-none active:cursor-grabbing',
+        'group relative flex items-center gap-2 rounded-md border bg-white px-2 py-2 transition-all select-none',
         active
           ? 'border-sky-500 ring-1 ring-sky-500'
           : 'border-neutral-200 hover:border-sky-400 hover:bg-sky-50/50',
-        isDragging &&
-          'z-10 scale-[1.02] border-sky-500 bg-white shadow-lg ring-2 ring-sky-300'
+        // Source row while being dragged: faded + flat (Figma pattern)
+        isDragging && 'opacity-30',
+        // Other rows while ANY row is being dragged: subtle non-interactive
+        !isDragging && isAnyDragging && 'cursor-default'
       )}
     >
-      <span
-        aria-hidden
-        className='flex size-5 shrink-0 items-center justify-center text-neutral-400 transition-colors group-hover:text-sky-600'
+      {/* ── Drop indicator line (Figma/Canva style) ────────────────────── */}
+      {dropIndicator && (
+        <span
+          aria-hidden
+          className={cn(
+            'pointer-events-none absolute -right-1 -left-1 z-20 flex items-center',
+            dropIndicator === 'above' ? '-top-1' : '-bottom-1'
+          )}
+        >
+          {/* Round terminator */}
+          <span className='size-2 rounded-full bg-sky-500 shadow-[0_0_0_3px_rgba(14,165,233,0.18)]' />
+          {/* Animated line */}
+          <span className='-ml-0.5 h-0.5 flex-1 rounded-full bg-sky-500 shadow-[0_0_0_3px_rgba(14,165,233,0.18)]' />
+          <span className='size-2 rounded-full bg-sky-500 shadow-[0_0_0_3px_rgba(14,165,233,0.18)]' />
+        </span>
+      )}
+
+      {/* ── Dedicated drag handle (clearer affordance, like Notion/Figma) */}
+      <button
+        ref={setActivatorNodeRef}
+        type='button'
+        {...attributes}
+        {...listeners}
+        aria-label={`Kéo để sắp xếp ${element.label}`}
+        title='Kéo để sắp xếp'
+        className={cn(
+          'flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded transition-colors select-none active:cursor-grabbing',
+          'text-neutral-300 hover:bg-sky-100 hover:text-sky-700',
+          isDragging && 'cursor-grabbing bg-sky-100 text-sky-700'
+        )}
       >
+        <GripVertical className='size-4' />
+      </button>
+
+      {/* ── Click target for selection (separate from drag) ──────────── */}
+      <button
+        type='button'
+        onClick={onSelect}
+        className='flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left'
+      >
+        <Icon className='size-3.5 shrink-0 text-neutral-500' />
+        <span className='flex-1 truncate text-xs text-neutral-700 group-hover:text-neutral-900'>
+          {element.label}
+        </span>
+        {color && (
+          <span
+            aria-hidden
+            className='size-3 shrink-0 rounded-sm border border-neutral-200'
+            style={{ backgroundColor: color }}
+          />
+        )}
+        {mobileOverride && (
+          <span
+            aria-label='Đã tuỳ biến cho mobile'
+            title='Đã tuỳ biến cho mobile'
+            data-testid='layer-mobile-badge'
+            className='inline-flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-tight text-emerald-700 ring-1 ring-emerald-200/80'
+          >
+            📱
+          </span>
+        )}
+      </button>
+    </div>
+  );
+}
+
+// ─── Drag ghost — floating preview that follows the cursor ────────────────
+
+function DragGhost({ element }: { element: LayerElement }) {
+  const Icon = element.icon;
+  return (
+    <div
+      className='flex cursor-grabbing items-center gap-2 rounded-md border border-sky-400 bg-white px-2 py-2 shadow-2xl ring-2 ring-sky-300/60'
+      style={{
+        // Slight tilt for tactile feel — matches Figma/Canva drag preview.
+        transform: 'rotate(-2deg) scale(1.02)',
+      }}
+    >
+      <span className='flex size-7 shrink-0 items-center justify-center rounded bg-sky-100 text-sky-700'>
         <GripVertical className='size-4' />
       </span>
       <Icon className='size-3.5 shrink-0 text-neutral-500' />
-      <span className='flex-1 truncate text-left text-xs text-neutral-700 group-hover:text-neutral-900'>
+      <span className='text-xs font-semibold text-neutral-900'>
         {element.label}
       </span>
-      {color && (
-        <span
-          aria-hidden
-          className='size-3 shrink-0 rounded-sm border border-neutral-200'
-          style={{ backgroundColor: color }}
-        />
-      )}
-      {mobileOverride && (
-        <span
-          aria-label='Đã tuỳ biến cho mobile'
-          title='Đã tuỳ biến cho mobile'
-          data-testid='layer-mobile-badge'
-          className='inline-flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-tight text-emerald-700 ring-1 ring-emerald-200/80'
-        >
-          📱
-        </span>
-      )}
     </div>
   );
 }
