@@ -1,0 +1,125 @@
+{
+  "admin": {
+    "forbidden": "Bạn không có quyền truy cập trang quản trị.",
+    "refresh": "Làm mới",
+    "search": "Tìm",
+    "creating": "Đang tạo…",
+    "prev": "Trước",
+    "next": "Sau",
+    "pageOf": "Trang {page}/{total}",
+    "nav": {
+      "overview": "Tổng quan",
+      "products": "Sản phẩm",
+      "templates": "Template",
+      "users": "Người dùng",
+      "aiUsage": "AI Usage",
+      "feedback": "Feedback"
+    },
+    "overview": {
+      "title": "Bảng điều khiển Admin",
+      "subtitle": "Tổng quan dữ liệu hệ thống. Bấm thẻ để vào trang chi tiết.",
+      "products": "Sản phẩm",
+      "templates": "Template",
+      "users": "Người dùng",
+      "aiUsage": "AI Usage",
+      "feedback": "Feedback",
+      "quickActions": "Truy cập nhanh",
+      "manageProducts": "Quản lý sản phẩm",
+      "manageTemplates": "Quản lý template",
+      "manageUsers": "Quản lý người dùng",
+      "manageAiUsage": "Quản lý AI usage",
+      "manageFeedback": "Quản lý feedback"
+    },
+    "products": {
+      "title": "Sản phẩm",
+      "subtitle": "{total, plural, =0 {Chưa có sản phẩm} =1 {1 sản phẩm} other {# sản phẩm}}",
+      "create": "Tạo sản phẩm",
+      "searchPlaceholder": "Tìm theo tên, SKU, mô tả…",
+      "empty": "Không có sản phẩm nào",
+      "edit": "Chỉnh sửa",
+      "col": {
+        "name": "Tên",
+        "sku": "SKU",
+        "status": "Trạng thái",
+        "created": "Tạo lúc"
+      },
+      "status": {
+        "draft": "Nháp",
+        "active": "Đang dùng",
+        "archived": "Lưu trữ"
+      }
+    },
+    "templates": {
+      "title": "Template",
+      "subtitle": "{total, plural, =0 {Chưa có template} =1 {1 template} other {# template}}",
+      "note": "Template hệ thống được quản lý qua versioning. Tạo mới bằng cách publish version từ Canvas Builder.",
+      "empty": "Không có template nào",
+      "view": "Xem",
+      "col": {
+        "name": "Tên",
+        "code": "Code",
+        "status": "Trạng thái",
+        "created": "Tạo lúc"
+      }
+    },
+    "aiUsage": {
+      "title": "AI Token Usage",
+      "subtitle": "Theo dõi token AI tiêu thụ của tất cả user và workspace.",
+      "exportCsv": "Xuất CSV",
+      "exporting": "Đang xuất…",
+      "empty": "Chưa có dữ liệu",
+      "topUsers": "Top user theo chi phí",
+      "topFeatures": "Top feature theo chi phí",
+      "recent": "Request gần đây",
+      "costOverTime": "Chi phí theo thời gian",
+      "range": {
+        "7d": "7 ngày",
+        "30d": "30 ngày",
+        "90d": "90 ngày"
+      },
+      "stat": {
+        "requests": "Tổng request",
+        "tokens": "Tổng tokens",
+        "cost": "Tổng chi phí",
+        "activeUsers": "User đang dùng"
+      },
+      "col": {
+        "user": "User",
+        "feature": "Feature",
+        "model": "Model",
+        "requests": "Request",
+        "tokens": "Tokens",
+        "cost": "Chi phí",
+        "created": "Thời gian",
+        "status": "Trạng thái"
+      },
+      "feature": {
+        "product_enrich": "Làm giàu sản phẩm",
+        "template_suggest": "Gợi ý template",
+        "landing_draft": "Draft landing",
+        "landing_optimize": "Tối ưu landing",
+        "media_suggest": "Gợi ý media",
+        "campaign_plan": "Kế hoạch campaign",
+        "block_content": "Nội dung block",
+        "canvas_apply_product": "Apply product canvas"
+      },
+      "status": {
+        "success": "Thành công",
+        "error": "Lỗi",
+        "timeout": "Timeout"
+      }
+    },
+    "users": {
+      "title": "Người dùng / Workspace",
+      "subtitle": "{total, plural, =0 {Chưa có workspace} =1 {1 workspace} other {# workspace}}",
+      "note": "Hiện đang hiển thị danh sách Client (workspace). User-level list sẽ thêm khi BE expose.",
+      "empty": "Không có workspace nào",
+      "view": "Chi tiết",
+      "col": {
+        "name": "Tên",
+        "status": "Trạng thái",
+        "created": "Tạo lúc"
+      }
+    }
+  }
+}

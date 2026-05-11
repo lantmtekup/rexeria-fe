@@ -5,6 +5,8 @@
       "sectionAccountTeam": "Account & Team",
       "teamLabel": "Team",
       "sectionGeneral": "General",
+      "sectionAdmin": "Admin",
+      "navAdmin": "Admin dashboard",
       "sectionOther": "Other",
       "navHome": "Home",
       "navTemplate": "Template",
@@ -17,7 +19,18 @@
       "navSupport": "Support center",
       "guest": "Guest",
       "logout": "Logout",
-      "basicPlan": "Basic plan"
+      "basicPlan": "Basic plan",
+      "changePassword": "Change password",
+      "changePasswordTitle": "Change password",
+      "changePasswordSubtitle": "New password must be at least {min} characters.",
+      "changePasswordOld": "Current password",
+      "changePasswordNew": "New password",
+      "changePasswordConfirm": "Confirm new password",
+      "changePasswordSubmit": "Update",
+      "changePasswordSubmitting": "Updating…",
+      "changePasswordSuccess": "Password updated successfully.",
+      "passwordMismatch": "Passwords do not match",
+      "cancel": "Cancel"
     },
     "home": {
       "title": "Welcome to REXER",

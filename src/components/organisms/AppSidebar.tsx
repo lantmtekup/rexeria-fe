@@ -1,17 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
 import {
-  Bell,
   Home,
   LayoutTemplate,
-  LogOut,
   Megaphone,
   MessageCircleQuestion,
   Package,
   PanelLeftClose,
-  Settings,
+  ShieldCheck,
   Sparkles,
   X,
 } from 'lucide-react';
@@ -19,21 +16,13 @@ import { useTranslations } from 'next-intl';
 
 import { Logo } from '@/components/atoms/logo';
 import { ThemeToggle } from '@/components/atoms/theme-toggle';
-import { AccountCard } from '@/components/molecules/AccountCard';
 import { SidebarItem } from '@/components/molecules/SidebarItem';
 import { SidebarSectionLabel } from '@/components/molecules/SidebarSectionLabel';
-import { TeamCard } from '@/components/molecules/TeamCard';
+import { UserProfileMenu } from '@/components/molecules/UserProfileMenu';
 import { useAuthRole } from '@/hooks/useAuthRole';
-import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { cn } from '@/lib/cn';
-import { logoutThunk } from '@/store/slices/authSlice';
 
 export interface AppSidebarProps extends React.HTMLAttributes<HTMLElement> {
-  team?: {
-    name: string;
-    initial?: string;
-    color?: string;
-  };
   /** When true, render as an overlay drawer on mobile (< md). Ignored on ≥ md. */
   mobileOpen?: boolean;
   /** Called when the drawer should close (backdrop click, nav tap, Esc). */
@@ -46,10 +35,9 @@ export interface AppSidebarProps extends React.HTMLAttributes<HTMLElement> {
 
 /**
  * Main left sidebar for the REXER app shell.
- * Layout: Logo → Account & Team → General nav → Other nav → ThemeToggle pinned bottom.
+ * Layout: Logo → General nav → Other nav → UserProfileMenu pinned bottom.
  */
 function AppSidebar({
-  team = { name: 'Hnd.Studio', initial: 'H' },
   mobileOpen = false,
   onMobileClose,
   desktopCollapsed = false,
@@ -57,24 +45,7 @@ function AppSidebar({
   className,
 }: AppSidebarProps) {
   const t = useTranslations('app.sidebar');
-  const router = useRouter();
-  const dispatch = useAppDispatch();
-  const user = useAppSelector(s => s.auth.user);
-  const { isClientUser } = useAuthRole();
-  const [menuOpen, setMenuOpen] = React.useState(false);
-  const menuRef = React.useRef<HTMLDivElement | null>(null);
-
-  // Click-outside to close the logout menu.
-  React.useEffect(() => {
-    if (!menuOpen) return;
-    function handler(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [menuOpen]);
+  const { isInternal } = useAuthRole();
 
   // Esc to close mobile drawer.
   React.useEffect(() => {
@@ -85,17 +56,6 @@ function AppSidebar({
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [mobileOpen, onMobileClose]);
-
-  async function handleLogout() {
-    setMenuOpen(false);
-    await dispatch(logoutThunk())
-      .unwrap()
-      .catch(() => {});
-    router.replace('/sign-in');
-  }
-
-  const displayName = user?.display_name || user?.email || t('guest');
-  const planLabel = user?.email || t('basicPlan');
 
   // Tap on a nav link should close the drawer on mobile.
   const handleNavClick = React.useCallback(
@@ -167,41 +127,6 @@ function AppSidebar({
           className='flex flex-1 flex-col overflow-y-auto'
           onClick={handleNavClick}
         >
-          {/* Account & Team */}
-          <SidebarSectionLabel>{t('sectionAccountTeam')}</SidebarSectionLabel>
-          <div ref={menuRef} className='relative flex flex-col gap-1 px-2'>
-            <AccountCard
-              sublabel={planLabel}
-              name={displayName}
-              onClick={() => setMenuOpen(v => !v)}
-              aria-expanded={menuOpen}
-            />
-            {menuOpen && (
-              <div
-                role='menu'
-                className='border-border bg-background absolute top-[calc(100%+4px)] right-2 left-2 z-20 overflow-hidden rounded-lg border shadow-md'
-              >
-                <button
-                  type='button'
-                  role='menuitem'
-                  onClick={handleLogout}
-                  className='text-foreground hover:bg-muted flex w-full cursor-pointer items-center gap-2 px-4 py-2.5 text-left text-sm transition-colors'
-                >
-                  <LogOut className='size-4' />
-                  {t('logout')}
-                </button>
-              </div>
-            )}
-            {!isClientUser && (
-              <TeamCard
-                sublabel={t('teamLabel')}
-                name={team.name}
-                initial={team.initial}
-                color={team.color}
-              />
-            )}
-          </div>
-
           {/* General */}
           <SidebarSectionLabel>{t('sectionGeneral')}</SidebarSectionLabel>
           <nav className='flex flex-col'>
@@ -228,19 +153,23 @@ function AppSidebar({
             />
           </nav>
 
+          {/* Admin (internal only) */}
+          {isInternal && (
+            <>
+              <SidebarSectionLabel>{t('sectionAdmin')}</SidebarSectionLabel>
+              <nav className='flex flex-col'>
+                <SidebarItem
+                  href='/admin'
+                  label={t('navAdmin')}
+                  icon={ShieldCheck}
+                />
+              </nav>
+            </>
+          )}
+
           {/* Other */}
           <SidebarSectionLabel>{t('sectionOther')}</SidebarSectionLabel>
           <nav className='flex flex-col'>
-            <SidebarItem
-              href='/notification'
-              label={t('navNotification')}
-              icon={Bell}
-            />
-            <SidebarItem
-              href='/setting'
-              label={t('navSetting')}
-              icon={Settings}
-            />
             <SidebarItem
               href='/support'
               label={t('navSupport')}
@@ -251,8 +180,9 @@ function AppSidebar({
           <div className='flex-1' />
         </div>
 
-        {/* Theme toggle pinned to bottom */}
-        <div className='border-sidebar-border border-t px-5 py-4'>
+        {/* Profile + theme toggle pinned to bottom */}
+        <div className='border-sidebar-border flex flex-col gap-2 border-t px-3 py-3'>
+          <UserProfileMenu />
           <ThemeToggle className='w-full [&>button]:flex-1' />
         </div>
       </aside>

@@ -77,6 +77,226 @@ export interface ResetPasswordRequest {
   new_password: string;
 }
 
+// ── Firebase Auth login ──────────────────────────────────────────────────
+/**
+ * FE flow: `signInWithPopup(googleProvider)` → user.getIdToken() → POST here.
+ * BE verifies the Firebase ID token via Firebase Admin SDK, upserts the
+ * user, and issues a session cookie. See `docs/be-alpha-spec.md` §B.3.
+ */
+export interface FirebaseLoginRequest {
+  id_token: string;
+  /** Analytics-only — BE upserts regardless. */
+  intent?: 'signin' | 'signup';
+  /** Optional — relative same-origin path FE wants to land on after login. */
+  redirect_after?: string;
+}
+
+export interface FirebaseLoginResponse {
+  user: RxUser;
+  session: RxSession;
+  /** Present when BE auto-creates an empty Client for the new user. */
+  client?: Client;
+  is_new_user: boolean;
+  /** True when BE linked Firebase identity to an existing same-email user. */
+  linked: boolean;
+  redirect_after?: string;
+}
+
+// ── Feedback (Alpha) ─────────────────────────────────────────────────────
+export type FeedbackCategory =
+  | 'bug'
+  | 'improvement'
+  | 'question'
+  | 'praise'
+  | 'other';
+export type FeedbackSeverity = 'low' | 'medium' | 'high' | 'critical';
+export type FeedbackStatus =
+  | 'new'
+  | 'triaged'
+  | 'in_progress'
+  | 'resolved'
+  | 'wontfix';
+
+export interface Feedback {
+  id: string;
+  user_id: string;
+  client_id?: string;
+  category: FeedbackCategory;
+  severity?: FeedbackSeverity;
+  title?: string;
+  message: string;
+  rating?: number;
+  page_url: string;
+  user_agent: string;
+  app_version?: string;
+  screenshot_id?: string;
+  meta?: Record<string, unknown>;
+  status: FeedbackStatus;
+  /** Admin-only — only present in admin endpoints. */
+  internal_note?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateFeedbackRequest {
+  category: FeedbackCategory;
+  severity?: FeedbackSeverity;
+  title?: string;
+  message: string;
+  rating?: number;
+  page_url: string;
+  user_agent: string;
+  app_version?: string;
+  screenshot_id?: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface UpdateFeedbackRequest {
+  status?: FeedbackStatus;
+  internal_note?: string;
+}
+
+export interface FeedbackResponse {
+  feedback: Feedback;
+}
+
+export interface FeedbackListResponse {
+  items: Feedback[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
+export interface AdminFeedbackQuery {
+  status?: FeedbackStatus;
+  category?: FeedbackCategory;
+  severity?: FeedbackSeverity;
+  q?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+  sort?: string;
+}
+
+// ── AI Usage (Alpha) ─────────────────────────────────────────────────────
+export type AIUsageFeature =
+  | 'product_enrich'
+  | 'template_suggest'
+  | 'landing_draft'
+  | 'landing_optimize'
+  | 'media_suggest'
+  | 'campaign_plan'
+  | 'block_content'
+  | 'canvas_apply_product';
+export type AIUsageProvider = 'anthropic' | 'openai' | 'google' | 'local';
+export type AIUsageStatus = 'success' | 'error' | 'timeout';
+
+export interface AIUsage {
+  id: string;
+  user_id: string;
+  client_id?: string;
+  request_id: string;
+  feature: AIUsageFeature;
+  model: string;
+  provider: AIUsageProvider;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  cached_tokens?: number;
+  cost_usd: number;
+  latency_ms?: number;
+  status: AIUsageStatus;
+  error_code?: string;
+  meta?: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface AIUsageSummary {
+  total_requests: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  cached_tokens: number;
+  cost_usd: number;
+  first_at?: string;
+  last_at?: string;
+}
+
+export interface AIUsageBucket {
+  bucket: string;
+  requests: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  cost_usd: number;
+}
+
+export interface AIUsageFeatureRow {
+  feature: AIUsageFeature;
+  requests: number;
+  total_tokens: number;
+  cost_usd: number;
+}
+
+export interface AIUsageModelRow {
+  model: string;
+  requests: number;
+  cost_usd: number;
+}
+
+export interface AIUsageUserRow {
+  user_id: string;
+  user_email?: string;
+  requests: number;
+  total_tokens: number;
+  cost_usd: number;
+}
+
+export interface AIUsageClientRow {
+  client_id: string;
+  client_name?: string;
+  requests: number;
+  total_tokens: number;
+  cost_usd: number;
+}
+
+export interface AIUsageSummaryResponse {
+  summary: AIUsageSummary;
+  series: AIUsageBucket[];
+  top_features: AIUsageFeatureRow[];
+  top_models?: AIUsageModelRow[];
+}
+
+export interface AIUsageGlobalResponse extends AIUsageSummaryResponse {
+  top_users: AIUsageUserRow[];
+  top_clients: AIUsageClientRow[];
+}
+
+export interface AIUsageListResponse {
+  items: AIUsage[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
+export interface AIUsageQuery {
+  from?: string;
+  to?: string;
+  group_by?: 'day' | 'week' | 'feature' | 'model' | 'provider';
+  status?: AIUsageStatus;
+  user_id?: string;
+  client_id?: string;
+  feature?: AIUsageFeature;
+  model?: string;
+  provider?: AIUsageProvider;
+}
+
+export interface AIUsageListQuery extends AIUsageQuery {
+  page?: number;
+  limit?: number;
+  sort?: string;
+}
+
 // ── Dashboard ────────────────────────────────────────────────────────────
 export interface DashboardSummary {
   active_clients: number;

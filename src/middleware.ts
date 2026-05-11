@@ -13,6 +13,7 @@ const protectedRoutes = [
   '/notification',
   '/setting',
   '/support',
+  '/admin',
 ];
 
 const authRoutes = ['/dang-nhap', '/quen-mat-khau', '/sign-in'];
@@ -84,6 +85,7 @@ export async function middleware(request: NextRequest) {
       '/notification',
       '/setting',
       '/support',
+      '/admin',
     ];
     if (appRoots.some(p => pathnameWithoutLocale.startsWith(p))) {
       return NextResponse.redirect(new URL('/sign-in', request.url));

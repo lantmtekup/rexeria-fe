@@ -1,0 +1,75 @@
+{
+  "feedback": {
+    "openButton": "Gửi feedback",
+    "title": "Gửi feedback Alpha",
+    "subtitle": "Cho team biết bạn thấy gì — bug, đề xuất, khen chê đều được.",
+    "categoryLabel": "Loại feedback",
+    "category": {
+      "bug": "Lỗi",
+      "improvement": "Đề xuất",
+      "question": "Câu hỏi",
+      "praise": "Khen",
+      "other": "Khác"
+    },
+    "severityLabel": "Mức độ ảnh hưởng",
+    "severity": {
+      "low": "Thấp",
+      "medium": "Trung bình",
+      "high": "Cao",
+      "critical": "Nghiêm trọng"
+    },
+    "ratingLabel": "Đánh giá (1–5)",
+    "messageLabel": "Mô tả",
+    "messagePlaceholder": "Mô tả càng chi tiết càng tốt — bước tái hiện, kỳ vọng, kết quả thực tế.",
+    "messageMinHint": "Tối thiểu {min} ký tự",
+    "screenshotLabel": "Đính kèm ảnh chụp màn hình (tùy chọn)",
+    "screenshotAdd": "Tải ảnh lên",
+    "screenshotRemove": "Xoá ảnh",
+    "submit": "Gửi",
+    "submitting": "Đang gửi…",
+    "cancel": "Huỷ",
+    "successMessage": "Đã gửi! Cảm ơn bạn đã giúp team Alpha.",
+    "admin": {
+      "title": "Triage feedback",
+      "subtitle": "{total, plural, =0 {Chưa có feedback} =1 {1 feedback} other {# feedback}} trong filter hiện tại",
+      "refresh": "Làm mới",
+      "exportCsv": "Xuất CSV",
+      "exporting": "Đang xuất…",
+      "search": "Tìm",
+      "searchPlaceholder": "Tìm theo tiêu đề / nội dung",
+      "filterStatus": "Trạng thái",
+      "filterCategory": "Loại",
+      "filterSeverity": "Mức độ",
+      "empty": "Không có feedback nào khớp filter",
+      "prev": "Trước",
+      "next": "Sau",
+      "pageOf": "Trang {page}/{total}",
+      "saving": "Đang lưu…",
+      "save": "Lưu",
+      "status": {
+        "new": "Mới",
+        "triaged": "Đã phân loại",
+        "in_progress": "Đang xử lý",
+        "resolved": "Đã giải quyết",
+        "wontfix": "Không xử lý"
+      },
+      "col": {
+        "created": "Thời gian",
+        "category": "Loại",
+        "severity": "Mức độ",
+        "message": "Nội dung",
+        "status": "Trạng thái"
+      },
+      "detail": {
+        "user": "User ID",
+        "appVersion": "App version",
+        "pageUrl": "Page URL",
+        "userAgent": "User agent",
+        "meta": "Metadata",
+        "statusLabel": "Cập nhật trạng thái",
+        "noteLabel": "Ghi chú nội bộ",
+        "notePlaceholder": "Vd. Linear ENG-412"
+      }
+    }
+  }
+}

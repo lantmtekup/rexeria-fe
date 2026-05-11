@@ -5,6 +5,8 @@
       "sectionAccountTeam": "Tài khoản & Nhóm",
       "teamLabel": "Nhóm",
       "sectionGeneral": "Chung",
+      "sectionAdmin": "Quản trị",
+      "navAdmin": "Bảng admin",
       "sectionOther": "Khác",
       "navHome": "Trang chủ",
       "navTemplate": "Template",
@@ -17,7 +19,18 @@
       "navSupport": "Trung tâm hỗ trợ",
       "guest": "Khách",
       "logout": "Đăng xuất",
-      "basicPlan": "Gói cơ bản"
+      "basicPlan": "Gói cơ bản",
+      "changePassword": "Đổi mật khẩu",
+      "changePasswordTitle": "Đổi mật khẩu",
+      "changePasswordSubtitle": "Mật khẩu mới tối thiểu {min} ký tự.",
+      "changePasswordOld": "Mật khẩu hiện tại",
+      "changePasswordNew": "Mật khẩu mới",
+      "changePasswordConfirm": "Xác nhận mật khẩu mới",
+      "changePasswordSubmit": "Cập nhật",
+      "changePasswordSubmitting": "Đang cập nhật…",
+      "changePasswordSuccess": "Đã đổi mật khẩu thành công.",
+      "passwordMismatch": "Mật khẩu xác nhận không khớp",
+      "cancel": "Huỷ"
     },
     "home": {
       "title": "Chào mừng đến với REXER",

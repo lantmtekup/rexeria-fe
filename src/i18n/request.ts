@@ -17,6 +17,8 @@ export default getRequestConfig(async () => {
       import(`./messages/validation/${locale}.json`),
       import(`./messages/upload/${locale}.json`),
       import(`./messages/app/${locale}.json`),
+      import(`./messages/feedback/${locale}.json`),
+      import(`./messages/admin/${locale}.json`),
     ]);
 
     return {

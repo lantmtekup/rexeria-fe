@@ -98,6 +98,18 @@ import type {
   PublishValidationResponse,
   RegisterRequest,
   RegisterResponse,
+  AdminFeedbackQuery,
+  AIUsageGlobalResponse,
+  AIUsageListQuery,
+  AIUsageListResponse,
+  AIUsageQuery,
+  AIUsageSummaryResponse,
+  CreateFeedbackRequest,
+  FeedbackListResponse,
+  FeedbackResponse,
+  FirebaseLoginRequest,
+  FirebaseLoginResponse,
+  UpdateFeedbackRequest,
   Release,
   ReportListResponse,
   ReleaseListResponse,
@@ -140,6 +152,16 @@ export const rexerApi = {
       }),
     resetPassword: (body: ResetPasswordRequest) =>
       rx<{ message?: string }>('/auth/reset-password', {
+        method: 'POST',
+        body,
+      }),
+    /**
+     * Exchange a Firebase ID token (from `signInWithPopup`) for a Rexer
+     * session. BE verifies the token via Firebase Admin SDK, then upserts
+     * the user. See `docs/be-alpha-spec.md` §B.3.
+     */
+    firebaseLogin: (body: FirebaseLoginRequest) =>
+      rx<FirebaseLoginResponse>('/auth/firebase/login', {
         method: 'POST',
         body,
       }),
@@ -715,5 +737,95 @@ export const rexerApi = {
         `/collections/${collectionId}/records/${recordId}`,
         { method: 'DELETE' }
       ),
+  },
+
+  // ── Feedback (be-alpha-spec.md §C) ─────────────────────────────────────
+  feedback: {
+    create: (body: CreateFeedbackRequest) =>
+      rx<FeedbackResponse>('/feedback', { method: 'POST', body }),
+    myList: (query?: {
+      status?: string;
+      category?: string;
+      page?: number;
+      limit?: number;
+      sort?: string;
+    }) => rx<FeedbackListResponse>('/feedback/me', { query }),
+  },
+
+  // ── AI Usage (be-ai-usage-spec.md) ─────────────────────────────────────
+  meAiUsage: {
+    /**
+     * User self-view — BE forces `user_id = ctx.user_id`. See
+     * `docs/be-ai-usage-spec.md` §4.5.
+     */
+    summary: (query?: AIUsageQuery) =>
+      rx<AIUsageSummaryResponse>('/me/ai-usage', {
+        query: query as Record<string, string | number | undefined>,
+      }),
+  },
+
+  adminAiUsage: {
+    userSummary: (userId: string, query?: AIUsageQuery) =>
+      rx<AIUsageSummaryResponse>(`/admin/users/${userId}/ai-usage`, {
+        query: query as Record<string, string | number | undefined>,
+      }),
+    globalSummary: (query?: AIUsageQuery) =>
+      rx<AIUsageGlobalResponse>('/admin/ai-usage', {
+        query: query as Record<string, string | number | undefined>,
+      }),
+    list: (query?: AIUsageListQuery) =>
+      rx<AIUsageListResponse>('/admin/ai-usage/list', {
+        query: query as Record<string, string | number | undefined>,
+      }),
+    /** Returns CSV blob — caller should trigger a download. */
+    exportCsv: async (query?: AIUsageListQuery): Promise<Blob> => {
+      const usp = new URLSearchParams();
+      if (query) {
+        for (const [k, v] of Object.entries(query)) {
+          if (v == null || v === '') continue;
+          usp.append(k, String(v));
+        }
+      }
+      const qs = usp.toString();
+      const res = await fetch(
+        `/api/rexer/admin/ai-usage/export.csv${qs ? `?${qs}` : ''}`,
+        { credentials: 'include' }
+      );
+      if (!res.ok) {
+        throw new Error(`CSV export failed: ${res.status}`);
+      }
+      return res.blob();
+    },
+  },
+
+  adminFeedback: {
+    list: (query?: AdminFeedbackQuery) =>
+      rx<FeedbackListResponse>('/admin/feedback', {
+        query: query as Record<string, string | number | undefined>,
+      }),
+    update: (id: string, body: UpdateFeedbackRequest) =>
+      rx<FeedbackResponse>(`/admin/feedback/${id}`, {
+        method: 'PATCH',
+        body,
+      }),
+    /** Returns CSV blob — caller should trigger a download. */
+    exportCsv: async (query?: AdminFeedbackQuery): Promise<Blob> => {
+      const usp = new URLSearchParams();
+      if (query) {
+        for (const [k, v] of Object.entries(query)) {
+          if (v == null || v === '') continue;
+          usp.append(k, String(v));
+        }
+      }
+      const qs = usp.toString();
+      const res = await fetch(
+        `/api/rexer/admin/feedback/export.csv${qs ? `?${qs}` : ''}`,
+        { credentials: 'include' }
+      );
+      if (!res.ok) {
+        throw new Error(`CSV export failed: ${res.status}`);
+      }
+      return res.blob();
+    },
   },
 };

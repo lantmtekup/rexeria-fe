@@ -1,0 +1,75 @@
+{
+  "feedback": {
+    "openButton": "Send feedback",
+    "title": "Send Alpha feedback",
+    "subtitle": "Tell us what you see — bugs, suggestions, praise are all welcome.",
+    "categoryLabel": "Category",
+    "category": {
+      "bug": "Bug",
+      "improvement": "Improvement",
+      "question": "Question",
+      "praise": "Praise",
+      "other": "Other"
+    },
+    "severityLabel": "Severity",
+    "severity": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "ratingLabel": "Rating (1–5)",
+    "messageLabel": "Description",
+    "messagePlaceholder": "Be specific — repro steps, expected vs. actual result.",
+    "messageMinHint": "Minimum {min} characters",
+    "screenshotLabel": "Attach screenshot (optional)",
+    "screenshotAdd": "Upload image",
+    "screenshotRemove": "Remove image",
+    "submit": "Send",
+    "submitting": "Sending…",
+    "cancel": "Cancel",
+    "successMessage": "Sent! Thanks for helping the Alpha team.",
+    "admin": {
+      "title": "Feedback triage",
+      "subtitle": "{total, plural, =0 {No feedback} =1 {1 item} other {# items}} matching the current filters",
+      "refresh": "Refresh",
+      "exportCsv": "Export CSV",
+      "exporting": "Exporting…",
+      "search": "Search",
+      "searchPlaceholder": "Search title / message",
+      "filterStatus": "Status",
+      "filterCategory": "Category",
+      "filterSeverity": "Severity",
+      "empty": "No feedback matches the current filters",
+      "prev": "Previous",
+      "next": "Next",
+      "pageOf": "Page {page}/{total}",
+      "saving": "Saving…",
+      "save": "Save",
+      "status": {
+        "new": "New",
+        "triaged": "Triaged",
+        "in_progress": "In progress",
+        "resolved": "Resolved",
+        "wontfix": "Won't fix"
+      },
+      "col": {
+        "created": "Created",
+        "category": "Category",
+        "severity": "Severity",
+        "message": "Message",
+        "status": "Status"
+      },
+      "detail": {
+        "user": "User ID",
+        "appVersion": "App version",
+        "pageUrl": "Page URL",
+        "userAgent": "User agent",
+        "meta": "Metadata",
+        "statusLabel": "Update status",
+        "noteLabel": "Internal note",
+        "notePlaceholder": "e.g. Linear ENG-412"
+      }
+    }
+  }
+}

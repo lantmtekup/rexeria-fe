@@ -27,6 +27,8 @@
     "login": "Login",
     "continueFacebook": "Continue with Facebook",
     "continueGoogle": "Continue with Google",
-    "continueApple": "Continue with Apple"
+    "continueApple": "Continue with Apple",
+    "companyNamePlaceholder": "Company name (optional)",
+    "googleCallbackLoading": "Signing you in with Google…"
   }
 }

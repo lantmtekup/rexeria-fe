@@ -1,0 +1,125 @@
+{
+  "admin": {
+    "forbidden": "You don't have access to the admin area.",
+    "refresh": "Refresh",
+    "search": "Search",
+    "creating": "Creating…",
+    "prev": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page}/{total}",
+    "nav": {
+      "overview": "Overview",
+      "products": "Products",
+      "templates": "Templates",
+      "users": "Users",
+      "aiUsage": "AI Usage",
+      "feedback": "Feedback"
+    },
+    "overview": {
+      "title": "Admin Dashboard",
+      "subtitle": "System overview. Click any card to drill down.",
+      "products": "Products",
+      "templates": "Templates",
+      "users": "Users",
+      "aiUsage": "AI Usage",
+      "feedback": "Feedback",
+      "quickActions": "Quick actions",
+      "manageProducts": "Manage products",
+      "manageTemplates": "Manage templates",
+      "manageUsers": "Manage users",
+      "manageAiUsage": "Manage AI usage",
+      "manageFeedback": "Manage feedback"
+    },
+    "products": {
+      "title": "Products",
+      "subtitle": "{total, plural, =0 {No products} =1 {1 product} other {# products}}",
+      "create": "New product",
+      "searchPlaceholder": "Search by name, SKU, description…",
+      "empty": "No products",
+      "edit": "Edit",
+      "col": {
+        "name": "Name",
+        "sku": "SKU",
+        "status": "Status",
+        "created": "Created"
+      },
+      "status": {
+        "draft": "Draft",
+        "active": "Active",
+        "archived": "Archived"
+      }
+    },
+    "templates": {
+      "title": "Templates",
+      "subtitle": "{total, plural, =0 {No templates} =1 {1 template} other {# templates}}",
+      "note": "System templates are managed via versioning. Publish a new version from Canvas Builder to create one.",
+      "empty": "No templates",
+      "view": "View",
+      "col": {
+        "name": "Name",
+        "code": "Code",
+        "status": "Status",
+        "created": "Created"
+      }
+    },
+    "aiUsage": {
+      "title": "AI Token Usage",
+      "subtitle": "Monitor AI token consumption across users and workspaces.",
+      "exportCsv": "Export CSV",
+      "exporting": "Exporting…",
+      "empty": "No data",
+      "topUsers": "Top users by cost",
+      "topFeatures": "Top features by cost",
+      "recent": "Recent requests",
+      "costOverTime": "Cost over time",
+      "range": {
+        "7d": "7 days",
+        "30d": "30 days",
+        "90d": "90 days"
+      },
+      "stat": {
+        "requests": "Total requests",
+        "tokens": "Total tokens",
+        "cost": "Total cost",
+        "activeUsers": "Active users"
+      },
+      "col": {
+        "user": "User",
+        "feature": "Feature",
+        "model": "Model",
+        "requests": "Requests",
+        "tokens": "Tokens",
+        "cost": "Cost",
+        "created": "Created",
+        "status": "Status"
+      },
+      "feature": {
+        "product_enrich": "Product enrich",
+        "template_suggest": "Template suggest",
+        "landing_draft": "Landing draft",
+        "landing_optimize": "Landing optimize",
+        "media_suggest": "Media suggest",
+        "campaign_plan": "Campaign plan",
+        "block_content": "Block content",
+        "canvas_apply_product": "Apply product"
+      },
+      "status": {
+        "success": "Success",
+        "error": "Error",
+        "timeout": "Timeout"
+      }
+    },
+    "users": {
+      "title": "Users / Workspaces",
+      "subtitle": "{total, plural, =0 {No workspaces} =1 {1 workspace} other {# workspaces}}",
+      "note": "Currently showing Client (workspace) list. User-level list will be added once BE exposes it.",
+      "empty": "No workspaces",
+      "view": "Details",
+      "col": {
+        "name": "Name",
+        "status": "Status",
+        "created": "Created"
+      }
+    }
+  }
+}

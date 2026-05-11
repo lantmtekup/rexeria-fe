@@ -27,6 +27,8 @@
     "login": "Đăng nhập",
     "continueFacebook": "Tiếp tục với Facebook",
     "continueGoogle": "Tiếp tục với Google",
-    "continueApple": "Tiếp tục với Apple"
+    "continueApple": "Tiếp tục với Apple",
+    "companyNamePlaceholder": "Tên công ty (tùy chọn)",
+    "googleCallbackLoading": "Đang xác thực với Google…"
   }
 }
