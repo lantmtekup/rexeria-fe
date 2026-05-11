@@ -1,9 +1,10 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
 import { z } from 'zod';
@@ -27,6 +28,7 @@ export default function RexerSignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status, error } = useAppSelector(s => s.auth);
+  const [showPassword, setShowPassword] = useState(false);
 
   const schema = useMemo(
     () =>
@@ -104,17 +106,31 @@ export default function RexerSignInForm() {
               {...form.register('email')}
             />
             <div className='bg-border h-px' />
-            <input
-              type='password'
-              autoComplete='current-password'
-              placeholder={t('passwordPlaceholder')}
-              className={cn(
-                'text-foreground placeholder:text-content-muted block w-full px-4 py-4 text-sm outline-none focus:bg-neutral-50',
-                form.formState.errors.password && 'bg-danger-bg'
-              )}
-              aria-invalid={Boolean(form.formState.errors.password)}
-              {...form.register('password')}
-            />
+            <div className='relative'>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                autoComplete='current-password'
+                placeholder={t('passwordPlaceholder')}
+                className={cn(
+                  'text-foreground placeholder:text-content-muted block w-full px-4 py-4 pr-12 text-sm outline-none focus:bg-neutral-50',
+                  form.formState.errors.password && 'bg-danger-bg'
+                )}
+                aria-invalid={Boolean(form.formState.errors.password)}
+                {...form.register('password')}
+              />
+              <button
+                type='button'
+                onClick={() => setShowPassword(prev => !prev)}
+                className='text-content-muted hover:text-foreground absolute top-1/2 right-4 -translate-y-1/2 transition-colors'
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <EyeOff className='size-5' />
+                ) : (
+                  <Eye className='size-5' />
+                )}
+              </button>
+            </div>
           </div>
 
           {(form.formState.errors.email ||
