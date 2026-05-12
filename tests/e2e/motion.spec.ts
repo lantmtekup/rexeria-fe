@@ -1,145 +1,200 @@
-import { expect, test } from 'playwright/test';
+import { expect, test, type Page } from 'playwright/test';
 
+/**
+ * Open the timeline modal and delete every existing track so each test
+ * starts with a clean slate. Without this, autosave persists tracks added
+ * by an earlier test, and the AddTrack popover hides element keys that
+ * already have a track.
+ */
+async function clearAllTracks(page: Page) {
+  await page.getByTestId('header-motion-editor').click();
+  await expect(page.getByTestId('motion-modal')).toBeVisible();
+  // Remove rows one-by-one — count drops as we click. Cap iterations to
+  // avoid infinite loops on a stuck UI.
+  for (let i = 0; i < 20; i++) {
+    const remaining = await page.getByLabel('Xóa track').count();
+    if (remaining === 0) break;
+    await page.getByLabel('Xóa track').first().click();
+  }
+  // Leave modal open — most callers want it open to perform their setup.
+}
+
+/**
+ * Phase 3 timeline editor — track-based motion. Tests cover modal entry
+ * points, controls bar, add/remove track, keyframe interactions, inspector,
+ * and modal close transitions.
+ *
+ * Requires the canvas template `TEMPLATE_ID` to exist on the BE pointed at
+ * by `NEXT_PUBLIC_REXER_API`. See `tests/e2e/auth.setup.ts` for credentials.
+ */
 const TEMPLATE_ID = 'e0c2b922-0dca-4fdb-be04-f622d9b6c5cb';
 const EDITOR_URL = `/canvas-templates/${TEMPLATE_ID}`;
 
-test.describe('Motion subsystem · canvas editor', () => {
-  test('header motion button is rendered', async ({ page }) => {
+test.describe('Motion timeline editor', () => {
+  test.beforeEach(async ({ page }) => {
     await page.goto(EDITOR_URL);
-    const btn = page.getByTestId('header-motion-button');
-    await expect(btn).toBeVisible({ timeout: 20_000 });
-    await expect(btn).toContainText('Motion');
+    // Wait for the editor header to render — confirms canvas loaded.
+    await expect(page.getByTestId('header-motion-editor')).toBeVisible({
+      timeout: 20_000,
+    });
   });
 
-  test('motion popover opens with preset gallery and categories', async ({
-    page,
-  }) => {
-    await page.goto(EDITOR_URL);
-    await page.getByTestId('header-motion-button').click();
-
-    const popover = page.getByTestId('motion-popover');
-    await expect(popover).toBeVisible();
-
-    // hero block defaults — entrance category should appear with cards
-    await expect(popover.getByTestId('motion-category-entrance')).toBeVisible();
-    await expect(
-      popover.getByTestId('motion-preset-hero.fade-up-stagger')
-    ).toBeVisible();
-
-    // Apply button initially disabled (no preset selected)
-    await expect(popover.getByTestId('motion-popover-apply')).toBeDisabled();
+  test('header Timeline button opens the modal', async ({ page }) => {
+    await page.getByTestId('header-motion-editor').click();
+    await expect(page.getByTestId('motion-modal')).toBeVisible();
+    await expect(page.getByTestId('motion-duration')).toBeVisible();
   });
 
-  test('selecting a preset enables apply, persists to header label', async ({
-    page,
-  }) => {
-    await page.goto(EDITOR_URL);
-    await page.getByTestId('header-motion-button').click();
-
-    const popover = page.getByTestId('motion-popover');
-    await popover.getByTestId('motion-preset-hero.fade-up-stagger').click();
-
-    // active flag flips on the card
-    await expect(
-      popover.getByTestId('motion-preset-hero.fade-up-stagger')
-    ).toHaveAttribute('data-active', 'true');
-
-    // knobs panel surfaces — match the role group, not the card text.
-    await expect(
-      popover.getByRole('radiogroup', { name: 'Tốc độ' })
-    ).toBeVisible();
-    await expect(
-      popover.getByRole('radiogroup', { name: 'Cường độ' })
-    ).toBeVisible();
-    await expect(
-      popover.getByRole('radiogroup', { name: 'Cascade' })
-    ).toBeVisible();
-
-    const apply = popover.getByTestId('motion-popover-apply');
-    await expect(apply).toBeEnabled();
-    await apply.click();
-
-    // popover closed
-    await expect(popover).toBeHidden();
-
-    // header reflects the applied preset name
-    const btn = page.getByTestId('header-motion-button');
-    await expect(btn).toContainText('Hiện lên + cascade');
-  });
-
-  test('disable motion via popover footer clears header label', async ({
-    page,
-  }) => {
-    await page.goto(EDITOR_URL);
-
-    // First apply a preset
-    await page.getByTestId('header-motion-button').click();
-    let popover = page.getByTestId('motion-popover');
-    await popover.getByTestId('motion-preset-hero.scale-in').click();
-    await popover.getByTestId('motion-popover-apply').click();
-
-    // Reopen and disable
-    await page.getByTestId('header-motion-button').click();
-    popover = page.getByTestId('motion-popover');
-    await popover.getByTestId('motion-popover-disable').click();
-
-    // header should fall back to 'Motion'
-    const btn = page.getByTestId('header-motion-button');
-    await expect(btn).toHaveText(/Motion/i);
-  });
-
-  test('sidebar Motion tab renders empty-state when no element selected', async ({
-    page,
-  }) => {
-    await page.goto(EDITOR_URL);
-    // BlockEditorSidebar already mounts with Lớp tab active.
+  test('sidebar Motion tab → CTA opens the modal', async ({ page }) => {
     await page.getByTestId('sidebar-tab-motion').click();
-    await expect(page.getByTestId('motion-panel-empty')).toBeVisible();
+    await page.getByTestId('sidebar-open-motion-editor').click();
+    await expect(page.getByTestId('motion-modal')).toBeVisible();
   });
 
-  test('preview button toggles preview state', async ({ page }) => {
-    await page.goto(EDITOR_URL);
-    const previewBtn = page.getByTestId('header-motion-preview');
-    await expect(previewBtn).toBeVisible();
-    await previewBtn.click();
-    // Visual state: button gets indigo bg class (we verify via class name match)
-    await expect(previewBtn).toHaveClass(/indigo/);
+  test('ESC closes the modal', async ({ page }) => {
+    await page.getByTestId('header-motion-editor').click();
+    await expect(page.getByTestId('motion-modal')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('motion-modal')).toBeHidden({
+      timeout: 2_000,
+    });
   });
 
-  test('Space key triggers motion preview', async ({ page }) => {
-    await page.goto(EDITOR_URL);
-    const previewBtn = page.getByTestId('header-motion-preview');
-    await page.locator('body').focus();
-    await page.keyboard.press('Space');
-    await expect(previewBtn).toHaveClass(/indigo/);
+  test('Close button hides the modal', async ({ page }) => {
+    await page.getByTestId('header-motion-editor').click();
+    await page.getByTestId('motion-modal-close').click();
+    await expect(page.getByTestId('motion-modal')).toBeHidden({
+      timeout: 2_000,
+    });
   });
 
-  test('?testMotion= URL param applies a hero motion (visible animation)', async ({
+  test('controls bar surfaces duration / trigger / play', async ({ page }) => {
+    await page.getByTestId('header-motion-editor').click();
+    await expect(page.getByTestId('motion-duration')).toHaveValue(/\d+/);
+    await expect(page.getByTestId('motion-trigger')).toBeVisible();
+    await expect(page.getByTestId('motion-play')).toBeVisible();
+  });
+
+  test('changing duration is reflected in the input', async ({ page }) => {
+    await page.getByTestId('header-motion-editor').click();
+    const dur = page.getByTestId('motion-duration');
+    await dur.fill('2500');
+    await expect(dur).toHaveValue('2500');
+  });
+
+  test('add track flow: open popover → pick element → track row appears', async ({
     page,
   }) => {
-    await page.goto(`${EDITOR_URL}?testMotion=hero.fade-up-stagger`);
+    await clearAllTracks(page);
 
-    // Wait for canvas to render — at least 1 element-key target should exist.
-    const firstTarget = page
-      .locator('[data-element-key]:not([data-element-key^="__"])')
-      .first();
-    await expect(firstTarget).toBeAttached({ timeout: 20_000 });
+    const addBtn = page.getByTestId('motion-add-track');
+    await expect(addBtn).toBeEnabled({ timeout: 5_000 });
+    await addBtn.click();
 
-    // GSAP applies inline transform/opacity on `from` tweens. Verify within
-    // a reasonable window that at least one targeted element has a non-empty
-    // inline style.
+    // Pick the block-root key — every block exposes it, so this is the
+    // most stable option. The selector matches the data-testid built from
+    // the BLOCK_ROOT_KEY constant ("__block__").
+    const opt = page.getByTestId('motion-add-track-option-__block__');
+    await expect(opt).toBeVisible();
+    await opt.click();
+
+    // The new track row should appear in the timeline.
+    await expect(page.getByTestId('motion-track-__block__')).toBeVisible();
+    // Default factory seeds two keyframes (0 + 60% of duration).
+    await expect(page.getByTestId('motion-kf-__block__-0')).toBeVisible();
+    await expect(page.getByTestId('motion-kf-__block__-1')).toBeVisible();
+  });
+
+  test('clicking a keyframe opens the inspector', async ({ page }) => {
+    await clearAllTracks(page);
+    await page.getByTestId('motion-add-track').click();
+    await page.getByTestId('motion-add-track-option-__block__').click();
+
+    await page.getByTestId('motion-kf-__block__-0').click();
+    await expect(page.getByTestId('motion-inspector')).toBeVisible();
+    await expect(page.getByTestId('motion-kf-time')).toBeVisible();
+    await expect(page.getByTestId('motion-kf-time')).toHaveValue('0');
+  });
+
+  test('editing keyframe time via inspector persists and re-orders kfs', async ({
+    page,
+  }) => {
+    await clearAllTracks(page);
+    await page.getByTestId('motion-add-track').click();
+    await page.getByTestId('motion-add-track-option-__block__').click();
+
+    // Select kf 0 (time=0). Bump its time past kf 1 (time≈900ms) → array
+    // re-sorts in patchKeyframe so the largest-time kf becomes index 1.
+    await page.getByTestId('motion-kf-__block__-0').click();
+    const timeInput = page.getByTestId('motion-kf-time');
+    await timeInput.fill('1500');
+
+    // Indices remain valid after sort (selection sticks to its slot, just
+    // points at a different kf now). Verify the timeline reflects the
+    // new ordering: index-1 diamond sits to the right of index-0.
     await expect
-      .poll(
-        async () => {
-          return await firstTarget.evaluate(el => {
-            const inline = (el as HTMLElement).style;
-            return Boolean(
-              inline.transform || inline.opacity || inline.visibility
-            );
-          });
-        },
-        { timeout: 5_000, intervals: [100, 200, 400] }
-      )
-      .toBe(true);
+      .poll(async () => {
+        const kf0 = await page
+          .getByTestId('motion-kf-__block__-0')
+          .evaluate(el => parseFloat((el as HTMLElement).style.left));
+        const kf1 = await page
+          .getByTestId('motion-kf-__block__-1')
+          .evaluate(el => parseFloat((el as HTMLElement).style.left));
+        return kf1 - kf0;
+      })
+      .toBeGreaterThan(0);
+  });
+
+  test('Delete key removes the selected keyframe', async ({ page }) => {
+    await clearAllTracks(page);
+    await page.getByTestId('motion-add-track').click();
+    await page.getByTestId('motion-add-track-option-__block__').click();
+
+    await page.getByTestId('motion-kf-__block__-0').click();
+    // Click the modal background so document.activeElement is no longer the
+    // diamond's <button> (Delete handler bails when an INPUT is focused, but
+    // also when nothing in particular has focus our handler still fires).
+    await page.getByTestId('motion-modal').click({ position: { x: 5, y: 5 } });
+    await page.getByTestId('motion-kf-__block__-0').click();
+    await page.keyboard.press('Delete');
+
+    // One kf was deleted — index 1 (the second seed) shouldn't exist anymore.
+    await expect(page.getByTestId('motion-kf-__block__-1')).toHaveCount(0);
+  });
+
+  test('inspector Delete button removes the keyframe', async ({ page }) => {
+    await clearAllTracks(page);
+    await page.getByTestId('motion-add-track').click();
+    await page.getByTestId('motion-add-track-option-__block__').click();
+
+    await page.getByTestId('motion-kf-__block__-1').click();
+    await page.getByTestId('motion-kf-delete').click();
+
+    await expect(page.getByTestId('motion-kf-__block__-1')).toHaveCount(0);
+    // Inspector closes after delete (selection cleared).
+    await expect(page.getByTestId('motion-inspector')).toBeHidden();
+  });
+
+  test('removing a track wipes its row + keyframes', async ({ page }) => {
+    await clearAllTracks(page);
+    await page.getByTestId('motion-add-track').click();
+    await page.getByTestId('motion-add-track-option-__block__').click();
+
+    const trackRow = page.getByTestId('motion-track-__block__');
+    await expect(trackRow).toBeVisible();
+    await trackRow.getByLabel('Xóa track').click();
+
+    await expect(trackRow).toHaveCount(0);
+  });
+
+  test('Play button triggers preview replay (no crash)', async ({ page }) => {
+    await clearAllTracks(page);
+    await page.getByTestId('motion-add-track').click();
+    await page.getByTestId('motion-add-track-option-__block__').click();
+    // Just verify clicking Play doesn't throw / unmount — no easy assertion
+    // on a one-shot GSAP play. The runtime's MotionProvider remounts via
+    // previewKey bump.
+    await page.getByTestId('motion-play').click();
+    await expect(page.getByTestId('motion-modal')).toBeVisible();
   });
 });

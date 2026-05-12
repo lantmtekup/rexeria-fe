@@ -1,9 +1,9 @@
 'use client';
 
-import * as React from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
+  Clapperboard,
   Copy,
   Eye,
   Globe2,
@@ -12,30 +12,23 @@ import {
   Play,
   Redo2,
   Smartphone,
-  Sparkles,
   Tablet,
   Undo2,
 } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 
-import { motionRegistry } from './motion/registry';
-import type { MotionConfig } from './motion/types';
-import { MotionPopover } from './motion/ui/MotionPopover';
-import type { BlockType, Device, Lang } from './types';
+import type { Device, Lang } from './types';
 
 export type HeaderTab = Lang | 'ai';
 
 interface BlockEditorHeaderProps {
   blockName: string;
-  blockType: BlockType;
   lang: Lang;
   device: Device;
   saving: boolean;
   dirty: boolean;
   duplicating?: boolean;
-  /** Block-level motion config for the current device variant. */
-  blockMotion: MotionConfig | null;
   onLangChange: (lang: Lang) => void;
   onDeviceChange: (device: Device) => void;
   onAi: () => void;
@@ -45,8 +38,8 @@ interface BlockEditorHeaderProps {
   onUndo: () => void;
   onRedo: () => void;
   onPublish: () => void;
-  onChangeBlockMotion: (next: MotionConfig | null) => void;
   onPlayMotionPreview: () => void;
+  onOpenMotionEditor: () => void;
   canUndo: boolean;
   canRedo: boolean;
   isPublished: boolean;
@@ -66,13 +59,11 @@ const DEVICE_BUTTONS: {
 
 export function BlockEditorHeader({
   blockName,
-  blockType,
   lang,
   device,
   saving,
   dirty,
   duplicating,
-  blockMotion,
   onLangChange,
   onDeviceChange,
   onAi,
@@ -82,8 +73,8 @@ export function BlockEditorHeader({
   onUndo,
   onRedo,
   onPublish,
-  onChangeBlockMotion,
   onPlayMotionPreview,
+  onOpenMotionEditor,
   canUndo,
   canRedo,
   isPublished,
@@ -91,10 +82,6 @@ export function BlockEditorHeader({
   backHref = '/canvas-templates',
 }: BlockEditorHeaderProps) {
   const status: SaveStatus = saving ? 'saving' : dirty ? 'dirty' : 'saved';
-  const [motionOpen, setMotionOpen] = React.useState(false);
-  const motionPresetName = blockMotion
-    ? motionRegistry.get(blockMotion.presetId)?.name.vi
-    : null;
 
   return (
     <header className='flex h-12 shrink-0 items-center gap-2.5 border-b border-neutral-200/80 bg-white px-3'>
@@ -174,34 +161,14 @@ export function BlockEditorHeader({
 
       <Divider />
 
-      {/* ── MOTION · preset + preview ──────────────────────────────── */}
-      <MotionPopover
-        blockType={blockType}
-        config={blockMotion}
-        onChange={onChangeBlockMotion}
-        onPreview={onPlayMotionPreview}
-        open={motionOpen}
-        onOpenChange={setMotionOpen}
-        trigger={
-          <button
-            type='button'
-            data-testid='header-motion-button'
-            className={cn(
-              'flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2 text-[11px] font-medium transition-colors',
-              blockMotion
-                ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
-            )}
-            title='Motion cho block (M)'
-          >
-            <Sparkles className='size-3.5' />
-            <span className='max-w-[120px] truncate'>
-              {motionPresetName ?? 'Motion'}
-            </span>
-          </button>
-        }
-      />
-
+      {/* ── MOTION · timeline editor + play preview ─────────────────── */}
+      <IconBtn
+        onClick={onOpenMotionEditor}
+        label='Mở trình chỉnh motion'
+        data-testid='header-motion-editor'
+      >
+        <Clapperboard className='size-4' />
+      </IconBtn>
       <IconBtn
         onClick={onPlayMotionPreview}
         label='Phát thử motion (Space)'

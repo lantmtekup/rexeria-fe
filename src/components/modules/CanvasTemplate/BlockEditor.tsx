@@ -21,6 +21,8 @@ import { PreviewMode } from './block-editor/PreviewMode';
 import { ProductPickerDialog } from './block-editor/ProductPickerDialog';
 import { PublishDialog } from './block-editor/PublishDialog';
 import { ReviewChangesDialog } from './block-editor/ReviewChangesDialog';
+import { MotionTimelineModal } from './block-editor/motion/timeline/MotionTimelineModal';
+import type { BlockMotion } from './block-editor/motion/types';
 import { applyProductToBlocks } from './block-editor/applyProduct';
 import { diffCanvas, type CanvasDiff } from './block-editor/diffCanvas';
 import {
@@ -40,15 +42,13 @@ import {
   type Block,
   type BlockBackground,
   type BlockContent,
-  type BlockMotionConfigStored,
-  type BlockMotionMapStored,
+  type BlockMotionStored,
   type BlockType,
   type Device,
   type ElementStyle,
   type ElementStylesMap,
   type Lang,
 } from './block-editor/types';
-import type { MotionConfig } from './block-editor/motion/types';
 
 interface BlockEditorProps {
   templateId: string;
@@ -151,6 +151,9 @@ export function BlockEditor({
   const motionPreviewTimer = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
+  // Full-screen timeline editor — opened from Header "Timeline" button or
+  // Sidebar "Motion" tab CTA. Autosaves via handleChangeBlockMotion.
+  const [motionEditorOpen, setMotionEditorOpen] = React.useState(false);
   // Once a save fails (typically 409 version conflict) we suppress the autosave
   // retry loop to stop toast spam. Reset on the next user-driven mutation so a
   // single retry happens automatically when the user keeps working.
@@ -506,49 +509,38 @@ export function BlockEditor({
   // ── Motion mutations ───────────────────────────────────────────────────
   const editVariantForMotion: 'desktop' | 'mobile' = editingVariantOf(device);
 
-  const writeMotion = React.useCallback(
-    (
-      patch: (
-        current: BlockMotionMapStored | undefined
-      ) => BlockMotionMapStored | undefined
-    ) => {
+  const handleChangeBlockMotion = React.useCallback(
+    (next: BlockMotionStored | null) => {
       if (!activeBlock) return;
       pushHistory();
       setBlocks(prev =>
         prev.map(b => {
           if (b.id !== activeBlock.id) return b;
           const variants = b.motion;
-          const currentForVariant = variants?.[editVariantForMotion];
-          const nextForVariant = patch(currentForVariant);
-          // DeviceVariants requires `desktop` to be defined. When the user
-          // edits the mobile variant first, seed desktop with an empty map
-          // so the type holds; the editor reads via `readVariant` which
-          // already falls back to desktop.
-          const desktopNext: BlockMotionMapStored =
+          // DeviceVariants requires `desktop` to always exist. When editing
+          // mobile and desktop is empty, leave desktop as undefined-tracks
+          // so render falls through readVariant.
+          const desktopNext: BlockMotionStored | undefined =
             editVariantForMotion === 'desktop'
-              ? (nextForVariant ?? {})
-              : (variants?.desktop ?? {});
-          const mobileNext: BlockMotionMapStored | undefined =
+              ? (next ?? undefined)
+              : variants?.desktop;
+          const mobileNext: BlockMotionStored | undefined =
             editVariantForMotion === 'mobile'
-              ? nextForVariant
+              ? (next ?? undefined)
               : variants?.mobile;
-          const desktopEmpty =
-            !desktopNext.block &&
-            !(desktopNext.elements && Object.keys(desktopNext.elements).length);
-          const mobileEmpty =
-            !mobileNext ||
-            (!mobileNext.block &&
-              !(
-                mobileNext.elements && Object.keys(mobileNext.elements).length
-              ));
-          if (desktopEmpty && mobileEmpty) {
+          const isEmpty = (m: BlockMotionStored | undefined) =>
+            !m || (m.tracks.length === 0 && m.duration === 0);
+          if (isEmpty(desktopNext) && isEmpty(mobileNext)) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { motion: _drop, ...rest } = b;
             return rest;
           }
           return {
             ...b,
-            motion: { desktop: desktopNext, mobile: mobileNext },
+            motion: {
+              desktop: desktopNext ?? { tracks: [], duration: 0 },
+              mobile: mobileNext,
+            },
           };
         })
       );
@@ -557,46 +549,7 @@ export function BlockEditor({
     [activeBlock, editVariantForMotion, pushHistory]
   );
 
-  const handleChangeBlockMotion = React.useCallback(
-    (next: MotionConfig | null) => {
-      writeMotion(current => {
-        if (!next) {
-          if (!current) return undefined;
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { block: _drop, ...rest } = current;
-          return Object.keys(rest).length
-            ? (rest as BlockMotionMapStored)
-            : undefined;
-        }
-        return {
-          ...(current ?? {}),
-          block: next as BlockMotionConfigStored,
-        };
-      });
-    },
-    [writeMotion]
-  );
-
-  const handleChangeElementMotion = React.useCallback(
-    (elementKey: string, next: MotionConfig | null) => {
-      writeMotion(current => {
-        const elements = { ...(current?.elements ?? {}) };
-        if (!next) {
-          delete elements[elementKey];
-        } else {
-          elements[elementKey] = next as BlockMotionConfigStored;
-        }
-        const cleaned: BlockMotionMapStored = {
-          ...(current ?? {}),
-          elements: Object.keys(elements).length ? elements : undefined,
-        };
-        if (!cleaned.block && !cleaned.elements) return undefined;
-        return cleaned;
-      });
-    },
-    [writeMotion]
-  );
-
+  // ── Motion preview ─────────────────────────────────────────────────────
   const playMotionPreview = React.useCallback(() => {
     setMotionPreviewing(true);
     if (motionPreviewTimer.current) {
@@ -1095,16 +1048,11 @@ export function BlockEditor({
     <div className='flex h-full min-h-0 flex-1 flex-col bg-neutral-100'>
       <BlockEditorHeader
         blockName={activeBlock?.name ?? '—'}
-        blockType={activeBlock?.blockType ?? 'hero_split'}
         lang={lang}
         device={device}
         saving={saving}
         dirty={dirty}
         duplicating={duplicating}
-        blockMotion={
-          (activeBlock?.motion?.[editVariantForMotion]?.block ??
-            null) as MotionConfig | null
-        }
         onLangChange={setLang}
         onDeviceChange={next => {
           // Reset the user-touched flag so each device toggle re-fits
@@ -1121,8 +1069,8 @@ export function BlockEditor({
         onUndo={handleUndo}
         onRedo={handleRedo}
         onPublish={() => setPublishOpen(true)}
-        onChangeBlockMotion={handleChangeBlockMotion}
         onPlayMotionPreview={playMotionPreview}
+        onOpenMotionEditor={() => setMotionEditorOpen(true)}
         canUndo={undoStackRef.current.length > 0}
         canRedo={redoStackRef.current.length > 0}
         isPublished={!!publish?.published}
@@ -1199,18 +1147,10 @@ export function BlockEditor({
             onCollapse={() => setLayersCollapsed(true)}
             activeTab={sidebarTab}
             onChangeTab={setSidebarTab}
-            blockMotion={
-              (activeBlock.motion?.[editVariantForMotion]?.block ??
-                null) as MotionConfig | null
+            motionTrackCount={
+              activeBlock.motion?.[editVariantForMotion]?.tracks.length ?? 0
             }
-            elementMotion={
-              selectedElementKey
-                ? ((activeBlock.motion?.[editVariantForMotion]?.elements?.[
-                    selectedElementKey
-                  ] ?? null) as MotionConfig | null)
-                : null
-            }
-            onChangeElementMotion={handleChangeElementMotion}
+            onOpenMotionEditor={() => setMotionEditorOpen(true)}
           />
         )}
 
@@ -1237,6 +1177,22 @@ export function BlockEditor({
           blocks={blocks}
           lang={lang}
           onClose={() => setPreviewing(false)}
+        />
+      )}
+
+      {activeBlock && (
+        <MotionTimelineModal
+          open={motionEditorOpen}
+          block={activeBlock}
+          device={device}
+          lang={lang}
+          motion={
+            activeBlock.motion?.[editVariantForMotion] as
+              | BlockMotion
+              | undefined
+          }
+          onChange={handleChangeBlockMotion}
+          onClose={() => setMotionEditorOpen(false)}
         />
       )}
 
