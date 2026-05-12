@@ -3,6 +3,7 @@ import type {
   Block,
   BlockBackground,
   BlockContent,
+  BlockMotionStored,
   DeviceVariants,
   ElementStylesMap,
 } from './types';
@@ -175,8 +176,37 @@ function migrateBlockV1toV2(b: Record<string, unknown>): Block {
       : wrap(elementStyles),
     background: isVariants(background) ? background : wrap(background),
     elementOrder: isVariants(elementOrder) ? elementOrder : wrap(elementOrder),
-    motion: b.motion as Block['motion'],
+    motion: migrateMotion(b.motion),
   };
+}
+
+/**
+ * Translate persisted `motion` field to the new track-based shape.
+ *
+ * - 2.0+ tracks payload (`{ tracks: [...] }`) passes through.
+ * - Legacy preset payload (`{ block: { presetId, ... } }` per device) is
+ *   dropped — the preset library was removed when motion went track-based,
+ *   so we have nothing to translate to. Returning `undefined` leaves the
+ *   block animation-free; the editor (Phase 3 timeline UI) will let users
+ *   re-author from scratch.
+ */
+function migrateMotion(raw: unknown): Block['motion'] {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const variants = raw as Record<string, unknown>;
+  const next: { desktop: BlockMotionStored; mobile?: BlockMotionStored } = {
+    desktop: { tracks: [], duration: 0, enabled: false },
+  };
+  let hasAny = false;
+  for (const variant of ['desktop', 'mobile'] as const) {
+    const v = variants[variant];
+    if (!v || typeof v !== 'object') continue;
+    if (Array.isArray((v as { tracks?: unknown }).tracks)) {
+      next[variant] = v as BlockMotionStored;
+      hasAny = true;
+    }
+    // Legacy `{ block, elements }` preset shape is intentionally skipped.
+  }
+  return hasAny ? next : undefined;
 }
 
 function isVariants<T>(v: unknown): v is DeviceVariants<T> {

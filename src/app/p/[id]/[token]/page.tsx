@@ -7,7 +7,11 @@ import { Globe2 } from 'lucide-react';
 
 import { Spinner } from '@/components/atoms/spinner';
 import { RenderBlock } from '@/components/modules/CanvasTemplate/block-editor/blocks/renderBlock';
-import { InViewBlock } from '@/components/modules/CanvasTemplate/block-editor/InViewBlock';
+import {
+  MotionBlockRoot,
+  MotionProvider,
+} from '@/components/modules/CanvasTemplate/block-editor/motion/runtime';
+import type { BlockMotion } from '@/components/modules/CanvasTemplate/block-editor/motion/types';
 import {
   parseCanvas,
   type BlockEditorCanvas,
@@ -130,19 +134,19 @@ export default function PublicLandingPage({ params }: PageProps) {
             const styles = block.elementStyles?.desktop;
             const background = block.background?.desktop;
             const order = block.elementOrder?.desktop;
+            const motion = block.motion?.desktop as BlockMotion | undefined;
             return (
-              <InViewBlock
-                key={block.id}
-                className='overflow-hidden rounded-md bg-white shadow-sm ring-1 ring-black/5'
-              >
-                <RenderBlock
-                  block={block}
-                  content={content}
-                  styles={styles}
-                  background={background}
-                  order={order}
-                />
-              </InViewBlock>
+              <MotionProvider key={block.id} mode='production' motion={motion}>
+                <MotionBlockRoot className='overflow-hidden rounded-md bg-white shadow-sm ring-1 ring-black/5'>
+                  <RenderBlock
+                    block={block}
+                    content={content}
+                    styles={styles}
+                    background={background}
+                    order={order}
+                  />
+                </MotionBlockRoot>
+              </MotionProvider>
             );
           })
         )}

@@ -21,7 +21,6 @@ import { Maximize2, Minus, Plus, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 import { RenderBlock } from './blocks/renderBlock';
-import { InViewBlock } from './InViewBlock';
 import type { Block, Lang } from './types';
 
 interface BlockTabBarProps {
@@ -234,15 +233,7 @@ function ThumbnailRenderer({ block, lang }: { block: Block; lang: Lang }) {
           transform: `scale(${scale})`,
         }}
       >
-        {/*
-          Thumbnails sit in a horizontally scrollable strip — defer animation
-          until the thumbnail is in view (or near it) so users see the intro
-          when they scroll past, not all at once on page load. Threshold tuned
-          loose (5% / -5% rootMargin) since thumbnails are small.
-        */}
-        <InViewBlock threshold={0.05} rootMargin='0px -5% 0px -5%'>
-          {inner}
-        </InViewBlock>
+        {inner}
       </div>
     </div>
   );

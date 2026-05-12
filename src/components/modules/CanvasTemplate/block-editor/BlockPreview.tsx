@@ -6,7 +6,7 @@ import { cn } from '@/lib/cn';
 
 import { RenderBlock } from './blocks/renderBlock';
 import { MotionBlockRoot, MotionProvider } from './motion/runtime';
-import type { BlockMotionMap, EditorMode, MotionConfig } from './motion/types';
+import type { BlockMotion, EditorMode } from './motion/types';
 import { readVariant, type Block, type Device, type Lang } from './types';
 
 interface BlockPreviewProps {
@@ -77,37 +77,13 @@ export function BlockPreview({
   const scale = zoom / 100;
   const surfaceRef = React.useRef<HTMLDivElement>(null);
 
-  // Resolve motion config for this device + an editor-mode override. URL
-  // param `?testMotion=<presetId>` forces preview mode and synthesises a
-  // block-level motion config so we can PoC the runtime without a UI yet.
-  // Strip this branch when the editing UI ships.
-  const { motionForDevice, effectiveMode } = React.useMemo<{
-    motionForDevice: BlockMotionMap | undefined;
-    effectiveMode: EditorMode;
-  }>(() => {
-    const testParam =
-      typeof window === 'undefined'
-        ? null
-        : new URLSearchParams(window.location.search).get('testMotion');
-    if (testParam) {
-      const synth: MotionConfig = {
-        presetId: testParam,
-        speed: 'normal',
-        intensity: 'normal',
-        cascade: 'normal',
-        enabled: true,
-      };
-      return {
-        motionForDevice: { block: synth },
-        effectiveMode: 'preview',
-      };
-    }
-    const stored = readVariant(block.motion, device);
-    return {
-      motionForDevice: stored as BlockMotionMap | undefined,
-      effectiveMode: motionMode,
-    };
-  }, [block.motion, device, motionMode]);
+  // Resolve motion config for the current device variant. The stored shape
+  // matches `BlockMotion` 1:1 (track-based timeline). In edit mode the
+  // runtime no-ops, so this can run unconditionally.
+  const motionForDevice = readVariant(block.motion, device) as
+    | BlockMotion
+    | undefined;
+  const effectiveMode: EditorMode = motionMode;
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Clicks inside an actively-editing element should NOT change selection
@@ -269,7 +245,6 @@ export function BlockPreview({
           >
             <MotionProvider
               mode={effectiveMode}
-              device={device}
               motion={motionForDevice}
               scrollerEl={surfaceRef.current}
             >

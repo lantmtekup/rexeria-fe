@@ -160,24 +160,12 @@ export function readVariant<T>(
 }
 
 /**
- * Per-block motion config — block-level entrance/ambient + optional
- * per-element overrides. The shape lives in `motion/types.ts` to avoid
- * a circular import here; we re-declare a structural subset to avoid
- * pulling motion types into every consumer of `Block`.
+ * Per-block motion config — track-based timeline. See `motion/types.ts`
+ * for the full shape definition. Re-exported here as `BlockMotionStored`
+ * to keep the wire format name stable.
  */
-export interface BlockMotionMapStored {
-  block?: BlockMotionConfigStored;
-  elements?: Record<string, BlockMotionConfigStored>;
-}
-
-export interface BlockMotionConfigStored {
-  presetId: string;
-  speed: 'slow' | 'normal' | 'fast';
-  intensity: 'subtle' | 'normal' | 'dramatic';
-  cascade: 'off' | 'normal' | 'slow';
-  delay?: number;
-  enabled?: boolean;
-}
+import type { BlockMotion } from './motion/types';
+export type BlockMotionStored = BlockMotion;
 
 export interface Block {
   id: string;
@@ -200,11 +188,11 @@ export interface Block {
    */
   elementOrder?: DeviceVariants<string[]>;
   /**
-   * Motion config — per-device. Block-level entrance/ambient applies to all
-   * children; element-level overrides target individual element keys. Stored
-   * verbatim and passed through serialize.
+   * Motion config — per-device track-based timeline. Tracks target individual
+   * element keys (or `__block__` for the block root). Stored verbatim and
+   * passed through serialize.
    */
-  motion?: DeviceVariants<BlockMotionMapStored>;
+  motion?: DeviceVariants<BlockMotionStored>;
 }
 
 /**
