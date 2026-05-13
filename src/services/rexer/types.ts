@@ -1260,6 +1260,259 @@ export interface RecordListResponse {
   total_pages: number;
 }
 
+// ── AI Templates (Rexer_Cap_nhat_tinh_nang_va_logic.pdf v1.0) ────────────
+// User-facing endpoints under /ai/templates/*, admin under /admin/ai/templates/*.
+// FE-side draft based on PDF spec §5 + Swagger; some fields may shift once
+// BE confirms `docs/be-ai-template-questions.md`.
+
+export type AIBlockRole =
+  | 'hero'
+  | 'tagline'
+  | 'pain'
+  | 'solution'
+  | 'feature'
+  | 'image'
+  | 'testimonial'
+  | 'price'
+  | 'cta'
+  | 'faq';
+
+export type AIBlockLayoutType = 'text' | 'image' | 'mixed';
+
+export type AIFieldDataType =
+  | 'text'
+  | 'number'
+  | 'select'
+  | 'image'
+  | 'textarea';
+
+export type AIBlockTone =
+  | 'formal'
+  | 'friendly'
+  | 'energetic'
+  | 'luxury'
+  | 'minimal';
+
+/** §5.2 — single field in the template Input Schema. */
+export interface AITemplateField {
+  field_key: string;
+  label: string;
+  data_type: AIFieldDataType;
+  is_required: boolean;
+  ai_can_infer: boolean;
+  placeholder?: string;
+  /** Block IDs that consume this field. */
+  mapped_blocks: string[];
+  /**
+   * Per BE Q13: option values are a flat `string[]`. FE renders them as
+   * `<option value={v}>{v}</option>` (label === value); i18n done at FE.
+   */
+  options?: string[];
+}
+
+/** §5.1 — pure structural block (no prompt). */
+export interface AITemplateBlock {
+  block_id: string;
+  position: number;
+  role: AIBlockRole;
+  layout_type: AIBlockLayoutType;
+}
+
+/**
+ * §5.3 — prompt context entity, FK to a block by `block_id`. Per BE Q20
+ * the admin payload sends `blocks[]`, `fields[]`, `block_prompts[]` as
+ * three separate arrays.
+ */
+export interface AITemplateBlockPrompt {
+  block_id: string;
+  prompt_instruction: string;
+  required_fields?: string[];
+  tone?: AIBlockTone;
+  length_constraint?: string;
+  examples?: string[];
+}
+
+export interface AITemplate {
+  id: string;
+  name: string;
+  description?: string;
+  topic?: string;
+  is_active: boolean;
+  /** Optimistic-lock version — required when PATCHing (Q21). */
+  version: number;
+  fields: AITemplateField[];
+  blocks: AITemplateBlock[];
+  /** Only returned to admin GET; user-facing GET strips this (Q5/Q6). */
+  block_prompts?: AITemplateBlockPrompt[];
+  thumbnail_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AITemplateResponse {
+  ai_template: AITemplate;
+}
+
+export interface AITemplateListResponse {
+  items: AITemplate[];
+  page: number;
+  limit: number;
+  total: number;
+  total_pages: number;
+}
+
+// ── Generate ─────────────────────────────────────────────────────────────
+/** Per BE Q10/Q11 — regenerate fragment. */
+export interface AIRegenerateRequest {
+  /** Empty / omitted = regenerate every block reusing prior inferred_context. */
+  block_id?: string;
+  /** Optional hint for the targeted block, ≤1000 chars. */
+  hint?: string;
+  /**
+   * When true, BE drops the prior `inferred_context` and re-runs Step 3
+   * (§8.17 "Suy luận lại"). Note: if `reinfer` is true, BE ignores
+   * `block_id` and regenerates the whole template.
+   */
+  reinfer?: boolean;
+}
+
+export interface AITemplateGenerateRequest {
+  /**
+   * Map `field_key → user input`. Per BE Q11 values can be string |
+   * number | boolean; BE coerces to string. Unknown keys → 400.
+   */
+  user_input: Record<string, string | number | boolean>;
+  /** Continue an existing session — required for regenerate. */
+  session_id?: string;
+  /** Optional. Presence indicates regeneration. */
+  regenerate?: AIRegenerateRequest;
+  /** Per BE Q11/Q29: `vi` or `en`, default `vi`. */
+  lang?: 'vi' | 'en';
+}
+
+/**
+ * Per BE Q5 — `source` enum is small and block-level.
+ * - `ai`      → block content sourced from LLM
+ * - `stub`    → fallback deterministic content (LLM failed / parse error)
+ * - `skipped` → locked-optional miss; `content === null`, `skipped: true`
+ * - `kept`    → in regenerate-one-block mode, the other 9 blocks reuse
+ *               the prior version verbatim (remapped from their original
+ *               source so the badge stays accurate)
+ */
+export type AIBlockSource = 'ai' | 'stub' | 'skipped' | 'kept';
+
+/** Per BE Q14 / Q5 — block payload returned by /generate. */
+export interface AIGeneratedBlock {
+  block_id: string;
+  position: number;
+  role: AIBlockRole;
+  layout_type: AIBlockLayoutType;
+  /** Null when `skipped` is true. */
+  content: Record<string, unknown> | null;
+  /** Media IDs the user picked into this block; resolution by FE via /media. */
+  image_media_ids?: string[];
+  source: AIBlockSource;
+  skipped?: boolean;
+}
+
+/** Per BE Q3 — wire shape for the regen-limit 429 details payload. */
+export interface AIRegenLimitDetails {
+  used: number;
+  limit: number;
+}
+
+/** Per BE Q2 — wire shape for missing-required details payload. */
+export interface AIMissingRequiredDetails {
+  missing_fields: string[];
+}
+
+export interface AITemplateUsage {
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_input_tokens?: number;
+}
+
+export interface AITemplateGenerateResponse {
+  session_id: string;
+  version: number;
+  /** §6.3 — values AI inferred for missing fields, reused across regen. */
+  inferred_context: Record<string, unknown>;
+  blocks: AIGeneratedBlock[];
+  /** Per BE Q17: `{ block_id: media_id[] }` map; FE resolves URLs via media API. */
+  image_suggestions: Record<string, string[]>;
+  model?: string;
+  usage?: AITemplateUsage;
+}
+
+// ── Session & versions (§8.19 rollback) ──────────────────────────────────
+export type AIGenerationKind = 'initial' | 'regenerate_block' | 'reinfer';
+
+/** Per BE Q14 — full version payload (no inferred_context unless added later). */
+export interface AIGenerationVersion {
+  version: number;
+  kind: AIGenerationKind;
+  /** Only set for `kind = "regenerate_block"`. */
+  target_block_id?: string;
+  blocks: AIGeneratedBlock[];
+  image_suggestions: Record<string, string[]>;
+  created_at: string;
+}
+
+export interface AIGenerationSession {
+  session_id: string;
+  template_id: string;
+  versions: AIGenerationVersion[];
+}
+
+export interface AITemplateSessionResponse {
+  session: AIGenerationSession;
+}
+
+// ── Admin DTOs ───────────────────────────────────────────────────────────
+/**
+ * Per BE Q20 — admin POST sends fields/blocks/block_prompts as three
+ * separate arrays, all required, block_prompts must have len=10.
+ */
+export interface CreateAITemplateRequest {
+  name: string;
+  description?: string;
+  topic?: string;
+  is_active?: boolean;
+  fields: AITemplateField[];
+  blocks: AITemplateBlock[];
+  block_prompts: AITemplateBlockPrompt[];
+}
+
+/**
+ * Per BE Q21 — top-level fields are partial; children require all 3
+ * arrays or none. `version` is required for optimistic lock.
+ */
+export interface UpdateAITemplateRequest {
+  version: number;
+  name?: string;
+  description?: string;
+  topic?: string;
+  is_active?: boolean;
+  fields?: AITemplateField[];
+  blocks?: AITemplateBlock[];
+  block_prompts?: AITemplateBlockPrompt[];
+}
+
+// ── Error codes (Q4 — full set) ──────────────────────────────────────────
+export type AITemplateErrorCode =
+  | 'ERR_AI_TEMPLATE_NOT_FOUND'
+  | 'ERR_AI_TEMPLATE_INVALID'
+  | 'ERR_AI_TEMPLATE_INACTIVE'
+  | 'ERR_AI_TEMPLATE_MISSING_REQUIRED'
+  | 'ERR_AI_TEMPLATE_SESSION_NOT_FOUND'
+  | 'ERR_AI_TEMPLATE_REGEN_LIMIT'
+  | 'ERR_CANVAS_VERSION_CONFLICT'
+  | 'ERR_FORBIDDEN'
+  | 'ERR_AI_PROVIDER_FAILURE'
+  | 'ERR_LLM_TIMEOUT'
+  | 'ERR_BAD_REQUEST'
+  | 'ERR_INTERNAL';
+
 // ── Error envelope ───────────────────────────────────────────────────────
 export interface RxErrorBody {
   code: string;

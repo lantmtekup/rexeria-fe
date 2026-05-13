@@ -3,6 +3,13 @@
  * data from `src/services/rexer/types.ts`.
  */
 import { rx } from './client';
+import {
+  isAiTemplateMockEnabled,
+  mockGenerateAiTemplate,
+  mockGetAiTemplate,
+  mockGetSession,
+  mockListAiTemplates,
+} from './__mocks__/aiTemplates';
 import type {
   CreateCollectionDTO,
   CreateRecordDTO,
@@ -25,8 +32,15 @@ import type {
   AIMediaSuggestResponse,
   AIProductEnrichRequest,
   AIProductEnrichResponse,
+  AITemplateGenerateRequest,
+  AITemplateGenerateResponse,
+  AITemplateListResponse,
+  AITemplateResponse,
+  AITemplateSessionResponse,
   AITemplateSuggestRequest,
   AITemplateSuggestResponse,
+  CreateAITemplateRequest,
+  UpdateAITemplateRequest,
   AuthMeResponse,
   BindMediaRequest,
   BindMediaResponse,
@@ -427,6 +441,40 @@ export const rexerApi = {
         { method: 'POST', body }
       ),
   },
+
+  // ── AI Templates (Rexer_Cap_nhat_tinh_nang_va_logic.pdf §4) ──────────
+  aiTemplates: {
+    list: (query?: { q?: string; page?: number; limit?: number }) =>
+      isAiTemplateMockEnabled()
+        ? Promise.resolve(mockListAiTemplates())
+        : rx<AITemplateListResponse>('/ai/templates', { query }),
+    get: async (id: string) => {
+      if (isAiTemplateMockEnabled()) {
+        const t = mockGetAiTemplate(id);
+        if (!t) throw new Error(`Mock template ${id} not found`);
+        return t;
+      }
+      const r = await rx<AITemplateResponse>(`/ai/templates/${id}`);
+      return r.ai_template;
+    },
+    generate: (id: string, body: AITemplateGenerateRequest) =>
+      isAiTemplateMockEnabled()
+        ? mockGenerateAiTemplate(id, body)
+        : rx<AITemplateGenerateResponse>(`/ai/templates/${id}/generate`, {
+            method: 'POST',
+            body,
+          }),
+    session: async (sessionId: string) => {
+      if (isAiTemplateMockEnabled()) {
+        return mockGetSession(sessionId);
+      }
+      const r = await rx<AITemplateSessionResponse>(
+        `/ai/templates/sessions/${sessionId}`
+      );
+      return r.session;
+    },
+  },
+
   releases: {
     get: async (id: string): Promise<Release> => {
       const r = await rx<ReleaseResponse>(`/releases/${id}`);
@@ -498,7 +546,19 @@ export const rexerApi = {
       }),
   },
   media: {
-    list: () => rx<MediaListResponse>('/media'),
+    /**
+     * Per BE Q17 patch: optional `ids` filter (repeated `?ids=` param) so
+     * callers can batch-resolve a known set of media in one request.
+     * BE caps at 100 ids, dedups, and silently skips unknowns.
+     */
+    list: (query?: { ids?: string[] }) => {
+      if (!query?.ids || query.ids.length === 0) {
+        return rx<MediaListResponse>('/media');
+      }
+      const usp = new URLSearchParams();
+      for (const id of query.ids) usp.append('ids', id);
+      return rx<MediaListResponse>(`/media?${usp.toString()}`);
+    },
     get: async (id: string): Promise<MediaAsset> => {
       const r = await rx<MediaAssetResponse>(`/media/${id}`);
       return r.media_asset;
@@ -796,6 +856,48 @@ export const rexerApi = {
       }
       return res.blob();
     },
+  },
+
+  // ── Admin AI Templates ───────────────────────────────────────────────
+  adminAiTemplates: {
+    list: (query?: {
+      is_active?: boolean;
+      q?: string;
+      page?: number;
+      limit?: number;
+    }) => rx<AITemplateListResponse>('/admin/ai/templates', { query }),
+    get: async (id: string) => {
+      const r = await rx<AITemplateResponse>(`/admin/ai/templates/${id}`);
+      return r.ai_template;
+    },
+    create: async (body: CreateAITemplateRequest) => {
+      const r = await rx<AITemplateResponse>('/admin/ai/templates', {
+        method: 'POST',
+        body,
+      });
+      return r.ai_template;
+    },
+    update: async (id: string, body: UpdateAITemplateRequest) => {
+      const r = await rx<AITemplateResponse>(`/admin/ai/templates/${id}`, {
+        method: 'PATCH',
+        body,
+      });
+      return r.ai_template;
+    },
+    remove: (id: string) =>
+      rx<{ message?: string }>(`/admin/ai/templates/${id}`, {
+        method: 'DELETE',
+      }),
+    /**
+     * Per BE Q22 patch: dry-run /generate for admin even when the template
+     * is_active=false. Does NOT charge the admin's AI quota; still persists
+     * to the generation log so admin can scroll history.
+     */
+    testGenerate: (id: string, body: AITemplateGenerateRequest) =>
+      rx<AITemplateGenerateResponse>(
+        `/admin/ai/templates/${id}/test-generate`,
+        { method: 'POST', body }
+      ),
   },
 
   adminFeedback: {

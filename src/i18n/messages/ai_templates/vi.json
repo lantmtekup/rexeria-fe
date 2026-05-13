@@ -1,0 +1,48 @@
+{
+  "ai_templates": {
+    "input_form": {
+      "title": "Nhập thông tin để AI tạo nội dung",
+      "description": "Bạn chỉ cần điền các trường bắt buộc. AI sẽ tự suy luận phần còn lại.",
+      "required_badge": "Bắt buộc",
+      "ai_infer_badge": "AI có thể tự suy luận",
+      "locked_badge": "Chỉ dùng giá trị bạn nhập",
+      "submit": "Tạo nội dung",
+      "submitting": "Đang tạo nội dung…",
+      "cancel": "Huỷ",
+      "validation_required": "Trường này bắt buộc",
+      "select_placeholder": "Chọn một giá trị"
+    },
+    "errors": {
+      "missing_required": "Vui lòng điền đầy đủ các trường bắt buộc.",
+      "regen_limit": "Bạn đã đạt giới hạn số lần tạo lại trong phiên này.",
+      "template_inactive": "Template này hiện không khả dụng.",
+      "generic": "Có lỗi khi gọi AI Service. Vui lòng thử lại."
+    },
+    "review": {
+      "title": "Xem trước nội dung AI tạo",
+      "regenerate": "Tạo lại",
+      "edit": "Chỉnh sửa",
+      "pick_image": "Chọn ảnh",
+      "ai_badge": "AI",
+      "stub_badge": "AI (fallback)",
+      "kept_badge": "Giữ từ phiên bản trước",
+      "skipped_badge": "Bỏ qua",
+      "regenerate_counter": "{used}/{limit} lần tạo lại",
+      "version_history": "Lịch sử phiên bản",
+      "confirm_save": "Lưu vào template",
+      "back_to_form": "Sửa thông tin nhập"
+    },
+    "block_roles": {
+      "hero": "Hero",
+      "tagline": "Tagline",
+      "pain": "Vấn đề",
+      "solution": "Giải pháp",
+      "feature": "Tính năng",
+      "image": "Hình ảnh",
+      "testimonial": "Đánh giá",
+      "price": "Giá",
+      "cta": "Kêu gọi hành động",
+      "faq": "FAQ"
+    }
+  }
+}

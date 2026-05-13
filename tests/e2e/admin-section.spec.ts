@@ -14,9 +14,10 @@ test.describe('Admin section', () => {
     await expect(page).not.toHaveURL(/\/sign-in/, { timeout: 15_000 });
     await expect(page).toHaveURL(/\/admin/);
 
-    // Tabs are visible (6 admin sub-routes via AdminNav)
+    // Tabs are visible (7 admin sub-routes via AdminNav — overview,
+    // products, templates, ai-templates, users, ai-usage, feedback).
     const navTabs = page.locator('nav a[href^="/admin"]');
-    await expect(navTabs).toHaveCount(6);
+    await expect(navTabs).toHaveCount(7);
 
     // Stat cards (4 cards on overview)
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
@@ -28,7 +29,9 @@ test.describe('Admin section', () => {
     // Products
     await page.goto('/admin/products');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Tạo sản phẩm|New product/i })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Tạo sản phẩm|New product/i })
+    ).toBeVisible();
     await page.screenshot({
       path: 'test-results/admin-products.png',
       fullPage: true,
@@ -64,7 +67,9 @@ test.describe('Admin section', () => {
     // Feedback
     await page.goto('/admin/feedback');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Xuất CSV|Export CSV/i })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Xuất CSV|Export CSV/i })
+    ).toBeVisible();
     await page.screenshot({
       path: 'test-results/admin-feedback.png',
       fullPage: true,

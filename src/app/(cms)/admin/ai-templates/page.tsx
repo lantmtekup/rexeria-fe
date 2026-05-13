@@ -1,0 +1,11 @@
+import { Suspense } from 'react';
+
+import { AdminAITemplateList } from '@/components/modules/Admin/AdminAITemplates/AdminAITemplateList';
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className='p-6 text-sm'>Loading…</div>}>
+      <AdminAITemplateList />
+    </Suspense>
+  );
+}

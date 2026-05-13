@@ -36,6 +36,11 @@ const TABS: Tab[] = [
     labelKey: 'nav.templates',
     icon: LayoutTemplateIcon,
   },
+  {
+    href: '/admin/ai-templates',
+    labelKey: 'nav.aiTemplates',
+    icon: SparklesIcon,
+  },
   { href: '/admin/users', labelKey: 'nav.users', icon: UsersIcon },
   { href: '/admin/ai-usage', labelKey: 'nav.aiUsage', icon: SparklesIcon },
   {

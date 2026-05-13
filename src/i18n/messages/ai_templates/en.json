@@ -1,0 +1,48 @@
+{
+  "ai_templates": {
+    "input_form": {
+      "title": "Tell us about your product so AI can generate content",
+      "description": "Fill in the required fields only. AI will infer the rest.",
+      "required_badge": "Required",
+      "ai_infer_badge": "AI can infer this",
+      "locked_badge": "AI will not change this",
+      "submit": "Generate",
+      "submitting": "Generating…",
+      "cancel": "Cancel",
+      "validation_required": "This field is required",
+      "select_placeholder": "Select a value"
+    },
+    "errors": {
+      "missing_required": "Please fill in all required fields.",
+      "regen_limit": "You have reached the regeneration limit for this session.",
+      "template_inactive": "This template is currently unavailable.",
+      "generic": "Something went wrong while calling the AI Service. Please try again."
+    },
+    "review": {
+      "title": "Review AI-generated content",
+      "regenerate": "Regenerate",
+      "edit": "Edit",
+      "pick_image": "Pick image",
+      "ai_badge": "AI",
+      "stub_badge": "AI (fallback)",
+      "kept_badge": "Kept from prior version",
+      "skipped_badge": "Skipped",
+      "regenerate_counter": "{used}/{limit} regenerations used",
+      "version_history": "Version history",
+      "confirm_save": "Save to template",
+      "back_to_form": "Edit inputs"
+    },
+    "block_roles": {
+      "hero": "Hero",
+      "tagline": "Tagline",
+      "pain": "Pain point",
+      "solution": "Solution",
+      "feature": "Feature",
+      "image": "Image",
+      "testimonial": "Testimonial",
+      "price": "Price",
+      "cta": "Call to action",
+      "faq": "FAQ"
+    }
+  }
+}
