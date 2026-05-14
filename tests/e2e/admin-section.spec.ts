@@ -14,10 +14,11 @@ test.describe('Admin section', () => {
     await expect(page).not.toHaveURL(/\/sign-in/, { timeout: 15_000 });
     await expect(page).toHaveURL(/\/admin/);
 
-    // Tabs are visible (7 admin sub-routes via AdminNav — overview,
-    // products, templates, ai-templates, users, ai-usage, feedback).
+    // Tabs are visible (8 admin sub-routes via AdminNav — overview,
+    // products, templates, ai-templates, saved-blocks, users, ai-usage,
+    // feedback).
     const navTabs = page.locator('nav a[href^="/admin"]');
-    await expect(navTabs).toHaveCount(7);
+    await expect(navTabs).toHaveCount(8);
 
     // Stat cards (4 cards on overview)
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();

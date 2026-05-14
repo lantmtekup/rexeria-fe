@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
+  BookmarkIcon,
   LayoutDashboardIcon,
   LayoutTemplateIcon,
   MessageSquareIcon,
@@ -40,6 +41,11 @@ const TABS: Tab[] = [
     href: '/admin/ai-templates',
     labelKey: 'nav.aiTemplates',
     icon: SparklesIcon,
+  },
+  {
+    href: '/admin/saved-blocks',
+    labelKey: 'nav.savedBlocks',
+    icon: BookmarkIcon,
   },
   { href: '/admin/users', labelKey: 'nav.users', icon: UsersIcon },
   { href: '/admin/ai-usage', labelKey: 'nav.aiUsage', icon: SparklesIcon },

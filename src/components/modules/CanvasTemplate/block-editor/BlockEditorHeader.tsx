@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import {
   ArrowLeft,
+  Bookmark,
   Clapperboard,
   Copy,
   Eye,
   Globe2,
+  ImagePlus,
   Monitor,
   Package,
   Play,
@@ -33,11 +35,13 @@ interface BlockEditorHeaderProps {
   onDeviceChange: (device: Device) => void;
   onAi: () => void;
   onApplyProduct: () => void;
+  onImportFromImage: () => void;
   onDuplicate: () => void;
   onPreview: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onPublish: () => void;
+  onSaveBlock?: () => void;
   onPlayMotionPreview: () => void;
   onOpenMotionEditor: () => void;
   canUndo: boolean;
@@ -68,11 +72,13 @@ export function BlockEditorHeader({
   onDeviceChange,
   onAi,
   onApplyProduct,
+  onImportFromImage,
   onDuplicate,
   onPreview,
   onUndo,
   onRedo,
   onPublish,
+  onSaveBlock,
   onPlayMotionPreview,
   onOpenMotionEditor,
   canUndo,
@@ -182,6 +188,13 @@ export function BlockEditorHeader({
 
       {/* ── RIGHT · quick actions + publish CTA ────────────────────── */}
       <div className='flex items-center'>
+        <IconBtn
+          onClick={onImportFromImage}
+          label='Tạo block từ ảnh / Figma'
+          data-testid='header-import-block'
+        >
+          <ImagePlus className='size-4' />
+        </IconBtn>
         <IconBtn onClick={onApplyProduct} label='Áp dụng sản phẩm vào canvas'>
           <Package className='size-4' />
         </IconBtn>
@@ -192,6 +205,11 @@ export function BlockEditorHeader({
         >
           <Copy className='size-4' />
         </IconBtn>
+        {onSaveBlock ? (
+          <IconBtn onClick={onSaveBlock} label='Lưu block vào thư viện'>
+            <Bookmark className='size-4' />
+          </IconBtn>
+        ) : null}
         <IconBtn onClick={onPreview} label='Xem trước'>
           <Eye className='size-4' />
         </IconBtn>

@@ -16,6 +16,7 @@ import { BlockEditorSidebar } from './block-editor/BlockEditorSidebar';
 import { BlockPreview } from './block-editor/BlockPreview';
 import { BlockTabBar } from './block-editor/BlockTabBar';
 import { DuplicateTemplateDialog } from './block-editor/DuplicateTemplateDialog';
+import { SaveBlockDialog } from './block-editor/SaveBlockDialog';
 import { ElementToolbar } from './block-editor/ElementToolbar';
 import { ImportBlockDialog } from './block-editor/ImportBlockDialog';
 import { PreviewMode } from './block-editor/PreviewMode';
@@ -155,6 +156,7 @@ export function BlockEditor({
   const [importOpen, setImportOpen] = React.useState(false);
   const [duplicateOpen, setDuplicateOpen] = React.useState(false);
   const [duplicating, setDuplicating] = React.useState(false);
+  const [saveBlockOpen, setSaveBlockOpen] = React.useState(false);
   const [layersCollapsed, setLayersCollapsed] = React.useState(false);
   const [sidebarTab, setSidebarTab] = React.useState<'layers' | 'motion'>(
     'layers'
@@ -532,6 +534,14 @@ export function BlockEditor({
     autosave.markDirty();
   };
 
+  const handleAddSavedBlock = (block: import('./block-editor/types').Block) => {
+    canvas.mutate(draft => {
+      draft.push(block);
+    });
+    canvas.setActiveId(block.id);
+    autosave.markDirty();
+  };
+
   const handleRemoveBlock = (id: string) => {
     const target = canvas.blocks.find(b => b.id === id);
     if (!target) return;
@@ -637,6 +647,7 @@ export function BlockEditor({
         onApplyProduct={() => setProductPickerOpen(true)}
         onImportFromImage={() => setImportOpen(true)}
         onDuplicate={() => setDuplicateOpen(true)}
+        onSaveBlock={activeBlock ? () => setSaveBlockOpen(true) : undefined}
         onPreview={() => setPreviewing(true)}
         onUndo={() => {
           canvas.undo();
@@ -785,6 +796,7 @@ export function BlockEditor({
         open={addOpen}
         onOpenChange={setAddOpen}
         onPick={handleAddBlock}
+        onPickSaved={handleAddSavedBlock}
       />
 
       {previewing && (
@@ -843,6 +855,12 @@ export function BlockEditor({
         saving={duplicating}
         onOpenChange={setDuplicateOpen}
         onConfirm={handleDuplicateConfirm}
+      />
+
+      <SaveBlockDialog
+        open={saveBlockOpen}
+        block={activeBlock ?? null}
+        onOpenChange={setSaveBlockOpen}
       />
 
       <ReviewChangesDialog
