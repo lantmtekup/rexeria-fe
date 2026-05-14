@@ -1,8 +1,14 @@
 import * as React from 'react';
 
 import { cn } from '@/lib/cn';
+import { findFont } from '@/lib/fonts';
 
-import type { BlockBackground, ElementStyle, ElementStylesMap } from '../types';
+import type {
+  BlockBackground,
+  ElementPositionsMap,
+  ElementStyle,
+  ElementStylesMap,
+} from '../types';
 
 /**
  * Build an inline style for a given element key. Returns `undefined` if no
@@ -22,6 +28,7 @@ export function elementStyleOf(
   if (s.fontStyle) out.fontStyle = s.fontStyle;
   if (s.textDecoration) out.textDecoration = s.textDecoration;
   if (s.textAlign) out.textAlign = s.textAlign;
+  if (s.fontFamily) out.fontFamily = findFont(s.fontFamily).family;
   if (Object.keys(out).length === 0) return undefined;
   return out;
 }
@@ -72,6 +79,40 @@ export function selectableClass(active: boolean, base?: string): string {
  * natural DOM position. Pass through `additionalStyle` to merge with any
  * existing per-element style (color/font etc).
  */
+/**
+ * Apply a free-form drag offset as `transform: translate(...)`. Stays inside
+ * the flex slot so siblings don't shift — used by the canvas drag handler.
+ * Returns undefined for keys without an offset (or with zero offset) so we
+ * don't bloat the inline style attribute.
+ */
+export function positionStyle(
+  positions: ElementPositionsMap | undefined,
+  key: string
+): React.CSSProperties | undefined {
+  const p = positions?.[key];
+  if (!p) return undefined;
+  if (p.x === 0 && p.y === 0) return undefined;
+  return { transform: `translate(${p.x}px, ${p.y}px)` };
+}
+
+/**
+ * Merge any number of partial CSSProperties into a single object, dropping
+ * undefined parts. Returns `undefined` when no part contributed anything so
+ * callers can omit the `style` prop entirely.
+ */
+export function composeStyle(
+  ...parts: Array<React.CSSProperties | undefined>
+): React.CSSProperties | undefined {
+  const out: React.CSSProperties = {};
+  let touched = false;
+  for (const p of parts) {
+    if (!p) continue;
+    Object.assign(out, p);
+    touched = true;
+  }
+  return touched ? out : undefined;
+}
+
 export function orderStyle(
   order: string[] | undefined,
   key: string,

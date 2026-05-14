@@ -35,9 +35,30 @@ export interface ElementStyle {
   fontStyle?: 'normal' | 'italic';
   textDecoration?: 'none' | 'underline' | 'line-through';
   textAlign?: 'left' | 'center' | 'right' | 'justify';
+  /** Font id from `src/lib/fonts.ts` (e.g. `inter`, `be-vietnam-pro`). */
+  fontFamily?: string;
 }
 
 export type ElementStylesMap = Record<string, ElementStyle | undefined>;
+
+/**
+ * Per-element free-position offset (Figma-style canvas drag).
+ *
+ * Applied as `transform: translate(Xpx, Ypx)` on top of the element's
+ * natural flex/grid position — so the element stays in its sibling slot
+ * but can be nudged anywhere visually. This preserves responsive layout
+ * (the offset is in the same coord space at every breakpoint) while
+ * giving users free-form arrangement.
+ *
+ * Setting both x and y to 0 is treated as "no override" and the entry
+ * is dropped when persisted, keeping wire payloads small.
+ */
+export interface ElementPosition {
+  x: number;
+  y: number;
+}
+
+export type ElementPositionsMap = Record<string, ElementPosition | undefined>;
 
 /**
  * Block-level background override. Applies to the block's outer card.
@@ -188,6 +209,12 @@ export interface Block {
    */
   elementOrder?: DeviceVariants<string[]>;
   /**
+   * Per-element free-form offset applied via `transform: translate`. Lets
+   * the user drag elements around on the canvas without breaking flex
+   * layout. Per-device, lang-agnostic.
+   */
+  elementPositions?: DeviceVariants<ElementPositionsMap>;
+  /**
    * Motion config — per-device track-based timeline. Tracks target individual
    * element keys (or `__block__` for the block root). Stored verbatim and
    * passed through serialize.
@@ -218,6 +245,12 @@ export function hasMobileOverride(block: Block, elementKey: string): boolean {
   const styleD = block.elementStyles?.desktop?.[elementKey];
   const styleM = block.elementStyles?.mobile?.[elementKey];
   if (styleM && JSON.stringify(styleD ?? null) !== JSON.stringify(styleM)) {
+    return true;
+  }
+  // Position overrides
+  const posD = block.elementPositions?.desktop?.[elementKey];
+  const posM = block.elementPositions?.mobile?.[elementKey];
+  if (posM && JSON.stringify(posD ?? null) !== JSON.stringify(posM)) {
     return true;
   }
   // Content (vi + en).

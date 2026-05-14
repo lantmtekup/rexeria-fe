@@ -6,6 +6,7 @@ import { getLocale, getMessages, getTimeZone } from 'next-intl/server';
 import Providers from './providers';
 import { Toaster } from '@/components/atoms/sonner';
 import { FeedbackFab } from '@/components/modules/Feedback/FeedbackFab';
+import { GOOGLE_FONTS_HREF } from '@/lib/fonts';
 import { SEO_CONSTANTS } from '@/lib/metadata';
 import {
   convertLang,
@@ -106,15 +107,18 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      {/* <head>
-        <Script
-          id='organization-schema'
-          type='application/ld+json'
-          dangerouslySetInnerHTML={{
-            __html: serializeSchema(organizationSchema),
-          }}
+      <head>
+        {/* Google Fonts — curated free Vietnamese-friendly families. See
+            src/lib/fonts.ts for the registry. Inter is loaded separately
+            via next/font (above). */}
+        <link rel='preconnect' href='https://fonts.googleapis.com' />
+        <link
+          rel='preconnect'
+          href='https://fonts.gstatic.com'
+          crossOrigin='anonymous'
         />
-      </head> */}
+        <link rel='stylesheet' href={GOOGLE_FONTS_HREF} />
+      </head>
       <body className={`${inter.variable} bg-background antialiased`}>
         <Providers locale={locale} messages={messages} timezone={timezone}>
           {children}

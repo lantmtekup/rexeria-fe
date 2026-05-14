@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 
 import { Input } from '@/components/atoms/input';
 import { Textarea } from '@/components/atoms/textarea';
+import { FontPicker } from '@/components/molecules/FontPicker';
 import { cn } from '@/lib/cn';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
@@ -402,6 +403,16 @@ function TextControls({
           className='h-7 w-56 rounded-md bg-white px-2 text-xs text-neutral-900 ring-1 ring-neutral-200/80 transition-shadow placeholder:text-neutral-400 hover:ring-neutral-300 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
         />
       )}
+
+      <Sep />
+
+      {/* Font family picker — Vietnamese-friendly Google Fonts */}
+      <InlineLabel label='Font'>
+        <FontPicker
+          value={style?.fontFamily}
+          onChange={fontId => onUpdateStyle({ fontFamily: fontId })}
+        />
+      </InlineLabel>
 
       <Sep />
 
