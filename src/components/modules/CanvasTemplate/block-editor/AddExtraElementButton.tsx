@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Popover as PopoverPrimitive } from 'radix-ui';
 import {
+  Crosshair,
   Image as ImageIcon,
   Plus,
   TextCursorInput,
@@ -47,6 +48,12 @@ const KINDS: Array<{
     label: 'Video',
     hint: 'Video từ URL hoặc media',
     icon: Video,
+  },
+  {
+    kind: 'hotspot',
+    label: 'Hotspot',
+    hint: 'Pin click → mở popup mô tả',
+    icon: Crosshair,
   },
 ];
 

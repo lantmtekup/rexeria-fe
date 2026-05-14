@@ -17,6 +17,7 @@ const BLOCK_LABEL: Record<Lang, Record<BlockType, string>> = {
     photo_gallery: 'thư viện ảnh',
     booking_form: 'form đăng ký / đặt chỗ',
     cta_section: 'section call-to-action cuối trang',
+    image_carousel: 'slide ảnh chuyển động',
   },
   en: {
     hero_split: 'split-layout hero block',
@@ -25,6 +26,7 @@ const BLOCK_LABEL: Record<Lang, Record<BlockType, string>> = {
     photo_gallery: 'photo gallery',
     booking_form: 'booking / lead form',
     cta_section: 'closing call-to-action section',
+    image_carousel: 'image carousel / slider',
   },
 };
 

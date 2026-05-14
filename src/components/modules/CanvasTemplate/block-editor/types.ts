@@ -7,7 +7,8 @@ export type BlockType =
   | 'feature_section'
   | 'photo_gallery'
   | 'booking_form'
-  | 'cta_section';
+  | 'cta_section'
+  | 'image_carousel';
 
 export interface HeroSplitStat {
   value: string;
@@ -144,6 +145,25 @@ export interface CtaSectionContent {
   backgroundTransform?: ImageTransform;
 }
 
+export interface CarouselSlide {
+  id: string;
+  imageUrl: string;
+  caption?: string;
+  altText?: string;
+  href?: string;
+}
+
+export interface ImageCarouselContent {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  slides: CarouselSlide[];
+  /** Auto-advance interval ms; 0 / undefined = manual only. */
+  autoplayMs?: number;
+  showPagination?: boolean;
+  showNavArrows?: boolean;
+}
+
 export type BlockContent =
   | HeroSplitContent
   | HeroOverlayContent
@@ -151,6 +171,7 @@ export type BlockContent =
   | PhotoGalleryContent
   | BookingFormContent
   | CtaSectionContent
+  | ImageCarouselContent
   | Record<string, unknown>;
 
 /**
@@ -193,7 +214,12 @@ export type BlockMotionStored = BlockMotion;
 // absolutely positioned inside the block frame so users can drag freely
 // (Figma-style). Persisted as `block.extraElements[]` in canvas_data.
 
-export type ExtraElementKind = 'text' | 'edit_text' | 'photo' | 'video';
+export type ExtraElementKind =
+  | 'text'
+  | 'edit_text'
+  | 'photo'
+  | 'video'
+  | 'hotspot';
 
 export interface ExtraPosition {
   x: number;
@@ -257,11 +283,31 @@ export interface ExtraVideoContent {
   alt?: string;
 }
 
+/**
+ * Hotspot: a small pin user-positioned on a block (typically over an image)
+ * that opens a popover on click. Use case: floorplan tooltips, product
+ * details, map markers. Popover content is editable inline.
+ */
+export interface ExtraHotspotContent {
+  /** Pin label rendered inside the pin chip — often a number or icon char. */
+  pinLabel?: string;
+  /** Popover title (one-liner). */
+  title: string;
+  /** Popover body — multi-line text. */
+  body?: string;
+  /** Optional CTA button inside the popover. */
+  ctaText?: string;
+  ctaUrl?: string;
+  /** Trigger — phase 1 only `click`; defer hover. */
+  trigger?: 'click';
+}
+
 export type ExtraElementContent =
   | ExtraTextContent
   | ExtraEditTextContent
   | ExtraPhotoContent
-  | ExtraVideoContent;
+  | ExtraVideoContent
+  | ExtraHotspotContent;
 
 /**
  * Optional analytics tracking config. When set, public render fires an
@@ -309,12 +355,17 @@ export interface VideoExtraElement extends ExtraElementBase {
   kind: 'video';
   content: ExtraVideoContent;
 }
+export interface HotspotExtraElement extends ExtraElementBase {
+  kind: 'hotspot';
+  content: ExtraHotspotContent;
+}
 
 export type ExtraElement =
   | TextExtraElement
   | EditTextExtraElement
   | PhotoExtraElement
-  | VideoExtraElement;
+  | VideoExtraElement
+  | HotspotExtraElement;
 
 export interface Block {
   id: string;
@@ -427,4 +478,9 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
   },
   booking_form: { type: 'booking_form', label: 'Booking', accent: '#b45309' },
   cta_section: { type: 'cta_section', label: 'CTA', accent: '#be123c' },
+  image_carousel: {
+    type: 'image_carousel',
+    label: 'Slide',
+    accent: '#2563eb',
+  },
 };

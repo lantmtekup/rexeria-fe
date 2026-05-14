@@ -5,6 +5,7 @@ import { CtaSection } from './CtaSection';
 import { FeatureSection } from './FeatureSection';
 import { HeroOverlay } from './HeroOverlay';
 import { HeroSplit } from './HeroSplit';
+import { ImageCarousel } from './ImageCarousel';
 import { PhotoGallery } from './PhotoGallery';
 import type {
   Block,
@@ -12,10 +13,12 @@ import type {
   BlockContent,
   BookingFormContent,
   CtaSectionContent,
+  ElementPositionsMap,
   ElementStylesMap,
   FeatureSectionContent,
   HeroOverlayContent,
   HeroSplitContent,
+  ImageCarouselContent,
   PhotoGalleryContent,
 } from '../types';
 
@@ -29,6 +32,8 @@ interface RenderBlockProps {
   background?: BlockBackground;
   /** Already resolved per-device element order. */
   order?: string[];
+  /** Already resolved per-device free-form drag offsets. */
+  positions?: ElementPositionsMap;
   activeKey?: string | null;
   fallback?: React.ReactNode;
 }
@@ -39,6 +44,7 @@ export function RenderBlock({
   styles,
   background,
   order,
+  positions,
   activeKey,
   fallback,
 }: RenderBlockProps) {
@@ -50,6 +56,7 @@ export function RenderBlock({
           styles={styles}
           background={background}
           order={order}
+          positions={positions}
           activeKey={activeKey}
         />
       );
@@ -60,6 +67,7 @@ export function RenderBlock({
           styles={styles}
           background={background}
           order={order}
+          positions={positions}
           activeKey={activeKey}
         />
       );
@@ -70,6 +78,7 @@ export function RenderBlock({
           styles={styles}
           background={background}
           order={order}
+          positions={positions}
           activeKey={activeKey}
         />
       );
@@ -80,6 +89,7 @@ export function RenderBlock({
           styles={styles}
           background={background}
           order={order}
+          positions={positions}
           activeKey={activeKey}
         />
       );
@@ -90,6 +100,7 @@ export function RenderBlock({
           styles={styles}
           background={background}
           order={order}
+          positions={positions}
           activeKey={activeKey}
         />
       );
@@ -100,6 +111,18 @@ export function RenderBlock({
           styles={styles}
           background={background}
           order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'image_carousel':
+      return (
+        <ImageCarousel
+          content={content as ImageCarouselContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
           activeKey={activeKey}
         />
       );

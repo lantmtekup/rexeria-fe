@@ -21,6 +21,7 @@ interface AddBlockDialogProps {
 const ORDERED_TYPES: BlockType[] = [
   'hero_split',
   'hero_overlay',
+  'image_carousel',
   'feature_section',
   'photo_gallery',
   'booking_form',

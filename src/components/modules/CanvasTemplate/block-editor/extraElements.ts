@@ -20,6 +20,8 @@ const DEFAULT_SIZE: Record<ExtraElementKind, ExtraSize> = {
   edit_text: { width: 280, height: 44 },
   photo: { width: 240, height: 180 },
   video: { width: 480, height: 270 },
+  // Hotspot pin is a small dot — popover floats from it; size = pin chip.
+  hotspot: { width: 28, height: 28 },
 };
 
 function newId(): string {
@@ -97,6 +99,30 @@ export function makeExtraElement(
         zIndex: 1,
         content: { source: 'url', url: '' },
         style: { controls: true },
+      };
+    case 'hotspot':
+      return {
+        id,
+        kind: 'hotspot',
+        position,
+        size,
+        zIndex: 10, // hotspots float above content by default
+        content: {
+          pinLabel: '+',
+          title: 'Tiêu đề popup',
+          body: 'Mô tả chi tiết khi user click vào pin.',
+          trigger: 'click',
+        },
+        style: {
+          backgroundColor: '#ffffff',
+          color: '#0a0a0a',
+          borderRadius: 999,
+          fontSize: 14,
+          fontWeight: 700,
+          fontFamily: 'inter',
+          borderColor: '#0a0a0a',
+          borderWidth: 2,
+        },
       };
   }
 }

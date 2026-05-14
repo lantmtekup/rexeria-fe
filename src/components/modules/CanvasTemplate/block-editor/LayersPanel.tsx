@@ -128,6 +128,13 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'primaryText', label: 'CTA chính', icon: MousePointerClick },
     { key: 'secondaryText', label: 'CTA phụ', icon: MousePointerClick },
   ],
+  image_carousel: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'description', label: 'Mô tả', icon: Pilcrow },
+    { key: 'slides', label: 'Slides', icon: Grid3x3 },
+  ],
 };
 
 export function LayersPanel({

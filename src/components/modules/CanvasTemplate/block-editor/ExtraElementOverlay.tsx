@@ -5,7 +5,7 @@ import * as React from 'react';
 import { cn } from '@/lib/cn';
 import { findFont } from '@/lib/fonts';
 
-import type { ExtraElement, ExtraPosition } from './types';
+import type { ExtraElement, ExtraPosition, HotspotExtraElement } from './types';
 
 interface Props {
   elements: ExtraElement[];
@@ -271,5 +271,82 @@ function RenderExtraElement({ el }: { el: ExtraElement }) {
             : el.content.mediaId || '(media)'}
         </div>
       );
+    case 'hotspot':
+      return <HotspotPin el={el} />;
   }
+}
+
+/**
+ * Hotspot renders as a pulsing pin. Click opens a small popover anchored
+ * below the pin. In editor view we still show the popover toggle so the
+ * designer can see / position it; in public view this is the actual UX.
+ */
+function HotspotPin({ el }: { el: HotspotExtraElement }) {
+  const [open, setOpen] = React.useState(false);
+  const s = el.style ?? {};
+  return (
+    <div className='relative size-full'>
+      <button
+        type='button'
+        onClick={e => {
+          e.stopPropagation();
+          setOpen(v => !v);
+        }}
+        className='flex size-full items-center justify-center font-bold shadow-md transition-transform hover:scale-110'
+        style={{
+          backgroundColor: s.backgroundColor,
+          color: s.color,
+          borderRadius: s.borderRadius,
+          fontSize: s.fontSize,
+          fontWeight: s.fontWeight,
+          borderColor: s.borderColor,
+          borderWidth: s.borderWidth,
+          borderStyle: s.borderWidth ? 'solid' : undefined,
+        }}
+      >
+        <span className='absolute inset-0 animate-ping rounded-full bg-current opacity-30' />
+        <span className='relative'>{el.content.pinLabel ?? '+'}</span>
+      </button>
+      {open ? (
+        <div
+          // Popover anchored just below pin, centered horizontally.
+          className='absolute top-full left-1/2 z-50 mt-2 w-64 -translate-x-1/2 rounded-lg border bg-white p-3 text-left text-xs shadow-xl ring-1 ring-black/5'
+          onClick={e => e.stopPropagation()}
+        >
+          <div className='flex items-start justify-between gap-2 pb-1'>
+            <p className='text-sm font-semibold text-neutral-900'>
+              {el.content.title || 'Tiêu đề'}
+            </p>
+            <button
+              type='button'
+              onClick={e => {
+                e.stopPropagation();
+                setOpen(false);
+              }}
+              className='text-neutral-400 hover:text-neutral-700'
+              aria-label='Đóng'
+            >
+              ×
+            </button>
+          </div>
+          {el.content.body ? (
+            <p className='text-[11px] leading-4 whitespace-pre-line text-neutral-600'>
+              {el.content.body}
+            </p>
+          ) : null}
+          {el.content.ctaText ? (
+            <a
+              href={el.content.ctaUrl || '#'}
+              onClick={e => e.stopPropagation()}
+              className='mt-2 inline-flex h-7 items-center rounded-md bg-neutral-900 px-2.5 text-[11px] font-semibold text-white hover:bg-neutral-800'
+              target={el.content.ctaUrl ? '_blank' : undefined}
+              rel='noreferrer'
+            >
+              {el.content.ctaText}
+            </a>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
 }

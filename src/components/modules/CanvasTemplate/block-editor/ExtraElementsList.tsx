@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+  Crosshair,
   Image as ImageIcon,
   TextCursorInput,
   Trash2,
@@ -27,6 +28,7 @@ const KIND_META: Record<
   edit_text: { label: 'Edit text', icon: TextCursorInput },
   photo: { label: 'Photo', icon: ImageIcon },
   video: { label: 'Video', icon: Video },
+  hotspot: { label: 'Hotspot', icon: Crosshair },
 };
 
 function labelOf(el: ExtraElement): string {
@@ -39,6 +41,8 @@ function labelOf(el: ExtraElement): string {
       return el.content.alt || 'Photo';
     case 'video':
       return el.content.alt || 'Video';
+    case 'hotspot':
+      return el.content.title || 'Hotspot';
   }
 }
 

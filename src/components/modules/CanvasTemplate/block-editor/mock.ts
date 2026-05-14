@@ -39,6 +39,7 @@ const NAME_BY_TYPE: Record<BlockType, string> = {
   photo_gallery: 'Thư viện ảnh',
   booking_form: 'Đặt chỗ',
   cta_section: 'CTA',
+  image_carousel: 'Slide ảnh',
 };
 
 function buildBlock(id: string, type: BlockType): Block {

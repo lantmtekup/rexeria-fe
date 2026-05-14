@@ -6,6 +6,7 @@ import {
   ArrowDownToLine,
   ArrowUpToLine,
   BarChart3,
+  Crosshair,
   Image as ImageIcon,
   TextCursorInput,
   Trash2,
@@ -23,6 +24,7 @@ import type {
   ExtraElement,
   ExtraElementKind,
   ExtraElementTracking,
+  HotspotExtraElement,
   PhotoExtraElement,
   TextExtraElement,
   VideoExtraElement,
@@ -42,6 +44,7 @@ const KIND_LABEL: Record<ExtraElementKind, string> = {
   edit_text: 'Edit text',
   photo: 'Photo',
   video: 'Video',
+  hotspot: 'Hotspot',
 };
 
 const KIND_ICON: Record<ExtraElementKind, React.ElementType> = {
@@ -49,6 +52,7 @@ const KIND_ICON: Record<ExtraElementKind, React.ElementType> = {
   edit_text: TextCursorInput,
   photo: ImageIcon,
   video: Video,
+  hotspot: Crosshair,
 };
 
 export function ExtraElementToolbar({
@@ -74,8 +78,10 @@ export function ExtraElementToolbar({
         <EditTextEditor el={element} onChange={onChange} />
       ) : element.kind === 'photo' ? (
         <PhotoEditor el={element} onChange={onChange} />
-      ) : (
+      ) : element.kind === 'video' ? (
         <VideoEditor el={element} onChange={onChange} />
+      ) : (
+        <HotspotEditor el={element} onChange={onChange} />
       )}
 
       <Sep />
@@ -317,6 +323,81 @@ function VideoEditor({
         />
         Autoplay
       </label>
+    </>
+  );
+}
+
+function HotspotEditor({
+  el,
+  onChange,
+}: {
+  el: HotspotExtraElement;
+  onChange: (patch: Partial<ExtraElement>) => void;
+}) {
+  return (
+    <>
+      <InlineLabel label='Pin'>
+        <input
+          value={el.content.pinLabel ?? ''}
+          onChange={e =>
+            onChange({ content: { ...el.content, pinLabel: e.target.value } })
+          }
+          placeholder='+'
+          maxLength={3}
+          className='h-7 w-10 rounded-md bg-white px-1.5 text-center text-xs ring-1 ring-neutral-200 focus:outline-none'
+        />
+      </InlineLabel>
+      <InlineLabel label='Tiêu đề'>
+        <input
+          value={el.content.title}
+          onChange={e =>
+            onChange({ content: { ...el.content, title: e.target.value } })
+          }
+          placeholder='Title popup'
+          className='h-7 w-44 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+        />
+      </InlineLabel>
+      <InlineLabel label='Body'>
+        <input
+          value={el.content.body ?? ''}
+          onChange={e =>
+            onChange({ content: { ...el.content, body: e.target.value } })
+          }
+          placeholder='Nội dung popup'
+          className='h-7 w-52 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+        />
+      </InlineLabel>
+      <InlineLabel label='CTA'>
+        <input
+          value={el.content.ctaText ?? ''}
+          onChange={e =>
+            onChange({ content: { ...el.content, ctaText: e.target.value } })
+          }
+          placeholder='Nút (vd: Xem chi tiết)'
+          className='h-7 w-32 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+        />
+      </InlineLabel>
+      <InlineLabel label='URL'>
+        <input
+          value={el.content.ctaUrl ?? ''}
+          onChange={e =>
+            onChange({ content: { ...el.content, ctaUrl: e.target.value } })
+          }
+          placeholder='https://…'
+          className='h-7 w-40 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+        />
+      </InlineLabel>
+      <input
+        type='color'
+        value={el.style?.backgroundColor ?? '#ffffff'}
+        onChange={e =>
+          onChange({
+            style: { ...el.style, backgroundColor: e.target.value },
+          })
+        }
+        className='size-7 cursor-pointer rounded-md bg-white p-0.5 ring-1 ring-neutral-200'
+        aria-label='Màu pin'
+      />
     </>
   );
 }

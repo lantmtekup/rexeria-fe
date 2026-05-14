@@ -7,6 +7,7 @@ import type {
   FeatureSectionContent,
   HeroOverlayContent,
   HeroSplitContent,
+  ImageCarouselContent,
   PhotoGalleryContent,
 } from './types';
 
@@ -210,6 +211,45 @@ const CTA_EN: CtaSectionContent = {
 };
 
 // ── Block name + defaults registry ──────────────────────────────────────
+const CAROUSEL_VI: ImageCarouselContent = {
+  eyebrow: 'BỘ SƯU TẬP',
+  title: 'Khám phá không gian sống',
+  description: 'Trượt qua các thiết kế nổi bật của dự án.',
+  slides: [
+    {
+      id: 's1',
+      imageUrl:
+        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80',
+      caption: 'Phòng khách view sông',
+    },
+    {
+      id: 's2',
+      imageUrl:
+        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1600&q=80',
+      caption: 'Sảnh đôi 12m',
+    },
+    {
+      id: 's3',
+      imageUrl:
+        'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1600&q=80',
+      caption: 'Tiện ích cao cấp',
+    },
+  ],
+  autoplayMs: 4500,
+  showPagination: true,
+  showNavArrows: true,
+};
+
+const CAROUSEL_EN: ImageCarouselContent = {
+  eyebrow: 'COLLECTION',
+  title: 'Discover the living space',
+  description: 'Swipe through the highlights of the project.',
+  slides: CAROUSEL_VI.slides,
+  autoplayMs: 4500,
+  showPagination: true,
+  showNavArrows: true,
+};
+
 const NAME_BY_TYPE: Record<BlockType, string> = {
   hero_split: 'Hero Split',
   hero_overlay: 'Hero Overlay',
@@ -217,6 +257,7 @@ const NAME_BY_TYPE: Record<BlockType, string> = {
   photo_gallery: 'Thư viện ảnh',
   booking_form: 'Đặt chỗ',
   cta_section: 'CTA',
+  image_carousel: 'Slide ảnh',
 };
 
 const DEFAULTS_VI: Record<BlockType, BlockContent> = {
@@ -226,6 +267,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   photo_gallery: GALLERY_VI,
   booking_form: BOOKING_VI,
   cta_section: CTA_VI,
+  image_carousel: CAROUSEL_VI,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
@@ -234,6 +276,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   photo_gallery: GALLERY_EN,
   booking_form: BOOKING_EN,
   cta_section: CTA_EN,
+  image_carousel: CAROUSEL_EN,
 };
 
 function genId() {
