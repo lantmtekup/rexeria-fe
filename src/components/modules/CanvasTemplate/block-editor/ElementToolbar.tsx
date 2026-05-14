@@ -45,6 +45,7 @@ import {
   type ElementStyle,
   type FeatureSectionContent,
   type HeroSplitContent,
+  type ImageCarouselContent,
   type ImageTransform,
   type Lang,
   type PhotoGalleryContent,
@@ -57,6 +58,7 @@ type ElementKind =
   | 'features'
   | 'photos'
   | 'reasons'
+  | 'slides'
   | 'background';
 
 export const BACKGROUND_LAYER_KEY = '__background__';
@@ -78,6 +80,7 @@ const ELEMENT_KIND: Record<string, ElementKind> = {
   features: 'features',
   photos: 'photos',
   reasons: 'reasons',
+  slides: 'slides',
   [BACKGROUND_LAYER_KEY]: 'background',
 };
 
@@ -98,6 +101,7 @@ const ELEMENT_LABEL: Record<string, string> = {
   features: 'Tiện ích',
   photos: 'Bộ ảnh',
   reasons: 'Lý do',
+  slides: 'Slides',
   [BACKGROUND_LAYER_KEY]: 'Nền',
 };
 
@@ -306,6 +310,12 @@ export function ElementToolbar({
         {kind === 'reasons' && (
           <ReasonsControls
             content={content as BookingFormContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'slides' && (
+          <SlidesControls
+            content={content as ImageCarouselContent}
             onContentChange={onContentChange}
           />
         )}
@@ -915,6 +925,194 @@ function PhotosControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm ảnh' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────────────────────── SLIDES
+
+function SlidesControls({
+  content,
+  onContentChange,
+}: {
+  content: ImageCarouselContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const slides = content.slides ?? [];
+
+  const update = (
+    i: number,
+    patch: Partial<ImageCarouselContent['slides'][number]>
+  ) => {
+    onContentChange({
+      ...content,
+      slides: slides.map((s, idx) => (idx === i ? { ...s, ...patch } : s)),
+    });
+  };
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      slides: slides.filter((_, idx) => idx !== i),
+    });
+  const move = (i: number, dir: -1 | 1) => {
+    const next = slides.slice();
+    const j = i + dir;
+    if (j < 0 || j >= next.length) return;
+    [next[i], next[j]] = [next[j], next[i]];
+    onContentChange({ ...content, slides: next });
+  };
+  const add = () =>
+    onContentChange({
+      ...content,
+      slides: [
+        ...slides,
+        {
+          id: `s_${Math.random().toString(36).slice(2, 8)}`,
+          imageUrl:
+            'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1600&q=80',
+          caption: '',
+        },
+      ],
+    });
+
+  return (
+    <PopoverTrigger
+      label='Slides'
+      preview={`${slides.length} slide`}
+      width={480}
+    >
+      {/* Carousel-level controls — apply to the whole block, not per slide. */}
+      <div className='mb-2 flex flex-col gap-2 rounded-md border border-neutral-200 bg-neutral-50/60 p-2'>
+        <p className='text-[10px] font-semibold tracking-widest text-neutral-500 uppercase'>
+          Cấu hình carousel
+        </p>
+        <div className='flex items-center gap-2'>
+          <label className='inline-flex shrink-0 items-center gap-1 text-[11px] text-neutral-600'>
+            <input
+              type='checkbox'
+              checked={(content.autoplayMs ?? 0) > 0}
+              onChange={e =>
+                onContentChange({
+                  ...content,
+                  autoplayMs: e.target.checked ? 4500 : 0,
+                })
+              }
+            />
+            Autoplay
+          </label>
+          <input
+            type='number'
+            min={1000}
+            max={20000}
+            step={500}
+            value={content.autoplayMs ?? 0}
+            onChange={e =>
+              onContentChange({
+                ...content,
+                autoplayMs: Math.max(0, Number(e.target.value) || 0),
+              })
+            }
+            disabled={!content.autoplayMs}
+            className='h-7 w-20 rounded-md bg-white px-1.5 text-center font-mono text-[11px] ring-1 ring-neutral-200 focus:outline-none disabled:opacity-50'
+            placeholder='ms'
+          />
+          <span className='text-[10px] text-neutral-400'>ms</span>
+        </div>
+        <div className='flex items-center gap-3'>
+          <label className='inline-flex items-center gap-1 text-[11px] text-neutral-600'>
+            <input
+              type='checkbox'
+              checked={content.showPagination ?? true}
+              onChange={e =>
+                onContentChange({
+                  ...content,
+                  showPagination: e.target.checked,
+                })
+              }
+            />
+            Pagination
+          </label>
+          <label className='inline-flex items-center gap-1 text-[11px] text-neutral-600'>
+            <input
+              type='checkbox'
+              checked={content.showNavArrows ?? true}
+              onChange={e =>
+                onContentChange({
+                  ...content,
+                  showNavArrows: e.target.checked,
+                })
+              }
+            />
+            Nút mũi tên
+          </label>
+        </div>
+      </div>
+
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {slides.map((slide, i) => (
+          <div
+            key={slide.id}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between'>
+              <span className='text-[10px] font-semibold tracking-widest text-neutral-500 uppercase'>
+                Slide {i + 1}
+              </span>
+              <div className='flex items-center gap-1'>
+                <button
+                  type='button'
+                  onClick={() => move(i, -1)}
+                  disabled={i === 0}
+                  aria-label='Lên trên'
+                  className='flex size-6 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40'
+                >
+                  ↑
+                </button>
+                <button
+                  type='button'
+                  onClick={() => move(i, 1)}
+                  disabled={i === slides.length - 1}
+                  aria-label='Xuống dưới'
+                  className='flex size-6 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40'
+                >
+                  ↓
+                </button>
+                <button
+                  type='button'
+                  onClick={() => remove(i)}
+                  aria-label='Xoá'
+                  className='flex size-7 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                >
+                  <Trash2 className='size-3.5' />
+                </button>
+              </div>
+            </div>
+            <ImagePicker
+              value={slide.imageUrl}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+            <Input
+              value={slide.caption ?? ''}
+              onChange={e => update(i, { caption: e.target.value })}
+              placeholder='Caption (hiện overlay đáy slide)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={slide.altText ?? ''}
+              onChange={e => update(i, { altText: e.target.value })}
+              placeholder='Alt text (SEO / a11y)'
+              className='h-8 border-neutral-200 bg-white text-[11px]'
+            />
+            <Input
+              value={slide.href ?? ''}
+              onChange={e => update(i, { href: e.target.value })}
+              placeholder='Link (https://… — bỏ trống nếu không click)'
+              className='h-8 border-neutral-200 bg-white text-[11px]'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm slide' />
     </PopoverTrigger>
   );
 }
