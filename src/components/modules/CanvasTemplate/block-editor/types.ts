@@ -263,6 +263,24 @@ export type ExtraElementContent =
   | ExtraPhotoContent
   | ExtraVideoContent;
 
+/**
+ * Optional analytics tracking config. When set, public render fires an
+ * event when the user interacts with the element (click for text / photo /
+ * video / hotspot, submit for edit_text). FE adapter dispatches it via
+ * `window.dispatchEvent(new CustomEvent('rexer:track', { detail }))` so
+ * any analytics provider (GA, Posthog, custom) can subscribe.
+ */
+export interface ExtraElementTracking {
+  /** Optional toggle — when false, FE skips emitting the event. Default true if any field is set. */
+  enabled?: boolean;
+  /** Event name string — required when tracking is in use. Example: `cta_click_hotspot_floorplan`. */
+  eventName?: string;
+  /** Free-form category (e.g. `cta`, `engagement`, `form_submit`). */
+  eventCategory?: string;
+  /** Optional free-form bag of static properties sent with the event. */
+  customData?: Record<string, string | number | boolean>;
+}
+
 interface ExtraElementBase {
   id: string;
   position: ExtraPosition;
@@ -271,6 +289,8 @@ interface ExtraElementBase {
   zIndex?: number;
   isVisible?: boolean;
   style?: ExtraElementStyle;
+  /** Analytics config — see `ExtraElementTracking`. */
+  tracking?: ExtraElementTracking;
 }
 
 export interface TextExtraElement extends ExtraElementBase {

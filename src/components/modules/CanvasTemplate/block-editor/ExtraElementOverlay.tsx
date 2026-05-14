@@ -16,6 +16,13 @@ interface Props {
   readOnly?: boolean;
   onSelect: (id: string | null) => void;
   onCommitPosition: (id: string, pos: ExtraPosition) => void;
+  /**
+   * When true, this overlay is rendering the published view (not the
+   * editor) — fires `rexer:track` events on element interaction per the
+   * `tracking` config. In editor mode we never emit so analytics don't
+   * spam during design.
+   */
+  emitTracking?: boolean;
 }
 
 interface DragState {
@@ -44,6 +51,7 @@ export function ExtraElementOverlay({
   readOnly,
   onSelect,
   onCommitPosition,
+  emitTracking,
 }: Props) {
   const dragRef = React.useRef<DragState | null>(null);
   const justDraggedRef = React.useRef(false);
@@ -97,13 +105,39 @@ export function ExtraElementOverlay({
     justDraggedRef.current = true;
   };
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>, id: string) => {
+  const handleClick = (
+    e: React.MouseEvent<HTMLDivElement>,
+    el: ExtraElement
+  ) => {
     if (justDraggedRef.current) {
       justDraggedRef.current = false;
       return;
     }
     e.stopPropagation();
-    onSelect(id);
+    // Public view: fire tracking event when configured. Editor view never
+    // emits so designers don't spam analytics while building.
+    if (emitTracking && el.tracking?.eventName) {
+      const {
+        enabled = true,
+        eventName,
+        eventCategory,
+        customData,
+      } = el.tracking;
+      if (enabled && typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('rexer:track', {
+            detail: {
+              eventName,
+              eventCategory,
+              elementId: el.id,
+              elementKind: el.kind,
+              customData,
+            },
+          })
+        );
+      }
+    }
+    onSelect(el.id);
   };
 
   if (elements.length === 0) return null;
@@ -120,7 +154,7 @@ export function ExtraElementOverlay({
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
-            onClick={e => handleClick(e, el.id)}
+            onClick={e => handleClick(e, el)}
             className={cn(
               'pointer-events-auto absolute cursor-grab select-none',
               selected

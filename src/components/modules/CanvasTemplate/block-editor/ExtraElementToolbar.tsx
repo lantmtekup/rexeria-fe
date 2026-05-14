@@ -1,9 +1,11 @@
 'use client';
 
 import * as React from 'react';
+import { Popover as PopoverPrimitive } from 'radix-ui';
 import {
   ArrowDownToLine,
   ArrowUpToLine,
+  BarChart3,
   Image as ImageIcon,
   TextCursorInput,
   Trash2,
@@ -20,6 +22,7 @@ import type {
   EditTextExtraElement,
   ExtraElement,
   ExtraElementKind,
+  ExtraElementTracking,
   PhotoExtraElement,
   TextExtraElement,
   VideoExtraElement,
@@ -77,6 +80,12 @@ export function ExtraElementToolbar({
 
       <Sep />
       <SizeEditor element={element} onChange={onChange} />
+
+      <Sep />
+      <TrackingPopover
+        tracking={element.tracking}
+        onChange={tracking => onChange({ tracking })}
+      />
 
       <Sep />
       <ToolbarBtn onClick={onBringToFront} label='Đưa lên trước'>
@@ -412,6 +421,101 @@ function InlineLabel({
 
 function Sep() {
   return <span className='h-4 w-px bg-neutral-200' aria-hidden />;
+}
+
+function TrackingPopover({
+  tracking,
+  onChange,
+}: {
+  tracking: ExtraElementTracking | undefined;
+  onChange: (next: ExtraElementTracking | undefined) => void;
+}) {
+  const enabled = tracking?.enabled ?? !!tracking?.eventName;
+  const set = (patch: Partial<ExtraElementTracking>) => {
+    const next: ExtraElementTracking = { ...(tracking ?? {}), ...patch };
+    onChange(next);
+  };
+  return (
+    <PopoverPrimitive.Root>
+      <PopoverPrimitive.Trigger asChild>
+        <button
+          type='button'
+          title='Tracking'
+          aria-label='Tracking'
+          className={cn(
+            'inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-medium ring-1 transition-colors',
+            enabled
+              ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+              : 'bg-white text-neutral-700 ring-neutral-200 hover:ring-neutral-300'
+          )}
+        >
+          <BarChart3 className='size-3.5' />
+          Tracking
+          {enabled ? (
+            <span className='size-1.5 rounded-full bg-emerald-500' />
+          ) : null}
+        </button>
+      </PopoverPrimitive.Trigger>
+      <PopoverPrimitive.Portal>
+        <PopoverPrimitive.Content
+          align='end'
+          sideOffset={6}
+          className='bg-background animate-in fade-in zoom-in-95 z-50 w-72 rounded-lg border shadow-lg'
+        >
+          <div className='flex items-center justify-between border-b px-3 py-2'>
+            <span className='text-xs font-semibold'>Tracking event</span>
+            <label className='inline-flex cursor-pointer items-center gap-1.5 text-[11px] text-neutral-600'>
+              <input
+                type='checkbox'
+                checked={enabled}
+                onChange={e => set({ enabled: e.target.checked })}
+              />
+              Bật
+            </label>
+          </div>
+          <div className='flex flex-col gap-2 p-3'>
+            <label className='flex flex-col gap-1'>
+              <span className='text-[10px] tracking-wide text-neutral-500 uppercase'>
+                Tên sự kiện (event_name)
+              </span>
+              <input
+                value={tracking?.eventName ?? ''}
+                onChange={e => set({ eventName: e.target.value })}
+                placeholder='vd: cta_click_hero'
+                className='h-8 rounded-md bg-white px-2 font-mono text-[11px] ring-1 ring-neutral-200 placeholder:text-neutral-400 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
+              />
+            </label>
+            <label className='flex flex-col gap-1'>
+              <span className='text-[10px] tracking-wide text-neutral-500 uppercase'>
+                Danh mục (category)
+              </span>
+              <input
+                value={tracking?.eventCategory ?? ''}
+                onChange={e => set({ eventCategory: e.target.value })}
+                placeholder='engagement / cta / form_submit'
+                className='h-8 rounded-md bg-white px-2 text-[11px] ring-1 ring-neutral-200 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
+              />
+            </label>
+            <p className='text-[10px] leading-4 text-neutral-500'>
+              Khi public view tương tác element này, FE dispatch{' '}
+              <code className='bg-neutral-100 px-1'>rexer:track</code> với{' '}
+              <code className='bg-neutral-100 px-1'>detail.eventName</code>.
+              Analytics provider (GA, Posthog…) subscribe để forward.
+            </p>
+            {tracking ? (
+              <button
+                type='button'
+                onClick={() => onChange(undefined)}
+                className='self-end text-[11px] text-red-600 hover:underline'
+              >
+                Xoá tracking
+              </button>
+            ) : null}
+          </div>
+        </PopoverPrimitive.Content>
+      </PopoverPrimitive.Portal>
+    </PopoverPrimitive.Root>
+  );
 }
 
 function ToolbarBtn({
