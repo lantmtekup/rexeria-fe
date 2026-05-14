@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { cn } from '@/lib/cn';
 
+import { ExtraElementOverlay } from './ExtraElementOverlay';
 import { RenderBlock } from './blocks/renderBlock';
 import { MotionBlockRoot, MotionProvider } from './motion/runtime';
 import type { BlockMotion, EditorMode } from './motion/types';
@@ -23,8 +24,28 @@ interface BlockPreviewProps {
   /** Called on blur / Enter / Esc with the final string value. */
   onCommitInlineEdit: (key: string, value: string) => void;
   onCancelInlineEdit: () => void;
+  /**
+   * Persist a new x/y offset for an element after a canvas drag completes.
+   * Coordinates are in unscaled CSS pixels (delta already divided by zoom).
+   */
+  onCommitElementPosition?: (
+    key: string,
+    pos: { x: number; y: number }
+  ) => void;
   /** Editor lifecycle for motion subsystem. Default 'edit' (no-op). */
   motionMode?: EditorMode;
+  /**
+   * Increments on every "Play preview" click. Threaded through to
+   * `MotionProvider` so the runtime can force a timeline rebuild + replay
+   * even when `motionMode` is already `'preview'` (otherwise the dep set in
+   * useGSAP is value-equal across re-clicks and the timeline doesn't restart).
+   */
+  motionPreviewNonce?: number;
+  /**
+   * When set, runtime animates only this element's track (single-element
+   * audition triggered by picking a preset on the sidebar panel).
+   */
+  motionPreviewElement?: string | null;
   /**
    * Fired on mount + whenever `device` changes with the zoom % needed to fit
    * the device frame fully in the visible canvas surface (clamped 20–100%).
@@ -32,6 +53,13 @@ interface BlockPreviewProps {
    * load when the desktop frame (1280px) is wider than the viewport.
    */
   onAutoFitZoom?: (percentage: number) => void;
+  // ── ExtraElements (free-drag user-added objects) ────────────────────────
+  selectedExtraElementId?: string | null;
+  onSelectExtraElement?: (id: string | null) => void;
+  onCommitExtraElementPosition?: (
+    id: string,
+    pos: { x: number; y: number }
+  ) => void;
 }
 
 const DEVICE_WIDTH: Record<Device, number> = {
@@ -66,13 +94,20 @@ export function BlockPreview({
   onCommitInlineEdit,
   onCancelInlineEdit,
   motionMode = 'edit',
+  motionPreviewNonce = 0,
+  motionPreviewElement = null,
   onAutoFitZoom,
+  onCommitElementPosition,
+  selectedExtraElementId = null,
+  onSelectExtraElement,
+  onCommitExtraElementPosition,
 }: BlockPreviewProps) {
   const langContent = lang === 'vi' ? block.contentVi : block.contentEn;
   const content = readVariant(langContent, device) ?? langContent.desktop;
   const styles = readVariant(block.elementStyles, device);
   const background = readVariant(block.background, device);
   const order = readVariant(block.elementOrder, device);
+  const positions = readVariant(block.elementPositions, device);
   const baseWidth = DEVICE_WIDTH[device];
   const scale = zoom / 100;
   const surfaceRef = React.useRef<HTMLDivElement>(null);
@@ -85,7 +120,90 @@ export function BlockPreview({
     | undefined;
   const effectiveMode: EditorMode = motionMode;
 
+  // ── Free-form drag (Figma-style) ─────────────────────────────────────
+  // Pointer is captured to the surface so the drag survives the cursor
+  // wandering across other elements. Coordinates are stored in unscaled
+  // CSS pixels — we divide by `scale` so a 100px drag at 50% zoom moves
+  // the element 200px in its own coord space, matching how the user
+  // perceives it on a zoomed canvas.
+  const dragRef = React.useRef<{
+    el: HTMLElement;
+    key: string;
+    startClientX: number;
+    startClientY: number;
+    baseX: number;
+    baseY: number;
+    /** Set to true once the pointer has moved past the drag threshold. */
+    active: boolean;
+  } | null>(null);
+  // Set true on pointerup of a real drag; consumed by the next click event
+  // so a drag doesn't also trigger element selection toggling.
+  const justDraggedRef = React.useRef(false);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (editingKey) return;
+    if (device === 'tablet') return; // tablet variant is read-only
+    if (e.button !== 0) return; // primary button only
+    const target = e.target as HTMLElement;
+    const el = target.closest<HTMLElement>('[data-element-key]');
+    if (!el || !surfaceRef.current?.contains(el)) return;
+    const key = el.getAttribute('data-element-key');
+    if (!key || key.startsWith('__')) return; // skip the block background
+    // First click selects; a second pointerdown on the SAME selected element
+    // initiates the drag. Without this, dragging from a row that wasn't
+    // selected yet would feel like an accidental move.
+    if (key !== selectedElementKey) return;
+    const base = positions?.[key] ?? { x: 0, y: 0 };
+    dragRef.current = {
+      el,
+      key,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      baseX: base.x,
+      baseY: base.y,
+      active: false,
+    };
+    surfaceRef.current?.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = dragRef.current;
+    if (!d) return;
+    const dxRaw = e.clientX - d.startClientX;
+    const dyRaw = e.clientY - d.startClientY;
+    if (!d.active && Math.hypot(dxRaw, dyRaw) < 4) return;
+    d.active = true;
+    const safeScale = scale || 1;
+    const x = d.baseX + dxRaw / safeScale;
+    const y = d.baseY + dyRaw / safeScale;
+    // Direct DOM write — no React state during move. React's next render
+    // (after pointerup → onCommitElementPosition) will land the same value
+    // via positionStyle so there's no visual jump.
+    d.el.style.transform = `translate(${x}px, ${y}px)`;
+    d.el.style.cursor = 'grabbing';
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = dragRef.current;
+    if (!d) return;
+    dragRef.current = null;
+    surfaceRef.current?.releasePointerCapture?.(e.pointerId);
+    d.el.style.cursor = '';
+    if (!d.active) return; // no real drag — let the click handler select
+    const safeScale = scale || 1;
+    const x = Math.round(d.baseX + (e.clientX - d.startClientX) / safeScale);
+    const y = Math.round(d.baseY + (e.clientY - d.startClientY) / safeScale);
+    onCommitElementPosition?.(d.key, { x, y });
+    justDraggedRef.current = true;
+  };
+
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // If the gesture that just ended was a real drag, swallow the synthetic
+    // click so selection doesn't toggle off the moved element.
+    if (justDraggedRef.current) {
+      justDraggedRef.current = false;
+      return;
+    }
     // Clicks inside an actively-editing element should NOT change selection
     // (user is positioning caret / selecting text within the editable region).
     if (editingKey) {
@@ -208,7 +326,21 @@ export function BlockPreview({
       ref={surfaceRef}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
-      className='relative flex flex-1 items-center justify-center overflow-auto bg-[#f3f1ec] p-8 [&_[data-inline-editing=true]]:cursor-text [&_[data-inline-editing=true]]:rounded-sm [&_[data-inline-editing=true]]:bg-sky-50/80 [&_[data-inline-editing=true]]:outline [&_[data-inline-editing=true]]:outline-2 [&_[data-inline-editing=true]]:outline-offset-2 [&_[data-inline-editing=true]]:outline-sky-500'
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      data-selected-key={selectedElementKey ?? ''}
+      className={cn(
+        'relative flex flex-1 items-center justify-center overflow-auto bg-[#f3f1ec] p-8',
+        '[&_[data-inline-editing=true]]:cursor-text [&_[data-inline-editing=true]]:rounded-sm [&_[data-inline-editing=true]]:bg-sky-50/80 [&_[data-inline-editing=true]]:outline [&_[data-inline-editing=true]]:outline-2 [&_[data-inline-editing=true]]:outline-offset-2 [&_[data-inline-editing=true]]:outline-sky-500',
+        // Selected element gets a grab cursor so users know it's draggable.
+        // Bracket-targeting via `data-element-key` matches the selected key.
+        selectedElementKey &&
+          !selectedElementKey.startsWith('__') &&
+          device !== 'tablet' &&
+          `[&_[data-element-key="${selectedElementKey}"]]:cursor-grab`
+      )}
     >
       {/*
         Outer wrapper reserves `scaledWidth × scaledHeight` in layout so the
@@ -237,8 +369,9 @@ export function BlockPreview({
         >
           <div
             data-element-key='__background__'
+            data-testid='active-block-preview'
             className={cn(
-              'w-full overflow-hidden rounded-md bg-white shadow-xl ring-1 ring-black/5',
+              'relative w-full overflow-hidden rounded-md bg-white shadow-xl ring-1 ring-black/5',
               selectedElementKey === '__background__' &&
                 'outline outline-2 outline-offset-2 outline-sky-500'
             )}
@@ -247,6 +380,8 @@ export function BlockPreview({
               mode={effectiveMode}
               motion={motionForDevice}
               scrollerEl={surfaceRef.current}
+              previewNonce={motionPreviewNonce}
+              previewElement={motionPreviewElement}
             >
               <MotionBlockRoot>
                 {/*
@@ -261,10 +396,22 @@ export function BlockPreview({
                   styles={styles}
                   background={background}
                   order={order}
+                  positions={positions}
                   activeKey={selectedElementKey}
                 />
               </MotionBlockRoot>
             </MotionProvider>
+            {/* User-added free-drag elements layered on top of the block. */}
+            <ExtraElementOverlay
+              elements={block.extraElements ?? []}
+              selectedId={selectedExtraElementId}
+              scale={scale}
+              readOnly={device === 'tablet'}
+              onSelect={id => onSelectExtraElement?.(id)}
+              onCommitPosition={(id, pos) =>
+                onCommitExtraElementPosition?.(id, pos)
+              }
+            />
           </div>
         </div>
       </div>

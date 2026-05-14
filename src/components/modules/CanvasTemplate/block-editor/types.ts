@@ -188,6 +188,114 @@ export function readVariant<T>(
 import type { BlockMotion } from './motion/types';
 export type BlockMotionStored = BlockMotion;
 
+// ── ExtraElement (free-drag user-added objects) ──────────────────────────
+// Spec: `docs/be-extra-elements-spec.md`. Four kinds per phase 1; each is
+// absolutely positioned inside the block frame so users can drag freely
+// (Figma-style). Persisted as `block.extraElements[]` in canvas_data.
+
+export type ExtraElementKind = 'text' | 'edit_text' | 'photo' | 'video';
+
+export interface ExtraPosition {
+  x: number;
+  y: number;
+}
+export interface ExtraSize {
+  width: number;
+  height: number;
+}
+
+/** Style fields shared across kinds. Each kind's renderer may ignore irrelevant ones. */
+export interface ExtraElementStyle {
+  // Text-ish
+  color?: string;
+  fontSize?: number;
+  fontWeight?: number;
+  fontStyle?: 'normal' | 'italic';
+  fontFamily?: string; // font id (src/lib/fonts.ts)
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
+  textDecoration?: 'none' | 'underline' | 'line-through';
+  lineHeight?: number;
+  letterSpacing?: number;
+  // Box
+  backgroundColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderRadius?: number;
+  padding?: number;
+  opacity?: number;
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none';
+  // edit_text input
+  autoplay?: boolean;
+  loop?: boolean;
+  muted?: boolean;
+  controls?: boolean;
+}
+
+export interface ExtraTextContent {
+  text: string;
+  textEn?: string;
+}
+export interface ExtraEditTextContent {
+  placeholder: string;
+  placeholderEn?: string;
+  defaultValue?: string;
+  fieldName: string;
+  inputType: 'text' | 'email' | 'tel' | 'number' | 'textarea';
+  isRequired: boolean;
+  maxLength?: number;
+}
+export interface ExtraPhotoContent {
+  mediaId: string;
+  alt?: string;
+  altEn?: string;
+}
+export interface ExtraVideoContent {
+  source: 'media' | 'url';
+  mediaId?: string;
+  url?: string;
+  poster?: string;
+  alt?: string;
+}
+
+export type ExtraElementContent =
+  | ExtraTextContent
+  | ExtraEditTextContent
+  | ExtraPhotoContent
+  | ExtraVideoContent;
+
+interface ExtraElementBase {
+  id: string;
+  position: ExtraPosition;
+  size: ExtraSize;
+  rotation?: number;
+  zIndex?: number;
+  isVisible?: boolean;
+  style?: ExtraElementStyle;
+}
+
+export interface TextExtraElement extends ExtraElementBase {
+  kind: 'text';
+  content: ExtraTextContent;
+}
+export interface EditTextExtraElement extends ExtraElementBase {
+  kind: 'edit_text';
+  content: ExtraEditTextContent;
+}
+export interface PhotoExtraElement extends ExtraElementBase {
+  kind: 'photo';
+  content: ExtraPhotoContent;
+}
+export interface VideoExtraElement extends ExtraElementBase {
+  kind: 'video';
+  content: ExtraVideoContent;
+}
+
+export type ExtraElement =
+  | TextExtraElement
+  | EditTextExtraElement
+  | PhotoExtraElement
+  | VideoExtraElement;
+
 export interface Block {
   id: string;
   blockType: BlockType;
@@ -214,6 +322,12 @@ export interface Block {
    * layout. Per-device, lang-agnostic.
    */
   elementPositions?: DeviceVariants<ElementPositionsMap>;
+  /**
+   * User-added free-drag elements layered absolutely on top of the block
+   * (text / edit_text / photo / video). Spec: `docs/be-extra-elements-spec.md`.
+   * Phase 1: flat array (no per-device override yet — defer per BE Q5).
+   */
+  extraElements?: ExtraElement[];
   /**
    * Motion config — per-device track-based timeline. Tracks target individual
    * element keys (or `__block__` for the block root). Stored verbatim and

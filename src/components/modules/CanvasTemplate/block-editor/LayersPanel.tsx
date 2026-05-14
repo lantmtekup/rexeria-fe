@@ -37,6 +37,8 @@ import {
 
 import { cn } from '@/lib/cn';
 
+import { AddExtraElementButton } from './AddExtraElementButton';
+import { ExtraElementsList } from './ExtraElementsList';
 import {
   editingVariantOf,
   hasMobileOverride,
@@ -44,9 +46,10 @@ import {
   type Block,
   type BlockType,
   type Device,
+  type ExtraElementKind,
 } from './types';
 
-interface LayerElement {
+export interface LayerElement {
   key: string;
   label: string;
   icon: React.ElementType;
@@ -59,6 +62,12 @@ interface LayersPanelProps {
   onSelectKey: (key: string | null) => void;
   /** Persist a new order to the block's elementOrder field. */
   onReorder?: (nextOrder: string[]) => void;
+  /** ExtraElements (free-drag user-added objects). Optional — when omitted
+   *  the panel hides the "+ Thêm element" affordance entirely. */
+  selectedExtraElementId?: string | null;
+  onAddExtraElement?: (kind: ExtraElementKind) => void;
+  onSelectExtraElement?: (id: string | null) => void;
+  onRemoveExtraElement?: (id: string) => void;
 }
 
 export const BACKGROUND_LAYER_KEY = '__background__';
@@ -69,7 +78,7 @@ const BACKGROUND_LAYER: LayerElement = {
   icon: Paintbrush,
 };
 
-const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
+export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
   hero_split: [
     BACKGROUND_LAYER,
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
@@ -127,7 +136,13 @@ export function LayersPanel({
   selectedKey,
   onSelectKey,
   onReorder,
+  selectedExtraElementId = null,
+  onAddExtraElement,
+  onSelectExtraElement,
+  onRemoveExtraElement,
 }: LayersPanelProps) {
+  const extras = block.extraElements ?? [];
+  const showExtraSection = !!onAddExtraElement;
   const baseElements = React.useMemo(
     () => ELEMENTS_BY_TYPE[block.blockType] ?? [],
     [block.blockType]
@@ -253,6 +268,20 @@ export function LayersPanel({
       className='flex flex-col gap-2 p-3'
       data-drag-state={isDragging ? 'dragging' : 'idle'}
     >
+      {showExtraSection ? (
+        <section className='flex flex-col gap-1.5 rounded-md bg-white p-2 ring-1 ring-neutral-200'>
+          <AddExtraElementButton onPick={kind => onAddExtraElement?.(kind)} />
+          {extras.length > 0 ? (
+            <ExtraElementsList
+              elements={extras}
+              selectedId={selectedExtraElementId}
+              onSelect={id => onSelectExtraElement?.(id)}
+              onRemove={id => onRemoveExtraElement?.(id)}
+            />
+          ) : null}
+        </section>
+      ) : null}
+
       {/* Status banner — visible drag state for debugging / UX confirmation. */}
       <div
         className={cn(
@@ -430,6 +459,7 @@ function LayerRow({
         {...listeners}
         aria-label={`Kéo để sắp xếp ${element.label}`}
         title='Kéo để sắp xếp'
+        data-testid={`layer-drag-handle-${element.key}`}
         className={cn(
           'flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded transition-colors select-none active:cursor-grabbing',
           'text-neutral-300 hover:bg-sky-100 hover:text-sky-700',

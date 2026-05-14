@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Spinner } from '@/components/atoms/spinner';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { CanvasTemplate, Product } from '@/services/rexer/types';
+import type { CanvasTemplate } from '@/services/rexer/types';
 
 import { AddBlockDialog } from './block-editor/AddBlockDialog';
 import { BlockEditorHeader } from './block-editor/BlockEditorHeader';
@@ -17,73 +17,57 @@ import { BlockPreview } from './block-editor/BlockPreview';
 import { BlockTabBar } from './block-editor/BlockTabBar';
 import { DuplicateTemplateDialog } from './block-editor/DuplicateTemplateDialog';
 import { ElementToolbar } from './block-editor/ElementToolbar';
+import { ImportBlockDialog } from './block-editor/ImportBlockDialog';
 import { PreviewMode } from './block-editor/PreviewMode';
 import { ProductPickerDialog } from './block-editor/ProductPickerDialog';
 import { PublishDialog } from './block-editor/PublishDialog';
 import { ReviewChangesDialog } from './block-editor/ReviewChangesDialog';
 import { MotionTimelineModal } from './block-editor/motion/timeline/MotionTimelineModal';
 import type { BlockMotion } from './block-editor/motion/types';
-import { applyProductToBlocks } from './block-editor/applyProduct';
-import { diffCanvas, type CanvasDiff } from './block-editor/diffCanvas';
-import {
-  mergeAcceptedChanges,
-  type AcceptMap,
-} from './block-editor/mergeAcceptedChanges';
 import { createBlock } from './block-editor/factory';
 import {
-  newShareToken,
   parseCanvas,
   seedBlocks,
   serializeCanvas,
-  type PublishMeta,
 } from './block-editor/serialize';
 import {
-  editingVariantOf,
-  type Block,
   type BlockBackground,
   type BlockContent,
   type BlockMotionStored,
   type BlockType,
-  type Device,
   type ElementStyle,
   type ElementStylesMap,
-  type Lang,
+  type ExtraElementKind,
 } from './block-editor/types';
+import {
+  bringToFront,
+  makeExtraElement,
+  patchExtraElement,
+  sendToBack,
+} from './block-editor/extraElements';
+import { ExtraElementToolbar } from './block-editor/ExtraElementToolbar';
+import { useAiApplyProduct } from './block-editor/hooks/useAiApplyProduct';
+import { useAutosave } from './block-editor/hooks/useAutosave';
+import { useCanvasState } from './block-editor/hooks/useCanvasState';
+import { useDeviceLang } from './block-editor/hooks/useDeviceLang';
+import { useElementSelection } from './block-editor/hooks/useElementSelection';
+import { useMotionPreview } from './block-editor/hooks/useMotionPreview';
+import { usePublishState } from './block-editor/hooks/usePublishState';
 
 interface BlockEditorProps {
   templateId: string;
   /**
-   * When set, after canvas loads run `handleApplyProduct(product)` once.
-   * Wired from the campaign detail page link `?apply_product=<id>` so user
-   * lands on a canvas that's already merged with their product info.
+   * When set, after canvas loads run `applyProduct(product)` once. Wired
+   * from the campaign detail page link `?apply_product=<id>` so user lands
+   * on a canvas already merged with their product info.
    */
   autoApplyProductId?: string;
-}
-
-const AUTOSAVE_DELAY_MS = 1500;
-
-function rxErrorMessage(err: unknown): string {
-  if (err instanceof RxApiError) return err.message || err.code;
-  if (err instanceof Error) return err.message;
-  return 'Lỗi không xác định';
-}
-
-/**
- * Pull the first failing field from a BE `details.validation_errors` map so
- * we can surface it in the toast. BE shape: `{ "blocks[0].contentVi": "..." }`.
- */
-function extractFirstValidationField(details: unknown): string | null {
-  if (!details || typeof details !== 'object') return null;
-  const ve = (details as { validation_errors?: unknown }).validation_errors;
-  if (!ve || typeof ve !== 'object') return null;
-  const firstKey = Object.keys(ve as Record<string, unknown>)[0];
-  return firstKey ?? null;
 }
 
 // BE `/canvas-templates/{id}/canvas` endpoint is currently slow (~10s even
 // for unauth 401 — see GAP-18 in be-issues-master.md). Keep client timeout
 // generous until BE adds early auth gating.
-const LOAD_TIMEOUT_MS = 15000;
+const LOAD_TIMEOUT_MS = 15_000;
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -104,98 +88,78 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
+function rxErrorMessage(err: unknown): string {
+  if (err instanceof RxApiError) return err.message || err.code;
+  if (err instanceof Error) return err.message;
+  return 'Lỗi không xác định';
+}
+
 export function BlockEditor({
   templateId,
   autoApplyProductId,
 }: BlockEditorProps) {
   const router = useRouter();
+
+  // ── Hooks ───────────────────────────────────────────────────────────────
   const [template, setTemplate] = React.useState<CanvasTemplate | null>(null);
-  const [blocks, setBlocks] = React.useState<Block[]>([]);
-  const [activeId, setActiveId] = React.useState<string | null>(null);
-  const [lang, setLang] = React.useState<Lang>('vi');
-  const [device, setDevice] = React.useState<Device>('desktop');
-  const [zoom, setZoom] = React.useState<number>(100);
-  /**
-   * Distinguish auto-fit zoom (on mount / device change) vs. user manually
-   * adjusting via slider. Once user touches zoom controls, we stop auto-fitting
-   * so their explicit choice persists across re-renders.
-   */
-  const userTouchedZoomRef = React.useRef(false);
+  const canvas = useCanvasState();
+  const deviceState = useDeviceLang();
+  const selection = useElementSelection();
+  const motionPreview = useMotionPreview({
+    onElementSelect: selection.selectKey,
+  });
+  const publishState = usePublishState();
+
+  // Autosave — payload built from latest canvas + publish state at save time.
+  const autosave = useAutosave({
+    templateId,
+    version: template?.version,
+    enabled: !!template,
+    buildPayload: () =>
+      serializeCanvas(
+        canvas.blocks,
+        canvas.activeId ?? undefined,
+        publishState.publish
+      ),
+    onVersionUpdate: nextVersion => {
+      setTemplate(prev =>
+        prev ? ({ ...prev, version: nextVersion } as CanvasTemplate) : prev
+      );
+    },
+    onConflict: () => {
+      // Conflict-recovery is currently user-driven (toast tells them to
+      // reload). A future improvement: keep their unsaved changes in
+      // sessionStorage and offer a 3-way merge.
+    },
+  });
+
+  // AI apply-product hook (uses autosave + canvas).
+  const ai = useAiApplyProduct({
+    templateId,
+    lang: deviceState.lang,
+    getBlocks: () => canvas.blocks,
+    getCanvasEtag: () => template?.canvas_etag,
+    getActiveId: () => canvas.activeId,
+    getPublish: () => publishState.publish,
+    applyBlocks: (next, nextActiveId) => canvas.reset(next, nextActiveId),
+    markDirty: autosave.markDirty,
+  });
+
+  // ── Local UI state (not hook-worthy on its own) ────────────────────────
   const [loading, setLoading] = React.useState(true);
-  const [saving, setSaving] = React.useState(false);
-  const [dirty, setDirty] = React.useState(false);
   const [loadError, setLoadError] = React.useState<string | null>(null);
-  const [addOpen, setAddOpen] = React.useState(false);
   const [previewing, setPreviewing] = React.useState(false);
-  const [selectedElementKey, setSelectedElementKey] = React.useState<
-    string | null
-  >(null);
-  /** Element key currently being edited inline via double-click. */
-  const [editingKey, setEditingKey] = React.useState<string | null>(null);
-  const [publish, setPublish] = React.useState<PublishMeta | undefined>(
-    undefined
-  );
+  const [addOpen, setAddOpen] = React.useState(false);
   const [publishOpen, setPublishOpen] = React.useState(false);
   const [productPickerOpen, setProductPickerOpen] = React.useState(false);
+  const [importOpen, setImportOpen] = React.useState(false);
   const [duplicateOpen, setDuplicateOpen] = React.useState(false);
   const [duplicating, setDuplicating] = React.useState(false);
   const [layersCollapsed, setLayersCollapsed] = React.useState(false);
-  // Sidebar tab — 'layers' shows existing LayersPanel, 'motion' shows
-  // element-level motion editor. Block-level motion lives in header popover.
   const [sidebarTab, setSidebarTab] = React.useState<'layers' | 'motion'>(
     'layers'
   );
-  // Motion preview mode: when true, BlockPreview switches to mode='preview'
-  // so timelines actually run. Auto-revert after 5s; click ▶ again to extend.
-  const [motionPreviewing, setMotionPreviewing] = React.useState(false);
-  const motionPreviewTimer = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
-  // Full-screen timeline editor — opened from Header "Timeline" button or
-  // Sidebar "Motion" tab CTA. Autosaves via handleChangeBlockMotion.
   const [motionEditorOpen, setMotionEditorOpen] = React.useState(false);
-  // Once a save fails (typically 409 version conflict) we suppress the autosave
-  // retry loop to stop toast spam. Reset on the next user-driven mutation so a
-  // single retry happens automatically when the user keeps working.
-  const [saveBlocked, setSaveBlocked] = React.useState(false);
-
-  // Refs to read latest state from autosave/unmount-flush callbacks.
-  const blocksRef = React.useRef(blocks);
-  const templateRef = React.useRef(template);
-  const activeIdRef = React.useRef(activeId);
-  const dirtyRef = React.useRef(dirty);
-  const savingRef = React.useRef(saving);
-
-  // Undo / redo stacks (keyed off blocks only — light snapshots).
-  const HISTORY_CAP = 50;
-  const undoStackRef = React.useRef<Block[][]>([]);
-  const redoStackRef = React.useRef<Block[][]>([]);
-  const [, forceHistoryRender] = React.useReducer(c => c + 1, 0);
-
-  const pushHistory = React.useCallback(() => {
-    undoStackRef.current.push(structuredClone(blocksRef.current));
-    if (undoStackRef.current.length > HISTORY_CAP) {
-      undoStackRef.current.shift();
-    }
-    redoStackRef.current = [];
-    setSaveBlocked(false);
-    forceHistoryRender();
-  }, []);
-  React.useEffect(() => {
-    blocksRef.current = blocks;
-  }, [blocks]);
-  React.useEffect(() => {
-    templateRef.current = template;
-  }, [template]);
-  React.useEffect(() => {
-    activeIdRef.current = activeId;
-  }, [activeId]);
-  React.useEffect(() => {
-    dirtyRef.current = dirty;
-  }, [dirty]);
-  React.useEffect(() => {
-    savingRef.current = saving;
-  }, [saving]);
 
   // ── Load ────────────────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -217,17 +181,16 @@ export function BlockEditor({
         if (cancelled) return;
         const parsed = parseCanvas(canvasResp?.canvas_data);
         const initial = parsed?.blocks.length ? parsed.blocks : seedBlocks();
-        setBlocks(initial);
-        setActiveId(parsed?.activeBlockId ?? initial[0]?.id ?? null);
-        setPublish(parsed?.publish);
-        setDirty(parsed === null);
+        canvas.reset(initial, parsed?.activeBlockId ?? initial[0]?.id ?? null);
+        publishState.setPublish(parsed?.publish);
+        // When we fell back to seed (parsed null), persist the seed by marking
+        // the canvas dirty so autosave fires after mount.
+        if (parsed === null) autosave.markDirty();
       } catch (err) {
         if (cancelled) return;
-        const msg = rxErrorMessage(err);
-        setLoadError(msg);
+        setLoadError(rxErrorMessage(err));
         const seeded = seedBlocks();
-        setBlocks(seeded);
-        setActiveId(seeded[0]?.id ?? null);
+        canvas.reset(seeded, seeded[0]?.id ?? null);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -235,11 +198,10 @@ export function BlockEditor({
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateId]);
 
-  // Auto-apply product when launched from campaign detail link
-  // (`?apply_product=<id>`). Run once after the first successful load — guard
-  // with a ref so re-renders don't re-trigger.
+  // Auto-apply product when launched from campaign detail link (`?apply_product=<id>`).
   const autoAppliedRef = React.useRef(false);
   React.useEffect(() => {
     if (!autoApplyProductId) return;
@@ -247,355 +209,248 @@ export function BlockEditor({
     autoAppliedRef.current = true;
     rexerApi.products
       .get(autoApplyProductId)
-      .then(res => handleApplyProduct(res.product))
+      .then(res => ai.applyProduct(res.product))
       .catch(err => {
         toast.error(`Auto-apply thất bại: ${rxErrorMessage(err)}`);
       });
-    // handleApplyProduct intentionally omitted — captured via closure, runs once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoApplyProductId, loading, template]);
 
-  // Keep latest publish in a ref for save.
-  const publishRef = React.useRef(publish);
-  React.useEffect(() => {
-    publishRef.current = publish;
-  }, [publish]);
-
-  // ── Save ────────────────────────────────────────────────────────────────
-  const doSave = React.useCallback(async (opts: { silent?: boolean } = {}) => {
-    const t = templateRef.current;
-    const bs = blocksRef.current;
-    const aid = activeIdRef.current;
-    const pub = publishRef.current;
-    if (!t || !bs.length || savingRef.current) return;
-    setSaving(true);
-    const wireCanvasData = serializeCanvas(
-      bs,
-      aid ?? undefined,
-      pub
-    ) as unknown as Record<string, unknown>;
-    try {
-      const updated = await rexerApi.canvasTemplates.update(t.id, {
-        canvas_data: wireCanvasData,
-        version: t.version,
-      });
-      setTemplate(updated);
-      setDirty(false);
-      setSaveBlocked(false);
-      if (!opts.silent) toast.success(`Đã lưu · v${updated.version}`);
-    } catch (err) {
-      // Stop the autosave retry loop so a single failure doesn't pile up
-      // toasts every AUTOSAVE_DELAY_MS. Reset happens on next user mutation.
-      setSaveBlocked(true);
-
-      // Dump full payload + error details so user can copy from console for
-      // debugging schema mismatches between FE and BE. Single grouped log
-      // keeps the console tidy.
-      const isRx = err instanceof RxApiError;
-      // eslint-disable-next-line no-console
-      console.groupCollapsed(
-        `%c[canvas save FAILED] ${isRx ? `${err.status} ${err.code}` : 'unknown'}`,
-        'color:#dc2626;font-weight:600'
-      );
-      // eslint-disable-next-line no-console
-      console.log('template.id:', t.id);
-      // eslint-disable-next-line no-console
-      console.log('template.version (etag):', t.version);
-      // eslint-disable-next-line no-console
-      console.log('REQUEST canvas_data:', wireCanvasData);
-      // eslint-disable-next-line no-console
-      console.log(
-        'REQUEST canvas_data (JSON):',
-        JSON.stringify({ canvas_data: wireCanvasData, version: t.version })
-      );
-      if (isRx) {
-        // eslint-disable-next-line no-console
-        console.log('RESPONSE error code:', err.code);
-        // eslint-disable-next-line no-console
-        console.log('RESPONSE error message:', err.message);
-        // eslint-disable-next-line no-console
-        console.log('RESPONSE error details:', err.details);
-        // eslint-disable-next-line no-console
-        console.log('RESPONSE request_id:', err.requestId);
-      } else {
-        // eslint-disable-next-line no-console
-        console.log('error (non-Rx):', err);
-      }
-      // eslint-disable-next-line no-console
-      console.groupEnd();
-
-      const isConflict = isRx && err.status === 409;
-      if (isConflict) {
-        toast.error(
-          'Canvas đã bị thay đổi từ chỗ khác — tải lại trang để đồng bộ trước khi sửa tiếp.'
-        );
-      } else {
-        // Surface validation field name in the toast when BE returns one,
-        // so user spots the broken field without opening DevTools.
-        const fieldHint =
-          isRx && err.details && typeof err.details === 'object'
-            ? extractFirstValidationField(err.details)
-            : null;
-        toast.error(
-          fieldHint
-            ? `Lưu thất bại: ${rxErrorMessage(err)} · field: ${fieldHint}`
-            : `Lưu thất bại: ${rxErrorMessage(err)} · xem console (F12) để biết chi tiết`
-        );
-      }
-    } finally {
-      setSaving(false);
-    }
-  }, []);
-
-  // Debounced autosave triggered by dirty state changes.
-  React.useEffect(() => {
-    if (!dirty || !template || saving || saveBlocked) return;
-    const id = setTimeout(() => {
-      void doSave({ silent: true });
-    }, AUTOSAVE_DELAY_MS);
-    return () => clearTimeout(id);
-  }, [dirty, blocks, template, saving, saveBlocked, doSave]);
-
-  // Flush on unmount and tab close (best-effort).
-  React.useEffect(() => {
-    const flush = () => {
-      if (dirtyRef.current && templateRef.current && !savingRef.current) {
-        void doSave({ silent: true });
-      }
-    };
-    window.addEventListener('beforeunload', flush);
-    return () => {
-      window.removeEventListener('beforeunload', flush);
-      flush();
-    };
-  }, [doSave]);
-
-  const activeBlock = React.useMemo(
-    () => blocks.find(b => b.id === activeId) ?? blocks[0] ?? null,
-    [blocks, activeId]
-  );
-
-  // Which variant the editor is currently writing to. Tablet → desktop.
-  const editVariant = editingVariantOf(device);
-
   // ── Mutations ───────────────────────────────────────────────────────────
-  const updateActiveContent = (next: BlockContent) => {
-    if (!activeBlock) return;
-    if (device === 'tablet') {
-      // Tablet preview is read-only — header banner explains why.
-      toast.info(
-        'Tablet đang xem layout desktop (read-only). Chuyển Desktop hoặc Mobile để chỉnh sửa.'
-      );
-      return;
-    }
-    pushHistory();
-    setBlocks(prev =>
-      prev.map(b => {
-        if (b.id !== activeBlock.id) return b;
-        const langKey = lang === 'vi' ? 'contentVi' : 'contentEn';
-        const current = b[langKey];
-        return {
-          ...b,
-          [langKey]: { ...current, [editVariant]: next },
-        };
-      })
+  const tabletReadOnly = (): boolean => {
+    if (deviceState.device !== 'tablet') return false;
+    toast.info(
+      'Tablet đang xem layout desktop (read-only). Chuyển Desktop hoặc Mobile để chỉnh sửa.'
     );
-    setDirty(true);
+    return true;
   };
 
-  const handleReorder = (next: Block[]) => {
-    pushHistory();
-    setBlocks(next);
-    setDirty(true);
+  const editVariant = deviceState.editVariant;
+  const langKey = deviceState.lang === 'vi' ? 'contentVi' : 'contentEn';
+
+  const updateActiveContent = (next: BlockContent) => {
+    if (tabletReadOnly()) return;
+    canvas.mutateActive(b => {
+      b[langKey] = { ...b[langKey], [editVariant]: next };
+    });
+    autosave.markDirty();
   };
 
   const handleUpdateElementStyle = (key: string, patch: ElementStyle) => {
-    if (!activeBlock) return;
-    if (device === 'tablet') {
-      toast.info(
-        'Tablet đang xem layout desktop (read-only). Chuyển Desktop hoặc Mobile để chỉnh sửa.'
-      );
-      return;
-    }
-    pushHistory();
-    setBlocks(prev =>
-      prev.map(b => {
-        if (b.id !== activeBlock.id) return b;
-        const variants = b.elementStyles ?? { desktop: {} };
-        const currentMap = variants[editVariant] ?? {};
-        const currentStyle = currentMap[key] ?? {};
-        const nextMap: ElementStylesMap = {
-          ...currentMap,
-          [key]: { ...currentStyle, ...patch },
-        };
-        return {
-          ...b,
-          elementStyles: { ...variants, [editVariant]: nextMap },
-        };
-      })
-    );
-    setDirty(true);
+    if (tabletReadOnly()) return;
+    canvas.mutateActive(b => {
+      const variants = b.elementStyles ?? { desktop: {} };
+      const currentMap = variants[editVariant] ?? {};
+      const currentStyle = currentMap[key] ?? {};
+      const nextMap: ElementStylesMap = {
+        ...currentMap,
+        [key]: { ...currentStyle, ...patch },
+      };
+      b.elementStyles = { ...variants, [editVariant]: nextMap };
+    });
+    autosave.markDirty();
   };
 
   const handleResetElementStyle = (key: string) => {
-    if (!activeBlock) return;
-    if (device === 'tablet') return;
-    pushHistory();
-    setBlocks(prev =>
-      prev.map(b => {
-        if (b.id !== activeBlock.id) return b;
-        const variants = b.elementStyles;
-        const currentMap = variants?.[editVariant];
-        if (!currentMap?.[key]) return b;
-        const nextMap = { ...currentMap };
-        delete nextMap[key];
-        return {
-          ...b,
-          elementStyles: {
-            ...(variants ?? { desktop: {} }),
-            [editVariant]: nextMap,
-          },
-        };
-      })
-    );
-    setDirty(true);
+    if (deviceState.device === 'tablet') return;
+    canvas.mutateActive(b => {
+      const variants = b.elementStyles;
+      const currentMap = variants?.[editVariant];
+      if (!currentMap?.[key]) return;
+      const nextMap = { ...currentMap };
+      delete nextMap[key];
+      b.elementStyles = {
+        ...(variants ?? { desktop: {} }),
+        [editVariant]: nextMap,
+      };
+    });
+    autosave.markDirty();
   };
 
   const handleUpdateBackground = (next: BlockBackground | undefined) => {
-    if (!activeBlock) return;
-    if (device === 'tablet') {
-      toast.info(
-        'Tablet đang xem layout desktop (read-only). Chuyển Desktop hoặc Mobile để chỉnh sửa.'
-      );
-      return;
-    }
-    pushHistory();
-    setBlocks(prev =>
-      prev.map(b => {
-        if (b.id !== activeBlock.id) return b;
-        const variants = b.background;
-        if (!next) {
-          // Clear this variant's background; if both variants empty, drop the field.
-          if (!variants) return b;
-          const stripped = { ...variants };
-          delete stripped[editVariant];
-          if (!stripped.desktop && !stripped.mobile) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { background: _drop, ...rest } = b;
-            return rest;
-          }
-          return { ...b, background: stripped as Block['background'] };
+    if (tabletReadOnly()) return;
+    canvas.mutateActive(b => {
+      const variants = b.background;
+      if (!next) {
+        if (!variants) return;
+        const stripped = { ...variants };
+        delete stripped[editVariant];
+        if (!stripped.desktop && !stripped.mobile) {
+          delete b.background;
+          return;
         }
-        const cleaned: BlockBackground = {
-          ...(next.color ? { color: next.color } : {}),
-          ...(next.imageUrl ? { imageUrl: next.imageUrl } : {}),
-          ...(next.imageTransform
-            ? { imageTransform: next.imageTransform }
-            : {}),
-        };
-        const baseDesktop = variants?.desktop ?? {};
-        return {
-          ...b,
-          background: {
-            ...(variants ?? { desktop: baseDesktop }),
-            [editVariant]: cleaned,
-          },
-        };
-      })
-    );
-    setDirty(true);
+        b.background = stripped as typeof b.background;
+        return;
+      }
+      const cleaned: BlockBackground = {
+        ...(next.color ? { color: next.color } : {}),
+        ...(next.imageUrl ? { imageUrl: next.imageUrl } : {}),
+        ...(next.imageTransform ? { imageTransform: next.imageTransform } : {}),
+      };
+      const baseDesktop = variants?.desktop ?? {};
+      b.background = {
+        ...(variants ?? { desktop: baseDesktop }),
+        [editVariant]: cleaned,
+      };
+    });
+    autosave.markDirty();
   };
-
-  // ── Motion mutations ───────────────────────────────────────────────────
-  const editVariantForMotion: 'desktop' | 'mobile' = editingVariantOf(device);
 
   const handleChangeBlockMotion = React.useCallback(
     (next: BlockMotionStored | null) => {
-      if (!activeBlock) return;
-      pushHistory();
-      setBlocks(prev =>
-        prev.map(b => {
-          if (b.id !== activeBlock.id) return b;
-          const variants = b.motion;
-          // DeviceVariants requires `desktop` to always exist. When editing
-          // mobile and desktop is empty, leave desktop as undefined-tracks
-          // so render falls through readVariant.
-          const desktopNext: BlockMotionStored | undefined =
-            editVariantForMotion === 'desktop'
-              ? (next ?? undefined)
-              : variants?.desktop;
-          const mobileNext: BlockMotionStored | undefined =
-            editVariantForMotion === 'mobile'
-              ? (next ?? undefined)
-              : variants?.mobile;
-          const isEmpty = (m: BlockMotionStored | undefined) =>
-            !m || (m.tracks.length === 0 && m.duration === 0);
-          if (isEmpty(desktopNext) && isEmpty(mobileNext)) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { motion: _drop, ...rest } = b;
-            return rest;
-          }
-          return {
-            ...b,
-            motion: {
-              desktop: desktopNext ?? { tracks: [], duration: 0 },
-              mobile: mobileNext,
-            },
-          };
-        })
+      canvas.mutateActive(b => {
+        const variants = b.motion;
+        const desktopNext: BlockMotionStored | undefined =
+          editVariant === 'desktop' ? (next ?? undefined) : variants?.desktop;
+        const mobileNext: BlockMotionStored | undefined =
+          editVariant === 'mobile' ? (next ?? undefined) : variants?.mobile;
+        const isEmpty = (m: BlockMotionStored | undefined) =>
+          !m || (m.tracks.length === 0 && m.duration === 0);
+        if (isEmpty(desktopNext) && isEmpty(mobileNext)) {
+          delete b.motion;
+          return;
+        }
+        b.motion = {
+          desktop: desktopNext ?? { tracks: [], duration: 0 },
+          mobile: mobileNext,
+        };
+      });
+      autosave.markDirty();
+    },
+    [canvas, editVariant, autosave]
+  );
+
+  const handleCommitElementPosition = (
+    key: string,
+    pos: { x: number; y: number }
+  ) => {
+    if (tabletReadOnly()) return;
+    canvas.mutateActive(b => {
+      const variants = b.elementPositions ?? { desktop: {} };
+      const currentMap = variants[editVariant] ?? {};
+      // Drop the entry when the offset is back to zero — keeps wire payloads
+      // small and matches the "no override" semantics of positionStyle.
+      if (pos.x === 0 && pos.y === 0) {
+        if (!currentMap[key]) return;
+        const nextMap = { ...currentMap };
+        delete nextMap[key];
+        b.elementPositions = { ...variants, [editVariant]: nextMap };
+        return;
+      }
+      b.elementPositions = {
+        ...variants,
+        [editVariant]: { ...currentMap, [key]: { x: pos.x, y: pos.y } },
+      };
+    });
+    autosave.markDirty();
+  };
+
+  const handleReorderElements = (nextOrder: string[]) => {
+    if (tabletReadOnly()) return;
+    canvas.mutateActive(b => {
+      const variants = b.elementOrder ?? { desktop: nextOrder };
+      b.elementOrder = { ...variants, [editVariant]: nextOrder };
+    });
+    autosave.markDirty();
+  };
+
+  // ── ExtraElements (free-drag user-added objects) ────────────────────────
+  const [selectedExtraElementId, setSelectedExtraElementId] = React.useState<
+    string | null
+  >(null);
+
+  const handleAddExtraElement = (kind: ExtraElementKind) => {
+    if (tabletReadOnly()) return;
+    // Drop the new element near the block's centre so the user sees it
+    // immediately. Coordinates are relative to the block frame.
+    const el = makeExtraElement(kind, { x: 80, y: 80 });
+    canvas.mutateActive(b => {
+      b.extraElements = [...(b.extraElements ?? []), el];
+    });
+    setSelectedExtraElementId(el.id);
+    selection.selectKey(null); // clear fixed-element selection
+    autosave.markDirty();
+  };
+
+  const handleRemoveExtraElement = (id: string) => {
+    if (tabletReadOnly()) return;
+    canvas.mutateActive(b => {
+      b.extraElements = (b.extraElements ?? []).filter(e => e.id !== id);
+    });
+    if (selectedExtraElementId === id) setSelectedExtraElementId(null);
+    autosave.markDirty();
+  };
+
+  const handleCommitExtraElementPosition = (
+    id: string,
+    pos: { x: number; y: number }
+  ) => {
+    if (tabletReadOnly()) return;
+    canvas.mutateActive(b => {
+      b.extraElements = (b.extraElements ?? []).map(e =>
+        e.id === id ? { ...e, position: pos } : e
       );
-      setDirty(true);
-    },
-    [activeBlock, editVariantForMotion, pushHistory]
-  );
+    });
+    autosave.markDirty();
+  };
 
-  // ── Motion preview ─────────────────────────────────────────────────────
-  const playMotionPreview = React.useCallback(() => {
-    setMotionPreviewing(true);
-    if (motionPreviewTimer.current) {
-      clearTimeout(motionPreviewTimer.current);
-    }
-    motionPreviewTimer.current = setTimeout(() => {
-      setMotionPreviewing(false);
-      motionPreviewTimer.current = null;
-    }, 5000);
-  }, []);
+  const handlePatchExtraElement = (
+    id: string,
+    patch: Partial<import('./block-editor/types').ExtraElement>
+  ) => {
+    if (tabletReadOnly()) return;
+    canvas.mutateActive(b => {
+      const next = patchExtraElement(b, id, patch);
+      b.extraElements = next.extraElements;
+    });
+    autosave.markDirty();
+  };
 
-  React.useEffect(
-    () => () => {
-      if (motionPreviewTimer.current) clearTimeout(motionPreviewTimer.current);
-    },
-    []
-  );
+  const handleBringExtraToFront = (id: string) => {
+    if (tabletReadOnly()) return;
+    canvas.mutateActive(b => {
+      const next = bringToFront(b, id);
+      b.extraElements = next.extraElements;
+    });
+    autosave.markDirty();
+  };
 
-  // Sync helpers: copy one variant's content/styles/background/order to the other.
+  const handleSendExtraToBack = (id: string) => {
+    if (tabletReadOnly()) return;
+    canvas.mutateActive(b => {
+      const next = sendToBack(b, id);
+      b.extraElements = next.extraElements;
+    });
+    autosave.markDirty();
+  };
+
+  const handleReorderBlocks = (
+    next: Parameters<typeof canvas.replaceBlocks>[0]
+  ) => {
+    canvas.replaceBlocks(next);
+    autosave.markDirty();
+  };
+
+  // ── Variant sync (Desktop ↔ Mobile copy) ───────────────────────────────
   const syncVariant = (
     from: 'desktop' | 'mobile',
     to: 'desktop' | 'mobile'
   ) => {
-    if (!activeBlock) return;
-    pushHistory();
-    setBlocks(prev =>
-      prev.map(b => {
-        if (b.id !== activeBlock.id) return b;
-        const cloneSrc = <T,>(v: { desktop: T; mobile?: T } | undefined) => {
-          if (!v) return v;
-          const src = v[from] ?? v.desktop;
-          if (src === undefined) return v;
-          return { ...v, [to]: structuredClone(src) };
-        };
-        return {
-          ...b,
-          contentVi: cloneSrc(b.contentVi)!,
-          contentEn: cloneSrc(b.contentEn)!,
-          elementStyles: cloneSrc(b.elementStyles),
-          background: cloneSrc(b.background),
-          elementOrder: cloneSrc(b.elementOrder),
-          motion: cloneSrc(b.motion),
-        };
-      })
-    );
-    setDirty(true);
+    canvas.mutateActive(b => {
+      const cloneSrc = <T,>(v: { desktop: T; mobile?: T } | undefined) => {
+        if (!v) return v;
+        const src = v[from] ?? v.desktop;
+        if (src === undefined) return v;
+        return { ...v, [to]: structuredClone(src) };
+      };
+      b.contentVi = cloneSrc(b.contentVi)!;
+      b.contentEn = cloneSrc(b.contentEn)!;
+      b.elementStyles = cloneSrc(b.elementStyles);
+      b.background = cloneSrc(b.background);
+      b.elementOrder = cloneSrc(b.elementOrder);
+      b.motion = cloneSrc(b.motion);
+    });
+    autosave.markDirty();
     toast.success(
       from === 'desktop'
         ? 'Đã copy Desktop → Mobile'
@@ -603,349 +458,109 @@ export function BlockEditor({
     );
   };
 
-  /**
-   * Persist a new element order array for the active block + active variant.
-   * Triggered by drag-end in LayersPanel. CSS `order` on each element div
-   * makes the reorder visible on the canvas.
-   */
-  const handleReorderElements = (nextOrder: string[]) => {
-    if (!activeBlock) return;
-    if (device === 'tablet') {
-      toast.info(
-        'Tablet đang xem layout desktop (read-only). Chuyển Desktop hoặc Mobile để chỉnh sửa.'
-      );
+  // ── Selection / inline edit ────────────────────────────────────────────
+  // Drop selection when block changes; drop inline edit when device/lang
+  // changes (content shape differs across variants).
+  React.useEffect(() => {
+    selection.selectKey(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canvas.activeId]);
+  React.useEffect(() => {
+    selection.endInlineEdit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deviceState.device, deviceState.lang]);
+
+  const handleStartInlineEdit = (key: string) => {
+    if (tabletReadOnly()) return;
+    selection.startInlineEdit(key);
+  };
+
+  const handleCommitInlineEdit = (key: string, value: string) => {
+    const block = canvas.blocks.find(b => b.id === canvas.activeId);
+    if (!block) {
+      selection.endInlineEdit();
       return;
     }
-    pushHistory();
-    setBlocks(prev =>
-      prev.map(b => {
-        if (b.id !== activeBlock.id) return b;
-        const variants = b.elementOrder ?? { desktop: nextOrder };
-        return {
-          ...b,
-          elementOrder: { ...variants, [editVariant]: nextOrder },
-        };
-      })
-    );
-    setDirty(true);
+    const langContent = block[langKey];
+    const current =
+      (editVariant === 'mobile' ? langContent.mobile : undefined) ??
+      langContent.desktop;
+    if ((current as Record<string, unknown>)[key] === value) {
+      selection.endInlineEdit();
+      return;
+    }
+    canvas.mutateActive(b => {
+      const variants = b[langKey];
+      const baseContent =
+        (editVariant === 'mobile' ? variants.mobile : undefined) ??
+        variants.desktop;
+      const nextContent: BlockContent = {
+        ...(baseContent as Record<string, unknown>),
+        [key]: value,
+      } as BlockContent;
+      b[langKey] = { ...variants, [editVariant]: nextContent };
+    });
+    autosave.markDirty();
+    selection.endInlineEdit();
   };
-
-  // Drop the selection when switching blocks so it doesn't bleed across.
-  React.useEffect(() => {
-    setSelectedElementKey(null);
-    setEditingKey(null);
-  }, [activeId]);
-
-  // Drop inline edit when switching device or lang — content shape changes.
-  React.useEffect(() => {
-    setEditingKey(null);
-  }, [device, lang]);
-
-  // Selection driven from canvas (BlockPreview). Rect is unused — toolbar
-  // is sticky and doesn't need to anchor to the element.
-  const handleSelectFromCanvas = React.useCallback((key: string | null) => {
-    setSelectedElementKey(key);
-  }, []);
-
-  const handleSelectFromSidebar = React.useCallback((key: string | null) => {
-    setSelectedElementKey(key);
-  }, []);
-
-  const handleToolbarUpdateStyle = (patch: ElementStyle) => {
-    if (!selectedElementKey) return;
-    handleUpdateElementStyle(selectedElementKey, patch);
-  };
-  const handleToolbarResetStyle = () => {
-    if (!selectedElementKey) return;
-    handleResetElementStyle(selectedElementKey);
-  };
-
-  // Inline edit (double-click on text element) handlers.
-  const handleStartInlineEdit = React.useCallback(
-    (key: string) => {
-      if (device === 'tablet') {
-        toast.info(
-          'Tablet đang xem layout desktop (read-only). Chuyển Desktop hoặc Mobile để chỉnh sửa.'
-        );
-        return;
-      }
-      setSelectedElementKey(key);
-      setEditingKey(key);
-    },
-    [device]
-  );
-
-  const handleCommitInlineEdit = React.useCallback(
-    (key: string, value: string) => {
-      // Read current content for the active variant + lang.
-      const block = blocksRef.current.find(b => b.id === activeIdRef.current);
-      if (!block) {
-        setEditingKey(null);
-        return;
-      }
-      const langKey = lang === 'vi' ? 'contentVi' : 'contentEn';
-      const langContent = block[langKey];
-      const current =
-        (editVariant === 'mobile' ? langContent.mobile : undefined) ??
-        langContent.desktop;
-      const cur = current as Record<string, unknown>;
-      // No-op when value didn't change → don't push history.
-      if (cur[key] === value) {
-        setEditingKey(null);
-        return;
-      }
-      pushHistory();
-      setBlocks(prev =>
-        prev.map(b => {
-          if (b.id !== block.id) return b;
-          const variants = b[langKey];
-          const baseContent =
-            (editVariant === 'mobile' ? variants.mobile : undefined) ??
-            variants.desktop;
-          const nextContent: BlockContent = {
-            ...(baseContent as Record<string, unknown>),
-            [key]: value,
-          } as BlockContent;
-          return {
-            ...b,
-            [langKey]: { ...variants, [editVariant]: nextContent },
-          };
-        })
-      );
-      setDirty(true);
-      setEditingKey(null);
-    },
-    [lang, editVariant, pushHistory]
-  );
-
-  const handleCancelInlineEdit = React.useCallback(() => {
-    setEditingKey(null);
-  }, []);
 
   // ── Publish ─────────────────────────────────────────────────────────────
   const handlePublishToggle = async () => {
     if (!template) return;
-    const next: PublishMeta = publish?.published
-      ? { ...publish, published: false }
-      : {
-          published: true,
-          shareToken: publish?.shareToken ?? newShareToken(),
-          publishedAt: new Date().toISOString(),
-        };
-    setPublish(next);
-    setDirty(true);
-    // Save immediately so the share URL is live.
+    publishState.togglePublish();
+    // Let the publish state flush, then push an immediate save so the share
+    // URL is live without waiting for the autosave debounce.
     await new Promise(r => setTimeout(r, 50));
-    await doSave({ silent: true });
-    toast.success(
-      next.published
-        ? 'Đã xuất bản — link sẵn sàng chia sẻ'
-        : 'Đã ngưng xuất bản'
-    );
+    autosave.markDirty();
+    await autosave.flush({ silent: true });
   };
 
   const handleRotateShareToken = async () => {
-    if (!publish?.published) return;
-    const next: PublishMeta = {
-      ...publish,
-      shareToken: newShareToken(),
-      publishedAt: new Date().toISOString(),
-    };
-    setPublish(next);
-    setDirty(true);
+    publishState.rotateShareToken();
     await new Promise(r => setTimeout(r, 50));
-    await doSave({ silent: true });
-    toast.success('Đã đổi link chia sẻ — link cũ không còn dùng được');
+    autosave.markDirty();
+    await autosave.flush({ silent: true });
   };
 
-  const [applyingProduct, setApplyingProduct] = React.useState(false);
-  /**
-   * State for the "Review changes" intermediate step (FA-3). When AI returns
-   * a proposed canvas we don't apply directly — instead we open the review
-   * dialog with a diff and let the user accept/reject per (block, group).
-   */
-  const [reviewState, setReviewState] = React.useState<{
-    diff: CanvasDiff;
-    aiBlocks: Block[];
-    originalBlocks: Block[];
-    productName: string;
-  } | null>(null);
-
-  const handleApplyProduct = async (product: Product) => {
-    if (applyingProduct) return;
-    setApplyingProduct(true);
-    const toastId = toast.loading(`AI đang phân tích "${product.name}"…`);
-    const requestBody = {
-      product_id: product.id,
-      lang,
-      preserve_user_overrides: true,
-      expected_canvas_etag: templateRef.current?.canvas_etag,
-    };
-    // Snapshot the user's blocks BEFORE the AI call so the review dialog can
-    // diff against the pristine state. Even though BE persists the AI output
-    // (no dry-run yet), we let the user pick which fields actually land via
-    // mergeAcceptedChanges.
-    const originalBlocks = structuredClone(blocksRef.current);
-    try {
-      const res = await rexerApi.ai.canvasApplyProduct(templateId, requestBody);
-      const parsed = parseCanvas(res.canvas_data);
-      if (!parsed?.blocks.length) {
-        throw new Error('BE returned empty canvas_data');
-      }
-      // Open the review dialog instead of applying immediately. The actual
-      // setBlocks/save happens inside `handleApplyReviewedChanges` once the
-      // user picks which (block, group) pairs to accept.
-      const diff = diffCanvas(originalBlocks, parsed.blocks, lang);
-      if (diff.totalChanges === 0) {
-        toast.info('AI không đề xuất thay đổi nào — canvas giữ nguyên.', {
-          id: toastId,
-        });
-        return;
-      }
-      setReviewState({
-        diff,
-        aiBlocks: parsed.blocks,
-        originalBlocks,
-        productName: product.name,
-      });
-      toast.dismiss(toastId);
-    } catch (err) {
-      // Build a full debug payload so the user can paste it into a BE
-      // ticket without opening DevTools. Includes request, ETag, response
-      // error, and the canvas_data we last saved (helps BE reproduce).
-      const isRx = err instanceof RxApiError;
-      const debugPayload = {
-        endpoint: `POST /v1/ai/canvas-templates/${templateId}/apply-product`,
-        request: requestBody,
-        response: isRx
-          ? {
-              status: err.status,
-              code: err.code,
-              message: err.message,
-              details: err.details,
-              request_id: err.requestId,
-            }
-          : { error: err instanceof Error ? err.message : String(err) },
-        context: {
-          template_id: templateId,
-          template_version: templateRef.current?.version,
-          canvas_etag: templateRef.current?.canvas_etag,
-          blocks_in_memory: blocksRef.current.length,
-          active_block_id: activeIdRef.current,
-          product: { id: product.id, name: product.name },
-        },
-        canvas_data_inmemory: serializeCanvas(
-          blocksRef.current,
-          activeIdRef.current ?? undefined,
-          publishRef.current
-        ),
-      };
-
-      // eslint-disable-next-line no-console
-      console.groupCollapsed(
-        `%c[apply-product FAILED] ${isRx ? `${err.status} ${err.code}` : 'unknown'}`,
-        'color:#dc2626;font-weight:600'
-      );
-      // eslint-disable-next-line no-console
-      console.log('Copy this for BE:', debugPayload);
-      // eslint-disable-next-line no-console
-      console.log(
-        'JSON (copy from here):',
-        JSON.stringify(debugPayload, null, 2)
-      );
-      // eslint-disable-next-line no-console
-      console.groupEnd();
-
-      // BE call failed — fall back to client-side deterministic mapping so
-      // user still gets something rather than nothing. Push history first
-      // so undo restores the pre-fallback state.
-      pushHistory();
-      setBlocks(prev => applyProductToBlocks(prev, product));
-      setDirty(true);
-
-      toast.error(
-        `AI thất bại (${rxErrorMessage(err)}) — đã fill bằng mapping mặc định`,
-        {
-          id: toastId,
-          duration: 12000,
-          // Copy the full debug payload to clipboard so user can paste into
-          // a BE ticket without opening DevTools.
-          action: {
-            label: 'Copy debug',
-            onClick: () => {
-              const text = JSON.stringify(debugPayload, null, 2);
-              const done = () => toast.success('Đã copy debug payload');
-              if (navigator.clipboard?.writeText) {
-                navigator.clipboard.writeText(text).then(done, () => {
-                  // eslint-disable-next-line no-console
-                  console.log('Clipboard blocked — payload:', text);
-                  toast.info('Clipboard bị block — payload trong console');
-                });
-              } else {
-                // eslint-disable-next-line no-console
-                console.log(text);
-                toast.info('Payload đã in ra console (F12)');
-              }
-            },
-          },
-        }
-      );
-    } finally {
-      setApplyingProduct(false);
-    }
+  // ── Block CRUD ──────────────────────────────────────────────────────────
+  const handleAddBlock = (type: BlockType) => {
+    const created = createBlock(type);
+    canvas.mutate(draft => {
+      draft.push(created);
+    });
+    canvas.setActiveId(created.id);
+    autosave.markDirty();
   };
 
-  /**
-   * Called when the user confirms which AI-proposed changes to apply.
-   * Merges per-(block, group) accept map → updates blocks → marks dirty.
-   * Autosave then persists. Pushes history so the entire merge is undoable.
-   */
-  const handleApplyReviewedChanges = (accept: AcceptMap) => {
-    if (!reviewState) return;
-    const { aiBlocks, originalBlocks, productName } = reviewState;
-    const merged = mergeAcceptedChanges(originalBlocks, aiBlocks, accept);
-
-    // Count what actually changed for the success toast.
-    let acceptedFields = 0;
-    for (const [, groups] of accept) acceptedFields += groups.size;
-
-    pushHistory();
-    setBlocks(merged);
-    if (!merged.find(b => b.id === activeIdRef.current)) {
-      setActiveId(merged[0]?.id ?? null);
-    }
-    setDirty(true);
-    setReviewState(null);
-    toast.success(
-      `Đã áp dụng ${acceptedFields} nhóm thay đổi từ "${productName}"`
-    );
+  const handleRemoveBlock = (id: string) => {
+    const target = canvas.blocks.find(b => b.id === id);
+    if (!target) return;
+    if (!window.confirm(`Xoá block "${target.name}"?`)) return;
+    let nextActive: string | null = canvas.activeId;
+    canvas.mutate(draft => {
+      const idx = draft.findIndex(b => b.id === id);
+      if (idx >= 0) draft.splice(idx, 1);
+      if (nextActive === id) nextActive = draft[0]?.id ?? null;
+    });
+    if (nextActive !== canvas.activeId) canvas.setActiveId(nextActive);
+    autosave.markDirty();
   };
 
-  const handleDuplicate = () => {
-    if (!templateRef.current || !blocksRef.current.length) return;
-    setDuplicateOpen(true);
-  };
-
+  // ── Duplicate ───────────────────────────────────────────────────────────
   const handleDuplicateConfirm = async (name: string) => {
-    const t = templateRef.current;
-    const bs = blocksRef.current;
-    const aid = activeIdRef.current;
-    if (!t || !bs.length || duplicating) return;
+    if (!template || !canvas.blocks.length || duplicating) return;
     setDuplicating(true);
     try {
       const created = await rexerApi.canvasTemplates.create({
         name,
-        width: t.width,
-        height: t.height,
-        engine: t.engine,
-        engine_version: t.engine_version,
-        // is_template=false so duplicate shows in "My Template" filter
-        // (CanvasTemplateList treats !is_template as user-owned).
+        width: template.width,
+        height: template.height,
+        engine: template.engine,
+        engine_version: template.engine_version,
         is_template: false,
-        // Clone canvas_data — drop publish state so duplicates start unpublished.
         canvas_data: serializeCanvas(
-          structuredClone(bs),
-          aid ?? undefined,
+          structuredClone(canvas.blocks),
+          canvas.activeId ?? undefined,
           undefined
         ) as unknown as Record<string, unknown>,
       });
@@ -959,59 +574,7 @@ export function BlockEditor({
     }
   };
 
-  const handleAdd = (type: BlockType) => {
-    pushHistory();
-    const created = createBlock(type);
-    setBlocks(prev => [...prev, created]);
-    setActiveId(created.id);
-    setDirty(true);
-  };
-
-  const handleRemove = (id: string) => {
-    const target = blocks.find(b => b.id === id);
-    if (!target) return;
-    if (!window.confirm(`Xoá block "${target.name}"?`)) return;
-    pushHistory();
-    setBlocks(prev => {
-      const next = prev.filter(b => b.id !== id);
-      if (activeIdRef.current === id) {
-        const fallback = next[0]?.id ?? null;
-        setActiveId(fallback);
-      }
-      return next;
-    });
-    setDirty(true);
-  };
-
-  const handleUndo = React.useCallback(() => {
-    const prev = undoStackRef.current.pop();
-    if (!prev) return;
-    redoStackRef.current.push(structuredClone(blocksRef.current));
-    if (redoStackRef.current.length > HISTORY_CAP) {
-      redoStackRef.current.shift();
-    }
-    setBlocks(prev);
-    setDirty(true);
-    setSaveBlocked(false);
-    forceHistoryRender();
-  }, []);
-
-  const handleRedo = React.useCallback(() => {
-    const next = redoStackRef.current.pop();
-    if (!next) return;
-    undoStackRef.current.push(structuredClone(blocksRef.current));
-    if (undoStackRef.current.length > HISTORY_CAP) {
-      undoStackRef.current.shift();
-    }
-    setBlocks(next);
-    setDirty(true);
-    setSaveBlocked(false);
-    forceHistoryRender();
-  }, []);
-
-  // Keyboard shortcuts: Cmd/Ctrl+Z = undo, Cmd/Ctrl+Shift+Z or Ctrl+Y = redo,
-  // Space = play motion preview. Skip when target is a form input so native
-  // field undo / Spacebar typing still works.
+  // ── Keyboard shortcuts (Cmd+Z / Y / Space) ─────────────────────────────
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -1023,19 +586,22 @@ export function BlockEditor({
       const key = e.key.toLowerCase();
       if (meta && key === 'z' && !e.shiftKey) {
         e.preventDefault();
-        handleUndo();
+        canvas.undo();
+        autosave.markDirty();
       } else if (meta && ((key === 'z' && e.shiftKey) || key === 'y')) {
         e.preventDefault();
-        handleRedo();
+        canvas.redo();
+        autosave.markDirty();
       } else if (!meta && (e.code === 'Space' || key === ' ')) {
         e.preventDefault();
-        playMotionPreview();
+        motionPreview.playBlock();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleUndo, handleRedo, playMotionPreview]);
+  }, [canvas, autosave, motionPreview]);
 
+  // ── Render ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className='flex h-full flex-1 items-center justify-center bg-neutral-100'>
@@ -1044,37 +610,49 @@ export function BlockEditor({
     );
   }
 
+  const saving = autosave.state.kind === 'saving';
+  const dirty =
+    autosave.state.kind === 'pending' ||
+    autosave.state.kind === 'saving' ||
+    autosave.state.kind === 'error';
+  const activeBlock = canvas.activeBlock;
+  const motionForActiveVariant = activeBlock?.motion?.[editVariant] as
+    | BlockMotion
+    | undefined;
+
   return (
     <div className='flex h-full min-h-0 flex-1 flex-col bg-neutral-100'>
       <BlockEditorHeader
         blockName={activeBlock?.name ?? '—'}
-        lang={lang}
-        device={device}
+        lang={deviceState.lang}
+        device={deviceState.device}
         saving={saving}
         dirty={dirty}
         duplicating={duplicating}
-        onLangChange={setLang}
-        onDeviceChange={next => {
-          // Reset the user-touched flag so each device toggle re-fits
-          // (mobile→desktop wants different fit %).
-          userTouchedZoomRef.current = false;
-          setDevice(next);
-        }}
+        onLangChange={deviceState.setLang}
+        onDeviceChange={deviceState.setDevice}
         onAi={() =>
           toast.info('Click 1 element trên canvas để mở popup AI riêng')
         }
         onApplyProduct={() => setProductPickerOpen(true)}
-        onDuplicate={handleDuplicate}
+        onImportFromImage={() => setImportOpen(true)}
+        onDuplicate={() => setDuplicateOpen(true)}
         onPreview={() => setPreviewing(true)}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
+        onUndo={() => {
+          canvas.undo();
+          autosave.markDirty();
+        }}
+        onRedo={() => {
+          canvas.redo();
+          autosave.markDirty();
+        }}
         onPublish={() => setPublishOpen(true)}
-        onPlayMotionPreview={playMotionPreview}
+        onPlayMotionPreview={motionPreview.playBlock}
         onOpenMotionEditor={() => setMotionEditorOpen(true)}
-        canUndo={undoStackRef.current.length > 0}
-        canRedo={redoStackRef.current.length > 0}
-        isPublished={!!publish?.published}
-        isMotionPreviewing={motionPreviewing}
+        canUndo={canvas.canUndo}
+        canRedo={canvas.canRedo}
+        isPublished={!!publishState.publish?.published}
+        isMotionPreviewing={motionPreview.previewing}
       />
 
       {loadError && (
@@ -1086,71 +664,108 @@ export function BlockEditor({
 
       <div className='relative flex min-h-0 flex-1 overflow-hidden'>
         <div className='flex min-w-0 flex-1 flex-col'>
-          {activeBlock && (
+          {activeBlock && selectedExtraElementId ? (
+            (() => {
+              const el = activeBlock.extraElements?.find(
+                e => e.id === selectedExtraElementId
+              );
+              if (!el) return null;
+              return (
+                <ExtraElementToolbar
+                  element={el}
+                  onChange={patch =>
+                    handlePatchExtraElement(selectedExtraElementId, patch)
+                  }
+                  onDelete={() =>
+                    handleRemoveExtraElement(selectedExtraElementId)
+                  }
+                  onClose={() => setSelectedExtraElementId(null)}
+                  onBringToFront={() =>
+                    handleBringExtraToFront(selectedExtraElementId)
+                  }
+                  onSendToBack={() =>
+                    handleSendExtraToBack(selectedExtraElementId)
+                  }
+                />
+              );
+            })()
+          ) : activeBlock ? (
             <ElementToolbar
               block={activeBlock}
-              lang={lang}
-              device={device}
-              selectedKey={selectedElementKey}
-              onClose={() => setSelectedElementKey(null)}
+              lang={deviceState.lang}
+              device={deviceState.device}
+              selectedKey={selection.selectedKey}
+              onClose={() => selection.selectKey(null)}
               onContentChange={updateActiveContent}
-              onUpdateStyle={handleToolbarUpdateStyle}
-              onResetStyle={handleToolbarResetStyle}
+              onUpdateStyle={patch => {
+                if (!selection.selectedKey) return;
+                handleUpdateElementStyle(selection.selectedKey, patch);
+              }}
+              onResetStyle={() => {
+                if (!selection.selectedKey) return;
+                handleResetElementStyle(selection.selectedKey);
+              }}
               onUpdateBackground={handleUpdateBackground}
               onSyncVariant={syncVariant}
             />
-          )}
+          ) : null}
           {activeBlock ? (
             <BlockPreview
               block={activeBlock}
-              lang={lang}
-              device={device}
-              zoom={zoom}
-              selectedElementKey={selectedElementKey}
-              editingKey={editingKey}
-              onSelectElement={handleSelectFromCanvas}
+              lang={deviceState.lang}
+              device={deviceState.device}
+              zoom={deviceState.zoom}
+              selectedElementKey={selection.selectedKey}
+              editingKey={selection.editingKey}
+              onSelectElement={selection.selectKey}
               onStartInlineEdit={handleStartInlineEdit}
               onCommitInlineEdit={handleCommitInlineEdit}
-              onCancelInlineEdit={handleCancelInlineEdit}
-              motionMode={motionPreviewing ? 'preview' : 'edit'}
-              onAutoFitZoom={pct => {
-                // Only auto-fit if user hasn't manually adjusted zoom yet.
-                if (!userTouchedZoomRef.current) setZoom(pct);
-              }}
+              onCancelInlineEdit={selection.endInlineEdit}
+              onCommitElementPosition={handleCommitElementPosition}
+              motionMode={motionPreview.previewing ? 'preview' : 'edit'}
+              motionPreviewNonce={motionPreview.nonce}
+              motionPreviewElement={motionPreview.previewElement}
+              onAutoFitZoom={deviceState.applyAutoFitZoom}
+              selectedExtraElementId={selectedExtraElementId}
+              onSelectExtraElement={setSelectedExtraElementId}
+              onCommitExtraElementPosition={handleCommitExtraElementPosition}
             />
           ) : (
             <EmptyState onAdd={() => setAddOpen(true)} />
           )}
           <BlockTabBar
-            blocks={blocks}
+            blocks={canvas.blocks}
             activeId={activeBlock?.id ?? null}
-            lang={lang}
-            zoom={zoom}
-            onSelect={setActiveId}
+            lang={deviceState.lang}
+            zoom={deviceState.zoom}
+            onSelect={canvas.setActiveId}
             onAdd={() => setAddOpen(true)}
-            onRemove={handleRemove}
-            onReorder={handleReorder}
-            onZoomChange={next => {
-              userTouchedZoomRef.current = true;
-              setZoom(next);
-            }}
+            onRemove={handleRemoveBlock}
+            onReorder={handleReorderBlocks}
+            onZoomChange={deviceState.setZoom}
           />
         </div>
 
         {activeBlock && !layersCollapsed && (
           <BlockEditorSidebar
             block={activeBlock}
-            device={device}
-            selectedElementKey={selectedElementKey}
-            onSelectElement={handleSelectFromSidebar}
+            device={deviceState.device}
+            selectedElementKey={selection.selectedKey}
+            onSelectElement={selection.selectKey}
             onReorderElements={handleReorderElements}
             onCollapse={() => setLayersCollapsed(true)}
             activeTab={sidebarTab}
             onChangeTab={setSidebarTab}
-            motionTrackCount={
-              activeBlock.motion?.[editVariantForMotion]?.tracks.length ?? 0
-            }
+            motion={motionForActiveVariant}
+            onChangeMotion={handleChangeBlockMotion}
             onOpenMotionEditor={() => setMotionEditorOpen(true)}
+            onPlayMotionPreview={motionPreview.playBlock}
+            onPlayElementPreview={motionPreview.playElement}
+            isMotionPreviewing={motionPreview.previewing}
+            selectedExtraElementId={selectedExtraElementId}
+            onAddExtraElement={handleAddExtraElement}
+            onSelectExtraElement={setSelectedExtraElementId}
+            onRemoveExtraElement={handleRemoveExtraElement}
           />
         )}
 
@@ -1169,13 +784,13 @@ export function BlockEditor({
       <AddBlockDialog
         open={addOpen}
         onOpenChange={setAddOpen}
-        onPick={handleAdd}
+        onPick={handleAddBlock}
       />
 
       {previewing && (
         <PreviewMode
-          blocks={blocks}
-          lang={lang}
+          blocks={canvas.blocks}
+          lang={deviceState.lang}
           onClose={() => setPreviewing(false)}
         />
       )}
@@ -1184,13 +799,9 @@ export function BlockEditor({
         <MotionTimelineModal
           open={motionEditorOpen}
           block={activeBlock}
-          device={device}
-          lang={lang}
-          motion={
-            activeBlock.motion?.[editVariantForMotion] as
-              | BlockMotion
-              | undefined
-          }
+          device={deviceState.device}
+          lang={deviceState.lang}
+          motion={motionForActiveVariant}
           onChange={handleChangeBlockMotion}
           onClose={() => setMotionEditorOpen(false)}
         />
@@ -1200,7 +811,7 @@ export function BlockEditor({
         open={publishOpen}
         onOpenChange={setPublishOpen}
         templateId={templateId}
-        publish={publish}
+        publish={publishState.publish}
         onTogglePublish={handlePublishToggle}
         onRotateToken={handleRotateShareToken}
       />
@@ -1208,7 +819,20 @@ export function BlockEditor({
       <ProductPickerDialog
         open={productPickerOpen}
         onOpenChange={setProductPickerOpen}
-        onPick={handleApplyProduct}
+        onPick={ai.applyProduct}
+      />
+
+      <ImportBlockDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onInsert={block => {
+          canvas.mutate(draft => {
+            draft.push(block);
+          });
+          canvas.setActiveId(block.id);
+          autosave.markDirty();
+          toast.success(`Đã thêm block "${block.name}" từ AI`);
+        }}
       />
 
       <DuplicateTemplateDialog
@@ -1221,17 +845,14 @@ export function BlockEditor({
         onConfirm={handleDuplicateConfirm}
       />
 
-      {/* Intermediate review step for "Áp dụng SP" — opens after AI returns
-          its proposed canvas, lets the user accept/reject per (block, group)
-          before the merge lands. See plan FA-1..FA-3. */}
       <ReviewChangesDialog
-        open={reviewState !== null}
-        diff={reviewState?.diff ?? null}
-        productName={reviewState?.productName ?? ''}
+        open={ai.reviewState !== null}
+        diff={ai.reviewState?.diff ?? null}
+        productName={ai.reviewState?.productName ?? ''}
         onOpenChange={open => {
-          if (!open) setReviewState(null);
+          if (!open) ai.cancelReview();
         }}
-        onApply={handleApplyReviewedChanges}
+        onApply={ai.acceptReviewed}
       />
     </div>
   );

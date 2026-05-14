@@ -1,12 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { Clapperboard, PanelRightClose } from 'lucide-react';
+import { PanelRightClose } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 
 import { LayersPanel } from './LayersPanel';
-import type { Block, Device } from './types';
+import { MotionLayersPanel } from './motion/MotionLayersPanel';
+import type { BlockMotion } from './motion/types';
+import type { Block, Device, ExtraElementKind } from './types';
 
 type SidebarTab = 'layers' | 'motion';
 
@@ -20,9 +22,19 @@ interface BlockEditorSidebarProps {
   /** Sidebar tab — 'layers' (default) or 'motion'. */
   activeTab?: SidebarTab;
   onChangeTab?: (tab: SidebarTab) => void;
-  /** Number of tracks on the active block — surfaced in the Motion tab. */
-  motionTrackCount?: number;
+  /** Stored motion for the current device variant. */
+  motion?: BlockMotion;
+  onChangeMotion?: (next: BlockMotion | null) => void;
   onOpenMotionEditor?: () => void;
+  onPlayMotionPreview?: () => void;
+  /** Audition a single element's animation. Triggered when user picks a preset. */
+  onPlayElementPreview?: (elementKey: string) => void;
+  isMotionPreviewing?: boolean;
+  // ── ExtraElements (free-drag user-added objects) ──────────────────────
+  selectedExtraElementId?: string | null;
+  onAddExtraElement?: (kind: ExtraElementKind) => void;
+  onSelectExtraElement?: (id: string | null) => void;
+  onRemoveExtraElement?: (id: string) => void;
 }
 
 export function BlockEditorSidebar({
@@ -34,8 +46,16 @@ export function BlockEditorSidebar({
   onCollapse,
   activeTab = 'layers',
   onChangeTab,
-  motionTrackCount = 0,
+  motion,
+  onChangeMotion,
   onOpenMotionEditor,
+  onPlayMotionPreview,
+  onPlayElementPreview,
+  isMotionPreviewing,
+  selectedExtraElementId,
+  onAddExtraElement,
+  onSelectExtraElement,
+  onRemoveExtraElement,
 }: BlockEditorSidebarProps) {
   const isMotion = activeTab === 'motion';
   return (
@@ -60,7 +80,7 @@ export function BlockEditorSidebar({
           Motion
         </TabBtn>
         <span className='ml-auto flex items-center px-3 text-[10px] text-neutral-400'>
-          {isMotion ? 'Element override' : 'Kéo để sắp xếp · Click để sửa'}
+          {isMotion ? 'Preset theo element' : 'Kéo để sắp xếp · Click để sửa'}
         </span>
         {onCollapse && (
           <button
@@ -76,9 +96,15 @@ export function BlockEditorSidebar({
 
       <div className='flex-1 overflow-y-auto'>
         {isMotion ? (
-          <MotionTabBody
-            trackCount={motionTrackCount}
-            onOpen={onOpenMotionEditor}
+          <MotionLayersPanel
+            block={block}
+            device={device}
+            motion={motion}
+            onChange={next => onChangeMotion?.(next)}
+            onOpenAdvanced={() => onOpenMotionEditor?.()}
+            onPlayPreview={onPlayMotionPreview}
+            onPlayElementPreview={onPlayElementPreview}
+            isPreviewing={isMotionPreviewing ?? false}
           />
         ) : (
           <LayersPanel
@@ -87,46 +113,14 @@ export function BlockEditorSidebar({
             selectedKey={selectedElementKey}
             onSelectKey={onSelectElement}
             onReorder={onReorderElements}
+            selectedExtraElementId={selectedExtraElementId}
+            onAddExtraElement={onAddExtraElement}
+            onSelectExtraElement={onSelectExtraElement}
+            onRemoveExtraElement={onRemoveExtraElement}
           />
         )}
       </div>
     </aside>
-  );
-}
-
-function MotionTabBody({
-  trackCount,
-  onOpen,
-}: {
-  trackCount: number;
-  onOpen?: () => void;
-}) {
-  return (
-    <div className='flex flex-col gap-3 px-4 py-5 text-[11px] text-neutral-500'>
-      <div className='rounded-md border border-neutral-200 bg-white p-3'>
-        <span className='font-mono text-[10px] tracking-[0.14em] text-neutral-400 uppercase'>
-          Block hiện tại
-        </span>
-        <p className='mt-1 text-[12px] font-semibold text-neutral-900'>
-          {trackCount === 0
-            ? 'Chưa có track nào'
-            : `${trackCount} track đang chạy`}
-        </p>
-      </div>
-      <button
-        type='button'
-        onClick={onOpen}
-        data-testid='sidebar-open-motion-editor'
-        className='flex h-8 cursor-pointer items-center justify-center gap-2 rounded-md bg-neutral-900 px-3 text-[11px] font-semibold text-white transition-colors hover:bg-neutral-700'
-      >
-        <Clapperboard className='size-3.5' />
-        Mở timeline editor
-      </button>
-      <p className='leading-relaxed text-neutral-400'>
-        Timeline mở ở chế độ full-screen. Phím tắt: <kbd>M</kbd> để mở nhanh,
-        <kbd>Esc</kbd> đóng.
-      </p>
-    </div>
   );
 }
 

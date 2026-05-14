@@ -176,6 +176,9 @@ function migrateBlockV1toV2(b: Record<string, unknown>): Block {
       : wrap(elementStyles),
     background: isVariants(background) ? background : wrap(background),
     elementOrder: isVariants(elementOrder) ? elementOrder : wrap(elementOrder),
+    extraElements: Array.isArray(b.extraElements)
+      ? (b.extraElements as Block['extraElements'])
+      : undefined,
     motion: migrateMotion(b.motion),
   };
 }
