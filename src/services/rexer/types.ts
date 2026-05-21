@@ -675,6 +675,87 @@ export interface AnalyticsDailyPoint {
   conversions: number;
   ctr: number;
 }
+
+// ── Template Analytics (admin, per spec be-template-analytics) ───────────
+export interface TemplateAnalyticsSummaryRow {
+  template_id: string;
+  template_title: string | null;
+  views: number;
+  unique_visitors: number;
+  blocks_viewed: number;
+  total_clicks: number;
+}
+
+export interface TargetStat {
+  target: string;
+  count: number;
+}
+
+export interface ActionStat {
+  action: string;
+  count: number;
+  unique_visitors: number;
+  targets: TargetStat[];
+}
+
+export interface FunnelStep {
+  name: string;
+  label: string;
+  count: number;
+  drop_off_pct: number;
+}
+
+export interface SlideStat {
+  index: number;
+  label: string;
+  views: number;
+  clicks: number;
+  avg_dwell_ms: number;
+}
+
+export interface ImageStat {
+  index: number;
+  src: string;
+  clicks: number;
+  zooms: number;
+}
+
+export interface BlockBreakdownRow {
+  block_id: string;
+  block_type: string | null;
+  views: number;
+  clicks: number;
+  unique_viewers: number;
+  avg_dwell_ms: number | null;
+  total_dwell_ms: number | null;
+  top_action: string | null;
+  top_target: string | null;
+  actions: ActionStat[];
+  funnel?: FunnelStep[] | null;
+  slides?: SlideStat[] | null;
+  images?: ImageStat[] | null;
+}
+
+export interface AnalyticsEventInput {
+  template_id: string;
+  block_id?: string;
+  element_id?: string;
+  element_role?: string;
+  visitor_id: string;
+  session_id: string;
+  event_type: string;
+  action?: string;
+  target?: string;
+  dwell_ms?: number;
+  scroll_depth?: number;
+  viewport_w?: number;
+  viewport_h?: number;
+  referrer?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  meta?: Record<string, unknown>;
+}
 export interface ProjectAnalyticsResponse {
   project_id: string;
   release_id?: string;

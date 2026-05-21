@@ -18,6 +18,7 @@ import {
   type RangePreset,
   type TemplateAnalyticsRow,
 } from './_fake-data';
+import { loadSummary } from './_remote';
 import {
   BlockTypeChip,
   CtrBadge,
@@ -34,12 +35,10 @@ export default function TemplateAnalyticsListPage() {
   const [preset, setPreset] = useState<RangePreset>('30d');
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-
-  const summary = useMemo(
-    () => applyPreset(FAKE_SUMMARY, preset),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [preset, refreshKey]
+  const [summary, setSummary] = useState<TemplateAnalyticsRow[]>(() =>
+    applyPreset(FAKE_SUMMARY, '30d')
   );
+  const [source, setSource] = useState<'live' | 'fake'>('fake');
 
   const totals = useMemo(
     () =>
@@ -57,8 +56,16 @@ export default function TemplateAnalyticsListPage() {
 
   useEffect(() => {
     setLoading(true);
-    const t = setTimeout(() => setLoading(false), 350);
-    return () => clearTimeout(t);
+    let cancelled = false;
+    loadSummary(preset, applyPreset(FAKE_SUMMARY, preset)).then(res => {
+      if (cancelled) return;
+      setSummary(res.data);
+      setSource(res.source);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [preset, refreshKey]);
 
   return (
@@ -66,7 +73,16 @@ export default function TemplateAnalyticsListPage() {
       <PageHeader
         back='/overview'
         title='Rexer AI — Landing page Analytics'
-        rightBadge={<FakeBadge />}
+        rightBadge={
+          source === 'live' ? (
+            <span className='inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-emerald-700 uppercase'>
+              <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
+              LIVE BE
+            </span>
+          ) : (
+            <FakeBadge />
+          )
+        }
       />
 
       <main className='mx-auto w-full max-w-6xl px-5 py-8 lg:px-10'>

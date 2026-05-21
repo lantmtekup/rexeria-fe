@@ -26,6 +26,7 @@ import {
   type RangePreset,
   type SlideStat,
 } from '../_fake-data';
+import { loadBreakdown } from '../_remote';
 import {
   BlockTypeChip,
   CtrBadge,
@@ -62,11 +63,10 @@ function TemplateDetailInner() {
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [openBlockId, setOpenBlockId] = useState<string | null>(null);
-
-  const blocks = useMemo<BlockBreakdownRow[]>(() => {
-    return applyPresetBreakdown(FAKE_BREAKDOWN[params.id] ?? [], preset);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id, preset, refreshKey]);
+  const [blocks, setBlocks] = useState<BlockBreakdownRow[]>(() =>
+    applyPresetBreakdown(FAKE_BREAKDOWN[params.id] ?? [], initialPreset)
+  );
+  const [source, setSource] = useState<'live' | 'fake'>('fake');
 
   const totals = useMemo(
     () => ({
@@ -80,9 +80,21 @@ function TemplateDetailInner() {
 
   useEffect(() => {
     setLoading(true);
-    const t = setTimeout(() => setLoading(false), 300);
-    return () => clearTimeout(t);
-  }, [preset, refreshKey]);
+    let cancelled = false;
+    loadBreakdown(
+      params.id,
+      preset,
+      applyPresetBreakdown(FAKE_BREAKDOWN[params.id] ?? [], preset)
+    ).then(res => {
+      if (cancelled) return;
+      setBlocks(res.data);
+      setSource(res.source);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [params.id, preset, refreshKey]);
 
   return (
     <div className='min-h-screen bg-zinc-50 text-zinc-900 antialiased'>
@@ -91,7 +103,16 @@ function TemplateDetailInner() {
         backLabel='Tất cả landing pages'
         title='Landing page Analytics'
         subtitle={tpl.template_title ?? tpl.template_id}
-        rightBadge={<FakeBadge />}
+        rightBadge={
+          source === 'live' ? (
+            <span className='inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-emerald-700 uppercase'>
+              <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
+              LIVE BE
+            </span>
+          ) : (
+            <FakeBadge />
+          )
+        }
       />
 
       <main className='mx-auto w-full max-w-6xl px-5 py-8 lg:px-10'>

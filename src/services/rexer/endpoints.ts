@@ -145,6 +145,10 @@ import type {
   UpdateProductCategoryRequest,
   UpdateProductRequest,
   UpdateTemplateRequest,
+  // Template Analytics (be-template-analytics-spec)
+  TemplateAnalyticsSummaryRow,
+  BlockBreakdownRow,
+  AnalyticsEventInput,
 } from './types';
 
 export const rexerApi = {
@@ -908,6 +912,28 @@ export const rexerApi = {
         `/admin/ai/templates/${id}/test-generate`,
         { method: 'POST', body }
       ),
+  },
+
+  templateAnalytics: {
+    /** Summary across all published templates (admin). */
+    summary: (query?: {
+      start?: string;
+      end?: string;
+      limit?: number;
+      sort?: 'views' | 'clicks' | 'visitors' | 'clicks_pct';
+    }) =>
+      rx<TemplateAnalyticsSummaryRow[]>('/admin/analytics/templates/summary', {
+        query,
+      }),
+    /** Per-block + per-action breakdown for 1 template (admin). */
+    breakdown: (templateId: string, query?: { start?: string; end?: string }) =>
+      rx<BlockBreakdownRow[]>(
+        `/admin/analytics/templates/${templateId}/breakdown`,
+        { query }
+      ),
+    /** Public ingest endpoint — fire from /p/[slug] visitor pages. */
+    ingestEvent: (body: AnalyticsEventInput) =>
+      rx<void>('/analytics/events', { method: 'POST', body }),
   },
 
   adminFeedback: {
