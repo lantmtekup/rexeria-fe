@@ -100,6 +100,26 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className='min-h-screen bg-zinc-50 text-zinc-900 antialiased'>
+      {/* Migration banner — tell users this is the sales showcase */}
+      <div className='border-b border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50 px-6 py-2 text-[12px]'>
+        <div className='flex items-center justify-between gap-2'>
+          <span className='flex items-center gap-1.5 text-cyan-800'>
+            <span className='rounded bg-cyan-600 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wider text-white uppercase'>
+              Demo
+            </span>
+            <span>
+              Showcase cho Sales. Production cùng UI nhưng kết nối BE thật.
+            </span>
+          </span>
+          <Link
+            href='/portal'
+            className='rounded-md bg-cyan-600 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-sm hover:bg-cyan-700'
+          >
+            → Mở /portal production
+          </Link>
+        </div>
+      </div>
+
       {/* Top header */}
       <header className='sticky top-0 z-30 flex items-center justify-between border-b border-zinc-200 bg-white/95 px-6 py-3 backdrop-blur'>
         <div className='flex items-center gap-3'>

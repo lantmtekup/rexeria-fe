@@ -1514,7 +1514,13 @@ export default function OverviewPage() {
             href='/overview/portal-demo'
             className='hidden items-center gap-1.5 rounded-lg border border-cyan-300 bg-cyan-50 px-2.5 py-1 text-xs font-bold text-cyan-700 hover:bg-cyan-100 sm:inline-flex'
           >
-            <Boxes className='size-3.5' /> Brand Portal Demo
+            <Boxes className='size-3.5' /> Portal Demo
+          </a>
+          <a
+            href='/portal'
+            className='hidden items-center gap-1.5 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 sm:inline-flex'
+          >
+            <Boxes className='size-3.5' /> /portal LIVE
           </a>
           <span className='rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm'>
             {visibleUC}/{totalUC} UC · {MODULES.length} modules

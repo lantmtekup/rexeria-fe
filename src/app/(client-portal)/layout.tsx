@@ -1,11 +1,14 @@
 import * as React from 'react';
 
-import { ClientPortalLayout } from '@/components/templates/ClientPortalLayout';
-
+/**
+ * Route group layout: pass-through. Phase 1 portal pages use their own
+ * `PortalShell` (with workspace switcher + logout + auth hydrator) — see
+ * `src/app/(client-portal)/portal/_shell.tsx`.
+ */
 export default function PortalRouteGroupLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <ClientPortalLayout>{children}</ClientPortalLayout>;
+  return <>{children}</>;
 }
