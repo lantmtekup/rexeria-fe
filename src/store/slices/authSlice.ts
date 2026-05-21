@@ -8,7 +8,17 @@ export type AuthUser = {
   email: string;
   display_name: string;
   principal_type: string;
+  /**
+   * FE-facing role per BE docs: `'admin' | 'staff' | 'client_user'`.
+   * Backfilled from `principal_type` by BE migration 000108. Use this for
+   * sidebar gating + smart redirect after login.
+   */
+  role: string;
   status: string;
+  /** Client (workspace) id when role === 'client_user'. Null cho admin/staff. */
+  client_id?: string | null;
+  /** Client name — convenience field từ LoginResponse.client.name. */
+  client_name?: string | null;
 };
 
 type AuthState = {
@@ -40,7 +50,10 @@ export const loginThunk = createAsyncThunk<
       email: res.user.email,
       display_name: res.user.display_name,
       principal_type: res.user.principal_type,
+      role: res.user.role ?? res.user.principal_type,
       status: res.user.status,
+      client_id: res.client?.id ?? null,
+      client_name: res.client?.name ?? null,
     };
   } catch (err) {
     if (err instanceof RxApiError) {
@@ -72,7 +85,10 @@ export const fetchMeThunk = createAsyncThunk<AuthUser | null>(
         email: res.user.email,
         display_name: res.user.display_name,
         principal_type: res.user.principal_type,
+        role: res.user.role ?? res.user.principal_type,
         status: res.user.status,
+        client_id: res.client?.id ?? null,
+        client_name: res.client?.name ?? null,
       };
     } catch {
       return null;

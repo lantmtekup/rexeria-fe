@@ -14,7 +14,15 @@ export interface RxUser {
   email: string;
   display_name: string;
   principal_type: string;
+  /**
+   * FE-facing role per BE Swagger: `'admin' | 'staff' | 'client_user'`.
+   * Backfilled from `principal_type` by BE migration 000108.
+   */
+  role?: string;
   status: string;
+  avatar_url?: string;
+  ai_quota_hard_limit?: boolean;
+  has_migrated_saved_blocks?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -41,6 +49,8 @@ export interface RegisterRequest {
 export interface LoginResponse {
   user: RxUser;
   session: RxSession;
+  /** Client (workspace) — nil cho admin/staff không scope tenant. */
+  client?: Client;
 }
 
 export interface RegisterResponse {
@@ -52,6 +62,8 @@ export interface RegisterResponse {
 export interface AuthMeResponse {
   user: RxUser;
   session: RxSession;
+  /** Client — nil cho admin/staff. Lets sidebar render workspace name. */
+  client?: Client;
 }
 
 export interface ChangePasswordRequest {

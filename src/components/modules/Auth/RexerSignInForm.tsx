@@ -60,12 +60,12 @@ export default function RexerSignInForm() {
         router.replace(explicit);
         return;
       }
-      // Smart route theo role:
-      // - admin / staff → /admin (CMS để quản lý hệ thống)
-      // - brand client (client_user, brand_*) → /portal
-      // - mọi role khác → /portal (default landing Phase 1)
-      const principal = user?.principal_type ?? '';
-      if (principal === 'admin' || principal === 'staff') {
+      // Smart route theo role (BE chuẩn: 'admin' | 'staff' | 'client_user').
+      // - admin / staff → /admin (CMS quản lý hệ thống)
+      // - client_user (brand client) → /portal
+      // - fallback → /portal
+      const role = user?.role ?? user?.principal_type ?? '';
+      if (role === 'admin' || role === 'staff') {
         router.replace('/admin');
       } else {
         router.replace('/portal');
