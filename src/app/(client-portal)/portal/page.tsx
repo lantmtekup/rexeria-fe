@@ -28,8 +28,9 @@ import {
   type ActivityItem,
   type DashboardStats,
 } from './_data';
-import { ApiStatusLabel, loadDashboardStats } from './_remote';
+import { ApiStatusLabel, loadActivity, loadDashboardStats } from './_remote';
 import { PortalShell } from './_shell';
+import { useActiveWorkspace } from './_workspace';
 
 const ACTIVITY_META: Record<
   ActivityItem['kind'],
@@ -48,9 +49,11 @@ const ACTIVITY_META: Record<
 };
 
 export default function PortalDashboardPage() {
+  const activeWs = useActiveWorkspace();
   const [stats, setStats] = useState<DashboardStats>(FAKE_STATS);
   const [source, setSource] = useState<'live' | 'fake'>('fake');
   const [loadError, setLoadError] = useState<string | undefined>(undefined);
+  const [activity, setActivity] = useState<ActivityItem[]>(FAKE_ACTIVITY);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +67,17 @@ export default function PortalDashboardPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadActivity(activeWs.id, 12).then(res => {
+      if (cancelled) return;
+      if (res.source === 'live') setActivity(res.data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeWs.id]);
 
   const ctr =
     stats.total_visitors_30d > 0
@@ -242,7 +256,7 @@ export default function PortalDashboardPage() {
             aria-hidden
           />
           <ul className='space-y-3'>
-            {FAKE_ACTIVITY.map(a => {
+            {activity.map(a => {
               const meta = ACTIVITY_META[a.kind];
               const Icon = meta.icon;
               return (

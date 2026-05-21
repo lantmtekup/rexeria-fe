@@ -9,16 +9,26 @@ import { rexerApi } from '@/services/rexer/endpoints';
 import type {
   CreateProductRequest,
   Product as BEProduct,
+  Workspace as BEWorkspace,
+  Notification as BENotification,
+  ActivityItem as BEActivityItem,
+  MediaFolder as BEMediaFolder,
 } from '@/services/rexer/types';
 
 import {
+  FAKE_ACTIVITY,
+  FAKE_FOLDERS,
   FAKE_PRODUCTS,
   FAKE_STATS,
   FAKE_TEMPLATES,
+  FAKE_WORKSPACES,
+  type ActivityItem,
   type DashboardStats,
+  type MediaFolder,
   type PortalProduct,
   type PortalTemplate,
   type ProductCategory,
+  type Workspace,
 } from './_data';
 
 export type LoadResult<T> = {
@@ -251,6 +261,236 @@ export function portalProductToBE(
     ingredients: v.ingredients,
     certifications: v.certifications,
   };
+}
+
+/* ---------- Workspaces (Phase 1 multitenancy) ---------- */
+
+const WORKSPACE_LOGO_COLORS = [
+  'bg-rose-500',
+  'bg-orange-500',
+  'bg-emerald-500',
+  'bg-indigo-500',
+  'bg-violet-500',
+  'bg-sky-500',
+  'bg-amber-500',
+];
+
+function workspaceLogoColor(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return WORKSPACE_LOGO_COLORS[Math.abs(h) % WORKSPACE_LOGO_COLORS.length];
+}
+
+function logoInitial(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+function beWorkspaceToPortal(w: BEWorkspace): Workspace {
+  return {
+    id: w.id,
+    client_id: w.client_id,
+    slug: w.slug,
+    name: w.name,
+    description: w.description ?? '',
+    logo_initial: logoInitial(w.name),
+    logo_color: workspaceLogoColor(w.id),
+    status: 'active',
+    // BE doesn't return aggregate counts here — UI shows them only on demo
+    member_count: 0,
+    template_count: 0,
+    storage_used_gb: 0,
+  };
+}
+
+export async function loadWorkspaces(): Promise<LoadResult<Workspace[]>> {
+  try {
+    const memberships = await rexerApi.workspaces.myMemberships();
+    const items = (memberships ?? []).map(m =>
+      beWorkspaceToPortal(m.workspace)
+    );
+    if (items.length === 0) {
+      return { data: FAKE_WORKSPACES, source: 'fake', error: 'empty list' };
+    }
+    return { data: items, source: 'live' };
+  } catch (err) {
+    return {
+      data: FAKE_WORKSPACES,
+      source: 'fake',
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+export async function switchWorkspaceRemote(
+  workspaceId: string
+): Promise<boolean> {
+  try {
+    await rexerApi.workspaces.switch({ workspace_id: workspaceId });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* ---------- Notifications (in-app bell) ---------- */
+
+export async function loadUnreadNotificationCount(): Promise<
+  LoadResult<number>
+> {
+  try {
+    const res = await rexerApi.notifications.unreadCount();
+    return { data: res.unread_count, source: 'live' };
+  } catch (err) {
+    return {
+      data: FAKE_STATS.unread_notifications,
+      source: 'fake',
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+export async function loadNotifications(query?: {
+  unread?: boolean;
+  limit?: number;
+}): Promise<LoadResult<BENotification[]>> {
+  try {
+    const res = await rexerApi.notifications.list(query);
+    return { data: res.items, source: 'live' };
+  } catch (err) {
+    return {
+      data: [],
+      source: 'fake',
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+export async function markNotificationsRead(opts: {
+  all?: boolean;
+  ids?: string[];
+}): Promise<boolean> {
+  try {
+    await rexerApi.notifications.markRead(opts);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* ---------- Activity feed (per-workspace audit log) ---------- */
+
+const ACTIVITY_KIND_MAP: Record<string, ActivityItem['kind']> = {
+  template_published: 'template_published',
+  template_updated: 'template_updated',
+  comment_created: 'comment_new',
+  comment_new: 'comment_new',
+  comment_resolved: 'comment_resolved',
+  media_uploaded: 'asset_uploaded',
+  asset_uploaded: 'asset_uploaded',
+  workspace_invited: 'workspace_invited',
+  member_invited: 'workspace_invited',
+};
+
+function relativeTime(iso: string): string {
+  const now = Date.now();
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return iso;
+  const diffMin = Math.round((now - t) / 60_000);
+  if (diffMin < 1) return 'vừa xong';
+  if (diffMin < 60) return `${diffMin} phút trước`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `${diffH} giờ trước`;
+  if (diffH < 48) return 'hôm qua';
+  const diffD = Math.round(diffH / 24);
+  return `${diffD} ngày trước`;
+}
+
+function beActivityToPortal(a: BEActivityItem): ActivityItem {
+  const meta = a.meta ?? {};
+  const actorRole = (meta.actor_role as ActivityItem['actor_role']) ?? 'staff';
+  return {
+    id: a.id,
+    kind: ACTIVITY_KIND_MAP[a.kind] ?? 'template_updated',
+    actor: a.actor_name ?? a.actor_id ?? 'Người dùng',
+    actor_role: actorRole === 'brand' ? 'brand' : 'staff',
+    subject: a.title ?? (meta.subject_name as string) ?? a.subject_id ?? '—',
+    excerpt: meta.excerpt as string | undefined,
+    at: relativeTime(a.created_at),
+  };
+}
+
+export async function loadActivity(
+  workspaceId?: string,
+  limit = 20
+): Promise<LoadResult<ActivityItem[]>> {
+  try {
+    const res = await rexerApi.activityFeed.list({
+      workspace_id: workspaceId,
+      limit,
+    });
+    const items = (res.items ?? []).map(beActivityToPortal);
+    if (items.length === 0) {
+      return { data: FAKE_ACTIVITY, source: 'fake', error: 'empty list' };
+    }
+    return { data: items, source: 'live' };
+  } catch (err) {
+    return {
+      data: FAKE_ACTIVITY,
+      source: 'fake',
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+/* ---------- Media folders (Drive-style) ---------- */
+
+function beFolderToPortal(f: BEMediaFolder): MediaFolder {
+  return {
+    id: f.id,
+    parent_id: f.parent_id ?? null,
+    name: f.name,
+    child_folder_count: f.child_count,
+    file_count: f.file_count,
+    size_bytes: f.size_bytes,
+    updated_at: f.updated_at,
+  };
+}
+
+export async function loadMediaFolders(
+  parentId?: string
+): Promise<LoadResult<MediaFolder[]>> {
+  try {
+    const res = await rexerApi.mediaFolders.list(
+      parentId ? { parent_id: parentId } : undefined
+    );
+    const items = (res.items ?? []).map(beFolderToPortal);
+    if (items.length === 0) {
+      return { data: FAKE_FOLDERS, source: 'fake', error: 'empty list' };
+    }
+    return { data: items, source: 'live' };
+  } catch (err) {
+    return {
+      data: FAKE_FOLDERS,
+      source: 'fake',
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+export async function createMediaFolderRemote(input: {
+  name: string;
+  parent_id?: string;
+  description?: string;
+}): Promise<MediaFolder | null> {
+  try {
+    const r = await rexerApi.mediaFolders.create(input);
+    return beFolderToPortal(r);
+  } catch {
+    return null;
+  }
 }
 
 /* ---------- API status banner ---------- */

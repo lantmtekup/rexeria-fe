@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { AuthHydrator } from '@/components/modules/Auth/AuthHydrator';
@@ -31,6 +31,11 @@ import {
   FAKE_WORKSPACES,
   type Workspace,
 } from './_data';
+import {
+  loadUnreadNotificationCount,
+  loadWorkspaces,
+  switchWorkspaceRemote,
+} from './_remote';
 import { useActiveWorkspace, withWorkspace } from './_workspace';
 
 type NavItem = {
@@ -91,8 +96,32 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
   const [wsMenuOpen, setWsMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
+  // Live data hydrated after mount; fallback to FAKE_* so SSR/static stay stable.
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(FAKE_WORKSPACES);
+  const [unreadCount, setUnreadCount] = useState<number>(
+    FAKE_STATS.unread_notifications
+  );
+
+  useEffect(() => {
+    let mounted = true;
+    loadWorkspaces().then(r => {
+      if (mounted && r.source === 'live') setWorkspaces(r.data);
+    });
+    loadUnreadNotificationCount().then(r => {
+      if (mounted && r.source === 'live') setUnreadCount(r.data);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const clientName = user?.client_name ?? FAKE_CLIENT.name;
+
   const switchWorkspace = (ws: Workspace) => {
     setWsMenuOpen(false);
+    // Fire-and-forget: BE call updates the server-side active workspace,
+    // FE keeps URL `?ws=<id>` as the source of truth for routing.
+    void switchWorkspaceRemote(ws.id);
     const path = pathname ?? '/portal';
     router.push(`${path}?ws=${ws.id}`);
   };
@@ -122,7 +151,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                 CLIENT
               </div>
               <div className='text-sm font-semibold tracking-tight'>
-                {FAKE_CLIENT.name}
+                {clientName}
               </div>
             </div>
           </div>
@@ -163,10 +192,10 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                 />
                 <div className='absolute top-full left-0 z-40 mt-1 w-80 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl'>
                   <div className='border-b border-zinc-100 bg-zinc-50/50 px-3 py-2 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
-                    {FAKE_WORKSPACES.length} workspace của {FAKE_CLIENT.name}
+                    {workspaces.length} workspace của {clientName}
                   </div>
                   <div className='max-h-80 overflow-y-auto py-1'>
-                    {FAKE_WORKSPACES.map(ws => {
+                    {workspaces.map(ws => {
                       const isActive = ws.id === activeWs.id;
                       return (
                         <button
@@ -220,9 +249,9 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
           {/* Notifications */}
           <button className='relative flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100'>
             <Bell className='size-3.5' />
-            {FAKE_STATS.unread_notifications > 0 && (
+            {unreadCount > 0 && (
               <span className='absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-rose-500 font-mono text-[9px] font-bold text-white ring-2 ring-white'>
-                {FAKE_STATS.unread_notifications}
+                {unreadCount}
               </span>
             )}
           </button>
@@ -297,7 +326,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
               </span>
             </div>
             <div className='mt-1 text-[10px] text-zinc-500'>
-              {FAKE_CLIENT.member_count} thành viên · {FAKE_WORKSPACES.length}{' '}
+              {FAKE_CLIENT.member_count} thành viên · {workspaces.length}{' '}
               workspace
             </div>
           </div>
