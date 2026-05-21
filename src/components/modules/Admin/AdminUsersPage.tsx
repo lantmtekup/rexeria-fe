@@ -3,9 +3,10 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { RefreshCwIcon } from 'lucide-react';
+import { RefreshCwIcon, UserPlus } from 'lucide-react';
 
 import { Button } from '@/components/atoms/button';
+import { AdminCreateUserModal } from './AdminCreateUserModal';
 import {
   Table,
   TableBody,
@@ -32,6 +33,7 @@ export function AdminUsersPage() {
   const [items, setItems] = React.useState<Client[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [createOpen, setCreateOpen] = React.useState(false);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -73,11 +75,26 @@ export function AdminUsersPage() {
             {t('users.subtitle', { total: items.length })}
           </p>
         </div>
-        <Button variant='outline' onClick={load} disabled={loading}>
-          <RefreshCwIcon className={cn('size-4', loading && 'animate-spin')} />
-          {t('refresh')}
-        </Button>
+        <div className='flex items-center gap-2'>
+          <Button variant='outline' onClick={load} disabled={loading}>
+            <RefreshCwIcon
+              className={cn('size-4', loading && 'animate-spin')}
+            />
+            {t('refresh')}
+          </Button>
+          <Button onClick={() => setCreateOpen(true)}>
+            <UserPlus className='size-4' />
+            Tạo user
+          </Button>
+        </div>
       </div>
+
+      <AdminCreateUserModal
+        open={createOpen}
+        clients={items}
+        onClose={() => setCreateOpen(false)}
+        onCreated={load}
+      />
 
       <p className='text-content-muted text-xs'>{t('users.note')}</p>
 
