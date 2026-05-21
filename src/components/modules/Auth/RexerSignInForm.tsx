@@ -27,7 +27,7 @@ export default function RexerSignInForm() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { status, error } = useAppSelector(s => s.auth);
+  const { status, error, user } = useAppSelector(s => s.auth);
   const [showPassword, setShowPassword] = useState(false);
 
   const schema = useMemo(
@@ -54,10 +54,24 @@ export default function RexerSignInForm() {
 
   useEffect(() => {
     if (status === 'succeeded') {
-      const redirect = searchParams.get('redirect') || '/home';
-      router.replace(redirect);
+      // Explicit redirect URL takes priority (used khi middleware redirect về /sign-in)
+      const explicit = searchParams.get('redirect');
+      if (explicit) {
+        router.replace(explicit);
+        return;
+      }
+      // Smart route theo role:
+      // - admin / staff → /admin (CMS để quản lý hệ thống)
+      // - brand client (client_user, brand_*) → /portal
+      // - mọi role khác → /portal (default landing Phase 1)
+      const principal = user?.principal_type ?? '';
+      if (principal === 'admin' || principal === 'staff') {
+        router.replace('/admin');
+      } else {
+        router.replace('/portal');
+      }
     }
-  }, [status, router, searchParams]);
+  }, [status, user, router, searchParams]);
 
   const handleSubmit = form.handleSubmit(async values => {
     await dispatch(
