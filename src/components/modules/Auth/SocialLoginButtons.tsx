@@ -103,6 +103,10 @@ export function SocialLoginButtons() {
         res.redirect_after ?? (res.is_new_user ? '/onboarding' : '/home');
       router.replace(target);
     } catch (err) {
+      // Log raw error to console for debugging — surface real cause via UI.
+      // eslint-disable-next-line no-console
+      console.error('[Google login] failed:', err);
+
       // Firebase popup errors come as AuthError with `.code` like
       // 'auth/popup-closed-by-user'. Map a few common ones.
       if (typeof err === 'object' && err !== null && 'code' in err) {
@@ -114,7 +118,12 @@ export function SocialLoginButtons() {
         }
         setError(`FIREBASE_${fb.code.replace('auth/', '').toUpperCase()}`);
       } else if (err instanceof RxApiError) {
+        // Surface BE error message directly (vd FIREBASE_TOKEN_INVALID,
+        // ERR_INTERNAL, ...) thay vì che bằng generic.
         setError(err.code || err.message || 'GOOGLE_OAUTH_FAILED');
+      } else if (err instanceof Error) {
+        // Surface message để dev biết stage nào fail (vd Network, fetchMe, ...).
+        setError(`GOOGLE_OAUTH_FAILED: ${err.message}`);
       } else {
         setError('GOOGLE_OAUTH_FAILED');
       }
@@ -124,8 +133,13 @@ export function SocialLoginButtons() {
 
   const errorMessage = error
     ? (() => {
+        // Nếu error có suffix (vd "GOOGLE_OAUTH_FAILED: network error"),
+        // split lấy code + raw message; hiện "translated key + raw suffix".
+        const [code, ...rest] = error.split(':');
+        const suffix = rest.join(':').trim();
         try {
-          return (tErrors as (key: string) => string)(error);
+          const translated = (tErrors as (key: string) => string)(code);
+          return suffix ? `${translated} (${suffix})` : translated;
         } catch {
           return error;
         }
