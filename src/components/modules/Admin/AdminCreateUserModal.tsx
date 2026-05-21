@@ -5,10 +5,15 @@ import { toast } from 'sonner';
 import {
   AlertCircle,
   Building2,
+  Check,
+  Copy,
   Eye,
   EyeOff,
   Loader2,
+  Mail,
+  RefreshCcw,
   ShieldCheck,
+  Sparkles,
   UserPlus,
   X,
 } from 'lucide-react';
@@ -18,6 +23,46 @@ import { RxApiError } from '@/services/rexer/client';
 import type { Client } from '@/services/rexer/types';
 
 type Role = 'admin' | 'staff' | 'client_user';
+
+type CreatedCredentials = {
+  email: string;
+  password: string;
+  displayName: string;
+  role: Role;
+  brandName?: string;
+  /** True when password came from BE (invite auto-gen). */
+  passwordFromBE: boolean;
+};
+
+/**
+ * Strong random password: 16 chars from a charset that guarantees at least
+ * one lowercase, uppercase, digit, and symbol. Avoids ambiguous chars
+ * (`l`, `1`, `O`, `0`) so people can read it off a screen.
+ */
+function generatePassword(): string {
+  const lowers = 'abcdefghijkmnopqrstuvwxyz';
+  const uppers = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const digits = '23456789';
+  const symbols = '!@#$%^&*-_=+';
+  const all = lowers + uppers + digits + symbols;
+  const random = (n: number) => {
+    const arr = new Uint32Array(n);
+    crypto.getRandomValues(arr);
+    return arr;
+  };
+  // Guarantee one of each, then fill the rest from the union.
+  const buckets = [lowers, uppers, digits, symbols];
+  const seed = random(16);
+  const chars = buckets.map((b, i) => b[seed[i] % b.length]);
+  for (let i = 4; i < 16; i++) chars.push(all[seed[i] % all.length]);
+  // Fisher-Yates shuffle so positions of the guarantee chars aren't fixed.
+  const shuffle = random(16);
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = shuffle[i] % (i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join('');
+}
 
 const ROLE_META: Record<
   Role,
@@ -61,9 +106,11 @@ export function AdminCreateUserModal({
   const [companyName, setCompanyName] = React.useState('');
   const [clientId, setClientId] = React.useState<string>('');
   const [brandMode, setBrandMode] = React.useState<'new' | 'existing'>('new');
+  const [autoGenPassword, setAutoGenPassword] = React.useState(true);
   const [showPassword, setShowPassword] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [created, setCreated] = React.useState<CreatedCredentials | null>(null);
 
   React.useEffect(() => {
     if (open) {
@@ -72,7 +119,9 @@ export function AdminCreateUserModal({
       setDisplayName('');
       setCompanyName('');
       setClientId(clients[0]?.id ?? '');
+      setAutoGenPassword(true);
       setError(null);
+      setCreated(null);
     }
   }, [open, clients]);
 
@@ -80,7 +129,9 @@ export function AdminCreateUserModal({
 
   const validate = (): string | null => {
     if (!email.includes('@')) return 'Email không hợp lệ';
-    if (password.length < 8) return 'Password tối thiểu 8 ký tự';
+    if (!autoGenPassword && password.length < 8) {
+      return 'Password tối thiểu 8 ký tự (hoặc bật auto-generate)';
+    }
     if (!displayName.trim()) return 'Tên hiển thị không được rỗng';
     if (role === 'client_user') {
       if (brandMode === 'new' && !companyName.trim()) {
@@ -102,37 +153,51 @@ export function AdminCreateUserModal({
     setSubmitting(true);
     setError(null);
     try {
+      // For invite-into-existing-client, BE can auto-generate the password
+      // if we omit it (returns it in `generated_password`). For /auth/register
+      // BE requires `password`, so we generate one client-side.
+      const inviteUseServerGen =
+        role === 'client_user' && brandMode === 'existing' && autoGenPassword;
+      const effectivePassword = autoGenPassword
+        ? inviteUseServerGen
+          ? ''
+          : generatePassword()
+        : password;
+
+      let finalPassword = effectivePassword;
+      let brandName: string | undefined;
+
       if (role === 'client_user') {
         if (brandMode === 'new') {
-          // Tạo brand + owner user (BE auto-creates client từ company_name)
           await rexerApi.auth.register({
             email,
-            password,
+            password: effectivePassword,
             full_name: displayName,
             company_name: companyName,
           });
+          brandName = companyName;
           toast.success(`Đã tạo brand "${companyName}" + owner user`, {
             description: email,
           });
         } else {
-          // Add user vào client có sẵn
-          await rexerApi.clients.inviteUser(clientId, {
+          const res = await rexerApi.clients.inviteUser(clientId, {
             email,
-            password,
+            ...(effectivePassword ? { password: effectivePassword } : {}),
             display_name: displayName,
           });
-          const brandName =
-            clients.find(c => c.id === clientId)?.name ?? clientId;
+          // BE returns generated_password when we omitted password.
+          if (!effectivePassword && res.generated_password) {
+            finalPassword = res.generated_password;
+          }
+          brandName = clients.find(c => c.id === clientId)?.name ?? clientId;
           toast.success(`Đã thêm user vào brand "${brandName}"`, {
             description: email,
           });
         }
       } else {
-        // Admin / Staff: BE chưa có endpoint create với role param.
-        // Tạm dùng /auth/register (sẽ thành client_user), warn user.
         await rexerApi.auth.register({
           email,
-          password,
+          password: effectivePassword,
           full_name: displayName,
           company_name: 'Rexer Internal',
         });
@@ -140,8 +205,16 @@ export function AdminCreateUserModal({
           description: `Cần BE expose endpoint promote role → ${role}. Hiện chỉ có thể đổi qua DB.`,
         });
       }
+
+      setCreated({
+        email,
+        password: finalPassword,
+        displayName,
+        role,
+        brandName,
+        passwordFromBE: inviteUseServerGen,
+      });
       onCreated();
-      onClose();
     } catch (err) {
       const code =
         err instanceof RxApiError
@@ -154,6 +227,20 @@ export function AdminCreateUserModal({
       setSubmitting(false);
     }
   };
+
+  // Once we have credentials to show, render the success view inside the
+  // same modal (keeps focus + backdrop).
+  if (created) {
+    return (
+      <CredentialsResultModal
+        creds={created}
+        onClose={() => {
+          setCreated(null);
+          onClose();
+        }}
+      />
+    );
+  }
 
   return (
     <div
@@ -260,28 +347,66 @@ export function AdminCreateUserModal({
             </Field>
           </div>
 
-          <Field label='Password' required hint='Tối thiểu 8 ký tự'>
-            <div className='relative'>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder='ít nhất 8 ký tự'
-                className='w-full rounded-lg border border-zinc-200 px-3 py-2 pr-10 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
-              />
-              <button
-                type='button'
-                onClick={() => setShowPassword(s => !s)}
-                className='absolute top-1/2 right-2 -translate-y-1/2 rounded p-1 text-zinc-400 hover:text-zinc-700'
-                aria-label='Toggle password visibility'
-              >
-                {showPassword ? (
-                  <EyeOff className='size-3.5' />
-                ) : (
-                  <Eye className='size-3.5' />
-                )}
-              </button>
+          <Field
+            label='Password'
+            required={!autoGenPassword}
+            hint={
+              autoGenPassword
+                ? role === 'client_user' && brandMode === 'existing'
+                  ? 'BE sẽ tự sinh — hiện sau khi tạo xong'
+                  : 'FE sinh 16 ký tự mạnh — hiện sau khi tạo xong'
+                : 'Tối thiểu 8 ký tự'
+            }
+          >
+            <div className='mb-2 flex items-center gap-2'>
+              <label className='flex cursor-pointer items-center gap-2 text-[12px] text-zinc-700'>
+                <input
+                  type='checkbox'
+                  checked={autoGenPassword}
+                  onChange={e => setAutoGenPassword(e.target.checked)}
+                  className='size-3.5 rounded border-zinc-300'
+                />
+                <Sparkles className='size-3.5 text-violet-500' />
+                Auto-generate password
+              </label>
             </div>
+            {!autoGenPassword && (
+              <div className='relative'>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder='ít nhất 8 ký tự'
+                  className='w-full rounded-lg border border-zinc-200 px-3 py-2 pr-20 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                />
+                <div className='absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5'>
+                  <button
+                    type='button'
+                    onClick={() => {
+                      setPassword(generatePassword());
+                      setShowPassword(true);
+                    }}
+                    className='rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-violet-600'
+                    aria-label='Generate random password'
+                    title='Sinh password ngẫu nhiên'
+                  >
+                    <RefreshCcw className='size-3.5' />
+                  </button>
+                  <button
+                    type='button'
+                    onClick={() => setShowPassword(s => !s)}
+                    className='rounded p-1 text-zinc-400 hover:text-zinc-700'
+                    aria-label='Toggle password visibility'
+                  >
+                    {showPassword ? (
+                      <EyeOff className='size-3.5' />
+                    ) : (
+                      <Eye className='size-3.5' />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
           </Field>
 
           {/* Brand-specific options */}
@@ -363,6 +488,7 @@ export function AdminCreateUserModal({
                 <code className='rounded bg-zinc-100 px-1'>
                   POST /v1/clients/{'{id}'}/users
                 </code>
+                {autoGenPassword && ' (BE sinh password)'}
               </>
             )}
             {(role === 'admin' || role === 'staff') && (
@@ -420,6 +546,201 @@ function Field({
       </label>
       <div className='mt-1'>{children}</div>
       {hint && <p className='mt-1 text-[10.5px] text-zinc-500'>{hint}</p>}
+    </div>
+  );
+}
+
+function CredentialsResultModal({
+  creds,
+  onClose,
+}: {
+  creds: CreatedCredentials;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = React.useState<
+    'email' | 'password' | 'all' | null
+  >(null);
+  const meta = ROLE_META[creds.role];
+
+  const copy = async (value: string, key: 'email' | 'password' | 'all') => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(key);
+      toast.success(
+        key === 'all' ? 'Đã copy email + password' : `Đã copy ${key}`
+      );
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      toast.error('Copy thất bại — copy thủ công nhé');
+    }
+  };
+
+  const summary = [
+    `Email: ${creds.email}`,
+    `Password: ${creds.password}`,
+    `Tên: ${creds.displayName}`,
+    creds.brandName ? `Brand: ${creds.brandName}` : null,
+    `Login URL: ${typeof window !== 'undefined' ? window.location.origin : ''}/sign-in`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return (
+    <div
+      className='fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm'
+      onClick={onClose}
+    >
+      <div
+        className='my-8 w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl'
+        onClick={e => e.stopPropagation()}
+      >
+        <div className='flex items-center justify-between border-b border-zinc-100 px-5 py-3'>
+          <div className='flex items-center gap-2.5'>
+            <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-sm'>
+              <Check className='size-4' />
+            </div>
+            <h3 className='text-[15px] leading-tight font-semibold'>
+              Đã tạo user thành công
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            className='rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+            aria-label='Close'
+          >
+            <X className='size-4' />
+          </button>
+        </div>
+
+        <div className='space-y-4 px-5 py-4'>
+          <div className='rounded-lg border border-amber-200 bg-amber-50 p-3'>
+            <div className='flex items-start gap-2 text-[12px] text-amber-900'>
+              <AlertCircle className='mt-0.5 size-3.5 shrink-0 text-amber-600' />
+              <div>
+                <span className='font-semibold'>Lưu ngay password</span> — chỉ
+                hiện 1 lần ở đây. Đóng modal là mất, BE không có endpoint xem
+                lại password cũ.
+              </div>
+            </div>
+          </div>
+
+          <div className='space-y-2'>
+            <CredField
+              label='Email'
+              value={creds.email}
+              copied={copied === 'email'}
+              onCopy={() => copy(creds.email, 'email')}
+              icon={<Mail className='size-3.5 text-zinc-500' />}
+            />
+            <CredField
+              label={
+                creds.passwordFromBE ? 'Password (BE auto-gen)' : 'Password'
+              }
+              value={creds.password}
+              copied={copied === 'password'}
+              onCopy={() => copy(creds.password, 'password')}
+              icon={<Sparkles className='size-3.5 text-violet-500' />}
+              mono
+            />
+          </div>
+
+          <div className='flex flex-wrap items-center gap-2 text-[12px] text-zinc-500'>
+            <span>Tên:</span>
+            <code className='rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800'>
+              {creds.displayName}
+            </code>
+            {creds.brandName && (
+              <>
+                <span>·</span>
+                <span>Brand:</span>
+                <code className='rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800'>
+                  {creds.brandName}
+                </code>
+              </>
+            )}
+            <span>·</span>
+            <span>Role:</span>
+            <span
+              className={`rounded-full ${meta.color} px-2 py-0.5 text-[10px] font-bold text-white`}
+            >
+              {meta.label}
+            </span>
+          </div>
+        </div>
+
+        <div className='flex items-center justify-between gap-3 border-t border-zinc-100 bg-zinc-50/50 px-5 py-3'>
+          <button
+            type='button'
+            onClick={() => copy(summary, 'all')}
+            className='flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100'
+          >
+            {copied === 'all' ? (
+              <Check className='size-3.5 text-emerald-500' />
+            ) : (
+              <Copy className='size-3.5' />
+            )}
+            Copy tất cả
+          </button>
+          <button
+            type='button'
+            onClick={onClose}
+            className='rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
+          >
+            Xong
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CredField({
+  label,
+  value,
+  copied,
+  onCopy,
+  icon,
+  mono,
+}: {
+  label: string;
+  value: string;
+  copied: boolean;
+  onCopy: () => void;
+  icon?: React.ReactNode;
+  mono?: boolean;
+}) {
+  return (
+    <div className='rounded-lg border border-zinc-200 bg-zinc-50/60 p-2.5'>
+      <div className='flex items-center gap-1.5 text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+        {icon}
+        {label}
+      </div>
+      <div className='mt-1 flex items-center gap-2'>
+        <div
+          className={`flex-1 truncate rounded border border-zinc-200 bg-white px-2 py-1.5 text-[13px] ${
+            mono ? 'font-mono' : ''
+          }`}
+        >
+          {value || <span className='text-zinc-400'>—</span>}
+        </div>
+        <button
+          type='button'
+          onClick={onCopy}
+          className={`flex items-center gap-1 rounded border px-2 py-1.5 text-[11px] font-medium transition-colors ${
+            copied
+              ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+              : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100'
+          }`}
+          aria-label={`Copy ${label}`}
+        >
+          {copied ? (
+            <Check className='size-3.5' />
+          ) : (
+            <Copy className='size-3.5' />
+          )}
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+      </div>
     </div>
   );
 }
