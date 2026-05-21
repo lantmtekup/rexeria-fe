@@ -142,7 +142,7 @@ function TemplateDetailInner() {
           />
         </section>
 
-        <FakeBanner />
+        {source === 'fake' && <FakeBanner />}
 
         {/* KPI for this template */}
         <div className='mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4'>

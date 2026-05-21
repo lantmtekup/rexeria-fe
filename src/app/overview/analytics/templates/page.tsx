@@ -110,7 +110,7 @@ export default function TemplateAnalyticsListPage() {
           />
         </section>
 
-        <FakeBanner />
+        {source === 'fake' && <FakeBanner />}
 
         <div className='mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4'>
           <StatCard
