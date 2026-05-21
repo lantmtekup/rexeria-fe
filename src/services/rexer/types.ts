@@ -1611,6 +1611,178 @@ export type AITemplateErrorCode =
   | 'ERR_BAD_REQUEST'
   | 'ERR_INTERNAL';
 
+// ── Workspaces (Phase 1 multitenancy — be-workspace-multitenancy-spec) ───
+export interface Workspace {
+  id: string;
+  client_id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WorkspaceListResponse {
+  items: Workspace[];
+}
+
+export interface WorkspaceMembership {
+  role: string;
+  workspace: Workspace;
+}
+
+export interface CreateWorkspaceRequest {
+  name: string;
+  slug: string;
+  description?: string;
+}
+
+export interface UpdateWorkspaceRequest {
+  name?: string;
+  description?: string;
+}
+
+export interface SwitchWorkspaceRequest {
+  workspace_id: string;
+}
+
+// ── Media folders (Drive-style hierarchy) ────────────────────────────────
+export interface MediaFolder {
+  id: string;
+  client_id: string;
+  workspace_id?: string;
+  parent_id?: string;
+  name: string;
+  description?: string;
+  child_count: number;
+  file_count: number;
+  size_bytes: number;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+}
+
+export interface MediaFolderListResponse {
+  items: MediaFolder[];
+  breadcrumb?: MediaFolder[];
+}
+
+export interface CreateMediaFolderRequest {
+  name: string;
+  description?: string;
+  parent_id?: string;
+}
+
+export interface UpdateMediaFolderRequest {
+  name?: string;
+  description?: string;
+  parent_id?: string;
+}
+
+// ── Template comments (review threads on a landing page) ─────────────────
+export interface TemplateComment {
+  id: string;
+  template_id: string;
+  workspace_id: string;
+  author_id: string;
+  /** Populated by BE for list responses to avoid N+1 fan-out. */
+  author_name?: string;
+  author_avatar_url?: string;
+  author_role?: string;
+  parent_id?: string;
+  body: string;
+  status: string;
+  resolved_at?: string;
+  resolved_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TemplateCommentListResponse {
+  items: TemplateComment[];
+}
+
+export interface CreateTemplateCommentRequest {
+  body: string;
+  parent_id?: string;
+}
+
+export interface UpdateTemplateCommentRequest {
+  body?: string;
+}
+
+// ── Notifications (in-app bell) ─────────────────────────────────────────
+export interface Notification {
+  id: string;
+  user_id: string;
+  workspace_id?: string;
+  actor_id?: string;
+  kind: string;
+  subject_type?: string;
+  subject_id?: string;
+  meta?: Record<string, unknown>;
+  read_at?: string;
+  created_at: string;
+}
+
+export interface NotificationListResponse {
+  items: Notification[];
+  page: number;
+  limit: number;
+  total: number;
+  unread_count: number;
+}
+
+export interface UnreadCountResponse {
+  unread_count: number;
+}
+
+export interface MarkReadRequest {
+  /** Set true to mark every notification for the caller as read. */
+  all?: boolean;
+  /** Explicit notification ids to mark — ignored when `all` is true. */
+  ids?: string[];
+}
+
+// ── Activity feed (per-workspace audit log surfaced to portal) ──────────
+export interface ActivityItem {
+  id: string;
+  workspace_id?: string;
+  actor_id: string;
+  actor_name?: string;
+  kind: string;
+  subject_type?: string;
+  subject_id?: string;
+  title?: string;
+  meta?: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ActivityFeedResponse {
+  items: ActivityItem[];
+}
+
+// ── Staff inbox (admin/staff task queue) ────────────────────────────────
+export interface StaffInboxItem {
+  id: string;
+  client_id?: string;
+  workspace_id?: string;
+  kind: string;
+  status: string;
+  subject_id?: string;
+  assignee_id?: string;
+  claimed_at?: string;
+  done_at?: string;
+  meta?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StaffInboxListResponse {
+  items: StaffInboxItem[];
+}
+
 // ── Error envelope ───────────────────────────────────────────────────────
 export interface RxErrorBody {
   code: string;

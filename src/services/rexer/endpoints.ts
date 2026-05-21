@@ -149,6 +149,27 @@ import type {
   TemplateAnalyticsSummaryRow,
   BlockBreakdownRow,
   AnalyticsEventInput,
+  // Phase 1 — workspaces / folders / comments / notifications / activity / inbox
+  Workspace,
+  WorkspaceListResponse,
+  WorkspaceMembership,
+  CreateWorkspaceRequest,
+  UpdateWorkspaceRequest,
+  SwitchWorkspaceRequest,
+  MediaFolder,
+  MediaFolderListResponse,
+  CreateMediaFolderRequest,
+  UpdateMediaFolderRequest,
+  TemplateComment,
+  TemplateCommentListResponse,
+  CreateTemplateCommentRequest,
+  UpdateTemplateCommentRequest,
+  NotificationListResponse,
+  UnreadCountResponse,
+  MarkReadRequest,
+  ActivityFeedResponse,
+  StaffInboxItem,
+  StaffInboxListResponse,
 } from './types';
 
 export const rexerApi = {
@@ -934,6 +955,109 @@ export const rexerApi = {
     /** Public ingest endpoint — fire from /p/[slug] visitor pages. */
     ingestEvent: (body: AnalyticsEventInput) =>
       rx<void>('/analytics/events', { method: 'POST', body }),
+  },
+
+  // ── Workspaces (be-workspace-multitenancy-spec) ────────────────────────
+  workspaces: {
+    /** List workspaces under a specific client (admin / staff view). */
+    listForClient: (clientId: string) =>
+      rx<WorkspaceListResponse>(`/clients/${clientId}/workspaces`),
+    /** Workspaces the current user belongs to — used by workspace switcher. */
+    myMemberships: () => rx<WorkspaceMembership[]>('/me/workspaces'),
+    switch: (body: SwitchWorkspaceRequest) =>
+      rx<{ message?: string }>('/me/workspace/switch', {
+        method: 'POST',
+        body,
+      }),
+    create: async (
+      clientId: string,
+      body: CreateWorkspaceRequest
+    ): Promise<Workspace> =>
+      rx<Workspace>(`/admin/clients/${clientId}/workspaces`, {
+        method: 'POST',
+        body,
+      }),
+    update: async (
+      workspaceId: string,
+      body: UpdateWorkspaceRequest
+    ): Promise<Workspace> =>
+      rx<Workspace>(`/admin/workspaces/${workspaceId}`, {
+        method: 'PATCH',
+        body,
+      }),
+    remove: (workspaceId: string) =>
+      rx<{ message?: string }>(`/admin/workspaces/${workspaceId}`, {
+        method: 'DELETE',
+      }),
+  },
+
+  // ── Media folders (Drive-style hierarchy) ──────────────────────────────
+  mediaFolders: {
+    /** List child folders of `parent_id` (omit param to fetch root). */
+    list: (query?: { parent_id?: string }) =>
+      rx<MediaFolderListResponse>('/media/folders', { query }),
+    get: (id: string) => rx<MediaFolder>(`/media/folders/${id}`),
+    create: (body: CreateMediaFolderRequest) =>
+      rx<MediaFolder>('/media/folders', { method: 'POST', body }),
+    update: (id: string, body: UpdateMediaFolderRequest) =>
+      rx<MediaFolder>(`/media/folders/${id}`, { method: 'PATCH', body }),
+    remove: (id: string) =>
+      rx<{ message?: string }>(`/media/folders/${id}`, { method: 'DELETE' }),
+  },
+
+  // ── Template comments (review threads on a landing page) ──────────────
+  templateComments: {
+    list: (templateId: string) =>
+      rx<TemplateCommentListResponse>(
+        `/portal/templates/${templateId}/comments`
+      ),
+    create: (templateId: string, body: CreateTemplateCommentRequest) =>
+      rx<TemplateComment>(`/portal/templates/${templateId}/comments`, {
+        method: 'POST',
+        body,
+      }),
+    update: (commentId: string, body: UpdateTemplateCommentRequest) =>
+      rx<TemplateComment>(`/portal/comments/${commentId}`, {
+        method: 'PATCH',
+        body,
+      }),
+    remove: (commentId: string) =>
+      rx<{ message?: string }>(`/portal/comments/${commentId}`, {
+        method: 'DELETE',
+      }),
+    resolve: (commentId: string) =>
+      rx<TemplateComment>(`/portal/comments/${commentId}/resolve`, {
+        method: 'POST',
+      }),
+  },
+
+  // ── Notifications (portal bell) ────────────────────────────────────────
+  notifications: {
+    list: (query?: { unread?: boolean; page?: number; limit?: number }) =>
+      rx<NotificationListResponse>('/portal/notifications', { query }),
+    unreadCount: () =>
+      rx<UnreadCountResponse>('/portal/notifications/unread-count'),
+    markRead: (body: MarkReadRequest) =>
+      rx<Record<string, number>>('/portal/notifications/mark-read', {
+        method: 'POST',
+        body,
+      }),
+  },
+
+  // ── Activity feed (per-workspace audit log) ───────────────────────────
+  activityFeed: {
+    list: (query?: { workspace_id?: string; limit?: number }) =>
+      rx<ActivityFeedResponse>('/portal/activity', { query }),
+  },
+
+  // ── Staff inbox (admin/staff task queue) ──────────────────────────────
+  staffInbox: {
+    list: (query?: { status?: string; kind?: string; assignee_id?: string }) =>
+      rx<StaffInboxListResponse>('/admin/inbox', { query }),
+    take: (itemId: string) =>
+      rx<StaffInboxItem>(`/admin/inbox/${itemId}/take`, { method: 'POST' }),
+    done: (itemId: string) =>
+      rx<StaffInboxItem>(`/admin/inbox/${itemId}/done`, { method: 'POST' }),
   },
 
   adminFeedback: {
