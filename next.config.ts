@@ -72,7 +72,7 @@ const nextConfig: NextConfig = {
     const be =
       process.env.NEXT_PUBLIC_REXER_API ??
       process.env.REXER_API ??
-      'http://75.119.128.96:9090';
+      'https://rexerai.tekupsoftware.com';
     return [
       {
         source: '/api/rexer/:path*',
