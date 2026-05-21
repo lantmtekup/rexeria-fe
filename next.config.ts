@@ -68,6 +68,39 @@ const nextConfig: NextConfig = {
 
   transpilePackages: ['react-markdown', 'remark-gfm'],
 
+  // Anthropic SDK (dùng client-side qua dangerouslyAllowBrowser) ship ESM với
+  // `node:*` scheme imports cho code path AWS/GCP credentials không chạy ở
+  // browser. Webpack 5 không tự handle scheme → cần NormalModuleReplacementPlugin
+  // để rewrite `node:foo` → false (rỗng) trong client bundle.
+  webpack: (config, { isServer, webpack }) => {
+    if (!isServer) {
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(
+          /^node:/,
+          (resource: { request: string }) => {
+            resource.request = resource.request.replace(/^node:/, '');
+          }
+        )
+      );
+      // Sau khi rewrite scheme, nhiều module Node built-in vẫn không tồn tại
+      // trong browser → fallback chúng về `false` để webpack skip.
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        path: false,
+        fs: false,
+        os: false,
+        crypto: false,
+        stream: false,
+        url: false,
+        util: false,
+        buffer: false,
+        process: false,
+        'fs/promises': false,
+      };
+    }
+    return config;
+  },
+
   async rewrites() {
     const be =
       process.env.NEXT_PUBLIC_REXER_API ??
