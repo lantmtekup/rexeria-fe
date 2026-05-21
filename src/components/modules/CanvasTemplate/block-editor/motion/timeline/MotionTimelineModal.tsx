@@ -56,8 +56,8 @@ export function MotionTimelineModal({
     () => motion ?? emptyMotion()
   );
   const [closing, setClosing] = React.useState(false);
-  const [previewKey, setPreviewKey] = React.useState(0); // bump to force MotionBlockRoot re-run
   const [playhead, setPlayhead] = React.useState(0);
+  const [playing, setPlaying] = React.useState(false);
   const [selected, setSelected] = React.useState<{
     elementKey: string;
     index: number;
@@ -67,14 +67,27 @@ export function MotionTimelineModal({
   const overlayRef = React.useRef<HTMLDivElement>(null);
   const sheetRef = React.useRef<HTMLDivElement>(null);
   const previewSurfaceRef = React.useRef<HTMLDivElement>(null);
+  const rafRef = React.useRef<number | null>(null);
 
-  // Sync draft when modal reopens with a different block.
+  // Sync draft when modal reopens with a different block. Deliberately drops
+  // `motion` from deps — once open, the draft is the source of truth and
+  // commits flow back via onChange; re-running on every parent re-render
+  // would clobber scrub/selection state mid-edit.
   React.useEffect(() => {
     if (!open) return;
     setDraft(motion ?? emptyMotion());
     setSelected(null);
     setPlayhead(0);
-  }, [open, block.id, motion]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, block.id]);
+
+  const stopPlay = React.useCallback(() => {
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    setPlaying(false);
+  }, []);
 
   const commit = React.useCallback(
     (next: BlockMotion) => {
@@ -86,7 +99,53 @@ export function MotionTimelineModal({
     [onChange]
   );
 
-  const handleClose = React.useCallback(() => setClosing(true), []);
+  const handleClose = React.useCallback(() => {
+    stopPlay();
+    setClosing(true);
+  }, [stopPlay]);
+
+  // Cleanup any in-flight playback when the modal unmounts.
+  React.useEffect(() => {
+    return () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  const handleScrub = React.useCallback((ms: number) => {
+    // Scrubbing always wins over auto-play.
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+      setPlaying(false);
+    }
+    setPlayhead(ms);
+  }, []);
+
+  const handleTogglePlay = React.useCallback(() => {
+    // Pause
+    if (rafRef.current != null) {
+      stopPlay();
+      return;
+    }
+    // Play — if we're at (or past) the end, restart from 0.
+    const startMs = playhead >= draft.duration ? 0 : playhead;
+    const startTs = performance.now();
+    const totalMs = draft.duration;
+    if (startMs !== playhead) setPlayhead(startMs);
+    setPlaying(true);
+    const loop = () => {
+      const next = startMs + (performance.now() - startTs);
+      if (next >= totalMs) {
+        rafRef.current = null;
+        setPlayhead(totalMs);
+        setPlaying(false);
+        return;
+      }
+      setPlayhead(next);
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+  }, [playhead, draft.duration, stopPlay]);
 
   // Enter/exit animation
   useGSAP(
@@ -185,20 +244,13 @@ export function MotionTimelineModal({
       setAvailableKeys([BLOCK_ROOT_KEY, ...Array.from(found).sort()]);
     }, 50);
     return () => clearTimeout(t);
-  }, [open, block.id, lang, device, previewKey]);
+  }, [open, block.id, lang, device]);
 
   const langContent = lang === 'vi' ? block.contentVi : block.contentEn;
   const content = readVariant(langContent, device) ?? langContent.desktop;
   const styles = readVariant(block.elementStyles, device);
   const background = readVariant(block.background, device);
   const order = readVariant(block.elementOrder, device);
-
-  const handlePlay = () => {
-    // Bump previewKey → MotionProvider unmounts/remounts → GSAP timeline
-    // rebuilds and replays from t=0. Keeps the runtime simple (no manual
-    // play-control hook needed).
-    setPreviewKey(k => k + 1);
-  };
 
   const usedKeys = new Set(draft.tracks.map(t => t.elementKey));
   const addTrackOptions = availableKeys.filter(k => !usedKeys.has(k));
@@ -249,10 +301,10 @@ export function MotionTimelineModal({
             >
               <div className='@container mx-auto max-w-[680px]'>
                 <MotionProvider
-                  key={previewKey}
                   mode='preview'
                   motion={draft}
                   scrollerEl={previewSurfaceRef.current}
+                  scrubMs={playhead}
                 >
                   <MotionBlockRoot className='overflow-hidden rounded-md bg-white shadow-md ring-1 ring-black/5'>
                     <RenderBlock
@@ -272,7 +324,8 @@ export function MotionTimelineModal({
           <BlockControlsBar
             motion={draft}
             onChange={next => commit(next)}
-            onPlay={handlePlay}
+            playing={playing}
+            onTogglePlay={handleTogglePlay}
             pxPerMs={pxPerMs}
             onPxPerMsChange={setPxPerMs}
           />
@@ -283,7 +336,7 @@ export function MotionTimelineModal({
               duration={draft.duration}
               pxPerMs={pxPerMs}
               playhead={playhead}
-              onScrub={setPlayhead}
+              onScrub={handleScrub}
             />
             <div className='flex flex-1 flex-col'>
               {draft.tracks.length === 0 ? (

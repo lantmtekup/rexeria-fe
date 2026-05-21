@@ -4,8 +4,13 @@ import * as React from 'react';
 import { Popover as PopoverPrimitive } from 'radix-ui';
 import {
   Crosshair,
+  Eraser,
+  Hourglass,
   Image as ImageIcon,
   Plus,
+  RotateCcw,
+  SlidersHorizontal,
+  SplitSquareHorizontal,
   TextCursorInput,
   Type,
   Video,
@@ -52,8 +57,38 @@ const KINDS: Array<{
   {
     kind: 'hotspot',
     label: 'Hotspot',
-    hint: 'Pin click → mở popup mô tả',
+    hint: 'Pin click → mở modal có ảnh/CTA',
     icon: Crosshair,
+  },
+  {
+    kind: 'compare',
+    label: 'So sánh ảnh',
+    hint: 'Slider before/after — kéo để reveal',
+    icon: SplitSquareHorizontal,
+  },
+  {
+    kind: 'range',
+    label: 'Slider giá trị',
+    hint: 'Input range — chọn số trong khoảng',
+    icon: SlidersHorizontal,
+  },
+  {
+    kind: 'countdown',
+    label: 'Countdown',
+    hint: 'Đếm ngược tới deadline / sự kiện',
+    icon: Hourglass,
+  },
+  {
+    kind: 'reveal',
+    label: 'Reveal',
+    hint: 'Cào / lột / spotlight để hé lộ ảnh',
+    icon: Eraser,
+  },
+  {
+    kind: 'spin_wheel',
+    label: 'Vòng quay',
+    hint: 'Spin wheel — minigame may mắn',
+    icon: RotateCcw,
   },
 ];
 

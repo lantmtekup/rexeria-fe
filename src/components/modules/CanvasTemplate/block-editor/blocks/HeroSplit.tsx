@@ -4,13 +4,16 @@ import { cn } from '@/lib/cn';
 
 import type {
   BlockBackground,
+  ElementPositionsMap,
   ElementStylesMap,
   HeroSplitContent,
 } from '../types';
 import {
   blockBackgroundStyle,
+  composeStyle,
   elementStyleOf,
   orderStyle,
+  positionStyle,
   selectableClass,
 } from './applyStyle';
 import { TransformedImage } from './TransformedImage';
@@ -20,6 +23,7 @@ interface HeroSplitProps {
   styles?: ElementStylesMap;
   background?: BlockBackground;
   order?: string[];
+  positions?: ElementPositionsMap;
   activeKey?: string | null;
   className?: string;
 }
@@ -29,22 +33,22 @@ export function HeroSplit({
   styles,
   background,
   order,
+  positions,
   activeKey,
   className,
 }: HeroSplitProps) {
-  const sEyebrow = orderStyle(
-    order,
-    'eyebrow',
-    elementStyleOf(styles, 'eyebrow')
-  );
-  const sTitle = orderStyle(order, 'title', elementStyleOf(styles, 'title'));
-  const sDescription = orderStyle(
-    order,
-    'description',
-    elementStyleOf(styles, 'description')
-  );
-  const sStats = orderStyle(order, 'stats', elementStyleOf(styles, 'stats'));
-  const sCta = orderStyle(order, 'ctaText', elementStyleOf(styles, 'ctaText'));
+  const styleOf = (key: string) =>
+    composeStyle(
+      elementStyleOf(styles, key),
+      orderStyle(order, key),
+      positionStyle(positions, key)
+    );
+  const sEyebrow = styleOf('eyebrow');
+  const sTitle = styleOf('title');
+  const sDescription = styleOf('description');
+  const sStats = styleOf('stats');
+  const sCta = styleOf('ctaText');
+  const sImage = styleOf('imageUrl');
   return (
     <div
       style={blockBackgroundStyle(background)}
@@ -136,6 +140,7 @@ export function HeroSplit({
 
       <div
         data-element-key='imageUrl'
+        style={sImage}
         className={selectableClass(
           activeKey === 'imageUrl',
           // Mobile: image cell has explicit aspect (parent grid-cols-1, no outer aspect).

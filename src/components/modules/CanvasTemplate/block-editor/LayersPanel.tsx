@@ -135,6 +135,53 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'description', label: 'Mô tả', icon: Pilcrow },
     { key: 'slides', label: 'Slides', icon: Grid3x3 },
   ],
+  stories: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'slides', label: 'Story slides', icon: ImageIcon },
+  ],
+  split_screen: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'description', label: 'Mô tả', icon: Pilcrow },
+    { key: 'views', label: 'Khung so sánh', icon: SquareDashed },
+  ],
+  quiz: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'description', label: 'Mô tả', icon: Pilcrow },
+    { key: 'questions', label: 'Câu hỏi', icon: ListChecks },
+    { key: 'results', label: 'Kết quả', icon: Grid3x3 },
+  ],
+  poll: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'question', label: 'Câu hỏi', icon: Type },
+    { key: 'options', label: 'Lựa chọn', icon: ListChecks },
+  ],
+  carousel_3d: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'description', label: 'Mô tả', icon: Pilcrow },
+    { key: 'slides', label: 'Slides', icon: Grid3x3 },
+  ],
+  flipbook: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'pages', label: 'Trang', icon: ImageIcon },
+  ],
+  panorama: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'description', label: 'Mô tả', icon: Pilcrow },
+    { key: 'imageUrl', label: 'Ảnh 360°', icon: ImageIcon },
+  ],
 };
 
 export function LayersPanel({

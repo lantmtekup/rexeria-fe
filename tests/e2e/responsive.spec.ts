@@ -160,6 +160,16 @@ test.describe('Block responsive output (per device frame)', () => {
 
   test('mobile frame · CTA touch target ≥ 44px', async ({ page }) => {
     await openEditor(page);
+    // Anchor to cta_section — its `primaryText`/`secondaryText` fields are
+    // populated in the seed factory, so we always have a rendered CTA to
+    // measure. Other blocks may have empty CTA strings (factory defaults
+    // `ctaText: ''` for hero_split) leaving no DOM target.
+    const ctaTab = page.getByTestId('block-tab-cta_section');
+    if (await ctaTab.count()) {
+      await ctaTab.scrollIntoViewIfNeeded();
+      await ctaTab.evaluate(el => (el as HTMLElement).click());
+      await page.waitForTimeout(300);
+    }
     await selectDevice(page, 'Mobile');
 
     let foundAny = false;

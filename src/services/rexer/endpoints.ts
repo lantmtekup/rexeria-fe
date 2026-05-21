@@ -9,6 +9,7 @@ import {
   mockGetAiTemplate,
   mockGetSession,
   mockListAiTemplates,
+  mockMediaList,
 } from './__mocks__/aiTemplates';
 import type {
   CreateCollectionDTO,
@@ -554,6 +555,15 @@ export const rexerApi = {
     list: (query?: { ids?: string[] }) => {
       if (!query?.ids || query.ids.length === 0) {
         return rx<MediaListResponse>('/media');
+      }
+      // Mock short-circuit: when AI template mock is on and we're asked
+      // for `mock-media-*` ids, serve them locally so the suggestion
+      // dialog renders without hitting BE (which doesn't know these ids).
+      if (
+        isAiTemplateMockEnabled() &&
+        query.ids.some(id => id.startsWith('mock-media-'))
+      ) {
+        return Promise.resolve(mockMediaList(query.ids));
       }
       const usp = new URLSearchParams();
       for (const id of query.ids) usp.append('ids', id);

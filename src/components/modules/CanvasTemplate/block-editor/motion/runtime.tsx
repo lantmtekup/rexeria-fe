@@ -25,6 +25,26 @@ interface MotionContextValue {
   mode: EditorMode;
   motion?: BlockMotion;
   scrollerEl?: HTMLElement | null;
+  /**
+   * When provided (including 0), the runtime builds the timeline paused and
+   * seeks to this ms position on every change; auto-play and ScrollTrigger
+   * arming are skipped. The timeline editor uses this to drive the preview
+   * from its scrubable playhead.
+   */
+  scrubMs?: number | null;
+  /**
+   * Bumped by the editor on every "Play preview" click. Surfaced here so
+   * MotionBlockRoot can include it in useGSAP deps — without it, re-clicking
+   * Play while already in preview mode is a no-op (no deps changed).
+   */
+  previewNonce?: number;
+  /**
+   * When set, the runtime only animates the track whose `elementKey` matches.
+   * Used by the sidebar panel for "preview-on-pick" — clicking a preset on
+   * row X plays just X's animation so the user can audition it without
+   * playing the whole-block timeline.
+   */
+  previewElement?: string | null;
 }
 
 const MotionContext = React.createContext<MotionContextValue | null>(null);
@@ -33,6 +53,9 @@ export interface MotionProviderProps {
   mode: EditorMode;
   motion?: BlockMotion;
   scrollerEl?: HTMLElement | null;
+  scrubMs?: number | null;
+  previewNonce?: number;
+  previewElement?: string | null;
   children: React.ReactNode;
 }
 
@@ -45,11 +68,21 @@ export function MotionProvider({
   mode,
   motion,
   scrollerEl,
+  scrubMs,
+  previewNonce,
+  previewElement,
   children,
 }: MotionProviderProps) {
   const value = React.useMemo<MotionContextValue>(
-    () => ({ mode, motion, scrollerEl }),
-    [mode, motion, scrollerEl]
+    () => ({
+      mode,
+      motion,
+      scrollerEl,
+      scrubMs,
+      previewNonce,
+      previewElement,
+    }),
+    [mode, motion, scrollerEl, scrubMs, previewNonce, previewElement]
   );
   return (
     <MotionContext.Provider value={value}>{children}</MotionContext.Provider>
@@ -120,27 +153,36 @@ function resolveTarget(
 
 function buildTimeline(
   root: HTMLElement,
-  motion: BlockMotion
+  motion: BlockMotion,
+  previewElement?: string | null
 ): gsap.core.Timeline | null {
   if (motion.enabled === false) return null;
-  if (!motion.tracks.length) return null;
+  // When previewing a single element, narrow to just that track. Skip repeat
+  // so the audition doesn't loop on the user.
+  const tracks = previewElement
+    ? motion.tracks.filter(t => t.elementKey === previewElement)
+    : motion.tracks;
+  if (!tracks.length) return null;
 
   const tl = gsap.timeline({
     paused: true,
-    repeat: motion.repeat ?? 0,
-    yoyo: motion.yoyo ?? false,
+    repeat: previewElement ? 0 : (motion.repeat ?? 0),
+    yoyo: previewElement ? false : (motion.yoyo ?? false),
   });
 
-  for (const track of motion.tracks) {
+  for (const track of tracks) {
     const target = resolveTarget(root, track.elementKey);
     if (!target) continue;
     addTrack(tl, target, track);
   }
 
   // Pad the timeline to the configured duration so repeat/yoyo behave even
-  // when the last keyframe lands before `duration`.
-  const totalSec = Math.max(motion.duration, 0) / 1000;
-  if (tl.duration() < totalSec) tl.set({}, {}, totalSec);
+  // when the last keyframe lands before `duration`. Single-element preview
+  // doesn't need padding — its track's own duration is fine.
+  if (!previewElement) {
+    const totalSec = Math.max(motion.duration, 0) / 1000;
+    if (tl.duration() < totalSec) tl.set({}, {}, totalSec);
+  }
 
   return tl;
 }
@@ -154,6 +196,14 @@ function addTrack(
     (a, b) => a.time - b.time
   );
   if (!keyframes.length) return;
+
+  // Disable any baseline CSS animation on the target while GSAP drives it.
+  // Several blocks (e.g. HeroSplit) bake in reveal animations like
+  // `animate-soft-rise` whose @keyframes animate `transform` — when the CSS
+  // animation is in its `fill: both` state it overrides inline `transform`
+  // set by GSAP, silently neutralising the preset. useGSAP's context.revert()
+  // on cleanup restores the original style.
+  target.style.animation = 'none';
 
   const first = keyframes[0]!;
   // Seed initial state at t=0 so the element doesn't flash its rest-state
@@ -199,10 +249,40 @@ export interface MotionBlockRootProps {
  */
 export function MotionBlockRoot({ className, children }: MotionBlockRootProps) {
   const ref = React.useRef<HTMLDivElement>(null);
+  const tlRef = React.useRef<gsap.core.Timeline | null>(null);
   const ctx = useMotionContext();
+  const isScrub = ctx?.scrubMs != null;
+
+  // Kill baseline CSS animations on every tracked element as soon as the
+  // block mounts (or motion config changes). Blocks like HeroSplit/HeroOverlay
+  // ship with @keyframes (animate-soft-rise / animate-reveal-x) that hold
+  // elements at opacity:0 during their animation-delay phase. If the user
+  // auditions a preset within that delay window, GSAP plays the audition on
+  // one element while the others are still invisible behind their CSS delay
+  // — the canvas looks blank. Disabling the CSS animation unconditionally
+  // (any editor mode) makes the element settle at its natural rest state
+  // immediately so GSAP is the sole animation driver from then on.
+  React.useLayoutEffect(() => {
+    const root = ref.current;
+    if (!root || !ctx?.motion?.tracks?.length) return;
+    const cleanups: Array<() => void> = [];
+    for (const track of ctx.motion.tracks) {
+      const target = resolveTarget(root, track.elementKey);
+      if (!target) continue;
+      const prev = target.style.animation;
+      target.style.animation = 'none';
+      cleanups.push(() => {
+        target.style.animation = prev;
+      });
+    }
+    return () => {
+      for (const fn of cleanups) fn();
+    };
+  }, [ctx?.motion]);
 
   useGSAP(
     () => {
+      tlRef.current = null;
       if (!ctx) return;
       if (ctx.mode === 'edit') return;
       if (!ctx.motion) return;
@@ -210,8 +290,27 @@ export function MotionBlockRoot({ className, children }: MotionBlockRootProps) {
       if (shouldSkipForA11y()) return;
 
       const root = ref.current;
-      const tl = buildTimeline(root, ctx.motion);
+      const tl = buildTimeline(root, ctx.motion, ctx.previewElement);
       if (!tl) return;
+      tlRef.current = tl;
+
+      if (isScrub) {
+        // External driver: stay paused, just seek to current scrub position.
+        // Trigger semantics (in-view, scroll-progress) don't apply inside the
+        // editor preview — they're production runtime concerns.
+        tl.seek(Math.max(0, (ctx.scrubMs ?? 0) / 1000), false);
+        return;
+      }
+
+      // Editor preview always plays immediately. The trigger config
+      // (`in-view`, `scroll-progress`) is for the production runtime where
+      // the user actually scrolls — relying on ScrollTrigger inside the
+      // editor preview is unreliable (the block is usually already in
+      // viewport, and `once: true` would only fire on the first preview).
+      if (ctx.mode === 'preview') {
+        tl.play(0);
+        return;
+      }
 
       const trigger = ctx.motion.trigger ?? 'in-view';
 
@@ -230,20 +329,41 @@ export function MotionBlockRoot({ className, children }: MotionBlockRootProps) {
         });
         return;
       }
-      // in-view (default)
+      // in-view (default). `start: 'center bottom'` fires when the centre of
+      // the block reaches the viewport bottom — geometrically equivalent to
+      // "50% of the block has scrolled in", which is what feels right for
+      // landing-page reveal animations. The previous threshold ('top 85%')
+      // fired the moment a sliver of the block peeked in, so the animation
+      // played before the user could actually see what was animating.
       ScrollTrigger.create({
         trigger: root,
         scroller: ctx.scrollerEl ?? undefined,
-        start: 'top 85%',
+        start: 'center bottom',
         once: true,
         onEnter: () => tl.play(0),
       });
     },
     {
-      dependencies: [ctx?.mode, ctx?.motion, ctx?.scrollerEl],
+      dependencies: [
+        ctx?.mode,
+        ctx?.motion,
+        ctx?.scrollerEl,
+        ctx?.previewNonce,
+        ctx?.previewElement,
+        isScrub,
+      ],
       scope: ref,
     }
   );
+
+  // Live seek when `scrubMs` changes — avoids the cost of rebuilding the
+  // whole timeline on every pointer-move while dragging the playhead.
+  React.useEffect(() => {
+    if (!isScrub) return;
+    const tl = tlRef.current;
+    if (!tl) return;
+    tl.seek(Math.max(0, (ctx?.scrubMs ?? 0) / 1000), false);
+  }, [isScrub, ctx?.scrubMs]);
 
   // No `data-element-key` here — the BlockPreview click handler walks the
   // closest `[data-element-key]` ancestor, so adding one would shadow

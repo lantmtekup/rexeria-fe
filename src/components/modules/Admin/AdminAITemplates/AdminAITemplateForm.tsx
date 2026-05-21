@@ -98,11 +98,14 @@ function emptyState(): FormState {
 
 function fromTemplate(t: AITemplate): FormState {
   // BE GET returns block_prompts for admin (Q5 — user GET strips). Fall
-  // back to an empty prompt per block when admin GET omits it.
+  // back to an empty prompt per block when admin GET omits it. Children
+  // arrays are optional in the type since BE list responses may strip them
+  // — admin GET-detail should populate, but stay defensive.
+  const blocks = t.blocks ?? [];
   const promptByBlock = new Map(
     (t.block_prompts ?? []).map(p => [p.block_id, p])
   );
-  const block_prompts = t.blocks.map(
+  const block_prompts = blocks.map(
     b =>
       promptByBlock.get(b.block_id) ?? {
         block_id: b.block_id,
@@ -116,8 +119,8 @@ function fromTemplate(t: AITemplate): FormState {
     description: t.description ?? '',
     topic: t.topic ?? '',
     is_active: t.is_active,
-    fields: t.fields,
-    blocks: t.blocks,
+    fields: t.fields ?? [],
+    blocks,
     block_prompts,
     version: t.version,
   };

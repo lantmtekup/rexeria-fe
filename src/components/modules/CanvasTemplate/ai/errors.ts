@@ -1,12 +1,11 @@
 /**
  * Helpers to parse AI Template error envelopes (`docs/be-ai-template-questions.md`).
  *
- * BE currently surfaces business codes via `RxApiError.code` only. Per the
- * agreed P0 patches (Q2 + Q3), BE will add `details.missing_fields[]` to
- * `ERR_AI_TEMPLATE_MISSING_REQUIRED` and `details.{used,limit}` to
- * `ERR_AI_TEMPLATE_REGEN_LIMIT`. The helpers below are forward-compatible:
- * they read those fields when present and return `undefined` otherwise so
- * the UI can fall back to plain messages without breaking.
+ * BE has shipped patches Q2 + Q3 — `ERR_AI_TEMPLATE_MISSING_REQUIRED` now
+ * carries `details.missing_fields[]` (raw field_key list) and
+ * `ERR_AI_TEMPLATE_REGEN_LIMIT` carries `details.{used, limit}`. We still
+ * tolerate the absence of these fields so legacy / replayed responses don't
+ * crash the UI, but the populated path is now the BE contract.
  */
 
 import { RxApiError } from '@/services/rexer/client';

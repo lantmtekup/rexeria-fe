@@ -20,8 +20,14 @@ const DEFAULT_SIZE: Record<ExtraElementKind, ExtraSize> = {
   edit_text: { width: 280, height: 44 },
   photo: { width: 240, height: 180 },
   video: { width: 480, height: 270 },
-  // Hotspot pin is a small dot — popover floats from it; size = pin chip.
-  hotspot: { width: 28, height: 28 },
+  // Hotspot pin chip. Bump from 28→36 so the symbol + ring are obvious on
+  // first add (28×28 with a thick ring left almost no room for the label).
+  hotspot: { width: 36, height: 36 },
+  compare: { width: 480, height: 320 },
+  range: { width: 280, height: 56 },
+  countdown: { width: 360, height: 120 },
+  reveal: { width: 320, height: 240 },
+  spin_wheel: { width: 320, height: 320 },
 };
 
 function newId(): string {
@@ -100,6 +106,119 @@ export function makeExtraElement(
         content: { source: 'url', url: '' },
         style: { controls: true },
       };
+    case 'compare':
+      return {
+        id,
+        kind: 'compare',
+        position,
+        size,
+        zIndex: 1,
+        content: {
+          beforeUrl:
+            'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1600&q=80',
+          afterUrl:
+            'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1600&q=80',
+          defaultRatio: 0.5,
+          beforeAlt: 'Trước',
+          afterAlt: 'Sau',
+        },
+        style: { borderRadius: 8 },
+      };
+    case 'range':
+      return {
+        id,
+        kind: 'range',
+        position,
+        size,
+        zIndex: 1,
+        content: {
+          fieldName: 'range_value',
+          label: 'Giá trị',
+          min: 0,
+          max: 100,
+          step: 1,
+          defaultValue: 50,
+          showValue: true,
+        },
+        style: {
+          ...baseStyle,
+          backgroundColor: '#0ea5e9',
+          color: '#0a0a0a',
+        },
+      };
+    case 'countdown': {
+      // 7 days into the future by default so the timer ticks visibly.
+      const target = new Date();
+      target.setDate(target.getDate() + 7);
+      return {
+        id,
+        kind: 'countdown',
+        position,
+        size,
+        zIndex: 5,
+        content: {
+          targetIso: target.toISOString(),
+          units: ['days', 'hours', 'minutes', 'seconds'],
+          label: 'Còn',
+          expiredText: 'Đã kết thúc',
+          style: 'flat',
+        },
+        style: {
+          ...baseStyle,
+          fontSize: 28,
+          fontWeight: 700,
+          color: '#0a0a0a',
+          textAlign: 'center',
+        },
+      };
+    }
+    case 'reveal':
+      return {
+        id,
+        kind: 'reveal',
+        position,
+        size,
+        zIndex: 4,
+        content: {
+          coverUrl:
+            'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80',
+          revealUrl:
+            'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80',
+          mode: 'scratch',
+          brushSize: 60,
+        },
+        style: { borderRadius: 8 },
+      };
+    case 'spin_wheel':
+      return {
+        id,
+        kind: 'spin_wheel',
+        position,
+        size,
+        zIndex: 6,
+        content: {
+          segments: [
+            { id: 's1', label: '10%', color: '#0ea5e9', prize: 'Giảm 10%' },
+            { id: 's2', label: '5%', color: '#a855f7', prize: 'Giảm 5%' },
+            { id: 's3', label: '20%', color: '#22c55e', prize: 'Giảm 20%' },
+            { id: 's4', label: 'Thử lại', color: '#64748b' },
+            {
+              id: 's5',
+              label: 'Free ship',
+              color: '#f59e0b',
+              prize: 'Miễn phí ship',
+            },
+            { id: 's6', label: '15%', color: '#ef4444', prize: 'Giảm 15%' },
+          ],
+          spinDurationMs: 4000,
+          buttonLabel: 'Quay',
+        },
+        style: {
+          ...baseStyle,
+          color: '#ffffff',
+          fontWeight: 700,
+        },
+      };
     case 'hotspot':
       return {
         id,
@@ -111,17 +230,23 @@ export function makeExtraElement(
           pinLabel: '+',
           title: 'Tiêu đề popup',
           body: 'Mô tả chi tiết khi user click vào pin.',
+          imageUrl: '',
+          ctaText: '',
+          ctaUrl: '',
           trigger: 'click',
         },
+        // Bright sky-blue pin with white text + thick white ring so it stays
+        // visible on photos of any palette (was previously white-on-white,
+        // effectively invisible over bright stock imagery).
         style: {
-          backgroundColor: '#ffffff',
-          color: '#0a0a0a',
+          backgroundColor: '#0ea5e9',
+          color: '#ffffff',
           borderRadius: 999,
-          fontSize: 14,
+          fontSize: 16,
           fontWeight: 700,
           fontFamily: 'inter',
-          borderColor: '#0a0a0a',
-          borderWidth: 2,
+          borderColor: '#ffffff',
+          borderWidth: 3,
         },
       };
   }

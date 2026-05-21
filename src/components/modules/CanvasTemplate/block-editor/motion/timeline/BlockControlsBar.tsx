@@ -1,14 +1,15 @@
 'use client';
 
 import * as React from 'react';
-import { Play, ZoomIn, ZoomOut } from 'lucide-react';
+import { Pause, Play, ZoomIn, ZoomOut } from 'lucide-react';
 
 import type { BlockMotion, MotionTrigger } from '../types';
 
 interface BlockControlsBarProps {
   motion: BlockMotion;
   onChange: (next: BlockMotion) => void;
-  onPlay: () => void;
+  playing: boolean;
+  onTogglePlay: () => void;
   pxPerMs: number;
   onPxPerMsChange: (px: number) => void;
 }
@@ -22,7 +23,8 @@ const TRIGGERS: { value: MotionTrigger; label: string }[] = [
 export function BlockControlsBar({
   motion,
   onChange,
-  onPlay,
+  playing,
+  onTogglePlay,
   pxPerMs,
   onPxPerMsChange,
 }: BlockControlsBarProps) {
@@ -30,12 +32,13 @@ export function BlockControlsBar({
     <div className='flex h-11 shrink-0 items-center gap-3 border-b border-neutral-200 bg-white px-4'>
       <button
         type='button'
-        onClick={onPlay}
+        onClick={onTogglePlay}
         data-testid='motion-play'
+        aria-pressed={playing}
         className='flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-neutral-900 px-3 text-[11px] font-semibold text-white transition-colors hover:bg-neutral-700'
       >
-        <Play className='size-3' />
-        Phát
+        {playing ? <Pause className='size-3' /> : <Play className='size-3' />}
+        {playing ? 'Dừng' : 'Phát'}
       </button>
 
       <Field label='Duration'>

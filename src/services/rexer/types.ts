@@ -1340,8 +1340,13 @@ export interface AITemplate {
   is_active: boolean;
   /** Optimistic-lock version — required when PATCHing (Q21). */
   version: number;
-  fields: AITemplateField[];
-  blocks: AITemplateBlock[];
+  /**
+   * Children arrays. BE list response (e.g. `GET /ai/templates`,
+   * `/admin/ai/templates`) may omit them for payload-size reasons; detail
+   * GET always populates them. Always access via `?? []` to stay safe.
+   */
+  fields?: AITemplateField[];
+  blocks?: AITemplateBlock[];
   /** Only returned to admin GET; user-facing GET strips this (Q5/Q6). */
   block_prompts?: AITemplateBlockPrompt[];
   thumbnail_url?: string;

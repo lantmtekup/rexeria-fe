@@ -14,13 +14,16 @@ import { cn } from '@/lib/cn';
 
 import type {
   BlockBackground,
+  ElementPositionsMap,
   ElementStylesMap,
   FeatureSectionContent,
 } from '../types';
 import {
   blockBackgroundStyle,
+  composeStyle,
   elementStyleOf,
   orderStyle,
+  positionStyle,
   selectableClass,
 } from './applyStyle';
 
@@ -29,6 +32,7 @@ interface FeatureSectionProps {
   styles?: ElementStylesMap;
   background?: BlockBackground;
   order?: string[];
+  positions?: ElementPositionsMap;
   activeKey?: string | null;
   className?: string;
 }
@@ -49,25 +53,20 @@ export function FeatureSection({
   styles,
   background,
   order,
+  positions,
   activeKey,
   className,
 }: FeatureSectionProps) {
-  const sEyebrow = orderStyle(
-    order,
-    'eyebrow',
-    elementStyleOf(styles, 'eyebrow')
-  );
-  const sTitle = orderStyle(order, 'title', elementStyleOf(styles, 'title'));
-  const sDescription = orderStyle(
-    order,
-    'description',
-    elementStyleOf(styles, 'description')
-  );
-  const sFeatures = orderStyle(
-    order,
-    'features',
-    elementStyleOf(styles, 'features')
-  );
+  const styleOf = (key: string) =>
+    composeStyle(
+      elementStyleOf(styles, key),
+      orderStyle(order, key),
+      positionStyle(positions, key)
+    );
+  const sEyebrow = styleOf('eyebrow');
+  const sTitle = styleOf('title');
+  const sDescription = styleOf('description');
+  const sFeatures = styleOf('features');
 
   return (
     <div

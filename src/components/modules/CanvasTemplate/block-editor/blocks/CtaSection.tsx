@@ -5,12 +5,15 @@ import { cn } from '@/lib/cn';
 import type {
   BlockBackground,
   CtaSectionContent,
+  ElementPositionsMap,
   ElementStylesMap,
 } from '../types';
 import {
   blockBackgroundStyle,
+  composeStyle,
   elementStyleOf,
   orderStyle,
+  positionStyle,
   selectableClass,
 } from './applyStyle';
 import { TransformedImage } from './TransformedImage';
@@ -20,6 +23,7 @@ interface CtaSectionProps {
   styles?: ElementStylesMap;
   background?: BlockBackground;
   order?: string[];
+  positions?: ElementPositionsMap;
   activeKey?: string | null;
   className?: string;
 }
@@ -29,30 +33,22 @@ export function CtaSection({
   styles,
   background,
   order,
+  positions,
   activeKey,
   className,
 }: CtaSectionProps) {
-  const sEyebrow = orderStyle(
-    order,
-    'eyebrow',
-    elementStyleOf(styles, 'eyebrow')
-  );
-  const sTitle = orderStyle(order, 'title', elementStyleOf(styles, 'title'));
-  const sSubtitle = orderStyle(
-    order,
-    'subtitle',
-    elementStyleOf(styles, 'subtitle')
-  );
-  const sPrimary = orderStyle(
-    order,
-    'primaryText',
-    elementStyleOf(styles, 'primaryText')
-  );
-  const sSecondary = orderStyle(
-    order,
-    'secondaryText',
-    elementStyleOf(styles, 'secondaryText')
-  );
+  const styleOf = (key: string) =>
+    composeStyle(
+      elementStyleOf(styles, key),
+      orderStyle(order, key),
+      positionStyle(positions, key)
+    );
+  const sEyebrow = styleOf('eyebrow');
+  const sTitle = styleOf('title');
+  const sSubtitle = styleOf('subtitle');
+  const sPrimary = styleOf('primaryText');
+  const sSecondary = styleOf('secondaryText');
+  const sBg = styleOf('backgroundUrl');
 
   return (
     <div
@@ -64,6 +60,7 @@ export function CtaSection({
     >
       <div
         data-element-key='backgroundUrl'
+        style={sBg}
         className={selectableClass(
           activeKey === 'backgroundUrl',
           'absolute inset-0 transition-transform duration-[1500ms] ease-out group-hover:scale-105'

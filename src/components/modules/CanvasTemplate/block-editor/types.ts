@@ -8,7 +8,14 @@ export type BlockType =
   | 'photo_gallery'
   | 'booking_form'
   | 'cta_section'
-  | 'image_carousel';
+  | 'image_carousel'
+  | 'stories'
+  | 'split_screen'
+  | 'quiz'
+  | 'poll'
+  | 'carousel_3d'
+  | 'flipbook'
+  | 'panorama';
 
 export interface HeroSplitStat {
   value: string;
@@ -164,6 +171,185 @@ export interface ImageCarouselContent {
   showNavArrows?: boolean;
 }
 
+/**
+ * Stories block — Instagram-style full-bleed panels with media + caption.
+ * Each panel auto-advances after `durationMs`; tap left/right edge to skip
+ * back/forward (mobile gesture pattern). At the end the block loops or
+ * holds on the last panel based on `loop`.
+ */
+export interface StoriesSlide {
+  id: string;
+  mediaUrl: string;
+  mediaType?: 'image' | 'video';
+  title?: string;
+  body?: string;
+  /** Optional CTA pill at the bottom of the panel. */
+  ctaText?: string;
+  ctaUrl?: string;
+  /** Duration in ms — default inherited from block config. */
+  durationMs?: number;
+}
+
+export interface StoriesContent {
+  eyebrow?: string;
+  title?: string;
+  slides: StoriesSlide[];
+  /** Default per-slide duration when slides[i].durationMs is unset. Default 4000. */
+  defaultDurationMs?: number;
+  loop?: boolean;
+  /** When true (default), show progress bars at the top of each slide. */
+  showProgress?: boolean;
+}
+
+/**
+ * Split-screen block — two `views` rendered side-by-side (or stacked on
+ * mobile). User can toggle which view is "active" via tabs; the inactive
+ * view stays visible but dimmed (collapsed on mobile).
+ */
+export interface SplitScreenView {
+  id: string;
+  label: string;
+  imageUrl?: string;
+  title: string;
+  body?: string;
+  ctaText?: string;
+  ctaUrl?: string;
+}
+
+export interface SplitScreenContent {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  views: SplitScreenView[]; // typically 2
+  /** Initial active view by index. Default 0. */
+  defaultIndex?: number;
+}
+
+/**
+ * Quiz block — multi-question form. Each question has options with
+ * weights; the renderer sums weights and matches to the highest-scoring
+ * `result` bucket. Stores last response in localStorage so user can
+ * resume mid-quiz.
+ */
+export interface QuizOption {
+  id: string;
+  label: string;
+  /** Numeric score added to the running total when this option is picked. */
+  score?: number;
+}
+
+export interface QuizQuestion {
+  id: string;
+  prompt: string;
+  options: QuizOption[];
+  /** Image shown above the prompt. Optional. */
+  imageUrl?: string;
+}
+
+export interface QuizResult {
+  id: string;
+  /** Inclusive lower bound on cumulative score for this result to win. */
+  minScore: number;
+  title: string;
+  body?: string;
+  imageUrl?: string;
+  ctaText?: string;
+  ctaUrl?: string;
+}
+
+export interface QuizContent {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  questions: QuizQuestion[];
+  results: QuizResult[];
+  /** Button label on each question to advance. Default "Tiếp". */
+  nextLabel?: string;
+  /** Button label on the final question to compute. Default "Xem kết quả". */
+  finishLabel?: string;
+}
+
+/**
+ * Poll block — single question, multiple options, vote → see results.
+ * Seed counts come from `baseVotes` so the bars feel populated; live votes
+ * accumulate locally (and could be POSTed to a BE collector). User can
+ * vote once per session (tracked in localStorage by block id).
+ */
+export interface PollOption {
+  id: string;
+  label: string;
+  /** Initial baseline vote count so result bars aren't 0 / 0 on first render. */
+  baseVotes?: number;
+}
+
+export interface PollContent {
+  eyebrow?: string;
+  question: string;
+  options: PollOption[];
+  /** Hide vote totals before user picks. Default true (mystery vibe). */
+  hideResultsUntilVoted?: boolean;
+  /** Button copy under each option. Defaults to "Vote". */
+  voteLabel?: string;
+  /** Message shown to user after vote. Default "Cảm ơn bạn đã bình chọn!". */
+  thankYouText?: string;
+}
+
+/**
+ * 3D coverflow carousel — extends ImageCarouselContent with a `mode`
+ * indicator. When mode is `3d-coverflow`, the renderer uses CSS
+ * transform-style: preserve-3d + per-slide rotateY for an iTunes-style
+ * coverflow effect.
+ */
+export interface Carousel3dContent extends ImageCarouselContent {
+  /** Visual mode. 'flat' falls back to the regular 2D carousel rendering. */
+  mode3d?: 'flat' | '3d-coverflow';
+  /** Perspective px applied to the outer wrapper. Default 1200. */
+  perspectivePx?: number;
+}
+
+/**
+ * Flipbook — multi-page catalog with CSS-based page-turn animation. Click
+ * the right side of a page to advance, left side to go back. Each page is
+ * an image; optional caption overlays each page.
+ */
+export interface FlipbookPage {
+  id: string;
+  imageUrl: string;
+  caption?: string;
+}
+
+export interface FlipbookContent {
+  eyebrow?: string;
+  title?: string;
+  pages: FlipbookPage[];
+  /** Aspect ratio of each page. Default '3/4' (portrait, magazine-like). */
+  aspect?: '3/4' | '4/3' | '1/1' | '16/9';
+  /** Show page numbers at bottom. Default true. */
+  showPageNumbers?: boolean;
+}
+
+/**
+ * Panorama — equirectangular 2:1 image that the user drags horizontally
+ * to rotate the view direction. CSS-only (translateX of an oversized
+ * image strip duplicated for seamless wraparound) — no Three.js or
+ * libraries required. Hotspot/extra-element overlays still work since the
+ * pano is rendered inside the block frame.
+ */
+export interface PanoramaContent {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  /** Equirectangular 2:1 image URL (width = 2 × height). */
+  imageUrl: string;
+  /** Initial yaw offset 0–1 (fraction of the image width). Default 0. */
+  initialYaw?: number;
+  /** Drag-to-yaw sensitivity multiplier. 1 = 1px drag → 1px translate.
+   *  Defaults to 1. Higher values feel "looser". */
+  sensitivity?: number;
+  /** Optional hint badge shown over the pano in editor view. */
+  hint?: string;
+}
+
 export type BlockContent =
   | HeroSplitContent
   | HeroOverlayContent
@@ -172,6 +358,13 @@ export type BlockContent =
   | BookingFormContent
   | CtaSectionContent
   | ImageCarouselContent
+  | StoriesContent
+  | SplitScreenContent
+  | QuizContent
+  | PollContent
+  | Carousel3dContent
+  | FlipbookContent
+  | PanoramaContent
   | Record<string, unknown>;
 
 /**
@@ -219,7 +412,12 @@ export type ExtraElementKind =
   | 'edit_text'
   | 'photo'
   | 'video'
-  | 'hotspot';
+  | 'hotspot'
+  | 'compare'
+  | 'range'
+  | 'countdown'
+  | 'reveal'
+  | 'spin_wheel';
 
 export interface ExtraPosition {
   x: number;
@@ -255,11 +453,66 @@ export interface ExtraElementStyle {
   loop?: boolean;
   muted?: boolean;
   controls?: boolean;
+  // ── Wave 1 visual effects (any kind can opt in) ──────────────────────
+  /** Glassmorphism backdrop blur. When true the element gains backdrop-blur
+   *  + a translucent tint, regardless of `backgroundColor`. */
+  glass?: boolean;
+  /** Optional override of the glass tint. Defaults to white/12%. */
+  glassTint?: string;
+  /** When set, an animated conic-gradient "beam" runs around the border.
+   *  Color = this value. Pair with `borderRadius` for rounded effects. */
+  beamColor?: string;
+  /** Beam revolution time in seconds. Default 3s. */
+  beamSpeedSec?: number;
+}
+
+/**
+ * Animated-text variants for `text` ExtraElement. All optional — when set,
+ * the renderer wraps the text with an effect that fires once on viewport
+ * entry (IntersectionObserver). Counter and marquee are mutually exclusive
+ * with `animation`; renderer picks them in priority: counter > marquee >
+ * animation > plain.
+ */
+export type TextAnimationMode =
+  | 'none'
+  | 'fade-up'
+  | 'typewriter'
+  | 'split-slide-up';
+
+export interface TextCounterConfig {
+  /** Starting value of the count-up. Defaults to 0. */
+  from?: number;
+  /** Required target value once animation completes. */
+  to: number;
+  /** Duration in ms. Defaults to 1600. */
+  durationMs?: number;
+  /** Optional prefix shown before the number (e.g. "$"). */
+  prefix?: string;
+  /** Optional suffix shown after the number (e.g. "+", "%", "₫"). */
+  suffix?: string;
+  /** Number of decimal places. Defaults to 0. */
+  decimals?: number;
+  /** When true, thousand separators are inserted (Vietnamese locale). */
+  thousandSep?: boolean;
+}
+
+export interface TextMarqueeConfig {
+  /** Time (seconds) it takes the text to fully cycle once. */
+  speedSec?: number;
+  /** Direction of travel. Default 'left'. */
+  direction?: 'left' | 'right';
 }
 
 export interface ExtraTextContent {
   text: string;
   textEn?: string;
+  animation?: TextAnimationMode;
+  /** Animation duration in ms (used by fade-up / typewriter / split-slide-up). */
+  animationDurationMs?: number;
+  /** When set, the text is overridden by an animated count-up of `to`. */
+  counter?: TextCounterConfig;
+  /** When set, the text scrolls horizontally — overrides animation. */
+  marquee?: TextMarqueeConfig;
 }
 export interface ExtraEditTextContent {
   placeholder: string;
@@ -274,6 +527,13 @@ export interface ExtraPhotoContent {
   mediaId: string;
   alt?: string;
   altEn?: string;
+  /**
+   * When set, the photo becomes a 2-sided card. Tapping (or hovering) flips
+   * it to reveal the back side (a separate media id). Powers `tap-to-flip`
+   * reveal patterns without needing a separate kind.
+   */
+  flipMediaId?: string;
+  flipMode?: 'tap' | 'hover';
 }
 export interface ExtraVideoContent {
   source: 'media' | 'url';
@@ -291,15 +551,112 @@ export interface ExtraVideoContent {
 export interface ExtraHotspotContent {
   /** Pin label rendered inside the pin chip — often a number or icon char. */
   pinLabel?: string;
-  /** Popover title (one-liner). */
+  /** Popup title (one-liner). */
   title: string;
-  /** Popover body — multi-line text. */
+  /** Popup body — multi-line text. */
   body?: string;
-  /** Optional CTA button inside the popover. */
+  /** Optional image rendered at the TOP of the popup (Notion/Figma-style). */
+  imageUrl?: string;
+  /** Optional CTA button inside the popup. */
   ctaText?: string;
   ctaUrl?: string;
   /** Trigger — phase 1 only `click`; defer hover. */
   trigger?: 'click';
+}
+
+/**
+ * Compare slider (before/after). Two images stacked; a draggable handle
+ * masks the front image via `clip-path: inset(0 X% 0 0)` so dragging the
+ * handle reveals the back image. Use case: renovation, day/night,
+ * before/after photo edits.
+ */
+export interface ExtraCompareContent {
+  /** Image shown ON TOP, masked by the handle. */
+  beforeUrl: string;
+  /** Image shown UNDERNEATH, revealed as the handle drags right. */
+  afterUrl: string;
+  /** Initial reveal ratio 0–1 (handle position). Defaults to 0.5. */
+  defaultRatio?: number;
+  /** Optional alt text per image for a11y. */
+  beforeAlt?: string;
+  afterAlt?: string;
+}
+
+/**
+ * Range slider input — HTML5 `<input type="range">` wrapped so users can
+ * place a continuous-value picker (budget, area, etc) on a block. The
+ * current value is submitted along with form data via `fieldName`.
+ */
+export interface ExtraRangeContent {
+  fieldName: string;
+  label?: string;
+  min: number;
+  max: number;
+  step?: number;
+  defaultValue?: number;
+  /** When true, the live value is shown next to the track. Default true. */
+  showValue?: boolean;
+  /** Optional unit suffix appended to the displayed value (e.g. "₫", "m²"). */
+  unit?: string;
+}
+
+/**
+ * Countdown timer — counts down to `targetIso`. Renders the time-remaining
+ * in any combination of days/hours/minutes/seconds. After it reaches zero
+ * the element shows `expiredText`. Use case: flash sales, event countdowns,
+ * Live Availability "X seats left" badges.
+ */
+export interface ExtraCountdownContent {
+  /** ISO timestamp to count down to (e.g. "2026-12-31T23:59:00+07:00"). */
+  targetIso: string;
+  /** Which units to display. Default ['days', 'hours', 'minutes', 'seconds']. */
+  units?: Array<'days' | 'hours' | 'minutes' | 'seconds'>;
+  /** Optional label rendered above the digits. */
+  label?: string;
+  /** Text shown after the target time passes. Defaults to "Đã kết thúc". */
+  expiredText?: string;
+  /** Visual style — flat digits or flip-card. Default 'flat'. */
+  style?: 'flat' | 'flip';
+}
+
+/**
+ * Reveal element — a "cover" image overlaid on top of a "reveal" image,
+ * gradually wiped to expose the bottom layer via user interaction. Mode
+ * picks the gesture / wipe geometry:
+ *   - 'scratch' — paint over with the cursor to erase
+ *   - 'peel' — drag from a corner to peel diagonally
+ *   - 'spotlight' — small circle follows pointer (cursor reveal)
+ *   - 'tap' — single tap fades out the cover entirely
+ */
+export interface ExtraRevealContent {
+  coverUrl: string;
+  revealUrl: string;
+  mode: 'scratch' | 'peel' | 'spotlight' | 'tap';
+  /** Spotlight / scratch brush radius in px. Default 60. */
+  brushSize?: number;
+}
+
+/**
+ * Spin wheel — segmented circle that spins on click and lands on a random
+ * (or weight-biased) segment. The result event fires through tracking.
+ */
+export interface SpinWheelSegment {
+  id: string;
+  label: string;
+  /** Color of the wedge fill. */
+  color?: string;
+  /** Optional prize text shown when the wheel lands on this segment. */
+  prize?: string;
+  /** Weight (default 1). Higher = more likely to be picked. */
+  weight?: number;
+}
+
+export interface ExtraSpinWheelContent {
+  segments: SpinWheelSegment[];
+  /** Spin animation duration in ms. Default 4000. */
+  spinDurationMs?: number;
+  /** Label rendered on the spin button. Default "Quay". */
+  buttonLabel?: string;
 }
 
 export type ExtraElementContent =
@@ -307,7 +664,12 @@ export type ExtraElementContent =
   | ExtraEditTextContent
   | ExtraPhotoContent
   | ExtraVideoContent
-  | ExtraHotspotContent;
+  | ExtraHotspotContent
+  | ExtraCompareContent
+  | ExtraRangeContent
+  | ExtraCountdownContent
+  | ExtraRevealContent
+  | ExtraSpinWheelContent;
 
 /**
  * Optional analytics tracking config. When set, public render fires an
@@ -359,13 +721,38 @@ export interface HotspotExtraElement extends ExtraElementBase {
   kind: 'hotspot';
   content: ExtraHotspotContent;
 }
+export interface CompareExtraElement extends ExtraElementBase {
+  kind: 'compare';
+  content: ExtraCompareContent;
+}
+export interface RangeExtraElement extends ExtraElementBase {
+  kind: 'range';
+  content: ExtraRangeContent;
+}
+export interface CountdownExtraElement extends ExtraElementBase {
+  kind: 'countdown';
+  content: ExtraCountdownContent;
+}
+export interface RevealExtraElement extends ExtraElementBase {
+  kind: 'reveal';
+  content: ExtraRevealContent;
+}
+export interface SpinWheelExtraElement extends ExtraElementBase {
+  kind: 'spin_wheel';
+  content: ExtraSpinWheelContent;
+}
 
 export type ExtraElement =
   | TextExtraElement
   | EditTextExtraElement
   | PhotoExtraElement
   | VideoExtraElement
-  | HotspotExtraElement;
+  | HotspotExtraElement
+  | CompareExtraElement
+  | RangeExtraElement
+  | CountdownExtraElement
+  | RevealExtraElement
+  | SpinWheelExtraElement;
 
 export interface Block {
   id: string;
@@ -483,4 +870,19 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     label: 'Slide',
     accent: '#2563eb',
   },
+  stories: { type: 'stories', label: 'Stories', accent: '#db2777' },
+  split_screen: {
+    type: 'split_screen',
+    label: 'Split screen',
+    accent: '#0891b2',
+  },
+  quiz: { type: 'quiz', label: 'Quiz', accent: '#9333ea' },
+  poll: { type: 'poll', label: 'Poll', accent: '#16a34a' },
+  carousel_3d: {
+    type: 'carousel_3d',
+    label: 'Coverflow 3D',
+    accent: '#0d9488',
+  },
+  flipbook: { type: 'flipbook', label: 'Flipbook', accent: '#854d0e' },
+  panorama: { type: 'panorama', label: 'Panorama 360°', accent: '#1d4ed8' },
 };

@@ -4,13 +4,16 @@ import { cn } from '@/lib/cn';
 
 import type {
   BlockBackground,
+  ElementPositionsMap,
   ElementStylesMap,
   HeroOverlayContent,
 } from '../types';
 import {
   blockBackgroundStyle,
+  composeStyle,
   elementStyleOf,
   orderStyle,
+  positionStyle,
   selectableClass,
 } from './applyStyle';
 import { TransformedImage } from './TransformedImage';
@@ -20,6 +23,7 @@ interface HeroOverlayProps {
   styles?: ElementStylesMap;
   background?: BlockBackground;
   order?: string[];
+  positions?: ElementPositionsMap;
   activeKey?: string | null;
   className?: string;
 }
@@ -29,17 +33,21 @@ export function HeroOverlay({
   styles,
   background,
   order,
+  positions,
   activeKey,
   className,
 }: HeroOverlayProps) {
-  const sTag = orderStyle(order, 'tag', elementStyleOf(styles, 'tag'));
-  const sTitle = orderStyle(order, 'title', elementStyleOf(styles, 'title'));
-  const sSubtitle = orderStyle(
-    order,
-    'subtitle',
-    elementStyleOf(styles, 'subtitle')
-  );
-  const sCta = orderStyle(order, 'ctaText', elementStyleOf(styles, 'ctaText'));
+  const styleOf = (key: string) =>
+    composeStyle(
+      elementStyleOf(styles, key),
+      orderStyle(order, key),
+      positionStyle(positions, key)
+    );
+  const sTag = styleOf('tag');
+  const sTitle = styleOf('title');
+  const sSubtitle = styleOf('subtitle');
+  const sCta = styleOf('ctaText');
+  const sBg = styleOf('backgroundUrl');
 
   return (
     <div
@@ -51,6 +59,7 @@ export function HeroOverlay({
     >
       <div
         data-element-key='backgroundUrl'
+        style={sBg}
         className={selectableClass(
           activeKey === 'backgroundUrl',
           'absolute inset-0 transition-transform duration-[1500ms] ease-out group-hover:scale-105'

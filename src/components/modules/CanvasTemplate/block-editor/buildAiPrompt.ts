@@ -18,6 +18,13 @@ const BLOCK_LABEL: Record<Lang, Record<BlockType, string>> = {
     booking_form: 'form đăng ký / đặt chỗ',
     cta_section: 'section call-to-action cuối trang',
     image_carousel: 'slide ảnh chuyển động',
+    stories: 'panel Stories (Insta-style)',
+    split_screen: 'so sánh 2 lựa chọn (split screen)',
+    quiz: 'trắc nghiệm gợi ý sản phẩm',
+    poll: 'bình chọn 1 câu hỏi nhiều lựa chọn',
+    carousel_3d: 'slide ảnh 3D coverflow',
+    flipbook: 'sách catalog lật trang',
+    panorama: 'ảnh 360° xoay được',
   },
   en: {
     hero_split: 'split-layout hero block',
@@ -27,6 +34,13 @@ const BLOCK_LABEL: Record<Lang, Record<BlockType, string>> = {
     booking_form: 'booking / lead form',
     cta_section: 'closing call-to-action section',
     image_carousel: 'image carousel / slider',
+    stories: 'stories panels (Instagram-style)',
+    split_screen: 'split-screen comparison',
+    quiz: 'quiz / product recommender',
+    poll: 'single-question poll',
+    carousel_3d: '3D coverflow image carousel',
+    flipbook: 'page-turn flipbook catalog',
+    panorama: '360° equirectangular panorama',
   },
 };
 

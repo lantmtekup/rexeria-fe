@@ -35,8 +35,8 @@ interface Props {
   /** Receives the full /generate response so caller can replace the block + bump counters. */
   onResult: (response: AITemplateGenerateResponse) => void;
   /**
-   * Fires when BE returns 429 ERR_AI_TEMPLATE_REGEN_LIMIT. Once BE Q3
-   * patch ships, `details.used/limit` will be populated; the dialog
+   * Fires when BE returns 429 ERR_AI_TEMPLATE_REGEN_LIMIT. With BE Q3
+   * shipped, `details.used/limit` are populated by the server; the dialog
    * passes them through so the Review page can snap its counter to
    * the authoritative server-side value.
    */

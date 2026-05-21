@@ -105,7 +105,7 @@ export function AIInputFormDialog({ templateId, onClose }: Props) {
       ) {
         const labels = parsed.missing_fields.map(
           (key: string) =>
-            template?.fields.find(f => f.field_key === key)?.label ?? key
+            template?.fields?.find(f => f.field_key === key)?.label ?? key
         );
         toast.error(`${tErr('missing_required')}: ${labels.join(', ')}`);
       } else {
@@ -132,7 +132,7 @@ export function AIInputFormDialog({ templateId, onClose }: Props) {
           </div>
         ) : template ? (
           <DynamicSchemaForm
-            fields={template.fields}
+            fields={template.fields ?? []}
             onSubmit={handleSubmit}
             onCancel={onClose}
             submitting={submitting}

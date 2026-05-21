@@ -3,7 +3,12 @@
 import * as React from 'react';
 import {
   Crosshair,
+  Eraser,
+  Hourglass,
   Image as ImageIcon,
+  RotateCcw,
+  SlidersHorizontal,
+  SplitSquareHorizontal,
   TextCursorInput,
   Trash2,
   Type,
@@ -29,6 +34,11 @@ const KIND_META: Record<
   photo: { label: 'Photo', icon: ImageIcon },
   video: { label: 'Video', icon: Video },
   hotspot: { label: 'Hotspot', icon: Crosshair },
+  compare: { label: 'So sánh ảnh', icon: SplitSquareHorizontal },
+  range: { label: 'Slider giá trị', icon: SlidersHorizontal },
+  countdown: { label: 'Countdown', icon: Hourglass },
+  reveal: { label: 'Reveal', icon: Eraser },
+  spin_wheel: { label: 'Vòng quay', icon: RotateCcw },
 };
 
 function labelOf(el: ExtraElement): string {
@@ -43,6 +53,16 @@ function labelOf(el: ExtraElement): string {
       return el.content.alt || 'Video';
     case 'hotspot':
       return el.content.title || 'Hotspot';
+    case 'compare':
+      return el.content.afterAlt || el.content.beforeAlt || 'So sánh ảnh';
+    case 'range':
+      return el.content.label || el.content.fieldName || 'Slider';
+    case 'countdown':
+      return el.content.label || 'Countdown';
+    case 'reveal':
+      return `Reveal · ${el.content.mode}`;
+    case 'spin_wheel':
+      return `Vòng quay (${el.content.segments.length} ô)`;
   }
 }
 

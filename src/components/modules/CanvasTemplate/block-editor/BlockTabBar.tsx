@@ -145,6 +145,8 @@ function SortableTab({
       <div
         {...attributes}
         {...listeners}
+        data-testid={`block-tab-${block.blockType}`}
+        data-active={active ? 'true' : 'false'}
         className={cn(
           'group relative aspect-[16/9] w-full cursor-pointer overflow-hidden rounded-md border bg-white transition-all',
           active

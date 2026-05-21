@@ -11,14 +11,20 @@
 
 User trong block editor cần thêm element mới vào block đã có (ngoài các slot cố định như `title`, `imageUrl`, …). Mỗi element user thêm là một đối tượng độc lập, kéo thả tự do trong block (Figma-style), persist cùng canvas.
 
-**4 kind hỗ trợ phase 1:**
+**10 kind hỗ trợ (Wave 1 + Wave 2):**
 
 | Kind | Mô tả | Use case |
 |---|---|---|
-| `text` | Label tĩnh chỉ hiển thị | Caption, badge, label phụ |
+| `text` | Label tĩnh + animation modes (typewriter / fade-up / split-slide-up / counter / marquee) | Caption, badge, headline |
 | `edit_text` | Input field cho end-user nhập | Form ngắn, search box, comment |
-| `photo` | Ảnh từ media library | Decorative image, logo, icon |
+| `photo` | Ảnh + optional flip-card (mặt sau) | Decorative image, logo, flip card, tap-to-flip |
 | `video` | Video (URL hoặc media) | Demo, intro, hero clip |
+| `hotspot` | Pin click → modal có ảnh / CTA | Tooltip floorplan, marker map, product detail |
+| `compare` | Slider before/after | Trước/sau renovate, day/night, retouch |
+| `range` | Input range chọn số trong khoảng | Budget / area / chỉ số tham số |
+| `countdown` | Đếm ngược tới deadline / sự kiện | Flash sale, event launch, live availability |
+| `reveal` | Cào / lột / spotlight để hé lộ ảnh | Coupon scratch, peel-to-reveal banner |
+| `spin_wheel` | Vòng quay may mắn với weighted segments | Gamification, prize draw, marketing |
 
 ---
 
@@ -181,6 +187,175 @@ BE constraint: validate `mediaId` tồn tại trong `media_assets` (FK), `status
 ```
 
 BE validate XOR: `mediaId` hoặc `url`, không cả hai.
+
+### 3.5. `hotspot` (pin click → modal popup)
+
+Pin nhỏ (typical 36×36 chip) chồng lên ảnh / block — click mở **modal fullscreen** có ảnh + tiêu đề + mô tả + CTA. Trigger phase 1 chỉ hỗ trợ `click`.
+
+```jsonc
+{
+  "kind": "hotspot",
+  "content": {
+    "pinLabel": "+",                  // optional, ≤ 3 char, hiển thị trong chip
+    "title":    "Hồ bơi vô cực",      // required, ≤ 120 char
+    "body":     "View toàn cảnh ...", // optional, ≤ 1000 char, multi-line
+    "imageUrl": "https://...png",     // optional — show ở top modal
+    "ctaText":  "Xem chi tiết",       // optional
+    "ctaUrl":   "https://...",        // optional, http(s)
+    "trigger":  "click"               // optional, default "click"
+  },
+  "style": {
+    "backgroundColor": "#0ea5e9",
+    "color":           "#ffffff",
+    "borderColor":     "#ffffff",
+    "borderWidth":     3,
+    "borderRadius":    999,
+    "fontSize":        16,
+    "fontWeight":      700,
+    "fontFamily":      "inter"
+  }
+}
+```
+
+**Validation cụ thể:**
+- `pinLabel` ≤ 3 char
+- `imageUrl` (nếu có) phải là http(s) URL
+- `ctaUrl` (nếu có) phải là http(s) URL
+- `trigger` ∈ `["click"]` (hover defer phase 2)
+
+### 3.6. `compare` (slider before/after)
+
+Hai ảnh chồng lên nhau, divider drag từ trái → phải để reveal phần ảnh sau. Use case: trước/sau renovate, day/night, retouch.
+
+```jsonc
+{
+  "kind": "compare",
+  "content": {
+    "beforeUrl":    "https://...before.jpg",  // required, ảnh ON TOP (bị mask)
+    "afterUrl":     "https://...after.jpg",   // required, ảnh dưới (lộ ra khi kéo)
+    "defaultRatio": 0.5,                      // optional, 0–1, default 0.5
+    "beforeAlt":    "Trước",                  // optional, label corner
+    "afterAlt":     "Sau"                     // optional, label corner
+  },
+  "style": {
+    "borderRadius": 8,
+    "opacity":      1
+  }
+}
+```
+
+**Validation cụ thể:**
+- `beforeUrl`, `afterUrl` required, http(s) URL
+- `defaultRatio` ∈ [0, 1] — BE clamp về [0.02, 0.98] trước khi lưu
+- `beforeAlt`, `afterAlt` ≤ 60 char
+
+### 3.7. `range` (input slider giá trị)
+
+`<input type="range">` cho user kéo chọn 1 giá trị trong khoảng. Submit cùng form data qua `fieldName` (giống `edit_text`).
+
+```jsonc
+{
+  "kind": "range",
+  "content": {
+    "fieldName":    "budget",          // required, regex ^[a-zA-Z_][a-zA-Z0-9_]*$
+    "label":        "Ngân sách",       // optional, ≤ 60 char
+    "min":          0,                  // required, number
+    "max":          5000,               // required, number > min
+    "step":         100,                // optional, default 1, > 0
+    "defaultValue": 2000,               // optional, mặc định = min
+    "showValue":    true,               // optional, default true
+    "unit":         "₫"                 // optional, ≤ 8 char (vd "₫", "m²", "°C")
+  },
+  "style": {
+    "backgroundColor": "#0ea5e9",       // accent color (track + thumb)
+    "color":           "#0a0a0a",       // label text color
+    "padding":         8
+  }
+}
+```
+
+**Validation cụ thể:**
+- `min`, `max`: number, `max > min`
+- `defaultValue` (nếu có) ∈ [min, max]
+- `step` > 0, ≤ (max − min)
+- `fieldName` unique trong block (BE có thể defer check, FE chịu)
+
+### 3.8. `countdown` (đếm ngược)
+
+Timer tick mỗi giây tới `targetIso`, hiện days/hours/minutes/seconds. Sau khi hết → `expiredText`.
+
+```jsonc
+{
+  "kind": "countdown",
+  "content": {
+    "targetIso":   "2026-12-31T23:59:00+07:00",   // required, ISO 8601
+    "units":       ["days", "hours", "minutes", "seconds"],  // optional
+    "label":       "Còn lại",                      // optional, ≤ 60 char
+    "expiredText": "Đã kết thúc",                  // optional, ≤ 60 char
+    "style":       "flat"                          // optional: "flat" | "flip"
+  },
+  "style": {
+    "fontSize":   28,
+    "fontWeight": 700,
+    "color":      "#0a0a0a",
+    "textAlign":  "center"
+  }
+}
+```
+
+**Validation cụ thể:**
+- `targetIso` parse được bằng `Date.parse()`
+- `units` items ∈ ["days","hours","minutes","seconds"], length 1-4, no duplicates
+- `style` ∈ ["flat","flip"]
+
+### 3.9. `reveal` (cào / lột / spotlight)
+
+Cover image overlay trên reveal image, mask theo tương tác.
+
+```jsonc
+{
+  "kind": "reveal",
+  "content": {
+    "coverUrl":  "https://...cover.jpg",   // required, http(s)
+    "revealUrl": "https://...reveal.jpg",  // required, http(s)
+    "mode":      "scratch",                 // required: "scratch" | "peel" | "spotlight" | "tap"
+    "brushSize": 60                         // optional, 10-200 px
+  },
+  "style": { "borderRadius": 8 }
+}
+```
+
+**Validation cụ thể:**
+- `coverUrl`, `revealUrl` required, http(s) URL
+- `mode` enum strict
+- `brushSize` ∈ [10, 200]
+
+### 3.10. `spin_wheel` (vòng quay may mắn)
+
+```jsonc
+{
+  "kind": "spin_wheel",
+  "content": {
+    "segments": [                                    // required, length 2-12
+      { "id": "s1", "label": "10%", "color": "#0ea5e9", "prize": "Giảm 10%", "weight": 1 },
+      { "id": "s2", "label": "5%",  "color": "#a855f7", "prize": "Giảm 5%",  "weight": 1 },
+      { "id": "s3", "label": "20%", "color": "#22c55e", "prize": "Giảm 20%", "weight": 1 }
+    ],
+    "spinDurationMs": 4000,    // optional, 500-10000
+    "buttonLabel":    "Quay"   // optional, ≤ 30 char
+  }
+}
+```
+
+**Validation cụ thể:**
+- `segments`: 2-12 entries, `id` unique trong block, regex `^[a-zA-Z0-9_-]+$`
+- `segments[].label` ≤ 30 char, required
+- `segments[].color` hex / rgba string, optional (default `#94a3b8`)
+- `segments[].weight` ≥ 0 (FE clamps NaN/negative to 1)
+- `segments[].prize` ≤ 100 char, optional
+- `spinDurationMs` ∈ [500, 10000]
+
+**Tracking gợi ý:** spin wheel nên fire event với `customData: { wonSegmentId, wonPrize }` để analytics theo dõi prize distribution.
 
 ---
 

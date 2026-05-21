@@ -30,15 +30,37 @@ export function TimelineRuler({
   onScrub,
 }: TimelineRulerProps) {
   const ref = React.useRef<HTMLDivElement>(null);
+  const draggingRef = React.useRef(false);
   const tickStep = pickTickStep(pxPerMs);
   const totalWidth = Math.max(duration * pxPerMs, 200);
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const ms = snapTime(x / pxPerMs);
-    onScrub(Math.min(duration, ms));
+  const scrubFromEvent = React.useCallback(
+    (clientX: number) => {
+      if (!ref.current) return;
+      const rect = ref.current.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const ms = snapTime(x / pxPerMs);
+      onScrub(Math.max(0, Math.min(duration, ms)));
+    },
+    [duration, pxPerMs, onScrub]
+  );
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    draggingRef.current = true;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    scrubFromEvent(e.clientX);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return;
+    scrubFromEvent(e.clientX);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
   };
 
   const ticks: number[] = [];
@@ -52,8 +74,12 @@ export function TimelineRuler({
       />
       <div
         ref={ref}
-        onClick={handleClick}
-        className='relative flex-1 cursor-crosshair overflow-hidden select-none'
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        data-testid='motion-ruler'
+        className='relative flex-1 cursor-grab touch-none overflow-hidden select-none active:cursor-grabbing'
         style={{ minWidth: totalWidth }}
       >
         {ticks.map(t => {

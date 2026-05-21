@@ -10,6 +10,7 @@ import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import { Spinner } from '@/components/atoms/spinner';
 import { SectionHeader } from '@/components/molecules/SectionHeader';
+import { serializeCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
 import { BlockReviewCard } from '@/components/modules/CanvasTemplate/ai/BlockReviewCard';
 import { VersionHistoryDrawer } from '@/components/modules/CanvasTemplate/ai/VersionHistoryDrawer';
 import { ImageSuggestionDialog } from '@/components/dialogs/ImageSuggestionDialog';
@@ -177,11 +178,77 @@ export default function AITemplateReviewPage() {
     toast.success(`Đã khôi phục về v${v.version}`);
   };
 
+  const [saving, setSaving] = React.useState(false);
+
   const handleConfirmSave = async () => {
-    // TODO(BE/PO): final save flow — per spec, content is persisted into
-    // the existing template entity. Concrete endpoint + payload TBD.
-    toast.success('Đã lưu (stub). Endpoint cuối sẽ wire khi BE confirm.');
-    router.push('/ai-templates');
+    if (saving) return;
+    setSaving(true);
+    try {
+      // Phase 1: persist AI draft into user's canvas-templates list. We
+      // create a fresh canvas template (is_template=false → user draft),
+      // stash the AI payload as `ai_draft` sidecar inside canvas_data so it
+      // survives reload. The block-editor schema itself stays empty for now
+      // — wiring a proper AI-blocks → block-editor-blocks mapping is a
+      // separate task (TODO below).
+      const productName = String(userInput.product_name ?? '').trim();
+      const name = productName
+        ? `AI: ${productName}`
+        : `AI draft ${new Date().toLocaleString('vi-VN')}`;
+
+      // BE validates `canvas_data` against the block-editor schema (v2.0)
+      // and rejects unknown top-level keys — so we can't stash the raw AI
+      // payload as a sidecar there. Stash it client-side under the new
+      // canvas id (sessionStorage); the canvas editor (or a future
+      // dedicated route) can read it back when mapping AI blocks →
+      // block-editor blocks is wired.
+      // TODO(canvas mapping): translate `blocks[]` into block-editor Block[]
+      // so the canvas editor renders AI content directly.
+      // Use the canonical v2.0 wire format via the editor's own
+      // serializer — keeps us in sync with BE schema validator (which
+      // rejected our legacy `{ version: 1, blocks: [] }` shape).
+      const canvas_data = serializeCanvas([]);
+      // eslint-disable-next-line no-console
+      console.debug('[ai-templates] canvas_data payload', canvas_data);
+
+      const created = await rexerApi.canvasTemplates.create({
+        name,
+        width: 1200,
+        height: 800,
+        engine: 'fabric',
+        engine_version: '5.3.0',
+        canvas_data,
+        is_template: false,
+      });
+
+      try {
+        sessionStorage.setItem(
+          `aitpl:draft:${created.id}`,
+          JSON.stringify({
+            ai_template_id: templateId,
+            session_id: sessionId,
+            version: currentVersion,
+            user_input: userInput,
+            blocks,
+            image_suggestions: imageSuggestions,
+          })
+        );
+      } catch {
+        // Quota / private-mode — silent fallback.
+      }
+      toast.success(`Đã lưu vào template "${created.name}"`);
+      // Route to /template (canvas tab) so the user sees the new entry.
+      router.push('/template');
+    } catch (err) {
+      toast.error(
+        err instanceof RxApiError
+          ? err.message || err.code
+          : err instanceof Error
+            ? err.message
+            : 'Lưu thất bại'
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!sessionId) {
@@ -236,10 +303,11 @@ export default function AITemplateReviewPage() {
               variant='primary'
               size='sm'
               onClick={handleConfirmSave}
+              disabled={saving || blocks.length === 0}
               className='gap-1'
             >
               <Save className='size-3.5' />
-              {tReview('confirm_save')}
+              {saving ? 'Đang lưu…' : tReview('confirm_save')}
             </Button>
           </div>
         }

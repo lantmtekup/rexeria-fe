@@ -4,13 +4,16 @@ import { cn } from '@/lib/cn';
 
 import type {
   BlockBackground,
+  ElementPositionsMap,
   ElementStylesMap,
   PhotoGalleryContent,
 } from '../types';
 import {
   blockBackgroundStyle,
+  composeStyle,
   elementStyleOf,
   orderStyle,
+  positionStyle,
   selectableClass,
 } from './applyStyle';
 import { TransformedImage } from './TransformedImage';
@@ -20,6 +23,7 @@ interface PhotoGalleryProps {
   styles?: ElementStylesMap;
   background?: BlockBackground;
   order?: string[];
+  positions?: ElementPositionsMap;
   activeKey?: string | null;
   className?: string;
 }
@@ -29,23 +33,22 @@ export function PhotoGallery({
   styles,
   background,
   order,
+  positions,
   activeKey,
   className,
 }: PhotoGalleryProps) {
   const photos = content.photos.slice(0, 5);
   const hasFive = photos.length >= 5;
-  const sEyebrow = orderStyle(
-    order,
-    'eyebrow',
-    elementStyleOf(styles, 'eyebrow')
-  );
-  const sTitle = orderStyle(order, 'title', elementStyleOf(styles, 'title'));
-  const sDescription = orderStyle(
-    order,
-    'description',
-    elementStyleOf(styles, 'description')
-  );
-  const sPhotos = orderStyle(order, 'photos', elementStyleOf(styles, 'photos'));
+  const styleOf = (key: string) =>
+    composeStyle(
+      elementStyleOf(styles, key),
+      orderStyle(order, key),
+      positionStyle(positions, key)
+    );
+  const sEyebrow = styleOf('eyebrow');
+  const sTitle = styleOf('title');
+  const sDescription = styleOf('description');
+  const sPhotos = styleOf('photos');
 
   return (
     <div

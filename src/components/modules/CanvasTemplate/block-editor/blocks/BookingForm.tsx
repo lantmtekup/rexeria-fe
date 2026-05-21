@@ -5,12 +5,15 @@ import { cn } from '@/lib/cn';
 import type {
   BlockBackground,
   BookingFormContent,
+  ElementPositionsMap,
   ElementStylesMap,
 } from '../types';
 import {
   blockBackgroundStyle,
+  composeStyle,
   elementStyleOf,
   orderStyle,
+  positionStyle,
   selectableClass,
 } from './applyStyle';
 
@@ -19,6 +22,7 @@ interface BookingFormProps {
   styles?: ElementStylesMap;
   background?: BlockBackground;
   order?: string[];
+  positions?: ElementPositionsMap;
   activeKey?: string | null;
   className?: string;
 }
@@ -28,35 +32,22 @@ export function BookingForm({
   styles,
   background,
   order,
+  positions,
   activeKey,
   className,
 }: BookingFormProps) {
-  const sEyebrow = orderStyle(
-    order,
-    'eyebrow',
-    elementStyleOf(styles, 'eyebrow')
-  );
-  const sTitle = orderStyle(order, 'title', elementStyleOf(styles, 'title'));
-  const sDescription = orderStyle(
-    order,
-    'description',
-    elementStyleOf(styles, 'description')
-  );
-  const sReasons = orderStyle(
-    order,
-    'reasons',
-    elementStyleOf(styles, 'reasons')
-  );
-  const sSubmit = orderStyle(
-    order,
-    'submitText',
-    elementStyleOf(styles, 'submitText')
-  );
-  const sNote = orderStyle(
-    order,
-    'noteText',
-    elementStyleOf(styles, 'noteText')
-  );
+  const styleOf = (key: string) =>
+    composeStyle(
+      elementStyleOf(styles, key),
+      orderStyle(order, key),
+      positionStyle(positions, key)
+    );
+  const sEyebrow = styleOf('eyebrow');
+  const sTitle = styleOf('title');
+  const sDescription = styleOf('description');
+  const sReasons = styleOf('reasons');
+  const sSubmit = styleOf('submitText');
+  const sNote = styleOf('noteText');
 
   return (
     <div

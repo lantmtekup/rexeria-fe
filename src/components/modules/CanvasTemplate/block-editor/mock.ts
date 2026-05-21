@@ -40,6 +40,13 @@ const NAME_BY_TYPE: Record<BlockType, string> = {
   booking_form: 'Đặt chỗ',
   cta_section: 'CTA',
   image_carousel: 'Slide ảnh',
+  stories: 'Stories',
+  split_screen: 'Split screen',
+  quiz: 'Quiz',
+  poll: 'Bình chọn',
+  carousel_3d: 'Coverflow 3D',
+  flipbook: 'Flipbook',
+  panorama: 'Panorama 360°',
 };
 
 function buildBlock(id: string, type: BlockType): Block {

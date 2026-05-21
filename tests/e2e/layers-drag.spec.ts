@@ -34,9 +34,13 @@ async function readOrder(page: Page): Promise<string[]> {
 }
 
 async function dragRow(page: Page, srcKey: string, dstKey: string) {
-  const src = page.locator(`[data-layer-key="${srcKey}"]`);
+  // The drag listener is bound to a dedicated handle button on each row
+  // (Figma/Notion pattern — added in commit 4dd4300). Grabbing the row
+  // centre would land on the select button instead → MouseSensor never
+  // activates. Anchor the press on the handle, drop on the destination row.
+  const handle = page.getByTestId(`layer-drag-handle-${srcKey}`);
   const dst = page.locator(`[data-layer-key="${dstKey}"]`);
-  const a = await src.boundingBox();
+  const a = await handle.boundingBox();
   const b = await dst.boundingBox();
   if (!a || !b) throw new Error('boxes missing');
   await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);

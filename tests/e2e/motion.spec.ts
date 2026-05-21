@@ -37,6 +37,18 @@ test.describe('Motion timeline editor', () => {
     await expect(page.getByTestId('header-motion-editor')).toBeVisible({
       timeout: 20_000,
     });
+    // Activate hero_split so every test starts from the same block. Without
+    // this, the persisted active_block_id from prior test runs leaks in and
+    // AddTrackPopover renders at a different height (different element-key
+    // count → flaky clicks).
+    const heroSplitTab = page.getByTestId('block-tab-hero_split');
+    if (await heroSplitTab.count()) {
+      await heroSplitTab.scrollIntoViewIfNeeded();
+      await heroSplitTab.evaluate(el => (el as HTMLElement).click());
+      await expect(heroSplitTab).toHaveAttribute('data-active', 'true', {
+        timeout: 5_000,
+      });
+    }
   });
 
   test('header Timeline button opens the modal', async ({ page }) => {
