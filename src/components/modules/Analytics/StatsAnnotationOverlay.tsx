@@ -3,7 +3,7 @@
 /**
  * Figma-style stats annotation overlay for landing pages.
  *
- * Wraps the rendered page; when enabled (toggle + admin/staff role), measures
+ * Wraps the rendered page; when enabled (toggle + logged-in user), measures
  * each `[data-block-id]` and `[data-element-id]` descendant via ResizeObserver
  * and renders one summary card per block in the LEFT gutter + one per element
  * (≥ ELEMENT_VIEWS_THRESHOLD) in the RIGHT gutter, connected by an SVG leader
@@ -12,8 +12,10 @@
  * Persistence: toggle state + date range stored in localStorage. Overlay is
  * zero-cost when OFF (renders nothing, doesn't measure).
  *
- * Permission: admin/staff only. BE breakdown endpoint is admin-gated; brand
- * users will need a separate brand-accessible endpoint (not yet on BE).
+ * Permission: visible to ANY logged-in user (admin / staff / client_user).
+ * The BE breakdown endpoint is still admin-gated, so for client_user we
+ * surface a "BE pending" banner instead of data until wave 2 W2.1 ships
+ * `/portal/templates/{id}/breakdown` (see `docs/be-missing-apis-phase1-wave2.md`).
  */
 
 import * as React from 'react';
@@ -368,20 +370,24 @@ export function StatsAnnotationOverlay({
 }) {
   const user = useAppSelector(s => s.auth.user);
   const role = user?.role ?? user?.principal_type ?? '';
-  const canAccess = role === 'admin' || role === 'staff';
+  const isLoggedIn = !!user;
+  const isAdminScope = role === 'admin' || role === 'staff';
 
   const [enabled, setEnabledState] = React.useState(false);
   const [range, setRangeState] = React.useState<DateRange>('30d');
   const [rows, setRows] = React.useState<BlockBreakdownRow[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [narrow, setNarrow] = React.useState(false);
+  // Sticky 403 flag so the brand-pending banner doesn't flash off between
+  // dropdown range changes (each change re-triggers fetch).
+  const [forbidden, setForbidden] = React.useState(false);
 
-  // Hydrate persisted state once we know the user is allowed in.
+  // Hydrate persisted state once we know the user is logged in.
   React.useEffect(() => {
-    if (!canAccess) return;
+    if (!isLoggedIn) return;
     setEnabledState(readEnabled());
     setRangeState(readRange());
-  }, [canAccess]);
+  }, [isLoggedIn]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -401,7 +407,7 @@ export function StatsAnnotationOverlay({
   };
 
   React.useEffect(() => {
-    if (!enabled || !canAccess) return;
+    if (!enabled || !isLoggedIn) return;
     let cancelled = false;
     setLoading(true);
     rexerApi.templateAnalytics
@@ -409,10 +415,18 @@ export function StatsAnnotationOverlay({
       .then(data => {
         if (cancelled) return;
         setRows(Array.isArray(data) ? data : []);
+        setForbidden(false);
       })
-      .catch(() => {
+      .catch(err => {
         if (cancelled) return;
         setRows([]);
+        // BE breakdown is admin-gated — flag 403 for brand users so we can
+        // surface a friendly "BE pending" banner instead of silent emptiness.
+        const status =
+          err && typeof err === 'object' && 'status' in err
+            ? (err as { status: number }).status
+            : undefined;
+        setForbidden(status === 403);
       })
       .finally(() => {
         if (cancelled) return;
@@ -421,7 +435,7 @@ export function StatsAnnotationOverlay({
     return () => {
       cancelled = true;
     };
-  }, [enabled, range, templateId, canAccess]);
+  }, [enabled, range, templateId, isLoggedIn]);
 
   const blockSelector = '[data-block-id]';
   const elementSelector = '[data-element-id]';
@@ -467,7 +481,8 @@ export function StatsAnnotationOverlay({
     return items;
   }, [rows]);
 
-  if (!canAccess) {
+  // Anonymous viewers (public visitor without login) never see the overlay.
+  if (!isLoggedIn) {
     return <>{children}</>;
   }
 
@@ -481,6 +496,18 @@ export function StatsAnnotationOverlay({
         loading={loading}
         hasData={rows.length > 0}
       />
+      {enabled && forbidden && !isAdminScope && (
+        <div className='fixed top-16 right-4 z-50 max-w-sm rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900 shadow'>
+          <div className='font-semibold'>
+            Phân tích cho brand — đang phát triển
+          </div>
+          <div className='mt-0.5 text-amber-800'>
+            BE chưa ship endpoint <code>/portal/templates/.../breakdown</code>{' '}
+            (wave 2 W2.1). Hiện chỉ admin xem được dữ liệu chi tiết. UI sẽ tự
+            live khi BE merge.
+          </div>
+        </div>
+      )}
       {children}
       {enabled && !narrow && (
         <Gutters
