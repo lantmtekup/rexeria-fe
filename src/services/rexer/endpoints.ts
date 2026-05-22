@@ -170,6 +170,15 @@ import type {
   ActivityFeedResponse,
   StaffInboxItem,
   StaffInboxListResponse,
+  // Phase 2 — portal endpoints (be-missing-apis-portal.md)
+  PortalDashboardSummary,
+  PortalTemplateListResponse,
+  PortalCommentListResponse,
+  PortalAdCampaign,
+  PortalAdCampaignListResponse,
+  PortalAdChannelListResponse,
+  CreatePortalAdCampaignRequest,
+  UpdatePortalAdCampaignRequest,
 } from './types';
 
 export const rexerApi = {
@@ -1048,6 +1057,68 @@ export const rexerApi = {
   activityFeed: {
     list: (query?: { workspace_id?: string; limit?: number }) =>
       rx<ActivityFeedResponse>('/portal/activity', { query }),
+  },
+
+  // ── Portal (Phase 2 — brand-side) ─────────────────────────────────────
+  portal: {
+    /** Brand dashboard top-cards + 7d trend. */
+    dashboardSummary: () =>
+      rx<PortalDashboardSummary>('/portal/dashboard/summary'),
+    /** Brand-scoped list of canvas templates the user can manage. */
+    listTemplates: (query?: {
+      status?: string;
+      workspace_id?: string;
+      page?: number;
+      limit?: number;
+    }) => rx<PortalTemplateListResponse>('/portal/templates', { query }),
+    /** Block breakdown for stats overlay — brand-accessible mirror of admin. */
+    templateBreakdown: (
+      templateId: string,
+      query?: { start?: string; end?: string }
+    ) =>
+      rx<BlockBreakdownRow[]>(`/portal/templates/${templateId}/breakdown`, {
+        query,
+      }),
+    /** Cross-template comment digest (replaces FAKE_THREADS on /portal/comments). */
+    listComments: (query?: {
+      status?: 'open' | 'resolved';
+      workspace_id?: string;
+      page?: number;
+      limit?: number;
+    }) => rx<PortalCommentListResponse>('/portal/comments', { query }),
+    /** Brand-side workspace create (auto-scoped by ctx.client_id). */
+    createWorkspace: (body: CreateWorkspaceRequest) =>
+      rx<Workspace>('/portal/workspaces', { method: 'POST', body }),
+    /** Activity feed mark-seen — clears the unread badge state. */
+    markActivitySeen: () =>
+      rx<{ message?: string }>('/portal/activity/mark-seen', {
+        method: 'POST',
+      }),
+  },
+
+  // ── Portal Ads ────────────────────────────────────────────────────────
+  portalAds: {
+    listChannels: () => rx<PortalAdChannelListResponse>('/portal/ads/channels'),
+    listCampaigns: (query?: {
+      status?: string;
+      channel?: string;
+      workspace_id?: string;
+      page?: number;
+      limit?: number;
+    }) => rx<PortalAdCampaignListResponse>('/portal/ads/campaigns', { query }),
+    getCampaign: (id: string) =>
+      rx<PortalAdCampaign>(`/portal/ads/campaigns/${id}`),
+    createCampaign: (body: CreatePortalAdCampaignRequest) =>
+      rx<PortalAdCampaign>('/portal/ads/campaigns', { method: 'POST', body }),
+    updateCampaign: (id: string, body: UpdatePortalAdCampaignRequest) =>
+      rx<PortalAdCampaign>(`/portal/ads/campaigns/${id}`, {
+        method: 'PATCH',
+        body,
+      }),
+    deleteCampaign: (id: string) =>
+      rx<{ message?: string }>(`/portal/ads/campaigns/${id}`, {
+        method: 'DELETE',
+      }),
   },
 
   // ── Staff inbox (admin/staff task queue) ──────────────────────────────

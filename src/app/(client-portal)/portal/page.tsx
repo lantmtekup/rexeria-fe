@@ -51,6 +51,7 @@ const ACTIVITY_META: Record<
 export default function PortalDashboardPage() {
   const activeWs = useActiveWorkspace();
   const [stats, setStats] = useState<DashboardStats>(FAKE_STATS);
+  const [trend7d, setTrend7d] = useState<number[]>(FAKE_TREND_7D);
   const [source, setSource] = useState<'live' | 'fake'>('fake');
   const [loadError, setLoadError] = useState<string | undefined>(undefined);
   const [activity, setActivity] = useState<ActivityItem[]>(FAKE_ACTIVITY);
@@ -60,6 +61,7 @@ export default function PortalDashboardPage() {
     loadDashboardStats().then(res => {
       if (cancelled) return;
       setStats(res.data);
+      if (res.trend_7d && res.trend_7d.length > 0) setTrend7d(res.trend_7d);
       setSource(res.source);
       setLoadError(res.error);
     });
@@ -200,7 +202,7 @@ export default function PortalDashboardPage() {
               ↗ +18.2%
             </span>
           </div>
-          <BarChart values={FAKE_TREND_7D} />
+          <BarChart values={trend7d} />
         </div>
 
         {/* Quick actions */}

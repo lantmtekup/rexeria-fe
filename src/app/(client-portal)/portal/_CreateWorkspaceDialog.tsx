@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * Brand-portal "Create workspace" dialog. Fires `POST /admin/clients/{id}/workspaces`
- * — currently admin-gated on BE, so a `client_user` will hit 403 and we
- * surface that as a friendly toast. Wave 2 W2.x will open a brand-side
- * endpoint and this dialog becomes universal.
+ * Brand-portal "Create workspace" dialog. Now fires `POST /portal/workspaces`
+ * — brand-scoped endpoint that auto-derives `client_id` from the session,
+ * so the FE no longer needs to pass it. Falls back gracefully if BE still
+ * has an outdated build (admin endpoint with explicit clientId) by 403'ing.
  */
 
 import * as React from 'react';
@@ -84,7 +84,7 @@ export function CreateWorkspaceDialog({
     setSubmitting(true);
     setError(null);
     try {
-      const ws = await rexerApi.workspaces.create(clientId, {
+      const ws = await rexerApi.portal.createWorkspace({
         name: name.trim(),
         slug: slug.trim(),
         description: description.trim() || undefined,
@@ -96,7 +96,7 @@ export function CreateWorkspaceDialog({
       const status = err instanceof RxApiError ? err.status : undefined;
       if (status === 403) {
         setError(
-          'BE đang giới hạn endpoint này cho admin. Brand user cần chờ wave 2 mở quyền — hoặc nhờ staff Rexer tạo hộ.'
+          'Endpoint /portal/workspaces yêu cầu brand scope — admin chưa link client cụ thể không tạo được. Login bằng brand user.'
         );
       } else {
         const msg =

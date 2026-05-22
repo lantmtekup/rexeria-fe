@@ -1790,3 +1790,131 @@ export interface RxErrorBody {
   details?: unknown;
   request_id?: string;
 }
+
+// ── Portal (Phase 2 wave — be-missing-apis-portal.md) ─────────────────────
+
+export interface PortalDashboardSummary {
+  templates_count: number;
+  templates_published: number;
+  total_views_30d: number;
+  total_visitors_30d: number;
+  total_clicks_30d: number;
+  total_leads_30d: number;
+  assets_count: number;
+  open_comments: number;
+  unread_notifications: number;
+  trend_7d: number[];
+}
+
+export interface PortalTemplateAuthor {
+  user_id: string;
+  name: string;
+  role: string;
+}
+
+export interface PortalTemplate {
+  id: string;
+  workspace_id: string;
+  name: string;
+  thumbnail_url?: string;
+  status: string;
+  views_30d: number;
+  clicks_30d: number;
+  leads_30d: number;
+  open_comments: number;
+  last_publish_at?: string;
+  last_updated_by?: PortalTemplateAuthor;
+}
+
+export interface PortalTemplateListResponse {
+  items: PortalTemplate[];
+  page?: number;
+  limit?: number;
+  total?: number;
+}
+
+/**
+ * Cross-template aggregated comment thread for the portal "Comments &
+ * Requests" page. BE returns `items: null` when no rows — coerce to [] at
+ * the consumer layer.
+ */
+export interface PortalCommentDigestItem extends TemplateComment {
+  template_name?: string;
+  template_thumbnail_url?: string;
+  reply_count?: number;
+  last_activity_at?: string;
+}
+
+export interface PortalCommentListResponse {
+  items: PortalCommentDigestItem[] | null;
+  page: number;
+  limit: number;
+  total: number;
+}
+
+// ── Portal Ads ────────────────────────────────────────────────────────────
+
+export interface PortalAdChannel {
+  id: string;
+  name: string;
+}
+
+export interface PortalAdChannelListResponse {
+  items: PortalAdChannel[];
+}
+
+export type PortalAdObjective =
+  | 'awareness'
+  | 'traffic'
+  | 'conversion'
+  | 'retention';
+export type PortalAdStatus = 'draft' | 'active' | 'paused' | 'completed';
+
+export interface PortalAdCampaign {
+  id: string;
+  client_id?: string;
+  workspace_id?: string;
+  name: string;
+  objective?: PortalAdObjective | string;
+  status: PortalAdStatus | string;
+  channels: string[];
+  budget_amount?: number;
+  budget_currency?: string;
+  start_date?: string;
+  end_date?: string;
+  landing_template_id?: string;
+  utm_campaign?: string;
+  notes?: string;
+  /** Aggregate denormalised numbers — BE may include rolling 30d totals. */
+  impressions?: number;
+  clicks?: number;
+  spent_amount?: number;
+  conversions?: number;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PortalAdCampaignListResponse {
+  items: PortalAdCampaign[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
+export interface CreatePortalAdCampaignRequest {
+  name: string;
+  objective?: PortalAdObjective;
+  channels?: string[];
+  budget_amount?: number;
+  budget_currency?: string;
+  start_date?: string;
+  end_date?: string;
+  landing_template_id?: string;
+  utm_campaign?: string;
+  notes?: string;
+  status?: PortalAdStatus;
+}
+
+export type UpdatePortalAdCampaignRequest =
+  Partial<CreatePortalAdCampaignRequest>;

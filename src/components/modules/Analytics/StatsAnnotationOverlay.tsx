@@ -662,8 +662,13 @@ export function StatsAnnotationOverlay({
     if (!enabled || !isLoggedIn) return;
     let cancelled = false;
     setLoading(true);
-    rexerApi.templateAnalytics
-      .breakdown(templateId, rangeToParams(range))
+    // Phase 2: brand-side `/portal/templates/{id}/breakdown` ships per
+    // be-missing-apis-portal.md P0. Admin/staff still hit the original
+    // admin endpoint for cross-client visibility.
+    const fetchPromise = isAdminScope
+      ? rexerApi.templateAnalytics.breakdown(templateId, rangeToParams(range))
+      : rexerApi.portal.templateBreakdown(templateId, rangeToParams(range));
+    fetchPromise
       .then(data => {
         if (cancelled) return;
         setFetchedRows(Array.isArray(data) ? data : []);
@@ -672,12 +677,12 @@ export function StatsAnnotationOverlay({
       .catch(err => {
         if (cancelled) return;
         setFetchedRows([]);
-        // BE breakdown is admin-gated — flag 403 for brand users so we can
-        // surface a friendly "BE pending" banner instead of silent emptiness.
         const status =
           err && typeof err === 'object' && 'status' in err
             ? (err as { status: number }).status
             : undefined;
+        // Sticky 403 — should now be rare since brand has its own endpoint,
+        // but keep the banner as a safety net for older roles.
         setForbidden(status === 403);
       })
       .finally(() => {
@@ -687,7 +692,7 @@ export function StatsAnnotationOverlay({
     return () => {
       cancelled = true;
     };
-  }, [enabled, range, templateId, isLoggedIn]);
+  }, [enabled, range, templateId, isLoggedIn, isAdminScope]);
 
   const blockSelector = '[data-block-id]';
   const elementSelector = '[data-element-id]';
@@ -855,13 +860,10 @@ export function StatsAnnotationOverlay({
       />
       {enabled && forbidden && !isAdminScope && (
         <div className='fixed top-16 right-4 z-50 max-w-sm rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900 shadow'>
-          <div className='font-semibold'>
-            Phân tích cho brand — đang phát triển
-          </div>
+          <div className='font-semibold'>Không truy cập được dữ liệu</div>
           <div className='mt-0.5 text-amber-800'>
-            BE chưa ship endpoint <code>/portal/templates/.../breakdown</code>{' '}
-            (wave 2 W2.1). Hiện chỉ admin xem được dữ liệu chi tiết. UI sẽ tự
-            live khi BE merge.
+            Tài khoản hiện không có quyền xem breakdown cho template này. Liên
+            hệ staff Rexer nếu cần access.
           </div>
         </div>
       )}

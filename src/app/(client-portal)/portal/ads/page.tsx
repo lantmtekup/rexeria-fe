@@ -17,10 +17,48 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+import { rexerApi } from '@/services/rexer/endpoints';
+import type { PortalAdCampaign } from '@/services/rexer/types';
 
 import { fmtFull, fmtNum } from '../_data';
 import { PortalShell } from '../_shell';
+
+const CHANNEL_TO_PLATFORM: Record<string, Platform> = {
+  meta: 'facebook',
+  facebook: 'facebook',
+  instagram: 'instagram',
+  google: 'google',
+  tiktok: 'tiktok',
+};
+
+function beCampaignToLocal(c: PortalAdCampaign): Campaign {
+  const platform =
+    CHANNEL_TO_PLATFORM[(c.channels ?? [])[0] ?? ''] ?? 'facebook';
+  const status: Campaign['status'] =
+    c.status === 'active'
+      ? 'active'
+      : c.status === 'paused'
+        ? 'paused'
+        : c.status === 'completed'
+          ? 'ended'
+          : 'draft';
+  return {
+    id: c.id,
+    name: c.name,
+    platform,
+    objective: c.objective ?? '—',
+    status,
+    impressions: c.impressions ?? 0,
+    reach: 0,
+    clicks: c.clicks ?? 0,
+    spend_vnd: c.spent_amount ?? 0,
+    conversions: c.conversions ?? 0,
+    trend: [],
+    template_id: c.landing_template_id,
+  };
+}
 
 /* ---------- fake data ---------- */
 
@@ -185,8 +223,27 @@ type PlatformFilter = 'all' | Platform;
 export default function PortalAdsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [platformFilter, setPlatformFilter] = useState<PlatformFilter>('all');
+  const [campaigns, setCampaigns] = useState<Campaign[]>(FAKE_CAMPAIGNS);
 
-  const filtered = FAKE_CAMPAIGNS.filter(c => {
+  useEffect(() => {
+    let cancelled = false;
+    rexerApi.portalAds
+      .listCampaigns({ limit: 50 })
+      .then(res => {
+        if (cancelled) return;
+        if (res.items && res.items.length > 0) {
+          setCampaigns(res.items.map(beCampaignToLocal));
+        }
+      })
+      .catch(() => {
+        // keep FAKE fallback silently when BE rejects (e.g. admin no scope)
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filtered = campaigns.filter(c => {
     if (statusFilter !== 'all' && c.status !== statusFilter) return false;
     if (platformFilter !== 'all' && c.platform !== platformFilter) return false;
     return true;
@@ -348,13 +405,13 @@ export default function PortalAdsPage() {
         </span>
         <div className='flex flex-wrap gap-1'>
           <FilterBtn
-            label={`Tất cả · ${FAKE_CAMPAIGNS.length}`}
+            label={`Tất cả · ${campaigns.length}`}
             active={statusFilter === 'all'}
             onClick={() => setStatusFilter('all')}
           />
           {(['active', 'paused', 'ended', 'draft'] as const).map(s => {
             const m = STATUS_META[s];
-            const c = FAKE_CAMPAIGNS.filter(x => x.status === s).length;
+            const c = campaigns.filter(x => x.status === s).length;
             return (
               <FilterBtn
                 key={s}

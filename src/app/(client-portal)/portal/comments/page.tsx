@@ -1,6 +1,9 @@
 'use client';
 
 import { CheckCircle2, MessageSquare, Send } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+import { rexerApi } from '@/services/rexer/endpoints';
 
 import { FAKE_TEMPLATES } from '../_data';
 import { PortalShell } from '../_shell';
@@ -65,9 +68,55 @@ const FAKE_THREADS: Thread[] = [
   },
 ];
 
+function relativeTime(iso?: string): string {
+  if (!iso) return '';
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return iso;
+  const diffMin = Math.round((Date.now() - t) / 60_000);
+  if (diffMin < 1) return 'vừa xong';
+  if (diffMin < 60) return `${diffMin} phút trước`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `${diffH} giờ trước`;
+  if (diffH < 48) return 'hôm qua';
+  return `${Math.round(diffH / 24)} ngày trước`;
+}
+
 export default function PortalCommentsPage() {
-  const open = FAKE_THREADS.filter(t => t.status === 'open');
-  const resolved = FAKE_THREADS.filter(t => t.status === 'resolved');
+  const [threads, setThreads] = useState<Thread[]>(FAKE_THREADS);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      rexerApi.portal
+        .listComments({ status: 'open', limit: 50 })
+        .catch(() => null),
+      rexerApi.portal
+        .listComments({ status: 'resolved', limit: 50 })
+        .catch(() => null),
+    ]).then(([openRes, resolvedRes]) => {
+      if (cancelled) return;
+      const openItems = openRes?.items ?? [];
+      const resolvedItems = resolvedRes?.items ?? [];
+      if (openItems.length === 0 && resolvedItems.length === 0) return; // keep FAKE
+      const mapped: Thread[] = [...openItems, ...resolvedItems].map(c => ({
+        template_id: c.template_id,
+        template_name:
+          c.template_name ?? c.template_id.slice(0, 8) ?? 'Landing page',
+        status: c.status === 'resolved' ? 'resolved' : 'open',
+        author: c.author_name ?? c.author_id ?? 'Người dùng',
+        author_role: c.author_role === 'staff' ? 'staff' : 'brand',
+        body: c.body,
+        at: relativeTime(c.last_activity_at ?? c.created_at),
+      }));
+      setThreads(mapped);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const open = threads.filter(t => t.status === 'open');
+  const resolved = threads.filter(t => t.status === 'resolved');
   return (
     <PortalShell>
       <section>

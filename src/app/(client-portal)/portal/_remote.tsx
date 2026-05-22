@@ -169,26 +169,29 @@ const TEMPLATE_GRADIENTS = [
 
 export async function loadTemplates(): Promise<LoadResult<PortalTemplate[]>> {
   try {
-    const res = await rexerApi.clientPortal.myProjects();
-    const items: PortalTemplate[] = (res.items ?? []).map((p, i) => ({
-      id: p.project_id,
-      workspace_id: '', // BE chưa trả workspace_id; FE filter all khi rỗng
-      name: p.name || p.template_name || p.project_id,
+    // Phase 2: BE shipped `/portal/templates` (be-missing-apis-portal.md P0.C)
+    // with brand-scoped shape that maps almost 1:1 to PortalTemplate. Only
+    // the cosmetic `thumbnail_gradient` + `last_updated_at` need synthesis.
+    const res = await rexerApi.portal.listTemplates({ limit: 50 });
+    const items: PortalTemplate[] = (res.items ?? []).map((t, i) => ({
+      id: t.id,
+      workspace_id: t.workspace_id || '',
+      name: t.name,
       thumbnail_gradient: TEMPLATE_GRADIENTS[i % TEMPLATE_GRADIENTS.length],
       status:
-        p.status === 'published' ||
-        p.status === 'draft' ||
-        p.status === 'archived'
-          ? p.status
+        t.status === 'published' ||
+        t.status === 'draft' ||
+        t.status === 'archived'
+          ? t.status
           : 'draft',
-      views_30d: p.analytics_summary?.page_views ?? 0,
-      clicks_30d: p.analytics_summary?.cta_clicks ?? 0,
-      leads_30d: p.analytics_summary?.conversions ?? 0,
-      open_comments: 0,
-      last_updated_at: p.last_publish_at ?? new Date().toISOString(),
+      views_30d: t.views_30d,
+      clicks_30d: t.clicks_30d,
+      leads_30d: t.leads_30d,
+      open_comments: t.open_comments,
+      last_updated_at: t.last_publish_at ?? new Date().toISOString(),
       last_updated_by: {
-        name: 'Staff Rexer',
-        role: 'staff',
+        name: t.last_updated_by?.name ?? 'Staff Rexer',
+        role: t.last_updated_by?.role === 'staff' ? 'staff' : 'brand',
       },
     }));
     if (items.length === 0) {
@@ -206,36 +209,28 @@ export async function loadTemplates(): Promise<LoadResult<PortalTemplate[]>> {
 
 /* ---------- Dashboard ---------- */
 
-export async function loadDashboardStats(): Promise<
-  LoadResult<DashboardStats>
-> {
+export type DashboardLoadResult = LoadResult<DashboardStats> & {
+  trend_7d?: number[];
+};
+
+export async function loadDashboardStats(): Promise<DashboardLoadResult> {
   try {
-    const res = await rexerApi.dashboard.summary();
-    // Map BE shape to portal stats; BE DashboardSummary may have different fields
-    // Use a best-effort merge with sensible defaults from FAKE_STATS
-    const r = res as unknown as Record<string, number | undefined>;
+    // Phase 2: BE shipped `/portal/dashboard/summary` with the exact shape
+    // the portal expects — no more best-effort merge with FAKE_STATS.
+    const res = await rexerApi.portal.dashboardSummary();
     return {
       data: {
-        templates_count:
-          r.templates_count ?? r.projects_count ?? FAKE_STATS.templates_count,
-        templates_published:
-          r.templates_published ??
-          r.published_count ??
-          FAKE_STATS.templates_published,
-        total_views_30d:
-          r.total_views_30d ?? r.views ?? FAKE_STATS.total_views_30d,
-        total_visitors_30d:
-          r.total_visitors_30d ??
-          r.unique_visitors ??
-          FAKE_STATS.total_visitors_30d,
-        total_clicks_30d:
-          r.total_clicks_30d ?? r.clicks ?? FAKE_STATS.total_clicks_30d,
-        total_leads_30d:
-          r.total_leads_30d ?? r.leads ?? FAKE_STATS.total_leads_30d,
-        assets_count: r.assets_count ?? FAKE_STATS.assets_count,
-        open_comments: FAKE_STATS.open_comments,
-        unread_notifications: FAKE_STATS.unread_notifications,
+        templates_count: res.templates_count,
+        templates_published: res.templates_published,
+        total_views_30d: res.total_views_30d,
+        total_visitors_30d: res.total_visitors_30d,
+        total_clicks_30d: res.total_clicks_30d,
+        total_leads_30d: res.total_leads_30d,
+        assets_count: res.assets_count,
+        open_comments: res.open_comments,
+        unread_notifications: res.unread_notifications,
       },
+      trend_7d: res.trend_7d,
       source: 'live',
     };
   } catch (err) {
