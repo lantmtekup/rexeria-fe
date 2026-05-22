@@ -8,6 +8,21 @@ import { expect, test } from 'playwright/test';
 
 const STORAGE_KEY = 'rexer:saved-blocks';
 
+/**
+ * Minimal-but-valid HeroSplit content. The canvas editor's RenderBlock
+ * reads `stats.length`, `imageUrl`, etc. — passing `{}` crashes on first
+ * render. Anything that satisfies HeroSplitContent (`types.ts:82`) is fine.
+ */
+const MINIMAL_HERO_SPLIT_CONTENT = {
+  eyebrow: 'Test',
+  title: 'Test title',
+  description: 'Test description',
+  imageUrl: '',
+  stats: [] as Array<{ value: string; label: string }>,
+  ctaText: 'Click',
+  ctaLink: '#',
+};
+
 function makeSavedBlock(name: string, blockType = 'hero_split') {
   const now = new Date().toISOString();
   return {
@@ -20,7 +35,7 @@ function makeSavedBlock(name: string, blockType = 'hero_split') {
       blockType,
       name,
       isVisible: true,
-      contentVi: { desktop: {} },
+      contentVi: { desktop: MINIMAL_HERO_SPLIT_CONTENT },
       extraElements: [],
     },
   };
@@ -176,7 +191,7 @@ test.describe('Admin Blocks page', () => {
               blockType: 'hero_split',
               name: 'Edit Flow Test',
               isVisible: true,
-              contentVi: { desktop: {} },
+              contentVi: { desktop: MINIMAL_HERO_SPLIT_CONTENT },
               extraElements: [],
             },
           },
@@ -215,6 +230,128 @@ test.describe('Admin Blocks page', () => {
           .catch(() => undefined);
       }
     }
+  });
+
+  test('Cập nhật bản gốc end-to-end: dialog overwrite + scratch cleanup', async ({
+    page,
+    baseURL,
+  }) => {
+    test.setTimeout(60_000); // canvas editor load + autosave can be slow
+    const base = baseURL ?? 'http://localhost:3000';
+    await page.goto('/admin/blocks');
+
+    // Seed a saved block with a recognisable name so we can later confirm
+    // overwrite preserved the ID.
+    const savedId = `sb_overwrite_${Date.now().toString(36)}`;
+    const originalCreatedAt = '2026-01-01T00:00:00.000Z';
+    await page.evaluate(
+      ({ key, items }) =>
+        window.localStorage.setItem(key, JSON.stringify(items)),
+      {
+        key: STORAGE_KEY,
+        items: [
+          {
+            id: savedId,
+            name: 'Overwrite Test Block',
+            createdAt: originalCreatedAt,
+            block: {
+              id: 'b_overwrite',
+              blockType: 'hero_split',
+              name: 'Overwrite Test Block',
+              isVisible: true,
+              contentVi: { desktop: MINIMAL_HERO_SPLIT_CONTENT },
+              extraElements: [],
+            },
+          },
+        ],
+      }
+    );
+    await page.reload();
+
+    // Capture the scratch canvas POST so we can later assert it gets deleted.
+    const createPromise = page.waitForResponse(
+      r =>
+        r.url().includes('/api/rexer/canvas-templates') &&
+        r.request().method() === 'POST',
+      { timeout: 15_000 }
+    );
+
+    await page
+      .locator('button:has-text("Overwrite Test Block")')
+      .first()
+      .click();
+    await page
+      .getByRole('button', { name: 'Sửa trong canvas', exact: true })
+      .click();
+
+    const createResp = await createPromise;
+    const createBody = await createResp.json();
+    const scratchId: string = createBody?.canvas_template?.id ?? createBody?.id;
+    expect(scratchId, 'scratch canvas id should be returned').toBeTruthy();
+
+    // Wait for canvas editor to fully mount — bookmark button only appears
+    // after activeBlock is hydrated from the canvas API.
+    const bookmarkBtn = page.getByRole('button', {
+      name: 'Lưu block vào thư viện',
+    });
+    await expect(bookmarkBtn).toBeVisible({ timeout: 20_000 });
+    await bookmarkBtn.click();
+
+    // Save-block dialog should open in OVERWRITE mode because the URL has
+    // ?saved_block_id=<id>. Verify the title + the description showing the ID.
+    await expect(
+      page.getByRole('heading', { name: 'Cập nhật block trong thư viện' })
+    ).toBeVisible();
+    await expect(page.locator(`code:has-text("${savedId}")`)).toBeVisible();
+    // Both CTAs should be present.
+    await expect(
+      page.getByRole('button', { name: 'Cập nhật bản gốc', exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Lưu bản mới', exact: true })
+    ).toBeVisible();
+
+    // Click "Cập nhật bản gốc" → overwrite + cleanup + redirect.
+    await page
+      .getByRole('button', { name: 'Cập nhật bản gốc', exact: true })
+      .click();
+
+    // FE redirects to /admin/blocks after success.
+    await page.waitForURL('**/admin/blocks', { timeout: 15_000 });
+
+    // localStorage: original ID + createdAt preserved, updatedAt bumped.
+    const items = await page.evaluate(
+      key => JSON.parse(window.localStorage.getItem(key) ?? '[]'),
+      STORAGE_KEY
+    );
+    expect(items.length, 'should still have exactly 1 saved block').toBe(1);
+    const updated = items[0];
+    expect(updated.id, 'ID preserved').toBe(savedId);
+    expect(updated.createdAt, 'createdAt preserved').toBe(originalCreatedAt);
+    expect(
+      updated.updatedAt,
+      'updatedAt is bumped to a recent ISO'
+    ).toBeTruthy();
+    expect(
+      new Date(updated.updatedAt).getTime(),
+      'updatedAt > createdAt'
+    ).toBeGreaterThan(new Date(originalCreatedAt).getTime());
+
+    // Scratch canvas should be archived by the FE post-save hook. Manually
+    // probe — soft-delete may return 200 on subsequent DELETE (idempotent)
+    // or 404 if BE archives + hides. Either is acceptable; we just want to
+    // confirm the canvas no longer appears in the active list.
+    const listRes = await page.request.get(
+      `${base}/api/rexer/canvas-templates?is_active=true&limit=50`
+    );
+    expect(listRes.ok()).toBeTruthy();
+    const listBody = (await listRes.json()) as {
+      items: Array<{ id: string }>;
+    };
+    const stillThere = listBody.items.some(it => it.id === scratchId);
+    expect(stillThere, 'scratch canvas should not be in active list').toBe(
+      false
+    );
   });
 
   test('cards render BlockMiniPreview (data-block-id-like content)', async ({
