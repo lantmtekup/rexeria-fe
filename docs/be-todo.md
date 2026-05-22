@@ -145,6 +145,51 @@ Expected:
 
 ---
 
+### P0.6 — Admin assign block / landing page sang brand
+
+**Workflow Phase 1 managed service**: admin/staff Rexer tạo canvas templates + saved blocks, rồi **assign** sang brand cụ thể (`client_id` + `workspace_id`). Brand chỉ thấy cái đã được assign.
+
+**Endpoint mới**:
+
+```
+POST /v1/canvas-templates/{templateId}/assign
+```
+
+- **Auth**: CookieAuth, role `admin` hoặc `staff`
+- **Body**:
+  ```ts
+  {
+    client_id: string;           // brand sẽ nhận template
+    workspace_id?: string;       // workspace cụ thể trong brand (default = brand's default ws)
+    notes?: string;              // optional handover note
+  }
+  ```
+- **Server side**:
+  - Validate `workspace_id` thuộc `client_id` (ngược lại 400)
+  - Update canvas_templates: `SET client_id = ..., workspace_id = ...`
+  - Insert vào `template_assignments` (audit log): `{template_id, assigned_by, client_id, workspace_id, assigned_at}`
+  - Trả event vào activity feed của brand
+- **Response 200**: updated `CanvasTemplate`
+
+### P0.7 — Brand clone từ template library
+
+**Workflow**: Brand không tự tạo từ trống — họ browse "template library" (canvas_templates được Rexer mark `is_public_template = true`) rồi click "Dùng template này" → BE clone toàn bộ canvas_data + bindings vào workspace của brand như landing page mới.
+
+**Endpoints mới**:
+
+```
+GET  /v1/portal/templates/library?q=&category=&page=&limit=
+POST /v1/canvas-templates/{templateId}/clone-to-workspace
+```
+
+**GET library** — Auth: `client_user`. Trả `CanvasTemplate[]` filter `is_public_template = true`, thêm field `category?: string` cho UI tab. Không kèm `canvas_data` (lazy load).
+
+**POST clone-to-workspace**:
+- **Auth**: `client_user`
+- **Body**: `{ workspace_id?: string, name?: string }` (default workspace = ctx active, default name = `<source.name> (copy)`)
+- **Server**: clone full canvas_data + media bindings vào workspace của brand. Set `is_template = false`, `client_id = ctx.client_id`, `workspace_id = body.workspace_id`. Reset publish meta.
+- **Response 201**: new `CanvasTemplate`
+
 ### P0.5 — `/auth/register` trả role sai
 
 **Pain**: Self-registered user (qua `/auth/register`) được set `role = 'staff'` thay vì `client_user`. Brand owner đăng ký mới → smart-redirect đẩy sang `/admin` (sai).
@@ -345,7 +390,7 @@ Confirm: avatar upload (`POST /portal/me/avatar`) dùng chung `media_assets` tab
 
 | Priority | Items | BE work |
 |---|---|---|
-| **P0** (5) | Templates backfill · POST templates · me/* · workspace create test · auth/register role fix | ~2 ngày |
+| **P0** (7) | Templates backfill · POST templates · me/* · workspace create test · auth/register role · admin assign · brand clone-from-library | ~3 ngày |
 | **P1** (6) | Admin users · comments shape · ads aggregate · element_id naming · saved-blocks · curate doc | ~5 ngày |
 | **P2** (4) | Swagger regen · activity filter · empty[] convention · avatar storage | ~2h |
 
@@ -358,9 +403,11 @@ Confirm: avatar upload (`POST /portal/me/avatar`) dùng chung `media_assets` tab
 1. **P0.1 (1h)** — SQL migration backfill → mở khoá `/portal/landing-pages`
 2. **P0.5 (30m)** — fix `/auth/register` role → brand signup redirect đúng
 3. **P0.4 (30m test)** — verify workspace create với brand_user
-4. **P0.2 (3h)** — POST `/portal/templates` → brand tạo landing mới
-5. **P0.3 (1d)** — `/portal/me/*` profile + members
-6. **P1.x** parallel sau khi P0 đóng
+4. **P0.6 (2h)** — POST `/canvas-templates/{id}/assign` → admin hand-off sang brand. **FE đã wire modal** ở `/admin/canvas-templates`.
+5. **P0.7 (3h)** — GET `/portal/templates/library` + POST clone-to-workspace → brand chọn template. **FE đã wire** ở `/portal/templates`.
+6. **P0.2 (3h)** — POST `/portal/templates` → brand tạo landing trắng (optional sau P0.7)
+7. **P0.3 (1d)** — `/portal/me/*` profile + members
+8. **P1.x** parallel sau khi P0 đóng
 
 ---
 

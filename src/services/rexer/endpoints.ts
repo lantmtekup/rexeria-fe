@@ -754,6 +754,34 @@ export const rexerApi = {
       );
       return r.canvas_template;
     },
+
+    /**
+     * Admin/staff hand-off: assign an existing canvas template to a brand
+     * (client + workspace). BE updates client_id/workspace_id and records
+     * the action for the brand's activity feed. See be-todo.md P0.6.
+     */
+    assignToBrand: (
+      id: string,
+      body: { client_id: string; workspace_id?: string; notes?: string }
+    ) =>
+      rx<CanvasTemplate>(`/canvas-templates/${id}/assign`, {
+        method: 'POST',
+        body,
+      }),
+
+    /**
+     * Brand-side "Use this template" clone — deep-copies a public template
+     * (is_public_template=true) into the brand's workspace as a new
+     * editable landing page. See be-todo.md P0.7.
+     */
+    cloneToWorkspace: (
+      id: string,
+      body: { workspace_id?: string; name?: string }
+    ) =>
+      rx<CanvasTemplate>(`/canvas-templates/${id}/clone-to-workspace`, {
+        method: 'POST',
+        body,
+      }),
   },
 
   // ── Collections + Records (be-collections-spec.md) ─────────────────────
@@ -1094,6 +1122,17 @@ export const rexerApi = {
       rx<{ message?: string }>('/portal/activity/mark-seen', {
         method: 'POST',
       }),
+    /**
+     * Public template library — Rexer-curated canvas templates brand can
+     * clone into their workspace. See be-todo.md P0.7.
+     */
+    listTemplateLibrary: (query?: {
+      q?: string;
+      category?: string;
+      page?: number;
+      limit?: number;
+    }) =>
+      rx<CanvasTemplateListResponse>('/portal/templates/library', { query }),
   },
 
   // ── Portal Ads ────────────────────────────────────────────────────────

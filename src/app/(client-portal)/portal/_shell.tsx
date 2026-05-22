@@ -15,6 +15,7 @@ import {
   MousePointerClick,
   Package,
   Settings,
+  Sparkles,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -52,6 +53,11 @@ const NAV: NavItem[] = [
     href: '/portal/landing-pages',
     label: 'Landing pages',
     icon: LayoutTemplate,
+  },
+  {
+    href: '/portal/templates',
+    label: 'Template library',
+    icon: Sparkles,
   },
   { href: '/portal/ads', label: 'Quảng cáo', icon: Megaphone, group: 'Engage' },
   {

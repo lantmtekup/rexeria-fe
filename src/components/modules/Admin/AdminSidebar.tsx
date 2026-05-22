@@ -39,6 +39,12 @@ const NAV: NavItem[] = [
   },
   { href: '/admin/products', labelKey: 'nav.products', icon: PackageIcon },
   {
+    href: '/admin/canvas-templates',
+    labelKey: 'nav.canvasTemplates',
+    icon: LayoutTemplateIcon,
+    group: 'Content',
+  },
+  {
     href: '/admin/templates',
     labelKey: 'nav.templates',
     icon: LayoutTemplateIcon,

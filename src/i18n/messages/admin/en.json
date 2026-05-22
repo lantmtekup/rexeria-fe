@@ -10,6 +10,7 @@
     "nav": {
       "overview": "Overview",
       "products": "Products",
+      "canvasTemplates": "Canvas templates",
       "templates": "Templates",
       "aiTemplates": "AI Templates",
       "savedBlocks": "Blocks",
