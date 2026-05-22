@@ -783,6 +783,12 @@ export function StatsAnnotationOverlay({
       )}
       {children}
       {enabled && !narrow && (
+        <div
+          aria-hidden
+          className='pointer-events-none fixed inset-0 z-20 bg-zinc-950/35 backdrop-blur-[1px]'
+        />
+      )}
+      {enabled && !narrow && (
         <Gutters
           blockMeasurements={blockMeasurements}
           elementMeasurements={elementMeasurements}
