@@ -14,6 +14,120 @@ Sau khi audit từng route trong `src/app/(client-portal)/portal/*`, đây là *
 
 ---
 
+## 🔴 P0 — Analytics event tracking (nguồn data cho TẤT CẢ stats)
+
+**Pain cốt lõi**: Mọi số views / clicks / CTR / dwell / sparkline trên dashboard + stats-overlay đều **lấy từ aggregation của events do public render fire ra**. Hiện tại:
+
+- **BE endpoint đã có**: `POST /v1/analytics/events` (public ingest, không cần auth, rate-limit 100/min/visitor) ✅
+- **BE aggregation**: cũng đã có — `/admin/analytics/templates/{id}/breakdown` đọc từ events đã ingest ✅
+- **FE chưa wire**: trang `/p/[id]/[token]` (public landing) **chưa gọi** `rexerApi.templateAnalytics.ingestEvent()` ở bất kỳ chỗ nào → BE không nhận event nào → breakdown trả `[]` → overlay phải dùng mock data 🔴
+
+→ Đây là lý do `npx playwright test` thấy "0 blocks" và FE phải sinh demo data từ DOM.
+
+### Schema event (đã có trong types.ts:751)
+
+```ts
+type AnalyticsEventInput = {
+  template_id: string;
+  block_id?: string;
+  element_id?: string;       // CTA / button id (per wave 2 W2.3 alignment)
+  element_role?: string;     // 'button' | 'link' | 'slide' | 'image' | 'form'
+  visitor_id: string;        // FE-generated UUID, persisted in localStorage
+  session_id: string;        // FE-generated UUID, expires after 30min idle
+  event_type: string;        // see enum below
+  action?: string;           // 'click' | 'submit' | 'swipe' | ...
+  target?: string;           // optional — element_id alias for legacy
+  dwell_ms?: number;
+  scroll_depth?: number;     // 0-100
+  viewport_w?: number;
+  viewport_h?: number;
+  referrer?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  meta?: Record<string, unknown>;
+};
+```
+
+### Event types FE sẽ fire (đề xuất chuẩn — BE confirm enum)
+
+| `event_type` | Fire khi | Required fields |
+|---|---|---|
+| `page_view` | Public page mount (1 lần / session / template) | `template_id`, `visitor_id`, `session_id`, `viewport_w/h`, `referrer`, `utm_*` |
+| `block_view` | Block scroll vào viewport ≥ 50% (1 lần / session / block) | `+ block_id` |
+| `block_dwell` | Khi block rời viewport — gửi total `dwell_ms` | `+ block_id`, `dwell_ms` |
+| `element_view` | Element scroll vào viewport ≥ 50% | `+ block_id, element_id, element_role` |
+| `click` | Click vào button/link tracked | `+ block_id, element_id, element_role, action='click'` |
+| `form_submit` | Form submit thành công | `+ block_id, element_id` |
+| `scroll_depth` | Đạt 25 / 50 / 75 / 100% | `+ scroll_depth` |
+| `slide_change` | Carousel/Stories đổi slide | `+ block_id, meta={from, to}` |
+| `slide_dwell` | Khi rời slide — `dwell_ms` cho slide đó | `+ block_id, meta={slide_index}, dwell_ms` |
+
+### Chi tiết FE wire (phase 2 task)
+
+Tạo `src/lib/analytics/tracker.ts`:
+
+```ts
+// Singleton tracker — lazy init khi public page mount
+class Tracker {
+  templateId: string;
+  visitor: string;   // localStorage 'rexer.tracker.visitor_id', UUID
+  session: string;   // sessionStorage 'rexer.tracker.session_id', UUID, refresh 30min idle
+  queue: AnalyticsEventInput[];
+
+  emit(partial: Partial<AnalyticsEventInput> & { event_type: string }): void
+  // → push vào queue, flush batch khi:
+  //   - queue.length >= 10
+  //   - 5s sau last emit (debounce)
+  //   - beforeunload (sendBeacon fallback)
+  // → POST /api/rexer/analytics/events
+}
+```
+
+**Wiring points**:
+1. `src/app/p/[id]/[token]/page.tsx` — mount tracker, fire `page_view`
+2. `block-editor/blocks/renderBlock.tsx` — IntersectionObserver fire `block_view` + `block_dwell`
+3. Tag clickables (đã có `data-element-id` từ StatsAnnotationOverlay) — attach `onClick` capture fire `click`
+4. `ImageCarousel.tsx` / `Stories.tsx` / `Carousel3d.tsx` — fire `slide_change`, `slide_dwell`
+5. `BookingForm.tsx` / `Quiz.tsx` / `Poll.tsx` — fire `form_submit`
+6. Global scroll listener (throttled) — fire `scroll_depth` thresholds
+
+### BE confirms cần trước khi FE wire
+
+1. **`event_type` enum**: BE có whitelist không, hay accept arbitrary string? Đề xuất whitelist + reject 400 nếu unknown.
+2. **Visitor ID source**: FE generate client-side (UUID lưu localStorage) — BE OK không, hay BE cấp `set-cookie` lúc visit page?
+3. **Session expiry**: 30 phút idle reset session_id — BE confirm có dùng để dedupe / count "unique" không?
+4. **Batch size**: Endpoint accept "single event OR array (max 50)" — BE confirm max 50 vẫn đúng?
+5. **`element_id` naming**: wave 2 W2.3 đang chờ — confirm convention `<block_prefix>__<element_key>` (FE đang dùng) match BE expect?
+6. **Rate limit response**: 429 returns nhanh hay block? FE cần biết để retry strategy.
+7. **Dwell aggregation**: BE tính `avg_dwell_ms = sum(dwell_ms) / count(unique_session)` đúng không?
+8. **Aggregation schedule**: real-time vs cron (5min/1h)? Ảnh hưởng đến UX brand expecting fresh numbers.
+9. **Retention policy**: raw events giữ bao lâu? Daily aggregates giữ bao lâu?
+10. **PII**: `meta` field có whitelist không? Brand fire arbitrary data có bị reject hay BE strip?
+
+### Effort
+
+- **BE**: ~0 endpoint mới — chỉ doc + confirm 10 câu hỏi (~2 giờ)
+- **FE**: ~2 ngày — tracker + 6 wiring points + Playwright test
+
+### Files
+
+| File mới (FE) | Mục đích |
+|---|---|
+| `src/lib/analytics/tracker.ts` | Singleton tracker, queue, batch flush, sendBeacon |
+| `src/lib/analytics/use-tracker.ts` | React hook mount + provide context |
+| `src/lib/analytics/intersection.ts` | IntersectionObserver helper cho block_view/element_view |
+
+| File chỉnh (FE) | Thay đổi |
+|---|---|
+| `src/app/p/[id]/[token]/page.tsx` | Mount tracker + fire page_view |
+| Mỗi `block-editor/blocks/*.tsx` (~14 file) | Wrap với block-view observer |
+| `block-editor/blocks/renderBlock.tsx` | Click capture handler bubble lên tracker |
+
+→ Wave này sẽ là **Phase 2.A** — block lớn nhất, unblock toàn bộ stats overlay live data.
+
+---
+
 ## 🔴 P0 — `/portal` (dashboard tổng quan)
 
 **Pain**: Trang dashboard hiện đang map từ `/dashboard/summary` (admin-style aggregates: `active_clients`, `projects_total`, ...) — không match shape brand cần (`templates_count`, `total_views_30d`, `total_visitors_30d`, `total_leads_30d`, `assets_count`, `open_comments`, ...). Hoạt động qua `_remote.tsx:loadDashboardStats` fallback fake.
@@ -314,7 +428,7 @@ DELETE /v1/portal/me/client/members/{userId}          # remove from brand
 
 ---
 
-## 🟡 P1 — Brand-side workspace create (đang dùng admin endpoint)
+## 🔴 P0 — Brand-side workspace create (đang dùng admin endpoint)
 
 **Pain**: `CreateWorkspaceDialog` (vừa ship) đang gọi `POST /admin/clients/{id}/workspaces` — admin-only. Brand user (`client_user`/`brand_owner`) bị 403, hiện banner "wave 2 mở quyền".
 
@@ -364,20 +478,25 @@ Không thiếu BE — chỉ cần FE tạo `/portal/notifications/page.tsx`. Def
 
 ## Migration plan đề xuất
 
-| Wave | Endpoint | Effort BE | FE blocker? |
-|---|---|---|---|
-| **P0.A** | `GET /portal/dashboard/summary` | ~4h | ✅ Yes |
-| **P0.B** | `GET /portal/templates` | ~4h | ✅ Yes |
-| **P0.C** | `GET /portal/templates/{id}/breakdown` (wave 2 W2.1) | ~2h | ✅ Yes (stats overlay) |
-| **P1.A** | Comments cross-template feed | ~3h | No (per-template wire OK) |
-| **P1.B** | Workspace brand-side create | ~2h | No (403 fallback OK Phase 1) |
-| **P1.C** | Profile + members | ~1d | No (page là Phase 2 polish) |
-| **P1.D** | Ads campaigns CRUD | ~1.5d | No (page là Phase 2) |
-| **P1.E** | Products brand-scope confirm | ~30m | No |
-| **P1.F** | Curate doc + example payload | ~1h | No |
-| **P2** | Activity mark-seen, notification page detail | ~1h | No |
+| Wave | Endpoint / Work | Effort BE | Effort FE | FE blocker? |
+|---|---|---|---|---|
+| **P0.A** | Analytics event tracking pipeline (BE confirm 10 Qs + FE wire 6 points) | ~2h doc | **~2d** | ✅ Yes — không có data thật cho mọi stats |
+| **P0.B** | `GET /portal/dashboard/summary` | ~4h | ~3h wire | ✅ Yes |
+| **P0.C** | `GET /portal/templates` brand-scope | ~4h | ~3h wire | ✅ Yes |
+| **P0.D** | `GET /portal/templates/{id}/breakdown` (wave 2 W2.1) | ~2h | 1 dòng đổi URL | ✅ Yes (stats overlay) |
+| **P0.E** | `POST /portal/workspaces` brand-side | ~2h | 1 dòng đổi URL | ✅ Yes — brand đang bị 403 |
+| **P1.A** | Comments cross-template feed | ~3h | ~4h | No |
+| **P1.B** | Profile + members | ~1d | ~4h | No |
+| **P1.C** | Ads campaigns CRUD | ~1.5d | ~1d | No |
+| **P1.D** | Products brand-scope confirm | ~30m | ~2h | No |
+| **P1.E** | Curate doc + example payload | ~1h | ~3h | No |
+| **P2** | Activity mark-seen, notification page detail | ~1h | ~3h | No |
 
-Tổng effort BE để portal hoạt động **production-ready không fake data**: ~3-4 ngày code + test.
+**Tổng**:
+- **BE**: ~3 ngày (chủ yếu ads + profile + members + dashboard aggregate)
+- **FE**: ~5 ngày (analytics tracker là phần lớn nhất)
+
+→ **P0 là ~1 tuần work parallel BE + FE** để portal có data thật end-to-end.
 
 ---
 
