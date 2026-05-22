@@ -12,9 +12,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import {
-  ArrowRight,
   Bookmark,
   Calendar,
   Copy,
@@ -56,6 +54,8 @@ import { serializeCanvas } from '@/components/modules/CanvasTemplate/block-edito
 import type { BlockType } from '@/components/modules/CanvasTemplate/block-editor/types';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
+
+import { AddBuiltinBlockDialog } from './AddBuiltinBlockDialog';
 
 type View = 'grid' | 'table';
 
@@ -124,6 +124,7 @@ export function AdminBlocksPage() {
   const [typeFilter, setTypeFilter] = React.useState<BlockType | 'all'>('all');
   const [tagFilter, setTagFilter] = React.useState<string | null>(null);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [catalogOpen, setCatalogOpen] = React.useState(false);
 
   React.useEffect(() => {
     setItems(listSavedBlocks());
@@ -215,14 +216,14 @@ export function AdminBlocksPage() {
                 blocks
               </p>
             </div>
-            <Link
-              href='/canvas-templates'
-              className='inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50'
+            <button
+              type='button'
+              onClick={() => setCatalogOpen(true)}
+              className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
             >
               <Plus className='size-3.5' />
-              Tạo block từ canvas
-              <ArrowRight className='size-3' />
-            </Link>
+              Thêm từ thư viện hệ thống
+            </button>
           </div>
 
           {/* Search + view toggle */}
@@ -325,14 +326,15 @@ export function AdminBlocksPage() {
               description={
                 items.length === 0 ? (
                   <>
-                    Mở canvas editor, bấm icon 🔖 trên header để lưu block hiện
-                    tại.{' '}
-                    <Link
-                      href='/canvas-templates'
+                    Bấm{' '}
+                    <button
+                      type='button'
+                      onClick={() => setCatalogOpen(true)}
                       className='text-primary underline'
                     >
-                      Mở canvas templates →
-                    </Link>
+                      Thêm từ thư viện hệ thống
+                    </button>{' '}
+                    để chọn 1 trong 14 block mẫu — sau đó sửa tuỳ ý.
                   </>
                 ) : (
                   'Đổi từ khoá hoặc xoá filter để xem tất cả.'
@@ -376,6 +378,12 @@ export function AdminBlocksPage() {
           onEdit={() => handleEdit(selected)}
         />
       )}
+
+      <AddBuiltinBlockDialog
+        open={catalogOpen}
+        onClose={() => setCatalogOpen(false)}
+        onAdded={id => setSelectedId(id)}
+      />
     </div>
   );
 }
