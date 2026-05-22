@@ -194,9 +194,9 @@ export async function loadTemplates(): Promise<LoadResult<PortalTemplate[]>> {
         role: t.last_updated_by?.role === 'staff' ? 'staff' : 'brand',
       },
     }));
-    if (items.length === 0) {
-      return { data: FAKE_TEMPLATES, source: 'fake', error: 'empty list' };
-    }
+    // Empty list from a successful BE call is a valid state — render it as
+    // live (the page shows its own empty-state UI) instead of falling back
+    // to fake data + the misleading "BE unavailable" banner.
     return { data: items, source: 'live' };
   } catch (err) {
     return {
@@ -306,9 +306,8 @@ export async function loadWorkspaces(): Promise<LoadResult<Workspace[]>> {
     const items = (memberships ?? []).map(m =>
       beWorkspaceToPortal(m.workspace)
     );
-    if (items.length === 0) {
-      return { data: FAKE_WORKSPACES, source: 'fake', error: 'empty list' };
-    }
+    // Empty membership list is valid (new brand, no workspaces yet) — keep
+    // FAKE_WORKSPACES out of the picture so the header chip doesn't lie.
     return { data: items, source: 'live' };
   } catch (err) {
     return {
@@ -427,9 +426,8 @@ export async function loadActivity(
       limit,
     });
     const items = (res.items ?? []).map(beActivityToPortal);
-    if (items.length === 0) {
-      return { data: FAKE_ACTIVITY, source: 'fake', error: 'empty list' };
-    }
+    // Empty activity feed is the expected new-workspace state — let it
+    // render the "no activity yet" UI instead of fake demo items.
     return { data: items, source: 'live' };
   } catch (err) {
     return {
@@ -462,9 +460,8 @@ export async function loadMediaFolders(
       parentId ? { parent_id: parentId } : undefined
     );
     const items = (res.items ?? []).map(beFolderToPortal);
-    if (items.length === 0) {
-      return { data: FAKE_FOLDERS, source: 'fake', error: 'empty list' };
-    }
+    // Empty folder list is valid — render Drive's "no folders" UI instead
+    // of populating fake demo folders that pollute the brand's namespace.
     return { data: items, source: 'live' };
   } catch (err) {
     return {
