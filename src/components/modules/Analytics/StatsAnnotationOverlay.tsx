@@ -19,7 +19,7 @@
  */
 
 import * as React from 'react';
-import { Eye, EyeOff, MousePointerClick, Timer } from 'lucide-react';
+import { Eye, EyeOff, MousePointerClick } from 'lucide-react';
 
 import { useAppSelector } from '@/hooks/useRedux';
 import { rexerApi } from '@/services/rexer/endpoints';
@@ -246,25 +246,8 @@ function generateMockBreakdown(
 /* ---------- cards ---------- */
 
 /**
- * HUD frame corners — 4 small L-shapes at each corner of a card, in cyan
- * glow. Pure decoration; doesn't affect layout.
- */
-function HudCorners() {
-  const cls =
-    'pointer-events-none absolute size-2.5 border-cyan-400/70 shadow-[0_0_6px_rgba(34,211,238,0.6)]';
-  return (
-    <>
-      <span className={`${cls} top-1 left-1 border-t border-l`} />
-      <span className={`${cls} top-1 right-1 border-t border-r`} />
-      <span className={`${cls} bottom-1 left-1 border-b border-l`} />
-      <span className={`${cls} right-1 bottom-1 border-r border-b`} />
-    </>
-  );
-}
-
-/**
- * Mini sparkline — synthesises 12 points from a seed for the trend line
- * at the bottom of each block card. Goes up + down to feel organic.
+ * Mini sparkline — gentle area chart under the hero number. Soft fade, no
+ * glow. Matches the Sunset-Palms reference aesthetic.
  */
 function Sparkline({ seed, tone }: { seed: string; tone: string }) {
   const points = React.useMemo(() => {
@@ -279,38 +262,48 @@ function Sparkline({ seed, tone }: { seed: string; tone: string }) {
   }, [seed]);
   const w = 100;
   const h = 22;
-  const path = points
+  const line = points
     .map((p, i) => {
       const x = (i / (points.length - 1)) * w;
       const y = h - p * h;
       return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
     })
     .join(' ');
+  const area = `${line} L ${w} ${h} L 0 ${h} Z`;
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
-      className='block h-5 w-full overflow-visible'
+      className={`block h-5 w-full ${tone}`}
+      preserveAspectRatio='none'
       aria-hidden
     >
       <defs>
-        <linearGradient id={`spark-${seed}`} x1='0' x2='1' y1='0' y2='0'>
-          <stop offset='0%' stopColor='currentColor' stopOpacity='0' />
-          <stop offset='100%' stopColor='currentColor' stopOpacity='1' />
+        <linearGradient id={`spark-area-${seed}`} x1='0' x2='0' y1='0' y2='1'>
+          <stop offset='0%' stopColor='currentColor' stopOpacity='0.35' />
+          <stop offset='100%' stopColor='currentColor' stopOpacity='0' />
         </linearGradient>
       </defs>
+      <path d={area} fill={`url(#spark-area-${seed})`} />
       <path
-        d={path}
+        d={line}
         fill='none'
-        stroke={`url(#spark-${seed})`}
-        strokeWidth={1.5}
+        stroke='currentColor'
+        strokeOpacity={0.9}
+        strokeWidth={1.25}
         strokeLinecap='round'
         strokeLinejoin='round'
-        className={tone}
-        style={{ filter: 'drop-shadow(0 0 3px currentColor)' }}
       />
     </svg>
   );
 }
+
+/**
+ * Card shell shared by block + element variants. Soft dark glass — modeled
+ * after the Sunset-Palms reference: rounded-2xl, low-contrast border, soft
+ * drop shadow, backdrop blur. No neon glow, no HUD corner brackets.
+ */
+const CARD_BASE =
+  'pointer-events-auto relative w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/85 p-3.5 text-white shadow-[0_8px_24px_rgba(0,0,0,0.25)] backdrop-blur-md';
 
 function BlockSummaryCard({
   index,
@@ -329,67 +322,59 @@ function BlockSummaryCard({
         ? 'text-amber-300'
         : 'text-rose-300';
   return (
-    <div className='group pointer-events-auto relative w-full overflow-visible rounded-xl border border-cyan-400/30 bg-gradient-to-br from-zinc-950/95 via-zinc-900/95 to-zinc-950/95 p-3 text-cyan-50 shadow-[0_0_24px_rgba(34,211,238,0.15),0_0_60px_rgba(34,211,238,0.06)_inset] backdrop-blur-md transition-all hover:border-cyan-300/60 hover:shadow-[0_0_32px_rgba(34,211,238,0.3)]'>
-      <HudCorners />
-
-      {/* Header: index + type + live/demo pulse */}
+    <div className={CARD_BASE}>
+      {/* Header */}
       <div className='flex items-center justify-between'>
-        <div className='flex items-center gap-2'>
-          <span className='relative flex size-5 items-center justify-center rounded-md bg-cyan-400 font-mono text-[10px] font-black text-zinc-950 shadow-[0_0_12px_rgba(34,211,238,0.8)]'>
+        <div className='flex items-center gap-1.5'>
+          <span className='flex size-4 items-center justify-center rounded-full bg-white/10 text-[9px] font-bold text-white'>
             {index + 1}
           </span>
-          <span className='truncate font-mono text-[9.5px] font-bold tracking-[0.18em] text-cyan-200/90 uppercase'>
-            {row.block_type ?? 'BLOCK'}
+          <span className='truncate text-[10px] font-medium tracking-wide text-zinc-300'>
+            {row.block_type ?? 'block'}
           </span>
         </div>
-        <span className='flex items-center gap-1 font-mono text-[8.5px] tracking-widest text-cyan-300/70 uppercase'>
-          <span
-            className={`size-1.5 rounded-full ${
-              isDemo ? 'bg-violet-400' : 'bg-cyan-400'
-            } animate-pulse shadow-[0_0_6px_currentColor]`}
-          />
+        <span
+          className={`text-[9px] tracking-wider uppercase ${
+            isDemo ? 'text-violet-300/80' : 'text-emerald-300/80'
+          }`}
+        >
           {isDemo ? 'demo' : 'live'}
         </span>
       </div>
 
-      {/* Hero stat — views, big */}
-      <div className='mt-3 flex items-baseline justify-between border-b border-cyan-400/20 pb-2'>
+      {/* Hero number */}
+      <div className='mt-2.5'>
+        <div className='text-[11px] text-zinc-400'>Lượt xem:</div>
+        <div className='text-2xl leading-tight font-bold text-white tabular-nums'>
+          {fmtCount(row.views)}
+        </div>
+      </div>
+
+      {/* Sparkline */}
+      <div className='-mx-1 mt-1.5'>
+        <Sparkline seed={row.block_id} tone='text-cyan-300' />
+      </div>
+
+      {/* Footer stats — 3-up row */}
+      <div className='mt-2 grid grid-cols-3 gap-2 border-t border-white/5 pt-2 text-[10.5px]'>
         <div>
-          <div className='font-mono text-3xl leading-none font-black tracking-tight text-cyan-50 tabular-nums [text-shadow:0_0_12px_rgba(34,211,238,0.4)]'>
-            {fmtCount(row.views)}
-          </div>
-          <div className='mt-1 flex items-center gap-1 font-mono text-[8.5px] tracking-[0.2em] text-cyan-300/60 uppercase'>
-            <Eye className='size-2.5' />
-            page views
+          <div className='text-zinc-400'>Click</div>
+          <div className='font-semibold text-white tabular-nums'>
+            {fmtCount(row.clicks)}
           </div>
         </div>
-        <div className={`text-right ${ctrTone}`}>
-          <div className='font-mono text-xl leading-none font-bold tabular-nums [text-shadow:0_0_8px_currentColor]'>
+        <div>
+          <div className='text-zinc-400'>CTR</div>
+          <div className={`font-semibold tabular-nums ${ctrTone}`}>
             {fmtPct(ctr)}
           </div>
-          <div className='mt-1 font-mono text-[8.5px] tracking-[0.2em] text-cyan-300/60 uppercase'>
-            CTR
+        </div>
+        <div>
+          <div className='text-zinc-400'>Dwell</div>
+          <div className='font-semibold text-white tabular-nums'>
+            {fmtDwellMs(row.avg_dwell_ms)}
           </div>
         </div>
-      </div>
-
-      {/* Secondary stats grid */}
-      <div className='mt-2 grid grid-cols-2 gap-2'>
-        <HudStat
-          icon={<MousePointerClick className='size-2.5' />}
-          label='clicks'
-          value={fmtCount(row.clicks)}
-        />
-        <HudStat
-          icon={<Timer className='size-2.5' />}
-          label='avg dwell'
-          value={fmtDwellMs(row.avg_dwell_ms)}
-        />
-      </div>
-
-      {/* Sparkline trend */}
-      <div className='mt-2 border-t border-cyan-400/15 pt-2'>
-        <Sparkline seed={row.block_id} tone='text-cyan-300' />
       </div>
     </div>
   );
@@ -405,86 +390,43 @@ function ElementStatCard({
   label?: string;
   action: ActionStat;
 }) {
-  const topTargets = action.targets.slice(0, 2);
+  const uniquePct = action.count
+    ? Math.round((action.unique_visitors / Math.max(1, action.count)) * 100)
+    : 0;
   return (
-    <div className='group pointer-events-auto relative w-full overflow-visible rounded-xl border border-fuchsia-400/30 bg-gradient-to-br from-zinc-950/95 via-zinc-900/95 to-zinc-950/95 p-3 text-fuchsia-50 shadow-[0_0_24px_rgba(232,121,249,0.15),0_0_60px_rgba(232,121,249,0.06)_inset] backdrop-blur-md transition-all hover:border-fuchsia-300/60 hover:shadow-[0_0_32px_rgba(232,121,249,0.3)]'>
-      <HudCorners />
-
-      <div className='truncate text-[12px] leading-tight font-bold tracking-tight text-fuchsia-100'>
-        {label || elementId}
-      </div>
-      <div className='mt-0.5 truncate font-mono text-[8.5px] tracking-[0.18em] text-fuchsia-300/60 uppercase'>
-        {action.action} · {elementId.split('__').slice(-1)[0]}
-      </div>
-
-      <div className='mt-2 flex items-baseline justify-between border-b border-fuchsia-400/20 pb-2'>
-        <div>
-          <div className='font-mono text-2xl leading-none font-black text-fuchsia-50 tabular-nums [text-shadow:0_0_10px_rgba(232,121,249,0.5)]'>
-            {fmtCount(action.count)}
+    <div className={CARD_BASE}>
+      <div className='flex items-start justify-between gap-2'>
+        <div className='min-w-0'>
+          <div className='truncate text-[12px] leading-tight font-semibold text-white'>
+            {label || elementId}
           </div>
-          <div className='mt-1 font-mono text-[8.5px] tracking-[0.2em] text-fuchsia-300/60 uppercase'>
-            clicks
+          <div className='mt-0.5 truncate text-[9.5px] tracking-wide text-zinc-400 uppercase'>
+            {action.action}
           </div>
         </div>
-        <div className='text-right'>
-          <div className='font-mono text-base leading-none font-bold text-fuchsia-200 tabular-nums'>
+        <MousePointerClick className='mt-0.5 size-3 shrink-0 text-zinc-500' />
+      </div>
+
+      <div className='mt-2'>
+        <div className='text-[11px] text-zinc-400'>Lượt click:</div>
+        <div className='text-2xl leading-tight font-bold text-white tabular-nums'>
+          {fmtCount(action.count)}
+        </div>
+      </div>
+
+      <div className='mt-2 grid grid-cols-2 gap-2 border-t border-white/5 pt-2 text-[10.5px]'>
+        <div>
+          <div className='text-zinc-400'>Unique</div>
+          <div className='font-semibold text-white tabular-nums'>
             {fmtCount(action.unique_visitors)}
           </div>
-          <div className='mt-1 font-mono text-[8.5px] tracking-[0.2em] text-fuchsia-300/60 uppercase'>
-            unique
+        </div>
+        <div>
+          <div className='text-zinc-400'>Tỉ lệ</div>
+          <div className='font-semibold text-emerald-300 tabular-nums'>
+            {uniquePct}%
           </div>
         </div>
-      </div>
-
-      {topTargets.length > 0 && (
-        <div className='mt-2 space-y-1'>
-          {topTargets.map(t => {
-            const pct = action.count
-              ? Math.min(100, (t.count / action.count) * 100)
-              : 0;
-            return (
-              <div key={t.target}>
-                <div className='flex items-center justify-between font-mono text-[10px]'>
-                  <span className='truncate text-fuchsia-200/80'>
-                    → {t.target}
-                  </span>
-                  <span className='ml-1 font-bold text-fuchsia-100 tabular-nums'>
-                    {fmtCount(t.count)}
-                  </span>
-                </div>
-                <div className='mt-0.5 h-0.5 w-full overflow-hidden rounded-full bg-fuchsia-400/15'>
-                  <div
-                    className='h-full rounded-full bg-fuchsia-400 shadow-[0_0_6px_rgba(232,121,249,0.8)]'
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** Single stat tile inside a HUD card — small icon + label + big mono value. */
-function HudStat({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className='rounded-md border border-cyan-400/15 bg-cyan-400/5 px-2 py-1.5'>
-      <div className='flex items-center gap-1 font-mono text-[8.5px] tracking-[0.2em] text-cyan-300/60 uppercase'>
-        {icon}
-        {label}
-      </div>
-      <div className='mt-0.5 font-mono text-sm leading-none font-bold text-cyan-50 tabular-nums'>
-        {value}
       </div>
     </div>
   );
@@ -496,37 +438,30 @@ function LeaderLine({
   from,
   to,
   side,
-  color = 'cyan',
 }: {
   /** Card edge (the card's gutter side). */
   from: { x: number; y: number };
   /** Element edge (the anchored element). */
   to: { x: number; y: number };
   side: 'left' | 'right';
-  /** Glow color theme — cyan for block lines (left), fuchsia for element (right). */
-  color?: 'cyan' | 'fuchsia';
 }) {
   const midX =
     side === 'left'
       ? from.x + (to.x - from.x) / 2
       : from.x - (from.x - to.x) / 2;
   const path = `M ${from.x} ${from.y} C ${midX} ${from.y}, ${midX} ${to.y}, ${to.x} ${to.y}`;
-  const stroke = color === 'fuchsia' ? 'rgb(232 121 249)' : 'rgb(34 211 238)';
+  const stroke = 'rgb(161 161 170)'; // zinc-400
   return (
-    <g
-      style={{
-        filter: `drop-shadow(0 0 4px ${stroke})`,
-      }}
-    >
+    <g>
       <path
         d={path}
         fill='none'
         stroke={stroke}
-        strokeOpacity={0.85}
-        strokeWidth={1.25}
+        strokeOpacity={0.45}
+        strokeWidth={1}
+        strokeDasharray='3 3'
       />
-      {/* Endpoint dot at the element side */}
-      <circle cx={to.x} cy={to.y} r={2.5} fill={stroke} />
+      <circle cx={to.x} cy={to.y} r={2} fill={stroke} fillOpacity={0.7} />
     </g>
   );
 }
@@ -947,7 +882,6 @@ function Gutters({
               from={{ x: cardLeft, y: elementCenterY }}
               to={{ x: m.right, y: elementCenterY }}
               side='right'
-              color='fuchsia'
             />
           );
         })}
