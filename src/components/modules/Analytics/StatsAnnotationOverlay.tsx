@@ -329,16 +329,16 @@ function Sparkline({ seed, tone }: { seed: string; tone: string }) {
 }
 
 /**
- * Card shell shared by block + element variants. Warm rust gradient with a
- * cream-tinted border — matches the brand palette the user landed on.
+ * Card shell shared by block + element variants. Cool teal gradient with a
+ * pale-cyan border — matches the brand palette the user landed on.
  */
 const CARD_BASE =
   'pointer-events-auto relative w-full overflow-hidden rounded-2xl border p-3.5 text-white shadow-[0_8px_24px_rgba(0,0,0,0.25)] backdrop-blur-md';
 
-const WARM_CARD_STYLE: React.CSSProperties = {
+const CARD_STYLE: React.CSSProperties = {
   background:
-    'linear-gradient(180deg, rgba(176, 93, 34, 0.78), rgba(94, 40, 12, 0.65))',
-  borderColor: 'rgba(241, 217, 177, 0.25)',
+    'linear-gradient(180deg, rgba(20, 40, 52, 0.78), rgba(12, 28, 40, 0.65))',
+  borderColor: 'rgba(109, 214, 232, 0.25)',
 };
 
 function BlockSummaryCard({
@@ -358,7 +358,7 @@ function BlockSummaryCard({
         ? 'text-amber-300'
         : 'text-rose-300';
   return (
-    <div className={CARD_BASE} style={WARM_CARD_STYLE}>
+    <div className={CARD_BASE} style={CARD_STYLE}>
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-1.5'>
@@ -430,7 +430,7 @@ function ElementStatCard({
     ? Math.round((action.unique_visitors / Math.max(1, action.count)) * 100)
     : 0;
   return (
-    <div className={CARD_BASE} style={WARM_CARD_STYLE}>
+    <div className={CARD_BASE} style={CARD_STYLE}>
       <div className='flex items-start justify-between gap-2'>
         <div className='min-w-0'>
           <div className='truncate text-[12px] leading-tight font-semibold text-white'>
