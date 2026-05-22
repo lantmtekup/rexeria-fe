@@ -28,8 +28,8 @@ import type { ActionStat, BlockBreakdownRow } from '@/services/rexer/types';
 const ELEMENT_VIEWS_THRESHOLD = 50;
 const STORAGE_KEY = 'rexer.statsOverlay.enabled';
 const RANGE_KEY = 'rexer.statsOverlay.range';
-const GUTTER_WIDTH = 280; // px reserved each side for cards (HUD-style needs room)
-const MIN_VIEWPORT = 1320; // below this we fold into a side panel (not yet)
+const GUTTER_WIDTH = 340; // px reserved each side — ~320 card + breathing room
+const MIN_VIEWPORT = 1360; // below this we fold into a side panel (not yet)
 
 type DateRange = '7d' | '30d' | '90d' | 'all';
 
@@ -277,10 +277,11 @@ function generateMockBreakdown(
 /* ---------- cards ---------- */
 
 /**
- * Mini sparkline — gentle area chart under the hero number. Soft fade, no
- * glow. Matches the Sunset-Palms reference aesthetic.
+ * Mini sparkline — gold gradient line on a soft gradient area fill. The
+ * palette matches the user's reference HTML (`#c89a52 → #f1d9a6` stroke,
+ * `#f1c98a` 35% → 0 area fill). 56px tall, stretches to card width.
  */
-function Sparkline({ seed, tone }: { seed: string; tone: string }) {
+function Sparkline({ seed }: { seed: string }) {
   const points = React.useMemo(() => {
     const arr: number[] = [];
     let v = 0.5;
@@ -291,36 +292,42 @@ function Sparkline({ seed, tone }: { seed: string; tone: string }) {
     }
     return arr;
   }, [seed]);
-  const w = 100;
-  const h = 22;
+  const w = 280;
+  const h = 56;
   const line = points
     .map((p, i) => {
       const x = (i / (points.length - 1)) * w;
-      const y = h - p * h;
+      const y = h - p * h * 0.85 - 4;
       return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
     })
     .join(' ');
   const area = `${line} L ${w} ${h} L 0 ${h} Z`;
+  const fillId = `spark-fill-${seed}`;
+  const strokeId = `spark-stroke-${seed}`;
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
-      className={`block h-5 w-full ${tone}`}
+      className='mt-[18px] block h-14 w-full'
       preserveAspectRatio='none'
       aria-hidden
     >
       <defs>
-        <linearGradient id={`spark-area-${seed}`} x1='0' x2='0' y1='0' y2='1'>
-          <stop offset='0%' stopColor='currentColor' stopOpacity='0.35' />
-          <stop offset='100%' stopColor='currentColor' stopOpacity='0' />
+        <linearGradient id={fillId} x1='0' x2='0' y1='0' y2='1'>
+          <stop offset='0' stopColor='#f1c98a' stopOpacity='0.35' />
+          <stop offset='1' stopColor='#f1c98a' stopOpacity='0' />
+        </linearGradient>
+        <linearGradient id={strokeId} x1='0' x2='1' y1='0' y2='0'>
+          <stop offset='0' stopColor='#c89a52' />
+          <stop offset='0.6' stopColor='#e8c478' />
+          <stop offset='1' stopColor='#f1d9a6' />
         </linearGradient>
       </defs>
-      <path d={area} fill={`url(#spark-area-${seed})`} />
+      <path d={area} fill={`url(#${fillId})`} />
       <path
         d={line}
         fill='none'
-        stroke='currentColor'
-        strokeOpacity={0.9}
-        strokeWidth={1.25}
+        stroke={`url(#${strokeId})`}
+        strokeWidth={2}
         strokeLinecap='round'
         strokeLinejoin='round'
       />
@@ -329,17 +336,29 @@ function Sparkline({ seed, tone }: { seed: string; tone: string }) {
 }
 
 /**
- * Card shell shared by block + element variants. Cool teal gradient with a
- * pale-cyan border — matches the brand palette the user landed on.
+ * Card shell shared by block + element variants. Warm dark glass treatment
+ * (per the user's reference HTML): semi-transparent brown-black with strong
+ * backdrop blur + saturate, hairline white border, big drop shadow, plus a
+ * subtle inner highlight at the top edge.
  */
 const CARD_BASE =
-  'pointer-events-auto relative w-full overflow-hidden rounded-2xl border p-3.5 text-white shadow-[0_8px_24px_rgba(0,0,0,0.25)] backdrop-blur-md';
+  'pointer-events-auto relative w-full overflow-hidden border text-white';
 
 const CARD_STYLE: React.CSSProperties = {
-  background:
-    'linear-gradient(180deg, rgba(20, 40, 52, 0.78), rgba(12, 28, 40, 0.65))',
-  borderColor: 'rgba(109, 214, 232, 0.25)',
+  background: 'rgba(28, 22, 18, 0.55)',
+  borderColor: 'rgba(255, 255, 255, 0.08)',
+  borderRadius: 22,
+  padding: '22px 26px 24px',
+  backdropFilter: 'blur(20px) saturate(1.2)',
+  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
+  boxShadow:
+    '0 20px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.07)',
 };
+
+const CARD_LABEL_CLS =
+  'm-0 text-[18px] font-normal tracking-[0.005em] text-white/85';
+const CARD_VALUE_CLS =
+  'm-0 mt-1.5 text-[38px] leading-none font-bold tracking-[-0.01em] text-white tabular-nums';
 
 function BlockSummaryCard({
   index,
@@ -360,17 +379,17 @@ function BlockSummaryCard({
   return (
     <div className={CARD_BASE} style={CARD_STYLE}>
       {/* Header */}
-      <div className='flex items-center justify-between'>
+      <div className='flex items-center justify-between text-white/60'>
         <div className='flex items-center gap-1.5'>
-          <span className='flex size-4 items-center justify-center rounded-full bg-white/10 text-[9px] font-bold text-white'>
+          <span className='flex size-4 items-center justify-center rounded-full bg-white/15 text-[10px] font-bold text-white'>
             {index + 1}
           </span>
-          <span className='truncate text-[10px] font-medium tracking-wide text-zinc-300'>
+          <span className='truncate text-[11px] font-medium tracking-wide'>
             {row.block_type ?? 'block'}
           </span>
         </div>
         <span
-          className={`text-[9px] tracking-wider uppercase ${
+          className={`text-[10px] tracking-wider uppercase ${
             isDemo ? 'text-violet-300/80' : 'text-emerald-300/80'
           }`}
         >
@@ -378,36 +397,30 @@ function BlockSummaryCard({
         </span>
       </div>
 
-      {/* Hero number */}
-      <div className='mt-2.5'>
-        <div className='text-[11px] text-zinc-400'>Lượt xem:</div>
-        <div className='text-2xl leading-tight font-bold text-white tabular-nums'>
-          {fmtCount(row.views)}
-        </div>
-      </div>
+      {/* Hero label + value (per the reference) */}
+      <p className={`${CARD_LABEL_CLS} mt-3`}>Lượt xem:</p>
+      <p className={CARD_VALUE_CLS}>{fmtCount(row.views)}</p>
 
-      {/* Sparkline */}
-      <div className='-mx-1 mt-1.5'>
-        <Sparkline seed={row.block_id} tone='text-cyan-300' />
-      </div>
+      {/* Gold sparkline */}
+      <Sparkline seed={row.block_id} />
 
-      {/* Footer stats — 3-up row */}
-      <div className='mt-2 grid grid-cols-3 gap-2 border-t border-white/5 pt-2 text-[10.5px]'>
+      {/* Footer stats — small auxiliary row */}
+      <div className='mt-4 grid grid-cols-3 gap-3 border-t border-white/10 pt-3 text-[11px]'>
         <div>
-          <div className='text-zinc-400'>Click</div>
-          <div className='font-semibold text-white tabular-nums'>
+          <div className='text-white/55'>Click</div>
+          <div className='mt-0.5 font-semibold tabular-nums'>
             {fmtCount(row.clicks)}
           </div>
         </div>
         <div>
-          <div className='text-zinc-400'>CTR</div>
-          <div className={`font-semibold tabular-nums ${ctrTone}`}>
+          <div className='text-white/55'>CTR</div>
+          <div className={`mt-0.5 font-semibold tabular-nums ${ctrTone}`}>
             {fmtPct(ctr)}
           </div>
         </div>
         <div>
-          <div className='text-zinc-400'>Dwell</div>
-          <div className='font-semibold text-white tabular-nums'>
+          <div className='text-white/55'>Dwell</div>
+          <div className='mt-0.5 font-semibold tabular-nums'>
             {fmtDwellMs(row.avg_dwell_ms)}
           </div>
         </div>
@@ -431,35 +444,31 @@ function ElementStatCard({
     : 0;
   return (
     <div className={CARD_BASE} style={CARD_STYLE}>
-      <div className='flex items-start justify-between gap-2'>
+      <div className='flex items-start justify-between gap-2 text-white/60'>
         <div className='min-w-0'>
-          <div className='truncate text-[12px] leading-tight font-semibold text-white'>
+          <div className='truncate text-[13px] leading-tight font-semibold text-white'>
             {label || elementId}
           </div>
-          <div className='mt-0.5 truncate text-[9.5px] tracking-wide text-zinc-400 uppercase'>
+          <div className='mt-0.5 truncate text-[10px] tracking-wider uppercase'>
             {action.action}
           </div>
         </div>
-        <MousePointerClick className='mt-0.5 size-3 shrink-0 text-zinc-500' />
+        <MousePointerClick className='mt-0.5 size-3.5 shrink-0' />
       </div>
 
-      <div className='mt-2'>
-        <div className='text-[11px] text-zinc-400'>Lượt click:</div>
-        <div className='text-2xl leading-tight font-bold text-white tabular-nums'>
-          {fmtCount(action.count)}
-        </div>
-      </div>
+      <p className={`${CARD_LABEL_CLS} mt-3`}>Lượt click:</p>
+      <p className={CARD_VALUE_CLS}>{fmtCount(action.count)}</p>
 
-      <div className='mt-2 grid grid-cols-2 gap-2 border-t border-white/5 pt-2 text-[10.5px]'>
+      <div className='mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-3 text-[11px]'>
         <div>
-          <div className='text-zinc-400'>Unique</div>
-          <div className='font-semibold text-white tabular-nums'>
+          <div className='text-white/55'>Unique</div>
+          <div className='mt-0.5 font-semibold tabular-nums'>
             {fmtCount(action.unique_visitors)}
           </div>
         </div>
         <div>
-          <div className='text-zinc-400'>Tỉ lệ</div>
-          <div className='font-semibold text-emerald-300 tabular-nums'>
+          <div className='text-white/55'>Tỉ lệ</div>
+          <div className='mt-0.5 font-semibold text-emerald-300 tabular-nums'>
             {uniquePct}%
           </div>
         </div>
