@@ -19,13 +19,14 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { AuthHydrator } from '@/components/modules/Auth/AuthHydrator';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { logoutThunk } from '@/store/slices/authSlice';
 
+import { CreateWorkspaceDialog } from './_CreateWorkspaceDialog';
 import {
   FAKE_CLIENT,
   FAKE_STATS,
@@ -102,6 +103,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
   const activeWs = useActiveWorkspace();
   const [wsMenuOpen, setWsMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [createWsOpen, setCreateWsOpen] = useState(false);
 
   // Live data hydrated after mount; fallback to FAKE_* so SSR/static stay stable.
   const [workspaces, setWorkspaces] = useState<Workspace[]>(FAKE_WORKSPACES);
@@ -109,18 +111,22 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
     FAKE_STATS.unread_notifications
   );
 
+  // Hoisted so the create-workspace flow can call it again after success.
+  const refreshWorkspaces = useCallback(async () => {
+    const r = await loadWorkspaces();
+    if (r.source === 'live') setWorkspaces(r.data);
+  }, []);
+
   useEffect(() => {
     let mounted = true;
-    loadWorkspaces().then(r => {
-      if (mounted && r.source === 'live') setWorkspaces(r.data);
-    });
+    refreshWorkspaces();
     loadUnreadNotificationCount().then(r => {
       if (mounted && r.source === 'live') setUnreadCount(r.data);
     });
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [refreshWorkspaces]);
 
   const clientName = user?.client_name ?? FAKE_CLIENT.name;
 
@@ -242,7 +248,14 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                     })}
                   </div>
                   <div className='border-t border-zinc-100 bg-zinc-50/30 px-3 py-2'>
-                    <button className='w-full text-left text-[11px] font-medium text-zinc-600 hover:text-zinc-900'>
+                    <button
+                      type='button'
+                      onClick={() => {
+                        setWsMenuOpen(false);
+                        setCreateWsOpen(true);
+                      }}
+                      className='w-full text-left text-[11px] font-medium text-zinc-600 hover:text-zinc-900'
+                    >
                       + Tạo workspace mới
                     </button>
                   </div>
@@ -423,6 +436,19 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+
+      <CreateWorkspaceDialog
+        open={createWsOpen}
+        clientId={user?.client_id ?? null}
+        onClose={() => setCreateWsOpen(false)}
+        onCreated={async ws => {
+          // Pull the freshest list from BE + immediately switch to the new
+          // workspace so the user sees their selection take effect.
+          await refreshWorkspaces();
+          const path = pathname ?? '/portal';
+          router.push(`${path}?ws=${ws.id}`);
+        }}
+      />
     </div>
   );
 }
