@@ -1,29 +1,32 @@
 'use client';
 
 /**
- * Standalone block-detail view used by the brand-portal route
- * `/portal/blocks/[id]`. Replaces the side-drawer pattern in /admin/blocks
- * for the portal context, so the URL stays under /portal even while editing
- * metadata. The "Sửa trong canvas" action opens the full canvas editor via
- * the in-portal wrapper at /portal/blocks/[id]/edit.
+ * Editorial-studio block-detail view used by the brand-portal route
+ * `/portal/blocks/[id]`. The preview is the hero, metadata reads like a
+ * curator's placard, and the sticky right rail keeps primary actions in
+ * reach without competing with the artwork.
  */
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
-  Bookmark,
   Calendar,
+  Check,
   Copy,
   Hash,
+  Layers,
+  Lightbulb,
+  Monitor,
   Pencil,
+  Smartphone,
+  Sparkles,
   Tag,
   Trash2,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { Button } from '@/components/atoms/button';
 import { BlockMiniPreview } from '@/components/modules/CanvasTemplate/block-editor/BlockMiniPreview';
 import {
   deleteSavedBlock,
@@ -84,6 +87,22 @@ function fmtDate(iso?: string): string {
   });
 }
 
+function fmtRelative(iso?: string): string {
+  if (!iso) return '—';
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return iso;
+  const diff = Date.now() - t;
+  const min = Math.floor(diff / 60_000);
+  if (min < 1) return 'vừa xong';
+  if (min < 60) return `${min} phút trước`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} giờ trước`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day} ngày trước`;
+  if (day < 30) return `${Math.floor(day / 7)} tuần trước`;
+  return fmtDate(iso);
+}
+
 interface Props {
   blockId: string;
   /**
@@ -105,6 +124,7 @@ export function BlockDetailView({
   const [nameInput, setNameInput] = React.useState(block?.name ?? '');
   const [tagInput, setTagInput] = React.useState('');
   const [editing, setEditing] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
 
   React.useEffect(() => {
     setBlock(getSavedBlock(blockId) ?? null);
@@ -119,17 +139,25 @@ export function BlockDetailView({
 
   if (!block) {
     return (
-      <div className='mx-auto max-w-3xl p-8'>
-        <Button variant='outline' onClick={() => router.push(backHref)}>
-          <ArrowLeft className='size-3.5' />
-          Quay lại danh sách
-        </Button>
-        <div className='mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center'>
-          <p className='text-[14px] font-semibold text-amber-900'>
-            Không tìm thấy block với id <code>{blockId}</code>
+      <div className='mx-auto max-w-3xl px-6 pt-10'>
+        <button
+          type='button'
+          onClick={() => router.push(backHref)}
+          className='group inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-600 shadow-sm transition-all hover:border-zinc-300 hover:text-zinc-900'
+        >
+          <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
+          Quay lại thư viện
+        </button>
+        <div className='mt-8 overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50/60 to-white p-10 text-center shadow-sm'>
+          <div className='mx-auto flex size-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700'>
+            <X className='size-6' strokeWidth={2.5} />
+          </div>
+          <p className='mt-4 text-[15px] font-semibold text-amber-900'>
+            Không tìm thấy block
           </p>
-          <p className='mt-1 text-[12px] text-amber-700'>
-            Block có thể đã bị xoá hoặc chưa tồn tại trong storage của bạn.
+          <p className='mt-1.5 text-[12.5px] text-amber-800/80'>
+            Block với id <code className='font-mono'>{blockId}</code> không tồn
+            tại trong storage — có thể đã bị xoá hoặc chưa sync.
           </p>
         </div>
       </div>
@@ -140,6 +168,8 @@ export function BlockDetailView({
   const gradient = BLOCK_TYPE_GRADIENT[type] ?? 'from-zinc-400 to-zinc-600';
   const label = BLOCK_TYPE_LABEL[type] ?? type;
   const tags = block.tags ?? [];
+  const extraCount = block.block.extraElements?.length ?? 0;
+  const hasMobile = !!block.block.contentVi?.mobile;
 
   const commitName = () => {
     if (nameInput.trim() && nameInput !== block.name) {
@@ -211,25 +241,90 @@ export function BlockDetailView({
     }
   };
 
+  const copyId = () => {
+    navigator.clipboard.writeText(block.id).then(
+      () => {
+        setCopied(true);
+        toast.success('Đã copy block ID');
+        window.setTimeout(() => setCopied(false), 1200);
+      },
+      () => toast.error('Copy thất bại')
+    );
+  };
+
   return (
-    <div className='mx-auto flex max-w-5xl flex-col gap-6 p-6'>
-      {/* Top bar */}
-      <div className='flex items-center justify-between'>
+    <div className='relative mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-6 pb-16 sm:px-6'>
+      {/* Soft ambient blur behind hero — adds atmosphere without competing
+          with the preview. Sits behind everything via -z-10. */}
+      <div
+        aria-hidden
+        className='pointer-events-none absolute inset-x-0 top-0 -z-10 mx-auto h-80 w-[90%] max-w-5xl rounded-[50%] bg-gradient-to-br from-zinc-200/40 via-zinc-100/20 to-transparent blur-3xl'
+      />
+
+      {/* ── Top utility bar ─────────────────────────────────────────────── */}
+      <header className='flex flex-wrap items-center justify-between gap-3'>
         <button
           type='button'
           onClick={() => router.push(backHref)}
-          className='inline-flex items-center gap-1.5 text-[13px] text-zinc-600 hover:text-zinc-900'
+          className='group inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3.5 py-1.5 text-[12.5px] font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
         >
-          <ArrowLeft className='size-4' />
-          Quay lại danh sách
+          <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
+          Thư viện blocks
         </button>
-        <div className='font-mono text-[10.5px] text-zinc-400'>{block.id}</div>
-      </div>
+        <button
+          type='button'
+          onClick={copyId}
+          className='group inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white/60 px-2.5 py-1 font-mono text-[10.5px] text-zinc-500 shadow-sm backdrop-blur transition-colors hover:border-zinc-300 hover:bg-white hover:text-zinc-900'
+          title='Click để copy block ID'
+        >
+          <Hash className='size-3' />
+          <span className='hidden sm:inline'>{block.id}</span>
+          <span className='sm:hidden'>{block.id.slice(0, 12)}…</span>
+          {copied ? (
+            <Check className='size-3 text-emerald-600' />
+          ) : (
+            <Copy className='size-3 text-zinc-400 group-hover:text-zinc-700' />
+          )}
+        </button>
+      </header>
 
-      {/* Header card */}
-      <div className='rounded-2xl border border-zinc-200 bg-white shadow-sm'>
-        <div className='flex items-start gap-5 p-5'>
-          <div className='min-w-0 flex-1'>
+      {/* ── Hero card ───────────────────────────────────────────────────── */}
+      <section className='relative overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-16px_rgba(0,0,0,0.12)]'>
+        {/* Soft gradient wash inside the hero card */}
+        <div
+          aria-hidden
+          className='pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-zinc-50/80 via-white/40 to-transparent'
+        />
+
+        <div className='relative p-6 sm:p-8'>
+          {/* Type pill row */}
+          <div className='flex flex-wrap items-center gap-2'>
+            <span
+              className={cn(
+                'inline-flex items-center rounded-full bg-gradient-to-br px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.18em] text-white/95 uppercase shadow-sm',
+                gradient
+              )}
+            >
+              {label}
+            </span>
+            <span className='font-mono text-[10.5px] tracking-wider text-zinc-400 uppercase'>
+              {type}
+            </span>
+            <span className='ml-auto inline-flex items-center gap-1 text-[10.5px] font-medium tracking-wider text-zinc-400 uppercase'>
+              {hasMobile ? (
+                <>
+                  <Smartphone className='size-3' /> Desktop + Mobile
+                </>
+              ) : (
+                <>
+                  <Monitor className='size-3' /> Desktop only
+                </>
+              )}
+            </span>
+          </div>
+
+          {/* Title — inline editable */}
+          <div className='mt-4'>
             {editingName ? (
               <input
                 autoFocus
@@ -243,141 +338,239 @@ export function BlockDetailView({
                     setEditingName(false);
                   }
                 }}
-                className='w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xl font-semibold outline-none focus:ring-2 focus:ring-zinc-900/10'
+                className='w-full max-w-2xl rounded-xl border-2 border-zinc-900 bg-white px-3 py-2 text-2xl font-bold tracking-tight outline-none sm:text-3xl'
               />
             ) : (
               <button
                 type='button'
                 onClick={() => setEditingName(true)}
-                className='group flex items-center gap-2 text-left'
+                className='group inline-flex items-baseline gap-2 text-left'
                 title='Click để đổi tên'
               >
-                <span className='text-2xl font-bold tracking-tight'>
+                <h1 className='text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl'>
                   {block.name}
-                </span>
-                <Pencil className='size-3.5 text-zinc-300 group-hover:text-zinc-600' />
+                </h1>
+                <Pencil className='size-3.5 text-zinc-300 transition-colors group-hover:text-zinc-700' />
               </button>
             )}
-            <div className='mt-2 flex flex-wrap items-center gap-3 text-[12px] text-zinc-500'>
-              <span
-                className={cn(
-                  'rounded bg-gradient-to-br px-2 py-0.5 font-mono text-[10px] font-bold tracking-widest text-white/95 uppercase shadow-sm',
-                  gradient
-                )}
-              >
-                {label}
-              </span>
-              <span className='inline-flex items-center gap-1'>
-                <Hash className='size-3' />
-                <code className='font-mono text-[11px]'>{type}</code>
-              </span>
-              <span className='inline-flex items-center gap-1'>
-                <Calendar className='size-3' />
-                {fmtDate(block.createdAt)}
-              </span>
-              {block.updatedAt && (
-                <span className='inline-flex items-center gap-1'>
-                  Cập nhật {fmtDate(block.updatedAt)}
+          </div>
+
+          {/* Meta line */}
+          <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-zinc-500'>
+            <span className='inline-flex items-center gap-1.5'>
+              <Calendar className='size-3' />
+              Tạo {fmtDate(block.createdAt)}
+            </span>
+            {block.updatedAt && (
+              <>
+                <span className='text-zinc-300'>·</span>
+                <span>Cập nhật {fmtRelative(block.updatedAt)}</span>
+              </>
+            )}
+            <span className='text-zinc-300'>·</span>
+            <span>
+              {extraCount > 0 ? `${extraCount} extras` : 'không có extras'}
+            </span>
+          </div>
+
+          {/* Preview — matted frame */}
+          <figure className='mt-7 overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-100 via-zinc-50 to-zinc-100 p-2.5 ring-1 ring-zinc-200/80 ring-inset'>
+            <div className='overflow-hidden rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.05),0_8px_24px_-12px_rgba(0,0,0,0.15)] ring-1 ring-zinc-900/5'>
+              <BlockMiniPreview block={block.block} aspect='16 / 9' />
+            </div>
+          </figure>
+        </div>
+      </section>
+
+      {/* ── 2-col grid: details/tags + actions rail ─────────────────────── */}
+      <section className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+        {/* Left col — Details + Tags */}
+        <div className='space-y-6 lg:col-span-2'>
+          {/* Details */}
+          <div className='rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm'>
+            <SectionHeader icon={<Layers className='size-3.5' />}>
+              Chi tiết
+            </SectionHeader>
+            <dl className='mt-4 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3'>
+              <DefRow
+                label='Block type'
+                value={
+                  <code className='rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11.5px] text-zinc-700'>
+                    {type}
+                  </code>
+                }
+              />
+              <DefRow label='Saved' value={fmtDate(block.createdAt)} />
+              <DefRow
+                label='Updated'
+                value={block.updatedAt ? fmtRelative(block.updatedAt) : '—'}
+              />
+              <DefRow label='Extras' value={`${extraCount} elements`} />
+              <DefRow
+                label='Layout'
+                value={hasMobile ? 'Desktop + Mobile' : 'Desktop only'}
+              />
+              <DefRow
+                label='Tags'
+                value={
+                  tags.length === 0 ? (
+                    <span className='text-zinc-400'>—</span>
+                  ) : (
+                    `${tags.length} tag${tags.length > 1 ? 's' : ''}`
+                  )
+                }
+              />
+            </dl>
+          </div>
+
+          {/* Tags editor */}
+          <div className='rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm'>
+            <SectionHeader icon={<Tag className='size-3.5' />}>
+              Tags
+            </SectionHeader>
+            <div className='mt-4 flex flex-wrap items-center gap-1.5'>
+              {tags.length === 0 && (
+                <span className='text-[12.5px] text-zinc-400 italic'>
+                  Chưa có tag — thêm để dễ filter trong thư viện
                 </span>
               )}
-              <span className='inline-flex items-center gap-1'>
-                <Bookmark className='size-3' />
-                {block.block.extraElements?.length ?? 0} extras
-              </span>
-              <span className='text-zinc-400'>
-                {block.block.contentVi?.mobile
-                  ? '📱 desktop + mobile'
-                  : '🖥 desktop only'}
-              </span>
+              {tags.map(t => (
+                <button
+                  key={t}
+                  type='button'
+                  onClick={() => removeTag(t)}
+                  className='group inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11.5px] font-medium text-zinc-700 transition-all hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
+                  title='Click để xoá tag'
+                >
+                  <span>{t}</span>
+                  <X className='size-2.5 text-zinc-400 group-hover:text-rose-500' />
+                </button>
+              ))}
+            </div>
+            <div className='mt-4 flex max-w-md items-center gap-2'>
+              <div className='relative flex-1'>
+                <Tag className='absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-zinc-400' />
+                <input
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addTag();
+                    }
+                  }}
+                  placeholder='Thêm tag (Enter)…'
+                  className='w-full rounded-lg border border-zinc-200 bg-zinc-50 py-2 pr-3 pl-9 text-[12.5px] transition-colors outline-none focus:border-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-900/5'
+                />
+              </div>
+              <button
+                type='button'
+                onClick={addTag}
+                disabled={!tagInput.trim()}
+                className='rounded-lg bg-zinc-900 px-3.5 py-2 text-[12.5px] font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                Thêm
+              </button>
             </div>
           </div>
-          <div className='flex flex-col gap-2'>
-            <Button
-              variant='primary'
-              onClick={handleEdit}
+        </div>
+
+        {/* Right col — Sticky action rail */}
+        <aside className='lg:sticky lg:top-6 lg:self-start'>
+          <div className='rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm'>
+            <SectionHeader icon={<Sparkles className='size-3.5' />}>
+              Hành động
+            </SectionHeader>
+
+            {/* Primary CTA — opens canvas editor */}
+            <button
+              type='button'
+              onClick={() => void handleEdit()}
               disabled={editing}
-              className='whitespace-nowrap'
+              className='group relative mt-4 flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 px-4 py-3 text-left text-white shadow-lg shadow-zinc-900/10 transition-all hover:from-zinc-800 hover:to-zinc-700 hover:shadow-zinc-900/20 disabled:opacity-60'
             >
-              <Pencil className='size-3.5' />
-              {editing ? 'Đang mở…' : 'Sửa trong canvas'}
-            </Button>
-            <div className='flex gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
+              {/* Subtle inner highlight */}
+              <span
+                aria-hidden
+                className='pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent'
+              />
+              <div className='min-w-0'>
+                <div className='text-[13.5px] font-semibold'>
+                  {editing ? 'Đang mở editor…' : 'Sửa trong canvas'}
+                </div>
+                <div className='text-[10.5px] text-white/55'>
+                  Editor full-screen + tất cả tooling
+                </div>
+              </div>
+              <div className='flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/10 transition-transform group-hover:translate-x-0.5'>
+                <Pencil className='size-3.5' />
+              </div>
+            </button>
+
+            {/* Secondary actions */}
+            <div className='mt-2 grid grid-cols-2 gap-2'>
+              <button
+                type='button'
                 onClick={handleDuplicate}
-                className='flex-1'
+                className='group inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[12px] font-medium text-zinc-700 transition-all hover:border-zinc-900 hover:text-zinc-900'
               >
                 <Copy className='size-3.5' />
                 Duplicate
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
+              </button>
+              <button
+                type='button'
                 onClick={handleDelete}
-                className='flex-1'
+                className='group inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[12px] font-medium text-zinc-700 transition-all hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
               >
-                <Trash2 className='size-3.5 text-rose-600' />
+                <Trash2 className='size-3.5' />
                 Xoá
-              </Button>
+              </button>
+            </div>
+
+            {/* Tip card */}
+            <div className='mt-5 flex gap-2.5 rounded-xl border border-amber-100 bg-amber-50/60 p-3.5'>
+              <Lightbulb className='size-4 shrink-0 text-amber-600' />
+              <div className='text-[11.5px] leading-relaxed text-amber-900/90'>
+                <strong className='block text-[11.5px] font-semibold text-amber-900'>
+                  Mẹo
+                </strong>
+                Sau khi sửa xong trong canvas → click 🔖 bookmark icon để cập
+                nhật bản gốc trong thư viện.
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </aside>
+      </section>
+    </div>
+  );
+}
 
-      {/* Preview */}
-      <div className='rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm'>
-        <div className='overflow-hidden rounded-xl'>
-          <BlockMiniPreview block={block.block} aspect='16 / 9' />
-        </div>
-      </div>
+/* ─── Subcomponents ──────────────────────────────────────────────────── */
 
-      {/* Tags */}
-      <div className='rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm'>
-        <div className='mb-2 flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
-          <Tag className='size-3' />
-          Tags
-        </div>
-        <div className='flex flex-wrap items-center gap-1.5'>
-          {tags.length === 0 && (
-            <span className='text-[12px] text-zinc-400'>Chưa có tag</span>
-          )}
-          {tags.map(t => (
-            <button
-              key={t}
-              type='button'
-              onClick={() => removeTag(t)}
-              className='group flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-1 text-[11.5px] font-medium text-zinc-700 hover:bg-rose-50 hover:text-rose-700'
-              title='Click để xoá tag'
-            >
-              {t}
-              <X className='size-2.5 opacity-0 group-hover:opacity-100' />
-            </button>
-          ))}
-        </div>
-        <div className='mt-3 flex max-w-md items-center gap-1.5'>
-          <input
-            value={tagInput}
-            onChange={e => setTagInput(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addTag();
-              }
-            }}
-            placeholder='Thêm tag (Enter)…'
-            className='flex-1 rounded-md border border-zinc-200 px-3 py-1.5 text-[12px] outline-none focus:border-zinc-400'
-          />
-          <button
-            type='button'
-            onClick={addTag}
-            disabled={!tagInput.trim()}
-            className='rounded-md bg-zinc-900 px-3 py-1.5 text-[12px] font-medium text-white hover:bg-zinc-700 disabled:opacity-40'
-          >
-            Thêm
-          </button>
-        </div>
-      </div>
+function SectionHeader({
+  icon,
+  children,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className='flex items-center gap-2 text-[10.5px] font-semibold tracking-[0.2em] text-zinc-500 uppercase'>
+      <span className='flex size-6 items-center justify-center rounded-md bg-zinc-100 text-zinc-600'>
+        {icon}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+function DefRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className='flex flex-col gap-1'>
+      <dt className='text-[10px] font-semibold tracking-[0.15em] text-zinc-400 uppercase'>
+        {label}
+      </dt>
+      <dd className='text-[13px] leading-snug text-zinc-800'>{value}</dd>
     </div>
   );
 }
