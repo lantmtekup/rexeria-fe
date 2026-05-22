@@ -899,6 +899,11 @@ function Gutters({
         )
       : 0;
 
+  const CARD_GAP = 50; // px gap between card edge and the anchored element
+  const CARD_WIDTH = GUTTER_WIDTH - 28;
+  const PAGE_PAD = 12;
+  const winW = typeof window !== 'undefined' ? window.innerWidth : 1280;
+
   return (
     <>
       {/* SVG layer for leader lines — full-page, behind cards */}
@@ -914,10 +919,15 @@ function Gutters({
           if (!m) return null;
           if (!rowByBlock.has(blockId)) return null;
           const cardCenterY = m.top + 24;
+          // Block card sits just left of the block — short stub line.
+          const cardRight = Math.max(
+            PAGE_PAD + CARD_WIDTH,
+            m.left - CARD_GAP + CARD_WIDTH
+          );
           return (
             <LeaderLine
               key={`bl-${blockId}`}
-              from={{ x: GUTTER_WIDTH, y: cardCenterY }}
+              from={{ x: cardRight, y: cardCenterY }}
               to={{ x: m.left, y: cardCenterY }}
               side='left'
             />
@@ -926,14 +936,15 @@ function Gutters({
         {elementCards.map(({ elementId }) => {
           const m = elementMeasurements.get(elementId);
           if (!m) return null;
-          // Anchor leader at the element's vertical centre, line up the card
-          // at the same y so the curve is short + readable.
           const elementCenterY = m.top + m.height / 2;
-          const winW = typeof window !== 'undefined' ? window.innerWidth : 1280;
+          const cardLeft = Math.min(
+            winW - CARD_WIDTH - PAGE_PAD,
+            m.right + CARD_GAP
+          );
           return (
             <LeaderLine
               key={`el-${elementId}`}
-              from={{ x: winW - GUTTER_WIDTH, y: elementCenterY }}
+              from={{ x: cardLeft, y: elementCenterY }}
               to={{ x: m.right, y: elementCenterY }}
               side='right'
               color='fuchsia'
@@ -942,23 +953,21 @@ function Gutters({
         })}
       </svg>
 
-      {/* Left gutter cards */}
-      <div
-        className='pointer-events-none absolute top-0 left-0 z-40'
-        style={{ width: GUTTER_WIDTH }}
-      >
+      {/* Block cards — sit ~50px to the left of each block (clamped). */}
+      <div className='pointer-events-none absolute top-0 left-0 z-40'>
         {orderedBlockIds.map((blockId, idx) => {
           const m = blockMeasurements.get(blockId);
           const row = rowByBlock.get(blockId);
           if (!m || !row) return null;
+          const left = Math.max(PAGE_PAD, m.left - CARD_WIDTH - CARD_GAP);
           return (
             <div
               key={blockId}
               style={{
                 position: 'absolute',
                 top: m.top,
-                left: 12,
-                width: GUTTER_WIDTH - 28,
+                left,
+                width: CARD_WIDTH,
               }}
             >
               <BlockSummaryCard index={idx} row={row} isDemo={isDemo} />
@@ -967,24 +976,25 @@ function Gutters({
         })}
       </div>
 
-      {/* Right gutter cards */}
-      <div
-        className='pointer-events-none absolute top-0 right-0 z-40'
-        style={{ width: GUTTER_WIDTH }}
-      >
+      {/* Element cards — sit ~50px to the right of each button (clamped). */}
+      <div className='pointer-events-none absolute top-0 left-0 z-40'>
         {elementCards.map(({ elementId, label, action }) => {
           const m = elementMeasurements.get(elementId);
           if (!m) return null;
-          // Vertically centre the card on the element (not the block).
+          // Vertically centre the card on the element (~80px tall card).
           const cardTop = m.top + m.height / 2 - 40;
+          const left = Math.min(
+            winW - CARD_WIDTH - PAGE_PAD,
+            m.right + CARD_GAP
+          );
           return (
             <div
               key={elementId}
               style={{
                 position: 'absolute',
                 top: cardTop,
-                right: 12,
-                width: GUTTER_WIDTH - 28,
+                left,
+                width: CARD_WIDTH,
               }}
             >
               <ElementStatCard
