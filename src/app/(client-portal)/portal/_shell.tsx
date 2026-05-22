@@ -18,7 +18,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -28,6 +28,7 @@ import { logoutThunk } from '@/store/slices/authSlice';
 
 import { CreateWorkspaceDialog } from './_CreateWorkspaceDialog';
 import {
+  DEFAULT_WORKSPACE_ID,
   FAKE_CLIENT,
   FAKE_STATS,
   FAKE_WORKSPACES,
@@ -38,11 +39,7 @@ import {
   loadWorkspaces,
   switchWorkspaceRemote,
 } from './_remote';
-import {
-  useActiveWorkspace,
-  withWorkspace,
-  WorkspaceListContext,
-} from './_workspace';
+import { withWorkspace, WorkspaceListContext } from './_workspace';
 
 type NavItem = {
   href: string;
@@ -102,15 +99,24 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
 function PortalShellInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const user = useAppSelector(s => s.auth.user);
-  const activeWs = useActiveWorkspace();
   const [wsMenuOpen, setWsMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [createWsOpen, setCreateWsOpen] = useState(false);
 
   // Live data hydrated after mount; fallback to FAKE_* so SSR/static stay stable.
   const [workspaces, setWorkspaces] = useState<Workspace[]>(FAKE_WORKSPACES);
+
+  // Active workspace — compute directly from local state + URL so the chip
+  // updates the instant we land a live list. `useActiveWorkspace()` is for
+  // descendants (consumes the context this component PROVIDES), not for use
+  // here in the same render.
+  const wsId =
+    searchParams?.get('ws') || workspaces[0]?.id || DEFAULT_WORKSPACE_ID;
+  const activeWs =
+    workspaces.find(w => w.id === wsId) ?? workspaces[0] ?? FAKE_WORKSPACES[0];
   const [unreadCount, setUnreadCount] = useState<number>(
     FAKE_STATS.unread_notifications
   );
