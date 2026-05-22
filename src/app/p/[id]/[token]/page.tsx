@@ -8,6 +8,7 @@ import { Globe2 } from 'lucide-react';
 import { Spinner } from '@/components/atoms/spinner';
 import { AuthHydrator } from '@/components/modules/Auth/AuthHydrator';
 import { StatsAnnotationOverlay } from '@/components/modules/Analytics/StatsAnnotationOverlay';
+import { useBlockTracking, useInitTracker } from '@/lib/analytics/use-tracker';
 import { RenderBlock } from '@/components/modules/CanvasTemplate/block-editor/blocks/renderBlock';
 import {
   MotionBlockRoot,
@@ -45,6 +46,10 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 
 export default function PublicLandingPage({ params }: PageProps) {
   const { id, token } = use(params);
+  // Visitor analytics — page_view + block_view/dwell + click + scroll_depth.
+  // Only fires once canvas is mounted (templateId becomes truthy).
+  useInitTracker(id);
+  useBlockTracking();
   const [canvas, setCanvas] = React.useState<BlockEditorCanvas | null>(null);
   const [status, setStatus] = React.useState<
     'loading' | 'ok' | 'not-published' | 'wrong-token' | 'error'
