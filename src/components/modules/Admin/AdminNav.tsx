@@ -43,7 +43,7 @@ const TABS: Tab[] = [
     icon: SparklesIcon,
   },
   {
-    href: '/admin/saved-blocks',
+    href: '/admin/blocks',
     labelKey: 'nav.savedBlocks',
     icon: BookmarkIcon,
   },

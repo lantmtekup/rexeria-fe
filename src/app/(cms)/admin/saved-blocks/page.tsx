@@ -1,11 +1,9 @@
-import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 
-import { AdminSavedBlocksPage } from '@/components/modules/Admin/AdminSavedBlocksPage';
-
+/**
+ * Old route — superseded by `/admin/blocks` (richer block management UI).
+ * Kept as a permanent redirect so bookmarks / sidebar links still work.
+ */
 export default function Page() {
-  return (
-    <Suspense fallback={<div className='p-6 text-sm'>Loading…</div>}>
-      <AdminSavedBlocksPage />
-    </Suspense>
-  );
+  redirect('/admin/blocks');
 }

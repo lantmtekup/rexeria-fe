@@ -22,6 +22,13 @@ export interface SavedBlock {
   block: Block;
   /** ISO timestamp when saved. */
   createdAt: string;
+  /** ISO timestamp of the last metadata change (rename, tag, duplicate-as). */
+  updatedAt?: string;
+  /**
+   * Free-form tags for filtering in the /admin/blocks library page.
+   * Lower-case kebab — UI displays them as chips.
+   */
+  tags?: string[];
 }
 
 function isBrowser(): boolean {
@@ -86,11 +93,73 @@ export function saveBlock(name: string, block: Block): SavedBlock {
 export function renameSavedBlock(id: string, name: string): void {
   const trimmed = name.trim();
   if (!trimmed) return;
-  writeRaw(readRaw().map(e => (e.id === id ? { ...e, name: trimmed } : e)));
+  const now = new Date().toISOString();
+  writeRaw(
+    readRaw().map(e =>
+      e.id === id ? { ...e, name: trimmed, updatedAt: now } : e
+    )
+  );
 }
 
 export function deleteSavedBlock(id: string): void {
   writeRaw(readRaw().filter(e => e.id !== id));
+}
+
+export function getSavedBlock(id: string): SavedBlock | undefined {
+  return readRaw().find(e => e.id === id);
+}
+
+/**
+ * Clone a saved block to a new entry. Block IDs (root + extras) are
+ * regenerated so the new entry can coexist with the original in any
+ * canvas. Name gets a `(copy)` suffix unless caller supplies one.
+ */
+export function duplicateSavedBlock(
+  id: string,
+  newName?: string
+): SavedBlock | undefined {
+  const source = getSavedBlock(id);
+  if (!source) return undefined;
+  const cloned = structuredClone(source.block);
+  cloned.id = `b_${Math.random().toString(36).slice(2, 10)}`;
+  if (cloned.extraElements?.length) {
+    cloned.extraElements = cloned.extraElements.map(el => ({
+      ...el,
+      id: `el_${Math.random().toString(36).slice(2, 14)}`,
+    }));
+  }
+  const now = new Date().toISOString();
+  const entry: SavedBlock = {
+    id: genId(),
+    name: (newName ?? `${source.name} (copy)`).trim() || 'Saved block',
+    block: cloned,
+    createdAt: now,
+    updatedAt: now,
+    tags: source.tags ? [...source.tags] : undefined,
+  };
+  writeRaw([...readRaw(), entry]);
+  return entry;
+}
+
+/**
+ * Replace the tag list on a saved block. Empty array clears tags. Tags
+ * are normalised (lower-case, deduped) at write time so UI doesn't have
+ * to repeat the dance.
+ */
+export function updateSavedBlockTags(id: string, tags: string[]): void {
+  const normalised = Array.from(
+    new Set(
+      tags
+        .map(t => t.trim().toLowerCase())
+        .filter(t => t.length > 0 && t.length <= 40)
+    )
+  );
+  const now = new Date().toISOString();
+  writeRaw(
+    readRaw().map(e =>
+      e.id === id ? { ...e, tags: normalised, updatedAt: now } : e
+    )
+  );
 }
 
 /**
