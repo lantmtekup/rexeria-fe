@@ -77,6 +77,37 @@ function writeRange(r: DateRange) {
   }
 }
 
+/* ---------- card offsets (drag-to-reposition persistence) ---------- */
+
+export type CardOffset = { dx: number; dy: number };
+export type OffsetMap = Record<string, CardOffset>;
+
+const offsetsStorageKey = (templateId: string) =>
+  `rexer.statsOverlay.offsets:${templateId}`;
+
+function readOffsets(templateId: string): OffsetMap {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(offsetsStorageKey(templateId));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeOffsets(templateId: string, offsets: OffsetMap): void {
+  try {
+    window.localStorage.setItem(
+      offsetsStorageKey(templateId),
+      JSON.stringify(offsets)
+    );
+  } catch {
+    // ignore quota errors
+  }
+}
+
 /* ---------- measurements ---------- */
 
 type Measurement = {
@@ -476,6 +507,8 @@ function StatsToolbar({
   loading,
   hasData,
   isDemo,
+  hasCustomOffsets,
+  onResetOffsets,
 }: {
   enabled: boolean;
   setEnabled: (v: boolean) => void;
@@ -484,6 +517,8 @@ function StatsToolbar({
   loading: boolean;
   hasData: boolean;
   isDemo: boolean;
+  hasCustomOffsets: boolean;
+  onResetOffsets: () => void;
 }) {
   return (
     <div className='fixed top-4 right-4 z-50 flex items-center gap-2 rounded-full border border-zinc-200 bg-white/95 px-2 py-1.5 shadow-lg backdrop-blur'>
@@ -523,6 +558,19 @@ function StatsToolbar({
           >
             {loading ? '…' : isDemo ? 'demo' : hasData ? 'live' : 'no data'}
           </span>
+          {hasCustomOffsets && (
+            <>
+              <div className='h-4 w-px bg-zinc-200' />
+              <button
+                type='button'
+                onClick={onResetOffsets}
+                className='rounded-md px-2 py-0.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+                title='Đặt lại vị trí mặc định cho mọi card'
+              >
+                Reset vị trí
+              </button>
+            </>
+          )}
         </>
       )}
     </div>
@@ -551,13 +599,33 @@ export function StatsAnnotationOverlay({
   // Sticky 403 flag so the brand-pending banner doesn't flash off between
   // dropdown range changes (each change re-triggers fetch).
   const [forbidden, setForbidden] = React.useState(false);
+  // Drag-positioned card offsets, keyed by `block:<id>` / `el:<id>`.
+  // Per-template so different landings keep their own layout.
+  const [offsets, setOffsets] = React.useState<OffsetMap>({});
 
   // Hydrate persisted state once we know the user is logged in.
   React.useEffect(() => {
     if (!isLoggedIn) return;
     setEnabledState(readEnabled());
     setRangeState(readRange());
-  }, [isLoggedIn]);
+    setOffsets(readOffsets(templateId));
+  }, [isLoggedIn, templateId]);
+
+  const updateOffset = React.useCallback(
+    (key: string, off: CardOffset) => {
+      setOffsets(prev => {
+        const next = { ...prev, [key]: off };
+        writeOffsets(templateId, next);
+        return next;
+      });
+    },
+    [templateId]
+  );
+
+  const resetOffsets = React.useCallback(() => {
+    setOffsets({});
+    writeOffsets(templateId, {});
+  }, [templateId]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -768,6 +836,8 @@ export function StatsAnnotationOverlay({
         loading={loading}
         hasData={rows.length > 0}
         isDemo={isDemo}
+        hasCustomOffsets={Object.keys(offsets).length > 0}
+        onResetOffsets={resetOffsets}
       />
       {enabled && forbidden && !isAdminScope && (
         <div className='fixed top-16 right-4 z-50 max-w-sm rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900 shadow'>
@@ -795,6 +865,8 @@ export function StatsAnnotationOverlay({
           rowByBlock={rowByBlock}
           elementCards={elementCards}
           isDemo={isDemo}
+          offsets={offsets}
+          onOffsetChange={updateOffset}
         />
       )}
       {enabled && narrow && (
@@ -807,12 +879,83 @@ export function StatsAnnotationOverlay({
   );
 }
 
+/**
+ * Drag-handle wrapper around each card. Renders at `(baseLeft + offset.dx,
+ * baseTop + offset.dy)`; mousedown starts a drag that updates `offset` live
+ * and commits to localStorage on mouseup. Cursor flips to `grabbing` while
+ * active. Inner card must be `pointer-events-auto` (the shared CARD_BASE is).
+ */
+function DraggableCard({
+  cardKey,
+  baseLeft,
+  baseTop,
+  width,
+  offset,
+  onChange,
+  children,
+}: {
+  cardKey: string;
+  baseLeft: number;
+  baseTop: number;
+  width: number;
+  offset: CardOffset;
+  onChange: (key: string, off: CardOffset) => void;
+  children: React.ReactNode;
+}) {
+  const [dragging, setDragging] = React.useState(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Avoid hijacking text-select inside the card if user wanted to copy stats
+    // later — drag only when mousedown lands on a non-text region. For now
+    // any region triggers drag; consumers don't have selectable content yet.
+    e.preventDefault();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startOffset = offset;
+    setDragging(true);
+
+    const onMove = (ev: MouseEvent) => {
+      onChange(cardKey, {
+        dx: startOffset.dx + (ev.clientX - startX),
+        dy: startOffset.dy + (ev.clientY - startY),
+      });
+    };
+    const onUp = () => {
+      setDragging(false);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  return (
+    <div
+      onMouseDown={handleMouseDown}
+      style={{
+        position: 'absolute',
+        left: baseLeft + offset.dx,
+        top: baseTop + offset.dy,
+        width,
+        cursor: dragging ? 'grabbing' : 'grab',
+        // Above leader lines so dragging is unimpeded; same as gutter wrapper.
+        zIndex: dragging ? 50 : 40,
+        userSelect: 'none',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function Gutters({
   blockMeasurements,
   elementMeasurements,
   rowByBlock,
   elementCards,
   isDemo,
+  offsets,
+  onOffsetChange,
 }: {
   blockMeasurements: Map<string, Measurement>;
   elementMeasurements: Map<string, Measurement>;
@@ -823,6 +966,8 @@ function Gutters({
     action: ActionStat;
   }>;
   isDemo: boolean;
+  offsets: OffsetMap;
+  onOffsetChange: (key: string, off: CardOffset) => void;
 }) {
   // Ordered block ids by vertical position so the index number reflects scroll order.
   const orderedBlockIds = React.useMemo(() => {
@@ -845,9 +990,40 @@ function Gutters({
   const PAGE_PAD = 12;
   const winW = typeof window !== 'undefined' ? window.innerWidth : 1280;
 
+  // Precompute the rendered position of each card (base + user offset).
+  // Leader lines + draggable wrappers both read from this list so the line
+  // tip follows the card while it's being dragged.
+  const blockCardLayouts = orderedBlockIds
+    .map((blockId, idx) => {
+      const m = blockMeasurements.get(blockId);
+      const row = rowByBlock.get(blockId);
+      if (!m || !row) return null;
+      const key = `block:${blockId}`;
+      const offset = offsets[key] ?? { dx: 0, dy: 0 };
+      const baseLeft = Math.max(PAGE_PAD, m.left - CARD_WIDTH - CARD_GAP);
+      const baseTop = m.top;
+      return { blockId, idx, m, row, key, offset, baseLeft, baseTop };
+    })
+    .filter(<T,>(v: T | null): v is T => v !== null);
+
+  const elementCardLayouts = elementCards
+    .map(({ elementId, label, action }) => {
+      const m = elementMeasurements.get(elementId);
+      if (!m) return null;
+      const key = `el:${elementId}`;
+      const offset = offsets[key] ?? { dx: 0, dy: 0 };
+      const baseLeft = Math.min(
+        winW - CARD_WIDTH - PAGE_PAD,
+        m.right + CARD_GAP
+      );
+      const baseTop = m.top + m.height / 2 - 40;
+      return { elementId, label, action, m, key, offset, baseLeft, baseTop };
+    })
+    .filter(<T,>(v: T | null): v is T => v !== null);
+
   return (
     <>
-      {/* SVG layer for leader lines — full-page, behind cards */}
+      {/* SVG layer for leader lines — tip follows the card via offsets. */}
       <svg
         aria-hidden
         className='pointer-events-none absolute top-0 left-0 z-30'
@@ -855,97 +1031,73 @@ function Gutters({
         height={docHeight}
         style={{ position: 'absolute' }}
       >
-        {orderedBlockIds.map(blockId => {
-          const m = blockMeasurements.get(blockId);
-          if (!m) return null;
-          if (!rowByBlock.has(blockId)) return null;
-          const cardCenterY = m.top + 24;
-          // Block card sits just left of the block — short stub line.
-          const cardRight = Math.max(
-            PAGE_PAD + CARD_WIDTH,
-            m.left - CARD_GAP + CARD_WIDTH
-          );
+        {blockCardLayouts.map(({ blockId, m, offset, baseLeft, baseTop }) => {
+          // Anchor leader at the right edge of the card (closest to block).
+          const cardRight = baseLeft + offset.dx + CARD_WIDTH;
+          const cardCenterY = baseTop + offset.dy + 28;
           return (
             <LeaderLine
               key={`bl-${blockId}`}
               from={{ x: cardRight, y: cardCenterY }}
-              to={{ x: m.left, y: cardCenterY }}
+              to={{ x: m.left, y: m.top + 24 }}
               side='left'
             />
           );
         })}
-        {elementCards.map(({ elementId }) => {
-          const m = elementMeasurements.get(elementId);
-          if (!m) return null;
-          const elementCenterY = m.top + m.height / 2;
-          const cardLeft = Math.min(
-            winW - CARD_WIDTH - PAGE_PAD,
-            m.right + CARD_GAP
-          );
-          return (
-            <LeaderLine
-              key={`el-${elementId}`}
-              from={{ x: cardLeft, y: elementCenterY }}
-              to={{ x: m.right, y: elementCenterY }}
-              side='right'
-            />
-          );
-        })}
+        {elementCardLayouts.map(
+          ({ elementId, m, offset, baseLeft, baseTop }) => {
+            // Anchor leader at the left edge of the card (closest to button).
+            const cardLeft = baseLeft + offset.dx;
+            const cardCenterY = baseTop + offset.dy + 40;
+            return (
+              <LeaderLine
+                key={`el-${elementId}`}
+                from={{ x: cardLeft, y: cardCenterY }}
+                to={{ x: m.right, y: m.top + m.height / 2 }}
+                side='right'
+              />
+            );
+          }
+        )}
       </svg>
 
-      {/* Block cards — sit ~50px to the left of each block (clamped). */}
-      <div className='pointer-events-none absolute top-0 left-0 z-40'>
-        {orderedBlockIds.map((blockId, idx) => {
-          const m = blockMeasurements.get(blockId);
-          const row = rowByBlock.get(blockId);
-          if (!m || !row) return null;
-          const left = Math.max(PAGE_PAD, m.left - CARD_WIDTH - CARD_GAP);
-          return (
-            <div
-              key={blockId}
-              style={{
-                position: 'absolute',
-                top: m.top,
-                left,
-                width: CARD_WIDTH,
-              }}
-            >
-              <BlockSummaryCard index={idx} row={row} isDemo={isDemo} />
-            </div>
-          );
-        })}
-      </div>
+      {/* Block cards — draggable. */}
+      {blockCardLayouts.map(
+        ({ blockId, idx, row, key, offset, baseLeft, baseTop }) => (
+          <DraggableCard
+            key={blockId}
+            cardKey={key}
+            baseLeft={baseLeft}
+            baseTop={baseTop}
+            width={CARD_WIDTH}
+            offset={offset}
+            onChange={onOffsetChange}
+          >
+            <BlockSummaryCard index={idx} row={row} isDemo={isDemo} />
+          </DraggableCard>
+        )
+      )}
 
-      {/* Element cards — sit ~50px to the right of each button (clamped). */}
-      <div className='pointer-events-none absolute top-0 left-0 z-40'>
-        {elementCards.map(({ elementId, label, action }) => {
-          const m = elementMeasurements.get(elementId);
-          if (!m) return null;
-          // Vertically centre the card on the element (~80px tall card).
-          const cardTop = m.top + m.height / 2 - 40;
-          const left = Math.min(
-            winW - CARD_WIDTH - PAGE_PAD,
-            m.right + CARD_GAP
-          );
-          return (
-            <div
-              key={elementId}
-              style={{
-                position: 'absolute',
-                top: cardTop,
-                left,
-                width: CARD_WIDTH,
-              }}
-            >
-              <ElementStatCard
-                elementId={elementId}
-                label={label}
-                action={action}
-              />
-            </div>
-          );
-        })}
-      </div>
+      {/* Element cards — draggable. */}
+      {elementCardLayouts.map(
+        ({ elementId, label, action, key, offset, baseLeft, baseTop }) => (
+          <DraggableCard
+            key={elementId}
+            cardKey={key}
+            baseLeft={baseLeft}
+            baseTop={baseTop}
+            width={CARD_WIDTH}
+            offset={offset}
+            onChange={onOffsetChange}
+          >
+            <ElementStatCard
+              elementId={elementId}
+              label={label}
+              action={action}
+            />
+          </DraggableCard>
+        )
+      )}
     </>
   );
 }
