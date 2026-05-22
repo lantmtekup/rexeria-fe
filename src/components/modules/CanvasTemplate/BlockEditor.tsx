@@ -866,6 +866,28 @@ export function BlockEditor({
         block={activeBlock ?? null}
         onOpenChange={setSaveBlockOpen}
         editingSavedBlockId={editingSavedBlockId}
+        onOverwriteSuccess={async () => {
+          // The /admin/blocks "Edit" flow creates a throwaway canvas just to
+          // host the block during editing. After we've written the changes
+          // back to the saved-blocks library, the canvas template is garbage
+          // — clean it up so it doesn't clutter the /canvas-templates list.
+          // Guard: only auto-delete if the canvas name matches the marker the
+          // Edit flow stamps on creation (`[Editing] ...`). Prevents a
+          // hand-crafted `?saved_block_id=...` URL from nuking a real canvas.
+          const isScratch = template?.name?.startsWith('[Editing] ') ?? false;
+          if (isScratch) {
+            try {
+              await rexerApi.canvasTemplates.remove(templateId);
+            } catch (err) {
+              // eslint-disable-next-line no-console
+              console.warn(
+                '[BlockEditor] could not auto-delete scratch canvas',
+                err
+              );
+            }
+          }
+          router.push('/admin/blocks');
+        }}
       />
 
       <ReviewChangesDialog

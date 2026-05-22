@@ -34,6 +34,13 @@ interface Props {
    * the `/admin/blocks` Edit flow appends to the canvas-editor URL.
    */
   editingSavedBlockId?: string;
+  /**
+   * Fires after a successful overwrite-mode save. The canvas-editor host
+   * uses this to clean up the scratch canvas template it created just to
+   * host the block during editing, and redirect the user back to
+   * `/admin/blocks`. Not fired for fork-as-new saves.
+   */
+  onOverwriteSuccess?: () => void;
 }
 
 /**
@@ -50,6 +57,7 @@ export function SaveBlockDialog({
   onOpenChange,
   onSaved,
   editingSavedBlockId,
+  onOverwriteSuccess,
 }: Props) {
   const [name, setName] = React.useState('');
 
@@ -97,6 +105,7 @@ export function SaveBlockDialog({
     toast.success(`Đã cập nhật "${updated.name}"`);
     onSaved?.(updated.id);
     onOpenChange(false);
+    onOverwriteSuccess?.();
   };
 
   return (
