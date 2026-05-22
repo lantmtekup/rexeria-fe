@@ -397,9 +397,12 @@ function BlockSummaryCard({
 
 function ElementStatCard({
   elementId,
+  label,
   action,
 }: {
   elementId: string;
+  /** Human label scraped from the button text — preferred over the raw id. */
+  label?: string;
   action: ActionStat;
 }) {
   const topTargets = action.targets.slice(0, 2);
@@ -407,11 +410,11 @@ function ElementStatCard({
     <div className='group pointer-events-auto relative w-full overflow-visible rounded-xl border border-fuchsia-400/30 bg-gradient-to-br from-zinc-950/95 via-zinc-900/95 to-zinc-950/95 p-3 text-fuchsia-50 shadow-[0_0_24px_rgba(232,121,249,0.15),0_0_60px_rgba(232,121,249,0.06)_inset] backdrop-blur-md transition-all hover:border-fuchsia-300/60 hover:shadow-[0_0_32px_rgba(232,121,249,0.3)]'>
       <HudCorners />
 
-      <div className='truncate font-mono text-[11px] font-bold tracking-tight text-fuchsia-100'>
-        {elementId}
+      <div className='truncate text-[12px] leading-tight font-bold tracking-tight text-fuchsia-100'>
+        {label || elementId}
       </div>
-      <div className='font-mono text-[8.5px] tracking-[0.2em] text-fuchsia-300/70 uppercase'>
-        action: {action.action}
+      <div className='mt-0.5 truncate font-mono text-[8.5px] tracking-[0.18em] text-fuchsia-300/60 uppercase'>
+        {action.action} · {elementId.split('__').slice(-1)[0]}
       </div>
 
       <div className='mt-2 flex items-baseline justify-between border-b border-fuchsia-400/20 pb-2'>
@@ -718,31 +721,102 @@ export function StatsAnnotationOverlay({
     return m;
   }, [rows]);
 
-  // Flatten elements above the threshold, with their parent block_id so
-  // we can locate the action stat for the card.
+  // Auto-tag every clickable inside a `[data-block-id]` with a stable
+  // `data-element-id` + label so the right-gutter cards can anchor to
+  // each button individually instead of collapsing them into one
+  // aggregated card per block.
+  const [taggedClickables, setTaggedClickables] = React.useState<
+    Array<{ elementId: string; label: string }>
+  >([]);
+  React.useEffect(() => {
+    if (!enabled || typeof document === 'undefined') return;
+    const list: Array<{ elementId: string; label: string }> = [];
+    document
+      .querySelectorAll<HTMLElement>('[data-block-id]')
+      .forEach(blockEl => {
+        const blockId = blockEl.getAttribute('data-block-id');
+        if (!blockId) return;
+        const clickables =
+          blockEl.querySelectorAll<HTMLElement>('button, a[href]');
+        clickables.forEach((el, idx) => {
+          let elementId = el.getAttribute('data-element-id');
+          if (!elementId) {
+            const key =
+              el.getAttribute('data-element-key') ??
+              el
+                .getAttribute('aria-label')
+                ?.toLowerCase()
+                .replace(/\s+/g, '_') ??
+              `cta_${idx + 1}`;
+            elementId = `${blockId.slice(0, 8)}__${key}`;
+            el.setAttribute('data-element-id', elementId);
+          }
+          const text =
+            (el.textContent || '').trim().split('\n')[0].slice(0, 40) ||
+            el.getAttribute('aria-label') ||
+            elementId;
+          list.push({ elementId, label: text });
+        });
+      });
+    setTaggedClickables(list);
+    // blockMeasurements changing means new blocks mounted — re-tag.
+  }, [enabled, blockMeasurements]);
+
+  // Element cards: one card per real clickable button on the page.
+  // In live mode we pick the matching real ActionStat from `rows`; in
+  // demo mode we synthesise per-button numbers from a seed.
   const elementCards = React.useMemo(() => {
-    const items: Array<{
-      elementId: string;
-      action: ActionStat;
-    }> = [];
-    for (const row of rows) {
-      for (const action of row.actions ?? []) {
-        for (const target of action.targets ?? []) {
-          if (target.count < ELEMENT_VIEWS_THRESHOLD) continue;
-          items.push({
-            elementId: target.target,
-            action: {
-              action: action.action,
-              count: target.count,
-              unique_visitors: action.unique_visitors,
-              targets: [target],
-            },
-          });
+    if (taggedClickables.length === 0) return [];
+    // Index real targets by their raw target string for cheap lookup.
+    const realByTarget = new Map<
+      string,
+      {
+        actionName: string;
+        target: { target: string; count: number };
+        uv: number;
+      }
+    >();
+    if (!isDemo) {
+      for (const row of rows) {
+        for (const action of row.actions ?? []) {
+          for (const target of action.targets ?? []) {
+            realByTarget.set(target.target, {
+              actionName: action.action,
+              target,
+              uv: action.unique_visitors,
+            });
+          }
         }
       }
     }
-    return items;
-  }, [rows]);
+    return taggedClickables.map(({ elementId, label }) => {
+      const real = realByTarget.get(elementId);
+      if (real) {
+        return {
+          elementId,
+          label,
+          action: {
+            action: real.actionName,
+            count: real.target.count,
+            unique_visitors: real.uv,
+            targets: [real.target],
+          },
+        };
+      }
+      // Demo synthesis — seeded per button so reload stays consistent.
+      const count = Math.round(120 + seededRandom(elementId, 5) * 880);
+      return {
+        elementId,
+        label,
+        action: {
+          action: 'click',
+          count,
+          unique_visitors: Math.round(count * 0.78),
+          targets: [{ target: elementId, count }],
+        },
+      };
+    });
+  }, [taggedClickables, rows, isDemo]);
 
   // Anonymous viewers (public visitor without login) never see the overlay.
   if (!isLoggedIn) {
@@ -802,7 +876,11 @@ function Gutters({
   blockMeasurements: Map<string, Measurement>;
   elementMeasurements: Map<string, Measurement>;
   rowByBlock: Map<string, BlockBreakdownRow>;
-  elementCards: Array<{ elementId: string; action: ActionStat }>;
+  elementCards: Array<{
+    elementId: string;
+    label?: string;
+    action: ActionStat;
+  }>;
   isDemo: boolean;
 }) {
   // Ordered block ids by vertical position so the index number reflects scroll order.
@@ -848,14 +926,15 @@ function Gutters({
         {elementCards.map(({ elementId }) => {
           const m = elementMeasurements.get(elementId);
           if (!m) return null;
-          const cardCenterY = m.top + 24;
-          // Right gutter starts at viewport - GUTTER_WIDTH; use window width.
+          // Anchor leader at the element's vertical centre, line up the card
+          // at the same y so the curve is short + readable.
+          const elementCenterY = m.top + m.height / 2;
           const winW = typeof window !== 'undefined' ? window.innerWidth : 1280;
           return (
             <LeaderLine
               key={`el-${elementId}`}
-              from={{ x: winW - GUTTER_WIDTH, y: cardCenterY }}
-              to={{ x: m.right, y: cardCenterY }}
+              from={{ x: winW - GUTTER_WIDTH, y: elementCenterY }}
+              to={{ x: m.right, y: elementCenterY }}
               side='right'
               color='fuchsia'
             />
@@ -893,20 +972,26 @@ function Gutters({
         className='pointer-events-none absolute top-0 right-0 z-40'
         style={{ width: GUTTER_WIDTH }}
       >
-        {elementCards.map(({ elementId, action }) => {
+        {elementCards.map(({ elementId, label, action }) => {
           const m = elementMeasurements.get(elementId);
           if (!m) return null;
+          // Vertically centre the card on the element (not the block).
+          const cardTop = m.top + m.height / 2 - 40;
           return (
             <div
               key={elementId}
               style={{
                 position: 'absolute',
-                top: m.top,
+                top: cardTop,
                 right: 12,
                 width: GUTTER_WIDTH - 28,
               }}
             >
-              <ElementStatCard elementId={elementId} action={action} />
+              <ElementStatCard
+                elementId={elementId}
+                label={label}
+                action={action}
+              />
             </div>
           );
         })}
