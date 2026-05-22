@@ -146,7 +146,10 @@ export default function PublicLandingPage({ params }: PageProps) {
                     mode='production'
                     motion={motion}
                   >
-                    <div data-block-id={block.id}>
+                    <div
+                      data-block-id={block.id}
+                      data-block-type={block.blockType}
+                    >
                       <MotionBlockRoot className='overflow-hidden rounded-md bg-white shadow-sm ring-1 ring-black/5'>
                         <RenderBlock
                           block={block}

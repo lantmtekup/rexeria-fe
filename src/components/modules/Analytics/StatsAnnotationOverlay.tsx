@@ -166,6 +166,83 @@ function ctrFromRow(r: BlockBreakdownRow): number {
   return (r.clicks / r.views) * 100;
 }
 
+/* ---------- mock data ---------- */
+
+/**
+ * Deterministic pseudo-random from a string seed — same block id gives the
+ * same numbers across renders so cards don't flicker between fetches.
+ */
+function seededRandom(seed: string, salt = 0): number {
+  let h = 2166136261 ^ salt;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) % 100000) / 100000;
+}
+
+/**
+ * Generate a believable demo `BlockBreakdownRow[]` from real DOM blocks.
+ * Used when BE has no analytics events for the template yet — lets the
+ * overlay show what populated cards look like instead of an empty grid.
+ *
+ * Numbers degrade per block index (first block sees the most traffic,
+ * later blocks see less — mirroring real visitor drop-off).
+ */
+function generateMockBreakdown(
+  blockIds: string[],
+  blockTypes: Map<string, string>
+): BlockBreakdownRow[] {
+  return blockIds.map((blockId, index) => {
+    const decay = Math.max(0.25, 1 - index * 0.18); // 1, .82, .64, .46, .28, .25...
+    const baseViews = Math.round(
+      12_000 * decay * (0.6 + seededRandom(blockId, 1) * 0.8)
+    );
+    const ctrPct = 2 + seededRandom(blockId, 2) * 18; // 2 % – 20 %
+    const clicks = Math.round(baseViews * (ctrPct / 100));
+    const unique = Math.round(
+      baseViews * (0.6 + seededRandom(blockId, 3) * 0.3)
+    );
+    const avgDwell = Math.round(2000 + seededRandom(blockId, 4) * 18_000);
+
+    const blockType = blockTypes.get(blockId) ?? 'block';
+    const targetPrefix = blockType.split('_')[0] ?? 'el';
+    const targets = [
+      {
+        target: `${targetPrefix}_cta_primary`,
+        count: Math.round(clicks * 0.62),
+      },
+      { target: `${targetPrefix}_link`, count: Math.round(clicks * 0.28) },
+      { target: `${targetPrefix}_image`, count: Math.round(clicks * 0.1) },
+    ].filter(t => t.count >= ELEMENT_VIEWS_THRESHOLD);
+
+    const actions: ActionStat[] =
+      targets.length === 0
+        ? []
+        : [
+            {
+              action: 'click',
+              count: clicks,
+              unique_visitors: Math.round(clicks * 0.85),
+              targets,
+            },
+          ];
+
+    return {
+      block_id: blockId,
+      block_type: blockType,
+      views: baseViews,
+      clicks,
+      unique_viewers: unique,
+      avg_dwell_ms: avgDwell,
+      total_dwell_ms: baseViews * avgDwell,
+      top_action: actions[0]?.action ?? null,
+      top_target: targets[0]?.target ?? null,
+      actions,
+    };
+  });
+}
+
 /* ---------- cards ---------- */
 
 function BlockSummaryCard({
@@ -311,6 +388,7 @@ function StatsToolbar({
   setRange,
   loading,
   hasData,
+  isDemo,
 }: {
   enabled: boolean;
   setEnabled: (v: boolean) => void;
@@ -318,6 +396,7 @@ function StatsToolbar({
   setRange: (r: DateRange) => void;
   loading: boolean;
   hasData: boolean;
+  isDemo: boolean;
 }) {
   return (
     <div className='fixed top-4 right-4 z-50 flex items-center gap-2 rounded-full border border-zinc-200 bg-white/95 px-2 py-1.5 shadow-lg backdrop-blur'>
@@ -350,8 +429,12 @@ function StatsToolbar({
               </option>
             ))}
           </select>
-          <span className='font-mono text-[10px] text-zinc-400'>
-            {loading ? '…' : hasData ? 'live' : 'no data'}
+          <span
+            className={`font-mono text-[10px] ${
+              isDemo ? 'text-violet-500' : 'text-zinc-400'
+            }`}
+          >
+            {loading ? '…' : isDemo ? 'demo' : hasData ? 'live' : 'no data'}
           </span>
         </>
       )}
@@ -375,7 +458,7 @@ export function StatsAnnotationOverlay({
 
   const [enabled, setEnabledState] = React.useState(false);
   const [range, setRangeState] = React.useState<DateRange>('30d');
-  const [rows, setRows] = React.useState<BlockBreakdownRow[]>([]);
+  const [fetchedRows, setFetchedRows] = React.useState<BlockBreakdownRow[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [narrow, setNarrow] = React.useState(false);
   // Sticky 403 flag so the brand-pending banner doesn't flash off between
@@ -414,12 +497,12 @@ export function StatsAnnotationOverlay({
       .breakdown(templateId, rangeToParams(range))
       .then(data => {
         if (cancelled) return;
-        setRows(Array.isArray(data) ? data : []);
+        setFetchedRows(Array.isArray(data) ? data : []);
         setForbidden(false);
       })
       .catch(err => {
         if (cancelled) return;
-        setRows([]);
+        setFetchedRows([]);
         // BE breakdown is admin-gated — flag 403 for brand users so we can
         // surface a friendly "BE pending" banner instead of silent emptiness.
         const status =
@@ -447,6 +530,37 @@ export function StatsAnnotationOverlay({
     elementSelector,
     enabled && !narrow
   );
+
+  // Mock fallback: when BE has no events (empty fetch OR 403), generate a
+  // demo dataset off the real DOM blocks so the overlay still has something
+  // to render. Driven by `data-block-id` attributes + the block-type label
+  // that `renderBlock.tsx` stamps via `data-block-type` (best-effort lookup
+  // — falls back to `block` if not present).
+  const blockTypeMap = React.useMemo(() => {
+    const m = new Map<string, string>();
+    if (typeof document === 'undefined') return m;
+    document.querySelectorAll<HTMLElement>('[data-block-id]').forEach(el => {
+      const id = el.getAttribute('data-block-id');
+      const type = el.getAttribute('data-block-type') ?? 'block';
+      if (id) m.set(id, type);
+    });
+    return m;
+    // blockMeasurements is a stable proxy for "DOM blocks changed" — the
+    // body reads from `document.querySelectorAll`, not the Map itself.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blockMeasurements]);
+
+  const isDemo =
+    enabled && fetchedRows.length === 0 && blockMeasurements.size > 0;
+
+  const rows: BlockBreakdownRow[] = React.useMemo(() => {
+    if (fetchedRows.length > 0) return fetchedRows;
+    if (!isDemo) return [];
+    const ids = Array.from(blockMeasurements.entries())
+      .sort((a, b) => a[1].top - b[1].top)
+      .map(([id]) => id);
+    return generateMockBreakdown(ids, blockTypeMap);
+  }, [fetchedRows, isDemo, blockMeasurements, blockTypeMap]);
 
   // Index breakdown by block_id for O(1) lookup.
   const rowByBlock = React.useMemo(() => {
@@ -495,6 +609,7 @@ export function StatsAnnotationOverlay({
         setRange={setRange}
         loading={loading}
         hasData={rows.length > 0}
+        isDemo={isDemo}
       />
       {enabled && forbidden && !isAdminScope && (
         <div className='fixed top-16 right-4 z-50 max-w-sm rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900 shadow'>
