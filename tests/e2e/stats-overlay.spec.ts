@@ -46,7 +46,7 @@ async function pickTemplateId(
     `LIST canvas templates should succeed (got ${listRes.status()})`
   ).toBeTruthy();
   const { items } = (await listRes.json()) as {
-    items: Array<{ id: string; is_active?: boolean }>;
+    items: Array<{ id: string; name?: string; is_active?: boolean }>;
   };
   expect(
     items.length,
@@ -54,7 +54,12 @@ async function pickTemplateId(
   ).toBeGreaterThan(0);
 
   // Probe each candidate for a non-empty `blocks` array. First match wins.
+  // Skip scratch canvases from the /admin/blocks Edit flow (`[Editing] ...`)
+  // — they have content but are throwaway and may disappear between runs.
   for (const item of items) {
+    if (typeof item.name === 'string' && item.name.startsWith('[Editing] ')) {
+      continue;
+    }
     const res = await request.get(
       `${baseURL}/api/rexer/canvas-templates/${item.id}/canvas`
     );

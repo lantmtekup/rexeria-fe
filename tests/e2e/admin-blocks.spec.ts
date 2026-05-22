@@ -89,6 +89,134 @@ test.describe('Admin Blocks page', () => {
     await expect(page.getByTitle('Click để xoá tag')).toContainText('campaign');
   });
 
+  test('duplicate clones the saved block with (copy) suffix', async ({
+    page,
+  }) => {
+    await page.goto('/admin/blocks');
+    await page.evaluate(
+      ({ key, items }) =>
+        window.localStorage.setItem(key, JSON.stringify(items)),
+      {
+        key: STORAGE_KEY,
+        items: [makeSavedBlock('Hero Tết 2026', 'hero_split')],
+      }
+    );
+    await page.reload();
+    // Open drawer
+    await page.locator('button:has-text("Hero Tết 2026")').first().click();
+    // Click Duplicate inside drawer
+    await page.getByRole('button', { name: 'Duplicate', exact: true }).click();
+    // Header count goes 1 → 2
+    await expect(page.getByText('2 blocks')).toBeVisible();
+    // Source of truth = localStorage. Avoids strict-mode collisions with
+    // the same text appearing in card + drawer + toast.
+    const items = await page.evaluate(
+      key => JSON.parse(window.localStorage.getItem(key) ?? '[]'),
+      STORAGE_KEY
+    );
+    expect(items.length).toBe(2);
+    expect(
+      items.some((i: { name: string }) => i.name === 'Hero Tết 2026 (copy)')
+    ).toBe(true);
+  });
+
+  test('delete removes block + clears drawer', async ({ page }) => {
+    await page.goto('/admin/blocks');
+    await page.evaluate(
+      ({ key, items }) =>
+        window.localStorage.setItem(key, JSON.stringify(items)),
+      {
+        key: STORAGE_KEY,
+        items: [
+          makeSavedBlock('Will be deleted', 'hero_split'),
+          makeSavedBlock('Will stay', 'cta_section'),
+        ],
+      }
+    );
+    await page.reload();
+    // Auto-accept the confirm() dialog the delete handler pops
+    page.once('dialog', dialog => dialog.accept());
+    await page.locator('button:has-text("Will be deleted")').first().click();
+    await page.getByRole('button', { name: 'Xoá', exact: true }).click();
+    await expect(page.getByText('1 blocks')).toBeVisible();
+    await expect(page.locator('text=Will be deleted')).toHaveCount(0);
+    // Drawer should auto-close
+    await expect(page.getByText('Sửa trong canvas')).toHaveCount(0);
+  });
+
+  test('Edit flow opens canvas editor with ?saved_block_id query', async ({
+    page,
+    baseURL,
+  }) => {
+    const base = baseURL ?? 'http://localhost:3000';
+    await page.goto('/admin/blocks');
+
+    // Capture the canvas-templates POST so we know what scratch id the BE
+    // hands back, then verify the FE redirects to it with the query param.
+    const createPromise = page.waitForResponse(
+      r =>
+        r.url().includes('/api/rexer/canvas-templates') &&
+        r.request().method() === 'POST',
+      { timeout: 15_000 }
+    );
+
+    const savedId = `sb_test_${Date.now().toString(36)}`;
+    await page.evaluate(
+      ({ key, items }) =>
+        window.localStorage.setItem(key, JSON.stringify(items)),
+      {
+        key: STORAGE_KEY,
+        items: [
+          {
+            id: savedId,
+            name: 'Edit Flow Test',
+            createdAt: new Date().toISOString(),
+            block: {
+              id: 'b_test',
+              blockType: 'hero_split',
+              name: 'Edit Flow Test',
+              isVisible: true,
+              contentVi: { desktop: {} },
+              extraElements: [],
+            },
+          },
+        ],
+      }
+    );
+    await page.reload();
+
+    let scratchId: string | undefined;
+    try {
+      await page.locator('button:has-text("Edit Flow Test")').first().click();
+      await page
+        .getByRole('button', { name: 'Sửa trong canvas', exact: true })
+        .click();
+
+      const resp = await createPromise;
+      expect(resp.status()).toBeLessThan(400);
+      const body = await resp.json();
+      scratchId =
+        body?.canvas_template?.id ?? body?.id ?? body?.canvasTemplate?.id;
+      expect(scratchId, 'BE should return a canvas template id').toBeTruthy();
+      // Wait for navigation to the new canvas editor with our query param.
+      await page.waitForURL(
+        new RegExp(
+          `/canvas-templates/${scratchId}\\?saved_block_id=${savedId}`
+        ),
+        { timeout: 15_000 }
+      );
+    } finally {
+      // Always purge the scratch canvas — leaving it pollutes the
+      // canvas-templates list and breaks the stats-overlay tests that pick
+      // the first template with blocks. Best-effort: ignore errors.
+      if (scratchId) {
+        await page.request
+          .delete(`${base}/api/rexer/canvas-templates/${scratchId}`)
+          .catch(() => undefined);
+      }
+    }
+  });
+
   test('cards render BlockMiniPreview (data-block-id-like content)', async ({
     page,
   }) => {
