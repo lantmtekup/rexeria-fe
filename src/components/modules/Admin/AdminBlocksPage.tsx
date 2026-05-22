@@ -51,6 +51,7 @@ import {
   updateSavedBlockTags,
   type SavedBlock,
 } from '@/components/modules/CanvasTemplate/block-editor/savedBlocks';
+import { BlockMiniPreview } from '@/components/modules/CanvasTemplate/block-editor/BlockMiniPreview';
 import { serializeCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
 import type { BlockType } from '@/components/modules/CanvasTemplate/block-editor/types';
 import { rexerApi } from '@/services/rexer/endpoints';
@@ -188,8 +189,12 @@ export function AdminBlocksPage() {
         canvas_data: canvasData,
         is_template: false,
       });
-      toast.success('Mở editor — sửa xong dùng 🔖 để lưu bản mới', { id: t });
-      router.push(`/canvas-templates/${created.id}`);
+      toast.success('Mở editor — sửa xong dùng 🔖 để cập nhật bản gốc', {
+        id: t,
+      });
+      // Append saved_block_id so the canvas editor's SaveBlockDialog opens
+      // in "overwrite original" mode when user clicks the bookmark icon.
+      router.push(`/canvas-templates/${created.id}?saved_block_id=${block.id}`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       toast.error(`Tạo canvas thất bại: ${msg}`, { id: t });
@@ -425,23 +430,26 @@ function BlockCard({
           : 'border-zinc-200 hover:border-zinc-300'
       )}
     >
-      <div
-        className={cn(
-          'relative h-32 bg-gradient-to-br',
-          gradient,
-          'flex items-center justify-center'
-        )}
-      >
-        <span className='font-mono text-[10px] font-bold tracking-widest text-white/80 uppercase'>
+      <div className='relative'>
+        <BlockMiniPreview block={item.block} aspect='4 / 3' />
+        {/* Type label overlays bottom-left so the user can still scan type
+            without parsing the rendered content. Tiny pill on a translucent
+            backdrop so it works over any preview background. */}
+        <span
+          className={cn(
+            'absolute bottom-2 left-2 rounded bg-gradient-to-br px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-white/95 uppercase shadow-sm',
+            gradient
+          )}
+        >
           {label}
         </span>
         {hasMobile && (
-          <span className='absolute top-2 right-2 rounded bg-black/30 px-1.5 py-0.5 font-mono text-[9px] text-white backdrop-blur'>
-            📱 mobile
+          <span className='absolute top-2 right-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-[9px] text-white backdrop-blur'>
+            📱
           </span>
         )}
         {extraCount > 0 && (
-          <span className='absolute bottom-2 left-2 rounded bg-black/30 px-1.5 py-0.5 font-mono text-[9px] text-white backdrop-blur'>
+          <span className='absolute top-2 left-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-[9px] text-white backdrop-blur'>
             +{extraCount} extras
           </span>
         )}
@@ -692,20 +700,16 @@ function DetailDrawer({
 
       {/* Preview */}
       <div className='px-4 pt-4'>
-        <div
-          className={cn(
-            'relative h-44 overflow-hidden rounded-lg bg-gradient-to-br',
-            gradient
-          )}
-        >
-          <div className='flex h-full flex-col items-center justify-center text-white/90'>
-            <span className='font-mono text-[10px] font-bold tracking-widest uppercase'>
-              {label}
-            </span>
-            <span className='mt-0.5 text-[10px] text-white/70'>
-              preview placeholder
-            </span>
-          </div>
+        <div className='relative overflow-hidden rounded-lg border border-zinc-200'>
+          <BlockMiniPreview block={block.block} aspect='16 / 9' />
+          <span
+            className={cn(
+              'absolute top-2 left-2 rounded bg-gradient-to-br px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-white/95 uppercase shadow-sm',
+              gradient
+            )}
+          >
+            {label}
+          </span>
           <div className='absolute right-0 bottom-0 left-0 flex items-center justify-between bg-black/20 px-2 py-1 text-[9.5px] text-white/80 backdrop-blur'>
             <span>
               {block.block.contentVi?.mobile
@@ -715,9 +719,6 @@ function DetailDrawer({
             <span>{block.block.extraElements?.length ?? 0} extras</span>
           </div>
         </div>
-        <p className='mt-1 text-center text-[10px] text-zinc-400'>
-          Real preview sẽ render khi BE saved-blocks ship — Phase 1: placeholder
-        </p>
       </div>
 
       {/* Metadata */}
