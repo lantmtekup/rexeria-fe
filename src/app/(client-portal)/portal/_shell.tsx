@@ -2,6 +2,7 @@
 
 import {
   Bell,
+  Bookmark,
   Building2,
   Check,
   ChevronsUpDown,
@@ -65,6 +66,12 @@ const NAV: NavItem[] = [
     href: '/portal/products',
     label: 'Product Info',
     icon: Package,
+    group: 'Assets',
+  },
+  {
+    href: '/portal/blocks',
+    label: 'Blocks',
+    icon: Bookmark,
     group: 'Assets',
   },
   {
