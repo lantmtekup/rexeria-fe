@@ -84,12 +84,16 @@ export function SocialLoginButtons() {
 
       const cred = await signInWithPopup(auth, provider);
       const idToken = await cred.user.getIdToken();
-      const redirectAfter = sp.get('redirect') ?? '/home';
+      // Explicit redirect (from middleware → /sign-in?redirect=...) wins;
+      // otherwise we resolve smartly by role AFTER fetchMe lands the user
+      // object in Redux. The placeholder we send to BE is just a fallback
+      // for the response shape, not what the FE will navigate to.
+      const explicitRedirect = sp.get('redirect');
 
       const res = await rexerApi.auth.firebaseLogin({
         id_token: idToken,
         intent: 'signin',
-        redirect_after: redirectAfter,
+        redirect_after: explicitRedirect ?? undefined,
       });
 
       // Mirror local signed cookie for middleware (same pattern as loginThunk).
@@ -97,10 +101,19 @@ export function SocialLoginButtons() {
         method: 'POST',
         credentials: 'include',
       });
-      await dispatch(fetchMeThunk());
+      const me = await dispatch(fetchMeThunk()).unwrap();
 
-      const target =
-        res.redirect_after ?? (res.is_new_user ? '/onboarding' : '/home');
+      let target: string;
+      if (explicitRedirect) {
+        target = explicitRedirect;
+      } else if (res.is_new_user) {
+        target = '/onboarding';
+      } else {
+        // Smart redirect by role — mirrors RexerSignInForm.tsx:67.
+        // admin / staff → /admin (CMS), brand client_user → /portal.
+        const role = me?.role ?? me?.principal_type ?? '';
+        target = role === 'admin' || role === 'staff' ? '/admin' : '/portal';
+      }
       router.replace(target);
     } catch (err) {
       // Log raw error to console for debugging — surface real cause via UI.
