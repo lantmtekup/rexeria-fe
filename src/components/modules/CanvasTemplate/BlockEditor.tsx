@@ -886,7 +886,12 @@ export function BlockEditor({
               );
             }
           }
-          router.push('/admin/blocks');
+          // Brand portal mounts the editor under /portal/blocks/.../edit.
+          // Send them back to the portal library — otherwise admin default.
+          const inPortal =
+            typeof window !== 'undefined' &&
+            window.location.pathname.startsWith('/portal/blocks');
+          router.push(inPortal ? '/portal/blocks' : '/admin/blocks');
         }}
       />
 

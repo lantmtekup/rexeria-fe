@@ -11,13 +11,15 @@
  */
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Bookmark,
   Calendar,
   Copy,
+  Eye,
   Hash,
   LayoutGrid,
+  MoreVertical,
   Pencil,
   Plus,
   Search,
@@ -118,6 +120,12 @@ function fmtRelative(iso?: string): string {
 
 export function AdminBlocksPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  // Brand portal mounts this component at /portal/blocks. In that context the
+  // side-drawer is replaced by a dedicated detail route (/portal/blocks/[id])
+  // so the URL clearly reads as portal — admin/staff still get the drawer.
+  const isPortal = pathname?.startsWith('/portal') ?? false;
+  const detailBase = isPortal ? '/portal/blocks' : '/admin/blocks';
   const [items, setItems] = React.useState<SavedBlock[]>([]);
   const [view, setView] = React.useState<View>('grid');
   const [search, setSearch] = React.useState('');
@@ -193,12 +201,23 @@ export function AdminBlocksPage() {
       toast.success('Mở editor — sửa xong dùng 🔖 để cập nhật bản gốc', {
         id: t,
       });
-      // Append saved_block_id so the canvas editor's SaveBlockDialog opens
-      // in "overwrite original" mode when user clicks the bookmark icon.
-      router.push(`/canvas-templates/${created.id}?saved_block_id=${block.id}`);
+      // Brand portal uses an in-portal wrapper so the URL stays under
+      // /portal/blocks/:id/edit. Admin keeps using the bare editor route.
+      const editPath = isPortal
+        ? `/portal/blocks/${block.id}/edit?canvas_id=${created.id}`
+        : `/canvas-templates/${created.id}?saved_block_id=${block.id}`;
+      router.push(editPath);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       toast.error(`Tạo canvas thất bại: ${msg}`, { id: t });
+    }
+  };
+
+  const openDetail = (id: string) => {
+    if (isPortal) {
+      router.push(`${detailBase}/${id}`);
+    } else {
+      setSelectedId(id);
     }
   };
 
@@ -345,13 +364,15 @@ export function AdminBlocksPage() {
             <GridView
               items={filtered}
               selectedId={selectedId}
-              onSelect={setSelectedId}
+              onSelect={openDetail}
+              onDuplicate={handleDuplicate}
+              onDelete={handleDelete}
             />
           ) : (
             <TableView
               items={filtered}
               selectedId={selectedId}
-              onSelect={setSelectedId}
+              onSelect={openDetail}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
               onEdit={handleEdit}
@@ -360,8 +381,8 @@ export function AdminBlocksPage() {
         </div>
       </div>
 
-      {/* Drawer */}
-      {selected && (
+      {/* Drawer (admin only — portal uses dedicated detail route) */}
+      {!isPortal && selected && (
         <DetailDrawer
           block={selected}
           onClose={() => setSelectedId(null)}
@@ -382,7 +403,7 @@ export function AdminBlocksPage() {
       <AddBuiltinBlockDialog
         open={catalogOpen}
         onClose={() => setCatalogOpen(false)}
-        onAdded={id => setSelectedId(id)}
+        onAdded={id => openDetail(id)}
       />
     </div>
   );
@@ -394,10 +415,14 @@ function GridView({
   items,
   selectedId,
   onSelect,
+  onDuplicate,
+  onDelete,
 }: {
   items: SavedBlock[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onDuplicate: (id: string) => void;
+  onDelete: (item: SavedBlock) => void;
 }) {
   return (
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
@@ -407,6 +432,8 @@ function GridView({
           item={it}
           active={it.id === selectedId}
           onClick={() => onSelect(it.id)}
+          onDuplicate={() => onDuplicate(it.id)}
+          onDelete={() => onDelete(it)}
         />
       ))}
     </div>
@@ -417,10 +444,14 @@ function BlockCard({
   item,
   active,
   onClick,
+  onDuplicate,
+  onDelete,
 }: {
   item: SavedBlock;
   active: boolean;
   onClick: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
 }) {
   const type = item.block.blockType;
   const gradient = BLOCK_TYPE_GRADIENT[type] ?? 'from-zinc-400 to-zinc-600';
@@ -428,67 +459,162 @@ function BlockCard({
   const extraCount = item.block.extraElements?.length ?? 0;
   const hasMobile = !!item.block.contentVi?.mobile;
   return (
-    <button
-      type='button'
-      onClick={onClick}
+    <div
       className={cn(
-        'group flex flex-col overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all hover:shadow-md',
+        'group relative flex flex-col overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all hover:shadow-md',
         active
           ? 'border-zinc-900 ring-2 ring-zinc-900/10'
           : 'border-zinc-200 hover:border-zinc-300'
       )}
     >
-      <div className='relative'>
-        <BlockMiniPreview block={item.block} aspect='4 / 3' />
-        {/* Type label overlays bottom-left so the user can still scan type
-            without parsing the rendered content. Tiny pill on a translucent
-            backdrop so it works over any preview background. */}
-        <span
-          className={cn(
-            'absolute bottom-2 left-2 rounded bg-gradient-to-br px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-white/95 uppercase shadow-sm',
-            gradient
-          )}
-        >
-          {label}
-        </span>
-        {hasMobile && (
-          <span className='absolute top-2 right-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-[9px] text-white backdrop-blur'>
-            📱
-          </span>
-        )}
-        {extraCount > 0 && (
-          <span className='absolute top-2 left-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-[9px] text-white backdrop-blur'>
-            +{extraCount} extras
-          </span>
-        )}
+      {/* Kebab menu — absolutely positioned so it floats over both preview
+          and metadata. Stopping propagation prevents the card body click. */}
+      <div className='absolute top-2 right-2 z-10'>
+        <CardKebabMenu
+          onDetail={onClick}
+          onDuplicate={onDuplicate}
+          onDelete={onDelete}
+        />
       </div>
-      <div className='flex flex-1 flex-col gap-1.5 p-3'>
-        <div className='truncate text-[13px] font-semibold text-zinc-800'>
-          {item.name}
-        </div>
-        <div className='font-mono text-[10px] text-zinc-500'>{type}</div>
-        {item.tags && item.tags.length > 0 && (
-          <div className='flex flex-wrap gap-1'>
-            {item.tags.slice(0, 3).map(t => (
-              <span
-                key={t}
-                className='rounded-full bg-zinc-100 px-1.5 py-0.5 text-[9.5px] font-medium text-zinc-600'
-              >
-                {t}
-              </span>
-            ))}
-            {item.tags.length > 3 && (
-              <span className='text-[9.5px] text-zinc-400'>
-                +{item.tags.length - 3}
-              </span>
+
+      <button
+        type='button'
+        onClick={onClick}
+        className='flex flex-1 flex-col text-left'
+      >
+        <div className='relative'>
+          <BlockMiniPreview block={item.block} aspect='4 / 3' />
+          <span
+            className={cn(
+              'absolute bottom-2 left-2 rounded bg-gradient-to-br px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-white/95 uppercase shadow-sm',
+              gradient
             )}
-          </div>
-        )}
-        <div className='mt-auto text-[10.5px] text-zinc-400'>
-          {fmtRelative(item.updatedAt ?? item.createdAt)}
+          >
+            {label}
+          </span>
+          {hasMobile && (
+            <span className='absolute right-2 bottom-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-[9px] text-white backdrop-blur'>
+              📱
+            </span>
+          )}
+          {extraCount > 0 && (
+            <span className='absolute top-2 left-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-[9px] text-white backdrop-blur'>
+              +{extraCount} extras
+            </span>
+          )}
         </div>
-      </div>
-    </button>
+        <div className='flex flex-1 flex-col gap-1.5 p-3'>
+          <div className='truncate text-[13px] font-semibold text-zinc-800'>
+            {item.name}
+          </div>
+          <div className='font-mono text-[10px] text-zinc-500'>{type}</div>
+          {item.tags && item.tags.length > 0 && (
+            <div className='flex flex-wrap gap-1'>
+              {item.tags.slice(0, 3).map(t => (
+                <span
+                  key={t}
+                  className='rounded-full bg-zinc-100 px-1.5 py-0.5 text-[9.5px] font-medium text-zinc-600'
+                >
+                  {t}
+                </span>
+              ))}
+              {item.tags.length > 3 && (
+                <span className='text-[9.5px] text-zinc-400'>
+                  +{item.tags.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+          <div className='mt-auto text-[10.5px] text-zinc-400'>
+            {fmtRelative(item.updatedAt ?? item.createdAt)}
+          </div>
+        </div>
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Tiny dropdown menu rendered next to each block card. Three actions:
+ * open detail page, duplicate, delete. Click-outside + Escape close it.
+ */
+function CardKebabMenu({
+  onDetail,
+  onDuplicate,
+  onDelete,
+}: {
+  onDetail: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const choose = (fn: () => void) => () => {
+    setOpen(false);
+    fn();
+  };
+
+  return (
+    <div ref={ref} className='relative' onClick={e => e.stopPropagation()}>
+      <button
+        type='button'
+        onClick={e => {
+          e.stopPropagation();
+          setOpen(o => !o);
+        }}
+        className='flex size-7 items-center justify-center rounded-full bg-white/85 text-zinc-700 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all hover:bg-white hover:text-zinc-900'
+        aria-label='More actions'
+        aria-expanded={open}
+      >
+        <MoreVertical className='size-3.5' />
+      </button>
+      {open && (
+        <div className='absolute top-9 right-0 z-20 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+          <button
+            type='button'
+            onClick={choose(onDetail)}
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-zinc-700 hover:bg-zinc-50'
+          >
+            <Eye className='size-3.5 text-zinc-500' />
+            Mở chi tiết
+          </button>
+          <button
+            type='button'
+            onClick={choose(onDuplicate)}
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-zinc-700 hover:bg-zinc-50'
+          >
+            <Copy className='size-3.5 text-zinc-500' />
+            Duplicate
+          </button>
+          <div className='h-px bg-zinc-100' />
+          <button
+            type='button'
+            onClick={choose(onDelete)}
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-rose-600 hover:bg-rose-50'
+          >
+            <Trash2 className='size-3.5' />
+            Xoá
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
