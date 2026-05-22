@@ -234,3 +234,117 @@ Effort FE wire BE: **~1.5 ngày**.
 - FE: @Lantm
 - BE: ack 6 câu §7 trước khi schedule patch
 - Spec / PO: align nếu cần sharing / team-scope
+
+---
+
+## 10. Update 2026-05-22 — Wave 2 FE polish
+
+Phase 2 FE đã ship thêm các tính năng sau, BE cần align schema khi implement server-backed:
+
+### 10.1. Fields mới trên `SavedBlock`
+
+Local schema giờ là:
+```ts
+{
+  id: string;
+  name: string;
+  block: Block;
+  createdAt: string;
+  updatedAt?: string;        // ⬅ NEW: bump mỗi lần rename, sửa tags, hoặc overwrite content
+  tags?: string[];           // ⬅ NEW: lower-case kebab, max 40 chars, deduped
+  thumbnail?: string;        // unchanged — vẫn defer
+}
+```
+
+**Implication cho DB schema** (cập nhật §4):
+```sql
+ALTER TABLE saved_blocks
+  ADD COLUMN tags TEXT[] DEFAULT '{}',
+  ADD COLUMN updated_at TIMESTAMPTZ DEFAULT now();
+
+CREATE INDEX idx_saved_blocks_tags ON saved_blocks USING GIN(tags);
+```
+
+**Implication cho endpoints**:
+- `PATCH /v1/saved-blocks/{id}` body accept thêm `tags?: string[]`
+- `GET /v1/saved-blocks?tag=campaign&tag=hero` — filter theo tag (AND giữa nhiều tag), hoặc `?tag=campaign,hero` (BE chọn convention)
+- `PATCH` cũng accept body `block_json` để overwrite content (xem §10.2)
+
+### 10.2. Edit-overwrite flow
+
+FE đã ship UX cho phép user **mở canvas editor để sửa 1 saved block** rồi save thay đổi trở lại bản gốc (không tạo bản mới):
+
+```
+User vào /admin/blocks → click "Sửa"
+  ↓
+FE tạo scratch canvas template thông qua POST /v1/canvas-templates
+  (name = "[Editing] <saved_block.name>", chứa 1 block duy nhất = saved.block)
+  ↓
+FE redirect /canvas-templates/<scratchId>?saved_block_id=<savedId>
+  ↓
+Canvas editor đọc query param → SaveBlockDialog vào "overwrite mode"
+  ↓
+User sửa xong → click 🔖 → primary CTA "Cập nhật bản gốc"
+  ↓
+FE gọi PATCH /v1/saved-blocks/{savedId} { block_json: <updated>, name: <name> }
+  ↓
+FE auto-delete scratch canvas template (DELETE /v1/canvas-templates/<scratchId>)
+  → guard: chỉ xoá nếu `template.name LIKE '[Editing] %'`
+```
+
+**Yêu cầu BE Phase 2**:
+- `PATCH /v1/saved-blocks/{id}` chấp nhận `block_json` (full overwrite) — không chỉ rename/tags.
+- Validation y hệt POST (cùng v2.0 block schema).
+- Cập nhật `updated_at`; **giữ nguyên** `id`, `created_at`, `usage_count`, `tags`.
+- Optimistic lock: tuỳ chọn `If-Match: <updated_at>` header → 412 nếu stale.
+
+### 10.3. Scratch canvas convention — nice-to-have BE flag
+
+Hiện FE dùng convention naming `[Editing] <name>` để mark scratch templates. Đề xuất 1 trong 2:
+
+**Option A — `is_scratch` flag trên CanvasTemplate (recommend)**:
+```sql
+ALTER TABLE canvas_templates
+  ADD COLUMN is_scratch BOOLEAN DEFAULT FALSE;
+CREATE INDEX idx_canvas_templates_scratch ON canvas_templates(is_scratch) WHERE is_scratch = TRUE;
+```
+
+- Endpoints `GET /v1/canvas-templates` mặc định `WHERE is_scratch = FALSE` → list không bị nhiễu
+- `POST` accept `is_scratch: true` từ FE
+- Cron purge scratch > 24h chưa update → tự xoá nếu user quên cleanup
+
+**Option B — giữ convention naming, FE tự cleanup**:
+- BE không cần thay đổi gì
+- Rủi ro: nếu FE crash giữa chừng → orphan vẫn còn
+- Hiện FE đã best-effort cleanup khi save thành công + guard tên `[Editing]`
+
+→ Đề nghị **Option A** Phase 3 (low priority). Option B đủ dùng Phase 2.
+
+### 10.4. Endpoint count update
+
+So với §3.1 ban đầu (5 endpoints), bổ sung:
+| Method | Path | Mục đích |
+|---|---|---|
+| `PATCH` | `/v1/saved-blocks/{id}` | Đã có — body bây giờ chấp nhận `block_json`, `tags`, `name` (đều optional) |
+| `GET` | `/v1/saved-blocks?tag=&q=&block_type=&page=&limit=` | Đã có — thêm filter `tag`, `block_type` (FE filter chip strip dùng) |
+
+Không có endpoint mới — chỉ mở rộng body/query của endpoints đã spec.
+
+### 10.5. Câu hỏi BE confirm (bổ sung §7)
+
+7. **`PATCH` body `block_json` full overwrite** — BE OK reuse validator của canvas blocks không, hay cần handler riêng?
+8. **Filter `tag` query** — AND multiple tag hay OR? FE đang chip-toggle 1 tag tại 1 thời điểm (đơn giản hoá Phase 2.0), nhưng Phase 3 sẽ multi-select → BE design ngay từ đầu nên thoáng.
+9. **`is_scratch` flag** trên `canvas_templates` — accept Option A không, hay giữ B?
+10. **Migration `updated_at` cho saved-blocks cũ** — backfill bằng `created_at` không?
+
+### 10.6. FE files đã touch
+
+| File | Vai trò |
+|---|---|
+| `src/components/modules/CanvasTemplate/block-editor/savedBlocks.ts` | Thêm `tags`, `updatedAt`, helpers `duplicate`, `updateTags`, `updateContent` |
+| `src/components/modules/CanvasTemplate/block-editor/SaveBlockDialog.tsx` | 2 mode: create / edit overwrite |
+| `src/components/modules/CanvasTemplate/block-editor/BlockMiniPreview.tsx` | Real preview thumbnail (FE-only) |
+| `src/components/modules/CanvasTemplate/BlockEditor.tsx` | Đọc `?saved_block_id=`, auto-delete scratch canvas |
+| `src/components/modules/Admin/AdminBlocksPage.tsx` | Grid + drawer + tags + edit flow |
+
+Khi BE ship server-backed, FE chỉ cần swap `savedBlocks.ts` từ localStorage → fetch. Consumers giữ nguyên signature.
