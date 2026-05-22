@@ -142,6 +142,36 @@ export function duplicateSavedBlock(
 }
 
 /**
+ * Replace the block content on a saved entry while preserving id/createdAt
+ * and bumping `updatedAt`. Used by the "edit then update original" flow
+ * from `/admin/blocks` → canvas editor → save-block icon.
+ *
+ * Optionally rename the entry at the same time (FE flow passes the new
+ * name from the SaveBlockDialog input).
+ */
+export function updateSavedBlockContent(
+  id: string,
+  block: Block,
+  name?: string
+): SavedBlock | undefined {
+  const all = readRaw();
+  const idx = all.findIndex(e => e.id === id);
+  if (idx === -1) return undefined;
+  const prev = all[idx];
+  const trimmedName = name?.trim();
+  const next: SavedBlock = {
+    ...prev,
+    name: trimmedName && trimmedName.length > 0 ? trimmedName : prev.name,
+    block: structuredClone(block),
+    updatedAt: new Date().toISOString(),
+  };
+  const out = [...all];
+  out[idx] = next;
+  writeRaw(out);
+  return next;
+}
+
+/**
  * Replace the tag list on a saved block. Empty array clears tags. Tags
  * are normalised (lower-case, deduped) at write time so UI doesn't have
  * to repeat the dance.

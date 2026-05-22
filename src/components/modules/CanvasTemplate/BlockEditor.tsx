@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { PanelRightOpen } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -157,6 +157,10 @@ export function BlockEditor({
   const [duplicateOpen, setDuplicateOpen] = React.useState(false);
   const [duplicating, setDuplicating] = React.useState(false);
   const [saveBlockOpen, setSaveBlockOpen] = React.useState(false);
+  // `/admin/blocks` "Edit" flow appends `?saved_block_id=<id>` so the
+  // save-block dialog lights up in overwrite mode instead of fork-as-new.
+  const searchParams = useSearchParams();
+  const editingSavedBlockId = searchParams?.get('saved_block_id') ?? undefined;
   const [layersCollapsed, setLayersCollapsed] = React.useState(false);
   const [sidebarTab, setSidebarTab] = React.useState<'layers' | 'motion'>(
     'layers'
@@ -861,6 +865,7 @@ export function BlockEditor({
         open={saveBlockOpen}
         block={activeBlock ?? null}
         onOpenChange={setSaveBlockOpen}
+        editingSavedBlockId={editingSavedBlockId}
       />
 
       <ReviewChangesDialog

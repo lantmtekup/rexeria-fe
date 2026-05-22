@@ -82,8 +82,37 @@ test.describe('Admin Blocks page', () => {
     // Sửa tag
     const tagInput = page.getByPlaceholder('Thêm tag (Enter)…');
     await tagInput.fill('campaign');
-    await page.getByRole('button', { name: 'Thêm' }).click();
+    // Use exact match — the inner BlockMiniPreview can contain buttons whose
+    // accessible name happens to include "Thêm" (eg. ImageCarousel placeholder).
+    await page.getByRole('button', { name: 'Thêm', exact: true }).click();
     // Drawer chip có title 'Click để xoá tag' — unique selector cho chip tag
     await expect(page.getByTitle('Click để xoá tag')).toContainText('campaign');
+  });
+
+  test('cards render BlockMiniPreview (data-block-id-like content)', async ({
+    page,
+  }) => {
+    await page.goto('/admin/blocks');
+    await page.evaluate(
+      ({ key, items }) =>
+        window.localStorage.setItem(key, JSON.stringify(items)),
+      {
+        key: STORAGE_KEY,
+        items: [makeSavedBlock('Hero Preview Test', 'hero_split')],
+      }
+    );
+    await page.reload();
+    // BlockMiniPreview applies `transform: scale(...)` on its inner wrapper.
+    // We just need any element with a scale transform to confirm the preview
+    // mounted (vs the old gradient placeholder which had none).
+    const card = page.locator('button:has-text("Hero Preview Test")').first();
+    await expect(card).toBeVisible();
+    const hasScaled = await card.evaluate(node => {
+      return Array.from(node.querySelectorAll<HTMLElement>('*')).some(el => {
+        const t = el.style.transform;
+        return t.includes('scale(');
+      });
+    });
+    expect(hasScaled).toBe(true);
   });
 });

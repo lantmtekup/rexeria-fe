@@ -15,7 +15,11 @@ import {
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 
-import { saveBlock } from './savedBlocks';
+import {
+  getSavedBlock,
+  saveBlock,
+  updateSavedBlockContent,
+} from './savedBlocks';
 import type { Block } from './types';
 
 interface Props {
@@ -23,24 +27,49 @@ interface Props {
   block: Block | null;
   onOpenChange: (open: boolean) => void;
   onSaved?: (id: string) => void;
+  /**
+   * When set, the dialog is in "edit existing saved block" mode — primary
+   * button overwrites the original; a secondary button still allows saving
+   * as a brand-new entry. Driven by the `?saved_block_id=<id>` query param
+   * the `/admin/blocks` Edit flow appends to the canvas-editor URL.
+   */
+  editingSavedBlockId?: string;
 }
 
 /**
- * Asks the user for a label, then snapshots the active block into the
- * saved-blocks library (currently localStorage — see savedBlocks.ts).
- * Default name comes from the block's current `name`.
+ * Two modes:
+ *  - **Create** (default): asks for a label, snapshots the active block into
+ *    the library as a NEW entry.
+ *  - **Edit existing** (when `editingSavedBlockId` set): primary CTA updates
+ *    the existing entry in place; a secondary CTA still lets the user fork
+ *    a new entry. Default name is loaded from the existing saved block.
  */
-export function SaveBlockDialog({ open, block, onOpenChange, onSaved }: Props) {
+export function SaveBlockDialog({
+  open,
+  block,
+  onOpenChange,
+  onSaved,
+  editingSavedBlockId,
+}: Props) {
   const [name, setName] = React.useState('');
 
-  // Reset name to the block's name every time the dialog reopens — so saving
-  // the same block twice doesn't carry over the previous custom label.
-  React.useEffect(() => {
-    if (open && block) setName(block.name ?? '');
-  }, [open, block]);
+  const editingEntry = React.useMemo(
+    () =>
+      editingSavedBlockId ? getSavedBlock(editingSavedBlockId) : undefined,
+    // Re-read every time the dialog opens so an external rename is picked up.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [editingSavedBlockId, open]
+  );
+  const isEditing = !!editingEntry;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  React.useEffect(() => {
+    if (!open) return;
+    if (editingEntry) setName(editingEntry.name);
+    else if (block) setName(block.name ?? '');
+  }, [open, block, editingEntry]);
+
+  const persistAsNew = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!block) return;
     const trimmed = name.trim();
     if (!trimmed) {
@@ -53,15 +82,49 @@ export function SaveBlockDialog({ open, block, onOpenChange, onSaved }: Props) {
     onOpenChange(false);
   };
 
+  const persistOverwrite = () => {
+    if (!block || !editingEntry) return;
+    const trimmed = name.trim();
+    if (!trimmed) {
+      toast.error('Tên block không được để trống');
+      return;
+    }
+    const updated = updateSavedBlockContent(editingEntry.id, block, trimmed);
+    if (!updated) {
+      toast.error('Không tìm thấy block gốc để cập nhật');
+      return;
+    }
+    toast.success(`Đã cập nhật "${updated.name}"`);
+    onSaved?.(updated.id);
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='sm:max-w-md'>
-        <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
+        <form
+          onSubmit={isEditing ? e => e.preventDefault() : persistAsNew}
+          className='flex flex-col gap-4'
+        >
           <DialogHeader>
-            <DialogTitle>Lưu block vào thư viện</DialogTitle>
+            <DialogTitle>
+              {isEditing
+                ? 'Cập nhật block trong thư viện'
+                : 'Lưu block vào thư viện'}
+            </DialogTitle>
             <DialogDescription>
-              Block sẽ xuất hiện trong tab “Đã lưu” khi bấm “Thêm block”. Dùng
-              lại được trong mọi canvas template.
+              {isEditing ? (
+                <>
+                  Đang sửa bản gốc{' '}
+                  <code className='rounded bg-zinc-100 px-1 font-mono text-[11px]'>
+                    {editingEntry.id}
+                  </code>
+                  . Cập nhật sẽ ghi đè nội dung &amp; ngày sửa; ID + tag giữ
+                  nguyên.
+                </>
+              ) : (
+                'Block sẽ xuất hiện trong tab “Đã lưu” khi bấm “Thêm block”. Dùng lại được trong mọi canvas template.'
+              )}
             </DialogDescription>
           </DialogHeader>
 
@@ -77,7 +140,7 @@ export function SaveBlockDialog({ open, block, onOpenChange, onSaved }: Props) {
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className='gap-2 sm:gap-2'>
             <Button
               type='button'
               variant='outline'
@@ -85,8 +148,24 @@ export function SaveBlockDialog({ open, block, onOpenChange, onSaved }: Props) {
             >
               Huỷ
             </Button>
-            <Button type='submit' variant='primary' disabled={!name.trim()}>
-              Lưu
+            {isEditing && (
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => persistAsNew()}
+                disabled={!name.trim()}
+                title='Lưu thành bản mới — bản gốc không đổi'
+              >
+                Lưu bản mới
+              </Button>
+            )}
+            <Button
+              type={isEditing ? 'button' : 'submit'}
+              variant='primary'
+              disabled={!name.trim()}
+              onClick={isEditing ? persistOverwrite : undefined}
+            >
+              {isEditing ? 'Cập nhật bản gốc' : 'Lưu'}
             </Button>
           </DialogFooter>
         </form>
