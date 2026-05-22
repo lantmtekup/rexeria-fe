@@ -329,12 +329,17 @@ function Sparkline({ seed, tone }: { seed: string; tone: string }) {
 }
 
 /**
- * Card shell shared by block + element variants. Soft dark glass — modeled
- * after the Sunset-Palms reference: rounded-2xl, low-contrast border, soft
- * drop shadow, backdrop blur. No neon glow, no HUD corner brackets.
+ * Card shell shared by block + element variants. Warm rust gradient with a
+ * cream-tinted border — matches the brand palette the user landed on.
  */
 const CARD_BASE =
-  'pointer-events-auto relative w-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/85 p-3.5 text-white shadow-[0_8px_24px_rgba(0,0,0,0.25)] backdrop-blur-md';
+  'pointer-events-auto relative w-full overflow-hidden rounded-2xl border p-3.5 text-white shadow-[0_8px_24px_rgba(0,0,0,0.25)] backdrop-blur-md';
+
+const WARM_CARD_STYLE: React.CSSProperties = {
+  background:
+    'linear-gradient(180deg, rgba(176, 93, 34, 0.78), rgba(94, 40, 12, 0.65))',
+  borderColor: 'rgba(241, 217, 177, 0.25)',
+};
 
 function BlockSummaryCard({
   index,
@@ -353,7 +358,7 @@ function BlockSummaryCard({
         ? 'text-amber-300'
         : 'text-rose-300';
   return (
-    <div className={CARD_BASE}>
+    <div className={CARD_BASE} style={WARM_CARD_STYLE}>
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-1.5'>
@@ -425,7 +430,7 @@ function ElementStatCard({
     ? Math.round((action.unique_visitors / Math.max(1, action.count)) * 100)
     : 0;
   return (
-    <div className={CARD_BASE}>
+    <div className={CARD_BASE} style={WARM_CARD_STYLE}>
       <div className='flex items-start justify-between gap-2'>
         <div className='min-w-0'>
           <div className='truncate text-[12px] leading-tight font-semibold text-white'>
