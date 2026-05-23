@@ -1,0 +1,608 @@
+'use client';
+
+/**
+ * Per-block analytics grid for a single landing page. Renders one card per
+ * block with:
+ *  - Small live `BlockMiniPreview` thumbnail
+ *  - Block label + total views in range
+ *  - Smooth (catmull-rom → cubic bezier) sparkline of daily views
+ *
+ * Data source is `BlockBreakdownRow[]` from the portal breakdown endpoint
+ * (or admin equivalent). When the BE doesn't yet ship `views_by_day` (see
+ * be-todo.md P1.7) we synthesise a deterministic mock per block_id so the
+ * UI still demonstrates shape — banner indicates fake source.
+ */
+
+import * as React from 'react';
+import {
+  ArrowLeft,
+  Loader2,
+  MousePointerClick,
+  TrendingUp,
+} from 'lucide-react';
+
+import { BlockMiniPreview } from '@/components/modules/CanvasTemplate/block-editor/BlockMiniPreview';
+import { parseCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
+import type {
+  Block,
+  BlockType,
+} from '@/components/modules/CanvasTemplate/block-editor/types';
+import { rexerApi } from '@/services/rexer/endpoints';
+import { RxApiError } from '@/services/rexer/client';
+import type { BlockBreakdownRow } from '@/services/rexer/types';
+import { cn } from '@/lib/cn';
+
+type Range = 7 | 14 | 30;
+
+const RANGES: { id: Range; label: string }[] = [
+  { id: 7, label: '7 ngày' },
+  { id: 14, label: '14 ngày' },
+  { id: 30, label: '30 ngày' },
+];
+
+const BLOCK_TYPE_LABEL: Record<BlockType, string> = {
+  hero_split: 'Hero Split',
+  hero_overlay: 'Hero Overlay',
+  feature_section: 'Features',
+  photo_gallery: 'Photo Gallery',
+  booking_form: 'Booking Form',
+  cta_section: 'CTA',
+  image_carousel: 'Carousel',
+  stories: 'Stories',
+  split_screen: 'Split Screen',
+  quiz: 'Quiz',
+  poll: 'Poll',
+  carousel_3d: 'Carousel 3D',
+  flipbook: 'Flipbook',
+  panorama: 'Panorama',
+};
+
+interface Props {
+  templateId: string;
+  templateName?: string;
+  /** Where to send the user via the back button. */
+  backHref?: string;
+  /** When set, calls admin breakdown endpoint; otherwise portal. */
+  useAdminEndpoint?: boolean;
+}
+
+interface LoadedBlock {
+  block: Block;
+  /** Title harvested from contentVi.desktop for readability. */
+  label: string;
+}
+
+export function BlockAnalyticsGrid({
+  templateId,
+  templateName,
+  backHref = '/portal/landing-pages',
+  useAdminEndpoint,
+}: Props) {
+  const [blocks, setBlocks] = React.useState<LoadedBlock[] | null>(null);
+  const [rows, setRows] = React.useState<BlockBreakdownRow[] | null>(null);
+  const [range, setRange] = React.useState<Range>(7);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [usingMock, setUsingMock] = React.useState(false);
+
+  // Load template blocks once — they don't depend on range.
+  React.useEffect(() => {
+    let cancelled = false;
+    rexerApi.canvasTemplates
+      .get(templateId)
+      .then(tpl => {
+        if (cancelled) return;
+        const parsed = parseCanvas(
+          tpl.canvas_data as Record<string, unknown> | undefined
+        );
+        if (!parsed) {
+          setBlocks([]);
+          return;
+        }
+        const loaded = parsed.blocks.map(b => ({
+          block: b,
+          label: extractLabel(b),
+        }));
+        setBlocks(loaded);
+      })
+      .catch(err => {
+        if (cancelled) return;
+        setError(
+          err instanceof RxApiError ? err.code || err.message : 'LOAD_FAILED'
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [templateId]);
+
+  // Reload breakdown each time range changes.
+  React.useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    const end = new Date();
+    const start = new Date(end.getTime() - range * 86_400_000);
+    const params = { start: start.toISOString(), end: end.toISOString() };
+    const promise = useAdminEndpoint
+      ? rexerApi.templateAnalytics.breakdown(templateId, params)
+      : rexerApi.portal.templateBreakdown(templateId, params);
+    promise
+      .then(res => {
+        if (cancelled) return;
+        const arr: BlockBreakdownRow[] = Array.isArray(res) ? res : [];
+        setRows(arr);
+        const hasReal = arr.some(
+          r => Array.isArray(r.views_by_day) && r.views_by_day.length > 0
+        );
+        setUsingMock(!hasReal);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // 404 / no data → empty rows, will mock everything
+        setRows([]);
+        setUsingMock(true);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [templateId, range, useAdminEndpoint]);
+
+  const rowMap = React.useMemo(() => {
+    const m = new Map<string, BlockBreakdownRow>();
+    for (const r of rows ?? []) m.set(r.block_id, r);
+    return m;
+  }, [rows]);
+
+  // Compute total + averages across all blocks
+  const aggregate = React.useMemo(() => {
+    if (!rows) return null;
+    let views = 0;
+    let clicks = 0;
+    for (const r of rows) {
+      views += r.views ?? 0;
+      clicks += r.clicks ?? 0;
+    }
+    return { views, clicks, blocks: rows.length };
+  }, [rows]);
+
+  if (error) {
+    return (
+      <div className='mx-auto max-w-3xl px-6 pt-10'>
+        <BackLink backHref={backHref} />
+        <div className='mt-8 rounded-2xl border border-rose-200 bg-rose-50 p-8 text-center text-rose-900'>
+          <p className='text-[14px] font-semibold'>
+            Không load được landing page
+          </p>
+          <p className='mt-1 font-mono text-[11px]'>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className='mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-6 pb-16 sm:px-6'>
+      {/* Header */}
+      <header className='flex flex-wrap items-end justify-between gap-3'>
+        <div>
+          <BackLink backHref={backHref} />
+          <h1 className='mt-3 text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl'>
+            Analytics theo block
+          </h1>
+          <p className='mt-1 text-[12.5px] text-zinc-500'>
+            {templateName ? (
+              <>
+                <span className='font-semibold text-zinc-700'>
+                  {templateName}
+                </span>{' '}
+                ·{' '}
+              </>
+            ) : null}
+            {blocks?.length ?? '…'} block · so sánh trend từng block trên cùng
+            khoảng thời gian
+          </p>
+        </div>
+        <div className='inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-sm'>
+          {RANGES.map(r => (
+            <button
+              key={r.id}
+              type='button'
+              onClick={() => setRange(r.id)}
+              className={cn(
+                'rounded-full px-3 py-1 text-[11.5px] font-medium transition-colors',
+                range === r.id
+                  ? 'bg-zinc-900 text-white shadow-sm'
+                  : 'text-zinc-600 hover:bg-zinc-100'
+              )}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      {/* Summary strip */}
+      {aggregate && (
+        <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+          <SummaryCard
+            icon={<TrendingUp className='size-3.5' />}
+            label='Tổng lượt xem'
+            value={aggregate.views.toLocaleString('vi-VN')}
+            accent='emerald'
+          />
+          <SummaryCard
+            icon={<MousePointerClick className='size-3.5' />}
+            label='Tổng click'
+            value={aggregate.clicks.toLocaleString('vi-VN')}
+            accent='violet'
+          />
+          <SummaryCard
+            label='Block có data'
+            value={`${aggregate.blocks} / ${blocks?.length ?? 0}`}
+            accent='zinc'
+          />
+          <SummaryCard
+            label='Khoảng thời gian'
+            value={`${range} ngày`}
+            accent='zinc'
+          />
+        </div>
+      )}
+
+      {/* Mock data banner */}
+      {usingMock && !loading && (
+        <div className='flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/70 px-3.5 py-2.5 text-[11.5px] text-amber-900'>
+          <span className='mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-100 font-mono text-[9px] font-bold'>
+            !
+          </span>
+          <div>
+            <strong className='font-semibold'>
+              Dùng mock data daily views
+            </strong>{' '}
+            — BE chưa ship field <code>views_by_day</code> (be-todo.md P1.7). Số
+            views tổng + clicks là số thật từ breakdown; sparkline được generate
+            deterministic theo block_id để demo shape.
+          </div>
+        </div>
+      )}
+
+      {/* Grid */}
+      {loading && !blocks ? (
+        <div className='flex items-center justify-center py-20 text-sm text-zinc-500'>
+          <Loader2 className='mr-2 size-4 animate-spin' />
+          Đang tải landing page…
+        </div>
+      ) : blocks && blocks.length === 0 ? (
+        <div className='rounded-2xl border border-zinc-200 bg-white p-12 text-center'>
+          <p className='text-[14px] font-semibold text-zinc-700'>
+            Landing page chưa có block
+          </p>
+          <p className='mt-1 text-[12px] text-zinc-500'>
+            Mở canvas editor để thêm block trước khi xem analytics.
+          </p>
+        </div>
+      ) : (
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+          {blocks?.map((entry, idx) => {
+            const row = rowMap.get(entry.block.id);
+            const series =
+              row?.views_by_day && row.views_by_day.length > 0
+                ? row.views_by_day
+                : mockSeries(entry.block.id, range, row?.views ?? 0);
+            return (
+              <BlockAnalyticsCard
+                key={entry.block.id}
+                index={idx + 1}
+                block={entry.block}
+                label={entry.label}
+                views={row?.views ?? series.reduce((a, b) => a + b, 0)}
+                clicks={row?.clicks ?? 0}
+                series={series}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Card ──────────────────────────────────────────────────────────── */
+
+function BlockAnalyticsCard({
+  index,
+  block,
+  label,
+  views,
+  clicks,
+  series,
+}: {
+  index: number;
+  block: Block;
+  label: string;
+  views: number;
+  clicks: number;
+  series: number[];
+}) {
+  const max = Math.max(...series, 1);
+  const delta = computeDelta(series);
+  const ctr = views > 0 ? Math.round((clicks / views) * 1000) / 10 : 0;
+  const typeName = BLOCK_TYPE_LABEL[block.blockType] ?? block.blockType;
+
+  return (
+    <div className='group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'>
+      {/* Header row — index + type */}
+      <div className='flex items-center justify-between border-b border-zinc-100 px-3.5 py-2'>
+        <div className='flex items-center gap-2'>
+          <span className='flex size-5 items-center justify-center rounded-full bg-zinc-100 font-mono text-[10px] font-bold text-zinc-600'>
+            {index}
+          </span>
+          <span className='font-mono text-[10px] tracking-wider text-zinc-400 uppercase'>
+            {typeName}
+          </span>
+        </div>
+        <DeltaPill delta={delta} />
+      </div>
+
+      {/* Thumbnail */}
+      <div className='relative aspect-[16/10] overflow-hidden border-b border-zinc-100 bg-gradient-to-br from-zinc-50 to-zinc-100'>
+        <BlockMiniPreview block={block} aspect='16 / 10' />
+      </div>
+
+      {/* Metrics */}
+      <div className='flex flex-1 flex-col gap-2 p-3.5'>
+        <h3 className='truncate text-[13px] font-semibold text-zinc-800'>
+          {label}
+        </h3>
+        <div className='grid grid-cols-3 gap-2 text-center'>
+          <Metric label='Views' value={views.toLocaleString('vi-VN')} />
+          <Metric label='Clicks' value={clicks.toLocaleString('vi-VN')} />
+          <Metric label='CTR' value={`${ctr}%`} />
+        </div>
+
+        {/* Sparkline */}
+        <div className='mt-1'>
+          <Sparkline series={series} max={max} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className='flex flex-col gap-0.5'>
+      <span className='text-[9px] font-medium tracking-wider text-zinc-400 uppercase'>
+        {label}
+      </span>
+      <span className='font-mono text-[12px] font-semibold text-zinc-800 tabular-nums'>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function DeltaPill({ delta }: { delta: number }) {
+  if (Number.isNaN(delta) || !Number.isFinite(delta)) {
+    return <span className='font-mono text-[9.5px] text-zinc-300'>—</span>;
+  }
+  const isUp = delta >= 0;
+  const sign = isUp ? '+' : '';
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-mono text-[9.5px] font-bold tabular-nums',
+        isUp ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
+      )}
+    >
+      {isUp ? '▲' : '▼'} {sign}
+      {Math.abs(delta).toFixed(0)}%
+    </span>
+  );
+}
+
+/* ─── Sparkline ─────────────────────────────────────────────────────── */
+
+/**
+ * Smooth (catmull-rom interpolated → cubic bezier) sparkline with a soft
+ * area fill below. Renders into a fluid-width SVG via viewBox so the host
+ * card can be any width.
+ */
+function Sparkline({ series, max }: { series: number[]; max: number }) {
+  const W = 280;
+  const H = 56;
+  const PADDING = 4;
+
+  if (series.length === 0) {
+    return <div className='h-14 rounded bg-zinc-50' />;
+  }
+
+  // Normalise → screen coords
+  const points: [number, number][] = series.map((v, i) => {
+    const x =
+      PADDING + (i / Math.max(1, series.length - 1)) * (W - PADDING * 2);
+    const y = H - PADDING - (v / max) * (H - PADDING * 2);
+    return [x, y];
+  });
+
+  const pathLine = catmullRomToBezier(points);
+  const pathArea = `${pathLine} L ${points[points.length - 1][0]} ${H} L ${points[0][0]} ${H} Z`;
+
+  const lastX = points[points.length - 1][0];
+  const lastY = points[points.length - 1][1];
+
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className='block w-full overflow-visible'
+      preserveAspectRatio='none'
+    >
+      <defs>
+        <linearGradient id='spark-fill' x1='0' y1='0' x2='0' y2='1'>
+          <stop offset='0%' stopColor='#6366f1' stopOpacity='0.22' />
+          <stop offset='100%' stopColor='#6366f1' stopOpacity='0.02' />
+        </linearGradient>
+        <linearGradient id='spark-line' x1='0' y1='0' x2='1' y2='0'>
+          <stop offset='0%' stopColor='#8b5cf6' />
+          <stop offset='100%' stopColor='#6366f1' />
+        </linearGradient>
+      </defs>
+      <path d={pathArea} fill='url(#spark-fill)' />
+      <path
+        d={pathLine}
+        fill='none'
+        stroke='url(#spark-line)'
+        strokeWidth={1.75}
+        strokeLinecap='round'
+        strokeLinejoin='round'
+      />
+      <circle
+        cx={lastX}
+        cy={lastY}
+        r={2.5}
+        fill='#6366f1'
+        stroke='white'
+        strokeWidth={1.5}
+      />
+    </svg>
+  );
+}
+
+/**
+ * Catmull-rom spline through `points` converted to a sequence of cubic
+ * bezier curves. Produces the soft, organic curve the user asked for.
+ */
+function catmullRomToBezier(points: [number, number][]): string {
+  if (points.length === 0) return '';
+  if (points.length === 1) {
+    const [x, y] = points[0];
+    return `M ${x} ${y}`;
+  }
+  const [first] = points;
+  let d = `M ${first[0]} ${first[1]}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[Math.max(0, i - 1)];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[Math.min(points.length - 1, i + 2)];
+    const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
+    const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
+    const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
+
+/* ─── Mock data ─────────────────────────────────────────────────────── */
+
+/**
+ * Deterministic mock daily series so the same block always shows the same
+ * shape across reloads. Seeded by `block_id` + range so toggling ranges
+ * doesn't produce wildly different traces.
+ */
+function mockSeries(seed: string, days: number, total: number): number[] {
+  let h = 2166136261;
+  const seedStr = `${seed}:${days}`;
+  for (let i = 0; i < seedStr.length; i++) {
+    h ^= seedStr.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const rng = () => {
+    h ^= h << 13;
+    h ^= h >>> 17;
+    h ^= h << 5;
+    return ((h >>> 0) % 1000) / 1000;
+  };
+  const base = total > 0 ? total / days : 8 + rng() * 30;
+  const trendBias = (rng() - 0.4) * 0.6; // -0.24 to +0.36
+  const out: number[] = [];
+  for (let i = 0; i < days; i++) {
+    const t = i / Math.max(1, days - 1);
+    const trend = 1 + trendBias * t;
+    const wave = 1 + Math.sin(t * Math.PI * 3 + rng() * 2) * 0.18;
+    const noise = 1 + (rng() - 0.5) * 0.35;
+    out.push(Math.max(0, Math.round(base * trend * wave * noise)));
+  }
+  return out;
+}
+
+/**
+ * % change from first half avg → second half avg. Returns NaN if data is
+ * too sparse or the first-half avg is zero.
+ */
+function computeDelta(series: number[]): number {
+  if (series.length < 4) return NaN;
+  const mid = Math.floor(series.length / 2);
+  const a = series.slice(0, mid);
+  const b = series.slice(mid);
+  const avg = (arr: number[]) =>
+    arr.reduce((s, v) => s + v, 0) / Math.max(1, arr.length);
+  const first = avg(a);
+  const second = avg(b);
+  if (first === 0) return NaN;
+  return ((second - first) / first) * 100;
+}
+
+/* ─── Subcomponents ─────────────────────────────────────────────────── */
+
+function SummaryCard({
+  icon,
+  label,
+  value,
+  accent,
+}: {
+  icon?: React.ReactNode;
+  label: string;
+  value: string;
+  accent: 'emerald' | 'violet' | 'zinc';
+}) {
+  const palette: Record<typeof accent, string> = {
+    emerald: 'border-emerald-100 bg-emerald-50/40 text-emerald-700',
+    violet: 'border-violet-100 bg-violet-50/40 text-violet-700',
+    zinc: 'border-zinc-200 bg-white text-zinc-600',
+  };
+  return (
+    <div
+      className={cn(
+        'flex flex-col gap-1 rounded-2xl border px-4 py-3 shadow-sm',
+        palette[accent]
+      )}
+    >
+      <div className='flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase opacity-75'>
+        {icon}
+        {label}
+      </div>
+      <div className='font-mono text-xl font-bold text-zinc-900 tabular-nums'>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function BackLink({ backHref }: { backHref: string }) {
+  return (
+    <a
+      href={backHref}
+      className='group inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
+    >
+      <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
+      Landing pages
+    </a>
+  );
+}
+
+/** Best-effort block label — pull the first text content if available. */
+function extractLabel(block: Block): string {
+  const v = block.contentVi?.desktop;
+  if (v && typeof v === 'object') {
+    const obj = v as Record<string, unknown>;
+    for (const key of ['title', 'heading', 'name', 'label']) {
+      const val = obj[key];
+      if (typeof val === 'string' && val.trim()) return val.trim();
+    }
+  }
+  return BLOCK_TYPE_LABEL[block.blockType] ?? block.blockType;
+}

@@ -201,7 +201,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
         {/* Actions */}
         <div className='mt-4 flex items-center gap-2'>
           <Link
-            href={`/overview/analytics/templates/${t.id}?range=30d`}
+            href={`/portal/landing-pages/${t.id}/analytics`}
             className='flex-1 rounded-lg bg-zinc-900 px-3 py-1.5 text-center text-xs font-medium text-white transition-colors hover:bg-zinc-700'
           >
             Xem analytics

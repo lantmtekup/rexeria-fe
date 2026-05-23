@@ -746,6 +746,12 @@ export interface BlockBreakdownRow {
   funnel?: FunnelStep[] | null;
   slides?: SlideStat[] | null;
   images?: ImageStat[] | null;
+  /**
+   * Daily view counts within the requested range (oldest → newest). BE
+   * field gated by be-todo.md P1.7. When missing, FE renders mock data so
+   * the per-block sparkline grid still shows shape but flags fake source.
+   */
+  views_by_day?: number[];
 }
 
 export interface AnalyticsEventInput {
