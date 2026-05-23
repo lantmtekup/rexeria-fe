@@ -59,6 +59,17 @@ const STATUS_CHIP: Record<string, string> = {
   archived: 'bg-zinc-100 text-zinc-500',
 };
 
+/**
+ * BE sometimes returns `author` as a User object (`{display_name, email, ...}`)
+ * even though the legacy schema said `string`. Render-safe extract — never
+ * pass the raw object to JSX or React throws.
+ */
+function formatAuthor(author: Template['author']): string {
+  if (!author) return '';
+  if (typeof author === 'string') return author;
+  return author.display_name || author.email || author.id || '';
+}
+
 export function AdminTemplatesPage() {
   const t = useTranslations('admin');
   const tErrors = useTranslations('errors');
@@ -458,9 +469,7 @@ function TemplateCard({
 
         <div className='mt-auto flex items-center justify-between text-[10.5px] text-zinc-500'>
           <span>
-            {item.author ? (
-              <span className='text-zinc-600'>{item.author}</span>
-            ) : (
+            {formatAuthor(item.author) || (
               <span className='text-zinc-400'>—</span>
             )}
           </span>

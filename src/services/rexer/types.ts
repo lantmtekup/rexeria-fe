@@ -321,6 +321,20 @@ export interface DashboardSummary {
 }
 
 // ── Template ─────────────────────────────────────────────────────────────
+/**
+ * BE returns `author` as a User object on `/v1/templates` even though the
+ * earlier swagger marked it `string`. Keep the union so older payloads
+ * still type-check; FE renders via `formatAuthor()` to pick `display_name`
+ * → `email` → `id`.
+ */
+export interface TemplateAuthor {
+  id?: string;
+  email?: string;
+  display_name?: string;
+  role?: string;
+  avatar_url?: string;
+}
+
 export interface Template {
   id: string;
   code: string;
@@ -332,7 +346,7 @@ export interface Template {
   thumbnail_url?: string;
   category?: string;
   tags?: string[];
-  author?: string;
+  author?: string | TemplateAuthor;
   created_at: string;
   updated_at: string;
   created_by: string;
