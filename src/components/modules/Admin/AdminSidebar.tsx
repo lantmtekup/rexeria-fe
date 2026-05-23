@@ -5,13 +5,16 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import {
+  BlocksIcon,
   BookmarkIcon,
+  InboxIcon,
   LayoutDashboardIcon,
   LayoutTemplateIcon,
   LogOutIcon,
   MessageSquareIcon,
   PackageIcon,
   SparklesIcon,
+  User2Icon,
   UsersIcon,
 } from 'lucide-react';
 
@@ -63,9 +66,27 @@ const NAV: NavItem[] = [
     group: 'Content',
   },
   {
+    href: '/admin/block-types',
+    labelKey: 'nav.blockTypes',
+    icon: BlocksIcon,
+    group: 'Content',
+  },
+  {
     href: '/admin/users',
     labelKey: 'nav.users',
     icon: UsersIcon,
+    group: 'Ops',
+  },
+  {
+    href: '/admin/users-global',
+    labelKey: 'nav.usersGlobal',
+    icon: User2Icon,
+    group: 'Ops',
+  },
+  {
+    href: '/admin/inbox',
+    labelKey: 'nav.inbox',
+    icon: InboxIcon,
     group: 'Ops',
   },
   {

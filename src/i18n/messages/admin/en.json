@@ -15,7 +15,10 @@
       "templates": "Landing page templates",
       "aiTemplates": "AI Templates",
       "savedBlocks": "Blocks",
-      "users": "Users",
+      "blockTypes": "Block types",
+      "users": "Customers",
+      "usersGlobal": "Global users",
+      "inbox": "Staff inbox",
       "aiUsage": "AI Usage",
       "feedback": "Feedback"
     },

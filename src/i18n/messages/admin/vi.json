@@ -15,7 +15,10 @@
       "templates": "Landing page template",
       "aiTemplates": "AI Template",
       "savedBlocks": "Blocks",
-      "users": "Người dùng",
+      "blockTypes": "Block types",
+      "users": "Khách hàng",
+      "usersGlobal": "User toàn hệ thống",
+      "inbox": "Staff inbox",
       "aiUsage": "AI Usage",
       "feedback": "Feedback"
     },

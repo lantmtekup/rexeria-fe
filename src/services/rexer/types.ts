@@ -1775,6 +1775,66 @@ export interface UpdatePortalMeRequest {
   avatar_url?: string;
 }
 
+// ── Admin Block Types catalog (architecture spec §4.2) ───────────────────
+
+export interface AdminBlockType {
+  code: string;
+  name: string;
+  description?: string;
+  category?: string;
+  icon_name?: string;
+  preview_image_url?: string;
+  props_schema?: Record<string, unknown>;
+  supported_surfaces?: string[];
+  min_dimensions?: { width?: number; height?: number };
+  supported_slot_types?: string[];
+  is_active: boolean;
+  engine_version?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CreateAdminBlockTypeRequest {
+  code: string;
+  name: string;
+  description?: string;
+  category?: string;
+  icon_name?: string;
+  props_schema?: Record<string, unknown>;
+  supported_surfaces: string[];
+  min_dimensions?: { width?: number; height?: number };
+  supported_slot_types?: string[];
+  engine_version?: string;
+}
+
+export interface UpdateAdminBlockTypeRequest {
+  name?: string;
+  description?: string;
+  category?: string;
+  icon_name?: string;
+  props_schema?: Record<string, unknown>;
+  supported_surfaces?: string[];
+  min_dimensions?: { width?: number; height?: number };
+  supported_slot_types?: string[];
+  is_active?: boolean;
+  engine_version?: string;
+}
+
+// ── Admin Users (global cross-brand list) ────────────────────────────────
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  display_name?: string;
+  avatar_url?: string;
+  role: string; // 'admin' | 'staff' | 'client_user' | 'brand_user'
+  status: string; // 'active' | 'pending' | 'disabled'
+  client_id?: string; // populated for brand users
+  client_name?: string;
+  last_login_at?: string;
+  created_at: string;
+}
+
 // ── Saved blocks (BE server-backed, swagger has them) ─────────────────────
 
 export interface SavedBlockServer {

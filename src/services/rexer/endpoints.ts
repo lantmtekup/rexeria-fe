@@ -155,6 +155,12 @@ import type {
   UpdatePortalAdCampaignRequest,
   // Server-backed saved blocks
   SavedBlockListResponse,
+  // Admin block-types catalog
+  AdminBlockType,
+  CreateAdminBlockTypeRequest,
+  UpdateAdminBlockTypeRequest,
+  // Admin global users
+  AdminUser,
   // P0.2 + P0.3 (be-todo.md)
   CreatePortalTemplateRequest,
   PortalClient,
@@ -1111,6 +1117,43 @@ export const rexerApi = {
   },
 
   // ── Staff inbox (admin/staff task queue) ──────────────────────────────
+  // ── Admin block-types catalog (architecture spec §4.2) ────────────────
+  adminBlockTypes: {
+    list: (query?: {
+      surface?: string;
+      category?: string;
+      is_active?: boolean;
+      q?: string;
+    }) => rx<{ items: AdminBlockType[] }>('/admin/block-types', { query }),
+    get: (code: string) => rx<AdminBlockType>(`/admin/block-types/${code}`),
+    create: (body: CreateAdminBlockTypeRequest) =>
+      rx<AdminBlockType>('/admin/block-types', { method: 'POST', body }),
+    update: (code: string, body: UpdateAdminBlockTypeRequest) =>
+      rx<AdminBlockType>(`/admin/block-types/${code}`, {
+        method: 'PATCH',
+        body,
+      }),
+    remove: (code: string) =>
+      rx<{ message?: string }>(`/admin/block-types/${code}`, {
+        method: 'DELETE',
+      }),
+  },
+
+  // ── Admin Users (global, cross-brand) — per audit BE shipped 2026-05-24
+  adminUsers: {
+    list: (query?: {
+      role?: string;
+      status?: string;
+      q?: string;
+      page?: number;
+      limit?: number;
+    }) =>
+      rx<{ items: AdminUser[]; total?: number; page?: number; limit?: number }>(
+        '/admin/users',
+        { query }
+      ),
+  },
+
   staffInbox: {
     list: (query?: { status?: string; kind?: string; assignee_id?: string }) =>
       rx<StaffInboxListResponse>('/admin/inbox', { query }),
