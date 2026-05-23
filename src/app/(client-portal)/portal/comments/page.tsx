@@ -1,14 +1,17 @@
 'use client';
 
-import { CheckCircle2, MessageSquare, Send } from 'lucide-react';
+import { CheckCircle2, Loader2, MessageSquare, Send } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { rexerApi } from '@/services/rexer/endpoints';
+import { RxApiError } from '@/services/rexer/client';
 
 import { FAKE_TEMPLATES } from '../_data';
 import { PortalShell } from '../_shell';
 
 type Thread = {
+  id?: string; // BE comment id (live only); FAKE_THREADS may omit
   template_id: string;
   template_name: string;
   status: 'open' | 'resolved';
@@ -83,6 +86,28 @@ function relativeTime(iso?: string): string {
 
 export default function PortalCommentsPage() {
   const [threads, setThreads] = useState<Thread[]>(FAKE_THREADS);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+
+  const handleResolve = async (commentId: string) => {
+    setResolvingId(commentId);
+    try {
+      await rexerApi.templateComments.resolve(commentId);
+      setThreads(prev =>
+        prev.map(t => (t.id === commentId ? { ...t, status: 'resolved' } : t))
+      );
+      toast.success('Đã đánh dấu thread giải quyết');
+    } catch (err) {
+      const msg =
+        err instanceof RxApiError
+          ? err.code || err.message
+          : err instanceof Error
+            ? err.message
+            : 'RESOLVE_FAILED';
+      toast.error(`Resolve thất bại: ${msg}`);
+    } finally {
+      setResolvingId(null);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -99,6 +124,7 @@ export default function PortalCommentsPage() {
       const resolvedItems = resolvedRes?.items ?? [];
       if (openItems.length === 0 && resolvedItems.length === 0) return; // keep FAKE
       const mapped: Thread[] = [...openItems, ...resolvedItems].map(c => ({
+        id: c.id,
         template_id: c.template_id,
         template_name:
           c.template_name ?? c.template_id.slice(0, 8) ?? 'Landing page',
@@ -170,7 +196,12 @@ export default function PortalCommentsPage() {
         </h2>
         <div className='space-y-3'>
           {open.map((t, i) => (
-            <ThreadCard key={i} t={t} />
+            <ThreadCard
+              key={t.id ?? i}
+              t={t}
+              onResolve={t.id ? () => handleResolve(t.id!) : undefined}
+              resolving={resolvingId === t.id}
+            />
           ))}
         </div>
       </section>
@@ -182,7 +213,7 @@ export default function PortalCommentsPage() {
         </h2>
         <div className='space-y-3 opacity-60'>
           {resolved.map((t, i) => (
-            <ThreadCard key={i} t={t} />
+            <ThreadCard key={t.id ?? `r-${i}`} t={t} />
           ))}
         </div>
       </section>
@@ -190,19 +221,45 @@ export default function PortalCommentsPage() {
   );
 }
 
-function ThreadCard({ t }: { t: Thread }) {
+function ThreadCard({
+  t,
+  onResolve,
+  resolving,
+}: {
+  t: Thread;
+  onResolve?: () => void;
+  resolving?: boolean;
+}) {
   return (
     <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
       <div className='border-b border-zinc-100 bg-zinc-50/50 px-4 py-2'>
-        <div className='flex items-center justify-between'>
+        <div className='flex items-center justify-between gap-2'>
           <span className='font-mono text-[11px] font-semibold text-zinc-700'>
             {t.template_name}
           </span>
-          {t.status === 'resolved' && (
-            <span className='flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700'>
-              <CheckCircle2 className='size-2.5' /> Resolved
-            </span>
-          )}
+          <div className='flex items-center gap-2'>
+            {t.status === 'resolved' && (
+              <span className='flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700'>
+                <CheckCircle2 className='size-2.5' /> Resolved
+              </span>
+            )}
+            {t.status === 'open' && onResolve && (
+              <button
+                type='button'
+                onClick={onResolve}
+                disabled={resolving}
+                className='inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-wait disabled:opacity-60'
+                title='Đánh dấu thread đã giải quyết'
+              >
+                {resolving ? (
+                  <Loader2 className='size-2.5 animate-spin' />
+                ) : (
+                  <CheckCircle2 className='size-2.5' />
+                )}
+                {resolving ? 'Đang…' : 'Resolve'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
       <div className='p-4'>
