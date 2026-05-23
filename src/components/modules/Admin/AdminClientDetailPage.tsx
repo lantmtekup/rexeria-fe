@@ -16,11 +16,15 @@ import {
   Calendar,
   Check,
   Copy,
-  ExternalLink,
   LayoutTemplate,
   Loader2,
   Mail,
+  MoreVertical,
   Package,
+  Pencil,
+  Plus,
+  Rocket,
+  Trash2,
   Users,
   Users2,
 } from 'lucide-react';
@@ -28,6 +32,8 @@ import { toast } from 'sonner';
 
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
+
+import { AdminAddLandingForClientDialog } from './AdminAddLandingForClientDialog';
 import type {
   CanvasTemplate,
   Client,
@@ -293,7 +299,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
         )}
         {tab === 'landings' && (
           <LandingsTab
-            clientId={clientId}
+            client={client}
             onCount={n => setCounts(c => ({ ...c, landings: n }))}
           />
         )}
@@ -397,66 +403,251 @@ function WorkspacesTab({
 /* ─── Tab: Landing pages ────────────────────────────────────────────── */
 
 function LandingsTab({
-  clientId,
+  client,
   onCount,
 }: {
-  clientId: string;
+  client: Client;
   onCount: (n: number) => void;
 }) {
+  const [items, setItems] = React.useState<CanvasTemplate[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [addOpen, setAddOpen] = React.useState(false);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await rexerApi.canvasTemplates.list({
+        client_id: client.id,
+        limit: 50,
+      });
+      const arr = r.items ?? [];
+      setItems(arr);
+      onCount(r.total ?? arr.length);
+    } catch (err) {
+      setError(
+        err instanceof RxApiError ? err.code || err.message : 'LOAD_FAILED'
+      );
+    } finally {
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client.id]);
+
+  React.useEffect(() => {
+    load();
+  }, [load]);
+
+  const handleDelete = async (item: CanvasTemplate) => {
+    if (
+      !window.confirm(
+        `Xoá landing "${item.name}"?\n\nThao tác này không thể undo.`
+      )
+    )
+      return;
+    const tid = toast.loading('Đang xoá…');
+    try {
+      await rexerApi.canvasTemplates.remove(item.id);
+      toast.success('Đã xoá', { id: tid });
+      load();
+    } catch (err) {
+      const msg =
+        err instanceof RxApiError
+          ? err.code || err.message
+          : err instanceof Error
+            ? err.message
+            : 'DELETE_FAILED';
+      toast.error(`Xoá thất bại: ${msg}`, { id: tid });
+    }
+  };
+
   return (
-    <LazyList<CanvasTemplate>
-      load={async () => {
-        const r = await rexerApi.canvasTemplates.list({
-          client_id: clientId,
-          limit: 50,
-        });
-        return r;
-      }}
-      onCount={onCount}
-      empty='Chưa có landing nào được assign cho khách hàng này'
-      render={t => (
-        <Link
-          href={`/canvas-templates/${t.id}`}
-          className='flex items-start gap-3 border-b border-zinc-100 px-4 py-3 last:border-0 hover:bg-zinc-50/50'
+    <div>
+      {/* Top action bar */}
+      <div className='flex items-center justify-between border-b border-zinc-100 px-4 py-3'>
+        <div className='text-[12px] text-zinc-500'>
+          {loading
+            ? 'Đang tải…'
+            : `${items.length} landing đã assign cho khách`}
+        </div>
+        <button
+          type='button'
+          onClick={() => setAddOpen(true)}
+          className='inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-emerald-700'
         >
-          <div className='aspect-[4/3] w-16 shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-gradient-to-br from-zinc-100 to-zinc-200'>
-            {t.thumbnail_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={t.thumbnail_url}
-                alt={t.name}
-                className='size-full object-cover'
-              />
-            ) : (
-              <div className='flex h-full items-center justify-center text-zinc-300'>
-                <LayoutTemplate className='size-4' />
-              </div>
-            )}
-          </div>
-          <div className='min-w-0 flex-1'>
-            <div className='flex items-center gap-2'>
-              <span className='truncate text-[13px] font-semibold text-zinc-900'>
-                {t.name}
-              </span>
-              <span
-                className={cn(
-                  'rounded-full px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase',
-                  t.is_active
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-zinc-100 text-zinc-500'
-                )}
-              >
-                {t.is_active ? 'active' : 'inactive'}
-              </span>
-            </div>
-            <div className='mt-0.5 font-mono text-[10px] text-zinc-400'>
-              {t.id.slice(0, 12)}…
-            </div>
-          </div>
-          <ExternalLink className='mt-1 size-3.5 text-zinc-300' />
-        </Link>
+          <Plus className='size-3.5' />
+          Tạo landing mới
+        </button>
+      </div>
+
+      {error && (
+        <div className='border-b border-zinc-100 bg-rose-50 px-4 py-2 text-[12px] text-rose-800'>
+          {error}
+        </div>
       )}
-    />
+
+      {loading && items.length === 0 ? (
+        <div className='flex items-center justify-center py-12 text-sm text-zinc-500'>
+          <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải…
+        </div>
+      ) : items.length === 0 ? (
+        <div className='px-4 py-10 text-center text-[13px] text-zinc-500'>
+          Khách hàng chưa có landing nào được assign — bấm{' '}
+          <strong>Tạo landing mới</strong> để bắt đầu.
+        </div>
+      ) : (
+        <div>
+          {items.map(t => (
+            <LandingRow
+              key={t.id}
+              item={t}
+              onDelete={() => handleDelete(t)}
+              onReload={load}
+            />
+          ))}
+        </div>
+      )}
+
+      <AdminAddLandingForClientDialog
+        open={addOpen}
+        client={client}
+        onClose={() => setAddOpen(false)}
+        onCreated={() => load()}
+      />
+    </div>
+  );
+}
+
+function LandingRow({
+  item,
+  onDelete,
+  onReload,
+}: {
+  item: CanvasTemplate;
+  onDelete: () => void;
+  onReload: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [menuOpen]);
+
+  const handlePublish = () => {
+    setMenuOpen(false);
+    toast.info(
+      'BE chưa ship POST /canvas-templates/{id}/publish (be-audit-2026-05-23.md). Đang đợi BE merge.'
+    );
+    onReload();
+  };
+
+  return (
+    <div className='flex items-start gap-3 border-b border-zinc-100 px-4 py-3 last:border-0 hover:bg-zinc-50/50'>
+      <Link
+        href={`/canvas-templates/${item.id}`}
+        className='aspect-[4/3] w-16 shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-gradient-to-br from-zinc-100 to-zinc-200'
+      >
+        {item.thumbnail_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.thumbnail_url}
+            alt={item.name}
+            className='size-full object-cover'
+          />
+        ) : (
+          <div className='flex h-full items-center justify-center text-zinc-300'>
+            <LayoutTemplate className='size-4' />
+          </div>
+        )}
+      </Link>
+
+      <div className='min-w-0 flex-1'>
+        <div className='flex items-center gap-2'>
+          <Link
+            href={`/canvas-templates/${item.id}`}
+            className='truncate text-[13px] font-semibold text-zinc-900 hover:underline'
+          >
+            {item.name}
+          </Link>
+          <span
+            className={cn(
+              'rounded-full px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase',
+              item.is_active
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-zinc-100 text-zinc-500'
+            )}
+          >
+            {item.is_active ? 'active' : 'inactive'}
+          </span>
+          {item.is_template && (
+            <span className='rounded-full bg-violet-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-violet-700 uppercase'>
+              library
+            </span>
+          )}
+        </div>
+        <div className='mt-0.5 font-mono text-[10px] text-zinc-400'>
+          {item.id.slice(0, 12)}… ·{' '}
+          {item.updated_at
+            ? new Date(item.updated_at).toLocaleDateString('vi-VN')
+            : '—'}
+        </div>
+      </div>
+
+      {/* Action menu */}
+      <div ref={menuRef} className='relative'>
+        <button
+          type='button'
+          onClick={() => setMenuOpen(o => !o)}
+          className='inline-flex size-7 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
+          aria-label='Hành động'
+        >
+          <MoreVertical className='size-3.5' />
+        </button>
+        {menuOpen && (
+          <div className='absolute top-9 right-0 z-20 w-52 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+            <Link
+              href={`/canvas-templates/${item.id}`}
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-zinc-700 hover:bg-zinc-50'
+              onClick={() => setMenuOpen(false)}
+            >
+              <Pencil className='size-3.5 text-zinc-500' />
+              Mở canvas editor
+            </Link>
+            <button
+              type='button'
+              onClick={handlePublish}
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-zinc-700 hover:bg-zinc-50'
+              title='BE chưa ship endpoint publish'
+            >
+              <Rocket className='size-3.5 text-zinc-500' />
+              Publish
+              <span className='ml-auto rounded bg-amber-100 px-1 py-0.5 font-mono text-[8.5px] font-bold text-amber-700'>
+                BE pending
+              </span>
+            </button>
+            <div className='h-px bg-zinc-100' />
+            <button
+              type='button'
+              onClick={() => {
+                setMenuOpen(false);
+                onDelete();
+              }}
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-rose-600 hover:bg-rose-50'
+            >
+              <Trash2 className='size-3.5' />
+              Xoá landing
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
