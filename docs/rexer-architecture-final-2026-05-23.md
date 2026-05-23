@@ -26,26 +26,28 @@ Rexer = platform giúp brand publish 3 loại "page" cho marketing:
 ## 1. Mục lục
 
 ```
-1.  14 quyết định product (Q1-Q14)
-2.  Personas + permissions matrix
-3.  Domain model — 22 entities
-4.  Slot schema spec
-5.  ER diagram
-6.  State machines (Page, CustomDomain, AIJob)
-7.  14 workflows W1-W14
-8.  URL + namespace conventions
-9.  API surface (resource-nested REST)
-10. Custom domain provisioning
-11. Analytics data flow
-12. AI integration points
-13. Naming glossary
-14. Phase 1 vs Phase 2 split
-15. Trade-offs
-16. Sprint plan (15 sprints, ~10 weeks với 2 BE parallel)
-17. Seed data — block_types catalog
-18. Open questions cho BE
-19. Migration mapping
-20. Contact
+2.  14 quyết định product (Q1-Q14)
+3.  Personas + permissions matrix
+4.  Domain model — 22 entities (locale-wrapped values, type_metadata jsonb)
+5.  Slot schema spec
+6.  ER diagram
+7.  State machines (Page, CustomDomain, AIJob)
+8.  14 workflows W1-W14
+9.  URL + namespace conventions
+10. API surface (resource-nested REST)
+11. Custom domain provisioning (3 target_types)
+12. Analytics data flow
+13. AI integration points
+14. Naming glossary
+15. Phase 1 vs Phase 2 split
+16. Trade-offs
+17. Sprint plan (16 sprints, ~10 weeks với 2 BE parallel)
+18. Seed data — block_types catalog
+19. Multi-tenancy RLS ⭐
+20. API versioning + deprecation policy ⭐
+21. Open questions cho BE
+22. Migration mapping
+23. Contact
 ```
 
 ---
@@ -73,8 +75,20 @@ Rexer = platform giúp brand publish 3 loại "page" cho marketing:
 
 - **Brand KHÔNG có canvas drag-drop editor** → chỉ form editor render từ template's slot_schema
 - **Rexer staff CÓ canvas editor** → tạo Template blueprint
-- **1 entity `Page`** cho cả 3 surface, type-specific fields nullable
+- **1 entity `Page`** cho cả 3 surface, type-specific config gom vào `type_metadata: jsonb`
 - **Block multi-surface** → `cta_button` dùng được cho cả landing + ad + curate
+
+### ⭐ 5 hardening mitigations (extensibility insurance)
+
+| # | Mitigation | Section | Cost | Tránh được |
+|---|---|---|---|---|
+| 1 | **Locale-wrapped text values** từ Phase 1 `{vi: "..."}` | §5.4-5.6 | 0.5 day FE | Multi-lang migration ~2 sprints Phase 2 |
+| 2 | **`pages.type_metadata: jsonb`** thay nullable columns | §4.3.1 | 1 day BE | Sparse schema khi thêm page type mới |
+| 3 | **`custom_domains.target_type`** enum cho 3 mục đích | §4.5 | 0.5 day BE | Refactor domain routing Phase 2 |
+| 4 | **Postgres Row Level Security** | §19 | 1 sprint BE | Tenant data leak risk |
+| 5 | **API versioning + deprecation** policy | §20 | 0.5 day BE | Breaking change communication chaos |
+
+→ **+1 sprint Phase 1 work** = tránh **5+ sprint Phase 2 retrofit** + security incident risk.
 
 ---
 
@@ -323,7 +337,7 @@ CONSTRAINTS:
 ```
 
 #### `pages` ⭐
-Brand-owned instance. Unified entity cho 3 type.
+Brand-owned instance. Unified entity cho 3 type. Type-specific config gom vào `type_metadata` jsonb để schema không sparse.
 
 ```yaml
 - id: uuid PK
@@ -332,7 +346,8 @@ Brand-owned instance. Unified entity cho 3 type.
 - slug: string                        # "tet-2026-promo"
 - name: string
 - description: text?
-- type: enum('landing', 'ad', 'curate')   # ⭐ discriminator
+- type: enum('landing', 'ad', 'curate', ...)   # ⭐ discriminator (extensible)
+- type_metadata: jsonb                # ⭐ type-specific config (xem schema bên dưới)
 - status: enum('draft', 'published', 'archived')
 - template_version_id: uuid FK → template_versions
 - active_release_id: uuid? FK → page_releases
@@ -345,24 +360,47 @@ Brand-owned instance. Unified entity cho 3 type.
 - updated_by: uuid FK → users
 - created_at, updated_at, archived_at?
 
-# Type-specific fields (NULL khi không applicable):
-- ad_format: enum('facebook_feed','youtube_pre_roll','tiktok_in_feed',
-                  'banner_728x90','banner_300x250','story_1080x1920',
-                  'instagram_square_1080x1080', 'youtube_thumb_1280x720')?
-- ad_dimensions: jsonb?               # { width, height }
-- curate_trigger: enum('time_on_page','scroll_50','exit_intent',
-                       'click_element','form_abandon')?
-- curate_trigger_config: jsonb?       # { delay_ms, target_selector, ... }
-- curate_embed_token: string?         # for <script> snippet
-
 CONSTRAINTS:
 - UNIQUE (workspace_id, type, slug)   # slug unique within type per workspace
 - INDEX (brand_id, type, status)
 - INDEX (workspace_id, type, status)
-- type='ad' ⇒ ad_format NOT NULL
-- type='curate' ⇒ curate_trigger NOT NULL
+- INDEX (type_metadata) USING GIN     # fast filter by type-specific fields
 - pages.type MUST match template_version.template.target_page_type (BE validate)
+- type_metadata MUST conform to schema defined per type (BE validate, xem §4.3.1)
 ```
+
+##### 4.3.1 `pages.type_metadata` schema per type
+
+BE validate dựa trên `pages.type`:
+
+```yaml
+type='landing':
+  type_metadata: {
+    # Phase 1: empty {} OK
+    # Phase 2+: featured_image?, og_meta?, robots?, sitemap_priority?
+  }
+
+type='ad':
+  type_metadata: {
+    format: 'facebook_feed' | 'banner_728x90' | 'story_1080x1920' | ...,
+    dimensions: { width: int, height: int },
+    duration_sec?: int      # cho video ads
+  }
+
+type='curate':
+  type_metadata: {
+    trigger: 'time_on_page' | 'scroll_50' | 'exit_intent' | 'click_element',
+    trigger_config: {
+      delay_ms?: int,
+      scroll_threshold_pct?: int,
+      target_selector?: string,
+      max_show_per_session?: int
+    },
+    embed_token: string     # generated khi publish
+  }
+```
+
+→ Thêm `type='email'` Phase 2 chỉ cần định nghĩa schema cho `type_metadata`, **không cần migration**.
 
 #### `page_revisions`
 Rolling 50 autosave revisions per page.
@@ -454,9 +492,12 @@ CONSTRAINTS:
 ### 4.5 Distribution — Custom Domain (2 tables, landing only)
 
 #### `custom_domains`
+Multi-purpose: landing serve / curate CDN / tracking pixel. Brand có thể có 3 domain riêng cho 3 mục đích.
+
 ```yaml
 - id, brand_id, workspace_id
-- domain: string UNIQUE               # "coca.vn"
+- domain: string UNIQUE               # "coca.vn" hoặc "cdn.coca.vn" hoặc "track.coca.vn"
+- target_type: enum('landing','curate_cdn','tracking')  # ⭐ NEW
 - status: enum('pending','verifying','verified','failed','disabled')
 - verification_token, verification_method
 - verified_at?, tls_status, tls_cert_id?, tls_expires_at?
@@ -465,8 +506,19 @@ CONSTRAINTS:
 
 CONSTRAINTS:
 - UNIQUE (domain)                     # 1 domain global
-- INDEX (brand_id), INDEX (workspace_id)
+- INDEX (brand_id, target_type)
+- INDEX (workspace_id, target_type)
 - INDEX (status) WHERE status IN ('verifying', 'pending')
+
+target_type semantics:
+- 'landing'    → routing: domain → workspace → pages WHERE type='landing'
+                 (Phase 1 ship)
+- 'curate_cdn' → serve curate.js + widget data từ brand's domain
+                 thay vì cdn.rexer.com → tránh CSP issue cross-origin
+                 (Phase 2)
+- 'tracking'   → analytics pixel endpoint từ brand's domain
+                 thay vì track.rexer.com → tránh ad-block
+                 (Phase 2)
 ```
 
 #### `domain_verification_logs`
@@ -714,18 +766,62 @@ Reference blocks + bind slot keys.
 
 ### 5.4 `pages.config_json` (filled instance) — lưu trong page_revisions
 
+⭐ **Locale-wrapped values** ngay từ Phase 1 → multi-language Phase 2 không cần migration.
+
 ```json
 {
-  "headline": "Sum vầy ngày Tết",
-  "subheadline": "Coca-Cola đồng hành",
-  "cta_label": "Đặt ngay",
-  "cta_url": "https://shop.coca.vn",
-  "hero_image": "media_uuid_abc",
+  "headline":    { "vi": "Sum vầy ngày Tết" },
+  "subheadline": { "vi": "Coca-Cola đồng hành" },
+  "cta_label":   { "vi": "Đặt ngay" },
+  "cta_url":     "https://shop.coca.vn",
+  "hero_image":  "media_uuid_abc",
   "features": [
-    {"icon":"shield","label":"Chính hãng","body":"..."},
-    {"icon":"truck","label":"Giao nhanh","body":"..."}
+    {
+      "icon":  "shield",
+      "label": { "vi": "Chính hãng" },
+      "body":  { "vi": "Phân phối trực tiếp..." }
+    },
+    {
+      "icon":  "truck",
+      "label": { "vi": "Giao nhanh" },
+      "body":  { "vi": "Miễn phí 200k+" }
+    }
   ],
   "products": ["prod_uuid_1", "prod_uuid_2"]
+}
+```
+
+### 5.5 Locale wrapping rules
+
+| Slot type | Wrap with locale? |
+|---|---|
+| `text`, `richtext` | ✅ **Wrap** `{vi: "...", en?: "...", ja?: "..."}` |
+| `url`, `email`, `phone` | ❌ Không wrap — same across locales |
+| `image`, `video`, `gallery` | ❌ Không wrap — media_asset_id same |
+| `product_ref`, `product_ref_list` | ❌ Không wrap — id same |
+| `color`, `icon`, `number`, `boolean` | ❌ Không wrap |
+| `array` items | Wrap nested text fields theo rule trên |
+
+**Phase 1 enforcement**:
+- BE validator: all text/richtext slot values phải có ít nhất `vi` key
+- FE form editor lưu input → wrap thành `{vi: input}` tự động
+- Public render: resolve theo `Accept-Language` header, fallback `vi` (default locale)
+
+**Phase 2 mở multi-lang**:
+- Just add `en`, `ja`, … vào existing values
+- BE expose `GET /v1/pages/{id}/translations` để brand add/edit locale variants
+- KHÔNG cần migrate data — backward compat hoàn toàn
+
+### 5.6 Block default locale
+
+`block_types.props_schema` có field cần text → FE form generator auto-wrap với current user locale (default `vi` Phase 1):
+
+```ts
+// FE form submit handler
+if (slot.type === 'text' || slot.type === 'richtext') {
+  config_json[slot.key] = { vi: userInput };
+} else {
+  config_json[slot.key] = userInput;
 }
 ```
 
@@ -1495,7 +1591,7 @@ Each AIJob persists `tokens_in/out` + `cost_credits`. Brand has `ai_credit_balan
 
 | Sprint | Deliverable | Effort |
 |---|---|---|
-| S1 | Schema design + migrations + seed (block_types 3 surfaces, ~25 types) | 1 week |
+| S1 | Schema design + migrations + seed (block_types 3 surfaces, ~25 types) + **RLS policies** ⭐ + **API versioning middleware** ⭐ | 1.5 weeks |
 | S2 | Auth + Brand + Workspace + User + Membership CRUD | 1 week |
 | S3 | BlockType catalog + Block CRUD + props validator | 1 week |
 | S4 | Template + TemplateVersion + slot_schema + canvas_blueprint validator | 1 week |
@@ -1511,7 +1607,7 @@ Each AIJob persists `tokens_in/out` + `cost_credits`. Brand has `ai_credit_balan
 | S14 | Testing + load test + bug fix | 1 week |
 | S15 | Production deploy + monitoring + runbook | 0.5 week |
 
-**Total**: ~16 weeks BE solo, **~10 weeks với 2 BE parallel** (S1-S5 cùng làm core, S6-S15 split: BE1 publish flows + custom domain, BE2 editors + analytics + AI).
+**Total**: ~16.5 weeks BE solo, **~10 weeks với 2 BE parallel** (S1-S5 cùng làm core, S6-S15 split: BE1 publish flows + custom domain, BE2 editors + analytics + AI). +0.5 week vs original cho RLS + API versioning hardening (§19-20).
 
 ---
 
@@ -1564,7 +1660,146 @@ product_card            supported_surfaces=['landing','ad']
 
 ---
 
-## 19. Open questions cho BE
+## 19. Multi-tenancy isolation — Postgres RLS ⭐
+
+Defense-in-depth: ngoài BE handler filter `WHERE brand_id = $ctx`, enable **Row Level Security** ở DB level để tránh tenant leak nếu BE code có bug.
+
+### 19.1 RLS setup per multi-tenant table
+
+```sql
+-- 1. Enable RLS trên mọi bảng brand-scoped
+ALTER TABLE pages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE page_revisions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE page_releases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE blocks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE template_versions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE media_assets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE media_folders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE saved_blocks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE custom_domains ENABLE ROW LEVEL SECURITY;
+ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE analytics_daily_aggregate ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_jobs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_slot_suggestions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE workspaces ENABLE ROW LEVEL SECURITY;
+ALTER TABLE brand_memberships ENABLE ROW LEVEL SECURITY;
+
+-- 2. Policy: brand_user chỉ thấy row có brand_id matching context
+CREATE POLICY tenant_isolation_pages ON pages
+  FOR ALL
+  USING (
+    brand_id = current_setting('app.brand_id', true)::uuid
+    OR current_setting('app.role', true) IN ('admin', 'staff')
+  );
+
+-- (Tương tự cho mọi table)
+
+-- 3. Public/system rows
+CREATE POLICY system_blocks_readable ON blocks
+  FOR SELECT
+  USING (scope = 'system' OR brand_id = current_setting('app.brand_id', true)::uuid);
+
+CREATE POLICY public_templates_readable ON templates
+  FOR SELECT
+  USING (scope = 'public' OR owner_brand_id = current_setting('app.brand_id', true)::uuid);
+```
+
+### 19.2 BE set context per request
+
+```go
+// pseudo-code Go BE
+func authMiddleware(c echo.Context) error {
+    session := validateCookie(c)
+    db := c.Get("db").(*sql.DB)
+
+    // Set context vars per connection
+    db.Exec("SET LOCAL app.brand_id = $1", session.BrandID)
+    db.Exec("SET LOCAL app.user_id = $1", session.UserID)
+    db.Exec("SET LOCAL app.role = $1", session.Role)
+
+    return next(c)
+}
+```
+
+### 19.3 Admin bypass
+
+`role IN ('admin', 'staff')` trong policy cho phép admin xem all brands — đủ cho ops/support.
+
+### 19.4 Cost vs benefit
+
+- **Cost**: +1 sprint setup (15 tables × 1-2 policies + integration test)
+- **Benefit**: bug-resistant tenant isolation, audit comply, defense-in-depth
+
+→ **Strongly recommended Phase 1** vì cost thấp + giảm risk leak nghiêm trọng.
+
+---
+
+## 20. API versioning + deprecation policy ⭐
+
+### 20.1 Versioning scheme
+
+- All public endpoints `/v1/...` prefix
+- Breaking changes → ship `/v2` parallel với `/v1` for 6 tháng
+- `/v1` deprecation announcement có sunset date 12 tháng trước remove
+- Non-breaking additions (new field, new endpoint) → `/v1` stays
+
+### 20.2 Deprecation headers
+
+BE return headers cho deprecated endpoints:
+
+```http
+HTTP/1.1 200 OK
+Deprecation: true
+Sunset: Wed, 31 Dec 2026 23:59:59 GMT
+Link: </v2/pages/{id}>; rel="successor-version"
+Warning: 299 - "Endpoint deprecated, migrate to /v2/pages/{id}"
+```
+
+### 20.3 Changelog endpoint
+
+```
+GET /v1/_meta/changelog
+GET /v1/_meta/changelog/{version}
+```
+
+Returns:
+```json
+{
+  "current_version": "v1.4.2",
+  "released_at": "2026-05-23T...",
+  "changes": [
+    {"type": "added", "path": "/pages/{id}/export", "since": "v1.4.0"},
+    {"type": "deprecated", "path": "/legacy/...", "sunset": "2026-12-31"}
+  ]
+}
+```
+
+### 20.4 Client version pinning
+
+Optional header để FE pin API version:
+
+```http
+GET /v1/pages/123
+Rexer-API-Version: 2026-05-23
+```
+
+→ BE response shape locked to that date. Default = latest stable.
+
+### 20.5 Implementation cost
+
+- Headers + middleware: ~0.5 day BE
+- Changelog endpoint: ~0.5 day BE
+- Doc + announcement process: PM owns
+
+→ **Recommend Phase 1** — adopt từ Day-1 rẻ, làm sau khó.
+
+---
+
+## 21. Open questions cho BE
 
 1. **Storage backend**: S3-compatible (Cloudflare R2 / Backblaze B2)? CDN provider?
 2. **TLS provider**: Caddy auto-cert (self-host) hay Cloudflare for SaaS?
@@ -1579,7 +1814,7 @@ product_card            supported_surfaces=['landing','ad']
 
 ---
 
-## 20. Migration mapping từ schema hiện tại
+## 22. Migration mapping từ schema hiện tại
 
 (FE internal reference — không gửi BE)
 
@@ -1595,7 +1830,7 @@ product_card            supported_surfaces=['landing','ad']
 
 ---
 
-## 21. Contact
+## 23. Contact
 
 - **Doc author**: @Lantm (FE owner, `lantm.tekup@gmail.com`)
 - **Decision authority**: PM + BE squad lead
