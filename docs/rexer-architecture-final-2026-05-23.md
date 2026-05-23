@@ -1,10 +1,40 @@
 # Rexer Architecture — Final Spec
 
-> **Version**: 1.0 (merged from v1.0 clean-design + v1.1 page-unified)
-> **Date**: 2026-05-23
-> **Status**: 🟢 **Source of truth** — BE thiết kế DB từ doc này
-> **Audience**: BE squad + PM + FE owner
-> **Scope**: Phase 1 (managed-service, full 3-surface) + Phase 2 hooks
+> **Version**: 1.0 (locked 2026-05-23)
+> **Status**: 🔒 **LOCKED — handed off to BE**
+> **Decisions**: 14 product decisions Q1-Q14 + 5 hardening mitigations all approved
+> **Audience**: BE squad lead (DB design owner) · PM · FE owner
+> **Scope**: Phase 1 managed-service, full 3-surface (landing + ad + curate)
+> **Action required**: BE acknowledge + answer 10 infra questions §21 + provide ETA per sprint §17
+
+---
+
+## ⚡ For BE squad — 5 minute read
+
+**TL;DR**: 1 entity `pages` với `type` discriminator cho 3 surface (landing/ad/curate), `blocks` first-class CRUD với `supported_surfaces[]`, `templates` cung cấp slot schema + canvas blueprint, brand fill qua form editor, publish snapshot vào immutable releases.
+
+**Critical decisions BE phải ack**:
+1. Postgres + Row Level Security cho multi-tenancy (§19) — block tenant leak
+2. JSONB cho `slot_schema`, `canvas_blueprint`, `settings`, `config_json`, `type_metadata` — extensibility
+3. Partition `analytics_events` by month — scale
+4. Custom domain với DNS verify + TLS auto-provision (§11) — Phase 1 required
+5. AI jobs polymorphic via `job_type` enum — Phase 1 staff + brand
+
+**22 tables** (xem §4):
+- Auth/Tenancy (4): users, brands, workspaces, brand_memberships
+- Block (2): block_types, blocks
+- Template/Page (5): templates, template_versions, pages, page_revisions, page_releases
+- Assets (4): products, media_assets, media_folders
+- Distribution (2): custom_domains, domain_verification_logs
+- Engagement (4): campaigns, campaign_metrics, analytics_events, analytics_daily_aggregate
+- AI (2): ai_jobs, ai_slot_suggestions
+- Audit (1): activity_logs
+
+**15 sprints ~10 tuần với 2 BE parallel** (xem §17).
+
+**Bắt đầu**: BE đọc §4 (DDL) → ack → start S1.
+
+---
 
 ---
 
