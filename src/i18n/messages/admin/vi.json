@@ -11,7 +11,7 @@
       "overview": "Tổng quan",
       "products": "Sản phẩm",
       "canvasTemplates": "Landing pages",
-      "templates": "Template",
+      "templates": "Landing page template",
       "aiTemplates": "AI Template",
       "savedBlocks": "Blocks",
       "users": "Người dùng",
@@ -22,7 +22,7 @@
       "title": "Bảng điều khiển Admin",
       "subtitle": "Tổng quan dữ liệu hệ thống. Bấm thẻ để vào trang chi tiết.",
       "products": "Sản phẩm",
-      "templates": "Template",
+      "templates": "Landing page template",
       "users": "Người dùng",
       "aiUsage": "AI Usage",
       "feedback": "Feedback",
@@ -53,10 +53,11 @@
       }
     },
     "templates": {
-      "title": "Template",
+      "title": "Landing page template",
       "subtitle": "{total, plural, =0 {Chưa có template} =1 {1 template} other {# template}}",
       "note": "Template hệ thống được quản lý qua versioning. Tạo mới bằng cách publish version từ Canvas Builder.",
       "empty": "Không có template nào",
+      "create": "Tạo template mới",
       "view": "Xem",
       "col": {
         "name": "Tên",

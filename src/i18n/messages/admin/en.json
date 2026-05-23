@@ -11,7 +11,7 @@
       "overview": "Overview",
       "products": "Products",
       "canvasTemplates": "Landing pages",
-      "templates": "Templates",
+      "templates": "Landing page templates",
       "aiTemplates": "AI Templates",
       "savedBlocks": "Blocks",
       "users": "Users",
@@ -22,7 +22,7 @@
       "title": "Admin Dashboard",
       "subtitle": "System overview. Click any card to drill down.",
       "products": "Products",
-      "templates": "Templates",
+      "templates": "Landing page templates",
       "users": "Users",
       "aiUsage": "AI Usage",
       "feedback": "Feedback",
@@ -53,10 +53,11 @@
       }
     },
     "templates": {
-      "title": "Templates",
+      "title": "Landing page template",
       "subtitle": "{total, plural, =0 {No templates} =1 {1 template} other {# templates}}",
       "note": "System templates are managed via versioning. Publish a new version from Canvas Builder to create one.",
       "empty": "No templates",
+      "create": "New template",
       "view": "View",
       "col": {
         "name": "Name",
