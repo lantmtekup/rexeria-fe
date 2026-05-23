@@ -201,11 +201,11 @@ export function AdminBlocksPage() {
       toast.success('Mở editor — sửa xong dùng 🔖 để cập nhật bản gốc', {
         id: t,
       });
-      // Brand portal uses an in-portal wrapper so the URL stays under
-      // /portal/blocks/:id/edit. Admin keeps using the bare editor route.
+      // Both admin + portal use in-namespace wrapper so the URL never leaks
+      // to bare /canvas-templates. Editor reads canvas_id from query string.
       const editPath = isPortal
         ? `/portal/blocks/${block.id}/edit?canvas_id=${created.id}`
-        : `/canvas-templates/${created.id}?saved_block_id=${block.id}`;
+        : `/admin/blocks/${block.id}/edit?canvas_id=${created.id}`;
       router.push(editPath);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
