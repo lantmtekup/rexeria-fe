@@ -1131,6 +1131,7 @@ export const rexerApi = {
       category?: string;
       page?: number;
       limit?: number;
+      sort?: string;
     }) =>
       rx<CanvasTemplateListResponse>('/portal/templates/library', { query }),
   },
