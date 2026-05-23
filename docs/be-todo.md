@@ -1,6 +1,6 @@
 # BE TODO — Master List
 
-**Date**: 2026-05-22
+**Date**: 2026-05-23 (refresh)
 **Audience**: BE squad — đây là source of truth duy nhất cho mọi gap còn lại
 **Replaces**:
 - ~~`be-missing-apis-phase1.md`~~ (wave 1 đã đóng ✅)
@@ -11,6 +11,23 @@
 - ~~`be-saved-blocks-spec.md` §10~~
 
 Các file gốc giữ trong repo để tham khảo context, nhưng **chỉ làm theo file này**.
+
+---
+
+## 📦 FE shipped tuần này (không chặn BE, để BE biết roadmap)
+
+Tuần 2026-05-19 → 23, FE đã release các phần sau **bằng localStorage / FE-only** — không có BE ask mới từ các phần này:
+
+| Tính năng | Route | Storage | BE ask sau này |
+|---|---|---|---|
+| Catalog 14 block-types với thumbnail thật + filter (Hero/Nội dung/Media/Tương tác/Nâng cao) | dialog tại `/portal/blocks` và `/admin/blocks` | localStorage `rexer:saved-blocks` | gắn vào P1.5 khi ship |
+| Brand-portal block detail page (editorial layout, inline rename, tag editor, sticky action rail) | `/portal/blocks/[id]` | localStorage | P1.5 |
+| In-portal edit wrapper (URL giữ trong `/portal/blocks/[id]/edit?canvas_id=...` thay vì nhảy `/canvas-templates/...`) | `/portal/blocks/[id]/edit` | tạo scratch canvas qua `POST /v1/canvas-templates` (đã chạy) | không cần thêm |
+| Kebab menu 3-dot trên mỗi block card (Mở chi tiết / Duplicate / Xoá) | `/portal/blocks` + `/admin/blocks` | local | không cần |
+| Admin assign-to-brand modal | `/admin/canvas-templates` | gọi `POST /canvas-templates/{id}/assign` | **đang block bởi P0.6** |
+| Brand template library browse + clone | `/portal/templates` | gọi `GET /portal/templates/library` + `POST /canvas-templates/{id}/clone-to-workspace` | **đang block bởi P0.7** |
+
+→ **2 phần đỏ là cốt lõi managed-service Phase 1** — admin tạo, assign cho brand; brand chỉ clone từ library, không tự tạo từ trống. FE wire đầy đủ rồi, BE merge P0.6 + P0.7 là chạy ngay.
 
 ---
 
