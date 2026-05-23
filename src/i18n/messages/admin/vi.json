@@ -2,6 +2,7 @@
   "admin": {
     "forbidden": "Bạn không có quyền truy cập trang quản trị.",
     "refresh": "Làm mới",
+    "logout": "Đăng xuất",
     "search": "Tìm",
     "creating": "Đang tạo…",
     "prev": "Trước",
