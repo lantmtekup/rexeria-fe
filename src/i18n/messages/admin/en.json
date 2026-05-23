@@ -115,10 +115,10 @@
       }
     },
     "users": {
-      "title": "Users / Workspaces",
-      "subtitle": "{total, plural, =0 {No workspaces} =1 {1 workspace} other {# workspaces}}",
-      "note": "Currently showing Client (workspace) list. User-level list will be added once BE exposes it.",
-      "empty": "No workspaces",
+      "title": "Customers",
+      "subtitle": "{total, plural, =0 {No customers} =1 {1 customer} other {# customers}}",
+      "note": "Manage brand/client accounts on Rexer. Click any row to see their landing pages, blocks and products.",
+      "empty": "No customers",
       "view": "Details",
       "col": {
         "name": "Name",

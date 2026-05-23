@@ -1939,6 +1939,30 @@ export interface UpdatePortalMeRequest {
   avatar_url?: string;
 }
 
+// ── Saved blocks (BE server-backed, swagger has them) ─────────────────────
+
+export interface SavedBlockServer {
+  id: string;
+  client_id?: string;
+  workspace_id?: string;
+  name: string;
+  block_json?: Record<string, unknown>;
+  tags?: string[];
+  scope?: 'private' | 'team' | 'public';
+  thumbnail_url?: string;
+  usage_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SavedBlockListResponse {
+  items: SavedBlockServer[];
+  page: number;
+  limit: number;
+  total: number;
+  total_pages: number;
+}
+
 // ── Portal templates create (be-todo.md P0.2) ─────────────────────────────
 
 export interface CreatePortalTemplateRequest {

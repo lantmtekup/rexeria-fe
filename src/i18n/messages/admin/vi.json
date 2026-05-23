@@ -115,10 +115,10 @@
       }
     },
     "users": {
-      "title": "Người dùng / Workspace",
-      "subtitle": "{total, plural, =0 {Chưa có workspace} =1 {1 workspace} other {# workspace}}",
-      "note": "Hiện đang hiển thị danh sách Client (workspace). User-level list sẽ thêm khi BE expose.",
-      "empty": "Không có workspace nào",
+      "title": "Khách hàng",
+      "subtitle": "{total, plural, =0 {Chưa có khách hàng} =1 {1 khách hàng} other {# khách hàng}}",
+      "note": "Quản lý các brand/client đăng ký Rexer. Click 1 row để xem chi tiết landing pages, blocks, products.",
+      "empty": "Không có khách hàng nào",
       "view": "Chi tiết",
       "col": {
         "name": "Tên",

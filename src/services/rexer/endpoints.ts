@@ -180,6 +180,8 @@ import type {
   PortalAdChannelListResponse,
   CreatePortalAdCampaignRequest,
   UpdatePortalAdCampaignRequest,
+  // Server-backed saved blocks
+  SavedBlockListResponse,
   // P0.2 + P0.3 (be-todo.md)
   CreatePortalTemplateRequest,
   PortalClient,
@@ -538,7 +540,8 @@ export const rexerApi = {
     },
   },
   clients: {
-    list: () => rx<ClientListResponse>('/clients'),
+    list: (query?: { status?: string; q?: string }) =>
+      rx<ClientListResponse>('/clients', { query }),
     get: async (id: string): Promise<Client> => {
       const r = await rx<ClientResponse>(`/clients/${id}`);
       return r.client;
@@ -981,6 +984,20 @@ export const rexerApi = {
         `/admin/ai/templates/${id}/test-generate`,
         { method: 'POST', body }
       ),
+  },
+
+  // ── Saved blocks (server-backed, BE shipped per swagger audit) ─────────
+  savedBlocks: {
+    list: (query?: {
+      client_id?: string;
+      workspace_id?: string;
+      scope?: 'private' | 'team' | 'public';
+      tag?: string;
+      q?: string;
+      page?: number;
+      limit?: number;
+      sort?: string;
+    }) => rx<SavedBlockListResponse>('/saved-blocks', { query }),
   },
 
   templateAnalytics: {

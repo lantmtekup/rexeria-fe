@@ -1,12 +1,33 @@
 'use client';
 
+/**
+ * Admin Customers (clients) list. BE `/v1/clients?status=&q=` returns the
+ * full collection with status filter + search; pagination/sorting/items-per-
+ * page are computed FE-side because BE doesn't return total/page yet.
+ *
+ * Standard list affordances: debounced search, status filter chips, sort
+ * dropdown, view toggle (grid + table), items-per-page selector, compact
+ * pagination. Each card/row links to the detail route `/admin/users/[id]`.
+ */
+
 import * as React from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { RefreshCwIcon, UserPlus } from 'lucide-react';
+import {
+  ArrowDownUp,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  RefreshCwIcon,
+  Search,
+  Table as TableIcon,
+  UserPlus,
+  Users,
+  X as XIcon,
+} from 'lucide-react';
 
 import { Button } from '@/components/atoms/button';
-import { AdminCreateUserModal } from './AdminCreateUserModal';
+import { Input } from '@/components/atoms/input';
 import {
   Table,
   TableBody,
@@ -20,39 +41,107 @@ import { RxApiError } from '@/services/rexer/client';
 import { cn } from '@/lib/cn';
 import type { Client } from '@/services/rexer/types';
 
-const STATUS_BADGE: Record<string, string> = {
-  active: 'bg-emerald-100 text-emerald-800',
-  pending: 'bg-amber-100 text-amber-800',
-  suspended: 'bg-red-100 text-red-800',
+import { AdminCreateUserModal } from './AdminCreateUserModal';
+import { gradientForId, initialsOf } from './_avatar';
+
+type View = 'grid' | 'table';
+type Status = 'all' | 'active' | 'pending' | 'suspended' | 'inactive';
+type Sort = '-updated_at' | '-created_at' | 'created_at' | 'name';
+
+const SORT_OPTIONS: { id: Sort; label: string }[] = [
+  { id: '-updated_at', label: 'Mới cập nhật' },
+  { id: '-created_at', label: 'Mới tạo nhất' },
+  { id: 'created_at', label: 'Cũ nhất' },
+  { id: 'name', label: 'Tên A→Z' },
+];
+
+const PAGE_SIZES = [10, 20, 50];
+
+const STATUS_CHIP: Record<string, string> = {
+  active: 'bg-emerald-100 text-emerald-700',
+  pending: 'bg-amber-100 text-amber-700',
+  suspended: 'bg-rose-100 text-rose-700',
+  inactive: 'bg-zinc-100 text-zinc-600',
 };
 
 export function AdminUsersPage() {
   const t = useTranslations('admin');
   const tErrors = useTranslations('errors');
 
-  const [items, setItems] = React.useState<Client[]>([]);
+  const [allItems, setAllItems] = React.useState<Client[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [search, setSearch] = React.useState('');
+  const [debouncedSearch, setDebouncedSearch] = React.useState('');
+  const [status, setStatus] = React.useState<Status>('all');
+  const [sort, setSort] = React.useState<Sort>('-updated_at');
+  const [view, setView] = React.useState<View>('grid');
+  const [page, setPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(20);
+
+  // Debounce search input
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, status, sort, pageSize]);
 
   const load = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const r = await rexerApi.clients.list();
-      setItems(r.items);
+      const query: { status?: string; q?: string } = {};
+      if (status !== 'all') query.status = status;
+      if (debouncedSearch.trim()) query.q = debouncedSearch.trim();
+      const r = await rexerApi.clients.list(query);
+      setAllItems(r.items ?? []);
     } catch (err) {
       const code =
         err instanceof RxApiError ? err.code || err.message : 'LOAD_FAILED';
       setError(code);
+      setAllItems([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [debouncedSearch, status]);
 
   React.useEffect(() => {
     load();
   }, [load]);
+
+  // FE-side sort + paginate
+  const sorted = React.useMemo(() => {
+    const arr = allItems.slice();
+    arr.sort((a, b) => {
+      switch (sort) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'created_at':
+          return (a.created_at || '').localeCompare(b.created_at || '');
+        case '-created_at':
+          return (b.created_at || '').localeCompare(a.created_at || '');
+        default:
+          return (b.updated_at || '').localeCompare(a.updated_at || '');
+      }
+    });
+    return arr;
+  }, [allItems, sort]);
+
+  const total = sorted.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const pageItems = sorted.slice((page - 1) * pageSize, page * pageSize);
+
+  const hasFilters = !!search.trim() || status !== 'all';
+  const clearFilters = () => {
+    setSearch('');
+    setStatus('all');
+    setSort('-updated_at');
+  };
 
   const errorMessage = error
     ? (() => {
@@ -66,13 +155,17 @@ export function AdminUsersPage() {
 
   return (
     <div className='flex flex-col gap-4 p-6'>
-      <div className='flex items-center justify-between'>
+      {/* Header */}
+      <div className='flex flex-wrap items-end justify-between gap-3'>
         <div>
-          <h1 className='text-2xl font-semibold tracking-tight'>
+          <div className='flex items-center gap-2 text-[10.5px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+            <Users className='size-3' /> {t('users.title')}
+          </div>
+          <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
             {t('users.title')}
           </h1>
-          <p className='text-content-muted text-sm'>
-            {t('users.subtitle', { total: items.length })}
+          <p className='text-content-muted mt-1 text-sm'>
+            {t('users.subtitle', { total: allItems.length })}
           </p>
         </div>
         <div className='flex items-center gap-2'>
@@ -84,85 +177,479 @@ export function AdminUsersPage() {
           </Button>
           <Button onClick={() => setCreateOpen(true)}>
             <UserPlus className='size-4' />
-            Tạo user
+            Tạo khách hàng
           </Button>
         </div>
       </div>
 
       <AdminCreateUserModal
         open={createOpen}
-        clients={items}
+        clients={allItems}
         onClose={() => setCreateOpen(false)}
         onCreated={load}
       />
 
       <p className='text-content-muted text-xs'>{t('users.note')}</p>
 
+      {/* Toolbar */}
+      <div className='flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm'>
+        <div className='relative max-w-sm flex-1'>
+          <Search className='absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-zinc-400' />
+          <Input
+            placeholder='Tìm theo tên / id…'
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className='pl-9'
+          />
+        </div>
+
+        <div className='relative inline-flex items-center'>
+          <ArrowDownUp className='pointer-events-none absolute left-2.5 size-3.5 text-zinc-400' />
+          <select
+            value={sort}
+            onChange={e => setSort(e.target.value as Sort)}
+            className='appearance-none rounded-lg border border-zinc-200 bg-white py-1.5 pr-3 pl-7 text-xs font-medium text-zinc-700 outline-none hover:bg-zinc-50 focus:border-zinc-400'
+            aria-label='Sort'
+          >
+            {SORT_OPTIONS.map(o => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <select
+          value={pageSize}
+          onChange={e => setPageSize(Number(e.target.value))}
+          className='rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 outline-none hover:bg-zinc-50'
+          aria-label='Items per page'
+          title='Số item mỗi trang'
+        >
+          {PAGE_SIZES.map(s => (
+            <option key={s} value={s}>
+              {s}/trang
+            </option>
+          ))}
+        </select>
+
+        <div className='ml-auto inline-flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-white p-0.5'>
+          <ViewBtn
+            active={view === 'grid'}
+            onClick={() => setView('grid')}
+            icon={<LayoutGrid className='size-3.5' />}
+            label='Grid'
+          />
+          <ViewBtn
+            active={view === 'table'}
+            onClick={() => setView('table')}
+            icon={<TableIcon className='size-3.5' />}
+            label='Table'
+          />
+        </div>
+      </div>
+
+      {/* Filter chips */}
+      <div className='flex flex-wrap items-center gap-x-3 gap-y-2'>
+        <FilterGroup label='Trạng thái'>
+          <ChipBtn
+            active={status === 'all'}
+            onClick={() => setStatus('all')}
+            label='Tất cả'
+          />
+          <ChipBtn
+            active={status === 'active'}
+            onClick={() => setStatus('active')}
+            label='Active'
+            accent='emerald'
+          />
+          <ChipBtn
+            active={status === 'pending'}
+            onClick={() => setStatus('pending')}
+            label='Pending'
+            accent='amber'
+          />
+          <ChipBtn
+            active={status === 'suspended'}
+            onClick={() => setStatus('suspended')}
+            label='Suspended'
+            accent='rose'
+          />
+          <ChipBtn
+            active={status === 'inactive'}
+            onClick={() => setStatus('inactive')}
+            label='Inactive'
+          />
+        </FilterGroup>
+
+        {hasFilters && (
+          <button
+            type='button'
+            onClick={clearFilters}
+            className='ml-1 inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-900'
+          >
+            <XIcon className='size-3' /> Clear
+          </button>
+        )}
+      </div>
+
       {errorMessage && (
-        <p className='text-destructive text-sm' role='alert'>
+        <p
+          className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800'
+          role='alert'
+        >
           {errorMessage}
         </p>
       )}
 
-      <div className='border-border rounded-lg border bg-white'>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('users.col.name')}</TableHead>
-              <TableHead className='w-32'>{t('users.col.status')}</TableHead>
-              <TableHead className='w-40'>{t('users.col.created')}</TableHead>
-              <TableHead className='w-32' />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {items.length === 0 && !loading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={4}
-                  className='text-content-muted py-8 text-center'
-                >
-                  {t('users.empty')}
+      {/* Body */}
+      {loading && allItems.length === 0 ? (
+        <div className='flex items-center justify-center py-16 text-sm text-zinc-500'>
+          <RefreshCwIcon className='mr-2 size-4 animate-spin' /> Đang tải khách
+          hàng…
+        </div>
+      ) : pageItems.length === 0 ? (
+        <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center'>
+          <Users className='mx-auto size-8 text-zinc-300' />
+          <p className='mt-3 text-[14px] font-semibold text-zinc-700'>
+            {hasFilters
+              ? 'Không có khách hàng nào khớp filter'
+              : t('users.empty')}
+          </p>
+          <p className='mt-1 text-[12px] text-zinc-500'>
+            {hasFilters
+              ? 'Thử đổi từ khoá hoặc clear filter.'
+              : 'Bấm "Tạo khách hàng" để onboard brand mới.'}
+          </p>
+        </div>
+      ) : view === 'grid' ? (
+        <GridView items={pageItems} />
+      ) : (
+        <TableView items={pageItems} t={t} />
+      )}
+
+      {/* Pagination */}
+      {pageItems.length > 0 && totalPages > 1 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={pageSize}
+          onChange={setPage}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ─── Grid ──────────────────────────────────────────────────────────── */
+
+function GridView({ items }: { items: Client[] }) {
+  return (
+    <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+      {items.map(c => (
+        <ClientCard key={c.id} item={c} />
+      ))}
+    </div>
+  );
+}
+
+function ClientCard({ item }: { item: Client }) {
+  const statusClass =
+    STATUS_CHIP[item.status?.toLowerCase()] ?? 'bg-zinc-100 text-zinc-600';
+  return (
+    <Link
+      href={`/admin/users/${item.id}`}
+      className='group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'
+    >
+      <div className='flex items-start gap-3 p-4'>
+        <Avatar id={item.id} name={item.name} size={48} />
+        <div className='min-w-0 flex-1'>
+          <h3 className='truncate text-[14px] font-semibold text-zinc-900'>
+            {item.name}
+          </h3>
+          <p className='mt-0.5 truncate font-mono text-[10px] text-zinc-400'>
+            {item.id.slice(0, 8)}…
+          </p>
+        </div>
+      </div>
+      <div className='mt-auto flex items-center justify-between border-t border-zinc-100 bg-zinc-50/50 px-4 py-2'>
+        <span
+          className={cn(
+            'rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase',
+            statusClass
+          )}
+        >
+          {item.status || '—'}
+        </span>
+        <span className='font-mono text-[10px] text-zinc-400'>
+          {item.created_at
+            ? new Date(item.created_at).toLocaleDateString('vi-VN')
+            : '—'}
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+/* ─── Table ─────────────────────────────────────────────────────────── */
+
+function TableView({
+  items,
+  t,
+}: {
+  items: Client[];
+  t: ReturnType<typeof useTranslations>;
+}) {
+  return (
+    <div className='border-border overflow-hidden rounded-2xl border bg-white'>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className='w-12' />
+            <TableHead>{t('users.col.name')}</TableHead>
+            <TableHead className='w-32'>{t('users.col.status')}</TableHead>
+            <TableHead className='w-40'>{t('users.col.created')}</TableHead>
+            <TableHead className='w-24' />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {items.map(item => {
+            const statusClass =
+              STATUS_CHIP[item.status?.toLowerCase()] ??
+              'bg-zinc-100 text-zinc-600';
+            return (
+              <TableRow key={item.id} className='hover:bg-zinc-50/50'>
+                <TableCell>
+                  <Avatar id={item.id} name={item.name} size={32} />
+                </TableCell>
+                <TableCell>
+                  <Link
+                    href={`/admin/users/${item.id}`}
+                    className='font-medium hover:underline'
+                  >
+                    {item.name}
+                  </Link>
+                  <div className='text-content-muted truncate font-mono text-xs'>
+                    {item.id}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <span
+                    className={cn(
+                      'rounded-full px-2 py-0.5 text-xs',
+                      statusClass
+                    )}
+                  >
+                    {item.status || '—'}
+                  </span>
+                </TableCell>
+                <TableCell className='text-xs'>
+                  {item.created_at
+                    ? new Date(item.created_at).toLocaleDateString('vi-VN')
+                    : '—'}
+                </TableCell>
+                <TableCell>
+                  <Link
+                    href={`/admin/users/${item.id}`}
+                    className='text-primary text-xs hover:underline'
+                  >
+                    {t('users.view')}
+                  </Link>
                 </TableCell>
               </TableRow>
-            ) : (
-              items.map(item => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <div className='font-medium'>{item.name}</div>
-                    <div className='text-content-muted truncate font-mono text-xs'>
-                      {item.id}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={cn(
-                        'rounded-full px-2 py-0.5 text-xs',
-                        STATUS_BADGE[item.status] ??
-                          'bg-neutral-100 text-neutral-700'
-                      )}
-                    >
-                      {item.status || '—'}
-                    </span>
-                  </TableCell>
-                  <TableCell className='text-xs'>
-                    {item.created_at
-                      ? new Date(item.created_at).toLocaleDateString()
-                      : '—'}
-                  </TableCell>
-                  <TableCell>
-                    <Link
-                      href={`/cms/contacts/${item.id}`}
-                      className='text-primary text-xs hover:underline'
-                    >
-                      {t('users.view')}
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+/* ─── Avatar ────────────────────────────────────────────────────────── */
+
+function Avatar({
+  id,
+  name,
+  size,
+}: {
+  id: string;
+  name: string;
+  size: number;
+}) {
+  const initials = initialsOf(name);
+  const gradient = gradientForId(id);
+  return (
+    <div
+      className={cn(
+        'flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br font-mono font-bold text-white shadow-sm',
+        gradient
+      )}
+      style={{
+        width: size,
+        height: size,
+        fontSize: Math.max(10, Math.floor(size * 0.36)),
+      }}
+    >
+      {initials}
+    </div>
+  );
+}
+
+/* ─── Pagination ────────────────────────────────────────────────────── */
+
+function Pagination({
+  page,
+  totalPages,
+  total,
+  pageSize,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  total: number;
+  pageSize: number;
+  onChange: (next: number) => void;
+}) {
+  const from = (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, total);
+
+  const pages: (number | 'gap')[] = [];
+  const add = (n: number) => {
+    if (!pages.includes(n) && n >= 1 && n <= totalPages) pages.push(n);
+  };
+  add(1);
+  if (page - 1 > 2) pages.push('gap');
+  add(page - 1);
+  add(page);
+  add(page + 1);
+  if (page + 1 < totalPages - 1) pages.push('gap');
+  add(totalPages);
+
+  return (
+    <div className='flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-sm'>
+      <span className='text-[11.5px] text-zinc-500'>
+        {from}–{to} trong {total}
+      </span>
+      <div className='flex items-center gap-1'>
+        <button
+          type='button'
+          onClick={() => onChange(Math.max(1, page - 1))}
+          disabled={page <= 1}
+          className='inline-flex size-7 items-center justify-center rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40'
+        >
+          <ChevronLeft className='size-3.5' />
+        </button>
+        {pages.map((p, i) =>
+          p === 'gap' ? (
+            <span key={`gap-${i}`} className='px-1 text-[11px] text-zinc-300'>
+              …
+            </span>
+          ) : (
+            <button
+              key={p}
+              type='button'
+              onClick={() => onChange(p)}
+              className={cn(
+                'inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono text-[11px] font-semibold tabular-nums',
+                p === page
+                  ? 'bg-zinc-900 text-white shadow-sm'
+                  : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
+              )}
+            >
+              {p}
+            </button>
+          )
+        )}
+        <button
+          type='button'
+          onClick={() => onChange(Math.min(totalPages, page + 1))}
+          disabled={page >= totalPages}
+          className='inline-flex size-7 items-center justify-center rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40'
+        >
+          <ChevronRight className='size-3.5' />
+        </button>
       </div>
     </div>
+  );
+}
+
+/* ─── Bits ──────────────────────────────────────────────────────────── */
+
+function FilterGroup({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className='inline-flex items-center gap-1.5'>
+      <span className='text-[10px] font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+        {label}
+      </span>
+      <div className='inline-flex flex-wrap items-center gap-1'>{children}</div>
+    </div>
+  );
+}
+
+function ChipBtn({
+  active,
+  onClick,
+  label,
+  accent,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  accent?: 'emerald' | 'amber' | 'rose';
+}) {
+  const accentActive: Record<NonNullable<typeof accent>, string> = {
+    emerald: 'bg-emerald-600 text-white shadow-sm',
+    amber: 'bg-amber-500 text-white shadow-sm',
+    rose: 'bg-rose-600 text-white shadow-sm',
+  };
+  const cls = active
+    ? accent
+      ? accentActive[accent]
+      : 'bg-zinc-900 text-white shadow-sm'
+    : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50';
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      className={cn(
+        'rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors',
+        cls
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+function ViewBtn({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      title={label}
+      className={cn(
+        'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
+        active ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100'
+      )}
+    >
+      {icon}
+    </button>
   );
 }
