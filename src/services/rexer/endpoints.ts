@@ -172,6 +172,7 @@ import type {
   StaffInboxListResponse,
   // Phase 2 — portal endpoints (be-missing-apis-portal.md)
   PortalDashboardSummary,
+  PortalTemplate,
   PortalTemplateListResponse,
   PortalCommentListResponse,
   PortalAdCampaign,
@@ -179,6 +180,16 @@ import type {
   PortalAdChannelListResponse,
   CreatePortalAdCampaignRequest,
   UpdatePortalAdCampaignRequest,
+  // P0.2 + P0.3 (be-todo.md)
+  CreatePortalTemplateRequest,
+  PortalClient,
+  UpdatePortalClientRequest,
+  PortalMember,
+  PortalMemberRole,
+  PortalMemberListResponse,
+  InvitePortalMemberRequest,
+  UpdatePortalMemberRoleRequest,
+  UpdatePortalMeRequest,
 } from './types';
 
 export const rexerApi = {
@@ -1134,6 +1145,48 @@ export const rexerApi = {
       sort?: string;
     }) =>
       rx<CanvasTemplateListResponse>('/portal/templates/library', { query }),
+
+    /**
+     * Brand creates a new landing — auto-scoped to ctx.client_id, defaults to
+     * ctx.active_workspace_id when `workspace_id` is omitted. See be-todo.md P0.2.
+     */
+    createTemplate: (body: CreatePortalTemplateRequest) =>
+      rx<PortalTemplate>('/portal/templates', { method: 'POST', body }),
+
+    // ── Profile / brand / members (be-todo.md P0.3) ──────────────────────
+    me: {
+      /** Brand profile (name, contact, logo). Read by every authenticated brand user. */
+      client: () => rx<PortalClient>('/portal/me/client'),
+      updateClient: (body: UpdatePortalClientRequest) =>
+        rx<PortalClient>('/portal/me/client', { method: 'PATCH', body }),
+      /** List of users with access to this brand. Optional role filter. */
+      members: (query?: { role?: PortalMemberRole }) =>
+        rx<PortalMemberListResponse>('/portal/me/members', { query }),
+      inviteMember: (body: InvitePortalMemberRequest) =>
+        rx<PortalMember>('/portal/me/members', { method: 'POST', body }),
+      updateMemberRole: (userId: string, body: UpdatePortalMemberRoleRequest) =>
+        rx<PortalMember>(`/portal/me/members/${userId}/role`, {
+          method: 'PATCH',
+          body,
+        }),
+      removeMember: (userId: string) =>
+        rx<void>(`/portal/me/members/${userId}`, { method: 'DELETE' }),
+      /** Update own display name / avatar (any brand role). */
+      update: (body: UpdatePortalMeRequest) =>
+        rx<{ user_id: string; display_name?: string; avatar_url?: string }>(
+          '/portal/me',
+          { method: 'PATCH', body }
+        ),
+      /** Avatar upload — multipart binary. */
+      uploadAvatar: async (file: File): Promise<{ avatar_url: string }> => {
+        const fd = new FormData();
+        fd.append('avatar', file);
+        return rx<{ avatar_url: string }>('/portal/me/avatar', {
+          method: 'POST',
+          body: fd,
+        });
+      },
+    },
   },
 
   // ── Portal Ads ────────────────────────────────────────────────────────

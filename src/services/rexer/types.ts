@@ -1858,6 +1858,83 @@ export interface PortalCommentListResponse {
   total: number;
 }
 
+// ── Portal me/* (be-todo.md P0.3) ─────────────────────────────────────────
+
+export interface PortalClient {
+  id: string;
+  name: string;
+  legal_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  country_code?: string;
+  plan?: string;
+  status: string;
+  member_count?: number;
+  storage_used_gb?: number;
+  storage_quota_gb?: number;
+  logo_url?: string;
+  industry?: string;
+  slug?: string;
+}
+
+export interface UpdatePortalClientRequest {
+  name?: string;
+  legal_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  country_code?: string;
+  industry?: string;
+  logo_url?: string;
+}
+
+export type PortalMemberRole =
+  | 'brand_owner'
+  | 'brand_member'
+  | 'brand_viewer'
+  | 'staff';
+
+export interface PortalMember {
+  user_id: string;
+  email: string;
+  display_name: string;
+  avatar_url?: string;
+  role: PortalMemberRole;
+  joined_at: string;
+  last_seen_at?: string;
+}
+
+export interface PortalMemberListResponse {
+  items: PortalMember[] | null;
+  page?: number;
+  limit?: number;
+  total?: number;
+}
+
+export interface InvitePortalMemberRequest {
+  email: string;
+  role: PortalMemberRole;
+  display_name?: string;
+}
+
+export interface UpdatePortalMemberRoleRequest {
+  role: PortalMemberRole;
+}
+
+export interface UpdatePortalMeRequest {
+  display_name?: string;
+  avatar_url?: string;
+}
+
+// ── Portal templates create (be-todo.md P0.2) ─────────────────────────────
+
+export interface CreatePortalTemplateRequest {
+  name: string;
+  width?: number;
+  height?: number;
+  workspace_id?: string;
+  source_template_id?: string;
+}
+
 // ── Portal Ads ────────────────────────────────────────────────────────────
 
 export interface PortalAdChannel {

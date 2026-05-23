@@ -5,6 +5,7 @@ import {
   ExternalLink,
   LayoutTemplate,
   MessageSquare,
+  Plus,
   Search,
   Send,
   Zap,
@@ -16,6 +17,8 @@ import { FAKE_TEMPLATES, fmtNum, type PortalTemplate } from '../_data';
 import { ApiStatusLabel, loadTemplates } from '../_remote';
 import { PortalShell } from '../_shell';
 import { useActiveWorkspace } from '../_workspace';
+
+import { CreateLandingDialog } from './_CreateLandingDialog';
 
 const STATUS_META = {
   published: {
@@ -44,6 +47,8 @@ export default function PortalTemplatesPage() {
   const [templates, setTemplates] = useState<PortalTemplate[]>(FAKE_TEMPLATES);
   const [source, setSource] = useState<'live' | 'fake'>('fake');
   const [loadError, setLoadError] = useState<string | undefined>(undefined);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,7 +61,7 @@ export default function PortalTemplatesPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadKey]);
 
   const scopedTemplates = templates.filter(
     t => !t.workspace_id || t.workspace_id === activeWs.id
@@ -84,13 +89,30 @@ export default function PortalTemplatesPage() {
             {templates.length} tổng client). Click để xem analytics chi tiết.
           </p>
         </div>
-        {source === 'live' && (
-          <span className='inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-emerald-700'>
-            <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
-            LIVE BE
-          </span>
-        )}
+        <div className='flex items-center gap-2'>
+          {source === 'live' && (
+            <span className='inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-emerald-700'>
+              <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
+              LIVE BE
+            </span>
+          )}
+          <button
+            type='button'
+            onClick={() => setCreateOpen(true)}
+            className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-zinc-700'
+          >
+            <Plus className='size-3.5' />
+            Tạo landing mới
+          </button>
+        </div>
       </section>
+
+      <CreateLandingDialog
+        open={createOpen}
+        workspaceId={activeWs.id}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => setReloadKey(k => k + 1)}
+      />
 
       <ApiStatusLabel source={source} error={loadError} />
 
