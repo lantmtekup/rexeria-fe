@@ -252,27 +252,218 @@ CONSTRAINTS:
 
 ---
 
-### 3.3 Customization assets
+### 3.3 Block — first-class entity với CRUD đầy đủ
 
-#### `SavedBlock`
-Brand-level block library cho reuse (Phase 2 brand sẽ dùng nhiều hơn).
+Block tách rõ thành **3 layer**:
+
+```
+┌────────────────────────────────────────────┐
+│  block_types       (system catalog, code) │  hero_split, feature_grid, ...
+│  read-only         (chỉ admin manage)      │
+└──────────────┬─────────────────────────────┘
+               │ type
+               ▼
+┌────────────────────────────────────────────┐
+│  blocks            (instance với settings) │  layout + motion + style
+│  full CRUD         (scope: system/brand_*) │  brand custom presets
+└──────────────┬─────────────────────────────┘
+               │ referenced by id
+               ▼
+┌────────────────────────────────────────────┐
+│  template_versions.canvas_blueprint        │  template assembles blocks
+│  + slot_bindings cho mỗi instance          │  + slot bindings per use
+└────────────────────────────────────────────┘
+```
+
+**Phân biệt rõ**:
+- **block.settings** = LAYOUT/STRUCTURE (column count, spacing, motion, color theme) — set khi tạo block, reusable
+- **landing.config_json** = CONTENT (text, image refs, product refs) — fill per landing
+- **canvas_blueprint** = lắp ráp blocks + map slot bindings → kết nối hai layer trên
+
+---
+
+#### `BlockType` — system catalog (built-in 14 types)
+
+Admin manage. Read-only cho staff/brand.
 
 ```yaml
-- id: uuid
-- brand_id: uuid → Brand
-- workspace_id: uuid? → Workspace     # optional, scope hẹp hơn
-- name: string
-- block_json: jsonb                   # 1 block subtree
-- tags: text[]
-- thumbnail_asset_id: uuid? → MediaAsset
-- usage_count: int DEFAULT 0
-- created_by: uuid → User
+- code: string PK                     # 'hero_split', 'feature_grid', ...
+- name: string                        # "Hero Split"
+- description: text
+- category: enum('hero', 'content', 'media', 'interactive', 'advanced')
+- icon_name: string                   # lucide icon hoặc custom svg ref
+- preview_image_url: string?
+- props_schema: jsonb                 # định nghĩa structure của block.settings
+- supported_slot_types: text[]        # slot types block này có thể bind vào ('text','image','product_ref','array',...)
+- min_settings: jsonb                 # required keys + defaults
+- is_active: boolean                  # disable khỏi UI mà không xoá data
+- engine_version: string              # 'fabric@5.3.0', để biết cách render
 - created_at, updated_at
 
 CONSTRAINTS:
-- INDEX (brand_id)
-- INDEX (brand_id, tags) USING GIN
+- PRIMARY KEY (code)
+- INDEX (category, is_active)
 ```
+
+**Sample row**:
+```json
+{
+  "code": "hero_split",
+  "name": "Hero Split",
+  "category": "hero",
+  "icon_name": "layout-grid",
+  "props_schema": {
+    "split_ratio": { "type": "enum", "values": ["50/50","60/40","70/30"], "default": "60/40" },
+    "split_direction": { "type": "enum", "values": ["LTR","RTL"], "default": "LTR" },
+    "padding": { "type": "spacing", "default": { "x": 24, "y": 80 } },
+    "background": { "type": "background_spec", "default": { "kind": "solid", "color": "#ffffff" } },
+    "motion": { "type": "motion_spec", "default": { "kind": "fade_in", "delay_ms": 0 } }
+  },
+  "supported_slot_types": ["text","richtext","image","url"],
+  "engine_version": "fabric@5.3.0"
+}
+```
+
+---
+
+#### `Block` — instance entity (CRUD đầy đủ)
+
+Mỗi block là 1 row có settings riêng. Brand/Staff/Admin tạo block với custom config rồi tái sử dụng across templates.
+
+```yaml
+- id: uuid PK
+- type_code: string FK → block_types.code
+- brand_id: uuid? FK → Brand          # NULL = system block (Rexer built-in)
+- workspace_id: uuid? FK → Workspace  # NULL = brand-level scope
+- name: string                        # "Hero — Tết primary CTA"
+- description: text?
+- settings: jsonb                     # KEY STORAGE — layout/motion/style/theme
+- thumbnail_asset_id: uuid? FK → MediaAsset
+- tags: text[]
+- scope: enum('system', 'brand_private', 'brand_team', 'brand_public')
+- usage_count: int DEFAULT 0          # tăng mỗi lần dùng trong canvas_blueprint
+- last_used_at: timestamp?
+- source_block_id: uuid? FK → blocks  # clone from another block
+- created_by: uuid → User
+- updated_by: uuid → User
+- created_at, updated_at, archived_at?
+
+CONSTRAINTS:
+- scope='system' ⇒ brand_id IS NULL
+- scope!='system' ⇒ brand_id IS NOT NULL
+- INDEX (brand_id, scope, type_code)
+- INDEX (brand_id, tags) USING GIN
+- INDEX (type_code, scope='system')   # fast catalog query for built-in
+- BE validate settings against block_types.props_schema mỗi PATCH
+```
+
+**Sample row** (brand-level custom block):
+```json
+{
+  "id": "blk_abc123",
+  "type_code": "hero_split",
+  "brand_id": "brand_coca",
+  "name": "Hero — Tết primary CTA",
+  "settings": {
+    "split_ratio": "60/40",
+    "split_direction": "LTR",
+    "padding": { "x": 32, "y": 100 },
+    "background": {
+      "kind": "gradient",
+      "from": "#ffe7e1",
+      "to": "#ffd0c0",
+      "angle": 135
+    },
+    "motion": { "kind": "slide_up", "delay_ms": 100 }
+  },
+  "scope": "brand_private",
+  "tags": ["tet","coca","primary"],
+  "usage_count": 3
+}
+```
+
+---
+
+#### Canvas blueprint reference blocks
+
+Template's `canvas_blueprint` (trong TemplateVersion) chứa list của block instances:
+
+```json
+{
+  "schema_version": "1.0",
+  "blocks": [
+    {
+      "instance_id": "b1",
+      "block_id": "blk_abc123",          // → blocks.id
+      "slot_bindings": {                  // map block props → slots
+        "headline":   {"$slot": "title"},
+        "subheadline":{"$slot": "subtitle"},
+        "cta_label":  {"$slot": "cta_label"},
+        "cta_url":    {"$slot": "cta_url"},
+        "hero_image": {"$slot": "hero_image"}
+      },
+      "override_settings": null            // optional: override per-instance
+    },
+    {
+      "instance_id": "b2",
+      "block_id": "blk_xyz789",
+      "slot_bindings": {
+        "items": {"$slot": "features"}
+      }
+    },
+    {
+      "instance_id": "b3",
+      "block_id": "blk_pqr456",
+      "slot_bindings": {
+        "products": {"$slot": "products"}
+      }
+    }
+  ]
+}
+```
+
+**Khi publish landing**:
+- BE resolve mỗi `block_id` → load block.settings
+- Apply `override_settings` nếu có
+- Snapshot toàn bộ vào `LandingRelease.canvas_blueprint_snapshot`
+- Result: release tự đứng độc lập, không phụ thuộc vào blocks table nữa (nếu block bị xoá sau đó, release vẫn render được)
+
+---
+
+#### Block CRUD endpoints
+
+```
+# Block types catalog (admin only manage)
+GET    /v1/block-types                       # list 14 types, filter category
+GET    /v1/block-types/{code}                 # detail + props_schema
+POST   /v1/admin/block-types                  # admin add new type (Phase 2+)
+PATCH  /v1/admin/block-types/{code}           # admin update
+DELETE /v1/admin/block-types/{code}           # soft disable (is_active=false)
+
+# Block instances (full CRUD cho admin/staff/brand)
+GET    /v1/blocks?scope=&type_code=&brand_id=&tag=&q=&page=&limit=
+POST   /v1/blocks                             # tạo block với settings (validate via props_schema)
+GET    /v1/blocks/{id}
+PATCH  /v1/blocks/{id}                        # update settings, name, tags
+DELETE /v1/blocks/{id}                        # soft delete (archived_at)
+POST   /v1/blocks/{id}/clone                  # tạo copy với source_block_id reference
+POST   /v1/blocks/{id}/use                    # increment usage_count (gọi khi insert vào blueprint)
+
+# Permission rules:
+# - scope='system' → chỉ admin/staff CRUD, brand đọc-only
+# - scope='brand_private' → chỉ user trong brand đó (mọi role)
+# - scope='brand_team' → user cùng workspace
+# - scope='brand_public' → cùng brand đọc, chỉ creator/brand_admin sửa
+```
+
+---
+
+#### So sánh với `SavedBlock` (legacy concept)
+
+`SavedBlock` trong các doc cũ chỉ là 1 case đặc biệt của `Block` mới:
+- Block với `scope='brand_private'` + được brand tự save khi đang edit
+- → KHÔNG cần bảng `saved_blocks` riêng nữa
+- Tất cả gom vào `blocks` table với scope discriminator
 
 #### `Product`
 Brand product catalog. Reference vào landing qua slot type `product_ref`.
@@ -779,9 +970,24 @@ CONSTRAINTS:
                   │  verified   │
                   └──────────────┘
 
-         ┌─────────────────┐
-         │  SAVED_BLOCK    │  brand-level reusable
-         └─────────────────┘
+         ┌─────────────────┐         ┌─────────────────┐
+         │  BLOCK_TYPE     │ 1—N     │   BLOCK         │  full CRUD
+         │  (system catalog)│ ──────▶ │  scope:         │
+         │  hero_split,    │         │  system /       │
+         │  feature_grid,  │         │  brand_private /│
+         │  ... (14 types) │         │  brand_team /   │
+         └─────────────────┘         │  brand_public   │
+                                     │  - settings:    │
+                                     │   layout/motion/│
+                                     │   style/theme   │
+                                     └────────┬────────┘
+                                              │ ref by id
+                                              ▼
+                                     ┌────────────────────────┐
+                                     │ canvas_blueprint       │
+                                     │ trong TemplateVersion  │
+                                     │ + slot_bindings        │
+                                     └────────────────────────┘
 
          ┌──────────┐         ┌─────────────┐
          │ PRODUCT  │ — ref ──│landing.     │
@@ -1105,15 +1311,63 @@ Actor: Brand_admin
 10. Brand can now publish landings — URL is https://coca.vn/{landing_slug}
 ```
 
-### W10 — Saved block reuse
+### W10 — Block CRUD + reuse trong template
 
 ```
 Actor: Staff (Phase 1) / Brand (Phase 2 when allowed)
-1. Trong template-builder, select 1 block group
-2. Click "Save block to library"
-3. POST /v1/saved-blocks {brand_id, name, block_json, tags}
-4. Later, in another template, drag block from "My library"
-5. Block JSON inserted into canvas_blueprint
+
+A. List + browse blocks
+   1. /admin/blocks (staff) hoặc /portal/blocks (brand)
+   2. GET /v1/block-types  → list 14 system types
+      GET /v1/blocks?brand_id=...&scope=brand_private  → brand's custom blocks
+   3. UI hiển thị 2 tab: "Built-in types" + "My library"
+
+B. Tạo block mới (1 trong 3 cách)
+   B1. Từ scratch:
+      - Click "Create block" → chọn block_type → modal "Configure settings"
+      - Form generate từ block_types.props_schema (split_ratio dropdown,
+        background color picker, motion enum, ...)
+      - Submit: POST /v1/blocks {
+          type_code: 'hero_split',
+          brand_id, scope: 'brand_private',
+          name: 'Hero — Tết primary CTA',
+          settings: { split_ratio: '60/40', background: {...}, motion: {...} },
+          tags: ['tet','coca']
+        }
+      - BE validate settings against block_types.props_schema
+      - Return new block.id
+   B2. Clone from existing:
+      - Click "Clone" trên 1 block → POST /v1/blocks/{id}/clone {name?}
+      - BE copy settings + source_block_id reference, scope inherit
+   B3. Save từ canvas builder:
+      - Trong template-builder, select 1 instance đang config
+      - Click "Save as block" → POST /v1/blocks với settings hiện tại
+
+C. Edit block settings (sửa layout, motion, style)
+   1. Click "Edit settings" trên block → modal generate từ props_schema
+   2. Đổi field (vd background gradient → solid)
+   3. PATCH /v1/blocks/{id} {settings: {...new}}
+   4. BE re-validate settings, update version timestamp
+   ⚠️ Note: edit block KHÔNG retro-update các template đã reference block_id này
+              (canvas_blueprint snapshot block.settings tại publish time)
+              Brand muốn update template → tạo template_version mới
+
+D. Use block trong template canvas
+   1. Trong template-builder, drag block từ library vào canvas
+   2. FE thêm vào canvas_blueprint.blocks[]:
+      {
+        instance_id: 'b_new',
+        block_id: <selected>,
+        slot_bindings: {}  // user maps slot keys next
+      }
+   3. POST /v1/blocks/{id}/use → ++ usage_count, set last_used_at
+
+E. Delete block
+   1. Click "Archive" → DELETE /v1/blocks/{id}
+   2. BE soft delete (set archived_at), block hết hiện trong UI list
+   3. Templates đang reference block_id này không bị break vì:
+      - Published templates đã snapshot settings vào release
+      - Draft templates vẫn reference được nhưng UI cảnh báo "block archived"
 ```
 
 ### W11 — Campaign tracking (Q8 standalone)
@@ -1223,13 +1477,24 @@ GET    /v1/landings/{id}/analytics/blocks?range=
 POST   /v1/admin/landings/from-template
 ```
 
-### Saved blocks
+### Blocks (replace legacy saved-blocks)
 
 ```
-GET    /v1/brands/{id}/saved-blocks?tag=&q=
-POST   /v1/brands/{id}/saved-blocks
-PATCH  /v1/saved-blocks/{id}
-DELETE /v1/saved-blocks/{id}
+# Block types — system catalog
+GET    /v1/block-types
+GET    /v1/block-types/{code}
+POST   /v1/admin/block-types                          # admin only (Phase 2+)
+PATCH  /v1/admin/block-types/{code}
+DELETE /v1/admin/block-types/{code}                   # soft disable
+
+# Block instances — full CRUD per scope
+GET    /v1/blocks?scope=&type_code=&brand_id=&tag=&q=&page=&limit=
+POST   /v1/blocks
+GET    /v1/blocks/{id}
+PATCH  /v1/blocks/{id}                                # update settings (validated against block_types.props_schema)
+DELETE /v1/blocks/{id}                                # soft archive
+POST   /v1/blocks/{id}/clone
+POST   /v1/blocks/{id}/use                            # ++ usage_count
 ```
 
 ### Products
@@ -1435,7 +1700,8 @@ Each AIJob persists `tokens_in/out` + `cost_credits`. Brand has `ai_credit_balan
 | **Landing revision** | Autosave rolling 50 versions | `landing_revisions` |
 | **Landing release** | Immutable snapshot khi publish | `landing_releases` |
 | **Slot** | Field trong template_version.slot_schema | (column, not table) |
-| **Saved block** | Brand-level reusable block | `saved_blocks` |
+| **Block type** | System catalog của 14 built-in types | `block_types` |
+| **Block** | Instance entity với settings (layout/motion/style), CRUD đầy đủ, có scope (system/brand_*) | `blocks` |
 | **Product** | Brand catalog item | `products` |
 | **Media asset** | File upload | `media_assets` |
 | **Media folder** | Tổ chức assets | `media_folders` |
@@ -1453,7 +1719,8 @@ Each AIJob persists `tokens_in/out` + `cost_credits`. Brand has `ai_credit_balan
 ### Phase 1 ship
 
 ✅ Brand + Workspace + User + Membership (2 roles)
-✅ Template (public scope) + TemplateVersion
+✅ **BlockType** (system catalog 14 built-in) + **Block** (CRUD đầy đủ với settings)
+✅ Template (public scope) + TemplateVersion (canvas_blueprint reference blocks)
 ✅ Landing + LandingRevision (rolling 50) + LandingRelease (immutable)
 ✅ Slot-fill UX cho brand (form editor)
 ✅ Custom Domain với DNS verify + TLS auto-provision
@@ -1506,16 +1773,17 @@ Each AIJob persists `tokens_in/out` + `cost_credits`. Brand has `ai_credit_balan
 |---|---|---|
 | **S1** | Schema design + migrations + seed data | 1 week |
 | **S2** | Auth + Brand + Workspace + User CRUD | 1 week |
-| **S3** | Template + TemplateVersion CRUD + slot_schema validator | 1 week |
-| **S4** | Landing + Revision + Release lifecycle + publish flow | 1.5 weeks |
-| **S5** | Custom Domain + DNS verify + TLS provision + edge routing | 1.5 weeks |
-| **S6** | Media upload (3-step) + Product CRUD + bind refs | 1 week |
-| **S7** | Analytics ingestion + aggregation cron + dashboard endpoints | 1 week |
-| **S8** | AI integration (job queue + slot suggest + template draft) | 1 week |
-| **S9** | Campaign + ActivityLog + audit | 0.5 week |
-| **S10** | Testing + load test + bug fix | 1 week |
+| **S3** | **BlockType** seed (14 built-in props_schema) + **Block** CRUD + props validator | 1 week |
+| **S4** | Template + TemplateVersion CRUD + slot_schema validator + canvas_blueprint references blocks | 1 week |
+| **S5** | Landing + Revision + Release lifecycle + publish flow (resolve blocks → snapshot) | 1.5 weeks |
+| **S6** | Custom Domain + DNS verify + TLS provision + edge routing | 1.5 weeks |
+| **S7** | Media upload (3-step) + Product CRUD + bind refs | 1 week |
+| **S8** | Analytics ingestion + aggregation cron + dashboard endpoints | 1 week |
+| **S9** | AI integration (job queue + slot suggest + template draft) | 1 week |
+| **S10** | Campaign + ActivityLog + audit | 0.5 week |
+| **S11** | Testing + load test + bug fix | 1 week |
 
-**Total Phase 1**: ~10 weeks BE solo, or ~6 weeks with 2 BE in parallel.
+**Total Phase 1**: ~11 weeks BE solo, or ~6 weeks với 2 BE parallel.
 
 ---
 
