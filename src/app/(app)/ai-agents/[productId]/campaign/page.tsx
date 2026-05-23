@@ -121,11 +121,10 @@ export default function AiCampaignPage({ params }: PageProps) {
         // Scope campaign to the product's client (BE enforces match).
         // Skip when product has no client (admin-owned).
         client_id: productClientId ?? undefined,
-        // Persist template binding. BE field expects a Project id but FE
-        // stores template_id directly (no projects.create yet). When
-        // projects.create lands, replace with project_id from `templates ↔
-        // canvas_templates → projects` flow.
-        landing_project_id: wizard.template_id || undefined,
+        // Template binding via `landing_project_id` removed — project-based
+        // landings deprecated. Campaign now references canvas-template via
+        // notes payload only; structured FK will return when BE adds a
+        // `canvas_template_id` column on campaigns.
         objective,
         channels: plan.channels,
         kpis: plan.kpis,

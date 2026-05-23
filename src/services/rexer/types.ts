@@ -397,55 +397,16 @@ export interface TemplatePreviewResponse {
   preview_descriptor_json?: Record<string, unknown>;
 }
 
-// ── Project ──────────────────────────────────────────────────────────────
-export interface Project {
-  id: string;
-  client_id: string;
-  product_id?: string | null;
-  name: string;
-  slug: string;
-  status: string;
-  template_id: string;
-  template_version_id: string;
-  active_release_id: string | null;
-  created_at: string;
-  updated_at: string;
-  created_by: string;
-  /** Joined when BE list returns nested template (eager load). */
-  template?: Pick<
-    Template,
-    | 'id'
-    | 'code'
-    | 'name'
-    | 'description'
-    | 'thumbnail_url'
-    | 'category'
-    | 'status'
-  >;
-  /** Joined when BE list returns nested client. */
-  client?: Pick<Client, 'id' | 'name' | 'status'>;
-}
-
-export interface ProjectListResponse {
-  items: Project[];
-}
+// ── Project (removed) ────────────────────────────────────────────────────
+// `/v1/projects` namespace deprecated — system standardized on canvas-
+// template based landings. SummaryMetrics kept because it's still used by
+// other analytics responses.
 
 export interface SummaryMetrics {
   page_views: number;
   cta_clicks: number;
   conversions: number;
   ctr: number;
-}
-
-export interface ProjectSummary {
-  project_id: string;
-  name: string;
-  status: string;
-  template_name: string;
-  active_release_id: string | null;
-  active_release_url: string | null;
-  last_publish_at: string | null;
-  analytics_summary: SummaryMetrics | null;
 }
 
 // ── Client ───────────────────────────────────────────────────────────────
@@ -497,53 +458,8 @@ export interface UpdateClientUserRequest {
   status?: 'active' | 'disabled';
 }
 
-export interface ClientAccessGrant {
-  id: string;
-  client_id: string;
-  project_id: string;
-  access_scope: 'summary_only' | 'summary_and_reports';
-  created_at: string;
-}
-export interface ClientAccessGrantResponse {
-  access_grant: ClientAccessGrant;
-}
-export interface CreateClientAccessGrantRequest {
-  project_id: string;
-  access_scope: 'summary_only' | 'summary_and_reports';
-}
-export interface ClientProjectListResponse {
-  client_id: string;
-  items: ProjectSummary[];
-}
-
-// ── Client portal (read-only for end clients) ────────────────────────────
-export interface ClientPortalProject {
-  project_id: string;
-  name: string;
-  status: string;
-  template_name: string;
-  page_url?: string;
-  last_publish_at?: string;
-  access_scope?: string;
-  analytics_summary?: SummaryMetrics;
-}
-export interface ClientPortalProjectListResponse {
-  items: ClientPortalProject[];
-}
-export interface ClientPortalProjectResponse {
-  project: ClientPortalProject;
-}
-export interface ClientPortalAnalyticsResponse {
-  project_id: string;
-  from: string;
-  to: string;
-  summary: SummaryMetrics;
-  daily: AnalyticsDailyPoint[];
-}
-export interface ClientPortalReportsResponse {
-  project_id: string;
-  items: ReportLink[];
-}
+// Access grants + client portal project read-only types removed alongside
+// `/v1/projects` — both belonged to the project-based flow.
 
 // ── Media ────────────────────────────────────────────────────────────────
 export interface MediaAsset {
@@ -586,77 +502,18 @@ export interface MediaAssetResponse {
   variants?: MediaVariant[];
 }
 
-// ── Release ──────────────────────────────────────────────────────────────
-export interface Release {
-  id: string;
-  project_id: string;
-  release_no: number;
-  state: string;
-  page_url?: string;
-  template_version_id?: string;
-  project_config_revision_id?: string;
-  published_at?: string;
-  created_at: string;
-  created_by?: string;
-}
-export interface ReleaseResponse {
-  release: Release;
-}
-export interface ReleaseListResponse {
-  items: Release[];
-}
-
-export interface ValidationError {
-  field?: string;
-  message: string;
-}
-export interface PublishValidationRequest {
-  config_revision_no?: number;
-}
-export interface PublishValidationResponse {
-  ready: boolean;
-  errors: ValidationError[];
-}
-
-export interface PublishProjectRequest {
-  config_revision_no: number;
-  notes?: string;
-}
-export interface PublishProjectResponse {
-  release: Release;
-}
-
-export interface RollbackReleaseRequest {
-  reason?: string;
-}
-export interface RollbackReleaseResponse {
-  release: Release;
-  message?: string;
-}
-
-// ── Project config ───────────────────────────────────────────────────────
-export interface ProjectConfigRevision {
-  id: string;
-  project_id: string;
-  revision_no: number;
-  config_json: Record<string, unknown>;
-  validation_result?: unknown;
-  created_at: string;
-  created_by?: string;
-}
-export interface ProjectConfigResponse {
-  project_id: string;
-  current_revision: ProjectConfigRevision | null;
-}
+// ── Release / Publish / Project config (removed) ─────────────────────────
+// Project lifecycle types removed alongside `/v1/projects` namespace.
+// Landings now publish through canvas_data.publish (see canvas-template
+// types + flow).
 
 // ── Media bind / upload ──────────────────────────────────────────────────
 export interface InitUploadRequest {
   filename: string;
   mime_type: string;
   file_size: number;
-  owner_scope: 'project' | 'library';
+  owner_scope: 'library';
   media_type?: 'image' | 'video' | 'file';
-  project_id?: string;
 }
 export interface InitUploadResponse {
   upload_id: string;
@@ -672,26 +529,9 @@ export interface CompleteUploadResponse {
   media_asset: MediaAsset;
 }
 
-export interface BindMediaItem {
-  field_key: string;
-  media_id: string;
-  slot_key?: string;
-}
-export interface BindMediaRequest {
-  items: BindMediaItem[];
-}
-export interface ProjectMediaBinding {
-  id: string;
-  project_id: string;
-  field_key: string;
-  slot_key?: string;
-  media_id: string;
-  created_at: string;
-}
-export interface BindMediaResponse {
-  project_id: string;
-  bindings: ProjectMediaBinding[];
-}
+// BindMediaItem/Request/Response + ProjectMediaBinding removed — those
+// only existed for `POST /v1/projects/{id}/media/bind`. Product bindings
+// use `BindProductMediaItem` + `ProductMediaBinding` instead.
 
 // ── Analytics ────────────────────────────────────────────────────────────
 export interface AnalyticsDailyPoint {
@@ -788,14 +628,8 @@ export interface AnalyticsEventInput {
   utm_campaign?: string;
   meta?: Record<string, unknown>;
 }
-export interface ProjectAnalyticsResponse {
-  project_id: string;
-  release_id?: string;
-  from: string;
-  to: string;
-  summary: SummaryMetrics;
-  daily: AnalyticsDailyPoint[];
-}
+// ProjectAnalyticsResponse removed — used to back /projects/{id}/analytics.
+// Equivalent block-level data lives in BlockBreakdownRow + portal breakdown.
 
 // ── Events / Reports ─────────────────────────────────────────────────────
 export interface EventSummaryResponse {
@@ -1066,7 +900,8 @@ export interface Campaign {
   name: string;
   product_id: string;
   client_id?: string;
-  landing_project_id?: string;
+  // `landing_project_id` removed — project-based landings deprecated. BE
+  // may still return this field on legacy rows; ignore on FE.
   objective?: CampaignObjective | string;
   status?: string;
   channels?: string[];
@@ -1096,7 +931,8 @@ export interface CreateCampaignRequest {
   name: string;
   product_id: string;
   client_id?: string;
-  landing_project_id?: string;
+  // `landing_project_id` removed — project-based landings deprecated. BE
+  // may still return this field on legacy rows; ignore on FE.
   objective?: CampaignObjective;
   channels?: string[];
   budget_amount?: number;

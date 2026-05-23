@@ -26,7 +26,7 @@ interface SettingTile {
 
 const TILES: SettingTile[] = [
   {
-    href: '/setting/clients',
+    href: '/admin/users',
     title: 'Clients & workspaces',
     description:
       'Manage client workspaces, invite team members, share landing reports.',

@@ -43,8 +43,6 @@ import type {
   CreateAITemplateRequest,
   UpdateAITemplateRequest,
   AuthMeResponse,
-  BindMediaRequest,
-  BindMediaResponse,
   BindProductMediaRequest,
   BindProductMediaResponse,
   CanvasDataResponse,
@@ -63,15 +61,7 @@ import type {
   CampaignResponse,
   ChangePasswordRequest,
   Client,
-  ClientAccessGrant,
-  ClientAccessGrantResponse,
   ClientListResponse,
-  ClientPortalAnalyticsResponse,
-  ClientPortalProject,
-  ClientPortalProjectListResponse,
-  ClientPortalProjectResponse,
-  ClientPortalReportsResponse,
-  ClientProjectListResponse,
   ClientResponse,
   ClientUser,
   ClientUserListResponse,
@@ -79,7 +69,6 @@ import type {
   CompleteUploadRequest,
   CompleteUploadResponse,
   CreateCampaignRequest,
-  CreateClientAccessGrantRequest,
   CloneProductRequest,
   CreateClientRequest,
   CreateClientUserRequest,
@@ -87,7 +76,6 @@ import type {
   CreateProductCategoryRequest,
   CreateProductRequest,
   DashboardSummary,
-  EventSummaryResponse,
   ForgotPasswordRequest,
   ForgotPasswordResponse,
   InitUploadRequest,
@@ -102,15 +90,6 @@ import type {
   ProductCategoryResponse,
   ProductListResponse,
   ProductResponse,
-  Project,
-  ProjectAnalyticsResponse,
-  ProjectConfigResponse,
-  ProjectListResponse,
-  ProjectSummary,
-  PublishProjectRequest,
-  PublishProjectResponse,
-  PublishValidationRequest,
-  PublishValidationResponse,
   RegisterRequest,
   RegisterResponse,
   AdminFeedbackQuery,
@@ -125,13 +104,7 @@ import type {
   FirebaseLoginRequest,
   FirebaseLoginResponse,
   UpdateFeedbackRequest,
-  Release,
-  ReportListResponse,
-  ReleaseListResponse,
-  ReleaseResponse,
   ResetPasswordRequest,
-  RollbackReleaseRequest,
-  RollbackReleaseResponse,
   Template,
   TemplateListResponse,
   TemplatePreviewResponse,
@@ -231,23 +204,9 @@ export const rexerApi = {
   dashboard: {
     summary: () => rx<DashboardSummary>('/dashboard/summary'),
   },
-  clientPortal: {
-    myProjects: () =>
-      rx<ClientPortalProjectListResponse>('/client-portal/me/projects'),
-    project: async (id: string): Promise<ClientPortalProject> => {
-      const r = await rx<ClientPortalProjectResponse>(
-        `/client-portal/projects/${id}`
-      );
-      return r.project;
-    },
-    analytics: (id: string, params?: { from?: string; to?: string }) =>
-      rx<ClientPortalAnalyticsResponse>(
-        `/client-portal/projects/${id}/analytics`,
-        { query: params }
-      ),
-    reports: (id: string) =>
-      rx<ClientPortalReportsResponse>(`/client-portal/projects/${id}/reports`),
-  },
+  // `clientPortal` namespace removed — the `/client-portal/*` routes only
+  // existed to serve project-based read-only landing reports for clients.
+  // Brand portal now uses `/portal/*` directly (see `portal` namespace).
   templates: {
     list: () => rx<TemplateListResponse>('/templates'),
     get: (id: string) => rx<TemplateResponse>(`/templates/${id}`),
@@ -275,56 +234,10 @@ export const rexerApi = {
       return r.template;
     },
   },
-  projects: {
-    list: () => rx<ProjectListResponse>('/projects'),
-    get: (id: string) => rx<Project>(`/projects/${id}`),
-    summary: (id: string) => rx<ProjectSummary>(`/projects/${id}/summary`),
-    analytics: (id: string, params?: { from?: string; to?: string }) =>
-      rx<ProjectAnalyticsResponse>(`/projects/${id}/analytics`, {
-        query: params,
-      }),
-    media: (id: string) => rx<MediaListResponse>(`/projects/${id}/media`),
-    config: (id: string) => rx<ProjectConfigResponse>(`/projects/${id}/config`),
-    eventsSummary: (id: string, params?: { from?: string; to?: string }) =>
-      rx<EventSummaryResponse>(`/projects/${id}/events/summary`, {
-        query: params,
-      }),
-    reports: (id: string) => rx<ReportListResponse>(`/projects/${id}/reports`),
-    activeRelease: async (id: string): Promise<Release | null> => {
-      try {
-        const r = await rx<ReleaseResponse>(`/projects/${id}/active-release`);
-        return r.release ?? null;
-      } catch (err) {
-        // 404 means no active release yet — surface as null
-        if (
-          err &&
-          typeof err === 'object' &&
-          'status' in err &&
-          (err as { status: number }).status === 404
-        ) {
-          return null;
-        }
-        throw err;
-      }
-    },
-    releases: (id: string) =>
-      rx<ReleaseListResponse>(`/projects/${id}/releases`),
-    publishValidate: (id: string, body?: PublishValidationRequest) =>
-      rx<PublishValidationResponse>(`/projects/${id}/publish/validate`, {
-        method: 'POST',
-        body: body ?? {},
-      }),
-    publish: async (
-      id: string,
-      body: PublishProjectRequest
-    ): Promise<Release> => {
-      const r = await rx<PublishProjectResponse>(`/projects/${id}/publish`, {
-        method: 'POST',
-        body,
-      });
-      return r.release;
-    },
-  },
+  // `projects` namespace removed — system standardized on canvas-template
+  // based landings (see docs/rexer-system-spec-v1.md). Anything that used
+  // to live under /v1/projects either deprecated or migrated to canvas-
+  // templates equivalents.
   products: {
     list: (query?: {
       status?: string;
@@ -523,22 +436,9 @@ export const rexerApi = {
     },
   },
 
-  releases: {
-    get: async (id: string): Promise<Release> => {
-      const r = await rx<ReleaseResponse>(`/releases/${id}`);
-      return r.release;
-    },
-    rollback: async (
-      id: string,
-      body?: RollbackReleaseRequest
-    ): Promise<Release> => {
-      const r = await rx<RollbackReleaseResponse>(`/releases/${id}/rollback`, {
-        method: 'POST',
-        body: body ?? {},
-      });
-      return r.release;
-    },
-  },
+  // `releases` namespace removed — Release lifecycle only existed for
+  // project-based landings (project → release snapshot). Canvas-template
+  // publish state lives in `canvas_data.publish`.
   clients: {
     list: (query?: { status?: string; q?: string }) =>
       rx<ClientListResponse>('/clients', { query }),
@@ -577,22 +477,9 @@ export const rexerApi = {
       );
       return r.user;
     },
-    projects: (id: string) =>
-      rx<ClientProjectListResponse>(`/clients/${id}/projects`),
-    createAccessGrant: async (
-      id: string,
-      body: CreateClientAccessGrantRequest
-    ): Promise<ClientAccessGrant> => {
-      const r = await rx<ClientAccessGrantResponse>(
-        `/clients/${id}/access-grants`,
-        { method: 'POST', body }
-      );
-      return r.access_grant;
-    },
-    deleteAccessGrant: (id: string, grantId: string) =>
-      rx<{ message?: string }>(`/clients/${id}/access-grants/${grantId}`, {
-        method: 'DELETE',
-      }),
+    // `clients.projects` + access grants removed alongside `/v1/projects`
+    // — both belonged to the project-based flow we deprecated. Brand
+    // landings live under canvas-templates with assign + clone-to-workspace.
   },
   media: {
     /**
@@ -646,16 +533,8 @@ export const rexerApi = {
         method: 'POST',
         body,
       }),
-    bindToProject: (projectId: string, body: BindMediaRequest) =>
-      rx<BindMediaResponse>(`/projects/${projectId}/media/bind`, {
-        method: 'POST',
-        body,
-      }),
-    unbindFromProject: (projectId: string, bindingId: string) =>
-      rx<{ message?: string }>(
-        `/projects/${projectId}/media/bindings/${bindingId}`,
-        { method: 'DELETE' }
-      ),
+    // `bindToProject` / `unbindFromProject` removed — project-based landings
+    // deprecated. Product bindings still live under `products.bindMedia`.
   },
 
   // ── Canvas Templates (be-canvas-templates-spec.md) ─────────────────────

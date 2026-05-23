@@ -239,7 +239,7 @@ export default function CampaignDetailPage({ params }: PageProps) {
         notes: meta.template_id
           ? packNotes(meta, currentUserNotes)
           : (draft.notes ?? undefined),
-        landing_project_id: draft.landing_project_id,
+        // `landing_project_id` removed — project-based landings deprecated.
       });
       setCampaign(updated);
       setDraft(updated);

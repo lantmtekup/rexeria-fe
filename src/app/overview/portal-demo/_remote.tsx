@@ -159,26 +159,29 @@ const TEMPLATE_GRADIENTS = [
 
 export async function loadTemplates(): Promise<LoadResult<PortalTemplate[]>> {
   try {
-    const res = await rexerApi.clientPortal.myProjects();
-    const items: PortalTemplate[] = (res.items ?? []).map((p, i) => ({
-      id: p.project_id,
-      workspace_id: '', // BE chưa trả workspace_id; FE filter all khi rỗng
-      name: p.name || p.template_name || p.project_id,
+    // Migrated off `rexerApi.clientPortal.myProjects` (project namespace
+    // removed). The portal-demo surface now just shows the brand-scoped
+    // canvas-template listing, matching the canonical /portal route.
+    const res = await rexerApi.portal.listTemplates({ limit: 50 });
+    const items: PortalTemplate[] = (res.items ?? []).map((t, i) => ({
+      id: t.id,
+      workspace_id: t.workspace_id || '',
+      name: t.name,
       thumbnail_gradient: TEMPLATE_GRADIENTS[i % TEMPLATE_GRADIENTS.length],
       status:
-        p.status === 'published' ||
-        p.status === 'draft' ||
-        p.status === 'archived'
-          ? p.status
+        t.status === 'published' ||
+        t.status === 'draft' ||
+        t.status === 'archived'
+          ? t.status
           : 'draft',
-      views_30d: p.analytics_summary?.page_views ?? 0,
-      clicks_30d: p.analytics_summary?.cta_clicks ?? 0,
-      leads_30d: p.analytics_summary?.conversions ?? 0,
-      open_comments: 0,
-      last_updated_at: p.last_publish_at ?? new Date().toISOString(),
+      views_30d: t.views_30d,
+      clicks_30d: t.clicks_30d,
+      leads_30d: t.leads_30d,
+      open_comments: t.open_comments,
+      last_updated_at: t.last_publish_at ?? new Date().toISOString(),
       last_updated_by: {
-        name: 'Staff Rexer',
-        role: 'staff',
+        name: t.last_updated_by?.name ?? 'Staff Rexer',
+        role: t.last_updated_by?.role === 'staff' ? 'staff' : 'brand',
       },
     }));
     if (items.length === 0) {
