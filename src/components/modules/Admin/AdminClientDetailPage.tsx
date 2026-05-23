@@ -519,6 +519,17 @@ function LandingsTab({
   );
 }
 
+function genShareToken(): string {
+  const arr = new Uint8Array(24);
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(arr);
+  } else {
+    for (let i = 0; i < arr.length; i++)
+      arr[i] = Math.floor(Math.random() * 256);
+  }
+  return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+}
+
 function LandingRow({
   item,
   onDelete,
@@ -540,12 +551,45 @@ function LandingRow({
     return () => document.removeEventListener('mousedown', onDoc);
   }, [menuOpen]);
 
-  const handlePublish = () => {
+  // BE confirmed (audit-2026-05-23 §2 Q3): canvas-template publish is done
+  // by PATCH /canvas-templates/{id} với canvas_data.publish.{published,
+  // shareToken, publishedAt}. No dedicated POST endpoint needed.
+  const togglePublish = async (publish: boolean) => {
     setMenuOpen(false);
-    toast.info(
-      'BE chưa ship POST /canvas-templates/{id}/publish (be-audit-2026-05-23.md). Đang đợi BE merge.'
-    );
-    onReload();
+    const tid = toast.loading(publish ? 'Đang publish…' : 'Đang unpublish…');
+    try {
+      const canvasRes = await rexerApi.canvasTemplates.getCanvas(item.id);
+      if (!canvasRes) {
+        toast.error('Không load được canvas data', { id: tid });
+        return;
+      }
+      const next = {
+        ...(canvasRes.canvas_data as Record<string, unknown>),
+        publish: publish
+          ? {
+              published: true,
+              shareToken: genShareToken(),
+              publishedAt: new Date().toISOString(),
+            }
+          : { published: false },
+      };
+      await rexerApi.canvasTemplates.update(item.id, {
+        version: item.version,
+        canvas_data: next,
+      });
+      toast.success(publish ? 'Đã publish landing' : 'Đã unpublish', {
+        id: tid,
+      });
+      onReload();
+    } catch (err) {
+      const msg =
+        err instanceof RxApiError
+          ? err.code || err.message
+          : err instanceof Error
+            ? err.message
+            : 'PUBLISH_FAILED';
+      toast.error(`Thao tác thất bại: ${msg}`, { id: tid });
+    }
   };
 
   return (
@@ -622,15 +666,21 @@ function LandingRow({
             </Link>
             <button
               type='button'
-              onClick={handlePublish}
+              onClick={() => togglePublish(true)}
               className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-zinc-700 hover:bg-zinc-50'
-              title='BE chưa ship endpoint publish'
+              title='Publish landing — sinh share_token + URL public'
             >
-              <Rocket className='size-3.5 text-zinc-500' />
+              <Rocket className='size-3.5 text-emerald-600' />
               Publish
-              <span className='ml-auto rounded bg-amber-100 px-1 py-0.5 font-mono text-[8.5px] font-bold text-amber-700'>
-                BE pending
-              </span>
+            </button>
+            <button
+              type='button'
+              onClick={() => togglePublish(false)}
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-zinc-700 hover:bg-zinc-50'
+              title='Unpublish — invalidate share_token, URL 404'
+            >
+              <Rocket className='size-3.5 rotate-180 text-zinc-500' />
+              Unpublish
             </button>
             <div className='h-px bg-zinc-100' />
             <button

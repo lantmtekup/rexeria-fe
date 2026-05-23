@@ -196,12 +196,22 @@ export default function PortalProfilePage() {
         <div className='flex items-center gap-2 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
           <Settings className='size-3' /> Profile
         </div>
-        <h1 className='mt-1 text-2xl font-bold tracking-tight'>
-          Cài đặt brand
-        </h1>
-        <p className='mt-1 text-[13px] text-zinc-500'>
-          Quản lý thông tin brand + thành viên có quyền truy cập portal.
-        </p>
+        <div className='flex flex-wrap items-end justify-between gap-2'>
+          <div>
+            <h1 className='mt-1 text-2xl font-bold tracking-tight'>
+              Cài đặt brand
+            </h1>
+            <p className='mt-1 text-[13px] text-zinc-500'>
+              Quản lý thông tin brand + thành viên + custom domain.
+            </p>
+          </div>
+          <a
+            href='/portal/profile/domains'
+            className='inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm hover:border-zinc-300 hover:bg-zinc-50'
+          >
+            🌐 Custom domains
+          </a>
+        </div>
       </section>
 
       {(pendingClientApi || pendingMembersApi) && (
