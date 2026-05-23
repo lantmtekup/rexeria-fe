@@ -9,27 +9,22 @@
  *                             ↑                       ↑
  *                          (restore)              (restore)
  *
- * Per-status affordances:
- *  - draft     → Edit, Preview, (Publish wired when BE ships endpoint)
- *  - published → Edit, Preview, View live (/p/{id}/{token}), Analytics
- *  - archived  → Restore (others disabled)
+ * Phase 1 managed-service: Rexer staff owns content (create, edit, publish).
+ * Brand is a **review-only** persona — they get Preview + Analytics on every
+ * card, nothing else. No Edit, no public-URL link, no publish controls. When
+ * Phase 2 opens self-serve, more buttons return.
  *
  * Preview = /portal/landing-pages/[id]/preview — auth-gated mirror of /p
- * that brand can open before publishing. View live needs a share_token
- * which is a BE field we don't always have on PortalTemplate yet — fall
- * back to /p/{id} so the link still opens with whatever BE has wired.
+ * that brand can open before staff publishes.
  */
 
 import {
   BarChart3,
   Eye,
-  ExternalLink,
   HelpCircle,
   Info,
   LayoutTemplate,
   MessageSquare,
-  Pencil,
-  Plus,
   Search,
   Send,
   Zap,
@@ -41,8 +36,6 @@ import { FAKE_TEMPLATES, fmtNum, type PortalTemplate } from '../_data';
 import { ApiStatusLabel, loadTemplates } from '../_remote';
 import { PortalShell } from '../_shell';
 import { useActiveWorkspace } from '../_workspace';
-
-import { CreateLandingDialog } from './_CreateLandingDialog';
 
 type LandingStatus = PortalTemplate['status'];
 
@@ -79,8 +72,6 @@ export default function PortalLandingPagesPage() {
   const [templates, setTemplates] = useState<PortalTemplate[]>(FAKE_TEMPLATES);
   const [source, setSource] = useState<'live' | 'fake'>('fake');
   const [loadError, setLoadError] = useState<string | undefined>(undefined);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
   const [helpOpen, setHelpOpen] = useState(false);
 
   useEffect(() => {
@@ -94,7 +85,7 @@ export default function PortalLandingPagesPage() {
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, []);
 
   const scopedTemplates = useMemo(
     () =>
@@ -158,23 +149,8 @@ export default function PortalLandingPagesPage() {
             <HelpCircle className='size-3.5' />
             Hướng dẫn
           </button>
-          <button
-            type='button'
-            onClick={() => setCreateOpen(true)}
-            className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-zinc-700'
-          >
-            <Plus className='size-3.5' />
-            Tạo landing mới
-          </button>
         </div>
       </section>
-
-      <CreateLandingDialog
-        open={createOpen}
-        workspaceId={activeWs.id}
-        onClose={() => setCreateOpen(false)}
-        onCreated={() => setReloadKey(k => k + 1)}
-      />
 
       {helpOpen && <LifecycleHelp onClose={() => setHelpOpen(false)} />}
 
@@ -245,11 +221,6 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
   const ctr = t.views_30d > 0 ? (t.clicks_30d / t.views_30d) * 100 : 0;
   const isArchived = t.status === 'archived';
   const isPublished = t.status === 'published';
-  // FE bridge — when BE ships `share_token` on PortalTemplate, use it. Until
-  // then, fall back to the bare /p/{id} which BE may redirect or render a
-  // not-published page.
-  const shareToken = (t as { share_token?: string }).share_token;
-  const liveHref = shareToken ? `/p/${t.id}/${shareToken}` : `/p/${t.id}`;
 
   return (
     <div className='group overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
@@ -313,67 +284,29 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
           </div>
         )}
 
-        {/* Actions — state-aware */}
+        {/* Actions — brand chỉ Preview + Analytics (Phase 1 review-only) */}
         <div className='mt-4 grid grid-cols-2 gap-2'>
-          {/* Edit — always available except archived */}
           <Link
-            href={`/canvas-templates/${t.id}`}
+            href={`/portal/landing-pages/${t.id}/preview`}
             aria-disabled={isArchived}
             className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               isArchived
                 ? 'pointer-events-none border border-zinc-200 bg-zinc-50 text-zinc-400'
                 : 'bg-zinc-900 text-white hover:bg-zinc-700'
             }`}
+            title='Xem trước landing — render chính xác như khách sẽ thấy'
           >
-            <Pencil className='size-3' />
-            Edit
-          </Link>
-
-          {/* Preview — always available (auth-gated brand preview) */}
-          <Link
-            href={`/portal/landing-pages/${t.id}/preview`}
-            aria-disabled={isArchived}
-            className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-              isArchived
-                ? 'pointer-events-none border-zinc-200 bg-zinc-50 text-zinc-400'
-                : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
-            }`}
-            title='Xem trước (chỉ brand thấy, không cần token)'
-          >
-            <Eye className='size-3' />
+            <Eye className='size-3.5' />
             Preview
           </Link>
 
-          {/* View live — only when published */}
-          {isPublished ? (
-            <a
-              href={liveHref}
-              target='_blank'
-              rel='noreferrer'
-              className='inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100'
-              title='Mở URL public — khách thấy được'
-            >
-              <ExternalLink className='size-3' />
-              Xem live
-            </a>
-          ) : (
-            <span
-              className='inline-flex cursor-not-allowed items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-400'
-              title='Chưa publish — không có URL công khai'
-            >
-              <ExternalLink className='size-3' />
-              Chưa publish
-            </span>
-          )}
-
-          {/* Analytics — only meaningful when published */}
           <Link
             href={`/portal/landing-pages/${t.id}/analytics`}
             aria-disabled={!isPublished}
-            className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
               isPublished
-                ? 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
-                : 'pointer-events-none border border-zinc-200 bg-zinc-50 text-zinc-400'
+                ? 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
+                : 'pointer-events-none border-zinc-200 bg-zinc-50 text-zinc-400'
             }`}
             title={
               isPublished
@@ -381,7 +314,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
                 : 'Chưa publish — chưa có data analytics'
             }
           >
-            <BarChart3 className='size-3' />
+            <BarChart3 className='size-3.5' />
             Analytics
           </Link>
         </div>
@@ -433,29 +366,28 @@ function LifecycleHelp({ onClose }: { onClose: () => void }) {
         <StateCard
           dot='bg-amber-500'
           name='Bản nháp (draft)'
-          help='Khi mới tạo. Chỉ bạn thấy. Sửa thoải mái trong canvas editor, mở Preview để xem trước thiết kế trên thiết bị thật.'
-          actions={['Edit', 'Preview']}
+          help='Rexer staff đang dựng. Bạn click Preview để xem WIP và phản hồi qua comment trước khi staff publish.'
+          actions={['Preview']}
         />
         <StateCard
           dot='bg-emerald-500'
           name='Đã publish'
-          help='Có URL công khai /p/[id]/[token]. Khách vào xem được. Tracking + analytics bắt đầu thu data.'
-          actions={['Edit', 'Preview', 'View live', 'Analytics']}
+          help='Landing đã live cho khách công khai. Bạn xem thiết kế qua Preview và theo dõi data thật qua Analytics.'
+          actions={['Preview', 'Analytics']}
         />
         <StateCard
           dot='bg-zinc-400'
           name='Lưu trữ'
-          help='URL public hết hiệu lực 404. Vẫn lưu trong workspace — restore lại được. Không sửa, không tính analytics.'
-          actions={['Restore']}
+          help='Đã ngưng hoạt động. URL public hết hiệu lực. Cần restore? Liên hệ Rexer staff.'
+          actions={[]}
         />
       </div>
 
       <div className='mt-4 rounded-xl border border-zinc-200 bg-white p-3 text-[11.5px] leading-relaxed text-zinc-600'>
-        <strong className='text-zinc-900'>Bạn thấy gì:</strong> <kbd>Edit</kbd>{' '}
-        mở canvas editor để sửa block + nội dung. <kbd>Preview</kbd> hiển thị
-        đúng như khách sẽ thấy nhưng không cần share token. <kbd>View live</kbd>{' '}
-        mở URL public thật. <kbd>Analytics</kbd> chỉ có dữ liệu sau khi publish
-        + có visitor truy cập.
+        <strong className='text-zinc-900'>Phase 1 managed-service:</strong>{' '}
+        Rexer staff phụ trách thiết kế, sửa, và publish landing pages. Bạn
+        review qua <kbd>Preview</kbd>, để lại comment khi cần chỉnh, và theo dõi
+        hiệu quả qua <kbd>Analytics</kbd> sau khi staff publish.
       </div>
     </div>
   );
