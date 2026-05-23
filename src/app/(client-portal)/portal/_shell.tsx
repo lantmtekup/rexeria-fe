@@ -7,6 +7,7 @@ import {
   Check,
   ChevronsUpDown,
   FolderOpen,
+  Globe,
   LayoutDashboard,
   LayoutTemplate,
   LogOut,
@@ -50,21 +51,34 @@ type NavItem = {
 const NAV: NavItem[] = [
   { href: '/portal', label: 'Dashboard', icon: LayoutDashboard },
   {
-    href: '/portal/landing-pages',
-    label: 'Landing pages',
-    icon: LayoutTemplate,
-  },
-  {
     href: '/portal/templates',
     label: 'Template library',
     icon: Sparkles,
   },
-  { href: '/portal/ads', label: 'Quảng cáo', icon: Megaphone, group: 'Engage' },
+  // Rexer Product — group hợp nhất 3 mục tăng trưởng có sẵn + Micro site mới.
+  {
+    href: '/portal/ads',
+    label: 'Quảng cáo',
+    icon: Megaphone,
+    group: 'Rexer Product',
+  },
   {
     href: '/portal/curate',
     label: 'Curate',
     icon: MousePointerClick,
-    group: 'Engage',
+    group: 'Rexer Product',
+  },
+  {
+    href: '/portal/landing-pages',
+    label: 'Landing pages',
+    icon: LayoutTemplate,
+    group: 'Rexer Product',
+  },
+  {
+    href: '/portal/micro-sites',
+    label: 'Micro site',
+    icon: Globe,
+    group: 'Rexer Product',
   },
   { href: '/portal/media', label: 'Media', icon: FolderOpen, group: 'Assets' },
   {
