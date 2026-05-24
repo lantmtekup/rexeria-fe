@@ -171,6 +171,48 @@ import type {
   InvitePortalMemberRequest,
   UpdatePortalMemberRoleRequest,
   UpdatePortalMeRequest,
+  // ── Canonical (Rexer Architecture Final 2026-05-23) ───────────────
+  Brand,
+  BrandListResponse,
+  BrandResponse,
+  BrandUser,
+  BrandUserListResponse,
+  CreateBrandRequest,
+  UpdateBrandRequest,
+  InviteBrandUserRequest,
+  InviteBrandUserResponse,
+  UpdateBrandUserRequest,
+  Page,
+  PageListResponse,
+  PageResponse,
+  PageType,
+  CreatePageRequest,
+  UpdatePageRequest,
+  PageRevisionListResponse,
+  SavePageConfigRequest,
+  PageRelease,
+  PageReleaseListResponse,
+  PublishPageRequest,
+  PublishPageValidateResponse,
+  PublishPageResponse,
+  PageAnalyticsSummary,
+  PageAnalyticsBlocksResponse,
+  Block,
+  BlockListResponse,
+  BlockResponse,
+  BlockScope,
+  CreateBlockRequest,
+  UpdateBlockRequest,
+  AIJob,
+  AIJobResponse,
+  AITemplateDraftInput,
+  AISlotSuggestInput,
+  AIPageOptimizeInput,
+  AIImageGenerateInput,
+  AISlotSuggestion,
+  RespondAISlotSuggestionRequest,
+  TrackEventInput,
+  TrackBatchRequest,
 } from './types';
 
 export const rexerApi = {
@@ -1192,5 +1234,342 @@ export const rexerApi = {
       }
       return res.blob();
     },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CANONICAL NAMESPACES (Rexer Architecture Final 2026-05-23)
+  // Added 2026-05-24. Wave 1 of fe-canonical-cutover-migration-plan.md.
+  // Wave 2 (next) will swap call sites from legacy → canonical, then
+  // legacy namespaces above can be deleted.
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // ── Brands (canonical, replaces `clients`) ───────────────────────────
+  brands: {
+    list: (query?: {
+      status?: string;
+      q?: string;
+      page?: number;
+      limit?: number;
+    }) => rx<BrandListResponse>('/brands', { query }),
+    get: async (id: string): Promise<Brand> => {
+      const r = await rx<BrandResponse>(`/brands/${id}`);
+      return r.brand;
+    },
+    create: async (body: CreateBrandRequest): Promise<Brand> => {
+      const r = await rx<BrandResponse>('/brands', { method: 'POST', body });
+      return r.brand;
+    },
+    update: async (id: string, body: UpdateBrandRequest): Promise<Brand> => {
+      const r = await rx<BrandResponse>(`/brands/${id}`, {
+        method: 'PATCH',
+        body,
+      });
+      return r.brand;
+    },
+    remove: (id: string) =>
+      rx<{ message?: string }>(`/brands/${id}`, { method: 'DELETE' }),
+
+    // ── Brand membership (replaces `clients.users` + `inviteUser`) ──
+    users: (brandId: string, query?: { role?: string }) =>
+      rx<BrandUserListResponse>(`/brands/${brandId}/users`, { query }),
+    inviteUser: (brandId: string, body: InviteBrandUserRequest) =>
+      rx<InviteBrandUserResponse>(`/brands/${brandId}/users`, {
+        method: 'POST',
+        body,
+      }),
+    updateUser: (
+      brandId: string,
+      userId: string,
+      body: UpdateBrandUserRequest
+    ) =>
+      rx<BrandUser>(`/brands/${brandId}/users/${userId}`, {
+        method: 'PATCH',
+        body,
+      }),
+    removeUser: (brandId: string, userId: string) =>
+      rx<{ message?: string }>(`/brands/${brandId}/users/${userId}`, {
+        method: 'DELETE',
+      }),
+
+    // ── Workspace nested under brand (replaces `workspaces.create` admin path) ─
+    workspaces: {
+      list: (brandId: string) =>
+        rx<WorkspaceListResponse>(`/brands/${brandId}/workspaces`),
+      create: (brandId: string, body: CreateWorkspaceRequest) =>
+        rx<Workspace>(`/brands/${brandId}/workspaces`, {
+          method: 'POST',
+          body,
+        }),
+    },
+
+    // ── Custom domains nested under brand ───────────────────────────────
+    domains: {
+      list: (brandId: string) =>
+        rx<{ items: unknown[] }>(`/brands/${brandId}/domains`),
+      create: (
+        brandId: string,
+        body: { domain: string; workspace_id?: string; target_type?: string }
+      ) => rx<unknown>(`/brands/${brandId}/domains`, { method: 'POST', body }),
+      verify: (brandId: string, domainId: string) =>
+        rx<unknown>(`/brands/${brandId}/domains/${domainId}/verify`, {
+          method: 'POST',
+        }),
+      remove: (brandId: string, domainId: string) =>
+        rx<{ message?: string }>(`/brands/${brandId}/domains/${domainId}`, {
+          method: 'DELETE',
+        }),
+    },
+
+    // ── Per-brand activity audit (replaces brand-scoped activityFeed) ──
+    activity: (
+      brandId: string,
+      query?: { entity_type?: string; from?: string; to?: string }
+    ) => rx<ActivityFeedResponse>(`/brands/${brandId}/activity`, { query }),
+  },
+
+  // ── Pages (canonical, replaces `projects` + `canvasTemplates` instance) ──
+  pages: {
+    /**
+     * List pages in a workspace. Filter `type` to scope to landing/ad/curate.
+     * Replaces `canvasTemplates.list({ client_id, workspace_id })`.
+     */
+    list: (
+      workspaceId: string,
+      query?: {
+        type?: PageType;
+        status?: string;
+        q?: string;
+        page?: number;
+        limit?: number;
+      }
+    ) => rx<PageListResponse>(`/workspaces/${workspaceId}/pages`, { query }),
+    /** Brand create — page seeded from a template. */
+    create: async (
+      workspaceId: string,
+      body: CreatePageRequest
+    ): Promise<Page> => {
+      const r = await rx<PageResponse>(`/workspaces/${workspaceId}/pages`, {
+        method: 'POST',
+        body,
+      });
+      return r.page;
+    },
+    get: async (id: string): Promise<Page> => {
+      const r = await rx<PageResponse>(`/pages/${id}`);
+      return r.page;
+    },
+    update: async (id: string, body: UpdatePageRequest): Promise<Page> => {
+      const r = await rx<PageResponse>(`/pages/${id}`, {
+        method: 'PATCH',
+        body,
+      });
+      return r.page;
+    },
+    /** Soft archive (status='archived', releases deactivate). */
+    archive: (id: string) =>
+      rx<{ message?: string }>(`/pages/${id}`, { method: 'DELETE' }),
+    restore: (id: string) =>
+      rx<PageResponse>(`/pages/${id}/restore`, { method: 'POST' }),
+
+    /** Autosave config — debounced from form editor. */
+    saveConfig: (id: string, body: SavePageConfigRequest) =>
+      rx<{ revision_no: number; saved_at: string }>(`/pages/${id}/config`, {
+        method: 'POST',
+        body,
+      }),
+
+    revisions: (id: string, query?: { page?: number; limit?: number }) =>
+      rx<PageRevisionListResponse>(`/pages/${id}/revisions`, { query }),
+
+    revertRevision: (id: string, revisionNo: number) =>
+      rx<{ revision_no: number }>(
+        `/pages/${id}/revisions/${revisionNo}/revert`,
+        { method: 'POST' }
+      ),
+
+    publishValidate: (id: string) =>
+      rx<PublishPageValidateResponse>(`/pages/${id}/publish/validate`, {
+        method: 'POST',
+      }),
+    publish: (id: string, body?: PublishPageRequest) =>
+      rx<PublishPageResponse>(`/pages/${id}/publish`, {
+        method: 'POST',
+        body: body ?? {},
+      }),
+    unpublish: (id: string) =>
+      rx<{ message?: string }>(`/pages/${id}/unpublish`, { method: 'POST' }),
+
+    releases: {
+      list: (pageId: string) =>
+        rx<PageReleaseListResponse>(`/pages/${pageId}/releases`),
+      get: (pageId: string, releaseId: string) =>
+        rx<PageRelease>(`/pages/${pageId}/releases/${releaseId}`),
+      activate: (pageId: string, releaseId: string) =>
+        rx<{ message?: string }>(
+          `/pages/${pageId}/releases/${releaseId}/activate`,
+          { method: 'POST' }
+        ),
+    },
+
+    /** Ad-type only — download rendered PNG/MP4. */
+    export: (id: string, format: 'png' | 'mp4' | 'html5') =>
+      rx<{ url: string; expires_at: string }>(`/pages/${id}/export`, {
+        query: { format },
+      }),
+    /** Curate-type only — return embed snippet code. */
+    embedSnippet: (id: string) =>
+      rx<{ snippet: string; embed_token: string }>(
+        `/pages/${id}/embed-snippet`
+      ),
+
+    /** Set page thumbnail. Replaces `canvasTemplates.setThumbnail`. */
+    setThumbnail: async (id: string, thumbnailUrl: string): Promise<Page> => {
+      const r = await rx<PageResponse>(`/pages/${id}/thumbnail`, {
+        method: 'PUT',
+        body: { thumbnail_url: thumbnailUrl },
+      });
+      return r.page;
+    },
+
+    analytics: {
+      summary: (id: string, query?: { range?: string }) =>
+        rx<PageAnalyticsSummary>(`/pages/${id}/analytics/summary`, { query }),
+      blocks: (id: string, query?: { range?: string }) =>
+        rx<PageAnalyticsBlocksResponse>(`/pages/${id}/analytics/blocks`, {
+          query,
+        }),
+    },
+  },
+
+  // ── Admin pages — admin/staff assign template to brand workspace ─────
+  adminPages: {
+    /** Replaces `canvasTemplates.assignToBrand`. */
+    fromTemplate: async (body: {
+      template_id: string;
+      template_version_id?: string;
+      brand_id: string;
+      workspace_id: string;
+      name: string;
+      type?: PageType;
+      handoff_notes?: string;
+    }): Promise<Page> => {
+      const r = await rx<PageResponse>('/admin/pages/from-template', {
+        method: 'POST',
+        body,
+      });
+      return r.page;
+    },
+  },
+
+  // ── Blocks (canonical CRUD, replaces `savedBlocks`) ──────────────────
+  blocks: {
+    list: (query?: {
+      scope?: BlockScope;
+      type_code?: string;
+      brand_id?: string;
+      workspace_id?: string;
+      surface?: PageType;
+      tag?: string;
+      q?: string;
+      page?: number;
+      limit?: number;
+      sort?: string;
+    }) => rx<BlockListResponse>('/blocks', { query }),
+    get: async (id: string): Promise<Block> => {
+      const r = await rx<BlockResponse>(`/blocks/${id}`);
+      return r.block;
+    },
+    create: async (body: CreateBlockRequest): Promise<Block> => {
+      const r = await rx<BlockResponse>('/blocks', { method: 'POST', body });
+      return r.block;
+    },
+    update: async (id: string, body: UpdateBlockRequest): Promise<Block> => {
+      const r = await rx<BlockResponse>(`/blocks/${id}`, {
+        method: 'PATCH',
+        body,
+      });
+      return r.block;
+    },
+    /** Soft archive. */
+    archive: (id: string) =>
+      rx<{ message?: string }>(`/blocks/${id}`, { method: 'DELETE' }),
+    clone: async (id: string, body?: { name?: string }): Promise<Block> => {
+      const r = await rx<BlockResponse>(`/blocks/${id}/clone`, {
+        method: 'POST',
+        body: body ?? {},
+      });
+      return r.block;
+    },
+    /** Increment usage_count when a block is added to a template/page. */
+    use: (id: string) =>
+      rx<{ usage_count: number }>(`/blocks/${id}/use`, { method: 'POST' }),
+  },
+
+  // ── BlockTypes public read (admin CRUD already at `adminBlockTypes`) ─
+  blockTypes: {
+    list: (query?: {
+      surface?: PageType;
+      category?: string;
+      is_active?: boolean;
+    }) => rx<{ items: unknown[] }>('/block-types', { query }),
+    get: (code: string) => rx<unknown>(`/block-types/${code}`),
+  },
+
+  // ── AI Jobs (canonical async, replaces 8 legacy `ai.*` endpoints) ────
+  aiJobs: {
+    templateDraft: async (body: AITemplateDraftInput): Promise<AIJob> => {
+      const r = await rx<AIJobResponse>('/ai/template-draft', {
+        method: 'POST',
+        body,
+      });
+      return r.job;
+    },
+    slotSuggest: async (body: AISlotSuggestInput): Promise<AIJob> => {
+      const r = await rx<AIJobResponse>('/ai/slot-suggest', {
+        method: 'POST',
+        body,
+      });
+      return r.job;
+    },
+    pageOptimize: async (body: AIPageOptimizeInput): Promise<AIJob> => {
+      const r = await rx<AIJobResponse>('/ai/page-optimize', {
+        method: 'POST',
+        body,
+      });
+      return r.job;
+    },
+    imageGenerate: async (body: AIImageGenerateInput): Promise<AIJob> => {
+      const r = await rx<AIJobResponse>('/ai/image-generate', {
+        method: 'POST',
+        body,
+      });
+      return r.job;
+    },
+    /** Poll until completion or fail. Caller passes signal for cancellation. */
+    get: async (jobId: string): Promise<AIJob> => {
+      const r = await rx<AIJobResponse>(`/ai/jobs/${jobId}`);
+      return r.job;
+    },
+    /** Accept/reject a suggestion. */
+    respondSuggestion: (
+      suggestionId: string,
+      body: RespondAISlotSuggestionRequest
+    ) =>
+      rx<AISlotSuggestion>(`/ai/slot-suggestions/${suggestionId}`, {
+        method: 'PATCH',
+        body,
+      }),
+  },
+
+  // ── Analytics ingest (canonical `/v1/track`, replaces `/analytics/events`) ─
+  // BE wired anti-spam 3-layer middleware (rate-limit + UA filter + HMAC visitor token).
+  // Shape pending BE confirmation per handoff §9 q3.
+  track: {
+    /** Fire a single event. Tracker batches via `events` instead for prod. */
+    event: (body: TrackEventInput) =>
+      rx<void>('/track', { method: 'POST', body }),
+    /** Batch up to 50 events per request — prefer this from tracker.ts. */
+    batch: (body: TrackBatchRequest) =>
+      rx<void>('/track', { method: 'POST', body }),
   },
 };

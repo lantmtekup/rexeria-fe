@@ -116,11 +116,11 @@ export function AdminBlockTypesPage() {
 
   const handleToggleActive = async (item: AdminBlockType) => {
     try {
-      await rexerApi.adminBlockTypes.update(item.code, {
+      await rexerApi.adminBlockTypes.update(item.type, {
         is_active: !item.is_active,
       });
       toast.success(
-        `Đã ${item.is_active ? 'disable' : 'enable'} block "${item.code}"`
+        `Đã ${item.is_active ? 'disable' : 'enable'} block "${item.type}"`
       );
       load();
     } catch (err) {
@@ -133,13 +133,13 @@ export function AdminBlockTypesPage() {
   const handleDelete = async (item: AdminBlockType) => {
     if (
       !window.confirm(
-        `Xoá block type "${item.code}"?\n\nMọi block đang dùng type này sẽ bị orphan.`
+        `Xoá block type "${item.type}"?\n\nMọi block đang dùng type này sẽ bị orphan.`
       )
     )
       return;
     try {
-      await rexerApi.adminBlockTypes.remove(item.code);
-      toast.success(`Đã xoá ${item.code}`);
+      await rexerApi.adminBlockTypes.remove(item.type);
+      toast.success(`Đã xoá ${item.type}`);
       load();
     } catch (err) {
       const msg =
@@ -148,7 +148,7 @@ export function AdminBlockTypesPage() {
     }
   };
 
-  const selected = items.find(it => it.code === selectedCode) ?? null;
+  const selected = items.find(it => it.type === selectedCode) ?? null;
 
   return (
     <div className='flex h-[calc(100vh-3.5rem)]'>
@@ -272,10 +272,10 @@ export function AdminBlockTypesPage() {
             <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
               {items.map(item => (
                 <BlockTypeCard
-                  key={item.code}
+                  key={item.type}
                   item={item}
-                  active={item.code === selectedCode}
-                  onSelect={() => setSelectedCode(item.code)}
+                  active={item.type === selectedCode}
+                  onSelect={() => setSelectedCode(item.type)}
                   onToggle={() => handleToggleActive(item)}
                   onDelete={() => handleDelete(item)}
                 />
@@ -335,27 +335,42 @@ function BlockTypeCard({
       >
         <div className='flex items-start justify-between gap-2'>
           <div className='flex items-center gap-2'>
-            {cat && (
-              <span className='text-lg' aria-hidden>
-                {cat.emoji}
-              </span>
+            {item.accent_color ? (
+              <span
+                className='inline-block size-3 shrink-0 rounded'
+                style={{ backgroundColor: item.accent_color }}
+                aria-hidden
+              />
+            ) : (
+              cat && (
+                <span className='text-lg' aria-hidden>
+                  {cat.emoji}
+                </span>
+              )
             )}
             <code className='font-mono text-[12.5px] font-bold text-zinc-900'>
-              {item.code}
+              {item.type}
             </code>
           </div>
-          {!item.is_active && (
-            <span className='rounded-full bg-zinc-200 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-zinc-600 uppercase'>
-              disabled
-            </span>
-          )}
+          <div className='flex items-center gap-1'>
+            {item.is_premium && (
+              <span className='rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-amber-700 uppercase'>
+                premium
+              </span>
+            )}
+            {!item.is_active && (
+              <span className='rounded-full bg-zinc-200 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-zinc-600 uppercase'>
+                disabled
+              </span>
+            )}
+          </div>
         </div>
         <div className='text-[13px] font-semibold text-zinc-800'>
-          {item.name}
+          {item.label_vi}
         </div>
-        {item.description && (
+        {item.description_vi && (
           <p className='line-clamp-2 text-[11.5px] leading-snug text-zinc-500'>
-            {item.description}
+            {item.description_vi}
           </p>
         )}
 
@@ -441,10 +456,19 @@ function BlockTypeDrawer({
     <aside className='flex w-[420px] flex-col border-l border-zinc-200 bg-white'>
       <div className='flex items-start justify-between border-b border-zinc-100 px-4 py-3'>
         <div className='min-w-0 flex-1'>
-          <code className='font-mono text-[13px] font-bold text-zinc-900'>
-            {item.code}
-          </code>
-          <p className='mt-0.5 text-[12px] text-zinc-600'>{item.name}</p>
+          <div className='flex items-center gap-2'>
+            {item.accent_color && (
+              <span
+                className='inline-block size-3 shrink-0 rounded'
+                style={{ backgroundColor: item.accent_color }}
+                aria-hidden
+              />
+            )}
+            <code className='font-mono text-[13px] font-bold text-zinc-900'>
+              {item.type}
+            </code>
+          </div>
+          <p className='mt-0.5 text-[12px] text-zinc-600'>{item.label_vi}</p>
         </div>
         <button
           type='button'
@@ -457,8 +481,14 @@ function BlockTypeDrawer({
       </div>
 
       <div className='flex-1 overflow-y-auto px-4 py-4 text-[12.5px]'>
-        {item.description && (
-          <p className='leading-relaxed text-zinc-600'>{item.description}</p>
+        {item.description_vi && (
+          <p className='leading-relaxed text-zinc-600'>{item.description_vi}</p>
+        )}
+        {item.label_en && (
+          <p className='mt-1 text-[11px] text-zinc-500'>
+            <span className='font-mono text-zinc-400'>EN:</span> {item.label_en}
+            {item.description_en ? ` — ${item.description_en}` : ''}
+          </p>
         )}
 
         <Section title='Surfaces'>

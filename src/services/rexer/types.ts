@@ -1775,49 +1775,54 @@ export interface UpdatePortalMeRequest {
   avatar_url?: string;
 }
 
-// ── Admin Block Types catalog (architecture spec §4.2) ───────────────────
+// ── Admin Block Types catalog (BE actual shape) ───────────────────
+// Note: BE shape diverges from architecture spec §4.2 — no supported_surfaces,
+// no props_schema, no category yet. Adapter rebuilds those if BE ships later.
 
 export interface AdminBlockType {
-  code: string;
-  name: string;
-  description?: string;
-  category?: string;
-  icon_name?: string;
-  preview_image_url?: string;
-  props_schema?: Record<string, unknown>;
-  supported_surfaces?: string[];
-  min_dimensions?: { width?: number; height?: number };
-  supported_slot_types?: string[];
+  type: string; // primary key — BE uses 'type' not 'code'
+  label_vi: string;
+  label_en?: string;
+  description_vi?: string;
+  description_en?: string;
+  accent_color?: string; // hex, replaces icon
   is_active: boolean;
-  engine_version?: string;
+  is_premium?: boolean;
+  schema_version?: string; // canvas engine version
+  sort_order?: number;
   created_at?: string;
   updated_at?: string;
+  // Future fields (architecture spec §4.2) — not shipped by BE yet:
+  supported_surfaces?: string[];
+  props_schema?: Record<string, unknown>;
+  category?: string;
+  min_dimensions?: { width: number; height: number };
+  engine_version?: string;
+  supported_slot_types?: string[];
 }
 
 export interface CreateAdminBlockTypeRequest {
-  code: string;
-  name: string;
-  description?: string;
-  category?: string;
-  icon_name?: string;
-  props_schema?: Record<string, unknown>;
-  supported_surfaces: string[];
-  min_dimensions?: { width?: number; height?: number };
-  supported_slot_types?: string[];
-  engine_version?: string;
+  type: string;
+  label_vi: string;
+  label_en?: string;
+  description_vi?: string;
+  description_en?: string;
+  accent_color?: string;
+  is_premium?: boolean;
+  schema_version?: string;
+  sort_order?: number;
 }
 
 export interface UpdateAdminBlockTypeRequest {
-  name?: string;
-  description?: string;
-  category?: string;
-  icon_name?: string;
-  props_schema?: Record<string, unknown>;
-  supported_surfaces?: string[];
-  min_dimensions?: { width?: number; height?: number };
-  supported_slot_types?: string[];
+  label_vi?: string;
+  label_en?: string;
+  description_vi?: string;
+  description_en?: string;
+  accent_color?: string;
   is_active?: boolean;
-  engine_version?: string;
+  is_premium?: boolean;
+  schema_version?: string;
+  sort_order?: number;
 }
 
 // ── Admin Users (global cross-brand list) ────────────────────────────────
@@ -1935,3 +1940,434 @@ export interface CreatePortalAdCampaignRequest {
 
 export type UpdatePortalAdCampaignRequest =
   Partial<CreatePortalAdCampaignRequest>;
+
+// ─────────────────────────────────────────────────────────────────────────
+// CANONICAL TYPES (Rexer Architecture Final 2026-05-23)
+// Added 2026-05-24 for FE canonical cutover. Legacy types above remain
+// alive until Wave 2 of `docs/fe-canonical-cutover-migration-plan.md`.
+// ─────────────────────────────────────────────────────────────────────────
+
+// ── Brand (canonical, replaces Client) ───────────────────────────────────
+export type BrandStatus = 'active' | 'pending' | 'suspended';
+export type BrandPlan = 'phase1_managed' | 'phase2_self_serve' | string;
+
+export interface Brand {
+  id: string;
+  slug: string;
+  name: string;
+  legal_name?: string;
+  contact_email: string;
+  contact_phone?: string;
+  country_code?: string;
+  industry?: string;
+  logo_asset_id?: string;
+  status: BrandStatus;
+  plan: BrandPlan;
+  storage_quota_gb: number;
+  storage_used_gb: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+export interface BrandListResponse {
+  items: Brand[];
+  page?: number;
+  limit?: number;
+  total?: number;
+  total_pages?: number;
+}
+export interface BrandResponse {
+  brand: Brand;
+}
+export interface CreateBrandRequest {
+  slug: string;
+  name: string;
+  contact_email: string;
+  legal_name?: string;
+  contact_phone?: string;
+  country_code?: string;
+  industry?: string;
+  plan?: BrandPlan;
+}
+export type UpdateBrandRequest = Partial<Omit<CreateBrandRequest, 'slug'>>;
+
+export type BrandMembershipRole = 'brand_admin' | 'brand_member';
+
+export interface BrandMembership {
+  id: string;
+  brand_id: string;
+  user_id: string;
+  role: BrandMembershipRole;
+  joined_at: string;
+  last_seen_at?: string;
+  invited_by?: string;
+}
+
+export interface BrandUser {
+  id: string;
+  email: string;
+  display_name: string;
+  avatar_url?: string;
+  status: 'active' | 'pending' | 'disabled';
+  membership: BrandMembership;
+}
+export interface BrandUserListResponse {
+  items: BrandUser[];
+}
+export interface InviteBrandUserRequest {
+  email: string;
+  display_name: string;
+  role: BrandMembershipRole;
+  password?: string;
+}
+export interface InviteBrandUserResponse {
+  user: BrandUser;
+  generated_password?: string;
+}
+export interface UpdateBrandUserRequest {
+  role?: BrandMembershipRole;
+  display_name?: string;
+  status?: 'active' | 'disabled';
+}
+
+// ── Page (canonical, unified entity with type discriminator) ─────────────
+export type PageType = 'landing' | 'ad' | 'curate';
+export type PageStatus = 'draft' | 'published' | 'archived';
+
+export interface PageMetadataLanding {
+  featured_image?: string;
+  og_meta?: Record<string, string>;
+  robots?: string;
+  sitemap_priority?: number;
+}
+export interface PageMetadataAd {
+  format:
+    | 'facebook_feed'
+    | 'banner_728x90'
+    | 'banner_300x250'
+    | 'instagram_square'
+    | 'story_1080x1920'
+    | 'youtube_thumbnail'
+    | string;
+  dimensions: { width: number; height: number };
+  duration_sec?: number;
+}
+export interface PageMetadataCurate {
+  trigger:
+    | 'time_on_page'
+    | 'scroll_50'
+    | 'exit_intent'
+    | 'click_element'
+    | string;
+  trigger_config: {
+    delay_ms?: number;
+    scroll_threshold_pct?: number;
+    target_selector?: string;
+    max_show_per_session?: number;
+  };
+  embed_token?: string;
+}
+export type PageTypeMetadata =
+  | PageMetadataLanding
+  | PageMetadataAd
+  | PageMetadataCurate
+  | Record<string, unknown>;
+
+export interface Page {
+  id: string;
+  brand_id: string;
+  workspace_id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  type: PageType;
+  type_metadata: PageTypeMetadata;
+  status: PageStatus;
+  template_version_id: string;
+  active_release_id?: string;
+  freeze_products: boolean;
+  assigned_by?: string;
+  assigned_at?: string;
+  handoff_notes?: string;
+  thumbnail_asset_id?: string;
+  thumbnail_url?: string;
+  created_by: string;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
+  archived_at?: string;
+}
+export interface PageListResponse {
+  items: Page[];
+  page?: number;
+  limit?: number;
+  total?: number;
+  total_pages?: number;
+}
+export interface PageResponse {
+  page: Page;
+}
+export interface CreatePageRequest {
+  type: PageType;
+  template_id: string;
+  template_version_id?: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  type_metadata?: PageTypeMetadata;
+  workspace_id?: string;
+}
+export interface UpdatePageRequest {
+  name?: string;
+  slug?: string;
+  description?: string;
+  type_metadata?: PageTypeMetadata;
+  freeze_products?: boolean;
+  thumbnail_asset_id?: string;
+}
+
+// ── Page revisions (rolling autosave) ────────────────────────────────────
+export interface PageRevision {
+  id: string;
+  page_id: string;
+  revision_no: number;
+  config_json: Record<string, unknown>;
+  changed_by: string;
+  changed_at: string;
+}
+export interface PageRevisionListResponse {
+  items: PageRevision[];
+  page_id: string;
+  latest_revision_no: number;
+}
+export interface SavePageConfigRequest {
+  config_json: Record<string, unknown>;
+  /** Optimistic concurrency — pass the latest revision_no FE has seen. */
+  base_revision_no?: number;
+}
+
+// ── Page releases (immutable publish snapshots) ──────────────────────────
+export interface PageRelease {
+  id: string;
+  page_id: string;
+  release_no: number;
+  version_label?: string;
+  config_snapshot: Record<string, unknown>;
+  canvas_blueprint_snapshot: Record<string, unknown>;
+  product_snapshot?: Record<string, unknown>;
+  share_token?: string;
+  published_by: string;
+  published_at: string;
+  is_active: boolean;
+}
+export interface PageReleaseListResponse {
+  items: PageRelease[];
+}
+export interface PublishPageRequest {
+  version_label?: string;
+}
+export interface PublishPageValidateResponse {
+  ok: boolean;
+  errors?: Array<{ slot_key?: string; code: string; message: string }>;
+}
+export interface PublishPageResponse {
+  release: PageRelease;
+  /** Type-specific publish output. */
+  output?: {
+    landing?: { url: string; share_token: string };
+    ad?: { export_url: string; format: string };
+    curate?: { embed_snippet: string; embed_token: string };
+  };
+}
+
+// ── Block (canonical CRUD entity) ────────────────────────────────────────
+export type BlockScope =
+  | 'system'
+  | 'brand_private'
+  | 'brand_team'
+  | 'brand_public';
+
+export interface Block {
+  id: string;
+  type_code: string;
+  brand_id?: string;
+  workspace_id?: string;
+  name: string;
+  description?: string;
+  settings: Record<string, unknown>;
+  thumbnail_asset_id?: string;
+  thumbnail_url?: string;
+  tags: string[];
+  scope: BlockScope;
+  usage_count: number;
+  last_used_at?: string;
+  source_block_id?: string;
+  created_by: string;
+  updated_by: string;
+  created_at: string;
+  updated_at: string;
+  archived_at?: string;
+}
+export interface BlockListResponse {
+  items: Block[];
+  page?: number;
+  limit?: number;
+  total?: number;
+  total_pages?: number;
+}
+export interface BlockResponse {
+  block: Block;
+}
+export interface CreateBlockRequest {
+  type_code: string;
+  name: string;
+  settings: Record<string, unknown>;
+  brand_id?: string;
+  workspace_id?: string;
+  scope?: BlockScope;
+  tags?: string[];
+  description?: string;
+}
+export interface UpdateBlockRequest {
+  name?: string;
+  description?: string;
+  settings?: Record<string, unknown>;
+  tags?: string[];
+  thumbnail_asset_id?: string;
+}
+
+// ── BlockType (system catalog, canonical mirror of AdminBlockType) ───────
+// AdminBlockType in legacy section already matches BE canonical shape —
+// re-export under canonical alias for code-mod clarity.
+export type CanonicalBlockType = AdminBlockType;
+export interface BlockTypeListResponse {
+  items: CanonicalBlockType[];
+}
+
+// ── AI Job (canonical async pattern) ─────────────────────────────────────
+export type AIJobType =
+  | 'template_draft'
+  | 'slot_suggest'
+  | 'page_optimize'
+  | 'image_generate';
+export type AIJobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
+
+export interface AIJob {
+  id: string;
+  requested_by: string;
+  brand_id?: string;
+  job_type: AIJobType;
+  input_payload: Record<string, unknown>;
+  output_payload?: Record<string, unknown>;
+  status: AIJobStatus;
+  cost_credits: number;
+  model: string;
+  tokens_in?: number;
+  tokens_out?: number;
+  error_message?: string;
+  created_at: string;
+  completed_at?: string;
+}
+export interface AIJobResponse {
+  job: AIJob;
+}
+
+export interface AITemplateDraftInput {
+  prompt: string;
+  target_page_type: PageType;
+  /** Optional brand context for tone/voice priming. */
+  brand_id?: string;
+  language?: string;
+}
+export interface AISlotSuggestInput {
+  page_id: string;
+  slot_key: string;
+  /** Free-form context provided by the editor (e.g., current value). */
+  context?: Record<string, unknown>;
+  count?: number;
+}
+export interface AIPageOptimizeInput {
+  page_id: string;
+  goals?: string[];
+}
+export interface AIImageGenerateInput {
+  prompt: string;
+  brand_id?: string;
+  aspect_ratio?: string;
+  /** Where the generated asset will be bound — informs storage path. */
+  page_id?: string;
+  slot_key?: string;
+}
+
+export interface AISlotSuggestion {
+  id: string;
+  page_id: string;
+  slot_key: string;
+  suggestion_text: string;
+  accepted?: boolean;
+  ai_job_id: string;
+  suggested_at: string;
+  responded_at?: string;
+}
+export interface AISlotSuggestionListResponse {
+  items: AISlotSuggestion[];
+}
+export interface RespondAISlotSuggestionRequest {
+  accepted: boolean;
+}
+
+// ── Track event (canonical analytics ingest /v1/track) ───────────────────
+export type TrackEventType =
+  | 'page_view'
+  | 'block_view'
+  | 'block_dwell'
+  | 'click'
+  | 'scroll_depth'
+  | 'form_submit'
+  | 'cta_click'
+  | 'product_view'
+  | 'product_click';
+
+export interface TrackEventInput {
+  page_id: string;
+  release_id?: string;
+  block_key?: string;
+  element_key?: string;
+  visitor_id: string;
+  session_id: string;
+  event_type: TrackEventType;
+  action?: string;
+  target?: string;
+  dwell_ms?: number;
+  scroll_depth?: number;
+  viewport_w?: number;
+  viewport_h?: number;
+  referrer?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  device_type?: 'desktop' | 'mobile' | 'tablet';
+  meta?: Record<string, unknown>;
+  occurred_at?: string;
+}
+export interface TrackBatchRequest {
+  events: TrackEventInput[];
+}
+
+// ── Page analytics (canonical, mirror of TemplateAnalytics) ──────────────
+export interface PageAnalyticsSummary {
+  page_id: string;
+  range: { start: string; end: string };
+  page_views: number;
+  unique_visitors: number;
+  clicks: number;
+  conversions: number;
+  avg_scroll_depth?: number;
+  trend: Array<{ date: string; page_views: number; clicks: number }>;
+}
+export interface PageAnalyticsBlockRow extends BlockBreakdownRow {
+  block_key: string;
+}
+export interface PageAnalyticsBlocksResponse {
+  items: PageAnalyticsBlockRow[];
+}
