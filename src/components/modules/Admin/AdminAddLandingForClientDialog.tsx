@@ -1,36 +1,29 @@
 'use client';
 
 /**
- * Admin dialog — create a fresh landing page directly inside a brand's
- * workspace. Composes two BE calls in sequence:
+ * Admin dialog — create a landing page for a brand by instantiating a
+ * template into one of the brand's workspaces. Canonical canonical flow
+ * (POST /admin/pages/from-template) replaces the legacy 2-step
+ * `POST /canvas-templates` + `POST /assign`.
  *
- *   1. POST /canvas-templates  → blank canvas (no client_id yet)
- *   2. POST /canvas-templates/{id}/assign  → hand off to brand workspace
- *
- * After both succeed, redirects the admin into the canvas editor so they
- * can start dressing the landing.
+ * Admin picks: workspace + template + name + handoff notes. BE creates
+ * the page in draft status; brand fills slots via portal.
  */
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
 import { Loader2, Send, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { Client, Workspace } from '@/services/rexer/types';
+import type { Brand, Template, Workspace } from '@/services/rexer/types';
 
 interface Props {
   open: boolean;
-  client: Client | null;
+  client: Brand | null;
   onClose: () => void;
-  onCreated?: (templateId: string) => void;
+  onCreated?: (pageId: string) => void;
 }
-
-const EMPTY_CANVAS = {
-  schema_version: '2.0',
-  blocks: [],
-};
 
 export function AdminAddLandingForClientDialog({
   open,
@@ -38,11 +31,12 @@ export function AdminAddLandingForClientDialog({
   onClose,
   onCreated,
 }: Props) {
-  const router = useRouter();
   const [name, setName] = React.useState('');
   const [notes, setNotes] = React.useState('');
   const [workspaces, setWorkspaces] = React.useState<Workspace[]>([]);
   const [workspaceId, setWorkspaceId] = React.useState('');
+  const [templates, setTemplates] = React.useState<Template[]>([]);
+  const [templateId, setTemplateId] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -51,8 +45,10 @@ export function AdminAddLandingForClientDialog({
     setName('');
     setNotes('');
     setError(null);
-    rexerApi.workspaces
-      .listForClient(client.id)
+
+    // Load workspaces + templates in parallel.
+    rexerApi.brands.workspaces
+      .list(client.id)
       .then(r => {
         setWorkspaces(r.items ?? []);
         const def = r.items?.find(w => w.is_default) ?? r.items?.[0];
@@ -61,6 +57,18 @@ export function AdminAddLandingForClientDialog({
       .catch(() => {
         setWorkspaces([]);
         setWorkspaceId('');
+      });
+
+    rexerApi.templates
+      .list()
+      .then(r => {
+        const items = r.items ?? [];
+        setTemplates(items);
+        setTemplateId(items[0]?.id ?? '');
+      })
+      .catch(() => {
+        setTemplates([]);
+        setTemplateId('');
       });
   }, [open, client]);
 
@@ -73,42 +81,28 @@ export function AdminAddLandingForClientDialog({
       setError('Đặt tên cho landing trước');
       return;
     }
+    if (!templateId) {
+      setError('Chọn template để khởi tạo');
+      return;
+    }
+    if (!workspaceId) {
+      setError('Chọn workspace cho brand');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
-      const created = await rexerApi.canvasTemplates.create({
+      const page = await rexerApi.adminPages.fromTemplate({
+        template_id: templateId,
+        brand_id: client.id,
+        workspace_id: workspaceId,
         name: trimmed,
-        width: 800,
-        height: 600,
-        engine: 'fabric',
-        engine_version: '5.3.0',
-        canvas_data: EMPTY_CANVAS,
-        is_template: false,
+        type: 'landing',
+        handoff_notes: notes.trim() || undefined,
       });
-      // Hand it off to the brand in the second call. BE will set
-      // client_id + workspace_id + (per spec) reset status to draft.
-      try {
-        await rexerApi.canvasTemplates.assignToBrand(created.id, {
-          client_id: client.id,
-          workspace_id: workspaceId || undefined,
-          notes: notes.trim() || undefined,
-        });
-      } catch (err) {
-        // Assign failed — keep the canvas but warn admin.
-        const msg =
-          err instanceof RxApiError
-            ? err.code || err.message
-            : err instanceof Error
-              ? err.message
-              : 'ASSIGN_FAILED';
-        toast.warning(
-          `Canvas đã tạo nhưng assign thất bại: ${msg}. Bạn có thể assign tay sau.`
-        );
-      }
-      toast.success(`Đã tạo "${created.name}" cho ${client.name}`);
-      onCreated?.(created.id);
+      toast.success(`Đã tạo "${page.name}" cho ${client.name}`);
+      onCreated?.(page.id);
       onClose();
-      router.push(`/canvas-templates/${created.id}`);
     } catch (err) {
       const msg =
         err instanceof RxApiError
@@ -139,7 +133,7 @@ export function AdminAddLandingForClientDialog({
             </div>
             <div className='leading-tight'>
               <h3 className='text-[15px] font-semibold'>
-                Tạo landing cho khách
+                Tạo landing cho brand
               </h3>
               <p className='font-mono text-[10px] text-zinc-400'>
                 {client.name}
@@ -174,7 +168,35 @@ export function AdminAddLandingForClientDialog({
 
           <div>
             <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
-              Workspace
+              Template <span className='text-rose-500'>*</span>
+            </label>
+            <select
+              value={templateId}
+              onChange={e => setTemplateId(e.target.value)}
+              disabled={templates.length === 0}
+              className='mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[14px] outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+            >
+              {templates.length === 0 && (
+                <option value=''>
+                  (Chưa có template — tạo template trước)
+                </option>
+              )}
+              {templates.map(t => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                  {t.category ? ` — ${t.category}` : ''}
+                </option>
+              ))}
+            </select>
+            <p className='mt-1 text-[10.5px] text-zinc-500'>
+              BE clone canvas_blueprint + slot_schema từ template_version hiện
+              hành sang page mới.
+            </p>
+          </div>
+
+          <div>
+            <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+              Workspace <span className='text-rose-500'>*</span>
             </label>
             <select
               value={workspaceId}
@@ -183,7 +205,7 @@ export function AdminAddLandingForClientDialog({
               className='mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[14px] outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             >
               {workspaces.length === 0 && (
-                <option value=''>(Khách chưa có workspace)</option>
+                <option value=''>(Brand chưa có workspace)</option>
               )}
               {workspaces.map(w => (
                 <option key={w.id} value={w.id}>
@@ -192,7 +214,7 @@ export function AdminAddLandingForClientDialog({
               ))}
             </select>
             <p className='mt-1 text-[10.5px] text-zinc-500'>
-              Mặc định = workspace default của khách
+              Mặc định = workspace default của brand
             </p>
           </div>
 
@@ -205,7 +227,7 @@ export function AdminAddLandingForClientDialog({
               onChange={e => setNotes(e.target.value)}
               rows={2}
               maxLength={2000}
-              placeholder='Vd: Đã set sẵn block hero + booking, brand chỉ cần đổi text + ảnh.'
+              placeholder='Vd: Brand chỉ cần đổi text + ảnh ở slot hero + booking.'
               className='mt-1 w-full resize-y rounded-lg border border-zinc-200 px-3 py-2 text-[13px] outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             />
           </div>
@@ -217,10 +239,11 @@ export function AdminAddLandingForClientDialog({
           )}
 
           <div className='rounded-lg border border-zinc-200 bg-zinc-50/50 px-3 py-2 text-[11px] text-zinc-600'>
-            FE flow: <code className='font-mono'>POST /canvas-templates</code>{' '}
-            tạo canvas trống → <code className='font-mono'>POST /assign</code>{' '}
-            gắn vào workspace của khách (status reset về draft). Admin sẽ vào
-            editor để dựng nội dung.
+            Canonical flow:{' '}
+            <code className='font-mono'>POST /admin/pages/from-template</code>{' '}
+            tạo Page (type=landing, status=draft) trong workspace của brand,
+            link tới template_version hiện hành. Brand vào portal fill slot qua
+            form editor.
           </div>
         </div>
 
@@ -235,7 +258,7 @@ export function AdminAddLandingForClientDialog({
           </button>
           <button
             type='submit'
-            disabled={submitting || !name.trim()}
+            disabled={submitting || !name.trim() || !templateId || !workspaceId}
             className='inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50'
           >
             {submitting ? (
@@ -243,7 +266,7 @@ export function AdminAddLandingForClientDialog({
             ) : (
               <Send className='size-3.5' />
             )}
-            {submitting ? 'Đang tạo…' : 'Tạo + mở editor'}
+            {submitting ? 'Đang tạo…' : 'Tạo page'}
           </button>
         </div>
       </form>

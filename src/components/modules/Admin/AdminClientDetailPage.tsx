@@ -1,10 +1,14 @@
 'use client';
 
 /**
- * Admin detail page for a single customer (client). Loads everything that
- * belongs to the brand: workspaces, landing pages, blocks, products, and
- * members. Renders as a header + stats strip + tabbed body. Each tab loads
- * lazily so the initial paint only blocks on `/clients/{id}`.
+ * Admin detail page for a single brand. Loads everything that belongs to
+ * the brand: workspaces, landing pages, blocks, products, and members.
+ * Renders as a header + stats strip + tabbed body. Each tab loads lazily
+ * so the initial paint only blocks on `/brands/{id}`.
+ *
+ * Migrated to canonical API in Wave 2 of FE canonical cutover
+ * (docs/fe-canonical-cutover-migration-plan.md). Route prop is still
+ * `clientId` for URL compatibility; internal state uses `Brand`.
  */
 
 import * as React from 'react';
@@ -35,11 +39,11 @@ import { RxApiError } from '@/services/rexer/client';
 
 import { AdminAddLandingForClientDialog } from './AdminAddLandingForClientDialog';
 import type {
-  CanvasTemplate,
-  Client,
-  ClientUser,
+  Block,
+  Brand,
+  BrandUser,
+  Page,
   Product,
-  SavedBlockServer,
   Workspace,
 } from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
@@ -76,7 +80,7 @@ interface Counts {
 }
 
 export function AdminClientDetailPage({ clientId }: Props) {
-  const [client, setClient] = React.useState<Client | null>(null);
+  const [client, setClient] = React.useState<Brand | null>(null);
   const [loadingClient, setLoadingClient] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [tab, setTab] = React.useState<TabKey>('workspaces');
@@ -89,7 +93,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
     let cancelled = false;
     setLoadingClient(true);
     setError(null);
-    rexerApi.clients
+    rexerApi.brands
       .get(clientId)
       .then(c => {
         if (cancelled) return;
@@ -113,7 +117,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
     navigator.clipboard.writeText(clientId).then(
       () => {
         setCopied(true);
-        toast.success('Đã copy client ID');
+        toast.success('Đã copy brand ID');
         window.setTimeout(() => setCopied(false), 1200);
       },
       () => toast.error('Copy thất bại')
@@ -361,7 +365,7 @@ function WorkspacesTab({
 }) {
   return (
     <LazyList<Workspace>
-      load={() => rexerApi.workspaces.listForClient(clientId)}
+      load={() => rexerApi.brands.workspaces.list(clientId)}
       onCount={onCount}
       empty='Chưa có workspace nào'
       render={ws => (
@@ -406,25 +410,30 @@ function LandingsTab({
   client,
   onCount,
 }: {
-  client: Client;
+  client: Brand;
   onCount: (n: number) => void;
 }) {
-  const [items, setItems] = React.useState<CanvasTemplate[]>([]);
+  const [items, setItems] = React.useState<Page[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [addOpen, setAddOpen] = React.useState(false);
 
+  // Pages are workspace-scoped in canonical API. List all brand's workspaces
+  // then fan out one /workspaces/:wsId/pages call per workspace and merge.
   const load = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const r = await rexerApi.canvasTemplates.list({
-        client_id: client.id,
-        limit: 50,
-      });
-      const arr = r.items ?? [];
+      const wsRes = await rexerApi.brands.workspaces.list(client.id);
+      const workspaces = wsRes.items ?? [];
+      const pagesByWs = await Promise.all(
+        workspaces.map(ws =>
+          rexerApi.pages.list(ws.id, { type: 'landing', limit: 50 })
+        )
+      );
+      const arr = pagesByWs.flatMap(r => r.items ?? []);
       setItems(arr);
-      onCount(r.total ?? arr.length);
+      onCount(arr.length);
     } catch (err) {
       setError(
         err instanceof RxApiError ? err.code || err.message : 'LOAD_FAILED'
@@ -439,17 +448,17 @@ function LandingsTab({
     load();
   }, [load]);
 
-  const handleDelete = async (item: CanvasTemplate) => {
+  const handleDelete = async (item: Page) => {
     if (
       !window.confirm(
-        `Xoá landing "${item.name}"?\n\nThao tác này không thể undo.`
+        `Xoá landing "${item.name}"?\n\nLanding sẽ chuyển sang archived (có thể restore).`
       )
     )
       return;
-    const tid = toast.loading('Đang xoá…');
+    const tid = toast.loading('Đang archive…');
     try {
-      await rexerApi.canvasTemplates.remove(item.id);
-      toast.success('Đã xoá', { id: tid });
+      await rexerApi.pages.archive(item.id);
+      toast.success('Đã archive', { id: tid });
       load();
     } catch (err) {
       const msg =
@@ -458,7 +467,7 @@ function LandingsTab({
           : err instanceof Error
             ? err.message
             : 'DELETE_FAILED';
-      toast.error(`Xoá thất bại: ${msg}`, { id: tid });
+      toast.error(`Archive thất bại: ${msg}`, { id: tid });
     }
   };
 
@@ -519,23 +528,12 @@ function LandingsTab({
   );
 }
 
-function genShareToken(): string {
-  const arr = new Uint8Array(24);
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(arr);
-  } else {
-    for (let i = 0; i < arr.length; i++)
-      arr[i] = Math.floor(Math.random() * 256);
-  }
-  return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
-}
-
 function LandingRow({
   item,
   onDelete,
   onReload,
 }: {
-  item: CanvasTemplate;
+  item: Page;
   onDelete: () => void;
   onReload: () => void;
 }) {
@@ -551,32 +549,19 @@ function LandingRow({
     return () => document.removeEventListener('mousedown', onDoc);
   }, [menuOpen]);
 
-  // BE confirmed (audit-2026-05-23 §2 Q3): canvas-template publish is done
-  // by PATCH /canvas-templates/{id} với canvas_data.publish.{published,
-  // shareToken, publishedAt}. No dedicated POST endpoint needed.
+  // Canonical publish flow: POST /pages/:id/publish snapshots
+  // page_revisions.config_json + canvas_blueprint into an immutable
+  // page_releases row and flips status to 'published'. Unpublish
+  // deactivates the release and reverts status to 'draft'.
   const togglePublish = async (publish: boolean) => {
     setMenuOpen(false);
     const tid = toast.loading(publish ? 'Đang publish…' : 'Đang unpublish…');
     try {
-      const canvasRes = await rexerApi.canvasTemplates.getCanvas(item.id);
-      if (!canvasRes) {
-        toast.error('Không load được canvas data', { id: tid });
-        return;
+      if (publish) {
+        await rexerApi.pages.publish(item.id);
+      } else {
+        await rexerApi.pages.unpublish(item.id);
       }
-      const next = {
-        ...(canvasRes.canvas_data as Record<string, unknown>),
-        publish: publish
-          ? {
-              published: true,
-              shareToken: genShareToken(),
-              publishedAt: new Date().toISOString(),
-            }
-          : { published: false },
-      };
-      await rexerApi.canvasTemplates.update(item.id, {
-        version: item.version,
-        canvas_data: next,
-      });
       toast.success(publish ? 'Đã publish landing' : 'Đã unpublish', {
         id: tid,
       });
@@ -623,18 +608,15 @@ function LandingRow({
           <span
             className={cn(
               'rounded-full px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase',
-              item.is_active
+              item.status === 'published'
                 ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-zinc-100 text-zinc-500'
+                : item.status === 'archived'
+                  ? 'bg-rose-100 text-rose-700'
+                  : 'bg-zinc-100 text-zinc-500'
             )}
           >
-            {item.is_active ? 'active' : 'inactive'}
+            {item.status}
           </span>
-          {item.is_template && (
-            <span className='rounded-full bg-violet-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-violet-700 uppercase'>
-              library
-            </span>
-          )}
         </div>
         <div className='mt-0.5 font-mono text-[10px] text-zinc-400'>
           {item.id.slice(0, 12)}… ·{' '}
@@ -711,10 +693,16 @@ function BlocksTab({
   onCount: (n: number) => void;
 }) {
   return (
-    <LazyList<SavedBlockServer>
-      load={() => rexerApi.savedBlocks.list({ client_id: clientId, limit: 50 })}
+    <LazyList<Block>
+      load={() =>
+        rexerApi.blocks.list({
+          brand_id: clientId,
+          scope: 'brand_private',
+          limit: 50,
+        })
+      }
       onCount={onCount}
-      empty='Khách hàng chưa save block nào lên thư viện'
+      empty='Brand chưa save block nào lên thư viện'
       render={b => (
         <div className='flex items-start gap-3 border-b border-zinc-100 px-4 py-3 last:border-0'>
           <div className='aspect-[4/3] w-14 shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-gradient-to-br from-zinc-100 to-zinc-200'>
@@ -823,10 +811,10 @@ function MembersTab({
   onCount: (n: number) => void;
 }) {
   return (
-    <LazyList<ClientUser>
-      load={() => rexerApi.clients.users(clientId)}
+    <LazyList<BrandUser>
+      load={() => rexerApi.brands.users(clientId)}
       onCount={onCount}
-      empty='Chưa có member nào trong workspace của khách hàng'
+      empty='Chưa có member nào trong brand'
       render={u => (
         <div className='flex items-center justify-between border-b border-zinc-100 px-4 py-3 last:border-0'>
           <div className='flex items-center gap-3'>
