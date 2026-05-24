@@ -20,7 +20,7 @@ import {
 
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
-import type { Client } from '@/services/rexer/types';
+import type { Brand } from '@/services/rexer/types';
 
 type Role = 'admin' | 'staff' | 'client_user';
 
@@ -95,7 +95,7 @@ export function AdminCreateUserModal({
   onCreated,
 }: {
   open: boolean;
-  clients: Client[];
+  clients: Brand[];
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -180,10 +180,11 @@ export function AdminCreateUserModal({
             description: email,
           });
         } else {
-          const res = await rexerApi.clients.inviteUser(clientId, {
+          const res = await rexerApi.brands.inviteUser(clientId, {
             email,
             ...(effectivePassword ? { password: effectivePassword } : {}),
             display_name: displayName,
+            role: 'brand_admin',
           });
           // BE returns generated_password when we omitted password.
           if (!effectivePassword && res.generated_password) {

@@ -43,8 +43,6 @@ import { RxApiError } from '@/services/rexer/client';
 import type { CanvasTemplate } from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
 
-import { AdminAssignTemplateDialog } from './AdminAssignTemplateDialog';
-
 type View = 'grid' | 'table';
 type Status = 'all' | 'active' | 'inactive';
 type Kind = 'all' | 'library' | 'assigned' | 'draft';
@@ -314,21 +312,40 @@ export function AdminCanvasTemplatesPage() {
         />
       )}
 
-      <AdminAssignTemplateDialog
-        open={!!assignTarget}
-        template={assignTarget}
-        onClose={() => setAssignTarget(null)}
-        onAssigned={updated => {
-          setItems(prev =>
-            prev.map(it => (it.id === updated.id ? updated : it))
-          );
-          toast.success(
-            'Brand sẽ thấy template này trong /portal/landing-pages'
-          );
-        }}
-      />
+      {/*
+       * AdminAssignTemplateDialog wires to canonical `adminPages.fromTemplate`
+       * which expects a Template (system catalog) — not the legacy
+       * `CanvasTemplate` shape this page still queries. Wave 2/3 of the
+       * canonical cutover will migrate this page entirely to /admin/templates
+       * (template catalog) and /admin/users/[brand] (per-brand pages).
+       * Until then, the assign action is a no-op with a clarifying toast.
+       */}
+      {assignTarget && (
+        <DeprecatedAssignNotice
+          template={assignTarget}
+          onClose={() => setAssignTarget(null)}
+        />
+      )}
     </div>
   );
+}
+
+function DeprecatedAssignNotice({
+  template,
+  onClose,
+}: {
+  template: CanvasTemplate;
+  onClose: () => void;
+}) {
+  React.useEffect(() => {
+    toast.info(
+      `Assign "${template.name}" — flow đang migrate sang /admin/templates (Wave 2 cutover). Tạm thời mở brand detail (/admin/users/[id]) → "Tạo landing mới" để hand-off.`,
+      { duration: 6000 }
+    );
+    onClose();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return null;
 }
 
 /* ─── Grid ──────────────────────────────────────────────────────────── */

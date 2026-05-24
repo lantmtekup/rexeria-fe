@@ -39,7 +39,7 @@ import {
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import { cn } from '@/lib/cn';
-import type { Client } from '@/services/rexer/types';
+import type { Brand } from '@/services/rexer/types';
 
 import { AdminCreateUserModal } from './AdminCreateUserModal';
 import { gradientForId, initialsOf } from './_avatar';
@@ -68,7 +68,7 @@ export function AdminUsersPage() {
   const t = useTranslations('admin');
   const tErrors = useTranslations('errors');
 
-  const [allItems, setAllItems] = React.useState<Client[]>([]);
+  const [allItems, setAllItems] = React.useState<Brand[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -98,7 +98,7 @@ export function AdminUsersPage() {
       const query: { status?: string; q?: string } = {};
       if (status !== 'all') query.status = status;
       if (debouncedSearch.trim()) query.q = debouncedSearch.trim();
-      const r = await rexerApi.clients.list(query);
+      const r = await rexerApi.brands.list(query);
       setAllItems(r.items ?? []);
     } catch (err) {
       const code =
@@ -344,7 +344,7 @@ export function AdminUsersPage() {
 
 /* ─── Grid ──────────────────────────────────────────────────────────── */
 
-function GridView({ items }: { items: Client[] }) {
+function GridView({ items }: { items: Brand[] }) {
   return (
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
       {items.map(c => (
@@ -354,7 +354,7 @@ function GridView({ items }: { items: Client[] }) {
   );
 }
 
-function ClientCard({ item }: { item: Client }) {
+function ClientCard({ item }: { item: Brand }) {
   const statusClass =
     STATUS_CHIP[item.status?.toLowerCase()] ?? 'bg-zinc-100 text-zinc-600';
   return (
@@ -398,7 +398,7 @@ function TableView({
   items,
   t,
 }: {
-  items: Client[];
+  items: Brand[];
   t: ReturnType<typeof useTranslations>;
 }) {
   return (

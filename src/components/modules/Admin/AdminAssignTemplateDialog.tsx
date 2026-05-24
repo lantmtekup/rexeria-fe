@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * Hand-off modal — admin/staff Rexer assign a canvas template to a brand
- * (client + workspace). Posts to `/canvas-templates/{id}/assign` per
- * be-todo.md P0.6. When BE isn't ready yet, surfaces the 404/501 cleanly
- * so admin knows to nudge BE.
+ * Hand-off modal — admin/staff Rexer instantiate a template into a brand's
+ * workspace as a new Page. Canonical flow uses
+ * `POST /admin/pages/from-template` (replaces legacy
+ * `/canvas-templates/{id}/assign`).
  */
 
 import * as React from 'react';
@@ -13,13 +13,13 @@ import { toast } from 'sonner';
 
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { CanvasTemplate, Client, Workspace } from '@/services/rexer/types';
+import type { Brand, Page, Template, Workspace } from '@/services/rexer/types';
 
 interface Props {
   open: boolean;
-  template: CanvasTemplate | null;
+  template: Template | null;
   onClose: () => void;
-  onAssigned?: (next: CanvasTemplate) => void;
+  onAssigned?: (page: Page) => void;
 }
 
 export function AdminAssignTemplateDialog({
@@ -28,11 +28,12 @@ export function AdminAssignTemplateDialog({
   onClose,
   onAssigned,
 }: Props) {
-  const [clients, setClients] = React.useState<Client[]>([]);
+  const [clients, setClients] = React.useState<Brand[]>([]);
   const [workspaces, setWorkspaces] = React.useState<Workspace[]>([]);
   const [clientId, setClientId] = React.useState('');
   const [workspaceId, setWorkspaceId] = React.useState('');
   const [notes, setNotes] = React.useState('');
+  const [pageName, setPageName] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -41,12 +42,13 @@ export function AdminAssignTemplateDialog({
     setClientId('');
     setWorkspaceId('');
     setNotes('');
+    setPageName(template?.name ?? '');
     setError(null);
-    rexerApi.clients
+    rexerApi.brands
       .list()
       .then(r => setClients(r.items ?? []))
       .catch(() => setClients([]));
-  }, [open]);
+  }, [open, template]);
 
   React.useEffect(() => {
     if (!clientId) {
@@ -54,8 +56,8 @@ export function AdminAssignTemplateDialog({
       setWorkspaceId('');
       return;
     }
-    rexerApi.workspaces
-      .listForClient(clientId)
+    rexerApi.brands.workspaces
+      .list(clientId)
       .then(r => {
         setWorkspaces(r.items ?? []);
         const def = r.items?.find(w => w.is_default) ?? r.items?.[0];
@@ -74,25 +76,30 @@ export function AdminAssignTemplateDialog({
       setError('Chọn brand trước khi assign');
       return;
     }
+    if (!workspaceId) {
+      setError('Brand chưa có workspace để instantiate page');
+      return;
+    }
+    const trimmedName = pageName.trim() || template.name;
     setSubmitting(true);
     setError(null);
     try {
-      const updated = await rexerApi.canvasTemplates.assignToBrand(
-        template.id,
-        {
-          client_id: clientId,
-          workspace_id: workspaceId || undefined,
-          notes: notes.trim() || undefined,
-        }
-      );
+      const page = await rexerApi.adminPages.fromTemplate({
+        template_id: template.id,
+        brand_id: clientId,
+        workspace_id: workspaceId,
+        name: trimmedName,
+        type: 'landing',
+        handoff_notes: notes.trim() || undefined,
+      });
       const clientName = clients.find(c => c.id === clientId)?.name ?? '?';
-      toast.success(`Đã assign "${template.name}" sang ${clientName}`);
-      onAssigned?.(updated);
+      toast.success(`Đã tạo "${page.name}" cho ${clientName}`);
+      onAssigned?.(page);
       onClose();
     } catch (err) {
       if (err instanceof RxApiError && err.status === 404) {
         setError(
-          'BE chưa ship endpoint /canvas-templates/{id}/assign (be-todo.md P0.6). Nhắc BE merge.'
+          'BE chưa ship endpoint /admin/pages/from-template — nhắc BE merge canonical handler.'
         );
       } else {
         const msg =
@@ -140,6 +147,20 @@ export function AdminAssignTemplateDialog({
         </div>
 
         <div className='space-y-4 px-5 py-4'>
+          <Field
+            label='Tên page'
+            hint='Mặc định = tên template, brand có thể đổi sau'
+          >
+            <input
+              type='text'
+              value={pageName}
+              maxLength={200}
+              onChange={e => setPageName(e.target.value)}
+              placeholder={template.name}
+              className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[14px] outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+            />
+          </Field>
+
           <Field label='Brand' required>
             <select
               value={clientId}

@@ -52,9 +52,7 @@ import {
   type SavedBlock,
 } from '@/components/modules/CanvasTemplate/block-editor/savedBlocks';
 import { BlockMiniPreview } from '@/components/modules/CanvasTemplate/block-editor/BlockMiniPreview';
-import { serializeCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
 import type { BlockType } from '@/components/modules/CanvasTemplate/block-editor/types';
-import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
 
 import { AddBuiltinBlockDialog } from './AddBuiltinBlockDialog';
@@ -181,36 +179,19 @@ export function AdminBlocksPage() {
   };
 
   /**
-   * Edit flow: create a scratch canvas template containing only this block,
-   * then push the user into the canvas editor. The new template is named
-   * `[Editing] <block name>` so it's easy to spot if they leave it lying around.
+   * Edit flow disabled in Wave 2 of canonical cutover — legacy scratch
+   * canvas-template create path is gone. Wave 3 will:
+   *   1. Switch this page from localStorage `savedBlocks` to server-backed
+   *      `rexerApi.blocks` (BE shape: type_code + settings + scope).
+   *   2. Refactor canvas-editor wrap to load `block.settings` directly
+   *      instead of round-tripping through a temp canvas-template id.
+   * For now surface an informative toast so admins know where to go.
    */
-  const handleEdit = async (block: SavedBlock) => {
-    const t = toast.loading('Đang tạo canvas tạm để chỉnh sửa…');
-    try {
-      const canvasData = serializeCanvas([block.block], block.block.id);
-      const created = await rexerApi.canvasTemplates.create({
-        name: `[Editing] ${block.name}`,
-        width: 800,
-        height: 600,
-        engine: 'fabric',
-        engine_version: '5.3.0',
-        canvas_data: canvasData,
-        is_template: false,
-      });
-      toast.success('Mở editor — sửa xong dùng 🔖 để cập nhật bản gốc', {
-        id: t,
-      });
-      // Both admin + portal use in-namespace wrapper so the URL never leaks
-      // to bare /canvas-templates. Editor reads canvas_id from query string.
-      const editPath = isPortal
-        ? `/portal/blocks/${block.id}/edit?canvas_id=${created.id}`
-        : `/admin/blocks/${block.id}/edit?canvas_id=${created.id}`;
-      router.push(editPath);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      toast.error(`Tạo canvas thất bại: ${msg}`, { id: t });
-    }
+  const handleEdit = (block: SavedBlock) => {
+    toast.info(
+      `Edit "${block.name}" — flow đang refactor sang block-direct editor (Wave 3). Tạm thời dùng portal block editor để chỉnh.`,
+      { duration: 6000 }
+    );
   };
 
   const openDetail = (id: string) => {
