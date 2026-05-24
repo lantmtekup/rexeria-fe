@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { rexerApi } from '@/services/rexer/endpoints';
-import { RxApiError } from '@/services/rexer/client';
 
 import { FAKE_TEMPLATES } from '../_data';
 import { PortalShell } from '../_shell';
@@ -88,25 +87,18 @@ export default function PortalCommentsPage() {
   const [threads, setThreads] = useState<Thread[]>(FAKE_THREADS);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
 
-  const handleResolve = async (commentId: string) => {
+  // Template comments archived per BE handoff §3.1 (defer Phase 2).
+  // Keep the FE list UI rendering for context, but resolve action is
+  // local-state-only until BE wires `activity_logs(action='page.comment')`.
+  const handleResolve = (commentId: string) => {
     setResolvingId(commentId);
-    try {
-      await rexerApi.templateComments.resolve(commentId);
-      setThreads(prev =>
-        prev.map(t => (t.id === commentId ? { ...t, status: 'resolved' } : t))
-      );
-      toast.success('Đã đánh dấu thread giải quyết');
-    } catch (err) {
-      const msg =
-        err instanceof RxApiError
-          ? err.code || err.message
-          : err instanceof Error
-            ? err.message
-            : 'RESOLVE_FAILED';
-      toast.error(`Resolve thất bại: ${msg}`);
-    } finally {
-      setResolvingId(null);
-    }
+    setThreads(prev =>
+      prev.map(t => (t.id === commentId ? { ...t, status: 'resolved' } : t))
+    );
+    toast.success('Đánh dấu local — comment thread BE deferred sang Phase 2', {
+      duration: 4000,
+    });
+    setResolvingId(null);
   };
 
   useEffect(() => {

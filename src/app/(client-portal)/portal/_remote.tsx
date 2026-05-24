@@ -329,7 +329,12 @@ export async function switchWorkspaceRemote(
   }
 }
 
-/* ---------- Notifications (in-app bell) ---------- */
+/* ---------- Notifications (in-app bell) ----------
+ * BE handoff §3.1: /v1/notifications/* dropped, /portal/notifications
+ * unmounted. Phase 2 will re-wire via email (Sendgrid/SES) or activity_logs
+ * with per-user read_at. Until then these resolve to empty state instead of
+ * surfacing FAKE_STATS to avoid showing a misleading unread badge.
+ */
 
 export async function loadUnreadNotificationCount(): Promise<
   LoadResult<number>
@@ -339,7 +344,7 @@ export async function loadUnreadNotificationCount(): Promise<
     return { data: res.unread_count, source: 'live' };
   } catch (err) {
     return {
-      data: FAKE_STATS.unread_notifications,
+      data: 0,
       source: 'fake',
       error: err instanceof Error ? err.message : String(err),
     };

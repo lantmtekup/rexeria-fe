@@ -82,32 +82,17 @@ export default function PortalTemplateLibraryPage() {
         setTotalPages(Math.max(1, res.total_pages ?? 1));
         setPendingEndpoint(false);
       })
-      .catch(async err => {
+      .catch(err => {
         if (cancelled) return;
-        if (err instanceof RxApiError && err.status === 404) {
-          // BE chưa ship endpoint — fallback list canvas_templates với is_template=true
-          try {
-            const r = await rexerApi.canvasTemplates.list({
-              is_template: true,
-              limit: LIMIT,
-              page,
-              q: debouncedSearch || undefined,
-              sort,
-            });
-            setItems(r.items ?? []);
-            setTotal(r.total ?? r.items?.length ?? 0);
-            setTotalPages(Math.max(1, r.total_pages ?? 1));
-            setPendingEndpoint(true);
-          } catch {
-            setItems([]);
-            setTotal(0);
-            setTotalPages(1);
-          }
-        } else {
-          setItems([]);
-          setTotal(0);
-          setTotalPages(1);
-        }
+        // Legacy fallback (canvas-templates) removed in Wave 2 cutover —
+        // BE no longer serves /v1/canvas-templates post-Migration 134.
+        const code =
+          err instanceof RxApiError ? err.code || err.message : 'LOAD_FAILED';
+        toast.error(`Không load được template library: ${code}`);
+        setItems([]);
+        setTotal(0);
+        setTotalPages(1);
+        setPendingEndpoint(false);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -117,28 +102,34 @@ export default function PortalTemplateLibraryPage() {
     };
   }, [debouncedSearch, sort, page]);
 
+  // Brand instantiates a template into their active workspace. Canonical:
+  // POST /workspaces/:wsId/pages { type:'landing', template_id }
+  // (replaces legacy POST /canvas-templates/:id/clone-to-workspace).
   const cloneIntoWorkspace = async (tpl: CanvasTemplate) => {
+    if (!activeWs.id) {
+      toast.error('Cần workspace hợp lệ trước khi tạo landing');
+      return;
+    }
     setCloning(tpl.id);
     try {
-      const created = await rexerApi.canvasTemplates.cloneToWorkspace(tpl.id, {
-        workspace_id: activeWs.id,
+      const page = await rexerApi.pages.create(activeWs.id, {
+        template_id: tpl.id,
+        type: 'landing',
+        name: tpl.name,
       });
-      toast.success(`Đã tạo landing "${created.name}" từ template`);
-      router.push(`/canvas-templates/${created.id}`);
+      toast.success(`Đã tạo landing "${page.name}" từ template`);
+      // TODO(wave-3): redirect to canonical brand slot-fill editor when
+      // shipped (e.g. /portal/landing-pages/:id/edit). For now, surface the
+      // new page in the landings list.
+      router.push('/portal/landing-pages');
     } catch (err) {
-      if (err instanceof RxApiError && err.status === 404) {
-        toast.error(
-          'BE chưa ship endpoint clone-to-workspace (be-todo.md P0.7). Nhắc BE merge.'
-        );
-      } else {
-        const msg =
-          err instanceof RxApiError
-            ? err.code || err.message
-            : err instanceof Error
-              ? err.message
-              : 'CLONE_FAILED';
-        toast.error(`Clone thất bại: ${msg}`);
-      }
+      const msg =
+        err instanceof RxApiError
+          ? err.code || err.message
+          : err instanceof Error
+            ? err.message
+            : 'CREATE_FAILED';
+      toast.error(`Tạo landing thất bại: ${msg}`);
     } finally {
       setCloning(null);
     }
