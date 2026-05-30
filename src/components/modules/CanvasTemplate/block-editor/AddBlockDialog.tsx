@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Bookmark, Pencil, Trash2 } from 'lucide-react';
+import { Bookmark, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/atoms/dialog';
 import { Input } from '@/components/atoms/input';
+import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
 
 import {
@@ -22,6 +23,15 @@ import {
   type SavedBlock,
 } from './savedBlocks';
 import { BLOCK_TYPE_META, type Block, type BlockType } from './types';
+
+/** Public /v1/block-types item shape (legacy naming — `code`/`name`/
+ *  `is_active`). Admin /v1/admin/block-types uses canonical `type`/`label_vi`
+ *  but this dialog only needs the public read which all roles can hit. */
+interface BeBlockType {
+  code: string;
+  name?: string;
+  is_active: boolean;
+}
 
 interface AddBlockDialogProps {
   open: boolean;
@@ -59,6 +69,11 @@ export function AddBlockDialog({
 }: AddBlockDialogProps) {
   const [tab, setTab] = React.useState<Tab>('builtin');
   const [saved, setSaved] = React.useState<SavedBlock[]>([]);
+  // BE block-types catalog — filter `is_active` source-of-truth.
+  // Null = loading; Set<code> = loaded; empty Set = nothing active.
+  const [activeCodes, setActiveCodes] = React.useState<Set<string> | null>(
+    null
+  );
 
   // Load + subscribe so saves in another tab refresh this list automatically.
   React.useEffect(() => {
@@ -66,6 +81,31 @@ export function AddBlockDialog({
     setSaved(listSavedBlocks());
     return subscribeSavedBlocks(() => setSaved(listSavedBlocks()));
   }, [open]);
+
+  // Load BE block-types + filter is_active. Show only types both FE knows
+  // how to render (ORDERED_TYPES) AND admin has marked active.
+  React.useEffect(() => {
+    if (!open) return;
+    setActiveCodes(null);
+    rexerApi.blockTypes
+      .list({ is_active: true })
+      .then(r => {
+        const items = (r.items ?? []) as BeBlockType[];
+        setActiveCodes(
+          new Set(items.filter(b => b.is_active).map(b => b.code))
+        );
+      })
+      .catch(() => {
+        // BE down? Fail open — show all FE types so editor remains usable.
+        setActiveCodes(new Set(ORDERED_TYPES));
+      });
+  }, [open]);
+
+  // Active types = FE-supported intersected with BE active set.
+  const visibleTypes = React.useMemo(() => {
+    if (!activeCodes) return [];
+    return ORDERED_TYPES.filter(t => activeCodes.has(t));
+  }, [activeCodes]);
 
   const handlePickSaved = (entry: SavedBlock) => {
     if (!onPickSaved) {
@@ -77,9 +117,11 @@ export function AddBlockDialog({
     onOpenChange(false);
   };
 
+  const loadingTypes = activeCodes === null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-3xl'>
+      <DialogContent className='flex max-h-[85vh] flex-col sm:max-w-3xl'>
         <DialogHeader>
           <DialogTitle>Thêm block mới</DialogTitle>
           <p className='text-sm text-neutral-500'>
@@ -87,10 +129,15 @@ export function AddBlockDialog({
           </p>
         </DialogHeader>
 
-        {/* Tab strip */}
-        <div className='flex items-end gap-1 border-b border-neutral-200'>
+        {/* Tab strip — sticky to dialog top while content scrolls below. */}
+        <div className='flex shrink-0 items-end gap-1 border-b border-neutral-200'>
           <TabBtn active={tab === 'builtin'} onClick={() => setTab('builtin')}>
             Block có sẵn
+            {!loadingTypes && visibleTypes.length > 0 ? (
+              <span className='ml-1.5 rounded-full bg-neutral-100 px-1.5 text-[10px] font-semibold text-neutral-600'>
+                {visibleTypes.length}
+              </span>
+            ) : null}
           </TabBtn>
           <TabBtn active={tab === 'saved'} onClick={() => setTab('saved')}>
             <span className='inline-flex items-center gap-1.5'>
@@ -105,42 +152,58 @@ export function AddBlockDialog({
           </TabBtn>
         </div>
 
-        {tab === 'builtin' ? (
-          <div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
-            {ORDERED_TYPES.map(type => {
-              const meta = BLOCK_TYPE_META[type];
-              return (
-                <button
-                  key={type}
-                  type='button'
-                  onClick={() => {
-                    onPick(type);
-                    onOpenChange(false);
-                  }}
-                  className={cn(
-                    'group flex cursor-pointer flex-col gap-2 overflow-hidden rounded-lg border border-neutral-200 bg-white p-2 text-left transition-colors hover:border-neutral-900'
-                  )}
-                >
-                  <div
-                    className='flex aspect-[16/10] items-center justify-center rounded-md text-[11px] font-semibold tracking-wider text-white/80 uppercase'
-                    style={{ backgroundColor: meta.accent }}
-                  >
-                    {meta.label}
-                  </div>
-                  <span className='px-1 text-xs font-medium text-neutral-700 group-hover:text-neutral-900'>
-                    {meta.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <SavedTab
-            entries={saved}
-            onPick={handlePickSaved}
-            onChanged={() => setSaved(listSavedBlocks())}
-          />
-        )}
+        {/* Scrollable body — capped to dialog height so 14+ block cards don't
+            push the footer/header out of viewport. */}
+        <div className='-mr-1 flex-1 overflow-y-auto pr-1'>
+          {tab === 'builtin' ? (
+            loadingTypes ? (
+              <div className='flex items-center justify-center py-12 text-sm text-neutral-500'>
+                <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải
+                catalog block…
+              </div>
+            ) : visibleTypes.length === 0 ? (
+              <div className='rounded-lg border border-dashed border-neutral-200 px-4 py-12 text-center text-sm text-neutral-500'>
+                Không có block type nào ở trạng thái active. Vào{' '}
+                <strong>/admin/block-types</strong> để bật.
+              </div>
+            ) : (
+              <div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
+                {visibleTypes.map(type => {
+                  const meta = BLOCK_TYPE_META[type];
+                  return (
+                    <button
+                      key={type}
+                      type='button'
+                      onClick={() => {
+                        onPick(type);
+                        onOpenChange(false);
+                      }}
+                      className={cn(
+                        'group flex cursor-pointer flex-col gap-2 overflow-hidden rounded-lg border border-neutral-200 bg-white p-2 text-left transition-colors hover:border-neutral-900'
+                      )}
+                    >
+                      <div
+                        className='flex aspect-[16/10] items-center justify-center rounded-md text-[11px] font-semibold tracking-wider text-white/80 uppercase'
+                        style={{ backgroundColor: meta.accent }}
+                      >
+                        {meta.label}
+                      </div>
+                      <span className='px-1 text-xs font-medium text-neutral-700 group-hover:text-neutral-900'>
+                        {meta.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )
+          ) : (
+            <SavedTab
+              entries={saved}
+              onPick={handlePickSaved}
+              onChanged={() => setSaved(listSavedBlocks())}
+            />
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
