@@ -18,6 +18,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import {
+  Archive,
   ArrowDownUp,
   ChevronLeft,
   ChevronRight,
@@ -25,11 +26,16 @@ import {
   Eye,
   LayoutGrid,
   LayoutTemplate,
+  MoreVertical,
   RefreshCwIcon,
+  RotateCcw,
   Search,
+  Send,
   Table as TableIcon,
+  Undo2,
   X as XIcon,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
 import { Input } from '@/components/atoms/input';
@@ -156,6 +162,36 @@ export function AdminCanvasTemplatesPage() {
   React.useEffect(() => {
     load();
   }, [load]);
+
+  // ── Page status mutations ────────────────────────────────────────────
+  const runPageAction = async (
+    action: 'publish' | 'unpublish' | 'archive' | 'restore',
+    page: Page
+  ) => {
+    const label = {
+      publish: 'Publish',
+      unpublish: 'Unpublish',
+      archive: 'Archive',
+      restore: 'Restore',
+    }[action];
+    if (action === 'archive') {
+      if (!window.confirm(`Archive "${page.name}"?\n\nPage status → archived.`))
+        return;
+    }
+    const tid = toast.loading(`${label}…`);
+    try {
+      if (action === 'publish') await rexerApi.pages.publish(page.id);
+      else if (action === 'unpublish') await rexerApi.pages.unpublish(page.id);
+      else if (action === 'archive') await rexerApi.pages.archive(page.id);
+      else if (action === 'restore') await rexerApi.pages.restore(page.id);
+      toast.success(`${label} thành công`, { id: tid });
+      await load();
+    } catch (err) {
+      const msg =
+        err instanceof RxApiError ? err.code || err.message : 'ACTION_FAILED';
+      toast.error(`${label} thất bại: ${msg}`, { id: tid });
+    }
+  };
 
   const clearFilters = () => {
     setSearch('');
@@ -357,9 +393,17 @@ export function AdminCanvasTemplatesPage() {
           </p>
         </div>
       ) : view === 'grid' ? (
-        <GridView items={items} brandById={brandById} />
+        <GridView
+          items={items}
+          brandById={brandById}
+          onAction={runPageAction}
+        />
       ) : (
-        <TableView items={items} brandById={brandById} />
+        <TableView
+          items={items}
+          brandById={brandById}
+          onAction={runPageAction}
+        />
       )}
 
       {/* Pagination */}
@@ -378,23 +422,40 @@ export function AdminCanvasTemplatesPage() {
 
 /* ─── Grid ──────────────────────────────────────────────────────────── */
 
+type PageAction = 'publish' | 'unpublish' | 'archive' | 'restore';
+
 function GridView({
   items,
   brandById,
+  onAction,
 }: {
   items: Page[];
   brandById: Map<string, Brand>;
+  onAction: (action: PageAction, page: Page) => void;
 }) {
   return (
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
       {items.map(p => (
-        <PageCard key={p.id} item={p} brand={brandById.get(p.brand_id)} />
+        <PageCard
+          key={p.id}
+          item={p}
+          brand={brandById.get(p.brand_id)}
+          onAction={onAction}
+        />
       ))}
     </div>
   );
 }
 
-function PageCard({ item, brand }: { item: Page; brand: Brand | undefined }) {
+function PageCard({
+  item,
+  brand,
+  onAction,
+}: {
+  item: Page;
+  brand: Brand | undefined;
+  onAction: (action: PageAction, page: Page) => void;
+}) {
   const statusClass = STATUS_CHIP[item.status] ?? STATUS_CHIP.archived;
   const typeChipClass =
     TYPE_CHIP[item.type] ?? 'bg-zinc-100 text-zinc-600 border-zinc-200';
@@ -466,17 +527,115 @@ function PageCard({ item, brand }: { item: Page; brand: Brand | undefined }) {
           </span>
         </div>
 
-        <div className='mt-1 grid grid-cols-2 gap-1.5'>
-          <OpenLandingButton page={item} variant='primary' />
+        <div className='mt-1 flex items-stretch gap-1.5'>
+          <div className='flex-1'>
+            <OpenLandingButton page={item} variant='primary' />
+          </div>
           <Link
             href={`/admin/users/${item.brand_id}`}
             className='inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50'
+            title='Mở brand detail'
           >
             <ExternalLink className='size-3' />
-            Brand
           </Link>
+          <PageActionMenu page={item} onAction={onAction} />
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Per-page actions: publish/unpublish/archive/restore. Surface depends on
+ *  current status — never show "Publish" for already-published, etc. */
+function PageActionMenu({
+  page,
+  onAction,
+}: {
+  page: Page;
+  onAction: (action: PageAction, page: Page) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const choose = (action: PageAction) => () => {
+    setOpen(false);
+    onAction(action, page);
+  };
+
+  return (
+    <div ref={ref} className='relative'>
+      <button
+        type='button'
+        onClick={() => setOpen(o => !o)}
+        className='inline-flex h-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700 transition-colors hover:bg-zinc-50'
+        aria-label='Hành động'
+        aria-expanded={open}
+      >
+        <MoreVertical className='size-3.5' />
+      </button>
+      {open && (
+        <div className='absolute right-0 bottom-full z-20 mb-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+          {page.status === 'draft' && (
+            <button
+              type='button'
+              onClick={choose('publish')}
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+            >
+              <Send className='size-3.5 text-emerald-600' />
+              Publish
+            </button>
+          )}
+          {page.status === 'published' && (
+            <button
+              type='button'
+              onClick={choose('unpublish')}
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+            >
+              <Undo2 className='size-3.5 text-amber-600' />
+              Unpublish
+            </button>
+          )}
+          {page.status === 'archived' && (
+            <button
+              type='button'
+              onClick={choose('restore')}
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+            >
+              <RotateCcw className='size-3.5 text-zinc-600' />
+              Restore (→ draft)
+            </button>
+          )}
+          {page.status !== 'archived' && (
+            <>
+              <div className='h-px bg-zinc-100' />
+              <button
+                type='button'
+                onClick={choose('archive')}
+                className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-rose-600 hover:bg-rose-50'
+              >
+                <Archive className='size-3.5' />
+                Archive
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -553,9 +712,11 @@ function ViewBtn({
 function TableView({
   items,
   brandById,
+  onAction,
 }: {
   items: Page[];
   brandById: Map<string, Brand>;
+  onAction: (action: PageAction, page: Page) => void;
 }) {
   return (
     <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white'>
@@ -628,14 +789,7 @@ function TableView({
                 <TableCell>
                   <div className='flex items-center justify-end gap-1.5'>
                     <OpenLandingButton page={p} variant='ghost' />
-                    <Link
-                      href={`/admin/users/${p.brand_id}`}
-                      className='text-primary inline-flex items-center gap-1 text-xs hover:underline'
-                      title='Mở brand detail'
-                    >
-                      Brand
-                      <ExternalLink className='size-3' />
-                    </Link>
+                    <PageActionMenu page={p} onAction={onAction} />
                   </div>
                 </TableCell>
               </TableRow>

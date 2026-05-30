@@ -292,12 +292,25 @@ export function BlockEditor({
         setTemplate(meta);
 
         const parsed = parseCanvas(canvasData);
-        const initial = parsed?.blocks.length ? parsed.blocks : seedBlocks();
+        // Wave 3: seed canonical templates start with empty canvas_blueprint
+        // (`blocks: []`). Falling back to `seedBlocks()` (hardcoded mock) made
+        // every empty template render the same content. Empty canvas now =
+        // empty canvas — user adds blocks via Add Block dialog.
+        //
+        // Only seed when canvasData is genuinely missing (parse null AND no
+        // server-side canvas at all), which signals a legacy / unmigrated
+        // template the editor needs sample data to render.
+        const hasServerCanvas = canvasData !== undefined;
+        const initial = parsed?.blocks.length
+          ? parsed.blocks
+          : hasServerCanvas
+            ? []
+            : seedBlocks();
         canvas.reset(initial, parsed?.activeBlockId ?? initial[0]?.id ?? null);
         publishState.setPublish(parsed?.publish);
-        // When we fell back to seed (parsed null), persist the seed by marking
-        // the canvas dirty so autosave fires after mount.
-        if (parsed === null) autosave.markDirty();
+        // Mark dirty only when we materialised mock seed — empty canvas
+        // (intentional Wave 3 starting state) doesn't need an autosave fire.
+        if (parsed === null && !hasServerCanvas) autosave.markDirty();
       } catch (err) {
         if (cancelled) return;
         setLoadError(rxErrorMessage(err));
