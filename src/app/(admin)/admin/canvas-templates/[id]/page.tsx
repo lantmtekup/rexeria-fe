@@ -3,15 +3,16 @@
 /**
  * Admin canvas template editor — `/admin/canvas-templates/[id]`.
  *
- * Param `id` accepts:
- *   - UUID  → treated as a template id, passed directly to BlockEditor.
- *   - else  → treated as a page slug. Resolve chain:
- *               page (by slug) → template_version_id → template_id.
- *             Then render BlockEditor with the derived template id.
+ * Param `id` accepts 3 shapes (try in order):
+ *   1. Template UUID → render BlockEditor directly.
+ *   2. Page UUID     → lookup page → template_version_id → template_id.
+ *   3. Page slug     → lookup page by slug → template_version_id → template.
  *
- * Why: `/admin/canvas-templates` (page list) navigates with `page.slug` so
- * URL stays human-readable. Editor needs `template_id` since
- * `rexerApi.templates.get/version` are template-scoped.
+ * Why 3 shapes: `/admin/canvas-templates` (page list) prefers slug for
+ * human-readable URLs, but falls back to page.id when slug is empty
+ * (vd page created without an admin-provided slug). Editor needs the
+ * derived template_id since `rexerApi.templates.get/version` are
+ * template-scoped.
  */
 
 import * as React from 'react';
@@ -48,32 +49,60 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
     let cancelled = false;
     setError(null);
 
-    // UUID → template id direct (legacy flow).
-    if (UUID_RE.test(rawId)) {
-      setTemplateId(rawId);
-      return;
-    }
-
-    // Slug → lookup page → derive template.
     (async () => {
       try {
-        // BE `?slug=` query param doesn't actually filter (returns all). Use
-        // `?q=` text search and match exact slug client-side.
-        const pages = await rexerApi.pages.listAll({ q: rawId, limit: 25 });
-        const page = pages.items?.find(p => p.slug === rawId);
-        if (!page) {
-          throw new Error(`Không tìm thấy page với slug "${rawId}"`);
+        // Resolve template_version_id from rawId (3 shapes, try in order).
+        let versionId: string | undefined;
+
+        if (UUID_RE.test(rawId)) {
+          // Shape 1: try as template id directly. Fast-path — most editor
+          // navigations from `/admin/templates` come this way.
+          try {
+            const tplRes = await rexerApi.templates.get(rawId);
+            if (cancelled) return;
+            // Template found → editor takes templateId directly, skip
+            // the version resolve below.
+            setTemplateId(tplRes.template.id);
+            return;
+          } catch {
+            // Not a template id — fall through to shape 2 (page id).
+          }
+
+          // Shape 2: try as page id.
+          try {
+            const page = await rexerApi.pages.get(rawId);
+            versionId = page.template_version_id;
+          } catch (pageErr) {
+            throw new Error(
+              `UUID "${rawId}" không khớp template ID nào hoặc page ID nào: ${rxMessage(pageErr)}`
+            );
+          }
+        } else {
+          // Shape 3: slug → lookup page → derive version_id.
+          // BE `?slug=` query param doesn't actually filter (returns all). Use
+          // `?q=` text search and match exact slug client-side.
+          const pages = await rexerApi.pages.listAll({ q: rawId, limit: 25 });
+          const page = pages.items?.find(p => p.slug === rawId);
+          if (!page) {
+            throw new Error(`Không tìm thấy page với slug "${rawId}"`);
+          }
+          versionId = page.template_version_id;
         }
-        // No flat `/template-versions/{vId}` endpoint to resolve template_id
-        // from version_id, so list templates and match on current_version_id.
-        // OK for now — system template count is small (< 100).
+
+        if (!versionId) {
+          throw new Error('Page không có template_version_id');
+        }
+
+        // Resolve version_id → template_id. No flat `/template-versions/{vId}`
+        // endpoint, so list templates + match on current_version_id. OK for
+        // now — system template count is small (< 100).
         const templates = await rexerApi.templates.list({ limit: 100 });
         const tpl = templates.items?.find(
-          t => t.current_version_id === page.template_version_id
+          t => t.current_version_id === versionId
         );
         if (!tpl) {
           throw new Error(
-            `Page "${rawId}" link tới template_version_id chưa khớp template nào`
+            `template_version_id "${versionId}" chưa khớp template nào (có thể version đã đổi)`
           );
         }
         if (!cancelled) setTemplateId(tpl.id);

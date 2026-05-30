@@ -57,11 +57,15 @@ type TypeFilter = 'all' | PageType;
 type Sort = '-updated_at' | '-created_at' | 'created_at' | 'name';
 type View = 'grid' | 'table';
 
-// "Mở landing" navigates to the admin canvas editor for the page's template.
-// Route `/admin/canvas-templates/[id]` accepts either UUID (template id) hoặc
-// page slug — resolver inside that route looks up page → template.
-function publicLandingUrl(slug: string): string {
-  return `/admin/canvas-templates/${slug}`;
+// "Mở landing" navigates to the admin canvas editor. Route
+// `/admin/canvas-templates/[id]` accepts:
+//   • slug (string)         → lookup page by slug → template
+//   • template UUID         → render directly
+//   • page UUID (fallback)  → lookup page by id → template
+// Pages without slug (vd "Landing Hero v1 - Copy" tạo qua dialog mà admin
+// không điền slug) vẫn mở được — link dùng page.id.
+function publicLandingUrl(slugOrId: string): string {
+  return `/admin/canvas-templates/${slugOrId}`;
 }
 
 const TYPE_GRADIENT: Record<string, string> = {
@@ -640,8 +644,9 @@ function PageActionMenu({
   );
 }
 
-/** Open landing in admin canvas editor. Disabled khi page chưa có slug
- *  (route resolver cần slug để lookup). */
+/** Open landing in admin canvas editor. Prefers slug for human-readable
+ *  URL; falls back to page UUID khi page chưa có slug (route resolver
+ *  handles both shapes). */
 function OpenLandingButton({
   page,
   variant,
@@ -649,31 +654,22 @@ function OpenLandingButton({
   page: Page;
   variant?: 'primary' | 'ghost';
 }) {
-  const canOpen = !!page.slug;
+  const segment = page.slug || page.id;
   const baseCls =
     'inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors';
   const enabledCls =
     variant === 'primary'
       ? 'bg-zinc-900 text-white hover:bg-zinc-700'
       : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50';
-  const disabledCls = 'cursor-not-allowed bg-zinc-100 text-zinc-400';
-
-  if (!canOpen) {
-    return (
-      <span
-        className={cn(baseCls, disabledCls)}
-        title='Page chưa có slug — không mở editor được'
-      >
-        <Eye className='size-3.5' />
-        Mở landing
-      </span>
-    );
-  }
   return (
     <Link
-      href={publicLandingUrl(page.slug)}
+      href={publicLandingUrl(segment)}
       className={cn(baseCls, enabledCls)}
-      title={`Mở editor canvas template`}
+      title={
+        page.slug
+          ? `Mở editor (slug: ${page.slug})`
+          : 'Mở editor (page chưa có slug, dùng id)'
+      }
     >
       <Eye className='size-3.5' />
       Mở landing
