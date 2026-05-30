@@ -118,6 +118,8 @@ import type {
   UpdateProductCategoryRequest,
   UpdateProductRequest,
   UpdateTemplateRequest,
+  CreateTemplateRequest,
+  CreateTemplateVersionRequest,
   // Template Analytics (be-template-analytics-spec)
   TemplateAnalyticsSummaryRow,
   BlockBreakdownRow,
@@ -215,6 +217,21 @@ import type {
   TrackBatchRequest,
 } from './types';
 
+// Tolerate BE responses for /brands/{id} returning either `{brand: Brand}`
+// (legacy wrapper) or raw `Brand` (post-2026-05-24 canonical cutover unwrap).
+// Keeps FE working across BE shape swap without coupling call sites to either.
+function unwrapBrand(r: BrandResponse | Brand): Brand {
+  if (
+    r &&
+    typeof r === 'object' &&
+    'brand' in r &&
+    (r as BrandResponse).brand
+  ) {
+    return (r as BrandResponse).brand;
+  }
+  return r as Brand;
+}
+
 export const rexerApi = {
   auth: {
     login: (body: LoginRequest) =>
@@ -256,7 +273,16 @@ export const rexerApi = {
   // existed to serve project-based read-only landing reports for clients.
   // Brand portal now uses `/portal/*` directly (see `portal` namespace).
   templates: {
-    list: () => rx<TemplateListResponse>('/templates'),
+    list: (query?: {
+      status?: 'draft' | 'active' | 'archived';
+      q?: string;
+      category?: string;
+      include_archived?: boolean;
+      sort?: 'created_at' | 'updated_at' | 'name';
+      order?: 'asc' | 'desc';
+      page?: number;
+      limit?: number;
+    }) => rx<TemplateListResponse>('/templates', { query }),
     get: (id: string) => rx<TemplateResponse>(`/templates/${id}`),
     versions: (id: string) =>
       rx<TemplateVersionListResponse>(`/templates/${id}/versions`),
@@ -280,6 +306,41 @@ export const rexerApi = {
         body,
       });
       return r.template;
+    },
+    create: async (body: CreateTemplateRequest): Promise<Template> => {
+      const r = await rx<TemplateResponse>('/templates', {
+        method: 'POST',
+        body,
+      });
+      return r.template;
+    },
+    /**
+     * Autosave buffer — mutable. PATCH overwrites the draft each call (no
+     * new version). Editor uses this for debounced autosave; commit to an
+     * immutable version via `createVersion(...)` (TBD adapter).
+     */
+    patchDraftBlueprint: async (
+      id: string,
+      blueprint: Record<string, unknown>
+    ): Promise<Template> => {
+      const r = await rx<TemplateResponse>(
+        `/templates/${id}/draft-canvas-blueprint`,
+        { method: 'PATCH', body: { canvas_blueprint: blueprint } }
+      );
+      return r.template;
+    },
+    /** Commit draft canvas_blueprint as an immutable version. Clears the
+     *  draft buffer on BE side. Required body fields inherit from the
+     *  current version when caller omits (caller pattern in BlockEditor). */
+    createVersion: async (
+      id: string,
+      body: CreateTemplateVersionRequest
+    ): Promise<TemplateVersion> => {
+      const r = await rx<TemplateVersionResponse>(`/templates/${id}/versions`, {
+        method: 'POST',
+        body,
+      });
+      return r.template_version;
     },
   },
   // `projects` namespace removed — system standardized on canvas-template
@@ -1252,19 +1313,22 @@ export const rexerApi = {
       limit?: number;
     }) => rx<BrandListResponse>('/brands', { query }),
     get: async (id: string): Promise<Brand> => {
-      const r = await rx<BrandResponse>(`/brands/${id}`);
-      return r.brand;
+      const r = await rx<BrandResponse | Brand>(`/brands/${id}`);
+      return unwrapBrand(r);
     },
     create: async (body: CreateBrandRequest): Promise<Brand> => {
-      const r = await rx<BrandResponse>('/brands', { method: 'POST', body });
-      return r.brand;
+      const r = await rx<BrandResponse | Brand>('/brands', {
+        method: 'POST',
+        body,
+      });
+      return unwrapBrand(r);
     },
     update: async (id: string, body: UpdateBrandRequest): Promise<Brand> => {
-      const r = await rx<BrandResponse>(`/brands/${id}`, {
+      const r = await rx<BrandResponse | Brand>(`/brands/${id}`, {
         method: 'PATCH',
         body,
       });
-      return r.brand;
+      return unwrapBrand(r);
     },
     remove: (id: string) =>
       rx<{ message?: string }>(`/brands/${id}`, { method: 'DELETE' }),
@@ -1291,12 +1355,15 @@ export const rexerApi = {
         method: 'DELETE',
       }),
 
-    // ── Workspace nested under brand (replaces `workspaces.create` admin path) ─
+    // BE 2026-05-26 ship Option A: canonical `/brands/:id/workspaces` LIVE,
+    // response field rename `client_id → brand_id`. Create vẫn dùng admin
+    // legacy path per swagger (`POST /admin/clients/:id/workspaces`); chưa có
+    // canonical create cho workspace.
     workspaces: {
       list: (brandId: string) =>
         rx<WorkspaceListResponse>(`/brands/${brandId}/workspaces`),
       create: (brandId: string, body: CreateWorkspaceRequest) =>
-        rx<Workspace>(`/brands/${brandId}/workspaces`, {
+        rx<Workspace>(`/admin/clients/${brandId}/workspaces`, {
           method: 'POST',
           body,
         }),
@@ -1343,6 +1410,21 @@ export const rexerApi = {
         limit?: number;
       }
     ) => rx<PageListResponse>(`/workspaces/${workspaceId}/pages`, { query }),
+    /**
+     * Cross-workspace flat list — admin/staff view of all pages across
+     * brands. Shipped 2026-05-30 (not yet in swagger). All params optional;
+     * filter by `type`, `brand_id`, `workspace_id`, `status`, free-text `q`.
+     */
+    listAll: (query?: {
+      type?: PageType;
+      status?: string;
+      brand_id?: string;
+      workspace_id?: string;
+      q?: string;
+      page?: number;
+      limit?: number;
+      sort?: string;
+    }) => rx<PageListResponse>('/pages', { query }),
     /** Brand create — page seeded from a template. */
     create: async (
       workspaceId: string,
@@ -1480,7 +1562,12 @@ export const rexerApi = {
       return r.block;
     },
     create: async (body: CreateBlockRequest): Promise<Block> => {
-      const r = await rx<BlockResponse>('/blocks', { method: 'POST', body });
+      // BE 2026-05-30: blocks.tags column NOT NULL, Go zero value nil → 500.
+      // Always send empty array if caller omits to match canonical default.
+      const r = await rx<BlockResponse>('/blocks', {
+        method: 'POST',
+        body: { ...body, tags: body.tags ?? [] },
+      });
       return r.block;
     },
     update: async (id: string, body: UpdateBlockRequest): Promise<Block> => {

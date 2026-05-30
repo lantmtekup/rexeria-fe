@@ -8,7 +8,10 @@ import { toast } from 'sonner';
 import { Spinner } from '@/components/atoms/spinner';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { CanvasTemplate } from '@/services/rexer/types';
+import type {
+  CanvasTemplate,
+  TemplateVersion as TemplateVersionType,
+} from '@/services/rexer/types';
 
 import { AddBlockDialog } from './block-editor/AddBlockDialog';
 import { BlockEditorHeader } from './block-editor/BlockEditorHeader';
@@ -89,6 +92,36 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
+/**
+ * BE TemplateVersion.canvas_blueprint shape:
+ *   `{ blocks: [...], schema_version: "1.0", legacy_preview?: ... }`
+ *
+ * Editor's `parseCanvas` accepts only `schema_version: "2.0"` (or legacy
+ * `schema: 'block_editor'`). Coerce the wrapper so blocks flow through.
+ * Block contents themselves stay untouched — BE fabric_to_blueprint
+ * converter (handoff §1.4) emits blocks in 2.0-compatible shape.
+ */
+function adaptCanvasBlueprint(
+  raw: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const blocks = Array.isArray((raw as { blocks?: unknown }).blocks)
+    ? ((raw as { blocks: unknown[] }).blocks as unknown[])
+    : [];
+  return { schema_version: '2.0', blocks };
+}
+
+/** Bump the patch segment of a semver-ish "x.y.z" string. Falls back to
+ *  appending "-r2" for non-standard formats. Used to suggest the next
+ *  immutable version when committing a draft. */
+function bumpVersion(v: string): string {
+  const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(v.trim());
+  if (m) {
+    return `${m[1]}.${m[2]}.${Number(m[3]) + 1}`;
+  }
+  return v + '-r2';
+}
+
 function rxErrorMessage(err: unknown): string {
   if (err instanceof RxApiError) return err.message || err.code;
   if (err instanceof Error) return err.message;
@@ -103,6 +136,12 @@ export function BlockEditor({
 
   // ── Hooks ───────────────────────────────────────────────────────────────
   const [template, setTemplate] = React.useState<CanvasTemplate | null>(null);
+  // Track canonical TemplateVersion (loaded from /templates/:id/versions/:vId)
+  // so "Save Version" can inherit field_schema_json + default_config_json
+  // when committing the draft to a new immutable version.
+  const [currentVersion, setCurrentVersion] =
+    React.useState<TemplateVersionType | null>(null);
+  const [savingVersion, setSavingVersion] = React.useState(false);
   const canvas = useCanvasState();
   const deviceState = useDeviceLang();
   const selection = useElementSelection();
@@ -168,24 +207,91 @@ export function BlockEditor({
   const [motionEditorOpen, setMotionEditorOpen] = React.useState(false);
 
   // ── Load ────────────────────────────────────────────────────────────────
+  // Wave 3 migration 2026-05-30: canonical `templates.get` + `templates.version`
+  // thay vì retired `canvasTemplates.get` + `canvasTemplates.getCanvas`. The
+  // adapter folds canonical Template + TemplateVersion into a CanvasTemplate-
+  // shaped object so the rest of the editor UI doesn't change.
+  //
+  // ⚠️ Save path (useAutosave + handlers below) still calls
+  // `canvasTemplates.update` (retired, 404). BE chưa có PATCH version endpoint;
+  // canonical versions immutable per spec — autosave model không match. Wave 3
+  // BE task: ship PATCH /templates/:id/versions/:vId/canvas_blueprint hoặc
+  // draft mechanism. Tới khi đó, save toast lỗi cho user — editor vẫn open +
+  // preview được.
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       setLoadError(null);
       try {
-        const meta = await withTimeout(
-          rexerApi.canvasTemplates.get(templateId),
+        const tplRes = await withTimeout(
+          rexerApi.templates.get(templateId),
           LOAD_TIMEOUT_MS
         );
         if (cancelled) return;
+        const tpl = tplRes.template;
+        const currentVerId = tpl.current_version_id;
+
+        // Priority order: draft buffer (autosave) → committed version.
+        // BE ship 2026-05-30 — Template.draft_canvas_blueprint holds the
+        // mutable autosave buffer. Reload resumes from there so user doesn't
+        // lose unsaved canvas edits.
+        let canvasData: Record<string, unknown> | undefined;
+        if (tpl.draft_canvas_blueprint) {
+          canvasData = adaptCanvasBlueprint(tpl.draft_canvas_blueprint);
+        } else if (currentVerId) {
+          const ver = await withTimeout(
+            rexerApi.templates.version(templateId, currentVerId),
+            LOAD_TIMEOUT_MS
+          );
+          if (cancelled) return;
+          setCurrentVersion(ver);
+          // canvas_blueprint stores `schema_version: "1.0"` from BE; editor's
+          // parseCanvas only accepts "2.0" or legacy `schema: 'block_editor'`.
+          // Coerce schema_version — blocks shape itself is already 2.0-aligned
+          // post BE fabric_to_blueprint converter (handoff §1.4).
+          if (ver.canvas_blueprint) {
+            canvasData = adaptCanvasBlueprint(ver.canvas_blueprint);
+          }
+        }
+        // Also stash version when we loaded canvas from draft buffer — need it
+        // for Save Version action to inherit schema fields.
+        if (tpl.draft_canvas_blueprint && currentVerId) {
+          rexerApi.templates
+            .version(templateId, currentVerId)
+            .then(v => {
+              if (!cancelled) setCurrentVersion(v);
+            })
+            .catch(() => {
+              /* non-blocking */
+            });
+        }
+
+        // Adapter: canonical Template → CanvasTemplate-shaped meta. `version`
+        // + `canvas_etag` are fakes — autosave optimistic-lock uses them but
+        // BE save endpoint is retired anyway (see Wave 3 note above).
+        const meta: CanvasTemplate = {
+          id: tpl.id,
+          name: tpl.name,
+          description: tpl.description ?? undefined,
+          width: 800,
+          height: 600,
+          engine: 'block_editor',
+          engine_version: '2.0',
+          canvas_etag: currentVerId ?? '',
+          version: 1,
+          is_active: tpl.status === 'active',
+          is_template: true,
+          thumbnail_url: tpl.thumbnail_url,
+          created_by: tpl.created_by,
+          updated_by: tpl.created_by,
+          created_at: tpl.created_at,
+          updated_at: tpl.updated_at,
+          canvas_data: canvasData,
+        };
         setTemplate(meta);
-        const canvasResp = await withTimeout(
-          rexerApi.canvasTemplates.getCanvas(templateId),
-          LOAD_TIMEOUT_MS
-        );
-        if (cancelled) return;
-        const parsed = parseCanvas(canvasResp?.canvas_data);
+
+        const parsed = parseCanvas(canvasData);
         const initial = parsed?.blocks.length ? parsed.blocks : seedBlocks();
         canvas.reset(initial, parsed?.activeBlockId ?? initial[0]?.id ?? null);
         publishState.setPublish(parsed?.publish);
@@ -510,6 +616,43 @@ export function BlockEditor({
     selection.endInlineEdit();
   };
 
+  // ── Save Version ────────────────────────────────────────────────────────
+  // Commit current draft canvas_blueprint as a new immutable version.
+  // Inherits schema fields from the previous version. Bumps patch number.
+  const handleSaveVersion = async () => {
+    if (!template || !currentVersion) {
+      toast.error('Chưa load được version hiện tại — đợi 1 giây rồi thử lại.');
+      return;
+    }
+    setSavingVersion(true);
+    try {
+      // Flush any pending autosave so draft buffer is up to date BE-side.
+      await autosave.flush({ silent: true });
+
+      const payload = serializeCanvas(
+        canvas.blocks,
+        canvas.activeId ?? undefined,
+        publishState.publish
+      );
+      const next = await rexerApi.templates.createVersion(template.id, {
+        version: bumpVersion(currentVersion.version),
+        schema_version: currentVersion.schema_version ?? '1',
+        field_schema_json: currentVersion.field_schema_json ?? {},
+        default_config_json: currentVersion.default_config_json ?? {},
+        canvas_blueprint: payload,
+        ...(currentVersion.renderer_key
+          ? { renderer_key: currentVersion.renderer_key }
+          : {}),
+      });
+      setCurrentVersion(next);
+      toast.success(`Đã commit version "${next.version}"`);
+    } catch (err) {
+      toast.error(`Save version thất bại: ${rxErrorMessage(err)}`);
+    } finally {
+      setSavingVersion(false);
+    }
+  };
+
   // ── Publish ─────────────────────────────────────────────────────────────
   const handlePublishToggle = async () => {
     if (!template) return;
@@ -674,6 +817,37 @@ export function BlockEditor({
         <div className='border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-800'>
           Không tải được canvas từ REXER ({loadError}). Đang dùng dữ liệu mẫu —
           lưu sẽ không hoạt động.
+        </div>
+      )}
+
+      {/* Draft / version bar — show committed version + Save Version action.
+          Autosave handles the draft buffer silently; this bar is the explicit
+          commit point to an immutable TemplateVersion. */}
+      {currentVersion && (
+        <div className='flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50/80 px-4 py-1.5 text-xs'>
+          <div className='flex items-center gap-2 text-zinc-600'>
+            <span className='font-mono text-[10.5px] tracking-wider text-zinc-400 uppercase'>
+              committed
+            </span>
+            <code className='rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-zinc-700 ring-1 ring-zinc-200'>
+              v{currentVersion.version}
+            </code>
+            <span className='text-zinc-300'>·</span>
+            <span className='text-[11px]'>
+              autosave ghi{' '}
+              <code className='font-mono'>draft_canvas_blueprint</code> · click{' '}
+              <strong>Save Version</strong> để commit immutable
+            </span>
+          </div>
+          <button
+            type='button'
+            onClick={handleSaveVersion}
+            disabled={savingVersion}
+            className='inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-white shadow-sm transition-colors hover:bg-zinc-700 disabled:cursor-wait disabled:opacity-60'
+            title={`Tạo immutable version mới (next: v${bumpVersion(currentVersion.version)})`}
+          >
+            {savingVersion ? 'Đang commit…' : 'Save Version'}
+          </button>
         </div>
       )}
 

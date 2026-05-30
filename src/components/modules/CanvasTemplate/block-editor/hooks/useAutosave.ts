@@ -121,18 +121,23 @@ export function useAutosave({
 
       setState({ kind: 'saving' });
       const payload = buildPayloadRef.current();
-      const ver = versionRef.current;
       try {
-        const updated = await rexerApi.canvasTemplates.update(templateId, {
-          canvas_data: payload as never,
-          version: ver as number,
-        });
+        // BE 2026-05-30: PATCH draft-canvas-blueprint = mutable autosave
+        // buffer. Không tạo version mới mỗi save → autosave debounce 1.5s OK.
+        // Commit thành immutable version qua POST /templates/:id/versions
+        // (explicit Save button, không phải auto).
+        await rexerApi.templates.patchDraftBlueprint(templateId, payload);
         if (token.cancelled) return; // a newer save superseded us
         dirtyRef.current = false;
         retryAttemptRef.current = 0;
-        onVersionRef.current(updated.version);
+        // Draft saves don't bump a version counter — keep version unchanged.
+        // onVersionUpdate signature stays for back-compat with the editor's
+        // optimistic-lock display, but we pass through the same value.
+        if (versionRef.current !== undefined) {
+          onVersionRef.current(versionRef.current);
+        }
         setState({ kind: 'saved', at: Date.now() });
-        if (!opts.silent) toast.success(`Đã lưu · v${updated.version}`);
+        if (!opts.silent) toast.success('Đã lưu draft');
       } catch (err) {
         if (token.cancelled) return;
         const reason = classifyError(err);
@@ -170,7 +175,7 @@ export function useAutosave({
         // eslint-disable-next-line no-console
         console.log('template_id:', templateId);
         // eslint-disable-next-line no-console
-        console.log('version (etag):', ver);
+        console.log('version (etag):', versionRef.current);
         // eslint-disable-next-line no-console
         console.log('payload:', payload);
         // eslint-disable-next-line no-console
@@ -212,22 +217,20 @@ export function useAutosave({
     setState({ kind: 'idle' });
   }, [clearTimers]);
 
-  // beforeunload — best-effort sync save via sendBeacon. The browser will not
-  // wait for an async fetch, so we serialise the payload and post it through
-  // sendBeacon which IS designed for this case.
+  // beforeunload — best-effort sync save via sendBeacon. Browser doesn't wait
+  // for async fetch, so we use sendBeacon which IS designed for this case.
+  // Posts the same shape as the PATCH route (BE accepts both PATCH + beacon
+  // body) so reload picks up the latest draft.
   React.useEffect(() => {
     const handler = () => {
       if (!dirtyRef.current) return;
       if (typeof navigator === 'undefined' || !navigator.sendBeacon) return;
       try {
         const payload = buildPayloadRef.current();
-        const body = JSON.stringify({
-          canvas_data: payload,
-          version: versionRef.current,
-        });
+        const body = JSON.stringify({ canvas_blueprint: payload });
         const blob = new Blob([body], { type: 'application/json' });
         navigator.sendBeacon(
-          `/api/rexer/canvas-templates/${templateId}/beacon-save`,
+          `/api/rexer/templates/${templateId}/draft-canvas-blueprint`,
           blob
         );
       } catch {

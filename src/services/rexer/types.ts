@@ -340,12 +340,18 @@ export interface Template {
   code: string;
   name: string;
   description: string;
-  status: string;
-  preview_mode: string;
+  status: string; // 'draft' | 'active' | 'archived'
+  preview_mode: string; // 'static' | 'rendered' | 'live_stub'
   current_version_id: string;
   thumbnail_url?: string;
   category?: string;
   tags?: string[];
+  /** Spec §4.3.1 discriminator (mig 132). 'landing' | 'ad' | 'curate' | 'email'. */
+  target_page_type?: string;
+  /** Mutable autosave buffer (BE ship 2026-05-30). Editor PATCH this on
+   *  every debounced save; doesn't create a new version. Commit to immutable
+   *  version via `POST /templates/:id/versions`. */
+  draft_canvas_blueprint?: Record<string, unknown>;
   author?: string | TemplateAuthor;
   created_at: string;
   updated_at: string;
@@ -362,8 +368,35 @@ export interface UpdateTemplateRequest {
   status?: 'draft' | 'active' | 'archived';
 }
 
+export interface CreateTemplateVersionRequest {
+  version: string; // required, e.g. "1.0.1"
+  schema_version: string; // required
+  field_schema_json: Record<string, unknown>; // required
+  default_config_json: Record<string, unknown>; // required
+  canvas_blueprint?: Record<string, unknown>;
+  preview_descriptor_json?: Record<string, unknown>;
+  renderer_key?: string;
+  thumbnail_url?: string;
+  change_note?: string;
+}
+
+export interface CreateTemplateRequest {
+  code: string; // required, maxLength 100
+  name: string; // required, maxLength 255
+  preview_mode: 'static' | 'rendered' | 'live_stub'; // required
+  status?: 'draft' | 'active' | 'archived';
+  description?: string;
+  category?: string; // maxLength 64
+  tags?: string[];
+  thumbnail_url?: string; // maxLength 512
+}
+
 export interface TemplateListResponse {
   items: Template[];
+  page?: number;
+  limit?: number;
+  total?: number;
+  total_pages?: number;
 }
 
 export interface TemplateVersion {
@@ -374,8 +407,13 @@ export interface TemplateVersion {
   renderer_key?: string;
   change_note?: string;
   field_schema_json?: Record<string, unknown>;
+  /** Spec §5.1 — canonical slot schema (mig 132). */
+  slot_schema?: Record<string, unknown>;
+  /** Spec §5.3 — canonical block tree (mig 132). `{ blocks: [], ... }`. */
+  canvas_blueprint?: Record<string, unknown>;
   default_config_json?: Record<string, unknown>;
   preview_descriptor_json?: Record<string, unknown>;
+  thumbnail_url?: string;
   created_at: string;
 }
 export interface TemplateResponse {
@@ -1468,9 +1506,12 @@ export type AITemplateErrorCode =
   | 'ERR_INTERNAL';
 
 // ── Workspaces (Phase 1 multitenancy — be-workspace-multitenancy-spec) ───
+// BE 2026-05-26 deploy: field `client_id` renamed `brand_id` ở canonical
+// `/v1/brands/:id/workspaces`. Legacy `/v1/clients/:id/workspaces` (vẫn LIVE
+// transient) trả `client_id` shape cũ — FE không call path đó nữa.
 export interface Workspace {
   id: string;
-  client_id: string;
+  brand_id: string;
   name: string;
   slug: string;
   description?: string;

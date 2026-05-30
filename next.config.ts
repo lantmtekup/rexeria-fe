@@ -111,6 +111,15 @@ const nextConfig: NextConfig = {
         source: '/api/rexer/:path*',
         destination: `${be}/v1/:path*`,
       },
+      // Canonical public landing render — BE serves /p/:slug as server-side
+      // HTML (LandingHandler.Render per BE handoff §3.4). Rewrite so the
+      // browser stays on the FE host while content comes from BE.
+      // Note: `/p/:slug` (1 segment) does NOT conflict with the legacy FE
+      // route `/p/[id]/[token]` (2 segments) — Next routes match first.
+      {
+        source: '/p/:slug',
+        destination: `${be}/p/:slug`,
+      },
     ];
   },
 };

@@ -2,9 +2,16 @@
 
 /**
  * Admin dialog — create a landing page for a brand by instantiating a
- * template into one of the brand's workspaces. Canonical canonical flow
- * (POST /admin/pages/from-template) replaces the legacy 2-step
- * `POST /canvas-templates` + `POST /assign`.
+ * template into one of the brand's workspaces. Uses canonical
+ * `POST /v1/workspaces/{wsId}/pages` (handler.go:114 RegisterCanonical,
+ * page_canonical.go:81 Create).
+ *
+ * History: trước dùng `POST /admin/pages/from-template` (per migration
+ * plan §7 row 6 — legacy stub) — endpoint này BE chưa mount → 404. Đổi
+ * sang canonical pages.create endpoint giống UseTemplateDialog.
+ *
+ * ⚠️ Endpoint canonical hiện 500 (brand_id="" — audit doc §1.3). Sẽ work
+ * tự động khi BE fix.
  *
  * Admin picks: workspace + template + name + handoff notes. BE creates
  * the page in draft status; brand fills slots via portal.
@@ -92,13 +99,11 @@ export function AdminAddLandingForClientDialog({
     setSubmitting(true);
     setError(null);
     try {
-      const page = await rexerApi.adminPages.fromTemplate({
+      const page = await rexerApi.pages.create(workspaceId, {
         template_id: templateId,
-        brand_id: client.id,
-        workspace_id: workspaceId,
         name: trimmed,
         type: 'landing',
-        handoff_notes: notes.trim() || undefined,
+        ...(notes.trim() ? { handoff_notes: notes.trim() } : {}),
       });
       toast.success(`Đã tạo "${page.name}" cho ${client.name}`);
       onCreated?.(page.id);

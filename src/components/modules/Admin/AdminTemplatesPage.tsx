@@ -14,7 +14,7 @@ import {
   ArrowDownUp,
   ChevronLeft,
   ChevronRight,
-  ExternalLinkIcon,
+  Eye,
   LayoutGrid,
   LayoutTemplate,
   RefreshCwIcon,
@@ -35,6 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/atoms/table';
+import { CreateTemplateDialog } from '@/components/dialogs/CreateTemplateDialog';
+import { UseTemplateDialog } from '@/components/dialogs/UseTemplateDialog';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import { cn } from '@/lib/cn';
@@ -83,6 +85,10 @@ export function AdminTemplatesPage() {
   const [category, setCategory] = React.useState<string | null>(null);
   const [sort, setSort] = React.useState<Sort>('-updated_at');
   const [view, setView] = React.useState<View>('grid');
+  // "Sử dụng template" dialog target; null when closed.
+  const [useTarget, setUseTarget] = React.useState<Template | null>(null);
+  // "Tạo template mới" dialog open state.
+  const [createOpen, setCreateOpen] = React.useState(false);
   const [page, setPage] = React.useState(1);
 
   React.useEffect(() => {
@@ -199,11 +205,12 @@ export function AdminTemplatesPage() {
             />
             {t('refresh')}
           </Button>
-          <Button asChild>
-            <Link href='/canvas-templates' title={t('templates.create')}>
-              <Sparkles className='size-4' />
-              {t('templates.create')}
-            </Link>
+          <Button
+            onClick={() => setCreateOpen(true)}
+            title={t('templates.create')}
+          >
+            <Sparkles className='size-4' />
+            {t('templates.create')}
           </Button>
         </div>
       </div>
@@ -345,7 +352,7 @@ export function AdminTemplatesPage() {
           </p>
         </div>
       ) : view === 'grid' ? (
-        <GridView items={pageItems} viewLabel={t('templates.view')} />
+        <GridView items={pageItems} onUse={setUseTarget} />
       ) : (
         <TableView
           items={pageItems}
@@ -355,7 +362,7 @@ export function AdminTemplatesPage() {
             status: t('templates.col.status'),
             created: t('templates.col.created'),
           }}
-          viewLabel={t('templates.view')}
+          onUse={setUseTarget}
         />
       )}
 
@@ -369,6 +376,16 @@ export function AdminTemplatesPage() {
           onChange={setPage}
         />
       )}
+
+      <UseTemplateDialog
+        open={!!useTarget}
+        onOpenChange={open => {
+          if (!open) setUseTarget(null);
+        }}
+        template={useTarget}
+      />
+
+      <CreateTemplateDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
 }
@@ -377,36 +394,32 @@ export function AdminTemplatesPage() {
 
 function GridView({
   items,
-  viewLabel,
+  onUse,
 }: {
   items: Template[];
-  viewLabel: string;
+  onUse: (t: Template) => void;
 }) {
   return (
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
       {items.map(it => (
-        <TemplateCard key={it.id} item={it} viewLabel={viewLabel} />
+        <TemplateCard key={it.id} item={it} onUse={() => onUse(it)} />
       ))}
     </div>
   );
 }
 
-function TemplateCard({
-  item,
-  viewLabel,
-}: {
-  item: Template;
-  viewLabel: string;
-}) {
+function TemplateCard({ item, onUse }: { item: Template; onUse: () => void }) {
   const statusClass =
     STATUS_CHIP[(item.status ?? '').toLowerCase()] ??
     'bg-zinc-100 text-zinc-600';
   return (
     <div className='group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'>
       <Link
-        href={`/template/${item.id}`}
+        href={`/admin/templates/${item.id}/preview`}
+        target='_blank'
+        rel='noopener noreferrer'
         className='relative block aspect-[16/10] overflow-hidden border-b border-zinc-100 bg-gradient-to-br from-zinc-100 via-zinc-200/60 to-zinc-100'
-        title={viewLabel}
+        title='Preview'
       >
         {item.thumbnail_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -480,13 +493,25 @@ function TemplateCard({
           </span>
         </div>
 
-        <Link
-          href={`/template/${item.id}`}
-          className='mt-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50'
-        >
-          <ExternalLinkIcon className='size-3' />
-          {viewLabel}
-        </Link>
+        <div className='mt-1 grid grid-cols-2 gap-1.5'>
+          <Link
+            href={`/admin/templates/${item.id}/preview`}
+            target='_blank'
+            rel='noopener noreferrer'
+            className='inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50'
+          >
+            <Eye className='size-3.5' />
+            Preview
+          </Link>
+          <button
+            type='button'
+            onClick={onUse}
+            className='inline-flex items-center justify-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700'
+          >
+            <Sparkles className='size-3.5' />
+            Sử dụng
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -497,11 +522,11 @@ function TemplateCard({
 function TableView({
   items,
   col,
-  viewLabel,
+  onUse,
 }: {
   items: Template[];
   col: { name: string; code: string; status: string; created: string };
-  viewLabel: string;
+  onUse: (t: Template) => void;
 }) {
   return (
     <div className='border-border overflow-hidden rounded-2xl border bg-white'>
@@ -513,7 +538,7 @@ function TableView({
             <TableHead className='w-32'>{col.code}</TableHead>
             <TableHead className='w-28'>{col.status}</TableHead>
             <TableHead className='w-40'>{col.created}</TableHead>
-            <TableHead className='w-24' />
+            <TableHead className='w-44' />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -567,13 +592,25 @@ function TableView({
                     : '—'}
                 </TableCell>
                 <TableCell>
-                  <Link
-                    href={`/template/${item.id}`}
-                    className='text-primary inline-flex items-center gap-1 text-xs hover:underline'
-                  >
-                    {viewLabel}
-                    <ExternalLinkIcon className='size-3' />
-                  </Link>
+                  <div className='flex items-center justify-end gap-1.5'>
+                    <Link
+                      href={`/admin/templates/${item.id}/preview`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50'
+                    >
+                      <Eye className='size-3' />
+                      Preview
+                    </Link>
+                    <button
+                      type='button'
+                      onClick={() => onUse(item)}
+                      className='inline-flex items-center gap-1 rounded-md bg-zinc-900 px-2 py-1 text-xs font-medium text-white hover:bg-zinc-700'
+                    >
+                      <Sparkles className='size-3' />
+                      Sử dụng
+                    </button>
+                  </div>
                 </TableCell>
               </TableRow>
             );

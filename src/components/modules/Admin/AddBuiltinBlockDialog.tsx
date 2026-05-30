@@ -19,11 +19,12 @@ import { toast } from 'sonner';
 
 import { BlockMiniPreview } from '@/components/modules/CanvasTemplate/block-editor/BlockMiniPreview';
 import { createBlock } from '@/components/modules/CanvasTemplate/block-editor/factory';
-import { saveBlock } from '@/components/modules/CanvasTemplate/block-editor/savedBlocks';
 import type {
   Block,
   BlockType,
 } from '@/components/modules/CanvasTemplate/block-editor/types';
+import { RxApiError } from '@/services/rexer/client';
+import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
 
 type Category =
@@ -224,18 +225,29 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
     );
   });
 
-  const handleAdd = (item: CatalogItem) => {
+  const handleAdd = async (item: CatalogItem) => {
     setAdding(item.type);
     try {
       const block = createBlock(item.type);
-      const saved = saveBlock(item.label, block);
-      toast.success(`Đã thêm "${saved.name}" vào thư viện`);
-      onAdded?.(saved.id);
+      // BE Block.settings: JSONMap opaque — FE serializes the editor Block
+      // shape so the canvas editor can reconstruct it on load.
+      const created = await rexerApi.blocks.create({
+        type_code: item.type,
+        name: item.label,
+        settings: block as unknown as Record<string, unknown>,
+        scope: 'brand_private',
+      });
+      toast.success(`Đã thêm "${created.name}" vào thư viện`);
+      onAdded?.(created.id);
       onClose();
     } catch (err) {
-      toast.error(
-        `Không thêm được: ${err instanceof Error ? err.message : 'unknown'}`
-      );
+      const msg =
+        err instanceof RxApiError
+          ? err.code || err.message
+          : err instanceof Error
+            ? err.message
+            : 'unknown';
+      toast.error(`Không thêm được: ${msg}`);
     } finally {
       setAdding(null);
     }
@@ -375,13 +387,26 @@ function CatalogCard({
   adding: boolean;
   onAdd: () => void;
 }) {
+  // Wrapper is a div role=button — BlockMiniPreview contains carousel prev/next
+  // <button>s for image_carousel/carousel_3d items; nesting <button> inside
+  // <button> is invalid HTML + raises hydration warning.
   return (
-    <button
-      type='button'
-      onClick={onAdd}
-      disabled={adding}
+    <div
+      role='button'
+      tabIndex={adding ? -1 : 0}
+      aria-disabled={adding}
+      onClick={() => {
+        if (!adding) onAdd();
+      }}
+      onKeyDown={e => {
+        if (adding) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onAdd();
+        }
+      }}
       className={cn(
-        'group flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white text-left shadow-sm transition-all',
+        'group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white text-left shadow-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
         'hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/5',
         adding && 'cursor-wait opacity-60'
       )}
@@ -426,6 +451,6 @@ function CatalogCard({
           {item.description}
         </p>
       </div>
-    </button>
+    </div>
   );
 }

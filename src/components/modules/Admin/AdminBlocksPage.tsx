@@ -1,13 +1,23 @@
 'use client';
 
 /**
- * Block management center. Lists saved blocks (localStorage Phase 1) with
- * grid/table views, search, type + tag filters, side drawer for preview +
- * metadata edit, and an "Edit" action that creates a scratch canvas
- * template containing the block and navigates to the canvas editor.
+ * Block management center — `/admin/blocks` (+ `/portal/blocks` mirror).
  *
- * Replaces the simpler `AdminSavedBlocksPage` — `/admin/saved-blocks` route
- * keeps working as a redirect for backwards compat.
+ * Wave 3 cutover (2026-05-30): migrated from localStorage `savedBlocks`
+ * helper to BE `/v1/blocks`. Endpoints wired:
+ *   GET    /v1/blocks                        → list (`rexerApi.blocks.list`)
+ *   POST   /v1/blocks                        → create (in AddBuiltinBlockDialog)
+ *   PATCH  /v1/blocks/:id                    → rename + tag update
+ *   DELETE /v1/blocks/:id                    → archive
+ *   POST   /v1/blocks/:id/clone              → duplicate
+ *   POST   /v1/blocks/:id/use                → not used here (canvas editor calls)
+ *
+ * BE `Block.settings` stores the editor's Block JSON (set by FE on save) —
+ * we parse it back here so `BlockMiniPreview` can render. When settings
+ * isn't a valid editor Block (e.g. brand_private rows seeded server-side),
+ * the card shows the gradient placeholder only.
+ *
+ * Edit-in-canvas is still Wave 3 work (handler shows informative toast).
  */
 
 import * as React from 'react';
@@ -19,9 +29,12 @@ import {
   Eye,
   Hash,
   LayoutGrid,
+  Loader2,
   MoreVertical,
   Pencil,
+  Play,
   Plus,
+  RefreshCw,
   Search,
   Table as TableIcon,
   Tag,
@@ -42,17 +55,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/atoms/table';
-import {
-  deleteSavedBlock,
-  duplicateSavedBlock,
-  listSavedBlocks,
-  renameSavedBlock,
-  subscribeSavedBlocks,
-  updateSavedBlockTags,
-  type SavedBlock,
-} from '@/components/modules/CanvasTemplate/block-editor/savedBlocks';
 import { BlockMiniPreview } from '@/components/modules/CanvasTemplate/block-editor/BlockMiniPreview';
-import type { BlockType } from '@/components/modules/CanvasTemplate/block-editor/types';
+import { PreviewMode } from '@/components/modules/CanvasTemplate/block-editor/PreviewMode';
+import type {
+  Block as EditorBlock,
+  BlockType,
+} from '@/components/modules/CanvasTemplate/block-editor/types';
+import { RxApiError } from '@/services/rexer/client';
+import { rexerApi } from '@/services/rexer/endpoints';
+import type { Block as ServerBlock } from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
 
 import { AddBuiltinBlockDialog } from './AddBuiltinBlockDialog';
@@ -116,6 +127,26 @@ function fmtRelative(iso?: string): string {
   return fmtDate(iso);
 }
 
+function rxMessage(err: unknown): string {
+  if (err instanceof RxApiError) return err.code || err.message || 'API_ERROR';
+  if (err instanceof Error) return err.message;
+  return 'Unexpected error';
+}
+
+/**
+ * Try parsing `Block.settings` back to an editor Block. FE writes editor
+ * Block as-is into settings on create, so the round-trip works for blocks
+ * the FE owns. Returns null for any row whose settings doesn't look like
+ * an editor Block (shows gradient-only card).
+ */
+function parseEditorBlock(
+  settings: Record<string, unknown> | undefined
+): EditorBlock | null {
+  if (!settings || typeof settings !== 'object') return null;
+  if (!('blockType' in settings)) return null;
+  return settings as unknown as EditorBlock;
+}
+
 export function AdminBlocksPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -124,22 +155,44 @@ export function AdminBlocksPage() {
   // so the URL clearly reads as portal — admin/staff still get the drawer.
   const isPortal = pathname?.startsWith('/portal') ?? false;
   const detailBase = isPortal ? '/portal/blocks' : '/admin/blocks';
-  const [items, setItems] = React.useState<SavedBlock[]>([]);
+
+  const [items, setItems] = React.useState<ServerBlock[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [view, setView] = React.useState<View>('grid');
   const [search, setSearch] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState<BlockType | 'all'>('all');
   const [tagFilter, setTagFilter] = React.useState<string | null>(null);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [catalogOpen, setCatalogOpen] = React.useState(false);
+  // Preview overlay — null = closed. Holds parsed editor Block + label for
+  // <PreviewMode> (full-screen layout + animation playback per device).
+  const [previewTarget, setPreviewTarget] = React.useState<{
+    block: EditorBlock;
+    name: string;
+  } | null>(null);
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const r = await rexerApi.blocks.list({ limit: 200 });
+      setItems(r.items ?? []);
+    } catch (err) {
+      setError(rxMessage(err));
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   React.useEffect(() => {
-    setItems(listSavedBlocks());
-    return subscribeSavedBlocks(() => setItems(listSavedBlocks()));
-  }, []);
+    load();
+  }, [load]);
 
   const selected = items.find(i => i.id === selectedId) ?? null;
 
-  // Aggregate distinct tags across all saved blocks for the filter chip row.
+  // Distinct tags across all rows for the filter chip row.
   const allTags = React.useMemo(() => {
     const s = new Set<string>();
     for (const it of items) for (const t of it.tags ?? []) s.add(t);
@@ -149,49 +202,88 @@ export function AdminBlocksPage() {
   const filtered = React.useMemo(() => {
     const q = search.trim().toLowerCase();
     return items.filter(e => {
-      if (typeFilter !== 'all' && e.block.blockType !== typeFilter)
-        return false;
+      if (typeFilter !== 'all' && e.type_code !== typeFilter) return false;
       if (tagFilter && !(e.tags ?? []).includes(tagFilter)) return false;
       if (!q) return true;
       return (
         e.name.toLowerCase().includes(q) ||
-        e.block.blockType.toLowerCase().includes(q) ||
+        e.type_code.toLowerCase().includes(q) ||
         (e.tags ?? []).some(t => t.includes(q))
       );
     });
   }, [items, search, typeFilter, tagFilter]);
 
-  const handleDuplicate = (id: string) => {
-    const dup = duplicateSavedBlock(id);
-    if (!dup) {
-      toast.error('Không tìm thấy block để clone');
-      return;
+  const handleDuplicate = async (id: string) => {
+    const tid = toast.loading('Đang clone…');
+    try {
+      const dup = await rexerApi.blocks.clone(id);
+      toast.success(`Đã clone — "${dup.name}"`, { id: tid });
+      await load();
+      setSelectedId(dup.id);
+    } catch (err) {
+      toast.error(`Clone thất bại: ${rxMessage(err)}`, { id: tid });
     }
-    toast.success(`Đã clone — "${dup.name}"`);
-    setSelectedId(dup.id);
   };
 
-  const handleDelete = (block: SavedBlock) => {
+  const handleDelete = async (block: ServerBlock) => {
     if (!window.confirm(`Xoá "${block.name}"?`)) return;
-    deleteSavedBlock(block.id);
-    toast.success('Đã xoá');
-    if (selectedId === block.id) setSelectedId(null);
+    const tid = toast.loading('Đang xoá…');
+    try {
+      await rexerApi.blocks.archive(block.id);
+      toast.success('Đã xoá', { id: tid });
+      if (selectedId === block.id) setSelectedId(null);
+      await load();
+    } catch (err) {
+      toast.error(`Xoá thất bại: ${rxMessage(err)}`, { id: tid });
+    }
+  };
+
+  const handleRename = async (id: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    try {
+      await rexerApi.blocks.update(id, { name: trimmed });
+      toast.success('Đã đổi tên');
+      await load();
+    } catch (err) {
+      toast.error(`Đổi tên thất bại: ${rxMessage(err)}`);
+    }
+  };
+
+  const handleTagsChange = async (id: string, tags: string[]) => {
+    const normalised = Array.from(
+      new Set(tags.map(t => t.trim().toLowerCase()).filter(t => t.length > 0))
+    );
+    try {
+      await rexerApi.blocks.update(id, { tags: normalised });
+      toast.success('Đã cập nhật tag');
+      await load();
+    } catch (err) {
+      toast.error(`Cập nhật tag thất bại: ${rxMessage(err)}`);
+    }
   };
 
   /**
-   * Edit flow disabled in Wave 2 of canonical cutover — legacy scratch
-   * canvas-template create path is gone. Wave 3 will:
-   *   1. Switch this page from localStorage `savedBlocks` to server-backed
-   *      `rexerApi.blocks` (BE shape: type_code + settings + scope).
-   *   2. Refactor canvas-editor wrap to load `block.settings` directly
-   *      instead of round-tripping through a temp canvas-template id.
-   * For now surface an informative toast so admins know where to go.
+   * Edit-in-canvas flow still blocked by Wave 3 work — canvas-editor wrap
+   * needs to load `block.settings` directly instead of round-tripping
+   * through a temp canvas-template id (which is retired post mig 134).
    */
-  const handleEdit = (block: SavedBlock) => {
+  const handleEdit = (block: ServerBlock) => {
     toast.info(
       `Edit "${block.name}" — flow đang refactor sang block-direct editor (Wave 3). Tạm thời dùng portal block editor để chỉnh.`,
       { duration: 6000 }
     );
+  };
+
+  const handlePreview = (block: ServerBlock) => {
+    const editorBlock = parseEditorBlock(block.settings);
+    if (!editorBlock) {
+      toast.error(
+        'Block này không có canvas data — settings rỗng hoặc shape không tương thích.'
+      );
+      return;
+    }
+    setPreviewTarget({ block: editorBlock, name: block.name });
   };
 
   const openDetail = (id: string) => {
@@ -216,14 +308,27 @@ export function AdminBlocksPage() {
                 blocks
               </p>
             </div>
-            <button
-              type='button'
-              onClick={() => setCatalogOpen(true)}
-              className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
-            >
-              <Plus className='size-3.5' />
-              Thêm từ thư viện hệ thống
-            </button>
+            <div className='flex items-center gap-2'>
+              <button
+                type='button'
+                onClick={load}
+                disabled={loading}
+                className='inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50'
+              >
+                <RefreshCw
+                  className={cn('size-3.5', loading && 'animate-spin')}
+                />
+                Refresh
+              </button>
+              <button
+                type='button'
+                onClick={() => setCatalogOpen(true)}
+                className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
+              >
+                <Plus className='size-3.5' />
+                Thêm từ thư viện hệ thống
+              </button>
+            </div>
           </div>
 
           {/* Search + view toggle */}
@@ -315,7 +420,16 @@ export function AdminBlocksPage() {
 
         {/* Body */}
         <div className='flex-1 overflow-y-auto bg-zinc-50/40 p-6'>
-          {filtered.length === 0 ? (
+          {error && (
+            <div className='mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800'>
+              Load blocks thất bại: <code className='font-mono'>{error}</code>
+            </div>
+          )}
+          {loading && items.length === 0 ? (
+            <div className='flex items-center justify-center py-20 text-sm text-zinc-500'>
+              <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải blocks…
+            </div>
+          ) : filtered.length === 0 ? (
             <EmptyState
               icon={<Bookmark className='size-10' />}
               title={
@@ -348,6 +462,7 @@ export function AdminBlocksPage() {
               onSelect={openDetail}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
+              onPreview={handlePreview}
             />
           ) : (
             <TableView
@@ -357,6 +472,7 @@ export function AdminBlocksPage() {
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
               onEdit={handleEdit}
+              onPreview={handlePreview}
             />
           )}
         </div>
@@ -367,25 +483,33 @@ export function AdminBlocksPage() {
         <DetailDrawer
           block={selected}
           onClose={() => setSelectedId(null)}
-          onRename={name => {
-            renameSavedBlock(selected.id, name);
-            toast.success('Đã đổi tên');
-          }}
-          onTagsChange={tags => {
-            updateSavedBlockTags(selected.id, tags);
-            toast.success('Đã cập nhật tag');
-          }}
+          onRename={name => handleRename(selected.id, name)}
+          onTagsChange={tags => handleTagsChange(selected.id, tags)}
           onDuplicate={() => handleDuplicate(selected.id)}
           onDelete={() => handleDelete(selected)}
           onEdit={() => handleEdit(selected)}
+          onPreview={() => handlePreview(selected)}
         />
       )}
 
       <AddBuiltinBlockDialog
         open={catalogOpen}
         onClose={() => setCatalogOpen(false)}
-        onAdded={id => openDetail(id)}
+        onAdded={id => {
+          load();
+          openDetail(id);
+        }}
       />
+
+      {/* Full-screen layout + animation preview overlay. PreviewMode handles
+          its own enter/exit animation + device responsive frame. */}
+      {previewTarget && (
+        <PreviewMode
+          blocks={[previewTarget.block]}
+          lang='vi'
+          onClose={() => setPreviewTarget(null)}
+        />
+      )}
     </div>
   );
 }
@@ -398,15 +522,17 @@ function GridView({
   onSelect,
   onDuplicate,
   onDelete,
+  onPreview,
 }: {
-  items: SavedBlock[];
+  items: ServerBlock[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onDuplicate: (id: string) => void;
-  onDelete: (item: SavedBlock) => void;
+  onDelete: (item: ServerBlock) => void;
+  onPreview: (item: ServerBlock) => void;
 }) {
   return (
-    <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+    <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
       {items.map(it => (
         <BlockCard
           key={it.id}
@@ -415,6 +541,7 @@ function GridView({
           onClick={() => onSelect(it.id)}
           onDuplicate={() => onDuplicate(it.id)}
           onDelete={() => onDelete(it)}
+          onPreview={() => onPreview(it)}
         />
       ))}
     </div>
@@ -427,18 +554,21 @@ function BlockCard({
   onClick,
   onDuplicate,
   onDelete,
+  onPreview,
 }: {
-  item: SavedBlock;
+  item: ServerBlock;
   active: boolean;
   onClick: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onPreview: () => void;
 }) {
-  const type = item.block.blockType;
+  const type = item.type_code as BlockType;
   const gradient = BLOCK_TYPE_GRADIENT[type] ?? 'from-zinc-400 to-zinc-600';
-  const label = BLOCK_TYPE_LABEL[type] ?? type;
-  const extraCount = item.block.extraElements?.length ?? 0;
-  const hasMobile = !!item.block.contentVi?.mobile;
+  const label = BLOCK_TYPE_LABEL[type] ?? item.type_code;
+  const editorBlock = parseEditorBlock(item.settings);
+  const extraCount = editorBlock?.extraElements?.length ?? 0;
+  const hasMobile = !!editorBlock?.contentVi?.mobile;
   return (
     <div
       className={cn(
@@ -448,13 +578,25 @@ function BlockCard({
           : 'border-zinc-200 hover:border-zinc-300'
       )}
     >
-      {/* Kebab menu — absolutely positioned so it floats over both preview
-          and metadata. Stopping propagation prevents the card body click. */}
-      <div className='absolute top-2 right-2 z-10'>
+      <div className='absolute top-2 right-2 z-10 flex items-center gap-1'>
+        {/* Quick preview button — opens full-screen layout + animation */}
+        <button
+          type='button'
+          onClick={e => {
+            e.stopPropagation();
+            onPreview();
+          }}
+          className='flex size-7 items-center justify-center rounded-full bg-white/85 text-zinc-700 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all hover:bg-white hover:text-zinc-900'
+          title='Xem preview (layout + animation)'
+          aria-label='Preview block'
+        >
+          <Play className='size-3.5' />
+        </button>
         <CardKebabMenu
           onDetail={onClick}
           onDuplicate={onDuplicate}
           onDelete={onDelete}
+          onPreview={onPreview}
         />
       </div>
 
@@ -464,7 +606,18 @@ function BlockCard({
         className='flex flex-1 flex-col text-left'
       >
         <div className='relative'>
-          <BlockMiniPreview block={item.block} aspect='4 / 3' />
+          {editorBlock ? (
+            <BlockMiniPreview block={editorBlock} aspect='4 / 3' />
+          ) : (
+            <div
+              className={cn(
+                'flex aspect-[4/3] items-center justify-center bg-gradient-to-br text-white/80',
+                gradient
+              )}
+            >
+              <Bookmark className='size-10 opacity-80' />
+            </div>
+          )}
           <span
             className={cn(
               'absolute bottom-2 left-2 rounded bg-gradient-to-br px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-white/95 uppercase shadow-sm',
@@ -488,7 +641,9 @@ function BlockCard({
           <div className='truncate text-[13px] font-semibold text-zinc-800'>
             {item.name}
           </div>
-          <div className='font-mono text-[10px] text-zinc-500'>{type}</div>
+          <div className='font-mono text-[10px] text-zinc-500'>
+            {item.type_code}
+          </div>
           {item.tags && item.tags.length > 0 && (
             <div className='flex flex-wrap gap-1'>
               {item.tags.slice(0, 3).map(t => (
@@ -506,8 +661,11 @@ function BlockCard({
               )}
             </div>
           )}
-          <div className='mt-auto text-[10.5px] text-zinc-400'>
-            {fmtRelative(item.updatedAt ?? item.createdAt)}
+          <div className='mt-auto flex items-center justify-between text-[10.5px] text-zinc-400'>
+            <span>{fmtRelative(item.updated_at ?? item.created_at)}</span>
+            {item.usage_count > 0 && (
+              <span className='font-mono'>↻ {item.usage_count}</span>
+            )}
           </div>
         </div>
       </button>
@@ -515,18 +673,16 @@ function BlockCard({
   );
 }
 
-/**
- * Tiny dropdown menu rendered next to each block card. Three actions:
- * open detail page, duplicate, delete. Click-outside + Escape close it.
- */
 function CardKebabMenu({
   onDetail,
   onDuplicate,
   onDelete,
+  onPreview,
 }: {
   onDetail: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onPreview: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
@@ -567,7 +723,15 @@ function CardKebabMenu({
         <MoreVertical className='size-3.5' />
       </button>
       {open && (
-        <div className='absolute top-9 right-0 z-20 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+        <div className='absolute top-9 right-0 z-20 w-48 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+          <button
+            type='button'
+            onClick={choose(onPreview)}
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-zinc-700 hover:bg-zinc-50'
+          >
+            <Play className='size-3.5 text-zinc-500' />
+            Preview (animation)
+          </button>
           <button
             type='button'
             onClick={choose(onDetail)}
@@ -608,13 +772,15 @@ function TableView({
   onDuplicate,
   onDelete,
   onEdit,
+  onPreview,
 }: {
-  items: SavedBlock[];
+  items: ServerBlock[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onDuplicate: (id: string) => void;
-  onDelete: (item: SavedBlock) => void;
-  onEdit: (item: SavedBlock) => Promise<void> | void;
+  onDelete: (item: ServerBlock) => void;
+  onEdit: (item: ServerBlock) => Promise<void> | void;
+  onPreview: (item: ServerBlock) => void;
 }) {
   return (
     <div className='overflow-hidden rounded-lg border border-zinc-200 bg-white'>
@@ -625,86 +791,103 @@ function TableView({
             <TableHead className='w-36'>Block type</TableHead>
             <TableHead className='w-32'>Tags</TableHead>
             <TableHead className='w-24'>Extras</TableHead>
+            <TableHead className='w-20'>Usage</TableHead>
             <TableHead className='w-32'>Cập nhật</TableHead>
             <TableHead className='w-40' />
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map(it => (
-            <TableRow
-              key={it.id}
-              data-state={it.id === selectedId ? 'selected' : undefined}
-              className='cursor-pointer'
-              onClick={() => onSelect(it.id)}
-            >
-              <TableCell>
-                <div className='font-medium'>{it.name}</div>
-                <div className='font-mono text-[10px] text-zinc-400'>
-                  {it.id}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant='secondary' className='font-mono text-[10px]'>
-                  {it.block.blockType}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                {it.tags && it.tags.length > 0 ? (
-                  <div className='flex flex-wrap gap-1'>
-                    {it.tags.slice(0, 2).map(t => (
-                      <span
-                        key={t}
-                        className='rounded-full bg-zinc-100 px-1.5 py-0.5 text-[9.5px] text-zinc-600'
-                      >
-                        {t}
-                      </span>
-                    ))}
+          {items.map(it => {
+            const editorBlock = parseEditorBlock(it.settings);
+            return (
+              <TableRow
+                key={it.id}
+                data-state={it.id === selectedId ? 'selected' : undefined}
+                className='cursor-pointer'
+                onClick={() => onSelect(it.id)}
+              >
+                <TableCell>
+                  <div className='font-medium'>{it.name}</div>
+                  <div className='font-mono text-[10px] text-zinc-400'>
+                    {it.id}
                   </div>
-                ) : (
-                  <span className='text-zinc-300'>—</span>
-                )}
-              </TableCell>
-              <TableCell>
-                <span className='font-mono text-[11px] text-zinc-600'>
-                  {it.block.extraElements?.length ?? 0}
-                </span>
-              </TableCell>
-              <TableCell className='text-xs text-zinc-500'>
-                {fmtRelative(it.updatedAt ?? it.createdAt)}
-              </TableCell>
-              <TableCell>
-                <div
-                  className='flex items-center gap-1'
-                  onClick={e => e.stopPropagation()}
-                >
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => onEdit(it)}
-                    title='Sửa trong canvas'
+                </TableCell>
+                <TableCell>
+                  <Badge variant='secondary' className='font-mono text-[10px]'>
+                    {it.type_code}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {it.tags && it.tags.length > 0 ? (
+                    <div className='flex flex-wrap gap-1'>
+                      {it.tags.slice(0, 2).map(t => (
+                        <span
+                          key={t}
+                          className='rounded-full bg-zinc-100 px-1.5 py-0.5 text-[9.5px] text-zinc-600'
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className='text-zinc-300'>—</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <span className='font-mono text-[11px] text-zinc-600'>
+                    {editorBlock?.extraElements?.length ?? 0}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className='font-mono text-[11px] text-zinc-600'>
+                    {it.usage_count ?? 0}
+                  </span>
+                </TableCell>
+                <TableCell className='text-xs text-zinc-500'>
+                  {fmtRelative(it.updated_at ?? it.created_at)}
+                </TableCell>
+                <TableCell>
+                  <div
+                    className='flex items-center gap-1'
+                    onClick={e => e.stopPropagation()}
                   >
-                    <Pencil className='size-3.5' />
-                  </Button>
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => onDuplicate(it.id)}
-                    title='Duplicate'
-                  >
-                    <Copy className='size-3.5' />
-                  </Button>
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => onDelete(it)}
-                    title='Xoá'
-                  >
-                    <Trash2 className='size-3.5 text-rose-600' />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onPreview(it)}
+                      title='Preview (layout + animation)'
+                    >
+                      <Play className='size-3.5' />
+                    </Button>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onEdit(it)}
+                      title='Sửa trong canvas (Wave 3)'
+                    >
+                      <Pencil className='size-3.5' />
+                    </Button>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onDuplicate(it.id)}
+                      title='Duplicate'
+                    >
+                      <Copy className='size-3.5' />
+                    </Button>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onDelete(it)}
+                      title='Xoá'
+                    >
+                      <Trash2 className='size-3.5 text-rose-600' />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
@@ -721,22 +904,25 @@ function DetailDrawer({
   onDuplicate,
   onDelete,
   onEdit,
+  onPreview,
 }: {
-  block: SavedBlock;
+  block: ServerBlock;
   onClose: () => void;
   onRename: (name: string) => void;
   onTagsChange: (tags: string[]) => void;
   onDuplicate: () => void;
   onDelete: () => void;
   onEdit: () => Promise<void> | void;
+  onPreview: () => void;
 }) {
   const [editingName, setEditingName] = React.useState(false);
   const [nameInput, setNameInput] = React.useState(block.name);
   const [tagInput, setTagInput] = React.useState('');
-  const type = block.block.blockType;
+  const type = block.type_code as BlockType;
   const gradient = BLOCK_TYPE_GRADIENT[type] ?? 'from-zinc-400 to-zinc-600';
-  const label = BLOCK_TYPE_LABEL[type] ?? type;
+  const label = BLOCK_TYPE_LABEL[type] ?? block.type_code;
   const tags = block.tags ?? [];
+  const editorBlock = parseEditorBlock(block.settings);
 
   React.useEffect(() => {
     setNameInput(block.name);
@@ -816,7 +1002,18 @@ function DetailDrawer({
       {/* Preview */}
       <div className='px-4 pt-4'>
         <div className='relative overflow-hidden rounded-lg border border-zinc-200'>
-          <BlockMiniPreview block={block.block} aspect='16 / 9' />
+          {editorBlock ? (
+            <BlockMiniPreview block={editorBlock} aspect='16 / 9' />
+          ) : (
+            <div
+              className={cn(
+                'flex aspect-video items-center justify-center bg-gradient-to-br text-white/80',
+                gradient
+              )}
+            >
+              <Bookmark className='size-10 opacity-80' />
+            </div>
+          )}
           <span
             className={cn(
               'absolute top-2 left-2 rounded bg-gradient-to-br px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-white/95 uppercase shadow-sm',
@@ -827,11 +1024,11 @@ function DetailDrawer({
           </span>
           <div className='absolute right-0 bottom-0 left-0 flex items-center justify-between bg-black/20 px-2 py-1 text-[9.5px] text-white/80 backdrop-blur'>
             <span>
-              {block.block.contentVi?.mobile
+              {editorBlock?.contentVi?.mobile
                 ? '📱 desktop + mobile'
                 : '🖥 desktop only'}
             </span>
-            <span>{block.block.extraElements?.length ?? 0} extras</span>
+            <span>{editorBlock?.extraElements?.length ?? 0} extras</span>
           </div>
         </div>
       </div>
@@ -841,24 +1038,36 @@ function DetailDrawer({
         <MetaRow
           icon={<Hash className='size-3' />}
           label='Block type'
-          value={<span className='font-mono text-[11px]'>{type}</span>}
+          value={
+            <span className='font-mono text-[11px]'>{block.type_code}</span>
+          }
         />
         <MetaRow
           icon={<Calendar className='size-3' />}
           label='Saved'
-          value={fmtDate(block.createdAt)}
+          value={fmtDate(block.created_at)}
         />
-        {block.updatedAt && (
+        {block.updated_at && block.updated_at !== block.created_at && (
           <MetaRow
             icon={<Calendar className='size-3' />}
             label='Updated'
-            value={fmtRelative(block.updatedAt)}
+            value={fmtRelative(block.updated_at)}
           />
         )}
         <MetaRow
           icon={<Bookmark className='size-3' />}
           label='Extras'
-          value={`${block.block.extraElements?.length ?? 0} elements`}
+          value={`${editorBlock?.extraElements?.length ?? 0} elements`}
+        />
+        <MetaRow
+          icon={<RefreshCw className='size-3' />}
+          label='Usage'
+          value={`${block.usage_count ?? 0} ×`}
+        />
+        <MetaRow
+          icon={<Hash className='size-3' />}
+          label='Scope'
+          value={<span className='font-mono text-[11px]'>{block.scope}</span>}
         />
       </div>
 
@@ -909,38 +1118,42 @@ function DetailDrawer({
         </div>
       </div>
 
-      {/* Actions */}
-      <div className='mt-auto space-y-2 border-t border-zinc-100 px-4 py-3'>
+      {/* Footer actions */}
+      <div className='mt-auto border-t border-zinc-100 px-4 py-3'>
+        {/* Primary action — most-used = visual preview */}
         <Button
-          variant='primary'
-          className='w-full'
-          onClick={() => void onEdit()}
+          size='sm'
+          onClick={onPreview}
+          className='mb-1.5 w-full'
+          disabled={!editorBlock}
+          title={
+            editorBlock
+              ? 'Mở preview full-screen với layout + animation'
+              : 'Block không có canvas data — preview disabled'
+          }
         >
-          <Pencil className='size-3.5' />
-          Sửa trong canvas
+          <Play className='size-3.5' />
+          Preview (layout + animation)
         </Button>
-        <div className='grid grid-cols-2 gap-2'>
-          <Button variant='outline' onClick={onDuplicate}>
-            <Copy className='size-3.5' />
-            Duplicate
+        <div className='grid grid-cols-3 gap-1.5'>
+          <Button variant='outline' size='sm' onClick={onEdit}>
+            <Pencil className='size-3.5' />
+            Edit
           </Button>
-          <Button variant='outline' onClick={onDelete}>
-            <Trash2 className='size-3.5 text-rose-600' />
+          <Button variant='outline' size='sm' onClick={onDuplicate}>
+            <Copy className='size-3.5' />
+            Clone
+          </Button>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={onDelete}
+            className='text-rose-600 hover:bg-rose-50'
+          >
+            <Trash2 className='size-3.5' />
             Xoá
           </Button>
         </div>
-        <button
-          type='button'
-          onClick={() => {
-            navigator.clipboard.writeText(block.id).then(
-              () => toast.success('Đã copy block ID'),
-              () => toast.error('Copy thất bại')
-            );
-          }}
-          className='w-full text-[10.5px] text-zinc-500 hover:text-zinc-900'
-        >
-          Copy block ID
-        </button>
       </div>
     </aside>
   );
@@ -957,11 +1170,11 @@ function MetaRow({
 }) {
   return (
     <div className='flex items-center justify-between gap-2'>
-      <div className='flex items-center gap-1.5 text-[10.5px] tracking-wider text-zinc-500 uppercase'>
+      <div className='flex items-center gap-1.5 text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
         {icon}
         {label}
       </div>
-      <div className='text-right text-[11.5px] text-zinc-700'>{value}</div>
+      <div className='text-zinc-800'>{value}</div>
     </div>
   );
 }

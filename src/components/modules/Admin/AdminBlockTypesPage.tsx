@@ -33,6 +33,7 @@ import {
 import { toast } from 'sonner';
 
 import { Input } from '@/components/atoms/input';
+import { BlockTypeFormDialog } from '@/components/dialogs/BlockTypeFormDialog';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type { AdminBlockType } from '@/services/rexer/types';
@@ -71,6 +72,10 @@ export function AdminBlockTypesPage() {
   const [surface, setSurface] = React.useState<SurfaceFilter>('all');
   const [showInactive, setShowInactive] = React.useState(false);
   const [selectedCode, setSelectedCode] = React.useState<string | null>(null);
+  const [formOpen, setFormOpen] = React.useState(false);
+  const [formInitial, setFormInitial] = React.useState<AdminBlockType | null>(
+    null
+  );
 
   React.useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
@@ -183,11 +188,10 @@ export function AdminBlockTypesPage() {
               </button>
               <button
                 type='button'
-                onClick={() =>
-                  toast.info(
-                    'Create block type — form editor sẽ ship cùng FE Phase 1.5'
-                  )
-                }
+                onClick={() => {
+                  setFormInitial(null);
+                  setFormOpen(true);
+                }}
                 className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
               >
                 <Plus className='size-3.5' />
@@ -295,8 +299,19 @@ export function AdminBlockTypesPage() {
             handleDelete(selected);
             setSelectedCode(null);
           }}
+          onEdit={() => {
+            setFormInitial(selected);
+            setFormOpen(true);
+          }}
         />
       )}
+
+      <BlockTypeFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        initial={formInitial}
+        onSaved={load}
+      />
     </div>
   );
 }
@@ -446,11 +461,13 @@ function BlockTypeDrawer({
   onClose,
   onToggle,
   onDelete,
+  onEdit,
 }: {
   item: AdminBlockType;
   onClose: () => void;
   onToggle: () => void;
   onDelete: () => void;
+  onEdit: () => void;
 }) {
   return (
     <aside className='flex w-[420px] flex-col border-l border-zinc-200 bg-white'>
@@ -562,9 +579,7 @@ function BlockTypeDrawer({
         <div className='grid grid-cols-3 gap-2'>
           <button
             type='button'
-            onClick={() =>
-              toast.info('Edit form — sẽ ship props_schema editor sau')
-            }
+            onClick={onEdit}
             className='inline-flex items-center justify-center gap-1 rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50'
           >
             <Pencil className='size-3.5' />
