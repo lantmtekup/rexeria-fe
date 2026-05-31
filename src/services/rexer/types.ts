@@ -2071,6 +2071,59 @@ export interface UpdateBrandUserRequest {
   status?: 'active' | 'disabled';
 }
 
+// ── Brand custom domains ─────────────────────────────────────────────────
+export type BrandDomainTarget = 'landing' | 'curate_cdn' | 'tracking';
+export type BrandDomainStatus =
+  | 'pending'
+  | 'verifying'
+  | 'verified'
+  | 'failed'
+  | string;
+
+export interface BrandDomain {
+  id: string;
+  brand_id: string;
+  workspace_id: string;
+  domain: string;
+  page_id: string | null;
+  target_type: BrandDomainTarget;
+  status: BrandDomainStatus;
+  verification_token: string;
+  verification_method: 'txt_record' | 'cname' | string;
+  verified_at: string | null;
+  tls_status: string;
+  tls_cert_id: string | null;
+  tls_expires_at: string | null;
+  last_check_at: string | null;
+  failure_reason: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+export interface BrandDomainListResponse {
+  items: BrandDomain[];
+  total: number;
+}
+export interface BrandDomainDnsRecord {
+  type: 'CNAME' | 'TXT' | string;
+  name: string;
+  value: string;
+}
+export interface CreateBrandDomainRequest {
+  domain: string;
+  workspace_id: string;
+  target_type: BrandDomainTarget;
+}
+export interface CreateBrandDomainResponse {
+  domain: BrandDomain;
+  dns_records: BrandDomainDnsRecord[];
+}
+export interface VerifyBrandDomainResponse {
+  domain: BrandDomain;
+  dns_records?: BrandDomainDnsRecord[];
+  message?: string;
+}
+
 // ── Page (canonical, unified entity with type discriminator) ─────────────
 export type PageType = 'landing' | 'ad' | 'curate';
 export type PageStatus = 'draft' | 'published' | 'archived';

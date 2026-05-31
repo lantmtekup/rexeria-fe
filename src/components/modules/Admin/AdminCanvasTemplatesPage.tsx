@@ -25,6 +25,7 @@ import {
   ChevronRight,
   ExternalLink,
   Eye,
+  Globe,
   LayoutGrid,
   LayoutTemplate,
   MoreVertical,
@@ -39,6 +40,7 @@ import {
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
+import { DomainSettingsDialog } from '@/components/dialogs/DomainSettingsDialog';
 import { Input } from '@/components/atoms/input';
 import {
   Table,
@@ -98,6 +100,8 @@ const TYPE_CHIP: Record<string, string> = {
 
 const LIMIT = 20;
 
+type PageAction = 'publish' | 'unpublish' | 'archive' | 'restore' | 'domain';
+
 export function AdminCanvasTemplatesPage() {
   const [items, setItems] = React.useState<Page[]>([]);
   const [total, setTotal] = React.useState(0);
@@ -112,6 +116,7 @@ export function AdminCanvasTemplatesPage() {
   const [sort, setSort] = React.useState<Sort>('-updated_at');
   const [page, setPage] = React.useState(1);
   const [view, setView] = React.useState<View>('grid');
+  const [domainPage, setDomainPage] = React.useState<Page | null>(null);
 
   // Debounce search.
   React.useEffect(() => {
@@ -169,10 +174,11 @@ export function AdminCanvasTemplatesPage() {
   }, [load]);
 
   // ── Page status mutations ────────────────────────────────────────────
-  const runPageAction = async (
-    action: 'publish' | 'unpublish' | 'archive' | 'restore',
-    page: Page
-  ) => {
+  const runPageAction = async (action: PageAction, page: Page) => {
+    if (action === 'domain') {
+      setDomainPage(page);
+      return;
+    }
     const label = {
       publish: 'Publish',
       unpublish: 'Unpublish',
@@ -421,13 +427,19 @@ export function AdminCanvasTemplatesPage() {
           onChange={setPage}
         />
       )}
+
+      {domainPage && (
+        <DomainSettingsDialog
+          open={!!domainPage}
+          onOpenChange={o => !o && setDomainPage(null)}
+          page={domainPage}
+        />
+      )}
     </div>
   );
 }
 
 /* ─── Grid ──────────────────────────────────────────────────────────── */
-
-type PageAction = 'publish' | 'unpublish' | 'archive' | 'restore';
 
 function GridView({
   items,
@@ -636,6 +648,15 @@ function PageActionMenu({
               Restore (→ draft)
             </button>
           )}
+          <div className='h-px bg-zinc-100' />
+          <button
+            type='button'
+            onClick={choose('domain')}
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+          >
+            <Globe className='size-3.5 text-blue-600' />
+            Cài đặt domain
+          </button>
           {page.status !== 'archived' && (
             <>
               <div className='h-px bg-zinc-100' />

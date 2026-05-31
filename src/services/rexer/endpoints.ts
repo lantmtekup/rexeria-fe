@@ -175,10 +175,14 @@ import type {
   UpdatePortalMeRequest,
   // ── Canonical (Rexer Architecture Final 2026-05-23) ───────────────
   Brand,
+  BrandDomainListResponse,
   BrandListResponse,
   BrandResponse,
   BrandUser,
   BrandUserListResponse,
+  CreateBrandDomainRequest,
+  CreateBrandDomainResponse,
+  VerifyBrandDomainResponse,
   CreateBrandRequest,
   UpdateBrandRequest,
   InviteBrandUserRequest,
@@ -1370,17 +1374,24 @@ export const rexerApi = {
     },
 
     // ── Custom domains nested under brand ───────────────────────────────
+    // BE shape probed 2026-05-31:
+    //   POST requires workspace_id (swagger says optional but server rejects
+    //   400 ERR_BAD_REQUEST: workspace_id is required).
+    //   Response: {domain: BrandDomain, dns_records: [{type, name, value}]}.
+    //   GET returns {items, total}.
     domains: {
       list: (brandId: string) =>
-        rx<{ items: unknown[] }>(`/brands/${brandId}/domains`),
-      create: (
-        brandId: string,
-        body: { domain: string; workspace_id?: string; target_type?: string }
-      ) => rx<unknown>(`/brands/${brandId}/domains`, { method: 'POST', body }),
-      verify: (brandId: string, domainId: string) =>
-        rx<unknown>(`/brands/${brandId}/domains/${domainId}/verify`, {
+        rx<BrandDomainListResponse>(`/brands/${brandId}/domains`),
+      create: (brandId: string, body: CreateBrandDomainRequest) =>
+        rx<CreateBrandDomainResponse>(`/brands/${brandId}/domains`, {
           method: 'POST',
+          body,
         }),
+      verify: (brandId: string, domainId: string) =>
+        rx<VerifyBrandDomainResponse>(
+          `/brands/${brandId}/domains/${domainId}/verify`,
+          { method: 'POST' }
+        ),
       remove: (brandId: string, domainId: string) =>
         rx<{ message?: string }>(`/brands/${brandId}/domains/${domainId}`, {
           method: 'DELETE',
