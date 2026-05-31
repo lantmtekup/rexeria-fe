@@ -20,6 +20,7 @@ import Link from 'next/link';
 import {
   Archive,
   ArrowDownUp,
+  BarChart3,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -594,7 +595,17 @@ function PageActionMenu({
         <MoreVertical className='size-3.5' />
       </button>
       {open && (
-        <div className='absolute right-0 bottom-full z-20 mb-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+        <div className='absolute right-0 bottom-full z-20 mb-1 w-48 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+          {/* Analytics — always available regardless of status. */}
+          <Link
+            href={`/admin/landing-pages/${page.slug || page.id}/analytics`}
+            onClick={() => setOpen(false)}
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+          >
+            <BarChart3 className='size-3.5 text-blue-600' />
+            Analytics
+          </Link>
+          <div className='h-px bg-zinc-100' />
           {page.status === 'draft' && (
             <button
               type='button'
