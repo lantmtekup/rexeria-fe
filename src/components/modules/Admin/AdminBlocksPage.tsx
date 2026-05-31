@@ -172,6 +172,13 @@ export function AdminBlocksPage() {
     block: EditorBlock;
     name: string;
   } | null>(null);
+  // Legacy preview — render component qua registry, không dùng PreviewMode
+  // vì PreviewMode expect editor Block shape (canvas-template). Holds
+  // schema id để lookup registry + lang switch (vi/en).
+  const [legacyPreviewTarget, setLegacyPreviewTarget] = React.useState<{
+    schemaId: string;
+    name: string;
+  } | null>(null);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -304,10 +311,15 @@ export function AdminBlocksPage() {
 
   const handlePreview = (block: ServerBlock) => {
     if (isLegacyItem(block)) {
-      // Legacy preview qua route riêng (next step). Tạm log + toast.
-      toast.info(
-        `Preview "${block.name}" — full-screen preview cho legacy block đang phát triển. Xem card preview ở grid.`
-      );
+      const schemaId =
+        typeof block.settings?.schemaId === 'string'
+          ? (block.settings.schemaId as string)
+          : null;
+      if (!schemaId || !getLegacyBlock(schemaId)) {
+        toast.error('Legacy block không tìm thấy trong registry.');
+        return;
+      }
+      setLegacyPreviewTarget({ schemaId, name: block.name });
       return;
     }
     const editorBlock = parseEditorBlock(block.settings);
@@ -542,6 +554,14 @@ export function AdminBlocksPage() {
           blocks={[previewTarget.block]}
           lang='vi'
           onClose={() => setPreviewTarget(null)}
+        />
+      )}
+
+      {legacyPreviewTarget && (
+        <LegacyPreviewOverlay
+          schemaId={legacyPreviewTarget.schemaId}
+          name={legacyPreviewTarget.name}
+          onClose={() => setLegacyPreviewTarget(null)}
         />
       )}
     </div>
@@ -1298,6 +1318,107 @@ function LegacyBlockThumbnail({
           transformOrigin: 'top left',
           pointerEvents: 'none',
         }}
+      >
+        <Component content={content} editable={false} />
+      </div>
+    </div>
+  );
+}
+
+/* ─── LegacyPreviewOverlay ──────────────────────────────────────────
+ * Full-screen modal render legacy block ở viewport thật + toolbar
+ * top-bar (name, lang switch vi/en, close). Block dùng position:
+ * fixed (delvaux hero), h-screen, vh units — wrapper có `transform:
+ * translateZ(0)` tạo new containing block để fixed children stay
+ * inside modal (giống pattern PageOverlayView 2026-05-31).
+ *
+ * ESC key + click backdrop → close. Body scroll lock while open. */
+function LegacyPreviewOverlay({
+  schemaId,
+  name,
+  onClose,
+}: {
+  schemaId: string;
+  name: string;
+  onClose: () => void;
+}) {
+  const [lang, setLang] = React.useState<'vi' | 'en'>('vi');
+  const entry = getLegacyBlock(schemaId);
+
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  if (!entry) return null;
+  const { Component, schema } = entry;
+  const content = (schema.defaults[lang] ?? schema.defaults.vi ?? {}) as Record<
+    string,
+    unknown
+  >;
+  const availableLangs = Object.keys(schema.defaults);
+
+  return (
+    <div className='fixed inset-0 z-[200] flex flex-col bg-zinc-950'>
+      {/* Toolbar */}
+      <div className='flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-zinc-900 px-4 py-2.5'>
+        <div className='flex min-w-0 items-center gap-3'>
+          <span className='inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] font-bold tracking-wider text-amber-300 uppercase'>
+            Legacy
+          </span>
+          <div className='min-w-0'>
+            <div className='truncate text-[13px] font-semibold text-white'>
+              {name}
+            </div>
+            <code className='block truncate font-mono text-[10px] text-zinc-400'>
+              {schema.id}
+            </code>
+          </div>
+        </div>
+        <div className='flex items-center gap-2'>
+          {availableLangs.length > 1 && (
+            <div className='flex items-center gap-1 rounded-full border border-white/10 bg-zinc-800 p-0.5'>
+              {availableLangs.map(l => (
+                <button
+                  key={l}
+                  type='button'
+                  onClick={() => setLang(l as 'vi' | 'en')}
+                  className={cn(
+                    'rounded-full px-2.5 py-1 font-mono text-[10px] font-bold tracking-wider uppercase transition-colors',
+                    lang === l
+                      ? 'bg-white text-zinc-900'
+                      : 'text-zinc-400 hover:text-white'
+                  )}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          )}
+          <button
+            type='button'
+            onClick={onClose}
+            className='flex size-8 items-center justify-center rounded-full text-zinc-300 hover:bg-white/10 hover:text-white'
+            aria-label='Đóng preview'
+            title='Đóng (ESC)'
+          >
+            <X className='size-4' />
+          </button>
+        </div>
+      </div>
+
+      {/* Content — translateZ tạo containing block cho fixed/vh children */}
+      <div
+        className='relative flex-1 overflow-auto bg-white'
+        style={{ transform: 'translateZ(0)' }}
       >
         <Component content={content} editable={false} />
       </div>

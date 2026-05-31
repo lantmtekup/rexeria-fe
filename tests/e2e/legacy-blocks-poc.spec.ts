@@ -63,6 +63,54 @@ test('legacy blocks render trong /admin/blocks list', async ({ page }) => {
     fullPage: true,
   });
 
+  // Close drawer trước (Escape) để Play button click ko bị overlay block
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+
+  // Preview full-screen — find Preview button (aria-label='Preview block').
+  // Card đầu list = FAQ legacy block, nên dùng .first()
+  const playBtn = page.getByRole('button', { name: 'Preview block' }).first();
+  await playBtn.scrollIntoViewIfNeeded();
+  await playBtn.click({ force: true });
+  await page.waitForTimeout(500);
+
+  // Modal có toolbar "Legacy" badge + schema id "faq.v1"
+  await expect(
+    page.getByText('Legacy', { exact: false }).first()
+  ).toBeVisible();
+  await expect(
+    page.locator('code').filter({ hasText: 'faq.v1' })
+  ).toBeVisible();
+
+  // Render component thật: heading "Câu Hỏi" hoặc "Thường Gặp"
+  await expect(page.getByText(/Câu Hỏi|Thường Gặp/).first()).toBeVisible();
+
+  await page.screenshot({
+    path: 'tests/e2e/.artifacts/legacy-blocks-faq-preview.png',
+    fullPage: false,
+  });
+
+  // Lang switch sang EN → heading đổi sang "Frequently"
+  const enBtn = page.getByRole('button', { name: /^en$/i }).first();
+  if (await enBtn.isVisible().catch(() => false)) {
+    await enBtn.click();
+    await page.waitForTimeout(300);
+    await expect(
+      page.getByText(/Frequently|Asked Questions/i).first()
+    ).toBeVisible();
+    await page.screenshot({
+      path: 'tests/e2e/.artifacts/legacy-blocks-faq-preview-en.png',
+      fullPage: false,
+    });
+  }
+
+  // ESC đóng modal
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  await expect(
+    page.locator('code').filter({ hasText: 'faq.v1' })
+  ).not.toBeVisible();
+
   // No console errors (allow Next.js dev warnings)
   const realErrors = consoleErrors.filter(
     e =>
