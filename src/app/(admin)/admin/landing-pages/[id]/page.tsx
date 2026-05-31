@@ -61,31 +61,33 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
         let versionId: string | undefined;
 
         if (UUID_RE.test(rawId)) {
-          // Shape 1: try as template id directly. Fast-path — most editor
-          // navigations from `/admin/templates` come this way.
-          try {
-            const tplRes = await rexerApi.templates.get(rawId);
-            if (cancelled) return;
-            // Template found → editor takes templateId directly, skip
-            // the version resolve below. No specific page slug in this
-            // shape (template can be used by multiple pages).
-            setTemplateId(tplRes.template.id);
-            return;
-          } catch {
-            // Not a template id — fall through to shape 2 (page id).
-          }
-
-          // Shape 2: try as page id.
+          // Order matters: try PAGE first, then TEMPLATE. Page is the common
+          // case (mọi navigate từ /admin/landing-pages). Template-id chỉ
+          // gặp sau khi vừa Create Template Dialog (router.push template.id).
+          // Đảo này tránh log noise GET /templates/{pageId} 404 ở DevTools
+          // cho luồng phổ biến nhất.
           try {
             const page = await rexerApi.pages.get(rawId);
+            if (cancelled) return;
             versionId = page.template_version_id;
             setPageId(page.id);
             setPageName(page.name);
             if (page.slug) setPageSlug(page.slug);
-          } catch (pageErr) {
-            throw new Error(
-              `UUID "${rawId}" không khớp template ID nào hoặc page ID nào: ${rxMessage(pageErr)}`
-            );
+          } catch {
+            // Not a page id — try as template id (newly-created template).
+            try {
+              const tplRes = await rexerApi.templates.get(rawId);
+              if (cancelled) return;
+              // Template found → editor takes templateId directly, skip
+              // the version resolve below. No specific page slug in this
+              // shape (template can be used by multiple pages).
+              setTemplateId(tplRes.template.id);
+              return;
+            } catch (tplErr) {
+              throw new Error(
+                `UUID "${rawId}" không khớp page ID nào hoặc template ID nào: ${rxMessage(tplErr)}`
+              );
+            }
           }
         } else {
           // Shape 3: slug → lookup page → derive version_id.
