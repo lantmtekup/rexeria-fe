@@ -79,6 +79,10 @@ interface BlockEditorProps {
   pageId?: string;
   /** Optional Page name — dùng auto-suggest slug khi user chưa đặt. */
   pageName?: string;
+  /** Optional Page.status từ BE — source of truth cho "đã xuất bản hay
+   *  chưa". Khi present + 'published', editor seed publishState đúng và
+   *  sync `pages.publish/unpublish` khi user toggle. */
+  pageStatus?: 'draft' | 'published' | 'archived';
   /** Callback khi PublishDialog đặt slug mới — để route page reload state.
    *  Optional (no-op nếu không cần refresh). */
   onPageSlugChange?: (slug: string) => void;
@@ -150,6 +154,7 @@ export function BlockEditor({
   pageSlug,
   pageId,
   pageName,
+  pageStatus,
   onPageSlugChange,
 }: BlockEditorProps) {
   const router = useRouter();
@@ -413,7 +418,28 @@ export function BlockEditor({
           parsed === null && !hasServerCanvas
         );
         canvas.reset(initial, parsed?.activeBlockId ?? initial[0]?.id ?? null);
-        publishState.setPublish(parsed?.publish);
+        // Publish state source-of-truth precedence:
+        //   1. BE Page.status === 'published' (canonical, set qua
+        //      pages.publish — survives Save Version commit clearing draft)
+        //   2. parsed blueprint.publish (legacy share-token meta)
+        //   3. undefined
+        // Save Version commit BE clear draft → blueprint.publish trống ở
+        // HEAD; nếu user publish qua kebab Publish ở landing list thì
+        // pageStatus='published' tới đây — vẫn show "Đã xuất bản" đúng.
+        if (pageStatus === 'published') {
+          publishState.setPublish({
+            published: true,
+            // shareToken giữ lại nếu blueprint cũ có, không thì empty —
+            // user click "Đổi link" sẽ generate khi cần (slug URL không
+            // cần shareToken).
+            shareToken: parsed?.publish?.shareToken ?? '',
+            publishedAt: parsed?.publish?.publishedAt,
+          });
+        } else if (pageStatus === 'archived') {
+          publishState.setPublish(undefined);
+        } else {
+          publishState.setPublish(parsed?.publish);
+        }
         // Mark dirty only when we materialised mock seed — empty canvas
         // (intentional Wave 3 starting state) doesn't need an autosave fire.
         if (parsed === null && !hasServerCanvas) autosave.markDirty();
@@ -791,14 +817,32 @@ export function BlockEditor({
   };
 
   // ── Publish ─────────────────────────────────────────────────────────────
+  // Updates 2 sources of truth khi user toggle:
+  //   - FE blueprint.publish (legacy meta, save vào draft qua autosave)
+  //   - BE Page.status qua pages.publish/unpublish — chỉ khi có pageId
+  // Có pageId thì BE là canonical (kebab Publish ở landing list cũng dùng
+  // path này) → reload show "Đã xuất bản" đúng.
   const handlePublishToggle = async () => {
     if (!template) return;
-    publishState.togglePublish();
-    // Let the publish state flush, then push an immediate save so the share
-    // URL is live without waiting for the autosave debounce.
+    const next = publishState.togglePublish();
     await new Promise(r => setTimeout(r, 50));
     autosave.markDirty();
     await autosave.flush({ silent: true });
+    // BE sync — bắn fire-and-forget; lỗi BE chỉ toast warning, không
+    // revert FE state vì blueprint đã save.
+    if (pageId && next) {
+      try {
+        if (next.published) {
+          await rexerApi.pages.publish(pageId);
+        } else {
+          await rexerApi.pages.unpublish(pageId);
+        }
+      } catch (err) {
+        toast.error(
+          `BE publish sync thất bại: ${rxErrorMessage(err)} — trạng thái FE đã đổi, refresh để verify`
+        );
+      }
+    }
   };
 
   const handleRotateShareToken = async () => {
