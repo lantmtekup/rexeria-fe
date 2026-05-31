@@ -17,12 +17,16 @@ import Link from 'next/link';
 import {
   ArrowLeft,
   ExternalLink,
+  Eye,
   FileJson,
   Loader2,
   RefreshCw,
 } from 'lucide-react';
 
 import { Button } from '@/components/atoms/button';
+import { PreviewMode } from '@/components/modules/CanvasTemplate/block-editor/PreviewMode';
+import { parseCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
+import type { Block } from '@/components/modules/CanvasTemplate/block-editor/types';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type {
@@ -31,6 +35,21 @@ import type {
   TemplateVersion,
 } from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
+
+/**
+ * BE `canvas_blueprint.schema_version` ở "1.0" — `parseCanvas` chỉ accept
+ * "2.0" / legacy. Coerce wrapper schema_version, blocks shape đã 2.0-aligned
+ * post BE fabric_to_blueprint converter (handoff §1.4).
+ */
+function adaptCanvasBlueprint(
+  raw: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const blocks = Array.isArray((raw as { blocks?: unknown }).blocks)
+    ? ((raw as { blocks: unknown[] }).blocks as unknown[])
+    : [];
+  return { schema_version: '2.0', blocks };
+}
 
 interface Props {
   templateId: string;
@@ -44,6 +63,18 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
   );
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [fePreviewing, setFePreviewing] = React.useState(false);
+
+  // FE-side render fallback: parse version.canvas_blueprint → blocks array
+  // dùng PreviewMode (same renderer used in editor). Hữu ích khi BE chưa
+  // ship preview_html / preview_url server-side (be-audit §15 — `/p/`
+  // renderer mới chỉ output placeholder primitive; preview endpoint cũng
+  // chưa renderer canvas blocks).
+  const feBlocks = React.useMemo<Block[] | null>(() => {
+    if (!version?.canvas_blueprint) return null;
+    const parsed = parseCanvas(adaptCanvasBlueprint(version.canvas_blueprint));
+    return parsed?.blocks ?? null;
+  }, [version]);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -140,15 +171,21 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
             <RefreshCw className={cn('size-3.5', loading && 'animate-spin')} />
             Reload preview
           </Button>
+          {feBlocks && feBlocks.length > 0 && (
+            <Button size='sm' onClick={() => setFePreviewing(true)}>
+              <Eye className='size-3.5' />
+              Visual preview ({feBlocks.length} block)
+            </Button>
+          )}
           {preview.preview_url && (
-            <Button asChild size='sm'>
+            <Button asChild size='sm' variant='outline'>
               <a
                 href={preview.preview_url}
                 target='_blank'
                 rel='noopener noreferrer'
               >
                 <ExternalLink className='size-3.5' />
-                Mở tab mới
+                BE preview URL
               </a>
             </Button>
           )}
@@ -157,8 +194,22 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
 
       {/* Preview body */}
       <div className='flex flex-1 items-stretch bg-zinc-100'>
-        <PreviewFrame template={template} preview={preview} version={version} />
+        <PreviewFrame
+          template={template}
+          preview={preview}
+          version={version}
+          feBlockCount={feBlocks?.length ?? 0}
+          onOpenFePreview={() => setFePreviewing(true)}
+        />
       </div>
+
+      {fePreviewing && feBlocks && (
+        <PreviewMode
+          blocks={feBlocks}
+          lang='vi'
+          onClose={() => setFePreviewing(false)}
+        />
+      )}
     </div>
   );
 }
@@ -167,10 +218,14 @@ function PreviewFrame({
   template,
   preview,
   version,
+  feBlockCount,
+  onOpenFePreview,
 }: {
   template: Template;
   preview: TemplatePreviewResponse;
   version: TemplateVersion | null;
+  feBlockCount: number;
+  onOpenFePreview: () => void;
 }) {
   if (preview.mode === 'rendered' && preview.preview_html) {
     return (
@@ -205,15 +260,26 @@ function PreviewFrame({
   }
   // Fallback: BE chưa render preview_html/url + canvas_blueprint rỗng.
   // Show structured panel — admin biết template chứa schema + default gì.
-  return <StructuredFallback template={template} version={version} />;
+  return (
+    <StructuredFallback
+      template={template}
+      version={version}
+      feBlockCount={feBlockCount}
+      onOpenFePreview={onOpenFePreview}
+    />
+  );
 }
 
 function StructuredFallback({
   template,
   version,
+  feBlockCount,
+  onOpenFePreview,
 }: {
   template: Template;
   version: TemplateVersion | null;
+  feBlockCount: number;
+  onOpenFePreview: () => void;
 }) {
   const fields = extractFields(version?.field_schema_json);
   const defaults = (version?.default_config_json ?? {}) as Record<
@@ -227,22 +293,35 @@ function StructuredFallback({
 
   return (
     <div className='mx-auto w-full max-w-3xl space-y-4 p-6'>
-      {/* Notice banner */}
-      <div className='rounded-2xl border border-amber-200 bg-amber-50 p-4'>
-        <p className='text-[13px] font-semibold text-amber-900'>
-          BE chưa render visual preview cho template này
-        </p>
-        <p className='mt-1 text-[11.5px] leading-relaxed text-amber-800'>
-          Template có <code className='font-mono'>preview_mode</code> ={' '}
-          <code className='font-mono'>{template.preview_mode}</code> nhưng
-          response không trả <code className='font-mono'>preview_html</code> /{' '}
-          <code className='font-mono'>preview_url</code>, và{' '}
-          <code className='font-mono'>canvas_blueprint.blocks</code> ={' '}
-          <code className='font-mono'>{blockCount}</code>. Cần BE seed canvas
-          blocks hoặc render preview_html từ slot schema + default config.
-          Tracked trong{' '}
-          <code className='font-mono'>docs/be-audit-2026-05-26.md</code>.
-        </p>
+      {/* Notice banner — đỡ nhẹ vì FE render được */}
+      <div className='flex items-start justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4'>
+        <div className='min-w-0 flex-1'>
+          <p className='text-[13px] font-semibold text-amber-900'>
+            BE chưa ship server-side render cho preview
+          </p>
+          <p className='mt-1 text-[11.5px] leading-relaxed text-amber-800'>
+            Template có <code className='font-mono'>preview_mode</code> ={' '}
+            <code className='font-mono'>{template.preview_mode}</code> nhưng
+            response không trả <code className='font-mono'>preview_html</code>{' '}
+            (be-audit §15 — `/p/{'{slug}'}` placeholder, preview endpoint cũng
+            vậy). Canvas có{' '}
+            <code className='font-mono'>{blockCount} block</code>.{' '}
+            {feBlockCount > 0 ? (
+              <>
+                Tạm thời render <strong>client-side</strong> bằng cùng engine
+                editor — bấm nút bên phải để mở visual preview.
+              </>
+            ) : (
+              'Canvas rỗng — chỉ xem được schema bên dưới.'
+            )}
+          </p>
+        </div>
+        {feBlockCount > 0 && (
+          <Button size='sm' onClick={onOpenFePreview} className='shrink-0'>
+            <Eye className='size-3.5' />
+            Visual preview
+          </Button>
+        )}
       </div>
 
       {/* Thumbnail */}
