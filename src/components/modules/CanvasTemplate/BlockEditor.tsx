@@ -66,6 +66,22 @@ interface BlockEditorProps {
    * on a canvas already merged with their product info.
    */
   autoApplyProductId?: string;
+  /**
+   * Optional — slug của Page mà editor đang chỉnh sửa, dùng để build clean
+   * share URL `/p/{slug}` thay vì legacy `/p/{template_id}/{share_token}`.
+   * Resolved upstream trong route `/admin/landing-pages/[id]` khi mở editor
+   * từ page list (path = slug hoặc page UUID).
+   */
+  pageSlug?: string;
+  /** Optional Page UUID — present cùng `pageSlug`/`pageName` khi editor mở
+   *  ở context của 1 page cụ thể. Cho PublishDialog set slug trực tiếp khi
+   *  page chưa có. */
+  pageId?: string;
+  /** Optional Page name — dùng auto-suggest slug khi user chưa đặt. */
+  pageName?: string;
+  /** Callback khi PublishDialog đặt slug mới — để route page reload state.
+   *  Optional (no-op nếu không cần refresh). */
+  onPageSlugChange?: (slug: string) => void;
 }
 
 // BE `/canvas-templates/{id}/canvas` endpoint is currently slow (~10s even
@@ -131,6 +147,10 @@ function rxErrorMessage(err: unknown): string {
 export function BlockEditor({
   templateId,
   autoApplyProductId,
+  pageSlug,
+  pageId,
+  pageName,
+  onPageSlugChange,
 }: BlockEditorProps) {
   const router = useRouter();
 
@@ -631,7 +651,10 @@ export function BlockEditor({
 
   // ── Save Version ────────────────────────────────────────────────────────
   // Commit current draft canvas_blueprint as a new immutable version.
-  // Inherits schema fields from the previous version. Bumps patch number.
+  // Bump LUÔN từ max(version_no) trong template — chứ ko phải từ
+  // `currentVersion` (page.template_version_id có thể trỏ version cũ trong
+  // khi BE đã có version mới hơn, dẫn đến 409 "already exists"). Inherits
+  // schema fields from currentVersion để giữ slot schema ổn định.
   const handleSaveVersion = async () => {
     if (!template || !currentVersion) {
       toast.error('Chưa load được version hiện tại — đợi 1 giây rồi thử lại.');
@@ -639,7 +662,6 @@ export function BlockEditor({
     }
     setSavingVersion(true);
     try {
-      // Flush any pending autosave so draft buffer is up to date BE-side.
       await autosave.flush({ silent: true });
 
       const payload = serializeCanvas(
@@ -647,8 +669,24 @@ export function BlockEditor({
         canvas.activeId ?? undefined,
         publishState.publish
       );
+
+      // Resolve next version string từ HEAD của template (max version_no).
+      const versList = await rexerApi.templates.versions(template.id);
+      const items = versList.items ?? [];
+      const head = items.reduce<TemplateVersionType | null>((max, v) => {
+        if (!max) return v;
+        return (v.version_no ?? 0) > (max.version_no ?? 0) ? v : max;
+      }, null);
+      const baseVersion = head?.version ?? currentVersion.version;
+      let candidate = bumpVersion(baseVersion);
+      // Hồi tiếp 1 lần nếu candidate vẫn trùng (race với commit khác).
+      const existing = new Set(items.map(v => v.version));
+      while (existing.has(candidate)) {
+        candidate = bumpVersion(candidate);
+      }
+
       const next = await rexerApi.templates.createVersion(template.id, {
-        version: bumpVersion(currentVersion.version),
+        version: candidate,
         schema_version: currentVersion.schema_version ?? '1',
         field_schema_json: currentVersion.field_schema_json ?? {},
         default_config_json: currentVersion.default_config_json ?? {},
@@ -1014,6 +1052,10 @@ export function BlockEditor({
         open={publishOpen}
         onOpenChange={setPublishOpen}
         templateId={templateId}
+        pageSlug={pageSlug}
+        pageId={pageId}
+        pageName={pageName}
+        onPageSlugChange={onPageSlugChange}
         publish={publishState.publish}
         onTogglePublish={handlePublishToggle}
         onRotateToken={handleRotateShareToken}

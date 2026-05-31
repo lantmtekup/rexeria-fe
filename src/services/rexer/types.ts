@@ -403,6 +403,9 @@ export interface TemplateVersion {
   id: string;
   template_id: string;
   version: string;
+  /** Monotonic integer assigned by BE on commit — use this for "what's the
+   *  HEAD version" sort instead of parsing the semver `version` string. */
+  version_no?: number;
   schema_version: string;
   renderer_key?: string;
   change_note?: string;

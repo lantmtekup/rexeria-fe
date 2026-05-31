@@ -43,11 +43,17 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
   const autoApplyProductId = searchParams.get('apply_product') ?? undefined;
 
   const [templateId, setTemplateId] = React.useState<string | null>(null);
+  const [pageSlug, setPageSlug] = React.useState<string | undefined>(undefined);
+  const [pageId, setPageId] = React.useState<string | undefined>(undefined);
+  const [pageName, setPageName] = React.useState<string | undefined>(undefined);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
     setError(null);
+    setPageSlug(undefined);
+    setPageId(undefined);
+    setPageName(undefined);
 
     (async () => {
       try {
@@ -61,7 +67,8 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
             const tplRes = await rexerApi.templates.get(rawId);
             if (cancelled) return;
             // Template found → editor takes templateId directly, skip
-            // the version resolve below.
+            // the version resolve below. No specific page slug in this
+            // shape (template can be used by multiple pages).
             setTemplateId(tplRes.template.id);
             return;
           } catch {
@@ -72,6 +79,9 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
           try {
             const page = await rexerApi.pages.get(rawId);
             versionId = page.template_version_id;
+            setPageId(page.id);
+            setPageName(page.name);
+            if (page.slug) setPageSlug(page.slug);
           } catch (pageErr) {
             throw new Error(
               `UUID "${rawId}" không khớp template ID nào hoặc page ID nào: ${rxMessage(pageErr)}`
@@ -87,6 +97,9 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
             throw new Error(`Không tìm thấy page với slug "${rawId}"`);
           }
           versionId = page.template_version_id;
+          setPageId(page.id);
+          setPageName(page.name);
+          setPageSlug(page.slug);
         }
 
         if (!versionId) {
@@ -143,6 +156,10 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
       <BlockEditor
         templateId={templateId}
         autoApplyProductId={autoApplyProductId}
+        pageSlug={pageSlug}
+        pageId={pageId}
+        pageName={pageName}
+        onPageSlugChange={setPageSlug}
       />
     </div>
   );
