@@ -87,16 +87,20 @@ export function BlockAnalyticsGrid({
   const [usingMock, setUsingMock] = React.useState(false);
 
   // Wave 3 migration 2026-05-31: canvasTemplates.get retired → load via
-  // canonical page → template_version chain. `templateId` prop name kept
-  // for back-compat — it's actually the page id from the URL.
+  // canonical page → template → HEAD version chain. `templateId` prop name
+  // kept for back-compat — actually the page id from the URL.
+  //
+  // 2026-05-31 fix: load HEAD (max version_no) instead of the version
+  // referenced by page.template_version_id. BE createVersion không
+  // auto-promote current_version_id / page.template_version_id, nên
+  // page.template_version_id thường trỏ về version cũ rỗng. Áp dụng
+  // workaround giống BlockEditor (be-audit §11 + commit 9d13b38).
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const page = await rexerApi.pages.get(templateId);
         if (cancelled) return;
-        // Need template_id to query templates.version. No flat
-        // /template-versions endpoint, so list templates + match.
         const templates = await rexerApi.templates.list({ limit: 200 });
         const tpl = templates.items?.find(
           t => t.current_version_id === page.template_version_id
@@ -105,14 +109,21 @@ export function BlockAnalyticsGrid({
           setBlocks([]);
           return;
         }
-        const ver = await rexerApi.templates.version(
-          tpl.id,
-          page.template_version_id
-        );
+        // Pick HEAD version (max version_no) — editor commit Save Version
+        // chỉ tạo new version, không bump current_version_id ở BE.
+        const versList = await rexerApi.templates.versions(tpl.id);
         if (cancelled) return;
-        // canvas_blueprint stores schema_version: "1.0"; coerce to "2.0"
-        // so parseCanvas accepts (blocks shape already compatible per
-        // BE fabric_to_blueprint converter, handoff §1.4).
+        const headVer = (versList.items ?? []).reduce<
+          (typeof versList.items)[number] | null
+        >(
+          (max, v) =>
+            !max || (v.version_no ?? 0) > (max.version_no ?? 0) ? v : max,
+          null
+        );
+        const targetVerId = headVer?.id ?? page.template_version_id;
+        const ver = await rexerApi.templates.version(tpl.id, targetVerId);
+        if (cancelled) return;
+        // canvas_blueprint stores schema_version: "1.0"; coerce to "2.0".
         const adapted = ver.canvas_blueprint
           ? {
               schema_version: '2.0',
@@ -278,19 +289,21 @@ export function BlockAnalyticsGrid({
         </div>
       )}
 
-      {/* Mock data banner */}
-      {usingMock && !loading && (
+      {/* Mock banner — chỉ hiện khi có rows từ BE nhưng thiếu views_by_day.
+          Empty (rows.length === 0) hiển thị empty state riêng phía dưới,
+          không cần banner. */}
+      {usingMock && !loading && rows && rows.length > 0 && (
         <div className='flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/70 px-3.5 py-2.5 text-[11.5px] text-amber-900'>
           <span className='mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-100 font-mono text-[9px] font-bold'>
             !
           </span>
           <div>
             <strong className='font-semibold'>
-              Dùng mock data daily views
+              Sparkline mô phỏng theo block_id
             </strong>{' '}
-            — BE chưa ship field <code>views_by_day</code> (be-todo.md P1.7). Số
-            views tổng + clicks là số thật từ breakdown; sparkline được generate
-            deterministic theo block_id để demo shape.
+            — page breakdown chưa có field <code>views_by_day</code> (be-audit
+            §11.4). Số views tổng + clicks là số thật, daily series là mock
+            deterministic để demo shape.
           </div>
         </div>
       )}
@@ -308,6 +321,17 @@ export function BlockAnalyticsGrid({
           </p>
           <p className='mt-1 text-[12px] text-zinc-500'>
             Mở canvas editor để thêm block trước khi xem analytics.
+          </p>
+        </div>
+      ) : rows && rows.length === 0 ? (
+        <div className='rounded-2xl border border-zinc-200 bg-white p-12 text-center'>
+          <p className='text-[14px] font-semibold text-zinc-700'>
+            Chưa có event nào trong {range} ngày gần nhất
+          </p>
+          <p className='mx-auto mt-1 max-w-md text-[12px] text-zinc-500'>
+            Page breakdown đọc từ bảng <code>analytics_daily_aggregate</code>{' '}
+            (job aggregate tổng hợp event qua đêm). Local DB hiện rỗng — khi có
+            view thật sẽ tự hiện. Xem be-audit §11.2 nếu chờ data lâu.
           </p>
         </div>
       ) : (
