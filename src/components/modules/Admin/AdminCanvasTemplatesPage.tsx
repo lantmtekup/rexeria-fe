@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Admin/staff cross-brand landing pages list — `/admin/canvas-templates`.
+ * Admin/staff cross-brand landing pages list — `/admin/landing-pages`.
  *
  * 2026-05-30 cutover: migrated from template catalog (`/v1/templates`) to
  * Page instances (`/v1/pages`). The page now answers "all landings ever
@@ -58,14 +58,14 @@ type Sort = '-updated_at' | '-created_at' | 'created_at' | 'name';
 type View = 'grid' | 'table';
 
 // "Mở landing" navigates to the admin canvas editor. Route
-// `/admin/canvas-templates/[id]` accepts:
+// `/admin/landing-pages/[id]` accepts:
 //   • slug (string)         → lookup page by slug → template
 //   • template UUID         → render directly
 //   • page UUID (fallback)  → lookup page by id → template
 // Pages without slug (vd "Landing Hero v1 - Copy" tạo qua dialog mà admin
 // không điền slug) vẫn mở được — link dùng page.id.
 function publicLandingUrl(slugOrId: string): string {
-  return `/admin/canvas-templates/${slugOrId}`;
+  return `/admin/landing-pages/${slugOrId}`;
 }
 
 const TYPE_GRADIENT: Record<string, string> = {

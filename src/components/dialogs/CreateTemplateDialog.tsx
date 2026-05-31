@@ -123,10 +123,10 @@ export function CreateTemplateDialog({
       const created = await rexerApi.templates.create(body);
       toast.success(`Đã tạo template "${created.code}"`);
       onOpenChange(false);
-      // Navigate to admin block editor — `/admin/canvas-templates/[id]`
+      // Navigate to admin block editor — `/admin/landing-pages/[id]`
       // renders BlockEditor (WYSIWYG, add/edit blocks). Mirror của
       // `/canvas-templates/[id]` ở admin namespace.
-      router.push(`/admin/canvas-templates/${created.id}`);
+      router.push(`/admin/landing-pages/${created.id}`);
     } catch (err) {
       toast.error(`Tạo thất bại: ${rxMessage(err)}`);
     } finally {

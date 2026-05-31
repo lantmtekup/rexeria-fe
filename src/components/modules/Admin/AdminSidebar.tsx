@@ -42,7 +42,7 @@ const NAV: NavItem[] = [
   },
   { href: '/admin/products', labelKey: 'nav.products', icon: PackageIcon },
   {
-    href: '/admin/canvas-templates',
+    href: '/admin/landing-pages',
     labelKey: 'nav.canvasTemplates',
     icon: LayoutTemplateIcon,
     group: 'Content',

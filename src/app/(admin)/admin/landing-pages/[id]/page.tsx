@@ -1,14 +1,14 @@
 'use client';
 
 /**
- * Admin canvas template editor — `/admin/canvas-templates/[id]`.
+ * Admin canvas template editor — `/admin/landing-pages/[id]`.
  *
  * Param `id` accepts 3 shapes (try in order):
  *   1. Template UUID → render BlockEditor directly.
  *   2. Page UUID     → lookup page → template_version_id → template_id.
  *   3. Page slug     → lookup page by slug → template_version_id → template.
  *
- * Why 3 shapes: `/admin/canvas-templates` (page list) prefers slug for
+ * Why 3 shapes: `/admin/landing-pages` (page list) prefers slug for
  * human-readable URLs, but falls back to page.id when slug is empty
  * (vd page created without an admin-provided slug). Editor needs the
  * derived template_id since `rexerApi.templates.get/version` are
