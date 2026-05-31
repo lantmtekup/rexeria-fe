@@ -11,15 +11,32 @@
 
 import type { Block as ServerBlock } from '@/services/rexer/types';
 
+import ctaSection from './cta-section';
 import delvauxHeroIntro from './delvaux-hero-intro';
 import faq from './faq';
+import featureSection from './feature-section';
+import heroOverlay from './hero-overlay';
+import heroSplit from './hero-split';
+import partners from './partners';
+import photoGallery from './photo-gallery';
 import rexerProduct from './rexer-product';
+import testimonials from './testimonials';
 import type { LegacyBlockEntry } from './types';
 
 const registry: readonly LegacyBlockEntry[] = [
-  faq,
-  rexerProduct,
+  // ── Hero ────────────────────────────────────────────────
+  heroSplit,
+  heroOverlay,
   delvauxHeroIntro,
+  // ── Landing sections ────────────────────────────────────
+  featureSection,
+  photoGallery,
+  testimonials,
+  partners,
+  faq,
+  ctaSection,
+  // ── Product ─────────────────────────────────────────────
+  rexerProduct,
 ];
 
 export function getAllLegacyBlocks(): readonly LegacyBlockEntry[] {

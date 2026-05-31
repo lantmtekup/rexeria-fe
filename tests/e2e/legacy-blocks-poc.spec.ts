@@ -67,10 +67,12 @@ test('legacy blocks render trong /admin/blocks list', async ({ page }) => {
   await page.keyboard.press('Escape');
   await page.waitForTimeout(200);
 
-  // Preview full-screen — find Preview button (aria-label='Preview block').
-  // Card đầu list = FAQ legacy block, nên dùng .first()
-  const playBtn = page.getByRole('button', { name: 'Preview block' }).first();
-  await playBtn.scrollIntoViewIfNeeded();
+  // Preview full-screen — scroll FAQ card visible, find Play button.
+  // Registry order: heroSplit, heroOverlay, delvauxHero, featureSection,
+  // photoGallery, testimonials, partners, faq, ctaSection, rexerProduct.
+  // FAQ là card index 7.
+  await faqCard.scrollIntoViewIfNeeded();
+  const playBtn = page.getByRole('button', { name: 'Preview block' }).nth(7);
   await playBtn.click({ force: true });
   await page.waitForTimeout(500);
 
