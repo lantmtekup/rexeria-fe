@@ -28,10 +28,12 @@ import type { Block } from '@/components/modules/CanvasTemplate/block-editor/typ
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type {
+  Page,
   Template,
   TemplatePreviewResponse,
   TemplateVersion,
 } from '@/services/rexer/types';
+import { getCodeTemplate } from '@/templates/registry';
 
 function adaptCanvasBlueprint(
   raw: Record<string, unknown> | undefined
@@ -147,6 +149,62 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
       router.push('/admin/templates');
     }
   }, [router]);
+
+  // Code template — registry lookup theo `template.code`. Có entry →
+  // render TSX component với defaults từ meta.contentSchema (admin
+  // preview, không có brand-specific content). Priority cao nhất —
+  // bỏ qua BE preview_html + canvas_blueprint.
+  const codeTpl = template ? getCodeTemplate(template.code) : null;
+  if (codeTpl) {
+    const defaults: Record<string, unknown> = {};
+    codeTpl.meta.contentSchema?.fields.forEach(f => {
+      if (f.default !== undefined) defaults[f.key] = f.default;
+    });
+    // Synthesize minimal Page object cho preview (admin chưa có page
+    // instance — code template render với defaults).
+    const dummyPage: Page = {
+      id: template!.id,
+      brand_id: '',
+      workspace_id: '',
+      slug: template!.code,
+      name: template!.name,
+      type: 'landing',
+      type_metadata: {},
+      status: 'draft',
+      template_version_id: '',
+      freeze_products: false,
+      created_by: '',
+      updated_by: '',
+      created_at: template!.created_at,
+      updated_at: template!.updated_at,
+    };
+    const Comp = codeTpl.Component;
+    return (
+      <div className='relative min-h-screen'>
+        <div className='fixed top-3 right-3 z-[60] flex items-center gap-2'>
+          <span className='rounded-full bg-zinc-900/80 px-2.5 py-0.5 text-[10px] font-medium tracking-wide text-white backdrop-blur'>
+            code template · {template!.code}
+          </span>
+          <Link
+            href={`/admin/templates/${templateId}/edit`}
+            className='inline-flex items-center gap-1 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium text-white backdrop-blur hover:bg-zinc-800/80'
+          >
+            <Pencil className='size-3' />
+            Edit source
+          </Link>
+          <button
+            type='button'
+            onClick={handleClose}
+            className='inline-flex items-center gap-1 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium text-white backdrop-blur hover:bg-zinc-800/80'
+          >
+            <ArrowLeft className='size-3' />
+            Đóng
+          </button>
+        </div>
+        <Comp page={dummyPage} content={defaults} mode='preview' />
+      </div>
+    );
+  }
 
   // BE preview_html → render iframe directly
   if (preview?.mode === 'rendered' && preview.preview_html) {
