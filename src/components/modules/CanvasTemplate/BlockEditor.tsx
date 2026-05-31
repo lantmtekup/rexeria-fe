@@ -252,29 +252,65 @@ export function BlockEditor({
         const tpl = tplRes.template;
         const currentVerId = tpl.current_version_id;
 
-        // Priority order: draft buffer (autosave) → committed version.
+        // Priority order: draft buffer (autosave) → HEAD committed version.
         // BE ship 2026-05-30 — Template.draft_canvas_blueprint holds the
         // mutable autosave buffer. Reload resumes from there so user doesn't
         // lose unsaved canvas edits.
+        //
+        // 2026-05-31 fix: khi không có draft, load HEAD (max version_no) thay
+        // vì tpl.current_version_id. Lý do: BE không auto-bump
+        // current_version_id sau createVersion → user save v1.0.6 nhưng
+        // current_version_id vẫn = v1.0.0 → reload load v1.0.0 (empty).
+        // BE cũng silently ignore PATCH template/page với current/template
+        // version_id → FE không promote được. Workaround: editor luôn show
+        // HEAD. (Public /p/{slug} render vẫn dùng page.template_version_id
+        // nên cần BE fix riêng — log warning.)
         let canvasData: Record<string, unknown> | undefined;
-        let loadSource: 'draft' | 'version' | 'empty' = 'empty';
+        let loadSource: 'draft' | 'version-head' | 'version-current' | 'empty' =
+          'empty';
+        let loadedVersionId: string | undefined;
         if (tpl.draft_canvas_blueprint) {
           canvasData = adaptCanvasBlueprint(tpl.draft_canvas_blueprint);
           loadSource = 'draft';
-        } else if (currentVerId) {
-          const ver = await withTimeout(
-            rexerApi.templates.version(templateId, currentVerId),
-            LOAD_TIMEOUT_MS
-          );
+        } else {
+          // Fetch versions list to find HEAD.
+          let headVer: TemplateVersionType | null = null;
+          try {
+            const versList = await withTimeout(
+              rexerApi.templates.versions(templateId),
+              LOAD_TIMEOUT_MS
+            );
+            const items = versList.items ?? [];
+            headVer = items.reduce<TemplateVersionType | null>((max, v) => {
+              if (!max) return v;
+              return (v.version_no ?? 0) > (max.version_no ?? 0) ? v : max;
+            }, null);
+          } catch {
+            /* versions list failed — fall back to current_version_id */
+          }
           if (cancelled) return;
-          setCurrentVersion(ver);
-          // canvas_blueprint stores `schema_version: "1.0"` from BE; editor's
-          // parseCanvas only accepts "2.0" or legacy `schema: 'block_editor'`.
-          // Coerce schema_version — blocks shape itself is already 2.0-aligned
-          // post BE fabric_to_blueprint converter (handoff §1.4).
-          if (ver.canvas_blueprint) {
-            canvasData = adaptCanvasBlueprint(ver.canvas_blueprint);
-            loadSource = 'version';
+
+          // Prefer HEAD; fall back to current_version_id if HEAD load fails.
+          const targetVerId = headVer?.id ?? currentVerId;
+          if (targetVerId) {
+            const ver = await withTimeout(
+              rexerApi.templates.version(templateId, targetVerId),
+              LOAD_TIMEOUT_MS
+            );
+            if (cancelled) return;
+            setCurrentVersion(ver);
+            loadedVersionId = ver.id;
+            // canvas_blueprint stores `schema_version: "1.0"` from BE;
+            // editor's parseCanvas only accepts "2.0" / `schema:
+            // 'block_editor'`. Coerce; blocks shape already 2.0-aligned
+            // post BE fabric_to_blueprint converter (handoff §1.4).
+            if (ver.canvas_blueprint) {
+              canvasData = adaptCanvasBlueprint(ver.canvas_blueprint);
+              loadSource =
+                headVer && ver.id === headVer.id
+                  ? 'version-head'
+                  : 'version-current';
+            }
           }
         }
         // eslint-disable-next-line no-console
@@ -283,8 +319,10 @@ export function BlockEditor({
           loadSource,
           '· template:',
           tpl.id,
-          '· current_version_id:',
+          '· current_version_id (BE):',
           currentVerId,
+          '· loaded version_id:',
+          loadedVersionId,
           '· raw blocks:',
           Array.isArray(
             (canvasData as { blocks?: unknown[] } | undefined)?.blocks
@@ -292,13 +330,32 @@ export function BlockEditor({
             ? (canvasData as { blocks: unknown[] }).blocks.length
             : 0
         );
-        // Also stash version when we loaded canvas from draft buffer — need it
-        // for Save Version action to inherit schema fields.
-        if (tpl.draft_canvas_blueprint && currentVerId) {
+        if (
+          loadSource === 'version-head' &&
+          loadedVersionId &&
+          loadedVersionId !== currentVerId
+        ) {
+          // eslint-disable-next-line no-console
+          console.warn(
+            '[rexer-editor] HEAD diverges from template.current_version_id — BE chưa promote sau createVersion. Public /p/{slug} render sẽ vẫn dùng current_version_id (cũ).'
+          );
+        }
+        // Also stash HEAD version when canvas loaded from draft — Save
+        // Version inherits schema fields from currentVersion, dùng HEAD
+        // schema để tránh nhánh schema bị regress.
+        if (tpl.draft_canvas_blueprint) {
           rexerApi.templates
-            .version(templateId, currentVerId)
-            .then(v => {
-              if (!cancelled) setCurrentVersion(v);
+            .versions(templateId)
+            .then(list => {
+              if (cancelled) return;
+              const head = (
+                list.items ?? []
+              ).reduce<TemplateVersionType | null>(
+                (max, v) =>
+                  !max || (v.version_no ?? 0) > (max.version_no ?? 0) ? v : max,
+                null
+              );
+              if (head) setCurrentVersion(head);
             })
             .catch(() => {
               /* non-blocking */
