@@ -11,7 +11,7 @@ export default function Header() {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src='/rcm-logo.svg'
+          src='/templates/mint-coint/rcm-logo.svg'
           alt='Royal Canadian Mint'
           className='h-12 w-auto drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)] md:h-16'
         />
