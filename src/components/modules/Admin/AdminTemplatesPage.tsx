@@ -96,6 +96,9 @@ export function AdminTemplatesPage() {
   // "Tạo template mới" dialog open state.
   const [createOpen, setCreateOpen] = React.useState(false);
   const [page, setPage] = React.useState(1);
+  // Bulk selection — chỉ active ở table view (grid view không expose checkbox).
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = React.useState(false);
 
   React.useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
@@ -170,6 +173,68 @@ export function AdminTemplatesPage() {
     },
     [load]
   );
+
+  // Clear selection khi đổi filter/page (rows hiển thị đổi).
+  React.useEffect(() => {
+    setSelected(new Set());
+  }, [debouncedSearch, status, category, sort, view, page]);
+
+  const toggleSelected = React.useCallback((id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = React.useCallback((ids: string[], allOn: boolean) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (allOn) ids.forEach(id => next.delete(id));
+      else ids.forEach(id => next.add(id));
+      return next;
+    });
+  }, []);
+
+  /** Bulk archive — BE không có hard DELETE (probe 2026-05-31, 404).
+   *  Soft delete = PATCH status='archived'. Fan-out parallel + reload.
+   *  Selected items vẫn xuất hiện ở list nhưng STATUS_CHIP 'archived'. */
+  const runBulkArchive = React.useCallback(async () => {
+    if (selected.size === 0) return;
+    const ids = Array.from(selected);
+    if (
+      !window.confirm(
+        `Archive ${ids.length} template?\n\nStatus → 'archived'. Có thể restore qua kebab menu.`
+      )
+    )
+      return;
+    setBulkBusy(true);
+    const tid = toast.loading(`Archive ${ids.length} templates…`);
+    let okCount = 0;
+    let failCount = 0;
+    await Promise.all(
+      ids.map(async id => {
+        try {
+          await rexerApi.templates.update(id, { status: 'archived' });
+          okCount += 1;
+        } catch {
+          failCount += 1;
+        }
+      })
+    );
+    if (failCount === 0) {
+      toast.success(`Đã archive ${okCount} templates`, { id: tid });
+    } else {
+      toast.error(
+        `${okCount}/${ids.length} OK, ${failCount} lỗi — reload để verify`,
+        { id: tid }
+      );
+    }
+    setSelected(new Set());
+    setBulkBusy(false);
+    await load();
+  }, [selected, load]);
 
   // Distinct categories across the dataset for the filter strip
   const categories = React.useMemo(() => {
@@ -419,6 +484,9 @@ export function AdminTemplatesPage() {
           }}
           onUse={setUseTarget}
           onStatusAction={runStatusAction}
+          selected={selected}
+          onToggleSelected={toggleSelected}
+          onToggleSelectAll={toggleSelectAll}
         />
       )}
 
@@ -431,6 +499,37 @@ export function AdminTemplatesPage() {
           limit={LIMIT}
           onChange={setPage}
         />
+      )}
+
+      {/* Bulk action bar — sticky bottom khi có selection. */}
+      {selected.size > 0 && view === 'table' && (
+        <div className='sticky bottom-4 z-30 mx-auto flex w-fit min-w-[320px] items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 shadow-2xl'>
+          <span className='text-[12.5px] font-medium text-white'>
+            Đã chọn{' '}
+            <span className='rounded-md bg-white/15 px-1.5 py-0.5 font-mono text-[11.5px]'>
+              {selected.size}
+            </span>{' '}
+            template
+          </span>
+          <button
+            type='button'
+            onClick={() => setSelected(new Set())}
+            disabled={bulkBusy}
+            className='rounded-md px-2 py-1 text-[11.5px] font-medium text-white/70 hover:bg-white/10 disabled:opacity-50'
+          >
+            Bỏ chọn
+          </button>
+          <div className='h-4 w-px bg-white/20' />
+          <button
+            type='button'
+            onClick={runBulkArchive}
+            disabled={bulkBusy}
+            className='inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-[12px] font-medium text-white hover:bg-rose-500 disabled:opacity-50'
+          >
+            <Archive className='size-3.5' />
+            {bulkBusy ? 'Archive…' : 'Archive đã chọn'}
+          </button>
+        </div>
       )}
 
       <UseTemplateDialog
@@ -707,17 +806,38 @@ function TableView({
   col,
   onUse,
   onStatusAction,
+  selected,
+  onToggleSelected,
+  onToggleSelectAll,
 }: {
   items: Template[];
   col: { name: string; code: string; status: string; created: string };
   onUse: (t: Template) => void;
   onStatusAction: (t: Template, action: TemplateStatusAction) => void;
+  selected: Set<string>;
+  onToggleSelected: (id: string) => void;
+  onToggleSelectAll: (ids: string[], allOn: boolean) => void;
 }) {
+  const ids = items.map(i => i.id);
+  const allOn = ids.length > 0 && ids.every(id => selected.has(id));
+  const someOn = ids.some(id => selected.has(id));
   return (
     <div className='border-border overflow-hidden rounded-2xl border bg-white'>
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className='w-10'>
+              <input
+                type='checkbox'
+                className='size-3.5 cursor-pointer rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400'
+                checked={allOn}
+                ref={el => {
+                  if (el) el.indeterminate = someOn && !allOn;
+                }}
+                onChange={() => onToggleSelectAll(ids, allOn)}
+                aria-label='Chọn tất cả'
+              />
+            </TableHead>
             <TableHead className='w-20'>Thumb</TableHead>
             <TableHead>{col.name}</TableHead>
             <TableHead className='w-32'>{col.code}</TableHead>
@@ -731,8 +851,21 @@ function TableView({
             const statusClass =
               STATUS_CHIP[(item.status ?? '').toLowerCase()] ??
               'bg-zinc-100 text-zinc-600';
+            const isSelected = selected.has(item.id);
             return (
-              <TableRow key={item.id}>
+              <TableRow
+                key={item.id}
+                className={cn(isSelected && 'bg-zinc-50')}
+              >
+                <TableCell>
+                  <input
+                    type='checkbox'
+                    className='size-3.5 cursor-pointer rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400'
+                    checked={isSelected}
+                    onChange={() => onToggleSelected(item.id)}
+                    aria-label={`Chọn ${item.name}`}
+                  />
+                </TableCell>
                 <TableCell>
                   <Link
                     href={`/template/${item.id}`}
