@@ -1,10 +1,13 @@
 'use client';
 
 /**
- * Rexer Product — apartment grid card. Stripped từ 360-cms: bỏ useReveal
- * hook + rx-container CSS, render plain. Editor wrappers removed.
+ * Rexer Product — apartment grid card. Reveal animation phục hồi 2026-05-31:
+ * header fade-in khi section enter viewport, cards stagger 80ms delay theo
+ * index. Inline `<style>` cho .rx-reveal vì rexerai không có global CSS
+ * tokens kiểu 360-cms. CSS scoped via section id.
  */
 
+import { useReveal } from '../_shared/use-reveal';
 import type { LegacyBlockComponentProps } from '../types';
 
 interface AssetRef {
@@ -18,6 +21,8 @@ interface ProductItem {
   image?: AssetRef | null;
 }
 
+const EASE_EXPO = 'cubic-bezier(0.16, 1, 0.3, 1)';
+
 const C = {
   sand: '#e8e2d3',
   sandPale: '#f4efe2',
@@ -25,10 +30,15 @@ const C = {
   roseDeep: '#a88271',
 };
 
-function ProductCard({ item }: { item: ProductItem }) {
+function ProductCard({ item, index }: { item: ProductItem; index: number }) {
+  const { ref, visible } = useReveal<HTMLElement>();
   const imgUrl = item.image?.url ?? '';
   return (
-    <article>
+    <article
+      ref={ref}
+      className={`rx-reveal ${visible ? 'is-visible' : ''}`}
+      style={{ transitionDelay: `${index * 80}ms` }}
+    >
       <div
         style={{
           aspectRatio: '4 / 5',
@@ -48,7 +58,12 @@ function ProductCard({ item }: { item: ProductItem }) {
               height: '100%',
               objectFit: 'cover',
               display: 'block',
+              transition: `transform 1.4s ${EASE_EXPO}`,
             }}
+            onMouseEnter={e =>
+              (e.currentTarget.style.transform = 'scale(1.04)')
+            }
+            onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
           />
         ) : null}
       </div>
@@ -95,19 +110,44 @@ export function RexerProduct({ content }: LegacyBlockComponentProps) {
   const items: ProductItem[] = Array.isArray(content.items)
     ? (content.items as ProductItem[])
     : [];
+
+  const { ref, visible } = useReveal<HTMLElement>();
   const [line1, line2] = heading.split('\n');
 
   return (
     <section
-      id='product'
+      id='rexer-product'
+      ref={ref}
       style={{
         padding: 'clamp(80px, 12vh, 160px) 24px',
         background: C.sand,
         color: C.ink,
       }}
     >
+      {/* Scoped reveal CSS — inline để self-contained không phụ thuộc global. */}
+      <style>{`
+        #rexer-product .rx-reveal {
+          opacity: 0;
+          transform: translate3d(0, 24px, 0);
+          transition: opacity 1.1s ${EASE_EXPO}, transform 1.1s ${EASE_EXPO};
+        }
+        #rexer-product .rx-reveal.is-visible {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          #rexer-product .rx-reveal {
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+          }
+        }
+      `}</style>
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-        <div style={{ marginBottom: 'clamp(48px, 8cqi, 96px)' }}>
+        <div
+          className={`rx-reveal ${visible ? 'is-visible' : ''}`}
+          style={{ marginBottom: 'clamp(48px, 8cqi, 96px)' }}
+        >
           <div
             style={{
               color: C.roseDeep,
@@ -148,7 +188,7 @@ export function RexerProduct({ content }: LegacyBlockComponentProps) {
           }}
         >
           {items.map((it, i) => (
-            <ProductCard key={it.tag ?? i} item={it} />
+            <ProductCard key={it.tag ?? i} item={it} index={i} />
           ))}
         </div>
       </div>
