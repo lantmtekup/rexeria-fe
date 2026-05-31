@@ -20,13 +20,17 @@
  * type_metadata content).
  */
 
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 
 import { getCodeTemplate } from '@/templates/registry';
 import type { Page, Template } from '@/services/rexer/types';
 
+// Param name `id` (not `slug`) để khớp với legacy `/p/[id]/[token]`.
+// Next.js không cho 2 dynamic param khác tên ở cùng path level. Trong
+// code dùng như slug (semantically).
 interface PageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
 }
 
 const REXER_BE =
@@ -34,16 +38,22 @@ const REXER_BE =
   process.env.REXER_API ??
   'https://rexerai.tekupsoftware.com';
 
+/** Forward incoming request cookies → BE so admin session works for
+ *  draft preview, public guests get RLS-filtered results. */
+async function cookieHeader(): Promise<string> {
+  const c = await cookies();
+  return c
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join('; ');
+}
+
 /** Server-side fetch page by slug. */
 async function fetchPageBySlug(slug: string): Promise<Page | null> {
-  // BE pages?q={slug} returns matching list, client filter exact slug.
-  // No admin auth needed for public page (BE allows guest read for
-  // published pages per RLS). Pass-through any session cookie if user
-  // logged in (so unpublished preview works for admin).
   try {
     const res = await fetch(
       `${REXER_BE}/v1/pages?q=${encodeURIComponent(slug)}&limit=25`,
-      { cache: 'no-store' }
+      { cache: 'no-store', headers: { Cookie: await cookieHeader() } }
     );
     if (!res.ok) return null;
     const body = (await res.json()) as { items?: Page[] };
@@ -58,10 +68,12 @@ async function fetchTemplate(
   templateVersionId: string
 ): Promise<Template | null> {
   try {
+    const cookie = await cookieHeader();
     // No flat /template-versions/{id} endpoint → list templates,
     // match. < 100 templates expected (small catalog).
     const res = await fetch(`${REXER_BE}/v1/templates?limit=500`, {
       cache: 'no-store',
+      headers: { Cookie: cookie },
     });
     if (!res.ok) return null;
     const body = (await res.json()) as { items?: Template[] };
@@ -78,6 +90,7 @@ async function fetchTemplate(
         try {
           const vr = await fetch(`${REXER_BE}/v1/templates/${t.id}/versions`, {
             cache: 'no-store',
+            headers: { Cookie: cookie },
           });
           if (!vr.ok) return null;
           const vb = (await vr.json()) as {
@@ -107,7 +120,7 @@ async function fetchBeHtml(slug: string): Promise<string | null> {
 }
 
 export default async function PublicLanding({ params }: PageProps) {
-  const { slug } = await params;
+  const { id: slug } = await params;
   const page = await fetchPageBySlug(slug);
   if (!page) notFound();
 

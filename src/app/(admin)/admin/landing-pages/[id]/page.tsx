@@ -21,8 +21,11 @@ import { useSearchParams } from 'next/navigation';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 import { BlockEditor } from '@/components/modules/CanvasTemplate/BlockEditor';
+import { CodeTemplatePageEditor } from '@/components/modules/Admin/CodeTemplatePageEditor';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
+import type { Page, Template } from '@/services/rexer/types';
+import { getCodeTemplate } from '@/templates/registry';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -43,6 +46,14 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
   const autoApplyProductId = searchParams.get('apply_product') ?? undefined;
 
   const [templateId, setTemplateId] = React.useState<string | null>(null);
+  /** Full template object — dùng để discriminate code vs block template
+   *  qua `template.code` lookup ở registry. Khi code template:
+   *  CodeTemplatePageEditor (form) thay vì BlockEditor. */
+  const [resolvedTemplate, setResolvedTemplate] =
+    React.useState<Template | null>(null);
+  /** Full Page object cho CodeTemplatePageEditor — render preview cần
+   *  page state đầy đủ. Block editor giữ raw IDs như cũ. */
+  const [resolvedPage, setResolvedPage] = React.useState<Page | null>(null);
   const [pageSlug, setPageSlug] = React.useState<string | undefined>(undefined);
   const [pageId, setPageId] = React.useState<string | undefined>(undefined);
   const [pageName, setPageName] = React.useState<string | undefined>(undefined);
@@ -62,6 +73,8 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
     setPageName(undefined);
     setPageStatus(undefined);
     setPinnedVersionId(undefined);
+    setResolvedTemplate(null);
+    setResolvedPage(null);
 
     (async () => {
       try {
@@ -78,6 +91,7 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
             const page = await rexerApi.pages.get(rawId);
             if (cancelled) return;
             versionId = page.template_version_id;
+            setResolvedPage(page);
             setPageId(page.id);
             setPageName(page.name);
             setPageStatus(page.status);
@@ -109,6 +123,7 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
             throw new Error(`Không tìm thấy page với slug "${rawId}"`);
           }
           versionId = page.template_version_id;
+          setResolvedPage(page);
           setPageId(page.id);
           setPageName(page.name);
           setPageStatus(page.status);
@@ -155,7 +170,10 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
             `template_version_id "${versionId}" không thuộc template nào (đã probe ${items.length} templates)`
           );
         }
-        if (!cancelled) setTemplateId(tpl.id);
+        if (!cancelled) {
+          setTemplateId(tpl.id);
+          setResolvedTemplate(tpl);
+        }
       } catch (err) {
         if (!cancelled) setError(rxMessage(err));
       }
@@ -185,6 +203,19 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
         <Loader2 className='mr-2 size-4 animate-spin' /> Đang resolve template
         từ slug…
       </div>
+    );
+  }
+
+  // Code template (registry lookup) + có page context → form editor thay
+  // BlockEditor. Block template hoặc route mở từ template UUID (no page)
+  // → BlockEditor như cũ.
+  if (
+    resolvedTemplate &&
+    resolvedPage &&
+    getCodeTemplate(resolvedTemplate.code)
+  ) {
+    return (
+      <CodeTemplatePageEditor page={resolvedPage} template={resolvedTemplate} />
     );
   }
 
