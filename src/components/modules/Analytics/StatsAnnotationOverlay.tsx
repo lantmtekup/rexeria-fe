@@ -140,7 +140,10 @@ function useElementMeasurements(
       nodes.forEach(node => {
         const id =
           node.getAttribute('data-block-id') ??
-          node.getAttribute('data-element-id');
+          node.getAttribute('data-element-id') ??
+          // Code template sections (Option C, §17). Cùng treated như block
+          // ở measurement, label/data lookup branch ở caller.
+          node.getAttribute('data-rexer-section');
         if (!id) return;
         const rect = node.getBoundingClientRect();
         next.set(id, {
@@ -694,8 +697,11 @@ export function StatsAnnotationOverlay({
     };
   }, [enabled, range, templateId, isLoggedIn, isAdminScope]);
 
-  const blockSelector = '[data-block-id]';
-  const elementSelector = '[data-element-id]';
+  // Block template: data-block-id. Code template: data-rexer-section.
+  // Cùng treat ở measurement layer — gutter card renderer dùng meta
+  // lookup riêng để label/icon đúng nguồn.
+  const blockSelector = '[data-block-id], [data-rexer-section]';
+  const elementSelector = '[data-element-id], [data-rexer-cta]';
   const blockMeasurements = useElementMeasurements(
     blockSelector,
     enabled && !narrow
@@ -718,6 +724,16 @@ export function StatsAnnotationOverlay({
       const type = el.getAttribute('data-block-type') ?? 'block';
       if (id) m.set(id, type);
     });
+    // Code template sections — label from data-rexer-label attr (set by
+    // PageOverlayView based on meta.tracking.sections lookup). Sections
+    // co-exist với blocks ở cùng Map; mock breakdown render unified.
+    document
+      .querySelectorAll<HTMLElement>('[data-rexer-section]')
+      .forEach(el => {
+        const id = el.getAttribute('data-rexer-section');
+        const label = el.getAttribute('data-rexer-label') ?? id ?? 'section';
+        if (id) m.set(id, label);
+      });
     return m;
     // blockMeasurements is a stable proxy for "DOM blocks changed" — the
     // body reads from `document.querySelectorAll`, not the Map itself.

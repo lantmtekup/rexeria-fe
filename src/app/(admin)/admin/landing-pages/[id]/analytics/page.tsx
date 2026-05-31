@@ -14,11 +14,15 @@
 
 import * as React from 'react';
 import { use } from 'react';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, BarChart3, LayoutDashboard, Loader2 } from 'lucide-react';
 
 import { BlockAnalyticsGrid } from '@/components/modules/Analytics/BlockAnalyticsGrid';
+import { PageOverlayView } from '@/components/modules/Analytics/PageOverlayView';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
+import { cn } from '@/lib/cn';
+
+type Tab = 'cards' | 'overlay';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -37,6 +41,10 @@ export default function AdminLandingAnalyticsPage({ params }: PageProps) {
   const { id: rawId } = use(params);
   const [resolvedId, setResolvedId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  // Tab giữa Cards view (BlockAnalyticsGrid existing) vs Overlay view
+  // (PageOverlayView mới — render trang full + stats annotation cards
+  // floating, drag-to-reposition giống Figma).
+  const [tab, setTab] = React.useState<Tab>('cards');
 
   React.useEffect(() => {
     let cancelled = false;
@@ -88,10 +96,61 @@ export default function AdminLandingAnalyticsPage({ params }: PageProps) {
   }
 
   return (
-    <BlockAnalyticsGrid
-      templateId={resolvedId}
-      backHref='/admin/landing-pages'
-      useAdminEndpoint
-    />
+    <div className='flex flex-col'>
+      {/* Tab switcher — sticky top, cùng z-index thấp hơn overlay
+          toolbar (z-50 của StatsAnnotationOverlay). */}
+      <div className='sticky top-0 z-20 flex items-center gap-1 border-b border-zinc-200 bg-white/90 px-4 py-2 backdrop-blur'>
+        <TabBtn
+          active={tab === 'cards'}
+          onClick={() => setTab('cards')}
+          icon={<BarChart3 className='size-3.5' />}
+          label='Cards view'
+        />
+        <TabBtn
+          active={tab === 'overlay'}
+          onClick={() => setTab('overlay')}
+          icon={<LayoutDashboard className='size-3.5' />}
+          label='Overlay view'
+        />
+      </div>
+
+      {tab === 'cards' ? (
+        <BlockAnalyticsGrid
+          templateId={resolvedId}
+          backHref='/admin/landing-pages'
+          useAdminEndpoint
+        />
+      ) : (
+        <PageOverlayView pageId={resolvedId} />
+      )}
+    </div>
+  );
+}
+
+function TabBtn({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium transition-colors',
+        active
+          ? 'bg-zinc-900 text-white'
+          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+      )}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
