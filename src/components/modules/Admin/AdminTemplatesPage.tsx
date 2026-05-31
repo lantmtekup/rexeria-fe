@@ -20,6 +20,7 @@ import {
   LayoutGrid,
   LayoutTemplate,
   MoreVertical,
+  Pencil,
   RefreshCwIcon,
   RotateCcw,
   Search,
@@ -641,6 +642,15 @@ function TemplateActionMenu({
       </button>
       {open && (
         <div className='absolute right-0 bottom-full z-20 mb-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+          <Link
+            href={`/admin/templates/${item.id}/edit`}
+            onClick={() => setOpen(false)}
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+          >
+            <Pencil className='size-3.5 text-blue-600' />
+            Mở editor
+          </Link>
+          <div className='h-px bg-zinc-100' />
           {status === 'draft' && (
             <button
               type='button'

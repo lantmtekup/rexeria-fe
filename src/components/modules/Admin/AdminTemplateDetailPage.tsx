@@ -245,10 +245,16 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
               />
               Refresh
             </Button>
-            <Button asChild size='sm'>
+            <Button asChild size='sm' variant='outline'>
               <Link href={`/admin/templates/${templateId}/preview`}>
                 <Eye className='size-3.5' />
                 Preview
+              </Link>
+            </Button>
+            <Button asChild size='sm'>
+              <Link href={`/admin/templates/${templateId}/edit`}>
+                <Pencil className='size-3.5' />
+                Mở editor
               </Link>
             </Button>
             <Button
