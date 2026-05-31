@@ -13,7 +13,7 @@ export default function AdminRouteGroupLayout({
 }) {
   return (
     <AdminGuard>
-      <div className='flex min-h-screen bg-zinc-50'>
+      <div className='flex min-h-screen w-full overflow-x-hidden bg-zinc-50'>
         <AdminSidebar />
         <main className='min-h-0 min-w-0 flex-1 overflow-auto'>{children}</main>
       </div>

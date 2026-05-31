@@ -594,12 +594,14 @@ function PageCard({
   const gradient =
     TYPE_GRADIENT[item.type] ?? 'from-zinc-400 via-zinc-500 to-zinc-600';
   return (
-    <div className='group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'>
+    <div className='group flex flex-col rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'>
       {/* Thumbnail area — gradient placeholder per type. BE Page response
-          không trả thumbnail_url; thumbnail_asset_id rỗng cho hầu hết rows. */}
+          không trả thumbnail_url; thumbnail_asset_id rỗng cho hầu hết rows.
+          Card root no longer clips (overflow-hidden removed) so the ⋮ action
+          menu can escape; the thumbnail keeps its own rounding + clip. */}
       <div
         className={cn(
-          'relative aspect-[16/10] overflow-hidden bg-gradient-to-br',
+          'relative aspect-[16/10] overflow-hidden rounded-t-2xl bg-gradient-to-br',
           gradient
         )}
       >
