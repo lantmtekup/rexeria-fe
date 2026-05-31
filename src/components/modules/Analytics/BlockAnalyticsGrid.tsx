@@ -97,6 +97,13 @@ export function BlockAnalyticsGrid({
   const [codeTemplateLabel, setCodeTemplateLabel] = React.useState<
     string | null
   >(null);
+  /** Real per-section metrics keyed by section_id, from the GA-style
+   *  breakdown endpoint (spec §17). Null until first load for a code
+   *  template. */
+  const [sectionStats, setSectionStats] = React.useState<Map<
+    string,
+    { views: number; clicks: number; series: number[] }
+  > | null>(null);
 
   // Wave 3 migration 2026-05-31: canvasTemplates.get retired → load via
   // canonical page → template → HEAD version chain. `templateId` prop name
@@ -182,13 +189,66 @@ export function BlockAnalyticsGrid({
     };
   }, [templateId]);
 
-  // Reload breakdown each time range changes. Canonical pages.analytics.blocks
-  // replaces the retired templateAnalytics/portal templateBreakdown — both
-  // admin + portal contexts use the same endpoint, BE enforces RLS via
-  // session principal so useAdminEndpoint is no longer needed.
+  // Reload breakdown each time range (or template kind) changes.
+  //  - Code template → GA-style section breakdown (spec §17, /analytics/
+  //    breakdown grouped by dimensions.section_id). section_view = views +
+  //    daily series, cta_click = clicks; joined by section_id.
+  //  - Block template → canonical pages.analytics.blocks (both admin +
+  //    portal use it; BE enforces RLS via session principal).
   React.useEffect(() => {
     let cancelled = false;
     setLoading(true);
+
+    if (sections) {
+      if (sections.length === 0) {
+        setSectionStats(new Map());
+        setLoading(false);
+        return;
+      }
+      Promise.all([
+        rexerApi.pages.analytics
+          .breakdown(templateId, {
+            group_by: 'dimensions.section_id',
+            event_type: 'section_view',
+            range: `${range}d`,
+          })
+          .catch(() => ({ items: [] })),
+        rexerApi.pages.analytics
+          .breakdown(templateId, {
+            group_by: 'dimensions.section_id',
+            event_type: 'cta_click',
+            range: `${range}d`,
+          })
+          .catch(() => ({ items: [] })),
+      ])
+        .then(([viewsRes, clicksRes]) => {
+          if (cancelled) return;
+          const m = new Map<
+            string,
+            { views: number; clicks: number; series: number[] }
+          >();
+          for (const r of viewsRes.items ?? []) {
+            m.set(r.key, {
+              views: r.metrics?.count ?? 0,
+              clicks: 0,
+              series: r.views_by_day ?? [],
+            });
+          }
+          for (const r of clicksRes.items ?? []) {
+            const e = m.get(r.key) ?? { views: 0, clicks: 0, series: [] };
+            e.clicks = r.metrics?.count ?? 0;
+            m.set(r.key, e);
+          }
+          setSectionStats(m);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+
     rexerApi.pages.analytics
       .blocks(templateId, { range: `${range}d` })
       .then(res => {
@@ -212,7 +272,7 @@ export function BlockAnalyticsGrid({
     return () => {
       cancelled = true;
     };
-  }, [templateId, range]);
+  }, [templateId, range, sections]);
 
   const rowMap = React.useMemo(() => {
     const m = new Map<string, BlockBreakdownRow>();
@@ -222,6 +282,20 @@ export function BlockAnalyticsGrid({
 
   // Compute total + averages across all blocks
   const aggregate = React.useMemo(() => {
+    // Code template branch — sum từ sectionStats (BE breakdown grouped
+    // by dimensions.section_id, per §17). "blocks có data" reuse cho
+    // section count, label vẫn ổn vì user mental model "thực thể tracked".
+    if (sections && sectionStats) {
+      let views = 0;
+      let clicks = 0;
+      let withData = 0;
+      sectionStats.forEach(s => {
+        views += s.views;
+        clicks += s.clicks;
+        if (s.views > 0 || s.clicks > 0) withData += 1;
+      });
+      return { views, clicks, blocks: withData };
+    }
     if (!rows) return null;
     let views = 0;
     let clicks = 0;
@@ -230,7 +304,7 @@ export function BlockAnalyticsGrid({
       clicks += r.clicks ?? 0;
     }
     return { views, clicks, blocks: rows.length };
-  }, [rows]);
+  }, [rows, sections, sectionStats]);
 
   if (error) {
     return (
@@ -303,8 +377,8 @@ export function BlockAnalyticsGrid({
             accent='violet'
           />
           <SummaryCard
-            label='Block có data'
-            value={`${aggregate.blocks} / ${blocks?.length ?? 0}`}
+            label={sections ? 'Section có data' : 'Block có data'}
+            value={`${aggregate.blocks} / ${sections ? sections.length : (blocks?.length ?? 0)}`}
             accent='zinc'
           />
           <SummaryCard
@@ -345,12 +419,13 @@ export function BlockAnalyticsGrid({
               Code template — section breakdown
             </strong>{' '}
             ({codeTemplateLabel}). Sections khai báo trong{' '}
-            <code className='font-mono'>meta.tracking.sections</code>. Fire qua{' '}
-            <code className='font-mono'>data-rexer-section</code> attrs ở TSX.
-            BE GA-style endpoint chưa ship → số liệu hiển thị mock
-            deterministic. Khi BE ship endpoint{' '}
-            <code className='font-mono'>analytics/breakdown</code>, FE sẽ đọc số
-            thật.
+            <code className='font-mono'>meta.tracking.sections</code>, fire qua{' '}
+            <code className='font-mono'>data-rexer-section</code> /{' '}
+            <code className='font-mono'>data-rexer-cta</code> ở public render.
+            Số liệu đọc thật từ{' '}
+            <code className='font-mono'>analytics/breakdown</code> (group_by{' '}
+            <code className='font-mono'>dimensions.section_id</code>) — chưa có
+            traffic thì hiển thị 0.
           </div>
         </div>
       )}
@@ -378,16 +453,15 @@ export function BlockAnalyticsGrid({
         ) : (
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
             {sections.map((s, idx) => {
-              const series = mockSeries(s.id, range, 0);
-              const views = series.reduce((a, b) => a + b, 0);
+              const stat = sectionStats?.get(s.id);
               return (
                 <SectionAnalyticsCard
                   key={s.id}
                   index={idx + 1}
                   section={s}
-                  views={views}
-                  clicks={Math.floor(views * 0.03)}
-                  series={series}
+                  views={stat?.views ?? 0}
+                  clicks={stat?.clicks ?? 0}
+                  series={stat?.series ?? []}
                 />
               );
             })}

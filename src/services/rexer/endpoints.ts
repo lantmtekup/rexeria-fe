@@ -203,6 +203,7 @@ import type {
   PublishPageResponse,
   PageAnalyticsSummary,
   PageAnalyticsBlocksResponse,
+  PageAnalyticsBreakdownResponse,
   Block,
   BlockListResponse,
   BlockResponse,
@@ -1529,6 +1530,26 @@ export const rexerApi = {
         rx<PageAnalyticsSummary>(`/pages/${id}/analytics/summary`, { query }),
       blocks: (id: string, query?: { range?: string }) =>
         rx<PageAnalyticsBlocksResponse>(`/pages/${id}/analytics/blocks`, {
+          query,
+        }),
+      /**
+       * GA-style generic breakdown (spec §17). `group_by` is a whitelisted
+       * key — `dimensions.section_id`, `dimensions.cta_id`,
+       * `dimensions.variant`, `block_key`, `event_type`, … Used for code
+       * templates which track sections via `dimensions.section_id` instead
+       * of canvas blocks.
+       */
+      breakdown: (
+        id: string,
+        query: {
+          group_by: string;
+          event_type?: string;
+          range?: string;
+          from?: string;
+          to?: string;
+        }
+      ) =>
+        rx<PageAnalyticsBreakdownResponse>(`/pages/${id}/analytics/breakdown`, {
           query,
         }),
     },

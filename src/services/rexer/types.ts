@@ -2476,3 +2476,19 @@ export interface PageAnalyticsBlockRow extends BlockBreakdownRow {
 export interface PageAnalyticsBlocksResponse {
   items: PageAnalyticsBlockRow[];
 }
+
+/**
+ * One row of a GA-style generic breakdown (BE `GET /pages/:id/analytics/
+ * breakdown?group_by=…`, spec §17). `key` is the distinct value of the
+ * grouped dimension (e.g. a `section_id`); `metrics.count` /
+ * `metrics.unique_session` are the totals; `views_by_day` is the daily
+ * series sized to the requested range (oldest → newest).
+ */
+export interface PageAnalyticsBreakdownRow {
+  key: string;
+  metrics: { count?: number; unique_session?: number } & Record<string, number>;
+  views_by_day?: number[];
+}
+export interface PageAnalyticsBreakdownResponse {
+  items: PageAnalyticsBreakdownRow[];
+}
