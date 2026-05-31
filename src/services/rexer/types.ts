@@ -2214,9 +2214,12 @@ export interface CreatePageRequest {
   type_metadata?: PageTypeMetadata;
   workspace_id?: string;
 }
+/** BE `UpdatePageRequest` (swagger 2026-05-31) chỉ accept các field dưới
+ *  — KHÔNG có `slug`. Slug chỉ set được lúc CreatePageRequest, sau đó
+ *  không đổi được (BE silently drop nếu truyền vào PATCH). Xem
+ *  be-audit §12. */
 export interface UpdatePageRequest {
   name?: string;
-  slug?: string;
   description?: string;
   type_metadata?: PageTypeMetadata;
   freeze_products?: boolean;

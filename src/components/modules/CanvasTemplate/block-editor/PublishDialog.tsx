@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Check, Copy, ExternalLink, Loader2, RotateCcw } from 'lucide-react';
+import { Check, Copy, ExternalLink, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
@@ -11,9 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/atoms/dialog';
-import { Input } from '@/components/atoms/input';
-import { RxApiError } from '@/services/rexer/client';
-import { rexerApi } from '@/services/rexer/endpoints';
 
 import type { PublishMeta } from './serialize';
 
@@ -25,38 +22,17 @@ interface PublishDialogProps {
    *  canonical `/p/{slug}` form. */
   pageSlug?: string;
   /** Page UUID — present cùng pageSlug/pageName khi editor đang ở context
-   *  của 1 page cụ thể. Khi page chưa có slug, dialog cho phép set slug
-   *  inline qua `pages.update(pageId, {slug})`. */
+   *  của 1 page cụ thể. Dùng để hiển thị notice khi page chưa có slug. */
   pageId?: string;
-  /** Page name — dùng auto-suggest slug. */
+  /** @deprecated 2026-05-31 — không dùng vì BE `UpdatePageRequest` không
+   *  accept `slug` (be-audit §12). Slug chỉ set được khi CreatePage. */
   pageName?: string;
-  /** Notify parent route khi slug đã được set, để re-resolve state. */
+  /** @deprecated 2026-05-31 — kept for back-compat; no longer fires
+   *  vì FE không thể đổi slug sau khi page tạo. */
   onPageSlugChange?: (slug: string) => void;
   publish: PublishMeta | undefined;
   onTogglePublish: () => void;
   onRotateToken: () => void;
-}
-
-// slug rule: lowercase, alphanum + dash, 2-80 chars, không bắt đầu/end bằng dash.
-const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const SLUG_LEN = { min: 2, max: 80 };
-
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/đ/g, 'd')
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, SLUG_LEN.max);
-}
-
-function rxMessage(err: unknown): string {
-  if (err instanceof RxApiError) return err.code || err.message || 'API_ERROR';
-  if (err instanceof Error) return err.message;
-  return 'Unexpected error';
 }
 
 export function PublishDialog({
@@ -65,22 +41,12 @@ export function PublishDialog({
   templateId,
   pageSlug,
   pageId,
-  pageName,
-  onPageSlugChange,
   publish,
   onTogglePublish,
   onRotateToken,
 }: PublishDialogProps) {
+  void open;
   const [copied, setCopied] = React.useState(false);
-  const [slugDraft, setSlugDraft] = React.useState('');
-  const [savingSlug, setSavingSlug] = React.useState(false);
-
-  // Seed slug draft from page name when dialog opens for a slug-less page.
-  React.useEffect(() => {
-    if (open && pageId && !pageSlug) {
-      setSlugDraft(pageName ? slugify(pageName) : '');
-    }
-  }, [open, pageId, pageSlug, pageName]);
 
   const url = React.useMemo(() => {
     if (!publish?.published) return '';
@@ -103,34 +69,6 @@ export function PublishDialog({
       toast.error('Không copy được — vui lòng copy thủ công');
     }
   };
-
-  const handleSaveSlug = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!pageId) return;
-    const value = slugDraft.trim().toLowerCase();
-    if (
-      value.length < SLUG_LEN.min ||
-      value.length > SLUG_LEN.max ||
-      !SLUG_RE.test(value)
-    ) {
-      toast.error(
-        `Slug: ${SLUG_LEN.min}-${SLUG_LEN.max} ký tự, chỉ a-z 0-9 và dấu '-'`
-      );
-      return;
-    }
-    setSavingSlug(true);
-    try {
-      await rexerApi.pages.update(pageId, { slug: value });
-      toast.success(`Đã đặt slug "${value}"`);
-      onPageSlugChange?.(value);
-    } catch (err) {
-      toast.error(`Đặt slug thất bại: ${rxMessage(err)}`);
-    } finally {
-      setSavingSlug(false);
-    }
-  };
-
-  const canSetSlug = !!pageId && !pageSlug;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -171,46 +109,20 @@ export function PublishDialog({
             </Button>
           </div>
 
-          {/* Slug setter — only when we have a page UUID but no slug yet. */}
-          {canSetSlug && (
-            <form
-              onSubmit={handleSaveSlug}
-              className='flex flex-col gap-2 rounded-md border border-amber-200 bg-amber-50 p-3'
-            >
+          {/* Notice khi page chưa có slug — BE `UpdatePageRequest` không
+              accept slug, chỉ set được lúc CreatePage. User phải tạo lại
+              page với slug hoặc đợi BE ship slug PATCH (be-audit §12). */}
+          {pageId && !pageSlug && (
+            <div className='flex flex-col gap-1 rounded-md border border-amber-200 bg-amber-50 p-3'>
               <span className='text-[11px] font-semibold tracking-wide text-amber-900 uppercase'>
-                Đặt slug để có link thân thiện
+                Page chưa có slug
               </span>
               <p className='text-[11.5px] leading-snug text-amber-800'>
-                Hiện link chia sẻ dùng id + token. Đặt slug để link đổi thành{' '}
-                <code className='font-mono'>/p/&#123;slug&#125;</code>.
+                Link chia sẻ đang dùng id + token (xấu). BE hiện chưa cho đổi
+                slug sau khi tạo page — tạo lại page với slug rõ ràng, hoặc đợi
+                BE ship slug PATCH (be-audit §12).
               </p>
-              <div className='flex items-center gap-2'>
-                <Input
-                  value={slugDraft}
-                  onChange={e =>
-                    setSlugDraft(
-                      e.target.value.toLowerCase().replace(/\s+/g, '-')
-                    )
-                  }
-                  placeholder='vd: tet-2026-thanh-cong'
-                  maxLength={SLUG_LEN.max}
-                  disabled={savingSlug}
-                  className='h-8 font-mono text-xs'
-                />
-                <Button
-                  type='submit'
-                  size='sm'
-                  disabled={
-                    savingSlug || slugDraft.trim().length < SLUG_LEN.min
-                  }
-                >
-                  {savingSlug && (
-                    <Loader2 className='mr-1 size-3 animate-spin' />
-                  )}
-                  Lưu slug
-                </Button>
-              </div>
-            </form>
+            </div>
           )}
 
           {publish?.published && url && (
