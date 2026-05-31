@@ -11,19 +11,24 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
+  Archive,
   ArrowDownUp,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Eye,
   LayoutGrid,
   LayoutTemplate,
+  MoreVertical,
   RefreshCwIcon,
+  RotateCcw,
   Search,
   Sparkles,
   Table as TableIcon,
   Tag,
   X as XIcon,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
 import { Input } from '@/components/atoms/input';
@@ -119,6 +124,51 @@ export function AdminTemplatesPage() {
   React.useEffect(() => {
     load();
   }, [load]);
+
+  // ── Status mutation ─────────────────────────────────────────────────
+  // BE PATCH /v1/templates/:id accepts `status` (active|draft|archived).
+  // Optimistic update + reload on failure.
+  const runStatusAction = React.useCallback(
+    async (tpl: Template, action: 'activate' | 'archive' | 'restore') => {
+      const nextStatus =
+        action === 'activate'
+          ? 'active'
+          : action === 'archive'
+            ? 'archived'
+            : 'draft';
+      const label =
+        action === 'activate'
+          ? 'Activate'
+          : action === 'archive'
+            ? 'Archive'
+            : 'Restore';
+      if (action === 'archive') {
+        if (
+          !window.confirm(
+            `Archive template "${tpl.name}"?\n\nStatus → archived.`
+          )
+        )
+          return;
+      }
+      const tid = toast.loading(`${label}…`);
+      // Optimistic
+      setAllItems(prev =>
+        prev.map(t => (t.id === tpl.id ? { ...t, status: nextStatus } : t))
+      );
+      try {
+        await rexerApi.templates.update(tpl.id, { status: nextStatus });
+        toast.success(`${label} thành công`, { id: tid });
+      } catch (err) {
+        toast.error(
+          `${label} thất bại: ${err instanceof RxApiError ? err.code || err.message : 'ERROR'}`,
+          { id: tid }
+        );
+        // Revert
+        await load();
+      }
+    },
+    [load]
+  );
 
   // Distinct categories across the dataset for the filter strip
   const categories = React.useMemo(() => {
@@ -352,7 +402,11 @@ export function AdminTemplatesPage() {
           </p>
         </div>
       ) : view === 'grid' ? (
-        <GridView items={pageItems} onUse={setUseTarget} />
+        <GridView
+          items={pageItems}
+          onUse={setUseTarget}
+          onStatusAction={runStatusAction}
+        />
       ) : (
         <TableView
           items={pageItems}
@@ -363,6 +417,7 @@ export function AdminTemplatesPage() {
             created: t('templates.col.created'),
           }}
           onUse={setUseTarget}
+          onStatusAction={runStatusAction}
         />
       )}
 
@@ -395,20 +450,35 @@ export function AdminTemplatesPage() {
 function GridView({
   items,
   onUse,
+  onStatusAction,
 }: {
   items: Template[];
   onUse: (t: Template) => void;
+  onStatusAction: (t: Template, action: TemplateStatusAction) => void;
 }) {
   return (
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
       {items.map(it => (
-        <TemplateCard key={it.id} item={it} onUse={() => onUse(it)} />
+        <TemplateCard
+          key={it.id}
+          item={it}
+          onUse={() => onUse(it)}
+          onStatusAction={onStatusAction}
+        />
       ))}
     </div>
   );
 }
 
-function TemplateCard({ item, onUse }: { item: Template; onUse: () => void }) {
+function TemplateCard({
+  item,
+  onUse,
+  onStatusAction,
+}: {
+  item: Template;
+  onUse: () => void;
+  onStatusAction: (t: Template, action: TemplateStatusAction) => void;
+}) {
   const statusClass =
     STATUS_CHIP[(item.status ?? '').toLowerCase()] ??
     'bg-zinc-100 text-zinc-600';
@@ -493,7 +563,7 @@ function TemplateCard({ item, onUse }: { item: Template; onUse: () => void }) {
           </span>
         </div>
 
-        <div className='mt-1 grid grid-cols-2 gap-1.5'>
+        <div className='mt-1 grid grid-cols-[1fr_1fr_auto] gap-1.5'>
           <Link
             href={`/admin/templates/${item.id}/preview`}
             target='_blank'
@@ -511,8 +581,111 @@ function TemplateCard({ item, onUse }: { item: Template; onUse: () => void }) {
             <Sparkles className='size-3.5' />
             Sử dụng
           </button>
+          <TemplateActionMenu
+            item={item}
+            onStatusAction={action => onStatusAction(item, action)}
+          />
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ─── Status action menu (kebab) ─────────────────────────────────────── */
+
+type TemplateStatusAction = 'activate' | 'archive' | 'restore';
+
+function TemplateActionMenu({
+  item,
+  onStatusAction,
+}: {
+  item: Template;
+  onStatusAction: (action: TemplateStatusAction) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const choose = (action: TemplateStatusAction) => () => {
+    setOpen(false);
+    onStatusAction(action);
+  };
+
+  const status = (item.status ?? '').toLowerCase();
+
+  return (
+    <div ref={ref} className='relative'>
+      <button
+        type='button'
+        onClick={() => setOpen(o => !o)}
+        className='inline-flex h-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700 transition-colors hover:bg-zinc-50'
+        aria-label='Hành động'
+        aria-expanded={open}
+      >
+        <MoreVertical className='size-3.5' />
+      </button>
+      {open && (
+        <div className='absolute right-0 bottom-full z-20 mb-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+          {status === 'draft' && (
+            <button
+              type='button'
+              onClick={choose('activate')}
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+            >
+              <CheckCircle2 className='size-3.5 text-emerald-600' />
+              Activate
+            </button>
+          )}
+          {status === 'active' && (
+            <button
+              type='button'
+              onClick={choose('restore')}
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+            >
+              <RotateCcw className='size-3.5 text-amber-600' />
+              Back to draft
+            </button>
+          )}
+          {status === 'archived' && (
+            <button
+              type='button'
+              onClick={choose('restore')}
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+            >
+              <RotateCcw className='size-3.5 text-zinc-600' />
+              Restore (→ draft)
+            </button>
+          )}
+          {status !== 'archived' && (
+            <>
+              <div className='h-px bg-zinc-100' />
+              <button
+                type='button'
+                onClick={choose('archive')}
+                className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-rose-600 hover:bg-rose-50'
+              >
+                <Archive className='size-3.5' />
+                Archive
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -523,10 +696,12 @@ function TableView({
   items,
   col,
   onUse,
+  onStatusAction,
 }: {
   items: Template[];
   col: { name: string; code: string; status: string; created: string };
   onUse: (t: Template) => void;
+  onStatusAction: (t: Template, action: TemplateStatusAction) => void;
 }) {
   return (
     <div className='border-border overflow-hidden rounded-2xl border bg-white'>
@@ -610,6 +785,10 @@ function TableView({
                       <Sparkles className='size-3' />
                       Sử dụng
                     </button>
+                    <TemplateActionMenu
+                      item={item}
+                      onStatusAction={a => onStatusAction(item, a)}
+                    />
                   </div>
                 </TableCell>
               </TableRow>

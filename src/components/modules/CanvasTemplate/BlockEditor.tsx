@@ -394,16 +394,23 @@ export function BlockEditor({
         const parsed = parseCanvas(canvasData);
         // Wave 3: seed canonical templates start with empty canvas_blueprint
         // (`blocks: []`). Falling back to `seedBlocks()` (hardcoded mock) made
-        // every empty template render the same content. Empty canvas now =
-        // empty canvas — user adds blocks via Add Block dialog.
+        // every empty template render the same content.
         //
-        // Only seed when canvasData is genuinely missing (parse null AND no
-        // server-side canvas at all), which signals a legacy / unmigrated
-        // template the editor needs sample data to render.
+        // Empty-canvas precedence:
+        //   1. parsed.blocks → user's actual canvas
+        //   2. hasServerCanvas (BE returned blueprint, possibly with blocks:[])
+        //      → empty array — user delete-everything-then-reload state
+        //   3. tpl.current_version_id === null → fresh template (vừa create
+        //      qua CreateTemplateDialog, chưa có version, chưa có draft) →
+        //      empty array, user tự add blocks
+        //   4. Otherwise → legacy template with missing canvas (mig artifact)
+        //      → seed mock để có gì render
         const hasServerCanvas = canvasData !== undefined;
+        const isFreshTemplate =
+          currentVerId === null && !tpl.draft_canvas_blueprint;
         const initial = parsed?.blocks.length
           ? parsed.blocks
-          : hasServerCanvas
+          : hasServerCanvas || isFreshTemplate
             ? []
             : seedBlocks();
         // eslint-disable-next-line no-console
@@ -415,7 +422,9 @@ export function BlockEditor({
           '· initial blocks installed:',
           initial.length,
           '· seeded mock?',
-          parsed === null && !hasServerCanvas
+          parsed === null && !hasServerCanvas && !isFreshTemplate,
+          '· isFreshTemplate?',
+          isFreshTemplate
         );
         canvas.reset(initial, parsed?.activeBlockId ?? initial[0]?.id ?? null);
         // Publish state source-of-truth precedence:
@@ -440,9 +449,12 @@ export function BlockEditor({
         } else {
           publishState.setPublish(parsed?.publish);
         }
-        // Mark dirty only when we materialised mock seed — empty canvas
-        // (intentional Wave 3 starting state) doesn't need an autosave fire.
-        if (parsed === null && !hasServerCanvas) autosave.markDirty();
+        // Mark dirty only when we materialised mock seed (legacy fallback).
+        // Empty canvas — intentional starting state for fresh template or
+        // canonical empty blueprint — doesn't need an autosave fire.
+        if (parsed === null && !hasServerCanvas && !isFreshTemplate) {
+          autosave.markDirty();
+        }
       } catch (err) {
         if (cancelled) return;
         setLoadError(rxErrorMessage(err));
@@ -766,10 +778,11 @@ export function BlockEditor({
   // Bump LUÔN từ max(version_no) trong template — chứ ko phải từ
   // `currentVersion` (page.template_version_id có thể trỏ version cũ trong
   // khi BE đã có version mới hơn, dẫn đến 409 "already exists"). Inherits
-  // schema fields from currentVersion để giữ slot schema ổn định.
+  // schema fields from currentVersion / HEAD; nếu template chưa có version
+  // nào (vừa created qua CreateTemplateDialog) thì dùng default + v1.0.0.
   const handleSaveVersion = async () => {
-    if (!template || !currentVersion) {
-      toast.error('Chưa load được version hiện tại — đợi 1 giây rồi thử lại.');
+    if (!template) {
+      toast.error('Chưa load template — đợi 1 giây rồi thử lại.');
       return;
     }
     setSavingVersion(true);
@@ -789,8 +802,21 @@ export function BlockEditor({
         if (!max) return v;
         return (v.version_no ?? 0) > (max.version_no ?? 0) ? v : max;
       }, null);
-      const baseVersion = head?.version ?? currentVersion.version;
-      let candidate = bumpVersion(baseVersion);
+
+      // Schema source: HEAD version → currentVersion → defaults.
+      // Template chưa có version nào (template mới create) → defaults.
+      const schemaSource: Partial<TemplateVersionType> =
+        head ?? currentVersion ?? {};
+
+      // Version bump: từ HEAD nếu có, không thì v1.0.0 (first version).
+      let candidate: string;
+      if (head?.version) {
+        candidate = bumpVersion(head.version);
+      } else if (currentVersion?.version) {
+        candidate = bumpVersion(currentVersion.version);
+      } else {
+        candidate = '1.0.0';
+      }
       // Hồi tiếp 1 lần nếu candidate vẫn trùng (race với commit khác).
       const existing = new Set(items.map(v => v.version));
       while (existing.has(candidate)) {
@@ -799,12 +825,12 @@ export function BlockEditor({
 
       const next = await rexerApi.templates.createVersion(template.id, {
         version: candidate,
-        schema_version: currentVersion.schema_version ?? '1',
-        field_schema_json: currentVersion.field_schema_json ?? {},
-        default_config_json: currentVersion.default_config_json ?? {},
+        schema_version: schemaSource.schema_version ?? '1',
+        field_schema_json: schemaSource.field_schema_json ?? {},
+        default_config_json: schemaSource.default_config_json ?? {},
         canvas_blueprint: payload,
-        ...(currentVersion.renderer_key
-          ? { renderer_key: currentVersion.renderer_key }
+        ...(schemaSource.renderer_key
+          ? { renderer_key: schemaSource.renderer_key }
           : {}),
       });
       setCurrentVersion(next);
@@ -1003,16 +1029,24 @@ export function BlockEditor({
 
       {/* Draft / version bar — show committed version + Save Version action.
           Autosave handles the draft buffer silently; this bar is the explicit
-          commit point to an immutable TemplateVersion. */}
-      {currentVersion && (
+          commit point to an immutable TemplateVersion. Template mới (chưa
+          có version nào) vẫn hiện bar — Save Version sẽ tạo v1.0.0 đầu
+          tiên. */}
+      {template && (
         <div className='flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50/80 px-4 py-1.5 text-xs'>
           <div className='flex items-center gap-2 text-zinc-600'>
             <span className='font-mono text-[10.5px] tracking-wider text-zinc-400 uppercase'>
-              committed
+              {currentVersion ? 'committed' : 'chưa có version'}
             </span>
-            <code className='rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-zinc-700 ring-1 ring-zinc-200'>
-              v{currentVersion.version}
-            </code>
+            {currentVersion ? (
+              <code className='rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-zinc-700 ring-1 ring-zinc-200'>
+                v{currentVersion.version}
+              </code>
+            ) : (
+              <code className='rounded bg-amber-50 px-1.5 py-0.5 font-mono text-[11px] text-amber-800 ring-1 ring-amber-200'>
+                draft only
+              </code>
+            )}
             <span className='text-zinc-300'>·</span>
             <span className='text-[11px]'>
               autosave ghi{' '}
@@ -1025,7 +1059,11 @@ export function BlockEditor({
             onClick={handleSaveVersion}
             disabled={savingVersion}
             className='inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-white shadow-sm transition-colors hover:bg-zinc-700 disabled:cursor-wait disabled:opacity-60'
-            title={`Tạo immutable version mới (next: v${bumpVersion(currentVersion.version)})`}
+            title={
+              currentVersion
+                ? `Tạo immutable version mới (next: v${bumpVersion(currentVersion.version)})`
+                : 'Commit version đầu tiên (v1.0.0)'
+            }
           >
             {savingVersion ? 'Đang commit…' : 'Save Version'}
           </button>
