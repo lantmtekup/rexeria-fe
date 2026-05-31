@@ -30,6 +30,14 @@ interface PublishDialogProps {
   pageId?: string;
   /** Page name — dùng auto-suggest slug khi user chưa đặt. */
   pageName?: string;
+  /** template_version_id mà page đang pin (BE field). Khi diverge khỏi
+   *  template's HEAD version → public render render version cũ. Banner
+   *  cảnh báo user (be-audit §13). */
+  pinnedVersionId?: string;
+  /** HEAD version trong template (resolved upstream). */
+  headVersionId?: string;
+  /** Version label của HEAD để hiển thị. */
+  headVersionLabel?: string;
   /** Notify parent route khi slug đã được set, để re-resolve state. */
   onPageSlugChange?: (slug: string) => void;
   publish: PublishMeta | undefined;
@@ -66,6 +74,9 @@ export function PublishDialog({
   pageSlug,
   pageId,
   pageName,
+  pinnedVersionId,
+  headVersionId,
+  headVersionLabel,
   onPageSlugChange,
   publish,
   onTogglePublish,
@@ -145,6 +156,12 @@ export function PublishDialog({
   // Show slug controls whenever we have a page context. Form has 2 modes:
   // collapsed (current slug + Đổi) and expanded (input + Lưu / Huỷ).
   const showSlugCtrl = !!pageId;
+
+  // Stale version detect: page.template_version_id (BE) vs template HEAD.
+  // BE chưa cho FE đổi page.template_version_id → public render render
+  // version cũ (be-audit §13). Warn user nếu diverge.
+  const versionStale =
+    !!pinnedVersionId && !!headVersionId && pinnedVersionId !== headVersionId;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -271,6 +288,30 @@ export function PublishDialog({
                 )}
               </div>
             </form>
+          )}
+
+          {versionStale && (
+            <div className='flex items-start gap-2 rounded-md border border-rose-300 bg-rose-50 p-3'>
+              <span className='mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-rose-200 font-mono text-[9px] font-bold text-rose-900'>
+                !
+              </span>
+              <div className='text-[11.5px] leading-snug text-rose-900'>
+                <strong className='font-semibold'>
+                  Public render đang dùng version cũ
+                </strong>{' '}
+                — page pin ở version{' '}
+                <code className='font-mono'>
+                  {pinnedVersionId?.slice(0, 8)}
+                </code>
+                , editor đã commit lên{' '}
+                <code className='font-mono'>
+                  {headVersionLabel ?? headVersionId?.slice(0, 8)}
+                </code>
+                . BE chưa cho FE chuyển page sang version mới (be-audit §13).
+                Tạm thời <code>/p/{pageSlug || '{slug}'}</code> vẫn hiển thị nội
+                dung cũ — đợi BE ship fix.
+              </div>
+            </div>
           )}
 
           {publish?.published && url && (

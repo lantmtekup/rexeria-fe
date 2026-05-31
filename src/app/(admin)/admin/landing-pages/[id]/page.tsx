@@ -49,6 +49,9 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
   const [pageStatus, setPageStatus] = React.useState<
     'draft' | 'published' | 'archived' | undefined
   >(undefined);
+  const [pinnedVersionId, setPinnedVersionId] = React.useState<
+    string | undefined
+  >(undefined);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -58,6 +61,7 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
     setPageId(undefined);
     setPageName(undefined);
     setPageStatus(undefined);
+    setPinnedVersionId(undefined);
 
     (async () => {
       try {
@@ -77,6 +81,7 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
             setPageId(page.id);
             setPageName(page.name);
             setPageStatus(page.status);
+            setPinnedVersionId(page.template_version_id);
             if (page.slug) setPageSlug(page.slug);
           } catch {
             // Not a page id — try as template id (newly-created template).
@@ -107,6 +112,7 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
           setPageId(page.id);
           setPageName(page.name);
           setPageStatus(page.status);
+          setPinnedVersionId(page.template_version_id);
           setPageSlug(page.slug);
         }
 
@@ -168,6 +174,7 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
         pageId={pageId}
         pageName={pageName}
         pageStatus={pageStatus}
+        pinnedVersionId={pinnedVersionId}
         onPageSlugChange={setPageSlug}
       />
     </div>

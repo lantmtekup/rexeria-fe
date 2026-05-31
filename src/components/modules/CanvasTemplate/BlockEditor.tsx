@@ -83,6 +83,10 @@ interface BlockEditorProps {
    *  chưa". Khi present + 'published', editor seed publishState đúng và
    *  sync `pages.publish/unpublish` khi user toggle. */
   pageStatus?: 'draft' | 'published' | 'archived';
+  /** `page.template_version_id` — version mà BE pin page đến (chỉ định
+   *  cho public render). Thường stale so với HEAD vì BE chưa cho FE
+   *  promote (be-audit §13). PublishDialog warn user nếu diverge. */
+  pinnedVersionId?: string;
   /** Callback khi PublishDialog đặt slug mới — để route page reload state.
    *  Optional (no-op nếu không cần refresh). */
   onPageSlugChange?: (slug: string) => void;
@@ -155,6 +159,7 @@ export function BlockEditor({
   pageId,
   pageName,
   pageStatus,
+  pinnedVersionId,
   onPageSlugChange,
 }: BlockEditorProps) {
   const router = useRouter();
@@ -1223,6 +1228,11 @@ export function BlockEditor({
         pageSlug={pageSlug}
         pageId={pageId}
         pageName={pageName}
+        pinnedVersionId={pinnedVersionId}
+        headVersionId={currentVersion?.id}
+        headVersionLabel={
+          currentVersion ? `v${currentVersion.version}` : undefined
+        }
         onPageSlugChange={onPageSlugChange}
         publish={publishState.publish}
         onTogglePublish={handlePublishToggle}
