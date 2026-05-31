@@ -43,10 +43,54 @@ export const meta: TemplateMeta = {
       { id: 'variants', label: 'Variants Picker' },
       { id: 'sku-cta', label: 'SKU + Buy CTA' },
     ],
+    // Mọi CTA tracked qua data-rexer-cta attrs. Labels hiển thị ở
+    // analytics breakdown nhóm theo cta_id (event_type=cta_click).
+    // Add CTA mới = thêm attr ở TSX + entry ở đây — analytics chart
+    // tự nhận. Section context (section_id) auto-attached khi CTA
+    // nằm trong [data-rexer-section] wrapper.
     ctas: [
-      { id: 'discover-panel', label: 'Open Discover Panel' },
-      { id: 'contact-mint', label: 'Contact The Mint' },
-      { id: 'buy-now', label: 'Buy Now' },
+      // ── Global UI (outside sections) ───────────────────────────
+      { id: 'header-logo', label: 'Header — RCM Logo' },
+      { id: 'nav-description', label: 'Nav — Description' },
+      { id: 'nav-discover', label: 'Nav — Discover' },
+      { id: 'nav-information', label: 'Nav — Information' },
+      { id: 'nav-podcast', label: 'Nav — Podcast' },
+      { id: 'contact-mint', label: 'Sticky CTA — Contact The Mint' },
+
+      // ── Section: discover-reverse (Hotspots tab 1) ─────────────
+      { id: 'hotspot-the-lone-pine', label: 'Hotspot — The Lone Pine' },
+      { id: 'hotspot-sky-and-water', label: 'Hotspot — Sky and Water' },
+      { id: 'hotspot-serrated-edge', label: 'Hotspot — Serrated Edge' },
+
+      // ── Section: discover-obverse (Hotspots tab 2) ─────────────
+      {
+        id: 'hotspot-king-charles-iii-effigy',
+        label: 'Hotspot — King Charles III Effigy',
+      },
+      {
+        id: 'hotspot-99-99-pure-gold',
+        label: 'Hotspot — 99.99% Pure Gold',
+      },
+
+      // ── Close detail drawer (both discover sections) ───────────
+      { id: 'close-detail-tab', label: 'Close Detail Drawer' },
+
+      // ── Section: variants ───────────────────────────────────────
+      { id: 'open-discover-panel', label: 'Coin → Open Discover Panel' },
+      { id: 'variant-reverse', label: 'Variant — Reverse' },
+      { id: 'variant-obverse', label: 'Variant — Obverse' },
+      { id: 'variant-packaging', label: 'Variant — Packaging' },
+
+      // ── Discover Panel (overlay drawer) ────────────────────────
+      { id: 'panel-close', label: 'Panel — Close' },
+      { id: 'panel-view-reverse', label: 'Panel — Switch View Reverse' },
+      { id: 'panel-view-obverse', label: 'Panel — Switch View Obverse' },
+      {
+        id: 'panel-view-packaging',
+        label: 'Panel — Switch View Packaging',
+      },
+      { id: 'panel-contact-mint', label: 'Panel CTA — Contact The Mint' },
+      { id: 'buy-coin', label: 'Panel CTA — Buy Now (conversion)' },
     ],
   },
 };

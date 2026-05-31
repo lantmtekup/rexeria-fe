@@ -8,6 +8,7 @@ export default function Header() {
         href=''
         className='brand-logo pointer-events-auto'
         aria-label='Royal Canadian Mint'
+        data-rexer-cta='header-logo'
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

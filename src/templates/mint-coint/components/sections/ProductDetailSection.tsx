@@ -36,6 +36,15 @@ interface Props {
 //
 // Replaces the previous design (large pill buttons stacked vertically with
 // always-visible labels) which didn't match the luxury minimal aesthetic.
+
+/** Slugify label cho data-rexer-cta id. Stable, kebab, lowercase. */
+function slugifyLabel(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export default function ProductDetailSection({
   id,
   variant,
@@ -312,6 +321,7 @@ export default function ProductDetailSection({
                   xPct={t.dotX}
                   yPct={t.dotY}
                   label={t.label}
+                  ctaId={`hotspot-${slugifyLabel(t.label)}`}
                   onClick={() =>
                     setActiveTab(activeTab === t.key ? null : t.key)
                   }
@@ -384,6 +394,7 @@ export default function ProductDetailSection({
               onClick={() => setActiveTab(null)}
               className='tab-close absolute top-6 right-6 z-10 p-2 transition-opacity hover:opacity-60'
               aria-label='Close'
+              data-rexer-cta='close-detail-tab'
             >
               <svg width='14' height='14' viewBox='0 0 12 13' fill='none'>
                 <line
@@ -437,17 +448,20 @@ function Hotspot({
   xPct,
   yPct,
   label,
+  ctaId,
   onClick,
 }: {
   xPct: number;
   yPct: number;
   label: string;
+  ctaId: string;
   onClick: () => void;
 }) {
   return (
     <button
       type='button'
       onClick={onClick}
+      data-rexer-cta={ctaId}
       className='group absolute flex -translate-x-1/2 -translate-y-1/2 items-center'
       // `touch-action: manipulation` skips iOS's 300ms tap-vs-double-tap
       // detection and lets vertical scroll pass through the button

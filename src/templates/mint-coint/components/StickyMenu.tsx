@@ -95,6 +95,7 @@ export default function StickyMenu() {
             <li key={id} className='hidden md:block'>
               <a
                 href={`#${id}`}
+                data-rexer-cta={`nav-${id}`}
                 className={`relative inline-block pb-1 transition-colors duration-300 ${
                   isActive
                     ? 'font-medium text-black'
@@ -118,6 +119,7 @@ export default function StickyMenu() {
             href='https://www.mint.ca/en/contact-us'
             target='_blank'
             rel='noopener noreferrer'
+            data-rexer-cta='contact-mint'
             className='block rounded-full bg-black px-3 py-2 text-[10px] tracking-wider whitespace-nowrap text-white uppercase transition-colors hover:bg-neutral-800 md:px-4 md:text-xs'
           >
             Contact the mint

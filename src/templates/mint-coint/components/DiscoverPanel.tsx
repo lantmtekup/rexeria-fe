@@ -106,6 +106,7 @@ export default function DiscoverPanel({
             onClick={onClose}
             className='mb-4 self-end p-2 hover:opacity-60'
             aria-label='Close'
+            data-rexer-cta='panel-close'
           >
             <svg width='14' height='14' viewBox='0 0 16 16' fill='none'>
               <line x1='0.65' y1='14.65' x2='14.79' y2='0.5' stroke='black' />
@@ -134,6 +135,7 @@ export default function DiscoverPanel({
                   key={c}
                   type='button'
                   onClick={() => setView(c)}
+                  data-rexer-cta={`panel-view-${c}`}
                   className={`h-6 w-6 overflow-hidden rounded-full border ${
                     view === c
                       ? 'border-black ring-1 ring-black ring-offset-2'
@@ -167,6 +169,7 @@ export default function DiscoverPanel({
               href='https://www.mint.ca/en/contact-us'
               target='_blank'
               rel='noopener noreferrer'
+              data-rexer-cta='panel-contact-mint'
               className='bg-black px-6 py-4 text-center text-xs tracking-[0.18em] text-white uppercase'
             >
               Contact the mint
@@ -175,6 +178,7 @@ export default function DiscoverPanel({
               href='https://www.mint.ca/en/shop/coins/2026/the-jack-pine-by-tom-thomson-1-kilo-pure-gold-coin'
               target='_blank'
               rel='noopener noreferrer'
+              data-rexer-cta='buy-coin'
               className='bg-black px-6 py-4 text-center text-xs tracking-[0.18em] text-white uppercase'
             >
               Buy Now

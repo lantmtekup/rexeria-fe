@@ -82,6 +82,7 @@ export default function ProductVariantSection({
             type='button'
             onClick={onOpenDiscover}
             aria-label='More information'
+            data-rexer-cta='open-discover-panel'
             className='content-top__image js-parallax gpu-layer group/info pointer-events-auto relative cursor-pointer'
             data-y='-20'
           >
@@ -116,6 +117,7 @@ export default function ProductVariantSection({
               key={v.key}
               data-variant={v.key}
               data-ref={v.ref}
+              data-rexer-cta={`variant-${v.key}`}
               onClick={() => setActive(v.key)}
               className={`h-9 w-9 cursor-pointer rounded-full border transition-all ${
                 active === v.key

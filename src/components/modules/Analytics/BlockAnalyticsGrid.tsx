@@ -104,6 +104,18 @@ export function BlockAnalyticsGrid({
     string,
     { views: number; clicks: number; series: number[] }
   > | null>(null);
+  /** Per-CTA click counts keyed by cta_id (declared trong
+   *  meta.tracking.ctas). Bổ sung cho sectionStats — user thấy được CTA
+   *  nào convert. Null khi block template. */
+  const [ctaStats, setCtaStats] = React.useState<Map<
+    string,
+    { clicks: number; series: number[] }
+  > | null>(null);
+  /** Declared CTAs từ meta để render label + ensure mọi CTA hiện cards
+   *  (cả khi clicks=0). */
+  const [ctas, setCtas] = React.useState<Array<{ id: string; label: string }>>(
+    []
+  );
 
   // Wave 3 migration 2026-05-31: canvasTemplates.get retired → load via
   // canonical page → template → HEAD version chain. `templateId` prop name
@@ -139,6 +151,7 @@ export function BlockAnalyticsGrid({
         if (codeTpl) {
           setCodeTemplateLabel(codeTpl.meta.name);
           setSections(codeTpl.meta.tracking?.sections ?? []);
+          setCtas(codeTpl.meta.tracking?.ctas ?? []);
           setBlocks(null);
           return;
         }
@@ -200,11 +213,15 @@ export function BlockAnalyticsGrid({
     setLoading(true);
 
     if (sections) {
-      if (sections.length === 0) {
+      if (sections.length === 0 && ctas.length === 0) {
         setSectionStats(new Map());
+        setCtaStats(new Map());
         setLoading(false);
         return;
       }
+      // 3 breakdown calls parallel: section_view (per section_id),
+      // cta_click per section_id (cho aggregate clicks per-section),
+      // cta_click per cta_id (cho CTA cards riêng).
       Promise.all([
         rexerApi.pages.analytics
           .breakdown(templateId, {
@@ -220,26 +237,42 @@ export function BlockAnalyticsGrid({
             range: `${range}d`,
           })
           .catch(() => ({ items: [] })),
+        rexerApi.pages.analytics
+          .breakdown(templateId, {
+            group_by: 'dimensions.cta_id',
+            event_type: 'cta_click',
+            range: `${range}d`,
+          })
+          .catch(() => ({ items: [] })),
       ])
-        .then(([viewsRes, clicksRes]) => {
+        .then(([viewsRes, sectionClicksRes, ctaRes]) => {
           if (cancelled) return;
-          const m = new Map<
+          const sm = new Map<
             string,
             { views: number; clicks: number; series: number[] }
           >();
           for (const r of viewsRes.items ?? []) {
-            m.set(r.key, {
+            sm.set(r.key, {
               views: r.metrics?.count ?? 0,
               clicks: 0,
               series: r.views_by_day ?? [],
             });
           }
-          for (const r of clicksRes.items ?? []) {
-            const e = m.get(r.key) ?? { views: 0, clicks: 0, series: [] };
+          for (const r of sectionClicksRes.items ?? []) {
+            const e = sm.get(r.key) ?? { views: 0, clicks: 0, series: [] };
             e.clicks = r.metrics?.count ?? 0;
-            m.set(r.key, e);
+            sm.set(r.key, e);
           }
-          setSectionStats(m);
+          setSectionStats(sm);
+
+          const cm = new Map<string, { clicks: number; series: number[] }>();
+          for (const r of ctaRes.items ?? []) {
+            cm.set(r.key, {
+              clicks: r.metrics?.count ?? 0,
+              series: r.views_by_day ?? [],
+            });
+          }
+          setCtaStats(cm);
         })
         .finally(() => {
           if (!cancelled) setLoading(false);
@@ -272,7 +305,7 @@ export function BlockAnalyticsGrid({
     return () => {
       cancelled = true;
     };
-  }, [templateId, range, sections]);
+  }, [templateId, range, sections, ctas.length]);
 
   const rowMap = React.useMemo(() => {
     const m = new Map<string, BlockBreakdownRow>();
@@ -451,21 +484,66 @@ export function BlockAnalyticsGrid({
             </p>
           </div>
         ) : (
-          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-            {sections.map((s, idx) => {
-              const stat = sectionStats?.get(s.id);
-              return (
-                <SectionAnalyticsCard
-                  key={s.id}
-                  index={idx + 1}
-                  section={s}
-                  views={stat?.views ?? 0}
-                  clicks={stat?.clicks ?? 0}
-                  series={stat?.series ?? []}
-                />
-              );
-            })}
-          </div>
+          <>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+              {sections.map((s, idx) => {
+                const stat = sectionStats?.get(s.id);
+                return (
+                  <SectionAnalyticsCard
+                    key={s.id}
+                    index={idx + 1}
+                    section={s}
+                    views={stat?.views ?? 0}
+                    clicks={stat?.clicks ?? 0}
+                    series={stat?.series ?? []}
+                  />
+                );
+              })}
+            </div>
+
+            {/* CTA breakdown — mỗi CTA declared trong meta.tracking.ctas
+                render 1 card với clicks count. Aggregated từ
+                breakdown(group_by=dimensions.cta_id). User phân tích
+                CTA nào convert tốt. */}
+            {ctas.length > 0 && (
+              <section className='mt-8 flex flex-col gap-3'>
+                <header className='flex items-end justify-between gap-3'>
+                  <div>
+                    <h2 className='text-[18px] font-bold tracking-tight text-zinc-900'>
+                      Breakdown theo CTA
+                    </h2>
+                    <p className='text-[12px] text-zinc-500'>
+                      Mỗi nút click trên page. Group by{' '}
+                      <code className='font-mono text-[11px]'>
+                        dimensions.cta_id
+                      </code>{' '}
+                      · {ctas.length} CTAs tracked.
+                    </p>
+                  </div>
+                  <span className='font-mono text-[10.5px] text-zinc-400'>
+                    {Array.from(ctaStats?.values() ?? []).reduce(
+                      (a, b) => a + b.clicks,
+                      0
+                    )}{' '}
+                    clicks · {range}d
+                  </span>
+                </header>
+                <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+                  {ctas.map(c => {
+                    const stat = ctaStats?.get(c.id);
+                    return (
+                      <CtaAnalyticsCard
+                        key={c.id}
+                        cta={c}
+                        clicks={stat?.clicks ?? 0}
+                        series={stat?.series ?? []}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+          </>
         )
       ) : blocks && blocks.length === 0 ? (
         <div className='rounded-2xl border border-zinc-200 bg-white p-12 text-center'>
@@ -638,6 +716,69 @@ function SectionAnalyticsCard({
           <Metric label='CTR' value={`${ctr}%`} />
         </div>
         <div className='mt-1'>
+          <Sparkline series={series} max={max} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── CtaAnalyticsCard ───────────────────────────────────────────────
+ * Compact card cho mỗi CTA. Render đầy đủ list CTAs declared trong
+ * meta.tracking.ctas — kể cả 0 clicks (để user thấy CTA nào dead).
+ * Backend group_by=dimensions.cta_id event_type=cta_click. */
+function CtaAnalyticsCard({
+  cta,
+  clicks,
+  series,
+}: {
+  cta: { id: string; label: string };
+  clicks: number;
+  series: number[];
+}) {
+  const max = Math.max(...series, 1);
+  const delta = computeDelta(series);
+  const isDead = clicks === 0;
+
+  return (
+    <div
+      className={cn(
+        'flex flex-col gap-2 rounded-xl border bg-white p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
+        isDead ? 'border-zinc-200' : 'border-zinc-200 hover:border-zinc-300'
+      )}
+    >
+      <div className='flex items-start justify-between gap-2'>
+        <div className='min-w-0 flex-1'>
+          <p
+            className={cn(
+              'truncate text-[12.5px] font-semibold',
+              isDead ? 'text-zinc-500' : 'text-zinc-800'
+            )}
+            title={cta.label}
+          >
+            {cta.label}
+          </p>
+          <code className='block truncate font-mono text-[9.5px] tracking-wider text-zinc-400 uppercase'>
+            {cta.id}
+          </code>
+        </div>
+        <DeltaPill delta={delta} />
+      </div>
+      <div className='flex items-end justify-between gap-3'>
+        <div className='flex flex-col gap-0.5'>
+          <span className='text-[9px] font-medium tracking-wider text-zinc-400 uppercase'>
+            Clicks
+          </span>
+          <span
+            className={cn(
+              'font-mono text-[18px] font-bold tabular-nums',
+              isDead ? 'text-zinc-300' : 'text-zinc-900'
+            )}
+          >
+            {clicks.toLocaleString('vi-VN')}
+          </span>
+        </div>
+        <div className='min-w-0 flex-1'>
           <Sparkline series={series} max={max} />
         </div>
       </div>
