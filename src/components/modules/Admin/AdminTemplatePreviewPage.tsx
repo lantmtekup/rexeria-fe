@@ -20,7 +20,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Loader2, Pencil } from 'lucide-react';
 
 import { PreviewMode } from '@/components/modules/CanvasTemplate/block-editor/PreviewMode';
 import { parseCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
@@ -180,11 +180,21 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
   if (feBlocks && feBlocks.length > 0) {
     return (
       <>
-        {/* Source badge — góc trên trái cạnh PreviewMode header. Cho user
-            biết đang preview từ draft vs version nào (debug giúp khi
-            content khác editor). */}
-        <div className='fixed top-3 right-44 z-[60] rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-medium tracking-wide text-white/70 backdrop-blur'>
-          {activeSource}
+        {/* Overlays trên PreviewMode header — source badge + edit button.
+            Cùng z-[60] để vượt PreviewMode (z-50). Edit CTA: dẫn user
+            sang block editor khi muốn sửa content. (Code field immutable,
+            metadata khác sửa qua /admin/templates/{id} detail.) */}
+        <div className='fixed top-3 right-44 z-[60] flex items-center gap-2'>
+          <span className='rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-medium tracking-wide text-white/70 backdrop-blur'>
+            {activeSource}
+          </span>
+          <Link
+            href={`/admin/templates/${templateId}/edit`}
+            className='inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-[11px] font-medium text-white backdrop-blur transition-colors hover:bg-white/25'
+          >
+            <Pencil className='size-3' />
+            Edit canvas
+          </Link>
         </div>
         <PreviewMode blocks={feBlocks} lang='vi' onClose={handleClose} />
       </>
