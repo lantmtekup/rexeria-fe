@@ -2265,6 +2265,11 @@ export interface PageReleaseListResponse {
 }
 export interface PublishPageRequest {
   version_label?: string;
+  /** BE shipped Option C 2026-05-31 per be-audit §13: re-point page sang
+   *  version chỉ định trước khi snapshot. Validate phải thuộc cùng template
+   *  (404 ERR_TEMPLATE_VERSION_NOT_FOUND nếu không). Bỏ qua → giữ
+   *  page.template_version_id cũ (back-compat). */
+  template_version_id?: string;
 }
 export interface PublishPageValidateResponse {
   ok: boolean;

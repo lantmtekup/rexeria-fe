@@ -191,8 +191,14 @@ export function AdminCanvasTemplatesPage() {
     }
     const tid = toast.loading(`${label}…`);
     try {
-      if (action === 'publish') await rexerApi.pages.publish(page.id);
-      else if (action === 'unpublish') await rexerApi.pages.unpublish(page.id);
+      if (action === 'publish') {
+        // Kebab publish ở list không biết HEAD version → để BE giữ
+        // page.template_version_id hiện tại (back-compat). User cần
+        // editor → Save Version → Publish để snapshot HEAD (be-audit
+        // §13 wired ở BlockEditor.handlePublishToggle).
+        await rexerApi.pages.publish(page.id);
+      } else if (action === 'unpublish')
+        await rexerApi.pages.unpublish(page.id);
       else if (action === 'archive') await rexerApi.pages.archive(page.id);
       else if (action === 'restore') await rexerApi.pages.restore(page.id);
       toast.success(`${label} thành công`, { id: tid });

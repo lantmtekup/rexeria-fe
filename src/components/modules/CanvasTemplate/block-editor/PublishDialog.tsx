@@ -291,15 +291,13 @@ export function PublishDialog({
           )}
 
           {versionStale && (
-            <div className='flex items-start gap-2 rounded-md border border-rose-300 bg-rose-50 p-3'>
-              <span className='mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-rose-200 font-mono text-[9px] font-bold text-rose-900'>
-                !
+            <div className='flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3'>
+              <span className='mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-200 font-mono text-[9px] font-bold text-amber-900'>
+                i
               </span>
-              <div className='text-[11.5px] leading-snug text-rose-900'>
-                <strong className='font-semibold'>
-                  Public render đang dùng version cũ
-                </strong>{' '}
-                — page pin ở version{' '}
+              <div className='text-[11.5px] leading-snug text-amber-900'>
+                <strong className='font-semibold'>Page pin ở version cũ</strong>{' '}
+                — page hiện ở{' '}
                 <code className='font-mono'>
                   {pinnedVersionId?.slice(0, 8)}
                 </code>
@@ -307,9 +305,10 @@ export function PublishDialog({
                 <code className='font-mono'>
                   {headVersionLabel ?? headVersionId?.slice(0, 8)}
                 </code>
-                . BE chưa cho FE chuyển page sang version mới (be-audit §13).
-                Tạm thời <code>/p/{pageSlug || '{slug}'}</code> vẫn hiển thị nội
-                dung cũ — đợi BE ship fix.
+                . Click <strong>Xuất bản lại</strong> để repoint page sang
+                version mới + re-snapshot. Sau publish,{' '}
+                <code>/p/{pageSlug || '{slug}'}</code> sẽ render content mới
+                nhất.
               </div>
             </div>
           )}

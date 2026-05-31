@@ -851,27 +851,48 @@ export function BlockEditor({
   // Updates 2 sources of truth khi user toggle:
   //   - FE blueprint.publish (legacy meta, save vào draft qua autosave)
   //   - BE Page.status qua pages.publish/unpublish — chỉ khi có pageId
-  // Có pageId thì BE là canonical (kebab Publish ở landing list cũng dùng
-  // path này) → reload show "Đã xuất bản" đúng.
+  // Khi publish, gửi kèm template_version_id = HEAD (currentVersion) để
+  // BE repoint page sang version mới + snapshot canvas mới nhất (BE
+  // Option C, be-audit §13 resolved 2026-05-31).
   const handlePublishToggle = async () => {
     if (!template) return;
     const next = publishState.togglePublish();
     await new Promise(r => setTimeout(r, 50));
     autosave.markDirty();
     await autosave.flush({ silent: true });
-    // BE sync — bắn fire-and-forget; lỗi BE chỉ toast warning, không
-    // revert FE state vì blueprint đã save.
     if (pageId && next) {
       try {
         if (next.published) {
-          await rexerApi.pages.publish(pageId);
+          await rexerApi.pages.publish(
+            pageId,
+            currentVersion
+              ? { template_version_id: currentVersion.id }
+              : undefined
+          );
         } else {
           await rexerApi.pages.unpublish(pageId);
         }
       } catch (err) {
-        toast.error(
-          `BE publish sync thất bại: ${rxErrorMessage(err)} — trạng thái FE đã đổi, refresh để verify`
-        );
+        // Surface BE validation reasons khi ERR_PAGE_PUBLISH_NOT_READY
+        // (be-audit §14). Format: details.reasons = string[].
+        if (
+          err instanceof RxApiError &&
+          err.code === 'ERR_PAGE_PUBLISH_NOT_READY'
+        ) {
+          const reasons =
+            (err.details as { reasons?: string[] } | undefined)?.reasons ?? [];
+          toast.error('Page chưa sẵn sàng publish', {
+            description:
+              reasons.length > 0
+                ? reasons.slice(0, 5).join(' · ')
+                : err.message,
+            duration: 8000,
+          });
+        } else {
+          toast.error(
+            `BE publish sync thất bại: ${rxErrorMessage(err)} — trạng thái FE đã đổi, refresh để verify`
+          );
+        }
       }
     }
   };
