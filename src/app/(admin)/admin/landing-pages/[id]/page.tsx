@@ -120,16 +120,39 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
           throw new Error('Page không có template_version_id');
         }
 
-        // Resolve version_id → template_id. No flat `/template-versions/{vId}`
-        // endpoint, so list templates + match on current_version_id. OK for
-        // now — system template count is small (< 100).
-        const templates = await rexerApi.templates.list({ limit: 100 });
-        const tpl = templates.items?.find(
-          t => t.current_version_id === versionId
+        // Resolve version_id → template_id.
+        //
+        // Cách cũ match `template.current_version_id === versionId` chỉ
+        // work khi page pin HEAD. Sau §13 (Option C publish repoint), BE
+        // không auto-bump template.current_version_id → page.template
+        // _version_id thường diverge khỏi template.current_version_id →
+        // find() undefined → throw "chưa khớp template nào".
+        //
+        // BE chưa có `GET /template-versions/:vId` flat endpoint (probed
+        // 2026-05-31, 404), cũng không trả `template_id` ở page response.
+        // Fix: fan-out templates.versions() parallel, find template chứa
+        // versionId trong versions[]. <100 templates → 100 fetches max,
+        // acceptable cho route bootstrap.
+        const templates = await rexerApi.templates.list({ limit: 500 });
+        const items = templates.items ?? [];
+        const matches = await Promise.all(
+          items.map(async t => {
+            // Fast-path: HEAD match (still common case)
+            if (t.current_version_id === versionId) return t;
+            try {
+              const vl = await rexerApi.templates.versions(t.id);
+              const has = (vl.items ?? []).some(v => v.id === versionId);
+              return has ? t : null;
+            } catch {
+              return null;
+            }
+          })
         );
+        const tpl = matches.find(Boolean) ?? null;
+        if (cancelled) return;
         if (!tpl) {
           throw new Error(
-            `template_version_id "${versionId}" chưa khớp template nào (có thể version đã đổi)`
+            `template_version_id "${versionId}" không thuộc template nào (đã probe ${items.length} templates)`
           );
         }
         if (!cancelled) setTemplateId(tpl.id);
