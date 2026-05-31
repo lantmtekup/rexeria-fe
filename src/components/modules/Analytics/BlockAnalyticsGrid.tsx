@@ -30,6 +30,8 @@ import type {
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type { BlockBreakdownRow } from '@/services/rexer/types';
+import { getCodeTemplate } from '@/templates/registry';
+import type { TemplateSection } from '@/templates/types';
 import { cn } from '@/lib/cn';
 
 type Range = 7 | 14 | 30;
@@ -85,6 +87,16 @@ export function BlockAnalyticsGrid({
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [usingMock, setUsingMock] = React.useState(false);
+  /** Per-section list khi page dùng code template — declared trong
+   *  template meta.tracking.sections. Null = block template, dùng
+   *  `blocks` legacy. */
+  const [sections, setSections] = React.useState<TemplateSection[] | null>(
+    null
+  );
+  /** Code template name (display only ở banner). */
+  const [codeTemplateLabel, setCodeTemplateLabel] = React.useState<
+    string | null
+  >(null);
 
   // Wave 3 migration 2026-05-31: canvasTemplates.get retired → load via
   // canonical page → template → HEAD version chain. `templateId` prop name
@@ -97,6 +109,8 @@ export function BlockAnalyticsGrid({
   // workaround giống BlockEditor (be-audit §11 + commit 9d13b38).
   React.useEffect(() => {
     let cancelled = false;
+    setSections(null);
+    setCodeTemplateLabel(null);
     (async () => {
       try {
         const page = await rexerApi.pages.get(templateId);
@@ -107,6 +121,18 @@ export function BlockAnalyticsGrid({
         );
         if (!tpl) {
           setBlocks([]);
+          return;
+        }
+
+        // Code template branch — render section cards declared trong
+        // meta.tracking.sections, KHÔNG đọc canvas_blueprint (template
+        // không dùng blocks). Block stub có thể còn sót trong canvas_
+        // blueprint của template (vd Mint-coint) — bỏ qua.
+        const codeTpl = getCodeTemplate(tpl.code);
+        if (codeTpl) {
+          setCodeTemplateLabel(codeTpl.meta.name);
+          setSections(codeTpl.meta.tracking?.sections ?? []);
+          setBlocks(null);
           return;
         }
         // Pick HEAD version (max version_no) — editor commit Save Version
@@ -308,12 +334,65 @@ export function BlockAnalyticsGrid({
         </div>
       )}
 
+      {/* Code template — section breakdown banner */}
+      {sections && (
+        <div className='flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50/70 px-3.5 py-2.5 text-[11.5px] text-blue-900'>
+          <span className='mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-blue-100 font-mono text-[9px] font-bold'>
+            i
+          </span>
+          <div>
+            <strong className='font-semibold'>
+              Code template — section breakdown
+            </strong>{' '}
+            ({codeTemplateLabel}). Sections khai báo trong{' '}
+            <code className='font-mono'>meta.tracking.sections</code>. Fire qua{' '}
+            <code className='font-mono'>data-rexer-section</code> attrs ở TSX.
+            BE GA-style endpoint chưa ship → số liệu hiển thị mock
+            deterministic. Khi BE ship endpoint{' '}
+            <code className='font-mono'>analytics/breakdown</code>, FE sẽ đọc số
+            thật.
+          </div>
+        </div>
+      )}
+
       {/* Grid */}
-      {loading && !blocks ? (
+      {loading && !blocks && !sections ? (
         <div className='flex items-center justify-center py-20 text-sm text-zinc-500'>
           <Loader2 className='mr-2 size-4 animate-spin' />
           Đang tải landing page…
         </div>
+      ) : sections ? (
+        sections.length === 0 ? (
+          <div className='rounded-2xl border border-zinc-200 bg-white p-12 text-center'>
+            <p className='text-[14px] font-semibold text-zinc-700'>
+              Template chưa khai báo sections
+            </p>
+            <p className='mx-auto mt-1 max-w-md text-[12px] text-zinc-500'>
+              Thêm <code className='font-mono'>tracking.sections</code> vào{' '}
+              <code className='font-mono'>
+                src/templates/{codeTemplateLabel}/meta.ts
+              </code>{' '}
+              để analytics breakdown theo section.
+            </p>
+          </div>
+        ) : (
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+            {sections.map((s, idx) => {
+              const series = mockSeries(s.id, range, 0);
+              const views = series.reduce((a, b) => a + b, 0);
+              return (
+                <SectionAnalyticsCard
+                  key={s.id}
+                  index={idx + 1}
+                  section={s}
+                  views={views}
+                  clicks={Math.floor(views * 0.03)}
+                  series={series}
+                />
+              );
+            })}
+          </div>
+        )
       ) : blocks && blocks.length === 0 ? (
         <div className='rounded-2xl border border-zinc-200 bg-white p-12 text-center'>
           <p className='text-[14px] font-semibold text-zinc-700'>
@@ -414,6 +493,76 @@ function BlockAnalyticsCard({
         </div>
 
         {/* Sparkline */}
+        <div className='mt-1'>
+          <Sparkline series={series} max={max} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── SectionAnalyticsCard ───────────────────────────────────────────
+ * Variant cho code template — render từ TemplateSection meta thay vì
+ * Block instance. Cùng layout BlockAnalyticsCard nhưng dùng thumbnail
+ * URL (nếu có) thay vì BlockMiniPreview, label từ section.label.
+ * Khi BE GA-style endpoint ship, swap mock series → real series từ
+ * `dimensions.section_id` aggregation. */
+function SectionAnalyticsCard({
+  index,
+  section,
+  views,
+  clicks,
+  series,
+}: {
+  index: number;
+  section: TemplateSection;
+  views: number;
+  clicks: number;
+  series: number[];
+}) {
+  const max = Math.max(...series, 1);
+  const delta = computeDelta(series);
+  const ctr = views > 0 ? Math.round((clicks / views) * 1000) / 10 : 0;
+
+  return (
+    <div className='group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'>
+      <div className='flex items-center justify-between border-b border-zinc-100 px-3.5 py-2'>
+        <div className='flex items-center gap-2'>
+          <span className='flex size-5 items-center justify-center rounded-full bg-zinc-100 font-mono text-[10px] font-bold text-zinc-600'>
+            {index}
+          </span>
+          <code className='font-mono text-[10px] tracking-wider text-zinc-400 uppercase'>
+            {section.id}
+          </code>
+        </div>
+        <DeltaPill delta={delta} />
+      </div>
+
+      {/* Thumbnail — fallback gradient khi không có */}
+      <div className='relative aspect-[16/10] overflow-hidden border-b border-zinc-100 bg-gradient-to-br from-blue-50 via-indigo-50 to-violet-50'>
+        {section.thumbnail ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={section.thumbnail}
+            alt={section.label}
+            className='size-full object-cover'
+          />
+        ) : (
+          <div className='flex h-full items-center justify-center text-[24px] font-bold text-blue-200/70'>
+            §{index}
+          </div>
+        )}
+      </div>
+
+      <div className='flex flex-1 flex-col gap-2 p-3.5'>
+        <h3 className='truncate text-[13px] font-semibold text-zinc-800'>
+          {section.label}
+        </h3>
+        <div className='grid grid-cols-3 gap-2 text-center'>
+          <Metric label='Views' value={views.toLocaleString('vi-VN')} />
+          <Metric label='Clicks' value={clicks.toLocaleString('vi-VN')} />
+          <Metric label='CTR' value={`${ctr}%`} />
+        </div>
         <div className='mt-1'>
           <Sparkline series={series} max={max} />
         </div>

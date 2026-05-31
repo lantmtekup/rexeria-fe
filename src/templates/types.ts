@@ -48,6 +48,35 @@ export interface TemplateContentSchema {
   fields: TemplateContentField[];
 }
 
+/**
+ * Logical section declaration cho per-section analytics. Tracking hook
+ * (useSectionTracking) cần biết section nào tồn tại để fire view event
+ * khi user scroll vào. Card analytics render theo thứ tự declared.
+ *
+ * Section id phải khớp `data-rexer-section` attr ở TSX. Kebab-case,
+ * stable across deploys (rename = break aggregate history).
+ */
+export interface TemplateSection {
+  /** Match `data-rexer-section` attr. kebab-case. */
+  id: string;
+  /** Display name ở analytics card. */
+  label: string;
+  /** Thumbnail (96x72 ~) cho card preview. Optional — fallback gradient. */
+  thumbnail?: string;
+}
+
+/**
+ * Tracking config declared trong meta.ts. Section list cho analytics
+ * + grouping. CTAs liệt kê các nút quan trọng (mỗi nút có
+ * `data-rexer-cta` attr) để label đẹp ở click report.
+ */
+export interface TemplateTrackingConfig {
+  sections: TemplateSection[];
+  /** Optional — CTAs labeling cho click events. Hook tự fire click cho
+   *  mọi [data-rexer-cta] regardless of liệt kê ở đây. */
+  ctas?: Array<{ id: string; label: string }>;
+}
+
 export interface TemplateMeta {
   /** Phải khớp `template.code` ở BE. */
   code: string;
@@ -59,6 +88,9 @@ export interface TemplateMeta {
   thumbnailUrl?: string;
   /** Schema để generate form cho brand customize per-page content. */
   contentSchema?: TemplateContentSchema;
+  /** Per-section tracking config. KHÔNG khai báo → page-level only
+   *  (no breakdown ở analytics). */
+  tracking?: TemplateTrackingConfig;
 }
 
 /**

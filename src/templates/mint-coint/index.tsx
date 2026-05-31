@@ -25,12 +25,23 @@ import ProductDetailSection from './components/sections/ProductDetailSection';
 import ProductVariantSection from './components/sections/ProductVariantSection';
 import ProductSkuSection from './components/sections/ProductSkuSection';
 import { IMG } from './lib/image-cdn';
+import { meta as mintCointMeta } from './meta';
+import { useSectionTracking } from '../_tracking/use-section-tracking';
 import type { TemplateProps } from '../types';
 
 import './styles.css';
 
-export default function MintCointTemplate({ mode }: TemplateProps) {
+export default function MintCointTemplate({ page, mode }: TemplateProps) {
   const [discoverOpen, setDiscoverOpen] = React.useState(false);
+
+  // Per-section tracking (chỉ public mode — preview/edit fire pollute
+  // prod data). Hook tự dedup view event 1 lần per session per section.
+  useSectionTracking({
+    pageId: page.id,
+    releaseId: page.active_release_id,
+    tracking: mintCointMeta.tracking,
+    enabled: mode === 'public',
+  });
 
   // Public mode: apply full-page immersive styles (scroll lock, no
   // scrollbar) globally. Preview/edit mode skips để admin shell scroll
@@ -70,91 +81,103 @@ export default function MintCointTemplate({ mode }: TemplateProps) {
     <>
       <Header />
       <main>
-        <HeroIntroSection />
-        <DetailsSection />
-        <ProductDetailSection
-          variant='1'
-          id='discover'
-          mainImage={IMG.coinReverse}
-          mainAlt='Jack Pine Gold Coin — reverse'
-          tabs={[
-            {
-              key: 'tab1',
-              label: 'The Lone Pine',
-              desc: "Tom Thomson's windswept jack pine, rising from rocky ground above a northern lake. The kilo-sized canvas allows the engraver to lift every needle, branch and crag from the painting into 99.99% pure gold relief.",
-              img: IMG.coinReverse,
-              dotX: 50,
-              dotY: 30,
-            },
-            {
-              key: 'tab2',
-              label: 'Sky and Water',
-              desc: "A monochromatic field of polished and frosted gold replaces the painting's sunset palette, deepening the impact of Thomson's dynamic composition.",
-              img: IMG.coinReverse,
-              dotX: 62,
-              dotY: 62,
-            },
-            {
-              key: 'tab3',
-              label: 'Serrated Edge',
-              desc: '101.6 mm in diameter with a serrated edge — a tactile signature of Royal Canadian Mint craftsmanship at this scale.',
-              img: IMG.coinReverse,
-              dotX: 38,
-              dotY: 62,
-            },
-          ]}
-        />
-        <ProductDetailSection
-          variant='2'
-          mainImage={IMG.coinObverse}
-          mainAlt='Jack Pine Gold Coin — obverse'
-          tabs={[
-            {
-              key: 'tab1',
-              label: 'King Charles III Effigy',
-              desc: 'The effigy of His Majesty King Charles III by Canadian artist Steven Rosati anchors the obverse — the contemporary face of Canadian numismatic art.',
-              img: IMG.coinObverse,
-              dotX: 50,
-              dotY: 35,
-            },
-            {
-              key: 'tab2',
-              label: '99.99% Pure Gold',
-              desc: '1006.1 g of .99999 fine gold, proof finish. Each strike is hand-inspected and serialised — only 75 will ever exist.',
-              img: IMG.coinReverse,
-              dotX: 50,
-              dotY: 65,
-            },
-          ]}
-        />
-        <ProductVariantSection
-          id='information'
-          onOpenDiscover={() => setDiscoverOpen(true)}
-          variants={[
-            {
-              key: 'reverse',
-              label: 'Reverse',
-              ref: 'rcm-252469',
-              swatch: IMG.coinReverse,
-              image: IMG.coinReverse,
-            },
-            {
-              key: 'obverse',
-              label: 'Obverse',
-              ref: 'rcm-252469',
-              swatch: IMG.coinObverse,
-              image: IMG.coinObverse,
-            },
-            {
-              key: 'packaging',
-              label: 'Packaging',
-              ref: 'rcm-252469',
-              swatch: IMG.coinPackaging,
-              image: IMG.coinPackaging,
-            },
-          ]}
-        />
-        <ProductSkuSection />
+        <div data-rexer-section='hero'>
+          <HeroIntroSection />
+        </div>
+        <div data-rexer-section='details'>
+          <DetailsSection />
+        </div>
+        <div data-rexer-section='discover-reverse'>
+          <ProductDetailSection
+            variant='1'
+            id='discover'
+            mainImage={IMG.coinReverse}
+            mainAlt='Jack Pine Gold Coin — reverse'
+            tabs={[
+              {
+                key: 'tab1',
+                label: 'The Lone Pine',
+                desc: "Tom Thomson's windswept jack pine, rising from rocky ground above a northern lake. The kilo-sized canvas allows the engraver to lift every needle, branch and crag from the painting into 99.99% pure gold relief.",
+                img: IMG.coinReverse,
+                dotX: 50,
+                dotY: 30,
+              },
+              {
+                key: 'tab2',
+                label: 'Sky and Water',
+                desc: "A monochromatic field of polished and frosted gold replaces the painting's sunset palette, deepening the impact of Thomson's dynamic composition.",
+                img: IMG.coinReverse,
+                dotX: 62,
+                dotY: 62,
+              },
+              {
+                key: 'tab3',
+                label: 'Serrated Edge',
+                desc: '101.6 mm in diameter with a serrated edge — a tactile signature of Royal Canadian Mint craftsmanship at this scale.',
+                img: IMG.coinReverse,
+                dotX: 38,
+                dotY: 62,
+              },
+            ]}
+          />
+        </div>
+        <div data-rexer-section='discover-obverse'>
+          <ProductDetailSection
+            variant='2'
+            mainImage={IMG.coinObverse}
+            mainAlt='Jack Pine Gold Coin — obverse'
+            tabs={[
+              {
+                key: 'tab1',
+                label: 'King Charles III Effigy',
+                desc: 'The effigy of His Majesty King Charles III by Canadian artist Steven Rosati anchors the obverse — the contemporary face of Canadian numismatic art.',
+                img: IMG.coinObverse,
+                dotX: 50,
+                dotY: 35,
+              },
+              {
+                key: 'tab2',
+                label: '99.99% Pure Gold',
+                desc: '1006.1 g of .99999 fine gold, proof finish. Each strike is hand-inspected and serialised — only 75 will ever exist.',
+                img: IMG.coinReverse,
+                dotX: 50,
+                dotY: 65,
+              },
+            ]}
+          />
+        </div>
+        <div data-rexer-section='variants'>
+          <ProductVariantSection
+            id='information'
+            onOpenDiscover={() => setDiscoverOpen(true)}
+            variants={[
+              {
+                key: 'reverse',
+                label: 'Reverse',
+                ref: 'rcm-252469',
+                swatch: IMG.coinReverse,
+                image: IMG.coinReverse,
+              },
+              {
+                key: 'obverse',
+                label: 'Obverse',
+                ref: 'rcm-252469',
+                swatch: IMG.coinObverse,
+                image: IMG.coinObverse,
+              },
+              {
+                key: 'packaging',
+                label: 'Packaging',
+                ref: 'rcm-252469',
+                swatch: IMG.coinPackaging,
+                image: IMG.coinPackaging,
+              },
+            ]}
+          />
+        </div>
+        <div data-rexer-section='sku-cta'>
+          <ProductSkuSection />
+        </div>
       </main>
       <DiscoverPanel
         open={discoverOpen}

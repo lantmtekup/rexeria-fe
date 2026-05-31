@@ -31,4 +31,22 @@ export const meta: TemplateMeta = {
       },
     ],
   },
+  tracking: {
+    // Section IDs khớp với `data-rexer-section` ở index.tsx wrappers.
+    // Stable across deploys — đừng rename vì sẽ break aggregate
+    // history. Add section mới = append, không xen giữa.
+    sections: [
+      { id: 'hero', label: 'Hero Intro' },
+      { id: 'details', label: 'Details / Specs' },
+      { id: 'discover-reverse', label: 'Discover — Reverse Side' },
+      { id: 'discover-obverse', label: 'Discover — Obverse Side' },
+      { id: 'variants', label: 'Variants Picker' },
+      { id: 'sku-cta', label: 'SKU + Buy CTA' },
+    ],
+    ctas: [
+      { id: 'discover-panel', label: 'Open Discover Panel' },
+      { id: 'contact-mint', label: 'Contact The Mint' },
+      { id: 'buy-now', label: 'Buy Now' },
+    ],
+  },
 };
