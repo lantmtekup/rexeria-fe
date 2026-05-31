@@ -87,7 +87,7 @@ export function AdminTemplatesPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
-  const [status, setStatus] = React.useState<Status>('all');
+  const [status, setStatus] = React.useState<Status>('active');
   const [category, setCategory] = React.useState<string | null>(null);
   const [sort, setSort] = React.useState<Sort>('-updated_at');
   const [view, setView] = React.useState<View>('grid');
