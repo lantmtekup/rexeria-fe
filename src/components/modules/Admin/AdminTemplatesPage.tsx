@@ -740,7 +740,7 @@ function TemplateActionMenu({
         <MoreVertical className='size-3.5' />
       </button>
       {open && (
-        <div className='absolute right-0 bottom-full z-20 mb-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+        <div className='absolute top-full right-0 z-30 mt-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
           <Link
             href={`/admin/templates/${item.id}/edit`}
             onClick={() => setOpen(false)}
@@ -822,7 +822,7 @@ function TableView({
   const allOn = ids.length > 0 && ids.every(id => selected.has(id));
   const someOn = ids.some(id => selected.has(id));
   return (
-    <div className='border-border overflow-hidden rounded-2xl border bg-white'>
+    <div className='border-border rounded-2xl border bg-white'>
       <Table>
         <TableHeader>
           <TableRow>
