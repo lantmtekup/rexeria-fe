@@ -1,0 +1,75 @@
+/**
+ * Mint-coint template — scoped styles. Áp dụng vào content qua wrapper
+ * `.mint-coint-root` để KHÔNG leak vào admin shell (preview/edit mode).
+ *
+ * Tailwind utility classes vẫn dùng được vì project-wide tailwind base
+ * đã load ở src/app/globals.css.
+ *
+ * Public render `/p/{slug}` mode: rules globally affecting html/body
+ * (scroll lock, overscroll-behavior...) áp dụng qua template's own
+ * useEffect khi mode === 'public' (xem index.tsx).
+ */
+
+/* ── Reset (scoped) ────────────────────────────────────────────────── */
+.mint-coint-root,
+.mint-coint-root *,
+.mint-coint-root *::before,
+.mint-coint-root *::after {
+  box-sizing: border-box;
+}
+
+.mint-coint-root {
+  background: #fff;
+  color: #1a1a1a;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+.mint-coint-root img {
+  max-width: 100%;
+  display: block;
+}
+
+.mint-coint-root button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mint-coint-root a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.mint-coint-root ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* ── GPU hints ─────────────────────────────────────────────────────── */
+.mint-coint-root .gpu-layer {
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+/* ── ProductDetail image container ─────────────────────────────────── */
+.mint-coint-root .product-detail-pan {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.mint-coint-root .product-detail-pan::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Reduced motion (global, OK to apply project-wide) ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .mint-coint-root *,
+  .mint-coint-root *::before,
+  .mint-coint-root *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

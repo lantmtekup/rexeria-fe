@@ -17,6 +17,7 @@ import type { ComponentType } from 'react';
 
 import type { TemplateMeta, TemplateProps } from './types';
 import { meta as heroClassicMeta } from './hero-classic/meta';
+import { meta as mintCointMeta } from './mint-coint/meta';
 
 interface CodeTemplateEntry {
   meta: TemplateMeta;
@@ -33,6 +34,21 @@ export const TEMPLATE_REGISTRY: Record<string, CodeTemplateEntry> = {
       ssr: true,
       loading: () => (
         <div className='flex min-h-screen items-center justify-center bg-zinc-50 text-sm text-zinc-500'>
+          Đang load template…
+        </div>
+      ),
+    }),
+  },
+  [mintCointMeta.code]: {
+    meta: mintCointMeta,
+    // ssr: true — template uses 'use client' directive nên client hooks
+    // (Lenis, GSAP ScrollTrigger, Swiper) fire client-side sau hydration.
+    // KHÔNG dùng ssr: false vì registry import từ server components
+    // (`/p/[id]/page.tsx`) → Next.js error.
+    Component: dynamic(() => import('./mint-coint'), {
+      ssr: true,
+      loading: () => (
+        <div className='flex min-h-screen items-center justify-center bg-white text-sm text-zinc-500'>
           Đang load template…
         </div>
       ),
