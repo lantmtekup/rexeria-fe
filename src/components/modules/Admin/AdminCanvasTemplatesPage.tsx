@@ -114,7 +114,8 @@ export function AdminCanvasTemplatesPage() {
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState<TypeFilter>('landing');
-  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('all');
+  const [statusFilter, setStatusFilter] =
+    React.useState<StatusFilter>('published');
   const [brandFilter, setBrandFilter] = React.useState<string>('');
   const [sort, setSort] = React.useState<Sort>('-updated_at');
   const [page, setPage] = React.useState(1);
