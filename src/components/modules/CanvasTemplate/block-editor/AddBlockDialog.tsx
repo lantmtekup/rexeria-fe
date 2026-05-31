@@ -14,15 +14,10 @@ import { Input } from '@/components/atoms/input';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
 
-import {
-  deleteSavedBlock,
-  instantiateSavedBlock,
-  listSavedBlocks,
-  renameSavedBlock,
-  subscribeSavedBlocks,
-  type SavedBlock,
-} from './savedBlocks';
+import { instantiateSavedBlock, type SavedBlock } from './savedBlocks';
 import { BLOCK_TYPE_META, type Block, type BlockType } from './types';
+import { RxApiError } from '@/services/rexer/client';
+import type { Block as ServerBlock } from '@/services/rexer/types';
 
 /** Public /v1/block-types item shape (legacy naming — `code`/`name`/
  *  `is_active`). Admin /v1/admin/block-types uses canonical `type`/`label_vi`
@@ -31,6 +26,25 @@ interface BeBlockType {
   code: string;
   name?: string;
   is_active: boolean;
+}
+
+/** Wave 3 migration 2026-05-31: Saved blocks tab loads from `/v1/blocks`
+ *  (same source as /admin/blocks list page) instead of localStorage. Each
+ *  ServerBlock.settings should be an FE editor Block (saved via the Save
+ *  Block icon in BlockEditor); we adapt to the SavedBlock shape the
+ *  SavedCard component expects. Returns null for rows whose settings
+ *  isn't a valid editor Block. */
+function serverToSavedBlock(b: ServerBlock): SavedBlock | null {
+  const s = b.settings;
+  if (!s || typeof s !== 'object' || !('blockType' in s)) return null;
+  return {
+    id: b.id,
+    name: b.name,
+    block: s as unknown as Block,
+    createdAt: b.created_at,
+    updatedAt: b.updated_at,
+    tags: b.tags ?? [],
+  };
 }
 
 interface AddBlockDialogProps {
@@ -68,19 +82,33 @@ export function AddBlockDialog({
   onPickSaved,
 }: AddBlockDialogProps) {
   const [tab, setTab] = React.useState<Tab>('builtin');
-  const [saved, setSaved] = React.useState<SavedBlock[]>([]);
+  // BE-backed saved blocks — same source as /admin/blocks list page.
+  // Null = loading; array = loaded (may be empty).
+  const [saved, setSaved] = React.useState<SavedBlock[] | null>(null);
   // BE block-types catalog — filter `is_active` source-of-truth.
   // Null = loading; Set<code> = loaded; empty Set = nothing active.
   const [activeCodes, setActiveCodes] = React.useState<Set<string> | null>(
     null
   );
 
-  // Load + subscribe so saves in another tab refresh this list automatically.
+  const reloadSaved = React.useCallback(async () => {
+    setSaved(null);
+    try {
+      const r = await rexerApi.blocks.list({ limit: 100 });
+      const items = (r.items ?? [])
+        .map(serverToSavedBlock)
+        .filter((b): b is SavedBlock => b !== null);
+      setSaved(items);
+    } catch {
+      setSaved([]);
+    }
+  }, []);
+
+  // Reload saved blocks each time dialog opens (matches /admin/blocks freshness).
   React.useEffect(() => {
     if (!open) return;
-    setSaved(listSavedBlocks());
-    return subscribeSavedBlocks(() => setSaved(listSavedBlocks()));
-  }, [open]);
+    void reloadSaved();
+  }, [open, reloadSaved]);
 
   // Load BE block-types + filter is_active. Show only types both FE knows
   // how to render (ORDERED_TYPES) AND admin has marked active.
@@ -143,7 +171,7 @@ export function AddBlockDialog({
             <span className='inline-flex items-center gap-1.5'>
               <Bookmark className='size-3.5' />
               Đã lưu
-              {saved.length > 0 ? (
+              {saved && saved.length > 0 ? (
                 <span className='rounded-full bg-neutral-900 px-1.5 text-[10px] font-semibold text-white'>
                   {saved.length}
                 </span>
@@ -196,11 +224,16 @@ export function AddBlockDialog({
                 })}
               </div>
             )
+          ) : saved === null ? (
+            <div className='flex items-center justify-center py-12 text-sm text-neutral-500'>
+              <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải saved
+              blocks…
+            </div>
           ) : (
             <SavedTab
               entries={saved}
               onPick={handlePickSaved}
-              onChanged={() => setSaved(listSavedBlocks())}
+              onChanged={reloadSaved}
             />
           )}
         </div>
@@ -281,23 +314,36 @@ function SavedCard({
     if (renaming) setNextName(entry.name);
   }, [renaming, entry.name]);
 
-  const submitRename = () => {
+  const submitRename = async () => {
     const trimmed = nextName.trim();
     if (!trimmed || trimmed === entry.name) {
       setRenaming(false);
       return;
     }
-    renameSavedBlock(entry.id, trimmed);
-    onChanged();
-    toast.success('Đã đổi tên');
-    setRenaming(false);
+    try {
+      await rexerApi.blocks.update(entry.id, { name: trimmed });
+      onChanged();
+      toast.success('Đã đổi tên');
+    } catch (err) {
+      const msg =
+        err instanceof RxApiError ? err.code || err.message : 'RENAME_FAILED';
+      toast.error(`Đổi tên thất bại: ${msg}`);
+    } finally {
+      setRenaming(false);
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!window.confirm(`Xoá "${entry.name}" khỏi thư viện?`)) return;
-    deleteSavedBlock(entry.id);
-    onChanged();
-    toast.success('Đã xoá');
+    try {
+      await rexerApi.blocks.archive(entry.id);
+      onChanged();
+      toast.success('Đã xoá');
+    } catch (err) {
+      const msg =
+        err instanceof RxApiError ? err.code || err.message : 'DELETE_FAILED';
+      toast.error(`Xoá thất bại: ${msg}`);
+    }
   };
 
   return (
