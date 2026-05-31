@@ -50,7 +50,14 @@ interface Props {
 export function AdminTemplatePreviewPage({ templateId }: Props) {
   const router = useRouter();
   const [template, setTemplate] = React.useState<Template | null>(null);
-  const [version, setVersion] = React.useState<TemplateVersion | null>(null);
+  /** Canvas blueprint chọn theo precedence editor: draft → HEAD →
+   *  currentVerId. Lưu raw object, parse trong useMemo. */
+  const [activeBlueprint, setActiveBlueprint] = React.useState<Record<
+    string,
+    unknown
+  > | null>(null);
+  /** Label hiển thị (vd "v1.0.2", "draft"). Debug + show ở header. */
+  const [activeSource, setActiveSource] = React.useState<string>('');
   const [preview, setPreview] = React.useState<TemplatePreviewResponse | null>(
     null
   );
@@ -58,10 +65,10 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
   const [error, setError] = React.useState<string | null>(null);
 
   const feBlocks = React.useMemo<Block[] | null>(() => {
-    if (!version?.canvas_blueprint) return null;
-    const parsed = parseCanvas(adaptCanvasBlueprint(version.canvas_blueprint));
+    if (!activeBlueprint) return null;
+    const parsed = parseCanvas(adaptCanvasBlueprint(activeBlueprint));
     return parsed?.blocks ?? null;
-  }, [version]);
+  }, [activeBlueprint]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -69,19 +76,53 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
       setLoading(true);
       setError(null);
       try {
+        // Load template + preview parallel. Preview để check
+        // BE-rendered HTML branch (rendered/live_stub mode); content
+        // chính cho FE-render đến từ template's draft / HEAD version,
+        // KHÔNG dùng preview.version_id (BE serve current_version_id,
+        // stale sau createVersion vì BE không auto-bump per §13).
         const [tplRes, prevRes] = await Promise.all([
           rexerApi.templates.get(templateId),
-          rexerApi.templates.preview(templateId),
+          rexerApi.templates.preview(templateId).catch(() => null),
         ]);
         if (cancelled) return;
         setTemplate(tplRes.template);
-        setPreview(prevRes);
-        if (prevRes.version_id) {
-          const v = await rexerApi.templates.version(
-            templateId,
-            prevRes.version_id
+        if (prevRes) setPreview(prevRes);
+
+        // Precedence giống BlockEditor load chain:
+        //   1. tpl.draft_canvas_blueprint (real-time autosaved)
+        //   2. HEAD version (max version_no)
+        //   3. current_version_id (fallback)
+        if (tplRes.template.draft_canvas_blueprint) {
+          setActiveBlueprint(tplRes.template.draft_canvas_blueprint);
+          setActiveSource('draft (autosaved)');
+          return;
+        }
+
+        // No draft — load HEAD.
+        let headVer: TemplateVersion | null = null;
+        try {
+          const versList = await rexerApi.templates.versions(templateId);
+          headVer = (versList.items ?? []).reduce<TemplateVersion | null>(
+            (max, v) =>
+              !max || (v.version_no ?? 0) > (max.version_no ?? 0) ? v : max,
+            null
           );
-          if (!cancelled) setVersion(v);
+        } catch {
+          /* versions list failed — fall back to current_version_id */
+        }
+        if (cancelled) return;
+
+        const targetVerId =
+          headVer?.id ??
+          tplRes.template.current_version_id ??
+          prevRes?.version_id;
+        if (targetVerId) {
+          const v = await rexerApi.templates.version(templateId, targetVerId);
+          if (!cancelled && v.canvas_blueprint) {
+            setActiveBlueprint(v.canvas_blueprint);
+            setActiveSource(`v${v.version}`);
+          }
         }
       } catch (err) {
         if (!cancelled)
@@ -137,7 +178,17 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
 
   // FE-side render — PreviewMode đã là fullscreen overlay với close handler.
   if (feBlocks && feBlocks.length > 0) {
-    return <PreviewMode blocks={feBlocks} lang='vi' onClose={handleClose} />;
+    return (
+      <>
+        {/* Source badge — góc trên trái cạnh PreviewMode header. Cho user
+            biết đang preview từ draft vs version nào (debug giúp khi
+            content khác editor). */}
+        <div className='fixed top-3 right-44 z-[60] rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-medium tracking-wide text-white/70 backdrop-blur'>
+          {activeSource}
+        </div>
+        <PreviewMode blocks={feBlocks} lang='vi' onClose={handleClose} />
+      </>
+    );
   }
 
   // Empty / error states — minimal full-screen message với back link.
