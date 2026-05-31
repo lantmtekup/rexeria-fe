@@ -1465,6 +1465,14 @@ export const rexerApi = {
     restore: (id: string) =>
       rx<PageResponse>(`/pages/${id}/restore`, { method: 'POST' }),
 
+    /** Hard delete — xoá vĩnh viễn page khỏi DB (irreversible).
+     *  BE TODO 2026-05-31 (be-audit §19): endpoint chưa exist. Khi BE
+     *  ship sẽ là `DELETE /v1/pages/:id?force=true` (preferred) hoặc
+     *  `DELETE /v1/pages/:id/purge`. FE đang stub behind feature flag
+     *  NEXT_PUBLIC_ENABLE_HARD_DELETE_PAGES. */
+    purge: (id: string) =>
+      rx<{ message?: string }>(`/pages/${id}?force=true`, { method: 'DELETE' }),
+
     /** Autosave config — debounced from form editor. */
     saveConfig: (id: string, body: SavePageConfigRequest) =>
       rx<{ revision_no: number; saved_at: string }>(`/pages/${id}/config`, {

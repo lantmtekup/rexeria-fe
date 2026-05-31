@@ -18,6 +18,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import {
+  AlertTriangle,
   Archive,
   ArrowDownUp,
   BarChart3,
@@ -25,6 +26,7 @@ import {
   ChevronRight,
   ExternalLink,
   Eye,
+  Flame,
   Globe,
   LayoutGrid,
   LayoutTemplate,
@@ -247,6 +249,59 @@ export function AdminCanvasTemplatesPage() {
     setBulkBusy(false);
     await load();
   }, [selected, load]);
+
+  // ── Hard delete (purge) ───────────────────────────────────────────────
+  // Feature flag NEXT_PUBLIC_ENABLE_HARD_DELETE_PAGES gate UI vì BE
+  // endpoint chưa ship (be-audit §19). Khi BE ready, flip flag = `true`.
+  const HARD_DELETE_ENABLED =
+    process.env.NEXT_PUBLIC_ENABLE_HARD_DELETE_PAGES === 'true';
+
+  /** Open confirm modal — chỉ chạy khi tất cả selected pages đều status
+   *  'archived' (tránh xoá nhầm page live). */
+  const [purgeModalOpen, setPurgeModalOpen] = React.useState(false);
+
+  /** Pages đang chọn có phải toàn archived không. Computed từ items
+   *  trong cache + selected ids. */
+  const selectedArchivedIds = React.useMemo(() => {
+    const archivedSet = new Set(
+      items.filter(p => p.status === 'archived').map(p => p.id)
+    );
+    return Array.from(selected).filter(id => archivedSet.has(id));
+  }, [selected, items]);
+
+  const allSelectedAreArchived =
+    selected.size > 0 && selectedArchivedIds.length === selected.size;
+
+  const runBulkPurge = React.useCallback(async () => {
+    const ids = selectedArchivedIds;
+    if (ids.length === 0) return;
+    setPurgeModalOpen(false);
+    setBulkBusy(true);
+    const tid = toast.loading(`Đang xoá vĩnh viễn ${ids.length} pages…`);
+    let okCount = 0;
+    let failCount = 0;
+    await Promise.all(
+      ids.map(async id => {
+        try {
+          await rexerApi.pages.purge(id);
+          okCount += 1;
+        } catch {
+          failCount += 1;
+        }
+      })
+    );
+    if (failCount === 0) {
+      toast.success(`Đã xoá vĩnh viễn ${okCount} pages`, { id: tid });
+    } else {
+      toast.error(
+        `${okCount}/${ids.length} OK, ${failCount} lỗi — BE có thể chưa ship endpoint`,
+        { id: tid }
+      );
+    }
+    setSelected(new Set());
+    setBulkBusy(false);
+    await load();
+  }, [selectedArchivedIds, load]);
 
   // ── Page status mutations ────────────────────────────────────────────
   const runPageAction = async (action: PageAction, page: Page) => {
@@ -540,7 +595,30 @@ export function AdminCanvasTemplatesPage() {
             <Trash2 className='size-3.5' />
             {bulkBusy ? 'Đang xoá…' : 'Xoá (archive) đã chọn'}
           </button>
+          {/* Hard delete — chỉ hiện khi flag ON + tất cả selected
+              đều archived (avoid xoá nhầm live page). */}
+          {HARD_DELETE_ENABLED && allSelectedAreArchived && (
+            <button
+              type='button'
+              onClick={() => setPurgeModalOpen(true)}
+              disabled={bulkBusy}
+              className='inline-flex items-center gap-1.5 rounded-md border border-red-500/40 bg-red-950 px-3 py-1.5 text-[12px] font-medium text-red-100 hover:bg-red-900 disabled:opacity-50'
+              title='Xoá vĩnh viễn — không khôi phục được'
+            >
+              <Flame className='size-3.5' />
+              Xoá vĩnh viễn
+            </button>
+          )}
         </div>
+      )}
+
+      {HARD_DELETE_ENABLED && (
+        <HardDeleteConfirmModal
+          open={purgeModalOpen}
+          count={selectedArchivedIds.length}
+          onConfirm={runBulkPurge}
+          onCancel={() => setPurgeModalOpen(false)}
+        />
       )}
 
       {domainPage && (
@@ -1109,5 +1187,103 @@ function ChipBtn({
     >
       {label}
     </button>
+  );
+}
+
+/* ─── HardDeleteConfirmModal ─────────────────────────────────────────
+ * Type-to-confirm modal cho bulk hard delete. User phải gõ chính xác
+ * "XOA" để enable nút confirm — pattern GitHub repo delete. Irreversible
+ * nên cần friction. */
+function HardDeleteConfirmModal({
+  open,
+  count,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  count: number;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const [typed, setTyped] = React.useState('');
+  const KEYWORD = 'XOA';
+
+  React.useEffect(() => {
+    if (!open) setTyped('');
+  }, [open]);
+
+  if (!open) return null;
+
+  const isConfirmed = typed === KEYWORD;
+
+  return (
+    <div
+      className='fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm'
+      onClick={onCancel}
+    >
+      <div
+        className='w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl'
+        onClick={e => e.stopPropagation()}
+      >
+        <div className='flex items-start gap-3'>
+          <div className='flex size-10 shrink-0 items-center justify-center rounded-full bg-red-100'>
+            <AlertTriangle className='size-5 text-red-600' />
+          </div>
+          <div className='flex-1'>
+            <h3 className='text-[15px] font-bold text-zinc-900'>
+              Xoá vĩnh viễn {count} landing pages?
+            </h3>
+            <p className='mt-1 text-[12.5px] leading-relaxed text-zinc-600'>
+              Hành động này{' '}
+              <span className='font-semibold text-red-700'>
+                KHÔNG thể khôi phục
+              </span>
+              . Page, versions, analytics events sẽ bị xoá khỏi DB. Khác với
+              &quot;Archive&quot; (chỉ ẩn, restore được).
+            </p>
+          </div>
+        </div>
+
+        <div className='mt-5'>
+          <label className='block text-[11.5px] font-medium text-zinc-700'>
+            Gõ{' '}
+            <span className='font-mono font-bold text-red-700'>{KEYWORD}</span>{' '}
+            vào ô dưới để confirm:
+          </label>
+          <input
+            type='text'
+            value={typed}
+            onChange={e => setTyped(e.target.value)}
+            autoFocus
+            placeholder={KEYWORD}
+            className='mt-1.5 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 font-mono text-[13px] outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-200'
+          />
+        </div>
+
+        <div className='mt-5 flex items-center justify-end gap-2'>
+          <button
+            type='button'
+            onClick={onCancel}
+            className='rounded-md px-3 py-1.5 text-[12.5px] font-medium text-zinc-600 hover:bg-zinc-100'
+          >
+            Huỷ
+          </button>
+          <button
+            type='button'
+            onClick={onConfirm}
+            disabled={!isConfirmed}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12.5px] font-medium transition-colors',
+              isConfirmed
+                ? 'bg-red-600 text-white hover:bg-red-500'
+                : 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+            )}
+          >
+            <Flame className='size-3.5' />
+            Xoá vĩnh viễn {count}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
