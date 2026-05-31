@@ -21,10 +21,12 @@ import {
   RefreshCwIcon,
   Search,
   Table as TableIcon,
+  Trash2,
   UserPlus,
   Users,
   X as XIcon,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
 import { Input } from '@/components/atoms/input';
@@ -79,6 +81,10 @@ export function AdminUsersPage() {
   const [view, setView] = React.useState<View>('grid');
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(20);
+  // Bulk selection — only available in table view (grid view không expose
+  // checkbox). BE `DELETE /v1/brands/:id` đã ship (probed 2026-05-31).
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = React.useState(false);
 
   // Debounce search input
   React.useEffect(() => {
@@ -113,6 +119,68 @@ export function AdminUsersPage() {
   React.useEffect(() => {
     load();
   }, [load]);
+
+  // Clear selection khi page/filter đổi (rows hiển thị thay đổi).
+  React.useEffect(() => {
+    setSelected(new Set());
+  }, [debouncedSearch, status, sort, view, page, pageSize]);
+
+  const toggleSelected = React.useCallback((id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = React.useCallback((ids: string[], allOn: boolean) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (allOn) ids.forEach(id => next.delete(id));
+      else ids.forEach(id => next.add(id));
+      return next;
+    });
+  }, []);
+
+  /** Bulk delete — BE `DELETE /v1/brands/:id` (hard delete, không như
+   *  templates chỉ archive). Fan-out parallel + reload list. Cảnh báo
+   *  user vì hard-delete = mất data + cascade brand memberships. */
+  const runBulkDelete = React.useCallback(async () => {
+    if (selected.size === 0) return;
+    const ids = Array.from(selected);
+    if (
+      !window.confirm(
+        `Xoá ${ids.length} khách hàng?\n\n⚠️ HARD DELETE — không thể khôi phục. Tất cả memberships, pages, blocks của brand sẽ bị cascade xoá theo BE setup.`
+      )
+    )
+      return;
+    setBulkBusy(true);
+    const tid = toast.loading(`Xoá ${ids.length} brand…`);
+    let okCount = 0;
+    let failCount = 0;
+    await Promise.all(
+      ids.map(async id => {
+        try {
+          await rexerApi.brands.remove(id);
+          okCount += 1;
+        } catch {
+          failCount += 1;
+        }
+      })
+    );
+    if (failCount === 0) {
+      toast.success(`Đã xoá ${okCount} brand`, { id: tid });
+    } else {
+      toast.error(
+        `${okCount}/${ids.length} OK, ${failCount} lỗi — reload để verify`,
+        { id: tid }
+      );
+    }
+    setSelected(new Set());
+    setBulkBusy(false);
+    await load();
+  }, [selected, load]);
 
   // FE-side sort + paginate
   const sorted = React.useMemo(() => {
@@ -325,7 +393,13 @@ export function AdminUsersPage() {
       ) : view === 'grid' ? (
         <GridView items={pageItems} />
       ) : (
-        <TableView items={pageItems} t={t} />
+        <TableView
+          items={pageItems}
+          t={t}
+          selected={selected}
+          onToggleSelected={toggleSelected}
+          onToggleSelectAll={toggleSelectAll}
+        />
       )}
 
       {/* Pagination */}
@@ -337,6 +411,37 @@ export function AdminUsersPage() {
           pageSize={pageSize}
           onChange={setPage}
         />
+      )}
+
+      {/* Bulk action bar — sticky bottom khi có selection ở table view. */}
+      {selected.size > 0 && view === 'table' && (
+        <div className='sticky bottom-4 z-30 mx-auto flex w-fit min-w-[320px] items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 shadow-2xl'>
+          <span className='text-[12.5px] font-medium text-white'>
+            Đã chọn{' '}
+            <span className='rounded-md bg-white/15 px-1.5 py-0.5 font-mono text-[11.5px]'>
+              {selected.size}
+            </span>{' '}
+            brand
+          </span>
+          <button
+            type='button'
+            onClick={() => setSelected(new Set())}
+            disabled={bulkBusy}
+            className='rounded-md px-2 py-1 text-[11.5px] font-medium text-white/70 hover:bg-white/10 disabled:opacity-50'
+          >
+            Bỏ chọn
+          </button>
+          <div className='h-4 w-px bg-white/20' />
+          <button
+            type='button'
+            onClick={runBulkDelete}
+            disabled={bulkBusy}
+            className='inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-[12px] font-medium text-white hover:bg-rose-500 disabled:opacity-50'
+          >
+            <Trash2 className='size-3.5' />
+            {bulkBusy ? 'Đang xoá…' : 'Xoá đã chọn'}
+          </button>
+        </div>
       )}
     </div>
   );
@@ -397,15 +502,36 @@ function ClientCard({ item }: { item: Brand }) {
 function TableView({
   items,
   t,
+  selected,
+  onToggleSelected,
+  onToggleSelectAll,
 }: {
   items: Brand[];
   t: ReturnType<typeof useTranslations>;
+  selected: Set<string>;
+  onToggleSelected: (id: string) => void;
+  onToggleSelectAll: (ids: string[], allOn: boolean) => void;
 }) {
+  const ids = items.map(i => i.id);
+  const allOn = ids.length > 0 && ids.every(id => selected.has(id));
+  const someOn = ids.some(id => selected.has(id));
   return (
     <div className='border-border overflow-hidden rounded-2xl border bg-white'>
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className='w-10'>
+              <input
+                type='checkbox'
+                className='size-3.5 cursor-pointer rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400'
+                checked={allOn}
+                ref={el => {
+                  if (el) el.indeterminate = someOn && !allOn;
+                }}
+                onChange={() => onToggleSelectAll(ids, allOn)}
+                aria-label='Chọn tất cả'
+              />
+            </TableHead>
             <TableHead className='w-12' />
             <TableHead>{t('users.col.name')}</TableHead>
             <TableHead className='w-32'>{t('users.col.status')}</TableHead>
@@ -418,8 +544,24 @@ function TableView({
             const statusClass =
               STATUS_CHIP[item.status?.toLowerCase()] ??
               'bg-zinc-100 text-zinc-600';
+            const isSelected = selected.has(item.id);
             return (
-              <TableRow key={item.id} className='hover:bg-zinc-50/50'>
+              <TableRow
+                key={item.id}
+                className={cn(
+                  'hover:bg-zinc-50/50',
+                  isSelected && 'bg-zinc-50'
+                )}
+              >
+                <TableCell>
+                  <input
+                    type='checkbox'
+                    className='size-3.5 cursor-pointer rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400'
+                    checked={isSelected}
+                    onChange={() => onToggleSelected(item.id)}
+                    aria-label={`Chọn ${item.name}`}
+                  />
+                </TableCell>
                 <TableCell>
                   <Avatar id={item.id} name={item.name} size={32} />
                 </TableCell>

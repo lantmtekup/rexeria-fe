@@ -34,6 +34,7 @@ import {
   Search,
   Send,
   Table as TableIcon,
+  Trash2,
   Undo2,
   X as XIcon,
 } from 'lucide-react';
@@ -117,6 +118,11 @@ export function AdminCanvasTemplatesPage() {
   const [page, setPage] = React.useState(1);
   const [view, setView] = React.useState<View>('grid');
   const [domainPage, setDomainPage] = React.useState<Page | null>(null);
+  // Bulk selection — chỉ available ở table view. BE pages chỉ có
+  // soft-delete (DELETE = archive); hard delete chưa expose. Bulk
+  // action = bulk archive (status='archived'). Restore qua kebab.
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = React.useState(false);
 
   // Debounce search.
   React.useEffect(() => {
@@ -172,6 +178,75 @@ export function AdminCanvasTemplatesPage() {
   React.useEffect(() => {
     load();
   }, [load]);
+
+  // Clear selection khi đổi filter/page.
+  React.useEffect(() => {
+    setSelected(new Set());
+  }, [
+    debouncedSearch,
+    typeFilter,
+    statusFilter,
+    brandFilter,
+    sort,
+    view,
+    page,
+  ]);
+
+  const toggleSelected = React.useCallback((id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = React.useCallback((ids: string[], allOn: boolean) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (allOn) ids.forEach(id => next.delete(id));
+      else ids.forEach(id => next.add(id));
+      return next;
+    });
+  }, []);
+
+  /** Bulk archive — `DELETE /v1/pages/:id` BE = soft delete
+   *  (status='archived'). Restore qua kebab "Restore". */
+  const runBulkArchive = React.useCallback(async () => {
+    if (selected.size === 0) return;
+    const ids = Array.from(selected);
+    if (
+      !window.confirm(
+        `Archive ${ids.length} landing page?\n\nStatus → 'archived'. Restore được qua kebab "Restore".`
+      )
+    )
+      return;
+    setBulkBusy(true);
+    const tid = toast.loading(`Archive ${ids.length} pages…`);
+    let okCount = 0;
+    let failCount = 0;
+    await Promise.all(
+      ids.map(async id => {
+        try {
+          await rexerApi.pages.archive(id);
+          okCount += 1;
+        } catch {
+          failCount += 1;
+        }
+      })
+    );
+    if (failCount === 0) {
+      toast.success(`Đã archive ${okCount} pages`, { id: tid });
+    } else {
+      toast.error(
+        `${okCount}/${ids.length} OK, ${failCount} lỗi — reload để verify`,
+        { id: tid }
+      );
+    }
+    setSelected(new Set());
+    setBulkBusy(false);
+    await load();
+  }, [selected, load]);
 
   // ── Page status mutations ────────────────────────────────────────────
   const runPageAction = async (action: PageAction, page: Page) => {
@@ -420,6 +495,9 @@ export function AdminCanvasTemplatesPage() {
           items={items}
           brandById={brandById}
           onAction={runPageAction}
+          selected={selected}
+          onToggleSelected={toggleSelected}
+          onToggleSelectAll={toggleSelectAll}
         />
       )}
 
@@ -432,6 +510,37 @@ export function AdminCanvasTemplatesPage() {
           limit={LIMIT}
           onChange={setPage}
         />
+      )}
+
+      {/* Bulk action bar — sticky bottom khi có selection ở table view. */}
+      {selected.size > 0 && view === 'table' && (
+        <div className='sticky bottom-4 z-30 mx-auto flex w-fit min-w-[320px] items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 shadow-2xl'>
+          <span className='text-[12.5px] font-medium text-white'>
+            Đã chọn{' '}
+            <span className='rounded-md bg-white/15 px-1.5 py-0.5 font-mono text-[11.5px]'>
+              {selected.size}
+            </span>{' '}
+            landing
+          </span>
+          <button
+            type='button'
+            onClick={() => setSelected(new Set())}
+            disabled={bulkBusy}
+            className='rounded-md px-2 py-1 text-[11.5px] font-medium text-white/70 hover:bg-white/10 disabled:opacity-50'
+          >
+            Bỏ chọn
+          </button>
+          <div className='h-4 w-px bg-white/20' />
+          <button
+            type='button'
+            onClick={runBulkArchive}
+            disabled={bulkBusy}
+            className='inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-[12px] font-medium text-white hover:bg-rose-500 disabled:opacity-50'
+          >
+            <Trash2 className='size-3.5' />
+            {bulkBusy ? 'Đang xoá…' : 'Xoá (archive) đã chọn'}
+          </button>
+        </div>
       )}
 
       {domainPage && (
@@ -747,16 +856,37 @@ function TableView({
   items,
   brandById,
   onAction,
+  selected,
+  onToggleSelected,
+  onToggleSelectAll,
 }: {
   items: Page[];
   brandById: Map<string, Brand>;
   onAction: (action: PageAction, page: Page) => void;
+  selected: Set<string>;
+  onToggleSelected: (id: string) => void;
+  onToggleSelectAll: (ids: string[], allOn: boolean) => void;
 }) {
+  const ids = items.map(i => i.id);
+  const allOn = ids.length > 0 && ids.every(id => selected.has(id));
+  const someOn = ids.some(id => selected.has(id));
   return (
     <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white'>
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className='w-10'>
+              <input
+                type='checkbox'
+                className='size-3.5 cursor-pointer rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400'
+                checked={allOn}
+                ref={el => {
+                  if (el) el.indeterminate = someOn && !allOn;
+                }}
+                onChange={() => onToggleSelectAll(ids, allOn)}
+                aria-label='Chọn tất cả'
+              />
+            </TableHead>
             <TableHead>Tên page</TableHead>
             <TableHead className='w-24'>Type</TableHead>
             <TableHead className='w-28'>Status</TableHead>
@@ -770,8 +900,18 @@ function TableView({
             const statusClass = STATUS_CHIP[p.status] ?? STATUS_CHIP.archived;
             const typeClass = TYPE_CHIP[p.type] ?? 'bg-zinc-100 text-zinc-600';
             const brand = brandById.get(p.brand_id);
+            const isSelected = selected.has(p.id);
             return (
-              <TableRow key={p.id}>
+              <TableRow key={p.id} className={cn(isSelected && 'bg-zinc-50')}>
+                <TableCell>
+                  <input
+                    type='checkbox'
+                    className='size-3.5 cursor-pointer rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400'
+                    checked={isSelected}
+                    onChange={() => onToggleSelected(p.id)}
+                    aria-label={`Chọn ${p.name}`}
+                  />
+                </TableCell>
                 <TableCell>
                   <div className='font-medium'>{p.name}</div>
                   <div className='flex items-center gap-2 font-mono text-[10.5px] text-zinc-400'>
