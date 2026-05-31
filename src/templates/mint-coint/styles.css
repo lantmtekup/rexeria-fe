@@ -29,14 +29,22 @@
   display: block;
 }
 
-/* KHÔNG reset background/color trên button + a — selector specificity
- * (.mint-coint-root + element) cao hơn Tailwind utility class đơn
- * (text-white, bg-black) → đè màu user-defined ở component. Chỉ reset
- * border + padding cho button mà KHÔNG đụng visual props.
- *
- * Mặc định Tailwind preflight đã reset button to default styling +
- * underline a — không cần re-reset ở scope này. */
-.mint-coint-root a {
+/* Reset button + link defaults nhưng dùng `:where()` để specificity = 0
+ * → Tailwind utility classes (bg-*, text-*, border-*) vẫn thắng khi
+ * user-defined ở component. Không có wrapping `:where()` thì selector
+ * specificity (class + element = 0,1,1) đè single Tailwind utility
+ * (class = 0,1,0) → bug font/color/bg invisible. */
+:where(.mint-coint-root) button {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  color: inherit;
+}
+
+:where(.mint-coint-root) a {
+  color: inherit;
   text-decoration: none;
 }
 
