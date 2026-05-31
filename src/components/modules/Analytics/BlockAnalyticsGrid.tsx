@@ -16,6 +16,7 @@
 import * as React from 'react';
 import {
   ArrowLeft,
+  ListTree,
   Loader2,
   MousePointerClick,
   TrendingUp,
@@ -113,9 +114,9 @@ export function BlockAnalyticsGrid({
   > | null>(null);
   /** Declared CTAs từ meta để render label + ensure mọi CTA hiện cards
    *  (cả khi clicks=0). */
-  const [ctas, setCtas] = React.useState<Array<{ id: string; label: string }>>(
-    []
-  );
+  const [ctas, setCtas] = React.useState<
+    Array<{ id: string; label: string; section?: string }>
+  >([]);
 
   // Wave 3 migration 2026-05-31: canvasTemplates.get retired → load via
   // canonical page → template → HEAD version chain. `templateId` prop name
@@ -488,6 +489,13 @@ export function BlockAnalyticsGrid({
             <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
               {sections.map((s, idx) => {
                 const stat = sectionStats?.get(s.id);
+                const sectionCtas = ctas
+                  .filter(c => c.section === s.id)
+                  .map(c => ({
+                    id: c.id,
+                    label: c.label,
+                    clicks: ctaStats?.get(c.id)?.clicks ?? 0,
+                  }));
                 return (
                   <SectionAnalyticsCard
                     key={s.id}
@@ -496,6 +504,7 @@ export function BlockAnalyticsGrid({
                     views={stat?.views ?? 0}
                     clicks={stat?.clicks ?? 0}
                     series={stat?.series ?? []}
+                    ctas={sectionCtas}
                   />
                 );
               })}
@@ -665,19 +674,38 @@ function SectionAnalyticsCard({
   views,
   clicks,
   series,
+  ctas = [],
 }: {
   index: number;
   section: TemplateSection;
   views: number;
   clicks: number;
   series: number[];
+  ctas?: Array<{ id: string; label: string; clicks: number }>;
 }) {
   const max = Math.max(...series, 1);
   const delta = computeDelta(series);
   const ctr = views > 0 ? Math.round((clicks / views) * 1000) / 10 : 0;
+  const [showCtaList, setShowCtaList] = React.useState(false);
+  const popRef = React.useRef<HTMLDivElement>(null);
+
+  // Close khi click outside
+  React.useEffect(() => {
+    if (!showCtaList) return;
+    const onDoc = (e: MouseEvent) => {
+      if (popRef.current && !popRef.current.contains(e.target as Node)) {
+        setShowCtaList(false);
+      }
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [showCtaList]);
+
+  const sortedCtas = [...ctas].sort((a, b) => b.clicks - a.clicks);
+  const ctaClickTotal = ctas.reduce((a, c) => a + c.clicks, 0);
 
   return (
-    <div className='group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'>
+    <div className='group relative flex flex-col overflow-visible rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'>
       <div className='flex items-center justify-between border-b border-zinc-100 px-3.5 py-2'>
         <div className='flex items-center gap-2'>
           <span className='flex size-5 items-center justify-center rounded-full bg-zinc-100 font-mono text-[10px] font-bold text-zinc-600'>
@@ -687,7 +715,85 @@ function SectionAnalyticsCard({
             {section.id}
           </code>
         </div>
-        <DeltaPill delta={delta} />
+        <div className='flex items-center gap-1.5'>
+          {ctas.length > 0 && (
+            <div className='relative' ref={popRef}>
+              <button
+                type='button'
+                onClick={() => setShowCtaList(v => !v)}
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold transition-colors',
+                  showCtaList
+                    ? 'bg-zinc-900 text-white'
+                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                )}
+                title={`${ctas.length} CTA tracked · ${ctaClickTotal} clicks`}
+                aria-label='Show CTA breakdown for this section'
+              >
+                <ListTree className='size-3' />
+                <span className='font-mono tabular-nums'>{ctas.length}</span>
+              </button>
+              {showCtaList && (
+                <div className='absolute top-full right-0 z-30 mt-1.5 w-64 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl'>
+                  <div className='flex items-center justify-between border-b border-zinc-100 bg-zinc-50 px-3 py-2'>
+                    <span className='text-[10.5px] font-bold tracking-wider text-zinc-600 uppercase'>
+                      CTAs · {section.label}
+                    </span>
+                    <span className='font-mono text-[10px] text-zinc-500 tabular-nums'>
+                      {ctaClickTotal} clicks
+                    </span>
+                  </div>
+                  <ul className='max-h-64 divide-y divide-zinc-100 overflow-y-auto'>
+                    {sortedCtas.map(c => {
+                      const pct =
+                        ctaClickTotal > 0
+                          ? (c.clicks / ctaClickTotal) * 100
+                          : 0;
+                      const isDead = c.clicks === 0;
+                      return (
+                        <li
+                          key={c.id}
+                          className='relative flex items-center justify-between gap-2 px-3 py-2'
+                        >
+                          {!isDead && (
+                            <span
+                              aria-hidden='true'
+                              className='absolute inset-y-0 left-0 bg-indigo-50'
+                              style={{ width: `${pct}%` }}
+                            />
+                          )}
+                          <div className='relative min-w-0 flex-1'>
+                            <p
+                              className={cn(
+                                'truncate text-[12px] font-medium',
+                                isDead ? 'text-zinc-400' : 'text-zinc-800'
+                              )}
+                              title={c.label}
+                            >
+                              {c.label}
+                            </p>
+                            <code className='block truncate font-mono text-[9.5px] text-zinc-400'>
+                              {c.id}
+                            </code>
+                          </div>
+                          <span
+                            className={cn(
+                              'relative shrink-0 font-mono text-[12px] font-bold tabular-nums',
+                              isDead ? 'text-zinc-300' : 'text-zinc-900'
+                            )}
+                          >
+                            {c.clicks.toLocaleString('vi-VN')}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+          <DeltaPill delta={delta} />
+        </div>
       </div>
 
       {/* Thumbnail — fallback gradient khi không có */}

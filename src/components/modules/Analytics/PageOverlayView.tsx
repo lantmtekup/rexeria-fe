@@ -158,12 +158,27 @@ export function PageOverlayView({ pageId }: Props) {
   // top-right để thấy stats cards. Public users (chưa login) sẽ không
   // thấy overlay (component tự gate isLoggedIn).
   // pageId truyền vào overlay (key cho fetch + offset localStorage).
+  //
+  // VIEWPORT CONTAINMENT: code template (mint-coint) dùng `position:
+  // fixed` cho hero scenes + sticky menus, và `h-screen` cho sections.
+  // Trong admin shell, fixed children escape ra phủ luôn sidebar →
+  // không acceptable. Fix: wrap trong container có `transform:
+  // translateZ(0)` → CSS trick establish new containing block, khiến
+  // mọi `position: fixed` descendant relative theo container chứ không
+  // viewport. Container cũng scroll riêng để user xem được toàn page
+  // mà không mất admin chrome. StatsAnnotationOverlay toolbar (fixed
+  // top-4 right-4) cũng tự stay trong container.
   return (
-    <StatsAnnotationOverlay templateId={pageId}>
-      <div className='relative min-h-[60vh] bg-zinc-50'>
-        <PageContent page={page} template={template} version={version} />
-      </div>
-    </StatsAnnotationOverlay>
+    <div
+      className='relative h-[calc(100vh-7rem)] w-full overflow-auto rounded-lg border border-zinc-200 bg-zinc-50'
+      style={{ transform: 'translateZ(0)' }}
+    >
+      <StatsAnnotationOverlay templateId={pageId}>
+        <div className='relative min-h-full bg-zinc-50'>
+          <PageContent page={page} template={template} version={version} />
+        </div>
+      </StatsAnnotationOverlay>
+    </div>
   );
 }
 

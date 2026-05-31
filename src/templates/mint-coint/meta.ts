@@ -58,39 +58,90 @@ export const meta: TemplateMeta = {
       { id: 'contact-mint', label: 'Sticky CTA — Contact The Mint' },
 
       // ── Section: discover-reverse (Hotspots tab 1) ─────────────
-      { id: 'hotspot-the-lone-pine', label: 'Hotspot — The Lone Pine' },
-      { id: 'hotspot-sky-and-water', label: 'Hotspot — Sky and Water' },
-      { id: 'hotspot-serrated-edge', label: 'Hotspot — Serrated Edge' },
+      {
+        id: 'hotspot-the-lone-pine',
+        label: 'Hotspot — The Lone Pine',
+        section: 'discover-reverse',
+      },
+      {
+        id: 'hotspot-sky-and-water',
+        label: 'Hotspot — Sky and Water',
+        section: 'discover-reverse',
+      },
+      {
+        id: 'hotspot-serrated-edge',
+        label: 'Hotspot — Serrated Edge',
+        section: 'discover-reverse',
+      },
 
       // ── Section: discover-obverse (Hotspots tab 2) ─────────────
       {
         id: 'hotspot-king-charles-iii-effigy',
         label: 'Hotspot — King Charles III Effigy',
+        section: 'discover-obverse',
       },
       {
         id: 'hotspot-99-99-pure-gold',
         label: 'Hotspot — 99.99% Pure Gold',
+        section: 'discover-obverse',
       },
 
-      // ── Close detail drawer (both discover sections) ───────────
-      { id: 'close-detail-tab', label: 'Close Detail Drawer' },
+      // ── Close detail drawer (both discover sections, attach reverse) ──
+      {
+        id: 'close-detail-tab',
+        label: 'Close Detail Drawer',
+        section: 'discover-reverse',
+      },
 
       // ── Section: variants ───────────────────────────────────────
-      { id: 'open-discover-panel', label: 'Coin → Open Discover Panel' },
-      { id: 'variant-reverse', label: 'Variant — Reverse' },
-      { id: 'variant-obverse', label: 'Variant — Obverse' },
-      { id: 'variant-packaging', label: 'Variant — Packaging' },
+      {
+        id: 'open-discover-panel',
+        label: 'Coin → Open Discover Panel',
+        section: 'variants',
+      },
+      {
+        id: 'variant-reverse',
+        label: 'Variant — Reverse',
+        section: 'variants',
+      },
+      {
+        id: 'variant-obverse',
+        label: 'Variant — Obverse',
+        section: 'variants',
+      },
+      {
+        id: 'variant-packaging',
+        label: 'Variant — Packaging',
+        section: 'variants',
+      },
 
-      // ── Discover Panel (overlay drawer) ────────────────────────
-      { id: 'panel-close', label: 'Panel — Close' },
-      { id: 'panel-view-reverse', label: 'Panel — Switch View Reverse' },
-      { id: 'panel-view-obverse', label: 'Panel — Switch View Obverse' },
+      // ── Discover Panel (overlay drawer, attach variants section) ──
+      { id: 'panel-close', label: 'Panel — Close', section: 'variants' },
+      {
+        id: 'panel-view-reverse',
+        label: 'Panel — Switch View Reverse',
+        section: 'variants',
+      },
+      {
+        id: 'panel-view-obverse',
+        label: 'Panel — Switch View Obverse',
+        section: 'variants',
+      },
       {
         id: 'panel-view-packaging',
         label: 'Panel — Switch View Packaging',
+        section: 'variants',
       },
-      { id: 'panel-contact-mint', label: 'Panel CTA — Contact The Mint' },
-      { id: 'buy-coin', label: 'Panel CTA — Buy Now (conversion)' },
+      {
+        id: 'panel-contact-mint',
+        label: 'Panel CTA — Contact The Mint',
+        section: 'variants',
+      },
+      {
+        id: 'buy-coin',
+        label: 'Panel CTA — Buy Now (conversion)',
+        section: 'variants',
+      },
     ],
   },
 };

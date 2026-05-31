@@ -73,8 +73,12 @@ export interface TemplateSection {
 export interface TemplateTrackingConfig {
   sections: TemplateSection[];
   /** Optional — CTAs labeling cho click events. Hook tự fire click cho
-   *  mọi [data-rexer-cta] regardless of liệt kê ở đây. */
-  ctas?: Array<{ id: string; label: string }>;
+   *  mọi [data-rexer-cta] regardless of liệt kê ở đây.
+   *
+   *  `section` (optional) = section.id mà CTA này nằm trong. Analytics UI
+   *  dùng để group CTAs theo section card (icon list breakdown trong từng
+   *  section card). Bỏ trống = global UI (header, sticky nav, ...). */
+  ctas?: Array<{ id: string; label: string; section?: string }>;
 }
 
 export interface TemplateMeta {
