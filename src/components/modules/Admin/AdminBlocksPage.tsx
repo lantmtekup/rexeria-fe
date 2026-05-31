@@ -600,10 +600,21 @@ function BlockCard({
         />
       </div>
 
-      <button
-        type='button'
+      {/* Card body — div + role="button" (KHÔNG <button>) vì
+          BlockMiniPreview chứa carousel với <button> prev/next nested.
+          Nested <button> = hydration error per react. Pattern giống
+          fix CatalogCard trước đó. */}
+      <div
+        role='button'
+        tabIndex={0}
         onClick={onClick}
-        className='flex flex-1 flex-col text-left'
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        className='flex flex-1 cursor-pointer flex-col text-left'
       >
         <div className='relative'>
           {editorBlock ? (
@@ -668,7 +679,7 @@ function BlockCard({
             )}
           </div>
         </div>
-      </button>
+      </div>
     </div>
   );
 }
