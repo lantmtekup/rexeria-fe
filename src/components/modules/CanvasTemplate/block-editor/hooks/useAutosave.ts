@@ -114,19 +114,53 @@ export function useAutosave({
 
   const doSave = React.useCallback(
     async (opts: { silent?: boolean } = {}): Promise<void> => {
-      if (!dirtyRef.current || !enabledRef.current) return;
+      if (!dirtyRef.current || !enabledRef.current) {
+        // eslint-disable-next-line no-console
+        console.log(
+          '[rexer-autosave] doSave skipped — dirty:',
+          dirtyRef.current,
+          'enabled:',
+          enabledRef.current
+        );
+        return;
+      }
       if (inflightRef.current) inflightRef.current.cancelled = true;
       const token = { cancelled: false };
       inflightRef.current = token;
 
       setState({ kind: 'saving' });
       const payload = buildPayloadRef.current();
+      // eslint-disable-next-line no-console
+      console.log(
+        '[rexer-autosave] PATCH draft → template:',
+        templateId,
+        'blocks:',
+        Array.isArray((payload as { blocks?: unknown[] }).blocks)
+          ? (payload as { blocks: unknown[] }).blocks.length
+          : '?',
+        'payload:',
+        payload
+      );
       try {
         // BE 2026-05-30: PATCH draft-canvas-blueprint = mutable autosave
         // buffer. Không tạo version mới mỗi save → autosave debounce 1.5s OK.
         // Commit thành immutable version qua POST /templates/:id/versions
         // (explicit Save button, không phải auto).
-        await rexerApi.templates.patchDraftBlueprint(templateId, payload);
+        const beTpl = await rexerApi.templates.patchDraftBlueprint(
+          templateId,
+          payload
+        );
+        // eslint-disable-next-line no-console
+        console.log(
+          '[rexer-autosave] PATCH OK — BE confirmed draft blocks:',
+          Array.isArray(
+            (beTpl.draft_canvas_blueprint as { blocks?: unknown[] } | undefined)
+              ?.blocks
+          )
+            ? (beTpl.draft_canvas_blueprint as { blocks: unknown[] }).blocks
+                .length
+            : 0
+        );
         if (token.cancelled) return; // a newer save superseded us
         dirtyRef.current = false;
         retryAttemptRef.current = 0;
@@ -191,13 +225,22 @@ export function useAutosave({
 
   const markDirty = React.useCallback(() => {
     dirtyRef.current = true;
+    // eslint-disable-next-line no-console
+    console.log(
+      '[rexer-autosave] markDirty — template:',
+      templateId,
+      'enabled:',
+      enabledRef.current,
+      'debounce(ms):',
+      AUTOSAVE_DELAY_MS
+    );
     setState(prev => (prev.kind === 'saving' ? prev : { kind: 'pending' }));
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (retryRef.current) clearTimeout(retryRef.current);
     debounceRef.current = setTimeout(() => {
       void doSave({ silent: true });
     }, AUTOSAVE_DELAY_MS);
-  }, [doSave]);
+  }, [doSave, templateId]);
 
   const flush = React.useCallback(
     async (opts?: { silent?: boolean }) => {
@@ -256,6 +299,39 @@ export function useAutosave({
 
   // Cleanup any timers on unmount.
   React.useEffect(() => clearTimers, [clearTimers]);
+
+  // Expose a debug peek on window so user can paste this in DevTools:
+  //   __rexer_autosave.dump()
+  //   __rexer_autosave.flush()   // force immediate save
+  //   __rexer_autosave.payload() // see what would be sent
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    interface DebugBag {
+      dump: () => unknown;
+      flush: (silent?: boolean) => Promise<void>;
+      payload: () => unknown;
+    }
+    const bag: DebugBag = {
+      dump: () => ({
+        state,
+        dirty: dirtyRef.current,
+        enabled: enabledRef.current,
+        templateId,
+        version: versionRef.current,
+        debounceArmed: !!debounceRef.current,
+      }),
+      flush: silent => doSave({ silent: silent ?? true }),
+      payload: () => buildPayloadRef.current(),
+    };
+    (window as unknown as Record<string, DebugBag>).__rexer_autosave = bag;
+    return () => {
+      try {
+        delete (window as unknown as Record<string, unknown>).__rexer_autosave;
+      } catch {
+        /* ignore */
+      }
+    };
+  }, [state, templateId, doSave]);
 
   return { state, markDirty, flush, reset };
 }

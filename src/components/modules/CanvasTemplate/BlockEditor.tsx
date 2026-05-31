@@ -257,8 +257,10 @@ export function BlockEditor({
         // mutable autosave buffer. Reload resumes from there so user doesn't
         // lose unsaved canvas edits.
         let canvasData: Record<string, unknown> | undefined;
+        let loadSource: 'draft' | 'version' | 'empty' = 'empty';
         if (tpl.draft_canvas_blueprint) {
           canvasData = adaptCanvasBlueprint(tpl.draft_canvas_blueprint);
+          loadSource = 'draft';
         } else if (currentVerId) {
           const ver = await withTimeout(
             rexerApi.templates.version(templateId, currentVerId),
@@ -272,8 +274,24 @@ export function BlockEditor({
           // post BE fabric_to_blueprint converter (handoff §1.4).
           if (ver.canvas_blueprint) {
             canvasData = adaptCanvasBlueprint(ver.canvas_blueprint);
+            loadSource = 'version';
           }
         }
+        // eslint-disable-next-line no-console
+        console.log(
+          '[rexer-editor] LOAD canvas from:',
+          loadSource,
+          '· template:',
+          tpl.id,
+          '· current_version_id:',
+          currentVerId,
+          '· raw blocks:',
+          Array.isArray(
+            (canvasData as { blocks?: unknown[] } | undefined)?.blocks
+          )
+            ? (canvasData as { blocks: unknown[] }).blocks.length
+            : 0
+        );
         // Also stash version when we loaded canvas from draft buffer — need it
         // for Save Version action to inherit schema fields.
         if (tpl.draft_canvas_blueprint && currentVerId) {
@@ -326,6 +344,17 @@ export function BlockEditor({
           : hasServerCanvas
             ? []
             : seedBlocks();
+        // eslint-disable-next-line no-console
+        console.log(
+          '[rexer-editor] PARSE canvas — parsed blocks:',
+          parsed?.blocks.length ?? 0,
+          '· hasServerCanvas:',
+          hasServerCanvas,
+          '· initial blocks installed:',
+          initial.length,
+          '· seeded mock?',
+          parsed === null && !hasServerCanvas
+        );
         canvas.reset(initial, parsed?.activeBlockId ?? initial[0]?.id ?? null);
         publishState.setPublish(parsed?.publish);
         // Mark dirty only when we materialised mock seed — empty canvas
