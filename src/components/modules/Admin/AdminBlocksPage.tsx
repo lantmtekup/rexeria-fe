@@ -64,6 +64,7 @@ import type {
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Block as ServerBlock } from '@/services/rexer/types';
+import { buildLegacyServerBlocks, getLegacyBlock } from '@/blocks/registry';
 import { cn } from '@/lib/cn';
 
 import { AddBuiltinBlockDialog } from './AddBuiltinBlockDialog';
@@ -177,14 +178,22 @@ export function AdminBlocksPage() {
     setError(null);
     try {
       const r = await rexerApi.blocks.list({ limit: 200 });
-      setItems(r.items ?? []);
+      // Merge legacy registry (POC ported từ 360-cms) ở đầu list. Synthetic
+      // entries có id `legacy:*` — không call BE, render preview qua local
+      // React component. Khi BE seed thật cho 113 blocks → bỏ merge này.
+      const legacy = buildLegacyServerBlocks();
+      setItems([...legacy, ...(r.items ?? [])]);
     } catch (err) {
       setError(rxMessage(err));
-      setItems([]);
+      setItems(buildLegacyServerBlocks());
     } finally {
       setLoading(false);
     }
   }, []);
+
+  /** Detect legacy synthetic entries. Skip BE actions cho row legacy
+   *  (delete/clone/rename) — chỉ allow preview + detail. */
+  const isLegacyItem = (item: ServerBlock) => item.id.startsWith('legacy:');
 
   React.useEffect(() => {
     load();
@@ -214,6 +223,12 @@ export function AdminBlocksPage() {
   }, [items, search, typeFilter, tagFilter]);
 
   const handleDuplicate = async (id: string) => {
+    if (id.startsWith('legacy:')) {
+      toast.info(
+        'Legacy block là catalog system — clone chưa support. Sẽ enable khi seed BE.'
+      );
+      return;
+    }
     const tid = toast.loading('Đang clone…');
     try {
       const dup = await rexerApi.blocks.clone(id);
@@ -226,6 +241,10 @@ export function AdminBlocksPage() {
   };
 
   const handleDelete = async (block: ServerBlock) => {
+    if (isLegacyItem(block)) {
+      toast.info('Legacy block thuộc system catalog — không xoá được từ UI.');
+      return;
+    }
     if (!window.confirm(`Xoá "${block.name}"?`)) return;
     const tid = toast.loading('Đang xoá…');
     try {
@@ -239,6 +258,10 @@ export function AdminBlocksPage() {
   };
 
   const handleRename = async (id: string, name: string) => {
+    if (id.startsWith('legacy:')) {
+      toast.info('Legacy block — đổi tên trong source code (src/blocks/).');
+      return;
+    }
     const trimmed = name.trim();
     if (!trimmed) return;
     try {
@@ -251,6 +274,10 @@ export function AdminBlocksPage() {
   };
 
   const handleTagsChange = async (id: string, tags: string[]) => {
+    if (id.startsWith('legacy:')) {
+      toast.info('Legacy block — tags fix ở schema source code.');
+      return;
+    }
     const normalised = Array.from(
       new Set(tags.map(t => t.trim().toLowerCase()).filter(t => t.length > 0))
     );
@@ -276,6 +303,13 @@ export function AdminBlocksPage() {
   };
 
   const handlePreview = (block: ServerBlock) => {
+    if (isLegacyItem(block)) {
+      // Legacy preview qua route riêng (next step). Tạm log + toast.
+      toast.info(
+        `Preview "${block.name}" — full-screen preview cho legacy block đang phát triển. Xem card preview ở grid.`
+      );
+      return;
+    }
     const editorBlock = parseEditorBlock(block.settings);
     if (!editorBlock) {
       toast.error(
@@ -565,7 +599,21 @@ function BlockCard({
 }) {
   const type = item.type_code as BlockType;
   const gradient = BLOCK_TYPE_GRADIENT[type] ?? 'from-zinc-400 to-zinc-600';
-  const label = BLOCK_TYPE_LABEL[type] ?? item.type_code;
+  // Legacy item: prefer schema.name → strip `legacy_` prefix from type_code
+  // không meaningful cho admin scan. Default label vẫn fallback type_code.
+  const isLegacy = item.id.startsWith('legacy:');
+  const legacySchemaId =
+    isLegacy && typeof item.settings?.schemaId === 'string'
+      ? (item.settings.schemaId as string)
+      : null;
+  const legacyEntry = legacySchemaId ? getLegacyBlock(legacySchemaId) : null;
+  const legacyCategory =
+    isLegacy && typeof item.settings?.category === 'string'
+      ? (item.settings.category as string)
+      : null;
+  const label = isLegacy
+    ? (legacyCategory ?? 'Legacy')
+    : (BLOCK_TYPE_LABEL[type] ?? item.type_code);
   const editorBlock = parseEditorBlock(item.settings);
   const extraCount = editorBlock?.extraElements?.length ?? 0;
   const hasMobile = !!editorBlock?.contentVi?.mobile;
@@ -619,6 +667,8 @@ function BlockCard({
         <div className='relative'>
           {editorBlock ? (
             <BlockMiniPreview block={editorBlock} aspect='4 / 3' />
+          ) : legacyEntry ? (
+            <LegacyBlockThumbnail entry={legacyEntry} />
           ) : (
             <div
               className={cn(
@@ -1213,5 +1263,44 @@ function ViewBtn({
     >
       {icon}
     </button>
+  );
+}
+
+/* ─── LegacyBlockThumbnail ───────────────────────────────────────────
+ * Render component legacy ở size lớn rồi scale down để fit khung
+ * 4:3 ratio của card. `transform: scale(...)` + `transform-origin:
+ * top left` đảm bảo component thấy viewport full-size (~1280×960) →
+ * khi shrink xuống card preview vẫn giữ layout proportions.
+ *
+ * Pointer-events: none để tránh hover / scroll affect card click. */
+function LegacyBlockThumbnail({
+  entry,
+}: {
+  entry: ReturnType<typeof getLegacyBlock>;
+}) {
+  if (!entry) return null;
+  const { schema, Component } = entry;
+  const content = (schema.defaults.vi ?? {}) as Record<string, unknown>;
+  const SOURCE_W = 1280;
+  const SOURCE_H = 960;
+
+  return (
+    <div className='relative aspect-[4/3] overflow-hidden bg-zinc-100'>
+      <div
+        aria-hidden='true'
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: SOURCE_W,
+          height: SOURCE_H,
+          transform: 'scale(0.25)',
+          transformOrigin: 'top left',
+          pointerEvents: 'none',
+        }}
+      >
+        <Component content={content} editable={false} />
+      </div>
+    </div>
   );
 }
