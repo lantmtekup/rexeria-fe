@@ -58,11 +58,13 @@ const BLOCK_TYPE_LABEL: Record<BlockType, string> = {
 };
 
 interface Props {
+  /** Page id (kept name `templateId` for back-compat — historic naming). */
   templateId: string;
   templateName?: string;
   /** Where to send the user via the back button. */
   backHref?: string;
-  /** When set, calls admin breakdown endpoint; otherwise portal. */
+  /** @deprecated Wave 3 — canonical `pages.analytics.blocks` works for both
+   *  admin + portal (BE enforces RLS). Prop accepted but ignored. */
   useAdminEndpoint?: boolean;
 }
 
@@ -76,7 +78,6 @@ export function BlockAnalyticsGrid({
   templateId,
   templateName,
   backHref = '/portal/landing-pages',
-  useAdminEndpoint,
 }: Props) {
   const [blocks, setBlocks] = React.useState<LoadedBlock[] | null>(null);
   const [rows, setRows] = React.useState<BlockBreakdownRow[] | null>(null);
@@ -85,16 +86,44 @@ export function BlockAnalyticsGrid({
   const [error, setError] = React.useState<string | null>(null);
   const [usingMock, setUsingMock] = React.useState(false);
 
-  // Load template blocks once — they don't depend on range.
+  // Wave 3 migration 2026-05-31: canvasTemplates.get retired → load via
+  // canonical page → template_version chain. `templateId` prop name kept
+  // for back-compat — it's actually the page id from the URL.
   React.useEffect(() => {
     let cancelled = false;
-    rexerApi.canvasTemplates
-      .get(templateId)
-      .then(tpl => {
+    (async () => {
+      try {
+        const page = await rexerApi.pages.get(templateId);
         if (cancelled) return;
-        const parsed = parseCanvas(
-          tpl.canvas_data as Record<string, unknown> | undefined
+        // Need template_id to query templates.version. No flat
+        // /template-versions endpoint, so list templates + match.
+        const templates = await rexerApi.templates.list({ limit: 200 });
+        const tpl = templates.items?.find(
+          t => t.current_version_id === page.template_version_id
         );
+        if (!tpl) {
+          setBlocks([]);
+          return;
+        }
+        const ver = await rexerApi.templates.version(
+          tpl.id,
+          page.template_version_id
+        );
+        if (cancelled) return;
+        // canvas_blueprint stores schema_version: "1.0"; coerce to "2.0"
+        // so parseCanvas accepts (blocks shape already compatible per
+        // BE fabric_to_blueprint converter, handoff §1.4).
+        const adapted = ver.canvas_blueprint
+          ? {
+              schema_version: '2.0',
+              blocks: Array.isArray(
+                (ver.canvas_blueprint as { blocks?: unknown }).blocks
+              )
+                ? (ver.canvas_blueprint as { blocks: unknown[] }).blocks
+                : [],
+            }
+          : undefined;
+        const parsed = parseCanvas(adapted);
         if (!parsed) {
           setBlocks([]);
           return;
@@ -104,32 +133,30 @@ export function BlockAnalyticsGrid({
           label: extractLabel(b),
         }));
         setBlocks(loaded);
-      })
-      .catch(err => {
+      } catch (err) {
         if (cancelled) return;
         setError(
           err instanceof RxApiError ? err.code || err.message : 'LOAD_FAILED'
         );
-      });
+      }
+    })();
     return () => {
       cancelled = true;
     };
   }, [templateId]);
 
-  // Reload breakdown each time range changes.
+  // Reload breakdown each time range changes. Canonical pages.analytics.blocks
+  // replaces the retired templateAnalytics/portal templateBreakdown — both
+  // admin + portal contexts use the same endpoint, BE enforces RLS via
+  // session principal so useAdminEndpoint is no longer needed.
   React.useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    const end = new Date();
-    const start = new Date(end.getTime() - range * 86_400_000);
-    const params = { start: start.toISOString(), end: end.toISOString() };
-    const promise = useAdminEndpoint
-      ? rexerApi.templateAnalytics.breakdown(templateId, params)
-      : rexerApi.portal.templateBreakdown(templateId, params);
-    promise
+    rexerApi.pages.analytics
+      .blocks(templateId, { range: `${range}d` })
       .then(res => {
         if (cancelled) return;
-        const arr: BlockBreakdownRow[] = Array.isArray(res) ? res : [];
+        const arr: BlockBreakdownRow[] = res.items ?? [];
         setRows(arr);
         const hasReal = arr.some(
           r => Array.isArray(r.views_by_day) && r.views_by_day.length > 0
@@ -148,7 +175,7 @@ export function BlockAnalyticsGrid({
     return () => {
       cancelled = true;
     };
-  }, [templateId, range, useAdminEndpoint]);
+  }, [templateId, range]);
 
   const rowMap = React.useMemo(() => {
     const m = new Map<string, BlockBreakdownRow>();
