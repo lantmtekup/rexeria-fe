@@ -1,29 +1,27 @@
 'use client';
 
 /**
- * Admin template preview — `GET /v1/templates/{id}/preview`.
+ * Admin template preview — `/admin/templates/[id]/preview`.
  *
- * Response per swagger `TemplatePreviewResponse`:
- *   { template_id, version_id, mode, preview_html?, preview_url?, preview_descriptor_json? }
+ * Single-purpose: render visual preview overlay tự động khi mở route.
+ * Đóng overlay (Esc / X) → quay về `/admin/templates`. Không có panel
+ * schema / fallback — schema thuộc về `/admin/templates/[id]` detail
+ * page, không phải preview route.
  *
- * Render strategy by mode:
- *  - `rendered`   → iframe `srcDoc={preview_html}` sandboxed (no JS)
- *  - `live_stub`  → iframe `src={preview_url}` (BE-hosted stub URL)
- *  - `static`     → fallback to template.thumbnail_url
+ * Render priority:
+ *  - BE `preview_html` (rendered mode) → iframe srcDoc
+ *  - BE `preview_url` (live_stub mode) → iframe src
+ *  - FE-side block renderer qua PreviewMode (fallback khi BE chưa ship
+ *    server-side render — be-audit §15)
+ *  - Template thumbnail (static mode)
+ *  - "Chưa có nội dung" message
  */
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  ArrowLeft,
-  ExternalLink,
-  Eye,
-  FileJson,
-  Loader2,
-  RefreshCw,
-} from 'lucide-react';
+import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
 
-import { Button } from '@/components/atoms/button';
 import { PreviewMode } from '@/components/modules/CanvasTemplate/block-editor/PreviewMode';
 import { parseCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
 import type { Block } from '@/components/modules/CanvasTemplate/block-editor/types';
@@ -34,13 +32,7 @@ import type {
   TemplatePreviewResponse,
   TemplateVersion,
 } from '@/services/rexer/types';
-import { cn } from '@/lib/cn';
 
-/**
- * BE `canvas_blueprint.schema_version` ở "1.0" — `parseCanvas` chỉ accept
- * "2.0" / legacy. Coerce wrapper schema_version, blocks shape đã 2.0-aligned
- * post BE fabric_to_blueprint converter (handoff §1.4).
- */
 function adaptCanvasBlueprint(
   raw: Record<string, unknown> | undefined
 ): Record<string, unknown> | undefined {
@@ -56,6 +48,7 @@ interface Props {
 }
 
 export function AdminTemplatePreviewPage({ templateId }: Props) {
+  const router = useRouter();
   const [template, setTemplate] = React.useState<Template | null>(null);
   const [version, setVersion] = React.useState<TemplateVersion | null>(null);
   const [preview, setPreview] = React.useState<TemplatePreviewResponse | null>(
@@ -63,413 +56,159 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
   );
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [fePreviewing, setFePreviewing] = React.useState(false);
 
-  // FE-side render fallback: parse version.canvas_blueprint → blocks array
-  // dùng PreviewMode (same renderer used in editor). Hữu ích khi BE chưa
-  // ship preview_html / preview_url server-side (be-audit §15 — `/p/`
-  // renderer mới chỉ output placeholder primitive; preview endpoint cũng
-  // chưa renderer canvas blocks).
   const feBlocks = React.useMemo<Block[] | null>(() => {
     if (!version?.canvas_blueprint) return null;
     const parsed = parseCanvas(adaptCanvasBlueprint(version.canvas_blueprint));
     return parsed?.blocks ?? null;
   }, [version]);
 
-  // Auto-open visual preview ngay khi feBlocks sẵn sàng — user click
-  // "Preview" ở list item là muốn xem ngay, không phải đọc schema. Khi
-  // user đóng overlay (Esc / X) → vẫn ở route preview với panel schema
-  // làm "behind the scene" inspection. Chỉ auto-open lần đầu — track
-  // qua ref để re-load không re-trigger overlay nếu user đã chủ động đóng.
-  const autoOpenedRef = React.useRef(false);
   React.useEffect(() => {
-    if (
-      !autoOpenedRef.current &&
-      feBlocks &&
-      feBlocks.length > 0 &&
-      !preview?.preview_html // chưa auto-open nếu BE đã ship preview_html
-    ) {
-      autoOpenedRef.current = true;
-      setFePreviewing(true);
-    }
-  }, [feBlocks, preview?.preview_html]);
-
-  const load = React.useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [tplRes, prevRes] = await Promise.all([
-        rexerApi.templates.get(templateId),
-        rexerApi.templates.preview(templateId),
-      ]);
-      setTemplate(tplRes.template);
-      setPreview(prevRes);
-      // Lazy-load full version (slot_schema + canvas_blueprint + default_config)
-      // so fallback panel can show schema when BE doesn't render preview_html.
-      if (prevRes.version_id) {
-        rexerApi.templates
-          .version(templateId, prevRes.version_id)
-          .then(setVersion)
-          .catch(() => {
-            /* fallback panel just hides extra detail if version load fails */
-          });
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [tplRes, prevRes] = await Promise.all([
+          rexerApi.templates.get(templateId),
+          rexerApi.templates.preview(templateId),
+        ]);
+        if (cancelled) return;
+        setTemplate(tplRes.template);
+        setPreview(prevRes);
+        if (prevRes.version_id) {
+          const v = await rexerApi.templates.version(
+            templateId,
+            prevRes.version_id
+          );
+          if (!cancelled) setVersion(v);
+        }
+      } catch (err) {
+        if (!cancelled)
+          setError(
+            err instanceof RxApiError ? err.code || err.message : 'LOAD_FAILED'
+          );
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    } catch (err) {
-      setError(
-        err instanceof RxApiError ? err.code || err.message : 'LOAD_FAILED'
-      );
-    } finally {
-      setLoading(false);
-    }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [templateId]);
 
-  React.useEffect(() => {
-    load();
-  }, [load]);
+  const handleClose = React.useCallback(() => {
+    // Quay về list (or back history nếu có). Dùng router.back() nếu
+    // history.length > 1, otherwise navigate /admin/templates.
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/admin/templates');
+    }
+  }, [router]);
 
-  if (loading && !template) {
+  // BE preview_html → render iframe directly
+  if (preview?.mode === 'rendered' && preview.preview_html) {
     return (
-      <div className='flex items-center justify-center p-16 text-sm text-zinc-500'>
-        <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải preview…
+      <div className='flex h-screen flex-col'>
+        <PreviewHeader template={template} onClose={handleClose} />
+        <iframe
+          title={`${template?.name ?? 'Template'} preview`}
+          srcDoc={preview.preview_html}
+          sandbox='allow-same-origin'
+          className='w-full flex-1 border-0 bg-white'
+        />
       </div>
     );
   }
 
-  if (error || !template || !preview) {
+  if (preview?.mode === 'live_stub' && preview.preview_url) {
     return (
-      <div className='mx-auto max-w-2xl p-8'>
-        <Link
-          href={`/admin/templates/${templateId}`}
-          className='inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900'
-        >
-          <ArrowLeft className='size-3.5' /> Quay lại
-        </Link>
-        <div className='mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
-          <p className='text-[14px] font-semibold text-rose-900'>
+      <div className='flex h-screen flex-col'>
+        <PreviewHeader template={template} onClose={handleClose} />
+        <iframe
+          title={`${template?.name ?? 'Template'} preview`}
+          src={preview.preview_url}
+          className='w-full flex-1 border-0 bg-white'
+        />
+      </div>
+    );
+  }
+
+  // FE-side render — PreviewMode đã là fullscreen overlay với close handler.
+  if (feBlocks && feBlocks.length > 0) {
+    return <PreviewMode blocks={feBlocks} lang='vi' onClose={handleClose} />;
+  }
+
+  // Empty / error states — minimal full-screen message với back link.
+  return (
+    <div className='flex h-screen flex-col items-center justify-center gap-4 bg-zinc-50 p-8'>
+      <Link
+        href='/admin/templates'
+        className='absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-700 hover:bg-zinc-100'
+      >
+        <ArrowLeft className='size-3.5' />
+        Templates
+      </Link>
+      {loading ? (
+        <div className='inline-flex items-center gap-2 text-sm text-zinc-500'>
+          <Loader2 className='size-4 animate-spin' />
+          Đang tải preview…
+        </div>
+      ) : error ? (
+        <div className='max-w-md rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
+          <AlertCircle className='mx-auto size-8 text-rose-600' />
+          <p className='mt-3 text-[14px] font-semibold text-rose-900'>
             Không load được preview
           </p>
-          <p className='mt-1 font-mono text-[11px] text-rose-700'>
-            {error || 'NOT_FOUND'}
+          <p className='mt-1 font-mono text-[11px] text-rose-700'>{error}</p>
+        </div>
+      ) : template?.thumbnail_url ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={template.thumbnail_url}
+            alt={`${template.name} — thumbnail`}
+            className='max-h-[80vh] max-w-[80vw] rounded-2xl border border-zinc-200 bg-white shadow-xl'
+          />
+          <p className='text-[12px] text-zinc-500'>
+            Template chưa có canvas blocks. Hiển thị thumbnail.
+          </p>
+        </>
+      ) : (
+        <div className='max-w-md rounded-2xl border border-zinc-200 bg-white p-8 text-center'>
+          <p className='text-[14px] font-semibold text-zinc-700'>
+            Template chưa có nội dung
+          </p>
+          <p className='mt-1 text-[12px] text-zinc-500'>
+            Mở editor để thêm block trước khi preview.
           </p>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className='flex h-[calc(100vh-3.5rem)] flex-col'>
-      {/* Header */}
-      <div className='flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-white px-6 py-3'>
-        <div className='flex items-center gap-3'>
-          <Link
-            href={`/admin/templates/${templateId}`}
-            className='group inline-flex items-center gap-1.5 text-[12px] font-medium text-zinc-600 hover:text-zinc-900'
-          >
-            <ArrowLeft className='size-3.5' /> {template.name}
-          </Link>
-          <span className='text-zinc-300'>·</span>
-          <code className='font-mono text-[11px] text-zinc-500'>
-            {template.code}
-          </code>
-          <span
-            className={cn(
-              'rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase',
-              preview.mode === 'rendered'
-                ? 'bg-emerald-100 text-emerald-700'
-                : preview.mode === 'live_stub'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-zinc-100 text-zinc-600'
-            )}
-          >
-            {preview.mode}
-          </span>
-        </div>
-        <div className='flex items-center gap-2'>
-          <Button variant='outline' size='sm' onClick={load} disabled={loading}>
-            <RefreshCw className={cn('size-3.5', loading && 'animate-spin')} />
-            Reload preview
-          </Button>
-          {feBlocks && feBlocks.length > 0 && (
-            <Button size='sm' onClick={() => setFePreviewing(true)}>
-              <Eye className='size-3.5' />
-              Visual preview ({feBlocks.length} block)
-            </Button>
-          )}
-          {preview.preview_url && (
-            <Button asChild size='sm' variant='outline'>
-              <a
-                href={preview.preview_url}
-                target='_blank'
-                rel='noopener noreferrer'
-              >
-                <ExternalLink className='size-3.5' />
-                BE preview URL
-              </a>
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Preview body */}
-      <div className='flex flex-1 items-stretch bg-zinc-100'>
-        <PreviewFrame
-          template={template}
-          preview={preview}
-          version={version}
-          feBlockCount={feBlocks?.length ?? 0}
-          onOpenFePreview={() => setFePreviewing(true)}
-        />
-      </div>
-
-      {fePreviewing && feBlocks && (
-        <PreviewMode
-          blocks={feBlocks}
-          lang='vi'
-          onClose={() => setFePreviewing(false)}
-        />
       )}
     </div>
   );
 }
 
-function PreviewFrame({
+function PreviewHeader({
   template,
-  preview,
-  version,
-  feBlockCount,
-  onOpenFePreview,
+  onClose,
 }: {
-  template: Template;
-  preview: TemplatePreviewResponse;
-  version: TemplateVersion | null;
-  feBlockCount: number;
-  onOpenFePreview: () => void;
+  template: Template | null;
+  onClose: () => void;
 }) {
-  if (preview.mode === 'rendered' && preview.preview_html) {
-    return (
-      <iframe
-        title={`${template.name} — rendered preview`}
-        srcDoc={preview.preview_html}
-        sandbox='allow-same-origin'
-        className='w-full border-0 bg-white'
-      />
-    );
-  }
-  if (preview.mode === 'live_stub' && preview.preview_url) {
-    return (
-      <iframe
-        title={`${template.name} — live stub`}
-        src={preview.preview_url}
-        className='w-full border-0 bg-white'
-      />
-    );
-  }
-  if (preview.mode === 'static' && template.thumbnail_url) {
-    return (
-      <div className='flex flex-1 items-center justify-center p-6'>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={template.thumbnail_url}
-          alt={`${template.name} — static preview`}
-          className='max-h-full max-w-full rounded-lg border border-zinc-200 shadow-sm'
-        />
-      </div>
-    );
-  }
-  // Fallback: BE chưa render preview_html/url + canvas_blueprint rỗng.
-  // Show structured panel — admin biết template chứa schema + default gì.
   return (
-    <StructuredFallback
-      template={template}
-      version={version}
-      feBlockCount={feBlockCount}
-      onOpenFePreview={onOpenFePreview}
-    />
+    <header className='flex items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-2'>
+      <button
+        type='button'
+        onClick={onClose}
+        className='inline-flex items-center gap-1.5 text-[12px] font-medium text-zinc-600 hover:text-zinc-900'
+      >
+        <ArrowLeft className='size-3.5' />
+        {template?.name ?? 'Preview'}
+      </button>
+      <span className='font-mono text-[10.5px] text-zinc-400'>
+        {template?.code}
+      </span>
+    </header>
   );
-}
-
-function StructuredFallback({
-  template,
-  version,
-  feBlockCount,
-  onOpenFePreview,
-}: {
-  template: Template;
-  version: TemplateVersion | null;
-  feBlockCount: number;
-  onOpenFePreview: () => void;
-}) {
-  const fields = extractFields(version?.field_schema_json);
-  const defaults = (version?.default_config_json ?? {}) as Record<
-    string,
-    unknown
-  >;
-  const blockCount = countBlocks(version?.canvas_blueprint);
-  const descriptor = version?.preview_descriptor_json as
-    | Record<string, unknown>
-    | undefined;
-
-  return (
-    <div className='mx-auto w-full max-w-3xl space-y-4 p-6'>
-      {/* Notice banner — đỡ nhẹ vì FE render được */}
-      <div className='flex items-start justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4'>
-        <div className='min-w-0 flex-1'>
-          <p className='text-[13px] font-semibold text-amber-900'>
-            BE chưa ship server-side render cho preview
-          </p>
-          <p className='mt-1 text-[11.5px] leading-relaxed text-amber-800'>
-            Template có <code className='font-mono'>preview_mode</code> ={' '}
-            <code className='font-mono'>{template.preview_mode}</code> nhưng
-            response không trả <code className='font-mono'>preview_html</code>{' '}
-            (be-audit §15 — `/p/{'{slug}'}` placeholder, preview endpoint cũng
-            vậy). Canvas có{' '}
-            <code className='font-mono'>{blockCount} block</code>.{' '}
-            {feBlockCount > 0 ? (
-              <>
-                Tạm thời render <strong>client-side</strong> bằng cùng engine
-                editor — bấm nút bên phải để mở visual preview.
-              </>
-            ) : (
-              'Canvas rỗng — chỉ xem được schema bên dưới.'
-            )}
-          </p>
-        </div>
-        {feBlockCount > 0 && (
-          <Button size='sm' onClick={onOpenFePreview} className='shrink-0'>
-            <Eye className='size-3.5' />
-            Visual preview
-          </Button>
-        )}
-      </div>
-
-      {/* Thumbnail */}
-      {template.thumbnail_url && (
-        <section className='rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm'>
-          <h3 className='mb-2 text-[10.5px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
-            Thumbnail
-          </h3>
-          <div className='overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50'>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={template.thumbnail_url}
-              alt={template.name}
-              className='block w-full object-cover'
-            />
-          </div>
-        </section>
-      )}
-
-      {/* Input fields schema */}
-      <section className='rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm'>
-        <h3 className='mb-2 flex items-center gap-1.5 text-[10.5px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
-          <FileJson className='size-3' />
-          Input fields ({fields.length})
-        </h3>
-        {fields.length === 0 ? (
-          <p className='text-content-muted text-sm'>
-            Template không khai báo input field nào.
-          </p>
-        ) : (
-          <ul className='divide-y divide-zinc-100'>
-            {fields.map(f => (
-              <li
-                key={f.key}
-                className='flex items-start justify-between gap-3 py-2'
-              >
-                <div className='min-w-0 flex-1'>
-                  <div className='flex items-center gap-2'>
-                    <code className='font-mono text-[12.5px] font-semibold text-zinc-900'>
-                      {f.key}
-                    </code>
-                    {f.required && (
-                      <span className='rounded-full bg-rose-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-rose-700 uppercase'>
-                        required
-                      </span>
-                    )}
-                  </div>
-                  <p className='mt-0.5 font-mono text-[10.5px] text-zinc-500'>
-                    type: {f.type}
-                  </p>
-                </div>
-                <div className='shrink-0 text-right'>
-                  <p className='text-[10px] font-semibold tracking-wider text-zinc-400 uppercase'>
-                    default
-                  </p>
-                  <code className='font-mono text-[11.5px] text-zinc-700'>
-                    {formatDefault(defaults[f.key])}
-                  </code>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {/* Preview descriptor */}
-      {descriptor && Object.keys(descriptor).length > 0 && (
-        <section className='rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm'>
-          <h3 className='mb-2 text-[10.5px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
-            Preview descriptor
-          </h3>
-          <pre className='overflow-x-auto rounded-md bg-zinc-50 p-3 font-mono text-[11px] leading-relaxed text-zinc-700'>
-            {JSON.stringify(descriptor, null, 2)}
-          </pre>
-        </section>
-      )}
-
-      {/* Raw default config */}
-      {Object.keys(defaults).length > 0 && (
-        <section className='rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm'>
-          <h3 className='mb-2 text-[10.5px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
-            default_config_json
-          </h3>
-          <pre className='overflow-x-auto rounded-md bg-zinc-50 p-3 font-mono text-[11px] leading-relaxed text-zinc-700'>
-            {JSON.stringify(defaults, null, 2)}
-          </pre>
-        </section>
-      )}
-    </div>
-  );
-}
-
-interface FieldSpec {
-  key: string;
-  type: string;
-  required: boolean;
-}
-
-function extractFields(
-  fieldSchema: Record<string, unknown> | undefined
-): FieldSpec[] {
-  if (!fieldSchema) return [];
-  const raw = (fieldSchema as { fields?: unknown }).fields;
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((f): f is Record<string, unknown> => !!f && typeof f === 'object')
-    .map(f => ({
-      key: String(f.key ?? ''),
-      type: String(f.type ?? 'text'),
-      required: !!f.required,
-    }))
-    .filter(f => f.key.length > 0);
-}
-
-function countBlocks(
-  canvasBlueprint: Record<string, unknown> | undefined
-): number {
-  if (!canvasBlueprint) return 0;
-  const blocks = (canvasBlueprint as { blocks?: unknown }).blocks;
-  return Array.isArray(blocks) ? blocks.length : 0;
-}
-
-function formatDefault(v: unknown): string {
-  if (v == null) return '—';
-  if (typeof v === 'string') return v.length > 40 ? v.slice(0, 40) + '…' : v;
-  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
-  try {
-    const s = JSON.stringify(v);
-    return s.length > 40 ? s.slice(0, 40) + '…' : s;
-  } catch {
-    return String(v);
-  }
 }
