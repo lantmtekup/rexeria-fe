@@ -76,6 +76,24 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
     return parsed?.blocks ?? null;
   }, [version]);
 
+  // Auto-open visual preview ngay khi feBlocks sẵn sàng — user click
+  // "Preview" ở list item là muốn xem ngay, không phải đọc schema. Khi
+  // user đóng overlay (Esc / X) → vẫn ở route preview với panel schema
+  // làm "behind the scene" inspection. Chỉ auto-open lần đầu — track
+  // qua ref để re-load không re-trigger overlay nếu user đã chủ động đóng.
+  const autoOpenedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (
+      !autoOpenedRef.current &&
+      feBlocks &&
+      feBlocks.length > 0 &&
+      !preview?.preview_html // chưa auto-open nếu BE đã ship preview_html
+    ) {
+      autoOpenedRef.current = true;
+      setFePreviewing(true);
+    }
+  }, [feBlocks, preview?.preview_html]);
+
   const load = React.useCallback(async () => {
     setLoading(true);
     setError(null);
