@@ -76,7 +76,7 @@ export function AdminUsersPage() {
   const [createOpen, setCreateOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
-  const [status, setStatus] = React.useState<Status>('all');
+  const [status, setStatus] = React.useState<Status>('active');
   const [sort, setSort] = React.useState<Sort>('-updated_at');
   const [view, setView] = React.useState<View>('grid');
   const [page, setPage] = React.useState(1);
