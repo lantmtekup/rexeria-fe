@@ -482,36 +482,17 @@ function ElementStatCard({
 
 /* ---------- leader line ---------- */
 
-function LeaderLine({
-  from,
-  to,
-  side,
-}: {
-  /** Card edge (the card's gutter side). */
+// User feedback 2026-05-31: dashed leader line + anchor dot quá noise
+// trên dark backgrounds (mint-coint hero). Disabled — card đã đứng cạnh
+// element nên user vẫn map được visually. Giữ component shell + props
+// để revert nhanh nếu cần.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function LeaderLine(_props: {
   from: { x: number; y: number };
-  /** Element edge (the anchored element). */
   to: { x: number; y: number };
   side: 'left' | 'right';
 }) {
-  const midX =
-    side === 'left'
-      ? from.x + (to.x - from.x) / 2
-      : from.x - (from.x - to.x) / 2;
-  const path = `M ${from.x} ${from.y} C ${midX} ${from.y}, ${midX} ${to.y}, ${to.x} ${to.y}`;
-  const stroke = 'rgb(161 161 170)'; // zinc-400
-  return (
-    <g>
-      <path
-        d={path}
-        fill='none'
-        stroke={stroke}
-        strokeOpacity={0.45}
-        strokeWidth={1}
-        strokeDasharray='3 3'
-      />
-      <circle cx={to.x} cy={to.y} r={2} fill={stroke} fillOpacity={0.7} />
-    </g>
-  );
+  return null;
 }
 
 /* ---------- toolbar ---------- */
