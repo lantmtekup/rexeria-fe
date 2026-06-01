@@ -67,12 +67,18 @@ test('legacy blocks render trong /admin/blocks list', async ({ page }) => {
   await page.keyboard.press('Escape');
   await page.waitForTimeout(200);
 
-  // Preview full-screen — scroll FAQ card visible, find Play button.
-  // Registry order: heroSplit, heroOverlay, delvauxHero, featureSection,
-  // photoGallery, testimonials, partners, faq, ctaSection, rexerProduct.
-  // FAQ là card index 7.
+  // Preview full-screen — find FAQ card root via name h3, walk up to
+  // the `.group` ancestor, then locate the Play button inside.
+  // Robust ngay cả khi registry order thay đổi.
   await faqCard.scrollIntoViewIfNeeded();
-  const playBtn = page.getByRole('button', { name: 'Preview block' }).nth(7);
+  const faqCardRoot = page
+    .locator('div.group')
+    .filter({ has: page.getByText('FAQ', { exact: true }) })
+    .first();
+  await expect(faqCardRoot).toBeVisible();
+  const playBtn = faqCardRoot
+    .getByRole('button', { name: 'Preview block' })
+    .first();
   await playBtn.click({ force: true });
   await page.waitForTimeout(500);
 

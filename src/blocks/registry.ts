@@ -15,6 +15,17 @@ import ctaSection from './cta-section';
 import delvauxHeroIntro from './delvaux-hero-intro';
 import faq from './faq';
 import featureSection from './feature-section';
+import framerArpeggioHero from './framer-arpeggio-hero';
+import framerAvexaHero from './framer-avexa-hero';
+import framerBungeeHero from './framer-bungee-hero';
+import framerHero from './framer-hero';
+import framerMobiusHero from './framer-mobius-hero';
+import framerPerformAbout from './framer-perform-about';
+import framerPerformHero from './framer-perform-hero';
+import framerPerformHeroV2 from './framer-perform-hero-v2';
+import framerPerformPricing from './framer-perform-pricing';
+import framerYumeHero from './framer-yume-hero';
+import framerYuyaHero from './framer-yuya-hero';
 import heroOverlay from './hero-overlay';
 import heroSplit from './hero-split';
 import partners from './partners';
@@ -28,6 +39,15 @@ const registry: readonly LegacyBlockEntry[] = [
   heroSplit,
   heroOverlay,
   delvauxHeroIntro,
+  framerHero,
+  framerYumeHero,
+  framerYuyaHero,
+  framerPerformHero,
+  framerPerformHeroV2,
+  framerArpeggioHero,
+  framerBungeeHero,
+  framerMobiusHero,
+  framerAvexaHero,
   // ── Landing sections ────────────────────────────────────
   featureSection,
   photoGallery,
@@ -35,6 +55,8 @@ const registry: readonly LegacyBlockEntry[] = [
   partners,
   faq,
   ctaSection,
+  framerPerformAbout,
+  framerPerformPricing,
   // ── Product ─────────────────────────────────────────────
   rexerProduct,
 ];
