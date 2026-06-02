@@ -23,6 +23,8 @@ export interface RxUser {
   avatar_url?: string;
   ai_quota_hard_limit?: boolean;
   has_migrated_saved_blocks?: boolean;
+  /** Active workspace for client_user — used to scope portal data. */
+  active_workspace_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -2116,6 +2118,17 @@ export interface CreateBrandDomainRequest {
   domain: string;
   workspace_id: string;
   target_type: BrandDomainTarget;
+  /** Optional landing page to bind on create (migration 000137). */
+  page_id?: string | null;
+}
+
+/** Bind / rebind the landing page a domain serves (PATCH page_id). */
+export interface UpdateBrandDomainRequest {
+  page_id?: string | null;
+}
+
+export interface BrandDomainResponse {
+  domain: BrandDomain;
 }
 export interface CreateBrandDomainResponse {
   domain: BrandDomain;

@@ -34,6 +34,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { rexerApi } from '@/services/rexer/endpoints';
+import type { BrandDomain, Page } from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
 
 import { PortalShell } from '../../_shell';
@@ -60,6 +62,8 @@ interface CustomDomain {
   last_check_at?: string;
   verified_at?: string;
   failure_reason?: string;
+  /** Bound landing page (migration 000137). */
+  page_id?: string | null;
 }
 
 const STATUS_META: Record<
@@ -155,8 +159,35 @@ const SEED_DOMAINS: CustomDomain[] = [
   },
 ];
 
+/** Map canonical BE BrandDomain → the local display shape. */
+function beDomainToLocal(d: BrandDomain): CustomDomain {
+  const tlsActive = (d.tls_status ?? '').toLowerCase() === 'active';
+  let status: DomainStatus =
+    (d.status as DomainStatus) in STATUS_META
+      ? (d.status as DomainStatus)
+      : 'pending';
+  // BE "verified" + TLS issued = live in our 3-step UI.
+  if (d.status === 'verified' && tlsActive) status = 'active';
+  return {
+    id: d.id,
+    domain: d.domain,
+    target_type: (['landing', 'curate_cdn', 'tracking'] as const).includes(
+      d.target_type as TargetType
+    )
+      ? (d.target_type as TargetType)
+      : 'landing',
+    status,
+    tls_active: tlsActive,
+    verification_token: d.verification_token,
+    last_check_at: d.last_check_at ?? undefined,
+    verified_at: d.verified_at ?? undefined,
+    failure_reason: d.failure_reason ?? undefined,
+    page_id: d.page_id,
+  };
+}
+
 const BE_PENDING_MSG =
-  'BE chưa ship /v1/brands/{id}/domains. Doc design ở rexer-architecture-final-2026-05-23.md §4.5';
+  'Không lấy được brand/workspace (BE cutover) — thao tác đang chạy ở chế độ local.';
 
 /* ─── Helpers ────────────────────────────────────────────────────────── */
 
@@ -190,8 +221,53 @@ function validateDomain(d: string): string | null {
 
 export default function PortalDomainsPage() {
   const [domains, setDomains] = React.useState<CustomDomain[]>(SEED_DOMAINS);
+  const [pages, setPages] = React.useState<Page[]>([]);
+  const [brandId, setBrandId] = React.useState<string | null>(null);
+  const [workspaceId, setWorkspaceId] = React.useState<string | null>(null);
+  const [source, setSource] = React.useState<'live' | 'fake'>('fake');
   const [addOpen, setAddOpen] = React.useState(false);
   const [verifyingId, setVerifyingId] = React.useState<string | null>(null);
+
+  const refresh = React.useCallback(async (bid: string) => {
+    const r = await rexerApi.brands.domains.list(bid);
+    setDomains((r.items ?? []).map(beDomainToLocal));
+  }, []);
+
+  // Load real data: /auth/me → workspaceId → landing pages (gives brand_id +
+  // the bindable page list) → domains. Falls back to SEED on any failure.
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const me = await rexerApi.auth.me();
+        const ws = me.user.active_workspace_id;
+        if (!ws) throw new Error('no active workspace');
+        if (cancelled) return;
+        setWorkspaceId(ws);
+
+        const pagesRes = await rexerApi.pages.list(ws, {
+          type: 'landing',
+          limit: 100,
+        });
+        const items = pagesRes.items ?? [];
+        const bid = items[0]?.brand_id;
+        if (!bid) throw new Error('cannot resolve brand id');
+        if (cancelled) return;
+        setPages(items);
+        setBrandId(bid);
+
+        const domRes = await rexerApi.brands.domains.list(bid);
+        if (cancelled) return;
+        setDomains((domRes.items ?? []).map(beDomainToLocal));
+        setSource('live');
+      } catch {
+        if (!cancelled) setSource('fake'); // keep SEED mock
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const counts = React.useMemo(() => {
     const m: Record<DomainStatus, number> = {
@@ -208,7 +284,6 @@ export default function PortalDomainsPage() {
 
   const handleVerify = async (id: string) => {
     setVerifyingId(id);
-    // Optimistic: bump pending → verifying immediately
     setDomains(prev =>
       prev.map(d =>
         d.id === id
@@ -220,37 +295,112 @@ export default function PortalDomainsPage() {
           : d
       )
     );
-    // Mock 2.5s "DNS check"; BE chưa wire, return tới mock state
-    await new Promise(r => setTimeout(r, 2500));
-    setDomains(prev =>
-      prev.map(d => (d.id === id ? { ...d, status: 'pending' } : d))
-    );
-    setVerifyingId(null);
-    toast.info(BE_PENDING_MSG);
+    if (!brandId) {
+      await new Promise(r => setTimeout(r, 1500));
+      setDomains(prev =>
+        prev.map(d => (d.id === id ? { ...d, status: 'pending' } : d))
+      );
+      setVerifyingId(null);
+      toast.info(BE_PENDING_MSG);
+      return;
+    }
+    try {
+      await rexerApi.brands.domains.verify(brandId, id);
+      await refresh(brandId);
+      toast.success('Đã chạy verify — kiểm tra trạng thái DNS/TLS.');
+    } catch (err) {
+      toast.error('Verify thất bại', {
+        description: err instanceof Error ? err.message : String(err),
+      });
+      await refresh(brandId).catch(() => {});
+    } finally {
+      setVerifyingId(null);
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const d = domains.find(x => x.id === id);
     if (!d) return;
     if (!window.confirm(`Xoá custom domain "${d.domain}"?`)) return;
-    setDomains(prev => prev.filter(x => x.id !== id));
-    toast.success(`Đã xoá ${d.domain}`);
+    if (!brandId) {
+      setDomains(prev => prev.filter(x => x.id !== id));
+      toast.success(`Đã xoá ${d.domain} (local)`);
+      return;
+    }
+    try {
+      await rexerApi.brands.domains.remove(brandId, id);
+      setDomains(prev => prev.filter(x => x.id !== id));
+      toast.success(`Đã xoá ${d.domain}`);
+    } catch (err) {
+      toast.error('Xoá thất bại', {
+        description: err instanceof Error ? err.message : String(err),
+      });
+    }
   };
 
-  const handleAdd = (input: { domain: string; target_type: TargetType }) => {
-    const newDom: CustomDomain = {
-      id: `dom_${Math.random().toString(36).slice(2, 8)}`,
-      domain: fmtDomain(input.domain),
-      target_type: input.target_type,
-      status: 'pending',
-      tls_active: false,
-      verification_token: `rxr_verify_${Math.random().toString(36).slice(2, 14)}`,
-    };
-    setDomains(prev => [newDom, ...prev]);
-    setAddOpen(false);
-    toast.success(
-      `Đã thêm ${newDom.domain} — tiếp tục thêm DNS records để verify`
+  const handleAdd = async (input: {
+    domain: string;
+    target_type: TargetType;
+    page_id?: string;
+  }) => {
+    const domain = fmtDomain(input.domain);
+    if (!brandId || !workspaceId) {
+      const newDom: CustomDomain = {
+        id: `dom_${Math.random().toString(36).slice(2, 8)}`,
+        domain,
+        target_type: input.target_type,
+        status: 'pending',
+        tls_active: false,
+        verification_token: `rxr_verify_${Math.random().toString(36).slice(2, 14)}`,
+        page_id: input.page_id ?? null,
+      };
+      setDomains(prev => [newDom, ...prev]);
+      setAddOpen(false);
+      toast.success(`Đã thêm ${domain} (local) — BE chưa khả dụng`);
+      return;
+    }
+    try {
+      const res = await rexerApi.brands.domains.create(brandId, {
+        domain,
+        workspace_id: workspaceId,
+        target_type: input.target_type,
+        page_id: input.page_id || null,
+      });
+      setDomains(prev => [beDomainToLocal(res.domain), ...prev]);
+      setAddOpen(false);
+      toast.success(
+        `Đã thêm ${res.domain.domain} — thêm DNS records để verify`
+      );
+    } catch (err) {
+      toast.error('Thêm domain thất bại', {
+        description: err instanceof Error ? err.message : String(err),
+      });
+    }
+  };
+
+  // Bind / unbind the landing page a domain serves (PATCH page_id).
+  const handleBind = async (id: string, pageId: string) => {
+    setDomains(prev =>
+      prev.map(d => (d.id === id ? { ...d, page_id: pageId || null } : d))
     );
+    if (!brandId) {
+      toast.info(BE_PENDING_MSG);
+      return;
+    }
+    try {
+      await rexerApi.brands.domains.update(brandId, id, {
+        page_id: pageId || null,
+      });
+      const page = pages.find(p => p.id === pageId);
+      toast.success(
+        pageId ? `Đã gắn landing "${page?.name ?? pageId}"` : 'Đã gỡ landing'
+      );
+    } catch (err) {
+      toast.error('Gắn landing thất bại', {
+        description: err instanceof Error ? err.message : String(err),
+      });
+      if (brandId) await refresh(brandId).catch(() => {});
+    }
   };
 
   return (
@@ -276,6 +426,16 @@ export default function PortalDomainsPage() {
           thực qua DNS + tự động cấp TLS.
         </p>
       </section>
+
+      {source === 'fake' && (
+        <div className='mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-[12px] text-amber-800'>
+          <ShieldAlert className='mt-0.5 size-3.5 shrink-0' />
+          <span>
+            Đang hiển thị dữ liệu demo — chưa lấy được brand/workspace từ BE
+            (cutover). Thao tác chạy ở chế độ local cho tới khi BE sẵn sàng.
+          </span>
+        </div>
+      )}
 
       {/* Stats strip */}
       <section className='mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4'>
@@ -340,8 +500,10 @@ export default function PortalDomainsPage() {
               key={d.id}
               domain={d}
               verifying={verifyingId === d.id}
+              pages={pages}
               onVerify={() => handleVerify(d.id)}
               onDelete={() => handleDelete(d.id)}
+              onBind={pageId => handleBind(d.id, pageId)}
             />
           ))
         )}
@@ -361,13 +523,17 @@ export default function PortalDomainsPage() {
 function DomainCard({
   domain,
   verifying,
+  pages,
   onVerify,
   onDelete,
+  onBind,
 }: {
   domain: CustomDomain;
   verifying: boolean;
+  pages: Page[];
   onVerify: () => void;
   onDelete: () => void;
+  onBind: (pageId: string) => void;
 }) {
   const target = TARGET_META[domain.target_type];
   const TargetIcon = target.icon;
@@ -453,6 +619,32 @@ function DomainCard({
       {/* Body — timeline + DNS records */}
       <div className='px-5 py-4'>
         <Timeline status={domain.status} tlsActive={domain.tls_active} />
+
+        {/* Bind landing page (target: landing) */}
+        {domain.target_type === 'landing' && (
+          <div className='mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50/60 px-3 py-2.5'>
+            <span className='inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+              <Globe className='size-3' /> Landing page
+            </span>
+            <select
+              value={domain.page_id ?? ''}
+              onChange={e => onBind(e.target.value)}
+              className='ml-auto min-w-[200px] rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[13px] outline-none focus:border-zinc-900'
+            >
+              <option value=''>— Chưa gắn landing page —</option>
+              {pages.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            {domain.page_id && (
+              <span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700'>
+                <CheckCircle2 className='size-2.5' /> Đã gắn
+              </span>
+            )}
+          </div>
+        )}
 
         {showDns && (
           <div className='mt-5'>

@@ -176,12 +176,14 @@ import type {
   // ── Canonical (Rexer Architecture Final 2026-05-23) ───────────────
   Brand,
   BrandDomainListResponse,
+  BrandDomainResponse,
   BrandListResponse,
   BrandResponse,
   BrandUser,
   BrandUserListResponse,
   CreateBrandDomainRequest,
   CreateBrandDomainResponse,
+  UpdateBrandDomainRequest,
   VerifyBrandDomainResponse,
   CreateBrandRequest,
   UpdateBrandRequest,
@@ -1397,6 +1399,16 @@ export const rexerApi = {
           `/brands/${brandId}/domains/${domainId}/verify`,
           { method: 'POST' }
         ),
+      /** Bind / rebind the landing page a domain serves. */
+      update: (
+        brandId: string,
+        domainId: string,
+        body: UpdateBrandDomainRequest
+      ) =>
+        rx<BrandDomainResponse>(`/brands/${brandId}/domains/${domainId}`, {
+          method: 'PATCH',
+          body,
+        }),
       remove: (brandId: string, domainId: string) =>
         rx<{ message?: string }>(`/brands/${brandId}/domains/${domainId}`, {
           method: 'DELETE',
