@@ -40,10 +40,15 @@ export const loginThunk = createAsyncThunk<
 >('auth/login', async ({ email, password }, { rejectWithValue }) => {
   try {
     const res = await rexerApi.auth.login({ email, password });
-    // Mirror a local signed cookie so the middleware can gate app routes.
+    // Mirror a local signed cookie so the middleware can gate app routes and
+    // route the user home by role (admin → /admin, brand → /portal).
     await fetch('/api/auth/session-set', {
       method: 'POST',
       credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        role: res.user.role ?? res.user.principal_type ?? '',
+      }),
     });
     return {
       id: res.user.id,

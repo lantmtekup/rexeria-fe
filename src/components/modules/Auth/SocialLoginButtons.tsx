@@ -15,6 +15,7 @@ import { RxApiError } from '@/services/rexer/client';
 import { getFirebaseAuth, isFirebaseConfigured } from '@/lib/firebase';
 import { fetchMeThunk } from '@/store/slices/authSlice';
 import type { AppDispatch } from '@/store';
+import { roleHomePath } from '@/lib/auth/roleTarget';
 import { cn } from '@/lib/cn';
 
 const ALPHA = process.env.NEXT_PUBLIC_ALPHA === '1';
@@ -96,12 +97,17 @@ export function SocialLoginButtons() {
         redirect_after: explicitRedirect ?? undefined,
       });
 
-      // Mirror local signed cookie for middleware (same pattern as loginThunk).
+      const me = await dispatch(fetchMeThunk()).unwrap();
+      const role = me?.role ?? me?.principal_type ?? '';
+
+      // Mirror local signed cookie for middleware (same pattern as loginThunk),
+      // carrying the role so a later revisit of `/` lands on the right home.
       await fetch('/api/auth/session-set', {
         method: 'POST',
         credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
       });
-      const me = await dispatch(fetchMeThunk()).unwrap();
 
       let target: string;
       if (explicitRedirect) {
@@ -109,10 +115,8 @@ export function SocialLoginButtons() {
       } else if (res.is_new_user) {
         target = '/onboarding';
       } else {
-        // Smart redirect by role — mirrors RexerSignInForm.tsx:67.
         // admin / staff → /admin (CMS), brand client_user → /portal.
-        const role = me?.role ?? me?.principal_type ?? '';
-        target = role === 'admin' || role === 'staff' ? '/admin' : '/portal';
+        target = roleHomePath(role);
       }
       router.replace(target);
     } catch (err) {

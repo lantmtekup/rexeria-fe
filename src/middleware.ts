@@ -2,6 +2,7 @@ import { jwtVerify } from 'jose';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { constants } from '@/settings/constants';
+import { roleHomePath } from '@/lib/auth/roleTarget';
 
 const protectedRoutes = [
   '/tai-khoan',
@@ -20,19 +21,23 @@ const authRoutes = ['/dang-nhap', '/quen-mat-khau', '/sign-in'];
 
 const publicRoutes = ['/api', '/_next', '/favicon.ico', '/scan', '/p/'];
 
-const isAuthenticated = async (request: NextRequest): Promise<boolean> => {
+/**
+ * Verify the local session cookie and return its `role` claim.
+ * Returns `null` when there is no valid session (unauthenticated).
+ */
+const getSessionRole = async (request: NextRequest): Promise<string | null> => {
   const accessToken = request.cookies.get(constants.ACCESS_TOKEN)?.value;
 
-  if (!accessToken) return false;
+  if (!accessToken) return null;
 
   try {
     const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) return false;
+    if (!jwtSecret) return null;
     const secret = new TextEncoder().encode(jwtSecret);
-    await jwtVerify(accessToken, secret);
-    return true;
+    const { payload } = await jwtVerify(accessToken, secret);
+    return typeof payload.role === 'string' ? payload.role : '';
   } catch {
-    return false;
+    return null;
   }
 };
 
@@ -57,16 +62,17 @@ export async function middleware(request: NextRequest) {
   const pathnameWithoutLocale =
     pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/';
 
-  const isAuth = await isAuthenticated(request);
+  const sessionRole = await getSessionRole(request);
+  const isAuth = sessionRole !== null;
 
   if (isAuthRoute(pathnameWithoutLocale)) {
     if (isAuth) {
-      return NextResponse.redirect(
-        new URL(
-          pathnameWithoutLocale.startsWith('/cms/login') ? '/cms' : '/',
-          request.url
-        )
-      );
+      // Already signed in: bounce off the auth page to the role's home
+      // (admin/staff → /admin, brand → /portal) instead of a generic landing.
+      const target = pathnameWithoutLocale.startsWith('/cms/login')
+        ? '/cms'
+        : roleHomePath(sessionRole);
+      return NextResponse.redirect(new URL(target, request.url));
     }
     return NextResponse.next();
   }

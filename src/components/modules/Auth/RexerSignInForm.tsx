@@ -13,6 +13,7 @@ import { Button } from '@/components/atoms/button';
 import { SocialLoginButtons } from '@/components/modules/Auth/SocialLoginButtons';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { cn } from '@/lib/cn';
+import { roleHomePath } from '@/lib/auth/roleTarget';
 import { loginThunk } from '@/store/slices/authSlice';
 
 type FormValues = {
@@ -62,14 +63,9 @@ export default function RexerSignInForm() {
       }
       // Smart route theo role (BE chuẩn: 'admin' | 'staff' | 'client_user').
       // - admin / staff → /admin (CMS quản lý hệ thống)
-      // - client_user (brand client) → /portal
-      // - fallback → /portal
+      // - client_user (brand client) / fallback → /portal
       const role = user?.role ?? user?.principal_type ?? '';
-      if (role === 'admin' || role === 'staff') {
-        router.replace('/admin');
-      } else {
-        router.replace('/portal');
-      }
+      router.replace(roleHomePath(role));
     }
   }, [status, user, router, searchParams]);
 
