@@ -24,6 +24,7 @@ import type { PortalAdCampaign } from '@/services/rexer/types';
 
 import { fmtFull, fmtNum } from '../_data';
 import { PortalShell } from '../_shell';
+import { CreateCampaignDialog } from './_CreateCampaignDialog';
 
 const CHANNEL_TO_PLATFORM: Record<string, Platform> = {
   meta: 'facebook',
@@ -224,6 +225,7 @@ export default function PortalAdsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [platformFilter, setPlatformFilter] = useState<PlatformFilter>('all');
   const [campaigns, setCampaigns] = useState<Campaign[]>(FAKE_CAMPAIGNS);
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -300,11 +302,20 @@ export default function PortalAdsPage() {
           <button className='flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100'>
             <RefreshCw className='size-3.5' /> Sync FB Ads
           </button>
-          <button className='flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700'>
+          <button
+            onClick={() => setCreateOpen(true)}
+            className='flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700'
+          >
             <Plus className='size-3.5' /> Tạo campaign
           </button>
         </div>
       </section>
+
+      <CreateCampaignDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={c => setCampaigns(prev => [beCampaignToLocal(c), ...prev])}
+      />
 
       <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-[12px] text-amber-800'>
         <span className='mt-0.5 inline-block size-2 shrink-0 rounded-full bg-amber-500' />

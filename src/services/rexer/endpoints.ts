@@ -1209,12 +1209,16 @@ export const rexerApi = {
       page?: number;
       limit?: number;
     }) => rx<PortalAdCampaignListResponse>('/portal/ads/campaigns', { query }),
+    // BE wraps the single campaign in `{ campaign }` (verified live 2026-06).
     getCampaign: (id: string) =>
-      rx<PortalAdCampaign>(`/portal/ads/campaigns/${id}`),
+      rx<{ campaign: PortalAdCampaign }>(`/portal/ads/campaigns/${id}`),
     createCampaign: (body: CreatePortalAdCampaignRequest) =>
-      rx<PortalAdCampaign>('/portal/ads/campaigns', { method: 'POST', body }),
+      rx<{ campaign: PortalAdCampaign }>('/portal/ads/campaigns', {
+        method: 'POST',
+        body,
+      }),
     updateCampaign: (id: string, body: UpdatePortalAdCampaignRequest) =>
-      rx<PortalAdCampaign>(`/portal/ads/campaigns/${id}`, {
+      rx<{ campaign: PortalAdCampaign }>(`/portal/ads/campaigns/${id}`, {
         method: 'PATCH',
         body,
       }),
