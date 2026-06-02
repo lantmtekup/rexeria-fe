@@ -714,4 +714,13 @@ function ProductInformationEditor({
   );
 }
 
-export { ProductInformationEditor };
+export {
+  ProductInformationEditor,
+  // Field primitives — exported so multi-step flows (e.g. the portal create
+  // wizard) can compose the same inputs across separate steps.
+  TextField,
+  CategoryField,
+  TagsField,
+  ColorsField,
+  CertField,
+};

@@ -8,6 +8,7 @@
 import { rexerApi } from '@/services/rexer/endpoints';
 import type {
   CreateProductRequest,
+  MediaAsset,
   Product as BEProduct,
   Workspace as BEWorkspace,
   Notification as BENotification,
@@ -102,6 +103,7 @@ export function beProductToPortal(p: BEProduct): PortalProduct {
     category: inferCategory(p.name, p.description),
     status: STATUS_MAP[p.status ?? 'active'] ?? 'active',
     cover_gradient: gradientFor(p.id),
+    thumbnail_url: p.thumbnail_url || undefined,
     description: p.description ?? '',
     sizes:
       sizes.length > 0
@@ -154,6 +156,42 @@ export async function updateProductRemote(
   } catch {
     return null;
   }
+}
+
+/**
+ * Upload an image to the media library (3-step flow) WITHOUT binding to a
+ * product — used by the create wizard, which has no product id yet. The
+ * returned asset id can be passed to `products.create` via `media_ids`, and
+ * its `public_url` used as `thumbnail_url`.
+ */
+export async function uploadProductImage(file: File): Promise<MediaAsset> {
+  const init = await rexerApi.media.initUpload({
+    filename: file.name,
+    mime_type: file.type || 'application/octet-stream',
+    file_size: file.size,
+    owner_scope: 'library',
+    media_type: file.type.startsWith('image/')
+      ? 'image'
+      : file.type.startsWith('video/')
+        ? 'video'
+        : 'file',
+  });
+
+  if (init.presigned_url) {
+    const res = await fetch(init.presigned_url, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file,
+    });
+    if (!res.ok) throw new Error(`Storage upload failed: ${res.status}`);
+  } else {
+    await rexerApi.media.uploadRaw(init.upload_id, file);
+  }
+
+  const completed = await rexerApi.media.completeUpload({
+    upload_id: init.upload_id,
+  });
+  return completed.media_asset;
 }
 
 /* ---------- Templates ---------- */
@@ -245,7 +283,8 @@ export async function loadDashboardStats(): Promise<DashboardLoadResult> {
 /* ---------- helper: convert PortalProduct value → CreateProductRequest ---------- */
 
 export function portalProductToBE(
-  v: import('@/components/modules/Product/ProductInformationEditor').ProductInformationValue
+  v: import('@/components/modules/Product/ProductInformationEditor').ProductInformationValue,
+  extra?: { thumbnail_url?: string; media_ids?: string[] }
 ): CreateProductRequest {
   return {
     name: v.name.trim(),
@@ -255,6 +294,8 @@ export function portalProductToBE(
     colors: v.colors,
     ingredients: v.ingredients,
     certifications: v.certifications,
+    ...(extra?.thumbnail_url ? { thumbnail_url: extra.thumbnail_url } : {}),
+    ...(extra?.media_ids?.length ? { media_ids: extra.media_ids } : {}),
   };
 }
 

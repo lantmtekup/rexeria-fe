@@ -927,6 +927,9 @@ export type PortalProduct = {
   category: ProductCategory;
   status: 'active' | 'coming_soon' | 'discontinued';
   cover_gradient: string;
+  /** Public CDN URL of the cover image. When set, the card shows it instead
+   *  of the gradient placeholder. */
+  thumbnail_url?: string;
   description: string;
   sizes: { label: string; volume_ml: number; price_vnd: number }[];
   colors?: { name: string; hex: string }[];

@@ -1,14 +1,30 @@
 'use client';
 
-import { Save, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import {
+  Award,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ImagePlus,
+  Loader2,
+  Package,
+  Sparkles,
+  Trash2,
+  X,
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
-  ProductInformationEditor,
+  CategoryField,
+  CertField,
+  TagsField,
+  ColorsField,
   emptyProductInformation,
   type ProductInformationValue,
 } from '@/components/modules/Product/ProductInformationEditor';
+import type { MediaAsset } from '@/services/rexer/types';
+import { cn } from '@/lib/cn';
 
 import {
   CATEGORY_LABEL,
@@ -19,6 +35,7 @@ import {
   createProductRemote,
   portalProductToBE,
   updateProductRemote,
+  uploadProductImage,
 } from '../_remote';
 
 const RANDOM_GRADIENTS = [
@@ -70,7 +87,8 @@ function portalToEditor(p: PortalProduct): ProductInformationValue {
 
 function editorToPortal(
   v: ProductInformationValue,
-  base: PortalProduct | null
+  base: PortalProduct | null,
+  thumbnailUrl?: string
 ): PortalProduct {
   const inferredCategory: ProductCategory =
     LABEL_TO_CATEGORY[v.category] ??
@@ -79,8 +97,6 @@ function editorToPortal(
     ) ??
     'carbonated';
 
-  // Try to parse size strings back to {label, volume_ml, price_vnd}
-  // Format: "330ml (Lon)" → volume_ml=330, label="Lon", price=base.price or default
   const parsedSizes = v.sizes.map((s, idx) => {
     const m = s.match(/^(\d+)\s*ml\s*(?:\(([^)]*)\))?$/i);
     if (m) {
@@ -110,6 +126,7 @@ function editorToPortal(
     cover_gradient:
       base?.cover_gradient ??
       RANDOM_GRADIENTS[Math.floor(Math.random() * RANDOM_GRADIENTS.length)],
+    thumbnail_url: thumbnailUrl ?? base?.thumbnail_url,
     description: v.description.trim(),
     sizes:
       parsedSizes.length > 0
@@ -126,6 +143,24 @@ function editorToPortal(
     created_at: base?.created_at ?? new Date().toISOString(),
   };
 }
+
+/* ---------- pending image (local preview before/after upload) ---------- */
+
+interface PendingImage {
+  key: string;
+  preview: string; // object URL or remote URL
+  file?: File; // present when not yet uploaded
+  asset?: MediaAsset; // present after upload
+}
+
+/* ---------- wizard steps ---------- */
+
+const STEPS = [
+  { key: 'basic', label: 'Cơ bản', icon: Package },
+  { key: 'media', label: 'Hình ảnh', icon: ImagePlus },
+  { key: 'specs', label: 'Thông số', icon: Sparkles },
+  { key: 'cert', label: 'Chứng nhận', icon: Award },
+] as const;
 
 /* ---------- modal ---------- */
 
@@ -145,64 +180,133 @@ export function ProductFormModal({
   const [value, setValue] = useState<ProductInformationValue>(
     emptyProductInformation()
   );
+  const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [thumbnail, setThumbnail] = useState<PendingImage | null>(null);
+  const [gallery, setGallery] = useState<PendingImage[]>([]);
+  const keyCounter = useRef(0);
+  const nextKey = () => `img-${keyCounter.current++}`;
 
-  // Reset value when product / open changes
+  // Reset when product / open changes
   useEffect(() => {
     if (!open) return;
     setValue(product ? portalToEditor(product) : emptyProductInformation());
+    setStep(0);
+    setThumbnail(
+      product?.thumbnail_url
+        ? { key: 'existing', preview: product.thumbnail_url }
+        : null
+    );
+    setGallery([]);
   }, [open, product]);
 
   if (!open) return null;
 
   const isEdit = !!product;
+  const canNext = step > 0 || value.name.trim().length > 0;
+
+  const addThumbnail = (file: File) => {
+    setThumbnail({ key: nextKey(), preview: URL.createObjectURL(file), file });
+  };
+  const addGallery = (files: FileList) => {
+    const next = Array.from(files).map(file => ({
+      key: nextKey(),
+      preview: URL.createObjectURL(file),
+      file,
+    }));
+    setGallery(prev => [...prev, ...next]);
+  };
 
   const handleSave = async () => {
     if (!value.name.trim()) {
       toast.error('Tên sản phẩm không được rỗng');
+      setStep(0);
       return;
     }
     setSaving(true);
     let next: PortalProduct;
 
-    if (liveBE) {
-      // Real BE call
-      const payload = portalProductToBE(value);
-      const result = isEdit
-        ? await updateProductRemote(product!.id, payload)
-        : await createProductRemote(payload);
-      if (result) {
-        // Merge with local extras (cover_gradient, features, etc.) for nicer UI
-        next = {
-          ...editorToPortal(value, product),
-          ...result,
+    try {
+      if (liveBE) {
+        // 1) upload all pending images → collect media_ids + thumbnail url.
+        // Image upload is best-effort: if the media endpoint fails (BE cutover
+        // gaps), we still create the product without images rather than
+        // aborting the whole flow.
+        const mediaIds: string[] = [];
+        let thumbUrl = product?.thumbnail_url;
+        let imageFailed = false;
+        const tryUpload = async (file: File): Promise<MediaAsset | null> => {
+          try {
+            return await uploadProductImage(file);
+          } catch {
+            imageFailed = true;
+            return null;
+          }
         };
+
+        if (thumbnail?.file) {
+          const a = await tryUpload(thumbnail.file);
+          if (a) {
+            mediaIds.push(a.id);
+            thumbUrl = a.public_url ?? thumbUrl;
+          }
+        }
+        for (const g of gallery) {
+          if (g.file) {
+            const a = await tryUpload(g.file);
+            if (a) mediaIds.push(a.id);
+          }
+        }
+
+        // 2) create / update product with images attached
+        const payload = portalProductToBE(value, {
+          thumbnail_url: thumbUrl,
+          media_ids: mediaIds,
+        });
+        const result = isEdit
+          ? await updateProductRemote(product!.id, payload)
+          : await createProductRemote(payload);
+
+        if (result) {
+          next = { ...editorToPortal(value, product, thumbUrl), ...result };
+          if (imageFailed) {
+            toast.warning(
+              isEdit ? `Đã lưu "${result.name}"` : `Đã tạo "${result.name}"`,
+              { description: 'Ảnh chưa upload được — BE media tạm lỗi.' }
+            );
+          } else {
+            toast.success(
+              isEdit ? `Đã lưu "${result.name}"` : `Đã tạo "${result.name}"`
+            );
+          }
+        } else {
+          next = editorToPortal(value, product, thumbnail?.preview);
+          toast.error('BE lỗi — đã lưu local', {
+            description: 'Dữ liệu chỉ tồn tại trong session này.',
+          });
+        }
+      } else {
+        // local mode — use object-URL preview as thumbnail
+        next = editorToPortal(value, product, thumbnail?.preview);
         toast.success(
           isEdit
-            ? `Đã lưu "${result.name}" (BE)`
-            : `Đã tạo "${result.name}" (BE)`
+            ? `Đã lưu "${next.name}" (local)`
+            : `Đã tạo "${next.name}" (local)`
         );
-      } else {
-        // API failed — fallback to local
-        next = editorToPortal(value, product);
-        toast.error('BE lỗi — đã lưu local', {
-          description: 'Dữ liệu chỉ tồn tại trong session này.',
-        });
       }
-    } else {
-      // Pure fake mode
-      next = editorToPortal(value, product);
-      toast.success(
-        isEdit
-          ? `Đã lưu "${next.name}" (local)`
-          : `Đã tạo "${next.name}" (local)`
-      );
-    }
 
-    onSave(next);
-    setSaving(false);
-    onClose();
+      onSave(next);
+      onClose();
+    } catch (err) {
+      toast.error('Lưu thất bại', {
+        description: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const isLast = step === STEPS.length - 1;
 
   return (
     <div
@@ -214,26 +318,17 @@ export function ProductFormModal({
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className='flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-3'>
+        <div className='flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-3.5'>
           <div className='flex items-center gap-2.5'>
             <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-sm'>
-              <Save className='size-4' />
+              <Package className='size-4' />
             </div>
             <div>
               <h3 className='text-[15px] leading-tight font-semibold'>
                 {isEdit ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}
               </h3>
-              <p className='mt-0.5 flex items-center gap-1.5 text-[10px] text-zinc-500'>
-                {product ? (
-                  <span className='font-mono'>
-                    {product.sku} · {product.id}
-                  </span>
-                ) : (
-                  <span>Reuse component từ codebase</span>
-                )}
-                <span className='rounded bg-orange-100 px-1 py-0.5 font-mono text-[9px] font-bold text-orange-700'>
-                  ProductInformationEditor
-                </span>
+              <p className='mt-0.5 text-[11px] text-zinc-500'>
+                {isEdit ? product!.sku : 'Điền thông tin theo từng bước'}
               </p>
             </div>
           </div>
@@ -246,68 +341,281 @@ export function ProductFormModal({
           </button>
         </div>
 
-        {/* Form body */}
-        <div className='space-y-4 px-5 py-4'>
-          {/* Name */}
-          <div>
-            <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
-              Tên sản phẩm <span className='text-rose-500'>*</span>
-            </label>
-            <input
-              type='text'
-              value={value.name}
-              onChange={e => setValue(v => ({ ...v, name: e.target.value }))}
-              placeholder='vd: Coca-Cola Original 330ml'
-              className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100'
-              maxLength={128}
-              autoFocus
-            />
-          </div>
+        {/* Stepper */}
+        <div className='flex items-center gap-1 border-b border-zinc-100 px-5 py-3'>
+          {STEPS.map((s, i) => {
+            const Icon = s.icon;
+            const active = i === step;
+            const done = i < step;
+            return (
+              <div key={s.key} className='flex flex-1 items-center'>
+                <button
+                  type='button'
+                  onClick={() => (i < step || canNext) && setStep(i)}
+                  className='flex items-center gap-2'
+                >
+                  <span
+                    className={cn(
+                      'flex size-6 items-center justify-center rounded-full text-[11px] font-bold transition-colors',
+                      active && 'bg-orange-500 text-white',
+                      done && 'bg-emerald-500 text-white',
+                      !active && !done && 'bg-zinc-100 text-zinc-400'
+                    )}
+                  >
+                    {done ? (
+                      <Check className='size-3.5' />
+                    ) : (
+                      <Icon className='size-3.5' />
+                    )}
+                  </span>
+                  <span
+                    className={cn(
+                      'text-[12px] font-medium',
+                      active ? 'text-zinc-900' : 'text-zinc-400'
+                    )}
+                  >
+                    {s.label}
+                  </span>
+                </button>
+                {i < STEPS.length - 1 && (
+                  <span
+                    className={cn(
+                      'mx-2 h-px flex-1',
+                      done ? 'bg-emerald-300' : 'bg-zinc-200'
+                    )}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
 
-          {/* Reused editor — no wrapper, lives inline */}
-          <ProductInformationEditor value={value} onChange={setValue} />
+        {/* Body */}
+        <div className='min-h-[320px] space-y-4 px-5 py-4'>
+          {/* Step 0 — Cơ bản */}
+          {step === 0 && (
+            <div className='space-y-4'>
+              <div>
+                <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                  Tên sản phẩm <span className='text-rose-500'>*</span>
+                </label>
+                <input
+                  type='text'
+                  value={value.name}
+                  onChange={e =>
+                    setValue(v => ({ ...v, name: e.target.value }))
+                  }
+                  placeholder='vd: Coca-Cola Original 330ml'
+                  className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100'
+                  maxLength={128}
+                  autoFocus
+                />
+              </div>
+              <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
+                <CategoryField
+                  value={value.category}
+                  onChange={v => setValue(s => ({ ...s, category: v }))}
+                />
+                <div className='border-border bg-background flex items-start gap-2 rounded-xl border px-4 py-3'>
+                  <div className='min-w-0 flex-1'>
+                    <div className='text-content-muted text-xs font-semibold'>
+                      SKU
+                    </div>
+                    <input
+                      type='text'
+                      value={value.sku}
+                      onChange={e =>
+                        setValue(s => ({ ...s, sku: e.target.value }))
+                      }
+                      placeholder='vd: COCA-330'
+                      className='placeholder:text-content-muted mt-0.5 w-full bg-transparent text-sm font-medium outline-none'
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className='border-border bg-background rounded-xl border px-4 py-3'>
+                <div className='text-content-muted text-xs font-semibold'>
+                  Mô tả
+                </div>
+                <textarea
+                  value={value.description}
+                  onChange={e =>
+                    setValue(s => ({ ...s, description: e.target.value }))
+                  }
+                  placeholder='Mô tả ngắn về sản phẩm…'
+                  rows={2}
+                  className='placeholder:text-content-muted mt-1 w-full resize-none bg-transparent text-sm outline-none'
+                />
+              </div>
+              {/* Thumbnail */}
+              <div>
+                <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                  Ảnh đại diện
+                </label>
+                {thumbnail ? (
+                  <div className='mt-1.5 flex items-center gap-3'>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={thumbnail.preview}
+                      alt='thumbnail'
+                      className='size-20 rounded-lg border border-zinc-200 object-cover'
+                    />
+                    <button
+                      type='button'
+                      onClick={() => setThumbnail(null)}
+                      className='inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs text-zinc-600 hover:bg-zinc-50'
+                    >
+                      <Trash2 className='size-3.5' /> Xoá
+                    </button>
+                  </div>
+                ) : (
+                  <label className='mt-1.5 flex h-20 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 text-[13px] text-zinc-500 hover:border-orange-300 hover:bg-orange-50/40'>
+                    <ImagePlus className='size-4' /> Tải ảnh lên
+                    <input
+                      type='file'
+                      accept='image/*'
+                      className='hidden'
+                      onChange={e =>
+                        e.target.files?.[0] && addThumbnail(e.target.files[0])
+                      }
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Step 1 — Hình ảnh (gallery) */}
+          {step === 1 && (
+            <div>
+              <p className='mb-3 text-[13px] text-zinc-500'>
+                Thư viện ảnh sản phẩm — dùng cho landing page & detail. (
+                {gallery.length} ảnh)
+              </p>
+              <div className='grid grid-cols-3 gap-3 sm:grid-cols-4'>
+                {gallery.map(g => (
+                  <div
+                    key={g.key}
+                    className='group relative aspect-square overflow-hidden rounded-lg border border-zinc-200'
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={g.preview}
+                      alt='gallery'
+                      className='h-full w-full object-cover'
+                    />
+                    <button
+                      type='button'
+                      onClick={() =>
+                        setGallery(prev => prev.filter(x => x.key !== g.key))
+                      }
+                      className='absolute top-1 right-1 hidden rounded-md bg-black/60 p-1 text-white group-hover:block'
+                      aria-label='Remove'
+                    >
+                      <Trash2 className='size-3' />
+                    </button>
+                  </div>
+                ))}
+                <label className='flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-zinc-300 text-[11px] text-zinc-500 hover:border-orange-300 hover:bg-orange-50/40'>
+                  <ImagePlus className='size-5' />
+                  Thêm ảnh
+                  <input
+                    type='file'
+                    accept='image/*'
+                    multiple
+                    className='hidden'
+                    onChange={e => e.target.files && addGallery(e.target.files)}
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2 — Thông số */}
+          {step === 2 && (
+            <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
+              <TagsField
+                label='Size'
+                placeholder='vd: 330ml (Lon)'
+                testId='size-input'
+                value={value.sizes}
+                onChange={v => setValue(s => ({ ...s, sizes: v }))}
+              />
+              <ColorsField
+                value={value.colors}
+                onChange={v => setValue(s => ({ ...s, colors: v }))}
+              />
+              <TagsField
+                label='Variant'
+                placeholder='vd: Zero Sugar'
+                testId='variant-input'
+                value={value.variants}
+                onChange={v => setValue(s => ({ ...s, variants: v }))}
+              />
+              <TagsField
+                label='Ingredients'
+                placeholder='vd: Caffeine'
+                testId='ingredients-input'
+                value={value.ingredients}
+                onChange={v => setValue(s => ({ ...s, ingredients: v }))}
+              />
+            </div>
+          )}
+
+          {/* Step 3 — Chứng nhận */}
+          {step === 3 && (
+            <CertField
+              value={value.certifications}
+              onChange={v => setValue(s => ({ ...s, certifications: v }))}
+            />
+          )}
         </div>
 
         {/* Footer */}
         <div className='flex items-center justify-between gap-3 border-t border-zinc-100 bg-zinc-50/50 px-5 py-3'>
-          <p className='text-[11px] text-zinc-500'>
-            {liveBE ? (
-              <>
-                <span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 font-bold text-emerald-700'>
-                  <span className='size-1 animate-pulse rounded-full bg-emerald-500' />
-                  LIVE
-                </span>{' '}
-                <span className='ml-1'>
-                  Lưu vào BE qua{' '}
-                  <code>products.{isEdit ? 'update' : 'create'}</code>
-                </span>
-              </>
+          <button
+            type='button'
+            onClick={step === 0 ? onClose : () => setStep(s => s - 1)}
+            disabled={saving}
+            className='inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50'
+          >
+            {step === 0 ? (
+              'Hủy'
             ) : (
               <>
-                <span className='font-semibold text-zinc-700'>Demo:</span> chỉ
-                update local state
+                <ChevronLeft className='size-3.5' /> Quay lại
               </>
             )}
-          </p>
-          <div className='flex items-center gap-2'>
-            <button
-              type='button'
-              onClick={onClose}
-              disabled={saving}
-              className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50'
-            >
-              Hủy
-            </button>
+          </button>
+
+          <div className='text-[11px] text-zinc-400'>
+            Bước {step + 1}/{STEPS.length}
+          </div>
+
+          {isLast ? (
             <button
               type='button'
               onClick={handleSave}
               disabled={saving}
-              className='flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-60'
+              className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-60'
             >
-              <Save className={`size-3.5 ${saving ? 'animate-pulse' : ''}`} />
+              {saving ? (
+                <Loader2 className='size-3.5 animate-spin' />
+              ) : (
+                <Check className='size-3.5' />
+              )}
               {saving ? 'Đang lưu…' : isEdit ? 'Lưu thay đổi' : 'Tạo sản phẩm'}
             </button>
-          </div>
+          ) : (
+            <button
+              type='button'
+              onClick={() => canNext && setStep(s => s + 1)}
+              disabled={!canNext}
+              className='inline-flex items-center gap-1 rounded-lg bg-orange-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-orange-600 disabled:opacity-50'
+            >
+              Tiếp <ChevronRight className='size-3.5' />
+            </button>
+          )}
         </div>
       </div>
     </div>

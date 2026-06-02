@@ -255,6 +255,14 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
       <div
         className={`relative aspect-[4/3] bg-gradient-to-br ${p.cover_gradient}`}
       >
+        {p.thumbnail_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={p.thumbnail_url}
+            alt={p.name}
+            className='absolute inset-0 h-full w-full object-cover'
+          />
+        )}
         <div className='absolute inset-0 bg-gradient-to-t from-black/30 to-transparent' />
         {/* Status + category chips */}
         <div className='absolute top-3 left-3 flex flex-wrap items-center gap-1.5'>
@@ -275,27 +283,29 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
           {p.sku}
         </span>
 
-        {/* Bottle/can preview placeholder */}
-        <div className='absolute inset-x-8 bottom-4 flex items-center justify-center'>
-          <div className='flex items-center gap-1.5'>
-            {p.sizes.slice(0, 3).map((s, i) => (
-              <div
-                key={i}
-                className='flex flex-col items-center gap-0.5 rounded bg-white/90 px-2 py-1 shadow-md backdrop-blur'
-              >
-                <span className='font-mono text-[10px] font-bold text-zinc-900'>
-                  {s.volume_ml}ml
-                </span>
-                <span className='text-[8px] text-zinc-500'>{s.label}</span>
-              </div>
-            ))}
-            {p.sizes.length > 3 && (
-              <div className='rounded bg-white/90 px-2 py-1 font-mono text-[10px] font-bold text-zinc-900 shadow-md backdrop-blur'>
-                +{p.sizes.length - 3}
-              </div>
-            )}
+        {/* Bottle/can preview placeholder — only when no real cover image */}
+        {!p.thumbnail_url && (
+          <div className='absolute inset-x-8 bottom-4 flex items-center justify-center'>
+            <div className='flex items-center gap-1.5'>
+              {p.sizes.slice(0, 3).map((s, i) => (
+                <div
+                  key={i}
+                  className='flex flex-col items-center gap-0.5 rounded bg-white/90 px-2 py-1 shadow-md backdrop-blur'
+                >
+                  <span className='font-mono text-[10px] font-bold text-zinc-900'>
+                    {s.volume_ml}ml
+                  </span>
+                  <span className='text-[8px] text-zinc-500'>{s.label}</span>
+                </div>
+              ))}
+              {p.sizes.length > 3 && (
+                <div className='rounded bg-white/90 px-2 py-1 font-mono text-[10px] font-bold text-zinc-900 shadow-md backdrop-blur'>
+                  +{p.sizes.length - 3}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Body */}
