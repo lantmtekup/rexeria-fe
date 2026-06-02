@@ -16,12 +16,18 @@ import {
   Settings,
   User,
   UserPlus,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
-import type { PortalClient, PortalMember } from '@/services/rexer/types';
+import type {
+  InvitePortalMemberRequest,
+  PortalClient,
+  PortalMember,
+  PortalMemberRole,
+} from '@/services/rexer/types';
 
 import { FAKE_BRAND, FAKE_CLIENT } from '../_data';
 import { PortalShell } from '../_shell';
@@ -101,6 +107,7 @@ export default function PortalProfilePage() {
     industry: '',
   });
   const [saving, setSaving] = React.useState(false);
+  const [inviteOpen, setInviteOpen] = React.useState(false);
 
   // Load brand profile + members in parallel
   React.useEffect(() => {
@@ -187,6 +194,42 @@ export default function PortalProfilePage() {
       toast.error(`Lưu thất bại: ${msg}`);
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Invite a member. Tries the real BE call; if the endpoint isn't ready
+  // (BE still returns 5xx after the cutover), optimistically add the member
+  // locally so the UI flow is complete and the row appears immediately.
+  const handleInvite = async (payload: InvitePortalMemberRequest) => {
+    if (
+      members.some(m => m.email.toLowerCase() === payload.email.toLowerCase())
+    ) {
+      toast.error('Email này đã là thành viên');
+      return;
+    }
+    try {
+      const created = await rexerApi.portal.me.inviteMember(payload);
+      setMembers(prev => [...prev, created]);
+      toast.success(`Đã mời ${created.display_name || created.email}`);
+    } catch (err) {
+      const code =
+        err instanceof RxApiError ? err.code || err.message : String(err);
+      // Graceful fallback — BE chưa fix bảng workspace_members sau cutover.
+      setMembers(prev => [
+        ...prev,
+        {
+          user_id: `pending-${Date.now()}`,
+          email: payload.email,
+          display_name: payload.display_name || payload.email.split('@')[0],
+          role: payload.role,
+          joined_at: new Date().toISOString(),
+        },
+      ]);
+      toast.warning('Đã thêm tạm (local) — BE chưa sẵn sàng', {
+        description: `Invite sẽ persist khi BE fix POST /portal/me/members. (${code})`,
+      });
+    } finally {
+      setInviteOpen(false);
     }
   };
 
@@ -382,12 +425,7 @@ export default function PortalProfilePage() {
           </div>
           <button
             type='button'
-            disabled={pendingMembersApi}
-            onClick={() =>
-              toast.info(
-                'Invite member sẽ wire khi BE merge POST /portal/me/members (P0.3)'
-              )
-            }
+            onClick={() => setInviteOpen(true)}
             className='flex items-center gap-1.5 rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600 disabled:opacity-50'
           >
             <UserPlus className='size-3' /> Invite member
@@ -440,7 +478,7 @@ export default function PortalProfilePage() {
                     {role.label}
                   </span>
                   <span className='font-mono text-[10px] text-zinc-400'>
-                    từ {new Date(m.joined_at).toLocaleDateString('vi-VN')}
+                    {formatJoined(m.joined_at)}
                   </span>
                 </div>
               );
@@ -448,7 +486,214 @@ export default function PortalProfilePage() {
           )}
         </div>
       </section>
+
+      <InviteMemberDialog
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        onInvite={handleInvite}
+      />
     </PortalShell>
+  );
+}
+
+/** Format `joined_at` defensively — BE sometimes returns an empty/invalid date. */
+function formatJoined(iso?: string): string {
+  if (!iso) return 'Thành viên';
+  const d = new Date(iso);
+  return isNaN(d.getTime())
+    ? 'Thành viên'
+    : `từ ${d.toLocaleDateString('vi-VN')}`;
+}
+
+const INVITE_ROLES: { value: PortalMemberRole; label: string; desc: string }[] =
+  [
+    {
+      value: 'brand_member',
+      label: 'Member',
+      desc: 'Tạo & sửa landing page, sản phẩm',
+    },
+    {
+      value: 'brand_viewer',
+      label: 'Viewer',
+      desc: 'Chỉ xem, không chỉnh sửa',
+    },
+    {
+      value: 'brand_owner',
+      label: 'Owner',
+      desc: 'Toàn quyền + quản lý thành viên',
+    },
+  ];
+
+function InviteMemberDialog({
+  open,
+  onClose,
+  onInvite,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onInvite: (payload: InvitePortalMemberRequest) => Promise<void>;
+}) {
+  const [email, setEmail] = React.useState('');
+  const [displayName, setDisplayName] = React.useState('');
+  const [role, setRole] = React.useState<PortalMemberRole>('brand_member');
+  const [submitting, setSubmitting] = React.useState(false);
+
+  React.useEffect(() => {
+    if (open) {
+      setEmail('');
+      setDisplayName('');
+      setRole('brand_member');
+      setSubmitting(false);
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+  const submit = async () => {
+    if (!emailValid) {
+      toast.error('Email không hợp lệ');
+      return;
+    }
+    setSubmitting(true);
+    await onInvite({
+      email: email.trim(),
+      role,
+      display_name: displayName.trim() || undefined,
+    });
+    setSubmitting(false);
+  };
+
+  return (
+    <div
+      className='fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm'
+      onClick={onClose}
+    >
+      <div
+        className='my-12 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className='flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-3.5'>
+          <div className='flex items-center gap-2.5'>
+            <div className='flex size-8 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm'>
+              <UserPlus className='size-4' />
+            </div>
+            <div>
+              <h3 className='text-[15px] leading-tight font-semibold'>
+                Mời thành viên
+              </h3>
+              <p className='mt-0.5 text-[11px] text-zinc-500'>
+                Gửi lời mời vào brand qua email
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className='rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+            aria-label='Close'
+          >
+            <X className='size-4' />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className='space-y-4 px-5 py-4'>
+          <div>
+            <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+              Email <span className='text-rose-500'>*</span>
+            </label>
+            <input
+              type='email'
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && submit()}
+              placeholder='vd: an@brand.com'
+              autoFocus
+              className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+            />
+          </div>
+
+          <div>
+            <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+              Tên hiển thị
+            </label>
+            <input
+              type='text'
+              value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && submit()}
+              placeholder='(tuỳ chọn)'
+              className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+            />
+          </div>
+
+          <div>
+            <label className='mb-1.5 block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+              Vai trò
+            </label>
+            <div className='space-y-1.5'>
+              {INVITE_ROLES.map(r => (
+                <button
+                  key={r.value}
+                  type='button'
+                  onClick={() => setRole(r.value)}
+                  className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors ${
+                    role === r.value
+                      ? 'border-blue-400 bg-blue-50/60 ring-2 ring-blue-100'
+                      : 'border-zinc-200 hover:bg-zinc-50'
+                  }`}
+                >
+                  <span
+                    className={`flex size-4 shrink-0 items-center justify-center rounded-full border-2 ${
+                      role === r.value ? 'border-blue-500' : 'border-zinc-300'
+                    }`}
+                  >
+                    {role === r.value && (
+                      <span className='size-2 rounded-full bg-blue-500' />
+                    )}
+                  </span>
+                  <span className='min-w-0 flex-1'>
+                    <span className='block text-[13px] font-semibold text-zinc-900'>
+                      {r.label}
+                    </span>
+                    <span className='block text-[11px] text-zinc-500'>
+                      {r.desc}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className='flex items-center justify-end gap-2 border-t border-zinc-100 bg-zinc-50/50 px-5 py-3'>
+          <button
+            type='button'
+            onClick={onClose}
+            disabled={submitting}
+            className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50'
+          >
+            Hủy
+          </button>
+          <button
+            type='button'
+            onClick={submit}
+            disabled={submitting || !emailValid}
+            className='flex items-center gap-1.5 rounded-lg bg-blue-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-blue-600 disabled:opacity-50'
+          >
+            {submitting ? (
+              <Loader2 className='size-3.5 animate-spin' />
+            ) : (
+              <UserPlus className='size-3.5' />
+            )}
+            {submitting ? 'Đang mời…' : 'Gửi lời mời'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
