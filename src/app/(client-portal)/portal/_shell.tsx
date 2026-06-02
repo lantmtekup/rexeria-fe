@@ -147,6 +147,14 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
 
   const clientName = user?.client_name ?? FAKE_CLIENT.name;
 
+  // Template library is a staff/admin surface (curate templates for brands).
+  // Brand (client_user) accounts don't manage the library, so hide it for them.
+  const role = user?.role ?? user?.principal_type ?? '';
+  const isStaffOrAdmin = role === 'staff' || role === 'admin';
+  const navItems = isStaffOrAdmin
+    ? NAV
+    : NAV.filter(n => n.href !== '/portal/templates');
+
   const switchWorkspace = (ws: Workspace) => {
     setWsMenuOpen(false);
     // Fire-and-forget: BE call updates the server-side active workspace,
@@ -369,14 +377,14 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
           </div>
 
           <nav className='space-y-0.5'>
-            {NAV.map((n, i) => {
+            {navItems.map((n, i) => {
               const isActive =
                 n.href === '/portal'
                   ? pathname === n.href
                   : pathname?.startsWith(n.href);
               const Icon = n.icon;
               const showGroupLabel =
-                n.group && (i === 0 || NAV[i - 1].group !== n.group);
+                n.group && (i === 0 || navItems[i - 1].group !== n.group);
               const linkHref = withWorkspace(n.href, activeWs.id);
               return (
                 <div key={n.href}>
@@ -416,8 +424,9 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          {/* Storage */}
-          <div className='mt-6 rounded-xl border border-zinc-200 bg-zinc-50 p-3'>
+          {/* Storage — ẩn cho tới khi BE có quota thật (hiện toàn FAKE_CLIENT/
+              activeWs mock). Khôi phục bằng cách bỏ comment khối dưới. */}
+          {/* <div className='mt-6 rounded-xl border border-zinc-200 bg-zinc-50 p-3'>
             <div className='flex items-center justify-between'>
               <div className='text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
                 Storage
@@ -446,7 +455,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
               Quota client: {FAKE_CLIENT.storage_used_gb} /{' '}
               {FAKE_CLIENT.storage_quota_gb} GB
             </div>
-          </div>
+          </div> */}
         </aside>
 
         <main className='mx-auto w-full max-w-5xl px-5 py-8 lg:px-8'>
