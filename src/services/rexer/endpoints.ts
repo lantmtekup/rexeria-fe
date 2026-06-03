@@ -379,7 +379,7 @@ export const rexerApi = {
   // to live under /v1/projects either deprecated or migrated to canvas-
   // templates equivalents.
   products: {
-    list: (query?: {
+    list: async (query?: {
       status?: string;
       category_id?: string;
       client_id?: string;
@@ -393,7 +393,31 @@ export const rexerApi = {
       template_category?: string;
       /** V2: filter library (true) vs my templates (false). */
       is_public_template?: boolean;
-    }) => rx<ProductListResponse>('/products', { query }),
+    }): Promise<ProductListResponse> => {
+      // BE `/v1/products` là list endpoint DUY NHẤT trả pagination lồng trong
+      // object `pagination` ({page,limit,total,total_pages}); mọi list khác
+      // (templates, brands, feedback, block-types, pages…) trả `total` ở
+      // top-level. Normalize tại đây để consumer đọc `res.total` đồng nhất —
+      // tránh `NaN sản phẩm` (admin) + card "0" (dashboard). Xem be-qa-2026-06-03.
+      const res = await rx<
+        ProductListResponse & {
+          pagination?: {
+            page?: number;
+            limit?: number;
+            total?: number;
+            total_pages?: number;
+          };
+        }
+      >('/products', { query });
+      const p = res.pagination;
+      const items = res.items ?? [];
+      return {
+        items,
+        page: res.page ?? p?.page ?? 1,
+        limit: res.limit ?? p?.limit ?? items.length,
+        total: res.total ?? p?.total ?? items.length,
+      };
+    },
     get: async (id: string): Promise<ProductResponse> =>
       rx<ProductResponse>(`/products/${id}`),
     create: async (body: CreateProductRequest): Promise<ProductResponse> => {
