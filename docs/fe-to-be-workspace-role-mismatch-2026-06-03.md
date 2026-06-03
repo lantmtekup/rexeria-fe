@@ -3,7 +3,23 @@
 **Ngày:** 2026-06-03
 **Người báo:** FE (vovanphuc)
 **Liên quan:** TÍNH NĂNG 2A (brand tạo/quản lý member), `docs/be-response-to-fe-qa-2026-06-03.md`
-**Mức:** 🟡 cần thống nhất doc/field (FE đã tự thích ứng tạm)
+**Mức:** 🟡 cần thống nhất doc/field
+**Trạng thái:** ✅ ĐÃ CHỐT (BE F6, 2026-06-03 — xem mục "Quyết định")
+
+## Quyết định (BE F6)
+
+BE xác nhận FE đúng (`internal/usecase/portal.go:850,857`: `Role`=users.role,
+`WorkspaceRole`=role trong `workspace_members`). **Chọn Option 1 — giữ field.**
+Bất đối xứng có chủ đích: REQUEST (invite/PATCH) field `role` = brand role; RESPONSE
+brand role ở `workspace_role`. `created_at` = lúc tạo tài khoản user (KHÔNG phải lúc
+join brand; surface này không có `joined_at`).
+
+FE đã áp dụng:
+- Gating/chip/select dùng `workspace_role ?? 'brand_member'` (KHÔNG fallback về `role`,
+  vì `client_user` không phải brand role hợp lệ).
+- `PortalMember` tách riêng, KHÔNG dùng chung type với `/v1/brands/:id/users` (`BrandUser`).
+
+BE: đã bổ sung mô tả field vào struct `PortalMember` + regenerate swagger (không đổi behavior).
 
 ## Tóm tắt
 

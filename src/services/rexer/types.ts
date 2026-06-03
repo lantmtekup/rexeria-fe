@@ -1777,17 +1777,20 @@ export interface PortalMember {
   display_name: string;
   avatar_url?: string;
   /**
-   * ⚠️ BE trả `role` = users tier nền-tảng (`client_user` | `staff` | …),
-   * KHÔNG phải brand role. Vai trò trong brand nằm ở `workspace_role`. Dùng
-   * `workspace_role ?? role` khi cần brand role. (verify live 2026-06-03:
-   * `/portal/me/members` trả cả hai field.)
+   * ⚠️ BE (F6, 2026-06-03): `role` = users tier nền-tảng
+   * (`client_user` | `staff` | `admin`), KHÔNG phải brand role. Brand role thật
+   * nằm ở `workspace_role`. Bất đối xứng có chủ đích: REQUEST (invite / PATCH)
+   * field `role` = brand role; RESPONSE brand role ở `workspace_role`.
+   * Dùng `workspace_role ?? 'brand_member'` cho gating — KHÔNG fallback về `role`.
+   * KHÔNG dùng chung type với `/v1/brands/:id/users` (`BrandUser` — surface khác).
    */
   role: PortalMemberRole;
   /** Brand role thật (brand_owner | brand_member | brand_viewer). */
   workspace_role?: PortalMemberRole;
   workspace_id?: string;
-  joined_at: string;
-  /** BE đặt tên `created_at` cho thời điểm join. */
+  /** Surface này KHÔNG có `joined_at`; dùng `created_at`. */
+  joined_at?: string;
+  /** Thời điểm tạo TÀI KHOẢN user (không phải lúc join brand). */
   created_at?: string;
   last_seen_at?: string;
 }

@@ -127,8 +127,13 @@ export default function PortalProfilePage() {
   const meId = useAppSelector(s => s.auth.user?.id);
   const isOwner = React.useMemo(() => {
     if (pendingMembersApi) return true; // BE chưa ship → không chặn dev
+    // BE (F6): brand role nằm ở `workspace_role`; `role` là tier (client_user…).
+    // Fallback 'brand_member' khi thiếu workspace_role — KHÔNG fallback về `role`
+    // (client_user không phải brand role hợp lệ → gating sai).
     return members.some(
-      m => m.user_id === meId && (m.workspace_role ?? m.role) === 'brand_owner'
+      m =>
+        m.user_id === meId &&
+        (m.workspace_role ?? 'brand_member') === 'brand_owner'
     );
   }, [members, meId, pendingMembersApi]);
 
@@ -493,8 +498,9 @@ export default function PortalProfilePage() {
             </div>
           ) : (
             members.map(m => {
-              // BE để brand role ở `workspace_role`; `role` là tier nền-tảng.
-              const brandRole = m.workspace_role ?? m.role;
+              // BE (F6): brand role ở `workspace_role`; `role` là tier nền-tảng.
+              // Fallback 'brand_member' (không dùng `role`) — xem isOwner.
+              const brandRole = m.workspace_role ?? 'brand_member';
               const role = ROLE_LABEL[brandRole] ?? {
                 label: brandRole,
                 chip: 'bg-zinc-100 text-zinc-700',
