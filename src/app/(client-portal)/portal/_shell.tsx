@@ -134,8 +134,13 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
   const [unreadCount, setUnreadCount] = useState<number>(
     FAKE_STATS.unread_notifications
   );
+  // `user` (Redux auth) rỗng lúc SSR nhưng có sẵn ở first client render →
+  // brand name render khác nhau → hydration mismatch (React #418). Gate qua
+  // `hydrated` để SSR + first client paint khớp, chỉ hiện brand thật sau mount.
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    setHydrated(true);
     let mounted = true;
     loadUnreadNotificationCount().then(r => {
       if (mounted && r.source === 'live') setUnreadCount(r.data);
@@ -145,7 +150,9 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const clientName = user?.brand_name ?? FAKE_CLIENT.name;
+  // Pre-hydration trả '' (server cũng có user=null → khớp); sau mount mới hiện
+  // brand thật. Tránh nháy nhầm tên placeholder, hết #418.
+  const clientName = hydrated ? (user?.brand_name ?? FAKE_CLIENT.name) : '';
 
   // Template library is a staff/admin surface (curate templates for brands).
   // Brand accounts don't manage it → hide for them. Theo mô hình role 4 tầng
@@ -155,9 +162,13 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
   const role = user?.role ?? user?.principal_type ?? '';
   const isStaffOrAdmin =
     !user?.brand_id && (role === 'staff' || role === 'admin');
-  const navItems = isStaffOrAdmin
-    ? NAV
-    : NAV.filter(n => n.href !== '/portal/templates');
+  // Pre-hydration luôn filter (giống server: user=null → không staff) để SSR
+  // và first client paint khớp; sau mount mới mở full NAV cho staff. Tránh
+  // lệch số nav item → #418.
+  const navItems =
+    hydrated && isStaffOrAdmin
+      ? NAV
+      : NAV.filter(n => n.href !== '/portal/templates');
 
   const switchWorkspace = (ws: Workspace) => {
     setWsMenuOpen(false);
@@ -305,8 +316,12 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
             )}
           </button>
 
-          {/* User menu */}
-          {user ? (
+          {/* User menu — skeleton trước hydration (server có user=null → render
+              Sign-in; client có user → render menu): structural mismatch #418.
+              Gate qua `hydrated` cho server + first paint khớp nhau. */}
+          {!hydrated ? (
+            <div className='h-8 w-20 animate-pulse rounded-lg bg-zinc-100' />
+          ) : user ? (
             <div className='relative'>
               <button
                 onClick={() => setUserMenuOpen(o => !o)}

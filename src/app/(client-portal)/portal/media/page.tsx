@@ -634,10 +634,20 @@ function FolderCard({
   folder: MediaFolder;
   onOpen: () => void;
 }) {
+  // Outer là <div role="button"> chứ KHÔNG phải <button>: bên trong có nút
+  // "More" (nested <button> trong <button> là HTML invalid → hydration error).
   return (
-    <button
+    <div
+      role='button'
+      tabIndex={0}
       onClick={onOpen}
-      className='group flex flex-col items-start overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-amber-50 to-white p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md'
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      className='group flex cursor-pointer flex-col items-start overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-amber-50 to-white p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md'
     >
       <div className='flex w-full items-center justify-between'>
         <div className='flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm transition-transform group-hover:scale-110'>
@@ -662,7 +672,7 @@ function FolderCard({
           `${folder.child_folder_count} thư mục · `}
         {folder.file_count} file
       </div>
-    </button>
+    </div>
   );
 }
 
