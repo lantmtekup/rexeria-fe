@@ -57,6 +57,7 @@ const BLOCK_TYPE_LABEL: Record<BlockType, string> = {
   carousel_3d: 'Carousel 3D',
   flipbook: 'Flipbook',
   panorama: 'Panorama',
+  legacy_embed: 'Legacy block',
 };
 
 const BLOCK_TYPE_GRADIENT: Record<BlockType, string> = {
@@ -74,6 +75,7 @@ const BLOCK_TYPE_GRADIENT: Record<BlockType, string> = {
   carousel_3d: 'from-fuchsia-500 to-pink-600',
   flipbook: 'from-amber-500 to-yellow-500',
   panorama: 'from-sky-500 to-cyan-600',
+  legacy_embed: 'from-slate-500 to-slate-700',
 };
 
 function fmtDate(iso?: string): string {

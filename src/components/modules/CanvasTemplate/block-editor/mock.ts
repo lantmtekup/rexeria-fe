@@ -47,6 +47,7 @@ const NAME_BY_TYPE: Record<BlockType, string> = {
   carousel_3d: 'Coverflow 3D',
   flipbook: 'Flipbook',
   panorama: 'Panorama 360°',
+  legacy_embed: 'Legacy block',
 };
 
 function buildBlock(id: string, type: BlockType): Block {

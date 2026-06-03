@@ -14,6 +14,10 @@ import { Input } from '@/components/atoms/input';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
 
+import { buildLegacyServerBlocks } from '@/blocks/registry';
+
+import { BlockMiniPreview } from './BlockMiniPreview';
+import { createBlock, createLegacyBlock } from './factory';
 import { instantiateSavedBlock, type SavedBlock } from './savedBlocks';
 import { BLOCK_TYPE_META, type Block, type BlockType } from './types';
 import { RxApiError } from '@/services/rexer/client';
@@ -35,7 +39,24 @@ interface BeBlockType {
  *  SavedCard component expects. Returns null for rows whose settings
  *  isn't a valid editor Block. */
 function serverToSavedBlock(b: ServerBlock): SavedBlock | null {
-  const s = b.settings;
+  const s = b.settings as Record<string, unknown> | null | undefined;
+  // Legacy/framer registry block → wrap as a `legacy_embed` editor block so it
+  // previews + inserts like any other block.
+  if (
+    s &&
+    typeof s === 'object' &&
+    s.__legacy &&
+    typeof s.schemaId === 'string'
+  ) {
+    return {
+      id: b.id,
+      name: b.name,
+      block: createLegacyBlock(s.schemaId, b.name),
+      createdAt: b.created_at,
+      updatedAt: b.updated_at,
+      tags: b.tags ?? [],
+    };
+  }
   if (!s || typeof s !== 'object' || !('blockType' in s)) return null;
   return {
     id: b.id,
@@ -73,15 +94,12 @@ const ORDERED_TYPES: BlockType[] = [
   'cta_section',
 ];
 
-type Tab = 'builtin' | 'saved';
-
 export function AddBlockDialog({
   open,
   onOpenChange,
   onPick,
   onPickSaved,
 }: AddBlockDialogProps) {
-  const [tab, setTab] = React.useState<Tab>('builtin');
   // BE-backed saved blocks — same source as /admin/blocks list page.
   // Null = loading; array = loaded (may be empty).
   const [saved, setSaved] = React.useState<SavedBlock[] | null>(null);
@@ -93,15 +111,19 @@ export function AddBlockDialog({
 
   const reloadSaved = React.useCallback(async () => {
     setSaved(null);
+    // Same source as /admin/blocks: legacy/framer registry (local) merged with
+    // BE saved blocks. Legacy entries wrap into `legacy_embed` blocks.
+    let beItems: ServerBlock[] = [];
     try {
-      const r = await rexerApi.blocks.list({ limit: 100 });
-      const items = (r.items ?? [])
-        .map(serverToSavedBlock)
-        .filter((b): b is SavedBlock => b !== null);
-      setSaved(items);
+      const r = await rexerApi.blocks.list({ limit: 200 });
+      beItems = r.items ?? [];
     } catch {
-      setSaved([]);
+      beItems = [];
     }
+    const items = [...buildLegacyServerBlocks(), ...beItems]
+      .map(serverToSavedBlock)
+      .filter((b): b is SavedBlock => b !== null);
+    setSaved(items);
   }, []);
 
   // Reload saved blocks each time dialog opens (matches /admin/blocks freshness).
@@ -135,6 +157,14 @@ export function AddBlockDialog({
     return ORDERED_TYPES.filter(t => activeCodes.has(t));
   }, [activeCodes]);
 
+  // Default-instance preview block per type — built once so the live
+  // BlockMiniPreview cards don't recreate on every dialog re-render.
+  const previewByType = React.useMemo(() => {
+    const m = {} as Record<BlockType, Block>;
+    for (const t of visibleTypes) m[t] = createBlock(t);
+    return m;
+  }, [visibleTypes]);
+
   const handlePickSaved = (entry: SavedBlock) => {
     if (!onPickSaved) {
       // Fallback: fall through to the builtin type so user still gets a block.
@@ -153,117 +183,89 @@ export function AddBlockDialog({
         <DialogHeader>
           <DialogTitle>Thêm block mới</DialogTitle>
           <p className='text-sm text-neutral-500'>
-            Chọn block có sẵn hoặc tái sử dụng block đã lưu trong thư viện.
+            Chọn block để thêm vào trang — preview hiển thị nội dung thật.
           </p>
         </DialogHeader>
 
-        {/* Tab strip — sticky to dialog top while content scrolls below. */}
-        <div className='flex shrink-0 items-end gap-1 border-b border-neutral-200'>
-          <TabBtn active={tab === 'builtin'} onClick={() => setTab('builtin')}>
-            Block có sẵn
-            {!loadingTypes && visibleTypes.length > 0 ? (
-              <span className='ml-1.5 rounded-full bg-neutral-100 px-1.5 text-[10px] font-semibold text-neutral-600'>
-                {visibleTypes.length}
-              </span>
-            ) : null}
-          </TabBtn>
-          <TabBtn active={tab === 'saved'} onClick={() => setTab('saved')}>
-            <span className='inline-flex items-center gap-1.5'>
-              <Bookmark className='size-3.5' />
-              Đã lưu
-              {saved && saved.length > 0 ? (
-                <span className='rounded-full bg-neutral-900 px-1.5 text-[10px] font-semibold text-white'>
-                  {saved.length}
-                </span>
-              ) : null}
-            </span>
-          </TabBtn>
-        </div>
-
-        {/* Scrollable body — capped to dialog height so 14+ block cards don't
-            push the footer/header out of viewport. */}
-        <div className='-mr-1 flex-1 overflow-y-auto pr-1'>
-          {tab === 'builtin' ? (
-            loadingTypes ? (
-              <div className='flex items-center justify-center py-12 text-sm text-neutral-500'>
-                <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải
-                catalog block…
-              </div>
-            ) : visibleTypes.length === 0 ? (
-              <div className='rounded-lg border border-dashed border-neutral-200 px-4 py-12 text-center text-sm text-neutral-500'>
-                Không có block type nào ở trạng thái active. Vào{' '}
-                <strong>/admin/block-types</strong> để bật.
-              </div>
-            ) : (
-              <div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
-                {visibleTypes.map(type => {
-                  const meta = BLOCK_TYPE_META[type];
-                  return (
-                    <button
-                      key={type}
-                      type='button'
-                      onClick={() => {
-                        onPick(type);
-                        onOpenChange(false);
-                      }}
-                      className={cn(
-                        'group flex cursor-pointer flex-col gap-2 overflow-hidden rounded-lg border border-neutral-200 bg-white p-2 text-left transition-colors hover:border-neutral-900'
-                      )}
-                    >
-                      <div
-                        className='flex aspect-[16/10] items-center justify-center rounded-md text-[11px] font-semibold tracking-wider text-white/80 uppercase'
-                        style={{ backgroundColor: meta.accent }}
-                      >
-                        {meta.label}
-                      </div>
-                      <span className='px-1 text-xs font-medium text-neutral-700 group-hover:text-neutral-900'>
-                        {meta.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )
-          ) : saved === null ? (
+        {/* Single scrollable list — KHÔNG tab. Thư viện block (nội dung thật,
+            cùng nguồn /admin/blocks) trước, rồi block cơ bản. */}
+        <div className='-mr-1 flex-1 space-y-6 overflow-y-auto pr-1'>
+          {loadingTypes && saved === null ? (
             <div className='flex items-center justify-center py-12 text-sm text-neutral-500'>
-              <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải saved
-              blocks…
+              <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải block…
             </div>
           ) : (
-            <SavedTab
-              entries={saved}
-              onPick={handlePickSaved}
-              onChanged={reloadSaved}
-            />
+            <>
+              {/* Thư viện — block đã thiết kế (cùng nguồn /admin/blocks) */}
+              {saved === null ? (
+                <div className='flex items-center justify-center py-8 text-sm text-neutral-500'>
+                  <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải thư
+                  viện…
+                </div>
+              ) : saved.length > 0 ? (
+                <section>
+                  <h3 className='mb-2 text-[11px] font-semibold tracking-wider text-neutral-500 uppercase'>
+                    Thư viện · {saved.length} block
+                  </h3>
+                  <SavedTab
+                    entries={saved}
+                    onPick={handlePickSaved}
+                    onChanged={reloadSaved}
+                  />
+                </section>
+              ) : null}
+
+              {/* Block cơ bản — starter skeleton theo loại */}
+              {!loadingTypes && visibleTypes.length > 0 ? (
+                <section>
+                  <h3 className='mb-2 text-[11px] font-semibold tracking-wider text-neutral-500 uppercase'>
+                    Block cơ bản · {visibleTypes.length}
+                  </h3>
+                  <div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
+                    {visibleTypes.map(type => {
+                      const meta = BLOCK_TYPE_META[type];
+                      return (
+                        <button
+                          key={type}
+                          type='button'
+                          onClick={() => {
+                            onPick(type);
+                            onOpenChange(false);
+                          }}
+                          className={cn(
+                            'group flex cursor-pointer flex-col gap-2 overflow-hidden rounded-lg border border-neutral-200 bg-white p-2 text-left transition-colors hover:border-neutral-900'
+                          )}
+                        >
+                          <div className='overflow-hidden rounded-md border border-neutral-100 bg-neutral-50'>
+                            <BlockMiniPreview
+                              block={previewByType[type]}
+                              aspect='16 / 10'
+                            />
+                          </div>
+                          <span className='px-1 text-xs font-medium text-neutral-700 group-hover:text-neutral-900'>
+                            {meta.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              ) : null}
+
+              {/* Cả hai rỗng */}
+              {!loadingTypes &&
+              visibleTypes.length === 0 &&
+              saved !== null &&
+              saved.length === 0 ? (
+                <div className='rounded-lg border border-dashed border-neutral-200 px-4 py-12 text-center text-sm text-neutral-500'>
+                  Chưa có block nào.
+                </div>
+              ) : null}
+            </>
           )}
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function TabBtn({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type='button'
-      onClick={onClick}
-      className={cn(
-        '-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
-        active
-          ? 'border-neutral-900 text-neutral-900'
-          : 'border-transparent text-neutral-500 hover:text-neutral-800'
-      )}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -308,7 +310,9 @@ function SavedCard({
 }) {
   const [renaming, setRenaming] = React.useState(false);
   const [nextName, setNextName] = React.useState(entry.name);
-  const meta = BLOCK_TYPE_META[entry.block.blockType];
+  // Legacy/framer catalog blocks are system-managed (id `legacy:*`) — no BE
+  // rename/delete (mirrors /admin/blocks).
+  const isLegacy = entry.id.startsWith('legacy:');
 
   React.useEffect(() => {
     if (renaming) setNextName(entry.name);
@@ -351,10 +355,10 @@ function SavedCard({
       <button
         type='button'
         onClick={() => onPick(entry)}
-        className='flex aspect-[16/10] cursor-pointer items-center justify-center rounded-md text-[11px] font-semibold tracking-wider text-white/80 uppercase'
-        style={{ backgroundColor: meta.accent }}
+        className='cursor-pointer overflow-hidden rounded-md border border-neutral-100 bg-neutral-50'
       >
-        {meta.label}
+        {/* Real live preview — same renderer as /admin/blocks grid. */}
+        <BlockMiniPreview block={entry.block} aspect='16 / 10' />
       </button>
       <div className='flex items-center gap-1 px-1'>
         {renaming ? (
@@ -379,22 +383,26 @@ function SavedCard({
             {entry.name}
           </button>
         )}
-        <button
-          type='button'
-          onClick={() => setRenaming(v => !v)}
-          className='shrink-0 rounded p-1 text-neutral-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-neutral-100 hover:text-neutral-700'
-          aria-label='Đổi tên'
-        >
-          <Pencil className='size-3' />
-        </button>
-        <button
-          type='button'
-          onClick={handleDelete}
-          className='shrink-0 rounded p-1 text-neutral-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-50 hover:text-red-600'
-          aria-label='Xoá'
-        >
-          <Trash2 className='size-3' />
-        </button>
+        {!isLegacy && (
+          <>
+            <button
+              type='button'
+              onClick={() => setRenaming(v => !v)}
+              className='shrink-0 rounded p-1 text-neutral-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-neutral-100 hover:text-neutral-700'
+              aria-label='Đổi tên'
+            >
+              <Pencil className='size-3' />
+            </button>
+            <button
+              type='button'
+              onClick={handleDelete}
+              className='shrink-0 rounded p-1 text-neutral-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-50 hover:text-red-600'
+              aria-label='Xoá'
+            >
+              <Trash2 className='size-3' />
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

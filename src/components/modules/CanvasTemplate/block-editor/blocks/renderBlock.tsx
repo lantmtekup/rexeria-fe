@@ -8,6 +8,7 @@ import { Flipbook } from './Flipbook';
 import { HeroOverlay } from './HeroOverlay';
 import { HeroSplit } from './HeroSplit';
 import { ImageCarousel } from './ImageCarousel';
+import { LegacyEmbed } from './LegacyEmbed';
 import { Panorama } from './Panorama';
 import { PhotoGallery } from './PhotoGallery';
 import { Poll } from './Poll';
@@ -28,6 +29,7 @@ import type {
   HeroOverlayContent,
   HeroSplitContent,
   ImageCarouselContent,
+  LegacyEmbedContent,
   PanoramaContent,
   PhotoGalleryContent,
   PollContent,
@@ -217,6 +219,8 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
+    case 'legacy_embed':
+      return <LegacyEmbed content={content as LegacyEmbedContent} />;
     default:
       return (
         <>

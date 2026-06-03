@@ -533,7 +533,10 @@ const NAME_BY_TYPE: Record<BlockType, string> = {
   carousel_3d: 'Coverflow 3D',
   flipbook: 'Flipbook',
   panorama: 'Panorama 360°',
+  legacy_embed: 'Legacy block',
 };
+
+const LEGACY_EMBED_EMPTY: BlockContent = { schemaId: '' };
 
 const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_VI,
@@ -550,6 +553,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   carousel_3d: CAROUSEL_3D_VI,
   flipbook: FLIPBOOK_VI,
   panorama: PANORAMA_VI,
+  legacy_embed: LEGACY_EMBED_EMPTY,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
@@ -566,6 +570,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   carousel_3d: CAROUSEL_3D_EN,
   flipbook: FLIPBOOK_EN,
   panorama: PANORAMA_EN,
+  legacy_embed: LEGACY_EMBED_EMPTY,
 };
 
 function genId() {
@@ -581,6 +586,22 @@ export function createBlock(type: BlockType): Block {
     name: NAME_BY_TYPE[type],
     contentVi: { desktop: structuredClone(DEFAULTS_VI[type]) },
     contentEn: { desktop: structuredClone(DEFAULTS_EN[type]) },
+    isVisible: true,
+  };
+}
+
+/**
+ * Create a `legacy_embed` block wrapping a registry legacy/framer block.
+ * The renderer resolves the design via `getLegacyBlock(schemaId)`.
+ */
+export function createLegacyBlock(schemaId: string, name: string): Block {
+  const content: BlockContent = { schemaId, legacyName: name };
+  return {
+    id: genId(),
+    blockType: 'legacy_embed',
+    name: name || 'Legacy block',
+    contentVi: { desktop: structuredClone(content) },
+    contentEn: { desktop: structuredClone(content) },
     isVisible: true,
   };
 }

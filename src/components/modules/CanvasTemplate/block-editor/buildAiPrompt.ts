@@ -25,6 +25,7 @@ const BLOCK_LABEL: Record<Lang, Record<BlockType, string>> = {
     carousel_3d: 'slide ảnh 3D coverflow',
     flipbook: 'sách catalog lật trang',
     panorama: 'ảnh 360° xoay được',
+    legacy_embed: 'block thiết kế sẵn (legacy/framer)',
   },
   en: {
     hero_split: 'split-layout hero block',
@@ -41,6 +42,7 @@ const BLOCK_LABEL: Record<Lang, Record<BlockType, string>> = {
     carousel_3d: '3D coverflow image carousel',
     flipbook: 'page-turn flipbook catalog',
     panorama: '360° equirectangular panorama',
+    legacy_embed: 'pre-designed legacy/framer block',
   },
 };
 

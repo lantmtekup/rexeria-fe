@@ -58,6 +58,7 @@ const BLOCK_TYPE_LABEL: Record<BlockType, string> = {
   carousel_3d: 'Carousel 3D',
   flipbook: 'Flipbook',
   panorama: 'Panorama',
+  legacy_embed: 'Legacy block',
 };
 
 interface Props {

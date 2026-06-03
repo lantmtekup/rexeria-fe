@@ -15,7 +15,10 @@ export type BlockType =
   | 'poll'
   | 'carousel_3d'
   | 'flipbook'
-  | 'panorama';
+  | 'panorama'
+  // Wrapper cho legacy/framer block (render qua schemaId trong registry).
+  // Không edit inline — chèn nguyên khối thiết kế vào canvas.
+  | 'legacy_embed';
 
 export interface HeroSplitStat {
   value: string;
@@ -350,6 +353,13 @@ export interface PanoramaContent {
   hint?: string;
 }
 
+/** Legacy/framer block embed — chỉ giữ schemaId; renderer tra registry. */
+export interface LegacyEmbedContent {
+  schemaId: string;
+  /** Tên hiển thị (từ schema.name) để UI editor show. */
+  legacyName?: string;
+}
+
 export type BlockContent =
   | HeroSplitContent
   | HeroOverlayContent
@@ -365,6 +375,7 @@ export type BlockContent =
   | Carousel3dContent
   | FlipbookContent
   | PanoramaContent
+  | LegacyEmbedContent
   | Record<string, unknown>;
 
 /**
@@ -885,4 +896,9 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
   },
   flipbook: { type: 'flipbook', label: 'Flipbook', accent: '#854d0e' },
   panorama: { type: 'panorama', label: 'Panorama 360°', accent: '#1d4ed8' },
+  legacy_embed: {
+    type: 'legacy_embed',
+    label: 'Legacy block',
+    accent: '#475569',
+  },
 };
