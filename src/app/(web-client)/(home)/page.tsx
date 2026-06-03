@@ -19,7 +19,11 @@ export default async function Homepage() {
         new TextEncoder().encode(secret)
       );
       const role = typeof payload.role === 'string' ? payload.role : '';
-      target = roleHomePath(role);
+      const scope =
+        payload.scope === 'brand' || payload.scope === 'platform'
+          ? payload.scope
+          : undefined;
+      target = roleHomePath(role, scope);
     } catch {
       // Invalid / expired cookie — treat as guest.
       target = '/home';

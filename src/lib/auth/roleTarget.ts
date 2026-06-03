@@ -1,13 +1,27 @@
 /**
  * Single source of truth for "where does this role land after login".
  *
- * - admin / staff  → `/admin`  (CMS — quản lý hệ thống)
- * - everything else (client_user / brand) → `/portal`
+ * Cutover 2026-06-03 (be-response-to-fe-qa §C1): không dựa `role` đơn lẻ vì
+ * `staff` dùng chung cho cả platform staff lẫn brand user. Phân biệt bằng
+ * `principal_type === 'admin'` + sự hiện diện của brand (`scope`):
+ *
+ * - role/principal_type `admin`         → `/admin`  (platform admin CMS)
+ * - có brand (`scope === 'brand'`)      → `/portal` (brand user, vd lantm)
+ * - còn lại (platform staff không brand)→ `/home`
+ *
+ * `scope` lấy từ: client-side = `user.brand_id ? 'brand' : 'platform'`;
+ * server-side (middleware, root `/`) = claim `scope` trong session JWT
+ * (xem `/api/auth/session-set`).
  *
  * Shared by the sign-in forms, the middleware (authed user hitting an auth
  * route), and the root `/` page so the redirect target never drifts between
  * call sites.
  */
-export function roleHomePath(role: string | null | undefined): string {
-  return role === 'admin' || role === 'staff' ? '/admin' : '/portal';
+export function roleHomePath(
+  role: string | null | undefined,
+  scope?: 'brand' | 'platform' | null
+): string {
+  if (role === 'admin') return '/admin';
+  if (scope === 'brand') return '/portal';
+  return '/home';
 }

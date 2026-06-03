@@ -21,16 +21,19 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 500 }
     );
   }
-  // Role is carried as a claim so the middleware + root `/` page can route the
-  // user home without an extra BE round-trip. Empty = treated as brand/portal.
+  // Role + scope là claim để middleware + root `/` page route user home mà
+  // không cần round-trip BE. `scope` = 'brand' nếu user gắn brand (→ /portal),
+  // 'platform' nếu không (platform admin/staff). Xem roleHomePath (§C1).
   let role = '';
+  let scope = '';
   try {
     const body = await req.json();
     if (typeof body?.role === 'string') role = body.role;
+    if (typeof body?.scope === 'string') scope = body.scope;
   } catch {
-    // No / invalid JSON body — keep the empty-role default.
+    // No / invalid JSON body — keep the defaults.
   }
-  const token = await new SignJWT({ sub: 'rexer-session', role })
+  const token = await new SignJWT({ sub: 'rexer-session', role, scope })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('24h')

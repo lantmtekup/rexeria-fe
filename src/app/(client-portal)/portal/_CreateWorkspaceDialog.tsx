@@ -17,7 +17,7 @@ import type { Workspace as BEWorkspace } from '@/services/rexer/types';
 
 interface Props {
   open: boolean;
-  /** Brand the workspace will belong to — usually `user.client_id`. */
+  /** Brand the workspace will belong to — usually `user.brand_id`. */
   clientId: string | null | undefined;
   onClose: () => void;
   /** Fires when BE returns 201; parent refreshes list + can switch. */

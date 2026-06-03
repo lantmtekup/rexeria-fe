@@ -48,7 +48,8 @@ const STATS: Stat[] = [
     icon: UsersIcon,
     accent: 'bg-emerald-50 text-emerald-700',
     fetcher: async () => {
-      const r = await rexerApi.clients.list();
+      // A1 (be-response §A1): /clients đã gỡ → dùng /brands.
+      const r = await rexerApi.brands.list();
       return Array.isArray(r.items) ? r.items.length : 0;
     },
   },
@@ -57,10 +58,9 @@ const STATS: Stat[] = [
     labelKey: 'overview.aiUsage',
     icon: SparklesIcon,
     accent: 'bg-rose-50 text-rose-700',
-    fetcher: async () => {
-      const r = await rexerApi.adminAiUsage.globalSummary({ group_by: 'day' });
-      return r.summary.total_requests ?? 0;
-    },
+    // A4 (be-response §A4): AI usage read API defer Phase 2 — chưa fetch (card
+    // hiện '—'), trang /admin/ai-usage là coming-soon. Bật lại khi BE ship.
+    fetcher: async () => -1,
   },
   {
     href: '/admin/feedback',

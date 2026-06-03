@@ -327,7 +327,7 @@ function logoInitial(name: string): string {
 function beWorkspaceToPortal(w: BEWorkspace): Workspace {
   return {
     id: w.id,
-    client_id: w.brand_id,
+    client_id: w.client_id,
     slug: w.slug,
     name: w.name,
     description: w.description ?? '',
@@ -466,6 +466,12 @@ export async function loadActivity(
   workspaceId?: string,
   limit = 20
 ): Promise<LoadResult<ActivityItem[]>> {
+  // B2 (be-response §B2): chỉ gọi BE khi có workspace_id THẬT (UUID). Seed/fake
+  // ws id (vd 'ws_coca_main') từ FAKE_WORKSPACES ở render đầu sẽ bị BE chặn
+  // 403 cross-tenant — bỏ qua, đợi workspace thật load rồi effect chạy lại.
+  if (workspaceId && !/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(workspaceId)) {
+    return { data: [], source: 'live' };
+  }
   try {
     const res = await rexerApi.activityFeed.list({
       workspace_id: workspaceId,

@@ -240,21 +240,30 @@ export default function PortalDomainsPage() {
     (async () => {
       try {
         const me = await rexerApi.auth.me();
-        const ws = me.user.active_workspace_id;
-        if (!ws) throw new Error('no active workspace');
-        if (cancelled) return;
-        setWorkspaceId(ws);
-
-        const pagesRes = await rexerApi.pages.list(ws, {
-          type: 'landing',
-          limit: 100,
-        });
-        const items = pagesRes.items ?? [];
-        const bid = items[0]?.brand_id;
+        // Brand id lấy canonical từ `auth.me().brand.id` (post-cutover 000143,
+        // be-response §D1) — KHÔNG suy ra từ brand_id của landing page đầu
+        // tiên: active workspace có thể chưa có landing page nào (vd ws
+        // "Default"), khiến cả trang rơi nhầm vào demo mode dù brand hợp lệ.
+        const bid = me.brand?.id;
         if (!bid) throw new Error('cannot resolve brand id');
+        const ws = me.user.active_workspace_id;
         if (cancelled) return;
-        setPages(items);
+        setWorkspaceId(ws ?? null);
         setBrandId(bid);
+
+        // Danh sách landing page để bind domain — best-effort, rỗng nếu ws
+        // chưa có page. Không chặn việc load domains.
+        if (ws) {
+          try {
+            const pagesRes = await rexerApi.pages.list(ws, {
+              type: 'landing',
+              limit: 100,
+            });
+            if (!cancelled) setPages(pagesRes.items ?? []);
+          } catch {
+            /* bind list optional */
+          }
+        }
 
         const domRes = await rexerApi.brands.domains.list(bid);
         if (cancelled) return;
