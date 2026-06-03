@@ -15,10 +15,13 @@ export type AuthUser = {
    */
   role: string;
   status: string;
-  /** Client (workspace) id when role === 'client_user'. Null cho admin/staff. */
-  client_id?: string | null;
-  /** Client name — convenience field từ LoginResponse.client.name. */
-  client_name?: string | null;
+  /**
+   * Brand id when role === 'client_user'. Null cho admin/staff.
+   * `brand.id` == legacy `client.id` (cutover 000143).
+   */
+  brand_id?: string | null;
+  /** Brand name — convenience field từ LoginResponse.brand.name. */
+  brand_name?: string | null;
 };
 
 type AuthState = {
@@ -57,8 +60,8 @@ export const loginThunk = createAsyncThunk<
       principal_type: res.user.principal_type,
       role: res.user.role ?? res.user.principal_type,
       status: res.user.status,
-      client_id: res.client?.id ?? null,
-      client_name: res.client?.name ?? null,
+      brand_id: res.brand?.id ?? null,
+      brand_name: res.brand?.name ?? null,
     };
   } catch (err) {
     if (err instanceof RxApiError) {
@@ -92,8 +95,8 @@ export const fetchMeThunk = createAsyncThunk<AuthUser | null>(
         principal_type: res.user.principal_type,
         role: res.user.role ?? res.user.principal_type,
         status: res.user.status,
-        client_id: res.client?.id ?? null,
-        client_name: res.client?.name ?? null,
+        brand_id: res.brand?.id ?? null,
+        brand_name: res.brand?.name ?? null,
       };
     } catch {
       return null;

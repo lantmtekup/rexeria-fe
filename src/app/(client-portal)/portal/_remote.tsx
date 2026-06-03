@@ -327,7 +327,7 @@ function logoInitial(name: string): string {
 function beWorkspaceToPortal(w: BEWorkspace): Workspace {
   return {
     id: w.id,
-    client_id: w.brand_id,
+    client_id: w.client_id,
     slug: w.slug,
     name: w.name,
     description: w.description ?? '',

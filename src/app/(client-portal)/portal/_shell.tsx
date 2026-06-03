@@ -145,7 +145,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const clientName = user?.client_name ?? FAKE_CLIENT.name;
+  const clientName = user?.brand_name ?? FAKE_CLIENT.name;
 
   // Template library is a staff/admin surface (curate templates for brands).
   // Brand (client_user) accounts don't manage the library, so hide it for them.
@@ -465,7 +465,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
 
       <CreateWorkspaceDialog
         open={createWsOpen}
-        clientId={user?.client_id ?? null}
+        clientId={user?.brand_id ?? null}
         onClose={() => setCreateWsOpen(false)}
         onCreated={async ws => {
           // Pull the freshest list from BE + immediately switch to the new

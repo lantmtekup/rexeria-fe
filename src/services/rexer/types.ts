@@ -51,21 +51,27 @@ export interface RegisterRequest {
 export interface LoginResponse {
   user: RxUser;
   session: RxSession;
-  /** Client (workspace) — nil cho admin/staff không scope tenant. */
-  client?: Client;
+  /**
+   * Brand (tenant) user thuộc về — nil cho admin/staff không scope tenant.
+   * Cutover 2026-06-03 (migration 000143): key đổi từ `client` → `brand`;
+   * `brand.id` == legacy `client.id`. (be-fe-handoff-2026-06-03 §1)
+   */
+  brand?: Brand;
 }
 
 export interface RegisterResponse {
   user: RxUser;
   session: RxSession;
-  client?: Client;
+  /** Brand — nil cho admin/staff. Renamed từ `client` (cutover 000143). */
+  brand?: Brand;
 }
 
 export interface AuthMeResponse {
   user: RxUser;
   session: RxSession;
-  /** Client — nil cho admin/staff. Lets sidebar render workspace name. */
-  client?: Client;
+  /** Brand — nil cho admin/staff. Lets sidebar render brand name. Renamed
+   *  từ `client` (cutover 000143). */
+  brand?: Brand;
 }
 
 export interface ChangePasswordRequest {
@@ -108,8 +114,9 @@ export interface FirebaseLoginRequest {
 export interface FirebaseLoginResponse {
   user: RxUser;
   session: RxSession;
-  /** Present when BE auto-creates an empty Client for the new user. */
-  client?: Client;
+  /** Present when BE auto-creates an empty brand for the new user. Renamed
+   *  từ `client` (cutover 000143). */
+  brand?: Brand;
   is_new_user: boolean;
   /** True when BE linked Firebase identity to an existing same-email user. */
   linked: boolean;
@@ -1511,12 +1518,14 @@ export type AITemplateErrorCode =
   | 'ERR_INTERNAL';
 
 // ── Workspaces (Phase 1 multitenancy — be-workspace-multitenancy-spec) ───
-// BE 2026-05-26 deploy: field `client_id` renamed `brand_id` ở canonical
-// `/v1/brands/:id/workspaces`. Legacy `/v1/clients/:id/workspaces` (vẫn LIVE
-// transient) trả `client_id` shape cũ — FE không call path đó nữa.
+// Cutover 2026-06-03 (migration 000143): object workspace VẪN carry
+// `client_id` — đây là field duy nhất cutover cố tình KHÔNG rename sang
+// `brand_id` (xác nhận swagger + be-fe-handoff-workspace-pages-2026-06-03 §1).
+// Đọc `client_id` như brand id (`client_id` == brand.id). Áp dụng cho cả
+// `GET /me/workspaces` lẫn `GET /brands/:id/workspaces`.
 export interface Workspace {
   id: string;
-  brand_id: string;
+  client_id: string;
   name: string;
   slug: string;
   description?: string;
