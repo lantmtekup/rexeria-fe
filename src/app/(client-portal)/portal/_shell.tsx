@@ -148,9 +148,13 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
   const clientName = user?.brand_name ?? FAKE_CLIENT.name;
 
   // Template library is a staff/admin surface (curate templates for brands).
-  // Brand (client_user) accounts don't manage the library, so hide it for them.
+  // Brand accounts don't manage it → hide for them. Theo mô hình role 4 tầng
+  // của BE (be-response §C1): `users.role` KHÔNG phân biệt platform-staff vs
+  // brand user (lantm có users.role='staff' nhưng là brand user). Phân biệt
+  // bằng SỰ HIỆN DIỆN của brand: user gắn brand ⇒ brand user, ẩn library.
   const role = user?.role ?? user?.principal_type ?? '';
-  const isStaffOrAdmin = role === 'staff' || role === 'admin';
+  const isStaffOrAdmin =
+    !user?.brand_id && (role === 'staff' || role === 'admin');
   const navItems = isStaffOrAdmin
     ? NAV
     : NAV.filter(n => n.href !== '/portal/templates');
