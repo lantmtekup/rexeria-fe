@@ -37,7 +37,7 @@ export function PhotoGallery({
   activeKey,
   className,
 }: PhotoGalleryProps) {
-  const photos = content.photos.slice(0, 5);
+  const photos = (content.photos ?? []).slice(0, 5);
   const hasFive = photos.length >= 5;
   const styleOf = (key: string) =>
     composeStyle(

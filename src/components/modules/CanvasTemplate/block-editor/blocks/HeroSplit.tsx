@@ -96,7 +96,7 @@ export function HeroSplit({
           )}
         </div>
 
-        {content.stats.length > 0 && (
+        {content.stats && content.stats.length > 0 && (
           <div
             data-element-key='stats'
             style={sStats}

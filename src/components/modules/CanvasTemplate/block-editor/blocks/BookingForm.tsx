@@ -96,7 +96,7 @@ export function BookingForm({
           )}
         </div>
 
-        {content.reasons.length > 0 && (
+        {(content.reasons ?? []).length > 0 && (
           <div
             data-element-key='reasons'
             style={sReasons}

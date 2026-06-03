@@ -114,7 +114,7 @@ export function FeatureSection({
         )}
       </div>
 
-      {content.features.length > 0 && (
+      {(content.features ?? []).length > 0 && (
         <div
           data-element-key='features'
           style={sFeatures}

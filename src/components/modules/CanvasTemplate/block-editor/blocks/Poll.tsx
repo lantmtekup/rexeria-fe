@@ -126,7 +126,7 @@ export function Poll({
           'mx-auto flex w-full max-w-xl flex-col gap-2'
         )}
       >
-        {content.options.map(opt => {
+        {(content.options ?? []).map(opt => {
           const v = votes[opt.id] ?? 0;
           const pct = total > 0 ? (v / total) * 100 : 0;
           const isVoted = voted === opt.id;
