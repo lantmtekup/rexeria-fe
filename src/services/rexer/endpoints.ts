@@ -154,6 +154,7 @@ import type {
   PortalMemberRole,
   PortalMemberListResponse,
   InvitePortalMemberRequest,
+  InvitePortalMemberResponse,
   UpdatePortalMemberRoleRequest,
   UpdatePortalMeRequest,
   // ── Canonical (Rexer Architecture Final 2026-05-23) ───────────────
@@ -1155,7 +1156,10 @@ export const rexerApi = {
       members: (query?: { role?: PortalMemberRole }) =>
         rx<PortalMemberListResponse>('/portal/me/members', { query }),
       inviteMember: (body: InvitePortalMemberRequest) =>
-        rx<PortalMember>('/portal/me/members', { method: 'POST', body }),
+        rx<InvitePortalMemberResponse>('/portal/me/members', {
+          method: 'POST',
+          body,
+        }),
       updateMemberRole: (userId: string, body: UpdatePortalMemberRoleRequest) =>
         rx<PortalMember>(`/portal/me/members/${userId}/role`, {
           method: 'PATCH',

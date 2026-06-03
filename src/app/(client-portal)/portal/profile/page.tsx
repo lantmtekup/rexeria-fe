@@ -10,16 +10,21 @@ import * as React from 'react';
 import {
   AlertTriangle,
   Building2,
+  Check,
+  Copy,
+  KeyRound,
   Loader2,
   Mail,
   Save,
   Settings,
+  Trash2,
   User,
   UserPlus,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { useAppSelector } from '@/hooks/useRedux';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type {
@@ -108,6 +113,24 @@ export default function PortalProfilePage() {
   });
   const [saving, setSaving] = React.useState(false);
   const [inviteOpen, setInviteOpen] = React.useState(false);
+  // Credential vừa tạo (BE tự sinh password) — hiển thị 1 lần cho owner copy.
+  const [createdCred, setCreatedCred] = React.useState<{
+    email: string;
+    display_name: string;
+    password: string;
+  } | null>(null);
+  const [busyMember, setBusyMember] = React.useState<string | null>(null);
+
+  // Role workspace của user hiện tại được suy ra từ chính entry của họ trong
+  // members list (users.role tier nền-tảng KHÔNG phân biệt brand_owner). Chỉ
+  // `brand_owner` mới được tạo/sửa/xoá member (member/viewer gọi sẽ 403).
+  const meId = useAppSelector(s => s.auth.user?.id);
+  const isOwner = React.useMemo(() => {
+    if (pendingMembersApi) return true; // BE chưa ship → không chặn dev
+    return members.some(
+      m => m.user_id === meId && (m.workspace_role ?? m.role) === 'brand_owner'
+    );
+  }, [members, meId, pendingMembersApi]);
 
   // Load brand profile + members in parallel
   React.useEffect(() => {
@@ -197,39 +220,69 @@ export default function PortalProfilePage() {
     }
   };
 
-  // Invite a member. Tries the real BE call; if the endpoint isn't ready
-  // (BE still returns 5xx after the cutover), optimistically add the member
-  // locally so the UI flow is complete and the row appears immediately.
+  // Tạo member mới. BE trả `{ member, generated_password? }` (top-level, không
+  // bọc {data}); `generated_password` chỉ có khi không gửi password — đây là
+  // cách DUY NHẤT owner lấy mật khẩu đưa member (BE không gửi email mời).
+  // KHÔNG optimistic-add nữa — để BE là source of truth (409/403/400).
   const handleInvite = async (payload: InvitePortalMemberRequest) => {
+    const res = await rexerApi.portal.me.inviteMember(payload);
+    setMembers(prev => [...prev, res.member]);
+    setInviteOpen(false);
+    if (res.generated_password) {
+      setCreatedCred({
+        email: res.member.email,
+        display_name: res.member.display_name,
+        password: res.generated_password,
+      });
+    } else {
+      toast.success(
+        `Đã tạo member ${res.member.display_name || res.member.email}`
+      );
+    }
+  };
+
+  const handleRoleChange = async (m: PortalMember, role: PortalMemberRole) => {
+    const prev = members;
+    setBusyMember(m.user_id);
+    setMembers(list =>
+      list.map(x =>
+        x.user_id === m.user_id ? { ...x, workspace_role: role } : x
+      )
+    );
+    try {
+      await rexerApi.portal.me.updateMemberRole(m.user_id, { role });
+      toast.success(`Đã đổi vai trò của ${m.display_name || m.email}`);
+    } catch (err) {
+      setMembers(prev); // rollback
+      const code =
+        err instanceof RxApiError ? err.code || err.message : 'UNKNOWN';
+      toast.error(`Đổi vai trò thất bại (${code})`);
+    } finally {
+      setBusyMember(null);
+    }
+  };
+
+  const handleRemoveMember = async (m: PortalMember) => {
     if (
-      members.some(m => m.email.toLowerCase() === payload.email.toLowerCase())
+      !window.confirm(
+        `Xoá ${m.display_name || m.email} khỏi brand? Họ sẽ mất quyền truy cập.`
+      )
     ) {
-      toast.error('Email này đã là thành viên');
       return;
     }
+    const prev = members;
+    setBusyMember(m.user_id);
+    setMembers(list => list.filter(x => x.user_id !== m.user_id));
     try {
-      const created = await rexerApi.portal.me.inviteMember(payload);
-      setMembers(prev => [...prev, created]);
-      toast.success(`Đã mời ${created.display_name || created.email}`);
+      await rexerApi.portal.me.removeMember(m.user_id);
+      toast.success(`Đã xoá ${m.display_name || m.email}`);
     } catch (err) {
+      setMembers(prev); // rollback
       const code =
-        err instanceof RxApiError ? err.code || err.message : String(err);
-      // Graceful fallback — BE chưa fix bảng workspace_members sau cutover.
-      setMembers(prev => [
-        ...prev,
-        {
-          user_id: `pending-${Date.now()}`,
-          email: payload.email,
-          display_name: payload.display_name || payload.email.split('@')[0],
-          role: payload.role,
-          joined_at: new Date().toISOString(),
-        },
-      ]);
-      toast.warning('Đã thêm tạm (local) — BE chưa sẵn sàng', {
-        description: `Invite sẽ persist khi BE fix POST /portal/me/members. (${code})`,
-      });
+        err instanceof RxApiError ? err.code || err.message : 'UNKNOWN';
+      toast.error(`Xoá thất bại (${code})`);
     } finally {
-      setInviteOpen(false);
+      setBusyMember(null);
     }
   };
 
@@ -423,13 +476,15 @@ export default function PortalProfilePage() {
               <Loader2 className='size-3.5 animate-spin text-zinc-400' />
             )}
           </div>
-          <button
-            type='button'
-            onClick={() => setInviteOpen(true)}
-            className='flex items-center gap-1.5 rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600 disabled:opacity-50'
-          >
-            <UserPlus className='size-3' /> Invite member
-          </button>
+          {isOwner && (
+            <button
+              type='button'
+              onClick={() => setInviteOpen(true)}
+              className='flex items-center gap-1.5 rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600 disabled:opacity-50'
+            >
+              <UserPlus className='size-3' /> Thêm member
+            </button>
+          )}
         </div>
         <div className='divide-y divide-zinc-100'>
           {members.length === 0 && !loadingMembers ? (
@@ -438,8 +493,10 @@ export default function PortalProfilePage() {
             </div>
           ) : (
             members.map(m => {
-              const role = ROLE_LABEL[m.role] ?? {
-                label: m.role,
+              // BE để brand role ở `workspace_role`; `role` là tier nền-tảng.
+              const brandRole = m.workspace_role ?? m.role;
+              const role = ROLE_LABEL[brandRole] ?? {
+                label: brandRole,
                 chip: 'bg-zinc-100 text-zinc-700',
               };
               const initials = m.display_name
@@ -472,14 +529,52 @@ export default function PortalProfilePage() {
                       <Mail className='size-2.5' /> {m.email}
                     </div>
                   </div>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${role.chip}`}
-                  >
-                    {role.label}
-                  </span>
-                  <span className='font-mono text-[10px] text-zinc-400'>
-                    {formatJoined(m.joined_at)}
-                  </span>
+                  {/* Owner đổi role/xoá member khác; không thao tác trên chính
+                      mình hoặc trên `staff` (do Rexer quản lý). */}
+                  {isOwner && m.user_id !== meId && brandRole !== 'staff' ? (
+                    <>
+                      <select
+                        value={brandRole}
+                        disabled={busyMember === m.user_id}
+                        onChange={e =>
+                          handleRoleChange(
+                            m,
+                            e.target.value as PortalMemberRole
+                          )
+                        }
+                        aria-label={`Vai trò của ${m.display_name}`}
+                        className='rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 outline-none focus:border-blue-400 disabled:opacity-50'
+                      >
+                        <option value='brand_owner'>Owner</option>
+                        <option value='brand_member'>Member</option>
+                        <option value='brand_viewer'>Viewer</option>
+                      </select>
+                      <button
+                        type='button'
+                        onClick={() => handleRemoveMember(m)}
+                        disabled={busyMember === m.user_id}
+                        aria-label={`Xoá ${m.display_name}`}
+                        className='rounded-lg p-1.5 text-zinc-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50'
+                      >
+                        {busyMember === m.user_id ? (
+                          <Loader2 className='size-3.5 animate-spin' />
+                        ) : (
+                          <Trash2 className='size-3.5' />
+                        )}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${role.chip}`}
+                      >
+                        {role.label}
+                      </span>
+                      <span className='font-mono text-[10px] text-zinc-400'>
+                        {formatJoined(m.joined_at ?? m.created_at)}
+                      </span>
+                    </>
+                  )}
                 </div>
               );
             })
@@ -492,6 +587,13 @@ export default function PortalProfilePage() {
         onClose={() => setInviteOpen(false)}
         onInvite={handleInvite}
       />
+
+      {createdCred && (
+        <MemberCredentialDialog
+          cred={createdCred}
+          onClose={() => setCreatedCred(null)}
+        />
+      )}
     </PortalShell>
   );
 }
@@ -535,6 +637,7 @@ function InviteMemberDialog({
 }) {
   const [email, setEmail] = React.useState('');
   const [displayName, setDisplayName] = React.useState('');
+  const [password, setPassword] = React.useState('');
   const [role, setRole] = React.useState<PortalMemberRole>('brand_member');
   const [submitting, setSubmitting] = React.useState(false);
 
@@ -542,6 +645,7 @@ function InviteMemberDialog({
     if (open) {
       setEmail('');
       setDisplayName('');
+      setPassword('');
       setRole('brand_member');
       setSubmitting(false);
     }
@@ -550,19 +654,51 @@ function InviteMemberDialog({
   if (!open) return null;
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const canSubmit =
+    emailValid &&
+    displayName.trim().length > 0 &&
+    (password.trim().length === 0 || password.trim().length >= 8);
 
   const submit = async () => {
     if (!emailValid) {
       toast.error('Email không hợp lệ');
       return;
     }
+    if (!displayName.trim()) {
+      toast.error('Tên hiển thị không được rỗng');
+      return;
+    }
+    if (password.trim() && password.trim().length < 8) {
+      toast.error(
+        'Mật khẩu tối thiểu 8 ký tự (hoặc bỏ trống để hệ thống sinh)'
+      );
+      return;
+    }
     setSubmitting(true);
-    await onInvite({
-      email: email.trim(),
-      role,
-      display_name: displayName.trim() || undefined,
-    });
-    setSubmitting(false);
+    try {
+      await onInvite({
+        email: email.trim(),
+        display_name: displayName.trim(),
+        role,
+        ...(password.trim() ? { password: password.trim() } : {}),
+      });
+    } catch (err) {
+      // BE là source of truth: phân nhánh 409 (email trùng) / 403 (không phải
+      // owner) / còn lại. KHÔNG đóng dialog để user sửa lại.
+      if (err instanceof RxApiError) {
+        if (err.status === 409 || err.code === 'ERR_CLIENT_USER_DUPLICATE') {
+          toast.error('Email này đã có tài khoản trong brand');
+        } else if (err.status === 403) {
+          toast.error('Chỉ brand owner mới tạo được member');
+        } else {
+          toast.error(`Tạo member thất bại (${err.code || err.message})`);
+        }
+      } else {
+        toast.error('Tạo member thất bại');
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -582,10 +718,10 @@ function InviteMemberDialog({
             </div>
             <div>
               <h3 className='text-[15px] leading-tight font-semibold'>
-                Mời thành viên
+                Thêm thành viên
               </h3>
               <p className='mt-0.5 text-[11px] text-zinc-500'>
-                Gửi lời mời vào brand qua email
+                Tạo tài khoản member + cấp mật khẩu (không gửi email mời)
               </p>
             </div>
           </div>
@@ -617,16 +753,35 @@ function InviteMemberDialog({
 
           <div>
             <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
-              Tên hiển thị
+              Tên hiển thị <span className='text-rose-500'>*</span>
             </label>
             <input
               type='text'
               value={displayName}
               onChange={e => setDisplayName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && submit()}
-              placeholder='(tuỳ chọn)'
+              placeholder='vd: Nguyễn Văn A'
               className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
             />
+          </div>
+
+          <div>
+            <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+              Mật khẩu
+            </label>
+            <input
+              type='text'
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && submit()}
+              placeholder='Bỏ trống → hệ thống tự sinh & hiện sau khi tạo'
+              autoComplete='off'
+              className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+            />
+            <p className='mt-1 text-[10.5px] text-zinc-400'>
+              Tối thiểu 8 ký tự nếu tự đặt. BE không gửi email — mật khẩu chỉ
+              hiện 1 lần để bạn đưa cho member.
+            </p>
           </div>
 
           <div>
@@ -681,7 +836,7 @@ function InviteMemberDialog({
           <button
             type='button'
             onClick={submit}
-            disabled={submitting || !emailValid}
+            disabled={submitting || !canSubmit}
             className='flex items-center gap-1.5 rounded-lg bg-blue-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-blue-600 disabled:opacity-50'
           >
             {submitting ? (
@@ -689,7 +844,140 @@ function InviteMemberDialog({
             ) : (
               <UserPlus className='size-3.5' />
             )}
-            {submitting ? 'Đang mời…' : 'Gửi lời mời'}
+            {submitting ? 'Đang tạo…' : 'Tạo member'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Hiển thị credential vừa tạo (BE tự sinh password). BE KHÔNG gửi email mời nên
+ * đây là cách DUY NHẤT owner lấy mật khẩu — chỉ hiện 1 lần.
+ */
+function MemberCredentialDialog({
+  cred,
+  onClose,
+}: {
+  cred: { email: string; display_name: string; password: string };
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = React.useState<'password' | 'all' | null>(null);
+
+  const copy = async (value: string, key: 'password' | 'all') => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(key);
+      toast.success(
+        key === 'all' ? 'Đã copy email + mật khẩu' : 'Đã copy mật khẩu'
+      );
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      toast.error('Copy thất bại — copy thủ công nhé');
+    }
+  };
+
+  const summary = [
+    `Email: ${cred.email}`,
+    `Mật khẩu: ${cred.password}`,
+    `Tên: ${cred.display_name}`,
+    `Đăng nhập: ${typeof window !== 'undefined' ? window.location.origin : ''}/sign-in`,
+  ].join('\n');
+
+  return (
+    <div
+      className='fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm'
+      onClick={onClose}
+    >
+      <div
+        className='my-12 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
+        onClick={e => e.stopPropagation()}
+      >
+        <div className='flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-3.5'>
+          <div className='flex items-center gap-2.5'>
+            <div className='flex size-8 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm'>
+              <Check className='size-4' />
+            </div>
+            <h3 className='text-[15px] leading-tight font-semibold'>
+              Đã tạo member {cred.display_name}
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            className='rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+            aria-label='Close'
+          >
+            <X className='size-4' />
+          </button>
+        </div>
+
+        <div className='space-y-4 px-5 py-4'>
+          <div className='flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900'>
+            <KeyRound className='mt-0.5 size-3.5 shrink-0 text-amber-600' />
+            <div>
+              <span className='font-semibold'>Lưu ngay mật khẩu</span> — chỉ
+              hiện 1 lần. BE không gửi email mời, bạn cần tự đưa thông tin này
+              cho member.
+            </div>
+          </div>
+
+          <div className='space-y-1'>
+            <div className='text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+              Email
+            </div>
+            <div className='flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-[13px]'>
+              <Mail className='size-3.5 text-zinc-400' />
+              {cred.email}
+            </div>
+          </div>
+
+          <div className='space-y-1'>
+            <div className='text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+              Mật khẩu
+            </div>
+            <div className='flex items-center gap-2'>
+              <code className='flex-1 truncate rounded-lg border border-zinc-200 bg-white px-3 py-2 font-mono text-[13px]'>
+                {cred.password}
+              </code>
+              <button
+                type='button'
+                onClick={() => copy(cred.password, 'password')}
+                className={`flex items-center gap-1 rounded-lg border px-2.5 py-2 text-[11px] font-medium ${
+                  copied === 'password'
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                    : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100'
+                }`}
+              >
+                {copied === 'password' ? (
+                  <Check className='size-3.5' />
+                ) : (
+                  <Copy className='size-3.5' />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className='flex items-center justify-between gap-2 border-t border-zinc-100 bg-zinc-50/50 px-5 py-3'>
+          <button
+            type='button'
+            onClick={() => copy(summary, 'all')}
+            className='flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100'
+          >
+            {copied === 'all' ? (
+              <Check className='size-3.5 text-emerald-500' />
+            ) : (
+              <Copy className='size-3.5' />
+            )}
+            Copy tất cả
+          </button>
+          <button
+            type='button'
+            onClick={onClose}
+            className='rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
+          >
+            Xong
           </button>
         </div>
       </div>

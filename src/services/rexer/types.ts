@@ -1776,8 +1776,19 @@ export interface PortalMember {
   email: string;
   display_name: string;
   avatar_url?: string;
+  /**
+   * ⚠️ BE trả `role` = users tier nền-tảng (`client_user` | `staff` | …),
+   * KHÔNG phải brand role. Vai trò trong brand nằm ở `workspace_role`. Dùng
+   * `workspace_role ?? role` khi cần brand role. (verify live 2026-06-03:
+   * `/portal/me/members` trả cả hai field.)
+   */
   role: PortalMemberRole;
+  /** Brand role thật (brand_owner | brand_member | brand_viewer). */
+  workspace_role?: PortalMemberRole;
+  workspace_id?: string;
   joined_at: string;
+  /** BE đặt tên `created_at` cho thời điểm join. */
+  created_at?: string;
   last_seen_at?: string;
 }
 
@@ -1790,8 +1801,23 @@ export interface PortalMemberListResponse {
 
 export interface InvitePortalMemberRequest {
   email: string;
-  role: PortalMemberRole;
-  display_name?: string;
+  /** Required theo BE (handler portal.go:367), 1–255 ký tự. */
+  display_name: string;
+  /** Optional — BE default `brand_member`. */
+  role?: PortalMemberRole;
+  /** Bỏ trống → BE tự sinh, trả về trong `generated_password`. */
+  password?: string;
+}
+
+/**
+ * Response `POST /v1/portal/me/members` — BE trả top-level, KHÔNG bọc
+ * `{data}` (verify pkg/http/response.go + handler portal.go:367).
+ */
+export interface InvitePortalMemberResponse {
+  member: PortalMember;
+  /** Chỉ có khi request KHÔNG gửi `password` (BE tự sinh). BE không gửi
+   *  email mời → đây là cách DUY NHẤT owner lấy mật khẩu đưa member. */
+  generated_password?: string;
 }
 
 export interface UpdatePortalMemberRoleRequest {
@@ -2045,15 +2071,20 @@ export interface BrandUser {
 export interface BrandUserListResponse {
   items: BrandUser[];
 }
+/**
+ * `POST /v1/brands/:brandId/users` — LINK user ĐÃ TỒN TẠI vào brand.
+ * KHÔNG tạo user, KHÔNG sinh password. Email chưa tồn tại → 404
+ * `ERR_USER_NOT_FOUND` (canonical: be-response-to-fe-qa-2026-06-03.md;
+ * verify internal/usecase/brand_membership.go:50-58,73).
+ */
 export interface InviteBrandUserRequest {
   email: string;
-  display_name: string;
   role: BrandMembershipRole;
-  password?: string;
+  display_name?: string;
 }
 export interface InviteBrandUserResponse {
-  user: BrandUser;
-  generated_password?: string;
+  /** Upsert membership. KHÔNG kèm user object / generated_password. */
+  membership: BrandMembership;
 }
 export interface UpdateBrandUserRequest {
   role?: BrandMembershipRole;
