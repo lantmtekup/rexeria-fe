@@ -224,19 +224,27 @@ export function AddBlockDialog({
                   <div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
                     {visibleTypes.map(type => {
                       const meta = BLOCK_TYPE_META[type];
+                      const pick = () => {
+                        onPick(type);
+                        onOpenChange(false);
+                      };
                       return (
-                        <button
+                        <div
                           key={type}
-                          type='button'
-                          onClick={() => {
-                            onPick(type);
-                            onOpenChange(false);
+                          role='button'
+                          tabIndex={0}
+                          onClick={pick}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              pick();
+                            }
                           }}
                           className={cn(
                             'group flex cursor-pointer flex-col gap-2 overflow-hidden rounded-lg border border-neutral-200 bg-white p-2 text-left transition-colors hover:border-neutral-900'
                           )}
                         >
-                          <div className='overflow-hidden rounded-md border border-neutral-100 bg-neutral-50'>
+                          <div className='pointer-events-none overflow-hidden rounded-md border border-neutral-100 bg-neutral-50'>
                             <BlockMiniPreview
                               block={previewByType[type]}
                               aspect='16 / 10'
@@ -245,7 +253,7 @@ export function AddBlockDialog({
                           <span className='px-1 text-xs font-medium text-neutral-700 group-hover:text-neutral-900'>
                             {meta.label}
                           </span>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -352,14 +360,24 @@ function SavedCard({
 
   return (
     <div className='group flex flex-col gap-2 overflow-hidden rounded-lg border border-neutral-200 bg-white p-2 transition-colors hover:border-neutral-900'>
-      <button
-        type='button'
+      <div
+        role='button'
+        tabIndex={0}
         onClick={() => onPick(entry)}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onPick(entry);
+          }
+        }}
         className='cursor-pointer overflow-hidden rounded-md border border-neutral-100 bg-neutral-50'
       >
-        {/* Real live preview — same renderer as /admin/blocks grid. */}
-        <BlockMiniPreview block={entry.block} aspect='16 / 10' />
-      </button>
+        {/* Real live preview — same renderer as /admin/blocks grid. Inner
+            interactive elements are inert so the card stays one click target. */}
+        <div className='pointer-events-none'>
+          <BlockMiniPreview block={entry.block} aspect='16 / 10' />
+        </div>
+      </div>
       <div className='flex items-center gap-1 px-1'>
         {renaming ? (
           <Input
