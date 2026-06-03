@@ -785,10 +785,10 @@ export function BlockEditor({
   // khi BE đã có version mới hơn, dẫn đến 409 "already exists"). Inherits
   // schema fields from currentVersion / HEAD; nếu template chưa có version
   // nào (vừa created qua CreateTemplateDialog) thì dùng default + v1.0.0.
-  const handleSaveVersion = async () => {
+  const handleSaveVersion = async (): Promise<TemplateVersionType | null> => {
     if (!template) {
       toast.error('Chưa load template — đợi 1 giây rồi thử lại.');
-      return;
+      return null;
     }
     setSavingVersion(true);
     try {
@@ -840,8 +840,10 @@ export function BlockEditor({
       });
       setCurrentVersion(next);
       toast.success(`Đã commit version "${next.version}"`);
+      return next;
     } catch (err) {
       toast.error(`Save version thất bại: ${rxErrorMessage(err)}`);
+      return null;
     } finally {
       setSavingVersion(false);
     }
@@ -863,11 +865,14 @@ export function BlockEditor({
     if (pageId && next) {
       try {
         if (next.published) {
+          // Commit canvas hiện tại → version mới TRƯỚC khi publish, để trang
+          // public luôn nhận đúng bản mới nhất (tránh publish version cũ khi
+          // user sửa nhưng quên "Save Version").
+          const committed = await handleSaveVersion();
+          const verId = committed?.id ?? currentVersion?.id;
           await rexerApi.pages.publish(
             pageId,
-            currentVersion
-              ? { template_version_id: currentVersion.id }
-              : undefined
+            verId ? { template_version_id: verId } : undefined
           );
         } else {
           await rexerApi.pages.unpublish(pageId);
