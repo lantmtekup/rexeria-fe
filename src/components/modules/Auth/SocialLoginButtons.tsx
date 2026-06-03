@@ -99,14 +99,15 @@ export function SocialLoginButtons() {
 
       const me = await dispatch(fetchMeThunk()).unwrap();
       const role = me?.role ?? me?.principal_type ?? '';
+      const scope = me?.brand_id ? 'brand' : 'platform';
 
       // Mirror local signed cookie for middleware (same pattern as loginThunk),
-      // carrying the role so a later revisit of `/` lands on the right home.
+      // carrying role + scope so a later revisit of `/` lands on the right home.
       await fetch('/api/auth/session-set', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
+        body: JSON.stringify({ role, scope }),
       });
 
       let target: string;
@@ -115,8 +116,8 @@ export function SocialLoginButtons() {
       } else if (res.is_new_user) {
         target = '/onboarding';
       } else {
-        // admin / staff → /admin (CMS), brand client_user → /portal.
-        target = roleHomePath(role);
+        // §C1: admin → /admin, có brand → /portal, còn lại → /home.
+        target = roleHomePath(role, scope);
       }
       router.replace(target);
     } catch (err) {

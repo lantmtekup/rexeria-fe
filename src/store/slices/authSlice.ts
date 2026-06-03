@@ -51,6 +51,8 @@ export const loginThunk = createAsyncThunk<
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         role: res.user.role ?? res.user.principal_type ?? '',
+        // scope='brand' → middleware/root page route về /portal (§C1).
+        scope: res.brand?.id ? 'brand' : 'platform',
       }),
     });
     return {

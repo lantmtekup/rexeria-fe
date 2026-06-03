@@ -239,6 +239,30 @@ function unwrapBrand(r: BrandResponse | Brand): Brand {
   return r as Brand;
 }
 
+// A2 (be-response §A2): map item từ catalog `/block-types`
+// (code/name/description/…) sang shape `AdminBlockType` (type/label_vi/…) mà
+// admin UI đang dùng. `accent_color`/`is_premium`/`sort_order` BE catalog không
+// trả → undefined (UI xử lý optional).
+function toAdminBlockType(it: Record<string, any>): AdminBlockType {
+  return {
+    type: it.code ?? it.type,
+    label_vi: it.name ?? it.label_vi ?? it.code,
+    label_en: it.name ?? it.label_en,
+    description_vi: it.description ?? it.description_vi,
+    is_active: it.is_active ?? true,
+    is_premium: it.is_premium,
+    sort_order: it.sort_order,
+    category: it.category,
+    supported_surfaces: it.supported_surfaces,
+    props_schema: it.props_schema,
+    min_dimensions: it.min_dimensions,
+    supported_slot_types: it.supported_slot_types,
+    engine_version: it.engine_version,
+    created_at: it.created_at,
+    updated_at: it.updated_at,
+  };
+}
+
 export const rexerApi = {
   auth: {
     login: (body: LoginRequest) =>
@@ -1233,13 +1257,24 @@ export const rexerApi = {
   // ── Staff inbox (admin/staff task queue) ──────────────────────────────
   // ── Admin block-types catalog (architecture spec §4.2) ────────────────
   adminBlockTypes: {
-    list: (query?: {
+    // A2 (be-response §A2): GET list/read canonical là `/block-types`
+    // (shape khác: code/name/description). `/admin/block-types` CHỈ có
+    // POST/PATCH/DELETE. Map catalog → AdminBlockType (type=code,
+    // label_vi=name…). Filter `is_active` làm client-side (BE list chưa
+    // hỗ trợ ?is_active) — xem AdminBlockTypesPage.
+    list: async (query?: {
       surface?: string;
       category?: string;
-      is_active?: boolean;
       q?: string;
-    }) => rx<{ items: AdminBlockType[] }>('/admin/block-types', { query }),
-    get: (code: string) => rx<AdminBlockType>(`/admin/block-types/${code}`),
+    }): Promise<{ items: AdminBlockType[] }> => {
+      const r = await rx<{ items: Array<Record<string, any>> }>(
+        '/block-types',
+        { query }
+      );
+      return { items: (r.items ?? []).map(toAdminBlockType) };
+    },
+    get: async (code: string): Promise<AdminBlockType> =>
+      toAdminBlockType(await rx<Record<string, any>>(`/block-types/${code}`)),
     create: (body: CreateAdminBlockTypeRequest) =>
       rx<AdminBlockType>('/admin/block-types', { method: 'POST', body }),
     update: (code: string, body: UpdateAdminBlockTypeRequest) =>

@@ -89,9 +89,11 @@ export function AdminBlockTypesPage() {
       const r = await rexerApi.adminBlockTypes.list({
         surface: surface === 'all' ? undefined : surface,
         q: debouncedSearch.trim() || undefined,
-        is_active: showInactive ? undefined : true,
       });
-      setItems(r.items ?? []);
+      // A2 (be-response §A2): BE `/block-types` chưa filter `is_active` →
+      // lọc client-side (giữ nguyên hành vi: tab off chỉ hiện block active).
+      const items = r.items ?? [];
+      setItems(showInactive ? items : items.filter(it => it.is_active));
     } catch (err) {
       setError(
         err instanceof RxApiError ? err.code || err.message : 'LOAD_FAILED'

@@ -25,7 +25,9 @@ const publicRoutes = ['/api', '/_next', '/favicon.ico', '/scan', '/p/'];
  * Verify the local session cookie and return its `role` claim.
  * Returns `null` when there is no valid session (unauthenticated).
  */
-const getSessionRole = async (request: NextRequest): Promise<string | null> => {
+const getSession = async (
+  request: NextRequest
+): Promise<{ role: string; scope: 'brand' | 'platform' | '' } | null> => {
   const accessToken = request.cookies.get(constants.ACCESS_TOKEN)?.value;
 
   if (!accessToken) return null;
@@ -35,7 +37,12 @@ const getSessionRole = async (request: NextRequest): Promise<string | null> => {
     if (!jwtSecret) return null;
     const secret = new TextEncoder().encode(jwtSecret);
     const { payload } = await jwtVerify(accessToken, secret);
-    return typeof payload.role === 'string' ? payload.role : '';
+    const role = typeof payload.role === 'string' ? payload.role : '';
+    const scope =
+      payload.scope === 'brand' || payload.scope === 'platform'
+        ? payload.scope
+        : '';
+    return { role, scope };
   } catch {
     return null;
   }
@@ -62,16 +69,16 @@ export async function middleware(request: NextRequest) {
   const pathnameWithoutLocale =
     pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/';
 
-  const sessionRole = await getSessionRole(request);
-  const isAuth = sessionRole !== null;
+  const session = await getSession(request);
+  const isAuth = session !== null;
 
   if (isAuthRoute(pathnameWithoutLocale)) {
     if (isAuth) {
       // Already signed in: bounce off the auth page to the role's home
-      // (admin/staff → /admin, brand → /portal) instead of a generic landing.
+      // (admin → /admin, brand → /portal, còn lại → /home) — §C1.
       const target = pathnameWithoutLocale.startsWith('/cms/login')
         ? '/cms'
-        : roleHomePath(sessionRole);
+        : roleHomePath(session.role, session.scope || undefined);
       return NextResponse.redirect(new URL(target, request.url));
     }
     return NextResponse.next();
