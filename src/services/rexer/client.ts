@@ -31,6 +31,32 @@ export interface RxFetchOptions extends Omit<RequestInit, 'body'> {
   query?: Record<string, string | number | boolean | undefined | null>;
 }
 
+const now = (): number =>
+  typeof performance !== 'undefined' ? performance.now() : Date.now();
+
+/**
+ * Dev-only timing log for every BE call — helps spot which request is stalling
+ * navigation. Logged in the browser console only; no-op in production.
+ *   ✓ fast (<600ms) · ⚠️ slow (>600ms) · 🐢 very slow (>1500ms)
+ */
+function logTiming(
+  method: string,
+  path: string,
+  status: number | 'ERR',
+  ms: number
+): void {
+  if (process.env.NODE_ENV === 'production') return;
+  if (typeof window === 'undefined') return;
+  const tag = ms > 1500 ? '🐢' : ms > 600 ? '⚠️' : '✓';
+  const color = ms > 1500 ? '#dc2626' : ms > 600 ? '#d97706' : '#16a34a';
+  // eslint-disable-next-line no-console
+  console.log(
+    `%c[rx ${tag}] ${method} ${path} → ${status} %c${Math.round(ms)}ms`,
+    `color:${color};font-weight:600`,
+    `color:${color};font-weight:700`
+  );
+}
+
 function buildUrl(path: string, query?: RxFetchOptions['query']): string {
   const url = path.startsWith('http')
     ? path
@@ -61,7 +87,16 @@ export async function rx<T>(
   if (body !== undefined) {
     init.body = typeof body === 'string' ? body : JSON.stringify(body);
   }
-  const res = await fetch(buildUrl(path, query), init);
+  const method = (rest.method ?? 'GET').toUpperCase();
+  const t0 = now();
+  let res: Response;
+  try {
+    res = await fetch(buildUrl(path, query), init);
+  } catch (err) {
+    logTiming(method, path, 'ERR', now() - t0);
+    throw err;
+  }
+  logTiming(method, path, res.status, now() - t0);
   if (raw) return res as unknown as T;
 
   const text = await res.text();
