@@ -141,7 +141,7 @@ export type FeedbackStatus =
 export interface Feedback {
   id: string;
   user_id: string;
-  client_id?: string;
+  brand_id?: string;
   category: FeedbackCategory;
   severity?: FeedbackSeverity;
   title?: string;
@@ -216,7 +216,7 @@ export type AIUsageStatus = 'success' | 'error' | 'timeout';
 export interface AIUsage {
   id: string;
   user_id: string;
-  client_id?: string;
+  brand_id?: string;
   request_id: string;
   feature: AIUsageFeature;
   model: string;
@@ -274,7 +274,7 @@ export interface AIUsageUserRow {
 }
 
 export interface AIUsageClientRow {
-  client_id: string;
+  brand_id: string;
   client_name?: string;
   requests: number;
   total_tokens: number;
@@ -306,7 +306,7 @@ export interface AIUsageQuery {
   group_by?: 'day' | 'week' | 'feature' | 'model' | 'provider';
   status?: AIUsageStatus;
   user_id?: string;
-  client_id?: string;
+  brand_id?: string;
   feature?: AIUsageFeature;
   model?: string;
   provider?: AIUsageProvider;
@@ -481,7 +481,7 @@ export type UpdateClientRequest = Partial<CreateClientRequest>;
 
 export interface ClientUser {
   id: string;
-  client_id: string;
+  brand_id: string;
   email: string;
   display_name: string;
   status: string;
@@ -514,7 +514,7 @@ export interface UpdateClientUserRequest {
 // ── Media ────────────────────────────────────────────────────────────────
 export interface MediaAsset {
   id: string;
-  project_id: string | null;
+  page_id: string | null;
   owner_scope: string;
   original_filename: string;
   media_type: 'image' | 'video' | '3d' | string;
@@ -593,9 +593,12 @@ export interface AnalyticsDailyPoint {
 }
 
 // ── Template Analytics (admin, per spec be-template-analytics) ───────────
+// BE đổi template_id→page_id, template_title→page_title từ canonical cutover
+// (be-fe-handoff follow-up 2026-06-03). URL `/admin/analytics/templates/*`
+// giữ nguyên (chữ "templates" là tên cũ), nhưng path param là {pageId}.
 export interface TemplateAnalyticsSummaryRow {
-  template_id: string;
-  template_title: string | null;
+  page_id: string;
+  page_title: string | null;
   views: number;
   unique_visitors: number;
   blocks_viewed: number;
@@ -659,7 +662,11 @@ export interface BlockBreakdownRow {
 }
 
 export interface AnalyticsEventInput {
-  template_id: string;
+  // Ingest `POST /v1/analytics/events` chỉ nhận `page_id` (be-fe-handoff Q5
+  // 2026-06-03). Schema `template_id` cũ đã bị retire — event gửi kèm
+  // `template_id` bị BE drop âm thầm (empty page_id ⇒ bỏ event). `page_id` ==
+  // page UUID của canvas đang xem (canvas instance ≡ page, reuse cùng UUID).
+  page_id: string;
   block_id?: string;
   element_id?: string;
   element_role?: string;
@@ -683,7 +690,7 @@ export interface AnalyticsEventInput {
 
 // ── Events / Reports ─────────────────────────────────────────────────────
 export interface EventSummaryResponse {
-  project_id: string;
+  page_id: string;
   from: string;
   to: string;
   event_counts: Record<string, number>;
@@ -691,7 +698,7 @@ export interface EventSummaryResponse {
 
 export interface ReportLink {
   id: string;
-  project_id: string;
+  page_id: string;
   type: string;
   title: string;
   url: string;
@@ -761,7 +768,7 @@ export interface Product {
   slug?: string;
   sku?: string;
   category_id?: string;
-  client_id?: string;
+  brand_id?: string;
   description?: string;
   sizes?: string[];
   colors?: ProductColor[];
@@ -839,7 +846,7 @@ export interface CreateProductRequest {
   slug?: string;
   sku?: string;
   category_id?: string;
-  client_id?: string;
+  brand_id?: string;
   description?: string;
   sizes?: string[];
   colors?: ProductColor[];
@@ -911,7 +918,7 @@ export interface ProductCategory {
   name: string;
   description?: string;
   features?: ProductFeature[];
-  client_id?: string;
+  brand_id?: string;
   created_at?: string;
   updated_at?: string;
   created_by?: string;
@@ -949,9 +956,11 @@ export interface Campaign {
   id: string;
   name: string;
   product_id: string;
-  client_id?: string;
-  // `landing_project_id` removed — project-based landings deprecated. BE
-  // may still return this field on legacy rows; ignore on FE.
+  brand_id?: string;
+  // `landing_page_id`: canonical FK tới landing page (BE rename từ tên cũ
+  // dạng project). FE hiện chưa wire UI link campaign→landing nên thường
+  // nil; đọc khi BE set sẵn.
+  landing_page_id?: string;
   objective?: CampaignObjective | string;
   status?: string;
   channels?: string[];
@@ -980,9 +989,10 @@ export interface CampaignListResponse {
 export interface CreateCampaignRequest {
   name: string;
   product_id: string;
-  client_id?: string;
-  // `landing_project_id` removed — project-based landings deprecated. BE
-  // may still return this field on legacy rows; ignore on FE.
+  brand_id?: string;
+  // `landing_page_id`: canonical FK tới landing page (BE rename từ tên cũ
+  // dạng project). FE chưa set khi create (link qua notes); để optional.
+  landing_page_id?: string;
   objective?: CampaignObjective;
   channels?: string[];
   budget_amount?: number;
@@ -1030,47 +1040,10 @@ export interface AITemplateSuggestResponse {
   candidates: AITemplateCandidate[];
 }
 
-export interface AILandingDraftRequest {
-  product_id: string;
-  template_version_id: string;
-  brief?: string;
-}
-export interface AICopyBlock {
-  section: string;
-  heading: string;
-  body: string;
-  cta?: string;
-}
-export interface AILandingDraftResponse {
-  config_json: Record<string, unknown>;
-  copy_blocks: AICopyBlock[];
-}
-
-export interface AILandingOptimizeRequest {
-  project_id: string;
-}
-export interface AILandingSuggestion {
-  section: string;
-  change: string;
-  reason: string;
-}
-export interface AILandingOptimizeResponse {
-  suggestions: AILandingSuggestion[];
-}
-
-export interface AIMediaSuggestRequest {
-  product_id: string;
-  section_keys: string[];
-}
-/** Per-suggestion item — BE 2026-05 shape (was just `string`). */
-export interface AIMediaSuggestion {
-  media_id: string;
-  source?: string;
-}
-export interface AIMediaSuggestResponse {
-  /** Map of `section_key` → list of suggestion items (each carries a media_id). */
-  suggestions: Record<string, AIMediaSuggestion[]>;
-}
+// AI landing/media types removed (be-fe-handoff Q4, 2026-06-03): các route
+// `/ai/landing/{draft,optimize}` + `/ai/media/suggest` không tồn tại trên BE.
+// AI canonical = async jobs (`/ai/template-draft`, `/ai/slot-suggest`,
+// `/ai/page-optimize`, `/ai/image-generate`) + poll `/ai/jobs/:id`.
 
 export interface AICampaignPlanRequest {
   product_id: string;
@@ -1159,7 +1132,7 @@ export interface AIBlockContentResponse {
 // ── Canvas Templates (be-canvas-templates-spec.md) ───────────────────────
 export interface CanvasTemplate {
   id: string;
-  client_id?: string;
+  brand_id?: string;
   collection_id?: string;
   name: string;
   description?: string;
@@ -1518,14 +1491,14 @@ export type AITemplateErrorCode =
   | 'ERR_INTERNAL';
 
 // ── Workspaces (Phase 1 multitenancy — be-workspace-multitenancy-spec) ───
-// Cutover 2026-06-03 (migration 000143): object workspace VẪN carry
-// `client_id` — đây là field duy nhất cutover cố tình KHÔNG rename sang
-// `brand_id` (xác nhận swagger + be-fe-handoff-workspace-pages-2026-06-03 §1).
-// Đọc `client_id` như brand id (`client_id` == brand.id). Áp dụng cho cả
-// `GET /me/workspaces` lẫn `GET /brands/:id/workspaces`.
+// Cutover 2026-06-03 (refactor/canonical-brand-id-rename): workspace giờ
+// trả `brand_id` (`brand_id` == brand.id). Migration trước cố tình giữ tên
+// cũ cho riêng workspace; lần rename này đã xoá ngoại lệ đó — toàn bộ API
+// không còn tên cũ. Áp dụng cho cả `GET /me/workspaces` lẫn
+// `GET /brands/:id/workspaces`.
 export interface Workspace {
   id: string;
-  client_id: string;
+  brand_id: string;
   name: string;
   slug: string;
   description?: string;
@@ -1561,7 +1534,7 @@ export interface SwitchWorkspaceRequest {
 // ── Media folders (Drive-style hierarchy) ────────────────────────────────
 export interface MediaFolder {
   id: string;
-  client_id: string;
+  brand_id: string;
   workspace_id?: string;
   parent_id?: string;
   name: string;
@@ -1677,7 +1650,7 @@ export interface ActivityFeedResponse {
 // ── Staff inbox (admin/staff task queue) ────────────────────────────────
 export interface StaffInboxItem {
   id: string;
-  client_id?: string;
+  brand_id?: string;
   workspace_id?: string;
   kind: string;
   status: string;
@@ -1889,8 +1862,11 @@ export interface AdminUser {
   avatar_url?: string;
   role: string; // 'admin' | 'staff' | 'client_user' | 'brand_user'
   status: string; // 'active' | 'pending' | 'disabled'
-  client_id?: string; // populated for brand users
-  client_name?: string;
+  brand_id?: string; // populated for brand users (null cho admin/staff)
+  // BE shipped brand_id + brand_name ở /admin/users (be-fe-handoff Q1
+  // 2026-06-03). Swagger render AdminUserItem rỗng do swag limitation với
+  // embedded struct — runtime vẫn trả brand_name.
+  brand_name?: string;
   last_login_at?: string;
   created_at: string;
 }
@@ -1899,7 +1875,7 @@ export interface AdminUser {
 
 export interface SavedBlockServer {
   id: string;
-  client_id?: string;
+  brand_id?: string;
   workspace_id?: string;
   name: string;
   block_json?: Record<string, unknown>;
@@ -1949,7 +1925,7 @@ export type PortalAdStatus = 'draft' | 'active' | 'paused' | 'completed';
 
 export interface PortalAdCampaign {
   id: string;
-  client_id?: string;
+  brand_id?: string;
   workspace_id?: string;
   name: string;
   objective?: PortalAdObjective | string;

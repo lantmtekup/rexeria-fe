@@ -2,7 +2,7 @@
  * React hooks that wrap the singleton `tracker` for the public landing
  * route. Three hooks:
  *
- * - `useInitTracker(templateId)`: mounts the tracker + fires `page_view`
+ * - `useInitTracker(pageId)`: mounts the tracker + fires `page_view`
  *   once per session. Returns nothing — it's a side-effect hook.
  *
  * - `useBlockTracking()`: sets up the global click capture + scroll-depth
@@ -20,16 +20,16 @@ import { tracker } from './tracker';
 
 const pageViewFiredFor = new Set<string>();
 
-export function useInitTracker(templateId: string | null | undefined): void {
+export function useInitTracker(pageId: string | null | undefined): void {
   React.useEffect(() => {
-    if (!templateId) return;
-    tracker.init(templateId);
-    const key = `${templateId}:${tracker.session}`;
+    if (!pageId) return;
+    tracker.init(pageId);
+    const key = `${pageId}:${tracker.session}`;
     if (!pageViewFiredFor.has(key)) {
       pageViewFiredFor.add(key);
       tracker.emit({ event_type: 'page_view' });
     }
-  }, [templateId]);
+  }, [pageId]);
 }
 
 /* ---------------- click + scroll + intersection ---------------- */

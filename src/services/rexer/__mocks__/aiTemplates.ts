@@ -456,7 +456,7 @@ const MOCK_MEDIA_URLS: Record<string, string> = {
 function buildMockMedia(id: string): MediaAsset {
   return {
     id,
-    project_id: null,
+    page_id: null,
     owner_scope: 'library',
     original_filename: `${id}.jpg`,
     media_type: 'image',

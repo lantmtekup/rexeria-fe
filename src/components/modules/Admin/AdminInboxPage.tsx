@@ -354,9 +354,9 @@ function InboxRow({
             <span>· Nhận {relativeTime(item.claimed_at)}</span>
           )}
           {item.done_at && <span>· Đóng {relativeTime(item.done_at)}</span>}
-          {item.client_id && (
+          {item.brand_id && (
             <span className='font-mono'>
-              · brand <code>{item.client_id.slice(0, 8)}…</code>
+              · brand <code>{item.brand_id.slice(0, 8)}…</code>
             </span>
           )}
         </div>

@@ -759,7 +759,7 @@ function ProductsTab({
 }) {
   return (
     <LazyList<Product>
-      load={() => rexerApi.products.list({ client_id: clientId, limit: 50 })}
+      load={() => rexerApi.products.list({ brand_id: clientId, limit: 50 })}
       onCount={onCount}
       empty='Khách hàng chưa có product nào'
       render={p => (

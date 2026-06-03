@@ -46,7 +46,7 @@ export interface CollectionFieldConfig {
 
 export interface DataCollection {
   id: string;
-  client_id?: string | null;
+  brand_id?: string | null;
   name: string;
   slug: string;
   description?: string | null;
