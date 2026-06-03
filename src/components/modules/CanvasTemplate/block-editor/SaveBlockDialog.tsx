@@ -15,11 +15,10 @@ import {
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 
-import {
-  getSavedBlock,
-  saveBlock,
-  updateSavedBlockContent,
-} from './savedBlocks';
+import { rexerApi } from '@/services/rexer/endpoints';
+import { RxApiError } from '@/services/rexer/client';
+
+import { getSavedBlock } from './savedBlocks';
 import type { Block } from './types';
 
 interface Props {
@@ -61,6 +60,8 @@ export function SaveBlockDialog({
 }: Props) {
   const [name, setName] = React.useState('');
 
+  const [saving, setSaving] = React.useState(false);
+
   const editingEntry = React.useMemo(
     () =>
       editingSavedBlockId ? getSavedBlock(editingSavedBlockId) : undefined,
@@ -68,7 +69,7 @@ export function SaveBlockDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [editingSavedBlockId, open]
   );
-  const isEditing = !!editingEntry;
+  const isEditing = !!editingSavedBlockId;
 
   React.useEffect(() => {
     if (!open) return;
@@ -76,7 +77,16 @@ export function SaveBlockDialog({
     else if (block) setName(block.name ?? '');
   }, [open, block, editingEntry]);
 
-  const persistAsNew = (e?: React.FormEvent) => {
+  const errMsg = (err: unknown) =>
+    err instanceof RxApiError
+      ? err.code || err.message
+      : err instanceof Error
+        ? err.message
+        : 'SAVE_FAILED';
+
+  // Lưu vào thư viện BE (`/v1/blocks`) — cùng nguồn mà tab "Đã lưu" /
+  // /admin/blocks đọc. (Trước đây lưu localStorage nên không bao giờ hiện lại.)
+  const persistAsNew = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!block) return;
     const trimmed = name.trim();
@@ -84,28 +94,46 @@ export function SaveBlockDialog({
       toast.error('Tên block không được để trống');
       return;
     }
-    const saved = saveBlock(trimmed, block);
-    toast.success(`Đã lưu "${saved.name}" vào thư viện`);
-    onSaved?.(saved.id);
-    onOpenChange(false);
+    setSaving(true);
+    try {
+      const created = await rexerApi.blocks.create({
+        type_code: block.blockType,
+        name: trimmed,
+        settings: block as unknown as Record<string, unknown>,
+        tags: [],
+      });
+      toast.success(`Đã lưu "${trimmed}" vào thư viện`);
+      onSaved?.(created.id);
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(`Lưu thất bại: ${errMsg(err)}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const persistOverwrite = () => {
-    if (!block || !editingEntry) return;
+  const persistOverwrite = async () => {
+    if (!block || !editingSavedBlockId) return;
     const trimmed = name.trim();
     if (!trimmed) {
       toast.error('Tên block không được để trống');
       return;
     }
-    const updated = updateSavedBlockContent(editingEntry.id, block, trimmed);
-    if (!updated) {
-      toast.error('Không tìm thấy block gốc để cập nhật');
-      return;
+    setSaving(true);
+    try {
+      const updated = await rexerApi.blocks.update(editingSavedBlockId, {
+        name: trimmed,
+        settings: block as unknown as Record<string, unknown>,
+      });
+      toast.success(`Đã cập nhật "${trimmed}"`);
+      onSaved?.(updated.id);
+      onOpenChange(false);
+      onOverwriteSuccess?.();
+    } catch (err) {
+      toast.error(`Cập nhật thất bại: ${errMsg(err)}`);
+    } finally {
+      setSaving(false);
     }
-    toast.success(`Đã cập nhật "${updated.name}"`);
-    onSaved?.(updated.id);
-    onOpenChange(false);
-    onOverwriteSuccess?.();
   };
 
   return (
@@ -126,7 +154,7 @@ export function SaveBlockDialog({
                 <>
                   Đang sửa bản gốc{' '}
                   <code className='rounded bg-zinc-100 px-1 font-mono text-[11px]'>
-                    {editingEntry.id}
+                    {editingSavedBlockId}
                   </code>
                   . Cập nhật sẽ ghi đè nội dung &amp; ngày sửa; ID + tag giữ
                   nguyên.
@@ -162,7 +190,7 @@ export function SaveBlockDialog({
                 type='button'
                 variant='outline'
                 onClick={() => persistAsNew()}
-                disabled={!name.trim()}
+                disabled={!name.trim() || saving}
                 title='Lưu thành bản mới — bản gốc không đổi'
               >
                 Lưu bản mới
@@ -171,10 +199,10 @@ export function SaveBlockDialog({
             <Button
               type={isEditing ? 'button' : 'submit'}
               variant='primary'
-              disabled={!name.trim()}
+              disabled={!name.trim() || saving}
               onClick={isEditing ? persistOverwrite : undefined}
             >
-              {isEditing ? 'Cập nhật bản gốc' : 'Lưu'}
+              {saving ? 'Đang lưu…' : isEditing ? 'Cập nhật bản gốc' : 'Lưu'}
             </Button>
           </DialogFooter>
         </form>
