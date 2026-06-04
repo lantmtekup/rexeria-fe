@@ -24,6 +24,7 @@ import { cn } from '@/lib/cn';
 
 import type { PortalTemplate } from '../_data';
 import { loadTemplates } from '../_remote';
+import { useActiveWorkspace } from '../_workspace';
 
 const OBJECTIVES: { value: PortalAdObjective; label: string; desc: string }[] =
   [
@@ -87,6 +88,15 @@ export function CreateCampaignDialog({
     { id: string; name: string }[]
   >([]);
   const [templates, setTemplates] = useState<PortalTemplate[]>([]);
+  const activeWs = useActiveWorkspace();
+
+  // Landing page đích chỉ trong workspace+brand hiện tại (template không gắn
+  // workspace = shared → vẫn cho chọn). Brand-scope đã do BE listTemplates.
+  const scopedTemplates = useMemo(
+    () =>
+      templates.filter(t => !t.workspace_id || t.workspace_id === activeWs.id),
+    [templates, activeWs.id]
+  );
 
   // Reset + load options when opening
   useEffect(() => {
@@ -403,7 +413,7 @@ export function CreateCampaignDialog({
                   className='border-border mt-1.5 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 >
                   <option value=''>— Chưa gắn landing page —</option>
-                  {templates.map(t => (
+                  {scopedTemplates.map(t => (
                     <option key={t.id} value={t.id}>
                       {t.name}
                     </option>
