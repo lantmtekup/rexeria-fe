@@ -416,20 +416,20 @@ export default function PortalDomainsPage() {
     <PortalShell>
       <Link
         href='/portal/profile'
-        className='group inline-flex items-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
+        className='group inline-flex items-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
       >
         <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
         Profile
       </Link>
 
       <section className='mt-5'>
-        <div className='flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+        <div className='text-2xs flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
           <Globe className='size-3' /> Custom domains
         </div>
         <h1 className='mt-1 text-2xl font-bold tracking-tight'>
           Tên miền tuỳ chỉnh
         </h1>
-        <p className='mt-1 text-[13px] text-zinc-500'>
+        <p className='mt-1 text-sm text-zinc-500'>
           Map domain riêng (vd <code className='font-mono'>coca.vn</code>) tới
           workspace để landing pages của bạn live tại URL chính chủ. Rexer xác
           thực qua DNS + tự động cấp TLS.
@@ -437,7 +437,7 @@ export default function PortalDomainsPage() {
       </section>
 
       {source === 'fake' && (
-        <div className='mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-[12px] text-amber-800'>
+        <div className='mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800'>
           <ShieldAlert className='mt-0.5 size-3.5 shrink-0' />
           <span>
             Đang hiển thị dữ liệu demo — chưa lấy được brand/workspace từ BE
@@ -476,7 +476,7 @@ export default function PortalDomainsPage() {
 
       {/* Add CTA */}
       <div className='mt-5 flex items-center justify-between gap-3'>
-        <p className='text-[11.5px] text-zinc-500'>
+        <p className='text-2xs text-zinc-500'>
           Đang quản lý <strong>{domains.length}</strong> domain · Brand quota
           không giới hạn Phase 1
         </p>
@@ -495,10 +495,10 @@ export default function PortalDomainsPage() {
         {domains.length === 0 ? (
           <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center'>
             <Globe className='mx-auto size-8 text-zinc-300' />
-            <p className='mt-3 text-[14px] font-semibold text-zinc-700'>
+            <p className='mt-3 text-sm font-semibold text-zinc-700'>
               Chưa có custom domain
             </p>
-            <p className='mt-1 text-[12px] text-zinc-500'>
+            <p className='mt-1 text-xs text-zinc-500'>
               Bấm &ldquo;Thêm domain&rdquo; để map tên miền riêng của brand vào
               Rexer.
             </p>
@@ -567,12 +567,12 @@ function DomainCard({
           </div>
           <div className='min-w-0'>
             <div className='flex flex-wrap items-center gap-2'>
-              <h3 className='truncate font-mono text-[15px] font-semibold text-zinc-900'>
+              <h3 className='truncate font-mono text-base font-semibold text-zinc-900'>
                 {domain.domain}
               </h3>
               <StatusPill status={domain.status} />
             </div>
-            <div className='mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500'>
+            <div className='text-2xs mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-zinc-500'>
               <span className='inline-flex items-center gap-1'>
                 <TargetIcon className='size-3' />
                 {target.label}
@@ -632,13 +632,13 @@ function DomainCard({
         {/* Bind landing page (target: landing) */}
         {domain.target_type === 'landing' && (
           <div className='mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50/60 px-3 py-2.5'>
-            <span className='inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <span className='text-2xs inline-flex items-center gap-1.5 font-semibold tracking-wider text-zinc-500 uppercase'>
               <Globe className='size-3' /> Landing page
             </span>
             <select
               value={domain.page_id ?? ''}
               onChange={e => onBind(e.target.value)}
-              className='ml-auto min-w-[200px] rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[13px] outline-none focus:border-zinc-900'
+              className='ml-auto min-w-[200px] rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-zinc-900'
             >
               <option value=''>— Chưa gắn landing page —</option>
               {pages.map(p => (
@@ -648,7 +648,7 @@ function DomainCard({
               ))}
             </select>
             {domain.page_id && (
-              <span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700'>
+              <span className='text-3xs inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 font-bold text-emerald-700'>
                 <CheckCircle2 className='size-2.5' /> Đã gắn
               </span>
             )}
@@ -657,7 +657,7 @@ function DomainCard({
 
         {showDns && (
           <div className='mt-5'>
-            <div className='mb-2 flex items-center gap-2 text-[10.5px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+            <div className='text-3xs mb-2 flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
               <ShieldAlert className='size-3' />
               DNS records — thêm tại nhà cung cấp domain
             </div>
@@ -677,7 +677,7 @@ function DomainCard({
               name={`_rexer-verify.${domain.domain}`}
               value={`rexer-verify=${domain.verification_token}`}
             />
-            <p className='mt-2 text-[11px] text-zinc-500'>
+            <p className='text-2xs mt-2 text-zinc-500'>
               DNS thường propagate trong 5-30 phút. Bấm{' '}
               <strong>Verify ngay</strong> sau khi đã add record. Rexer cũng tự
               poll mỗi 5 phút.
@@ -686,7 +686,7 @@ function DomainCard({
         )}
 
         {domain.status === 'failed' && domain.failure_reason && (
-          <div className='mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800'>
+          <div className='mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
             <strong>Verify thất bại:</strong> {domain.failure_reason}
           </div>
         )}
@@ -711,7 +711,7 @@ function Timeline({
   const live = status === 'active';
 
   return (
-    <div className='flex items-center gap-2 text-[11px]'>
+    <div className='text-2xs flex items-center gap-2'>
       <Step active={dnsDone} loading={status === 'verifying'} label='DNS' />
       <Connector active={dnsDone} />
       <Step active={tlsDone} label='TLS' />
@@ -803,7 +803,7 @@ function DnsRecord({
   return (
     <div className='group relative mt-2 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-900'>
       {/* Kind chip */}
-      <div className='absolute top-0 left-0 rounded-br-lg bg-zinc-800 px-2 py-0.5 font-mono text-[10px] font-bold tracking-wider text-zinc-300'>
+      <div className='text-3xs absolute top-0 left-0 rounded-br-lg bg-zinc-800 px-2 py-0.5 font-mono font-bold tracking-wider text-zinc-300'>
         {kind}
       </div>
       <button
@@ -818,7 +818,7 @@ function DnsRecord({
           <Copy className='size-3.5' />
         )}
       </button>
-      <div className='overflow-x-auto px-3 pt-7 pb-3 font-mono text-[11.5px] leading-relaxed'>
+      <div className='text-2xs overflow-x-auto px-3 pt-7 pb-3 font-mono leading-relaxed'>
         <div className='flex flex-wrap items-baseline gap-x-3 whitespace-nowrap'>
           <span className='text-blue-300'>Name</span>
           <span className='text-white'>{name}</span>
@@ -839,7 +839,7 @@ function StatusPill({ status }: { status: DomainStatus }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase',
+        'text-3xs inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase',
         meta.chip
       )}
     >
@@ -878,7 +878,7 @@ function StatCard({
     <div
       className={cn('rounded-2xl border px-4 py-3 shadow-sm', palette[accent])}
     >
-      <div className='flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase opacity-75'>
+      <div className='text-3xs flex items-center gap-1.5 font-semibold tracking-[0.18em] uppercase opacity-75'>
         {icon}
         {label}
       </div>
@@ -939,7 +939,7 @@ function AddDomainDialog({
             <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-sm'>
               <Globe className='size-4' />
             </div>
-            <h3 className='text-[15px] font-semibold'>Thêm custom domain</h3>
+            <h3 className='text-base font-semibold'>Thêm custom domain</h3>
           </div>
           <button
             type='button'
@@ -953,7 +953,7 @@ function AddDomainDialog({
 
         <div className='space-y-4 px-5 py-4'>
           <div>
-            <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
               Domain <span className='text-rose-500'>*</span>
             </label>
             <input
@@ -965,16 +965,16 @@ function AddDomainDialog({
                 setError(null);
               }}
               placeholder='coca.vn hoặc campaigns.coca.vn'
-              className='mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 font-mono text-[14px] outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             />
-            <p className='mt-1 text-[10.5px] text-zinc-500'>
+            <p className='text-3xs mt-1 text-zinc-500'>
               Apex (coca.vn) hoặc subdomain (campaigns.coca.vn). Không có
               http(s):// hoặc path.
             </p>
           </div>
 
           <div>
-            <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
               Mục đích
             </label>
             <div className='mt-2 space-y-2'>
@@ -1000,11 +1000,11 @@ function AddDomainDialog({
                       className='mt-1.5 size-3.5 accent-emerald-600'
                     />
                     <div className='flex-1'>
-                      <div className='flex items-center gap-1.5 text-[13px] font-semibold text-zinc-900'>
+                      <div className='flex items-center gap-1.5 text-sm font-semibold text-zinc-900'>
                         <Icon className='size-3.5' />
                         {meta.label}
                       </div>
-                      <p className='mt-0.5 text-[11px] leading-snug text-zinc-500'>
+                      <p className='text-2xs mt-0.5 leading-snug text-zinc-500'>
                         {meta.description}
                       </p>
                     </div>
@@ -1015,12 +1015,12 @@ function AddDomainDialog({
           </div>
 
           {error && (
-            <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800'>
+            <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
               {error}
             </div>
           )}
 
-          <div className='rounded-lg border border-amber-100 bg-amber-50/60 px-3 py-2 text-[11px] leading-relaxed text-amber-900'>
+          <div className='text-2xs rounded-lg border border-amber-100 bg-amber-50/60 px-3 py-2 leading-relaxed text-amber-900'>
             <strong>Sau khi thêm:</strong> bạn sẽ thấy 2 DNS records (CNAME +
             TXT) để add tại nhà cung cấp domain. Rexer auto-verify sau khi DNS
             propagate (5-30 phút).

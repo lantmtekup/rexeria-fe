@@ -49,7 +49,39 @@ Form phức tạp: `Form` atom + `react-hook-form` + `zod` (đã có `@hookform/
 - Ưu tiên token design-system (`text-foreground`, `text-content-muted`, `border-border`,
   `bg-muted`) thay vì hardcode `zinc-*` rải rác khi có token tương đương.
 
-## 5. Handler & props
+## 5. Design tokens — font-size, màu, radius (ĐỒNG BỘ)
+
+**Font-size — KHÔNG dùng `text-[Npx]` tuỳ tiện.** Dùng class scale:
+
+| px cũ | Class | px |
+|---|---|---|
+| 8, 9, 9.5, 10, 10.5 | `text-3xs` | 10 |
+| 11, 11.5 | `text-2xs` | 11 |
+| 12, 12.5 | `text-xs` | 12 |
+| 13, 13.5, 14 | `text-sm` | 14 |
+| 15, 16 | `text-base` | 16 |
+| 18 | `text-lg` · 20 `text-xl` · 24/26 `text-2xl` · 38/40 `text-4xl` · 56 `text-6xl` · 72 `text-7xl` | |
+
+(`text-3xs`/`text-2xs` định nghĩa trong `globals.css @theme`.)
+
+**Màu — dùng token ngữ nghĩa, KHÔNG hardcode `zinc-*`** (vừa đồng bộ vừa support dark-mode):
+
+| Thay vì | Dùng |
+|---|---|
+| `text-zinc-900/950`, `text-black` | `text-foreground` |
+| `text-zinc-500/600` | `text-content-muted` (hoặc `text-muted-foreground`) |
+| `text-zinc-400` | `text-muted-foreground` |
+| `bg-zinc-50/100` | `bg-muted` |
+| `bg-white` (card/surface) | `bg-background` / `bg-card` |
+| `border-zinc-200` | `border-border` |
+| `ring-zinc-*` | `ring-ring` |
+| brand blue cứng (`bg-blue-600`) | `bg-primary` / `text-primary` |
+
+**Radius — quy ước:** `rounded-md` (input/button nhỏ) · `rounded-lg` (button/card thường) ·
+`rounded-xl`→`rounded-2xl` (panel/modal/section) · `rounded-full` (avatar/pill/chip).
+Đừng trộn `rounded` (trơn) với các bậc khác trong cùng cụm.
+
+## 6. Handler & props
 
 - Logic > 1 dòng: đặt tên hàm (`const handleSave = …`), không nhồi inline `onClick={() => {...}}`.
 - Tránh bùng nổ boolean-prop; nhiều biến thể → compound component / `variant`.
@@ -61,3 +93,6 @@ Form phức tạp: `Form` atom + `react-hook-form` + `zod` (đã có `@hookform/
 - [ ] Không có chuỗi Tailwind dài lặp ≥ 2 lần.
 - [ ] Class điều kiện qua `cn()`.
 - [ ] Molecules tái dùng thay vì dựng lại.
+- [ ] Font-size dùng class scale (`text-3xs…text-7xl`), KHÔNG `text-[Npx]`.
+- [ ] Màu dùng token (`text-foreground`/`content-muted`/`border-border`/`bg-muted`), KHÔNG `zinc-*`.
+- [ ] Radius theo quy ước (md/lg/xl/2xl/full).

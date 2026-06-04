@@ -176,10 +176,10 @@ export function CreateCampaignDialog({
               <Megaphone className='size-4' />
             </div>
             <div>
-              <h3 className='text-[15px] leading-tight font-semibold'>
+              <h3 className='text-base leading-tight font-semibold'>
                 Tạo campaign
               </h3>
-              <p className='mt-0.5 text-[11px] text-zinc-500'>
+              <p className='text-2xs mt-0.5 text-zinc-500'>
                 Chiến dịch quảng cáo mới (lưu nháp)
               </p>
             </div>
@@ -208,7 +208,7 @@ export function CreateCampaignDialog({
                 >
                   <span
                     className={cn(
-                      'flex size-6 items-center justify-center rounded-full text-[11px] font-bold transition-colors',
+                      'text-2xs flex size-6 items-center justify-center rounded-full font-bold transition-colors',
                       active && 'bg-blue-600 text-white',
                       done && 'bg-emerald-500 text-white',
                       !active && !done && 'bg-zinc-100 text-zinc-400'
@@ -222,7 +222,7 @@ export function CreateCampaignDialog({
                   </span>
                   <span
                     className={cn(
-                      'text-[12px] font-medium',
+                      'text-xs font-medium',
                       active ? 'text-zinc-900' : 'text-zinc-400'
                     )}
                   >
@@ -248,7 +248,7 @@ export function CreateCampaignDialog({
           {step === 0 && (
             <div className='space-y-4'>
               <div>
-                <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
                   Tên campaign <span className='text-rose-500'>*</span>
                 </label>
                 <input
@@ -256,14 +256,14 @@ export function CreateCampaignDialog({
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder='vd: Coca-Cola Tết 2026 — Awareness'
-                  className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                  className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                   maxLength={128}
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className='mb-1.5 block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs mb-1.5 block font-semibold tracking-wider text-zinc-500 uppercase'>
                   Mục tiêu
                 </label>
                 <div className='grid grid-cols-2 gap-2'>
@@ -279,10 +279,10 @@ export function CreateCampaignDialog({
                           : 'border-zinc-200 hover:bg-zinc-50'
                       )}
                     >
-                      <span className='block text-[13px] font-semibold text-zinc-900'>
+                      <span className='block text-sm font-semibold text-zinc-900'>
                         {o.label}
                       </span>
-                      <span className='block text-[11px] text-zinc-500'>
+                      <span className='text-2xs block text-zinc-500'>
                         {o.desc}
                       </span>
                     </button>
@@ -291,12 +291,12 @@ export function CreateCampaignDialog({
               </div>
 
               <div>
-                <label className='mb-1.5 block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs mb-1.5 block font-semibold tracking-wider text-zinc-500 uppercase'>
                   Kênh chạy
                 </label>
                 <div className='flex flex-wrap gap-1.5'>
                   {channelOpts.length === 0 && (
-                    <span className='text-[12px] text-zinc-400'>
+                    <span className='text-xs text-zinc-400'>
                       Đang tải kênh…
                     </span>
                   )}
@@ -308,7 +308,7 @@ export function CreateCampaignDialog({
                         type='button'
                         onClick={() => toggleChannel(c.id)}
                         className={cn(
-                          'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-medium transition-colors',
+                          'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                           on
                             ? 'border-blue-500 bg-blue-600 text-white'
                             : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
@@ -328,7 +328,7 @@ export function CreateCampaignDialog({
           {step === 1 && (
             <div className='space-y-4'>
               <div>
-                <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
                   Ngân sách
                 </label>
                 <div className='mt-1.5 flex items-center gap-2'>
@@ -338,14 +338,14 @@ export function CreateCampaignDialog({
                     value={budget}
                     onChange={e => setBudget(e.target.value)}
                     placeholder='vd: 50000000'
-                    className='w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                    className='w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                   />
-                  <span className='shrink-0 rounded-lg bg-zinc-100 px-3 py-2 text-[13px] font-medium text-zinc-600'>
+                  <span className='shrink-0 rounded-lg bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-600'>
                     VND
                   </span>
                 </div>
                 {budget && (
-                  <p className='mt-1 text-[11px] text-zinc-400'>
+                  <p className='text-2xs mt-1 text-zinc-400'>
                     ≈ {(Number(budget) / 1_000_000).toLocaleString('vi-VN')}M
                     VND
                   </p>
@@ -354,7 +354,7 @@ export function CreateCampaignDialog({
 
               <div className='grid grid-cols-2 gap-3'>
                 <div>
-                  <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                  <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
                     Bắt đầu
                   </label>
                   <div className='mt-1.5 flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2'>
@@ -363,12 +363,12 @@ export function CreateCampaignDialog({
                       type='date'
                       value={startDate}
                       onChange={e => setStartDate(e.target.value)}
-                      className='w-full bg-transparent text-[13px] outline-none'
+                      className='w-full bg-transparent text-sm outline-none'
                     />
                   </div>
                 </div>
                 <div>
-                  <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                  <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
                     Kết thúc
                   </label>
                   <div className='mt-1.5 flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2'>
@@ -378,12 +378,12 @@ export function CreateCampaignDialog({
                       value={endDate}
                       min={startDate || undefined}
                       onChange={e => setEndDate(e.target.value)}
-                      className='w-full bg-transparent text-[13px] outline-none'
+                      className='w-full bg-transparent text-sm outline-none'
                     />
                   </div>
                 </div>
               </div>
-              <p className='text-[11px] text-zinc-400'>
+              <p className='text-2xs text-zinc-400'>
                 Tất cả tuỳ chọn — có thể bỏ trống và chỉnh sau trong chi tiết
                 campaign.
               </p>
@@ -394,13 +394,13 @@ export function CreateCampaignDialog({
           {step === 2 && (
             <div className='space-y-4'>
               <div>
-                <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
                   Landing page đích
                 </label>
                 <select
                   value={templateId}
                   onChange={e => setTemplateId(e.target.value)}
-                  className='mt-1.5 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                  className='mt-1.5 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 >
                   <option value=''>— Chưa gắn landing page —</option>
                   {templates.map(t => (
@@ -409,13 +409,13 @@ export function CreateCampaignDialog({
                     </option>
                   ))}
                 </select>
-                <p className='mt-1 text-[11px] text-zinc-400'>
+                <p className='text-2xs mt-1 text-zinc-400'>
                   Traffic từ campaign sẽ đổ về landing page này.
                 </p>
               </div>
 
               <div>
-                <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
                   UTM campaign
                 </label>
                 <input
@@ -426,12 +426,12 @@ export function CreateCampaignDialog({
                     setUtm(e.target.value);
                   }}
                   placeholder='auto từ tên campaign'
-                  className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 font-mono text-[13px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                  className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 font-mono text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 />
               </div>
 
               <div>
-                <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
                   Ghi chú
                 </label>
                 <textarea
@@ -439,7 +439,7 @@ export function CreateCampaignDialog({
                   onChange={e => setNotes(e.target.value)}
                   rows={2}
                   placeholder='(tuỳ chọn)'
-                  className='mt-1.5 w-full resize-none rounded-lg border border-zinc-200 px-3 py-2 text-[13px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                  className='mt-1.5 w-full resize-none rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 />
               </div>
             </div>
@@ -463,7 +463,7 @@ export function CreateCampaignDialog({
             )}
           </button>
 
-          <div className='text-[11px] text-zinc-400'>
+          <div className='text-2xs text-zinc-400'>
             Bước {step + 1}/{STEPS.length}
           </div>
 

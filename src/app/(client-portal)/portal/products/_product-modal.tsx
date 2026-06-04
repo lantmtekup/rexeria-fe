@@ -324,10 +324,10 @@ export function ProductFormModal({
               <Package className='size-4' />
             </div>
             <div>
-              <h3 className='text-[15px] leading-tight font-semibold'>
+              <h3 className='text-base leading-tight font-semibold'>
                 {isEdit ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}
               </h3>
-              <p className='mt-0.5 text-[11px] text-zinc-500'>
+              <p className='text-2xs mt-0.5 text-zinc-500'>
                 {isEdit ? product!.sku : 'Điền thông tin theo từng bước'}
               </p>
             </div>
@@ -356,7 +356,7 @@ export function ProductFormModal({
                 >
                   <span
                     className={cn(
-                      'flex size-6 items-center justify-center rounded-full text-[11px] font-bold transition-colors',
+                      'text-2xs flex size-6 items-center justify-center rounded-full font-bold transition-colors',
                       active && 'bg-orange-500 text-white',
                       done && 'bg-emerald-500 text-white',
                       !active && !done && 'bg-zinc-100 text-zinc-400'
@@ -370,7 +370,7 @@ export function ProductFormModal({
                   </span>
                   <span
                     className={cn(
-                      'text-[12px] font-medium',
+                      'text-xs font-medium',
                       active ? 'text-zinc-900' : 'text-zinc-400'
                     )}
                   >
@@ -396,7 +396,7 @@ export function ProductFormModal({
           {step === 0 && (
             <div className='space-y-4'>
               <div>
-                <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
                   Tên sản phẩm <span className='text-rose-500'>*</span>
                 </label>
                 <input
@@ -406,7 +406,7 @@ export function ProductFormModal({
                     setValue(v => ({ ...v, name: e.target.value }))
                   }
                   placeholder='vd: Coca-Cola Original 330ml'
-                  className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100'
+                  className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100'
                   maxLength={128}
                   autoFocus
                 />
@@ -449,7 +449,7 @@ export function ProductFormModal({
               </div>
               {/* Thumbnail */}
               <div>
-                <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
                   Ảnh đại diện
                 </label>
                 {thumbnail ? (
@@ -469,7 +469,7 @@ export function ProductFormModal({
                     </button>
                   </div>
                 ) : (
-                  <label className='mt-1.5 flex h-20 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 text-[13px] text-zinc-500 hover:border-orange-300 hover:bg-orange-50/40'>
+                  <label className='mt-1.5 flex h-20 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 text-sm text-zinc-500 hover:border-orange-300 hover:bg-orange-50/40'>
                     <ImagePlus className='size-4' /> Tải ảnh lên
                     <input
                       type='file'
@@ -488,7 +488,7 @@ export function ProductFormModal({
           {/* Step 1 — Hình ảnh (gallery) */}
           {step === 1 && (
             <div>
-              <p className='mb-3 text-[13px] text-zinc-500'>
+              <p className='mb-3 text-sm text-zinc-500'>
                 Thư viện ảnh sản phẩm — dùng cho landing page & detail. (
                 {gallery.length} ảnh)
               </p>
@@ -516,7 +516,7 @@ export function ProductFormModal({
                     </button>
                   </div>
                 ))}
-                <label className='flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-zinc-300 text-[11px] text-zinc-500 hover:border-orange-300 hover:bg-orange-50/40'>
+                <label className='text-2xs flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-zinc-300 text-zinc-500 hover:border-orange-300 hover:bg-orange-50/40'>
                   <ImagePlus className='size-5' />
                   Thêm ảnh
                   <input
@@ -588,7 +588,7 @@ export function ProductFormModal({
             )}
           </button>
 
-          <div className='text-[11px] text-zinc-400'>
+          <div className='text-2xs text-zinc-400'>
             Bước {step + 1}/{STEPS.length}
           </div>
 
