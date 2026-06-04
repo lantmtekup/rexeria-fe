@@ -1042,7 +1042,7 @@ export function BlockEditor({
           canvas.redo();
           autosave.markDirty();
         }}
-        onPublish={() => setPublishOpen(true)}
+        onPublish={pageId ? () => setPublishOpen(true) : undefined}
         onPlayMotionPreview={motionPreview.playBlock}
         onOpenMotionEditor={() => setMotionEditorOpen(true)}
         canUndo={canvas.canUndo}
