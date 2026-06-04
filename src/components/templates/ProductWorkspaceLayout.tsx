@@ -45,17 +45,13 @@ function ProductWorkspaceLayout({
   actions,
   children,
 }: ProductWorkspaceLayoutProps) {
-  // Product tabs: [Product, Landing, Marketing]
+  // Product tabs: [Product, Marketing]. "Landing" bị gỡ — route
+  // `${basePath}/landing` chưa tồn tại nên tab đó dẫn tới NotFound.
   const topTabs = [
     {
       key: 'product',
       label: 'Product',
       href: `${basePath}/information`,
-    },
-    {
-      key: 'landing',
-      label: 'Landing',
-      href: `${basePath}/landing`,
     },
     {
       key: 'marketing',

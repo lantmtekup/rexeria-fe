@@ -231,7 +231,7 @@ export default function PortalDashboardPage() {
               href='/portal/landing-pages'
               icon={LayoutTemplate}
               title='Xem landing pages'
-              desc='Browse 12 landing page Rexer đã làm'
+              desc='Browse các landing page Rexer đã làm'
               accent='indigo'
             />
             <QuickAction

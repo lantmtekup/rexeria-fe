@@ -346,10 +346,8 @@ export default function PortalProfilePage() {
                   className='size-16 rounded-2xl object-cover shadow-md'
                 />
               ) : (
-                <div
-                  className={`flex size-16 items-center justify-center rounded-2xl ${FAKE_BRAND.logo_color} font-mono text-xl font-bold text-white shadow-md`}
-                >
-                  {FAKE_BRAND.logo_initial}
+                <div className='flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500 to-orange-500 font-mono text-xl font-bold text-white shadow-md'>
+                  {brandInitials(client?.name)}
                 </div>
               )}
               <div className='flex-1'>
@@ -494,6 +492,16 @@ export default function PortalProfilePage() {
       />
     </PortalShell>
   );
+}
+
+/** Initials viết tắt từ tên brand (vd "Tekup Solutions" → "TS"). */
+function brandInitials(name?: string | null): string {
+  const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '—';
+  return parts
+    .slice(0, 2)
+    .map(p => p[0]?.toUpperCase() ?? '')
+    .join('');
 }
 
 /** Format `joined_at` defensively — BE sometimes returns an empty/invalid date. */

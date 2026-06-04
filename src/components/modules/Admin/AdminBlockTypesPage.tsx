@@ -171,8 +171,8 @@ export function AdminBlockTypesPage() {
                 Catalog blocks hệ thống
               </h1>
               <p className='text-content-muted mt-1 text-sm'>
-                Quản lý 14+ block types brand dùng để dựng landing/ad/curate.
-                Mỗi type có <code className='font-mono'>props_schema</code> +{' '}
+                Quản lý block types brand dùng để dựng landing/ad/curate. Mỗi
+                type có <code className='font-mono'>props_schema</code> +{' '}
                 <code className='font-mono'>supported_surfaces</code>.
               </p>
             </div>
