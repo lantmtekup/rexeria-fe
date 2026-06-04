@@ -38,45 +38,19 @@ import {
   type SavedBlock,
 } from '@/components/modules/CanvasTemplate/block-editor/savedBlocks';
 import { serializeCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
+import { BLOCK_TYPE_META } from '@/components/modules/CanvasTemplate/block-editor/types';
 import type { BlockType } from '@/components/modules/CanvasTemplate/block-editor/types';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
 
-const BLOCK_TYPE_LABEL: Record<BlockType, string> = {
-  hero_split: 'Hero Split',
-  hero_overlay: 'Hero Overlay',
-  feature_section: 'Features',
-  photo_gallery: 'Photo Gallery',
-  booking_form: 'Booking Form',
-  cta_section: 'CTA',
-  image_carousel: 'Carousel',
-  stories: 'Stories',
-  split_screen: 'Split Screen',
-  quiz: 'Quiz',
-  poll: 'Poll',
-  carousel_3d: 'Carousel 3D',
-  flipbook: 'Flipbook',
-  panorama: 'Panorama',
-  legacy_embed: 'Legacy block',
-};
+// Derive từ registry BLOCK_TYPE_META (nguồn duy nhất).
+const BLOCK_TYPE_LABEL: Record<BlockType, string> = Object.fromEntries(
+  Object.values(BLOCK_TYPE_META).map(m => [m.type, m.adminLabel])
+) as Record<BlockType, string>;
 
-const BLOCK_TYPE_GRADIENT: Record<BlockType, string> = {
-  hero_split: 'from-rose-400 to-red-500',
-  hero_overlay: 'from-zinc-700 to-zinc-900',
-  feature_section: 'from-emerald-400 to-teal-500',
-  photo_gallery: 'from-pink-400 to-fuchsia-500',
-  booking_form: 'from-blue-500 to-violet-500',
-  cta_section: 'from-amber-400 to-orange-500',
-  image_carousel: 'from-cyan-400 to-blue-500',
-  stories: 'from-orange-400 to-pink-500',
-  split_screen: 'from-slate-500 to-zinc-600',
-  quiz: 'from-violet-500 to-purple-600',
-  poll: 'from-indigo-500 to-blue-600',
-  carousel_3d: 'from-fuchsia-500 to-pink-600',
-  flipbook: 'from-amber-500 to-yellow-500',
-  panorama: 'from-sky-500 to-cyan-600',
-  legacy_embed: 'from-slate-500 to-slate-700',
-};
+const BLOCK_TYPE_GRADIENT: Record<BlockType, string> = Object.fromEntries(
+  Object.values(BLOCK_TYPE_META).map(m => [m.type, m.gradient])
+) as Record<BlockType, string>;
 
 function fmtDate(iso?: string): string {
   if (!iso) return '—';

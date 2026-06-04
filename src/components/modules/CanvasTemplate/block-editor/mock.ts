@@ -1,4 +1,5 @@
 import { defaultContentFor } from './factory';
+import { BLOCK_TYPE_META } from './types';
 import type { Block, BlockType, HeroSplitContent } from './types';
 
 const HERO_SPLIT_VI_OVERRIDE: HeroSplitContent = {
@@ -32,29 +33,11 @@ const HERO_SPLIT_EN_OVERRIDE: HeroSplitContent = {
   ctaLink: '',
 };
 
-const NAME_BY_TYPE: Record<BlockType, string> = {
-  hero_split: 'Hero Split',
-  hero_overlay: 'Hero Overlay',
-  feature_section: 'Tiện ích nổi bật',
-  photo_gallery: 'Thư viện ảnh',
-  booking_form: 'Đặt chỗ',
-  cta_section: 'CTA',
-  image_carousel: 'Slide ảnh',
-  stories: 'Stories',
-  split_screen: 'Split screen',
-  quiz: 'Quiz',
-  poll: 'Bình chọn',
-  carousel_3d: 'Coverflow 3D',
-  flipbook: 'Flipbook',
-  panorama: 'Panorama 360°',
-  legacy_embed: 'Legacy block',
-};
-
 function buildBlock(id: string, type: BlockType): Block {
   return {
     id,
     blockType: type,
-    name: NAME_BY_TYPE[type],
+    name: BLOCK_TYPE_META[type].defaultName,
     contentVi: { desktop: defaultContentFor(type, 'vi') },
     contentEn: { desktop: defaultContentFor(type, 'en') },
     isVisible: true,
