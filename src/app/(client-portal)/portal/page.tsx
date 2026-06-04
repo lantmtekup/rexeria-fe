@@ -18,9 +18,10 @@ import Link from 'next/link';
 
 import { useEffect, useState } from 'react';
 
+import { useAppSelector } from '@/hooks/useRedux';
+
 import {
   FAKE_ACTIVITY,
-  FAKE_BRAND,
   FAKE_STATS,
   FAKE_TREND_7D,
   fmtFull,
@@ -50,6 +51,11 @@ const ACTIVITY_META: Record<
 
 export default function PortalDashboardPage() {
   const activeWs = useActiveWorkspace();
+  // Tên brand thật từ auth store (LoginResponse.brand.name). Fallback 'bạn'
+  // khi chưa hydrate / user không gắn brand — KHÔNG dùng demo brand cứng
+  // (trước đây hardcode "Flagship Cola" cho mọi account). Fallback tĩnh nên
+  // SSR và first client paint khớp, không lệch hydration.
+  const brandName = useAppSelector(s => s.auth.user?.brand_name);
   const [stats, setStats] = useState<DashboardStats>(FAKE_STATS);
   const [trend7d, setTrend7d] = useState<number[]>(FAKE_TREND_7D);
   const [source, setSource] = useState<'live' | 'fake'>('fake');
@@ -109,7 +115,7 @@ export default function PortalDashboardPage() {
           <h1 className='mt-2 text-3xl font-bold tracking-tight'>
             Xin chào,{' '}
             <span className='bg-gradient-to-r from-rose-600 to-orange-600 bg-clip-text text-transparent'>
-              {FAKE_BRAND.name}
+              {brandName ?? 'bạn'}
             </span>
           </h1>
           <p className='mt-1 max-w-2xl text-[13px] leading-relaxed text-zinc-600'>
