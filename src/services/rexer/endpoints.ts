@@ -1148,8 +1148,17 @@ export const rexerApi = {
 
     // ── Profile / brand / members (be-todo.md P0.3) ──────────────────────
     me: {
-      /** Brand profile (name, contact, logo). Read by every authenticated brand user. */
-      client: () => rx<PortalClient>('/portal/me/client'),
+      /**
+       * Brand profile (name, contact, logo). Read by every authenticated brand user.
+       * BE bọc response trong `{ client: {...} }` — unwrap để form bind đúng field
+       * (nếu BE đổi sang flat sau này thì `?? r` vẫn chạy). Xem be ping-list 2026-06-04.
+       */
+      client: async () => {
+        const r = await rx<PortalClient | { client: PortalClient }>(
+          '/portal/me/client'
+        );
+        return ((r as { client?: PortalClient })?.client ?? r) as PortalClient;
+      },
       updateClient: (body: UpdatePortalClientRequest) =>
         rx<PortalClient>('/portal/me/client', { method: 'PATCH', body }),
       /** List of users with access to this brand. Optional role filter. */

@@ -74,7 +74,10 @@ export function BlockTabBar({
           items={blocks.map(b => b.id)}
           strategy={horizontalListSortingStrategy}
         >
-          <div className='flex flex-1 items-end gap-2 overflow-x-auto pb-1'>
+          {/* min-w-0: cho phép flex item co đúng cách để overflow-x-auto cuộn
+              trong strip thay vì collapse rồi để nút "Thêm block" tràn đè lên
+              ZoomControls ở viewport hẹp (QA F1). */}
+          <div className='flex min-w-0 flex-1 items-end gap-2 overflow-x-auto pb-1'>
             {blocks.map((block, index) => (
               <SortableTab
                 key={block.id}
@@ -250,7 +253,7 @@ function ZoomControls({
 }) {
   const clamp = (n: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, n));
   return (
-    <div className='flex items-center gap-1.5 self-center rounded-md border border-neutral-200 bg-white px-2 py-1.5'>
+    <div className='flex shrink-0 items-center gap-1.5 self-center rounded-md border border-neutral-200 bg-white px-2 py-1.5'>
       <button
         type='button'
         aria-label='Thu nhỏ'

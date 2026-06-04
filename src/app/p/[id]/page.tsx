@@ -6,9 +6,10 @@
  * mở link share giờ xem được landing.
  *
  * Render branches:
- *  1. **Code template** — registry match qua `template_name` từ public
- *     response (BE chưa expose `template_code` field; FE lookup bằng
- *     `meta.name` workaround). Render React TSX SSR + hydrate.
+ *  1. **Code template** — registry match qua `template_code` (khóa ổn
+ *     định `src/templates/{code}`) từ public response. BE contract
+ *     2026-06-04 §2b xác nhận field này luôn có; `template_name` chỉ còn
+ *     làm fallback. Render React TSX SSR + hydrate.
  *  2. **Block template** — render canvas_blueprint trực tiếp từ public
  *     response qua `BlockPreview` (mirror admin overlay view).
  *     Fallback: legacy BE `/p/{slug}` HTML qua iframe nếu BlockPreview
@@ -19,7 +20,7 @@
 
 import { notFound } from 'next/navigation';
 
-import { listCodeTemplates } from '@/templates/registry';
+import { getCodeTemplate, listCodeTemplates } from '@/templates/registry';
 import type { Page } from '@/services/rexer/types';
 
 import { PublicBlockRender } from './_block-render';
@@ -34,9 +35,9 @@ const REXER_BE =
   'https://rexerai.tekupsoftware.com';
 
 /**
- * Shape của `/v1/public/pages/{slug}` (probed 2026-05-31). KHÔNG có
- * `template_code` field — FE workaround lookup qua `template_name`.
- * Doc be-audit §18 request BE add `template_code` cho match chính xác.
+ * Shape của `/v1/public/pages/{slug}`. BE contract 2026-06-04 §2b xác nhận
+ * response gồm `template_code` (khóa renderer ổn định) + `template_id`.
+ * `template_name` giữ lại làm fallback match khi thiếu code (defensive).
  */
 interface PublicPageResponse {
   id: string;
@@ -48,7 +49,9 @@ interface PublicPageResponse {
   published_at: string;
   canvas_blueprint?: Record<string, unknown>;
   config?: Record<string, unknown>;
+  template_code?: string;
   template_name?: string;
+  template_id?: string;
   template_version_id: string;
 }
 
@@ -67,10 +70,19 @@ async function fetchPublicPage(
   }
 }
 
-/** Match `template_name` (public response) → registry meta.name.
- *  Workaround vì BE chưa expose template_code ở public response.
- *  Fragile nếu admin tạo nhiều template trùng tên — accept rủi ro tới
- *  khi BE thêm field. */
+/** Resolve code-template entry cho public page.
+ *  Primary: `template_code` (BE contract §2b) → registry key, exact match.
+ *  Fallback: `template_name` chỉ khi response thiếu code (defensive). */
+function resolveCodeTemplate(pub: PublicPageResponse) {
+  return (
+    getCodeTemplate(pub.template_code) ??
+    findCodeTemplateByName(pub.template_name)
+  );
+}
+
+/** Fallback match `template_name` → registry meta.name/code. Chỉ dùng khi
+ *  public response thiếu `template_code`. Fragile nếu trùng tên — chấp nhận
+ *  vì chỉ là nhánh dự phòng. */
 function findCodeTemplateByName(name: string | undefined) {
   if (!name) return null;
   const lc = name.trim().toLowerCase();
@@ -122,7 +134,7 @@ export default async function PublicLanding({ params }: PageProps) {
   const pub = await fetchPublicPage(slug);
   if (!pub) notFound();
 
-  const codeTpl = findCodeTemplateByName(pub.template_name);
+  const codeTpl = resolveCodeTemplate(pub);
 
   if (codeTpl) {
     const Comp = codeTpl.Component;

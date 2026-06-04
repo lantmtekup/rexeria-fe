@@ -184,10 +184,15 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
     try {
       await dispatch(logoutThunk()).unwrap();
       toast.success('Đã đăng xuất');
-      router.push('/sign-in');
     } catch {
       toast.error('Đăng xuất thất bại');
     }
+    // Hard nav (KHÔNG router.push): sau khi logout clear cookie
+    // `_access_token`, soft navigation của App Router có thể phục vụ /sign-in
+    // từ Router Cache đã tính dưới cookie cũ (middleware redirect /sign-in →
+    // /portal khi còn auth) → kẹt lại /portal. window.location buộc request
+    // mới qua middleware với cookie đã xoá + reset sạch state in-memory.
+    window.location.replace('/sign-in');
   };
 
   return (

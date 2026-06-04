@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Bell, ChevronUp, KeyRound, LogOut, Settings } from 'lucide-react';
 
@@ -19,7 +18,6 @@ import { ChangePasswordDialog } from './ChangePasswordDialog';
  */
 export function UserProfileMenu() {
   const t = useTranslations('app.sidebar');
-  const router = useRouter();
   const dispatch = useAppDispatch();
   const user = useAppSelector(s => s.auth.user);
   const [open, setOpen] = React.useState(false);
@@ -42,7 +40,9 @@ export function UserProfileMenu() {
     await dispatch(logoutThunk())
       .unwrap()
       .catch(() => {});
-    router.replace('/sign-in');
+    // Hard nav — tránh soft-nav kẹt lại trang cũ do Router Cache sau logout
+    // (xem _shell.tsx handleLogout).
+    window.location.replace('/sign-in');
   };
 
   const displayName = user?.display_name || user?.email || t('guest');

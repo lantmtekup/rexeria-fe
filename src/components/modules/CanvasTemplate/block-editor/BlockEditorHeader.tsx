@@ -40,7 +40,11 @@ interface BlockEditorHeaderProps {
   onPreview: () => void;
   onUndo: () => void;
   onRedo: () => void;
-  onPublish: () => void;
+  /** Optional — chỉ truyền khi editor ở context page có thể publish (có
+   *  pageId). Template-only mode (catalog preset) không có public page nên
+   *  bỏ qua → nút "Xuất bản" ẩn (xem BlockEditor: publish chỉ work qua
+   *  /p/{slug} của page instance; share-token legacy đã bị BE gỡ). */
+  onPublish?: () => void;
   onSaveBlock?: () => void;
   onPlayMotionPreview: () => void;
   onOpenMotionEditor: () => void;
@@ -215,20 +219,22 @@ export function BlockEditorHeader({
         </IconBtn>
       </div>
 
-      <button
-        type='button'
-        onClick={onPublish}
-        className={cn(
-          'ml-1 flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-3 text-[11px] font-semibold tracking-tight transition-colors',
-          'shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_0_rgba(0,0,0,0.04)]',
-          isPublished
-            ? 'bg-emerald-600 text-white hover:bg-emerald-500'
-            : 'bg-neutral-900 text-white hover:bg-neutral-700'
-        )}
-      >
-        <Globe2 className='size-3.5' />
-        {isPublished ? 'Đã xuất bản' : 'Xuất bản'}
-      </button>
+      {onPublish ? (
+        <button
+          type='button'
+          onClick={onPublish}
+          className={cn(
+            'ml-1 flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-3 text-[11px] font-semibold tracking-tight transition-colors',
+            'shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_0_rgba(0,0,0,0.04)]',
+            isPublished
+              ? 'bg-emerald-600 text-white hover:bg-emerald-500'
+              : 'bg-neutral-900 text-white hover:bg-neutral-700'
+          )}
+        >
+          <Globe2 className='size-3.5' />
+          {isPublished ? 'Đã xuất bản' : 'Xuất bản'}
+        </button>
+      ) : null}
     </header>
   );
 }

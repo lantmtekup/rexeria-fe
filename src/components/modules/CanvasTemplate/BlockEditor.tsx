@@ -347,7 +347,7 @@ export function BlockEditor({
         ) {
           // eslint-disable-next-line no-console
           console.warn(
-            '[rexer-editor] HEAD diverges from template.current_version_id — BE chưa promote sau createVersion. Public /p/{slug} render sẽ vẫn dùng current_version_id (cũ).'
+            '[rexer-editor] HEAD diverges from template.current_version_id (by design — BE chỉ set current_version_id ở version đầu, contract 2026-06-04 §2a). Render công khai dùng page.template_version_id + release snapshot, KHÔNG dùng current_version_id.'
           );
         }
         // Also stash HEAD version when canvas loaded from draft — Save
@@ -1042,7 +1042,7 @@ export function BlockEditor({
           canvas.redo();
           autosave.markDirty();
         }}
-        onPublish={() => setPublishOpen(true)}
+        onPublish={pageId ? () => setPublishOpen(true) : undefined}
         onPlayMotionPreview={motionPreview.playBlock}
         onOpenMotionEditor={() => setMotionEditorOpen(true)}
         canUndo={canvas.canUndo}

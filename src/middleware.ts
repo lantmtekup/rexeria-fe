@@ -15,6 +15,10 @@ const protectedRoutes = [
   '/setting',
   '/support',
   '/admin',
+  // Brand portal — chỉ cho user đã đăng nhập. BE đã 401 data khi thiếu
+  // cookie, nhưng vẫn gate ở middleware để user logout không thấy khung
+  // portal (defense-in-depth).
+  '/portal',
 ];
 
 const authRoutes = ['/dang-nhap', '/quen-mat-khau', '/sign-in'];
@@ -99,6 +103,7 @@ export async function middleware(request: NextRequest) {
       '/setting',
       '/support',
       '/admin',
+      '/portal',
     ];
     if (appRoots.some(p => pathnameWithoutLocale.startsWith(p))) {
       return NextResponse.redirect(new URL('/sign-in', request.url));

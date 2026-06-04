@@ -449,6 +449,10 @@ export default function PortalCuratePage() {
           Chọn loại tương tác Rexer sẽ track trên trang public của brand. Mỗi
           loại fire 1 analytics event để dashboard tổng hợp.
         </p>
+        <div className='mt-3 inline-block rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800'>
+          <strong>UI Demo · dữ liệu mẫu</strong> — số liệu event + feed
+          real-time bên dưới là mock; chờ BE wire endpoint analytics events.
+        </div>
       </section>
 
       {/* Top stats */}

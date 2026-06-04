@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useMemo } from 'react';
 
 import { Button } from '@/components/atoms/button';
@@ -15,7 +15,6 @@ import { Locale } from '@/settings/enums';
 export default function CmsLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations('cms');
   const pathname = usePathname();
-  const router = useRouter();
   const dispatch = useAppDispatch();
   const locale = useLocale();
   const localeEnum = locale === 'en' ? Locale.EN : Locale.VI;
@@ -32,7 +31,8 @@ export default function CmsLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     await dispatch(logoutThunk());
-    router.replace('/sign-in');
+    // Hard nav — tránh kẹt trang do Router Cache sau logout (xem _shell.tsx).
+    window.location.replace('/sign-in');
   };
 
   return (

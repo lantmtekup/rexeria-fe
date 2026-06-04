@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useAuthRole } from '@/hooks/useAuthRole';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { fetchMeThunk } from '@/store/slices/authSlice';
+import { roleHomePath } from '@/lib/auth/roleTarget';
 
 /**
  * Client-side gate for `/admin/*` routes. Middleware only verifies the JWT
@@ -40,7 +41,11 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
       return;
     }
     if (!isAdmin && !isStaff) {
-      router.replace('/home');
+      // Bounce non-admin/non-staff về home theo role: brand user → /portal,
+      // còn lại → /home (khớp roleHomePath dùng ở sign-in + middleware).
+      router.replace(
+        roleHomePath(user.role, user.brand_id ? 'brand' : 'platform')
+      );
     }
   }, [hydrated, user, isAdmin, isStaff, router]);
 

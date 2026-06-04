@@ -169,8 +169,8 @@ export function PublishDialog({
         <DialogHeader>
           <DialogTitle>Xuất bản & chia sẻ</DialogTitle>
           <p className='text-sm text-neutral-500'>
-            Khi xuất bản, mọi người có link đều xem được landing page này (chỉ
-            đọc, không cần đăng nhập trên rexer).
+            Khi xuất bản, mọi người có link đều xem được trang này (chỉ đọc,
+            không cần đăng nhập trên rexer).
           </p>
         </DialogHeader>
 
