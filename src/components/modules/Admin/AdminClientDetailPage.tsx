@@ -20,10 +20,13 @@ import {
   Calendar,
   Check,
   Copy,
+  Globe,
   LayoutTemplate,
   Loader2,
   Mail,
+  Megaphone,
   MoreVertical,
+  MousePointerClick,
   Package,
   Pencil,
   Plus,
@@ -38,6 +41,9 @@ import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 
 import { AdminAddLandingForClientDialog } from './AdminAddLandingForClientDialog';
+import { AdsTab } from './client-tabs/AdsTab';
+import { CurateTab } from './client-tabs/CurateTab';
+import { MicroSitesTab } from './client-tabs/MicroSitesTab';
 import type {
   Block,
   Brand,
@@ -54,7 +60,15 @@ interface Props {
   clientId: string;
 }
 
-type TabKey = 'workspaces' | 'landings' | 'blocks' | 'products' | 'members';
+type TabKey =
+  | 'workspaces'
+  | 'landings'
+  | 'blocks'
+  | 'products'
+  | 'members'
+  | 'ads'
+  | 'microsites'
+  | 'curate';
 
 const TABS: { id: TabKey; label: string; icon: React.ElementType }[] = [
   { id: 'workspaces', label: 'Workspaces', icon: Building2 },
@@ -62,6 +76,9 @@ const TABS: { id: TabKey; label: string; icon: React.ElementType }[] = [
   { id: 'blocks', label: 'Blocks', icon: Bookmark },
   { id: 'products', label: 'Products', icon: Package },
   { id: 'members', label: 'Members', icon: Users },
+  { id: 'ads', label: 'Quảng cáo', icon: Megaphone },
+  { id: 'microsites', label: 'Microsite', icon: Globe },
+  { id: 'curate', label: 'Curate', icon: MousePointerClick },
 ];
 
 const STATUS_CHIP: Record<string, string> = {
@@ -77,6 +94,9 @@ interface Counts {
   blocks?: number;
   products?: number;
   members?: number;
+  ads?: number;
+  microsites?: number;
+  curate?: number;
 }
 
 export function AdminClientDetailPage({ clientId }: Props) {
@@ -324,6 +344,20 @@ export function AdminClientDetailPage({ clientId }: Props) {
             clientId={clientId}
             onCount={n => setCounts(c => ({ ...c, members: n }))}
           />
+        )}
+        {tab === 'ads' && (
+          <AdsTab
+            brandName={client.name}
+            onCount={n => setCounts(c => ({ ...c, ads: n }))}
+          />
+        )}
+        {tab === 'microsites' && (
+          <MicroSitesTab
+            onCount={n => setCounts(c => ({ ...c, microsites: n }))}
+          />
+        )}
+        {tab === 'curate' && (
+          <CurateTab onCount={n => setCounts(c => ({ ...c, curate: n }))} />
         )}
       </section>
     </div>
