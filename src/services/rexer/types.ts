@@ -2303,9 +2303,21 @@ export interface PublishPageRequest {
    *  page.template_version_id cũ (back-compat). */
   template_version_id?: string;
 }
+/** Một lỗi readiness do BE trả ở `/publish/validate` (BE model
+ *  `ValidationResult.Errors` → `ValidationError{field,message}`). */
+export interface PublishPageValidationError {
+  field: string;
+  message: string;
+}
+/** Response của `POST /pages/{id}/publish/validate`.
+ *  Khớp BE `models.ValidationResult` (`internal/domain/models/project_config.go`):
+ *  `{ valid, errors?: [{field, message}] }`. KHÁC với lỗi publish thật —
+ *  khi `POST /publish` fail readiness, BE ném `ERR_PAGE_PUBLISH_NOT_READY` (422)
+ *  với envelope `details.reasons: string[]` (mỗi reason = `"<field>: <message>"`),
+ *  xem `BlockEditor.handlePublishToggle`. */
 export interface PublishPageValidateResponse {
-  ok: boolean;
-  errors?: Array<{ slot_key?: string; code: string; message: string }>;
+  valid: boolean;
+  errors?: PublishPageValidationError[];
 }
 export interface PublishPageResponse {
   release: PageRelease;

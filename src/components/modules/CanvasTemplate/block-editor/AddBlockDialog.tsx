@@ -14,10 +14,8 @@ import { Input } from '@/components/atoms/input';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
 
-import { buildLegacyServerBlocks } from '@/blocks/registry';
-
 import { BlockMiniPreview } from './BlockMiniPreview';
-import { createBlock, createLegacyBlock } from './factory';
+import { createBlock } from './factory';
 import { instantiateSavedBlock, type SavedBlock } from './savedBlocks';
 import { BLOCK_TYPE_META, type Block, type BlockType } from './types';
 import { RxApiError } from '@/services/rexer/client';
@@ -40,23 +38,10 @@ interface BeBlockType {
  *  isn't a valid editor Block. */
 function serverToSavedBlock(b: ServerBlock): SavedBlock | null {
   const s = b.settings as Record<string, unknown> | null | undefined;
-  // Legacy/framer registry block → wrap as a `legacy_embed` editor block so it
-  // previews + inserts like any other block.
-  if (
-    s &&
-    typeof s === 'object' &&
-    s.__legacy &&
-    typeof s.schemaId === 'string'
-  ) {
-    return {
-      id: b.id,
-      name: b.name,
-      block: createLegacyBlock(s.schemaId, b.name),
-      createdAt: b.created_at,
-      updatedAt: b.updated_at,
-      tags: b.tags ?? [],
-    };
-  }
+  // Legacy/framer registry blocks (`__legacy`) không còn được chèn vào canvas:
+  // BE đã bật validate block_type theo catalog (block ngoài catalog → 400 khi
+  // commit version). `legacy_embed` không thuộc catalog nên bỏ qua các entry
+  // legacy ở đây — chúng vẫn xem được ở /admin/blocks (catalog browse-only).
   if (!s || typeof s !== 'object' || !('blockType' in s)) return null;
   return {
     id: b.id,
@@ -78,20 +63,63 @@ interface AddBlockDialogProps {
 }
 
 const ORDERED_TYPES: BlockType[] = [
+  // ── Heroes ──────────────────────────────────────────────
   'hero_split',
   'hero_overlay',
+  'framer_yume_hero',
+  'framer_yuya_hero',
+  'framer_arpeggio_hero',
+  'framer_delvaux_hero_intro',
+  'framer_hero',
+  'framer_perform_hero',
+  'framer_perform_hero_v2',
+  'framer_bungee_hero',
+  'framer_mobius_hero',
+  'framer_avexa_hero',
+  // ── Content / Editorial ─────────────────────────────────
+  'framer_intro_redefined',
+  'framer_paradigm_title',
+  'framer_large_quote',
+  'framer_studio_manifesto',
+  'framer_explore_cta',
+  'framer_aestha_editorial',
+  'framer_aestha_project_detail',
+  // ── Features / Services ──────────────────────────────────
+  'feature_section',
+  'framer_avexa_bento',
+  'framer_clarity_services',
+  'framer_velora_services',
+  'framer_finnegan_expertise',
+  'framer_perform_about',
+  'framer_perform_pricing',
+  // ── Projects / Gallery ───────────────────────────────────
+  'framer_firma_featured',
+  'framer_projects_grid',
+  'framer_vs_collins_projects',
+  'framer_horizontal_scroll',
+  'framer_image_stagger',
+  'photo_gallery',
+  // ── Team / People ────────────────────────────────────────
+  'framer_team_directory',
+  // ── Timeline / FAQ ───────────────────────────────────────
+  'framer_darling_timeline',
+  'framer_faq_minimal',
+  // ── Stats / Signature ────────────────────────────────────
+  'framer_stats_grid',
+  'framer_signature_feature',
+  // ── Footer / CTA ─────────────────────────────────────────
+  'framer_contact_footer',
+  'cta_section',
+  // ── Interactive / Other ──────────────────────────────────
   'image_carousel',
   'carousel_3d',
   'stories',
   'flipbook',
   'panorama',
-  'feature_section',
-  'photo_gallery',
   'split_screen',
   'quiz',
   'poll',
   'booking_form',
-  'cta_section',
 ];
 
 export function AddBlockDialog({
@@ -111,8 +139,9 @@ export function AddBlockDialog({
 
   const reloadSaved = React.useCallback(async () => {
     setSaved(null);
-    // Same source as /admin/blocks: legacy/framer registry (local) merged with
-    // BE saved blocks. Legacy entries wrap into `legacy_embed` blocks.
+    // Chỉ BE saved blocks (`/v1/blocks`) — KHÔNG merge legacy/framer registry
+    // nữa: legacy block chèn vào canvas sẽ thành `legacy_embed` (ngoài catalog)
+    // → BE reject khi commit version. Legacy vẫn browse được ở /admin/blocks.
     let beItems: ServerBlock[] = [];
     try {
       const r = await rexerApi.blocks.list({ limit: 200 });
@@ -120,7 +149,7 @@ export function AddBlockDialog({
     } catch {
       beItems = [];
     }
-    const items = [...buildLegacyServerBlocks(), ...beItems]
+    const items = beItems
       .map(serverToSavedBlock)
       .filter((b): b is SavedBlock => b !== null);
     setSaved(items);

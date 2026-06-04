@@ -1,3 +1,4 @@
+import { BLOCK_TYPE_META } from './types';
 import type { BlockContent, BlockType, Lang } from './types';
 
 interface BuildAiPromptArgs {
@@ -9,42 +10,11 @@ interface BuildAiPromptArgs {
   lang: Lang;
 }
 
-const BLOCK_LABEL: Record<Lang, Record<BlockType, string>> = {
-  vi: {
-    hero_split: 'block hero (chia đôi)',
-    hero_overlay: 'block hero (toàn cảnh có overlay)',
-    feature_section: 'section tiện ích / điểm nổi bật',
-    photo_gallery: 'thư viện ảnh',
-    booking_form: 'form đăng ký / đặt chỗ',
-    cta_section: 'section call-to-action cuối trang',
-    image_carousel: 'slide ảnh chuyển động',
-    stories: 'panel Stories (Insta-style)',
-    split_screen: 'so sánh 2 lựa chọn (split screen)',
-    quiz: 'trắc nghiệm gợi ý sản phẩm',
-    poll: 'bình chọn 1 câu hỏi nhiều lựa chọn',
-    carousel_3d: 'slide ảnh 3D coverflow',
-    flipbook: 'sách catalog lật trang',
-    panorama: 'ảnh 360° xoay được',
-    legacy_embed: 'block thiết kế sẵn (legacy/framer)',
-  },
-  en: {
-    hero_split: 'split-layout hero block',
-    hero_overlay: 'full-bleed hero overlay block',
-    feature_section: 'feature highlights section',
-    photo_gallery: 'photo gallery',
-    booking_form: 'booking / lead form',
-    cta_section: 'closing call-to-action section',
-    image_carousel: 'image carousel / slider',
-    stories: 'stories panels (Instagram-style)',
-    split_screen: 'split-screen comparison',
-    quiz: 'quiz / product recommender',
-    poll: 'single-question poll',
-    carousel_3d: '3D coverflow image carousel',
-    flipbook: 'page-turn flipbook catalog',
-    panorama: '360° equirectangular panorama',
-    legacy_embed: 'pre-designed legacy/framer block',
-  },
-};
+// Nhãn block cho prompt AI — derive từ registry BLOCK_TYPE_META (aiLabelVi/En).
+function blockAiLabel(type: BlockType, lang: Lang): string {
+  const m = BLOCK_TYPE_META[type];
+  return lang === 'vi' ? m.aiLabelVi : m.aiLabelEn;
+}
 
 const FIELD_LABEL: Record<Lang, Record<string, string>> = {
   vi: {
@@ -102,7 +72,7 @@ const FIELD_LABEL: Record<Lang, Record<string, string>> = {
  */
 export function buildAiPrompt(args: BuildAiPromptArgs): string {
   const { userPrompt, blockType, blockName, selectedField, lang } = args;
-  const block = BLOCK_LABEL[lang][blockType];
+  const block = blockAiLabel(blockType, lang);
   const field = FIELD_LABEL[lang][selectedField] ?? selectedField;
   const trimmed = userPrompt.trim();
 

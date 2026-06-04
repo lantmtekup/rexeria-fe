@@ -24,6 +24,7 @@ import {
 
 import { BlockMiniPreview } from '@/components/modules/CanvasTemplate/block-editor/BlockMiniPreview';
 import { parseCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
+import { BLOCK_TYPE_META } from '@/components/modules/CanvasTemplate/block-editor/types';
 import type {
   Block,
   BlockType,
@@ -43,23 +44,10 @@ const RANGES: { id: Range; label: string }[] = [
   { id: 30, label: '30 ngày' },
 ];
 
-const BLOCK_TYPE_LABEL: Record<BlockType, string> = {
-  hero_split: 'Hero Split',
-  hero_overlay: 'Hero Overlay',
-  feature_section: 'Features',
-  photo_gallery: 'Photo Gallery',
-  booking_form: 'Booking Form',
-  cta_section: 'CTA',
-  image_carousel: 'Carousel',
-  stories: 'Stories',
-  split_screen: 'Split Screen',
-  quiz: 'Quiz',
-  poll: 'Poll',
-  carousel_3d: 'Carousel 3D',
-  flipbook: 'Flipbook',
-  panorama: 'Panorama',
-  legacy_embed: 'Legacy block',
-};
+// Derive từ registry BLOCK_TYPE_META (nguồn duy nhất).
+const BLOCK_TYPE_LABEL: Record<BlockType, string> = Object.fromEntries(
+  Object.values(BLOCK_TYPE_META).map(m => [m.type, m.adminLabel])
+) as Record<BlockType, string>;
 
 interface Props {
   /** Page id (kept name `templateId` for back-compat — historic naming). */
