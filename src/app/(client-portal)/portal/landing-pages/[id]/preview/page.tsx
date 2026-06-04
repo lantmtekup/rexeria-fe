@@ -75,16 +75,16 @@ export default function PortalLandingPreviewPage() {
       <button
         type='button'
         onClick={() => router.push('/portal/landing-pages')}
-        className='inline-flex items-center gap-1.5 text-[13px] text-zinc-600 hover:text-zinc-900'
+        className='inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900'
       >
         <ArrowLeft className='size-4' /> Landing pages
       </button>
       <div className='mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center'>
         <Construction className='mx-auto size-7 text-amber-700' />
-        <p className='mt-3 text-[14px] font-semibold text-amber-900'>
+        <p className='mt-3 text-sm font-semibold text-amber-900'>
           Preview đang được rebuild
         </p>
-        <p className='mt-2 text-[12px] text-amber-800'>
+        <p className='mt-2 text-xs text-amber-800'>
           Preview canonical (template_version.canvas_blueprint + slot fills từ
           page_revisions.config_json) sẽ release ở Wave 3. Hiện tại muốn chỉnh
           nội dung, gửi yêu cầu cho Rexer ở{' '}
@@ -98,12 +98,12 @@ export default function PortalLandingPreviewPage() {
           .
         </p>
         {status === 'error' && (
-          <p className='mt-2 font-mono text-[10.5px] text-amber-800/80'>
+          <p className='text-3xs mt-2 font-mono text-amber-800/80'>
             (debug) {error}
           </p>
         )}
         {page && (
-          <div className='mt-4 inline-flex flex-col gap-1 rounded-lg border border-amber-300 bg-white px-4 py-3 text-left text-[11.5px]'>
+          <div className='text-2xs mt-4 inline-flex flex-col gap-1 rounded-lg border border-amber-300 bg-white px-4 py-3 text-left'>
             <div>
               <span className='text-zinc-500'>Page:</span>{' '}
               <strong>{page.name}</strong>
@@ -114,7 +114,7 @@ export default function PortalLandingPreviewPage() {
             <div>
               <span className='text-zinc-500'>Type:</span> {page.type}
             </div>
-            <div className='font-mono text-[10px] text-zinc-500'>{page.id}</div>
+            <div className='text-3xs font-mono text-zinc-500'>{page.id}</div>
           </div>
         )}
       </div>

@@ -110,7 +110,7 @@ function MarketingCard({
                 className={cn('border-background border-2', i > 0 && '-ml-2')}
               />
             ))}
-            <span className='border-background -ml-2 inline-flex size-6 items-center justify-center rounded-full border-2 bg-neutral-900 text-[10px] font-semibold text-white'>
+            <span className='border-background text-3xs -ml-2 inline-flex size-6 items-center justify-center rounded-full border-2 bg-neutral-900 font-semibold text-white'>
               {MOCK_MEMBERS.length}
             </span>
           </div>

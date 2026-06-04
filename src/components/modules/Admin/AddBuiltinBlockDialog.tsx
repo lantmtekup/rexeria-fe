@@ -269,10 +269,10 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
               <Sparkles className='size-4' />
             </div>
             <div className='leading-tight'>
-              <h3 className='text-[15px] font-semibold'>
+              <h3 className='text-base font-semibold'>
                 Thêm block từ thư viện hệ thống
               </h3>
-              <p className='text-[11px] text-zinc-500'>
+              <p className='text-2xs text-zinc-500'>
                 {filtered.length} / {CATALOG.length} block types
               </p>
             </div>
@@ -297,7 +297,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder='Tìm theo tên / type / mô tả…'
-              className='w-full rounded-lg border border-zinc-200 bg-white py-2 pr-3 pl-9 text-[13px] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
+              className='w-full rounded-lg border border-zinc-200 bg-white py-2 pr-3 pl-9 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
             />
           </div>
 
@@ -313,7 +313,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                   onClick={() => setCategory(cat.id)}
                   disabled={empty && cat.id !== 'all'}
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11.5px] font-medium transition-all',
+                    'text-2xs inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-medium transition-all',
                     active
                       ? 'border-zinc-900 bg-zinc-900 text-white shadow-sm'
                       : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50',
@@ -323,7 +323,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                   {cat.label}
                   <span
                     className={cn(
-                      'inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 font-mono text-[10px] tabular-nums',
+                      'text-3xs inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 font-mono tabular-nums',
                       active
                         ? 'bg-white/15 text-white/90'
                         : 'bg-zinc-100 text-zinc-500'
@@ -344,10 +344,10 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
               <div className='mx-auto flex size-12 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400'>
                 <Search className='size-5' />
               </div>
-              <p className='mt-3 text-[13px] font-semibold text-zinc-700'>
+              <p className='mt-3 text-sm font-semibold text-zinc-700'>
                 Không có block khớp tìm kiếm
               </p>
-              <p className='mt-1 text-[11.5px] text-zinc-500'>
+              <p className='text-2xs mt-1 text-zinc-500'>
                 Đổi từ khoá hoặc category để xem các block khác.
               </p>
             </div>
@@ -366,7 +366,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
         </div>
 
         {/* Footer hint */}
-        <div className='border-t border-zinc-100 bg-white px-5 py-2.5 text-[11px] text-zinc-500'>
+        <div className='text-2xs border-t border-zinc-100 bg-white px-5 py-2.5 text-zinc-500'>
           Sau khi thêm, block sẽ xuất hiện trong thư viện. Click{' '}
           <em className='text-zinc-700'>Sửa trong canvas</em> để mở editor và
           tuỳ chỉnh nội dung.
@@ -422,7 +422,7 @@ function CatalogCard({
             gradient hero did. */}
         <span
           className={cn(
-            'absolute bottom-2 left-2 inline-flex items-center rounded-md bg-gradient-to-br px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-[0.15em] text-white/95 uppercase shadow-sm',
+            'text-3xs absolute bottom-2 left-2 inline-flex items-center rounded-md bg-gradient-to-br px-1.5 py-0.5 font-mono font-bold tracking-[0.15em] text-white/95 uppercase shadow-sm',
             item.gradient
           )}
         >
@@ -436,7 +436,7 @@ function CatalogCard({
 
       <div className='flex flex-1 flex-col gap-1 p-3.5'>
         <div className='flex items-center justify-between gap-2'>
-          <span className='text-[13.5px] font-semibold text-zinc-800'>
+          <span className='text-sm font-semibold text-zinc-800'>
             {item.label}
           </span>
           {adding ? (
@@ -447,7 +447,7 @@ function CatalogCard({
             </span>
           )}
         </div>
-        <p className='line-clamp-2 text-[11.5px] leading-snug text-zinc-500'>
+        <p className='text-2xs line-clamp-2 leading-snug text-zinc-500'>
           {item.description}
         </p>
       </div>

@@ -119,7 +119,7 @@ export function SaveAsTemplateDialog({
 
         <form onSubmit={submit} className='flex flex-col gap-3'>
           <label className='flex flex-col gap-1'>
-            <span className='text-[10px] font-semibold tracking-widest text-neutral-500 uppercase'>
+            <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
               Tên template
             </span>
             <input
@@ -133,7 +133,7 @@ export function SaveAsTemplateDialog({
           </label>
 
           <label className='flex flex-col gap-1'>
-            <span className='text-[10px] font-semibold tracking-widest text-neutral-500 uppercase'>
+            <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
               Danh mục
             </span>
             <select
@@ -150,7 +150,7 @@ export function SaveAsTemplateDialog({
           </label>
 
           <label className='flex flex-col gap-1'>
-            <span className='text-[10px] font-semibold tracking-widest text-neutral-500 uppercase'>
+            <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
               Tags{' '}
               <span className='text-neutral-400 normal-case'>
                 (ngăn cách dấu phẩy)

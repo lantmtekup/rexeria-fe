@@ -226,7 +226,7 @@ export function AdminUsersPage() {
       {/* Header */}
       <div className='flex flex-wrap items-end justify-between gap-3'>
         <div>
-          <div className='flex items-center gap-2 text-[10.5px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+          <div className='text-3xs flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
             <Users className='size-3' /> {t('users.title')}
           </div>
           <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
@@ -354,7 +354,7 @@ export function AdminUsersPage() {
           <button
             type='button'
             onClick={clearFilters}
-            className='ml-1 inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-900'
+            className='text-2xs ml-1 inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900'
           >
             <XIcon className='size-3' /> Clear
           </button>
@@ -379,12 +379,12 @@ export function AdminUsersPage() {
       ) : pageItems.length === 0 ? (
         <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center'>
           <Users className='mx-auto size-8 text-zinc-300' />
-          <p className='mt-3 text-[14px] font-semibold text-zinc-700'>
+          <p className='mt-3 text-sm font-semibold text-zinc-700'>
             {hasFilters
               ? 'Không có khách hàng nào khớp filter'
               : t('users.empty')}
           </p>
-          <p className='mt-1 text-[12px] text-zinc-500'>
+          <p className='mt-1 text-xs text-zinc-500'>
             {hasFilters
               ? 'Thử đổi từ khoá hoặc clear filter.'
               : 'Bấm "Tạo khách hàng" để onboard brand mới.'}
@@ -416,9 +416,9 @@ export function AdminUsersPage() {
       {/* Bulk action bar — sticky bottom khi có selection ở table view. */}
       {selected.size > 0 && view === 'table' && (
         <div className='sticky bottom-4 z-30 mx-auto flex w-fit min-w-[320px] items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 shadow-2xl'>
-          <span className='text-[12.5px] font-medium text-white'>
+          <span className='text-xs font-medium text-white'>
             Đã chọn{' '}
-            <span className='rounded-md bg-white/15 px-1.5 py-0.5 font-mono text-[11.5px]'>
+            <span className='text-2xs rounded-md bg-white/15 px-1.5 py-0.5 font-mono'>
               {selected.size}
             </span>{' '}
             brand
@@ -427,7 +427,7 @@ export function AdminUsersPage() {
             type='button'
             onClick={() => setSelected(new Set())}
             disabled={bulkBusy}
-            className='rounded-md px-2 py-1 text-[11.5px] font-medium text-white/70 hover:bg-white/10 disabled:opacity-50'
+            className='text-2xs rounded-md px-2 py-1 font-medium text-white/70 hover:bg-white/10 disabled:opacity-50'
           >
             Bỏ chọn
           </button>
@@ -436,7 +436,7 @@ export function AdminUsersPage() {
             type='button'
             onClick={runBulkDelete}
             disabled={bulkBusy}
-            className='inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-[12px] font-medium text-white hover:bg-rose-500 disabled:opacity-50'
+            className='inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-500 disabled:opacity-50'
           >
             <Trash2 className='size-3.5' />
             {bulkBusy ? 'Đang xoá…' : 'Xoá đã chọn'}
@@ -470,10 +470,10 @@ function ClientCard({ item }: { item: Brand }) {
       <div className='flex items-start gap-3 p-4'>
         <Avatar id={item.id} name={item.name} size={48} />
         <div className='min-w-0 flex-1'>
-          <h3 className='truncate text-[14px] font-semibold text-zinc-900'>
+          <h3 className='truncate text-sm font-semibold text-zinc-900'>
             {item.name}
           </h3>
-          <p className='mt-0.5 truncate font-mono text-[10px] text-zinc-400'>
+          <p className='text-3xs mt-0.5 truncate font-mono text-zinc-400'>
             {item.id.slice(0, 8)}…
           </p>
         </div>
@@ -481,13 +481,13 @@ function ClientCard({ item }: { item: Brand }) {
       <div className='mt-auto flex items-center justify-between border-t border-zinc-100 bg-zinc-50/50 px-4 py-2'>
         <span
           className={cn(
-            'rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase',
+            'text-3xs rounded-full px-2 py-0.5 font-bold tracking-wider uppercase',
             statusClass
           )}
         >
           {item.status || '—'}
         </span>
-        <span className='font-mono text-[10px] text-zinc-400'>
+        <span className='text-3xs font-mono text-zinc-400'>
           {item.created_at
             ? new Date(item.created_at).toLocaleDateString('vi-VN')
             : '—'}
@@ -670,7 +670,7 @@ function Pagination({
 
   return (
     <div className='flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-sm'>
-      <span className='text-[11.5px] text-zinc-500'>
+      <span className='text-2xs text-zinc-500'>
         {from}–{to} trong {total}
       </span>
       <div className='flex items-center gap-1'>
@@ -684,7 +684,7 @@ function Pagination({
         </button>
         {pages.map((p, i) =>
           p === 'gap' ? (
-            <span key={`gap-${i}`} className='px-1 text-[11px] text-zinc-300'>
+            <span key={`gap-${i}`} className='text-2xs px-1 text-zinc-300'>
               …
             </span>
           ) : (
@@ -693,7 +693,7 @@ function Pagination({
               type='button'
               onClick={() => onChange(p)}
               className={cn(
-                'inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono text-[11px] font-semibold tabular-nums',
+                'text-2xs inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono font-semibold tabular-nums',
                 p === page
                   ? 'bg-zinc-900 text-white shadow-sm'
                   : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
@@ -727,7 +727,7 @@ function FilterGroup({
 }) {
   return (
     <div className='inline-flex items-center gap-1.5'>
-      <span className='text-[10px] font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+      <span className='text-3xs font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
         {label}
       </span>
       <div className='inline-flex flex-wrap items-center gap-1'>{children}</div>
@@ -761,7 +761,7 @@ function ChipBtn({
       type='button'
       onClick={onClick}
       className={cn(
-        'rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors',
+        'text-2xs rounded-full px-2.5 py-1 font-medium transition-colors',
         cls
       )}
     >
@@ -787,7 +787,7 @@ function ViewBtn({
       onClick={onClick}
       title={label}
       className={cn(
-        'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
+        'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
         active ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100'
       )}
     >

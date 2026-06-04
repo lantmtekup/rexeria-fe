@@ -88,7 +88,7 @@ function ProductTile({
         )}
         <span
           className={cn(
-            'absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-medium capitalize',
+            'text-3xs absolute top-2 left-2 rounded-full px-2 py-0.5 font-medium capitalize',
             tone
           )}
         >
@@ -100,14 +100,14 @@ function ProductTile({
         <p className='text-foreground line-clamp-2 text-sm leading-tight font-semibold'>
           {product.name}
         </p>
-        <div className='text-muted-foreground flex items-center justify-between text-[10px]'>
+        <div className='text-muted-foreground text-3xs flex items-center justify-between'>
           <span className='truncate'>
             {product.sku ?? product.slug ?? product.id.slice(0, 8)}
           </span>
           <span>{date}</span>
         </div>
         {(product.colors?.length || product.sizes?.length) && (
-          <div className='text-muted-foreground flex flex-wrap gap-2 text-[10px]'>
+          <div className='text-muted-foreground text-3xs flex flex-wrap gap-2'>
             {product.colors?.length ? (
               <span>{product.colors.length} màu</span>
             ) : null}

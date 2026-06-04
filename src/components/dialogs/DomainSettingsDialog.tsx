@@ -206,7 +206,7 @@ export function DomainSettingsDialog({
 
         {/* URL preview for this page */}
         <section className='rounded-xl border border-zinc-200 bg-zinc-50 p-3'>
-          <p className='text-[11.5px] font-semibold tracking-wide text-zinc-600 uppercase'>
+          <p className='text-2xs font-semibold tracking-wide text-zinc-600 uppercase'>
             URL của trang này
           </p>
           <ul className='mt-2 flex flex-col gap-1.5'>
@@ -215,7 +215,7 @@ export function DomainSettingsDialog({
               label='Mặc định (relative)'
             />
             {verifiedDomains.length === 0 && (
-              <li className='text-[11.5px] text-zinc-500 italic'>
+              <li className='text-2xs text-zinc-500 italic'>
                 Chưa có domain custom đã xác minh.
               </li>
             )}
@@ -236,7 +236,7 @@ export function DomainSettingsDialog({
         >
           <Label
             htmlFor='dom-new'
-            className='text-[12px] font-semibold text-zinc-700'
+            className='text-xs font-semibold text-zinc-700'
           >
             Thêm domain mới
           </Label>
@@ -255,7 +255,7 @@ export function DomainSettingsDialog({
               Thêm
             </Button>
           </div>
-          <p className='text-[11px] text-zinc-500'>
+          <p className='text-2xs text-zinc-500'>
             Sau khi thêm, cần config DNS (TXT + CNAME) rồi bấm
             &quot;Verify&quot;.
           </p>
@@ -264,14 +264,14 @@ export function DomainSettingsDialog({
         {/* Domains list */}
         <section>
           <div className='mb-2 flex items-center justify-between'>
-            <h3 className='text-[12px] font-semibold tracking-wide text-zinc-600 uppercase'>
+            <h3 className='text-xs font-semibold tracking-wide text-zinc-600 uppercase'>
               Domains của brand ({domains?.length ?? 0})
             </h3>
             <button
               type='button'
               onClick={() => void reload()}
               disabled={loading}
-              className='inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-zinc-600 hover:bg-zinc-100 disabled:opacity-50'
+              className='text-2xs inline-flex items-center gap-1 rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-100 disabled:opacity-50'
               aria-label='Refresh'
             >
               <RefreshCw className={cn('size-3', loading && 'animate-spin')} />
@@ -280,14 +280,14 @@ export function DomainSettingsDialog({
           </div>
 
           {error && (
-            <div className='mb-2 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2 text-[12px] text-rose-800'>
+            <div className='mb-2 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2 text-xs text-rose-800'>
               <AlertCircle className='mt-0.5 size-3.5 shrink-0' />
               <span className='font-mono'>{error}</span>
             </div>
           )}
 
           {!error && domains && domains.length === 0 && (
-            <p className='rounded-lg border border-dashed border-zinc-300 p-4 text-center text-[12px] text-zinc-500'>
+            <p className='rounded-lg border border-dashed border-zinc-300 p-4 text-center text-xs text-zinc-500'>
               Chưa có custom domain nào.
             </p>
           )}
@@ -300,7 +300,7 @@ export function DomainSettingsDialog({
               >
                 <div className='flex items-center gap-2 px-3 py-2'>
                   <StatusDot status={d.status} />
-                  <span className='flex-1 truncate font-mono text-[12.5px] text-zinc-800'>
+                  <span className='flex-1 truncate font-mono text-xs text-zinc-800'>
                     {d.domain}
                   </span>
                   <StatusBadge status={d.status} />
@@ -311,7 +311,7 @@ export function DomainSettingsDialog({
                       size='sm'
                       disabled={busyId === d.id}
                       onClick={() => void handleVerify(d)}
-                      className='h-7 text-[11.5px]'
+                      className='text-2xs h-7'
                     >
                       {busyId === d.id ? (
                         <Loader2 className='size-3 animate-spin' />
@@ -325,7 +325,7 @@ export function DomainSettingsDialog({
                     onClick={() =>
                       setExpandedId(expandedId === d.id ? null : d.id)
                     }
-                    className='rounded-md px-2 py-1 text-[11px] text-zinc-500 hover:bg-zinc-100'
+                    className='text-2xs rounded-md px-2 py-1 text-zinc-500 hover:bg-zinc-100'
                   >
                     DNS
                   </button>
@@ -341,10 +341,10 @@ export function DomainSettingsDialog({
                 </div>
                 {expandedId === d.id && (
                   <div className='border-t border-zinc-100 bg-zinc-50/60 px-3 py-2'>
-                    <p className='mb-1.5 text-[11px] font-semibold text-zinc-600'>
+                    <p className='text-2xs mb-1.5 font-semibold text-zinc-600'>
                       Cấu hình DNS tại nhà cung cấp domain
                     </p>
-                    <table className='w-full text-[11.5px]'>
+                    <table className='text-2xs w-full'>
                       <thead className='text-zinc-500'>
                         <tr>
                           <th className='py-1 text-left font-medium'>Type</th>
@@ -379,7 +379,7 @@ export function DomainSettingsDialog({
                       </tbody>
                     </table>
                     {d.failure_reason && (
-                      <p className='mt-2 text-[11px] text-rose-600'>
+                      <p className='text-2xs mt-2 text-rose-600'>
                         Lỗi xác minh gần nhất: {d.failure_reason}
                       </p>
                     )}
@@ -390,7 +390,7 @@ export function DomainSettingsDialog({
           </ul>
 
           {loading && !domains && (
-            <div className='flex items-center justify-center py-6 text-[12px] text-zinc-500'>
+            <div className='flex items-center justify-center py-6 text-xs text-zinc-500'>
               <Loader2 className='mr-2 size-3.5 animate-spin' />
               Đang load…
             </div>
@@ -428,9 +428,7 @@ function StatusBadge({ status }: { status: string }) {
       status
     );
   return (
-    <span
-      className={cn('rounded-full px-2 py-0.5 text-[10.5px] font-medium', cls)}
-    >
+    <span className={cn('text-3xs rounded-full px-2 py-0.5 font-medium', cls)}>
       {label}
     </span>
   );
@@ -440,8 +438,8 @@ function UrlRow({ url, label }: { url: string; label: string }) {
   const display = url.startsWith('http') ? url : url;
   return (
     <li className='flex items-center gap-2'>
-      <span className='shrink-0 text-[11px] text-zinc-500'>{label}:</span>
-      <code className='flex-1 truncate font-mono text-[11.5px] text-zinc-800'>
+      <span className='text-2xs shrink-0 text-zinc-500'>{label}:</span>
+      <code className='text-2xs flex-1 truncate font-mono text-zinc-800'>
         {display}
       </code>
       <button

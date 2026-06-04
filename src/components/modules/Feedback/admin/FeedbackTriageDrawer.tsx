@@ -141,7 +141,7 @@ export function FeedbackTriageDrawer({ feedback, onClose, onUpdated }: Props) {
               <label className='text-content-muted font-medium'>
                 {t('admin.detail.userAgent')}
               </label>
-              <p className='mt-1 truncate font-mono text-[11px]'>
+              <p className='text-2xs mt-1 truncate font-mono'>
                 {feedback.user_agent}
               </p>
             </div>
@@ -152,7 +152,7 @@ export function FeedbackTriageDrawer({ feedback, onClose, onUpdated }: Props) {
               <label className='text-content-muted font-medium'>
                 {t('admin.detail.meta')}
               </label>
-              <pre className='mt-1 overflow-x-auto rounded bg-neutral-50 p-2 font-mono text-[11px]'>
+              <pre className='text-2xs mt-1 overflow-x-auto rounded bg-neutral-50 p-2 font-mono'>
                 {JSON.stringify(feedback.meta, null, 2)}
               </pre>
             </div>

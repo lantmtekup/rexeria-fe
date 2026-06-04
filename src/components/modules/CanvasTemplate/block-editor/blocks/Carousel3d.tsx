@@ -107,7 +107,7 @@ export function Carousel3d({
               style={sEyebrow}
               className={selectableClass(
                 activeKey === 'eyebrow',
-                'text-[10px] font-semibold tracking-[0.32em] text-white/60 uppercase'
+                'text-3xs font-semibold tracking-[0.32em] text-white/60 uppercase'
               )}
             >
               {content.eyebrow}

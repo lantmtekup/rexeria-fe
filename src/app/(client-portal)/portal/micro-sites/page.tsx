@@ -8,11 +8,11 @@ export default function PortalMicroSitesPage() {
   return (
     <PortalShell>
       <section>
-        <div className='flex items-center gap-2 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+        <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
           <Globe className='size-3' /> Micro site
         </div>
         <h1 className='mt-1 text-2xl font-bold tracking-tight'>Micro site</h1>
-        <p className='mt-1 text-[13px] text-zinc-500'>
+        <p className='mt-1 text-sm text-zinc-500'>
           Tổ hợp nhiều landing page thành 1 mini-site có domain riêng, menu,
           navigation cross-page. Khác landing page đơn (1 URL) — micro site là
           nhóm trang liên kết để campaign dài hơi.
@@ -29,12 +29,12 @@ export default function PortalMicroSitesPage() {
             <div className='flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/20'>
               <Hammer className='size-7' strokeWidth={2.2} />
             </div>
-            <p className='mt-5 text-[15px] font-semibold text-zinc-900'>
+            <p className='mt-5 text-base font-semibold text-zinc-900'>
               Tính năng đang phát triển
             </p>
-            <p className='mt-1.5 max-w-md text-[12.5px] leading-relaxed text-zinc-500'>
+            <p className='mt-1.5 max-w-md text-xs leading-relaxed text-zinc-500'>
               FE đã wire route + sidebar. Khi BE ship endpoint{' '}
-              <code className='rounded bg-zinc-100 px-1 py-0.5 font-mono text-[11px]'>
+              <code className='text-2xs rounded bg-zinc-100 px-1 py-0.5 font-mono'>
                 /v1/portal/micro-sites
               </code>{' '}
               (schema: name, slug, pages[], theme, domain_id), trang này sẽ live
@@ -57,7 +57,7 @@ export default function PortalMicroSitesPage() {
             </div>
           </div>
         </div>
-        <div className='flex items-center justify-center gap-2 border-t border-zinc-100 bg-zinc-50/50 px-6 py-3 text-[11px] text-zinc-500'>
+        <div className='text-2xs flex items-center justify-center gap-2 border-t border-zinc-100 bg-zinc-50/50 px-6 py-3 text-zinc-500'>
           <Sparkles className='size-3 text-zinc-400' />
           Roadmap Phase 2 — sau khi /portal/landing-pages chạy data thật ổn
           định.
@@ -70,8 +70,8 @@ export default function PortalMicroSitesPage() {
 function RoadmapCard({ title, body }: { title: string; body: string }) {
   return (
     <div className='rounded-xl border border-zinc-200 bg-zinc-50/60 p-3 text-left'>
-      <div className='text-[11px] font-semibold text-zinc-800'>{title}</div>
-      <p className='mt-1 text-[10.5px] leading-snug text-zinc-500'>{body}</p>
+      <div className='text-2xs font-semibold text-zinc-800'>{title}</div>
+      <p className='text-3xs mt-1 leading-snug text-zinc-500'>{body}</p>
     </div>
   );
 }

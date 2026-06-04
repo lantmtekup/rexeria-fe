@@ -79,7 +79,7 @@ export function BlockEditorSidebar({
         >
           Motion
         </TabBtn>
-        <span className='ml-auto flex items-center px-3 text-[10px] text-neutral-400'>
+        <span className='text-3xs ml-auto flex items-center px-3 text-neutral-400'>
           {isMotion ? 'Preset theo element' : 'Kéo để sắp xếp · Click để sửa'}
         </span>
         {onCollapse && (

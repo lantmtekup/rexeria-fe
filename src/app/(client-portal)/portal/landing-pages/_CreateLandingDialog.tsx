@@ -96,7 +96,7 @@ export function CreateLandingDialog({
             <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-sm'>
               <Sparkles className='size-4' />
             </div>
-            <h3 className='text-[15px] font-semibold'>Tạo landing mới</h3>
+            <h3 className='text-base font-semibold'>Tạo landing mới</h3>
           </div>
           <button
             type='button'
@@ -110,7 +110,7 @@ export function CreateLandingDialog({
 
         <div className='space-y-3 px-5 py-4'>
           <div>
-            <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
               Tên landing <span className='text-rose-500'>*</span>
             </label>
             <input
@@ -120,16 +120,16 @@ export function CreateLandingDialog({
               maxLength={200}
               onChange={e => setName(e.target.value)}
               placeholder='Vd: Hè 2026 — Coca-Cola promo'
-              className='mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[14px] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
+              className='mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
             />
-            <p className='mt-1 text-[10.5px] text-zinc-500'>
+            <p className='text-3xs mt-1 text-zinc-500'>
               Tên hiển thị trong /portal/landing-pages, đổi sau được. Workspace
               hiện tại sẽ được auto-attach.
             </p>
           </div>
 
           {error && (
-            <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800'>
+            <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
               {error}
             </div>
           )}

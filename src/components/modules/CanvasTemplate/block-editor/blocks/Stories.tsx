@@ -117,7 +117,7 @@ export function Stories({
               style={sEyebrow}
               className={selectableClass(
                 activeKey === 'eyebrow',
-                'text-[10px] font-semibold tracking-[0.32em] text-white/60 uppercase @2xl:text-[11px]'
+                'text-3xs @2xl:text-2xs font-semibold tracking-[0.32em] text-white/60 uppercase'
               )}
             >
               {content.eyebrow}

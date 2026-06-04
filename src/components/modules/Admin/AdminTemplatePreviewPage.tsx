@@ -182,12 +182,12 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
     return (
       <div className='relative min-h-screen'>
         <div className='fixed top-3 right-3 z-[60] flex items-center gap-2'>
-          <span className='rounded-full bg-zinc-900/80 px-2.5 py-0.5 text-[10px] font-medium tracking-wide text-white backdrop-blur'>
+          <span className='text-3xs rounded-full bg-zinc-900/80 px-2.5 py-0.5 font-medium tracking-wide text-white backdrop-blur'>
             code template · {template!.code}
           </span>
           <Link
             href={`/admin/templates/${templateId}/edit`}
-            className='inline-flex items-center gap-1 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium text-white backdrop-blur hover:bg-zinc-800/80'
+            className='text-2xs inline-flex items-center gap-1 rounded-full bg-zinc-900/80 px-3 py-1 font-medium text-white backdrop-blur hover:bg-zinc-800/80'
           >
             <Pencil className='size-3' />
             Edit source
@@ -195,7 +195,7 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
           <button
             type='button'
             onClick={handleClose}
-            className='inline-flex items-center gap-1 rounded-full bg-zinc-900/80 px-3 py-1 text-[11px] font-medium text-white backdrop-blur hover:bg-zinc-800/80'
+            className='text-2xs inline-flex items-center gap-1 rounded-full bg-zinc-900/80 px-3 py-1 font-medium text-white backdrop-blur hover:bg-zinc-800/80'
           >
             <ArrowLeft className='size-3' />
             Đóng
@@ -243,12 +243,12 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
             sang block editor khi muốn sửa content. (Code field immutable,
             metadata khác sửa qua /admin/templates/{id} detail.) */}
         <div className='fixed top-3 right-44 z-[60] flex items-center gap-2'>
-          <span className='rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-medium tracking-wide text-white/70 backdrop-blur'>
+          <span className='text-3xs rounded-full bg-white/10 px-2.5 py-0.5 font-medium tracking-wide text-white/70 backdrop-blur'>
             {activeSource}
           </span>
           <Link
             href={`/admin/templates/${templateId}/edit`}
-            className='inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-[11px] font-medium text-white backdrop-blur transition-colors hover:bg-white/25'
+            className='text-2xs inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 font-medium text-white backdrop-blur transition-colors hover:bg-white/25'
           >
             <Pencil className='size-3' />
             Edit canvas
@@ -264,7 +264,7 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
     <div className='flex h-screen flex-col items-center justify-center gap-4 bg-zinc-50 p-8'>
       <Link
         href='/admin/templates'
-        className='absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-700 hover:bg-zinc-100'
+        className='absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100'
       >
         <ArrowLeft className='size-3.5' />
         Templates
@@ -277,10 +277,10 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
       ) : error ? (
         <div className='max-w-md rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
           <AlertCircle className='mx-auto size-8 text-rose-600' />
-          <p className='mt-3 text-[14px] font-semibold text-rose-900'>
+          <p className='mt-3 text-sm font-semibold text-rose-900'>
             Không load được preview
           </p>
-          <p className='mt-1 font-mono text-[11px] text-rose-700'>{error}</p>
+          <p className='text-2xs mt-1 font-mono text-rose-700'>{error}</p>
         </div>
       ) : template?.thumbnail_url ? (
         <>
@@ -290,16 +290,16 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
             alt={`${template.name} — thumbnail`}
             className='max-h-[80vh] max-w-[80vw] rounded-2xl border border-zinc-200 bg-white shadow-xl'
           />
-          <p className='text-[12px] text-zinc-500'>
+          <p className='text-xs text-zinc-500'>
             Template chưa có canvas blocks. Hiển thị thumbnail.
           </p>
         </>
       ) : (
         <div className='max-w-md rounded-2xl border border-zinc-200 bg-white p-8 text-center'>
-          <p className='text-[14px] font-semibold text-zinc-700'>
+          <p className='text-sm font-semibold text-zinc-700'>
             Template chưa có nội dung
           </p>
-          <p className='mt-1 text-[12px] text-zinc-500'>
+          <p className='mt-1 text-xs text-zinc-500'>
             Mở editor để thêm block trước khi preview.
           </p>
         </div>
@@ -320,14 +320,12 @@ function PreviewHeader({
       <button
         type='button'
         onClick={onClose}
-        className='inline-flex items-center gap-1.5 text-[12px] font-medium text-zinc-600 hover:text-zinc-900'
+        className='inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900'
       >
         <ArrowLeft className='size-3.5' />
         {template?.name ?? 'Preview'}
       </button>
-      <span className='font-mono text-[10.5px] text-zinc-400'>
-        {template?.code}
-      </span>
+      <span className='text-3xs font-mono text-zinc-400'>{template?.code}</span>
     </header>
   );
 }

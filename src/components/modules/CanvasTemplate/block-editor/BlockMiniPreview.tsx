@@ -83,7 +83,7 @@ export function BlockMiniPreview({
       <div
         ref={ref}
         className={cn(
-          'flex items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 text-[10px] text-zinc-400',
+          'text-3xs flex items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 text-zinc-400',
           className
         )}
         style={{ aspectRatio: aspect }}

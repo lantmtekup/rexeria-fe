@@ -248,7 +248,7 @@ function TabButton({
       {count > 0 && (
         <span
           className={cn(
-            'inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold',
+            'text-3xs inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-semibold',
             active
               ? 'bg-neutral-900 text-white'
               : 'bg-neutral-100 text-neutral-500'
@@ -284,7 +284,7 @@ function GeneralTab({
     <section className='flex flex-col gap-4'>
       <div className='border-border bg-background flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4'>
         <div className='flex items-center gap-2'>
-          <span className='text-[10px] font-semibold tracking-widest text-neutral-500 uppercase'>
+          <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
             Vai trò
           </span>
           <select
@@ -391,7 +391,7 @@ function ColorTab({
           <p className='text-xs font-semibold text-amber-800'>
             {orphans.length} ảnh có color_name không khớp với màu hiện tại
           </p>
-          <p className='mt-1 text-[11px] text-amber-700'>
+          <p className='text-2xs mt-1 text-amber-700'>
             Có thể do bạn đổi tên/xoá màu. Bỏ liên kết hoặc rename color trong
             Information để khớp.
           </p>
@@ -433,17 +433,13 @@ function ColorGroup({
         <span className='text-sm font-semibold text-neutral-900'>
           {color.name}
         </span>
-        <span className='font-mono text-[10px] text-neutral-400'>
-          {color.hex}
-        </span>
+        <span className='text-3xs font-mono text-neutral-400'>{color.hex}</span>
         {color.is_default && (
           <Badge variant='secondary' className='bg-amber-100 text-amber-700'>
             Mặc định
           </Badge>
         )}
-        <span className='text-[11px] text-neutral-400'>
-          {entries.length} ảnh
-        </span>
+        <span className='text-2xs text-neutral-400'>{entries.length} ảnh</span>
         <div className='ml-auto'>
           <UploadButton
             productId={productId}
@@ -455,7 +451,7 @@ function ColorGroup({
         </div>
       </div>
       {entries.length === 0 ? (
-        <p className='text-[11px] text-neutral-400'>Chưa có ảnh cho màu này.</p>
+        <p className='text-2xs text-neutral-400'>Chưa có ảnh cho màu này.</p>
       ) : (
         <div className='grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4'>
           {entries.map(e => (

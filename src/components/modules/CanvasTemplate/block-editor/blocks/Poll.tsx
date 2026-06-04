@@ -100,7 +100,7 @@ export function Poll({
             style={sEyebrow}
             className={selectableClass(
               activeKey === 'eyebrow',
-              'text-[10px] font-semibold tracking-[0.32em] text-emerald-700 uppercase @2xl:text-[11px]'
+              'text-3xs @2xl:text-2xs font-semibold tracking-[0.32em] text-emerald-700 uppercase'
             )}
           >
             {content.eyebrow}
@@ -164,12 +164,12 @@ export function Poll({
                   <span className='font-semibold text-neutral-900'>
                     {Math.round(pct)}%
                   </span>
-                  <span className='text-[10px] text-neutral-500'>
+                  <span className='text-3xs text-neutral-500'>
                     ({v.toLocaleString('vi-VN')})
                   </span>
                 </span>
               ) : (
-                <span className='relative z-10 text-[11px] font-medium text-emerald-700'>
+                <span className='text-2xs relative z-10 font-medium text-emerald-700'>
                   {content.voteLabel ?? 'Bình chọn'}
                 </span>
               )}
@@ -189,7 +189,7 @@ export function Poll({
           <button
             type='button'
             onClick={reset}
-            className='inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3 text-[11px] font-medium text-neutral-700 hover:bg-neutral-50'
+            className='text-2xs inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3 font-medium text-neutral-700 hover:bg-neutral-50'
           >
             <RotateCcw className='size-3' />
             Đặt lại

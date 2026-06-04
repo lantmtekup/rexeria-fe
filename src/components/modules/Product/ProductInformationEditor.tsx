@@ -86,9 +86,7 @@ function FieldShell({
         <div className='text-foreground mt-0.5 min-h-5 text-sm font-medium'>
           {children}
         </div>
-        {hint && (
-          <div className='text-content-muted mt-1 text-[11px]'>{hint}</div>
-        )}
+        {hint && <div className='text-content-muted text-2xs mt-1'>{hint}</div>}
       </div>
       {trailing}
     </div>
@@ -265,7 +263,7 @@ function CertField({
                       updateAt(i, { media_id: e.target.value || undefined })
                     }
                     placeholder='media_id (logo, optional)'
-                    className='rounded border border-neutral-200 bg-white px-2 py-1 text-[11px] outline-none focus:border-neutral-900'
+                    className='text-2xs rounded border border-neutral-200 bg-white px-2 py-1 outline-none focus:border-neutral-900'
                   />
                   <input
                     type='url'
@@ -274,7 +272,7 @@ function CertField({
                       updateAt(i, { url: e.target.value || undefined })
                     }
                     placeholder='URL verify (optional)'
-                    className='rounded border border-neutral-200 bg-white px-2 py-1 text-[11px] outline-none focus:border-neutral-900'
+                    className='text-2xs rounded border border-neutral-200 bg-white px-2 py-1 outline-none focus:border-neutral-900'
                   />
                 </div>
               </li>
@@ -300,7 +298,7 @@ function CertField({
             type='button'
             onClick={add}
             disabled={!draftName.trim()}
-            className='inline-flex h-7 cursor-pointer items-center gap-1 rounded-md bg-neutral-900 px-2.5 text-[11px] font-semibold text-white hover:bg-neutral-800 disabled:opacity-40'
+            className='text-2xs inline-flex h-7 cursor-pointer items-center gap-1 rounded-md bg-neutral-900 px-2.5 font-semibold text-white hover:bg-neutral-800 disabled:opacity-40'
           >
             <Plus className='size-3' /> Thêm
           </button>
@@ -530,7 +528,7 @@ function ColorsField({
                     <span className='truncate text-xs font-medium text-neutral-800'>
                       {c.name}
                     </span>
-                    <span className='font-mono text-[10px] text-neutral-400'>
+                    <span className='text-3xs font-mono text-neutral-400'>
                       {c.hex}
                     </span>
                   </div>
@@ -587,7 +585,7 @@ function ColorsField({
                 className='group flex flex-col items-center gap-1'
               >
                 <ColorSwatch asSpan color={c.hex} size={20} />
-                <span className='text-[10px]'>{c.name}</span>
+                <span className='text-3xs'>{c.name}</span>
               </button>
             ))}
           </div>

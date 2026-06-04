@@ -106,10 +106,10 @@ export function BlockEditorHeader({
       </Link>
 
       <div className='flex min-w-0 items-baseline gap-2'>
-        <span className='text-[10px] font-semibold tracking-[0.18em] text-neutral-400 uppercase'>
+        <span className='text-3xs font-semibold tracking-[0.18em] text-neutral-400 uppercase'>
           Block
         </span>
-        <h1 className='truncate text-[13px] font-semibold tracking-tight text-neutral-900'>
+        <h1 className='truncate text-sm font-semibold tracking-tight text-neutral-900'>
           {blockName}
         </h1>
       </div>
@@ -149,21 +149,21 @@ export function BlockEditorHeader({
         <SegmentedButton
           active={lang === 'vi'}
           onClick={() => onLangChange('vi')}
-          className='h-7 px-2 font-mono text-[10px] font-semibold tracking-[0.14em]'
+          className='text-3xs h-7 px-2 font-mono font-semibold tracking-[0.14em]'
         >
           VI
         </SegmentedButton>
         <SegmentedButton
           active={lang === 'en'}
           onClick={() => onLangChange('en')}
-          className='h-7 px-2 font-mono text-[10px] font-semibold tracking-[0.14em]'
+          className='text-3xs h-7 px-2 font-mono font-semibold tracking-[0.14em]'
         >
           EN
         </SegmentedButton>
         <SegmentedButton
           onClick={onAi}
           aria-label='AI'
-          className='h-7 px-2 font-mono text-[10px] font-semibold tracking-[0.14em]'
+          className='text-3xs h-7 px-2 font-mono font-semibold tracking-[0.14em]'
         >
           AI
         </SegmentedButton>
@@ -224,7 +224,7 @@ export function BlockEditorHeader({
           type='button'
           onClick={onPublish}
           className={cn(
-            'ml-1 flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-3 text-[11px] font-semibold tracking-tight transition-colors',
+            'text-2xs ml-1 flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-3 font-semibold tracking-tight transition-colors',
             'shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_0_rgba(0,0,0,0.04)]',
             isPublished
               ? 'bg-emerald-600 text-white hover:bg-emerald-500'
@@ -271,7 +271,7 @@ function SaveDot({ status }: { status: SaveStatus }) {
       <span className={cn('size-1.5 rounded-full', dot)} aria-hidden />
       <span
         className={cn(
-          'font-mono text-[10px] tracking-[0.04em] tabular-nums',
+          'text-3xs font-mono tracking-[0.04em] tabular-nums',
           tone
         )}
       >

@@ -204,7 +204,7 @@ export function AdminAITemplateForm({ initial }: Props) {
             {initial ? `Sửa: ${initial.name}` : 'Tạo AI Template'}
           </h1>
           {initial ? (
-            <Badge variant='outline' className='text-[10px]'>
+            <Badge variant='outline' className='text-3xs'>
               v{data.version}
             </Badge>
           ) : null}
@@ -447,7 +447,7 @@ function FieldRow({
               >
                 <Badge
                   variant={checked ? 'default' : 'outline'}
-                  className='text-[10px]'
+                  className='text-3xs'
                 >
                   {b.role}
                 </Badge>
@@ -568,11 +568,11 @@ function BlockPromptRow({
       <summary className='flex cursor-pointer items-center gap-2 px-3 py-2'>
         <span className='text-muted-foreground text-xs'>#{block.position}</span>
         <span className='font-medium'>{block.role}</span>
-        <Badge variant='outline' className='text-[10px]'>
+        <Badge variant='outline' className='text-3xs'>
           {block.layout_type}
         </Badge>
         {prompt.prompt_instruction ? (
-          <Badge variant='secondary' className='text-[10px]'>
+          <Badge variant='secondary' className='text-3xs'>
             đã có prompt
           </Badge>
         ) : null}
@@ -645,7 +645,7 @@ function BlockPromptRow({
                   >
                     <Badge
                       variant={checked ? 'default' : 'outline'}
-                      className='text-[10px]'
+                      className='text-3xs'
                     >
                       {f.field_key}
                     </Badge>

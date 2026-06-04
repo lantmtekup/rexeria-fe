@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn';
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 const sizeMap: Record<AvatarSize, string> = {
-  xs: 'size-5 text-[10px]',
+  xs: 'size-5 text-3xs',
   sm: 'size-6 text-xs',
   md: 'size-8 text-sm',
   lg: 'size-10 text-base',

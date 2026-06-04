@@ -175,7 +175,7 @@ export function CreateTemplateDialog({
               className='font-mono'
               disabled={submitting}
             />
-            <p className='text-muted-foreground text-[11px]'>
+            <p className='text-muted-foreground text-2xs'>
               Auto-sinh từ tên. Slug duy nhất, không đổi được sau khi tạo.
             </p>
           </div>

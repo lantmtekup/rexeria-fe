@@ -249,7 +249,7 @@ export default function AiCampaignPage({ params }: PageProps) {
               value={landingPageId}
               onChange={setLandingPageId}
             />
-            <p className='text-muted-foreground text-[11px]'>
+            <p className='text-muted-foreground text-2xs'>
               Gắn landing để có tracked URL + scope metrics theo trang đó.
             </p>
           </div>

@@ -122,7 +122,7 @@ export function PageHeader({
 
 export function FakeBadge() {
   return (
-    <span className='rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-amber-700 uppercase'>
+    <span className='text-3xs rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 font-bold tracking-wider text-amber-700 uppercase'>
       UI Demo · Fake data
     </span>
   );
@@ -130,7 +130,7 @@ export function FakeBadge() {
 
 export function FakeBanner() {
   return (
-    <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-[12px] text-amber-800'>
+    <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800'>
       <Sparkles className='mt-0.5 size-3.5 shrink-0 text-amber-600' />
       <div>
         <span className='font-semibold'>Trang demo</span> — dữ liệu hiển thị là{' '}
@@ -168,7 +168,7 @@ export function StatCard({
           <Icon className='size-5' />
         </div>
       </div>
-      <div className='mt-3 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+      <div className='text-2xs mt-3 font-semibold tracking-wider text-zinc-500 uppercase'>
         {label}
       </div>
       <div className='mt-0.5 flex items-baseline gap-1.5'>
@@ -176,10 +176,10 @@ export function StatCard({
           {fmtNum(value)}
         </span>
         {value >= 1000 && (
-          <span className='text-[11px] text-zinc-400'>({fmtFull(value)})</span>
+          <span className='text-2xs text-zinc-400'>({fmtFull(value)})</span>
         )}
       </div>
-      {hint && <div className='mt-1 text-[10.5px] text-zinc-500'>{hint}</div>}
+      {hint && <div className='text-3xs mt-1 text-zinc-500'>{hint}</div>}
     </div>
   );
 }
@@ -198,12 +198,11 @@ export const BLOCK_TYPE_COLOR: Record<string, string> = {
 };
 
 export function BlockTypeChip({ type }: { type: string | null }) {
-  if (!type)
-    return <span className='font-mono text-[11px] text-zinc-400'>—</span>;
+  if (!type) return <span className='text-2xs font-mono text-zinc-400'>—</span>;
   const tone = BLOCK_TYPE_COLOR[type] ?? 'bg-zinc-100 text-zinc-700';
   return (
     <span
-      className={`inline-flex rounded-md px-2 py-0.5 text-[12px] font-semibold ${tone}`}
+      className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ${tone}`}
     >
       {type}
     </span>
@@ -219,7 +218,7 @@ export function CtrBadge({ ctr: c }: { ctr: number }) {
         ? 'bg-amber-100 text-amber-700'
         : 'bg-zinc-100 text-zinc-600';
   return (
-    <span className={`rounded-md px-1.5 py-0.5 font-mono text-[11px] ${tone}`}>
+    <span className={`text-2xs rounded-md px-1.5 py-0.5 font-mono ${tone}`}>
       {c.toFixed(1)}%
     </span>
   );

@@ -162,7 +162,7 @@ export function Panorama({
               style={sEyebrow}
               className={selectableClass(
                 activeKey === 'eyebrow',
-                'text-[10px] font-semibold tracking-[0.32em] text-white/60 uppercase'
+                'text-3xs font-semibold tracking-[0.32em] text-white/60 uppercase'
               )}
             >
               {content.eyebrow}
@@ -248,7 +248,7 @@ export function Panorama({
 
           {/* Hint badge — visible in editor / first interaction. */}
           {content.hint && (
-            <span className='pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-[11px] font-medium text-white backdrop-blur'>
+            <span className='text-2xs pointer-events-none absolute top-3 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 font-medium text-white backdrop-blur'>
               <Compass className='mr-1 inline size-3' />
               {content.hint}
             </span>
@@ -270,7 +270,7 @@ export function Panorama({
                 }deg, rgba(255,255,255,0.18) 0)`,
               }}
             />
-            <span className='absolute text-[9px] font-semibold tracking-wider text-white/80'>
+            <span className='text-3xs absolute font-semibold tracking-wider text-white/80'>
               360°
             </span>
           </div>

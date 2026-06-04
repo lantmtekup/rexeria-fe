@@ -220,10 +220,10 @@ export function ProductFormModal({
               <Save className='size-4' />
             </div>
             <div>
-              <h3 className='text-[15px] leading-tight font-semibold'>
+              <h3 className='text-base leading-tight font-semibold'>
                 {isEdit ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}
               </h3>
-              <p className='mt-0.5 flex items-center gap-1.5 text-[10px] text-zinc-500'>
+              <p className='text-3xs mt-0.5 flex items-center gap-1.5 text-zinc-500'>
                 {product ? (
                   <span className='font-mono'>
                     {product.sku} · {product.id}
@@ -231,7 +231,7 @@ export function ProductFormModal({
                 ) : (
                   <span>Reuse component từ codebase</span>
                 )}
-                <span className='rounded bg-orange-100 px-1 py-0.5 font-mono text-[9px] font-bold text-orange-700'>
+                <span className='text-3xs rounded bg-orange-100 px-1 py-0.5 font-mono font-bold text-orange-700'>
                   ProductInformationEditor
                 </span>
               </p>
@@ -250,7 +250,7 @@ export function ProductFormModal({
         <div className='space-y-4 px-5 py-4'>
           {/* Name */}
           <div>
-            <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
               Tên sản phẩm <span className='text-rose-500'>*</span>
             </label>
             <input
@@ -258,7 +258,7 @@ export function ProductFormModal({
               value={value.name}
               onChange={e => setValue(v => ({ ...v, name: e.target.value }))}
               placeholder='vd: Coca-Cola Original 330ml'
-              className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100'
+              className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100'
               maxLength={128}
               autoFocus
             />
@@ -270,7 +270,7 @@ export function ProductFormModal({
 
         {/* Footer */}
         <div className='flex items-center justify-between gap-3 border-t border-zinc-100 bg-zinc-50/50 px-5 py-3'>
-          <p className='text-[11px] text-zinc-500'>
+          <p className='text-2xs text-zinc-500'>
             {liveBE ? (
               <>
                 <span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 font-bold text-emerald-700'>

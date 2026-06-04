@@ -126,7 +126,7 @@ export function AddExtraElementButton({ onPick, disabled }: Props) {
             <p className='text-foreground text-xs font-semibold'>
               Chọn loại element
             </p>
-            <p className='text-muted-foreground text-[11px]'>
+            <p className='text-muted-foreground text-2xs'>
               Element mới sẽ đặt giữa block, có thể kéo tự do sau.
             </p>
           </div>
@@ -148,7 +148,7 @@ export function AddExtraElementButton({ onPick, disabled }: Props) {
                     <span className='block text-sm leading-5 font-medium'>
                       {label}
                     </span>
-                    <span className='text-muted-foreground block text-[11px] leading-4'>
+                    <span className='text-muted-foreground text-2xs block leading-4'>
                       {hint}
                     </span>
                   </span>

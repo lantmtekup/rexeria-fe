@@ -71,13 +71,13 @@ export default function PortalCommentsPage() {
   return (
     <PortalShell>
       <section>
-        <div className='flex items-center gap-2 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+        <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
           <MessageSquare className='size-3' /> Comments &amp; Requests
         </div>
         <h1 className='mt-1 text-2xl font-bold tracking-tight'>
           Trao đổi với Rexer
         </h1>
-        <p className='mt-1 text-[13px] text-zinc-500'>
+        <p className='mt-1 text-sm text-zinc-500'>
           Yêu cầu sửa landing page, hỏi đáp, feedback. Staff phụ trách brand sẽ
           trả lời trong vòng 24 giờ làm việc.
         </p>
@@ -91,7 +91,7 @@ export default function PortalCommentsPage() {
           </div>
           <h3 className='text-sm font-semibold'>Gửi yêu cầu mới</h3>
         </div>
-        <select className='mb-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-zinc-400'>
+        <select className='mb-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400'>
           <option>Chọn landing page muốn comment...</option>
           {FAKE_TEMPLATES.map(t => (
             <option key={t.id} value={t.id}>
@@ -102,10 +102,10 @@ export default function PortalCommentsPage() {
         <textarea
           placeholder="Viết yêu cầu của bạn... vd: 'Đổi màu nền hero sang gradient navy', 'Thêm 1 block về certifications'..."
           rows={3}
-          className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-zinc-400'
+          className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-400'
         />
         <div className='mt-2 flex items-center justify-between'>
-          <span className='text-[10.5px] text-zinc-500'>
+          <span className='text-3xs text-zinc-500'>
             Hỗ trợ Markdown · Tối đa 4000 ký tự
           </span>
           <button className='rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'>
@@ -116,7 +116,7 @@ export default function PortalCommentsPage() {
 
       {/* Open threads */}
       <section className='mt-6'>
-        <h2 className='mb-3 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+        <h2 className='text-2xs mb-3 font-semibold tracking-wider text-zinc-500 uppercase'>
           Đang chờ Rexer ({open.length})
         </h2>
         <div className='space-y-3'>
@@ -128,7 +128,7 @@ export default function PortalCommentsPage() {
 
       {/* Resolved */}
       <section className='mt-6'>
-        <h2 className='mb-3 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+        <h2 className='text-2xs mb-3 font-semibold tracking-wider text-zinc-500 uppercase'>
           Đã giải quyết ({resolved.length})
         </h2>
         <div className='space-y-3 opacity-60'>
@@ -146,11 +146,11 @@ function ThreadCard({ t }: { t: Thread }) {
     <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
       <div className='border-b border-zinc-100 bg-zinc-50/50 px-4 py-2'>
         <div className='flex items-center justify-between'>
-          <span className='font-mono text-[11px] font-semibold text-zinc-700'>
+          <span className='text-2xs font-mono font-semibold text-zinc-700'>
             {t.template_name}
           </span>
           {t.status === 'resolved' && (
-            <span className='flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700'>
+            <span className='text-3xs flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 font-bold text-emerald-700'>
               <CheckCircle2 className='size-2.5' /> Resolved
             </span>
           )}
@@ -159,7 +159,7 @@ function ThreadCard({ t }: { t: Thread }) {
       <div className='p-4'>
         <div className='flex items-start gap-3'>
           <div
-            className={`flex size-8 shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-bold text-white shadow-sm ${
+            className={`text-2xs flex size-8 shrink-0 items-center justify-center rounded-full font-mono font-bold text-white shadow-sm ${
               t.author_role === 'brand' ? 'bg-rose-500' : 'bg-orange-500'
             }`}
           >
@@ -167,12 +167,10 @@ function ThreadCard({ t }: { t: Thread }) {
           </div>
           <div className='min-w-0 flex-1'>
             <div className='flex flex-wrap items-baseline gap-x-2'>
-              <span className='text-[13px] font-semibold'>{t.author}</span>
-              <span className='font-mono text-[10px] text-zinc-400'>
-                {t.at}
-              </span>
+              <span className='text-sm font-semibold'>{t.author}</span>
+              <span className='text-3xs font-mono text-zinc-400'>{t.at}</span>
             </div>
-            <p className='mt-1 text-[13px] leading-relaxed text-zinc-700'>
+            <p className='mt-1 text-sm leading-relaxed text-zinc-700'>
               {t.body}
             </p>
           </div>
@@ -180,22 +178,20 @@ function ThreadCard({ t }: { t: Thread }) {
 
         {t.reply && (
           <div className='mt-3 ml-11 flex items-start gap-3 rounded-xl border border-zinc-100 bg-zinc-50/50 p-3'>
-            <div className='flex size-7 shrink-0 items-center justify-center rounded-full bg-orange-500 font-mono text-[10px] font-bold text-white shadow-sm'>
+            <div className='text-3xs flex size-7 shrink-0 items-center justify-center rounded-full bg-orange-500 font-mono font-bold text-white shadow-sm'>
               {t.reply.author.slice(0, 2).toUpperCase()}
             </div>
             <div className='min-w-0 flex-1'>
               <div className='flex flex-wrap items-baseline gap-x-2'>
-                <span className='text-[12.5px] font-semibold'>
-                  {t.reply.author}
-                </span>
-                <span className='rounded bg-orange-100 px-1.5 py-0.5 font-mono text-[9px] font-bold text-orange-700'>
+                <span className='text-xs font-semibold'>{t.reply.author}</span>
+                <span className='text-3xs rounded bg-orange-100 px-1.5 py-0.5 font-mono font-bold text-orange-700'>
                   STAFF
                 </span>
-                <span className='font-mono text-[10px] text-zinc-400'>
+                <span className='text-3xs font-mono text-zinc-400'>
                   {t.reply.at}
                 </span>
               </div>
-              <p className='mt-1 text-[12.5px] leading-relaxed text-zinc-700'>
+              <p className='mt-1 text-xs leading-relaxed text-zinc-700'>
                 {t.reply.body}
               </p>
             </div>
@@ -203,7 +199,7 @@ function ThreadCard({ t }: { t: Thread }) {
         )}
 
         {t.status === 'open' && !t.reply && (
-          <div className='mt-3 ml-11 rounded-xl border border-dashed border-zinc-200 bg-white px-3 py-2 text-center text-[11px] text-zinc-500'>
+          <div className='text-2xs mt-3 ml-11 rounded-xl border border-dashed border-zinc-200 bg-white px-3 py-2 text-center text-zinc-500'>
             ⏳ Đang chờ Rexer phản hồi
           </div>
         )}

@@ -94,7 +94,7 @@ export function UseTemplateDialog({
 
         <form onSubmit={submit} className='flex flex-col gap-3'>
           <label className='flex flex-col gap-1'>
-            <span className='text-[10px] font-semibold tracking-widest text-neutral-500 uppercase'>
+            <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
               Tên sản phẩm mới
             </span>
             <input
@@ -109,7 +109,7 @@ export function UseTemplateDialog({
           </label>
 
           {template?.template_category && (
-            <p className='text-[11px] text-neutral-500'>
+            <p className='text-2xs text-neutral-500'>
               Danh mục:{' '}
               <span className='font-medium text-neutral-700'>
                 {template.template_category}

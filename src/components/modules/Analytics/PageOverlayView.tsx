@@ -143,10 +143,10 @@ export function PageOverlayView({ pageId }: Props) {
       <div className='mx-auto max-w-md p-6'>
         <div className='rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
           <AlertCircle className='mx-auto size-8 text-rose-600' />
-          <p className='mt-3 text-[14px] font-semibold text-rose-900'>
+          <p className='mt-3 text-sm font-semibold text-rose-900'>
             Không load được trang
           </p>
-          <p className='mt-1 font-mono text-[11px] text-rose-700'>
+          <p className='text-2xs mt-1 font-mono text-rose-700'>
             {error ?? 'Missing page/template'}
           </p>
         </div>

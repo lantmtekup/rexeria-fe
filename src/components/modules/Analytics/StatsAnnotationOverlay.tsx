@@ -359,9 +359,9 @@ const CARD_STYLE: React.CSSProperties = {
 };
 
 const CARD_LABEL_CLS =
-  'm-0 text-[18px] font-normal tracking-[0.005em] text-white/85';
+  'm-0 text-lg font-normal tracking-[0.005em] text-white/85';
 const CARD_VALUE_CLS =
-  'm-0 mt-1.5 text-[38px] leading-none font-bold tracking-[-0.01em] text-white tabular-nums';
+  'm-0 mt-1.5 text-4xl leading-none font-bold tracking-[-0.01em] text-white tabular-nums';
 
 function BlockSummaryCard({
   index,
@@ -384,15 +384,15 @@ function BlockSummaryCard({
       {/* Header */}
       <div className='flex items-center justify-between text-white/60'>
         <div className='flex items-center gap-1.5'>
-          <span className='flex size-4 items-center justify-center rounded-full bg-white/15 text-[10px] font-bold text-white'>
+          <span className='text-3xs flex size-4 items-center justify-center rounded-full bg-white/15 font-bold text-white'>
             {index + 1}
           </span>
-          <span className='truncate text-[11px] font-medium tracking-wide'>
+          <span className='text-2xs truncate font-medium tracking-wide'>
             {row.block_type ?? 'block'}
           </span>
         </div>
         <span
-          className={`text-[10px] tracking-wider uppercase ${
+          className={`text-3xs tracking-wider uppercase ${
             isDemo ? 'text-violet-300/80' : 'text-emerald-300/80'
           }`}
         >
@@ -408,7 +408,7 @@ function BlockSummaryCard({
       <Sparkline seed={row.block_id} />
 
       {/* Footer stats — small auxiliary row */}
-      <div className='mt-4 grid grid-cols-3 gap-3 border-t border-white/10 pt-3 text-[11px]'>
+      <div className='text-2xs mt-4 grid grid-cols-3 gap-3 border-t border-white/10 pt-3'>
         <div>
           <div className='text-white/55'>Click</div>
           <div className='mt-0.5 font-semibold tabular-nums'>
@@ -449,10 +449,10 @@ function ElementStatCard({
     <div className={CARD_BASE} style={CARD_STYLE}>
       <div className='flex items-start justify-between gap-2 text-white/60'>
         <div className='min-w-0'>
-          <div className='truncate text-[13px] leading-tight font-semibold text-white'>
+          <div className='truncate text-sm leading-tight font-semibold text-white'>
             {label || elementId}
           </div>
-          <div className='mt-0.5 truncate text-[10px] tracking-wider uppercase'>
+          <div className='text-3xs mt-0.5 truncate tracking-wider uppercase'>
             {action.action}
           </div>
         </div>
@@ -462,7 +462,7 @@ function ElementStatCard({
       <p className={`${CARD_LABEL_CLS} mt-3`}>Lượt click:</p>
       <p className={CARD_VALUE_CLS}>{fmtCount(action.count)}</p>
 
-      <div className='mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-3 text-[11px]'>
+      <div className='text-2xs mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-3'>
         <div>
           <div className='text-white/55'>Unique</div>
           <div className='mt-0.5 font-semibold tabular-nums'>
@@ -523,7 +523,7 @@ function StatsToolbar({
       <button
         type='button'
         onClick={() => setEnabled(!enabled)}
-        className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-medium transition-colors ${
+        className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
           enabled ? 'bg-zinc-900 text-white' : 'text-zinc-700 hover:bg-zinc-100'
         }`}
         title={enabled ? 'Tắt overlay' : 'Bật stats overlay'}
@@ -541,7 +541,7 @@ function StatsToolbar({
           <select
             value={range}
             onChange={e => setRange(e.target.value as DateRange)}
-            className='cursor-pointer rounded-md bg-transparent px-1 py-0.5 text-[11.5px] font-medium text-zinc-700 outline-none hover:bg-zinc-50'
+            className='text-2xs cursor-pointer rounded-md bg-transparent px-1 py-0.5 font-medium text-zinc-700 outline-none hover:bg-zinc-50'
           >
             {(Object.keys(RANGE_LABEL) as DateRange[]).map(r => (
               <option key={r} value={r}>
@@ -550,7 +550,7 @@ function StatsToolbar({
             ))}
           </select>
           <span
-            className={`font-mono text-[10px] ${
+            className={`text-3xs font-mono ${
               isDemo ? 'text-violet-500' : 'text-zinc-400'
             }`}
           >
@@ -562,7 +562,7 @@ function StatsToolbar({
               <button
                 type='button'
                 onClick={onResetOffsets}
-                className='rounded-md px-2 py-0.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+                className='text-2xs rounded-md px-2 py-0.5 font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
                 title='Đặt lại vị trí mặc định cho mọi card'
               >
                 Reset vị trí
@@ -856,7 +856,7 @@ export function StatsAnnotationOverlay({
         onResetOffsets={resetOffsets}
       />
       {enabled && forbidden && !isAdminScope && (
-        <div className='fixed top-16 right-4 z-50 max-w-sm rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-900 shadow'>
+        <div className='text-2xs fixed top-16 right-4 z-50 max-w-sm rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 shadow'>
           <div className='font-semibold'>Không truy cập được dữ liệu</div>
           <div className='mt-0.5 text-amber-800'>
             Tài khoản hiện không có quyền xem breakdown cho template này. Liên
@@ -883,7 +883,7 @@ export function StatsAnnotationOverlay({
         />
       )}
       {enabled && narrow && (
-        <div className='fixed right-4 bottom-4 z-40 max-w-xs rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800 shadow'>
+        <div className='text-2xs fixed right-4 bottom-4 z-40 max-w-xs rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800 shadow'>
           Viewport &lt; {MIN_VIEWPORT}px — overlay cần màn hình rộng hơn để hiện
           gutter.
         </div>

@@ -145,7 +145,7 @@ export function BlockDetailView({
         <button
           type='button'
           onClick={() => router.push(backHref)}
-          className='group inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-600 shadow-sm transition-all hover:border-zinc-300 hover:text-zinc-900'
+          className='group inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 shadow-sm transition-all hover:border-zinc-300 hover:text-zinc-900'
         >
           <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
           Quay lại thư viện
@@ -154,10 +154,10 @@ export function BlockDetailView({
           <div className='mx-auto flex size-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700'>
             <X className='size-6' strokeWidth={2.5} />
           </div>
-          <p className='mt-4 text-[15px] font-semibold text-amber-900'>
+          <p className='mt-4 text-base font-semibold text-amber-900'>
             Không tìm thấy block
           </p>
-          <p className='mt-1.5 text-[12.5px] text-amber-800/80'>
+          <p className='mt-1.5 text-xs text-amber-800/80'>
             Block với id <code className='font-mono'>{blockId}</code> không tồn
             tại trong storage — có thể đã bị xoá hoặc chưa sync.
           </p>
@@ -268,7 +268,7 @@ export function BlockDetailView({
         <button
           type='button'
           onClick={() => router.push(backHref)}
-          className='group inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3.5 py-1.5 text-[12.5px] font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
+          className='group inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3.5 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
         >
           <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
           Thư viện blocks
@@ -276,7 +276,7 @@ export function BlockDetailView({
         <button
           type='button'
           onClick={copyId}
-          className='group inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white/60 px-2.5 py-1 font-mono text-[10.5px] text-zinc-500 shadow-sm backdrop-blur transition-colors hover:border-zinc-300 hover:bg-white hover:text-zinc-900'
+          className='group text-3xs inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white/60 px-2.5 py-1 font-mono text-zinc-500 shadow-sm backdrop-blur transition-colors hover:border-zinc-300 hover:bg-white hover:text-zinc-900'
           title='Click để copy block ID'
         >
           <Hash className='size-3' />
@@ -303,16 +303,16 @@ export function BlockDetailView({
           <div className='flex flex-wrap items-center gap-2'>
             <span
               className={cn(
-                'inline-flex items-center rounded-full bg-gradient-to-br px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.18em] text-white/95 uppercase shadow-sm',
+                'text-3xs inline-flex items-center rounded-full bg-gradient-to-br px-2.5 py-1 font-mono font-bold tracking-[0.18em] text-white/95 uppercase shadow-sm',
                 gradient
               )}
             >
               {label}
             </span>
-            <span className='font-mono text-[10.5px] tracking-wider text-zinc-400 uppercase'>
+            <span className='text-3xs font-mono tracking-wider text-zinc-400 uppercase'>
               {type}
             </span>
-            <span className='ml-auto inline-flex items-center gap-1 text-[10.5px] font-medium tracking-wider text-zinc-400 uppercase'>
+            <span className='text-3xs ml-auto inline-flex items-center gap-1 font-medium tracking-wider text-zinc-400 uppercase'>
               {hasMobile ? (
                 <>
                   <Smartphone className='size-3' /> Desktop + Mobile
@@ -358,7 +358,7 @@ export function BlockDetailView({
           </div>
 
           {/* Meta line */}
-          <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-zinc-500'>
+          <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500'>
             <span className='inline-flex items-center gap-1.5'>
               <Calendar className='size-3' />
               Tạo {fmtDate(block.createdAt)}
@@ -397,7 +397,7 @@ export function BlockDetailView({
               <DefRow
                 label='Block type'
                 value={
-                  <code className='rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11.5px] text-zinc-700'>
+                  <code className='text-2xs rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-700'>
                     {type}
                   </code>
                 }
@@ -432,7 +432,7 @@ export function BlockDetailView({
             </SectionHeader>
             <div className='mt-4 flex flex-wrap items-center gap-1.5'>
               {tags.length === 0 && (
-                <span className='text-[12.5px] text-zinc-400 italic'>
+                <span className='text-xs text-zinc-400 italic'>
                   Chưa có tag — thêm để dễ filter trong thư viện
                 </span>
               )}
@@ -441,7 +441,7 @@ export function BlockDetailView({
                   key={t}
                   type='button'
                   onClick={() => removeTag(t)}
-                  className='group inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11.5px] font-medium text-zinc-700 transition-all hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
+                  className='group text-2xs inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 font-medium text-zinc-700 transition-all hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
                   title='Click để xoá tag'
                 >
                   <span>{t}</span>
@@ -462,14 +462,14 @@ export function BlockDetailView({
                     }
                   }}
                   placeholder='Thêm tag (Enter)…'
-                  className='w-full rounded-lg border border-zinc-200 bg-zinc-50 py-2 pr-3 pl-9 text-[12.5px] transition-colors outline-none focus:border-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-900/5'
+                  className='w-full rounded-lg border border-zinc-200 bg-zinc-50 py-2 pr-3 pl-9 text-xs transition-colors outline-none focus:border-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-900/5'
                 />
               </div>
               <button
                 type='button'
                 onClick={addTag}
                 disabled={!tagInput.trim()}
-                className='rounded-lg bg-zinc-900 px-3.5 py-2 text-[12.5px] font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40'
+                className='rounded-lg bg-zinc-900 px-3.5 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40'
               >
                 Thêm
               </button>
@@ -497,10 +497,10 @@ export function BlockDetailView({
                 className='pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent'
               />
               <div className='min-w-0'>
-                <div className='text-[13.5px] font-semibold'>
+                <div className='text-sm font-semibold'>
                   {editing ? 'Đang mở editor…' : 'Sửa trong canvas'}
                 </div>
-                <div className='text-[10.5px] text-white/55'>
+                <div className='text-3xs text-white/55'>
                   Editor full-screen + tất cả tooling
                 </div>
               </div>
@@ -514,7 +514,7 @@ export function BlockDetailView({
               <button
                 type='button'
                 onClick={handleDuplicate}
-                className='group inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[12px] font-medium text-zinc-700 transition-all hover:border-zinc-900 hover:text-zinc-900'
+                className='group inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-700 transition-all hover:border-zinc-900 hover:text-zinc-900'
               >
                 <Copy className='size-3.5' />
                 Duplicate
@@ -522,7 +522,7 @@ export function BlockDetailView({
               <button
                 type='button'
                 onClick={handleDelete}
-                className='group inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[12px] font-medium text-zinc-700 transition-all hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
+                className='group inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-700 transition-all hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
               >
                 <Trash2 className='size-3.5' />
                 Xoá
@@ -532,8 +532,8 @@ export function BlockDetailView({
             {/* Tip card */}
             <div className='mt-5 flex gap-2.5 rounded-xl border border-amber-100 bg-amber-50/60 p-3.5'>
               <Lightbulb className='size-4 shrink-0 text-amber-600' />
-              <div className='text-[11.5px] leading-relaxed text-amber-900/90'>
-                <strong className='block text-[11.5px] font-semibold text-amber-900'>
+              <div className='text-2xs leading-relaxed text-amber-900/90'>
+                <strong className='text-2xs block font-semibold text-amber-900'>
                   Mẹo
                 </strong>
                 Sau khi sửa xong trong canvas → click 🔖 bookmark icon để cập
@@ -557,7 +557,7 @@ function SectionHeader({
   children: React.ReactNode;
 }) {
   return (
-    <div className='flex items-center gap-2 text-[10.5px] font-semibold tracking-[0.2em] text-zinc-500 uppercase'>
+    <div className='text-3xs flex items-center gap-2 font-semibold tracking-[0.2em] text-zinc-500 uppercase'>
       <span className='flex size-6 items-center justify-center rounded-md bg-zinc-100 text-zinc-600'>
         {icon}
       </span>
@@ -569,10 +569,10 @@ function SectionHeader({
 function DefRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className='flex flex-col gap-1'>
-      <dt className='text-[10px] font-semibold tracking-[0.15em] text-zinc-400 uppercase'>
+      <dt className='text-3xs font-semibold tracking-[0.15em] text-zinc-400 uppercase'>
         {label}
       </dt>
-      <dd className='text-[13px] leading-snug text-zinc-800'>{value}</dd>
+      <dd className='text-sm leading-snug text-zinc-800'>{value}</dd>
     </div>
   );
 }

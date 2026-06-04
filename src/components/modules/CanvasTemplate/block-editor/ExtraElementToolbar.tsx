@@ -338,7 +338,7 @@ function EditTextEditor({
           onChange={e =>
             onChange({ content: { ...el.content, fieldName: e.target.value } })
           }
-          className='h-7 w-32 rounded-md bg-white px-2 font-mono text-[11px] ring-1 ring-neutral-200 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
+          className='text-2xs h-7 w-32 rounded-md bg-white px-2 font-mono ring-1 ring-neutral-200 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Loại'>
@@ -362,7 +362,7 @@ function EditTextEditor({
           <option value='textarea'>textarea</option>
         </select>
       </InlineLabel>
-      <label className='inline-flex items-center gap-1 text-[11px] text-neutral-600'>
+      <label className='text-2xs inline-flex items-center gap-1 text-neutral-600'>
         <input
           type='checkbox'
           checked={el.content.isRequired}
@@ -505,7 +505,7 @@ function VideoEditor({
           }
         />
       )}
-      <label className='inline-flex items-center gap-1 text-[11px] text-neutral-600'>
+      <label className='text-2xs inline-flex items-center gap-1 text-neutral-600'>
         <input
           type='checkbox'
           checked={el.style?.controls ?? true}
@@ -515,7 +515,7 @@ function VideoEditor({
         />
         Controls
       </label>
-      <label className='inline-flex items-center gap-1 text-[11px] text-neutral-600'>
+      <label className='text-2xs inline-flex items-center gap-1 text-neutral-600'>
         <input
           type='checkbox'
           checked={el.style?.autoplay ?? false}
@@ -644,7 +644,7 @@ function StyleControls({
             onChange({ style: { ...s, fontSize: n } });
           }}
           placeholder='—'
-          className='h-7 w-12 rounded-md bg-white px-1.5 text-center font-mono text-[11px] ring-1 ring-neutral-200 focus:outline-none'
+          className='text-2xs h-7 w-12 rounded-md bg-white px-1.5 text-center font-mono ring-1 ring-neutral-200 focus:outline-none'
         />
       </InlineLabel>
       <input
@@ -655,7 +655,7 @@ function StyleControls({
         aria-label='Màu chữ'
       />
       <label
-        className='inline-flex items-center gap-1 text-[11px] text-neutral-600'
+        className='text-2xs inline-flex items-center gap-1 text-neutral-600'
         title='Glassmorphism — backdrop blur + tint trong'
       >
         <input
@@ -684,7 +684,7 @@ function StyleControls({
             })
           }
           className={cn(
-            'h-7 cursor-pointer rounded-md px-2 text-[11px] ring-1',
+            'text-2xs h-7 cursor-pointer rounded-md px-2 ring-1',
             s.beamColor
               ? 'bg-sky-100 text-sky-900 ring-sky-300'
               : 'bg-white text-neutral-600 ring-neutral-200'
@@ -1035,13 +1035,13 @@ function SpinWheelEditor({
             <input
               value={s.label}
               onChange={e => patchSeg(i, { label: e.target.value })}
-              className='h-5 w-16 bg-transparent text-[11px] focus:outline-none'
+              className='text-2xs h-5 w-16 bg-transparent focus:outline-none'
               placeholder={`Ô ${i + 1}`}
             />
             <input
               value={s.prize ?? ''}
               onChange={e => patchSeg(i, { prize: e.target.value })}
-              className='h-5 w-20 bg-transparent text-[10px] text-neutral-500 focus:outline-none'
+              className='text-3xs h-5 w-20 bg-transparent text-neutral-500 focus:outline-none'
               placeholder='prize'
             />
             <button
@@ -1057,7 +1057,7 @@ function SpinWheelEditor({
         <button
           type='button'
           onClick={addSeg}
-          className='h-6 rounded-md bg-neutral-100 px-2 text-[11px] hover:bg-neutral-200'
+          className='text-2xs h-6 rounded-md bg-neutral-100 px-2 hover:bg-neutral-200'
         >
           + Ô
         </button>
@@ -1085,7 +1085,7 @@ function SizeEditor({
               size: { ...element.size, width: Number(e.target.value) || 1 },
             })
           }
-          className='h-7 w-14 rounded-md bg-white px-1.5 text-center font-mono text-[11px] ring-1 ring-neutral-200 focus:outline-none'
+          className='text-2xs h-7 w-14 rounded-md bg-white px-1.5 text-center font-mono ring-1 ring-neutral-200 focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='H'>
@@ -1098,7 +1098,7 @@ function SizeEditor({
               size: { ...element.size, height: Number(e.target.value) || 1 },
             })
           }
-          className='h-7 w-14 rounded-md bg-white px-1.5 text-center font-mono text-[11px] ring-1 ring-neutral-200 focus:outline-none'
+          className='text-2xs h-7 w-14 rounded-md bg-white px-1.5 text-center font-mono ring-1 ring-neutral-200 focus:outline-none'
         />
       </InlineLabel>
     </>
@@ -1113,7 +1113,7 @@ function InlineLabel({
   children: React.ReactNode;
 }) {
   return (
-    <span className='inline-flex items-center gap-1 text-[10px] tracking-wide text-neutral-500 uppercase'>
+    <span className='text-3xs inline-flex items-center gap-1 tracking-wide text-neutral-500 uppercase'>
       {label}
       {children}
     </span>
@@ -1144,7 +1144,7 @@ function TrackingPopover({
           title='Tracking'
           aria-label='Tracking'
           className={cn(
-            'inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] font-medium ring-1 transition-colors',
+            'text-2xs inline-flex h-7 items-center gap-1 rounded-md px-2 font-medium ring-1 transition-colors',
             enabled
               ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
               : 'bg-white text-neutral-700 ring-neutral-200 hover:ring-neutral-300'
@@ -1165,7 +1165,7 @@ function TrackingPopover({
         >
           <div className='flex items-center justify-between border-b px-3 py-2'>
             <span className='text-xs font-semibold'>Tracking event</span>
-            <label className='inline-flex cursor-pointer items-center gap-1.5 text-[11px] text-neutral-600'>
+            <label className='text-2xs inline-flex cursor-pointer items-center gap-1.5 text-neutral-600'>
               <input
                 type='checkbox'
                 checked={enabled}
@@ -1176,28 +1176,28 @@ function TrackingPopover({
           </div>
           <div className='flex flex-col gap-2 p-3'>
             <label className='flex flex-col gap-1'>
-              <span className='text-[10px] tracking-wide text-neutral-500 uppercase'>
+              <span className='text-3xs tracking-wide text-neutral-500 uppercase'>
                 Tên sự kiện (event_name)
               </span>
               <input
                 value={tracking?.eventName ?? ''}
                 onChange={e => set({ eventName: e.target.value })}
                 placeholder='vd: cta_click_hero'
-                className='h-8 rounded-md bg-white px-2 font-mono text-[11px] ring-1 ring-neutral-200 placeholder:text-neutral-400 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
+                className='text-2xs h-8 rounded-md bg-white px-2 font-mono ring-1 ring-neutral-200 placeholder:text-neutral-400 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
               />
             </label>
             <label className='flex flex-col gap-1'>
-              <span className='text-[10px] tracking-wide text-neutral-500 uppercase'>
+              <span className='text-3xs tracking-wide text-neutral-500 uppercase'>
                 Danh mục (category)
               </span>
               <input
                 value={tracking?.eventCategory ?? ''}
                 onChange={e => set({ eventCategory: e.target.value })}
                 placeholder='engagement / cta / form_submit'
-                className='h-8 rounded-md bg-white px-2 text-[11px] ring-1 ring-neutral-200 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
+                className='text-2xs h-8 rounded-md bg-white px-2 ring-1 ring-neutral-200 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
               />
             </label>
-            <p className='text-[10px] leading-4 text-neutral-500'>
+            <p className='text-3xs leading-4 text-neutral-500'>
               Khi public view tương tác element này, FE dispatch{' '}
               <code className='bg-neutral-100 px-1'>rexer:track</code> với{' '}
               <code className='bg-neutral-100 px-1'>detail.eventName</code>.
@@ -1207,7 +1207,7 @@ function TrackingPopover({
               <button
                 type='button'
                 onClick={() => onChange(undefined)}
-                className='self-end text-[11px] text-red-600 hover:underline'
+                className='text-2xs self-end text-red-600 hover:underline'
               >
                 Xoá tracking
               </button>

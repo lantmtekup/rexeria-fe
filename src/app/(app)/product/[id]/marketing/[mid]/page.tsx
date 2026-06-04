@@ -540,7 +540,7 @@ export default function CampaignDetailPage({ params }: PageProps) {
                   }
                   disabled={!editing}
                 />
-                <p className='text-muted-foreground text-[11px]'>
+                <p className='text-muted-foreground text-2xs'>
                   Trang được gắn sẽ dựng tracked URL + scope metrics. Bỏ trống =
                   không gắn.
                 </p>

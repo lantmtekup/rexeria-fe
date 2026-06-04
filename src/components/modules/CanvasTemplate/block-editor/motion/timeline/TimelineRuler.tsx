@@ -91,7 +91,7 @@ export function TimelineRuler({
                 style={{ left }}
               />
               <span
-                className='absolute top-0.5 font-mono text-[9px] text-neutral-400 tabular-nums'
+                className='text-3xs absolute top-0.5 font-mono text-neutral-400 tabular-nums'
                 style={{ left: left + 3 }}
               >
                 {formatMs(t)}

@@ -101,10 +101,10 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
   return (
     <div className='min-h-screen bg-zinc-50 text-zinc-900 antialiased'>
       {/* Migration banner — tell users this is the sales showcase */}
-      <div className='border-b border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50 px-6 py-2 text-[12px]'>
+      <div className='border-b border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50 px-6 py-2 text-xs'>
         <div className='flex items-center justify-between gap-2'>
           <span className='flex items-center gap-1.5 text-cyan-800'>
-            <span className='rounded bg-cyan-600 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wider text-white uppercase'>
+            <span className='text-3xs rounded bg-cyan-600 px-1.5 py-0.5 font-mono font-bold tracking-wider text-white uppercase'>
               Demo
             </span>
             <span>
@@ -113,7 +113,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
           </span>
           <Link
             href='/portal'
-            className='rounded-md bg-cyan-600 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-sm hover:bg-cyan-700'
+            className='text-2xs rounded-md bg-cyan-600 px-2.5 py-0.5 font-bold text-white shadow-sm hover:bg-cyan-700'
           >
             → Mở /portal production
           </Link>
@@ -137,7 +137,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
               <Building2 className='size-3.5' />
             </div>
             <div className='leading-tight'>
-              <div className='text-[10px] font-semibold tracking-wider text-zinc-400 uppercase'>
+              <div className='text-3xs font-semibold tracking-wider text-zinc-400 uppercase'>
                 CLIENT
               </div>
               <div className='text-sm font-semibold tracking-tight'>
@@ -159,12 +159,12 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
               }`}
             >
               <div
-                className={`flex size-7 items-center justify-center rounded-md ${activeWs.logo_color} font-mono text-[11px] font-bold text-white shadow-sm`}
+                className={`flex size-7 items-center justify-center rounded-md ${activeWs.logo_color} text-2xs font-mono font-bold text-white shadow-sm`}
               >
                 {activeWs.logo_initial}
               </div>
               <div className='text-left leading-tight'>
-                <div className='text-[10px] font-semibold tracking-wider text-zinc-400 uppercase'>
+                <div className='text-3xs font-semibold tracking-wider text-zinc-400 uppercase'>
                   Workspace
                 </div>
                 <div className='text-sm font-semibold tracking-tight'>
@@ -181,7 +181,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                   onClick={() => setWsMenuOpen(false)}
                 />
                 <div className='absolute top-full left-0 z-40 mt-1 w-80 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl'>
-                  <div className='border-b border-zinc-100 bg-zinc-50/50 px-3 py-2 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                  <div className='text-3xs border-b border-zinc-100 bg-zinc-50/50 px-3 py-2 font-semibold tracking-wider text-zinc-500 uppercase'>
                     {FAKE_WORKSPACES.length} workspace của {FAKE_CLIENT.name}
                   </div>
                   <div className='max-h-80 overflow-y-auto py-1'>
@@ -196,23 +196,23 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                           }`}
                         >
                           <div
-                            className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${ws.logo_color} font-mono text-[12px] font-bold text-white shadow-sm`}
+                            className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${ws.logo_color} font-mono text-xs font-bold text-white shadow-sm`}
                           >
                             {ws.logo_initial}
                           </div>
                           <div className='min-w-0 flex-1'>
                             <div className='flex items-center gap-1.5'>
-                              <span className='text-[13px] font-semibold'>
+                              <span className='text-sm font-semibold'>
                                 {ws.name}
                               </span>
                               {isActive && (
                                 <Check className='size-3.5 text-emerald-500' />
                               )}
                             </div>
-                            <div className='truncate text-[10.5px] text-zinc-500'>
+                            <div className='text-3xs truncate text-zinc-500'>
                               {ws.description}
                             </div>
-                            <div className='mt-0.5 flex items-center gap-2 text-[9.5px] text-zinc-400'>
+                            <div className='text-3xs mt-0.5 flex items-center gap-2 text-zinc-400'>
                               <span>{ws.member_count} member</span>
                               <span>·</span>
                               <span>{ws.template_count} template</span>
@@ -225,7 +225,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                     })}
                   </div>
                   <div className='border-t border-zinc-100 bg-zinc-50/30 px-3 py-2'>
-                    <button className='w-full text-left text-[11px] font-medium text-zinc-600 hover:text-zinc-900'>
+                    <button className='text-2xs w-full text-left font-medium text-zinc-600 hover:text-zinc-900'>
                       + Tạo workspace mới
                     </button>
                   </div>
@@ -239,12 +239,12 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
           <button className='relative flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100'>
             <Bell className='size-3.5' />
             {FAKE_STATS.unread_notifications > 0 && (
-              <span className='absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-rose-500 font-mono text-[9px] font-bold text-white ring-2 ring-white'>
+              <span className='text-3xs absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-rose-500 font-mono font-bold text-white ring-2 ring-white'>
                 {FAKE_STATS.unread_notifications}
               </span>
             )}
           </button>
-          <span className='rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-amber-700 uppercase'>
+          <span className='text-3xs rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 font-bold tracking-wider text-amber-700 uppercase'>
             UI Demo · Fake data
           </span>
         </div>
@@ -254,15 +254,15 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
         {/* Side nav */}
         <aside className='sticky top-[57px] hidden h-[calc(100vh-57px)] w-60 shrink-0 overflow-y-auto border-r border-zinc-200 bg-white px-3 py-4 lg:block'>
           <div className='mb-4 rounded-xl bg-gradient-to-br from-rose-50 to-white p-3'>
-            <div className='text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
               Plan
             </div>
-            <div className='mt-0.5 text-[11px] text-zinc-600'>
+            <div className='text-2xs mt-0.5 text-zinc-600'>
               <span className='font-mono font-semibold text-rose-700'>
                 Phase 1 Managed
               </span>
             </div>
-            <div className='mt-1 text-[10px] text-zinc-500'>
+            <div className='text-3xs mt-1 text-zinc-500'>
               {FAKE_CLIENT.member_count} thành viên · {FAKE_WORKSPACES.length}{' '}
               workspace
             </div>
@@ -281,7 +281,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
               return (
                 <div key={n.href}>
                   {showGroupLabel && (
-                    <div className='mt-3 mb-1 px-2.5 text-[9px] font-bold tracking-wider text-zinc-400 uppercase'>
+                    <div className='text-3xs mt-3 mb-1 px-2.5 font-bold tracking-wider text-zinc-400 uppercase'>
                       {n.group}
                     </div>
                   )}
@@ -301,7 +301,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                     <span className='flex-1'>{n.label}</span>
                     {n.badge !== undefined && n.badge > 0 && (
                       <span
-                        className={`rounded-full px-1.5 py-0.5 font-mono text-[10px] font-semibold ${
+                        className={`text-3xs rounded-full px-1.5 py-0.5 font-mono font-semibold ${
                           isActive
                             ? 'bg-white/20 text-white'
                             : 'bg-rose-100 text-rose-700'
@@ -319,16 +319,16 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
           {/* Workspace storage */}
           <div className='mt-6 rounded-xl border border-zinc-200 bg-zinc-50 p-3'>
             <div className='flex items-center justify-between'>
-              <div className='text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+              <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
                 Storage
               </div>
               <div
-                className={`flex size-5 items-center justify-center rounded ${activeWs.logo_color} font-mono text-[9px] font-bold text-white`}
+                className={`flex size-5 items-center justify-center rounded ${activeWs.logo_color} text-3xs font-mono font-bold text-white`}
               >
                 {activeWs.logo_initial}
               </div>
             </div>
-            <div className='mt-1 text-[11px] text-zinc-700'>
+            <div className='text-2xs mt-1 text-zinc-700'>
               <span className='font-mono font-bold'>
                 {activeWs.storage_used_gb} GB
               </span>{' '}
@@ -342,7 +342,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                 }}
               />
             </div>
-            <div className='mt-1 text-[9.5px] text-zinc-400'>
+            <div className='text-3xs mt-1 text-zinc-400'>
               Quota client: {FAKE_CLIENT.storage_used_gb} /{' '}
               {FAKE_CLIENT.storage_quota_gb} GB
             </div>

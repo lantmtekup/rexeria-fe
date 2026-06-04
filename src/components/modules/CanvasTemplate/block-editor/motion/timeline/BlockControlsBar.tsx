@@ -35,7 +35,7 @@ export function BlockControlsBar({
         onClick={onTogglePlay}
         data-testid='motion-play'
         aria-pressed={playing}
-        className='flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-neutral-900 px-3 text-[11px] font-semibold text-white transition-colors hover:bg-neutral-700'
+        className='text-2xs flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-neutral-900 px-3 font-semibold text-white transition-colors hover:bg-neutral-700'
       >
         {playing ? <Pause className='size-3' /> : <Play className='size-3' />}
         {playing ? 'Dừng' : 'Phát'}
@@ -54,9 +54,9 @@ export function BlockControlsBar({
               duration: Math.max(0, Number(e.target.value)),
             })
           }
-          className='h-7 w-20 rounded-md border border-neutral-200 bg-white px-2 text-[11px] tabular-nums focus:border-neutral-400 focus:outline-none'
+          className='text-2xs h-7 w-20 rounded-md border border-neutral-200 bg-white px-2 tabular-nums focus:border-neutral-400 focus:outline-none'
         />
-        <span className='font-mono text-[10px] text-neutral-400'>ms</span>
+        <span className='text-3xs font-mono text-neutral-400'>ms</span>
       </Field>
 
       <Field label='Trigger'>
@@ -66,7 +66,7 @@ export function BlockControlsBar({
           onChange={e =>
             onChange({ ...motion, trigger: e.target.value as MotionTrigger })
           }
-          className='h-7 cursor-pointer rounded-md border border-neutral-200 bg-white px-2 text-[11px] focus:border-neutral-400 focus:outline-none'
+          className='text-2xs h-7 cursor-pointer rounded-md border border-neutral-200 bg-white px-2 focus:border-neutral-400 focus:outline-none'
         >
           {TRIGGERS.map(t => (
             <option key={t.value} value={t.value}>
@@ -85,9 +85,9 @@ export function BlockControlsBar({
           onChange={e =>
             onChange({ ...motion, repeat: Number(e.target.value) })
           }
-          className='h-7 w-14 rounded-md border border-neutral-200 bg-white px-2 text-[11px] tabular-nums focus:border-neutral-400 focus:outline-none'
+          className='text-2xs h-7 w-14 rounded-md border border-neutral-200 bg-white px-2 tabular-nums focus:border-neutral-400 focus:outline-none'
         />
-        <span className='font-mono text-[10px] text-neutral-400'>(-1=∞)</span>
+        <span className='text-3xs font-mono text-neutral-400'>(-1=∞)</span>
       </Field>
 
       <Field label='Yoyo'>
@@ -119,7 +119,7 @@ export function BlockControlsBar({
         >
           <ZoomOut className='size-3.5' />
         </button>
-        <span className='font-mono text-[10px] text-neutral-400 tabular-nums'>
+        <span className='text-3xs font-mono text-neutral-400 tabular-nums'>
           {Math.round(pxPerMs * 1000)}px/s
         </span>
         <button
@@ -144,7 +144,7 @@ function Field({
 }) {
   return (
     <label className='flex items-center gap-1.5'>
-      <span className='font-mono text-[10px] tracking-[0.1em] text-neutral-400 uppercase'>
+      <span className='text-3xs font-mono tracking-[0.1em] text-neutral-400 uppercase'>
         {label}
       </span>
       {children}

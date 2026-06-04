@@ -142,10 +142,10 @@ export function AdminClientDetailPage({ clientId }: Props) {
           <ArrowLeft className='size-3.5' /> Quay lại
         </Link>
         <div className='mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
-          <p className='text-[14px] font-semibold text-rose-900'>
+          <p className='text-sm font-semibold text-rose-900'>
             Không load được khách hàng
           </p>
-          <p className='mt-1 font-mono text-[11px] text-rose-700'>
+          <p className='text-2xs mt-1 font-mono text-rose-700'>
             {error || 'NOT_FOUND'}
           </p>
         </div>
@@ -161,7 +161,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
       {/* Breadcrumb */}
       <Link
         href='/admin/users'
-        className='group inline-flex items-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
+        className='group inline-flex items-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
       >
         <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
         Khách hàng
@@ -189,14 +189,14 @@ export function AdminClientDetailPage({ clientId }: Props) {
               </h1>
               <span
                 className={cn(
-                  'rounded-full px-2 py-0.5 text-[10.5px] font-bold tracking-wider uppercase',
+                  'text-3xs rounded-full px-2 py-0.5 font-bold tracking-wider uppercase',
                   statusClass
                 )}
               >
                 {client.status || '—'}
               </span>
             </div>
-            <div className='mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-zinc-500'>
+            <div className='mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500'>
               <button
                 type='button'
                 onClick={copyId}
@@ -268,7 +268,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
               type='button'
               onClick={() => setTab(t.id)}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors',
+                'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
                 active
                   ? 'bg-zinc-900 text-white shadow-sm'
                   : 'text-zinc-600 hover:bg-zinc-100'
@@ -279,7 +279,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
               {typeof count === 'number' && (
                 <span
                   className={cn(
-                    'inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 font-mono text-[10px] tabular-nums',
+                    'text-3xs inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 font-mono tabular-nums',
                     active
                       ? 'bg-white/15 text-white/90'
                       : 'bg-zinc-100 text-zinc-500'
@@ -343,7 +343,7 @@ function StatCard({
 }) {
   return (
     <div className='rounded-2xl border border-zinc-200 bg-white px-4 py-3 shadow-sm'>
-      <div className='flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+      <div className='text-3xs flex items-center gap-1.5 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
         {icon}
         {label}
       </div>
@@ -373,27 +373,27 @@ function WorkspacesTab({
           <div className='flex items-center gap-3'>
             <div
               className={cn(
-                'flex size-9 items-center justify-center rounded-lg bg-gradient-to-br font-mono text-[11px] font-bold text-white',
+                'text-2xs flex size-9 items-center justify-center rounded-lg bg-gradient-to-br font-mono font-bold text-white',
                 gradientForId(ws.id)
               )}
             >
               {initialsOf(ws.name)}
             </div>
             <div>
-              <div className='text-[13px] font-semibold text-zinc-900'>
+              <div className='text-sm font-semibold text-zinc-900'>
                 {ws.name}
                 {ws.is_default && (
-                  <span className='ml-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-emerald-700 uppercase'>
+                  <span className='text-3xs ml-2 rounded-full bg-emerald-100 px-1.5 py-0.5 font-bold tracking-wider text-emerald-700 uppercase'>
                     default
                   </span>
                 )}
               </div>
-              <div className='font-mono text-[10.5px] text-zinc-400'>
+              <div className='text-3xs font-mono text-zinc-400'>
                 {ws.slug ?? ws.id.slice(0, 12)}
               </div>
             </div>
           </div>
-          <div className='font-mono text-[10.5px] text-zinc-400'>
+          <div className='text-3xs font-mono text-zinc-400'>
             {ws.created_at
               ? new Date(ws.created_at).toLocaleDateString('vi-VN')
               : '—'}
@@ -475,7 +475,7 @@ function LandingsTab({
     <div>
       {/* Top action bar */}
       <div className='flex items-center justify-between border-b border-zinc-100 px-4 py-3'>
-        <div className='text-[12px] text-zinc-500'>
+        <div className='text-xs text-zinc-500'>
           {loading
             ? 'Đang tải…'
             : `${items.length} landing đã assign cho khách`}
@@ -491,7 +491,7 @@ function LandingsTab({
       </div>
 
       {error && (
-        <div className='border-b border-zinc-100 bg-rose-50 px-4 py-2 text-[12px] text-rose-800'>
+        <div className='border-b border-zinc-100 bg-rose-50 px-4 py-2 text-xs text-rose-800'>
           {error}
         </div>
       )}
@@ -501,7 +501,7 @@ function LandingsTab({
           <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải…
         </div>
       ) : items.length === 0 ? (
-        <div className='px-4 py-10 text-center text-[13px] text-zinc-500'>
+        <div className='px-4 py-10 text-center text-sm text-zinc-500'>
           Khách hàng chưa có landing nào được assign — bấm{' '}
           <strong>Tạo landing mới</strong> để bắt đầu.
         </div>
@@ -601,13 +601,13 @@ function LandingRow({
         <div className='flex items-center gap-2'>
           <Link
             href={`/canvas-templates/${item.id}`}
-            className='truncate text-[13px] font-semibold text-zinc-900 hover:underline'
+            className='truncate text-sm font-semibold text-zinc-900 hover:underline'
           >
             {item.name}
           </Link>
           <span
             className={cn(
-              'rounded-full px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase',
+              'text-3xs rounded-full px-1.5 py-0.5 font-bold tracking-wider uppercase',
               item.status === 'published'
                 ? 'bg-emerald-100 text-emerald-700'
                 : item.status === 'archived'
@@ -618,7 +618,7 @@ function LandingRow({
             {item.status}
           </span>
         </div>
-        <div className='mt-0.5 font-mono text-[10px] text-zinc-400'>
+        <div className='text-3xs mt-0.5 font-mono text-zinc-400'>
           {item.id.slice(0, 12)}… ·{' '}
           {item.updated_at
             ? new Date(item.updated_at).toLocaleDateString('vi-VN')
@@ -640,7 +640,7 @@ function LandingRow({
           <div className='absolute top-9 right-0 z-20 w-52 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
             <Link
               href={`/canvas-templates/${item.id}`}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-zinc-700 hover:bg-zinc-50'
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
               onClick={() => setMenuOpen(false)}
             >
               <Pencil className='size-3.5 text-zinc-500' />
@@ -649,7 +649,7 @@ function LandingRow({
             <button
               type='button'
               onClick={() => togglePublish(true)}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-zinc-700 hover:bg-zinc-50'
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
               title='Publish landing — sinh share_token + URL public'
             >
               <Rocket className='size-3.5 text-emerald-600' />
@@ -658,7 +658,7 @@ function LandingRow({
             <button
               type='button'
               onClick={() => togglePublish(false)}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-zinc-700 hover:bg-zinc-50'
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
               title='Unpublish — invalidate share_token, URL 404'
             >
               <Rocket className='size-3.5 rotate-180 text-zinc-500' />
@@ -671,7 +671,7 @@ function LandingRow({
                 setMenuOpen(false);
                 onDelete();
               }}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-rose-600 hover:bg-rose-50'
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
             >
               <Trash2 className='size-3.5' />
               Xoá landing
@@ -720,19 +720,19 @@ function BlocksTab({
             )}
           </div>
           <div className='min-w-0 flex-1'>
-            <div className='truncate text-[13px] font-semibold text-zinc-900'>
+            <div className='truncate text-sm font-semibold text-zinc-900'>
               {b.name}
             </div>
-            <div className='mt-0.5 flex flex-wrap items-center gap-2 text-[10.5px] text-zinc-500'>
+            <div className='text-3xs mt-0.5 flex flex-wrap items-center gap-2 text-zinc-500'>
               {b.scope && (
-                <span className='rounded-full bg-zinc-100 px-1.5 py-0.5 font-mono text-[9px] tracking-wider uppercase'>
+                <span className='text-3xs rounded-full bg-zinc-100 px-1.5 py-0.5 font-mono tracking-wider uppercase'>
                   {b.scope}
                 </span>
               )}
               {b.tags?.slice(0, 3).map(t => (
                 <span
                   key={t}
-                  className='rounded-full bg-zinc-50 px-1.5 py-0.5 text-[9.5px]'
+                  className='text-3xs rounded-full bg-zinc-50 px-1.5 py-0.5'
                 >
                   {t}
                 </span>
@@ -779,17 +779,17 @@ function ProductsTab({
             )}
           </div>
           <div className='min-w-0 flex-1'>
-            <div className='truncate text-[13px] font-semibold text-zinc-900'>
+            <div className='truncate text-sm font-semibold text-zinc-900'>
               {p.name}
             </div>
-            <div className='mt-0.5 flex flex-wrap items-center gap-2 text-[10.5px] text-zinc-500'>
+            <div className='text-3xs mt-0.5 flex flex-wrap items-center gap-2 text-zinc-500'>
               {p.sku && (
-                <code className='font-mono text-[10px] text-zinc-600'>
+                <code className='text-3xs font-mono text-zinc-600'>
                   {p.sku}
                 </code>
               )}
               {p.status && (
-                <span className='rounded-full bg-zinc-100 px-1.5 py-0.5 text-[9.5px] tracking-wider uppercase'>
+                <span className='text-3xs rounded-full bg-zinc-100 px-1.5 py-0.5 tracking-wider uppercase'>
                   {p.status}
                 </span>
               )}
@@ -820,17 +820,17 @@ function MembersTab({
           <div className='flex items-center gap-3'>
             <div
               className={cn(
-                'flex size-9 items-center justify-center rounded-full bg-gradient-to-br font-mono text-[11px] font-bold text-white',
+                'text-2xs flex size-9 items-center justify-center rounded-full bg-gradient-to-br font-mono font-bold text-white',
                 gradientForId(u.id)
               )}
             >
               {initialsOf(u.display_name || u.email)}
             </div>
             <div>
-              <div className='text-[13px] font-semibold text-zinc-900'>
+              <div className='text-sm font-semibold text-zinc-900'>
                 {u.display_name || '(không tên)'}
               </div>
-              <div className='flex items-center gap-1.5 text-[10.5px] text-zinc-500'>
+              <div className='text-3xs flex items-center gap-1.5 text-zinc-500'>
                 <Mail className='size-2.5' />
                 {u.email}
               </div>
@@ -838,7 +838,7 @@ function MembersTab({
           </div>
           <span
             className={cn(
-              'rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase',
+              'text-3xs rounded-full px-2 py-0.5 font-bold tracking-wider uppercase',
               STATUS_CHIP[u.status?.toLowerCase()] ??
                 'bg-zinc-100 text-zinc-600'
             )}
@@ -908,14 +908,12 @@ function LazyList<T extends { id: string }>({
   }
   if (error) {
     return (
-      <div className='px-4 py-6 text-center text-[12.5px] text-rose-700'>
-        {error}
-      </div>
+      <div className='px-4 py-6 text-center text-xs text-rose-700'>{error}</div>
     );
   }
   if (!items || items.length === 0) {
     return (
-      <div className='px-4 py-10 text-center text-[13px] text-zinc-500'>
+      <div className='px-4 py-10 text-center text-sm text-zinc-500'>
         {empty}
       </div>
     );

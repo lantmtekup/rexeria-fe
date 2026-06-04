@@ -65,7 +65,7 @@ export function HeroSplit({
               style={sEyebrow}
               className={selectableClass(
                 activeKey === 'eyebrow',
-                'animate-reveal-x inline-flex w-fit items-center gap-2 text-[10px] font-semibold tracking-[0.32em] text-white/60 uppercase [animation-delay:900ms] [animation-duration:700ms] @2xl:text-[11px]'
+                'animate-reveal-x text-3xs @2xl:text-2xs inline-flex w-fit items-center gap-2 font-semibold tracking-[0.32em] text-white/60 uppercase [animation-delay:900ms] [animation-duration:700ms]'
               )}
             >
               <span className='size-1 shrink-0 rounded-full bg-white/40' />
@@ -114,7 +114,7 @@ export function HeroSplit({
                 <div className='text-sm leading-none font-semibold @2xl:text-base @4xl:text-2xl'>
                   {stat.value}
                 </div>
-                <div className='mt-1 text-[8px] tracking-widest text-white/50 uppercase @2xl:mt-1.5 @4xl:mt-2 @4xl:text-[10px]'>
+                <div className='text-3xs @4xl:text-3xs mt-1 tracking-widest text-white/50 uppercase @2xl:mt-1.5 @4xl:mt-2'>
                   {stat.label}
                 </div>
               </div>

@@ -85,15 +85,15 @@ function FieldBadges({ field }: { field: AITemplateField }) {
   return (
     <div className='flex flex-wrap gap-1'>
       {field.is_required ? (
-        <Badge variant='destructive' className='text-[10px]'>
+        <Badge variant='destructive' className='text-3xs'>
           {t('required_badge')}
         </Badge>
       ) : field.ai_can_infer ? (
-        <Badge variant='secondary' className='text-[10px]'>
+        <Badge variant='secondary' className='text-3xs'>
           {t('ai_infer_badge')}
         </Badge>
       ) : (
-        <Badge variant='outline' className='text-[10px]'>
+        <Badge variant='outline' className='text-3xs'>
           {t('locked_badge')}
         </Badge>
       )}

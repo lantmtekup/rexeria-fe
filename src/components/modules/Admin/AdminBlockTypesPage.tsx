@@ -164,7 +164,7 @@ export function AdminBlockTypesPage() {
         <div className='border-b border-zinc-200 bg-white px-6 py-4'>
           <div className='flex flex-wrap items-end justify-between gap-3'>
             <div>
-              <div className='flex items-center gap-2 text-[10.5px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+              <div className='text-3xs flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
                 <Blocks className='size-3' /> Block types catalog
               </div>
               <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
@@ -222,7 +222,7 @@ export function AdminBlockTypesPage() {
                 className='pl-9'
               />
             </div>
-            <span className='inline-flex items-center gap-1 px-1 text-[10px] font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+            <span className='text-3xs inline-flex items-center gap-1 px-1 font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
               <Filter className='size-3' /> Surface
             </span>
             {(['all', 'landing', 'ad', 'curate'] as const).map(s => (
@@ -231,7 +231,7 @@ export function AdminBlockTypesPage() {
                 type='button'
                 onClick={() => setSurface(s)}
                 className={cn(
-                  'rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors',
+                  'text-2xs rounded-full px-2.5 py-1 font-medium transition-colors',
                   surface === s
                     ? 'bg-zinc-900 text-white shadow-sm'
                     : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
@@ -240,7 +240,7 @@ export function AdminBlockTypesPage() {
                 {s === 'all' ? 'Tất cả' : (SURFACE_META[s]?.label ?? s)}
               </button>
             ))}
-            <label className='ml-2 inline-flex cursor-pointer items-center gap-1.5 text-[11px] text-zinc-600'>
+            <label className='text-2xs ml-2 inline-flex cursor-pointer items-center gap-1.5 text-zinc-600'>
               <input
                 type='checkbox'
                 checked={showInactive}
@@ -255,7 +255,7 @@ export function AdminBlockTypesPage() {
         {/* Body — grid */}
         <div className='flex-1 overflow-y-auto bg-zinc-50/40 p-6'>
           {error && (
-            <div className='mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800'>
+            <div className='mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
               {error}
             </div>
           )}
@@ -267,10 +267,10 @@ export function AdminBlockTypesPage() {
           ) : items.length === 0 ? (
             <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center'>
               <Blocks className='mx-auto size-8 text-zinc-300' />
-              <p className='mt-3 text-[14px] font-semibold text-zinc-700'>
+              <p className='mt-3 text-sm font-semibold text-zinc-700'>
                 Không có block type nào
               </p>
-              <p className='mt-1 text-[12px] text-zinc-500'>
+              <p className='mt-1 text-xs text-zinc-500'>
                 Bấm &ldquo;Tạo block type&rdquo; hoặc đổi filter.
               </p>
             </div>
@@ -365,28 +365,28 @@ function BlockTypeCard({
                 </span>
               )
             )}
-            <code className='font-mono text-[12.5px] font-bold text-zinc-900'>
+            <code className='font-mono text-xs font-bold text-zinc-900'>
               {item.type}
             </code>
           </div>
           <div className='flex items-center gap-1'>
             {item.is_premium && (
-              <span className='rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-amber-700 uppercase'>
+              <span className='text-3xs rounded-full bg-amber-100 px-1.5 py-0.5 font-bold tracking-wider text-amber-700 uppercase'>
                 premium
               </span>
             )}
             {!item.is_active && (
-              <span className='rounded-full bg-zinc-200 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-zinc-600 uppercase'>
+              <span className='text-3xs rounded-full bg-zinc-200 px-1.5 py-0.5 font-bold tracking-wider text-zinc-600 uppercase'>
                 disabled
               </span>
             )}
           </div>
         </div>
-        <div className='text-[13px] font-semibold text-zinc-800'>
+        <div className='text-sm font-semibold text-zinc-800'>
           {item.label_vi}
         </div>
         {item.description_vi && (
-          <p className='line-clamp-2 text-[11.5px] leading-snug text-zinc-500'>
+          <p className='text-2xs line-clamp-2 leading-snug text-zinc-500'>
             {item.description_vi}
           </p>
         )}
@@ -399,7 +399,7 @@ function BlockTypeCard({
               <span
                 key={s}
                 className={cn(
-                  'inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase',
+                  'text-3xs inline-flex items-center rounded-full border px-1.5 py-0.5 font-bold tracking-wider uppercase',
                   meta?.chip ?? 'border-zinc-200 bg-zinc-100 text-zinc-700'
                 )}
               >
@@ -410,7 +410,7 @@ function BlockTypeCard({
         </div>
 
         {item.min_dimensions && (
-          <p className='font-mono text-[10px] text-zinc-400'>
+          <p className='text-3xs font-mono text-zinc-400'>
             {item.min_dimensions.width}×{item.min_dimensions.height}px
           </p>
         )}
@@ -421,7 +421,7 @@ function BlockTypeCard({
         <button
           type='button'
           onClick={onSelect}
-          className='inline-flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+          className='text-2xs inline-flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1 font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
         >
           <Eye className='size-3' />
           Xem
@@ -430,7 +430,7 @@ function BlockTypeCard({
           type='button'
           onClick={onToggle}
           className={cn(
-            'inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium hover:bg-zinc-100',
+            'text-2xs inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 font-medium hover:bg-zinc-100',
             item.is_active
               ? 'text-zinc-600 hover:text-amber-700'
               : 'text-zinc-600 hover:text-emerald-700'
@@ -446,7 +446,7 @@ function BlockTypeCard({
         <button
           type='button'
           onClick={onDelete}
-          className='inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-zinc-600 hover:bg-rose-50 hover:text-rose-700'
+          className='text-2xs inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 font-medium text-zinc-600 hover:bg-rose-50 hover:text-rose-700'
           title='Xoá'
         >
           <Trash2 className='size-3' />
@@ -483,11 +483,11 @@ function BlockTypeDrawer({
                 aria-hidden
               />
             )}
-            <code className='font-mono text-[13px] font-bold text-zinc-900'>
+            <code className='font-mono text-sm font-bold text-zinc-900'>
               {item.type}
             </code>
           </div>
-          <p className='mt-0.5 text-[12px] text-zinc-600'>{item.label_vi}</p>
+          <p className='mt-0.5 text-xs text-zinc-600'>{item.label_vi}</p>
         </div>
         <button
           type='button'
@@ -499,12 +499,12 @@ function BlockTypeDrawer({
         </button>
       </div>
 
-      <div className='flex-1 overflow-y-auto px-4 py-4 text-[12.5px]'>
+      <div className='flex-1 overflow-y-auto px-4 py-4 text-xs'>
         {item.description_vi && (
           <p className='leading-relaxed text-zinc-600'>{item.description_vi}</p>
         )}
         {item.label_en && (
-          <p className='mt-1 text-[11px] text-zinc-500'>
+          <p className='text-2xs mt-1 text-zinc-500'>
             <span className='font-mono text-zinc-400'>EN:</span> {item.label_en}
             {item.description_en ? ` — ${item.description_en}` : ''}
           </p>
@@ -518,7 +518,7 @@ function BlockTypeDrawer({
                 <span
                   key={s}
                   className={cn(
-                    'inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase',
+                    'text-3xs inline-flex items-center rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase',
                     meta?.chip ?? 'border-zinc-200 bg-zinc-100 text-zinc-700'
                   )}
                 >
@@ -531,7 +531,7 @@ function BlockTypeDrawer({
 
         {item.category && (
           <Section title='Category'>
-            <span className='text-[12px] text-zinc-700'>
+            <span className='text-xs text-zinc-700'>
               {CATEGORY_META[item.category]?.emoji}{' '}
               {CATEGORY_META[item.category]?.label ?? item.category}
             </span>
@@ -540,7 +540,7 @@ function BlockTypeDrawer({
 
         {item.min_dimensions && (
           <Section title='Min dimensions'>
-            <code className='font-mono text-[11.5px] text-zinc-700'>
+            <code className='text-2xs font-mono text-zinc-700'>
               {item.min_dimensions.width} × {item.min_dimensions.height}px
             </code>
           </Section>
@@ -548,7 +548,7 @@ function BlockTypeDrawer({
 
         {item.engine_version && (
           <Section title='Engine'>
-            <code className='rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] text-zinc-700'>
+            <code className='text-2xs rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-700'>
               {item.engine_version}
             </code>
           </Section>
@@ -560,7 +560,7 @@ function BlockTypeDrawer({
               {item.supported_slot_types.map(s => (
                 <code
                   key={s}
-                  className='rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] text-zinc-700'
+                  className='text-3xs rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-700'
                 >
                   {s}
                 </code>
@@ -570,7 +570,7 @@ function BlockTypeDrawer({
         )}
 
         <Section title='Props schema'>
-          <pre className='overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-50 p-3 font-mono text-[10.5px] leading-relaxed text-zinc-700'>
+          <pre className='text-3xs overflow-x-auto rounded-lg border border-zinc-200 bg-zinc-50 p-3 font-mono leading-relaxed text-zinc-700'>
             {JSON.stringify(item.props_schema ?? {}, null, 2)}
           </pre>
         </Section>
@@ -622,7 +622,7 @@ function Section({
 }) {
   return (
     <div className='mt-4'>
-      <div className='mb-1.5 text-[10px] font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+      <div className='text-3xs mb-1.5 font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
         {title}
       </div>
       {children}
@@ -650,7 +650,7 @@ function Stat({
     <div
       className={cn('rounded-xl border px-3 py-2 shadow-sm', palette[accent])}
     >
-      <div className='text-[9.5px] font-semibold tracking-[0.18em] uppercase opacity-75'>
+      <div className='text-3xs font-semibold tracking-[0.18em] uppercase opacity-75'>
         {label}
       </div>
       <div className='mt-0.5 font-mono text-lg font-bold text-zinc-900 tabular-nums'>

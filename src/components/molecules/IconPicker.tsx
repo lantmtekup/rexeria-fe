@@ -149,7 +149,7 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
                   onChange(undefined);
                   setOpen(false);
                 }}
-                className='text-[10px] font-medium text-neutral-500 hover:text-neutral-900'
+                className='text-3xs font-medium text-neutral-500 hover:text-neutral-900'
               >
                 Bỏ chọn
               </button>
@@ -179,7 +179,7 @@ export function IconPicker({ value, onChange, label }: IconPickerProps) {
               );
             })}
             {filtered.length === 0 && (
-              <div className='col-span-6 py-3 text-center text-[11px] text-neutral-400'>
+              <div className='text-2xs col-span-6 py-3 text-center text-neutral-400'>
                 Không tìm thấy icon
               </div>
             )}

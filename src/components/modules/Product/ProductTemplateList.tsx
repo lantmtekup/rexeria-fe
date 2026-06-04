@@ -95,7 +95,7 @@ export function ProductTemplateList() {
             type='button'
             onClick={() => setCategory(c.value)}
             className={cn(
-              'rounded-full px-2.5 py-1 text-[11px] font-semibold transition-colors',
+              'text-2xs rounded-full px-2.5 py-1 font-semibold transition-colors',
               category === c.value
                 ? 'bg-neutral-900 text-white'
                 : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
@@ -193,7 +193,7 @@ function TemplateTile({
         {template.is_public_template && (
           <span
             aria-label='Public template (library)'
-            className='absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-violet-600/90 px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-white uppercase'
+            className='text-3xs absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-violet-600/90 px-1.5 py-0.5 font-semibold tracking-wider text-white uppercase'
           >
             <Sparkles className='size-3' />
             Library
@@ -205,7 +205,7 @@ function TemplateTile({
         <p className='text-foreground line-clamp-2 text-sm leading-tight font-semibold'>
           {template.name}
         </p>
-        <div className='text-muted-foreground flex flex-wrap items-center gap-2 text-[10px]'>
+        <div className='text-muted-foreground text-3xs flex flex-wrap items-center gap-2'>
           {template.template_category && (
             <span className='inline-flex items-center rounded-full bg-neutral-100 px-1.5 py-0.5 font-medium text-neutral-700'>
               {template.template_category}

@@ -257,7 +257,7 @@ export function UseTemplateDialog({
           <button
             type='button'
             onClick={() => setShowAdvanced(v => !v)}
-            className='self-start text-[11px] font-medium text-zinc-500 hover:text-zinc-900'
+            className='text-2xs self-start font-medium text-zinc-500 hover:text-zinc-900'
           >
             {showAdvanced ? '− Ẩn tuỳ chọn nâng cao' : '+ Tuỳ chọn nâng cao'}
           </button>

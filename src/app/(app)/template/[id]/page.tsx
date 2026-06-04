@@ -206,7 +206,7 @@ export default function TemplatePreviewPage({ params }: PageProps) {
             </div>
           ) : (
             <div className='bg-background ring-border flex h-[640px] w-[320px] flex-col overflow-hidden rounded-[32px] shadow-xl ring-1'>
-              <div className='flex items-center justify-between bg-neutral-100 px-6 py-2 text-[10px] font-semibold'>
+              <div className='text-3xs flex items-center justify-between bg-neutral-100 px-6 py-2 font-semibold'>
                 <span>9:41</span>
                 <span className='h-5 w-16 rounded-full bg-black' />
                 <span>100%</span>

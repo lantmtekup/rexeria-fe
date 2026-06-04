@@ -118,15 +118,15 @@ export function CodeTemplatePageEditor({ page, template }: Props) {
         <div className='flex items-center gap-3'>
           <Link
             href='/admin/landing-pages'
-            className='inline-flex items-center gap-1.5 text-[12px] font-medium text-zinc-600 hover:text-zinc-900'
+            className='inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900'
           >
             <ArrowLeft className='size-3.5' /> Landing pages
           </Link>
           <span className='text-zinc-300'>·</span>
-          <span className='text-[13px] font-semibold text-zinc-900'>
+          <span className='text-sm font-semibold text-zinc-900'>
             {page.name}
           </span>
-          <span className='inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold tracking-wider text-blue-700 uppercase'>
+          <span className='text-3xs inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 font-bold tracking-wider text-blue-700 uppercase'>
             <Code2 className='size-3' />
             code · {template.code}
           </span>
@@ -157,7 +157,7 @@ export function CodeTemplatePageEditor({ page, template }: Props) {
         <aside className='w-[380px] shrink-0 overflow-y-auto border-r border-zinc-200 bg-white'>
           {grouped.map(([group, fields]) => (
             <section key={group} className='border-b border-zinc-100 p-4'>
-              <h3 className='mb-3 text-[10.5px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+              <h3 className='text-3xs mb-3 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
                 {group}
               </h3>
               <div className='flex flex-col gap-3'>
@@ -173,7 +173,7 @@ export function CodeTemplatePageEditor({ page, template }: Props) {
             </section>
           ))}
           <div className='p-4'>
-            <p className='text-[11px] text-zinc-500'>
+            <p className='text-2xs text-zinc-500'>
               Source code:{' '}
               <code className='font-mono'>src/templates/{template.code}/</code>
             </p>
@@ -203,7 +203,7 @@ function FieldInput({
   const id = `f-${field.key}`;
   return (
     <div className='flex flex-col gap-1.5'>
-      <Label htmlFor={id} className='text-[11.5px]'>
+      <Label htmlFor={id} className='text-2xs'>
         {field.label}
         {field.required && <span className='ml-1 text-rose-600'>*</span>}
       </Label>
@@ -216,12 +216,12 @@ function FieldInput({
                 value={(value as string) ?? ''}
                 onChange={e => onChange(e.target.value)}
                 rows={3}
-                className='text-[12px]'
+                className='text-xs'
               />
             );
           case 'boolean':
             return (
-              <label className='inline-flex items-center gap-2 text-[12px] text-zinc-700'>
+              <label className='inline-flex items-center gap-2 text-xs text-zinc-700'>
                 <input
                   id={id}
                   type='checkbox'
@@ -243,7 +243,7 @@ function FieldInput({
                     e.target.value === '' ? undefined : Number(e.target.value)
                   )
                 }
-                className='text-[12px]'
+                className='text-xs'
               />
             );
           case 'select':
@@ -252,7 +252,7 @@ function FieldInput({
                 id={id}
                 value={(value as string) ?? ''}
                 onChange={e => onChange(e.target.value)}
-                className='border-input bg-background h-9 rounded-md border px-3 text-[12px]'
+                className='border-input bg-background h-9 rounded-md border px-3 text-xs'
               >
                 {field.options?.map(o => (
                   <option key={o.value} value={o.value}>
@@ -272,14 +272,12 @@ function FieldInput({
                 value={(value as string) ?? ''}
                 onChange={e => onChange(e.target.value)}
                 placeholder={field.type === 'image' ? 'https://...' : undefined}
-                className='text-[12px]'
+                className='text-xs'
               />
             );
         }
       })()}
-      {field.hint && (
-        <p className='text-[10.5px] text-zinc-500'>{field.hint}</p>
-      )}
+      {field.hint && <p className='text-3xs text-zinc-500'>{field.hint}</p>}
     </div>
   );
 }

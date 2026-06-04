@@ -179,7 +179,7 @@ function SortableTab({
 
       <span
         className={cn(
-          'px-0.5 text-[10px] font-medium tracking-wide',
+          'text-3xs px-0.5 font-medium tracking-wide',
           active ? 'text-neutral-900' : 'text-neutral-500'
         )}
       >
@@ -222,7 +222,7 @@ function ThumbnailRenderer({ block, lang }: { block: Block; lang: Lang }) {
       background={background}
       order={order}
       fallback={
-        <div className='flex aspect-[16/9] w-full items-center justify-center bg-neutral-100 text-[8px] font-semibold tracking-widest text-neutral-400 uppercase'>
+        <div className='text-3xs flex aspect-[16/9] w-full items-center justify-center bg-neutral-100 font-semibold tracking-widest text-neutral-400 uppercase'>
           {block.name}
         </div>
       }
@@ -282,7 +282,7 @@ function ZoomControls({
       >
         <Plus className='size-3.5' />
       </button>
-      <span className='min-w-[36px] text-right text-[11px] font-medium text-neutral-600 tabular-nums'>
+      <span className='text-2xs min-w-[36px] text-right font-medium text-neutral-600 tabular-nums'>
         {Math.round(zoom)}%
       </span>
       <button

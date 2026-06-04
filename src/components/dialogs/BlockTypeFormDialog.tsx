@@ -210,7 +210,7 @@ export function BlockTypeFormDialog({
               placeholder='hero_split'
               className='font-mono'
             />
-            <p className='text-muted-foreground text-[11px]'>
+            <p className='text-muted-foreground text-2xs'>
               Snake_case, bắt đầu bằng chữ thường, 2–64 ký tự. Là primary key,
               không sửa được sau khi tạo.
             </p>

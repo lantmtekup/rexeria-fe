@@ -36,17 +36,17 @@ export function AdminComingSoon({
             </div>
             <div className='flex-1'>
               <div className='flex items-center gap-2'>
-                <span className='rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-700 uppercase'>
+                <span className='text-3xs rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-bold tracking-wider text-amber-700 uppercase'>
                   Coming soon
                 </span>
-                <span className='inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 font-mono text-[10px] text-zinc-600'>
+                <span className='text-3xs inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 font-mono text-zinc-600'>
                   <Clock className='size-2.5' /> {estTime}
                 </span>
               </div>
               <h1 className='mt-1 text-2xl font-bold tracking-tight'>
                 {title}
               </h1>
-              <p className='mt-1 text-[13px] text-zinc-600'>{subtitle}</p>
+              <p className='mt-1 text-sm text-zinc-600'>{subtitle}</p>
             </div>
           </div>
         </div>
@@ -55,10 +55,10 @@ export function AdminComingSoon({
         <div className='border-b border-zinc-100 px-6 py-4'>
           <div className='flex items-center justify-between'>
             <div>
-              <div className='text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+              <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
                 Spec BE
               </div>
-              <code className='mt-0.5 inline-block rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[11.5px] text-zinc-700'>
+              <code className='text-2xs mt-0.5 inline-block rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-700'>
                 docs/{specFile}
               </code>
             </div>
@@ -75,12 +75,12 @@ export function AdminComingSoon({
 
         {/* Dependencies */}
         <div className='px-6 py-4'>
-          <div className='mb-3 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='text-3xs mb-3 font-semibold tracking-wider text-zinc-500 uppercase'>
             Phụ thuộc
           </div>
           <ul className='space-y-2'>
             {dependencies.map((d, i) => (
-              <li key={i} className='flex items-start gap-2 text-[13px]'>
+              <li key={i} className='flex items-start gap-2 text-sm'>
                 <span
                   className={`mt-1 inline-flex size-2.5 shrink-0 items-center justify-center rounded-full ${
                     d.status === 'done'
@@ -92,7 +92,7 @@ export function AdminComingSoon({
                 />
                 <span className='flex-1 text-zinc-700'>{d.text}</span>
                 <span
-                  className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase ${
+                  className={`text-3xs rounded px-1.5 py-0.5 font-mono font-bold uppercase ${
                     d.status === 'done'
                       ? 'bg-emerald-100 text-emerald-700'
                       : d.status === 'in_progress'
@@ -116,10 +116,10 @@ export function AdminComingSoon({
           <div className='border-t border-zinc-100 bg-zinc-50/50 px-6 py-4'>
             <div className='flex items-center justify-between'>
               <div>
-                <div className='text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
                   UI Demo có sẵn
                 </div>
-                <p className='mt-0.5 text-[12px] text-zinc-600'>
+                <p className='mt-0.5 text-xs text-zinc-600'>
                   Xem trước UI + UX design tại trang demo (fake data).
                 </p>
               </div>

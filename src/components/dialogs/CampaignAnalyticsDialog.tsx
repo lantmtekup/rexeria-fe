@@ -147,7 +147,7 @@ function CampaignAnalyticsDialog({
                       <TimeSelect />
                     </div>
                     <Spark data={m.spark} />
-                    <div className='text-content-muted mt-1 flex justify-between text-[10px]'>
+                    <div className='text-content-muted text-3xs mt-1 flex justify-between'>
                       <span>01:00</span>
                       <span>02:00</span>
                       <span>03:00</span>
@@ -185,7 +185,7 @@ function CampaignAnalyticsDialog({
                       key={o.label}
                       className='border-border bg-background rounded-lg border p-3'
                     >
-                      <p className='text-content-muted text-[10px] font-semibold'>
+                      <p className='text-content-muted text-3xs font-semibold'>
                         {o.label}
                       </p>
                       <p className='text-lg font-bold tracking-[-0.02em]'>
@@ -196,7 +196,7 @@ function CampaignAnalyticsDialog({
                 </div>
                 {/* Chart */}
                 <div className='relative mt-4 h-28 w-full'>
-                  <div className='text-content-muted absolute inset-y-0 left-0 flex flex-col justify-between text-[10px]'>
+                  <div className='text-content-muted text-3xs absolute inset-y-0 left-0 flex flex-col justify-between'>
                     <span>500</span>
                     <span>400</span>
                     <span>300</span>

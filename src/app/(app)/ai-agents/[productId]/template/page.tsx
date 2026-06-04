@@ -200,7 +200,7 @@ export default function AiTemplatePickerPage({ params }: PageProps) {
             >
               AI Suggestions
               {candidates.length > 0 && (
-                <span className='bg-primary/15 text-primary ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold'>
+                <span className='bg-primary/15 text-primary text-3xs ml-1 rounded-full px-1.5 py-0.5 font-semibold'>
                   {candidates.length}
                 </span>
               )}
@@ -210,7 +210,7 @@ export default function AiTemplatePickerPage({ params }: PageProps) {
               onClick={() => setTab('library')}
             >
               All Templates
-              <span className='ml-1 rounded-full bg-neutral-200 px-1.5 py-0.5 text-[10px] font-semibold text-neutral-700'>
+              <span className='text-3xs ml-1 rounded-full bg-neutral-200 px-1.5 py-0.5 font-semibold text-neutral-700'>
                 {templates.length}
               </span>
             </TabButton>

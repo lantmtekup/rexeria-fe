@@ -161,7 +161,7 @@ export function MotionLayersPanel({
     <div className='flex h-full flex-col'>
       {/* ── Block-level controls ───────────────────────────────────────── */}
       <div className='space-y-3 border-b border-neutral-200 bg-white px-4 py-4'>
-        <label className='flex cursor-pointer items-center gap-2.5 text-[13px] font-medium tracking-tight text-neutral-900'>
+        <label className='flex cursor-pointer items-center gap-2.5 text-sm font-medium tracking-tight text-neutral-900'>
           <input
             type='checkbox'
             checked={enabled}
@@ -177,7 +177,7 @@ export function MotionLayersPanel({
             onChange={e =>
               patch({ ...current, trigger: e.target.value as MotionTrigger })
             }
-            className='h-8 w-full cursor-pointer rounded-md border border-neutral-200 bg-white px-2.5 text-[12px] tracking-tight text-neutral-800 focus:border-neutral-400 focus:outline-none'
+            className='h-8 w-full cursor-pointer rounded-md border border-neutral-200 bg-white px-2.5 text-xs tracking-tight text-neutral-800 focus:border-neutral-400 focus:outline-none'
           >
             {TRIGGERS.map(t => (
               <option key={t.value} value={t.value}>
@@ -194,7 +194,7 @@ export function MotionLayersPanel({
             data-testid='sidebar-play-motion-preview'
             aria-pressed={isPreviewing}
             className={cn(
-              'flex h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-md px-3 text-[12px] font-semibold tracking-tight transition-colors',
+              'flex h-9 w-full cursor-pointer items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold tracking-tight transition-colors',
               isPreviewing
                 ? 'bg-indigo-600 text-white hover:bg-indigo-500'
                 : 'bg-neutral-900 text-white hover:bg-neutral-700'
@@ -213,7 +213,7 @@ export function MotionLayersPanel({
           <button
             type='button'
             onClick={() => applyStaggerAll('fade-up', 100)}
-            className='flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-neutral-50 px-2 text-[12px] font-medium tracking-tight text-neutral-700 transition-colors hover:bg-neutral-100'
+            className='flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-neutral-50 px-2 text-xs font-medium tracking-tight text-neutral-700 transition-colors hover:bg-neutral-100'
           >
             <Sparkles className='size-3.5' />
             Stagger all
@@ -222,7 +222,7 @@ export function MotionLayersPanel({
             type='button'
             onClick={onOpenAdvanced}
             data-testid='sidebar-open-motion-editor'
-            className='flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 text-[12px] font-medium tracking-tight text-neutral-700 transition-colors hover:bg-neutral-50'
+            className='flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 text-xs font-medium tracking-tight text-neutral-700 transition-colors hover:bg-neutral-50'
           >
             <Clapperboard className='size-3.5' />
             Timeline
@@ -233,14 +233,14 @@ export function MotionLayersPanel({
       {/* ── Section header: element group toggle ──────────────────────── */}
       {elements.length > 0 && (
         <div className='flex items-center justify-between border-b border-neutral-200 bg-neutral-50 px-4 py-2'>
-          <span className='text-[11px] font-medium tracking-wide text-neutral-500'>
+          <span className='text-2xs font-medium tracking-wide text-neutral-500'>
             Element ({elements.length})
           </span>
           <button
             type='button'
             onClick={toggleAll}
             data-testid='motion-toggle-all'
-            className='cursor-pointer text-[11px] font-medium tracking-tight text-neutral-500 hover:text-neutral-900'
+            className='text-2xs cursor-pointer font-medium tracking-tight text-neutral-500 hover:text-neutral-900'
           >
             {allExpanded ? 'Thu gọn tất cả' : 'Mở rộng tất cả'}
           </button>
@@ -250,7 +250,7 @@ export function MotionLayersPanel({
       {/* ── Per-element rows ───────────────────────────────────────────── */}
       <div className='flex-1 overflow-y-auto'>
         {elements.length === 0 ? (
-          <div className='px-4 py-6 text-center text-[12px] text-neutral-400'>
+          <div className='px-4 py-6 text-center text-xs text-neutral-400'>
             Block này chưa hỗ trợ motion theo element.
           </div>
         ) : (
@@ -290,14 +290,14 @@ export function MotionLayersPanel({
                     )}
                     <GripVertical className='size-3 shrink-0 text-neutral-300' />
                     <Icon className='size-4 shrink-0 text-neutral-500' />
-                    <span className='truncate text-[13px] font-medium tracking-tight text-neutral-900'>
+                    <span className='truncate text-sm font-medium tracking-tight text-neutral-900'>
                       {el.label}
                     </span>
                     <span
                       className={cn(
-                        'ml-auto shrink-0 truncate text-[11px] tabular-nums',
+                        'text-2xs ml-auto shrink-0 truncate tabular-nums',
                         isCustom
-                          ? 'rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-amber-700 uppercase'
+                          ? 'text-3xs rounded bg-amber-100 px-1.5 py-0.5 font-medium tracking-wide text-amber-700 uppercase'
                           : presetId === 'none'
                             ? 'text-neutral-400'
                             : 'text-neutral-500'
@@ -315,7 +315,7 @@ export function MotionLayersPanel({
                   {isOpen && (
                     <div className='px-4 pt-1 pb-3'>
                       {isCustom ? (
-                        <p className='text-[12px] leading-relaxed text-neutral-500'>
+                        <p className='text-xs leading-relaxed text-neutral-500'>
                           Track này được chỉnh tay bằng timeline. Mở advanced
                           timeline để sửa.
                         </p>
@@ -333,7 +333,7 @@ export function MotionLayersPanel({
                                 )
                               }
                               data-testid={`motion-preset-${el.key}`}
-                              className='h-8 w-full cursor-pointer rounded-md border border-neutral-200 bg-white px-2.5 text-[12px] tracking-tight text-neutral-800 focus:border-neutral-400 focus:outline-none'
+                              className='h-8 w-full cursor-pointer rounded-md border border-neutral-200 bg-white px-2.5 text-xs tracking-tight text-neutral-800 focus:border-neutral-400 focus:outline-none'
                             >
                               {PRESETS.map(p => (
                                 <option key={p.id} value={p.id}>
@@ -377,7 +377,7 @@ export function MotionLayersPanel({
 
       {/* ── Footer: status line (FAB at bottom-right; keep generous padding) */}
       <div className='border-t border-neutral-200 bg-neutral-50 px-4 py-2 pb-20'>
-        <p className='text-center text-[11px] tracking-tight text-neutral-400'>
+        <p className='text-2xs text-center tracking-tight text-neutral-400'>
           {current.tracks.length} element đang animate
           {hasCustomTrack && ' · có track custom'}
         </p>
@@ -395,7 +395,7 @@ function Field({
 }) {
   return (
     <label className='flex flex-col gap-1'>
-      <span className='text-[10px] font-medium tracking-wide text-neutral-400 uppercase'>
+      <span className='text-3xs font-medium tracking-wide text-neutral-400 uppercase'>
         {label}
       </span>
       {children}
@@ -434,9 +434,9 @@ function NumberInput({
         onKeyDown={e => {
           if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur();
         }}
-        className='h-full flex-1 bg-transparent px-2.5 text-[12px] text-neutral-800 tabular-nums focus:outline-none'
+        className='h-full flex-1 bg-transparent px-2.5 text-xs text-neutral-800 tabular-nums focus:outline-none'
       />
-      <span className='text-[10px] font-medium tracking-wide text-neutral-400'>
+      <span className='text-3xs font-medium tracking-wide text-neutral-400'>
         ms
       </span>
     </div>

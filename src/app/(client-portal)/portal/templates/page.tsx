@@ -138,20 +138,20 @@ export default function PortalTemplateLibraryPage() {
   return (
     <PortalShell>
       <section>
-        <div className='flex items-center gap-2 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+        <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
           <LayoutTemplate className='size-3' /> Template library
         </div>
         <h1 className='mt-1 text-2xl font-bold tracking-tight'>
           Bắt đầu từ template
         </h1>
-        <p className='mt-1 text-[13px] text-zinc-500'>
+        <p className='mt-1 text-sm text-zinc-500'>
           Chọn 1 template Rexer đã thiết kế sẵn, click{' '}
           <strong>Dùng template</strong> để tạo landing page trong workspace của
           bạn — sửa nội dung + publish khi sẵn sàng.
         </p>
 
         {pendingEndpoint && (
-          <div className='mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800'>
+          <div className='text-2xs mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800'>
             BE chưa ship <code>/portal/templates/library</code> — đang fallback
             sang <code>canvas-templates?is_template=true</code>. UI tự live khi
             BE merge (be-todo.md P0.7).
@@ -210,12 +210,12 @@ export default function PortalTemplateLibraryPage() {
         ) : items.length === 0 ? (
           <div className='rounded-2xl border border-zinc-200 bg-white p-12 text-center'>
             <Sparkles className='mx-auto size-8 text-zinc-300' />
-            <p className='mt-3 text-[14px] font-semibold text-zinc-700'>
+            <p className='mt-3 text-sm font-semibold text-zinc-700'>
               {debouncedSearch
                 ? 'Không có template khớp tìm kiếm'
                 : 'Rexer chưa publish template nào'}
             </p>
-            <p className='mt-1 text-[12px] text-zinc-500'>
+            <p className='mt-1 text-xs text-zinc-500'>
               {debouncedSearch
                 ? 'Thử từ khoá khác hoặc clear filter.'
                 : 'Sẽ có sớm — staff Rexer đang chuẩn bị bộ template demo.'}
@@ -302,11 +302,11 @@ function TemplateCard({
         )}
       </div>
       <div className='flex flex-1 flex-col gap-2 p-3.5'>
-        <h3 className='truncate text-[14px] font-semibold text-zinc-900'>
+        <h3 className='truncate text-sm font-semibold text-zinc-900'>
           {tpl.name}
         </h3>
         {tpl.description && (
-          <p className='line-clamp-2 text-[11.5px] text-zinc-500'>
+          <p className='text-2xs line-clamp-2 text-zinc-500'>
             {tpl.description}
           </p>
         )}
@@ -346,7 +346,7 @@ function TableView({
 }) {
   return (
     <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
-      <table className='w-full text-[13px]'>
+      <table className='w-full text-sm'>
         <thead>
           <tr className='border-b border-zinc-100 bg-zinc-50/50'>
             <th className='w-20 px-4 py-2 text-left font-medium text-zinc-500'>
@@ -382,12 +382,12 @@ function TableView({
               </td>
               <td className='px-4 py-2'>
                 <div className='font-semibold text-zinc-900'>{tpl.name}</div>
-                <div className='font-mono text-[10px] text-zinc-400'>
+                <div className='text-3xs font-mono text-zinc-400'>
                   {tpl.id.slice(0, 12)}…
                 </div>
               </td>
               <td className='hidden px-4 py-2 sm:table-cell'>
-                <p className='line-clamp-2 max-w-md text-[12px] text-zinc-500'>
+                <p className='line-clamp-2 max-w-md text-xs text-zinc-500'>
                   {tpl.description || <span className='text-zinc-300'>—</span>}
                 </p>
               </td>
@@ -396,7 +396,7 @@ function TableView({
                   type='button'
                   onClick={() => onUse(tpl)}
                   disabled={cloning === tpl.id}
-                  className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-[11.5px] font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-60'
+                  className='text-2xs inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-60'
                 >
                   {cloning === tpl.id ? (
                     <>
@@ -449,7 +449,7 @@ function Pagination({
 
   return (
     <div className='flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-sm'>
-      <span className='text-[11.5px] text-zinc-500'>
+      <span className='text-2xs text-zinc-500'>
         {from}–{to} trong {total}
       </span>
       <div className='flex items-center gap-1'>
@@ -463,7 +463,7 @@ function Pagination({
         </button>
         {pages.map((p, i) =>
           p === 'gap' ? (
-            <span key={`gap-${i}`} className='px-1 text-[11px] text-zinc-300'>
+            <span key={`gap-${i}`} className='text-2xs px-1 text-zinc-300'>
               …
             </span>
           ) : (
@@ -472,7 +472,7 @@ function Pagination({
               type='button'
               onClick={() => onChange(p)}
               className={cn(
-                'inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono text-[11px] font-semibold tabular-nums',
+                'text-2xs inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono font-semibold tabular-nums',
                 p === page
                   ? 'bg-zinc-900 text-white shadow-sm'
                   : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
@@ -512,7 +512,7 @@ function ViewBtn({
       onClick={onClick}
       title={label}
       className={cn(
-        'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
+        'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
         active ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100'
       )}
     >

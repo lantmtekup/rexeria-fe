@@ -102,11 +102,11 @@ export default function PortalDashboardPage() {
         />
         <div className='relative'>
           <div className='flex items-center justify-between gap-2'>
-            <div className='flex items-center gap-2 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
               <Sparkles className='size-3' /> Brand Dashboard · 30 ngày qua
             </div>
             {source === 'live' && (
-              <span className='inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-emerald-700'>
+              <span className='text-3xs inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-bold tracking-wider text-emerald-700'>
                 <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
                 LIVE BE · dashboard.summary
               </span>
@@ -118,7 +118,7 @@ export default function PortalDashboardPage() {
               {brandName ?? 'bạn'}
             </span>
           </h1>
-          <p className='mt-1 max-w-2xl text-[13px] leading-relaxed text-zinc-600'>
+          <p className='mt-1 max-w-2xl text-sm leading-relaxed text-zinc-600'>
             Rexer đang quản lý <strong>{stats.templates_published}</strong>{' '}
             landing page public cho brand. Bạn có{' '}
             <strong>{stats.open_comments}</strong> comment đang chờ xử lý và{' '}
@@ -199,12 +199,12 @@ export default function PortalDashboardPage() {
               </div>
               <div>
                 <h3 className='text-sm font-semibold'>Lượt xem 7 ngày qua</h3>
-                <p className='text-[11px] text-zinc-500'>
+                <p className='text-2xs text-zinc-500'>
                   Tổng cộng tất cả landing page
                 </p>
               </div>
             </div>
-            <span className='rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700'>
+            <span className='text-3xs rounded-full bg-emerald-100 px-2 py-0.5 font-bold text-emerald-700'>
               ↗ +18.2%
             </span>
           </div>
@@ -254,7 +254,7 @@ export default function PortalDashboardPage() {
             </div>
             <h3 className='text-sm font-semibold'>Hoạt động gần đây</h3>
           </div>
-          <button className='text-[11px] text-zinc-500 hover:text-zinc-900'>
+          <button className='text-2xs text-zinc-500 hover:text-zinc-900'>
             Xem tất cả →
           </button>
         </div>
@@ -275,7 +275,7 @@ export default function PortalDashboardPage() {
                     <Icon className='size-3.5' />
                   </span>
                   <div className='min-w-0 flex-1 pb-1'>
-                    <div className='flex flex-wrap items-baseline gap-x-2 text-[13px]'>
+                    <div className='flex flex-wrap items-baseline gap-x-2 text-sm'>
                       <span className='font-semibold'>{a.actor}</span>
                       <span className='text-zinc-500'>
                         {meta.label.toLowerCase()}
@@ -283,12 +283,12 @@ export default function PortalDashboardPage() {
                       <span className='font-mono text-zinc-700'>
                         {a.subject}
                       </span>
-                      <span className='ml-auto font-mono text-[10px] text-zinc-400'>
+                      <span className='text-3xs ml-auto font-mono text-zinc-400'>
                         {a.at}
                       </span>
                     </div>
                     {a.excerpt && (
-                      <p className='mt-1 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-[12px] leading-snug text-zinc-700 italic'>
+                      <p className='mt-1 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-xs leading-snug text-zinc-700 italic'>
                         &ldquo;{a.excerpt}&rdquo;
                       </p>
                     )}
@@ -382,21 +382,19 @@ function StatCard({
       >
         <Icon className='size-[18px]' />
       </div>
-      <div className='mt-3 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+      <div className='text-3xs mt-3 font-semibold tracking-wider text-zinc-500 uppercase'>
         {label}
       </div>
       <div className='mt-0.5 font-mono text-2xl font-bold text-zinc-900'>
         {fmtNum(value)}
       </div>
       {value >= 1000 && (
-        <div className='font-mono text-[10px] text-zinc-400'>
+        <div className='text-3xs font-mono text-zinc-400'>
           ({fmtFull(value)})
         </div>
       )}
       {hint && (
-        <div className='mt-1 text-[10.5px] leading-snug text-zinc-500'>
-          {hint}
-        </div>
+        <div className='text-3xs mt-1 leading-snug text-zinc-500'>{hint}</div>
       )}
     </div>
   );
@@ -427,10 +425,10 @@ function QuickAction({
         <Icon className='size-4' />
       </div>
       <div className='min-w-0 flex-1'>
-        <div className='text-[13px] font-semibold'>{title}</div>
-        <div className='truncate text-[10.5px] text-zinc-500'>{desc}</div>
+        <div className='text-sm font-semibold'>{title}</div>
+        <div className='text-3xs truncate text-zinc-500'>{desc}</div>
       </div>
-      <span className={`text-[12px] font-bold ${c.text}`}>→</span>
+      <span className={`text-xs font-bold ${c.text}`}>→</span>
     </Link>
   );
 }
@@ -447,16 +445,14 @@ function BarChart({ values }: { values: number[] }) {
             key={i}
             className='group flex flex-1 flex-col items-center gap-1'
           >
-            <span className='font-mono text-[10px] font-semibold text-zinc-700 opacity-0 transition-opacity group-hover:opacity-100'>
+            <span className='text-3xs font-mono font-semibold text-zinc-700 opacity-0 transition-opacity group-hover:opacity-100'>
               {fmtNum(v)}
             </span>
             <div
               className='w-full rounded-t-md bg-gradient-to-t from-blue-500 to-blue-300 transition-all group-hover:from-blue-600 group-hover:to-blue-400'
               style={{ height: `${h}%`, minHeight: 8 }}
             />
-            <span className='font-mono text-[10px] text-zinc-500'>
-              {days[i]}
-            </span>
+            <span className='text-3xs font-mono text-zinc-500'>{days[i]}</span>
           </div>
         );
       })}

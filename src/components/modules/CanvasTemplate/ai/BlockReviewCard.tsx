@@ -73,7 +73,7 @@ export function BlockReviewCard({
           <h3 className='text-foreground text-sm font-semibold'>
             {tRoles(block.role)}
           </h3>
-          <Badge variant={badge.variant} className='gap-1 text-[10px]'>
+          <Badge variant={badge.variant} className='text-3xs gap-1'>
             {badge.icon}
             {tReview(badge.key)}
           </Badge>

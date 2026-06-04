@@ -227,13 +227,13 @@ export default function PortalAdsPage() {
       {/* Header */}
       <section className='flex flex-wrap items-end justify-between gap-4'>
         <div>
-          <div className='flex items-center gap-2 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
             <Megaphone className='size-3' /> Quảng cáo · 14 ngày qua
           </div>
           <h1 className='mt-1 text-2xl font-bold tracking-tight'>
             Performance quảng cáo
           </h1>
-          <p className='mt-1 text-[13px] text-zinc-500'>
+          <p className='mt-1 text-sm text-zinc-500'>
             {totals.active_count} campaign đang chạy trên 4 nền tảng. Spend{' '}
             <strong>{(totals.spend / 1_000_000).toFixed(1)}M VND</strong> trong
             14 ngày.
@@ -249,7 +249,7 @@ export default function PortalAdsPage() {
         </div>
       </section>
 
-      <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-[12px] text-amber-800'>
+      <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800'>
         <span className='mt-0.5 inline-block size-2 shrink-0 rounded-full bg-amber-500' />
         <div>
           <span className='font-semibold'>UI Demo · Fake data</span>
@@ -329,12 +329,12 @@ export default function PortalAdsPage() {
             </div>
             <div>
               <h3 className='text-sm font-semibold'>Spend 14 ngày qua</h3>
-              <p className='text-[11px] text-zinc-500'>
+              <p className='text-2xs text-zinc-500'>
                 Tổng cộng tất cả campaign
               </p>
             </div>
           </div>
-          <span className='rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700'>
+          <span className='text-3xs rounded-full bg-emerald-100 px-2 py-0.5 font-bold text-emerald-700'>
             ↗ +24.8%
           </span>
         </div>
@@ -343,7 +343,7 @@ export default function PortalAdsPage() {
 
       {/* Filter bar */}
       <div className='mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm'>
-        <span className='text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+        <span className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
           Status
         </span>
         <div className='flex flex-wrap gap-1'>
@@ -366,7 +366,7 @@ export default function PortalAdsPage() {
             );
           })}
         </div>
-        <span className='ml-3 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+        <span className='text-3xs ml-3 font-semibold tracking-wider text-zinc-500 uppercase'>
           Platform
         </span>
         <div className='flex flex-wrap gap-1'>
@@ -402,7 +402,7 @@ export default function PortalAdsPage() {
         <div className='overflow-x-auto'>
           <table className='w-full text-sm'>
             <thead className='border-b border-zinc-100 bg-zinc-50'>
-              <tr className='text-left text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+              <tr className='text-3xs text-left font-semibold tracking-wider text-zinc-500 uppercase'>
                 <th className='px-4 py-2.5'>Campaign</th>
                 <th className='px-3 py-2.5 text-right'>Imp</th>
                 <th className='px-3 py-2.5 text-right'>Reach</th>
@@ -493,14 +493,14 @@ function KpiCard({
       >
         <Icon className='size-[18px]' />
       </div>
-      <div className='mt-3 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+      <div className='text-3xs mt-3 font-semibold tracking-wider text-zinc-500 uppercase'>
         {label}
       </div>
       <div className='mt-0.5 font-mono text-2xl font-bold text-zinc-900'>
         {value}
       </div>
       {subValue && (
-        <div className='mt-0.5 truncate font-mono text-[10px] text-zinc-400'>
+        <div className='text-3xs mt-0.5 truncate font-mono text-zinc-400'>
           {subValue}
         </div>
       )}
@@ -524,7 +524,7 @@ function FilterBtn({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
+      className={`text-2xs flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium transition-all ${
         active
           ? `${color ?? 'bg-zinc-900'} text-white shadow-sm`
           : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
@@ -558,10 +558,8 @@ function CampaignRow({ c }: { c: Campaign }) {
             </div>
           </div>
           <div className='min-w-0 flex-1'>
-            <div className='line-clamp-1 text-[13px] font-semibold'>
-              {c.name}
-            </div>
-            <div className='mt-0.5 flex items-center gap-1.5 text-[10.5px] text-zinc-500'>
+            <div className='line-clamp-1 text-sm font-semibold'>{c.name}</div>
+            <div className='text-3xs mt-0.5 flex items-center gap-1.5 text-zinc-500'>
               <span
                 className={`rounded-md px-1.5 py-0.5 font-bold ${status.chip}`}
               >
@@ -610,7 +608,7 @@ function CtrBadge({ ctr: c }: { ctr: number }) {
         ? 'bg-amber-100 text-amber-700'
         : 'bg-zinc-100 text-zinc-600';
   return (
-    <span className={`rounded-md px-1.5 py-0.5 font-mono text-[11px] ${tone}`}>
+    <span className={`text-2xs rounded-md px-1.5 py-0.5 font-mono ${tone}`}>
       {c.toFixed(2)}%
     </span>
   );
@@ -669,7 +667,7 @@ function BarChart({ values }: { values: number[] }) {
             key={i}
             className='group relative flex flex-1 flex-col items-center gap-1'
           >
-            <span className='font-mono text-[10px] font-semibold text-zinc-700 opacity-0 transition-opacity group-hover:opacity-100'>
+            <span className='text-3xs font-mono font-semibold text-zinc-700 opacity-0 transition-opacity group-hover:opacity-100'>
               {v}M
             </span>
             <div
@@ -677,9 +675,7 @@ function BarChart({ values }: { values: number[] }) {
               style={{ height: `${h}%`, minHeight: 8 }}
             />
             {label && (
-              <span className='font-mono text-[10px] text-zinc-500'>
-                {label}
-              </span>
+              <span className='text-3xs font-mono text-zinc-500'>{label}</span>
             )}
           </div>
         );

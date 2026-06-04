@@ -339,7 +339,7 @@ export function LayersPanel({
       {/* Status banner — visible drag state for debugging / UX confirmation. */}
       <div
         className={cn(
-          'flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[11px] font-medium ring-1 transition-colors',
+          'text-2xs flex items-center gap-2 rounded-md px-2.5 py-1.5 font-medium ring-1 transition-colors',
           statusTone
         )}
         role='status'
@@ -426,7 +426,7 @@ export function LayersPanel({
             : null}
         </DragOverlay>
       </DndContext>
-      <p className='mt-1 text-[10px] text-neutral-400'>
+      <p className='text-3xs mt-1 text-neutral-400'>
         Click 1 lớp để mở popup chỉnh sửa. Kéo (≥4px) để sắp xếp lại.
       </p>
     </div>
@@ -545,7 +545,7 @@ function LayerRow({
             aria-label='Đã tuỳ biến cho mobile'
             title='Đã tuỳ biến cho mobile'
             data-testid='layer-mobile-badge'
-            className='inline-flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-tight text-emerald-700 ring-1 ring-emerald-200/80'
+            className='text-3xs inline-flex shrink-0 items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 font-mono font-semibold tracking-tight text-emerald-700 ring-1 ring-emerald-200/80'
           >
             📱
           </span>

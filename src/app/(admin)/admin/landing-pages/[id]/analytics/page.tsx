@@ -78,10 +78,10 @@ export default function AdminLandingAnalyticsPage({ params }: PageProps) {
       <div className='mx-auto max-w-md p-8'>
         <div className='rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
           <AlertCircle className='mx-auto size-8 text-rose-600' />
-          <p className='mt-3 text-[14px] font-semibold text-rose-900'>
+          <p className='mt-3 text-sm font-semibold text-rose-900'>
             Không mở được analytics
           </p>
-          <p className='mt-1 font-mono text-[11.5px] text-rose-700'>{error}</p>
+          <p className='text-2xs mt-1 font-mono text-rose-700'>{error}</p>
         </div>
       </div>
     );
@@ -143,7 +143,7 @@ function TabBtn({
       type='button'
       onClick={onClick}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-medium transition-colors',
+        'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
         active
           ? 'bg-zinc-900 text-white'
           : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'

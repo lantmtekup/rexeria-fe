@@ -63,7 +63,7 @@ function CampaignTile({
           </p>
         </div>
         <span
-          className={`rounded-full px-2 py-0.5 text-[11px] font-medium capitalize ${tone}`}
+          className={`text-2xs rounded-full px-2 py-0.5 font-medium capitalize ${tone}`}
         >
           {campaign.status ?? 'draft'}
         </span>

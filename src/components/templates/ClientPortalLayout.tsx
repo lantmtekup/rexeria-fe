@@ -83,7 +83,7 @@ function ClientPortalLayout({ children }: ClientPortalLayoutProps) {
             <p className='text-foreground truncate text-xs font-semibold'>
               {displayName}
             </p>
-            <p className='text-muted-foreground truncate text-[10px]'>
+            <p className='text-muted-foreground text-3xs truncate'>
               {user?.email ?? 'signed in'}
             </p>
           </div>

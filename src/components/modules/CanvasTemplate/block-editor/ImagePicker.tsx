@@ -156,7 +156,7 @@ export function ImagePicker({
           type='button'
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className='flex h-8 shrink-0 cursor-pointer items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 text-[11px] font-medium text-neutral-700 transition-colors hover:border-neutral-900 hover:text-neutral-900 disabled:opacity-50'
+          className='text-2xs flex h-8 shrink-0 cursor-pointer items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 font-medium text-neutral-700 transition-colors hover:border-neutral-900 hover:text-neutral-900 disabled:opacity-50'
         >
           <Upload className='size-3' />
           Tải lên
@@ -176,10 +176,10 @@ export function ImagePicker({
       {supportsTransform && (
         <div className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'>
           <div className='flex items-center justify-between gap-2'>
-            <span className='text-[10px] font-medium tracking-wider text-neutral-500 uppercase'>
+            <span className='text-3xs font-medium tracking-wider text-neutral-500 uppercase'>
               Xoay
             </span>
-            <span className='font-mono text-[11px] text-neutral-700 tabular-nums'>
+            <span className='text-2xs font-mono text-neutral-700 tabular-nums'>
               {t.rotation}°
             </span>
           </div>
@@ -215,10 +215,10 @@ export function ImagePicker({
           </div>
 
           <div className='mt-1 flex items-center justify-between gap-2'>
-            <span className='text-[10px] font-medium tracking-wider text-neutral-500 uppercase'>
+            <span className='text-3xs font-medium tracking-wider text-neutral-500 uppercase'>
               Phóng
             </span>
-            <span className='font-mono text-[11px] text-neutral-700 tabular-nums'>
+            <span className='text-2xs font-mono text-neutral-700 tabular-nums'>
               {Math.round(t.scale * 100)}%
             </span>
           </div>
@@ -250,7 +250,7 @@ export function ImagePicker({
           <button
             type='button'
             onClick={() => onTransformChange?.({ ...DEFAULT_IMAGE_TRANSFORM })}
-            className='mt-1 flex w-full cursor-pointer items-center justify-center gap-1 rounded-md border border-dashed border-neutral-200 py-1 text-[10px] font-medium text-neutral-500 transition-colors hover:border-neutral-900 hover:text-neutral-900'
+            className='text-3xs mt-1 flex w-full cursor-pointer items-center justify-center gap-1 rounded-md border border-dashed border-neutral-200 py-1 font-medium text-neutral-500 transition-colors hover:border-neutral-900 hover:text-neutral-900'
           >
             <Undo2 className='size-3' />
             Khôi phục

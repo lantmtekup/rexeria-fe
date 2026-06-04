@@ -83,7 +83,7 @@ function TemplateVersionsPanel({
                         v{v.version}
                       </span>
                       {isCurrent && (
-                        <Badge variant='default' className='px-1.5 text-[10px]'>
+                        <Badge variant='default' className='text-3xs px-1.5'>
                           Current
                         </Badge>
                       )}
@@ -91,7 +91,7 @@ function TemplateVersionsPanel({
                     <p className='text-muted-foreground mt-0.5 text-xs'>
                       {v.change_note || '—'}
                     </p>
-                    <p className='text-muted-foreground/80 mt-0.5 text-[10px]'>
+                    <p className='text-muted-foreground/80 text-3xs mt-0.5'>
                       {formatDate(v.created_at)} · schema {v.schema_version}
                     </p>
                   </div>

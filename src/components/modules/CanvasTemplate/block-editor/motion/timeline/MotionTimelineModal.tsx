@@ -271,13 +271,13 @@ export function MotionTimelineModal({
     >
       <div ref={sheetRef} className='flex h-full flex-col bg-neutral-50'>
         <header className='flex h-12 shrink-0 items-center gap-3 border-b border-neutral-200 bg-white px-4'>
-          <span className='font-mono text-[10px] tracking-[0.18em] text-neutral-400 uppercase'>
+          <span className='text-3xs font-mono tracking-[0.18em] text-neutral-400 uppercase'>
             Motion timeline
           </span>
-          <h2 className='truncate text-[13px] font-semibold tracking-tight text-neutral-900'>
+          <h2 className='truncate text-sm font-semibold tracking-tight text-neutral-900'>
             {block.name}
           </h2>
-          <span className='font-mono text-[10px] tracking-[0.12em] text-neutral-400 uppercase'>
+          <span className='text-3xs font-mono tracking-[0.12em] text-neutral-400 uppercase'>
             · {device}
           </span>
           <div className='flex-1' />
@@ -411,7 +411,7 @@ export function MotionTimelineModal({
           )}
         </div>
 
-        <footer className='flex h-9 shrink-0 items-center gap-3 border-t border-neutral-200 bg-white px-4 text-[10px] text-neutral-500'>
+        <footer className='text-3xs flex h-9 shrink-0 items-center gap-3 border-t border-neutral-200 bg-white px-4 text-neutral-500'>
           <span className='font-mono tracking-[0.14em] uppercase'>
             ⌘Drag · Click ruler · Del/Backspace
           </span>
@@ -419,7 +419,7 @@ export function MotionTimelineModal({
           <button
             type='button'
             onClick={handleClose}
-            className='flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-neutral-900 px-3 text-[11px] font-semibold text-white hover:bg-neutral-700'
+            className='text-2xs flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-neutral-900 px-3 font-semibold text-white hover:bg-neutral-700'
           >
             <Play className={cn('size-3', 'rotate-90')} />
             Xong

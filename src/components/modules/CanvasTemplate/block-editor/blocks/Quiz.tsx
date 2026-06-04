@@ -116,7 +116,7 @@ export function Quiz({
             style={sEyebrow}
             className={selectableClass(
               activeKey === 'eyebrow',
-              'text-[10px] font-semibold tracking-[0.32em] text-purple-700 uppercase @2xl:text-[11px]'
+              'text-3xs @2xl:text-2xs font-semibold tracking-[0.32em] text-purple-700 uppercase'
             )}
           >
             {content.eyebrow}
@@ -280,7 +280,7 @@ export function Quiz({
                   Làm lại
                 </button>
               </div>
-              <span className='text-[10px] tracking-wider text-neutral-400 uppercase'>
+              <span className='text-3xs tracking-wider text-neutral-400 uppercase'>
                 Điểm: {totalScore}
               </span>
             </>

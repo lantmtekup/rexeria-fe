@@ -362,7 +362,7 @@ export function AdminCanvasTemplatesPage() {
       {/* Header */}
       <div className='flex flex-wrap items-end justify-between gap-3'>
         <div>
-          <div className='flex items-center gap-2 text-[10.5px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+          <div className='text-3xs flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
             <LayoutTemplate className='size-3' /> Landing pages
           </div>
           <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
@@ -503,20 +503,20 @@ export function AdminCanvasTemplatesPage() {
           <button
             type='button'
             onClick={clearFilters}
-            className='ml-1 inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-900'
+            className='text-2xs ml-1 inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900'
           >
             <XIcon className='size-3' />
             Clear
           </button>
         )}
 
-        <div className='ml-auto text-[10.5px] text-zinc-500'>
+        <div className='text-3xs ml-auto text-zinc-500'>
           {items.length} / {total}
         </div>
       </div>
 
       {error && (
-        <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800'>
+        <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
           {error}
         </div>
       )}
@@ -529,12 +529,12 @@ export function AdminCanvasTemplatesPage() {
       ) : items.length === 0 ? (
         <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center'>
           <LayoutTemplate className='mx-auto size-8 text-zinc-300' />
-          <p className='mt-3 text-[14px] font-semibold text-zinc-700'>
+          <p className='mt-3 text-sm font-semibold text-zinc-700'>
             {hasActiveFilters
               ? 'Không có page nào khớp filter'
               : 'Chưa có page nào'}
           </p>
-          <p className='mt-1 text-[12px] text-zinc-500'>
+          <p className='mt-1 text-xs text-zinc-500'>
             {hasActiveFilters
               ? 'Thử đổi từ khoá hoặc clear filter.'
               : 'Vào /admin/templates → click "Sử dụng" để tạo landing đầu tiên.'}
@@ -571,9 +571,9 @@ export function AdminCanvasTemplatesPage() {
       {/* Bulk action bar — sticky bottom khi có selection ở table view. */}
       {selected.size > 0 && view === 'table' && (
         <div className='sticky bottom-4 z-30 mx-auto flex w-fit min-w-[320px] items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 shadow-2xl'>
-          <span className='text-[12.5px] font-medium text-white'>
+          <span className='text-xs font-medium text-white'>
             Đã chọn{' '}
-            <span className='rounded-md bg-white/15 px-1.5 py-0.5 font-mono text-[11.5px]'>
+            <span className='text-2xs rounded-md bg-white/15 px-1.5 py-0.5 font-mono'>
               {selected.size}
             </span>{' '}
             landing
@@ -582,7 +582,7 @@ export function AdminCanvasTemplatesPage() {
             type='button'
             onClick={() => setSelected(new Set())}
             disabled={bulkBusy}
-            className='rounded-md px-2 py-1 text-[11.5px] font-medium text-white/70 hover:bg-white/10 disabled:opacity-50'
+            className='text-2xs rounded-md px-2 py-1 font-medium text-white/70 hover:bg-white/10 disabled:opacity-50'
           >
             Bỏ chọn
           </button>
@@ -591,7 +591,7 @@ export function AdminCanvasTemplatesPage() {
             type='button'
             onClick={runBulkArchive}
             disabled={bulkBusy}
-            className='inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-[12px] font-medium text-white hover:bg-rose-500 disabled:opacity-50'
+            className='inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-500 disabled:opacity-50'
           >
             <Trash2 className='size-3.5' />
             {bulkBusy ? 'Đang xoá…' : 'Xoá (archive) đã chọn'}
@@ -603,7 +603,7 @@ export function AdminCanvasTemplatesPage() {
               type='button'
               onClick={() => setPurgeModalOpen(true)}
               disabled={bulkBusy}
-              className='inline-flex items-center gap-1.5 rounded-md border border-red-500/40 bg-red-950 px-3 py-1.5 text-[12px] font-medium text-red-100 hover:bg-red-900 disabled:opacity-50'
+              className='inline-flex items-center gap-1.5 rounded-md border border-red-500/40 bg-red-950 px-3 py-1.5 text-xs font-medium text-red-100 hover:bg-red-900 disabled:opacity-50'
               title='Xoá vĩnh viễn — không khôi phục được'
             >
               <Flame className='size-3.5' />
@@ -689,7 +689,7 @@ function PageCard({
         </div>
         <span
           className={cn(
-            'absolute top-2 left-2 rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase backdrop-blur',
+            'text-3xs absolute top-2 left-2 rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase backdrop-blur',
             typeChipClass,
             'border-white/30 bg-white/80'
           )}
@@ -698,7 +698,7 @@ function PageCard({
         </span>
         <span
           className={cn(
-            'absolute top-2 right-2 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase shadow-sm backdrop-blur',
+            'text-3xs absolute top-2 right-2 rounded-full px-2 py-0.5 font-bold tracking-wider uppercase shadow-sm backdrop-blur',
             statusClass
           )}
         >
@@ -707,20 +707,20 @@ function PageCard({
       </div>
 
       <div className='flex flex-1 flex-col gap-2 p-3.5'>
-        <h3 className='line-clamp-1 text-[14px] font-semibold text-zinc-900'>
+        <h3 className='line-clamp-1 text-sm font-semibold text-zinc-900'>
           {item.name}
         </h3>
         {item.slug ? (
-          <code className='line-clamp-1 font-mono text-[10.5px] text-zinc-500'>
+          <code className='text-3xs line-clamp-1 font-mono text-zinc-500'>
             /p/{item.slug}
           </code>
         ) : (
-          <span className='font-mono text-[10.5px] text-zinc-400'>
+          <span className='text-3xs font-mono text-zinc-400'>
             (chưa có slug)
           </span>
         )}
 
-        <div className='mt-auto flex items-center justify-between text-[10.5px] text-zinc-500'>
+        <div className='text-3xs mt-auto flex items-center justify-between text-zinc-500'>
           {brand ? (
             <Link
               href={`/admin/users/${brand.id}`}
@@ -808,7 +808,7 @@ function PageActionMenu({
           <Link
             href={`/admin/landing-pages/${page.slug || page.id}/analytics`}
             onClick={() => setOpen(false)}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
           >
             <BarChart3 className='size-3.5 text-blue-600' />
             Analytics
@@ -818,7 +818,7 @@ function PageActionMenu({
             <button
               type='button'
               onClick={choose('publish')}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
             >
               <Send className='size-3.5 text-emerald-600' />
               Publish
@@ -828,7 +828,7 @@ function PageActionMenu({
             <button
               type='button'
               onClick={choose('unpublish')}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
             >
               <Undo2 className='size-3.5 text-amber-600' />
               Unpublish
@@ -838,7 +838,7 @@ function PageActionMenu({
             <button
               type='button'
               onClick={choose('restore')}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
             >
               <RotateCcw className='size-3.5 text-zinc-600' />
               Restore (→ draft)
@@ -848,7 +848,7 @@ function PageActionMenu({
           <button
             type='button'
             onClick={choose('domain')}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
           >
             <Globe className='size-3.5 text-blue-600' />
             Cài đặt domain
@@ -859,7 +859,7 @@ function PageActionMenu({
               <button
                 type='button'
                 onClick={choose('archive')}
-                className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-rose-600 hover:bg-rose-50'
+                className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
               >
                 <Archive className='size-3.5' />
                 Archive
@@ -922,7 +922,7 @@ function ViewBtn({
       onClick={onClick}
       title={label}
       className={cn(
-        'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
+        'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
         active ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100'
       )}
     >
@@ -995,7 +995,7 @@ function TableView({
                 </TableCell>
                 <TableCell>
                   <div className='font-medium'>{p.name}</div>
-                  <div className='flex items-center gap-2 font-mono text-[10.5px] text-zinc-400'>
+                  <div className='text-3xs flex items-center gap-2 font-mono text-zinc-400'>
                     {p.slug ? <code>{p.slug}</code> : <span>—</span>}
                     <span>·</span>
                     <code>{p.id.slice(0, 12)}…</code>
@@ -1004,7 +1004,7 @@ function TableView({
                 <TableCell>
                   <span
                     className={cn(
-                      'rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase',
+                      'text-3xs rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase',
                       typeClass
                     )}
                   >
@@ -1014,7 +1014,7 @@ function TableView({
                 <TableCell>
                   <span
                     className={cn(
-                      'rounded-full px-2 py-0.5 text-[10.5px] font-medium',
+                      'text-3xs rounded-full px-2 py-0.5 font-medium',
                       statusClass
                     )}
                   >
@@ -1025,13 +1025,13 @@ function TableView({
                   {brand ? (
                     <Link
                       href={`/admin/users/${brand.id}`}
-                      className='inline-flex items-center gap-1 text-[12px] font-medium text-zinc-700 hover:text-zinc-900 hover:underline'
+                      className='inline-flex items-center gap-1 text-xs font-medium text-zinc-700 hover:text-zinc-900 hover:underline'
                     >
                       {brand.name}
                       <ExternalLink className='size-3 text-zinc-400' />
                     </Link>
                   ) : (
-                    <code className='font-mono text-[10.5px] text-zinc-500'>
+                    <code className='text-3xs font-mono text-zinc-500'>
                       {p.brand_id.slice(0, 8)}…
                     </code>
                   )}
@@ -1088,7 +1088,7 @@ function Pagination({
 
   return (
     <div className='flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-sm'>
-      <span className='text-[11.5px] text-zinc-500'>
+      <span className='text-2xs text-zinc-500'>
         {from}–{to} trong {total}
       </span>
       <div className='flex items-center gap-1'>
@@ -1103,7 +1103,7 @@ function Pagination({
         </button>
         {pages.map((p, i) =>
           p === 'gap' ? (
-            <span key={`gap-${i}`} className='px-1 text-[11px] text-zinc-300'>
+            <span key={`gap-${i}`} className='text-2xs px-1 text-zinc-300'>
               …
             </span>
           ) : (
@@ -1112,7 +1112,7 @@ function Pagination({
               type='button'
               onClick={() => onChange(p)}
               className={cn(
-                'inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono text-[11px] font-semibold tabular-nums transition-colors',
+                'text-2xs inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono font-semibold tabular-nums transition-colors',
                 p === page
                   ? 'bg-zinc-900 text-white shadow-sm'
                   : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
@@ -1147,7 +1147,7 @@ function FilterGroup({
 }) {
   return (
     <div className='inline-flex items-center gap-1.5'>
-      <span className='text-[10px] font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+      <span className='text-3xs font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
         {label}
       </span>
       <div className='inline-flex items-center gap-1'>{children}</div>
@@ -1182,7 +1182,7 @@ function ChipBtn({
       type='button'
       onClick={onClick}
       className={cn(
-        'rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors',
+        'text-2xs rounded-full px-2.5 py-1 font-medium transition-colors',
         cls
       )}
     >
@@ -1231,10 +1231,10 @@ function HardDeleteConfirmModal({
             <AlertTriangle className='size-5 text-red-600' />
           </div>
           <div className='flex-1'>
-            <h3 className='text-[15px] font-bold text-zinc-900'>
+            <h3 className='text-base font-bold text-zinc-900'>
               Xoá vĩnh viễn {count} landing pages?
             </h3>
-            <p className='mt-1 text-[12.5px] leading-relaxed text-zinc-600'>
+            <p className='mt-1 text-xs leading-relaxed text-zinc-600'>
               Hành động này{' '}
               <span className='font-semibold text-red-700'>
                 KHÔNG thể khôi phục
@@ -1246,7 +1246,7 @@ function HardDeleteConfirmModal({
         </div>
 
         <div className='mt-5'>
-          <label className='block text-[11.5px] font-medium text-zinc-700'>
+          <label className='text-2xs block font-medium text-zinc-700'>
             Gõ{' '}
             <span className='font-mono font-bold text-red-700'>{KEYWORD}</span>{' '}
             vào ô dưới để confirm:
@@ -1257,7 +1257,7 @@ function HardDeleteConfirmModal({
             onChange={e => setTyped(e.target.value)}
             autoFocus
             placeholder={KEYWORD}
-            className='mt-1.5 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 font-mono text-[13px] outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-200'
+            className='mt-1.5 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 font-mono text-sm outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-200'
           />
         </div>
 
@@ -1265,7 +1265,7 @@ function HardDeleteConfirmModal({
           <button
             type='button'
             onClick={onCancel}
-            className='rounded-md px-3 py-1.5 text-[12.5px] font-medium text-zinc-600 hover:bg-zinc-100'
+            className='rounded-md px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100'
           >
             Huỷ
           </button>
@@ -1274,7 +1274,7 @@ function HardDeleteConfirmModal({
             onClick={onConfirm}
             disabled={!isConfirmed}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12.5px] font-medium transition-colors',
+              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
               isConfirmed
                 ? 'bg-red-600 text-white hover:bg-red-500'
                 : 'cursor-not-allowed bg-zinc-100 text-zinc-400'

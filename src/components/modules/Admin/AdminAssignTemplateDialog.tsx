@@ -130,8 +130,8 @@ export function AdminAssignTemplateDialog({
               <Send className='size-4' />
             </div>
             <div className='leading-tight'>
-              <h3 className='text-[15px] font-semibold'>Assign sang brand</h3>
-              <p className='font-mono text-[10px] text-zinc-400'>
+              <h3 className='text-base font-semibold'>Assign sang brand</h3>
+              <p className='text-3xs font-mono text-zinc-400'>
                 {template.name}
               </p>
             </div>
@@ -157,7 +157,7 @@ export function AdminAssignTemplateDialog({
               maxLength={200}
               onChange={e => setPageName(e.target.value)}
               placeholder={template.name}
-              className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[14px] outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             />
           </Field>
 
@@ -165,7 +165,7 @@ export function AdminAssignTemplateDialog({
             <select
               value={clientId}
               onChange={e => setClientId(e.target.value)}
-              className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[14px] outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             >
               <option value=''>— Chọn brand —</option>
               {clients.map(c => (
@@ -184,7 +184,7 @@ export function AdminAssignTemplateDialog({
               <select
                 value={workspaceId}
                 onChange={e => setWorkspaceId(e.target.value)}
-                className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[14px] outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+                className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
                 disabled={workspaces.length === 0}
               >
                 {workspaces.length === 0 && (
@@ -206,12 +206,12 @@ export function AdminAssignTemplateDialog({
               rows={3}
               maxLength={2000}
               placeholder='Vd: Template đã set sẵn block hero + booking form, brand chỉ cần đổi text + ảnh.'
-              className='w-full resize-y rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='w-full resize-y rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             />
           </Field>
 
           {error && (
-            <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800'>
+            <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
               {error}
             </div>
           )}
@@ -258,11 +258,11 @@ function Field({
 }) {
   return (
     <div>
-      <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+      <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
         {label} {required && <span className='text-rose-500'>*</span>}
       </label>
       <div className='mt-1'>{children}</div>
-      {hint && <p className='mt-1 text-[10.5px] text-zinc-500'>{hint}</p>}
+      {hint && <p className='text-3xs mt-1 text-zinc-500'>{hint}</p>}
     </div>
   );
 }

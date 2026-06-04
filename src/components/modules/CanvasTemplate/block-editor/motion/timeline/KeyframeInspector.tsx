@@ -47,11 +47,11 @@ export function KeyframeInspector({
       className='shrink-0 border-t border-neutral-200 bg-white px-4 py-3'
     >
       <div className='mb-3 flex items-center gap-3'>
-        <span className='font-mono text-[10px] tracking-[0.14em] text-neutral-400 uppercase'>
+        <span className='text-3xs font-mono tracking-[0.14em] text-neutral-400 uppercase'>
           Keyframe
         </span>
         <label className='flex items-center gap-1.5'>
-          <span className='font-mono text-[10px] text-neutral-500'>Time</span>
+          <span className='text-3xs font-mono text-neutral-500'>Time</span>
           <input
             type='number'
             min={0}
@@ -64,16 +64,16 @@ export function KeyframeInspector({
                 time: Math.max(0, Math.min(maxTime, Number(e.target.value))),
               })
             }
-            className='h-7 w-20 rounded-md border border-neutral-200 bg-white px-2 text-[11px] tabular-nums focus:border-neutral-400 focus:outline-none'
+            className='text-2xs h-7 w-20 rounded-md border border-neutral-200 bg-white px-2 tabular-nums focus:border-neutral-400 focus:outline-none'
           />
-          <span className='font-mono text-[10px] text-neutral-400'>ms</span>
+          <span className='text-3xs font-mono text-neutral-400'>ms</span>
         </label>
         <label className='flex items-center gap-1.5'>
-          <span className='font-mono text-[10px] text-neutral-500'>Easing</span>
+          <span className='text-3xs font-mono text-neutral-500'>Easing</span>
           <select
             value={easingValue}
             onChange={e => onChange({ easing: e.target.value as MotionEasing })}
-            className='h-7 cursor-pointer rounded-md border border-neutral-200 bg-white px-2 text-[11px] focus:border-neutral-400 focus:outline-none'
+            className='text-2xs h-7 cursor-pointer rounded-md border border-neutral-200 bg-white px-2 focus:border-neutral-400 focus:outline-none'
           >
             {EASING_OPTIONS.map(o => (
               <option key={String(o.value)} value={String(o.value)}>
@@ -87,7 +87,7 @@ export function KeyframeInspector({
           type='button'
           onClick={onDelete}
           data-testid='motion-kf-delete'
-          className='flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-2.5 text-[11px] font-medium text-rose-700 hover:bg-rose-100'
+          className='text-2xs flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-2.5 font-medium text-rose-700 hover:bg-rose-100'
         >
           <Trash2 className='size-3' /> Xóa
         </button>
@@ -105,7 +105,7 @@ export function KeyframeInspector({
                 onChange={e => toggleProperty(prop, e.target.checked)}
                 className='size-3.5 cursor-pointer accent-neutral-900'
               />
-              <span className='w-20 font-mono text-[10px] tracking-[0.06em] text-neutral-500 uppercase'>
+              <span className='text-3xs w-20 font-mono tracking-[0.06em] text-neutral-500 uppercase'>
                 {PROPERTY_LABEL[prop]}
               </span>
               <input
@@ -114,7 +114,7 @@ export function KeyframeInspector({
                 step={prop === 'opacity' || prop === 'scale' ? 0.05 : 1}
                 value={value}
                 onChange={e => setPropertyValue(prop, Number(e.target.value))}
-                className='h-7 w-20 rounded-md border border-neutral-200 bg-white px-2 text-[11px] tabular-nums focus:border-neutral-400 focus:outline-none disabled:bg-neutral-50 disabled:text-neutral-400'
+                className='text-2xs h-7 w-20 rounded-md border border-neutral-200 bg-white px-2 tabular-nums focus:border-neutral-400 focus:outline-none disabled:bg-neutral-50 disabled:text-neutral-400'
               />
             </label>
           );

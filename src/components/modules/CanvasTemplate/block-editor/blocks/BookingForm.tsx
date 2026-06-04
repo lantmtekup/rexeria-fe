@@ -65,7 +65,7 @@ export function BookingForm({
               style={sEyebrow}
               className={selectableClass(
                 activeKey === 'eyebrow',
-                'animate-reveal-x inline-flex w-fit items-center gap-2 text-[10px] font-semibold tracking-[0.32em] text-white/60 uppercase [animation-delay:900ms] [animation-duration:700ms] @2xl:text-xs'
+                'animate-reveal-x text-3xs inline-flex w-fit items-center gap-2 font-semibold tracking-[0.32em] text-white/60 uppercase [animation-delay:900ms] [animation-duration:700ms] @2xl:text-xs'
               )}
             >
               <span className='size-1 shrink-0 rounded-full bg-white/40' />
@@ -114,7 +114,7 @@ export function BookingForm({
                 <div className='text-base leading-none font-semibold @2xl:text-lg @4xl:text-xl'>
                   {r.value}
                 </div>
-                <div className='mt-1.5 text-[10px] tracking-widest text-white/55 uppercase @2xl:mt-2 @2xl:text-xs'>
+                <div className='text-3xs mt-1.5 tracking-widest text-white/55 uppercase @2xl:mt-2 @2xl:text-xs'>
                   {r.label}
                 </div>
               </div>
@@ -146,7 +146,7 @@ export function BookingForm({
             style={sNote}
             className={selectableClass(
               activeKey === 'noteText',
-              'text-[10px] text-neutral-400 @2xl:text-xs'
+              'text-3xs text-neutral-400 @2xl:text-xs'
             )}
           >
             {content.noteText}
@@ -168,7 +168,7 @@ function FormField({
 }) {
   return (
     <label className='flex flex-col gap-1'>
-      <span className='text-[10px] font-medium tracking-widest text-neutral-500 uppercase @2xl:text-xs'>
+      <span className='text-3xs font-medium tracking-widest text-neutral-500 uppercase @2xl:text-xs'>
         {label}
       </span>
       {textarea ? (

@@ -257,7 +257,7 @@ export function ImportBlockDialog({
                         ? 'Thả ảnh vào đây'
                         : 'Kéo thả ảnh PNG/JPG vào đây hoặc click để chọn'}
                     </p>
-                    <p className='pointer-events-none text-[10px] text-neutral-400'>
+                    <p className='text-3xs pointer-events-none text-neutral-400'>
                       Max 5MB — ưu tiên ảnh chụp 1 section landing page
                     </p>
                   </>
@@ -272,7 +272,7 @@ export function ImportBlockDialog({
                 className='hidden'
               />
               {file && (
-                <div className='mt-2 flex items-center justify-between text-[11px] text-neutral-500'>
+                <div className='text-2xs mt-2 flex items-center justify-between text-neutral-500'>
                   <span className='truncate'>
                     {file.name} · {Math.round(file.size / 1024)}KB
                   </span>
@@ -295,9 +295,9 @@ export function ImportBlockDialog({
                   onChange={e => setFigmaUrl(e.target.value)}
                   data-testid='import-figma-url'
                   placeholder='https://figma.com/design/ABC123/...?node-id=1-2'
-                  className='h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-[12px] focus:border-neutral-400 focus:outline-none'
+                  className='h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-xs focus:border-neutral-400 focus:outline-none'
                 />
-                <p className='mt-1 text-[10px] text-neutral-400'>
+                <p className='text-3xs mt-1 text-neutral-400'>
                   Phải có <code>?node-id=...</code> — chọn frame cụ thể trong
                   Figma rồi copy link.
                 </p>
@@ -309,9 +309,9 @@ export function ImportBlockDialog({
                   onChange={e => setFigmaToken(e.target.value)}
                   data-testid='import-figma-token'
                   placeholder='figd_…'
-                  className='h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-[12px] focus:border-neutral-400 focus:outline-none'
+                  className='h-9 w-full rounded-md border border-neutral-200 bg-white px-3 text-xs focus:border-neutral-400 focus:outline-none'
                 />
-                <p className='mt-1 text-[10px] text-neutral-400'>
+                <p className='text-3xs mt-1 text-neutral-400'>
                   Lấy ở Figma → Settings → Account → Personal access tokens. Lưu
                   trong browser (localStorage), không gửi lên BE.
                 </p>
@@ -322,7 +322,7 @@ export function ImportBlockDialog({
           {error && (
             <div
               data-testid='import-error'
-              className='rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] leading-relaxed text-rose-700'
+              className='text-2xs rounded-md border border-rose-200 bg-rose-50 px-3 py-2 leading-relaxed text-rose-700'
             >
               {error}
             </div>
@@ -331,19 +331,19 @@ export function ImportBlockDialog({
           {result && (
             <div
               data-testid='import-result'
-              className='rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-[12px] text-emerald-900'
+              className='rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-900'
             >
               <div className='font-semibold'>
                 Đề xuất block:{' '}
                 <span
-                  className='rounded bg-white px-1.5 py-0.5 font-mono text-[10px] tracking-wider text-emerald-700 uppercase'
+                  className='text-3xs rounded bg-white px-1.5 py-0.5 font-mono tracking-wider text-emerald-700 uppercase'
                   data-testid='import-suggested-type'
                 >
                   {BLOCK_TYPE_META[result.raw.blockType].label}
                 </span>
               </div>
               {result.reasoning && (
-                <p className='mt-1.5 text-[11px] leading-relaxed text-emerald-800'>
+                <p className='text-2xs mt-1.5 leading-relaxed text-emerald-800'>
                   {result.reasoning}
                 </p>
               )}
@@ -353,14 +353,14 @@ export function ImportBlockDialog({
 
         {/* Footer actions */}
         <div className='flex items-center justify-between border-t border-neutral-200 pt-3'>
-          <p className='text-[10px] text-neutral-400'>
+          <p className='text-3xs text-neutral-400'>
             AI có thể tạo nhầm — review lại sau khi insert.
           </p>
           <div className='flex gap-2'>
             <button
               type='button'
               onClick={() => onOpenChange(false)}
-              className='flex h-8 cursor-pointer items-center rounded-md border border-neutral-200 bg-white px-3 text-[11px] font-medium text-neutral-700 hover:bg-neutral-50'
+              className='text-2xs flex h-8 cursor-pointer items-center rounded-md border border-neutral-200 bg-white px-3 font-medium text-neutral-700 hover:bg-neutral-50'
             >
               Đóng
             </button>
@@ -374,7 +374,7 @@ export function ImportBlockDialog({
                   (source === 'figma' && !figmaUrl.trim())
                 }
                 data-testid='import-run'
-                className='flex h-8 cursor-pointer items-center gap-1.5 rounded-md bg-neutral-900 px-3 text-[11px] font-semibold text-white transition-colors hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-40'
+                className='text-2xs flex h-8 cursor-pointer items-center gap-1.5 rounded-md bg-neutral-900 px-3 font-semibold text-white transition-colors hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-40'
               >
                 {busy && <Loader2 className='size-3 animate-spin' />}
                 {busy ? 'Đang phân tích…' : 'Phân tích bằng AI'}
@@ -384,7 +384,7 @@ export function ImportBlockDialog({
                 type='button'
                 onClick={confirmInsert}
                 data-testid='import-confirm'
-                className='flex h-8 cursor-pointer items-center rounded-md bg-emerald-600 px-3 text-[11px] font-semibold text-white transition-colors hover:bg-emerald-500'
+                className='text-2xs flex h-8 cursor-pointer items-center rounded-md bg-emerald-600 px-3 font-semibold text-white transition-colors hover:bg-emerald-500'
               >
                 Insert vào canvas
               </button>
@@ -414,7 +414,7 @@ function TabBtn({
       data-testid={testId}
       data-active={active ? 'true' : 'false'}
       className={cn(
-        'relative -mb-px flex h-9 cursor-pointer items-center gap-1.5 px-3 text-[12px] font-medium transition-colors',
+        'relative -mb-px flex h-9 cursor-pointer items-center gap-1.5 px-3 text-xs font-medium transition-colors',
         active ? 'text-neutral-900' : 'text-neutral-500 hover:text-neutral-700'
       )}
     >
@@ -435,7 +435,7 @@ function Field({
 }) {
   return (
     <label className='flex flex-col gap-1'>
-      <span className='text-[10px] font-medium tracking-wide text-neutral-500 uppercase'>
+      <span className='text-3xs font-medium tracking-wide text-neutral-500 uppercase'>
         {label}
       </span>
       {children}

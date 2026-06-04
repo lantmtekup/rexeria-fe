@@ -303,7 +303,7 @@ export function AdminTemplatesPage() {
       {/* Header */}
       <div className='flex flex-wrap items-end justify-between gap-3'>
         <div>
-          <div className='flex items-center gap-2 text-[10.5px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+          <div className='text-3xs flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
             <LayoutTemplate className='size-3' /> {t('templates.title')}
           </div>
           <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
@@ -430,7 +430,7 @@ export function AdminTemplatesPage() {
           <button
             type='button'
             onClick={clearFilters}
-            className='ml-1 inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-900'
+            className='text-2xs ml-1 inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900'
           >
             <XIcon className='size-3' />
             Clear
@@ -456,12 +456,12 @@ export function AdminTemplatesPage() {
       ) : pageItems.length === 0 ? (
         <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center'>
           <LayoutTemplate className='mx-auto size-8 text-zinc-300' />
-          <p className='mt-3 text-[14px] font-semibold text-zinc-700'>
+          <p className='mt-3 text-sm font-semibold text-zinc-700'>
             {hasActiveFilters
               ? 'Không có template nào khớp filter'
               : t('templates.empty')}
           </p>
-          <p className='mt-1 text-[12px] text-zinc-500'>
+          <p className='mt-1 text-xs text-zinc-500'>
             {hasActiveFilters
               ? 'Thử đổi từ khoá hoặc clear filter.'
               : t('templates.note')}
@@ -504,9 +504,9 @@ export function AdminTemplatesPage() {
       {/* Bulk action bar — sticky bottom khi có selection. */}
       {selected.size > 0 && view === 'table' && (
         <div className='sticky bottom-4 z-30 mx-auto flex w-fit min-w-[320px] items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 shadow-2xl'>
-          <span className='text-[12.5px] font-medium text-white'>
+          <span className='text-xs font-medium text-white'>
             Đã chọn{' '}
-            <span className='rounded-md bg-white/15 px-1.5 py-0.5 font-mono text-[11.5px]'>
+            <span className='text-2xs rounded-md bg-white/15 px-1.5 py-0.5 font-mono'>
               {selected.size}
             </span>{' '}
             template
@@ -515,7 +515,7 @@ export function AdminTemplatesPage() {
             type='button'
             onClick={() => setSelected(new Set())}
             disabled={bulkBusy}
-            className='rounded-md px-2 py-1 text-[11.5px] font-medium text-white/70 hover:bg-white/10 disabled:opacity-50'
+            className='text-2xs rounded-md px-2 py-1 font-medium text-white/70 hover:bg-white/10 disabled:opacity-50'
           >
             Bỏ chọn
           </button>
@@ -524,7 +524,7 @@ export function AdminTemplatesPage() {
             type='button'
             onClick={runBulkArchive}
             disabled={bulkBusy}
-            className='inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-[12px] font-medium text-white hover:bg-rose-500 disabled:opacity-50'
+            className='inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-500 disabled:opacity-50'
           >
             <Archive className='size-3.5' />
             {bulkBusy ? 'Archive…' : 'Archive đã chọn'}
@@ -606,7 +606,7 @@ function TemplateCard({
         {item.status && (
           <span
             className={cn(
-              'absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider backdrop-blur',
+              'text-3xs absolute top-2 left-2 rounded-full px-2 py-0.5 font-bold tracking-wider backdrop-blur',
               statusClass
             )}
           >
@@ -614,7 +614,7 @@ function TemplateCard({
           </span>
         )}
         {item.category && (
-          <span className='absolute top-2 right-2 rounded-full bg-violet-100/90 px-2 py-0.5 text-[10px] font-bold tracking-wider text-violet-700 backdrop-blur'>
+          <span className='text-3xs absolute top-2 right-2 rounded-full bg-violet-100/90 px-2 py-0.5 font-bold tracking-wider text-violet-700 backdrop-blur'>
             {item.category}
           </span>
         )}
@@ -622,17 +622,17 @@ function TemplateCard({
 
       <div className='flex flex-1 flex-col gap-2 p-3.5'>
         <div className='flex items-start justify-between gap-2'>
-          <h3 className='line-clamp-1 text-[14px] font-semibold text-zinc-900'>
+          <h3 className='line-clamp-1 text-sm font-semibold text-zinc-900'>
             {item.name}
           </h3>
           {item.code && (
-            <code className='shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] text-zinc-600'>
+            <code className='text-3xs shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-600'>
               {item.code}
             </code>
           )}
         </div>
         {item.description && (
-          <p className='line-clamp-2 text-[11.5px] leading-snug text-zinc-500'>
+          <p className='text-2xs line-clamp-2 leading-snug text-zinc-500'>
             {item.description}
           </p>
         )}
@@ -642,7 +642,7 @@ function TemplateCard({
             {item.tags.slice(0, 3).map(tg => (
               <span
                 key={tg}
-                className='rounded-full bg-zinc-100 px-1.5 py-0.5 text-[9.5px] font-medium text-zinc-600'
+                className='text-3xs rounded-full bg-zinc-100 px-1.5 py-0.5 font-medium text-zinc-600'
               >
                 {tg}
               </span>
@@ -650,7 +650,7 @@ function TemplateCard({
           </div>
         )}
 
-        <div className='mt-auto flex items-center justify-between text-[10.5px] text-zinc-500'>
+        <div className='text-3xs mt-auto flex items-center justify-between text-zinc-500'>
           <span>
             {formatAuthor(item.author) || (
               <span className='text-zinc-400'>—</span>
@@ -744,7 +744,7 @@ function TemplateActionMenu({
           <Link
             href={`/admin/templates/${item.id}/edit`}
             onClick={() => setOpen(false)}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
           >
             <Pencil className='size-3.5 text-blue-600' />
             Mở editor
@@ -754,7 +754,7 @@ function TemplateActionMenu({
             <button
               type='button'
               onClick={choose('activate')}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
             >
               <CheckCircle2 className='size-3.5 text-emerald-600' />
               Activate
@@ -764,7 +764,7 @@ function TemplateActionMenu({
             <button
               type='button'
               onClick={choose('restore')}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
             >
               <RotateCcw className='size-3.5 text-amber-600' />
               Back to draft
@@ -774,7 +774,7 @@ function TemplateActionMenu({
             <button
               type='button'
               onClick={choose('restore')}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-zinc-700 hover:bg-zinc-50'
+              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
             >
               <RotateCcw className='size-3.5 text-zinc-600' />
               Restore (→ draft)
@@ -786,7 +786,7 @@ function TemplateActionMenu({
               <button
                 type='button'
                 onClick={choose('archive')}
-                className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-rose-600 hover:bg-rose-50'
+                className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
               >
                 <Archive className='size-3.5' />
                 Archive
@@ -975,7 +975,7 @@ function Pagination({
 
   return (
     <div className='flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-sm'>
-      <span className='text-[11.5px] text-zinc-500'>
+      <span className='text-2xs text-zinc-500'>
         {from}–{to} trong {total}
       </span>
       <div className='flex items-center gap-1'>
@@ -989,7 +989,7 @@ function Pagination({
         </button>
         {pages.map((p, i) =>
           p === 'gap' ? (
-            <span key={`gap-${i}`} className='px-1 text-[11px] text-zinc-300'>
+            <span key={`gap-${i}`} className='text-2xs px-1 text-zinc-300'>
               …
             </span>
           ) : (
@@ -998,7 +998,7 @@ function Pagination({
               type='button'
               onClick={() => onChange(p)}
               className={cn(
-                'inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono text-[11px] font-semibold tabular-nums',
+                'text-2xs inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono font-semibold tabular-nums',
                 p === page
                   ? 'bg-zinc-900 text-white shadow-sm'
                   : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
@@ -1034,7 +1034,7 @@ function FilterGroup({
 }) {
   return (
     <div className='inline-flex items-center gap-1.5'>
-      <span className='inline-flex items-center gap-1 text-[10px] font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+      <span className='text-3xs inline-flex items-center gap-1 font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
         {icon}
         {label}
       </span>
@@ -1069,7 +1069,7 @@ function ChipBtn({
       type='button'
       onClick={onClick}
       className={cn(
-        'rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors',
+        'text-2xs rounded-full px-2.5 py-1 font-medium transition-colors',
         cls
       )}
     >
@@ -1095,7 +1095,7 @@ function ViewBtn({
       onClick={onClick}
       title={label}
       className={cn(
-        'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
+        'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
         active ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100'
       )}
     >

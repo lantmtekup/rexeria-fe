@@ -201,7 +201,7 @@ const ACTOR_COLOR: Record<ActorName, string> = {
 function ActorBadge({ actor }: { actor: ActorName }) {
   return (
     <span
-      className={`shrink-0 rounded ${ACTOR_COLOR[actor]} px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wide text-white`}
+      className={`shrink-0 rounded ${ACTOR_COLOR[actor]} text-3xs px-1.5 py-0.5 font-mono font-bold tracking-wide text-white`}
     >
       {actor.toUpperCase()}
     </span>
@@ -222,15 +222,13 @@ function UseCaseCard({ uc }: { uc: UC }) {
       <div className='mb-2 flex items-start justify-between gap-2'>
         <div className='min-w-0'>
           <div className='flex items-center gap-2'>
-            <span className='rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-[9px] font-bold text-white'>
+            <span className='text-3xs rounded bg-zinc-900 px-1.5 py-0.5 font-mono font-bold text-white'>
               UC-{uc.id}
             </span>
-            <h3 className='text-[13.5px] font-semibold text-zinc-900'>
-              {uc.title}
-            </h3>
+            <h3 className='text-sm font-semibold text-zinc-900'>{uc.title}</h3>
           </div>
           {uc.goal && (
-            <p className='mt-1 text-[11.5px] text-zinc-500 italic'>
+            <p className='text-2xs mt-1 text-zinc-500 italic'>
               <span className='font-medium not-italic'>Mục tiêu:</span>{' '}
               {uc.goal}
             </p>
@@ -238,10 +236,10 @@ function UseCaseCard({ uc }: { uc: UC }) {
         </div>
         <ActorBadge actor={uc.actor} />
       </div>
-      <ol className='space-y-1 text-[13px] leading-snug text-zinc-700 [&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[11.5px]'>
+      <ol className='[&_code]:text-2xs space-y-1 text-sm leading-snug text-zinc-700 [&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono'>
         {uc.steps.map((s, i) => (
           <li key={i} className='flex gap-2'>
-            <span className='mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-zinc-100 font-mono text-[9px] font-bold text-zinc-600'>
+            <span className='text-3xs mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-zinc-100 font-mono font-bold text-zinc-600'>
               {i + 1}
             </span>
             <span className='flex-1'>{s}</span>
@@ -1522,7 +1520,7 @@ export default function OverviewPage() {
           >
             <Boxes className='size-3.5' /> /portal LIVE
           </a>
-          <span className='rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm'>
+          <span className='text-2xs rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2.5 py-0.5 font-medium text-white shadow-sm'>
             {visibleUC}/{totalUC} UC · {MODULES.length} modules
           </span>
         </div>
@@ -1617,7 +1615,7 @@ function FilterBar({
   return (
     <div className='sticky top-[57px] z-20 border-b border-zinc-200 bg-white/95 px-6 py-2.5 backdrop-blur'>
       <div className='flex flex-wrap items-center gap-3'>
-        <span className='text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+        <span className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
           Lọc theo actor
         </span>
         <div className='flex flex-wrap items-center gap-1.5'>
@@ -1639,7 +1637,7 @@ function FilterBar({
                 />
                 {a}
                 <span
-                  className={`rounded px-1 font-mono text-[10px] ${
+                  className={`text-3xs rounded px-1 font-mono ${
                     active ? 'bg-white/25' : 'bg-zinc-100'
                   }`}
                 >
@@ -1685,7 +1683,7 @@ function Sidebar({
 }) {
   return (
     <aside className='sticky top-[105px] hidden h-[calc(100vh-105px)] w-72 shrink-0 overflow-y-auto border-r border-zinc-200 bg-white px-4 py-6 lg:block'>
-      <div className='mb-4 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+      <div className='text-2xs mb-4 font-semibold tracking-wider text-zinc-500 uppercase'>
         {MODULES.length} modules
       </div>
       <nav className='flex flex-col gap-0.5'>
@@ -1717,7 +1715,7 @@ function Sidebar({
               <span className='flex-1 leading-snug'>{n.label}</span>
               {n.cases && (
                 <span
-                  className={`rounded px-1 font-mono text-[9px] ${
+                  className={`text-3xs rounded px-1 font-mono ${
                     isActive
                       ? 'bg-white/20 text-white'
                       : dimmed
@@ -1729,7 +1727,7 @@ function Sidebar({
                 </span>
               )}
               <span
-                className={`font-mono text-[10px] ${dimmed ? 'text-zinc-300' : 'text-zinc-400'}`}
+                className={`text-3xs font-mono ${dimmed ? 'text-zinc-300' : 'text-zinc-400'}`}
               >
                 {n.num}
               </span>
@@ -1755,10 +1753,10 @@ function Hero() {
       />
       <div className='relative'>
         <div className='flex flex-wrap items-center gap-2'>
-          <span className='inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-3 py-1 text-[11px] font-medium text-white shadow-sm'>
+          <span className='text-2xs inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-3 py-1 font-medium text-white shadow-sm'>
             <Sparkles className='size-3' /> Use-case driven documentation
           </span>
-          <span className='inline-flex items-center gap-1.5 rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 text-[11px] font-bold text-cyan-700'>
+          <span className='text-2xs inline-flex items-center gap-1.5 rounded-full border border-cyan-300 bg-cyan-50 px-3 py-1 font-bold text-cyan-700'>
             ⚡ Phase 1 — Managed service
           </span>
         </div>
@@ -1858,7 +1856,7 @@ function ValueProp() {
     <section className='mb-10'>
       <div className='mb-3 flex items-baseline justify-between gap-3'>
         <SectionLabel>Vì sao Rexer AI tồn tại</SectionLabel>
-        <span className='text-[11px] text-zinc-500'>
+        <span className='text-2xs text-zinc-500'>
           6 pain points · 6 cách Rexer trả lời
         </span>
       </div>
@@ -1874,12 +1872,12 @@ function ValueProp() {
               {/* Problem half */}
               <div className='border-b border-dashed border-zinc-200 bg-gradient-to-br from-rose-50/60 to-white px-4 pt-4 pb-3'>
                 <div className='mb-2 flex items-center justify-between'>
-                  <span className='inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold tracking-wide text-rose-700'>
-                    <span className='text-[11px] leading-none'>✕</span> VẤN ĐỀ
+                  <span className='text-3xs inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 font-bold tracking-wide text-rose-700'>
+                    <span className='text-2xs leading-none'>✕</span> VẤN ĐỀ
                   </span>
                   <Icon className='size-4 text-rose-300' />
                 </div>
-                <p className='text-[13px] leading-snug text-zinc-700'>
+                <p className='text-sm leading-snug text-zinc-700'>
                   {it.problem}
                 </p>
               </div>
@@ -1889,7 +1887,7 @@ function ValueProp() {
                 <span
                   className={`flex size-6 items-center justify-center rounded-full border-2 border-white ${c.bg} text-white shadow-sm`}
                 >
-                  <span className='text-[12px] leading-none'>↓</span>
+                  <span className='text-xs leading-none'>↓</span>
                 </span>
               </div>
 
@@ -1897,22 +1895,22 @@ function ValueProp() {
               <div className={`bg-gradient-to-br ${c.gradient} px-4 pt-2 pb-4`}>
                 <div className='mb-2 flex items-center justify-between'>
                   <span
-                    className={`inline-flex items-center gap-1 rounded-full ${c.chip} px-2 py-0.5 text-[10px] font-bold tracking-wide`}
+                    className={`inline-flex items-center gap-1 rounded-full ${c.chip} text-3xs px-2 py-0.5 font-bold tracking-wide`}
                   >
                     <Sparkles className='size-2.5' /> REXER
                   </span>
                   <span
-                    className={`rounded-full bg-white px-1.5 py-0.5 font-mono text-[9px] font-semibold ${c.text} shadow-sm`}
+                    className={`text-3xs rounded-full bg-white px-1.5 py-0.5 font-mono font-semibold ${c.text} shadow-sm`}
                   >
                     {it.ref}
                   </span>
                 </div>
-                <p className='text-[13px] leading-snug text-zinc-800'>
+                <p className='text-sm leading-snug text-zinc-800'>
                   {it.solution}
                 </p>
                 <div className='mt-2.5 flex items-center gap-1.5 border-t border-white/60 pt-2'>
                   <span className={`text-base leading-none ${c.text}`}>✓</span>
-                  <span className={`text-[11.5px] font-semibold ${c.text}`}>
+                  <span className={`text-2xs font-semibold ${c.text}`}>
                     {it.gain}
                   </span>
                 </div>
@@ -1996,17 +1994,17 @@ function ActorsCards() {
                 </div>
                 {a.phase && (
                   <span
-                    className={`rounded-full ${c.bg} px-1.5 py-0.5 text-[9px] font-bold text-white`}
+                    className={`rounded-full ${c.bg} text-3xs px-1.5 py-0.5 font-bold text-white`}
                   >
                     {a.phase}
                   </span>
                 )}
               </div>
-              <div className='mt-3 font-mono text-[10px] text-zinc-400'>
+              <div className='text-3xs mt-3 font-mono text-zinc-400'>
                 {a.code}
               </div>
               <div className='text-sm font-semibold'>{a.name}</div>
-              <div className='mt-0.5 text-[11px] leading-snug text-zinc-500'>
+              <div className='text-2xs mt-0.5 leading-snug text-zinc-500'>
                 {a.scope}
               </div>
             </div>
@@ -2022,7 +2020,7 @@ function BigWorkflow() {
     <section className='mb-10'>
       <div className='mb-3 flex items-baseline justify-between gap-3'>
         <SectionLabel>Hành trình của một template AI</SectionLabel>
-        <span className='text-[11px] text-zinc-500'>
+        <span className='text-2xs text-zinc-500'>
           Từ khách lạ → trang live → vòng lặp cải tiến
         </span>
       </div>
@@ -2043,26 +2041,24 @@ function BigWorkflow() {
                       <Icon className='size-[22px]' />
                     </div>
                     <span
-                      className={`rounded-md ${c.bg} px-1.5 py-0.5 font-mono text-[9px] font-bold text-white`}
+                      className={`rounded-md ${c.bg} text-3xs px-1.5 py-0.5 font-mono font-bold text-white`}
                     >
                       {s.actor}
                     </span>
                   </div>
 
                   <div className='mt-3 flex items-baseline gap-1.5'>
-                    <span
-                      className={`font-mono text-[11px] font-bold ${c.text}`}
-                    >
+                    <span className={`text-2xs font-mono font-bold ${c.text}`}>
                       {s.num}
                     </span>
-                    <span className='font-mono text-[9px] text-zinc-400'>
+                    <span className='text-3xs font-mono text-zinc-400'>
                       · {s.time}
                     </span>
                   </div>
-                  <h3 className='mt-0.5 text-[15px] leading-tight font-bold text-zinc-900'>
+                  <h3 className='mt-0.5 text-base leading-tight font-bold text-zinc-900'>
                     {s.title}
                   </h3>
-                  <p className='mt-2 flex-1 text-[12px] leading-relaxed text-zinc-600'>
+                  <p className='mt-2 flex-1 text-xs leading-relaxed text-zinc-600'>
                     {s.story}
                   </p>
 
@@ -2070,7 +2066,7 @@ function BigWorkflow() {
                     <span className={`text-base leading-none ${c.text}`}>
                       →
                     </span>
-                    <span className={`text-[11px] font-semibold ${c.text}`}>
+                    <span className={`text-2xs font-semibold ${c.text}`}>
                       {s.outcome}
                     </span>
                   </div>
@@ -2144,16 +2140,16 @@ function ModuleSection({
                 </div>
                 <div>
                   <div className='flex items-center gap-2'>
-                    <span className='font-mono text-[11px] text-zinc-400'>
+                    <span className='text-2xs font-mono text-zinc-400'>
                       {m.num}
                     </span>
                     <span
-                      className={`rounded-full ${c.chip} px-2 py-0.5 text-[10px] font-medium`}
+                      className={`rounded-full ${c.chip} text-3xs px-2 py-0.5 font-medium`}
                     >
                       {m.short}
                     </span>
                     {m.cases && (
-                      <span className='rounded-full bg-zinc-100 px-2 py-0.5 font-mono text-[10px] text-zinc-600'>
+                      <span className='text-3xs rounded-full bg-zinc-100 px-2 py-0.5 font-mono text-zinc-600'>
                         {isFiltered
                           ? `${filtered.length}/${totalCases}`
                           : `${totalCases}`}{' '}
@@ -2167,7 +2163,7 @@ function ModuleSection({
                 </div>
               </div>
               {m.intro && (
-                <div className='mt-4 text-sm leading-relaxed text-zinc-700 [&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[12px] [&_li]:my-0.5 [&_p]:my-2 [&_strong]:font-semibold [&_strong]:text-zinc-900 [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5'>
+                <div className='mt-4 text-sm leading-relaxed text-zinc-700 [&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_li]:my-0.5 [&_p]:my-2 [&_strong]:font-semibold [&_strong]:text-zinc-900 [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5'>
                   {m.intro}
                 </div>
               )}
@@ -2186,7 +2182,7 @@ function ModuleSection({
           )}
 
           {m.cases && filtered.length === 0 && (
-            <div className='mt-5 rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-3 text-center text-[11px] text-zinc-500'>
+            <div className='text-2xs mt-5 rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-3 text-center text-zinc-500'>
               Không có UC khớp filter trong module này
             </div>
           )}
@@ -2198,7 +2194,7 @@ function ModuleSection({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className='mb-3 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+    <h2 className='text-2xs mb-3 font-semibold tracking-wider text-zinc-500 uppercase'>
       {children}
     </h2>
   );

@@ -166,7 +166,7 @@ export function AdminInboxPage() {
     <div className='flex flex-col gap-4 p-6'>
       <div className='flex flex-wrap items-end justify-between gap-3'>
         <div>
-          <div className='flex items-center gap-2 text-[10.5px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+          <div className='text-3xs flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
             <Inbox className='size-3' /> Staff inbox
           </div>
           <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
@@ -213,7 +213,7 @@ export function AdminInboxPage() {
 
       {/* Filters */}
       <div className='flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm'>
-        <span className='inline-flex items-center gap-1 px-2 text-[10px] font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+        <span className='text-3xs inline-flex items-center gap-1 px-2 font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
           <Filter className='size-3' /> Status
         </span>
         {(['all', 'open', 'claimed', 'done'] as const).map(s => (
@@ -222,7 +222,7 @@ export function AdminInboxPage() {
             type='button'
             onClick={() => setStatusFilter(s)}
             className={cn(
-              'rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors',
+              'text-2xs rounded-full px-2.5 py-1 font-medium transition-colors',
               statusFilter === s
                 ? 'bg-zinc-900 text-white shadow-sm'
                 : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
@@ -235,13 +235,13 @@ export function AdminInboxPage() {
         {distinctKinds.length > 0 && (
           <>
             <span className='ml-2 hidden h-4 w-px bg-zinc-200 sm:block' />
-            <span className='inline-flex items-center gap-1 px-2 text-[10px] font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+            <span className='text-3xs inline-flex items-center gap-1 px-2 font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
               Kind
             </span>
             <select
               value={kindFilter}
               onChange={e => setKindFilter(e.target.value)}
-              className='rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 outline-none hover:bg-zinc-50'
+              className='text-2xs rounded-lg border border-zinc-200 bg-white px-2 py-1 font-medium text-zinc-700 outline-none hover:bg-zinc-50'
             >
               <option value='all'>Tất cả</option>
               {distinctKinds.map(k => (
@@ -255,7 +255,7 @@ export function AdminInboxPage() {
       </div>
 
       {error && (
-        <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800'>
+        <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
           {error}
         </div>
       )}
@@ -268,10 +268,8 @@ export function AdminInboxPage() {
       ) : items.length === 0 ? (
         <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center'>
           <Inbox className='mx-auto size-8 text-zinc-300' />
-          <p className='mt-3 text-[14px] font-semibold text-zinc-700'>
-            Inbox sạch
-          </p>
-          <p className='mt-1 text-[12px] text-zinc-500'>
+          <p className='mt-3 text-sm font-semibold text-zinc-700'>Inbox sạch</p>
+          <p className='mt-1 text-xs text-zinc-500'>
             Không có item nào khớp filter — staff team đã catch up.
           </p>
         </div>
@@ -328,27 +326,25 @@ function InboxRow({
       </div>
       <div className='min-w-0 flex-1'>
         <div className='flex flex-wrap items-center gap-2'>
-          <span className='text-[13px] font-semibold text-zinc-900'>
+          <span className='text-sm font-semibold text-zinc-900'>
             {subject ?? kind.label}
           </span>
           <span
             className={cn(
-              'inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase',
+              'text-3xs inline-flex items-center rounded-full border px-1.5 py-0.5 font-bold tracking-wider uppercase',
               status.chip
             )}
           >
             {status.label}
           </span>
-          <span className='inline-flex items-center rounded-full bg-zinc-100 px-1.5 py-0.5 font-mono text-[9.5px] text-zinc-600'>
+          <span className='text-3xs inline-flex items-center rounded-full bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-600'>
             {item.kind}
           </span>
         </div>
         {summary && (
-          <p className='mt-1 line-clamp-2 text-[12px] text-zinc-600'>
-            {summary}
-          </p>
+          <p className='mt-1 line-clamp-2 text-xs text-zinc-600'>{summary}</p>
         )}
-        <div className='mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10.5px] text-zinc-500'>
+        <div className='text-3xs mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-zinc-500'>
           <span>Tạo {relativeTime(item.created_at)}</span>
           {item.claimed_at && (
             <span>· Nhận {relativeTime(item.claimed_at)}</span>
@@ -427,7 +423,7 @@ function StatCard({
     <div
       className={cn('rounded-2xl border px-4 py-3 shadow-sm', palette[accent])}
     >
-      <div className='flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase opacity-75'>
+      <div className='text-3xs flex items-center gap-1.5 font-semibold tracking-[0.18em] uppercase opacity-75'>
         {icon}
         {label}
       </div>

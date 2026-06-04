@@ -154,7 +154,7 @@ export function ProductPickerDialog({
                         <p className='text-foreground truncate text-sm font-semibold'>
                           {p.name}
                         </p>
-                        <span className='text-muted-foreground shrink-0 text-[10px] font-medium tracking-wider uppercase'>
+                        <span className='text-muted-foreground text-3xs shrink-0 font-medium tracking-wider uppercase'>
                           {p.status ?? 'draft'}
                         </span>
                       </div>
@@ -163,7 +163,7 @@ export function ProductPickerDialog({
                           {p.description}
                         </p>
                       )}
-                      <div className='text-muted-foreground flex flex-wrap gap-2 text-[10px]'>
+                      <div className='text-muted-foreground text-3xs flex flex-wrap gap-2'>
                         {p.sku && <span>SKU {p.sku}</span>}
                         {p.colors?.length ? (
                           <span>{p.colors.length} màu</span>

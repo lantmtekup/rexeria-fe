@@ -75,7 +75,7 @@ export default function TemplateAnalyticsListPage() {
         title='Rexer AI — Landing page Analytics'
         rightBadge={
           source === 'live' ? (
-            <span className='inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-emerald-700 uppercase'>
+            <span className='text-3xs inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-0.5 font-bold tracking-wider text-emerald-700 uppercase'>
               <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
               LIVE BE
             </span>
@@ -96,7 +96,7 @@ export default function TemplateAnalyticsListPage() {
                 <h1 className='text-2xl font-bold tracking-tight'>
                   Template Analytics
                 </h1>
-                <p className='text-[12.5px] text-zinc-500'>
+                <p className='text-xs text-zinc-500'>
                   Tất cả canvas template published. Click vào template để xem
                   chi tiết block + actions.
                 </p>
@@ -144,7 +144,7 @@ export default function TemplateAnalyticsListPage() {
             <h2 className='text-sm font-semibold'>
               Performance theo Landing page
             </h2>
-            <span className='text-[11px] text-zinc-500'>
+            <span className='text-2xs text-zinc-500'>
               Click vào dòng để mở trang chi tiết
             </span>
           </div>
@@ -181,7 +181,7 @@ function SummaryTable({
     <div className='overflow-x-auto'>
       <table className='w-full text-sm'>
         <thead className='border-b border-zinc-100 bg-zinc-50'>
-          <tr className='text-left text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+          <tr className='text-3xs text-left font-semibold tracking-wider text-zinc-500 uppercase'>
             <th className='px-5 py-2.5'>Landing page</th>
             <th className='px-3 py-2.5 text-right'>Views</th>
             <th className='px-3 py-2.5 text-right'>Visitors</th>
@@ -247,14 +247,14 @@ function ApiContractSection() {
     <section className='mt-10 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm'>
       <div className='flex items-center gap-2'>
         <div className='flex size-7 items-center justify-center rounded-lg bg-zinc-900 text-white shadow-sm'>
-          <span className='font-mono text-[10px]'>{`{ }`}</span>
+          <span className='text-3xs font-mono'>{`{ }`}</span>
         </div>
         <h2 className='text-base font-bold'>Hợp đồng API cho Backend</h2>
-        <span className='rounded-full bg-zinc-100 px-2 py-0.5 font-mono text-[10px] text-zinc-600'>
+        <span className='text-3xs rounded-full bg-zinc-100 px-2 py-0.5 font-mono text-zinc-600'>
           v1
         </span>
       </div>
-      <p className='mt-2 text-[12.5px] text-zinc-600'>
+      <p className='mt-2 text-xs text-zinc-600'>
         Trang này gọi 1 endpoint. Trang detail (<code>/templates/[id]</code>)
         gọi thêm 1 endpoint nữa. Tổng 3 endpoint (gồm POST ingest).
       </p>
@@ -312,7 +312,7 @@ Response: 204 No Content`}
         />
       </div>
 
-      <div className='mt-5 rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-4 text-[12.5px] text-zinc-700'>
+      <div className='mt-5 rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-4 text-xs text-zinc-700'>
         <div className='font-semibold text-zinc-900'>
           Action taxonomy theo block type
         </div>
@@ -324,18 +324,16 @@ Response: 204 No Content`}
             >
               <div className='flex items-center justify-between'>
                 <BlockTypeChip type={type} />
-                <span className='font-mono text-[9px] text-zinc-400'>
+                <span className='text-3xs font-mono text-zinc-400'>
                   {t.actions.length} actions
                 </span>
               </div>
-              <div className='mt-1 text-[10.5px] text-zinc-500'>
-                {t.description}
-              </div>
+              <div className='text-3xs mt-1 text-zinc-500'>{t.description}</div>
               <div className='mt-1.5 flex flex-wrap gap-1'>
                 {t.actions.map(a => (
                   <span
                     key={a}
-                    className='rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[10px] text-blue-700'
+                    className='text-3xs rounded bg-blue-50 px-1.5 py-0.5 font-mono text-blue-700'
                   >
                     {a}
                   </span>
@@ -367,18 +365,18 @@ function ApiEndpoint({
     <div className='overflow-hidden rounded-xl border border-zinc-200 bg-white'>
       <div className='flex items-center gap-2 border-b border-zinc-100 bg-zinc-50 px-4 py-2'>
         <span
-          className={`rounded-md ${methodColor} px-1.5 py-0.5 font-mono text-[10px] font-bold text-white`}
+          className={`rounded-md ${methodColor} text-3xs px-1.5 py-0.5 font-mono font-bold text-white`}
         >
           {method}
         </span>
-        <code className='font-mono text-[12.5px] font-semibold'>
+        <code className='font-mono text-xs font-semibold'>
           {path}
           <span className='font-normal text-zinc-400'>{query}</span>
         </code>
       </div>
       <div className='grid grid-cols-1 gap-4 px-4 py-3 lg:grid-cols-[1fr_300px]'>
-        <p className='text-[12.5px] leading-relaxed text-zinc-700'>{desc}</p>
-        <pre className='overflow-x-auto rounded-lg bg-zinc-900 px-3 py-2 font-mono text-[11px] leading-snug text-zinc-100'>
+        <p className='text-xs leading-relaxed text-zinc-700'>{desc}</p>
+        <pre className='text-2xs overflow-x-auto rounded-lg bg-zinc-900 px-3 py-2 font-mono leading-snug text-zinc-100'>
           {response}
         </pre>
       </div>

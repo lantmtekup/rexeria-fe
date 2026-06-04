@@ -204,7 +204,7 @@ export function AddBlockDialog({
                 </div>
               ) : saved.length > 0 ? (
                 <section>
-                  <h3 className='mb-2 text-[11px] font-semibold tracking-wider text-neutral-500 uppercase'>
+                  <h3 className='text-2xs mb-2 font-semibold tracking-wider text-neutral-500 uppercase'>
                     Thư viện · {saved.length} block
                   </h3>
                   <SavedTab
@@ -218,7 +218,7 @@ export function AddBlockDialog({
               {/* Block cơ bản — starter skeleton theo loại */}
               {!loadingTypes && visibleTypes.length > 0 ? (
                 <section>
-                  <h3 className='mb-2 text-[11px] font-semibold tracking-wider text-neutral-500 uppercase'>
+                  <h3 className='text-2xs mb-2 font-semibold tracking-wider text-neutral-500 uppercase'>
                     Block cơ bản · {visibleTypes.length}
                   </h3>
                   <div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>

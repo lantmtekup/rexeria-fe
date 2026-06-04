@@ -249,7 +249,7 @@ function RenderExtraElement({ el }: { el: ExtraElement }) {
         return (
           <div
             style={baseStyle}
-            className='flex items-center justify-center bg-black text-[10px] text-white'
+            className='text-3xs flex items-center justify-center bg-black text-white'
           >
             Video:{' '}
             {el.content.source === 'url'
@@ -434,12 +434,12 @@ function CompareSlider({
       {(c.beforeAlt || c.afterAlt) && (
         <>
           {c.beforeAlt ? (
-            <span className='pointer-events-none absolute top-2 left-2 rounded bg-black/60 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-white uppercase'>
+            <span className='text-3xs pointer-events-none absolute top-2 left-2 rounded bg-black/60 px-2 py-0.5 font-semibold tracking-wider text-white uppercase'>
               {c.beforeAlt}
             </span>
           ) : null}
           {c.afterAlt ? (
-            <span className='pointer-events-none absolute top-2 right-2 rounded bg-black/60 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-white uppercase'>
+            <span className='text-3xs pointer-events-none absolute top-2 right-2 rounded bg-black/60 px-2 py-0.5 font-semibold tracking-wider text-white uppercase'>
               {c.afterAlt}
             </span>
           ) : null}
@@ -755,7 +755,7 @@ function PhotoRenderer({
     return (
       <div
         style={baseStyle}
-        className='flex items-center justify-center bg-neutral-100 text-[10px] text-neutral-400'
+        className='text-3xs flex items-center justify-center bg-neutral-100 text-neutral-400'
       >
         Chưa chọn ảnh
       </div>
@@ -799,7 +799,7 @@ function PhotoRenderer({
   return (
     <div
       style={baseStyle}
-      className='flex items-center justify-center bg-neutral-100 text-[10px] text-neutral-500'
+      className='text-3xs flex items-center justify-center bg-neutral-100 text-neutral-500'
     >
       Photo: {c.mediaId.slice(0, 8)}…
     </div>
@@ -865,7 +865,7 @@ function RangeSlider({
       onPointerDown={e => e.stopPropagation()}
     >
       {(c.label || showValue) && (
-        <div className='flex items-center justify-between text-[11px] font-medium text-neutral-600'>
+        <div className='text-2xs flex items-center justify-between font-medium text-neutral-600'>
           {c.label ? <span>{c.label}</span> : <span />}
           {showValue ? (
             <span className='text-neutral-900 tabular-nums'>
@@ -1161,7 +1161,7 @@ function RevealRenderer({
         />
       )}
       {/* Hint badge */}
-      <span className='pointer-events-none absolute top-2 left-2 rounded bg-black/60 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-white uppercase'>
+      <span className='text-3xs pointer-events-none absolute top-2 left-2 rounded bg-black/60 px-2 py-0.5 font-semibold tracking-wider text-white uppercase'>
         {c.mode}
       </span>
     </div>
@@ -1301,13 +1301,13 @@ function SpinWheelRenderer({
       <button
         type='button'
         onClick={spin}
-        className='rounded-pill mt-1 bg-neutral-900 px-4 py-2 text-[12px] font-semibold text-white shadow hover:bg-neutral-700'
+        className='rounded-pill mt-1 bg-neutral-900 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-neutral-700'
       >
         {c.buttonLabel ?? 'Quay'}
       </button>
       {winner ? (
         <span
-          className='mt-1 rounded-md bg-emerald-100 px-2 py-1 text-[11px] font-semibold text-emerald-900'
+          className='text-2xs mt-1 rounded-md bg-emerald-100 px-2 py-1 font-semibold text-emerald-900'
           aria-live='polite'
         >
           🎉 {winner}
@@ -1395,7 +1395,7 @@ function HotspotPin({ el }: { el: HotspotExtraElement }) {
                 {el.content.title || 'Tiêu đề'}
               </h3>
               {el.content.body ? (
-                <p className='text-[13px] leading-relaxed whitespace-pre-line text-neutral-600'>
+                <p className='text-sm leading-relaxed whitespace-pre-line text-neutral-600'>
                   {el.content.body}
                 </p>
               ) : null}
@@ -1403,7 +1403,7 @@ function HotspotPin({ el }: { el: HotspotExtraElement }) {
                 <a
                   href={el.content.ctaUrl || '#'}
                   onClick={e => e.stopPropagation()}
-                  className='rounded-pill mt-1 inline-flex h-9 items-center bg-neutral-900 px-4 text-[12px] font-semibold text-white hover:bg-neutral-700'
+                  className='rounded-pill mt-1 inline-flex h-9 items-center bg-neutral-900 px-4 text-xs font-semibold text-white hover:bg-neutral-700'
                   target={el.content.ctaUrl ? '_blank' : undefined}
                   rel='noreferrer'
                 >

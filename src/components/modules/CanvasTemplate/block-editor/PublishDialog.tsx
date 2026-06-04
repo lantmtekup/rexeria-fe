@@ -188,7 +188,7 @@ export function PublishDialog({
                 </span>
               </p>
               {publish?.publishedAt && (
-                <p className='text-[11px] text-neutral-500'>
+                <p className='text-2xs text-neutral-500'>
                   Cập nhật: {new Date(publish.publishedAt).toLocaleString()}
                 </p>
               )}
@@ -208,10 +208,10 @@ export function PublishDialog({
           {showSlugCtrl && !editingSlug && pageSlug && (
             <div className='flex items-center justify-between gap-2 rounded-md border border-neutral-200 bg-white px-3 py-2'>
               <div className='min-w-0 flex-1'>
-                <p className='text-[10.5px] font-semibold tracking-widest text-neutral-500 uppercase'>
+                <p className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
                   Slug
                 </p>
-                <code className='block truncate font-mono text-[12px] text-neutral-800'>
+                <code className='block truncate font-mono text-xs text-neutral-800'>
                   {pageSlug}
                 </code>
               </div>
@@ -230,10 +230,10 @@ export function PublishDialog({
               onSubmit={handleSaveSlug}
               className='flex flex-col gap-2 rounded-md border border-amber-200 bg-amber-50 p-3'
             >
-              <span className='text-[11px] font-semibold tracking-wide text-amber-900 uppercase'>
+              <span className='text-2xs font-semibold tracking-wide text-amber-900 uppercase'>
                 {pageSlug ? 'Đổi slug' : 'Đặt slug để có link thân thiện'}
               </span>
-              <p className='text-[11.5px] leading-snug text-amber-800'>
+              <p className='text-2xs leading-snug text-amber-800'>
                 {pageSlug ? (
                   <>
                     Đổi slug sẽ vô hiệu hoá link cũ. URL mới:{' '}
@@ -292,10 +292,10 @@ export function PublishDialog({
 
           {versionStale && (
             <div className='flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3'>
-              <span className='mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-200 font-mono text-[9px] font-bold text-amber-900'>
+              <span className='text-3xs mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-200 font-mono font-bold text-amber-900'>
                 i
               </span>
-              <div className='text-[11.5px] leading-snug text-amber-900'>
+              <div className='text-2xs leading-snug text-amber-900'>
                 <strong className='font-semibold'>Page pin ở version cũ</strong>{' '}
                 — page hiện ở{' '}
                 <code className='font-mono'>
@@ -315,7 +315,7 @@ export function PublishDialog({
 
           {publish?.published && url && (
             <div className='flex flex-col gap-2'>
-              <span className='text-[10px] font-semibold tracking-widest text-neutral-500 uppercase'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
                 Link chia sẻ
               </span>
               <div className='flex items-center gap-2'>
@@ -348,14 +348,14 @@ export function PublishDialog({
                 <button
                   type='button'
                   onClick={onRotateToken}
-                  className='inline-flex w-fit cursor-pointer items-center gap-1 text-[11px] text-neutral-500 hover:text-neutral-900'
+                  className='text-2xs inline-flex w-fit cursor-pointer items-center gap-1 text-neutral-500 hover:text-neutral-900'
                 >
                   <RotateCcw className='size-3' />
                   Đổi link (vô hiệu hoá link cũ)
                 </button>
               )}
               {pageSlug && (
-                <p className='text-[11px] text-neutral-500'>
+                <p className='text-2xs text-neutral-500'>
                   Link dùng slug của page. Đổi slug ở Settings của landing.
                 </p>
               )}

@@ -138,7 +138,7 @@ export function ElementToolbar({
     return (
       <div className='flex h-10 shrink-0 items-center gap-2 border-b border-amber-200/70 bg-amber-50/60 px-3'>
         <div className='size-1.5 rounded-full bg-amber-500' aria-hidden />
-        <span className='text-[11px] text-amber-800'>
+        <span className='text-2xs text-amber-800'>
           Tablet đang xem layout{' '}
           <strong className='font-semibold'>Desktop</strong> (chỉ đọc) — chuyển
           Desktop hoặc Mobile để chỉnh sửa.
@@ -151,9 +151,9 @@ export function ElementToolbar({
     return (
       <div className='flex h-10 shrink-0 items-center gap-2 border-b border-neutral-200/80 bg-neutral-50/70 px-3'>
         <Layers className='size-3 text-neutral-400' />
-        <span className='text-[11px] tracking-tight text-neutral-500'>
+        <span className='text-2xs tracking-tight text-neutral-500'>
           Đang sửa{' '}
-          <span className='font-mono text-[10px] font-semibold tracking-[0.14em] text-neutral-700 uppercase'>
+          <span className='text-3xs font-mono font-semibold tracking-[0.14em] text-neutral-700 uppercase'>
             {device === 'mobile' ? 'Mobile' : 'Desktop'}
           </span>{' '}
           · click vào element trên canvas (hoặc chọn lớp ở phải) để bắt đầu
@@ -167,7 +167,7 @@ export function ElementToolbar({
                 device === 'mobile' ? 'mobile' : 'desktop'
               )
             }
-            className='ml-auto flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-white px-2 text-[10px] font-semibold tracking-tight text-neutral-700 ring-1 ring-neutral-200/80 transition-colors hover:text-neutral-900 hover:ring-neutral-300'
+            className='text-3xs ml-auto flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-white px-2 font-semibold tracking-tight text-neutral-700 ring-1 ring-neutral-200/80 transition-colors hover:text-neutral-900 hover:ring-neutral-300'
           >
             {device === 'mobile'
               ? 'Copy Desktop → Mobile'
@@ -262,7 +262,7 @@ export function ElementToolbar({
   return (
     <div className='flex h-11 shrink-0 items-center gap-1.5 border-b border-neutral-200/80 bg-neutral-50/60 px-2.5'>
       {/* Element label pill — refined indigo accent */}
-      <div className='flex shrink-0 items-center gap-1.5 rounded-md bg-indigo-50/80 px-2 py-1 text-[10px] font-semibold tracking-[0.14em] text-indigo-700 uppercase'>
+      <div className='text-3xs flex shrink-0 items-center gap-1.5 rounded-md bg-indigo-50/80 px-2 py-1 font-semibold tracking-[0.14em] text-indigo-700 uppercase'>
         <span className='size-1.5 rounded-full bg-indigo-500' aria-hidden />
         {label}
       </div>
@@ -439,7 +439,7 @@ function TextControls({
             onUpdateStyle({ fontSize: n });
           }}
           placeholder='—'
-          className='h-7 w-12 rounded-md bg-white px-1.5 font-mono text-[11px] text-neutral-900 tabular-nums ring-1 ring-neutral-200/80 transition-shadow placeholder:text-neutral-400 hover:ring-neutral-300 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
+          className='text-2xs h-7 w-12 rounded-md bg-white px-1.5 font-mono text-neutral-900 tabular-nums ring-1 ring-neutral-200/80 transition-shadow placeholder:text-neutral-400 hover:ring-neutral-300 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
         />
       </InlineLabel>
 
@@ -589,7 +589,7 @@ function ImageControls({
 
   return (
     <>
-      <span className='font-mono text-[10px] tracking-[0.08em] text-neutral-400 uppercase'>
+      <span className='text-3xs font-mono tracking-[0.08em] text-neutral-400 uppercase'>
         {block.blockType.replace('_', ' ')}
       </span>
 
@@ -670,7 +670,7 @@ function BackgroundControls({
         width={360}
       >
         <ImagePicker value={imageUrl} onChange={setImage} />
-        <p className='mt-2 text-[10px] text-neutral-400'>
+        <p className='text-3xs mt-2 text-neutral-400'>
           Ảnh nền sẽ phủ lên màu nền (cover, canh giữa).
         </p>
       </PopoverTrigger>
@@ -897,7 +897,7 @@ function PhotosControls({
             className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
           >
             <div className='flex items-center justify-between'>
-              <span className='text-[10px] font-semibold tracking-widest text-neutral-500 uppercase'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
                 Ảnh {i + 1}
               </span>
               <button
@@ -983,11 +983,11 @@ function SlidesControls({
     >
       {/* Carousel-level controls — apply to the whole block, not per slide. */}
       <div className='mb-2 flex flex-col gap-2 rounded-md border border-neutral-200 bg-neutral-50/60 p-2'>
-        <p className='text-[10px] font-semibold tracking-widest text-neutral-500 uppercase'>
+        <p className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
           Cấu hình carousel
         </p>
         <div className='flex items-center gap-2'>
-          <label className='inline-flex shrink-0 items-center gap-1 text-[11px] text-neutral-600'>
+          <label className='text-2xs inline-flex shrink-0 items-center gap-1 text-neutral-600'>
             <input
               type='checkbox'
               checked={(content.autoplayMs ?? 0) > 0}
@@ -1013,13 +1013,13 @@ function SlidesControls({
               })
             }
             disabled={!content.autoplayMs}
-            className='h-7 w-20 rounded-md bg-white px-1.5 text-center font-mono text-[11px] ring-1 ring-neutral-200 focus:outline-none disabled:opacity-50'
+            className='text-2xs h-7 w-20 rounded-md bg-white px-1.5 text-center font-mono ring-1 ring-neutral-200 focus:outline-none disabled:opacity-50'
             placeholder='ms'
           />
-          <span className='text-[10px] text-neutral-400'>ms</span>
+          <span className='text-3xs text-neutral-400'>ms</span>
         </div>
         <div className='flex items-center gap-3'>
-          <label className='inline-flex items-center gap-1 text-[11px] text-neutral-600'>
+          <label className='text-2xs inline-flex items-center gap-1 text-neutral-600'>
             <input
               type='checkbox'
               checked={content.showPagination ?? true}
@@ -1032,7 +1032,7 @@ function SlidesControls({
             />
             Pagination
           </label>
-          <label className='inline-flex items-center gap-1 text-[11px] text-neutral-600'>
+          <label className='text-2xs inline-flex items-center gap-1 text-neutral-600'>
             <input
               type='checkbox'
               checked={content.showNavArrows ?? true}
@@ -1055,7 +1055,7 @@ function SlidesControls({
             className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
           >
             <div className='flex items-center justify-between'>
-              <span className='text-[10px] font-semibold tracking-widest text-neutral-500 uppercase'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
                 Slide {i + 1}
               </span>
               <div className='flex items-center gap-1'>
@@ -1101,13 +1101,13 @@ function SlidesControls({
               value={slide.altText ?? ''}
               onChange={e => update(i, { altText: e.target.value })}
               placeholder='Alt text (SEO / a11y)'
-              className='h-8 border-neutral-200 bg-white text-[11px]'
+              className='text-2xs h-8 border-neutral-200 bg-white'
             />
             <Input
               value={slide.href ?? ''}
               onChange={e => update(i, { href: e.target.value })}
               placeholder='Link (https://… — bỏ trống nếu không click)'
-              className='h-8 border-neutral-200 bg-white text-[11px]'
+              className='text-2xs h-8 border-neutral-200 bg-white'
             />
           </div>
         ))}
@@ -1219,7 +1219,7 @@ function AiButton({
           type='button'
           aria-label='AI tạo nội dung'
           title='AI tạo nội dung'
-          className='flex h-7 cursor-pointer items-center gap-1 rounded-md bg-neutral-900 px-2.5 text-[10px] font-semibold tracking-tight text-white transition-colors hover:bg-neutral-700'
+          className='text-3xs flex h-7 cursor-pointer items-center gap-1 rounded-md bg-neutral-900 px-2.5 font-semibold tracking-tight text-white transition-colors hover:bg-neutral-700'
         >
           <Sparkles className='size-3 text-violet-300' />
           AI
@@ -1233,10 +1233,10 @@ function AiButton({
         >
           <div className='mb-2 flex items-center gap-2'>
             <Sparkles className='size-3 text-violet-500' />
-            <span className='text-[10px] font-semibold tracking-[0.16em] text-neutral-700 uppercase'>
+            <span className='text-3xs font-semibold tracking-[0.16em] text-neutral-700 uppercase'>
               AI tạo nội dung
             </span>
-            <span className='ml-auto font-mono text-[10px] tracking-tight text-neutral-400'>
+            <span className='text-3xs ml-auto font-mono tracking-tight text-neutral-400'>
               {blockType.replace('_', ' ')}
             </span>
           </div>
@@ -1254,14 +1254,14 @@ function AiButton({
             className='min-h-20 resize-none border-neutral-200 bg-white text-xs leading-5'
           />
           <div className='mt-2 flex items-center justify-between'>
-            <span className='font-mono text-[10px] tracking-tight text-neutral-400'>
+            <span className='text-3xs font-mono tracking-tight text-neutral-400'>
               ⌘ Enter
             </span>
             <button
               type='button'
               onClick={() => void submit()}
               disabled={busy}
-              className='flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-neutral-900 px-3 text-[11px] font-semibold tracking-tight text-white transition-colors hover:bg-neutral-700 disabled:opacity-50'
+              className='text-2xs flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-neutral-900 px-3 font-semibold tracking-tight text-white transition-colors hover:bg-neutral-700 disabled:opacity-50'
             >
               {busy ? (
                 <>
@@ -1302,10 +1302,10 @@ function PopoverTrigger({
       <Popover.Trigger asChild>
         <button
           type='button'
-          className='flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-white px-2 text-[11px] font-medium text-neutral-700 ring-1 ring-neutral-200/80 transition-colors hover:text-neutral-900 hover:ring-neutral-300'
+          className='text-2xs flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-white px-2 font-medium text-neutral-700 ring-1 ring-neutral-200/80 transition-colors hover:text-neutral-900 hover:ring-neutral-300'
         >
           {icon}
-          <span className='font-mono text-[10px] tracking-tight text-neutral-400'>
+          <span className='text-3xs font-mono tracking-tight text-neutral-400'>
             {label}
           </span>
           <span className='max-w-[140px] truncate'>{preview}</span>
@@ -1381,7 +1381,7 @@ function InlineLabel({
 }) {
   return (
     <span className='flex items-center gap-1.5'>
-      <span className='font-mono text-[10px] tracking-[0.08em] text-neutral-400 uppercase'>
+      <span className='text-3xs font-mono tracking-[0.08em] text-neutral-400 uppercase'>
         {label}
       </span>
       {children}
@@ -1405,7 +1405,7 @@ function ColorSwatch({
       className='flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-1.5 transition-colors hover:bg-neutral-100'
       title={value}
     >
-      <span className='font-mono text-[10px] tracking-[0.08em] text-neutral-400 uppercase'>
+      <span className='text-3xs font-mono tracking-[0.08em] text-neutral-400 uppercase'>
         {label}
       </span>
       <span className='relative inline-flex'>
@@ -1422,7 +1422,7 @@ function ColorSwatch({
           aria-label={`Chọn ${label}`}
         />
       </span>
-      <span className='font-mono text-[10px] text-neutral-500 tabular-nums'>
+      <span className='text-3xs font-mono text-neutral-500 tabular-nums'>
         {value.replace('#', '').toUpperCase()}
       </span>
     </label>

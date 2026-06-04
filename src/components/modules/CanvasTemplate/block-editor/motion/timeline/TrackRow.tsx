@@ -46,7 +46,7 @@ export function TrackRow({
         className='flex shrink-0 items-center gap-1 border-r border-neutral-200 bg-neutral-50 px-3'
         style={{ width: TRACK_HEADER_WIDTH }}
       >
-        <span className='min-w-0 flex-1 truncate text-[11px] font-medium text-neutral-800'>
+        <span className='text-2xs min-w-0 flex-1 truncate font-medium text-neutral-800'>
           {elementLabel(track.elementKey)}
         </span>
         <button

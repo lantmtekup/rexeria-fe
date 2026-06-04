@@ -79,7 +79,7 @@ export function HeroOverlay({
             style={sTag}
             className={selectableClass(
               activeKey === 'tag',
-              'rounded-pill animate-reveal-x inline-block w-fit border border-white/40 bg-white/10 px-3 py-1 text-[10px] font-semibold tracking-wider uppercase backdrop-blur [animation-delay:900ms] [animation-duration:700ms] @2xl:text-[11px]'
+              'rounded-pill animate-reveal-x text-3xs @2xl:text-2xs inline-block w-fit border border-white/40 bg-white/10 px-3 py-1 font-semibold tracking-wider uppercase backdrop-blur [animation-delay:900ms] [animation-duration:700ms]'
             )}
           >
             {content.tag}

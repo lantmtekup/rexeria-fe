@@ -117,13 +117,13 @@ export default function PortalLandingPagesPage() {
     <PortalShell>
       <section className='flex flex-wrap items-end justify-between gap-4'>
         <div>
-          <div className='flex items-center gap-2 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
             <LayoutTemplate className='size-3' /> Landing pages
           </div>
           <h1 className='mt-1 text-2xl font-bold tracking-tight'>
             Tất cả landing pages
           </h1>
-          <p className='mt-1 text-[13px] text-zinc-500'>
+          <p className='mt-1 text-sm text-zinc-500'>
             Workspace <strong>{activeWs.name}</strong> có{' '}
             <strong>{scopedTemplates.length}</strong> landing page
             <span className='text-zinc-400'>
@@ -135,7 +135,7 @@ export default function PortalLandingPagesPage() {
         </div>
         <div className='flex items-center gap-2'>
           {source === 'live' && (
-            <span className='inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-emerald-700'>
+            <span className='text-3xs inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-bold tracking-wider text-emerald-700'>
               <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
               LIVE BE
             </span>
@@ -165,7 +165,7 @@ export default function PortalLandingPagesPage() {
             placeholder='Tìm theo tên...'
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className='flex-1 bg-transparent text-[13px] outline-none placeholder:text-zinc-400'
+            className='flex-1 bg-transparent text-sm outline-none placeholder:text-zinc-400'
           />
         </div>
         <div className='inline-flex items-center rounded-lg border border-zinc-200 bg-white p-0.5'>
@@ -186,7 +186,7 @@ export default function PortalLandingPagesPage() {
               >
                 {s === 'all' ? 'Tất cả' : STATUS_META[s].label}
                 <span
-                  className={`inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 font-mono text-[10px] tabular-nums ${
+                  className={`text-3xs inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 font-mono tabular-nums ${
                     filter === s
                       ? 'bg-white/15 text-white/90'
                       : 'bg-zinc-100 text-zinc-500'
@@ -231,14 +231,14 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
         <div className='absolute inset-0 bg-black/10' />
         <div className='absolute top-3 left-3 flex items-center gap-1.5'>
           <span
-            className={`flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold backdrop-blur ${status.chip}`}
+            className={`text-3xs flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 font-bold backdrop-blur ${status.chip}`}
           >
             <span className={`size-1.5 rounded-full ${status.dot}`} />
             {t.status}
           </span>
         </div>
         {t.open_comments > 0 && (
-          <div className='absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-rose-700 backdrop-blur'>
+          <div className='text-3xs absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 font-bold text-rose-700 backdrop-blur'>
             <MessageSquare className='size-2.5' /> {t.open_comments} open
           </div>
         )}
@@ -252,10 +252,10 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
 
       {/* Body */}
       <div className='p-4'>
-        <h3 className='line-clamp-1 text-[14px] font-bold tracking-tight'>
+        <h3 className='line-clamp-1 text-sm font-bold tracking-tight'>
           {t.name}
         </h3>
-        <p className='mt-0.5 text-[10.5px] text-zinc-400'>
+        <p className='text-3xs mt-0.5 text-zinc-400'>
           Cập nhật bởi{' '}
           <span className='font-semibold text-zinc-600'>
             {t.last_updated_by.name}
@@ -274,7 +274,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
           </div>
         ) : (
           <div
-            className={`mt-3 rounded-lg border border-dashed px-3 py-2 text-center text-[11px] ${
+            className={`text-2xs mt-3 rounded-lg border border-dashed px-3 py-2 text-center ${
               isArchived
                 ? 'border-zinc-200 bg-zinc-50 text-zinc-500'
                 : 'border-amber-200 bg-amber-50/50 text-amber-700'
@@ -335,10 +335,10 @@ function Stat({
   return (
     <div className='rounded-md bg-zinc-50 py-1.5'>
       <Icon className='mx-auto size-3 text-zinc-400' />
-      <div className='mt-0.5 font-mono text-[12px] font-bold text-zinc-900'>
+      <div className='mt-0.5 font-mono text-xs font-bold text-zinc-900'>
         {value}
       </div>
-      <div className='font-mono text-[9px] text-zinc-500'>{label}</div>
+      <div className='text-3xs font-mono text-zinc-500'>{label}</div>
     </div>
   );
 }
@@ -349,14 +349,14 @@ function LifecycleHelp({ onClose }: { onClose: () => void }) {
   return (
     <div className='mt-4 rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50/80 via-white to-white p-5 shadow-sm'>
       <div className='flex items-start justify-between gap-2'>
-        <div className='flex items-center gap-2 text-[11px] font-semibold tracking-[0.18em] text-blue-700 uppercase'>
+        <div className='text-2xs flex items-center gap-2 font-semibold tracking-[0.18em] text-blue-700 uppercase'>
           <Info className='size-3.5' />
           Vòng đời landing page
         </div>
         <button
           type='button'
           onClick={onClose}
-          className='text-[11px] text-zinc-500 hover:text-zinc-900'
+          className='text-2xs text-zinc-500 hover:text-zinc-900'
         >
           Ẩn
         </button>
@@ -383,7 +383,7 @@ function LifecycleHelp({ onClose }: { onClose: () => void }) {
         />
       </div>
 
-      <div className='mt-4 rounded-xl border border-zinc-200 bg-white p-3 text-[11.5px] leading-relaxed text-zinc-600'>
+      <div className='text-2xs mt-4 rounded-xl border border-zinc-200 bg-white p-3 leading-relaxed text-zinc-600'>
         <strong className='text-zinc-900'>Phase 1 managed-service:</strong>{' '}
         Rexer staff phụ trách thiết kế, sửa, và publish landing pages. Bạn
         review qua <kbd>Preview</kbd>, để lại comment khi cần chỉnh, và theo dõi
@@ -408,14 +408,14 @@ function StateCard({
     <div className='rounded-xl border border-zinc-200 bg-white p-3 shadow-sm'>
       <div className='flex items-center gap-2'>
         <span className={`size-2 rounded-full ${dot}`} />
-        <span className='text-[12px] font-semibold text-zinc-900'>{name}</span>
+        <span className='text-xs font-semibold text-zinc-900'>{name}</span>
       </div>
-      <p className='mt-1.5 text-[11px] leading-snug text-zinc-600'>{help}</p>
+      <p className='text-2xs mt-1.5 leading-snug text-zinc-600'>{help}</p>
       <div className='mt-2 flex flex-wrap gap-1'>
         {actions.map(a => (
           <span
             key={a}
-            className='rounded-full bg-zinc-100 px-1.5 py-0.5 font-mono text-[9.5px] text-zinc-600'
+            className='text-3xs rounded-full bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-600'
           >
             {a}
           </span>

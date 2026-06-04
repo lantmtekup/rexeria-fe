@@ -112,14 +112,14 @@ export function AdminTemplateNewPage() {
     <div className='mx-auto flex max-w-3xl flex-col gap-5 p-6'>
       <Link
         href='/admin/templates'
-        className='group inline-flex items-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
+        className='group inline-flex items-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
       >
         <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
         Templates
       </Link>
 
       <div>
-        <div className='text-[10.5px] font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+        <div className='text-3xs font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
           Tạo template
         </div>
         <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
@@ -148,7 +148,7 @@ export function AdminTemplateNewPage() {
             className='font-mono'
             maxLength={100}
           />
-          <p className='text-muted-foreground text-[11px]'>
+          <p className='text-muted-foreground text-2xs'>
             Slug duy nhất, không đổi được sau khi tạo. Vd:{' '}
             <code className='font-mono'>landing-hero-v1</code>.
           </p>
@@ -237,7 +237,7 @@ export function AdminTemplateNewPage() {
             onChange={e => setTagsText(e.target.value)}
             placeholder='campaign, hero, mobile-first'
           />
-          <p className='text-muted-foreground text-[11px]'>
+          <p className='text-muted-foreground text-2xs'>
             Phân cách bằng dấu phẩy.
           </p>
         </div>

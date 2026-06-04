@@ -192,7 +192,7 @@ export function ReviewChangesDialog({
           <div className='relative flex items-center gap-4 px-6 py-3'>
             {/* AI badge */}
             <span
-              className='inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold tracking-[0.18em] text-amber-800 uppercase ring-1 ring-amber-200/80'
+              className='text-3xs inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-2 py-0.5 font-semibold tracking-[0.18em] text-amber-800 uppercase ring-1 ring-amber-200/80'
               title='AI-generated suggestions'
             >
               <Sparkles className='size-3' />
@@ -201,8 +201,8 @@ export function ReviewChangesDialog({
 
             {/* Display heading — single tight line */}
             <DialogTitle asChild>
-              <h2 className='min-w-0 flex-1 truncate font-serif text-[20px] leading-tight tracking-tight text-neutral-900'>
-                <span className='font-mono text-[15px] tracking-[-0.04em] text-stone-400'>
+              <h2 className='min-w-0 flex-1 truncate font-serif text-xl leading-tight tracking-tight text-neutral-900'>
+                <span className='font-mono text-base tracking-[-0.04em] text-stone-400'>
                   {totalFields}
                 </span>{' '}
                 thay đổi từ{' '}
@@ -380,7 +380,7 @@ function InlineStat({
     <li
       title={`${count} thay đổi · ${title}`}
       className={cn(
-        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 transition-colors',
+        'text-2xs inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ring-1 transition-colors',
         muted
           ? 'bg-stone-50 text-stone-300 ring-stone-200'
           : 'bg-white text-neutral-700 ring-stone-200'
@@ -412,7 +412,7 @@ function FilterPill({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors',
+        'text-2xs inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 font-medium transition-colors',
         disabled
           ? 'cursor-not-allowed border-stone-100 bg-stone-50 text-stone-300'
           : 'border-stone-200 bg-white text-stone-600 hover:border-neutral-400 hover:text-neutral-900'
@@ -420,7 +420,7 @@ function FilterPill({
     >
       <Icon className='size-3' />
       {label}
-      <span className='font-mono text-[10px] text-stone-400'>{count}</span>
+      <span className='text-3xs font-mono text-stone-400'>{count}</span>
     </button>
   );
 }
@@ -468,7 +468,7 @@ function BlockSection({
           aria-hidden
         >
           {String(index).padStart(2, '0')}
-          <span className='ml-0.5 font-mono text-[9px] tracking-widest text-stone-400 uppercase'>
+          <span className='text-3xs ml-0.5 font-mono tracking-widest text-stone-400 uppercase'>
             /{String(total).padStart(2, '0')}
           </span>
         </span>
@@ -487,16 +487,16 @@ function BlockSection({
           <h3 className='truncate font-serif text-base leading-tight tracking-tight text-neutral-900'>
             {block.blockName}
           </h3>
-          <span className='inline-flex shrink-0 items-center rounded-full bg-stone-100 px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-stone-500 uppercase'>
+          <span className='text-3xs inline-flex shrink-0 items-center rounded-full bg-stone-100 px-1.5 py-0.5 font-mono tracking-widest text-stone-500 uppercase'>
             {block.blockType.replace('_', ' ')}
           </span>
           {block.isNew && (
-            <span className='inline-flex shrink-0 items-center rounded-full bg-emerald-50 px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-emerald-700 uppercase ring-1 ring-emerald-200/60'>
+            <span className='text-3xs inline-flex shrink-0 items-center rounded-full bg-emerald-50 px-1.5 py-0.5 font-mono tracking-widest text-emerald-700 uppercase ring-1 ring-emerald-200/60'>
               + Mới
             </span>
           )}
           {block.isRemoved && (
-            <span className='inline-flex shrink-0 items-center rounded-full bg-rose-50 px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-rose-700 uppercase ring-1 ring-rose-200/60'>
+            <span className='text-3xs inline-flex shrink-0 items-center rounded-full bg-rose-50 px-1.5 py-0.5 font-mono tracking-widest text-rose-700 uppercase ring-1 ring-rose-200/60'>
               − Xoá
             </span>
           )}
@@ -504,7 +504,7 @@ function BlockSection({
 
         {totalGroups > 0 && (
           <div className='flex shrink-0 items-center gap-2'>
-            <span className='font-mono text-[10px] text-stone-500 tabular-nums'>
+            <span className='text-3xs font-mono text-stone-500 tabular-nums'>
               {acceptedCount}/{totalGroups}
             </span>
             <Switch
@@ -578,7 +578,7 @@ function GroupCard({
           <span className='text-sm font-semibold tracking-tight text-neutral-900'>
             {GROUP_LABEL[groupDiff.group]}
           </span>
-          <span className='font-mono text-[10px] tracking-tight text-stone-400'>
+          <span className='text-3xs font-mono tracking-tight text-stone-400'>
             · {groupDiff.fields.length} field
           </span>
         </div>
@@ -608,7 +608,7 @@ function FieldRow({ field, group }: { field: FieldDiff; group: DiffGroup }) {
     return (
       <li className='px-4 py-4'>
         <div className='mb-2 flex items-center gap-2'>
-          <span className='font-mono text-[10px] tracking-widest text-stone-400 uppercase'>
+          <span className='text-3xs font-mono tracking-widest text-stone-400 uppercase'>
             {label}
           </span>
         </div>
@@ -624,7 +624,7 @@ function FieldRow({ field, group }: { field: FieldDiff; group: DiffGroup }) {
     return (
       <li className='px-4 py-3'>
         <div className='mb-1.5 flex items-center gap-2'>
-          <span className='font-mono text-[10px] tracking-widest text-stone-400 uppercase'>
+          <span className='text-3xs font-mono tracking-widest text-stone-400 uppercase'>
             {label}
           </span>
         </div>
@@ -644,7 +644,7 @@ function FieldRow({ field, group }: { field: FieldDiff; group: DiffGroup }) {
   return (
     <li className='px-4 py-3'>
       <div className='mb-1.5 flex items-center gap-2'>
-        <span className='font-mono text-[10px] tracking-widest text-stone-400 uppercase'>
+        <span className='text-3xs font-mono tracking-widest text-stone-400 uppercase'>
           {label}
         </span>
       </div>
@@ -686,7 +686,7 @@ function ImageDiffCard({
       {/* Corner label — small caps */}
       <span
         className={cn(
-          'absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[9px] font-bold tracking-widest uppercase shadow-sm backdrop-blur',
+          'text-3xs absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono font-bold tracking-widest uppercase shadow-sm backdrop-blur',
           tone === 'rose'
             ? 'bg-rose-50/90 text-rose-700 ring-1 ring-rose-200/70'
             : 'bg-emerald-50/90 text-emerald-700 ring-1 ring-emerald-200/70'
@@ -715,7 +715,7 @@ function ImageDiffCard({
         {/* Bottom gradient + filename — only when URL */}
         {isUrl && (
           <div className='pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2'>
-            <p className='truncate font-mono text-[9px] text-white/90'>
+            <p className='text-3xs truncate font-mono text-white/90'>
               {(value as string)
                 .replace(/^https?:\/\//, '')
                 .split('?')[0]
@@ -726,7 +726,7 @@ function ImageDiffCard({
 
         {!isUrl && (
           <div className='absolute inset-0 flex items-center justify-center'>
-            <span className='text-[10px] font-medium text-stone-400 italic'>
+            <span className='text-3xs font-medium text-stone-400 italic'>
               {value === undefined || value === null || value === ''
                 ? side === 'old'
                   ? '(không có ảnh)'
@@ -762,7 +762,7 @@ function TextValue({ value, side }: { value: unknown; side: 'old' | 'new' }) {
       {/* Side label — tiny corner badge */}
       <span
         className={cn(
-          'absolute -top-2 left-2 px-1.5 font-mono text-[8px] font-bold tracking-widest uppercase',
+          'text-3xs absolute -top-2 left-2 px-1.5 font-mono font-bold tracking-widest uppercase',
           side === 'old'
             ? 'bg-stone-50/40 text-rose-500'
             : 'bg-stone-50/40 text-emerald-600'
@@ -808,7 +808,7 @@ function ListPreview({ value, side }: { value: unknown; side: 'old' | 'new' }) {
     >
       <span
         className={cn(
-          'absolute -top-2 left-2 px-1.5 font-mono text-[8px] font-bold tracking-widest uppercase',
+          'text-3xs absolute -top-2 left-2 px-1.5 font-mono font-bold tracking-widest uppercase',
           side === 'old'
             ? 'bg-stone-50/40 text-rose-500'
             : 'bg-stone-50/40 text-emerald-600'
@@ -824,7 +824,7 @@ function ListPreview({ value, side }: { value: unknown; side: 'old' | 'new' }) {
         <div className='flex flex-col gap-1.5 pt-0.5'>
           <span
             className={cn(
-              'font-mono text-[10px] font-bold',
+              'text-3xs font-mono font-bold',
               side === 'old' ? 'text-rose-700/70' : 'text-emerald-700'
             )}
           >
@@ -835,7 +835,7 @@ function ListPreview({ value, side }: { value: unknown; side: 'old' | 'new' }) {
               <span
                 key={i}
                 className={cn(
-                  'inline-flex max-w-[180px] items-center rounded-full px-2 py-0.5 text-[10px]',
+                  'text-3xs inline-flex max-w-[180px] items-center rounded-full px-2 py-0.5',
                   side === 'old'
                     ? 'bg-white/70 text-rose-900/80 line-through decoration-rose-400/40'
                     : 'bg-emerald-50 text-emerald-900 ring-1 ring-emerald-100'
@@ -847,7 +847,7 @@ function ListPreview({ value, side }: { value: unknown; side: 'old' | 'new' }) {
             {items.length > 4 && (
               <span
                 className={cn(
-                  'inline-flex items-center rounded-full px-2 py-0.5 font-mono text-[9px]',
+                  'text-3xs inline-flex items-center rounded-full px-2 py-0.5 font-mono',
                   side === 'old' ? 'text-rose-500/70' : 'text-emerald-700'
                 )}
               >

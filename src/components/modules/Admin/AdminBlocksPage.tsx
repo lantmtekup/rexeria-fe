@@ -433,7 +433,7 @@ export function AdminBlocksPage() {
                       type='button'
                       onClick={() => setTagFilter(tagFilter === t ? null : t)}
                       className={cn(
-                        'rounded-full border px-2 py-0.5 text-[10.5px] font-medium transition-colors',
+                        'text-3xs rounded-full border px-2 py-0.5 font-medium transition-colors',
                         tagFilter === t
                           ? 'border-zinc-900 bg-zinc-900 text-white'
                           : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
@@ -452,14 +452,14 @@ export function AdminBlocksPage() {
                     setTypeFilter('all');
                     setTagFilter(null);
                   }}
-                  className='ml-1 inline-flex items-center gap-1 text-[10.5px] text-zinc-500 hover:text-zinc-900'
+                  className='text-3xs ml-1 inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900'
                 >
                   <X className='size-3' />
                   Clear
                 </button>
               )}
 
-              <div className='ml-auto text-[10.5px] text-zinc-500'>
+              <div className='text-3xs ml-auto text-zinc-500'>
                 {filtered.length} / {items.length}
               </div>
             </div>
@@ -469,7 +469,7 @@ export function AdminBlocksPage() {
         {/* Body */}
         <div className='flex-1 overflow-y-auto bg-zinc-50/40 p-6'>
           {error && (
-            <div className='mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800'>
+            <div className='mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
               Load blocks thất bại: <code className='font-mono'>{error}</code>
             </div>
           )}
@@ -703,28 +703,28 @@ function BlockCard({
           )}
           <span
             className={cn(
-              'absolute bottom-2 left-2 rounded bg-gradient-to-br px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-white/95 uppercase shadow-sm',
+              'text-3xs absolute bottom-2 left-2 rounded bg-gradient-to-br px-1.5 py-0.5 font-mono font-bold tracking-widest text-white/95 uppercase shadow-sm',
               gradient
             )}
           >
             {label}
           </span>
           {hasMobile && (
-            <span className='absolute right-2 bottom-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-[9px] text-white backdrop-blur'>
+            <span className='text-3xs absolute right-2 bottom-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-white backdrop-blur'>
               📱
             </span>
           )}
           {extraCount > 0 && (
-            <span className='absolute top-2 left-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-[9px] text-white backdrop-blur'>
+            <span className='text-3xs absolute top-2 left-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-white backdrop-blur'>
               +{extraCount} extras
             </span>
           )}
         </div>
         <div className='flex flex-1 flex-col gap-1.5 p-3'>
-          <div className='truncate text-[13px] font-semibold text-zinc-800'>
+          <div className='truncate text-sm font-semibold text-zinc-800'>
             {item.name}
           </div>
-          <div className='font-mono text-[10px] text-zinc-500'>
+          <div className='text-3xs font-mono text-zinc-500'>
             {item.type_code}
           </div>
           {item.tags && item.tags.length > 0 && (
@@ -732,19 +732,19 @@ function BlockCard({
               {item.tags.slice(0, 3).map(t => (
                 <span
                   key={t}
-                  className='rounded-full bg-zinc-100 px-1.5 py-0.5 text-[9.5px] font-medium text-zinc-600'
+                  className='text-3xs rounded-full bg-zinc-100 px-1.5 py-0.5 font-medium text-zinc-600'
                 >
                   {t}
                 </span>
               ))}
               {item.tags.length > 3 && (
-                <span className='text-[9.5px] text-zinc-400'>
+                <span className='text-3xs text-zinc-400'>
                   +{item.tags.length - 3}
                 </span>
               )}
             </div>
           )}
-          <div className='mt-auto flex items-center justify-between text-[10.5px] text-zinc-400'>
+          <div className='text-3xs mt-auto flex items-center justify-between text-zinc-400'>
             <span>{fmtRelative(item.updated_at ?? item.created_at)}</span>
             {item.usage_count > 0 && (
               <span className='font-mono'>↻ {item.usage_count}</span>
@@ -810,7 +810,7 @@ function CardKebabMenu({
           <button
             type='button'
             onClick={choose(onPreview)}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-zinc-700 hover:bg-zinc-50'
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
           >
             <Play className='size-3.5 text-zinc-500' />
             Preview (animation)
@@ -818,7 +818,7 @@ function CardKebabMenu({
           <button
             type='button'
             onClick={choose(onDetail)}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-zinc-700 hover:bg-zinc-50'
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
           >
             <Eye className='size-3.5 text-zinc-500' />
             Mở chi tiết
@@ -826,7 +826,7 @@ function CardKebabMenu({
           <button
             type='button'
             onClick={choose(onDuplicate)}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-zinc-700 hover:bg-zinc-50'
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
           >
             <Copy className='size-3.5 text-zinc-500' />
             Duplicate
@@ -835,7 +835,7 @@ function CardKebabMenu({
           <button
             type='button'
             onClick={choose(onDelete)}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-[12.5px] text-rose-600 hover:bg-rose-50'
+            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
           >
             <Trash2 className='size-3.5' />
             Xoá
@@ -891,12 +891,12 @@ function TableView({
               >
                 <TableCell>
                   <div className='font-medium'>{it.name}</div>
-                  <div className='font-mono text-[10px] text-zinc-400'>
+                  <div className='text-3xs font-mono text-zinc-400'>
                     {it.id}
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant='secondary' className='font-mono text-[10px]'>
+                  <Badge variant='secondary' className='text-3xs font-mono'>
                     {it.type_code}
                   </Badge>
                 </TableCell>
@@ -906,7 +906,7 @@ function TableView({
                       {it.tags.slice(0, 2).map(t => (
                         <span
                           key={t}
-                          className='rounded-full bg-zinc-100 px-1.5 py-0.5 text-[9.5px] text-zinc-600'
+                          className='text-3xs rounded-full bg-zinc-100 px-1.5 py-0.5 text-zinc-600'
                         >
                           {t}
                         </span>
@@ -917,12 +917,12 @@ function TableView({
                   )}
                 </TableCell>
                 <TableCell>
-                  <span className='font-mono text-[11px] text-zinc-600'>
+                  <span className='text-2xs font-mono text-zinc-600'>
                     {editorBlock?.extraElements?.length ?? 0}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className='font-mono text-[11px] text-zinc-600'>
+                  <span className='text-2xs font-mono text-zinc-600'>
                     {it.usage_count ?? 0}
                   </span>
                 </TableCell>
@@ -1068,7 +1068,7 @@ function DetailDrawer({
               <Pencil className='size-3 text-zinc-300 group-hover:text-zinc-600' />
             </button>
           )}
-          <div className='mt-0.5 font-mono text-[10px] text-zinc-500'>
+          <div className='text-3xs mt-0.5 font-mono text-zinc-500'>
             {block.id}
           </div>
         </div>
@@ -1099,13 +1099,13 @@ function DetailDrawer({
           )}
           <span
             className={cn(
-              'absolute top-2 left-2 rounded bg-gradient-to-br px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-widest text-white/95 uppercase shadow-sm',
+              'text-3xs absolute top-2 left-2 rounded bg-gradient-to-br px-1.5 py-0.5 font-mono font-bold tracking-widest text-white/95 uppercase shadow-sm',
               gradient
             )}
           >
             {label}
           </span>
-          <div className='absolute right-0 bottom-0 left-0 flex items-center justify-between bg-black/20 px-2 py-1 text-[9.5px] text-white/80 backdrop-blur'>
+          <div className='text-3xs absolute right-0 bottom-0 left-0 flex items-center justify-between bg-black/20 px-2 py-1 text-white/80 backdrop-blur'>
             <span>
               {editorBlock?.contentVi?.mobile
                 ? '📱 desktop + mobile'
@@ -1117,13 +1117,11 @@ function DetailDrawer({
       </div>
 
       {/* Metadata */}
-      <div className='space-y-3 px-4 py-4 text-[12px]'>
+      <div className='space-y-3 px-4 py-4 text-xs'>
         <MetaRow
           icon={<Hash className='size-3' />}
           label='Block type'
-          value={
-            <span className='font-mono text-[11px]'>{block.type_code}</span>
-          }
+          value={<span className='text-2xs font-mono'>{block.type_code}</span>}
         />
         <MetaRow
           icon={<Calendar className='size-3' />}
@@ -1150,26 +1148,26 @@ function DetailDrawer({
         <MetaRow
           icon={<Hash className='size-3' />}
           label='Scope'
-          value={<span className='font-mono text-[11px]'>{block.scope}</span>}
+          value={<span className='text-2xs font-mono'>{block.scope}</span>}
         />
       </div>
 
       {/* Tags */}
       <div className='border-t border-zinc-100 px-4 py-3'>
-        <div className='mb-1.5 flex items-center gap-1 text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+        <div className='text-3xs mb-1.5 flex items-center gap-1 font-semibold tracking-wider text-zinc-500 uppercase'>
           <Tag className='size-3' />
           Tags
         </div>
         <div className='flex flex-wrap items-center gap-1'>
           {tags.length === 0 && (
-            <span className='text-[11px] text-zinc-400'>Chưa có tag</span>
+            <span className='text-2xs text-zinc-400'>Chưa có tag</span>
           )}
           {tags.map(t => (
             <button
               key={t}
               type='button'
               onClick={() => removeTag(t)}
-              className='group flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[10.5px] font-medium text-zinc-700 hover:bg-rose-50 hover:text-rose-700'
+              className='group text-3xs flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-700 hover:bg-rose-50 hover:text-rose-700'
               title='Click để xoá tag'
             >
               {t}
@@ -1188,13 +1186,13 @@ function DetailDrawer({
               }
             }}
             placeholder='Thêm tag (Enter)…'
-            className='flex-1 rounded-md border border-zinc-200 px-2 py-1 text-[11px] outline-none focus:border-zinc-400'
+            className='text-2xs flex-1 rounded-md border border-zinc-200 px-2 py-1 outline-none focus:border-zinc-400'
           />
           <button
             type='button'
             onClick={addTag}
             disabled={!tagInput.trim()}
-            className='rounded-md bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-zinc-700 disabled:opacity-40'
+            className='text-2xs rounded-md bg-zinc-900 px-2.5 py-1 font-medium text-white hover:bg-zinc-700 disabled:opacity-40'
           >
             Thêm
           </button>
@@ -1253,7 +1251,7 @@ function MetaRow({
 }) {
   return (
     <div className='flex items-center justify-between gap-2'>
-      <div className='flex items-center gap-1.5 text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+      <div className='text-3xs flex items-center gap-1.5 font-semibold tracking-wider text-zinc-500 uppercase'>
         {icon}
         {label}
       </div>
@@ -1279,7 +1277,7 @@ function ViewBtn({
       onClick={onClick}
       title={label}
       className={cn(
-        'flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors',
+        'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
         active ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100'
       )}
     >
@@ -1373,14 +1371,14 @@ function LegacyPreviewOverlay({
       {/* Toolbar */}
       <div className='flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-zinc-900 px-4 py-2.5'>
         <div className='flex min-w-0 items-center gap-3'>
-          <span className='inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] font-bold tracking-wider text-amber-300 uppercase'>
+          <span className='text-3xs inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 font-mono font-bold tracking-wider text-amber-300 uppercase'>
             Legacy
           </span>
           <div className='min-w-0'>
-            <div className='truncate text-[13px] font-semibold text-white'>
+            <div className='truncate text-sm font-semibold text-white'>
               {name}
             </div>
-            <code className='block truncate font-mono text-[10px] text-zinc-400'>
+            <code className='text-3xs block truncate font-mono text-zinc-400'>
               {schema.id}
             </code>
           </div>
@@ -1394,7 +1392,7 @@ function LegacyPreviewOverlay({
                   type='button'
                   onClick={() => setLang(l as 'vi' | 'en')}
                   className={cn(
-                    'rounded-full px-2.5 py-1 font-mono text-[10px] font-bold tracking-wider uppercase transition-colors',
+                    'text-3xs rounded-full px-2.5 py-1 font-mono font-bold tracking-wider uppercase transition-colors',
                     lang === l
                       ? 'bg-white text-zinc-900'
                       : 'text-zinc-400 hover:text-white'

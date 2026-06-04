@@ -269,12 +269,12 @@ export function ApiStatusLabel({
     return null; // no banner when live
   }
   return (
-    <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-[12px] text-amber-800'>
+    <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800'>
       <span className='mt-0.5 inline-block size-2 shrink-0 rounded-full bg-amber-500' />
       <div>
         <span className='font-semibold'>Đang dùng fake data</span>
         {error && (
-          <span className='ml-2 font-mono text-[10px] text-amber-600'>
+          <span className='text-3xs ml-2 font-mono text-amber-600'>
             {error.slice(0, 80)}
           </span>
         )}

@@ -204,7 +204,7 @@ export default function DocumentBEPage() {
           </div>
         </div>
         <div className='flex items-center gap-2'>
-          <span className='rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 px-2.5 py-0.5 text-[11px] font-medium text-white shadow-sm'>
+          <span className='text-2xs rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 px-2.5 py-0.5 font-medium text-white shadow-sm'>
             {SPECS.length} specs
           </span>
         </div>
@@ -213,7 +213,7 @@ export default function DocumentBEPage() {
       {/* Filter bar */}
       <div className='sticky top-[57px] z-20 border-b border-zinc-200 bg-white/95 px-6 py-2.5 backdrop-blur'>
         <div className='flex flex-wrap items-center gap-3'>
-          <span className='flex items-center gap-1 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+          <span className='text-3xs flex items-center gap-1 font-semibold tracking-wider text-zinc-500 uppercase'>
             <Filter className='size-3' /> Trạng thái
           </span>
           <div className='flex flex-wrap items-center gap-1.5'>
@@ -244,13 +244,13 @@ export default function DocumentBEPage() {
               );
             })}
           </div>
-          <span className='ml-2 flex items-center gap-1 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+          <span className='text-3xs ml-2 flex items-center gap-1 font-semibold tracking-wider text-zinc-500 uppercase'>
             Module
           </span>
           <div className='flex flex-wrap items-center gap-1'>
             <button
               onClick={() => setCategoryFilter('all')}
-              className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
+              className={`text-2xs rounded-full px-2.5 py-1 font-medium transition-all ${
                 categoryFilter === 'all'
                   ? 'bg-zinc-900 text-white shadow-sm'
                   : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
@@ -266,7 +266,7 @@ export default function DocumentBEPage() {
                 <button
                   key={cat}
                   onClick={() => setCategoryFilter(cat)}
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${
+                  className={`text-2xs rounded-full px-2.5 py-1 font-medium transition-all ${
                     active
                       ? `${a.bg} text-white shadow-sm`
                       : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
@@ -287,10 +287,10 @@ export default function DocumentBEPage() {
       <div className='flex'>
         <aside className='sticky top-[107px] hidden h-[calc(100vh-107px)] w-72 shrink-0 overflow-y-auto border-r border-zinc-200 bg-white px-4 py-6 lg:block'>
           <div className='mb-4 flex items-center justify-between'>
-            <span className='text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <span className='text-2xs font-semibold tracking-wider text-zinc-500 uppercase'>
               Mục lục
             </span>
-            <span className='font-mono text-[10px] text-zinc-400'>
+            <span className='text-3xs font-mono text-zinc-400'>
               {filtered.length} mục
             </span>
           </div>
@@ -317,7 +317,7 @@ export default function DocumentBEPage() {
                   <span
                     className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${
                       isActive ? a.bg : a.bgSoft
-                    } ${isActive ? 'text-white' : a.text} font-mono text-[10px] font-bold`}
+                    } ${isActive ? 'text-white' : a.text} text-3xs font-mono font-bold`}
                   >
                     {s.num}
                   </span>
@@ -325,17 +325,17 @@ export default function DocumentBEPage() {
                     <div className='flex items-center gap-1.5'>
                       <Icon className='size-3 shrink-0 opacity-70' />
                       <span
-                        className={`truncate text-[9px] font-bold tracking-wider uppercase ${
+                        className={`text-3xs truncate font-bold tracking-wider uppercase ${
                           isActive ? 'text-zinc-300' : 'text-zinc-400'
                         }`}
                       >
                         {STATUS_META[s.status].label}
                       </span>
                     </div>
-                    <div className='mt-0.5 truncate text-[12.5px] leading-snug'>
+                    <div className='mt-0.5 truncate text-xs leading-snug'>
                       {s.title}
                     </div>
-                    <div className='mt-0.5 flex items-center gap-2 text-[10px]'>
+                    <div className='text-3xs mt-0.5 flex items-center gap-2'>
                       <span
                         className={`flex items-center gap-0.5 ${
                           isActive ? 'text-zinc-300' : 'text-zinc-400'
@@ -350,7 +350,7 @@ export default function DocumentBEPage() {
               );
             })}
           </nav>
-          <div className='mt-6 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-3 text-[11px] leading-relaxed text-zinc-600'>
+          <div className='text-2xs mt-6 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-3 leading-relaxed text-zinc-600'>
             💡 Mỗi mục là 1 spec file trong{' '}
             <code className='rounded bg-white px-1'>docs/</code>. File path đầy
             đủ ở header của mỗi card.
@@ -407,7 +407,7 @@ function Hero() {
         aria-hidden
       />
       <div className='relative'>
-        <span className='inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 px-3 py-1 text-[11px] font-medium text-white shadow-sm'>
+        <span className='text-2xs inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 px-3 py-1 font-medium text-white shadow-sm'>
           <FileCode2 className='size-3' /> Backend specs · live doc
         </span>
         <h1 className='mt-4 text-4xl font-bold tracking-tight md:text-5xl'>
@@ -455,16 +455,16 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
             </div>
             <div className='min-w-0 flex-1'>
               <div className='flex flex-wrap items-center gap-2'>
-                <span className={`font-mono text-[11px] font-bold ${a.text}`}>
+                <span className={`text-2xs font-mono font-bold ${a.text}`}>
                   SPEC #{s.num}
                 </span>
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_META[s.status].chip}`}
+                  className={`text-3xs rounded-full px-2 py-0.5 font-medium ${STATUS_META[s.status].chip}`}
                 >
                   {STATUS_META[s.status].label}
                 </span>
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${a.chip}`}
+                  className={`text-3xs rounded-full px-2 py-0.5 font-medium ${a.chip}`}
                 >
                   {CATEGORY_META[s.category].label}
                 </span>
@@ -472,7 +472,7 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
               <h2 className='mt-1 text-xl font-bold tracking-tight'>
                 {s.title}
               </h2>
-              <code className='mt-1 inline-block rounded bg-white/70 px-1.5 py-0.5 font-mono text-[10.5px] text-zinc-600 ring-1 ring-zinc-200/60'>
+              <code className='text-3xs mt-1 inline-block rounded bg-white/70 px-1.5 py-0.5 font-mono text-zinc-600 ring-1 ring-zinc-200/60'>
                 docs/{s.filename}
               </code>
             </div>
@@ -484,7 +484,7 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
             </span>
             <span className='inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-zinc-600 ring-1 ring-zinc-200'>
               <Priority level={s.priority} />{' '}
-              <span className='font-mono text-[10px] text-zinc-500'>
+              <span className='text-3xs font-mono text-zinc-500'>
                 P{s.priority}
               </span>
             </span>
@@ -496,19 +496,19 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
           {/* Goal + Prereq */}
           <div className='mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2'>
             <div className='rounded-lg border border-white/60 bg-white/70 px-3 py-2'>
-              <div className='text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+              <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
                 🎯 Mục tiêu
               </div>
-              <p className='mt-1 text-[12.5px] leading-snug text-zinc-700'>
+              <p className='mt-1 text-xs leading-snug text-zinc-700'>
                 {s.goal}
               </p>
             </div>
             {s.prereq && (
               <div className='rounded-lg border border-white/60 bg-white/70 px-3 py-2'>
-                <div className='text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
                   📋 Phụ thuộc
                 </div>
-                <p className='mt-1 font-mono text-[11.5px] leading-snug text-zinc-700'>
+                <p className='text-2xs mt-1 font-mono leading-snug text-zinc-700'>
                   {s.prereq}
                 </p>
               </div>
@@ -519,7 +519,7 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
         {/* Endpoints */}
         {s.endpoints.length > 0 && (
           <div className='border-b border-zinc-100 px-6 py-4'>
-            <h5 className='flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <h5 className='text-2xs flex items-center gap-1.5 font-semibold tracking-wider text-zinc-500 uppercase'>
               <FileCode2 className='size-3.5' /> Endpoints ({s.endpoints.length}
               )
             </h5>
@@ -534,7 +534,7 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
         {/* Schema tables */}
         {s.schema_tables.length > 0 && (
           <div className='border-b border-zinc-100 px-6 py-4'>
-            <h5 className='flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <h5 className='text-2xs flex items-center gap-1.5 font-semibold tracking-wider text-zinc-500 uppercase'>
               <Database className='size-3.5' /> Schema tables (
               {s.schema_tables.length})
             </h5>
@@ -542,7 +542,7 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
               {s.schema_tables.map(t => (
                 <span
                   key={t}
-                  className='inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-[11px] text-emerald-700'
+                  className='text-2xs inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-emerald-700'
                 >
                   <Database className='size-2.5' /> {t}
                 </span>
@@ -560,11 +560,11 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
           {s.requirements.map((req, i) => (
             <li key={i} className='relative pb-4 pl-12 last:pb-0'>
               <span
-                className={`absolute top-0 left-0 flex size-8 items-center justify-center rounded-full ${a.bg} font-mono text-[12px] font-bold text-white shadow-sm ring-4 ring-white`}
+                className={`absolute top-0 left-0 flex size-8 items-center justify-center rounded-full ${a.bg} font-mono text-xs font-bold text-white shadow-sm ring-4 ring-white`}
               >
                 {i + 1}
               </span>
-              <div className='text-[13.5px] leading-relaxed text-zinc-700 [&_b]:font-semibold [&_b]:text-zinc-900 [&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[12px]'>
+              <div className='text-sm leading-relaxed text-zinc-700 [&_b]:font-semibold [&_b]:text-zinc-900 [&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs'>
                 {req}
               </div>
             </li>
@@ -593,7 +593,7 @@ function EndpointChip({ text }: { text: string }) {
   const m = text.match(/^(GET|POST|PUT|PATCH|DELETE)\s+(.+)$/);
   if (!m) {
     return (
-      <span className='inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 font-mono text-[11px] text-zinc-600'>
+      <span className='text-2xs inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 font-mono text-zinc-600'>
         {text}
       </span>
     );
@@ -609,11 +609,11 @@ function EndpointChip({ text }: { text: string }) {
   return (
     <span className='inline-flex items-center gap-1.5 overflow-hidden rounded-md border border-zinc-200 bg-white'>
       <span
-        className={`${methodColor[method] ?? 'bg-zinc-600'} px-1.5 py-0.5 font-mono text-[9.5px] font-bold text-white`}
+        className={`${methodColor[method] ?? 'bg-zinc-600'} text-3xs px-1.5 py-0.5 font-mono font-bold text-white`}
       >
         {method}
       </span>
-      <code className='px-1.5 py-0.5 pr-2 font-mono text-[11px] text-zinc-700'>
+      <code className='text-2xs px-1.5 py-0.5 pr-2 font-mono text-zinc-700'>
         {path}
       </code>
     </span>

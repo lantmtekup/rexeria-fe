@@ -30,12 +30,12 @@ export function AddTrackPopover({ options, onPick }: AddTrackPopoverProps) {
         onClick={() => setOpen(o => !o)}
         disabled={options.length === 0}
         data-testid='motion-add-track'
-        className='flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2.5 text-[11px] font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40'
+        className='text-2xs flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2.5 font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40'
       >
         <Plus className='size-3' />
         Thêm track
         {options.length === 0 && (
-          <span className='font-mono text-[10px] text-neutral-400'>
+          <span className='text-3xs font-mono text-neutral-400'>
             (đã hết element)
           </span>
         )}
@@ -51,14 +51,12 @@ export function AddTrackPopover({ options, onPick }: AddTrackPopoverProps) {
                 setOpen(false);
               }}
               data-testid={`motion-add-track-option-${key}`}
-              className='flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-[11px] text-neutral-700 hover:bg-neutral-100'
+              className='text-2xs flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-neutral-700 hover:bg-neutral-100'
             >
               <span className='flex-1 truncate font-medium'>
                 {elementLabel(key)}
               </span>
-              <span className='font-mono text-[10px] text-neutral-400'>
-                {key}
-              </span>
+              <span className='text-3xs font-mono text-neutral-400'>{key}</span>
             </button>
           ))}
         </div>

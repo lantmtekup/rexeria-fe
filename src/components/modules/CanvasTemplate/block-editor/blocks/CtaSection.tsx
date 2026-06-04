@@ -80,7 +80,7 @@ export function CtaSection({
             style={sEyebrow}
             className={selectableClass(
               activeKey === 'eyebrow',
-              'animate-reveal-x inline-flex w-fit items-center gap-2 text-[10px] font-semibold tracking-[0.32em] text-white/70 uppercase [animation-delay:900ms] [animation-duration:700ms] @2xl:text-xs'
+              'animate-reveal-x text-3xs inline-flex w-fit items-center gap-2 font-semibold tracking-[0.32em] text-white/70 uppercase [animation-delay:900ms] [animation-duration:700ms] @2xl:text-xs'
             )}
           >
             <span className='size-1 shrink-0 rounded-full bg-white/50' />

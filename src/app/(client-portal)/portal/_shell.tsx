@@ -205,7 +205,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
               <Building2 className='size-3.5' />
             </div>
             <div className='leading-tight'>
-              <div className='text-[10px] font-semibold tracking-wider text-zinc-400 uppercase'>
+              <div className='text-3xs font-semibold tracking-wider text-zinc-400 uppercase'>
                 CLIENT
               </div>
               <div className='text-sm font-semibold tracking-tight'>
@@ -227,12 +227,12 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
               }`}
             >
               <div
-                className={`flex size-7 items-center justify-center rounded-md ${activeWs.logo_color} font-mono text-[11px] font-bold text-white shadow-sm`}
+                className={`flex size-7 items-center justify-center rounded-md ${activeWs.logo_color} text-2xs font-mono font-bold text-white shadow-sm`}
               >
                 {activeWs.logo_initial}
               </div>
               <div className='text-left leading-tight'>
-                <div className='text-[10px] font-semibold tracking-wider text-zinc-400 uppercase'>
+                <div className='text-3xs font-semibold tracking-wider text-zinc-400 uppercase'>
                   Workspace
                 </div>
                 <div className='text-sm font-semibold tracking-tight'>
@@ -249,7 +249,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                   onClick={() => setWsMenuOpen(false)}
                 />
                 <div className='absolute top-full left-0 z-40 mt-1 w-80 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl'>
-                  <div className='border-b border-zinc-100 bg-zinc-50/50 px-3 py-2 text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                  <div className='text-3xs border-b border-zinc-100 bg-zinc-50/50 px-3 py-2 font-semibold tracking-wider text-zinc-500 uppercase'>
                     {workspaces.length} workspace của {clientName}
                   </div>
                   <div className='max-h-80 overflow-y-auto py-1'>
@@ -264,23 +264,23 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                           }`}
                         >
                           <div
-                            className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${ws.logo_color} font-mono text-[12px] font-bold text-white shadow-sm`}
+                            className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${ws.logo_color} font-mono text-xs font-bold text-white shadow-sm`}
                           >
                             {ws.logo_initial}
                           </div>
                           <div className='min-w-0 flex-1'>
                             <div className='flex items-center gap-1.5'>
-                              <span className='text-[13px] font-semibold'>
+                              <span className='text-sm font-semibold'>
                                 {ws.name}
                               </span>
                               {isActive && (
                                 <Check className='size-3.5 text-emerald-500' />
                               )}
                             </div>
-                            <div className='truncate text-[10.5px] text-zinc-500'>
+                            <div className='text-3xs truncate text-zinc-500'>
                               {ws.description}
                             </div>
-                            <div className='mt-0.5 flex items-center gap-2 text-[9.5px] text-zinc-400'>
+                            <div className='text-3xs mt-0.5 flex items-center gap-2 text-zinc-400'>
                               <span>{ws.member_count} member</span>
                               <span>·</span>
                               <span>{ws.template_count} landing</span>
@@ -299,7 +299,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                         setWsMenuOpen(false);
                         setCreateWsOpen(true);
                       }}
-                      className='w-full text-left text-[11px] font-medium text-zinc-600 hover:text-zinc-900'
+                      className='text-2xs w-full text-left font-medium text-zinc-600 hover:text-zinc-900'
                     >
                       + Tạo workspace mới
                     </button>
@@ -315,7 +315,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
           <button className='relative flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100'>
             <Bell className='size-3.5' />
             {unreadCount > 0 && (
-              <span className='absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-rose-500 font-mono text-[9px] font-bold text-white ring-2 ring-white'>
+              <span className='text-3xs absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-rose-500 font-mono font-bold text-white ring-2 ring-white'>
                 {unreadCount}
               </span>
             )}
@@ -332,7 +332,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                 onClick={() => setUserMenuOpen(o => !o)}
                 className='flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100'
               >
-                <div className='flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-violet-500 font-mono text-[10px] font-bold text-white'>
+                <div className='text-3xs flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-violet-500 font-mono font-bold text-white'>
                   {(user.display_name ?? user.email ?? '?')
                     .slice(0, 2)
                     .toUpperCase()}
@@ -350,19 +350,19 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                   />
                   <div className='absolute top-full right-0 z-40 mt-1 w-56 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl'>
                     <div className='border-b border-zinc-100 px-3 py-2'>
-                      <div className='truncate text-[13px] font-semibold'>
+                      <div className='truncate text-sm font-semibold'>
                         {user.display_name ?? '—'}
                       </div>
-                      <div className='truncate font-mono text-[10.5px] text-zinc-500'>
+                      <div className='text-3xs truncate font-mono text-zinc-500'>
                         {user.email}
                       </div>
-                      <div className='mt-1 inline-block rounded bg-orange-100 px-1.5 py-0.5 font-mono text-[9px] font-bold text-orange-700'>
+                      <div className='text-3xs mt-1 inline-block rounded bg-orange-100 px-1.5 py-0.5 font-mono font-bold text-orange-700'>
                         {user.principal_type ?? 'user'}
                       </div>
                     </div>
                     <button
                       onClick={handleLogout}
-                      className='flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-zinc-700 hover:bg-rose-50 hover:text-rose-700'
+                      className='flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zinc-700 hover:bg-rose-50 hover:text-rose-700'
                     >
                       <LogOut className='size-3.5' />
                       Đăng xuất
@@ -386,15 +386,15 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
         {/* Side nav */}
         <aside className='sticky top-[57px] hidden h-[calc(100vh-57px)] w-60 shrink-0 overflow-y-auto border-r border-zinc-200 bg-white px-3 py-4 lg:block'>
           <div className='mb-4 rounded-xl bg-gradient-to-br from-rose-50 to-white p-3'>
-            <div className='text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
               Plan
             </div>
-            <div className='mt-0.5 text-[11px] text-zinc-600'>
+            <div className='text-2xs mt-0.5 text-zinc-600'>
               <span className='font-mono font-semibold text-rose-700'>
                 Phase 1 Managed
               </span>
             </div>
-            <div className='mt-1 text-[10px] text-zinc-500'>
+            <div className='text-3xs mt-1 text-zinc-500'>
               {FAKE_CLIENT.member_count} thành viên · {workspaces.length}{' '}
               workspace
             </div>
@@ -413,7 +413,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
               return (
                 <div key={n.href}>
                   {showGroupLabel && (
-                    <div className='mt-3 mb-1 px-2.5 text-[9px] font-bold tracking-wider text-zinc-400 uppercase'>
+                    <div className='text-3xs mt-3 mb-1 px-2.5 font-bold tracking-wider text-zinc-400 uppercase'>
                       {n.group}
                     </div>
                   )}
@@ -433,7 +433,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                     <span className='flex-1'>{n.label}</span>
                     {n.badge !== undefined && n.badge > 0 && (
                       <span
-                        className={`rounded-full px-1.5 py-0.5 font-mono text-[10px] font-semibold ${
+                        className={`text-3xs rounded-full px-1.5 py-0.5 font-mono font-semibold ${
                           isActive
                             ? 'bg-white/20 text-white'
                             : 'bg-rose-100 text-rose-700'
@@ -452,16 +452,16 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
               activeWs mock). Khôi phục bằng cách bỏ comment khối dưới. */}
           {/* <div className='mt-6 rounded-xl border border-zinc-200 bg-zinc-50 p-3'>
             <div className='flex items-center justify-between'>
-              <div className='text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+              <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
                 Storage
               </div>
               <div
-                className={`flex size-5 items-center justify-center rounded ${activeWs.logo_color} font-mono text-[9px] font-bold text-white`}
+                className={`flex size-5 items-center justify-center rounded ${activeWs.logo_color} font-mono text-3xs font-bold text-white`}
               >
                 {activeWs.logo_initial}
               </div>
             </div>
-            <div className='mt-1 text-[11px] text-zinc-700'>
+            <div className='mt-1 text-2xs text-zinc-700'>
               <span className='font-mono font-bold'>
                 {activeWs.storage_used_gb} GB
               </span>{' '}
@@ -475,7 +475,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                 }}
               />
             </div>
-            <div className='mt-1 text-[9.5px] text-zinc-400'>
+            <div className='mt-1 text-3xs text-zinc-400'>
               Quota client: {FAKE_CLIENT.storage_used_gb} /{' '}
               {FAKE_CLIENT.storage_quota_gb} GB
             </div>

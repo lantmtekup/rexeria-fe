@@ -37,10 +37,10 @@ export default function AdminBlockEditPage() {
   if (!canvasId) {
     return (
       <div className='mx-auto max-w-2xl p-10 text-center'>
-        <p className='text-[14px] font-semibold text-zinc-800'>
+        <p className='text-sm font-semibold text-zinc-800'>
           Thiếu canvas_id — không thể mở editor.
         </p>
-        <p className='mt-1 text-[12px] text-zinc-500'>
+        <p className='mt-1 text-xs text-zinc-500'>
           Mở lại từ trang Blocks để tạo canvas tạm trước khi sửa.
         </p>
         <Link
@@ -58,7 +58,7 @@ export default function AdminBlockEditPage() {
     <div className='relative flex h-screen flex-col'>
       {/* Slim admin-context breadcrumb so the user knows they're still in
           /admin even though the underlying editor takes full viewport. */}
-      <div className='flex items-center gap-2 border-b border-zinc-200 bg-white px-4 py-2 text-[12px] text-zinc-600'>
+      <div className='flex items-center gap-2 border-b border-zinc-200 bg-white px-4 py-2 text-xs text-zinc-600'>
         <button
           type='button'
           onClick={() => router.push('/admin/blocks')}

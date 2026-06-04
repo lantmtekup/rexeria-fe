@@ -88,7 +88,7 @@ export function Flipbook({
               style={sEyebrow}
               className={selectableClass(
                 activeKey === 'eyebrow',
-                'text-[10px] font-semibold tracking-[0.32em] text-amber-700 uppercase'
+                'text-3xs font-semibold tracking-[0.32em] text-amber-700 uppercase'
               )}
             >
               {content.eyebrow}
@@ -172,7 +172,7 @@ export function Flipbook({
                       transform: 'rotateY(180deg)',
                     }}
                   >
-                    <div className='flex size-full items-center justify-center text-[10px] tracking-widest text-amber-900/40 uppercase'>
+                    <div className='text-3xs flex size-full items-center justify-center tracking-widest text-amber-900/40 uppercase'>
                       Lật trang
                     </div>
                   </div>

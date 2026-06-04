@@ -70,7 +70,7 @@ export function PublicBlockRender({ page, blueprint }: Props) {
           );
         })}
       </main>
-      <footer className='border-t border-neutral-200 bg-white px-6 py-4 text-center text-[10px] tracking-widest text-neutral-400 uppercase'>
+      <footer className='text-3xs border-t border-neutral-200 bg-white px-6 py-4 text-center tracking-widest text-neutral-400 uppercase'>
         Tạo bằng REXER · {visible.length} block · {page.slug}
       </footer>
     </div>

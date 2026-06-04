@@ -165,7 +165,7 @@ export function RecordTable({
                   <TableHead key={f.id} className='whitespace-nowrap'>
                     {f.label}
                     {f.isPrimary && (
-                      <Badge variant='secondary' className='ml-1 text-[10px]'>
+                      <Badge variant='secondary' className='text-3xs ml-1'>
                         primary
                       </Badge>
                     )}

@@ -98,7 +98,7 @@ export function FontPicker({ value, onChange, compact }: Props) {
               if (items.length === 0) return null;
               return (
                 <div key={cat} className='py-1'>
-                  <div className='text-muted-foreground px-3 pb-1 text-[10px] font-semibold tracking-wide uppercase'>
+                  <div className='text-muted-foreground text-3xs px-3 pb-1 font-semibold tracking-wide uppercase'>
                     {CATEGORY_LABEL[cat]}
                   </div>
                   {items.map(f => {
@@ -124,7 +124,7 @@ export function FontPicker({ value, onChange, compact }: Props) {
                             {f.label}
                           </span>
                           {f.note ? (
-                            <span className='text-muted-foreground block text-[10px]'>
+                            <span className='text-muted-foreground text-3xs block'>
                               {f.note}
                             </span>
                           ) : null}

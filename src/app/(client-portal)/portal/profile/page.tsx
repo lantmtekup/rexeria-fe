@@ -294,7 +294,7 @@ export default function PortalProfilePage() {
   return (
     <PortalShell>
       <section>
-        <div className='flex items-center gap-2 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+        <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
           <Settings className='size-3' /> Profile
         </div>
         <div className='flex flex-wrap items-end justify-between gap-2'>
@@ -302,7 +302,7 @@ export default function PortalProfilePage() {
             <h1 className='mt-1 text-2xl font-bold tracking-tight'>
               Cài đặt brand
             </h1>
-            <p className='mt-1 text-[13px] text-zinc-500'>
+            <p className='mt-1 text-sm text-zinc-500'>
               Quản lý thông tin brand + thành viên + custom domain.
             </p>
           </div>
@@ -316,7 +316,7 @@ export default function PortalProfilePage() {
       </section>
 
       {(pendingClientApi || pendingMembersApi) && (
-        <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2.5 text-[12px] text-amber-900'>
+        <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2.5 text-xs text-amber-900'>
           <AlertTriangle className='mt-0.5 size-3.5 shrink-0' />
           <div>
             BE chưa ship đủ endpoint <code>/portal/me/*</code> (P0.3) — đang
@@ -392,7 +392,7 @@ export default function PortalProfilePage() {
         {/* Brand logo + workspace id */}
         <aside className='space-y-4'>
           <div className='rounded-2xl border border-zinc-200 bg-gradient-to-br from-rose-50 to-white p-5 shadow-sm'>
-            <div className='text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <div className='text-2xs font-semibold tracking-wider text-zinc-500 uppercase'>
               Logo
             </div>
             <div className='mt-3 flex items-center gap-3'>
@@ -417,11 +417,11 @@ export default function PortalProfilePage() {
                       'POST /portal/me/avatar — gửi multipart binary, FE sẽ wire khi BE confirm endpoint'
                     )
                   }
-                  className='block rounded-lg border border-zinc-200 bg-white px-3 py-1 text-[11px] font-medium hover:bg-zinc-100 disabled:opacity-50'
+                  className='text-2xs block rounded-lg border border-zinc-200 bg-white px-3 py-1 font-medium hover:bg-zinc-100 disabled:opacity-50'
                 >
                   Upload logo mới
                 </button>
-                <p className='mt-1 text-[10px] text-zinc-500'>
+                <p className='text-3xs mt-1 text-zinc-500'>
                   PNG / SVG · ≤ 1MB · Vuông
                 </p>
               </div>
@@ -429,33 +429,33 @@ export default function PortalProfilePage() {
           </div>
 
           <div className='rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm'>
-            <div className='text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <div className='text-2xs font-semibold tracking-wider text-zinc-500 uppercase'>
               Client ID
             </div>
-            <code className='mt-2 block rounded-lg bg-zinc-50 px-2 py-1.5 font-mono text-[11px] break-all text-zinc-600'>
+            <code className='text-2xs mt-2 block rounded-lg bg-zinc-50 px-2 py-1.5 font-mono break-all text-zinc-600'>
               {client?.id ?? '—'}
             </code>
-            <p className='mt-2 text-[11px] text-zinc-500'>
+            <p className='text-2xs mt-2 text-zinc-500'>
               Dùng khi liên hệ support hoặc tích hợp API.
             </p>
             {client && (
               <div className='mt-3 grid grid-cols-2 gap-2 border-t border-zinc-100 pt-3 text-center'>
                 <div>
-                  <div className='font-mono text-[16px] font-bold text-zinc-900 tabular-nums'>
+                  <div className='font-mono text-base font-bold text-zinc-900 tabular-nums'>
                     {client.member_count ?? '—'}
                   </div>
-                  <div className='text-[10px] tracking-wider text-zinc-500 uppercase'>
+                  <div className='text-3xs tracking-wider text-zinc-500 uppercase'>
                     Members
                   </div>
                 </div>
                 <div>
-                  <div className='font-mono text-[16px] font-bold text-zinc-900 tabular-nums'>
+                  <div className='font-mono text-base font-bold text-zinc-900 tabular-nums'>
                     {client.storage_used_gb ?? 0}
-                    <span className='text-[11px] text-zinc-400'>
+                    <span className='text-2xs text-zinc-400'>
                       /{client.storage_quota_gb ?? '—'}
                     </span>
                   </div>
-                  <div className='text-[10px] tracking-wider text-zinc-500 uppercase'>
+                  <div className='text-3xs tracking-wider text-zinc-500 uppercase'>
                     GB
                   </div>
                 </div>
@@ -491,7 +491,7 @@ export default function PortalProfilePage() {
         </div>
         <div className='divide-y divide-zinc-100'>
           {members.length === 0 && !loadingMembers ? (
-            <div className='py-6 text-center text-[12px] text-zinc-500'>
+            <div className='py-6 text-center text-xs text-zinc-500'>
               Chưa có thành viên nào.
             </div>
           ) : (
@@ -521,15 +521,15 @@ export default function PortalProfilePage() {
                       className='size-9 rounded-full object-cover shadow-sm'
                     />
                   ) : (
-                    <div className='flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 font-mono text-[11px] font-bold text-white shadow-sm'>
+                    <div className='text-2xs flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 font-mono font-bold text-white shadow-sm'>
                       {initials}
                     </div>
                   )}
                   <div className='min-w-0 flex-1'>
-                    <div className='text-[13px] font-semibold'>
+                    <div className='text-sm font-semibold'>
                       {m.display_name}
                     </div>
-                    <div className='flex items-center gap-1.5 text-[10.5px] text-zinc-500'>
+                    <div className='text-3xs flex items-center gap-1.5 text-zinc-500'>
                       <Mail className='size-2.5' /> {m.email}
                     </div>
                   </div>
@@ -547,7 +547,7 @@ export default function PortalProfilePage() {
                           )
                         }
                         aria-label={`Vai trò của ${m.display_name}`}
-                        className='rounded-lg border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 outline-none focus:border-blue-400 disabled:opacity-50'
+                        className='text-2xs rounded-lg border border-zinc-200 bg-white px-2 py-1 font-medium text-zinc-700 outline-none focus:border-blue-400 disabled:opacity-50'
                       >
                         <option value='brand_owner'>Owner</option>
                         <option value='brand_member'>Member</option>
@@ -570,11 +570,11 @@ export default function PortalProfilePage() {
                   ) : (
                     <>
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${role.chip}`}
+                        className={`text-3xs rounded-full px-2 py-0.5 font-bold ${role.chip}`}
                       >
                         {role.label}
                       </span>
-                      <span className='font-mono text-[10px] text-zinc-400'>
+                      <span className='text-3xs font-mono text-zinc-400'>
                         {formatJoined(m.joined_at ?? m.created_at)}
                       </span>
                     </>
@@ -731,10 +731,10 @@ function InviteMemberDialog({
               <UserPlus className='size-4' />
             </div>
             <div>
-              <h3 className='text-[15px] leading-tight font-semibold'>
+              <h3 className='text-base leading-tight font-semibold'>
                 Thêm thành viên
               </h3>
-              <p className='mt-0.5 text-[11px] text-zinc-500'>
+              <p className='text-2xs mt-0.5 text-zinc-500'>
                 Tạo tài khoản member + cấp mật khẩu (không gửi email mời)
               </p>
             </div>
@@ -751,7 +751,7 @@ function InviteMemberDialog({
         {/* Body */}
         <div className='space-y-4 px-5 py-4'>
           <div>
-            <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
               Email <span className='text-rose-500'>*</span>
             </label>
             <input
@@ -761,12 +761,12 @@ function InviteMemberDialog({
               onKeyDown={e => e.key === 'Enter' && submit()}
               placeholder='vd: an@brand.com'
               autoFocus
-              className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+              className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
             />
           </div>
 
           <div>
-            <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
               Tên hiển thị <span className='text-rose-500'>*</span>
             </label>
             <input
@@ -775,12 +775,12 @@ function InviteMemberDialog({
               onChange={e => setDisplayName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && submit()}
               placeholder='vd: Nguyễn Văn A'
-              className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+              className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
             />
           </div>
 
           <div>
-            <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
               Mật khẩu
             </label>
             <input
@@ -790,16 +790,16 @@ function InviteMemberDialog({
               onKeyDown={e => e.key === 'Enter' && submit()}
               placeholder='Bỏ trống → hệ thống tự sinh & hiện sau khi tạo'
               autoComplete='off'
-              className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+              className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
             />
-            <p className='mt-1 text-[10.5px] text-zinc-400'>
+            <p className='text-3xs mt-1 text-zinc-400'>
               Tối thiểu 8 ký tự nếu tự đặt. BE không gửi email — mật khẩu chỉ
               hiện 1 lần để bạn đưa cho member.
             </p>
           </div>
 
           <div>
-            <label className='mb-1.5 block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs mb-1.5 block font-semibold tracking-wider text-zinc-500 uppercase'>
               Vai trò
             </label>
             <div className='space-y-1.5'>
@@ -824,10 +824,10 @@ function InviteMemberDialog({
                     )}
                   </span>
                   <span className='min-w-0 flex-1'>
-                    <span className='block text-[13px] font-semibold text-zinc-900'>
+                    <span className='block text-sm font-semibold text-zinc-900'>
                       {r.label}
                     </span>
-                    <span className='block text-[11px] text-zinc-500'>
+                    <span className='text-2xs block text-zinc-500'>
                       {r.desc}
                     </span>
                   </span>
@@ -913,7 +913,7 @@ function MemberCredentialDialog({
             <div className='flex size-8 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm'>
               <Check className='size-4' />
             </div>
-            <h3 className='text-[15px] leading-tight font-semibold'>
+            <h3 className='text-base leading-tight font-semibold'>
               Đã tạo member {cred.display_name}
             </h3>
           </div>
@@ -927,7 +927,7 @@ function MemberCredentialDialog({
         </div>
 
         <div className='space-y-4 px-5 py-4'>
-          <div className='flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900'>
+          <div className='flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900'>
             <KeyRound className='mt-0.5 size-3.5 shrink-0 text-amber-600' />
             <div>
               <span className='font-semibold'>Lưu ngay mật khẩu</span> — chỉ
@@ -937,27 +937,27 @@ function MemberCredentialDialog({
           </div>
 
           <div className='space-y-1'>
-            <div className='text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
               Email
             </div>
-            <div className='flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-[13px]'>
+            <div className='flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm'>
               <Mail className='size-3.5 text-zinc-400' />
               {cred.email}
             </div>
           </div>
 
           <div className='space-y-1'>
-            <div className='text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
               Mật khẩu
             </div>
             <div className='flex items-center gap-2'>
-              <code className='flex-1 truncate rounded-lg border border-zinc-200 bg-white px-3 py-2 font-mono text-[13px]'>
+              <code className='flex-1 truncate rounded-lg border border-zinc-200 bg-white px-3 py-2 font-mono text-sm'>
                 {cred.password}
               </code>
               <button
                 type='button'
                 onClick={() => copy(cred.password, 'password')}
-                className={`flex items-center gap-1 rounded-lg border px-2.5 py-2 text-[11px] font-medium ${
+                className={`text-2xs flex items-center gap-1 rounded-lg border px-2.5 py-2 font-medium ${
                   copied === 'password'
                     ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
                     : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100'
@@ -1014,7 +1014,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className='text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+      <label className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
         {label}
       </label>
       <input
@@ -1022,11 +1022,11 @@ function Field({
         value={value}
         readOnly={readonly}
         onChange={e => onChange?.(e.target.value)}
-        className={`mt-1 w-full rounded-lg border border-zinc-200 px-3 py-1.5 text-[13px] outline-none focus:border-zinc-400 ${
+        className={`mt-1 w-full rounded-lg border border-zinc-200 px-3 py-1.5 text-sm outline-none focus:border-zinc-400 ${
           readonly ? 'bg-zinc-50 text-zinc-500' : 'bg-white'
         }`}
       />
-      {hint && <p className='mt-1 text-[10.5px] text-zinc-400'>{hint}</p>}
+      {hint && <p className='text-3xs mt-1 text-zinc-400'>{hint}</p>}
     </div>
   );
 }

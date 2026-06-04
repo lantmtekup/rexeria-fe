@@ -126,10 +126,10 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
           <ArrowLeft className='size-3.5' /> Quay lại
         </Link>
         <div className='mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
-          <p className='text-[14px] font-semibold text-rose-900'>
+          <p className='text-sm font-semibold text-rose-900'>
             Không load được template
           </p>
-          <p className='mt-1 font-mono text-[11px] text-rose-700'>
+          <p className='text-2xs mt-1 font-mono text-rose-700'>
             {error || 'NOT_FOUND'}
           </p>
         </div>
@@ -147,7 +147,7 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
     <div className='mx-auto flex max-w-5xl flex-col gap-5 p-6'>
       <Link
         href='/admin/templates'
-        className='group inline-flex items-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
+        className='group inline-flex items-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
       >
         <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
         Templates
@@ -177,7 +177,7 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
               </h1>
               <span
                 className={cn(
-                  'rounded-full px-2 py-0.5 text-[10.5px] font-bold tracking-wider uppercase',
+                  'text-3xs rounded-full px-2 py-0.5 font-bold tracking-wider uppercase',
                   statusChip
                 )}
               >
@@ -186,7 +186,7 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
               {template.target_page_type && (
                 <span
                   className={cn(
-                    'rounded-full border px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase',
+                    'text-3xs rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase',
                     pageTypeChip
                   )}
                 >
@@ -197,7 +197,7 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
             <button
               type='button'
               onClick={copyId}
-              className='group mt-2 inline-flex items-center gap-1.5 font-mono text-[12px] text-zinc-500 hover:text-zinc-900'
+              className='group mt-2 inline-flex items-center gap-1.5 font-mono text-xs text-zinc-500 hover:text-zinc-900'
               title='Click để copy template ID'
             >
               <span className='font-semibold'>{template.code}</span>
@@ -210,11 +210,11 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
               )}
             </button>
             {template.description && (
-              <p className='mt-2 text-[13px] leading-relaxed text-zinc-600'>
+              <p className='mt-2 text-sm leading-relaxed text-zinc-600'>
                 {template.description}
               </p>
             )}
-            <div className='mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11.5px] text-zinc-500'>
+            <div className='text-2xs mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-zinc-500'>
               <span className='inline-flex items-center gap-1.5'>
                 <Calendar className='size-3' />
                 Cập nhật{' '}
@@ -306,10 +306,10 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
             />
             {currentVersion.change_note && (
               <div className='sm:col-span-2'>
-                <p className='text-[10.5px] font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+                <p className='text-3xs font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
                   Change note
                 </p>
-                <p className='mt-1 text-[13px] leading-relaxed text-zinc-700'>
+                <p className='mt-1 text-sm leading-relaxed text-zinc-700'>
                   {currentVersion.change_note}
                 </p>
               </div>
@@ -334,7 +334,7 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
           </h2>
         </div>
         {versions.length === 0 ? (
-          <div className='px-5 py-8 text-center text-[13px] text-zinc-500'>
+          <div className='px-5 py-8 text-center text-sm text-zinc-500'>
             Chưa có version nào.
           </div>
         ) : (
@@ -348,26 +348,26 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
                 >
                   <div>
                     <div className='flex items-center gap-2'>
-                      <code className='font-mono text-[13px] font-semibold text-zinc-900'>
+                      <code className='font-mono text-sm font-semibold text-zinc-900'>
                         {v.version}
                       </code>
                       {isCurrent && (
-                        <span className='rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-emerald-700 uppercase'>
+                        <span className='text-3xs rounded-full bg-emerald-100 px-1.5 py-0.5 font-bold tracking-wider text-emerald-700 uppercase'>
                           current
                         </span>
                       )}
                       <span className='text-zinc-400'>·</span>
-                      <code className='font-mono text-[11px] text-zinc-500'>
+                      <code className='text-2xs font-mono text-zinc-500'>
                         {v.schema_version}
                       </code>
                     </div>
                     {v.change_note && (
-                      <p className='mt-0.5 text-[12px] text-zinc-600'>
+                      <p className='mt-0.5 text-xs text-zinc-600'>
                         {v.change_note}
                       </p>
                     )}
                   </div>
-                  <div className='text-right font-mono text-[10.5px] text-zinc-400'>
+                  <div className='text-3xs text-right font-mono text-zinc-400'>
                     {new Date(v.created_at).toLocaleDateString('vi-VN')}
                   </div>
                 </li>
@@ -391,13 +391,13 @@ function Field({
 }) {
   return (
     <div>
-      <p className='text-[10.5px] font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+      <p className='text-3xs font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
         {label}
       </p>
       <p
         className={cn(
-          'mt-1 text-[13px] text-zinc-800',
-          mono && 'font-mono text-[12px]'
+          'mt-1 text-sm text-zinc-800',
+          mono && 'font-mono text-xs'
         )}
       >
         {value}

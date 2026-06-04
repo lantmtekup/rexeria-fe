@@ -72,20 +72,20 @@ export default function PortalTemplatesPage() {
     <PortalShell>
       <section className='flex flex-wrap items-end justify-between gap-4'>
         <div>
-          <div className='flex items-center gap-2 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
             <LayoutTemplate className='size-3' /> Landing pages
           </div>
           <h1 className='mt-1 text-2xl font-bold tracking-tight'>
             Tất cả landing pages
           </h1>
-          <p className='mt-1 text-[13px] text-zinc-500'>
+          <p className='mt-1 text-sm text-zinc-500'>
             Workspace <strong>{activeWs.name}</strong> có{' '}
             <strong>{scopedTemplates.length}</strong> landing page (/
             {templates.length} tổng client). Click để xem analytics chi tiết.
           </p>
         </div>
         {source === 'live' && (
-          <span className='inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold tracking-wider text-emerald-700'>
+          <span className='text-3xs inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-bold tracking-wider text-emerald-700'>
             <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
             LIVE BE
           </span>
@@ -103,7 +103,7 @@ export default function PortalTemplatesPage() {
             placeholder='Tìm theo tên...'
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className='flex-1 bg-transparent text-[13px] outline-none placeholder:text-zinc-400'
+            className='flex-1 bg-transparent text-sm outline-none placeholder:text-zinc-400'
           />
         </div>
         <div className='inline-flex items-center rounded-lg border border-zinc-200 bg-white p-0.5'>
@@ -151,14 +151,14 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
         <div className='absolute inset-0 bg-black/10' />
         <div className='absolute top-3 left-3 flex items-center gap-1.5'>
           <span
-            className={`flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold backdrop-blur ${status.chip}`}
+            className={`text-3xs flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 font-bold backdrop-blur ${status.chip}`}
           >
             <span className={`size-1.5 rounded-full ${status.dot}`} />
             {t.status}
           </span>
         </div>
         {t.open_comments > 0 && (
-          <div className='absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-rose-700 backdrop-blur'>
+          <div className='text-3xs absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 font-bold text-rose-700 backdrop-blur'>
             <MessageSquare className='size-2.5' /> {t.open_comments} open
           </div>
         )}
@@ -172,10 +172,10 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
 
       {/* Body */}
       <div className='p-4'>
-        <h3 className='line-clamp-1 text-[14px] font-bold tracking-tight'>
+        <h3 className='line-clamp-1 text-sm font-bold tracking-tight'>
           {t.name}
         </h3>
-        <p className='mt-0.5 text-[10.5px] text-zinc-400'>
+        <p className='text-3xs mt-0.5 text-zinc-400'>
           Cập nhật bởi{' '}
           <span className='font-semibold text-zinc-600'>
             {t.last_updated_by.name}
@@ -193,7 +193,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
             <Stat label='Leads' value={fmtNum(t.leads_30d)} icon={Send} />
           </div>
         ) : (
-          <div className='mt-3 rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-3 py-2 text-center text-[11px] text-zinc-500'>
+          <div className='text-2xs mt-3 rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-3 py-2 text-center text-zinc-500'>
             Chưa publish — chưa có số liệu
           </div>
         )}
@@ -235,10 +235,10 @@ function Stat({
   return (
     <div className='rounded-md bg-zinc-50 py-1.5'>
       <Icon className='mx-auto size-3 text-zinc-400' />
-      <div className='mt-0.5 font-mono text-[12px] font-bold text-zinc-900'>
+      <div className='mt-0.5 font-mono text-xs font-bold text-zinc-900'>
         {value}
       </div>
-      <div className='font-mono text-[9px] text-zinc-500'>{label}</div>
+      <div className='text-3xs font-mono text-zinc-500'>{label}</div>
     </div>
   );
 }

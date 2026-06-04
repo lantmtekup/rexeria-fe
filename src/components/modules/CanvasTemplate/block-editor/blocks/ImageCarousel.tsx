@@ -74,7 +74,7 @@ export function ImageCarousel({
               data-element-key='eyebrow'
               className={selectableClass(
                 activeKey === 'eyebrow',
-                'text-[11px] tracking-[0.18em] text-white/60 uppercase'
+                'text-2xs tracking-[0.18em] text-white/60 uppercase'
               )}
               style={styleOf('eyebrow')}
             >

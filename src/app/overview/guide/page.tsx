@@ -670,7 +670,7 @@ const TUTORIALS: Tutorial[] = [
           <>
             Trong textarea prompt, dùng <code>{'{{tên_biến}}'}</code> để chèn
             giá trị từ form. Ví dụ:{' '}
-            <code className='text-[11px]'>
+            <code className='text-2xs'>
               {
                 'Tạo landing cho sản phẩm "{{name}}" với mô tả "{{desc}}", style {{style}}.'
               }
@@ -767,7 +767,7 @@ function CalloutBox({ c }: { c: Callout }) {
       className={`mt-2 flex items-start gap-2 rounded-lg border ${map.border} ${map.bg} px-3 py-2`}
     >
       <Icon className={`mt-0.5 size-3.5 shrink-0 ${map.iconClass}`} />
-      <div className='flex-1 text-[12px] leading-snug text-zinc-700'>
+      <div className='flex-1 text-xs leading-snug text-zinc-700'>
         <span className={`font-semibold ${map.labelClass}`}>{map.label}: </span>
         {c.text}
       </div>
@@ -842,10 +842,10 @@ export default function GuidePage() {
       <div className='flex'>
         <aside className='sticky top-[57px] hidden h-[calc(100vh-57px)] w-72 shrink-0 overflow-y-auto border-r border-zinc-200 bg-white px-4 py-6 lg:block'>
           <div className='mb-4 flex items-center justify-between'>
-            <span className='text-[11px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <span className='text-2xs font-semibold tracking-wider text-zinc-500 uppercase'>
               Lộ trình
             </span>
-            <span className='font-mono text-[10px] text-zinc-400'>
+            <span className='text-3xs font-mono text-zinc-400'>
               {filtered.length} bài
             </span>
           </div>
@@ -871,7 +871,7 @@ export default function GuidePage() {
                   <span
                     className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${
                       isActive ? c.bg : c.bgSoft
-                    } ${isActive ? 'text-white' : c.text} font-mono text-[11px] font-bold`}
+                    } ${isActive ? 'text-white' : c.text} text-2xs font-mono font-bold`}
                   >
                     {t.num}
                   </span>
@@ -879,17 +879,15 @@ export default function GuidePage() {
                     <div className='flex items-center gap-1.5'>
                       <Icon className='size-3 shrink-0 opacity-70' />
                       <span
-                        className={`truncate text-[10px] font-medium tracking-wider uppercase ${
+                        className={`text-3xs truncate font-medium tracking-wider uppercase ${
                           isActive ? 'text-zinc-300' : 'text-zinc-400'
                         }`}
                       >
                         {t.audience}
                       </span>
                     </div>
-                    <div className='mt-0.5 text-[13px] leading-snug'>
-                      {t.title}
-                    </div>
-                    <div className='mt-0.5 flex items-center gap-2 text-[10px]'>
+                    <div className='mt-0.5 text-sm leading-snug'>{t.title}</div>
+                    <div className='text-3xs mt-0.5 flex items-center gap-2'>
                       <span
                         className={`flex items-center gap-0.5 ${
                           isActive ? 'text-zinc-300' : 'text-zinc-400'
@@ -904,7 +902,7 @@ export default function GuidePage() {
               );
             })}
           </nav>
-          <div className='mt-6 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-3 text-[11px] leading-relaxed text-zinc-600'>
+          <div className='text-2xs mt-6 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-3 leading-relaxed text-zinc-600'>
             💡 Mới bắt đầu? Đi tuần tự Tutorial 0 → 5. Admin nhảy thẳng Tutorial
             7.
           </div>
@@ -965,7 +963,7 @@ function Hero() {
         aria-hidden
       />
       <div className='relative'>
-        <span className='inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-blue-500 px-3 py-1 text-[11px] font-medium text-white shadow-sm'>
+        <span className='text-2xs inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-blue-500 px-3 py-1 font-medium text-white shadow-sm'>
           <BookOpen className='size-3' /> Step-by-step
         </span>
         <h1 className='mt-4 text-4xl font-bold tracking-tight md:text-5xl'>
@@ -1017,13 +1015,11 @@ function TutorialSection({ t, next }: { t: Tutorial; next?: Tutorial }) {
                 </div>
                 <div>
                   <div className='flex items-center gap-2'>
-                    <span
-                      className={`font-mono text-[11px] font-bold ${c.text}`}
-                    >
+                    <span className={`text-2xs font-mono font-bold ${c.text}`}>
                       TUTORIAL {t.num}
                     </span>
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      className={`text-3xs rounded-full px-2 py-0.5 font-medium ${
                         t.audience === 'Admin'
                           ? 'bg-orange-100 text-orange-700'
                           : 'bg-blue-100 text-blue-700'
@@ -1052,19 +1048,19 @@ function TutorialSection({ t, next }: { t: Tutorial; next?: Tutorial }) {
 
               <div className='mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='rounded-lg border border-white/60 bg-white/70 px-3 py-2'>
-                  <div className='text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                  <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
                     🎯 Mục tiêu
                   </div>
-                  <p className='mt-1 text-[12.5px] leading-snug text-zinc-700'>
+                  <p className='mt-1 text-xs leading-snug text-zinc-700'>
                     {t.goal}
                   </p>
                 </div>
                 {t.prereq && (
                   <div className='rounded-lg border border-white/60 bg-white/70 px-3 py-2'>
-                    <div className='text-[10px] font-semibold tracking-wider text-zinc-500 uppercase'>
+                    <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
                       📋 Cần trước
                     </div>
-                    <p className='mt-1 text-[12.5px] leading-snug text-zinc-700'>
+                    <p className='mt-1 text-xs leading-snug text-zinc-700'>
                       {t.prereq}
                     </p>
                   </div>
@@ -1092,14 +1088,14 @@ function TutorialSection({ t, next }: { t: Tutorial; next?: Tutorial }) {
           {t.steps.map((s, i) => (
             <li key={i} className='relative pb-5 pl-12 last:pb-0'>
               <span
-                className={`absolute top-0 left-0 flex size-8 items-center justify-center rounded-full ${c.bg} font-mono text-[12px] font-bold text-white shadow-sm ring-4 ring-white`}
+                className={`absolute top-0 left-0 flex size-8 items-center justify-center rounded-full ${c.bg} font-mono text-xs font-bold text-white shadow-sm ring-4 ring-white`}
               >
                 {i + 1}
               </span>
-              <div className='text-[14px] font-semibold text-zinc-900'>
+              <div className='text-sm font-semibold text-zinc-900'>
                 {s.title}
               </div>
-              <div className='mt-1 text-[13.5px] leading-relaxed text-zinc-700 [&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[12px]'>
+              <div className='mt-1 text-sm leading-relaxed text-zinc-700 [&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs'>
                 {s.body}
               </div>
               {s.callout && <CalloutBox c={s.callout} />}
@@ -1111,7 +1107,7 @@ function TutorialSection({ t, next }: { t: Tutorial; next?: Tutorial }) {
         {(t.done || next) && (
           <div className='border-t border-zinc-100 bg-zinc-50/50 px-6 py-4'>
             {t.done && (
-              <div className='flex items-start gap-2 text-[13px]'>
+              <div className='flex items-start gap-2 text-sm'>
                 <CheckCircle2 className={`mt-0.5 size-4 shrink-0 ${c.text}`} />
                 <div>
                   <span className={`font-semibold ${c.text}`}>Hoàn tất:</span>{' '}

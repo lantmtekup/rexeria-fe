@@ -268,7 +268,7 @@ export function AdminCreateUserModal({
             <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-violet-500 text-white shadow-sm'>
               <UserPlus className='size-4' />
             </div>
-            <h3 className='text-[15px] leading-tight font-semibold'>
+            <h3 className='text-base leading-tight font-semibold'>
               Tạo user mới
             </h3>
           </div>
@@ -285,7 +285,7 @@ export function AdminCreateUserModal({
         <div className='space-y-4 px-5 py-4'>
           {/* Role picker */}
           <div>
-            <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
               Role <span className='text-rose-500'>*</span>
             </label>
             <div className='mt-2 grid grid-cols-3 gap-2'>
@@ -309,10 +309,8 @@ export function AdminCreateUserModal({
                     >
                       <Icon className='size-3.5' />
                     </div>
-                    <div className='text-[12.5px] font-semibold'>
-                      {meta.label}
-                    </div>
-                    <div className='text-[10.5px] leading-snug text-zinc-500'>
+                    <div className='text-xs font-semibold'>{meta.label}</div>
+                    <div className='text-3xs leading-snug text-zinc-500'>
                       {meta.description}
                     </div>
                   </button>
@@ -323,7 +321,7 @@ export function AdminCreateUserModal({
 
           {/* Warning cho admin/staff */}
           {(role === 'admin' || role === 'staff') && (
-            <div className='flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-800'>
+            <div className='flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800'>
               <AlertCircle className='mt-0.5 size-3.5 shrink-0 text-amber-600' />
               <div>
                 <span className='font-semibold'>BE chưa expose endpoint</span>{' '}
@@ -344,7 +342,7 @@ export function AdminCreateUserModal({
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder='user@example.com'
-                className='w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                className='w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
               />
             </Field>
             <Field label='Tên hiển thị' required>
@@ -353,7 +351,7 @@ export function AdminCreateUserModal({
                 value={displayName}
                 onChange={e => setDisplayName(e.target.value)}
                 placeholder='Nguyễn Văn A'
-                className='w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                className='w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
               />
             </Field>
           </div>
@@ -369,7 +367,7 @@ export function AdminCreateUserModal({
               }
             >
               <div className='mb-2 flex items-center gap-2'>
-                <label className='flex cursor-pointer items-center gap-2 text-[12px] text-zinc-700'>
+                <label className='flex cursor-pointer items-center gap-2 text-xs text-zinc-700'>
                   <input
                     type='checkbox'
                     checked={autoGenPassword}
@@ -387,7 +385,7 @@ export function AdminCreateUserModal({
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder='ít nhất 8 ký tự'
-                    className='w-full rounded-lg border border-zinc-200 px-3 py-2 pr-20 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                    className='w-full rounded-lg border border-zinc-200 px-3 py-2 pr-20 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                   />
                   <div className='absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5'>
                     <button
@@ -423,7 +421,7 @@ export function AdminCreateUserModal({
           {/* Brand-specific options */}
           {role === 'client_user' && (
             <div className='rounded-xl border border-teal-200 bg-teal-50/40 p-3'>
-              <div className='mb-2 flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-teal-700 uppercase'>
+              <div className='text-2xs mb-2 flex items-center gap-1.5 font-semibold tracking-wider text-teal-700 uppercase'>
                 <Building2 className='size-3' /> Brand
               </div>
               <div className='mb-2 flex gap-1.5'>
@@ -450,7 +448,7 @@ export function AdminCreateUserModal({
                     value={companyName}
                     onChange={e => setCompanyName(e.target.value)}
                     placeholder='vd: ACME Beverage Group'
-                    className='w-full rounded-lg border border-zinc-200 px-3 py-2 text-[14px] outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100'
+                    className='w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100'
                   />
                 </Field>
               ) : (
@@ -462,7 +460,7 @@ export function AdminCreateUserModal({
                   <select
                     value={clientId}
                     onChange={e => setClientId(e.target.value)}
-                    className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[14px] outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100'
+                    className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100'
                   >
                     {clients.length === 0 && (
                       <option value=''>Chưa có brand nào</option>
@@ -479,7 +477,7 @@ export function AdminCreateUserModal({
           )}
 
           {error && (
-            <div className='flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-800'>
+            <div className='flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
               <AlertCircle className='mt-0.5 size-3.5 shrink-0 text-rose-600' />
               <div className='font-mono'>{error}</div>
             </div>
@@ -488,7 +486,7 @@ export function AdminCreateUserModal({
 
         {/* Footer */}
         <div className='flex items-center justify-between gap-3 border-t border-zinc-100 bg-zinc-50/50 px-5 py-3'>
-          <p className='text-[11px] text-zinc-500'>
+          <p className='text-2xs text-zinc-500'>
             {role === 'client_user' && brandMode === 'new' && (
               <>
                 Endpoint:{' '}
@@ -556,11 +554,11 @@ function Field({
 }) {
   return (
     <div>
-      <label className='block text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+      <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
         {label} {required && <span className='text-rose-500'>*</span>}
       </label>
       <div className='mt-1'>{children}</div>
-      {hint && <p className='mt-1 text-[10.5px] text-zinc-500'>{hint}</p>}
+      {hint && <p className='text-3xs mt-1 text-zinc-500'>{hint}</p>}
     </div>
   );
 }
@@ -614,7 +612,7 @@ function CredentialsResultModal({
             <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-sm'>
               <Check className='size-4' />
             </div>
-            <h3 className='text-[15px] leading-tight font-semibold'>
+            <h3 className='text-base leading-tight font-semibold'>
               Đã tạo user thành công
             </h3>
           </div>
@@ -629,7 +627,7 @@ function CredentialsResultModal({
 
         <div className='space-y-4 px-5 py-4'>
           <div className='rounded-lg border border-amber-200 bg-amber-50 p-3'>
-            <div className='flex items-start gap-2 text-[12px] text-amber-900'>
+            <div className='flex items-start gap-2 text-xs text-amber-900'>
               <AlertCircle className='mt-0.5 size-3.5 shrink-0 text-amber-600' />
               <div>
                 <span className='font-semibold'>Lưu ngay password</span> — chỉ
@@ -659,7 +657,7 @@ function CredentialsResultModal({
             />
           </div>
 
-          <div className='flex flex-wrap items-center gap-2 text-[12px] text-zinc-500'>
+          <div className='flex flex-wrap items-center gap-2 text-xs text-zinc-500'>
             <span>Tên:</span>
             <code className='rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-800'>
               {creds.displayName}
@@ -676,7 +674,7 @@ function CredentialsResultModal({
             <span>·</span>
             <span>Role:</span>
             <span
-              className={`rounded-full ${meta.color} px-2 py-0.5 text-[10px] font-bold text-white`}
+              className={`rounded-full ${meta.color} text-3xs px-2 py-0.5 font-bold text-white`}
             >
               {meta.label}
             </span>
@@ -726,13 +724,13 @@ function CredField({
 }) {
   return (
     <div className='rounded-lg border border-zinc-200 bg-zinc-50/60 p-2.5'>
-      <div className='flex items-center gap-1.5 text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase'>
+      <div className='text-3xs flex items-center gap-1.5 font-semibold tracking-wider text-zinc-500 uppercase'>
         {icon}
         {label}
       </div>
       <div className='mt-1 flex items-center gap-2'>
         <div
-          className={`flex-1 truncate rounded border border-zinc-200 bg-white px-2 py-1.5 text-[13px] ${
+          className={`flex-1 truncate rounded border border-zinc-200 bg-white px-2 py-1.5 text-sm ${
             mono ? 'font-mono' : ''
           }`}
         >
@@ -741,7 +739,7 @@ function CredField({
         <button
           type='button'
           onClick={onCopy}
-          className={`flex items-center gap-1 rounded border px-2 py-1.5 text-[11px] font-medium transition-colors ${
+          className={`text-2xs flex items-center gap-1 rounded border px-2 py-1.5 font-medium transition-colors ${
             copied
               ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
               : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100'
@@ -776,7 +774,7 @@ function ModeBtn({
       type='button'
       onClick={onClick}
       disabled={disabled}
-      className={`flex-1 rounded-lg border px-2.5 py-1 text-[11.5px] font-medium transition-all disabled:opacity-40 ${
+      className={`text-2xs flex-1 rounded-lg border px-2.5 py-1 font-medium transition-all disabled:opacity-40 ${
         active
           ? 'border-teal-500 bg-teal-100 text-teal-800'
           : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'

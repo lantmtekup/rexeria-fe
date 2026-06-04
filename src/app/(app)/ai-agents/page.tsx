@@ -87,7 +87,7 @@ function CampaignCard({
         <div className='flex shrink-0 items-center gap-2'>
           <span
             className={cn(
-              'rounded-full px-2 py-0.5 text-[10px] font-medium capitalize',
+              'text-3xs rounded-full px-2 py-0.5 font-medium capitalize',
               tone
             )}
           >
@@ -124,9 +124,7 @@ function CampaignCard({
               </Badge>
             ))}
             {campaign.channels.length > 4 && (
-              <span className='text-[10px]'>
-                +{campaign.channels.length - 4}
-              </span>
+              <span className='text-3xs'>+{campaign.channels.length - 4}</span>
             )}
           </div>
         )}

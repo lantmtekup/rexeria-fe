@@ -1066,20 +1066,20 @@ export function BlockEditor({
       {template && (
         <div className='flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50/80 px-4 py-1.5 text-xs'>
           <div className='flex items-center gap-2 text-zinc-600'>
-            <span className='font-mono text-[10.5px] tracking-wider text-zinc-400 uppercase'>
+            <span className='text-3xs font-mono tracking-wider text-zinc-400 uppercase'>
               {currentVersion ? 'committed' : 'chưa có version'}
             </span>
             {currentVersion ? (
-              <code className='rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-zinc-700 ring-1 ring-zinc-200'>
+              <code className='text-2xs rounded bg-white px-1.5 py-0.5 font-mono text-zinc-700 ring-1 ring-zinc-200'>
                 v{currentVersion.version}
               </code>
             ) : (
-              <code className='rounded bg-amber-50 px-1.5 py-0.5 font-mono text-[11px] text-amber-800 ring-1 ring-amber-200'>
+              <code className='text-2xs rounded bg-amber-50 px-1.5 py-0.5 font-mono text-amber-800 ring-1 ring-amber-200'>
                 draft only
               </code>
             )}
             <span className='text-zinc-300'>·</span>
-            <span className='text-[11px]'>
+            <span className='text-2xs'>
               autosave ghi{' '}
               <code className='font-mono'>draft_canvas_blueprint</code> · click{' '}
               <strong>Save Version</strong> để commit immutable
@@ -1089,7 +1089,7 @@ export function BlockEditor({
             type='button'
             onClick={handleSaveVersion}
             disabled={savingVersion}
-            className='inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-white shadow-sm transition-colors hover:bg-zinc-700 disabled:cursor-wait disabled:opacity-60'
+            className='text-2xs inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-2.5 py-1 font-medium text-white shadow-sm transition-colors hover:bg-zinc-700 disabled:cursor-wait disabled:opacity-60'
             title={
               currentVersion
                 ? `Tạo immutable version mới (next: v${bumpVersion(currentVersion.version)})`

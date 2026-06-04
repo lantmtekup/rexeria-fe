@@ -79,7 +79,7 @@ export function ExtraElementsList({
 }: Props) {
   if (elements.length === 0) {
     return (
-      <p className='px-3 py-2 text-[11px] text-neutral-400'>
+      <p className='text-2xs px-3 py-2 text-neutral-400'>
         Chưa có element tự thêm. Bấm “Thêm element” để bắt đầu.
       </p>
     );
@@ -108,9 +108,7 @@ export function ExtraElementsList({
               >
                 <Icon className='size-3.5 shrink-0 text-neutral-500' />
                 <span className='min-w-0 flex-1 truncate'>{labelOf(el)}</span>
-                <span className='text-[10px] text-neutral-400'>
-                  {meta.label}
-                </span>
+                <span className='text-3xs text-neutral-400'>{meta.label}</span>
                 <button
                   type='button'
                   onClick={e => {

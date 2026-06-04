@@ -166,7 +166,7 @@ function FeatureRowEditor({
       <div className='flex flex-wrap items-center gap-2'>
         {/* Mode radio */}
         <div
-          className='inline-flex rounded-md border border-neutral-200 bg-neutral-50 p-0.5 text-[10px] font-semibold tracking-wider text-neutral-500 uppercase'
+          className='text-3xs inline-flex rounded-md border border-neutral-200 bg-neutral-50 p-0.5 font-semibold tracking-wider text-neutral-500 uppercase'
           role='radiogroup'
           aria-label='Loại hiển thị feature'
         >
