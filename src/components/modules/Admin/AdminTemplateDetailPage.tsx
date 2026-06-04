@@ -43,7 +43,7 @@ import { cn } from '@/lib/cn';
 const STATUS_CHIP: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700',
   draft: 'bg-amber-100 text-amber-700',
-  archived: 'bg-zinc-200 text-zinc-600',
+  archived: 'bg-zinc-200 text-content-muted',
 };
 
 const PAGE_TYPE_CHIP: Record<string, string> = {
@@ -110,7 +110,7 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
 
   if (loading && !template) {
     return (
-      <div className='flex items-center justify-center p-16 text-sm text-zinc-500'>
+      <div className='text-content-muted flex items-center justify-center p-16 text-sm'>
         <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải…
       </div>
     );
@@ -121,7 +121,7 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
       <div className='mx-auto max-w-2xl p-8'>
         <Link
           href='/admin/templates'
-          className='inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900'
+          className='text-content-muted hover:text-foreground inline-flex items-center gap-1.5 text-sm'
         >
           <ArrowLeft className='size-3.5' /> Quay lại
         </Link>
@@ -140,23 +140,23 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
   const statusChip = STATUS_CHIP[template.status] ?? STATUS_CHIP.archived;
   const pageTypeChip = template.target_page_type
     ? (PAGE_TYPE_CHIP[template.target_page_type] ??
-      'bg-zinc-100 text-zinc-700 border-zinc-200')
+      'bg-muted text-content-muted border-border')
     : null;
 
   return (
     <div className='mx-auto flex max-w-5xl flex-col gap-5 p-6'>
       <Link
         href='/admin/templates'
-        className='group inline-flex items-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
+        className='group border-border text-content-muted hover:text-foreground inline-flex items-center gap-2 self-start rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900'
       >
         <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
         Templates
       </Link>
 
       {/* Header */}
-      <section className='relative overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm'>
+      <section className='border-border relative overflow-hidden rounded-3xl border bg-white shadow-sm'>
         <div className='flex flex-wrap items-start gap-5 p-6 sm:p-7'>
-          <div className='aspect-[4/3] w-32 shrink-0 overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-zinc-100 to-zinc-200'>
+          <div className='border-border aspect-[4/3] w-32 shrink-0 overflow-hidden rounded-xl border bg-gradient-to-br from-zinc-100 to-zinc-200'>
             {template.thumbnail_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -165,14 +165,14 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
                 className='size-full object-cover'
               />
             ) : (
-              <div className='flex h-full items-center justify-center text-zinc-300'>
+              <div className='text-muted-foreground flex h-full items-center justify-center'>
                 <Pencil className='size-8' />
               </div>
             )}
           </div>
           <div className='min-w-0 flex-1'>
             <div className='flex flex-wrap items-center gap-2'>
-              <h1 className='truncate text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl'>
+              <h1 className='text-foreground truncate text-2xl font-bold tracking-tight sm:text-3xl'>
                 {template.name}
               </h1>
               <span
@@ -197,24 +197,24 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
             <button
               type='button'
               onClick={copyId}
-              className='group mt-2 inline-flex items-center gap-1.5 font-mono text-xs text-zinc-500 hover:text-zinc-900'
+              className='group text-content-muted hover:text-foreground mt-2 inline-flex items-center gap-1.5 font-mono text-xs'
               title='Click để copy template ID'
             >
               <span className='font-semibold'>{template.code}</span>
-              <span className='text-zinc-400'>·</span>
+              <span className='text-muted-foreground'>·</span>
               <span>{template.id}</span>
               {copied ? (
                 <Check className='size-3 text-emerald-600' />
               ) : (
-                <Copy className='size-3 text-zinc-400 group-hover:text-zinc-700' />
+                <Copy className='text-muted-foreground group-hover:text-content-muted size-3' />
               )}
             </button>
             {template.description && (
-              <p className='mt-2 text-sm leading-relaxed text-zinc-600'>
+              <p className='text-content-muted mt-2 text-sm leading-relaxed'>
                 {template.description}
               </p>
             )}
-            <div className='text-2xs mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-zinc-500'>
+            <div className='text-2xs text-content-muted mt-3 flex flex-wrap items-center gap-x-4 gap-y-1'>
               <span className='inline-flex items-center gap-1.5'>
                 <Calendar className='size-3' />
                 Cập nhật{' '}
@@ -283,8 +283,10 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
       )}
 
       {/* Current version */}
-      <section className='rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm'>
-        <h2 className='text-sm font-semibold text-zinc-900'>Current version</h2>
+      <section className='border-border rounded-2xl border bg-white p-5 shadow-sm'>
+        <h2 className='text-foreground text-sm font-semibold'>
+          Current version
+        </h2>
         {currentVersion ? (
           <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2'>
             <Field label='Version' value={currentVersion.version} mono />
@@ -306,10 +308,10 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
             />
             {currentVersion.change_note && (
               <div className='sm:col-span-2'>
-                <p className='text-3xs font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+                <p className='text-3xs text-muted-foreground font-semibold tracking-[0.18em] uppercase'>
                   Change note
                 </p>
-                <p className='mt-1 text-sm leading-relaxed text-zinc-700'>
+                <p className='text-content-muted mt-1 text-sm leading-relaxed'>
                   {currentVersion.change_note}
                 </p>
               </div>
@@ -327,14 +329,14 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
       </section>
 
       {/* Versions list */}
-      <section className='rounded-2xl border border-zinc-200 bg-white shadow-sm'>
-        <div className='flex items-center justify-between border-b border-zinc-100 px-5 py-3'>
-          <h2 className='text-sm font-semibold text-zinc-900'>
+      <section className='border-border rounded-2xl border bg-white shadow-sm'>
+        <div className='border-border flex items-center justify-between border-b px-5 py-3'>
+          <h2 className='text-foreground text-sm font-semibold'>
             Tất cả version ({versions.length})
           </h2>
         </div>
         {versions.length === 0 ? (
-          <div className='px-5 py-8 text-center text-sm text-zinc-500'>
+          <div className='text-content-muted px-5 py-8 text-center text-sm'>
             Chưa có version nào.
           </div>
         ) : (
@@ -344,11 +346,11 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
               return (
                 <li
                   key={v.id}
-                  className='flex items-start justify-between gap-3 border-b border-zinc-100 px-5 py-3 last:border-0 hover:bg-zinc-50/50'
+                  className='border-border hover:bg-muted/50 flex items-start justify-between gap-3 border-b px-5 py-3 last:border-0'
                 >
                   <div>
                     <div className='flex items-center gap-2'>
-                      <code className='font-mono text-sm font-semibold text-zinc-900'>
+                      <code className='text-foreground font-mono text-sm font-semibold'>
                         {v.version}
                       </code>
                       {isCurrent && (
@@ -356,18 +358,18 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
                           current
                         </span>
                       )}
-                      <span className='text-zinc-400'>·</span>
-                      <code className='text-2xs font-mono text-zinc-500'>
+                      <span className='text-muted-foreground'>·</span>
+                      <code className='text-2xs text-content-muted font-mono'>
                         {v.schema_version}
                       </code>
                     </div>
                     {v.change_note && (
-                      <p className='mt-0.5 text-xs text-zinc-600'>
+                      <p className='text-content-muted mt-0.5 text-xs'>
                         {v.change_note}
                       </p>
                     )}
                   </div>
-                  <div className='text-3xs text-right font-mono text-zinc-400'>
+                  <div className='text-3xs text-muted-foreground text-right font-mono'>
                     {new Date(v.created_at).toLocaleDateString('vi-VN')}
                   </div>
                 </li>
@@ -391,12 +393,12 @@ function Field({
 }) {
   return (
     <div>
-      <p className='text-3xs font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+      <p className='text-3xs text-muted-foreground font-semibold tracking-[0.18em] uppercase'>
         {label}
       </p>
       <p
         className={cn(
-          'mt-1 text-sm text-zinc-800',
+          'text-foreground mt-1 text-sm',
           mono && 'font-mono text-xs'
         )}
       >
@@ -458,8 +460,8 @@ function EditMetaSection({
   };
 
   return (
-    <section className='flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm'>
-      <h2 className='text-sm font-semibold text-zinc-900'>Sửa metadata</h2>
+    <section className='border-border flex flex-col gap-4 rounded-2xl border bg-white p-5 shadow-sm'>
+      <h2 className='text-foreground text-sm font-semibold'>Sửa metadata</h2>
       <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
         <div className='flex flex-col gap-1.5'>
           <Label htmlFor='ed-name'>Tên</Label>
@@ -537,7 +539,7 @@ function EditMetaSection({
           onChange={e => setThumbnailUrl(e.target.value)}
         />
       </div>
-      <div className='flex items-center justify-end gap-2 border-t border-zinc-100 pt-3'>
+      <div className='border-border flex items-center justify-end gap-2 border-t pt-3'>
         <Button variant='outline' onClick={onCancel} disabled={submitting}>
           Huỷ
         </Button>

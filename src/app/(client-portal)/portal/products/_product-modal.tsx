@@ -318,7 +318,7 @@ export function ProductFormModal({
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className='flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-3.5'>
+        <div className='border-border flex items-center justify-between gap-3 border-b px-5 py-3.5'>
           <div className='flex items-center gap-2.5'>
             <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-sm'>
               <Package className='size-4' />
@@ -327,14 +327,14 @@ export function ProductFormModal({
               <h3 className='text-base leading-tight font-semibold'>
                 {isEdit ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}
               </h3>
-              <p className='text-2xs mt-0.5 text-zinc-500'>
+              <p className='text-2xs text-content-muted mt-0.5'>
                 {isEdit ? product!.sku : 'Điền thông tin theo từng bước'}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className='rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label='Close'
           >
             <X className='size-4' />
@@ -342,7 +342,7 @@ export function ProductFormModal({
         </div>
 
         {/* Stepper */}
-        <div className='flex items-center gap-1 border-b border-zinc-100 px-5 py-3'>
+        <div className='border-border flex items-center gap-1 border-b px-5 py-3'>
           {STEPS.map((s, i) => {
             const Icon = s.icon;
             const active = i === step;
@@ -359,7 +359,7 @@ export function ProductFormModal({
                       'text-2xs flex size-6 items-center justify-center rounded-full font-bold transition-colors',
                       active && 'bg-orange-500 text-white',
                       done && 'bg-emerald-500 text-white',
-                      !active && !done && 'bg-zinc-100 text-zinc-400'
+                      !active && !done && 'bg-muted text-muted-foreground'
                     )}
                   >
                     {done ? (
@@ -371,7 +371,7 @@ export function ProductFormModal({
                   <span
                     className={cn(
                       'text-xs font-medium',
-                      active ? 'text-zinc-900' : 'text-zinc-400'
+                      active ? 'text-foreground' : 'text-muted-foreground'
                     )}
                   >
                     {s.label}
@@ -396,7 +396,7 @@ export function ProductFormModal({
           {step === 0 && (
             <div className='space-y-4'>
               <div>
-                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
                   Tên sản phẩm <span className='text-rose-500'>*</span>
                 </label>
                 <input
@@ -406,7 +406,7 @@ export function ProductFormModal({
                     setValue(v => ({ ...v, name: e.target.value }))
                   }
                   placeholder='vd: Coca-Cola Original 330ml'
-                  className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100'
+                  className='border-border mt-1.5 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100'
                   maxLength={128}
                   autoFocus
                 />
@@ -449,7 +449,7 @@ export function ProductFormModal({
               </div>
               {/* Thumbnail */}
               <div>
-                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
                   Ảnh đại diện
                 </label>
                 {thumbnail ? (
@@ -458,18 +458,18 @@ export function ProductFormModal({
                     <img
                       src={thumbnail.preview}
                       alt='thumbnail'
-                      className='size-20 rounded-lg border border-zinc-200 object-cover'
+                      className='border-border size-20 rounded-lg border object-cover'
                     />
                     <button
                       type='button'
                       onClick={() => setThumbnail(null)}
-                      className='inline-flex items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs text-zinc-600 hover:bg-zinc-50'
+                      className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs'
                     >
                       <Trash2 className='size-3.5' /> Xoá
                     </button>
                   </div>
                 ) : (
-                  <label className='mt-1.5 flex h-20 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-300 text-sm text-zinc-500 hover:border-orange-300 hover:bg-orange-50/40'>
+                  <label className='border-border text-content-muted mt-1.5 flex h-20 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed text-sm hover:border-orange-300 hover:bg-orange-50/40'>
                     <ImagePlus className='size-4' /> Tải ảnh lên
                     <input
                       type='file'
@@ -488,7 +488,7 @@ export function ProductFormModal({
           {/* Step 1 — Hình ảnh (gallery) */}
           {step === 1 && (
             <div>
-              <p className='mb-3 text-sm text-zinc-500'>
+              <p className='text-content-muted mb-3 text-sm'>
                 Thư viện ảnh sản phẩm — dùng cho landing page & detail. (
                 {gallery.length} ảnh)
               </p>
@@ -496,7 +496,7 @@ export function ProductFormModal({
                 {gallery.map(g => (
                   <div
                     key={g.key}
-                    className='group relative aspect-square overflow-hidden rounded-lg border border-zinc-200'
+                    className='group border-border relative aspect-square overflow-hidden rounded-lg border'
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -516,7 +516,7 @@ export function ProductFormModal({
                     </button>
                   </div>
                 ))}
-                <label className='text-2xs flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-zinc-300 text-zinc-500 hover:border-orange-300 hover:bg-orange-50/40'>
+                <label className='text-2xs border-border text-content-muted flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed hover:border-orange-300 hover:bg-orange-50/40'>
                   <ImagePlus className='size-5' />
                   Thêm ảnh
                   <input
@@ -572,12 +572,12 @@ export function ProductFormModal({
         </div>
 
         {/* Footer */}
-        <div className='flex items-center justify-between gap-3 border-t border-zinc-100 bg-zinc-50/50 px-5 py-3'>
+        <div className='border-border bg-muted/50 flex items-center justify-between gap-3 border-t px-5 py-3'>
           <button
             type='button'
             onClick={step === 0 ? onClose : () => setStep(s => s - 1)}
             disabled={saving}
-            className='inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50'
+            className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             {step === 0 ? (
               'Hủy'
@@ -588,7 +588,7 @@ export function ProductFormModal({
             )}
           </button>
 
-          <div className='text-2xs text-zinc-400'>
+          <div className='text-2xs text-muted-foreground'>
             Bước {step + 1}/{STEPS.length}
           </div>
 

@@ -124,14 +124,14 @@ export function AdminAssignTemplateDialog({
         className='my-12 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
-        <div className='flex items-center justify-between border-b border-zinc-100 px-5 py-3'>
+        <div className='border-border flex items-center justify-between border-b px-5 py-3'>
           <div className='flex items-center gap-2.5'>
             <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-sm'>
               <Send className='size-4' />
             </div>
             <div className='leading-tight'>
               <h3 className='text-base font-semibold'>Assign sang brand</h3>
-              <p className='text-3xs font-mono text-zinc-400'>
+              <p className='text-3xs text-muted-foreground font-mono'>
                 {template.name}
               </p>
             </div>
@@ -139,7 +139,7 @@ export function AdminAssignTemplateDialog({
           <button
             type='button'
             onClick={onClose}
-            className='rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label='Close'
           >
             <X className='size-4' />
@@ -157,7 +157,7 @@ export function AdminAssignTemplateDialog({
               maxLength={200}
               onChange={e => setPageName(e.target.value)}
               placeholder={template.name}
-              className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='border-border w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             />
           </Field>
 
@@ -165,7 +165,7 @@ export function AdminAssignTemplateDialog({
             <select
               value={clientId}
               onChange={e => setClientId(e.target.value)}
-              className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='border-border w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             >
               <option value=''>— Chọn brand —</option>
               {clients.map(c => (
@@ -184,7 +184,7 @@ export function AdminAssignTemplateDialog({
               <select
                 value={workspaceId}
                 onChange={e => setWorkspaceId(e.target.value)}
-                className='w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+                className='border-border w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
                 disabled={workspaces.length === 0}
               >
                 {workspaces.length === 0 && (
@@ -206,7 +206,7 @@ export function AdminAssignTemplateDialog({
               rows={3}
               maxLength={2000}
               placeholder='Vd: Template đã set sẵn block hero + booking form, brand chỉ cần đổi text + ảnh.'
-              className='w-full resize-y rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='border-border w-full resize-y rounded-lg border px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             />
           </Field>
 
@@ -217,12 +217,12 @@ export function AdminAssignTemplateDialog({
           )}
         </div>
 
-        <div className='flex items-center justify-end gap-2 border-t border-zinc-100 bg-zinc-50/50 px-5 py-3'>
+        <div className='border-border bg-muted/50 flex items-center justify-end gap-2 border-t px-5 py-3'>
           <button
             type='button'
             onClick={onClose}
             disabled={submitting}
-            className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50'
+            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             Huỷ
           </button>
@@ -258,11 +258,11 @@ function Field({
 }) {
   return (
     <div>
-      <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+      <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
         {label} {required && <span className='text-rose-500'>*</span>}
       </label>
       <div className='mt-1'>{children}</div>
-      {hint && <p className='text-3xs mt-1 text-zinc-500'>{hint}</p>}
+      {hint && <p className='text-3xs text-content-muted mt-1'>{hint}</p>}
     </div>
   );
 }

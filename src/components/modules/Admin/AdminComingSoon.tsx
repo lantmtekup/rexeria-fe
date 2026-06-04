@@ -27,9 +27,9 @@ export function AdminComingSoon({
 }) {
   return (
     <div className='mx-auto max-w-3xl p-6'>
-      <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
+      <div className='border-border overflow-hidden rounded-2xl border bg-white shadow-sm'>
         {/* Header */}
-        <div className='border-b border-zinc-100 bg-gradient-to-br from-indigo-50 via-white to-fuchsia-50 p-6'>
+        <div className='border-border border-b bg-gradient-to-br from-indigo-50 via-white to-fuchsia-50 p-6'>
           <div className='flex items-start gap-3'>
             <div className='flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white shadow-md'>
               <Icon className='size-6' />
@@ -39,32 +39,32 @@ export function AdminComingSoon({
                 <span className='text-3xs rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-bold tracking-wider text-amber-700 uppercase'>
                   Coming soon
                 </span>
-                <span className='text-3xs inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 font-mono text-zinc-600'>
+                <span className='text-3xs bg-muted text-content-muted inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono'>
                   <Clock className='size-2.5' /> {estTime}
                 </span>
               </div>
               <h1 className='mt-1 text-2xl font-bold tracking-tight'>
                 {title}
               </h1>
-              <p className='mt-1 text-sm text-zinc-600'>{subtitle}</p>
+              <p className='text-content-muted mt-1 text-sm'>{subtitle}</p>
             </div>
           </div>
         </div>
 
         {/* Spec link */}
-        <div className='border-b border-zinc-100 px-6 py-4'>
+        <div className='border-border border-b px-6 py-4'>
           <div className='flex items-center justify-between'>
             <div>
-              <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+              <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
                 Spec BE
               </div>
-              <code className='text-2xs mt-0.5 inline-block rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-700'>
+              <code className='text-2xs bg-muted text-content-muted mt-0.5 inline-block rounded px-1.5 py-0.5 font-mono'>
                 docs/{specFile}
               </code>
             </div>
             <Link
               href={`/overview/document-BE#${specFile.replace('.md', '').replace('be-', 'be-')}`}
-              className='flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100'
+              className='border-border text-content-muted hover:bg-muted flex items-center gap-1 rounded-lg border bg-white px-2.5 py-1 text-xs font-medium'
             >
               <FileCode2 className='size-3.5' />
               Xem spec
@@ -75,7 +75,7 @@ export function AdminComingSoon({
 
         {/* Dependencies */}
         <div className='px-6 py-4'>
-          <div className='text-3xs mb-3 font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='text-3xs text-content-muted mb-3 font-semibold tracking-wider uppercase'>
             Phụ thuộc
           </div>
           <ul className='space-y-2'>
@@ -90,7 +90,7 @@ export function AdminComingSoon({
                         : 'bg-blue-500'
                   }`}
                 />
-                <span className='flex-1 text-zinc-700'>{d.text}</span>
+                <span className='text-content-muted flex-1'>{d.text}</span>
                 <span
                   className={`text-3xs rounded px-1.5 py-0.5 font-mono font-bold uppercase ${
                     d.status === 'done'
@@ -113,13 +113,13 @@ export function AdminComingSoon({
 
         {/* Preview link (demo) */}
         {previewHref && previewLabel && (
-          <div className='border-t border-zinc-100 bg-zinc-50/50 px-6 py-4'>
+          <div className='border-border bg-muted/50 border-t px-6 py-4'>
             <div className='flex items-center justify-between'>
               <div>
-                <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+                <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
                   UI Demo có sẵn
                 </div>
-                <p className='mt-0.5 text-xs text-zinc-600'>
+                <p className='text-content-muted mt-0.5 text-xs'>
                   Xem trước UI + UX design tại trang demo (fake data).
                 </p>
               </div>

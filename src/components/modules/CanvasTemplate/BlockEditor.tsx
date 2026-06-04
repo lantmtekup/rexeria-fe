@@ -1064,13 +1064,13 @@ export function BlockEditor({
           có version nào) vẫn hiện bar — Save Version sẽ tạo v1.0.0 đầu
           tiên. */}
       {template && (
-        <div className='flex items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50/80 px-4 py-1.5 text-xs'>
-          <div className='flex items-center gap-2 text-zinc-600'>
-            <span className='text-3xs font-mono tracking-wider text-zinc-400 uppercase'>
+        <div className='border-border bg-muted/80 flex items-center justify-between gap-2 border-b px-4 py-1.5 text-xs'>
+          <div className='text-content-muted flex items-center gap-2'>
+            <span className='text-3xs text-muted-foreground font-mono tracking-wider uppercase'>
               {currentVersion ? 'committed' : 'chưa có version'}
             </span>
             {currentVersion ? (
-              <code className='text-2xs rounded bg-white px-1.5 py-0.5 font-mono text-zinc-700 ring-1 ring-zinc-200'>
+              <code className='text-2xs text-content-muted rounded bg-white px-1.5 py-0.5 font-mono ring-1 ring-zinc-200'>
                 v{currentVersion.version}
               </code>
             ) : (
@@ -1078,7 +1078,7 @@ export function BlockEditor({
                 draft only
               </code>
             )}
-            <span className='text-zinc-300'>·</span>
+            <span className='text-muted-foreground'>·</span>
             <span className='text-2xs'>
               autosave ghi{' '}
               <code className='font-mono'>draft_canvas_blueprint</code> · click{' '}

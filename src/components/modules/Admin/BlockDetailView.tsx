@@ -145,7 +145,7 @@ export function BlockDetailView({
         <button
           type='button'
           onClick={() => router.push(backHref)}
-          className='group inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 shadow-sm transition-all hover:border-zinc-300 hover:text-zinc-900'
+          className='group border-border text-content-muted hover:border-border hover:text-foreground inline-flex items-center gap-2 rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all'
         >
           <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
           Quay lại thư viện
@@ -268,7 +268,7 @@ export function BlockDetailView({
         <button
           type='button'
           onClick={() => router.push(backHref)}
-          className='group inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3.5 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
+          className='group border-border text-content-muted hover:text-foreground inline-flex items-center gap-2 rounded-full border bg-white px-3.5 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900'
         >
           <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
           Thư viện blocks
@@ -276,7 +276,7 @@ export function BlockDetailView({
         <button
           type='button'
           onClick={copyId}
-          className='group text-3xs inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white/60 px-2.5 py-1 font-mono text-zinc-500 shadow-sm backdrop-blur transition-colors hover:border-zinc-300 hover:bg-white hover:text-zinc-900'
+          className='group text-3xs border-border text-content-muted hover:border-border hover:text-foreground inline-flex items-center gap-1.5 rounded-full border bg-white/60 px-2.5 py-1 font-mono shadow-sm backdrop-blur transition-colors hover:bg-white'
           title='Click để copy block ID'
         >
           <Hash className='size-3' />
@@ -285,13 +285,13 @@ export function BlockDetailView({
           {copied ? (
             <Check className='size-3 text-emerald-600' />
           ) : (
-            <Copy className='size-3 text-zinc-400 group-hover:text-zinc-700' />
+            <Copy className='text-muted-foreground group-hover:text-content-muted size-3' />
           )}
         </button>
       </header>
 
       {/* ── Hero card ───────────────────────────────────────────────────── */}
-      <section className='relative overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-16px_rgba(0,0,0,0.12)]'>
+      <section className='border-border relative overflow-hidden rounded-3xl border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-16px_rgba(0,0,0,0.12)]'>
         {/* Soft gradient wash inside the hero card */}
         <div
           aria-hidden
@@ -309,10 +309,10 @@ export function BlockDetailView({
             >
               {label}
             </span>
-            <span className='text-3xs font-mono tracking-wider text-zinc-400 uppercase'>
+            <span className='text-3xs text-muted-foreground font-mono tracking-wider uppercase'>
               {type}
             </span>
-            <span className='text-3xs ml-auto inline-flex items-center gap-1 font-medium tracking-wider text-zinc-400 uppercase'>
+            <span className='text-3xs text-muted-foreground ml-auto inline-flex items-center gap-1 font-medium tracking-wider uppercase'>
               {hasMobile ? (
                 <>
                   <Smartphone className='size-3' /> Desktop + Mobile
@@ -349,27 +349,27 @@ export function BlockDetailView({
                 className='group inline-flex items-baseline gap-2 text-left'
                 title='Click để đổi tên'
               >
-                <h1 className='text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl'>
+                <h1 className='text-foreground text-2xl font-bold tracking-tight sm:text-3xl'>
                   {block.name}
                 </h1>
-                <Pencil className='size-3.5 text-zinc-300 transition-colors group-hover:text-zinc-700' />
+                <Pencil className='text-muted-foreground group-hover:text-content-muted size-3.5 transition-colors' />
               </button>
             )}
           </div>
 
           {/* Meta line */}
-          <div className='mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500'>
+          <div className='text-content-muted mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs'>
             <span className='inline-flex items-center gap-1.5'>
               <Calendar className='size-3' />
               Tạo {fmtDate(block.createdAt)}
             </span>
             {block.updatedAt && (
               <>
-                <span className='text-zinc-300'>·</span>
+                <span className='text-muted-foreground'>·</span>
                 <span>Cập nhật {fmtRelative(block.updatedAt)}</span>
               </>
             )}
-            <span className='text-zinc-300'>·</span>
+            <span className='text-muted-foreground'>·</span>
             <span>
               {extraCount > 0 ? `${extraCount} extras` : 'không có extras'}
             </span>
@@ -389,7 +389,7 @@ export function BlockDetailView({
         {/* Left col — Details + Tags */}
         <div className='space-y-6 lg:col-span-2'>
           {/* Details */}
-          <div className='rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm'>
+          <div className='border-border rounded-2xl border bg-white p-6 shadow-sm'>
             <SectionHeader icon={<Layers className='size-3.5' />}>
               Chi tiết
             </SectionHeader>
@@ -397,7 +397,7 @@ export function BlockDetailView({
               <DefRow
                 label='Block type'
                 value={
-                  <code className='text-2xs rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-700'>
+                  <code className='text-2xs bg-muted text-content-muted rounded px-1.5 py-0.5 font-mono'>
                     {type}
                   </code>
                 }
@@ -416,7 +416,7 @@ export function BlockDetailView({
                 label='Tags'
                 value={
                   tags.length === 0 ? (
-                    <span className='text-zinc-400'>—</span>
+                    <span className='text-muted-foreground'>—</span>
                   ) : (
                     `${tags.length} tag${tags.length > 1 ? 's' : ''}`
                   )
@@ -426,13 +426,13 @@ export function BlockDetailView({
           </div>
 
           {/* Tags editor */}
-          <div className='rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm'>
+          <div className='border-border rounded-2xl border bg-white p-6 shadow-sm'>
             <SectionHeader icon={<Tag className='size-3.5' />}>
               Tags
             </SectionHeader>
             <div className='mt-4 flex flex-wrap items-center gap-1.5'>
               {tags.length === 0 && (
-                <span className='text-xs text-zinc-400 italic'>
+                <span className='text-muted-foreground text-xs italic'>
                   Chưa có tag — thêm để dễ filter trong thư viện
                 </span>
               )}
@@ -441,17 +441,17 @@ export function BlockDetailView({
                   key={t}
                   type='button'
                   onClick={() => removeTag(t)}
-                  className='group text-2xs inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 font-medium text-zinc-700 transition-all hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
+                  className='group text-2xs border-border bg-muted text-content-muted inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium transition-all hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
                   title='Click để xoá tag'
                 >
                   <span>{t}</span>
-                  <X className='size-2.5 text-zinc-400 group-hover:text-rose-500' />
+                  <X className='text-muted-foreground size-2.5 group-hover:text-rose-500' />
                 </button>
               ))}
             </div>
             <div className='mt-4 flex max-w-md items-center gap-2'>
               <div className='relative flex-1'>
-                <Tag className='absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-zinc-400' />
+                <Tag className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
                 <input
                   value={tagInput}
                   onChange={e => setTagInput(e.target.value)}
@@ -462,7 +462,7 @@ export function BlockDetailView({
                     }
                   }}
                   placeholder='Thêm tag (Enter)…'
-                  className='w-full rounded-lg border border-zinc-200 bg-zinc-50 py-2 pr-3 pl-9 text-xs transition-colors outline-none focus:border-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-900/5'
+                  className='border-border bg-muted w-full rounded-lg border py-2 pr-3 pl-9 text-xs transition-colors outline-none focus:border-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-900/5'
                 />
               </div>
               <button
@@ -479,7 +479,7 @@ export function BlockDetailView({
 
         {/* Right col — Sticky action rail */}
         <aside className='lg:sticky lg:top-6 lg:self-start'>
-          <div className='rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm'>
+          <div className='border-border rounded-2xl border bg-white p-5 shadow-sm'>
             <SectionHeader icon={<Sparkles className='size-3.5' />}>
               Hành động
             </SectionHeader>
@@ -514,7 +514,7 @@ export function BlockDetailView({
               <button
                 type='button'
                 onClick={handleDuplicate}
-                className='group inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-700 transition-all hover:border-zinc-900 hover:text-zinc-900'
+                className='group border-border text-content-muted hover:text-foreground inline-flex items-center justify-center gap-1.5 rounded-lg border bg-white px-3 py-2 text-xs font-medium transition-all hover:border-zinc-900'
               >
                 <Copy className='size-3.5' />
                 Duplicate
@@ -522,7 +522,7 @@ export function BlockDetailView({
               <button
                 type='button'
                 onClick={handleDelete}
-                className='group inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-700 transition-all hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
+                className='group border-border text-content-muted inline-flex items-center justify-center gap-1.5 rounded-lg border bg-white px-3 py-2 text-xs font-medium transition-all hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
               >
                 <Trash2 className='size-3.5' />
                 Xoá
@@ -557,8 +557,8 @@ function SectionHeader({
   children: React.ReactNode;
 }) {
   return (
-    <div className='text-3xs flex items-center gap-2 font-semibold tracking-[0.2em] text-zinc-500 uppercase'>
-      <span className='flex size-6 items-center justify-center rounded-md bg-zinc-100 text-zinc-600'>
+    <div className='text-3xs text-content-muted flex items-center gap-2 font-semibold tracking-[0.2em] uppercase'>
+      <span className='bg-muted text-content-muted flex size-6 items-center justify-center rounded-md'>
         {icon}
       </span>
       {children}
@@ -569,10 +569,10 @@ function SectionHeader({
 function DefRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className='flex flex-col gap-1'>
-      <dt className='text-3xs font-semibold tracking-[0.15em] text-zinc-400 uppercase'>
+      <dt className='text-3xs text-muted-foreground font-semibold tracking-[0.15em] uppercase'>
         {label}
       </dt>
-      <dd className='text-sm leading-snug text-zinc-800'>{value}</dd>
+      <dd className='text-foreground text-sm leading-snug'>{value}</dd>
     </div>
   );
 }

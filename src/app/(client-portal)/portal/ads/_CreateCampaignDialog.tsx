@@ -170,7 +170,7 @@ export function CreateCampaignDialog({
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className='flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-3.5'>
+        <div className='border-border flex items-center justify-between gap-3 border-b px-5 py-3.5'>
           <div className='flex items-center gap-2.5'>
             <div className='flex size-8 items-center justify-center rounded-lg bg-blue-600 text-white shadow-sm'>
               <Megaphone className='size-4' />
@@ -179,14 +179,14 @@ export function CreateCampaignDialog({
               <h3 className='text-base leading-tight font-semibold'>
                 Tạo campaign
               </h3>
-              <p className='text-2xs mt-0.5 text-zinc-500'>
+              <p className='text-2xs text-content-muted mt-0.5'>
                 Chiến dịch quảng cáo mới (lưu nháp)
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className='rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label='Close'
           >
             <X className='size-4' />
@@ -194,7 +194,7 @@ export function CreateCampaignDialog({
         </div>
 
         {/* Stepper */}
-        <div className='flex items-center gap-1 border-b border-zinc-100 px-5 py-3'>
+        <div className='border-border flex items-center gap-1 border-b px-5 py-3'>
           {STEPS.map((s, i) => {
             const Icon = s.icon;
             const active = i === step;
@@ -211,7 +211,7 @@ export function CreateCampaignDialog({
                       'text-2xs flex size-6 items-center justify-center rounded-full font-bold transition-colors',
                       active && 'bg-blue-600 text-white',
                       done && 'bg-emerald-500 text-white',
-                      !active && !done && 'bg-zinc-100 text-zinc-400'
+                      !active && !done && 'bg-muted text-muted-foreground'
                     )}
                   >
                     {done ? (
@@ -223,7 +223,7 @@ export function CreateCampaignDialog({
                   <span
                     className={cn(
                       'text-xs font-medium',
-                      active ? 'text-zinc-900' : 'text-zinc-400'
+                      active ? 'text-foreground' : 'text-muted-foreground'
                     )}
                   >
                     {s.label}
@@ -248,7 +248,7 @@ export function CreateCampaignDialog({
           {step === 0 && (
             <div className='space-y-4'>
               <div>
-                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
                   Tên campaign <span className='text-rose-500'>*</span>
                 </label>
                 <input
@@ -256,14 +256,14 @@ export function CreateCampaignDialog({
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder='vd: Coca-Cola Tết 2026 — Awareness'
-                  className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                  className='border-border mt-1.5 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                   maxLength={128}
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className='text-3xs mb-1.5 block font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs text-content-muted mb-1.5 block font-semibold tracking-wider uppercase'>
                   Mục tiêu
                 </label>
                 <div className='grid grid-cols-2 gap-2'>
@@ -276,13 +276,13 @@ export function CreateCampaignDialog({
                         'rounded-lg border px-3 py-2 text-left transition-colors',
                         objective === o.value
                           ? 'border-blue-400 bg-blue-50/60 ring-2 ring-blue-100'
-                          : 'border-zinc-200 hover:bg-zinc-50'
+                          : 'border-border hover:bg-muted'
                       )}
                     >
-                      <span className='block text-sm font-semibold text-zinc-900'>
+                      <span className='text-foreground block text-sm font-semibold'>
                         {o.label}
                       </span>
-                      <span className='text-2xs block text-zinc-500'>
+                      <span className='text-2xs text-content-muted block'>
                         {o.desc}
                       </span>
                     </button>
@@ -291,12 +291,12 @@ export function CreateCampaignDialog({
               </div>
 
               <div>
-                <label className='text-3xs mb-1.5 block font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs text-content-muted mb-1.5 block font-semibold tracking-wider uppercase'>
                   Kênh chạy
                 </label>
                 <div className='flex flex-wrap gap-1.5'>
                   {channelOpts.length === 0 && (
-                    <span className='text-xs text-zinc-400'>
+                    <span className='text-muted-foreground text-xs'>
                       Đang tải kênh…
                     </span>
                   )}
@@ -311,7 +311,7 @@ export function CreateCampaignDialog({
                           'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
                           on
                             ? 'border-blue-500 bg-blue-600 text-white'
-                            : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                            : 'border-border text-content-muted hover:bg-muted bg-white'
                         )}
                       >
                         {on && <Check className='size-3' />}
@@ -328,7 +328,7 @@ export function CreateCampaignDialog({
           {step === 1 && (
             <div className='space-y-4'>
               <div>
-                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
                   Ngân sách
                 </label>
                 <div className='mt-1.5 flex items-center gap-2'>
@@ -338,14 +338,14 @@ export function CreateCampaignDialog({
                     value={budget}
                     onChange={e => setBudget(e.target.value)}
                     placeholder='vd: 50000000'
-                    className='w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                    className='border-border w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                   />
-                  <span className='shrink-0 rounded-lg bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-600'>
+                  <span className='bg-muted text-content-muted shrink-0 rounded-lg px-3 py-2 text-sm font-medium'>
                     VND
                   </span>
                 </div>
                 {budget && (
-                  <p className='text-2xs mt-1 text-zinc-400'>
+                  <p className='text-2xs text-muted-foreground mt-1'>
                     ≈ {(Number(budget) / 1_000_000).toLocaleString('vi-VN')}M
                     VND
                   </p>
@@ -354,11 +354,11 @@ export function CreateCampaignDialog({
 
               <div className='grid grid-cols-2 gap-3'>
                 <div>
-                  <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+                  <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
                     Bắt đầu
                   </label>
-                  <div className='mt-1.5 flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2'>
-                    <Calendar className='size-3.5 text-zinc-400' />
+                  <div className='border-border mt-1.5 flex items-center gap-2 rounded-lg border px-3 py-2'>
+                    <Calendar className='text-muted-foreground size-3.5' />
                     <input
                       type='date'
                       value={startDate}
@@ -368,11 +368,11 @@ export function CreateCampaignDialog({
                   </div>
                 </div>
                 <div>
-                  <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+                  <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
                     Kết thúc
                   </label>
-                  <div className='mt-1.5 flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2'>
-                    <Calendar className='size-3.5 text-zinc-400' />
+                  <div className='border-border mt-1.5 flex items-center gap-2 rounded-lg border px-3 py-2'>
+                    <Calendar className='text-muted-foreground size-3.5' />
                     <input
                       type='date'
                       value={endDate}
@@ -383,7 +383,7 @@ export function CreateCampaignDialog({
                   </div>
                 </div>
               </div>
-              <p className='text-2xs text-zinc-400'>
+              <p className='text-2xs text-muted-foreground'>
                 Tất cả tuỳ chọn — có thể bỏ trống và chỉnh sau trong chi tiết
                 campaign.
               </p>
@@ -394,13 +394,13 @@ export function CreateCampaignDialog({
           {step === 2 && (
             <div className='space-y-4'>
               <div>
-                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
                   Landing page đích
                 </label>
                 <select
                   value={templateId}
                   onChange={e => setTemplateId(e.target.value)}
-                  className='mt-1.5 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                  className='border-border mt-1.5 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 >
                   <option value=''>— Chưa gắn landing page —</option>
                   {templates.map(t => (
@@ -409,13 +409,13 @@ export function CreateCampaignDialog({
                     </option>
                   ))}
                 </select>
-                <p className='text-2xs mt-1 text-zinc-400'>
+                <p className='text-2xs text-muted-foreground mt-1'>
                   Traffic từ campaign sẽ đổ về landing page này.
                 </p>
               </div>
 
               <div>
-                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
                   UTM campaign
                 </label>
                 <input
@@ -426,12 +426,12 @@ export function CreateCampaignDialog({
                     setUtm(e.target.value);
                   }}
                   placeholder='auto từ tên campaign'
-                  className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 font-mono text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                  className='border-border mt-1.5 w-full rounded-lg border px-3 py-2 font-mono text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 />
               </div>
 
               <div>
-                <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+                <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
                   Ghi chú
                 </label>
                 <textarea
@@ -439,7 +439,7 @@ export function CreateCampaignDialog({
                   onChange={e => setNotes(e.target.value)}
                   rows={2}
                   placeholder='(tuỳ chọn)'
-                  className='mt-1.5 w-full resize-none rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                  className='border-border mt-1.5 w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 />
               </div>
             </div>
@@ -447,12 +447,12 @@ export function CreateCampaignDialog({
         </div>
 
         {/* Footer */}
-        <div className='flex items-center justify-between gap-3 border-t border-zinc-100 bg-zinc-50/50 px-5 py-3'>
+        <div className='border-border bg-muted/50 flex items-center justify-between gap-3 border-t px-5 py-3'>
           <button
             type='button'
             onClick={step === 0 ? onClose : () => setStep(s => s - 1)}
             disabled={saving}
-            className='inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50'
+            className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             {step === 0 ? (
               'Hủy'
@@ -463,7 +463,7 @@ export function CreateCampaignDialog({
             )}
           </button>
 
-          <div className='text-2xs text-zinc-400'>
+          <div className='text-2xs text-muted-foreground'>
             Bước {step + 1}/{STEPS.length}
           </div>
 

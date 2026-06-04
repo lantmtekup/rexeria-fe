@@ -378,7 +378,7 @@ const SCOPE_META: Record<
   InteractionMeta['scope'],
   { label: string; chip: string }
 > = {
-  page: { label: 'Page-level', chip: 'bg-zinc-100 text-zinc-700' },
+  page: { label: 'Page-level', chip: 'bg-muted text-content-muted' },
   block: { label: 'Block-level', chip: 'bg-blue-100 text-blue-700' },
   element: { label: 'Element-level', chip: 'bg-violet-100 text-violet-700' },
 };
@@ -439,13 +439,13 @@ export default function PortalCuratePage() {
     <PortalShell>
       {/* Header */}
       <section>
-        <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
+        <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
           <Sticker className='size-3' /> Curate · Loại tương tác
         </div>
         <h1 className='mt-1 text-2xl font-bold tracking-tight'>
           Quản lý tương tác visitor
         </h1>
-        <p className='mt-1 max-w-2xl text-sm text-zinc-500'>
+        <p className='text-content-muted mt-1 max-w-2xl text-sm'>
           Chọn loại tương tác Rexer sẽ track trên trang public của brand. Mỗi
           loại fire 1 analytics event để dashboard tổng hợp.
         </p>
@@ -477,15 +477,15 @@ export default function PortalCuratePage() {
       </div>
 
       {/* Filter bar */}
-      <div className='mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm'>
-        <div className='flex flex-1 items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 lg:max-w-sm'>
-          <Search className='size-3.5 text-zinc-400' />
+      <div className='border-border mt-5 flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3 shadow-sm'>
+        <div className='border-border bg-muted flex flex-1 items-center gap-2 rounded-lg border px-3 py-1.5 lg:max-w-sm'>
+          <Search className='text-muted-foreground size-3.5' />
           <input
             type='text'
             placeholder='Tìm theo tên / mô tả...'
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className='flex-1 bg-transparent text-sm outline-none placeholder:text-zinc-400'
+            className='placeholder:text-muted-foreground flex-1 bg-transparent text-sm outline-none'
           />
         </div>
         <div className='flex flex-wrap items-center gap-1'>
@@ -496,7 +496,7 @@ export default function PortalCuratePage() {
               className={`text-2xs rounded-full px-2.5 py-1 font-medium transition-all ${
                 scopeFilter === s
                   ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                  : 'border-border text-content-muted hover:bg-muted border bg-white'
               }`}
             >
               {s === 'all'
@@ -520,15 +520,15 @@ export default function PortalCuratePage() {
       </div>
 
       {/* Recent events feed */}
-      <section className='mt-8 rounded-2xl border border-zinc-200 bg-white shadow-sm'>
-        <div className='flex items-center justify-between border-b border-zinc-100 px-5 py-3'>
+      <section className='border-border mt-8 rounded-2xl border bg-white shadow-sm'>
+        <div className='border-border flex items-center justify-between border-b px-5 py-3'>
           <div className='flex items-center gap-2'>
             <div className='flex size-7 items-center justify-center rounded-lg bg-zinc-900 text-white shadow-sm'>
               <Activity className='size-4' />
             </div>
             <div>
               <h3 className='text-sm font-semibold'>Events real-time</h3>
-              <p className='text-2xs text-zinc-500'>
+              <p className='text-2xs text-content-muted'>
                 {FAKE_EVENTS.length} sự kiện gần nhất trên các trang public
               </p>
             </div>
@@ -564,7 +564,7 @@ function StatTile({
   icon: LucideIcon;
 }) {
   return (
-    <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm'>
+    <div className='border-border overflow-hidden rounded-2xl border bg-white p-4 shadow-sm'>
       <div className='flex items-center gap-2.5'>
         <div
           className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${color} text-white shadow-sm`}
@@ -572,14 +572,16 @@ function StatTile({
           <Icon className='size-4' />
         </div>
         <div className='min-w-0 flex-1'>
-          <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
             {label}
           </div>
-          <div className='font-mono text-lg font-bold text-zinc-900'>
+          <div className='text-foreground font-mono text-lg font-bold'>
             {value}
           </div>
           {hint && (
-            <div className='text-3xs font-mono text-zinc-400'>{hint}</div>
+            <div className='text-3xs text-muted-foreground font-mono'>
+              {hint}
+            </div>
           )}
         </div>
       </div>
@@ -601,7 +603,7 @@ function InteractionCard({
   const scope = SCOPE_META[m.scope];
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br ${m.gradient} to-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
+      className={`group border-border relative overflow-hidden rounded-2xl border bg-gradient-to-br ${m.gradient} to-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
         !enabled ? 'opacity-60' : ''
       }`}
     >
@@ -621,28 +623,28 @@ function InteractionCard({
           {enabled ? (
             <ToggleRight className='size-7 text-emerald-500' />
           ) : (
-            <ToggleLeft className='size-7 text-zinc-300' />
+            <ToggleLeft className='text-muted-foreground size-7' />
           )}
         </button>
       </div>
 
       <div className='mt-3 flex items-center gap-1.5'>
-        <span className='text-3xs font-mono text-zinc-400'>{kind}</span>
+        <span className='text-3xs text-muted-foreground font-mono'>{kind}</span>
         {m.default && (
-          <span className='text-3xs rounded bg-zinc-100 px-1 py-0.5 font-mono font-bold text-zinc-600'>
+          <span className='text-3xs bg-muted text-content-muted rounded px-1 py-0.5 font-mono font-bold'>
             DEFAULT
           </span>
         )}
       </div>
       <h3 className='mt-0.5 text-sm font-bold tracking-tight'>{m.label}</h3>
-      <p className='text-2xs mt-1 leading-snug text-zinc-600'>
+      <p className='text-2xs text-content-muted mt-1 leading-snug'>
         {m.description}
       </p>
 
-      <div className='mt-3 flex items-end justify-between border-t border-zinc-100 pt-2'>
+      <div className='border-border mt-3 flex items-end justify-between border-t pt-2'>
         <div>
-          <div className='text-3xs font-mono text-zinc-500'>30 ngày</div>
-          <div className='font-mono text-base font-bold text-zinc-900'>
+          <div className='text-3xs text-content-muted font-mono'>30 ngày</div>
+          <div className='text-foreground font-mono text-base font-bold'>
             {fmtNum(m.count_30d)}
           </div>
         </div>
@@ -660,7 +662,7 @@ function EventRow({ e }: { e: Event }) {
   const m = INTERACTIONS[e.kind];
   const Icon = m.icon;
   return (
-    <div className='flex items-start gap-3 px-5 py-2.5 transition-colors hover:bg-zinc-50/60'>
+    <div className='hover:bg-muted/60 flex items-start gap-3 px-5 py-2.5 transition-colors'>
       <div
         className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${m.color} text-white shadow-sm`}
       >
@@ -671,26 +673,32 @@ function EventRow({ e }: { e: Event }) {
           <span className='text-3xs rounded bg-blue-100 px-1.5 py-0.5 font-mono font-bold text-blue-700'>
             {e.kind}
           </span>
-          <span className='font-semibold text-zinc-900'>{e.template_name}</span>
+          <span className='text-foreground font-semibold'>
+            {e.template_name}
+          </span>
           {e.target && (
             <>
-              <span className='text-zinc-300'>→</span>
-              <code className='text-3xs rounded bg-zinc-100 px-1 py-0.5 font-mono text-zinc-700'>
+              <span className='text-muted-foreground'>→</span>
+              <code className='text-3xs bg-muted text-content-muted rounded px-1 py-0.5 font-mono'>
                 {e.target}
               </code>
             </>
           )}
           {e.meta && (
-            <span className='text-3xs font-mono text-zinc-400'>· {e.meta}</span>
+            <span className='text-3xs text-muted-foreground font-mono'>
+              · {e.meta}
+            </span>
           )}
         </div>
-        <div className='text-3xs mt-0.5 flex items-center gap-2 text-zinc-500'>
+        <div className='text-3xs text-content-muted mt-0.5 flex items-center gap-2'>
           <span className='font-mono'>visitor {e.visitor}</span>
           <span>·</span>
           <Type className='size-2.5' /> {m.scope}
         </div>
       </div>
-      <span className='text-3xs shrink-0 font-mono text-zinc-400'>{e.at}</span>
+      <span className='text-3xs text-muted-foreground shrink-0 font-mono'>
+        {e.at}
+      </span>
     </div>
   );
 }

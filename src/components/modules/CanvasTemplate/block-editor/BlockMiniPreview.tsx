@@ -83,7 +83,7 @@ export function BlockMiniPreview({
       <div
         ref={ref}
         className={cn(
-          'text-3xs flex items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 text-zinc-400',
+          'text-3xs text-muted-foreground flex items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200',
           className
         )}
         style={{ aspectRatio: aspect }}
@@ -108,7 +108,7 @@ export function BlockMiniPreview({
       >
         <PreviewErrorBoundary
           fallback={
-            <div className='flex h-[600px] items-center justify-center text-xs text-zinc-400'>
+            <div className='text-muted-foreground flex h-[600px] items-center justify-center text-xs'>
               render error
             </div>
           }

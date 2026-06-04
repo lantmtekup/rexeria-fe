@@ -112,18 +112,18 @@ export function CodeTemplatePageEditor({ page, template }: Props) {
   };
 
   return (
-    <div className='flex h-full min-h-0 flex-1 flex-col bg-zinc-100'>
+    <div className='bg-muted flex h-full min-h-0 flex-1 flex-col'>
       {/* Header */}
-      <header className='flex items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-2.5'>
+      <header className='border-border flex items-center justify-between gap-3 border-b bg-white px-4 py-2.5'>
         <div className='flex items-center gap-3'>
           <Link
             href='/admin/landing-pages'
-            className='inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900'
+            className='text-content-muted hover:text-foreground inline-flex items-center gap-1.5 text-xs font-medium'
           >
             <ArrowLeft className='size-3.5' /> Landing pages
           </Link>
-          <span className='text-zinc-300'>·</span>
-          <span className='text-sm font-semibold text-zinc-900'>
+          <span className='text-muted-foreground'>·</span>
+          <span className='text-foreground text-sm font-semibold'>
             {page.name}
           </span>
           <span className='text-3xs inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 font-bold tracking-wider text-blue-700 uppercase'>
@@ -154,10 +154,10 @@ export function CodeTemplatePageEditor({ page, template }: Props) {
       {/* Body — split: form trái, preview phải */}
       <div className='flex min-h-0 flex-1'>
         {/* Form panel */}
-        <aside className='w-[380px] shrink-0 overflow-y-auto border-r border-zinc-200 bg-white'>
+        <aside className='border-border w-[380px] shrink-0 overflow-y-auto border-r bg-white'>
           {grouped.map(([group, fields]) => (
-            <section key={group} className='border-b border-zinc-100 p-4'>
-              <h3 className='text-3xs mb-3 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+            <section key={group} className='border-border border-b p-4'>
+              <h3 className='text-3xs text-content-muted mb-3 font-semibold tracking-[0.18em] uppercase'>
                 {group}
               </h3>
               <div className='flex flex-col gap-3'>
@@ -173,7 +173,7 @@ export function CodeTemplatePageEditor({ page, template }: Props) {
             </section>
           ))}
           <div className='p-4'>
-            <p className='text-2xs text-zinc-500'>
+            <p className='text-2xs text-content-muted'>
               Source code:{' '}
               <code className='font-mono'>src/templates/{template.code}/</code>
             </p>
@@ -221,13 +221,13 @@ function FieldInput({
             );
           case 'boolean':
             return (
-              <label className='inline-flex items-center gap-2 text-xs text-zinc-700'>
+              <label className='text-content-muted inline-flex items-center gap-2 text-xs'>
                 <input
                   id={id}
                   type='checkbox'
                   checked={!!value}
                   onChange={e => onChange(e.target.checked)}
-                  className='size-3.5 rounded border-zinc-300'
+                  className='border-border size-3.5 rounded'
                 />
                 Bật
               </label>
@@ -277,7 +277,9 @@ function FieldInput({
             );
         }
       })()}
-      {field.hint && <p className='text-3xs text-zinc-500'>{field.hint}</p>}
+      {field.hint && (
+        <p className='text-3xs text-content-muted'>{field.hint}</p>
+      )}
     </div>
   );
 }

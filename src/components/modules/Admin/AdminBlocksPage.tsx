@@ -347,7 +347,7 @@ export function AdminBlocksPage() {
       {/* Main column */}
       <div className='flex flex-1 flex-col overflow-hidden'>
         {/* Header */}
-        <div className='border-b border-zinc-200 bg-white px-6 py-4'>
+        <div className='border-border border-b bg-white px-6 py-4'>
           <div className='flex items-start justify-between gap-3'>
             <div>
               <h1 className='text-xl font-semibold'>Blocks</h1>
@@ -361,7 +361,7 @@ export function AdminBlocksPage() {
                 type='button'
                 onClick={load}
                 disabled={loading}
-                className='inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50'
+                className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
               >
                 <RefreshCw
                   className={cn('size-3.5', loading && 'animate-spin')}
@@ -382,7 +382,7 @@ export function AdminBlocksPage() {
           {/* Search + view toggle */}
           <div className='mt-4 flex items-center gap-3'>
             <div className='relative max-w-md flex-1'>
-              <Search className='absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-zinc-400' />
+              <Search className='text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2' />
               <Input
                 placeholder='Tìm theo tên / block type / tag…'
                 value={search}
@@ -390,7 +390,7 @@ export function AdminBlocksPage() {
                 className='pl-8'
               />
             </div>
-            <div className='flex items-center gap-1 rounded-lg border border-zinc-200 bg-white p-0.5'>
+            <div className='border-border flex items-center gap-1 rounded-lg border bg-white p-0.5'>
               <ViewBtn
                 active={view === 'grid'}
                 onClick={() => setView('grid')}
@@ -414,7 +414,7 @@ export function AdminBlocksPage() {
                 onChange={e =>
                   setTypeFilter(e.target.value as BlockType | 'all')
                 }
-                className='rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 outline-none hover:bg-zinc-50'
+                className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-2.5 py-1 text-xs font-medium outline-none'
               >
                 <option value='all'>Tất cả type</option>
                 {(Object.keys(BLOCK_TYPE_LABEL) as BlockType[]).map(t => (
@@ -426,7 +426,7 @@ export function AdminBlocksPage() {
 
               {allTags.length > 0 && (
                 <div className='flex items-center gap-1.5'>
-                  <Tag className='size-3 text-zinc-400' />
+                  <Tag className='text-muted-foreground size-3' />
                   {allTags.map(t => (
                     <button
                       key={t}
@@ -436,7 +436,7 @@ export function AdminBlocksPage() {
                         'text-3xs rounded-full border px-2 py-0.5 font-medium transition-colors',
                         tagFilter === t
                           ? 'border-zinc-900 bg-zinc-900 text-white'
-                          : 'border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                          : 'border-border text-content-muted hover:bg-muted bg-white'
                       )}
                     >
                       {t}
@@ -452,14 +452,14 @@ export function AdminBlocksPage() {
                     setTypeFilter('all');
                     setTagFilter(null);
                   }}
-                  className='text-3xs ml-1 inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900'
+                  className='text-3xs text-content-muted hover:text-foreground ml-1 inline-flex items-center gap-1'
                 >
                   <X className='size-3' />
                   Clear
                 </button>
               )}
 
-              <div className='text-3xs ml-auto text-zinc-500'>
+              <div className='text-3xs text-content-muted ml-auto'>
                 {filtered.length} / {items.length}
               </div>
             </div>
@@ -467,14 +467,14 @@ export function AdminBlocksPage() {
         </div>
 
         {/* Body */}
-        <div className='flex-1 overflow-y-auto bg-zinc-50/40 p-6'>
+        <div className='bg-muted/40 flex-1 overflow-y-auto p-6'>
           {error && (
             <div className='mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
               Load blocks thất bại: <code className='font-mono'>{error}</code>
             </div>
           )}
           {loading && items.length === 0 ? (
-            <div className='flex items-center justify-center py-20 text-sm text-zinc-500'>
+            <div className='text-content-muted flex items-center justify-center py-20 text-sm'>
               <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải blocks…
             </div>
           ) : filtered.length === 0 ? (
@@ -645,7 +645,7 @@ function BlockCard({
         'group relative flex flex-col overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all hover:shadow-md',
         active
           ? 'border-zinc-900 ring-2 ring-zinc-900/10'
-          : 'border-zinc-200 hover:border-zinc-300'
+          : 'border-border hover:border-border'
       )}
     >
       <div className='absolute top-2 right-2 z-10 flex items-center gap-1'>
@@ -656,7 +656,7 @@ function BlockCard({
             e.stopPropagation();
             onPreview();
           }}
-          className='flex size-7 items-center justify-center rounded-full bg-white/85 text-zinc-700 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all hover:bg-white hover:text-zinc-900'
+          className='text-content-muted hover:text-foreground flex size-7 items-center justify-center rounded-full bg-white/85 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all hover:bg-white'
           title='Xem preview (layout + animation)'
           aria-label='Preview block'
         >
@@ -721,10 +721,10 @@ function BlockCard({
           )}
         </div>
         <div className='flex flex-1 flex-col gap-1.5 p-3'>
-          <div className='truncate text-sm font-semibold text-zinc-800'>
+          <div className='text-foreground truncate text-sm font-semibold'>
             {item.name}
           </div>
-          <div className='text-3xs font-mono text-zinc-500'>
+          <div className='text-3xs text-content-muted font-mono'>
             {item.type_code}
           </div>
           {item.tags && item.tags.length > 0 && (
@@ -732,19 +732,19 @@ function BlockCard({
               {item.tags.slice(0, 3).map(t => (
                 <span
                   key={t}
-                  className='text-3xs rounded-full bg-zinc-100 px-1.5 py-0.5 font-medium text-zinc-600'
+                  className='text-3xs bg-muted text-content-muted rounded-full px-1.5 py-0.5 font-medium'
                 >
                   {t}
                 </span>
               ))}
               {item.tags.length > 3 && (
-                <span className='text-3xs text-zinc-400'>
+                <span className='text-3xs text-muted-foreground'>
                   +{item.tags.length - 3}
                 </span>
               )}
             </div>
           )}
-          <div className='text-3xs mt-auto flex items-center justify-between text-zinc-400'>
+          <div className='text-3xs text-muted-foreground mt-auto flex items-center justify-between'>
             <span>{fmtRelative(item.updated_at ?? item.created_at)}</span>
             {item.usage_count > 0 && (
               <span className='font-mono'>↻ {item.usage_count}</span>
@@ -799,39 +799,39 @@ function CardKebabMenu({
           e.stopPropagation();
           setOpen(o => !o);
         }}
-        className='flex size-7 items-center justify-center rounded-full bg-white/85 text-zinc-700 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all hover:bg-white hover:text-zinc-900'
+        className='text-content-muted hover:text-foreground flex size-7 items-center justify-center rounded-full bg-white/85 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all hover:bg-white'
         aria-label='More actions'
         aria-expanded={open}
       >
         <MoreVertical className='size-3.5' />
       </button>
       {open && (
-        <div className='absolute top-9 right-0 z-20 w-48 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+        <div className='border-border absolute top-9 right-0 z-20 w-48 overflow-hidden rounded-lg border bg-white shadow-lg'>
           <button
             type='button'
             onClick={choose(onPreview)}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+            className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
           >
-            <Play className='size-3.5 text-zinc-500' />
+            <Play className='text-content-muted size-3.5' />
             Preview (animation)
           </button>
           <button
             type='button'
             onClick={choose(onDetail)}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+            className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
           >
-            <Eye className='size-3.5 text-zinc-500' />
+            <Eye className='text-content-muted size-3.5' />
             Mở chi tiết
           </button>
           <button
             type='button'
             onClick={choose(onDuplicate)}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+            className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
           >
-            <Copy className='size-3.5 text-zinc-500' />
+            <Copy className='text-content-muted size-3.5' />
             Duplicate
           </button>
-          <div className='h-px bg-zinc-100' />
+          <div className='bg-muted h-px' />
           <button
             type='button'
             onClick={choose(onDelete)}
@@ -866,7 +866,7 @@ function TableView({
   onPreview: (item: ServerBlock) => void;
 }) {
   return (
-    <div className='overflow-hidden rounded-lg border border-zinc-200 bg-white'>
+    <div className='border-border overflow-hidden rounded-lg border bg-white'>
       <Table>
         <TableHeader>
           <TableRow>
@@ -891,7 +891,7 @@ function TableView({
               >
                 <TableCell>
                   <div className='font-medium'>{it.name}</div>
-                  <div className='text-3xs font-mono text-zinc-400'>
+                  <div className='text-3xs text-muted-foreground font-mono'>
                     {it.id}
                   </div>
                 </TableCell>
@@ -906,27 +906,27 @@ function TableView({
                       {it.tags.slice(0, 2).map(t => (
                         <span
                           key={t}
-                          className='text-3xs rounded-full bg-zinc-100 px-1.5 py-0.5 text-zinc-600'
+                          className='text-3xs bg-muted text-content-muted rounded-full px-1.5 py-0.5'
                         >
                           {t}
                         </span>
                       ))}
                     </div>
                   ) : (
-                    <span className='text-zinc-300'>—</span>
+                    <span className='text-muted-foreground'>—</span>
                   )}
                 </TableCell>
                 <TableCell>
-                  <span className='text-2xs font-mono text-zinc-600'>
+                  <span className='text-2xs text-content-muted font-mono'>
                     {editorBlock?.extraElements?.length ?? 0}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className='text-2xs font-mono text-zinc-600'>
+                  <span className='text-2xs text-content-muted font-mono'>
                     {it.usage_count ?? 0}
                   </span>
                 </TableCell>
-                <TableCell className='text-xs text-zinc-500'>
+                <TableCell className='text-content-muted text-xs'>
                   {fmtRelative(it.updated_at ?? it.created_at)}
                 </TableCell>
                 <TableCell>
@@ -1036,9 +1036,9 @@ function DetailDrawer({
   };
 
   return (
-    <aside className='flex w-[380px] flex-col border-l border-zinc-200 bg-white'>
+    <aside className='border-border flex w-[380px] flex-col border-l bg-white'>
       {/* Header */}
-      <div className='flex items-start justify-between border-b border-zinc-100 px-4 py-3'>
+      <div className='border-border flex items-start justify-between border-b px-4 py-3'>
         <div className='min-w-0 flex-1'>
           {editingName ? (
             <input
@@ -1053,7 +1053,7 @@ function DetailDrawer({
                   setEditingName(false);
                 }
               }}
-              className='w-full rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm font-semibold outline-none focus:ring-2 focus:ring-zinc-900/10'
+              className='border-border w-full rounded-md border bg-white px-2 py-1 text-sm font-semibold outline-none focus:ring-2 focus:ring-zinc-900/10'
             />
           ) : (
             <button
@@ -1065,17 +1065,17 @@ function DetailDrawer({
               <span className='truncate text-sm font-semibold'>
                 {block.name}
               </span>
-              <Pencil className='size-3 text-zinc-300 group-hover:text-zinc-600' />
+              <Pencil className='text-muted-foreground group-hover:text-content-muted size-3' />
             </button>
           )}
-          <div className='text-3xs mt-0.5 font-mono text-zinc-500'>
+          <div className='text-3xs text-content-muted mt-0.5 font-mono'>
             {block.id}
           </div>
         </div>
         <button
           type='button'
           onClick={onClose}
-          className='rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+          className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded p-1'
           aria-label='Close'
         >
           <X className='size-4' />
@@ -1084,7 +1084,7 @@ function DetailDrawer({
 
       {/* Preview */}
       <div className='px-4 pt-4'>
-        <div className='relative overflow-hidden rounded-lg border border-zinc-200'>
+        <div className='border-border relative overflow-hidden rounded-lg border'>
           {editorBlock ? (
             <BlockMiniPreview block={editorBlock} aspect='16 / 9' />
           ) : (
@@ -1153,21 +1153,21 @@ function DetailDrawer({
       </div>
 
       {/* Tags */}
-      <div className='border-t border-zinc-100 px-4 py-3'>
-        <div className='text-3xs mb-1.5 flex items-center gap-1 font-semibold tracking-wider text-zinc-500 uppercase'>
+      <div className='border-border border-t px-4 py-3'>
+        <div className='text-3xs text-content-muted mb-1.5 flex items-center gap-1 font-semibold tracking-wider uppercase'>
           <Tag className='size-3' />
           Tags
         </div>
         <div className='flex flex-wrap items-center gap-1'>
           {tags.length === 0 && (
-            <span className='text-2xs text-zinc-400'>Chưa có tag</span>
+            <span className='text-2xs text-muted-foreground'>Chưa có tag</span>
           )}
           {tags.map(t => (
             <button
               key={t}
               type='button'
               onClick={() => removeTag(t)}
-              className='group text-3xs flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 font-medium text-zinc-700 hover:bg-rose-50 hover:text-rose-700'
+              className='group text-3xs bg-muted text-content-muted flex items-center gap-1 rounded-full px-2 py-0.5 font-medium hover:bg-rose-50 hover:text-rose-700'
               title='Click để xoá tag'
             >
               {t}
@@ -1186,7 +1186,7 @@ function DetailDrawer({
               }
             }}
             placeholder='Thêm tag (Enter)…'
-            className='text-2xs flex-1 rounded-md border border-zinc-200 px-2 py-1 outline-none focus:border-zinc-400'
+            className='text-2xs border-border flex-1 rounded-md border px-2 py-1 outline-none focus:border-zinc-400'
           />
           <button
             type='button'
@@ -1200,7 +1200,7 @@ function DetailDrawer({
       </div>
 
       {/* Footer actions */}
-      <div className='mt-auto border-t border-zinc-100 px-4 py-3'>
+      <div className='border-border mt-auto border-t px-4 py-3'>
         {/* Primary action — most-used = visual preview */}
         <Button
           size='sm'
@@ -1251,11 +1251,11 @@ function MetaRow({
 }) {
   return (
     <div className='flex items-center justify-between gap-2'>
-      <div className='text-3xs flex items-center gap-1.5 font-semibold tracking-wider text-zinc-500 uppercase'>
+      <div className='text-3xs text-content-muted flex items-center gap-1.5 font-semibold tracking-wider uppercase'>
         {icon}
         {label}
       </div>
-      <div className='text-zinc-800'>{value}</div>
+      <div className='text-foreground'>{value}</div>
     </div>
   );
 }
@@ -1278,7 +1278,7 @@ function ViewBtn({
       title={label}
       className={cn(
         'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
-        active ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100'
+        active ? 'bg-zinc-900 text-white' : 'text-content-muted hover:bg-muted'
       )}
     >
       {icon}
@@ -1305,7 +1305,7 @@ function LegacyBlockThumbnail({
   const SOURCE_H = 960;
 
   return (
-    <div className='relative aspect-[4/3] overflow-hidden bg-zinc-100'>
+    <div className='bg-muted relative aspect-[4/3] overflow-hidden'>
       <div
         aria-hidden='true'
         style={{
@@ -1378,7 +1378,7 @@ function LegacyPreviewOverlay({
             <div className='truncate text-sm font-semibold text-white'>
               {name}
             </div>
-            <code className='text-3xs block truncate font-mono text-zinc-400'>
+            <code className='text-3xs text-muted-foreground block truncate font-mono'>
               {schema.id}
             </code>
           </div>
@@ -1394,8 +1394,8 @@ function LegacyPreviewOverlay({
                   className={cn(
                     'text-3xs rounded-full px-2.5 py-1 font-mono font-bold tracking-wider uppercase transition-colors',
                     lang === l
-                      ? 'bg-white text-zinc-900'
-                      : 'text-zinc-400 hover:text-white'
+                      ? 'text-foreground bg-white'
+                      : 'text-muted-foreground hover:text-white'
                   )}
                 >
                   {l}
@@ -1406,7 +1406,7 @@ function LegacyPreviewOverlay({
           <button
             type='button'
             onClick={onClose}
-            className='flex size-8 items-center justify-center rounded-full text-zinc-300 hover:bg-white/10 hover:text-white'
+            className='text-muted-foreground flex size-8 items-center justify-center rounded-full hover:bg-white/10 hover:text-white'
             aria-label='Đóng preview'
             title='Đóng (ESC)'
           >

@@ -63,7 +63,7 @@ const STATUS_CHIP: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700',
   pending: 'bg-amber-100 text-amber-700',
   suspended: 'bg-rose-100 text-rose-700',
-  inactive: 'bg-zinc-100 text-zinc-600',
+  inactive: 'bg-muted text-content-muted',
 };
 
 export function AdminUsersPage() {
@@ -226,7 +226,7 @@ export function AdminUsersPage() {
       {/* Header */}
       <div className='flex flex-wrap items-end justify-between gap-3'>
         <div>
-          <div className='text-3xs flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+          <div className='text-3xs text-content-muted flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
             <Users className='size-3' /> {t('users.title')}
           </div>
           <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
@@ -260,9 +260,9 @@ export function AdminUsersPage() {
       <p className='text-content-muted text-xs'>{t('users.note')}</p>
 
       {/* Toolbar */}
-      <div className='flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm'>
+      <div className='border-border flex flex-wrap items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm'>
         <div className='relative max-w-sm flex-1'>
-          <Search className='absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-zinc-400' />
+          <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
           <Input
             placeholder='Tìm theo tên / id…'
             value={search}
@@ -272,11 +272,11 @@ export function AdminUsersPage() {
         </div>
 
         <div className='relative inline-flex items-center'>
-          <ArrowDownUp className='pointer-events-none absolute left-2.5 size-3.5 text-zinc-400' />
+          <ArrowDownUp className='text-muted-foreground pointer-events-none absolute left-2.5 size-3.5' />
           <select
             value={sort}
             onChange={e => setSort(e.target.value as Sort)}
-            className='appearance-none rounded-lg border border-zinc-200 bg-white py-1.5 pr-3 pl-7 text-xs font-medium text-zinc-700 outline-none hover:bg-zinc-50 focus:border-zinc-400'
+            className='border-border text-content-muted hover:bg-muted appearance-none rounded-lg border bg-white py-1.5 pr-3 pl-7 text-xs font-medium outline-none focus:border-zinc-400'
             aria-label='Sort'
           >
             {SORT_OPTIONS.map(o => (
@@ -290,7 +290,7 @@ export function AdminUsersPage() {
         <select
           value={pageSize}
           onChange={e => setPageSize(Number(e.target.value))}
-          className='rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 outline-none hover:bg-zinc-50'
+          className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium outline-none'
           aria-label='Items per page'
           title='Số item mỗi trang'
         >
@@ -301,7 +301,7 @@ export function AdminUsersPage() {
           ))}
         </select>
 
-        <div className='ml-auto inline-flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-white p-0.5'>
+        <div className='border-border ml-auto inline-flex items-center gap-0.5 rounded-lg border bg-white p-0.5'>
           <ViewBtn
             active={view === 'grid'}
             onClick={() => setView('grid')}
@@ -354,7 +354,7 @@ export function AdminUsersPage() {
           <button
             type='button'
             onClick={clearFilters}
-            className='text-2xs ml-1 inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900'
+            className='text-2xs text-content-muted hover:text-foreground ml-1 inline-flex items-center gap-1'
           >
             <XIcon className='size-3' /> Clear
           </button>
@@ -372,19 +372,19 @@ export function AdminUsersPage() {
 
       {/* Body */}
       {loading && allItems.length === 0 ? (
-        <div className='flex items-center justify-center py-16 text-sm text-zinc-500'>
+        <div className='text-content-muted flex items-center justify-center py-16 text-sm'>
           <RefreshCwIcon className='mr-2 size-4 animate-spin' /> Đang tải khách
           hàng…
         </div>
       ) : pageItems.length === 0 ? (
-        <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center'>
-          <Users className='mx-auto size-8 text-zinc-300' />
-          <p className='mt-3 text-sm font-semibold text-zinc-700'>
+        <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
+          <Users className='text-muted-foreground mx-auto size-8' />
+          <p className='text-content-muted mt-3 text-sm font-semibold'>
             {hasFilters
               ? 'Không có khách hàng nào khớp filter'
               : t('users.empty')}
           </p>
-          <p className='mt-1 text-xs text-zinc-500'>
+          <p className='text-content-muted mt-1 text-xs'>
             {hasFilters
               ? 'Thử đổi từ khoá hoặc clear filter.'
               : 'Bấm "Tạo khách hàng" để onboard brand mới.'}
@@ -461,24 +461,24 @@ function GridView({ items }: { items: Brand[] }) {
 
 function ClientCard({ item }: { item: Brand }) {
   const statusClass =
-    STATUS_CHIP[item.status?.toLowerCase()] ?? 'bg-zinc-100 text-zinc-600';
+    STATUS_CHIP[item.status?.toLowerCase()] ?? 'bg-muted text-content-muted';
   return (
     <Link
       href={`/admin/users/${item.id}`}
-      className='group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'
+      className='group border-border hover:border-border flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'
     >
       <div className='flex items-start gap-3 p-4'>
         <Avatar id={item.id} name={item.name} size={48} />
         <div className='min-w-0 flex-1'>
-          <h3 className='truncate text-sm font-semibold text-zinc-900'>
+          <h3 className='text-foreground truncate text-sm font-semibold'>
             {item.name}
           </h3>
-          <p className='text-3xs mt-0.5 truncate font-mono text-zinc-400'>
+          <p className='text-3xs text-muted-foreground mt-0.5 truncate font-mono'>
             {item.id.slice(0, 8)}…
           </p>
         </div>
       </div>
-      <div className='mt-auto flex items-center justify-between border-t border-zinc-100 bg-zinc-50/50 px-4 py-2'>
+      <div className='border-border bg-muted/50 mt-auto flex items-center justify-between border-t px-4 py-2'>
         <span
           className={cn(
             'text-3xs rounded-full px-2 py-0.5 font-bold tracking-wider uppercase',
@@ -487,7 +487,7 @@ function ClientCard({ item }: { item: Brand }) {
         >
           {item.status || '—'}
         </span>
-        <span className='text-3xs font-mono text-zinc-400'>
+        <span className='text-3xs text-muted-foreground font-mono'>
           {item.created_at
             ? new Date(item.created_at).toLocaleDateString('vi-VN')
             : '—'}
@@ -523,7 +523,7 @@ function TableView({
             <TableHead className='w-10'>
               <input
                 type='checkbox'
-                className='size-3.5 cursor-pointer rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400'
+                className='border-border text-foreground size-3.5 cursor-pointer rounded focus:ring-zinc-400'
                 checked={allOn}
                 ref={el => {
                   if (el) el.indeterminate = someOn && !allOn;
@@ -543,20 +543,17 @@ function TableView({
           {items.map(item => {
             const statusClass =
               STATUS_CHIP[item.status?.toLowerCase()] ??
-              'bg-zinc-100 text-zinc-600';
+              'bg-muted text-content-muted';
             const isSelected = selected.has(item.id);
             return (
               <TableRow
                 key={item.id}
-                className={cn(
-                  'hover:bg-zinc-50/50',
-                  isSelected && 'bg-zinc-50'
-                )}
+                className={cn('hover:bg-muted/50', isSelected && 'bg-muted')}
               >
                 <TableCell>
                   <input
                     type='checkbox'
-                    className='size-3.5 cursor-pointer rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400'
+                    className='border-border text-foreground size-3.5 cursor-pointer rounded focus:ring-zinc-400'
                     checked={isSelected}
                     onChange={() => onToggleSelected(item.id)}
                     aria-label={`Chọn ${item.name}`}
@@ -669,8 +666,8 @@ function Pagination({
   add(totalPages);
 
   return (
-    <div className='flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-sm'>
-      <span className='text-2xs text-zinc-500'>
+    <div className='border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-2.5 shadow-sm'>
+      <span className='text-2xs text-content-muted'>
         {from}–{to} trong {total}
       </span>
       <div className='flex items-center gap-1'>
@@ -678,13 +675,16 @@ function Pagination({
           type='button'
           onClick={() => onChange(Math.max(1, page - 1))}
           disabled={page <= 1}
-          className='inline-flex size-7 items-center justify-center rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40'
+          className='border-border text-content-muted hover:bg-muted inline-flex size-7 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-40'
         >
           <ChevronLeft className='size-3.5' />
         </button>
         {pages.map((p, i) =>
           p === 'gap' ? (
-            <span key={`gap-${i}`} className='text-2xs px-1 text-zinc-300'>
+            <span
+              key={`gap-${i}`}
+              className='text-2xs text-muted-foreground px-1'
+            >
               …
             </span>
           ) : (
@@ -696,7 +696,7 @@ function Pagination({
                 'text-2xs inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono font-semibold tabular-nums',
                 p === page
                   ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
+                  : 'border-border text-content-muted hover:bg-muted border bg-white'
               )}
             >
               {p}
@@ -707,7 +707,7 @@ function Pagination({
           type='button'
           onClick={() => onChange(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages}
-          className='inline-flex size-7 items-center justify-center rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40'
+          className='border-border text-content-muted hover:bg-muted inline-flex size-7 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-40'
         >
           <ChevronRight className='size-3.5' />
         </button>
@@ -727,7 +727,7 @@ function FilterGroup({
 }) {
   return (
     <div className='inline-flex items-center gap-1.5'>
-      <span className='text-3xs font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+      <span className='text-3xs text-muted-foreground font-semibold tracking-[0.18em] uppercase'>
         {label}
       </span>
       <div className='inline-flex flex-wrap items-center gap-1'>{children}</div>
@@ -755,7 +755,7 @@ function ChipBtn({
     ? accent
       ? accentActive[accent]
       : 'bg-zinc-900 text-white shadow-sm'
-    : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50';
+    : 'border border-border bg-white text-content-muted hover:bg-muted';
   return (
     <button
       type='button'
@@ -788,7 +788,7 @@ function ViewBtn({
       title={label}
       className={cn(
         'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
-        active ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100'
+        active ? 'bg-zinc-900 text-white' : 'text-content-muted hover:bg-muted'
       )}
     >
       {icon}

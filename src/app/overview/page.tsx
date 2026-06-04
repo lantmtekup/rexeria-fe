@@ -160,10 +160,10 @@ const ACCENT: Record<
   },
   zinc: {
     bg: 'bg-zinc-500',
-    bgSoft: 'bg-zinc-50',
-    border: 'border-zinc-200',
-    text: 'text-zinc-600',
-    chip: 'bg-zinc-100 text-zinc-700',
+    bgSoft: 'bg-muted',
+    border: 'border-border',
+    text: 'text-content-muted',
+    chip: 'bg-muted text-content-muted',
     gradient: 'from-zinc-100 to-white',
   },
   indigo: {
@@ -218,17 +218,19 @@ type UC = {
 
 function UseCaseCard({ uc }: { uc: UC }) {
   return (
-    <div className='rounded-xl border border-zinc-200 bg-white/70 p-3 transition-colors hover:bg-white'>
+    <div className='border-border rounded-xl border bg-white/70 p-3 transition-colors hover:bg-white'>
       <div className='mb-2 flex items-start justify-between gap-2'>
         <div className='min-w-0'>
           <div className='flex items-center gap-2'>
             <span className='text-3xs rounded bg-zinc-900 px-1.5 py-0.5 font-mono font-bold text-white'>
               UC-{uc.id}
             </span>
-            <h3 className='text-sm font-semibold text-zinc-900'>{uc.title}</h3>
+            <h3 className='text-foreground text-sm font-semibold'>
+              {uc.title}
+            </h3>
           </div>
           {uc.goal && (
-            <p className='text-2xs mt-1 text-zinc-500 italic'>
+            <p className='text-2xs text-content-muted mt-1 italic'>
               <span className='font-medium not-italic'>Mục tiêu:</span>{' '}
               {uc.goal}
             </p>
@@ -236,10 +238,10 @@ function UseCaseCard({ uc }: { uc: UC }) {
         </div>
         <ActorBadge actor={uc.actor} />
       </div>
-      <ol className='[&_code]:text-2xs space-y-1 text-sm leading-snug text-zinc-700 [&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono'>
+      <ol className='[&_code]:text-2xs text-content-muted [&_code]:bg-muted space-y-1 text-sm leading-snug [&_code]:rounded [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono'>
         {uc.steps.map((s, i) => (
           <li key={i} className='flex gap-2'>
-            <span className='text-3xs mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-zinc-100 font-mono font-bold text-zinc-600'>
+            <span className='text-3xs bg-muted text-content-muted mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full font-mono font-bold'>
               {i + 1}
             </span>
             <span className='flex-1'>{s}</span>
@@ -1477,12 +1479,12 @@ export default function OverviewPage() {
   }, []);
 
   return (
-    <div className='min-h-screen bg-zinc-50 text-zinc-900 antialiased'>
-      <header className='sticky top-0 z-30 flex items-center justify-between border-b border-zinc-200 bg-white/90 px-6 py-3 backdrop-blur'>
+    <div className='bg-muted text-foreground min-h-screen antialiased'>
+      <header className='border-border sticky top-0 z-30 flex items-center justify-between border-b bg-white/90 px-6 py-3 backdrop-blur'>
         <div className='flex items-center gap-3'>
           <button
             onClick={() => setNavOpen(v => !v)}
-            className='rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-medium hover:bg-zinc-100'
+            className='border-border hover:bg-muted rounded-lg border px-2.5 py-1 text-xs font-medium'
           >
             {navOpen ? '×' : '☰'} Điều hướng
           </button>
@@ -1498,13 +1500,13 @@ export default function OverviewPage() {
         <div className='flex items-center gap-2'>
           <a
             href='/overview/guide'
-            className='hidden items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 sm:inline-flex'
+            className='border-border text-content-muted hover:bg-muted hidden items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1 text-xs font-medium sm:inline-flex'
           >
             <BookOpen className='size-3.5' /> Hướng dẫn
           </a>
           <a
             href='/overview/document-BE'
-            className='hidden items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 sm:inline-flex'
+            className='border-border text-content-muted hover:bg-muted hidden items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1 text-xs font-medium sm:inline-flex'
           >
             <Cpu className='size-3.5' /> BE Docs
           </a>
@@ -1552,8 +1554,8 @@ export default function OverviewPage() {
           <BigWorkflow />
 
           {visibleUC === 0 && isFiltered && (
-            <div className='mb-6 rounded-2xl border border-dashed border-zinc-300 bg-white p-6 text-center'>
-              <div className='text-sm font-medium text-zinc-700'>
+            <div className='border-border mb-6 rounded-2xl border border-dashed bg-white p-6 text-center'>
+              <div className='text-content-muted text-sm font-medium'>
                 Không có use case nào khớp filter.
               </div>
               <button
@@ -1569,19 +1571,19 @@ export default function OverviewPage() {
             <ModuleSection key={m.id} m={m} selected={selected} />
           ))}
 
-          <footer className='mt-16 rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600 shadow-sm'>
+          <footer className='border-border text-content-muted mt-16 rounded-2xl border bg-white p-6 text-sm shadow-sm'>
             <div className='flex items-start gap-3'>
               <div className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white'>
                 <Activity className='size-5' />
               </div>
               <div>
-                <div className='font-semibold text-zinc-900'>
+                <div className='text-foreground font-semibold'>
                   Tài liệu use-case sống
                 </div>
                 <p className='mt-1 leading-relaxed'>
                   Mỗi UC mô tả 1 hành vi thực tế của Actor lên hệ thống. Khi
                   thêm feature, tạo UC mới (format{' '}
-                  <code className='rounded bg-zinc-100 px-1'>UC-Mục.Số</code>)
+                  <code className='bg-muted rounded px-1'>UC-Mục.Số</code>)
                   trong module tương ứng.
                 </p>
               </div>
@@ -1613,9 +1615,9 @@ function FilterBar({
   onReset: () => void;
 }) {
   return (
-    <div className='sticky top-[57px] z-20 border-b border-zinc-200 bg-white/95 px-6 py-2.5 backdrop-blur'>
+    <div className='border-border sticky top-[57px] z-20 border-b bg-white/95 px-6 py-2.5 backdrop-blur'>
       <div className='flex flex-wrap items-center gap-3'>
-        <span className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+        <span className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
           Lọc theo actor
         </span>
         <div className='flex flex-wrap items-center gap-1.5'>
@@ -1629,7 +1631,7 @@ function FilterBar({
                 className={`group flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
                   active
                     ? `${color} border-transparent text-white shadow-sm`
-                    : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50'
+                    : 'border-border text-content-muted hover:border-border hover:bg-muted bg-white'
                 }`}
               >
                 <span
@@ -1638,7 +1640,7 @@ function FilterBar({
                 {a}
                 <span
                   className={`text-3xs rounded px-1 font-mono ${
-                    active ? 'bg-white/25' : 'bg-zinc-100'
+                    active ? 'bg-white/25' : 'bg-muted'
                   }`}
                 >
                   {counts[a]}
@@ -1648,20 +1650,20 @@ function FilterBar({
           })}
         </div>
         <div className='ml-auto flex items-center gap-2 text-xs'>
-          <span className='font-mono text-zinc-700'>
+          <span className='text-content-muted font-mono'>
             <span
               className={
-                isFiltered ? 'font-bold text-zinc-900' : 'text-zinc-500'
+                isFiltered ? 'text-foreground font-bold' : 'text-content-muted'
               }
             >
               {visible}
             </span>
-            <span className='text-zinc-400'>/{total} UC</span>
+            <span className='text-muted-foreground'>/{total} UC</span>
           </span>
           {isFiltered && (
             <button
               onClick={onReset}
-              className='rounded-md border border-zinc-200 bg-white px-2 py-0.5 text-zinc-600 transition-colors hover:bg-zinc-100'
+              className='border-border text-content-muted hover:bg-muted rounded-md border bg-white px-2 py-0.5 transition-colors'
             >
               Reset
             </button>
@@ -1682,8 +1684,8 @@ function Sidebar({
   isFiltered: boolean;
 }) {
   return (
-    <aside className='sticky top-[105px] hidden h-[calc(100vh-105px)] w-72 shrink-0 overflow-y-auto border-r border-zinc-200 bg-white px-4 py-6 lg:block'>
-      <div className='text-2xs mb-4 font-semibold tracking-wider text-zinc-500 uppercase'>
+    <aside className='border-border sticky top-[105px] hidden h-[calc(100vh-105px)] w-72 shrink-0 overflow-y-auto border-r bg-white px-4 py-6 lg:block'>
+      <div className='text-2xs text-content-muted mb-4 font-semibold tracking-wider uppercase'>
         {MODULES.length} modules
       </div>
       <nav className='flex flex-col gap-0.5'>
@@ -1701,14 +1703,14 @@ function Sidebar({
                 isActive
                   ? 'bg-zinc-900 text-white shadow-sm'
                   : dimmed
-                    ? 'text-zinc-300'
-                    : 'text-zinc-700 hover:bg-zinc-100'
+                    ? 'text-muted-foreground'
+                    : 'text-content-muted hover:bg-muted'
               }`}
             >
               <span
                 className={`flex size-6 shrink-0 items-center justify-center rounded-md ${
-                  isActive ? a.bg : dimmed ? 'bg-zinc-50' : a.bgSoft
-                } ${isActive ? 'text-white' : dimmed ? 'text-zinc-300' : a.text}`}
+                  isActive ? a.bg : dimmed ? 'bg-muted' : a.bgSoft
+                } ${isActive ? 'text-white' : dimmed ? 'text-muted-foreground' : a.text}`}
               >
                 <Icon className='size-3.5' />
               </span>
@@ -1719,15 +1721,15 @@ function Sidebar({
                     isActive
                       ? 'bg-white/20 text-white'
                       : dimmed
-                        ? 'bg-zinc-50 text-zinc-300'
-                        : 'bg-zinc-100 text-zinc-500'
+                        ? 'bg-muted text-muted-foreground'
+                        : 'bg-muted text-content-muted'
                   }`}
                 >
                   {count}
                 </span>
               )}
               <span
-                className={`text-3xs font-mono ${dimmed ? 'text-zinc-300' : 'text-zinc-400'}`}
+                className={`text-3xs font-mono ${dimmed ? 'text-muted-foreground' : 'text-muted-foreground'}`}
               >
                 {n.num}
               </span>
@@ -1741,7 +1743,7 @@ function Sidebar({
 
 function Hero() {
   return (
-    <section className='relative mb-8 overflow-hidden rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm'>
+    <section className='border-border relative mb-8 overflow-hidden rounded-3xl border bg-white p-8 shadow-sm'>
       <div className='absolute inset-0 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 opacity-70' />
       <div
         className='absolute -top-12 -right-12 size-48 rounded-full bg-violet-200 blur-3xl'
@@ -1766,7 +1768,7 @@ function Hero() {
             Use Cases
           </span>
         </h1>
-        <p className='mt-3 max-w-2xl text-sm leading-relaxed text-zinc-600 md:text-base'>
+        <p className='text-content-muted mt-3 max-w-2xl text-sm leading-relaxed md:text-base'>
           <strong>Phase 1</strong>: Rexer cung cấp <em>managed service</em> cho
           brand lớn — Staff làm hết template + landing; brand login portal để
           xem analytics &amp; upload assets. 6 actor, 56+ use cases.
@@ -1856,7 +1858,7 @@ function ValueProp() {
     <section className='mb-10'>
       <div className='mb-3 flex items-baseline justify-between gap-3'>
         <SectionLabel>Vì sao Rexer AI tồn tại</SectionLabel>
-        <span className='text-2xs text-zinc-500'>
+        <span className='text-2xs text-content-muted'>
           6 pain points · 6 cách Rexer trả lời
         </span>
       </div>
@@ -1867,17 +1869,17 @@ function ValueProp() {
           return (
             <div
               key={it.ref}
-              className='group relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'
+              className='group border-border relative overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'
             >
               {/* Problem half */}
-              <div className='border-b border-dashed border-zinc-200 bg-gradient-to-br from-rose-50/60 to-white px-4 pt-4 pb-3'>
+              <div className='border-border border-b border-dashed bg-gradient-to-br from-rose-50/60 to-white px-4 pt-4 pb-3'>
                 <div className='mb-2 flex items-center justify-between'>
                   <span className='text-3xs inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 font-bold tracking-wide text-rose-700'>
                     <span className='text-2xs leading-none'>✕</span> VẤN ĐỀ
                   </span>
                   <Icon className='size-4 text-rose-300' />
                 </div>
-                <p className='text-sm leading-snug text-zinc-700'>
+                <p className='text-content-muted text-sm leading-snug'>
                   {it.problem}
                 </p>
               </div>
@@ -1905,7 +1907,7 @@ function ValueProp() {
                     {it.ref}
                   </span>
                 </div>
-                <p className='text-sm leading-snug text-zinc-800'>
+                <p className='text-foreground text-sm leading-snug'>
                   {it.solution}
                 </p>
                 <div className='mt-2.5 flex items-center gap-1.5 border-t border-white/60 pt-2'>
@@ -2000,11 +2002,11 @@ function ActorsCards() {
                   </span>
                 )}
               </div>
-              <div className='text-3xs mt-3 font-mono text-zinc-400'>
+              <div className='text-3xs text-muted-foreground mt-3 font-mono'>
                 {a.code}
               </div>
               <div className='text-sm font-semibold'>{a.name}</div>
-              <div className='text-2xs mt-0.5 leading-snug text-zinc-500'>
+              <div className='text-2xs text-content-muted mt-0.5 leading-snug'>
                 {a.scope}
               </div>
             </div>
@@ -2020,11 +2022,11 @@ function BigWorkflow() {
     <section className='mb-10'>
       <div className='mb-3 flex items-baseline justify-between gap-3'>
         <SectionLabel>Hành trình của một template AI</SectionLabel>
-        <span className='text-2xs text-zinc-500'>
+        <span className='text-2xs text-content-muted'>
           Từ khách lạ → trang live → vòng lặp cải tiến
         </span>
       </div>
-      <div className='relative overflow-hidden rounded-3xl border border-zinc-200 bg-gradient-to-br from-white via-zinc-50 to-white p-6 shadow-sm'>
+      <div className='border-border relative overflow-hidden rounded-3xl border bg-gradient-to-br from-white via-zinc-50 to-white p-6 shadow-sm'>
         <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6'>
           {WORKFLOW.map((s, i) => {
             const c = ACCENT[s.accent];
@@ -2051,18 +2053,18 @@ function BigWorkflow() {
                     <span className={`text-2xs font-mono font-bold ${c.text}`}>
                       {s.num}
                     </span>
-                    <span className='text-3xs font-mono text-zinc-400'>
+                    <span className='text-3xs text-muted-foreground font-mono'>
                       · {s.time}
                     </span>
                   </div>
-                  <h3 className='mt-0.5 text-base leading-tight font-bold text-zinc-900'>
+                  <h3 className='text-foreground mt-0.5 text-base leading-tight font-bold'>
                     {s.title}
                   </h3>
-                  <p className='mt-2 flex-1 text-xs leading-relaxed text-zinc-600'>
+                  <p className='text-content-muted mt-2 flex-1 text-xs leading-relaxed'>
                     {s.story}
                   </p>
 
-                  <div className='mt-3 flex items-center gap-1.5 border-t border-zinc-200/60 pt-2.5'>
+                  <div className='border-border/60 mt-3 flex items-center gap-1.5 border-t pt-2.5'>
                     <span className={`text-base leading-none ${c.text}`}>
                       →
                     </span>
@@ -2127,7 +2129,7 @@ function ModuleSection({
 
   return (
     <section id={m.id} className='scroll-mt-32 py-6'>
-      <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:shadow-md'>
+      <div className='border-border overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:shadow-md'>
         <div className={`h-1 ${c.bg}`} aria-hidden />
         <div className='p-6'>
           <div className='grid grid-cols-1 gap-6 lg:grid-cols-[1fr_200px]'>
@@ -2140,7 +2142,7 @@ function ModuleSection({
                 </div>
                 <div>
                   <div className='flex items-center gap-2'>
-                    <span className='text-2xs font-mono text-zinc-400'>
+                    <span className='text-2xs text-muted-foreground font-mono'>
                       {m.num}
                     </span>
                     <span
@@ -2149,7 +2151,7 @@ function ModuleSection({
                       {m.short}
                     </span>
                     {m.cases && (
-                      <span className='text-3xs rounded-full bg-zinc-100 px-2 py-0.5 font-mono text-zinc-600'>
+                      <span className='text-3xs bg-muted text-content-muted rounded-full px-2 py-0.5 font-mono'>
                         {isFiltered
                           ? `${filtered.length}/${totalCases}`
                           : `${totalCases}`}{' '}
@@ -2163,7 +2165,7 @@ function ModuleSection({
                 </div>
               </div>
               {m.intro && (
-                <div className='mt-4 text-sm leading-relaxed text-zinc-700 [&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_li]:my-0.5 [&_p]:my-2 [&_strong]:font-semibold [&_strong]:text-zinc-900 [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5'>
+                <div className='text-content-muted [&_code]:bg-muted [&_strong]:text-foreground mt-4 text-sm leading-relaxed [&_code]:rounded [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_li]:my-0.5 [&_p]:my-2 [&_strong]:font-semibold [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:space-y-1 [&_ul]:pl-5'>
                   {m.intro}
                 </div>
               )}
@@ -2182,7 +2184,7 @@ function ModuleSection({
           )}
 
           {m.cases && filtered.length === 0 && (
-            <div className='text-2xs mt-5 rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50 px-4 py-3 text-center text-zinc-500'>
+            <div className='text-2xs border-border bg-muted/50 text-content-muted mt-5 rounded-xl border border-dashed px-4 py-3 text-center'>
               Không có UC khớp filter trong module này
             </div>
           )}
@@ -2194,7 +2196,7 @@ function ModuleSection({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className='text-2xs mb-3 font-semibold tracking-wider text-zinc-500 uppercase'>
+    <h2 className='text-2xs text-content-muted mb-3 font-semibold tracking-wider uppercase'>
       {children}
     </h2>
   );

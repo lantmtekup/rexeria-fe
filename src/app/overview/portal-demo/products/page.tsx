@@ -42,7 +42,7 @@ const STATUS_META: Record<
   },
   discontinued: {
     label: 'Discontinued',
-    chip: 'bg-zinc-100 text-zinc-600',
+    chip: 'bg-muted text-content-muted',
     icon: XCircle,
   },
 };
@@ -124,13 +124,13 @@ export default function PortalProductsPage() {
     <PortalShell>
       <section className='flex flex-wrap items-end justify-between gap-4'>
         <div>
-          <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
             <Package className='size-3' /> Product Information
           </div>
           <h1 className='mt-1 text-2xl font-bold tracking-tight'>
             Catalog sản phẩm
           </h1>
-          <p className='mt-1 text-sm text-zinc-500'>
+          <p className='text-content-muted mt-1 text-sm'>
             {products.length} sản phẩm trong workspace. Rexer dùng thông tin này
             khi tạo landing page tự động (AI apply-product).
           </p>
@@ -143,7 +143,9 @@ export default function PortalProductsPage() {
             </span>
           )}
           {loading && (
-            <span className='text-2xs font-mono text-zinc-400'>loading…</span>
+            <span className='text-2xs text-muted-foreground font-mono'>
+              loading…
+            </span>
           )}
           <button
             onClick={openCreate}
@@ -165,18 +167,18 @@ export default function PortalProductsPage() {
       />
 
       {/* Filter bar */}
-      <div className='mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm'>
-        <div className='flex flex-1 items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 lg:max-w-sm'>
-          <Search className='size-3.5 text-zinc-400' />
+      <div className='border-border mt-5 flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3 shadow-sm'>
+        <div className='border-border bg-muted flex flex-1 items-center gap-2 rounded-lg border px-3 py-1.5 lg:max-w-sm'>
+          <Search className='text-muted-foreground size-3.5' />
           <input
             type='text'
             placeholder='Tìm theo tên / SKU...'
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className='flex-1 bg-transparent text-sm outline-none placeholder:text-zinc-400'
+            className='placeholder:text-muted-foreground flex-1 bg-transparent text-sm outline-none'
           />
         </div>
-        <Filter className='size-3.5 text-zinc-400' />
+        <Filter className='text-muted-foreground size-3.5' />
         <div className='flex flex-wrap items-center gap-1'>
           <CatBtn
             label={`Tất cả · ${counts.all}`}
@@ -202,7 +204,7 @@ export default function PortalProductsPage() {
       {/* Products grid */}
       <div className='mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'>
         {filtered.length === 0 ? (
-          <div className='col-span-full rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center text-sm text-zinc-500'>
+          <div className='border-border text-content-muted col-span-full rounded-2xl border border-dashed bg-white p-10 text-center text-sm'>
             Không có sản phẩm nào khớp filter.
           </div>
         ) : (
@@ -232,7 +234,7 @@ function CatBtn({
       className={`text-2xs rounded-full px-2.5 py-1 font-medium transition-all ${
         active
           ? `${color} text-white shadow-sm`
-          : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+          : 'border-border text-content-muted hover:bg-muted border bg-white'
       }`}
     >
       {label}
@@ -248,7 +250,7 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
   const maxPrice = Math.max(...p.sizes.map(s => s.price_vnd));
 
   return (
-    <div className='group overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+    <div className='group border-border overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       {/* Cover */}
       <div
         className={`relative aspect-[4/3] bg-gradient-to-br ${p.cover_gradient}`}
@@ -281,14 +283,14 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
                 key={i}
                 className='flex flex-col items-center gap-0.5 rounded bg-white/90 px-2 py-1 shadow-md backdrop-blur'
               >
-                <span className='text-3xs font-mono font-bold text-zinc-900'>
+                <span className='text-3xs text-foreground font-mono font-bold'>
                   {s.volume_ml}ml
                 </span>
-                <span className='text-3xs text-zinc-500'>{s.label}</span>
+                <span className='text-3xs text-content-muted'>{s.label}</span>
               </div>
             ))}
             {p.sizes.length > 3 && (
-              <div className='text-3xs rounded bg-white/90 px-2 py-1 font-mono font-bold text-zinc-900 shadow-md backdrop-blur'>
+              <div className='text-3xs text-foreground rounded bg-white/90 px-2 py-1 font-mono font-bold shadow-md backdrop-blur'>
                 +{p.sizes.length - 3}
               </div>
             )}
@@ -299,25 +301,25 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
       {/* Body */}
       <div className='p-4'>
         <h3 className='text-sm font-bold tracking-tight'>{p.name}</h3>
-        <p className='text-2xs mt-1 line-clamp-2 leading-snug text-zinc-600'>
+        <p className='text-2xs text-content-muted mt-1 line-clamp-2 leading-snug'>
           {p.description}
         </p>
 
         {/* Price range */}
-        <div className='mt-3 flex items-center gap-2 border-y border-zinc-100 py-2'>
-          <span className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+        <div className='border-border mt-3 flex items-center gap-2 border-y py-2'>
+          <span className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
             Giá
           </span>
-          <span className='font-mono text-sm font-bold text-zinc-900'>
+          <span className='text-foreground font-mono text-sm font-bold'>
             {minPrice.toLocaleString('vi-VN')}đ
             {minPrice !== maxPrice && (
-              <span className='text-zinc-400'>
+              <span className='text-muted-foreground'>
                 {' '}
                 – {maxPrice.toLocaleString('vi-VN')}đ
               </span>
             )}
           </span>
-          <span className='text-3xs ml-auto rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-600'>
+          <span className='text-3xs bg-muted text-content-muted ml-auto rounded px-1.5 py-0.5 font-mono'>
             {p.sizes.length} size
           </span>
         </div>
@@ -329,8 +331,10 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
               <div key={f.label} className='text-2xs flex items-start gap-1.5'>
                 <Sparkles className='mt-0.5 size-2.5 shrink-0 text-orange-500' />
                 <div>
-                  <span className='font-semibold text-zinc-900'>{f.label}</span>
-                  <span className='text-zinc-500'> — {f.description}</span>
+                  <span className='text-foreground font-semibold'>
+                    {f.label}
+                  </span>
+                  <span className='text-content-muted'> — {f.description}</span>
                 </div>
               </div>
             ))}
@@ -348,7 +352,7 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
             </span>
           ))}
           {p.ingredients.length > 0 && (
-            <span className='text-3xs inline-flex items-center gap-0.5 rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-zinc-600'>
+            <span className='text-3xs border-border bg-muted text-content-muted inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5'>
               <Beaker className='size-2' /> {p.ingredients.length} thành phần
             </span>
           )}
@@ -365,13 +369,13 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
               Landing page gắn ({p.related_template_ids.length})
             </Link>
           ) : (
-            <span className='text-2xs flex flex-1 items-center justify-center gap-1 rounded-lg border border-dashed border-zinc-200 bg-white px-3 py-1.5 text-zinc-400'>
+            <span className='text-2xs border-border text-muted-foreground flex flex-1 items-center justify-center gap-1 rounded-lg border border-dashed bg-white px-3 py-1.5'>
               <Clock className='size-3' /> Chưa có landing page
             </span>
           )}
           <button
             onClick={onEdit}
-            className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50'
+            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'
           >
             Sửa
           </button>

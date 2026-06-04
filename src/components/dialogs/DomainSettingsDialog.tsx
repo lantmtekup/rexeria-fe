@@ -205,8 +205,8 @@ export function DomainSettingsDialog({
         </DialogHeader>
 
         {/* URL preview for this page */}
-        <section className='rounded-xl border border-zinc-200 bg-zinc-50 p-3'>
-          <p className='text-2xs font-semibold tracking-wide text-zinc-600 uppercase'>
+        <section className='border-border bg-muted rounded-xl border p-3'>
+          <p className='text-2xs text-content-muted font-semibold tracking-wide uppercase'>
             URL của trang này
           </p>
           <ul className='mt-2 flex flex-col gap-1.5'>
@@ -215,7 +215,7 @@ export function DomainSettingsDialog({
               label='Mặc định (relative)'
             />
             {verifiedDomains.length === 0 && (
-              <li className='text-2xs text-zinc-500 italic'>
+              <li className='text-2xs text-content-muted italic'>
                 Chưa có domain custom đã xác minh.
               </li>
             )}
@@ -232,11 +232,11 @@ export function DomainSettingsDialog({
         {/* Add new */}
         <form
           onSubmit={handleAdd}
-          className='flex flex-col gap-2 rounded-xl border border-zinc-200 p-3'
+          className='border-border flex flex-col gap-2 rounded-xl border p-3'
         >
           <Label
             htmlFor='dom-new'
-            className='text-xs font-semibold text-zinc-700'
+            className='text-content-muted text-xs font-semibold'
           >
             Thêm domain mới
           </Label>
@@ -255,7 +255,7 @@ export function DomainSettingsDialog({
               Thêm
             </Button>
           </div>
-          <p className='text-2xs text-zinc-500'>
+          <p className='text-2xs text-content-muted'>
             Sau khi thêm, cần config DNS (TXT + CNAME) rồi bấm
             &quot;Verify&quot;.
           </p>
@@ -264,14 +264,14 @@ export function DomainSettingsDialog({
         {/* Domains list */}
         <section>
           <div className='mb-2 flex items-center justify-between'>
-            <h3 className='text-xs font-semibold tracking-wide text-zinc-600 uppercase'>
+            <h3 className='text-content-muted text-xs font-semibold tracking-wide uppercase'>
               Domains của brand ({domains?.length ?? 0})
             </h3>
             <button
               type='button'
               onClick={() => void reload()}
               disabled={loading}
-              className='text-2xs inline-flex items-center gap-1 rounded-md px-2 py-1 text-zinc-600 hover:bg-zinc-100 disabled:opacity-50'
+              className='text-2xs text-content-muted hover:bg-muted inline-flex items-center gap-1 rounded-md px-2 py-1 disabled:opacity-50'
               aria-label='Refresh'
             >
               <RefreshCw className={cn('size-3', loading && 'animate-spin')} />
@@ -287,7 +287,7 @@ export function DomainSettingsDialog({
           )}
 
           {!error && domains && domains.length === 0 && (
-            <p className='rounded-lg border border-dashed border-zinc-300 p-4 text-center text-xs text-zinc-500'>
+            <p className='border-border text-content-muted rounded-lg border border-dashed p-4 text-center text-xs'>
               Chưa có custom domain nào.
             </p>
           )}
@@ -296,11 +296,11 @@ export function DomainSettingsDialog({
             {(domains ?? []).map(d => (
               <li
                 key={d.id}
-                className='rounded-xl border border-zinc-200 bg-white'
+                className='border-border rounded-xl border bg-white'
               >
                 <div className='flex items-center gap-2 px-3 py-2'>
                   <StatusDot status={d.status} />
-                  <span className='flex-1 truncate font-mono text-xs text-zinc-800'>
+                  <span className='text-foreground flex-1 truncate font-mono text-xs'>
                     {d.domain}
                   </span>
                   <StatusBadge status={d.status} />
@@ -325,7 +325,7 @@ export function DomainSettingsDialog({
                     onClick={() =>
                       setExpandedId(expandedId === d.id ? null : d.id)
                     }
-                    className='text-2xs rounded-md px-2 py-1 text-zinc-500 hover:bg-zinc-100'
+                    className='text-2xs text-content-muted hover:bg-muted rounded-md px-2 py-1'
                   >
                     DNS
                   </button>
@@ -340,12 +340,12 @@ export function DomainSettingsDialog({
                   </button>
                 </div>
                 {expandedId === d.id && (
-                  <div className='border-t border-zinc-100 bg-zinc-50/60 px-3 py-2'>
-                    <p className='text-2xs mb-1.5 font-semibold text-zinc-600'>
+                  <div className='border-border bg-muted/60 border-t px-3 py-2'>
+                    <p className='text-2xs text-content-muted mb-1.5 font-semibold'>
                       Cấu hình DNS tại nhà cung cấp domain
                     </p>
                     <table className='text-2xs w-full'>
-                      <thead className='text-zinc-500'>
+                      <thead className='text-content-muted'>
                         <tr>
                           <th className='py-1 text-left font-medium'>Type</th>
                           <th className='py-1 text-left font-medium'>Name</th>
@@ -353,9 +353,9 @@ export function DomainSettingsDialog({
                           <th className='w-6' />
                         </tr>
                       </thead>
-                      <tbody className='font-mono text-zinc-800'>
+                      <tbody className='text-foreground font-mono'>
                         {dnsRecordsFor(d).map((r, i) => (
-                          <tr key={i} className='border-t border-zinc-200/70'>
+                          <tr key={i} className='border-border/70 border-t'>
                             <td className='py-1 pr-2'>{r.type}</td>
                             <td className='py-1 pr-2'>{r.name}</td>
                             <td className='max-w-[200px] truncate py-1 pr-2'>
@@ -368,7 +368,7 @@ export function DomainSettingsDialog({
                                   void navigator.clipboard.writeText(r.value);
                                   toast.success('Đã copy');
                                 }}
-                                className='rounded-md p-1 text-zinc-500 hover:bg-zinc-100'
+                                className='text-content-muted hover:bg-muted rounded-md p-1'
                                 aria-label='Copy value'
                               >
                                 <Copy className='size-3' />
@@ -390,7 +390,7 @@ export function DomainSettingsDialog({
           </ul>
 
           {loading && !domains && (
-            <div className='flex items-center justify-center py-6 text-xs text-zinc-500'>
+            <div className='text-content-muted flex items-center justify-center py-6 text-xs'>
               <Loader2 className='mr-2 size-3.5 animate-spin' />
               Đang load…
             </div>
@@ -418,7 +418,7 @@ function StatusBadge({ status }: { status: string }) {
     verifying: 'bg-blue-100 text-blue-700',
     failed: 'bg-rose-100 text-rose-700',
   };
-  const cls = map[status] ?? 'bg-zinc-100 text-zinc-700';
+  const cls = map[status] ?? 'bg-muted text-content-muted';
   const label =
     status === 'verified' ? (
       <span className='inline-flex items-center gap-1'>
@@ -438,8 +438,8 @@ function UrlRow({ url, label }: { url: string; label: string }) {
   const display = url.startsWith('http') ? url : url;
   return (
     <li className='flex items-center gap-2'>
-      <span className='text-2xs shrink-0 text-zinc-500'>{label}:</span>
-      <code className='text-2xs flex-1 truncate font-mono text-zinc-800'>
+      <span className='text-2xs text-content-muted shrink-0'>{label}:</span>
+      <code className='text-2xs text-foreground flex-1 truncate font-mono'>
         {display}
       </code>
       <button
@@ -448,7 +448,7 @@ function UrlRow({ url, label }: { url: string; label: string }) {
           void navigator.clipboard.writeText(url);
           toast.success('Đã copy URL');
         }}
-        className='rounded-md p-1 text-zinc-500 hover:bg-zinc-200'
+        className='text-content-muted rounded-md p-1 hover:bg-zinc-200'
         aria-label='Copy URL'
       >
         <Copy className='size-3' />

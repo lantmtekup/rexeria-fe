@@ -68,7 +68,7 @@ const STATUS_CHIP: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700',
   pending: 'bg-amber-100 text-amber-700',
   suspended: 'bg-rose-100 text-rose-700',
-  inactive: 'bg-zinc-100 text-zinc-600',
+  inactive: 'bg-muted text-content-muted',
 };
 
 interface Counts {
@@ -126,7 +126,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
 
   if (loadingClient && !client) {
     return (
-      <div className='flex items-center justify-center p-16 text-sm text-zinc-500'>
+      <div className='text-content-muted flex items-center justify-center p-16 text-sm'>
         <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải…
       </div>
     );
@@ -137,7 +137,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
       <div className='mx-auto max-w-2xl p-8'>
         <Link
           href='/admin/users'
-          className='inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900'
+          className='text-content-muted hover:text-foreground inline-flex items-center gap-1.5 text-sm'
         >
           <ArrowLeft className='size-3.5' /> Quay lại
         </Link>
@@ -154,21 +154,21 @@ export function AdminClientDetailPage({ clientId }: Props) {
   }
 
   const statusClass =
-    STATUS_CHIP[client.status?.toLowerCase()] ?? 'bg-zinc-100 text-zinc-600';
+    STATUS_CHIP[client.status?.toLowerCase()] ?? 'bg-muted text-content-muted';
 
   return (
     <div className='mx-auto flex max-w-6xl flex-col gap-5 p-6'>
       {/* Breadcrumb */}
       <Link
         href='/admin/users'
-        className='group inline-flex items-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
+        className='group border-border text-content-muted hover:text-foreground inline-flex items-center gap-2 self-start rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900'
       >
         <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
         Khách hàng
       </Link>
 
       {/* Header card */}
-      <section className='relative overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm'>
+      <section className='border-border relative overflow-hidden rounded-3xl border bg-white shadow-sm'>
         <div
           aria-hidden
           className='pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-zinc-50/80 to-transparent'
@@ -184,7 +184,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
           </div>
           <div className='min-w-0 flex-1'>
             <div className='flex flex-wrap items-center gap-2'>
-              <h1 className='truncate text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl'>
+              <h1 className='text-foreground truncate text-2xl font-bold tracking-tight sm:text-3xl'>
                 {client.name}
               </h1>
               <span
@@ -196,18 +196,18 @@ export function AdminClientDetailPage({ clientId }: Props) {
                 {client.status || '—'}
               </span>
             </div>
-            <div className='mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500'>
+            <div className='text-content-muted mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs'>
               <button
                 type='button'
                 onClick={copyId}
-                className='group inline-flex items-center gap-1.5 font-mono hover:text-zinc-900'
+                className='group hover:text-foreground inline-flex items-center gap-1.5 font-mono'
                 title='Click để copy client ID'
               >
                 <span>{client.id}</span>
                 {copied ? (
                   <Check className='size-3 text-emerald-600' />
                 ) : (
-                  <Copy className='size-3 text-zinc-400 group-hover:text-zinc-700' />
+                  <Copy className='text-muted-foreground group-hover:text-content-muted size-3' />
                 )}
               </button>
               <span className='inline-flex items-center gap-1.5'>
@@ -257,7 +257,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
       </section>
 
       {/* Tabs */}
-      <nav className='flex flex-wrap items-center gap-1 rounded-2xl border border-zinc-200 bg-white p-1 shadow-sm'>
+      <nav className='border-border flex flex-wrap items-center gap-1 rounded-2xl border bg-white p-1 shadow-sm'>
         {TABS.map(t => {
           const Icon = t.icon;
           const count = counts[t.id];
@@ -271,7 +271,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
                 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
                 active
                   ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'text-zinc-600 hover:bg-zinc-100'
+                  : 'text-content-muted hover:bg-muted'
               )}
             >
               <Icon className='size-3.5' />
@@ -282,7 +282,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
                     'text-3xs inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 font-mono tabular-nums',
                     active
                       ? 'bg-white/15 text-white/90'
-                      : 'bg-zinc-100 text-zinc-500'
+                      : 'bg-muted text-content-muted'
                   )}
                 >
                   {count}
@@ -294,7 +294,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
       </nav>
 
       {/* Tab body */}
-      <section className='rounded-2xl border border-zinc-200 bg-white shadow-sm'>
+      <section className='border-border rounded-2xl border bg-white shadow-sm'>
         {tab === 'workspaces' && (
           <WorkspacesTab
             clientId={clientId}
@@ -342,13 +342,13 @@ function StatCard({
   value: number | undefined;
 }) {
   return (
-    <div className='rounded-2xl border border-zinc-200 bg-white px-4 py-3 shadow-sm'>
-      <div className='text-3xs flex items-center gap-1.5 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+    <div className='border-border rounded-2xl border bg-white px-4 py-3 shadow-sm'>
+      <div className='text-3xs text-content-muted flex items-center gap-1.5 font-semibold tracking-[0.18em] uppercase'>
         {icon}
         {label}
       </div>
-      <div className='mt-1 font-mono text-2xl font-bold text-zinc-900 tabular-nums'>
-        {value ?? <span className='text-zinc-300'>—</span>}
+      <div className='text-foreground mt-1 font-mono text-2xl font-bold tabular-nums'>
+        {value ?? <span className='text-muted-foreground'>—</span>}
       </div>
     </div>
   );
@@ -369,7 +369,7 @@ function WorkspacesTab({
       onCount={onCount}
       empty='Chưa có workspace nào'
       render={ws => (
-        <div className='flex items-center justify-between border-b border-zinc-100 px-4 py-3 last:border-0 hover:bg-zinc-50/50'>
+        <div className='border-border hover:bg-muted/50 flex items-center justify-between border-b px-4 py-3 last:border-0'>
           <div className='flex items-center gap-3'>
             <div
               className={cn(
@@ -380,7 +380,7 @@ function WorkspacesTab({
               {initialsOf(ws.name)}
             </div>
             <div>
-              <div className='text-sm font-semibold text-zinc-900'>
+              <div className='text-foreground text-sm font-semibold'>
                 {ws.name}
                 {ws.is_default && (
                   <span className='text-3xs ml-2 rounded-full bg-emerald-100 px-1.5 py-0.5 font-bold tracking-wider text-emerald-700 uppercase'>
@@ -388,12 +388,12 @@ function WorkspacesTab({
                   </span>
                 )}
               </div>
-              <div className='text-3xs font-mono text-zinc-400'>
+              <div className='text-3xs text-muted-foreground font-mono'>
                 {ws.slug ?? ws.id.slice(0, 12)}
               </div>
             </div>
           </div>
-          <div className='text-3xs font-mono text-zinc-400'>
+          <div className='text-3xs text-muted-foreground font-mono'>
             {ws.created_at
               ? new Date(ws.created_at).toLocaleDateString('vi-VN')
               : '—'}
@@ -474,8 +474,8 @@ function LandingsTab({
   return (
     <div>
       {/* Top action bar */}
-      <div className='flex items-center justify-between border-b border-zinc-100 px-4 py-3'>
-        <div className='text-xs text-zinc-500'>
+      <div className='border-border flex items-center justify-between border-b px-4 py-3'>
+        <div className='text-content-muted text-xs'>
           {loading
             ? 'Đang tải…'
             : `${items.length} landing đã assign cho khách`}
@@ -491,17 +491,17 @@ function LandingsTab({
       </div>
 
       {error && (
-        <div className='border-b border-zinc-100 bg-rose-50 px-4 py-2 text-xs text-rose-800'>
+        <div className='border-border border-b bg-rose-50 px-4 py-2 text-xs text-rose-800'>
           {error}
         </div>
       )}
 
       {loading && items.length === 0 ? (
-        <div className='flex items-center justify-center py-12 text-sm text-zinc-500'>
+        <div className='text-content-muted flex items-center justify-center py-12 text-sm'>
           <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải…
         </div>
       ) : items.length === 0 ? (
-        <div className='px-4 py-10 text-center text-sm text-zinc-500'>
+        <div className='text-content-muted px-4 py-10 text-center text-sm'>
           Khách hàng chưa có landing nào được assign — bấm{' '}
           <strong>Tạo landing mới</strong> để bắt đầu.
         </div>
@@ -578,10 +578,10 @@ function LandingRow({
   };
 
   return (
-    <div className='flex items-start gap-3 border-b border-zinc-100 px-4 py-3 last:border-0 hover:bg-zinc-50/50'>
+    <div className='border-border hover:bg-muted/50 flex items-start gap-3 border-b px-4 py-3 last:border-0'>
       <Link
         href={`/canvas-templates/${item.id}`}
-        className='aspect-[4/3] w-16 shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-gradient-to-br from-zinc-100 to-zinc-200'
+        className='border-border aspect-[4/3] w-16 shrink-0 overflow-hidden rounded-md border bg-gradient-to-br from-zinc-100 to-zinc-200'
       >
         {item.thumbnail_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -591,7 +591,7 @@ function LandingRow({
             className='size-full object-cover'
           />
         ) : (
-          <div className='flex h-full items-center justify-center text-zinc-300'>
+          <div className='text-muted-foreground flex h-full items-center justify-center'>
             <LayoutTemplate className='size-4' />
           </div>
         )}
@@ -601,7 +601,7 @@ function LandingRow({
         <div className='flex items-center gap-2'>
           <Link
             href={`/canvas-templates/${item.id}`}
-            className='truncate text-sm font-semibold text-zinc-900 hover:underline'
+            className='text-foreground truncate text-sm font-semibold hover:underline'
           >
             {item.name}
           </Link>
@@ -612,13 +612,13 @@ function LandingRow({
                 ? 'bg-emerald-100 text-emerald-700'
                 : item.status === 'archived'
                   ? 'bg-rose-100 text-rose-700'
-                  : 'bg-zinc-100 text-zinc-500'
+                  : 'bg-muted text-content-muted'
             )}
           >
             {item.status}
           </span>
         </div>
-        <div className='text-3xs mt-0.5 font-mono text-zinc-400'>
+        <div className='text-3xs text-muted-foreground mt-0.5 font-mono'>
           {item.id.slice(0, 12)}… ·{' '}
           {item.updated_at
             ? new Date(item.updated_at).toLocaleDateString('vi-VN')
@@ -631,25 +631,25 @@ function LandingRow({
         <button
           type='button'
           onClick={() => setMenuOpen(o => !o)}
-          className='inline-flex size-7 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
+          className='text-content-muted hover:bg-muted hover:text-foreground inline-flex size-7 items-center justify-center rounded-md'
           aria-label='Hành động'
         >
           <MoreVertical className='size-3.5' />
         </button>
         {menuOpen && (
-          <div className='absolute top-9 right-0 z-20 w-52 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+          <div className='border-border absolute top-9 right-0 z-20 w-52 overflow-hidden rounded-lg border bg-white shadow-lg'>
             <Link
               href={`/canvas-templates/${item.id}`}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+              className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
               onClick={() => setMenuOpen(false)}
             >
-              <Pencil className='size-3.5 text-zinc-500' />
+              <Pencil className='text-content-muted size-3.5' />
               Mở canvas editor
             </Link>
             <button
               type='button'
               onClick={() => togglePublish(true)}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+              className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
               title='Publish landing — sinh share_token + URL public'
             >
               <Rocket className='size-3.5 text-emerald-600' />
@@ -658,13 +658,13 @@ function LandingRow({
             <button
               type='button'
               onClick={() => togglePublish(false)}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+              className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
               title='Unpublish — invalidate share_token, URL 404'
             >
-              <Rocket className='size-3.5 rotate-180 text-zinc-500' />
+              <Rocket className='text-content-muted size-3.5 rotate-180' />
               Unpublish
             </button>
-            <div className='h-px bg-zinc-100' />
+            <div className='bg-muted h-px' />
             <button
               type='button'
               onClick={() => {
@@ -704,8 +704,8 @@ function BlocksTab({
       onCount={onCount}
       empty='Brand chưa save block nào lên thư viện'
       render={b => (
-        <div className='flex items-start gap-3 border-b border-zinc-100 px-4 py-3 last:border-0'>
-          <div className='aspect-[4/3] w-14 shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-gradient-to-br from-zinc-100 to-zinc-200'>
+        <div className='border-border flex items-start gap-3 border-b px-4 py-3 last:border-0'>
+          <div className='border-border aspect-[4/3] w-14 shrink-0 overflow-hidden rounded-md border bg-gradient-to-br from-zinc-100 to-zinc-200'>
             {b.thumbnail_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -714,25 +714,25 @@ function BlocksTab({
                 className='size-full object-cover'
               />
             ) : (
-              <div className='flex h-full items-center justify-center text-zinc-300'>
+              <div className='text-muted-foreground flex h-full items-center justify-center'>
                 <Bookmark className='size-4' />
               </div>
             )}
           </div>
           <div className='min-w-0 flex-1'>
-            <div className='truncate text-sm font-semibold text-zinc-900'>
+            <div className='text-foreground truncate text-sm font-semibold'>
               {b.name}
             </div>
-            <div className='text-3xs mt-0.5 flex flex-wrap items-center gap-2 text-zinc-500'>
+            <div className='text-3xs text-content-muted mt-0.5 flex flex-wrap items-center gap-2'>
               {b.scope && (
-                <span className='text-3xs rounded-full bg-zinc-100 px-1.5 py-0.5 font-mono tracking-wider uppercase'>
+                <span className='text-3xs bg-muted rounded-full px-1.5 py-0.5 font-mono tracking-wider uppercase'>
                   {b.scope}
                 </span>
               )}
               {b.tags?.slice(0, 3).map(t => (
                 <span
                   key={t}
-                  className='text-3xs rounded-full bg-zinc-50 px-1.5 py-0.5'
+                  className='text-3xs bg-muted rounded-full px-1.5 py-0.5'
                 >
                   {t}
                 </span>
@@ -763,8 +763,8 @@ function ProductsTab({
       onCount={onCount}
       empty='Khách hàng chưa có product nào'
       render={p => (
-        <div className='flex items-start gap-3 border-b border-zinc-100 px-4 py-3 last:border-0 hover:bg-zinc-50/50'>
-          <div className='aspect-square w-12 shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-gradient-to-br from-zinc-100 to-zinc-200'>
+        <div className='border-border hover:bg-muted/50 flex items-start gap-3 border-b px-4 py-3 last:border-0'>
+          <div className='border-border aspect-square w-12 shrink-0 overflow-hidden rounded-md border bg-gradient-to-br from-zinc-100 to-zinc-200'>
             {p.thumbnail_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -773,23 +773,23 @@ function ProductsTab({
                 className='size-full object-cover'
               />
             ) : (
-              <div className='flex h-full items-center justify-center text-zinc-300'>
+              <div className='text-muted-foreground flex h-full items-center justify-center'>
                 <Package className='size-4' />
               </div>
             )}
           </div>
           <div className='min-w-0 flex-1'>
-            <div className='truncate text-sm font-semibold text-zinc-900'>
+            <div className='text-foreground truncate text-sm font-semibold'>
               {p.name}
             </div>
-            <div className='text-3xs mt-0.5 flex flex-wrap items-center gap-2 text-zinc-500'>
+            <div className='text-3xs text-content-muted mt-0.5 flex flex-wrap items-center gap-2'>
               {p.sku && (
-                <code className='text-3xs font-mono text-zinc-600'>
+                <code className='text-3xs text-content-muted font-mono'>
                   {p.sku}
                 </code>
               )}
               {p.status && (
-                <span className='text-3xs rounded-full bg-zinc-100 px-1.5 py-0.5 tracking-wider uppercase'>
+                <span className='text-3xs bg-muted rounded-full px-1.5 py-0.5 tracking-wider uppercase'>
                   {p.status}
                 </span>
               )}
@@ -816,7 +816,7 @@ function MembersTab({
       onCount={onCount}
       empty='Chưa có member nào trong brand'
       render={u => (
-        <div className='flex items-center justify-between border-b border-zinc-100 px-4 py-3 last:border-0'>
+        <div className='border-border flex items-center justify-between border-b px-4 py-3 last:border-0'>
           <div className='flex items-center gap-3'>
             <div
               className={cn(
@@ -827,10 +827,10 @@ function MembersTab({
               {initialsOf(u.display_name || u.email)}
             </div>
             <div>
-              <div className='text-sm font-semibold text-zinc-900'>
+              <div className='text-foreground text-sm font-semibold'>
                 {u.display_name || '(không tên)'}
               </div>
-              <div className='text-3xs flex items-center gap-1.5 text-zinc-500'>
+              <div className='text-3xs text-content-muted flex items-center gap-1.5'>
                 <Mail className='size-2.5' />
                 {u.email}
               </div>
@@ -840,7 +840,7 @@ function MembersTab({
             className={cn(
               'text-3xs rounded-full px-2 py-0.5 font-bold tracking-wider uppercase',
               STATUS_CHIP[u.status?.toLowerCase()] ??
-                'bg-zinc-100 text-zinc-600'
+                'bg-muted text-content-muted'
             )}
           >
             {u.status || '—'}
@@ -901,7 +901,7 @@ function LazyList<T extends { id: string }>({
 
   if (loading) {
     return (
-      <div className='flex items-center justify-center py-12 text-sm text-zinc-500'>
+      <div className='text-content-muted flex items-center justify-center py-12 text-sm'>
         <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải…
       </div>
     );
@@ -913,7 +913,7 @@ function LazyList<T extends { id: string }>({
   }
   if (!items || items.length === 0) {
     return (
-      <div className='px-4 py-10 text-center text-sm text-zinc-500'>
+      <div className='text-content-muted px-4 py-10 text-center text-sm'>
         {empty}
       </div>
     );

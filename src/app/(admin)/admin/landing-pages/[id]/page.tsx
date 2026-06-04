@@ -185,7 +185,7 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
 
   if (error) {
     return (
-      <div className='flex h-full flex-1 items-center justify-center bg-zinc-50 p-8'>
+      <div className='bg-muted flex h-full flex-1 items-center justify-center p-8'>
         <div className='max-w-md rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
           <AlertCircle className='mx-auto size-8 text-rose-600' />
           <p className='mt-3 text-sm font-semibold text-rose-900'>
@@ -199,7 +199,7 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
 
   if (!templateId) {
     return (
-      <div className='flex h-full flex-1 items-center justify-center text-sm text-zinc-500'>
+      <div className='text-content-muted flex h-full flex-1 items-center justify-center text-sm'>
         <Loader2 className='mr-2 size-4 animate-spin' /> Đang resolve template
         từ slug…
       </div>

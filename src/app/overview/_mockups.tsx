@@ -26,7 +26,7 @@ function Frame({
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm ${className}`}
+      className={`border-border relative overflow-hidden rounded-2xl border bg-white p-3 shadow-sm ${className}`}
     >
       {children}
     </div>
@@ -78,7 +78,7 @@ export function MockRoles() {
         {roles.map(r => (
           <div
             key={r.label}
-            className='flex items-center gap-2 rounded-lg border border-zinc-100 bg-white p-2'
+            className='border-border flex items-center gap-2 rounded-lg border bg-white p-2'
           >
             <div
               className={`flex size-7 items-center justify-center rounded-full ${r.color} text-white`}
@@ -87,7 +87,7 @@ export function MockRoles() {
             </div>
             <div className='flex-1'>
               <div className='text-2xs font-semibold'>{r.label}</div>
-              <div className='mt-1 h-1 w-full rounded bg-zinc-100'>
+              <div className='bg-muted mt-1 h-1 w-full rounded'>
                 <div
                   className={`h-1 rounded ${r.color}`}
                   style={{
@@ -116,11 +116,13 @@ export function MockAuth() {
           <Lock className='size-5' />
         </div>
         <div className='mt-3 w-full space-y-1.5'>
-          <div className='h-6 rounded border border-zinc-200 bg-white' />
-          <div className='h-6 rounded border border-zinc-200 bg-white' />
+          <div className='border-border h-6 rounded border bg-white' />
+          <div className='border-border h-6 rounded border bg-white' />
           <div className='h-6 rounded bg-rose-500' />
         </div>
-        <div className='text-3xs mt-2 text-zinc-500'>JWT · cookie httpOnly</div>
+        <div className='text-3xs text-content-muted mt-2'>
+          JWT · cookie httpOnly
+        </div>
       </div>
     </Frame>
   );
@@ -133,10 +135,10 @@ export function MockMasterData() {
         <Database className='size-4 text-emerald-600' />
         <div className='text-2xs font-semibold'>Products / Collections</div>
       </div>
-      <div className='mt-2 overflow-hidden rounded border border-zinc-100'>
-        <div className='text-3xs grid grid-cols-3 bg-zinc-50 font-mono text-zinc-500'>
-          <span className='border-r border-zinc-100 px-1.5 py-1'>id</span>
-          <span className='border-r border-zinc-100 px-1.5 py-1'>name</span>
+      <div className='border-border mt-2 overflow-hidden rounded border'>
+        <div className='text-3xs bg-muted text-content-muted grid grid-cols-3 font-mono'>
+          <span className='border-border border-r px-1.5 py-1'>id</span>
+          <span className='border-border border-r px-1.5 py-1'>name</span>
           <span className='px-1.5 py-1'>price</span>
         </div>
         {[
@@ -146,12 +148,12 @@ export function MockMasterData() {
         ].map((r, i) => (
           <div
             key={i}
-            className='text-3xs grid grid-cols-3 border-t border-zinc-100'
+            className='text-3xs border-border grid grid-cols-3 border-t'
           >
-            <span className='border-r border-zinc-100 px-1.5 py-1 font-mono text-zinc-400'>
+            <span className='border-border text-muted-foreground border-r px-1.5 py-1 font-mono'>
               {r[0]}
             </span>
-            <span className='border-r border-zinc-100 px-1.5 py-1'>{r[1]}</span>
+            <span className='border-border border-r px-1.5 py-1'>{r[1]}</span>
             <span className='px-1.5 py-1 text-emerald-600'>{r[2]}</span>
           </div>
         ))}
@@ -171,19 +173,19 @@ export function MockAITemplates() {
       </div>
       <div className='mt-2 space-y-1.5'>
         <div>
-          <div className='text-3xs text-zinc-500'>Tên sản phẩm</div>
-          <div className='mt-0.5 h-5 rounded border border-zinc-200 bg-white' />
+          <div className='text-3xs text-content-muted'>Tên sản phẩm</div>
+          <div className='border-border mt-0.5 h-5 rounded border bg-white' />
         </div>
         <div>
-          <div className='text-3xs text-zinc-500'>Style</div>
+          <div className='text-3xs text-content-muted'>Style</div>
           <div className='mt-0.5 flex gap-1'>
             <span className='text-3xs rounded border border-violet-300 bg-violet-100 px-1.5 py-0.5 text-violet-700'>
               Luxury
             </span>
-            <span className='text-3xs rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-zinc-500'>
+            <span className='text-3xs border-border text-content-muted rounded border bg-white px-1.5 py-0.5'>
               Casual
             </span>
-            <span className='text-3xs rounded border border-zinc-200 bg-white px-1.5 py-0.5 text-zinc-500'>
+            <span className='text-3xs border-border text-content-muted rounded border bg-white px-1.5 py-0.5'>
               Bold
             </span>
           </div>
@@ -201,7 +203,7 @@ export function MockAIGen() {
           <Sparkles className='size-3.5' />
         </div>
         <div className='flex-1 space-y-1.5'>
-          <div className='text-3xs rounded-lg rounded-tl-sm border border-zinc-200 bg-white px-2 py-1.5'>
+          <div className='text-3xs border-border rounded-lg rounded-tl-sm border bg-white px-2 py-1.5'>
             Tạo template cho Tour Đà Nẵng 3N2Đ
           </div>
           <div className='text-3xs rounded-lg rounded-tl-sm bg-fuchsia-500 px-2 py-1.5 text-white'>
@@ -210,10 +212,10 @@ export function MockAIGen() {
         </div>
       </div>
       <div className='mt-2 flex items-center gap-1'>
-        <span className='text-3xs rounded border border-zinc-200 bg-white px-1.5 py-0.5 font-mono text-zinc-500'>
+        <span className='text-3xs border-border text-content-muted rounded border bg-white px-1.5 py-0.5 font-mono'>
           v1 initial
         </span>
-        <ChevronRight className='size-2.5 text-zinc-300' />
+        <ChevronRight className='text-muted-foreground size-2.5' />
         <span className='text-3xs rounded bg-fuchsia-500 px-1.5 py-0.5 font-mono text-white'>
           v2 regen
         </span>
@@ -234,14 +236,14 @@ export function MockCanvasEditor() {
               className={`text-3xs flex h-6 items-center justify-center rounded font-bold ${
                 i === 0
                   ? 'bg-blue-500 text-white'
-                  : 'border border-zinc-200 bg-white text-zinc-500'
+                  : 'border-border text-content-muted border bg-white'
               }`}
             >
               {t}
             </div>
           ))}
         </div>
-        <div className='relative aspect-[4/3] rounded border border-zinc-200 bg-white'>
+        <div className='border-border relative aspect-[4/3] rounded border bg-white'>
           <div className='absolute inset-x-2 top-2 h-2 rounded bg-blue-200' />
           <div className='absolute top-5 left-2 h-1.5 w-2/3 rounded bg-blue-100' />
           <div className='absolute top-[30px] left-2 h-1.5 w-1/2 rounded bg-blue-100' />
@@ -249,8 +251,8 @@ export function MockCanvasEditor() {
         </div>
         <div className='space-y-1'>
           <Layers className='size-3.5 text-blue-500' />
-          <Type className='size-3.5 text-zinc-400' />
-          <ImageIcon className='size-3.5 text-zinc-400' />
+          <Type className='text-muted-foreground size-3.5' />
+          <ImageIcon className='text-muted-foreground size-3.5' />
         </div>
       </div>
     </Frame>
@@ -260,7 +262,7 @@ export function MockCanvasEditor() {
 export function MockExtraElements() {
   return (
     <Frame className='bg-gradient-to-br from-cyan-50 to-white'>
-      <div className='relative aspect-[4/3] overflow-hidden rounded border border-zinc-200 bg-white'>
+      <div className='border-border relative aspect-[4/3] overflow-hidden rounded border bg-white'>
         <div className='absolute inset-0 bg-gradient-to-br from-cyan-100 to-white' />
         {/* hotspots */}
         <span className='absolute top-2 left-3 flex size-3 items-center justify-center rounded-full bg-cyan-500 text-white shadow-md ring-4 ring-cyan-500/20'>
@@ -295,14 +297,14 @@ export function MockSavedBlocks() {
         {blocks.map((b, i) => (
           <div
             key={i}
-            className={`aspect-video rounded border border-zinc-200 bg-gradient-to-br ${b} p-1`}
+            className={`border-border aspect-video rounded border bg-gradient-to-br ${b} p-1`}
           >
             <div className='h-1 w-1/2 rounded bg-white/70' />
             <div className='mt-1 h-0.5 w-2/3 rounded bg-white/60' />
           </div>
         ))}
       </div>
-      <div className='text-3xs mt-1.5 text-center text-zinc-500'>
+      <div className='text-3xs text-content-muted mt-1.5 text-center'>
         Saved blocks library
       </div>
     </Frame>
@@ -316,12 +318,12 @@ export function MockCanvasList() {
         {[1, 2, 3].map(i => (
           <div
             key={i}
-            className='flex items-center gap-2 rounded border border-zinc-100 bg-white p-1.5'
+            className='border-border flex items-center gap-2 rounded border bg-white p-1.5'
           >
             <div className='size-8 shrink-0 rounded bg-gradient-to-br from-blue-200 to-blue-50' />
             <div className='flex-1'>
               <div className='h-1.5 w-3/4 rounded bg-zinc-200' />
-              <div className='mt-1 h-1 w-1/2 rounded bg-zinc-100' />
+              <div className='bg-muted mt-1 h-1 w-1/2 rounded' />
             </div>
             <span className='text-3xs rounded bg-blue-500 px-1 py-0.5 font-mono text-white'>
               AI
@@ -336,7 +338,7 @@ export function MockCanvasList() {
 export function MockCollections() {
   return (
     <Frame className='bg-gradient-to-br from-emerald-50 to-white'>
-      <div className='overflow-hidden rounded border border-zinc-100'>
+      <div className='border-border overflow-hidden rounded border'>
         <div className='text-3xs grid grid-cols-4 bg-emerald-50 font-mono text-emerald-700'>
           <span className='border-r border-emerald-100 px-1 py-1'>name</span>
           <span className='border-r border-emerald-100 px-1 py-1'>phone</span>
@@ -355,14 +357,14 @@ export function MockCollections() {
             <span className='border-r border-emerald-100 px-1 py-1'>
               {r[0]}
             </span>
-            <span className='border-r border-emerald-100 px-1 py-1 font-mono text-zinc-500'>
+            <span className='text-content-muted border-r border-emerald-100 px-1 py-1 font-mono'>
               {r[1]}
             </span>
-            <span className='border-r border-emerald-100 px-1 py-1 text-zinc-500'>
+            <span className='text-content-muted border-r border-emerald-100 px-1 py-1'>
               {r[2]}
             </span>
             <span
-              className={`px-1 py-1 ${r[3] === 'paid' ? 'text-emerald-600' : 'text-zinc-500'}`}
+              className={`px-1 py-1 ${r[3] === 'paid' ? 'text-emerald-600' : 'text-content-muted'}`}
             >
               {r[3]}
             </span>
@@ -376,7 +378,7 @@ export function MockCollections() {
 export function MockProducts() {
   return (
     <Frame className='bg-gradient-to-br from-emerald-50 to-white'>
-      <div className='overflow-hidden rounded-lg border border-zinc-100 bg-white'>
+      <div className='border-border overflow-hidden rounded-lg border bg-white'>
         <div className='aspect-[3/2] bg-gradient-to-br from-emerald-200 to-emerald-50'>
           <div className='flex h-full items-center justify-center'>
             <ShoppingBag className='size-6 text-emerald-600/60' />
@@ -385,7 +387,7 @@ export function MockProducts() {
         <div className='p-1.5'>
           <div className='h-1.5 w-3/4 rounded bg-zinc-200' />
           <div className='mt-1 flex items-center justify-between'>
-            <div className='h-1.5 w-1/3 rounded bg-zinc-100' />
+            <div className='bg-muted h-1.5 w-1/3 rounded' />
             <span className='text-3xs font-bold text-emerald-600'>$49</span>
           </div>
         </div>
@@ -413,10 +415,10 @@ export function MockNotifications() {
           ].map(([a, b], i) => (
             <div
               key={i}
-              className='flex items-center justify-between rounded border border-zinc-100 bg-white px-1.5 py-1'
+              className='border-border flex items-center justify-between rounded border bg-white px-1.5 py-1'
             >
               <span className='text-3xs'>{a}</span>
-              <span className='text-3xs text-zinc-400'>{b}</span>
+              <span className='text-3xs text-muted-foreground'>{b}</span>
             </div>
           ))}
         </div>
@@ -438,10 +440,10 @@ export function MockAdminDash() {
         {stats.map(s => (
           <div
             key={s.label}
-            className={`rounded-lg border border-zinc-100 bg-gradient-to-br ${s.from} to-white p-1.5`}
+            className={`border-border rounded-lg border bg-gradient-to-br ${s.from} to-white p-1.5`}
           >
-            <div className='text-3xs text-zinc-500'>{s.label}</div>
-            <div className='font-mono text-sm font-bold text-zinc-900'>
+            <div className='text-3xs text-content-muted'>{s.label}</div>
+            <div className='text-foreground font-mono text-sm font-bold'>
               {s.value}
             </div>
           </div>
@@ -465,13 +467,13 @@ export function MockAIUsage() {
           </div>
         ))}
       </div>
-      <div className='text-3xs mt-1 flex justify-between font-mono text-zinc-400'>
+      <div className='text-3xs text-muted-foreground mt-1 flex justify-between font-mono'>
         <span>Mon</span>
         <span>Wed</span>
         <span>Fri</span>
         <span>Sun</span>
       </div>
-      <div className='text-3xs mt-1 text-center text-zinc-500'>
+      <div className='text-3xs text-content-muted mt-1 text-center'>
         AI requests / day
       </div>
     </Frame>
@@ -489,7 +491,7 @@ export function MockSettings() {
         ].map(([label, on]) => (
           <div
             key={label as string}
-            className='flex items-center justify-between rounded border border-zinc-100 bg-white px-2 py-1.5'
+            className='border-border flex items-center justify-between rounded border bg-white px-2 py-1.5'
           >
             <span className='text-3xs'>{label}</span>
             <div
@@ -507,7 +509,7 @@ export function MockSettings() {
           <span className='text-3xs rounded border border-zinc-900 bg-zinc-900 px-1.5 py-0.5 font-mono text-white'>
             EN
           </span>
-          <span className='text-3xs rounded border border-zinc-200 bg-white px-1.5 py-0.5 font-mono text-zinc-500'>
+          <span className='text-3xs border-border text-content-muted rounded border bg-white px-1.5 py-0.5 font-mono'>
             VI
           </span>
         </div>
@@ -549,42 +551,42 @@ export function MockWorkflowStep({ step }: { step: number }) {
   switch (step) {
     case 1:
       return (
-        <div className='flex items-center gap-2 text-xs text-zinc-600'>
+        <div className='text-content-muted flex items-center gap-2 text-xs'>
           <Hand className='size-4 text-rose-500' />
           Landing → Sign-up
         </div>
       );
     case 2:
       return (
-        <div className='flex items-center gap-2 text-xs text-zinc-600'>
+        <div className='text-content-muted flex items-center gap-2 text-xs'>
           <MessageSquare className='size-4 text-violet-500' />
           Form fields
         </div>
       );
     case 3:
       return (
-        <div className='flex items-center gap-2 text-xs text-zinc-600'>
+        <div className='text-content-muted flex items-center gap-2 text-xs'>
           <Sparkles className='size-4 text-fuchsia-500' />
           Claude generates
         </div>
       );
     case 4:
       return (
-        <div className='flex items-center gap-2 text-xs text-zinc-600'>
+        <div className='text-content-muted flex items-center gap-2 text-xs'>
           <Layers className='size-4 text-blue-500' />
           Drag blocks
         </div>
       );
     case 5:
       return (
-        <div className='flex items-center gap-2 text-xs text-zinc-600'>
+        <div className='text-content-muted flex items-center gap-2 text-xs'>
           <Send className='size-4 text-emerald-500' />
           Share / Product
         </div>
       );
     case 6:
       return (
-        <div className='flex items-center gap-2 text-xs text-zinc-600'>
+        <div className='text-content-muted flex items-center gap-2 text-xs'>
           <Bell className='size-4 text-amber-500' />
           Track + feedback
         </div>

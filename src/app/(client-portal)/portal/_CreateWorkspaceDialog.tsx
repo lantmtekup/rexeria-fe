@@ -122,7 +122,7 @@ export function CreateWorkspaceDialog({
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className='flex items-center justify-between border-b border-zinc-100 px-5 py-3'>
+        <div className='border-border flex items-center justify-between border-b px-5 py-3'>
           <div className='flex items-center gap-2.5'>
             <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-sm'>
               <Sparkles className='size-4' />
@@ -134,7 +134,7 @@ export function CreateWorkspaceDialog({
           <button
             type='button'
             onClick={onClose}
-            className='rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label='Close'
           >
             <X className='size-4' />
@@ -151,7 +151,7 @@ export function CreateWorkspaceDialog({
               placeholder='Vd: Flagship Cola — Tết 2026'
               autoFocus
               maxLength={200}
-              className='w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
+              className='border-border w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
             />
           </Field>
 
@@ -170,7 +170,7 @@ export function CreateWorkspaceDialog({
               }}
               placeholder='flagship-cola-tet-2026'
               maxLength={64}
-              className='w-full rounded-lg border border-zinc-200 px-3 py-2 font-mono text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
+              className='border-border w-full rounded-lg border px-3 py-2 font-mono text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
             />
           </Field>
 
@@ -182,13 +182,13 @@ export function CreateWorkspaceDialog({
               placeholder='Sub-brand nước cola có ga cho thị trường VN…'
               rows={3}
               maxLength={2000}
-              className='w-full resize-y rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
+              className='border-border w-full resize-y rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
             />
           </Field>
 
           {/* Client preview */}
           {clientId && (
-            <div className='text-2xs rounded-lg bg-zinc-50 px-3 py-2 text-zinc-500'>
+            <div className='text-2xs bg-muted text-content-muted rounded-lg px-3 py-2'>
               Sẽ tạo trong client{' '}
               <code className='rounded bg-white px-1 font-mono'>
                 {clientId.slice(0, 8)}…
@@ -210,12 +210,12 @@ export function CreateWorkspaceDialog({
         </form>
 
         {/* Footer */}
-        <div className='flex items-center justify-end gap-2 border-t border-zinc-100 bg-zinc-50/50 px-5 py-3'>
+        <div className='border-border bg-muted/50 flex items-center justify-end gap-2 border-t px-5 py-3'>
           <button
             type='button'
             onClick={onClose}
             disabled={submitting}
-            className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50'
+            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             Huỷ
           </button>
@@ -251,11 +251,11 @@ function Field({
 }) {
   return (
     <div>
-      <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+      <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
         {label} {required && <span className='text-rose-500'>*</span>}
       </label>
       <div className='mt-1'>{children}</div>
-      {hint && <p className='text-3xs mt-1 text-zinc-500'>{hint}</p>}
+      {hint && <p className='text-3xs text-content-muted mt-1'>{hint}</p>}
     </div>
   );
 }

@@ -176,8 +176,10 @@ export function UseTemplateDialog({
           <DialogTitle>Sử dụng template</DialogTitle>
           <DialogDescription>
             Tạo landing page mới từ template{' '}
-            <code className='font-mono text-zinc-700'>{template.code}</code>.
-            Page sẽ có status <strong>draft</strong>, brand chỉnh nội dung qua
+            <code className='text-content-muted font-mono'>
+              {template.code}
+            </code>
+            . Page sẽ có status <strong>draft</strong>, brand chỉnh nội dung qua
             slot rồi publish.
           </DialogDescription>
         </DialogHeader>
@@ -257,13 +259,13 @@ export function UseTemplateDialog({
           <button
             type='button'
             onClick={() => setShowAdvanced(v => !v)}
-            className='text-2xs self-start font-medium text-zinc-500 hover:text-zinc-900'
+            className='text-2xs text-content-muted hover:text-foreground self-start font-medium'
           >
             {showAdvanced ? '− Ẩn tuỳ chọn nâng cao' : '+ Tuỳ chọn nâng cao'}
           </button>
 
           {showAdvanced && (
-            <div className='flex flex-col gap-3 rounded-lg border border-zinc-200 bg-zinc-50/40 p-3'>
+            <div className='border-border bg-muted/40 flex flex-col gap-3 rounded-lg border p-3'>
               <div className='flex flex-col gap-1.5'>
                 <Label htmlFor='use-tpl-slug'>Slug (URL)</Label>
                 <Input

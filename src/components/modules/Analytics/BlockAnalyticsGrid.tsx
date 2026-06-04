@@ -359,13 +359,13 @@ export function BlockAnalyticsGrid({
       <header className='flex flex-wrap items-end justify-between gap-3'>
         <div>
           <BackLink backHref={backHref} />
-          <h1 className='mt-3 text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl'>
+          <h1 className='text-foreground mt-3 text-2xl font-bold tracking-tight sm:text-3xl'>
             Analytics theo block
           </h1>
-          <p className='mt-1 text-xs text-zinc-500'>
+          <p className='text-content-muted mt-1 text-xs'>
             {templateName ? (
               <>
-                <span className='font-semibold text-zinc-700'>
+                <span className='text-content-muted font-semibold'>
                   {templateName}
                 </span>{' '}
                 ·{' '}
@@ -375,7 +375,7 @@ export function BlockAnalyticsGrid({
             khoảng thời gian
           </p>
         </div>
-        <div className='inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-white p-1 shadow-sm'>
+        <div className='border-border inline-flex items-center gap-1 rounded-full border bg-white p-1 shadow-sm'>
           {RANGES.map(r => (
             <button
               key={r.id}
@@ -385,7 +385,7 @@ export function BlockAnalyticsGrid({
                 'text-2xs rounded-full px-3 py-1 font-medium transition-colors',
                 range === r.id
                   ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'text-zinc-600 hover:bg-zinc-100'
+                  : 'text-content-muted hover:bg-muted'
               )}
             >
               {r.label}
@@ -465,17 +465,17 @@ export function BlockAnalyticsGrid({
 
       {/* Grid */}
       {loading && !blocks && !sections ? (
-        <div className='flex items-center justify-center py-20 text-sm text-zinc-500'>
+        <div className='text-content-muted flex items-center justify-center py-20 text-sm'>
           <Loader2 className='mr-2 size-4 animate-spin' />
           Đang tải landing page…
         </div>
       ) : sections ? (
         sections.length === 0 ? (
-          <div className='rounded-2xl border border-zinc-200 bg-white p-12 text-center'>
-            <p className='text-sm font-semibold text-zinc-700'>
+          <div className='border-border rounded-2xl border bg-white p-12 text-center'>
+            <p className='text-content-muted text-sm font-semibold'>
               Template chưa khai báo sections
             </p>
-            <p className='mx-auto mt-1 max-w-md text-xs text-zinc-500'>
+            <p className='text-content-muted mx-auto mt-1 max-w-md text-xs'>
               Thêm <code className='font-mono'>tracking.sections</code> vào{' '}
               <code className='font-mono'>
                 src/templates/{codeTemplateLabel}/meta.ts
@@ -517,10 +517,10 @@ export function BlockAnalyticsGrid({
               <section className='mt-8 flex flex-col gap-3'>
                 <header className='flex items-end justify-between gap-3'>
                   <div>
-                    <h2 className='text-lg font-bold tracking-tight text-zinc-900'>
+                    <h2 className='text-foreground text-lg font-bold tracking-tight'>
                       Breakdown theo CTA
                     </h2>
-                    <p className='text-xs text-zinc-500'>
+                    <p className='text-content-muted text-xs'>
                       Mỗi nút click trên page. Group by{' '}
                       <code className='text-2xs font-mono'>
                         dimensions.cta_id
@@ -528,7 +528,7 @@ export function BlockAnalyticsGrid({
                       · {ctas.length} CTAs tracked.
                     </p>
                   </div>
-                  <span className='text-3xs font-mono text-zinc-400'>
+                  <span className='text-3xs text-muted-foreground font-mono'>
                     {Array.from(ctaStats?.values() ?? []).reduce(
                       (a, b) => a + b.clicks,
                       0
@@ -554,20 +554,20 @@ export function BlockAnalyticsGrid({
           </>
         )
       ) : blocks && blocks.length === 0 ? (
-        <div className='rounded-2xl border border-zinc-200 bg-white p-12 text-center'>
-          <p className='text-sm font-semibold text-zinc-700'>
+        <div className='border-border rounded-2xl border bg-white p-12 text-center'>
+          <p className='text-content-muted text-sm font-semibold'>
             Landing page chưa có block
           </p>
-          <p className='mt-1 text-xs text-zinc-500'>
+          <p className='text-content-muted mt-1 text-xs'>
             Mở canvas editor để thêm block trước khi xem analytics.
           </p>
         </div>
       ) : rows && rows.length === 0 ? (
-        <div className='rounded-2xl border border-zinc-200 bg-white p-12 text-center'>
-          <p className='text-sm font-semibold text-zinc-700'>
+        <div className='border-border rounded-2xl border bg-white p-12 text-center'>
+          <p className='text-content-muted text-sm font-semibold'>
             Chưa có event nào trong {range} ngày gần nhất
           </p>
-          <p className='mx-auto mt-1 max-w-md text-xs text-zinc-500'>
+          <p className='text-content-muted mx-auto mt-1 max-w-md text-xs'>
             Page breakdown đọc từ bảng <code>analytics_daily_aggregate</code>{' '}
             (job aggregate tổng hợp event qua đêm). Local DB hiện rỗng — khi có
             view thật sẽ tự hiện. Xem be-audit §11.2 nếu chờ data lâu.
@@ -622,14 +622,14 @@ function BlockAnalyticsCard({
   const typeName = BLOCK_TYPE_LABEL[block.blockType] ?? block.blockType;
 
   return (
-    <div className='group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'>
+    <div className='group border-border hover:border-border flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       {/* Header row — index + type */}
-      <div className='flex items-center justify-between border-b border-zinc-100 px-3.5 py-2'>
+      <div className='border-border flex items-center justify-between border-b px-3.5 py-2'>
         <div className='flex items-center gap-2'>
-          <span className='text-3xs flex size-5 items-center justify-center rounded-full bg-zinc-100 font-mono font-bold text-zinc-600'>
+          <span className='text-3xs bg-muted text-content-muted flex size-5 items-center justify-center rounded-full font-mono font-bold'>
             {index}
           </span>
-          <span className='text-3xs font-mono tracking-wider text-zinc-400 uppercase'>
+          <span className='text-3xs text-muted-foreground font-mono tracking-wider uppercase'>
             {typeName}
           </span>
         </div>
@@ -637,13 +637,13 @@ function BlockAnalyticsCard({
       </div>
 
       {/* Thumbnail */}
-      <div className='relative aspect-[16/10] overflow-hidden border-b border-zinc-100 bg-gradient-to-br from-zinc-50 to-zinc-100'>
+      <div className='border-border relative aspect-[16/10] overflow-hidden border-b bg-gradient-to-br from-zinc-50 to-zinc-100'>
         <BlockMiniPreview block={block} aspect='16 / 10' />
       </div>
 
       {/* Metrics */}
       <div className='flex flex-1 flex-col gap-2 p-3.5'>
-        <h3 className='truncate text-sm font-semibold text-zinc-800'>
+        <h3 className='text-foreground truncate text-sm font-semibold'>
           {label}
         </h3>
         <div className='grid grid-cols-3 gap-2 text-center'>
@@ -704,13 +704,13 @@ function SectionAnalyticsCard({
   const ctaClickTotal = ctas.reduce((a, c) => a + c.clicks, 0);
 
   return (
-    <div className='group relative flex flex-col overflow-visible rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'>
-      <div className='flex items-center justify-between border-b border-zinc-100 px-3.5 py-2'>
+    <div className='group border-border hover:border-border relative flex flex-col overflow-visible rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+      <div className='border-border flex items-center justify-between border-b px-3.5 py-2'>
         <div className='flex items-center gap-2'>
-          <span className='text-3xs flex size-5 items-center justify-center rounded-full bg-zinc-100 font-mono font-bold text-zinc-600'>
+          <span className='text-3xs bg-muted text-content-muted flex size-5 items-center justify-center rounded-full font-mono font-bold'>
             {index}
           </span>
-          <code className='text-3xs font-mono tracking-wider text-zinc-400 uppercase'>
+          <code className='text-3xs text-muted-foreground font-mono tracking-wider uppercase'>
             {section.id}
           </code>
         </div>
@@ -724,7 +724,7 @@ function SectionAnalyticsCard({
                   'text-3xs inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-semibold transition-colors',
                   showCtaList
                     ? 'bg-zinc-900 text-white'
-                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                    : 'bg-muted text-content-muted hover:bg-zinc-200'
                 )}
                 title={`${ctas.length} CTA tracked · ${ctaClickTotal} clicks`}
                 aria-label='Show CTA breakdown for this section'
@@ -733,12 +733,12 @@ function SectionAnalyticsCard({
                 <span className='font-mono tabular-nums'>{ctas.length}</span>
               </button>
               {showCtaList && (
-                <div className='absolute top-full right-0 z-30 mt-1.5 w-64 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl'>
-                  <div className='flex items-center justify-between border-b border-zinc-100 bg-zinc-50 px-3 py-2'>
-                    <span className='text-3xs font-bold tracking-wider text-zinc-600 uppercase'>
+                <div className='border-border absolute top-full right-0 z-30 mt-1.5 w-64 overflow-hidden rounded-xl border bg-white shadow-xl'>
+                  <div className='border-border bg-muted flex items-center justify-between border-b px-3 py-2'>
+                    <span className='text-3xs text-content-muted font-bold tracking-wider uppercase'>
                       CTAs · {section.label}
                     </span>
-                    <span className='text-3xs font-mono text-zinc-500 tabular-nums'>
+                    <span className='text-3xs text-content-muted font-mono tabular-nums'>
                       {ctaClickTotal} clicks
                     </span>
                   </div>
@@ -765,20 +765,24 @@ function SectionAnalyticsCard({
                             <p
                               className={cn(
                                 'truncate text-xs font-medium',
-                                isDead ? 'text-zinc-400' : 'text-zinc-800'
+                                isDead
+                                  ? 'text-muted-foreground'
+                                  : 'text-foreground'
                               )}
                               title={c.label}
                             >
                               {c.label}
                             </p>
-                            <code className='text-3xs block truncate font-mono text-zinc-400'>
+                            <code className='text-3xs text-muted-foreground block truncate font-mono'>
                               {c.id}
                             </code>
                           </div>
                           <span
                             className={cn(
                               'relative shrink-0 font-mono text-xs font-bold tabular-nums',
-                              isDead ? 'text-zinc-300' : 'text-zinc-900'
+                              isDead
+                                ? 'text-muted-foreground'
+                                : 'text-foreground'
                             )}
                           >
                             {c.clicks.toLocaleString('vi-VN')}
@@ -796,7 +800,7 @@ function SectionAnalyticsCard({
       </div>
 
       {/* Thumbnail — fallback gradient khi không có */}
-      <div className='relative aspect-[16/10] overflow-hidden border-b border-zinc-100 bg-gradient-to-br from-blue-50 via-indigo-50 to-violet-50'>
+      <div className='border-border relative aspect-[16/10] overflow-hidden border-b bg-gradient-to-br from-blue-50 via-indigo-50 to-violet-50'>
         {section.thumbnail ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -812,7 +816,7 @@ function SectionAnalyticsCard({
       </div>
 
       <div className='flex flex-1 flex-col gap-2 p-3.5'>
-        <h3 className='truncate text-sm font-semibold text-zinc-800'>
+        <h3 className='text-foreground truncate text-sm font-semibold'>
           {section.label}
         </h3>
         <div className='grid grid-cols-3 gap-2 text-center'>
@@ -849,7 +853,7 @@ function CtaAnalyticsCard({
     <div
       className={cn(
         'flex flex-col gap-2 rounded-xl border bg-white p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-        isDead ? 'border-zinc-200' : 'border-zinc-200 hover:border-zinc-300'
+        isDead ? 'border-border' : 'border-border hover:border-border'
       )}
     >
       <div className='flex items-start justify-between gap-2'>
@@ -857,13 +861,13 @@ function CtaAnalyticsCard({
           <p
             className={cn(
               'truncate text-xs font-semibold',
-              isDead ? 'text-zinc-500' : 'text-zinc-800'
+              isDead ? 'text-content-muted' : 'text-foreground'
             )}
             title={cta.label}
           >
             {cta.label}
           </p>
-          <code className='text-3xs block truncate font-mono tracking-wider text-zinc-400 uppercase'>
+          <code className='text-3xs text-muted-foreground block truncate font-mono tracking-wider uppercase'>
             {cta.id}
           </code>
         </div>
@@ -871,13 +875,13 @@ function CtaAnalyticsCard({
       </div>
       <div className='flex items-end justify-between gap-3'>
         <div className='flex flex-col gap-0.5'>
-          <span className='text-3xs font-medium tracking-wider text-zinc-400 uppercase'>
+          <span className='text-3xs text-muted-foreground font-medium tracking-wider uppercase'>
             Clicks
           </span>
           <span
             className={cn(
               'font-mono text-lg font-bold tabular-nums',
-              isDead ? 'text-zinc-300' : 'text-zinc-900'
+              isDead ? 'text-muted-foreground' : 'text-foreground'
             )}
           >
             {clicks.toLocaleString('vi-VN')}
@@ -894,10 +898,10 @@ function CtaAnalyticsCard({
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className='flex flex-col gap-0.5'>
-      <span className='text-3xs font-medium tracking-wider text-zinc-400 uppercase'>
+      <span className='text-3xs text-muted-foreground font-medium tracking-wider uppercase'>
         {label}
       </span>
-      <span className='font-mono text-xs font-semibold text-zinc-800 tabular-nums'>
+      <span className='text-foreground font-mono text-xs font-semibold tabular-nums'>
         {value}
       </span>
     </div>
@@ -906,7 +910,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 function DeltaPill({ delta }: { delta: number }) {
   if (Number.isNaN(delta) || !Number.isFinite(delta)) {
-    return <span className='text-3xs font-mono text-zinc-300'>—</span>;
+    return <span className='text-3xs text-muted-foreground font-mono'>—</span>;
   }
   const isUp = delta >= 0;
   const sign = isUp ? '+' : '';
@@ -936,7 +940,7 @@ function Sparkline({ series, max }: { series: number[]; max: number }) {
   const PADDING = 4;
 
   if (series.length === 0) {
-    return <div className='h-14 rounded bg-zinc-50' />;
+    return <div className='bg-muted h-14 rounded' />;
   }
 
   // Normalise → screen coords
@@ -1082,7 +1086,7 @@ function SummaryCard({
   const palette: Record<typeof accent, string> = {
     emerald: 'border-emerald-100 bg-emerald-50/40 text-emerald-700',
     violet: 'border-violet-100 bg-violet-50/40 text-violet-700',
-    zinc: 'border-zinc-200 bg-white text-zinc-600',
+    zinc: 'border-border bg-white text-content-muted',
   };
   return (
     <div
@@ -1095,7 +1099,7 @@ function SummaryCard({
         {icon}
         {label}
       </div>
-      <div className='font-mono text-xl font-bold text-zinc-900 tabular-nums'>
+      <div className='text-foreground font-mono text-xl font-bold tabular-nums'>
         {value}
       </div>
     </div>
@@ -1106,7 +1110,7 @@ function BackLink({ backHref }: { backHref: string }) {
   return (
     <a
       href={backHref}
-      className='group inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
+      className='group border-border text-content-muted hover:text-foreground inline-flex items-center gap-2 rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900'
     >
       <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
       Landing pages

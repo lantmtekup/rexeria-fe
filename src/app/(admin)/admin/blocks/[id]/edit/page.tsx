@@ -37,10 +37,10 @@ export default function AdminBlockEditPage() {
   if (!canvasId) {
     return (
       <div className='mx-auto max-w-2xl p-10 text-center'>
-        <p className='text-sm font-semibold text-zinc-800'>
+        <p className='text-foreground text-sm font-semibold'>
           Thiếu canvas_id — không thể mở editor.
         </p>
-        <p className='mt-1 text-xs text-zinc-500'>
+        <p className='text-content-muted mt-1 text-xs'>
           Mở lại từ trang Blocks để tạo canvas tạm trước khi sửa.
         </p>
         <Link
@@ -58,21 +58,21 @@ export default function AdminBlockEditPage() {
     <div className='relative flex h-screen flex-col'>
       {/* Slim admin-context breadcrumb so the user knows they're still in
           /admin even though the underlying editor takes full viewport. */}
-      <div className='flex items-center gap-2 border-b border-zinc-200 bg-white px-4 py-2 text-xs text-zinc-600'>
+      <div className='border-border text-content-muted flex items-center gap-2 border-b bg-white px-4 py-2 text-xs'>
         <button
           type='button'
           onClick={() => router.push('/admin/blocks')}
-          className='inline-flex items-center gap-1 hover:text-zinc-900'
+          className='hover:text-foreground inline-flex items-center gap-1'
         >
           <ArrowLeft className='size-3.5' />
           /admin/blocks
         </button>
-        <span className='text-zinc-300'>/</span>
-        <span className='font-mono text-zinc-500'>
+        <span className='text-muted-foreground'>/</span>
+        <span className='text-content-muted font-mono'>
           {savedBlockId.slice(0, 12)}…
         </span>
-        <span className='text-zinc-300'>/</span>
-        <span className='font-semibold text-zinc-900'>edit</span>
+        <span className='text-muted-foreground'>/</span>
+        <span className='text-foreground font-semibold'>edit</span>
       </div>
       <div className='flex-1 overflow-hidden'>
         <BlockEditor templateId={canvasId} />

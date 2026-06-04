@@ -89,7 +89,7 @@ export default function AdminLandingAnalyticsPage({ params }: PageProps) {
 
   if (!resolvedId) {
     return (
-      <div className='flex h-64 items-center justify-center text-sm text-zinc-500'>
+      <div className='text-content-muted flex h-64 items-center justify-center text-sm'>
         <Loader2 className='mr-2 size-4 animate-spin' /> Đang resolve landing…
       </div>
     );
@@ -99,7 +99,7 @@ export default function AdminLandingAnalyticsPage({ params }: PageProps) {
     <div className='flex flex-col'>
       {/* Tab switcher — sticky top, cùng z-index thấp hơn overlay
           toolbar (z-50 của StatsAnnotationOverlay). */}
-      <div className='sticky top-0 z-20 flex items-center gap-1 border-b border-zinc-200 bg-white/90 px-4 py-2 backdrop-blur'>
+      <div className='border-border sticky top-0 z-20 flex items-center gap-1 border-b bg-white/90 px-4 py-2 backdrop-blur'>
         <TabBtn
           active={tab === 'cards'}
           onClick={() => setTab('cards')}
@@ -146,7 +146,7 @@ function TabBtn({
         'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
         active
           ? 'bg-zinc-900 text-white'
-          : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+          : 'text-content-muted hover:bg-muted hover:text-foreground'
       )}
     >
       {icon}

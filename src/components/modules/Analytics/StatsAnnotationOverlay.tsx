@@ -519,12 +519,14 @@ function StatsToolbar({
   onResetOffsets: () => void;
 }) {
   return (
-    <div className='fixed top-4 right-4 z-50 flex items-center gap-2 rounded-full border border-zinc-200 bg-white/95 px-2 py-1.5 shadow-lg backdrop-blur'>
+    <div className='border-border fixed top-4 right-4 z-50 flex items-center gap-2 rounded-full border bg-white/95 px-2 py-1.5 shadow-lg backdrop-blur'>
       <button
         type='button'
         onClick={() => setEnabled(!enabled)}
         className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-          enabled ? 'bg-zinc-900 text-white' : 'text-zinc-700 hover:bg-zinc-100'
+          enabled
+            ? 'bg-zinc-900 text-white'
+            : 'text-content-muted hover:bg-muted'
         }`}
         title={enabled ? 'Tắt overlay' : 'Bật stats overlay'}
       >
@@ -541,7 +543,7 @@ function StatsToolbar({
           <select
             value={range}
             onChange={e => setRange(e.target.value as DateRange)}
-            className='text-2xs cursor-pointer rounded-md bg-transparent px-1 py-0.5 font-medium text-zinc-700 outline-none hover:bg-zinc-50'
+            className='text-2xs text-content-muted hover:bg-muted cursor-pointer rounded-md bg-transparent px-1 py-0.5 font-medium outline-none'
           >
             {(Object.keys(RANGE_LABEL) as DateRange[]).map(r => (
               <option key={r} value={r}>
@@ -551,7 +553,7 @@ function StatsToolbar({
           </select>
           <span
             className={`text-3xs font-mono ${
-              isDemo ? 'text-violet-500' : 'text-zinc-400'
+              isDemo ? 'text-violet-500' : 'text-muted-foreground'
             }`}
           >
             {loading ? '…' : isDemo ? 'demo' : hasData ? 'live' : 'no data'}
@@ -562,7 +564,7 @@ function StatsToolbar({
               <button
                 type='button'
                 onClick={onResetOffsets}
-                className='text-2xs rounded-md px-2 py-0.5 font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+                className='text-2xs text-content-muted hover:bg-muted hover:text-foreground rounded-md px-2 py-0.5 font-medium'
                 title='Đặt lại vị trí mặc định cho mọi card'
               >
                 Reset vị trí

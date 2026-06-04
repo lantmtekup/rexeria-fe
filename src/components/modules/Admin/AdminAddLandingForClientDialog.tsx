@@ -131,20 +131,22 @@ export function AdminAddLandingForClientDialog({
         onClick={e => e.stopPropagation()}
         className='my-16 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
       >
-        <div className='flex items-center justify-between border-b border-zinc-100 px-5 py-3'>
+        <div className='border-border flex items-center justify-between border-b px-5 py-3'>
           <div className='flex items-center gap-2.5'>
             <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-sm'>
               <Sparkles className='size-4' />
             </div>
             <div className='leading-tight'>
               <h3 className='text-base font-semibold'>Tạo landing cho brand</h3>
-              <p className='text-3xs font-mono text-zinc-400'>{client.name}</p>
+              <p className='text-3xs text-muted-foreground font-mono'>
+                {client.name}
+              </p>
             </div>
           </div>
           <button
             type='button'
             onClick={onClose}
-            className='rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label='Close'
           >
             <X className='size-4' />
@@ -153,7 +155,7 @@ export function AdminAddLandingForClientDialog({
 
         <div className='space-y-4 px-5 py-4'>
           <div>
-            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
               Tên landing <span className='text-rose-500'>*</span>
             </label>
             <input
@@ -163,19 +165,19 @@ export function AdminAddLandingForClientDialog({
               maxLength={200}
               onChange={e => setName(e.target.value)}
               placeholder='Vd: Hè 2026 — Coca-Cola promo'
-              className='mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='border-border mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             />
           </div>
 
           <div>
-            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
               Template <span className='text-rose-500'>*</span>
             </label>
             <select
               value={templateId}
               onChange={e => setTemplateId(e.target.value)}
               disabled={templates.length === 0}
-              className='mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='border-border mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             >
               {templates.length === 0 && (
                 <option value=''>
@@ -189,21 +191,21 @@ export function AdminAddLandingForClientDialog({
                 </option>
               ))}
             </select>
-            <p className='text-3xs mt-1 text-zinc-500'>
+            <p className='text-3xs text-content-muted mt-1'>
               BE clone canvas_blueprint + slot_schema từ template_version hiện
               hành sang page mới.
             </p>
           </div>
 
           <div>
-            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
               Workspace <span className='text-rose-500'>*</span>
             </label>
             <select
               value={workspaceId}
               onChange={e => setWorkspaceId(e.target.value)}
               disabled={workspaces.length === 0}
-              className='mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='border-border mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             >
               {workspaces.length === 0 && (
                 <option value=''>(Brand chưa có workspace)</option>
@@ -214,13 +216,13 @@ export function AdminAddLandingForClientDialog({
                 </option>
               ))}
             </select>
-            <p className='text-3xs mt-1 text-zinc-500'>
+            <p className='text-3xs text-content-muted mt-1'>
               Mặc định = workspace default của brand
             </p>
           </div>
 
           <div>
-            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
               Ghi chú handover
             </label>
             <textarea
@@ -229,7 +231,7 @@ export function AdminAddLandingForClientDialog({
               rows={2}
               maxLength={2000}
               placeholder='Vd: Brand chỉ cần đổi text + ảnh ở slot hero + booking.'
-              className='mt-1 w-full resize-y rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='border-border mt-1 w-full resize-y rounded-lg border px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             />
           </div>
 
@@ -239,7 +241,7 @@ export function AdminAddLandingForClientDialog({
             </div>
           )}
 
-          <div className='text-2xs rounded-lg border border-zinc-200 bg-zinc-50/50 px-3 py-2 text-zinc-600'>
+          <div className='text-2xs border-border bg-muted/50 text-content-muted rounded-lg border px-3 py-2'>
             Canonical flow:{' '}
             <code className='font-mono'>POST /admin/pages/from-template</code>{' '}
             tạo Page (type=landing, status=draft) trong workspace của brand,
@@ -248,12 +250,12 @@ export function AdminAddLandingForClientDialog({
           </div>
         </div>
 
-        <div className='flex items-center justify-end gap-2 border-t border-zinc-100 bg-zinc-50/50 px-5 py-3'>
+        <div className='border-border bg-muted/50 flex items-center justify-end gap-2 border-t px-5 py-3'>
           <button
             type='button'
             onClick={onClose}
             disabled={submitting}
-            className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50'
+            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             Huỷ
           </button>

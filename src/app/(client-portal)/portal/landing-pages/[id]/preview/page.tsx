@@ -65,7 +65,7 @@ export default function PortalLandingPreviewPage() {
   if (status === 'loading') {
     return (
       <div className='flex h-screen items-center justify-center bg-neutral-100'>
-        <Loader2 className='size-6 animate-spin text-zinc-500' />
+        <Loader2 className='text-content-muted size-6 animate-spin' />
       </div>
     );
   }
@@ -75,7 +75,7 @@ export default function PortalLandingPreviewPage() {
       <button
         type='button'
         onClick={() => router.push('/portal/landing-pages')}
-        className='inline-flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900'
+        className='text-content-muted hover:text-foreground inline-flex items-center gap-1.5 text-sm'
       >
         <ArrowLeft className='size-4' /> Landing pages
       </button>
@@ -105,16 +105,18 @@ export default function PortalLandingPreviewPage() {
         {page && (
           <div className='text-2xs mt-4 inline-flex flex-col gap-1 rounded-lg border border-amber-300 bg-white px-4 py-3 text-left'>
             <div>
-              <span className='text-zinc-500'>Page:</span>{' '}
+              <span className='text-content-muted'>Page:</span>{' '}
               <strong>{page.name}</strong>
             </div>
             <div>
-              <span className='text-zinc-500'>Status:</span> {page.status}
+              <span className='text-content-muted'>Status:</span> {page.status}
             </div>
             <div>
-              <span className='text-zinc-500'>Type:</span> {page.type}
+              <span className='text-content-muted'>Type:</span> {page.type}
             </div>
-            <div className='text-3xs font-mono text-zinc-500'>{page.id}</div>
+            <div className='text-3xs text-content-muted font-mono'>
+              {page.id}
+            </div>
           </div>
         )}
       </div>

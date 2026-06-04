@@ -15,7 +15,7 @@ export function LegacyEmbed({ content }: { content: LegacyEmbedContent }) {
   const entry = getLegacyBlock(content.schemaId);
   if (!entry) {
     return (
-      <div className='flex min-h-[160px] items-center justify-center bg-zinc-50 text-sm text-zinc-400'>
+      <div className='bg-muted text-muted-foreground flex min-h-[160px] items-center justify-center text-sm'>
         Legacy block không tìm thấy: {content.schemaId || '(trống)'}
       </div>
     );

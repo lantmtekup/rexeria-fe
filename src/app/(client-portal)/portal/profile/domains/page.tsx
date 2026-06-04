@@ -98,7 +98,7 @@ const STATUS_META: Record<
   },
   disabled: {
     label: 'Tắt',
-    chip: 'bg-zinc-100 text-zinc-600 border-zinc-200',
+    chip: 'bg-muted text-content-muted border-border',
     dot: 'bg-zinc-400',
   },
 };
@@ -416,20 +416,20 @@ export default function PortalDomainsPage() {
     <PortalShell>
       <Link
         href='/portal/profile'
-        className='group inline-flex items-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
+        className='group border-border text-content-muted hover:text-foreground inline-flex items-center gap-2 self-start rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900'
       >
         <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
         Profile
       </Link>
 
       <section className='mt-5'>
-        <div className='text-2xs flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+        <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
           <Globe className='size-3' /> Custom domains
         </div>
         <h1 className='mt-1 text-2xl font-bold tracking-tight'>
           Tên miền tuỳ chỉnh
         </h1>
-        <p className='mt-1 text-sm text-zinc-500'>
+        <p className='text-content-muted mt-1 text-sm'>
           Map domain riêng (vd <code className='font-mono'>coca.vn</code>) tới
           workspace để landing pages của bạn live tại URL chính chủ. Rexer xác
           thực qua DNS + tự động cấp TLS.
@@ -476,7 +476,7 @@ export default function PortalDomainsPage() {
 
       {/* Add CTA */}
       <div className='mt-5 flex items-center justify-between gap-3'>
-        <p className='text-2xs text-zinc-500'>
+        <p className='text-2xs text-content-muted'>
           Đang quản lý <strong>{domains.length}</strong> domain · Brand quota
           không giới hạn Phase 1
         </p>
@@ -493,12 +493,12 @@ export default function PortalDomainsPage() {
       {/* Domain list */}
       <section className='mt-5 space-y-4'>
         {domains.length === 0 ? (
-          <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center'>
-            <Globe className='mx-auto size-8 text-zinc-300' />
-            <p className='mt-3 text-sm font-semibold text-zinc-700'>
+          <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
+            <Globe className='text-muted-foreground mx-auto size-8' />
+            <p className='text-content-muted mt-3 text-sm font-semibold'>
               Chưa có custom domain
             </p>
-            <p className='mt-1 text-xs text-zinc-500'>
+            <p className='text-content-muted mt-1 text-xs'>
               Bấm &ldquo;Thêm domain&rdquo; để map tên miền riêng của brand vào
               Rexer.
             </p>
@@ -552,13 +552,13 @@ function DomainCard({
     domain.status === 'failed';
 
   return (
-    <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
+    <div className='border-border overflow-hidden rounded-2xl border bg-white shadow-sm'>
       {/* Header */}
-      <div className='flex flex-wrap items-start gap-3 border-b border-zinc-100 px-5 py-4'>
+      <div className='border-border flex flex-wrap items-start gap-3 border-b px-5 py-4'>
         <div className='flex min-w-0 flex-1 items-start gap-3'>
           <div
             className={cn(
-              'flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200 text-zinc-700',
+              'text-content-muted flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200',
               domain.status === 'active' &&
                 'from-emerald-100 to-emerald-200 text-emerald-700'
             )}
@@ -567,12 +567,12 @@ function DomainCard({
           </div>
           <div className='min-w-0'>
             <div className='flex flex-wrap items-center gap-2'>
-              <h3 className='truncate font-mono text-base font-semibold text-zinc-900'>
+              <h3 className='text-foreground truncate font-mono text-base font-semibold'>
                 {domain.domain}
               </h3>
               <StatusPill status={domain.status} />
             </div>
-            <div className='text-2xs mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-zinc-500'>
+            <div className='text-2xs text-content-muted mt-1 flex flex-wrap items-center gap-x-3 gap-y-1'>
               <span className='inline-flex items-center gap-1'>
                 <TargetIcon className='size-3' />
                 {target.label}
@@ -617,7 +617,7 @@ function DomainCard({
           <button
             type='button'
             onClick={onDelete}
-            className='inline-flex size-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-500 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
+            className='border-border text-content-muted inline-flex size-8 items-center justify-center rounded-lg border bg-white transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
             title='Xoá domain'
           >
             <Trash2 className='size-3.5' />
@@ -631,14 +631,14 @@ function DomainCard({
 
         {/* Bind landing page (target: landing) */}
         {domain.target_type === 'landing' && (
-          <div className='mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50/60 px-3 py-2.5'>
-            <span className='text-2xs inline-flex items-center gap-1.5 font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='border-border bg-muted/60 mt-4 flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2.5'>
+            <span className='text-2xs text-content-muted inline-flex items-center gap-1.5 font-semibold tracking-wider uppercase'>
               <Globe className='size-3' /> Landing page
             </span>
             <select
               value={domain.page_id ?? ''}
               onChange={e => onBind(e.target.value)}
-              className='ml-auto min-w-[200px] rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-zinc-900'
+              className='border-border ml-auto min-w-[200px] rounded-lg border bg-white px-2.5 py-1.5 text-sm outline-none focus:border-zinc-900'
             >
               <option value=''>— Chưa gắn landing page —</option>
               {pages.map(p => (
@@ -657,7 +657,7 @@ function DomainCard({
 
         {showDns && (
           <div className='mt-5'>
-            <div className='text-3xs mb-2 flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+            <div className='text-3xs text-content-muted mb-2 flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
               <ShieldAlert className='size-3' />
               DNS records — thêm tại nhà cung cấp domain
             </div>
@@ -677,7 +677,7 @@ function DomainCard({
               name={`_rexer-verify.${domain.domain}`}
               value={`rexer-verify=${domain.verification_token}`}
             />
-            <p className='text-2xs mt-2 text-zinc-500'>
+            <p className='text-2xs text-content-muted mt-2'>
               DNS thường propagate trong 5-30 phút. Bấm{' '}
               <strong>Verify ngay</strong> sau khi đã add record. Rexer cũng tự
               poll mỗi 5 phút.
@@ -741,7 +741,7 @@ function Step({
             ? final
               ? 'bg-emerald-500 text-white'
               : 'bg-violet-500 text-white'
-            : 'border border-zinc-300 bg-white text-zinc-400'
+            : 'border-border text-muted-foreground border bg-white'
         )}
       >
         {loading ? (
@@ -755,7 +755,7 @@ function Step({
       <span
         className={cn(
           'font-medium tracking-wider uppercase',
-          active ? 'text-zinc-900' : 'text-zinc-400'
+          active ? 'text-foreground' : 'text-muted-foreground'
         )}
       >
         {label}
@@ -801,15 +801,15 @@ function DnsRecord({
   };
 
   return (
-    <div className='group relative mt-2 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-900'>
+    <div className='group border-border relative mt-2 overflow-hidden rounded-xl border bg-zinc-900'>
       {/* Kind chip */}
-      <div className='text-3xs absolute top-0 left-0 rounded-br-lg bg-zinc-800 px-2 py-0.5 font-mono font-bold tracking-wider text-zinc-300'>
+      <div className='text-3xs text-muted-foreground absolute top-0 left-0 rounded-br-lg bg-zinc-800 px-2 py-0.5 font-mono font-bold tracking-wider'>
         {kind}
       </div>
       <button
         type='button'
         onClick={copy}
-        className='absolute top-1.5 right-1.5 inline-flex size-7 items-center justify-center rounded-md bg-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-700 hover:text-white'
+        className='text-muted-foreground absolute top-1.5 right-1.5 inline-flex size-7 items-center justify-center rounded-md bg-zinc-800 transition-colors hover:bg-zinc-700 hover:text-white'
         title='Copy record'
       >
         {copied ? (
@@ -872,7 +872,7 @@ function StatCard({
     emerald: 'border-emerald-100 bg-emerald-50/40 text-emerald-700',
     blue: 'border-blue-100 bg-blue-50/40 text-blue-700',
     amber: 'border-amber-100 bg-amber-50/40 text-amber-700',
-    zinc: 'border-zinc-200 bg-white text-zinc-600',
+    zinc: 'border-border bg-white text-content-muted',
   };
   return (
     <div
@@ -882,7 +882,7 @@ function StatCard({
         {icon}
         {label}
       </div>
-      <div className='mt-1 font-mono text-xl font-bold text-zinc-900 tabular-nums'>
+      <div className='text-foreground mt-1 font-mono text-xl font-bold tabular-nums'>
         {value}
       </div>
     </div>
@@ -934,7 +934,7 @@ function AddDomainDialog({
         onClick={e => e.stopPropagation()}
         className='my-12 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
       >
-        <div className='flex items-center justify-between border-b border-zinc-100 px-5 py-3'>
+        <div className='border-border flex items-center justify-between border-b px-5 py-3'>
           <div className='flex items-center gap-2.5'>
             <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-sm'>
               <Globe className='size-4' />
@@ -944,7 +944,7 @@ function AddDomainDialog({
           <button
             type='button'
             onClick={onClose}
-            className='rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label='Close'
           >
             <X className='size-4' />
@@ -953,7 +953,7 @@ function AddDomainDialog({
 
         <div className='space-y-4 px-5 py-4'>
           <div>
-            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
               Domain <span className='text-rose-500'>*</span>
             </label>
             <input
@@ -965,16 +965,16 @@ function AddDomainDialog({
                 setError(null);
               }}
               placeholder='coca.vn hoặc campaigns.coca.vn'
-              className='mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 font-mono text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='border-border mt-1 w-full rounded-lg border bg-white px-3 py-2 font-mono text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             />
-            <p className='text-3xs mt-1 text-zinc-500'>
+            <p className='text-3xs text-content-muted mt-1'>
               Apex (coca.vn) hoặc subdomain (campaigns.coca.vn). Không có
               http(s):// hoặc path.
             </p>
           </div>
 
           <div>
-            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
               Mục đích
             </label>
             <div className='mt-2 space-y-2'>
@@ -989,7 +989,7 @@ function AddDomainDialog({
                       'flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors',
                       selected
                         ? 'border-emerald-300 bg-emerald-50/50'
-                        : 'border-zinc-200 bg-white hover:bg-zinc-50'
+                        : 'border-border hover:bg-muted bg-white'
                     )}
                   >
                     <input
@@ -1000,11 +1000,11 @@ function AddDomainDialog({
                       className='mt-1.5 size-3.5 accent-emerald-600'
                     />
                     <div className='flex-1'>
-                      <div className='flex items-center gap-1.5 text-sm font-semibold text-zinc-900'>
+                      <div className='text-foreground flex items-center gap-1.5 text-sm font-semibold'>
                         <Icon className='size-3.5' />
                         {meta.label}
                       </div>
-                      <p className='text-2xs mt-0.5 leading-snug text-zinc-500'>
+                      <p className='text-2xs text-content-muted mt-0.5 leading-snug'>
                         {meta.description}
                       </p>
                     </div>
@@ -1027,11 +1027,11 @@ function AddDomainDialog({
           </div>
         </div>
 
-        <div className='flex items-center justify-end gap-2 border-t border-zinc-100 bg-zinc-50/50 px-5 py-3'>
+        <div className='border-border bg-muted/50 flex items-center justify-end gap-2 border-t px-5 py-3'>
           <button
             type='button'
             onClick={onClose}
-            className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100'
+            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'
           >
             Huỷ
           </button>

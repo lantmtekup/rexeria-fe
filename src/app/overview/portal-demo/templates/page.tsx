@@ -30,7 +30,7 @@ const STATUS_META = {
   },
   archived: {
     label: 'Archived',
-    chip: 'bg-zinc-100 text-zinc-600',
+    chip: 'bg-muted text-content-muted',
     dot: 'bg-zinc-400',
   },
 };
@@ -72,13 +72,13 @@ export default function PortalTemplatesPage() {
     <PortalShell>
       <section className='flex flex-wrap items-end justify-between gap-4'>
         <div>
-          <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
             <LayoutTemplate className='size-3' /> Landing pages
           </div>
           <h1 className='mt-1 text-2xl font-bold tracking-tight'>
             Tất cả landing pages
           </h1>
-          <p className='mt-1 text-sm text-zinc-500'>
+          <p className='text-content-muted mt-1 text-sm'>
             Workspace <strong>{activeWs.name}</strong> có{' '}
             <strong>{scopedTemplates.length}</strong> landing page (/
             {templates.length} tổng client). Click để xem analytics chi tiết.
@@ -95,18 +95,18 @@ export default function PortalTemplatesPage() {
       <ApiStatusLabel source={source} error={loadError} />
 
       {/* Filter bar */}
-      <div className='mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm'>
-        <div className='flex flex-1 items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 lg:max-w-sm'>
-          <Search className='size-3.5 text-zinc-400' />
+      <div className='border-border mt-5 flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3 shadow-sm'>
+        <div className='border-border bg-muted flex flex-1 items-center gap-2 rounded-lg border px-3 py-1.5 lg:max-w-sm'>
+          <Search className='text-muted-foreground size-3.5' />
           <input
             type='text'
             placeholder='Tìm theo tên...'
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className='flex-1 bg-transparent text-sm outline-none placeholder:text-zinc-400'
+            className='placeholder:text-muted-foreground flex-1 bg-transparent text-sm outline-none'
           />
         </div>
-        <div className='inline-flex items-center rounded-lg border border-zinc-200 bg-white p-0.5'>
+        <div className='border-border inline-flex items-center rounded-lg border bg-white p-0.5'>
           {(['all', 'published', 'draft', 'archived'] as const).map(s => (
             <button
               key={s}
@@ -114,7 +114,7 @@ export default function PortalTemplatesPage() {
               className={`rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
                 filter === s
                   ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'text-zinc-600 hover:bg-zinc-100'
+                  : 'text-content-muted hover:bg-muted'
               }`}
             >
               {s === 'all'
@@ -128,7 +128,7 @@ export default function PortalTemplatesPage() {
       {/* Templates grid */}
       <div className='mt-5 grid grid-cols-1 gap-4 md:grid-cols-2'>
         {filtered.length === 0 ? (
-          <div className='col-span-full rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center text-sm text-zinc-500'>
+          <div className='border-border text-content-muted col-span-full rounded-2xl border border-dashed bg-white p-10 text-center text-sm'>
             Không có template nào khớp filter.
           </div>
         ) : (
@@ -143,7 +143,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
   const status = STATUS_META[t.status];
   const ctr = t.views_30d > 0 ? (t.clicks_30d / t.views_30d) * 100 : 0;
   return (
-    <div className='group overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+    <div className='group border-border overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       {/* Thumbnail */}
       <div
         className={`relative aspect-[16/9] bg-gradient-to-br ${t.thumbnail_gradient}`}
@@ -175,9 +175,9 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
         <h3 className='line-clamp-1 text-sm font-bold tracking-tight'>
           {t.name}
         </h3>
-        <p className='text-3xs mt-0.5 text-zinc-400'>
+        <p className='text-3xs text-muted-foreground mt-0.5'>
           Cập nhật bởi{' '}
-          <span className='font-semibold text-zinc-600'>
+          <span className='text-content-muted font-semibold'>
             {t.last_updated_by.name}
           </span>
           {' · '}
@@ -193,7 +193,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
             <Stat label='Leads' value={fmtNum(t.leads_30d)} icon={Send} />
           </div>
         ) : (
-          <div className='text-2xs mt-3 rounded-lg border border-dashed border-zinc-200 bg-zinc-50 px-3 py-2 text-center text-zinc-500'>
+          <div className='text-2xs border-border bg-muted text-content-muted mt-3 rounded-lg border border-dashed px-3 py-2 text-center'>
             Chưa publish — chưa có số liệu
           </div>
         )}
@@ -211,7 +211,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
               href={`/p/${t.id}`}
               target='_blank'
               rel='noreferrer'
-              className='flex items-center gap-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50'
+              className='border-border text-content-muted hover:bg-muted flex items-center gap-1 rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium'
             >
               <ExternalLink className='size-3' />
               Xem live
@@ -233,12 +233,12 @@ function Stat({
   icon: typeof Eye;
 }) {
   return (
-    <div className='rounded-md bg-zinc-50 py-1.5'>
-      <Icon className='mx-auto size-3 text-zinc-400' />
-      <div className='mt-0.5 font-mono text-xs font-bold text-zinc-900'>
+    <div className='bg-muted rounded-md py-1.5'>
+      <Icon className='text-muted-foreground mx-auto size-3' />
+      <div className='text-foreground mt-0.5 font-mono text-xs font-bold'>
         {value}
       </div>
-      <div className='text-3xs font-mono text-zinc-500'>{label}</div>
+      <div className='text-3xs text-content-muted font-mono'>{label}</div>
     </div>
   );
 }

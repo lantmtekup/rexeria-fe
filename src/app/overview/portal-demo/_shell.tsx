@@ -79,7 +79,7 @@ const NAV: NavItem[] = [
 export function PortalShell({ children }: { children: React.ReactNode }) {
   return (
     <Suspense
-      fallback={<div className='p-8 text-sm text-zinc-500'>Loading…</div>}
+      fallback={<div className='text-content-muted p-8 text-sm'>Loading…</div>}
     >
       <PortalShellInner>{children}</PortalShellInner>
     </Suspense>
@@ -99,7 +99,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className='min-h-screen bg-zinc-50 text-zinc-900 antialiased'>
+    <div className='bg-muted text-foreground min-h-screen antialiased'>
       {/* Migration banner — tell users this is the sales showcase */}
       <div className='border-b border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50 px-6 py-2 text-xs'>
         <div className='flex items-center justify-between gap-2'>
@@ -121,15 +121,15 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Top header */}
-      <header className='sticky top-0 z-30 flex items-center justify-between border-b border-zinc-200 bg-white/95 px-6 py-3 backdrop-blur'>
+      <header className='border-border sticky top-0 z-30 flex items-center justify-between border-b bg-white/95 px-6 py-3 backdrop-blur'>
         <div className='flex items-center gap-3'>
           <Link
             href='/overview'
-            className='flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100'
+            className='border-border text-content-muted hover:bg-muted flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium'
           >
             <ArrowLeft className='size-3.5' /> Overview
           </Link>
-          <span className='text-zinc-300'>/</span>
+          <span className='text-muted-foreground'>/</span>
 
           {/* Client info */}
           <div className='flex items-center gap-2'>
@@ -137,7 +137,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
               <Building2 className='size-3.5' />
             </div>
             <div className='leading-tight'>
-              <div className='text-3xs font-semibold tracking-wider text-zinc-400 uppercase'>
+              <div className='text-3xs text-muted-foreground font-semibold tracking-wider uppercase'>
                 CLIENT
               </div>
               <div className='text-sm font-semibold tracking-tight'>
@@ -146,7 +146,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <span className='text-zinc-300'>/</span>
+          <span className='text-muted-foreground'>/</span>
 
           {/* Workspace switcher */}
           <div className='relative'>
@@ -154,8 +154,8 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
               onClick={() => setWsMenuOpen(o => !o)}
               className={`flex items-center gap-2 rounded-lg border px-2.5 py-1 text-sm transition-all ${
                 wsMenuOpen
-                  ? 'border-zinc-300 bg-zinc-50'
-                  : 'border-zinc-200 bg-white hover:bg-zinc-50'
+                  ? 'border-border bg-muted'
+                  : 'border-border hover:bg-muted bg-white'
               }`}
             >
               <div
@@ -164,14 +164,14 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                 {activeWs.logo_initial}
               </div>
               <div className='text-left leading-tight'>
-                <div className='text-3xs font-semibold tracking-wider text-zinc-400 uppercase'>
+                <div className='text-3xs text-muted-foreground font-semibold tracking-wider uppercase'>
                   Workspace
                 </div>
                 <div className='text-sm font-semibold tracking-tight'>
                   {activeWs.name}
                 </div>
               </div>
-              <ChevronsUpDown className='size-3.5 text-zinc-400' />
+              <ChevronsUpDown className='text-muted-foreground size-3.5' />
             </button>
 
             {wsMenuOpen && (
@@ -180,8 +180,8 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                   className='fixed inset-0 z-30'
                   onClick={() => setWsMenuOpen(false)}
                 />
-                <div className='absolute top-full left-0 z-40 mt-1 w-80 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl'>
-                  <div className='text-3xs border-b border-zinc-100 bg-zinc-50/50 px-3 py-2 font-semibold tracking-wider text-zinc-500 uppercase'>
+                <div className='border-border absolute top-full left-0 z-40 mt-1 w-80 overflow-hidden rounded-xl border bg-white shadow-2xl'>
+                  <div className='text-3xs border-border bg-muted/50 text-content-muted border-b px-3 py-2 font-semibold tracking-wider uppercase'>
                     {FAKE_WORKSPACES.length} workspace của {FAKE_CLIENT.name}
                   </div>
                   <div className='max-h-80 overflow-y-auto py-1'>
@@ -192,7 +192,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                           key={ws.id}
                           onClick={() => switchWorkspace(ws)}
                           className={`flex w-full items-start gap-2.5 px-3 py-2 text-left transition-colors ${
-                            isActive ? 'bg-zinc-50' : 'hover:bg-zinc-50'
+                            isActive ? 'bg-muted' : 'hover:bg-muted'
                           }`}
                         >
                           <div
@@ -209,10 +209,10 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                                 <Check className='size-3.5 text-emerald-500' />
                               )}
                             </div>
-                            <div className='text-3xs truncate text-zinc-500'>
+                            <div className='text-3xs text-content-muted truncate'>
                               {ws.description}
                             </div>
-                            <div className='text-3xs mt-0.5 flex items-center gap-2 text-zinc-400'>
+                            <div className='text-3xs text-muted-foreground mt-0.5 flex items-center gap-2'>
                               <span>{ws.member_count} member</span>
                               <span>·</span>
                               <span>{ws.template_count} template</span>
@@ -224,8 +224,8 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                       );
                     })}
                   </div>
-                  <div className='border-t border-zinc-100 bg-zinc-50/30 px-3 py-2'>
-                    <button className='text-2xs w-full text-left font-medium text-zinc-600 hover:text-zinc-900'>
+                  <div className='border-border bg-muted/30 border-t px-3 py-2'>
+                    <button className='text-2xs text-content-muted hover:text-foreground w-full text-left font-medium'>
                       + Tạo workspace mới
                     </button>
                   </div>
@@ -236,7 +236,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className='flex items-center gap-2'>
-          <button className='relative flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100'>
+          <button className='border-border text-content-muted hover:bg-muted relative flex items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1 text-xs font-medium'>
             <Bell className='size-3.5' />
             {FAKE_STATS.unread_notifications > 0 && (
               <span className='text-3xs absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-rose-500 font-mono font-bold text-white ring-2 ring-white'>
@@ -252,17 +252,17 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
 
       <div className='flex'>
         {/* Side nav */}
-        <aside className='sticky top-[57px] hidden h-[calc(100vh-57px)] w-60 shrink-0 overflow-y-auto border-r border-zinc-200 bg-white px-3 py-4 lg:block'>
+        <aside className='border-border sticky top-[57px] hidden h-[calc(100vh-57px)] w-60 shrink-0 overflow-y-auto border-r bg-white px-3 py-4 lg:block'>
           <div className='mb-4 rounded-xl bg-gradient-to-br from-rose-50 to-white p-3'>
-            <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+            <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
               Plan
             </div>
-            <div className='text-2xs mt-0.5 text-zinc-600'>
+            <div className='text-2xs text-content-muted mt-0.5'>
               <span className='font-mono font-semibold text-rose-700'>
                 Phase 1 Managed
               </span>
             </div>
-            <div className='text-3xs mt-1 text-zinc-500'>
+            <div className='text-3xs text-content-muted mt-1'>
               {FAKE_CLIENT.member_count} thành viên · {FAKE_WORKSPACES.length}{' '}
               workspace
             </div>
@@ -281,7 +281,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
               return (
                 <div key={n.href}>
                   {showGroupLabel && (
-                    <div className='text-3xs mt-3 mb-1 px-2.5 font-bold tracking-wider text-zinc-400 uppercase'>
+                    <div className='text-3xs text-muted-foreground mt-3 mb-1 px-2.5 font-bold tracking-wider uppercase'>
                       {n.group}
                     </div>
                   )}
@@ -292,11 +292,11 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                     } ${
                       isActive
                         ? 'bg-zinc-900 text-white shadow-sm'
-                        : 'text-zinc-700 hover:bg-zinc-100'
+                        : 'text-content-muted hover:bg-muted'
                     }`}
                   >
                     <Icon
-                      className={`size-4 ${isActive ? 'text-white' : 'text-zinc-500'}`}
+                      className={`size-4 ${isActive ? 'text-white' : 'text-content-muted'}`}
                     />
                     <span className='flex-1'>{n.label}</span>
                     {n.badge !== undefined && n.badge > 0 && (
@@ -317,9 +317,9 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
           </nav>
 
           {/* Workspace storage */}
-          <div className='mt-6 rounded-xl border border-zinc-200 bg-zinc-50 p-3'>
+          <div className='border-border bg-muted mt-6 rounded-xl border p-3'>
             <div className='flex items-center justify-between'>
-              <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+              <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
                 Storage
               </div>
               <div
@@ -328,11 +328,11 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                 {activeWs.logo_initial}
               </div>
             </div>
-            <div className='text-2xs mt-1 text-zinc-700'>
+            <div className='text-2xs text-content-muted mt-1'>
               <span className='font-mono font-bold'>
                 {activeWs.storage_used_gb} GB
               </span>{' '}
-              <span className='text-zinc-400'>trong workspace này</span>
+              <span className='text-muted-foreground'>trong workspace này</span>
             </div>
             <div className='mt-1.5 h-1.5 overflow-hidden rounded-full bg-zinc-200'>
               <div
@@ -342,7 +342,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
                 }}
               />
             </div>
-            <div className='text-3xs mt-1 text-zinc-400'>
+            <div className='text-3xs text-muted-foreground mt-1'>
               Quota client: {FAKE_CLIENT.storage_used_gb} /{' '}
               {FAKE_CLIENT.storage_quota_gb} GB
             </div>

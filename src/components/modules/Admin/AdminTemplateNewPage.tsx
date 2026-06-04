@@ -112,14 +112,14 @@ export function AdminTemplateNewPage() {
     <div className='mx-auto flex max-w-3xl flex-col gap-5 p-6'>
       <Link
         href='/admin/templates'
-        className='group inline-flex items-center gap-2 self-start rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900 hover:text-zinc-900'
+        className='group border-border text-content-muted hover:text-foreground inline-flex items-center gap-2 self-start rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900'
       >
         <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
         Templates
       </Link>
 
       <div>
-        <div className='text-3xs font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+        <div className='text-3xs text-content-muted font-semibold tracking-[0.18em] uppercase'>
           Tạo template
         </div>
         <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
@@ -133,7 +133,7 @@ export function AdminTemplateNewPage() {
 
       <form
         onSubmit={handleSubmit}
-        className='flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm'
+        className='border-border flex flex-col gap-4 rounded-2xl border bg-white p-6 shadow-sm'
       >
         {/* Code */}
         <div className='flex flex-col gap-1.5'>
@@ -253,7 +253,7 @@ export function AdminTemplateNewPage() {
           />
         </div>
 
-        <div className='mt-2 flex items-center justify-end gap-2 border-t border-zinc-100 pt-4'>
+        <div className='border-border mt-2 flex items-center justify-end gap-2 border-t pt-4'>
           <Button
             type='button'
             variant='outline'

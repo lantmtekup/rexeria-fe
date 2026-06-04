@@ -263,7 +263,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className='flex items-center justify-between border-b border-zinc-100 px-5 py-3'>
+        <div className='border-border flex items-center justify-between border-b px-5 py-3'>
           <div className='flex items-center gap-2.5'>
             <div className='flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-sm'>
               <Sparkles className='size-4' />
@@ -272,7 +272,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
               <h3 className='text-base font-semibold'>
                 Thêm block từ thư viện hệ thống
               </h3>
-              <p className='text-2xs text-zinc-500'>
+              <p className='text-2xs text-content-muted'>
                 {filtered.length} / {CATALOG.length} block types
               </p>
             </div>
@@ -280,7 +280,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
           <button
             type='button'
             onClick={onClose}
-            className='rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label='Close'
           >
             <X className='size-4' />
@@ -288,16 +288,16 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
         </div>
 
         {/* Search + category filter */}
-        <div className='space-y-3 border-b border-zinc-100 bg-zinc-50/40 px-5 py-3.5'>
+        <div className='border-border bg-muted/40 space-y-3 border-b px-5 py-3.5'>
           <div className='relative max-w-md'>
-            <Search className='absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-zinc-400' />
+            <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
             <input
               type='text'
               autoFocus
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder='Tìm theo tên / type / mô tả…'
-              className='w-full rounded-lg border border-zinc-200 bg-white py-2 pr-3 pl-9 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
+              className='border-border w-full rounded-lg border bg-white py-2 pr-3 pl-9 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
             />
           </div>
 
@@ -316,7 +316,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                     'text-2xs inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-medium transition-all',
                     active
                       ? 'border-zinc-900 bg-zinc-900 text-white shadow-sm'
-                      : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50',
+                      : 'border-border text-content-muted hover:border-border hover:bg-muted bg-white',
                     empty && !active && 'cursor-not-allowed opacity-40'
                   )}
                 >
@@ -326,7 +326,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                       'text-3xs inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 font-mono tabular-nums',
                       active
                         ? 'bg-white/15 text-white/90'
-                        : 'bg-zinc-100 text-zinc-500'
+                        : 'bg-muted text-content-muted'
                     )}
                   >
                     {count}
@@ -338,16 +338,16 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
         </div>
 
         {/* Grid */}
-        <div className='max-h-[62vh] overflow-y-auto bg-zinc-50/30 p-5'>
+        <div className='bg-muted/30 max-h-[62vh] overflow-y-auto p-5'>
           {filtered.length === 0 ? (
             <div className='py-16 text-center'>
-              <div className='mx-auto flex size-12 items-center justify-center rounded-2xl bg-zinc-100 text-zinc-400'>
+              <div className='bg-muted text-muted-foreground mx-auto flex size-12 items-center justify-center rounded-2xl'>
                 <Search className='size-5' />
               </div>
-              <p className='mt-3 text-sm font-semibold text-zinc-700'>
+              <p className='text-content-muted mt-3 text-sm font-semibold'>
                 Không có block khớp tìm kiếm
               </p>
-              <p className='text-2xs mt-1 text-zinc-500'>
+              <p className='text-2xs text-content-muted mt-1'>
                 Đổi từ khoá hoặc category để xem các block khác.
               </p>
             </div>
@@ -366,10 +366,10 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
         </div>
 
         {/* Footer hint */}
-        <div className='text-2xs border-t border-zinc-100 bg-white px-5 py-2.5 text-zinc-500'>
+        <div className='text-2xs border-border text-content-muted border-t bg-white px-5 py-2.5'>
           Sau khi thêm, block sẽ xuất hiện trong thư viện. Click{' '}
-          <em className='text-zinc-700'>Sửa trong canvas</em> để mở editor và
-          tuỳ chỉnh nội dung.
+          <em className='text-content-muted'>Sửa trong canvas</em> để mở editor
+          và tuỳ chỉnh nội dung.
         </div>
       </div>
     </div>
@@ -406,7 +406,7 @@ function CatalogCard({
         }
       }}
       className={cn(
-        'group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white text-left shadow-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
+        'group border-border flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
         'hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/5',
         adding && 'cursor-wait opacity-60'
       )}
@@ -414,7 +414,7 @@ function CatalogCard({
       {/* Real preview thumbnail — same renderer the saved-blocks library
           uses. Wrapped in a soft mat so heterogeneous block backgrounds
           (pure white hero vs dark overlay) still look intentional. */}
-      <div className='relative aspect-[4/3] overflow-hidden border-b border-zinc-100 bg-gradient-to-br from-zinc-100 to-zinc-50'>
+      <div className='border-border relative aspect-[4/3] overflow-hidden border-b bg-gradient-to-br from-zinc-100 to-zinc-50'>
         <BlockMiniPreview block={getPreviewBlock(item.type)} aspect='4 / 3' />
 
         {/* Type pill — small accent so users can still scan block type at
@@ -436,18 +436,18 @@ function CatalogCard({
 
       <div className='flex flex-1 flex-col gap-1 p-3.5'>
         <div className='flex items-center justify-between gap-2'>
-          <span className='text-sm font-semibold text-zinc-800'>
+          <span className='text-foreground text-sm font-semibold'>
             {item.label}
           </span>
           {adding ? (
-            <Loader2 className='size-4 animate-spin text-zinc-500' />
+            <Loader2 className='text-content-muted size-4 animate-spin' />
           ) : (
-            <span className='flex size-6 items-center justify-center rounded-full border border-zinc-200 bg-zinc-50 text-zinc-400 transition-all group-hover:border-indigo-500 group-hover:bg-indigo-500 group-hover:text-white'>
+            <span className='border-border bg-muted text-muted-foreground flex size-6 items-center justify-center rounded-full border transition-all group-hover:border-indigo-500 group-hover:bg-indigo-500 group-hover:text-white'>
               <Plus className='size-3' strokeWidth={2.5} />
             </span>
           )}
         </div>
-        <p className='text-2xs line-clamp-2 leading-snug text-zinc-500'>
+        <p className='text-2xs text-content-muted line-clamp-2 leading-snug'>
           {item.description}
         </p>
       </div>

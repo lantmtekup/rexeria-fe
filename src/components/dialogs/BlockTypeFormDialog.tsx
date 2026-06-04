@@ -287,7 +287,7 @@ export function BlockTypeFormDialog({
                   onChange={e =>
                     setData(d => ({ ...d, accent_color: e.target.value }))
                   }
-                  className='size-9 cursor-pointer rounded border border-zinc-200 bg-white p-0.5'
+                  className='border-border size-9 cursor-pointer rounded border bg-white p-0.5'
                   aria-label='accent color picker'
                 />
                 <Input
@@ -328,7 +328,7 @@ export function BlockTypeFormDialog({
           </div>
 
           {/* Switches */}
-          <div className='flex flex-wrap items-center gap-6 rounded-lg border border-zinc-200 bg-zinc-50/40 px-3 py-2'>
+          <div className='border-border bg-muted/40 flex flex-wrap items-center gap-6 rounded-lg border px-3 py-2'>
             <label className='inline-flex cursor-pointer items-center gap-2'>
               <Switch
                 checked={data.is_premium}

@@ -166,7 +166,7 @@ export function AdminInboxPage() {
     <div className='flex flex-col gap-4 p-6'>
       <div className='flex flex-wrap items-end justify-between gap-3'>
         <div>
-          <div className='text-3xs flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+          <div className='text-3xs text-content-muted flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
             <Inbox className='size-3' /> Staff inbox
           </div>
           <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
@@ -182,7 +182,7 @@ export function AdminInboxPage() {
           type='button'
           onClick={load}
           disabled={loading}
-          className='inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 disabled:opacity-50'
+          className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium shadow-sm disabled:opacity-50'
         >
           <RefreshCw className={cn('size-3.5', loading && 'animate-spin')} />
           Refresh
@@ -212,8 +212,8 @@ export function AdminInboxPage() {
       </div>
 
       {/* Filters */}
-      <div className='flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm'>
-        <span className='text-3xs inline-flex items-center gap-1 px-2 font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+      <div className='border-border flex flex-wrap items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm'>
+        <span className='text-3xs text-muted-foreground inline-flex items-center gap-1 px-2 font-semibold tracking-[0.18em] uppercase'>
           <Filter className='size-3' /> Status
         </span>
         {(['all', 'open', 'claimed', 'done'] as const).map(s => (
@@ -225,7 +225,7 @@ export function AdminInboxPage() {
               'text-2xs rounded-full px-2.5 py-1 font-medium transition-colors',
               statusFilter === s
                 ? 'bg-zinc-900 text-white shadow-sm'
-                : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
+                : 'border-border text-content-muted hover:bg-muted border bg-white'
             )}
           >
             {s === 'all' ? 'Tất cả' : (STATUS_META[s]?.label ?? s)}
@@ -235,13 +235,13 @@ export function AdminInboxPage() {
         {distinctKinds.length > 0 && (
           <>
             <span className='ml-2 hidden h-4 w-px bg-zinc-200 sm:block' />
-            <span className='text-3xs inline-flex items-center gap-1 px-2 font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+            <span className='text-3xs text-muted-foreground inline-flex items-center gap-1 px-2 font-semibold tracking-[0.18em] uppercase'>
               Kind
             </span>
             <select
               value={kindFilter}
               onChange={e => setKindFilter(e.target.value)}
-              className='text-2xs rounded-lg border border-zinc-200 bg-white px-2 py-1 font-medium text-zinc-700 outline-none hover:bg-zinc-50'
+              className='text-2xs border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-2 py-1 font-medium outline-none'
             >
               <option value='all'>Tất cả</option>
               {distinctKinds.map(k => (
@@ -262,14 +262,16 @@ export function AdminInboxPage() {
 
       {/* List */}
       {loading && items.length === 0 ? (
-        <div className='flex items-center justify-center py-16 text-sm text-zinc-500'>
+        <div className='text-content-muted flex items-center justify-center py-16 text-sm'>
           <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải inbox…
         </div>
       ) : items.length === 0 ? (
-        <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center'>
-          <Inbox className='mx-auto size-8 text-zinc-300' />
-          <p className='mt-3 text-sm font-semibold text-zinc-700'>Inbox sạch</p>
-          <p className='mt-1 text-xs text-zinc-500'>
+        <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
+          <Inbox className='text-muted-foreground mx-auto size-8' />
+          <p className='text-content-muted mt-3 text-sm font-semibold'>
+            Inbox sạch
+          </p>
+          <p className='text-content-muted mt-1 text-xs'>
             Không có item nào khớp filter — staff team đã catch up.
           </p>
         </div>
@@ -306,16 +308,16 @@ function InboxRow({
   const kind = KIND_META[item.kind] ?? {
     label: item.kind,
     icon: '📌',
-    chip: 'bg-zinc-100 text-zinc-700',
+    chip: 'bg-muted text-content-muted',
   };
   const status = STATUS_META[item.status] ?? {
     label: item.status,
-    chip: 'bg-zinc-50 text-zinc-700 border-zinc-200',
+    chip: 'bg-muted text-content-muted border-border',
   };
   const subject = (item.meta as { subject?: string } | undefined)?.subject;
   const summary = (item.meta as { summary?: string } | undefined)?.summary;
   return (
-    <div className='flex flex-wrap items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md'>
+    <div className='border-border flex flex-wrap items-start gap-3 rounded-2xl border bg-white p-4 shadow-sm transition-shadow hover:shadow-md'>
       <div
         className={cn(
           'flex size-10 shrink-0 items-center justify-center rounded-xl text-lg shadow-sm',
@@ -326,7 +328,7 @@ function InboxRow({
       </div>
       <div className='min-w-0 flex-1'>
         <div className='flex flex-wrap items-center gap-2'>
-          <span className='text-sm font-semibold text-zinc-900'>
+          <span className='text-foreground text-sm font-semibold'>
             {subject ?? kind.label}
           </span>
           <span
@@ -337,14 +339,16 @@ function InboxRow({
           >
             {status.label}
           </span>
-          <span className='text-3xs inline-flex items-center rounded-full bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-600'>
+          <span className='text-3xs bg-muted text-content-muted inline-flex items-center rounded-full px-1.5 py-0.5 font-mono'>
             {item.kind}
           </span>
         </div>
         {summary && (
-          <p className='mt-1 line-clamp-2 text-xs text-zinc-600'>{summary}</p>
+          <p className='text-content-muted mt-1 line-clamp-2 text-xs'>
+            {summary}
+          </p>
         )}
-        <div className='text-3xs mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-zinc-500'>
+        <div className='text-3xs text-content-muted mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5'>
           <span>Tạo {relativeTime(item.created_at)}</span>
           {item.claimed_at && (
             <span>· Nhận {relativeTime(item.claimed_at)}</span>
@@ -427,7 +431,7 @@ function StatCard({
         {icon}
         {label}
       </div>
-      <div className='mt-1 font-mono text-xl font-bold text-zinc-900 tabular-nums'>
+      <div className='text-foreground mt-1 font-mono text-xl font-bold tabular-nums'>
         {value}
       </div>
     </div>

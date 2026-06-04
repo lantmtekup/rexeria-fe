@@ -95,11 +95,11 @@ export function PageHeader({
   rightBadge?: React.ReactNode;
 }) {
   return (
-    <header className='sticky top-0 z-30 flex items-center justify-between border-b border-zinc-200 bg-white/95 px-6 py-3 backdrop-blur'>
+    <header className='border-border sticky top-0 z-30 flex items-center justify-between border-b bg-white/95 px-6 py-3 backdrop-blur'>
       <div className='flex min-w-0 items-center gap-3'>
         <Link
           href={back}
-          className='flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100'
+          className='border-border text-content-muted hover:bg-muted flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium'
         >
           <ArrowLeft className='size-3.5' /> {backLabel}
         </Link>
@@ -110,7 +110,10 @@ export function PageHeader({
           <span className='truncate text-sm font-semibold tracking-tight'>
             {title}
             {subtitle && (
-              <span className='font-normal text-zinc-400'> · {subtitle}</span>
+              <span className='text-muted-foreground font-normal'>
+                {' '}
+                · {subtitle}
+              </span>
             )}
           </span>
         </div>
@@ -159,7 +162,7 @@ export function StatCard({
   const c = ACCENT_MAP[accent];
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br ${c.gradient} to-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md`}
+      className={`group border-border relative overflow-hidden rounded-2xl border bg-gradient-to-br ${c.gradient} to-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md`}
     >
       <div className='flex items-start justify-between'>
         <div
@@ -168,18 +171,20 @@ export function StatCard({
           <Icon className='size-5' />
         </div>
       </div>
-      <div className='text-2xs mt-3 font-semibold tracking-wider text-zinc-500 uppercase'>
+      <div className='text-2xs text-content-muted mt-3 font-semibold tracking-wider uppercase'>
         {label}
       </div>
       <div className='mt-0.5 flex items-baseline gap-1.5'>
-        <span className='font-mono text-2xl font-bold text-zinc-900'>
+        <span className='text-foreground font-mono text-2xl font-bold'>
           {fmtNum(value)}
         </span>
         {value >= 1000 && (
-          <span className='text-2xs text-zinc-400'>({fmtFull(value)})</span>
+          <span className='text-2xs text-muted-foreground'>
+            ({fmtFull(value)})
+          </span>
         )}
       </div>
-      {hint && <div className='text-3xs mt-1 text-zinc-500'>{hint}</div>}
+      {hint && <div className='text-3xs text-content-muted mt-1'>{hint}</div>}
     </div>
   );
 }
@@ -198,8 +203,9 @@ export const BLOCK_TYPE_COLOR: Record<string, string> = {
 };
 
 export function BlockTypeChip({ type }: { type: string | null }) {
-  if (!type) return <span className='text-2xs font-mono text-zinc-400'>—</span>;
-  const tone = BLOCK_TYPE_COLOR[type] ?? 'bg-zinc-100 text-zinc-700';
+  if (!type)
+    return <span className='text-2xs text-muted-foreground font-mono'>—</span>;
+  const tone = BLOCK_TYPE_COLOR[type] ?? 'bg-muted text-content-muted';
   return (
     <span
       className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold ${tone}`}
@@ -210,13 +216,13 @@ export function BlockTypeChip({ type }: { type: string | null }) {
 }
 
 export function CtrBadge({ ctr: c }: { ctr: number }) {
-  if (!isFinite(c)) return <span className='text-zinc-400'>—</span>;
+  if (!isFinite(c)) return <span className='text-muted-foreground'>—</span>;
   const tone =
     c >= 10
       ? 'bg-emerald-100 text-emerald-700'
       : c >= 5
         ? 'bg-amber-100 text-amber-700'
-        : 'bg-zinc-100 text-zinc-600';
+        : 'bg-muted text-content-muted';
   return (
     <span className={`text-2xs rounded-md px-1.5 py-0.5 font-mono ${tone}`}>
       {c.toFixed(1)}%
@@ -234,7 +240,7 @@ export function Skeleton({ rows, cols }: { rows: number; cols: number }) {
           {Array.from({ length: cols }).map((__, j) => (
             <div
               key={j}
-              className='h-5 flex-1 rounded bg-zinc-100'
+              className='bg-muted h-5 flex-1 rounded'
               style={{ opacity: 0.5 + (cols - j) * 0.05 }}
             />
           ))}
@@ -261,7 +267,7 @@ export function PresetBar({
 }) {
   return (
     <div className='flex flex-wrap items-center gap-2'>
-      <div className='inline-flex items-center rounded-lg border border-zinc-200 bg-white p-0.5 shadow-sm'>
+      <div className='border-border inline-flex items-center rounded-lg border bg-white p-0.5 shadow-sm'>
         {(['7d', '30d', '90d', 'all'] as const).map(p => (
           <button
             key={p}
@@ -269,7 +275,7 @@ export function PresetBar({
             className={`rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
               preset === p
                 ? 'bg-zinc-900 text-white shadow-sm'
-                : 'text-zinc-600 hover:bg-zinc-100'
+                : 'text-content-muted hover:bg-muted'
             }`}
           >
             {PRESET_LABEL[p]}
@@ -278,7 +284,7 @@ export function PresetBar({
       </div>
       <button
         onClick={onRefresh}
-        className='flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm hover:bg-zinc-100'
+        className='border-border text-content-muted hover:bg-muted flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium shadow-sm'
       >
         <RefreshCw className='size-3.5' /> Làm mới
       </button>

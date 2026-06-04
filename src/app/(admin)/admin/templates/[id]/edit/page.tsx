@@ -79,7 +79,7 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
 
   if (error) {
     return (
-      <div className='flex h-full flex-1 items-center justify-center bg-zinc-50 p-8'>
+      <div className='bg-muted flex h-full flex-1 items-center justify-center p-8'>
         <div className='max-w-md rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
           <AlertCircle className='mx-auto size-8 text-rose-600' />
           <p className='mt-3 text-sm font-semibold text-rose-900'>
@@ -93,7 +93,7 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
 
   if (!templateId) {
     return (
-      <div className='flex h-full flex-1 items-center justify-center text-sm text-zinc-500'>
+      <div className='text-content-muted flex h-full flex-1 items-center justify-center text-sm'>
         <Loader2 className='mr-2 size-4 animate-spin' /> Đang load template…
       </div>
     );
@@ -108,7 +108,7 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
       <div className='mx-auto max-w-3xl space-y-5 p-8'>
         <Link
           href='/admin/templates'
-          className='inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900'
+          className='text-content-muted hover:text-foreground inline-flex items-center gap-1.5 text-xs font-medium'
         >
           <ArrowLeft className='size-3.5' /> Templates
         </Link>
@@ -127,8 +127,8 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
               </p>
             </div>
           </div>
-          <div className='text-2xs mt-4 rounded-lg bg-white p-3 font-mono text-zinc-700'>
-            <p className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='text-2xs text-content-muted mt-4 rounded-lg bg-white p-3 font-mono'>
+            <p className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
               Source files
             </p>
             <ul className='mt-2 space-y-1'>
@@ -141,18 +141,18 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
               <li>　├── index.tsx — React component + animation</li>
               <li>　└── meta.ts — content schema (form fields)</li>
             </ul>
-            <p className='text-3xs mt-3 font-semibold tracking-wider text-zinc-500 uppercase'>
+            <p className='text-3xs text-content-muted mt-3 font-semibold tracking-wider uppercase'>
               Registry
             </p>
             <p className='mt-1'>src/templates/registry.tsx</p>
           </div>
         </div>
 
-        <div className='rounded-2xl border border-zinc-200 bg-white p-5'>
-          <h3 className='text-xs font-semibold tracking-wider text-zinc-500 uppercase'>
+        <div className='border-border rounded-2xl border bg-white p-5'>
+          <h3 className='text-content-muted text-xs font-semibold tracking-wider uppercase'>
             Content fields ({fields.length})
           </h3>
-          <p className='text-2xs mt-1 text-zinc-500'>
+          <p className='text-2xs text-content-muted mt-1'>
             Brand fill các field này khi tạo landing từ template (lưu vào{' '}
             <code className='font-mono'>page.type_metadata</code>).
           </p>
@@ -164,18 +164,20 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
                   className='flex items-start justify-between gap-3 py-2'
                 >
                   <div className='min-w-0 flex-1'>
-                    <code className='font-mono text-xs font-semibold text-zinc-900'>
+                    <code className='text-foreground font-mono text-xs font-semibold'>
                       {f.key}
                     </code>
-                    <span className='text-2xs ml-2 text-zinc-500'>
+                    <span className='text-2xs text-content-muted ml-2'>
                       — {f.label}
                     </span>
                     {f.hint && (
-                      <p className='text-3xs mt-0.5 text-zinc-500'>{f.hint}</p>
+                      <p className='text-3xs text-content-muted mt-0.5'>
+                        {f.hint}
+                      </p>
                     )}
                   </div>
                   <div className='shrink-0 text-right'>
-                    <p className='text-3xs font-mono text-zinc-500'>
+                    <p className='text-3xs text-content-muted font-mono'>
                       {f.type}
                       {f.required && (
                         <span className='ml-1 font-bold text-rose-600'>*</span>

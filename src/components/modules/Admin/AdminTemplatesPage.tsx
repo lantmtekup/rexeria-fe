@@ -64,7 +64,7 @@ const LIMIT = 12;
 const STATUS_CHIP: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700',
   draft: 'bg-amber-100 text-amber-700',
-  archived: 'bg-zinc-100 text-zinc-500',
+  archived: 'bg-muted text-content-muted',
 };
 
 /**
@@ -303,7 +303,7 @@ export function AdminTemplatesPage() {
       {/* Header */}
       <div className='flex flex-wrap items-end justify-between gap-3'>
         <div>
-          <div className='text-3xs flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+          <div className='text-3xs text-content-muted flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
             <LayoutTemplate className='size-3' /> {t('templates.title')}
           </div>
           <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
@@ -334,9 +334,9 @@ export function AdminTemplatesPage() {
       <p className='text-content-muted text-xs'>{t('templates.note')}</p>
 
       {/* Toolbar */}
-      <div className='flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm'>
+      <div className='border-border flex flex-wrap items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm'>
         <div className='relative max-w-sm flex-1'>
-          <Search className='absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-zinc-400' />
+          <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
           <Input
             placeholder='Tìm theo tên / code / mô tả / tag…'
             value={search}
@@ -346,11 +346,11 @@ export function AdminTemplatesPage() {
         </div>
 
         <div className='relative inline-flex items-center'>
-          <ArrowDownUp className='pointer-events-none absolute left-2.5 size-3.5 text-zinc-400' />
+          <ArrowDownUp className='text-muted-foreground pointer-events-none absolute left-2.5 size-3.5' />
           <select
             value={sort}
             onChange={e => setSort(e.target.value as Sort)}
-            className='appearance-none rounded-lg border border-zinc-200 bg-white py-1.5 pr-3 pl-7 text-xs font-medium text-zinc-700 outline-none hover:bg-zinc-50 focus:border-zinc-400'
+            className='border-border text-content-muted hover:bg-muted appearance-none rounded-lg border bg-white py-1.5 pr-3 pl-7 text-xs font-medium outline-none focus:border-zinc-400'
             aria-label='Sort'
           >
             {SORT_OPTIONS.map(o => (
@@ -361,7 +361,7 @@ export function AdminTemplatesPage() {
           </select>
         </div>
 
-        <div className='ml-auto inline-flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-white p-0.5'>
+        <div className='border-border ml-auto inline-flex items-center gap-0.5 rounded-lg border bg-white p-0.5'>
           <ViewBtn
             active={view === 'grid'}
             onClick={() => setView('grid')}
@@ -430,7 +430,7 @@ export function AdminTemplatesPage() {
           <button
             type='button'
             onClick={clearFilters}
-            className='text-2xs ml-1 inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900'
+            className='text-2xs text-content-muted hover:text-foreground ml-1 inline-flex items-center gap-1'
           >
             <XIcon className='size-3' />
             Clear
@@ -449,19 +449,19 @@ export function AdminTemplatesPage() {
 
       {/* Body */}
       {loading && allItems.length === 0 ? (
-        <div className='flex items-center justify-center py-16 text-sm text-zinc-500'>
+        <div className='text-content-muted flex items-center justify-center py-16 text-sm'>
           <RefreshCwIcon className='mr-2 size-4 animate-spin' /> Đang tải
           template…
         </div>
       ) : pageItems.length === 0 ? (
-        <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center'>
-          <LayoutTemplate className='mx-auto size-8 text-zinc-300' />
-          <p className='mt-3 text-sm font-semibold text-zinc-700'>
+        <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
+          <LayoutTemplate className='text-muted-foreground mx-auto size-8' />
+          <p className='text-content-muted mt-3 text-sm font-semibold'>
             {hasActiveFilters
               ? 'Không có template nào khớp filter'
               : t('templates.empty')}
           </p>
-          <p className='mt-1 text-xs text-zinc-500'>
+          <p className='text-content-muted mt-1 text-xs'>
             {hasActiveFilters
               ? 'Thử đổi từ khoá hoặc clear filter.'
               : t('templates.note')}
@@ -581,14 +581,14 @@ function TemplateCard({
 }) {
   const statusClass =
     STATUS_CHIP[(item.status ?? '').toLowerCase()] ??
-    'bg-zinc-100 text-zinc-600';
+    'bg-muted text-content-muted';
   return (
-    <div className='group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'>
+    <div className='group border-border hover:border-border flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       <Link
         href={`/admin/templates/${item.id}/preview`}
         target='_blank'
         rel='noopener noreferrer'
-        className='relative block aspect-[16/10] overflow-hidden border-b border-zinc-100 bg-gradient-to-br from-zinc-100 via-zinc-200/60 to-zinc-100'
+        className='border-border relative block aspect-[16/10] overflow-hidden border-b bg-gradient-to-br from-zinc-100 via-zinc-200/60 to-zinc-100'
         title='Preview'
       >
         {item.thumbnail_url ? (
@@ -599,7 +599,7 @@ function TemplateCard({
             className='size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]'
           />
         ) : (
-          <div className='flex h-full items-center justify-center text-zinc-300'>
+          <div className='text-muted-foreground flex h-full items-center justify-center'>
             <LayoutTemplate className='size-10' />
           </div>
         )}
@@ -622,17 +622,17 @@ function TemplateCard({
 
       <div className='flex flex-1 flex-col gap-2 p-3.5'>
         <div className='flex items-start justify-between gap-2'>
-          <h3 className='line-clamp-1 text-sm font-semibold text-zinc-900'>
+          <h3 className='text-foreground line-clamp-1 text-sm font-semibold'>
             {item.name}
           </h3>
           {item.code && (
-            <code className='text-3xs shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-600'>
+            <code className='text-3xs bg-muted text-content-muted shrink-0 rounded px-1.5 py-0.5 font-mono'>
               {item.code}
             </code>
           )}
         </div>
         {item.description && (
-          <p className='text-2xs line-clamp-2 leading-snug text-zinc-500'>
+          <p className='text-2xs text-content-muted line-clamp-2 leading-snug'>
             {item.description}
           </p>
         )}
@@ -642,7 +642,7 @@ function TemplateCard({
             {item.tags.slice(0, 3).map(tg => (
               <span
                 key={tg}
-                className='text-3xs rounded-full bg-zinc-100 px-1.5 py-0.5 font-medium text-zinc-600'
+                className='text-3xs bg-muted text-content-muted rounded-full px-1.5 py-0.5 font-medium'
               >
                 {tg}
               </span>
@@ -650,13 +650,13 @@ function TemplateCard({
           </div>
         )}
 
-        <div className='text-3xs mt-auto flex items-center justify-between text-zinc-500'>
+        <div className='text-3xs text-content-muted mt-auto flex items-center justify-between'>
           <span>
             {formatAuthor(item.author) || (
-              <span className='text-zinc-400'>—</span>
+              <span className='text-muted-foreground'>—</span>
             )}
           </span>
-          <span className='font-mono text-zinc-400'>
+          <span className='text-muted-foreground font-mono'>
             {item.created_at
               ? new Date(item.created_at).toLocaleDateString('vi-VN')
               : '—'}
@@ -668,7 +668,7 @@ function TemplateCard({
             href={`/admin/templates/${item.id}/preview`}
             target='_blank'
             rel='noopener noreferrer'
-            className='inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50'
+            className='border-border text-content-muted hover:bg-muted inline-flex items-center justify-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium transition-colors'
           >
             <Eye className='size-3.5' />
             Preview
@@ -733,28 +733,28 @@ function TemplateActionMenu({
       <button
         type='button'
         onClick={() => setOpen(o => !o)}
-        className='inline-flex h-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700 transition-colors hover:bg-zinc-50'
+        className='border-border text-content-muted hover:bg-muted inline-flex h-full items-center justify-center rounded-lg border bg-white px-2 transition-colors'
         aria-label='Hành động'
         aria-expanded={open}
       >
         <MoreVertical className='size-3.5' />
       </button>
       {open && (
-        <div className='absolute top-full right-0 z-30 mt-1 w-44 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+        <div className='border-border absolute top-full right-0 z-30 mt-1 w-44 overflow-hidden rounded-lg border bg-white shadow-lg'>
           <Link
             href={`/admin/templates/${item.id}/edit`}
             onClick={() => setOpen(false)}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+            className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
           >
             <Pencil className='size-3.5 text-blue-600' />
             Mở editor
           </Link>
-          <div className='h-px bg-zinc-100' />
+          <div className='bg-muted h-px' />
           {status === 'draft' && (
             <button
               type='button'
               onClick={choose('activate')}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+              className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
             >
               <CheckCircle2 className='size-3.5 text-emerald-600' />
               Activate
@@ -764,7 +764,7 @@ function TemplateActionMenu({
             <button
               type='button'
               onClick={choose('restore')}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+              className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
             >
               <RotateCcw className='size-3.5 text-amber-600' />
               Back to draft
@@ -774,15 +774,15 @@ function TemplateActionMenu({
             <button
               type='button'
               onClick={choose('restore')}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+              className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
             >
-              <RotateCcw className='size-3.5 text-zinc-600' />
+              <RotateCcw className='text-content-muted size-3.5' />
               Restore (→ draft)
             </button>
           )}
           {status !== 'archived' && (
             <>
-              <div className='h-px bg-zinc-100' />
+              <div className='bg-muted h-px' />
               <button
                 type='button'
                 onClick={choose('archive')}
@@ -829,7 +829,7 @@ function TableView({
             <TableHead className='w-10'>
               <input
                 type='checkbox'
-                className='size-3.5 cursor-pointer rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400'
+                className='border-border text-foreground size-3.5 cursor-pointer rounded focus:ring-zinc-400'
                 checked={allOn}
                 ref={el => {
                   if (el) el.indeterminate = someOn && !allOn;
@@ -850,17 +850,14 @@ function TableView({
           {items.map(item => {
             const statusClass =
               STATUS_CHIP[(item.status ?? '').toLowerCase()] ??
-              'bg-zinc-100 text-zinc-600';
+              'bg-muted text-content-muted';
             const isSelected = selected.has(item.id);
             return (
-              <TableRow
-                key={item.id}
-                className={cn(isSelected && 'bg-zinc-50')}
-              >
+              <TableRow key={item.id} className={cn(isSelected && 'bg-muted')}>
                 <TableCell>
                   <input
                     type='checkbox'
-                    className='size-3.5 cursor-pointer rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400'
+                    className='border-border text-foreground size-3.5 cursor-pointer rounded focus:ring-zinc-400'
                     checked={isSelected}
                     onChange={() => onToggleSelected(item.id)}
                     aria-label={`Chọn ${item.name}`}
@@ -869,7 +866,7 @@ function TableView({
                 <TableCell>
                   <Link
                     href={`/template/${item.id}`}
-                    className='block aspect-[4/3] w-16 overflow-hidden rounded-md border border-zinc-200 bg-gradient-to-br from-zinc-100 to-zinc-200'
+                    className='border-border block aspect-[4/3] w-16 overflow-hidden rounded-md border bg-gradient-to-br from-zinc-100 to-zinc-200'
                   >
                     {item.thumbnail_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -879,7 +876,7 @@ function TableView({
                         className='size-full object-cover'
                       />
                     ) : (
-                      <div className='flex h-full items-center justify-center text-zinc-300'>
+                      <div className='text-muted-foreground flex h-full items-center justify-center'>
                         <LayoutTemplate className='size-4' />
                       </div>
                     )}
@@ -915,7 +912,7 @@ function TableView({
                       href={`/admin/templates/${item.id}/preview`}
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50'
+                      className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1 rounded-md border bg-white px-2 py-1 text-xs font-medium'
                     >
                       <Eye className='size-3' />
                       Preview
@@ -974,8 +971,8 @@ function Pagination({
   add(totalPages);
 
   return (
-    <div className='flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-sm'>
-      <span className='text-2xs text-zinc-500'>
+    <div className='border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-2.5 shadow-sm'>
+      <span className='text-2xs text-content-muted'>
         {from}–{to} trong {total}
       </span>
       <div className='flex items-center gap-1'>
@@ -983,13 +980,16 @@ function Pagination({
           type='button'
           onClick={() => onChange(Math.max(1, page - 1))}
           disabled={page <= 1}
-          className='inline-flex size-7 items-center justify-center rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40'
+          className='border-border text-content-muted hover:bg-muted inline-flex size-7 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-40'
         >
           <ChevronLeft className='size-3.5' />
         </button>
         {pages.map((p, i) =>
           p === 'gap' ? (
-            <span key={`gap-${i}`} className='text-2xs px-1 text-zinc-300'>
+            <span
+              key={`gap-${i}`}
+              className='text-2xs text-muted-foreground px-1'
+            >
               …
             </span>
           ) : (
@@ -1001,7 +1001,7 @@ function Pagination({
                 'text-2xs inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono font-semibold tabular-nums',
                 p === page
                   ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
+                  : 'border-border text-content-muted hover:bg-muted border bg-white'
               )}
             >
               {p}
@@ -1012,7 +1012,7 @@ function Pagination({
           type='button'
           onClick={() => onChange(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages}
-          className='inline-flex size-7 items-center justify-center rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40'
+          className='border-border text-content-muted hover:bg-muted inline-flex size-7 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-40'
         >
           <ChevronRight className='size-3.5' />
         </button>
@@ -1034,7 +1034,7 @@ function FilterGroup({
 }) {
   return (
     <div className='inline-flex items-center gap-1.5'>
-      <span className='text-3xs inline-flex items-center gap-1 font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+      <span className='text-3xs text-muted-foreground inline-flex items-center gap-1 font-semibold tracking-[0.18em] uppercase'>
         {icon}
         {label}
       </span>
@@ -1063,7 +1063,7 @@ function ChipBtn({
     ? accent
       ? accentActive[accent]
       : 'bg-zinc-900 text-white shadow-sm'
-    : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50';
+    : 'border border-border bg-white text-content-muted hover:bg-muted';
   return (
     <button
       type='button'
@@ -1096,7 +1096,7 @@ function ViewBtn({
       title={label}
       className={cn(
         'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
-        active ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100'
+        active ? 'bg-zinc-900 text-white' : 'text-content-muted hover:bg-muted'
       )}
     >
       {icon}

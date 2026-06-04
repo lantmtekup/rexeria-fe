@@ -214,7 +214,7 @@ export function ProductFormModal({
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className='flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-3'>
+        <div className='border-border flex items-center justify-between gap-3 border-b px-5 py-3'>
           <div className='flex items-center gap-2.5'>
             <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-sm'>
               <Save className='size-4' />
@@ -223,7 +223,7 @@ export function ProductFormModal({
               <h3 className='text-base leading-tight font-semibold'>
                 {isEdit ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}
               </h3>
-              <p className='text-3xs mt-0.5 flex items-center gap-1.5 text-zinc-500'>
+              <p className='text-3xs text-content-muted mt-0.5 flex items-center gap-1.5'>
                 {product ? (
                   <span className='font-mono'>
                     {product.sku} · {product.id}
@@ -239,7 +239,7 @@ export function ProductFormModal({
           </div>
           <button
             onClick={onClose}
-            className='rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label='Close'
           >
             <X className='size-4' />
@@ -250,7 +250,7 @@ export function ProductFormModal({
         <div className='space-y-4 px-5 py-4'>
           {/* Name */}
           <div>
-            <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+            <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
               Tên sản phẩm <span className='text-rose-500'>*</span>
             </label>
             <input
@@ -258,7 +258,7 @@ export function ProductFormModal({
               value={value.name}
               onChange={e => setValue(v => ({ ...v, name: e.target.value }))}
               placeholder='vd: Coca-Cola Original 330ml'
-              className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100'
+              className='border-border mt-1.5 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100'
               maxLength={128}
               autoFocus
             />
@@ -269,8 +269,8 @@ export function ProductFormModal({
         </div>
 
         {/* Footer */}
-        <div className='flex items-center justify-between gap-3 border-t border-zinc-100 bg-zinc-50/50 px-5 py-3'>
-          <p className='text-2xs text-zinc-500'>
+        <div className='border-border bg-muted/50 flex items-center justify-between gap-3 border-t px-5 py-3'>
+          <p className='text-2xs text-content-muted'>
             {liveBE ? (
               <>
                 <span className='inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 font-bold text-emerald-700'>
@@ -284,8 +284,8 @@ export function ProductFormModal({
               </>
             ) : (
               <>
-                <span className='font-semibold text-zinc-700'>Demo:</span> chỉ
-                update local state
+                <span className='text-content-muted font-semibold'>Demo:</span>{' '}
+                chỉ update local state
               </>
             )}
           </p>
@@ -294,7 +294,7 @@ export function ProductFormModal({
               type='button'
               onClick={onClose}
               disabled={saving}
-              className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-50'
+              className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
             >
               Hủy
             </button>

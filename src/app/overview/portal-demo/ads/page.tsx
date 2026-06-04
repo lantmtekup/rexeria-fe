@@ -67,7 +67,7 @@ const STATUS_META: Record<
   },
   ended: {
     label: 'Ended',
-    chip: 'bg-zinc-100 text-zinc-600',
+    chip: 'bg-muted text-content-muted',
     dot: 'bg-zinc-400',
   },
   draft: {
@@ -227,20 +227,20 @@ export default function PortalAdsPage() {
       {/* Header */}
       <section className='flex flex-wrap items-end justify-between gap-4'>
         <div>
-          <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
             <Megaphone className='size-3' /> Quảng cáo · 14 ngày qua
           </div>
           <h1 className='mt-1 text-2xl font-bold tracking-tight'>
             Performance quảng cáo
           </h1>
-          <p className='mt-1 text-sm text-zinc-500'>
+          <p className='text-content-muted mt-1 text-sm'>
             {totals.active_count} campaign đang chạy trên 4 nền tảng. Spend{' '}
             <strong>{(totals.spend / 1_000_000).toFixed(1)}M VND</strong> trong
             14 ngày.
           </p>
         </div>
         <div className='flex items-center gap-2'>
-          <button className='flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100'>
+          <button className='border-border text-content-muted hover:bg-muted flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'>
             <RefreshCw className='size-3.5' /> Sync FB Ads
           </button>
           <button className='flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700'>
@@ -321,7 +321,7 @@ export default function PortalAdsPage() {
       </div>
 
       {/* Spend trend chart */}
-      <section className='mt-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm'>
+      <section className='border-border mt-6 rounded-2xl border bg-white p-5 shadow-sm'>
         <div className='mb-3 flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <div className='flex size-7 items-center justify-center rounded-lg bg-rose-500 text-white shadow-sm'>
@@ -329,7 +329,7 @@ export default function PortalAdsPage() {
             </div>
             <div>
               <h3 className='text-sm font-semibold'>Spend 14 ngày qua</h3>
-              <p className='text-2xs text-zinc-500'>
+              <p className='text-2xs text-content-muted'>
                 Tổng cộng tất cả campaign
               </p>
             </div>
@@ -342,8 +342,8 @@ export default function PortalAdsPage() {
       </section>
 
       {/* Filter bar */}
-      <div className='mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm'>
-        <span className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+      <div className='border-border mt-6 flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3 shadow-sm'>
+        <span className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
           Status
         </span>
         <div className='flex flex-wrap gap-1'>
@@ -366,7 +366,7 @@ export default function PortalAdsPage() {
             );
           })}
         </div>
-        <span className='text-3xs ml-3 font-semibold tracking-wider text-zinc-500 uppercase'>
+        <span className='text-3xs text-content-muted ml-3 font-semibold tracking-wider uppercase'>
           Platform
         </span>
         <div className='flex flex-wrap gap-1'>
@@ -393,16 +393,16 @@ export default function PortalAdsPage() {
       </div>
 
       {/* Campaigns table */}
-      <div className='mt-4 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
-        <div className='border-b border-zinc-100 px-5 py-3'>
+      <div className='border-border mt-4 overflow-hidden rounded-2xl border bg-white shadow-sm'>
+        <div className='border-border border-b px-5 py-3'>
           <h2 className='text-sm font-semibold'>
             Campaigns ({filtered.length})
           </h2>
         </div>
         <div className='overflow-x-auto'>
           <table className='w-full text-sm'>
-            <thead className='border-b border-zinc-100 bg-zinc-50'>
-              <tr className='text-3xs text-left font-semibold tracking-wider text-zinc-500 uppercase'>
+            <thead className='border-border bg-muted border-b'>
+              <tr className='text-3xs text-content-muted text-left font-semibold tracking-wider uppercase'>
                 <th className='px-4 py-2.5'>Campaign</th>
                 <th className='px-3 py-2.5 text-right'>Imp</th>
                 <th className='px-3 py-2.5 text-right'>Reach</th>
@@ -418,7 +418,7 @@ export default function PortalAdsPage() {
                 <tr>
                   <td
                     colSpan={8}
-                    className='px-5 py-10 text-center text-sm text-zinc-500'
+                    className='text-content-muted px-5 py-10 text-center text-sm'
                   >
                     Không có campaign nào khớp filter.
                   </td>
@@ -486,21 +486,21 @@ function KpiCard({
   const c = ACCENT_MAP[accent];
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br ${c.gradient} to-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md`}
+      className={`group border-border relative overflow-hidden rounded-2xl border bg-gradient-to-br ${c.gradient} to-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md`}
     >
       <div
         className={`flex size-9 items-center justify-center rounded-xl ${c.bg} text-white shadow-sm transition-transform group-hover:scale-110`}
       >
         <Icon className='size-[18px]' />
       </div>
-      <div className='text-3xs mt-3 font-semibold tracking-wider text-zinc-500 uppercase'>
+      <div className='text-3xs text-content-muted mt-3 font-semibold tracking-wider uppercase'>
         {label}
       </div>
-      <div className='mt-0.5 font-mono text-2xl font-bold text-zinc-900'>
+      <div className='text-foreground mt-0.5 font-mono text-2xl font-bold'>
         {value}
       </div>
       {subValue && (
-        <div className='text-3xs mt-0.5 truncate font-mono text-zinc-400'>
+        <div className='text-3xs text-muted-foreground mt-0.5 truncate font-mono'>
           {subValue}
         </div>
       )}
@@ -527,7 +527,7 @@ function FilterBtn({
       className={`text-2xs flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium transition-all ${
         active
           ? `${color ?? 'bg-zinc-900'} text-white shadow-sm`
-          : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+          : 'border-border text-content-muted hover:bg-muted border bg-white'
       }`}
     >
       {Icon ? (
@@ -546,7 +546,7 @@ function CampaignRow({ c }: { c: Campaign }) {
   const PlatformIcon = platform.icon;
   const ctr = c.impressions ? (c.clicks / c.impressions) * 100 : 0;
   return (
-    <tr className='border-t border-zinc-100 transition-colors hover:bg-zinc-50/60'>
+    <tr className='border-border hover:bg-muted/60 border-t transition-colors'>
       <td className='px-4 py-3'>
         <div className='flex items-start gap-2.5'>
           <div className='flex flex-col items-center gap-1'>
@@ -559,7 +559,7 @@ function CampaignRow({ c }: { c: Campaign }) {
           </div>
           <div className='min-w-0 flex-1'>
             <div className='line-clamp-1 text-sm font-semibold'>{c.name}</div>
-            <div className='text-3xs mt-0.5 flex items-center gap-1.5 text-zinc-500'>
+            <div className='text-3xs text-content-muted mt-0.5 flex items-center gap-1.5'>
               <span
                 className={`rounded-md px-1.5 py-0.5 font-bold ${status.chip}`}
               >
@@ -580,7 +580,7 @@ function CampaignRow({ c }: { c: Campaign }) {
       <td className='px-3 py-3 text-right font-mono'>
         {fmtFull(c.impressions)}
       </td>
-      <td className='px-3 py-3 text-right font-mono text-zinc-500'>
+      <td className='text-content-muted px-3 py-3 text-right font-mono'>
         {fmtFull(c.reach)}
       </td>
       <td className='px-3 py-3 text-right font-mono'>{fmtFull(c.clicks)}</td>
@@ -606,7 +606,7 @@ function CtrBadge({ ctr: c }: { ctr: number }) {
       ? 'bg-emerald-100 text-emerald-700'
       : c >= 1
         ? 'bg-amber-100 text-amber-700'
-        : 'bg-zinc-100 text-zinc-600';
+        : 'bg-muted text-content-muted';
   return (
     <span className={`text-2xs rounded-md px-1.5 py-0.5 font-mono ${tone}`}>
       {c.toFixed(2)}%
@@ -667,7 +667,7 @@ function BarChart({ values }: { values: number[] }) {
             key={i}
             className='group relative flex flex-1 flex-col items-center gap-1'
           >
-            <span className='text-3xs font-mono font-semibold text-zinc-700 opacity-0 transition-opacity group-hover:opacity-100'>
+            <span className='text-3xs text-content-muted font-mono font-semibold opacity-0 transition-opacity group-hover:opacity-100'>
               {v}M
             </span>
             <div
@@ -675,7 +675,9 @@ function BarChart({ values }: { values: number[] }) {
               style={{ height: `${h}%`, minHeight: 8 }}
             />
             {label && (
-              <span className='text-3xs font-mono text-zinc-500'>{label}</span>
+              <span className='text-3xs text-content-muted font-mono'>
+                {label}
+              </span>
             )}
           </div>
         );

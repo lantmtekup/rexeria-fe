@@ -118,15 +118,15 @@ export function AdminSidebar() {
   };
 
   return (
-    <aside className='flex h-screen w-60 shrink-0 flex-col border-r border-zinc-200 bg-white'>
+    <aside className='border-border flex h-screen w-60 shrink-0 flex-col border-r bg-white'>
       {/* Brand header */}
-      <div className='flex h-14 items-center gap-2 border-b border-zinc-100 px-4'>
+      <div className='border-border flex h-14 items-center gap-2 border-b px-4'>
         <div className='text-2xs flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-orange-500 font-mono font-bold text-white shadow-sm'>
           RX
         </div>
         <div className='leading-tight'>
           <div className='text-sm font-semibold tracking-tight'>Rexer</div>
-          <div className='text-3xs font-semibold tracking-wider text-zinc-400 uppercase'>
+          <div className='text-3xs text-muted-foreground font-semibold tracking-wider uppercase'>
             Admin Console
           </div>
         </div>
@@ -147,7 +147,7 @@ export function AdminSidebar() {
           return (
             <div key={n.href}>
               {showGroup && (
-                <div className='text-3xs mt-3 mb-1 px-2.5 font-bold tracking-wider text-zinc-400 uppercase'>
+                <div className='text-3xs text-muted-foreground mt-3 mb-1 px-2.5 font-bold tracking-wider uppercase'>
                   {n.group}
                 </div>
               )}
@@ -157,7 +157,7 @@ export function AdminSidebar() {
                   'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
                   active
                     ? 'bg-zinc-900 text-white'
-                    : 'text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900'
+                    : 'text-content-muted hover:bg-muted hover:text-foreground'
                 )}
               >
                 <Icon className='size-4 shrink-0' />
@@ -175,19 +175,19 @@ export function AdminSidebar() {
       </nav>
 
       {/* Footer: user + logout */}
-      <div className='border-t border-zinc-100 p-3'>
+      <div className='border-border border-t p-3'>
         {user && (
-          <div className='mb-2 flex items-center gap-2 rounded-lg bg-zinc-50 px-2.5 py-2'>
+          <div className='bg-muted mb-2 flex items-center gap-2 rounded-lg px-2.5 py-2'>
             <div className='text-3xs flex size-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-violet-500 font-mono font-bold text-white'>
               {(user.display_name ?? user.email ?? '?')
                 .slice(0, 2)
                 .toUpperCase()}
             </div>
             <div className='min-w-0 flex-1 leading-tight'>
-              <div className='truncate text-xs font-semibold text-zinc-800'>
+              <div className='text-foreground truncate text-xs font-semibold'>
                 {user.display_name ?? user.email}
               </div>
-              <div className='text-3xs truncate text-zinc-500'>
+              <div className='text-3xs text-content-muted truncate'>
                 {user.role ?? user.principal_type}
               </div>
             </div>

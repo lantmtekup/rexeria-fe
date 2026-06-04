@@ -72,7 +72,7 @@ export default function PortalDashboardPage() {
   return (
     <PortalShell>
       {/* Hero */}
-      <section className='relative mb-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm'>
+      <section className='border-border relative mb-6 overflow-hidden rounded-2xl border bg-white p-6 shadow-sm'>
         <div className='absolute inset-0 bg-gradient-to-br from-rose-50 via-white to-amber-50 opacity-70' />
         <div
           className='absolute -top-8 -right-8 size-36 rounded-full bg-rose-200 blur-3xl'
@@ -80,7 +80,7 @@ export default function PortalDashboardPage() {
         />
         <div className='relative'>
           <div className='flex items-center justify-between gap-2'>
-            <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
+            <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
               <Sparkles className='size-3' /> Brand Dashboard · 30 ngày qua
             </div>
             {source === 'live' && (
@@ -96,7 +96,7 @@ export default function PortalDashboardPage() {
               {FAKE_BRAND.name}
             </span>
           </h1>
-          <p className='mt-1 max-w-2xl text-sm leading-relaxed text-zinc-600'>
+          <p className='text-content-muted mt-1 max-w-2xl text-sm leading-relaxed'>
             Rexer đang quản lý <strong>{stats.templates_published}</strong>{' '}
             landing page public cho brand. Bạn có{' '}
             <strong>{stats.open_comments}</strong> comment đang chờ xử lý và{' '}
@@ -169,7 +169,7 @@ export default function PortalDashboardPage() {
 
       {/* Trend chart */}
       <section className='mt-6 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]'>
-        <div className='rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm'>
+        <div className='border-border rounded-2xl border bg-white p-5 shadow-sm'>
           <div className='mb-3 flex items-center justify-between'>
             <div className='flex items-center gap-2'>
               <div className='flex size-7 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm'>
@@ -177,7 +177,7 @@ export default function PortalDashboardPage() {
               </div>
               <div>
                 <h3 className='text-sm font-semibold'>Lượt xem 7 ngày qua</h3>
-                <p className='text-2xs text-zinc-500'>
+                <p className='text-2xs text-content-muted'>
                   Tổng cộng tất cả landing page
                 </p>
               </div>
@@ -190,7 +190,7 @@ export default function PortalDashboardPage() {
         </div>
 
         {/* Quick actions */}
-        <div className='rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm'>
+        <div className='border-border rounded-2xl border bg-white p-5 shadow-sm'>
           <div className='mb-3 flex items-center gap-2'>
             <div className='flex size-7 items-center justify-center rounded-lg bg-violet-500 text-white shadow-sm'>
               <Sparkles className='size-4' />
@@ -224,7 +224,7 @@ export default function PortalDashboardPage() {
       </section>
 
       {/* Recent activity */}
-      <section className='mt-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm'>
+      <section className='border-border mt-6 rounded-2xl border bg-white p-5 shadow-sm'>
         <div className='mb-3 flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <div className='flex size-7 items-center justify-center rounded-lg bg-zinc-900 text-white shadow-sm'>
@@ -232,13 +232,13 @@ export default function PortalDashboardPage() {
             </div>
             <h3 className='text-sm font-semibold'>Hoạt động gần đây</h3>
           </div>
-          <button className='text-2xs text-zinc-500 hover:text-zinc-900'>
+          <button className='text-2xs text-content-muted hover:text-foreground'>
             Xem tất cả →
           </button>
         </div>
         <div className='relative'>
           <div
-            className='absolute top-3 bottom-3 left-[15px] w-0.5 bg-zinc-100'
+            className='bg-muted absolute top-3 bottom-3 left-[15px] w-0.5'
             aria-hidden
           />
           <ul className='space-y-3'>
@@ -255,18 +255,18 @@ export default function PortalDashboardPage() {
                   <div className='min-w-0 flex-1 pb-1'>
                     <div className='flex flex-wrap items-baseline gap-x-2 text-sm'>
                       <span className='font-semibold'>{a.actor}</span>
-                      <span className='text-zinc-500'>
+                      <span className='text-content-muted'>
                         {meta.label.toLowerCase()}
                       </span>
-                      <span className='font-mono text-zinc-700'>
+                      <span className='text-content-muted font-mono'>
                         {a.subject}
                       </span>
-                      <span className='text-3xs ml-auto font-mono text-zinc-400'>
+                      <span className='text-3xs text-muted-foreground ml-auto font-mono'>
                         {a.at}
                       </span>
                     </div>
                     {a.excerpt && (
-                      <p className='mt-1 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-xs leading-snug text-zinc-700 italic'>
+                      <p className='border-border bg-muted text-content-muted mt-1 rounded-lg border px-2.5 py-1.5 text-xs leading-snug italic'>
                         &ldquo;{a.excerpt}&rdquo;
                       </p>
                     )}
@@ -353,26 +353,28 @@ function StatCard({
   const c = ACCENT_MAP[accent];
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br ${c.gradient} to-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md`}
+      className={`group border-border relative overflow-hidden rounded-2xl border bg-gradient-to-br ${c.gradient} to-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md`}
     >
       <div
         className={`flex size-9 items-center justify-center rounded-xl ${c.bg} text-white shadow-sm transition-transform group-hover:scale-110`}
       >
         <Icon className='size-[18px]' />
       </div>
-      <div className='text-3xs mt-3 font-semibold tracking-wider text-zinc-500 uppercase'>
+      <div className='text-3xs text-content-muted mt-3 font-semibold tracking-wider uppercase'>
         {label}
       </div>
-      <div className='mt-0.5 font-mono text-2xl font-bold text-zinc-900'>
+      <div className='text-foreground mt-0.5 font-mono text-2xl font-bold'>
         {fmtNum(value)}
       </div>
       {value >= 1000 && (
-        <div className='text-3xs font-mono text-zinc-400'>
+        <div className='text-3xs text-muted-foreground font-mono'>
           ({fmtFull(value)})
         </div>
       )}
       {hint && (
-        <div className='text-3xs mt-1 leading-snug text-zinc-500'>{hint}</div>
+        <div className='text-3xs text-content-muted mt-1 leading-snug'>
+          {hint}
+        </div>
       )}
     </div>
   );
@@ -395,7 +397,7 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className='group flex items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition-all hover:border-zinc-300 hover:shadow-sm'
+      className='group border-border hover:border-border flex items-center gap-3 rounded-xl border bg-white p-3 transition-all hover:shadow-sm'
     >
       <div
         className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${c.bg} text-white shadow-sm transition-transform group-hover:scale-110`}
@@ -404,7 +406,7 @@ function QuickAction({
       </div>
       <div className='min-w-0 flex-1'>
         <div className='text-sm font-semibold'>{title}</div>
-        <div className='text-3xs truncate text-zinc-500'>{desc}</div>
+        <div className='text-3xs text-content-muted truncate'>{desc}</div>
       </div>
       <span className={`text-xs font-bold ${c.text}`}>→</span>
     </Link>
@@ -423,14 +425,16 @@ function BarChart({ values }: { values: number[] }) {
             key={i}
             className='group flex flex-1 flex-col items-center gap-1'
           >
-            <span className='text-3xs font-mono font-semibold text-zinc-700 opacity-0 transition-opacity group-hover:opacity-100'>
+            <span className='text-3xs text-content-muted font-mono font-semibold opacity-0 transition-opacity group-hover:opacity-100'>
               {fmtNum(v)}
             </span>
             <div
               className='w-full rounded-t-md bg-gradient-to-t from-blue-500 to-blue-300 transition-all group-hover:from-blue-600 group-hover:to-blue-400'
               style={{ height: `${h}%`, minHeight: 8 }}
             />
-            <span className='text-3xs font-mono text-zinc-500'>{days[i]}</span>
+            <span className='text-3xs text-content-muted font-mono'>
+              {days[i]}
+            </span>
           </div>
         );
       })}

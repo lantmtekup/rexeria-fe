@@ -35,27 +35,27 @@ const FAKE_MEMBERS = [
 const ROLE_LABEL: Record<string, { label: string; chip: string }> = {
   brand_owner: { label: 'Owner', chip: 'bg-rose-100 text-rose-700' },
   brand_member: { label: 'Member', chip: 'bg-blue-100 text-blue-700' },
-  brand_viewer: { label: 'Viewer', chip: 'bg-zinc-100 text-zinc-700' },
+  brand_viewer: { label: 'Viewer', chip: 'bg-muted text-content-muted' },
 };
 
 export default function PortalProfilePage() {
   return (
     <PortalShell>
       <section>
-        <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
+        <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
           <Settings className='size-3' /> Profile
         </div>
         <h1 className='mt-1 text-2xl font-bold tracking-tight'>
           Cài đặt brand
         </h1>
-        <p className='mt-1 text-sm text-zinc-500'>
+        <p className='text-content-muted mt-1 text-sm'>
           Quản lý thông tin brand + thành viên có quyền truy cập portal.
         </p>
       </section>
 
       <div className='mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]'>
         {/* Brand info */}
-        <section className='rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm'>
+        <section className='border-border rounded-2xl border bg-white p-5 shadow-sm'>
           <div className='mb-3 flex items-center gap-2'>
             <div className='flex size-7 items-center justify-center rounded-lg bg-rose-500 text-white shadow-sm'>
               <Building2 className='size-4' />
@@ -96,8 +96,8 @@ export default function PortalProfilePage() {
 
         {/* Brand logo + plan info */}
         <aside className='space-y-4'>
-          <div className='rounded-2xl border border-zinc-200 bg-gradient-to-br from-rose-50 to-white p-5 shadow-sm'>
-            <div className='text-2xs font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='border-border rounded-2xl border bg-gradient-to-br from-rose-50 to-white p-5 shadow-sm'>
+            <div className='text-2xs text-content-muted font-semibold tracking-wider uppercase'>
               Logo
             </div>
             <div className='mt-3 flex items-center gap-3'>
@@ -107,24 +107,24 @@ export default function PortalProfilePage() {
                 {FAKE_BRAND.logo_initial}
               </div>
               <div className='flex-1'>
-                <button className='text-2xs block rounded-lg border border-zinc-200 bg-white px-3 py-1 font-medium hover:bg-zinc-100'>
+                <button className='text-2xs border-border hover:bg-muted block rounded-lg border bg-white px-3 py-1 font-medium'>
                   Upload logo mới
                 </button>
-                <p className='text-3xs mt-1 text-zinc-500'>
+                <p className='text-3xs text-content-muted mt-1'>
                   PNG / SVG · ≤ 1MB · Vuông
                 </p>
               </div>
             </div>
           </div>
 
-          <div className='rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm'>
-            <div className='text-2xs font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='border-border rounded-2xl border bg-white p-5 shadow-sm'>
+            <div className='text-2xs text-content-muted font-semibold tracking-wider uppercase'>
               Workspace ID
             </div>
-            <code className='text-2xs mt-2 block rounded-lg bg-zinc-50 px-2 py-1.5 font-mono break-all text-zinc-600'>
+            <code className='text-2xs bg-muted text-content-muted mt-2 block rounded-lg px-2 py-1.5 font-mono break-all'>
               {FAKE_BRAND.id}
             </code>
-            <p className='text-2xs mt-2 text-zinc-500'>
+            <p className='text-2xs text-content-muted mt-2'>
               Dùng khi liên hệ support hoặc tích hợp API.
             </p>
           </div>
@@ -132,7 +132,7 @@ export default function PortalProfilePage() {
       </div>
 
       {/* Members */}
-      <section className='mt-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm'>
+      <section className='border-border mt-6 rounded-2xl border bg-white p-5 shadow-sm'>
         <div className='mb-3 flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <div className='flex size-7 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm'>
@@ -163,7 +163,7 @@ export default function PortalProfilePage() {
                 </div>
                 <div className='min-w-0 flex-1'>
                   <div className='text-sm font-semibold'>{m.name}</div>
-                  <div className='text-3xs flex items-center gap-1.5 text-zinc-500'>
+                  <div className='text-3xs text-content-muted flex items-center gap-1.5'>
                     <Mail className='size-2.5' /> {m.email}
                   </div>
                 </div>
@@ -172,7 +172,7 @@ export default function PortalProfilePage() {
                 >
                   {role.label}
                 </span>
-                <span className='text-3xs font-mono text-zinc-400'>
+                <span className='text-3xs text-muted-foreground font-mono'>
                   từ {m.joined}
                 </span>
               </div>
@@ -197,18 +197,18 @@ function Field({
 }) {
   return (
     <div>
-      <label className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+      <label className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
         {label}
       </label>
       <input
         type='text'
         defaultValue={value}
         readOnly={readonly}
-        className={`mt-1 w-full rounded-lg border border-zinc-200 px-3 py-1.5 text-sm outline-none focus:border-zinc-400 ${
-          readonly ? 'bg-zinc-50 text-zinc-500' : 'bg-white'
+        className={`border-border mt-1 w-full rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-zinc-400 ${
+          readonly ? 'bg-muted text-content-muted' : 'bg-white'
         }`}
       />
-      {hint && <p className='text-3xs mt-1 text-zinc-400'>{hint}</p>}
+      {hint && <p className='text-3xs text-muted-foreground mt-1'>{hint}</p>}
     </div>
   );
 }

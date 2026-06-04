@@ -44,7 +44,7 @@ import {
 export default function TemplateDetailPage() {
   return (
     <Suspense
-      fallback={<div className='p-8 text-sm text-zinc-500'>Loading…</div>}
+      fallback={<div className='text-content-muted p-8 text-sm'>Loading…</div>}
     >
       <TemplateDetailInner />
     </Suspense>
@@ -97,7 +97,7 @@ function TemplateDetailInner() {
   }, [params.id, preset, refreshKey]);
 
   return (
-    <div className='min-h-screen bg-zinc-50 text-zinc-900 antialiased'>
+    <div className='bg-muted text-foreground min-h-screen antialiased'>
       <PageHeader
         back='/overview/analytics/templates'
         backLabel='Tất cả landing pages'
@@ -119,17 +119,17 @@ function TemplateDetailInner() {
         {/* Detail hero */}
         <section className='flex flex-wrap items-end justify-between gap-4'>
           <div className='min-w-0'>
-            <div className='text-2xs font-semibold tracking-wider text-zinc-500 uppercase'>
+            <div className='text-2xs text-content-muted font-semibold tracking-wider uppercase'>
               Landing page
             </div>
             <h1 className='mt-1 text-2xl font-bold tracking-tight'>
               {tpl.template_title ?? (
-                <span className='font-mono text-zinc-400'>
+                <span className='text-muted-foreground font-mono'>
                   {tpl.template_id}
                 </span>
               )}
             </h1>
-            <div className='text-2xs mt-1 flex items-center gap-2 text-zinc-500'>
+            <div className='text-2xs text-content-muted mt-1 flex items-center gap-2'>
               <span className='font-mono'>{tpl.template_id}</span>
               <span>·</span>
               <span>{blocks.length} block</span>
@@ -175,8 +175,8 @@ function TemplateDetailInner() {
         </div>
 
         {/* Blocks table with inline detail */}
-        <div className='mt-6 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
-          <div className='flex items-center justify-between border-b border-zinc-100 px-5 py-3'>
+        <div className='border-border mt-6 overflow-hidden rounded-2xl border bg-white shadow-sm'>
+          <div className='border-border flex items-center justify-between border-b px-5 py-3'>
             <div className='flex items-center gap-2'>
               <div className='flex size-7 items-center justify-center rounded-lg bg-violet-500 text-white shadow-sm'>
                 <MousePointerClick className='size-4' />
@@ -185,7 +185,7 @@ function TemplateDetailInner() {
                 <h2 className='text-sm font-semibold'>
                   Block breakdown ({blocks.length})
                 </h2>
-                <p className='text-2xs text-zinc-500'>
+                <p className='text-2xs text-content-muted'>
                   Click vào dòng để xem chi tiết action / funnel / slides
                 </p>
               </div>
@@ -196,7 +196,7 @@ function TemplateDetailInner() {
                   id ? null : (blocks[0]?.block_id ?? null)
                 )
               }
-              className='text-2xs rounded-lg border border-zinc-200 bg-white px-2.5 py-1 font-medium text-zinc-600 hover:bg-zinc-100'
+              className='text-2xs border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-2.5 py-1 font-medium'
             >
               {openBlockId ? 'Đóng tất cả' : 'Mở block đầu'}
             </button>
@@ -229,7 +229,7 @@ function BreakdownTable({
   if (loading && !rows.length) return <Skeleton rows={3} cols={7} />;
   if (!rows.length) {
     return (
-      <div className='px-5 py-8 text-center text-sm text-zinc-500'>
+      <div className='text-content-muted px-5 py-8 text-center text-sm'>
         Template này chưa có block view/click trong khoảng được chọn.
       </div>
     );
@@ -237,8 +237,8 @@ function BreakdownTable({
   return (
     <div className='overflow-x-auto'>
       <table className='w-full text-sm'>
-        <thead className='border-b border-zinc-100 bg-zinc-50/50'>
-          <tr className='text-3xs text-left font-semibold tracking-wider text-zinc-500 uppercase'>
+        <thead className='border-border bg-muted/50 border-b'>
+          <tr className='text-3xs text-content-muted text-left font-semibold tracking-wider uppercase'>
             <th className='w-8 px-3 py-2.5' />
             <th className='px-3 py-2.5'>Block</th>
             <th className='px-3 py-2.5 text-right'>Views</th>
@@ -257,11 +257,11 @@ function BreakdownTable({
               <Fragment key={r.block_id}>
                 <tr
                   onClick={() => onToggle(r.block_id)}
-                  className={`cursor-pointer border-t border-zinc-100 transition-colors ${
-                    isOpen ? 'bg-violet-50/40' : 'hover:bg-zinc-50/60'
+                  className={`border-border cursor-pointer border-t transition-colors ${
+                    isOpen ? 'bg-violet-50/40' : 'hover:bg-muted/60'
                   }`}
                 >
-                  <td className='px-3 py-2.5 text-zinc-400'>
+                  <td className='text-muted-foreground px-3 py-2.5'>
                     {isOpen ? (
                       <ChevronDown className='size-4' />
                     ) : (
@@ -271,7 +271,7 @@ function BreakdownTable({
                   <td className='px-3 py-2.5'>
                     <div className='flex items-center gap-2'>
                       <BlockTypeChip type={r.block_type} />
-                      <span className='text-3xs font-mono text-zinc-400'>
+                      <span className='text-3xs text-muted-foreground font-mono'>
                         {r.actions.length} action
                       </span>
                     </div>
@@ -279,7 +279,7 @@ function BreakdownTable({
                   <td className='px-3 py-2.5 text-right font-mono'>
                     {fmtFull(r.views)}
                   </td>
-                  <td className='px-3 py-2.5 text-right font-mono text-zinc-500'>
+                  <td className='text-content-muted px-3 py-2.5 text-right font-mono'>
                     {fmtFull(r.unique_viewers)}
                   </td>
                   <td className='px-3 py-2.5 text-right font-mono'>
@@ -288,7 +288,7 @@ function BreakdownTable({
                   <td className='px-3 py-2.5 text-right'>
                     <CtrBadge ctr={(r.clicks / r.views) * 100} />
                   </td>
-                  <td className='px-3 py-2.5 text-right font-mono text-zinc-700'>
+                  <td className='text-content-muted px-3 py-2.5 text-right font-mono'>
                     {fmtDwell(r.avg_dwell_ms)}
                   </td>
                   <td className='px-3 py-2.5'>
@@ -297,10 +297,10 @@ function BreakdownTable({
                         {r.top_action}
                       </span>
                     ) : (
-                      <span className='text-zinc-400'>—</span>
+                      <span className='text-muted-foreground'>—</span>
                     )}
                   </td>
-                  <td className='text-2xs max-w-[180px] truncate px-3 py-2.5 font-mono text-zinc-500'>
+                  <td className='text-2xs text-content-muted max-w-[180px] truncate px-3 py-2.5 font-mono'>
                     {r.top_target ?? '—'}
                   </td>
                 </tr>
@@ -327,12 +327,12 @@ function BlockDetailPanel({ row }: { row: BlockBreakdownRow }) {
   return (
     <div className='space-y-4'>
       <div>
-        <h4 className='text-sm font-bold text-zinc-900'>
+        <h4 className='text-foreground text-sm font-bold'>
           Chi tiết hành vi —{' '}
           <span className='font-mono text-violet-700'>{row.block_id}</span>
         </h4>
         {taxonomy && (
-          <p className='text-2xs mt-0.5 text-zinc-500'>
+          <p className='text-2xs text-content-muted mt-0.5'>
             {taxonomy.description} · Tracked actions:{' '}
             <span className='font-mono'>{taxonomy.actions.length}</span>
           </p>
@@ -375,7 +375,7 @@ function BlockDetailPanel({ row }: { row: BlockBreakdownRow }) {
         </div>
       )}
 
-      <div className='rounded-xl border border-zinc-200 bg-white p-4'>
+      <div className='border-border rounded-xl border bg-white p-4'>
         <div className='mb-3 flex items-center justify-between gap-2'>
           <div className='flex items-center gap-2'>
             <div className='flex size-6 items-center justify-center rounded-lg bg-zinc-900 text-white'>
@@ -385,7 +385,7 @@ function BlockDetailPanel({ row }: { row: BlockBreakdownRow }) {
               Actions ({row.actions.length})
             </h5>
           </div>
-          <span className='text-3xs font-mono text-zinc-400'>
+          <span className='text-3xs text-muted-foreground font-mono'>
             Sort theo count
           </span>
         </div>
@@ -414,12 +414,12 @@ function Funnel({ steps }: { steps: FunnelStep[] }) {
                   <span className='text-3xs flex size-5 items-center justify-center rounded-full bg-zinc-900 font-mono font-bold text-white'>
                     {i + 1}
                   </span>
-                  <span className='text-xs font-medium text-zinc-700'>
+                  <span className='text-content-muted text-xs font-medium'>
                     {s.label}
                   </span>
                 </div>
               </div>
-              <div className='relative flex-1 overflow-hidden rounded-md bg-zinc-100'>
+              <div className='bg-muted relative flex-1 overflow-hidden rounded-md'>
                 <div
                   className={`flex h-7 items-center justify-end pr-2 ${
                     isLast
@@ -441,7 +441,7 @@ function Funnel({ steps }: { steps: FunnelStep[] }) {
                         ? 'bg-rose-100 text-rose-700'
                         : s.drop_off_pct >= 30
                           ? 'bg-amber-100 text-amber-700'
-                          : 'bg-zinc-100 text-zinc-600'
+                          : 'bg-muted text-content-muted'
                     }`}
                   >
                     −{s.drop_off_pct}%
@@ -452,8 +452,8 @@ function Funnel({ steps }: { steps: FunnelStep[] }) {
           </div>
         );
       })}
-      <div className='text-2xs mt-3 flex items-center justify-between border-t border-zinc-100 pt-2'>
-        <span className='text-zinc-500'>Conversion tổng:</span>
+      <div className='text-2xs border-border mt-3 flex items-center justify-between border-t pt-2'>
+        <span className='text-content-muted'>Conversion tổng:</span>
         <span className='font-mono font-bold text-emerald-700'>
           {((final / first) * 100).toFixed(2)}%
         </span>
@@ -472,7 +472,7 @@ function SlidesGrid({ slides }: { slides: SlideStat[] }) {
         return (
           <div
             key={s.index}
-            className='overflow-hidden rounded-lg border border-zinc-200 bg-white'
+            className='border-border overflow-hidden rounded-lg border bg-white'
           >
             <div className='aspect-video bg-gradient-to-br from-amber-200 to-amber-50 p-1.5'>
               <span className='text-3xs rounded bg-white/80 px-1.5 py-0.5 font-mono text-amber-700'>
@@ -482,15 +482,15 @@ function SlidesGrid({ slides }: { slides: SlideStat[] }) {
             <div className='p-2'>
               <div className='text-2xs truncate font-medium'>{s.label}</div>
               <div className='text-3xs mt-1 flex items-center justify-between'>
-                <span className='font-mono text-zinc-500'>
+                <span className='text-content-muted font-mono'>
                   {fmtNum(s.views)} v
                 </span>
-                <span className='font-mono text-zinc-500'>
+                <span className='text-content-muted font-mono'>
                   {fmtNum(s.clicks)} c
                 </span>
                 <CtrBadge ctr={ctrPct} />
               </div>
-              <div className='text-3xs mt-1 text-zinc-400'>
+              <div className='text-3xs text-muted-foreground mt-1'>
                 dwell {fmtDwell(s.avg_dwell_ms)}
               </div>
             </div>
@@ -512,7 +512,7 @@ function ImagesGrid({ images }: { images: GalleryImageStat[] }) {
         return (
           <div
             key={img.src}
-            className='overflow-hidden rounded-lg border border-zinc-200 bg-white'
+            className='border-border overflow-hidden rounded-lg border bg-white'
           >
             <div
               className='relative aspect-square bg-gradient-to-br from-blue-200 to-blue-50'
@@ -529,11 +529,13 @@ function ImagesGrid({ images }: { images: GalleryImageStat[] }) {
             </div>
             <div className='p-1.5'>
               <div className='text-3xs flex items-center justify-between'>
-                <span className='font-mono text-zinc-700'>
+                <span className='text-content-muted font-mono'>
                   {img.clicks} clicks
                 </span>
               </div>
-              <div className='text-3xs text-zinc-400'>{img.zooms} zooms</div>
+              <div className='text-3xs text-muted-foreground'>
+                {img.zooms} zooms
+              </div>
             </div>
           </div>
         );
@@ -547,15 +549,15 @@ function ImagesGrid({ images }: { images: GalleryImageStat[] }) {
 function ActionsTable({ actions }: { actions: ActionBreakdown[] }) {
   if (!actions.length)
     return (
-      <p className='text-center text-xs text-zinc-500'>
+      <p className='text-content-muted text-center text-xs'>
         Chưa có action nào trong khoảng thời gian này.
       </p>
     );
   return (
     <div className='overflow-x-auto'>
       <table className='w-full text-sm'>
-        <thead className='border-b border-zinc-100'>
-          <tr className='text-3xs text-left font-semibold tracking-wider text-zinc-500 uppercase'>
+        <thead className='border-border border-b'>
+          <tr className='text-3xs text-content-muted text-left font-semibold tracking-wider uppercase'>
             <th className='py-2 pr-3'>Action</th>
             <th className='py-2 pr-3 text-right'>Count</th>
             <th className='py-2 pr-3 text-right'>Unique</th>
@@ -564,7 +566,7 @@ function ActionsTable({ actions }: { actions: ActionBreakdown[] }) {
         </thead>
         <tbody>
           {actions.map(a => (
-            <tr key={a.action} className='border-t border-zinc-100'>
+            <tr key={a.action} className='border-border border-t'>
               <td className='py-2 pr-3'>
                 <span className='text-2xs rounded-md bg-blue-100 px-1.5 py-0.5 font-mono text-blue-700'>
                   {a.action}
@@ -573,7 +575,7 @@ function ActionsTable({ actions }: { actions: ActionBreakdown[] }) {
               <td className='py-2 pr-3 text-right font-mono font-semibold'>
                 {fmtFull(a.count)}
               </td>
-              <td className='py-2 pr-3 text-right font-mono text-zinc-500'>
+              <td className='text-content-muted py-2 pr-3 text-right font-mono'>
                 {fmtFull(a.unique_visitors)}
               </td>
               <td className='py-2 pr-3'>
@@ -582,23 +584,23 @@ function ActionsTable({ actions }: { actions: ActionBreakdown[] }) {
                     {a.targets.slice(0, 5).map(t => (
                       <span
                         key={t.target}
-                        className='text-3xs inline-flex items-center gap-1 rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 font-mono text-zinc-700'
+                        className='text-3xs border-border bg-muted text-content-muted inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono'
                       >
                         {t.target}
-                        <span className='text-zinc-400'>·</span>
-                        <span className='font-bold text-zinc-900'>
+                        <span className='text-muted-foreground'>·</span>
+                        <span className='text-foreground font-bold'>
                           {fmtFull(t.count)}
                         </span>
                       </span>
                     ))}
                     {a.targets.length > 5 && (
-                      <span className='text-3xs text-zinc-400'>
+                      <span className='text-3xs text-muted-foreground'>
                         +{a.targets.length - 5} khác
                       </span>
                     )}
                   </div>
                 ) : (
-                  <span className='text-2xs text-zinc-400'>
+                  <span className='text-2xs text-muted-foreground'>
                     Không có target
                   </span>
                 )}

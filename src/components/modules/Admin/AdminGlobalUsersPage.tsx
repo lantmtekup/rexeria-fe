@@ -63,7 +63,7 @@ const ROLE_META: Record<
 const STATUS_CHIP: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700',
   pending: 'bg-amber-100 text-amber-700',
-  disabled: 'bg-zinc-100 text-zinc-500',
+  disabled: 'bg-muted text-content-muted',
 };
 
 const PAGE_SIZES = [10, 20, 50];
@@ -133,7 +133,7 @@ export function AdminGlobalUsersPage() {
     <div className='flex flex-col gap-4 p-6'>
       <div className='flex flex-wrap items-end justify-between gap-3'>
         <div>
-          <div className='text-3xs flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+          <div className='text-3xs text-content-muted flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
             <Users className='size-3' /> Global users
           </div>
           <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
@@ -144,7 +144,7 @@ export function AdminGlobalUsersPage() {
             profile ở{' '}
             <Link
               href='/admin/users'
-              className='text-zinc-900 underline hover:text-zinc-700'
+              className='text-foreground hover:text-content-muted underline'
             >
               /admin/users
             </Link>{' '}
@@ -155,7 +155,7 @@ export function AdminGlobalUsersPage() {
           type='button'
           onClick={load}
           disabled={loading}
-          className='inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 disabled:opacity-50'
+          className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium shadow-sm disabled:opacity-50'
         >
           <RefreshCw className={cn('size-3.5', loading && 'animate-spin')} />
           Refresh
@@ -185,9 +185,9 @@ export function AdminGlobalUsersPage() {
       </div>
 
       {/* Toolbar */}
-      <div className='flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm'>
+      <div className='border-border flex flex-wrap items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm'>
         <div className='relative max-w-sm flex-1'>
-          <Search className='absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-zinc-400' />
+          <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
           <Input
             placeholder='Tìm theo email / display_name…'
             value={search}
@@ -198,7 +198,7 @@ export function AdminGlobalUsersPage() {
         <select
           value={pageSize}
           onChange={e => setPageSize(Number(e.target.value))}
-          className='rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50'
+          className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium'
         >
           {PAGE_SIZES.map(s => (
             <option key={s} value={s}>
@@ -272,21 +272,21 @@ export function AdminGlobalUsersPage() {
 
       {/* Table */}
       {loading && users.length === 0 ? (
-        <div className='flex items-center justify-center py-16 text-sm text-zinc-500'>
+        <div className='text-content-muted flex items-center justify-center py-16 text-sm'>
           <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải users…
         </div>
       ) : users.length === 0 ? (
-        <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center'>
-          <Users className='mx-auto size-8 text-zinc-300' />
-          <p className='mt-3 text-sm font-semibold text-zinc-700'>
+        <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
+          <Users className='text-muted-foreground mx-auto size-8' />
+          <p className='text-content-muted mt-3 text-sm font-semibold'>
             Không có user khớp filter
           </p>
         </div>
       ) : (
-        <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
+        <div className='border-border overflow-hidden rounded-2xl border bg-white shadow-sm'>
           <table className='w-full text-sm'>
             <thead>
-              <tr className='text-3xs border-b border-zinc-100 bg-zinc-50/50 text-left font-semibold tracking-[0.15em] text-zinc-500 uppercase'>
+              <tr className='text-3xs border-border bg-muted/50 text-content-muted border-b text-left font-semibold tracking-[0.15em] uppercase'>
                 <th className='w-14 px-4 py-2' />
                 <th className='px-4 py-2'>User</th>
                 <th className='w-32 px-4 py-2'>Role</th>
@@ -299,15 +299,15 @@ export function AdminGlobalUsersPage() {
               {users.map(u => {
                 const roleMeta = ROLE_META[u.role] ?? {
                   label: u.role,
-                  chip: 'bg-zinc-100 text-zinc-700',
+                  chip: 'bg-muted text-content-muted',
                   icon: User,
                 };
                 const statusClass =
-                  STATUS_CHIP[u.status] ?? 'bg-zinc-100 text-zinc-600';
+                  STATUS_CHIP[u.status] ?? 'bg-muted text-content-muted';
                 return (
                   <tr
                     key={u.id}
-                    className='border-b border-zinc-100 last:border-0 hover:bg-zinc-50/40'
+                    className='border-border hover:bg-muted/40 border-b last:border-0'
                   >
                     <td className='px-4 py-2'>
                       {u.avatar_url ? (
@@ -329,7 +329,7 @@ export function AdminGlobalUsersPage() {
                       )}
                     </td>
                     <td className='px-4 py-2'>
-                      <div className='font-medium text-zinc-900'>
+                      <div className='text-foreground font-medium'>
                         {u.display_name ?? '(no name)'}
                       </div>
                       <div className='text-content-muted text-3xs font-mono'>
@@ -361,7 +361,7 @@ export function AdminGlobalUsersPage() {
                       {u.brand_id ? (
                         <Link
                           href={`/admin/users/${u.brand_id}`}
-                          className='text-zinc-700 hover:underline'
+                          className='text-content-muted hover:underline'
                         >
                           {u.brand_name ?? (
                             <code className='font-mono'>
@@ -370,10 +370,10 @@ export function AdminGlobalUsersPage() {
                           )}
                         </Link>
                       ) : (
-                        <span className='text-zinc-300'>—</span>
+                        <span className='text-muted-foreground'>—</span>
                       )}
                     </td>
-                    <td className='text-3xs px-4 py-2 font-mono text-zinc-500'>
+                    <td className='text-3xs text-content-muted px-4 py-2 font-mono'>
                       {u.last_login_at
                         ? new Date(u.last_login_at).toLocaleDateString('vi-VN')
                         : '—'}
@@ -388,8 +388,8 @@ export function AdminGlobalUsersPage() {
 
       {/* Pagination */}
       {users.length > 0 && totalPages > 1 && (
-        <div className='flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-sm'>
-          <span className='text-2xs text-zinc-500'>
+        <div className='border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-2.5 shadow-sm'>
+          <span className='text-2xs text-content-muted'>
             Trang {page}/{totalPages} · {total} users
           </span>
           <div className='flex items-center gap-1'>
@@ -397,7 +397,7 @@ export function AdminGlobalUsersPage() {
               type='button'
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className='text-2xs rounded-md border border-zinc-200 px-2 py-1 hover:bg-zinc-50 disabled:opacity-40'
+              className='text-2xs border-border hover:bg-muted rounded-md border px-2 py-1 disabled:opacity-40'
             >
               ‹ Trước
             </button>
@@ -405,7 +405,7 @@ export function AdminGlobalUsersPage() {
               type='button'
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className='text-2xs rounded-md border border-zinc-200 px-2 py-1 hover:bg-zinc-50 disabled:opacity-40'
+              className='text-2xs border-border hover:bg-muted rounded-md border px-2 py-1 disabled:opacity-40'
             >
               Sau ›
             </button>
@@ -429,7 +429,7 @@ function FilterGroup({
 }) {
   return (
     <div className='inline-flex items-center gap-1.5'>
-      <span className='text-3xs inline-flex items-center gap-1 font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+      <span className='text-3xs text-muted-foreground inline-flex items-center gap-1 font-semibold tracking-[0.18em] uppercase'>
         {icon}
         {label}
       </span>
@@ -460,7 +460,7 @@ function Chip({
     ? accent
       ? accentActive[accent]
       : 'bg-zinc-900 text-white shadow-sm'
-    : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50';
+    : 'border border-border bg-white text-content-muted hover:bg-muted';
   return (
     <button
       type='button'
@@ -499,7 +499,7 @@ function StatCard({
         {icon}
         {label}
       </div>
-      <div className='mt-1 font-mono text-xl font-bold text-zinc-900 tabular-nums'>
+      <div className='text-foreground mt-1 font-mono text-xl font-bold tabular-nums'>
         {value}
       </div>
     </div>

@@ -91,7 +91,7 @@ const SORT_OPTIONS: { id: Sort; label: string }[] = [
 const STATUS_CHIP: Record<string, string> = {
   draft: 'bg-amber-100 text-amber-700',
   published: 'bg-emerald-100 text-emerald-700',
-  archived: 'bg-zinc-200 text-zinc-600',
+  archived: 'bg-zinc-200 text-content-muted',
 };
 
 const TYPE_CHIP: Record<string, string> = {
@@ -362,7 +362,7 @@ export function AdminCanvasTemplatesPage() {
       {/* Header */}
       <div className='flex flex-wrap items-end justify-between gap-3'>
         <div>
-          <div className='text-3xs flex items-center gap-2 font-semibold tracking-[0.18em] text-zinc-500 uppercase'>
+          <div className='text-3xs text-content-muted flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
             <LayoutTemplate className='size-3' /> Landing pages
           </div>
           <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
@@ -384,9 +384,9 @@ export function AdminCanvasTemplatesPage() {
       </div>
 
       {/* Toolbar — search + sort */}
-      <div className='flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm'>
+      <div className='border-border flex flex-wrap items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm'>
         <div className='relative max-w-sm flex-1'>
-          <Search className='absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-zinc-400' />
+          <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
           <Input
             placeholder='Tìm theo tên / slug…'
             value={search}
@@ -396,11 +396,11 @@ export function AdminCanvasTemplatesPage() {
         </div>
 
         <div className='relative inline-flex items-center'>
-          <ArrowDownUp className='pointer-events-none absolute left-2.5 size-3.5 text-zinc-400' />
+          <ArrowDownUp className='text-muted-foreground pointer-events-none absolute left-2.5 size-3.5' />
           <select
             value={sort}
             onChange={e => setSort(e.target.value as Sort)}
-            className='appearance-none rounded-lg border border-zinc-200 bg-white py-1.5 pr-3 pl-7 text-xs font-medium text-zinc-700 outline-none hover:bg-zinc-50 focus:border-zinc-400'
+            className='border-border text-content-muted hover:bg-muted appearance-none rounded-lg border bg-white py-1.5 pr-3 pl-7 text-xs font-medium outline-none focus:border-zinc-400'
             aria-label='Sort'
           >
             {SORT_OPTIONS.map(o => (
@@ -411,7 +411,7 @@ export function AdminCanvasTemplatesPage() {
           </select>
         </div>
 
-        <div className='ml-auto inline-flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-white p-0.5'>
+        <div className='border-border ml-auto inline-flex items-center gap-0.5 rounded-lg border bg-white p-0.5'>
           <ViewBtn
             active={view === 'grid'}
             onClick={() => setView('grid')}
@@ -488,7 +488,7 @@ export function AdminCanvasTemplatesPage() {
           <select
             value={brandFilter}
             onChange={e => setBrandFilter(e.target.value)}
-            className='rounded-lg border border-zinc-200 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 outline-none hover:bg-zinc-50'
+            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-2.5 py-1 text-xs font-medium outline-none'
           >
             <option value=''>Tất cả brand</option>
             {brands.map(b => (
@@ -503,14 +503,14 @@ export function AdminCanvasTemplatesPage() {
           <button
             type='button'
             onClick={clearFilters}
-            className='text-2xs ml-1 inline-flex items-center gap-1 text-zinc-500 hover:text-zinc-900'
+            className='text-2xs text-content-muted hover:text-foreground ml-1 inline-flex items-center gap-1'
           >
             <XIcon className='size-3' />
             Clear
           </button>
         )}
 
-        <div className='text-3xs ml-auto text-zinc-500'>
+        <div className='text-3xs text-content-muted ml-auto'>
           {items.length} / {total}
         </div>
       </div>
@@ -523,18 +523,18 @@ export function AdminCanvasTemplatesPage() {
 
       {/* List body */}
       {loading && items.length === 0 ? (
-        <div className='flex items-center justify-center py-20 text-sm text-zinc-500'>
+        <div className='text-content-muted flex items-center justify-center py-20 text-sm'>
           <RefreshCwIcon className='mr-2 size-4 animate-spin' /> Đang tải pages…
         </div>
       ) : items.length === 0 ? (
-        <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-12 text-center'>
-          <LayoutTemplate className='mx-auto size-8 text-zinc-300' />
-          <p className='mt-3 text-sm font-semibold text-zinc-700'>
+        <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
+          <LayoutTemplate className='text-muted-foreground mx-auto size-8' />
+          <p className='text-content-muted mt-3 text-sm font-semibold'>
             {hasActiveFilters
               ? 'Không có page nào khớp filter'
               : 'Chưa có page nào'}
           </p>
-          <p className='mt-1 text-xs text-zinc-500'>
+          <p className='text-content-muted mt-1 text-xs'>
             {hasActiveFilters
               ? 'Thử đổi từ khoá hoặc clear filter.'
               : 'Vào /admin/templates → click "Sử dụng" để tạo landing đầu tiên.'}
@@ -669,11 +669,11 @@ function PageCard({
 }) {
   const statusClass = STATUS_CHIP[item.status] ?? STATUS_CHIP.archived;
   const typeChipClass =
-    TYPE_CHIP[item.type] ?? 'bg-zinc-100 text-zinc-600 border-zinc-200';
+    TYPE_CHIP[item.type] ?? 'bg-muted text-content-muted border-border';
   const gradient =
     TYPE_GRADIENT[item.type] ?? 'from-zinc-400 via-zinc-500 to-zinc-600';
   return (
-    <div className='group flex flex-col rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'>
+    <div className='group border-border hover:border-border flex flex-col rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       {/* Thumbnail area — gradient placeholder per type. BE Page response
           không trả thumbnail_url; thumbnail_asset_id rỗng cho hầu hết rows.
           Card root no longer clips (overflow-hidden removed) so the ⋮ action
@@ -707,33 +707,33 @@ function PageCard({
       </div>
 
       <div className='flex flex-1 flex-col gap-2 p-3.5'>
-        <h3 className='line-clamp-1 text-sm font-semibold text-zinc-900'>
+        <h3 className='text-foreground line-clamp-1 text-sm font-semibold'>
           {item.name}
         </h3>
         {item.slug ? (
-          <code className='text-3xs line-clamp-1 font-mono text-zinc-500'>
+          <code className='text-3xs text-content-muted line-clamp-1 font-mono'>
             /p/{item.slug}
           </code>
         ) : (
-          <span className='text-3xs font-mono text-zinc-400'>
+          <span className='text-3xs text-muted-foreground font-mono'>
             (chưa có slug)
           </span>
         )}
 
-        <div className='text-3xs mt-auto flex items-center justify-between text-zinc-500'>
+        <div className='text-3xs text-content-muted mt-auto flex items-center justify-between'>
           {brand ? (
             <Link
               href={`/admin/users/${brand.id}`}
-              className='inline-flex items-center gap-1 truncate font-medium text-zinc-700 hover:text-zinc-900 hover:underline'
+              className='text-content-muted hover:text-foreground inline-flex items-center gap-1 truncate font-medium hover:underline'
             >
               {brand.name}
             </Link>
           ) : (
-            <code className='font-mono text-zinc-400'>
+            <code className='text-muted-foreground font-mono'>
               {item.brand_id.slice(0, 8)}…
             </code>
           )}
-          <span className='font-mono text-zinc-400'>
+          <span className='text-muted-foreground font-mono'>
             {item.updated_at
               ? new Date(item.updated_at).toLocaleDateString('vi-VN')
               : '—'}
@@ -746,7 +746,7 @@ function PageCard({
           </div>
           <Link
             href={`/admin/users/${item.brand_id}`}
-            className='inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50'
+            className='border-border text-content-muted hover:bg-muted inline-flex items-center justify-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium transition-colors'
             title='Mở brand detail'
           >
             <ExternalLink className='size-3' />
@@ -796,29 +796,29 @@ function PageActionMenu({
       <button
         type='button'
         onClick={() => setOpen(o => !o)}
-        className='inline-flex h-full items-center justify-center rounded-lg border border-zinc-200 bg-white px-2 text-zinc-700 transition-colors hover:bg-zinc-50'
+        className='border-border text-content-muted hover:bg-muted inline-flex h-full items-center justify-center rounded-lg border bg-white px-2 transition-colors'
         aria-label='Hành động'
         aria-expanded={open}
       >
         <MoreVertical className='size-3.5' />
       </button>
       {open && (
-        <div className='absolute top-full right-0 z-30 mt-1 w-48 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-lg'>
+        <div className='border-border absolute top-full right-0 z-30 mt-1 w-48 overflow-hidden rounded-lg border bg-white shadow-lg'>
           {/* Analytics — always available regardless of status. */}
           <Link
             href={`/admin/landing-pages/${page.slug || page.id}/analytics`}
             onClick={() => setOpen(false)}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+            className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
           >
             <BarChart3 className='size-3.5 text-blue-600' />
             Analytics
           </Link>
-          <div className='h-px bg-zinc-100' />
+          <div className='bg-muted h-px' />
           {page.status === 'draft' && (
             <button
               type='button'
               onClick={choose('publish')}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+              className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
             >
               <Send className='size-3.5 text-emerald-600' />
               Publish
@@ -828,7 +828,7 @@ function PageActionMenu({
             <button
               type='button'
               onClick={choose('unpublish')}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+              className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
             >
               <Undo2 className='size-3.5 text-amber-600' />
               Unpublish
@@ -838,24 +838,24 @@ function PageActionMenu({
             <button
               type='button'
               onClick={choose('restore')}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+              className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
             >
-              <RotateCcw className='size-3.5 text-zinc-600' />
+              <RotateCcw className='text-content-muted size-3.5' />
               Restore (→ draft)
             </button>
           )}
-          <div className='h-px bg-zinc-100' />
+          <div className='bg-muted h-px' />
           <button
             type='button'
             onClick={choose('domain')}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50'
+            className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
           >
             <Globe className='size-3.5 text-blue-600' />
             Cài đặt domain
           </button>
           {page.status !== 'archived' && (
             <>
-              <div className='h-px bg-zinc-100' />
+              <div className='bg-muted h-px' />
               <button
                 type='button'
                 onClick={choose('archive')}
@@ -888,7 +888,7 @@ function OpenLandingButton({
   const enabledCls =
     variant === 'primary'
       ? 'bg-zinc-900 text-white hover:bg-zinc-700'
-      : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50';
+      : 'border border-border bg-white text-content-muted hover:bg-muted';
   return (
     <Link
       href={publicLandingUrl(segment)}
@@ -923,7 +923,7 @@ function ViewBtn({
       title={label}
       className={cn(
         'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
-        active ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100'
+        active ? 'bg-zinc-900 text-white' : 'text-content-muted hover:bg-muted'
       )}
     >
       {icon}
@@ -952,14 +952,14 @@ function TableView({
   const allOn = ids.length > 0 && ids.every(id => selected.has(id));
   const someOn = ids.some(id => selected.has(id));
   return (
-    <div className='rounded-2xl border border-zinc-200 bg-white'>
+    <div className='border-border rounded-2xl border bg-white'>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className='w-10'>
               <input
                 type='checkbox'
-                className='size-3.5 cursor-pointer rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400'
+                className='border-border text-foreground size-3.5 cursor-pointer rounded focus:ring-zinc-400'
                 checked={allOn}
                 ref={el => {
                   if (el) el.indeterminate = someOn && !allOn;
@@ -979,15 +979,16 @@ function TableView({
         <TableBody>
           {items.map(p => {
             const statusClass = STATUS_CHIP[p.status] ?? STATUS_CHIP.archived;
-            const typeClass = TYPE_CHIP[p.type] ?? 'bg-zinc-100 text-zinc-600';
+            const typeClass =
+              TYPE_CHIP[p.type] ?? 'bg-muted text-content-muted';
             const brand = brandById.get(p.brand_id);
             const isSelected = selected.has(p.id);
             return (
-              <TableRow key={p.id} className={cn(isSelected && 'bg-zinc-50')}>
+              <TableRow key={p.id} className={cn(isSelected && 'bg-muted')}>
                 <TableCell>
                   <input
                     type='checkbox'
-                    className='size-3.5 cursor-pointer rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400'
+                    className='border-border text-foreground size-3.5 cursor-pointer rounded focus:ring-zinc-400'
                     checked={isSelected}
                     onChange={() => onToggleSelected(p.id)}
                     aria-label={`Chọn ${p.name}`}
@@ -995,7 +996,7 @@ function TableView({
                 </TableCell>
                 <TableCell>
                   <div className='font-medium'>{p.name}</div>
-                  <div className='text-3xs flex items-center gap-2 font-mono text-zinc-400'>
+                  <div className='text-3xs text-muted-foreground flex items-center gap-2 font-mono'>
                     {p.slug ? <code>{p.slug}</code> : <span>—</span>}
                     <span>·</span>
                     <code>{p.id.slice(0, 12)}…</code>
@@ -1025,18 +1026,18 @@ function TableView({
                   {brand ? (
                     <Link
                       href={`/admin/users/${brand.id}`}
-                      className='inline-flex items-center gap-1 text-xs font-medium text-zinc-700 hover:text-zinc-900 hover:underline'
+                      className='text-content-muted hover:text-foreground inline-flex items-center gap-1 text-xs font-medium hover:underline'
                     >
                       {brand.name}
-                      <ExternalLink className='size-3 text-zinc-400' />
+                      <ExternalLink className='text-muted-foreground size-3' />
                     </Link>
                   ) : (
-                    <code className='text-3xs font-mono text-zinc-500'>
+                    <code className='text-3xs text-content-muted font-mono'>
                       {p.brand_id.slice(0, 8)}…
                     </code>
                   )}
                 </TableCell>
-                <TableCell className='text-xs text-zinc-500'>
+                <TableCell className='text-content-muted text-xs'>
                   {p.updated_at
                     ? new Date(p.updated_at).toLocaleDateString('vi-VN')
                     : '—'}
@@ -1087,8 +1088,8 @@ function Pagination({
   add(totalPages);
 
   return (
-    <div className='flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-sm'>
-      <span className='text-2xs text-zinc-500'>
+    <div className='border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-2.5 shadow-sm'>
+      <span className='text-2xs text-content-muted'>
         {from}–{to} trong {total}
       </span>
       <div className='flex items-center gap-1'>
@@ -1096,14 +1097,17 @@ function Pagination({
           type='button'
           onClick={() => onChange(Math.max(1, page - 1))}
           disabled={page <= 1}
-          className='inline-flex size-7 items-center justify-center rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40'
+          className='border-border text-content-muted hover:bg-muted inline-flex size-7 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-40'
           aria-label='Trang trước'
         >
           <ChevronLeft className='size-3.5' />
         </button>
         {pages.map((p, i) =>
           p === 'gap' ? (
-            <span key={`gap-${i}`} className='text-2xs px-1 text-zinc-300'>
+            <span
+              key={`gap-${i}`}
+              className='text-2xs text-muted-foreground px-1'
+            >
               …
             </span>
           ) : (
@@ -1115,7 +1119,7 @@ function Pagination({
                 'text-2xs inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono font-semibold tabular-nums transition-colors',
                 p === page
                   ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
+                  : 'border-border text-content-muted hover:bg-muted border bg-white'
               )}
             >
               {p}
@@ -1126,7 +1130,7 @@ function Pagination({
           type='button'
           onClick={() => onChange(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages}
-          className='inline-flex size-7 items-center justify-center rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40'
+          className='border-border text-content-muted hover:bg-muted inline-flex size-7 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-40'
           aria-label='Trang sau'
         >
           <ChevronRight className='size-3.5' />
@@ -1147,7 +1151,7 @@ function FilterGroup({
 }) {
   return (
     <div className='inline-flex items-center gap-1.5'>
-      <span className='text-3xs font-semibold tracking-[0.18em] text-zinc-400 uppercase'>
+      <span className='text-3xs text-muted-foreground font-semibold tracking-[0.18em] uppercase'>
         {label}
       </span>
       <div className='inline-flex items-center gap-1'>{children}</div>
@@ -1176,7 +1180,7 @@ function ChipBtn({
     ? accent
       ? accentActive[accent]
       : 'bg-zinc-900 text-white shadow-sm'
-    : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50';
+    : 'border border-border bg-white text-content-muted hover:bg-muted';
   return (
     <button
       type='button'
@@ -1231,10 +1235,10 @@ function HardDeleteConfirmModal({
             <AlertTriangle className='size-5 text-red-600' />
           </div>
           <div className='flex-1'>
-            <h3 className='text-base font-bold text-zinc-900'>
+            <h3 className='text-foreground text-base font-bold'>
               Xoá vĩnh viễn {count} landing pages?
             </h3>
-            <p className='mt-1 text-xs leading-relaxed text-zinc-600'>
+            <p className='text-content-muted mt-1 text-xs leading-relaxed'>
               Hành động này{' '}
               <span className='font-semibold text-red-700'>
                 KHÔNG thể khôi phục
@@ -1246,7 +1250,7 @@ function HardDeleteConfirmModal({
         </div>
 
         <div className='mt-5'>
-          <label className='text-2xs block font-medium text-zinc-700'>
+          <label className='text-2xs text-content-muted block font-medium'>
             Gõ{' '}
             <span className='font-mono font-bold text-red-700'>{KEYWORD}</span>{' '}
             vào ô dưới để confirm:
@@ -1257,7 +1261,7 @@ function HardDeleteConfirmModal({
             onChange={e => setTyped(e.target.value)}
             autoFocus
             placeholder={KEYWORD}
-            className='mt-1.5 w-full rounded-lg border border-zinc-300 bg-zinc-50 px-3 py-2 font-mono text-sm outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-200'
+            className='border-border bg-muted mt-1.5 w-full rounded-lg border px-3 py-2 font-mono text-sm outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-200'
           />
         </div>
 
@@ -1265,7 +1269,7 @@ function HardDeleteConfirmModal({
           <button
             type='button'
             onClick={onCancel}
-            className='rounded-md px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-100'
+            className='text-content-muted hover:bg-muted rounded-md px-3 py-1.5 text-xs font-medium'
           >
             Huỷ
           </button>
@@ -1277,7 +1281,7 @@ function HardDeleteConfirmModal({
               'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
               isConfirmed
                 ? 'bg-red-600 text-white hover:bg-red-500'
-                : 'cursor-not-allowed bg-zinc-100 text-zinc-400'
+                : 'bg-muted text-muted-foreground cursor-not-allowed'
             )}
           >
             <Flame className='size-3.5' />

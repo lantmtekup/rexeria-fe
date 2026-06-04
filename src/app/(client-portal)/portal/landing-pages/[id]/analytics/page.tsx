@@ -79,7 +79,7 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
           </div>
         </div>
       ) : !resolvedId ? (
-        <div className='flex h-64 items-center justify-center text-sm text-zinc-500'>
+        <div className='text-content-muted flex h-64 items-center justify-center text-sm'>
           <Loader2 className='mr-2 size-4 animate-spin' /> Đang resolve landing…
         </div>
       ) : (

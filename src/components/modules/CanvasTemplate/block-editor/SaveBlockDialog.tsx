@@ -153,7 +153,7 @@ export function SaveBlockDialog({
               {isEditing ? (
                 <>
                   Đang sửa bản gốc{' '}
-                  <code className='text-2xs rounded bg-zinc-100 px-1 font-mono'>
+                  <code className='text-2xs bg-muted rounded px-1 font-mono'>
                     {editingSavedBlockId}
                   </code>
                   . Cập nhật sẽ ghi đè nội dung &amp; ngày sửa; ID + tag giữ

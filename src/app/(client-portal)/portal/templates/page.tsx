@@ -138,13 +138,13 @@ export default function PortalTemplateLibraryPage() {
   return (
     <PortalShell>
       <section>
-        <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
+        <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
           <LayoutTemplate className='size-3' /> Template library
         </div>
         <h1 className='mt-1 text-2xl font-bold tracking-tight'>
           Bắt đầu từ template
         </h1>
-        <p className='mt-1 text-sm text-zinc-500'>
+        <p className='text-content-muted mt-1 text-sm'>
           Chọn 1 template Rexer đã thiết kế sẵn, click{' '}
           <strong>Dùng template</strong> để tạo landing page trong workspace của
           bạn — sửa nội dung + publish khi sẵn sàng.
@@ -160,9 +160,9 @@ export default function PortalTemplateLibraryPage() {
       </section>
 
       {/* Toolbar — search + sort + view */}
-      <div className='mt-5 flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-200 bg-white p-2 shadow-sm'>
+      <div className='border-border mt-5 flex flex-wrap items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm'>
         <div className='relative max-w-sm flex-1'>
-          <Search className='absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-zinc-400' />
+          <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
           <Input
             placeholder='Tìm theo tên / mô tả…'
             value={search}
@@ -171,11 +171,11 @@ export default function PortalTemplateLibraryPage() {
           />
         </div>
         <div className='relative inline-flex items-center'>
-          <ArrowDownUp className='pointer-events-none absolute left-2.5 size-3.5 text-zinc-400' />
+          <ArrowDownUp className='text-muted-foreground pointer-events-none absolute left-2.5 size-3.5' />
           <select
             value={sort}
             onChange={e => setSort(e.target.value as Sort)}
-            className='appearance-none rounded-lg border border-zinc-200 bg-white py-1.5 pr-3 pl-7 text-xs font-medium text-zinc-700 outline-none hover:bg-zinc-50 focus:border-zinc-400'
+            className='border-border text-content-muted hover:bg-muted appearance-none rounded-lg border bg-white py-1.5 pr-3 pl-7 text-xs font-medium outline-none focus:border-zinc-400'
             aria-label='Sort'
           >
             {SORT_OPTIONS.map(o => (
@@ -185,7 +185,7 @@ export default function PortalTemplateLibraryPage() {
             ))}
           </select>
         </div>
-        <div className='ml-auto inline-flex items-center gap-0.5 rounded-lg border border-zinc-200 bg-white p-0.5'>
+        <div className='border-border ml-auto inline-flex items-center gap-0.5 rounded-lg border bg-white p-0.5'>
           <ViewBtn
             active={view === 'grid'}
             onClick={() => setView('grid')}
@@ -204,18 +204,18 @@ export default function PortalTemplateLibraryPage() {
       {/* List body */}
       <div className='mt-5'>
         {loading && items.length === 0 ? (
-          <div className='flex items-center justify-center py-16 text-sm text-zinc-500'>
+          <div className='text-content-muted flex items-center justify-center py-16 text-sm'>
             <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải template…
           </div>
         ) : items.length === 0 ? (
-          <div className='rounded-2xl border border-zinc-200 bg-white p-12 text-center'>
-            <Sparkles className='mx-auto size-8 text-zinc-300' />
-            <p className='mt-3 text-sm font-semibold text-zinc-700'>
+          <div className='border-border rounded-2xl border bg-white p-12 text-center'>
+            <Sparkles className='text-muted-foreground mx-auto size-8' />
+            <p className='text-content-muted mt-3 text-sm font-semibold'>
               {debouncedSearch
                 ? 'Không có template khớp tìm kiếm'
                 : 'Rexer chưa publish template nào'}
             </p>
-            <p className='mt-1 text-xs text-zinc-500'>
+            <p className='text-content-muted mt-1 text-xs'>
               {debouncedSearch
                 ? 'Thử từ khoá khác hoặc clear filter.'
                 : 'Sẽ có sớm — staff Rexer đang chuẩn bị bộ template demo.'}
@@ -286,7 +286,7 @@ function TemplateCard({
   loading: boolean;
 }) {
   return (
-    <div className='group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md'>
+    <div className='group border-border hover:border-border flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       <div className='relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-zinc-200 to-zinc-300'>
         {tpl.thumbnail_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -296,17 +296,17 @@ function TemplateCard({
             className='size-full object-cover transition-transform duration-300 group-hover:scale-[1.02]'
           />
         ) : (
-          <div className='flex h-full items-center justify-center text-zinc-400'>
+          <div className='text-muted-foreground flex h-full items-center justify-center'>
             <LayoutTemplate className='size-10' />
           </div>
         )}
       </div>
       <div className='flex flex-1 flex-col gap-2 p-3.5'>
-        <h3 className='truncate text-sm font-semibold text-zinc-900'>
+        <h3 className='text-foreground truncate text-sm font-semibold'>
           {tpl.name}
         </h3>
         {tpl.description && (
-          <p className='text-2xs line-clamp-2 text-zinc-500'>
+          <p className='text-2xs text-content-muted line-clamp-2'>
             {tpl.description}
           </p>
         )}
@@ -345,27 +345,27 @@ function TableView({
   cloning: string | null;
 }) {
   return (
-    <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
+    <div className='border-border overflow-hidden rounded-2xl border bg-white shadow-sm'>
       <table className='w-full text-sm'>
         <thead>
-          <tr className='border-b border-zinc-100 bg-zinc-50/50'>
-            <th className='w-20 px-4 py-2 text-left font-medium text-zinc-500'>
+          <tr className='border-border bg-muted/50 border-b'>
+            <th className='text-content-muted w-20 px-4 py-2 text-left font-medium'>
               Thumb
             </th>
-            <th className='px-4 py-2 text-left font-medium text-zinc-500'>
+            <th className='text-content-muted px-4 py-2 text-left font-medium'>
               Tên
             </th>
-            <th className='hidden px-4 py-2 text-left font-medium text-zinc-500 sm:table-cell'>
+            <th className='text-content-muted hidden px-4 py-2 text-left font-medium sm:table-cell'>
               Mô tả
             </th>
-            <th className='w-32 px-4 py-2 text-right font-medium text-zinc-500' />
+            <th className='text-content-muted w-32 px-4 py-2 text-right font-medium' />
           </tr>
         </thead>
         <tbody>
           {items.map(tpl => (
-            <tr key={tpl.id} className='border-b border-zinc-100 last:border-0'>
+            <tr key={tpl.id} className='border-border border-b last:border-0'>
               <td className='px-4 py-2'>
-                <div className='aspect-[4/3] w-16 overflow-hidden rounded-md border border-zinc-200 bg-gradient-to-br from-zinc-100 to-zinc-200'>
+                <div className='border-border aspect-[4/3] w-16 overflow-hidden rounded-md border bg-gradient-to-br from-zinc-100 to-zinc-200'>
                   {tpl.thumbnail_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -374,21 +374,23 @@ function TableView({
                       className='size-full object-cover'
                     />
                   ) : (
-                    <div className='flex h-full items-center justify-center text-zinc-300'>
+                    <div className='text-muted-foreground flex h-full items-center justify-center'>
                       <LayoutTemplate className='size-4' />
                     </div>
                   )}
                 </div>
               </td>
               <td className='px-4 py-2'>
-                <div className='font-semibold text-zinc-900'>{tpl.name}</div>
-                <div className='text-3xs font-mono text-zinc-400'>
+                <div className='text-foreground font-semibold'>{tpl.name}</div>
+                <div className='text-3xs text-muted-foreground font-mono'>
                   {tpl.id.slice(0, 12)}…
                 </div>
               </td>
               <td className='hidden px-4 py-2 sm:table-cell'>
-                <p className='line-clamp-2 max-w-md text-xs text-zinc-500'>
-                  {tpl.description || <span className='text-zinc-300'>—</span>}
+                <p className='text-content-muted line-clamp-2 max-w-md text-xs'>
+                  {tpl.description || (
+                    <span className='text-muted-foreground'>—</span>
+                  )}
                 </p>
               </td>
               <td className='px-4 py-2 text-right'>
@@ -448,8 +450,8 @@ function Pagination({
   add(totalPages);
 
   return (
-    <div className='flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-2.5 shadow-sm'>
-      <span className='text-2xs text-zinc-500'>
+    <div className='border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-2.5 shadow-sm'>
+      <span className='text-2xs text-content-muted'>
         {from}–{to} trong {total}
       </span>
       <div className='flex items-center gap-1'>
@@ -457,13 +459,16 @@ function Pagination({
           type='button'
           onClick={() => onChange(Math.max(1, page - 1))}
           disabled={page <= 1}
-          className='inline-flex size-7 items-center justify-center rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40'
+          className='border-border text-content-muted hover:bg-muted inline-flex size-7 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-40'
         >
           <ChevronLeft className='size-3.5' />
         </button>
         {pages.map((p, i) =>
           p === 'gap' ? (
-            <span key={`gap-${i}`} className='text-2xs px-1 text-zinc-300'>
+            <span
+              key={`gap-${i}`}
+              className='text-2xs text-muted-foreground px-1'
+            >
               …
             </span>
           ) : (
@@ -475,7 +480,7 @@ function Pagination({
                 'text-2xs inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono font-semibold tabular-nums',
                 p === page
                   ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50'
+                  : 'border-border text-content-muted hover:bg-muted border bg-white'
               )}
             >
               {p}
@@ -486,7 +491,7 @@ function Pagination({
           type='button'
           onClick={() => onChange(Math.min(totalPages, page + 1))}
           disabled={page >= totalPages}
-          className='inline-flex size-7 items-center justify-center rounded-md border border-zinc-200 text-zinc-600 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40'
+          className='border-border text-content-muted hover:bg-muted inline-flex size-7 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-40'
         >
           <ChevronRight className='size-3.5' />
         </button>
@@ -513,7 +518,7 @@ function ViewBtn({
       title={label}
       className={cn(
         'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
-        active ? 'bg-zinc-900 text-white' : 'text-zinc-600 hover:bg-zinc-100'
+        active ? 'bg-zinc-900 text-white' : 'text-content-muted hover:bg-muted'
       )}
     >
       {icon}

@@ -185,12 +185,12 @@ export default function DocumentBEPage() {
   }, []);
 
   return (
-    <div className='min-h-screen bg-zinc-50 text-zinc-900 antialiased'>
-      <header className='sticky top-0 z-30 flex items-center justify-between border-b border-zinc-200 bg-white/95 px-6 py-3 backdrop-blur'>
+    <div className='bg-muted text-foreground min-h-screen antialiased'>
+      <header className='border-border sticky top-0 z-30 flex items-center justify-between border-b bg-white/95 px-6 py-3 backdrop-blur'>
         <div className='flex items-center gap-3'>
           <Link
             href='/overview'
-            className='flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100'
+            className='border-border text-content-muted hover:bg-muted flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium'
           >
             <ArrowLeft className='size-3.5' /> Overview
           </Link>
@@ -211,9 +211,9 @@ export default function DocumentBEPage() {
       </header>
 
       {/* Filter bar */}
-      <div className='sticky top-[57px] z-20 border-b border-zinc-200 bg-white/95 px-6 py-2.5 backdrop-blur'>
+      <div className='border-border sticky top-[57px] z-20 border-b bg-white/95 px-6 py-2.5 backdrop-blur'>
         <div className='flex flex-wrap items-center gap-3'>
-          <span className='text-3xs flex items-center gap-1 font-semibold tracking-wider text-zinc-500 uppercase'>
+          <span className='text-3xs text-content-muted flex items-center gap-1 font-semibold tracking-wider uppercase'>
             <Filter className='size-3' /> Trạng thái
           </span>
           <div className='flex flex-wrap items-center gap-1.5'>
@@ -236,7 +236,7 @@ export default function DocumentBEPage() {
                   className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-all ${
                     active
                       ? 'border-zinc-900 bg-zinc-900 text-white shadow-sm'
-                      : `border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50`
+                      : `border-border text-content-muted hover:bg-muted bg-white`
                   }`}
                 >
                   {meta.label}
@@ -244,7 +244,7 @@ export default function DocumentBEPage() {
               );
             })}
           </div>
-          <span className='text-3xs ml-2 flex items-center gap-1 font-semibold tracking-wider text-zinc-500 uppercase'>
+          <span className='text-3xs text-content-muted ml-2 flex items-center gap-1 font-semibold tracking-wider uppercase'>
             Module
           </span>
           <div className='flex flex-wrap items-center gap-1'>
@@ -253,7 +253,7 @@ export default function DocumentBEPage() {
               className={`text-2xs rounded-full px-2.5 py-1 font-medium transition-all ${
                 categoryFilter === 'all'
                   ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                  : 'border-border text-content-muted hover:bg-muted border bg-white'
               }`}
             >
               All
@@ -269,7 +269,7 @@ export default function DocumentBEPage() {
                   className={`text-2xs rounded-full px-2.5 py-1 font-medium transition-all ${
                     active
                       ? `${a.bg} text-white shadow-sm`
-                      : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50'
+                      : 'border-border text-content-muted hover:bg-muted border bg-white'
                   }`}
                 >
                   {CATEGORY_META[cat].label}
@@ -277,20 +277,22 @@ export default function DocumentBEPage() {
               );
             })}
           </div>
-          <div className='ml-auto font-mono text-xs text-zinc-500'>
-            <span className='font-bold text-zinc-900'>{filtered.length}</span>
-            <span className='text-zinc-400'>/{SPECS.length} hiển thị</span>
+          <div className='text-content-muted ml-auto font-mono text-xs'>
+            <span className='text-foreground font-bold'>{filtered.length}</span>
+            <span className='text-muted-foreground'>
+              /{SPECS.length} hiển thị
+            </span>
           </div>
         </div>
       </div>
 
       <div className='flex'>
-        <aside className='sticky top-[107px] hidden h-[calc(100vh-107px)] w-72 shrink-0 overflow-y-auto border-r border-zinc-200 bg-white px-4 py-6 lg:block'>
+        <aside className='border-border sticky top-[107px] hidden h-[calc(100vh-107px)] w-72 shrink-0 overflow-y-auto border-r bg-white px-4 py-6 lg:block'>
           <div className='mb-4 flex items-center justify-between'>
-            <span className='text-2xs font-semibold tracking-wider text-zinc-500 uppercase'>
+            <span className='text-2xs text-content-muted font-semibold tracking-wider uppercase'>
               Mục lục
             </span>
-            <span className='text-3xs font-mono text-zinc-400'>
+            <span className='text-3xs text-muted-foreground font-mono'>
               {filtered.length} mục
             </span>
           </div>
@@ -311,7 +313,7 @@ export default function DocumentBEPage() {
                       ? 'pointer-events-none opacity-25'
                       : isActive
                         ? 'bg-zinc-900 text-white shadow-sm'
-                        : 'text-zinc-700 hover:bg-zinc-100'
+                        : 'text-content-muted hover:bg-muted'
                   }`}
                 >
                   <span
@@ -326,7 +328,9 @@ export default function DocumentBEPage() {
                       <Icon className='size-3 shrink-0 opacity-70' />
                       <span
                         className={`text-3xs truncate font-bold tracking-wider uppercase ${
-                          isActive ? 'text-zinc-300' : 'text-zinc-400'
+                          isActive
+                            ? 'text-muted-foreground'
+                            : 'text-muted-foreground'
                         }`}
                       >
                         {STATUS_META[s.status].label}
@@ -338,7 +342,9 @@ export default function DocumentBEPage() {
                     <div className='text-3xs mt-0.5 flex items-center gap-2'>
                       <span
                         className={`flex items-center gap-0.5 ${
-                          isActive ? 'text-zinc-300' : 'text-zinc-400'
+                          isActive
+                            ? 'text-muted-foreground'
+                            : 'text-muted-foreground'
                         }`}
                       >
                         <Clock className='size-2.5' /> {s.est_time}
@@ -350,7 +356,7 @@ export default function DocumentBEPage() {
               );
             })}
           </nav>
-          <div className='text-2xs mt-6 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-3 leading-relaxed text-zinc-600'>
+          <div className='text-2xs border-border bg-muted text-content-muted mt-6 rounded-xl border border-dashed p-3 leading-relaxed'>
             💡 Mỗi mục là 1 spec file trong{' '}
             <code className='rounded bg-white px-1'>docs/</code>. File path đầy
             đủ ở header của mỗi card.
@@ -361,7 +367,7 @@ export default function DocumentBEPage() {
           <Hero />
 
           {filtered.length === 0 ? (
-            <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-8 text-center text-sm text-zinc-500'>
+            <div className='border-border text-content-muted rounded-2xl border border-dashed bg-white p-8 text-center text-sm'>
               Không có spec nào khớp filter.
             </div>
           ) : (
@@ -370,13 +376,13 @@ export default function DocumentBEPage() {
             ))
           )}
 
-          <footer className='mt-12 rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600 shadow-sm'>
+          <footer className='border-border text-content-muted mt-12 rounded-2xl border bg-white p-6 text-sm shadow-sm'>
             <div className='flex items-start gap-3'>
               <div className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 text-white'>
                 <CheckCircle2 className='size-5' />
               </div>
               <div>
-                <div className='font-semibold text-zinc-900'>
+                <div className='text-foreground font-semibold'>
                   Tổng {SPECS.length} spec · {counts.inprogress} đang làm ·{' '}
                   {counts.new} mới · {counts.done} xong
                 </div>
@@ -396,7 +402,7 @@ export default function DocumentBEPage() {
 
 function Hero() {
   return (
-    <section className='relative mb-8 overflow-hidden rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm'>
+    <section className='border-border relative mb-8 overflow-hidden rounded-3xl border bg-white p-8 shadow-sm'>
       <div className='absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-fuchsia-50 opacity-70' />
       <div
         className='absolute -top-12 -right-12 size-48 rounded-full bg-indigo-200 blur-3xl'
@@ -416,7 +422,7 @@ function Hero() {
             Backend
           </span>
         </h1>
-        <p className='mt-3 max-w-2xl text-sm leading-relaxed text-zinc-600 md:text-base'>
+        <p className='text-content-muted mt-3 max-w-2xl text-sm leading-relaxed md:text-base'>
           {SPECS.length} spec trong <code>docs/be-*-spec.md</code> — chia 8
           module. Mỗi card có mục tiêu, endpoints, schema bảng, key requirements
           và file path để mở chi tiết.
@@ -442,7 +448,7 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
   const Icon = s.icon;
   return (
     <section id={s.id} className='mb-6 scroll-mt-32'>
-      <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
+      <div className='border-border overflow-hidden rounded-2xl border bg-white shadow-sm'>
         <div className={`h-1 ${a.bg}`} aria-hidden />
 
         {/* Header */}
@@ -472,23 +478,23 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
               <h2 className='mt-1 text-xl font-bold tracking-tight'>
                 {s.title}
               </h2>
-              <code className='text-3xs mt-1 inline-block rounded bg-white/70 px-1.5 py-0.5 font-mono text-zinc-600 ring-1 ring-zinc-200/60'>
+              <code className='text-3xs text-content-muted mt-1 inline-block rounded bg-white/70 px-1.5 py-0.5 font-mono ring-1 ring-zinc-200/60'>
                 docs/{s.filename}
               </code>
             </div>
           </div>
 
           <div className='mt-3 flex flex-wrap items-center gap-2 text-xs'>
-            <span className='inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-zinc-600 ring-1 ring-zinc-200'>
-              <Clock className='size-3 text-zinc-400' /> {s.est_time}
+            <span className='text-content-muted inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-zinc-200'>
+              <Clock className='text-muted-foreground size-3' /> {s.est_time}
             </span>
-            <span className='inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-zinc-600 ring-1 ring-zinc-200'>
+            <span className='text-content-muted inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-zinc-200'>
               <Priority level={s.priority} />{' '}
-              <span className='text-3xs font-mono text-zinc-500'>
+              <span className='text-3xs text-content-muted font-mono'>
                 P{s.priority}
               </span>
             </span>
-            <span className='inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-zinc-600 ring-1 ring-zinc-200'>
+            <span className='text-content-muted inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-zinc-200'>
               {s.requirements.length} requirement
             </span>
           </div>
@@ -496,19 +502,19 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
           {/* Goal + Prereq */}
           <div className='mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2'>
             <div className='rounded-lg border border-white/60 bg-white/70 px-3 py-2'>
-              <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+              <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
                 🎯 Mục tiêu
               </div>
-              <p className='mt-1 text-xs leading-snug text-zinc-700'>
+              <p className='text-content-muted mt-1 text-xs leading-snug'>
                 {s.goal}
               </p>
             </div>
             {s.prereq && (
               <div className='rounded-lg border border-white/60 bg-white/70 px-3 py-2'>
-                <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+                <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
                   📋 Phụ thuộc
                 </div>
-                <p className='text-2xs mt-1 font-mono leading-snug text-zinc-700'>
+                <p className='text-2xs text-content-muted mt-1 font-mono leading-snug'>
                   {s.prereq}
                 </p>
               </div>
@@ -518,8 +524,8 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
 
         {/* Endpoints */}
         {s.endpoints.length > 0 && (
-          <div className='border-b border-zinc-100 px-6 py-4'>
-            <h5 className='text-2xs flex items-center gap-1.5 font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='border-border border-b px-6 py-4'>
+            <h5 className='text-2xs text-content-muted flex items-center gap-1.5 font-semibold tracking-wider uppercase'>
               <FileCode2 className='size-3.5' /> Endpoints ({s.endpoints.length}
               )
             </h5>
@@ -533,8 +539,8 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
 
         {/* Schema tables */}
         {s.schema_tables.length > 0 && (
-          <div className='border-b border-zinc-100 px-6 py-4'>
-            <h5 className='text-2xs flex items-center gap-1.5 font-semibold tracking-wider text-zinc-500 uppercase'>
+          <div className='border-border border-b px-6 py-4'>
+            <h5 className='text-2xs text-content-muted flex items-center gap-1.5 font-semibold tracking-wider uppercase'>
               <Database className='size-3.5' /> Schema tables (
               {s.schema_tables.length})
             </h5>
@@ -564,7 +570,7 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
               >
                 {i + 1}
               </span>
-              <div className='text-sm leading-relaxed text-zinc-700 [&_b]:font-semibold [&_b]:text-zinc-900 [&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs'>
+              <div className='text-content-muted [&_b]:text-foreground [&_code]:bg-muted text-sm leading-relaxed [&_b]:font-semibold [&_code]:rounded [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs'>
                 {req}
               </div>
             </li>
@@ -573,7 +579,7 @@ function SpecSection({ s, next }: { s: SpecDoc; next?: SpecDoc }) {
 
         {/* Footer */}
         {next && (
-          <div className='border-t border-zinc-100 bg-zinc-50/50 px-6 py-4'>
+          <div className='border-border bg-muted/50 border-t px-6 py-4'>
             <a
               href={`#${next.id}`}
               className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-zinc-700'
@@ -593,7 +599,7 @@ function EndpointChip({ text }: { text: string }) {
   const m = text.match(/^(GET|POST|PUT|PATCH|DELETE)\s+(.+)$/);
   if (!m) {
     return (
-      <span className='text-2xs inline-flex items-center rounded-md border border-zinc-200 bg-zinc-50 px-2 py-0.5 font-mono text-zinc-600'>
+      <span className='text-2xs border-border bg-muted text-content-muted inline-flex items-center rounded-md border px-2 py-0.5 font-mono'>
         {text}
       </span>
     );
@@ -607,13 +613,13 @@ function EndpointChip({ text }: { text: string }) {
     DELETE: 'bg-rose-600',
   };
   return (
-    <span className='inline-flex items-center gap-1.5 overflow-hidden rounded-md border border-zinc-200 bg-white'>
+    <span className='border-border inline-flex items-center gap-1.5 overflow-hidden rounded-md border bg-white'>
       <span
         className={`${methodColor[method] ?? 'bg-zinc-600'} text-3xs px-1.5 py-0.5 font-mono font-bold text-white`}
       >
         {method}
       </span>
-      <code className='text-2xs px-1.5 py-0.5 pr-2 font-mono text-zinc-700'>
+      <code className='text-2xs text-content-muted px-1.5 py-0.5 pr-2 font-mono'>
         {path}
       </code>
     </span>

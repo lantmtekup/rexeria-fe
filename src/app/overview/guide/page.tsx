@@ -767,7 +767,7 @@ function CalloutBox({ c }: { c: Callout }) {
       className={`mt-2 flex items-start gap-2 rounded-lg border ${map.border} ${map.bg} px-3 py-2`}
     >
       <Icon className={`mt-0.5 size-3.5 shrink-0 ${map.iconClass}`} />
-      <div className='flex-1 text-xs leading-snug text-zinc-700'>
+      <div className='text-content-muted flex-1 text-xs leading-snug'>
         <span className={`font-semibold ${map.labelClass}`}>{map.label}: </span>
         {c.text}
       </div>
@@ -804,12 +804,12 @@ export default function GuidePage() {
   );
 
   return (
-    <div className='min-h-screen bg-zinc-50 text-zinc-900 antialiased'>
-      <header className='sticky top-0 z-30 flex items-center justify-between border-b border-zinc-200 bg-white/95 px-6 py-3 backdrop-blur'>
+    <div className='bg-muted text-foreground min-h-screen antialiased'>
+      <header className='border-border sticky top-0 z-30 flex items-center justify-between border-b bg-white/95 px-6 py-3 backdrop-blur'>
         <div className='flex items-center gap-3'>
           <Link
             href='/overview'
-            className='flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 hover:bg-zinc-100'
+            className='border-border text-content-muted hover:bg-muted flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium'
           >
             <ArrowLeft className='size-3.5' /> Overview
           </Link>
@@ -830,7 +830,7 @@ export default function GuidePage() {
               className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
                 audienceFilter === a
                   ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-100'
+                  : 'border-border text-content-muted hover:bg-muted border bg-white'
               }`}
             >
               {a === 'all' ? 'Tất cả' : a}
@@ -840,12 +840,12 @@ export default function GuidePage() {
       </header>
 
       <div className='flex'>
-        <aside className='sticky top-[57px] hidden h-[calc(100vh-57px)] w-72 shrink-0 overflow-y-auto border-r border-zinc-200 bg-white px-4 py-6 lg:block'>
+        <aside className='border-border sticky top-[57px] hidden h-[calc(100vh-57px)] w-72 shrink-0 overflow-y-auto border-r bg-white px-4 py-6 lg:block'>
           <div className='mb-4 flex items-center justify-between'>
-            <span className='text-2xs font-semibold tracking-wider text-zinc-500 uppercase'>
+            <span className='text-2xs text-content-muted font-semibold tracking-wider uppercase'>
               Lộ trình
             </span>
-            <span className='text-3xs font-mono text-zinc-400'>
+            <span className='text-3xs text-muted-foreground font-mono'>
               {filtered.length} bài
             </span>
           </div>
@@ -865,7 +865,7 @@ export default function GuidePage() {
                       ? 'pointer-events-none opacity-30'
                       : isActive
                         ? 'bg-zinc-900 text-white shadow-sm'
-                        : 'text-zinc-700 hover:bg-zinc-100'
+                        : 'text-content-muted hover:bg-muted'
                   }`}
                 >
                   <span
@@ -880,7 +880,9 @@ export default function GuidePage() {
                       <Icon className='size-3 shrink-0 opacity-70' />
                       <span
                         className={`text-3xs truncate font-medium tracking-wider uppercase ${
-                          isActive ? 'text-zinc-300' : 'text-zinc-400'
+                          isActive
+                            ? 'text-muted-foreground'
+                            : 'text-muted-foreground'
                         }`}
                       >
                         {t.audience}
@@ -890,7 +892,9 @@ export default function GuidePage() {
                     <div className='text-3xs mt-0.5 flex items-center gap-2'>
                       <span
                         className={`flex items-center gap-0.5 ${
-                          isActive ? 'text-zinc-300' : 'text-zinc-400'
+                          isActive
+                            ? 'text-muted-foreground'
+                            : 'text-muted-foreground'
                         }`}
                       >
                         <Clock className='size-2.5' /> {t.time}
@@ -902,7 +906,7 @@ export default function GuidePage() {
               );
             })}
           </nav>
-          <div className='text-2xs mt-6 rounded-xl border border-dashed border-zinc-200 bg-zinc-50 p-3 leading-relaxed text-zinc-600'>
+          <div className='text-2xs border-border bg-muted text-content-muted mt-6 rounded-xl border border-dashed p-3 leading-relaxed'>
             💡 Mới bắt đầu? Đi tuần tự Tutorial 0 → 5. Admin nhảy thẳng Tutorial
             7.
           </div>
@@ -912,7 +916,7 @@ export default function GuidePage() {
           <Hero />
 
           {filtered.length === 0 ? (
-            <div className='rounded-2xl border border-dashed border-zinc-300 bg-white p-8 text-center text-sm text-zinc-500'>
+            <div className='border-border text-content-muted rounded-2xl border border-dashed bg-white p-8 text-center text-sm'>
               Không có tutorial nào cho filter này.
             </div>
           ) : (
@@ -921,13 +925,13 @@ export default function GuidePage() {
             ))
           )}
 
-          <footer className='mt-12 rounded-2xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600 shadow-sm'>
+          <footer className='border-border text-content-muted mt-12 rounded-2xl border bg-white p-6 text-sm shadow-sm'>
             <div className='flex items-start gap-3'>
               <div className='flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-blue-500 text-white'>
                 <CheckCircle2 className='size-5' />
               </div>
               <div>
-                <div className='font-semibold text-zinc-900'>
+                <div className='text-foreground font-semibold'>
                   Bạn đã hoàn thành toàn bộ hướng dẫn
                 </div>
                 <p className='mt-1 leading-relaxed'>
@@ -952,7 +956,7 @@ export default function GuidePage() {
 
 function Hero() {
   return (
-    <section className='relative mb-8 overflow-hidden rounded-3xl border border-zinc-200 bg-white p-8 shadow-sm'>
+    <section className='border-border relative mb-8 overflow-hidden rounded-3xl border bg-white p-8 shadow-sm'>
       <div className='absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-blue-50 opacity-70' />
       <div
         className='absolute -top-12 -right-12 size-48 rounded-full bg-emerald-200 blur-3xl'
@@ -972,16 +976,16 @@ function Hero() {
             từng bước
           </span>
         </h1>
-        <p className='mt-3 max-w-2xl text-sm leading-relaxed text-zinc-600 md:text-base'>
+        <p className='text-content-muted mt-3 max-w-2xl text-sm leading-relaxed md:text-base'>
           {TUTORIALS.length} tutorial chia làm 2 nhánh: <strong>User</strong>{' '}
           (sign-up → publish, 6 bài) và <strong>Admin</strong> (cấu hình hệ
           thống, 1 bài). Mỗi bài ~1-15 phút, làm theo là xong.
         </p>
         <div className='mt-5 flex flex-wrap items-center gap-2 text-xs'>
-          <span className='inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-zinc-700 ring-1 ring-zinc-200'>
-            <Clock className='size-3 text-zinc-400' /> Tổng ~40 phút
+          <span className='text-content-muted inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-zinc-200'>
+            <Clock className='text-muted-foreground size-3' /> Tổng ~40 phút
           </span>
-          <span className='inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-zinc-700 ring-1 ring-zinc-200'>
+          <span className='text-content-muted inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-zinc-200'>
             <Star className='size-3 fill-amber-400 text-amber-400' /> Cơ bản ·
             Trung bình
           </span>
@@ -1000,7 +1004,7 @@ function TutorialSection({ t, next }: { t: Tutorial; next?: Tutorial }) {
   const Mockup = t.mockup;
   return (
     <section id={t.id} className='mb-6 scroll-mt-20'>
-      <div className='overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm'>
+      <div className='border-border overflow-hidden rounded-2xl border bg-white shadow-sm'>
         <div className={`h-1 ${c.bg}`} aria-hidden />
 
         {/* Header */}
@@ -1035,32 +1039,32 @@ function TutorialSection({ t, next }: { t: Tutorial; next?: Tutorial }) {
               </div>
 
               <div className='mt-3 flex flex-wrap items-center gap-2 text-xs'>
-                <span className='inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-zinc-600 ring-1 ring-zinc-200'>
-                  <Clock className='size-3 text-zinc-400' /> {t.time}
+                <span className='text-content-muted inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-zinc-200'>
+                  <Clock className='text-muted-foreground size-3' /> {t.time}
                 </span>
-                <span className='inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-zinc-600 ring-1 ring-zinc-200'>
+                <span className='text-content-muted inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-zinc-200'>
                   <Difficulty level={t.difficulty} />
                 </span>
-                <span className='inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-zinc-600 ring-1 ring-zinc-200'>
+                <span className='text-content-muted inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-zinc-200'>
                   {t.steps.length} bước
                 </span>
               </div>
 
               <div className='mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='rounded-lg border border-white/60 bg-white/70 px-3 py-2'>
-                  <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+                  <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
                     🎯 Mục tiêu
                   </div>
-                  <p className='mt-1 text-xs leading-snug text-zinc-700'>
+                  <p className='text-content-muted mt-1 text-xs leading-snug'>
                     {t.goal}
                   </p>
                 </div>
                 {t.prereq && (
                   <div className='rounded-lg border border-white/60 bg-white/70 px-3 py-2'>
-                    <div className='text-3xs font-semibold tracking-wider text-zinc-500 uppercase'>
+                    <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
                       📋 Cần trước
                     </div>
-                    <p className='mt-1 text-xs leading-snug text-zinc-700'>
+                    <p className='text-content-muted mt-1 text-xs leading-snug'>
                       {t.prereq}
                     </p>
                   </div>
@@ -1092,10 +1096,10 @@ function TutorialSection({ t, next }: { t: Tutorial; next?: Tutorial }) {
               >
                 {i + 1}
               </span>
-              <div className='text-sm font-semibold text-zinc-900'>
+              <div className='text-foreground text-sm font-semibold'>
                 {s.title}
               </div>
-              <div className='mt-1 text-sm leading-relaxed text-zinc-700 [&_code]:rounded [&_code]:bg-zinc-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs'>
+              <div className='text-content-muted [&_code]:bg-muted mt-1 text-sm leading-relaxed [&_code]:rounded [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs'>
                 {s.body}
               </div>
               {s.callout && <CalloutBox c={s.callout} />}
@@ -1105,13 +1109,13 @@ function TutorialSection({ t, next }: { t: Tutorial; next?: Tutorial }) {
 
         {/* Footer: done + next */}
         {(t.done || next) && (
-          <div className='border-t border-zinc-100 bg-zinc-50/50 px-6 py-4'>
+          <div className='border-border bg-muted/50 border-t px-6 py-4'>
             {t.done && (
               <div className='flex items-start gap-2 text-sm'>
                 <CheckCircle2 className={`mt-0.5 size-4 shrink-0 ${c.text}`} />
                 <div>
                   <span className={`font-semibold ${c.text}`}>Hoàn tất:</span>{' '}
-                  <span className='text-zinc-700'>{t.done}</span>
+                  <span className='text-content-muted'>{t.done}</span>
                 </div>
               </div>
             )}

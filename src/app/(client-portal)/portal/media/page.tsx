@@ -294,13 +294,13 @@ export default function PortalMediaPage() {
         {/* Header */}
         <section className='flex flex-wrap items-end justify-between gap-4'>
           <div>
-            <div className='text-2xs flex items-center gap-2 font-semibold tracking-wider text-zinc-500 uppercase'>
+            <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
               <FolderOpen className='size-3' /> Media · Google Drive style
             </div>
             <h1 className='mt-1 text-2xl font-bold tracking-tight'>
               Thư viện Media
             </h1>
-            <p className='mt-1 text-sm text-zinc-500'>
+            <p className='text-content-muted mt-1 text-sm'>
               Tổ chức ảnh / video / tài liệu theo thư mục. Kéo-thả file để
               upload trực tiếp.
             </p>
@@ -308,7 +308,7 @@ export default function PortalMediaPage() {
           <div className='flex items-center gap-2'>
             <button
               onClick={() => setShowNewFolderModal(true)}
-              className='flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100'
+              className='border-border text-content-muted hover:bg-muted flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'
             >
               <FolderPlus className='size-3.5' /> Tạo folder
             </button>
@@ -322,11 +322,13 @@ export default function PortalMediaPage() {
         </section>
 
         {/* Breadcrumb + toolbar */}
-        <div className='mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm'>
+        <div className='border-border mt-5 flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3 shadow-sm'>
           <nav className='flex flex-1 items-center gap-1 text-sm'>
             {breadcrumb.map((f, i) => (
               <div key={f.id} className='flex items-center gap-1'>
-                {i > 0 && <ChevronRight className='size-3.5 text-zinc-300' />}
+                {i > 0 && (
+                  <ChevronRight className='text-muted-foreground size-3.5' />
+                )}
                 <button
                   onClick={() => {
                     setCurrentFolderId(f.id);
@@ -334,8 +336,8 @@ export default function PortalMediaPage() {
                   }}
                   className={`flex items-center gap-1 rounded-md px-2 py-1 transition-colors ${
                     i === breadcrumb.length - 1
-                      ? 'bg-zinc-100 font-semibold text-zinc-900'
-                      : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900'
+                      ? 'bg-muted text-foreground font-semibold'
+                      : 'text-content-muted hover:bg-muted hover:text-foreground'
                   }`}
                 >
                   {i === 0 && <Home className='size-3' />}
@@ -346,27 +348,27 @@ export default function PortalMediaPage() {
           </nav>
 
           <div className='flex items-center gap-2'>
-            <div className='flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2 py-1'>
-              <Search className='size-3.5 text-zinc-400' />
+            <div className='border-border bg-muted flex items-center gap-1.5 rounded-lg border px-2 py-1'>
+              <Search className='text-muted-foreground size-3.5' />
               <input
                 type='text'
                 placeholder='Search folder...'
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className='w-32 bg-transparent text-xs outline-none placeholder:text-zinc-400'
+                className='placeholder:text-muted-foreground w-32 bg-transparent text-xs outline-none'
               />
             </div>
-            <div className='inline-flex items-center rounded-lg border border-zinc-200 bg-white p-0.5'>
+            <div className='border-border inline-flex items-center rounded-lg border bg-white p-0.5'>
               <button
                 onClick={() => setView('grid')}
-                className={`rounded-md p-1 ${view === 'grid' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-zinc-100'}`}
+                className={`rounded-md p-1 ${view === 'grid' ? 'bg-zinc-900 text-white' : 'text-content-muted hover:bg-muted'}`}
                 aria-label='Grid view'
               >
                 <Grid3x3 className='size-3.5' />
               </button>
               <button
                 onClick={() => setView('list')}
-                className={`rounded-md p-1 ${view === 'list' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:bg-zinc-100'}`}
+                className={`rounded-md p-1 ${view === 'list' ? 'bg-zinc-900 text-white' : 'text-content-muted hover:bg-muted'}`}
                 aria-label='List view'
               >
                 <List className='size-3.5' />
@@ -413,12 +415,12 @@ export default function PortalMediaPage() {
                         <span className='truncate text-xs font-semibold'>
                           {u.name}
                         </span>
-                        <span className='text-3xs shrink-0 font-mono text-zinc-500'>
+                        <span className='text-3xs text-content-muted shrink-0 font-mono'>
                           {fmtBytes(u.size_bytes)}
                         </span>
                       </div>
                       <div className='mt-1 flex items-center gap-2'>
-                        <div className='h-1 flex-1 overflow-hidden rounded-full bg-zinc-100'>
+                        <div className='bg-muted h-1 flex-1 overflow-hidden rounded-full'>
                           <div
                             className='h-full rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 transition-all duration-200'
                             style={{ width: `${u.progress}%` }}
@@ -448,13 +450,13 @@ export default function PortalMediaPage() {
               <h3 className='mt-3 text-base font-bold'>
                 {currentFolderId === 'f_root' ? 'Bắt đầu nào' : 'Folder rỗng'}
               </h3>
-              <p className='mt-1 text-xs text-zinc-600'>
+              <p className='text-content-muted mt-1 text-xs'>
                 Kéo-thả file vào đây hoặc{' '}
                 <span className='font-semibold text-cyan-700 underline-offset-2 hover:underline'>
                   click để chọn file
                 </span>
               </p>
-              <div className='text-3xs mt-3 flex flex-wrap items-center justify-center gap-1.5 text-zinc-500'>
+              <div className='text-3xs text-content-muted mt-3 flex flex-wrap items-center justify-center gap-1.5'>
                 <span className='rounded-full bg-white px-2 py-0.5 ring-1 ring-zinc-200'>
                   🖼 Hình ảnh ≤ 100MB
                 </span>
@@ -471,7 +473,7 @@ export default function PortalMediaPage() {
         {/* Folders section */}
         {visibleFolders.length > 0 && (
           <section className='mt-5'>
-            <h2 className='text-2xs mb-2 font-semibold tracking-wider text-zinc-500 uppercase'>
+            <h2 className='text-2xs text-content-muted mb-2 font-semibold tracking-wider uppercase'>
               Thư mục ({visibleFolders.length})
             </h2>
             {view === 'grid' ? (
@@ -488,7 +490,7 @@ export default function PortalMediaPage() {
                 ))}
               </div>
             ) : (
-              <div className='divide-y divide-zinc-100 overflow-hidden rounded-2xl border border-zinc-200 bg-white'>
+              <div className='border-border divide-y divide-zinc-100 overflow-hidden rounded-2xl border bg-white'>
                 {visibleFolders.map(f => (
                   <FolderRow
                     key={f.id}
@@ -504,7 +506,7 @@ export default function PortalMediaPage() {
         {/* Files section */}
         {visibleFiles.length > 0 && (
           <section className='mt-6'>
-            <h2 className='text-2xs mb-2 font-semibold tracking-wider text-zinc-500 uppercase'>
+            <h2 className='text-2xs text-content-muted mb-2 font-semibold tracking-wider uppercase'>
               File ({visibleFiles.length})
             </h2>
             {view === 'grid' ? (
@@ -514,7 +516,7 @@ export default function PortalMediaPage() {
                 ))}
               </div>
             ) : (
-              <div className='divide-y divide-zinc-100 overflow-hidden rounded-2xl border border-zinc-200 bg-white'>
+              <div className='border-border divide-y divide-zinc-100 overflow-hidden rounded-2xl border bg-white'>
                 {visibleFiles.map(f => (
                   <FileRow key={f.id} f={f} />
                 ))}
@@ -565,7 +567,7 @@ function NewFolderModal({
         className='w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
-        <div className='flex items-center justify-between border-b border-zinc-100 px-5 py-3'>
+        <div className='border-border flex items-center justify-between border-b px-5 py-3'>
           <div className='flex items-center gap-2'>
             <div className='flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm'>
               <FolderPlus className='size-4' />
@@ -574,7 +576,7 @@ function NewFolderModal({
           </div>
           <button
             onClick={onClose}
-            className='rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1'
             aria-label='Close'
           >
             <X className='size-4' />
@@ -587,7 +589,7 @@ function NewFolderModal({
           }}
           className='px-5 py-4'
         >
-          <label className='text-3xs block font-semibold tracking-wider text-zinc-500 uppercase'>
+          <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
             Tên folder
           </label>
           <input
@@ -595,12 +597,12 @@ function NewFolderModal({
             type='text'
             value={name}
             onChange={e => setName(e.target.value)}
-            className='mt-1.5 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100'
+            className='border-border mt-1.5 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100'
             maxLength={64}
           />
-          <p className='text-2xs mt-1.5 text-zinc-500'>
+          <p className='text-2xs text-content-muted mt-1.5'>
             Tạo trong{' '}
-            <span className='font-mono font-semibold text-zinc-700'>
+            <span className='text-content-muted font-mono font-semibold'>
               {parentName}
             </span>
           </p>
@@ -608,7 +610,7 @@ function NewFolderModal({
             <button
               type='button'
               onClick={onClose}
-              className='rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50'
+              className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'
             >
               Hủy
             </button>
@@ -647,14 +649,14 @@ function FolderCard({
           onOpen();
         }
       }}
-      className='group flex cursor-pointer flex-col items-start overflow-hidden rounded-xl border border-zinc-200 bg-gradient-to-br from-amber-50 to-white p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md'
+      className='group border-border flex cursor-pointer flex-col items-start overflow-hidden rounded-xl border bg-gradient-to-br from-amber-50 to-white p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md'
     >
       <div className='flex w-full items-center justify-between'>
         <div className='flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm transition-transform group-hover:scale-110'>
           <Folder className='size-5' />
         </div>
         <button
-          className='rounded p-1 text-zinc-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-zinc-100 hover:text-zinc-700'
+          className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded p-1 opacity-0 transition-opacity group-hover:opacity-100'
           onClick={e => e.stopPropagation()}
           aria-label='More'
         >
@@ -667,7 +669,7 @@ function FolderCard({
       >
         {folder.name}
       </div>
-      <div className='text-3xs mt-0.5 text-zinc-500'>
+      <div className='text-3xs text-content-muted mt-0.5'>
         {folder.child_folder_count > 0 &&
           `${folder.child_folder_count} thư mục · `}
         {folder.file_count} file
@@ -686,23 +688,23 @@ function FolderRow({
   return (
     <button
       onClick={onOpen}
-      className='flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-zinc-50'
+      className='hover:bg-muted flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors'
     >
       <div className='flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm'>
         <Folder className='size-4' />
       </div>
       <div className='min-w-0 flex-1'>
         <div className='text-sm font-semibold'>{folder.name}</div>
-        <div className='text-3xs text-zinc-500'>
+        <div className='text-3xs text-content-muted'>
           {folder.child_folder_count > 0 &&
             `${folder.child_folder_count} thư mục · `}
           {folder.file_count} file · {fmtBytes(folder.size_bytes)}
         </div>
       </div>
-      <span className='text-3xs font-mono text-zinc-400'>
+      <span className='text-3xs text-muted-foreground font-mono'>
         {new Date(folder.updated_at).toLocaleDateString('vi-VN')}
       </span>
-      <ChevronRight className='size-4 text-zinc-300' />
+      <ChevronRight className='text-muted-foreground size-4' />
     </button>
   );
 }
@@ -713,7 +715,7 @@ function FileCard({ f }: { f: MediaFile }) {
   const meta = KIND_META[f.kind];
   const Icon = meta.icon;
   return (
-    <div className='group cursor-pointer overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+    <div className='group border-border cursor-pointer overflow-hidden rounded-xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       <div
         className={`relative aspect-square bg-gradient-to-br ${f.thumbnail_gradient}`}
       >
@@ -735,7 +737,7 @@ function FileCard({ f }: { f: MediaFile }) {
         <div className='truncate text-xs font-semibold' title={f.name}>
           {f.name}
         </div>
-        <div className='text-3xs mt-0.5 flex items-center justify-between text-zinc-500'>
+        <div className='text-3xs text-content-muted mt-0.5 flex items-center justify-between'>
           <span className='font-mono'>{fmtBytes(f.size_bytes)}</span>
           <span>{f.uploaded_by.name}</span>
         </div>
@@ -744,7 +746,7 @@ function FileCard({ f }: { f: MediaFile }) {
             {f.tags.slice(0, 2).map(t => (
               <span
                 key={t}
-                className='text-3xs inline-flex items-center gap-0.5 rounded bg-zinc-100 px-1 py-0.5 font-mono text-zinc-600'
+                className='text-3xs bg-muted text-content-muted inline-flex items-center gap-0.5 rounded px-1 py-0.5 font-mono'
               >
                 <Tag className='size-2' /> {t}
               </span>
@@ -760,7 +762,7 @@ function FileRow({ f }: { f: MediaFile }) {
   const meta = KIND_META[f.kind];
   const Icon = meta.icon;
   return (
-    <div className='flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-zinc-50'>
+    <div className='hover:bg-muted flex items-center gap-3 px-4 py-2.5 transition-colors'>
       <div
         className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${meta.color} text-white shadow-sm`}
       >
@@ -770,18 +772,18 @@ function FileRow({ f }: { f: MediaFile }) {
         <div className='truncate text-sm font-semibold' title={f.name}>
           {f.name}
         </div>
-        <div className='text-3xs text-zinc-500'>
+        <div className='text-3xs text-content-muted'>
           {fmtBytes(f.size_bytes)} ·{' '}
           {new Date(f.uploaded_at).toLocaleDateString('vi-VN')} ·{' '}
           {f.uploaded_by.name}
         </div>
       </div>
       {f.campaign && (
-        <span className='text-3xs rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-600'>
+        <span className='text-3xs bg-muted text-content-muted rounded-md px-1.5 py-0.5 font-mono'>
           {f.campaign}
         </span>
       )}
-      <span className='text-3xs font-mono text-zinc-400'>
+      <span className='text-3xs text-muted-foreground font-mono'>
         {f.kind.toUpperCase()}
       </span>
     </div>

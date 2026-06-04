@@ -133,7 +133,7 @@ export function PageOverlayView({ pageId }: Props) {
 
   if (loading) {
     return (
-      <div className='flex h-64 items-center justify-center text-sm text-zinc-500'>
+      <div className='text-content-muted flex h-64 items-center justify-center text-sm'>
         <Loader2 className='mr-2 size-4 animate-spin' /> Đang load…
       </div>
     );
@@ -170,11 +170,11 @@ export function PageOverlayView({ pageId }: Props) {
   // top-4 right-4) cũng tự stay trong container.
   return (
     <div
-      className='relative h-[calc(100vh-7rem)] w-full overflow-auto rounded-lg border border-zinc-200 bg-zinc-50'
+      className='border-border bg-muted relative h-[calc(100vh-7rem)] w-full overflow-auto rounded-lg border'
       style={{ transform: 'translateZ(0)' }}
     >
       <StatsAnnotationOverlay templateId={pageId}>
-        <div className='relative min-h-full bg-zinc-50'>
+        <div className='bg-muted relative min-h-full'>
           <PageContent page={page} template={template} version={version} />
         </div>
       </StatsAnnotationOverlay>
@@ -233,7 +233,7 @@ function PageContent({
   // Block template — render HEAD canvas blocks FE-side.
   if (!version) {
     return (
-      <div className='flex h-64 items-center justify-center text-sm text-zinc-500'>
+      <div className='text-content-muted flex h-64 items-center justify-center text-sm'>
         Block template thiếu version data.
       </div>
     );
@@ -243,7 +243,7 @@ function PageContent({
 
   if (visible.length === 0) {
     return (
-      <div className='flex h-64 items-center justify-center text-sm text-zinc-500'>
+      <div className='text-content-muted flex h-64 items-center justify-center text-sm'>
         Trang chưa có block hiển thị.
       </div>
     );

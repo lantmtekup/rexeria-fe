@@ -261,16 +261,16 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
 
   // Empty / error states — minimal full-screen message với back link.
   return (
-    <div className='flex h-screen flex-col items-center justify-center gap-4 bg-zinc-50 p-8'>
+    <div className='bg-muted flex h-screen flex-col items-center justify-center gap-4 p-8'>
       <Link
         href='/admin/templates'
-        className='absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100'
+        className='border-border text-content-muted hover:bg-muted absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-xs font-medium'
       >
         <ArrowLeft className='size-3.5' />
         Templates
       </Link>
       {loading ? (
-        <div className='inline-flex items-center gap-2 text-sm text-zinc-500'>
+        <div className='text-content-muted inline-flex items-center gap-2 text-sm'>
           <Loader2 className='size-4 animate-spin' />
           Đang tải preview…
         </div>
@@ -288,18 +288,18 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
           <img
             src={template.thumbnail_url}
             alt={`${template.name} — thumbnail`}
-            className='max-h-[80vh] max-w-[80vw] rounded-2xl border border-zinc-200 bg-white shadow-xl'
+            className='border-border max-h-[80vh] max-w-[80vw] rounded-2xl border bg-white shadow-xl'
           />
-          <p className='text-xs text-zinc-500'>
+          <p className='text-content-muted text-xs'>
             Template chưa có canvas blocks. Hiển thị thumbnail.
           </p>
         </>
       ) : (
-        <div className='max-w-md rounded-2xl border border-zinc-200 bg-white p-8 text-center'>
-          <p className='text-sm font-semibold text-zinc-700'>
+        <div className='border-border max-w-md rounded-2xl border bg-white p-8 text-center'>
+          <p className='text-content-muted text-sm font-semibold'>
             Template chưa có nội dung
           </p>
-          <p className='mt-1 text-xs text-zinc-500'>
+          <p className='text-content-muted mt-1 text-xs'>
             Mở editor để thêm block trước khi preview.
           </p>
         </div>
@@ -316,16 +316,18 @@ function PreviewHeader({
   onClose: () => void;
 }) {
   return (
-    <header className='flex items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-2'>
+    <header className='border-border flex items-center justify-between gap-3 border-b bg-white px-4 py-2'>
       <button
         type='button'
         onClick={onClose}
-        className='inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900'
+        className='text-content-muted hover:text-foreground inline-flex items-center gap-1.5 text-xs font-medium'
       >
         <ArrowLeft className='size-3.5' />
         {template?.name ?? 'Preview'}
       </button>
-      <span className='text-3xs font-mono text-zinc-400'>{template?.code}</span>
+      <span className='text-3xs text-muted-foreground font-mono'>
+        {template?.code}
+      </span>
     </header>
   );
 }

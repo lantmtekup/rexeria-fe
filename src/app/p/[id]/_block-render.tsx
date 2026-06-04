@@ -40,7 +40,7 @@ export function PublicBlockRender({ page, blueprint }: Props) {
 
   if (visible.length === 0) {
     return (
-      <div className='flex min-h-screen items-center justify-center bg-zinc-50 text-sm text-zinc-500'>
+      <div className='bg-muted text-content-muted flex min-h-screen items-center justify-center text-sm'>
         Trang chưa có nội dung.
       </div>
     );
