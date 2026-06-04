@@ -47,7 +47,8 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 export default function PublicLandingPage({ params }: PageProps) {
   const { id, token } = use(params);
   // Visitor analytics — page_view + block_view/dwell + click + scroll_depth.
-  // Only fires once canvas is mounted (templateId becomes truthy).
+  // `id` là page UUID của canvas đang xem (canvas instance ≡ page) — ingest
+  // chỉ nhận page_id (be-fe-handoff Q5).
   useInitTracker(id);
   useBlockTracking();
   const [canvas, setCanvas] = React.useState<BlockEditorCanvas | null>(null);

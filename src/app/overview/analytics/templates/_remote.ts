@@ -35,8 +35,10 @@ function rangeFor(preset: RangePreset): {
 
 function summaryToPortal(rows: BETemplateSummaryRow[]): TemplateAnalyticsRow[] {
   return rows.map(r => ({
-    template_id: r.template_id,
-    template_title: r.template_title ?? null,
+    // left = FE portal view-model (demo shape, giữ nguyên); right = BE row
+    // đã rename template_id→page_id, template_title→page_title.
+    template_id: r.page_id,
+    template_title: r.page_title ?? null,
     views: r.views ?? 0,
     unique_visitors: r.unique_visitors ?? 0,
     blocks_viewed: r.blocks_viewed ?? 0,

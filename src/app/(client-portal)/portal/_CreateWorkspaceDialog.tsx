@@ -2,7 +2,7 @@
 
 /**
  * Brand-portal "Create workspace" dialog. Now fires `POST /portal/workspaces`
- * — brand-scoped endpoint that auto-derives `client_id` from the session,
+ * — brand-scoped endpoint that auto-derives `brand_id` from the session,
  * so the FE no longer needs to pass it. Falls back gracefully if BE still
  * has an outdated build (admin endpoint with explicit clientId) by 403'ing.
  */

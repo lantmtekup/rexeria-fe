@@ -25,12 +25,6 @@ import type {
   AIBlockContentResponse,
   AICampaignPlanRequest,
   AICampaignPlanResponse,
-  AILandingDraftRequest,
-  AILandingDraftResponse,
-  AILandingOptimizeRequest,
-  AILandingOptimizeResponse,
-  AIMediaSuggestRequest,
-  AIMediaSuggestResponse,
   AIProductEnrichRequest,
   AIProductEnrichResponse,
   AITemplateGenerateRequest,
@@ -60,19 +54,10 @@ import type {
   CampaignMetrics,
   CampaignResponse,
   ChangePasswordRequest,
-  Client,
-  ClientListResponse,
-  ClientResponse,
-  ClientUser,
-  ClientUserListResponse,
-  ClientUserResponse,
   CompleteUploadRequest,
   CompleteUploadResponse,
   CreateCampaignRequest,
   CloneProductRequest,
-  CreateClientRequest,
-  CreateClientUserRequest,
-  CreateClientUserResponse,
   CreateProductCategoryRequest,
   CreateProductRequest,
   DashboardSummary,
@@ -113,8 +98,6 @@ import type {
   TemplateVersionListResponse,
   TemplateVersionResponse,
   UpdateCampaignRequest,
-  UpdateClientRequest,
-  UpdateClientUserRequest,
   UpdateProductCategoryRequest,
   UpdateProductRequest,
   UpdateTemplateRequest,
@@ -171,6 +154,7 @@ import type {
   PortalMemberRole,
   PortalMemberListResponse,
   InvitePortalMemberRequest,
+  InvitePortalMemberResponse,
   UpdatePortalMemberRoleRequest,
   UpdatePortalMeRequest,
   // ── Canonical (Rexer Architecture Final 2026-05-23) ───────────────
@@ -382,7 +366,7 @@ export const rexerApi = {
     list: async (query?: {
       status?: string;
       category_id?: string;
-      client_id?: string;
+      brand_id?: string;
       q?: string;
       page?: number;
       limit?: number;
@@ -532,21 +516,8 @@ export const rexerApi = {
         method: 'POST',
         body,
       }),
-    landingDraft: (body: AILandingDraftRequest) =>
-      rx<AILandingDraftResponse>('/ai/landing/draft', {
-        method: 'POST',
-        body,
-      }),
-    landingOptimize: (body: AILandingOptimizeRequest) =>
-      rx<AILandingOptimizeResponse>('/ai/landing/optimize', {
-        method: 'POST',
-        body,
-      }),
-    mediaSuggest: (body: AIMediaSuggestRequest) =>
-      rx<AIMediaSuggestResponse>('/ai/media/suggest', {
-        method: 'POST',
-        body,
-      }),
+    // landingDraft / landingOptimize / mediaSuggest removed (be-fe-handoff Q4,
+    // 2026-06-03): `/ai/landing/*` + `/ai/media/suggest` không tồn tại trên BE.
     campaignPlan: (body: AICampaignPlanRequest) =>
       rx<AICampaignPlanResponse>('/ai/campaign/plan', {
         method: 'POST',
@@ -603,48 +574,10 @@ export const rexerApi = {
   // `releases` namespace removed — Release lifecycle only existed for
   // project-based landings (project → release snapshot). Canvas-template
   // publish state lives in `canvas_data.publish`.
-  clients: {
-    list: (query?: { status?: string; q?: string }) =>
-      rx<ClientListResponse>('/clients', { query }),
-    get: async (id: string): Promise<Client> => {
-      const r = await rx<ClientResponse>(`/clients/${id}`);
-      return r.client;
-    },
-    create: async (body: CreateClientRequest): Promise<Client> => {
-      const r = await rx<ClientResponse>('/clients', {
-        method: 'POST',
-        body,
-      });
-      return r.client;
-    },
-    update: async (id: string, body: UpdateClientRequest): Promise<Client> => {
-      const r = await rx<ClientResponse>(`/clients/${id}`, {
-        method: 'PATCH',
-        body,
-      });
-      return r.client;
-    },
-    users: (id: string) => rx<ClientUserListResponse>(`/clients/${id}/users`),
-    inviteUser: (id: string, body: CreateClientUserRequest) =>
-      rx<CreateClientUserResponse>(`/clients/${id}/users`, {
-        method: 'POST',
-        body,
-      }),
-    updateUser: async (
-      clientId: string,
-      userId: string,
-      body: UpdateClientUserRequest
-    ): Promise<ClientUser> => {
-      const r = await rx<ClientUserResponse>(
-        `/clients/${clientId}/users/${userId}`,
-        { method: 'PATCH', body }
-      );
-      return r.user;
-    },
-    // `clients.projects` + access grants removed alongside `/v1/projects`
-    // — both belonged to the project-based flow we deprecated. Brand
-    // landings live under canvas-templates with assign + clone-to-workspace.
-  },
+  // `clients` namespace removed (refactor/canonical-brand-id-rename
+  // 2026-06-03): `/v1/clients*` CRUD + users/projects/access-grants đã bị
+  // xoá khỏi BE. Brand CRUD nằm ở `brands` namespace; brand landings dùng
+  // canvas-templates assign + clone-to-workspace.
   media: {
     /**
      * Per BE Q17 patch: optional `ids` filter (repeated `?ids=` param) so
@@ -704,7 +637,7 @@ export const rexerApi = {
   // ── Canvas Templates (be-canvas-templates-spec.md) ─────────────────────
   canvasTemplates: {
     list: (query?: {
-      client_id?: string;
+      brand_id?: string;
       collection_id?: string;
       is_template?: boolean;
       is_active?: boolean;
@@ -814,12 +747,12 @@ export const rexerApi = {
 
     /**
      * Admin/staff hand-off: assign an existing canvas template to a brand
-     * (client + workspace). BE updates client_id/workspace_id and records
+     * (brand + workspace). BE updates brand_id/workspace_id and records
      * the action for the brand's activity feed. See be-todo.md P0.6.
      */
     assignToBrand: (
       id: string,
-      body: { client_id: string; workspace_id?: string; notes?: string }
+      body: { brand_id: string; workspace_id?: string; notes?: string }
     ) =>
       rx<CanvasTemplate>(`/canvas-templates/${id}/assign`, {
         method: 'POST',
@@ -1032,7 +965,7 @@ export const rexerApi = {
   // ── Saved blocks (server-backed, BE shipped per swagger audit) ─────────
   savedBlocks: {
     list: (query?: {
-      client_id?: string;
+      brand_id?: string;
       workspace_id?: string;
       scope?: 'private' | 'team' | 'public';
       tag?: string;
@@ -1185,7 +1118,7 @@ export const rexerApi = {
       page?: number;
       limit?: number;
     }) => rx<PortalCommentListResponse>('/portal/comments', { query }),
-    /** Brand-side workspace create (auto-scoped by ctx.client_id). */
+    /** Brand-side workspace create (auto-scoped by ctx.brand_id). */
     createWorkspace: (body: CreateWorkspaceRequest) =>
       rx<Workspace>('/portal/workspaces', { method: 'POST', body }),
     /** Activity feed mark-seen — clears the unread badge state. */
@@ -1207,7 +1140,7 @@ export const rexerApi = {
       rx<CanvasTemplateListResponse>('/portal/templates/library', { query }),
 
     /**
-     * Brand creates a new landing — auto-scoped to ctx.client_id, defaults to
+     * Brand creates a new landing — auto-scoped to ctx.brand_id, defaults to
      * ctx.active_workspace_id when `workspace_id` is omitted. See be-todo.md P0.2.
      */
     createTemplate: (body: CreatePortalTemplateRequest) =>
@@ -1232,7 +1165,10 @@ export const rexerApi = {
       members: (query?: { role?: PortalMemberRole }) =>
         rx<PortalMemberListResponse>('/portal/me/members', { query }),
       inviteMember: (body: InvitePortalMemberRequest) =>
-        rx<PortalMember>('/portal/me/members', { method: 'POST', body }),
+        rx<InvitePortalMemberResponse>('/portal/me/members', {
+          method: 'POST',
+          body,
+        }),
       updateMemberRole: (userId: string, body: UpdatePortalMemberRoleRequest) =>
         rx<PortalMember>(`/portal/me/members/${userId}/role`, {
           method: 'PATCH',
@@ -1435,7 +1371,7 @@ export const rexerApi = {
       }),
 
     // BE 2026-05-26 ship Option A: canonical `/brands/:id/workspaces` LIVE,
-    // response field rename `client_id → brand_id`. Create vẫn dùng admin
+    // response field dùng `brand_id`. Create vẫn dùng admin
     // legacy path per swagger (`POST /admin/clients/:id/workspaces`); chưa có
     // canonical create cho workspace.
     workspaces: {
@@ -1494,7 +1430,7 @@ export const rexerApi = {
   pages: {
     /**
      * List pages in a workspace. Filter `type` to scope to landing/ad/curate.
-     * Replaces `canvasTemplates.list({ client_id, workspace_id })`.
+     * Replaces `canvasTemplates.list({ brand_id, workspace_id })`.
      */
     list: (
       workspaceId: string,

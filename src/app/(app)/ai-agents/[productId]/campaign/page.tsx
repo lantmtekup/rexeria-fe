@@ -10,6 +10,7 @@ import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import { Spinner } from '@/components/atoms/spinner';
 import { Textarea } from '@/components/atoms/textarea';
+import { LandingPagePicker } from '@/components/molecules/LandingPagePicker';
 import { ProductWorkspaceLayout } from '@/components/templates/ProductWorkspaceLayout';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
@@ -64,13 +65,16 @@ export default function AiCampaignPage({ params }: PageProps) {
     React.useState<CampaignObjective>('conversion');
   const [budget, setBudget] = React.useState<string>('1000');
   const [notes, setNotes] = React.useState('');
+  const [landingPageId, setLandingPageId] = React.useState<string | undefined>(
+    undefined
+  );
   const [plan, setPlan] = React.useState<AICampaignPlanResponse | null>(null);
   const [planning, setPlanning] = React.useState(false);
   const [creating, setCreating] = React.useState(false);
-  // Cache product.client_id so we can scope the campaign to the same client
+  // Cache product.brand_id so we can scope the campaign to the same brand
   // as the product. Without this BE rejects with ERR_FORBIDDEN
-  // "Product belongs to another client" when the logged-in user (eg admin)
-  // has no client of its own.
+  // "Product belongs to another brand" when the logged-in user (eg admin)
+  // has no brand of its own.
   const [productClientId, setProductClientId] = React.useState<
     string | null | undefined
   >(undefined);
@@ -80,7 +84,7 @@ export default function AiCampaignPage({ params }: PageProps) {
     rexerApi.products
       .get(productId)
       .then(res => {
-        if (alive) setProductClientId(res.product.client_id ?? null);
+        if (alive) setProductClientId(res.product.brand_id ?? null);
       })
       .catch(() => {
         if (alive) setProductClientId(null);
@@ -118,13 +122,11 @@ export default function AiCampaignPage({ params }: PageProps) {
       const created = await rexerApi.campaigns.create({
         name: plan.name,
         product_id: productId,
-        // Scope campaign to the product's client (BE enforces match).
-        // Skip when product has no client (admin-owned).
-        client_id: productClientId ?? undefined,
-        // Template binding via `landing_project_id` removed — project-based
-        // landings deprecated. Campaign now references canvas-template via
-        // notes payload only; structured FK will return when BE adds a
-        // `canvas_template_id` column on campaigns.
+        // Scope campaign to the product's brand (BE enforces match).
+        // Skip when product has no brand (admin-owned).
+        brand_id: productClientId ?? undefined,
+        // Gắn landing để BE dựng tracked_url + scope metrics (be-fe-handoff Q3).
+        landing_page_id: landingPageId,
         objective,
         channels: plan.channels,
         kpis: plan.kpis,
@@ -236,6 +238,20 @@ export default function AiCampaignPage({ params }: PageProps) {
               onChange={e => setNotes(e.target.value)}
               placeholder='Channels you prefer, launch date, brand guardrails…'
             />
+          </div>
+
+          <div className='flex flex-col gap-2'>
+            <span className='text-muted-foreground text-xs font-semibold'>
+              Landing page (optional)
+            </span>
+            <LandingPagePicker
+              brandId={productClientId}
+              value={landingPageId}
+              onChange={setLandingPageId}
+            />
+            <p className='text-muted-foreground text-[11px]'>
+              Gắn landing để có tracked URL + scope metrics theo trang đó.
+            </p>
           </div>
 
           <Button

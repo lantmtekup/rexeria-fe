@@ -327,7 +327,9 @@ function logoInitial(name: string): string {
 function beWorkspaceToPortal(w: BEWorkspace): Workspace {
   return {
     id: w.id,
-    client_id: w.client_id,
+    // Left key là field nội bộ của portal Workspace (FK demo); right đọc
+    // field BE đã rename `client_id → brand_id`.
+    client_id: w.brand_id,
     slug: w.slug,
     name: w.name,
     description: w.description ?? '',

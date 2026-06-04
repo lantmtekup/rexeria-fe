@@ -12,8 +12,12 @@
  *   (dwell, scroll depth) reset between visits.
  *
  * The tracker is a module-level singleton — only the visible public render
- * mounts it. Calling `init()` again with the same `templateId` is a no-op;
+ * mounts it. Calling `init()` again with the same `pageId` is a no-op;
  * passing a different one resets the session bucket.
+ *
+ * `pageId` = canonical page UUID (be-fe-handoff Q5 2026-06-03 — the ingest
+ * only accepts `page_id`; the legacy `template_id` schema was retired and
+ * such events are silently dropped).
  */
 
 import type { AnalyticsEventInput } from '@/services/rexer/types';
@@ -81,7 +85,7 @@ function utmFromUrl(): Pick<
 }
 
 class Tracker {
-  private templateId = '';
+  private pageId = '';
   private visitorId = '';
   private sessionId = '';
   private queue: AnalyticsEventInput[] = [];
@@ -89,13 +93,13 @@ class Tracker {
   private unloadHandler: (() => void) | null = null;
   private initialized = false;
 
-  init(templateId: string): void {
-    if (this.initialized && this.templateId === templateId) return;
-    // Different template on same SPA navigation — flush leftovers first.
-    if (this.initialized && this.templateId !== templateId) {
+  init(pageId: string): void {
+    if (this.initialized && this.pageId === pageId) return;
+    // Different page on same SPA navigation — flush leftovers first.
+    if (this.initialized && this.pageId !== pageId) {
       this.flush();
     }
-    this.templateId = templateId;
+    this.pageId = pageId;
     this.visitorId = readOrCreateVisitor();
     this.sessionId = readOrCreateSession();
     this.initialized = true;
@@ -121,7 +125,7 @@ class Tracker {
     if (!this.initialized || typeof window === 'undefined') return;
     this.touchSession();
     const event: AnalyticsEventInput = {
-      template_id: this.templateId,
+      page_id: this.pageId,
       visitor_id: this.visitorId,
       session_id: this.sessionId,
       viewport_w: window.innerWidth,

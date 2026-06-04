@@ -2,7 +2,7 @@
 
 /**
  * Brand-side "Create new landing" dialog. Wires `POST /v1/portal/templates`
- * (be-todo.md P0.2). BE auto-scopes by ctx.client_id + ctx.active_workspace
+ * (be-todo.md P0.2). BE auto-scopes by ctx.brand_id + ctx.active_workspace
  * when workspace_id is omitted.
  */
 

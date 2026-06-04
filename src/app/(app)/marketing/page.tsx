@@ -213,7 +213,7 @@ export default function MarketingListPage() {
         return;
       }
       productId = first.id;
-      clientId = first.client_id;
+      clientId = first.brand_id;
     } catch (err) {
       toast.error(`Không lấy được sản phẩm: ${rxErrorMessage(err)}`);
       return;
@@ -226,7 +226,7 @@ export default function MarketingListPage() {
         await rexerApi.campaigns.create({
           name: `${draft.name} — ${cName}`,
           product_id: productId,
-          client_id: clientId,
+          brand_id: clientId,
           status,
         });
         okCount++;
