@@ -24,6 +24,7 @@ import {
 } from '../_data';
 import { ApiStatusLabel, loadProducts } from '../_remote';
 import { PortalShell } from '../_shell';
+import { useActiveWorkspace } from '../_workspace';
 import { ProductFormModal } from './_product-modal';
 
 const STATUS_META: Record<
@@ -61,10 +62,14 @@ export default function PortalProductsPage() {
     null
   );
 
-  // Try real BE on mount; fallback to fake data
+  const activeWs = useActiveWorkspace();
+
+  // Try real BE (scope theo brand của workspace đang chọn); fallback fake data.
+  // Đổi ?ws= → client_id đổi → reload.
   useEffect(() => {
     let cancelled = false;
-    loadProducts().then(res => {
+    setLoading(true);
+    loadProducts(activeWs.client_id).then(res => {
       if (cancelled) return;
       setProducts(res.data);
       setSource(res.source);
@@ -74,7 +79,7 @@ export default function PortalProductsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [activeWs.client_id]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: products.length };

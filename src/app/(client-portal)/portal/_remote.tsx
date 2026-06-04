@@ -121,9 +121,19 @@ export function beProductToPortal(p: BEProduct): PortalProduct {
   };
 }
 
-export async function loadProducts(): Promise<LoadResult<PortalProduct[]>> {
+// Products scope theo BRAND (repo product.go lọc `brand_id`, không có
+// workspace_id). `brandId` = client_id của workspace đang chọn (?ws=). Chỉ
+// truyền khi là UUID thật — fake/seed id để RLS tự scope theo session.
+export async function loadProducts(
+  brandId?: string
+): Promise<LoadResult<PortalProduct[]>> {
   try {
-    const res = await rexerApi.products.list({ is_template: false, limit: 50 });
+    const isUuid = !!brandId && /^[0-9a-f-]{36}$/i.test(brandId);
+    const res = await rexerApi.products.list({
+      is_template: false,
+      limit: 50,
+      ...(isUuid ? { brand_id: brandId } : {}),
+    });
     const items = (res.items ?? []).map(beProductToPortal);
     return { data: items, source: 'live' };
   } catch (err) {
