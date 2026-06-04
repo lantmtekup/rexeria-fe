@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 
 import { rexerApi } from '@/services/rexer/endpoints';
 
-import { FAKE_TEMPLATES } from '../_data';
 import { PortalShell } from '../_shell';
 
 type Thread = {
@@ -86,6 +85,8 @@ function relativeTime(iso?: string): string {
 export default function PortalCommentsPage() {
   const [threads, setThreads] = useState<Thread[]>(FAKE_THREADS);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  // true khi vẫn đang hiển thị FAKE_THREADS (BE comment threads deferred Phase 2)
+  const [isDemo, setIsDemo] = useState(true);
 
   // Template comments archived per BE handoff §3.1 (defer Phase 2).
   // Keep the FE list UI rendering for context, but resolve action is
@@ -112,9 +113,11 @@ export default function PortalCommentsPage() {
         .catch(() => null),
     ]).then(([openRes, resolvedRes]) => {
       if (cancelled) return;
+      // Cả 2 call fail (endpoint lỗi) → giữ FAKE + banner demo. Nếu BE trả 200
+      // (kể cả rỗng) thì dùng data live, kể cả khi total=0 (hiện empty state thật).
+      if (openRes === null && resolvedRes === null) return;
       const openItems = openRes?.items ?? [];
       const resolvedItems = resolvedRes?.items ?? [];
-      if (openItems.length === 0 && resolvedItems.length === 0) return; // keep FAKE
       const mapped: Thread[] = [...openItems, ...resolvedItems].map(c => ({
         id: c.id,
         template_id: c.template_id,
@@ -127,6 +130,7 @@ export default function PortalCommentsPage() {
         at: relativeTime(c.last_activity_at ?? c.created_at),
       }));
       setThreads(mapped);
+      setIsDemo(false);
     });
     return () => {
       cancelled = true;
@@ -148,6 +152,13 @@ export default function PortalCommentsPage() {
           Yêu cầu sửa landing page, hỏi đáp, feedback. Staff phụ trách brand sẽ
           trả lời trong vòng 24 giờ làm việc.
         </p>
+        {isDemo && (
+          <div className='mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800'>
+            <strong>UI Demo · dữ liệu mẫu</strong> — comment threads chờ BE wire
+            Phase 2 (<code>activity_logs(action=&apos;page.comment&apos;)</code>
+            ). Các thread bên dưới chỉ minh hoạ luồng.
+          </div>
+        )}
       </section>
 
       {/* New comment box */}
@@ -158,13 +169,11 @@ export default function PortalCommentsPage() {
           </div>
           <h3 className='text-sm font-semibold'>Gửi yêu cầu mới</h3>
         </div>
-        <select className='mb-2 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] outline-none focus:border-zinc-400'>
-          <option>Chọn landing page muốn comment...</option>
-          {FAKE_TEMPLATES.map(t => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
+        <select
+          disabled
+          className='mb-2 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-[13px] text-zinc-500 outline-none focus:border-zinc-400'
+        >
+          <option>Chọn landing page muốn comment… (Phase 2)</option>
         </select>
         <textarea
           placeholder="Viết yêu cầu của bạn... vd: 'Đổi màu nền hero sang gradient navy', 'Thêm 1 block về certifications'..."
@@ -175,11 +184,26 @@ export default function PortalCommentsPage() {
           <span className='text-[10.5px] text-zinc-500'>
             Hỗ trợ Markdown · Tối đa 4000 ký tự
           </span>
-          <button className='rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'>
+          <button
+            type='button'
+            onClick={() =>
+              toast.info(
+                'Gửi comment trực tiếp đang hoàn thiện (Phase 2). Hiện tại liên hệ staff Rexer phụ trách brand để yêu cầu sửa.'
+              )
+            }
+            className='rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
+          >
             Gửi yêu cầu
           </button>
         </div>
       </section>
+
+      {/* Empty state khi BE trả live nhưng brand chưa có comment nào */}
+      {!isDemo && threads.length === 0 && (
+        <div className='mt-6 rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/50 py-10 text-center text-[13px] text-zinc-500'>
+          Chưa có yêu cầu nào. Gửi comment ở trên để bắt đầu trao đổi với Rexer.
+        </div>
+      )}
 
       {/* Open threads */}
       <section className='mt-6'>

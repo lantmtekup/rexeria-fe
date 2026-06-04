@@ -71,11 +71,10 @@ function Dashboard() {
 
 export default function HomePage() {
   const user = useAppSelector(s => s.auth.user);
-  // Cards on Home open the canvas editor at /canvas-templates/:id, so we
-  // list canvas templates here (not /templates — a different entity with
-  // no canvas editor route).
+  // `/v1/canvas-templates` đã bị gỡ ở canonical cutover (Migration 134) →
+  // list templates qua `/v1/templates` (BE contract 2026-06-04 §#3).
   const templates = useRexer(
-    () => rexerApi.canvasTemplates.list({ is_active: true, limit: 6 }),
+    () => rexerApi.templates.list({ status: 'active', limit: 6 }),
     []
   );
   // Section "Product" — dùng resource Product thật (BE thêm `thumbnail_url`
@@ -88,7 +87,7 @@ export default function HomePage() {
     ? templates.data.items.slice(0, 6).map(t => ({
         id: t.id,
         name: t.name,
-        author: `${t.width}×${t.height}`,
+        author: t.category ?? t.target_page_type ?? '',
         imageSrc: t.thumbnail_url,
         imageBg: t.thumbnail_url ? undefined : '#f5f3ee',
       }))

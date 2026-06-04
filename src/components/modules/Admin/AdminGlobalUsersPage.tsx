@@ -358,20 +358,25 @@ export function AdminGlobalUsersPage() {
                       </span>
                     </td>
                     <td className='px-4 py-2 text-[11.5px]'>
-                      {u.client_id ? (
-                        <Link
-                          href={`/admin/users/${u.client_id}`}
-                          className='text-zinc-700 hover:underline'
-                        >
-                          {u.client_name ?? (
-                            <code className='font-mono'>
-                              {u.client_id.slice(0, 8)}…
-                            </code>
-                          )}
-                        </Link>
-                      ) : (
-                        <span className='text-zinc-300'>—</span>
-                      )}
+                      {(() => {
+                        // BE trả brand_id/brand_name; client_* là alias cũ.
+                        const brandId = u.brand_id ?? u.client_id;
+                        const brandName = u.brand_name ?? u.client_name;
+                        return brandId ? (
+                          <Link
+                            href={`/admin/users/${brandId}`}
+                            className='text-zinc-700 hover:underline'
+                          >
+                            {brandName ?? (
+                              <code className='font-mono'>
+                                {brandId.slice(0, 8)}…
+                              </code>
+                            )}
+                          </Link>
+                        ) : (
+                          <span className='text-zinc-300'>—</span>
+                        );
+                      })()}
                     </td>
                     <td className='px-4 py-2 font-mono text-[10.5px] text-zinc-500'>
                       {u.last_login_at

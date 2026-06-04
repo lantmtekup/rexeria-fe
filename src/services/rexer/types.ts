@@ -1889,7 +1889,11 @@ export interface AdminUser {
   avatar_url?: string;
   role: string; // 'admin' | 'staff' | 'client_user' | 'brand_user'
   status: string; // 'active' | 'pending' | 'disabled'
-  client_id?: string; // populated for brand users
+  /** Brand association — BE trả `brand_id` + `brand_name` (be-tasks 2026-06-04 §4a).
+   *  Giữ `client_*` cho back-compat; đọc `brand_*` trước. */
+  brand_id?: string;
+  brand_name?: string;
+  client_id?: string; // populated for brand users (legacy alias)
   client_name?: string;
   last_login_at?: string;
   created_at: string;
