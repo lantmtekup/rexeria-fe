@@ -11,6 +11,7 @@ import {
   LayoutDashboardIcon,
   LayoutTemplateIcon,
   LogOutIcon,
+  MegaphoneIcon,
   MessageSquareIcon,
   PackageIcon,
   SparklesIcon,
@@ -41,6 +42,7 @@ const NAV: NavItem[] = [
     exact: true,
   },
   { href: '/admin/products', labelKey: 'nav.products', icon: PackageIcon },
+  { href: '/admin/ads', labelKey: 'nav.ads', icon: MegaphoneIcon },
   {
     href: '/admin/landing-pages',
     labelKey: 'nav.canvasTemplates',
