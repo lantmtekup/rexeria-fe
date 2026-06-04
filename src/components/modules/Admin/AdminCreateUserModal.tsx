@@ -127,9 +127,12 @@ export function AdminCreateUserModal({
 
   if (!open) return null;
 
+  // Mode "Brand có sẵn" chỉ LINK user (2B) — không đụng tới password.
+  const isLinkExisting = role === 'client_user' && brandMode === 'existing';
+
   const validate = (): string | null => {
     if (!email.includes('@')) return 'Email không hợp lệ';
-    if (!autoGenPassword && password.length < 8) {
+    if (!isLinkExisting && !autoGenPassword && password.length < 8) {
       return 'Password tối thiểu 8 ký tự (hoặc bật auto-generate)';
     }
     if (!displayName.trim()) return 'Tên hiển thị không được rỗng';
@@ -153,48 +156,55 @@ export function AdminCreateUserModal({
     setSubmitting(true);
     setError(null);
     try {
-      // For invite-into-existing-client, BE can auto-generate the password
-      // if we omit it (returns it in `generated_password`). For /auth/register
-      // BE requires `password`, so we generate one client-side.
-      const inviteUseServerGen =
-        role === 'client_user' && brandMode === 'existing' && autoGenPassword;
-      const effectivePassword = autoGenPassword
-        ? inviteUseServerGen
-          ? ''
-          : generatePassword()
-        : password;
-
-      let finalPassword = effectivePassword;
-      let brandName: string | undefined;
-
-      if (role === 'client_user') {
-        if (brandMode === 'new') {
-          await rexerApi.auth.register({
+      // ── 2B: gán user ĐÃ TỒN TẠI vào brand có sẵn ──────────────────────────
+      // `POST /v1/brands/:id/users` chỉ LINK user (canonical
+      // be-response-to-fe-qa-2026-06-03). KHÔNG tạo user, KHÔNG sinh password.
+      // Email chưa tồn tại → 404 ERR_USER_NOT_FOUND.
+      if (role === 'client_user' && brandMode === 'existing') {
+        const brandName =
+          clients.find(c => c.id === clientId)?.name ?? clientId;
+        try {
+          await rexerApi.brands.inviteUser(clientId, {
             email,
-            password: effectivePassword,
-            full_name: displayName,
-            company_name: companyName,
-          });
-          brandName = companyName;
-          toast.success(`Đã tạo brand "${companyName}" + owner user`, {
-            description: email,
-          });
-        } else {
-          const res = await rexerApi.brands.inviteUser(clientId, {
-            email,
-            ...(effectivePassword ? { password: effectivePassword } : {}),
             display_name: displayName,
             role: 'brand_admin',
           });
-          // BE returns generated_password when we omitted password.
-          if (!effectivePassword && res.generated_password) {
-            finalPassword = res.generated_password;
+        } catch (err) {
+          if (
+            err instanceof RxApiError &&
+            (err.status === 404 || err.code === 'ERR_USER_NOT_FOUND')
+          ) {
+            setError(
+              'User này chưa có tài khoản. Endpoint "Brand có sẵn" chỉ gán user ĐÃ TỒN TẠI — hãy tạo user trước (mode "Tạo brand mới") hoặc để họ tự đăng ký, rồi mới gán vào brand.'
+            );
+            return;
           }
-          brandName = clients.find(c => c.id === clientId)?.name ?? clientId;
-          toast.success(`Đã thêm user vào brand "${brandName}"`, {
-            description: email,
-          });
+          throw err;
         }
+        toast.success(`Đã gán user vào brand "${brandName}"`, {
+          description: email,
+        });
+        onCreated();
+        onClose();
+        return;
+      }
+
+      // ── Các mode còn lại đều qua /auth/register (FE tự sinh password) ──────
+      const effectivePassword = autoGenPassword ? generatePassword() : password;
+      let brandName: string | undefined;
+
+      if (role === 'client_user') {
+        // brandMode === 'new'
+        await rexerApi.auth.register({
+          email,
+          password: effectivePassword,
+          full_name: displayName,
+          company_name: companyName,
+        });
+        brandName = companyName;
+        toast.success(`Đã tạo brand "${companyName}" + owner user`, {
+          description: email,
+        });
       } else {
         await rexerApi.auth.register({
           email,
@@ -209,11 +219,11 @@ export function AdminCreateUserModal({
 
       setCreated({
         email,
-        password: finalPassword,
+        password: effectivePassword,
         displayName,
         role,
         brandName,
-        passwordFromBE: inviteUseServerGen,
+        passwordFromBE: false,
       });
       onCreated();
     } catch (err) {
@@ -348,67 +358,67 @@ export function AdminCreateUserModal({
             </Field>
           </div>
 
-          <Field
-            label='Password'
-            required={!autoGenPassword}
-            hint={
-              autoGenPassword
-                ? role === 'client_user' && brandMode === 'existing'
-                  ? 'BE sẽ tự sinh — hiện sau khi tạo xong'
-                  : 'FE sinh 16 ký tự mạnh — hiện sau khi tạo xong'
-                : 'Tối thiểu 8 ký tự'
-            }
-          >
-            <div className='mb-2 flex items-center gap-2'>
-              <label className='flex cursor-pointer items-center gap-2 text-[12px] text-zinc-700'>
-                <input
-                  type='checkbox'
-                  checked={autoGenPassword}
-                  onChange={e => setAutoGenPassword(e.target.checked)}
-                  className='size-3.5 rounded border-zinc-300'
-                />
-                <Sparkles className='size-3.5 text-violet-500' />
-                Auto-generate password
-              </label>
-            </div>
-            {!autoGenPassword && (
-              <div className='relative'>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder='ít nhất 8 ký tự'
-                  className='w-full rounded-lg border border-zinc-200 px-3 py-2 pr-20 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
-                />
-                <div className='absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5'>
-                  <button
-                    type='button'
-                    onClick={() => {
-                      setPassword(generatePassword());
-                      setShowPassword(true);
-                    }}
-                    className='rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-violet-600'
-                    aria-label='Generate random password'
-                    title='Sinh password ngẫu nhiên'
-                  >
-                    <RefreshCcw className='size-3.5' />
-                  </button>
-                  <button
-                    type='button'
-                    onClick={() => setShowPassword(s => !s)}
-                    className='rounded p-1 text-zinc-400 hover:text-zinc-700'
-                    aria-label='Toggle password visibility'
-                  >
-                    {showPassword ? (
-                      <EyeOff className='size-3.5' />
-                    ) : (
-                      <Eye className='size-3.5' />
-                    )}
-                  </button>
-                </div>
+          {!isLinkExisting && (
+            <Field
+              label='Password'
+              required={!autoGenPassword}
+              hint={
+                autoGenPassword
+                  ? 'FE sinh 16 ký tự mạnh — hiện sau khi tạo xong'
+                  : 'Tối thiểu 8 ký tự'
+              }
+            >
+              <div className='mb-2 flex items-center gap-2'>
+                <label className='flex cursor-pointer items-center gap-2 text-[12px] text-zinc-700'>
+                  <input
+                    type='checkbox'
+                    checked={autoGenPassword}
+                    onChange={e => setAutoGenPassword(e.target.checked)}
+                    className='size-3.5 rounded border-zinc-300'
+                  />
+                  <Sparkles className='size-3.5 text-violet-500' />
+                  Auto-generate password
+                </label>
               </div>
-            )}
-          </Field>
+              {!autoGenPassword && (
+                <div className='relative'>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder='ít nhất 8 ký tự'
+                    className='w-full rounded-lg border border-zinc-200 px-3 py-2 pr-20 text-[14px] outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                  />
+                  <div className='absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5'>
+                    <button
+                      type='button'
+                      onClick={() => {
+                        setPassword(generatePassword());
+                        setShowPassword(true);
+                      }}
+                      className='rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-violet-600'
+                      aria-label='Generate random password'
+                      title='Sinh password ngẫu nhiên'
+                    >
+                      <RefreshCcw className='size-3.5' />
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => setShowPassword(s => !s)}
+                      className='rounded p-1 text-zinc-400 hover:text-zinc-700'
+                      aria-label='Toggle password visibility'
+                    >
+                      {showPassword ? (
+                        <EyeOff className='size-3.5' />
+                      ) : (
+                        <Eye className='size-3.5' />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </Field>
+          )}
 
           {/* Brand-specific options */}
           {role === 'client_user' && (
@@ -444,7 +454,11 @@ export function AdminCreateUserModal({
                   />
                 </Field>
               ) : (
-                <Field label='Chọn brand' required>
+                <Field
+                  label='Chọn brand'
+                  required
+                  hint='Chỉ GÁN user ĐÃ TỒN TẠI vào brand (không tạo user / không cấp password). Email chưa có tài khoản sẽ báo lỗi.'
+                >
                   <select
                     value={clientId}
                     onChange={e => setClientId(e.target.value)}
@@ -487,9 +501,9 @@ export function AdminCreateUserModal({
               <>
                 Endpoint:{' '}
                 <code className='rounded bg-zinc-100 px-1'>
-                  POST /v1/clients/{'{id}'}/users
-                </code>
-                {autoGenPassword && ' (BE sinh password)'}
+                  POST /v1/brands/{'{id}'}/users
+                </code>{' '}
+                (link-only)
               </>
             )}
             {(role === 'admin' || role === 'staff') && (

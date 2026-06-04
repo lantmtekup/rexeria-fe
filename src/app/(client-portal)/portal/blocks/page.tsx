@@ -11,7 +11,7 @@ import { PortalShell } from '../_shell';
  * + same localStorage layer (`rexer:saved-blocks`) for Phase 1 — brand
  * users browse the shared block library here.
  *
- * Phase 2 will scope this per `client_id` once BE saved-blocks endpoints
+ * Phase 2 will scope this per `brand_id` once BE saved-blocks endpoints
  * ship (see `docs/be-saved-blocks-spec.md`).
  */
 export default function PortalBlocksPage() {

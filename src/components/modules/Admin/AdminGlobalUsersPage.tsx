@@ -358,14 +358,14 @@ export function AdminGlobalUsersPage() {
                       </span>
                     </td>
                     <td className='px-4 py-2 text-[11.5px]'>
-                      {u.client_id ? (
+                      {u.brand_id ? (
                         <Link
-                          href={`/admin/users/${u.client_id}`}
+                          href={`/admin/users/${u.brand_id}`}
                           className='text-zinc-700 hover:underline'
                         >
-                          {u.client_name ?? (
+                          {u.brand_name ?? (
                             <code className='font-mono'>
-                              {u.client_id.slice(0, 8)}…
+                              {u.brand_id.slice(0, 8)}…
                             </code>
                           )}
                         </Link>

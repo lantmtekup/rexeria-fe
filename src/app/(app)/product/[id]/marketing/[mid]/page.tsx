@@ -21,6 +21,7 @@ import { Button } from '@/components/atoms/button';
 import { Spinner } from '@/components/atoms/spinner';
 import { Textarea } from '@/components/atoms/textarea';
 import { MetricCard } from '@/components/molecules/MetricCard';
+import { LandingPagePicker } from '@/components/molecules/LandingPagePicker';
 import { ProductWorkspaceLayout } from '@/components/templates/ProductWorkspaceLayout';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
@@ -239,7 +240,8 @@ export default function CampaignDetailPage({ params }: PageProps) {
         notes: meta.template_id
           ? packNotes(meta, currentUserNotes)
           : (draft.notes ?? undefined),
-        // `landing_project_id` removed — project-based landings deprecated.
+        // Gắn landing → BE dựng tracked_url + scope metrics (be-fe-handoff Q3).
+        landing_page_id: draft.landing_page_id ?? undefined,
       });
       setCampaign(updated);
       setDraft(updated);
@@ -526,10 +528,28 @@ export default function CampaignDetailPage({ params }: PageProps) {
                 />
               </div>
 
+              <div className='flex flex-col gap-2 sm:col-span-2'>
+                <label className='text-muted-foreground text-xs font-semibold'>
+                  Landing page
+                </label>
+                <LandingPagePicker
+                  brandId={view.brand_id}
+                  value={view.landing_page_id}
+                  onChange={pageId =>
+                    setDraft(d => (d ? { ...d, landing_page_id: pageId } : d))
+                  }
+                  disabled={!editing}
+                />
+                <p className='text-muted-foreground text-[11px]'>
+                  Trang được gắn sẽ dựng tracked URL + scope metrics. Bỏ trống =
+                  không gắn.
+                </p>
+              </div>
+
               {wizardMeta.template_id && (
                 <div className='flex flex-col gap-2 sm:col-span-2'>
                   <label className='text-muted-foreground text-xs font-semibold'>
-                    Linked landing / template
+                    Linked landing / template (wizard)
                   </label>
                   <div className='border-border bg-muted/30 flex items-start justify-between gap-3 rounded-xl border p-3'>
                     <div className='min-w-0 flex-1'>
