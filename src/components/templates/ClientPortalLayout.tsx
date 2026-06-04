@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Building2,
   ExternalLink,
@@ -43,7 +42,6 @@ const NAV: NavItem[] = [
 ];
 
 function ClientPortalLayout({ children }: ClientPortalLayoutProps) {
-  const router = useRouter();
   const dispatch = useAppDispatch();
   const user = useAppSelector(s => s.auth.user);
 
@@ -54,7 +52,9 @@ function ClientPortalLayout({ children }: ClientPortalLayoutProps) {
       // ignore
     }
     toast.success('Signed out');
-    router.replace('/sign-in');
+    // Hard nav — soft router.replace có thể kẹt /portal vì Router Cache tính
+    // dưới cookie cũ sau khi logout (xem _shell.tsx handleLogout).
+    window.location.replace('/sign-in');
   };
 
   const displayName = user?.display_name || user?.email || 'Guest';

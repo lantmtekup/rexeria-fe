@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   BlocksIcon,
@@ -106,7 +106,6 @@ const NAV: NavItem[] = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const t = useTranslations('admin');
-  const router = useRouter();
   const dispatch = useAppDispatch();
   const user = useAppSelector(s => s.auth.user);
   const locale = useLocale();
@@ -114,7 +113,8 @@ export function AdminSidebar() {
 
   const handleLogout = async () => {
     await dispatch(logoutThunk());
-    router.replace('/sign-in');
+    // Hard nav — tránh kẹt trang do Router Cache sau logout (xem _shell.tsx).
+    window.location.replace('/sign-in');
   };
 
   return (
