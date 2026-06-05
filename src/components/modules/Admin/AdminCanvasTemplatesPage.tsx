@@ -119,7 +119,7 @@ export function AdminCanvasTemplatesPage() {
   const [brandFilter, setBrandFilter] = React.useState<string>('');
   const [sort, setSort] = React.useState<Sort>('-updated_at');
   const [page, setPage] = React.useState(1);
-  const [view, setView] = React.useState<View>('grid');
+  const [view, setView] = React.useState<View>('table');
   const [domainPage, setDomainPage] = React.useState<Page | null>(null);
   // Bulk selection — chỉ available ở table view. BE pages chỉ có
   // soft-delete (DELETE = archive); hard delete chưa expose. Bulk

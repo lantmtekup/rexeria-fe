@@ -78,7 +78,7 @@ export function AdminUsersPage() {
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
   const [status, setStatus] = React.useState<Status>('active');
   const [sort, setSort] = React.useState<Sort>('-updated_at');
-  const [view, setView] = React.useState<View>('grid');
+  const [view, setView] = React.useState<View>('table');
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(20);
   // Bulk selection — only available in table view (grid view không expose

@@ -103,7 +103,7 @@ export default function PortalMediaPage() {
   const [folders, setFolders] = useState<MediaFolder[]>(FAKE_FOLDERS);
   const [files, setFiles] = useState<MediaFile[]>(FAKE_MEDIA_FILES);
   const [currentFolderId, setCurrentFolderId] = useState<string>('f_root');
-  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [view, setView] = useState<'grid' | 'list'>('list');
   const [search, setSearch] = useState('');
   const [draggedOver, setDraggedOver] = useState(false);
   const [showNewFolderModal, setShowNewFolderModal] = useState(false);

@@ -90,7 +90,7 @@ export function AdminTemplatesPage() {
   const [status, setStatus] = React.useState<Status>('active');
   const [category, setCategory] = React.useState<string | null>(null);
   const [sort, setSort] = React.useState<Sort>('-updated_at');
-  const [view, setView] = React.useState<View>('grid');
+  const [view, setView] = React.useState<View>('table');
   // "Sử dụng template" dialog target; null when closed.
   const [useTarget, setUseTarget] = React.useState<Template | null>(null);
   // "Tạo template mới" dialog open state.

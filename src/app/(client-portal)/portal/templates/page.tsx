@@ -51,7 +51,7 @@ export default function PortalTemplateLibraryPage() {
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
   const [sort, setSort] = React.useState<Sort>('-updated_at');
-  const [view, setView] = React.useState<View>('grid');
+  const [view, setView] = React.useState<View>('table');
   const [page, setPage] = React.useState(1);
   const [total, setTotal] = React.useState(0);
   const [totalPages, setTotalPages] = React.useState(1);

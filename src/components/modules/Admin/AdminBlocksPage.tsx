@@ -137,7 +137,7 @@ export function AdminBlocksPage() {
   const [items, setItems] = React.useState<ServerBlock[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [view, setView] = React.useState<View>('grid');
+  const [view, setView] = React.useState<View>('table');
   const [search, setSearch] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState<BlockType | 'all'>('all');
   const [tagFilter, setTagFilter] = React.useState<string | null>(null);
