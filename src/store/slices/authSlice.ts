@@ -100,7 +100,22 @@ export const fetchMeThunk = createAsyncThunk<AuthUser | null>(
         brand_id: res.brand?.id ?? null,
         brand_name: res.brand?.name ?? null,
       };
-    } catch {
+    } catch (err) {
+      // BE says we're unauthenticated (expired/invalid session) but the local
+      // signed cookie may still exist → middleware would bounce /sign-in back
+      // to the protected route, trapping the guard on a spinner. Clear the
+      // stale cookie here and await it so any guard redirect that follows
+      // actually sticks. Only on 401 — a network blip must not nuke the session.
+      if (err instanceof RxApiError && err.status === 401) {
+        try {
+          await fetch('/api/auth/session-clear', {
+            method: 'POST',
+            credentials: 'include',
+          });
+        } catch {
+          // ignore — best effort
+        }
+      }
       return null;
     }
   }
@@ -136,10 +151,19 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchMeThunk.fulfilled, (state, action) => {
+        // Reach a terminal state either way so guards stop waiting. A null
+        // payload = unauthenticated → clear user + mark failed (guard → login).
         if (action.payload) {
           state.user = action.payload;
           state.status = 'succeeded';
+        } else {
+          state.user = null;
+          state.status = 'failed';
         }
+      })
+      .addCase(fetchMeThunk.rejected, state => {
+        state.user = null;
+        state.status = 'failed';
       });
   },
 });
