@@ -124,6 +124,57 @@ export function BlockAnalyticsGrid({
       try {
         const page = await rexerApi.pages.get(templateId);
         if (cancelled) return;
+
+        // PRIMARY structure source — the PUBLISHED blueprint from
+        // `/public/pages/{slug}`. This is exactly what renders on /p/{slug}
+        // and what analytics events were tracked against, so its block ids
+        // line up with the breakdown rows. The template-version HEAD chain
+        // below is a fallback: for copied / re-versioned pages the HEAD
+        // blueprint is often empty (BE doesn't bump current_version_id),
+        // which is why a published page showed "chưa có block" despite having
+        // breakdown data.
+        if (page.slug) {
+          try {
+            const pub = await rexerApi.publicPages.get(page.slug);
+            if (cancelled) return;
+            if (pub) {
+              const codeTpl = pub.template_code
+                ? getCodeTemplate(pub.template_code)
+                : undefined;
+              if (codeTpl) {
+                setCodeTemplateLabel(codeTpl.meta.name);
+                setSections(codeTpl.meta.tracking?.sections ?? []);
+                setCtas(codeTpl.meta.tracking?.ctas ?? []);
+                setBlocks(null);
+                return;
+              }
+              const pubBlocks = Array.isArray(
+                (pub.canvas_blueprint as { blocks?: unknown[] })?.blocks
+              )
+                ? (pub.canvas_blueprint as { blocks: unknown[] }).blocks
+                : [];
+              if (pubBlocks.length > 0) {
+                const parsed = parseCanvas({
+                  schema_version: '2.0',
+                  blocks: pubBlocks,
+                });
+                if (parsed && parsed.blocks.length > 0) {
+                  setBlocks(
+                    parsed.blocks.map(b => ({
+                      block: b,
+                      label: extractLabel(b),
+                    }))
+                  );
+                  return;
+                }
+              }
+            }
+          } catch {
+            // Public fetch failed (unpublished page, etc.) — fall through to
+            // the legacy template-version chain below.
+          }
+        }
+
         const templates = await rexerApi.templates.list({ limit: 200 });
         const tpl = templates.items?.find(
           t => t.current_version_id === page.template_version_id

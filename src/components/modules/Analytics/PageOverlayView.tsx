@@ -71,6 +71,45 @@ export function PageOverlayView({ pageId }: Props) {
         const p = await rexerApi.pages.get(pageId);
         if (cancelled) return;
         setPage(p);
+
+        // PRIMARY source — the PUBLISHED blueprint from `/public/pages/{slug}`.
+        // Same source the live /p/{slug} page renders from + what analytics
+        // events track against. Avoids the fragile template→HEAD-version chain
+        // below, which yields an empty blueprint for copied / re-versioned
+        // pages (BE doesn't bump current_version_id). PageContent only reads
+        // `template.code` + `version.canvas_blueprint`, so a synthetic pair is
+        // sufficient here.
+        if (p.slug) {
+          try {
+            const pub = await rexerApi.publicPages.get(p.slug);
+            if (cancelled) return;
+            if (pub) {
+              const codeTpl = pub.template_code
+                ? getCodeTemplate(pub.template_code)
+                : undefined;
+              setTemplate({ code: pub.template_code ?? '' } as Template);
+              if (codeTpl) {
+                // Code template — renders from registry, no version needed.
+                return;
+              }
+              const pubBlocks = Array.isArray(
+                (pub.canvas_blueprint as { blocks?: unknown[] })?.blocks
+              )
+                ? (pub.canvas_blueprint as { blocks: unknown[] }).blocks
+                : [];
+              if (pubBlocks.length > 0) {
+                setVersion({
+                  canvas_blueprint: pub.canvas_blueprint,
+                } as TemplateVersion);
+                return;
+              }
+            }
+          } catch {
+            // Public fetch failed (unpublished page) — fall through to the
+            // legacy template-version chain below.
+          }
+        }
+
         // Find template owning page.template_version_id. Fan-out per §13
         // (template.current_version_id thường stale).
         const tplList = await rexerApi.templates.list({ limit: 500 });
