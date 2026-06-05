@@ -347,12 +347,13 @@ export function AdminClientDetailPage({ clientId }: Props) {
         )}
         {tab === 'ads' && (
           <AdsTab
-            brandName={client.name}
+            clientId={clientId}
             onCount={n => setCounts(c => ({ ...c, ads: n }))}
           />
         )}
         {tab === 'microsites' && (
           <MicroSitesTab
+            clientId={clientId}
             onCount={n => setCounts(c => ({ ...c, microsites: n }))}
           />
         )}

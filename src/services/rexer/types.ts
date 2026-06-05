@@ -2001,6 +2001,180 @@ export interface CreatePortalAdCampaignRequest {
 export type UpdatePortalAdCampaignRequest =
   Partial<CreatePortalAdCampaignRequest>;
 
+// ── Portal Ad metrics (manual staff entry) ───────────────────────────────
+// BE: spec §A / be-spec-ad-metrics.md. Read = GET /portal/ads/campaigns/{id}/
+// metrics (brand-scoped). Write = PUT /admin/campaigns/{id}/metrics (staff).
+export interface PortalAdMetricDaily {
+  campaign_id: string;
+  date: string; // YYYY-MM-DD
+  impressions: number;
+  reach: number;
+  clicks: number;
+  spent_amount: number; // VND
+  conversions: number;
+}
+export interface PortalAdMetricSummary {
+  impressions: number;
+  reach: number;
+  clicks: number;
+  spent_amount: number;
+  conversions: number;
+  ctr: number;
+  cpc: number;
+}
+export interface PortalAdMetricsResponse {
+  campaign_id: string;
+  from?: string;
+  to?: string;
+  summary: PortalAdMetricSummary;
+  daily: PortalAdMetricDaily[];
+}
+// One day of manually-entered metrics. `spend` is VND integer → spent_amount.
+export interface UpsertAdMetricDaily {
+  date: string; // YYYY-MM-DD
+  impressions: number;
+  reach: number;
+  clicks: number;
+  spend: number;
+  conversions: number;
+}
+export interface UpsertAdMetricsRequest {
+  from: string; // YYYY-MM-DD
+  to: string; // YYYY-MM-DD
+  mode?: 'range' | 'daily'; // audit-only; daily[] is always explicit
+  daily: UpsertAdMetricDaily[]; // 1..92 days, idempotent per (campaign, date)
+}
+
+// ── Micro-sites (spec §B) ────────────────────────────────────────────────
+// Externally-hosted brand sites Rexer manages metadata + analytics for (not a
+// builder). Reads brand-scoped (/portal/micro-sites); writes staff-only
+// (/admin/micro-sites, soft-delete).
+export type MicroSiteStatus = 'live' | 'dev' | 'paused';
+export interface MicroSite {
+  id: string;
+  brand_id: string;
+  workspace_id?: string | null;
+  name: string;
+  url: string;
+  status: MicroSiteStatus | string;
+  description?: string | null;
+  thumbnail_url?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+  archived_at?: string | null;
+  // Denormalised from micro_site_events (never persisted).
+  views_30d: number;
+  views_trend_pct: number;
+}
+export interface MicroSiteListResponse {
+  items: MicroSite[];
+  total: number;
+  page: number;
+  limit: number;
+}
+export interface CreateMicroSiteRequest {
+  brand_id: string;
+  workspace_id?: string;
+  name: string;
+  url?: string;
+  status?: MicroSiteStatus;
+  description?: string;
+  thumbnail_url?: string;
+}
+export type UpdateMicroSiteRequest = Partial<
+  Omit<CreateMicroSiteRequest, 'brand_id'>
+>;
+export interface MicroSiteAnalyticsSummary {
+  views: number;
+  visitors: number;
+  avg_time_s: number;
+  bounce_pct: number;
+  views_delta_pct: number;
+  visitors_delta_pct: number;
+  bounce_delta_pct: number;
+}
+export interface MicroSiteDailyPoint {
+  date: string;
+  views: number;
+  visitors: number;
+}
+export interface MicroSiteTopPage {
+  path: string;
+  views: number;
+}
+export interface MicroSiteTopReferrer {
+  source: string;
+  views: number;
+}
+export interface MicroSiteAnalytics {
+  micro_site_id: string;
+  summary: MicroSiteAnalyticsSummary;
+  daily: MicroSiteDailyPoint[];
+  /** Nguồn dữ liệu chuỗi daily: script ingest / nhập tay / trộn cả hai. */
+  source?: 'ingest' | 'manual' | 'mixed' | string;
+  top_pages: MicroSiteTopPage[];
+  top_referrers: MicroSiteTopReferrer[];
+}
+
+// ── Micro-site pages (managed list, spec §A) ─────────────────────────────
+export type MicroSitePageStatus = 'live' | 'dev' | 'paused';
+export interface MicroSitePage {
+  id: string;
+  micro_site_id: string;
+  name: string;
+  path: string;
+  status: MicroSitePageStatus | string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  archived_at?: string | null;
+  /** Derived from micro_site_events by path (read-time, never persisted). */
+  views_30d: number;
+}
+export interface CreateMicroSitePageRequest {
+  name: string;
+  path: string;
+  status?: MicroSitePageStatus;
+  sort_order?: number;
+}
+export type UpdateMicroSitePageRequest = Partial<CreateMicroSitePageRequest>;
+
+// ── Micro-site manual metrics (staff fallback, spec §B) ──────────────────
+export interface UpsertMicroSiteMetricDaily {
+  date: string; // YYYY-MM-DD
+  views: number;
+  visitors: number;
+  avg_time_s: number;
+  bounce_pct: number;
+}
+export interface UpsertMicroSiteMetricsRequest {
+  from: string;
+  to: string;
+  mode?: 'range' | 'daily';
+  daily: UpsertMicroSiteMetricDaily[];
+}
+
+// ── Public page (published render source) ────────────────────────────────
+// GET /v1/public/pages/{slug} — the published release. This is the canonical
+// source the live /p/{slug} page renders from AND what analytics events are
+// tracked against (so block ids here match breakdown rows).
+export interface PublicPageResponse {
+  id: string;
+  slug: string;
+  name: string;
+  type: string;
+  release_id: string;
+  release_no: number;
+  published_at: string;
+  canvas_blueprint?: Record<string, unknown>;
+  config?: Record<string, unknown>;
+  template_code?: string;
+  template_name?: string;
+  template_id?: string;
+  template_version_id: string;
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // CANONICAL TYPES (Rexer Architecture Final 2026-05-23)
 // Added 2026-05-24 for FE canonical cutover. Legacy types above remain

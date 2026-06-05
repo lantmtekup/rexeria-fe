@@ -31,6 +31,7 @@ export interface DailyMetric extends MetricValues {
 export interface MetricsUpdate {
   from: string;
   to: string;
+  mode: 'range' | 'daily';
   total: MetricValues;
   daily: DailyMetric[];
 }
@@ -149,9 +150,8 @@ export function UpdateMetricsDialog({
       );
     }
 
-    onSave({ from, to, total, daily });
+    onSave({ from, to, mode, total, daily });
     onOpenChange(false);
-    toast.success(`Đã cập nhật số liệu "${campaignName}"`);
   };
 
   return (

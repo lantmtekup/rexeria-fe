@@ -3,14 +3,23 @@
 /**
  * Admin — quản lý số liệu quảng cáo. Hệ thống CHƯA đấu API các bên (Meta/
  * Google/TikTok) nên nhân viên Rexer nhập tay số liệu theo khoảng ngày để
- * khách hàng thấy hiệu quả. Hiện local demo; khi BE ship endpoint ghi metrics
- * (xem docs/be-spec-ad-metrics.md) sẽ wire thật.
+ * khách hàng thấy hiệu quả. Wire BE (be-spec-ad-metrics.md §A):
+ *   list  GET /portal/ads/campaigns (platform admin → mọi brand)
+ *   write PUT /admin/campaigns/{id}/metrics (idempotent theo ngày).
+ * Lưu ý gap BE: list campaign chưa lọc theo brand_id & item chưa có brand_name
+ * → map brand qua /brands. Xem docs/be-tasks-2026-06-05.md.
  */
 
-import { BarChart3, Megaphone, Pencil, Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { BarChart3, Loader2, Megaphone, Pencil, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import { cn } from '@/lib/cn';
+import { rexerApi } from '@/services/rexer/endpoints';
+import type {
+  PortalAdCampaign,
+  PortalAdMetricsResponse,
+} from '@/services/rexer/types';
 
 import {
   UpdateMetricsDialog,
@@ -31,14 +40,6 @@ interface AdminCampaign {
   metrics: MetricValues;
 }
 
-const Z: MetricValues = {
-  impressions: 0,
-  reach: 0,
-  clicks: 0,
-  spend: 0,
-  conversions: 0,
-};
-
 const STATUS_CHIP: Record<Status, string> = {
   active: 'bg-emerald-100 text-emerald-700',
   paused: 'bg-amber-100 text-amber-700',
@@ -46,64 +47,40 @@ const STATUS_CHIP: Record<Status, string> = {
   draft: 'bg-blue-100 text-blue-700',
 };
 
-const SEED: AdminCampaign[] = [
-  {
-    id: 'cmp_01',
-    name: 'Coca Tết 2026 — Awareness',
-    brand_name: 'ACME Beverage Group',
-    status: 'active',
-    channel: 'Meta',
-    period_from: '2026-05-20',
-    period_to: '2026-06-03',
+const CHANNEL_LABEL: Record<string, string> = {
+  meta: 'Meta',
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  google: 'Google',
+  tiktok: 'TikTok',
+};
+
+function toStatus(s: string): Status {
+  return s === 'active' || s === 'paused' || s === 'completed' ? s : 'draft';
+}
+
+function channelOf(c: PortalAdCampaign): string {
+  const ch = (c.channels ?? [])[0] ?? '';
+  return CHANNEL_LABEL[ch] ?? (ch ? ch : '—');
+}
+
+function metricsFromSummary(m: PortalAdMetricsResponse): {
+  metrics: MetricValues;
+  from?: string;
+  to?: string;
+} {
+  return {
     metrics: {
-      impressions: 1_245_820,
-      reach: 482_140,
-      clicks: 24_812,
-      spend: 184_500_000,
-      conversions: 1_240,
+      impressions: m.summary.impressions,
+      reach: m.summary.reach,
+      clicks: m.summary.clicks,
+      spend: m.summary.spent_amount,
+      conversions: m.summary.conversions,
     },
-  },
-  {
-    id: 'cmp_02',
-    name: 'Fanta Summer — Conversion',
-    brand_name: 'ACME Beverage Group',
-    status: 'paused',
-    channel: 'TikTok',
-    period_from: '2026-04-01',
-    period_to: '2026-04-30',
-    metrics: {
-      impressions: 612_400,
-      reach: 248_120,
-      clicks: 18_402,
-      spend: 98_400_000,
-      conversions: 1_840,
-    },
-  },
-  {
-    id: 'cmp_03',
-    name: 'Compain 01',
-    brand_name: 'ACME Beverage Group',
-    status: 'draft',
-    channel: 'Meta',
-    metrics: { ...Z },
-  },
-  {
-    id: 'cmp_04',
-    name: 'Tekup Payroll — Launch',
-    brand_name: 'Tekup JSC',
-    status: 'active',
-    channel: 'Google',
-    period_from: '2026-05-01',
-    period_to: '2026-05-31',
-    metrics: {
-      impressions: 284_120,
-      reach: 198_200,
-      clicks: 12_400,
-      spend: 42_180_000,
-      conversions: 624,
-    },
-  },
-];
+    from: m.from,
+    to: m.to,
+  };
+}
 
 function fmt(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -115,10 +92,61 @@ function fmtVnd(n: number): string {
 }
 
 export function AdminAdMetricsPage() {
-  const [campaigns, setCampaigns] = useState<AdminCampaign[]>(SEED);
+  const [campaigns, setCampaigns] = useState<AdminCampaign[]>([]);
+  const [loading, setLoading] = useState(true);
   const [brand, setBrand] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<AdminCampaign | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [list, brandsRes] = await Promise.all([
+          rexerApi.portalAds.listCampaigns({ limit: 100 }),
+          rexerApi.brands.list({ limit: 200 }).catch(() => ({ items: [] })),
+        ]);
+        if (cancelled) return;
+        const nameById = new Map(
+          (brandsRes.items ?? []).map(b => [b.id, b.name])
+        );
+        const rows: AdminCampaign[] = (list.items ?? []).map(c => ({
+          id: c.id,
+          name: c.name,
+          brand_name: (c.brand_id && nameById.get(c.brand_id)) || '—',
+          status: toStatus(String(c.status)),
+          channel: channelOf(c),
+          metrics: {
+            impressions: c.impressions ?? 0,
+            reach: 0, // filled from per-campaign metrics below
+            clicks: c.clicks ?? 0,
+            spend: c.spent_amount ?? 0,
+            conversions: c.conversions ?? 0,
+          },
+        }));
+        setCampaigns(rows);
+        setLoading(false);
+        // Enrich reach + period from each campaign's metrics summary.
+        const enriched = await Promise.all(
+          rows.map(async row => {
+            try {
+              const m = await rexerApi.portalAds.getMetrics(row.id);
+              const { metrics, from, to } = metricsFromSummary(m);
+              return { ...row, metrics, period_from: from, period_to: to };
+            } catch {
+              return row;
+            }
+          })
+        );
+        if (!cancelled) setCampaigns(enriched);
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const brands = useMemo(
     () => Array.from(new Set(campaigns.map(c => c.brand_name))),
@@ -132,19 +160,25 @@ export function AdminAdMetricsPage() {
     return true;
   });
 
-  const handleSave = (id: string, u: MetricsUpdate) =>
-    setCampaigns(prev =>
-      prev.map(c =>
-        c.id === id
-          ? {
-              ...c,
-              period_from: u.from,
-              period_to: u.to,
-              metrics: u.total,
-            }
-          : c
-      )
-    );
+  const handleSave = async (id: string, u: MetricsUpdate) => {
+    try {
+      const res = await rexerApi.portalAds.upsertMetrics(id, {
+        from: u.from,
+        to: u.to,
+        mode: u.mode,
+        daily: u.daily,
+      });
+      const { metrics, from, to } = metricsFromSummary(res);
+      setCampaigns(prev =>
+        prev.map(c =>
+          c.id === id ? { ...c, period_from: from, period_to: to, metrics } : c
+        )
+      );
+      toast.success('Đã lưu số liệu');
+    } catch {
+      toast.error('Lưu số liệu thất bại');
+    }
+  };
 
   return (
     <div className='mx-auto w-full max-w-6xl px-6 py-6'>
@@ -161,10 +195,11 @@ export function AdminAdMetricsPage() {
         </div>
       </div>
 
-      <div className='mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2 text-xs text-amber-800'>
-        <span className='mt-0.5 inline-block size-2 shrink-0 rounded-full bg-amber-500' />
-        Local demo — BE chưa ship endpoint ghi metrics. Số liệu nhập chỉ tồn tại
-        trong session (xem docs/be-spec-ad-metrics.md).
+      <div className='mt-3 flex items-start gap-2 rounded-xl border border-sky-200 bg-sky-50/70 px-3 py-2 text-xs text-sky-800'>
+        <span className='mt-0.5 inline-block size-2 shrink-0 rounded-full bg-sky-500' />
+        Số liệu nhập tay lưu qua BE (PUT
+        /admin/campaigns/&#123;id&#125;/metrics) và hiển thị cho brand ở
+        /portal/ads.
       </div>
 
       {/* Filter */}
@@ -208,13 +243,22 @@ export function AdminAdMetricsPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan={8} className='px-4 py-10 text-center'>
+                  <span className='text-content-muted inline-flex items-center gap-2 text-xs'>
+                    <Loader2 className='size-4 animate-spin' /> Đang tải
+                    campaign…
+                  </span>
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
               <tr>
                 <td
                   colSpan={8}
                   className='text-content-muted px-4 py-10 text-center text-xs'
                 >
-                  Không có campaign nào khớp.
+                  Chưa có campaign nào.
                 </td>
               </tr>
             ) : (
@@ -281,8 +325,7 @@ export function AdminAdMetricsPage() {
 
       <p className='text-content-muted text-3xs mt-3 flex items-center gap-1.5'>
         <BarChart3 className='size-3' />
-        Số liệu nhập tay sẽ hiển thị cho brand ở /portal/ads (cùng nguồn khi BE
-        wire).
+        Số liệu nhập tay hiển thị cho brand ở /portal/ads (cùng nguồn dữ liệu).
       </p>
 
       <UpdateMetricsDialog

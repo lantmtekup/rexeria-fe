@@ -3,14 +3,25 @@
 /**
  * Tab "Quảng cáo" trong màn quản lý khách hàng. Mirror /portal/ads nhưng
  * staff-facing & scope theo brand đang xem. Nhân viên Rexer nhập tay metrics
- * campaign (chưa đấu API Meta/Google/TikTok) — tái dùng UpdateMetricsDialog.
- * Local demo; spec ghi thật ở docs/be-spec-ad-metrics.md.
+ * campaign (chưa đấu API Meta/Google/TikTok) qua PUT /admin/campaigns/{id}/
+ * metrics — tái dùng UpdateMetricsDialog.
+ *
+ * ⚠️ Gap BE: GET /portal/ads/campaigns chưa nhận ?brand_id (platform admin lấy
+ * mọi brand) nên ở đây phải lọc client-side theo brand_id === clientId. Tạo
+ * campaign cho brand khác cũng chưa có endpoint staff → chỉ sửa metrics.
+ * Xem docs/be-tasks-2026-06-05.md.
  */
 
 import * as React from 'react';
-import { Megaphone, Pencil, Plus } from 'lucide-react';
+import { Loader2, Megaphone, Pencil } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { cn } from '@/lib/cn';
+import { rexerApi } from '@/services/rexer/endpoints';
+import type {
+  PortalAdCampaign,
+  PortalAdMetricsResponse,
+} from '@/services/rexer/types';
 
 import {
   UpdateMetricsDialog,
@@ -30,14 +41,6 @@ interface Campaign {
   metrics: MetricValues;
 }
 
-const Z: MetricValues = {
-  impressions: 0,
-  reach: 0,
-  clicks: 0,
-  spend: 0,
-  conversions: 0,
-};
-
 const STATUS_CHIP: Record<Status, string> = {
   active: 'bg-emerald-100 text-emerald-700',
   paused: 'bg-amber-100 text-amber-700',
@@ -45,46 +48,55 @@ const STATUS_CHIP: Record<Status, string> = {
   draft: 'bg-blue-100 text-blue-700',
 };
 
-function seedFor(brandName: string): Campaign[] {
-  return [
-    {
-      id: 'cmp_01',
-      name: `${brandName} — Awareness`,
-      status: 'active',
-      channel: 'Meta',
-      period_from: '2026-05-20',
-      period_to: '2026-06-03',
-      metrics: {
-        impressions: 1_245_820,
-        reach: 482_140,
-        clicks: 24_812,
-        spend: 184_500_000,
-        conversions: 1_240,
-      },
+const CHANNEL_LABEL: Record<string, string> = {
+  meta: 'Meta',
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  google: 'Google',
+  tiktok: 'TikTok',
+};
+
+function toStatus(s: string): Status {
+  return s === 'active' || s === 'paused' || s === 'completed' ? s : 'draft';
+}
+
+function channelOf(c: PortalAdCampaign): string {
+  const ch = (c.channels ?? [])[0] ?? '';
+  return CHANNEL_LABEL[ch] ?? (ch ? ch : '—');
+}
+
+function toCampaign(c: PortalAdCampaign): Campaign {
+  return {
+    id: c.id,
+    name: c.name,
+    status: toStatus(String(c.status)),
+    channel: channelOf(c),
+    metrics: {
+      impressions: c.impressions ?? 0,
+      reach: 0,
+      clicks: c.clicks ?? 0,
+      spend: c.spent_amount ?? 0,
+      conversions: c.conversions ?? 0,
     },
-    {
-      id: 'cmp_02',
-      name: `${brandName} — Conversion`,
-      status: 'paused',
-      channel: 'TikTok',
-      period_from: '2026-04-01',
-      period_to: '2026-04-30',
-      metrics: {
-        impressions: 612_400,
-        reach: 248_120,
-        clicks: 18_402,
-        spend: 98_400_000,
-        conversions: 1_840,
-      },
+  };
+}
+
+function metricsFromSummary(m: PortalAdMetricsResponse): {
+  metrics: MetricValues;
+  from?: string;
+  to?: string;
+} {
+  return {
+    metrics: {
+      impressions: m.summary.impressions,
+      reach: m.summary.reach,
+      clicks: m.summary.clicks,
+      spend: m.summary.spent_amount,
+      conversions: m.summary.conversions,
     },
-    {
-      id: 'cmp_03',
-      name: 'Compain 01',
-      status: 'draft',
-      channel: 'Meta',
-      metrics: { ...Z },
-    },
-  ];
+    from: m.from,
+    to: m.to,
+  };
 }
 
 function fmt(n: number): string {
@@ -97,15 +109,14 @@ function fmtVnd(n: number): string {
 }
 
 export function AdsTab({
-  brandName,
+  clientId,
   onCount,
 }: {
-  brandName: string;
+  clientId: string;
   onCount: (n: number) => void;
 }) {
-  const [campaigns, setCampaigns] = React.useState<Campaign[]>(() =>
-    seedFor(brandName)
-  );
+  const [campaigns, setCampaigns] = React.useState<Campaign[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [editing, setEditing] = React.useState<Campaign | null>(null);
 
   const onCountRef = React.useRef(onCount);
@@ -114,120 +125,154 @@ export function AdsTab({
     onCountRef.current(campaigns.length);
   }, [campaigns.length]);
 
-  const handleSave = (id: string, u: MetricsUpdate) =>
-    setCampaigns(prev =>
-      prev.map(c =>
-        c.id === id
-          ? { ...c, period_from: u.from, period_to: u.to, metrics: u.total }
-          : c
-      )
-    );
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await rexerApi.portalAds.listCampaigns({ limit: 100 });
+        // BE gap: no ?brand_id filter → scope client-side to this brand.
+        const mine = (list.items ?? []).filter(c => c.brand_id === clientId);
+        if (cancelled) return;
+        const rows = mine.map(toCampaign);
+        setCampaigns(rows);
+        setLoading(false);
+        const enriched = await Promise.all(
+          rows.map(async row => {
+            try {
+              const m = await rexerApi.portalAds.getMetrics(row.id);
+              const { metrics, from, to } = metricsFromSummary(m);
+              return { ...row, metrics, period_from: from, period_to: to };
+            } catch {
+              return row;
+            }
+          })
+        );
+        if (!cancelled) setCampaigns(enriched);
+      } catch {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId]);
 
-  const addBlank = () =>
-    setCampaigns(prev => [
-      ...prev,
-      {
-        id: `cmp_${prev.length + 1}_${prev.length}`,
-        name: `Campaign ${prev.length + 1}`,
-        status: 'draft',
-        channel: 'Meta',
-        metrics: { ...Z },
-      },
-    ]);
+  const handleSave = async (id: string, u: MetricsUpdate) => {
+    try {
+      const res = await rexerApi.portalAds.upsertMetrics(id, {
+        from: u.from,
+        to: u.to,
+        mode: u.mode,
+        daily: u.daily,
+      });
+      const { metrics, from, to } = metricsFromSummary(res);
+      setCampaigns(prev =>
+        prev.map(c =>
+          c.id === id ? { ...c, period_from: from, period_to: to, metrics } : c
+        )
+      );
+      toast.success('Đã lưu số liệu');
+    } catch {
+      toast.error('Lưu số liệu thất bại');
+    }
+  };
 
   return (
     <div>
-      <div className='border-border flex items-center justify-between border-b px-4 py-3'>
+      <div className='border-border border-b px-4 py-3'>
         <div className='text-content-muted text-xs'>
           Chưa đấu API quảng cáo — nhân viên Rexer nhập tay metrics theo khoảng
-          ngày cho khách thấy hiệu quả.
+          ngày cho khách thấy hiệu quả. Campaign do brand tạo ở portal; staff
+          cập nhật số liệu.
         </div>
-        <button
-          type='button'
-          onClick={addBlank}
-          className='inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-emerald-700'
-        >
-          <Plus className='size-3.5' /> Thêm campaign
-        </button>
       </div>
 
-      <table className='w-full text-sm'>
-        <thead>
-          <tr className='border-border text-content-muted text-2xs border-b text-left tracking-wider uppercase'>
-            <th className='px-4 py-2.5 font-semibold'>Campaign</th>
-            <th className='px-3 py-2.5 font-semibold'>Khoảng</th>
-            <th className='px-3 py-2.5 text-right font-semibold'>Imp</th>
-            <th className='px-3 py-2.5 text-right font-semibold'>Clicks</th>
-            <th className='px-3 py-2.5 text-right font-semibold'>CTR</th>
-            <th className='px-3 py-2.5 text-right font-semibold'>Spend</th>
-            <th className='px-3 py-2.5 text-right font-semibold'>Conv</th>
-            <th className='px-3 py-2.5' />
-          </tr>
-        </thead>
-        <tbody>
-          {campaigns.map(c => {
-            const m = c.metrics;
-            const ctr = m.impressions
-              ? ((m.clicks / m.impressions) * 100).toFixed(2)
-              : '0.00';
-            return (
-              <tr
-                key={c.id}
-                className='border-border/60 hover:bg-muted/40 border-b last:border-0'
-              >
-                <td className='px-4 py-2.5'>
-                  <div className='font-medium'>{c.name}</div>
-                  <div className='text-content-muted text-3xs mt-0.5 flex items-center gap-1.5'>
-                    <span
-                      className={cn(
-                        'rounded px-1.5 py-0.5 font-bold',
-                        STATUS_CHIP[c.status]
-                      )}
+      {loading ? (
+        <div className='text-content-muted flex items-center justify-center gap-2 px-4 py-10 text-sm'>
+          <Loader2 className='size-4 animate-spin' /> Đang tải campaign…
+        </div>
+      ) : campaigns.length === 0 ? (
+        <div className='text-content-muted px-4 py-10 text-center text-sm'>
+          Brand này chưa có campaign nào.
+        </div>
+      ) : (
+        <table className='w-full text-sm'>
+          <thead>
+            <tr className='border-border text-content-muted text-2xs border-b text-left tracking-wider uppercase'>
+              <th className='px-4 py-2.5 font-semibold'>Campaign</th>
+              <th className='px-3 py-2.5 font-semibold'>Khoảng</th>
+              <th className='px-3 py-2.5 text-right font-semibold'>Imp</th>
+              <th className='px-3 py-2.5 text-right font-semibold'>Clicks</th>
+              <th className='px-3 py-2.5 text-right font-semibold'>CTR</th>
+              <th className='px-3 py-2.5 text-right font-semibold'>Spend</th>
+              <th className='px-3 py-2.5 text-right font-semibold'>Conv</th>
+              <th className='px-3 py-2.5' />
+            </tr>
+          </thead>
+          <tbody>
+            {campaigns.map(c => {
+              const m = c.metrics;
+              const ctr = m.impressions
+                ? ((m.clicks / m.impressions) * 100).toFixed(2)
+                : '0.00';
+              return (
+                <tr
+                  key={c.id}
+                  className='border-border/60 hover:bg-muted/40 border-b last:border-0'
+                >
+                  <td className='px-4 py-2.5'>
+                    <div className='font-medium'>{c.name}</div>
+                    <div className='text-content-muted text-3xs mt-0.5 flex items-center gap-1.5'>
+                      <span
+                        className={cn(
+                          'rounded px-1.5 py-0.5 font-bold',
+                          STATUS_CHIP[c.status]
+                        )}
+                      >
+                        {c.status}
+                      </span>
+                      <span>· {c.channel}</span>
+                    </div>
+                  </td>
+                  <td className='text-content-muted text-3xs px-3 py-2.5 font-mono'>
+                    {c.period_from
+                      ? `${c.period_from.slice(5)} → ${c.period_to?.slice(5)}`
+                      : '—'}
+                  </td>
+                  <td className='px-3 py-2.5 text-right font-mono'>
+                    {fmt(m.impressions)}
+                  </td>
+                  <td className='px-3 py-2.5 text-right font-mono'>
+                    {fmt(m.clicks)}
+                  </td>
+                  <td className='text-content-muted px-3 py-2.5 text-right font-mono'>
+                    {ctr}%
+                  </td>
+                  <td className='px-3 py-2.5 text-right font-mono font-semibold'>
+                    {fmtVnd(m.spend)}
+                  </td>
+                  <td className='px-3 py-2.5 text-right font-mono'>
+                    {fmt(m.conversions)}
+                  </td>
+                  <td className='px-3 py-2.5 text-right'>
+                    <button
+                      type='button'
+                      onClick={() => setEditing(c)}
+                      className='border-border text-content-muted hover:border-foreground hover:text-foreground inline-flex items-center gap-1 rounded-lg border bg-white px-2.5 py-1 text-xs font-medium'
                     >
-                      {c.status}
-                    </span>
-                    <span>· {c.channel}</span>
-                  </div>
-                </td>
-                <td className='text-content-muted text-3xs px-3 py-2.5 font-mono'>
-                  {c.period_from
-                    ? `${c.period_from.slice(5)} → ${c.period_to?.slice(5)}`
-                    : '—'}
-                </td>
-                <td className='px-3 py-2.5 text-right font-mono'>
-                  {fmt(m.impressions)}
-                </td>
-                <td className='px-3 py-2.5 text-right font-mono'>
-                  {fmt(m.clicks)}
-                </td>
-                <td className='text-content-muted px-3 py-2.5 text-right font-mono'>
-                  {ctr}%
-                </td>
-                <td className='px-3 py-2.5 text-right font-mono font-semibold'>
-                  {fmtVnd(m.spend)}
-                </td>
-                <td className='px-3 py-2.5 text-right font-mono'>
-                  {fmt(m.conversions)}
-                </td>
-                <td className='px-3 py-2.5 text-right'>
-                  <button
-                    type='button'
-                    onClick={() => setEditing(c)}
-                    className='border-border text-content-muted hover:border-foreground hover:text-foreground inline-flex items-center gap-1 rounded-lg border bg-white px-2.5 py-1 text-xs font-medium'
-                  >
-                    <Pencil className='size-3' /> Cập nhật
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                      <Pencil className='size-3' /> Cập nhật
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
 
       <div className='text-content-muted text-3xs flex items-center gap-1.5 px-4 py-3'>
         <Megaphone className='size-3' />
-        Số liệu nhập tay sẽ hiển thị cho brand ở /portal/ads (cùng nguồn khi BE
-        wire).
+        Số liệu nhập tay hiển thị cho brand ở /portal/ads (cùng nguồn dữ liệu).
       </div>
 
       <UpdateMetricsDialog

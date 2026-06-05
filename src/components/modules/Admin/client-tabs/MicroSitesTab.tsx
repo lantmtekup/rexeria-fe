@@ -3,12 +3,20 @@
 /**
  * Tab "Microsite" trong màn quản lý khách hàng. Mirror /portal/micro-sites —
  * Rexer code site riêng cho khách (a.com, b.com…); platform chỉ QUẢN LÝ danh
- * sách + thông tin chung + views. Staff đăng ký/sửa cho khách. Local demo;
- * BE chưa ship /portal/micro-sites + analytics theo micro_site_id.
+ * sách + thông tin chung + views. Staff đăng ký/sửa cho khách.
+ * BE: spec §B — list /portal/micro-sites?brand_id; write /admin/micro-sites.
  */
 
 import * as React from 'react';
-import { ExternalLink, Globe, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+  ExternalLink,
+  Globe,
+  Layers,
+  Loader2,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
@@ -22,50 +30,29 @@ import {
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 import { cn } from '@/lib/cn';
+import { rexerApi } from '@/services/rexer/endpoints';
+import type { MicroSite, MicroSiteStatus } from '@/services/rexer/types';
 
-type SiteStatus = 'live' | 'dev' | 'paused';
+import { MicroSiteManageDialog } from './MicroSiteManageDialog';
 
-interface MicroSite {
-  id: string;
+interface MicroSiteForm {
   name: string;
   url: string;
-  status: SiteStatus;
-  description?: string;
-  views_30d: number;
+  status: MicroSiteStatus;
+  description: string;
 }
 
-const STATUS_META: Record<SiteStatus, { label: string; chip: string }> = {
+const STATUS_META: Record<MicroSiteStatus, { label: string; chip: string }> = {
   live: { label: 'Live', chip: 'bg-emerald-100 text-emerald-700' },
   dev: { label: 'Đang dev', chip: 'bg-amber-100 text-amber-700' },
   paused: { label: 'Tạm dừng', chip: 'bg-muted text-content-muted' },
 };
 
-const SEED: MicroSite[] = [
-  {
-    id: 'ms_abce',
-    name: 'ABCe',
-    url: 'https://abce.com',
-    status: 'live',
-    description: 'Micro-site thương hiệu ABCe — landing + catalog + booking.',
-    views_30d: 482_140,
-  },
-  {
-    id: 'ms_tet',
-    name: 'Coca Tết 2026',
-    url: 'https://tet.coca.vn',
-    status: 'live',
-    description: 'Campaign Tết — mini-site nhiều trang + lì xì game.',
-    views_30d: 720_400,
-  },
-  {
-    id: 'ms_sport',
-    name: 'Sport 2026',
-    url: '',
-    status: 'dev',
-    description: 'Cross-brand sự kiện thể thao 2026 — đang build.',
-    views_30d: 0,
-  },
-];
+function statusMeta(s: string) {
+  return STATUS_META[
+    (s as MicroSiteStatus) in STATUS_META ? (s as MicroSiteStatus) : 'dev'
+  ];
+}
 
 function fmt(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -73,14 +60,55 @@ function fmt(n: number): string {
   return String(n);
 }
 
-export function MicroSitesTab({ onCount }: { onCount: (n: number) => void }) {
-  const [sites, setSites] = React.useState<MicroSite[]>(SEED);
+export function MicroSitesTab({
+  clientId,
+  onCount,
+}: {
+  clientId: string;
+  onCount: (n: number) => void;
+}) {
+  const [sites, setSites] = React.useState<MicroSite[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [editing, setEditing] = React.useState<MicroSite | null>(null);
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [managing, setManaging] = React.useState<MicroSite | null>(null);
+  // Page-count badges — fetched per site from /portal/micro-sites/{id}/pages.
+  const [pageCounts, setPageCounts] = React.useState<Record<string, number>>(
+    {}
+  );
+
+  const refreshPageCounts = React.useCallback(async (list: MicroSite[]) => {
+    const entries = await Promise.all(
+      list.map(async s => {
+        try {
+          const pages = await rexerApi.microSites.listPages(s.id);
+          return [s.id, pages.length] as const;
+        } catch {
+          return [s.id, 0] as const;
+        }
+      })
+    );
+    setPageCounts(Object.fromEntries(entries));
+  }, []);
 
   const onCountRef = React.useRef(onCount);
   onCountRef.current = onCount;
   React.useEffect(() => onCountRef.current(sites.length), [sites.length]);
+
+  const reload = React.useCallback(() => {
+    setLoading(true);
+    rexerApi.microSites
+      .list({ brand_id: clientId, limit: 100 })
+      .then(res => {
+        const items = res.items ?? [];
+        setSites(items);
+        refreshPageCounts(items);
+      })
+      .catch(() => toast.error('Không tải được danh sách micro-site'))
+      .finally(() => setLoading(false));
+  }, [clientId, refreshPageCounts]);
+
+  React.useEffect(() => reload(), [reload]);
 
   const openNew = () => {
     setEditing(null);
@@ -91,26 +119,35 @@ export function MicroSitesTab({ onCount }: { onCount: (n: number) => void }) {
     setDialogOpen(true);
   };
 
-  const handleSave = (data: Omit<MicroSite, 'id' | 'views_30d'>) => {
-    if (editing) {
-      setSites(prev =>
-        prev.map(s => (s.id === editing.id ? { ...s, ...data } : s))
-      );
-      toast.success(`Đã cập nhật "${data.name}"`);
-    } else {
-      setSites(prev => [
-        ...prev,
-        { ...data, id: `ms_${prev.length}_${prev.length + 1}`, views_30d: 0 },
-      ]);
-      toast.success(`Đã thêm micro-site "${data.name}"`);
+  const handleSave = async (data: MicroSiteForm) => {
+    try {
+      if (editing) {
+        const updated = await rexerApi.microSites.update(editing.id, data);
+        setSites(prev => prev.map(s => (s.id === editing.id ? updated : s)));
+        toast.success(`Đã cập nhật "${updated.name}"`);
+      } else {
+        const created = await rexerApi.microSites.create({
+          brand_id: clientId,
+          ...data,
+        });
+        setSites(prev => [created, ...prev]);
+        toast.success(`Đã thêm micro-site "${created.name}"`);
+      }
+      setDialogOpen(false);
+    } catch {
+      toast.error('Lưu thất bại — kiểm tra lại thông tin');
     }
-    setDialogOpen(false);
   };
 
-  const handleDelete = (s: MicroSite) => {
+  const handleDelete = async (s: MicroSite) => {
     if (!window.confirm(`Xoá micro-site "${s.name}"?`)) return;
-    setSites(prev => prev.filter(x => x.id !== s.id));
-    toast.success('Đã xoá');
+    try {
+      await rexerApi.microSites.remove(s.id);
+      setSites(prev => prev.filter(x => x.id !== s.id));
+      toast.success('Đã xoá');
+    } catch {
+      toast.error('Xoá thất bại');
+    }
   };
 
   return (
@@ -129,7 +166,11 @@ export function MicroSitesTab({ onCount }: { onCount: (n: number) => void }) {
         </button>
       </div>
 
-      {sites.length === 0 ? (
+      {loading ? (
+        <div className='text-content-muted flex items-center justify-center gap-2 px-4 py-10 text-sm'>
+          <Loader2 className='size-4 animate-spin' /> Đang tải…
+        </div>
+      ) : sites.length === 0 ? (
         <div className='text-content-muted px-4 py-10 text-center text-sm'>
           Khách chưa có micro-site nào — bấm <strong>Thêm micro-site</strong>.
         </div>
@@ -151,10 +192,10 @@ export function MicroSitesTab({ onCount }: { onCount: (n: number) => void }) {
                   <span
                     className={cn(
                       'text-3xs rounded-full px-2 py-0.5 font-bold tracking-wider uppercase',
-                      STATUS_META[s.status].chip
+                      statusMeta(s.status).chip
                     )}
                   >
-                    {STATUS_META[s.status].label}
+                    {statusMeta(s.status).label}
                   </span>
                 </div>
                 {s.url ? (
@@ -186,6 +227,19 @@ export function MicroSitesTab({ onCount }: { onCount: (n: number) => void }) {
               <div className='flex shrink-0 items-center gap-1'>
                 <button
                   type='button'
+                  onClick={() => setManaging(s)}
+                  className='border-border text-content-muted hover:border-foreground hover:text-foreground inline-flex items-center gap-1 rounded-md border bg-white px-2 py-1 text-xs font-medium'
+                  aria-label='Quản lý page & số liệu'
+                >
+                  <Layers className='size-3.5' /> Quản lý
+                  {pageCounts[s.id] ? (
+                    <span className='bg-muted text-3xs ml-0.5 rounded-full px-1.5 py-0.5 font-bold'>
+                      {pageCounts[s.id]}
+                    </span>
+                  ) : null}
+                </button>
+                <button
+                  type='button'
                   onClick={() => openEdit(s)}
                   className='text-content-muted hover:bg-muted hover:text-foreground inline-flex size-7 items-center justify-center rounded-md'
                   aria-label='Sửa'
@@ -212,6 +266,16 @@ export function MicroSitesTab({ onCount }: { onCount: (n: number) => void }) {
         onOpenChange={setDialogOpen}
         onSave={handleSave}
       />
+
+      {managing && (
+        <MicroSiteManageDialog
+          open={!!managing}
+          siteId={managing.id}
+          siteName={managing.name}
+          onOpenChange={o => !o && setManaging(null)}
+          onChanged={() => refreshPageCounts(sites)}
+        />
+      )}
     </div>
   );
 }
@@ -225,27 +289,36 @@ function MicroSiteDialog({
   open: boolean;
   editing: MicroSite | null;
   onOpenChange: (o: boolean) => void;
-  onSave: (data: Omit<MicroSite, 'id' | 'views_30d'>) => void;
+  onSave: (data: MicroSiteForm) => void | Promise<void>;
 }) {
   const [name, setName] = React.useState('');
   const [url, setUrl] = React.useState('');
-  const [status, setStatus] = React.useState<SiteStatus>('dev');
+  const [status, setStatus] = React.useState<MicroSiteStatus>('dev');
   const [description, setDescription] = React.useState('');
+  const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
     if (!open) return;
     setName(editing?.name ?? '');
     setUrl(editing?.url ?? '');
-    setStatus(editing?.status ?? 'dev');
+    setStatus((editing?.status as MicroSiteStatus) ?? 'dev');
     setDescription(editing?.description ?? '');
+    setSaving(false);
   }, [open, editing]);
 
-  const submit = () => {
+  const submit = async () => {
     if (!name.trim()) {
       toast.error('Nhập tên micro-site');
       return;
     }
-    onSave({ name: name.trim(), url: url.trim(), status, description });
+    setSaving(true);
+    await onSave({
+      name: name.trim(),
+      url: url.trim(),
+      status,
+      description: description.trim(),
+    });
+    setSaving(false);
   };
 
   return (
@@ -324,11 +397,12 @@ function MicroSiteDialog({
             variant='pill-light'
             size='sm'
             onClick={() => onOpenChange(false)}
+            disabled={saving}
           >
             Huỷ
           </Button>
-          <Button variant='pill' size='sm' onClick={submit}>
-            {editing ? 'Lưu' : 'Thêm site'}
+          <Button variant='pill' size='sm' onClick={submit} disabled={saving}>
+            {saving ? 'Đang lưu…' : editing ? 'Lưu' : 'Thêm site'}
           </Button>
         </DialogFooter>
       </DialogContent>

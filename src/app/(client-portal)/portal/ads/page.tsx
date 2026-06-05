@@ -225,17 +225,42 @@ export default function PortalAdsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [platformFilter, setPlatformFilter] = useState<PlatformFilter>('all');
   const [campaigns, setCampaigns] = useState<Campaign[]>(FAKE_CAMPAIGNS);
+  const [live, setLive] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     rexerApi.portalAds
       .listCampaigns({ limit: 50 })
-      .then(res => {
-        if (cancelled) return;
-        if (res.items && res.items.length > 0) {
-          setCampaigns(res.items.map(beCampaignToLocal));
-        }
+      .then(async res => {
+        if (cancelled || !res.items || res.items.length === 0) return;
+        setCampaigns(res.items.map(beCampaignToLocal));
+        setLive(true);
+        // Enrich with manual metrics (reach + daily trend) per campaign. The
+        // list endpoint only carries aggregate impressions/clicks/spend.
+        const withMetrics = await Promise.all(
+          res.items.map(async c => {
+            const base = beCampaignToLocal(c);
+            try {
+              const m = await rexerApi.portalAds.getMetrics(c.id);
+              const daily = m.daily ?? [];
+              return {
+                ...base,
+                impressions: m.summary.impressions || base.impressions,
+                clicks: m.summary.clicks || base.clicks,
+                spend_vnd: m.summary.spent_amount || base.spend_vnd,
+                conversions: m.summary.conversions || base.conversions,
+                reach: m.summary.reach,
+                trend: daily
+                  .slice(-14)
+                  .map(d => Math.round(d.spent_amount / 1_000_000)),
+              };
+            } catch {
+              return base;
+            }
+          })
+        );
+        if (!cancelled) setCampaigns(withMetrics);
       })
       .catch(() => {
         // keep FAKE fallback silently when BE rejects (e.g. admin no scope)
@@ -317,16 +342,28 @@ export default function PortalAdsPage() {
         onCreated={c => setCampaigns(prev => [beCampaignToLocal(c), ...prev])}
       />
 
-      <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800'>
-        <span className='mt-0.5 inline-block size-2 shrink-0 rounded-full bg-amber-500' />
-        <div>
-          <span className='font-semibold'>UI Demo · Fake data</span>
-          <span className='ml-2 text-amber-700'>
-            — Cần tích hợp Meta Marketing API + Google Ads API + TikTok Ads API
-            (BE chưa có).
-          </span>
+      {live ? (
+        <div className='mt-4 flex items-start gap-2 rounded-xl border border-sky-200 bg-sky-50/60 px-3 py-2 text-xs text-sky-800'>
+          <span className='mt-0.5 inline-block size-2 shrink-0 rounded-full bg-sky-500' />
+          <div>
+            <span className='font-semibold'>Số liệu nhập tay bởi Rexer</span>
+            <span className='ml-2 text-sky-700'>
+              — Chưa đấu trực tiếp Meta/Google/TikTok; đội ngũ Rexer cập nhật số
+              liệu theo khoảng ngày.
+            </span>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800'>
+          <span className='mt-0.5 inline-block size-2 shrink-0 rounded-full bg-amber-500' />
+          <div>
+            <span className='font-semibold'>UI Demo · Dữ liệu mẫu</span>
+            <span className='ml-2 text-amber-700'>
+              — Chưa có campaign thật cho thương hiệu này.
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* KPI grid 8 cards */}
       <div className='mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4'>

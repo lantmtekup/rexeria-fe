@@ -138,6 +138,20 @@ import type {
   PortalAdChannelListResponse,
   CreatePortalAdCampaignRequest,
   UpdatePortalAdCampaignRequest,
+  PortalAdMetricsResponse,
+  UpsertAdMetricsRequest,
+  // Micro-sites (spec §B)
+  MicroSite,
+  MicroSiteListResponse,
+  MicroSiteAnalytics,
+  CreateMicroSiteRequest,
+  UpdateMicroSiteRequest,
+  MicroSitePage,
+  CreateMicroSitePageRequest,
+  UpdateMicroSitePageRequest,
+  UpsertMicroSiteMetricsRequest,
+  // Public page (published render source)
+  PublicPageResponse,
   // Server-backed saved blocks
   SavedBlockListResponse,
   // Admin block-types catalog
@@ -1221,6 +1235,112 @@ export const rexerApi = {
       rx<{ message?: string }>(`/portal/ads/campaigns/${id}`, {
         method: 'DELETE',
       }),
+    // Brand-scoped read of manually-entered metrics (summary + daily, incl. reach).
+    getMetrics: (id: string, query?: { from?: string; to?: string }) =>
+      rx<PortalAdMetricsResponse>(`/portal/ads/campaigns/${id}/metrics`, {
+        query,
+      }),
+    // Staff-only upsert of daily metrics (idempotent per date). Route lives under
+    // /admin (staff scope) per spec §A; brand-bound staff limited to own brand.
+    upsertMetrics: (id: string, body: UpsertAdMetricsRequest) =>
+      rx<PortalAdMetricsResponse>(`/admin/campaigns/${id}/metrics`, {
+        method: 'PUT',
+        body,
+      }),
+  },
+
+  // ── Micro-sites (spec §B) ─────────────────────────────────────────────
+  // Reads brand-scoped (staff pass ?brand_id); writes staff-only. BE wraps the
+  // single site in `{ micro_site }`; list/analytics are flat.
+  microSites: {
+    list: (query?: {
+      brand_id?: string;
+      workspace_id?: string;
+      status?: string;
+      page?: number;
+      limit?: number;
+    }) => rx<MicroSiteListResponse>('/portal/micro-sites', { query }),
+    get: async (id: string): Promise<MicroSite> => {
+      const r = await rx<{ micro_site: MicroSite }>(
+        `/portal/micro-sites/${id}`
+      );
+      return r.micro_site;
+    },
+    analytics: (id: string, query?: { from?: string; to?: string }) =>
+      rx<MicroSiteAnalytics>(`/portal/micro-sites/${id}/analytics`, { query }),
+    create: async (body: CreateMicroSiteRequest): Promise<MicroSite> => {
+      const r = await rx<{ micro_site: MicroSite }>('/admin/micro-sites', {
+        method: 'POST',
+        body,
+      });
+      return r.micro_site;
+    },
+    update: async (
+      id: string,
+      body: UpdateMicroSiteRequest
+    ): Promise<MicroSite> => {
+      const r = await rx<{ micro_site: MicroSite }>(
+        `/admin/micro-sites/${id}`,
+        {
+          method: 'PATCH',
+          body,
+        }
+      );
+      return r.micro_site;
+    },
+    remove: (id: string) =>
+      rx<{ archived: boolean }>(`/admin/micro-sites/${id}`, {
+        method: 'DELETE',
+      }),
+
+    // ── Pages (managed list, spec §A) ──────────────────────────────────
+    listPages: async (id: string): Promise<MicroSitePage[]> => {
+      const r = await rx<{ items: MicroSitePage[] }>(
+        `/portal/micro-sites/${id}/pages`
+      );
+      return r.items ?? [];
+    },
+    createPage: async (
+      id: string,
+      body: CreateMicroSitePageRequest
+    ): Promise<MicroSitePage> => {
+      const r = await rx<{ page: MicroSitePage }>(
+        `/admin/micro-sites/${id}/pages`,
+        { method: 'POST', body }
+      );
+      return r.page;
+    },
+    updatePage: async (
+      id: string,
+      pageId: string,
+      body: UpdateMicroSitePageRequest
+    ): Promise<MicroSitePage> => {
+      const r = await rx<{ page: MicroSitePage }>(
+        `/admin/micro-sites/${id}/pages/${pageId}`,
+        { method: 'PATCH', body }
+      );
+      return r.page;
+    },
+    removePage: (id: string, pageId: string) =>
+      rx<{ archived: boolean }>(`/admin/micro-sites/${id}/pages/${pageId}`, {
+        method: 'DELETE',
+      }),
+
+    // ── Manual metrics (staff fallback, spec §B) ───────────────────────
+    // Returns the refreshed merged analytics (ingest wins, manual fallback).
+    upsertMetrics: (id: string, body: UpsertMicroSiteMetricsRequest) =>
+      rx<MicroSiteAnalytics>(`/admin/micro-sites/${id}/metrics`, {
+        method: 'PUT',
+        body,
+      }),
+  },
+
+  // ── Public pages (published render source) ────────────────────────────
+  // Same source the live /p/{slug} page renders from — its canvas_blueprint
+  // matches what analytics events were tracked against.
+  publicPages: {
+    get: (slug: string) =>
+      rx<PublicPageResponse>(`/public/pages/${encodeURIComponent(slug)}`),
   },
 
   // ── Staff inbox (admin/staff task queue) ──────────────────────────────
