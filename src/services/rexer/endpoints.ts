@@ -152,6 +152,12 @@ import type {
   UpsertMicroSiteMetricsRequest,
   // Public page (published render source)
   PublicPageResponse,
+  // Tracking keys
+  TrackingKey,
+  TrackingKeyListResponse,
+  CreateTrackingKeyRequest,
+  UpdateTrackingKeyRequest,
+  CreateTrackingKeyResponse,
   // Server-backed saved blocks
   SavedBlockListResponse,
   // Admin block-types catalog
@@ -1341,6 +1347,38 @@ export const rexerApi = {
   publicPages: {
     get: (slug: string) =>
       rx<PublicPageResponse>(`/public/pages/${encodeURIComponent(slug)}`),
+  },
+
+  // ── Tracking keys (brand analytics ingest credential) ─────────────────
+  // Read = priv (brand user của brand đó, hoặc staff kèm ?brand_id).
+  // Write = internal (staff/admin only). Plaintext `key` chỉ trả ở create +
+  // rotate. Key revoked KHÔNG xuất hiện trong list.
+  trackingKeys: {
+    list: (query?: { brand_id?: string; page?: number; limit?: number }) =>
+      rx<TrackingKeyListResponse>('/portal/tracking-keys', { query }),
+    create: (body: CreateTrackingKeyRequest) =>
+      rx<CreateTrackingKeyResponse>('/admin/tracking-keys', {
+        method: 'POST',
+        body,
+      }),
+    update: async (
+      id: string,
+      body: UpdateTrackingKeyRequest
+    ): Promise<TrackingKey> => {
+      const r = await rx<{ tracking_key: TrackingKey }>(
+        `/admin/tracking-keys/${id}`,
+        { method: 'PATCH', body }
+      );
+      return r.tracking_key;
+    },
+    rotate: (id: string) =>
+      rx<CreateTrackingKeyResponse>(`/admin/tracking-keys/${id}/rotate`, {
+        method: 'POST',
+      }),
+    revoke: (id: string) =>
+      rx<{ revoked: boolean }>(`/admin/tracking-keys/${id}`, {
+        method: 'DELETE',
+      }),
   },
 
   // ── Staff inbox (admin/staff task queue) ──────────────────────────────

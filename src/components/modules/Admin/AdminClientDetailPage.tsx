@@ -21,6 +21,7 @@ import {
   Check,
   Copy,
   Globe,
+  KeyRound,
   LayoutTemplate,
   Loader2,
   Mail,
@@ -44,6 +45,7 @@ import { AdminAddLandingForClientDialog } from './AdminAddLandingForClientDialog
 import { AdsTab } from './client-tabs/AdsTab';
 import { CurateTab } from './client-tabs/CurateTab';
 import { MicroSitesTab } from './client-tabs/MicroSitesTab';
+import { TrackingKeysTab } from './client-tabs/TrackingKeysTab';
 import type {
   Block,
   Brand,
@@ -68,7 +70,8 @@ type TabKey =
   | 'members'
   | 'ads'
   | 'microsites'
-  | 'curate';
+  | 'curate'
+  | 'tracking-keys';
 
 const TABS: { id: TabKey; label: string; icon: React.ElementType }[] = [
   { id: 'workspaces', label: 'Workspaces', icon: Building2 },
@@ -79,6 +82,7 @@ const TABS: { id: TabKey; label: string; icon: React.ElementType }[] = [
   { id: 'ads', label: 'Quảng cáo', icon: Megaphone },
   { id: 'microsites', label: 'Microsite', icon: Globe },
   { id: 'curate', label: 'Curate', icon: MousePointerClick },
+  { id: 'tracking-keys', label: 'Tracking keys', icon: KeyRound },
 ];
 
 const STATUS_CHIP: Record<string, string> = {
@@ -97,6 +101,7 @@ interface Counts {
   ads?: number;
   microsites?: number;
   curate?: number;
+  'tracking-keys'?: number;
 }
 
 export function AdminClientDetailPage({ clientId }: Props) {
@@ -359,6 +364,12 @@ export function AdminClientDetailPage({ clientId }: Props) {
         )}
         {tab === 'curate' && (
           <CurateTab onCount={n => setCounts(c => ({ ...c, curate: n }))} />
+        )}
+        {tab === 'tracking-keys' && (
+          <TrackingKeysTab
+            clientId={clientId}
+            onCount={n => setCounts(c => ({ ...c, 'tracking-keys': n }))}
+          />
         )}
       </section>
     </div>

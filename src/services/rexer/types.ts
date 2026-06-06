@@ -2155,6 +2155,48 @@ export interface UpsertMicroSiteMetricsRequest {
   daily: UpsertMicroSiteMetricDaily[];
 }
 
+// ── Tracking keys (brand analytics ingest credential) ────────────────────
+// Credential `pk_live_…` cho website ngoài gửi analytics về ReXeR, scope theo
+// brand. Plaintext chỉ hiện 1 lần lúc create/rotate. BE migration 000021.
+export type TrackingKeyStatus = 'active' | 'disabled' | 'revoked';
+export interface TrackingKey {
+  id: string;
+  brand_id: string;
+  workspace_id?: string | null;
+  name: string;
+  key_prefix: string; // phần đầu hiển thị an toàn (vd pk_live_6dQCfHUN)
+  allowed_origins: string[]; // [] = mọi origin
+  status: TrackingKeyStatus | string;
+  last_used_at?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+  revoked_at?: string | null;
+}
+export interface TrackingKeyListResponse {
+  items: TrackingKey[];
+  total: number;
+  page: number;
+  limit: number;
+}
+export interface CreateTrackingKeyRequest {
+  brand_id: string;
+  workspace_id?: string | null;
+  name: string;
+  allowed_origins: string[];
+}
+export interface UpdateTrackingKeyRequest {
+  name?: string;
+  allowed_origins?: string[];
+  status?: 'active' | 'disabled';
+}
+// Trả về CHỈ ở create + rotate — `key` là plaintext, hiện 1 lần duy nhất.
+export interface CreateTrackingKeyResponse {
+  tracking_key: TrackingKey;
+  key: string;
+  snippet: string;
+}
+
 // ── Public page (published render source) ────────────────────────────────
 // GET /v1/public/pages/{slug} — the published release. This is the canonical
 // source the live /p/{slug} page renders from AND what analytics events are
