@@ -170,12 +170,15 @@ export function ProductFormModal({
   onClose,
   onSave,
   liveBE = false,
+  brandId,
 }: {
   open: boolean;
   product: PortalProduct | null; // null = create mode
   onClose: () => void;
   onSave: (p: PortalProduct) => void;
   liveBE?: boolean;
+  /** Admin tạo hộ brand → gắn brand_id vào product mới (portal bỏ trống). */
+  brandId?: string;
 }) {
   const [value, setValue] = useState<ProductInformationValue>(
     emptyProductInformation()
@@ -265,7 +268,9 @@ export function ProductFormModal({
         });
         const result = isEdit
           ? await updateProductRemote(product!.id, payload)
-          : await createProductRemote(payload);
+          : await createProductRemote(
+              brandId ? { ...payload, brand_id: brandId } : payload
+            );
 
         if (result) {
           next = { ...editorToPortal(value, product, thumbUrl), ...result };
