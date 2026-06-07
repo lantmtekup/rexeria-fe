@@ -30,7 +30,10 @@ import {
   Globe,
   LayoutGrid,
   LayoutTemplate,
+  Link2,
   MoreVertical,
+  Pencil,
+  Plus,
   RefreshCwIcon,
   RotateCcw,
   Search,
@@ -44,6 +47,10 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
 import { DomainSettingsDialog } from '@/components/dialogs/DomainSettingsDialog';
+import {
+  CreateLandingDialog,
+  EditLandingDialog,
+} from '@/components/dialogs/LandingFormDialog';
 import { Input } from '@/components/atoms/input';
 import {
   Table,
@@ -63,13 +70,10 @@ type TypeFilter = 'all' | PageType;
 type Sort = '-updated_at' | '-created_at' | 'created_at' | 'name';
 type View = 'grid' | 'table';
 
-// "Mở landing" navigates to the admin canvas editor. Route
-// `/admin/landing-pages/[id]` accepts:
-//   • slug (string)         → lookup page by slug → template
-//   • template UUID         → render directly
-//   • page UUID (fallback)  → lookup page by id → template
-// Pages without slug (vd "Landing Hero v1 - Copy" tạo qua dialog mà admin
-// không điền slug) vẫn mở được — link dùng page.id.
+// Admin canvas editor route `/admin/landing-pages/[id]` — accepts slug, template
+// UUID, hoặc page UUID (fallback khi page chưa có slug). Dùng cho "Mở editor"
+// (kebab) + nút primary khi page chưa publish. Trang LIVE cho user xem là
+// `/p/{slug}` (published) hoặc `external_url` — xem OpenLandingButton.
 function publicLandingUrl(slugOrId: string): string {
   return `/admin/landing-pages/${slugOrId}`;
 }
@@ -103,7 +107,13 @@ const TYPE_CHIP: Record<string, string> = {
 
 const LIMIT = 20;
 
-type PageAction = 'publish' | 'unpublish' | 'archive' | 'restore' | 'domain';
+type PageAction =
+  | 'publish'
+  | 'unpublish'
+  | 'archive'
+  | 'restore'
+  | 'domain'
+  | 'edit';
 
 export function AdminCanvasTemplatesPage() {
   const [items, setItems] = React.useState<Page[]>([]);
@@ -121,6 +131,8 @@ export function AdminCanvasTemplatesPage() {
   const [page, setPage] = React.useState(1);
   const [view, setView] = React.useState<View>('table');
   const [domainPage, setDomainPage] = React.useState<Page | null>(null);
+  const [createOpen, setCreateOpen] = React.useState(false);
+  const [editPage, setEditPage] = React.useState<Page | null>(null);
   // Bulk selection — chỉ available ở table view. BE pages chỉ có
   // soft-delete (DELETE = archive); hard delete chưa expose. Bulk
   // action = bulk archive (status='archived'). Restore qua kebab.
@@ -310,6 +322,10 @@ export function AdminCanvasTemplatesPage() {
       setDomainPage(page);
       return;
     }
+    if (action === 'edit') {
+      setEditPage(page);
+      return;
+    }
     const label = {
       publish: 'Publish',
       unpublish: 'Unpublish',
@@ -379,6 +395,10 @@ export function AdminCanvasTemplatesPage() {
               className={cn('size-4', loading && 'animate-spin')}
             />
             Refresh
+          </Button>
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className='size-4' />
+            Tạo landing
           </Button>
         </div>
       </div>
@@ -537,8 +557,14 @@ export function AdminCanvasTemplatesPage() {
           <p className='text-content-muted mt-1 text-xs'>
             {hasActiveFilters
               ? 'Thử đổi từ khoá hoặc clear filter.'
-              : 'Vào /admin/templates → click "Sử dụng" để tạo landing đầu tiên.'}
+              : 'Bấm "Tạo landing" để dựng từ template hoặc trỏ link domain.'}
           </p>
+          {!hasActiveFilters && (
+            <Button className='mt-4' onClick={() => setCreateOpen(true)}>
+              <Plus className='size-4' />
+              Tạo landing
+            </Button>
+          )}
         </div>
       ) : view === 'grid' ? (
         <GridView
@@ -629,6 +655,22 @@ export function AdminCanvasTemplatesPage() {
           page={domainPage}
         />
       )}
+
+      <CreateLandingDialog
+        open={createOpen}
+        brands={brands}
+        onOpenChange={setCreateOpen}
+        onCreated={() => load()}
+      />
+      <EditLandingDialog
+        open={!!editPage}
+        page={editPage}
+        onOpenChange={o => !o && setEditPage(null)}
+        onUpdated={updated => {
+          setItems(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+          setEditPage(null);
+        }}
+      />
     </div>
   );
 }
@@ -710,7 +752,12 @@ function PageCard({
         <h3 className='text-foreground line-clamp-1 text-sm font-semibold'>
           {item.name}
         </h3>
-        {item.slug ? (
+        {item.external_url ? (
+          <span className='text-3xs text-content-muted line-clamp-1 inline-flex items-center gap-1 font-mono'>
+            <Link2 className='size-3 shrink-0 text-indigo-500' />
+            {item.external_url.replace(/^https?:\/\//, '')}
+          </span>
+        ) : item.slug ? (
           <code className='text-3xs text-content-muted line-clamp-1 font-mono'>
             /p/{item.slug}
           </code>
@@ -804,6 +851,26 @@ function PageActionMenu({
       </button>
       {open && (
         <div className='border-border absolute top-full right-0 z-30 mt-1 w-48 overflow-hidden rounded-lg border bg-white shadow-lg'>
+          {/* Mở editor (canvas) — chỉ landing dựng từ template (không external). */}
+          {!page.external_url && (
+            <Link
+              href={`/admin/landing-pages/${page.slug || page.id}`}
+              onClick={() => setOpen(false)}
+              className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
+            >
+              <LayoutTemplate className='size-3.5 text-violet-600' />
+              Mở editor (canvas)
+            </Link>
+          )}
+          {/* Sửa thông tin (tên / slug / link) — mọi status. */}
+          <button
+            type='button'
+            onClick={choose('edit')}
+            className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
+          >
+            <Pencil className='text-content-muted size-3.5' />
+            Sửa thông tin
+          </button>
           {/* Analytics — always available regardless of status. */}
           <Link
             href={`/admin/landing-pages/${page.slug || page.id}/analytics`}
@@ -889,18 +956,48 @@ function OpenLandingButton({
     variant === 'primary'
       ? 'bg-zinc-900 text-white hover:bg-zinc-700'
       : 'border border-border bg-white text-content-muted hover:bg-muted';
+
+  // External landing → mở thẳng URL ngoài (tab mới).
+  if (page.external_url) {
+    return (
+      <a
+        href={page.external_url}
+        target='_blank'
+        rel='noreferrer'
+        className={cn(baseCls, enabledCls)}
+        title={`Mở link ngoài: ${page.external_url}`}
+      >
+        <ExternalLink className='size-3.5' />
+        Mở link
+      </a>
+    );
+  }
+
+  // Template landing đã publish + có slug → xem TRANG LIVE /p/{slug} (tab mới).
+  if (page.status === 'published' && page.slug) {
+    return (
+      <a
+        href={`/p/${page.slug}`}
+        target='_blank'
+        rel='noreferrer'
+        className={cn(baseCls, enabledCls)}
+        title={`Xem trang công khai: /p/${page.slug}`}
+      >
+        <Eye className='size-3.5' />
+        Xem landing
+      </a>
+    );
+  }
+
+  // Chưa publish (hoặc chưa có slug) → chưa có trang live → mở editor.
   return (
     <Link
       href={publicLandingUrl(segment)}
       className={cn(baseCls, enabledCls)}
-      title={
-        page.slug
-          ? `Mở editor (slug: ${page.slug})`
-          : 'Mở editor (page chưa có slug, dùng id)'
-      }
+      title='Chưa publish — mở editor'
     >
-      <Eye className='size-3.5' />
-      Mở landing
+      <Pencil className='size-3.5' />
+      Mở editor
     </Link>
   );
 }
@@ -995,11 +1092,27 @@ function TableView({
                   />
                 </TableCell>
                 <TableCell>
-                  <div className='font-medium'>{p.name}</div>
+                  <div className='flex items-center gap-2 font-medium'>
+                    {p.name}
+                    {p.external_url && (
+                      <span className='text-3xs inline-flex items-center gap-1 rounded-full bg-indigo-50 px-1.5 py-0.5 font-bold tracking-wider text-indigo-700 uppercase'>
+                        <Link2 className='size-2.5' />
+                        External
+                      </span>
+                    )}
+                  </div>
                   <div className='text-3xs text-muted-foreground flex items-center gap-2 font-mono'>
-                    {p.slug ? <code>{p.slug}</code> : <span>—</span>}
-                    <span>·</span>
-                    <code>{p.id.slice(0, 12)}…</code>
+                    {p.external_url ? (
+                      <code className='truncate'>
+                        {p.external_url.replace(/^https?:\/\//, '')}
+                      </code>
+                    ) : (
+                      <>
+                        {p.slug ? <code>{p.slug}</code> : <span>—</span>}
+                        <span>·</span>
+                        <code>{p.id.slice(0, 12)}…</code>
+                      </>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>
