@@ -515,6 +515,10 @@ export interface UpdateClientUserRequest {
 export interface MediaAsset {
   id: string;
   page_id: string | null;
+  /** Brand sở hữu asset (BE đã có cột). Admin scope qua đây. */
+  brand_id?: string | null;
+  workspace_id?: string | null;
+  folder_id?: string | null;
   owner_scope: string;
   original_filename: string;
   media_type: 'image' | 'video' | '3d' | string;
@@ -537,6 +541,9 @@ export interface MediaAsset {
 }
 export interface MediaListResponse {
   items: MediaAsset[];
+  total?: number;
+  page?: number;
+  limit?: number;
 }
 
 export interface MediaVariant {
@@ -564,6 +571,31 @@ export interface InitUploadRequest {
   file_size: number;
   owner_scope: 'library';
   media_type?: 'image' | 'video' | 'file';
+  /** Admin upload hộ brand → asset gắn brand_id này (BE spec admin-asset-scope). */
+  brand_id?: string;
+  workspace_id?: string;
+  folder_id?: string;
+}
+/** Query cho GET /media (BE handler hỗ trợ; FE mở rộng từ chỉ `ids`). */
+export interface MediaListQuery {
+  ids?: string[];
+  brand_id?: string;
+  folder_id?: string;
+  media_type?: string;
+  status?: string;
+  tag?: string;
+  q?: string;
+  page?: number;
+  limit?: number;
+}
+export interface BulkMoveMediaRequest {
+  ids: string[];
+  folder_id: string | null;
+}
+export interface UpdateMediaRequest {
+  original_filename?: string;
+  tags?: string[];
+  folder_id?: string | null;
 }
 export interface InitUploadResponse {
   upload_id: string;
@@ -1556,6 +1588,9 @@ export interface CreateMediaFolderRequest {
   name: string;
   description?: string;
   parent_id?: string;
+  /** Admin tạo folder hộ brand. Brand user bỏ qua (BE tự lấy brand mình). */
+  brand_id?: string;
+  workspace_id?: string;
 }
 
 export interface UpdateMediaFolderRequest {
@@ -2436,6 +2471,11 @@ export interface Page {
   handoff_notes?: string;
   thumbnail_asset_id?: string;
   thumbnail_url?: string;
+  /**
+   * External landing (không template/canvas) — set ⇒ click mở thẳng URL này,
+   * không vào editor. BE spec: docs/be-spec-external-landing-2026-06-07.md.
+   */
+  external_url?: string | null;
   created_by: string;
   updated_by: string;
   created_at: string;
@@ -2454,13 +2494,16 @@ export interface PageResponse {
 }
 export interface CreatePageRequest {
   type: PageType;
-  template_id: string;
+  /** Bắt buộc cho landing dựng từ template; bỏ trống khi tạo external landing. */
+  template_id?: string;
   template_version_id?: string;
   name: string;
   slug?: string;
   description?: string;
   type_metadata?: PageTypeMetadata;
   workspace_id?: string;
+  /** External landing (không template) — đúng 1 trong (template_id, external_url). */
+  external_url?: string;
 }
 /** BE `UpdatePageRequest` — accepts `slug` (BE shipped fix 2026-05-31
  *  per be-audit §12, dù swagger chưa regen). Validate FE-side: lowercase
@@ -2472,6 +2515,8 @@ export interface UpdatePageRequest {
   type_metadata?: PageTypeMetadata;
   freeze_products?: boolean;
   thumbnail_asset_id?: string;
+  /** Đổi/clear URL của external landing. */
+  external_url?: string | null;
 }
 
 // ── Page revisions (rolling autosave) ────────────────────────────────────

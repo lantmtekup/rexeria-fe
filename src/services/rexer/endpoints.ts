@@ -70,6 +70,9 @@ import type {
   MediaAsset,
   MediaAssetResponse,
   MediaListResponse,
+  MediaListQuery,
+  UpdateMediaRequest,
+  BulkMoveMediaRequest,
   ProductCategory,
   ProductCategoryListResponse,
   ProductCategoryResponse,
@@ -604,22 +607,29 @@ export const rexerApi = {
      * callers can batch-resolve a known set of media in one request.
      * BE caps at 100 ids, dedups, and silently skips unknowns.
      */
-    list: (query?: { ids?: string[] }) => {
-      if (!query?.ids || query.ids.length === 0) {
-        return rx<MediaListResponse>('/media');
-      }
+    list: (query?: MediaListQuery) => {
       // Mock short-circuit: when AI template mock is on and we're asked
       // for `mock-media-*` ids, serve them locally so the suggestion
       // dialog renders without hitting BE (which doesn't know these ids).
       if (
+        query?.ids?.length &&
         isAiTemplateMockEnabled() &&
         query.ids.some(id => id.startsWith('mock-media-'))
       ) {
         return Promise.resolve(mockMediaList(query.ids));
       }
       const usp = new URLSearchParams();
-      for (const id of query.ids) usp.append('ids', id);
-      return rx<MediaListResponse>(`/media?${usp.toString()}`);
+      for (const id of query?.ids ?? []) usp.append('ids', id);
+      if (query?.brand_id) usp.append('brand_id', query.brand_id);
+      if (query?.folder_id) usp.append('folder_id', query.folder_id);
+      if (query?.media_type) usp.append('media_type', query.media_type);
+      if (query?.status) usp.append('status', query.status);
+      if (query?.tag) usp.append('tag', query.tag);
+      if (query?.q) usp.append('q', query.q);
+      if (query?.page) usp.append('page', String(query.page));
+      if (query?.limit) usp.append('limit', String(query.limit));
+      const qs = usp.toString();
+      return rx<MediaListResponse>(`/media${qs ? `?${qs}` : ''}`);
     },
     get: async (id: string): Promise<MediaAsset> => {
       const r = await rx<MediaAssetResponse>(`/media/${id}`);
@@ -650,6 +660,26 @@ export const rexerApi = {
         method: 'POST',
         body,
       }),
+    /** Rename / re-tag / move 1 asset. */
+    update: async (
+      id: string,
+      body: UpdateMediaRequest
+    ): Promise<MediaAsset> => {
+      const r = await rx<MediaAssetResponse>(`/media/${id}`, {
+        method: 'PATCH',
+        body,
+      });
+      return r.media_asset;
+    },
+    remove: (id: string) =>
+      rx<{ message?: string }>(`/media/${id}`, { method: 'DELETE' }),
+    bulkDelete: (ids: string[]) =>
+      rx<{ message?: string }>('/media/bulk-delete', {
+        method: 'POST',
+        body: { ids },
+      }),
+    bulkMove: (body: BulkMoveMediaRequest) =>
+      rx<{ message?: string }>('/media/bulk-move', { method: 'POST', body }),
     // `bindToProject` / `unbindFromProject` removed — project-based landings
     // deprecated. Product bindings still live under `products.bindMedia`.
   },
@@ -1054,8 +1084,9 @@ export const rexerApi = {
 
   // ── Media folders (Drive-style hierarchy) ──────────────────────────────
   mediaFolders: {
-    /** List child folders of `parent_id` (omit param to fetch root). */
-    list: (query?: { parent_id?: string }) =>
+    /** List child folders of `parent_id` (omit param to fetch root).
+     *  `brand_id` cho platform admin scope vào brand cụ thể (BE spec). */
+    list: (query?: { parent_id?: string; brand_id?: string }) =>
       rx<MediaFolderListResponse>('/media/folders', { query }),
     get: (id: string) => rx<MediaFolder>(`/media/folders/${id}`),
     create: (body: CreateMediaFolderRequest) =>

@@ -1,39 +1,88 @@
-import { UploadCloud } from 'lucide-react';
+'use client';
 
-import { AdminComingSoon } from '@/components/modules/Admin/AdminComingSoon';
+/**
+ * Admin asset library (toàn hệ thống) — `/admin/assets`. Quản lý asset/folder
+ * cho BẤT KỲ brand nào: chọn brand → <MediaLibrary brandId> (upload/folder/
+ * delete/move/rename/tag/search). Dùng chung component với portal.
+ *
+ * ⚠️ Cần BE ship brand_id scoping cho media/folders (be-spec-admin-asset-scope-
+ * 2026-06-07) thì platform admin mới scope đúng brand; media-list đã honor
+ * brand_id, folders hiện 403 — chờ BE.
+ */
+
+import * as React from 'react';
+import { Images, Loader2 } from 'lucide-react';
+
+import { MediaLibrary } from '@/components/modules/Media/MediaLibrary';
+import { rexerApi } from '@/services/rexer/endpoints';
+import type { Brand } from '@/services/rexer/types';
 
 export default function AdminAssetsPage() {
+  const [brands, setBrands] = React.useState<Brand[]>([]);
+  const [brandId, setBrandId] = React.useState('');
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    rexerApi.brands
+      .list({ page: 1, limit: 200 })
+      .then(r => {
+        const items = r.items ?? [];
+        setBrands(items);
+        setBrandId(items[0]?.id ?? '');
+      })
+      .catch(() => setBrands([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
-    <AdminComingSoon
-      icon={UploadCloud}
-      title='Asset Library (toàn hệ thống)'
-      subtitle='Browse mọi asset (hình ảnh / video / tài liệu) qua tất cả workspace. Filter theo client, brand, campaign. Quota management + virus scan dashboard.'
-      specFile='be-asset-upload-spec.md'
-      estTime='~2 tuần BE'
-      dependencies={[
-        {
-          status: 'new',
-          text: 'Bảng assets với workspace_id + client_id scope',
-        },
-        {
-          status: 'new',
-          text: 'Direct-to-S3 presigned upload (POST /assets/presign + confirm)',
-        },
-        {
-          status: 'new',
-          text: 'Lambda thumbnail generation + ClamAV virus scan async',
-        },
-        {
-          status: 'new',
-          text: 'Folder hierarchy (Google Drive style) — Phase 2 extension',
-        },
-        {
-          status: 'new',
-          text: 'Quota check 10GB/workspace, file size limits',
-        },
-      ]}
-      previewHref='/overview/portal-demo/media'
-      previewLabel='Xem demo /portal-demo/media'
-    />
+    <div className='flex flex-col gap-4 p-6'>
+      <div className='flex flex-wrap items-end justify-between gap-3'>
+        <div>
+          <div className='text-3xs text-content-muted flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
+            <Images className='size-3' /> Asset library
+          </div>
+          <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
+            Asset toàn hệ thống
+          </h1>
+          <p className='text-content-muted mt-1 text-sm'>
+            Quản lý hình ảnh, video, tài liệu cho từng brand — upload hộ, tổ
+            chức thư mục, gắn tag.
+          </p>
+        </div>
+        <div className='flex items-center gap-2'>
+          <label className='text-3xs text-muted-foreground font-semibold tracking-wider uppercase'>
+            Brand
+          </label>
+          <select
+            value={brandId}
+            onChange={e => setBrandId(e.target.value)}
+            disabled={brands.length === 0}
+            className='border-border rounded-lg border bg-white px-3 py-1.5 text-sm outline-none disabled:opacity-50'
+          >
+            {brands.length === 0 ? (
+              <option value=''>—</option>
+            ) : (
+              brands.map(b => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className='text-content-muted flex items-center justify-center gap-2 py-20 text-sm'>
+          <Loader2 className='size-4 animate-spin' /> Đang tải brand…
+        </div>
+      ) : !brandId ? (
+        <div className='border-border text-content-muted rounded-2xl border border-dashed py-16 text-center text-sm'>
+          Chọn brand để quản lý asset.
+        </div>
+      ) : (
+        <MediaLibrary key={brandId} brandId={brandId} />
+      )}
+    </div>
   );
 }

@@ -21,6 +21,7 @@ import {
   Check,
   Copy,
   Globe,
+  Images,
   KeyRound,
   LayoutTemplate,
   Loader2,
@@ -43,6 +44,7 @@ import { RxApiError } from '@/services/rexer/client';
 
 import { AdminAddLandingForClientDialog } from './AdminAddLandingForClientDialog';
 import { AdsTab } from './client-tabs/AdsTab';
+import { AssetsTab } from './client-tabs/AssetsTab';
 import { CurateTab } from './client-tabs/CurateTab';
 import { MicroSitesTab } from './client-tabs/MicroSitesTab';
 import { TrackingKeysTab } from './client-tabs/TrackingKeysTab';
@@ -71,7 +73,8 @@ type TabKey =
   | 'ads'
   | 'microsites'
   | 'curate'
-  | 'tracking-keys';
+  | 'tracking-keys'
+  | 'assets';
 
 const TABS: { id: TabKey; label: string; icon: React.ElementType }[] = [
   { id: 'workspaces', label: 'Workspaces', icon: Building2 },
@@ -83,6 +86,7 @@ const TABS: { id: TabKey; label: string; icon: React.ElementType }[] = [
   { id: 'microsites', label: 'Microsite', icon: Globe },
   { id: 'curate', label: 'Curate', icon: MousePointerClick },
   { id: 'tracking-keys', label: 'Tracking keys', icon: KeyRound },
+  { id: 'assets', label: 'Media', icon: Images },
 ];
 
 const STATUS_CHIP: Record<string, string> = {
@@ -102,6 +106,7 @@ interface Counts {
   microsites?: number;
   curate?: number;
   'tracking-keys'?: number;
+  assets?: number;
 }
 
 export function AdminClientDetailPage({ clientId }: Props) {
@@ -369,6 +374,12 @@ export function AdminClientDetailPage({ clientId }: Props) {
           <TrackingKeysTab
             clientId={clientId}
             onCount={n => setCounts(c => ({ ...c, 'tracking-keys': n }))}
+          />
+        )}
+        {tab === 'assets' && (
+          <AssetsTab
+            clientId={clientId}
+            onCount={n => setCounts(c => ({ ...c, assets: n }))}
           />
         )}
       </section>

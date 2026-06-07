@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import {
   BlocksIcon,
   BookmarkIcon,
+  ImagesIcon,
   InboxIcon,
   LayoutDashboardIcon,
   LayoutTemplateIcon,
@@ -71,6 +72,12 @@ const NAV: NavItem[] = [
     href: '/admin/block-types',
     labelKey: 'nav.blockTypes',
     icon: BlocksIcon,
+    group: 'Content',
+  },
+  {
+    href: '/admin/assets',
+    labelKey: 'nav.assets',
+    icon: ImagesIcon,
     group: 'Content',
   },
   {
