@@ -28,7 +28,17 @@
       "assumptions": "AI assumptions",
       "handoff": "Customize the experience",
       "confidence": "Confidence",
-      "why": "Why"
+      "why": "Why",
+      "failed": "Something went wrong while generating the blueprint. Please try again.",
+      "generatedWith": "Generated with"
+    },
+    "goals": {
+      "product_discovery": "Product discovery",
+      "interactive_story": "Interactive story",
+      "comparison": "Comparison",
+      "lead_excitement": "Lead excitement",
+      "brand_storytelling": "Brand storytelling",
+      "guided_decision": "Guided decision"
     },
     "fields": {
       "campaign_objective": "Campaign objective",

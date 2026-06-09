@@ -28,7 +28,17 @@
       "assumptions": "Giả định của AI",
       "handoff": "Tùy chỉnh trải nghiệm",
       "confidence": "Độ tin cậy",
-      "why": "Vì sao"
+      "why": "Vì sao",
+      "failed": "Đã có lỗi khi tạo blueprint. Vui lòng thử lại.",
+      "generatedWith": "Tạo bởi"
+    },
+    "goals": {
+      "product_discovery": "Khám phá sản phẩm",
+      "interactive_story": "Câu chuyện tương tác",
+      "comparison": "So sánh lựa chọn",
+      "lead_excitement": "Khơi gợi & thu lead",
+      "brand_storytelling": "Kể chuyện thương hiệu",
+      "guided_decision": "Dẫn dắt quyết định"
     },
     "fields": {
       "campaign_objective": "Mục tiêu chiến dịch",
