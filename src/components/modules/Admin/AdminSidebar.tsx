@@ -11,6 +11,7 @@ import {
   InboxIcon,
   LayoutDashboardIcon,
   LayoutTemplateIcon,
+  LightbulbIcon,
   LogOutIcon,
   MegaphoneIcon,
   MessageSquareIcon,
@@ -60,6 +61,12 @@ const NAV: NavItem[] = [
     href: '/admin/ai-templates',
     labelKey: 'nav.aiTemplates',
     icon: SparklesIcon,
+    group: 'Content',
+  },
+  {
+    href: '/admin/insights',
+    labelKey: 'nav.aiInsights',
+    icon: LightbulbIcon,
     group: 'Content',
   },
   {
