@@ -1,0 +1,40 @@
+{
+  "insights": {
+    "title": "AI-Insights",
+    "subtitle": "Turn a product/campaign brief into an interactive experience strategy",
+    "setup": {
+      "heading": "Choose your inputs",
+      "workspace": "Workspace",
+      "product": "Product (optional)",
+      "campaign": "Campaign (optional)",
+      "missingHeading": "Fill in the missing information",
+      "run": "Run analysis"
+    },
+    "generating": {
+      "heading": "AI is analyzing…",
+      "steps": {
+        "understand_context": "Understand business context",
+        "classify_goal": "Classify experience goal",
+        "recommend_journey": "Recommend customer journey",
+        "recommend_blocks": "Recommend blocks/modules",
+        "recommend_templates": "Recommend templates"
+      }
+    },
+    "blueprint": {
+      "goal": "Experience Goal",
+      "journey": "Customer Journey",
+      "blocks": "Recommended blocks",
+      "templates": "Recommended templates",
+      "assumptions": "AI assumptions",
+      "handoff": "Customize the experience",
+      "confidence": "Confidence",
+      "why": "Why"
+    },
+    "fields": {
+      "campaign_objective": "Campaign objective",
+      "audience": "Target audience",
+      "pain_points": "Pain point",
+      "market_context": "Market context"
+    }
+  }
+}

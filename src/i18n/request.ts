@@ -20,6 +20,7 @@ export default getRequestConfig(async () => {
       import(`./messages/feedback/${locale}.json`),
       import(`./messages/admin/${locale}.json`),
       import(`./messages/ai_templates/${locale}.json`),
+      import(`./messages/insights/${locale}.json`),
     ]);
 
     return {
