@@ -229,6 +229,12 @@ import type {
   RespondAISlotSuggestionRequest,
   TrackEventInput,
   TrackBatchRequest,
+  // ── AI-Insights (experience strategy blueprint) ───────────────────
+  InsightPrefillRequest,
+  PrefillResult,
+  CreateInsightReportBody,
+  InsightReportResponse,
+  InsightReportListResponse,
 } from './types';
 
 // Tolerate BE responses for /brands/{id} returning either `{brand: Brand}`
@@ -1895,6 +1901,37 @@ export const rexerApi = {
         method: 'PATCH',
         body,
       }),
+  },
+
+  // ── AI-Insights (experience strategy blueprint) ───────────────────────
+  // Tenant-scoped dưới `/v1/insights/*` (priv group). Prefill chạy đồng bộ;
+  // tạo report enqueue job experience_insights (202) → FE poll `get(id, true)`
+  // tới status terminal (succeeded|failed). Routes/shapes khớp openapi.yaml.
+  insights: {
+    /** Resolve context DB + list field chiến lược còn thiếu (đồng bộ, không enqueue job). */
+    prefill: (body: InsightPrefillRequest) =>
+      rx<PrefillResult>('/insights/prefill', { method: 'POST', body }),
+    /** Tạo report + enqueue job (202). BE bọc trong `{ report }`. */
+    create: async (body: CreateInsightReportBody) => {
+      const r = await rx<InsightReportResponse>('/insights/reports', {
+        method: 'POST',
+        body,
+      });
+      return r.report;
+    },
+    /** Lấy 1 report; `includeSteps` gắn `?include=steps` để kèm engine trace. */
+    get: async (id: string, includeSteps = false) => {
+      const r = await rx<InsightReportResponse>(`/insights/reports/${id}`, {
+        query: includeSteps ? { include: 'steps' } : undefined,
+      });
+      return r.report;
+    },
+    /** List report của brand caller (BE pin non-admin về brand của họ). */
+    list: (query?: {
+      workspace_id?: string;
+      product_id?: string;
+      campaign_id?: string;
+    }) => rx<InsightReportListResponse>('/insights/reports', { query }),
   },
 
   // ── Analytics ingest (canonical `/v1/track`, replaces `/analytics/events`) ─

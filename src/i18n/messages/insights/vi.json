@@ -1,0 +1,61 @@
+{
+  "insights": {
+    "title": "AI-Insights",
+    "subtitle": "Biến brief sản phẩm/chiến dịch thành chiến lược trải nghiệm tương tác",
+    "phases": {
+      "setup": "Nhập liệu",
+      "generating": "Phân tích",
+      "blueprint": "Blueprint"
+    },
+    "setup": {
+      "heading": "Chọn dữ liệu đầu vào",
+      "workspace": "Không gian làm việc",
+      "product": "Sản phẩm (tùy chọn)",
+      "campaign": "Chiến dịch (tùy chọn)",
+      "missingHeading": "Bổ sung thông tin còn thiếu",
+      "missingHint": "AI cần vài thông tin chiến lược chưa có sẵn trong dữ liệu của bạn.",
+      "run": "Chạy phân tích",
+      "runHint": "AI sẽ đọc bối cảnh và dựng chiến lược trải nghiệm trong khoảng 1–2 phút."
+    },
+    "generating": {
+      "heading": "AI đang phân tích…",
+      "subheading": "Đang dựng chiến lược trải nghiệm từ bối cảnh của bạn",
+      "progress": "Bước {done}/{total}",
+      "steps": {
+        "understand_context": "Hiểu bối cảnh kinh doanh",
+        "classify_goal": "Phân loại experience goal",
+        "recommend_journey": "Đề xuất customer journey",
+        "recommend_blocks": "Đề xuất blocks/modules",
+        "recommend_templates": "Đề xuất templates"
+      }
+    },
+    "blueprint": {
+      "readyTitle": "Blueprint đã sẵn sàng",
+      "readySubtitle": "Chiến lược trải nghiệm tương tác do AI đề xuất",
+      "goal": "Experience Goal",
+      "journey": "Customer Journey",
+      "blocks": "Blocks đề xuất",
+      "templates": "Templates đề xuất",
+      "assumptions": "Giả định của AI",
+      "handoff": "Tùy chỉnh trải nghiệm",
+      "confidence": "Độ tin cậy",
+      "why": "Vì sao",
+      "failed": "Đã có lỗi khi tạo blueprint. Vui lòng thử lại.",
+      "generatedWith": "Tạo bởi"
+    },
+    "goals": {
+      "product_discovery": "Khám phá sản phẩm",
+      "interactive_story": "Câu chuyện tương tác",
+      "comparison": "So sánh lựa chọn",
+      "lead_excitement": "Khơi gợi & thu lead",
+      "brand_storytelling": "Kể chuyện thương hiệu",
+      "guided_decision": "Dẫn dắt quyết định"
+    },
+    "fields": {
+      "campaign_objective": "Mục tiêu chiến dịch",
+      "audience": "Đối tượng mục tiêu",
+      "pain_points": "Pain point",
+      "market_context": "Bối cảnh thị trường"
+    }
+  }
+}

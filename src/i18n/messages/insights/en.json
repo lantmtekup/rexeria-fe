@@ -1,0 +1,61 @@
+{
+  "insights": {
+    "title": "AI-Insights",
+    "subtitle": "Turn a product/campaign brief into an interactive experience strategy",
+    "phases": {
+      "setup": "Inputs",
+      "generating": "Analyzing",
+      "blueprint": "Blueprint"
+    },
+    "setup": {
+      "heading": "Choose your inputs",
+      "workspace": "Workspace",
+      "product": "Product (optional)",
+      "campaign": "Campaign (optional)",
+      "missingHeading": "Fill in the missing information",
+      "missingHint": "The AI needs a few strategic details that aren't in your data yet.",
+      "run": "Run analysis",
+      "runHint": "The AI reads your context and drafts an experience strategy in about 1–2 minutes."
+    },
+    "generating": {
+      "heading": "AI is analyzing…",
+      "subheading": "Drafting an experience strategy from your context",
+      "progress": "Step {done}/{total}",
+      "steps": {
+        "understand_context": "Understand business context",
+        "classify_goal": "Classify experience goal",
+        "recommend_journey": "Recommend customer journey",
+        "recommend_blocks": "Recommend blocks/modules",
+        "recommend_templates": "Recommend templates"
+      }
+    },
+    "blueprint": {
+      "readyTitle": "Your blueprint is ready",
+      "readySubtitle": "An AI-recommended interactive experience strategy",
+      "goal": "Experience Goal",
+      "journey": "Customer Journey",
+      "blocks": "Recommended blocks",
+      "templates": "Recommended templates",
+      "assumptions": "AI assumptions",
+      "handoff": "Customize the experience",
+      "confidence": "Confidence",
+      "why": "Why",
+      "failed": "Something went wrong while generating the blueprint. Please try again.",
+      "generatedWith": "Generated with"
+    },
+    "goals": {
+      "product_discovery": "Product discovery",
+      "interactive_story": "Interactive story",
+      "comparison": "Comparison",
+      "lead_excitement": "Lead excitement",
+      "brand_storytelling": "Brand storytelling",
+      "guided_decision": "Guided decision"
+    },
+    "fields": {
+      "campaign_objective": "Campaign objective",
+      "audience": "Target audience",
+      "pain_points": "Pain point",
+      "market_context": "Market context"
+    }
+  }
+}
