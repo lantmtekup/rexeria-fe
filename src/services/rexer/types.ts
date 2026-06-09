@@ -2797,3 +2797,187 @@ export interface PageAnalyticsBreakdownRow {
 export interface PageAnalyticsBreakdownResponse {
   items: PageAnalyticsBreakdownRow[];
 }
+
+// ── AI-Insights (mirror BE openapi.yaml #/components/schemas/Insight*) ────
+//
+// Mặt phẳng AI-Insights: biến brief sản phẩm/chiến dịch thành chiến lược
+// trải nghiệm tương tác. Các type dưới đây phải khớp từng field (snake_case)
+// với `be-ReXeR.ai/docs/openapi.yaml` — file đó là nguồn chân lý của contract.
+
+/** Trạng thái vòng đời của một insight report (đồng bộ với ai_jobs). */
+export type InsightStatus = 'queued' | 'running' | 'succeeded' | 'failed';
+
+/** 5 bước cố định của engine tạo blueprint, theo thứ tự chạy. */
+export type InsightStepKey =
+  | 'understand_context'
+  | 'classify_goal'
+  | 'recommend_journey'
+  | 'recommend_blocks'
+  | 'recommend_templates';
+
+/** Trạng thái của từng bước; `skipped` khi bước không cần chạy. */
+export type InsightStepStatus =
+  | 'queued'
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'skipped';
+
+/** Experience goal được AI phân loại. */
+export type ExperienceGoal =
+  | 'product_discovery'
+  | 'interactive_story'
+  | 'comparison'
+  | 'lead_excitement'
+  | 'brand_storytelling'
+  | 'guided_decision';
+
+/** Một bước trong trace của engine; chỉ trả về khi `include=steps`. */
+export interface InsightReportStep {
+  id: string;
+  report_id: string;
+  step_key: InsightStepKey;
+  step_order: number;
+  status: InsightStepStatus;
+  input_payload?: Record<string, unknown>;
+  output_payload?: Record<string, unknown>;
+  model?: string;
+  tokens_in?: number;
+  tokens_out?: number;
+  error_message?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
+  created_at?: string;
+}
+
+/** Experience goal đã phân loại kèm độ tin cậy và lý do. */
+export interface InsightBlueprintGoal {
+  primary_goal: ExperienceGoal;
+  confidence: number;
+  rationale: string;
+  secondary_goal?: ExperienceGoal | null;
+}
+
+/** Một stage trong customer journey, mỗi stage có intent và lý do. */
+export interface InsightJourneyStage {
+  key: string;
+  name: string;
+  intent: string;
+  rationale: string;
+}
+
+/** Customer journey gồm tên pattern, lý do và danh sách stage có thứ tự. */
+export interface InsightBlueprintJourney {
+  journey_pattern_name: string;
+  rationale: string;
+  stages: InsightJourneyStage[];
+}
+
+/** Một block được đề xuất, đã được lọc theo catalog block_types thật. */
+export interface InsightRecommendedBlock {
+  block_type_code: string;
+  block_name: string;
+  reason: string;
+}
+
+/** Nhóm block đề xuất theo từng stage của journey. */
+export interface InsightBlocksByStage {
+  stage_key: string;
+  stage_rationale: string;
+  blocks: InsightRecommendedBlock[];
+}
+
+/** Tập hợp block đề xuất, gom theo stage. */
+export interface InsightBlueprintBlocks {
+  blocks_by_stage: InsightBlocksByStage[];
+}
+
+/** Một template/collection được dựng từ các block code đã chọn. */
+export interface InsightRecommendedTemplate {
+  name: string;
+  category: string;
+  block_codes: string[];
+  description: string;
+  why_fit: string;
+}
+
+/** Tập hợp template đề xuất. */
+export interface InsightBlueprintTemplates {
+  templates: InsightRecommendedTemplate[];
+}
+
+/**
+ * Blueprint chiến lược trải nghiệm hoàn chỉnh: 4 section (experience_goal,
+ * customer_journey, recommended_blocks, recommended_templates) cùng
+ * business_context đã resolve và provenance. Mỗi đề xuất đều mang lý do.
+ * Null cho tới khi report đạt status=succeeded.
+ */
+export interface InsightBlueprint {
+  version?: number;
+  business_context?: Record<string, unknown>;
+  experience_goal?: InsightBlueprintGoal;
+  customer_journey?: InsightBlueprintJourney;
+  recommended_blocks?: InsightBlueprintBlocks;
+  recommended_templates?: InsightBlueprintTemplates;
+  generated_with?: string;
+}
+
+/** Một insight report; `blueprint` và `steps` chỉ có khi đã hoàn tất / include. */
+export interface InsightReport {
+  id: string;
+  brand_id: string;
+  workspace_id: string;
+  product_id?: string | null;
+  campaign_id?: string | null;
+  title?: string;
+  status: InsightStatus;
+  input_snapshot?: Record<string, unknown>;
+  blueprint?: InsightBlueprint | null;
+  ai_job_id?: string | null;
+  model?: string;
+  tokens_in?: number;
+  tokens_out?: number;
+  cost_credits?: number;
+  error_message?: string | null;
+  version: number;
+  parent_report_id?: string | null;
+  requested_by?: string;
+  created_at?: string;
+  updated_at?: string;
+  completed_at?: string | null;
+  steps?: InsightReportStep[];
+}
+
+/** Request body của `POST /v1/insights/prefill`. */
+export interface InsightPrefillRequest {
+  workspace_id: string;
+  product_id?: string;
+  campaign_id?: string;
+}
+
+/** Kết quả prefill: context đã resolve + các field chiến lược còn thiếu. */
+export interface PrefillResult {
+  context: Record<string, unknown>;
+  missing_fields: string[];
+}
+
+/** Request body của `POST /v1/insights/reports`. */
+export interface CreateInsightReportBody {
+  workspace_id: string;
+  product_id?: string;
+  campaign_id?: string;
+  title?: string;
+  inputs?: Record<string, unknown>;
+  parent_report_id?: string;
+}
+
+/** Response bọc 1 report (`InsightReportResponse`). */
+export interface InsightReportResponse {
+  report: InsightReport;
+}
+
+/** Response danh sách report (`InsightReportListResponse`). */
+export interface InsightReportListResponse {
+  items: InsightReport[];
+  total: number;
+}
