@@ -2,16 +2,25 @@
   "insights": {
     "title": "AI-Insights",
     "subtitle": "Turn a product/campaign brief into an interactive experience strategy",
+    "phases": {
+      "setup": "Inputs",
+      "generating": "Analyzing",
+      "blueprint": "Blueprint"
+    },
     "setup": {
       "heading": "Choose your inputs",
       "workspace": "Workspace",
       "product": "Product (optional)",
       "campaign": "Campaign (optional)",
       "missingHeading": "Fill in the missing information",
-      "run": "Run analysis"
+      "missingHint": "The AI needs a few strategic details that aren't in your data yet.",
+      "run": "Run analysis",
+      "runHint": "The AI reads your context and drafts an experience strategy in about 1–2 minutes."
     },
     "generating": {
       "heading": "AI is analyzing…",
+      "subheading": "Drafting an experience strategy from your context",
+      "progress": "Step {done}/{total}",
       "steps": {
         "understand_context": "Understand business context",
         "classify_goal": "Classify experience goal",
@@ -21,6 +30,8 @@
       }
     },
     "blueprint": {
+      "readyTitle": "Your blueprint is ready",
+      "readySubtitle": "An AI-recommended interactive experience strategy",
       "goal": "Experience Goal",
       "journey": "Customer Journey",
       "blocks": "Recommended blocks",

@@ -2,16 +2,25 @@
   "insights": {
     "title": "AI-Insights",
     "subtitle": "Biến brief sản phẩm/chiến dịch thành chiến lược trải nghiệm tương tác",
+    "phases": {
+      "setup": "Nhập liệu",
+      "generating": "Phân tích",
+      "blueprint": "Blueprint"
+    },
     "setup": {
       "heading": "Chọn dữ liệu đầu vào",
       "workspace": "Không gian làm việc",
       "product": "Sản phẩm (tùy chọn)",
       "campaign": "Chiến dịch (tùy chọn)",
       "missingHeading": "Bổ sung thông tin còn thiếu",
-      "run": "Chạy phân tích"
+      "missingHint": "AI cần vài thông tin chiến lược chưa có sẵn trong dữ liệu của bạn.",
+      "run": "Chạy phân tích",
+      "runHint": "AI sẽ đọc bối cảnh và dựng chiến lược trải nghiệm trong khoảng 1–2 phút."
     },
     "generating": {
       "heading": "AI đang phân tích…",
+      "subheading": "Đang dựng chiến lược trải nghiệm từ bối cảnh của bạn",
+      "progress": "Bước {done}/{total}",
       "steps": {
         "understand_context": "Hiểu bối cảnh kinh doanh",
         "classify_goal": "Phân loại experience goal",
@@ -21,6 +30,8 @@
       }
     },
     "blueprint": {
+      "readyTitle": "Blueprint đã sẵn sàng",
+      "readySubtitle": "Chiến lược trải nghiệm tương tác do AI đề xuất",
       "goal": "Experience Goal",
       "journey": "Customer Journey",
       "blocks": "Blocks đề xuất",

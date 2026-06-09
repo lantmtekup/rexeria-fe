@@ -2,15 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { ArrowRight, Database, Sparkles } from 'lucide-react';
 
 import { rexerApi } from '@/services/rexer/endpoints';
 import { useRexer } from '@/services/rexer/use-rexer';
 import type { CreateInsightReportBody } from '@/services/rexer/types';
-import { Button } from '@/components/atoms/button';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 import { Spinner } from '@/components/atoms/spinner';
-import { cn } from '@/lib/cn';
+import { GradientButton } from './ui';
 
 /**
  * Màn Setup của wizard AI-Insights (form có cấu trúc, KHÔNG chatbot).
@@ -129,112 +129,146 @@ export function SetupStep({ submitting, onRun, brandLocked }: SetupStepProps) {
   }
 
   const selectClass =
-    'border-border text-content-muted hover:bg-muted focus:border-zinc-400 ' +
-    'w-full appearance-none rounded-lg border bg-white px-3 py-2 text-sm outline-none ' +
+    'w-full appearance-none rounded-xl border border-border bg-white px-3 py-2.5 text-sm ' +
+    'text-content-main outline-none transition hover:bg-muted ' +
+    'focus:border-primary focus:ring-2 focus:ring-primary/20 ' +
     'disabled:cursor-not-allowed disabled:opacity-50';
 
   return (
     <div className='space-y-6'>
-      <header className='space-y-1'>
-        <h1 className='text-2xl font-semibold'>{t('title')}</h1>
-        <p className='text-content-muted'>{t('subtitle')}</p>
-      </header>
-
-      <section className='space-y-4'>
-        <h2 className='font-medium'>{t('setup.heading')}</h2>
-
-        <div className='space-y-1.5'>
-          <Label htmlFor='insights-workspace'>{t('setup.workspace')}</Label>
-          <select
-            id='insights-workspace'
-            value={workspaceId}
-            onChange={e => setWorkspaceId(e.target.value)}
-            disabled={workspaces.loading}
-            className={selectClass}
-          >
-            <option value=''>—</option>
-            {workspaceItems.map(w => (
-              <option key={w.id} value={w.id}>
-                {w.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className='space-y-1.5'>
-          <Label htmlFor='insights-product'>{t('setup.product')}</Label>
-          <select
-            id='insights-product'
-            value={productId}
-            onChange={e => setProductId(e.target.value)}
-            disabled={!workspaceId || products.loading}
-            className={selectClass}
-          >
-            <option value=''>—</option>
-            {(products.data?.items ?? []).map(p => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className='space-y-1.5'>
-          <Label htmlFor='insights-campaign'>{t('setup.campaign')}</Label>
-          <select
-            id='insights-campaign'
-            value={campaignId}
-            onChange={e => setCampaignId(e.target.value)}
-            disabled={!workspaceId || campaigns.loading}
-            className={selectClass}
-          >
-            <option value=''>—</option>
-            {(campaigns.data?.items ?? []).map(c => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </section>
-
-      {(prefilling || missing.length > 0) && (
-        <section className='space-y-4'>
-          <h2 className='flex items-center gap-2 font-medium'>
-            {t('setup.missingHeading')}
-            {prefilling && <Spinner size={14} />}
+      {/* Card chọn dữ liệu đầu vào */}
+      <div className='border-border bg-card rounded-2xl border p-5 shadow-sm'>
+        <div className='mb-4 flex items-center gap-2.5'>
+          <span className='bg-primary/10 text-primary inline-flex size-8 items-center justify-center rounded-lg'>
+            <Database className='size-4' aria-hidden />
+          </span>
+          <h2 className='text-content-main text-sm font-semibold'>
+            {t('setup.heading')}
           </h2>
-          {missing.map(f => (
-            <div key={f} className='space-y-1.5'>
-              <Label htmlFor={`insights-gap-${f}`}>{fieldLabel(f)}</Label>
-              <Input
-                id={`insights-gap-${f}`}
-                value={inputs[f] ?? ''}
-                onChange={e =>
-                  setInputs(prev => ({ ...prev, [f]: e.target.value }))
-                }
-              />
+        </div>
+
+        <div className='grid gap-4 sm:grid-cols-3'>
+          <div className='space-y-1.5'>
+            <Label htmlFor='insights-workspace'>{t('setup.workspace')}</Label>
+            <select
+              id='insights-workspace'
+              value={workspaceId}
+              onChange={e => setWorkspaceId(e.target.value)}
+              disabled={workspaces.loading}
+              className={selectClass}
+            >
+              <option value=''>—</option>
+              {workspaceItems.map(w => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className='space-y-1.5'>
+            <Label htmlFor='insights-product'>{t('setup.product')}</Label>
+            <select
+              id='insights-product'
+              value={productId}
+              onChange={e => setProductId(e.target.value)}
+              disabled={!workspaceId || products.loading}
+              className={selectClass}
+            >
+              <option value=''>—</option>
+              {(products.data?.items ?? []).map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className='space-y-1.5'>
+            <Label htmlFor='insights-campaign'>{t('setup.campaign')}</Label>
+            <select
+              id='insights-campaign'
+              value={campaignId}
+              onChange={e => setCampaignId(e.target.value)}
+              disabled={!workspaceId || campaigns.loading}
+              className={selectClass}
+            >
+              <option value=''>—</option>
+              {(campaigns.data?.items ?? []).map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Callout: AI cần thêm thông tin chiến lược không có trong DB */}
+      {(prefilling || missing.length > 0) && (
+        <div className='animate-in fade-in slide-in-from-bottom-2 border-warning/30 bg-warning-bg rounded-2xl border p-5 duration-300'>
+          <div className='mb-1 flex items-center gap-2'>
+            <Sparkles className='text-warning size-4' aria-hidden />
+            <h2 className='text-content-main text-sm font-semibold'>
+              {t('setup.missingHeading')}
+            </h2>
+            {prefilling && <Spinner size={14} className='text-warning' />}
+          </div>
+          <p className='text-content-muted mb-4 text-xs'>
+            {t('setup.missingHint')}
+          </p>
+          {missing.length > 0 && (
+            <div className='grid gap-4 sm:grid-cols-2'>
+              {missing.map(f => (
+                <div key={f} className='space-y-1.5'>
+                  <Label htmlFor={`insights-gap-${f}`}>{fieldLabel(f)}</Label>
+                  <Input
+                    id={`insights-gap-${f}`}
+                    value={inputs[f] ?? ''}
+                    onChange={e =>
+                      setInputs(prev => ({ ...prev, [f]: e.target.value }))
+                    }
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-        </section>
+          )}
+        </div>
       )}
 
-      <Button
-        type='button'
-        disabled={!canRun}
-        onClick={() =>
-          onRun({
-            workspace_id: workspaceId,
-            product_id: productId || undefined,
-            campaign_id: campaignId || undefined,
-            inputs,
-          })
-        }
-        className={cn(submitting && 'pointer-events-none')}
-      >
-        {submitting && <Spinner size={16} />}
-        {t('setup.run')}
-      </Button>
+      {/* CTA gradient + dòng gợi ý thời lượng */}
+      <div className='flex flex-col items-center gap-2 pt-1'>
+        <GradientButton
+          disabled={!canRun}
+          onClick={() =>
+            onRun({
+              workspace_id: workspaceId,
+              product_id: productId || undefined,
+              campaign_id: campaignId || undefined,
+              inputs,
+            })
+          }
+          leading={
+            submitting ? (
+              <Spinner size={18} />
+            ) : (
+              <Sparkles className='size-4' aria-hidden />
+            )
+          }
+          className='w-full sm:w-auto'
+        >
+          {t('setup.run')}
+          {!submitting && (
+            <ArrowRight
+              className='size-4 transition group-hover:translate-x-0.5'
+              aria-hidden
+            />
+          )}
+        </GradientButton>
+        <p className='text-content-muted text-center text-xs'>
+          {t('setup.runHint')}
+        </p>
+      </div>
     </div>
   );
 }
