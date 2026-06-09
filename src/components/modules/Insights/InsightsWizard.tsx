@@ -26,8 +26,11 @@ export function InsightsWizard({
   // Tách `setPhase` ra biến riêng: setter của useState ổn định giữa các render
   // nên dùng làm dependency được, tránh phải đưa cả object `flow` vào deps.
   const { setPhase } = flow;
+  // Giữ `reportId` ở cả phase `generating` lẫn `blueprint`: hook tự dừng poll khi
+  // report đạt terminal (không tái lập timer), nên màn blueprint vẫn còn dữ liệu
+  // report để render. Chỉ truyền `null` ở `setup` (chưa có report) để hook nghỉ.
   const { report } = useInsightReport(
-    flow.phase === 'generating' ? flow.reportId : null
+    flow.phase === 'setup' ? null : flow.reportId
   );
 
   // Khi report về terminal (succeeded|failed) thì sang màn blueprint.
