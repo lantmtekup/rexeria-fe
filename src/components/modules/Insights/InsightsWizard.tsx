@@ -23,6 +23,9 @@ export function InsightsWizard({
   brandLocked?: boolean;
 }) {
   const flow = useInsightsFlow();
+  // Tách `setPhase` ra biến riêng: setter của useState ổn định giữa các render
+  // nên dùng làm dependency được, tránh phải đưa cả object `flow` vào deps.
+  const { setPhase } = flow;
   const { report } = useInsightReport(
     flow.phase === 'generating' ? flow.reportId : null
   );
@@ -30,10 +33,9 @@ export function InsightsWizard({
   // Khi report về terminal (succeeded|failed) thì sang màn blueprint.
   useEffect(() => {
     if (report?.status === 'succeeded' || report?.status === 'failed') {
-      flow.setPhase('blueprint');
+      setPhase('blueprint');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [report?.status]);
+  }, [report?.status, setPhase]);
 
   if (flow.phase === 'setup') {
     return (
