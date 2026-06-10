@@ -17,6 +17,9 @@ const NAV = [
   { href: '/rexer/contact', label: 'Contact' },
 ];
 
+/** Cổng đăng nhập — đi qua subdomain portal, không mở /sign-in trên landing. */
+const PORTAL_URL = 'https://portal.rexerstudio.com';
+
 function isActive(pathname: string, href: string): boolean {
   return href === '/rexer' ? pathname === '/rexer' : pathname.startsWith(href);
 }
@@ -76,7 +79,9 @@ export function LandingNavbar() {
 
         <div className='hidden md:flex'>
           <Button asChild variant={dark ? 'pill-light' : 'pill'} size='sm'>
-            <Link href='/sign-in'>Sign in</Link>
+            {/* Đăng nhập đi qua subdomain portal — landing không mở /sign-in
+                tại chỗ (middleware chặn trên host landing). */}
+            <a href={PORTAL_URL}>Sign in</a>
           </Button>
         </div>
 
@@ -109,9 +114,9 @@ export function LandingNavbar() {
             </Link>
           ))}
           <Button asChild variant='pill' size='sm' className='mt-2 w-full'>
-            <Link href='/sign-in' onClick={() => setOpen(false)}>
+            <a href={PORTAL_URL} onClick={() => setOpen(false)}>
               Sign in
-            </Link>
+            </a>
           </Button>
         </nav>
       )}

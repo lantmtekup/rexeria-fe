@@ -70,6 +70,43 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // ── Host-based entry (2026-06-10) ────────────────────────────────────────
+  // - Domain chính (rexerstudio.com / *.vercel.app / localhost): `/` phục vụ
+  //   LANDING (rewrite nội bộ sang /rexer — URL giữ nguyên `/`).
+  // - Subdomain portal.* (portal.rexerstudio.com): `/` đưa thẳng vào app —
+  //   đã đăng nhập → role home (/admin | /portal | /home), chưa → /sign-in.
+  // Các route khác không đổi: /sign-in, /portal, /admin… hoạt động trên mọi
+  // host; /rexer/* (landing) vẫn truy cập trực tiếp được.
+  const host = request.headers.get('host') ?? '';
+  const isPortalHost = host.startsWith('portal.');
+
+  if (pathname === '/') {
+    if (!isPortalHost) {
+      return NextResponse.rewrite(new URL('/rexer', request.url));
+    }
+    const session = await getSession(request);
+    const target = session
+      ? roleHomePath(session.role, session.scope || undefined)
+      : '/sign-in';
+    return NextResponse.redirect(new URL(target, request.url));
+  }
+
+  // Domain landing PUBLIC (rexerstudio.com): không mở trang auth tại chỗ —
+  // ai cố vào /sign-in, /sign-up… sẽ được đưa qua subdomain portal (giữ
+  // nguyên path). Chỉ áp cho host landing prod; portal.* / localhost /
+  // *.workers.dev / *.vercel.app vẫn mở bình thường (dev + đăng nhập portal).
+  const LANDING_HOSTS = ['rexerstudio.com', 'www.rexerstudio.com'];
+  if (
+    LANDING_HOSTS.includes(host) &&
+    /^\/(sign-in|sign-up|dang-nhap|quen-mat-khau|forgot-password|reset-password)/.test(
+      pathname
+    )
+  ) {
+    return NextResponse.redirect(
+      new URL(pathname, 'https://portal.rexerstudio.com')
+    );
+  }
+
   const pathnameWithoutLocale =
     pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/';
 
