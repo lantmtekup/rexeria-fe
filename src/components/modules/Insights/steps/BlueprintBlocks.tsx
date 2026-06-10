@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
-  ChevronDown,
   Eye,
   LayoutGrid,
   LayoutTemplate,
@@ -146,53 +145,30 @@ function BlockRow({ block }: { block: InsightRecommendedBlock }) {
   );
 }
 
-/* ── Stage group (collapsible) ─────────────────────────────────────────────── */
+/* ── Stage group (không collapse — collapse ở cấp section/cha) ──────────────── */
 
-function StageGroup({
-  stage,
-  defaultOpen,
-}: {
-  stage: InsightBlocksByStage;
-  defaultOpen: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
+function StageGroup({ stage }: { stage: InsightBlocksByStage }) {
   const blocks = stage.blocks ?? [];
-
   return (
     <div className='border-border overflow-hidden rounded-xl border'>
-      <button
-        type='button'
-        onClick={() => setOpen(o => !o)}
-        className='hover:bg-muted/60 flex w-full items-center gap-2 px-3 py-2.5 text-left transition'
-      >
-        <ChevronDown
-          className={cn(
-            'text-content-muted size-4 shrink-0 transition-transform',
-            !open && '-rotate-90'
-          )}
-          aria-hidden
-        />
+      <div className='bg-muted/40 flex items-center gap-2 px-3 py-2.5'>
         <span className='text-content-main flex-1 text-sm font-semibold'>
           {stage.stage_key}
         </span>
-        <span className='text-content-muted bg-muted rounded-full px-2 py-0.5 text-[11px] font-semibold'>
+        <span className='text-content-muted bg-card rounded-full px-2 py-0.5 text-[11px] font-semibold'>
           {blocks.length}
         </span>
-      </button>
-      {open && (
-        <div className='space-y-2 px-3 pt-1 pb-3'>
-          {stage.stage_rationale && (
-            <p className='text-content-muted text-xs'>
-              {stage.stage_rationale}
-            </p>
-          )}
-          <ul className='space-y-2'>
-            {blocks.map(b => (
-              <BlockRow key={b.block_type_code} block={b} />
-            ))}
-          </ul>
-        </div>
-      )}
+      </div>
+      <div className='space-y-2 px-3 pt-2 pb-3'>
+        {stage.stage_rationale && (
+          <p className='text-content-muted text-xs'>{stage.stage_rationale}</p>
+        )}
+        <ul className='space-y-2'>
+          {blocks.map(b => (
+            <BlockRow key={b.block_type_code} block={b} />
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -210,14 +186,11 @@ export function BlocksSection({ blueprint }: { blueprint: InsightBlueprint }) {
       index={3}
       accent='emerald'
       delayMs={160}
+      collapsible
     >
       <div className='space-y-2.5'>
-        {stages.map((stage, i) => (
-          <StageGroup
-            key={stage.stage_key}
-            stage={stage}
-            defaultOpen={i === 0}
-          />
+        {stages.map(stage => (
+          <StageGroup key={stage.stage_key} stage={stage} />
         ))}
       </div>
     </SectionCard>
@@ -332,6 +305,7 @@ export function TemplatesSection({
       index={4}
       accent='amber'
       delayMs={240}
+      collapsible
     >
       <div className='grid gap-4 sm:grid-cols-2'>
         {(templates.templates ?? []).map(tpl => (

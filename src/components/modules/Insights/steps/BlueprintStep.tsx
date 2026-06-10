@@ -67,6 +67,7 @@ function GoalSection({ blueprint }: { blueprint: InsightBlueprint }) {
       index={1}
       accent='blue'
       delayMs={0}
+      collapsible
     >
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
         <div className='flex flex-col items-center gap-1'>
@@ -112,6 +113,7 @@ function JourneySection({ blueprint }: { blueprint: InsightBlueprint }) {
       index={2}
       accent='violet'
       delayMs={80}
+      collapsible
     >
       {journey.journey_pattern_name && (
         <div className='rounded-pill mb-2 inline-flex bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-700'>
