@@ -22,6 +22,7 @@
       "notFound": "Report not found.",
       "rename": "Rename",
       "delete": "Delete",
+      "editRerun": "Edit & re-run",
       "renamePrompt": "New report name:",
       "renamed": "Renamed",
       "renameFailed": "Rename failed (BE not ready?)",

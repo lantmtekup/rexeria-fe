@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ArrowLeft, ClipboardList, Loader2 } from 'lucide-react';
+import { ArrowLeft, ClipboardList, Loader2, Pencil } from 'lucide-react';
 
 import { useInsightReport } from '@/services/rexer/use-rexer';
 import type { ExperienceGoal } from '@/services/rexer/types';
@@ -43,16 +43,27 @@ export function InsightReportView({
 
   return (
     <div className='space-y-6'>
-      <Link
-        href={basePath}
-        className='group border-border text-content-muted hover:border-foreground hover:text-foreground inline-flex items-center gap-2 self-start rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all'
-      >
-        <ArrowLeft
-          className='size-3.5 transition-transform group-hover:-translate-x-0.5'
-          aria-hidden
-        />
-        {t('list.back')}
-      </Link>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <Link
+          href={basePath}
+          className='group border-border text-content-muted hover:border-foreground hover:text-foreground inline-flex items-center gap-2 self-start rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all'
+        >
+          <ArrowLeft
+            className='size-3.5 transition-transform group-hover:-translate-x-0.5'
+            aria-hidden
+          />
+          {t('list.back')}
+        </Link>
+        {report && (
+          <button
+            type='button'
+            onClick={() => router.push(`${basePath}/new?from=${reportId}`)}
+            className='border-border text-content-main hover:bg-muted inline-flex items-center gap-1.5 rounded-xl border bg-white px-3 py-2 text-xs font-semibold shadow-sm transition'
+          >
+            <Pencil className='size-3.5' aria-hidden /> {t('list.editRerun')}
+          </button>
+        )}
+      </div>
 
       {loading && !report ? (
         <div className='text-content-muted flex items-center justify-center gap-2 py-16 text-sm'>

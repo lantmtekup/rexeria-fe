@@ -22,6 +22,7 @@
       "notFound": "Không tìm thấy báo cáo.",
       "rename": "Đổi tên",
       "delete": "Xoá",
+      "editRerun": "Chỉnh sửa & chạy lại",
       "renamePrompt": "Tên mới cho báo cáo:",
       "renamed": "Đã đổi tên",
       "renameFailed": "Đổi tên thất bại (BE chưa hỗ trợ?)",

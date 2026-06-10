@@ -45,7 +45,7 @@ import {
   localSuggestJourney,
   type StepId,
 } from './logic';
-import { HAPPY_CITY_BRIEF } from './seed';
+import { EMPTY_BRIEF, HAPPY_CITY_BRIEF } from './seed';
 import { AssetPickerDialog } from './AssetPickerDialog';
 
 /**
@@ -65,6 +65,8 @@ export interface IntakeWizardProps {
   submitting: boolean;
   onRun: (body: CreateInsightReportBody) => void;
   brandLocked: boolean;
+  /** Mở để "chỉnh sửa & chạy lại" từ 1 report cũ → prefill brief/goal/journey. */
+  fromReportId?: string;
 }
 
 /** Chip chọn được; `accent` để bước AI tô tím, mặc định primary. */
@@ -145,12 +147,20 @@ export function IntakeWizard({
   submitting,
   onRun,
   brandLocked,
+  fromReportId,
 }: IntakeWizardProps) {
   const t = useTranslations('insights');
 
   const [step, setStep] = useState(0);
-  // Prefill từ deck Happy City Cà Mau (seed); user mở lên là có sẵn, sửa sau.
-  const [brief, setBrief] = useState<InsightBrief>(HAPPY_CITY_BRIEF);
+  // Tạo mới: prefill seed Happy City. Chỉnh sửa từ report cũ: bắt đầu trắng rồi
+  // hydrate từ input_snapshot (effect bên dưới).
+  const [brief, setBrief] = useState<InsightBrief>(
+    fromReportId ? EMPTY_BRIEF : HAPPY_CITY_BRIEF
+  );
+  const [hydrating, setHydrating] = useState(!!fromReportId);
+  const [parentReportId, setParentReportId] = useState<string | undefined>(
+    undefined
+  );
 
   // Workspace bắt buộc cho create (BE yêu cầu). Portal: auto-pick mặc định.
   const [workspaceId, setWorkspaceId] = useState('');
@@ -165,6 +175,39 @@ export function IntakeWizard({
       workspaceItems.find(w => w.is_default) ?? workspaceItems[0];
     if (preferred) setWorkspaceId(preferred.id);
   }, [brandLocked, workspaceId, workspaceItems]);
+
+  // "Chỉnh sửa & chạy lại": nạp brief/goal/journey từ report cũ (input_snapshot).
+  useEffect(() => {
+    if (!fromReportId) return;
+    let alive = true;
+    setHydrating(true);
+    rexerApi.insights
+      .get(fromReportId)
+      .then(r => {
+        if (!alive) return;
+
+        const s = (r.input_snapshot ?? {}) as Record<string, any>;
+        const b = s.manual?.brief ?? s.brief;
+        if (b) setBrief(b as InsightBrief);
+        const eg = s.selections?.experience_goal;
+        const goals: string[] = [];
+        if (eg?.primary_goal) goals.push(eg.primary_goal);
+        if (eg?.secondary_goal) goals.push(eg.secondary_goal);
+        if (Array.isArray(s.manual?.custom_goals))
+          goals.push(...s.manual.custom_goals);
+        if (goals.length) setSelectedGoals(goals);
+        if (s.selections?.customer_journey)
+          setJourney(s.selections.customer_journey as InsightBlueprintJourney);
+        setParentReportId(fromReportId);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (alive) setHydrating(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [fromReportId]);
 
   // Gợi ý lũy tiến cho bước hiện tại.
   const [suggestion, setSuggestion] = useState<InsightStepSuggestion | null>(
@@ -522,6 +565,7 @@ export function IntakeWizard({
     onRun({
       workspace_id: workspaceId,
       title: brief.brand?.name || undefined,
+      parent_report_id: parentReportId,
       inputs: {
         brief,
         source: 'wizard_v2',
@@ -618,12 +662,12 @@ export function IntakeWizard({
 
       {/* Panel chính */}
       <div className='border-border bg-card relative flex min-h-[480px] flex-1 flex-col rounded-2xl border'>
-        {analyzing && (
+        {(analyzing || hydrating) && (
           <div className='absolute inset-0 z-10 grid place-items-center rounded-2xl bg-white/85 backdrop-blur-sm'>
             <div className='text-center'>
               <Loader2 className='mx-auto size-7 animate-spin text-violet-600' />
               <p className='text-content-main mt-3 text-sm font-semibold'>
-                {t('intake.analyzing')}
+                {hydrating ? t('list.loading') : t('intake.analyzing')}
               </p>
             </div>
           </div>
