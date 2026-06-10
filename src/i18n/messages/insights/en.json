@@ -88,6 +88,7 @@
         "brandName": "Brand name",
         "positioning": "Positioning",
         "tone": "Tone",
+        "toneAddPh": "Add another tone…",
         "visualIdentity": "Visual identity",
         "features": "Key features",
         "perLine": "one per line",
@@ -95,6 +96,7 @@
         "pricing": "Pricing",
         "useCases": "Use cases",
         "objectives": "Primary objective",
+        "objectiveAddPh": "Another objective? Type then Enter…",
         "persona": "Persona",
         "ageRange": "Age range",
         "behaviours": "Behaviours",
@@ -105,20 +107,33 @@
         "competitors": "Main competitors",
         "trends": "Market trends",
         "expectations": "Customer expectations",
-        "assetDrop": "Drag & drop images, videos, brochures…",
+        "assetDrop": "Drag & drop or click to choose files",
+        "assetUploadHint": "Images, videos, brochures (PDF/DOC) — uploaded to library",
+        "assetUploading": "Uploading…",
+        "assetPick": "Choose from library",
+        "assetManualPh": "or type an existing asset name/URL…",
+        "assetAddBtn": "Add",
         "assetAdd": "Added assets",
-        "challenges": "Current challenges"
+        "challenges": "Current challenges",
+        "challengeAddPh": "Another challenge? Type then Enter…"
       },
       "goal": {
         "introAi": "The AI classifies the best-fit experience type. You can re-select.",
         "introGuide": "A guided suggestion based on your brief — re-select if needed.",
-        "secondary": "secondary"
+        "multiHint": "You can pick multiple goals (the first is primary).",
+        "primary": "primary",
+        "secondary": "secondary",
+        "customLabel": "Custom",
+        "addPh": "Another goal? Type then Enter…"
       },
       "journey": {
         "intro": "Applies an industry journey pattern, then tailors it to the chosen goal.",
         "patternLabel": "INDUSTRY PATTERN",
         "stagesLabel": "Suggested journey",
-        "stagesHint": "edit titles if needed"
+        "stagesHint": "add / edit / remove stages",
+        "stageNamePh": "Stage name",
+        "intentPh": "Intent",
+        "addStage": "Add stage"
       },
       "review": {
         "brand": "Brand",

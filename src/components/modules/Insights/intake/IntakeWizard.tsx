@@ -9,10 +9,13 @@ import {
   ChevronRight,
   Image as ImageIcon,
   Loader2,
+  Plus,
   Sparkles,
   Upload,
   Wand2,
+  X,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { rexerApi } from '@/services/rexer/endpoints';
 import { useRexer } from '@/services/rexer/use-rexer';
@@ -42,6 +45,8 @@ import {
   localSuggestJourney,
   type StepId,
 } from './logic';
+import { HAPPY_CITY_BRIEF } from './seed';
+import { AssetPickerDialog } from './AssetPickerDialog';
 
 /**
  * Wizard v2 — intake nhiều bước (form có cấu trúc, KHÔNG chatbot). Thay cho
@@ -61,16 +66,6 @@ export interface IntakeWizardProps {
   onRun: (body: CreateInsightReportBody) => void;
   brandLocked: boolean;
 }
-
-const EMPTY_BRIEF: InsightBrief = {
-  brand: { tone: [] },
-  product: { features: [] },
-  objective: { campaign_objectives: [] },
-  audience: { pain_points: [], device: 'mobile' },
-  market: {},
-  assets: { items: [] },
-  challenges: [],
-};
 
 /** Chip chọn được; `accent` để bước AI tô tím, mặc định primary. */
 function Chip({
@@ -154,7 +149,8 @@ export function IntakeWizard({
   const t = useTranslations('insights');
 
   const [step, setStep] = useState(0);
-  const [brief, setBrief] = useState<InsightBrief>(EMPTY_BRIEF);
+  // Prefill từ deck Happy City Cà Mau (seed); user mở lên là có sẵn, sửa sau.
+  const [brief, setBrief] = useState<InsightBrief>(HAPPY_CITY_BRIEF);
 
   // Workspace bắt buộc cho create (BE yêu cầu). Portal: auto-pick mặc định.
   const [workspaceId, setWorkspaceId] = useState('');
@@ -179,7 +175,10 @@ export function IntakeWizard({
   // Experience Goal đã xếp hạng + lựa chọn.
   const [goalRanks, setGoalRanks] = useState<GoalRanking[]>([]);
   const [goalSource, setGoalSource] = useState<'ai' | 'guide'>('guide');
-  const [primaryGoal, setPrimaryGoal] = useState<ExperienceGoal | null>(null);
+  // Multi-select goal: mảng có thứ tự — enum đầu = primary, enum kế = secondary;
+  // có thể chứa goal tuỳ chỉnh (string ngoài enum) do user tự nhập.
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+  const [goalInput, setGoalInput] = useState('');
 
   // Journey đề xuất (sửa được).
   const [journey, setJourney] = useState<InsightBlueprintJourney | null>(null);
@@ -189,15 +188,27 @@ export function IntakeWizard({
   } | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
 
+  // Bước "assets": upload file thật + ô thêm tay + chọn từ thư viện.
+  const [uploading, setUploading] = useState(false);
+  const [assetInput, setAssetInput] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
+  // Bước "brand": ô thêm tone tuỳ chỉnh.
+  const [toneInput, setToneInput] = useState('');
+  // Bước "objective": ô thêm mục tiêu tuỳ chỉnh.
+  const [objectiveInput, setObjectiveInput] = useState('');
+  // Bước "challenges": ô thêm thách thức tuỳ chỉnh.
+  const [challengeInput, setChallengeInput] = useState('');
+
   const cur = STEPS[step];
   const ctx = { workspace_id: workspaceId || undefined };
 
-  // Goal phụ = goal xếp hạng cao nhất khác primary.
-  const secondaryGoal = useMemo<ExperienceGoal | null>(() => {
-    if (!primaryGoal) return null;
-    const next = goalRanks.find(g => g.goal !== primaryGoal);
-    return next?.goal ?? null;
-  }, [goalRanks, primaryGoal]);
+  // g có phải Experience Goal enum hợp lệ không?
+  const isExpGoal = (g: string): g is ExperienceGoal =>
+    GOAL_META.some(m => m.id === g);
+  // primary = enum goal đầu tiên đã chọn; secondary = enum kế tiếp.
+  const enumGoals = selectedGoals.filter(isExpGoal) as ExperienceGoal[];
+  const primaryGoal: ExperienceGoal | null = enumGoals[0] ?? null;
+  const secondaryGoal: ExperienceGoal | null = enumGoals[1] ?? null;
 
   // Mỗi lần đổi bước: nạp gợi ý (ưu tiên BE, fallback heuristic).
   useEffect(() => {
@@ -261,8 +272,9 @@ export function IntakeWizard({
   }, [cur.id]);
 
   useEffect(() => {
-    if (goalRanks.length && !primaryGoal) setPrimaryGoal(goalRanks[0].goal);
-  }, [goalRanks, primaryGoal]);
+    if (goalRanks.length && selectedGoals.length === 0)
+      setSelectedGoals([goalRanks[0].goal]);
+  }, [goalRanks, selectedGoals.length]);
 
   // Khi vào bước "journey" và đã có goal: dựng journey (BE → heuristic).
   useEffect(() => {
@@ -328,9 +340,151 @@ export function IntakeWizard({
       .filter(Boolean);
   }
 
-  function pickGoal(g: ExperienceGoal) {
-    setPrimaryGoal(g);
+  // ── Assets: thêm/xoá + upload file thật (tái dùng luồng media init→raw→complete)
+  function appendAssets(names: string[]) {
+    if (!names.length) return;
+    setBrief(b => {
+      const cur = b.assets?.items ?? [];
+      const fresh = names.filter(n => n && !cur.includes(n));
+      if (!fresh.length) return b;
+      return { ...b, assets: { ...b.assets, items: [...cur, ...fresh] } };
+    });
+  }
+  function removeAsset(idx: number) {
+    setBrief(b => ({
+      ...b,
+      assets: {
+        ...b.assets,
+        items: (b.assets?.items ?? []).filter((_, i) => i !== idx),
+      },
+    }));
+  }
+  function addTone() {
+    const v = toneInput.trim();
+    if (!v) return;
+    setBrief(b => {
+      const cur = b.brand?.tone ?? [];
+      if (cur.includes(v)) return b;
+      return { ...b, brand: { ...b.brand, tone: [...cur, v] } };
+    });
+    setToneInput('');
+  }
+  function addObjective() {
+    const v = objectiveInput.trim();
+    if (!v) return;
+    setBrief(b => {
+      const cur = b.objective?.campaign_objectives ?? [];
+      if (cur.includes(v)) return b;
+      return {
+        ...b,
+        objective: { ...b.objective, campaign_objectives: [...cur, v] },
+      };
+    });
+    setObjectiveInput('');
+  }
+  function addChallenge() {
+    const v = challengeInput.trim();
+    if (!v) return;
+    setBrief(b => {
+      const cur = b.challenges ?? [];
+      if (cur.includes(v)) return b;
+      return { ...b, challenges: [...cur, v] };
+    });
+    setChallengeInput('');
+  }
+  function kindOf(mime: string): 'image' | 'video' | 'file' {
+    if (mime.startsWith('image/')) return 'image';
+    if (mime.startsWith('video/')) return 'video';
+    return 'file';
+  }
+  async function uploadAssets(fileList: FileList | null) {
+    const files = fileList ? Array.from(fileList) : [];
+    if (!files.length) return;
+    setUploading(true);
+    const names: string[] = [];
+    for (const file of files) {
+      try {
+        const init = await rexerApi.media.initUpload({
+          filename: file.name,
+          mime_type: file.type || 'application/octet-stream',
+          file_size: file.size,
+          owner_scope: 'library',
+          media_type: kindOf(file.type),
+        });
+        // PUT thẳng chỉ khi presigned_url là storage external thật; còn lại
+        // dùng proxy uploadRaw (đi qua /api/rexer rewrite) — giống MediaLibrary.
+        const ps = init.presigned_url;
+        const useDirect =
+          !!ps && /^https?:\/\//i.test(ps) && !ps.includes('/media/uploads/');
+        if (useDirect) {
+          const r = await fetch(ps!, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': file.type || 'application/octet-stream',
+            },
+            body: file,
+          });
+          if (!r.ok) throw new Error(`upload ${r.status}`);
+        } else {
+          await rexerApi.media.uploadRaw(init.upload_id, file);
+        }
+        const res = await rexerApi.media.completeUpload({
+          upload_id: init.upload_id,
+        });
+        names.push(res?.media_asset?.original_filename || file.name);
+      } catch {
+        toast.error(`Upload "${file.name}" thất bại`);
+      }
+    }
+    appendAssets(names);
+    setUploading(false);
+    if (names.length) toast.success(`Đã thêm ${names.length} file`);
+  }
+
+  function toggleGoal(g: string) {
+    setSelectedGoals(prev =>
+      prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g]
+    );
     setJourney(null); // đổi goal → dựng lại journey ở bước sau
+  }
+  function addGoal() {
+    const v = goalInput.trim();
+    if (!v) return;
+    setSelectedGoals(prev => (prev.includes(v) ? prev : [...prev, v]));
+    setGoalInput('');
+    setJourney(null);
+  }
+
+  // Journey: thêm / sửa / xoá stage (chỉnh trực tiếp trên journey.stages).
+  function addStage() {
+    setJourney(j => {
+      const base = j ?? {
+        journey_pattern_name: '',
+        rationale: '',
+        stages: [],
+      };
+      const key = `custom-${base.stages.length}-${base.stages.reduce((a, s) => a + s.key.length, 0)}`;
+      return {
+        ...base,
+        stages: [...base.stages, { key, name: '', intent: '', rationale: '' }],
+      };
+    });
+  }
+  function updateStage(
+    i: number,
+    patchStage: { name?: string; intent?: string }
+  ) {
+    setJourney(j => {
+      if (!j) return j;
+      const stages = [...j.stages];
+      stages[i] = { ...stages[i], ...patchStage };
+      return { ...j, stages };
+    });
+  }
+  function removeStage(i: number) {
+    setJourney(j =>
+      j ? { ...j, stages: j.stages.filter((_, idx) => idx !== i) } : j
+    );
   }
 
   const goalLabel = (g: ExperienceGoal) => {
@@ -342,7 +496,7 @@ export function IntakeWizard({
   // Điều kiện cho phép sang bước kế.
   const canNext = (() => {
     if (cur.id === 'brand') return !!workspaceId && !!brief.brand?.name?.trim();
-    if (cur.id === 'goal') return !!primaryGoal;
+    if (cur.id === 'goal') return selectedGoals.length > 0;
     return true;
   })();
 
@@ -350,10 +504,15 @@ export function IntakeWizard({
   const nextIsAi = STEPS[step + 1]?.ai;
 
   function submit() {
+    const customGoals = selectedGoals.filter(g => !isExpGoal(g));
     onRun({
       workspace_id: workspaceId,
       title: brief.brand?.name || undefined,
-      inputs: { brief, source: 'wizard_v2' },
+      inputs: {
+        brief,
+        source: 'wizard_v2',
+        ...(customGoals.length ? { custom_goals: customGoals } : {}),
+      },
       selections: {
         experience_goal: primaryGoal
           ? { primary_goal: primaryGoal, secondary_goal: secondaryGoal }
@@ -594,7 +753,11 @@ export function IntakeWizard({
             </FieldRow>
             <FieldRow label={t('intake.fields.tone')}>
               <ChipRow>
-                {TONES.map(o => (
+                {/* Tone mặc định + tone tuỳ chỉnh user đã thêm */}
+                {[
+                  ...TONES,
+                  ...(brief.brand?.tone ?? []).filter(x => !TONES.includes(x)),
+                ].map(o => (
                   <Chip
                     key={o}
                     on={brief.brand?.tone?.includes(o) ?? false}
@@ -606,9 +769,32 @@ export function IntakeWizard({
                   </Chip>
                 ))}
               </ChipRow>
+              <div className='mt-2 flex gap-2'>
+                <Input
+                  value={toneInput}
+                  onChange={e => setToneInput(e.target.value)}
+                  placeholder={t('intake.fields.toneAddPh')}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addTone();
+                    }
+                  }}
+                />
+                <button
+                  type='button'
+                  onClick={addTone}
+                  disabled={!toneInput.trim()}
+                  className='border-border text-content-muted hover:bg-muted inline-flex shrink-0 items-center gap-1 rounded-xl border px-3 text-sm font-semibold transition disabled:opacity-40'
+                >
+                  <Plus className='size-4' aria-hidden />
+                  {t('intake.fields.assetAddBtn')}
+                </button>
+              </div>
             </FieldRow>
             <FieldRow label={t('intake.fields.visualIdentity')}>
-              <Input
+              <Textarea
+                className='min-h-20'
                 value={brief.brand?.visual_identity ?? ''}
                 onChange={e =>
                   patch('brand', { visual_identity: e.target.value })
@@ -640,17 +826,25 @@ export function IntakeWizard({
               />
             </FieldRow>
             <div className='grid gap-4 sm:grid-cols-2'>
-              <FieldRow label={t('intake.fields.pricing')}>
-                <Input
-                  value={brief.product?.pricing ?? ''}
-                  onChange={e => patch('product', { pricing: e.target.value })}
+              <FieldRow
+                label={t('intake.fields.pricing')}
+                hint={t('intake.fields.perLine')}
+              >
+                <Textarea
+                  defaultValue={(brief.product?.pricing ?? []).join('\n')}
+                  onChange={e =>
+                    patch('product', { pricing: lines(e.target.value) })
+                  }
                 />
               </FieldRow>
-              <FieldRow label={t('intake.fields.useCases')}>
-                <Input
-                  value={brief.product?.use_cases ?? ''}
+              <FieldRow
+                label={t('intake.fields.useCases')}
+                hint={t('intake.fields.perLine')}
+              >
+                <Textarea
+                  defaultValue={(brief.product?.use_cases ?? []).join('\n')}
                   onChange={e =>
-                    patch('product', { use_cases: e.target.value })
+                    patch('product', { use_cases: lines(e.target.value) })
                   }
                 />
               </FieldRow>
@@ -662,7 +856,13 @@ export function IntakeWizard({
         return (
           <FieldRow label={t('intake.fields.objectives')}>
             <ChipRow>
-              {OBJECTIVES.map(o => (
+              {/* Mục tiêu mặc định + mục tiêu tuỳ chỉnh user đã thêm */}
+              {[
+                ...OBJECTIVES,
+                ...(brief.objective?.campaign_objectives ?? []).filter(
+                  x => !OBJECTIVES.includes(x)
+                ),
+              ].map(o => (
                 <Chip
                   key={o}
                   on={
@@ -681,28 +881,48 @@ export function IntakeWizard({
                 </Chip>
               ))}
             </ChipRow>
+            <div className='mt-2 flex gap-2'>
+              <Input
+                value={objectiveInput}
+                onChange={e => setObjectiveInput(e.target.value)}
+                placeholder={t('intake.fields.objectiveAddPh')}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addObjective();
+                  }
+                }}
+              />
+              <button
+                type='button'
+                onClick={addObjective}
+                disabled={!objectiveInput.trim()}
+                className='border-border text-content-muted hover:bg-muted inline-flex shrink-0 items-center gap-1 rounded-xl border px-3 text-sm font-semibold transition disabled:opacity-40'
+              >
+                <Plus className='size-4' aria-hidden />
+                {t('intake.fields.assetAddBtn')}
+              </button>
+            </div>
           </FieldRow>
         );
 
       case 'audience':
         return (
           <div className='space-y-4'>
-            <div className='grid gap-4 sm:grid-cols-[2fr_1fr]'>
-              <FieldRow label={t('intake.fields.persona')}>
-                <Input
-                  value={brief.audience?.persona ?? ''}
-                  onChange={e => patch('audience', { persona: e.target.value })}
-                />
-              </FieldRow>
-              <FieldRow label={t('intake.fields.ageRange')}>
-                <Input
-                  value={brief.audience?.age_range ?? ''}
-                  onChange={e =>
-                    patch('audience', { age_range: e.target.value })
-                  }
-                />
-              </FieldRow>
-            </div>
+            <FieldRow label={t('intake.fields.persona')}>
+              <Textarea
+                className='min-h-16'
+                value={brief.audience?.persona ?? ''}
+                onChange={e => patch('audience', { persona: e.target.value })}
+              />
+            </FieldRow>
+            <FieldRow label={t('intake.fields.ageRange')}>
+              <Input
+                className='sm:max-w-xs'
+                value={brief.audience?.age_range ?? ''}
+                onChange={e => patch('audience', { age_range: e.target.value })}
+              />
+            </FieldRow>
             <FieldRow label={t('intake.fields.behaviours')}>
               <Textarea
                 value={brief.audience?.behaviours ?? ''}
@@ -757,13 +977,13 @@ export function IntakeWizard({
               />
             </FieldRow>
             <FieldRow label={t('intake.fields.trends')}>
-              <Input
+              <Textarea
                 value={brief.market?.trends ?? ''}
                 onChange={e => patch('market', { trends: e.target.value })}
               />
             </FieldRow>
             <FieldRow label={t('intake.fields.expectations')}>
-              <Input
+              <Textarea
                 value={brief.market?.expectations ?? ''}
                 onChange={e =>
                   patch('market', { expectations: e.target.value })
@@ -776,33 +996,123 @@ export function IntakeWizard({
       case 'assets':
         return (
           <div className='space-y-4'>
-            <div className='border-border bg-muted/40 rounded-2xl border border-dashed p-6 text-center'>
-              <Upload
-                className='text-content-muted mx-auto mb-1.5 size-5'
-                aria-hidden
+            {/* Upload thật: label bọc input ẩn → click hoặc kéo-thả */}
+            <label
+              onDragOver={e => e.preventDefault()}
+              onDrop={e => {
+                e.preventDefault();
+                if (!uploading) uploadAssets(e.dataTransfer.files);
+              }}
+              className={cn(
+                'border-border bg-muted/40 flex cursor-pointer flex-col items-center rounded-2xl border border-dashed p-6 text-center transition',
+                uploading
+                  ? 'cursor-wait opacity-80'
+                  : 'hover:border-primary/40 hover:bg-primary/5'
+              )}
+            >
+              <input
+                type='file'
+                multiple
+                accept='image/*,video/*,.pdf,.doc,.docx'
+                className='sr-only'
+                disabled={uploading}
+                onChange={e => {
+                  uploadAssets(e.target.files);
+                  e.target.value = '';
+                }}
               />
-              <p className='text-content-main text-sm font-semibold'>
-                {t('intake.fields.assetDrop')}
-              </p>
-            </div>
+              {uploading ? (
+                <>
+                  <Loader2 className='text-primary mb-1.5 size-5 animate-spin' />
+                  <p className='text-content-main text-sm font-semibold'>
+                    {t('intake.fields.assetUploading')}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Upload
+                    className='text-content-muted mb-1.5 size-5'
+                    aria-hidden
+                  />
+                  <p className='text-content-main text-sm font-semibold'>
+                    {t('intake.fields.assetDrop')}
+                  </p>
+                  <p className='text-content-muted mt-0.5 text-xs'>
+                    {t('intake.fields.assetUploadHint')}
+                  </p>
+                </>
+              )}
+            </label>
+
+            {/* Chọn từ thư viện media đã có */}
+            <button
+              type='button'
+              onClick={() => setPickerOpen(true)}
+              className='border-border text-content-main hover:bg-muted flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition'
+            >
+              <ImageIcon className='text-primary size-4' aria-hidden />
+              {t('intake.fields.assetPick')}
+            </button>
+            <AssetPickerDialog
+              open={pickerOpen}
+              onOpenChange={setPickerOpen}
+              onPick={appendAssets}
+            />
+
+            {/* Thêm tay (tên/URL asset đã có sẵn) */}
             <FieldRow label={t('intake.fields.assetAdd')}>
-              <Textarea
-                defaultValue={(brief.assets?.items ?? []).join('\n')}
-                placeholder={t('intake.fields.perLine')}
-                onChange={e =>
-                  patch('assets', { items: lines(e.target.value) })
-                }
-              />
+              <div className='flex gap-2'>
+                <Input
+                  value={assetInput}
+                  onChange={e => setAssetInput(e.target.value)}
+                  placeholder={t('intake.fields.assetManualPh')}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const v = assetInput.trim();
+                      if (v) {
+                        appendAssets([v]);
+                        setAssetInput('');
+                      }
+                    }
+                  }}
+                />
+                <button
+                  type='button'
+                  onClick={() => {
+                    const v = assetInput.trim();
+                    if (v) {
+                      appendAssets([v]);
+                      setAssetInput('');
+                    }
+                  }}
+                  disabled={!assetInput.trim()}
+                  className='border-border text-content-muted hover:bg-muted inline-flex shrink-0 items-center gap-1 rounded-xl border px-3 text-sm font-semibold transition disabled:opacity-40'
+                >
+                  <Plus className='size-4' aria-hidden />
+                  {t('intake.fields.assetAddBtn')}
+                </button>
+              </div>
             </FieldRow>
+
+            {/* Chips: mỗi asset có nút xoá */}
             {(brief.assets?.items ?? []).length > 0 && (
               <ChipRow>
-                {brief.assets!.items!.map(a => (
+                {brief.assets!.items!.map((a, i) => (
                   <span
-                    key={a}
+                    key={`${a}-${i}`}
                     className='bg-primary/5 text-primary inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-mono text-xs'
                   >
                     <ImageIcon className='size-3' aria-hidden />
                     {a}
+                    <button
+                      type='button'
+                      onClick={() => removeAsset(i)}
+                      className='hover:text-primary/60 -mr-0.5 ml-0.5'
+                      aria-label='Xoá'
+                    >
+                      <X className='size-3' aria-hidden />
+                    </button>
                   </span>
                 ))}
               </ChipRow>
@@ -814,7 +1124,13 @@ export function IntakeWizard({
         return (
           <FieldRow label={t('intake.fields.challenges')}>
             <ChipRow>
-              {CHALLENGES.map(o => (
+              {/* Thách thức mặc định + tuỳ chỉnh user đã thêm */}
+              {[
+                ...CHALLENGES,
+                ...(brief.challenges ?? []).filter(
+                  x => !CHALLENGES.includes(x)
+                ),
+              ].map(o => (
                 <Chip
                   key={o}
                   on={brief.challenges?.includes(o) ?? false}
@@ -829,6 +1145,28 @@ export function IntakeWizard({
                 </Chip>
               ))}
             </ChipRow>
+            <div className='mt-2 flex gap-2'>
+              <Input
+                value={challengeInput}
+                onChange={e => setChallengeInput(e.target.value)}
+                placeholder={t('intake.fields.challengeAddPh')}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addChallenge();
+                  }
+                }}
+              />
+              <button
+                type='button'
+                onClick={addChallenge}
+                disabled={!challengeInput.trim()}
+                className='border-border text-content-muted hover:bg-muted inline-flex shrink-0 items-center gap-1 rounded-xl border px-3 text-sm font-semibold transition disabled:opacity-40'
+              >
+                <Plus className='size-4' aria-hidden />
+                {t('intake.fields.assetAddBtn')}
+              </button>
+            </div>
           </FieldRow>
         );
 
@@ -836,21 +1174,44 @@ export function IntakeWizard({
         return (
           <div className='space-y-4'>
             <p className='text-content-muted text-[12.5px]'>
-              {goalSource === 'ai'
+              {(goalSource === 'ai'
                 ? t('intake.goal.introAi')
-                : t('intake.goal.introGuide')}
+                : t('intake.goal.introGuide')) +
+                ' ' +
+                t('intake.goal.multiHint')}
             </p>
             <div className='grid gap-2.5 sm:grid-cols-2'>
-              {GOAL_META.map(meta => {
-                const rank = goalRanks.find(g => g.goal === meta.id);
-                const on = primaryGoal === meta.id;
-                const isPrimary = rank?.rank === 'primary';
-                const isSecondary = rank?.rank === 'secondary';
+              {[
+                ...GOAL_META.map(m => ({
+                  id: m.id as string,
+                  en: m.en,
+                  vn: goalLabel(m.id),
+                  custom: false,
+                })),
+                ...selectedGoals
+                  .filter(g => !isExpGoal(g))
+                  .map(g => ({
+                    id: g,
+                    en: t('intake.goal.customLabel'),
+                    vn: g,
+                    custom: true,
+                  })),
+              ].map(item => {
+                const on = selectedGoals.includes(item.id);
+                const role =
+                  item.id === primaryGoal
+                    ? 'primary'
+                    : item.id === secondaryGoal
+                      ? 'secondary'
+                      : null;
+                const rank = item.custom
+                  ? undefined
+                  : goalRanks.find(g => g.goal === item.id);
                 return (
                   <button
-                    key={meta.id}
+                    key={item.id}
                     type='button'
-                    onClick={() => pickGoal(meta.id)}
+                    onClick={() => toggleGoal(item.id)}
                     className={cn(
                       'relative rounded-2xl border p-3 text-left transition',
                       on
@@ -858,30 +1219,58 @@ export function IntakeWizard({
                         : 'border-border bg-card hover:border-violet-200'
                     )}
                   >
-                    {isPrimary && rank && (
-                      <span className='absolute top-2.5 right-2.5 rounded-md bg-violet-600 px-1.5 py-0.5 text-[10px] font-bold text-white'>
-                        {Math.round(rank.confidence * 100)}%
-                      </span>
-                    )}
-                    {isSecondary && (
-                      <span className='absolute top-2.5 right-2.5 text-[10px] font-bold text-violet-500'>
-                        {t('intake.goal.secondary')}
-                      </span>
-                    )}
+                    <span className='absolute top-2.5 right-2.5'>
+                      {role === 'primary' ? (
+                        <span className='rounded-md bg-violet-600 px-1.5 py-0.5 text-[10px] font-bold text-white'>
+                          {t('intake.goal.primary')}
+                        </span>
+                      ) : role === 'secondary' ? (
+                        <span className='text-[10px] font-bold text-violet-500'>
+                          {t('intake.goal.secondary')}
+                        </span>
+                      ) : rank?.rank === 'primary' ? (
+                        <span className='rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-700'>
+                          {Math.round(rank.confidence * 100)}%
+                        </span>
+                      ) : null}
+                    </span>
                     <div
                       className={cn(
-                        'text-sm font-semibold',
+                        'pr-10 text-sm font-semibold',
                         on ? 'text-violet-700' : 'text-content-main'
                       )}
                     >
-                      {goalLabel(meta.id)}
+                      {item.vn}
                     </div>
                     <div className='text-content-muted mt-0.5 font-mono text-[11px]'>
-                      {meta.en}
+                      {item.en}
                     </div>
                   </button>
                 );
               })}
+            </div>
+            {/* Thêm goal tuỳ chỉnh nếu không có option phù hợp */}
+            <div className='flex gap-2'>
+              <Input
+                value={goalInput}
+                onChange={e => setGoalInput(e.target.value)}
+                placeholder={t('intake.goal.addPh')}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addGoal();
+                  }
+                }}
+              />
+              <button
+                type='button'
+                onClick={addGoal}
+                disabled={!goalInput.trim()}
+                className='border-border text-content-muted hover:bg-muted inline-flex shrink-0 items-center gap-1 rounded-xl border px-3 text-sm font-semibold transition disabled:opacity-40'
+              >
+                <Plus className='size-4' aria-hidden />
+                {t('intake.fields.assetAddBtn')}
+              </button>
             </div>
             {primaryGoal &&
               (() => {
@@ -932,25 +1321,41 @@ export function IntakeWizard({
                 {(journey?.stages ?? []).map((st, i) => (
                   <div
                     key={st.key}
-                    className='border-border flex items-center gap-3 rounded-xl border px-3 py-2'
+                    className='border-border flex items-center gap-2 rounded-xl border px-3 py-2'
                   >
                     <span className='bg-primary/10 text-primary inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold'>
                       {i + 1}
                     </span>
                     <input
                       value={st.name}
-                      onChange={e => {
-                        const stages = [...(journey?.stages ?? [])];
-                        stages[i] = { ...stages[i], name: e.target.value };
-                        setJourney(j => (j ? { ...j, stages } : j));
-                      }}
-                      className='text-content-main flex-1 border-none bg-transparent text-sm font-semibold outline-none'
+                      onChange={e => updateStage(i, { name: e.target.value })}
+                      placeholder={t('intake.journey.stageNamePh')}
+                      className='text-content-main min-w-0 flex-1 border-none bg-transparent text-sm font-semibold outline-none'
                     />
-                    <span className='text-success shrink-0 text-[11px] font-semibold whitespace-nowrap'>
-                      {st.intent}
-                    </span>
+                    <input
+                      value={st.intent}
+                      onChange={e => updateStage(i, { intent: e.target.value })}
+                      placeholder={t('intake.journey.intentPh')}
+                      className='text-success w-28 shrink-0 border-none bg-transparent text-right text-[11px] font-semibold outline-none'
+                    />
+                    <button
+                      type='button'
+                      onClick={() => removeStage(i)}
+                      aria-label='Xoá'
+                      className='text-content-muted hover:text-danger shrink-0'
+                    >
+                      <X className='size-3.5' aria-hidden />
+                    </button>
                   </div>
                 ))}
+                <button
+                  type='button'
+                  onClick={addStage}
+                  className='border-border text-content-muted hover:bg-muted flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed px-3 py-2 text-sm font-semibold transition'
+                >
+                  <Plus className='size-4' aria-hidden />
+                  {t('intake.journey.addStage')}
+                </button>
               </div>
             </FieldRow>
           </div>
@@ -973,7 +1378,11 @@ export function IntakeWizard({
             />
             <ReviewCard
               label={t('intake.review.goal')}
-              value={primaryGoal ? goalLabel(primaryGoal) : undefined}
+              value={
+                selectedGoals
+                  .map(g => (isExpGoal(g) ? goalLabel(g) : g))
+                  .join(', ') || undefined
+              }
             />
             <ReviewCard
               label={t('intake.review.journey')}

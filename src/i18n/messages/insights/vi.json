@@ -88,6 +88,7 @@
         "brandName": "Tên thương hiệu",
         "positioning": "Định vị",
         "tone": "Tone",
+        "toneAddPh": "Thêm tone khác…",
         "visualIdentity": "Nhận diện thị giác",
         "features": "Tính năng nổi bật",
         "perLine": "mỗi dòng 1 ý",
@@ -95,6 +96,7 @@
         "pricing": "Mức giá",
         "useCases": "Use cases",
         "objectives": "Mục tiêu chính",
+        "objectiveAddPh": "Mục tiêu khác? Nhập rồi Enter…",
         "persona": "Persona",
         "ageRange": "Độ tuổi",
         "behaviours": "Hành vi",
@@ -105,20 +107,33 @@
         "competitors": "Đối thủ chính",
         "trends": "Xu hướng thị trường",
         "expectations": "Kỳ vọng khách hàng",
-        "assetDrop": "Kéo thả ảnh, video, brochure…",
+        "assetDrop": "Kéo thả hoặc bấm để chọn file",
+        "assetUploadHint": "Ảnh, video, brochure (PDF/DOC) — tải lên thư viện",
+        "assetUploading": "Đang upload…",
+        "assetPick": "Chọn từ thư viện",
+        "assetManualPh": "hoặc nhập tên/URL asset đã có…",
+        "assetAddBtn": "Thêm",
         "assetAdd": "Asset đã thêm",
-        "challenges": "Thách thức đang gặp"
+        "challenges": "Thách thức đang gặp",
+        "challengeAddPh": "Thách thức khác? Nhập rồi Enter…"
       },
       "goal": {
         "introAi": "AI phân loại loại trải nghiệm phù hợp nhất. Bạn có thể chọn lại.",
         "introGuide": "Gợi ý dẫn hướng dựa trên brief của bạn — chọn lại nếu cần.",
-        "secondary": "phụ"
+        "multiHint": "Có thể chọn nhiều mục tiêu (mục đầu là chính).",
+        "primary": "chính",
+        "secondary": "phụ",
+        "customLabel": "Tuỳ chỉnh",
+        "addPh": "Mục tiêu khác? Nhập rồi Enter…"
       },
       "journey": {
         "intro": "Áp mẫu journey theo ngành rồi tùy biến theo Goal đã chốt.",
         "patternLabel": "MẪU NGÀNH",
         "stagesLabel": "Journey đề xuất",
-        "stagesHint": "sửa tiêu đề nếu cần"
+        "stagesHint": "thêm / sửa / xoá giai đoạn",
+        "stageNamePh": "Tên giai đoạn",
+        "intentPh": "Mục đích",
+        "addStage": "Thêm giai đoạn"
       },
       "review": {
         "brand": "Thương hiệu",

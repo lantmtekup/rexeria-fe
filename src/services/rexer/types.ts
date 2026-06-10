@@ -2997,8 +2997,8 @@ export interface InsightBrief {
   product?: {
     features?: string[];
     benefits?: string;
-    pricing?: string;
-    use_cases?: string;
+    pricing?: string[];
+    use_cases?: string[];
   };
   objective?: {
     campaign_objectives?: string[];

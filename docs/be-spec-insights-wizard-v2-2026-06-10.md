@@ -58,8 +58,8 @@ InsightBrief:
       properties:
         features:  { type: array, items: { type: string } }
         benefits:  { type: string }
-        pricing:   { type: string }
-        use_cases: { type: string }
+        pricing:   { type: array, items: { type: string } }
+        use_cases: { type: array, items: { type: string } }
     objective:
       type: object
       properties:
@@ -92,6 +92,12 @@ InsightBrief:
 > nên dùng các khoá trên làm tín hiệu cho prompt classify_goal/journey để chất lượng
 > tốt hơn. Đặc biệt `audience.pain_points` quyết định stage "Risk Reducer", và
 > `brand.tone`/`objective` ảnh hưởng phân loại goal.
+
+> **Giá trị tự do (FE đã hỗ trợ):** các mảng `brand.tone`, `objective.campaign_objectives`,
+> `challenges` là **danh sách string tự do** — FE gợi ý sẵn vài giá trị phổ biến nhưng
+> user **gõ thêm giá trị bất kỳ** (vd tone "Mộc mạc", mục tiêu "Tuyển dụng", thách thức
+> riêng). BE **KHÔNG được hard-validate theo enum cố định** cho mấy field này, chỉ nhận
+> string thường. Tương tự `pricing`/`use_cases` là list từng dòng do user nhập.
 
 ---
 
@@ -204,7 +210,9 @@ properties:
 ```
 
 > `journey.stages[]` dùng đúng `InsightJourneyStage {key,name,intent,rationale}`. FE
-> cho sửa `name` từng stage.
+> cho user **thêm / sửa (name + intent) / xoá** từng stage, kể cả stage tự thêm
+> (`key` dạng `custom-*`). BE nhận journey với số stage & nội dung **bất kỳ**, không
+> giả định cố định theo industry_pattern.
 
 ---
 
@@ -237,6 +245,13 @@ selections:
   compatible tuyệt đối.**
 
 > Đây là lý do các step v1 đã có status `skipped` — khớp sẵn, không cần đổi schema step.
+
+**Goal tuỳ chỉnh (FE đã hỗ trợ):** ở bước Experience Goal user **chọn nhiều** mục tiêu
+và có thể **tự nhập goal ngoài enum**. `selections.experience_goal.primary_goal` /
+`secondary_goal` chỉ chứa giá trị **thuộc enum** (goal enum đầu/kế trong danh sách chọn).
+Các goal tự nhập (không thuộc enum) FE gửi riêng ở `inputs.custom_goals: string[]` để
+job vẫn đọc được mong muốn của user mà không phá enum. BE nên đưa `custom_goals` vào
+ngữ cảnh khi `recommend_blocks/templates`.
 
 ### 6.1 Nới ràng buộc workspace (optional, ưu tiên Trung)
 

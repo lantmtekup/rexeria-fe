@@ -171,7 +171,7 @@ function briefHaystack(brief: InsightBrief): string {
     brief.brand?.name,
     brief.brand?.positioning,
     brief.product?.benefits,
-    brief.product?.use_cases,
+    ...(brief.product?.use_cases ?? []),
     ...(brief.product?.features ?? []),
     brief.audience?.persona,
   ]
