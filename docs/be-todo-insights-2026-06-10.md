@@ -1,106 +1,124 @@
-# BE TODO — AI-Insights (sau phiên FE 2026-06-10)
+# BE spec — AI-Insights blueprint: mở / lưu / generate (gửi team BE + AI)
 
-> Gửi team BE + AI. FE branch `feat/insights-wizard-v2` (MR !13). Doc này tổng hợp
-> **những gì BE còn cần** sau khi FE hoàn thiện: wizard v2, trang list báo cáo, và
-> nâng cấp UI blueprint (blocks/templates editable). Bổ sung cho
+> FE branch `feat/insights-wizard-v2` (MR !13). Bổ sung cho
 > `be-spec-insights-wizard-v2-2026-06-10.md` (3 endpoint sync + selections — đã ship).
-
-## 0. Trạng thái (đã probe live 2026-06-10)
-
-| Hạng mục | Prod | Dev local | Ghi chú |
-|---|---|---|---|
-| `suggest` / `classify-goal` / `suggest-journey` | ✅ | ✅ | FE đã ráp, shape khớp |
-| `create` + `selections` + `inputs.custom_goals` | ✅ | ✅ | job skip classify/journey khi có selections |
-| `PATCH /insights/reports/{id}` (đổi tên) | ✅ (401) | ❌ (404) | **deploy xuống dev** |
-| `DELETE /insights/reports/{id}` (xoá) | ✅ (401) | ❌ (404) | **deploy xuống dev** |
-| AI job worker (tạo blueprint) | ✅ | ❌ | **dev report kẹt `queued`** |
-| `/block-types` (catalog cho "tìm thủ công") | ✅ | ? | FE tái dùng modal editor — ok |
-
-Các mục dưới là **việc BE còn phải làm**, xếp theo ưu tiên.
+> Viết theo **kịch bản thao tác**: FE đang làm gì → thiếu gì → BE cần build gì.
 
 ---
 
-## 1. [CAO] Đồng bộ catalog block AI đề xuất với catalog editor thật
+## 0. Vấn đề cốt lõi (đọc trước)
 
-**Vấn đề (quan trọng nhất):** blueprint trả block `block_type_code` dạng `framer_yume_hero`,
-`framer_studio_manifesto`, `framer_large_quote`… Nhưng catalog block **insert được** ở
-editor (`/v1/block-types`, dùng cho "Tìm thủ công") lại là `hero_split`, `feature_grid`,
-`pricing_table`… → **2 namespace khác nhau**. Hệ quả:
-- Block AI gợi ý **không preview được** (không có trong catalog) → FE phải fallback tile gradient.
-- Không thể "insert thẳng" block AI gợi ý vào editor (code không hợp lệ với validate catalog).
+Blueprint hiện trả về **gợi ý dạng chữ** do AI sinh. **Block và template KHÔNG có `id`,
+KHÔNG có `url`** — nên FE *không có gì để "mở" hay "lưu"*. Cụ thể shape hiện tại:
 
-**Đề nghị:** engine `recommend_blocks`/`recommend_templates` map về **đúng `type` trong
-`/v1/block-types`** (catalog canonical). Nếu vẫn muốn giữ tên framer cho hiển thị, trả thêm:
 ```jsonc
-{ "block_type_code": "hero_split",        // PHẢI thuộc catalog /v1/block-types
-  "block_name": "Hero - Yume",            // tên hiển thị (giữ nguyên)
-  "reason": "…",
-  "preview_image_url": "https://…",       // optional — xem §2
-  "legacy_framer_code": "framer_yume_hero" // optional — tham chiếu cũ
-}
+// recommended_blocks.blocks_by_stage[].blocks[]
+{ "block_type_code": "framer_yume_hero", "block_name": "Hero - Yume", "reason": "…" }
+// recommended_templates.templates[]
+{ "name": "The Visionary Legacy Flow", "category": "…", "block_codes": ["framer_…"],
+  "description": "…", "why_fit": "…" }
 ```
-→ FE render preview thật + cho phép insert/handoff sang editor.
+→ Không có id/url → "Xem chi tiết" chỉ hiện lại mấy dòng chữ này; không mở được trang nào.
+→ `framer_*` **không thuộc** catalog block insert được (`/v1/block-types` dùng mã `hero_split`,
+`feature_grid`…) → không preview, không chèn vào editor được.
 
-## 2. [CAO] Thumbnail / preview cho block & template trong blueprint
+## 1. Trạng thái đã probe live (2026-06-10)
 
-FE hiện: block là **editor type** → render `BlockMiniPreview` (seed mặc định); còn lại →
-tile gradient + tên. Để đẹp & giúp user quyết định, đề nghị BE cung cấp **ảnh preview**:
-- Mỗi block trong `/v1/block-types`: thêm field `preview_image_url` (ảnh thumbnail).
-- Template đề xuất: thêm `preview_image_url` (hoặc danh sách `block_codes` đã canonical
-  để FE tự ghép preview).
+| Endpoint | Prod | Dev | |
+|---|---|---|---|
+| suggest / classify-goal / suggest-journey + selections | ✅ | ✅ | đã ship |
+| `PATCH` / `DELETE /v1/insights/reports/{id}` | ✅ (401) | ❌ (404) | deploy xuống dev |
+| AI job worker (sinh blueprint) | ✅ | ❌ | dev report kẹt `queued` |
+| `/v1/block-types` (catalog) | ✅ | ✅ | FE "tìm thủ công" dùng cái này |
 
-Không bắt buộc nếu §1 xong (FE preview được bằng renderer), nhưng ảnh thật sẽ tốt hơn.
+---
 
-## 3. [CAO] Endpoint "AI tạo nội dung" cho 1 block
+## 2. Kịch bản & việc BE cần
 
-Nút **"AI tạo nội dung"** trên mỗi block (hiện placeholder). Cần endpoint sinh nội dung
-mẫu cho 1 block theo brief + ngữ cảnh stage:
+### KB1 — [CAO] Block AI gợi ý phải dùng đúng catalog (để preview + insert + "tìm thủ công")
+
+**FE hiện:** block `framer_*` → không có trong `/v1/block-types` → FE chỉ vẽ tile gradient +
+tên (không preview, không chèn editor được).
+**BE cần:** engine `recommend_blocks`/`recommend_templates` trả `block_type_code` **thuộc
+`/v1/block-types`** (canonical, vd `hero_split`). Giữ tên hiển thị + (tuỳ) mã framer cũ:
+```jsonc
+{ "block_type_code": "hero_split",          // BẮT BUỘC ∈ /v1/block-types
+  "block_name": "Hero - Yume",
+  "reason": "…",
+  "legacy_framer_code": "framer_yume_hero", // optional
+  "preview_image_url": "https://…" }        // optional (xem KB5)
+```
+→ FE render preview thật + cho phép insert/handoff. **Đây là chặn lớn nhất.**
+
+### KB2 — [CAO] "Xem chi tiết / Mở" template → cần template THẬT có id + url
+
+**FE hiện:** click "Xem chi tiết" template chỉ mở dialog hiện name/category/codes/why_fit
+(chữ). **Không mở được trang vì template chưa tồn tại trong DB.**
+**BE cần:** endpoint **dựng template thật từ blueprint** (handoff), trả id + url để FE mở:
+```
+POST /v1/insights/reports/{id}/handoff
+body (optional): { "template": { "name", "block_codes": ["hero_split", …] } }
+→ 201 { "template_id": "uuid", "edit_url": "/admin/templates/{id}",
+        "preview_url": "/p/{slug}" }
+```
+→ Sau handoff, "mở template" = điều hướng `edit_url`/`preview_url`. (Block không có trang
+riêng — chỉ mở/preview trong template/editor.)
+
+### KB3 — [CAO] "Tìm thủ công" add block + Xoá/Di chuyển → cần LƯU blueprint đã chỉnh
+
+**FE hiện:** "Tìm thủ công" mở modal editor (catalog BE thật) → chọn block → **append vào
+state local**. Xoá/di chuyển cũng chỉ local. **F5 là mất, không lưu đâu cả.**
+**BE cần:** lưu blueprint đã user chỉnh (block list theo stage, thứ tự, journey):
+```
+PATCH /v1/insights/reports/{id}/blueprint
+body: { "recommended_blocks": { "blocks_by_stage": [ … đã chỉnh … ] },
+        "customer_journey": { … } }
+→ 200 { "report": { … blueprint đã cập nhật … } }
+```
+(hoặc tạo version con qua `parent_report_id`.) → Lúc đó add/xoá/move mới persist + chảy
+được sang handoff (KB2).
+
+### KB4 — [CAO] "AI tạo nội dung" cho 1 block
+
+**FE hiện:** nút "AI tạo nội dung" → toast placeholder.
+**BE cần:**
 ```
 POST /v1/insights/blocks/generate-content
-{
-  "report_id": "uuid",            // hoặc gửi brief trực tiếp
-  "block_type_code": "hero_split",
-  "stage_key": "vision_immersion",
-  "brief": { … }                  // optional nếu đã có report_id
-}
-→ 200 { "content": { … } }        // payload khớp content_schema của block type
+body: { "report_id": "uuid", "block_type_code": "hero_split",
+        "stage_key": "vision_immersion" }
+→ 200 { "content": { … } }   // payload khớp content_schema của block type
 ```
-Trả về content có thể nạp thẳng vào block khi handoff sang editor.
+→ Content nạp thẳng vào block khi handoff.
 
-## 4. [TRUNG] Lưu blueprint đã chỉnh (customize) + handoff dựng landing
+### KB5 — [TRUNG] Ảnh preview cho block & template
 
-FE cho user **thêm/xoá/di chuyển block** trong blueprint (hiện chỉ state local, mất khi
-reload). Nút "Tùy chỉnh trải nghiệm" (handoff) chưa có đích. Cần:
-- **Lưu blueprint đã sửa:** `PATCH /v1/insights/reports/{id}/blueprint` (hoặc tạo version
-  con qua `parent_report_id`) nhận `recommended_blocks` / `customer_journey` đã chỉnh.
-- **Handoff → tạo landing/template** từ blueprint: endpoint dựng template draft từ danh
-  sách block đã chốt (map sang `/v1/templates` + block_types canonical ở §1).
-```
-POST /v1/insights/reports/{id}/handoff   // hoặc /v1/templates from-blueprint
-→ 201 { "template_id": "uuid", "edit_url": "/admin/templates/{id}" }
-```
+`/v1/block-types` thêm `preview_image_url` mỗi block; template đề xuất thêm
+`preview_image_url`. Không bắt buộc nếu KB1 xong (FE preview bằng renderer), nhưng ảnh thật
+đẹp hơn.
 
-## 5. [TRUNG] Deploy report PATCH/DELETE xuống dev + AI worker dev
+### KB6 — [TRUNG] Deploy report PATCH/DELETE xuống dev + bật AI worker dev
 
-- `PATCH`/`DELETE /v1/insights/reports/{id}` đã có trên **prod** (probe 401) nhưng **dev
-  404** → FE đổi tên/xoá báo cáo trên dev sẽ lỗi. Deploy xuống dev.
-- **AI job worker không chạy ở dev** → report giữ `queued`, không ra blueprint, không test
-  được trọn vòng trên dev. Bật worker dev (hoặc 1 staging có worker) để QA.
+- `PATCH`/`DELETE /v1/insights/reports/{id}` có ở prod, **dev 404** → đổi tên/xoá report
+  trên dev đang lỗi. Deploy xuống dev.
+- AI worker không chạy dev → report kẹt `queued`, không QA trọn vòng được. Bật worker
+  dev (hoặc staging).
 
-## 6. [THẤP] Cho phép create brand-only (workspace optional)
+### KB7 — [THẤP] Create brand-only (workspace optional)
 
-Như spec §6.1: portal user nên tạo report **không cần `workspace_id`** (BE resolve brand
-từ session). Hiện FE auto-pick workspace mặc định để né — chạy được nhưng nên nới.
+Portal user tạo report không cần `workspace_id` (BE resolve brand từ session). Hiện FE
+auto-pick workspace mặc định để né.
 
 ---
 
-## 7. Checklist BE
-- [ ] §1 — `recommend_blocks/templates` trả `block_type_code` thuộc `/v1/block-types` canonical (+ legacy code optional).
-- [ ] §2 — `preview_image_url` cho block-types (+ template) — optional.
-- [ ] §3 — `POST /v1/insights/blocks/generate-content`.
-- [ ] §4 — lưu blueprint đã chỉnh + handoff dựng landing từ blueprint.
-- [ ] §5 — deploy PATCH/DELETE report xuống dev; bật AI worker dev/staging.
-- [ ] §6 — create brand-only (workspace optional).
+## 3. Checklist BE
+- [ ] **KB1** — recommend_blocks/templates trả `block_type_code` ∈ `/v1/block-types` (+legacy/preview optional).
+- [ ] **KB2** — `POST /v1/insights/reports/{id}/handoff` → tạo template thật, trả id + edit_url/preview_url.
+- [ ] **KB3** — `PATCH /v1/insights/reports/{id}/blueprint` → lưu blocks/journey đã chỉnh.
+- [ ] **KB4** — `POST /v1/insights/blocks/generate-content`.
+- [ ] **KB5** — `preview_image_url` cho block-types + template (optional).
+- [ ] **KB6** — deploy PATCH/DELETE report xuống dev; bật AI worker dev/staging.
+- [ ] **KB7** — create brand-only.
 
-> FE đã sẵn sàng ráp ngay khi từng mục lên (graceful fallback hiện tại: preview→tile,
-> AI tạo nội dung / handoff → toast placeholder, edit blueprint → local state).
+> FE đã dựng sẵn UI + chỗ ráp cho tất cả mục trên (fallback hiện tại: preview→tile,
+> generate/handoff→toast, edit blueprint→state local). BE lên mục nào, FE gắn mục đó,
+> không phải sửa lại UI.
