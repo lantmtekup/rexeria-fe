@@ -18,7 +18,15 @@
       "emptyHint": "Create your first analysis — the AI drafts an experience strategy from your brief.",
       "emptyFilter": "No reports match the filter",
       "back": "Reports",
-      "notFound": "Report not found."
+      "notFound": "Report not found.",
+      "rename": "Rename",
+      "delete": "Delete",
+      "renamePrompt": "New report name:",
+      "renamed": "Renamed",
+      "renameFailed": "Rename failed (BE not ready?)",
+      "deleteConfirm": "Delete report \"{name}\"?",
+      "deleted": "Report deleted",
+      "deleteFailed": "Delete failed (BE not ready?)"
     },
     "status": {
       "queued": "Queued",

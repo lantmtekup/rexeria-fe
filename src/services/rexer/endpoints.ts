@@ -1937,6 +1937,25 @@ export const rexerApi = {
       product_id?: string;
       campaign_id?: string;
     }) => rx<InsightReportListResponse>('/insights/reports', { query }),
+    /**
+     * Đổi tên (PATCH) 1 report. BE bọc `{ report }`.
+     * (Cần BE ship `PATCH /v1/insights/reports/{id}` — xem be-spec wizard v2 §10.)
+     */
+    update: async (id: string, body: { title?: string }) => {
+      const r = await rx<InsightReportResponse>(`/insights/reports/${id}`, {
+        method: 'PATCH',
+        body,
+      });
+      return r.report;
+    },
+    /**
+     * Xoá / archive 1 report (DELETE).
+     * (Cần BE ship `DELETE /v1/insights/reports/{id}` — xem be-spec wizard v2 §10.)
+     */
+    remove: (id: string) =>
+      rx<{ archived?: boolean }>(`/insights/reports/${id}`, {
+        method: 'DELETE',
+      }),
 
     // ── Wizard v2: thao tác tương tác đồng bộ (xem be-spec-insights-wizard-v2) ──
     // 3 endpoint dưới CÓ THỂ chưa deploy ở BE → mỗi method nuốt lỗi và trả `null`

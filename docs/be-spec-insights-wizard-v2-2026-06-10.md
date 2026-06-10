@@ -295,3 +295,34 @@ Nếu chưa làm kịp, FE tạm giữ selector workspace (portal auto-pick work
 - Lớp **heuristic client** thay tạm 3 endpoint trên (gắn nhãn "gợi ý dẫn hướng",
   KHÔNG mạo nhận AI). Khi BE live → thay bằng call thật.
 - `create` gửi kèm `selections` (BE bỏ qua an toàn nếu chưa đọc).
+
+---
+
+## 10. (BỔ SUNG 2026-06-10) Sửa/Xoá report cho trang List — CẦN BE
+
+Trang list AI-Insights cần **đổi tên** + **xoá** report trên từng card. Probe live
+local: `PATCH` và `DELETE /v1/insights/reports/{id}` đều **404** → BE chưa có. Đề nghị
+ship 2 endpoint (tenant-scoped trên brand, như GET hiện có):
+
+### 10.1 `PATCH /v1/insights/reports/{id}` — đổi tên
+**Request** `UpdateInsightReportRequest`:
+```yaml
+type: object
+properties:
+  title: { type: string, maxLength: 200 }
+```
+**Response 200**: `InsightReportResponse` (`{ report }`) với `title` đã đổi.
+- `403` nếu không có quyền brand · `404` nếu report không thuộc brand caller.
+- FE chỉ gửi `title` (các field khác của report là read-only do AI sinh).
+
+### 10.2 `DELETE /v1/insights/reports/{id}` — xoá / archive
+**Response 200**: `{ "archived": true }` (soft-delete/archive khuyến nghị, không xoá cứng).
+- Sau xoá, report không còn trong `list`. `403`/`404` như trên.
+
+> FE đã wire sẵn `rexerApi.insights.update(id,{title})` + `remove(id)`; khi 2 endpoint
+> live là chạy ngay. Hiện chưa có → FE hiện toast "thất bại (BE chưa hỗ trợ?)".
+
+### Checklist BE bổ sung
+- [ ] `PATCH /v1/insights/reports/{id}` (rename title).
+- [ ] `DELETE /v1/insights/reports/{id}` (archive).
+- [ ] Cập nhật `docs/openapi.yaml` + `docs/swagger.yaml`.

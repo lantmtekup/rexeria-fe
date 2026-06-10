@@ -7,12 +7,16 @@ import {
   Check,
   Clock,
   Loader2,
+  MoreVertical,
+  Pencil,
   Plus,
   Search,
   Sparkles,
   Target,
+  Trash2,
   X,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { rexerApi } from '@/services/rexer/endpoints';
 import type {
@@ -67,6 +71,38 @@ export function InsightsList({ basePath }: { basePath: string }) {
     const key = `status.${s}`;
     const label = t(key);
     return label === key ? s : label;
+  };
+
+  const handleRename = async (r: InsightReport) => {
+    const next = window.prompt(t('list.renamePrompt'), r.title ?? '');
+    if (next == null) return;
+    const title = next.trim();
+    if (!title || title === r.title) return;
+    try {
+      const updated = await rexerApi.insights.update(r.id, { title });
+      setItems(prev =>
+        prev.map(x => (x.id === r.id ? { ...x, title: updated.title } : x))
+      );
+      toast.success(t('list.renamed'));
+    } catch {
+      toast.error(t('list.renameFailed'));
+    }
+  };
+
+  const handleDelete = async (r: InsightReport) => {
+    if (
+      !window.confirm(
+        t('list.deleteConfirm', { name: r.title || t('list.untitled') })
+      )
+    )
+      return;
+    try {
+      await rexerApi.insights.remove(r.id);
+      setItems(prev => prev.filter(x => x.id !== r.id));
+      toast.success(t('list.deleted'));
+    } catch {
+      toast.error(t('list.deleteFailed'));
+    }
   };
 
   const filtered = items.filter(r => {
@@ -144,61 +180,127 @@ export function InsightsList({ basePath }: { basePath: string }) {
         <EmptyState basePath={basePath} hasAny={items.length > 0} t={t} />
       ) : (
         <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'>
-          {filtered.map(r => {
-            const meta =
-              STATUS_META[r.status as InsightStatus] ?? STATUS_META.queued;
-            const StatusIcon = meta.icon;
-            const goal = r.blueprint?.experience_goal?.primary_goal;
-            return (
-              <Link
-                key={r.id}
-                href={`${basePath}/${r.id}`}
-                className='group border-border hover:border-primary/40 flex flex-col gap-3 rounded-2xl border bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'
-              >
-                <div className='flex items-start justify-between gap-2'>
-                  <span className='bg-primary/10 text-primary inline-flex size-9 shrink-0 items-center justify-center rounded-xl'>
-                    <Sparkles className='size-4' aria-hidden />
-                  </span>
-                  <span
-                    className={cn(
-                      'text-3xs inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold',
-                      meta.chip
-                    )}
-                  >
-                    <StatusIcon
-                      className={cn(
-                        'size-3',
-                        r.status === 'running' && 'animate-spin'
-                      )}
-                      aria-hidden
-                    />
-                    {statusLabel(r.status as InsightStatus)}
-                  </span>
-                </div>
-                <div className='min-w-0'>
-                  <h3 className='text-content-main truncate text-sm font-semibold'>
-                    {r.title || t('list.untitled')}
-                  </h3>
-                  {goal && (
-                    <p className='text-content-muted mt-0.5 inline-flex items-center gap-1 text-xs'>
-                      <Target className='size-3' aria-hidden />
-                      {goalLabel(goal)}
-                    </p>
-                  )}
-                </div>
-                {r.created_at && (
-                  <p className='text-content-muted text-3xs mt-auto font-mono'>
-                    {new Date(r.created_at).toLocaleDateString('vi-VN', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    })}
-                  </p>
-                )}
-              </Link>
-            );
-          })}
+          {filtered.map(r => (
+            <ReportCard
+              key={r.id}
+              report={r}
+              href={`${basePath}/${r.id}`}
+              statusLabel={statusLabel}
+              goalLabel={goalLabel}
+              untitled={t('list.untitled')}
+              renameLabel={t('list.rename')}
+              deleteLabel={t('list.delete')}
+              onRename={() => handleRename(r)}
+              onDelete={() => handleDelete(r)}
+            />
+          ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+function ReportCard({
+  report: r,
+  href,
+  statusLabel,
+  goalLabel,
+  untitled,
+  renameLabel,
+  deleteLabel,
+  onRename,
+  onDelete,
+}: {
+  report: InsightReport;
+  href: string;
+  statusLabel: (s: InsightStatus) => string;
+  goalLabel: (g: ExperienceGoal) => string;
+  untitled: string;
+  renameLabel: string;
+  deleteLabel: string;
+  onRename: () => void;
+  onDelete: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const meta = STATUS_META[r.status as InsightStatus] ?? STATUS_META.queued;
+  const StatusIcon = meta.icon;
+  const goal = r.blueprint?.experience_goal?.primary_goal;
+
+  return (
+    <div className='group border-border hover:border-primary/40 relative flex flex-col gap-3 rounded-2xl border bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+      {/* Lớp phủ click toàn card → mở chi tiết (button menu nằm trên nhờ z-index) */}
+      <Link
+        href={href}
+        className='absolute inset-0 rounded-2xl'
+        aria-label={r.title || untitled}
+      />
+
+      <div className='flex items-start justify-between gap-2'>
+        <span className='bg-primary/10 text-primary inline-flex size-9 shrink-0 items-center justify-center rounded-xl'>
+          <Sparkles className='size-4' aria-hidden />
+        </span>
+        <div className='relative z-10 flex items-center gap-1'>
+          <span
+            className={cn(
+              'text-3xs inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold',
+              meta.chip
+            )}
+          >
+            <StatusIcon
+              className={cn('size-3', r.status === 'running' && 'animate-spin')}
+              aria-hidden
+            />
+            {statusLabel(r.status as InsightStatus)}
+          </span>
+          <button
+            type='button'
+            onClick={() => setMenuOpen(o => !o)}
+            onBlur={() => setTimeout(() => setMenuOpen(false), 120)}
+            className='text-content-muted hover:bg-muted rounded p-1'
+            aria-label='Tuỳ chọn'
+          >
+            <MoreVertical className='size-4' aria-hidden />
+          </button>
+          {menuOpen && (
+            <div className='border-border absolute top-7 right-0 z-20 w-32 overflow-hidden rounded-lg border bg-white shadow-lg'>
+              <button
+                type='button'
+                onClick={onRename}
+                className='hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
+              >
+                <Pencil className='size-3' aria-hidden /> {renameLabel}
+              </button>
+              <button
+                type='button'
+                onClick={onDelete}
+                className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3' aria-hidden /> {deleteLabel}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className='min-w-0'>
+        <h3 className='text-content-main truncate text-sm font-semibold'>
+          {r.title || untitled}
+        </h3>
+        {goal && (
+          <p className='text-content-muted mt-0.5 inline-flex items-center gap-1 text-xs'>
+            <Target className='size-3' aria-hidden />
+            {goalLabel(goal)}
+          </p>
+        )}
+      </div>
+      {r.created_at && (
+        <p className='text-content-muted text-3xs mt-auto font-mono'>
+          {new Date(r.created_at).toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })}
+        </p>
       )}
     </div>
   );

@@ -18,7 +18,15 @@
       "emptyHint": "Tạo phân tích đầu tiên — AI sẽ dựng chiến lược trải nghiệm từ brief của bạn.",
       "emptyFilter": "Không có báo cáo khớp bộ lọc",
       "back": "Danh sách báo cáo",
-      "notFound": "Không tìm thấy báo cáo."
+      "notFound": "Không tìm thấy báo cáo.",
+      "rename": "Đổi tên",
+      "delete": "Xoá",
+      "renamePrompt": "Tên mới cho báo cáo:",
+      "renamed": "Đã đổi tên",
+      "renameFailed": "Đổi tên thất bại (BE chưa hỗ trợ?)",
+      "deleteConfirm": "Xoá báo cáo \"{name}\"?",
+      "deleted": "Đã xoá báo cáo",
+      "deleteFailed": "Xoá thất bại (BE chưa hỗ trợ?)"
     },
     "status": {
       "queued": "Chờ xử lý",
