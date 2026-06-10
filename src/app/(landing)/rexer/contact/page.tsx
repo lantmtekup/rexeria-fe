@@ -24,7 +24,14 @@ export default function ContactPage() {
   return (
     <>
       {/* Hero */}
-      <section className='mx-auto max-w-4xl px-6 pt-20 pb-14 text-center sm:pt-28'>
+      <section className='relative mx-auto max-w-4xl px-6 pt-20 pb-14 text-center sm:pt-28'>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src='/landing/images/oT5iCekJTWft1yPozCYLHeeXMg.svg'
+          alt=''
+          aria-hidden
+          className='pointer-events-none absolute top-0 left-1/2 -z-10 w-[50%] -translate-x-1/2 opacity-50 select-none'
+        />
         <h1 className='text-5xl font-semibold tracking-tight text-neutral-900 sm:text-7xl'>
           Start <em className='font-serif font-light'>Something</em> bold
         </h1>

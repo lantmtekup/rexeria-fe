@@ -1,13 +1,19 @@
 import type { Metadata } from 'next';
 
+import { StartProjectCta } from '@/components/landing/StartProjectCta';
 import { StudioHome } from '@/components/landing/StudioHome';
 
 export const metadata: Metadata = {
-  title: 'ReXeR Studio — Interactive product experiences',
+  title: 'ReXeR Studio — Transforming brand touchpoints to Interactive Experience',
   description:
-    'ReXeR Studio transforms your digital assets into interactive experiences that engage deeper and convert smarter. Built once. Delivered everywhere.',
+    'From content chaos to customer conversion: we craft immersive, interactive experiences for your brand digital touchpoints.',
 };
 
 export default function RexerHome() {
-  return <StudioHome />;
+  return (
+    <>
+      <StudioHome />
+      <StartProjectCta />
+    </>
+  );
 }

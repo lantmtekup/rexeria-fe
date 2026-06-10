@@ -44,7 +44,14 @@ export default function AboutPage() {
   return (
     <>
       {/* Hero */}
-      <section className='mx-auto max-w-6xl px-6 pt-20 pb-12 sm:pt-28'>
+      <section className='relative mx-auto max-w-6xl overflow-visible px-6 pt-20 pb-12 sm:pt-28'>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={img('oT5iCekJTWft1yPozCYLHeeXMg.svg')}
+          alt=''
+          aria-hidden
+          className='pointer-events-none absolute top-0 right-0 -z-10 w-[55%] opacity-60 select-none'
+        />
         <h1 className='max-w-4xl text-4xl font-semibold tracking-tight text-neutral-900 sm:text-6xl lg:text-7xl'>
           Crafting digital <em className='font-serif font-light'>Touchpoints</em>
           <br className='hidden sm:block' /> into immersive experiences
