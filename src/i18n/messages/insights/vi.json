@@ -2,6 +2,7 @@
   "insights": {
     "title": "AI-Insights",
     "subtitle": "Biến brief sản phẩm/chiến dịch thành chiến lược trải nghiệm tương tác",
+    "reportInput": "Dữ liệu đã nhập",
     "phases": {
       "setup": "Nhập liệu",
       "generating": "Phân tích",

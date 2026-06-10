@@ -2,6 +2,7 @@
   "insights": {
     "title": "AI-Insights",
     "subtitle": "Turn a product/campaign brief into an interactive experience strategy",
+    "reportInput": "Submitted inputs",
     "phases": {
       "setup": "Inputs",
       "generating": "Analyzing",
