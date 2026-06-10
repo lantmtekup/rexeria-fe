@@ -369,12 +369,12 @@ function TemplateCard({ tpl }: { tpl: InsightRecommendedTemplate }) {
   const codes = tpl.block_codes ?? [];
 
   return (
-    <div className='group/tpl border-border bg-card overflow-hidden rounded-xl border transition hover:-translate-y-0.5 hover:shadow-md'>
+    <div className='group/tpl border-border bg-card flex h-full flex-col overflow-hidden rounded-xl border transition hover:-translate-y-0.5 hover:shadow-md'>
       <div className='relative'>
         <Thumb
           code={tpl.name}
           kind='template'
-          className='h-24 w-full rounded-none'
+          className='h-36 w-full rounded-none'
         />
         <button
           type='button'
@@ -384,10 +384,16 @@ function TemplateCard({ tpl }: { tpl: InsightRecommendedTemplate }) {
           <Eye className='size-3' aria-hidden /> {t('blueprint.viewDetail')}
         </button>
       </div>
-      <div className='space-y-2 p-4'>
-        <div className='flex items-center justify-between gap-2'>
-          <span className='text-content-main font-semibold'>{tpl.name}</span>
-          {tpl.category && <Badge variant='secondary'>{tpl.category}</Badge>}
+      <div className='flex flex-1 flex-col gap-2 p-4'>
+        <div className='flex items-start justify-between gap-2'>
+          <span className='text-content-main min-w-0 font-semibold'>
+            {tpl.name}
+          </span>
+          {tpl.category && (
+            <Badge variant='secondary' className='shrink-0'>
+              {tpl.category}
+            </Badge>
+          )}
         </div>
         {tpl.description && (
           <p className='text-content-muted line-clamp-2 text-sm'>
@@ -395,14 +401,14 @@ function TemplateCard({ tpl }: { tpl: InsightRecommendedTemplate }) {
           </p>
         )}
         {codes.length > 0 && (
-          <div className='flex flex-wrap gap-1.5'>
+          <div className='mt-auto flex flex-wrap gap-1.5 pt-1'>
             {codes.slice(0, 4).map(code => (
               <Badge key={code} variant='outline'>
                 {code}
               </Badge>
             ))}
             {codes.length > 4 && (
-              <span className='text-content-muted text-xs'>
+              <span className='text-content-muted self-center text-xs'>
                 +{codes.length - 4}
               </span>
             )}
