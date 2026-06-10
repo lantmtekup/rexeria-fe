@@ -70,6 +70,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // ── Host-based entry (2026-06-10) ────────────────────────────────────────
+  // - Domain chính (rexerstudio.com / *.vercel.app / localhost): `/` phục vụ
+  //   LANDING (rewrite nội bộ sang /rexer — URL giữ nguyên `/`).
+  // - Subdomain portal.* (portal.rexerstudio.com): `/` đưa thẳng vào app —
+  //   đã đăng nhập → role home (/admin | /portal | /home), chưa → /sign-in.
+  // Các route khác không đổi: /sign-in, /portal, /admin… hoạt động trên mọi
+  // host; /rexer/* (landing) vẫn truy cập trực tiếp được.
+  if (pathname === '/') {
+    const host = request.headers.get('host') ?? '';
+    const isPortalHost = host.startsWith('portal.');
+    if (!isPortalHost) {
+      return NextResponse.rewrite(new URL('/rexer', request.url));
+    }
+    const session = await getSession(request);
+    const target = session
+      ? roleHomePath(session.role, session.scope || undefined)
+      : '/sign-in';
+    return NextResponse.redirect(new URL(target, request.url));
+  }
+
   const pathnameWithoutLocale =
     pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '') || '/';
 
