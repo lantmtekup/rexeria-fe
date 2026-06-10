@@ -82,7 +82,15 @@
       "blockCode": "Mã block",
       "category": "Danh mục",
       "description": "Mô tả",
-      "previewNote": "Ảnh preview & nội dung mẫu sẽ hiển thị khi BE cung cấp catalog block/template."
+      "previewNote": "Ảnh preview & nội dung mẫu sẽ hiển thị khi BE cung cấp catalog block/template.",
+      "saved": "Đã lưu thay đổi blueprint",
+      "saveFailed": "Lưu thay đổi thất bại",
+      "generated": "Đã sinh nội dung",
+      "generateFailed": "Sinh nội dung thất bại",
+      "generatedTitle": "Nội dung AI đề xuất",
+      "generatedHint": "Nội dung khớp schema của block — sẽ được nạp khi dựng template.",
+      "handoffDone": "Đã dựng template từ blueprint",
+      "handoffFailed": "Dựng template thất bại"
     },
     "goals": {
       "product_discovery": "Khám phá sản phẩm",

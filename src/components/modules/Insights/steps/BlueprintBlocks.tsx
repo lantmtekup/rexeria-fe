@@ -9,11 +9,14 @@ import {
   Eye,
   LayoutGrid,
   LayoutTemplate,
+  Loader2,
   Search,
   Sparkles,
   Trash2,
   Wand2,
 } from 'lucide-react';
+
+import { rexerApi } from '@/services/rexer/endpoints';
 
 import { Badge } from '@/components/atoms/badge';
 import {
@@ -65,16 +68,20 @@ function thumbGradient(s: string): string {
 function Thumb({
   code,
   name,
+  imageUrl,
   kind = 'block',
   className,
 }: {
   code: string;
   /** Tên block — hiển thị trên tile fallback để dễ nhận diện. */
   name?: string;
+  /** Ảnh preview thật từ catalog (KB5) — ưu tiên cao nhất khi có. */
+  imageUrl?: string;
   kind?: 'block' | 'template';
   className?: string;
 }) {
   const Icon = kind === 'template' ? LayoutTemplate : LayoutGrid;
+  const [imgError, setImgError] = useState(false);
   const meta = (
     BLOCK_TYPE_META as Record<string, { gradient?: string } | undefined>
   )[code];
@@ -89,6 +96,26 @@ function Thumb({
       return null;
     }
   }, [code, isEditorType]);
+
+  // Ưu tiên 1: ảnh preview thật từ BE (KB5).
+  if (imageUrl && !imgError) {
+    return (
+      <div
+        className={cn(
+          'border-border shrink-0 overflow-hidden rounded-lg border bg-white',
+          className
+        )}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imageUrl}
+          alt={name ?? code}
+          onError={() => setImgError(true)}
+          className='h-full w-full object-cover'
+        />
+      </div>
+    );
+  }
 
   if (preview) {
     return (
@@ -128,23 +155,56 @@ function BlockRow({
   block,
   index,
   count,
+  reportId,
+  stageKey,
   onMove,
   onDelete,
 }: {
   block: InsightRecommendedBlock;
   index: number;
   count: number;
+  reportId?: string;
+  stageKey: string;
   onMove: (dir: -1 | 1) => void;
   onDelete: () => void;
 }) {
   const t = useTranslations('insights');
   const [open, setOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generated, setGenerated] = useState<Record<string, unknown> | null>(
+    null
+  );
+
+  // KB4: sinh nội dung mẫu cho block (khớp props_schema) → hiện trong dialog.
+  const generate = async () => {
+    if (!reportId) {
+      toast.info(t('blueprint.generatePending'));
+      return;
+    }
+    setGenerating(true);
+    try {
+      const r = await rexerApi.insights.generateBlockContent({
+        report_id: reportId,
+        block_type_code: block.block_type_code,
+        stage_key: stageKey,
+      });
+      setGenerated(r.content);
+      toast.success(t('blueprint.generated'));
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t('blueprint.generateFailed')
+      );
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   return (
     <li className='border-border bg-card flex gap-3 rounded-xl border p-3'>
       <Thumb
         code={block.block_type_code}
         name={block.block_name}
+        imageUrl={block.preview_image_url}
         className='h-20 w-32'
       />
       <div className='min-w-0 flex-1'>
@@ -168,10 +228,16 @@ function BlockRow({
             onClick={() => setOpen(true)}
           />
           <ActionBtn
-            icon={<Wand2 className='size-3' aria-hidden />}
+            icon={
+              generating ? (
+                <Loader2 className='size-3 animate-spin' aria-hidden />
+              ) : (
+                <Wand2 className='size-3' aria-hidden />
+              )
+            }
             label={t('blueprint.aiGenerate')}
             accent='violet'
-            onClick={() => toast.info(t('blueprint.generatePending'))}
+            onClick={generate}
           />
         </div>
       </div>
@@ -221,6 +287,36 @@ function BlockRow({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Kết quả "AI tạo nội dung" (KB4) — key/value theo props_schema */}
+      <Dialog
+        open={generated !== null}
+        onOpenChange={o => !o && setGenerated(null)}
+      >
+        <DialogContent className='sm:max-w-lg'>
+          <DialogHeader>
+            <DialogTitle className='flex items-center gap-2'>
+              <Wand2 className='size-4 text-violet-600' aria-hidden />
+              {t('blueprint.generatedTitle')} · {block.block_name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className='max-h-[55vh] space-y-2 overflow-y-auto text-sm'>
+            {Object.entries(generated ?? {}).map(([k, v]) => (
+              <div key={k} className='bg-muted/50 rounded-lg px-3 py-2'>
+                <div className='text-content-muted mb-0.5 font-mono text-[11px] font-semibold'>
+                  {k}
+                </div>
+                <div className='text-content-main break-words'>
+                  {typeof v === 'string' ? v : JSON.stringify(v, null, 2)}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className='text-content-muted text-xs'>
+            {t('blueprint.generatedHint')}
+          </p>
+        </DialogContent>
+      </Dialog>
     </li>
   );
 }
@@ -229,11 +325,13 @@ function BlockRow({
 
 function StageGroup({
   stage,
+  reportId,
   onAddBlock,
   onMoveBlock,
   onDeleteBlock,
 }: {
   stage: InsightBlocksByStage;
+  reportId?: string;
   onAddBlock: () => void;
   onMoveBlock: (idx: number, dir: -1 | 1) => void;
   onDeleteBlock: (idx: number) => void;
@@ -269,6 +367,8 @@ function StageGroup({
               block={b}
               index={i}
               count={blocks.length}
+              reportId={reportId}
+              stageKey={stage.stage_key}
               onMove={dir => onMoveBlock(i, dir)}
               onDelete={() => onDeleteBlock(i)}
             />
@@ -279,7 +379,13 @@ function StageGroup({
   );
 }
 
-export function BlocksSection({ blueprint }: { blueprint: InsightBlueprint }) {
+export function BlocksSection({
+  blueprint,
+  reportId,
+}: {
+  blueprint: InsightBlueprint;
+  reportId?: string;
+}) {
   const t = useTranslations('insights');
   const [stages, setStages] = useState<InsightBlocksByStage[]>(
     blueprint.recommended_blocks?.blocks_by_stage ?? []
@@ -288,25 +394,44 @@ export function BlocksSection({ blueprint }: { blueprint: InsightBlueprint }) {
 
   if (!blueprint.recommended_blocks) return null;
 
+  /**
+   * Cập nhật stages + persist lên BE (KB3 — PATCH blueprint). Optimistic: set
+   * state ngay; nếu lưu lỗi → rollback về state trước + toast.
+   */
+  const mutate = (next: InsightBlocksByStage[]) => {
+    const prev = stages;
+    setStages(next);
+    if (!reportId) return; // không có report (vd preview) → chỉ local
+    rexerApi.insights
+      .updateBlueprint(reportId, {
+        recommended_blocks: { blocks_by_stage: next },
+      })
+      .then(() => toast.success(t('blueprint.saved')))
+      .catch(() => {
+        setStages(prev);
+        toast.error(t('blueprint.saveFailed'));
+      });
+  };
+
   const appendBlock = (stageKey: string, b: InsightRecommendedBlock) =>
-    setStages(prev =>
-      prev.map(s =>
+    mutate(
+      stages.map(s =>
         s.stage_key === stageKey
           ? { ...s, blocks: [...(s.blocks ?? []), b] }
           : s
       )
     );
   const deleteBlock = (stageKey: string, idx: number) =>
-    setStages(prev =>
-      prev.map(s =>
+    mutate(
+      stages.map(s =>
         s.stage_key === stageKey
           ? { ...s, blocks: (s.blocks ?? []).filter((_, i) => i !== idx) }
           : s
       )
     );
   const moveBlock = (stageKey: string, idx: number, dir: -1 | 1) =>
-    setStages(prev =>
-      prev.map(s => {
+    mutate(
+      stages.map(s => {
         if (s.stage_key !== stageKey) return s;
         const arr = [...(s.blocks ?? [])];
         const j = idx + dir;
@@ -341,6 +466,7 @@ export function BlocksSection({ blueprint }: { blueprint: InsightBlueprint }) {
           <StageGroup
             key={stage.stage_key}
             stage={stage}
+            reportId={reportId}
             onAddBlock={() => setAddStageKey(stage.stage_key)}
             onMoveBlock={(i, dir) => moveBlock(stage.stage_key, i, dir)}
             onDeleteBlock={i => deleteBlock(stage.stage_key, i)}

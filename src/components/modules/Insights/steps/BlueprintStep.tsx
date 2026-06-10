@@ -1,15 +1,20 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import {
   AlertTriangle,
   Check,
+  Loader2,
   RotateCcw,
   Route,
   Target,
   Wand2,
 } from 'lucide-react';
 
+import { rexerApi } from '@/services/rexer/endpoints';
 import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import type {
@@ -160,6 +165,25 @@ function JourneySection({ blueprint }: { blueprint: InsightBlueprint }) {
 
 export function BlueprintStep({ report, onRestart }: BlueprintStepProps) {
   const t = useTranslations('insights');
+  const router = useRouter();
+  const [handingOff, setHandingOff] = useState(false);
+
+  // KB2: dựng template thật từ blueprint → điều hướng sang trang edit template.
+  const handoff = async () => {
+    if (!report?.id) return;
+    setHandingOff(true);
+    try {
+      const r = await rexerApi.insights.handoff(report.id);
+      toast.success(t('blueprint.handoffDone'));
+      router.push(r.edit_url);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t('blueprint.handoffFailed')
+      );
+    } finally {
+      setHandingOff(false);
+    }
+  };
 
   if (!report) return null;
 
@@ -202,7 +226,7 @@ export function BlueprintStep({ report, onRestart }: BlueprintStepProps) {
 
       <GoalSection blueprint={blueprint} />
       <JourneySection blueprint={blueprint} />
-      <BlocksSection blueprint={blueprint} />
+      <BlocksSection blueprint={blueprint} reportId={report.id} />
       <TemplatesSection blueprint={blueprint} />
 
       {blueprint.generated_with && (
@@ -213,7 +237,17 @@ export function BlueprintStep({ report, onRestart }: BlueprintStepProps) {
 
       {/* Footer hành động */}
       <div className='border-border flex flex-wrap items-center gap-3 border-t pt-5'>
-        <GradientButton leading={<Wand2 className='size-4' aria-hidden />}>
+        <GradientButton
+          disabled={handingOff}
+          onClick={handoff}
+          leading={
+            handingOff ? (
+              <Loader2 className='size-4 animate-spin' aria-hidden />
+            ) : (
+              <Wand2 className='size-4' aria-hidden />
+            )
+          }
+        >
           {t('blueprint.handoff')}
         </GradientButton>
         <Button type='button' variant='outline' onClick={onRestart}>

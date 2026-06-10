@@ -240,6 +240,10 @@ import type {
   ClassifyGoalResponse,
   SuggestJourneyResponse,
   ExperienceGoal,
+  UpdateInsightBlueprintBody,
+  InsightHandoffResponse,
+  GenerateBlockContentBody,
+  GenerateBlockContentResponse,
 } from './types';
 
 // Tolerate BE responses for /brands/{id} returning either `{brand: Brand}`
@@ -1937,10 +1941,7 @@ export const rexerApi = {
       product_id?: string;
       campaign_id?: string;
     }) => rx<InsightReportListResponse>('/insights/reports', { query }),
-    /**
-     * Đổi tên (PATCH) 1 report. BE bọc `{ report }`.
-     * (Cần BE ship `PATCH /v1/insights/reports/{id}` — xem be-spec wizard v2 §10.)
-     */
+    /** Đổi tên 1 report (KB6). BE bọc `{ report }`. */
     update: async (id: string, body: { title?: string }) => {
       const r = await rx<InsightReportResponse>(`/insights/reports/${id}`, {
         method: 'PATCH',
@@ -1948,13 +1949,33 @@ export const rexerApi = {
       });
       return r.report;
     },
-    /**
-     * Xoá / archive 1 report (DELETE).
-     * (Cần BE ship `DELETE /v1/insights/reports/{id}` — xem be-spec wizard v2 §10.)
-     */
+    /** Xoá 1 report, cascade steps (KB6). */
     remove: (id: string) =>
       rx<{ archived?: boolean }>(`/insights/reports/${id}`, {
         method: 'DELETE',
+      }),
+    /** Lưu blocks/journey user đã chỉnh trong blueprint (merge từng section) — KB3. */
+    updateBlueprint: async (id: string, body: UpdateInsightBlueprintBody) => {
+      const r = await rx<InsightReportResponse>(
+        `/insights/reports/${id}/blueprint`,
+        { method: 'PATCH', body }
+      );
+      return r.report;
+    },
+    /** Dựng template thật từ blueprint → `template_id` + `edit_url` — KB2. */
+    handoff: (
+      id: string,
+      body?: { template?: { name?: string; block_codes?: string[] } }
+    ) =>
+      rx<InsightHandoffResponse>(`/insights/reports/${id}/handoff`, {
+        method: 'POST',
+        body: body ?? {},
+      }),
+    /** Sinh nội dung mẫu cho 1 block (khớp props_schema của block type) — KB4. */
+    generateBlockContent: (body: GenerateBlockContentBody) =>
+      rx<GenerateBlockContentResponse>('/insights/blocks/generate-content', {
+        method: 'POST',
+        body,
       }),
 
     // ── Wizard v2: thao tác tương tác đồng bộ (xem be-spec-insights-wizard-v2) ──

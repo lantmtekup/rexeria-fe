@@ -2878,6 +2878,8 @@ export interface InsightRecommendedBlock {
   block_type_code: string;
   block_name: string;
   reason: string;
+  /** Ảnh preview enrich từ catalog (KB5) — worker non-dev mới gắn. */
+  preview_image_url?: string;
 }
 
 /** Nhóm block đề xuất theo từng stage của journey. */
@@ -3064,6 +3066,32 @@ export interface SuggestJourneyResponse {
     name: string;
     stages: string[];
   };
+}
+
+/** Body của `PATCH /v1/insights/reports/{id}/blueprint` (KB3 — merge từng section). */
+export interface UpdateInsightBlueprintBody {
+  recommended_blocks?: InsightBlueprintBlocks;
+  customer_journey?: InsightBlueprintJourney;
+}
+
+/** Response của `POST /v1/insights/reports/{id}/handoff` (KB2 — dựng template thật). */
+export interface InsightHandoffResponse {
+  template_id: string;
+  edit_url: string;
+  /** Rỗng tới khi template publish 1 page (chưa có /p). */
+  preview_url?: string;
+}
+
+/** Body của `POST /v1/insights/blocks/generate-content` (KB4). */
+export interface GenerateBlockContentBody {
+  report_id: string;
+  block_type_code: string;
+  stage_key?: string;
+}
+
+/** Response generate-content: payload khớp props_schema của block type. */
+export interface GenerateBlockContentResponse {
+  content: Record<string, unknown>;
 }
 
 /** Response bọc 1 report (`InsightReportResponse`). */

@@ -82,7 +82,15 @@
       "blockCode": "Block code",
       "category": "Category",
       "description": "Description",
-      "previewNote": "Preview image & sample content will show once BE provides the block/template catalog."
+      "previewNote": "Preview image & sample content will show once BE provides the block/template catalog.",
+      "saved": "Blueprint changes saved",
+      "saveFailed": "Failed to save changes",
+      "generated": "Content generated",
+      "generateFailed": "Content generation failed",
+      "generatedTitle": "AI-suggested content",
+      "generatedHint": "Content matches the block schema — applied when building the template.",
+      "handoffDone": "Template built from blueprint",
+      "handoffFailed": "Handoff failed"
     },
     "goals": {
       "product_discovery": "Product discovery",
