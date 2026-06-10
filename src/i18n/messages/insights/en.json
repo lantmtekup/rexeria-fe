@@ -2,10 +2,39 @@
   "insights": {
     "title": "AI-Insights",
     "subtitle": "Turn a product/campaign brief into an interactive experience strategy",
+    "reportInput": "Submitted inputs",
     "phases": {
       "setup": "Inputs",
       "generating": "Analyzing",
       "blueprint": "Blueprint"
+    },
+    "list": {
+      "subtitle": "Experience strategy reports you've created",
+      "new": "New analysis",
+      "searchPh": "Search by title…",
+      "statusAll": "All",
+      "loading": "Loading reports…",
+      "untitled": "Experience analysis",
+      "empty": "No reports yet",
+      "emptyHint": "Create your first analysis — the AI drafts an experience strategy from your brief.",
+      "emptyFilter": "No reports match the filter",
+      "back": "Reports",
+      "notFound": "Report not found.",
+      "rename": "Rename",
+      "delete": "Delete",
+      "editRerun": "Edit & re-run",
+      "renamePrompt": "New report name:",
+      "renamed": "Renamed",
+      "renameFailed": "Rename failed (BE not ready?)",
+      "deleteConfirm": "Delete report \"{name}\"?",
+      "deleted": "Report deleted",
+      "deleteFailed": "Delete failed (BE not ready?)"
+    },
+    "status": {
+      "queued": "Queued",
+      "running": "Running",
+      "succeeded": "Done",
+      "failed": "Failed"
     },
     "setup": {
       "heading": "Choose your inputs",
@@ -41,7 +70,27 @@
       "confidence": "Confidence",
       "why": "Why",
       "failed": "Something went wrong while generating the blueprint. Please try again.",
-      "generatedWith": "Generated with"
+      "generatedWith": "Generated with",
+      "viewDetail": "View detail",
+      "aiGenerate": "AI generate",
+      "manualSearch": "Search manually",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "removeBlock": "Remove block",
+      "generatePending": "AI block-content generation is in progress (needs BE).",
+      "searchPending": "Manual block search in the library — coming soon.",
+      "blockCode": "Block code",
+      "category": "Category",
+      "description": "Description",
+      "previewNote": "Preview image & sample content will show once BE provides the block/template catalog.",
+      "saved": "Blueprint changes saved",
+      "saveFailed": "Failed to save changes",
+      "generated": "Content generated",
+      "generateFailed": "Content generation failed",
+      "generatedTitle": "AI-suggested content",
+      "generatedHint": "Content matches the block schema — applied when building the template.",
+      "handoffDone": "Template built from blueprint",
+      "handoffFailed": "Handoff failed"
     },
     "goals": {
       "product_discovery": "Product discovery",
@@ -56,6 +105,94 @@
       "audience": "Target audience",
       "pain_points": "Pain point",
       "market_context": "Market context"
+    },
+    "intake": {
+      "aiSection": "AI ANALYSIS",
+      "analyzing": "Synthesizing suggestions…",
+      "steps": {
+        "brand": "Brand",
+        "product": "Product / Service",
+        "objective": "Campaign objective",
+        "audience": "Target audience",
+        "market": "Market context",
+        "assets": "Existing assets",
+        "challenges": "Sales challenges",
+        "goal": "Experience Goal",
+        "journey": "Customer Journey",
+        "review": "Review & build Blueprint"
+      },
+      "suggest": {
+        "ai": "AI SUGGESTS",
+        "guide": "GUIDED SUGGESTION",
+        "basedOn": "based on",
+        "apply": "Apply"
+      },
+      "nav": {
+        "back": "Back",
+        "next": "Continue",
+        "aiNext": "Let AI suggest the next step",
+        "create": "Build Blueprint"
+      },
+      "fields": {
+        "brandName": "Brand name",
+        "positioning": "Positioning",
+        "tone": "Tone",
+        "toneAddPh": "Add another tone…",
+        "visualIdentity": "Visual identity",
+        "features": "Key features",
+        "perLine": "one per line",
+        "benefits": "Core benefits",
+        "pricing": "Pricing",
+        "useCases": "Use cases",
+        "objectives": "Primary objective",
+        "objectiveAddPh": "Another objective? Type then Enter…",
+        "persona": "Persona",
+        "ageRange": "Age range",
+        "behaviours": "Behaviours",
+        "painPoints": "Pain points",
+        "painHint": "one per line; drives the risk-reducer stage",
+        "motivations": "Motivations",
+        "device": "Device",
+        "competitors": "Main competitors",
+        "trends": "Market trends",
+        "expectations": "Customer expectations",
+        "assetDrop": "Drag & drop or click to choose files",
+        "assetUploadHint": "Images, videos, brochures (PDF/DOC) — uploaded to library",
+        "assetUploading": "Uploading…",
+        "assetPick": "Choose from library",
+        "assetManualPh": "or type an existing asset name/URL…",
+        "assetAddBtn": "Add",
+        "assetAdd": "Added assets",
+        "challenges": "Current challenges",
+        "challengeAddPh": "Another challenge? Type then Enter…"
+      },
+      "goal": {
+        "introAi": "The AI classifies the best-fit experience type. You can re-select.",
+        "introGuide": "A guided suggestion based on your brief — re-select if needed.",
+        "multiHint": "You can pick multiple goals (the first is primary).",
+        "primary": "primary",
+        "secondary": "secondary",
+        "customLabel": "Custom",
+        "addPh": "Another goal? Type then Enter…"
+      },
+      "journey": {
+        "intro": "Applies an industry journey pattern, then tailors it to the chosen goal.",
+        "patternLabel": "INDUSTRY PATTERN",
+        "stagesLabel": "Suggested journey",
+        "stagesHint": "add / edit / remove stages",
+        "stageNamePh": "Stage name",
+        "intentPh": "Intent",
+        "addStage": "Add stage"
+      },
+      "review": {
+        "brand": "Brand",
+        "objective": "Objective",
+        "audience": "Audience",
+        "goal": "Experience Goal",
+        "journey": "Journey",
+        "journeyCount": "{n} stages",
+        "challenges": "Challenges"
+      }
     }
   }
 }

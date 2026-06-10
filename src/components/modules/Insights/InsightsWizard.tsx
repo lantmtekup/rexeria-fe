@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import { useInsightReport } from '@/services/rexer/use-rexer';
 import { useInsightsFlow } from './useInsightsFlow';
-import { SetupStep } from './steps/SetupStep';
+import { IntakeWizard } from './intake/IntakeWizard';
 import { GeneratingStep } from './steps/GeneratingStep';
 import { BlueprintStep } from './steps/BlueprintStep';
 import { WizardProgress } from './steps/WizardProgress';
@@ -24,8 +24,10 @@ import { AiOrb } from './steps/ui';
  */
 export function InsightsWizard({
   brandLocked = true,
+  fromReportId,
 }: {
   brandLocked?: boolean;
+  fromReportId?: string;
 }) {
   const t = useTranslations('insights');
   const flow = useInsightsFlow();
@@ -49,10 +51,11 @@ export function InsightsWizard({
   let content;
   if (flow.phase === 'setup') {
     content = (
-      <SetupStep
+      <IntakeWizard
         submitting={flow.submitting}
         onRun={flow.run}
         brandLocked={brandLocked}
+        fromReportId={fromReportId}
       />
     );
   } else if (flow.phase === 'generating') {

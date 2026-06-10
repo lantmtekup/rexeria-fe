@@ -1,17 +1,20 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import {
   AlertTriangle,
   Check,
-  LayoutGrid,
-  LayoutTemplate,
+  Loader2,
   RotateCcw,
   Route,
   Target,
   Wand2,
 } from 'lucide-react';
 
+import { rexerApi } from '@/services/rexer/endpoints';
 import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import type {
@@ -20,6 +23,7 @@ import type {
   InsightReport,
 } from '@/services/rexer/types';
 import { ConfidenceRing, GradientButton, SectionCard } from './ui';
+import { BlocksSection, TemplatesSection } from './BlueprintBlocks';
 
 /**
  * Màn Blueprint của wizard AI-Insights: render 4 section chiến lược
@@ -68,6 +72,7 @@ function GoalSection({ blueprint }: { blueprint: InsightBlueprint }) {
       index={1}
       accent='blue'
       delayMs={0}
+      collapsible
     >
       <div className='flex flex-col gap-4 sm:flex-row sm:items-center'>
         <div className='flex flex-col items-center gap-1'>
@@ -113,6 +118,7 @@ function JourneySection({ blueprint }: { blueprint: InsightBlueprint }) {
       index={2}
       accent='violet'
       delayMs={80}
+      collapsible
     >
       {journey.journey_pattern_name && (
         <div className='rounded-pill mb-2 inline-flex bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-700'>
@@ -154,119 +160,30 @@ function JourneySection({ blueprint }: { blueprint: InsightBlueprint }) {
   );
 }
 
-/** Section blocks đề xuất: gom theo từng stage, mỗi block kèm lý do. */
-function BlocksSection({ blueprint }: { blueprint: InsightBlueprint }) {
-  const t = useTranslations('insights');
-  const blocks = blueprint.recommended_blocks;
-  if (!blocks) return null;
-
-  return (
-    <SectionCard
-      icon={<LayoutGrid aria-hidden />}
-      title={t('blueprint.blocks')}
-      index={3}
-      accent='emerald'
-      delayMs={160}
-    >
-      <div className='space-y-3'>
-        {(blocks.blocks_by_stage ?? []).map(stage => (
-          <div
-            key={stage.stage_key}
-            className='border-border bg-muted/40 rounded-xl border p-3'
-          >
-            <div className='text-content-main font-medium'>
-              {stage.stage_key}
-            </div>
-            {stage.stage_rationale && (
-              <p className='text-content-muted mb-2 text-sm'>
-                {stage.stage_rationale}
-              </p>
-            )}
-            <ul className='space-y-2'>
-              {(stage.blocks ?? []).map(block => (
-                <li
-                  key={block.block_type_code}
-                  className='flex flex-wrap items-baseline gap-2 text-sm'
-                >
-                  <Badge
-                    variant='outline'
-                    className='bg-emerald-50 text-emerald-700'
-                  >
-                    {block.block_type_code}
-                  </Badge>
-                  <span className='text-content-main font-medium'>
-                    {block.block_name}
-                  </span>
-                  {block.reason && (
-                    <span className='text-content-muted'>— {block.reason}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </SectionCard>
-  );
-}
-
-/** Section templates đề xuất: mỗi template kèm block codes và lý do phù hợp. */
-function TemplatesSection({ blueprint }: { blueprint: InsightBlueprint }) {
-  const t = useTranslations('insights');
-  const templates = blueprint.recommended_templates;
-  if (!templates) return null;
-
-  return (
-    <SectionCard
-      icon={<LayoutTemplate aria-hidden />}
-      title={t('blueprint.templates')}
-      index={4}
-      accent='amber'
-      delayMs={240}
-    >
-      <div className='grid gap-4 sm:grid-cols-2'>
-        {(templates.templates ?? []).map(tpl => (
-          <div
-            key={tpl.name}
-            className='group/tpl border-border bg-card overflow-hidden rounded-xl border transition hover:-translate-y-0.5 hover:shadow-md'
-          >
-            <div className='h-1 w-full bg-[linear-gradient(90deg,#f59e0b,#fbbf24)]' />
-            <div className='space-y-2 p-4'>
-              <div className='flex items-center justify-between gap-2'>
-                <span className='text-content-main font-semibold'>
-                  {tpl.name}
-                </span>
-                {tpl.category && (
-                  <Badge variant='secondary'>{tpl.category}</Badge>
-                )}
-              </div>
-              {tpl.description && (
-                <p className='text-content-muted text-sm'>{tpl.description}</p>
-              )}
-              {(tpl.block_codes ?? []).length > 0 && (
-                <div className='flex flex-wrap gap-1.5'>
-                  {tpl.block_codes.map(code => (
-                    <Badge key={code} variant='outline'>
-                      {code}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              {tpl.why_fit && (
-                <p className='text-content-muted text-xs'>
-                  {t('blueprint.why')}: {tpl.why_fit}
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </SectionCard>
-  );
-}
+// BlocksSection + TemplatesSection (collapse/expand, thumbnail, xem chi tiết,
+// AI tạo nội dung / tìm thủ công) đã tách sang ./BlueprintBlocks.
 
 export function BlueprintStep({ report, onRestart }: BlueprintStepProps) {
   const t = useTranslations('insights');
+  const router = useRouter();
+  const [handingOff, setHandingOff] = useState(false);
+
+  // KB2: dựng template thật từ blueprint → điều hướng sang trang edit template.
+  const handoff = async () => {
+    if (!report?.id) return;
+    setHandingOff(true);
+    try {
+      const r = await rexerApi.insights.handoff(report.id);
+      toast.success(t('blueprint.handoffDone'));
+      router.push(r.edit_url);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t('blueprint.handoffFailed')
+      );
+    } finally {
+      setHandingOff(false);
+    }
+  };
 
   if (!report) return null;
 
@@ -309,7 +226,7 @@ export function BlueprintStep({ report, onRestart }: BlueprintStepProps) {
 
       <GoalSection blueprint={blueprint} />
       <JourneySection blueprint={blueprint} />
-      <BlocksSection blueprint={blueprint} />
+      <BlocksSection blueprint={blueprint} reportId={report.id} />
       <TemplatesSection blueprint={blueprint} />
 
       {blueprint.generated_with && (
@@ -320,7 +237,17 @@ export function BlueprintStep({ report, onRestart }: BlueprintStepProps) {
 
       {/* Footer hành động */}
       <div className='border-border flex flex-wrap items-center gap-3 border-t pt-5'>
-        <GradientButton leading={<Wand2 className='size-4' aria-hidden />}>
+        <GradientButton
+          disabled={handingOff}
+          onClick={handoff}
+          leading={
+            handingOff ? (
+              <Loader2 className='size-4 animate-spin' aria-hidden />
+            ) : (
+              <Wand2 className='size-4' aria-hidden />
+            )
+          }
+        >
           {t('blueprint.handoff')}
         </GradientButton>
         <Button type='button' variant='outline' onClick={onRestart}>

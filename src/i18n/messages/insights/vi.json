@@ -2,10 +2,39 @@
   "insights": {
     "title": "AI-Insights",
     "subtitle": "Biến brief sản phẩm/chiến dịch thành chiến lược trải nghiệm tương tác",
+    "reportInput": "Dữ liệu đã nhập",
     "phases": {
       "setup": "Nhập liệu",
       "generating": "Phân tích",
       "blueprint": "Blueprint"
+    },
+    "list": {
+      "subtitle": "Báo cáo chiến lược trải nghiệm đã tạo",
+      "new": "Tạo phân tích mới",
+      "searchPh": "Tìm theo tiêu đề…",
+      "statusAll": "Tất cả",
+      "loading": "Đang tải báo cáo…",
+      "untitled": "Phân tích trải nghiệm",
+      "empty": "Chưa có báo cáo nào",
+      "emptyHint": "Tạo phân tích đầu tiên — AI sẽ dựng chiến lược trải nghiệm từ brief của bạn.",
+      "emptyFilter": "Không có báo cáo khớp bộ lọc",
+      "back": "Danh sách báo cáo",
+      "notFound": "Không tìm thấy báo cáo.",
+      "rename": "Đổi tên",
+      "delete": "Xoá",
+      "editRerun": "Chỉnh sửa & chạy lại",
+      "renamePrompt": "Tên mới cho báo cáo:",
+      "renamed": "Đã đổi tên",
+      "renameFailed": "Đổi tên thất bại (BE chưa hỗ trợ?)",
+      "deleteConfirm": "Xoá báo cáo \"{name}\"?",
+      "deleted": "Đã xoá báo cáo",
+      "deleteFailed": "Xoá thất bại (BE chưa hỗ trợ?)"
+    },
+    "status": {
+      "queued": "Chờ xử lý",
+      "running": "Đang chạy",
+      "succeeded": "Hoàn tất",
+      "failed": "Lỗi"
     },
     "setup": {
       "heading": "Chọn dữ liệu đầu vào",
@@ -41,7 +70,27 @@
       "confidence": "Độ tin cậy",
       "why": "Vì sao",
       "failed": "Đã có lỗi khi tạo blueprint. Vui lòng thử lại.",
-      "generatedWith": "Tạo bởi"
+      "generatedWith": "Tạo bởi",
+      "viewDetail": "Xem chi tiết",
+      "aiGenerate": "AI tạo nội dung",
+      "manualSearch": "Tìm thủ công",
+      "moveUp": "Di chuyển lên",
+      "moveDown": "Di chuyển xuống",
+      "removeBlock": "Xoá block",
+      "generatePending": "Tính năng AI tạo nội dung block đang phát triển (cần BE).",
+      "searchPending": "Tìm block thủ công trong thư viện — sắp có.",
+      "blockCode": "Mã block",
+      "category": "Danh mục",
+      "description": "Mô tả",
+      "previewNote": "Ảnh preview & nội dung mẫu sẽ hiển thị khi BE cung cấp catalog block/template.",
+      "saved": "Đã lưu thay đổi blueprint",
+      "saveFailed": "Lưu thay đổi thất bại",
+      "generated": "Đã sinh nội dung",
+      "generateFailed": "Sinh nội dung thất bại",
+      "generatedTitle": "Nội dung AI đề xuất",
+      "generatedHint": "Nội dung khớp schema của block — sẽ được nạp khi dựng template.",
+      "handoffDone": "Đã dựng template từ blueprint",
+      "handoffFailed": "Dựng template thất bại"
     },
     "goals": {
       "product_discovery": "Khám phá sản phẩm",
@@ -56,6 +105,94 @@
       "audience": "Đối tượng mục tiêu",
       "pain_points": "Pain point",
       "market_context": "Bối cảnh thị trường"
+    },
+    "intake": {
+      "aiSection": "AI PHÂN TÍCH",
+      "analyzing": "Đang tổng hợp gợi ý…",
+      "steps": {
+        "brand": "Thương hiệu",
+        "product": "Sản phẩm / Dịch vụ",
+        "objective": "Mục tiêu chiến dịch",
+        "audience": "Đối tượng mục tiêu",
+        "market": "Bối cảnh thị trường",
+        "assets": "Tài sản hiện có",
+        "challenges": "Thách thức bán hàng",
+        "goal": "Experience Goal",
+        "journey": "Customer Journey",
+        "review": "Xem lại & tạo Blueprint"
+      },
+      "suggest": {
+        "ai": "AI GỢI Ý",
+        "guide": "GỢI Ý DẪN HƯỚNG",
+        "basedOn": "dựa trên",
+        "apply": "Áp dụng"
+      },
+      "nav": {
+        "back": "Quay lại",
+        "next": "Tiếp tục",
+        "aiNext": "Để AI gợi ý bước sau",
+        "create": "Tạo Blueprint"
+      },
+      "fields": {
+        "brandName": "Tên thương hiệu",
+        "positioning": "Định vị",
+        "tone": "Tone",
+        "toneAddPh": "Thêm tone khác…",
+        "visualIdentity": "Nhận diện thị giác",
+        "features": "Tính năng nổi bật",
+        "perLine": "mỗi dòng 1 ý",
+        "benefits": "Lợi ích chính",
+        "pricing": "Mức giá",
+        "useCases": "Use cases",
+        "objectives": "Mục tiêu chính",
+        "objectiveAddPh": "Mục tiêu khác? Nhập rồi Enter…",
+        "persona": "Persona",
+        "ageRange": "Độ tuổi",
+        "behaviours": "Hành vi",
+        "painPoints": "Pain points",
+        "painHint": "mỗi dòng 1 ý; quyết định stage giảm rủi ro",
+        "motivations": "Động lực",
+        "device": "Thiết bị",
+        "competitors": "Đối thủ chính",
+        "trends": "Xu hướng thị trường",
+        "expectations": "Kỳ vọng khách hàng",
+        "assetDrop": "Kéo thả hoặc bấm để chọn file",
+        "assetUploadHint": "Ảnh, video, brochure (PDF/DOC) — tải lên thư viện",
+        "assetUploading": "Đang upload…",
+        "assetPick": "Chọn từ thư viện",
+        "assetManualPh": "hoặc nhập tên/URL asset đã có…",
+        "assetAddBtn": "Thêm",
+        "assetAdd": "Asset đã thêm",
+        "challenges": "Thách thức đang gặp",
+        "challengeAddPh": "Thách thức khác? Nhập rồi Enter…"
+      },
+      "goal": {
+        "introAi": "AI phân loại loại trải nghiệm phù hợp nhất. Bạn có thể chọn lại.",
+        "introGuide": "Gợi ý dẫn hướng dựa trên brief của bạn — chọn lại nếu cần.",
+        "multiHint": "Có thể chọn nhiều mục tiêu (mục đầu là chính).",
+        "primary": "chính",
+        "secondary": "phụ",
+        "customLabel": "Tuỳ chỉnh",
+        "addPh": "Mục tiêu khác? Nhập rồi Enter…"
+      },
+      "journey": {
+        "intro": "Áp mẫu journey theo ngành rồi tùy biến theo Goal đã chốt.",
+        "patternLabel": "MẪU NGÀNH",
+        "stagesLabel": "Journey đề xuất",
+        "stagesHint": "thêm / sửa / xoá giai đoạn",
+        "stageNamePh": "Tên giai đoạn",
+        "intentPh": "Mục đích",
+        "addStage": "Thêm giai đoạn"
+      },
+      "review": {
+        "brand": "Thương hiệu",
+        "objective": "Mục tiêu",
+        "audience": "Đối tượng",
+        "goal": "Experience Goal",
+        "journey": "Journey",
+        "journeyCount": "{n} giai đoạn",
+        "challenges": "Thách thức"
+      }
     }
   }
 }

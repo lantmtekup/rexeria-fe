@@ -3,54 +3,62 @@
 import {
   BarChart3,
   ExternalLink,
-  Eye,
   Globe,
   Loader2,
+  MoreVertical,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
   TrendingDown,
   TrendingUp,
-  Users,
-  type LucideIcon,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type {
-  MicroSite,
-  MicroSiteAnalytics,
-  MicroSiteStatus,
-} from '@/services/rexer/types';
+import { useRexer } from '@/services/rexer/use-rexer';
 
-import { fmtFull, fmtNum } from '../_data';
+import { fmtNum } from '../_data';
 import { PortalShell } from '../_shell';
+import { CreateMicroSiteDialog } from './_CreateMicroSiteDialog';
+import {
+  STATUS_META,
+  gradientFor,
+  statusMeta,
+  type MicroSite,
+  type MicroSiteStatus,
+} from './_data';
 
-const STATUS_META: Record<MicroSiteStatus, { label: string; chip: string }> = {
-  live: { label: 'Live', chip: 'bg-emerald-100 text-emerald-700' },
-  dev: { label: 'Đang dev', chip: 'bg-amber-100 text-amber-700' },
-  paused: { label: 'Tạm dừng', chip: 'bg-muted text-content-muted' },
-};
+type StatusFilter = 'all' | MicroSiteStatus;
 
-function statusMeta(s: string) {
-  return STATUS_META[
-    (s as MicroSiteStatus) in STATUS_META ? (s as MicroSiteStatus) : 'dev'
-  ];
-}
-
+/**
+ * Danh sách micro-site (site Rexer code riêng cho khách, domain riêng). Wire API
+ * thật `rexerApi.microSites.*`: list + CRUD (tạo/sửa/xoá). Click 1 site → trang
+ * analytics riêng `/portal/micro-sites/[id]`.
+ */
 export default function PortalMicroSitesPage() {
   const [sites, setSites] = useState<MicroSite[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState<MicroSite | null>(null);
+  const [filter, setFilter] = useState<StatusFilter>('all');
+  const [search, setSearch] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<MicroSite | null>(null);
+
+  // brand_id để tạo mới: lấy từ workspace mặc định của user (create cần brand_id).
+  const memberships = useRexer(() => rexerApi.workspaces.myMemberships(), []);
+  const brandId = useMemo(() => {
+    const ws = (memberships.data ?? []).map(m => m.workspace);
+    return (ws.find(w => w.is_default) ?? ws[0])?.brand_id ?? '';
+  }, [memberships.data]);
 
   useEffect(() => {
     let cancelled = false;
     rexerApi.microSites
       .list({ limit: 100 })
-      .then(res => {
-        if (cancelled) return;
-        const items = res.items ?? [];
-        setSites(items);
-        setSelected(items[0] ?? null);
-      })
+      .then(res => !cancelled && setSites(res.items ?? []))
       .catch(() => {})
       .finally(() => !cancelled && setLoading(false));
     return () => {
@@ -58,350 +66,322 @@ export default function PortalMicroSitesPage() {
     };
   }, []);
 
+  const stats = useMemo(() => {
+    const live = sites.filter(s => s.status === 'live').length;
+    const dev = sites.filter(s => s.status === 'dev').length;
+    const views = sites.reduce((a, s) => a + (s.views_30d ?? 0), 0);
+    return { total: sites.length, live, dev, views };
+  }, [sites]);
+
+  const filtered = sites.filter(s => {
+    if (filter !== 'all' && s.status !== filter) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!s.name.toLowerCase().includes(q) && !s.url.toLowerCase().includes(q))
+        return false;
+    }
+    return true;
+  });
+
+  const openCreate = () => {
+    setEditing(null);
+    setDialogOpen(true);
+  };
+  const openEdit = (s: MicroSite) => {
+    setEditing(s);
+    setDialogOpen(true);
+  };
+  const handleSaved = (s: MicroSite) =>
+    setSites(prev => {
+      const i = prev.findIndex(x => x.id === s.id);
+      if (i >= 0) {
+        const next = [...prev];
+        next[i] = s;
+        return next;
+      }
+      return [s, ...prev];
+    });
+  const handleDelete = async (s: MicroSite) => {
+    if (!window.confirm(`Xoá micro site "${s.name}"?`)) return;
+    try {
+      await rexerApi.microSites.remove(s.id);
+      setSites(prev => prev.filter(x => x.id !== s.id));
+      toast.success(`Đã xoá "${s.name}"`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Xoá thất bại');
+    }
+  };
+
   return (
     <PortalShell>
-      <section>
-        <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
-          <Globe className='size-3' /> Micro site
+      <section className='flex flex-wrap items-end justify-between gap-4'>
+        <div>
+          <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
+            <Globe className='size-3' /> Micro site
+          </div>
+          <h1 className='mt-1 text-2xl font-bold tracking-tight'>Micro site</h1>
+          <p className='text-content-muted mt-1 text-sm'>
+            Site Rexer code riêng cho khách (domain riêng). Click 1 site để xem
+            analytics.
+          </p>
         </div>
-        <h1 className='mt-1 text-2xl font-bold tracking-tight'>Micro site</h1>
-        <p className='text-content-muted mt-1 text-sm'>
-          Các site Rexer dựng riêng cho thương hiệu (domain riêng). Theo dõi
-          lượt xem & người dùng tổng hợp từ script nhúng.
-        </p>
+        <button
+          onClick={openCreate}
+          className='bg-primary hover:bg-primary-dark inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-white shadow-sm'
+        >
+          <Plus className='size-3.5' /> Thêm micro site
+        </button>
       </section>
 
+      {/* Stats */}
+      <section className='mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4'>
+        <StatCard label='Tổng site' value={String(stats.total)} />
+        <StatCard label='Live' value={String(stats.live)} accent='emerald' />
+        <StatCard label='Đang dev' value={String(stats.dev)} accent='amber' />
+        <StatCard label='Views / 30d' value={fmtNum(stats.views)} />
+      </section>
+
+      {/* Filter */}
+      <div className='border-border mt-5 flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3 shadow-sm'>
+        <div className='border-border bg-muted flex flex-1 items-center gap-2 rounded-lg border px-3 py-1.5 lg:max-w-sm'>
+          <Search className='text-content-muted size-3.5' />
+          <input
+            type='text'
+            placeholder='Tìm tên / domain…'
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className='placeholder:text-content-muted flex-1 bg-transparent text-sm outline-none'
+          />
+        </div>
+        <div className='flex flex-wrap items-center gap-1'>
+          {(['all', 'live', 'dev', 'paused'] as StatusFilter[]).map(f => (
+            <FilterBtn
+              key={f}
+              label={f === 'all' ? 'Tất cả' : STATUS_META[f].label}
+              active={filter === f}
+              onClick={() => setFilter(f)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Grid */}
       {loading ? (
         <div className='text-content-muted mt-10 flex items-center justify-center gap-2 text-sm'>
           <Loader2 className='size-4 animate-spin' /> Đang tải micro-site…
         </div>
-      ) : sites.length === 0 ? (
-        <EmptyState />
       ) : (
-        <>
-          <div className='mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
-            {sites.map(s => (
+        <section className='mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'>
+          {filtered.length === 0 ? (
+            <div className='border-border text-content-muted col-span-full rounded-2xl border border-dashed bg-white p-12 text-center text-sm'>
+              {sites.length === 0
+                ? 'Chưa có micro site nào.'
+                : 'Không có micro site nào khớp filter.'}
+            </div>
+          ) : (
+            filtered.map(s => (
               <SiteCard
                 key={s.id}
                 site={s}
-                active={selected?.id === s.id}
-                onSelect={() => setSelected(s)}
+                onEdit={() => openEdit(s)}
+                onDelete={() => handleDelete(s)}
               />
-            ))}
-          </div>
-          {selected && <AnalyticsPanel site={selected} />}
-        </>
+            ))
+          )}
+        </section>
       )}
+
+      <CreateMicroSiteDialog
+        open={dialogOpen}
+        site={editing}
+        brandId={brandId}
+        onOpenChange={setDialogOpen}
+        onSaved={handleSaved}
+      />
     </PortalShell>
   );
 }
 
 function SiteCard({
   site,
-  active,
-  onSelect,
+  onEdit,
+  onDelete,
 }: {
   site: MicroSite;
-  active: boolean;
-  onSelect: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
-  const sm = statusMeta(site.status);
-  const trendUp = site.views_trend_pct >= 0;
-  return (
-    <button
-      type='button'
-      onClick={onSelect}
-      className={cn(
-        'group border-border rounded-2xl border bg-white p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-        active && 'ring-primary border-primary/40 ring-2'
-      )}
-    >
-      <div className='flex items-start justify-between gap-2'>
-        <div className='flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm'>
-          <Globe className='size-5' />
-        </div>
-        <span
-          className={cn(
-            'text-3xs rounded-full px-2 py-0.5 font-bold tracking-wider uppercase',
-            sm.chip
-          )}
-        >
-          {sm.label}
-        </span>
-      </div>
-      <div className='text-foreground mt-3 text-sm font-semibold'>
-        {site.name}
-      </div>
-      {site.url ? (
-        <a
-          href={site.url}
-          target='_blank'
-          rel='noreferrer'
-          onClick={e => e.stopPropagation()}
-          className='text-3xs text-content-muted hover:text-foreground mt-0.5 inline-flex items-center gap-1 font-mono hover:underline'
-        >
-          {site.url} <ExternalLink className='size-2.5' />
-        </a>
-      ) : (
-        <span className='text-3xs text-muted-foreground mt-0.5 block font-mono'>
-          chưa có URL
-        </span>
-      )}
-      <div className='border-border/60 mt-3 flex items-end justify-between border-t pt-3'>
-        <div>
-          <div className='text-foreground font-mono text-lg font-bold tabular-nums'>
-            {fmtNum(site.views_30d)}
-          </div>
-          <div className='text-3xs text-muted-foreground'>views 30 ngày</div>
-        </div>
-        <span
-          className={cn(
-            'text-2xs inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold',
-            trendUp
-              ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-rose-100 text-rose-700'
-          )}
-        >
-          {trendUp ? (
-            <TrendingUp className='size-3' />
-          ) : (
-            <TrendingDown className='size-3' />
-          )}
-          {trendUp ? '+' : ''}
-          {site.views_trend_pct}%
-        </span>
-      </div>
-    </button>
-  );
-}
-
-function AnalyticsPanel({ site }: { site: MicroSite }) {
-  const [data, setData] = useState<MicroSiteAnalytics | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const load = useCallback(() => {
-    setLoading(true);
-    setData(null);
-    rexerApi.microSites
-      .analytics(site.id)
-      .then(setData)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [site.id]);
-
-  useEffect(() => load(), [load]);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const meta = statusMeta(site.status);
+  const up = site.views_trend_pct >= 0;
 
   return (
-    <section className='border-border mt-6 rounded-2xl border bg-white p-5 shadow-sm'>
-      <div className='mb-4 flex items-center gap-2'>
-        <div className='flex size-7 items-center justify-center rounded-lg bg-indigo-500 text-white shadow-sm'>
-          <BarChart3 className='size-4' />
-        </div>
-        <div>
-          <h3 className='text-sm font-semibold'>Analytics — {site.name}</h3>
-          <p className='text-2xs text-content-muted'>30 ngày gần nhất</p>
-        </div>
-        {data?.source && (
-          <span
-            className={cn(
-              'text-3xs ml-auto rounded-full px-2 py-0.5 font-bold',
-              data.source === 'ingest'
-                ? 'bg-emerald-100 text-emerald-700'
-                : data.source === 'manual'
-                  ? 'bg-violet-100 text-violet-700'
-                  : 'bg-sky-100 text-sky-700'
-            )}
-            title='Nguồn dữ liệu: script đo / nhập tay / trộn'
-          >
-            {data.source === 'ingest'
-              ? 'Script đo'
-              : data.source === 'manual'
-                ? 'Nhập tay'
-                : 'Trộn'}
-          </span>
+    <div className='group border-border overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+      {/* Cover */}
+      <Link
+        href={`/portal/micro-sites/${site.id}`}
+        className={cn(
+          'relative flex aspect-[16/8] items-center justify-center bg-gradient-to-br',
+          site.thumbnail_url ? '' : gradientFor(site.id)
         )}
+      >
+        {site.thumbnail_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={site.thumbnail_url}
+            alt={site.name}
+            className='absolute inset-0 h-full w-full object-cover'
+          />
+        ) : (
+          <Globe className='size-8 text-white/70' />
+        )}
+        <span
+          className={cn(
+            'text-3xs absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 font-bold backdrop-blur',
+            meta.chip
+          )}
+        >
+          <span className={cn('size-1.5 rounded-full', meta.dot)} />{' '}
+          {meta.label}
+        </span>
+      </Link>
+
+      {/* Body */}
+      <div className='p-4'>
+        <div className='flex items-start justify-between gap-2'>
+          <div className='min-w-0'>
+            <h3 className='truncate text-sm font-bold tracking-tight'>
+              {site.name}
+            </h3>
+            {site.url ? (
+              <a
+                href={site.url}
+                target='_blank'
+                rel='noreferrer'
+                onClick={e => e.stopPropagation()}
+                className='text-content-muted hover:text-primary text-3xs mt-0.5 inline-flex items-center gap-1 font-mono'
+              >
+                <ExternalLink className='size-2.5' />
+                {site.url.replace(/^https?:\/\//, '')}
+              </a>
+            ) : (
+              <span className='text-3xs text-content-muted mt-0.5 inline-block'>
+                chưa có URL
+              </span>
+            )}
+          </div>
+          <div className='relative'>
+            <button
+              onClick={() => setMenuOpen(o => !o)}
+              onBlur={() => setTimeout(() => setMenuOpen(false), 120)}
+              className='text-content-muted hover:bg-muted rounded p-1'
+              aria-label='Tuỳ chọn'
+            >
+              <MoreVertical className='size-4' />
+            </button>
+            {menuOpen && (
+              <div className='border-border absolute right-0 z-10 mt-1 w-32 overflow-hidden rounded-lg border bg-white shadow-lg'>
+                <button
+                  onClick={onEdit}
+                  className='hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
+                >
+                  <Pencil className='size-3' /> Sửa
+                </button>
+                <button
+                  onClick={onDelete}
+                  className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
+                >
+                  <Trash2 className='size-3' /> Xoá
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Views */}
+        <div className='border-border mt-3 flex items-center gap-2 border-t py-2'>
+          <span className='text-2xs text-content-muted font-semibold tracking-wider uppercase'>
+            Views 30d
+          </span>
+          <span className='font-mono text-sm font-bold'>
+            {site.views_30d ? fmtNum(site.views_30d) : '—'}
+          </span>
+          {site.views_30d > 0 && (
+            <span
+              className={cn(
+                'text-3xs ml-auto inline-flex items-center gap-0.5 font-semibold',
+                up ? 'text-emerald-600' : 'text-rose-600'
+              )}
+            >
+              {up ? (
+                <TrendingUp className='size-3' />
+              ) : (
+                <TrendingDown className='size-3' />
+              )}
+              {up ? '+' : ''}
+              {site.views_trend_pct}%
+            </span>
+          )}
+        </div>
+
+        <Link
+          href={`/portal/micro-sites/${site.id}`}
+          className='bg-foreground hover:bg-foreground/85 mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white'
+        >
+          <BarChart3 className='size-3.5' /> Xem analytics
+        </Link>
       </div>
-
-      {loading ? (
-        <div className='text-content-muted flex items-center justify-center gap-2 py-10 text-sm'>
-          <Loader2 className='size-4 animate-spin' /> Đang tải số liệu…
-        </div>
-      ) : !data ? (
-        <div className='text-content-muted py-10 text-center text-sm'>
-          Chưa có số liệu cho site này.
-        </div>
-      ) : (
-        <>
-          <div className='grid grid-cols-2 gap-3 lg:grid-cols-4'>
-            <Kpi
-              icon={Eye}
-              label='Lượt xem'
-              value={fmtNum(data.summary.views)}
-              delta={data.summary.views_delta_pct}
-            />
-            <Kpi
-              icon={Users}
-              label='Người dùng'
-              value={fmtNum(data.summary.visitors)}
-              delta={data.summary.visitors_delta_pct}
-            />
-            <Kpi
-              icon={TrendingUp}
-              label='Thời gian TB'
-              value={`${data.summary.avg_time_s}s`}
-            />
-            <Kpi
-              icon={TrendingDown}
-              label='Bounce'
-              value={`${data.summary.bounce_pct.toFixed(1)}%`}
-              delta={data.summary.bounce_delta_pct}
-              invertDelta
-            />
-          </div>
-
-          {data.daily.length > 0 && <DailyChart points={data.daily} />}
-
-          <div className='mt-5 grid gap-4 sm:grid-cols-2'>
-            <TopList
-              title='Trang nhiều view'
-              rows={data.top_pages.map(p => ({
-                label: p.path,
-                value: p.views,
-              }))}
-            />
-            <TopList
-              title='Nguồn truy cập'
-              rows={data.top_referrers.map(r => ({
-                label: r.source,
-                value: r.views,
-              }))}
-            />
-          </div>
-        </>
-      )}
-    </section>
+    </div>
   );
 }
 
-function Kpi({
-  icon: Icon,
+function StatCard({
   label,
   value,
-  delta,
-  invertDelta,
+  accent,
 }: {
-  icon: LucideIcon;
   label: string;
   value: string;
-  delta?: number;
-  invertDelta?: boolean;
+  accent?: 'emerald' | 'amber';
 }) {
-  const good = delta == null ? true : invertDelta ? delta <= 0 : delta >= 0;
   return (
-    <div className='border-border rounded-xl border bg-gradient-to-br from-indigo-50/60 to-white p-3 shadow-sm'>
-      <div className='flex size-8 items-center justify-center rounded-lg bg-indigo-500 text-white shadow-sm'>
-        <Icon className='size-4' />
-      </div>
-      <div className='text-3xs text-content-muted mt-2 font-semibold tracking-wider uppercase'>
+    <div className='border-border rounded-2xl border bg-white px-4 py-3 shadow-sm'>
+      <div className='text-2xs text-content-muted font-semibold tracking-wider uppercase'>
         {label}
       </div>
-      <div className='text-foreground mt-0.5 font-mono text-xl font-bold'>
+      <div
+        className={cn(
+          'mt-1 font-mono text-xl font-bold tabular-nums',
+          accent === 'emerald' && 'text-emerald-600',
+          accent === 'amber' && 'text-amber-600'
+        )}
+      >
         {value}
       </div>
-      {delta != null && (
-        <div
-          className={cn(
-            'text-3xs mt-0.5 font-mono font-semibold',
-            good ? 'text-emerald-600' : 'text-rose-600'
-          )}
-        >
-          {delta >= 0 ? '+' : ''}
-          {delta}% vs kỳ trước
-        </div>
-      )}
     </div>
   );
 }
 
-function DailyChart({
-  points,
+function FilterBtn({
+  label,
+  active,
+  onClick,
 }: {
-  points: { date: string; views: number; visitors: number }[];
-}) {
-  const max = Math.max(...points.map(p => p.views), 1);
-  return (
-    <div className='border-border mt-5 rounded-xl border p-3'>
-      <div className='text-3xs text-content-muted mb-2 font-semibold tracking-wider uppercase'>
-        Views theo ngày
-      </div>
-      <div className='flex h-28 items-end gap-0.5'>
-        {points.map(p => (
-          <div
-            key={p.date}
-            className='group relative flex flex-1 flex-col items-center'
-            title={`${p.date}: ${fmtFull(p.views)} views`}
-          >
-            <div
-              className='w-full rounded-t bg-gradient-to-t from-indigo-500 to-violet-400 transition-all group-hover:from-indigo-600'
-              style={{ height: `${(p.views / max) * 100}%`, minHeight: 2 }}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TopList({
-  title,
-  rows,
-}: {
-  title: string;
-  rows: { label: string; value: number }[];
+  label: string;
+  active: boolean;
+  onClick: () => void;
 }) {
   return (
-    <div className='border-border rounded-xl border p-3'>
-      <div className='text-3xs text-content-muted mb-2 font-semibold tracking-wider uppercase'>
-        {title}
-      </div>
-      {rows.length === 0 ? (
-        <p className='text-2xs text-muted-foreground py-2'>Chưa có dữ liệu.</p>
-      ) : (
-        <ul className='space-y-1.5'>
-          {rows.slice(0, 5).map((r, i) => (
-            <li
-              key={i}
-              className='flex items-center justify-between gap-2 text-xs'
-            >
-              <span className='text-content-muted truncate font-mono'>
-                {r.label}
-              </span>
-              <span className='text-foreground font-mono font-semibold tabular-nums'>
-                {fmtNum(r.value)}
-              </span>
-            </li>
-          ))}
-        </ul>
+    <button
+      onClick={onClick}
+      className={cn(
+        'text-2xs rounded-full px-2.5 py-1 font-medium transition-all',
+        active
+          ? 'bg-foreground text-white shadow-sm'
+          : 'border-border text-content-muted hover:bg-muted border bg-white'
       )}
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className='border-border mt-6 overflow-hidden rounded-2xl border bg-white shadow-sm'>
-      <div className='flex flex-col items-center px-8 py-12 text-center'>
-        <div className='flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/20'>
-          <Globe className='size-7' strokeWidth={2.2} />
-        </div>
-        <p className='text-foreground mt-4 text-base font-semibold'>
-          Chưa có micro-site nào
-        </p>
-        <p className='text-content-muted mt-1.5 max-w-md text-xs leading-relaxed'>
-          Đội ngũ Rexer sẽ dựng site riêng và đăng ký vào đây — bạn sẽ thấy lượt
-          xem & analytics tổng hợp ngay khi site go-live.
-        </p>
-      </div>
-    </div>
+    >
+      {label}
+    </button>
   );
 }

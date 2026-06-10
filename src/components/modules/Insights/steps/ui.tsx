@@ -1,7 +1,7 @@
 'use client';
 
-import type { CSSProperties, ReactNode } from 'react';
-import { Sparkles } from 'lucide-react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
+import { ChevronDown, Sparkles } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 
@@ -72,6 +72,8 @@ export function SectionCard({
   index,
   accent = 'blue',
   delayMs = 0,
+  collapsible = false,
+  defaultOpen = true,
   children,
   className,
 }: {
@@ -80,13 +82,48 @@ export function SectionCard({
   index?: number;
   accent?: SectionAccent;
   delayMs?: number;
+  /** Cho phép thu/mở cả section (ở cấp cha). */
+  collapsible?: boolean;
+  defaultOpen?: boolean;
   children: ReactNode;
   className?: string;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
   const style: CSSProperties = {
     animationDelay: `${delayMs}ms`,
     animationFillMode: 'backwards',
   };
+
+  const header = (
+    <>
+      <span
+        className={cn(
+          'inline-flex size-9 items-center justify-center rounded-xl [&_svg]:size-[18px]',
+          ACCENTS[accent]
+        )}
+      >
+        {icon}
+      </span>
+      <h2 className='text-content-main text-base font-semibold'>{title}</h2>
+      <span className='ml-auto flex items-center gap-2'>
+        {index != null && (
+          <span className='text-content-muted text-xs font-semibold tabular-nums'>
+            {String(index).padStart(2, '0')}
+          </span>
+        )}
+        {collapsible && (
+          <ChevronDown
+            className={cn(
+              'text-content-muted size-4 transition-transform',
+              !open && '-rotate-90'
+            )}
+            aria-hidden
+          />
+        )}
+      </span>
+    </>
+  );
+
   return (
     <section
       style={style}
@@ -96,23 +133,21 @@ export function SectionCard({
         className
       )}
     >
-      <div className='mb-4 flex items-center gap-3'>
-        <span
+      {collapsible ? (
+        <button
+          type='button'
+          onClick={() => setOpen(o => !o)}
           className={cn(
-            'inline-flex size-9 items-center justify-center rounded-xl [&_svg]:size-[18px]',
-            ACCENTS[accent]
+            'flex w-full items-center gap-3 text-left',
+            open && 'mb-4'
           )}
         >
-          {icon}
-        </span>
-        <h2 className='text-content-main text-base font-semibold'>{title}</h2>
-        {index != null && (
-          <span className='text-content-muted ml-auto text-xs font-semibold tabular-nums'>
-            {String(index).padStart(2, '0')}
-          </span>
-        )}
-      </div>
-      {children}
+          {header}
+        </button>
+      ) : (
+        <div className='mb-4 flex items-center gap-3'>{header}</div>
+      )}
+      {(!collapsible || open) && children}
     </section>
   );
 }

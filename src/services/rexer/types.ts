@@ -2878,6 +2878,8 @@ export interface InsightRecommendedBlock {
   block_type_code: string;
   block_name: string;
   reason: string;
+  /** Ảnh preview enrich từ catalog (KB5) — worker non-dev mới gắn. */
+  preview_image_url?: string;
 }
 
 /** Nhóm block đề xuất theo từng stage của journey. */
@@ -2968,7 +2970,128 @@ export interface CreateInsightReportBody {
   campaign_id?: string;
   title?: string;
   inputs?: Record<string, unknown>;
+  /**
+   * Wizard v2: goal/journey user đã chốt. BE bỏ qua an toàn nếu chưa đọc field này
+   * (xem docs/be-spec-insights-wizard-v2). Khi đọc, job skip classify_goal/journey.
+   */
+  selections?: InsightSelections;
   parent_report_id?: string;
+}
+
+// ── Wizard v2 (interactive intake) — xem docs/be-spec-insights-wizard-v2 ──────
+//
+// Các type dưới phục vụ luồng nhập liệu nhiều bước + gợi ý lũy tiến. FE hiện chạy
+// heuristic client; khi 3 endpoint suggest/classify-goal/suggest-journey live thì
+// thay bằng call thật, shape giữ nguyên.
+
+/**
+ * Brief có cấu trúc thu thập trong wizard v2; nhồi nguyên object vào `inputs` của
+ * create (vẫn hợp lệ vì `inputs` là additionalProperties). Mọi field optional để
+ * cho phép submit sớm/khuyết.
+ */
+export interface InsightBrief {
+  brand?: {
+    name?: string;
+    positioning?: string;
+    tone?: string[];
+    visual_identity?: string;
+  };
+  product?: {
+    features?: string[];
+    benefits?: string;
+    pricing?: string[];
+    use_cases?: string[];
+  };
+  objective?: {
+    campaign_objectives?: string[];
+  };
+  audience?: {
+    persona?: string;
+    age_range?: string;
+    behaviours?: string;
+    pain_points?: string[];
+    motivations?: string;
+    device?: 'mobile' | 'desktop' | 'both';
+  };
+  market?: {
+    competitors?: string;
+    trends?: string;
+    expectations?: string;
+  };
+  assets?: {
+    items?: string[];
+  };
+  challenges?: string[];
+}
+
+/** Goal + journey user đã chốt trong wizard (đính kèm create qua `selections`). */
+export interface InsightSelections {
+  experience_goal?: {
+    primary_goal: ExperienceGoal;
+    secondary_goal?: ExperienceGoal | null;
+  };
+  customer_journey?: InsightBlueprintJourney;
+}
+
+/** Một gợi ý lũy tiến cho 1 bước (POST /v1/insights/suggest). */
+export interface InsightStepSuggestion {
+  text: string;
+  based_on?: string[];
+  /** Giá trị đề xuất để prefill field của step, vd `{ campaign_objectives: ['Thu lead'] }`. */
+  values?: Record<string, unknown>;
+}
+
+/** Response của `POST /v1/insights/suggest`. */
+export interface InsightSuggestResponse {
+  suggestion: InsightStepSuggestion;
+}
+
+/** Một Experience Goal đã được xếp hạng (POST /v1/insights/classify-goal). */
+export interface GoalRanking {
+  goal: ExperienceGoal;
+  confidence: number;
+  rationale?: string;
+  rank?: 'primary' | 'secondary' | 'other';
+}
+
+/** Response của `POST /v1/insights/classify-goal` (trả toàn bộ goal đã xếp hạng). */
+export interface ClassifyGoalResponse {
+  goals: GoalRanking[];
+}
+
+/** Response của `POST /v1/insights/suggest-journey` (tái dùng InsightBlueprintJourney). */
+export interface SuggestJourneyResponse {
+  journey: InsightBlueprintJourney;
+  industry_pattern?: {
+    name: string;
+    stages: string[];
+  };
+}
+
+/** Body của `PATCH /v1/insights/reports/{id}/blueprint` (KB3 — merge từng section). */
+export interface UpdateInsightBlueprintBody {
+  recommended_blocks?: InsightBlueprintBlocks;
+  customer_journey?: InsightBlueprintJourney;
+}
+
+/** Response của `POST /v1/insights/reports/{id}/handoff` (KB2 — dựng template thật). */
+export interface InsightHandoffResponse {
+  template_id: string;
+  edit_url: string;
+  /** Rỗng tới khi template publish 1 page (chưa có /p). */
+  preview_url?: string;
+}
+
+/** Body của `POST /v1/insights/blocks/generate-content` (KB4). */
+export interface GenerateBlockContentBody {
+  report_id: string;
+  block_type_code: string;
+  stage_key?: string;
+}
+
+/** Response generate-content: payload khớp props_schema của block type. */
+export interface GenerateBlockContentResponse {
+  content: Record<string, unknown>;
 }
 
 /** Response bọc 1 report (`InsightReportResponse`). */
