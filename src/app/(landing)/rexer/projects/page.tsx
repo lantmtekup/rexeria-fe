@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 
+import { WordReveal } from '@/components/landing/LandingMotion';
 import { StartProjectCta } from '@/components/landing/StartProjectCta';
 
 export const metadata: Metadata = {
@@ -51,7 +52,11 @@ export default function ProjectsPage() {
       {/* Hero */}
       <section className='mx-auto max-w-4xl px-6 pt-20 pb-14 text-center sm:pt-28'>
         <h1 className='text-5xl font-semibold tracking-tight text-neutral-900 sm:text-7xl'>
-          Explore <em className='font-serif font-light'>Our</em> projects
+          <WordReveal
+            on='load'
+            text='Explore Our projects'
+            italic={1}
+          />
         </h1>
       </section>
 

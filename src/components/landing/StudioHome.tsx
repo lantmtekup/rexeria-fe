@@ -2,9 +2,17 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { motion, useReducedMotion, type Variants } from 'framer-motion';
 
 import { cn } from '@/lib/cn';
+
+import {
+  CountUp,
+  FadeUp,
+  FadeUpItem,
+  ScaleIn,
+  StaggerGroup,
+  WordReveal,
+} from './LandingMotion';
 
 // Assets self-host trong public/landing (serve qua Vercel CDN khi deploy).
 const vid = (id: string) => `/landing/videos/${id}.mp4`;
@@ -54,10 +62,10 @@ const PROCESS = [
 ];
 
 const STATS = [
-  { value: '17', label: 'Increase in dwell time' },
-  { value: '75', label: 'Increase in engagement and attentive seconds' },
-  { value: '70', label: 'Increase in Traffic Quality' },
-  { value: '24', label: 'Increase in Purchase Intent' },
+  { value: 17, label: 'Increase in dwell time' },
+  { value: 75, label: 'Increase in engagement and attentive seconds' },
+  { value: 70, label: 'Increase in Traffic Quality' },
+  { value: 24, label: 'Increase in Purchase Intent' },
 ];
 
 const TEAM = [
@@ -99,18 +107,12 @@ function PhoneVideo({ video }: { video: string }) {
 }
 
 export function StudioHome() {
-  const reduce = useReducedMotion();
   const [openService, setOpenService] = useState(0);
   const [slide, setSlide] = useState(0);
 
-  const reveal: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 28 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
-  };
-
   return (
     <>
-      {/* ── Hero (dark, video bg) ─────────────────────────── */}
+      {/* ── Hero (dark, video bg) — cascade lúc load 0.5→1.6s như gốc ── */}
       <section className='relative isolate min-h-[92vh] overflow-hidden bg-neutral-950 text-white'>
         <video
           className='absolute inset-0 -z-10 h-full w-full object-cover opacity-60'
@@ -123,30 +125,26 @@ export function StudioHome() {
           aria-hidden
         />
         <div className='mx-auto flex min-h-[92vh] max-w-7xl flex-col justify-between px-6 pt-16 pb-12'>
-          <motion.h1
-            initial='hidden'
-            animate='show'
-            variants={reveal}
-            className='leading-none font-semibold tracking-tight'
-          >
-            <span className='block text-[19vw] sm:text-[11rem] lg:text-[13rem]'>ReXeR</span>
-            <span className='mt-2 block text-center font-light tracking-[0.35em] text-[10vw] sm:text-[6rem] lg:text-[7rem]'>
-              STUDIO
+          <h1 className='leading-none font-semibold tracking-tight'>
+            <span className='block text-[19vw] sm:text-[11rem] lg:text-[13rem]'>
+              <WordReveal text='ReXeR' on='load' delay={0.3} />
             </span>
-          </motion.h1>
+            <span className='mt-2 block text-center font-light tracking-[0.35em] text-[10vw] sm:text-[6rem] lg:text-[7rem]'>
+              <WordReveal text='STUDIO' on='load' delay={0.5} />
+            </span>
+          </h1>
           <div className='grid items-end gap-10 md:grid-cols-2'>
             <ul className='space-y-2'>
-              {SERVICES.map(s => (
-                <li
-                  key={s.no}
-                  className='flex items-baseline justify-between border-b border-white/15 pb-2 text-lg sm:text-xl'
-                >
-                  <span>{s.name}</span>
-                  <span className='font-serif text-white/60 italic'>{s.no}</span>
-                </li>
+              {SERVICES.map((s, i) => (
+                <FadeUp key={s.no} on='load' delay={1.0 + i * 0.1}>
+                  <li className='flex items-baseline justify-between border-b border-white/15 pb-2 text-lg sm:text-xl'>
+                    <span>{s.name}</span>
+                    <span className='font-serif text-white/60 italic'>{s.no}</span>
+                  </li>
+                </FadeUp>
               ))}
             </ul>
-            <div className='md:text-right'>
+            <FadeUp on='load' delay={1.4} className='md:text-right'>
               <p className='ml-auto max-w-md text-lg text-white/80'>
                 From content chaos to customer conversion: we craft immersive,
                 interactive experiences for your brand digital touchpoints.
@@ -157,16 +155,18 @@ export function StudioHome() {
               >
                 Let’s work together
               </Link>
-            </div>
+            </FadeUp>
           </div>
         </div>
       </section>
 
       {/* ── Inside the Studio ─────────────────────────────── */}
       <section className='mx-auto max-w-6xl px-6 py-20 sm:py-28'>
-        <p className='text-sm text-neutral-500'>+ Inside the Studio</p>
+        <FadeUp>
+          <p className='text-sm text-neutral-500'>+ Inside the Studio</p>
+        </FadeUp>
         <div className='mt-10 grid items-center gap-12 md:grid-cols-2'>
-          <div className='overflow-hidden rounded-3xl'>
+          <ScaleIn className='overflow-hidden rounded-3xl'>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={img('YtKu2KtnJg55xSb6Eje2P55SnRw.png')}
@@ -174,30 +174,34 @@ export function StudioHome() {
               loading='lazy'
               className='aspect-square w-full max-w-[520px] object-cover'
             />
-          </div>
+          </ScaleIn>
           <div>
-            <Link
-              href='/rexer/contact'
-              className='group block rounded-2xl border border-neutral-200 p-6 transition-colors hover:bg-neutral-50'
-            >
-              <span className='text-lg font-medium'>Discuss your project</span>
-              <span className='ml-2 text-neutral-400 transition-transform group-hover:translate-x-1'>
-                +
-              </span>
-              <p className='mt-1 text-sm text-neutral-500'>Connect with Us</p>
-            </Link>
-            <p className='mt-8 text-lg leading-relaxed text-neutral-700'>
-              We’re not just designers or developers — we’re storytellers,
-              problem-solvers, and brand builders. Blending bold creativity
-              with strategy, we craft experiences that connect, convert, and
-              stand out in a crowded digital world.
-            </p>
-            <Link
-              href='/rexer/projects'
-              className={cn(pillBtn, 'mt-8 bg-neutral-950 text-white')}
-            >
-              View our work
-            </Link>
+            <FadeUp>
+              <Link
+                href='/rexer/contact'
+                className='group block rounded-2xl border border-neutral-200 p-6 transition-colors hover:bg-neutral-50'
+              >
+                <span className='text-lg font-medium'>Discuss your project</span>
+                <span className='ml-2 text-neutral-400 transition-transform group-hover:translate-x-1'>
+                  +
+                </span>
+                <p className='mt-1 text-sm text-neutral-500'>Connect with Us</p>
+              </Link>
+            </FadeUp>
+            <FadeUp delay={0.15}>
+              <p className='mt-8 text-lg leading-relaxed text-neutral-700'>
+                We’re not just designers or developers — we’re storytellers,
+                problem-solvers, and brand builders. Blending bold creativity
+                with strategy, we craft experiences that connect, convert, and
+                stand out in a crowded digital world.
+              </p>
+              <Link
+                href='/rexer/projects'
+                className={cn(pillBtn, 'mt-8 bg-neutral-950 text-white')}
+              >
+                View our work
+              </Link>
+            </FadeUp>
           </div>
         </div>
       </section>
@@ -213,23 +217,22 @@ export function StudioHome() {
         />
         <div className='absolute inset-0 -z-10 bg-neutral-950/60' />
         <div className='mx-auto max-w-6xl px-6 py-20 sm:py-28'>
-          <p className='text-sm text-white/60'>+ What we craft</p>
-          <motion.h2
-            initial='hidden'
-            whileInView='show'
-            viewport={{ once: true, amount: 0.5 }}
-            variants={reveal}
-            className='mt-4 text-4xl font-semibold tracking-tight sm:text-6xl'
-          >
-            Solutions that <em className='font-serif font-light'>Drive</em> results
-          </motion.h2>
+          <FadeUp>
+            <p className='text-sm text-white/60'>+ What we craft</p>
+          </FadeUp>
+          <h2 className='mt-4 text-4xl font-semibold tracking-tight sm:text-6xl'>
+            <WordReveal
+              text='Solutions that Drive results'
+              italic={2}
+            />
+          </h2>
 
           <div className='mt-14 grid gap-12 lg:grid-cols-[1.4fr_1fr]'>
-            <div>
+            <StaggerGroup>
               {SERVICES.map((s, i) => {
                 const isOpen = openService === i;
                 return (
-                  <div key={s.no} className='border-b border-white/15'>
+                  <FadeUpItem key={s.no} className='border-b border-white/15'>
                     <button
                       type='button'
                       onClick={() => setOpenService(i)}
@@ -242,10 +245,10 @@ export function StudioHome() {
                     {isOpen && s.desc && (
                       <p className='pb-6 text-sm leading-relaxed text-white/70'>{s.desc}</p>
                     )}
-                  </div>
+                  </FadeUpItem>
                 );
               })}
-              <div className='mt-8 flex flex-wrap gap-2'>
+              <FadeUpItem className='mt-8 flex flex-wrap gap-2'>
                 {CHIPS.map(c => (
                   <span
                     key={c}
@@ -254,41 +257,55 @@ export function StudioHome() {
                     {c}
                   </span>
                 ))}
-              </div>
-            </div>
-            <PhoneVideo video='uiGZzAG77icYKQfVtwqa6DkKrKI' />
+              </FadeUpItem>
+            </StaggerGroup>
+            <ScaleIn delay={0.2}>
+              <PhoneVideo video='uiGZzAG77icYKQfVtwqa6DkKrKI' />
+            </ScaleIn>
           </div>
 
-          <p className='mx-auto mt-20 max-w-3xl text-center text-2xl font-medium sm:text-3xl'>
-            Together, we build impactful experiences, lasting relationships,
-            and digital solutions that move businesses forward.
-          </p>
+          <FadeUp delay={0.1}>
+            <p className='mx-auto mt-20 max-w-3xl text-center text-2xl font-medium sm:text-3xl'>
+              Together, we build impactful experiences, lasting relationships,
+              and digital solutions that move businesses forward.
+            </p>
+          </FadeUp>
         </div>
       </section>
 
       {/* ── Ideas & Execution ─────────────────────────────── */}
       <section className='mx-auto max-w-6xl px-6 py-20 sm:py-28'>
-        <p className='text-sm text-neutral-500'>+ Our Expertise</p>
+        <FadeUp>
+          <p className='text-sm text-neutral-500'>+ Our Expertise</p>
+        </FadeUp>
         <h2 className='mt-6 leading-none font-semibold tracking-tight'>
-          <span className='block text-6xl sm:text-8xl'>Ideas</span>
+          <span className='block text-6xl sm:text-8xl'>
+            <WordReveal text='Ideas' />
+          </span>
           <span className='mt-2 flex items-center gap-4'>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={img('KdLcdCL2Vd3YlK7sv90RzDRRBy0.svg')}
-              alt='&'
-              className='h-16 w-auto sm:h-24'
-            />
-            <span className='text-6xl sm:text-8xl'>Execution</span>
+            <ScaleIn delay={0.2}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={img('KdLcdCL2Vd3YlK7sv90RzDRRBy0.svg')}
+                alt='&'
+                className='h-16 w-auto sm:h-24'
+              />
+            </ScaleIn>
+            <span className='text-6xl sm:text-8xl'>
+              <WordReveal text='Execution' delay={0.15} />
+            </span>
           </span>
         </h2>
-        <p className='mt-10 max-w-2xl text-lg leading-relaxed text-neutral-600'>
-          At ReXeR Studio, we transform ambitious ideas into precise execution.
-          Every project begins with bold creativity and is carried through with
-          technical excellence, ensuring experiences that don’t just
-          inspire—but perform. By blending imagination with rigor, we deliver
-          results that elevate engagement, drive conversions, and strengthen
-          brand trust.
-        </p>
+        <FadeUp delay={0.2}>
+          <p className='mt-10 max-w-2xl text-lg leading-relaxed text-neutral-600'>
+            At ReXeR Studio, we transform ambitious ideas into precise
+            execution. Every project begins with bold creativity and is carried
+            through with technical excellence, ensuring experiences that don’t
+            just inspire—but perform. By blending imagination with rigor, we
+            deliver results that elevate engagement, drive conversions, and
+            strengthen brand trust.
+          </p>
+        </FadeUp>
       </section>
 
       {/* ── Projects slider ───────────────────────────────── */}
@@ -296,13 +313,11 @@ export function StudioHome() {
         {PROJECTS.map((p, i) => (
           <div key={p.name} className={cn('relative', i === slide ? 'block' : 'hidden')}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={img(p.cover)}
-              alt={p.name}
-              className='h-[70vh] w-full object-cover'
-            />
+            <img src={img(p.cover)} alt={p.name} className='h-[70vh] w-full object-cover' />
             <div className='absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-neutral-950/80 via-transparent to-transparent p-8 sm:p-14'>
-              <h3 className='text-5xl font-semibold sm:text-7xl'>{p.name}</h3>
+              <h3 className='text-5xl font-semibold sm:text-7xl'>
+                <WordReveal text={p.name} on='load' key={`name-${slide}`} />
+              </h3>
               <p className='mt-2 font-serif text-2xl font-light text-white/80 italic sm:text-4xl'>
                 {p.kind}
               </p>
@@ -327,7 +342,6 @@ export function StudioHome() {
             </div>
           </div>
         ))}
-        {/* slider controls */}
         <div className='absolute top-6 right-6 flex gap-2'>
           <button
             type='button'
@@ -350,58 +364,58 @@ export function StudioHome() {
 
       {/* ── Process ───────────────────────────────────────── */}
       <section className='mx-auto max-w-6xl px-6 py-20 sm:py-28'>
-        <p className='text-sm text-neutral-500'>+ From concept to launch</p>
+        <FadeUp>
+          <p className='text-sm text-neutral-500'>+ From concept to launch</p>
+        </FadeUp>
         <h2 className='mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl'>
-          Your ideas transform into{' '}
-          <em className='font-serif font-light'>Brand</em> stories
+          <WordReveal
+            text='Your ideas transform into Brand stories'
+            italic={4}
+          />
         </h2>
-        <div className='mt-14 grid gap-10 md:grid-cols-3'>
+        <StaggerGroup className='mt-14 grid gap-10 md:grid-cols-3'>
           {PROCESS.map(step => (
-            <motion.div
-              key={step.title}
-              initial='hidden'
-              whileInView='show'
-              viewport={{ once: true, amount: 0.3 }}
-              variants={reveal}
-              className='rounded-3xl border border-neutral-200 p-8'
-            >
+            <FadeUpItem key={step.title} className='rounded-3xl border border-neutral-200 p-8'>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={img(step.icon)} alt='' aria-hidden className='size-20' loading='lazy' />
               <h3 className='mt-6 text-xl font-semibold'>{step.title}</h3>
               <p className='mt-3 text-sm leading-relaxed text-neutral-600'>{step.desc}</p>
-            </motion.div>
+            </FadeUpItem>
           ))}
-        </div>
+        </StaggerGroup>
       </section>
 
-      {/* ── Stats (dark) ──────────────────────────────────── */}
+      {/* ── Stats (dark) — counter đếm lên như gốc ────────── */}
       <section className='relative isolate overflow-hidden bg-neutral-950 text-white'>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={img('In71mAHWVZuNR2BJ9rDchD2cgQ.svg')}
           alt=''
           aria-hidden
-          className='pointer-events-none absolute -left-40 top-10 -z-10 w-[60%] opacity-30 select-none'
+          className='pointer-events-none absolute top-10 -left-40 -z-10 w-[60%] opacity-30 select-none'
         />
         <div className='mx-auto max-w-6xl px-6 py-20 sm:py-28'>
-          <p className='text-sm text-white/60'>+ Verified Performance</p>
+          <FadeUp>
+            <p className='text-sm text-white/60'>+ Verified Performance</p>
+          </FadeUp>
           <div className='mt-8 grid gap-12 lg:grid-cols-2'>
             <h2 className='text-5xl leading-tight font-semibold tracking-tight sm:text-6xl'>
-              Higher Attention
-              <br />
-              <em className='font-serif font-light'>Better</em> Outcome
+              <WordReveal
+                text='Higher Attention Better Outcome'
+                italic={2}
+              />
             </h2>
-            <div>
+            <StaggerGroup>
               {STATS.map(s => (
-                <div
+                <FadeUpItem
                   key={s.label}
                   className='flex items-baseline justify-between gap-6 border-b border-white/15 py-5'
                 >
-                  <span className='text-6xl font-semibold sm:text-7xl'>{s.value}</span>
+                  <CountUp value={s.value} className='text-6xl font-semibold sm:text-7xl' />
                   <span className='text-right text-white/70'>{s.label}</span>
-                </div>
+                </FadeUpItem>
               ))}
-            </div>
+            </StaggerGroup>
           </div>
         </div>
       </section>
@@ -417,28 +431,33 @@ export function StudioHome() {
         />
         <div className='absolute inset-0 -z-10 bg-neutral-950/55' />
         <div className='mx-auto max-w-6xl px-6 py-20 sm:py-28'>
-          <p className='text-sm text-white/60'>+ Talent with purpose</p>
+          <FadeUp>
+            <p className='text-sm text-white/60'>+ Talent with purpose</p>
+          </FadeUp>
           <div className='mt-6 grid items-start gap-12 lg:grid-cols-[1.2fr_1fr]'>
             <div>
               <h2 className='text-5xl font-semibold tracking-tight sm:text-7xl'>
-                We’re your
-                <br />
-                <em className='font-serif font-light'>Creative</em> partners
+                <WordReveal
+                  text='We’re your Creative partners'
+                  italic={2}
+                />
               </h2>
-              <p className='mt-10 max-w-md text-lg text-white/80'>
-                We’re a creative team that values purposeful design, open
-                collaboration, and work that truly makes an impact.
-              </p>
-              <Link
-                href='/rexer/about'
-                className={cn(pillBtn, 'mt-8 bg-white text-neutral-950')}
-              >
-                Know more about us
-              </Link>
+              <FadeUp delay={0.2}>
+                <p className='mt-10 max-w-md text-lg text-white/80'>
+                  We’re a creative team that values purposeful design, open
+                  collaboration, and work that truly makes an impact.
+                </p>
+                <Link
+                  href='/rexer/about'
+                  className={cn(pillBtn, 'mt-8 bg-white text-neutral-950')}
+                >
+                  Know more about us
+                </Link>
+              </FadeUp>
             </div>
-            <div className='grid grid-cols-2 gap-4'>
+            <StaggerGroup className='grid grid-cols-2 gap-4' delay={0.2}>
               {TEAM.map(m => (
-                <div key={m.name}>
+                <FadeUpItem key={m.name}>
                   <div className='aspect-[2/3] overflow-hidden rounded-2xl bg-white/10'>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -450,51 +469,58 @@ export function StudioHome() {
                   </div>
                   <h3 className='mt-3 font-semibold'>{m.name}</h3>
                   <p className='text-sm text-white/60'>{m.role}</p>
-                </div>
+                </FadeUpItem>
               ))}
-            </div>
+            </StaggerGroup>
           </div>
         </div>
       </section>
 
       {/* ── Blog journal ──────────────────────────────────── */}
       <section className='mx-auto max-w-6xl px-6 py-20 sm:py-28'>
-        <p className='text-sm text-neutral-500'>+ Insights & Inspiration</p>
+        <FadeUp>
+          <p className='text-sm text-neutral-500'>+ Insights & Inspiration</p>
+        </FadeUp>
         <div className='mt-6 grid items-start gap-12 lg:grid-cols-[1fr_1.2fr]'>
           <div>
             <h2 className='text-5xl font-semibold tracking-tight sm:text-7xl'>
-              Explore our
-              <br />
-              <em className='font-serif font-light'>Latest</em> journal
+              <WordReveal
+                text='Explore our Latest journal'
+                italic={2}
+              />
             </h2>
             {/* TODO: blog page chưa có — gắn link khi clone blog. */}
-            <span className={cn(pillBtn, 'mt-8 cursor-default bg-neutral-950 text-white')}>
-              View all blogs
-            </span>
+            <FadeUp delay={0.2}>
+              <span className={cn(pillBtn, 'mt-8 cursor-default bg-neutral-950 text-white')}>
+                View all blogs
+              </span>
+            </FadeUp>
           </div>
-          <div className='divide-y divide-neutral-200'>
+          <StaggerGroup className='divide-y divide-neutral-200'>
             {POSTS.map(post => (
-              <article key={post.title} className='flex items-center gap-6 py-5'>
-                <div className='min-w-0 flex-1'>
-                  <p className='text-xs text-neutral-400'>
-                    {post.date} · {post.read}
-                  </p>
-                  <h3 className='mt-1 truncate text-lg font-medium sm:whitespace-normal'>
-                    {post.title}
-                  </h3>
-                </div>
-                <div className='w-36 shrink-0 overflow-hidden rounded-xl sm:w-44'>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={img(post.cover)}
-                    alt=''
-                    loading='lazy'
-                    className='aspect-[16/9] w-full object-cover'
-                  />
-                </div>
-              </article>
+              <FadeUpItem key={post.title}>
+                <article className='flex items-center gap-6 py-5'>
+                  <div className='min-w-0 flex-1'>
+                    <p className='text-xs text-neutral-400'>
+                      {post.date} · {post.read}
+                    </p>
+                    <h3 className='mt-1 truncate text-lg font-medium sm:whitespace-normal'>
+                      {post.title}
+                    </h3>
+                  </div>
+                  <div className='w-36 shrink-0 overflow-hidden rounded-xl sm:w-44'>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img(post.cover)}
+                      alt=''
+                      loading='lazy'
+                      className='aspect-[16/9] w-full object-cover'
+                    />
+                  </div>
+                </article>
+              </FadeUpItem>
             ))}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
     </>

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 
 import { FaqAccordion, REXER_FAQ } from '@/components/landing/FaqAccordion';
+import { FadeUp, WordReveal } from '@/components/landing/LandingMotion';
 import { StartProjectCta } from '@/components/landing/StartProjectCta';
 
 export const metadata: Metadata = {
@@ -53,19 +54,25 @@ export default function AboutPage() {
           className='pointer-events-none absolute top-0 right-0 -z-10 w-[55%] opacity-60 select-none'
         />
         <h1 className='max-w-4xl text-4xl font-semibold tracking-tight text-neutral-900 sm:text-6xl lg:text-7xl'>
-          Crafting digital <em className='font-serif font-light'>Touchpoints</em>
-          <br className='hidden sm:block' /> into immersive experiences
+          <WordReveal
+            on='load'
+            text='Crafting digital Touchpoints into immersive experiences'
+            italic={2}
+          />
         </h1>
-        <p className='mt-8 max-w-xl text-lg text-neutral-600'>
-          We’re a team of designers, developers, and strategists bringing bold
-          ideas to life with purpose, passion, and unforgettable execution.
-        </p>
-        <Link
-          href='/rexer/contact'
-          className='mt-8 inline-flex h-10 items-center rounded-pill bg-neutral-950 px-6 text-sm font-medium text-white transition-transform hover:scale-105'
-        >
-          Get started
-        </Link>
+        <FadeUp on='load' delay={0.5}>
+          <p className='mt-8 max-w-xl text-lg text-neutral-600'>
+            We’re a team of designers, developers, and strategists bringing
+            bold ideas to life with purpose, passion, and unforgettable
+            execution.
+          </p>
+          <Link
+            href='/rexer/contact'
+            className='mt-8 inline-flex h-10 items-center rounded-pill bg-neutral-950 px-6 text-sm font-medium text-white transition-transform hover:scale-105'
+          >
+            Get started
+          </Link>
+        </FadeUp>
       </section>
 
       {/* Collage strip */}

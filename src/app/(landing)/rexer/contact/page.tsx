@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Mail, MapPin, Phone } from 'lucide-react';
 
 import { FaqAccordion, REXER_FAQ } from '@/components/landing/FaqAccordion';
+import { WordReveal } from '@/components/landing/LandingMotion';
 import { LetsWorkForm } from '@/components/landing/LetsWorkForm';
 
 export const metadata: Metadata = {
@@ -33,7 +34,11 @@ export default function ContactPage() {
           className='pointer-events-none absolute top-0 left-1/2 -z-10 w-[50%] -translate-x-1/2 opacity-50 select-none'
         />
         <h1 className='text-5xl font-semibold tracking-tight text-neutral-900 sm:text-7xl'>
-          Start <em className='font-serif font-light'>Something</em> bold
+          <WordReveal
+            on='load'
+            text='Start Something bold'
+            italic={1}
+          />
         </h1>
       </section>
 
