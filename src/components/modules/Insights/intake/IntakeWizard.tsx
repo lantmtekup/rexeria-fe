@@ -210,10 +210,24 @@ export function IntakeWizard({
   const primaryGoal: ExperienceGoal | null = enumGoals[0] ?? null;
   const secondaryGoal: ExperienceGoal | null = enumGoals[1] ?? null;
 
-  // Mỗi lần đổi bước: nạp gợi ý (ưu tiên BE, fallback heuristic).
+  // Mỗi lần đổi bước: nạp gợi ý (ưu tiên BE, fallback heuristic). Chỉ gọi BE cho
+  // các bước BE `suggest` hỗ trợ (xem be-fe-test §1) — bước khác chỉ dùng heuristic.
   useEffect(() => {
     let alive = true;
     const id = cur.id;
+    const SUGGEST_STEPS: StepId[] = [
+      'product',
+      'objective',
+      'audience',
+      'market',
+      'assets',
+      'challenges',
+    ];
+    if (!SUGGEST_STEPS.includes(id)) {
+      setSuggestion(localSuggest(id, brief));
+      setSuggestSource('guide');
+      return;
+    }
     rexerApi.insights
       .suggest({ step: id, brief, ...ctx })
       .then(res => {

@@ -1,5 +1,12 @@
 # BE spec — AI-Insights Wizard v2 (interactive, human-in-the-loop)
 
+> ✅ **ĐÃ SHIP & VERIFIED (2026-06-10):** BE đã implement đủ 3 endpoint mới
+> (`suggest`, `classify-goal`, `suggest-journey`) + `selections`/`inputs.custom_goals`
+> trên create. FE đã probe live local :8080 + qua proxy `/api/rexer` — shape khớp 100%,
+> mã lỗi 400 đúng. FE dùng BE trước, fallback heuristic nếu endpoint 404. Guide test:
+> `be-ReXeR.ai/docs/be-fe-test-insights-wizard-v2-2026-06-10.md`. (Lưu ý dev: AI job
+> worker không chạy ở dev → create giữ `queued`, không poll ra `succeeded`.)
+
 > Gửi team BE. FE: branch `feat/insights-wizard-v2`. Nguồn chân lý contract vẫn là
 > `be-ReXeR.ai/docs/openapi.yaml` — doc này đề xuất phần **bổ sung**, không phá vỡ
 > 3 endpoint hiện có (`prefill`, `reports`, `reports/{id}`).
