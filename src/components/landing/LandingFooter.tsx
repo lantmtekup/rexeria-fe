@@ -4,10 +4,10 @@ import { Logo } from '@/components/atoms/logo';
 
 const COLS = [
   {
-    title: 'Product',
+    title: 'Main links',
     links: [
-      { href: '/rexer/products', label: 'Overview' },
-      { href: '/rexer/products', label: 'Features' },
+      { href: '/rexer/projects', label: 'Projects' },
+      { href: '/rexer/about', label: 'About us' },
       { href: '/sign-in', label: 'Sign in' },
     ],
   },
