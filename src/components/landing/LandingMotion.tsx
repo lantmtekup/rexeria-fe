@@ -29,7 +29,12 @@ interface RevealProps {
 }
 
 /** Fade-up 1000ms expo-out — pattern element reveal của site gốc. */
-export function FadeUp({ children, delay = 0, on = 'view', className }: RevealProps) {
+export function FadeUp({
+  children,
+  delay = 0,
+  on = 'view',
+  className,
+}: RevealProps) {
   const reduce = useReducedMotion();
   const props =
     on === 'load'
@@ -67,7 +72,13 @@ interface WordRevealProps {
 }
 
 /** Heading reveal theo từng từ — span 400ms ease-out + stagger (82 anim trong capture). */
-export function WordReveal({ text, delay = 0, on = 'view', className, italic }: WordRevealProps) {
+export function WordReveal({
+  text,
+  delay = 0,
+  on = 'view',
+  className,
+  italic,
+}: WordRevealProps) {
   const reduce = useReducedMotion();
   const words = text.split(' ');
   const props =
@@ -81,12 +92,17 @@ export function WordReveal({ text, delay = 0, on = 'view', className, italic }: 
   return (
     <motion.span
       {...props}
-      variants={{ show: { transition: { staggerChildren: 0.08, delayChildren: delay } } }}
+      variants={{
+        show: { transition: { staggerChildren: 0.08, delayChildren: delay } },
+      }}
       className={className}
       aria-label={text}
     >
       {words.map((w, i) => (
-        <span key={`${w}-${i}`} className='inline-block overflow-hidden align-bottom'>
+        <span
+          key={`${w}-${i}`}
+          className='inline-block overflow-hidden align-bottom'
+        >
           <motion.span
             className='inline-block'
             variants={{
@@ -133,7 +149,9 @@ export function StaggerGroup({ children, className, delay = 0 }: RevealProps) {
       initial='hidden'
       whileInView='show'
       viewport={{ once: true, amount: 0.2 }}
-      variants={{ show: { transition: { staggerChildren: 0.12, delayChildren: delay } } }}
+      variants={{
+        show: { transition: { staggerChildren: 0.12, delayChildren: delay } },
+      }}
       className={className}
     >
       {children}
@@ -141,7 +159,13 @@ export function StaggerGroup({ children, className, delay = 0 }: RevealProps) {
   );
 }
 
-export function FadeUpItem({ children, className }: { children: React.ReactNode; className?: string }) {
+export function FadeUpItem({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   const reduce = useReducedMotion();
   return (
     <motion.div
@@ -157,7 +181,13 @@ export function FadeUpItem({ children, className }: { children: React.ReactNode;
 }
 
 /** Counter đếm lên khi vào viewport — cho block stats 17/75/70/24. */
-export function CountUp({ value, className }: { value: number; className?: string }) {
+export function CountUp({
+  value,
+  className,
+}: {
+  value: number;
+  className?: string;
+}) {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, amount: 0.6 });

@@ -39,7 +39,12 @@ export function LetsWorkForm() {
           <label className='mb-1.5 block text-sm text-neutral-700'>
             Full name*
           </label>
-          <input className={inputClass} name='name' placeholder='Your name' required />
+          <input
+            className={inputClass}
+            name='name'
+            placeholder='Your name'
+            required
+          />
         </div>
         <div>
           <label className='mb-1.5 block text-sm text-neutral-700'>
@@ -54,7 +59,9 @@ export function LetsWorkForm() {
           />
         </div>
         <div>
-          <label className='mb-1.5 block text-sm text-neutral-700'>Message</label>
+          <label className='mb-1.5 block text-sm text-neutral-700'>
+            Message
+          </label>
           <textarea
             className={inputClass}
             name='message'
@@ -65,7 +72,7 @@ export function LetsWorkForm() {
       </div>
       <button
         type='submit'
-        className='mt-5 inline-flex h-10 items-center rounded-pill bg-neutral-950 px-6 text-sm font-medium text-white transition-transform hover:scale-105'
+        className='rounded-pill mt-5 inline-flex h-10 items-center bg-neutral-950 px-6 text-sm font-medium text-white transition-transform hover:scale-105'
       >
         Submit
       </button>

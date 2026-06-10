@@ -23,10 +23,7 @@ export function StartProjectCta() {
           </p>
         </FadeUp>
         <h2 className='mt-4 text-center text-4xl font-semibold tracking-tight text-white sm:text-6xl'>
-          <WordReveal
-            text='Start your Project today'
-            italic={2}
-          />
+          <WordReveal text='Start your Project today' italic={2} />
         </h2>
         <FadeUp delay={0.25} className='mx-auto mt-12 max-w-xl'>
           <LetsWorkForm />

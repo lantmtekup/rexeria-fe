@@ -37,10 +37,30 @@ const CHIPS = [
 ];
 
 const PROJECTS = [
-  { name: 'Belgo', kind: 'Curated Content - Microsite', tags: ['Curated Content', 'F&B'], cover: 'yOY9BjQp71irIABOobzzKsTSFE.png' },
-  { name: 'IWC Schafhausen', kind: 'Immersive Product Experience', tags: ['Product Experience', 'Fashion Accessories'], cover: 'm23TtwrdgSQLx9n3aRXoyPHDmEQ.jpg' },
-  { name: 'Eleve', kind: 'Curated Content', tags: ['Curated Content', 'Real Estate'], cover: 'nKF4R8yfFbbFDJ8KxYZRn7wkF04.png' },
-  { name: 'Rolex', kind: 'Product Showcase', tags: ['Product Showcase', 'Luxury'], cover: 'F7XaGU1O1OqRY4FvUxtXQs4b820.jpeg' },
+  {
+    name: 'Belgo',
+    kind: 'Curated Content - Microsite',
+    tags: ['Curated Content', 'F&B'],
+    cover: 'yOY9BjQp71irIABOobzzKsTSFE.png',
+  },
+  {
+    name: 'IWC Schafhausen',
+    kind: 'Immersive Product Experience',
+    tags: ['Product Experience', 'Fashion Accessories'],
+    cover: 'm23TtwrdgSQLx9n3aRXoyPHDmEQ.jpg',
+  },
+  {
+    name: 'Eleve',
+    kind: 'Curated Content',
+    tags: ['Curated Content', 'Real Estate'],
+    cover: 'nKF4R8yfFbbFDJ8KxYZRn7wkF04.png',
+  },
+  {
+    name: 'Rolex',
+    kind: 'Product Showcase',
+    tags: ['Product Showcase', 'Luxury'],
+    cover: 'F7XaGU1O1OqRY4FvUxtXQs4b820.jpeg',
+  },
 ];
 
 const PROCESS = [
@@ -69,14 +89,37 @@ const STATS = [
 ];
 
 const TEAM = [
-  { name: 'Hai Dang', role: 'Creative Director', photo: 'wzkhisN82qguVuM3hGrCiyodzw.jpg' },
-  { name: 'Yann Vo', role: 'BD Director', photo: 'O7sTkDacFTXtPPFYoyzvFOLhciA.jpeg' },
+  {
+    name: 'Hai Dang',
+    role: 'Creative Director',
+    photo: 'wzkhisN82qguVuM3hGrCiyodzw.jpg',
+  },
+  {
+    name: 'Yann Vo',
+    role: 'BD Director',
+    photo: 'O7sTkDacFTXtPPFYoyzvFOLhciA.jpeg',
+  },
 ];
 
 const POSTS = [
-  { date: 'Oct 7, 2025', read: '2 min read', title: 'Curated Content: Why Content Alone No Longer Converts', cover: 'os0YZ4NU1PpgjeW8UTGGrpESKgg.jpeg' },
-  { date: 'Jun 21, 2025', read: '2 min read', title: '4 Luxury Case Studies That Prove Interactive Experiences Convert', cover: '5OdaKpBzT1Ec8ofg9rNecDygZ4.webp' },
-  { date: 'Jun 12, 2025', read: '4 min read', title: 'Why 2026 Will Belong to Experience-First Brands', cover: 'EITi5QTOPWfDXwQq1KDpx3O7xtc.jpeg' },
+  {
+    date: 'Oct 7, 2025',
+    read: '2 min read',
+    title: 'Curated Content: Why Content Alone No Longer Converts',
+    cover: 'os0YZ4NU1PpgjeW8UTGGrpESKgg.jpeg',
+  },
+  {
+    date: 'Jun 21, 2025',
+    read: '2 min read',
+    title: '4 Luxury Case Studies That Prove Interactive Experiences Convert',
+    cover: '5OdaKpBzT1Ec8ofg9rNecDygZ4.webp',
+  },
+  {
+    date: 'Jun 12, 2025',
+    read: '4 min read',
+    title: 'Why 2026 Will Belong to Experience-First Brands',
+    cover: 'EITi5QTOPWfDXwQq1KDpx3O7xtc.jpeg',
+  },
 ];
 
 const pillBtn =
@@ -94,7 +137,13 @@ function PhoneVideo({ video }: { video: string }) {
       />
       <video
         className='absolute z-10 object-cover'
-        style={{ top: '2.3%', left: '5.4%', width: '89.2%', height: '95.4%', borderRadius: '34px' }}
+        style={{
+          top: '2.3%',
+          left: '5.4%',
+          width: '89.2%',
+          height: '95.4%',
+          borderRadius: '34px',
+        }}
         src={vid(video)}
         autoPlay
         muted
@@ -113,7 +162,8 @@ export function StudioHome() {
   return (
     <>
       {/* ── Hero (dark, video bg) — cascade lúc load 0.5→1.6s như gốc ── */}
-      <section className='relative isolate min-h-[92vh] overflow-hidden bg-neutral-950 text-white'>
+      {/* -mt-16: tràn lên dưới navbar trong suốt (nav h-16). */}
+      <section className='relative isolate -mt-16 min-h-screen overflow-hidden bg-neutral-950 text-white'>
         <video
           className='absolute inset-0 -z-10 h-full w-full object-cover opacity-60'
           src={vid('aMrf9JGU3yYdb6750VEo3fjjEY')}
@@ -124,12 +174,12 @@ export function StudioHome() {
           preload='metadata'
           aria-hidden
         />
-        <div className='mx-auto flex min-h-[92vh] max-w-7xl flex-col justify-between px-6 pt-16 pb-12'>
+        <div className='mx-auto flex min-h-screen max-w-7xl flex-col justify-between px-6 pt-28 pb-12'>
           <h1 className='leading-none font-semibold tracking-tight'>
             <span className='block text-[19vw] sm:text-[11rem] lg:text-[13rem]'>
               <WordReveal text='ReXeR' on='load' delay={0.3} />
             </span>
-            <span className='mt-2 block text-center font-light tracking-[0.35em] text-[10vw] sm:text-[6rem] lg:text-[7rem]'>
+            <span className='mt-2 block text-center text-[10vw] font-light tracking-[0.35em] sm:text-[6rem] lg:text-[7rem]'>
               <WordReveal text='STUDIO' on='load' delay={0.5} />
             </span>
           </h1>
@@ -139,7 +189,9 @@ export function StudioHome() {
                 <FadeUp key={s.no} on='load' delay={1.0 + i * 0.1}>
                   <li className='flex items-baseline justify-between border-b border-white/15 pb-2 text-lg sm:text-xl'>
                     <span>{s.name}</span>
-                    <span className='font-serif text-white/60 italic'>{s.no}</span>
+                    <span className='font-serif text-white/60 italic'>
+                      {s.no}
+                    </span>
                   </li>
                 </FadeUp>
               ))}
@@ -181,7 +233,9 @@ export function StudioHome() {
                 href='/rexer/contact'
                 className='group block rounded-2xl border border-neutral-200 p-6 transition-colors hover:bg-neutral-50'
               >
-                <span className='text-lg font-medium'>Discuss your project</span>
+                <span className='text-lg font-medium'>
+                  Discuss your project
+                </span>
                 <span className='ml-2 text-neutral-400 transition-transform group-hover:translate-x-1'>
                   +
                 </span>
@@ -221,10 +275,7 @@ export function StudioHome() {
             <p className='text-sm text-white/60'>+ What we craft</p>
           </FadeUp>
           <h2 className='mt-4 text-4xl font-semibold tracking-tight sm:text-6xl'>
-            <WordReveal
-              text='Solutions that Drive results'
-              italic={2}
-            />
+            <WordReveal text='Solutions that Drive results' italic={2} />
           </h2>
 
           <div className='mt-14 grid gap-12 lg:grid-cols-[1.4fr_1fr]'>
@@ -239,11 +290,17 @@ export function StudioHome() {
                       aria-expanded={isOpen}
                       className='flex w-full items-baseline justify-between py-5 text-left'
                     >
-                      <span className='text-xl font-medium sm:text-2xl'>{s.name}</span>
-                      <span className='font-serif text-2xl text-white/50 italic'>{s.no}</span>
+                      <span className='text-xl font-medium sm:text-2xl'>
+                        {s.name}
+                      </span>
+                      <span className='font-serif text-2xl text-white/50 italic'>
+                        {s.no}
+                      </span>
                     </button>
                     {isOpen && s.desc && (
-                      <p className='pb-6 text-sm leading-relaxed text-white/70'>{s.desc}</p>
+                      <p className='pb-6 text-sm leading-relaxed text-white/70'>
+                        {s.desc}
+                      </p>
                     )}
                   </FadeUpItem>
                 );
@@ -311,9 +368,16 @@ export function StudioHome() {
       {/* ── Projects slider ───────────────────────────────── */}
       <section className='relative isolate overflow-hidden bg-neutral-950 text-white'>
         {PROJECTS.map((p, i) => (
-          <div key={p.name} className={cn('relative', i === slide ? 'block' : 'hidden')}>
+          <div
+            key={p.name}
+            className={cn('relative', i === slide ? 'block' : 'hidden')}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={img(p.cover)} alt={p.name} className='h-[70vh] w-full object-cover' />
+            <img
+              src={img(p.cover)}
+              alt={p.name}
+              className='h-[70vh] w-full object-cover'
+            />
             <div className='absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-neutral-950/80 via-transparent to-transparent p-8 sm:p-14'>
               <h3 className='text-5xl font-semibold sm:text-7xl'>
                 <WordReveal text={p.name} on='load' key={`name-${slide}`} />
@@ -332,9 +396,13 @@ export function StudioHome() {
                 ))}
                 <span className='ml-auto flex items-center gap-6 text-sm text-white/70'>
                   <span>
-                    {String(i + 1).padStart(2, '0')} / {String(PROJECTS.length).padStart(2, '0')}
+                    {String(i + 1).padStart(2, '0')} /{' '}
+                    {String(PROJECTS.length).padStart(2, '0')}
                   </span>
-                  <Link href='/rexer/projects' className='underline-offset-4 hover:underline'>
+                  <Link
+                    href='/rexer/projects'
+                    className='underline-offset-4 hover:underline'
+                  >
                     View project
                   </Link>
                 </span>
@@ -346,7 +414,9 @@ export function StudioHome() {
           <button
             type='button'
             aria-label='Previous project'
-            onClick={() => setSlide(s => (s - 1 + PROJECTS.length) % PROJECTS.length)}
+            onClick={() =>
+              setSlide(s => (s - 1 + PROJECTS.length) % PROJECTS.length)
+            }
             className='flex size-10 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white/30'
           >
             ←
@@ -375,11 +445,22 @@ export function StudioHome() {
         </h2>
         <StaggerGroup className='mt-14 grid gap-10 md:grid-cols-3'>
           {PROCESS.map(step => (
-            <FadeUpItem key={step.title} className='rounded-3xl border border-neutral-200 p-8'>
+            <FadeUpItem
+              key={step.title}
+              className='rounded-3xl border border-neutral-200 p-8'
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img(step.icon)} alt='' aria-hidden className='size-20' loading='lazy' />
+              <img
+                src={img(step.icon)}
+                alt=''
+                aria-hidden
+                className='size-20'
+                loading='lazy'
+              />
               <h3 className='mt-6 text-xl font-semibold'>{step.title}</h3>
-              <p className='mt-3 text-sm leading-relaxed text-neutral-600'>{step.desc}</p>
+              <p className='mt-3 text-sm leading-relaxed text-neutral-600'>
+                {step.desc}
+              </p>
             </FadeUpItem>
           ))}
         </StaggerGroup>
@@ -400,10 +481,7 @@ export function StudioHome() {
           </FadeUp>
           <div className='mt-8 grid gap-12 lg:grid-cols-2'>
             <h2 className='text-5xl leading-tight font-semibold tracking-tight sm:text-6xl'>
-              <WordReveal
-                text='Higher Attention Better Outcome'
-                italic={2}
-              />
+              <WordReveal text='Higher Attention Better Outcome' italic={2} />
             </h2>
             <StaggerGroup>
               {STATS.map(s => (
@@ -411,7 +489,10 @@ export function StudioHome() {
                   key={s.label}
                   className='flex items-baseline justify-between gap-6 border-b border-white/15 py-5'
                 >
-                  <CountUp value={s.value} className='text-6xl font-semibold sm:text-7xl' />
+                  <CountUp
+                    value={s.value}
+                    className='text-6xl font-semibold sm:text-7xl'
+                  />
                   <span className='text-right text-white/70'>{s.label}</span>
                 </FadeUpItem>
               ))}
@@ -437,10 +518,7 @@ export function StudioHome() {
           <div className='mt-6 grid items-start gap-12 lg:grid-cols-[1.2fr_1fr]'>
             <div>
               <h2 className='text-5xl font-semibold tracking-tight sm:text-7xl'>
-                <WordReveal
-                  text='We’re your Creative partners'
-                  italic={2}
-                />
+                <WordReveal text='We’re your Creative partners' italic={2} />
               </h2>
               <FadeUp delay={0.2}>
                 <p className='mt-10 max-w-md text-lg text-white/80'>
@@ -484,14 +562,16 @@ export function StudioHome() {
         <div className='mt-6 grid items-start gap-12 lg:grid-cols-[1fr_1.2fr]'>
           <div>
             <h2 className='text-5xl font-semibold tracking-tight sm:text-7xl'>
-              <WordReveal
-                text='Explore our Latest journal'
-                italic={2}
-              />
+              <WordReveal text='Explore our Latest journal' italic={2} />
             </h2>
             {/* TODO: blog page chưa có — gắn link khi clone blog. */}
             <FadeUp delay={0.2}>
-              <span className={cn(pillBtn, 'mt-8 cursor-default bg-neutral-950 text-white')}>
+              <span
+                className={cn(
+                  pillBtn,
+                  'mt-8 cursor-default bg-neutral-950 text-white'
+                )}
+              >
                 View all blogs
               </span>
             </FadeUp>

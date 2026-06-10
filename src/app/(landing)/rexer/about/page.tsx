@@ -28,9 +28,21 @@ const COLLAGE = [
 ];
 
 const TEAM = [
-  { name: 'Hai Dang', role: 'CX Manager', photo: 'jtR1zf9Nly45hX70fpoemEX5hh0.jpg' },
-  { name: 'Hong Ngo', role: 'Branding Strategist', photo: 'GhOBdI12buFfPMM3kUtJKxA1zAY.jpg' },
-  { name: 'Yann Vo', role: 'BD Manager', photo: 'O7sTkDacFTXtPPFYoyzvFOLhciA.jpeg' },
+  {
+    name: 'Hai Dang',
+    role: 'CX Manager',
+    photo: 'jtR1zf9Nly45hX70fpoemEX5hh0.jpg',
+  },
+  {
+    name: 'Hong Ngo',
+    role: 'Branding Strategist',
+    photo: 'GhOBdI12buFfPMM3kUtJKxA1zAY.jpg',
+  },
+  {
+    name: 'Yann Vo',
+    role: 'BD Manager',
+    photo: 'O7sTkDacFTXtPPFYoyzvFOLhciA.jpeg',
+  },
 ];
 
 const GOAL_POINTS = [
@@ -62,13 +74,12 @@ export default function AboutPage() {
         </h1>
         <FadeUp on='load' delay={0.5}>
           <p className='mt-8 max-w-xl text-lg text-neutral-600'>
-            We’re a team of designers, developers, and strategists bringing
-            bold ideas to life with purpose, passion, and unforgettable
-            execution.
+            We’re a team of designers, developers, and strategists bringing bold
+            ideas to life with purpose, passion, and unforgettable execution.
           </p>
           <Link
             href='/rexer/contact'
-            className='mt-8 inline-flex h-10 items-center rounded-pill bg-neutral-950 px-6 text-sm font-medium text-white transition-transform hover:scale-105'
+            className='rounded-pill mt-8 inline-flex h-10 items-center bg-neutral-950 px-6 text-sm font-medium text-white transition-transform hover:scale-105'
           >
             Get started
           </Link>
@@ -78,9 +89,17 @@ export default function AboutPage() {
       {/* Collage strip */}
       <section className='mx-auto grid max-w-7xl grid-cols-3 gap-2 px-2 sm:gap-3'>
         {COLLAGE.map(id => (
-          <div key={id} className='aspect-[8/5] overflow-hidden rounded-xl bg-neutral-100'>
+          <div
+            key={id}
+            className='aspect-[8/5] overflow-hidden rounded-xl bg-neutral-100'
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={img(id)} alt='' loading='lazy' className='h-full w-full object-cover' />
+            <img
+              src={img(id)}
+              alt=''
+              loading='lazy'
+              className='h-full w-full object-cover'
+            />
           </div>
         ))}
       </section>
@@ -102,9 +121,9 @@ export default function AboutPage() {
             <h3 className='text-2xl font-semibold'>Our mission</h3>
             <p className='mt-4 leading-relaxed text-neutral-600'>
               To empower brands through bold design, strategic thinking, and
-              digital experiences that inspire action and create lasting
-              impact. To help businesses stand out through thoughtful branding
-              and high-performance digital solutions rooted in creativity and
+              digital experiences that inspire action and create lasting impact.
+              To help businesses stand out through thoughtful branding and
+              high-performance digital solutions rooted in creativity and
               clarity.
             </p>
             <p className='mt-6 text-neutral-600'>
@@ -113,7 +132,7 @@ export default function AboutPage() {
             </p>
             <Link
               href='/rexer/contact'
-              className='mt-6 inline-flex h-10 items-center rounded-pill bg-neutral-950 px-6 text-sm font-medium text-white transition-transform hover:scale-105'
+              className='rounded-pill mt-6 inline-flex h-10 items-center bg-neutral-950 px-6 text-sm font-medium text-white transition-transform hover:scale-105'
             >
               Meet our team
             </Link>
@@ -187,7 +206,9 @@ export default function AboutPage() {
 
       {/* FAQ */}
       <section className='mx-auto max-w-3xl px-6 py-16'>
-        <p className='text-center text-sm text-neutral-500'>+ Have questions?</p>
+        <p className='text-center text-sm text-neutral-500'>
+          + Have questions?
+        </p>
         <h2 className='mt-4 text-center text-4xl font-semibold tracking-tight sm:text-6xl'>
           Find <em className='font-serif font-light'>The</em> answers
         </h2>

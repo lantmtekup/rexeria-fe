@@ -34,11 +34,7 @@ export default function ContactPage() {
           className='pointer-events-none absolute top-0 left-1/2 -z-10 w-[50%] -translate-x-1/2 opacity-50 select-none'
         />
         <h1 className='text-5xl font-semibold tracking-tight text-neutral-900 sm:text-7xl'>
-          <WordReveal
-            on='load'
-            text='Start Something bold'
-            italic={1}
-          />
+          <WordReveal on='load' text='Start Something bold' italic={1} />
         </h1>
       </section>
 

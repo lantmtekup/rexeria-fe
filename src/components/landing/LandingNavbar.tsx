@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 
 import { Button } from '@/components/atoms/button';
@@ -24,12 +24,33 @@ function isActive(pathname: string, href: string): boolean {
 export function LandingNavbar() {
   const pathname = usePathname() ?? '';
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Home có hero tối full-screen → nav trong suốt chữ trắng khi ở đầu trang
+  // (như site gốc); scroll xuống hoặc trang khác → nền trắng chữ tối.
+  const onDarkHero = pathname.replace(/\/$/, '') === '/rexer';
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const dark = onDarkHero && !scrolled && !open;
 
   return (
-    <header className='sticky top-0 z-50 border-b border-neutral-200 bg-white/80 backdrop-blur'>
+    <header
+      className={cn(
+        'sticky top-0 z-50 border-b transition-colors duration-300',
+        dark
+          ? 'border-transparent bg-transparent'
+          : 'border-neutral-200 bg-white/80 backdrop-blur'
+      )}
+    >
       <div className='mx-auto flex h-16 max-w-6xl items-center justify-between px-6'>
         <Link href='/rexer' aria-label='Rexer' className='shrink-0'>
-          <Logo size={20} />
+          <Logo size={20} className={cn(dark && 'invert')} />
         </Link>
 
         <nav className='hidden items-center gap-1 md:flex'>
@@ -38,8 +59,14 @@ export function LandingNavbar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'rounded-md px-3 py-2 text-sm text-neutral-600 transition-colors hover:text-neutral-900',
-                isActive(pathname, item.href) && 'font-medium text-neutral-900'
+                'rounded-md px-3 py-2 text-sm transition-colors',
+                dark
+                  ? 'text-white/70 hover:text-white'
+                  : 'text-neutral-600 hover:text-neutral-900',
+                isActive(pathname, item.href) &&
+                  (dark
+                    ? 'font-medium text-white'
+                    : 'font-medium text-neutral-900')
               )}
             >
               {item.label}
@@ -48,14 +75,17 @@ export function LandingNavbar() {
         </nav>
 
         <div className='hidden md:flex'>
-          <Button asChild variant='pill' size='sm'>
+          <Button asChild variant={dark ? 'pill-light' : 'pill'} size='sm'>
             <Link href='/sign-in'>Sign in</Link>
           </Button>
         </div>
 
         <button
           type='button'
-          className='inline-flex items-center justify-center rounded-md p-2 text-neutral-700 md:hidden'
+          className={cn(
+            'inline-flex items-center justify-center rounded-md p-2 md:hidden',
+            dark ? 'text-white' : 'text-neutral-700'
+          )}
           aria-label='Open menu'
           onClick={() => setOpen(v => !v)}
         >

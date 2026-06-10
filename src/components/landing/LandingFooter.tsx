@@ -41,7 +41,7 @@ export function LandingFooter() {
             <input
               type='email'
               placeholder='Enter email address*'
-              className='h-10 w-full rounded-pill border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-white/40 focus:border-white/50 focus:outline-none'
+              className='rounded-pill h-10 w-full border border-white/20 bg-white/10 px-4 text-sm text-white placeholder:text-white/40 focus:border-white/50 focus:outline-none'
             />
             <button
               type='submit'
@@ -52,10 +52,16 @@ export function LandingFooter() {
             </button>
           </form>
           <div className='mt-8 space-y-2 text-sm text-white/60'>
-            <a href='https://www.facebook.com/' className='block hover:text-white'>
+            <a
+              href='https://www.facebook.com/'
+              className='block hover:text-white'
+            >
               Facebook +
             </a>
-            <a href='https://www.linkedin.com/' className='block hover:text-white'>
+            <a
+              href='https://www.linkedin.com/'
+              className='block hover:text-white'
+            >
               LinkedIn +
             </a>
           </div>

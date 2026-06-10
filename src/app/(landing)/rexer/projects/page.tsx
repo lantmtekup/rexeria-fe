@@ -52,11 +52,7 @@ export default function ProjectsPage() {
       {/* Hero */}
       <section className='mx-auto max-w-4xl px-6 pt-20 pb-14 text-center sm:pt-28'>
         <h1 className='text-5xl font-semibold tracking-tight text-neutral-900 sm:text-7xl'>
-          <WordReveal
-            on='load'
-            text='Explore Our projects'
-            italic={1}
-          />
+          <WordReveal on='load' text='Explore Our projects' italic={1} />
         </h1>
       </section>
 
@@ -73,7 +69,7 @@ export default function ProjectsPage() {
                 className='aspect-[16/10] w-full object-cover transition-transform duration-500 group-hover:scale-105'
               />
               <div className='absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-neutral-950/70 via-transparent to-transparent p-6'>
-                <h3 className='text-3xl font-semibold text-white sm:text-4xl'>
+                <h3 className='text-2xl font-semibold text-white sm:text-4xl'>
                   {p.name}
                 </h3>
                 <p className='mt-1 font-serif text-lg font-light text-white/80 italic'>
