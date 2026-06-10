@@ -4,11 +4,14 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
+  ChevronDown,
+  ChevronUp,
   Eye,
   LayoutGrid,
   LayoutTemplate,
   Search,
   Sparkles,
+  Trash2,
   Wand2,
 } from 'lucide-react';
 
@@ -26,6 +29,11 @@ import type {
   InsightRecommendedBlock,
   InsightRecommendedTemplate,
 } from '@/services/rexer/types';
+import { AddBlockDialog } from '../../CanvasTemplate/block-editor/AddBlockDialog';
+import {
+  BLOCK_TYPE_META,
+  type BlockType,
+} from '../../CanvasTemplate/block-editor/types';
 import { SectionCard } from './ui';
 
 /**
@@ -77,7 +85,19 @@ function Thumb({
 
 /* ── Block ───────────────────────────────────────────────────────────────── */
 
-function BlockRow({ block }: { block: InsightRecommendedBlock }) {
+function BlockRow({
+  block,
+  index,
+  count,
+  onMove,
+  onDelete,
+}: {
+  block: InsightRecommendedBlock;
+  index: number;
+  count: number;
+  onMove: (dir: -1 | 1) => void;
+  onDelete: () => void;
+}) {
   const t = useTranslations('insights');
   const [open, setOpen] = useState(false);
 
@@ -110,12 +130,29 @@ function BlockRow({ block }: { block: InsightRecommendedBlock }) {
             accent='violet'
             onClick={() => toast.info(t('blueprint.generatePending'))}
           />
-          <ActionBtn
-            icon={<Search className='size-3' aria-hidden />}
-            label={t('blueprint.manualSearch')}
-            onClick={() => toast.info(t('blueprint.searchPending'))}
-          />
         </div>
+      </div>
+
+      {/* Điều khiển: di chuyển lên/xuống + xoá */}
+      <div className='flex shrink-0 flex-col items-center gap-0.5'>
+        <IconBtn
+          icon={<ChevronUp className='size-3.5' aria-hidden />}
+          label={t('blueprint.moveUp')}
+          disabled={index === 0}
+          onClick={() => onMove(-1)}
+        />
+        <IconBtn
+          icon={<ChevronDown className='size-3.5' aria-hidden />}
+          label={t('blueprint.moveDown')}
+          disabled={index === count - 1}
+          onClick={() => onMove(1)}
+        />
+        <IconBtn
+          icon={<Trash2 className='size-3.5' aria-hidden />}
+          label={t('blueprint.removeBlock')}
+          danger
+          onClick={onDelete}
+        />
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -145,9 +182,20 @@ function BlockRow({ block }: { block: InsightRecommendedBlock }) {
   );
 }
 
-/* ── Stage group (không collapse — collapse ở cấp section/cha) ──────────────── */
+/* ── Stage group (collapse ở cấp section/cha) — "Tìm thủ công" thêm block ──── */
 
-function StageGroup({ stage }: { stage: InsightBlocksByStage }) {
+function StageGroup({
+  stage,
+  onAddBlock,
+  onMoveBlock,
+  onDeleteBlock,
+}: {
+  stage: InsightBlocksByStage;
+  onAddBlock: () => void;
+  onMoveBlock: (idx: number, dir: -1 | 1) => void;
+  onDeleteBlock: (idx: number) => void;
+}) {
+  const t = useTranslations('insights');
   const blocks = stage.blocks ?? [];
   return (
     <div className='border-border overflow-hidden rounded-xl border'>
@@ -158,14 +206,29 @@ function StageGroup({ stage }: { stage: InsightBlocksByStage }) {
         <span className='text-content-muted bg-card rounded-full px-2 py-0.5 text-[11px] font-semibold'>
           {blocks.length}
         </span>
+        <button
+          type='button'
+          onClick={onAddBlock}
+          className='border-border text-content-muted hover:bg-card inline-flex items-center gap-1 rounded-lg border bg-white/60 px-2 py-1 text-[11px] font-semibold transition'
+        >
+          <Search className='size-3' aria-hidden />{' '}
+          {t('blueprint.manualSearch')}
+        </button>
       </div>
       <div className='space-y-2 px-3 pt-2 pb-3'>
         {stage.stage_rationale && (
           <p className='text-content-muted text-xs'>{stage.stage_rationale}</p>
         )}
         <ul className='space-y-2'>
-          {blocks.map(b => (
-            <BlockRow key={b.block_type_code} block={b} />
+          {blocks.map((b, i) => (
+            <BlockRow
+              key={`${b.block_type_code}-${i}`}
+              block={b}
+              index={i}
+              count={blocks.length}
+              onMove={dir => onMoveBlock(i, dir)}
+              onDelete={() => onDeleteBlock(i)}
+            />
           ))}
         </ul>
       </div>
@@ -175,9 +238,51 @@ function StageGroup({ stage }: { stage: InsightBlocksByStage }) {
 
 export function BlocksSection({ blueprint }: { blueprint: InsightBlueprint }) {
   const t = useTranslations('insights');
-  const blocks = blueprint.recommended_blocks;
-  if (!blocks) return null;
-  const stages = blocks.blocks_by_stage ?? [];
+  const [stages, setStages] = useState<InsightBlocksByStage[]>(
+    blueprint.recommended_blocks?.blocks_by_stage ?? []
+  );
+  const [addStageKey, setAddStageKey] = useState<string | null>(null);
+
+  if (!blueprint.recommended_blocks) return null;
+
+  const appendBlock = (stageKey: string, b: InsightRecommendedBlock) =>
+    setStages(prev =>
+      prev.map(s =>
+        s.stage_key === stageKey
+          ? { ...s, blocks: [...(s.blocks ?? []), b] }
+          : s
+      )
+    );
+  const deleteBlock = (stageKey: string, idx: number) =>
+    setStages(prev =>
+      prev.map(s =>
+        s.stage_key === stageKey
+          ? { ...s, blocks: (s.blocks ?? []).filter((_, i) => i !== idx) }
+          : s
+      )
+    );
+  const moveBlock = (stageKey: string, idx: number, dir: -1 | 1) =>
+    setStages(prev =>
+      prev.map(s => {
+        if (s.stage_key !== stageKey) return s;
+        const arr = [...(s.blocks ?? [])];
+        const j = idx + dir;
+        if (j < 0 || j >= arr.length) return s;
+        [arr[idx], arr[j]] = [arr[j], arr[idx]];
+        return { ...s, blocks: arr };
+      })
+    );
+
+  // Thêm block từ AddBlockDialog của editor → map BlockType → recommended block.
+  const addFromType = (type: BlockType) => {
+    if (!addStageKey) return;
+    appendBlock(addStageKey, {
+      block_type_code: type,
+      block_name: BLOCK_TYPE_META[type]?.label ?? type,
+      reason: '',
+    });
+    setAddStageKey(null);
+  };
 
   return (
     <SectionCard
@@ -190,9 +295,25 @@ export function BlocksSection({ blueprint }: { blueprint: InsightBlueprint }) {
     >
       <div className='space-y-2.5'>
         {stages.map(stage => (
-          <StageGroup key={stage.stage_key} stage={stage} />
+          <StageGroup
+            key={stage.stage_key}
+            stage={stage}
+            onAddBlock={() => setAddStageKey(stage.stage_key)}
+            onMoveBlock={(i, dir) => moveBlock(stage.stage_key, i, dir)}
+            onDeleteBlock={i => deleteBlock(stage.stage_key, i)}
+          />
         ))}
       </div>
+
+      {/* Popup tìm/thêm block — tái dùng AddBlockDialog của editor */}
+      <AddBlockDialog
+        open={addStageKey !== null}
+        onOpenChange={o => {
+          if (!o) setAddStageKey(null);
+        }}
+        onPick={addFromType}
+        onPickSaved={b => addFromType(b.blockType)}
+      />
     </SectionCard>
   );
 }
@@ -342,6 +463,38 @@ function ActionBtn({
     >
       {icon}
       {label}
+    </button>
+  );
+}
+
+function IconBtn({
+  icon,
+  label,
+  onClick,
+  disabled,
+  danger,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      className={cn(
+        'inline-flex size-6 items-center justify-center rounded-md transition disabled:opacity-30',
+        danger
+          ? 'text-content-muted hover:bg-rose-50 hover:text-rose-600'
+          : 'text-content-muted hover:bg-muted'
+      )}
+    >
+      {icon}
     </button>
   );
 }
