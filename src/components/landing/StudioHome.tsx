@@ -12,6 +12,8 @@ const HERO_SUB =
 
 interface Section {
   label: string;
+  /** Pill button shown under each phone (per-section label from the source site). */
+  cta: string;
   /** [left, center, right] — center sits lower (staggered), matching the original. */
   videos: [string, string, string];
 }
@@ -19,25 +21,47 @@ interface Section {
 const SECTIONS: Section[] = [
   {
     label: 'Scroll-Based Curated Content',
+    cta: 'Explore on mobile',
     videos: ['l0V8HAteitXNygFk8Y3am5zOkg', 'mpcDbQZZP3ipomLUlRxR3tF0cw', 'oBgevyH1PYfw0f80WuFNtryri7E'],
   },
   {
     label: 'Interactive Product Experience',
+    cta: 'Visit site',
     videos: ['mpcDbQZZP3ipomLUlRxR3tF0cw', 'mb9lxvLdpsHhsE7uqDMNZZgUPEw', 'KMGrymsKGlEVYETp2Leh97XHQ'],
   },
   {
     label: 'Interactive Microsite',
+    cta: 'Spotlight',
     videos: ['oBgevyH1PYfw0f80WuFNtryri7E', 'yez8FryTvCrXEzGt8hEJX2qjcYU', '47XNuuxK8R4AiENe1Pcdr21dIDc'],
   },
   {
     label: 'Dynamic Showcases',
+    cta: 'Animated Display',
     videos: ['BKl4B3YdGnBmylNhxWugm1je5xM', 'aD5IPrBXJ3FOg4F3msKbbY0v1Y', 'L09S1s19KqUvOMpcbbbtkFbYLA'],
   },
   {
     label: 'Tap & Swipe Experiences',
+    cta: 'Slider',
     videos: ['1avd434oreZgbK0q5ZDeTzYmpY', 'mb9lxvLdpsHhsE7uqDMNZZgUPEw', 'cZ6uQYuIiwocOrIiWdxJlE0S0hs'],
   },
 ];
+
+/** Black pill CTA under each phone — matches source site (h-36px, white 14px
+ *  label, ~34px below the phone). TODO: real destinations aren't exposed by
+ *  the Framer SSR markup (client-side links) — wire hrefs when provided. */
+function PhoneCta({ label }: { label: string }) {
+  return (
+    <div className='mt-8 flex justify-center'>
+      <a
+        href='#'
+        onClick={e => e.preventDefault()}
+        className='inline-flex h-9 items-center rounded-pill bg-neutral-950 px-5 text-sm text-white transition-transform duration-300 hover:scale-105'
+      >
+        {label}
+      </a>
+    </div>
+  );
+}
 
 /** iPhone mockup: video clipped to the screen area, real bezel PNG on top. */
 function Phone({ video, className }: { video: string; className?: string }) {
@@ -129,15 +153,18 @@ export function StudioHome() {
           >
             <motion.div variants={reveal}>
               <Phone video={s.videos[0]} />
+              <PhoneCta label={s.cta} />
             </motion.div>
             <motion.div variants={reveal} className='sm:mt-28'>
               <Phone video={s.videos[1]} />
+              <PhoneCta label={s.cta} />
             </motion.div>
             <motion.div
               variants={reveal}
               className='col-span-2 sm:col-span-1'
             >
               <Phone video={s.videos[2]} />
+              <PhoneCta label={s.cta} />
             </motion.div>
           </motion.div>
         </section>
