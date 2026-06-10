@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
@@ -30,6 +30,8 @@ import type {
   InsightRecommendedTemplate,
 } from '@/services/rexer/types';
 import { AddBlockDialog } from '../../CanvasTemplate/block-editor/AddBlockDialog';
+import { BlockMiniPreview } from '../../CanvasTemplate/block-editor/BlockMiniPreview';
+import { createBlock } from '../../CanvasTemplate/block-editor/factory';
 import {
   BLOCK_TYPE_META,
   type BlockType,
@@ -62,23 +64,60 @@ function thumbGradient(s: string): string {
 
 function Thumb({
   code,
+  name,
   kind = 'block',
   className,
 }: {
   code: string;
+  /** Tên block — hiển thị trên tile fallback để dễ nhận diện. */
+  name?: string;
   kind?: 'block' | 'template';
   className?: string;
 }) {
   const Icon = kind === 'template' ? LayoutTemplate : LayoutGrid;
+  const meta = (
+    BLOCK_TYPE_META as Record<string, { gradient?: string } | undefined>
+  )[code];
+  const isEditorType = kind === 'block' && code in BLOCK_TYPE_META;
+
+  // Editor type → dựng block mặc định (seed) rồi render preview thật.
+  const preview = useMemo(() => {
+    if (!isEditorType) return null;
+    try {
+      return createBlock(code as BlockType);
+    } catch {
+      return null;
+    }
+  }, [code, isEditorType]);
+
+  if (preview) {
+    return (
+      <div
+        className={cn(
+          'border-border shrink-0 overflow-hidden rounded-lg border bg-white',
+          className
+        )}
+      >
+        <BlockMiniPreview block={preview} aspect='4 / 3' />
+      </div>
+    );
+  }
+
+  // Fallback (vd block framer_* chưa có preview): tile gradient + icon + tên.
   return (
     <div
       className={cn(
-        'relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br text-white',
-        thumbGradient(code),
+        'relative flex shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-lg bg-gradient-to-br p-2 text-center text-white',
+        meta?.gradient ?? thumbGradient(code),
         className
       )}
     >
-      <Icon className='size-5 opacity-90' aria-hidden />
+      <Icon className='size-5 shrink-0 opacity-90' aria-hidden />
+      {name && (
+        <span className='line-clamp-2 text-[10px] leading-tight font-semibold'>
+          {name}
+        </span>
+      )}
     </div>
   );
 }
@@ -103,7 +142,11 @@ function BlockRow({
 
   return (
     <li className='border-border bg-card flex gap-3 rounded-xl border p-3'>
-      <Thumb code={block.block_type_code} className='size-14' />
+      <Thumb
+        code={block.block_type_code}
+        name={block.block_name}
+        className='h-20 w-32'
+      />
       <div className='min-w-0 flex-1'>
         <div className='flex flex-wrap items-baseline gap-2'>
           <span className='text-content-main text-sm font-semibold'>
