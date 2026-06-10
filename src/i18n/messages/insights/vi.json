@@ -56,6 +56,79 @@
       "audience": "Đối tượng mục tiêu",
       "pain_points": "Pain point",
       "market_context": "Bối cảnh thị trường"
+    },
+    "intake": {
+      "aiSection": "AI PHÂN TÍCH",
+      "analyzing": "Đang tổng hợp gợi ý…",
+      "steps": {
+        "brand": "Thương hiệu",
+        "product": "Sản phẩm / Dịch vụ",
+        "objective": "Mục tiêu chiến dịch",
+        "audience": "Đối tượng mục tiêu",
+        "market": "Bối cảnh thị trường",
+        "assets": "Tài sản hiện có",
+        "challenges": "Thách thức bán hàng",
+        "goal": "Experience Goal",
+        "journey": "Customer Journey",
+        "review": "Xem lại & tạo Blueprint"
+      },
+      "suggest": {
+        "ai": "AI GỢI Ý",
+        "guide": "GỢI Ý DẪN HƯỚNG",
+        "basedOn": "dựa trên",
+        "apply": "Áp dụng"
+      },
+      "nav": {
+        "back": "Quay lại",
+        "next": "Tiếp tục",
+        "aiNext": "Để AI gợi ý bước sau",
+        "create": "Tạo Blueprint"
+      },
+      "fields": {
+        "brandName": "Tên thương hiệu",
+        "positioning": "Định vị",
+        "tone": "Tone",
+        "visualIdentity": "Nhận diện thị giác",
+        "features": "Tính năng nổi bật",
+        "perLine": "mỗi dòng 1 ý",
+        "benefits": "Lợi ích chính",
+        "pricing": "Mức giá",
+        "useCases": "Use cases",
+        "objectives": "Mục tiêu chính",
+        "persona": "Persona",
+        "ageRange": "Độ tuổi",
+        "behaviours": "Hành vi",
+        "painPoints": "Pain points",
+        "painHint": "mỗi dòng 1 ý; quyết định stage giảm rủi ro",
+        "motivations": "Động lực",
+        "device": "Thiết bị",
+        "competitors": "Đối thủ chính",
+        "trends": "Xu hướng thị trường",
+        "expectations": "Kỳ vọng khách hàng",
+        "assetDrop": "Kéo thả ảnh, video, brochure…",
+        "assetAdd": "Asset đã thêm",
+        "challenges": "Thách thức đang gặp"
+      },
+      "goal": {
+        "introAi": "AI phân loại loại trải nghiệm phù hợp nhất. Bạn có thể chọn lại.",
+        "introGuide": "Gợi ý dẫn hướng dựa trên brief của bạn — chọn lại nếu cần.",
+        "secondary": "phụ"
+      },
+      "journey": {
+        "intro": "Áp mẫu journey theo ngành rồi tùy biến theo Goal đã chốt.",
+        "patternLabel": "MẪU NGÀNH",
+        "stagesLabel": "Journey đề xuất",
+        "stagesHint": "sửa tiêu đề nếu cần"
+      },
+      "review": {
+        "brand": "Thương hiệu",
+        "objective": "Mục tiêu",
+        "audience": "Đối tượng",
+        "goal": "Experience Goal",
+        "journey": "Journey",
+        "journeyCount": "{n} giai đoạn",
+        "challenges": "Thách thức"
+      }
     }
   }
 }

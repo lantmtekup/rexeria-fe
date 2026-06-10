@@ -56,6 +56,79 @@
       "audience": "Target audience",
       "pain_points": "Pain point",
       "market_context": "Market context"
+    },
+    "intake": {
+      "aiSection": "AI ANALYSIS",
+      "analyzing": "Synthesizing suggestions…",
+      "steps": {
+        "brand": "Brand",
+        "product": "Product / Service",
+        "objective": "Campaign objective",
+        "audience": "Target audience",
+        "market": "Market context",
+        "assets": "Existing assets",
+        "challenges": "Sales challenges",
+        "goal": "Experience Goal",
+        "journey": "Customer Journey",
+        "review": "Review & build Blueprint"
+      },
+      "suggest": {
+        "ai": "AI SUGGESTS",
+        "guide": "GUIDED SUGGESTION",
+        "basedOn": "based on",
+        "apply": "Apply"
+      },
+      "nav": {
+        "back": "Back",
+        "next": "Continue",
+        "aiNext": "Let AI suggest the next step",
+        "create": "Build Blueprint"
+      },
+      "fields": {
+        "brandName": "Brand name",
+        "positioning": "Positioning",
+        "tone": "Tone",
+        "visualIdentity": "Visual identity",
+        "features": "Key features",
+        "perLine": "one per line",
+        "benefits": "Core benefits",
+        "pricing": "Pricing",
+        "useCases": "Use cases",
+        "objectives": "Primary objective",
+        "persona": "Persona",
+        "ageRange": "Age range",
+        "behaviours": "Behaviours",
+        "painPoints": "Pain points",
+        "painHint": "one per line; drives the risk-reducer stage",
+        "motivations": "Motivations",
+        "device": "Device",
+        "competitors": "Main competitors",
+        "trends": "Market trends",
+        "expectations": "Customer expectations",
+        "assetDrop": "Drag & drop images, videos, brochures…",
+        "assetAdd": "Added assets",
+        "challenges": "Current challenges"
+      },
+      "goal": {
+        "introAi": "The AI classifies the best-fit experience type. You can re-select.",
+        "introGuide": "A guided suggestion based on your brief — re-select if needed.",
+        "secondary": "secondary"
+      },
+      "journey": {
+        "intro": "Applies an industry journey pattern, then tailors it to the chosen goal.",
+        "patternLabel": "INDUSTRY PATTERN",
+        "stagesLabel": "Suggested journey",
+        "stagesHint": "edit titles if needed"
+      },
+      "review": {
+        "brand": "Brand",
+        "objective": "Objective",
+        "audience": "Audience",
+        "goal": "Experience Goal",
+        "journey": "Journey",
+        "journeyCount": "{n} stages",
+        "challenges": "Challenges"
+      }
     }
   }
 }

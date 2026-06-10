@@ -7,7 +7,7 @@ import { InsightsWizard } from '@/components/modules/Insights/InsightsWizard';
  */
 export default function AdminInsightsPage() {
   return (
-    <div className='mx-auto max-w-3xl p-6'>
+    <div className='mx-auto max-w-6xl p-6'>
       <InsightsWizard brandLocked={false} />
     </div>
   );

@@ -11,7 +11,7 @@ import { PortalShell } from '../_shell';
 export default function PortalInsightsPage() {
   return (
     <PortalShell>
-      <div className='mx-auto max-w-3xl'>
+      <div className='mx-auto max-w-6xl'>
         <InsightsWizard brandLocked />
       </div>
     </PortalShell>

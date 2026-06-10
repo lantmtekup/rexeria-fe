@@ -235,6 +235,11 @@ import type {
   CreateInsightReportBody,
   InsightReportResponse,
   InsightReportListResponse,
+  InsightBrief,
+  InsightSuggestResponse,
+  ClassifyGoalResponse,
+  SuggestJourneyResponse,
+  ExperienceGoal,
 } from './types';
 
 // Tolerate BE responses for /brands/{id} returning either `{brand: Brand}`
@@ -1932,6 +1937,65 @@ export const rexerApi = {
       product_id?: string;
       campaign_id?: string;
     }) => rx<InsightReportListResponse>('/insights/reports', { query }),
+
+    // ── Wizard v2: thao tác tương tác đồng bộ (xem be-spec-insights-wizard-v2) ──
+    // 3 endpoint dưới CÓ THỂ chưa deploy ở BE → mỗi method nuốt lỗi và trả `null`
+    // để FE tự rơi về lớp heuristic client. Khi BE live, FE nhận data thật, UI
+    // không đổi. KHÔNG throw ra ngoài.
+
+    /** Gợi ý lũy tiến cho 1 bước. `null` nếu BE chưa hỗ trợ. */
+    suggest: async (body: {
+      step: string;
+      brief: InsightBrief;
+      workspace_id?: string;
+      product_id?: string;
+      campaign_id?: string;
+    }): Promise<InsightSuggestResponse | null> => {
+      try {
+        return await rx<InsightSuggestResponse>('/insights/suggest', {
+          method: 'POST',
+          body,
+        });
+      } catch {
+        return null;
+      }
+    },
+
+    /** Xếp hạng Experience Goal từ brief. `null` nếu BE chưa hỗ trợ. */
+    classifyGoal: async (body: {
+      brief: InsightBrief;
+      workspace_id?: string;
+      product_id?: string;
+      campaign_id?: string;
+    }): Promise<ClassifyGoalResponse | null> => {
+      try {
+        return await rx<ClassifyGoalResponse>('/insights/classify-goal', {
+          method: 'POST',
+          body,
+        });
+      } catch {
+        return null;
+      }
+    },
+
+    /** Đề xuất journey theo goal đã chốt. `null` nếu BE chưa hỗ trợ. */
+    suggestJourney: async (body: {
+      primary_goal: ExperienceGoal;
+      secondary_goal?: ExperienceGoal | null;
+      brief: InsightBrief;
+      workspace_id?: string;
+      product_id?: string;
+      campaign_id?: string;
+    }): Promise<SuggestJourneyResponse | null> => {
+      try {
+        return await rx<SuggestJourneyResponse>('/insights/suggest-journey', {
+          method: 'POST',
+          body,
+        });
+      } catch {
+        return null;
+      }
+    },
   },
 
   // ── Analytics ingest (canonical `/v1/track`, replaces `/analytics/events`) ─

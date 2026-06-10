@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import { useInsightReport } from '@/services/rexer/use-rexer';
 import { useInsightsFlow } from './useInsightsFlow';
-import { SetupStep } from './steps/SetupStep';
+import { IntakeWizard } from './intake/IntakeWizard';
 import { GeneratingStep } from './steps/GeneratingStep';
 import { BlueprintStep } from './steps/BlueprintStep';
 import { WizardProgress } from './steps/WizardProgress';
@@ -49,7 +49,7 @@ export function InsightsWizard({
   let content;
   if (flow.phase === 'setup') {
     content = (
-      <SetupStep
+      <IntakeWizard
         submitting={flow.submitting}
         onRun={flow.run}
         brandLocked={brandLocked}
