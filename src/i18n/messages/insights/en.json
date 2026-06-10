@@ -70,7 +70,16 @@
       "confidence": "Confidence",
       "why": "Why",
       "failed": "Something went wrong while generating the blueprint. Please try again.",
-      "generatedWith": "Generated with"
+      "generatedWith": "Generated with",
+      "viewDetail": "View detail",
+      "aiGenerate": "AI generate",
+      "manualSearch": "Search manually",
+      "generatePending": "AI block-content generation is in progress (needs BE).",
+      "searchPending": "Manual block search in the library — coming soon.",
+      "blockCode": "Block code",
+      "category": "Category",
+      "description": "Description",
+      "previewNote": "Preview image & sample content will show once BE provides the block/template catalog."
     },
     "goals": {
       "product_discovery": "Product discovery",

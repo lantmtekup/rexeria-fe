@@ -70,7 +70,16 @@
       "confidence": "Độ tin cậy",
       "why": "Vì sao",
       "failed": "Đã có lỗi khi tạo blueprint. Vui lòng thử lại.",
-      "generatedWith": "Tạo bởi"
+      "generatedWith": "Tạo bởi",
+      "viewDetail": "Xem chi tiết",
+      "aiGenerate": "AI tạo nội dung",
+      "manualSearch": "Tìm thủ công",
+      "generatePending": "Tính năng AI tạo nội dung block đang phát triển (cần BE).",
+      "searchPending": "Tìm block thủ công trong thư viện — sắp có.",
+      "blockCode": "Mã block",
+      "category": "Danh mục",
+      "description": "Mô tả",
+      "previewNote": "Ảnh preview & nội dung mẫu sẽ hiển thị khi BE cung cấp catalog block/template."
     },
     "goals": {
       "product_discovery": "Khám phá sản phẩm",
