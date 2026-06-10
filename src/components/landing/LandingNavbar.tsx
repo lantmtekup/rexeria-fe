@@ -1,0 +1,89 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import { Menu, X } from 'lucide-react';
+
+import { Button } from '@/components/atoms/button';
+import { Logo } from '@/components/atoms/logo';
+import { cn } from '@/lib/cn';
+
+const NAV = [
+  { href: '/rexer', label: 'Home' },
+  { href: '/rexer/about', label: 'About' },
+  { href: '/rexer/products', label: 'Products' },
+  { href: '/rexer/contact', label: 'Contact' },
+];
+
+function isActive(pathname: string, href: string): boolean {
+  return href === '/rexer' ? pathname === '/rexer' : pathname.startsWith(href);
+}
+
+export function LandingNavbar() {
+  const pathname = usePathname() ?? '';
+  const [open, setOpen] = useState(false);
+
+  return (
+    <header className='sticky top-0 z-50 border-b border-neutral-200 bg-white/80 backdrop-blur'>
+      <div className='mx-auto flex h-16 max-w-6xl items-center justify-between px-6'>
+        <Link href='/rexer' aria-label='Rexer' className='shrink-0'>
+          <Logo size={20} />
+        </Link>
+
+        <nav className='hidden items-center gap-1 md:flex'>
+          {NAV.map(item => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'rounded-md px-3 py-2 text-sm text-neutral-600 transition-colors hover:text-neutral-900',
+                isActive(pathname, item.href) && 'font-medium text-neutral-900'
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className='hidden md:flex'>
+          <Button asChild variant='pill' size='sm'>
+            <Link href='/sign-in'>Sign in</Link>
+          </Button>
+        </div>
+
+        <button
+          type='button'
+          className='inline-flex items-center justify-center rounded-md p-2 text-neutral-700 md:hidden'
+          aria-label='Open menu'
+          onClick={() => setOpen(v => !v)}
+        >
+          {open ? <X className='size-5' /> : <Menu className='size-5' />}
+        </button>
+      </div>
+
+      {open && (
+        <nav className='border-t border-neutral-200 bg-white px-6 py-3 md:hidden'>
+          {NAV.map(item => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setOpen(false)}
+              className={cn(
+                'block rounded-md px-3 py-2 text-sm text-neutral-700',
+                isActive(pathname, item.href) && 'bg-neutral-100 font-medium'
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
+          <Button asChild variant='pill' size='sm' className='mt-2 w-full'>
+            <Link href='/sign-in' onClick={() => setOpen(false)}>
+              Sign in
+            </Link>
+          </Button>
+        </nav>
+      )}
+    </header>
+  );
+}

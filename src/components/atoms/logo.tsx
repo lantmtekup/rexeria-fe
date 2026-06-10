@@ -3,10 +3,10 @@ import * as React from 'react';
 import { cn } from '@/lib/cn';
 
 /** Intrinsic viewBox of the Figma-exported wordmark (so width = size * RATIO). */
-const WORDMARK_RATIO = 112 / 18;
+const WORDMARK_RATIO = 135 / 16;
 
 export interface LogoProps extends React.HTMLAttributes<HTMLSpanElement> {
-  /** pixel height of the wordmark (width is scaled from the 112:18 ratio) */
+  /** pixel height of the wordmark (width is scaled from the 135:16 ratio) */
   size?: number;
   src?: string;
   alt?: string;
