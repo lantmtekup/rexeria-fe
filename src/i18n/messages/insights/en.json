@@ -7,6 +7,25 @@
       "generating": "Analyzing",
       "blueprint": "Blueprint"
     },
+    "list": {
+      "subtitle": "Experience strategy reports you've created",
+      "new": "New analysis",
+      "searchPh": "Search by title…",
+      "statusAll": "All",
+      "loading": "Loading reports…",
+      "untitled": "Experience analysis",
+      "empty": "No reports yet",
+      "emptyHint": "Create your first analysis — the AI drafts an experience strategy from your brief.",
+      "emptyFilter": "No reports match the filter",
+      "back": "Reports",
+      "notFound": "Report not found."
+    },
+    "status": {
+      "queued": "Queued",
+      "running": "Running",
+      "succeeded": "Done",
+      "failed": "Failed"
+    },
     "setup": {
       "heading": "Choose your inputs",
       "workspace": "Workspace",

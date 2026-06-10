@@ -1,14 +1,13 @@
-import { InsightsWizard } from '@/components/modules/Insights/InsightsWizard';
+import { InsightsList } from '@/components/modules/Insights/InsightsList';
 
 /**
- * Trang AI-Insights cho admin/staff.
- * Brand KHÔNG bị khoá (brandLocked=false) — màn setup phải cho chọn brand tường minh,
- * vì admin không có một workspace active duy nhất như brand portal.
+ * Trang AI-Insights cho admin/staff: danh sách báo cáo.
+ * Tạo mới → /admin/insights/new · chi tiết → /admin/insights/[id].
  */
 export default function AdminInsightsPage() {
   return (
     <div className='mx-auto max-w-6xl p-6'>
-      <InsightsWizard brandLocked={false} />
+      <InsightsList basePath='/admin/insights' />
     </div>
   );
 }

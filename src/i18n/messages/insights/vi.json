@@ -7,6 +7,25 @@
       "generating": "Phân tích",
       "blueprint": "Blueprint"
     },
+    "list": {
+      "subtitle": "Báo cáo chiến lược trải nghiệm đã tạo",
+      "new": "Tạo phân tích mới",
+      "searchPh": "Tìm theo tiêu đề…",
+      "statusAll": "Tất cả",
+      "loading": "Đang tải báo cáo…",
+      "untitled": "Phân tích trải nghiệm",
+      "empty": "Chưa có báo cáo nào",
+      "emptyHint": "Tạo phân tích đầu tiên — AI sẽ dựng chiến lược trải nghiệm từ brief của bạn.",
+      "emptyFilter": "Không có báo cáo khớp bộ lọc",
+      "back": "Danh sách báo cáo",
+      "notFound": "Không tìm thấy báo cáo."
+    },
+    "status": {
+      "queued": "Chờ xử lý",
+      "running": "Đang chạy",
+      "succeeded": "Hoàn tất",
+      "failed": "Lỗi"
+    },
     "setup": {
       "heading": "Chọn dữ liệu đầu vào",
       "workspace": "Không gian làm việc",
