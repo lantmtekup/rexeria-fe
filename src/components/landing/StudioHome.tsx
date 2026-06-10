@@ -2,10 +2,10 @@
 
 import { motion, useReducedMotion, type Variants } from 'framer-motion';
 
-const CDN = 'https://framerusercontent.com';
-const vid = (id: string) => `${CDN}/assets/${id}.mp4`;
-/** Real iPhone bezel PNG from the source site (transparent screen cutout). */
-const PHONE_FRAME = `${CDN}/images/ey6Ro3H5JCgs2C9qMC6EfKlgD9s.png`;
+// Assets self-host trong public/landing (serve qua Vercel CDN khi deploy).
+const vid = (id: string) => `/landing/videos/${id}.mp4`;
+/** iPhone bezel PNG (transparent screen cutout). */
+const PHONE_FRAME = '/landing/images/ey6Ro3H5JCgs2C9qMC6EfKlgD9s.png';
 
 const HERO_SUB =
   'ReXeR Studio transforms your digital assets into interactive experiences that engage deeper and convert smarter. Built once. Delivered everywhere. From scroll-based journeys to immersive product showcases and smart interactive ads, we craft modular experiences that work together across every touchpoint — driving awareness, engagement, and conversion.';

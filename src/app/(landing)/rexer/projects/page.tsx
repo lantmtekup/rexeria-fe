@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     'Explore our projects: curated content microsites, immersive product experiences, and interactive showcases.',
 };
 
-const img = (id: string) => `https://framerusercontent.com/images/${id}`;
+const img = (id: string) => `/landing/images/${id}`;
 
 interface Project {
   name: string;

@@ -1,6 +1,6 @@
 import { LetsWorkForm } from './LetsWorkForm';
 
-const BG = 'https://framerusercontent.com/images/f2NvgNRlcuKjsRHuUQLb4qV1f40.jpg';
+const BG = '/landing/images/f2NvgNRlcuKjsRHuUQLb4qV1f40.jpg';
 
 /** Section CTA "Start your Project today" — nền ảnh tối + form, clone từ site gốc. */
 export function StartProjectCta() {

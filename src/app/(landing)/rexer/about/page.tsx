@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     'We’re a team of designers, developers, and strategists bringing bold ideas to life with purpose, passion, and unforgettable execution.',
 };
 
-const img = (id: string) => `https://framerusercontent.com/images/${id}`;
+const img = (id: string) => `/landing/images/${id}`;
 
 /** Dải collage 9 ảnh dưới hero — đúng asset từ site gốc. */
 const COLLAGE = [
