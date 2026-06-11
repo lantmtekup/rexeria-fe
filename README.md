@@ -313,3 +313,18 @@ This project is private and proprietary.
 
 ---
 
+
+## 📦 Demo apps (`apps/`)
+
+Demo/clone sites import từ 360-admin-cms (06/2026), mỗi app tự chứa (own `package.json`, không workspaces):
+
+| App | Stack | Dev | Deploy | URL |
+|---|---|---|---|---|
+| `apps/mintcoin` | Next 15 + GSAP/Lenis | `npm run dev` | `npm run cf:deploy` | rexerai-mintcoin.lantm.workers.dev |
+| `apps/mintcoin-v2` | Next 15 + GSAP/Lenis | `npm run dev` | `npm run cf:deploy` | rexerai-mintcoin-v2.lantm.workers.dev |
+| `apps/delvaux` | Next 15 + GSAP/Lenis | `npm run dev` | `npm run cf:deploy` | rexerai-delvaux.lantm.workers.dev |
+| `apps/icggallery` | Vite + React Three Fiber | `npm run dev` (port 7777) | `npm run build && npx wrangler deploy` | rexerai-icggallery.lantm.workers.dev |
+
+- mintcoin cần secrets `REXER_ADMIN_EMAIL/PASSWORD` (`wrangler secret put`) + `.env.local` khi dev (hỏi @lantm).
+- icggallery: model 3D nặng load từ CloudFront CDN, không nằm trong repo/bundle.
+- `recon-archive/` (gitignored): artifacts recon/extract phục vụ clone — bản gốc local của @lantm.
