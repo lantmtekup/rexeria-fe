@@ -4,7 +4,8 @@ import { WordReveal } from '@/components/landing/LandingMotion';
 import { StartProjectCta } from '@/components/landing/StartProjectCta';
 
 export const metadata: Metadata = {
-  title: 'Projects — ReXeR Studio',
+  title: { absolute: 'Projects — ReXeR Studio' },
+  alternates: { canonical: '/rexer/projects' },
   description:
     'Explore our projects: curated content microsites, immersive product experiences, and interactive showcases.',
 };

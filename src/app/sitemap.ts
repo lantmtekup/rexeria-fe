@@ -1,29 +1,50 @@
 /**
- * Dynamic Sitemap generation
- * Generates XML sitemap for search engines with static and dynamic routes
+ * Sitemap cho search engines. Hiện liệt kê các trang LANDING public
+ * (rexerstudio.com). Trang app (portal/admin) sau đăng nhập không đưa vào.
+ * `/` là canonical của trang chủ (middleware rewrite / → /rexer).
  */
 
 import type { MetadataRoute } from 'next';
 
-/**
- * Sitemap revalidation time (in seconds)
- * Set to 7 days for ISR (Incremental Static Regeneration)
- */
-export const revalidate = 604800; // 7 days
+import { SEO_CONSTANTS } from '@/lib/metadata';
 
-/**
- * Generate complete sitemap with static and dynamic routes
- * Only generates sitemap in production environment
- */
+/** Revalidate 1 ngày. */
+export const revalidate = 86400;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const isProduction = process.env.NODE_ENV === 'production';
-  const timestamp = new Date().toISOString();
+  const base = SEO_CONSTANTS.SITE_URL.replace(/\/$/, '');
+  const lastModified = new Date();
 
-  // Log sitemap update time (only in production)
-  if (isProduction) {
-    // eslint-disable-next-line no-console
-    console.log(`[SITEMAP] Cập nhật lúc: ${timestamp}`);
-  }
-
-  return [];
+  return [
+    {
+      url: `${base}/`,
+      lastModified,
+      changeFrequency: 'weekly',
+      priority: 1,
+    },
+    {
+      url: `${base}/rexer/studio`,
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${base}/rexer/projects`,
+      lastModified,
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    },
+    {
+      url: `${base}/rexer/about`,
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
+      url: `${base}/rexer/contact`,
+      lastModified,
+      changeFrequency: 'yearly',
+      priority: 0.6,
+    },
+  ];
 }
