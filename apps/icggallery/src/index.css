@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: #f6f1ec;
+}
+body {
+  font-family: 'Jost', 'Futura', 'Helvetica Neue', Arial, sans-serif;
+}
+
+@keyframes ctaUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.enter-cta {
+  animation: ctaUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.popup-card {
+  animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .popup-card {
+    animation: none;
+  }
+}
+
+/* Hotspot eye — gentle attention pulse, blink on hover */
+@keyframes hotspotPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(255, 255, 255, 0);
+  }
+}
+@keyframes eyeBlink2 {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  12% {
+    transform: scaleY(0.08);
+  }
+  24% {
+    transform: scaleY(1);
+  }
+  40% {
+    transform: scaleY(0.08);
+  }
+  52% {
+    transform: scaleY(1);
+  }
+}
+.hotspot-btn {
+  animation: hotspotPulse 2.6s ease-out infinite;
+}
+.hotspot-eye {
+  transform-origin: center;
+}
+.hotspot-btn:hover {
+  animation-play-state: paused;
+}
+.hotspot-btn:hover .hotspot-eye {
+  animation: eyeBlink2 0.9s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hotspot-btn {
+    animation: none;
+  }
+  .hotspot-btn:hover .hotspot-eye {
+    animation: none;
+  }
+}
+
+/* Eye hotspot pulsing ring */
+@keyframes hotspotPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+.hotspot-pulse {
+  animation: hotspotPulse 1.8s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hotspot-pulse {
+    animation: none;
+  }
+}

@@ -64,3 +64,6 @@ playwright-report/
 # OpenNext (Cloudflare) build output
 .open-next
 .wrangler
+
+# Recon/extract artifacts (200M+) — local only, khong commit
+recon-archive/

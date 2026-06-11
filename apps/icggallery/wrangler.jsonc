@@ -1,0 +1,11 @@
+// CF Worker static cho icggallery (Vite SPA). Build: npm run build — Deploy: npx wrangler deploy
+// Models nặng (*_pov.glb, camera_paths) vẫn load từ CloudFront CDN — không nằm trong bundle.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rexerai-icggallery",
+  "compatibility_date": "2026-05-01",
+  "assets": {
+    "directory": "dist",
+    "not_found_handling": "single-page-application"
+  }
+}
