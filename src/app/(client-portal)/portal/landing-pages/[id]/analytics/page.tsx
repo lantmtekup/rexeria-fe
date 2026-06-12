@@ -16,6 +16,8 @@ import { use } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 import { BlockAnalyticsGrid } from '@/components/modules/Analytics/BlockAnalyticsGrid';
+import { FunnelOverview } from '@/components/modules/Analytics/FunnelOverview';
+import { cn } from '@/lib/cn';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 
@@ -34,10 +36,18 @@ function rxMessage(err: unknown): string {
   return 'Unexpected error';
 }
 
+type AnalyticsTab = 'funnel' | 'blocks';
+
+const TABS: { value: AnalyticsTab; label: string }[] = [
+  { value: 'funnel', label: 'Phễu & Lead' },
+  { value: 'blocks', label: 'Theo block' },
+];
+
 export default function PortalLandingAnalyticsPage({ params }: PageProps) {
   const { id: rawId } = use(params);
   const [resolvedId, setResolvedId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [tab, setTab] = React.useState<AnalyticsTab>('funnel');
 
   React.useEffect(() => {
     let cancelled = false;
@@ -83,10 +93,40 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
           <Loader2 className='mr-2 size-4 animate-spin' /> Đang resolve landing…
         </div>
       ) : (
-        <BlockAnalyticsGrid
-          templateId={resolvedId}
-          backHref='/portal/landing-pages'
-        />
+        <>
+          {/* Tab switch: phễu Marketing/Sales (mới) ↔ grid theo block (cũ).
+              Grid giữ nguyên header/back-link riêng nên switcher đặt nổi
+              ở giữa-trên, không phá layout 2 view. */}
+          <div className='flex justify-center pt-4'>
+            <div className='border-border bg-muted inline-flex rounded-lg border p-0.5'>
+              {TABS.map(t => (
+                <button
+                  key={t.value}
+                  type='button'
+                  onClick={() => setTab(t.value)}
+                  className={cn(
+                    'rounded-md px-3 py-1 text-xs font-medium transition-colors',
+                    tab === t.value
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-content-muted hover:text-foreground'
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {tab === 'funnel' ? (
+            <div className='mx-auto w-full max-w-6xl px-4 pt-4 pb-16 sm:px-6'>
+              <FunnelOverview pageId={resolvedId} />
+            </div>
+          ) : (
+            <BlockAnalyticsGrid
+              templateId={resolvedId}
+              backHref='/portal/landing-pages'
+            />
+          )}
+        </>
       )}
     </PortalShell>
   );
