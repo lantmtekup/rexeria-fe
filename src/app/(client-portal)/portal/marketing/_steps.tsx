@@ -6,6 +6,7 @@
  * Campaign (thông số chạy). Product/landing picker render ở `_editor.tsx`.
  */
 
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -192,10 +193,6 @@ function BriefFields({
                   files: fv.files.filter((_, x) => x !== i),
                 })
               }
-              showAddMore
-              onAddMore={() =>
-                patchField(f.key, { extras: [...fv.extras, ''] })
-              }
             />
             {fv.extras.map((extra, i) => (
               <FeatureField
@@ -210,8 +207,26 @@ function BriefFields({
                     extras: fv.extras.map((x, xi) => (xi === i ? next : x)),
                   })
                 }
+                onRemove={() =>
+                  patchField(f.key, {
+                    extras: fv.extras.filter((_, xi) => xi !== i),
+                  })
+                }
               />
             ))}
+            {/* Nút thêm ô mô tả — luôn ở CUỐI cụm, dưới mọi ô extra. */}
+            <div className='grid grid-cols-[160px_1fr] gap-6'>
+              <span />
+              <button
+                type='button'
+                onClick={() =>
+                  patchField(f.key, { extras: [...fv.extras, ''] })
+                }
+                className='rounded-pill text-neutral-0 inline-flex h-8 w-fit cursor-pointer items-center gap-1 bg-neutral-900 px-3 text-xs font-semibold hover:bg-neutral-800'
+              >
+                <Plus className='size-3.5' /> Add more feature
+              </button>
+            </div>
           </div>
         );
       })}

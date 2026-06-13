@@ -42,6 +42,8 @@ export interface FeatureFieldProps extends DivAttrs {
   /** File đính kèm hiển thị dạng chip dưới textarea. */
   attachments?: FeatureAttachment[];
   onRemoveAttachment?: (index: number) => void;
+  /** Khi set, hiện nút ✕ góc phải ô để xoá field này (ô "feature" thêm). */
+  onRemove?: () => void;
 }
 
 /** Icon ⓘ kèm tooltip hover — dùng chung cho FeatureField + Assets. */
@@ -83,6 +85,7 @@ function FeatureField({
   uploading = false,
   attachments,
   onRemoveAttachment,
+  onRemove,
   className,
   ...props
 }: FeatureFieldProps) {
@@ -112,9 +115,21 @@ function FeatureField({
         {info && <InfoTip text={infoText} />}
       </div>
       <div className='flex flex-col gap-3'>
-        <div className='border-border bg-background focus-within:border-foreground/40 rounded-xl border p-4 transition-colors'>
-          <div className='text-content-muted mb-1 text-xs font-semibold'>
-            Description
+        <div className='border-border bg-background focus-within:border-foreground/40 relative rounded-xl border p-4 transition-colors'>
+          <div className='mb-1 flex items-center justify-between'>
+            <span className='text-content-muted text-xs font-semibold'>
+              Description
+            </span>
+            {onRemove && (
+              <button
+                type='button'
+                aria-label='Xoá mục này'
+                onClick={onRemove}
+                className='text-content-muted hover:text-destructive -mt-1 -mr-1'
+              >
+                <X className='size-4' />
+              </button>
+            )}
           </div>
           <textarea
             value={text}
