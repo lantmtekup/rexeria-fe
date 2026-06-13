@@ -60,7 +60,7 @@ const fmtCreated = (iso?: string) => {
 
 export default function PortalMarketingPage() {
   return (
-    <PortalShell>
+    <PortalShell fullBleed>
       <MarketingInner />
     </PortalShell>
   );
@@ -123,7 +123,7 @@ function MarketingCard({ group }: { group: MarketingGroup }) {
   // danh sách campaign con (mỗi cái có detail riêng) không rời trang.
   const detailHref = `/portal/marketing/${group.campaigns[0].id}`;
   return (
-    <section className='bg-muted/50 border-border hover:border-primary/40 rounded-2xl border p-5 transition-colors'>
+    <section className='bg-card border-border hover:border-primary/40 rounded-2xl border p-5 shadow-sm transition-colors'>
       <div className='flex items-start justify-between'>
         <Link href={detailHref} className='min-w-0 flex-1'>
           <h2 className='text-foreground text-base font-bold'>{group.title}</h2>
