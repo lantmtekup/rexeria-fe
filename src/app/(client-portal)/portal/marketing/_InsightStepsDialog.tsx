@@ -37,16 +37,20 @@ import type {
   InsightStepKey,
 } from '@/services/rexer/types';
 
-import {
-  GoalSection,
-  JourneySection,
-} from '@/components/modules/Insights/steps/BlueprintStep';
+import { JourneySection } from '@/components/modules/Insights/steps/BlueprintStep';
 import {
   BlocksSection,
   TemplatesSection,
 } from '@/components/modules/Insights/steps/BlueprintBlocks';
+import {
+  ConfidenceRing,
+  SectionCard,
+} from '@/components/modules/Insights/steps/ui';
+
+import { GOAL_LABEL } from './_insights-labels';
 
 const STEPS = ['Experience Goal', 'Customer Journey', 'Blocks & Templates'];
+const GOAL_OPTIONS = Object.keys(GOAL_LABEL) as (keyof typeof GOAL_LABEL)[];
 
 /* ── Trích output_payload của từng step trace (canonical key) ───────────── */
 
@@ -218,7 +222,7 @@ export function InsightStepsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-3xl'>
+      <DialogContent className='max-w-4xl'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <Sparkles className='size-4 text-blue-600' /> Kết quả AI-Insights
@@ -267,7 +271,7 @@ export function InsightStepsDialog({
         <div className='max-h-[60vh] overflow-y-auto py-1'>
           {step === 0 && (
             <StepBox loading={goalLoading} empty={!goal} failed={failed}>
-              {goal && <GoalSection blueprint={{ experience_goal: goal }} />}
+              {goal && <GoalEditable goal={goal} onChange={setOvGoal} />}
             </StepBox>
           )}
 
@@ -278,7 +282,10 @@ export function InsightStepsDialog({
               failed={failed}
             >
               {journey && (
-                <JourneySection blueprint={{ customer_journey: journey }} />
+                <JourneySection
+                  blueprint={{ customer_journey: journey }}
+                  collapsible={false}
+                />
               )}
             </StepBox>
           )}
@@ -294,10 +301,12 @@ export function InsightStepsDialog({
                   <BlocksSection
                     blueprint={{ recommended_blocks: blocks }}
                     reportId={report.id}
+                    collapsible={false}
                   />
                   {!!templates?.templates?.length && (
                     <TemplatesSection
                       blueprint={{ recommended_templates: templates }}
+                      collapsible={false}
                     />
                   )}
                 </div>
@@ -356,6 +365,63 @@ export function InsightStepsDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Experience Goal có thể sửa: chọn lại goal + sửa lý do AI gen. */
+function GoalEditable({
+  goal,
+  onChange,
+}: {
+  goal: InsightBlueprintGoal;
+  onChange: (g: InsightBlueprintGoal) => void;
+}) {
+  const pct = Math.round((goal.confidence ?? 0) * 100);
+  return (
+    <SectionCard
+      icon={<Sparkles aria-hidden />}
+      title='Experience Goal'
+      index={1}
+      accent='blue'
+      delayMs={0}
+      collapsible={false}
+    >
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-start'>
+        <div className='flex shrink-0 flex-col items-center gap-1'>
+          <ConfidenceRing pct={pct} />
+          <span className='text-content-muted text-xs'>Độ tin cậy</span>
+        </div>
+        <div className='flex flex-1 flex-col gap-2'>
+          <select
+            value={goal.primary_goal}
+            onChange={e =>
+              onChange({
+                ...goal,
+                primary_goal: e.target
+                  .value as InsightBlueprintGoal['primary_goal'],
+              })
+            }
+            className='border-input bg-background text-foreground h-10 w-full rounded-md border px-3 text-sm font-semibold outline-none'
+          >
+            {GOAL_OPTIONS.map(g => (
+              <option key={g} value={g}>
+                {GOAL_LABEL[g]}
+              </option>
+            ))}
+          </select>
+          <textarea
+            value={goal.rationale ?? ''}
+            onChange={e => onChange({ ...goal, rationale: e.target.value })}
+            rows={6}
+            placeholder='Lý do AI đề xuất — bạn có thể chỉnh sửa…'
+            className='border-input bg-background text-foreground focus:border-foreground/40 w-full resize-y rounded-lg border p-3 text-sm leading-6 outline-none'
+          />
+          <p className='text-content-muted text-2xs'>
+            Nội dung AI tạo — sửa trực tiếp nếu cần.
+          </p>
+        </div>
+      </div>
+    </SectionCard>
   );
 }
 

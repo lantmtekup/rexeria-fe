@@ -104,7 +104,13 @@ export function GoalSection({ blueprint }: { blueprint: InsightBlueprint }) {
 }
 
 /** Section customer journey: tên pattern + lý do + các stage có thứ tự (timeline). */
-export function JourneySection({ blueprint }: { blueprint: InsightBlueprint }) {
+export function JourneySection({
+  blueprint,
+  collapsible = true,
+}: {
+  blueprint: InsightBlueprint;
+  collapsible?: boolean;
+}) {
   const t = useTranslations('insights');
   const journey = blueprint.customer_journey;
   if (!journey) return null;
@@ -118,7 +124,7 @@ export function JourneySection({ blueprint }: { blueprint: InsightBlueprint }) {
       index={2}
       accent='violet'
       delayMs={80}
-      collapsible
+      collapsible={collapsible}
     >
       {journey.journey_pattern_name && (
         <div className='rounded-pill mb-2 inline-flex bg-violet-100 px-3 py-1 text-sm font-semibold text-violet-700'>

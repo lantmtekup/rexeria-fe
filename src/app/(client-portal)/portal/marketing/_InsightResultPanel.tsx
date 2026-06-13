@@ -24,20 +24,8 @@ import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 
 import { InsightStepsDialog } from './_InsightStepsDialog';
-import type {
-  ExperienceGoal,
-  InsightReport,
-  InsightStatus,
-} from '@/services/rexer/types';
-
-export const GOAL_LABEL: Record<ExperienceGoal, string> = {
-  product_discovery: 'Khám phá sản phẩm',
-  interactive_story: 'Câu chuyện tương tác',
-  comparison: 'So sánh lựa chọn',
-  lead_excitement: 'Tạo lead / hứng khởi',
-  brand_storytelling: 'Kể chuyện thương hiệu',
-  guided_decision: 'Dẫn dắt quyết định',
-};
+import { GOAL_LABEL } from './_insights-labels';
+import type { InsightReport, InsightStatus } from '@/services/rexer/types';
 
 const STATUS_META: Record<InsightStatus, { label: string; cls: string }> = {
   queued: { label: 'Đang chờ xử lý…', cls: 'text-amber-600' },
