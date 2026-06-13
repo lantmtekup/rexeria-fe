@@ -2801,6 +2801,105 @@ export interface PageAnalyticsBreakdownResponse {
   items: PageAnalyticsBreakdownRow[];
 }
 
+// ── Analytics v2: phễu + leads ────────────────────────────────────────────
+//
+// Khớp từng field (snake_case) với be-ReXeR.ai handoff
+// `docs/be-fe-handoff-analytics-funnel-leads-2026-06-12.md` §3 + các model
+// `internal/domain/models/{analytics_event,lead}.go`. Backs trang
+// `/portal/landing-pages/[id]/analytics` tab "Phễu & Lead".
+
+/** Cửa sổ thời gian dùng chung cho mọi query analytics v2. */
+export type AnalyticsRange = '7d' | '30d' | '90d';
+
+/** GET /v1/analytics/funnel — 6 bậc phễu + tile dwell cho 1 page. */
+export interface AnalyticsFunnelResponse {
+  page_id: string;
+  visits: number;
+  engaged: number;
+  cta_clicks: number;
+  leads: number;
+  sql: number;
+  deals: number;
+  visits_prev_period: number;
+  avg_session_sec: number;
+  total_dwell_sec: number;
+  /** Ngưỡng score qualify SQL (brand override hoặc default 65). */
+  sql_threshold: number;
+  from: string;
+  to: string;
+}
+
+/** Một điểm trong chuỗi theo ngày (zero-filled theo ngày UTC). */
+export interface AnalyticsSeriesPoint {
+  date: string; // YYYY-MM-DD
+  value: number;
+}
+
+/** GET /v1/analytics/timeseries?metric=visits|leads. */
+export interface AnalyticsTimeseriesResponse {
+  page_id: string;
+  metric: string;
+  points: AnalyticsSeriesPoint[];
+}
+
+/** Một nhóm utm_source trong GET /v1/analytics/sources ('' → 'direct'). */
+export interface AnalyticsSourceRow {
+  utm_source: string;
+  visits: number;
+  leads: number;
+}
+export interface AnalyticsSourcesResponse {
+  items: AnalyticsSourceRow[];
+}
+
+export type LeadStatus = 'new' | 'contacted' | 'negotiating' | 'won' | 'lost';
+export type LeadTier = 'hot' | 'warm' | 'cold';
+export type LeadMethod = 'form' | 'wallet' | 'whitelist';
+
+/** Deal đã chốt gắn với 1 lead (cột "Deal" của bảng Sales). */
+export interface LeadDeal {
+  id: string;
+  lead_id: string;
+  value: number;
+  currency: string;
+  won_at: string;
+  created_at: string;
+}
+
+/**
+ * Một lead trong bảng Sales (BE `models.Lead`). `contact`/`name` là PII chỉ
+ * có trong bảng leads, không nằm trong analytics_events. `deal` được preload
+ * khi lead đã `won`.
+ */
+export interface Lead {
+  id: string;
+  brand_id: string;
+  workspace_id: string | null;
+  page_id: string;
+  session_id: string;
+  visitor_id: string;
+  method: LeadMethod;
+  name: string | null;
+  contact: string;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  score: number;
+  tier: LeadTier;
+  status: LeadStatus;
+  created_at: string;
+  updated_at: string;
+  deal?: LeadDeal | null;
+}
+
+/** GET /v1/leads — list + pagination. */
+export interface LeadsListResponse {
+  items: Lead[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 // ── AI-Insights (mirror BE openapi.yaml #/components/schemas/Insight*) ────
 //
 // Mặt phẳng AI-Insights: biến brief sản phẩm/chiến dịch thành chiến lược

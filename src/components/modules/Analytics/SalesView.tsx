@@ -1,13 +1,14 @@
 'use client';
 
 /**
- * View Sales (spec §5) — nửa dưới phễu: ưu tiên & chốt lead. Bảng sort
- * score desc (danh sách ưu tiên), đổi status tại chỗ (demo: state cục bộ;
- * GĐ3-wire sẽ PATCH /v1/leads/{id} + bắn lead_status_change).
+ * View Sales (spec §5) — nửa dưới phễu: ưu tiên & chốt lead. Bảng sort score
+ * desc (danh sách ưu tiên), đổi status tại chỗ qua PATCH /v1/leads/{id} và
+ * chốt deal qua POST /v1/leads/{id}/deal. SQL/Doanh thu lấy số tổng từ funnel
+ * (authoritative); bảng chỉ tải top-200 lead theo score.
  */
 
 import { BadgeCheck, DollarSign, Percent, Users } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Badge } from '@/components/atoms/badge';
 import {
@@ -19,11 +20,13 @@ import {
   TableRow,
 } from '@/components/atoms/table';
 import { cn } from '@/lib/cn';
+import { rexerApi } from '@/services/rexer/endpoints';
+import { RxApiError } from '@/services/rexer/client';
+import type { Lead, LeadStatus, LeadTier } from '@/services/rexer/types';
 
 import { Card, MetricTile } from './dashboard-bits';
-
-import type { DemoAnalytics, DemoLead, LeadStatus } from './funnel-demo';
-import { SQL_THRESHOLD } from './funnel-demo';
+import { useLeads } from './funnel-data';
+import type { DateRange, FunnelCounts } from './funnel-types';
 
 const STATUS_LABEL: Record<LeadStatus, string> = {
   new: 'Mới',
@@ -39,42 +42,71 @@ const STATUS_ORDER: LeadStatus[] = [
   'won',
   'lost',
 ];
-const TIER_CLASS = {
+const TIER_CLASS: Record<LeadTier, string> = {
   hot: 'bg-red-100 text-red-700',
   warm: 'bg-amber-100 text-amber-700',
   cold: 'bg-sky-100 text-sky-700',
-} as const;
-const TIER_LABEL = { hot: 'Hot', warm: 'Warm', cold: 'Cold' } as const;
-const METHOD_LABEL = {
+};
+const TIER_LABEL: Record<LeadTier, string> = {
+  hot: 'Hot',
+  warm: 'Warm',
+  cold: 'Cold',
+};
+const METHOD_LABEL: Record<Lead['method'], string> = {
   form: 'Form',
   wallet: 'Ví',
   whitelist: 'Whitelist',
-} as const;
+};
 
 const fmt = (n: number) => n.toLocaleString('vi-VN');
 const usd = (n: number) => `$${n.toLocaleString('en-US')}`;
 
-export function SalesView({ data }: { data: DemoAnalytics }) {
-  // Demo: status đổi tại chỗ, giữ trong state để thấy pipeline nhảy theo.
-  const [overrides, setOverrides] = useState<Record<string, LeadStatus>>({});
-  const leads = useMemo(
-    () =>
-      data.leads
-        .map(l => ({ ...l, status: overrides[l.id] ?? l.status }))
-        .sort((a, b) => b.score - a.score),
-    [data.leads, overrides]
-  );
+export function SalesView({
+  pageId,
+  range,
+  funnel,
+  sqlThreshold,
+}: {
+  pageId: string;
+  range: DateRange;
+  funnel: FunnelCounts;
+  sqlThreshold: number;
+}) {
+  const { leads, loading, error, setLeads } = useLeads(pageId, range);
 
-  const open = leads.filter(l => l.status !== 'won' && l.status !== 'lost');
-  const sqlCount = leads.filter(l => l.score >= SQL_THRESHOLD).length;
+  // Doanh thu chốt tính trên tập đã tải (top-200); deals tổng lấy từ funnel.
   const won = leads.filter(l => l.status === 'won');
+  const open = leads.filter(l => l.status !== 'won' && l.status !== 'lost');
+  const revenue = won.reduce((s, l) => s + (l.deal?.value ?? 0), 0);
   const byStatus = STATUS_ORDER.map(s => ({
     status: s,
     count: leads.filter(l => l.status === s).length,
   }));
 
-  const handleStatusChange = (id: string, status: LeadStatus) =>
-    setOverrides(prev => ({ ...prev, [id]: status }));
+  // Cập nhật lạc quan: sửa state ngay, rollback nếu API lỗi.
+  const handleStatusChange = async (id: string, status: LeadStatus) => {
+    const prev = leads;
+    setLeads(ls => ls.map(l => (l.id === id ? { ...l, status } : l)));
+    try {
+      const updated = await rexerApi.leads.updateStatus(id, status);
+      setLeads(ls => ls.map(l => (l.id === id ? updated : l)));
+    } catch (e) {
+      setLeads(prev);
+      toast.error(
+        e instanceof RxApiError ? e.message : 'Không cập nhật được trạng thái'
+      );
+    }
+  };
+
+  const handleCreateDeal = async (id: string, value: number) => {
+    try {
+      const updated = await rexerApi.leads.createDeal(id, { value });
+      setLeads(ls => ls.map(l => (l.id === id ? updated : l)));
+      toast.success('Đã ghi nhận deal chốt');
+    } catch (e) {
+      toast.error(e instanceof RxApiError ? e.message : 'Không tạo được deal');
+    }
+  };
 
   return (
     <div className='flex flex-col gap-6'>
@@ -88,15 +120,15 @@ export function SalesView({ data }: { data: DemoAnalytics }) {
         <MetricTile
           icon={BadgeCheck}
           label='SQL (đạt chuẩn)'
-          value={fmt(sqlCount)}
-          hint={`score ≥ ${SQL_THRESHOLD}`}
+          value={fmt(funnel.sql)}
+          hint={`score ≥ ${sqlThreshold}`}
         />
         <MetricTile
           icon={Percent}
           label='Tỷ lệ chốt'
           value={
-            leads.length > 0
-              ? `${((won.length / leads.length) * 100).toFixed(1)}%`
+            funnel.leads > 0
+              ? `${((funnel.deals / funnel.leads) * 100).toFixed(1)}%`
               : '—'
           }
           hint='deals / leads'
@@ -104,7 +136,7 @@ export function SalesView({ data }: { data: DemoAnalytics }) {
         <MetricTile
           icon={DollarSign}
           label='Doanh thu chốt'
-          value={usd(won.reduce((s, l) => s + (l.dealValue ?? 0), 0))}
+          value={usd(revenue)}
           hint='sum(deal_won.value)'
           hintTone='positive'
         />
@@ -124,17 +156,35 @@ export function SalesView({ data }: { data: DemoAnalytics }) {
         ))}
       </div>
 
-      <LeadTable leads={leads} onStatusChange={handleStatusChange} />
+      {error ? (
+        <Card title='Danh sách ưu tiên'>
+          <p className='text-content-muted text-sm'>{error}</p>
+        </Card>
+      ) : (
+        <LeadTable
+          leads={leads}
+          loading={loading}
+          sqlThreshold={sqlThreshold}
+          onStatusChange={handleStatusChange}
+          onCreateDeal={handleCreateDeal}
+        />
+      )}
     </div>
   );
 }
 
 function LeadTable({
   leads,
+  loading,
+  sqlThreshold,
   onStatusChange,
+  onCreateDeal,
 }: {
-  leads: DemoLead[];
+  leads: Lead[];
+  loading: boolean;
+  sqlThreshold: number;
   onStatusChange: (id: string, status: LeadStatus) => void;
+  onCreateDeal: (id: string, value: number) => void;
 }) {
   return (
     <Card title='Danh sách ưu tiên' tag='sort score giảm dần'>
@@ -150,53 +200,116 @@ function LeadTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {leads.map(lead => (
-            <TableRow key={lead.id}>
-              <TableCell>
-                <p className='text-foreground font-medium'>{lead.name}</p>
-                <p className='text-content-muted text-xs'>{lead.contact}</p>
-              </TableCell>
-              <TableCell>
-                <p className='text-sm'>{METHOD_LABEL[lead.method]}</p>
-                <p className='text-content-muted text-xs'>{lead.source}</p>
-              </TableCell>
+          {loading && leads.length === 0 ? (
+            <TableRow>
               <TableCell
-                className={cn(
-                  'text-right font-semibold tabular-nums',
-                  lead.score >= SQL_THRESHOLD
-                    ? 'text-foreground'
-                    : 'text-content-muted'
-                )}
+                colSpan={6}
+                className='text-content-muted py-8 text-center'
               >
-                {lead.score}
-              </TableCell>
-              <TableCell>
-                <Badge variant='secondary' className={TIER_CLASS[lead.tier]}>
-                  {TIER_LABEL[lead.tier]}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <select
-                  value={lead.status}
-                  onChange={e =>
-                    onStatusChange(lead.id, e.target.value as LeadStatus)
-                  }
-                  className='border-border bg-background text-foreground rounded-md border px-2 py-1 text-xs'
-                >
-                  {STATUS_ORDER.map(s => (
-                    <option key={s} value={s}>
-                      {STATUS_LABEL[s]}
-                    </option>
-                  ))}
-                </select>
-              </TableCell>
-              <TableCell className='text-right text-sm tabular-nums'>
-                {lead.dealValue != null ? usd(lead.dealValue) : '—'}
+                Đang tải lead…
               </TableCell>
             </TableRow>
-          ))}
+          ) : leads.length === 0 ? (
+            <TableRow>
+              <TableCell
+                colSpan={6}
+                className='text-content-muted py-8 text-center'
+              >
+                Chưa có lead nào trong khoảng thời gian này.
+              </TableCell>
+            </TableRow>
+          ) : (
+            leads.map(lead => (
+              <LeadRow
+                key={lead.id}
+                lead={lead}
+                sqlThreshold={sqlThreshold}
+                onStatusChange={onStatusChange}
+                onCreateDeal={onCreateDeal}
+              />
+            ))
+          )}
         </TableBody>
       </Table>
     </Card>
+  );
+}
+
+function LeadRow({
+  lead,
+  sqlThreshold,
+  onStatusChange,
+  onCreateDeal,
+}: {
+  lead: Lead;
+  sqlThreshold: number;
+  onStatusChange: (id: string, status: LeadStatus) => void;
+  onCreateDeal: (id: string, value: number) => void;
+}) {
+  const handleDeal = () => {
+    const raw = window.prompt('Giá trị deal (USD):');
+    if (raw == null) return;
+    const value = Number(raw);
+    if (!Number.isFinite(value) || value <= 0) {
+      toast.error('Giá trị deal phải là số > 0');
+      return;
+    }
+    onCreateDeal(lead.id, value);
+  };
+
+  return (
+    <TableRow>
+      <TableCell>
+        <p className='text-foreground font-medium'>
+          {lead.name ?? '(chưa có tên)'}
+        </p>
+        <p className='text-content-muted text-xs'>{lead.contact}</p>
+      </TableCell>
+      <TableCell>
+        <p className='text-sm'>{METHOD_LABEL[lead.method]}</p>
+        <p className='text-content-muted text-xs'>
+          {lead.utm_source ?? 'direct'}
+        </p>
+      </TableCell>
+      <TableCell
+        className={cn(
+          'text-right font-semibold tabular-nums',
+          lead.score >= sqlThreshold ? 'text-foreground' : 'text-content-muted'
+        )}
+      >
+        {lead.score}
+      </TableCell>
+      <TableCell>
+        <Badge variant='secondary' className={TIER_CLASS[lead.tier]}>
+          {TIER_LABEL[lead.tier]}
+        </Badge>
+      </TableCell>
+      <TableCell>
+        <select
+          value={lead.status}
+          onChange={e => onStatusChange(lead.id, e.target.value as LeadStatus)}
+          className='border-border bg-background text-foreground rounded-md border px-2 py-1 text-xs'
+        >
+          {STATUS_ORDER.map(s => (
+            <option key={s} value={s}>
+              {STATUS_LABEL[s]}
+            </option>
+          ))}
+        </select>
+      </TableCell>
+      <TableCell className='text-right text-sm tabular-nums'>
+        {lead.deal ? (
+          usd(lead.deal.value)
+        ) : (
+          <button
+            type='button'
+            onClick={handleDeal}
+            className='text-content-muted hover:text-foreground text-xs underline-offset-2 hover:underline'
+          >
+            + Ghi deal
+          </button>
+        )}
+      </TableCell>
+    </TableRow>
   );
 }

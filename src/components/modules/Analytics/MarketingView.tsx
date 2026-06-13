@@ -11,7 +11,7 @@ import { Eye, Sparkles, Timer, Wallet } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 import { AreaChart, Card, MetricTile } from './dashboard-bits';
-import type { DateRange, DemoAnalytics } from './funnel-demo';
+import type { DateRange, FunnelAnalytics } from './funnel-types';
 
 const fmt = (n: number) => n.toLocaleString('vi-VN');
 
@@ -44,7 +44,7 @@ export function MarketingView({
   data,
   range,
 }: {
-  data: DemoAnalytics;
+  data: FunnelAnalytics;
   range: DateRange;
 }) {
   const {
@@ -53,7 +53,6 @@ export function MarketingView({
     blocks,
     visitsByDay,
     visitsDeltaPct,
-    leadsAB,
     avgSessionSec,
   } = data;
 
@@ -81,7 +80,7 @@ export function MarketingView({
           icon={Wallet}
           label='Lead tạo ra'
           value={fmt(funnel.leads)}
-          hint={`A: ${fmt(leadsAB.a)} · B: ${fmt(leadsAB.b)}`}
+          hint={`${fmt(funnel.sql)} đạt chuẩn SQL`}
         />
         <MetricTile
           icon={Timer}
@@ -115,7 +114,7 @@ function SourceBars({
   sources,
   totalVisits,
 }: {
-  sources: DemoAnalytics['sources'];
+  sources: FunnelAnalytics['sources'];
   totalVisits: number;
 }) {
   const sorted = [...sources].sort((a, b) => b.visits - a.visits);
@@ -146,7 +145,7 @@ function SourceBars({
   );
 }
 
-function CtrBars({ blocks }: { blocks: DemoAnalytics['blocks'] }) {
+function CtrBars({ blocks }: { blocks: FunnelAnalytics['blocks'] }) {
   const rows = blocks
     .map(b => ({ ...b, ctr: b.views > 0 ? (b.clicks / b.views) * 100 : 0 }))
     .sort((a, b) => b.ctr - a.ctr);

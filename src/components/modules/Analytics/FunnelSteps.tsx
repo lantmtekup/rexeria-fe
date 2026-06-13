@@ -11,7 +11,7 @@
 
 import { cn } from '@/lib/cn';
 
-import type { FunnelCounts } from './funnel-demo';
+import type { FunnelCounts } from './funnel-types';
 
 export type FunnelFocus = 'marketing' | 'sales' | 'all';
 
