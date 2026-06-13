@@ -44,6 +44,8 @@ export interface FeatureFieldProps extends DivAttrs {
   onRemoveAttachment?: (index: number) => void;
   /** Khi set, hiện nút ✕ góc phải ô để xoá field này (ô "feature" thêm). */
   onRemove?: () => void;
+  /** Thu gọn nội dung dài còn `rows` dòng, kèm nút See More / See Less. */
+  collapsible?: boolean;
 }
 
 /** Icon ⓘ kèm tooltip hover — dùng chung cho FeatureField + Assets. */
@@ -86,12 +88,16 @@ function FeatureField({
   attachments,
   onRemoveAttachment,
   onRemove,
+  collapsible = false,
   className,
   ...props
 }: FeatureFieldProps) {
   const isControlled = value !== undefined;
   const [internal, setInternal] = React.useState<string>(description ?? '');
   const fileRef = React.useRef<HTMLInputElement>(null);
+  const taRef = React.useRef<HTMLTextAreaElement>(null);
+  const [expanded, setExpanded] = React.useState(false);
+  const [overflowing, setOverflowing] = React.useState(false);
 
   // Reset internal state when the upstream `description` (mock per route)
   // changes. Skip for controlled mode — caller owns state.
@@ -104,6 +110,20 @@ function FeatureField({
     if (isControlled) onChange?.(next);
     else setInternal(next);
   };
+
+  // See More: thu gọn về `rows` dòng; mở rộng grow theo scrollHeight. Đo
+  // overflow mỗi khi text/expand đổi để chỉ hiện nút khi nội dung tràn.
+  React.useEffect(() => {
+    const ta = taRef.current;
+    if (!ta || !collapsible) return;
+    if (expanded) {
+      ta.style.height = 'auto';
+      ta.style.height = `${ta.scrollHeight}px`;
+    } else {
+      ta.style.height = '';
+      setOverflowing(ta.scrollHeight > ta.clientHeight + 2);
+    }
+  }, [text, expanded, collapsible, rows]);
 
   return (
     <div
@@ -132,13 +152,27 @@ function FeatureField({
             )}
           </div>
           <textarea
+            ref={taRef}
             value={text}
             onChange={e => setText(e.target.value)}
             placeholder={placeholder}
             disabled={disabled}
             rows={rows}
-            className='text-foreground placeholder:text-content-muted w-full resize-y border-0 bg-transparent p-0 text-sm leading-6 outline-none disabled:opacity-60'
+            className={cn(
+              'text-foreground placeholder:text-content-muted w-full border-0 bg-transparent p-0 text-sm leading-6 outline-none disabled:opacity-60',
+              collapsible ? 'resize-none' : 'resize-y',
+              collapsible && !expanded && 'overflow-hidden'
+            )}
           />
+          {collapsible && (overflowing || expanded) && (
+            <button
+              type='button'
+              onClick={() => setExpanded(e => !e)}
+              className='bg-muted text-foreground hover:bg-muted/70 mt-1.5 inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold transition-colors'
+            >
+              {expanded ? 'See Less' : 'See More'}
+            </button>
+          )}
           {!!attachments?.length && (
             <ul className='mt-2 flex flex-wrap gap-1.5'>
               {attachments.map((a, i) => (

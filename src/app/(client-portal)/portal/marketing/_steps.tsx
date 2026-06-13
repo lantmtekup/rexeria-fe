@@ -183,6 +183,7 @@ function BriefFields({
               label={f.label}
               infoText={f.info}
               rows={3}
+              collapsible
               placeholder={`Describe about ${f.label}`}
               value={fv.text}
               onChange={next => patchField(f.key, { text: next })}
@@ -202,6 +203,7 @@ function BriefFields({
                 info={false}
                 showUpload={false}
                 rows={3}
+                collapsible
                 placeholder={`Describe more about ${f.label}`}
                 value={extra}
                 onChange={next =>
