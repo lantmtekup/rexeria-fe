@@ -42,10 +42,7 @@ import {
   BlocksSection,
   TemplatesSection,
 } from '@/components/modules/Insights/steps/BlueprintBlocks';
-import {
-  ConfidenceRing,
-  SectionCard,
-} from '@/components/modules/Insights/steps/ui';
+import { ConfidenceRing } from '@/components/modules/Insights/steps/ui';
 
 import { GOAL_LABEL } from './_insights-labels';
 
@@ -222,7 +219,7 @@ export function InsightStepsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-4xl'>
+      <DialogContent className='!w-[96vw] !max-w-[1150px]'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <Sparkles className='size-4 text-blue-600' /> Kết quả AI-Insights
@@ -267,16 +264,16 @@ export function InsightStepsDialog({
           ))}
         </ol>
 
-        {/* Step body — render đúng các section FULL của trang report. */}
-        <div className='max-h-[60vh] overflow-y-auto py-1'>
+        {/* Step body — content phẳng, không lồng khung thừa. */}
+        <div className='min-h-[58vh] overflow-y-auto py-1'>
           {step === 0 && (
-            <StepBox loading={goalLoading} empty={!goal} failed={failed}>
+            <StepBody loading={goalLoading} empty={!goal} failed={failed}>
               {goal && <GoalEditable goal={goal} onChange={setOvGoal} />}
-            </StepBox>
+            </StepBody>
           )}
 
           {step === 1 && (
-            <StepBox
+            <StepBody
               loading={journeyLoading}
               empty={!journey?.stages?.length}
               failed={failed}
@@ -287,11 +284,11 @@ export function InsightStepsDialog({
                   collapsible={false}
                 />
               )}
-            </StepBox>
+            </StepBody>
           )}
 
           {step === 2 && (
-            <StepBox
+            <StepBody
               loading={blocksLoading}
               empty={!blockCount}
               failed={failed}
@@ -311,7 +308,7 @@ export function InsightStepsDialog({
                   )}
                 </div>
               )}
-            </StepBox>
+            </StepBody>
           )}
         </div>
 
@@ -368,7 +365,10 @@ export function InsightStepsDialog({
   );
 }
 
-/** Experience Goal có thể sửa: chọn lại goal + sửa lý do AI gen. */
+/**
+ * Experience Goal sửa được — render phẳng (KHÔNG bọc SectionCard) để khỏi
+ * trùng tiêu đề với step indicator. Vòng tin cậy + chọn goal + textarea cao.
+ */
 function GoalEditable({
   goal,
   onChange,
@@ -378,54 +378,46 @@ function GoalEditable({
 }) {
   const pct = Math.round((goal.confidence ?? 0) * 100);
   return (
-    <SectionCard
-      icon={<Sparkles aria-hidden />}
-      title='Experience Goal'
-      index={1}
-      accent='blue'
-      delayMs={0}
-      collapsible={false}
-    >
-      <div className='flex flex-col gap-4 sm:flex-row sm:items-start'>
-        <div className='flex shrink-0 flex-col items-center gap-1'>
-          <ConfidenceRing pct={pct} />
-          <span className='text-content-muted text-xs'>Độ tin cậy</span>
-        </div>
-        <div className='flex flex-1 flex-col gap-2'>
-          <select
-            value={goal.primary_goal}
-            onChange={e =>
-              onChange({
-                ...goal,
-                primary_goal: e.target
-                  .value as InsightBlueprintGoal['primary_goal'],
-              })
-            }
-            className='border-input bg-background text-foreground h-10 w-full rounded-md border px-3 text-sm font-semibold outline-none'
-          >
-            {GOAL_OPTIONS.map(g => (
-              <option key={g} value={g}>
-                {GOAL_LABEL[g]}
-              </option>
-            ))}
-          </select>
-          <textarea
-            value={goal.rationale ?? ''}
-            onChange={e => onChange({ ...goal, rationale: e.target.value })}
-            rows={6}
-            placeholder='Lý do AI đề xuất — bạn có thể chỉnh sửa…'
-            className='border-input bg-background text-foreground focus:border-foreground/40 w-full resize-y rounded-lg border p-3 text-sm leading-6 outline-none'
-          />
-          <p className='text-content-muted text-2xs'>
-            Nội dung AI tạo — sửa trực tiếp nếu cần.
-          </p>
-        </div>
+    <div className='flex flex-col gap-5 sm:flex-row sm:items-start'>
+      <div className='flex shrink-0 flex-col items-center gap-1 pt-1'>
+        <ConfidenceRing pct={pct} />
+        <span className='text-content-muted text-xs'>Độ tin cậy</span>
       </div>
-    </SectionCard>
+      <div className='flex flex-1 flex-col gap-2'>
+        <select
+          value={goal.primary_goal}
+          onChange={e =>
+            onChange({
+              ...goal,
+              primary_goal: e.target
+                .value as InsightBlueprintGoal['primary_goal'],
+            })
+          }
+          className='border-input bg-background text-foreground h-11 w-full rounded-lg border px-3 text-base font-semibold outline-none'
+        >
+          {GOAL_OPTIONS.map(g => (
+            <option key={g} value={g}>
+              {GOAL_LABEL[g]}
+            </option>
+          ))}
+        </select>
+        <textarea
+          value={goal.rationale ?? ''}
+          onChange={e => onChange({ ...goal, rationale: e.target.value })}
+          rows={14}
+          placeholder='Lý do AI đề xuất — bạn có thể chỉnh sửa…'
+          className='border-input bg-background text-foreground focus:border-foreground/40 min-h-[44vh] w-full resize-y rounded-lg border p-4 text-sm leading-7 outline-none'
+        />
+        <p className='text-content-muted text-2xs'>
+          Nội dung AI tạo — sửa trực tiếp nếu cần.
+        </p>
+      </div>
+    </div>
   );
 }
 
-function StepBox({
+/** Bọc trạng thái loading/empty; có data thì render thẳng, không khung thừa. */
+function StepBody({
   loading,
   empty,
   failed,
@@ -438,22 +430,18 @@ function StepBox({
 }) {
   if (loading) {
     return (
-      <div className='border-border text-content-muted flex h-28 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-sm'>
-        <Loader2 className='size-5 animate-spin text-blue-600' />
+      <div className='text-content-muted flex h-[50vh] flex-col items-center justify-center gap-2 text-sm'>
+        <Loader2 className='size-6 animate-spin text-blue-600' />
         AI đang phân tích phần này…
       </div>
     );
   }
   if (empty) {
     return (
-      <div className='border-border text-content-muted flex h-28 flex-col items-center justify-center gap-1 rounded-xl border border-dashed text-sm'>
+      <div className='text-content-muted flex h-[50vh] flex-col items-center justify-center text-sm'>
         {failed ? 'AI chạy thất bại phần này.' : 'Chưa có dữ liệu.'}
       </div>
     );
   }
-  return (
-    <div className='border-border bg-muted/30 rounded-xl border p-4'>
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }
