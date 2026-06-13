@@ -46,7 +46,7 @@ import { ConfidenceRing } from '@/components/modules/Insights/steps/ui';
 
 import { GOAL_LABEL } from './_insights-labels';
 
-const STEPS = ['Experience Goal', 'Customer Journey', 'Blocks & Templates'];
+const STEPS = ['Experience Goal', 'Customer Journey', 'Blocks', 'Templates'];
 const GOAL_OPTIONS = Object.keys(GOAL_LABEL) as (keyof typeof GOAL_LABEL)[];
 
 /* ── Trích output_payload của từng step trace (canonical key) ───────────── */
@@ -212,14 +212,19 @@ export function InsightStepsDialog({
     }
   };
 
-  const regenerate = [regenGoal, regenJourney, regenBlocks][step];
+  // step 2 = Blocks, step 3 = Templates (cùng regenerate qua re-run report).
+  const regenerate = [regenGoal, regenJourney, regenBlocks, regenBlocks][step];
   const blockCount =
     blocks?.blocks_by_stage?.reduce((n, s) => n + s.blocks.length, 0) ?? 0;
+  const templatesLoading =
+    !templates?.templates?.length &&
+    running &&
+    !isDone(stepOf(report, 'recommend_templates'));
   const canApply = report.status === 'succeeded';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='!w-[96vw] !max-w-[1150px]'>
+      <DialogContent className='max-h-[90vh] !w-[96vw] !max-w-[1150px]'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <Sparkles className='size-4 text-blue-600' /> Kết quả AI-Insights
@@ -264,8 +269,8 @@ export function InsightStepsDialog({
           ))}
         </ol>
 
-        {/* Step body — content phẳng, không lồng khung thừa. */}
-        <div className='min-h-[58vh] overflow-y-auto py-1'>
+        {/* Step body — cuộn nội bộ (max-h), nội dung phẳng. */}
+        <div className='max-h-[62vh] min-h-[40vh] overflow-y-auto py-1 pr-1'>
           {step === 0 && (
             <StepBody loading={goalLoading} empty={!goal} failed={failed}>
               {goal && <GoalEditable goal={goal} onChange={setOvGoal} />}
@@ -294,19 +299,26 @@ export function InsightStepsDialog({
               failed={failed}
             >
               {!!blockCount && (
-                <div className='flex flex-col gap-4'>
-                  <BlocksSection
-                    blueprint={{ recommended_blocks: blocks }}
-                    reportId={report.id}
-                    collapsible={false}
-                  />
-                  {!!templates?.templates?.length && (
-                    <TemplatesSection
-                      blueprint={{ recommended_templates: templates }}
-                      collapsible={false}
-                    />
-                  )}
-                </div>
+                <BlocksSection
+                  blueprint={{ recommended_blocks: blocks }}
+                  reportId={report.id}
+                  collapsible={false}
+                />
+              )}
+            </StepBody>
+          )}
+
+          {step === 3 && (
+            <StepBody
+              loading={templatesLoading}
+              empty={!templates?.templates?.length}
+              failed={failed}
+            >
+              {!!templates?.templates?.length && (
+                <TemplatesSection
+                  blueprint={{ recommended_templates: templates }}
+                  collapsible={false}
+                />
               )}
             </StepBody>
           )}
