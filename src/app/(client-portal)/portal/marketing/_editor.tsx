@@ -32,6 +32,7 @@ import { useActiveWorkspace } from '../_workspace';
 
 import { AiAssistantDialog } from './_AiAssistantDialog';
 import { InsightResultPanel, type InsightHandoff } from './_InsightResultPanel';
+import { marketingToInsightInputs } from './_insights-bridge';
 import { emptyAssets, type AssetsState } from './_assets';
 import {
   emptyBriefField,
@@ -385,6 +386,10 @@ export function MarketingEditor({
               {reportId && (
                 <InsightResultPanel
                   reportId={reportId}
+                  brief={
+                    marketingToInsightInputs(brief, assets, campaign).inputs
+                  }
+                  workspaceId={ws?.id}
                   handoff={handoff}
                   onHandoff={handleHandoff}
                 />

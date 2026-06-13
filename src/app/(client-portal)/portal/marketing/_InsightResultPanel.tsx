@@ -22,13 +22,15 @@ import { toast } from 'sonner';
 import { Button } from '@/components/atoms/button';
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
+
+import { InsightStepsDialog } from './_InsightStepsDialog';
 import type {
   ExperienceGoal,
   InsightReport,
   InsightStatus,
 } from '@/services/rexer/types';
 
-const GOAL_LABEL: Record<ExperienceGoal, string> = {
+export const GOAL_LABEL: Record<ExperienceGoal, string> = {
   product_discovery: 'Khám phá sản phẩm',
   interactive_story: 'Câu chuyện tương tác',
   comparison: 'So sánh lựa chọn',
@@ -51,10 +53,15 @@ export interface InsightHandoff {
 
 export function InsightResultPanel({
   reportId,
+  brief,
+  workspaceId,
   handoff,
   onHandoff,
 }: {
   reportId: string;
+  /** InsightBrief đã map từ Marketing — cho popup generate lại từng step. */
+  brief: Record<string, unknown>;
+  workspaceId?: string;
   handoff?: InsightHandoff;
   /** Lưu kết quả handoff vào notes campaign (editor tự PATCH). */
   onHandoff: (h: InsightHandoff) => void;
@@ -62,6 +69,8 @@ export function InsightResultPanel({
   const [report, setReport] = useState<InsightReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
+  const [stepsOpen, setStepsOpen] = useState(false);
+  const autoOpened = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const poll = useCallback(async () => {
@@ -72,6 +81,10 @@ export function InsightResultPanel({
       // Còn đang chạy → hẹn poll lại sau 4s (worker mất vài chục giây).
       if (r.status === 'queued' || r.status === 'running') {
         timer.current = setTimeout(poll, 4000);
+      } else if (r.status === 'succeeded' && !autoOpened.current) {
+        // Phân tích xong → mở popup 3 step 1 lần.
+        autoOpened.current = true;
+        setStepsOpen(true);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không tải được report');
@@ -91,6 +104,7 @@ export function InsightResultPanel({
       const res = await rexerApi.insights.handoff(reportId);
       const h = { template_id: res.template_id, edit_url: res.edit_url };
       onHandoff(h);
+      setStepsOpen(false);
       toast.success('Đã dựng template từ kết quả AI-Insights');
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Handoff thất bại');
@@ -201,17 +215,38 @@ export function InsightResultPanel({
               </Link>
             </div>
           ) : (
-            <Button size='sm' onClick={handleApply} disabled={applying}>
-              {applying ? (
-                <>
-                  <Loader2 className='size-4 animate-spin' /> Đang dựng…
-                </>
-              ) : (
-                'Dùng kết quả này → dựng template'
-              )}
-            </Button>
+            <div className='flex flex-wrap gap-2'>
+              <Button
+                size='sm'
+                variant='outline'
+                onClick={() => setStepsOpen(true)}
+              >
+                <Sparkles className='size-4' /> Xem từng bước
+              </Button>
+              <Button size='sm' onClick={handleApply} disabled={applying}>
+                {applying ? (
+                  <>
+                    <Loader2 className='size-4 animate-spin' /> Đang dựng…
+                  </>
+                ) : (
+                  'Dùng kết quả này → dựng template'
+                )}
+              </Button>
+            </div>
           )}
         </div>
+      )}
+
+      {report?.status === 'succeeded' && (
+        <InsightStepsDialog
+          open={stepsOpen}
+          onOpenChange={setStepsOpen}
+          report={report}
+          brief={brief}
+          workspaceId={workspaceId}
+          applying={applying}
+          onApply={handleApply}
+        />
       )}
     </div>
   );
