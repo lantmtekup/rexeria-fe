@@ -3,15 +3,18 @@
 /**
  * Popup review kết quả AI-Insights theo 3 step (yêu cầu 2026-06-13):
  *   1. Experience Goal · 2. Customer Journey · 3. Blocks + Templates.
- * Mỗi step hiện kết quả AI + nút "Generate lại" (gọi lại đúng phần đó) và
- * "Next"; step cuối là "Áp dụng → dựng template" (handoff).
  *
- * Generate lại từng phần dùng endpoint sync wizard-v2 (classify-goal /
- * suggest-journey); step 3 tạo report mới với selections đã chốt rồi poll.
- * Các endpoint này hiện 404 trên prod (audit §20) → fallback toast, UI không vỡ.
+ * Popup mở NGAY khi AI bắt đầu chạy: mỗi step hiện loading, điền dần khi step
+ * tương ứng trong `report.steps` xong (classify_goal / recommend_journey /
+ * recommend_blocks / recommend_templates). Mỗi step có "Generate lại" (gọi lại
+ * đúng phần đó) + "Next"; step cuối "Áp dụng → dựng template" (handoff, chỉ bật
+ * khi report đã succeeded).
+ *
+ * Generate lại + handoff dùng endpoint wizard-v2 (audit §20 đang 404 trên
+ * prod) → fallback toast, UI không vỡ.
  */
 
-import { Check, Loader2, RefreshCw, Sparkles, X } from 'lucide-react';
+import { Check, Loader2, RefreshCw, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -30,11 +33,44 @@ import type {
   InsightBlueprintBlocks,
   InsightBlueprintTemplates,
   InsightReport,
+  InsightReportStep,
+  InsightStepKey,
 } from '@/services/rexer/types';
 
 import { GOAL_LABEL } from './_InsightResultPanel';
 
 const STEPS = ['Experience Goal', 'Customer Journey', 'Blocks & Templates'];
+
+/* ── Trích output_payload của từng step trace (canonical key) ───────────── */
+
+const stepOf = (report: InsightReport, key: InsightStepKey) =>
+  report.steps?.find(s => s.step_key === key);
+
+const isDone = (s?: InsightReportStep) =>
+  s?.status === 'succeeded' || s?.status === 'skipped';
+
+function asGoal(s?: InsightReportStep): InsightBlueprintGoal | undefined {
+  const o = s?.output_payload as Partial<InsightBlueprintGoal> | undefined;
+  return o?.primary_goal ? (o as InsightBlueprintGoal) : undefined;
+}
+function asJourney(s?: InsightReportStep): InsightBlueprintJourney | undefined {
+  const o = s?.output_payload as Partial<InsightBlueprintJourney> | undefined;
+  return Array.isArray(o?.stages) ? (o as InsightBlueprintJourney) : undefined;
+}
+function asBlocks(s?: InsightReportStep): InsightBlueprintBlocks | undefined {
+  const o = s?.output_payload as Partial<InsightBlueprintBlocks> | undefined;
+  return Array.isArray(o?.blocks_by_stage)
+    ? (o as InsightBlueprintBlocks)
+    : undefined;
+}
+function asTemplates(
+  s?: InsightReportStep
+): InsightBlueprintTemplates | undefined {
+  const o = s?.output_payload as Partial<InsightBlueprintTemplates> | undefined;
+  return Array.isArray(o?.templates)
+    ? (o as InsightBlueprintTemplates)
+    : undefined;
+}
 
 export function InsightStepsDialog({
   open,
@@ -55,21 +91,41 @@ export function InsightStepsDialog({
   /** Bấm "Áp dụng" ở step cuối → handoff dựng template. */
   onApply: () => void;
 }) {
-  const bp = report.blueprint;
   const [step, setStep] = useState(0);
-  const [goal, setGoal] = useState<InsightBlueprintGoal | undefined>(
-    bp?.experience_goal
-  );
-  const [journey, setJourney] = useState<InsightBlueprintJourney | undefined>(
-    bp?.customer_journey
-  );
-  const [blocks, setBlocks] = useState<InsightBlueprintBlocks | undefined>(
-    bp?.recommended_blocks
-  );
-  const [templates, setTemplates] = useState<
-    InsightBlueprintTemplates | undefined
-  >(bp?.recommended_templates);
   const [busy, setBusy] = useState(false);
+  // Override từ "Generate lại" — ưu tiên hơn dữ liệu poll.
+  const [ovGoal, setOvGoal] = useState<InsightBlueprintGoal>();
+  const [ovJourney, setOvJourney] = useState<InsightBlueprintJourney>();
+  const [ovBlocks, setOvBlocks] = useState<InsightBlueprintBlocks>();
+  const [ovTemplates, setOvTemplates] = useState<InsightBlueprintTemplates>();
+
+  const bp = report.blueprint;
+  const running = report.status === 'queued' || report.status === 'running';
+  const failed = report.status === 'failed';
+
+  // Nguồn dữ liệu mỗi phần: override → step trace → blueprint (khi succeeded).
+  const goal =
+    ovGoal ?? asGoal(stepOf(report, 'classify_goal')) ?? bp?.experience_goal;
+  const journey =
+    ovJourney ??
+    asJourney(stepOf(report, 'recommend_journey')) ??
+    bp?.customer_journey;
+  const blocks =
+    ovBlocks ??
+    asBlocks(stepOf(report, 'recommend_blocks')) ??
+    bp?.recommended_blocks;
+  const templates =
+    ovTemplates ??
+    asTemplates(stepOf(report, 'recommend_templates')) ??
+    bp?.recommended_templates;
+
+  // Loading mỗi step: chưa có data + report còn đang chạy (step đó chưa xong).
+  const goalLoading =
+    !goal && running && !isDone(stepOf(report, 'classify_goal'));
+  const journeyLoading =
+    !journey && running && !isDone(stepOf(report, 'recommend_journey'));
+  const blocksLoading =
+    !blocks && running && !isDone(stepOf(report, 'recommend_blocks'));
 
   const unavailable = () =>
     toast.error('BE chưa hỗ trợ generate lại (wizard-v2 đang chờ deploy)');
@@ -83,7 +139,7 @@ export function InsightStepsDialog({
       });
       if (!r?.goals?.length) return unavailable();
       const top = r.goals[0];
-      setGoal({
+      setOvGoal({
         primary_goal: top.goal,
         confidence: top.confidence,
         rationale: top.rationale ?? '',
@@ -106,7 +162,7 @@ export function InsightStepsDialog({
         workspace_id: workspaceId,
       });
       if (!r?.journey) return unavailable();
-      setJourney(r.journey);
+      setOvJourney(r.journey);
       toast.success('Đã tạo lại Customer Journey');
     } finally {
       setBusy(false);
@@ -129,12 +185,11 @@ export function InsightStepsDialog({
           customer_journey: journey,
         },
       });
-      // Poll tối đa ~40s.
       for (let i = 0; i < 10; i++) {
         const r = await rexerApi.insights.get(rep.id);
         if (r.status === 'succeeded') {
-          setBlocks(r.blueprint?.recommended_blocks);
-          setTemplates(r.blueprint?.recommended_templates);
+          setOvBlocks(r.blueprint?.recommended_blocks);
+          setOvTemplates(r.blueprint?.recommended_templates);
           toast.success('Đã tạo lại Blocks & Templates');
           return;
         }
@@ -152,6 +207,7 @@ export function InsightStepsDialog({
   const regenerate = [regenGoal, regenJourney, regenBlocks][step];
   const blockCount =
     blocks?.blocks_by_stage?.reduce((n, s) => n + s.blocks.length, 0) ?? 0;
+  const canApply = report.status === 'succeeded';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -159,6 +215,11 @@ export function InsightStepsDialog({
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <Sparkles className='size-4 text-blue-600' /> Kết quả AI-Insights
+            {running && (
+              <span className='text-content-muted inline-flex items-center gap-1 text-xs font-normal'>
+                <Loader2 className='size-3 animate-spin' /> đang phân tích…
+              </span>
+            )}
           </DialogTitle>
         </DialogHeader>
 
@@ -198,7 +259,7 @@ export function InsightStepsDialog({
         {/* Step body */}
         <div className='max-h-[46vh] overflow-y-auto py-1'>
           {step === 0 && (
-            <StepBox empty={!goal} label='goal'>
+            <StepBox loading={goalLoading} empty={!goal} failed={failed}>
               {goal && (
                 <>
                   <p className='text-foreground text-base font-semibold'>
@@ -221,7 +282,11 @@ export function InsightStepsDialog({
           )}
 
           {step === 1 && (
-            <StepBox empty={!journey?.stages?.length} label='journey'>
+            <StepBox
+              loading={journeyLoading}
+              empty={!journey?.stages?.length}
+              failed={failed}
+            >
               {journey && (
                 <>
                   <p className='text-foreground text-sm font-semibold'>
@@ -252,7 +317,11 @@ export function InsightStepsDialog({
           )}
 
           {step === 2 && (
-            <StepBox empty={!blockCount} label='blocks'>
+            <StepBox
+              loading={blocksLoading}
+              empty={!blockCount}
+              failed={failed}
+            >
               {!!blockCount && (
                 <div className='flex flex-col gap-3'>
                   {blocks!.blocks_by_stage.map(s => (
@@ -316,7 +385,16 @@ export function InsightStepsDialog({
                 Next
               </Button>
             ) : (
-              <Button size='sm' onClick={onApply} disabled={busy || applying}>
+              <Button
+                size='sm'
+                onClick={onApply}
+                disabled={busy || applying || !canApply}
+                title={
+                  canApply
+                    ? undefined
+                    : 'Chờ AI phân tích xong mới áp dụng được'
+                }
+              >
                 {applying ? 'Đang dựng…' : 'Áp dụng → dựng template'}
               </Button>
             )}
@@ -328,19 +406,28 @@ export function InsightStepsDialog({
 }
 
 function StepBox({
+  loading,
   empty,
-  label,
+  failed,
   children,
 }: {
+  loading?: boolean;
   empty?: boolean;
-  label: string;
+  failed?: boolean;
   children: React.ReactNode;
 }) {
-  if (empty) {
+  if (loading) {
     return (
       <div className='border-border text-content-muted flex h-28 flex-col items-center justify-center gap-2 rounded-xl border border-dashed text-sm'>
-        <X className='size-4' />
-        Chưa có dữ liệu {label} — bấm Generate lại.
+        <Loader2 className='size-5 animate-spin text-blue-600' />
+        AI đang phân tích phần này…
+      </div>
+    );
+  }
+  if (empty) {
+    return (
+      <div className='border-border text-content-muted flex h-28 flex-col items-center justify-center gap-1 rounded-xl border border-dashed text-sm'>
+        {failed ? 'AI chạy thất bại phần này.' : 'Chưa có dữ liệu.'}
       </div>
     );
   }

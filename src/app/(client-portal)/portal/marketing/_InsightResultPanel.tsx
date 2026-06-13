@@ -75,16 +75,18 @@ export function InsightResultPanel({
 
   const poll = useCallback(async () => {
     try {
-      const r = await rexerApi.insights.get(reportId);
+      const r = await rexerApi.insights.get(reportId, true); // kèm steps
       setReport(r);
       setError(null);
+      // Mở popup 3 step 1 lần ngay khi có report (kể cả đang chạy) — trừ
+      // khi đã handoff (xem lại qua nút "Xem từng bước").
+      if (!autoOpened.current && r.status !== 'failed') {
+        autoOpened.current = true;
+        setStepsOpen(true);
+      }
       // Còn đang chạy → hẹn poll lại sau 4s (worker mất vài chục giây).
       if (r.status === 'queued' || r.status === 'running') {
         timer.current = setTimeout(poll, 4000);
-      } else if (r.status === 'succeeded' && !autoOpened.current) {
-        // Phân tích xong → mở popup 3 step 1 lần.
-        autoOpened.current = true;
-        setStepsOpen(true);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không tải được report');
@@ -237,7 +239,7 @@ export function InsightResultPanel({
         </div>
       )}
 
-      {report?.status === 'succeeded' && (
+      {report && (
         <InsightStepsDialog
           open={stepsOpen}
           onOpenChange={setStepsOpen}
