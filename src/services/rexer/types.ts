@@ -1029,8 +1029,11 @@ export interface CreateCampaignRequest {
   channels?: string[];
   budget_amount?: number;
   budget_currency?: string;
-  start_date?: SimpleDate;
-  end_date?: SimpleDate;
+  // BE NHẬN date dạng string `YYYY-MM-DD` khi create (bind format
+  // "2006-01-02" — probe 2026-06-12); chỉ khi ĐỌC mới trả wrapper SimpleDate
+  // `{'time.Time': iso}`. Gửi SimpleDate lên sẽ bị 400 bind_error.
+  start_date?: string;
+  end_date?: string;
   kpis?: CampaignKPI[];
   notes?: string;
   /** Lifecycle — defaults to `draft` when omitted. */
