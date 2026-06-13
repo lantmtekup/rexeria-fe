@@ -111,18 +111,37 @@ const SELECT_CLASS =
 
 /* ── 02 Marketing — Discovery / Concept / Assets ───────────────────────── */
 
+/** Field bắt buộc mỗi section (text chính phải có) — dùng cho validate. */
+export const REQUIRED_FIELDS: Record<'discovery' | 'concept', string[]> = {
+  discovery: DISCOVERY_FIELDS.map(f => f.key),
+  concept: CONCEPT_FIELDS.map(f => f.key),
+};
+
+/** Trả danh sách label field còn trống của 1 section brief. */
+export function missingBriefFields(
+  section: 'discovery' | 'concept',
+  brief: BriefState
+): string[] {
+  const defs = section === 'discovery' ? DISCOVERY_FIELDS : CONCEPT_FIELDS;
+  return defs
+    .filter(f => !(brief[section][f.key]?.text ?? '').trim())
+    .map(f => f.label);
+}
+
 export function StepMarketing({
   section,
   brief,
   onBriefChange,
   assets,
   onAssetsChange,
+  showErrors = false,
 }: {
   section: MarketingSection;
   brief: BriefState;
   onBriefChange: (next: BriefState) => void;
   assets: AssetsState;
   onAssetsChange: (next: AssetsState) => void;
+  showErrors?: boolean;
 }) {
   if (section === 'assets')
     return <AssetsSection assets={assets} onChange={onAssetsChange} />;
@@ -131,6 +150,7 @@ export function StepMarketing({
       section={section}
       brief={brief}
       onBriefChange={onBriefChange}
+      showErrors={showErrors}
     />
   );
 }
@@ -139,10 +159,12 @@ function BriefFields({
   section,
   brief,
   onBriefChange,
+  showErrors,
 }: {
   section: 'discovery' | 'concept';
   brief: BriefState;
   onBriefChange: (next: BriefState) => void;
+  showErrors?: boolean;
 }) {
   // key đang upload file đính kèm (spinner trên icon ⬆ của đúng mục đó)
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
@@ -195,6 +217,7 @@ function BriefFields({
                   files: fv.files.filter((_, x) => x !== i),
                 })
               }
+              error={showErrors && !fv.text.trim()}
             />
             {fv.extras.map((extra, i) => (
               <FeatureField

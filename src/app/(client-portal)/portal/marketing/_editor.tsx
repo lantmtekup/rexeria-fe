@@ -37,6 +37,7 @@ import { emptyAssets, type AssetsState } from './_assets';
 import {
   emptyBriefField,
   StepCampaign,
+  missingBriefFields,
   StepMarketing,
   type BriefField,
   type BriefState,
@@ -149,6 +150,7 @@ export function MarketingEditor({
     endDate: toDateInput(initial?.end_date),
   });
   const [saving, setSaving] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [reportId, setReportId] = useState<string | undefined>(
     parseReportId(initial?.notes)
@@ -246,8 +248,30 @@ export function MarketingEditor({
   };
 
   // Continue đi tuần tự rail Discovery → Concept → Assets → Campaign, tới
-  // Campaign thì Lưu/Tạo.
+  // Campaign thì Lưu/Tạo. Chặn sang step mới nếu section thiếu thông tin.
   const handleContinue = () => {
+    if (section === 'discovery' || section === 'concept') {
+      const missing = missingBriefFields(section, brief);
+      if (missing.length) {
+        setShowErrors(true);
+        toast.error(`Vui lòng nhập: ${missing.join(', ')}`);
+        return;
+      }
+    }
+    if (section === 'assets') {
+      const total = (['image', 'video', '3d'] as const).reduce(
+        (n, k) =>
+          n +
+          assets[k].items.length +
+          assets[k].folders.reduce((m, f) => m + f.items.length, 0),
+        0
+      );
+      if (total === 0) {
+        toast.error('Vui lòng tải lên ít nhất 1 tài nguyên (ảnh/video/3D)');
+        return;
+      }
+    }
+    setShowErrors(false);
     const i = SECTIONS.findIndex(s => s.key === section);
     if (i < SECTIONS.length - 1) setSection(SECTIONS[i + 1].key);
     else handleSave();
@@ -402,6 +426,7 @@ export function MarketingEditor({
               onBriefChange={setBrief}
               assets={assets}
               onAssetsChange={setAssets}
+              showErrors={showErrors}
             />
           )}
         </main>

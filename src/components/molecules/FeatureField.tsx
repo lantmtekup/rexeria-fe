@@ -46,6 +46,8 @@ export interface FeatureFieldProps extends DivAttrs {
   onRemove?: () => void;
   /** Thu gọn nội dung dài còn `rows` dòng, kèm nút See More / See Less. */
   collapsible?: boolean;
+  /** Hiện viền đỏ + dòng nhắc khi field bắt buộc đang trống. */
+  error?: boolean;
 }
 
 /** Icon ⓘ kèm tooltip hover — dùng chung cho FeatureField + Assets. */
@@ -89,6 +91,7 @@ function FeatureField({
   onRemoveAttachment,
   onRemove,
   collapsible = false,
+  error = false,
   className,
   ...props
 }: FeatureFieldProps) {
@@ -135,7 +138,14 @@ function FeatureField({
         {info && <InfoTip text={infoText} />}
       </div>
       <div className='flex flex-col gap-3'>
-        <div className='border-border bg-background focus-within:border-foreground/40 relative rounded-xl border p-4 transition-colors'>
+        <div
+          className={cn(
+            'bg-background relative rounded-xl border p-4 transition-colors',
+            error
+              ? 'border-destructive'
+              : 'border-border focus-within:border-foreground/40'
+          )}
+        >
           <div className='mb-1 flex items-center justify-between'>
             <span className='text-content-muted text-xs font-semibold'>
               Description
@@ -240,6 +250,9 @@ function FeatureField({
             </div>
           )}
         </div>
+        {error && (
+          <p className='text-destructive text-xs'>Vui lòng nhập nội dung.</p>
+        )}
         {showAddMore && (
           <button
             type='button'
