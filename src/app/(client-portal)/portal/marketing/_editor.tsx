@@ -9,7 +9,7 @@
  * BE chưa có entity Marketing → brief sống trong `campaign.notes` (JSON).
  */
 
-import { ArrowLeft, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { ArrowLeft, FlaskConical, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -33,6 +33,7 @@ import { useActiveWorkspace } from '../_workspace';
 import { AiAssistantDialog } from './_AiAssistantDialog';
 import { InsightResultPanel, type InsightHandoff } from './_InsightResultPanel';
 import { marketingToInsightInputs } from './_insights-bridge';
+import { HAPPY_CITY_BRIEF, HAPPY_CITY_CAMPAIGN } from './_seed';
 import { emptyAssets, type AssetsState } from './_assets';
 import {
   emptyBriefField,
@@ -304,6 +305,19 @@ export function MarketingEditor({
           <h1 className='text-foreground text-base font-semibold'>
             {mode === 'create' ? 'Create Marketing' : (initial?.name ?? '')}
           </h1>
+          <Button
+            variant='outline'
+            size='sm'
+            className='text-xs'
+            onClick={() => {
+              setBrief(HAPPY_CITY_BRIEF);
+              setCampaign(c => ({ ...c, ...HAPPY_CITY_CAMPAIGN }));
+              setShowErrors(false);
+              toast.success('Đã điền dữ liệu mẫu Happy City');
+            }}
+          >
+            <FlaskConical className='size-4' /> Điền mẫu
+          </Button>
         </div>
         <div className='flex items-center gap-3'>
           {mode === 'edit' && (
