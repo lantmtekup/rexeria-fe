@@ -18,6 +18,7 @@ import {
   Package,
   Settings,
   Sparkles,
+  Target,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -85,6 +86,12 @@ const NAV: NavItem[] = [
     href: '/portal/insights',
     label: 'AI-Insights',
     icon: Lightbulb,
+    group: 'Rexer Product',
+  },
+  {
+    href: '/portal/marketing',
+    label: 'Marketing',
+    icon: Target,
     group: 'Rexer Product',
   },
   { href: '/portal/media', label: 'Media', icon: FolderOpen, group: 'Assets' },
