@@ -7,7 +7,7 @@ import { MarketingEditor } from '../_editor';
 
 export default function NewMarketingPage() {
   return (
-    <PortalShell>
+    <PortalShell fullBleed>
       <MarketingEditor mode='create' />
     </PortalShell>
   );

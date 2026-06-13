@@ -107,7 +107,7 @@ function FeatureField({
 
   return (
     <div
-      className={cn('grid grid-cols-[160px_1fr] items-start gap-6', className)}
+      className={cn('grid grid-cols-[140px_1fr] items-start gap-4', className)}
       {...props}
     >
       <div className='text-foreground flex items-center gap-1 pt-2 text-sm font-semibold'>

@@ -48,7 +48,7 @@ export default function MarketingDetailPage({
   }, [id]);
 
   return (
-    <PortalShell>
+    <PortalShell fullBleed>
       {error ? (
         <div className='mx-auto max-w-md p-8 text-center'>
           <div className='rounded-2xl border border-rose-200 bg-rose-50 p-6'>

@@ -244,6 +244,14 @@ export function MarketingEditor({
     }
   };
 
+  // Continue đi tuần tự rail Discovery → Concept → Assets → Campaign, tới
+  // Campaign thì Lưu/Tạo.
+  const handleContinue = () => {
+    const i = SECTIONS.findIndex(s => s.key === section);
+    if (i < SECTIONS.length - 1) setSection(SECTIONS[i + 1].key);
+    else handleSave();
+  };
+
   const handleDelete = async () => {
     if (!initial) return;
     setDeleting(true);
@@ -258,7 +266,7 @@ export function MarketingEditor({
   };
 
   return (
-    <div className='bg-background flex min-h-full flex-col'>
+    <div className='bg-background flex min-h-[calc(100vh-57px)] flex-col'>
       <div className='border-border flex flex-wrap items-center justify-between gap-3 border-b px-6 py-3'>
         <div className='flex items-center gap-2'>
           <Button
@@ -303,18 +311,24 @@ export function MarketingEditor({
             </button>
             <button
               type='button'
-              onClick={handleSave}
+              onClick={handleContinue}
               disabled={saving}
               className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center px-5 text-sm font-semibold transition-colors disabled:opacity-60'
             >
-              {saving ? 'Đang lưu…' : 'Continue'}
+              {saving
+                ? 'Đang lưu…'
+                : section === 'campaign'
+                  ? mode === 'create'
+                    ? 'Tạo campaign'
+                    : 'Lưu thay đổi'
+                  : 'Continue'}
             </button>
           </div>
         </div>
       </div>
 
       <div className='flex flex-1'>
-        <aside className='border-border w-56 shrink-0 border-r px-4 py-5'>
+        <aside className='border-border w-48 shrink-0 border-r px-3 py-5'>
           <ul className='flex flex-col'>
             {SECTIONS.map(s => (
               <li key={s.key}>
@@ -335,9 +349,9 @@ export function MarketingEditor({
           </ul>
         </aside>
 
-        <main className='flex-1 px-8 py-6'>
+        <main className='flex-1 px-6 py-5'>
           {section === 'campaign' ? (
-            <div className='flex max-w-xl flex-col gap-4'>
+            <div className='flex max-w-lg flex-col gap-4'>
               <div className='grid gap-1.5'>
                 <Label htmlFor='me-product'>Sản phẩm</Label>
                 <select

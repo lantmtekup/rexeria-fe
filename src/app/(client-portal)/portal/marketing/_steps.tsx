@@ -174,14 +174,15 @@ function BriefFields({
   };
 
   return (
-    <div className='flex max-w-3xl flex-col gap-8'>
+    <div className='flex max-w-3xl flex-col gap-5'>
       {fields.map(f => {
         const fv = getField(f.key);
         return (
-          <div key={f.key} className='flex flex-col gap-3'>
+          <div key={f.key} className='flex flex-col gap-2'>
             <FeatureField
               label={f.label}
               infoText={f.info}
+              rows={3}
               placeholder={`Describe about ${f.label}`}
               value={fv.text}
               onChange={next => patchField(f.key, { text: next })}
@@ -200,6 +201,7 @@ function BriefFields({
                 label=''
                 info={false}
                 showUpload={false}
+                rows={3}
                 placeholder={`Describe more about ${f.label}`}
                 value={extra}
                 onChange={next =>
@@ -215,7 +217,7 @@ function BriefFields({
               />
             ))}
             {/* Nút thêm ô mô tả — luôn ở CUỐI cụm, dưới mọi ô extra. */}
-            <div className='grid grid-cols-[160px_1fr] gap-6'>
+            <div className='grid grid-cols-[140px_1fr] gap-4'>
               <span />
               <button
                 type='button'
