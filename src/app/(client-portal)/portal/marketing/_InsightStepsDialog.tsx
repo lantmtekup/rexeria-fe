@@ -44,7 +44,7 @@ import {
 } from '@/components/modules/Insights/steps/BlueprintBlocks';
 import { ConfidenceRing } from '@/components/modules/Insights/steps/ui';
 
-import { GOAL_LABEL } from './_insights-labels';
+import { GOAL_LABEL, type InsightSummary } from './_insights-labels';
 
 const STEPS = ['Experience Goal', 'Customer Journey', 'Blocks', 'Templates'];
 const GOAL_OPTIONS = Object.keys(GOAL_LABEL) as (keyof typeof GOAL_LABEL)[];
@@ -86,8 +86,10 @@ export function InsightStepsDialog({
   report,
   brief,
   workspaceId,
+  savedGoal,
   applying,
   onApply,
+  onSaved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -95,14 +97,21 @@ export function InsightStepsDialog({
   /** InsightBrief đã map từ Marketing — dùng để generate lại từng phần. */
   brief: Record<string, unknown>;
   workspaceId?: string;
+  /** Goal đã sửa lần trước (lưu trong notes) — seed lại khi mở. */
+  savedGoal?: InsightBlueprintGoal;
   applying?: boolean;
   /** Bấm "Áp dụng" ở step cuối → handoff dựng template. */
   onApply: () => void;
+  /** Lưu chỉnh sửa: PATCH journey/blocks lên BE + đẩy summary (kèm goal) lên. */
+  onSaved?: (s: InsightSummary) => void;
 }) {
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
-  // Override từ "Generate lại" — ưu tiên hơn dữ liệu poll.
-  const [ovGoal, setOvGoal] = useState<InsightBlueprintGoal>();
+  const [saving, setSaving] = useState(false);
+  // Override từ "Generate lại" / sửa tay — ưu tiên hơn dữ liệu poll.
+  const [ovGoal, setOvGoal] = useState<InsightBlueprintGoal | undefined>(
+    savedGoal
+  );
   const [ovJourney, setOvJourney] = useState<InsightBlueprintJourney>();
   const [ovBlocks, setOvBlocks] = useState<InsightBlueprintBlocks>();
   const [ovTemplates, setOvTemplates] = useState<InsightBlueprintTemplates>();
@@ -222,6 +231,33 @@ export function InsightStepsDialog({
     !isDone(stepOf(report, 'recommend_templates'));
   const canApply = report.status === 'succeeded';
 
+  // Lưu chỉnh sửa: journey/blocks lên BE (KB3 — BE chỉ nhận 2 phần này);
+  // goal-edit gói trong summary để editor ghi vào notes (BE chưa nhận goal).
+  const handleSaveEdits = async () => {
+    setSaving(true);
+    try {
+      if (journey || blocks) {
+        await rexerApi.insights.updateBlueprint(report.id, {
+          customer_journey: journey,
+          recommended_blocks: blocks,
+        });
+      }
+      onSaved?.({
+        status: 'succeeded',
+        goal: goal?.primary_goal,
+        goalLabel: goal ? GOAL_LABEL[goal.primary_goal] : undefined,
+        goalEdit: goal,
+        journeyName: journey?.journey_pattern_name,
+        blockCount,
+      });
+      toast.success('Đã lưu chỉnh sửa');
+    } catch {
+      toast.error('Lưu lên BE thất bại (wizard-v2 đang chờ deploy)');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-h-[90vh] !w-[96vw] !max-w-[1150px]'>
@@ -335,6 +371,17 @@ export function InsightStepsDialog({
             Back
           </Button>
           <div className='flex items-center gap-2'>
+            {onSaved && (
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={handleSaveEdits}
+                disabled={busy || saving || !canApply}
+                title='Lưu chỉnh sửa lên hệ thống'
+              >
+                {saving ? 'Đang lưu…' : 'Lưu'}
+              </Button>
+            )}
             <Button
               variant='outline'
               size='sm'

@@ -24,7 +24,11 @@ import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 
 import { InsightStepsDialog } from './_InsightStepsDialog';
-import { GOAL_LABEL } from './_insights-labels';
+import {
+  GOAL_LABEL,
+  deriveSummary,
+  type InsightSummary,
+} from './_insights-labels';
 import type { InsightReport, InsightStatus } from '@/services/rexer/types';
 
 const STATUS_META: Record<InsightStatus, { label: string; cls: string }> = {
@@ -44,21 +48,31 @@ export function InsightResultPanel({
   brief,
   workspaceId,
   handoff,
+  summary,
+  autoOpenId,
   onHandoff,
+  onSummary,
 }: {
   reportId: string;
   /** InsightBrief đã map từ Marketing — cho popup generate lại từng step. */
   brief: Record<string, unknown>;
   workspaceId?: string;
   handoff?: InsightHandoff;
+  /** Snapshot từ notes — hiện ngay trước khi poll xong. */
+  summary?: InsightSummary;
+  /** Chỉ auto-mở popup khi id này == reportId (report vừa chạy phiên này). */
+  autoOpenId?: string;
   /** Lưu kết quả handoff vào notes campaign (editor tự PATCH). */
   onHandoff: (h: InsightHandoff) => void;
+  /** Đẩy tóm tắt kết quả lên editor để lưu vào notes (list card + instant). */
+  onSummary?: (s: InsightSummary) => void;
 }) {
   const [report, setReport] = useState<InsightReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
   const [stepsOpen, setStepsOpen] = useState(false);
   const autoOpened = useRef(false);
+  const summarized = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const poll = useCallback(async () => {
@@ -66,11 +80,20 @@ export function InsightResultPanel({
       const r = await rexerApi.insights.get(reportId, true); // kèm steps
       setReport(r);
       setError(null);
-      // Mở popup 3 step 1 lần ngay khi có report (kể cả đang chạy) — trừ
-      // khi đã handoff (xem lại qua nút "Xem từng bước").
-      if (!autoOpened.current && r.status !== 'failed') {
+      // Auto-mở popup CHỈ cho report vừa chạy phiên này (autoOpenId), không
+      // bung lại mỗi lần vào lại trang.
+      if (
+        !autoOpened.current &&
+        autoOpenId === reportId &&
+        r.status !== 'failed'
+      ) {
         autoOpened.current = true;
         setStepsOpen(true);
+      }
+      // Xong → đẩy summary lên editor 1 lần để lưu notes.
+      if (r.status === 'succeeded' && !summarized.current) {
+        summarized.current = true;
+        onSummary?.(deriveSummary(r));
       }
       // Còn đang chạy → hẹn poll lại sau 4s (worker mất vài chục giây).
       if (r.status === 'queued' || r.status === 'running') {
@@ -79,7 +102,7 @@ export function InsightResultPanel({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không tải được report');
     }
-  }, [reportId]);
+  }, [reportId, autoOpenId, onSummary]);
 
   useEffect(() => {
     poll();
@@ -123,11 +146,21 @@ export function InsightResultPanel({
       {error ? (
         <p className='text-destructive text-xs'>{error}</p>
       ) : !report ? (
-        <StatusLine
-          icon='spin'
-          text='Đang tải report…'
-          cls='text-content-muted'
-        />
+        // Hiện summary từ notes ngay trong lúc poll BE (đỡ nhấp nháy).
+        <div className='flex flex-col gap-2'>
+          {summary?.goalLabel && (
+            <Field label='Experience goal'>
+              <span className='text-foreground text-sm font-medium'>
+                {summary.goalLabel}
+              </span>
+            </Field>
+          )}
+          <StatusLine
+            icon='spin'
+            text='Đang tải report…'
+            cls='text-content-muted'
+          />
+        </div>
       ) : status === 'failed' ? (
         <div className='flex flex-col gap-2'>
           <StatusLine
@@ -234,8 +267,10 @@ export function InsightResultPanel({
           report={report}
           brief={brief}
           workspaceId={workspaceId}
+          savedGoal={summary?.goalEdit}
           applying={applying}
           onApply={handleApply}
+          onSaved={onSummary}
         />
       )}
     </div>

@@ -33,6 +33,7 @@ import { useActiveWorkspace } from '../_workspace';
 import { AiAssistantDialog } from './_AiAssistantDialog';
 import { InsightResultPanel, type InsightHandoff } from './_InsightResultPanel';
 import { marketingToInsightInputs } from './_insights-bridge';
+import { type InsightSummary } from './_insights-labels';
 import { HAPPY_CITY_BRIEF, HAPPY_CITY_CAMPAIGN } from './_seed';
 import { emptyAssets, type AssetsState } from './_assets';
 import {
@@ -46,8 +47,11 @@ import {
   type MarketingSection,
 } from './_steps';
 
-type SectionKey = MarketingSection | 'campaign';
+type SectionKey = MarketingSection | 'campaign' | 'insights';
 
+// `insights` không nằm trong luồng Continue (chỉ hiện khi đã chạy AI) — tách
+// khỏi STEP_FLOW để Continue đi đúng Discovery→Concept→Assets→Campaign.
+const STEP_FLOW: SectionKey[] = ['discovery', 'concept', 'assets', 'campaign'];
 const SECTIONS: { key: SectionKey; label: string }[] = [
   { key: 'discovery', label: 'Discovery' },
   { key: 'concept', label: 'Concept' },
@@ -90,6 +94,16 @@ function parseHandoff(notes?: string): InsightHandoff | undefined {
   try {
     return notes
       ? (JSON.parse(notes)?.insight_handoff ?? undefined)
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function parseSummary(notes?: string): InsightSummary | undefined {
+  try {
+    return notes
+      ? (JSON.parse(notes)?.insight_summary ?? undefined)
       : undefined;
   } catch {
     return undefined;
@@ -159,6 +173,12 @@ export function MarketingEditor({
   const [handoff, setHandoff] = useState<InsightHandoff | undefined>(
     parseHandoff(initial?.notes)
   );
+  const [summary, setSummary] = useState<InsightSummary | undefined>(
+    parseSummary(initial?.notes)
+  );
+  // ID report vừa chạy phiên này → chỉ auto-mở popup cho report mới, không
+  // bung lại mỗi lần vào lại trang.
+  const [freshReportId, setFreshReportId] = useState<string | undefined>();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -175,11 +195,16 @@ export function MarketingEditor({
   const product = products?.find(p => p.id === productId);
 
   // Notes = nguồn lưu duy nhất cho brief/assets + liên kết AI-Insights.
-  const buildNotes = (over?: { reportId?: string; handoff?: InsightHandoff }) =>
+  const buildNotes = (over?: {
+    reportId?: string;
+    handoff?: InsightHandoff;
+    summary?: InsightSummary;
+  }) =>
     JSON.stringify({
       marketing_brief: { ...brief, assets },
       insight_report_id: over?.reportId ?? reportId,
       insight_handoff: over?.handoff ?? handoff,
+      insight_summary: over?.summary ?? summary,
     });
 
   const handleSave = async () => {
@@ -223,6 +248,8 @@ export function MarketingEditor({
 
   const handleReportStarted = async (id: string) => {
     setReportId(id);
+    setFreshReportId(id); // report mới → popup auto-mở 1 lần
+    setSection('insights'); // nhảy sang tab kết quả
     // Edit mode: ghi luôn vào notes để không mất khi rời trang chưa bấm Lưu.
     if (mode === 'edit' && initial) {
       try {
@@ -231,6 +258,21 @@ export function MarketingEditor({
         });
       } catch {
         // notes sẽ được ghi lại khi user bấm Lưu — không chặn flow.
+      }
+    }
+  };
+
+  // Tóm tắt kết quả AI (goal/journey/blocks) → lưu vào notes cho list card +
+  // panel hiện ngay không cần poll. Edit mode PATCH luôn.
+  const handleSummary = async (s: InsightSummary) => {
+    setSummary(s);
+    if (mode === 'edit' && initial) {
+      try {
+        await rexerApi.campaigns.update(initial.id, {
+          notes: buildNotes({ summary: s }),
+        });
+      } catch {
+        /* ghi lại khi bấm Lưu */
       }
     }
   };
@@ -273,8 +315,8 @@ export function MarketingEditor({
       }
     }
     setShowErrors(false);
-    const i = SECTIONS.findIndex(s => s.key === section);
-    if (i < SECTIONS.length - 1) setSection(SECTIONS[i + 1].key);
+    const i = STEP_FLOW.indexOf(section);
+    if (i >= 0 && i < STEP_FLOW.length - 1) setSection(STEP_FLOW[i + 1]);
     else handleSave();
   };
 
@@ -385,6 +427,23 @@ export function MarketingEditor({
                 </button>
               </li>
             ))}
+            {/* Tab AI-Insights dưới Campaign — chỉ hiện khi đã chạy AI. */}
+            {reportId && (
+              <li>
+                <button
+                  type='button'
+                  onClick={() => setSection('insights')}
+                  className={cn(
+                    'flex w-full items-center gap-1.5 border-l-2 px-3 py-2 text-left text-sm transition-colors',
+                    section === 'insights'
+                      ? 'border-foreground text-foreground font-medium'
+                      : 'text-content-muted hover:text-foreground border-transparent'
+                  )}
+                >
+                  <Sparkles className='size-3.5 text-blue-600' /> AI-Insights
+                </button>
+              </li>
+            )}
           </ul>
         </aside>
 
@@ -418,21 +477,27 @@ export function MarketingEditor({
                   onChange={setLandingId}
                 />
               </div>
-
-              {/* GĐ2: kết quả AI-Insights đổ về setup cuối — chỉ hiện khi đã
-                  chạy từ nút AI-Assistant (có report_id). */}
-              {reportId && (
-                <InsightResultPanel
-                  reportId={reportId}
-                  brief={
-                    marketingToInsightInputs(brief, assets, campaign).inputs
-                  }
-                  workspaceId={ws?.id}
-                  handoff={handoff}
-                  onHandoff={handleHandoff}
-                />
-              )}
             </div>
+          ) : section === 'insights' ? (
+            // Tab AI-Insights: kết quả AI đổ về (panel đầy đủ). Đọc summary từ
+            // notes trước → hiện ngay, poll BE để cập nhật + cho generate lại.
+            reportId ? (
+              <InsightResultPanel
+                reportId={reportId}
+                brief={marketingToInsightInputs(brief, assets, campaign).inputs}
+                workspaceId={ws?.id}
+                handoff={handoff}
+                summary={summary}
+                autoOpenId={freshReportId}
+                onHandoff={handleHandoff}
+                onSummary={handleSummary}
+              />
+            ) : (
+              <p className='text-content-muted text-sm'>
+                Chưa chạy AI-Insights. Bấm nút AI-Assistant trên thanh đầu để
+                phân tích từ dữ liệu Marketing.
+              </p>
+            )
           ) : (
             <StepMarketing
               section={section}

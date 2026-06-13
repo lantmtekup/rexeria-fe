@@ -10,7 +10,7 @@
  * BE chưa có teams.
  */
 
-import { ChevronDown, Megaphone, Network, Plus } from 'lucide-react';
+import { ChevronDown, Megaphone, Network, Plus, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -33,6 +33,21 @@ interface MarketingGroup {
   createdAt?: string;
   campaigns: Campaign[];
   active: boolean;
+  /** Tóm tắt AI-Insights lấy từ notes (nếu có) — hiện chip trên card. */
+  insight?: { goalLabel?: string; handed?: boolean };
+}
+
+function readInsight(c: Campaign): MarketingGroup['insight'] | undefined {
+  try {
+    const n = c.notes ? JSON.parse(c.notes) : null;
+    if (!n?.insight_report_id) return undefined;
+    return {
+      goalLabel: n.insight_summary?.goalLabel,
+      handed: !!n.insight_handoff?.template_id,
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 function groupCampaigns(items: Campaign[]): MarketingGroup[] {
@@ -49,6 +64,7 @@ function groupCampaigns(items: Campaign[]): MarketingGroup[] {
       .sort()[0],
     campaigns,
     active: campaigns.some(c => c.status === 'active'),
+    insight: campaigns.map(readInsight).find(Boolean),
   }));
 }
 
@@ -126,7 +142,19 @@ function MarketingCard({ group }: { group: MarketingGroup }) {
     <section className='bg-card border-border hover:border-primary/40 rounded-2xl border p-5 shadow-sm transition-colors'>
       <div className='flex items-start justify-between'>
         <Link href={detailHref} className='min-w-0 flex-1'>
-          <h2 className='text-foreground text-base font-bold'>{group.title}</h2>
+          <div className='flex flex-wrap items-center gap-2'>
+            <h2 className='text-foreground text-base font-bold'>
+              {group.title}
+            </h2>
+            {group.insight && (
+              <span className='text-2xs inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-600'>
+                <Sparkles className='size-3' />
+                {group.insight.handed
+                  ? 'Đã dựng template'
+                  : (group.insight.goalLabel ?? 'AI-Insights')}
+              </span>
+            )}
+          </div>
           <p className='text-content-muted mt-0.5 text-xs'>
             Create: {fmtCreated(group.createdAt)}
           </p>
