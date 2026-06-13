@@ -57,7 +57,7 @@ function useGoalLabel() {
 }
 
 /** Section experience goal: vòng tin cậy + goal chính + lý do (+ goal phụ nếu có). */
-function GoalSection({ blueprint }: { blueprint: InsightBlueprint }) {
+export function GoalSection({ blueprint }: { blueprint: InsightBlueprint }) {
   const t = useTranslations('insights');
   const goalLabel = useGoalLabel();
   const goal = blueprint.experience_goal;
@@ -104,7 +104,7 @@ function GoalSection({ blueprint }: { blueprint: InsightBlueprint }) {
 }
 
 /** Section customer journey: tên pattern + lý do + các stage có thứ tự (timeline). */
-function JourneySection({ blueprint }: { blueprint: InsightBlueprint }) {
+export function JourneySection({ blueprint }: { blueprint: InsightBlueprint }) {
   const t = useTranslations('insights');
   const journey = blueprint.customer_journey;
   if (!journey) return null;

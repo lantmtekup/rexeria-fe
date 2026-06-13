@@ -37,7 +37,14 @@ import type {
   InsightStepKey,
 } from '@/services/rexer/types';
 
-import { GOAL_LABEL } from './_InsightResultPanel';
+import {
+  GoalSection,
+  JourneySection,
+} from '@/components/modules/Insights/steps/BlueprintStep';
+import {
+  BlocksSection,
+  TemplatesSection,
+} from '@/components/modules/Insights/steps/BlueprintBlocks';
 
 const STEPS = ['Experience Goal', 'Customer Journey', 'Blocks & Templates'];
 
@@ -211,7 +218,7 @@ export function InsightStepsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-w-xl'>
+      <DialogContent className='max-w-3xl'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <Sparkles className='size-4 text-blue-600' /> Kết quả AI-Insights
@@ -256,28 +263,11 @@ export function InsightStepsDialog({
           ))}
         </ol>
 
-        {/* Step body */}
-        <div className='max-h-[46vh] overflow-y-auto py-1'>
+        {/* Step body — render đúng các section FULL của trang report. */}
+        <div className='max-h-[60vh] overflow-y-auto py-1'>
           {step === 0 && (
             <StepBox loading={goalLoading} empty={!goal} failed={failed}>
-              {goal && (
-                <>
-                  <p className='text-foreground text-base font-semibold'>
-                    {GOAL_LABEL[goal.primary_goal] ?? goal.primary_goal}
-                  </p>
-                  {goal.rationale && (
-                    <p className='text-content-muted mt-1 text-sm'>
-                      {goal.rationale}
-                    </p>
-                  )}
-                  {goal.secondary_goal && (
-                    <p className='text-content-muted mt-2 text-xs'>
-                      Phụ:{' '}
-                      {GOAL_LABEL[goal.secondary_goal] ?? goal.secondary_goal}
-                    </p>
-                  )}
-                </>
-              )}
+              {goal && <GoalSection blueprint={{ experience_goal: goal }} />}
             </StepBox>
           )}
 
@@ -288,30 +278,7 @@ export function InsightStepsDialog({
               failed={failed}
             >
               {journey && (
-                <>
-                  <p className='text-foreground text-sm font-semibold'>
-                    {journey.journey_pattern_name}
-                  </p>
-                  <ol className='mt-3 flex flex-col gap-2'>
-                    {journey.stages.map((s, i) => (
-                      <li key={s.key} className='flex gap-3'>
-                        <span className='bg-primary/10 text-primary flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold'>
-                          {i + 1}
-                        </span>
-                        <div>
-                          <p className='text-foreground text-sm font-medium'>
-                            {s.name}
-                          </p>
-                          {s.intent && (
-                            <p className='text-content-muted text-xs'>
-                              {s.intent}
-                            </p>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                </>
+                <JourneySection blueprint={{ customer_journey: journey }} />
               )}
             </StepBox>
           )}
@@ -323,28 +290,15 @@ export function InsightStepsDialog({
               failed={failed}
             >
               {!!blockCount && (
-                <div className='flex flex-col gap-3'>
-                  {blocks!.blocks_by_stage.map(s => (
-                    <div key={s.stage_key}>
-                      <p className='text-content-muted text-2xs font-semibold uppercase'>
-                        {s.stage_key}
-                      </p>
-                      <div className='mt-1 flex flex-wrap gap-1.5'>
-                        {s.blocks.map(b => (
-                          <span
-                            key={b.block_type_code}
-                            className='border-border bg-background rounded-md border px-2 py-0.5 text-xs'
-                          >
-                            {b.block_name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                <div className='flex flex-col gap-4'>
+                  <BlocksSection
+                    blueprint={{ recommended_blocks: blocks }}
+                    reportId={report.id}
+                  />
                   {!!templates?.templates?.length && (
-                    <p className='text-content-muted text-xs'>
-                      + {templates.templates.length} template gợi ý
-                    </p>
+                    <TemplatesSection
+                      blueprint={{ recommended_templates: templates }}
+                    />
                   )}
                 </div>
               )}
