@@ -179,7 +179,8 @@
       "deleteDesc": "Campaign \"{name}\" (including the brief) will be removed permanently. This cannot be undone.",
       "cancel": "Cancel",
       "delete": "Delete",
-      "deleting": "Deleting…"
+      "deleting": "Deleting…",
+      "createProductFirst": "+ Create a product first"
     },
     "marketingSteps": {
       "info_marketingConcept": "Overall direction of the campaign — the core value to convey to customers.",
@@ -200,7 +201,12 @@
       "budget": "Budget",
       "currency": "Currency",
       "startDate": "Start",
-      "endDate": "End"
+      "endDate": "End",
+      "primaryAgeLabel": "Age",
+      "primaryAgePh": "Input age",
+      "primaryBudgetLabel": "Budget",
+      "primaryBudgetPh": "Input your Budget",
+      "descriptionLabel": "Description"
     },
     "marketingAssets": {
       "infoImage": "Product / lifestyle images for landing pages and ads.",

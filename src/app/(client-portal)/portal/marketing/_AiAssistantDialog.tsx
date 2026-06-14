@@ -23,6 +23,7 @@ import {
 } from '@/components/atoms/dialog';
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
+import type { Product } from '@/services/rexer/types';
 
 import type { AssetsState } from './_assets';
 import { marketingToInsightInputs } from './_insights-bridge';
@@ -35,6 +36,7 @@ export function AiAssistantDialog({
   assets,
   campaign,
   productId,
+  product,
   campaignId,
   workspaceId,
   existingReportId,
@@ -46,6 +48,7 @@ export function AiAssistantDialog({
   assets: AssetsState;
   campaign: CampaignState;
   productId: string;
+  product?: Product;
   campaignId?: string;
   workspaceId?: string;
   existingReportId?: string;
@@ -54,8 +57,8 @@ export function AiAssistantDialog({
   const t = useTranslations('portal');
   const [running, setRunning] = useState(false);
   const { inputs, coverage } = useMemo(
-    () => marketingToInsightInputs(brief, assets, campaign),
-    [brief, assets, campaign]
+    () => marketingToInsightInputs(brief, assets, campaign, product),
+    [brief, assets, campaign, product]
   );
   const filled = coverage.filter(c => c.ok).length;
 

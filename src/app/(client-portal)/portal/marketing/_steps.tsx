@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
-import { FeatureField } from '@/components/molecules/FeatureField';
+import { FeatureField, InfoTip } from '@/components/molecules/FeatureField';
 import { cn } from '@/lib/cn';
 import type { CampaignObjective } from '@/services/rexer/types';
 
@@ -28,8 +28,12 @@ import {
 
 export type MarketingSection = 'discovery' | 'concept' | 'assets';
 
-/** 1 mục brief: text chính + các ô mô tả thêm (Add more feature) + file kèm. */
+/** 1 mục brief: ô primary (Age/Budget — chỉ field có cấu hình), text mô tả
+ * chính + các ô mô tả thêm (Add more feature) + file kèm. */
 export interface BriefField {
+  /** Giá trị ô labeled phía trên Description (Age cho Target audience,
+   * Budget cho Plan). Chỉ field có `primary` trong def mới dùng. */
+  primary?: string;
   text: string;
   extras: string[];
   files: AssetItem[];
@@ -57,18 +61,30 @@ export interface CampaignState {
   endDate: string;
 }
 
-export const DISCOVERY_FIELDS = [
+/** primary = key cấu hình ô labeled phía trên Description (Age/Budget). */
+type BriefFieldDef = { key: string; label: string; primary?: 'age' | 'budget' };
+
+export const DISCOVERY_FIELDS: readonly BriefFieldDef[] = [
   { key: 'marketingConcept', label: 'Marketing Concept' },
   { key: 'messageDevelopment', label: 'Message Development' },
   { key: 'creativeDirection', label: 'Creative Direction' },
   { key: 'contentMap', label: 'Content Map' },
-] as const;
+];
 
-export const CONCEPT_FIELDS = [
+export const CONCEPT_FIELDS: readonly BriefFieldDef[] = [
   { key: 'aboutConcept', label: 'About Concept' },
-  { key: 'targetAudience', label: 'Target audience' },
-  { key: 'plan', label: 'Plan' },
-] as const;
+  { key: 'targetAudience', label: 'Target audience', primary: 'age' },
+  { key: 'plan', label: 'Plan', primary: 'budget' },
+];
+
+/** Label + placeholder (i18n key) cho ô primary. */
+const PRIMARY_CFG: Record<
+  'age' | 'budget',
+  { labelKey: string; phKey: string }
+> = {
+  age: { labelKey: 'primaryAgeLabel', phKey: 'primaryAgePh' },
+  budget: { labelKey: 'primaryBudgetLabel', phKey: 'primaryBudgetPh' },
+};
 
 const OBJECTIVES: { value: CampaignObjective; infoKey: string }[] = [
   { value: 'awareness', infoKey: 'objAwareness' },
@@ -173,11 +189,35 @@ function BriefFields({
     <div className='flex max-w-3xl flex-col gap-5'>
       {fields.map(f => {
         const fv = getField(f.key);
+        const primary = f.primary ? PRIMARY_CFG[f.primary] : null;
         return (
           <div key={f.key} className='flex flex-col gap-2'>
+            {primary && (
+              // Header section + ô primary (Age/Budget) label-on-top, theo design.
+              <div className='grid grid-cols-[140px_1fr] gap-4'>
+                <div className='flex items-start gap-1.5 pt-2.5 text-sm font-semibold'>
+                  {f.label}
+                  <InfoTip text={t(`marketingSteps.info_${f.key}`)} />
+                </div>
+                <div className='border-input focus-within:border-foreground rounded-xl border px-3.5 py-2'>
+                  <div className='text-foreground text-xs font-semibold'>
+                    {t(`marketingSteps.${primary.labelKey}`)}
+                  </div>
+                  <input
+                    className='text-foreground placeholder:text-content-muted mt-0.5 w-full border-0 bg-transparent p-0 text-sm outline-none'
+                    placeholder={t(`marketingSteps.${primary.phKey}`)}
+                    value={fv.primary ?? ''}
+                    onChange={e =>
+                      patchField(f.key, { primary: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+            )}
             <FeatureField
-              label={f.label}
-              infoText={t(`marketingSteps.info_${f.key}`)}
+              label={primary ? t('marketingSteps.descriptionLabel') : f.label}
+              info={!primary}
+              infoText={primary ? undefined : t(`marketingSteps.info_${f.key}`)}
               rows={3}
               collapsible
               placeholder={`Describe about ${f.label}`}

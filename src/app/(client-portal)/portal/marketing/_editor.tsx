@@ -11,6 +11,7 @@
 
 import { ArrowLeft, FlaskConical, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -486,6 +487,14 @@ export function MarketingEditor({
                     </option>
                   ))}
                 </select>
+                {products?.length === 0 && (
+                  <Link
+                    href='/portal/products'
+                    className='text-primary text-xs font-medium hover:underline'
+                  >
+                    {t('marketingEditor.createProductFirst')}
+                  </Link>
+                )}
               </div>
               <StepCampaign value={campaign} onChange={setCampaign} />
               <div className='grid gap-1.5'>
@@ -536,6 +545,7 @@ export function MarketingEditor({
         assets={assets}
         campaign={campaign}
         productId={productId}
+        product={product}
         campaignId={mode === 'edit' ? initial?.id : undefined}
         workspaceId={ws?.id}
         existingReportId={reportId}

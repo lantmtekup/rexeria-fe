@@ -4,6 +4,9 @@
     "locale_en": "EN",
     "locale_vi": "VN",
     "a11y_switchToEnglish": "Chuyển sang tiếng Anh",
-    "a11y_switchToVietnamese": "Chuyển sang tiếng Việt"
+    "a11y_switchToVietnamese": "Chuyển sang tiếng Việt",
+    "landingPickerLoading": "Đang tải landing…",
+    "landingPickerNone": "— Không gắn landing —",
+    "landingPickerCurrent": "Landing hiện tại ({id}…)"
   }
 }

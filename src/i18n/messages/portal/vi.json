@@ -179,7 +179,8 @@
       "deleteDesc": "Campaign “{name}” (kèm brief) sẽ bị xoá khỏi hệ thống. Không hoàn tác được.",
       "cancel": "Huỷ",
       "delete": "Xoá",
-      "deleting": "Đang xoá…"
+      "deleting": "Đang xoá…",
+      "createProductFirst": "+ Tạo sản phẩm trước"
     },
     "marketingSteps": {
       "info_marketingConcept": "Định hướng tổng thể của chiến dịch — giá trị cốt lõi muốn truyền tải tới khách hàng.",
@@ -200,7 +201,12 @@
       "budget": "Ngân sách",
       "currency": "Tiền tệ",
       "startDate": "Bắt đầu",
-      "endDate": "Kết thúc"
+      "endDate": "Kết thúc",
+      "primaryAgeLabel": "Độ tuổi",
+      "primaryAgePh": "Nhập độ tuổi",
+      "primaryBudgetLabel": "Ngân sách",
+      "primaryBudgetPh": "Nhập ngân sách",
+      "descriptionLabel": "Mô tả"
     },
     "marketingAssets": {
       "infoImage": "Ảnh sản phẩm / lifestyle dùng cho landing page và quảng cáo.",
