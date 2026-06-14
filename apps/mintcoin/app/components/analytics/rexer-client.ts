@@ -1,11 +1,7 @@
 // ReXeR analytics client — push (anonymous /v1/track) + read (authed page APIs).
 // Contract mirrors be-ReXeR.ai/docs/be-analytics-track-integration.md.
 
-import {
-  REXER_API_BASE,
-  REXER_PAGE_ID,
-  REXER_TRACKING_KEY,
-} from './analytics-data';
+import { REXER_PAGE_ID, REXER_TRACKING_KEY } from './analytics-data';
 
 // ── identity ────────────────────────────────────────────────────────────────
 function rid(): string {
@@ -97,7 +93,11 @@ export function track(eventType: TrackEventType, opts: TrackOpts = {}): void {
   if (REXER_TRACKING_KEY) headers['X-ReXeR-Key'] = REXER_TRACKING_KEY;
 
   try {
-    fetch(`${REXER_API_BASE}/v1/track`, {
+    // Routed through our same-origin /api/track proxy: the ReXeR key only
+    // whitelists the prod domain as an Origin, and the browser can't forge the
+    // Origin header — so the server forwards with the allowed Origin. Works
+    // identically on localhost dev and the deployed domain.
+    fetch(`/api/track`, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
@@ -155,4 +155,24 @@ export async function fetchBlocks(range: string): Promise<BlockRow[] | null> {
     `/pages/${REXER_PAGE_ID}/analytics/blocks?range=${range}`
   );
   return res ? res.items : null;
+}
+
+// Per-CTA click breakdown (group by dimensions.cta_id). Our clicks are pushed as
+// event_type `block_click` with the element's data-cta-id mirrored to
+// dimensions.cta_id, so we group those. Returns a { cta_id → click count } map.
+interface BreakdownRow {
+  key: string;
+  metrics: { count: number; unique_session?: number };
+}
+
+export async function fetchCtaBreakdown(
+  range: string
+): Promise<Record<string, number> | null> {
+  const res = await readJSON<{ items: BreakdownRow[] }>(
+    `/pages/${REXER_PAGE_ID}/analytics/breakdown?group_by=dimensions.cta_id&event_type=block_click&range=${range}`
+  );
+  if (!res) return null;
+  const map: Record<string, number> = {};
+  res.items.forEach(r => (map[r.key] = r.metrics?.count ?? 0));
+  return map;
 }
