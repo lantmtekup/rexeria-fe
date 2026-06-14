@@ -5,6 +5,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  FlaskConical,
   ImagePlus,
   Loader2,
   Package,
@@ -162,6 +163,28 @@ const STEPS = [
   { key: 'specs', labelKey: 'stepSpecs', icon: Sparkles },
   { key: 'cert', labelKey: 'stepCert', icon: Award },
 ] as const;
+
+/** Mẫu fill nhanh — sản phẩm thật từ mint.ca (The Jack Pine 1kg gold coin). */
+const SAMPLE_PRODUCT: ProductInformationValue = {
+  name: 'The Jack Pine by Tom Thomson – 1 Kilo Pure Gold Coin',
+  category: '',
+  description:
+    'Commemorative 1-kilo pure gold coin celebrating Tom Thomson’s iconic ' +
+    '1916–17 painting. An engraved interpretation of a windswept jack pine ' +
+    'against a distant shoreline — a symbol of Canadian wilderness and ' +
+    'resilience. The monochromatic gold format emphasises composition and ' +
+    'emotional depth over colour.',
+  sku: '252469',
+  sizes: ['1006.1 g', 'Ø 101.6 mm'],
+  colors: [{ name: 'Yellow', hex: '#FACC15', is_default: true }],
+  variants: ['252469', 'Proof'],
+  ingredients: ['99.99% pure gold', 'Face value $2,500 CAD'],
+  certifications: [
+    { name: 'Proof finish' },
+    { name: 'Mintage 75 worldwide' },
+    { name: 'Serialized certificate' },
+  ],
+};
 
 /* ---------- modal ---------- */
 
@@ -347,13 +370,26 @@ export function ProductFormModal({
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
-            aria-label='Close'
-          >
-            <X className='size-4' />
-          </button>
+          <div className='flex items-center gap-2'>
+            {!isEdit && (
+              <button
+                type='button'
+                onClick={() => setValue(SAMPLE_PRODUCT)}
+                className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-xs font-medium'
+                title={t('productsProductModal.fillSampleHint')}
+              >
+                <FlaskConical className='size-3.5' />
+                {t('productsProductModal.fillSample')}
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
+              aria-label='Close'
+            >
+              <X className='size-4' />
+            </button>
+          </div>
         </div>
 
         {/* Stepper */}

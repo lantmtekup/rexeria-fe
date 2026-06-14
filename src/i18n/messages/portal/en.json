@@ -519,7 +519,9 @@
       "savingBtn": "Saving…",
       "saveChangesBtn": "Save changes",
       "createProductBtn": "Create product",
-      "nextBtn": "Next"
+      "nextBtn": "Next",
+      "fillSample": "Fill sample",
+      "fillSampleHint": "Quick-fill sample data (The Jack Pine)"
     },
     "profile": {
       "saveBeNotReady": "BE hasn't shipped the PATCH /portal/me/client endpoint yet (P0.3)",

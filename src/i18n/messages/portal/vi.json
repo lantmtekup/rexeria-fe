@@ -519,7 +519,9 @@
       "savingBtn": "Đang lưu…",
       "saveChangesBtn": "Lưu thay đổi",
       "createProductBtn": "Tạo sản phẩm",
-      "nextBtn": "Tiếp"
+      "nextBtn": "Tiếp",
+      "fillSample": "Điền mẫu",
+      "fillSampleHint": "Điền nhanh dữ liệu mẫu (The Jack Pine)"
     },
     "profile": {
       "saveBeNotReady": "BE chưa ship endpoint PATCH /portal/me/client (P0.3)",
