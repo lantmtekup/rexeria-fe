@@ -197,7 +197,11 @@ function PortalShellInner({
   // Landing pages, Media (Assets), Marketing. Các mục còn lại ẩn cho tới khi
   // mở self-serve. Dev (NODE_ENV !== production) vẫn full để code/test. Staff
   // sau hydrate vẫn thấy full ngay cả trên prod.
-  const isProd = process.env.NODE_ENV === 'production';
+  // Bật trên prod build, hoặc local set NEXT_PUBLIC_PORTAL_MINIMAL=1 để xem
+  // trước chế độ menu rút gọn ngay trên localhost.
+  const isProd =
+    process.env.NODE_ENV === 'production' ||
+    process.env.NEXT_PUBLIC_PORTAL_MINIMAL === '1';
   const PROD_ALLOWED = new Set([
     '/portal/landing-pages',
     '/portal/media',
