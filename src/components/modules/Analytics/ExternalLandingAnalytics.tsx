@@ -18,14 +18,12 @@
  */
 
 import {
-  ArrowLeft,
   ExternalLink,
   Eye,
   MousePointerClick,
   Send,
   Users,
 } from 'lucide-react';
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { cn } from '@/lib/cn';
@@ -53,14 +51,12 @@ interface Props {
   pageId: string;
   externalUrl?: string | null;
   pageName?: string;
-  backHref?: string;
 }
 
 export function ExternalLandingAnalytics({
   pageId,
   externalUrl,
   pageName,
-  backHref = '/portal/landing-pages',
 }: Props) {
   const [range, setRange] = useState<AnalyticsRange>('30d');
   const [loading, setLoading] = useState(true);
@@ -189,13 +185,7 @@ export function ExternalLandingAnalytics({
       {/* Header */}
       <div className='flex flex-wrap items-end justify-between gap-3'>
         <div>
-          <Link
-            href={backHref}
-            className='text-content-muted hover:text-foreground inline-flex items-center gap-1.5 text-xs font-medium'
-          >
-            <ArrowLeft className='size-3.5' /> Landing pages
-          </Link>
-          <h1 className='mt-1 text-xl font-bold tracking-tight'>
+          <h1 className='text-xl font-bold tracking-tight'>
             {pageName ?? 'Landing ngoài'}
           </h1>
           {externalUrl && (

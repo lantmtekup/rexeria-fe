@@ -150,7 +150,6 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
               pageId={resolvedId}
               externalUrl={meta.external_url}
               pageName={meta.name}
-              backHref='/portal/landing-pages'
             />
           ) : tab === 'funnel' ? (
             <div className='mx-auto w-full max-w-6xl px-4 pt-4 pb-16 sm:px-6'>
