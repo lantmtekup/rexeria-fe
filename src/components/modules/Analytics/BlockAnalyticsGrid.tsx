@@ -208,6 +208,12 @@ export function BlockAnalyticsGrid({
           null
         );
         const targetVerId = headVer?.id ?? page.template_version_id;
+        // Template chưa có version nào (chưa publish/commit) → đừng gọi
+        // version(<null>) gây 500. Hiện trống thay vì vỡ.
+        if (!targetVerId) {
+          setBlocks([]);
+          return;
+        }
         const ver = await rexerApi.templates.version(tpl.id, targetVerId);
         if (cancelled) return;
         // canvas_blueprint stores schema_version: "1.0"; coerce to "2.0".
