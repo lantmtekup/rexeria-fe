@@ -253,6 +253,7 @@
       "pickTemplate": "Pick a template to build",
       "whyFit": "Why it fits: {reason}",
       "templateBuilt": "Template built from result",
+      "viewLanding": "View landing",
       "openEditor": "Open editor",
       "viewSteps": "View steps",
       "building": "Building…",

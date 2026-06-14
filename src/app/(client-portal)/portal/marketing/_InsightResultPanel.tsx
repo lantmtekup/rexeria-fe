@@ -11,13 +11,15 @@
 import {
   ArrowUpRight,
   Check,
+  Eye,
   Loader2,
   Sparkles,
   TriangleAlert,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
@@ -25,7 +27,12 @@ import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 
 import { InsightStepsDialog } from './_InsightStepsDialog';
-import { BlocksSection } from '@/components/modules/Insights/steps/BlueprintBlocks';
+import {
+  BlocksSection,
+  buildBlocksFromCodes,
+} from '@/components/modules/Insights/steps/BlueprintBlocks';
+import { PreviewMode } from '@/components/modules/CanvasTemplate/block-editor/PreviewMode';
+import type { Lang } from '@/components/modules/CanvasTemplate/block-editor/types';
 import {
   GOAL_LABEL,
   deriveSummary,
@@ -70,10 +77,13 @@ export function InsightResultPanel({
   onSummary?: (s: InsightSummary) => void;
 }) {
   const t = useTranslations('portal');
+  const locale = useLocale();
+  const lang: Lang = locale === 'en' ? 'en' : 'vi';
   const [report, setReport] = useState<InsightReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
   const [stepsOpen, setStepsOpen] = useState(false);
+  const [landingOpen, setLandingOpen] = useState(false);
   const autoOpened = useRef(false);
   const summarized = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -150,6 +160,17 @@ export function InsightResultPanel({
 
   const status = report?.status;
   const bp = report?.blueprint;
+
+  // Landing preview: dựng từ recommended_blocks (taxonomy AI → editor block
+  // gần nhất, theo đúng thứ tự stage). KHÔNG dùng template BE handoff vì nó
+  // hiện lưu block rỗng (chưa có renderer FE). Code không map được → bỏ qua.
+  const landingBlocks = useMemo(() => {
+    const stages = bp?.recommended_blocks?.blocks_by_stage ?? [];
+    const codes = stages.flatMap(s =>
+      (s.blocks ?? []).map(b => b.block_type_code)
+    );
+    return buildBlocksFromCodes(codes);
+  }, [bp?.recommended_blocks]);
 
   return (
     <div className='border-border bg-muted/30 mt-2 flex flex-col gap-3 rounded-xl border p-4'>
@@ -315,18 +336,32 @@ export function InsightResultPanel({
           )}
 
           {handoff ? (
-            <div className='border-border flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2'>
+            <div className='border-border flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2'>
               <span className='inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700'>
                 <Check className='size-3.5' />{' '}
                 {t('marketingInsightResultPanel.templateBuilt')}
               </span>
-              <Link
-                href={handoff.edit_url}
-                className='text-primary inline-flex items-center gap-0.5 text-xs font-semibold hover:underline'
-              >
-                {t('marketingInsightResultPanel.openEditor')}{' '}
-                <ArrowUpRight className='size-3' />
-              </Link>
+              <div className='flex items-center gap-3'>
+                {/* Xem landing — overlay full-screen dựng từ recommended_blocks
+                    (template BE còn rỗng nên không preview được trực tiếp). */}
+                {landingBlocks.length > 0 && (
+                  <button
+                    type='button'
+                    onClick={() => setLandingOpen(true)}
+                    className='text-foreground inline-flex items-center gap-1 text-xs font-semibold hover:underline'
+                  >
+                    <Eye className='size-3.5' />{' '}
+                    {t('marketingInsightResultPanel.viewLanding')}
+                  </button>
+                )}
+                <Link
+                  href={handoff.edit_url}
+                  className='text-primary inline-flex items-center gap-0.5 text-xs font-semibold hover:underline'
+                >
+                  {t('marketingInsightResultPanel.openEditor')}{' '}
+                  <ArrowUpRight className='size-3' />
+                </Link>
+              </div>
             </div>
           ) : (
             <div className='flex flex-wrap gap-2'>
@@ -366,6 +401,19 @@ export function InsightResultPanel({
           onSaved={onSummary}
         />
       )}
+
+      {/* Landing preview toàn màn hình — portal ra body để thoát transform/
+          overflow của panel marketing. */}
+      {landingOpen &&
+        landingBlocks.length > 0 &&
+        createPortal(
+          <PreviewMode
+            blocks={landingBlocks}
+            lang={lang}
+            onClose={() => setLandingOpen(false)}
+          />,
+          document.body
+        )}
     </div>
   );
 }

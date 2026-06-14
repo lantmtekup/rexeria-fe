@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
@@ -100,6 +101,26 @@ function resolveEditorType(code: string): BlockType | null {
   const c = code.toLowerCase();
   for (const [re, t] of FUZZY_RULES) if (re.test(c)) return t;
   return null;
+}
+
+/**
+ * Dựng danh sách editor Block từ các block_type_code (taxonomy AI) — resolve
+ * sang editor type gần nhất rồi tạo block mặc định. Code không map được → bỏ
+ * qua. Dùng để preview landing/template thật (xếp chồng trong PreviewMode),
+ * vì template do BE handoff dựng hiện lưu block rỗng (chưa có renderer FE).
+ */
+export function buildBlocksFromCodes(codes: string[]) {
+  return codes
+    .map(code => {
+      const editorType = resolveEditorType(code);
+      if (!editorType) return null;
+      try {
+        return createBlock(editorType);
+      } catch {
+        return null;
+      }
+    })
+    .filter((b): b is NonNullable<typeof b> => b !== null);
 }
 
 function Thumb({
@@ -391,14 +412,18 @@ function BlockRow({
       </Dialog>
 
       {/* Preview full block — render editor block thật ở chế độ toàn màn hình
-          (giống /admin/blocks): device toggle + đóng. */}
-      {previewOpen && detailPreview && (
-        <PreviewMode
-          blocks={[detailPreview]}
-          lang={lang}
-          onClose={() => setPreviewOpen(false)}
-        />
-      )}
+          (giống /admin/blocks): device toggle + đóng. Portal ra body để thoát
+          transform/overflow của card/dialog (fixed sẽ bị neo nhầm nếu không). */}
+      {previewOpen &&
+        detailPreview &&
+        createPortal(
+          <PreviewMode
+            blocks={[detailPreview]}
+            lang={lang}
+            onClose={() => setPreviewOpen(false)}
+          />,
+          document.body
+        )}
     </li>
   );
 }
@@ -596,19 +621,10 @@ function TemplateCard({
   // Preview cả template: resolve từng block_code → editor block, render xếp
   // chồng trong PreviewMode (giống trang public). Code lạ → bỏ qua; còn ≥1
   // block resolve được thì cho nút Preview.
-  const tplBlocks = useMemo(() => {
-    return (tpl.block_codes ?? [])
-      .map(code => {
-        const editorType = resolveEditorType(code);
-        if (!editorType) return null;
-        try {
-          return createBlock(editorType);
-        } catch {
-          return null;
-        }
-      })
-      .filter((b): b is NonNullable<typeof b> => b !== null);
-  }, [tpl.block_codes]);
+  const tplBlocks = useMemo(
+    () => buildBlocksFromCodes(tpl.block_codes ?? []),
+    [tpl.block_codes]
+  );
   // SP1: nhãn nguồn — template thật trong thư viện vs AI tự dựng. Thiếu `source`
   // (report trước SP1) → không hiển thị badge.
   const sourceBadge =
@@ -742,14 +758,18 @@ function TemplateCard({
       </Dialog>
 
       {/* Preview cả template toàn màn hình — xếp chồng các block đã resolve
-          (giống trang public), device toggle + đóng. */}
-      {previewOpen && tplBlocks.length > 0 && (
-        <PreviewMode
-          blocks={tplBlocks}
-          lang={lang}
-          onClose={() => setPreviewOpen(false)}
-        />
-      )}
+          (giống trang public), device toggle + đóng. Portal ra body để thoát
+          transform/overflow của card. */}
+      {previewOpen &&
+        tplBlocks.length > 0 &&
+        createPortal(
+          <PreviewMode
+            blocks={tplBlocks}
+            lang={lang}
+            onClose={() => setPreviewOpen(false)}
+          />,
+          document.body
+        )}
     </div>
   );
 }
