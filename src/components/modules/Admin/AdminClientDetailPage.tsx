@@ -883,7 +883,11 @@ function MembersTab({
       const newPassword = generatePassword();
       const fp = await rexerApi.auth.forgotPassword({ email });
       if (!fp.reset_token) {
-        toast.error('BE không trả reset_token (cần bật MVP mode)');
+        // Prod không lộ reset_token (chỉ MVP/local trả thẳng) → không đặt được
+        // password biết trước. Cần BE thêm endpoint admin-set-password.
+        toast.error(
+          'Prod chưa hỗ trợ reset trực tiếp — cần BE thêm endpoint admin đặt mật khẩu. Hiện chỉ chạy trên local (MVP).'
+        );
         return;
       }
       await rexerApi.auth.resetPassword({
