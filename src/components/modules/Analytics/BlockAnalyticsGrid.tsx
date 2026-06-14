@@ -30,7 +30,6 @@ import type {
   BlockType,
 } from '@/components/modules/CanvasTemplate/block-editor/types';
 import { rexerApi } from '@/services/rexer/endpoints';
-import { RxApiError } from '@/services/rexer/client';
 import type { BlockBreakdownRow } from '@/services/rexer/types';
 import { getCodeTemplate } from '@/templates/registry';
 import type { TemplateSection } from '@/templates/types';
@@ -75,7 +74,6 @@ export function BlockAnalyticsGrid({
   const [rows, setRows] = React.useState<BlockBreakdownRow[] | null>(null);
   const [range, setRange] = React.useState<Range>(7);
   const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
   const [usingMock, setUsingMock] = React.useState(false);
   /** Per-section list khi page dùng code template — declared trong
    *  template meta.tracking.sections. Null = block template, dùng
@@ -237,11 +235,11 @@ export function BlockAnalyticsGrid({
           label: extractLabel(b),
         }));
         setBlocks(loaded);
-      } catch (err) {
+      } catch {
         if (cancelled) return;
-        setError(
-          err instanceof RxApiError ? err.code || err.message : 'LOAD_FAILED'
-        );
+        // Endpoint internal-only / page lỗi → vẫn hiện full layout với data 0
+        // (summary + empty state) thay vì chặn cả trang bằng màn lỗi.
+        setBlocks([]);
       }
     })();
     return () => {
@@ -385,18 +383,6 @@ export function BlockAnalyticsGrid({
     }
     return { views, clicks, blocks: rows.length };
   }, [rows, sections, sectionStats]);
-
-  if (error) {
-    return (
-      <div className='mx-auto max-w-3xl px-6 pt-10'>
-        <BackLink backHref={backHref} />
-        <div className='mt-8 rounded-2xl border border-rose-200 bg-rose-50 p-8 text-center text-rose-900'>
-          <p className='text-sm font-semibold'>Không load được landing page</p>
-          <p className='text-2xs mt-1 font-mono'>{error}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className='mx-auto flex max-w-6xl flex-col gap-6 px-4 pt-6 pb-16 sm:px-6'>
