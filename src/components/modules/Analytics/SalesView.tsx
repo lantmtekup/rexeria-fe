@@ -7,7 +7,13 @@
  * (authoritative); bảng chỉ tải top-200 lead theo score.
  */
 
-import { BadgeCheck, DollarSign, Percent, Users } from 'lucide-react';
+import {
+  BadgeCheck,
+  DollarSign,
+  type LucideIcon,
+  Percent,
+  Users,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/atoms/badge';
@@ -24,7 +30,7 @@ import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type { Lead, LeadStatus, LeadTier } from '@/services/rexer/types';
 
-import { Card, MetricTile } from './dashboard-bits';
+import { Card } from './dashboard-bits';
 import { useLeads } from './funnel-data';
 import type { DateRange, FunnelCounts } from './funnel-types';
 
@@ -60,6 +66,36 @@ const METHOD_LABEL: Record<Lead['method'], string> = {
 
 const fmt = (n: number) => n.toLocaleString('vi-VN');
 const usd = (n: number) => `$${n.toLocaleString('en-US')}`;
+
+/** Accent màu cho từng KPI card (icon-chip + thanh accent trên). */
+type Accent = 'indigo' | 'violet' | 'emerald' | 'amber';
+const ACCENT: Record<Accent, { chip: string; icon: string; bar: string }> = {
+  indigo: {
+    chip: 'bg-indigo-50',
+    icon: 'text-indigo-600',
+    bar: 'bg-indigo-500',
+  },
+  violet: {
+    chip: 'bg-violet-50',
+    icon: 'text-violet-600',
+    bar: 'bg-violet-500',
+  },
+  emerald: {
+    chip: 'bg-emerald-50',
+    icon: 'text-emerald-600',
+    bar: 'bg-emerald-500',
+  },
+  amber: { chip: 'bg-amber-50', icon: 'text-amber-600', bar: 'bg-amber-500' },
+};
+
+/** Chấm màu theo pipeline status. */
+const STATUS_DOT: Record<LeadStatus, string> = {
+  new: 'bg-blue-500',
+  contacted: 'bg-indigo-500',
+  negotiating: 'bg-amber-500',
+  won: 'bg-emerald-500',
+  lost: 'bg-rose-400',
+};
 
 export function SalesView({
   pageId,
@@ -108,48 +144,62 @@ export function SalesView({
     }
   };
 
+  const closeRate =
+    funnel.leads > 0
+      ? `${((funnel.deals / funnel.leads) * 100).toFixed(1)}%`
+      : '—';
+
   return (
     <div className='flex flex-col gap-6'>
-      <div className='grid grid-cols-2 gap-4 xl:grid-cols-4'>
-        <MetricTile
+      <div className='grid grid-cols-2 gap-3 xl:grid-cols-4'>
+        <SalesKpiCard
           icon={Users}
+          accent='indigo'
           label='Lead cần xử lý'
           value={fmt(open.length)}
           hint='status ≠ chốt/mất'
         />
-        <MetricTile
+        <SalesKpiCard
           icon={BadgeCheck}
+          accent='violet'
           label='SQL (đạt chuẩn)'
           value={fmt(funnel.sql)}
           hint={`score ≥ ${sqlThreshold}`}
         />
-        <MetricTile
+        <SalesKpiCard
           icon={Percent}
+          accent='amber'
           label='Tỷ lệ chốt'
-          value={
-            funnel.leads > 0
-              ? `${((funnel.deals / funnel.leads) * 100).toFixed(1)}%`
-              : '—'
-          }
+          value={closeRate}
           hint='deals / leads'
         />
-        <MetricTile
+        <SalesKpiCard
           icon={DollarSign}
+          accent='emerald'
           label='Doanh thu chốt'
           value={usd(revenue)}
-          hint='sum(deal_won.value)'
-          hintTone='positive'
+          hint='Σ deal đã chốt'
+          positive={revenue > 0}
         />
       </div>
 
-      <div className='flex flex-wrap gap-2'>
+      <div className='flex flex-wrap items-center gap-2'>
+        <span className='text-content-muted text-2xs font-semibold tracking-wider uppercase'>
+          Pipeline
+        </span>
         {byStatus.map(({ status, count }) => (
           <span
             key={status}
-            className='border-border bg-card text-foreground inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs'
+            className='border-border bg-card inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm'
           >
-            {STATUS_LABEL[status]}
-            <span className='text-content-muted font-semibold tabular-nums'>
+            <span className={cn('size-2 rounded-full', STATUS_DOT[status])} />
+            <span className='text-foreground'>{STATUS_LABEL[status]}</span>
+            <span
+              className={cn(
+                'text-2xs rounded-full px-1.5 font-bold tabular-nums',
+                count > 0 ? 'bg-muted text-foreground' : 'text-muted-foreground'
+              )}
+            >
               {count}
             </span>
           </span>
@@ -168,6 +218,52 @@ export function SalesView({
           onStatusChange={handleStatusChange}
           onCreateDeal={handleCreateDeal}
         />
+      )}
+    </div>
+  );
+}
+
+/** KPI card premium: icon-chip màu, số to, thanh accent trên, hover lift. */
+function SalesKpiCard({
+  icon: Icon,
+  accent,
+  label,
+  value,
+  hint,
+  positive,
+}: {
+  icon: LucideIcon;
+  accent: Accent;
+  label: string;
+  value: string;
+  hint?: string;
+  positive?: boolean;
+}) {
+  const a = ACCENT[accent];
+  return (
+    <div className='group border-border bg-card relative overflow-hidden rounded-2xl border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+      <span className={cn('absolute inset-x-0 top-0 h-1', a.bar)} />
+      <div className='flex items-center gap-2.5'>
+        <span
+          className={cn(
+            'flex size-9 items-center justify-center rounded-xl',
+            a.chip
+          )}
+        >
+          <Icon className={cn('size-4', a.icon)} />
+        </span>
+        <span className='text-content-muted text-sm font-medium'>{label}</span>
+      </div>
+      <p
+        className={cn(
+          'mt-3 text-4xl font-bold tracking-[-0.02em]',
+          positive ? 'text-emerald-600' : 'text-foreground'
+        )}
+      >
+        {value}
+      </p>
+      {hint && (
+        <p className='text-muted-foreground mt-1.5 font-mono text-xs'>{hint}</p>
       )}
     </div>
   );
