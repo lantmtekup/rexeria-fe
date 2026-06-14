@@ -69,7 +69,7 @@ export default function TemplateAnalyticsListPage() {
   }, [preset, refreshKey]);
 
   return (
-    <div className='bg-muted text-foreground min-h-screen antialiased'>
+    <div className='bg-background text-foreground min-h-screen antialiased'>
       <PageHeader
         back='/overview'
         title='Rexer AI — Landing page Analytics'

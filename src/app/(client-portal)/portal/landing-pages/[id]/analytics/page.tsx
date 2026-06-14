@@ -124,19 +124,19 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
         </div>
       ) : (
         <>
-          {/* Tab switch — external: Tổng quan ↔ Phễu; thường: Phễu ↔ Theo block.
-              Các view giữ header/back-link riêng nên switcher nổi giữa-trên. */}
+          {/* Tab switch — segmented gradient xanh nổi bật (style stepper).
+              external: Tổng quan ↔ Phễu; thường: Phễu ↔ Theo block. */}
           <div className='flex justify-center pt-4'>
-            <div className='border-border bg-muted inline-flex rounded-lg border p-0.5'>
+            <div className='border-border inline-flex rounded-full border bg-white p-1 shadow-sm'>
               {tabs.map(t => (
                 <button
                   key={t.value}
                   type='button'
                   onClick={() => setTab(t.value)}
                   className={cn(
-                    'rounded-md px-3 py-1 text-xs font-medium transition-colors',
+                    'rounded-full px-5 py-2 text-sm font-semibold transition-all',
                     tab === t.value
-                      ? 'bg-background text-foreground shadow-sm'
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md shadow-blue-500/25'
                       : 'text-content-muted hover:text-foreground'
                   )}
                 >
