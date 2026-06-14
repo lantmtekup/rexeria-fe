@@ -1962,10 +1962,20 @@ export const rexerApi = {
       );
       return r.report;
     },
-    /** Dựng template thật từ blueprint → `template_id` + `edit_url` — KB2. */
+    /**
+     * Dựng template thật từ blueprint → `template_id` + `edit_url` — KB2.
+     * SP1: `source_template_id` (1 gợi ý `source=library`) → BE clone canvas_blueprint
+     * của template thật thay vì compose từ `block_codes`.
+     */
     handoff: (
       id: string,
-      body?: { template?: { name?: string; block_codes?: string[] } }
+      body?: {
+        template?: {
+          name?: string;
+          block_codes?: string[];
+          source_template_id?: string;
+        };
+      }
     ) =>
       rx<InsightHandoffResponse>(`/insights/reports/${id}/handoff`, {
         method: 'POST',
