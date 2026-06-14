@@ -6,7 +6,6 @@ import { getLocale, getMessages, getTimeZone } from 'next-intl/server';
 
 import Providers from './providers';
 import { Toaster } from '@/components/atoms/sonner';
-import { FeedbackFab } from '@/components/modules/Feedback/FeedbackFab';
 import { GOOGLE_FONTS_HREF } from '@/lib/fonts';
 import { SEO_CONSTANTS } from '@/lib/metadata';
 import {
@@ -137,7 +136,6 @@ export default async function RootLayout({
       <body className={`${inter.variable} bg-background antialiased`}>
         <Providers locale={locale} messages={messages} timezone={timezone}>
           {children}
-          <FeedbackFab />
           <Toaster position='top-right' />
         </Providers>
       </body>

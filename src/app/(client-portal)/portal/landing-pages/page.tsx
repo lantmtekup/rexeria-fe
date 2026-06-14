@@ -27,7 +27,6 @@ import {
   Loader2,
   Info,
   LayoutTemplate,
-  MessageSquare,
   Search,
   Send,
   Zap,
@@ -286,12 +285,6 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
             {t.status}
           </span>
         </div>
-        {t.open_comments > 0 && (
-          <div className='text-3xs absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 font-bold text-rose-700 backdrop-blur'>
-            <MessageSquare className='size-2.5' /> {t.open_comments} open
-          </div>
-        )}
-
         {/* Đổi ảnh thumbnail — hiện khi hover (hoặc khi đang upload) */}
         <button
           type='button'

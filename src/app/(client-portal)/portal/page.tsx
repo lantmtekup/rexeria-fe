@@ -115,7 +115,6 @@ export default function PortalDashboardPage() {
           <p className='text-content-muted mt-1 max-w-2xl text-sm leading-relaxed'>
             Rexer đang quản lý <strong>{stats.templates_published}</strong>{' '}
             landing page public cho brand. Bạn có{' '}
-            <strong>{stats.open_comments}</strong> comment đang chờ xử lý và{' '}
             <strong>{stats.unread_notifications}</strong> thông báo mới.
           </p>
         </div>
@@ -166,13 +165,6 @@ export default function PortalDashboardPage() {
           value={stats.assets_count}
           hint='File trong thư viện'
           accent='cyan'
-        />
-        <StatCard
-          icon={MessageSquare}
-          label='Open comments'
-          value={stats.open_comments}
-          hint='Đang chờ Rexer xử lý'
-          accent='orange'
         />
         <StatCard
           icon={Bell}
@@ -227,13 +219,6 @@ export default function PortalDashboardPage() {
               title='Xem landing pages'
               desc='Browse các landing page Rexer đã làm'
               accent='indigo'
-            />
-            <QuickAction
-              href='/portal/comments'
-              icon={MessageSquare}
-              title='Comment / Request'
-              desc='Yêu cầu sửa hoặc đặt câu hỏi'
-              accent='orange'
             />
           </div>
         </div>

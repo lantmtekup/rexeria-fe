@@ -13,7 +13,6 @@ import {
   Lightbulb,
   LogOut,
   Megaphone,
-  MessageSquare,
   MousePointerClick,
   Package,
   Settings,
@@ -106,12 +105,6 @@ const NAV: NavItem[] = [
     label: 'Blocks',
     icon: Bookmark,
     group: 'Assets',
-  },
-  {
-    href: '/portal/comments',
-    label: 'Comments',
-    icon: MessageSquare,
-    badge: FAKE_STATS.open_comments,
   },
   { href: '/portal/profile', label: 'Profile', icon: Settings },
 ];

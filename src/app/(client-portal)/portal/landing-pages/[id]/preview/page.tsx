@@ -87,15 +87,7 @@ export default function PortalLandingPreviewPage() {
         <p className='mt-2 text-xs text-amber-800'>
           Preview canonical (template_version.canvas_blueprint + slot fills từ
           page_revisions.config_json) sẽ release ở Wave 3. Hiện tại muốn chỉnh
-          nội dung, gửi yêu cầu cho Rexer ở{' '}
-          <button
-            type='button'
-            onClick={() => router.push('/portal/comments')}
-            className='font-medium text-amber-900 underline underline-offset-2'
-          >
-            Comment / Request
-          </button>
-          .
+          nội dung, liên hệ Rexer để được hỗ trợ.
         </p>
         {status === 'error' && (
           <p className='text-3xs mt-2 font-mono text-amber-800/80'>
