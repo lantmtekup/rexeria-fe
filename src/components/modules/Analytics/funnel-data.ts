@@ -12,16 +12,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { rexerApi } from '@/services/rexer/endpoints';
-import { RxApiError } from '@/services/rexer/client';
 import type { Lead } from '@/services/rexer/types';
 
 import type { DateRange, FunnelAnalytics } from './funnel-types';
-
-function errMessage(e: unknown): string {
-  if (e instanceof RxApiError) return e.message;
-  if (e instanceof Error) return e.message;
-  return 'Không tải được dữ liệu analytics';
-}
 
 interface AsyncState<T> {
   data: T | null;
@@ -163,8 +156,14 @@ export function useLeads(pageId: string, range: DateRange) {
       .then(res => {
         if (alive) setLeads(res.items);
       })
-      .catch(e => {
-        if (alive) setError(errMessage(e));
+      .catch(() => {
+        // `/v1/leads` có thể 403 "Internal-only" với portal user (hoặc chưa
+        // forward qua proxy). Graceful: bảng rỗng + empty state "Chưa có lead",
+        // KHÔNG đổ chuỗi lỗi ra "Danh sách ưu tiên" — đồng nhất các tab khác.
+        if (alive) {
+          setLeads([]);
+          setError(null);
+        }
       })
       .finally(() => {
         if (alive) setLoading(false);
