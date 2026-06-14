@@ -12,7 +12,42 @@
 
 ## Gap 1 — [CHẶN] wizard-v2 endpoints + worker chưa lên prod (audit §20)
 
-### Hiện trạng (probe 2026-06-12, session admin hợp lệ)
+### ✅ BE xác nhận (2026-06-14): code XONG, chỉ chờ deploy
+- Tất cả endpoint đã đăng ký trong `handler/insight.go`: `POST /insights/suggest`,
+  `/classify-goal`, `/suggest-journey`, `/blocks/generate-content`
+  (+ create/list/get/blueprint/handoff).
+- AI worker: `StartAIJobWorker` trong `wire.go` tự chạy khi `!IsDev()`
+  (prod/staging bật; chỉ tắt ở dev để e2e không race).
+- Code đã nằm trên `main`.
+
+### Việc còn lại (ops/BE — KHÔNG phải FE)
+1. Deploy `main` lên prod.
+2. Chạy migration **000024**.
+3. Đảm bảo env prod là **non-dev** → worker tự chạy, report ra `succeeded`.
+
+### ⚠️ Re-probe prod 2026-06-14 — vẫn CHƯA deploy
+| Route (POST) | Prod |
+|---|---|
+| `insights/suggest` | ❌ 404 |
+| `insights/classify-goal` | ❌ 404 |
+| `insights/suggest-journey` | ❌ 404 |
+| `insights/blocks/generate-content` | ❌ 404 |
+
+→ Code ở main nhưng prod **chưa lấy bản mới**. Cần trigger deploy thật.
+
+### Checklist verify SAU deploy (chạy với cookie admin)
+```bash
+B=https://rexerai.tekupsoftware.com/v1
+# 1. endpoint sống (401/400 = OK, 404 = chưa deploy)
+for ep in suggest classify-goal suggest-journey blocks/generate-content; do
+  curl -s -o /dev/null -w "$ep %{http_code}\n" -X POST -b "$CK" \
+    -H 'Content-Type: application/json' -d '{}' "$B/insights/$ep"
+done
+# 2. worker chạy: tạo report rồi poll tới succeeded (không kẹt queued)
+#    POST /insights/reports {workspace_id, inputs} → GET /insights/reports/{id}
+```
+
+### Hiện trạng cũ (probe 2026-06-12, session admin hợp lệ)
 | Route | Prod | Ghi chú |
 |---|---|---|
 | `GET /v1/insights/reports`, `POST /prefill` | ✅ | sống |
