@@ -19,7 +19,6 @@ import { Avatar } from '@/components/atoms/avatar';
 import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import { Spinner } from '@/components/atoms/spinner';
-import { EmptyState } from '@/components/molecules/EmptyState';
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Campaign } from '@/services/rexer/types';
@@ -86,13 +85,15 @@ export default function PortalMarketingPage() {
 function MarketingInner() {
   const t = useTranslations('portal');
   const [campaigns, setCampaigns] = useState<Campaign[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(() => {
     rexerApi.campaigns
       .list({ limit: 50 })
       .then(r => setCampaigns(r.items ?? []))
-      .catch(err => setError(err instanceof Error ? err.message : 'API_ERROR'));
+      // `/campaigns` đang internal-only ở BE → brand user nhận 403
+      // "Internal-only endpoint". Graceful: coi như chưa có campaign (hiện
+      // empty-state) thay vì đổ raw error. Gỡ khi BE mở /campaigns cho brand.
+      .catch(() => setCampaigns([]));
   }, []);
 
   useEffect(() => {
@@ -116,9 +117,7 @@ function MarketingInner() {
         </Button>
       </header>
 
-      {error ? (
-        <EmptyState title={t('marketing.loadError')} description={error} />
-      ) : campaigns === null ? (
+      {campaigns === null ? (
         <div className='text-content-muted flex h-48 items-center justify-center gap-2 text-sm'>
           <Spinner className='size-4' /> {t('marketing.loading')}
         </div>
