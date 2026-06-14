@@ -20,8 +20,11 @@
 
 import {
   BarChart3,
+  ExternalLink,
   Eye,
   HelpCircle,
+  ImagePlus,
+  Loader2,
   Info,
   LayoutTemplate,
   MessageSquare,
@@ -30,10 +33,13 @@ import {
   Zap,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+
+import { rexerApi } from '@/services/rexer/endpoints';
 
 import { FAKE_TEMPLATES, fmtNum, type PortalTemplate } from '../_data';
-import { ApiStatusLabel, loadTemplates } from '../_remote';
+import { ApiStatusLabel, loadTemplates, uploadProductImage } from '../_remote';
 import { PortalShell } from '../_shell';
 import { useActiveWorkspace } from '../_workspace';
 
@@ -222,13 +228,62 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
   const isArchived = t.status === 'archived';
   const isPublished = t.status === 'published';
 
+  const [thumb, setThumb] = useState<string | null>(t.thumbnail_url ?? null);
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  // Upload ảnh → media asset → PATCH page.thumbnail_asset_id → BE trả
+  // thumbnail_url. Cập nhật ảnh tại chỗ, không reload cả list.
+  const handlePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Vui lòng chọn file ảnh');
+      return;
+    }
+    setBusy(true);
+    uploadProductImage(file)
+      .then(asset =>
+        rexerApi.pages
+          .update(t.id, { thumbnail_asset_id: asset.id })
+          .then(p => p.thumbnail_url ?? asset.public_url ?? null)
+      )
+      .then(url => {
+        setThumb(url);
+        toast.success('Đã cập nhật ảnh thumbnail');
+      })
+      .catch(err =>
+        toast.error(err instanceof Error ? err.message : 'Upload thất bại')
+      )
+      .finally(() => setBusy(false));
+  };
+
   return (
     <div className='group border-border overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       {/* Thumbnail */}
       <div
-        className={`relative aspect-[16/9] bg-gradient-to-br ${t.thumbnail_gradient}`}
+        className={`relative aspect-[16/9] ${thumb ? 'bg-muted' : `bg-gradient-to-br ${t.thumbnail_gradient}`}`}
       >
-        <div className='absolute inset-0 bg-black/10' />
+        {thumb ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={thumb}
+            alt={t.name}
+            className='absolute inset-0 size-full object-cover'
+          />
+        ) : (
+          <>
+            <div className='absolute inset-0 bg-black/10' />
+            {/* Decorative fake content (placeholder khi chưa có ảnh) */}
+            <div className='absolute inset-x-6 bottom-6'>
+              <div className='h-2.5 w-2/3 rounded bg-white/40' />
+              <div className='mt-2 h-1.5 w-1/2 rounded bg-white/30' />
+              <div className='mt-3 h-5 w-20 rounded-md bg-white/80' />
+            </div>
+          </>
+        )}
+
         <div className='absolute top-3 left-3 flex items-center gap-1.5'>
           <span
             className={`text-3xs flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 font-bold backdrop-blur ${status.chip}`}
@@ -242,12 +297,29 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
             <MessageSquare className='size-2.5' /> {t.open_comments} open
           </div>
         )}
-        {/* Decorative fake content */}
-        <div className='absolute inset-x-6 bottom-6'>
-          <div className='h-2.5 w-2/3 rounded bg-white/40' />
-          <div className='mt-2 h-1.5 w-1/2 rounded bg-white/30' />
-          <div className='mt-3 h-5 w-20 rounded-md bg-white/80' />
-        </div>
+
+        {/* Đổi ảnh thumbnail — hiện khi hover (hoặc khi đang upload) */}
+        <button
+          type='button'
+          onClick={() => fileRef.current?.click()}
+          disabled={busy}
+          className='text-2xs absolute right-3 bottom-3 inline-flex items-center gap-1.5 rounded-lg bg-black/70 px-2.5 py-1.5 font-medium text-white opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 disabled:cursor-wait disabled:opacity-100'
+          title='Tải ảnh thumbnail mới'
+        >
+          {busy ? (
+            <Loader2 className='size-3.5 animate-spin' />
+          ) : (
+            <ImagePlus className='size-3.5' />
+          )}
+          {busy ? 'Đang tải…' : 'Đổi ảnh'}
+        </button>
+        <input
+          ref={fileRef}
+          type='file'
+          accept='image/*'
+          className='hidden'
+          onChange={handlePick}
+        />
       </div>
 
       {/* Body */}
@@ -286,19 +358,34 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
 
         {/* Actions — brand chỉ Preview + Analytics (Phase 1 review-only) */}
         <div className='mt-4 grid grid-cols-2 gap-2'>
-          <Link
-            href={`/portal/landing-pages/${t.id}/preview`}
-            aria-disabled={isArchived}
-            className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              isArchived
-                ? 'border-border bg-muted text-muted-foreground pointer-events-none border'
-                : 'bg-zinc-900 text-white hover:bg-zinc-700'
-            }`}
-            title='Xem trước landing — render chính xác như khách sẽ thấy'
-          >
-            <Eye className='size-3.5' />
-            Preview
-          </Link>
+          {t.external_url ? (
+            // Landing loại "extension" → mở thẳng URL ngoài (tab mới), giống
+            // nút "Mở link" ở admin. Không có trang Preview nội bộ để render.
+            <a
+              href={t.external_url}
+              target='_blank'
+              rel='noreferrer'
+              className='inline-flex items-center justify-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700'
+              title={`Mở link ngoài: ${t.external_url}`}
+            >
+              <ExternalLink className='size-3.5' />
+              Mở link
+            </a>
+          ) : (
+            <Link
+              href={`/portal/landing-pages/${t.id}/preview`}
+              aria-disabled={isArchived}
+              className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                isArchived
+                  ? 'border-border bg-muted text-muted-foreground pointer-events-none border'
+                  : 'bg-zinc-900 text-white hover:bg-zinc-700'
+              }`}
+              title='Xem trước landing — render chính xác như khách sẽ thấy'
+            >
+              <Eye className='size-3.5' />
+              Preview
+            </Link>
+          )}
 
           <Link
             href={`/portal/landing-pages/${t.id}/analytics`}

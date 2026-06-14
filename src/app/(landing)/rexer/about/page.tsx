@@ -7,7 +7,8 @@ import { FadeUp, WordReveal } from '@/components/landing/LandingMotion';
 import { StartProjectCta } from '@/components/landing/StartProjectCta';
 
 export const metadata: Metadata = {
-  title: 'About us — ReXeR Studio',
+  title: { absolute: 'About us — ReXeR Studio' },
+  alternates: { canonical: '/rexer/about' },
   description:
     'We’re a team of designers, developers, and strategists bringing bold ideas to life with purpose, passion, and unforgettable execution.',
 };

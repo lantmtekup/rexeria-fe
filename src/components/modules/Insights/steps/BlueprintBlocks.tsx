@@ -383,9 +383,11 @@ function StageGroup({
 export function BlocksSection({
   blueprint,
   reportId,
+  collapsible = true,
 }: {
   blueprint: InsightBlueprint;
   reportId?: string;
+  collapsible?: boolean;
 }) {
   const t = useTranslations('insights');
   const [stages, setStages] = useState<InsightBlocksByStage[]>(
@@ -460,7 +462,7 @@ export function BlocksSection({
       index={3}
       accent='emerald'
       delayMs={160}
-      collapsible
+      collapsible={collapsible}
     >
       <div className='space-y-2.5'>
         {stages.map(stage => (
@@ -632,13 +634,16 @@ function TemplateCard({
 
 export function TemplatesSection({
   blueprint,
-  pending,
+  pending = null,
   onUse,
+  collapsible = true,
 }: {
   blueprint: InsightBlueprint;
-  /** Key handoff đang chạy (tên template) — null khi rảnh. Khoá các card khi != null. */
-  pending: string | null;
-  onUse: (tpl: InsightRecommendedTemplate) => void;
+  /** Key handoff đang chạy (tên template) — null khi rảnh. Khoá các card khi
+   * != null. Optional: chế độ preview (popup marketing) bỏ qua handoff. */
+  pending?: string | null;
+  onUse?: (tpl: InsightRecommendedTemplate) => void;
+  collapsible?: boolean;
 }) {
   const t = useTranslations('insights');
   const templates = blueprint.recommended_templates;
@@ -651,7 +656,7 @@ export function TemplatesSection({
       index={4}
       accent='amber'
       delayMs={240}
-      collapsible
+      collapsible={collapsible}
     >
       <div className='grid gap-4 sm:grid-cols-2'>
         {(templates.templates ?? []).map(tpl => (
@@ -660,7 +665,7 @@ export function TemplatesSection({
             tpl={tpl}
             busy={pending === tpl.name}
             disabled={pending !== null}
-            onUse={() => onUse(tpl)}
+            onUse={() => onUse?.(tpl)}
           />
         ))}
       </div>

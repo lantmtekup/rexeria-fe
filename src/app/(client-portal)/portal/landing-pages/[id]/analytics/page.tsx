@@ -16,6 +16,9 @@ import { use } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 import { BlockAnalyticsGrid } from '@/components/modules/Analytics/BlockAnalyticsGrid';
+import { ExternalLandingAnalytics } from '@/components/modules/Analytics/ExternalLandingAnalytics';
+import { FunnelOverview } from '@/components/modules/Analytics/FunnelOverview';
+import { cn } from '@/lib/cn';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 
@@ -34,29 +37,55 @@ function rxMessage(err: unknown): string {
   return 'Unexpected error';
 }
 
+type AnalyticsTab = 'overview' | 'funnel' | 'blocks';
+
+interface PageMeta {
+  external_url?: string | null;
+  name?: string;
+}
+
 export default function PortalLandingAnalyticsPage({ params }: PageProps) {
   const { id: rawId } = use(params);
   const [resolvedId, setResolvedId] = React.useState<string | null>(null);
+  const [meta, setMeta] = React.useState<PageMeta>({});
   const [error, setError] = React.useState<string | null>(null);
+  const [tab, setTab] = React.useState<AnalyticsTab | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
     setError(null);
     setResolvedId(null);
+    setMeta({});
+    setTab(null);
     (async () => {
       try {
+        let id = rawId;
+        let pageMeta: PageMeta = {};
         if (UUID_RE.test(rawId)) {
-          setResolvedId(rawId);
-          return;
+          // UUID → fetch page detail để biết external_url + tên (brand-scoped
+          // GET /pages/:id, priv). Lỗi → coi như landing thường, vẫn render.
+          try {
+            const p = await rexerApi.pages.get(rawId);
+            pageMeta = { external_url: p.external_url, name: p.name };
+          } catch {
+            /* degrade: không có meta → tab funnel/blocks như cũ */
+          }
+        } else {
+          // Slug → lookup. `?slug=` BE chưa filter chính xác nên dùng `?q=`
+          // + match exact client-side (cùng pattern admin editor route).
+          const pages = await rexerApi.pages.listAll({ q: rawId, limit: 25 });
+          const page = pages.items?.find(p => p.slug === rawId);
+          if (!page) {
+            throw new Error(`Không tìm thấy landing với slug "${rawId}"`);
+          }
+          id = page.id;
+          pageMeta = { external_url: page.external_url, name: page.name };
         }
-        // Slug → lookup. `?slug=` BE chưa filter chính xác nên dùng `?q=`
-        // + match exact client-side (cùng pattern admin editor route).
-        const pages = await rexerApi.pages.listAll({ q: rawId, limit: 25 });
-        const page = pages.items?.find(p => p.slug === rawId);
-        if (!page) {
-          throw new Error(`Không tìm thấy landing với slug "${rawId}"`);
-        }
-        if (!cancelled) setResolvedId(page.id);
+        if (cancelled) return;
+        setResolvedId(id);
+        setMeta(pageMeta);
+        // External landing → mặc định view "Tổng quan" (block grid vô nghĩa).
+        setTab(pageMeta.external_url ? 'overview' : 'funnel');
       } catch (err) {
         if (!cancelled) setError(rxMessage(err));
       }
@@ -65,6 +94,17 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
       cancelled = true;
     };
   }, [rawId]);
+
+  const isExternal = !!meta.external_url;
+  const tabs: { value: AnalyticsTab; label: string }[] = isExternal
+    ? [
+        { value: 'overview', label: 'Tổng quan' },
+        { value: 'funnel', label: 'Phễu & Lead' },
+      ]
+    : [
+        { value: 'funnel', label: 'Phễu & Lead' },
+        { value: 'blocks', label: 'Theo block' },
+      ];
 
   return (
     <PortalShell>
@@ -78,15 +118,51 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
             <p className='text-2xs mt-1 font-mono text-rose-700'>{error}</p>
           </div>
         </div>
-      ) : !resolvedId ? (
+      ) : !resolvedId || !tab ? (
         <div className='text-content-muted flex h-64 items-center justify-center text-sm'>
           <Loader2 className='mr-2 size-4 animate-spin' /> Đang resolve landing…
         </div>
       ) : (
-        <BlockAnalyticsGrid
-          templateId={resolvedId}
-          backHref='/portal/landing-pages'
-        />
+        <>
+          {/* Tab switch — external: Tổng quan ↔ Phễu; thường: Phễu ↔ Theo block.
+              Các view giữ header/back-link riêng nên switcher nổi giữa-trên. */}
+          <div className='flex justify-center pt-4'>
+            <div className='border-border bg-muted inline-flex rounded-lg border p-0.5'>
+              {tabs.map(t => (
+                <button
+                  key={t.value}
+                  type='button'
+                  onClick={() => setTab(t.value)}
+                  className={cn(
+                    'rounded-md px-3 py-1 text-xs font-medium transition-colors',
+                    tab === t.value
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-content-muted hover:text-foreground'
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {tab === 'overview' ? (
+            <ExternalLandingAnalytics
+              pageId={resolvedId}
+              externalUrl={meta.external_url}
+              pageName={meta.name}
+              backHref='/portal/landing-pages'
+            />
+          ) : tab === 'funnel' ? (
+            <div className='mx-auto w-full max-w-6xl px-4 pt-4 pb-16 sm:px-6'>
+              <FunnelOverview pageId={resolvedId} />
+            </div>
+          ) : (
+            <BlockAnalyticsGrid
+              templateId={resolvedId}
+              backHref='/portal/landing-pages'
+            />
+          )}
+        </>
       )}
     </PortalShell>
   );

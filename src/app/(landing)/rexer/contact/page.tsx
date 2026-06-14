@@ -6,7 +6,8 @@ import { WordReveal } from '@/components/landing/LandingMotion';
 import { LetsWorkForm } from '@/components/landing/LetsWorkForm';
 
 export const metadata: Metadata = {
-  title: 'Contact — ReXeR Studio',
+  title: { absolute: 'Contact — ReXeR Studio' },
+  alternates: { canonical: '/rexer/contact' },
   description:
     'Every great project begins with a simple conversation — let’s start yours.',
 };

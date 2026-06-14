@@ -41,6 +41,7 @@ import { toast } from 'sonner';
 
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
+import { copyText, generatePassword } from '@/lib/password';
 
 import { AdminAddLandingForClientDialog } from './AdminAddLandingForClientDialog';
 import { AdsTab } from './client-tabs/AdsTab';
@@ -867,44 +868,208 @@ function MembersTab({
   clientId: string;
   onCount: (n: number) => void;
 }) {
+  // Password vừa reset để hiện cho admin copy gửi brand.
+  const [reset, setReset] = React.useState<{
+    email: string;
+    password: string;
+  } | null>(null);
+  const [resetting, setResetting] = React.useState<string | null>(null);
+
+  // Reset = forgot-password lấy token (MVP BE trả thẳng) → reset-password với
+  // password FE sinh. Không cần endpoint admin set-password riêng.
+  const handleReset = async (email: string) => {
+    setResetting(email);
+    try {
+      const newPassword = generatePassword();
+      const fp = await rexerApi.auth.forgotPassword({ email });
+      if (!fp.reset_token) {
+        // Prod không lộ reset_token (chỉ MVP/local trả thẳng) → không đặt được
+        // password biết trước. Cần BE thêm endpoint admin-set-password.
+        toast.error(
+          'Prod chưa hỗ trợ reset trực tiếp — cần BE thêm endpoint admin đặt mật khẩu. Hiện chỉ chạy trên local (MVP).'
+        );
+        return;
+      }
+      await rexerApi.auth.resetPassword({
+        token: fp.reset_token,
+        new_password: newPassword,
+      });
+      setReset({ email, password: newPassword });
+    } catch (err) {
+      toast.error(
+        err instanceof RxApiError
+          ? err.code || err.message
+          : err instanceof Error
+            ? err.message
+            : 'Reset thất bại'
+      );
+    } finally {
+      setResetting(null);
+    }
+  };
+
   return (
-    <LazyList<BrandUser>
-      load={() => rexerApi.brands.users(clientId)}
-      onCount={onCount}
-      empty='Chưa có member nào trong brand'
-      render={u => (
-        <div className='border-border flex items-center justify-between border-b px-4 py-3 last:border-0'>
-          <div className='flex items-center gap-3'>
-            <div
-              className={cn(
-                'text-2xs flex size-9 items-center justify-center rounded-full bg-gradient-to-br font-mono font-bold text-white',
-                gradientForId(u.id)
-              )}
-            >
-              {initialsOf(u.display_name || u.email)}
+    <>
+      <LazyList<BrandUser>
+        load={() => rexerApi.brands.users(clientId)}
+        onCount={onCount}
+        empty='Chưa có member nào trong brand'
+        render={u => (
+          <div className='border-border flex items-center justify-between gap-3 border-b px-4 py-3 last:border-0'>
+            <div className='flex min-w-0 items-center gap-3'>
+              <div
+                className={cn(
+                  'text-2xs flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-mono font-bold text-white',
+                  gradientForId(u.id)
+                )}
+              >
+                {initialsOf(u.display_name || u.email)}
+              </div>
+              <div className='min-w-0'>
+                <div className='text-foreground truncate text-sm font-semibold'>
+                  {u.display_name || '(không tên)'}
+                </div>
+                <div className='text-3xs text-content-muted flex items-center gap-1.5'>
+                  <Mail className='size-2.5' />
+                  {u.email}
+                </div>
+              </div>
             </div>
-            <div>
-              <div className='text-foreground text-sm font-semibold'>
-                {u.display_name || '(không tên)'}
-              </div>
-              <div className='text-3xs text-content-muted flex items-center gap-1.5'>
-                <Mail className='size-2.5' />
-                {u.email}
-              </div>
+            <div className='flex shrink-0 items-center gap-2'>
+              <span
+                className={cn(
+                  'text-3xs rounded-full px-2 py-0.5 font-bold tracking-wider uppercase',
+                  STATUS_CHIP[u.status?.toLowerCase()] ??
+                    'bg-muted text-content-muted'
+                )}
+              >
+                {u.status || '—'}
+              </span>
+              <button
+                type='button'
+                onClick={() => handleReset(u.email)}
+                disabled={resetting === u.email}
+                className='border-border text-content-muted hover:text-foreground hover:bg-muted inline-flex items-center gap-1 rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-60'
+                title='Đặt lại mật khẩu cho member'
+              >
+                <KeyRound className='size-3.5' />
+                {resetting === u.email ? 'Đang reset…' : 'Reset pass'}
+              </button>
             </div>
           </div>
-          <span
-            className={cn(
-              'text-3xs rounded-full px-2 py-0.5 font-bold tracking-wider uppercase',
-              STATUS_CHIP[u.status?.toLowerCase()] ??
-                'bg-muted text-content-muted'
-            )}
-          >
-            {u.status || '—'}
-          </span>
-        </div>
+        )}
+      />
+      {reset && (
+        <ResetPasswordResultModal
+          email={reset.email}
+          password={reset.password}
+          onClose={() => setReset(null)}
+        />
       )}
-    />
+    </>
+  );
+}
+
+/** Popup hiện mật khẩu mới sau reset — copy để gửi brand. */
+function ResetPasswordResultModal({
+  email,
+  password,
+  onClose,
+}: {
+  email: string;
+  password: string;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = React.useState<'pw' | 'all' | null>(null);
+  const copy = async (value: string, key: 'pw' | 'all') => {
+    if (await copyText(value)) {
+      setCopied(key);
+      toast.success(key === 'all' ? 'Đã copy email + password' : 'Đã copy');
+      setTimeout(() => setCopied(null), 1500);
+    } else {
+      toast.error('Copy thất bại — bôi đen rồi Cmd/Ctrl+C');
+    }
+  };
+  const summary = `Email: ${email}\nPassword: ${password}\nLogin: ${typeof window !== 'undefined' ? window.location.origin : ''}/sign-in`;
+
+  return (
+    <div
+      className='fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 backdrop-blur-sm'
+      onClick={onClose}
+    >
+      <div
+        className='my-8 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
+        onClick={e => e.stopPropagation()}
+      >
+        <div className='border-border flex items-center justify-between border-b px-5 py-3'>
+          <div className='flex items-center gap-2.5'>
+            <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-sm'>
+              <KeyRound className='size-4' />
+            </div>
+            <h3 className='text-base font-semibold'>Đã đặt lại mật khẩu</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className='text-content-muted hover:bg-muted rounded-lg p-1.5'
+            aria-label='Close'
+          >
+            ✕
+          </button>
+        </div>
+        <div className='space-y-3 px-5 py-4'>
+          <div className='rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900'>
+            <span className='font-semibold'>Lưu ngay password</span> — chỉ hiện
+            1 lần. Gửi cho member để đăng nhập.
+          </div>
+          <div className='border-border bg-muted/60 rounded-lg border p-2.5'>
+            <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
+              Email
+            </div>
+            <div className='border-border mt-1 truncate rounded border bg-white px-2 py-1.5 text-sm select-all'>
+              {email}
+            </div>
+          </div>
+          <div className='border-border bg-muted/60 rounded-lg border p-2.5'>
+            <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
+              Password mới
+            </div>
+            <div className='mt-1 flex items-center gap-2'>
+              <div className='border-border flex-1 truncate rounded border bg-white px-2 py-1.5 font-mono text-sm select-all'>
+                {password}
+              </div>
+              <button
+                type='button'
+                onClick={() => copy(password, 'pw')}
+                className={cn(
+                  'text-2xs rounded border px-2 py-1.5 font-medium',
+                  copied === 'pw'
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                    : 'border-border text-content-muted hover:bg-muted bg-white'
+                )}
+              >
+                {copied === 'pw' ? 'Copied' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className='border-border bg-muted/50 flex items-center justify-between border-t px-5 py-3'>
+          <button
+            type='button'
+            onClick={() => copy(summary, 'all')}
+            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'
+          >
+            {copied === 'all' ? 'Đã copy ✓' : 'Copy tất cả'}
+          </button>
+          <button
+            type='button'
+            onClick={onClose}
+            className='rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
+          >
+            Xong
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { headers } from 'next/headers';
 import { getLocale, getMessages, getTimeZone } from 'next-intl/server';
 // import Script from 'next/script';
 
@@ -40,7 +41,16 @@ export async function generateMetadata(): Promise<Metadata> {
   const keywords = config?.keywords || '';
   const ogImage = config?.ogImageUrl || SEO_CONSTANTS.DEFAULT_OG_IMAGE;
 
+  // Landing host (EN) → og:locale en_US; app/portal giữ vi_VN.
+  const host = (await headers()).get('host') ?? '';
+  const isLandingHost =
+    host === 'rexerstudio.com' || host === 'www.rexerstudio.com';
+  const ogLocale = isLandingHost ? 'en_US' : SEO_CONSTANTS.DEFAULT_LOCALE;
+
   return {
+    // Gốc resolve mọi URL tương đối trong metadata (og:image, canonical…).
+    // Thiếu cái này từng làm og:image trỏ http://localhost:3000 trên prod.
+    metadataBase: new URL(SEO_CONSTANTS.SITE_URL),
     title: {
       default: title,
       template: `%s | ${SEO_CONSTANTS.SITE_NAME}`,
@@ -50,9 +60,9 @@ export async function generateMetadata(): Promise<Metadata> {
     authors: [{ name: SEO_CONSTANTS.ORGANIZATION.name }],
     creator: SEO_CONSTANTS.ORGANIZATION.name,
     publisher: SEO_CONSTANTS.ORGANIZATION.name,
-    alternates: {
-      canonical: SEO_CONSTANTS.SITE_URL,
-    },
+    // KHÔNG đặt canonical global ở đây — canonical = SITE_URL trên mọi trang
+    // sẽ khiến tất cả trang con tự nhận là bản sao của trang chủ. Canonical
+    // khai báo theo từng page (xem (landing)/rexer/*).
     icons: {
       icon: '/brand/rexer-wordmark.svg',
       shortcut: '/brand/rexer-wordmark.svg',
@@ -60,7 +70,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     openGraph: {
       type: 'website',
-      locale: SEO_CONSTANTS.DEFAULT_LOCALE,
+      locale: ogLocale,
       url: SEO_CONSTANTS.SITE_URL,
       siteName: SEO_CONSTANTS.SITE_NAME,
       title,
@@ -103,10 +113,15 @@ export default async function RootLayout({
   const messages = await getMessages();
   const timezone = await getTimeZone();
 
-  // const organizationSchema = generateOrganizationSchema();
+  // Landing (rexerstudio.com) nội dung tiếng Anh → khai báo lang="en" cho đúng
+  // SEO/accessibility; portal.* và app giữ theo locale user (mặc định vi).
+  const host = (await headers()).get('host') ?? '';
+  const isLandingHost =
+    host === 'rexerstudio.com' || host === 'www.rexerstudio.com';
+  const htmlLang = isLandingHost ? 'en' : locale;
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={htmlLang} suppressHydrationWarning>
       <head>
         {/* Google Fonts — curated free Vietnamese-friendly families. See
             src/lib/fonts.ts for the registry. Inter is loaded separately

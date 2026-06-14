@@ -10,7 +10,7 @@
  */
 
 import * as React from 'react';
-import { ExternalLink, LayoutTemplate } from 'lucide-react';
+import { ExternalLink, ImagePlus, LayoutTemplate, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
@@ -38,6 +38,31 @@ function rxMsg(err: unknown): string {
 
 function isValidUrl(v: string): boolean {
   return /^https?:\/\/.+/i.test(v.trim());
+}
+
+/** Upload ảnh → media asset (3 bước). Trả asset để gán thumbnail_asset_id. */
+async function uploadThumb(file: File) {
+  const init = await rexerApi.media.initUpload({
+    filename: file.name,
+    mime_type: file.type || 'image/png',
+    file_size: file.size,
+    owner_scope: 'library',
+    media_type: 'image',
+  });
+  if (init.presigned_url) {
+    const res = await fetch(init.presigned_url, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type || 'image/png' },
+      body: file,
+    });
+    if (!res.ok) throw new Error(`Storage upload lỗi ${res.status}`);
+  } else {
+    await rexerApi.media.uploadRaw(init.upload_id, file);
+  }
+  const done = await rexerApi.media.completeUpload({
+    upload_id: init.upload_id,
+  });
+  return done.media_asset;
 }
 
 function ModeTab({
@@ -212,11 +237,17 @@ export function CreateLandingDialog({
                 className='border-border mt-1 w-full rounded-md border bg-white px-3 py-2 text-sm outline-none'
               >
                 <option value=''>Chọn brand…</option>
-                {brands.map(b => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
+                {brands
+                  // Chỉ brand đang hoạt động — ẩn suspended/inactive/deleted.
+                  .filter(b => {
+                    const s = b.status?.toLowerCase();
+                    return !s || s === 'active';
+                  })
+                  .map(b => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
               </select>
             </Field>
             <Field label='Workspace'>
@@ -305,14 +336,36 @@ export function EditLandingDialog({
   const [slug, setSlug] = React.useState('');
   const [externalUrl, setExternalUrl] = React.useState('');
   const [saving, setSaving] = React.useState(false);
+  const [thumbUrl, setThumbUrl] = React.useState<string | null>(null);
+  const [thumbAssetId, setThumbAssetId] = React.useState<string | null>(null);
+  const [uploading, setUploading] = React.useState(false);
+  const fileRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (!open || !page) return;
     setName(page.name ?? '');
     setSlug(page.slug ?? '');
     setExternalUrl(page.external_url ?? '');
+    setThumbUrl(page.thumbnail_url ?? null);
+    setThumbAssetId(null);
     setSaving(false);
   }, [open, page]);
+
+  const pickThumb = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/'))
+      return toast.error('Vui lòng chọn file ảnh');
+    setUploading(true);
+    uploadThumb(file)
+      .then(asset => {
+        setThumbAssetId(asset.id);
+        setThumbUrl(asset.public_url ?? null);
+      })
+      .catch(err => toast.error(`Upload lỗi: ${rxMsg(err)}`))
+      .finally(() => setUploading(false));
+  };
 
   const submit = async () => {
     if (!page) return;
@@ -326,6 +379,7 @@ export function EditLandingDialog({
         name: name.trim(),
         ...(slug.trim() ? { slug: slug.trim() } : {}),
         ...(isExternal ? { external_url: externalUrl.trim() } : {}),
+        ...(thumbAssetId ? { thumbnail_asset_id: thumbAssetId } : {}),
       });
       toast.success('Đã cập nhật landing');
       onUpdated(updated);
@@ -380,6 +434,51 @@ export function EditLandingDialog({
               </p>
             </Field>
           )}
+
+          <Field label='Ảnh thumbnail'>
+            <div className='mt-1 flex items-center gap-3'>
+              <div className='border-border bg-muted relative aspect-[16/9] w-32 shrink-0 overflow-hidden rounded-lg border'>
+                {thumbUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={thumbUrl}
+                    alt='thumbnail'
+                    className='absolute inset-0 size-full object-cover'
+                  />
+                ) : (
+                  <div className='text-muted-foreground flex size-full items-center justify-center'>
+                    <ImagePlus className='size-5' />
+                  </div>
+                )}
+              </div>
+              <div className='min-w-0'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <Loader2 className='size-3.5 animate-spin' />
+                  ) : (
+                    <ImagePlus className='size-3.5' />
+                  )}
+                  {uploading ? 'Đang tải…' : thumbUrl ? 'Đổi ảnh' : 'Tải ảnh'}
+                </Button>
+                <p className='text-3xs text-muted-foreground mt-1'>
+                  Ảnh hiển thị trên card landing. Lưu mới áp dụng.
+                </p>
+              </div>
+              <input
+                ref={fileRef}
+                type='file'
+                accept='image/*'
+                className='hidden'
+                onChange={pickThumb}
+              />
+            </div>
+          </Field>
         </div>
 
         <DialogFooter>

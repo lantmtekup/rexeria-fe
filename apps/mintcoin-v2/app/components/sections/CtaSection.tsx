@@ -153,6 +153,7 @@ export default function CtaSection() {
               href={MINT_URL}
               target='_blank'
               rel='noopener noreferrer'
+              data-cta-id='buy-online'
               className='inline-block text-[11px] tracking-[0.18em] text-[#c79119] uppercase transition-colors hover:text-neutral-100'
             >
               Or buy directly online →
@@ -259,6 +260,7 @@ export default function CtaSection() {
               <button
                 type='submit'
                 disabled={status === 'loading'}
+                data-cta-id='reserve-submit'
                 className='w-full rounded-full bg-[#c79119] py-4 text-xs font-medium tracking-[0.18em] text-neutral-900 uppercase transition-colors duration-300 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60'
               >
                 {status === 'loading' ? 'Sending…' : 'Request a call back'}

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ANALYTICS_BLOCKS, type AnalyticsBlock } from './analytics-data';
 import {
   fetchBlocks,
+  fetchCtaBreakdown,
   fetchSummary,
   type BlockRow,
   type PageSummary,
@@ -30,6 +31,8 @@ export default function AnalyticsOverlay({ onLogout }: Props) {
   const [source, setSource] = useState<Source>('loading');
   const [summary, setSummary] = useState<PageSummary | null>(null);
   const [liveBlocks, setLiveBlocks] = useState<Record<string, BlockRow>>({});
+  // Per-CTA click counts (cta_id → count) for blocks that define hotspots.
+  const [ctaCounts, setCtaCounts] = useState<Record<string, number>>({});
   const rafRef = useRef<number | undefined>(undefined);
 
   // Fetch real data from ReXeR. No mock fallback — on auth/network failure the
@@ -37,22 +40,26 @@ export default function AnalyticsOverlay({ onLogout }: Props) {
   useEffect(() => {
     let alive = true;
     setSource('loading');
-    Promise.all([fetchSummary(range), fetchBlocks(range)]).then(
-      ([sum, blocks]) => {
-        if (!alive) return;
-        if (blocks) {
-          const map: Record<string, BlockRow> = {};
-          blocks.forEach(b => (map[b.block_key] = b));
-          setLiveBlocks(map);
-          setSummary(sum);
-          setSource('live');
-        } else {
-          setLiveBlocks({});
-          setSummary(null);
-          setSource('error');
-        }
+    Promise.all([
+      fetchSummary(range),
+      fetchBlocks(range),
+      fetchCtaBreakdown(range),
+    ]).then(([sum, blocks, ctas]) => {
+      if (!alive) return;
+      if (blocks) {
+        const map: Record<string, BlockRow> = {};
+        blocks.forEach(b => (map[b.block_key] = b));
+        setLiveBlocks(map);
+        setCtaCounts(ctas || {});
+        setSummary(sum);
+        setSource('live');
+      } else {
+        setLiveBlocks({});
+        setCtaCounts({});
+        setSummary(null);
+        setSource('error');
       }
-    );
+    });
     return () => {
       alive = false;
     };
@@ -102,15 +109,15 @@ export default function AnalyticsOverlay({ onLogout }: Props) {
       const scroll = live ? Math.round(live.avg_scroll_depth) : 0;
       const ctr = views > 0 ? (clicks / views) * 100 : 0;
       const rows: [string, string][] = [
-        ['Lượt xem', views.toLocaleString()],
-        ['Click', clicks.toLocaleString()],
-        ['Scroll depth TB', `${scroll}%`],
+        ['Views', views.toLocaleString()],
+        ['Clicks', clicks.toLocaleString()],
+        ['Avg scroll depth', `${scroll}%`],
         ['CTR', `${ctr.toFixed(1)}%`],
       ];
       // Time-on-block — shown only once the BE returns avg_dwell_ms.
       if (live?.avg_dwell_ms != null) {
         rows.push([
-          'Thời gian xem TB',
+          'Avg time on block',
           `${(live.avg_dwell_ms / 1000).toFixed(1)}s`,
         ]);
       }
@@ -128,7 +135,7 @@ export default function AnalyticsOverlay({ onLogout }: Props) {
         {summary && (
           <span className='text-neutral-300'>
             {summary.page_views.toLocaleString()} views ·{' '}
-            {summary.unique_visitors.toLocaleString()} khách ·{' '}
+            {summary.unique_visitors.toLocaleString()} visitors ·{' '}
             {summary.clicks.toLocaleString()} clicks
           </span>
         )}
@@ -152,7 +159,7 @@ export default function AnalyticsOverlay({ onLogout }: Props) {
             onClick={onLogout}
             className='rounded bg-neutral-800 px-3 py-1 text-neutral-200 transition-colors hover:bg-neutral-700'
           >
-            Đăng xuất
+            Log out
           </button>
         </div>
       </div>
@@ -161,6 +168,10 @@ export default function AnalyticsOverlay({ onLogout }: Props) {
       {positions.map(p => {
         if (!p.visible) return null;
         const block = blockById(p.id);
+        // Hide a block's badge/card entirely once data is live and it has no
+        // clicks — keeps the overlay focused on blocks with real interaction.
+        const blockClicks = liveBlocks[block.id]?.clicks ?? 0;
+        if (source === 'live' && blockClicks === 0) return null;
         const open = !collapsed[p.id]; // open by default
         const rows = metricsFor(block);
         const [heroLabel, heroValue] = rows[0];
@@ -188,7 +199,7 @@ export default function AnalyticsOverlay({ onLogout }: Props) {
 
                 {source === 'error' ? (
                   <div className='px-4 py-4 text-amber-300/90'>
-                    Cần đăng nhập ReXeR để xem số liệu.
+                    Log in to ReXeR to view metrics.
                   </div>
                 ) : (
                   <>
@@ -211,6 +222,26 @@ export default function AnalyticsOverlay({ onLogout }: Props) {
                         />
                       ))}
                     </div>
+
+                    {/* Per-hotspot click breakdown (named points) */}
+                    {block.ctas && block.ctas.length > 0 && (
+                      <div className='border-t border-neutral-800 px-4 py-2'>
+                        <div className='mb-1 text-[10px] tracking-wider text-amber-300/80 uppercase'>
+                          Clicks by point
+                        </div>
+                        {block.ctas.map(c => (
+                          <Metric
+                            key={c.id}
+                            label={c.label}
+                            value={
+                              source === 'loading'
+                                ? '…'
+                                : (ctaCounts[c.id] ?? 0).toLocaleString()
+                            }
+                          />
+                        ))}
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -226,8 +257,8 @@ function SourceChip({ source }: { source: Source }) {
   // "LIVE · ReXeR" is hidden by design; only surface loading / not-logged-in.
   if (source === 'live') return null;
   const map = {
-    loading: ['bg-neutral-700 text-neutral-300', 'Đang tải…'],
-    error: ['bg-red-500/20 text-red-300', 'CHƯA ĐĂNG NHẬP'],
+    loading: ['bg-neutral-700 text-neutral-300', 'Loading…'],
+    error: ['bg-red-500/20 text-red-300', 'NOT LOGGED IN'],
   } as const;
   const [cls, label] = map[source];
   return <span className={`rounded px-2 py-0.5 ${cls}`}>{label}</span>;

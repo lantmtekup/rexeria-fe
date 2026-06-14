@@ -226,6 +226,7 @@ export async function loadTemplates(): Promise<LoadResult<PortalTemplate[]>> {
       workspace_id: t.workspace_id || '',
       name: t.name,
       thumbnail_gradient: TEMPLATE_GRADIENTS[i % TEMPLATE_GRADIENTS.length],
+      thumbnail_url: t.thumbnail_url || null,
       status:
         t.status === 'published' ||
         t.status === 'draft' ||
@@ -242,6 +243,39 @@ export async function loadTemplates(): Promise<LoadResult<PortalTemplate[]>> {
         role: t.last_updated_by?.role === 'staff' ? 'staff' : 'brand',
       },
     }));
+    // `/portal/templates` không SELECT `p.external_url` (BE portal.go), nên
+    // enrich thêm từ brand-scoped `GET /workspaces/{ws}/pages` (h.List) —
+    // endpoint này portal gọi được + trả Page kèm `external_url`. Merge theo
+    // page id (portal template id == page id post-cutover). Best-effort: lỗi
+    // thì giữ nguyên list (card fallback Preview như cũ).
+    const wsIds = Array.from(
+      new Set(items.map(t => t.workspace_id).filter(Boolean))
+    );
+    if (wsIds.length > 0) {
+      try {
+        const pageLists = await Promise.all(
+          wsIds.map(ws =>
+            rexerApi.pages
+              .list(ws, { limit: 100 })
+              .then(r => r.items ?? [])
+              .catch(() => [])
+          )
+        );
+        const externalById = new Map<string, string>();
+        for (const list of pageLists) {
+          for (const p of list) {
+            if (p.external_url) externalById.set(p.id, p.external_url);
+          }
+        }
+        for (const t of items) {
+          const ext = externalById.get(t.id);
+          if (ext) t.external_url = ext;
+        }
+      } catch {
+        /* enrich best-effort — bỏ qua nếu fail */
+      }
+    }
+
     // Empty list from a successful BE call is a valid state — render it as
     // live (the page shows its own empty-state UI) instead of falling back
     // to fake data + the misleading "BE unavailable" banner.

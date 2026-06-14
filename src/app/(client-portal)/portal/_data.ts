@@ -155,6 +155,15 @@ export type PortalTemplate = {
   open_comments: number;
   last_updated_at: string; // ISO
   last_updated_by: { name: string; role: 'staff' | 'brand' };
+  /**
+   * External landing (loại "extension") — URL ngoài (vd mintcoin.vercel.app).
+   * `/portal/templates` không trả field này nên loadTemplates enrich thêm
+   * từ `pages.list(workspaceId)`. Có giá trị ⇒ card mở thẳng link ngoài.
+   */
+  external_url?: string | null;
+  /** Ảnh thumbnail thật (BE trả từ thumbnail_asset_id). Có → card hiện ảnh
+   * thay gradient placeholder. */
+  thumbnail_url?: string | null;
 };
 
 export const FAKE_TEMPLATES: PortalTemplate[] = [
