@@ -198,17 +198,18 @@ function PortalShellInner({
   // mở self-serve. Dev (NODE_ENV !== production) vẫn full để code/test. Staff
   // sau hydrate vẫn thấy full ngay cả trên prod.
   const isProd = process.env.NODE_ENV === 'production';
-  const PROD_BRAND_ALLOWED = new Set([
+  const PROD_ALLOWED = new Set([
     '/portal/landing-pages',
     '/portal/media',
     '/portal/marketing',
   ]);
-  const navItems =
-    hydrated && isStaffOrAdmin
+  // PROD: ẩn cho TẤT CẢ (kể cả staff) — portal khách chỉ còn 3 mục Phase 1.
+  // Dev vẫn full (staff) / chỉ ẩn template (brand) để còn code/test.
+  const navItems = isProd
+    ? NAV.filter(n => PROD_ALLOWED.has(n.href))
+    : hydrated && isStaffOrAdmin
       ? NAV
-      : isProd
-        ? NAV.filter(n => PROD_BRAND_ALLOWED.has(n.href))
-        : NAV.filter(n => n.href !== '/portal/templates');
+      : NAV.filter(n => n.href !== '/portal/templates');
 
   const switchWorkspace = (ws: Workspace) => {
     setWsMenuOpen(false);
