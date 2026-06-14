@@ -40,29 +40,18 @@ export function useFunnelAnalytics(pageId: string, range: DateRange) {
     let alive = true;
     setState(s => ({ ...s, loading: true, error: null }));
 
-    // Degrade từng call: chỉ `funnel` là core (số phễu). sources/blocks/
-    // timeseries là phụ trợ — 1 cái lỗi (vd `blocks` trả "Internal-only" với
-    // 1 số ngữ cảnh) KHÔNG được làm trắng cả tab. Mirror graceful-empty của
-    // BlockAnalyticsGrid + tab Tổng quan: thiếu data → render số 0, không màn
-    // lỗi. Chỉ báo lỗi khi chính `funnel` (core) hỏng.
-    const ZERO_FUNNEL = {
-      page_id: pageId,
-      visits: 0,
-      engaged: 0,
-      cta_clicks: 0,
-      leads: 0,
-      sql: 0,
-      deals: 0,
-      visits_prev_period: 0,
-      avg_session_sec: 0,
-      total_dwell_sec: 0,
-      sql_threshold: 65,
-      from: '',
-      to: '',
-    };
-
+    // Degrade từng call + FALLBACK. `/analytics/funnel|timeseries|sources` có
+    // thể 404 (reverse proxy prod chưa forward `/v1/analytics/*`) → khi đó
+    // dựng số phễu từ `summary` + `breakdown(event_type)` (path-param
+    // `/v1/pages/:id/analytics/*` — luôn được proxy forward, giống tab Tổng
+    // quan). Nhờ vậy Phễu vẫn có visits/engaged/cta/leads thật thay vì rỗng.
     Promise.all([
       rexerApi.pages.analytics.funnel(pageId, { range }).catch(() => null),
+      rexerApi.pages.analytics.summary(pageId, { range }).catch(() => null),
+      rexerApi.pages.analytics
+        .breakdown(pageId, { group_by: 'event_type', range })
+        .then(r => r.items ?? [])
+        .catch(() => []),
       rexerApi.pages.analytics
         .sources(pageId, { range })
         .catch(() => ({ items: [] })),
@@ -73,22 +62,33 @@ export function useFunnelAnalytics(pageId: string, range: DateRange) {
         .timeseries(pageId, { metric: 'visits', range })
         .catch(() => ({ page_id: pageId, metric: 'visits', points: [] })),
     ])
-      .then(([funnelRes, sources, blocksRes, ts]) => {
+      .then(([funnelRes, sum, evt, sources, blocksRes, ts]) => {
         if (!alive) return;
-        const funnel = funnelRes ?? ZERO_FUNNEL;
-        const prev = funnel.visits_prev_period;
+        const pv = evt.find(r => r.key === 'page_view');
+        const scroll = evt.find(r => r.key === 'scroll_depth');
+
+        // Ưu tiên endpoint funnel; thiếu (404) → suy từ summary + breakdown.
+        const visits = funnelRes?.visits || sum?.page_views || 0;
+        const ctaClicks = funnelRes?.cta_clicks || sum?.clicks || 0;
+        const leads = funnelRes?.leads || sum?.conversions || 0;
+        // engaged ≈ số session có scroll (proxy khi không có funnel thật).
+        const engaged =
+          funnelRes?.engaged || scroll?.metrics.unique_session || 0;
+        const sql = funnelRes?.sql ?? 0;
+        const deals = funnelRes?.deals ?? 0;
+
+        // visitsByDay: timeseries nếu có, không thì views_by_day của page_view.
+        const visitsByDay =
+          ts.points.length > 0
+            ? ts.points.map(p => p.value)
+            : (pv?.views_by_day ?? []);
+
+        const prev = funnelRes?.visits_prev_period ?? 0;
         const visitsDeltaPct =
-          prev > 0 ? Math.round(((funnel.visits - prev) / prev) * 100) : 0;
+          prev > 0 ? Math.round(((visits - prev) / prev) * 100) : 0;
 
         const mapped: FunnelAnalytics = {
-          funnel: {
-            visits: funnel.visits,
-            engaged: funnel.engaged,
-            ctaClicks: funnel.cta_clicks,
-            leads: funnel.leads,
-            sql: funnel.sql,
-            deals: funnel.deals,
-          },
+          funnel: { visits, engaged, ctaClicks, leads, sql, deals },
           sources: sources.items.map(s => ({
             source: s.utm_source,
             visits: s.visits,
@@ -100,10 +100,10 @@ export function useFunnelAnalytics(pageId: string, range: DateRange) {
             clicks: b.clicks,
             dwellSec: Math.round((b.total_dwell_ms ?? 0) / 1000),
           })),
-          visitsByDay: ts.points.map(p => p.value),
+          visitsByDay,
           visitsDeltaPct,
-          avgSessionSec: funnel.avg_session_sec,
-          sqlThreshold: funnel.sql_threshold,
+          avgSessionSec: funnelRes?.avg_session_sec ?? 0,
+          sqlThreshold: funnelRes?.sql_threshold ?? 65,
         };
         setState({ data: mapped, loading: false, error: null });
       })

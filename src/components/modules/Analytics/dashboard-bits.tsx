@@ -144,8 +144,8 @@ export function AreaChart({ series }: { series: number[] }) {
           <stop offset='100%' stopColor='#4f46e5' stopOpacity='0.02' />
         </linearGradient>
       </defs>
-      {yTicks.map(t => (
-        <g key={t}>
+      {yTicks.map((t, i) => (
+        <g key={i}>
           <line
             x1={PAD.l}
             x2={W - PAD.r}
