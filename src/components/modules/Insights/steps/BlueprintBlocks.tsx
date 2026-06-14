@@ -1,11 +1,12 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
   ChevronDown,
   ChevronUp,
+  Expand,
   Eye,
   LayoutGrid,
   LayoutTemplate,
@@ -35,10 +36,12 @@ import type {
 } from '@/services/rexer/types';
 import { AddBlockDialog } from '../../CanvasTemplate/block-editor/AddBlockDialog';
 import { BlockMiniPreview } from '../../CanvasTemplate/block-editor/BlockMiniPreview';
+import { PreviewMode } from '../../CanvasTemplate/block-editor/PreviewMode';
 import { createBlock } from '../../CanvasTemplate/block-editor/factory';
 import {
   BLOCK_TYPE_META,
   type BlockType,
+  type Lang,
 } from '../../CanvasTemplate/block-editor/types';
 import { SectionCard } from './ui';
 
@@ -204,7 +207,10 @@ function BlockRow({
   onDelete: () => void;
 }) {
   const t = useTranslations('insights');
+  const locale = useLocale();
+  const lang: Lang = locale === 'en' ? 'en' : 'vi';
   const [open, setOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState<Record<string, unknown> | null>(
     null
@@ -275,6 +281,13 @@ function BlockRow({
             label={t('blueprint.viewDetail')}
             onClick={() => setOpen(true)}
           />
+          {detailPreview && (
+            <ActionBtn
+              icon={<Expand className='size-3' aria-hidden />}
+              label={t('blueprint.preview')}
+              onClick={() => setPreviewOpen(true)}
+            />
+          )}
           <ActionBtn
             icon={
               generating ? (
@@ -376,6 +389,16 @@ function BlockRow({
           </p>
         </DialogContent>
       </Dialog>
+
+      {/* Preview full block — render editor block thật ở chế độ toàn màn hình
+          (giống /admin/blocks): device toggle + đóng. */}
+      {previewOpen && detailPreview && (
+        <PreviewMode
+          blocks={[detailPreview]}
+          lang={lang}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
     </li>
   );
 }
