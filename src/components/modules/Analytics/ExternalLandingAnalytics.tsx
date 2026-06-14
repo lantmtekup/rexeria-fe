@@ -405,21 +405,15 @@ function ConnectionBanner({
       />
       {connected ? (
         <span>
-          Đã kết nối tracking key
-          {trackingKey?.key_prefix && (
-            <span className='font-mono font-semibold'>
-              {' '}
-              {trackingKey.key_prefix}…
-            </span>
-          )}
-          {trackingKey?.last_used_at && (
+          {trackingKey?.last_used_at ? (
             <>
-              {' '}
-              · nhận dữ liệu lần cuối{' '}
+              Dữ liệu cập nhật gần nhất{' '}
               <strong>
                 {new Date(trackingKey.last_used_at).toLocaleString('vi-VN')}
               </strong>
             </>
+          ) : (
+            'Đã kết nối — đang nhận dữ liệu'
           )}
         </span>
       ) : (
