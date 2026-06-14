@@ -212,11 +212,17 @@ export function CreateLandingDialog({
                 className='border-border mt-1 w-full rounded-md border bg-white px-3 py-2 text-sm outline-none'
               >
                 <option value=''>Chọn brand…</option>
-                {brands.map(b => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
+                {brands
+                  // Chỉ brand đang hoạt động — ẩn suspended/inactive/deleted.
+                  .filter(b => {
+                    const s = b.status?.toLowerCase();
+                    return !s || s === 'active';
+                  })
+                  .map(b => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
               </select>
             </Field>
             <Field label='Workspace'>
