@@ -24,6 +24,7 @@ import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 
 import { InsightStepsDialog } from './_InsightStepsDialog';
+import { BlocksSection } from '@/components/modules/Insights/steps/BlueprintBlocks';
 import {
   GOAL_LABEL,
   deriveSummary,
@@ -111,10 +112,21 @@ export function InsightResultPanel({
     };
   }, [poll]);
 
+  // Template user chọn để dựng (mặc định cái đầu) — truyền block_codes vào
+  // handoff. Không chọn → BE tự derive từ blueprint.
+  const [picked, setPicked] = useState<number>(0);
+
   const handleApply = async () => {
     setApplying(true);
     try {
-      const res = await rexerApi.insights.handoff(reportId);
+      const tpls = report?.blueprint?.recommended_templates?.templates ?? [];
+      const chosen = tpls[picked];
+      const res = await rexerApi.insights.handoff(
+        reportId,
+        chosen
+          ? { template: { name: chosen.name, block_codes: chosen.block_codes } }
+          : undefined
+      );
       const h = { template_id: res.template_id, edit_url: res.edit_url };
       onHandoff(h);
       setStepsOpen(false);
@@ -213,15 +225,73 @@ export function InsightResultPanel({
             </Field>
           )}
 
+          {/* Block đề xuất — list đầy đủ theo stage (mỗi block có "AI tạo
+              nội dung" để xem nội dung mẫu). */}
           {!!bp?.recommended_blocks?.blocks_by_stage?.length && (
-            <Field label='Block đề xuất'>
-              <span className='text-content-muted text-xs'>
-                {bp.recommended_blocks.blocks_by_stage.reduce(
-                  (n, s) => n + s.blocks.length,
-                  0
-                )}{' '}
-                block qua {bp.recommended_blocks.blocks_by_stage.length} stage
-              </span>
+            <BlocksSection
+              blueprint={{ recommended_blocks: bp.recommended_blocks }}
+              reportId={reportId}
+              collapsible
+            />
+          )}
+
+          {/* Template gợi ý — user CHỌN 1 cái để dựng (block_codes truyền vào
+              handoff). Mỗi template hiện block bên trong + lý do phù hợp. */}
+          {!!bp?.recommended_templates?.templates?.length && !handoff && (
+            <Field label='Chọn template để dựng'>
+              <div className='flex flex-col gap-2'>
+                {bp.recommended_templates.templates.map((t, i) => (
+                  <button
+                    key={t.name}
+                    type='button'
+                    onClick={() => setPicked(i)}
+                    className={cn(
+                      'rounded-lg border p-3 text-left transition-colors',
+                      picked === i
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/40'
+                    )}
+                  >
+                    <div className='flex items-center justify-between gap-2'>
+                      <span className='text-foreground text-sm font-semibold'>
+                        {t.name}
+                      </span>
+                      <span
+                        className={cn(
+                          'flex size-4 shrink-0 items-center justify-center rounded-full border',
+                          picked === i
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-border'
+                        )}
+                      >
+                        {picked === i && <Check className='size-3' />}
+                      </span>
+                    </div>
+                    {t.description && (
+                      <p className='text-content-muted mt-0.5 text-xs'>
+                        {t.description}
+                      </p>
+                    )}
+                    {!!t.block_codes?.length && (
+                      <div className='mt-1.5 flex flex-wrap gap-1'>
+                        {t.block_codes.map(code => (
+                          <span
+                            key={code}
+                            className='bg-muted text-content-muted text-2xs rounded px-1.5 py-0.5'
+                          >
+                            {code}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {t.why_fit && (
+                      <p className='text-content-muted text-2xs mt-1 italic'>
+                        Vì sao hợp: {t.why_fit}
+                      </p>
+                    )}
+                  </button>
+                ))}
+              </div>
             </Field>
           )}
 
