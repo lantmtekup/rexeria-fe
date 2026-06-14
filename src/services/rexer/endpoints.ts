@@ -213,6 +213,13 @@ import type {
   PageAnalyticsSummary,
   PageAnalyticsBlocksResponse,
   PageAnalyticsBreakdownResponse,
+  AnalyticsRange,
+  AnalyticsFunnelResponse,
+  AnalyticsTimeseriesResponse,
+  AnalyticsSourcesResponse,
+  Lead,
+  LeadsListResponse,
+  LeadStatus,
   Block,
   BlockListResponse,
   BlockResponse,
@@ -1784,6 +1791,63 @@ export const rexerApi = {
         rx<PageAnalyticsBreakdownResponse>(`/pages/${id}/analytics/breakdown`, {
           query,
         }),
+
+      // ── Analytics v2: phễu + leads (be-spec-analytics-funnel-leads) ──
+      // `id` ở đây là page_id (uuid|slug) — BE nhận qua query, không phải path.
+      /** 6-bậc phễu visits → engaged → cta_clicks → leads → sql → deals. */
+      funnel: (id: string, query?: { range?: AnalyticsRange }) =>
+        rx<AnalyticsFunnelResponse>('/analytics/funnel', {
+          query: { page_id: id, ...query },
+        }),
+      /** Chuỗi theo ngày (zero-filled) cho 1 metric: visits|leads. */
+      timeseries: (
+        id: string,
+        query: { metric: 'visits' | 'leads'; range?: AnalyticsRange }
+      ) =>
+        rx<AnalyticsTimeseriesResponse>('/analytics/timeseries', {
+          query: { page_id: id, ...query },
+        }),
+      /** Visits + leads gom theo utm_source ('' → 'direct'). */
+      sources: (id: string, query?: { range?: AnalyticsRange }) =>
+        rx<AnalyticsSourcesResponse>('/analytics/sources', {
+          query: { page_id: id, ...query },
+        }),
+    },
+  },
+
+  // ── Leads (Sales view — be-spec-analytics-funnel-leads §4.5–4.7) ──────
+  // Leads được TẠO bởi ingest `lead_submit` ẩn danh trên POST /v1/track;
+  // ở đây chỉ có list + chuyển trạng thái + chốt deal (cookieAuth, tenant).
+  leads: {
+    /** Bảng lead của 1 page; sort_by score|created_at. */
+    list: (query: {
+      page_id: string;
+      range?: AnalyticsRange;
+      status?: LeadStatus;
+      tier?: 'hot' | 'warm' | 'cold';
+      sort_by?: 'score' | 'created_at';
+      sort_order?: 'asc' | 'desc';
+      page?: number;
+      limit?: number;
+    }) => rx<LeadsListResponse>('/leads', { query }),
+    /** Đổi trạng thái lead; BE ghi lead_status_log. Trả `{ lead }`. */
+    updateStatus: async (id: string, status: LeadStatus): Promise<Lead> => {
+      const r = await rx<{ lead: Lead }>(`/leads/${id}`, {
+        method: 'PATCH',
+        body: { status },
+      });
+      return r.lead;
+    },
+    /** Tạo deal + set status `won` (atomic). Trả `{ lead }` đã có deal. */
+    createDeal: async (
+      id: string,
+      body: { value: number; currency?: string }
+    ): Promise<Lead> => {
+      const r = await rx<{ lead: Lead }>(`/leads/${id}/deal`, {
+        method: 'POST',
+        body,
+      });
+      return r.lead;
     },
   },
 

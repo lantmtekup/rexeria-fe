@@ -18,6 +18,7 @@ import {
   Package,
   Settings,
   Sparkles,
+  Target,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -87,6 +88,12 @@ const NAV: NavItem[] = [
     icon: Lightbulb,
     group: 'Rexer Product',
   },
+  {
+    href: '/portal/marketing',
+    label: 'Marketing',
+    icon: Target,
+    group: 'Rexer Product',
+  },
   { href: '/portal/media', label: 'Media', icon: FolderOpen, group: 'Assets' },
   {
     href: '/portal/products',
@@ -109,17 +116,30 @@ const NAV: NavItem[] = [
   { href: '/portal/profile', label: 'Profile', icon: Settings },
 ];
 
-export function PortalShell({ children }: { children: React.ReactNode }) {
+export function PortalShell({
+  children,
+  fullBleed = false,
+}: {
+  children: React.ReactNode;
+  /** Bỏ padding + max-width của main, content fill trắng sát mép (editor). */
+  fullBleed?: boolean;
+}) {
   return (
     <Suspense
       fallback={<div className='text-content-muted p-8 text-sm'>Loading…</div>}
     >
-      <PortalShellInner>{children}</PortalShellInner>
+      <PortalShellInner fullBleed={fullBleed}>{children}</PortalShellInner>
     </Suspense>
   );
 }
 
-function PortalShellInner({ children }: { children: React.ReactNode }) {
+function PortalShellInner({
+  children,
+  fullBleed,
+}: {
+  children: React.ReactNode;
+  fullBleed?: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -489,7 +509,13 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
           </div> */}
         </aside>
 
-        <main className='mx-auto w-full max-w-5xl px-5 py-8 lg:px-8'>
+        <main
+          className={
+            fullBleed
+              ? 'bg-background w-full'
+              : 'mx-auto w-full max-w-5xl px-5 py-8 lg:px-8'
+          }
+        >
           {children}
         </main>
       </div>

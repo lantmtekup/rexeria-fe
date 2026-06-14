@@ -36,10 +36,13 @@ select {
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  /* font */
+  /* font — SF Pro Text trên thiết bị Apple (license Apple không cho self-host
+     trên web nên đi qua system stack); máy khác fallback Inter (webfont gần
+     SF Pro nhất, đã load sẵn qua next/font) rồi tới system sans. */
   --font-sans:
-    var(--font-inter), ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    'SF Pro Text', -apple-system, BlinkMacSystemFont, var(--font-inter),
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, ui-sans-serif, system-ui,
+    sans-serif;
 
   /* ── Type scale (canonical) ──────────────────────────────────────────────
      Dense admin/portal UI dùng nhiều cỡ < 12px. Thêm 2 bậc sub-xs để thay

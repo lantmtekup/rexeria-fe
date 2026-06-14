@@ -4,8 +4,9 @@
 
 export const SEO_CONSTANTS = {
   // Site information
-  SITE_NAME: '',
-  SITE_DESCRIPTION: '',
+  SITE_NAME: process.env.NEXT_PUBLIC_SITE_NAME || 'ReXeR Studio',
+  SITE_DESCRIPTION:
+    'From content chaos to customer conversion: we craft immersive, interactive experiences for your brand digital touchpoints.',
   DEFAULT_LOCALE: 'vi_VN',
 
   // Title & Description lengths (SEO best practices)
@@ -21,18 +22,21 @@ export const SEO_CONSTANTS = {
   TWITTER_IMAGE_HEIGHT: 600,
 
   // Default images
+  // TODO(og-image): thay bằng PNG/JPG 1200×630 thật — FB/Twitter KHÔNG render
+  // SVG. Đặt file tại public/brand/og-image.png rồi đổi path dưới đây.
   DEFAULT_OG_IMAGE: '/brand/rexer-wordmark.svg',
-  DEFAULT_IMAGE_ALT: '',
+  DEFAULT_IMAGE_ALT: 'ReXeR Studio — Interactive Experience Studio',
 
   // Site URLs (from environment variables)
-  SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || '',
+  SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'https://rexerstudio.com',
 
   // Organization info for Schema.org
   ORGANIZATION: {
-    name: '',
-    url: '',
+    name: 'ReXeR Studio',
+    url: 'https://rexerstudio.com',
     logo: '/brand/rexer-wordmark.svg',
-    description: '',
+    description:
+      'Studio crafting immersive, interactive experiences for brand digital touchpoints — transforming brand touchpoints into interactive experiences.',
   },
 
   // Social media
@@ -40,7 +44,13 @@ export const SEO_CONSTANTS = {
   FACEBOOK_HANDLE: '',
 
   // Keywords
-  DEFAULT_KEYWORDS: [],
+  DEFAULT_KEYWORDS: [
+    'interactive experience',
+    'landing page',
+    'brand experience',
+    'web design studio',
+    'ReXeR Studio',
+  ],
 } as const;
 
 /**

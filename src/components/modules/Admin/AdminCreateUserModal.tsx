@@ -35,6 +35,35 @@ type CreatedCredentials = {
 };
 
 /**
+ * Copy text robust — thử Clipboard API (cần secure context), fallback
+ * textarea + execCommand khi clipboard không khả dụng/bị chặn. Trả true nếu OK.
+ */
+async function copyText(value: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch {
+    /* rơi xuống fallback */
+  }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = value;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Strong random password: 16 chars from a charset that guarantees at least
  * one lowercase, uppercase, digit, and symbol. Avoids ambiguous chars
  * (`l`, `1`, `O`, `0`) so people can read it off a screen.
@@ -576,15 +605,15 @@ function CredentialsResultModal({
   const meta = ROLE_META[creds.role];
 
   const copy = async (value: string, key: 'email' | 'password' | 'all') => {
-    try {
-      await navigator.clipboard.writeText(value);
+    const ok = await copyText(value);
+    if (ok) {
       setCopied(key);
       toast.success(
         key === 'all' ? 'Đã copy email + password' : `Đã copy ${key}`
       );
       setTimeout(() => setCopied(null), 1500);
-    } catch {
-      toast.error('Copy thất bại — copy thủ công nhé');
+    } else {
+      toast.error('Copy thất bại — bôi đen rồi Cmd/Ctrl+C nhé');
     }
   };
 
@@ -730,9 +759,10 @@ function CredField({
       </div>
       <div className='mt-1 flex items-center gap-2'>
         <div
-          className={`border-border flex-1 truncate rounded border bg-white px-2 py-1.5 text-sm ${
+          className={`border-border flex-1 truncate rounded border bg-white px-2 py-1.5 text-sm select-all ${
             mono ? 'font-mono' : ''
           }`}
+          title={value}
         >
           {value || <span className='text-muted-foreground'>—</span>}
         </div>
