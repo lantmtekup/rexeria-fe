@@ -48,6 +48,7 @@ export function FunnelOverview({ pageId }: { pageId: string }) {
           ]}
           value={tab}
           onChange={v => setTab(v as ViewTab)}
+          variant='gradient'
         />
         <PillGroup
           options={RANGES.map(r => ({ value: r.value, label: r.label }))}
@@ -101,32 +102,51 @@ function FunnelSkeleton() {
   );
 }
 
-/** Nhóm nút pill (range / tab). */
+/** Nhóm nút pill (range / tab). `variant='gradient'` → segmented xanh nổi bật
+ *  cho view-switcher (Marketing/Sales); default subtle cho range. */
 function PillGroup({
   options,
   value,
   onChange,
+  variant = 'subtle',
 }: {
   options: { value: string; label: string }[];
   value: string;
   onChange: (v: string) => void;
+  variant?: 'subtle' | 'gradient';
 }) {
+  const gradient = variant === 'gradient';
   return (
-    <div className='border-border bg-muted flex rounded-lg border p-0.5'>
-      {options.map(o => (
-        <Button
-          key={o.value}
-          variant='ghost'
-          size='sm'
-          onClick={() => onChange(o.value)}
-          className={cn(
-            'h-7 rounded-md px-2.5 text-xs',
-            value === o.value && 'bg-background text-foreground shadow-sm'
-          )}
-        >
-          {o.label}
-        </Button>
-      ))}
+    <div
+      className={cn(
+        'border-border flex border',
+        gradient
+          ? 'rounded-full bg-white p-1 shadow-sm'
+          : 'bg-muted rounded-lg p-0.5'
+      )}
+    >
+      {options.map(o => {
+        const active = value === o.value;
+        return (
+          <Button
+            key={o.value}
+            variant='ghost'
+            size='sm'
+            onClick={() => onChange(o.value)}
+            className={cn(
+              gradient
+                ? 'h-8 rounded-full px-4 text-sm font-semibold'
+                : 'h-7 rounded-md px-2.5 text-xs',
+              active &&
+                (gradient
+                  ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md shadow-blue-500/25 hover:from-blue-600 hover:to-blue-500 hover:text-white'
+                  : 'bg-background text-foreground shadow-sm')
+            )}
+          >
+            {o.label}
+          </Button>
+        );
+      })}
     </div>
   );
 }

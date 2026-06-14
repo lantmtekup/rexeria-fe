@@ -27,11 +27,11 @@ import {
   Loader2,
   Info,
   LayoutTemplate,
-  MessageSquare,
   Search,
   Send,
   Zap,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -45,33 +45,25 @@ import { useActiveWorkspace } from '../_workspace';
 
 type LandingStatus = PortalTemplate['status'];
 
-const STATUS_META: Record<
-  LandingStatus,
-  { label: string; chip: string; dot: string; descShort: string }
-> = {
+const STATUS_META: Record<LandingStatus, { chip: string; dot: string }> = {
   published: {
-    label: '✓ Đã publish',
     chip: 'bg-emerald-100 text-emerald-700',
     dot: 'bg-emerald-500',
-    descShort: 'Khách công khai vào được URL /p/[id]/[token]',
   },
   draft: {
-    label: 'Bản nháp',
     chip: 'bg-amber-100 text-amber-700',
     dot: 'bg-amber-500',
-    descShort: 'Chỉ brand thấy. Click Preview để xem trước khi publish',
   },
   archived: {
-    label: 'Lưu trữ',
     chip: 'bg-muted text-content-muted',
     dot: 'bg-zinc-400',
-    descShort: 'Đã lưu trữ — URL public hết hiệu lực. Restore để khôi phục',
   },
 };
 
 type StatusFilter = 'all' | LandingStatus;
 
 export default function PortalLandingPagesPage() {
+  const t = useTranslations('portal');
   const [filter, setFilter] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
   const activeWs = useActiveWorkspace();
@@ -127,11 +119,12 @@ export default function PortalLandingPagesPage() {
             <LayoutTemplate className='size-3' /> Landing pages
           </div>
           <h1 className='mt-1 text-2xl font-bold tracking-tight'>
-            Tất cả landing pages
+            {t('landingPages.title')}
           </h1>
           <p className='text-content-muted mt-1 text-sm'>
-            Workspace <strong>{activeWs.name}</strong> có{' '}
-            <strong>{scopedTemplates.length}</strong> landing page
+            {t('landingPages.workspaceLabel')} <strong>{activeWs.name}</strong>{' '}
+            {t('landingPages.has')} <strong>{scopedTemplates.length}</strong>{' '}
+            landing page
             <span className='text-muted-foreground'>
               {' '}
               · {countByStatus.published} published · {countByStatus.draft}{' '}
@@ -140,20 +133,14 @@ export default function PortalLandingPagesPage() {
           </p>
         </div>
         <div className='flex items-center gap-2'>
-          {source === 'live' && (
-            <span className='text-3xs inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-bold tracking-wider text-emerald-700'>
-              <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
-              LIVE BE
-            </span>
-          )}
           <button
             type='button'
             onClick={() => setHelpOpen(o => !o)}
             className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium'
-            title='Hướng dẫn trạng thái'
+            title={t('landingPages.helpTitle')}
           >
             <HelpCircle className='size-3.5' />
-            Hướng dẫn
+            {t('landingPages.help')}
           </button>
         </div>
       </section>
@@ -168,7 +155,7 @@ export default function PortalLandingPagesPage() {
           <Search className='text-muted-foreground size-3.5' />
           <input
             type='text'
-            placeholder='Tìm theo tên...'
+            placeholder={t('landingPages.searchPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className='placeholder:text-muted-foreground flex-1 bg-transparent text-sm outline-none'
@@ -190,7 +177,9 @@ export default function PortalLandingPagesPage() {
                     : 'text-content-muted hover:bg-muted'
                 }`}
               >
-                {s === 'all' ? 'Tất cả' : STATUS_META[s].label}
+                {s === 'all'
+                  ? t('landingPages.filterAll')
+                  : t(`landingPages.status_${s}`)}
                 <span
                   className={`text-3xs inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 font-mono tabular-nums ${
                     filter === s
@@ -210,7 +199,7 @@ export default function PortalLandingPagesPage() {
       <div className='mt-5 grid grid-cols-1 gap-4 md:grid-cols-2'>
         {filtered.length === 0 ? (
           <div className='border-border text-content-muted col-span-full rounded-2xl border border-dashed bg-white p-10 text-center text-sm'>
-            Không có landing nào khớp filter.
+            {t('landingPages.emptyFilter')}
           </div>
         ) : (
           filtered.map(t => <TemplateCard key={t.id} t={t} />)
@@ -223,6 +212,7 @@ export default function PortalLandingPagesPage() {
 /* ─── Card ──────────────────────────────────────────────────────────── */
 
 function TemplateCard({ t }: { t: PortalTemplate }) {
+  const tr = useTranslations('portal');
   const status = STATUS_META[t.status];
   const ctr = t.views_30d > 0 ? (t.clicks_30d / t.views_30d) * 100 : 0;
   const isArchived = t.status === 'archived';
@@ -239,7 +229,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
     e.target.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      toast.error('Vui lòng chọn file ảnh');
+      toast.error(tr('landingPages.pickImageError'));
       return;
     }
     setBusy(true);
@@ -251,10 +241,12 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
       )
       .then(url => {
         setThumb(url);
-        toast.success('Đã cập nhật ảnh thumbnail');
+        toast.success(tr('landingPages.thumbnailUpdated'));
       })
       .catch(err =>
-        toast.error(err instanceof Error ? err.message : 'Upload thất bại')
+        toast.error(
+          err instanceof Error ? err.message : tr('landingPages.uploadFailed')
+        )
       )
       .finally(() => setBusy(false));
   };
@@ -292,26 +284,20 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
             {t.status}
           </span>
         </div>
-        {t.open_comments > 0 && (
-          <div className='text-3xs absolute top-3 right-3 flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 font-bold text-rose-700 backdrop-blur'>
-            <MessageSquare className='size-2.5' /> {t.open_comments} open
-          </div>
-        )}
-
         {/* Đổi ảnh thumbnail — hiện khi hover (hoặc khi đang upload) */}
         <button
           type='button'
           onClick={() => fileRef.current?.click()}
           disabled={busy}
           className='text-2xs absolute right-3 bottom-3 inline-flex items-center gap-1.5 rounded-lg bg-black/70 px-2.5 py-1.5 font-medium text-white opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 disabled:cursor-wait disabled:opacity-100'
-          title='Tải ảnh thumbnail mới'
+          title={tr('landingPages.uploadThumbnailTitle')}
         >
           {busy ? (
             <Loader2 className='size-3.5 animate-spin' />
           ) : (
             <ImagePlus className='size-3.5' />
           )}
-          {busy ? 'Đang tải…' : 'Đổi ảnh'}
+          {busy ? tr('landingPages.uploading') : tr('landingPages.changeImage')}
         </button>
         <input
           ref={fileRef}
@@ -328,7 +314,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
           {t.name}
         </h3>
         <p className='text-3xs text-muted-foreground mt-0.5'>
-          Cập nhật bởi{' '}
+          {tr('landingPages.updatedBy')}{' '}
           <span className='text-content-muted font-semibold'>
             {t.last_updated_by.name}
           </span>
@@ -352,7 +338,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
                 : 'border-amber-200 bg-amber-50/50 text-amber-700'
             }`}
           >
-            {status.descShort}
+            {tr(`landingPages.descShort_${t.status}`)}
           </div>
         )}
 
@@ -366,10 +352,12 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
               target='_blank'
               rel='noreferrer'
               className='inline-flex items-center justify-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700'
-              title={`Mở link ngoài: ${t.external_url}`}
+              title={tr('landingPages.openExternalTitle', {
+                url: t.external_url,
+              })}
             >
               <ExternalLink className='size-3.5' />
-              Mở link
+              {tr('landingPages.openLink')}
             </a>
           ) : (
             <Link
@@ -380,7 +368,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
                   ? 'border-border bg-muted text-muted-foreground pointer-events-none border'
                   : 'bg-zinc-900 text-white hover:bg-zinc-700'
               }`}
-              title='Xem trước landing — render chính xác như khách sẽ thấy'
+              title={tr('landingPages.previewTitle')}
             >
               <Eye className='size-3.5' />
               Preview
@@ -397,8 +385,8 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
             }`}
             title={
               isPublished
-                ? 'Xem thống kê click, view, dwell theo từng block'
-                : 'Chưa publish — chưa có data analytics'
+                ? tr('landingPages.analyticsTitle')
+                : tr('landingPages.analyticsDisabledTitle')
             }
           >
             <BarChart3 className='size-3.5' />
@@ -433,48 +421,51 @@ function Stat({
 /* ─── Lifecycle help drawer ─────────────────────────────────────────── */
 
 function LifecycleHelp({ onClose }: { onClose: () => void }) {
+  const t = useTranslations('portal');
   return (
     <div className='mt-4 rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50/80 via-white to-white p-5 shadow-sm'>
       <div className='flex items-start justify-between gap-2'>
         <div className='text-2xs flex items-center gap-2 font-semibold tracking-[0.18em] text-blue-700 uppercase'>
           <Info className='size-3.5' />
-          Vòng đời landing page
+          {t('landingPages.lifecycleTitle')}
         </div>
         <button
           type='button'
           onClick={onClose}
           className='text-2xs text-content-muted hover:text-foreground'
         >
-          Ẩn
+          {t('landingPages.hide')}
         </button>
       </div>
 
       <div className='mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3'>
         <StateCard
           dot='bg-amber-500'
-          name='Bản nháp (draft)'
-          help='Rexer staff đang dựng. Bạn click Preview để xem WIP và phản hồi qua comment trước khi staff publish.'
+          name={t('landingPages.stateDraftName')}
+          help={t('landingPages.stateDraftHelp')}
           actions={['Preview']}
         />
         <StateCard
           dot='bg-emerald-500'
-          name='Đã publish'
-          help='Landing đã live cho khách công khai. Bạn xem thiết kế qua Preview và theo dõi data thật qua Analytics.'
+          name={t('landingPages.statePublishedName')}
+          help={t('landingPages.statePublishedHelp')}
           actions={['Preview', 'Analytics']}
         />
         <StateCard
           dot='bg-zinc-400'
-          name='Lưu trữ'
-          help='Đã ngưng hoạt động. URL public hết hiệu lực. Cần restore? Liên hệ Rexer staff.'
+          name={t('landingPages.stateArchivedName')}
+          help={t('landingPages.stateArchivedHelp')}
           actions={[]}
         />
       </div>
 
       <div className='text-2xs border-border text-content-muted mt-4 rounded-xl border bg-white p-3 leading-relaxed'>
-        <strong className='text-foreground'>Phase 1 managed-service:</strong>{' '}
-        Rexer staff phụ trách thiết kế, sửa, và publish landing pages. Bạn
-        review qua <kbd>Preview</kbd>, để lại comment khi cần chỉnh, và theo dõi
-        hiệu quả qua <kbd>Analytics</kbd> sau khi staff publish.
+        {t.rich('landingPages.phaseNote', {
+          strong: chunks => (
+            <strong className='text-foreground'>{chunks}</strong>
+          ),
+          kbd: chunks => <kbd>{chunks}</kbd>,
+        })}
       </div>
     </div>
   );

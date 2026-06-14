@@ -1,13 +1,16 @@
 /**
  * GĐ1 bridge Marketing → AI-Insights
  * (docs/plan-marketing-insights-bridge-2026-06-13.md §1-2).
- * Map brief Marketing (notes JSON) sang shape `InsightBrief` cho
- * `insights.create({inputs})`. `inputs` phía BE là additionalProperties nên
- * kèm thêm key ngoài interface (message_development, plan…) là hợp lệ —
- * bước understand_context sẽ tự digest.
+ * Map brief Marketing (notes JSON) + SẢN PHẨM gắn campaign sang shape
+ * `InsightBrief` cho `insights.create({inputs})`. `inputs` phía BE là
+ * additionalProperties nên kèm thêm key ngoài interface (message_development,
+ * product_details…) là hợp lệ — bước understand_context tự digest.
+ *
+ * Campaign buộc gắn product (BE), nên dữ liệu sản phẩm thật (mô tả, features,
+ * size/màu/thành phần/chứng nhận) ĐƯỢC đưa vào AI thay vì chỉ text concept.
  */
 
-import type { InsightBrief } from '@/services/rexer/types';
+import type { InsightBrief, Product } from '@/services/rexer/types';
 
 import type { AssetsState } from './_assets';
 import type { BriefField, BriefState, CampaignState } from './_steps';
@@ -21,12 +24,12 @@ const joined = (f?: BriefField): string =>
         .join('\n')
     : '';
 
-/** Map objective campaign → chip objective của insights (logic.ts). */
+/** Map objective campaign → mô tả mục tiêu rõ nghĩa cho AI digest. */
 const OBJECTIVE_MAP: Record<string, string> = {
-  awareness: 'Nhận biết',
-  traffic: 'Thu lead',
-  conversion: 'Chuyển đổi',
-  retention: 'Giáo dục',
+  awareness: 'Nhận biết thương hiệu',
+  traffic: 'Tăng truy cập / traffic',
+  conversion: 'Chuyển đổi / mua hàng',
+  retention: 'Giữ chân / tái mua',
 };
 
 export interface BridgeResult {
@@ -37,7 +40,8 @@ export interface BridgeResult {
 export function marketingToInsightInputs(
   brief: BriefState,
   assets: AssetsState,
-  campaign: CampaignState
+  campaign: CampaignState,
+  product?: Product
 ): BridgeResult {
   const d = brief.discovery;
   const c = brief.concept;
@@ -46,9 +50,41 @@ export function marketingToInsightInputs(
   const message = joined(d.messageDevelopment);
   const visual = joined(d.creativeDirection);
   const contentMap = joined(d.contentMap);
-  const benefits = joined(c.aboutConcept);
+  const conceptBenefits = joined(c.aboutConcept);
   const persona = joined(c.targetAudience);
-  const plan = joined(c.plan);
+  const ageRange = c.targetAudience?.primary?.trim() || undefined;
+  const planBudget = c.plan?.primary?.trim() || undefined;
+  const planText = joined(c.plan);
+  // Plan = ngân sách (ô Budget) + mô tả kế hoạch.
+  const plan =
+    [planBudget && `Ngân sách: ${planBudget}`, planText]
+      .filter(Boolean)
+      .join('\n') || '';
+
+  // ── Sản phẩm gắn campaign → benefits/features/specs cho AI ──────────────
+  const productFeatures = (product?.features ?? [])
+    .map(f => [f.label, f.description].filter(Boolean).join(' — '))
+    .filter(Boolean);
+  // benefits = mô tả sản phẩm (data thật) + lợi ích concept (brief tự gõ).
+  const benefits =
+    [product?.description, conceptBenefits].filter(Boolean).join('\n\n') ||
+    undefined;
+  const productDetails = [
+    product?.name && `Sản phẩm: ${product.name}`,
+    product?.sku && `SKU: ${product.sku}`,
+    product?.sizes?.length && `Kích cỡ: ${product.sizes.join(', ')}`,
+    product?.colors?.length &&
+      `Màu: ${product.colors.map(col => col.name).join(', ')}`,
+    product?.ingredients?.length &&
+      `Thành phần: ${product.ingredients.join(', ')}`,
+    product?.certifications?.length &&
+      `Chứng nhận: ${product.certifications
+        .map(cert => cert.name)
+        .filter(Boolean)
+        .join(', ')}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   const assetNames = (['image', 'video', '3d'] as const).flatMap(k => [
     ...assets[k].items.map(i => i.name),
@@ -61,7 +97,7 @@ export function marketingToInsightInputs(
       visual_identity: visual || undefined,
       tone: [],
     },
-    product: { benefits: benefits || undefined, features: [] },
+    product: { benefits, features: productFeatures },
     objective: {
       campaign_objectives: campaign.objective
         ? [OBJECTIVE_MAP[campaign.objective] ?? campaign.objective]
@@ -69,9 +105,11 @@ export function marketingToInsightInputs(
     },
     audience: {
       persona: persona || undefined,
+      age_range: ageRange,
       behaviours: contentMap || undefined,
       pain_points: [],
-      device: 'mobile',
+      // Landing chủ yếu mobile-first; AI vẫn cân nhắc desktop khi cần.
+      device: 'both',
     },
     market: {},
     assets: { items: assetNames },
@@ -81,18 +119,27 @@ export function marketingToInsightInputs(
   const inputs: Record<string, unknown> = {
     ...insightBrief,
     // Ngoài schema chuẩn — understand_context đọc free-form.
+    product_name: product?.name || undefined,
+    product_details: productDetails || undefined,
     message_development: message || undefined,
     marketing_plan: plan || undefined,
     campaign_channels: campaign.channels.length ? campaign.channels : undefined,
+    campaign_budget: campaign.budget
+      ? `${campaign.budget} ${campaign.currency}`
+      : undefined,
     source: 'portal_marketing_bridge',
   };
 
   const coverage = [
+    {
+      label: 'Sản phẩm gắn campaign → benefits/features',
+      ok: !!product && (!!benefits || productFeatures.length > 0),
+    },
     { label: 'Marketing Concept → định vị brand', ok: !!positioning },
     { label: 'Message Development → thông điệp', ok: !!message },
     { label: 'Creative Direction → visual identity', ok: !!visual },
     { label: 'Content Map → hành vi/journey', ok: !!contentMap },
-    { label: 'About Concept → lợi ích sản phẩm', ok: !!benefits },
+    { label: 'About Concept → lợi ích bổ sung', ok: !!conceptBenefits },
     { label: 'Target audience → persona', ok: !!persona },
     { label: 'Plan → kế hoạch triển khai', ok: !!plan },
     { label: 'Objective campaign', ok: !!campaign.objective },

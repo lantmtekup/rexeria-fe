@@ -10,6 +10,8 @@
  */
 
 import { ArrowLeft, FlaskConical, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -142,6 +144,7 @@ export function MarketingEditor({
   mode: 'create' | 'edit';
   campaign?: Campaign;
 }) {
+  const t = useTranslations('portal');
   const router = useRouter();
   const ws = useActiveWorkspace();
   const [section, setSection] = useState<SectionKey>('discovery');
@@ -209,7 +212,7 @@ export function MarketingEditor({
 
   const handleSave = async () => {
     if (!campaign.name.trim() || !productId) {
-      toast.error('Cần tên campaign và sản phẩm (xem mục Campaign)');
+      toast.error(t('marketingEditor.needNameProduct'));
       setSection('campaign');
       return;
     }
@@ -233,14 +236,18 @@ export function MarketingEditor({
           product_id: productId,
           status: 'active',
         });
-        toast.success(`Đã tạo campaign "${campaign.name.trim()}"`);
+        toast.success(
+          t('marketingEditor.createdToast', { name: campaign.name.trim() })
+        );
       } else if (initial) {
         await rexerApi.campaigns.update(initial.id, body);
-        toast.success('Đã lưu thay đổi');
+        toast.success(t('marketingEditor.savedToast'));
       }
       router.push('/portal/marketing');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Lưu thất bại');
+      toast.error(
+        err instanceof Error ? err.message : t('marketingEditor.saveFailed')
+      );
     } finally {
       setSaving(false);
     }
@@ -297,7 +304,9 @@ export function MarketingEditor({
       const missing = missingBriefFields(section, brief);
       if (missing.length) {
         setShowErrors(true);
-        toast.error(`Vui lòng nhập: ${missing.join(', ')}`);
+        toast.error(
+          t('marketingEditor.pleaseEnter', { fields: missing.join(', ') })
+        );
         return;
       }
     }
@@ -310,7 +319,7 @@ export function MarketingEditor({
         0
       );
       if (total === 0) {
-        toast.error('Vui lòng tải lên ít nhất 1 tài nguyên (ảnh/video/3D)');
+        toast.error(t('marketingEditor.needAsset'));
         return;
       }
     }
@@ -325,10 +334,12 @@ export function MarketingEditor({
     setDeleting(true);
     try {
       await rexerApi.campaigns.remove(initial.id);
-      toast.success(`Đã xoá "${initial.name}"`);
+      toast.success(t('marketingEditor.deletedToast', { name: initial.name }));
       router.push('/portal/marketing');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Xoá thất bại');
+      toast.error(
+        err instanceof Error ? err.message : t('marketingEditor.deleteFailed')
+      );
       setDeleting(false);
     }
   };
@@ -345,7 +356,9 @@ export function MarketingEditor({
             <ArrowLeft className='size-4' />
           </Button>
           <h1 className='text-foreground text-base font-semibold'>
-            {mode === 'create' ? 'Create Marketing' : (initial?.name ?? '')}
+            {mode === 'create'
+              ? t('marketingEditor.createTitle')
+              : (initial?.name ?? '')}
           </h1>
           <Button
             variant='outline'
@@ -355,17 +368,18 @@ export function MarketingEditor({
               setBrief(HAPPY_CITY_BRIEF);
               setCampaign(c => ({ ...c, ...HAPPY_CITY_CAMPAIGN }));
               setShowErrors(false);
-              toast.success('Đã điền dữ liệu mẫu Happy City');
+              toast.success(t('marketingEditor.sampleFilledToast'));
             }}
           >
-            <FlaskConical className='size-4' /> Điền mẫu
+            <FlaskConical className='size-4' />{' '}
+            {t('marketingEditor.fillSample')}
           </Button>
         </div>
         <div className='flex items-center gap-3'>
           {mode === 'edit' && (
             <button
               type='button'
-              aria-label='Xoá marketing'
+              aria-label={t('marketingEditor.deleteAria')}
               onClick={() => setConfirmDelete(true)}
               className='text-destructive hover:bg-destructive/10 inline-flex size-9 items-center justify-center rounded-full transition-colors'
             >
@@ -385,7 +399,7 @@ export function MarketingEditor({
             <button
               type='button'
               onClick={() => setAiOpen(true)}
-              title='Chạy AI-Insights từ dữ liệu Marketing'
+              title={t('marketingEditor.aiAssistantTitle')}
               className='inline-flex items-center gap-1.5 bg-gradient-to-r from-sky-100 via-sky-50 to-emerald-50 px-4 text-sm font-semibold text-blue-600 transition-opacity hover:opacity-80'
             >
               <Sparkles className='size-4' /> AI-Assistant
@@ -397,11 +411,11 @@ export function MarketingEditor({
               className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center px-5 text-sm font-semibold transition-colors disabled:opacity-60'
             >
               {saving
-                ? 'Đang lưu…'
+                ? t('marketingEditor.saving')
                 : section === 'campaign'
                   ? mode === 'create'
-                    ? 'Tạo campaign'
-                    : 'Lưu thay đổi'
+                    ? t('marketingEditor.createCta')
+                    : t('marketingEditor.saveCta')
                   : 'Continue'}
             </button>
           </div>
@@ -451,7 +465,9 @@ export function MarketingEditor({
           {section === 'campaign' ? (
             <div className='flex max-w-lg flex-col gap-4'>
               <div className='grid gap-1.5'>
-                <Label htmlFor='me-product'>Sản phẩm</Label>
+                <Label htmlFor='me-product'>
+                  {t('marketingEditor.productLabel')}
+                </Label>
                 <select
                   id='me-product'
                   className={SELECT_CLASS}
@@ -459,18 +475,30 @@ export function MarketingEditor({
                   onChange={e => setProductId(e.target.value)}
                   disabled={mode === 'edit' || !products?.length}
                 >
-                  {products === null && <option>Đang tải…</option>}
-                  {products?.length === 0 && <option>Chưa có sản phẩm</option>}
+                  {products === null && (
+                    <option>{t('marketingEditor.loadingProducts')}</option>
+                  )}
+                  {products?.length === 0 && (
+                    <option>{t('marketingEditor.noProducts')}</option>
+                  )}
                   {products?.map(p => (
                     <option key={p.id} value={p.id}>
                       {p.name}
                     </option>
                   ))}
                 </select>
+                {products?.length === 0 && (
+                  <Link
+                    href='/portal/products'
+                    className='text-primary text-xs font-medium hover:underline'
+                  >
+                    {t('marketingEditor.createProductFirst')}
+                  </Link>
+                )}
               </div>
               <StepCampaign value={campaign} onChange={setCampaign} />
               <div className='grid gap-1.5'>
-                <Label>Landing gắn kèm (đo phễu)</Label>
+                <Label>{t('marketingEditor.landingLabel')}</Label>
                 <LandingPagePicker
                   brandId={product?.brand_id ?? initial?.brand_id}
                   value={landingId}
@@ -494,8 +522,7 @@ export function MarketingEditor({
               />
             ) : (
               <p className='text-content-muted text-sm'>
-                Chưa chạy AI-Insights. Bấm nút AI-Assistant trên thanh đầu để
-                phân tích từ dữ liệu Marketing.
+                {t('marketingEditor.noInsightsHint')}
               </p>
             )
           ) : (
@@ -518,6 +545,7 @@ export function MarketingEditor({
         assets={assets}
         campaign={campaign}
         productId={productId}
+        product={product}
         campaignId={mode === 'edit' ? initial?.id : undefined}
         workspaceId={ws?.id}
         existingReportId={reportId}
@@ -527,22 +555,23 @@ export function MarketingEditor({
       <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <DialogContent className='max-w-sm'>
           <DialogHeader>
-            <DialogTitle>Xoá marketing?</DialogTitle>
+            <DialogTitle>{t('marketingEditor.deleteTitle')}</DialogTitle>
           </DialogHeader>
           <p className='text-content-muted text-sm'>
-            Campaign &ldquo;{initial?.name}&rdquo; (kèm brief) sẽ bị xoá khỏi hệ
-            thống. Không hoàn tác được.
+            {t('marketingEditor.deleteDesc', { name: initial?.name ?? '' })}
           </p>
           <DialogFooter>
             <Button variant='outline' onClick={() => setConfirmDelete(false)}>
-              Huỷ
+              {t('marketingEditor.cancel')}
             </Button>
             <Button
               variant='destructive'
               onClick={handleDelete}
               disabled={deleting}
             >
-              {deleting ? 'Đang xoá…' : 'Xoá'}
+              {deleting
+                ? t('marketingEditor.deleting')
+                : t('marketingEditor.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

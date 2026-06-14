@@ -99,7 +99,7 @@ function PortalShellInner({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className='bg-muted text-foreground min-h-screen antialiased'>
+    <div className='bg-background text-foreground min-h-screen antialiased'>
       {/* Migration banner — tell users this is the sales showcase */}
       <div className='border-b border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50 px-6 py-2 text-xs'>
         <div className='flex items-center justify-between gap-2'>

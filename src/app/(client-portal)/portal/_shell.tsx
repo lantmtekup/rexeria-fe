@@ -13,7 +13,6 @@ import {
   Lightbulb,
   LogOut,
   Megaphone,
-  MessageSquare,
   MousePointerClick,
   Package,
   Settings,
@@ -26,8 +25,12 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import { useLocale, useTranslations } from 'next-intl';
+
+import { LanguageSwitcher } from '@/components/molecules/LanguageSwitcher';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { logoutThunk } from '@/store/slices/authSlice';
+import { Locale } from '@/settings/enums';
 
 import { CreateWorkspaceDialog } from './_CreateWorkspaceDialog';
 import { usePortalData } from '../_PortalDataProvider';
@@ -44,76 +47,77 @@ import { withWorkspace } from './_workspace';
 
 type NavItem = {
   href: string;
-  label: string;
+  labelKey: string;
   icon: LucideIcon;
   badge?: number;
   group?: string;
 };
 
+// `labelKey` resolves via t('shell.<labelKey>') at render — NAV is module-level
+// so it can't call the hook here.
 const NAV: NavItem[] = [
-  { href: '/portal', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/portal', labelKey: 'navDashboard', icon: LayoutDashboard },
   {
     href: '/portal/templates',
-    label: 'Template library',
+    labelKey: 'navTemplateLibrary',
     icon: Sparkles,
   },
   // Rexer Product — group hợp nhất 3 mục tăng trưởng có sẵn + Micro site mới.
   {
     href: '/portal/ads',
-    label: 'Quảng cáo',
+    labelKey: 'navAds',
     icon: Megaphone,
     group: 'Rexer Product',
   },
   {
     href: '/portal/curate',
-    label: 'Curate',
+    labelKey: 'navCurate',
     icon: MousePointerClick,
     group: 'Rexer Product',
   },
   {
     href: '/portal/landing-pages',
-    label: 'Landing pages',
+    labelKey: 'navLandingPages',
     icon: LayoutTemplate,
     group: 'Rexer Product',
   },
   {
     href: '/portal/micro-sites',
-    label: 'Micro site',
+    labelKey: 'navMicroSite',
     icon: Globe,
     group: 'Rexer Product',
   },
   {
     href: '/portal/insights',
-    label: 'AI-Insights',
+    labelKey: 'navInsights',
     icon: Lightbulb,
     group: 'Rexer Product',
   },
   {
     href: '/portal/marketing',
-    label: 'Marketing',
+    labelKey: 'navMarketing',
     icon: Target,
     group: 'Rexer Product',
   },
-  { href: '/portal/media', label: 'Media', icon: FolderOpen, group: 'Assets' },
+  {
+    href: '/portal/media',
+    labelKey: 'navMedia',
+    icon: FolderOpen,
+    group: 'Assets',
+  },
   {
     href: '/portal/products',
-    label: 'Product Info',
+    labelKey: 'navProductInfo',
     icon: Package,
     group: 'Assets',
   },
   {
     href: '/portal/blocks',
-    label: 'Blocks',
+    labelKey: 'navBlocks',
     icon: Bookmark,
     group: 'Assets',
   },
-  {
-    href: '/portal/comments',
-    label: 'Comments',
-    icon: MessageSquare,
-    badge: FAKE_STATS.open_comments,
-  },
-  { href: '/portal/profile', label: 'Profile', icon: Settings },
+  { href: '/portal/profile', labelKey: 'navProfile', icon: Settings },
 ];
 
 export function PortalShell({
@@ -140,6 +144,7 @@ function PortalShellInner({
   children: React.ReactNode;
   fullBleed?: boolean;
 }) {
+  const t = useTranslations('portal');
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -153,6 +158,7 @@ function PortalShellInner({
   const [wsMenuOpen, setWsMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [createWsOpen, setCreateWsOpen] = useState(false);
+  const locale = useLocale() as Locale;
 
   const wsId =
     searchParams?.get('ws') || workspaces[0]?.id || DEFAULT_WORKSPACE_ID;
@@ -192,8 +198,26 @@ function PortalShellInner({
   // Pre-hydration luôn filter (giống server: user=null → không staff) để SSR
   // và first client paint khớp; sau mount mới mở full NAV cho staff. Tránh
   // lệch số nav item → #418.
-  const navItems =
-    hydrated && isStaffOrAdmin
+  //
+  // PROD: brand/khách chỉ thấy 3 mục đã sẵn sàng cho Phase 1 managed —
+  // Landing pages, Media (Assets), Marketing. Các mục còn lại ẩn cho tới khi
+  // mở self-serve. Dev (NODE_ENV !== production) vẫn full để code/test. Staff
+  // sau hydrate vẫn thấy full ngay cả trên prod.
+  // Bật trên prod build, hoặc local set NEXT_PUBLIC_PORTAL_MINIMAL=1 để xem
+  // trước chế độ menu rút gọn ngay trên localhost.
+  const isProd =
+    process.env.NODE_ENV === 'production' ||
+    process.env.NEXT_PUBLIC_PORTAL_MINIMAL === '1';
+  const PROD_ALLOWED = new Set([
+    '/portal/landing-pages',
+    '/portal/media',
+    '/portal/marketing',
+  ]);
+  // PROD: ẩn cho TẤT CẢ (kể cả staff) — portal khách chỉ còn 3 mục Phase 1.
+  // Dev vẫn full (staff) / chỉ ẩn template (brand) để còn code/test.
+  const navItems = isProd
+    ? NAV.filter(n => PROD_ALLOWED.has(n.href))
+    : hydrated && isStaffOrAdmin
       ? NAV
       : NAV.filter(n => n.href !== '/portal/templates');
 
@@ -210,9 +234,9 @@ function PortalShellInner({
     setUserMenuOpen(false);
     try {
       await dispatch(logoutThunk()).unwrap();
-      toast.success('Đã đăng xuất');
+      toast.success(t('shell.logoutSuccess'));
     } catch {
-      toast.error('Đăng xuất thất bại');
+      toast.error(t('shell.logoutError'));
     }
     // Hard nav (KHÔNG router.push): sau khi logout clear cookie
     // `_access_token`, soft navigation của App Router có thể phục vụ /sign-in
@@ -223,7 +247,7 @@ function PortalShellInner({
   };
 
   return (
-    <div className='bg-muted text-foreground min-h-screen antialiased'>
+    <div className='bg-background text-foreground min-h-screen antialiased'>
       <header className='border-border sticky top-0 z-30 flex items-center justify-between border-b bg-white/95 px-6 py-3 backdrop-blur'>
         <div className='flex items-center gap-3'>
           {/* Client info */}
@@ -233,7 +257,7 @@ function PortalShellInner({
             </div>
             <div className='leading-tight'>
               <div className='text-3xs text-muted-foreground font-semibold tracking-wider uppercase'>
-                CLIENT
+                {t('shell.clientLabel')}
               </div>
               <div className='text-sm font-semibold tracking-tight'>
                 {clientName}
@@ -260,7 +284,7 @@ function PortalShellInner({
               </div>
               <div className='text-left leading-tight'>
                 <div className='text-3xs text-muted-foreground font-semibold tracking-wider uppercase'>
-                  Workspace
+                  {t('shell.workspaceLabel')}
                 </div>
                 <div className='text-sm font-semibold tracking-tight'>
                   {activeWs.name}
@@ -277,7 +301,10 @@ function PortalShellInner({
                 />
                 <div className='border-border absolute top-full left-0 z-40 mt-1 w-80 overflow-hidden rounded-xl border bg-white shadow-2xl'>
                   <div className='text-3xs border-border bg-muted/50 text-content-muted border-b px-3 py-2 font-semibold tracking-wider uppercase'>
-                    {workspaces.length} workspace của {clientName}
+                    {t('shell.workspacesOf', {
+                      count: workspaces.length,
+                      client: clientName,
+                    })}
                   </div>
                   <div className='max-h-80 overflow-y-auto py-1'>
                     {workspaces.map(ws => {
@@ -308,9 +335,17 @@ function PortalShellInner({
                               {ws.description}
                             </div>
                             <div className='text-3xs text-muted-foreground mt-0.5 flex items-center gap-2'>
-                              <span>{ws.member_count} member</span>
+                              <span>
+                                {t('shell.memberCount', {
+                                  count: ws.member_count,
+                                })}
+                              </span>
                               <span>·</span>
-                              <span>{ws.template_count} landing</span>
+                              <span>
+                                {t('shell.landingCount', {
+                                  count: ws.template_count,
+                                })}
+                              </span>
                               <span>·</span>
                               <span className='font-mono'>{ws.slug}</span>
                             </div>
@@ -328,7 +363,7 @@ function PortalShellInner({
                       }}
                       className='text-2xs text-content-muted hover:text-foreground w-full text-left font-medium'
                     >
-                      + Tạo workspace mới
+                      {t('shell.createWorkspace')}
                     </button>
                   </div>
                 </div>
@@ -338,6 +373,10 @@ function PortalShellInner({
         </div>
 
         <div className='flex items-center gap-2'>
+          <LanguageSwitcher
+            locale={locale}
+            className='border-border rounded-lg border bg-white px-2.5 py-1'
+          />
           {/* Notifications */}
           <button className='border-border text-content-muted hover:bg-muted relative flex items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1 text-xs font-medium'>
             <Bell className='size-3.5' />
@@ -392,7 +431,7 @@ function PortalShellInner({
                       className='text-content-muted flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-rose-50 hover:text-rose-700'
                     >
                       <LogOut className='size-3.5' />
-                      Đăng xuất
+                      {t('shell.logout')}
                     </button>
                   </div>
                 </>
@@ -403,7 +442,7 @@ function PortalShellInner({
               href='/sign-in'
               className='rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
             >
-              Đăng nhập
+              {t('shell.signIn')}
             </Link>
           )}
         </div>
@@ -414,7 +453,7 @@ function PortalShellInner({
         <aside className='border-border sticky top-[57px] hidden h-[calc(100vh-57px)] w-60 shrink-0 overflow-y-auto border-r bg-white px-3 py-4 lg:block'>
           <div className='mb-4 rounded-xl bg-gradient-to-br from-rose-50 to-white p-3'>
             <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
-              Plan
+              {t('shell.plan')}
             </div>
             <div className='text-2xs text-content-muted mt-0.5'>
               <span className='font-mono font-semibold text-rose-700'>
@@ -422,8 +461,10 @@ function PortalShellInner({
               </span>
             </div>
             <div className='text-3xs text-content-muted mt-1'>
-              {FAKE_CLIENT.member_count} thành viên · {workspaces.length}{' '}
-              workspace
+              {t('shell.membersWorkspaces', {
+                members: FAKE_CLIENT.member_count,
+                workspaces: workspaces.length,
+              })}
             </div>
           </div>
 
@@ -457,7 +498,7 @@ function PortalShellInner({
                     <Icon
                       className={`size-4 ${isActive ? 'text-white' : 'text-content-muted'}`}
                     />
-                    <span className='flex-1'>{n.label}</span>
+                    <span className='flex-1'>{t(`shell.${n.labelKey}`)}</span>
                     {n.badge !== undefined && n.badge > 0 && (
                       <span
                         className={`text-3xs rounded-full px-1.5 py-0.5 font-mono font-semibold ${

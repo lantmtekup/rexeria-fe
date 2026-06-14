@@ -13,6 +13,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft } from 'lucide-react';
 
 import { BlockEditor } from '@/components/modules/CanvasTemplate/BlockEditor';
@@ -21,6 +22,7 @@ export default function PortalBlockEditPage() {
   const params = useParams<{ id: string }>();
   const sp = useSearchParams();
   const router = useRouter();
+  const t = useTranslations('portal');
   const savedBlockId = params?.id ?? '';
   const canvasId = sp?.get('canvas_id') ?? '';
 
@@ -40,17 +42,17 @@ export default function PortalBlockEditPage() {
     return (
       <div className='mx-auto max-w-2xl p-10 text-center'>
         <p className='text-foreground text-sm font-semibold'>
-          Thiếu canvas_id — không thể mở editor.
+          {t('blocksIdEdit.missingCanvasTitle')}
         </p>
         <p className='text-content-muted mt-1 text-xs'>
-          Mở lại từ trang chi tiết block để tạo canvas tạm trước khi sửa.
+          {t('blocksIdEdit.missingCanvasDesc')}
         </p>
         <Link
           href={`/portal/blocks/${savedBlockId}`}
           className='mt-4 inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
         >
           <ArrowLeft className='size-3.5' />
-          Quay lại chi tiết
+          {t('blocksIdEdit.backToDetail')}
         </Link>
       </div>
     );

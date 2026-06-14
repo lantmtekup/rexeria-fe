@@ -15,6 +15,7 @@ import {
   Sparkles,
   TriangleAlert,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -32,11 +33,11 @@ import {
 } from './_insights-labels';
 import type { InsightReport, InsightStatus } from '@/services/rexer/types';
 
-const STATUS_META: Record<InsightStatus, { label: string; cls: string }> = {
-  queued: { label: 'Đang chờ xử lý…', cls: 'text-amber-600' },
-  running: { label: 'AI đang phân tích…', cls: 'text-blue-600' },
-  succeeded: { label: 'Hoàn tất', cls: 'text-emerald-600' },
-  failed: { label: 'Thất bại', cls: 'text-destructive' },
+const STATUS_META: Record<InsightStatus, { labelKey: string; cls: string }> = {
+  queued: { labelKey: 'statusQueued', cls: 'text-amber-600' },
+  running: { labelKey: 'statusRunning', cls: 'text-blue-600' },
+  succeeded: { labelKey: 'statusSucceeded', cls: 'text-emerald-600' },
+  failed: { labelKey: 'statusFailed', cls: 'text-destructive' },
 };
 
 export interface InsightHandoff {
@@ -68,6 +69,7 @@ export function InsightResultPanel({
   /** Đẩy tóm tắt kết quả lên editor để lưu vào notes (list card + instant). */
   onSummary?: (s: InsightSummary) => void;
 }) {
+  const t = useTranslations('portal');
   const [report, setReport] = useState<InsightReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
@@ -101,9 +103,13 @@ export function InsightResultPanel({
         timer.current = setTimeout(poll, 4000);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không tải được report');
+      setError(
+        err instanceof Error
+          ? err.message
+          : t('marketingInsightResultPanel.loadReportError')
+      );
     }
-  }, [reportId, autoOpenId, onSummary]);
+  }, [reportId, autoOpenId, onSummary, t]);
 
   useEffect(() => {
     poll();
@@ -130,9 +136,13 @@ export function InsightResultPanel({
       const h = { template_id: res.template_id, edit_url: res.edit_url };
       onHandoff(h);
       setStepsOpen(false);
-      toast.success('Đã dựng template từ kết quả AI-Insights');
+      toast.success(t('marketingInsightResultPanel.handoffSuccess'));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Handoff thất bại');
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t('marketingInsightResultPanel.handoffError')
+      );
     } finally {
       setApplying(false);
     }
@@ -151,7 +161,8 @@ export function InsightResultPanel({
           href={`/portal/insights/${reportId}`}
           className='text-primary inline-flex items-center gap-0.5 text-xs hover:underline'
         >
-          Xem đầy đủ <ArrowUpRight className='size-3' />
+          {t('marketingInsightResultPanel.viewFull')}{' '}
+          <ArrowUpRight className='size-3' />
         </Link>
       </div>
 
@@ -161,7 +172,7 @@ export function InsightResultPanel({
         // Hiện summary từ notes ngay trong lúc poll BE (đỡ nhấp nháy).
         <div className='flex flex-col gap-2'>
           {summary?.goalLabel && (
-            <Field label='Experience goal'>
+            <Field label={t('marketingInsightResultPanel.experienceGoal')}>
               <span className='text-foreground text-sm font-medium'>
                 {summary.goalLabel}
               </span>
@@ -169,7 +180,7 @@ export function InsightResultPanel({
           )}
           <StatusLine
             icon='spin'
-            text='Đang tải report…'
+            text={t('marketingInsightResultPanel.loadingReport')}
             cls='text-content-muted'
           />
         </div>
@@ -177,23 +188,27 @@ export function InsightResultPanel({
         <div className='flex flex-col gap-2'>
           <StatusLine
             icon='warn'
-            text={report.error_message || 'AI chạy thất bại'}
+            text={
+              report.error_message || t('marketingInsightResultPanel.aiFailed')
+            }
             cls='text-destructive'
           />
           <span className='text-content-muted text-xs'>
-            Thử chạy lại từ nút AI-Assistant phía trên.
+            {t('marketingInsightResultPanel.retryHint')}
           </span>
         </div>
       ) : status !== 'succeeded' ? (
         <StatusLine
           icon='spin'
-          text={STATUS_META[status ?? 'queued'].label}
+          text={t(
+            `marketingInsightResultPanel.${STATUS_META[status ?? 'queued'].labelKey}`
+          )}
           cls={STATUS_META[status ?? 'queued'].cls}
         />
       ) : (
         <div className='flex flex-col gap-3'>
           {bp?.experience_goal && (
-            <Field label='Experience goal'>
+            <Field label={t('marketingInsightResultPanel.experienceGoal')}>
               <span className='text-foreground text-sm font-medium'>
                 {GOAL_LABEL[bp.experience_goal.primary_goal] ??
                   bp.experience_goal.primary_goal}
@@ -208,7 +223,9 @@ export function InsightResultPanel({
 
           {!!bp?.customer_journey?.stages?.length && (
             <Field
-              label={`Journey · ${bp.customer_journey.journey_pattern_name}`}
+              label={t('marketingInsightResultPanel.journeyLabel', {
+                name: bp.customer_journey.journey_pattern_name,
+              })}
             >
               <div className='flex flex-wrap items-center gap-1'>
                 {bp.customer_journey.stages.map((s, i) => (
@@ -238,11 +255,11 @@ export function InsightResultPanel({
           {/* Template gợi ý — user CHỌN 1 cái để dựng (block_codes truyền vào
               handoff). Mỗi template hiện block bên trong + lý do phù hợp. */}
           {!!bp?.recommended_templates?.templates?.length && !handoff && (
-            <Field label='Chọn template để dựng'>
+            <Field label={t('marketingInsightResultPanel.pickTemplate')}>
               <div className='flex flex-col gap-2'>
-                {bp.recommended_templates.templates.map((t, i) => (
+                {bp.recommended_templates.templates.map((tpl, i) => (
                   <button
-                    key={t.name}
+                    key={tpl.name}
                     type='button'
                     onClick={() => setPicked(i)}
                     className={cn(
@@ -254,7 +271,7 @@ export function InsightResultPanel({
                   >
                     <div className='flex items-center justify-between gap-2'>
                       <span className='text-foreground text-sm font-semibold'>
-                        {t.name}
+                        {tpl.name}
                       </span>
                       <span
                         className={cn(
@@ -267,14 +284,14 @@ export function InsightResultPanel({
                         {picked === i && <Check className='size-3' />}
                       </span>
                     </div>
-                    {t.description && (
+                    {tpl.description && (
                       <p className='text-content-muted mt-0.5 text-xs'>
-                        {t.description}
+                        {tpl.description}
                       </p>
                     )}
-                    {!!t.block_codes?.length && (
+                    {!!tpl.block_codes?.length && (
                       <div className='mt-1.5 flex flex-wrap gap-1'>
-                        {t.block_codes.map(code => (
+                        {tpl.block_codes.map(code => (
                           <span
                             key={code}
                             className='bg-muted text-content-muted text-2xs rounded px-1.5 py-0.5'
@@ -284,9 +301,11 @@ export function InsightResultPanel({
                         ))}
                       </div>
                     )}
-                    {t.why_fit && (
+                    {tpl.why_fit && (
                       <p className='text-content-muted text-2xs mt-1 italic'>
-                        Vì sao hợp: {t.why_fit}
+                        {t('marketingInsightResultPanel.whyFit', {
+                          reason: tpl.why_fit,
+                        })}
                       </p>
                     )}
                   </button>
@@ -298,13 +317,15 @@ export function InsightResultPanel({
           {handoff ? (
             <div className='border-border flex items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2'>
               <span className='inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700'>
-                <Check className='size-3.5' /> Đã dựng template từ kết quả
+                <Check className='size-3.5' />{' '}
+                {t('marketingInsightResultPanel.templateBuilt')}
               </span>
               <Link
                 href={handoff.edit_url}
                 className='text-primary inline-flex items-center gap-0.5 text-xs font-semibold hover:underline'
               >
-                Mở editor <ArrowUpRight className='size-3' />
+                {t('marketingInsightResultPanel.openEditor')}{' '}
+                <ArrowUpRight className='size-3' />
               </Link>
             </div>
           ) : (
@@ -314,15 +335,17 @@ export function InsightResultPanel({
                 variant='outline'
                 onClick={() => setStepsOpen(true)}
               >
-                <Sparkles className='size-4' /> Xem từng bước
+                <Sparkles className='size-4' />{' '}
+                {t('marketingInsightResultPanel.viewSteps')}
               </Button>
               <Button size='sm' onClick={handleApply} disabled={applying}>
                 {applying ? (
                   <>
-                    <Loader2 className='size-4 animate-spin' /> Đang dựng…
+                    <Loader2 className='size-4 animate-spin' />{' '}
+                    {t('marketingInsightResultPanel.building')}
                   </>
                 ) : (
-                  'Dùng kết quả này → dựng template'
+                  t('marketingInsightResultPanel.useResult')
                 )}
               </Button>
             </div>

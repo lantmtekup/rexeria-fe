@@ -13,6 +13,7 @@ import {
   Sparkles,
   XCircle,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -63,6 +64,7 @@ export default function PortalProductsPage() {
   );
 
   const activeWs = useActiveWorkspace();
+  const t = useTranslations('portal');
 
   // Try real BE (scope theo brand của workspace đang chọn); fallback fake data.
   // Đổi ?ws= → client_id đổi → reload.
@@ -133,20 +135,13 @@ export default function PortalProductsPage() {
             <Package className='size-3' /> Product Information
           </div>
           <h1 className='mt-1 text-2xl font-bold tracking-tight'>
-            Catalog sản phẩm
+            {t('products.title')}
           </h1>
           <p className='text-content-muted mt-1 text-sm'>
-            {products.length} sản phẩm trong workspace. Rexer dùng thông tin này
-            khi tạo landing page tự động (AI apply-product).
+            {t('products.subtitle', { count: products.length })}
           </p>
         </div>
         <div className='flex items-center gap-2'>
-          {source === 'live' && (
-            <span className='text-3xs inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-bold tracking-wider text-emerald-700'>
-              <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
-              LIVE BE
-            </span>
-          )}
           {loading && (
             <span className='text-2xs text-muted-foreground font-mono'>
               loading…
@@ -156,7 +151,7 @@ export default function PortalProductsPage() {
             onClick={openCreate}
             className='flex items-center gap-1.5 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-orange-600'
           >
-            <Plus className='size-3.5' /> Thêm sản phẩm
+            <Plus className='size-3.5' /> {t('products.addProduct')}
           </button>
         </div>
       </section>
@@ -177,7 +172,7 @@ export default function PortalProductsPage() {
           <Search className='text-muted-foreground size-3.5' />
           <input
             type='text'
-            placeholder='Tìm theo tên / SKU...'
+            placeholder={t('products.searchPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className='placeholder:text-muted-foreground flex-1 bg-transparent text-sm outline-none'
@@ -186,7 +181,7 @@ export default function PortalProductsPage() {
         <Filter className='text-muted-foreground size-3.5' />
         <div className='flex flex-wrap items-center gap-1'>
           <CatBtn
-            label={`Tất cả · ${counts.all}`}
+            label={`${t('products.filterAll')} · ${counts.all}`}
             active={catFilter === 'all'}
             color='bg-zinc-900'
             onClick={() => setCatFilter('all')}
@@ -210,7 +205,7 @@ export default function PortalProductsPage() {
       <div className='mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'>
         {filtered.length === 0 ? (
           <div className='border-border text-content-muted col-span-full rounded-2xl border border-dashed bg-white p-10 text-center text-sm'>
-            Không có sản phẩm nào khớp filter.
+            {t('products.emptyFilter')}
           </div>
         ) : (
           filtered.map(p => (
@@ -248,6 +243,7 @@ function CatBtn({
 }
 
 function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
+  const t = useTranslations('portal');
   const status = STATUS_META[p.status];
   const StatusIcon = status.icon;
   const catMeta = CATEGORY_LABEL[p.category];
@@ -323,7 +319,7 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
         {/* Price range */}
         <div className='border-border mt-3 flex items-center gap-2 border-y py-2'>
           <span className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
-            Giá
+            {t('products.price')}
           </span>
           <span className='text-foreground font-mono text-sm font-bold'>
             {minPrice.toLocaleString('vi-VN')}đ
@@ -368,7 +364,8 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
           ))}
           {p.ingredients.length > 0 && (
             <span className='text-3xs border-border bg-muted text-content-muted inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5'>
-              <Beaker className='size-2' /> {p.ingredients.length} thành phần
+              <Beaker className='size-2' />{' '}
+              {t('products.ingredients', { count: p.ingredients.length })}
             </span>
           )}
         </div>
@@ -381,18 +378,20 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
               className='flex flex-1 items-center justify-center gap-1 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700'
             >
               <LayoutTemplate className='size-3' />
-              Landing page gắn ({p.related_template_ids.length})
+              {t('products.linkedLanding', {
+                count: p.related_template_ids.length,
+              })}
             </Link>
           ) : (
             <span className='text-2xs border-border text-muted-foreground flex flex-1 items-center justify-center gap-1 rounded-lg border border-dashed bg-white px-3 py-1.5'>
-              <Clock className='size-3' /> Chưa có landing page
+              <Clock className='size-3' /> {t('products.noLanding')}
             </span>
           )}
           <button
             onClick={onEdit}
             className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'
           >
-            Sửa
+            {t('products.edit')}
           </button>
         </div>
       </div>

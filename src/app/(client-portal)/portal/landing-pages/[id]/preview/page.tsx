@@ -17,6 +17,7 @@
  */
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Construction, Loader2 } from 'lucide-react';
 
@@ -25,6 +26,7 @@ import { rexerApi } from '@/services/rexer/endpoints';
 import type { Page } from '@/services/rexer/types';
 
 export default function PortalLandingPreviewPage() {
+  const t = useTranslations('portal');
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = params?.id ?? '';
@@ -82,20 +84,10 @@ export default function PortalLandingPreviewPage() {
       <div className='mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center'>
         <Construction className='mx-auto size-7 text-amber-700' />
         <p className='mt-3 text-sm font-semibold text-amber-900'>
-          Preview đang được rebuild
+          {t('landingPagesIdPreview.rebuildingTitle')}
         </p>
         <p className='mt-2 text-xs text-amber-800'>
-          Preview canonical (template_version.canvas_blueprint + slot fills từ
-          page_revisions.config_json) sẽ release ở Wave 3. Hiện tại muốn chỉnh
-          nội dung, gửi yêu cầu cho Rexer ở{' '}
-          <button
-            type='button'
-            onClick={() => router.push('/portal/comments')}
-            className='font-medium text-amber-900 underline underline-offset-2'
-          >
-            Comment / Request
-          </button>
-          .
+          {t('landingPagesIdPreview.rebuildingDesc')}
         </p>
         {status === 'error' && (
           <p className='text-3xs mt-2 font-mono text-amber-800/80'>

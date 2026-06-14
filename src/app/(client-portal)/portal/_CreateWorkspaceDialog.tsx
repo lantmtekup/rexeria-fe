@@ -8,6 +8,7 @@
  */
 
 import * as React from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Loader2, Sparkles, X } from 'lucide-react';
 
@@ -42,6 +43,7 @@ export function CreateWorkspaceDialog({
   onClose,
   onCreated,
 }: Props) {
+  const t = useTranslations('portal');
   const [name, setName] = React.useState('');
   const [slug, setSlug] = React.useState('');
   const [description, setDescription] = React.useState('');
@@ -77,7 +79,7 @@ export function CreateWorkspaceDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientId) {
-      setError('Tài khoản chưa gắn client — không tạo được workspace.');
+      setError(t('createWorkspaceDialog.errNoClient'));
       return;
     }
     if (!canSubmit) return;
@@ -89,15 +91,13 @@ export function CreateWorkspaceDialog({
         slug: slug.trim(),
         description: description.trim() || undefined,
       });
-      toast.success(`Đã tạo workspace "${ws.name}"`);
+      toast.success(t('createWorkspaceDialog.createdToast', { name: ws.name }));
       onCreated(ws);
       onClose();
     } catch (err) {
       const status = err instanceof RxApiError ? err.status : undefined;
       if (status === 403) {
-        setError(
-          'Endpoint /portal/workspaces yêu cầu brand scope — admin chưa link client cụ thể không tạo được. Login bằng brand user.'
-        );
+        setError(t('createWorkspaceDialog.err403'));
       } else {
         const msg =
           err instanceof RxApiError
@@ -128,7 +128,7 @@ export function CreateWorkspaceDialog({
               <Sparkles className='size-4' />
             </div>
             <h3 className='text-base leading-tight font-semibold'>
-              Tạo workspace mới
+              {t('createWorkspaceDialog.title')}
             </h3>
           </div>
           <button
@@ -143,12 +143,12 @@ export function CreateWorkspaceDialog({
 
         <form onSubmit={handleSubmit} className='space-y-4 px-5 py-4'>
           {/* Name */}
-          <Field label='Tên workspace' required>
+          <Field label={t('createWorkspaceDialog.nameLabel')} required>
             <input
               type='text'
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder='Vd: Flagship Cola — Tết 2026'
+              placeholder={t('createWorkspaceDialog.namePlaceholder')}
               autoFocus
               maxLength={200}
               className='border-border w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
@@ -159,7 +159,7 @@ export function CreateWorkspaceDialog({
           <Field
             label='Slug'
             required
-            hint='Dùng trong URL — chỉ chữ thường, số, dấu gạch ngang'
+            hint={t('createWorkspaceDialog.slugHint')}
           >
             <input
               type='text'
@@ -175,11 +175,14 @@ export function CreateWorkspaceDialog({
           </Field>
 
           {/* Description */}
-          <Field label='Mô tả' hint='Tuỳ chọn — giúp đồng đội nhận diện'>
+          <Field
+            label={t('createWorkspaceDialog.descLabel')}
+            hint={t('createWorkspaceDialog.descHint')}
+          >
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder='Sub-brand nước cola có ga cho thị trường VN…'
+              placeholder={t('createWorkspaceDialog.descPlaceholder')}
               rows={3}
               maxLength={2000}
               className='border-border w-full resize-y rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
@@ -189,7 +192,7 @@ export function CreateWorkspaceDialog({
           {/* Client preview */}
           {clientId && (
             <div className='text-2xs bg-muted text-content-muted rounded-lg px-3 py-2'>
-              Sẽ tạo trong client{' '}
+              {t('createWorkspaceDialog.clientPreview')}{' '}
               <code className='rounded bg-white px-1 font-mono'>
                 {clientId.slice(0, 8)}…
               </code>
@@ -197,8 +200,7 @@ export function CreateWorkspaceDialog({
           )}
           {!clientId && (
             <div className='rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800'>
-              Tài khoản hiện không gắn client cụ thể — đăng nhập bằng brand user
-              để tạo workspace cho brand đó.
+              {t('createWorkspaceDialog.noClientWarning')}
             </div>
           )}
 
@@ -217,7 +219,7 @@ export function CreateWorkspaceDialog({
             disabled={submitting}
             className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
-            Huỷ
+            {t('createWorkspaceDialog.cancel')}
           </button>
           <button
             type='button'
@@ -230,7 +232,9 @@ export function CreateWorkspaceDialog({
             ) : (
               <Sparkles className='size-3.5' />
             )}
-            {submitting ? 'Đang tạo…' : 'Tạo workspace'}
+            {submitting
+              ? t('createWorkspaceDialog.submitting')
+              : t('createWorkspaceDialog.submit')}
           </button>
         </div>
       </div>

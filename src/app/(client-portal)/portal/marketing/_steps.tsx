@@ -7,12 +7,13 @@
  */
 
 import { Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
-import { FeatureField } from '@/components/molecules/FeatureField';
+import { FeatureField, InfoTip } from '@/components/molecules/FeatureField';
 import { cn } from '@/lib/cn';
 import type { CampaignObjective } from '@/services/rexer/types';
 
@@ -27,8 +28,12 @@ import {
 
 export type MarketingSection = 'discovery' | 'concept' | 'assets';
 
-/** 1 mục brief: text chính + các ô mô tả thêm (Add more feature) + file kèm. */
+/** 1 mục brief: ô primary (Age/Budget — chỉ field có cấu hình), text mô tả
+ * chính + các ô mô tả thêm (Add more feature) + file kèm. */
 export interface BriefField {
+  /** Giá trị ô labeled phía trên Description (Age cho Target audience,
+   * Budget cho Plan). Chỉ field có `primary` trong def mới dùng. */
+  primary?: string;
   text: string;
   extras: string[];
   files: AssetItem[];
@@ -56,52 +61,36 @@ export interface CampaignState {
   endDate: string;
 }
 
-export const DISCOVERY_FIELDS = [
-  {
-    key: 'marketingConcept',
-    label: 'Marketing Concept',
-    info: 'Định hướng tổng thể của chiến dịch — giá trị cốt lõi muốn truyền tải tới khách hàng.',
-  },
-  {
-    key: 'messageDevelopment',
-    label: 'Message Development',
-    info: 'Thông điệp chính & phụ sẽ dùng xuyên suốt các kênh truyền thông.',
-  },
-  {
-    key: 'creativeDirection',
-    label: 'Creative Direction',
-    info: 'Phong cách hình ảnh, tông màu, mood & tone sáng tạo của chiến dịch.',
-  },
-  {
-    key: 'contentMap',
-    label: 'Content Map',
-    info: 'Loại nội dung cho từng giai đoạn trong hành trình khách hàng.',
-  },
-] as const;
+/** primary = key cấu hình ô labeled phía trên Description (Age/Budget). */
+type BriefFieldDef = { key: string; label: string; primary?: 'age' | 'budget' };
 
-export const CONCEPT_FIELDS = [
-  {
-    key: 'aboutConcept',
-    label: 'About Concept',
-    info: 'Mô tả ngắn gọn concept của sản phẩm / chiến dịch.',
-  },
-  {
-    key: 'targetAudience',
-    label: 'Target audience',
-    info: 'Chân dung khách hàng mục tiêu: độ tuổi, hành vi, nhu cầu, nỗi đau.',
-  },
-  {
-    key: 'plan',
-    label: 'Plan',
-    info: 'Kế hoạch triển khai: kênh, thời gian, ngân sách, nguồn lực.',
-  },
-] as const;
+export const DISCOVERY_FIELDS: readonly BriefFieldDef[] = [
+  { key: 'marketingConcept', label: 'Marketing Concept' },
+  { key: 'messageDevelopment', label: 'Message Development' },
+  { key: 'creativeDirection', label: 'Creative Direction' },
+  { key: 'contentMap', label: 'Content Map' },
+];
 
-const OBJECTIVES: { value: CampaignObjective; label: string }[] = [
-  { value: 'awareness', label: 'Nhận biết' },
-  { value: 'traffic', label: 'Kéo traffic' },
-  { value: 'conversion', label: 'Chuyển đổi' },
-  { value: 'retention', label: 'Giữ chân' },
+export const CONCEPT_FIELDS: readonly BriefFieldDef[] = [
+  { key: 'aboutConcept', label: 'About Concept' },
+  { key: 'targetAudience', label: 'Target audience', primary: 'age' },
+  { key: 'plan', label: 'Plan', primary: 'budget' },
+];
+
+/** Label + placeholder (i18n key) cho ô primary. */
+const PRIMARY_CFG: Record<
+  'age' | 'budget',
+  { labelKey: string; phKey: string }
+> = {
+  age: { labelKey: 'primaryAgeLabel', phKey: 'primaryAgePh' },
+  budget: { labelKey: 'primaryBudgetLabel', phKey: 'primaryBudgetPh' },
+};
+
+const OBJECTIVES: { value: CampaignObjective; infoKey: string }[] = [
+  { value: 'awareness', infoKey: 'objAwareness' },
+  { value: 'traffic', infoKey: 'objTraffic' },
+  { value: 'conversion', infoKey: 'objConversion' },
+  { value: 'retention', infoKey: 'objRetention' },
 ];
 
 const CHANNELS = ['Facebook', 'Google', 'TikTok', 'Zalo', 'Email'];
@@ -166,6 +155,7 @@ function BriefFields({
   onBriefChange: (next: BriefState) => void;
   showErrors?: boolean;
 }) {
+  const t = useTranslations('portal');
   // key đang upload file đính kèm (spinner trên icon ⬆ của đúng mục đó)
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
   const fields = section === 'discovery' ? DISCOVERY_FIELDS : CONCEPT_FIELDS;
@@ -188,7 +178,7 @@ function BriefFields({
       try {
         ok.push(await uploadOne(file));
       } catch {
-        toast.error(`Upload "${file.name}" thất bại`);
+        toast.error(t('marketingSteps.uploadFailed', { name: file.name }));
       }
     }
     if (ok.length) patchField(key, { files: [...getField(key).files, ...ok] });
@@ -199,11 +189,35 @@ function BriefFields({
     <div className='flex max-w-3xl flex-col gap-5'>
       {fields.map(f => {
         const fv = getField(f.key);
+        const primary = f.primary ? PRIMARY_CFG[f.primary] : null;
         return (
           <div key={f.key} className='flex flex-col gap-2'>
+            {primary && (
+              // Header section + ô primary (Age/Budget) label-on-top, theo design.
+              <div className='grid grid-cols-[140px_1fr] gap-4'>
+                <div className='flex items-start gap-1.5 pt-2.5 text-sm font-semibold'>
+                  {f.label}
+                  <InfoTip text={t(`marketingSteps.info_${f.key}`)} />
+                </div>
+                <div className='border-input focus-within:border-foreground rounded-xl border px-3.5 py-2'>
+                  <div className='text-foreground text-xs font-semibold'>
+                    {t(`marketingSteps.${primary.labelKey}`)}
+                  </div>
+                  <input
+                    className='text-foreground placeholder:text-content-muted mt-0.5 w-full border-0 bg-transparent p-0 text-sm outline-none'
+                    placeholder={t(`marketingSteps.${primary.phKey}`)}
+                    value={fv.primary ?? ''}
+                    onChange={e =>
+                      patchField(f.key, { primary: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+            )}
             <FeatureField
-              label={f.label}
-              infoText={f.info}
+              label={primary ? t('marketingSteps.descriptionLabel') : f.label}
+              info={!primary}
+              infoText={primary ? undefined : t(`marketingSteps.info_${f.key}`)}
               rows={3}
               collapsible
               placeholder={`Describe about ${f.label}`}
@@ -270,6 +284,7 @@ export function StepCampaign({
   value: CampaignState;
   onChange: (next: CampaignState) => void;
 }) {
+  const t = useTranslations('portal');
   const set = <K extends keyof CampaignState>(k: K, v: CampaignState[K]) =>
     onChange({ ...value, [k]: v });
   const toggleChannel = (ch: string) =>
@@ -283,12 +298,12 @@ export function StepCampaign({
   return (
     <div className='flex max-w-xl flex-col gap-4'>
       <div className='grid gap-1.5'>
-        <Label htmlFor='cw-name'>Tên campaign</Label>
+        <Label htmlFor='cw-name'>{t('marketingSteps.campaignName')}</Label>
         <Input
           id='cw-name'
           value={value.name}
           onChange={e => set('name', e.target.value)}
-          placeholder='VD: Tết 2027 — Mở bán đợt 1'
+          placeholder={t('marketingSteps.campaignNamePlaceholder')}
         />
       </div>
       <div className='grid gap-1.5'>
@@ -301,13 +316,13 @@ export function StepCampaign({
         >
           {OBJECTIVES.map(o => (
             <option key={o.value} value={o.value}>
-              {o.label}
+              {t(`marketingSteps.${o.infoKey}`)}
             </option>
           ))}
         </select>
       </div>
       <div className='grid gap-1.5'>
-        <Label>Kênh</Label>
+        <Label>{t('marketingSteps.channels')}</Label>
         <div className='flex flex-wrap gap-2'>
           {CHANNELS.map(ch => (
             <button
@@ -328,7 +343,7 @@ export function StepCampaign({
       </div>
       <div className='grid grid-cols-3 gap-3'>
         <div className='col-span-2 grid gap-1.5'>
-          <Label htmlFor='cw-budget'>Ngân sách</Label>
+          <Label htmlFor='cw-budget'>{t('marketingSteps.budget')}</Label>
           <Input
             id='cw-budget'
             type='number'
@@ -339,7 +354,7 @@ export function StepCampaign({
           />
         </div>
         <div className='grid gap-1.5'>
-          <Label htmlFor='cw-currency'>Tiền tệ</Label>
+          <Label htmlFor='cw-currency'>{t('marketingSteps.currency')}</Label>
           <select
             id='cw-currency'
             className={SELECT_CLASS}
@@ -353,7 +368,7 @@ export function StepCampaign({
       </div>
       <div className='grid grid-cols-2 gap-3'>
         <div className='grid gap-1.5'>
-          <Label htmlFor='cw-start'>Bắt đầu</Label>
+          <Label htmlFor='cw-start'>{t('marketingSteps.startDate')}</Label>
           <Input
             id='cw-start'
             type='date'
@@ -362,7 +377,7 @@ export function StepCampaign({
           />
         </div>
         <div className='grid gap-1.5'>
-          <Label htmlFor='cw-end'>Kết thúc</Label>
+          <Label htmlFor='cw-end'>{t('marketingSteps.endDate')}</Label>
           <Input
             id='cw-end'
             type='date'

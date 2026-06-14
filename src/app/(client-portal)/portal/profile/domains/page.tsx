@@ -33,6 +33,7 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { BrandDomain, Page } from '@/services/rexer/types';
@@ -68,36 +69,36 @@ interface CustomDomain {
 
 const STATUS_META: Record<
   DomainStatus,
-  { label: string; chip: string; dot: string; pulse?: boolean }
+  { labelKey: string; chip: string; dot: string; pulse?: boolean }
 > = {
   pending: {
-    label: 'Chờ DNS',
+    labelKey: 'statusPending',
     chip: 'bg-amber-50 text-amber-700 border-amber-200',
     dot: 'bg-amber-500',
   },
   verifying: {
-    label: 'Đang verify',
+    labelKey: 'statusVerifying',
     chip: 'bg-blue-50 text-blue-700 border-blue-200',
     dot: 'bg-blue-500',
     pulse: true,
   },
   verified: {
-    label: 'DNS verified',
+    labelKey: 'statusVerified',
     chip: 'bg-violet-50 text-violet-700 border-violet-200',
     dot: 'bg-violet-500',
   },
   active: {
-    label: 'Live',
+    labelKey: 'statusActive',
     chip: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     dot: 'bg-emerald-500',
   },
   failed: {
-    label: 'Thất bại',
+    labelKey: 'statusFailed',
     chip: 'bg-rose-50 text-rose-700 border-rose-200',
     dot: 'bg-rose-500',
   },
   disabled: {
-    label: 'Tắt',
+    labelKey: 'statusDisabled',
     chip: 'bg-muted text-content-muted border-border',
     dot: 'bg-zinc-400',
   },
@@ -105,25 +106,22 @@ const STATUS_META: Record<
 
 const TARGET_META: Record<
   TargetType,
-  { label: string; icon: React.ElementType; description: string }
+  { labelKey: string; icon: React.ElementType; descriptionKey: string }
 > = {
   landing: {
-    label: 'Landing pages',
+    labelKey: 'targetLandingLabel',
     icon: Globe,
-    description:
-      'Public URL serve published landings của brand. URL dạng coca.vn/{slug}',
+    descriptionKey: 'targetLandingDesc',
   },
   curate_cdn: {
-    label: 'Curate CDN',
+    labelKey: 'targetCdnLabel',
     icon: ShieldCheck,
-    description:
-      'Serve curate.js + widget data từ domain của brand thay vì cdn.rexer.com → tránh CSP cross-origin issue',
+    descriptionKey: 'targetCdnDesc',
   },
   tracking: {
-    label: 'Tracking pixel',
+    labelKey: 'targetTrackingLabel',
     icon: ShieldAlert,
-    description:
-      'Analytics endpoint từ track.coca.vn → tránh ad-block chặn track.rexer.com',
+    descriptionKey: 'targetTrackingDesc',
   },
 };
 
@@ -186,40 +184,40 @@ function beDomainToLocal(d: BrandDomain): CustomDomain {
   };
 }
 
-const BE_PENDING_MSG =
-  'Không lấy được brand/workspace (BE cutover) — thao tác đang chạy ở chế độ local.';
+type TFn = (key: string, values?: Record<string, string | number>) => string;
 
 /* ─── Helpers ────────────────────────────────────────────────────────── */
 
-function relativeTime(iso?: string): string {
+function relativeTime(iso: string | undefined, t: TFn): string {
   if (!iso) return '—';
-  const t = new Date(iso).getTime();
-  if (Number.isNaN(t)) return iso;
-  const diffMin = Math.round((Date.now() - t) / 60_000);
-  if (diffMin < 1) return 'vừa xong';
-  if (diffMin < 60) return `${diffMin}m trước`;
+  const ts = new Date(iso).getTime();
+  if (Number.isNaN(ts)) return iso;
+  const diffMin = Math.round((Date.now() - ts) / 60_000);
+  if (diffMin < 1) return t('profileDomains.timeJustNow');
+  if (diffMin < 60) return t('profileDomains.timeMinutesAgo', { n: diffMin });
   const diffH = Math.round(diffMin / 60);
-  if (diffH < 24) return `${diffH}h trước`;
-  return `${Math.round(diffH / 24)}d trước`;
+  if (diffH < 24) return t('profileDomains.timeHoursAgo', { n: diffH });
+  return t('profileDomains.timeDaysAgo', { n: Math.round(diffH / 24) });
 }
 
 function fmtDomain(d: string): string {
   return d.toLowerCase().trim().replace(/\/$/, '');
 }
 
-function validateDomain(d: string): string | null {
+function validateDomain(d: string, t: TFn): string | null {
   const v = fmtDomain(d);
-  if (!v) return 'Nhập domain';
-  if (v.length > 253) return 'Quá dài (>253 ký tự)';
+  if (!v) return t('profileDomains.errEmpty');
+  if (v.length > 253) return t('profileDomains.errTooLong');
   // Strict-ish hostname regex
   const re = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
-  if (!re.test(v)) return 'Format không hợp lệ (vd: coca.vn, cdn.coca.vn)';
+  if (!re.test(v)) return t('profileDomains.errFormat');
   return null;
 }
 
 /* ─── Page ───────────────────────────────────────────────────────────── */
 
 export default function PortalDomainsPage() {
+  const t = useTranslations('portal');
   const [domains, setDomains] = React.useState<CustomDomain[]>(SEED_DOMAINS);
   const [pages, setPages] = React.useState<Page[]>([]);
   const [brandId, setBrandId] = React.useState<string | null>(null);
@@ -310,15 +308,15 @@ export default function PortalDomainsPage() {
         prev.map(d => (d.id === id ? { ...d, status: 'pending' } : d))
       );
       setVerifyingId(null);
-      toast.info(BE_PENDING_MSG);
+      toast.info(t('profileDomains.bePendingMsg'));
       return;
     }
     try {
       await rexerApi.brands.domains.verify(brandId, id);
       await refresh(brandId);
-      toast.success('Đã chạy verify — kiểm tra trạng thái DNS/TLS.');
+      toast.success(t('profileDomains.verifyRunToast'));
     } catch (err) {
-      toast.error('Verify thất bại', {
+      toast.error(t('profileDomains.verifyFailToast'), {
         description: err instanceof Error ? err.message : String(err),
       });
       await refresh(brandId).catch(() => {});
@@ -330,18 +328,23 @@ export default function PortalDomainsPage() {
   const handleDelete = async (id: string) => {
     const d = domains.find(x => x.id === id);
     if (!d) return;
-    if (!window.confirm(`Xoá custom domain "${d.domain}"?`)) return;
+    if (
+      !window.confirm(t('profileDomains.deleteConfirm', { domain: d.domain }))
+    )
+      return;
     if (!brandId) {
       setDomains(prev => prev.filter(x => x.id !== id));
-      toast.success(`Đã xoá ${d.domain} (local)`);
+      toast.success(
+        t('profileDomains.deletedLocalToast', { domain: d.domain })
+      );
       return;
     }
     try {
       await rexerApi.brands.domains.remove(brandId, id);
       setDomains(prev => prev.filter(x => x.id !== id));
-      toast.success(`Đã xoá ${d.domain}`);
+      toast.success(t('profileDomains.deletedToast', { domain: d.domain }));
     } catch (err) {
-      toast.error('Xoá thất bại', {
+      toast.error(t('profileDomains.deleteFailToast'), {
         description: err instanceof Error ? err.message : String(err),
       });
     }
@@ -365,7 +368,7 @@ export default function PortalDomainsPage() {
       };
       setDomains(prev => [newDom, ...prev]);
       setAddOpen(false);
-      toast.success(`Đã thêm ${domain} (local) — BE chưa khả dụng`);
+      toast.success(t('profileDomains.addedLocalToast', { domain }));
       return;
     }
     try {
@@ -378,10 +381,10 @@ export default function PortalDomainsPage() {
       setDomains(prev => [beDomainToLocal(res.domain), ...prev]);
       setAddOpen(false);
       toast.success(
-        `Đã thêm ${res.domain.domain} — thêm DNS records để verify`
+        t('profileDomains.addedToast', { domain: res.domain.domain })
       );
     } catch (err) {
-      toast.error('Thêm domain thất bại', {
+      toast.error(t('profileDomains.addFailToast'), {
         description: err instanceof Error ? err.message : String(err),
       });
     }
@@ -393,7 +396,7 @@ export default function PortalDomainsPage() {
       prev.map(d => (d.id === id ? { ...d, page_id: pageId || null } : d))
     );
     if (!brandId) {
-      toast.info(BE_PENDING_MSG);
+      toast.info(t('profileDomains.bePendingMsg'));
       return;
     }
     try {
@@ -402,10 +405,12 @@ export default function PortalDomainsPage() {
       });
       const page = pages.find(p => p.id === pageId);
       toast.success(
-        pageId ? `Đã gắn landing "${page?.name ?? pageId}"` : 'Đã gỡ landing'
+        pageId
+          ? t('profileDomains.boundToast', { name: page?.name ?? pageId })
+          : t('profileDomains.unboundToast')
       );
     } catch (err) {
-      toast.error('Gắn landing thất bại', {
+      toast.error(t('profileDomains.bindFailToast'), {
         description: err instanceof Error ? err.message : String(err),
       });
       if (brandId) await refresh(brandId).catch(() => {});
@@ -419,55 +424,52 @@ export default function PortalDomainsPage() {
         className='group border-border text-content-muted hover:text-foreground inline-flex items-center gap-2 self-start rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900'
       >
         <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
-        Profile
+        {t('profileDomains.backProfile')}
       </Link>
 
       <section className='mt-5'>
         <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
-          <Globe className='size-3' /> Custom domains
+          <Globe className='size-3' /> {t('profileDomains.eyebrow')}
         </div>
         <h1 className='mt-1 text-2xl font-bold tracking-tight'>
-          Tên miền tuỳ chỉnh
+          {t('profileDomains.title')}
         </h1>
         <p className='text-content-muted mt-1 text-sm'>
-          Map domain riêng (vd <code className='font-mono'>coca.vn</code>) tới
-          workspace để landing pages của bạn live tại URL chính chủ. Rexer xác
-          thực qua DNS + tự động cấp TLS.
+          {t.rich('profileDomains.subtitle', {
+            code: chunks => <code className='font-mono'>{chunks}</code>,
+          })}
         </p>
       </section>
 
       {source === 'fake' && (
         <div className='mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800'>
           <ShieldAlert className='mt-0.5 size-3.5 shrink-0' />
-          <span>
-            Đang hiển thị dữ liệu demo — chưa lấy được brand/workspace từ BE
-            (cutover). Thao tác chạy ở chế độ local cho tới khi BE sẵn sàng.
-          </span>
+          <span>{t('profileDomains.demoBanner')}</span>
         </div>
       )}
 
       {/* Stats strip */}
       <section className='mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4'>
         <StatCard
-          label='Live'
+          label={t('profileDomains.statLive')}
           value={counts.active}
           icon={<ShieldCheck className='size-3.5' />}
           accent='emerald'
         />
         <StatCard
-          label='Verifying'
+          label={t('profileDomains.statVerifying')}
           value={counts.verifying + counts.verified}
           icon={<Loader2 className='size-3.5' />}
           accent='blue'
         />
         <StatCard
-          label='Chờ DNS'
+          label={t('profileDomains.statPending')}
           value={counts.pending}
           icon={<ShieldAlert className='size-3.5' />}
           accent='amber'
         />
         <StatCard
-          label='Tổng'
+          label={t('profileDomains.statTotal')}
           value={domains.length}
           icon={<Globe className='size-3.5' />}
           accent='zinc'
@@ -477,8 +479,10 @@ export default function PortalDomainsPage() {
       {/* Add CTA */}
       <div className='mt-5 flex items-center justify-between gap-3'>
         <p className='text-2xs text-content-muted'>
-          Đang quản lý <strong>{domains.length}</strong> domain · Brand quota
-          không giới hạn Phase 1
+          {t.rich('profileDomains.managingCount', {
+            count: domains.length,
+            strong: chunks => <strong>{chunks}</strong>,
+          })}
         </p>
         <button
           type='button'
@@ -486,7 +490,7 @@ export default function PortalDomainsPage() {
           className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-zinc-700'
         >
           <Plus className='size-3.5' />
-          Thêm domain
+          {t('profileDomains.addDomain')}
         </button>
       </div>
 
@@ -496,11 +500,10 @@ export default function PortalDomainsPage() {
           <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
             <Globe className='text-muted-foreground mx-auto size-8' />
             <p className='text-content-muted mt-3 text-sm font-semibold'>
-              Chưa có custom domain
+              {t('profileDomains.emptyTitle')}
             </p>
             <p className='text-content-muted mt-1 text-xs'>
-              Bấm &ldquo;Thêm domain&rdquo; để map tên miền riêng của brand vào
-              Rexer.
+              {t('profileDomains.emptyDesc')}
             </p>
           </div>
         ) : (
@@ -544,6 +547,7 @@ function DomainCard({
   onDelete: () => void;
   onBind: (pageId: string) => void;
 }) {
+  const t = useTranslations('portal');
   const target = TARGET_META[domain.target_type];
   const TargetIcon = target.icon;
   const showDns =
@@ -575,16 +579,20 @@ function DomainCard({
             <div className='text-2xs text-content-muted mt-1 flex flex-wrap items-center gap-x-3 gap-y-1'>
               <span className='inline-flex items-center gap-1'>
                 <TargetIcon className='size-3' />
-                {target.label}
+                {t(`profileDomains.${target.labelKey}`)}
               </span>
               <span>·</span>
-              <span>Check {relativeTime(domain.last_check_at)}</span>
+              <span>
+                {t('profileDomains.lastCheck', {
+                  time: relativeTime(domain.last_check_at, t),
+                })}
+              </span>
               {domain.tls_active && (
                 <>
                   <span>·</span>
                   <span className='inline-flex items-center gap-1 text-emerald-700'>
                     <Lock className='size-3' />
-                    TLS active
+                    {t('profileDomains.tlsActive')}
                   </span>
                 </>
               )}
@@ -605,20 +613,22 @@ function DomainCard({
               ) : (
                 <RefreshCw className='size-3.5' />
               )}
-              {verifying ? 'Đang check…' : 'Verify ngay'}
+              {verifying
+                ? t('profileDomains.checking')
+                : t('profileDomains.verifyNow')}
             </button>
           )}
           {domain.status === 'verifying' && (
             <span className='inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700'>
               <Loader2 className='size-3.5 animate-spin' />
-              Polling…
+              {t('profileDomains.polling')}
             </span>
           )}
           <button
             type='button'
             onClick={onDelete}
             className='border-border text-content-muted inline-flex size-8 items-center justify-center rounded-lg border bg-white transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
-            title='Xoá domain'
+            title={t('profileDomains.deleteTitle')}
           >
             <Trash2 className='size-3.5' />
           </button>
@@ -633,14 +643,14 @@ function DomainCard({
         {domain.target_type === 'landing' && (
           <div className='border-border bg-muted/60 mt-4 flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2.5'>
             <span className='text-2xs text-content-muted inline-flex items-center gap-1.5 font-semibold tracking-wider uppercase'>
-              <Globe className='size-3' /> Landing page
+              <Globe className='size-3' /> {t('profileDomains.landingPage')}
             </span>
             <select
               value={domain.page_id ?? ''}
               onChange={e => onBind(e.target.value)}
               className='border-border ml-auto min-w-[200px] rounded-lg border bg-white px-2.5 py-1.5 text-sm outline-none focus:border-zinc-900'
             >
-              <option value=''>— Chưa gắn landing page —</option>
+              <option value=''>{t('profileDomains.noLandingOption')}</option>
               {pages.map(p => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -649,7 +659,8 @@ function DomainCard({
             </select>
             {domain.page_id && (
               <span className='text-3xs inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 font-bold text-emerald-700'>
-                <CheckCircle2 className='size-2.5' /> Đã gắn
+                <CheckCircle2 className='size-2.5' />{' '}
+                {t('profileDomains.bound')}
               </span>
             )}
           </div>
@@ -659,7 +670,7 @@ function DomainCard({
           <div className='mt-5'>
             <div className='text-3xs text-content-muted mb-2 flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
               <ShieldAlert className='size-3' />
-              DNS records — thêm tại nhà cung cấp domain
+              {t('profileDomains.dnsRecordsTitle')}
             </div>
             <DnsRecord
               kind='CNAME'
@@ -678,16 +689,17 @@ function DomainCard({
               value={`rexer-verify=${domain.verification_token}`}
             />
             <p className='text-2xs text-content-muted mt-2'>
-              DNS thường propagate trong 5-30 phút. Bấm{' '}
-              <strong>Verify ngay</strong> sau khi đã add record. Rexer cũng tự
-              poll mỗi 5 phút.
+              {t.rich('profileDomains.dnsHint', {
+                strong: chunks => <strong>{chunks}</strong>,
+              })}
             </p>
           </div>
         )}
 
         {domain.status === 'failed' && domain.failure_reason && (
           <div className='mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
-            <strong>Verify thất bại:</strong> {domain.failure_reason}
+            <strong>{t('profileDomains.verifyFailedLabel')}</strong>{' '}
+            {domain.failure_reason}
           </div>
         )}
       </div>
@@ -786,6 +798,7 @@ function DnsRecord({
   name: string;
   value: string;
 }) {
+  const t = useTranslations('portal');
   const [copied, setCopied] = React.useState(false);
   const text = `${kind}    ${name}    ${value}`;
 
@@ -793,10 +806,10 @@ function DnsRecord({
     navigator.clipboard.writeText(text).then(
       () => {
         setCopied(true);
-        toast.success(`Đã copy ${kind} record`);
+        toast.success(t('profileDomains.copiedToast', { kind }));
         window.setTimeout(() => setCopied(false), 1500);
       },
-      () => toast.error('Copy thất bại')
+      () => toast.error(t('profileDomains.copyFailToast'))
     );
   };
 
@@ -810,7 +823,7 @@ function DnsRecord({
         type='button'
         onClick={copy}
         className='text-muted-foreground absolute top-1.5 right-1.5 inline-flex size-7 items-center justify-center rounded-md bg-zinc-800 transition-colors hover:bg-zinc-700 hover:text-white'
-        title='Copy record'
+        title={t('profileDomains.copyRecordTitle')}
       >
         {copied ? (
           <CheckCircle2 className='size-3.5 text-emerald-400' />
@@ -835,6 +848,7 @@ function DnsRecord({
 /* ─── Status pill ────────────────────────────────────────────────────── */
 
 function StatusPill({ status }: { status: DomainStatus }) {
+  const t = useTranslations('portal');
   const meta = STATUS_META[status];
   return (
     <span
@@ -850,7 +864,7 @@ function StatusPill({ status }: { status: DomainStatus }) {
           meta.pulse && 'animate-pulse'
         )}
       />
-      {meta.label}
+      {t(`profileDomains.${meta.labelKey}`)}
     </span>
   );
 }
@@ -900,6 +914,7 @@ function AddDomainDialog({
   onClose: () => void;
   onSubmit: (v: { domain: string; target_type: TargetType }) => void;
 }) {
+  const t = useTranslations('portal');
   const [domain, setDomain] = React.useState('');
   const [targetType, setTargetType] = React.useState<TargetType>('landing');
   const [error, setError] = React.useState<string | null>(null);
@@ -916,7 +931,7 @@ function AddDomainDialog({
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
-    const err = validateDomain(domain);
+    const err = validateDomain(domain, t);
     if (err) {
       setError(err);
       return;
@@ -939,13 +954,15 @@ function AddDomainDialog({
             <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-sm'>
               <Globe className='size-4' />
             </div>
-            <h3 className='text-base font-semibold'>Thêm custom domain</h3>
+            <h3 className='text-base font-semibold'>
+              {t('profileDomains.dialogTitle')}
+            </h3>
           </div>
           <button
             type='button'
             onClick={onClose}
             className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
-            aria-label='Close'
+            aria-label={t('profileDomains.close')}
           >
             <X className='size-4' />
           </button>
@@ -954,7 +971,8 @@ function AddDomainDialog({
         <div className='space-y-4 px-5 py-4'>
           <div>
             <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-              Domain <span className='text-rose-500'>*</span>
+              {t('profileDomains.domainLabel')}{' '}
+              <span className='text-rose-500'>*</span>
             </label>
             <input
               autoFocus
@@ -964,27 +982,26 @@ function AddDomainDialog({
                 setDomain(e.target.value);
                 setError(null);
               }}
-              placeholder='coca.vn hoặc campaigns.coca.vn'
+              placeholder={t('profileDomains.domainPlaceholder')}
               className='border-border mt-1 w-full rounded-lg border bg-white px-3 py-2 font-mono text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             />
             <p className='text-3xs text-content-muted mt-1'>
-              Apex (coca.vn) hoặc subdomain (campaigns.coca.vn). Không có
-              http(s):// hoặc path.
+              {t('profileDomains.domainHint')}
             </p>
           </div>
 
           <div>
             <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-              Mục đích
+              {t('profileDomains.purposeLabel')}
             </label>
             <div className='mt-2 space-y-2'>
-              {(['landing', 'curate_cdn', 'tracking'] as const).map(t => {
-                const meta = TARGET_META[t];
+              {(['landing', 'curate_cdn', 'tracking'] as const).map(typ => {
+                const meta = TARGET_META[typ];
                 const Icon = meta.icon;
-                const selected = targetType === t;
+                const selected = targetType === typ;
                 return (
                   <label
-                    key={t}
+                    key={typ}
                     className={cn(
                       'flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors',
                       selected
@@ -996,16 +1013,16 @@ function AddDomainDialog({
                       type='radio'
                       name='target_type'
                       checked={selected}
-                      onChange={() => setTargetType(t)}
+                      onChange={() => setTargetType(typ)}
                       className='mt-1.5 size-3.5 accent-emerald-600'
                     />
                     <div className='flex-1'>
                       <div className='text-foreground flex items-center gap-1.5 text-sm font-semibold'>
                         <Icon className='size-3.5' />
-                        {meta.label}
+                        {t(`profileDomains.${meta.labelKey}`)}
                       </div>
                       <p className='text-2xs text-content-muted mt-0.5 leading-snug'>
-                        {meta.description}
+                        {t(`profileDomains.${meta.descriptionKey}`)}
                       </p>
                     </div>
                   </label>
@@ -1021,9 +1038,9 @@ function AddDomainDialog({
           )}
 
           <div className='text-2xs rounded-lg border border-amber-100 bg-amber-50/60 px-3 py-2 leading-relaxed text-amber-900'>
-            <strong>Sau khi thêm:</strong> bạn sẽ thấy 2 DNS records (CNAME +
-            TXT) để add tại nhà cung cấp domain. Rexer auto-verify sau khi DNS
-            propagate (5-30 phút).
+            {t.rich('profileDomains.afterAddNote', {
+              strong: chunks => <strong>{chunks}</strong>,
+            })}
           </div>
         </div>
 
@@ -1033,7 +1050,7 @@ function AddDomainDialog({
             onClick={onClose}
             className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'
           >
-            Huỷ
+            {t('profileDomains.cancel')}
           </button>
           <button
             type='submit'
@@ -1041,7 +1058,7 @@ function AddDomainDialog({
             className='inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50'
           >
             <Plus className='size-3.5' />
-            Thêm domain
+            {t('profileDomains.addDomain')}
           </button>
         </div>
       </form>

@@ -97,7 +97,7 @@ function TemplateDetailInner() {
   }, [params.id, preset, refreshKey]);
 
   return (
-    <div className='bg-muted text-foreground min-h-screen antialiased'>
+    <div className='bg-background text-foreground min-h-screen antialiased'>
       <PageHeader
         back='/overview/analytics/templates'
         backLabel='Tất cả landing pages'

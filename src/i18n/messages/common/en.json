@@ -4,6 +4,9 @@
     "locale_en": "EN",
     "locale_vi": "VN",
     "a11y_switchToEnglish": "Switch to English",
-    "a11y_switchToVietnamese": "Switch to Vietnamese"
+    "a11y_switchToVietnamese": "Switch to Vietnamese",
+    "landingPickerLoading": "Loading landings…",
+    "landingPickerNone": "— No landing attached —",
+    "landingPickerCurrent": "Current landing ({id}…)"
   }
 }

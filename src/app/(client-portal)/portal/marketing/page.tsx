@@ -11,6 +11,7 @@
  */
 
 import { ChevronDown, Megaphone, Network, Plus, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -18,7 +19,6 @@ import { Avatar } from '@/components/atoms/avatar';
 import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import { Spinner } from '@/components/atoms/spinner';
-import { EmptyState } from '@/components/molecules/EmptyState';
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Campaign } from '@/services/rexer/types';
@@ -83,14 +83,17 @@ export default function PortalMarketingPage() {
 }
 
 function MarketingInner() {
+  const t = useTranslations('portal');
   const [campaigns, setCampaigns] = useState<Campaign[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(() => {
     rexerApi.campaigns
       .list({ limit: 50 })
       .then(r => setCampaigns(r.items ?? []))
-      .catch(err => setError(err instanceof Error ? err.message : 'API_ERROR'));
+      // `/campaigns` đang internal-only ở BE → brand user nhận 403
+      // "Internal-only endpoint". Graceful: coi như chưa có campaign (hiện
+      // empty-state) thay vì đổ raw error. Gỡ khi BE mở /campaigns cho brand.
+      .catch(() => setCampaigns([]));
   }, []);
 
   useEffect(() => {
@@ -114,11 +117,9 @@ function MarketingInner() {
         </Button>
       </header>
 
-      {error ? (
-        <EmptyState title='Không tải được campaigns' description={error} />
-      ) : campaigns === null ? (
+      {campaigns === null ? (
         <div className='text-content-muted flex h-48 items-center justify-center gap-2 text-sm'>
-          <Spinner className='size-4' /> Đang tải…
+          <Spinner className='size-4' /> {t('marketing.loading')}
         </div>
       ) : campaigns.length === 0 ? (
         <MarketingEmpty />
@@ -134,6 +135,7 @@ function MarketingInner() {
 }
 
 function MarketingCard({ group }: { group: MarketingGroup }) {
+  const t = useTranslations('portal');
   const [open, setOpen] = useState(false);
   // Click card → chi tiết (editor) của campaign đầu nhóm; chevron xổ nhanh
   // danh sách campaign con (mỗi cái có detail riêng) không rời trang.
@@ -150,7 +152,7 @@ function MarketingCard({ group }: { group: MarketingGroup }) {
               <span className='text-2xs inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 font-medium text-blue-600'>
                 <Sparkles className='size-3' />
                 {group.insight.handed
-                  ? 'Đã dựng template'
+                  ? t('marketing.templateBuilt')
                   : (group.insight.goalLabel ?? 'AI-Insights')}
               </span>
             )}
@@ -161,7 +163,7 @@ function MarketingCard({ group }: { group: MarketingGroup }) {
         </Link>
         <button
           type='button'
-          aria-label='Xem campaigns trong nhóm'
+          aria-label={t('marketing.toggleCampaigns')}
           onClick={() => setOpen(o => !o)}
           className='text-content-muted hover:text-foreground p-1'
         >
@@ -214,11 +216,11 @@ function MarketingCard({ group }: { group: MarketingGroup }) {
                   href={`/portal/landing-pages/${c.landing_page_id}/analytics`}
                   className='text-primary text-xs whitespace-nowrap hover:underline'
                 >
-                  Phễu analytics →
+                  {t('marketing.analyticsFunnel')}
                 </Link>
               ) : (
                 <span className='text-content-muted text-xs whitespace-nowrap'>
-                  chưa gắn landing
+                  {t('marketing.noLanding')}
                 </span>
               )}
             </li>

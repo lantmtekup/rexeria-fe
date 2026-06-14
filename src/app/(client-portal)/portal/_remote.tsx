@@ -262,14 +262,43 @@ export async function loadTemplates(): Promise<LoadResult<PortalTemplate[]>> {
           )
         );
         const externalById = new Map<string, string>();
+        // BE lưu `thumbnail_asset_id` nhưng KHÔNG resolve `thumbnail_url`
+        // (cả /portal/templates lẫn /workspaces/{ws}/pages trả null). Gom
+        // asset_id rồi batch `media.list({ids})` → public_url để hiện ảnh đã
+        // lưu khi reload. (BE gap — bỏ workaround này khi BE trả thumbnail_url.)
+        const assetIdByPage = new Map<string, string>();
         for (const list of pageLists) {
           for (const p of list) {
             if (p.external_url) externalById.set(p.id, p.external_url);
+            if (p.thumbnail_url) {
+              // BE đã resolve sẵn → dùng luôn.
+              const t = items.find(it => it.id === p.id);
+              if (t) t.thumbnail_url = p.thumbnail_url;
+            } else if (p.thumbnail_asset_id) {
+              assetIdByPage.set(p.id, p.thumbnail_asset_id);
+            }
           }
         }
         for (const t of items) {
           const ext = externalById.get(t.id);
           if (ext) t.external_url = ext;
+        }
+        // Resolve asset_id → public_url (1 batch call).
+        const assetIds = Array.from(new Set(assetIdByPage.values()));
+        if (assetIds.length > 0) {
+          const media = await rexerApi.media
+            .list({ ids: assetIds })
+            .then(r => r.items ?? [])
+            .catch(() => []);
+          const urlByAsset = new Map<string, string>();
+          for (const m of media) {
+            if (m.public_url) urlByAsset.set(m.id, m.public_url);
+          }
+          for (const t of items) {
+            const aid = assetIdByPage.get(t.id);
+            const url = aid ? urlByAsset.get(aid) : undefined;
+            if (url) t.thumbnail_url = url;
+          }
         }
       } catch {
         /* enrich best-effort — bỏ qua nếu fail */
@@ -592,23 +621,9 @@ export function ApiStatusLabel({
   source: 'live' | 'fake';
   error?: string;
 }) {
-  if (source === 'live') {
-    return null; // no banner when live
-  }
-  return (
-    <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800'>
-      <span className='mt-0.5 inline-block size-2 shrink-0 rounded-full bg-amber-500' />
-      <div>
-        <span className='font-semibold'>Đang dùng fake data</span>
-        {error && (
-          <span className='text-3xs ml-2 font-mono text-amber-600'>
-            {error.slice(0, 80)}
-          </span>
-        )}
-        <span className='ml-2 text-amber-700'>
-          — BE chưa khả dụng hoặc bạn chưa login.
-        </span>
-      </div>
-    </div>
-  );
+  // Đã chạy product — ẩn hết label dev (LIVE BE / fake-data warning). Giữ
+  // tham số source/error cho caller nhưng không render gì.
+  void source;
+  void error;
+  return null;
 }

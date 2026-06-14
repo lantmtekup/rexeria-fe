@@ -10,6 +10,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   ArrowDownUp,
   ChevronLeft,
@@ -35,15 +36,16 @@ import { PortalShell } from '../_shell';
 type View = 'grid' | 'table';
 type Sort = '-updated_at' | '-created_at' | 'name';
 
-const SORT_OPTIONS: { id: Sort; label: string }[] = [
-  { id: '-updated_at', label: 'Mới cập nhật' },
-  { id: '-created_at', label: 'Mới nhất' },
-  { id: 'name', label: 'Tên A→Z' },
+const SORT_OPTIONS: { id: Sort; labelKey: string }[] = [
+  { id: '-updated_at', labelKey: 'sortUpdated' },
+  { id: '-created_at', labelKey: 'sortNewest' },
+  { id: 'name', labelKey: 'sortName' },
 ];
 
 const LIMIT = 12;
 
 export default function PortalTemplateLibraryPage() {
+  const t = useTranslations('portal');
   const router = useRouter();
   const activeWs = useActiveWorkspace();
   const [items, setItems] = React.useState<CanvasTemplate[]>([]);
@@ -88,7 +90,7 @@ export default function PortalTemplateLibraryPage() {
         // BE no longer serves /v1/canvas-templates post-Migration 134.
         const code =
           err instanceof RxApiError ? err.code || err.message : 'LOAD_FAILED';
-        toast.error(`Không load được template library: ${code}`);
+        toast.error(t('templates.loadFailed', { code }));
         setItems([]);
         setTotal(0);
         setTotalPages(1);
@@ -100,14 +102,14 @@ export default function PortalTemplateLibraryPage() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearch, sort, page]);
+  }, [debouncedSearch, sort, page, t]);
 
   // Brand instantiates a template into their active workspace. Canonical:
   // POST /workspaces/:wsId/pages { type:'landing', template_id }
   // (replaces legacy POST /canvas-templates/:id/clone-to-workspace).
   const cloneIntoWorkspace = async (tpl: CanvasTemplate) => {
     if (!activeWs.id) {
-      toast.error('Cần workspace hợp lệ trước khi tạo landing');
+      toast.error(t('templates.workspaceRequired'));
       return;
     }
     setCloning(tpl.id);
@@ -117,7 +119,7 @@ export default function PortalTemplateLibraryPage() {
         type: 'landing',
         name: tpl.name,
       });
-      toast.success(`Đã tạo landing "${page.name}" từ template`);
+      toast.success(t('templates.createdToast', { name: page.name }));
       // TODO(wave-3): redirect to canonical brand slot-fill editor when
       // shipped (e.g. /portal/landing-pages/:id/edit). For now, surface the
       // new page in the landings list.
@@ -129,7 +131,7 @@ export default function PortalTemplateLibraryPage() {
           : err instanceof Error
             ? err.message
             : 'CREATE_FAILED';
-      toast.error(`Tạo landing thất bại: ${msg}`);
+      toast.error(t('templates.createFailed', { code: msg }));
     } finally {
       setCloning(null);
     }
@@ -139,22 +141,23 @@ export default function PortalTemplateLibraryPage() {
     <PortalShell>
       <section>
         <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
-          <LayoutTemplate className='size-3' /> Template library
+          <LayoutTemplate className='size-3' /> {t('templates.eyebrow')}
         </div>
         <h1 className='mt-1 text-2xl font-bold tracking-tight'>
-          Bắt đầu từ template
+          {t('templates.title')}
         </h1>
         <p className='text-content-muted mt-1 text-sm'>
-          Chọn 1 template Rexer đã thiết kế sẵn, click{' '}
-          <strong>Dùng template</strong> để tạo landing page trong workspace của
-          bạn — sửa nội dung + publish khi sẵn sàng.
+          {t('templates.subtitlePre')}{' '}
+          <strong>{t('templates.useLabel')}</strong>{' '}
+          {t('templates.subtitlePost')}
         </p>
 
         {pendingEndpoint && (
           <div className='text-2xs mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800'>
-            BE chưa ship <code>/portal/templates/library</code> — đang fallback
-            sang <code>canvas-templates?is_template=true</code>. UI tự live khi
-            BE merge (be-todo.md P0.7).
+            {t('templates.pendingPre')} <code>/portal/templates/library</code>{' '}
+            {t('templates.pendingMid')}{' '}
+            <code>canvas-templates?is_template=true</code>.{' '}
+            {t('templates.pendingPost')}
           </div>
         )}
       </section>
@@ -164,7 +167,7 @@ export default function PortalTemplateLibraryPage() {
         <div className='relative max-w-sm flex-1'>
           <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
           <Input
-            placeholder='Tìm theo tên / mô tả…'
+            placeholder={t('templates.searchPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className='pl-9'
@@ -180,7 +183,7 @@ export default function PortalTemplateLibraryPage() {
           >
             {SORT_OPTIONS.map(o => (
               <option key={o.id} value={o.id}>
-                {o.label}
+                {t(`templates.${o.labelKey}`)}
               </option>
             ))}
           </select>
@@ -205,20 +208,21 @@ export default function PortalTemplateLibraryPage() {
       <div className='mt-5'>
         {loading && items.length === 0 ? (
           <div className='text-content-muted flex items-center justify-center py-16 text-sm'>
-            <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải template…
+            <Loader2 className='mr-2 size-4 animate-spin' />{' '}
+            {t('templates.loading')}
           </div>
         ) : items.length === 0 ? (
           <div className='border-border rounded-2xl border bg-white p-12 text-center'>
             <Sparkles className='text-muted-foreground mx-auto size-8' />
             <p className='text-content-muted mt-3 text-sm font-semibold'>
               {debouncedSearch
-                ? 'Không có template khớp tìm kiếm'
-                : 'Rexer chưa publish template nào'}
+                ? t('templates.emptyFilterTitle')
+                : t('templates.emptyTitle')}
             </p>
             <p className='text-content-muted mt-1 text-xs'>
               {debouncedSearch
-                ? 'Thử từ khoá khác hoặc clear filter.'
-                : 'Sẽ có sớm — staff Rexer đang chuẩn bị bộ template demo.'}
+                ? t('templates.emptyFilterHint')
+                : t('templates.emptyHint')}
             </p>
           </div>
         ) : view === 'grid' ? (
@@ -285,6 +289,7 @@ function TemplateCard({
   onUse: () => void;
   loading: boolean;
 }) {
+  const t = useTranslations('portal');
   return (
     <div className='group border-border hover:border-border flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       <div className='relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-zinc-200 to-zinc-300'>
@@ -320,11 +325,12 @@ function TemplateCard({
         >
           {loading ? (
             <>
-              <Loader2 className='size-3.5 animate-spin' /> Đang clone…
+              <Loader2 className='size-3.5 animate-spin' />{' '}
+              {t('templates.cloning')}
             </>
           ) : (
             <>
-              <Sparkles className='size-3.5' /> Dùng template này
+              <Sparkles className='size-3.5' /> {t('templates.useCardBtn')}
             </>
           )}
         </button>
@@ -341,22 +347,23 @@ function TableView({
   cloning,
 }: {
   items: CanvasTemplate[];
-  onUse: (t: CanvasTemplate) => void;
+  onUse: (tpl: CanvasTemplate) => void;
   cloning: string | null;
 }) {
+  const t = useTranslations('portal');
   return (
     <div className='border-border overflow-hidden rounded-2xl border bg-white shadow-sm'>
       <table className='w-full text-sm'>
         <thead>
           <tr className='border-border bg-muted/50 border-b'>
             <th className='text-content-muted w-20 px-4 py-2 text-left font-medium'>
-              Thumb
+              {t('templates.colThumb')}
             </th>
             <th className='text-content-muted px-4 py-2 text-left font-medium'>
-              Tên
+              {t('templates.colName')}
             </th>
             <th className='text-content-muted hidden px-4 py-2 text-left font-medium sm:table-cell'>
-              Mô tả
+              {t('templates.colDescription')}
             </th>
             <th className='text-content-muted w-32 px-4 py-2 text-right font-medium' />
           </tr>
@@ -402,11 +409,12 @@ function TableView({
                 >
                   {cloning === tpl.id ? (
                     <>
-                      <Loader2 className='size-3 animate-spin' /> Cloning…
+                      <Loader2 className='size-3 animate-spin' />{' '}
+                      {t('templates.cloningShort')}
                     </>
                   ) : (
                     <>
-                      <Sparkles className='size-3' /> Dùng
+                      <Sparkles className='size-3' /> {t('templates.useShort')}
                     </>
                   )}
                 </button>
@@ -434,6 +442,7 @@ function Pagination({
   limit: number;
   onChange: (next: number) => void;
 }) {
+  const t = useTranslations('portal');
   const from = (page - 1) * limit + 1;
   const to = Math.min(page * limit, total);
 
@@ -452,7 +461,7 @@ function Pagination({
   return (
     <div className='border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-2.5 shadow-sm'>
       <span className='text-2xs text-content-muted'>
-        {from}–{to} trong {total}
+        {t('templates.paginationRange', { from, to, total })}
       </span>
       <div className='flex items-center gap-1'>
         <button

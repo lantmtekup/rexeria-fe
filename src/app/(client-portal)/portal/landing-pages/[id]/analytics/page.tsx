@@ -11,6 +11,7 @@
  * ERR_BAD_REQUEST), nên FE phải check shape rồi mới gọi.
  */
 
+import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { use } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -45,6 +46,7 @@ interface PageMeta {
 }
 
 export default function PortalLandingAnalyticsPage({ params }: PageProps) {
+  const t = useTranslations('portal');
   const { id: rawId } = use(params);
   const [resolvedId, setResolvedId] = React.useState<string | null>(null);
   const [meta, setMeta] = React.useState<PageMeta>({});
@@ -76,7 +78,9 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
           const pages = await rexerApi.pages.listAll({ q: rawId, limit: 25 });
           const page = pages.items?.find(p => p.slug === rawId);
           if (!page) {
-            throw new Error(`Không tìm thấy landing với slug "${rawId}"`);
+            throw new Error(
+              t('landingPagesIdAnalytics.notFoundSlug', { slug: rawId })
+            );
           }
           id = page.id;
           pageMeta = { external_url: page.external_url, name: page.name };
@@ -93,17 +97,20 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
     return () => {
       cancelled = true;
     };
-  }, [rawId]);
+  }, [rawId, t]);
 
   const isExternal = !!meta.external_url;
   const tabs: { value: AnalyticsTab; label: string }[] = isExternal
     ? [
-        { value: 'overview', label: 'Tổng quan' },
-        { value: 'funnel', label: 'Phễu & Lead' },
+        {
+          value: 'overview',
+          label: t('landingPagesIdAnalytics.tabOverview'),
+        },
+        { value: 'funnel', label: t('landingPagesIdAnalytics.tabFunnel') },
       ]
     : [
-        { value: 'funnel', label: 'Phễu & Lead' },
-        { value: 'blocks', label: 'Theo block' },
+        { value: 'funnel', label: t('landingPagesIdAnalytics.tabFunnel') },
+        { value: 'blocks', label: t('landingPagesIdAnalytics.tabBlocks') },
       ];
 
   return (
@@ -113,30 +120,31 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
           <div className='rounded-2xl border border-rose-200 bg-rose-50 p-6'>
             <AlertCircle className='mx-auto size-8 text-rose-600' />
             <p className='mt-3 text-sm font-semibold text-rose-900'>
-              Không mở được analytics
+              {t('landingPagesIdAnalytics.openError')}
             </p>
             <p className='text-2xs mt-1 font-mono text-rose-700'>{error}</p>
           </div>
         </div>
       ) : !resolvedId || !tab ? (
         <div className='text-content-muted flex h-64 items-center justify-center text-sm'>
-          <Loader2 className='mr-2 size-4 animate-spin' /> Đang resolve landing…
+          <Loader2 className='mr-2 size-4 animate-spin' />{' '}
+          {t('landingPagesIdAnalytics.resolving')}
         </div>
       ) : (
         <>
-          {/* Tab switch — external: Tổng quan ↔ Phễu; thường: Phễu ↔ Theo block.
-              Các view giữ header/back-link riêng nên switcher nổi giữa-trên. */}
+          {/* Tab switch — segmented gradient xanh nổi bật (style stepper).
+              external: Tổng quan ↔ Phễu; thường: Phễu ↔ Theo block. */}
           <div className='flex justify-center pt-4'>
-            <div className='border-border bg-muted inline-flex rounded-lg border p-0.5'>
+            <div className='border-border inline-flex rounded-full border bg-white p-1 shadow-sm'>
               {tabs.map(t => (
                 <button
                   key={t.value}
                   type='button'
                   onClick={() => setTab(t.value)}
                   className={cn(
-                    'rounded-md px-3 py-1 text-xs font-medium transition-colors',
+                    'rounded-full px-5 py-2 text-sm font-semibold transition-all',
                     tab === t.value
-                      ? 'bg-background text-foreground shadow-sm'
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md shadow-blue-500/25'
                       : 'text-content-muted hover:text-foreground'
                   )}
                 >
@@ -150,7 +158,6 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
               pageId={resolvedId}
               externalUrl={meta.external_url}
               pageName={meta.name}
-              backHref='/portal/landing-pages'
             />
           ) : tab === 'funnel' ? (
             <div className='mx-auto w-full max-w-6xl px-4 pt-4 pb-16 sm:px-6'>

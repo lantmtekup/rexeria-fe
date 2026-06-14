@@ -14,6 +14,7 @@
  * Degrade êm: lỗi quyền → picker rỗng, campaign vẫn tạo/sửa được.
  */
 
+import { useTranslations } from 'next-intl';
 import * as React from 'react';
 
 import { rexerApi } from '@/services/rexer/endpoints';
@@ -39,6 +40,7 @@ export function LandingPagePicker({
   disabled,
   className,
 }: Props) {
+  const t = useTranslations('common');
   const [pages, setPages] = React.useState<Page[]>([]);
   const [loading, setLoading] = React.useState(false);
 
@@ -86,10 +88,12 @@ export function LandingPagePicker({
       className={`${SELECT_CLASS} ${className ?? ''}`}
     >
       <option value=''>
-        {loading ? 'Đang tải landing…' : '— Không gắn landing —'}
+        {loading ? t('landingPickerLoading') : t('landingPickerNone')}
       </option>
       {!hasValueOption && value && (
-        <option value={value}>Landing hiện tại ({value.slice(0, 8)}…)</option>
+        <option value={value}>
+          {t('landingPickerCurrent', { id: value.slice(0, 8) })}
+        </option>
       )}
       {pages.map(p => (
         <option key={p.id} value={p.id}>

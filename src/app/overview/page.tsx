@@ -1479,7 +1479,7 @@ export default function OverviewPage() {
   }, []);
 
   return (
-    <div className='bg-muted text-foreground min-h-screen antialiased'>
+    <div className='bg-background text-foreground min-h-screen antialiased'>
       <header className='border-border sticky top-0 z-30 flex items-center justify-between border-b bg-white/90 px-6 py-3 backdrop-blur'>
         <div className='flex items-center gap-3'>
           <button

@@ -11,6 +11,7 @@ import {
   Timer,
   Users,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -33,6 +34,7 @@ function fmtDuration(s: number): string {
  * Map shape thật (summary/daily/top_pages/top_referrers). 30 ngày gần nhất.
  */
 export default function MicroSiteAnalyticsPage() {
+  const t = useTranslations('portal');
   const params = useParams();
   const id = String(params?.id ?? '');
 
@@ -64,7 +66,8 @@ export default function MicroSiteAnalyticsPage() {
       <PortalShell>
         <BackLink />
         <div className='text-content-muted mt-10 flex items-center justify-center gap-2 text-sm'>
-          <Loader2 className='size-4 animate-spin' /> Đang tải analytics…
+          <Loader2 className='size-4 animate-spin' />{' '}
+          {t('microSitesId.loading')}
         </div>
       </PortalShell>
     );
@@ -75,7 +78,7 @@ export default function MicroSiteAnalyticsPage() {
       <PortalShell>
         <BackLink />
         <div className='border-border text-content-muted mt-6 rounded-2xl border border-dashed bg-white p-12 text-center text-sm'>
-          Không tìm thấy micro site.
+          {t('microSitesId.notFound')}
         </div>
       </PortalShell>
     );
@@ -119,13 +122,13 @@ export default function MicroSiteAnalyticsPage() {
             </a>
           ) : (
             <span className='text-content-muted mt-1 inline-block text-xs'>
-              chưa có URL
+              {t('microSitesId.noUrl')}
             </span>
           )}
         </div>
         <div className='flex items-center gap-2'>
           <span className='border-border text-content-muted rounded-lg border bg-white px-3 py-1.5 text-xs'>
-            30 ngày qua
+            {t('microSitesId.last30Days')}
           </span>
           {site.url && (
             <a
@@ -134,7 +137,7 @@ export default function MicroSiteAnalyticsPage() {
               rel='noreferrer'
               className='bg-foreground hover:bg-foreground/85 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white'
             >
-              <ExternalLink className='size-3.5' /> Mở site
+              <ExternalLink className='size-3.5' /> {t('microSitesId.openSite')}
             </a>
           )}
         </div>
@@ -142,7 +145,7 @@ export default function MicroSiteAnalyticsPage() {
 
       {!a && (
         <div className='border-border text-content-muted mt-4 rounded-xl border border-dashed bg-white px-4 py-6 text-center text-sm'>
-          Chưa có số liệu analytics cho site này.
+          {t('microSitesId.noAnalytics')}
         </div>
       )}
 
@@ -152,27 +155,27 @@ export default function MicroSiteAnalyticsPage() {
           <section className='mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4'>
             <Kpi
               icon={<Eye className='size-4' />}
-              label='Lượt xem'
+              label={t('microSitesId.kpiViews')}
               value={fmtNum(a.summary.views)}
               delta={a.summary.views_delta_pct}
               accent='blue'
             />
             <Kpi
               icon={<Users className='size-4' />}
-              label='Khách (unique)'
+              label={t('microSitesId.kpiVisitors')}
               value={fmtNum(a.summary.visitors)}
               delta={a.summary.visitors_delta_pct}
               accent='emerald'
             />
             <Kpi
               icon={<Timer className='size-4' />}
-              label='Thời gian TB'
+              label={t('microSitesId.kpiAvgTime')}
               value={fmtDuration(a.summary.avg_time_s)}
               accent='violet'
             />
             <Kpi
               icon={<Gauge className='size-4' />}
-              label='Bounce rate'
+              label={t('microSitesId.kpiBounce')}
               value={`${a.summary.bounce_pct.toFixed(1)}%`}
               delta={a.summary.bounce_delta_pct}
               invertDelta
@@ -184,7 +187,8 @@ export default function MicroSiteAnalyticsPage() {
           {daily.length > 0 && (
             <section className='border-border mt-4 rounded-2xl border bg-white p-4 shadow-sm'>
               <div className='text-2xs text-content-muted flex items-center gap-1.5 font-semibold tracking-wider uppercase'>
-                <MousePointerClick className='size-3' /> Lượt xem theo ngày
+                <MousePointerClick className='size-3' />{' '}
+                {t('microSitesId.viewsByDay')}
               </div>
               <div className='mt-3 flex h-32 items-end gap-1'>
                 {daily.map(p => (
@@ -197,15 +201,15 @@ export default function MicroSiteAnalyticsPage() {
                 ))}
               </div>
               <div className='text-3xs text-content-muted mt-1.5 flex justify-between'>
-                <span>30 ngày trước</span>
-                <span>Hôm nay</span>
+                <span>{t('microSitesId.daysAgo30')}</span>
+                <span>{t('microSitesId.today')}</span>
               </div>
             </section>
           )}
 
           {/* Breakdowns */}
           <section className='mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2'>
-            <BreakdownPanel title='Top trang'>
+            <BreakdownPanel title={t('microSitesId.topPages')}>
               {topPages.length === 0 ? (
                 <Empty />
               ) : (
@@ -219,7 +223,7 @@ export default function MicroSiteAnalyticsPage() {
                 ))
               )}
             </BreakdownPanel>
-            <BreakdownPanel title='Nguồn traffic'>
+            <BreakdownPanel title={t('microSitesId.trafficSources')}>
               {referrers.length === 0 ? (
                 <Empty />
               ) : (
@@ -241,7 +245,12 @@ export default function MicroSiteAnalyticsPage() {
 }
 
 function Empty() {
-  return <p className='text-2xs text-content-muted py-2'>Chưa có dữ liệu.</p>;
+  const t = useTranslations('portal');
+  return (
+    <p className='text-2xs text-content-muted py-2'>
+      {t('microSitesId.noData')}
+    </p>
+  );
 }
 
 function BackLink() {

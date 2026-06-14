@@ -14,6 +14,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 import { useEffect, useState } from 'react';
@@ -50,6 +51,7 @@ const ACTIVITY_META: Record<
 };
 
 export default function PortalDashboardPage() {
+  const t = useTranslations('portal');
   const activeWs = useActiveWorkspace();
   // Tên brand thật từ auth store (LoginResponse.brand.name). Fallback 'bạn'
   // khi chưa hydrate / user không gắn brand — KHÔNG dùng demo brand cứng
@@ -103,26 +105,21 @@ export default function PortalDashboardPage() {
         <div className='relative'>
           <div className='flex items-center justify-between gap-2'>
             <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
-              <Sparkles className='size-3' /> Brand Dashboard · 30 ngày qua
+              <Sparkles className='size-3' /> {t('dashboard.heroEyebrow')}
             </div>
-            {source === 'live' && (
-              <span className='text-3xs inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-bold tracking-wider text-emerald-700'>
-                <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
-                LIVE BE · dashboard.summary
-              </span>
-            )}
           </div>
           <h1 className='mt-2 text-3xl font-bold tracking-tight'>
-            Xin chào,{' '}
+            {t('dashboard.greeting')}{' '}
             <span className='bg-gradient-to-r from-rose-600 to-orange-600 bg-clip-text text-transparent'>
-              {brandName ?? 'bạn'}
+              {brandName ?? t('dashboard.greetingFallback')}
             </span>
           </h1>
           <p className='text-content-muted mt-1 max-w-2xl text-sm leading-relaxed'>
-            Rexer đang quản lý <strong>{stats.templates_published}</strong>{' '}
-            landing page public cho brand. Bạn có{' '}
-            <strong>{stats.open_comments}</strong> comment đang chờ xử lý và{' '}
-            <strong>{stats.unread_notifications}</strong> thông báo mới.
+            {t.rich('dashboard.heroDesc', {
+              published: stats.templates_published,
+              unread: stats.unread_notifications,
+              strong: chunks => <strong>{chunks}</strong>,
+            })}
           </p>
         </div>
       </section>
@@ -133,58 +130,53 @@ export default function PortalDashboardPage() {
       <div className='grid grid-cols-2 gap-3 lg:grid-cols-4'>
         <StatCard
           icon={LayoutTemplate}
-          label='Landing pages'
+          label={t('dashboard.statLandingPages')}
           value={stats.templates_count}
-          hint={`${stats.templates_published} đang public`}
+          hint={t('dashboard.statLandingPagesHint', {
+            count: stats.templates_published,
+          })}
           accent='indigo'
         />
         <StatCard
           icon={Eye}
-          label='Tổng views'
+          label={t('dashboard.statViews')}
           value={stats.total_views_30d}
-          hint='30 ngày qua'
+          hint={t('dashboard.statViewsHint')}
           accent='blue'
         />
         <StatCard
           icon={Users}
-          label='Visitors'
+          label={t('dashboard.statVisitors')}
           value={stats.total_visitors_30d}
-          hint='Unique trong 30d'
+          hint={t('dashboard.statVisitorsHint')}
           accent='emerald'
         />
         <StatCard
           icon={Zap}
-          label='Clicks'
+          label={t('dashboard.statClicks')}
           value={stats.total_clicks_30d}
-          hint={`CTR ${ctr.toFixed(1)}%`}
+          hint={t('dashboard.statClicksHint', { ctr: ctr.toFixed(1) })}
           accent='amber'
         />
         <StatCard
           icon={Send}
-          label='Leads thu được'
+          label={t('dashboard.statLeads')}
           value={stats.total_leads_30d}
-          hint='Form submit thành công'
+          hint={t('dashboard.statLeadsHint')}
           accent='rose'
         />
         <StatCard
           icon={UploadCloud}
-          label='Assets'
+          label={t('dashboard.statAssets')}
           value={stats.assets_count}
-          hint='File trong thư viện'
+          hint={t('dashboard.statAssetsHint')}
           accent='cyan'
         />
         <StatCard
-          icon={MessageSquare}
-          label='Open comments'
-          value={stats.open_comments}
-          hint='Đang chờ Rexer xử lý'
-          accent='orange'
-        />
-        <StatCard
           icon={Bell}
-          label='Thông báo'
+          label={t('dashboard.statNotifications')}
           value={stats.unread_notifications}
-          hint='Chưa đọc'
+          hint={t('dashboard.statNotificationsHint')}
           accent='violet'
         />
       </div>
@@ -198,9 +190,11 @@ export default function PortalDashboardPage() {
                 <TrendingUp className='size-4' />
               </div>
               <div>
-                <h3 className='text-sm font-semibold'>Lượt xem 7 ngày qua</h3>
+                <h3 className='text-sm font-semibold'>
+                  {t('dashboard.trendTitle')}
+                </h3>
                 <p className='text-2xs text-content-muted'>
-                  Tổng cộng tất cả landing page
+                  {t('dashboard.trendSubtitle')}
                 </p>
               </div>
             </div>
@@ -217,29 +211,24 @@ export default function PortalDashboardPage() {
             <div className='flex size-7 items-center justify-center rounded-lg bg-violet-500 text-white shadow-sm'>
               <Sparkles className='size-4' />
             </div>
-            <h3 className='text-sm font-semibold'>Quick actions</h3>
+            <h3 className='text-sm font-semibold'>
+              {t('dashboard.quickActionsTitle')}
+            </h3>
           </div>
           <div className='space-y-2'>
             <QuickAction
               href='/portal/media'
               icon={UploadCloud}
-              title='Upload media mới'
-              desc='Cung cấp ảnh / video / tài liệu cho Rexer'
+              title={t('dashboard.quickUploadTitle')}
+              desc={t('dashboard.quickUploadDesc')}
               accent='cyan'
             />
             <QuickAction
               href='/portal/landing-pages'
               icon={LayoutTemplate}
-              title='Xem landing pages'
-              desc='Browse các landing page Rexer đã làm'
+              title={t('dashboard.quickPagesTitle')}
+              desc={t('dashboard.quickPagesDesc')}
               accent='indigo'
-            />
-            <QuickAction
-              href='/portal/comments'
-              icon={MessageSquare}
-              title='Comment / Request'
-              desc='Yêu cầu sửa hoặc đặt câu hỏi'
-              accent='orange'
             />
           </div>
         </div>
@@ -252,10 +241,12 @@ export default function PortalDashboardPage() {
             <div className='flex size-7 items-center justify-center rounded-lg bg-zinc-900 text-white shadow-sm'>
               <BarChart3 className='size-4' />
             </div>
-            <h3 className='text-sm font-semibold'>Hoạt động gần đây</h3>
+            <h3 className='text-sm font-semibold'>
+              {t('dashboard.activityTitle')}
+            </h3>
           </div>
           <button className='text-2xs text-content-muted hover:text-foreground'>
-            Xem tất cả →
+            {t('dashboard.activityViewAll')}
           </button>
         </div>
         <div className='relative'>
@@ -436,8 +427,17 @@ function QuickAction({
 }
 
 function BarChart({ values }: { values: number[] }) {
+  const t = useTranslations('portal');
   const max = Math.max(...values);
-  const days = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+  const days = [
+    t('dashboard.dayMon'),
+    t('dashboard.dayTue'),
+    t('dashboard.dayWed'),
+    t('dashboard.dayThu'),
+    t('dashboard.dayFri'),
+    t('dashboard.daySat'),
+    t('dashboard.daySun'),
+  ];
   return (
     <div className='flex h-32 items-end gap-1.5'>
       {values.map((v, i) => {
