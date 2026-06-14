@@ -66,6 +66,39 @@ function thumbGradient(s: string): string {
   return THUMB_GRADIENTS[Math.abs(h) % THUMB_GRADIENTS.length];
 }
 
+/**
+ * AI gợi ý block bằng taxonomy riêng (headline_overlay, ad_story_1080x1920…)
+ * KHÔNG trùng key editor (hero_overlay, stories…). Map fuzzy → editor BlockType
+ * gần nhất để render preview THẬT. Khớp trực tiếp ưu tiên; không khớp → null
+ * (fallback gradient tile + ghi chú catalog).
+ */
+const FUZZY_RULES: [RegExp, BlockType][] = [
+  [/headline.*overlay|hero.*overlay/, 'hero_overlay'],
+  [/stor(y|ies)|reel|1080x1920|9x16/, 'stories'],
+  [/hero|intro|banner|cover/, 'hero_split'],
+  [/gallery|photo|lookbook/, 'photo_gallery'],
+  [/carousel|slider|swipe/, 'image_carousel'],
+  [/booking|form|lead|contact|sign.?up|register/, 'booking_form'],
+  [/\bcta\b|call.?to|button/, 'cta_section'],
+  [/feature|benefit|value|highlight/, 'feature_section'],
+  [/quiz/, 'quiz'],
+  [/poll|vote/, 'poll'],
+  [/faq|question/, 'framer_faq_minimal'],
+  [/quote|testimonial|review/, 'framer_large_quote'],
+  [/stat|metric|number|count/, 'framer_stats_grid'],
+  [/split/, 'split_screen'],
+  [/3d|three.?d/, 'carousel_3d'],
+  [/panorama|360/, 'panorama'],
+  [/flip/, 'flipbook'],
+];
+
+function resolveEditorType(code: string): BlockType | null {
+  if (code in BLOCK_TYPE_META) return code as BlockType;
+  const c = code.toLowerCase();
+  for (const [re, t] of FUZZY_RULES) if (re.test(c)) return t;
+  return null;
+}
+
 function Thumb({
   code,
   name,
@@ -86,17 +119,18 @@ function Thumb({
   const meta = (
     BLOCK_TYPE_META as Record<string, { gradient?: string } | undefined>
   )[code];
-  const isEditorType = kind === 'block' && code in BLOCK_TYPE_META;
-
-  // Editor type → dựng block mặc định (seed) rồi render preview thật.
+  // Editor type (trực tiếp hoặc fuzzy) → dựng block mặc định (seed) rồi
+  // render preview thật.
   const preview = useMemo(() => {
-    if (!isEditorType) return null;
+    if (kind !== 'block') return null;
+    const editorType = resolveEditorType(code);
+    if (!editorType) return null;
     try {
-      return createBlock(code as BlockType);
+      return createBlock(editorType);
     } catch {
       return null;
     }
-  }, [code, isEditorType]);
+  }, [code, kind]);
 
   // Ưu tiên 1: ảnh preview thật từ BE (KB5).
   if (imageUrl && !imgError) {
@@ -175,6 +209,19 @@ function BlockRow({
   const [generated, setGenerated] = useState<Record<string, unknown> | null>(
     null
   );
+
+  // Preview thật khi block là editor type (có trong BLOCK_TYPE_META): dựng
+  // block mặc định rồi render qua BlockMiniPreview. Type lạ (vd framer_*) →
+  // null → dialog hiện ghi chú "chờ BE catalog".
+  const detailPreview = useMemo(() => {
+    const editorType = resolveEditorType(block.block_type_code);
+    if (!editorType) return null;
+    try {
+      return createBlock(editorType);
+    } catch {
+      return null;
+    }
+  }, [block.block_type_code]);
 
   // KB4: sinh nội dung mẫu cho block (khớp props_schema) → hiện trong dialog.
   const generate = async () => {
@@ -282,9 +329,20 @@ function BlockRow({
             {block.reason && (
               <DetailRow label={t('blueprint.why')}>{block.reason}</DetailRow>
             )}
-            <p className='text-content-muted border-border rounded-lg border border-dashed p-3 text-xs'>
-              {t('blueprint.previewNote')}
-            </p>
+            {detailPreview ? (
+              <div>
+                <p className='text-content-muted text-2xs mb-1.5 font-semibold tracking-wider uppercase'>
+                  {t('blueprint.preview')}
+                </p>
+                <div className='border-border bg-muted overflow-hidden rounded-lg border'>
+                  <BlockMiniPreview block={detailPreview} aspect='16 / 9' />
+                </div>
+              </div>
+            ) : (
+              <p className='text-content-muted border-border rounded-lg border border-dashed p-3 text-xs'>
+                {t('blueprint.previewNote')}
+              </p>
+            )}
           </div>
         </DialogContent>
       </Dialog>

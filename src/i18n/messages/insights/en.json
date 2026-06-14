@@ -93,7 +93,8 @@
       "generatedTitle": "AI-suggested content",
       "generatedHint": "Content matches the block schema — applied when building the template.",
       "handoffDone": "Template built from blueprint",
-      "handoffFailed": "Handoff failed"
+      "handoffFailed": "Handoff failed",
+      "preview": "Preview"
     },
     "goals": {
       "product_discovery": "Product discovery",

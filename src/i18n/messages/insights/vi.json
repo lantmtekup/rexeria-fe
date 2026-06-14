@@ -93,7 +93,8 @@
       "generatedTitle": "Nội dung AI đề xuất",
       "generatedHint": "Nội dung khớp schema của block — sẽ được nạp khi dựng template.",
       "handoffDone": "Đã dựng template từ blueprint",
-      "handoffFailed": "Dựng template thất bại"
+      "handoffFailed": "Dựng template thất bại",
+      "preview": "Xem trước"
     },
     "goals": {
       "product_discovery": "Khám phá sản phẩm",
