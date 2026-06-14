@@ -13,6 +13,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -40,6 +41,7 @@ type StatusFilter = 'all' | MicroSiteStatus;
  * analytics riêng `/portal/micro-sites/[id]`.
  */
 export default function PortalMicroSitesPage() {
+  const t = useTranslations('portal');
   const [sites, setSites] = useState<MicroSite[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<StatusFilter>('all');
@@ -102,13 +104,16 @@ export default function PortalMicroSitesPage() {
       return [s, ...prev];
     });
   const handleDelete = async (s: MicroSite) => {
-    if (!window.confirm(`Xoá micro site "${s.name}"?`)) return;
+    if (!window.confirm(t('microSites.confirmDelete', { name: s.name })))
+      return;
     try {
       await rexerApi.microSites.remove(s.id);
       setSites(prev => prev.filter(x => x.id !== s.id));
-      toast.success(`Đã xoá "${s.name}"`);
+      toast.success(t('microSites.deletedToast', { name: s.name }));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Xoá thất bại');
+      toast.error(
+        err instanceof Error ? err.message : t('microSites.deleteFailed')
+      );
     }
   };
 
@@ -117,28 +122,43 @@ export default function PortalMicroSitesPage() {
       <section className='flex flex-wrap items-end justify-between gap-4'>
         <div>
           <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
-            <Globe className='size-3' /> Micro site
+            <Globe className='size-3' /> {t('microSites.eyebrow')}
           </div>
-          <h1 className='mt-1 text-2xl font-bold tracking-tight'>Micro site</h1>
+          <h1 className='mt-1 text-2xl font-bold tracking-tight'>
+            {t('microSites.title')}
+          </h1>
           <p className='text-content-muted mt-1 text-sm'>
-            Site Rexer code riêng cho khách (domain riêng). Click 1 site để xem
-            analytics.
+            {t('microSites.subtitle')}
           </p>
         </div>
         <button
           onClick={openCreate}
           className='bg-primary hover:bg-primary-dark inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-white shadow-sm'
         >
-          <Plus className='size-3.5' /> Thêm micro site
+          <Plus className='size-3.5' /> {t('microSites.addBtn')}
         </button>
       </section>
 
       {/* Stats */}
       <section className='mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4'>
-        <StatCard label='Tổng site' value={String(stats.total)} />
-        <StatCard label='Live' value={String(stats.live)} accent='emerald' />
-        <StatCard label='Đang dev' value={String(stats.dev)} accent='amber' />
-        <StatCard label='Views / 30d' value={fmtNum(stats.views)} />
+        <StatCard
+          label={t('microSites.statTotal')}
+          value={String(stats.total)}
+        />
+        <StatCard
+          label={t('microSites.statLive')}
+          value={String(stats.live)}
+          accent='emerald'
+        />
+        <StatCard
+          label={t('microSites.statDev')}
+          value={String(stats.dev)}
+          accent='amber'
+        />
+        <StatCard
+          label={t('microSites.statViews30d')}
+          value={fmtNum(stats.views)}
+        />
       </section>
 
       {/* Filter */}
@@ -147,7 +167,7 @@ export default function PortalMicroSitesPage() {
           <Search className='text-content-muted size-3.5' />
           <input
             type='text'
-            placeholder='Tìm tên / domain…'
+            placeholder={t('microSites.searchPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className='placeholder:text-content-muted flex-1 bg-transparent text-sm outline-none'
@@ -157,7 +177,9 @@ export default function PortalMicroSitesPage() {
           {(['all', 'live', 'dev', 'paused'] as StatusFilter[]).map(f => (
             <FilterBtn
               key={f}
-              label={f === 'all' ? 'Tất cả' : STATUS_META[f].label}
+              label={
+                f === 'all' ? t('microSites.filterAll') : STATUS_META[f].label
+              }
               active={filter === f}
               onClick={() => setFilter(f)}
             />
@@ -168,15 +190,15 @@ export default function PortalMicroSitesPage() {
       {/* Grid */}
       {loading ? (
         <div className='text-content-muted mt-10 flex items-center justify-center gap-2 text-sm'>
-          <Loader2 className='size-4 animate-spin' /> Đang tải micro-site…
+          <Loader2 className='size-4 animate-spin' /> {t('microSites.loading')}
         </div>
       ) : (
         <section className='mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'>
           {filtered.length === 0 ? (
             <div className='border-border text-content-muted col-span-full rounded-2xl border border-dashed bg-white p-12 text-center text-sm'>
               {sites.length === 0
-                ? 'Chưa có micro site nào.'
-                : 'Không có micro site nào khớp filter.'}
+                ? t('microSites.emptyNone')
+                : t('microSites.emptyFilter')}
             </div>
           ) : (
             filtered.map(s => (
@@ -211,6 +233,7 @@ function SiteCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations('portal');
   const [menuOpen, setMenuOpen] = useState(false);
   const meta = statusMeta(site.status);
   const up = site.views_trend_pct >= 0;
@@ -266,7 +289,7 @@ function SiteCard({
               </a>
             ) : (
               <span className='text-3xs text-content-muted mt-0.5 inline-block'>
-                chưa có URL
+                {t('microSites.noUrl')}
               </span>
             )}
           </div>
@@ -275,7 +298,7 @@ function SiteCard({
               onClick={() => setMenuOpen(o => !o)}
               onBlur={() => setTimeout(() => setMenuOpen(false), 120)}
               className='text-content-muted hover:bg-muted rounded p-1'
-              aria-label='Tuỳ chọn'
+              aria-label={t('microSites.optionsAria')}
             >
               <MoreVertical className='size-4' />
             </button>
@@ -285,13 +308,13 @@ function SiteCard({
                   onClick={onEdit}
                   className='hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
                 >
-                  <Pencil className='size-3' /> Sửa
+                  <Pencil className='size-3' /> {t('microSites.edit')}
                 </button>
                 <button
                   onClick={onDelete}
                   className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
                 >
-                  <Trash2 className='size-3' /> Xoá
+                  <Trash2 className='size-3' /> {t('microSites.delete')}
                 </button>
               </div>
             )}
@@ -301,7 +324,7 @@ function SiteCard({
         {/* Views */}
         <div className='border-border mt-3 flex items-center gap-2 border-t py-2'>
           <span className='text-2xs text-content-muted font-semibold tracking-wider uppercase'>
-            Views 30d
+            {t('microSites.views30d')}
           </span>
           <span className='font-mono text-sm font-bold'>
             {site.views_30d ? fmtNum(site.views_30d) : '—'}
@@ -328,7 +351,7 @@ function SiteCard({
           href={`/portal/micro-sites/${site.id}`}
           className='bg-foreground hover:bg-foreground/85 mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white'
         >
-          <BarChart3 className='size-3.5' /> Xem analytics
+          <BarChart3 className='size-3.5' /> {t('microSites.viewAnalytics')}
         </Link>
       </div>
     </div>

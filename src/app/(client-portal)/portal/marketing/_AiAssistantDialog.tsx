@@ -8,6 +8,7 @@
  */
 
 import { AlertTriangle, Check, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -50,6 +51,7 @@ export function AiAssistantDialog({
   existingReportId?: string;
   onStarted: (reportId: string) => void;
 }) {
+  const t = useTranslations('portal');
   const [running, setRunning] = useState(false);
   const { inputs, coverage } = useMemo(
     () => marketingToInsightInputs(brief, assets, campaign),
@@ -59,7 +61,7 @@ export function AiAssistantDialog({
 
   const handleRun = async () => {
     if (!workspaceId) {
-      toast.error('Thiếu workspace — mở portal qua đúng workspace');
+      toast.error(t('marketingAiAssistantDialog.missingWorkspace'));
       return;
     }
     setRunning(true);
@@ -73,11 +75,15 @@ export function AiAssistantDialog({
           : 'Marketing brief',
         inputs,
       });
-      toast.success('Đã tạo report AI-Insights — đang chạy phân tích');
+      toast.success(t('marketingAiAssistantDialog.createdToast'));
       onStarted(report.id);
       onOpenChange(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Tạo report thất bại');
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : t('marketingAiAssistantDialog.createFailed')
+      );
     } finally {
       setRunning(false);
     }
@@ -89,14 +95,12 @@ export function AiAssistantDialog({
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <Sparkles className='size-4 text-blue-600' />
-            Chạy AI-Insights từ dữ liệu Marketing
+            {t('marketingAiAssistantDialog.title')}
           </DialogTitle>
         </DialogHeader>
 
         <p className='text-content-muted text-sm'>
-          Brief Discovery/Concept/Assets sẽ được map sang AI-Insights — không
-          cần nhập lại từ đầu. Mục còn trống AI vẫn chạy được nhưng kết quả kém
-          sắc hơn.
+          {t('marketingAiAssistantDialog.description')}
         </p>
 
         <ul className='flex flex-col gap-1.5'>
@@ -117,29 +121,33 @@ export function AiAssistantDialog({
         </ul>
 
         <p className='text-content-muted text-xs'>
-          Đã điền {filled}/{coverage.length} mục · mỗi lần chạy tốn credits (5–8
-          lượt gọi AI).
+          {t('marketingAiAssistantDialog.coverageHint', {
+            filled,
+            total: coverage.length,
+          })}
         </p>
 
         {existingReportId && (
           <p className='text-xs'>
-            Campaign này đã có report:{' '}
+            {t('marketingAiAssistantDialog.existingReportPrefix')}{' '}
             <Link
               href={`/portal/insights/${existingReportId}`}
               className='text-primary hover:underline'
             >
-              xem kết quả →
+              {t('marketingAiAssistantDialog.existingReportLink')}
             </Link>{' '}
-            (chạy lại sẽ tạo report mới)
+            {t('marketingAiAssistantDialog.existingReportSuffix')}
           </p>
         )}
 
         <DialogFooter>
           <Button variant='outline' onClick={() => onOpenChange(false)}>
-            Huỷ
+            {t('marketingAiAssistantDialog.cancel')}
           </Button>
           <Button onClick={handleRun} disabled={running}>
-            {running ? 'Đang tạo…' : 'Chạy AI-Insights'}
+            {running
+              ? t('marketingAiAssistantDialog.creating')
+              : t('marketingAiAssistantDialog.run')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -12,6 +12,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -156,10 +157,10 @@ interface PendingImage {
 /* ---------- wizard steps ---------- */
 
 const STEPS = [
-  { key: 'basic', label: 'Cơ bản', icon: Package },
-  { key: 'media', label: 'Hình ảnh', icon: ImagePlus },
-  { key: 'specs', label: 'Thông số', icon: Sparkles },
-  { key: 'cert', label: 'Chứng nhận', icon: Award },
+  { key: 'basic', labelKey: 'stepBasic', icon: Package },
+  { key: 'media', labelKey: 'stepMedia', icon: ImagePlus },
+  { key: 'specs', labelKey: 'stepSpecs', icon: Sparkles },
+  { key: 'cert', labelKey: 'stepCert', icon: Award },
 ] as const;
 
 /* ---------- modal ---------- */
@@ -180,6 +181,7 @@ export function ProductFormModal({
   /** Admin tạo hộ brand → gắn brand_id vào product mới (portal bỏ trống). */
   brandId?: string;
 }) {
+  const t = useTranslations('portal');
   const [value, setValue] = useState<ProductInformationValue>(
     emptyProductInformation()
   );
@@ -222,7 +224,7 @@ export function ProductFormModal({
 
   const handleSave = async () => {
     if (!value.name.trim()) {
-      toast.error('Tên sản phẩm không được rỗng');
+      toast.error(t('productsProductModal.nameRequiredToast'));
       setStep(0);
       return;
     }
@@ -276,18 +278,22 @@ export function ProductFormModal({
           next = { ...editorToPortal(value, product, thumbUrl), ...result };
           if (imageFailed) {
             toast.warning(
-              isEdit ? `Đã lưu "${result.name}"` : `Đã tạo "${result.name}"`,
-              { description: 'Ảnh chưa upload được — BE media tạm lỗi.' }
+              isEdit
+                ? t('productsProductModal.savedToast', { name: result.name })
+                : t('productsProductModal.createdToast', { name: result.name }),
+              { description: t('productsProductModal.imageUploadFailedDesc') }
             );
           } else {
             toast.success(
-              isEdit ? `Đã lưu "${result.name}"` : `Đã tạo "${result.name}"`
+              isEdit
+                ? t('productsProductModal.savedToast', { name: result.name })
+                : t('productsProductModal.createdToast', { name: result.name })
             );
           }
         } else {
           next = editorToPortal(value, product, thumbnail?.preview);
-          toast.error('BE lỗi — đã lưu local', {
-            description: 'Dữ liệu chỉ tồn tại trong session này.',
+          toast.error(t('productsProductModal.beErrorSavedLocalToast'), {
+            description: t('productsProductModal.beErrorSavedLocalDesc'),
           });
         }
       } else {
@@ -295,15 +301,15 @@ export function ProductFormModal({
         next = editorToPortal(value, product, thumbnail?.preview);
         toast.success(
           isEdit
-            ? `Đã lưu "${next.name}" (local)`
-            : `Đã tạo "${next.name}" (local)`
+            ? t('productsProductModal.savedLocalToast', { name: next.name })
+            : t('productsProductModal.createdLocalToast', { name: next.name })
         );
       }
 
       onSave(next);
       onClose();
     } catch (err) {
-      toast.error('Lưu thất bại', {
+      toast.error(t('productsProductModal.saveFailedToast'), {
         description: err instanceof Error ? err.message : String(err),
       });
     } finally {
@@ -330,10 +336,14 @@ export function ProductFormModal({
             </div>
             <div>
               <h3 className='text-base leading-tight font-semibold'>
-                {isEdit ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}
+                {isEdit
+                  ? t('productsProductModal.editTitle')
+                  : t('productsProductModal.createTitle')}
               </h3>
               <p className='text-2xs text-content-muted mt-0.5'>
-                {isEdit ? product!.sku : 'Điền thông tin theo từng bước'}
+                {isEdit
+                  ? product!.sku
+                  : t('productsProductModal.createSubtitle')}
               </p>
             </div>
           </div>
@@ -379,7 +389,7 @@ export function ProductFormModal({
                       active ? 'text-foreground' : 'text-muted-foreground'
                     )}
                   >
-                    {s.label}
+                    {t(`productsProductModal.${s.labelKey}`)}
                   </span>
                 </button>
                 {i < STEPS.length - 1 && (
@@ -402,7 +412,8 @@ export function ProductFormModal({
             <div className='space-y-4'>
               <div>
                 <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-                  Tên sản phẩm <span className='text-rose-500'>*</span>
+                  {t('productsProductModal.nameLabel')}{' '}
+                  <span className='text-rose-500'>*</span>
                 </label>
                 <input
                   type='text'
@@ -410,7 +421,7 @@ export function ProductFormModal({
                   onChange={e =>
                     setValue(v => ({ ...v, name: e.target.value }))
                   }
-                  placeholder='vd: Coca-Cola Original 330ml'
+                  placeholder={t('productsProductModal.namePlaceholder')}
                   className='border-border mt-1.5 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100'
                   maxLength={128}
                   autoFocus
@@ -432,7 +443,7 @@ export function ProductFormModal({
                       onChange={e =>
                         setValue(s => ({ ...s, sku: e.target.value }))
                       }
-                      placeholder='vd: COCA-330'
+                      placeholder={t('productsProductModal.skuPlaceholder')}
                       className='placeholder:text-content-muted mt-0.5 w-full bg-transparent text-sm font-medium outline-none'
                     />
                   </div>
@@ -440,14 +451,14 @@ export function ProductFormModal({
               </div>
               <div className='border-border bg-background rounded-xl border px-4 py-3'>
                 <div className='text-content-muted text-xs font-semibold'>
-                  Mô tả
+                  {t('productsProductModal.descriptionLabel')}
                 </div>
                 <textarea
                   value={value.description}
                   onChange={e =>
                     setValue(s => ({ ...s, description: e.target.value }))
                   }
-                  placeholder='Mô tả ngắn về sản phẩm…'
+                  placeholder={t('productsProductModal.descriptionPlaceholder')}
                   rows={2}
                   className='placeholder:text-content-muted mt-1 w-full resize-none bg-transparent text-sm outline-none'
                 />
@@ -455,7 +466,7 @@ export function ProductFormModal({
               {/* Thumbnail */}
               <div>
                 <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-                  Ảnh đại diện
+                  {t('productsProductModal.thumbnailLabel')}
                 </label>
                 {thumbnail ? (
                   <div className='mt-1.5 flex items-center gap-3'>
@@ -470,12 +481,14 @@ export function ProductFormModal({
                       onClick={() => setThumbnail(null)}
                       className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs'
                     >
-                      <Trash2 className='size-3.5' /> Xoá
+                      <Trash2 className='size-3.5' />{' '}
+                      {t('productsProductModal.removeBtn')}
                     </button>
                   </div>
                 ) : (
                   <label className='border-border text-content-muted mt-1.5 flex h-20 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed text-sm hover:border-orange-300 hover:bg-orange-50/40'>
-                    <ImagePlus className='size-4' /> Tải ảnh lên
+                    <ImagePlus className='size-4' />{' '}
+                    {t('productsProductModal.uploadImageBtn')}
                     <input
                       type='file'
                       accept='image/*'
@@ -494,8 +507,9 @@ export function ProductFormModal({
           {step === 1 && (
             <div>
               <p className='text-content-muted mb-3 text-sm'>
-                Thư viện ảnh sản phẩm — dùng cho landing page & detail. (
-                {gallery.length} ảnh)
+                {t('productsProductModal.galleryHint', {
+                  count: gallery.length,
+                })}
               </p>
               <div className='grid grid-cols-3 gap-3 sm:grid-cols-4'>
                 {gallery.map(g => (
@@ -523,7 +537,7 @@ export function ProductFormModal({
                 ))}
                 <label className='text-2xs border-border text-content-muted flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed hover:border-orange-300 hover:bg-orange-50/40'>
                   <ImagePlus className='size-5' />
-                  Thêm ảnh
+                  {t('productsProductModal.addImageBtn')}
                   <input
                     type='file'
                     accept='image/*'
@@ -541,7 +555,7 @@ export function ProductFormModal({
             <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
               <TagsField
                 label='Size'
-                placeholder='vd: 330ml (Lon)'
+                placeholder={t('productsProductModal.sizePlaceholder')}
                 testId='size-input'
                 value={value.sizes}
                 onChange={v => setValue(s => ({ ...s, sizes: v }))}
@@ -552,14 +566,14 @@ export function ProductFormModal({
               />
               <TagsField
                 label='Variant'
-                placeholder='vd: Zero Sugar'
+                placeholder={t('productsProductModal.variantPlaceholder')}
                 testId='variant-input'
                 value={value.variants}
                 onChange={v => setValue(s => ({ ...s, variants: v }))}
               />
               <TagsField
                 label='Ingredients'
-                placeholder='vd: Caffeine'
+                placeholder={t('productsProductModal.ingredientsPlaceholder')}
                 testId='ingredients-input'
                 value={value.ingredients}
                 onChange={v => setValue(s => ({ ...s, ingredients: v }))}
@@ -585,16 +599,20 @@ export function ProductFormModal({
             className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             {step === 0 ? (
-              'Hủy'
+              t('productsProductModal.cancelBtn')
             ) : (
               <>
-                <ChevronLeft className='size-3.5' /> Quay lại
+                <ChevronLeft className='size-3.5' />{' '}
+                {t('productsProductModal.backBtn')}
               </>
             )}
           </button>
 
           <div className='text-2xs text-muted-foreground'>
-            Bước {step + 1}/{STEPS.length}
+            {t('productsProductModal.stepCounter', {
+              current: step + 1,
+              total: STEPS.length,
+            })}
           </div>
 
           {isLast ? (
@@ -609,7 +627,11 @@ export function ProductFormModal({
               ) : (
                 <Check className='size-3.5' />
               )}
-              {saving ? 'Đang lưu…' : isEdit ? 'Lưu thay đổi' : 'Tạo sản phẩm'}
+              {saving
+                ? t('productsProductModal.savingBtn')
+                : isEdit
+                  ? t('productsProductModal.saveChangesBtn')
+                  : t('productsProductModal.createProductBtn')}
             </button>
           ) : (
             <button
@@ -618,7 +640,8 @@ export function ProductFormModal({
               disabled={!canNext}
               className='inline-flex items-center gap-1 rounded-lg bg-orange-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-orange-600 disabled:opacity-50'
             >
-              Tiếp <ChevronRight className='size-3.5' />
+              {t('productsProductModal.nextBtn')}{' '}
+              <ChevronRight className='size-3.5' />
             </button>
           )}
         </div>

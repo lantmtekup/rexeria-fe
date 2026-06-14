@@ -15,6 +15,7 @@
  */
 
 import { Check, Loader2, RefreshCw, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -105,6 +106,7 @@ export function InsightStepsDialog({
   /** Lưu chỉnh sửa: PATCH journey/blocks lên BE + đẩy summary (kèm goal) lên. */
   onSaved?: (s: InsightSummary) => void;
 }) {
+  const t = useTranslations('portal');
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -145,7 +147,7 @@ export function InsightStepsDialog({
     !blocks && running && !isDone(stepOf(report, 'recommend_blocks'));
 
   const unavailable = () =>
-    toast.error('BE chưa hỗ trợ generate lại (wizard-v2 đang chờ deploy)');
+    toast.error(t('marketingInsightStepsDialog.regenNotSupported'));
 
   const regenGoal = async () => {
     setBusy(true);
@@ -162,7 +164,7 @@ export function InsightStepsDialog({
         rationale: top.rationale ?? '',
         secondary_goal: r.goals[1]?.goal,
       });
-      toast.success('Đã tạo lại Experience Goal');
+      toast.success(t('marketingInsightStepsDialog.regeneratedGoal'));
     } finally {
       setBusy(false);
     }
@@ -180,7 +182,7 @@ export function InsightStepsDialog({
       });
       if (!r?.journey) return unavailable();
       setOvJourney(r.journey);
-      toast.success('Đã tạo lại Customer Journey');
+      toast.success(t('marketingInsightStepsDialog.regeneratedJourney'));
     } finally {
       setBusy(false);
     }
@@ -207,13 +209,13 @@ export function InsightStepsDialog({
         if (r.status === 'succeeded') {
           setOvBlocks(r.blueprint?.recommended_blocks);
           setOvTemplates(r.blueprint?.recommended_templates);
-          toast.success('Đã tạo lại Blocks & Templates');
+          toast.success(t('marketingInsightStepsDialog.regeneratedBlocks'));
           return;
         }
         if (r.status === 'failed') return unavailable();
         await new Promise(res => setTimeout(res, 4000));
       }
-      toast.message('Đang xử lý — thử lại sau ít phút');
+      toast.message(t('marketingInsightStepsDialog.processingRetry'));
     } catch {
       unavailable();
     } finally {
@@ -250,9 +252,9 @@ export function InsightStepsDialog({
         journeyName: journey?.journey_pattern_name,
         blockCount,
       });
-      toast.success('Đã lưu chỉnh sửa');
+      toast.success(t('marketingInsightStepsDialog.editsSaved'));
     } catch {
-      toast.error('Lưu lên BE thất bại (wizard-v2 đang chờ deploy)');
+      toast.error(t('marketingInsightStepsDialog.saveFailed'));
     } finally {
       setSaving(false);
     }
@@ -263,10 +265,12 @@ export function InsightStepsDialog({
       <DialogContent className='max-h-[90vh] !w-[96vw] !max-w-[1150px]'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
-            <Sparkles className='size-4 text-blue-600' /> Kết quả AI-Insights
+            <Sparkles className='size-4 text-blue-600' />{' '}
+            {t('marketingInsightStepsDialog.title')}
             {running && (
               <span className='text-content-muted inline-flex items-center gap-1 text-xs font-normal'>
-                <Loader2 className='size-3 animate-spin' /> đang phân tích…
+                <Loader2 className='size-3 animate-spin' />{' '}
+                {t('marketingInsightStepsDialog.analyzing')}
               </span>
             )}
           </DialogTitle>
@@ -377,9 +381,11 @@ export function InsightStepsDialog({
                 size='sm'
                 onClick={handleSaveEdits}
                 disabled={busy || saving || !canApply}
-                title='Lưu chỉnh sửa lên hệ thống'
+                title={t('marketingInsightStepsDialog.saveTooltip')}
               >
-                {saving ? 'Đang lưu…' : 'Lưu'}
+                {saving
+                  ? t('marketingInsightStepsDialog.saving')
+                  : t('marketingInsightStepsDialog.save')}
               </Button>
             )}
             <Button
@@ -393,7 +399,7 @@ export function InsightStepsDialog({
               ) : (
                 <RefreshCw className='size-4' />
               )}
-              Generate lại
+              {t('marketingInsightStepsDialog.regenerate')}
             </Button>
             {step < STEPS.length - 1 ? (
               <Button
@@ -411,10 +417,12 @@ export function InsightStepsDialog({
                 title={
                   canApply
                     ? undefined
-                    : 'Chờ AI phân tích xong mới áp dụng được'
+                    : t('marketingInsightStepsDialog.applyTooltip')
                 }
               >
-                {applying ? 'Đang dựng…' : 'Áp dụng → dựng template'}
+                {applying
+                  ? t('marketingInsightStepsDialog.building')
+                  : t('marketingInsightStepsDialog.apply')}
               </Button>
             )}
           </div>
@@ -435,12 +443,15 @@ function GoalEditable({
   goal: InsightBlueprintGoal;
   onChange: (g: InsightBlueprintGoal) => void;
 }) {
+  const t = useTranslations('portal');
   const pct = Math.round((goal.confidence ?? 0) * 100);
   return (
     <div className='flex flex-col gap-5 sm:flex-row sm:items-start'>
       <div className='flex shrink-0 flex-col items-center gap-1 pt-1'>
         <ConfidenceRing pct={pct} />
-        <span className='text-content-muted text-xs'>Độ tin cậy</span>
+        <span className='text-content-muted text-xs'>
+          {t('marketingInsightStepsDialog.confidence')}
+        </span>
       </div>
       <div className='flex flex-1 flex-col gap-2'>
         <select
@@ -464,11 +475,11 @@ function GoalEditable({
           value={goal.rationale ?? ''}
           onChange={e => onChange({ ...goal, rationale: e.target.value })}
           rows={14}
-          placeholder='Lý do AI đề xuất — bạn có thể chỉnh sửa…'
+          placeholder={t('marketingInsightStepsDialog.rationalePlaceholder')}
           className='border-input bg-background text-foreground focus:border-foreground/40 min-h-[44vh] w-full resize-y rounded-lg border p-4 text-sm leading-7 outline-none'
         />
         <p className='text-content-muted text-2xs'>
-          Nội dung AI tạo — sửa trực tiếp nếu cần.
+          {t('marketingInsightStepsDialog.aiContentHint')}
         </p>
       </div>
     </div>
@@ -487,18 +498,21 @@ function StepBody({
   failed?: boolean;
   children: React.ReactNode;
 }) {
+  const t = useTranslations('portal');
   if (loading) {
     return (
       <div className='text-content-muted flex h-[50vh] flex-col items-center justify-center gap-2 text-sm'>
         <Loader2 className='size-6 animate-spin text-blue-600' />
-        AI đang phân tích phần này…
+        {t('marketingInsightStepsDialog.stepAnalyzing')}
       </div>
     );
   }
   if (empty) {
     return (
       <div className='text-content-muted flex h-[50vh] flex-col items-center justify-center text-sm'>
-        {failed ? 'AI chạy thất bại phần này.' : 'Chưa có dữ liệu.'}
+        {failed
+          ? t('marketingInsightStepsDialog.stepFailed')
+          : t('marketingInsightStepsDialog.stepEmpty')}
       </div>
     );
   }

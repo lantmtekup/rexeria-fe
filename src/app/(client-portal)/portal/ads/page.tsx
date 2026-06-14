@@ -17,6 +17,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
 import { rexerApi } from '@/services/rexer/endpoints';
@@ -222,6 +223,7 @@ type StatusFilter = 'all' | Campaign['status'];
 type PlatformFilter = 'all' | Platform;
 
 export default function PortalAdsPage() {
+  const t = useTranslations('portal');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [platformFilter, setPlatformFilter] = useState<PlatformFilter>('all');
   const [campaigns, setCampaigns] = useState<Campaign[]>(FAKE_CAMPAIGNS);
@@ -312,26 +314,30 @@ export default function PortalAdsPage() {
       <section className='flex flex-wrap items-end justify-between gap-4'>
         <div>
           <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
-            <Megaphone className='size-3' /> Quảng cáo · 14 ngày qua
+            <Megaphone className='size-3' /> {t('ads.eyebrow')}
           </div>
           <h1 className='mt-1 text-2xl font-bold tracking-tight'>
-            Performance quảng cáo
+            {t('ads.title')}
           </h1>
           <p className='text-content-muted mt-1 text-sm'>
-            {totals.active_count} campaign đang chạy trên 4 nền tảng. Spend{' '}
-            <strong>{(totals.spend / 1_000_000).toFixed(1)}M VND</strong> trong
-            14 ngày.
+            {t('ads.subtitlePrefix', { count: totals.active_count })}{' '}
+            <strong>
+              {t('ads.subtitleSpend', {
+                amount: (totals.spend / 1_000_000).toFixed(1),
+              })}
+            </strong>{' '}
+            {t('ads.subtitleSuffix')}
           </p>
         </div>
         <div className='flex items-center gap-2'>
           <button className='border-border text-content-muted hover:bg-muted flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'>
-            <RefreshCw className='size-3.5' /> Sync FB Ads
+            <RefreshCw className='size-3.5' /> {t('ads.syncFbAds')}
           </button>
           <button
             onClick={() => setCreateOpen(true)}
             className='flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700'
           >
-            <Plus className='size-3.5' /> Tạo campaign
+            <Plus className='size-3.5' /> {t('ads.createCampaign')}
           </button>
         </div>
       </section>
@@ -346,10 +352,9 @@ export default function PortalAdsPage() {
         <div className='mt-4 flex items-start gap-2 rounded-xl border border-sky-200 bg-sky-50/60 px-3 py-2 text-xs text-sky-800'>
           <span className='mt-0.5 inline-block size-2 shrink-0 rounded-full bg-sky-500' />
           <div>
-            <span className='font-semibold'>Số liệu nhập tay bởi Rexer</span>
+            <span className='font-semibold'>{t('ads.manualBannerTitle')}</span>
             <span className='ml-2 text-sky-700'>
-              — Chưa đấu trực tiếp Meta/Google/TikTok; đội ngũ Rexer cập nhật số
-              liệu theo khoảng ngày.
+              {t('ads.manualBannerDesc')}
             </span>
           </div>
         </div>
@@ -357,9 +362,9 @@ export default function PortalAdsPage() {
         <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-800'>
           <span className='mt-0.5 inline-block size-2 shrink-0 rounded-full bg-amber-500' />
           <div>
-            <span className='font-semibold'>UI Demo · Dữ liệu mẫu</span>
+            <span className='font-semibold'>{t('ads.demoBannerTitle')}</span>
             <span className='ml-2 text-amber-700'>
-              — Chưa có campaign thật cho thương hiệu này.
+              {t('ads.demoBannerDesc')}
             </span>
           </div>
         </div>
@@ -369,7 +374,7 @@ export default function PortalAdsPage() {
       <div className='mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4'>
         <KpiCard
           icon={CircleDollarSign}
-          label='Chi tiêu'
+          label={t('ads.kpiSpend')}
           value={`${(totals.spend / 1_000_000).toFixed(1)}M`}
           subValue={`${fmtFull(totals.spend)}₫`}
           accent='rose'
@@ -433,9 +438,11 @@ export default function PortalAdsPage() {
               <TrendingUp className='size-4' />
             </div>
             <div>
-              <h3 className='text-sm font-semibold'>Spend 14 ngày qua</h3>
+              <h3 className='text-sm font-semibold'>
+                {t('ads.spendChartTitle')}
+              </h3>
               <p className='text-2xs text-content-muted'>
-                Tổng cộng tất cả campaign
+                {t('ads.spendChartSub')}
               </p>
             </div>
           </div>
@@ -453,7 +460,7 @@ export default function PortalAdsPage() {
         </span>
         <div className='flex flex-wrap gap-1'>
           <FilterBtn
-            label={`Tất cả · ${campaigns.length}`}
+            label={t('ads.filterAllCount', { count: campaigns.length })}
             active={statusFilter === 'all'}
             onClick={() => setStatusFilter('all')}
           />
@@ -476,7 +483,7 @@ export default function PortalAdsPage() {
         </span>
         <div className='flex flex-wrap gap-1'>
           <FilterBtn
-            label='Tất cả'
+            label={t('ads.filterAll')}
             active={platformFilter === 'all'}
             onClick={() => setPlatformFilter('all')}
           />
@@ -525,7 +532,7 @@ export default function PortalAdsPage() {
                     colSpan={8}
                     className='text-content-muted px-5 py-10 text-center text-sm'
                   >
-                    Không có campaign nào khớp filter.
+                    {t('ads.emptyFilter')}
                   </td>
                 </tr>
               ) : (

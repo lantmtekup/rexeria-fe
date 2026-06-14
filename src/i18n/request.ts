@@ -21,6 +21,7 @@ export default getRequestConfig(async () => {
       import(`./messages/admin/${locale}.json`),
       import(`./messages/ai_templates/${locale}.json`),
       import(`./messages/insights/${locale}.json`),
+      import(`./messages/portal/${locale}.json`),
     ]);
 
     return {

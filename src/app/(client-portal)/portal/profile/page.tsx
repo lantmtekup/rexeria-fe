@@ -22,6 +22,7 @@ import {
   UserPlus,
   X,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
 import { useAppSelector } from '@/hooks/useRedux';
@@ -99,6 +100,7 @@ interface FormState {
 }
 
 export default function PortalProfilePage() {
+  const t = useTranslations('portal');
   const [client, setClient] = React.useState<PortalClient | null>(null);
   const [members, setMembers] = React.useState<PortalMember[]>([]);
   const [loadingClient, setLoadingClient] = React.useState(true);
@@ -199,7 +201,7 @@ export default function PortalProfilePage() {
 
   const handleSave = async () => {
     if (pendingClientApi) {
-      toast.error('BE chưa ship endpoint PATCH /portal/me/client (P0.3)');
+      toast.error(t('profile.saveBeNotReady'));
       return;
     }
     setSaving(true);
@@ -211,7 +213,7 @@ export default function PortalProfilePage() {
         industry: form.industry.trim() || undefined,
       });
       setClient(updated);
-      toast.success('Đã lưu thông tin brand');
+      toast.success(t('profile.savedToast'));
     } catch (err) {
       const msg =
         err instanceof RxApiError
@@ -219,7 +221,7 @@ export default function PortalProfilePage() {
           : err instanceof Error
             ? err.message
             : 'SAVE_FAILED';
-      toast.error(`Lưu thất bại: ${msg}`);
+      toast.error(t('profile.saveFailed', { msg }));
     } finally {
       setSaving(false);
     }
@@ -241,7 +243,9 @@ export default function PortalProfilePage() {
       });
     } else {
       toast.success(
-        `Đã tạo member ${res.member.display_name || res.member.email}`
+        t('profile.memberCreatedToast', {
+          name: res.member.display_name || res.member.email,
+        })
       );
     }
   };
@@ -256,12 +260,14 @@ export default function PortalProfilePage() {
     );
     try {
       await rexerApi.portal.me.updateMemberRole(m.user_id, { role });
-      toast.success(`Đã đổi vai trò của ${m.display_name || m.email}`);
+      toast.success(
+        t('profile.roleChangedToast', { name: m.display_name || m.email })
+      );
     } catch (err) {
       setMembers(prev); // rollback
       const code =
         err instanceof RxApiError ? err.code || err.message : 'UNKNOWN';
-      toast.error(`Đổi vai trò thất bại (${code})`);
+      toast.error(t('profile.roleChangeFailed', { code }));
     } finally {
       setBusyMember(null);
     }
@@ -270,7 +276,7 @@ export default function PortalProfilePage() {
   const handleRemoveMember = async (m: PortalMember) => {
     if (
       !window.confirm(
-        `Xoá ${m.display_name || m.email} khỏi brand? Họ sẽ mất quyền truy cập.`
+        t('profile.removeConfirm', { name: m.display_name || m.email })
       )
     ) {
       return;
@@ -280,12 +286,14 @@ export default function PortalProfilePage() {
     setMembers(list => list.filter(x => x.user_id !== m.user_id));
     try {
       await rexerApi.portal.me.removeMember(m.user_id);
-      toast.success(`Đã xoá ${m.display_name || m.email}`);
+      toast.success(
+        t('profile.memberRemovedToast', { name: m.display_name || m.email })
+      );
     } catch (err) {
       setMembers(prev); // rollback
       const code =
         err instanceof RxApiError ? err.code || err.message : 'UNKNOWN';
-      toast.error(`Xoá thất bại (${code})`);
+      toast.error(t('profile.removeFailed', { code }));
     } finally {
       setBusyMember(null);
     }
@@ -300,17 +308,17 @@ export default function PortalProfilePage() {
         <div className='flex flex-wrap items-end justify-between gap-2'>
           <div>
             <h1 className='mt-1 text-2xl font-bold tracking-tight'>
-              Cài đặt brand
+              {t('profile.title')}
             </h1>
             <p className='text-content-muted mt-1 text-sm'>
-              Quản lý thông tin brand + thành viên + custom domain.
+              {t('profile.subtitle')}
             </p>
           </div>
           <a
             href='/portal/profile/domains'
             className='border-border text-content-muted hover:border-border hover:bg-muted inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium shadow-sm'
           >
-            🌐 Custom domains
+            🌐 {t('profile.customDomains')}
           </a>
         </div>
       </section>
@@ -319,8 +327,8 @@ export default function PortalProfilePage() {
         <div className='mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2.5 text-xs text-amber-900'>
           <AlertTriangle className='mt-0.5 size-3.5 shrink-0' />
           <div>
-            BE chưa ship đủ endpoint <code>/portal/me/*</code> (P0.3) — đang
-            hiển thị fallback. Save sẽ disable cho tới khi BE merge.
+            {t('profile.beFallbackPre')} <code>/portal/me/*</code>{' '}
+            {t('profile.beFallbackPost')}
           </div>
         </div>
       )}
@@ -332,43 +340,45 @@ export default function PortalProfilePage() {
             <div className='flex size-7 items-center justify-center rounded-lg bg-rose-500 text-white shadow-sm'>
               <Building2 className='size-4' />
             </div>
-            <h3 className='text-sm font-semibold'>Thông tin Brand</h3>
+            <h3 className='text-sm font-semibold'>
+              {t('profile.brandInfoHeading')}
+            </h3>
             {loadingClient && (
               <Loader2 className='text-muted-foreground ml-auto size-3.5 animate-spin' />
             )}
           </div>
           <div className='space-y-3'>
             <Field
-              label='Tên Brand'
+              label={t('profile.fieldBrandName')}
               value={form.name}
               onChange={v => setForm(s => ({ ...s, name: v }))}
             />
             <Field
-              label='Slug (URL identifier)'
+              label={t('profile.fieldSlug')}
               value={client?.slug ?? ''}
-              hint='Cố định — không thể đổi sau khi tạo'
+              hint={t('profile.fieldSlugHint')}
               readonly
             />
             <Field
-              label='Email liên hệ'
+              label={t('profile.fieldContactEmail')}
               value={form.contact_email}
               onChange={v => setForm(s => ({ ...s, contact_email: v }))}
-              hint='Email Rexer dùng để liên hệ về billing + support'
+              hint={t('profile.fieldContactEmailHint')}
             />
             <Field
-              label='Số điện thoại'
+              label={t('profile.fieldPhone')}
               value={form.contact_phone}
               onChange={v => setForm(s => ({ ...s, contact_phone: v }))}
             />
             <Field
-              label='Industry'
+              label={t('profile.fieldIndustry')}
               value={form.industry}
               onChange={v => setForm(s => ({ ...s, industry: v }))}
             />
             <Field
-              label='Plan'
+              label={t('profile.fieldPlan')}
               value={client?.plan ?? '—'}
-              hint='Đang chạy'
+              hint={t('profile.fieldPlanHint')}
               readonly
             />
             <div className='pt-2'>
@@ -383,7 +393,7 @@ export default function PortalProfilePage() {
                 ) : (
                   <Save className='size-3.5' />
                 )}
-                {saving ? 'Đang lưu…' : 'Lưu thay đổi'}
+                {saving ? t('profile.saving') : t('profile.saveChanges')}
               </button>
             </div>
           </div>
@@ -412,17 +422,13 @@ export default function PortalProfilePage() {
                 <button
                   type='button'
                   disabled={pendingClientApi}
-                  onClick={() =>
-                    toast.info(
-                      'POST /portal/me/avatar — gửi multipart binary, FE sẽ wire khi BE confirm endpoint'
-                    )
-                  }
+                  onClick={() => toast.info(t('profile.avatarTodoToast'))}
                   className='text-2xs border-border hover:bg-muted block rounded-lg border bg-white px-3 py-1 font-medium disabled:opacity-50'
                 >
-                  Upload logo mới
+                  {t('profile.uploadLogo')}
                 </button>
                 <p className='text-3xs text-content-muted mt-1'>
-                  PNG / SVG · ≤ 1MB · Vuông
+                  {t('profile.logoHint')}
                 </p>
               </div>
             </div>
@@ -436,7 +442,7 @@ export default function PortalProfilePage() {
               {client?.id ?? '—'}
             </code>
             <p className='text-2xs text-content-muted mt-2'>
-              Dùng khi liên hệ support hoặc tích hợp API.
+              {t('profile.clientIdHint')}
             </p>
             {client && (
               <div className='border-border mt-3 grid grid-cols-2 gap-2 border-t pt-3 text-center'>
@@ -473,7 +479,7 @@ export default function PortalProfilePage() {
               <User className='size-4' />
             </div>
             <h3 className='text-sm font-semibold'>
-              Thành viên ({members.length})
+              {t('profile.membersHeading', { count: members.length })}
             </h3>
             {loadingMembers && (
               <Loader2 className='text-muted-foreground size-3.5 animate-spin' />
@@ -485,14 +491,14 @@ export default function PortalProfilePage() {
               onClick={() => setInviteOpen(true)}
               className='flex items-center gap-1.5 rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600 disabled:opacity-50'
             >
-              <UserPlus className='size-3' /> Thêm member
+              <UserPlus className='size-3' /> {t('profile.addMember')}
             </button>
           )}
         </div>
         <div className='divide-y divide-zinc-100'>
           {members.length === 0 && !loadingMembers ? (
             <div className='text-content-muted py-6 text-center text-xs'>
-              Chưa có thành viên nào.
+              {t('profile.emptyMembers')}
             </div>
           ) : (
             members.map(m => {
@@ -546,7 +552,9 @@ export default function PortalProfilePage() {
                             e.target.value as PortalMemberRole
                           )
                         }
-                        aria-label={`Vai trò của ${m.display_name}`}
+                        aria-label={t('profile.roleAria', {
+                          name: m.display_name,
+                        })}
                         className='text-2xs border-border text-content-muted rounded-lg border bg-white px-2 py-1 font-medium outline-none focus:border-blue-400 disabled:opacity-50'
                       >
                         <option value='brand_owner'>Owner</option>
@@ -557,7 +565,9 @@ export default function PortalProfilePage() {
                         type='button'
                         onClick={() => handleRemoveMember(m)}
                         disabled={busyMember === m.user_id}
-                        aria-label={`Xoá ${m.display_name}`}
+                        aria-label={t('profile.removeAria', {
+                          name: m.display_name,
+                        })}
                         className='text-muted-foreground rounded-lg p-1.5 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50'
                       >
                         {busyMember === m.user_id ? (
@@ -575,7 +585,7 @@ export default function PortalProfilePage() {
                         {role.label}
                       </span>
                       <span className='text-3xs text-muted-foreground font-mono'>
-                        {formatJoined(m.joined_at ?? m.created_at)}
+                        {formatJoined(m.joined_at ?? m.created_at, t)}
                       </span>
                     </>
                   )}
@@ -613,32 +623,38 @@ function brandInitials(name?: string | null): string {
 }
 
 /** Format `joined_at` defensively — BE sometimes returns an empty/invalid date. */
-function formatJoined(iso?: string): string {
-  if (!iso) return 'Thành viên';
+function formatJoined(
+  iso: string | undefined,
+  t: ReturnType<typeof useTranslations>
+): string {
+  if (!iso) return t('profile.joinedMember');
   const d = new Date(iso);
   return isNaN(d.getTime())
-    ? 'Thành viên'
-    : `từ ${d.toLocaleDateString('vi-VN')}`;
+    ? t('profile.joinedMember')
+    : t('profile.joinedSince', { date: d.toLocaleDateString('vi-VN') });
 }
 
-const INVITE_ROLES: { value: PortalMemberRole; label: string; desc: string }[] =
-  [
-    {
-      value: 'brand_member',
-      label: 'Member',
-      desc: 'Tạo & sửa landing page, sản phẩm',
-    },
-    {
-      value: 'brand_viewer',
-      label: 'Viewer',
-      desc: 'Chỉ xem, không chỉnh sửa',
-    },
-    {
-      value: 'brand_owner',
-      label: 'Owner',
-      desc: 'Toàn quyền + quản lý thành viên',
-    },
-  ];
+const INVITE_ROLES: {
+  value: PortalMemberRole;
+  label: string;
+  descKey: string;
+}[] = [
+  {
+    value: 'brand_member',
+    label: 'Member',
+    descKey: 'profile.inviteRoleMemberDesc',
+  },
+  {
+    value: 'brand_viewer',
+    label: 'Viewer',
+    descKey: 'profile.inviteRoleViewerDesc',
+  },
+  {
+    value: 'brand_owner',
+    label: 'Owner',
+    descKey: 'profile.inviteRoleOwnerDesc',
+  },
+];
 
 function InviteMemberDialog({
   open,
@@ -649,6 +665,7 @@ function InviteMemberDialog({
   onClose: () => void;
   onInvite: (payload: InvitePortalMemberRequest) => Promise<void>;
 }) {
+  const t = useTranslations('portal');
   const [email, setEmail] = React.useState('');
   const [displayName, setDisplayName] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -675,17 +692,15 @@ function InviteMemberDialog({
 
   const submit = async () => {
     if (!emailValid) {
-      toast.error('Email không hợp lệ');
+      toast.error(t('profile.invalidEmail'));
       return;
     }
     if (!displayName.trim()) {
-      toast.error('Tên hiển thị không được rỗng');
+      toast.error(t('profile.emptyDisplayName'));
       return;
     }
     if (password.trim() && password.trim().length < 8) {
-      toast.error(
-        'Mật khẩu tối thiểu 8 ký tự (hoặc bỏ trống để hệ thống sinh)'
-      );
+      toast.error(t('profile.passwordTooShort'));
       return;
     }
     setSubmitting(true);
@@ -701,14 +716,16 @@ function InviteMemberDialog({
       // owner) / còn lại. KHÔNG đóng dialog để user sửa lại.
       if (err instanceof RxApiError) {
         if (err.status === 409 || err.code === 'ERR_CLIENT_USER_DUPLICATE') {
-          toast.error('Email này đã có tài khoản trong brand');
+          toast.error(t('profile.inviteDuplicate'));
         } else if (err.status === 403) {
-          toast.error('Chỉ brand owner mới tạo được member');
+          toast.error(t('profile.inviteForbidden'));
         } else {
-          toast.error(`Tạo member thất bại (${err.code || err.message})`);
+          toast.error(
+            t('profile.inviteFailedCode', { code: err.code || err.message })
+          );
         }
       } else {
-        toast.error('Tạo member thất bại');
+        toast.error(t('profile.inviteFailed'));
       }
     } finally {
       setSubmitting(false);
@@ -732,10 +749,10 @@ function InviteMemberDialog({
             </div>
             <div>
               <h3 className='text-base leading-tight font-semibold'>
-                Thêm thành viên
+                {t('profile.inviteTitle')}
               </h3>
               <p className='text-2xs text-content-muted mt-0.5'>
-                Tạo tài khoản member + cấp mật khẩu (không gửi email mời)
+                {t('profile.inviteSubtitle')}
               </p>
             </div>
           </div>
@@ -759,7 +776,7 @@ function InviteMemberDialog({
               value={email}
               onChange={e => setEmail(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && submit()}
-              placeholder='vd: an@brand.com'
+              placeholder={t('profile.emailPlaceholder')}
               autoFocus
               className='border-border mt-1.5 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
             />
@@ -767,40 +784,40 @@ function InviteMemberDialog({
 
           <div>
             <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-              Tên hiển thị <span className='text-rose-500'>*</span>
+              {t('profile.displayNameLabel')}{' '}
+              <span className='text-rose-500'>*</span>
             </label>
             <input
               type='text'
               value={displayName}
               onChange={e => setDisplayName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && submit()}
-              placeholder='vd: Nguyễn Văn A'
+              placeholder={t('profile.displayNamePlaceholder')}
               className='border-border mt-1.5 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
             />
           </div>
 
           <div>
             <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-              Mật khẩu
+              {t('profile.passwordLabel')}
             </label>
             <input
               type='text'
               value={password}
               onChange={e => setPassword(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && submit()}
-              placeholder='Bỏ trống → hệ thống tự sinh & hiện sau khi tạo'
+              placeholder={t('profile.passwordPlaceholder')}
               autoComplete='off'
               className='border-border mt-1.5 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
             />
             <p className='text-3xs text-muted-foreground mt-1'>
-              Tối thiểu 8 ký tự nếu tự đặt. BE không gửi email — mật khẩu chỉ
-              hiện 1 lần để bạn đưa cho member.
+              {t('profile.passwordHint')}
             </p>
           </div>
 
           <div>
             <label className='text-3xs text-content-muted mb-1.5 block font-semibold tracking-wider uppercase'>
-              Vai trò
+              {t('profile.roleLabel')}
             </label>
             <div className='space-y-1.5'>
               {INVITE_ROLES.map(r => (
@@ -828,7 +845,7 @@ function InviteMemberDialog({
                       {r.label}
                     </span>
                     <span className='text-2xs text-content-muted block'>
-                      {r.desc}
+                      {t(r.descKey)}
                     </span>
                   </span>
                 </button>
@@ -845,7 +862,7 @@ function InviteMemberDialog({
             disabled={submitting}
             className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
-            Hủy
+            {t('profile.cancel')}
           </button>
           <button
             type='button'
@@ -858,7 +875,7 @@ function InviteMemberDialog({
             ) : (
               <UserPlus className='size-3.5' />
             )}
-            {submitting ? 'Đang tạo…' : 'Tạo member'}
+            {submitting ? t('profile.creating') : t('profile.createMember')}
           </button>
         </div>
       </div>
@@ -877,6 +894,7 @@ function MemberCredentialDialog({
   cred: { email: string; display_name: string; password: string };
   onClose: () => void;
 }) {
+  const t = useTranslations('portal');
   const [copied, setCopied] = React.useState<'password' | 'all' | null>(null);
 
   const copy = async (value: string, key: 'password' | 'all') => {
@@ -884,19 +902,19 @@ function MemberCredentialDialog({
       await navigator.clipboard.writeText(value);
       setCopied(key);
       toast.success(
-        key === 'all' ? 'Đã copy email + mật khẩu' : 'Đã copy mật khẩu'
+        key === 'all' ? t('profile.copiedAll') : t('profile.copiedPassword')
       );
       setTimeout(() => setCopied(null), 1500);
     } catch {
-      toast.error('Copy thất bại — copy thủ công nhé');
+      toast.error(t('profile.copyFailed'));
     }
   };
 
   const summary = [
-    `Email: ${cred.email}`,
-    `Mật khẩu: ${cred.password}`,
-    `Tên: ${cred.display_name}`,
-    `Đăng nhập: ${typeof window !== 'undefined' ? window.location.origin : ''}/sign-in`,
+    `${t('profile.summaryEmail')}: ${cred.email}`,
+    `${t('profile.summaryPassword')}: ${cred.password}`,
+    `${t('profile.summaryName')}: ${cred.display_name}`,
+    `${t('profile.summaryLogin')}: ${typeof window !== 'undefined' ? window.location.origin : ''}/sign-in`,
   ].join('\n');
 
   return (
@@ -914,7 +932,7 @@ function MemberCredentialDialog({
               <Check className='size-4' />
             </div>
             <h3 className='text-base leading-tight font-semibold'>
-              Đã tạo member {cred.display_name}
+              {t('profile.credCreatedTitle', { name: cred.display_name })}
             </h3>
           </div>
           <button
@@ -930,9 +948,8 @@ function MemberCredentialDialog({
           <div className='flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900'>
             <KeyRound className='mt-0.5 size-3.5 shrink-0 text-amber-600' />
             <div>
-              <span className='font-semibold'>Lưu ngay mật khẩu</span> — chỉ
-              hiện 1 lần. BE không gửi email mời, bạn cần tự đưa thông tin này
-              cho member.
+              <span className='font-semibold'>{t('profile.savePassword')}</span>{' '}
+              {t('profile.savePasswordHint')}
             </div>
           </div>
 
@@ -948,7 +965,7 @@ function MemberCredentialDialog({
 
           <div className='space-y-1'>
             <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
-              Mật khẩu
+              {t('profile.passwordLabel')}
             </div>
             <div className='flex items-center gap-2'>
               <code className='border-border flex-1 truncate rounded-lg border bg-white px-3 py-2 font-mono text-sm'>
@@ -984,14 +1001,14 @@ function MemberCredentialDialog({
             ) : (
               <Copy className='size-3.5' />
             )}
-            Copy tất cả
+            {t('profile.copyAll')}
           </button>
           <button
             type='button'
             onClick={onClose}
             className='rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
           >
-            Xong
+            {t('profile.done')}
           </button>
         </div>
       </div>

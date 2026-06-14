@@ -12,6 +12,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -26,26 +27,17 @@ import type { PortalTemplate } from '../_data';
 import { loadTemplates } from '../_remote';
 import { useActiveWorkspace } from '../_workspace';
 
-const OBJECTIVES: { value: PortalAdObjective; label: string; desc: string }[] =
-  [
-    { value: 'awareness', label: 'Nhận diện', desc: 'Tăng độ phủ thương hiệu' },
-    {
-      value: 'traffic',
-      label: 'Traffic',
-      desc: 'Kéo truy cập về landing page',
-    },
-    {
-      value: 'conversion',
-      label: 'Chuyển đổi',
-      desc: 'Tối ưu lead / đơn hàng',
-    },
-    { value: 'retention', label: 'Giữ chân', desc: 'Re-engage khách cũ' },
-  ];
+const OBJECTIVES: PortalAdObjective[] = [
+  'awareness',
+  'traffic',
+  'conversion',
+  'retention',
+];
 
 const STEPS = [
-  { key: 'info', label: 'Thông tin', icon: Target },
-  { key: 'budget', label: 'Ngân sách & lịch', icon: Wallet },
-  { key: 'link', label: 'Liên kết', icon: Link2 },
+  { key: 'info', icon: Target },
+  { key: 'budget', icon: Wallet },
+  { key: 'link', icon: Link2 },
 ] as const;
 
 /** Bỏ dấu + slugify cho UTM. */
@@ -70,6 +62,7 @@ export function CreateCampaignDialog({
   onClose: () => void;
   onCreated: (c: PortalAdCampaign) => void;
 }) {
+  const t = useTranslations('portal');
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
 
@@ -139,7 +132,7 @@ export function CreateCampaignDialog({
 
   const submit = async () => {
     if (!name.trim()) {
-      toast.error('Tên campaign không được rỗng');
+      toast.error(t('adsCreateCampaignDialog.nameRequiredToast'));
       setStep(0);
       return;
     }
@@ -158,11 +151,13 @@ export function CreateCampaignDialog({
         notes: notes.trim() || undefined,
         status: 'draft',
       });
-      toast.success(`Đã tạo campaign "${res.campaign.name}"`);
+      toast.success(
+        t('adsCreateCampaignDialog.createdToast', { name: res.campaign.name })
+      );
       onCreated(res.campaign);
       onClose();
     } catch (err) {
-      toast.error('Tạo campaign thất bại', {
+      toast.error(t('adsCreateCampaignDialog.createFailedToast'), {
         description: err instanceof Error ? err.message : String(err),
       });
     } finally {
@@ -187,17 +182,17 @@ export function CreateCampaignDialog({
             </div>
             <div>
               <h3 className='text-base leading-tight font-semibold'>
-                Tạo campaign
+                {t('adsCreateCampaignDialog.title')}
               </h3>
               <p className='text-2xs text-content-muted mt-0.5'>
-                Chiến dịch quảng cáo mới (lưu nháp)
+                {t('adsCreateCampaignDialog.subtitle')}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
             className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
-            aria-label='Close'
+            aria-label={t('adsCreateCampaignDialog.closeAria')}
           >
             <X className='size-4' />
           </button>
@@ -236,7 +231,7 @@ export function CreateCampaignDialog({
                       active ? 'text-foreground' : 'text-muted-foreground'
                     )}
                   >
-                    {s.label}
+                    {t(`adsCreateCampaignDialog.step_${s.key}`)}
                   </span>
                 </button>
                 {i < STEPS.length - 1 && (
@@ -259,13 +254,14 @@ export function CreateCampaignDialog({
             <div className='space-y-4'>
               <div>
                 <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-                  Tên campaign <span className='text-rose-500'>*</span>
+                  {t('adsCreateCampaignDialog.nameLabel')}{' '}
+                  <span className='text-rose-500'>*</span>
                 </label>
                 <input
                   type='text'
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  placeholder='vd: Coca-Cola Tết 2026 — Awareness'
+                  placeholder={t('adsCreateCampaignDialog.namePlaceholder')}
                   className='border-border mt-1.5 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                   maxLength={128}
                   autoFocus
@@ -274,26 +270,26 @@ export function CreateCampaignDialog({
 
               <div>
                 <label className='text-3xs text-content-muted mb-1.5 block font-semibold tracking-wider uppercase'>
-                  Mục tiêu
+                  {t('adsCreateCampaignDialog.objectiveLabel')}
                 </label>
                 <div className='grid grid-cols-2 gap-2'>
                   {OBJECTIVES.map(o => (
                     <button
-                      key={o.value}
+                      key={o}
                       type='button'
-                      onClick={() => setObjective(o.value)}
+                      onClick={() => setObjective(o)}
                       className={cn(
                         'rounded-lg border px-3 py-2 text-left transition-colors',
-                        objective === o.value
+                        objective === o
                           ? 'border-blue-400 bg-blue-50/60 ring-2 ring-blue-100'
                           : 'border-border hover:bg-muted'
                       )}
                     >
                       <span className='text-foreground block text-sm font-semibold'>
-                        {o.label}
+                        {t(`adsCreateCampaignDialog.objective_${o}_label`)}
                       </span>
                       <span className='text-2xs text-content-muted block'>
-                        {o.desc}
+                        {t(`adsCreateCampaignDialog.objective_${o}_desc`)}
                       </span>
                     </button>
                   ))}
@@ -302,12 +298,12 @@ export function CreateCampaignDialog({
 
               <div>
                 <label className='text-3xs text-content-muted mb-1.5 block font-semibold tracking-wider uppercase'>
-                  Kênh chạy
+                  {t('adsCreateCampaignDialog.channelsLabel')}
                 </label>
                 <div className='flex flex-wrap gap-1.5'>
                   {channelOpts.length === 0 && (
                     <span className='text-muted-foreground text-xs'>
-                      Đang tải kênh…
+                      {t('adsCreateCampaignDialog.channelsLoading')}
                     </span>
                   )}
                   {channelOpts.map(c => {
@@ -339,7 +335,7 @@ export function CreateCampaignDialog({
             <div className='space-y-4'>
               <div>
                 <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-                  Ngân sách
+                  {t('adsCreateCampaignDialog.budgetLabel')}
                 </label>
                 <div className='mt-1.5 flex items-center gap-2'>
                   <input
@@ -347,7 +343,7 @@ export function CreateCampaignDialog({
                     min={0}
                     value={budget}
                     onChange={e => setBudget(e.target.value)}
-                    placeholder='vd: 50000000'
+                    placeholder={t('adsCreateCampaignDialog.budgetPlaceholder')}
                     className='border-border w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                   />
                   <span className='bg-muted text-content-muted shrink-0 rounded-lg px-3 py-2 text-sm font-medium'>
@@ -365,7 +361,7 @@ export function CreateCampaignDialog({
               <div className='grid grid-cols-2 gap-3'>
                 <div>
                   <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-                    Bắt đầu
+                    {t('adsCreateCampaignDialog.startDateLabel')}
                   </label>
                   <div className='border-border mt-1.5 flex items-center gap-2 rounded-lg border px-3 py-2'>
                     <Calendar className='text-muted-foreground size-3.5' />
@@ -379,7 +375,7 @@ export function CreateCampaignDialog({
                 </div>
                 <div>
                   <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-                    Kết thúc
+                    {t('adsCreateCampaignDialog.endDateLabel')}
                   </label>
                   <div className='border-border mt-1.5 flex items-center gap-2 rounded-lg border px-3 py-2'>
                     <Calendar className='text-muted-foreground size-3.5' />
@@ -394,8 +390,7 @@ export function CreateCampaignDialog({
                 </div>
               </div>
               <p className='text-2xs text-muted-foreground'>
-                Tất cả tuỳ chọn — có thể bỏ trống và chỉnh sau trong chi tiết
-                campaign.
+                {t('adsCreateCampaignDialog.scheduleHint')}
               </p>
             </div>
           )}
@@ -405,14 +400,16 @@ export function CreateCampaignDialog({
             <div className='space-y-4'>
               <div>
                 <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-                  Landing page đích
+                  {t('adsCreateCampaignDialog.landingLabel')}
                 </label>
                 <select
                   value={templateId}
                   onChange={e => setTemplateId(e.target.value)}
                   className='border-border mt-1.5 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 >
-                  <option value=''>— Chưa gắn landing page —</option>
+                  <option value=''>
+                    {t('adsCreateCampaignDialog.landingNone')}
+                  </option>
                   {scopedTemplates.map(t => (
                     <option key={t.id} value={t.id}>
                       {t.name}
@@ -420,7 +417,7 @@ export function CreateCampaignDialog({
                   ))}
                 </select>
                 <p className='text-2xs text-muted-foreground mt-1'>
-                  Traffic từ campaign sẽ đổ về landing page này.
+                  {t('adsCreateCampaignDialog.landingHint')}
                 </p>
               </div>
 
@@ -435,20 +432,20 @@ export function CreateCampaignDialog({
                     setUtmTouched(true);
                     setUtm(e.target.value);
                   }}
-                  placeholder='auto từ tên campaign'
+                  placeholder={t('adsCreateCampaignDialog.utmPlaceholder')}
                   className='border-border mt-1.5 w-full rounded-lg border px-3 py-2 font-mono text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 />
               </div>
 
               <div>
                 <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-                  Ghi chú
+                  {t('adsCreateCampaignDialog.notesLabel')}
                 </label>
                 <textarea
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   rows={2}
-                  placeholder='(tuỳ chọn)'
+                  placeholder={t('adsCreateCampaignDialog.notesPlaceholder')}
                   className='border-border mt-1.5 w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 />
               </div>
@@ -465,16 +462,20 @@ export function CreateCampaignDialog({
             className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             {step === 0 ? (
-              'Hủy'
+              t('adsCreateCampaignDialog.cancel')
             ) : (
               <>
-                <ChevronLeft className='size-3.5' /> Quay lại
+                <ChevronLeft className='size-3.5' />{' '}
+                {t('adsCreateCampaignDialog.back')}
               </>
             )}
           </button>
 
           <div className='text-2xs text-muted-foreground'>
-            Bước {step + 1}/{STEPS.length}
+            {t('adsCreateCampaignDialog.stepCounter', {
+              current: step + 1,
+              total: STEPS.length,
+            })}
           </div>
 
           {isLast ? (
@@ -489,7 +490,9 @@ export function CreateCampaignDialog({
               ) : (
                 <Check className='size-3.5' />
               )}
-              {saving ? 'Đang tạo…' : 'Tạo campaign'}
+              {saving
+                ? t('adsCreateCampaignDialog.creating')
+                : t('adsCreateCampaignDialog.submit')}
             </button>
           ) : (
             <button
@@ -498,7 +501,8 @@ export function CreateCampaignDialog({
               disabled={!canNext}
               className='inline-flex items-center gap-1 rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50'
             >
-              Tiếp <ChevronRight className='size-3.5' />
+              {t('adsCreateCampaignDialog.next')}{' '}
+              <ChevronRight className='size-3.5' />
             </button>
           )}
         </div>

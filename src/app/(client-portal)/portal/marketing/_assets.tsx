@@ -9,6 +9,7 @@
  */
 
 import { Box, ImagePlus, Loader2, Plus, SquarePlay, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -48,7 +49,7 @@ const ROWS: {
   accept: string;
   uploadLabel: string;
   icon: typeof ImagePlus;
-  info: string;
+  infoKey: string;
 }[] = [
   {
     kind: 'image',
@@ -56,7 +57,7 @@ const ROWS: {
     accept: 'image/*',
     uploadLabel: 'Upload Image',
     icon: ImagePlus,
-    info: 'Ảnh sản phẩm / lifestyle dùng cho landing page và quảng cáo.',
+    infoKey: 'infoImage',
   },
   {
     kind: 'video',
@@ -64,7 +65,7 @@ const ROWS: {
     accept: 'video/*',
     uploadLabel: 'Upload Video',
     icon: SquarePlay,
-    info: 'Video giới thiệu, TVC, reel… dùng cho landing và các kênh media.',
+    infoKey: 'infoVideo',
   },
   {
     kind: '3d',
@@ -72,7 +73,7 @@ const ROWS: {
     accept: '.glb,.gltf,.obj,.fbx,.usdz',
     uploadLabel: 'Upload 3D',
     icon: Box,
-    info: 'Model 3D sản phẩm (GLB/GLTF…) cho trải nghiệm tương tác trên landing.',
+    infoKey: 'info3d',
   },
 ];
 
@@ -154,6 +155,7 @@ function AssetRow({
   group: AssetGroup;
   onGroupChange: (g: AssetGroup) => void;
 }) {
+  const t = useTranslations('portal');
   const [addingFolder, setAddingFolder] = useState(false);
   const [folderName, setFolderName] = useState('');
 
@@ -161,7 +163,7 @@ function AssetRow({
     const name = folderName.trim();
     if (!name) return;
     if (group.folders.some(f => f.name === name)) {
-      toast.error(`Folder "${name}" đã tồn tại`);
+      toast.error(t('marketingAssets.folderExists', { name }));
       return;
     }
     onGroupChange({
@@ -176,7 +178,7 @@ function AssetRow({
     <div className='flex items-start gap-6'>
       <p className='text-foreground flex w-32 shrink-0 items-center gap-1.5 pt-3 text-sm font-semibold'>
         {row.label}
-        <InfoTip text={row.info} />
+        <InfoTip text={t(`marketingAssets.${row.infoKey}`)} />
       </p>
       <div className='flex min-w-0 flex-1 flex-col gap-3'>
         <AssetFrame
@@ -213,11 +215,11 @@ function AssetRow({
               value={folderName}
               onChange={e => setFolderName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAddFolder()}
-              placeholder='Tên folder'
+              placeholder={t('marketingAssets.folderNamePlaceholder')}
               className='h-8 w-52 text-sm'
             />
             <Button size='sm' className='h-8' onClick={handleAddFolder}>
-              Thêm
+              {t('marketingAssets.add')}
             </Button>
             <Button
               size='sm'
@@ -225,7 +227,7 @@ function AssetRow({
               className='h-8'
               onClick={() => setAddingFolder(false)}
             >
-              Huỷ
+              {t('marketingAssets.cancel')}
             </Button>
           </div>
         ) : (
@@ -235,7 +237,7 @@ function AssetRow({
             className='bg-muted text-foreground hover:bg-muted/70 inline-flex w-fit items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors'
           >
             <Plus className='bg-foreground text-background size-4 rounded-full p-0.5' />
-            Add folder
+            {t('marketingAssets.addFolder')}
           </button>
         )}
       </div>
@@ -257,6 +259,7 @@ function AssetFrame({
   onItemsChange: (items: AssetItem[]) => void;
   onRemove?: () => void;
 }) {
+  const t = useTranslations('portal');
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -270,7 +273,10 @@ function AssetFrame({
         ok.push(await uploadOne(file, row.kind));
       } catch (err) {
         toast.error(
-          `Upload "${file.name}" thất bại${err instanceof Error ? `: ${err.message}` : ''}`
+          t('marketingAssets.uploadFailed', {
+            name: file.name,
+            detail: err instanceof Error ? `: ${err.message}` : '',
+          })
         );
       }
     }
@@ -287,7 +293,7 @@ function AssetFrame({
           {onRemove && (
             <button
               type='button'
-              aria-label='Xoá folder'
+              aria-label={t('marketingAssets.removeFolder')}
               onClick={onRemove}
               className='text-muted-foreground hover:text-destructive'
             >
@@ -308,7 +314,7 @@ function AssetFrame({
           ) : (
             <row.icon className='size-6' />
           )}
-          {uploading ? 'Đang tải…' : row.uploadLabel}
+          {uploading ? t('marketingAssets.uploading') : row.uploadLabel}
         </button>
         <input
           ref={inputRef}
@@ -340,6 +346,7 @@ function Thumb({
   item: AssetItem;
   onRemove: () => void;
 }) {
+  const t = useTranslations('portal');
   return (
     <div className='group relative size-32 shrink-0 overflow-hidden rounded-xl'>
       {kind === 'image' && item.url ? (
@@ -365,7 +372,7 @@ function Thumb({
       )}
       <button
         type='button'
-        aria-label='Xoá file'
+        aria-label={t('marketingAssets.removeFile')}
         onClick={onRemove}
         className='absolute top-1 right-1 hidden rounded-full bg-black/60 p-1 text-white group-hover:block'
       >

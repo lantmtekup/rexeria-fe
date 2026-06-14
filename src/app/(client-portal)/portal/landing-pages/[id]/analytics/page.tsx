@@ -11,6 +11,7 @@
  * ERR_BAD_REQUEST), nên FE phải check shape rồi mới gọi.
  */
 
+import { useTranslations } from 'next-intl';
 import * as React from 'react';
 import { use } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -45,6 +46,7 @@ interface PageMeta {
 }
 
 export default function PortalLandingAnalyticsPage({ params }: PageProps) {
+  const t = useTranslations('portal');
   const { id: rawId } = use(params);
   const [resolvedId, setResolvedId] = React.useState<string | null>(null);
   const [meta, setMeta] = React.useState<PageMeta>({});
@@ -76,7 +78,9 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
           const pages = await rexerApi.pages.listAll({ q: rawId, limit: 25 });
           const page = pages.items?.find(p => p.slug === rawId);
           if (!page) {
-            throw new Error(`Không tìm thấy landing với slug "${rawId}"`);
+            throw new Error(
+              t('landingPagesIdAnalytics.notFoundSlug', { slug: rawId })
+            );
           }
           id = page.id;
           pageMeta = { external_url: page.external_url, name: page.name };
@@ -93,17 +97,20 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
     return () => {
       cancelled = true;
     };
-  }, [rawId]);
+  }, [rawId, t]);
 
   const isExternal = !!meta.external_url;
   const tabs: { value: AnalyticsTab; label: string }[] = isExternal
     ? [
-        { value: 'overview', label: 'Tổng quan' },
-        { value: 'funnel', label: 'Phễu & Lead' },
+        {
+          value: 'overview',
+          label: t('landingPagesIdAnalytics.tabOverview'),
+        },
+        { value: 'funnel', label: t('landingPagesIdAnalytics.tabFunnel') },
       ]
     : [
-        { value: 'funnel', label: 'Phễu & Lead' },
-        { value: 'blocks', label: 'Theo block' },
+        { value: 'funnel', label: t('landingPagesIdAnalytics.tabFunnel') },
+        { value: 'blocks', label: t('landingPagesIdAnalytics.tabBlocks') },
       ];
 
   return (
@@ -113,14 +120,15 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
           <div className='rounded-2xl border border-rose-200 bg-rose-50 p-6'>
             <AlertCircle className='mx-auto size-8 text-rose-600' />
             <p className='mt-3 text-sm font-semibold text-rose-900'>
-              Không mở được analytics
+              {t('landingPagesIdAnalytics.openError')}
             </p>
             <p className='text-2xs mt-1 font-mono text-rose-700'>{error}</p>
           </div>
         </div>
       ) : !resolvedId || !tab ? (
         <div className='text-content-muted flex h-64 items-center justify-center text-sm'>
-          <Loader2 className='mr-2 size-4 animate-spin' /> Đang resolve landing…
+          <Loader2 className='mr-2 size-4 animate-spin' />{' '}
+          {t('landingPagesIdAnalytics.resolving')}
         </div>
       ) : (
         <>

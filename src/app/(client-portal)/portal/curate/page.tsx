@@ -21,6 +21,7 @@ import {
   Type,
   type LucideIcon,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -388,6 +389,7 @@ const SCOPE_META: Record<
 type ScopeFilter = 'all' | InteractionMeta['scope'];
 
 export default function PortalCuratePage() {
+  const t = useTranslations('portal');
   const [search, setSearch] = useState('');
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>('all');
   const [enabledMap, setEnabledMap] = useState<
@@ -429,7 +431,9 @@ export default function PortalCuratePage() {
     setEnabledMap(m => {
       const next = { ...m, [k]: !m[k] };
       toast.success(
-        `${INTERACTIONS[k].label} ${next[k] ? 'đã bật' : 'đã tắt'} tracking`
+        next[k]
+          ? t('curate.toggleOnToast', { label: t(`curate.kind_${k}_label`) })
+          : t('curate.toggleOffToast', { label: t(`curate.kind_${k}_label`) })
       );
       return next;
     });
@@ -440,41 +444,42 @@ export default function PortalCuratePage() {
       {/* Header */}
       <section>
         <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
-          <Sticker className='size-3' /> Curate · Loại tương tác
+          <Sticker className='size-3' /> {t('curate.eyebrow')}
         </div>
         <h1 className='mt-1 text-2xl font-bold tracking-tight'>
-          Quản lý tương tác visitor
+          {t('curate.title')}
         </h1>
         <p className='text-content-muted mt-1 max-w-2xl text-sm'>
-          Chọn loại tương tác Rexer sẽ track trên trang public của brand. Mỗi
-          loại fire 1 analytics event để dashboard tổng hợp.
+          {t('curate.subtitle')}
         </p>
         <div className='text-2xs mt-3 inline-block rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800'>
-          <strong>UI Demo · dữ liệu mẫu</strong> — số liệu event + feed
-          real-time bên dưới là mock; chờ BE wire endpoint analytics events.
+          <strong>{t('curate.demoBadgeStrong')}</strong>{' '}
+          {t('curate.demoBadgeRest')}
         </div>
       </section>
 
       {/* Top stats */}
       <div className='mt-4 grid grid-cols-3 gap-3'>
         <StatTile
-          label='Loại đang track'
+          label={t('curate.statTrackingLabel')}
           value={`${totals.enabled}/${totals.total}`}
-          hint='Có thể bật/tắt từng loại'
+          hint={t('curate.statTrackingHint')}
           color='bg-emerald-500'
           icon={CheckCircle2}
         />
         <StatTile
-          label='Events 30 ngày'
+          label={t('curate.statEvents30dLabel')}
           value={fmtNum(totals.totalEvents)}
-          hint={`${fmtFull(totals.totalEvents)} sự kiện`}
+          hint={t('curate.statEvents30dHint', {
+            count: fmtFull(totals.totalEvents),
+          })}
           color='bg-blue-500'
           icon={Activity}
         />
         <StatTile
-          label='Events real-time'
-          value={`${FAKE_EVENTS.length} mới`}
-          hint='Trong 25 phút qua'
+          label={t('curate.statRealtimeLabel')}
+          value={t('curate.statRealtimeValue', { count: FAKE_EVENTS.length })}
+          hint={t('curate.statRealtimeHint')}
           color='bg-fuchsia-500'
           icon={Sparkles}
         />
@@ -486,7 +491,7 @@ export default function PortalCuratePage() {
           <Search className='text-muted-foreground size-3.5' />
           <input
             type='text'
-            placeholder='Tìm theo tên / mô tả...'
+            placeholder={t('curate.searchPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className='placeholder:text-muted-foreground flex-1 bg-transparent text-sm outline-none'
@@ -504,8 +509,8 @@ export default function PortalCuratePage() {
               }`}
             >
               {s === 'all'
-                ? `Tất cả · ${allKinds.length}`
-                : SCOPE_META[s].label}
+                ? t('curate.filterAll', { count: allKinds.length })
+                : t(`curate.scope_${s}`)}
             </button>
           ))}
         </div>
@@ -531,9 +536,9 @@ export default function PortalCuratePage() {
               <Activity className='size-4' />
             </div>
             <div>
-              <h3 className='text-sm font-semibold'>Events real-time</h3>
+              <h3 className='text-sm font-semibold'>{t('curate.feedTitle')}</h3>
               <p className='text-2xs text-content-muted'>
-                {FAKE_EVENTS.length} sự kiện gần nhất trên các trang public
+                {t('curate.feedSubtitle', { count: FAKE_EVENTS.length })}
               </p>
             </div>
           </div>
@@ -598,9 +603,9 @@ function InteractionCard({
   enabled: boolean;
   onToggle: () => void;
 }) {
+  const t = useTranslations('portal');
   const m = INTERACTIONS[kind];
   const Icon = m.icon;
-  const scope = SCOPE_META[m.scope];
   return (
     <div
       className={`group border-border relative overflow-hidden rounded-2xl border bg-gradient-to-br ${m.gradient} to-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${
@@ -636,22 +641,26 @@ function InteractionCard({
           </span>
         )}
       </div>
-      <h3 className='mt-0.5 text-sm font-bold tracking-tight'>{m.label}</h3>
+      <h3 className='mt-0.5 text-sm font-bold tracking-tight'>
+        {t(`curate.kind_${kind}_label`)}
+      </h3>
       <p className='text-2xs text-content-muted mt-1 leading-snug'>
-        {m.description}
+        {t(`curate.kind_${kind}_desc`)}
       </p>
 
       <div className='border-border mt-3 flex items-end justify-between border-t pt-2'>
         <div>
-          <div className='text-3xs text-content-muted font-mono'>30 ngày</div>
+          <div className='text-3xs text-content-muted font-mono'>
+            {t('curate.days30')}
+          </div>
           <div className='text-foreground font-mono text-base font-bold'>
             {fmtNum(m.count_30d)}
           </div>
         </div>
         <span
-          className={`text-3xs rounded-full px-2 py-0.5 font-bold ${scope.chip}`}
+          className={`text-3xs rounded-full px-2 py-0.5 font-bold ${SCOPE_META[m.scope].chip}`}
         >
-          {scope.label}
+          {t(`curate.scope_${m.scope}`)}
         </span>
       </div>
     </div>

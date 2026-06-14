@@ -8,6 +8,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Loader2, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -29,6 +30,7 @@ export function CreateLandingDialog({
   onCreated,
 }: Props) {
   const router = useRouter();
+  const t = useTranslations('portal');
   const [name, setName] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -46,7 +48,7 @@ export function CreateLandingDialog({
     e?.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
-      setError('Đặt tên cho landing trước khi tạo');
+      setError(t('landingPagesCreateLandingDialog.errorNameRequired'));
       return;
     }
     setSubmitting(true);
@@ -56,7 +58,11 @@ export function CreateLandingDialog({
         name: trimmed,
         workspace_id: workspaceId,
       });
-      toast.success(`Đã tạo "${created.name}"`);
+      toast.success(
+        t('landingPagesCreateLandingDialog.createdToast', {
+          name: created.name,
+        })
+      );
       onCreated?.(created.id);
       onClose();
       // BE returns canvas_template id even though listTemplates uses a
@@ -64,9 +70,7 @@ export function CreateLandingDialog({
       router.push(`/canvas-templates/${created.id}`);
     } catch (err) {
       if (err instanceof RxApiError && err.status === 404) {
-        setError(
-          'BE chưa ship endpoint POST /portal/templates (be-todo.md P0.2)'
-        );
+        setError(t('landingPagesCreateLandingDialog.errorEndpointMissing'));
       } else {
         const msg =
           err instanceof RxApiError
@@ -96,13 +100,15 @@ export function CreateLandingDialog({
             <div className='flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-sm'>
               <Sparkles className='size-4' />
             </div>
-            <h3 className='text-base font-semibold'>Tạo landing mới</h3>
+            <h3 className='text-base font-semibold'>
+              {t('landingPagesCreateLandingDialog.title')}
+            </h3>
           </div>
           <button
             type='button'
             onClick={onClose}
             className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
-            aria-label='Close'
+            aria-label={t('landingPagesCreateLandingDialog.closeAria')}
           >
             <X className='size-4' />
           </button>
@@ -111,7 +117,8 @@ export function CreateLandingDialog({
         <div className='space-y-3 px-5 py-4'>
           <div>
             <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-              Tên landing <span className='text-rose-500'>*</span>
+              {t('landingPagesCreateLandingDialog.nameLabel')}{' '}
+              <span className='text-rose-500'>*</span>
             </label>
             <input
               autoFocus
@@ -119,12 +126,11 @@ export function CreateLandingDialog({
               value={name}
               maxLength={200}
               onChange={e => setName(e.target.value)}
-              placeholder='Vd: Hè 2026 — Coca-Cola promo'
+              placeholder={t('landingPagesCreateLandingDialog.namePlaceholder')}
               className='border-border mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
             />
             <p className='text-3xs text-content-muted mt-1'>
-              Tên hiển thị trong /portal/landing-pages, đổi sau được. Workspace
-              hiện tại sẽ được auto-attach.
+              {t('landingPagesCreateLandingDialog.nameHint')}
             </p>
           </div>
 
@@ -142,7 +148,7 @@ export function CreateLandingDialog({
             disabled={submitting}
             className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
-            Huỷ
+            {t('landingPagesCreateLandingDialog.cancel')}
           </button>
           <button
             type='submit'
@@ -154,7 +160,9 @@ export function CreateLandingDialog({
             ) : (
               <Sparkles className='size-3.5' />
             )}
-            {submitting ? 'Đang tạo…' : 'Tạo + mở editor'}
+            {submitting
+              ? t('landingPagesCreateLandingDialog.submitting')
+              : t('landingPagesCreateLandingDialog.submit')}
           </button>
         </div>
       </form>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Globe, Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -41,6 +42,7 @@ export function CreateMicroSiteDialog({
   onOpenChange: (open: boolean) => void;
   onSaved: (site: MicroSite) => void;
 }) {
+  const t = useTranslations('portal');
   const isEdit = !!site;
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
@@ -58,15 +60,15 @@ export function CreateMicroSiteDialog({
 
   const submit = async () => {
     if (!name.trim()) {
-      toast.error('Tên micro site không được rỗng');
+      toast.error(t('microSitesCreateMicroSiteDialog.nameRequired'));
       return;
     }
     if (status === 'live' && !url.trim()) {
-      toast.error('Site Live cần có URL');
+      toast.error(t('microSitesCreateMicroSiteDialog.liveNeedsUrl'));
       return;
     }
     if (!isEdit && !brandId) {
-      toast.error('Chưa xác định được brand để tạo micro site');
+      toast.error(t('microSitesCreateMicroSiteDialog.noBrand'));
       return;
     }
     setSaving(true);
@@ -83,11 +85,19 @@ export function CreateMicroSiteDialog({
       onSaved(saved);
       onOpenChange(false);
       toast.success(
-        isEdit ? `Đã lưu "${saved.name}"` : `Đã thêm "${saved.name}"`
+        isEdit
+          ? t('microSitesCreateMicroSiteDialog.savedToast', {
+              name: saved.name,
+            })
+          : t('microSitesCreateMicroSiteDialog.addedToast', {
+              name: saved.name,
+            })
       );
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : 'Lưu micro site thất bại'
+        err instanceof Error
+          ? err.message
+          : t('microSitesCreateMicroSiteDialog.saveFailed')
       );
     } finally {
       setSaving(false);
@@ -102,24 +112,29 @@ export function CreateMicroSiteDialog({
             <span className='flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-white'>
               <Globe className='size-4' />
             </span>
-            {isEdit ? 'Sửa micro site' : 'Thêm micro site'}
+            {isEdit
+              ? t('microSitesCreateMicroSiteDialog.titleEdit')
+              : t('microSitesCreateMicroSiteDialog.titleCreate')}
           </DialogTitle>
         </DialogHeader>
 
         <div className='space-y-4'>
-          <Field label='Tên' required>
+          <Field
+            label={t('microSitesCreateMicroSiteDialog.nameLabel')}
+            required
+          >
             <Input
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder='vd: ABCe'
+              placeholder={t('microSitesCreateMicroSiteDialog.namePlaceholder')}
               autoFocus
               maxLength={120}
             />
           </Field>
 
           <Field
-            label='Domain / URL'
-            hint='Site khách do Rexer code + host riêng'
+            label={t('microSitesCreateMicroSiteDialog.urlLabel')}
+            hint={t('microSitesCreateMicroSiteDialog.urlHint')}
           >
             <Input
               value={url}
@@ -131,7 +146,7 @@ export function CreateMicroSiteDialog({
 
           <div>
             <Label className='text-2xs text-content-muted font-semibold tracking-wider uppercase'>
-              Trạng thái
+              {t('microSitesCreateMicroSiteDialog.statusLabel')}
             </Label>
             <div className='mt-1.5 grid grid-cols-3 gap-2'>
               {STATUSES.map(s => {
@@ -157,12 +172,14 @@ export function CreateMicroSiteDialog({
             </div>
           </div>
 
-          <Field label='Mô tả'>
+          <Field label={t('microSitesCreateMicroSiteDialog.descriptionLabel')}>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
               rows={2}
-              placeholder='(tuỳ chọn)'
+              placeholder={t(
+                'microSitesCreateMicroSiteDialog.descriptionPlaceholder'
+              )}
               className='border-border placeholder:text-content-muted focus:border-primary w-full resize-none rounded-md border bg-white px-3 py-2 text-sm outline-none'
             />
           </Field>
@@ -175,7 +192,7 @@ export function CreateMicroSiteDialog({
             onClick={() => onOpenChange(false)}
             disabled={saving}
           >
-            Huỷ
+            {t('microSitesCreateMicroSiteDialog.cancel')}
           </Button>
           <Button
             variant='pill'
@@ -184,7 +201,9 @@ export function CreateMicroSiteDialog({
             disabled={!name.trim() || saving}
           >
             {saving && <Loader2 className='size-3.5 animate-spin' />}
-            {isEdit ? 'Lưu thay đổi' : 'Tạo micro site'}
+            {isEdit
+              ? t('microSitesCreateMicroSiteDialog.saveChanges')
+              : t('microSitesCreateMicroSiteDialog.createButton')}
           </Button>
         </DialogFooter>
       </DialogContent>
