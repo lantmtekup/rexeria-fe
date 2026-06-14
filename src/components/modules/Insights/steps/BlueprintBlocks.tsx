@@ -19,6 +19,7 @@ import {
 import { rexerApi } from '@/services/rexer/endpoints';
 
 import { Badge } from '@/components/atoms/badge';
+import { Button } from '@/components/atoms/button';
 import {
   Dialog,
   DialogContent,
@@ -491,10 +492,34 @@ export function BlocksSection({
 
 /* ── Template ──────────────────────────────────────────────────────────────── */
 
-function TemplateCard({ tpl }: { tpl: InsightRecommendedTemplate }) {
+function TemplateCard({
+  tpl,
+  busy,
+  disabled,
+  onUse,
+}: {
+  tpl: InsightRecommendedTemplate;
+  /** Card này đang handoff → hiện spinner. */
+  busy: boolean;
+  /** Có handoff khác đang chạy → khoá nút. */
+  disabled: boolean;
+  onUse: () => void;
+}) {
   const t = useTranslations('insights');
   const [open, setOpen] = useState(false);
   const codes = tpl.block_codes ?? [];
+  // SP1: nhãn nguồn — template thật trong thư viện vs AI tự dựng. Thiếu `source`
+  // (report trước SP1) → không hiển thị badge.
+  const sourceBadge =
+    tpl.source === 'library' ? (
+      <Badge variant='default' className='shrink-0'>
+        {t('blueprint.sourceLibrary')}
+      </Badge>
+    ) : tpl.source === 'composed' ? (
+      <Badge variant='outline' className='shrink-0'>
+        {t('blueprint.sourceComposed')}
+      </Badge>
+    ) : null;
 
   return (
     <div className='group/tpl border-border bg-card flex h-full flex-col overflow-hidden rounded-xl border transition hover:-translate-y-0.5 hover:shadow-md'>
@@ -502,6 +527,7 @@ function TemplateCard({ tpl }: { tpl: InsightRecommendedTemplate }) {
         <Thumb
           code={tpl.name}
           kind='template'
+          imageUrl={tpl.thumbnail_url ?? undefined}
           className='h-36 w-full rounded-none'
         />
         <button
@@ -517,31 +543,50 @@ function TemplateCard({ tpl }: { tpl: InsightRecommendedTemplate }) {
           <span className='text-content-main min-w-0 font-semibold'>
             {tpl.name}
           </span>
-          {tpl.category && (
-            <Badge variant='secondary' className='shrink-0'>
-              {tpl.category}
-            </Badge>
-          )}
+          <div className='flex shrink-0 items-center gap-1'>
+            {sourceBadge}
+            {tpl.category && (
+              <Badge variant='secondary' className='shrink-0'>
+                {tpl.category}
+              </Badge>
+            )}
+          </div>
         </div>
         {tpl.description && (
           <p className='text-content-muted line-clamp-2 text-sm'>
             {tpl.description}
           </p>
         )}
-        {codes.length > 0 && (
-          <div className='mt-auto flex flex-wrap gap-1.5 pt-1'>
-            {codes.slice(0, 4).map(code => (
-              <Badge key={code} variant='outline'>
-                {code}
-              </Badge>
-            ))}
-            {codes.length > 4 && (
-              <span className='text-content-muted self-center text-xs'>
-                +{codes.length - 4}
-              </span>
+        <div className='mt-auto flex flex-col gap-2 pt-1'>
+          {codes.length > 0 && (
+            <div className='flex flex-wrap gap-1.5'>
+              {codes.slice(0, 4).map(code => (
+                <Badge key={code} variant='outline'>
+                  {code}
+                </Badge>
+              ))}
+              {codes.length > 4 && (
+                <span className='text-content-muted self-center text-xs'>
+                  +{codes.length - 4}
+                </span>
+              )}
+            </div>
+          )}
+          <Button
+            type='button'
+            size='sm'
+            onClick={onUse}
+            disabled={disabled}
+            className='w-full'
+          >
+            {busy ? (
+              <Loader2 className='size-4 animate-spin' aria-hidden />
+            ) : (
+              <Wand2 className='size-4' aria-hidden />
             )}
-          </div>
-        )}
+            {t('blueprint.useTemplate')}
+          </Button>
+        </div>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -589,9 +634,15 @@ function TemplateCard({ tpl }: { tpl: InsightRecommendedTemplate }) {
 
 export function TemplatesSection({
   blueprint,
+  pending = null,
+  onUse,
   collapsible = true,
 }: {
   blueprint: InsightBlueprint;
+  /** Key handoff đang chạy (tên template) — null khi rảnh. Khoá các card khi
+   * != null. Optional: chế độ preview (popup marketing) bỏ qua handoff. */
+  pending?: string | null;
+  onUse?: (tpl: InsightRecommendedTemplate) => void;
   collapsible?: boolean;
 }) {
   const t = useTranslations('insights');
@@ -609,7 +660,13 @@ export function TemplatesSection({
     >
       <div className='grid gap-4 sm:grid-cols-2'>
         {(templates.templates ?? []).map(tpl => (
-          <TemplateCard key={tpl.name} tpl={tpl} />
+          <TemplateCard
+            key={tpl.name}
+            tpl={tpl}
+            busy={pending === tpl.name}
+            disabled={pending !== null}
+            onUse={() => onUse?.(tpl)}
+          />
         ))}
       </div>
     </SectionCard>

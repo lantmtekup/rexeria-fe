@@ -3003,6 +3003,16 @@ export interface InsightRecommendedTemplate {
   block_codes: string[];
   description: string;
   why_fit: string;
+  /**
+   * SP1: nguồn của gợi ý. `library` = template thật trong thư viện (có `template_id`
+   * + có thể có `thumbnail_url`); `composed` = AI tự dựng từ `block_codes`.
+   * Optional vì report tạo trước SP1 không có field này.
+   */
+  source?: 'library' | 'composed';
+  /** SP1: id template thật khi `source==='library'`; rỗng/thiếu khi `composed`. */
+  template_id?: string;
+  /** SP1: ảnh thumbnail template thật (nếu có); null/thiếu khi `composed`. */
+  thumbnail_url?: string | null;
 }
 
 /** Tập hợp template đề xuất. */

@@ -20,6 +20,7 @@ import { Button } from '@/components/atoms/button';
 import type {
   ExperienceGoal,
   InsightBlueprint,
+  InsightRecommendedTemplate,
   InsightReport,
 } from '@/services/rexer/types';
 import { ConfidenceRing, GradientButton, SectionCard } from './ui';
@@ -32,8 +33,10 @@ import { BlocksSection, TemplatesSection } from './BlueprintBlocks';
  * lý do (rationale/why) để người dùng hiểu vì sao AI gợi ý như vậy.
  *
  * Xử lý cả case `failed` / thiếu blueprint: hiện thông báo lỗi + nút chạy lại.
- * Nút "Tùy chỉnh trải nghiệm" (handoff) hiện chưa có đích điều hướng (ngoài
- * phạm vi task này); nút "Chạy phân tích" reset wizard về màn Setup.
+ * Handoff (SP1): nút global "Tùy chỉnh trải nghiệm" compose template từ toàn bộ
+ * blueprint; mỗi card template có nút "Dùng template này" — pick `library` thì
+ * clone template thật (gửi `source_template_id`), còn lại compose theo block_codes;
+ * cả hai đều điều hướng sang trang edit template. Nút "Chạy phân tích" reset wizard.
  *
  * Lưu ý contract: blueprint của BE KHÔNG có field `assumptions` (xác nhận theo
  * openapi.yaml #/components/schemas/InsightBlueprint) → không render panel đó.
@@ -169,17 +172,49 @@ export function JourneySection({
 // BlocksSection + TemplatesSection (collapse/expand, thumbnail, xem chi tiết,
 // AI tạo nội dung / tìm thủ công) đã tách sang ./BlueprintBlocks.
 
+/** Key của nút global "tự dựng từ blueprint" (phân biệt với key = tên template). */
+const COMPOSE_KEY = '__compose__';
+
 export function BlueprintStep({ report, onRestart }: BlueprintStepProps) {
   const t = useTranslations('insights');
   const router = useRouter();
-  const [handingOff, setHandingOff] = useState(false);
+  // Key đang handoff: tên template cho 1 card, COMPOSE_KEY cho nút global, null khi rảnh.
+  // Khoá 1 handoff tại một thời điểm để tránh tạo template trùng.
+  const [pending, setPending] = useState<string | null>(null);
 
-  // KB2: dựng template thật từ blueprint → điều hướng sang trang edit template.
-  const handoff = async () => {
-    if (!report?.id) return;
-    setHandingOff(true);
+  // KB2 / SP1: dựng template thật từ blueprint → điều hướng sang trang edit template.
+  // `choice` rỗng → BE compose từ blocks của blueprint (hành vi cũ). Có `choice`:
+  // library (có template_id) → clone template thật; còn lại → compose theo block_codes.
+  const handoff = async (choice?: InsightRecommendedTemplate) => {
+    if (!report?.id || pending) return;
+    setPending(choice?.name ?? COMPOSE_KEY);
     try {
-      const r = await rexerApi.insights.handoff(report.id);
+      let body:
+        | {
+            template?: {
+              name?: string;
+              block_codes?: string[];
+              source_template_id?: string;
+            };
+          }
+        | undefined;
+      if (choice) {
+        body =
+          choice.source === 'library' && choice.template_id
+            ? {
+                template: {
+                  name: choice.name,
+                  source_template_id: choice.template_id,
+                },
+              }
+            : {
+                template: {
+                  name: choice.name,
+                  block_codes: choice.block_codes,
+                },
+              };
+      }
+      const r = await rexerApi.insights.handoff(report.id, body);
       toast.success(t('blueprint.handoffDone'));
       router.push(r.edit_url);
     } catch (err) {
@@ -187,7 +222,7 @@ export function BlueprintStep({ report, onRestart }: BlueprintStepProps) {
         err instanceof Error ? err.message : t('blueprint.handoffFailed')
       );
     } finally {
-      setHandingOff(false);
+      setPending(null);
     }
   };
 
@@ -233,7 +268,11 @@ export function BlueprintStep({ report, onRestart }: BlueprintStepProps) {
       <GoalSection blueprint={blueprint} />
       <JourneySection blueprint={blueprint} />
       <BlocksSection blueprint={blueprint} reportId={report.id} />
-      <TemplatesSection blueprint={blueprint} />
+      <TemplatesSection
+        blueprint={blueprint}
+        pending={pending}
+        onUse={handoff}
+      />
 
       {blueprint.generated_with && (
         <p className='text-content-muted text-xs'>
@@ -244,10 +283,10 @@ export function BlueprintStep({ report, onRestart }: BlueprintStepProps) {
       {/* Footer hành động */}
       <div className='border-border flex flex-wrap items-center gap-3 border-t pt-5'>
         <GradientButton
-          disabled={handingOff}
-          onClick={handoff}
+          disabled={pending !== null}
+          onClick={() => handoff()}
           leading={
-            handingOff ? (
+            pending === COMPOSE_KEY ? (
               <Loader2 className='size-4 animate-spin' aria-hidden />
             ) : (
               <Wand2 className='size-4' aria-hidden />
@@ -256,7 +295,12 @@ export function BlueprintStep({ report, onRestart }: BlueprintStepProps) {
         >
           {t('blueprint.handoff')}
         </GradientButton>
-        <Button type='button' variant='outline' onClick={onRestart}>
+        <Button
+          type='button'
+          variant='outline'
+          onClick={onRestart}
+          disabled={pending !== null}
+        >
           <RotateCcw className='size-4' aria-hidden />
           {t('setup.run')}
         </Button>
