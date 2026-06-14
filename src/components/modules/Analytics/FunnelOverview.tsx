@@ -33,7 +33,10 @@ const RANGES: { value: DateRange; label: string }[] = [
 export function FunnelOverview({ pageId }: { pageId: string }) {
   const [range, setRange] = useState<DateRange>('30d');
   const [tab, setTab] = useState<ViewTab>('marketing');
-  const { data, loading, error } = useFunnelAnalytics(pageId, range);
+  // useFunnelAnalytics degrade từng call (funnel lỗi → số 0), nên không có
+  // trạng thái "màn lỗi" — thiếu data chỉ render layout với số 0, đồng nhất
+  // graceful-empty với BlockAnalyticsGrid + tab Tổng quan.
+  const { data, loading } = useFunnelAnalytics(pageId, range);
 
   return (
     <div className='flex flex-col gap-4'>
@@ -53,11 +56,7 @@ export function FunnelOverview({ pageId }: { pageId: string }) {
         />
       </div>
 
-      {error ? (
-        <Card title='Không tải được analytics'>
-          <p className='text-content-muted text-sm'>{error}</p>
-        </Card>
-      ) : loading || !data ? (
+      {loading || !data ? (
         <FunnelSkeleton />
       ) : (
         <>

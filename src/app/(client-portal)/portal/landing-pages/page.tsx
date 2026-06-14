@@ -20,6 +20,7 @@
 
 import {
   BarChart3,
+  ExternalLink,
   Eye,
   HelpCircle,
   Info,
@@ -286,19 +287,34 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
 
         {/* Actions — brand chỉ Preview + Analytics (Phase 1 review-only) */}
         <div className='mt-4 grid grid-cols-2 gap-2'>
-          <Link
-            href={`/portal/landing-pages/${t.id}/preview`}
-            aria-disabled={isArchived}
-            className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              isArchived
-                ? 'border-border bg-muted text-muted-foreground pointer-events-none border'
-                : 'bg-zinc-900 text-white hover:bg-zinc-700'
-            }`}
-            title='Xem trước landing — render chính xác như khách sẽ thấy'
-          >
-            <Eye className='size-3.5' />
-            Preview
-          </Link>
+          {t.external_url ? (
+            // Landing loại "extension" → mở thẳng URL ngoài (tab mới), giống
+            // nút "Mở link" ở admin. Không có trang Preview nội bộ để render.
+            <a
+              href={t.external_url}
+              target='_blank'
+              rel='noreferrer'
+              className='inline-flex items-center justify-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700'
+              title={`Mở link ngoài: ${t.external_url}`}
+            >
+              <ExternalLink className='size-3.5' />
+              Mở link
+            </a>
+          ) : (
+            <Link
+              href={`/portal/landing-pages/${t.id}/preview`}
+              aria-disabled={isArchived}
+              className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                isArchived
+                  ? 'border-border bg-muted text-muted-foreground pointer-events-none border'
+                  : 'bg-zinc-900 text-white hover:bg-zinc-700'
+              }`}
+              title='Xem trước landing — render chính xác như khách sẽ thấy'
+            >
+              <Eye className='size-3.5' />
+              Preview
+            </Link>
+          )}
 
           <Link
             href={`/portal/landing-pages/${t.id}/analytics`}

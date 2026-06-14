@@ -40,14 +40,42 @@ export function useFunnelAnalytics(pageId: string, range: DateRange) {
     let alive = true;
     setState(s => ({ ...s, loading: true, error: null }));
 
+    // Degrade từng call: chỉ `funnel` là core (số phễu). sources/blocks/
+    // timeseries là phụ trợ — 1 cái lỗi (vd `blocks` trả "Internal-only" với
+    // 1 số ngữ cảnh) KHÔNG được làm trắng cả tab. Mirror graceful-empty của
+    // BlockAnalyticsGrid + tab Tổng quan: thiếu data → render số 0, không màn
+    // lỗi. Chỉ báo lỗi khi chính `funnel` (core) hỏng.
+    const ZERO_FUNNEL = {
+      page_id: pageId,
+      visits: 0,
+      engaged: 0,
+      cta_clicks: 0,
+      leads: 0,
+      sql: 0,
+      deals: 0,
+      visits_prev_period: 0,
+      avg_session_sec: 0,
+      total_dwell_sec: 0,
+      sql_threshold: 65,
+      from: '',
+      to: '',
+    };
+
     Promise.all([
-      rexerApi.pages.analytics.funnel(pageId, { range }),
-      rexerApi.pages.analytics.sources(pageId, { range }),
-      rexerApi.pages.analytics.blocks(pageId, { range }),
-      rexerApi.pages.analytics.timeseries(pageId, { metric: 'visits', range }),
+      rexerApi.pages.analytics.funnel(pageId, { range }).catch(() => null),
+      rexerApi.pages.analytics
+        .sources(pageId, { range })
+        .catch(() => ({ items: [] })),
+      rexerApi.pages.analytics
+        .blocks(pageId, { range })
+        .catch(() => ({ items: [] })),
+      rexerApi.pages.analytics
+        .timeseries(pageId, { metric: 'visits', range })
+        .catch(() => ({ page_id: pageId, metric: 'visits', points: [] })),
     ])
-      .then(([funnel, sources, blocksRes, ts]) => {
+      .then(([funnelRes, sources, blocksRes, ts]) => {
         if (!alive) return;
+        const funnel = funnelRes ?? ZERO_FUNNEL;
         const prev = funnel.visits_prev_period;
         const visitsDeltaPct =
           prev > 0 ? Math.round(((funnel.visits - prev) / prev) * 100) : 0;
@@ -79,9 +107,31 @@ export function useFunnelAnalytics(pageId: string, range: DateRange) {
         };
         setState({ data: mapped, loading: false, error: null });
       })
-      .catch(e => {
+      .catch(() => {
+        // Mapping chỉ lỗi ở tình huống gần như bất khả (input đã được
+        // guaranteed-shape ở trên). Vẫn graceful-empty: render layout số 0,
+        // không màn lỗi / không kẹt skeleton.
         if (!alive) return;
-        setState({ data: null, loading: false, error: errMessage(e) });
+        setState({
+          data: {
+            funnel: {
+              visits: 0,
+              engaged: 0,
+              ctaClicks: 0,
+              leads: 0,
+              sql: 0,
+              deals: 0,
+            },
+            sources: [],
+            blocks: [],
+            visitsByDay: [],
+            visitsDeltaPct: 0,
+            avgSessionSec: 0,
+            sqlThreshold: 65,
+          },
+          loading: false,
+          error: null,
+        });
       });
 
     return () => {

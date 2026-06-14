@@ -21,7 +21,7 @@ export default function AnalyticsLogin({ onSuccess }: Props) {
       setError('');
       onSuccess();
     } else {
-      setError('Sai tên đăng nhập hoặc mật khẩu.');
+      setError('Incorrect username or password.');
     }
   };
 
@@ -33,14 +33,14 @@ export default function AnalyticsLogin({ onSuccess }: Props) {
       >
         <h1 className='mb-1 font-serif text-xl text-white'>Analytics Access</h1>
         <p className='mb-6 text-sm text-neutral-400'>
-          Đăng nhập để xem lớp phân tích landing.
+          Log in to view the landing analytics layer.
         </p>
 
         <label
           htmlFor='an-user'
           className='mb-1 block text-xs text-neutral-400'
         >
-          Tên đăng nhập
+          Username
         </label>
         <input
           id='an-user'
@@ -56,7 +56,7 @@ export default function AnalyticsLogin({ onSuccess }: Props) {
           htmlFor='an-pass'
           className='mb-1 block text-xs text-neutral-400'
         >
-          Mật khẩu
+          Password
         </label>
         <input
           id='an-pass'
@@ -74,7 +74,7 @@ export default function AnalyticsLogin({ onSuccess }: Props) {
           type='submit'
           className='w-full rounded-lg bg-amber-500 py-2 text-sm font-medium text-neutral-950 transition-colors hover:bg-amber-400'
         >
-          Đăng nhập
+          Log in
         </button>
       </form>
     </div>
