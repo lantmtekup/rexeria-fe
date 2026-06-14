@@ -587,8 +587,28 @@ function TemplateCard({
   onUse: () => void;
 }) {
   const t = useTranslations('insights');
+  const locale = useLocale();
+  const lang: Lang = locale === 'en' ? 'en' : 'vi';
   const [open, setOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const codes = tpl.block_codes ?? [];
+
+  // Preview cả template: resolve từng block_code → editor block, render xếp
+  // chồng trong PreviewMode (giống trang public). Code lạ → bỏ qua; còn ≥1
+  // block resolve được thì cho nút Preview.
+  const tplBlocks = useMemo(() => {
+    return (tpl.block_codes ?? [])
+      .map(code => {
+        const editorType = resolveEditorType(code);
+        if (!editorType) return null;
+        try {
+          return createBlock(editorType);
+        } catch {
+          return null;
+        }
+      })
+      .filter((b): b is NonNullable<typeof b> => b !== null);
+  }, [tpl.block_codes]);
   // SP1: nhãn nguồn — template thật trong thư viện vs AI tự dựng. Thiếu `source`
   // (report trước SP1) → không hiển thị badge.
   const sourceBadge =
@@ -611,13 +631,24 @@ function TemplateCard({
           imageUrl={tpl.thumbnail_url ?? undefined}
           className='h-36 w-full rounded-none'
         />
-        <button
-          type='button'
-          onClick={() => setOpen(true)}
-          className='text-content-main absolute right-2 bottom-2 inline-flex items-center gap-1 rounded-lg bg-white/95 px-2 py-1 text-[11px] font-semibold shadow-sm backdrop-blur transition hover:bg-white'
-        >
-          <Eye className='size-3' aria-hidden /> {t('blueprint.viewDetail')}
-        </button>
+        <div className='absolute right-2 bottom-2 flex gap-1.5'>
+          {tplBlocks.length > 0 && (
+            <button
+              type='button'
+              onClick={() => setPreviewOpen(true)}
+              className='text-content-main inline-flex items-center gap-1 rounded-lg bg-white/95 px-2 py-1 text-[11px] font-semibold shadow-sm backdrop-blur transition hover:bg-white'
+            >
+              <Expand className='size-3' aria-hidden /> {t('blueprint.preview')}
+            </button>
+          )}
+          <button
+            type='button'
+            onClick={() => setOpen(true)}
+            className='text-content-main inline-flex items-center gap-1 rounded-lg bg-white/95 px-2 py-1 text-[11px] font-semibold shadow-sm backdrop-blur transition hover:bg-white'
+          >
+            <Eye className='size-3' aria-hidden /> {t('blueprint.viewDetail')}
+          </button>
+        </div>
       </div>
       <div className='flex flex-1 flex-col gap-2 p-4'>
         <div className='flex items-start justify-between gap-2'>
@@ -709,6 +740,16 @@ function TemplateCard({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Preview cả template toàn màn hình — xếp chồng các block đã resolve
+          (giống trang public), device toggle + đóng. */}
+      {previewOpen && tplBlocks.length > 0 && (
+        <PreviewMode
+          blocks={tplBlocks}
+          lang={lang}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
     </div>
   );
 }
