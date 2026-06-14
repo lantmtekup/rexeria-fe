@@ -192,10 +192,23 @@ function PortalShellInner({
   // Pre-hydration luôn filter (giống server: user=null → không staff) để SSR
   // và first client paint khớp; sau mount mới mở full NAV cho staff. Tránh
   // lệch số nav item → #418.
+  //
+  // PROD: brand/khách chỉ thấy 3 mục đã sẵn sàng cho Phase 1 managed —
+  // Landing pages, Media (Assets), Marketing. Các mục còn lại ẩn cho tới khi
+  // mở self-serve. Dev (NODE_ENV !== production) vẫn full để code/test. Staff
+  // sau hydrate vẫn thấy full ngay cả trên prod.
+  const isProd = process.env.NODE_ENV === 'production';
+  const PROD_BRAND_ALLOWED = new Set([
+    '/portal/landing-pages',
+    '/portal/media',
+    '/portal/marketing',
+  ]);
   const navItems =
     hydrated && isStaffOrAdmin
       ? NAV
-      : NAV.filter(n => n.href !== '/portal/templates');
+      : isProd
+        ? NAV.filter(n => PROD_BRAND_ALLOWED.has(n.href))
+        : NAV.filter(n => n.href !== '/portal/templates');
 
   const switchWorkspace = (ws: Workspace) => {
     setWsMenuOpen(false);

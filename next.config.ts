@@ -15,6 +15,9 @@ const parseImageHostname = (): string | undefined => {
 const imageHostname = parseImageHostname();
 
 const nextConfig: NextConfig = {
+  // Ẩn nút "N" Next.js dev tools indicator (góc dưới trái) ở dev.
+  devIndicators: false,
+
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',
