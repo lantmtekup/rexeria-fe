@@ -44,8 +44,6 @@ export function AdminAddLandingForClientDialog({
   const [workspaceId, setWorkspaceId] = React.useState('');
   const [templates, setTemplates] = React.useState<Template[]>([]);
   const [templateId, setTemplateId] = React.useState('');
-  // Landing code riêng: không clone từ template nào, dev tự code layout.
-  const [customCoded, setCustomCoded] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -90,8 +88,8 @@ export function AdminAddLandingForClientDialog({
       setError('Đặt tên cho landing trước');
       return;
     }
-    if (!customCoded && !templateId) {
-      setError('Chọn template, hoặc tick "Landing code riêng"');
+    if (!templateId) {
+      setError('Chọn template để khởi tạo');
       return;
     }
     if (!workspaceId) {
@@ -102,10 +100,7 @@ export function AdminAddLandingForClientDialog({
     setError(null);
     try {
       const page = await rexerApi.pages.create(workspaceId, {
-        // Code riêng → KHÔNG gửi template_id, đánh dấu custom_coded.
-        ...(customCoded
-          ? { type_metadata: { custom_coded: true } }
-          : { template_id: templateId }),
+        template_id: templateId,
         name: trimmed,
         type: 'landing',
         ...(notes.trim() ? { handoff_notes: notes.trim() } : {}),
@@ -175,32 +170,14 @@ export function AdminAddLandingForClientDialog({
           </div>
 
           <div>
-            <div className='flex items-center justify-between'>
-              <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-                Template{' '}
-                {customCoded ? (
-                  <span className='text-content-muted normal-case'>
-                    (không dùng)
-                  </span>
-                ) : (
-                  <span className='text-rose-500'>*</span>
-                )}
-              </label>
-              <label className='text-content-muted flex cursor-pointer items-center gap-1.5 text-xs'>
-                <input
-                  type='checkbox'
-                  checked={customCoded}
-                  onChange={e => setCustomCoded(e.target.checked)}
-                  className='accent-emerald-500'
-                />
-                Landing code riêng
-              </label>
-            </div>
+            <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
+              Template <span className='text-rose-500'>*</span>
+            </label>
             <select
               value={templateId}
               onChange={e => setTemplateId(e.target.value)}
-              disabled={customCoded || templates.length === 0}
-              className='border-border mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 disabled:opacity-50'
+              disabled={templates.length === 0}
+              className='border-border mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             >
               {templates.length === 0 && (
                 <option value=''>
@@ -215,9 +192,8 @@ export function AdminAddLandingForClientDialog({
               ))}
             </select>
             <p className='text-3xs text-content-muted mt-1'>
-              {customCoded
-                ? 'Landing code riêng — KHÔNG clone từ template. Page tạo trống (type_metadata.custom_coded), dev tự code layout.'
-                : 'BE clone canvas_blueprint + slot_schema từ template_version hiện hành sang page mới.'}
+              BE clone canvas_blueprint + slot_schema từ template_version hiện
+              hành sang page mới.
             </p>
           </div>
 
