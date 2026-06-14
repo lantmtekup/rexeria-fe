@@ -18,6 +18,9 @@ import type { ComponentType } from 'react';
 import type { TemplateMeta, TemplateProps } from './types';
 import { meta as heroClassicMeta } from './hero-classic/meta';
 import { meta as mintCointMeta } from './mint-coint/meta';
+import { meta as maisonNoirMeta } from './maison-noir/meta';
+import { meta as maisonAtelierMeta } from './maison-atelier/meta';
+import { meta as maisonClairMeta } from './maison-clair/meta';
 
 interface CodeTemplateEntry {
   meta: TemplateMeta;
@@ -49,6 +52,40 @@ export const TEMPLATE_REGISTRY: Record<string, CodeTemplateEntry> = {
       ssr: true,
       loading: () => (
         <div className='flex min-h-screen items-center justify-center bg-white text-sm text-zinc-500'>
+          Đang load template…
+        </div>
+      ),
+    }),
+  },
+  // ── Maison Éclat jewelry landings (GSAP + Lenis, 'use client') ──────────
+  [maisonNoirMeta.code]: {
+    meta: maisonNoirMeta,
+    Component: dynamic(() => import('./maison-noir'), {
+      ssr: true,
+      loading: () => (
+        <div className='flex min-h-screen items-center justify-center bg-[#0a0a0b] text-sm text-[#8f877a]'>
+          Đang load template…
+        </div>
+      ),
+    }),
+  },
+  [maisonAtelierMeta.code]: {
+    meta: maisonAtelierMeta,
+    Component: dynamic(() => import('./maison-atelier'), {
+      ssr: true,
+      loading: () => (
+        <div className='flex min-h-screen items-center justify-center bg-[#F2ECE3] text-sm text-[#7C7065]'>
+          Đang load template…
+        </div>
+      ),
+    }),
+  },
+  [maisonClairMeta.code]: {
+    meta: maisonClairMeta,
+    Component: dynamic(() => import('./maison-clair'), {
+      ssr: true,
+      loading: () => (
+        <div className='flex min-h-screen items-center justify-center bg-[#FBFBF9] text-sm text-[#7E827E]'>
           Đang load template…
         </div>
       ),
