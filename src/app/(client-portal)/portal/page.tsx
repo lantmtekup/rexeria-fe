@@ -105,12 +105,6 @@ export default function PortalDashboardPage() {
             <div className='text-2xs text-content-muted flex items-center gap-2 font-semibold tracking-wider uppercase'>
               <Sparkles className='size-3' /> Brand Dashboard · 30 ngày qua
             </div>
-            {source === 'live' && (
-              <span className='text-3xs inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-bold tracking-wider text-emerald-700'>
-                <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
-                LIVE BE · dashboard.summary
-              </span>
-            )}
           </div>
           <h1 className='mt-2 text-3xl font-bold tracking-tight'>
             Xin chào,{' '}

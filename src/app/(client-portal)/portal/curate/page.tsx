@@ -537,10 +537,6 @@ export default function PortalCuratePage() {
               </p>
             </div>
           </div>
-          <span className='text-3xs flex items-center gap-1.5 rounded-full bg-emerald-100 px-2 py-0.5 font-bold text-emerald-700'>
-            <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
-            LIVE feed
-          </span>
         </div>
         <div className='divide-y divide-zinc-100'>
           {FAKE_EVENTS.map(e => (

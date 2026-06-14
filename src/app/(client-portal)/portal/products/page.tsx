@@ -141,12 +141,6 @@ export default function PortalProductsPage() {
           </p>
         </div>
         <div className='flex items-center gap-2'>
-          {source === 'live' && (
-            <span className='text-3xs inline-flex items-center gap-1.5 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 font-bold tracking-wider text-emerald-700'>
-              <span className='size-1.5 animate-pulse rounded-full bg-emerald-500' />
-              LIVE BE
-            </span>
-          )}
           {loading && (
             <span className='text-2xs text-muted-foreground font-mono'>
               loading…
