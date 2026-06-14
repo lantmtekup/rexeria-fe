@@ -226,6 +226,7 @@ export async function loadTemplates(): Promise<LoadResult<PortalTemplate[]>> {
       workspace_id: t.workspace_id || '',
       name: t.name,
       thumbnail_gradient: TEMPLATE_GRADIENTS[i % TEMPLATE_GRADIENTS.length],
+      thumbnail_url: t.thumbnail_url || null,
       status:
         t.status === 'published' ||
         t.status === 'draft' ||
