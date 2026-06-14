@@ -153,8 +153,14 @@ export function PageOverlayView({ pageId }: Props) {
             null
           );
           const targetVerId = head?.id ?? p.template_version_id;
-          const v = await rexerApi.templates.version(foundTpl.id, targetVerId);
-          if (!cancelled) setVersion(v);
+          // Chưa có version → đừng gọi version(<null>) gây 500.
+          if (targetVerId) {
+            const v = await rexerApi.templates.version(
+              foundTpl.id,
+              targetVerId
+            );
+            if (!cancelled) setVersion(v);
+          }
         }
       } catch (err) {
         if (!cancelled)

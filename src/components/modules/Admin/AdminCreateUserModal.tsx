@@ -141,6 +141,9 @@ export function AdminCreateUserModal({
   const [error, setError] = React.useState<string | null>(null);
   const [created, setCreated] = React.useState<CreatedCredentials | null>(null);
 
+  // Reset CHỈ khi modal mở (open false→true). KHÔNG phụ thuộc `clients`:
+  // sau khi tạo, onCreated reload list → clients đổi → nếu để trong deps effect
+  // chạy lại + setCreated(null) → màn success bị nuốt sau ~vài giây.
   React.useEffect(() => {
     if (open) {
       setEmail('');
@@ -152,7 +155,8 @@ export function AdminCreateUserModal({
       setError(null);
       setCreated(null);
     }
-  }, [open, clients]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   if (!open) return null;
 
