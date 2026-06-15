@@ -460,7 +460,7 @@ function Hotspot({
       type='button'
       onClick={onClick}
       data-cta-id={`hotspot-${label.toLowerCase().replace(/\s+/g, '-')}`}
-      className='group absolute flex -translate-x-1/2 -translate-y-1/2 items-center'
+      className='group absolute -translate-x-1/2 -translate-y-1/2'
       // `touch-action: manipulation` skips iOS's 300ms tap-vs-double-tap
       // detection and lets vertical scroll pass through the button
       // immediately if the finger moves at all. Without this, even a
@@ -469,11 +469,22 @@ function Hotspot({
       style={{ left: `${xPct}%`, top: `${yPct}%`, touchAction: 'manipulation' }}
       aria-label={`Open ${label}`}
     >
-      <span className='relative flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-black/15 transition-transform duration-300 group-hover:scale-125'>
-        {/* tiny inner dot, only visible on hover for an extra "live" feel */}
-        <span className='block h-1 w-1 rounded-full bg-black opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
+      {/* Hotspot marker = the RCM crown badge image. The wrapper span carries
+          the gentle float animation; the img keeps the hover-scale so the two
+          transforms don't fight. */}
+      <span className='hotspot-float block'>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src='/mint-icon.png'
+          alt=''
+          aria-hidden='true'
+          draggable={false}
+          className='h-10 w-10 rounded-full shadow-lg drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)] transition-transform duration-300 select-none group-hover:scale-110'
+        />
       </span>
-      <span className='ml-3 -translate-x-1 rounded-full bg-white/95 px-3 py-1 text-[10px] tracking-[0.18em] whitespace-nowrap text-black uppercase opacity-0 shadow-sm transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100'>
+      {/* Hover label (desktop). Absolutely positioned + pointer-events-none so
+          it never expands the button box or overlaps/blocks the coin. */}
+      <span className='pointer-events-none absolute top-1/2 left-12 -translate-x-1 -translate-y-1/2 rounded-full bg-white/95 px-3 py-1 text-[10px] tracking-[0.18em] whitespace-nowrap text-black uppercase opacity-0 shadow-sm transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100'>
         {label}
       </span>
     </button>

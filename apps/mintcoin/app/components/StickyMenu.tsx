@@ -92,7 +92,7 @@ export default function StickyMenu() {
         {NAV_LINKS.map(({ id, label }) => {
           const isActive = activeId === id;
           return (
-            <li key={id} className='hidden md:block'>
+            <li key={id}>
               <a
                 href={`#${id}`}
                 data-cta-id={`nav-${id}`}
@@ -114,17 +114,6 @@ export default function StickyMenu() {
             </li>
           );
         })}
-        <li>
-          <a
-            href='https://www.mint.ca/en/contact-us'
-            target='_blank'
-            rel='noopener noreferrer'
-            data-cta-id='contact-the-mint'
-            className='block rounded-full bg-black px-3 py-2 text-[10px] tracking-wider whitespace-nowrap text-white uppercase transition-colors hover:bg-neutral-800 md:px-4 md:text-xs'
-          >
-            Contact the mint
-          </a>
-        </li>
       </ul>
     </div>
   );

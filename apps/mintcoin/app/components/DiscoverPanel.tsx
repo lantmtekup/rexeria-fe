@@ -80,9 +80,17 @@ export default function DiscoverPanel({
           <Swiper
             key={view}
             modules={[Navigation, Pagination]}
-            navigation
+            // Default Swiper arrows (blue, 44px, font-glyph) looked off — use
+            // our own circular buttons below for full control over look + size.
+            navigation={{
+              prevEl: '.discover-prev',
+              nextEl: '.discover-next',
+            }}
             pagination={{ clickable: true }}
             className='h-full w-full'
+            style={
+              { '--swiper-pagination-color': '#1a1a1a' } as React.CSSProperties
+            }
           >
             {images[view].map((src, i) => (
               <SwiperSlide key={i}>
@@ -95,6 +103,39 @@ export default function DiscoverPanel({
               </SwiperSlide>
             ))}
           </Swiper>
+
+          {/* Custom nav arrows — matched pair: 44px white circle, soft ring +
+              shadow, neutral chevron. Same size/colour on both sides. */}
+          <button
+            type='button'
+            aria-label='Previous image'
+            className='discover-prev absolute top-1/2 left-4 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 shadow-md ring-1 ring-black/10 backdrop-blur-sm transition-colors duration-200 hover:bg-white'
+          >
+            <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
+              <path
+                d='M15 6l-6 6 6 6'
+                stroke='currentColor'
+                strokeWidth='1.75'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+              />
+            </svg>
+          </button>
+          <button
+            type='button'
+            aria-label='Next image'
+            className='discover-next absolute top-1/2 right-4 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-neutral-800 shadow-md ring-1 ring-black/10 backdrop-blur-sm transition-colors duration-200 hover:bg-white'
+          >
+            <svg width='16' height='16' viewBox='0 0 24 24' fill='none'>
+              <path
+                d='M9 6l6 6-6 6'
+                stroke='currentColor'
+                strokeWidth='1.75'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+              />
+            </svg>
+          </button>
         </div>
 
         <div
@@ -164,26 +205,7 @@ export default function DiscoverPanel({
             <span className='text-neutral-700'>CAD $2,500</span>
           </div>
 
-          <div className='mb-10 flex flex-col gap-3'>
-            <a
-              href='https://www.mint.ca/en/contact-us'
-              target='_blank'
-              rel='noopener noreferrer'
-              data-cta-id='discover-contact'
-              className='bg-black px-6 py-4 text-center text-xs tracking-[0.18em] text-white uppercase'
-            >
-              Contact the mint
-            </a>
-            <a
-              href='https://www.mint.ca/en/shop/coins/2026/the-jack-pine-by-tom-thomson-1-kilo-pure-gold-coin'
-              target='_blank'
-              rel='noopener noreferrer'
-              data-cta-id='discover-buy-now'
-              className='bg-black px-6 py-4 text-center text-xs tracking-[0.18em] text-white uppercase'
-            >
-              Buy Now
-            </a>
-          </div>
+          <div className='mb-2' />
 
           <details className='border-t border-black/10 py-4'>
             <summary className='flex cursor-pointer list-none justify-between text-sm'>
