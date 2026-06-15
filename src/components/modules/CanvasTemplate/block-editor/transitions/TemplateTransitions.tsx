@@ -150,17 +150,19 @@ function FadeStack({ items, className }: Omit<Props, 'transition'>) {
   );
 }
 
-/** Roll-up — sticky stacking: mỗi section ghim top rồi section sau đè lên. */
+/** Roll-up — sticky stacking: mỗi section ghim top rồi section sau đè lên.
+ *  Block bám top + section overflow-hidden (KHÔNG căn giữa) → không có vùng
+ *  trong suốt cướp pointer; block trên cùng (đang xem) nhận đủ chuột. */
 function RollUpStack({ items, className }: Omit<Props, 'transition'>) {
   return (
     <div className={cn('relative', className)}>
       {items.map((n, i) => (
         <section
           key={i}
-          className='sticky top-0 flex min-h-screen items-center justify-center'
+          className='sticky top-0 min-h-screen overflow-hidden bg-white'
           style={{ zIndex: i + 1 }}
         >
-          <div className='w-full'>{n}</div>
+          {n}
         </section>
       ))}
     </div>
@@ -267,17 +269,19 @@ function ParallaxStack({ items, className }: Omit<Props, 'transition'>) {
       if (reduced()) return;
       const els = gsap.utils.toArray<HTMLElement>('.tt-par', ref.current);
       els.forEach((el, i) => {
+        // Đảo chiều xen kẽ + dịch theo % chiều cao → block cạnh nhau chạy
+        // ngược tốc độ, thấy rõ parallax.
         gsap.fromTo(
           el,
-          { y: 0 },
+          { yPercent: i % 2 === 0 ? 10 : -10 },
           {
-            y: i % 2 === 0 ? -70 : -36,
+            yPercent: i % 2 === 0 ? -10 : 10,
             ease: 'none',
             scrollTrigger: {
               trigger: el,
               start: 'top bottom',
               end: 'bottom top',
-              scrub: true,
+              scrub: 1,
             },
           }
         );
