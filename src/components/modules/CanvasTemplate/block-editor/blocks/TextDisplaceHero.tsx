@@ -80,23 +80,29 @@ export function TextDisplaceHero({
   const heading = content.title ?? '';
   const body = content.description ?? '';
 
-  // Chụp tâm (viewport coords) của mỗi đơn vị animate trong root.
+  // Chụp tâm mỗi đơn vị TƯƠNG ĐỐI với root (không phải viewport) → an toàn khi
+  // cuộn trang. Trừ đi displacement hiện tại (cx/cy) để ra tâm "nghỉ" thật kể
+  // cả lúc re-capture giữa animation.
   const captureCenters = React.useCallback(() => {
     const root = rootRef.current;
     if (!root) return;
+    const rootRect = root.getBoundingClientRect();
     const els = Array.from(
       root.querySelectorAll<HTMLElement>('[data-td-unit]')
     );
-    unitsRef.current = els.map(el => {
+    const prev = unitsRef.current;
+    unitsRef.current = els.map((el, i) => {
+      const cx = prev[i]?.cx ?? 0;
+      const cy = prev[i]?.cy ?? 0;
       const r = el.getBoundingClientRect();
       return {
         el,
-        ox: r.left + r.width / 2,
-        oy: r.top + r.height / 2,
-        cx: 0,
-        cy: 0,
-        tx: 0,
-        ty: 0,
+        ox: r.left - rootRect.left + r.width / 2 - cx,
+        oy: r.top - rootRect.top + r.height / 2 - cy,
+        cx,
+        cy,
+        tx: prev[i]?.tx ?? 0,
+        ty: prev[i]?.ty ?? 0,
       };
     });
   }, []);
@@ -114,10 +120,14 @@ export function TextDisplaceHero({
     const t = window.setTimeout(captureCenters, 100);
 
     const onMove = (e: PointerEvent) => {
+      // Quy con trỏ về toạ độ tương đối root (khớp ox/oy đã chụp).
+      const rootRect = root.getBoundingClientRect();
+      const px = e.clientX - rootRect.left;
+      const py = e.clientY - rootRect.top;
       const units = unitsRef.current;
       for (const u of units) {
-        const dx = u.ox - e.clientX;
-        const dy = u.oy - e.clientY;
+        const dx = u.ox - px;
+        const dy = u.oy - py;
         const dist = Math.hypot(dx, dy);
         if (dist > 0 && dist < radius) {
           const force = (1 - dist / radius) * strength;
