@@ -383,8 +383,18 @@ export default function WorksSection() {
                 className={`card-thumbs relative overflow-hidden ${mirrored ? 'md:order-1' : ''}`}
               >
                 {/* MOBILE single image — full width, no backdrop, no thumbs.
-                  Replaces the 4-thumb grid + backdrop wash on phones. */}
-                <div className='mobile-img aspect-square w-full overflow-hidden will-change-transform md:hidden'>
+                  Replaces the 4-thumb grid + backdrop wash on phones. Tapping
+                  it opens the same lightbox the desktop thumbnails use (the
+                  thumb grid is hidden on mobile, so this is the only entry). */}
+                <button
+                  type='button'
+                  aria-label={`View ${thumbMeta(w.hero).title}`}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setActive({ src: w.hero, ...thumbMeta(w.hero) });
+                  }}
+                  className='mobile-img block aspect-square w-full cursor-pointer overflow-hidden will-change-transform md:hidden'
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={w.hero}
@@ -393,7 +403,7 @@ export default function WorksSection() {
                     decoding='async'
                     className='h-full w-full object-cover'
                   />
-                </div>
+                </button>
 
                 {/* DESKTOP backdrop image — per-card unique. object-contain
                   so the full coin/painting shows without top/bottom crop. */}
