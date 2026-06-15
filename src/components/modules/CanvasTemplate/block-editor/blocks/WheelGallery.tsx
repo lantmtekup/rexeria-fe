@@ -122,7 +122,7 @@ export function WheelGallery({
       }}
       className={cn('relative w-full', className)}
     >
-      <div className='sticky top-0 h-screen overflow-hidden bg-neutral-950'>
+      <div className='sticky top-0 h-screen overflow-hidden bg-[#0f1219]'>
         {(content.eyebrow || content.title) && (
           <div className='absolute inset-x-0 top-10 z-[2] flex flex-col items-center gap-1 text-center text-white'>
             {content.eyebrow && (

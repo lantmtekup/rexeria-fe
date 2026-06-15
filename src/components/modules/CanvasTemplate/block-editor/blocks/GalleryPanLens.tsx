@@ -90,7 +90,7 @@ export function GalleryPanLens({
       ref={rootRef}
       style={blockBackgroundStyle(background)}
       className={cn(
-        'animate-in fade-in relative h-[70vh] w-full [cursor:crosshair] overflow-hidden rounded-md bg-neutral-950 duration-500 ease-out',
+        'animate-in fade-in relative h-[70vh] w-full [cursor:crosshair] overflow-hidden rounded-md bg-[#0f1219] duration-500 ease-out',
         className
       )}
     >

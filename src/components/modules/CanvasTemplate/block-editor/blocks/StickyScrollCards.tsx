@@ -109,7 +109,7 @@ export function StickyScrollCards({
       className={cn('relative w-full', className)}
     >
       {/* Lớp giữ màn hình bằng CSS sticky (an toàn iOS). */}
-      <div className='sticky top-0 flex h-screen flex-col items-center justify-center gap-6 overflow-hidden bg-neutral-950 px-6'>
+      <div className='sticky top-0 flex h-screen flex-col items-center justify-center gap-6 overflow-hidden bg-[#0f1219] px-6'>
         {(content.eyebrow || content.title) && (
           <div className='flex flex-col items-center gap-1 text-center text-white'>
             {content.eyebrow && (

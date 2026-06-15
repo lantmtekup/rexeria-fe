@@ -158,7 +158,7 @@ export function ImageTrail({
       ref={rootRef}
       style={blockBackgroundStyle(background)}
       className={cn(
-        'animate-in fade-in @container relative flex min-h-[70vh] w-full items-center justify-center overflow-hidden rounded-md bg-neutral-100 duration-500 ease-out',
+        'animate-in fade-in @container relative flex min-h-[70vh] w-full items-center justify-center overflow-hidden rounded-md bg-[#f4f1ea] duration-500 ease-out',
         className
       )}
     >

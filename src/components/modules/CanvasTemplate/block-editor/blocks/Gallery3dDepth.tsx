@@ -127,7 +127,7 @@ export function Gallery3dDepth({
         perspective: '1200px',
       }}
       className={cn(
-        'animate-in fade-in @container relative flex h-[70vh] w-full items-center justify-center overflow-hidden rounded-md bg-neutral-950 duration-500 ease-out [transform-style:preserve-3d]',
+        'animate-in fade-in @container relative flex h-[70vh] w-full items-center justify-center overflow-hidden rounded-md bg-[#17131f] duration-500 ease-out [transform-style:preserve-3d]',
         className
       )}
     >

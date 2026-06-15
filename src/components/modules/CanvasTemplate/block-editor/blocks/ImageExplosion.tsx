@@ -146,7 +146,7 @@ export function ImageExplosion({
       ref={rootRef}
       style={blockBackgroundStyle(background)}
       className={cn(
-        'animate-in fade-in @container relative flex min-h-[70vh] w-full flex-col items-center justify-end gap-6 overflow-hidden rounded-md bg-neutral-900 px-6 pb-8 duration-500 ease-out',
+        'animate-in fade-in @container relative flex min-h-[70vh] w-full flex-col items-center justify-end gap-6 overflow-hidden rounded-md bg-[#0e1a16] px-6 pb-8 duration-500 ease-out',
         className
       )}
     >

@@ -58,7 +58,7 @@ export function MarqueeBand({
     <div
       style={blockBackgroundStyle(background)}
       className={cn(
-        'animate-in fade-in relative flex w-full items-center overflow-hidden rounded-md bg-neutral-950 py-10 duration-500 ease-out',
+        'animate-in fade-in relative flex w-full items-center overflow-hidden rounded-md bg-[#0f1219] py-10 duration-500 ease-out',
         className
       )}
     >

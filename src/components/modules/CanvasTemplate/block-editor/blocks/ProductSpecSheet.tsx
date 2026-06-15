@@ -61,7 +61,7 @@ export function ProductSpecSheet({
     <div
       style={blockBackgroundStyle(background)}
       className={cn(
-        'animate-in fade-in @container relative flex min-h-[70vh] w-full flex-col items-center justify-center gap-5 overflow-hidden rounded-md bg-neutral-100 px-6 py-12 duration-500 ease-out',
+        'animate-in fade-in @container relative flex min-h-[70vh] w-full flex-col items-center justify-center gap-5 overflow-hidden rounded-md bg-[#f4f1ea] px-6 py-12 duration-500 ease-out',
         className
       )}
     >

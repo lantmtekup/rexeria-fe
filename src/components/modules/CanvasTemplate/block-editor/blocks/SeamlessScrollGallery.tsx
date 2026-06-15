@@ -43,7 +43,7 @@ export function SeamlessScrollGallery({
     <div
       style={blockBackgroundStyle(background)}
       className={cn(
-        'animate-in fade-in relative w-full overflow-hidden rounded-md bg-neutral-950 py-10 duration-500 ease-out',
+        'animate-in fade-in relative w-full overflow-hidden rounded-md bg-[#0e1a16] py-10 duration-500 ease-out',
         className
       )}
     >

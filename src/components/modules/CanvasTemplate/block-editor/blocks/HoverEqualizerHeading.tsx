@@ -92,7 +92,7 @@ export function HoverEqualizerHeading({
     <div
       style={blockBackgroundStyle(background)}
       className={cn(
-        'animate-in fade-in @container flex min-h-[70vh] w-full items-end justify-center overflow-hidden rounded-md bg-neutral-950 px-6 pb-10 duration-500 ease-out',
+        'animate-in fade-in @container flex min-h-[70vh] w-full items-end justify-center overflow-hidden rounded-md bg-[#17131f] px-6 pb-10 duration-500 ease-out',
         className
       )}
     >

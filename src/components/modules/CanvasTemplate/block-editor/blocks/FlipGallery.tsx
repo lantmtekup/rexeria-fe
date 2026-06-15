@@ -118,7 +118,7 @@ export function FlipGallery({
       ref={rootRef}
       style={blockBackgroundStyle(background)}
       className={cn(
-        'fg-root fg-stack animate-in fade-in @container relative w-full overflow-hidden rounded-md bg-neutral-900 px-6 py-8 duration-500 ease-out',
+        'fg-root fg-stack animate-in fade-in @container relative w-full overflow-hidden rounded-md bg-[#17131f] px-6 py-8 duration-500 ease-out',
         className
       )}
     >
