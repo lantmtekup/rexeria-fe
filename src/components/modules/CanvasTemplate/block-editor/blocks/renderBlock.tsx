@@ -46,7 +46,10 @@ import { Panorama } from './Panorama';
 import { PhotoGallery } from './PhotoGallery';
 import { Poll } from './Poll';
 import { Quiz } from './Quiz';
+import { Gallery3dDepth } from './Gallery3dDepth';
+import { ImageTrail } from './ImageTrail';
 import { SplitScreen } from './SplitScreen';
+import { StickyScrollCards } from './StickyScrollCards';
 import { Stories } from './Stories';
 import { TextDisplaceHero } from './TextDisplaceHero';
 import type {
@@ -104,6 +107,9 @@ import type {
   SplitScreenContent,
   StoriesContent,
   TextDisplaceHeroContent,
+  ImageTrailContent,
+  StickyScrollCardsContent,
+  Gallery3dDepthContent,
 } from '../types';
 
 interface RenderBlockProps {
@@ -291,6 +297,39 @@ export function RenderBlock({
       return (
         <TextDisplaceHero
           content={content as TextDisplaceHeroContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'image_trail':
+      return (
+        <ImageTrail
+          content={content as ImageTrailContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'sticky_scroll_cards':
+      return (
+        <StickyScrollCards
+          content={content as StickyScrollCardsContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'gallery_3d_depth':
+      return (
+        <Gallery3dDepth
+          content={content as Gallery3dDepthContent}
           styles={styles}
           background={background}
           order={order}

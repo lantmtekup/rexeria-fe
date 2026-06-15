@@ -18,6 +18,9 @@ export type BlockType =
   | 'panorama'
   // ── Animation blocks (port từ CodeGrid 40-demo, mô hình "block tự chạy") ──
   | 'text_displace_hero'
+  | 'image_trail'
+  | 'sticky_scroll_cards'
+  | 'gallery_3d_depth'
   // ── Framer-native blocks (migrate từ src/blocks/ legacy → native) ──────
   // Mỗi design framer = 1 block_type riêng, render native + edit inline được.
   // BE phải có code tương ứng active trong catalog block_types.
@@ -409,6 +412,53 @@ export interface TextDisplaceHeroContent {
   strength?: number;
   /** Hệ số lerp 0–1: càng nhỏ càng "trễ"/mượt. Default 0.1. */
   smoothing?: number;
+}
+
+/**
+ * Image trail — rê con trỏ trong block → ảnh mọc theo vết rồi tự biến mất (port
+ * CodeGrid Burocratik). `images` là mảng URL ảnh hiển thị ngẫu nhiên.
+ */
+export interface ImageTrailContent {
+  eyebrow?: string;
+  title?: string;
+  images: string[];
+  /** Khoảng cách con trỏ phải di (px) mới tạo ảnh mới. Default 100. */
+  threshold?: number;
+  /** Thời gian ảnh tồn tại trước khi mờ đi (ms). Default 750. */
+  lifespan?: number;
+  /** Thời lượng scale-in / scale-out (ms). Default 750 / 1000. */
+  inDuration?: number;
+  outDuration?: number;
+}
+
+/**
+ * Sticky scroll cards — cuộn để các card ảnh chồng lên nhau (port CodeGrid
+ * Ashfall). Mỗi card có ảnh + nhãn; số card quyết định độ dài quãng cuộn.
+ */
+export interface StickyScrollCardsContent {
+  eyebrow?: string;
+  title?: string;
+  cards: { imageUrl: string; title?: string }[];
+  /** Scale card khi bị đẩy ra sau. Default 0.5. */
+  finalScale?: number;
+  /** Góc xoay card (độ). Default 10. */
+  rotateDeg?: number;
+  /** Zoom ảnh bên trong card. Default 1.5. */
+  imageZoom?: number;
+}
+
+/**
+ * Gallery 3D depth — khối ảnh bay từ chiều sâu ra trước mặt, lặp vô hạn (port
+ * CodeGrid Mat Voyce, CSS-3D + GSAP). `images` là mảng URL.
+ */
+export interface Gallery3dDepthContent {
+  eyebrow?: string;
+  title?: string;
+  images: string[];
+  /** Độ trễ giữa các khối (s). Default 0.25. */
+  stagger?: number;
+  /** Thời lượng bay vào (s). Default 2. */
+  duration?: number;
 }
 
 /** Legacy/framer block embed — chỉ giữ schemaId; renderer tra registry. */
@@ -901,6 +951,9 @@ export type BlockContent =
   | FlipbookContent
   | PanoramaContent
   | TextDisplaceHeroContent
+  | ImageTrailContent
+  | StickyScrollCardsContent
+  | Gallery3dDepthContent
   | FramerYumeHeroContent
   | FramerArpeggioHeroContent
   | FramerDelvauxHeroIntroContent
@@ -1584,6 +1637,36 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Text Displace Hero',
     aiLabelVi: 'hero chữ lớn "thổi" văng theo con trỏ',
     aiLabelEn: 'hero with text that scatters away from the cursor',
+  },
+  image_trail: {
+    type: 'image_trail',
+    label: 'Image Trail',
+    accent: '#0f0f0f',
+    adminLabel: 'Image Trail',
+    gradient: 'from-zinc-400 to-zinc-600',
+    defaultName: 'Image Trail',
+    aiLabelVi: 'vệt ảnh mọc theo con trỏ',
+    aiLabelEn: 'image trail following the cursor',
+  },
+  sticky_scroll_cards: {
+    type: 'sticky_scroll_cards',
+    label: 'Sticky Scroll Cards',
+    accent: '#0f0f0f',
+    adminLabel: 'Sticky Scroll Cards',
+    gradient: 'from-stone-500 to-stone-700',
+    defaultName: 'Sticky Scroll Cards',
+    aiLabelVi: 'card ảnh chồng lên nhau khi cuộn',
+    aiLabelEn: 'cards that stack on scroll',
+  },
+  gallery_3d_depth: {
+    type: 'gallery_3d_depth',
+    label: 'Gallery 3D Depth',
+    accent: '#0f0f0f',
+    adminLabel: 'Gallery 3D Depth',
+    gradient: 'from-indigo-500 to-purple-700',
+    defaultName: 'Gallery 3D Depth',
+    aiLabelVi: 'khối ảnh bay từ chiều sâu 3D',
+    aiLabelEn: '3D image blocks flying from depth',
   },
   framer_yume_hero: {
     type: 'framer_yume_hero',

@@ -112,6 +112,9 @@ const ORDERED_TYPES: BlockType[] = [
   'cta_section',
   // ── Interactive / Other ──────────────────────────────────
   'text_displace_hero',
+  'image_trail',
+  'sticky_scroll_cards',
+  'gallery_3d_depth',
   'image_carousel',
   'carousel_3d',
   'stories',

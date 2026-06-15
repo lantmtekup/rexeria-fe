@@ -32,6 +32,9 @@ import type {
   ImageCarouselContent,
   PanoramaContent,
   TextDisplaceHeroContent,
+  ImageTrailContent,
+  StickyScrollCardsContent,
+  Gallery3dDepthContent,
   PhotoGalleryContent,
   PollContent,
   QuizContent,
@@ -567,6 +570,70 @@ const TEXT_DISPLACE_HERO_EN: TextDisplaceHeroContent = {
   eyebrow: 'MOVE YOUR CURSOR',
   title: 'A living experience',
   description: 'Glide your cursor across the words to see them react.',
+};
+
+const SAMPLE_GALLERY = [
+  HOUSE_IMG,
+  ROOM_IMG,
+  KITCHEN_IMG,
+  POOL_IMG,
+  GARDEN_IMG,
+  HOUSE_IMG,
+  ROOM_IMG,
+  KITCHEN_IMG,
+];
+
+const IMAGE_TRAIL_VI: ImageTrailContent = {
+  eyebrow: 'DI CHUỘT QUA',
+  title: 'Khám phá bộ sưu tập',
+  images: SAMPLE_GALLERY,
+  threshold: 100,
+  lifespan: 750,
+};
+const IMAGE_TRAIL_EN: ImageTrailContent = {
+  ...IMAGE_TRAIL_VI,
+  eyebrow: 'MOVE YOUR CURSOR',
+  title: 'Explore the collection',
+};
+
+const STICKY_SCROLL_CARDS_VI: StickyScrollCardsContent = {
+  eyebrow: 'CUỘN ĐỂ XEM',
+  title: 'Hành trình dự án',
+  cards: [
+    { imageUrl: HOUSE_IMG, title: 'Mặt tiền' },
+    { imageUrl: ROOM_IMG, title: 'Phòng khách' },
+    { imageUrl: KITCHEN_IMG, title: 'Bếp' },
+    { imageUrl: POOL_IMG, title: 'Hồ bơi' },
+    { imageUrl: GARDEN_IMG, title: 'Sân vườn' },
+  ],
+  finalScale: 0.5,
+  rotateDeg: 10,
+  imageZoom: 1.5,
+};
+const STICKY_SCROLL_CARDS_EN: StickyScrollCardsContent = {
+  ...STICKY_SCROLL_CARDS_VI,
+  eyebrow: 'SCROLL TO EXPLORE',
+  title: 'Project journey',
+  cards: [
+    { imageUrl: HOUSE_IMG, title: 'Facade' },
+    { imageUrl: ROOM_IMG, title: 'Living room' },
+    { imageUrl: KITCHEN_IMG, title: 'Kitchen' },
+    { imageUrl: POOL_IMG, title: 'Pool' },
+    { imageUrl: GARDEN_IMG, title: 'Garden' },
+  ],
+};
+
+const GALLERY_3D_DEPTH_VI: Gallery3dDepthContent = {
+  eyebrow: 'BỘ SƯU TẬP',
+  title: 'Không gian sống',
+  images: SAMPLE_GALLERY,
+  stagger: 0.25,
+  duration: 2,
+};
+const GALLERY_3D_DEPTH_EN: Gallery3dDepthContent = {
+  ...GALLERY_3D_DEPTH_VI,
+  eyebrow: 'COLLECTION',
+  title: 'Living spaces',
 };
 
 // ── Framer-native: Hero - Yume ──────────────────────────────────────────
@@ -1774,6 +1841,9 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   flipbook: FLIPBOOK_VI,
   panorama: PANORAMA_VI,
   text_displace_hero: TEXT_DISPLACE_HERO_VI,
+  image_trail: IMAGE_TRAIL_VI,
+  sticky_scroll_cards: STICKY_SCROLL_CARDS_VI,
+  gallery_3d_depth: GALLERY_3D_DEPTH_VI,
   framer_yume_hero: FRAMER_YUME_HERO_VI,
   framer_yuya_hero: FRAMER_YUYA_HERO_VI,
   framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_VI,
@@ -1826,6 +1896,9 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   flipbook: FLIPBOOK_EN,
   panorama: PANORAMA_EN,
   text_displace_hero: TEXT_DISPLACE_HERO_EN,
+  image_trail: IMAGE_TRAIL_EN,
+  sticky_scroll_cards: STICKY_SCROLL_CARDS_EN,
+  gallery_3d_depth: GALLERY_3D_DEPTH_EN,
   framer_yume_hero: FRAMER_YUME_HERO_EN,
   framer_yuya_hero: FRAMER_YUYA_HERO_EN,
   framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_EN,
