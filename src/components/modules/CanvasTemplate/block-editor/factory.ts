@@ -35,6 +35,10 @@ import type {
   ImageTrailContent,
   StickyScrollCardsContent,
   Gallery3dDepthContent,
+  ParallaxHeroContent,
+  LightboxFlipContent,
+  FlipGalleryContent,
+  WheelGalleryContent,
   PhotoGalleryContent,
   PollContent,
   QuizContent,
@@ -634,6 +638,73 @@ const GALLERY_3D_DEPTH_EN: Gallery3dDepthContent = {
   ...GALLERY_3D_DEPTH_VI,
   eyebrow: 'COLLECTION',
   title: 'Living spaces',
+};
+
+const PARALLAX_HERO_VI: ParallaxHeroContent = {
+  eyebrow: 'SÁNG TẠO',
+  title: 'Trải nghiệm có chiều sâu',
+  layers: [
+    { imageUrl: POOL_IMG, speed: -10, top: '70%', left: '18%', width: '20%' },
+    { imageUrl: GARDEN_IMG, speed: 8, top: '32%', left: '82%', width: '16%' },
+    { imageUrl: ROOM_IMG, speed: -6, top: '28%', left: '20%', width: '14%' },
+  ],
+  marqueeText: 'Creative · Technology · Media',
+  marqueeSeconds: 40,
+};
+const PARALLAX_HERO_EN: ParallaxHeroContent = {
+  ...PARALLAX_HERO_VI,
+  eyebrow: 'CREATIVE',
+  title: 'An experience with depth',
+};
+
+const LIGHTBOX_FLIP_VI: LightboxFlipContent = {
+  eyebrow: 'THƯ VIỆN',
+  title: 'Click để phóng to',
+  images: SAMPLE_GALLERY,
+  columns: 4,
+  duration: 0.6,
+};
+const LIGHTBOX_FLIP_EN: LightboxFlipContent = {
+  ...LIGHTBOX_FLIP_VI,
+  eyebrow: 'GALLERY',
+  title: 'Click to zoom',
+};
+
+const FLIP_GALLERY_VI: FlipGalleryContent = {
+  eyebrow: 'BỘ SƯU TẬP',
+  title: 'Đổi cách xem',
+  images: [HOUSE_IMG, ROOM_IMG, KITCHEN_IMG, POOL_IMG],
+  expandLabel: 'Dàn ra',
+  collapseLabel: 'Thu gọn',
+};
+const FLIP_GALLERY_EN: FlipGalleryContent = {
+  ...FLIP_GALLERY_VI,
+  eyebrow: 'COLLECTION',
+  title: 'Switch the view',
+  expandLabel: 'Spread',
+  collapseLabel: 'Collapse',
+};
+
+const WHEEL_GALLERY_VI: WheelGalleryContent = {
+  eyebrow: 'CUỘN ĐỂ XOAY',
+  title: 'Vòng quay dự án',
+  images: [
+    HOUSE_IMG,
+    ROOM_IMG,
+    KITCHEN_IMG,
+    POOL_IMG,
+    GARDEN_IMG,
+    HOUSE_IMG,
+    ROOM_IMG,
+    KITCHEN_IMG,
+    POOL_IMG,
+    GARDEN_IMG,
+  ],
+};
+const WHEEL_GALLERY_EN: WheelGalleryContent = {
+  ...WHEEL_GALLERY_VI,
+  eyebrow: 'SCROLL TO SPIN',
+  title: 'Project carousel',
 };
 
 // ── Framer-native: Hero - Yume ──────────────────────────────────────────
@@ -1844,6 +1915,10 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   image_trail: IMAGE_TRAIL_VI,
   sticky_scroll_cards: STICKY_SCROLL_CARDS_VI,
   gallery_3d_depth: GALLERY_3D_DEPTH_VI,
+  parallax_hero: PARALLAX_HERO_VI,
+  lightbox_flip: LIGHTBOX_FLIP_VI,
+  flip_gallery: FLIP_GALLERY_VI,
+  wheel_gallery: WHEEL_GALLERY_VI,
   framer_yume_hero: FRAMER_YUME_HERO_VI,
   framer_yuya_hero: FRAMER_YUYA_HERO_VI,
   framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_VI,
@@ -1899,6 +1974,10 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   image_trail: IMAGE_TRAIL_EN,
   sticky_scroll_cards: STICKY_SCROLL_CARDS_EN,
   gallery_3d_depth: GALLERY_3D_DEPTH_EN,
+  parallax_hero: PARALLAX_HERO_EN,
+  lightbox_flip: LIGHTBOX_FLIP_EN,
+  flip_gallery: FLIP_GALLERY_EN,
+  wheel_gallery: WHEEL_GALLERY_EN,
   framer_yume_hero: FRAMER_YUME_HERO_EN,
   framer_yuya_hero: FRAMER_YUYA_HERO_EN,
   framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_EN,

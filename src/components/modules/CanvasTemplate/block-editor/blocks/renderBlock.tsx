@@ -46,12 +46,16 @@ import { Panorama } from './Panorama';
 import { PhotoGallery } from './PhotoGallery';
 import { Poll } from './Poll';
 import { Quiz } from './Quiz';
+import { FlipGallery } from './FlipGallery';
 import { Gallery3dDepth } from './Gallery3dDepth';
 import { ImageTrail } from './ImageTrail';
+import { LightboxFlip } from './LightboxFlip';
+import { ParallaxHero } from './ParallaxHero';
 import { SplitScreen } from './SplitScreen';
 import { StickyScrollCards } from './StickyScrollCards';
 import { Stories } from './Stories';
 import { TextDisplaceHero } from './TextDisplaceHero';
+import { WheelGallery } from './WheelGallery';
 import type {
   Block,
   BlockBackground,
@@ -110,6 +114,10 @@ import type {
   ImageTrailContent,
   StickyScrollCardsContent,
   Gallery3dDepthContent,
+  ParallaxHeroContent,
+  LightboxFlipContent,
+  FlipGalleryContent,
+  WheelGalleryContent,
 } from '../types';
 
 interface RenderBlockProps {
@@ -330,6 +338,50 @@ export function RenderBlock({
       return (
         <Gallery3dDepth
           content={content as Gallery3dDepthContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'parallax_hero':
+      return (
+        <ParallaxHero
+          content={content as ParallaxHeroContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'lightbox_flip':
+      return (
+        <LightboxFlip
+          content={content as LightboxFlipContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'flip_gallery':
+      return (
+        <FlipGallery
+          content={content as FlipGalleryContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'wheel_gallery':
+      return (
+        <WheelGallery
+          content={content as WheelGalleryContent}
           styles={styles}
           background={background}
           order={order}

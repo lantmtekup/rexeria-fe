@@ -21,6 +21,10 @@ export type BlockType =
   | 'image_trail'
   | 'sticky_scroll_cards'
   | 'gallery_3d_depth'
+  | 'parallax_hero'
+  | 'lightbox_flip'
+  | 'flip_gallery'
+  | 'wheel_gallery'
   // ── Framer-native blocks (migrate từ src/blocks/ legacy → native) ──────
   // Mỗi design framer = 1 block_type riêng, render native + edit inline được.
   // BE phải có code tương ứng active trong catalog block_types.
@@ -459,6 +463,51 @@ export interface Gallery3dDepthContent {
   stagger?: number;
   /** Thời lượng bay vào (s). Default 2. */
   duration?: number;
+}
+
+/** Parallax hero — sticker trôi theo con trỏ + marquee (port CodeGrid 002). */
+export interface ParallaxHeroContent {
+  eyebrow?: string;
+  title?: string;
+  /** Lớp sticker; `speed` âm = ngược chiều chuột, dương = cùng chiều. */
+  layers: {
+    imageUrl: string;
+    speed: number;
+    top?: string;
+    left?: string;
+    width?: string;
+  }[];
+  /** Chữ chạy ngang nền (rỗng = tắt). */
+  marqueeText?: string;
+  /** Chu kỳ marquee (s). Default 40. */
+  marqueeSeconds?: number;
+}
+
+/** Lightbox flip — lưới ảnh, click phóng to bay ra giữa (port CodeGrid 008). */
+export interface LightboxFlipContent {
+  eyebrow?: string;
+  title?: string;
+  images: string[];
+  /** Số cột lưới. Default 4. */
+  columns?: number;
+  /** Thời lượng phóng/thu (s). Default 0.6. */
+  duration?: number;
+}
+
+/** Flip gallery — nút đổi giữa layout chồng-xoay ↔ dàn hàng (port CodeGrid 130). */
+export interface FlipGalleryContent {
+  eyebrow?: string;
+  title?: string;
+  images: string[];
+  expandLabel?: string;
+  collapseLabel?: string;
+}
+
+/** Wheel gallery — bánh xe ảnh quay theo cuộn (port CodeGrid 014). */
+export interface WheelGalleryContent {
+  eyebrow?: string;
+  title?: string;
+  images: string[];
 }
 
 /** Legacy/framer block embed — chỉ giữ schemaId; renderer tra registry. */
@@ -954,6 +1003,10 @@ export type BlockContent =
   | ImageTrailContent
   | StickyScrollCardsContent
   | Gallery3dDepthContent
+  | ParallaxHeroContent
+  | LightboxFlipContent
+  | FlipGalleryContent
+  | WheelGalleryContent
   | FramerYumeHeroContent
   | FramerArpeggioHeroContent
   | FramerDelvauxHeroIntroContent
@@ -1667,6 +1720,46 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Gallery 3D Depth',
     aiLabelVi: 'khối ảnh bay từ chiều sâu 3D',
     aiLabelEn: '3D image blocks flying from depth',
+  },
+  parallax_hero: {
+    type: 'parallax_hero',
+    label: 'Parallax Hero',
+    accent: '#0f0f0f',
+    adminLabel: 'Parallax Hero',
+    gradient: 'from-amber-400 to-orange-600',
+    defaultName: 'Parallax Hero',
+    aiLabelVi: 'hero sticker trôi theo con trỏ + marquee',
+    aiLabelEn: 'hero with parallax stickers + marquee',
+  },
+  lightbox_flip: {
+    type: 'lightbox_flip',
+    label: 'Lightbox Flip',
+    accent: '#0f0f0f',
+    adminLabel: 'Lightbox Flip',
+    gradient: 'from-zinc-500 to-zinc-700',
+    defaultName: 'Lightbox Flip',
+    aiLabelVi: 'lưới ảnh click phóng to bay ra',
+    aiLabelEn: 'image grid with flip lightbox',
+  },
+  flip_gallery: {
+    type: 'flip_gallery',
+    label: 'Flip Gallery',
+    accent: '#0f0f0f',
+    adminLabel: 'Flip Gallery',
+    gradient: 'from-rose-400 to-pink-600',
+    defaultName: 'Flip Gallery',
+    aiLabelVi: 'gallery đổi layout chồng ↔ dàn hàng',
+    aiLabelEn: 'gallery toggling stacked ↔ spread layout',
+  },
+  wheel_gallery: {
+    type: 'wheel_gallery',
+    label: 'Wheel Gallery',
+    accent: '#0f0f0f',
+    adminLabel: 'Wheel Gallery',
+    gradient: 'from-cyan-400 to-blue-600',
+    defaultName: 'Wheel Gallery',
+    aiLabelVi: 'bánh xe ảnh quay theo cuộn',
+    aiLabelEn: 'image wheel rotating on scroll',
   },
   framer_yume_hero: {
     type: 'framer_yume_hero',

@@ -454,6 +454,26 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
     { key: 'title', label: 'Tiêu đề', icon: Type },
   ],
+  parallax_hero: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  lightbox_flip: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  flip_gallery: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  wheel_gallery: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
 };
 
 export function LayersPanel({
