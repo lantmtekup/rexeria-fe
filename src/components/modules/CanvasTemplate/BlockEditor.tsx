@@ -23,6 +23,7 @@ import { SaveBlockDialog } from './block-editor/SaveBlockDialog';
 import { ElementToolbar } from './block-editor/ElementToolbar';
 import { ImportBlockDialog } from './block-editor/ImportBlockDialog';
 import { PreviewMode } from './block-editor/PreviewMode';
+import { TransitionSelect } from './block-editor/transitions/TransitionSelect';
 import { ProductPickerDialog } from './block-editor/ProductPickerDialog';
 import { PublishDialog } from './block-editor/PublishDialog';
 import { ReviewChangesDialog } from './block-editor/ReviewChangesDialog';
@@ -189,7 +190,8 @@ export function BlockEditor({
       serializeCanvas(
         canvas.blocks,
         canvas.activeId ?? undefined,
-        publishState.publish
+        publishState.publish,
+        transition
       ),
     onVersionUpdate: nextVersion => {
       setTemplate(prev =>
@@ -231,6 +233,9 @@ export function BlockEditor({
   const searchParams = useSearchParams();
   const editingSavedBlockId = searchParams?.get('saved_block_id') ?? undefined;
   const [layersCollapsed, setLayersCollapsed] = React.useState(false);
+  // Transition cấp template (preset áp cho cả collection block). Lưu vào
+  // canvas_blueprint qua serializeCanvas → public/preview render áp.
+  const [transition, setTransition] = React.useState<string>('none');
   const [sidebarTab, setSidebarTab] = React.useState<'layers' | 'motion'>(
     'layers'
   );
@@ -432,6 +437,7 @@ export function BlockEditor({
           isFreshTemplate
         );
         canvas.reset(initial, parsed?.activeBlockId ?? initial[0]?.id ?? null);
+        setTransition(parsed?.transition ?? 'none');
         // Publish state source-of-truth precedence:
         //   1. BE Page.status === 'published' (canonical, set qua
         //      pages.publish — survives Save Version commit clearing draft)
@@ -1016,7 +1022,7 @@ export function BlockEditor({
     | undefined;
 
   return (
-    <div className='flex h-full min-h-0 flex-1 flex-col bg-neutral-100'>
+    <div className='relative flex h-full min-h-0 flex-1 flex-col bg-neutral-100'>
       <BlockEditorHeader
         blockName={activeBlock?.name ?? '—'}
         lang={deviceState.lang}
@@ -1231,9 +1237,21 @@ export function BlockEditor({
         <PreviewMode
           blocks={canvas.blocks}
           lang={deviceState.lang}
+          transition={transition}
           onClose={() => setPreviewing(false)}
         />
       )}
+
+      {/* Transition cấp template — áp cho cả collection block. */}
+      <div className='absolute bottom-4 left-4 z-40'>
+        <TransitionSelect
+          value={transition}
+          onChange={v => {
+            setTransition(v);
+            autosave.markDirty();
+          }}
+        />
+      </div>
 
       {activeBlock && (
         <MotionTimelineModal
