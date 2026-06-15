@@ -48,6 +48,7 @@ import { Poll } from './Poll';
 import { Quiz } from './Quiz';
 import { SplitScreen } from './SplitScreen';
 import { Stories } from './Stories';
+import { TextDisplaceHero } from './TextDisplaceHero';
 import type {
   Block,
   BlockBackground,
@@ -102,6 +103,7 @@ import type {
   QuizContent,
   SplitScreenContent,
   StoriesContent,
+  TextDisplaceHeroContent,
 } from '../types';
 
 interface RenderBlockProps {
@@ -278,6 +280,17 @@ export function RenderBlock({
       return (
         <Panorama
           content={content as PanoramaContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'text_displace_hero':
+      return (
+        <TextDisplaceHero
+          content={content as TextDisplaceHeroContent}
           styles={styles}
           background={background}
           order={order}

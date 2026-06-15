@@ -16,6 +16,8 @@ export type BlockType =
   | 'carousel_3d'
   | 'flipbook'
   | 'panorama'
+  // ── Animation blocks (port từ CodeGrid 40-demo, mô hình "block tự chạy") ──
+  | 'text_displace_hero'
   // ── Framer-native blocks (migrate từ src/blocks/ legacy → native) ──────
   // Mỗi design framer = 1 block_type riêng, render native + edit inline được.
   // BE phải có code tương ứng active trong catalog block_types.
@@ -388,6 +390,25 @@ export interface PanoramaContent {
   sensitivity?: number;
   /** Optional hint badge shown over the pano in editor view. */
   hint?: string;
+}
+
+/**
+ * Text-displacement hero — chữ "thổi" văng khỏi con trỏ rồi đàn hồi về (port
+ * CodeGrid Menu XL). `title` là khối chữ lớn bị displace; `description` (nếu có)
+ * cũng displace theo từ. Các số dưới là config (có default).
+ */
+export interface TextDisplaceHeroContent {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  /** Tách `title` theo ký tự ('char', mặc định) hay theo từ ('word'). */
+  splitBy?: 'word' | 'char';
+  /** Bán kính ảnh hưởng quanh con trỏ (px). Default 150. */
+  radius?: number;
+  /** Lực đẩy tối đa khi con trỏ sát chữ (px). Default 300. */
+  strength?: number;
+  /** Hệ số lerp 0–1: càng nhỏ càng "trễ"/mượt. Default 0.1. */
+  smoothing?: number;
 }
 
 /** Legacy/framer block embed — chỉ giữ schemaId; renderer tra registry. */
@@ -879,6 +900,7 @@ export type BlockContent =
   | Carousel3dContent
   | FlipbookContent
   | PanoramaContent
+  | TextDisplaceHeroContent
   | FramerYumeHeroContent
   | FramerArpeggioHeroContent
   | FramerDelvauxHeroIntroContent
@@ -1552,6 +1574,16 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Panorama 360°',
     aiLabelVi: 'ảnh 360° xoay được',
     aiLabelEn: '360° equirectangular panorama',
+  },
+  text_displace_hero: {
+    type: 'text_displace_hero',
+    label: 'Text Displace Hero',
+    accent: '#0f0f0f',
+    adminLabel: 'Text Displace Hero',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Text Displace Hero',
+    aiLabelVi: 'hero chữ lớn "thổi" văng theo con trỏ',
+    aiLabelEn: 'hero with text that scatters away from the cursor',
   },
   framer_yume_hero: {
     type: 'framer_yume_hero',

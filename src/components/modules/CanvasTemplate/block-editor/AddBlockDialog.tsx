@@ -111,6 +111,7 @@ const ORDERED_TYPES: BlockType[] = [
   'framer_contact_footer',
   'cta_section',
   // ── Interactive / Other ──────────────────────────────────
+  'text_displace_hero',
   'image_carousel',
   'carousel_3d',
   'stories',

@@ -31,6 +31,7 @@ import type {
   HeroSplitContent,
   ImageCarouselContent,
   PanoramaContent,
+  TextDisplaceHeroContent,
   PhotoGalleryContent,
   PollContent,
   QuizContent,
@@ -550,6 +551,22 @@ const PANORAMA_EN: PanoramaContent = {
   description:
     'Drag horizontally to rotate the view — tap hotspots for detail.',
   hint: 'Drag to rotate',
+};
+
+const TEXT_DISPLACE_HERO_VI: TextDisplaceHeroContent = {
+  eyebrow: 'DI CHUỘT QUA',
+  title: 'Trải nghiệm sống động',
+  description: 'Rê con trỏ qua dòng chữ để xem nó phản ứng theo chuyển động.',
+  splitBy: 'char',
+  radius: 150,
+  strength: 300,
+  smoothing: 0.1,
+};
+const TEXT_DISPLACE_HERO_EN: TextDisplaceHeroContent = {
+  ...TEXT_DISPLACE_HERO_VI,
+  eyebrow: 'MOVE YOUR CURSOR',
+  title: 'A living experience',
+  description: 'Glide your cursor across the words to see them react.',
 };
 
 // ── Framer-native: Hero - Yume ──────────────────────────────────────────
@@ -1756,6 +1773,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   carousel_3d: CAROUSEL_3D_VI,
   flipbook: FLIPBOOK_VI,
   panorama: PANORAMA_VI,
+  text_displace_hero: TEXT_DISPLACE_HERO_VI,
   framer_yume_hero: FRAMER_YUME_HERO_VI,
   framer_yuya_hero: FRAMER_YUYA_HERO_VI,
   framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_VI,
@@ -1807,6 +1825,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   carousel_3d: CAROUSEL_3D_EN,
   flipbook: FLIPBOOK_EN,
   panorama: PANORAMA_EN,
+  text_displace_hero: TEXT_DISPLACE_HERO_EN,
   framer_yume_hero: FRAMER_YUME_HERO_EN,
   framer_yuya_hero: FRAMER_YUYA_HERO_EN,
   framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_EN,

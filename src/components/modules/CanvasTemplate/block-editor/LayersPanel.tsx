@@ -433,6 +433,12 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'description', label: 'Mô tả', icon: Pilcrow },
     { key: 'imageUrl', label: 'Ảnh 360°', icon: ImageIcon },
   ],
+  text_displace_hero: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'description', label: 'Mô tả', icon: Pilcrow },
+  ],
 };
 
 export function LayersPanel({
