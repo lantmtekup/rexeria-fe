@@ -28,6 +28,11 @@ function visitorId(): string {
   return v;
 }
 
+// Exposed so the lead form can stamp its submission with the same identity the
+// tracker uses (links a form lead back to the visitor's session events).
+export const getSessionId = sessionId;
+export const getVisitorId = visitorId;
+
 // ── push ──────────────────────────────────────────────────────────────────
 // Event types the BE counts (internal/domain/consts): page_view → summary views,
 // block_view → per-block views, block_click → block + summary clicks.
