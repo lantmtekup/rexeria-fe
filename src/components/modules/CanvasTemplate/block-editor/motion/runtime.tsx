@@ -24,6 +24,7 @@ if (typeof window !== 'undefined') {
 interface MotionContextValue {
   mode: EditorMode;
   motion?: BlockMotion;
+  motionKit?: MotionKitConfig;
   scrollerEl?: HTMLElement | null;
   /**
    * When provided (including 0), the runtime builds the timeline paused and
@@ -49,9 +50,20 @@ interface MotionContextValue {
 
 const MotionContext = React.createContext<MotionContextValue | null>(null);
 
+/**
+ * Brand/site-level motion personality (from the active motion_kit). Applied to
+ * every block timeline: durations are multiplied by `durationScale` and a track
+ * with no easing of its own falls back to `easing`. One knob, whole site.
+ */
+export interface MotionKitConfig {
+  easing?: string;
+  durationScale?: number;
+}
+
 export interface MotionProviderProps {
   mode: EditorMode;
   motion?: BlockMotion;
+  motionKit?: MotionKitConfig;
   scrollerEl?: HTMLElement | null;
   scrubMs?: number | null;
   previewNonce?: number;
@@ -67,6 +79,7 @@ export interface MotionProviderProps {
 export function MotionProvider({
   mode,
   motion,
+  motionKit,
   scrollerEl,
   scrubMs,
   previewNonce,
@@ -77,12 +90,13 @@ export function MotionProvider({
     () => ({
       mode,
       motion,
+      motionKit,
       scrollerEl,
       scrubMs,
       previewNonce,
       previewElement,
     }),
-    [mode, motion, scrollerEl, scrubMs, previewNonce, previewElement]
+    [mode, motion, motionKit, scrollerEl, scrubMs, previewNonce, previewElement]
   );
   return (
     <MotionContext.Provider value={value}>{children}</MotionContext.Provider>
@@ -126,7 +140,7 @@ function toGsapVars(
  * Resolve an easing token to the string GSAP wants. Cubic-bezier easings
  * register a CustomEase on first use and reuse the named id afterward.
  */
-function resolveEase(easing: MotionEasing | undefined): string {
+function resolveEase(easing: MotionEasing | string | undefined): string {
   if (!easing) return 'power2.out';
   if (typeof easing === 'string') return easing;
   const [a, b, c, d] = easing.cubicBezier;
@@ -154,7 +168,8 @@ function resolveTarget(
 function buildTimeline(
   root: HTMLElement,
   motion: BlockMotion,
-  previewElement?: string | null
+  previewElement?: string | null,
+  motionKit?: MotionKitConfig
 ): gsap.core.Timeline | null {
   if (motion.enabled === false) return null;
   // When previewing a single element, narrow to just that track. Skip repeat
@@ -170,17 +185,23 @@ function buildTimeline(
     yoyo: previewElement ? false : (motion.yoyo ?? false),
   });
 
+  const scale =
+    motionKit?.durationScale && motionKit.durationScale > 0
+      ? motionKit.durationScale
+      : 1;
+
   for (const track of tracks) {
     const target = resolveTarget(root, track.elementKey);
     if (!target) continue;
-    addTrack(tl, target, track);
+    addTrack(tl, target, track, motionKit);
   }
 
   // Pad the timeline to the configured duration so repeat/yoyo behave even
   // when the last keyframe lands before `duration`. Single-element preview
-  // doesn't need padding — its track's own duration is fine.
+  // doesn't need padding — its track's own duration is fine. Scale by the
+  // motion kit so padding matches the scaled tween durations.
   if (!previewElement) {
-    const totalSec = Math.max(motion.duration, 0) / 1000;
+    const totalSec = (Math.max(motion.duration, 0) / 1000) * scale;
     if (tl.duration() < totalSec) tl.set({}, {}, totalSec);
   }
 
@@ -190,8 +211,13 @@ function buildTimeline(
 function addTrack(
   tl: gsap.core.Timeline,
   target: HTMLElement,
-  track: MotionTrack
+  track: MotionTrack,
+  motionKit?: MotionKitConfig
 ) {
+  const scale =
+    motionKit?.durationScale && motionKit.durationScale > 0
+      ? motionKit.durationScale
+      : 1;
   const keyframes: MotionKeyframe[] = [...track.keyframes].sort(
     (a, b) => a.time - b.time
   );
@@ -213,12 +239,15 @@ function addTrack(
   for (let i = 1; i < keyframes.length; i++) {
     const prev = keyframes[i - 1]!;
     const cur = keyframes[i]!;
-    const duration = Math.max(0, (cur.time - prev.time) / 1000);
-    const ease = resolveEase(prev.easing);
+    // Scale duration + start offset by the motion kit so the whole timeline
+    // speeds up / slows down together; fall back to the kit easing when the
+    // keyframe declares none.
+    const duration = Math.max(0, ((cur.time - prev.time) / 1000) * scale);
+    const ease = resolveEase(prev.easing ?? motionKit?.easing);
     tl.to(
       target,
       { ...toGsapVars(cur.values), duration, ease },
-      prev.time / 1000
+      (prev.time / 1000) * scale
     );
   }
 }
@@ -290,7 +319,12 @@ export function MotionBlockRoot({ className, children }: MotionBlockRootProps) {
       if (shouldSkipForA11y()) return;
 
       const root = ref.current;
-      const tl = buildTimeline(root, ctx.motion, ctx.previewElement);
+      const tl = buildTimeline(
+        root,
+        ctx.motion,
+        ctx.previewElement,
+        ctx.motionKit
+      );
       if (!tl) return;
       tlRef.current = tl;
 
@@ -347,6 +381,7 @@ export function MotionBlockRoot({ className, children }: MotionBlockRootProps) {
       dependencies: [
         ctx?.mode,
         ctx?.motion,
+        ctx?.motionKit,
         ctx?.scrollerEl,
         ctx?.previewNonce,
         ctx?.previewElement,

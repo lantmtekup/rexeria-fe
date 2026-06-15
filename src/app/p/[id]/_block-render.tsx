@@ -18,13 +18,15 @@ import {
 import type { BlockMotion } from '@/components/modules/CanvasTemplate/block-editor/motion/types';
 import { parseCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
 import { brandKitToCssVars, type BrandKitData } from '@/lib/brand-kit';
-import type { Page } from '@/services/rexer/types';
+import type { MotionKitData, Page } from '@/services/rexer/types';
 
 interface Props {
   page: Page;
   blueprint: Record<string, unknown>;
   /** Active brand kit → injected as CSS vars so block token styles resolve. */
   brandKit?: BrandKitData;
+  /** Active motion kit → scales every block's GSAP timeline. */
+  motionKit?: MotionKitData;
 }
 
 function adaptCanvas(
@@ -37,9 +39,21 @@ function adaptCanvas(
   return { schema_version: '2.0', blocks };
 }
 
-export function PublicBlockRender({ page, blueprint, brandKit }: Props) {
+export function PublicBlockRender({
+  page,
+  blueprint,
+  brandKit,
+  motionKit,
+}: Props) {
   const parsed = parseCanvas(adaptCanvas(blueprint));
   const visible = parsed?.blocks.filter(b => b.isVisible) ?? [];
+
+  // Map the BE motion kit (snake_case) to the runtime config the GSAP layer
+  // reads (durationScale + easing). transition_style drives page transitions
+  // (handled by the global @view-transition rule), not the per-block timeline.
+  const motionConfig = motionKit
+    ? { easing: motionKit.easing, durationScale: motionKit.duration_scale }
+    : undefined;
 
   if (visible.length === 0) {
     return (
@@ -61,7 +75,12 @@ export function PublicBlockRender({ page, blueprint, brandKit }: Props) {
           const order = block.elementOrder?.desktop;
           const motion = block.motion?.desktop as BlockMotion | undefined;
           return (
-            <MotionProvider key={block.id} mode='production' motion={motion}>
+            <MotionProvider
+              key={block.id}
+              mode='production'
+              motion={motion}
+              motionKit={motionConfig}
+            >
               <MotionBlockRoot className='overflow-hidden rounded-md bg-white shadow-sm ring-1 ring-black/5'>
                 <RenderBlock
                   block={block}

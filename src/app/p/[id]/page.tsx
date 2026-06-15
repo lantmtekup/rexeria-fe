@@ -22,7 +22,7 @@ import { notFound } from 'next/navigation';
 
 import { getCodeTemplate, listCodeTemplates } from '@/templates/registry';
 import { brandKitToCssVars, type BrandKitData } from '@/lib/brand-kit';
-import type { Page } from '@/services/rexer/types';
+import type { MotionKitData, Page } from '@/services/rexer/types';
 
 import { PublicBlockRender } from './_block-render';
 
@@ -56,6 +56,8 @@ interface PublicPageResponse {
   template_version_id: string;
   /** Active brand kit tokens (colors/fonts/logo/tokens) — BE contract 2026-06-15. */
   brand_kit?: BrandKitData;
+  /** Active motion kit — animation scale + page-transition style. */
+  motion_kit?: MotionKitData;
 }
 
 async function fetchPublicPage(
@@ -166,6 +168,7 @@ export default async function PublicLanding({ params }: PageProps) {
         page={page}
         blueprint={blueprint}
         brandKit={pub.brand_kit}
+        motionKit={pub.motion_kit}
       />
     );
   }

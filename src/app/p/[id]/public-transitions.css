@@ -1,0 +1,19 @@
+/*
+ * Native cross-document View Transitions for public landing pages.
+ *
+ * `navigation: auto` makes the browser cross-fade between two same-origin
+ * documents on a hard navigation (a block CTA `<a href>` to another `/p/…`
+ * page) instead of the default white flash — the "native app feel" moat vs a
+ * static export, with zero JS and GPU-accelerated compositing.
+ *
+ * Progressive enhancement: unsupported browsers (Firefox, older Safari) simply
+ * navigate instantly. Guarded by `prefers-reduced-motion` for a11y + motion
+ * sickness. Shared-element morph (a card → hero across pages) builds on this by
+ * giving the two elements the same `view-transition-name` — that cross-page
+ * identity registry is the `site` layer (Phase 2c).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
+  }
+}

@@ -2255,6 +2255,25 @@ export interface PublicPageResponse {
   template_version_id: string;
   /** Active brand-kit tokens injected as CSS vars at render (2026-06-15). */
   brand_kit?: BrandKitTokens;
+  /** Active motion kit — scales animation + sets page-transition style. */
+  motion_kit?: MotionKitData;
+}
+
+// ── Motion Kit (per-brand motion personality) ────────────────────────────
+export interface MotionKitData {
+  easing?: string;
+  duration_scale?: number;
+  transition_style?: 'fade' | 'slide' | 'morph';
+  intensity?: 'subtle' | 'normal' | 'bold';
+}
+
+export interface MotionKit extends MotionKitData {
+  id: string;
+  brand_id: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 // ── Brand Kit (controlled design-token layer) ────────────────────────────
