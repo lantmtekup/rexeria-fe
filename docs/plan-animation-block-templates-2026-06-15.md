@@ -2,6 +2,15 @@
 
 > Nghiên cứu + kế hoạch — 2026-06-15. Nguồn: `~/Documents/discord-summarizer/Phan-tich-40-vi-du-Frontend-Animation.pdf` (CodeGrid). Mục tiêu: biến các hiệu ứng thành **block template tái dùng** trong block-editor.
 
+> ✅ **TRẠNG THÁI:** Đã build + verify **18 block Tier-B** trên nhánh `feat/anim-block-text-displace` (MR #26) — 0 lỗi console, demo render đủ.
+> - Batch 1: text_displace_hero, image_trail, sticky_scroll_cards, gallery_3d_depth
+> - Batch 2: parallax_hero, lightbox_flip, flip_gallery, wheel_gallery
+> - Batch 3: hover_reveal_list, hover_grid_reveal, hover_equalizer_heading, image_explosion, marquee_band
+> - Batch 4: letter_slider, svg_morph_overlay, gallery_pan_lens, seamless_scroll_gallery, product_spec_sheet
+>
+> **Cần tinh chỉnh sau verify:** `wheel_gallery` (khoảng trống), `gallery_pan_lens` (lens yếu).
+> **Còn lại:** BE đăng ký 18 code vào catalog (để add/save trong editor); Tier C (preloader/nav/page-transition/Three.js shader) KHÔNG làm block.
+
 ## 1. Kiến trúc hiện tại (tóm tắt nghiên cứu)
 
 ### 1a. Thêm 1 block type = ~7 chỗ
