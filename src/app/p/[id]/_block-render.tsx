@@ -17,11 +17,14 @@ import {
 } from '@/components/modules/CanvasTemplate/block-editor/motion/runtime';
 import type { BlockMotion } from '@/components/modules/CanvasTemplate/block-editor/motion/types';
 import { parseCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
+import { brandKitToCssVars, type BrandKitData } from '@/lib/brand-kit';
 import type { Page } from '@/services/rexer/types';
 
 interface Props {
   page: Page;
   blueprint: Record<string, unknown>;
+  /** Active brand kit → injected as CSS vars so block token styles resolve. */
+  brandKit?: BrandKitData;
 }
 
 function adaptCanvas(
@@ -34,7 +37,7 @@ function adaptCanvas(
   return { schema_version: '2.0', blocks };
 }
 
-export function PublicBlockRender({ page, blueprint }: Props) {
+export function PublicBlockRender({ page, blueprint, brandKit }: Props) {
   const parsed = parseCanvas(adaptCanvas(blueprint));
   const visible = parsed?.blocks.filter(b => b.isVisible) ?? [];
 
@@ -46,8 +49,10 @@ export function PublicBlockRender({ page, blueprint }: Props) {
     );
   }
 
+  // Brand-kit tokens as CSS vars on the page wrapper; they cascade to every
+  // block so `token:*` element styles resolve to the brand's palette/fonts.
   return (
-    <div className='min-h-screen bg-white'>
+    <div className='min-h-screen bg-white' style={brandKitToCssVars(brandKit)}>
       <main className='@container mx-auto flex w-full max-w-[1280px] flex-col gap-3 px-4 py-6 md:gap-4 md:py-10'>
         {visible.map(block => {
           const content = block.contentVi.desktop;

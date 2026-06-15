@@ -2253,6 +2253,35 @@ export interface PublicPageResponse {
   template_name?: string;
   template_id?: string;
   template_version_id: string;
+  /** Active brand-kit tokens injected as CSS vars at render (2026-06-15). */
+  brand_kit?: BrandKitTokens;
+}
+
+// ── Brand Kit (controlled design-token layer) ────────────────────────────
+/** Role-keyed token maps; mirrors BE models.BrandKit jsonb columns. */
+export interface BrandKitTokens {
+  colors?: Record<string, string>;
+  fonts?: Record<string, string>;
+  logo?: Record<string, unknown>;
+  tokens?: Record<string, string | number>;
+}
+
+export interface BrandKit extends BrandKitTokens {
+  id: string;
+  brand_id: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateBrandKitRequest extends BrandKitTokens {
+  name: string;
+  activate?: boolean;
+}
+
+export interface UpdateBrandKitRequest extends BrandKitTokens {
+  name?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────

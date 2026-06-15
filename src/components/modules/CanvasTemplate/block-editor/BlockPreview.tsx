@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 
+import { brandKitToCssVars, DEFAULT_PREVIEW_KIT } from '@/lib/brand-kit';
 import { cn } from '@/lib/cn';
 
 import { ExtraElementOverlay } from './ExtraElementOverlay';
@@ -365,6 +366,10 @@ export function BlockPreview({
           style={{
             width: baseWidth,
             transform: `scale(${scale})`,
+            // Preview brand-kit tokens so `token:*` element styles resolve to
+            // sensible colors/fonts while authoring (real per-brand kit fills
+            // these at render).
+            ...brandKitToCssVars(DEFAULT_PREVIEW_KIT),
           }}
         >
           <div

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
+import { resolveColorValue, resolveFontValue } from '@/lib/brand-kit';
 import { cn } from '@/lib/cn';
-import { findFont } from '@/lib/fonts';
 
 import type {
   BlockBackground,
@@ -22,13 +22,15 @@ export function elementStyleOf(
   const s: ElementStyle | undefined = styles[key];
   if (!s) return undefined;
   const out: React.CSSProperties = {};
-  if (s.color) out.color = s.color;
+  // Controlled tokens (`token:primary`) resolve to CSS vars; legacy raw values
+  // (a `#hex` color or a font id) pass through for back-compat.
+  if (s.color) out.color = resolveColorValue(s.color);
   if (typeof s.fontSize === 'number') out.fontSize = `${s.fontSize}px`;
   if (typeof s.fontWeight === 'number') out.fontWeight = s.fontWeight;
   if (s.fontStyle) out.fontStyle = s.fontStyle;
   if (s.textDecoration) out.textDecoration = s.textDecoration;
   if (s.textAlign) out.textAlign = s.textAlign;
-  if (s.fontFamily) out.fontFamily = findFont(s.fontFamily).family;
+  if (s.fontFamily) out.fontFamily = resolveFontValue(s.fontFamily);
   if (Object.keys(out).length === 0) return undefined;
   return out;
 }
@@ -50,7 +52,7 @@ export function blockBackgroundStyle(
 ): React.CSSProperties | undefined {
   if (!bg) return undefined;
   const out: React.CSSProperties = {};
-  if (bg.color) out.backgroundColor = bg.color;
+  if (bg.color) out.backgroundColor = resolveColorValue(bg.color);
   if (bg.imageUrl) {
     const safe = bg.imageUrl.replace(/"/g, '%22');
     out.backgroundImage = `url("${safe}")`;
