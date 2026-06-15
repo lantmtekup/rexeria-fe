@@ -175,7 +175,7 @@ export function TextDisplaceHero({
       ref={rootRef}
       style={blockBackgroundStyle(background)}
       className={cn(
-        'animate-in fade-in @container relative flex w-full flex-col items-center justify-center gap-6 overflow-hidden rounded-md bg-neutral-950 px-6 py-20 text-center text-white duration-500 ease-out @2xl:py-28',
+        'animate-in fade-in @container relative flex min-h-[70vh] w-full flex-col items-center justify-center gap-6 overflow-hidden rounded-md bg-neutral-950 px-6 py-16 text-center text-white duration-500 ease-out',
         className
       )}
     >

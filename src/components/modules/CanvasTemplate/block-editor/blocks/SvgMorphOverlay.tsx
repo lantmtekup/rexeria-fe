@@ -90,7 +90,7 @@ export function SvgMorphOverlay({
       ref={rootRef}
       style={blockBackgroundStyle(background)}
       className={cn(
-        'animate-in fade-in @container relative flex min-h-[60vh] w-full items-center justify-center overflow-hidden rounded-md bg-neutral-800 duration-500 ease-out',
+        'animate-in fade-in @container relative flex min-h-[70vh] w-full items-center justify-center overflow-hidden rounded-md bg-neutral-800 duration-500 ease-out',
         className
       )}
     >

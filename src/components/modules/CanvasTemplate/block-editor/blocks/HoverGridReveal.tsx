@@ -76,7 +76,7 @@ export function HoverGridReveal({
     <div
       style={blockBackgroundStyle(background)}
       className={cn(
-        'animate-in fade-in @container relative flex w-full items-center justify-center overflow-hidden rounded-md bg-neutral-950 p-6 duration-500 ease-out',
+        'animate-in fade-in @container relative flex min-h-[70vh] w-full items-center justify-center overflow-hidden rounded-md bg-neutral-950 p-6 duration-500 ease-out',
         className
       )}
     >

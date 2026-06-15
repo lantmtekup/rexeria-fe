@@ -153,7 +153,7 @@ export function LightboxFlip({
       ref={rootRef}
       style={blockBackgroundStyle(background)}
       className={cn(
-        'animate-in fade-in @container relative w-full overflow-hidden rounded-md bg-neutral-100 p-5 duration-500 ease-out',
+        'animate-in fade-in @container relative flex min-h-[70vh] w-full flex-col justify-center overflow-hidden rounded-md bg-neutral-100 p-6 duration-500 ease-out',
         className
       )}
     >

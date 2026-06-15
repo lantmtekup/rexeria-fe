@@ -1,4 +1,5 @@
 import { BLOCK_TYPE_META } from './types';
+import { MEDIA, pickMedia } from './blocks/sample-media';
 import type {
   Block,
   BlockContent,
@@ -586,21 +587,10 @@ const TEXT_DISPLACE_HERO_EN: TextDisplaceHeroContent = {
   description: 'Glide your cursor across the words to see them react.',
 };
 
-const SAMPLE_GALLERY = [
-  HOUSE_IMG,
-  ROOM_IMG,
-  KITCHEN_IMG,
-  POOL_IMG,
-  GARDEN_IMG,
-  HOUSE_IMG,
-  ROOM_IMG,
-  KITCHEN_IMG,
-];
-
 const IMAGE_TRAIL_VI: ImageTrailContent = {
   eyebrow: 'DI CHUỘT QUA',
   title: 'Khám phá bộ sưu tập',
-  images: SAMPLE_GALLERY,
+  images: pickMedia(8, 0),
   threshold: 100,
   lifespan: 750,
 };
@@ -614,11 +604,11 @@ const STICKY_SCROLL_CARDS_VI: StickyScrollCardsContent = {
   eyebrow: 'CUỘN ĐỂ XEM',
   title: 'Hành trình dự án',
   cards: [
-    { imageUrl: HOUSE_IMG, title: 'Mặt tiền' },
-    { imageUrl: ROOM_IMG, title: 'Phòng khách' },
-    { imageUrl: KITCHEN_IMG, title: 'Bếp' },
-    { imageUrl: POOL_IMG, title: 'Hồ bơi' },
-    { imageUrl: GARDEN_IMG, title: 'Sân vườn' },
+    { imageUrl: MEDIA.architecture[0], title: 'Mặt tiền' },
+    { imageUrl: MEDIA.interior[0], title: 'Phòng khách' },
+    { imageUrl: MEDIA.interior[2], title: 'Bếp' },
+    { imageUrl: MEDIA.nature[0], title: 'Hồ bơi' },
+    { imageUrl: MEDIA.architecture[4], title: 'Sân vườn' },
   ],
   finalScale: 0.5,
   rotateDeg: 10,
@@ -629,18 +619,18 @@ const STICKY_SCROLL_CARDS_EN: StickyScrollCardsContent = {
   eyebrow: 'SCROLL TO EXPLORE',
   title: 'Project journey',
   cards: [
-    { imageUrl: HOUSE_IMG, title: 'Facade' },
-    { imageUrl: ROOM_IMG, title: 'Living room' },
-    { imageUrl: KITCHEN_IMG, title: 'Kitchen' },
-    { imageUrl: POOL_IMG, title: 'Pool' },
-    { imageUrl: GARDEN_IMG, title: 'Garden' },
+    { imageUrl: MEDIA.architecture[0], title: 'Facade' },
+    { imageUrl: MEDIA.interior[0], title: 'Living room' },
+    { imageUrl: MEDIA.interior[2], title: 'Kitchen' },
+    { imageUrl: MEDIA.nature[0], title: 'Pool' },
+    { imageUrl: MEDIA.architecture[4], title: 'Garden' },
   ],
 };
 
 const GALLERY_3D_DEPTH_VI: Gallery3dDepthContent = {
   eyebrow: 'BỘ SƯU TẬP',
   title: 'Không gian sống',
-  images: SAMPLE_GALLERY,
+  images: pickMedia(8, 8),
   stagger: 0.25,
   duration: 2,
 };
@@ -654,9 +644,27 @@ const PARALLAX_HERO_VI: ParallaxHeroContent = {
   eyebrow: 'SÁNG TẠO',
   title: 'Trải nghiệm có chiều sâu',
   layers: [
-    { imageUrl: POOL_IMG, speed: -10, top: '70%', left: '18%', width: '20%' },
-    { imageUrl: GARDEN_IMG, speed: 8, top: '32%', left: '82%', width: '16%' },
-    { imageUrl: ROOM_IMG, speed: -6, top: '28%', left: '20%', width: '14%' },
+    {
+      imageUrl: MEDIA.nature[1],
+      speed: -10,
+      top: '70%',
+      left: '18%',
+      width: '20%',
+    },
+    {
+      imageUrl: MEDIA.architecture[1],
+      speed: 8,
+      top: '32%',
+      left: '82%',
+      width: '16%',
+    },
+    {
+      imageUrl: MEDIA.interior[1],
+      speed: -6,
+      top: '28%',
+      left: '20%',
+      width: '14%',
+    },
   ],
   marqueeText: 'Creative · Technology · Media',
   marqueeSeconds: 40,
@@ -670,7 +678,7 @@ const PARALLAX_HERO_EN: ParallaxHeroContent = {
 const LIGHTBOX_FLIP_VI: LightboxFlipContent = {
   eyebrow: 'THƯ VIỆN',
   title: 'Click để phóng to',
-  images: SAMPLE_GALLERY,
+  images: pickMedia(8, 3),
   columns: 4,
   duration: 0.6,
 };
@@ -683,7 +691,7 @@ const LIGHTBOX_FLIP_EN: LightboxFlipContent = {
 const FLIP_GALLERY_VI: FlipGalleryContent = {
   eyebrow: 'BỘ SƯU TẬP',
   title: 'Đổi cách xem',
-  images: [HOUSE_IMG, ROOM_IMG, KITCHEN_IMG, POOL_IMG],
+  images: pickMedia(4, 14),
   expandLabel: 'Dàn ra',
   collapseLabel: 'Thu gọn',
 };
@@ -698,18 +706,7 @@ const FLIP_GALLERY_EN: FlipGalleryContent = {
 const WHEEL_GALLERY_VI: WheelGalleryContent = {
   eyebrow: 'CUỘN ĐỂ XOAY',
   title: 'Vòng quay dự án',
-  images: [
-    HOUSE_IMG,
-    ROOM_IMG,
-    KITCHEN_IMG,
-    POOL_IMG,
-    GARDEN_IMG,
-    HOUSE_IMG,
-    ROOM_IMG,
-    KITCHEN_IMG,
-    POOL_IMG,
-    GARDEN_IMG,
-  ],
+  images: pickMedia(12, 6),
 };
 const WHEEL_GALLERY_EN: WheelGalleryContent = {
   ...WHEEL_GALLERY_VI,
@@ -720,11 +717,11 @@ const WHEEL_GALLERY_EN: WheelGalleryContent = {
 const HOVER_REVEAL_LIST_VI: HoverRevealListContent = {
   title: 'Dự án nổi bật',
   items: [
-    { label: 'Happy City', imageUrl: HOUSE_IMG },
-    { label: 'Maison Noir', imageUrl: ROOM_IMG },
-    { label: 'The Jack Pine', imageUrl: KITCHEN_IMG },
-    { label: 'Riverside', imageUrl: POOL_IMG },
-    { label: 'Green Villa', imageUrl: GARDEN_IMG },
+    { label: 'Happy City', imageUrl: MEDIA.architecture[2] },
+    { label: 'Maison Noir', imageUrl: MEDIA.interior[3] },
+    { label: 'The Jack Pine', imageUrl: MEDIA.nature[2] },
+    { label: 'Riverside', imageUrl: MEDIA.architecture[3] },
+    { label: 'Green Villa', imageUrl: MEDIA.interior[4] },
   ],
 };
 const HOVER_REVEAL_LIST_EN: HoverRevealListContent = {
@@ -733,7 +730,7 @@ const HOVER_REVEAL_LIST_EN: HoverRevealListContent = {
 };
 
 const HOVER_GRID_REVEAL_VI: HoverGridRevealContent = {
-  imageUrl: HOUSE_IMG,
+  imageUrl: MEDIA.architecture[3],
   cols: 16,
   rows: 11,
   overlayColor: '#fd5530',
@@ -757,7 +754,7 @@ const HOVER_EQ_HEADING_EN: HoverEqualizerHeadingContent = {
 const IMAGE_EXPLOSION_VI: ImageExplosionContent = {
   eyebrow: 'CUỘN TỚI ĐÂY',
   title: 'Bùng nổ trải nghiệm',
-  images: [HOUSE_IMG, ROOM_IMG, KITCHEN_IMG, POOL_IMG, GARDEN_IMG],
+  images: pickMedia(6, 18),
 };
 const IMAGE_EXPLOSION_EN: ImageExplosionContent = {
   ...IMAGE_EXPLOSION_VI,
@@ -777,16 +774,16 @@ const MARQUEE_BAND_EN: MarqueeBandContent = {
 
 const LETTER_SLIDER_VI: LetterSliderContent = {
   slides: [
-    { title: 'Happy City', imageUrl: HOUSE_IMG },
-    { title: 'Maison Noir', imageUrl: ROOM_IMG },
-    { title: 'Riverside', imageUrl: POOL_IMG },
+    { title: 'Happy City', imageUrl: MEDIA.architecture[1] },
+    { title: 'Maison Noir', imageUrl: MEDIA.interior[1] },
+    { title: 'Riverside', imageUrl: MEDIA.nature[3] },
   ],
 };
 const LETTER_SLIDER_EN: LetterSliderContent = { ...LETTER_SLIDER_VI };
 
 const SVG_MORPH_OVERLAY_VI: SvgMorphOverlayContent = {
   title: 'Khám phá bộ sưu tập',
-  images: [HOUSE_IMG, ROOM_IMG, KITCHEN_IMG, POOL_IMG],
+  images: pickMedia(4, 20),
   overlayColor: '#36301d',
   toggleLabel: 'Mở bộ sưu tập',
 };
@@ -797,17 +794,7 @@ const SVG_MORPH_OVERLAY_EN: SvgMorphOverlayContent = {
 };
 
 const GALLERY_PAN_LENS_VI: GalleryPanLensContent = {
-  images: [
-    HOUSE_IMG,
-    ROOM_IMG,
-    KITCHEN_IMG,
-    POOL_IMG,
-    GARDEN_IMG,
-    HOUSE_IMG,
-    ROOM_IMG,
-    KITCHEN_IMG,
-    POOL_IMG,
-  ],
+  images: pickMedia(9, 11),
   radius: 260,
   maxScale: 2.4,
 };
@@ -815,7 +802,7 @@ const GALLERY_PAN_LENS_EN: GalleryPanLensContent = { ...GALLERY_PAN_LENS_VI };
 
 const SEAMLESS_SCROLL_GALLERY_VI: SeamlessScrollGalleryContent = {
   title: 'Dự án tiêu biểu',
-  images: [HOUSE_IMG, ROOM_IMG, KITCHEN_IMG, POOL_IMG, GARDEN_IMG],
+  images: pickMedia(7, 16),
   seconds: 30,
 };
 const SEAMLESS_SCROLL_GALLERY_EN: SeamlessScrollGalleryContent = {
@@ -827,7 +814,7 @@ const PRODUCT_SPEC_SHEET_VI: ProductSpecSheetContent = {
   eyebrow: 'SẢN PHẨM',
   title: 'The Jack Pine',
   description: 'Đồng vàng 99.99% — phiên bản giới hạn.',
-  imageUrl: KITCHEN_IMG,
+  imageUrl: MEDIA.product[0],
   specLabel: 'Thông số',
   specs: [
     { label: 'Khối lượng', value: '1006.1 g' },
