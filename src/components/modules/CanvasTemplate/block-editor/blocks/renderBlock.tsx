@@ -48,14 +48,19 @@ import { Poll } from './Poll';
 import { Quiz } from './Quiz';
 import { FlipGallery } from './FlipGallery';
 import { Gallery3dDepth } from './Gallery3dDepth';
+import { GalleryPanLens } from './GalleryPanLens';
 import { HoverEqualizerHeading } from './HoverEqualizerHeading';
 import { HoverGridReveal } from './HoverGridReveal';
 import { HoverRevealList } from './HoverRevealList';
 import { ImageExplosion } from './ImageExplosion';
 import { ImageTrail } from './ImageTrail';
+import { LetterSlider } from './LetterSlider';
 import { LightboxFlip } from './LightboxFlip';
 import { MarqueeBand } from './MarqueeBand';
 import { ParallaxHero } from './ParallaxHero';
+import { ProductSpecSheet } from './ProductSpecSheet';
+import { SeamlessScrollGallery } from './SeamlessScrollGallery';
+import { SvgMorphOverlay } from './SvgMorphOverlay';
 import { SplitScreen } from './SplitScreen';
 import { StickyScrollCards } from './StickyScrollCards';
 import { Stories } from './Stories';
@@ -128,6 +133,11 @@ import type {
   HoverEqualizerHeadingContent,
   ImageExplosionContent,
   MarqueeBandContent,
+  LetterSliderContent,
+  SvgMorphOverlayContent,
+  GalleryPanLensContent,
+  SeamlessScrollGalleryContent,
+  ProductSpecSheetContent,
 } from '../types';
 
 interface RenderBlockProps {
@@ -447,6 +457,61 @@ export function RenderBlock({
       return (
         <MarqueeBand
           content={content as MarqueeBandContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'letter_slider':
+      return (
+        <LetterSlider
+          content={content as LetterSliderContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'svg_morph_overlay':
+      return (
+        <SvgMorphOverlay
+          content={content as SvgMorphOverlayContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'gallery_pan_lens':
+      return (
+        <GalleryPanLens
+          content={content as GalleryPanLensContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'seamless_scroll_gallery':
+      return (
+        <SeamlessScrollGallery
+          content={content as SeamlessScrollGalleryContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'product_spec_sheet':
+      return (
+        <ProductSpecSheet
+          content={content as ProductSpecSheetContent}
           styles={styles}
           background={background}
           order={order}

@@ -30,6 +30,11 @@ export type BlockType =
   | 'hover_equalizer_heading'
   | 'image_explosion'
   | 'marquee_band'
+  | 'letter_slider'
+  | 'svg_morph_overlay'
+  | 'gallery_pan_lens'
+  | 'seamless_scroll_gallery'
+  | 'product_spec_sheet'
   // ── Framer-native blocks (migrate từ src/blocks/ legacy → native) ──────
   // Mỗi design framer = 1 block_type riêng, render native + edit inline được.
   // BE phải có code tương ứng active trong catalog block_types.
@@ -559,6 +564,47 @@ export interface MarqueeBandContent {
   seconds?: number;
 }
 
+/** Letter slider — slider sản phẩm, chữ mở từng ký tự (port CodeGrid 027). */
+export interface LetterSliderContent {
+  slides: { title: string; imageUrl: string }[];
+}
+
+/** SVG morph overlay — màn màu dâng dạng sóng lộ lưới sản phẩm (port CodeGrid 038). */
+export interface SvgMorphOverlayContent {
+  title?: string;
+  images: string[];
+  /** Màu overlay. Default #36301d. */
+  overlayColor?: string;
+  toggleLabel?: string;
+}
+
+/** Gallery pan + lens — ảnh lớn pan theo chuột, phồng quanh con trỏ (port CodeGrid 015). */
+export interface GalleryPanLensContent {
+  images: string[];
+  /** Bán kính lens (px). Default 260. */
+  radius?: number;
+  /** Scale tối đa khi con trỏ ở tâm. Default 2.4. */
+  maxScale?: number;
+}
+
+/** Seamless scroll gallery — dải ảnh cuộn ngang vô tận liền mạch (port CodeGrid 238). */
+export interface SeamlessScrollGalleryContent {
+  title?: string;
+  images: string[];
+  /** Chu kỳ chạy (s). Default 30. */
+  seconds?: number;
+}
+
+/** Product spec sheet — trang sản phẩm + bảng thông số trượt lên (port CodeGrid 022). */
+export interface ProductSpecSheetContent {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  imageUrl: string;
+  specs: { label: string; value: string }[];
+  specLabel?: string;
+}
+
 /** Legacy/framer block embed — chỉ giữ schemaId; renderer tra registry. */
 export interface LegacyEmbedContent {
   schemaId: string;
@@ -1061,6 +1107,11 @@ export type BlockContent =
   | HoverEqualizerHeadingContent
   | ImageExplosionContent
   | MarqueeBandContent
+  | LetterSliderContent
+  | SvgMorphOverlayContent
+  | GalleryPanLensContent
+  | SeamlessScrollGalleryContent
+  | ProductSpecSheetContent
   | FramerYumeHeroContent
   | FramerArpeggioHeroContent
   | FramerDelvauxHeroIntroContent
@@ -1864,6 +1915,56 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Marquee Band',
     aiLabelVi: 'dải chữ lớn chạy ngang vô tận',
     aiLabelEn: 'large text marquee scrolling horizontally',
+  },
+  letter_slider: {
+    type: 'letter_slider',
+    label: 'Letter Slider',
+    accent: '#0f0f0f',
+    adminLabel: 'Letter Slider',
+    gradient: 'from-violet-500 to-fuchsia-600',
+    defaultName: 'Letter Slider',
+    aiLabelVi: 'slider sản phẩm, chữ mở từng ký tự',
+    aiLabelEn: 'product slider revealing letters one by one',
+  },
+  svg_morph_overlay: {
+    type: 'svg_morph_overlay',
+    label: 'SVG Morph Overlay',
+    accent: '#0f0f0f',
+    adminLabel: 'SVG Morph Overlay',
+    gradient: 'from-amber-700 to-yellow-900',
+    defaultName: 'SVG Morph Overlay',
+    aiLabelVi: 'màn màu dâng dạng sóng lộ lưới sản phẩm',
+    aiLabelEn: 'wave overlay morph revealing a product grid',
+  },
+  gallery_pan_lens: {
+    type: 'gallery_pan_lens',
+    label: 'Gallery Pan + Lens',
+    accent: '#0f0f0f',
+    adminLabel: 'Gallery Pan + Lens',
+    gradient: 'from-teal-500 to-cyan-700',
+    defaultName: 'Gallery Pan + Lens',
+    aiLabelVi: 'ảnh lớn pan theo chuột, phồng quanh con trỏ',
+    aiLabelEn: 'large gallery panning with a lens-zoom cursor',
+  },
+  seamless_scroll_gallery: {
+    type: 'seamless_scroll_gallery',
+    label: 'Seamless Scroll Gallery',
+    accent: '#0f0f0f',
+    adminLabel: 'Seamless Scroll Gallery',
+    gradient: 'from-sky-500 to-indigo-600',
+    defaultName: 'Seamless Scroll Gallery',
+    aiLabelVi: 'dải ảnh cuộn ngang vô tận liền mạch',
+    aiLabelEn: 'seamless infinite horizontal image strip',
+  },
+  product_spec_sheet: {
+    type: 'product_spec_sheet',
+    label: 'Product Spec Sheet',
+    accent: '#0f0f0f',
+    adminLabel: 'Product Spec Sheet',
+    gradient: 'from-stone-500 to-neutral-700',
+    defaultName: 'Product Spec Sheet',
+    aiLabelVi: 'trang sản phẩm + bảng thông số trượt lên',
+    aiLabelEn: 'product page with a sliding spec sheet',
   },
   framer_yume_hero: {
     type: 'framer_yume_hero',

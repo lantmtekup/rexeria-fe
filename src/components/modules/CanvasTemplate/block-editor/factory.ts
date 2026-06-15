@@ -44,6 +44,11 @@ import type {
   HoverEqualizerHeadingContent,
   ImageExplosionContent,
   MarqueeBandContent,
+  LetterSliderContent,
+  SvgMorphOverlayContent,
+  GalleryPanLensContent,
+  SeamlessScrollGalleryContent,
+  ProductSpecSheetContent,
   PhotoGalleryContent,
   PollContent,
   QuizContent,
@@ -768,6 +773,80 @@ const MARQUEE_BAND_VI: MarqueeBandContent = {
 const MARQUEE_BAND_EN: MarqueeBandContent = {
   ...MARQUEE_BAND_VI,
   text: 'Creative · Technology · Media',
+};
+
+const LETTER_SLIDER_VI: LetterSliderContent = {
+  slides: [
+    { title: 'Happy City', imageUrl: HOUSE_IMG },
+    { title: 'Maison Noir', imageUrl: ROOM_IMG },
+    { title: 'Riverside', imageUrl: POOL_IMG },
+  ],
+};
+const LETTER_SLIDER_EN: LetterSliderContent = { ...LETTER_SLIDER_VI };
+
+const SVG_MORPH_OVERLAY_VI: SvgMorphOverlayContent = {
+  title: 'Khám phá bộ sưu tập',
+  images: [HOUSE_IMG, ROOM_IMG, KITCHEN_IMG, POOL_IMG],
+  overlayColor: '#36301d',
+  toggleLabel: 'Mở bộ sưu tập',
+};
+const SVG_MORPH_OVERLAY_EN: SvgMorphOverlayContent = {
+  ...SVG_MORPH_OVERLAY_VI,
+  title: 'Explore the collection',
+  toggleLabel: 'Open catalog',
+};
+
+const GALLERY_PAN_LENS_VI: GalleryPanLensContent = {
+  images: [
+    HOUSE_IMG,
+    ROOM_IMG,
+    KITCHEN_IMG,
+    POOL_IMG,
+    GARDEN_IMG,
+    HOUSE_IMG,
+    ROOM_IMG,
+    KITCHEN_IMG,
+    POOL_IMG,
+  ],
+  radius: 260,
+  maxScale: 2.4,
+};
+const GALLERY_PAN_LENS_EN: GalleryPanLensContent = { ...GALLERY_PAN_LENS_VI };
+
+const SEAMLESS_SCROLL_GALLERY_VI: SeamlessScrollGalleryContent = {
+  title: 'Dự án tiêu biểu',
+  images: [HOUSE_IMG, ROOM_IMG, KITCHEN_IMG, POOL_IMG, GARDEN_IMG],
+  seconds: 30,
+};
+const SEAMLESS_SCROLL_GALLERY_EN: SeamlessScrollGalleryContent = {
+  ...SEAMLESS_SCROLL_GALLERY_VI,
+  title: 'Featured projects',
+};
+
+const PRODUCT_SPEC_SHEET_VI: ProductSpecSheetContent = {
+  eyebrow: 'SẢN PHẨM',
+  title: 'The Jack Pine',
+  description: 'Đồng vàng 99.99% — phiên bản giới hạn.',
+  imageUrl: KITCHEN_IMG,
+  specLabel: 'Thông số',
+  specs: [
+    { label: 'Khối lượng', value: '1006.1 g' },
+    { label: 'Đường kính', value: 'Ø 101.6 mm' },
+    { label: 'Độ tinh khiết', value: '99.99% vàng' },
+    { label: 'Mệnh giá', value: '$2,500 CAD' },
+  ],
+};
+const PRODUCT_SPEC_SHEET_EN: ProductSpecSheetContent = {
+  ...PRODUCT_SPEC_SHEET_VI,
+  eyebrow: 'PRODUCT',
+  description: '99.99% pure gold — limited edition.',
+  specLabel: 'Specs',
+  specs: [
+    { label: 'Weight', value: '1006.1 g' },
+    { label: 'Diameter', value: 'Ø 101.6 mm' },
+    { label: 'Purity', value: '99.99% gold' },
+    { label: 'Face value', value: '$2,500 CAD' },
+  ],
 };
 
 // ── Framer-native: Hero - Yume ──────────────────────────────────────────
@@ -1987,6 +2066,11 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   hover_equalizer_heading: HOVER_EQ_HEADING_VI,
   image_explosion: IMAGE_EXPLOSION_VI,
   marquee_band: MARQUEE_BAND_VI,
+  letter_slider: LETTER_SLIDER_VI,
+  svg_morph_overlay: SVG_MORPH_OVERLAY_VI,
+  gallery_pan_lens: GALLERY_PAN_LENS_VI,
+  seamless_scroll_gallery: SEAMLESS_SCROLL_GALLERY_VI,
+  product_spec_sheet: PRODUCT_SPEC_SHEET_VI,
   framer_yume_hero: FRAMER_YUME_HERO_VI,
   framer_yuya_hero: FRAMER_YUYA_HERO_VI,
   framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_VI,
@@ -2051,6 +2135,11 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hover_equalizer_heading: HOVER_EQ_HEADING_EN,
   image_explosion: IMAGE_EXPLOSION_EN,
   marquee_band: MARQUEE_BAND_EN,
+  letter_slider: LETTER_SLIDER_EN,
+  svg_morph_overlay: SVG_MORPH_OVERLAY_EN,
+  gallery_pan_lens: GALLERY_PAN_LENS_EN,
+  seamless_scroll_gallery: SEAMLESS_SCROLL_GALLERY_EN,
+  product_spec_sheet: PRODUCT_SPEC_SHEET_EN,
   framer_yume_hero: FRAMER_YUME_HERO_EN,
   framer_yuya_hero: FRAMER_YUYA_HERO_EN,
   framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_EN,

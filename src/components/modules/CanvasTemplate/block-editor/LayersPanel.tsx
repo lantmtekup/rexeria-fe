@@ -495,6 +495,23 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'text', label: 'Chữ chạy', icon: Type },
   ],
+  letter_slider: [BACKGROUND_LAYER],
+  svg_morph_overlay: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  gallery_pan_lens: [BACKGROUND_LAYER],
+  seamless_scroll_gallery: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  product_spec_sheet: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'description', label: 'Mô tả', icon: Pilcrow },
+    { key: 'imageUrl', label: 'Ảnh', icon: ImageIcon },
+  ],
 };
 
 export function LayersPanel({
