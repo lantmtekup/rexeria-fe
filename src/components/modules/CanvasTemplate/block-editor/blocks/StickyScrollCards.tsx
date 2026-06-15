@@ -106,7 +106,7 @@ export function StickyScrollCards({
     <div
       ref={rootRef}
       style={{ ...blockBackgroundStyle(background), height: `${n * 100}vh` }}
-      className={cn('relative w-full', className)}
+      className={cn('relative w-full bg-[#0f1219]', className)}
     >
       {/* Lớp giữ màn hình bằng CSS sticky (an toàn iOS). */}
       <div className='sticky top-0 flex h-screen flex-col items-center justify-center gap-6 overflow-hidden bg-[#0f1219] px-6'>

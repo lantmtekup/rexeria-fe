@@ -120,7 +120,7 @@ export function WheelGallery({
         ...blockBackgroundStyle(background),
         height: `${Math.max(n * 28, 200)}vh`,
       }}
-      className={cn('relative w-full', className)}
+      className={cn('relative w-full bg-[#0f1219]', className)}
     >
       <div className='sticky top-0 h-screen overflow-hidden bg-[#0f1219]'>
         {(content.eyebrow || content.title) && (
