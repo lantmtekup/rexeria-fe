@@ -474,6 +474,27 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
     { key: 'title', label: 'Tiêu đề', icon: Type },
   ],
+  hover_reveal_list: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  hover_grid_reveal: [
+    BACKGROUND_LAYER,
+    { key: 'imageUrl', label: 'Ảnh', icon: ImageIcon },
+  ],
+  hover_equalizer_heading: [
+    BACKGROUND_LAYER,
+    { key: 'heading', label: 'Tiêu đề', icon: Type },
+  ],
+  image_explosion: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  marquee_band: [
+    BACKGROUND_LAYER,
+    { key: 'text', label: 'Chữ chạy', icon: Type },
+  ],
 };
 
 export function LayersPanel({

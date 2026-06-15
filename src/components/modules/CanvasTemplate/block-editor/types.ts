@@ -25,6 +25,11 @@ export type BlockType =
   | 'lightbox_flip'
   | 'flip_gallery'
   | 'wheel_gallery'
+  | 'hover_reveal_list'
+  | 'hover_grid_reveal'
+  | 'hover_equalizer_heading'
+  | 'image_explosion'
+  | 'marquee_band'
   // ── Framer-native blocks (migrate từ src/blocks/ legacy → native) ──────
   // Mỗi design framer = 1 block_type riêng, render native + edit inline được.
   // BE phải có code tương ứng active trong catalog block_types.
@@ -508,6 +513,50 @@ export interface WheelGalleryContent {
   eyebrow?: string;
   title?: string;
   images: string[];
+}
+
+/** Hover reveal list — danh sách tên, hover hiện ảnh bám chuột (port CodeGrid 001). */
+export interface HoverRevealListContent {
+  title?: string;
+  items: { label: string; imageUrl: string }[];
+}
+
+/** Hover grid reveal — ảnh phủ lưới ô sáng theo vệt chuột (port CodeGrid 046). */
+export interface HoverGridRevealContent {
+  imageUrl: string;
+  cols?: number;
+  rows?: number;
+  /** Màu overlay (blend screen). Default #fd5530. */
+  overlayColor?: string;
+  /** Màu ô sáng (blend hard-light). Default #fff989. */
+  blockColor?: string;
+  /** Thời gian ô mờ lại (ms). Default 300. */
+  resetMs?: number;
+}
+
+/** Hover equalizer heading — chữ giãn scaleY theo con trỏ (port CodeGrid 049). */
+export interface HoverEqualizerHeadingContent {
+  heading: string;
+  /** scaleY ký tự đang trỏ. Default 2.2. */
+  peak?: number;
+  /** scaleY 2 ký tự kề bên. Default 1.6. */
+  neighbor?: number;
+}
+
+/** Image explosion — ảnh "nổ" bay lên rồi rơi khi cuộn tới (port CodeGrid 246). */
+export interface ImageExplosionContent {
+  eyebrow?: string;
+  title?: string;
+  images: string[];
+}
+
+/** Marquee band — dải chữ lớn chạy ngang vô tận (CSS thuần). */
+export interface MarqueeBandContent {
+  text: string;
+  /** Ký tự ngăn giữa các lần lặp. Default ' · '. */
+  separator?: string;
+  /** Chu kỳ chạy (s). Default 24. */
+  seconds?: number;
 }
 
 /** Legacy/framer block embed — chỉ giữ schemaId; renderer tra registry. */
@@ -1007,6 +1056,11 @@ export type BlockContent =
   | LightboxFlipContent
   | FlipGalleryContent
   | WheelGalleryContent
+  | HoverRevealListContent
+  | HoverGridRevealContent
+  | HoverEqualizerHeadingContent
+  | ImageExplosionContent
+  | MarqueeBandContent
   | FramerYumeHeroContent
   | FramerArpeggioHeroContent
   | FramerDelvauxHeroIntroContent
@@ -1760,6 +1814,56 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Wheel Gallery',
     aiLabelVi: 'bánh xe ảnh quay theo cuộn',
     aiLabelEn: 'image wheel rotating on scroll',
+  },
+  hover_reveal_list: {
+    type: 'hover_reveal_list',
+    label: 'Hover Reveal List',
+    accent: '#0f0f0f',
+    adminLabel: 'Hover Reveal List',
+    gradient: 'from-orange-400 to-red-600',
+    defaultName: 'Hover Reveal List',
+    aiLabelVi: 'danh sách tên, hover hiện ảnh bám chuột',
+    aiLabelEn: 'name list revealing image on hover',
+  },
+  hover_grid_reveal: {
+    type: 'hover_grid_reveal',
+    label: 'Hover Grid Reveal',
+    accent: '#0f0f0f',
+    adminLabel: 'Hover Grid Reveal',
+    gradient: 'from-yellow-400 to-orange-600',
+    defaultName: 'Hover Grid Reveal',
+    aiLabelVi: 'ảnh phủ lưới ô sáng theo vệt chuột',
+    aiLabelEn: 'image with grid cells lighting on hover',
+  },
+  hover_equalizer_heading: {
+    type: 'hover_equalizer_heading',
+    label: 'Hover Equalizer Heading',
+    accent: '#0f0f0f',
+    adminLabel: 'Hover Equalizer Heading',
+    gradient: 'from-lime-400 to-emerald-600',
+    defaultName: 'Hover Equalizer Heading',
+    aiLabelVi: 'tiêu đề chữ giãn như equalizer khi hover',
+    aiLabelEn: 'heading text stretching like an equalizer on hover',
+  },
+  image_explosion: {
+    type: 'image_explosion',
+    label: 'Image Explosion',
+    accent: '#0f0f0f',
+    adminLabel: 'Image Explosion',
+    gradient: 'from-fuchsia-500 to-rose-600',
+    defaultName: 'Image Explosion',
+    aiLabelVi: 'ảnh nổ tung bay lên rồi rơi khi cuộn tới',
+    aiLabelEn: 'images exploding upward then falling on scroll',
+  },
+  marquee_band: {
+    type: 'marquee_band',
+    label: 'Marquee Band',
+    accent: '#0f0f0f',
+    adminLabel: 'Marquee Band',
+    gradient: 'from-neutral-500 to-neutral-700',
+    defaultName: 'Marquee Band',
+    aiLabelVi: 'dải chữ lớn chạy ngang vô tận',
+    aiLabelEn: 'large text marquee scrolling horizontally',
   },
   framer_yume_hero: {
     type: 'framer_yume_hero',

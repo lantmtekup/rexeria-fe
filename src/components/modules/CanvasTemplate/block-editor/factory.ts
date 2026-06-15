@@ -39,6 +39,11 @@ import type {
   LightboxFlipContent,
   FlipGalleryContent,
   WheelGalleryContent,
+  HoverRevealListContent,
+  HoverGridRevealContent,
+  HoverEqualizerHeadingContent,
+  ImageExplosionContent,
+  MarqueeBandContent,
   PhotoGalleryContent,
   PollContent,
   QuizContent,
@@ -705,6 +710,64 @@ const WHEEL_GALLERY_EN: WheelGalleryContent = {
   ...WHEEL_GALLERY_VI,
   eyebrow: 'SCROLL TO SPIN',
   title: 'Project carousel',
+};
+
+const HOVER_REVEAL_LIST_VI: HoverRevealListContent = {
+  title: 'Dự án nổi bật',
+  items: [
+    { label: 'Happy City', imageUrl: HOUSE_IMG },
+    { label: 'Maison Noir', imageUrl: ROOM_IMG },
+    { label: 'The Jack Pine', imageUrl: KITCHEN_IMG },
+    { label: 'Riverside', imageUrl: POOL_IMG },
+    { label: 'Green Villa', imageUrl: GARDEN_IMG },
+  ],
+};
+const HOVER_REVEAL_LIST_EN: HoverRevealListContent = {
+  ...HOVER_REVEAL_LIST_VI,
+  title: 'Featured projects',
+};
+
+const HOVER_GRID_REVEAL_VI: HoverGridRevealContent = {
+  imageUrl: HOUSE_IMG,
+  cols: 16,
+  rows: 11,
+  overlayColor: '#fd5530',
+  blockColor: '#fff989',
+  resetMs: 300,
+};
+const HOVER_GRID_REVEAL_EN: HoverGridRevealContent = {
+  ...HOVER_GRID_REVEAL_VI,
+};
+
+const HOVER_EQ_HEADING_VI: HoverEqualizerHeadingContent = {
+  heading: 'TRẢI NGHIỆM',
+  peak: 2.2,
+  neighbor: 1.6,
+};
+const HOVER_EQ_HEADING_EN: HoverEqualizerHeadingContent = {
+  ...HOVER_EQ_HEADING_VI,
+  heading: 'EXPERIENCE',
+};
+
+const IMAGE_EXPLOSION_VI: ImageExplosionContent = {
+  eyebrow: 'CUỘN TỚI ĐÂY',
+  title: 'Bùng nổ trải nghiệm',
+  images: [HOUSE_IMG, ROOM_IMG, KITCHEN_IMG, POOL_IMG, GARDEN_IMG],
+};
+const IMAGE_EXPLOSION_EN: ImageExplosionContent = {
+  ...IMAGE_EXPLOSION_VI,
+  eyebrow: 'SCROLL HERE',
+  title: 'Experience explosion',
+};
+
+const MARQUEE_BAND_VI: MarqueeBandContent = {
+  text: 'Sáng tạo · Công nghệ · Truyền thông',
+  separator: ' · ',
+  seconds: 24,
+};
+const MARQUEE_BAND_EN: MarqueeBandContent = {
+  ...MARQUEE_BAND_VI,
+  text: 'Creative · Technology · Media',
 };
 
 // ── Framer-native: Hero - Yume ──────────────────────────────────────────
@@ -1919,6 +1982,11 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   lightbox_flip: LIGHTBOX_FLIP_VI,
   flip_gallery: FLIP_GALLERY_VI,
   wheel_gallery: WHEEL_GALLERY_VI,
+  hover_reveal_list: HOVER_REVEAL_LIST_VI,
+  hover_grid_reveal: HOVER_GRID_REVEAL_VI,
+  hover_equalizer_heading: HOVER_EQ_HEADING_VI,
+  image_explosion: IMAGE_EXPLOSION_VI,
+  marquee_band: MARQUEE_BAND_VI,
   framer_yume_hero: FRAMER_YUME_HERO_VI,
   framer_yuya_hero: FRAMER_YUYA_HERO_VI,
   framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_VI,
@@ -1978,6 +2046,11 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   lightbox_flip: LIGHTBOX_FLIP_EN,
   flip_gallery: FLIP_GALLERY_EN,
   wheel_gallery: WHEEL_GALLERY_EN,
+  hover_reveal_list: HOVER_REVEAL_LIST_EN,
+  hover_grid_reveal: HOVER_GRID_REVEAL_EN,
+  hover_equalizer_heading: HOVER_EQ_HEADING_EN,
+  image_explosion: IMAGE_EXPLOSION_EN,
+  marquee_band: MARQUEE_BAND_EN,
   framer_yume_hero: FRAMER_YUME_HERO_EN,
   framer_yuya_hero: FRAMER_YUYA_HERO_EN,
   framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_EN,

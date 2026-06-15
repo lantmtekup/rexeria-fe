@@ -48,8 +48,13 @@ import { Poll } from './Poll';
 import { Quiz } from './Quiz';
 import { FlipGallery } from './FlipGallery';
 import { Gallery3dDepth } from './Gallery3dDepth';
+import { HoverEqualizerHeading } from './HoverEqualizerHeading';
+import { HoverGridReveal } from './HoverGridReveal';
+import { HoverRevealList } from './HoverRevealList';
+import { ImageExplosion } from './ImageExplosion';
 import { ImageTrail } from './ImageTrail';
 import { LightboxFlip } from './LightboxFlip';
+import { MarqueeBand } from './MarqueeBand';
 import { ParallaxHero } from './ParallaxHero';
 import { SplitScreen } from './SplitScreen';
 import { StickyScrollCards } from './StickyScrollCards';
@@ -118,6 +123,11 @@ import type {
   LightboxFlipContent,
   FlipGalleryContent,
   WheelGalleryContent,
+  HoverRevealListContent,
+  HoverGridRevealContent,
+  HoverEqualizerHeadingContent,
+  ImageExplosionContent,
+  MarqueeBandContent,
 } from '../types';
 
 interface RenderBlockProps {
@@ -382,6 +392,61 @@ export function RenderBlock({
       return (
         <WheelGallery
           content={content as WheelGalleryContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'hover_reveal_list':
+      return (
+        <HoverRevealList
+          content={content as HoverRevealListContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'hover_grid_reveal':
+      return (
+        <HoverGridReveal
+          content={content as HoverGridRevealContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'hover_equalizer_heading':
+      return (
+        <HoverEqualizerHeading
+          content={content as HoverEqualizerHeadingContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'image_explosion':
+      return (
+        <ImageExplosion
+          content={content as ImageExplosionContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'marquee_band':
+      return (
+        <MarqueeBand
+          content={content as MarqueeBandContent}
           styles={styles}
           background={background}
           order={order}

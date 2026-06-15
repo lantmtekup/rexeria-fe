@@ -66,6 +66,8 @@ export const BACKGROUND_LAYER_KEY = '__background__';
 const ELEMENT_KIND: Record<string, ElementKind> = {
   eyebrow: 'text',
   title: 'text',
+  heading: 'text',
+  text: 'text',
   tag: 'text',
   description: 'text',
   subtitle: 'text',
