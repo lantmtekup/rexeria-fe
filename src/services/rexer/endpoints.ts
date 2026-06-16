@@ -292,6 +292,16 @@ function toAdminBlockType(it: Record<string, any>): AdminBlockType {
     engine_version: it.engine_version,
     created_at: it.created_at,
     updated_at: it.updated_at,
+    // AI recommendation taxonomy (migration 000033) — passthrough snake_case.
+    function: it.function,
+    funnel_stage: it.funnel_stage,
+    goal_tags: it.goal_tags,
+    industry_fit: it.industry_fit,
+    tone: it.tone,
+    page_role: it.page_role,
+    proof_type: it.proof_type,
+    needs_media: it.needs_media,
+    has_cta: it.has_cta,
   };
 }
 

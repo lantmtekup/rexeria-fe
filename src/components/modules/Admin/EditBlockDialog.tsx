@@ -18,12 +18,7 @@ import { Label } from '@/components/atoms/label';
 import { Textarea } from '@/components/atoms/textarea';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { Block, BlockAIMetadata } from '@/services/rexer/types';
-
-import {
-  BlockAiMetadataFields,
-  cleanAiMetadata,
-} from './BlockAiMetadataFields';
+import type { Block } from '@/services/rexer/types';
 
 export interface EditBlockDialogProps {
   open: boolean;
@@ -50,7 +45,6 @@ export function EditBlockDialog({
   const [description, setDescription] = React.useState('');
   const [tags, setTags] = React.useState<string[]>([]);
   const [tagInput, setTagInput] = React.useState('');
-  const [aiMeta, setAiMeta] = React.useState<BlockAIMetadata>({});
   const [submitting, setSubmitting] = React.useState(false);
 
   // Nạp lại form mỗi khi mở với block khác.
@@ -59,7 +53,6 @@ export function EditBlockDialog({
       setName(block.name ?? '');
       setDescription(block.description ?? '');
       setTags(block.tags ?? []);
-      setAiMeta(block.ai_metadata ?? {});
       setTagInput('');
     }
   }, [open, block]);
@@ -86,8 +79,6 @@ export function EditBlockDialog({
         name: trimmedName,
         description: description.trim() || undefined,
         tags,
-        // Luôn gửi (kể cả khi rỗng → {}) để cho phép xoá metadata cũ.
-        ai_metadata: cleanAiMetadata(aiMeta) ?? {},
       });
       toast.success(`Đã cập nhật "${updated.name}"`);
       onSaved(updated);
@@ -105,8 +96,8 @@ export function EditBlockDialog({
         <DialogHeader>
           <DialogTitle>Sửa thông tin block</DialogTitle>
           <DialogDescription>
-            Cập nhật tên, mô tả, tag + metadata cho AI gợi ý. Nội dung canvas
-            (settings) chỉnh trong block editor, không sửa ở đây.
+            Cập nhật tên, mô tả, tag. Nội dung canvas (settings) chỉnh trong
+            block editor, không sửa ở đây.
           </DialogDescription>
         </DialogHeader>
 
@@ -168,13 +159,6 @@ export function EditBlockDialog({
               placeholder='Nhập tag rồi Enter…'
             />
           </div>
-
-          <BlockAiMetadataFields
-            value={aiMeta}
-            onChange={setAiMeta}
-            idPrefix='eb-ai'
-            disabled={submitting}
-          />
         </div>
 
         <DialogFooter>

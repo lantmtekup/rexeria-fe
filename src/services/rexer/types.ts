@@ -1894,6 +1894,17 @@ export interface AdminBlockType {
   min_dimensions?: { width: number; height: number };
   engine_version?: string;
   supported_slot_types?: string[];
+  // AI recommendation taxonomy (block_types migration 000033) — snake_case khớp
+  // BE. Engine recommend_blocks khớp brief với các tín hiệu này.
+  function?: string;
+  funnel_stage?: string[];
+  goal_tags?: string[];
+  industry_fit?: string[];
+  tone?: string[];
+  page_role?: string;
+  proof_type?: string;
+  needs_media?: string;
+  has_cta?: boolean;
 }
 
 export interface CreateAdminBlockTypeRequest {
@@ -1906,6 +1917,16 @@ export interface CreateAdminBlockTypeRequest {
   is_premium?: boolean;
   schema_version?: string;
   sort_order?: number;
+  // AI recommendation taxonomy (gửi snake_case trực tiếp lên BE).
+  function?: string;
+  funnel_stage?: string[];
+  goal_tags?: string[];
+  industry_fit?: string[];
+  tone?: string[];
+  page_role?: string;
+  proof_type?: string;
+  needs_media?: string;
+  has_cta?: boolean;
 }
 
 export interface UpdateAdminBlockTypeRequest {
@@ -1918,6 +1939,16 @@ export interface UpdateAdminBlockTypeRequest {
   is_premium?: boolean;
   schema_version?: string;
   sort_order?: number;
+  // AI recommendation taxonomy (gửi snake_case trực tiếp lên BE).
+  function?: string;
+  funnel_stage?: string[];
+  goal_tags?: string[];
+  industry_fit?: string[];
+  tone?: string[];
+  page_role?: string;
+  proof_type?: string;
+  needs_media?: string;
+  has_cta?: boolean;
 }
 
 // ── Admin Users (global cross-brand list) ────────────────────────────────
@@ -2678,31 +2709,6 @@ export type BlockScope =
   | 'brand_team'
   | 'brand_public';
 
-/**
- * Tone hợp lệ cho BlockAIMetadata.tone — đồng bộ với BE `AllowedBlockTones`
- * (`internal/domain/models/block.go`). FE render select từ list này.
- */
-export type BlockTone =
-  | 'professional'
-  | 'friendly'
-  | 'luxury'
-  | 'playful'
-  | 'urgent'
-  | 'minimal';
-
-/**
- * Metadata có cấu trúc phục vụ AI-Insights recommendation, lưu ở cột jsonb
- * `blocks.ai_metadata`. Tất cả field optional — block chưa nhập là object rỗng.
- * Shape khớp BE `models.BlockAIMetadata`.
- */
-export interface BlockAIMetadata {
-  use_case?: string;
-  industry?: string;
-  tone?: BlockTone;
-  target_audience?: string;
-  keywords?: string[];
-}
-
 export interface Block {
   id: string;
   type_code: string;
@@ -2714,7 +2720,6 @@ export interface Block {
   thumbnail_asset_id?: string;
   thumbnail_url?: string;
   tags: string[];
-  ai_metadata?: BlockAIMetadata;
   scope: BlockScope;
   usage_count: number;
   last_used_at?: string;
@@ -2744,7 +2749,6 @@ export interface CreateBlockRequest {
   scope?: BlockScope;
   tags?: string[];
   description?: string;
-  ai_metadata?: BlockAIMetadata;
 }
 export interface UpdateBlockRequest {
   name?: string;
@@ -2752,7 +2756,6 @@ export interface UpdateBlockRequest {
   settings?: Record<string, unknown>;
   tags?: string[];
   thumbnail_asset_id?: string;
-  ai_metadata?: BlockAIMetadata;
 }
 
 // ── BlockType (system catalog, canonical mirror of AdminBlockType) ───────

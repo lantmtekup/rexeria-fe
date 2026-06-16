@@ -541,6 +541,49 @@ function BlockTypeDrawer({
           </Section>
         )}
 
+        {(item.function ||
+          item.page_role ||
+          item.proof_type ||
+          item.has_cta ||
+          (item.needs_media && item.needs_media !== 'none') ||
+          item.funnel_stage?.length ||
+          item.goal_tags?.length ||
+          item.tone?.length ||
+          item.industry_fit?.length) && (
+          <Section title='AI taxonomy'>
+            <dl className='flex flex-col gap-1.5'>
+              {item.function && (
+                <TaxoRow label='Function' value={item.function} />
+              )}
+              {item.page_role && (
+                <TaxoRow label='Vị trí' value={item.page_role} />
+              )}
+              {!!item.funnel_stage?.length && (
+                <TaxoRow label='Funnel' value={item.funnel_stage.join(', ')} />
+              )}
+              {!!item.goal_tags?.length && (
+                <TaxoRow label='Goals' value={item.goal_tags.join(', ')} />
+              )}
+              {!!item.tone?.length && (
+                <TaxoRow label='Tone' value={item.tone.join(', ')} />
+              )}
+              {!!item.industry_fit?.length && (
+                <TaxoRow
+                  label='Industry'
+                  value={item.industry_fit.join(', ')}
+                />
+              )}
+              {item.proof_type && (
+                <TaxoRow label='Proof' value={item.proof_type} />
+              )}
+              {item.needs_media && item.needs_media !== 'none' && (
+                <TaxoRow label='Media' value={item.needs_media} />
+              )}
+              <TaxoRow label='CTA' value={item.has_cta ? 'có' : 'không'} />
+            </dl>
+          </Section>
+        )}
+
         {item.min_dimensions && (
           <Section title='Min dimensions'>
             <code className='text-2xs text-content-muted font-mono'>
@@ -629,6 +672,16 @@ function Section({
         {title}
       </div>
       {children}
+    </div>
+  );
+}
+
+/** Một dòng label/value cho block AI taxonomy trong drawer. */
+function TaxoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className='flex items-baseline gap-2'>
+      <dt className='text-muted-foreground w-16 shrink-0 font-mono'>{label}</dt>
+      <dd className='text-content-muted'>{value}</dd>
     </div>
   );
 }

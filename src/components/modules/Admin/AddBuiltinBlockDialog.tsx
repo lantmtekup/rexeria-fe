@@ -5,9 +5,8 @@
  * portal mirror at `/portal/blocks`). Data nạp thật từ BE `/v1/block-types`
  * (active block types), lọc còn các type mà canvas factory dựng + preview
  * được, rồi show `BlockMiniPreview` thumbnail per card. Bấm 1 card → mở form
- * nhập tên/mô tả/tags + metadata cho AI (`BlockAiMetadataFields`) → tạo bản
- * ghi block (`POST /v1/blocks`, scope `brand_private`) với settings từ
- * `createBlock(type)` và `ai_metadata` người dùng nhập.
+ * nhập tên/mô tả/tags → tạo bản ghi block (`POST /v1/blocks`, scope
+ * `brand_private`) với settings từ `createBlock(type)`.
  */
 
 import * as React from 'react';
@@ -26,13 +25,7 @@ import type {
 import { BLOCK_TYPE_META } from '@/components/modules/CanvasTemplate/block-editor/types';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { BlockAIMetadata } from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
-
-import {
-  BlockAiMetadataFields,
-  cleanAiMetadata,
-} from './BlockAiMetadataFields';
 
 interface CatalogItem {
   type: BlockType;
@@ -86,7 +79,6 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
   const [formDesc, setFormDesc] = React.useState('');
   const [formTags, setFormTags] = React.useState<string[]>([]);
   const [tagInput, setTagInput] = React.useState('');
-  const [aiMeta, setAiMeta] = React.useState<BlockAIMetadata>({});
 
   React.useEffect(() => {
     if (!open) return;
@@ -145,7 +137,6 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
     setFormDesc(item.description ?? '');
     setFormTags([]);
     setTagInput('');
-    setAiMeta({});
   };
 
   const addTag = () => {
@@ -175,7 +166,6 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
         name,
         description: formDesc.trim() || undefined,
         tags: formTags,
-        ai_metadata: cleanAiMetadata(aiMeta),
         settings: block as unknown as Record<string, unknown>,
         scope: 'brand_private',
       });
@@ -299,13 +289,6 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                     placeholder='Nhập tag rồi Enter…'
                   />
                 </div>
-
-                <BlockAiMetadataFields
-                  value={aiMeta}
-                  onChange={setAiMeta}
-                  idPrefix='ab-ai'
-                  disabled={adding}
-                />
               </div>
             </div>
 
@@ -419,8 +402,8 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
 
             {/* Footer hint */}
             <div className='text-2xs border-border text-content-muted border-t bg-white px-5 py-2.5'>
-              Chọn 1 block type để nhập tên, mô tả + metadata cho AI gợi ý trước
-              khi thêm vào thư viện.
+              Chọn 1 block type để nhập tên, mô tả + tags trước khi thêm vào thư
+              viện.
             </div>
           </>
         )}
