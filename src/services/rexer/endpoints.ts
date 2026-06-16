@@ -97,9 +97,12 @@ import type {
   TemplateListResponse,
   TemplatePreviewResponse,
   TemplateResponse,
+  TemplateEffect,
   TemplateVersion,
   TemplateVersionListResponse,
   TemplateVersionResponse,
+  CreateTemplateEffectRequest,
+  UpdateTemplateEffectRequest,
   UpdateCampaignRequest,
   UpdateProductCategoryRequest,
   UpdateProductRequest,
@@ -401,6 +404,56 @@ export const rexerApi = {
         body,
       });
       return r.template_version;
+    },
+  },
+  // Hiệu ứng của template (BE template_effects). Reads mở cho mọi user đăng
+  // nhập; mutations (create/update/activate) chỉ staff (BE gate ở internal).
+  templateEffects: {
+    list: async (templateId: string): Promise<TemplateEffect[]> => {
+      const r = await rx<{ items: TemplateEffect[]; total: number }>(
+        `/templates/${templateId}/effects`
+      );
+      return r.items ?? [];
+    },
+    get: async (
+      templateId: string,
+      effectId: string
+    ): Promise<TemplateEffect> => {
+      const r = await rx<{ template_effect: TemplateEffect }>(
+        `/templates/${templateId}/effects/${effectId}`
+      );
+      return r.template_effect;
+    },
+    create: async (
+      templateId: string,
+      body: CreateTemplateEffectRequest
+    ): Promise<TemplateEffect> => {
+      const r = await rx<{ template_effect: TemplateEffect }>(
+        `/templates/${templateId}/effects`,
+        { method: 'POST', body }
+      );
+      return r.template_effect;
+    },
+    update: async (
+      templateId: string,
+      effectId: string,
+      body: UpdateTemplateEffectRequest
+    ): Promise<TemplateEffect> => {
+      const r = await rx<{ template_effect: TemplateEffect }>(
+        `/templates/${templateId}/effects/${effectId}`,
+        { method: 'PATCH', body }
+      );
+      return r.template_effect;
+    },
+    activate: async (
+      templateId: string,
+      effectId: string
+    ): Promise<TemplateEffect> => {
+      const r = await rx<{ template_effect: TemplateEffect }>(
+        `/templates/${templateId}/effects/${effectId}/activate`,
+        { method: 'POST' }
+      );
+      return r.template_effect;
     },
   },
   // `projects` namespace removed — system standardized on canvas-template

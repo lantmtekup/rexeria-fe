@@ -8,6 +8,7 @@
  */
 
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
@@ -43,6 +44,7 @@ import {
 } from '@/components/atoms/table';
 import { CreateTemplateDialog } from '@/components/dialogs/CreateTemplateDialog';
 import { UseTemplateDialog } from '@/components/dialogs/UseTemplateDialog';
+import { TemplateEffectsDialog } from '@/components/modules/CanvasTemplate/TemplateEffectsDialog';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import { cn } from '@/lib/cn';
@@ -93,6 +95,9 @@ export function AdminTemplatesPage() {
   const [view, setView] = React.useState<View>('table');
   // "Sử dụng template" dialog target; null when closed.
   const [useTarget, setUseTarget] = React.useState<Template | null>(null);
+  const [effectsTarget, setEffectsTarget] = React.useState<Template | null>(
+    null
+  );
   // "Tạo template mới" dialog open state.
   const [createOpen, setCreateOpen] = React.useState(false);
   const [page, setPage] = React.useState(1);
@@ -471,6 +476,7 @@ export function AdminTemplatesPage() {
         <GridView
           items={pageItems}
           onUse={setUseTarget}
+          onEffects={setEffectsTarget}
           onStatusAction={runStatusAction}
         />
       ) : (
@@ -483,6 +489,7 @@ export function AdminTemplatesPage() {
             created: t('templates.col.created'),
           }}
           onUse={setUseTarget}
+          onEffects={setEffectsTarget}
           onStatusAction={runStatusAction}
           selected={selected}
           onToggleSelected={toggleSelected}
@@ -540,6 +547,14 @@ export function AdminTemplatesPage() {
         template={useTarget}
       />
 
+      <TemplateEffectsDialog
+        open={!!effectsTarget}
+        onOpenChange={open => {
+          if (!open) setEffectsTarget(null);
+        }}
+        template={effectsTarget}
+      />
+
       <CreateTemplateDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
@@ -550,10 +565,12 @@ export function AdminTemplatesPage() {
 function GridView({
   items,
   onUse,
+  onEffects,
   onStatusAction,
 }: {
   items: Template[];
   onUse: (t: Template) => void;
+  onEffects: (t: Template) => void;
   onStatusAction: (t: Template, action: TemplateStatusAction) => void;
 }) {
   return (
@@ -563,6 +580,7 @@ function GridView({
           key={it.id}
           item={it}
           onUse={() => onUse(it)}
+          onEffects={onEffects}
           onStatusAction={onStatusAction}
         />
       ))}
@@ -573,10 +591,12 @@ function GridView({
 function TemplateCard({
   item,
   onUse,
+  onEffects,
   onStatusAction,
 }: {
   item: Template;
   onUse: () => void;
+  onEffects: (t: Template) => void;
   onStatusAction: (t: Template, action: TemplateStatusAction) => void;
 }) {
   const statusClass =
@@ -683,6 +703,7 @@ function TemplateCard({
           </button>
           <TemplateActionMenu
             item={item}
+            onEffects={() => onEffects(item)}
             onStatusAction={action => onStatusAction(item, action)}
           />
         </div>
@@ -697,27 +718,52 @@ type TemplateStatusAction = 'activate' | 'archive' | 'restore';
 
 function TemplateActionMenu({
   item,
+  onEffects,
   onStatusAction,
 }: {
   item: Template;
+  onEffects: () => void;
   onStatusAction: (action: TemplateStatusAction) => void;
 }) {
   const [open, setOpen] = React.useState(false);
-  const ref = React.useRef<HTMLDivElement>(null);
+  // Dropdown render qua portal + position fixed để KHÔNG bị card cha
+  // (overflow-hidden + hover translate) cắt/che. Toạ độ tính từ rect của nút.
+  const [pos, setPos] = React.useState<{ top: number; right: number } | null>(
+    null
+  );
+  const btnRef = React.useRef<HTMLButtonElement>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  const toggle = () => {
+    if (!open) {
+      const r = btnRef.current?.getBoundingClientRect();
+      if (r) setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+    }
+    setOpen(o => !o);
+  };
 
   React.useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (!btnRef.current?.contains(t) && !menuRef.current?.contains(t)) {
+        setOpen(false);
+      }
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
+    // Vị trí cố định theo rect lúc mở → đóng khi scroll/resize để tránh lệch.
+    const onMove = () => setOpen(false);
     document.addEventListener('mousedown', onDoc);
     document.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', onMove, true);
+    window.addEventListener('resize', onMove);
     return () => {
       document.removeEventListener('mousedown', onDoc);
       document.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', onMove, true);
+      window.removeEventListener('resize', onMove);
     };
   }, [open]);
 
@@ -729,73 +775,92 @@ function TemplateActionMenu({
   const status = (item.status ?? '').toLowerCase();
 
   return (
-    <div ref={ref} className='relative'>
+    <>
       <button
+        ref={btnRef}
         type='button'
-        onClick={() => setOpen(o => !o)}
+        onClick={toggle}
         className='border-border text-content-muted hover:bg-muted inline-flex h-full items-center justify-center rounded-lg border bg-white px-2 transition-colors'
         aria-label='Hành động'
         aria-expanded={open}
       >
         <MoreVertical className='size-3.5' />
       </button>
-      {open && (
-        <div className='border-border absolute top-full right-0 z-30 mt-1 w-44 overflow-hidden rounded-lg border bg-white shadow-lg'>
-          <Link
-            href={`/admin/templates/${item.id}/edit`}
-            onClick={() => setOpen(false)}
-            className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
+      {open &&
+        pos &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{ position: 'fixed', top: pos.top, right: pos.right }}
+            className='border-border z-[200] w-44 overflow-hidden rounded-lg border bg-white shadow-lg'
           >
-            <Pencil className='size-3.5 text-blue-600' />
-            Mở editor
-          </Link>
-          <div className='bg-muted h-px' />
-          {status === 'draft' && (
-            <button
-              type='button'
-              onClick={choose('activate')}
+            <Link
+              href={`/admin/templates/${item.id}/edit`}
+              onClick={() => setOpen(false)}
               className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
             >
-              <CheckCircle2 className='size-3.5 text-emerald-600' />
-              Activate
-            </button>
-          )}
-          {status === 'active' && (
+              <Pencil className='size-3.5 text-blue-600' />
+              Mở editor
+            </Link>
             <button
               type='button'
-              onClick={choose('restore')}
+              onClick={() => {
+                setOpen(false);
+                onEffects();
+              }}
               className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
             >
-              <RotateCcw className='size-3.5 text-amber-600' />
-              Back to draft
+              <Sparkles className='size-3.5 text-violet-600' />
+              Hiệu ứng template
             </button>
-          )}
-          {status === 'archived' && (
-            <button
-              type='button'
-              onClick={choose('restore')}
-              className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
-            >
-              <RotateCcw className='text-content-muted size-3.5' />
-              Restore (→ draft)
-            </button>
-          )}
-          {status !== 'archived' && (
-            <>
-              <div className='bg-muted h-px' />
+            <div className='bg-muted h-px' />
+            {status === 'draft' && (
               <button
                 type='button'
-                onClick={choose('archive')}
-                className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
+                onClick={choose('activate')}
+                className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
               >
-                <Archive className='size-3.5' />
-                Archive
+                <CheckCircle2 className='size-3.5 text-emerald-600' />
+                Activate
               </button>
-            </>
-          )}
-        </div>
-      )}
-    </div>
+            )}
+            {status === 'active' && (
+              <button
+                type='button'
+                onClick={choose('restore')}
+                className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
+              >
+                <RotateCcw className='size-3.5 text-amber-600' />
+                Back to draft
+              </button>
+            )}
+            {status === 'archived' && (
+              <button
+                type='button'
+                onClick={choose('restore')}
+                className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
+              >
+                <RotateCcw className='text-content-muted size-3.5' />
+                Restore (→ draft)
+              </button>
+            )}
+            {status !== 'archived' && (
+              <>
+                <div className='bg-muted h-px' />
+                <button
+                  type='button'
+                  onClick={choose('archive')}
+                  className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
+                >
+                  <Archive className='size-3.5' />
+                  Archive
+                </button>
+              </>
+            )}
+          </div>,
+          document.body
+        )}
+    </>
   );
 }
 
@@ -805,6 +870,7 @@ function TableView({
   items,
   col,
   onUse,
+  onEffects,
   onStatusAction,
   selected,
   onToggleSelected,
@@ -813,6 +879,7 @@ function TableView({
   items: Template[];
   col: { name: string; code: string; status: string; created: string };
   onUse: (t: Template) => void;
+  onEffects: (t: Template) => void;
   onStatusAction: (t: Template, action: TemplateStatusAction) => void;
   selected: Set<string>;
   onToggleSelected: (id: string) => void;
@@ -927,6 +994,7 @@ function TableView({
                     </button>
                     <TemplateActionMenu
                       item={item}
+                      onEffects={() => onEffects(item)}
                       onStatusAction={a => onStatusAction(item, a)}
                     />
                   </div>

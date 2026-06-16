@@ -6,8 +6,7 @@
  * Wave 3 cutover (2026-05-30): migrated from localStorage `savedBlocks`
  * helper to BE `/v1/blocks`. Endpoints wired:
  *   GET    /v1/blocks                        → list (`rexerApi.blocks.list`)
- *   POST   /v1/blocks                        → create (in AddBuiltinBlockDialog)
- *   PATCH  /v1/blocks/:id                    → rename + tag update
+ *   PATCH  /v1/blocks/:id                    → rename + tag + info update
  *   DELETE /v1/blocks/:id                    → archive
  *   POST   /v1/blocks/:id/clone              → duplicate
  *   POST   /v1/blocks/:id/use                → not used here (canvas editor calls)
@@ -65,10 +64,10 @@ import type {
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Block as ServerBlock } from '@/services/rexer/types';
-import { buildLegacyServerBlocks, getLegacyBlock } from '@/blocks/registry';
 import { cn } from '@/lib/cn';
 
 import { AddBuiltinBlockDialog } from './AddBuiltinBlockDialog';
+import { EditBlockDialog } from './EditBlockDialog';
 
 type View = 'grid' | 'table';
 
@@ -149,35 +148,22 @@ export function AdminBlocksPage() {
     block: EditorBlock;
     name: string;
   } | null>(null);
-  // Legacy preview — render component qua registry, không dùng PreviewMode
-  // vì PreviewMode expect editor Block shape (canvas-template). Holds
-  // schema id để lookup registry + lang switch (vi/en).
-  const [legacyPreviewTarget, setLegacyPreviewTarget] = React.useState<{
-    schemaId: string;
-    name: string;
-  } | null>(null);
+  // Block đang sửa thông tin (name/description/tags) qua EditBlockDialog.
+  const [editTarget, setEditTarget] = React.useState<ServerBlock | null>(null);
 
   const load = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const r = await rexerApi.blocks.list({ limit: 200 });
-      // Merge legacy registry (POC ported từ 360-cms) ở đầu list. Synthetic
-      // entries có id `legacy:*` — không call BE, render preview qua local
-      // React component. Khi BE seed thật cho 113 blocks → bỏ merge này.
-      const legacy = buildLegacyServerBlocks();
-      setItems([...legacy, ...(r.items ?? [])]);
+      setItems(r.items ?? []);
     } catch (err) {
       setError(rxMessage(err));
-      setItems(buildLegacyServerBlocks());
+      setItems([]);
     } finally {
       setLoading(false);
     }
   }, []);
-
-  /** Detect legacy synthetic entries. Skip BE actions cho row legacy
-   *  (delete/clone/rename) — chỉ allow preview + detail. */
-  const isLegacyItem = (item: ServerBlock) => item.id.startsWith('legacy:');
 
   React.useEffect(() => {
     load();
@@ -207,12 +193,6 @@ export function AdminBlocksPage() {
   }, [items, search, typeFilter, tagFilter]);
 
   const handleDuplicate = async (id: string) => {
-    if (id.startsWith('legacy:')) {
-      toast.info(
-        'Legacy block là catalog system — clone chưa support. Sẽ enable khi seed BE.'
-      );
-      return;
-    }
     const tid = toast.loading('Đang clone…');
     try {
       const dup = await rexerApi.blocks.clone(id);
@@ -225,10 +205,6 @@ export function AdminBlocksPage() {
   };
 
   const handleDelete = async (block: ServerBlock) => {
-    if (isLegacyItem(block)) {
-      toast.info('Legacy block thuộc system catalog — không xoá được từ UI.');
-      return;
-    }
     if (!window.confirm(`Xoá "${block.name}"?`)) return;
     const tid = toast.loading('Đang xoá…');
     try {
@@ -242,10 +218,6 @@ export function AdminBlocksPage() {
   };
 
   const handleRename = async (id: string, name: string) => {
-    if (id.startsWith('legacy:')) {
-      toast.info('Legacy block — đổi tên trong source code (src/blocks/).');
-      return;
-    }
     const trimmed = name.trim();
     if (!trimmed) return;
     try {
@@ -258,10 +230,6 @@ export function AdminBlocksPage() {
   };
 
   const handleTagsChange = async (id: string, tags: string[]) => {
-    if (id.startsWith('legacy:')) {
-      toast.info('Legacy block — tags fix ở schema source code.');
-      return;
-    }
     const normalised = Array.from(
       new Set(tags.map(t => t.trim().toLowerCase()).filter(t => t.length > 0))
     );
@@ -274,31 +242,13 @@ export function AdminBlocksPage() {
     }
   };
 
-  /**
-   * Edit-in-canvas flow still blocked by Wave 3 work — canvas-editor wrap
-   * needs to load `block.settings` directly instead of round-tripping
-   * through a temp canvas-template id (which is retired post mig 134).
-   */
+  /** Mở dialog sửa thông tin block (name/description/tags). Nội dung canvas
+   *  (settings) vẫn chỉnh trong block editor riêng. */
   const handleEdit = (block: ServerBlock) => {
-    toast.info(
-      `Edit "${block.name}" — flow đang refactor sang block-direct editor (Wave 3). Tạm thời dùng portal block editor để chỉnh.`,
-      { duration: 6000 }
-    );
+    setEditTarget(block);
   };
 
   const handlePreview = (block: ServerBlock) => {
-    if (isLegacyItem(block)) {
-      const schemaId =
-        typeof block.settings?.schemaId === 'string'
-          ? (block.settings.schemaId as string)
-          : null;
-      if (!schemaId || !getLegacyBlock(schemaId)) {
-        toast.error('Legacy block không tìm thấy trong registry.');
-        return;
-      }
-      setLegacyPreviewTarget({ schemaId, name: block.name });
-      return;
-    }
     const editorBlock = parseEditorBlock(block.settings);
     if (!editorBlock) {
       toast.error(
@@ -461,21 +411,9 @@ export function AdminBlocksPage() {
                   : 'Không khớp tìm kiếm'
               }
               description={
-                items.length === 0 ? (
-                  <>
-                    Bấm{' '}
-                    <button
-                      type='button'
-                      onClick={() => setCatalogOpen(true)}
-                      className='text-primary underline'
-                    >
-                      Thêm từ thư viện hệ thống
-                    </button>{' '}
-                    để chọn 1 trong 14 block mẫu — sau đó sửa tuỳ ý.
-                  </>
-                ) : (
-                  'Đổi từ khoá hoặc xoá filter để xem tất cả.'
-                )
+                items.length === 0
+                  ? 'Tạo block trong canvas editor rồi lưu vào thư viện.'
+                  : 'Đổi từ khoá hoặc xoá filter để xem tất cả.'
               }
             />
           ) : view === 'grid' ? (
@@ -485,6 +423,7 @@ export function AdminBlocksPage() {
               onSelect={openDetail}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
+              onEdit={handleEdit}
               onPreview={handlePreview}
             />
           ) : (
@@ -534,13 +473,17 @@ export function AdminBlocksPage() {
         />
       )}
 
-      {legacyPreviewTarget && (
-        <LegacyPreviewOverlay
-          schemaId={legacyPreviewTarget.schemaId}
-          name={legacyPreviewTarget.name}
-          onClose={() => setLegacyPreviewTarget(null)}
-        />
-      )}
+      <EditBlockDialog
+        open={!!editTarget}
+        onOpenChange={open => {
+          if (!open) setEditTarget(null);
+        }}
+        block={editTarget}
+        onSaved={updated => {
+          setItems(prev => prev.map(b => (b.id === updated.id ? updated : b)));
+          setEditTarget(null);
+        }}
+      />
     </div>
   );
 }
@@ -553,6 +496,7 @@ function GridView({
   onSelect,
   onDuplicate,
   onDelete,
+  onEdit,
   onPreview,
 }: {
   items: ServerBlock[];
@@ -560,6 +504,7 @@ function GridView({
   onSelect: (id: string) => void;
   onDuplicate: (id: string) => void;
   onDelete: (item: ServerBlock) => void;
+  onEdit: (item: ServerBlock) => void;
   onPreview: (item: ServerBlock) => void;
 }) {
   return (
@@ -572,6 +517,7 @@ function GridView({
           onClick={() => onSelect(it.id)}
           onDuplicate={() => onDuplicate(it.id)}
           onDelete={() => onDelete(it)}
+          onEdit={() => onEdit(it)}
           onPreview={() => onPreview(it)}
         />
       ))}
@@ -585,6 +531,7 @@ function BlockCard({
   onClick,
   onDuplicate,
   onDelete,
+  onEdit,
   onPreview,
 }: {
   item: ServerBlock;
@@ -592,25 +539,12 @@ function BlockCard({
   onClick: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onEdit: () => void;
   onPreview: () => void;
 }) {
   const type = item.type_code as BlockType;
   const gradient = BLOCK_TYPE_GRADIENT[type] ?? 'from-zinc-400 to-zinc-600';
-  // Legacy item: prefer schema.name → strip `legacy_` prefix from type_code
-  // không meaningful cho admin scan. Default label vẫn fallback type_code.
-  const isLegacy = item.id.startsWith('legacy:');
-  const legacySchemaId =
-    isLegacy && typeof item.settings?.schemaId === 'string'
-      ? (item.settings.schemaId as string)
-      : null;
-  const legacyEntry = legacySchemaId ? getLegacyBlock(legacySchemaId) : null;
-  const legacyCategory =
-    isLegacy && typeof item.settings?.category === 'string'
-      ? (item.settings.category as string)
-      : null;
-  const label = isLegacy
-    ? (legacyCategory ?? 'Legacy')
-    : (BLOCK_TYPE_LABEL[type] ?? item.type_code);
+  const label = BLOCK_TYPE_LABEL[type] ?? item.type_code;
   const editorBlock = parseEditorBlock(item.settings);
   const extraCount = editorBlock?.extraElements?.length ?? 0;
   const hasMobile = !!editorBlock?.contentVi?.mobile;
@@ -641,6 +575,7 @@ function BlockCard({
           onDetail={onClick}
           onDuplicate={onDuplicate}
           onDelete={onDelete}
+          onEdit={onEdit}
           onPreview={onPreview}
         />
       </div>
@@ -664,8 +599,6 @@ function BlockCard({
         <div className='relative'>
           {editorBlock ? (
             <BlockMiniPreview block={editorBlock} aspect='4 / 3' />
-          ) : legacyEntry ? (
-            <LegacyBlockThumbnail entry={legacyEntry} />
           ) : (
             <div
               className={cn(
@@ -735,11 +668,13 @@ function CardKebabMenu({
   onDetail,
   onDuplicate,
   onDelete,
+  onEdit,
   onPreview,
 }: {
   onDetail: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onEdit: () => void;
   onPreview: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -797,6 +732,14 @@ function CardKebabMenu({
           >
             <Eye className='text-content-muted size-3.5' />
             Mở chi tiết
+          </button>
+          <button
+            type='button'
+            onClick={choose(onEdit)}
+            className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
+          >
+            <Pencil className='text-content-muted size-3.5' />
+            Sửa thông tin
           </button>
           <button
             type='button'
@@ -921,7 +864,7 @@ function TableView({
                       variant='ghost'
                       size='sm'
                       onClick={() => onEdit(it)}
-                      title='Sửa trong canvas (Wave 3)'
+                      title='Sửa thông tin (tên, mô tả, tag)'
                     >
                       <Pencil className='size-3.5' />
                     </Button>
@@ -1258,145 +1201,5 @@ function ViewBtn({
     >
       {icon}
     </button>
-  );
-}
-
-/* ─── LegacyBlockThumbnail ───────────────────────────────────────────
- * Render component legacy ở size lớn rồi scale down để fit khung
- * 4:3 ratio của card. `transform: scale(...)` + `transform-origin:
- * top left` đảm bảo component thấy viewport full-size (~1280×960) →
- * khi shrink xuống card preview vẫn giữ layout proportions.
- *
- * Pointer-events: none để tránh hover / scroll affect card click. */
-function LegacyBlockThumbnail({
-  entry,
-}: {
-  entry: ReturnType<typeof getLegacyBlock>;
-}) {
-  if (!entry) return null;
-  const { schema, Component } = entry;
-  const content = (schema.defaults.vi ?? {}) as Record<string, unknown>;
-  const SOURCE_W = 1280;
-  const SOURCE_H = 960;
-
-  return (
-    <div className='bg-muted relative aspect-[4/3] overflow-hidden'>
-      <div
-        aria-hidden='true'
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: SOURCE_W,
-          height: SOURCE_H,
-          transform: 'scale(0.25)',
-          transformOrigin: 'top left',
-          pointerEvents: 'none',
-        }}
-      >
-        <Component content={content} editable={false} />
-      </div>
-    </div>
-  );
-}
-
-/* ─── LegacyPreviewOverlay ──────────────────────────────────────────
- * Full-screen modal render legacy block ở viewport thật + toolbar
- * top-bar (name, lang switch vi/en, close). Block dùng position:
- * fixed (delvaux hero), h-screen, vh units — wrapper có `transform:
- * translateZ(0)` tạo new containing block để fixed children stay
- * inside modal (giống pattern PageOverlayView 2026-05-31).
- *
- * ESC key + click backdrop → close. Body scroll lock while open. */
-function LegacyPreviewOverlay({
-  schemaId,
-  name,
-  onClose,
-}: {
-  schemaId: string;
-  name: string;
-  onClose: () => void;
-}) {
-  const [lang, setLang] = React.useState<'vi' | 'en'>('vi');
-  const entry = getLegacyBlock(schemaId);
-
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [onClose]);
-
-  if (!entry) return null;
-  const { Component, schema } = entry;
-  const content = (schema.defaults[lang] ?? schema.defaults.vi ?? {}) as Record<
-    string,
-    unknown
-  >;
-  const availableLangs = Object.keys(schema.defaults);
-
-  return (
-    <div className='fixed inset-0 z-[200] flex flex-col bg-zinc-950'>
-      {/* Toolbar */}
-      <div className='flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-zinc-900 px-4 py-2.5'>
-        <div className='flex min-w-0 items-center gap-3'>
-          <span className='text-3xs inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 font-mono font-bold tracking-wider text-amber-300 uppercase'>
-            Legacy
-          </span>
-          <div className='min-w-0'>
-            <div className='truncate text-sm font-semibold text-white'>
-              {name}
-            </div>
-            <code className='text-3xs text-muted-foreground block truncate font-mono'>
-              {schema.id}
-            </code>
-          </div>
-        </div>
-        <div className='flex items-center gap-2'>
-          {availableLangs.length > 1 && (
-            <div className='flex items-center gap-1 rounded-full border border-white/10 bg-zinc-800 p-0.5'>
-              {availableLangs.map(l => (
-                <button
-                  key={l}
-                  type='button'
-                  onClick={() => setLang(l as 'vi' | 'en')}
-                  className={cn(
-                    'text-3xs rounded-full px-2.5 py-1 font-mono font-bold tracking-wider uppercase transition-colors',
-                    lang === l
-                      ? 'text-foreground bg-white'
-                      : 'text-muted-foreground hover:text-white'
-                  )}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-          )}
-          <button
-            type='button'
-            onClick={onClose}
-            className='text-muted-foreground flex size-8 items-center justify-center rounded-full hover:bg-white/10 hover:text-white'
-            aria-label='Đóng preview'
-            title='Đóng (ESC)'
-          >
-            <X className='size-4' />
-          </button>
-        </div>
-      </div>
-
-      {/* Content — translateZ tạo containing block cho fixed/vh children */}
-      <div
-        className='relative flex-1 overflow-auto bg-white'
-        style={{ transform: 'translateZ(0)' }}
-      >
-        <Component content={content} editable={false} />
-      </div>
-    </div>
   );
 }

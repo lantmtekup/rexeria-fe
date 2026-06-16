@@ -2276,6 +2276,36 @@ export interface MotionKit extends MotionKitData {
   updated_at: string;
 }
 
+// ── Template Effects (per-template motion personality) ───────────────────
+// Song song với MotionKit (mức brand) nhưng gắn với template: mỗi template có
+// N bộ hiệu ứng, đúng 1 bộ active. Mirror BE models.TemplateEffect.
+export interface TemplateEffect {
+  id: string;
+  template_id: string;
+  name: string;
+  is_active: boolean;
+  easing: string;
+  duration_scale: number;
+  transition_style: 'fade' | 'slide' | 'morph';
+  intensity: 'subtle' | 'normal' | 'bold';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateTemplateEffectRequest {
+  name: string;
+  easing?: string;
+  duration_scale?: number;
+  transition_style?: 'fade' | 'slide' | 'morph';
+  intensity?: 'subtle' | 'normal' | 'bold';
+  /** Đặt bộ này thành active ngay khi tạo. */
+  activate?: boolean;
+}
+
+export type UpdateTemplateEffectRequest = Partial<
+  Omit<CreateTemplateEffectRequest, 'activate'>
+>;
+
 // ── Brand Kit (controlled design-token layer) ────────────────────────────
 /** Role-keyed token maps; mirrors BE models.BrandKit jsonb columns. */
 export interface BrandKitTokens {
@@ -2648,6 +2678,31 @@ export type BlockScope =
   | 'brand_team'
   | 'brand_public';
 
+/**
+ * Tone hợp lệ cho BlockAIMetadata.tone — đồng bộ với BE `AllowedBlockTones`
+ * (`internal/domain/models/block.go`). FE render select từ list này.
+ */
+export type BlockTone =
+  | 'professional'
+  | 'friendly'
+  | 'luxury'
+  | 'playful'
+  | 'urgent'
+  | 'minimal';
+
+/**
+ * Metadata có cấu trúc phục vụ AI-Insights recommendation, lưu ở cột jsonb
+ * `blocks.ai_metadata`. Tất cả field optional — block chưa nhập là object rỗng.
+ * Shape khớp BE `models.BlockAIMetadata`.
+ */
+export interface BlockAIMetadata {
+  use_case?: string;
+  industry?: string;
+  tone?: BlockTone;
+  target_audience?: string;
+  keywords?: string[];
+}
+
 export interface Block {
   id: string;
   type_code: string;
@@ -2659,6 +2714,7 @@ export interface Block {
   thumbnail_asset_id?: string;
   thumbnail_url?: string;
   tags: string[];
+  ai_metadata?: BlockAIMetadata;
   scope: BlockScope;
   usage_count: number;
   last_used_at?: string;
@@ -2688,6 +2744,7 @@ export interface CreateBlockRequest {
   scope?: BlockScope;
   tags?: string[];
   description?: string;
+  ai_metadata?: BlockAIMetadata;
 }
 export interface UpdateBlockRequest {
   name?: string;
@@ -2695,6 +2752,7 @@ export interface UpdateBlockRequest {
   settings?: Record<string, unknown>;
   tags?: string[];
   thumbnail_asset_id?: string;
+  ai_metadata?: BlockAIMetadata;
 }
 
 // ── BlockType (system catalog, canonical mirror of AdminBlockType) ───────
