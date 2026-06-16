@@ -25,7 +25,8 @@ export type MotionPresetId =
   | 'slide-right'
   | 'scale-in'
   | 'zoom-in'
-  | 'blur-in';
+  | 'blur-in'
+  | 'mask-reveal';
 
 export interface MotionPresetMeta {
   id: MotionPresetId;
@@ -44,6 +45,11 @@ export const PRESETS: readonly MotionPresetMeta[] = [
   { id: 'scale-in', label: 'Scale In', hint: 'Phóng nhẹ' },
   { id: 'zoom-in', label: 'Zoom In', hint: 'Zoom mạnh' },
   { id: 'blur-in', label: 'Blur In', hint: 'Mờ → nét' },
+  {
+    id: 'mask-reveal',
+    label: 'Mask Reveal',
+    hint: 'Chữ trượt lên qua mặt nạ (theo dòng)',
+  },
 ] as const;
 
 const DEFAULT_EASING: MotionEasing = 'power2.out';
@@ -53,7 +59,10 @@ interface PresetShape {
   to: Partial<Record<MotionProperty, number>>;
 }
 
-const SHAPES: Record<Exclude<MotionPresetId, 'none'>, PresetShape> = {
+const SHAPES: Record<
+  Exclude<MotionPresetId, 'none' | 'mask-reveal'>,
+  PresetShape
+> = {
   'fade-in': {
     from: { opacity: 0 },
     to: { opacity: 1 },
@@ -110,6 +119,27 @@ export function applyPreset(
     return { ...motion, tracks: otherTracks, duration: nextDuration };
   }
 
+  // mask-reveal: track mang cờ `split` — runtime tự SplitText + stagger. Keyframe
+  // opacity 0→1 chỉ để mang delay/duration (detectPreset đọc lại qua `split`).
+  if (presetId === 'mask-reveal') {
+    const start = Math.max(0, Math.round(delay));
+    const end = start + Math.max(50, Math.round(duration));
+    const track: MotionTrack = {
+      elementKey,
+      split: 'lines',
+      keyframes: [
+        { time: start, values: { opacity: 0 }, easing: DEFAULT_EASING },
+        { time: end, values: { opacity: 1 } },
+      ],
+    };
+    const nextTracks = [...otherTracks, track];
+    return {
+      ...motion,
+      tracks: nextTracks,
+      duration: recomputeMotionDuration(nextTracks, motion.duration),
+    };
+  }
+
   const shape = SHAPES[presetId];
   const start = Math.max(0, Math.round(delay));
   const end = start + Math.max(50, Math.round(duration));
@@ -143,6 +173,17 @@ export function detectPreset(track: MotionTrack):
   if (kfs.length !== 2) return { kind: 'custom' };
   const [a, b] = kfs;
   if (a.time > b.time) return { kind: 'custom' };
+
+  // mask-reveal nhận diện qua cờ `split` (keyframe opacity trùng fade-in nên
+  // phải check trước vòng SHAPES).
+  if (track.split) {
+    return {
+      kind: 'preset',
+      presetId: 'mask-reveal',
+      delay: a.time,
+      duration: b.time - a.time,
+    };
+  }
 
   for (const [presetId, shape] of Object.entries(SHAPES) as [
     Exclude<MotionPresetId, 'none'>,

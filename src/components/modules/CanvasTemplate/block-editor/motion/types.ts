@@ -69,6 +69,12 @@ export interface MotionTrack {
   elementKey: string;
   /** Ordered ascending by `time`. Runtime sorts defensively. */
   keyframes: MotionKeyframe[];
+  /**
+   * Khi set → runtime KHÔNG tween property thường mà tách text bằng SplitText
+   * (lines/words) + mask (overflow hidden) rồi stagger yPercent reveal. Dùng
+   * cho preset `mask-reveal`. Track không có `split` chạy như cũ.
+   */
+  split?: 'lines' | 'words';
 }
 
 export interface BlockMotion {

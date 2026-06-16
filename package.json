@@ -39,6 +39,8 @@
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.13",
+    "@react-three/drei": "^10",
+    "@react-three/fiber": "^9",
     "@reduxjs/toolkit": "^2.8.2",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
@@ -82,6 +84,7 @@
     "split-type": "^0.3.4",
     "swiper": "^12.2.0",
     "tailwind-merge": "^3.3.1",
+    "three": "^0.184.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -96,6 +99,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.184.1",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
     "esbuild": "^0.28.0",

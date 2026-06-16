@@ -54,6 +54,19 @@ import { HoverGridReveal } from './HoverGridReveal';
 import { HoverRevealList } from './HoverRevealList';
 import { ImageExplosion } from './ImageExplosion';
 import { ImageTrail } from './ImageTrail';
+import { CardShowcase } from './CardShowcase';
+import { StorySlides } from './StorySlides';
+import { FlipShowreel } from './FlipShowreel';
+import { PeelReveal } from './PeelReveal';
+import { AccordionMedia } from './AccordionMedia';
+import { PricingTable } from './PricingTable';
+import { ImageBanner } from './ImageBanner';
+import { VideoGallery } from './VideoGallery';
+import { Spotlight } from './Spotlight';
+import { ProcessSteps } from './ProcessSteps';
+import { DotMatrix } from './DotMatrix';
+import { InteractiveGrid } from './InteractiveGrid';
+import { PixelReveal } from './PixelReveal';
 import { LetterSlider } from './LetterSlider';
 import { LightboxFlip } from './LightboxFlip';
 import { MarqueeBand } from './MarqueeBand';
@@ -132,6 +145,19 @@ import type {
   HoverGridRevealContent,
   HoverEqualizerHeadingContent,
   ImageExplosionContent,
+  CardShowcaseContent,
+  StorySlidesContent,
+  FlipShowreelContent,
+  PeelRevealContent,
+  AccordionMediaContent,
+  PricingTableContent,
+  ImageBannerContent,
+  VideoGalleryContent,
+  SpotlightContent,
+  ProcessStepsContent,
+  DotMatrixContent,
+  InteractiveGridContent,
+  PixelRevealContent,
   MarqueeBandContent,
   LetterSliderContent,
   SvgMorphOverlayContent,
@@ -457,6 +483,149 @@ export function RenderBlock({
       return (
         <MarqueeBand
           content={content as MarqueeBandContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'card_showcase':
+      return (
+        <CardShowcase
+          content={content as CardShowcaseContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'story_slides':
+      return (
+        <StorySlides
+          content={content as StorySlidesContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'flip_showreel':
+      return (
+        <FlipShowreel
+          content={content as FlipShowreelContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'peel_reveal':
+      return (
+        <PeelReveal
+          content={content as PeelRevealContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'accordion_media':
+      return (
+        <AccordionMedia
+          content={content as AccordionMediaContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'pricing_table':
+      return (
+        <PricingTable
+          content={content as PricingTableContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'image_banner':
+      return (
+        <ImageBanner
+          content={content as ImageBannerContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'video_gallery':
+      return (
+        <VideoGallery
+          content={content as VideoGalleryContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'spotlight':
+      return (
+        <Spotlight
+          content={content as SpotlightContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'process_steps':
+      return (
+        <ProcessSteps
+          content={content as ProcessStepsContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'dot_matrix':
+      return (
+        <DotMatrix
+          content={content as DotMatrixContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'interactive_grid':
+      return (
+        <InteractiveGrid
+          content={content as InteractiveGridContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'pixel_reveal':
+      return (
+        <PixelReveal
+          content={content as PixelRevealContent}
           styles={styles}
           background={background}
           order={order}

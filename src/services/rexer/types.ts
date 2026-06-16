@@ -2887,6 +2887,13 @@ export interface Lead {
   score: number;
   tier: LeadTier;
   status: LeadStatus;
+  /**
+   * Toàn bộ payload form ngoài (POST /v1/forms/submit), schemaless jsonb. Mỗi
+   * landing tự định nghĩa field riêng (company, budget, message, …) nên đây là
+   * map tự do — `name`/`contact` ở trên được BE derive từ chính map này. Null
+   * với lead GA-style `lead_submit` (không qua external form).
+   */
+  form_data?: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
   deal?: LeadDeal | null;

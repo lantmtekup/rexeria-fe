@@ -1,17 +1,18 @@
 'use client';
 
 /**
- * Editor marketing dùng chung create/edit (`/portal/marketing/new` + `/[id]`).
- * Layout: KHÔNG stepper — một màn duy nhất, rail trái 4 section
- * Discovery / Concept / Assets / Campaign (campaign nằm dưới assets, theo
- * feedback 2026-06-13). Product chọn ngay trong section Campaign (BE bắt
- * buộc campaign gắn product); landing picker cũng nằm đó.
- * BE chưa có entity Marketing → brief sống trong `campaign.notes` (JSON).
+ * Editor campaign dùng chung create/edit (`/portal/marketing/new` + `/[id]`).
+ * Layout: 1 rail dọc DUY NHẤT, gom 2 nhóm (review UX 2026-06-15):
+ *   THÔNG TIN: Discovery · Concept · Assets · Sản phẩm  (nuôi AI)
+ *   KẾ HOẠCH:  Chiến dịch (mục tiêu/ngân sách/kênh/thời gian) · Landing page
+ *   AI:        AI-Insights (chỉ hiện khi đã chạy)
+ * Bỏ tab ngang lồng trong rail (2 tầng nav đá nhau). Mỗi mục là 1 panel
+ * (_CampaignPanels). BE chưa có entity Marketing → brief sống trong
+ * `campaign.notes` (JSON); blueprint AI fetch 1 lần ở đây rồi truyền xuống.
  */
 
 import { ArrowLeft, FlaskConical, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -24,8 +25,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/atoms/dialog';
-import { Label } from '@/components/atoms/label';
-import { LandingPagePicker } from '@/components/molecules/LandingPagePicker';
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Campaign, Product } from '@/services/rexer/types';
@@ -33,6 +32,7 @@ import type { Campaign, Product } from '@/services/rexer/types';
 import { useActiveWorkspace } from '../_workspace';
 
 import { AiAssistantDialog } from './_AiAssistantDialog';
+import { GeneralPanel, LandingPanel, ProductPanel } from './_CampaignPanels';
 import { InsightResultPanel, type InsightHandoff } from './_InsightResultPanel';
 import { marketingToInsightInputs } from './_insights-bridge';
 import { type InsightSummary } from './_insights-labels';
@@ -40,7 +40,6 @@ import { HAPPY_CITY_BRIEF, HAPPY_CITY_CAMPAIGN } from './_seed';
 import { emptyAssets, type AssetsState } from './_assets';
 import {
   emptyBriefField,
-  StepCampaign,
   missingBriefFields,
   StepMarketing,
   type BriefField,
@@ -49,20 +48,47 @@ import {
   type MarketingSection,
 } from './_steps';
 
-type SectionKey = MarketingSection | 'campaign' | 'insights';
+type SectionKey =
+  | MarketingSection
+  | 'product'
+  | 'campaign'
+  | 'landing'
+  | 'insights';
 
-// `insights` không nằm trong luồng Continue (chỉ hiện khi đã chạy AI) — tách
-// khỏi STEP_FLOW để Continue đi đúng Discovery→Concept→Assets→Campaign.
-const STEP_FLOW: SectionKey[] = ['discovery', 'concept', 'assets', 'campaign'];
-const SECTIONS: { key: SectionKey; label: string }[] = [
-  { key: 'discovery', label: 'Discovery' },
-  { key: 'concept', label: 'Concept' },
-  { key: 'assets', label: 'Assets' },
-  { key: 'campaign', label: 'Campaign' },
+// Continue đi tuần tự theo rail: brief → sản phẩm → chiến dịch → landing → Lưu.
+// `insights` ngoài luồng (chỉ hiện khi đã chạy AI).
+const STEP_FLOW: SectionKey[] = [
+  'discovery',
+  'concept',
+  'assets',
+  'product',
+  'campaign',
+  'landing',
 ];
+const LAST_STEP: SectionKey = STEP_FLOW[STEP_FLOW.length - 1];
 
-const SELECT_CLASS =
-  'border-input bg-background h-10 w-full rounded-md border px-3 text-sm outline-none disabled:opacity-60';
+// Rail dọc gom 2 nhóm (label/items là i18n key cho `t()`).
+const RAIL_GROUPS: {
+  label: string;
+  items: { key: SectionKey; label: string }[];
+}[] = [
+  {
+    label: 'marketingCampaignTabs.groupInfo',
+    items: [
+      { key: 'discovery', label: 'marketingCampaignTabs.secDiscovery' },
+      { key: 'concept', label: 'marketingCampaignTabs.secConcept' },
+      { key: 'assets', label: 'marketingCampaignTabs.secAssets' },
+      { key: 'product', label: 'marketingCampaignTabs.productTab' },
+    ],
+  },
+  {
+    label: 'marketingCampaignTabs.groupPlan',
+    items: [
+      { key: 'campaign', label: 'marketingCampaignTabs.secCampaign' },
+      { key: 'landing', label: 'marketingCampaignTabs.landingTab' },
+    ],
+  },
+];
 
 // Notes cũ lưu field dạng string thuần — migrate sang BriefField đầy đủ.
 function migrateField(v: unknown): BriefField {
@@ -394,7 +420,7 @@ export function MarketingEditor({
               className='bg-muted text-foreground hover:bg-muted/70 inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors'
             >
               <Plus className='bg-foreground text-background size-4 rounded-full p-0.5' />
-              Add more Marketing
+              {t('marketingEditor.addMore')}
             </button>
             <button
               type='button'
@@ -412,103 +438,66 @@ export function MarketingEditor({
             >
               {saving
                 ? t('marketingEditor.saving')
-                : section === 'campaign'
+                : section === LAST_STEP || section === 'insights'
                   ? mode === 'create'
                     ? t('marketingEditor.createCta')
                     : t('marketingEditor.saveCta')
-                  : 'Continue'}
+                  : t('marketingEditor.continueCta')}
             </button>
           </div>
         </div>
       </div>
 
       <div className='flex flex-1'>
-        <aside className='border-border w-48 shrink-0 border-r px-3 py-5'>
-          <ul className='flex flex-col'>
-            {SECTIONS.map(s => (
-              <li key={s.key}>
-                <button
-                  type='button'
-                  onClick={() => setSection(s.key)}
-                  className={cn(
-                    'w-full border-l-2 px-3 py-2 text-left text-sm transition-colors',
-                    section === s.key
-                      ? 'border-foreground text-foreground font-medium'
-                      : 'text-content-muted hover:text-foreground border-transparent'
-                  )}
-                >
-                  {s.label}
-                </button>
-              </li>
+        <aside className='border-border bg-muted/20 w-56 shrink-0 border-r px-4 py-6'>
+          <nav className='flex flex-col gap-7'>
+            {RAIL_GROUPS.map((g, gi) => (
+              <RailGroup key={g.label} label={t(g.label)} index={gi + 1}>
+                {g.items.map((s, i) => (
+                  <RailItem
+                    key={s.key}
+                    label={t(s.label)}
+                    step={i + 1}
+                    active={section === s.key}
+                    onClick={() => setSection(s.key)}
+                  />
+                ))}
+              </RailGroup>
             ))}
-            {/* Tab AI-Insights dưới Campaign — chỉ hiện khi đã chạy AI. */}
+            {/* Nhóm AI — chỉ hiện khi đã chạy AI. */}
             {reportId && (
-              <li>
-                <button
-                  type='button'
+              <RailGroup label={t('marketingCampaignTabs.groupAi')}>
+                <RailItem
+                  label='AI-Insights'
+                  active={section === 'insights'}
                   onClick={() => setSection('insights')}
-                  className={cn(
-                    'flex w-full items-center gap-1.5 border-l-2 px-3 py-2 text-left text-sm transition-colors',
-                    section === 'insights'
-                      ? 'border-foreground text-foreground font-medium'
-                      : 'text-content-muted hover:text-foreground border-transparent'
-                  )}
-                >
-                  <Sparkles className='size-3.5 text-blue-600' /> AI-Insights
-                </button>
-              </li>
+                  icon={<Sparkles className='size-4 text-blue-600' />}
+                />
+              </RailGroup>
             )}
-          </ul>
+          </nav>
         </aside>
 
         <main className='flex-1 px-6 py-5'>
           {section === 'campaign' ? (
-            <div className='flex max-w-lg flex-col gap-4'>
-              <div className='grid gap-1.5'>
-                <Label htmlFor='me-product'>
-                  {t('marketingEditor.productLabel')}
-                </Label>
-                <select
-                  id='me-product'
-                  className={SELECT_CLASS}
-                  value={productId}
-                  onChange={e => setProductId(e.target.value)}
-                  disabled={mode === 'edit' || !products?.length}
-                >
-                  {products === null && (
-                    <option>{t('marketingEditor.loadingProducts')}</option>
-                  )}
-                  {products?.length === 0 && (
-                    <option>{t('marketingEditor.noProducts')}</option>
-                  )}
-                  {products?.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                {products?.length === 0 && (
-                  <Link
-                    href='/portal/products'
-                    className='text-primary text-xs font-medium hover:underline'
-                  >
-                    {t('marketingEditor.createProductFirst')}
-                  </Link>
-                )}
-              </div>
-              <StepCampaign value={campaign} onChange={setCampaign} />
-              <div className='grid gap-1.5'>
-                <Label>{t('marketingEditor.landingLabel')}</Label>
-                <LandingPagePicker
-                  brandId={product?.brand_id ?? initial?.brand_id}
-                  value={landingId}
-                  onChange={setLandingId}
-                />
-              </div>
-            </div>
+            <GeneralPanel campaign={campaign} onCampaignChange={setCampaign} />
+          ) : section === 'product' ? (
+            <ProductPanel
+              mode={mode}
+              products={products}
+              productId={productId}
+              onProductIdChange={setProductId}
+              product={product}
+            />
+          ) : section === 'landing' ? (
+            <LandingPanel
+              brandId={product?.brand_id ?? initial?.brand_id}
+              landingId={landingId}
+              onLandingChange={setLandingId}
+            />
           ) : section === 'insights' ? (
-            // Tab AI-Insights: kết quả AI đổ về (panel đầy đủ). Đọc summary từ
-            // notes trước → hiện ngay, poll BE để cập nhật + cho generate lại.
+            // AI-Insights: kết quả AI đổ về (panel đầy đủ). Đọc summary từ notes
+            // trước → hiện ngay, poll BE để cập nhật + cho generate lại.
             reportId ? (
               <InsightResultPanel
                 reportId={reportId}
@@ -577,5 +566,78 @@ export function MarketingEditor({
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/** Nhóm cấp 1 trong rail: tiêu đề nhóm (caps, có số thứ tự) + list item nối
+ *  bằng đường guide bên trái để thấy rõ phân cấp nhóm → mục. */
+function RailGroup({
+  label,
+  index,
+  children,
+}: {
+  label: string;
+  index?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className='text-content-muted mb-2 flex items-center gap-1.5 px-1 text-[10px] font-bold tracking-[0.14em] uppercase'>
+        {index != null && (
+          <span className='bg-foreground/10 flex size-4 items-center justify-center rounded text-[9px] font-bold'>
+            {index}
+          </span>
+        )}
+        {label}
+      </p>
+      <ul className='border-border ml-[7px] flex flex-col gap-0.5 border-l pl-2'>
+        {children}
+      </ul>
+    </div>
+  );
+}
+
+/** Mục cấp 2 trong rail: pill, có số thứ tự (theo mạch Continue) hoặc icon. */
+function RailItem({
+  label,
+  step,
+  active,
+  onClick,
+  icon,
+}: {
+  label: string;
+  step?: number;
+  active: boolean;
+  onClick: () => void;
+  icon?: React.ReactNode;
+}) {
+  return (
+    <li>
+      <button
+        type='button'
+        onClick={onClick}
+        className={cn(
+          'flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors',
+          active
+            ? 'bg-background text-foreground font-medium shadow-sm'
+            : 'text-content-muted hover:bg-background/60 hover:text-foreground'
+        )}
+      >
+        {icon ??
+          (step != null && (
+            <span
+              className={cn(
+                'flex size-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold',
+                active
+                  ? 'border-foreground text-foreground'
+                  : 'border-border text-content-muted'
+              )}
+            >
+              {step}
+            </span>
+          ))}
+        {label}
+      </button>
+    </li>
   );
 }

@@ -35,6 +35,19 @@ export type BlockType =
   | 'gallery_pan_lens'
   | 'seamless_scroll_gallery'
   | 'product_spec_sheet'
+  | 'card_showcase'
+  | 'story_slides'
+  | 'flip_showreel'
+  | 'peel_reveal'
+  | 'accordion_media'
+  | 'pricing_table'
+  | 'image_banner'
+  | 'video_gallery'
+  | 'spotlight'
+  | 'process_steps'
+  | 'dot_matrix'
+  | 'interactive_grid'
+  | 'pixel_reveal'
   // ── Framer-native blocks (migrate từ src/blocks/ legacy → native) ──────
   // Mỗi design framer = 1 block_type riêng, render native + edit inline được.
   // BE phải có code tương ứng active trong catalog block_types.
@@ -443,6 +456,12 @@ export interface ImageTrailContent {
   /** Thời lượng scale-in / scale-out (ms). Default 750 / 1000. */
   inDuration?: number;
   outDuration?: number;
+  /**
+   * Chế độ "chào mời": khi user chưa rê chuột, một con trỏ ảo tự đi lang thang
+   * trong block để sinh vệt ảnh (cho user biết block tương tác được). Khi user
+   * rê chuột thật thì tự tắt. Default false.
+   */
+  autoDemo?: boolean;
 }
 
 /**
@@ -553,6 +572,94 @@ export interface ImageExplosionContent {
   eyebrow?: string;
   title?: string;
   images: string[];
+}
+
+/** Card showcase — lưới thẻ (ảnh + tiêu đề + phụ đề), reveal fade-up stagger. */
+export interface CardShowcaseContent {
+  /** Tiêu đề section (tùy chọn). */
+  title?: string;
+  cards: { imageUrl: string; title: string; subtitle?: string }[];
+}
+
+/** Story slides — slide tự chạy kiểu IG-stories + thanh index progress. */
+export interface StorySlidesContent {
+  slides: { imageUrl: string; title: string; subtitle?: string }[];
+  /** Thời gian mỗi slide (ms). Default 4000. */
+  duration?: number;
+}
+
+/** Flip showreel — headline + visual morph layout theo scroll (GSAP Flip). */
+export interface FlipShowreelContent {
+  title?: string;
+  imageUrl: string;
+}
+
+/** Peel reveal — ảnh phóng + clip-path "lột" mở theo scroll pin (sticky). */
+export interface PeelRevealContent {
+  title?: string;
+  imageUrl: string;
+}
+
+/** Accordion media — hàng panel ngang, panel active nở (ảnh + tiêu đề + mô tả). */
+export interface AccordionMediaContent {
+  items: { title: string; description: string; imageUrl: string }[];
+}
+
+/** Pricing table — bảng giá các gói. */
+export interface PricingTableContent {
+  title?: string;
+  plans: {
+    name: string;
+    price: string;
+    period?: string;
+    features: string[];
+    highlighted?: boolean;
+  }[];
+}
+
+/** Image banner — ảnh nền full-bleed + heading/description reveal. */
+export interface ImageBannerContent {
+  imageUrl: string;
+  heading: string;
+  description?: string;
+}
+
+/** Video gallery — lưới video hover-to-play. */
+export interface VideoGalleryContent {
+  title?: string;
+  videos: { src: string; poster?: string; title?: string }[];
+}
+
+/** Spotlight — section tối, đèn rọi radial bám chuột làm sáng chữ. */
+export interface SpotlightContent {
+  title?: string;
+  lines: string[];
+}
+
+/** Process steps — quy trình đánh số, reveal fade-up lần lượt khi cuộn. */
+export interface ProcessStepsContent {
+  title?: string;
+  steps: { title: string; description?: string }[];
+}
+
+/** Dot matrix — canvas lưới chấm phản ứng con trỏ. */
+export interface DotMatrixContent {
+  title?: string;
+  /** Khoảng cách chấm (px). Default 26. */
+  gap?: number;
+  /** Màu chấm. Default #5b6472. */
+  dotColor?: string;
+}
+
+/** Interactive grid — lưới ảnh, hover phóng to + làm mờ ô khác. */
+export interface InteractiveGridContent {
+  images: string[];
+}
+
+/** Pixel reveal — ảnh hiện qua pixelation (canvas) khi cuộn vào view. */
+export interface PixelRevealContent {
+  imageUrl: string;
+  title?: string;
 }
 
 /** Marquee band — dải chữ lớn chạy ngang vô tận (CSS thuần). */
@@ -1106,6 +1213,19 @@ export type BlockContent =
   | HoverGridRevealContent
   | HoverEqualizerHeadingContent
   | ImageExplosionContent
+  | CardShowcaseContent
+  | StorySlidesContent
+  | FlipShowreelContent
+  | PeelRevealContent
+  | AccordionMediaContent
+  | PricingTableContent
+  | ImageBannerContent
+  | VideoGalleryContent
+  | SpotlightContent
+  | ProcessStepsContent
+  | DotMatrixContent
+  | InteractiveGridContent
+  | PixelRevealContent
   | MarqueeBandContent
   | LetterSliderContent
   | SvgMorphOverlayContent
@@ -1915,6 +2035,136 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Marquee Band',
     aiLabelVi: 'dải chữ lớn chạy ngang vô tận',
     aiLabelEn: 'large text marquee scrolling horizontally',
+  },
+  card_showcase: {
+    type: 'card_showcase',
+    label: 'Card Showcase',
+    accent: '#0f0f0f',
+    adminLabel: 'Card Showcase',
+    gradient: 'from-sky-500 to-indigo-600',
+    defaultName: 'Card Showcase',
+    aiLabelVi: 'lưới thẻ ảnh hiện lên fade-up khi cuộn tới',
+    aiLabelEn: 'grid of image cards revealing fade-up on scroll',
+  },
+  story_slides: {
+    type: 'story_slides',
+    label: 'Story Slides',
+    accent: '#0f0f0f',
+    adminLabel: 'Story Slides',
+    gradient: 'from-rose-500 to-orange-500',
+    defaultName: 'Story Slides',
+    aiLabelVi: 'slide tự chạy kiểu story có thanh tiến trình',
+    aiLabelEn: 'auto-advancing story slides with progress bars',
+  },
+  flip_showreel: {
+    type: 'flip_showreel',
+    label: 'Flip Showreel',
+    accent: '#0f0f0f',
+    adminLabel: 'Flip Showreel',
+    gradient: 'from-amber-500 to-pink-600',
+    defaultName: 'Flip Showreel',
+    aiLabelVi: 'tiêu đề + ảnh morph layout khi cuộn (Flip)',
+    aiLabelEn: 'headline + visual morphing layout on scroll (Flip)',
+  },
+  peel_reveal: {
+    type: 'peel_reveal',
+    label: 'Peel Reveal',
+    accent: '#0f0f0f',
+    adminLabel: 'Peel Reveal',
+    gradient: 'from-fuchsia-500 to-purple-600',
+    defaultName: 'Peel Reveal',
+    aiLabelVi: 'ảnh phóng to + lột mặt nạ mở dần khi cuộn',
+    aiLabelEn: 'image scaling up + clip-path peel reveal on scroll',
+  },
+  accordion_media: {
+    type: 'accordion_media',
+    label: 'Accordion Media',
+    accent: '#0f0f0f',
+    adminLabel: 'Accordion Media',
+    gradient: 'from-teal-500 to-emerald-600',
+    defaultName: 'Accordion Media',
+    aiLabelVi: 'accordion ảnh ngang, panel active nở rộng',
+    aiLabelEn: 'horizontal image accordion, active panel expands',
+  },
+  pricing_table: {
+    type: 'pricing_table',
+    label: 'Pricing Table',
+    accent: '#0f0f0f',
+    adminLabel: 'Pricing Table',
+    gradient: 'from-emerald-500 to-green-600',
+    defaultName: 'Pricing Table',
+    aiLabelVi: 'bảng giá các gói dịch vụ',
+    aiLabelEn: 'pricing plans table',
+  },
+  image_banner: {
+    type: 'image_banner',
+    label: 'Image Banner',
+    accent: '#0f0f0f',
+    adminLabel: 'Image Banner',
+    gradient: 'from-slate-500 to-zinc-700',
+    defaultName: 'Image Banner',
+    aiLabelVi: 'ảnh nền lớn + tiêu đề hiện fade-up',
+    aiLabelEn: 'full-bleed image banner with revealing heading',
+  },
+  video_gallery: {
+    type: 'video_gallery',
+    label: 'Video Gallery',
+    accent: '#0f0f0f',
+    adminLabel: 'Video Gallery',
+    gradient: 'from-red-500 to-rose-600',
+    defaultName: 'Video Gallery',
+    aiLabelVi: 'lưới video hover để phát',
+    aiLabelEn: 'grid of videos that play on hover',
+  },
+  spotlight: {
+    type: 'spotlight',
+    label: 'Spotlight',
+    accent: '#0f0f0f',
+    adminLabel: 'Spotlight',
+    gradient: 'from-yellow-400 to-amber-600',
+    defaultName: 'Spotlight',
+    aiLabelVi: 'đèn rọi bám chuột làm sáng chữ trên nền tối',
+    aiLabelEn: 'cursor-following spotlight revealing text on dark',
+  },
+  process_steps: {
+    type: 'process_steps',
+    label: 'Process Steps',
+    accent: '#0f0f0f',
+    adminLabel: 'Process Steps',
+    gradient: 'from-indigo-500 to-blue-600',
+    defaultName: 'Process Steps',
+    aiLabelVi: 'quy trình đánh số hiện lần lượt khi cuộn',
+    aiLabelEn: 'numbered process steps revealing on scroll',
+  },
+  dot_matrix: {
+    type: 'dot_matrix',
+    label: 'Dot Matrix',
+    accent: '#0f0f0f',
+    adminLabel: 'Dot Matrix',
+    gradient: 'from-cyan-500 to-blue-600',
+    defaultName: 'Dot Matrix',
+    aiLabelVi: 'canvas lưới chấm phình sáng theo con trỏ',
+    aiLabelEn: 'canvas dot grid reacting to cursor',
+  },
+  interactive_grid: {
+    type: 'interactive_grid',
+    label: 'Interactive Grid',
+    accent: '#0f0f0f',
+    adminLabel: 'Interactive Grid',
+    gradient: 'from-lime-500 to-emerald-600',
+    defaultName: 'Interactive Grid',
+    aiLabelVi: 'lưới ảnh hover phóng to + làm mờ ô khác',
+    aiLabelEn: 'image grid where hover enlarges a tile, dims others',
+  },
+  pixel_reveal: {
+    type: 'pixel_reveal',
+    label: 'Pixel Reveal',
+    accent: '#0f0f0f',
+    adminLabel: 'Pixel Reveal',
+    gradient: 'from-purple-500 to-violet-600',
+    defaultName: 'Pixel Reveal',
+    aiLabelVi: 'ảnh hiện dần qua hiệu ứng pixel khi cuộn',
+    aiLabelEn: 'image resolving from pixelation on scroll',
   },
   letter_slider: {
     type: 'letter_slider',

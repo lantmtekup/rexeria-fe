@@ -168,10 +168,14 @@ export default function AnalyticsOverlay({ onLogout }: Props) {
       {positions.map(p => {
         if (!p.visible) return null;
         const block = blockById(p.id);
-        // Hide a block's badge/card entirely once data is live and it has no
-        // clicks — keeps the overlay focused on blocks with real interaction.
-        const blockClicks = liveBlocks[block.id]?.clicks ?? 0;
-        if (source === 'live' && blockClicks === 0) return null;
+        // Hide a block's badge/card only when it has NO data at all (no views
+        // AND no clicks). Blocks without a CTA still get views/scroll-depth, so
+        // they must keep showing analytics — clicks alone shouldn't gate them.
+        const blockRow = liveBlocks[block.id];
+        const blockViews = blockRow?.views ?? 0;
+        const blockClicks = blockRow?.clicks ?? 0;
+        if (source === 'live' && blockViews === 0 && blockClicks === 0)
+          return null;
         const open = !collapsed[p.id]; // open by default
         const rows = metricsFor(block);
         const [heroLabel, heroValue] = rows[0];

@@ -21,6 +21,8 @@ import { meta as mintCointMeta } from './mint-coint/meta';
 import { meta as maisonNoirMeta } from './maison-noir/meta';
 import { meta as maisonAtelierMeta } from './maison-atelier/meta';
 import { meta as maisonClairMeta } from './maison-clair/meta';
+import { meta as luxCoin3dMeta } from './lux-coin-3d/meta';
+import { meta as particleWave3dMeta } from './particle-wave-3d/meta';
 
 interface CodeTemplateEntry {
   meta: TemplateMeta;
@@ -86,6 +88,29 @@ export const TEMPLATE_REGISTRY: Record<string, CodeTemplateEntry> = {
       ssr: true,
       loading: () => (
         <div className='flex min-h-screen items-center justify-center bg-[#FBFBF9] text-sm text-[#7E827E]'>
+          Đang load template…
+        </div>
+      ),
+    }),
+  },
+  // ── 3D coin landing (R3F + drei, 'use client'; Canvas ssr:false bên trong) ──
+  [luxCoin3dMeta.code]: {
+    meta: luxCoin3dMeta,
+    Component: dynamic(() => import('./lux-coin-3d'), {
+      ssr: true,
+      loading: () => (
+        <div className='flex min-h-screen items-center justify-center bg-[#08070a] text-sm text-[#c9a96e]/60'>
+          Đang load template…
+        </div>
+      ),
+    }),
+  },
+  [particleWave3dMeta.code]: {
+    meta: particleWave3dMeta,
+    Component: dynamic(() => import('./particle-wave-3d'), {
+      ssr: true,
+      loading: () => (
+        <div className='flex min-h-screen items-center justify-center bg-[#06070b] text-sm text-white/40'>
           Đang load template…
         </div>
       ),

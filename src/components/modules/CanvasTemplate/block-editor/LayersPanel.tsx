@@ -495,6 +495,46 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'text', label: 'Chữ chạy', icon: Type },
   ],
+  card_showcase: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  story_slides: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  flip_showreel: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  peel_reveal: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  accordion_media: [BACKGROUND_LAYER],
+  pricing_table: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  image_banner: [
+    BACKGROUND_LAYER,
+    { key: 'heading', label: 'Tiêu đề', icon: Type },
+  ],
+  video_gallery: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  spotlight: [BACKGROUND_LAYER, { key: 'title', label: 'Chữ', icon: Type }],
+  process_steps: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  dot_matrix: [BACKGROUND_LAYER, { key: 'title', label: 'Chữ', icon: Type }],
+  interactive_grid: [BACKGROUND_LAYER],
+  pixel_reveal: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
   letter_slider: [BACKGROUND_LAYER],
   svg_morph_overlay: [
     BACKGROUND_LAYER,

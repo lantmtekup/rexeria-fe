@@ -1,0 +1,303 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+/* Normalize <select>: Safari render kiểu native glossy (gradient + mũi tên đôi,
+   inset shadow) lệch hẳn UI. Force appearance + chevron nhất quán toàn app.
+   Padding-right chừa chỗ chevron; utility `pr-*` vẫn override được khi cần. */
+select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 0.9rem;
+  padding-right: 1.85rem;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* font — SF Pro Text trên thiết bị Apple (license Apple không cho self-host
+     trên web nên đi qua system stack); máy khác fallback Inter (webfont gần
+     SF Pro nhất, đã load sẵn qua next/font) rồi tới system sans. */
+  --font-sans:
+    'SF Pro Text', -apple-system, BlinkMacSystemFont, var(--font-inter),
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, ui-sans-serif, system-ui,
+    sans-serif;
+
+  /* ── Type scale (canonical) ──────────────────────────────────────────────
+     Dense admin/portal UI dùng nhiều cỡ < 12px. Thêm 2 bậc sub-xs để thay
+     cho `text-[8-11px]` tuỳ tiện; từ text-xs trở lên giữ default Tailwind.
+       text-3xs 10 · text-2xs 11 · text-xs 12 · text-sm 14 · text-base 16
+       text-lg 18 · text-xl 20 · text-2xl 24 · 3xl 30 · 4xl 36 · 5xl 48 …
+     Map px cũ → class: 8/9/9.5/10/10.5→3xs · 11/11.5→2xs · 12/12.5→xs ·
+       13/13.5/14→sm · 15/16→base · 18→lg · 20→xl · 24/26→2xl · 38/40→4xl. */
+  --text-3xs: 0.625rem; /* 10px */
+  --text-3xs--line-height: 1rem;
+  --text-2xs: 0.6875rem; /* 11px */
+  --text-2xs--line-height: 1rem;
+
+  /* neutral scale — derived from Tekup branding White/Black tokens */
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-200: #ebebeb;
+  --color-neutral-300: #e1e1e1;
+  --color-neutral-400: #c3c3c3;
+  --color-neutral-500: #9b9b9b;
+  --color-neutral-600: #7a7a7a;
+  --color-neutral-700: #5f5f5f;
+  --color-neutral-800: #2d2d2d;
+  --color-neutral-900: #000000;
+
+  /* primary — REXER blue */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+
+  /* semantic */
+  --color-success: #22c55e;
+  --color-success-bg: #f0fdf4;
+  --color-danger: #ef4444;
+  --color-danger-bg: #fef2f2;
+  --color-warning: #f59e0b;
+  --color-warning-bg: #fffbeb;
+
+  /* shadcn-style tokens wired to REXER theme variables */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-dark: var(--primary-dark);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* content tokens (still referenced by a few legacy components) */
+  --color-content-main: var(--content-main);
+  --color-content-muted: var(--content-muted);
+
+  /* sidebar */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+
+  /* radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-pill: 9999px;
+  --radius: var(--radius-md);
+}
+
+:root {
+  --radius: 8px;
+
+  /* surface */
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+
+  /* primary */
+  --primary: #3b82f6;
+  --primary-dark: #2563eb;
+  --primary-foreground: #ffffff;
+
+  /* secondary (used for grey pill buttons / muted surfaces) */
+  --secondary: #f5f5f5;
+  --secondary-foreground: #000000;
+
+  /* muted + accent */
+  --muted: #f5f5f5;
+  --muted-foreground: #9b9b9b;
+  --accent: #f5f5f5;
+  --accent-foreground: #000000;
+
+  /* content text */
+  --content-main: #000000;
+  --content-muted: #5f5f5f;
+
+  --destructive: #ef4444;
+  --border: #ebebeb;
+  --input: #e1e1e1;
+  --ring: #3b82f6;
+
+  /* sidebar (app shell) */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #000000;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #ebebeb;
+
+  /* AI gradient (AI-Assistant buttons, orb glow) */
+  --ai-gradient: linear-gradient(90deg, #a3d4fc 0%, #d6eeff 100%);
+}
+
+.dark {
+  --background: #0b0b0b;
+  --foreground: #fafafa;
+  --card: #141414;
+  --card-foreground: #fafafa;
+  --popover: #141414;
+  --popover-foreground: #fafafa;
+
+  --primary: #60a5fa;
+  --primary-dark: #3b82f6;
+  --primary-foreground: #0b0b0b;
+
+  --secondary: #1f1f1f;
+  --secondary-foreground: #fafafa;
+
+  --muted: #1f1f1f;
+  --muted-foreground: #9b9b9b;
+  --accent: #1f1f1f;
+  --accent-foreground: #fafafa;
+
+  --content-main: #fafafa;
+  --content-muted: #9b9b9b;
+
+  --destructive: #ef4444;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #60a5fa;
+
+  --sidebar: #141414;
+  --sidebar-foreground: #fafafa;
+  --sidebar-accent: #1f1f1f;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply antialiased;
+    /* Microsite tối — tránh flash trắng ở overscroll/viền */
+    background: #08070a;
+    color: #fff;
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* shared layout helpers */
+.max-container-content {
+  @apply mx-auto max-w-[1440px];
+}
+.space-x-content {
+  @apply px-4 md:px-8 xl:px-12;
+}
+
+/* AI gradient utility */
+.bg-ai-gradient {
+  background: var(--ai-gradient);
+}
+
+/* loading logo breath */
+@keyframes loading-logo-breath {
+  0%,
+  100% {
+    transform: scale(0.95);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+.animate-loading-logo {
+  animation: loading-logo-breath 1.5s ease-in-out infinite;
+}
+
+/* OTP caret */
+@keyframes caret-blink {
+  0%,
+  70%,
+  100% {
+    opacity: 1;
+  }
+  20%,
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ── Block-editor entrance animations ───────────────────────────────────
+ * Used by the canvas block components (HeroSplit, HeroOverlay, etc.) to
+ * sequence "image first → text reveal" on mount. Pure CSS so it doesn't
+ * replay on edit (React updates textContent without remounting).
+ */
+
+/* Typewriter-style horizontal mask reveal — text "nhả chữ" left → right. */
+@keyframes block-reveal-x {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+.animate-reveal-x {
+  animation: block-reveal-x 1s cubic-bezier(0.65, 0.05, 0.36, 1) both;
+}
+
+/* Soft fade + slight rise — for CTAs and description blocks where a hard
+ * mask reveal feels too aggressive. */
+@keyframes block-soft-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-soft-rise {
+  animation: block-soft-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}

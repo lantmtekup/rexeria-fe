@@ -44,6 +44,19 @@ import type {
   HoverGridRevealContent,
   HoverEqualizerHeadingContent,
   ImageExplosionContent,
+  CardShowcaseContent,
+  StorySlidesContent,
+  FlipShowreelContent,
+  PeelRevealContent,
+  AccordionMediaContent,
+  PricingTableContent,
+  ImageBannerContent,
+  VideoGalleryContent,
+  SpotlightContent,
+  ProcessStepsContent,
+  DotMatrixContent,
+  InteractiveGridContent,
+  PixelRevealContent,
   MarqueeBandContent,
   LetterSliderContent,
   SvgMorphOverlayContent,
@@ -761,6 +774,314 @@ const IMAGE_EXPLOSION_EN: ImageExplosionContent = {
   eyebrow: 'SCROLL HERE',
   title: 'Experience explosion',
 };
+
+const CARD_SHOWCASE_VI: CardShowcaseContent = {
+  title: 'Dự án tiêu biểu',
+  cards: [
+    {
+      imageUrl: MEDIA.architecture[0],
+      title: 'Happy City',
+      subtitle: 'Khu đô thị kiểu mẫu',
+    },
+    {
+      imageUrl: MEDIA.interior[0],
+      title: 'Maison Noir',
+      subtitle: 'Không gian sống sang trọng',
+    },
+    {
+      imageUrl: MEDIA.nature[1],
+      title: 'Riverside',
+      subtitle: 'Bên dòng sông xanh',
+    },
+  ],
+};
+const CARD_SHOWCASE_EN: CardShowcaseContent = {
+  ...CARD_SHOWCASE_VI,
+  title: 'Featured Projects',
+  cards: [
+    {
+      imageUrl: MEDIA.architecture[0],
+      title: 'Happy City',
+      subtitle: 'Model urban district',
+    },
+    {
+      imageUrl: MEDIA.interior[0],
+      title: 'Maison Noir',
+      subtitle: 'Luxury living space',
+    },
+    {
+      imageUrl: MEDIA.nature[1],
+      title: 'Riverside',
+      subtitle: 'By the green river',
+    },
+  ],
+};
+
+const STORY_SLIDES_VI: StorySlidesContent = {
+  duration: 4000,
+  slides: [
+    {
+      imageUrl: MEDIA.architecture[0],
+      title: 'Happy City',
+      subtitle: 'Khu đô thị kiểu mẫu',
+    },
+    {
+      imageUrl: MEDIA.interior[0],
+      title: 'Maison Noir',
+      subtitle: 'Không gian sống sang trọng',
+    },
+    {
+      imageUrl: MEDIA.nature[1],
+      title: 'Riverside',
+      subtitle: 'Bên dòng sông xanh',
+    },
+  ],
+};
+const STORY_SLIDES_EN: StorySlidesContent = {
+  ...STORY_SLIDES_VI,
+  slides: [
+    {
+      imageUrl: MEDIA.architecture[0],
+      title: 'Happy City',
+      subtitle: 'Model urban district',
+    },
+    {
+      imageUrl: MEDIA.interior[0],
+      title: 'Maison Noir',
+      subtitle: 'Luxury living space',
+    },
+    {
+      imageUrl: MEDIA.nature[1],
+      title: 'Riverside',
+      subtitle: 'By the green river',
+    },
+  ],
+};
+
+const FLIP_SHOWREEL_VI: FlipShowreelContent = {
+  title: 'Happy City',
+  imageUrl: MEDIA.architecture[0],
+};
+const FLIP_SHOWREEL_EN: FlipShowreelContent = { ...FLIP_SHOWREEL_VI };
+
+const PEEL_REVEAL_VI: PeelRevealContent = {
+  title: 'Happy City',
+  imageUrl: MEDIA.architecture[0],
+};
+const PEEL_REVEAL_EN: PeelRevealContent = {
+  ...PEEL_REVEAL_VI,
+};
+
+const ACCORDION_MEDIA_VI: AccordionMediaContent = {
+  items: [
+    {
+      title: 'Thiết kế',
+      description:
+        'Tinh tế trong từng chi tiết, cân bằng giữa kỹ thuật và cảm xúc.',
+      imageUrl: MEDIA.architecture[0],
+    },
+    {
+      title: 'Trải nghiệm',
+      description:
+        'Ánh sáng, chất liệu và sự tĩnh lặng mời mọi giác quan lắng lại.',
+      imageUrl: MEDIA.interior[0],
+    },
+    {
+      title: 'Di sản',
+      description: 'Mỗi công trình kể một câu chuyện bền vững theo thời gian.',
+      imageUrl: MEDIA.nature[1],
+    },
+  ],
+};
+const ACCORDION_MEDIA_EN: AccordionMediaContent = {
+  items: [
+    {
+      title: 'Design',
+      description:
+        'Precision in every detail, balancing technique and emotion.',
+      imageUrl: MEDIA.architecture[0],
+    },
+    {
+      title: 'Experience',
+      description: 'Light, texture and stillness invite every sense to settle.',
+      imageUrl: MEDIA.interior[0],
+    },
+    {
+      title: 'Legacy',
+      description: 'Each work tells a story that endures over time.',
+      imageUrl: MEDIA.nature[1],
+    },
+  ],
+};
+
+const PRICING_TABLE_VI: PricingTableContent = {
+  title: 'Bảng giá',
+  plans: [
+    {
+      name: 'Cơ bản',
+      price: '0đ',
+      period: 'tháng',
+      features: ['1 landing page', 'Phân tích cơ bản', 'Hỗ trợ email'],
+    },
+    {
+      name: 'Chuyên nghiệp',
+      price: '990k',
+      period: 'tháng',
+      highlighted: true,
+      features: [
+        '10 landing page',
+        'AI-Insights',
+        'Tên miền riêng',
+        'Hỗ trợ ưu tiên',
+      ],
+    },
+    {
+      name: 'Doanh nghiệp',
+      price: 'Liên hệ',
+      features: ['Không giới hạn', 'SLA riêng', 'Tích hợp CRM'],
+    },
+  ],
+};
+const PRICING_TABLE_EN: PricingTableContent = {
+  title: 'Pricing',
+  plans: [
+    {
+      name: 'Basic',
+      price: '$0',
+      period: 'mo',
+      features: ['1 landing page', 'Basic analytics', 'Email support'],
+    },
+    {
+      name: 'Pro',
+      price: '$39',
+      period: 'mo',
+      highlighted: true,
+      features: [
+        '10 landing pages',
+        'AI-Insights',
+        'Custom domain',
+        'Priority support',
+      ],
+    },
+    {
+      name: 'Enterprise',
+      price: 'Contact',
+      features: ['Unlimited', 'Dedicated SLA', 'CRM integration'],
+    },
+  ],
+};
+
+const IMAGE_BANNER_VI: ImageBannerContent = {
+  imageUrl: MEDIA.architecture[1],
+  heading: 'Hơn cả một nơi ở',
+  description:
+    'Mỗi chi tiết được thiết kế để bạn cảm thấy như ở nhà, giữa sự thanh lịch.',
+};
+const IMAGE_BANNER_EN: ImageBannerContent = {
+  imageUrl: MEDIA.architecture[1],
+  heading: 'More Than a Stay',
+  description:
+    'Every detail is designed to make you feel at home amid quiet elegance.',
+};
+
+const VIDEO_GALLERY_VI: VideoGalleryContent = {
+  title: 'Thước phim',
+  videos: [
+    {
+      src: 'https://cdn.coverr.co/videos/coverr-a-city-at-night-9476/1080p.mp4',
+      title: 'Đêm thành phố',
+    },
+    {
+      src: 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-forest-2633/1080p.mp4',
+      title: 'Rừng xanh',
+    },
+    {
+      src: 'https://cdn.coverr.co/videos/coverr-waves-on-the-beach-1409/1080p.mp4',
+      title: 'Sóng biển',
+    },
+  ],
+};
+const VIDEO_GALLERY_EN: VideoGalleryContent = {
+  ...VIDEO_GALLERY_VI,
+  title: 'Reel',
+};
+
+const SPOTLIGHT_VI: SpotlightContent = {
+  lines: ['Chúng tôi tạo ra', 'những trải nghiệm', 'đáng nhớ.'],
+};
+const SPOTLIGHT_EN: SpotlightContent = {
+  lines: ['We craft', 'memorable', 'experiences.'],
+};
+
+const PROCESS_STEPS_VI: ProcessStepsContent = {
+  title: 'Quy trình',
+  steps: [
+    {
+      title: 'Khám phá',
+      description: 'Tìm hiểu mục tiêu, khách hàng và bối cảnh dự án.',
+    },
+    {
+      title: 'Ý tưởng',
+      description: 'Định hình concept và định hướng sáng tạo.',
+    },
+    { title: 'Thực thi', description: 'Thiết kế, dựng và tối ưu trải nghiệm.' },
+    {
+      title: 'Đo lường',
+      description: 'Theo dõi hiệu quả và cải tiến liên tục.',
+    },
+  ],
+};
+const PROCESS_STEPS_EN: ProcessStepsContent = {
+  title: 'Process',
+  steps: [
+    {
+      title: 'Discover',
+      description: 'Understand goals, audience and project context.',
+    },
+    {
+      title: 'Concept',
+      description: 'Shape the concept and creative direction.',
+    },
+    {
+      title: 'Build',
+      description: 'Design, build and optimize the experience.',
+    },
+    {
+      title: 'Measure',
+      description: 'Track performance and improve continuously.',
+    },
+  ],
+};
+
+const DOT_MATRIX_VI: DotMatrixContent = {
+  title: 'Tương tác',
+  gap: 26,
+  dotColor: '#5b6472',
+};
+const DOT_MATRIX_EN: DotMatrixContent = {
+  ...DOT_MATRIX_VI,
+  title: 'Interactive',
+};
+
+const INTERACTIVE_GRID_VI: InteractiveGridContent = {
+  images: [
+    MEDIA.architecture[0],
+    MEDIA.interior[0],
+    MEDIA.nature[1],
+    MEDIA.architecture[1],
+    MEDIA.interior[1],
+    MEDIA.nature[2],
+    MEDIA.architecture[2],
+    MEDIA.nature[3],
+  ],
+};
+const INTERACTIVE_GRID_EN: InteractiveGridContent = { ...INTERACTIVE_GRID_VI };
+
+const PIXEL_REVEAL_VI: PixelRevealContent = {
+  imageUrl: MEDIA.architecture[0],
+  title: 'Happy City',
+};
+const PIXEL_REVEAL_EN: PixelRevealContent = { ...PIXEL_REVEAL_VI };
 
 const MARQUEE_BAND_VI: MarqueeBandContent = {
   text: 'Sáng tạo · Công nghệ · Truyền thông',
@@ -2052,6 +2373,19 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   hover_grid_reveal: HOVER_GRID_REVEAL_VI,
   hover_equalizer_heading: HOVER_EQ_HEADING_VI,
   image_explosion: IMAGE_EXPLOSION_VI,
+  card_showcase: CARD_SHOWCASE_VI,
+  story_slides: STORY_SLIDES_VI,
+  flip_showreel: FLIP_SHOWREEL_VI,
+  peel_reveal: PEEL_REVEAL_VI,
+  accordion_media: ACCORDION_MEDIA_VI,
+  pricing_table: PRICING_TABLE_VI,
+  image_banner: IMAGE_BANNER_VI,
+  video_gallery: VIDEO_GALLERY_VI,
+  spotlight: SPOTLIGHT_VI,
+  process_steps: PROCESS_STEPS_VI,
+  dot_matrix: DOT_MATRIX_VI,
+  interactive_grid: INTERACTIVE_GRID_VI,
+  pixel_reveal: PIXEL_REVEAL_VI,
   marquee_band: MARQUEE_BAND_VI,
   letter_slider: LETTER_SLIDER_VI,
   svg_morph_overlay: SVG_MORPH_OVERLAY_VI,
@@ -2121,6 +2455,19 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hover_grid_reveal: HOVER_GRID_REVEAL_EN,
   hover_equalizer_heading: HOVER_EQ_HEADING_EN,
   image_explosion: IMAGE_EXPLOSION_EN,
+  card_showcase: CARD_SHOWCASE_EN,
+  story_slides: STORY_SLIDES_EN,
+  flip_showreel: FLIP_SHOWREEL_EN,
+  peel_reveal: PEEL_REVEAL_EN,
+  accordion_media: ACCORDION_MEDIA_EN,
+  pricing_table: PRICING_TABLE_EN,
+  image_banner: IMAGE_BANNER_EN,
+  video_gallery: VIDEO_GALLERY_EN,
+  spotlight: SPOTLIGHT_EN,
+  process_steps: PROCESS_STEPS_EN,
+  dot_matrix: DOT_MATRIX_EN,
+  interactive_grid: INTERACTIVE_GRID_EN,
+  pixel_reveal: PIXEL_REVEAL_EN,
   marquee_band: MARQUEE_BAND_EN,
   letter_slider: LETTER_SLIDER_EN,
   svg_morph_overlay: SVG_MORPH_OVERLAY_EN,

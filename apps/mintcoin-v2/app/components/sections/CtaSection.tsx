@@ -4,12 +4,17 @@ import { useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useIsomorphicLayoutEffect } from '@/lib/use-isomorphic-layout-effect';
+import { REXER_PAGE_ID } from '@/app/components/analytics/analytics-data';
+import {
+  getSessionId,
+  getVisitorId,
+} from '@/app/components/analytics/rexer-client';
 
 // Closing CTA section — final call-to-action for the Jack Pine 1 kilo
 // gold coin. LEFT: serif headline + copy + compact contact strip.
 // RIGHT: lead-capture form (name / email / phone / message) that POSTs
-// to /api/leads so sales can follow up. Dark luxury palette + gold
-// accent to match Hero / Works / Process / Services.
+// to /api/forms → ReXeR /v1/forms/submit (creates a lead in the Sales tab).
+// Dark luxury palette + gold accent to match Hero / Works / Process / Services.
 
 const MINT_URL =
   'https://www.mint.ca/en/shop/coins/2026/the-jack-pine-by-tom-thomson-1-kilo-pure-gold-coin';
@@ -42,6 +47,9 @@ export default function CtaSection() {
   });
   const [status, setStatus] = useState<SubmitState>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  // Debug: exact upstream cURL (from the proxy) to verify the key with BE.
+  const [curlCmd, setCurlCmd] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useIsomorphicLayoutEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -81,24 +89,66 @@ export default function CtaSection() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (status === 'loading') return;
+
+    // BE requires at least one contact channel (email OR phone).
+    if (!form.email.trim() && !form.phone.trim()) {
+      setStatus('error');
+      setErrorMsg('Please provide an email or phone number.');
+      return;
+    }
+
     setStatus('loading');
     setErrorMsg('');
     try {
-      const res = await fetch('/api/leads', {
+      // Only send the fields the visitor actually filled — BE stores `fields`
+      // verbatim as the lead's form_data.
+      const fields: Record<string, string> = {};
+      if (form.name.trim()) fields.name = form.name.trim();
+      if (form.email.trim()) fields.email = form.email.trim();
+      if (form.phone.trim()) fields.phone = form.phone.trim();
+      if (form.message.trim()) fields.message = form.message.trim();
+
+      const params = new URLSearchParams(window.location.search);
+      // Submit through the same-origin proxy → ReXeR POST /v1/forms/submit,
+      // which creates/dedups a lead (visible in the Sales tab).
+      const res = await fetch('/api/forms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          page_id: REXER_PAGE_ID,
+          session_id: getSessionId(),
+          visitor_id: getVisitorId(),
+          fields,
+          utm_source: params.get('utm_source') || undefined,
+          utm_medium: params.get('utm_medium') || undefined,
+          utm_campaign: params.get('utm_campaign') || undefined,
+        }),
       });
+      // Capture the exact upstream cURL the proxy ran (works on ok OR error).
+      const curl = res.headers.get('x-debug-curl');
+      if (curl) setCurlCmd(decodeURIComponent(curl));
       const data = await res.json().catch(() => ({}));
       if (!res.ok)
         throw new Error(
-          data.error || 'Something went wrong. Please try again.'
+          data.error ||
+            data.message ||
+            'Something went wrong. Please try again.'
         );
       setStatus('success');
       setForm({ name: '', email: '', phone: '', message: '' });
     } catch (err) {
       setStatus('error');
       setErrorMsg((err as Error).message);
+    }
+  };
+
+  const copyCurl = async () => {
+    try {
+      await navigator.clipboard.writeText(curlCmd);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
     }
   };
 
@@ -271,6 +321,27 @@ export default function CtaSection() {
                 advisor about this product.
               </p>
             </form>
+          )}
+
+          {/* Debug — copy the exact upstream cURL to verify the key with BE. */}
+          {curlCmd && (
+            <div className='mt-4 rounded-lg border border-neutral-100/10 bg-neutral-100/[0.02] p-4'>
+              <div className='mb-2 flex items-center justify-between gap-3'>
+                <span className='text-[10px] tracking-[0.18em] text-neutral-500 uppercase'>
+                  Debug · upstream request
+                </span>
+                <button
+                  type='button'
+                  onClick={copyCurl}
+                  className='rounded-full border border-[#c79119]/40 px-3 py-1 text-[10px] tracking-[0.16em] text-[#c79119] uppercase transition-colors hover:bg-[#c79119]/10'
+                >
+                  {copied ? 'Copied ✓' : 'Copy cURL'}
+                </button>
+              </div>
+              <pre className='max-h-40 overflow-auto rounded bg-black/40 p-3 text-[11px] leading-relaxed whitespace-pre-wrap text-neutral-400'>
+                {curlCmd}
+              </pre>
+            </div>
           )}
         </div>
       </div>

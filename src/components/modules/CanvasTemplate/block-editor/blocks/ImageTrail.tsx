@@ -63,6 +63,7 @@ export function ImageTrail({
   const lifespan = content.lifespan ?? 750;
   const inDuration = content.inDuration ?? 750;
   const outDuration = content.outDuration ?? 1000;
+  const autoDemo = content.autoDemo ?? false;
 
   React.useEffect(() => {
     const reduce =
@@ -122,7 +123,35 @@ export function ImageTrail({
       }
     };
 
+    // ── attract mode: con trỏ ảo lang thang khi user chưa tương tác ──
+    let attract = autoDemo;
+    let started = false;
+    let tx = 0;
+    let ty = 0;
+    let vx = 0;
+    let vy = 0;
+    const pickTarget = () => {
+      const rect = root.getBoundingClientRect();
+      tx = rect.left + rect.width * (0.12 + Math.random() * 0.76);
+      ty = rect.top + rect.height * (0.18 + Math.random() * 0.64);
+    };
+
     const tick = () => {
+      if (attract) {
+        if (!started) {
+          const rect = root.getBoundingClientRect();
+          vx = rect.left + rect.width / 2;
+          vy = rect.top + rect.height / 2;
+          pickTarget();
+          started = true;
+        }
+        vx += (tx - vx) * 0.075;
+        vy += (ty - vy) * 0.075;
+        mouseX = vx;
+        mouseY = vy;
+        inside = true;
+        if (Math.hypot(tx - vx, ty - vy) < 28) pickTarget();
+      }
       if (inside && movedEnough()) {
         lastX = mouseX;
         lastY = mouseY;
@@ -133,6 +162,7 @@ export function ImageTrail({
     };
 
     const onMove = (e: PointerEvent) => {
+      attract = false; // user rê chuột thật → tắt chào mời
       mouseX = e.clientX;
       mouseY = e.clientY;
       inside = true;
@@ -151,7 +181,7 @@ export function ImageTrail({
       cancelAnimationFrame(raf);
       trail.forEach(t => t.el.remove());
     };
-  }, [images, threshold, lifespan, inDuration, outDuration]);
+  }, [images, threshold, lifespan, inDuration, outDuration, autoDemo]);
 
   return (
     <div

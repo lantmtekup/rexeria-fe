@@ -8,8 +8,10 @@ interface Props {
 }
 
 export default function AnalyticsLogin({ onSuccess }: Props) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  // Prefill with the demo credentials for quick access.
+  const [username, setUsername] = useState(ANALYTICS_CREDENTIALS.username);
+  const [password, setPassword] = useState(ANALYTICS_CREDENTIALS.password);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,15 +60,25 @@ export default function AnalyticsLogin({ onSuccess }: Props) {
         >
           Password
         </label>
-        <input
-          id='an-pass'
-          type='password'
-          autoComplete='current-password'
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          className='mb-4 w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-white outline-none focus:border-amber-500'
-          placeholder='••••••••'
-        />
+        <div className='relative mb-4'>
+          <input
+            id='an-pass'
+            type={showPassword ? 'text' : 'password'}
+            autoComplete='current-password'
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            className='w-full rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 pr-16 text-sm text-white outline-none focus:border-amber-500'
+            placeholder='••••••••'
+          />
+          <button
+            type='button'
+            onClick={() => setShowPassword(s => !s)}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            className='absolute top-1/2 right-2 -translate-y-1/2 rounded px-2 py-1 text-xs text-neutral-400 transition-colors hover:text-amber-400'
+          >
+            {showPassword ? 'Hide' : 'Show'}
+          </button>
+        </div>
 
         {error && <p className='mb-4 text-sm text-red-400'>{error}</p>}
 

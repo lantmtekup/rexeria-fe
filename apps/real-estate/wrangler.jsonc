@@ -1,0 +1,12 @@
+// CF Worker static cho real-estate (Aestha demo, tách từ 360-admin-cms /aestha-demo).
+// Vite SPA. Build: npm run build — Deploy: npm run cf:deploy
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rexerai-real-estate",
+  "compatibility_date": "2026-05-01",
+  "assets": {
+    "directory": "dist",
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [{ "pattern": "real-estate.rexerstudio.com", "custom_domain": true }]
+}
