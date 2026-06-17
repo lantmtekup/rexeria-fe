@@ -20,6 +20,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
+import { Button } from '@/components/atoms/button';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { PortalAdCampaign } from '@/services/rexer/types';
 
@@ -50,7 +51,7 @@ function beCampaignToLocal(c: PortalAdCampaign): Campaign {
     id: c.id,
     name: c.name,
     platform,
-    objective: c.objective ?? '—',
+    objective: c.objective ?? '-',
     status,
     impressions: c.impressions ?? 0,
     reach: 0,
@@ -73,7 +74,7 @@ const PLATFORM_META: Record<
   facebook: { label: 'Facebook', color: 'bg-blue-600', icon: Facebook },
   instagram: { label: 'Instagram', color: 'bg-pink-500', icon: Instagram },
   google: { label: 'Google Ads', color: 'bg-emerald-600', icon: Globe2 },
-  tiktok: { label: 'TikTok', color: 'bg-zinc-900', icon: Activity },
+  tiktok: { label: 'TikTok', color: 'bg-foreground', icon: Activity },
 };
 
 type Campaign = {
@@ -108,7 +109,7 @@ const STATUS_META: Record<
   ended: {
     label: 'Ended',
     chip: 'bg-muted text-content-muted',
-    dot: 'bg-zinc-400',
+    dot: 'bg-muted-foreground',
   },
   draft: {
     label: 'Draft',
@@ -120,7 +121,7 @@ const STATUS_META: Record<
 const FAKE_CAMPAIGNS: Campaign[] = [
   {
     id: 'cmp_tet_fb',
-    name: 'Coca-Cola Tết 2026 — Brand awareness',
+    name: 'Coca-Cola Tết 2026: Brand awareness',
     platform: 'facebook',
     objective: 'Awareness',
     status: 'active',
@@ -134,7 +135,7 @@ const FAKE_CAMPAIGNS: Campaign[] = [
   },
   {
     id: 'cmp_tet_ig',
-    name: 'Coca-Cola Tết 2026 — Reels',
+    name: 'Coca-Cola Tết 2026: Reels',
     platform: 'instagram',
     objective: 'Engagement',
     status: 'active',
@@ -148,7 +149,7 @@ const FAKE_CAMPAIGNS: Campaign[] = [
   },
   {
     id: 'cmp_zero_fb',
-    name: 'Coca-Cola Zero Sugar — Sport',
+    name: 'Coca-Cola Zero Sugar: Sport',
     platform: 'facebook',
     objective: 'Conversion',
     status: 'active',
@@ -162,7 +163,7 @@ const FAKE_CAMPAIGNS: Campaign[] = [
   },
   {
     id: 'cmp_fanta_tiktok',
-    name: 'Fanta Watermelon — Summer challenge',
+    name: 'Fanta Watermelon: Summer challenge',
     platform: 'tiktok',
     objective: 'Engagement',
     status: 'active',
@@ -176,7 +177,7 @@ const FAKE_CAMPAIGNS: Campaign[] = [
   },
   {
     id: 'cmp_sprite_google',
-    name: 'Sprite Lemon — Search retargeting',
+    name: 'Sprite Lemon: Search retargeting',
     platform: 'google',
     objective: 'Traffic',
     status: 'paused',
@@ -190,7 +191,7 @@ const FAKE_CAMPAIGNS: Campaign[] = [
   },
   {
     id: 'cmp_olympic',
-    name: 'Olympic 2026 Edition — Teaser',
+    name: 'Olympic 2026 Edition: Teaser',
     platform: 'instagram',
     objective: 'Awareness',
     status: 'draft',
@@ -204,7 +205,7 @@ const FAKE_CAMPAIGNS: Campaign[] = [
   },
   {
     id: 'cmp_mochau_done',
-    name: 'Mộc Châu Festival — Done',
+    name: 'Mộc Châu Festival: Done',
     platform: 'facebook',
     objective: 'Conversion',
     status: 'ended',
@@ -330,15 +331,12 @@ export default function PortalAdsPage() {
           </p>
         </div>
         <div className='flex items-center gap-2'>
-          <button className='border-border text-content-muted hover:bg-muted flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'>
-            <RefreshCw className='size-3.5' /> {t('ads.syncFbAds')}
-          </button>
-          <button
-            onClick={() => setCreateOpen(true)}
-            className='flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-blue-700'
-          >
-            <Plus className='size-3.5' /> {t('ads.createCampaign')}
-          </button>
+          <Button variant='neutral' size='sm'>
+            <RefreshCw /> {t('ads.syncFbAds')}
+          </Button>
+          <Button size='sm' onClick={() => setCreateOpen(true)}>
+            <Plus /> {t('ads.createCampaign')}
+          </Button>
         </div>
       </section>
 
@@ -431,7 +429,7 @@ export default function PortalAdsPage() {
       </div>
 
       {/* Spend trend chart */}
-      <section className='border-border mt-6 rounded-2xl border bg-white p-5 shadow-sm'>
+      <section className='border-border bg-card mt-6 rounded-2xl border p-5 shadow-sm'>
         <div className='mb-3 flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <div className='flex size-7 items-center justify-center rounded-lg bg-rose-500 text-white shadow-sm'>
@@ -454,7 +452,7 @@ export default function PortalAdsPage() {
       </section>
 
       {/* Filter bar */}
-      <div className='border-border mt-6 flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3 shadow-sm'>
+      <div className='border-border bg-background mt-6 flex flex-wrap items-center gap-3 rounded-2xl border p-3 shadow-sm'>
         <span className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
           Status
         </span>
@@ -505,7 +503,7 @@ export default function PortalAdsPage() {
       </div>
 
       {/* Campaigns table */}
-      <div className='border-border mt-4 overflow-hidden rounded-2xl border bg-white shadow-sm'>
+      <div className='border-border bg-card mt-4 overflow-hidden rounded-2xl border shadow-sm'>
         <div className='border-border border-b px-5 py-3'>
           <h2 className='text-sm font-semibold'>
             Campaigns ({filtered.length})
@@ -638,8 +636,8 @@ function FilterBtn({
       onClick={onClick}
       className={`text-2xs flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium transition-all ${
         active
-          ? `${color ?? 'bg-zinc-900'} text-white shadow-sm`
-          : 'border-border text-content-muted hover:bg-muted border bg-white'
+          ? `${color ?? 'bg-foreground'} text-white shadow-sm`
+          : 'border-border text-content-muted hover:bg-muted bg-background border'
       }`}
     >
       {Icon ? (

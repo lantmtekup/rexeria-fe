@@ -158,7 +158,7 @@ export function UpdateMetricsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-h-[88vh] overflow-hidden sm:max-w-lg'>
         <DialogHeader>
-          <DialogTitle>Cập nhật số liệu — {campaignName}</DialogTitle>
+          <DialogTitle>Cập nhật số liệu: {campaignName}</DialogTitle>
           <p className='text-content-muted text-xs'>
             Nhân viên Rexer nhập tay (chưa đấu API quảng cáo).
           </p>
@@ -174,7 +174,7 @@ export function UpdateMetricsDialog({
               className={cn(
                 'rounded-md px-3 py-1.5 font-medium transition-colors',
                 mode === m
-                  ? 'text-foreground bg-white shadow-sm'
+                  ? 'text-foreground bg-background shadow-sm'
                   : 'text-content-muted'
               )}
             >
@@ -214,7 +214,7 @@ export function UpdateMetricsDialog({
             </p>
           ) : (
             <table className='w-full text-xs'>
-              <thead className='text-content-muted text-2xs sticky top-0 bg-white'>
+              <thead className='text-content-muted text-2xs bg-background sticky top-0'>
                 <tr className='border-border border-b'>
                   <th className='py-1.5 text-left font-semibold'>Ngày</th>
                   <th className='py-1.5 text-right font-semibold'>Imp</th>
@@ -236,7 +236,7 @@ export function UpdateMetricsDialog({
                           value={dailyMap[date]?.[k] || ''}
                           onChange={e => setDailyField(date, k, e.target.value)}
                           placeholder='0'
-                          className='border-border focus:border-primary text-3xs w-full rounded border bg-white px-1.5 py-0.5 text-right font-mono outline-none'
+                          className='border-border focus:border-primary text-3xs bg-background w-full rounded border px-1.5 py-0.5 text-right font-mono outline-none'
                         />
                       </td>
                     ))}
@@ -249,13 +249,13 @@ export function UpdateMetricsDialog({
 
         <DialogFooter>
           <Button
-            variant='pill-light'
+            variant='neutral'
             size='sm'
             onClick={() => onOpenChange(false)}
           >
             Huỷ
           </Button>
-          <Button variant='pill' size='sm' onClick={submit}>
+          <Button size='sm' onClick={submit}>
             Lưu số liệu
           </Button>
         </DialogFooter>
@@ -280,7 +280,7 @@ function DateField({
       <Label className='text-2xs text-content-muted font-semibold tracking-wider uppercase'>
         {label}
       </Label>
-      <div className='border-border focus-within:border-primary mt-1 flex items-center gap-2 rounded-md border bg-white px-2.5 py-2'>
+      <div className='border-border focus-within:border-primary bg-background mt-1 flex items-center gap-2 rounded-md border px-2.5 py-2'>
         <CalendarDays className='text-content-muted size-3.5' />
         <input
           type='date'

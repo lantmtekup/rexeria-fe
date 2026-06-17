@@ -32,6 +32,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import { Input } from '@/components/atoms/input';
 import { BlockTypeFormDialog } from '@/components/dialogs/BlockTypeFormDialog';
 import { rexerApi } from '@/services/rexer/endpoints';
@@ -161,7 +163,7 @@ export function AdminBlockTypesPage() {
     <div className='flex h-[calc(100vh-3.5rem)]'>
       <div className='flex flex-1 flex-col overflow-hidden'>
         {/* Header */}
-        <div className='border-border border-b bg-white px-6 py-4'>
+        <div className='border-border bg-card border-b px-6 py-4'>
           <div className='flex flex-wrap items-end justify-between gap-3'>
             <div>
               <div className='text-3xs text-content-muted flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
@@ -177,28 +179,27 @@ export function AdminBlockTypesPage() {
               </p>
             </div>
             <div className='flex items-center gap-2'>
-              <button
-                type='button'
+              <Button
+                variant='neutral'
+                size='sm'
                 onClick={load}
                 disabled={loading}
-                className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
               >
                 <RefreshCw
                   className={cn('size-3.5', loading && 'animate-spin')}
                 />
                 Refresh
-              </button>
-              <button
-                type='button'
+              </Button>
+              <Button
+                size='sm'
                 onClick={() => {
                   setFormInitial(null);
                   setFormOpen(true);
                 }}
-                className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
               >
                 <Plus className='size-3.5' />
                 Tạo block type
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -226,19 +227,14 @@ export function AdminBlockTypesPage() {
               <Filter className='size-3' /> Surface
             </span>
             {(['all', 'landing', 'ad', 'curate'] as const).map(s => (
-              <button
+              <Chip
                 key={s}
-                type='button'
+                size='sm'
+                selected={surface === s}
                 onClick={() => setSurface(s)}
-                className={cn(
-                  'text-2xs rounded-full px-2.5 py-1 font-medium transition-colors',
-                  surface === s
-                    ? 'bg-zinc-900 text-white shadow-sm'
-                    : 'border-border text-content-muted hover:bg-muted border bg-white'
-                )}
               >
                 {s === 'all' ? 'Tất cả' : (SURFACE_META[s]?.label ?? s)}
-              </button>
+              </Chip>
             ))}
             <label className='text-2xs text-content-muted ml-2 inline-flex cursor-pointer items-center gap-1.5'>
               <input
@@ -255,7 +251,7 @@ export function AdminBlockTypesPage() {
         {/* Body — grid */}
         <div className='bg-muted/40 flex-1 overflow-y-auto p-6'>
           {error && (
-            <div className='mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
+            <div className='border-destructive/20 bg-danger-bg text-destructive mb-3 rounded-lg border px-3 py-2 text-xs'>
               {error}
             </div>
           )}
@@ -265,7 +261,7 @@ export function AdminBlockTypesPage() {
               <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải catalog…
             </div>
           ) : items.length === 0 ? (
-            <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
+            <div className='border-border bg-card rounded-2xl border border-dashed p-12 text-center'>
               <Blocks className='text-muted-foreground mx-auto size-8' />
               <p className='text-content-muted mt-3 text-sm font-semibold'>
                 Không có block type nào
@@ -338,9 +334,9 @@ function BlockTypeCard({
   return (
     <div
       className={cn(
-        'group flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
+        'group bg-card flex flex-col overflow-hidden rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
         active
-          ? 'border-zinc-900 ring-2 ring-zinc-900/10'
+          ? 'border-foreground ring-foreground/10 ring-2'
           : 'border-border hover:border-border',
         !item.is_active && 'opacity-60'
       )}
@@ -376,7 +372,7 @@ function BlockTypeCard({
               </span>
             )}
             {!item.is_active && (
-              <span className='text-3xs text-content-muted rounded-full bg-zinc-200 px-1.5 py-0.5 font-bold tracking-wider uppercase'>
+              <span className='text-3xs text-content-muted bg-muted rounded-full px-1.5 py-0.5 font-bold tracking-wider uppercase'>
                 disabled
               </span>
             )}
@@ -446,7 +442,7 @@ function BlockTypeCard({
         <button
           type='button'
           onClick={onDelete}
-          className='text-2xs text-content-muted inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 font-medium hover:bg-rose-50 hover:text-rose-700'
+          className='text-2xs text-content-muted hover:bg-danger-bg hover:text-destructive inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 font-medium'
           title='Xoá'
         >
           <Trash2 className='size-3' />
@@ -472,7 +468,7 @@ function BlockTypeDrawer({
   onEdit: () => void;
 }) {
   return (
-    <aside className='border-border flex w-[420px] flex-col border-l bg-white'>
+    <aside className='border-border bg-card flex w-[420px] flex-col border-l'>
       <div className='border-border flex items-start justify-between border-b px-4 py-3'>
         <div className='min-w-0 flex-1'>
           <div className='flex items-center gap-2'>
@@ -489,14 +485,15 @@ function BlockTypeDrawer({
           </div>
           <p className='text-content-muted mt-0.5 text-xs'>{item.label_vi}</p>
         </div>
-        <button
+        <Button
           type='button'
+          variant='ghost'
+          size='icon'
           onClick={onClose}
-          className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded p-1'
           aria-label='Close'
         >
           <Trash2 className='size-4' />
-        </button>
+        </Button>
       </div>
 
       <div className='flex-1 overflow-y-auto px-4 py-4 text-xs'>
@@ -509,7 +506,7 @@ function BlockTypeDrawer({
           <p className='text-2xs text-content-muted mt-1'>
             <span className='text-muted-foreground font-mono'>EN:</span>{' '}
             {item.label_en}
-            {item.description_en ? ` — ${item.description_en}` : ''}
+            {item.description_en ? `: ${item.description_en}` : ''}
           </p>
         )}
 
@@ -625,18 +622,22 @@ function BlockTypeDrawer({
       {/* Drawer footer actions */}
       <div className='border-border border-t px-4 py-3'>
         <div className='grid grid-cols-3 gap-2'>
-          <button
+          <Button
             type='button'
+            variant='neutral'
+            size='sm'
             onClick={onEdit}
-            className='border-border text-content-muted hover:bg-muted inline-flex items-center justify-center gap-1 rounded-lg border bg-white px-2 py-1.5 text-xs font-medium'
+            className='w-full'
           >
             <Pencil className='size-3.5' />
             Edit
-          </button>
-          <button
+          </Button>
+          <Button
             type='button'
+            variant='neutral'
+            size='sm'
             onClick={onToggle}
-            className='border-border text-content-muted hover:bg-muted inline-flex items-center justify-center gap-1 rounded-lg border bg-white px-2 py-1.5 text-xs font-medium'
+            className='w-full'
           >
             {item.is_active ? (
               <PowerOff className='size-3.5' />
@@ -644,15 +645,17 @@ function BlockTypeDrawer({
               <Power className='size-3.5' />
             )}
             {item.is_active ? 'Disable' : 'Enable'}
-          </button>
-          <button
+          </Button>
+          <Button
             type='button'
+            variant='destructive'
+            size='sm'
             onClick={onDelete}
-            className='border-border inline-flex items-center justify-center gap-1 rounded-lg border bg-white px-2 py-1.5 text-xs font-medium text-rose-700 hover:border-rose-300 hover:bg-rose-50'
+            className='w-full'
           >
             <Trash2 className='size-3.5' />
             Xoá
-          </button>
+          </Button>
         </div>
       </div>
     </aside>
@@ -700,7 +703,7 @@ function Stat({
     amber: 'border-amber-100 bg-amber-50/40 text-amber-700',
     violet: 'border-violet-100 bg-violet-50/40 text-violet-700',
     emerald: 'border-emerald-100 bg-emerald-50/40 text-emerald-700',
-    zinc: 'border-border bg-white text-content-muted',
+    zinc: 'border-border bg-card text-content-muted',
   };
   return (
     <div

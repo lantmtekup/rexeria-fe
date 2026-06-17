@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import { Input } from '@/components/atoms/input';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
@@ -163,7 +165,7 @@ export default function PortalTemplateLibraryPage() {
       </section>
 
       {/* Toolbar — search + sort + view */}
-      <div className='border-border mt-5 flex flex-wrap items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm'>
+      <div className='border-border bg-background mt-5 flex flex-wrap items-center gap-2 rounded-2xl border p-2 shadow-sm'>
         <div className='relative max-w-sm flex-1'>
           <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
           <Input
@@ -178,7 +180,7 @@ export default function PortalTemplateLibraryPage() {
           <select
             value={sort}
             onChange={e => setSort(e.target.value as Sort)}
-            className='border-border text-content-muted hover:bg-muted appearance-none rounded-lg border bg-white py-1.5 pr-3 pl-7 text-xs font-medium outline-none focus:border-zinc-400'
+            className='border-border text-content-muted hover:bg-muted bg-background focus:border-ring appearance-none rounded-lg border py-1.5 pr-3 pl-7 text-xs font-medium outline-none'
             aria-label='Sort'
           >
             {SORT_OPTIONS.map(o => (
@@ -188,7 +190,7 @@ export default function PortalTemplateLibraryPage() {
             ))}
           </select>
         </div>
-        <div className='border-border ml-auto inline-flex items-center gap-0.5 rounded-lg border bg-white p-0.5'>
+        <div className='border-border bg-background ml-auto inline-flex items-center gap-0.5 rounded-lg border p-0.5'>
           <ViewBtn
             active={view === 'grid'}
             onClick={() => setView('grid')}
@@ -212,7 +214,7 @@ export default function PortalTemplateLibraryPage() {
             {t('templates.loading')}
           </div>
         ) : items.length === 0 ? (
-          <div className='border-border rounded-2xl border bg-white p-12 text-center'>
+          <div className='border-border bg-card rounded-2xl border p-12 text-center'>
             <Sparkles className='text-muted-foreground mx-auto size-8' />
             <p className='text-content-muted mt-3 text-sm font-semibold'>
               {debouncedSearch
@@ -291,7 +293,7 @@ function TemplateCard({
 }) {
   const t = useTranslations('portal');
   return (
-    <div className='group border-border hover:border-border flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+    <div className='group border-border hover:border-border bg-card flex flex-col overflow-hidden rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       <div className='relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-zinc-200 to-zinc-300'>
         {tpl.thumbnail_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -315,13 +317,12 @@ function TemplateCard({
             {tpl.description}
           </p>
         )}
-        <button
+        <Button
           type='button'
+          size='sm'
           onClick={onUse}
           disabled={loading}
-          className={cn(
-            'mt-auto flex items-center justify-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60'
-          )}
+          className='mt-auto w-full'
         >
           {loading ? (
             <>
@@ -333,7 +334,7 @@ function TemplateCard({
               <Sparkles className='size-3.5' /> {t('templates.useCardBtn')}
             </>
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -352,7 +353,7 @@ function TableView({
 }) {
   const t = useTranslations('portal');
   return (
-    <div className='border-border overflow-hidden rounded-2xl border bg-white shadow-sm'>
+    <div className='border-border bg-card overflow-hidden rounded-2xl border shadow-sm'>
       <table className='w-full text-sm'>
         <thead>
           <tr className='border-border bg-muted/50 border-b'>
@@ -396,16 +397,16 @@ function TableView({
               <td className='hidden px-4 py-2 sm:table-cell'>
                 <p className='text-content-muted line-clamp-2 max-w-md text-xs'>
                   {tpl.description || (
-                    <span className='text-muted-foreground'>—</span>
+                    <span className='text-muted-foreground'>-</span>
                   )}
                 </p>
               </td>
               <td className='px-4 py-2 text-right'>
-                <button
+                <Button
                   type='button'
+                  size='sm'
                   onClick={() => onUse(tpl)}
                   disabled={cloning === tpl.id}
-                  className='text-2xs inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 font-medium text-white transition-colors hover:bg-zinc-700 disabled:opacity-60'
                 >
                   {cloning === tpl.id ? (
                     <>
@@ -417,7 +418,7 @@ function TableView({
                       <Sparkles className='size-3' /> {t('templates.useShort')}
                     </>
                   )}
-                </button>
+                </Button>
               </td>
             </tr>
           ))}
@@ -459,7 +460,7 @@ function Pagination({
   add(totalPages);
 
   return (
-    <div className='border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-2.5 shadow-sm'>
+    <div className='border-border bg-background flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 shadow-sm'>
       <span className='text-2xs text-content-muted'>
         {t('templates.paginationRange', { from, to, total })}
       </span>
@@ -488,8 +489,8 @@ function Pagination({
               className={cn(
                 'text-2xs inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono font-semibold tabular-nums',
                 p === page
-                  ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'border-border text-content-muted hover:bg-muted border bg-white'
+                  ? 'bg-foreground text-background shadow-sm'
+                  : 'border-border text-content-muted hover:bg-muted bg-background border'
               )}
             >
               {p}
@@ -521,16 +522,8 @@ function ViewBtn({
   label: string;
 }) {
   return (
-    <button
-      type='button'
-      onClick={onClick}
-      title={label}
-      className={cn(
-        'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
-        active ? 'bg-zinc-900 text-white' : 'text-content-muted hover:bg-muted'
-      )}
-    >
+    <Chip selected={active} size='sm' onClick={onClick} title={label}>
       {icon}
-    </button>
+    </Chip>
   );
 }

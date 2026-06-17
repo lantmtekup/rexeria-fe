@@ -361,7 +361,7 @@ function Thumb({
       ) : (
         <div
           className={cn(
-            'flex size-full flex-col items-center justify-center gap-1 bg-zinc-900 px-2 text-white'
+            'bg-foreground text-background flex size-full flex-col items-center justify-center gap-1 px-2'
           )}
         >
           <Box className='size-6' />

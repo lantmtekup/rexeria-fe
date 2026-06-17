@@ -2756,6 +2756,12 @@ export interface UpdateBlockRequest {
   settings?: Record<string, unknown>;
   tags?: string[];
   thumbnail_asset_id?: string;
+  /**
+   * Đổi loại block_type của instance đã lưu. BE chưa khai báo field này trong
+   * PATCH /blocks/:id contract (2026-06) — gửi kèm; cần verify persist 2 chiều
+   * khi test (mở → đổi → lưu → mở lại). Nếu không stick thì BE cần cho phép.
+   */
+  type_code?: string;
 }
 
 // ── BlockType (system catalog, canonical mirror of AdminBlockType) ───────

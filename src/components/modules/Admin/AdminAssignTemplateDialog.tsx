@@ -11,6 +11,7 @@ import * as React from 'react';
 import { Building2, Loader2, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Brand, Page, Template, Workspace } from '@/services/rexer/types';
@@ -99,7 +100,7 @@ export function AdminAssignTemplateDialog({
     } catch (err) {
       if (err instanceof RxApiError && err.status === 404) {
         setError(
-          'BE chưa ship endpoint /admin/pages/from-template — nhắc BE merge canonical handler.'
+          'BE chưa ship endpoint /admin/pages/from-template, nhắc BE merge canonical handler.'
         );
       } else {
         const msg =
@@ -121,7 +122,7 @@ export function AdminAssignTemplateDialog({
       onClick={onClose}
     >
       <div
-        className='my-12 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
+        className='bg-card my-12 w-full max-w-md overflow-hidden rounded-2xl shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
         <div className='border-border flex items-center justify-between border-b px-5 py-3'>
@@ -136,14 +137,15 @@ export function AdminAssignTemplateDialog({
               </p>
             </div>
           </div>
-          <button
+          <Button
             type='button'
+            variant='ghost'
+            size='icon'
             onClick={onClose}
-            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label='Close'
           >
             <X className='size-4' />
-          </button>
+          </Button>
         </div>
 
         <div className='space-y-4 px-5 py-4'>
@@ -157,7 +159,7 @@ export function AdminAssignTemplateDialog({
               maxLength={200}
               onChange={e => setPageName(e.target.value)}
               placeholder={template.name}
-              className='border-border w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='border-border bg-background w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             />
           </Field>
 
@@ -165,9 +167,9 @@ export function AdminAssignTemplateDialog({
             <select
               value={clientId}
               onChange={e => setClientId(e.target.value)}
-              className='border-border w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='border-border bg-background w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             >
-              <option value=''>— Chọn brand —</option>
+              <option value=''>- Chọn brand -</option>
               {clients.map(c => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -184,7 +186,7 @@ export function AdminAssignTemplateDialog({
               <select
                 value={workspaceId}
                 onChange={e => setWorkspaceId(e.target.value)}
-                className='border-border w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+                className='border-border bg-background w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
                 disabled={workspaces.length === 0}
               >
                 {workspaces.length === 0 && (
@@ -199,7 +201,7 @@ export function AdminAssignTemplateDialog({
             </Field>
           )}
 
-          <Field label='Ghi chú handover' hint='Tuỳ chọn — gửi kèm cho brand'>
+          <Field label='Ghi chú handover' hint='Tuỳ chọn, gửi kèm cho brand'>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
@@ -211,26 +213,27 @@ export function AdminAssignTemplateDialog({
           </Field>
 
           {error && (
-            <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
+            <div className='border-destructive/20 bg-danger-bg text-destructive rounded-lg border px-3 py-2 text-xs'>
               {error}
             </div>
           )}
         </div>
 
         <div className='border-border bg-muted/50 flex items-center justify-end gap-2 border-t px-5 py-3'>
-          <button
+          <Button
             type='button'
+            variant='neutral'
+            size='sm'
             onClick={onClose}
             disabled={submitting}
-            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             Huỷ
-          </button>
-          <button
+          </Button>
+          <Button
             type='button'
+            size='sm'
             onClick={handleSubmit}
             disabled={submitting || !clientId}
-            className='flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50'
           >
             {submitting ? (
               <Loader2 className='size-3.5 animate-spin' />
@@ -238,7 +241,7 @@ export function AdminAssignTemplateDialog({
               <Building2 className='size-3.5' />
             )}
             {submitting ? 'Đang assign…' : 'Assign'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

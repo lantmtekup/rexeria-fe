@@ -16,6 +16,7 @@ import * as React from 'react';
 import { Loader2, Megaphone, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type {
@@ -62,7 +63,7 @@ function toStatus(s: string): Status {
 
 function channelOf(c: PortalAdCampaign): string {
   const ch = (c.channels ?? [])[0] ?? '';
-  return CHANNEL_LABEL[ch] ?? (ch ? ch : '—');
+  return CHANNEL_LABEL[ch] ?? (ch ? ch : '-');
 }
 
 function toCampaign(c: PortalAdCampaign): Campaign {
@@ -181,7 +182,7 @@ export function AdsTab({
     <div>
       <div className='border-border border-b px-4 py-3'>
         <div className='text-content-muted text-xs'>
-          Chưa đấu API quảng cáo — nhân viên Rexer nhập tay metrics theo khoảng
+          Chưa đấu API quảng cáo. Nhân viên Rexer nhập tay metrics theo khoảng
           ngày cho khách thấy hiệu quả. Campaign do brand tạo ở portal; staff
           cập nhật số liệu.
         </div>
@@ -237,7 +238,7 @@ export function AdsTab({
                   <td className='text-content-muted text-3xs px-3 py-2.5 font-mono'>
                     {c.period_from
                       ? `${c.period_from.slice(5)} → ${c.period_to?.slice(5)}`
-                      : '—'}
+                      : '-'}
                   </td>
                   <td className='px-3 py-2.5 text-right font-mono'>
                     {fmt(m.impressions)}
@@ -255,13 +256,13 @@ export function AdsTab({
                     {fmt(m.conversions)}
                   </td>
                   <td className='px-3 py-2.5 text-right'>
-                    <button
-                      type='button'
+                    <Button
+                      variant='neutral'
+                      size='xs'
                       onClick={() => setEditing(c)}
-                      className='border-border text-content-muted hover:border-foreground hover:text-foreground inline-flex items-center gap-1 rounded-lg border bg-white px-2.5 py-1 text-xs font-medium'
                     >
                       <Pencil className='size-3' /> Cập nhật
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               );

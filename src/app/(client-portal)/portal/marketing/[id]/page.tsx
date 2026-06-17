@@ -53,12 +53,12 @@ export default function MarketingDetailPage({
     <PortalShell fullBleed>
       {error ? (
         <div className='mx-auto max-w-md p-8 text-center'>
-          <div className='rounded-2xl border border-rose-200 bg-rose-50 p-6'>
-            <AlertCircle className='mx-auto size-8 text-rose-600' />
-            <p className='mt-3 text-sm font-semibold text-rose-900'>
+          <div className='border-destructive/20 bg-danger-bg rounded-2xl border p-6'>
+            <AlertCircle className='text-destructive mx-auto size-8' />
+            <p className='text-destructive mt-3 text-sm font-semibold'>
               {t('marketingId.openError')}
             </p>
-            <p className='text-2xs mt-1 font-mono text-rose-700'>{error}</p>
+            <p className='text-2xs text-destructive mt-1 font-mono'>{error}</p>
           </div>
         </div>
       ) : !campaign ? (

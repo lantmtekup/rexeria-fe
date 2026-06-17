@@ -66,7 +66,7 @@ export default function PortalLandingPreviewPage() {
 
   if (status === 'loading') {
     return (
-      <div className='flex h-screen items-center justify-center bg-neutral-100'>
+      <div className='bg-muted flex h-screen items-center justify-center'>
         <Loader2 className='text-content-muted size-6 animate-spin' />
       </div>
     );
@@ -95,7 +95,7 @@ export default function PortalLandingPreviewPage() {
           </p>
         )}
         {page && (
-          <div className='text-2xs mt-4 inline-flex flex-col gap-1 rounded-lg border border-amber-300 bg-white px-4 py-3 text-left'>
+          <div className='text-2xs bg-card mt-4 inline-flex flex-col gap-1 rounded-lg border border-amber-300 px-4 py-3 text-left'>
             <div>
               <span className='text-content-muted'>Page:</span>{' '}
               <strong>{page.name}</strong>

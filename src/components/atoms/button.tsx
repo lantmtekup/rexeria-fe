@@ -23,6 +23,9 @@ const buttonVariants = cva(
         /** outline blue pill — Edit button */
         outline:
           'rounded-pill border border-primary bg-background text-primary hover:bg-primary/5',
+        /** neutral bordered secondary — Refresh, Cancel, Back, toolbar actions */
+        neutral:
+          'rounded-md border border-border bg-background text-content-muted hover:bg-muted',
         /** generic ghost */
         ghost: 'rounded-md hover:bg-accent hover:text-accent-foreground',
         /** link style */
@@ -37,6 +40,7 @@ const buttonVariants = cva(
         ai: 'rounded-pill bg-ai-gradient text-primary-600 font-semibold hover:brightness-105',
       },
       size: {
+        xs: 'h-7 gap-1.5 px-2.5 text-xs [&_svg]:size-3.5',
         sm: 'h-8 px-3 text-xs',
         default: 'h-10 px-4',
         md: 'h-10 px-4',

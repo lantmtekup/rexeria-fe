@@ -33,6 +33,7 @@ import {
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import { Input } from '@/components/atoms/input';
 import {
   Table,
@@ -232,7 +233,7 @@ export function AdminTemplatesPage() {
       toast.success(`Đã archive ${okCount} templates`, { id: tid });
     } else {
       toast.error(
-        `${okCount}/${ids.length} OK, ${failCount} lỗi — reload để verify`,
+        `${okCount}/${ids.length} OK, ${failCount} lỗi. Reload để verify`,
         { id: tid }
       );
     }
@@ -339,7 +340,7 @@ export function AdminTemplatesPage() {
       <p className='text-content-muted text-xs'>{t('templates.note')}</p>
 
       {/* Toolbar */}
-      <div className='border-border flex flex-wrap items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm'>
+      <div className='border-border bg-card flex flex-wrap items-center gap-2 rounded-2xl border p-2 shadow-sm'>
         <div className='relative max-w-sm flex-1'>
           <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
           <Input
@@ -355,7 +356,7 @@ export function AdminTemplatesPage() {
           <select
             value={sort}
             onChange={e => setSort(e.target.value as Sort)}
-            className='border-border text-content-muted hover:bg-muted appearance-none rounded-lg border bg-white py-1.5 pr-3 pl-7 text-xs font-medium outline-none focus:border-zinc-400'
+            className='border-border text-content-muted hover:bg-muted bg-background focus:border-ring appearance-none rounded-lg border py-1.5 pr-3 pl-7 text-xs font-medium outline-none'
             aria-label='Sort'
           >
             {SORT_OPTIONS.map(o => (
@@ -366,7 +367,7 @@ export function AdminTemplatesPage() {
           </select>
         </div>
 
-        <div className='border-border ml-auto inline-flex items-center gap-0.5 rounded-lg border bg-white p-0.5'>
+        <div className='border-border bg-background ml-auto inline-flex items-center gap-0.5 rounded-lg border p-0.5'>
           <ViewBtn
             active={view === 'grid'}
             onClick={() => setView('grid')}
@@ -411,7 +412,7 @@ export function AdminTemplatesPage() {
 
         {categories.length > 0 && (
           <>
-            <span className='hidden h-4 w-px bg-zinc-200 sm:block' />
+            <span className='bg-border hidden h-4 w-px sm:block' />
             <FilterGroup label='Category' icon={<Tag className='size-3' />}>
               <ChipBtn
                 active={!category}
@@ -445,7 +446,7 @@ export function AdminTemplatesPage() {
 
       {errorMessage && (
         <p
-          className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800'
+          className='border-destructive/20 bg-danger-bg text-destructive rounded-lg border px-3 py-2 text-sm'
           role='alert'
         >
           {errorMessage}
@@ -459,7 +460,7 @@ export function AdminTemplatesPage() {
           template…
         </div>
       ) : pageItems.length === 0 ? (
-        <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
+        <div className='border-border bg-card rounded-2xl border border-dashed p-12 text-center'>
           <LayoutTemplate className='text-muted-foreground mx-auto size-8' />
           <p className='text-content-muted mt-3 text-sm font-semibold'>
             {hasActiveFilters
@@ -510,8 +511,8 @@ export function AdminTemplatesPage() {
 
       {/* Bulk action bar — sticky bottom khi có selection. */}
       {selected.size > 0 && view === 'table' && (
-        <div className='sticky bottom-4 z-30 mx-auto flex w-fit min-w-[320px] items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 shadow-2xl'>
-          <span className='text-xs font-medium text-white'>
+        <div className='bg-foreground border-foreground sticky bottom-4 z-30 mx-auto flex w-fit min-w-[320px] items-center gap-3 rounded-xl border px-4 py-2.5 shadow-2xl'>
+          <span className='text-background text-xs font-medium'>
             Đã chọn{' '}
             <span className='text-2xs rounded-md bg-white/15 px-1.5 py-0.5 font-mono'>
               {selected.size}
@@ -527,15 +528,16 @@ export function AdminTemplatesPage() {
             Bỏ chọn
           </button>
           <div className='h-4 w-px bg-white/20' />
-          <button
+          <Button
             type='button'
+            variant='destructive'
+            size='sm'
             onClick={runBulkArchive}
             disabled={bulkBusy}
-            className='inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-500 disabled:opacity-50'
           >
             <Archive className='size-3.5' />
             {bulkBusy ? 'Archive…' : 'Archive đã chọn'}
-          </button>
+          </Button>
         </div>
       )}
 
@@ -603,7 +605,7 @@ function TemplateCard({
     STATUS_CHIP[(item.status ?? '').toLowerCase()] ??
     'bg-muted text-content-muted';
   return (
-    <div className='group border-border hover:border-border flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+    <div className='group border-border hover:border-border bg-card flex flex-col overflow-hidden rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       <Link
         href={`/admin/templates/${item.id}/preview`}
         target='_blank'
@@ -673,13 +675,13 @@ function TemplateCard({
         <div className='text-3xs text-content-muted mt-auto flex items-center justify-between'>
           <span>
             {formatAuthor(item.author) || (
-              <span className='text-muted-foreground'>—</span>
+              <span className='text-muted-foreground'>-</span>
             )}
           </span>
           <span className='text-muted-foreground font-mono'>
             {item.created_at
               ? new Date(item.created_at).toLocaleDateString('vi-VN')
-              : '—'}
+              : '-'}
           </span>
         </div>
 
@@ -688,7 +690,7 @@ function TemplateCard({
             href={`/admin/templates/${item.id}/preview`}
             target='_blank'
             rel='noopener noreferrer'
-            className='border-border text-content-muted hover:bg-muted inline-flex items-center justify-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium transition-colors'
+            className='border-border text-content-muted hover:bg-muted bg-background inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors'
           >
             <Eye className='size-3.5' />
             Preview
@@ -696,7 +698,7 @@ function TemplateCard({
           <button
             type='button'
             onClick={onUse}
-            className='inline-flex items-center justify-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700'
+            className='bg-foreground text-background hover:bg-foreground/85 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors'
           >
             <Sparkles className='size-3.5' />
             Sử dụng
@@ -780,7 +782,7 @@ function TemplateActionMenu({
         ref={btnRef}
         type='button'
         onClick={toggle}
-        className='border-border text-content-muted hover:bg-muted inline-flex h-full items-center justify-center rounded-lg border bg-white px-2 transition-colors'
+        className='border-border text-content-muted hover:bg-muted bg-background inline-flex h-full items-center justify-center rounded-lg border px-2 transition-colors'
         aria-label='Hành động'
         aria-expanded={open}
       >
@@ -792,7 +794,7 @@ function TemplateActionMenu({
           <div
             ref={menuRef}
             style={{ position: 'fixed', top: pos.top, right: pos.right }}
-            className='border-border z-[200] w-44 overflow-hidden rounded-lg border bg-white shadow-lg'
+            className='border-border bg-card z-[200] w-44 overflow-hidden rounded-lg border shadow-lg'
           >
             <Link
               href={`/admin/templates/${item.id}/edit`}
@@ -850,7 +852,7 @@ function TemplateActionMenu({
                 <button
                   type='button'
                   onClick={choose('archive')}
-                  className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
+                  className='text-destructive hover:bg-danger-bg flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
                 >
                   <Archive className='size-3.5' />
                   Archive
@@ -889,14 +891,14 @@ function TableView({
   const allOn = ids.length > 0 && ids.every(id => selected.has(id));
   const someOn = ids.some(id => selected.has(id));
   return (
-    <div className='border-border rounded-2xl border bg-white'>
+    <div className='border-border bg-card rounded-2xl border'>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className='w-10'>
               <input
                 type='checkbox'
-                className='border-border text-foreground size-3.5 cursor-pointer rounded focus:ring-zinc-400'
+                className='border-border text-foreground focus:ring-ring size-3.5 cursor-pointer rounded'
                 checked={allOn}
                 ref={el => {
                   if (el) el.indeterminate = someOn && !allOn;
@@ -924,7 +926,7 @@ function TableView({
                 <TableCell>
                   <input
                     type='checkbox'
-                    className='border-border text-foreground size-3.5 cursor-pointer rounded focus:ring-zinc-400'
+                    className='border-border text-foreground focus:ring-ring size-3.5 cursor-pointer rounded'
                     checked={isSelected}
                     onChange={() => onToggleSelected(item.id)}
                     aria-label={`Chọn ${item.name}`}
@@ -965,13 +967,13 @@ function TableView({
                       statusClass
                     )}
                   >
-                    {item.status || '—'}
+                    {item.status || '-'}
                   </span>
                 </TableCell>
                 <TableCell className='text-xs'>
                   {item.created_at
                     ? new Date(item.created_at).toLocaleDateString('vi-VN')
-                    : '—'}
+                    : '-'}
                 </TableCell>
                 <TableCell>
                   <div className='flex items-center justify-end gap-1.5'>
@@ -979,7 +981,7 @@ function TableView({
                       href={`/admin/templates/${item.id}/preview`}
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1 rounded-md border bg-white px-2 py-1 text-xs font-medium'
+                      className='border-border text-content-muted hover:bg-muted bg-background inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium'
                     >
                       <Eye className='size-3' />
                       Preview
@@ -987,7 +989,7 @@ function TableView({
                     <button
                       type='button'
                       onClick={() => onUse(item)}
-                      className='inline-flex items-center gap-1 rounded-md bg-zinc-900 px-2 py-1 text-xs font-medium text-white hover:bg-zinc-700'
+                      className='bg-foreground text-background hover:bg-foreground/85 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium'
                     >
                       <Sparkles className='size-3' />
                       Sử dụng
@@ -1039,9 +1041,9 @@ function Pagination({
   add(totalPages);
 
   return (
-    <div className='border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-2.5 shadow-sm'>
+    <div className='border-border bg-card flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 shadow-sm'>
       <span className='text-2xs text-content-muted'>
-        {from}–{to} trong {total}
+        {from}-{to} trong {total}
       </span>
       <div className='flex items-center gap-1'>
         <button
@@ -1061,19 +1063,15 @@ function Pagination({
               …
             </span>
           ) : (
-            <button
+            <Chip
               key={p}
-              type='button'
+              size='sm'
+              selected={p === page}
               onClick={() => onChange(p)}
-              className={cn(
-                'text-2xs inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono font-semibold tabular-nums',
-                p === page
-                  ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'border-border text-content-muted hover:bg-muted border bg-white'
-              )}
+              className='min-w-7 rounded-md px-2 font-mono tabular-nums'
             >
               {p}
-            </button>
+            </Chip>
           )
         )}
         <button
@@ -1130,8 +1128,8 @@ function ChipBtn({
   const cls = active
     ? accent
       ? accentActive[accent]
-      : 'bg-zinc-900 text-white shadow-sm'
-    : 'border border-border bg-white text-content-muted hover:bg-muted';
+      : 'bg-foreground text-background shadow-sm'
+    : 'border border-border bg-background text-content-muted hover:bg-muted';
   return (
     <button
       type='button'
@@ -1158,16 +1156,15 @@ function ViewBtn({
   label: string;
 }) {
   return (
-    <button
-      type='button'
+    <Chip
+      size='sm'
+      selected={active}
       onClick={onClick}
       title={label}
-      className={cn(
-        'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
-        active ? 'bg-zinc-900 text-white' : 'text-content-muted hover:bg-muted'
-      )}
+      aria-label={label}
+      className='border-0 px-2'
     >
       {icon}
-    </button>
+    </Chip>
   );
 }

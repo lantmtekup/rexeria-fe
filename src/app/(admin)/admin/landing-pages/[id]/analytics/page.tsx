@@ -18,9 +18,9 @@ import { AlertCircle, BarChart3, LayoutDashboard, Loader2 } from 'lucide-react';
 
 import { BlockAnalyticsGrid } from '@/components/modules/Analytics/BlockAnalyticsGrid';
 import { PageOverlayView } from '@/components/modules/Analytics/PageOverlayView';
+import { Chip } from '@/components/atoms/chip';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import { cn } from '@/lib/cn';
 
 type Tab = 'cards' | 'overlay';
 
@@ -76,12 +76,12 @@ export default function AdminLandingAnalyticsPage({ params }: PageProps) {
   if (error) {
     return (
       <div className='mx-auto max-w-md p-8'>
-        <div className='rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
-          <AlertCircle className='mx-auto size-8 text-rose-600' />
-          <p className='mt-3 text-sm font-semibold text-rose-900'>
+        <div className='border-destructive/20 bg-danger-bg rounded-2xl border p-6 text-center'>
+          <AlertCircle className='text-destructive mx-auto size-8' />
+          <p className='text-destructive mt-3 text-sm font-semibold'>
             Không mở được analytics
           </p>
-          <p className='text-2xs mt-1 font-mono text-rose-700'>{error}</p>
+          <p className='text-2xs text-destructive mt-1 font-mono'>{error}</p>
         </div>
       </div>
     );
@@ -99,7 +99,7 @@ export default function AdminLandingAnalyticsPage({ params }: PageProps) {
     <div className='flex flex-col'>
       {/* Tab switcher — sticky top, cùng z-index thấp hơn overlay
           toolbar (z-50 của StatsAnnotationOverlay). */}
-      <div className='border-border sticky top-0 z-20 flex items-center gap-1 border-b bg-white/90 px-4 py-2 backdrop-blur'>
+      <div className='border-border bg-background/90 sticky top-0 z-20 flex items-center gap-1 border-b px-4 py-2 backdrop-blur'>
         <TabBtn
           active={tab === 'cards'}
           onClick={() => setTab('cards')}
@@ -139,18 +139,9 @@ function TabBtn({
   label: string;
 }) {
   return (
-    <button
-      type='button'
-      onClick={onClick}
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-        active
-          ? 'bg-zinc-900 text-white'
-          : 'text-content-muted hover:bg-muted hover:text-foreground'
-      )}
-    >
+    <Chip selected={active} size='md' onClick={onClick}>
       {icon}
       {label}
-    </button>
+    </Chip>
   );
 }

@@ -44,6 +44,7 @@ import { toast } from 'sonner';
 
 import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import { Input } from '@/components/atoms/input';
 import { EmptyState } from '@/components/molecules/EmptyState';
 import {
@@ -63,7 +64,10 @@ import type {
 } from '@/components/modules/CanvasTemplate/block-editor/types';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { Block as ServerBlock } from '@/services/rexer/types';
+import type {
+  AdminBlockType,
+  Block as ServerBlock,
+} from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
 
 import { AddBuiltinBlockDialog } from './AddBuiltinBlockDialog';
@@ -82,7 +86,7 @@ const BLOCK_TYPE_GRADIENT: Record<BlockType, string> = Object.fromEntries(
 ) as Record<BlockType, string>;
 
 function fmtDate(iso?: string): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString('vi-VN', {
@@ -93,7 +97,7 @@ function fmtDate(iso?: string): string {
 }
 
 function fmtRelative(iso?: string): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const t = new Date(iso).getTime();
   if (Number.isNaN(t)) return iso;
   const diff = Date.now() - t;
@@ -150,6 +154,9 @@ export function AdminBlocksPage() {
   } | null>(null);
   // Block đang sửa thông tin (name/description/tags) qua EditBlockDialog.
   const [editTarget, setEditTarget] = React.useState<ServerBlock | null>(null);
+  // Block_type thật từ BE (/block-types) — nguồn cho filter + dialog sửa, thay
+  // registry FE cứng (vốn không phủ block_type chỉ có ở BE).
+  const [blockTypes, setBlockTypes] = React.useState<AdminBlockType[]>([]);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -169,7 +176,33 @@ export function AdminBlocksPage() {
     load();
   }, [load]);
 
+  // Nạp block_type thật từ BE 1 lần (lỗi → để rỗng, filter fallback theo data).
+  React.useEffect(() => {
+    rexerApi.adminBlockTypes
+      .list()
+      .then(r => setBlockTypes(r.items ?? []))
+      .catch(() => setBlockTypes([]));
+  }, []);
+
   const selected = items.find(i => i.id === selectedId) ?? null;
+
+  // Options filter type: ưu tiên block_type BE; gộp thêm type_code có trong
+  // data mà BE chưa trả (đừng để block nào không lọc được).
+  const typeOptions = React.useMemo(() => {
+    const map = new Map<string, string>();
+    for (const bt of blockTypes) map.set(bt.type, bt.label_vi || bt.type);
+    for (const it of items) {
+      if (!map.has(it.type_code)) {
+        map.set(
+          it.type_code,
+          BLOCK_TYPE_LABEL[it.type_code as BlockType] ?? it.type_code
+        );
+      }
+    }
+    return Array.from(map, ([code, label]) => ({ code, label })).sort((a, b) =>
+      a.label.localeCompare(b.label)
+    );
+  }, [blockTypes, items]);
 
   // Distinct tags across all rows for the filter chip row.
   const allTags = React.useMemo(() => {
@@ -196,7 +229,7 @@ export function AdminBlocksPage() {
     const tid = toast.loading('Đang clone…');
     try {
       const dup = await rexerApi.blocks.clone(id);
-      toast.success(`Đã clone — "${dup.name}"`, { id: tid });
+      toast.success(`Đã clone: "${dup.name}"`, { id: tid });
       await load();
       setSelectedId(dup.id);
     } catch (err) {
@@ -252,7 +285,7 @@ export function AdminBlocksPage() {
     const editorBlock = parseEditorBlock(block.settings);
     if (!editorBlock) {
       toast.error(
-        'Block này không có canvas data — settings rỗng hoặc shape không tương thích.'
+        'Block này không có canvas data, settings rỗng hoặc shape không tương thích.'
       );
       return;
     }
@@ -272,7 +305,7 @@ export function AdminBlocksPage() {
       {/* Main column */}
       <div className='flex flex-1 flex-col overflow-hidden'>
         {/* Header */}
-        <div className='border-border border-b bg-white px-6 py-4'>
+        <div className='border-border bg-background border-b px-6 py-4'>
           <div className='flex items-start justify-between gap-3'>
             <div>
               <h1 className='text-xl font-semibold'>Blocks</h1>
@@ -282,25 +315,19 @@ export function AdminBlocksPage() {
               </p>
             </div>
             <div className='flex items-center gap-2'>
-              <button
-                type='button'
+              <Button
+                variant='neutral'
+                size='sm'
                 onClick={load}
                 disabled={loading}
-                className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
               >
-                <RefreshCw
-                  className={cn('size-3.5', loading && 'animate-spin')}
-                />
+                <RefreshCw className={cn(loading && 'animate-spin')} />
                 Refresh
-              </button>
-              <button
-                type='button'
-                onClick={() => setCatalogOpen(true)}
-                className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
-              >
-                <Plus className='size-3.5' />
+              </Button>
+              <Button size='sm' onClick={() => setCatalogOpen(true)}>
+                <Plus />
                 Thêm từ thư viện hệ thống
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -315,7 +342,7 @@ export function AdminBlocksPage() {
                 className='pl-8'
               />
             </div>
-            <div className='border-border flex items-center gap-1 rounded-lg border bg-white p-0.5'>
+            <div className='border-border bg-background flex items-center gap-1 rounded-lg border p-0.5'>
               <ViewBtn
                 active={view === 'grid'}
                 onClick={() => setView('grid')}
@@ -339,12 +366,12 @@ export function AdminBlocksPage() {
                 onChange={e =>
                   setTypeFilter(e.target.value as BlockType | 'all')
                 }
-                className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-2.5 py-1 text-xs font-medium outline-none'
+                className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1 text-xs font-medium outline-none'
               >
                 <option value='all'>Tất cả type</option>
-                {(Object.keys(BLOCK_TYPE_LABEL) as BlockType[]).map(t => (
-                  <option key={t} value={t}>
-                    {BLOCK_TYPE_LABEL[t]}
+                {typeOptions.map(o => (
+                  <option key={o.code} value={o.code}>
+                    {o.label}
                   </option>
                 ))}
               </select>
@@ -353,19 +380,14 @@ export function AdminBlocksPage() {
                 <div className='flex items-center gap-1.5'>
                   <Tag className='text-muted-foreground size-3' />
                   {allTags.map(t => (
-                    <button
+                    <Chip
                       key={t}
-                      type='button'
+                      selected={tagFilter === t}
+                      size='sm'
                       onClick={() => setTagFilter(tagFilter === t ? null : t)}
-                      className={cn(
-                        'text-3xs rounded-full border px-2 py-0.5 font-medium transition-colors',
-                        tagFilter === t
-                          ? 'border-zinc-900 bg-zinc-900 text-white'
-                          : 'border-border text-content-muted hover:bg-muted bg-white'
-                      )}
                     >
                       {t}
-                    </button>
+                    </Chip>
                   ))}
                 </div>
               )}
@@ -394,7 +416,7 @@ export function AdminBlocksPage() {
         {/* Body */}
         <div className='bg-muted/40 flex-1 overflow-y-auto p-6'>
           {error && (
-            <div className='mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
+            <div className='border-destructive/20 bg-danger-bg text-destructive mb-3 rounded-lg border px-3 py-2 text-xs'>
               Load blocks thất bại: <code className='font-mono'>{error}</code>
             </div>
           )}
@@ -479,6 +501,7 @@ export function AdminBlocksPage() {
           if (!open) setEditTarget(null);
         }}
         block={editTarget}
+        blockTypes={blockTypes}
         onSaved={updated => {
           setItems(prev => prev.map(b => (b.id === updated.id ? updated : b)));
           setEditTarget(null);
@@ -551,9 +574,9 @@ function BlockCard({
   return (
     <div
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all hover:shadow-md',
+        'group bg-card relative flex flex-col overflow-hidden rounded-xl border text-left shadow-sm transition-all hover:shadow-md',
         active
-          ? 'border-zinc-900 ring-2 ring-zinc-900/10'
+          ? 'border-foreground ring-foreground/10 ring-2'
           : 'border-border hover:border-border'
       )}
     >
@@ -565,7 +588,7 @@ function BlockCard({
             e.stopPropagation();
             onPreview();
           }}
-          className='text-content-muted hover:text-foreground flex size-7 items-center justify-center rounded-full bg-white/85 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all hover:bg-white'
+          className='text-content-muted hover:text-foreground bg-background/85 hover:bg-background flex size-7 items-center justify-center rounded-full shadow-sm ring-1 ring-black/5 backdrop-blur transition-all'
           title='Xem preview (layout + animation)'
           aria-label='Preview block'
         >
@@ -709,14 +732,14 @@ function CardKebabMenu({
           e.stopPropagation();
           setOpen(o => !o);
         }}
-        className='text-content-muted hover:text-foreground flex size-7 items-center justify-center rounded-full bg-white/85 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all hover:bg-white'
+        className='text-content-muted hover:text-foreground bg-background/85 hover:bg-background flex size-7 items-center justify-center rounded-full shadow-sm ring-1 ring-black/5 backdrop-blur transition-all'
         aria-label='More actions'
         aria-expanded={open}
       >
         <MoreVertical className='size-3.5' />
       </button>
       {open && (
-        <div className='border-border absolute top-9 right-0 z-20 w-48 overflow-hidden rounded-lg border bg-white shadow-lg'>
+        <div className='border-border bg-background absolute top-9 right-0 z-20 w-48 overflow-hidden rounded-lg border shadow-lg'>
           <button
             type='button'
             onClick={choose(onPreview)}
@@ -753,7 +776,7 @@ function CardKebabMenu({
           <button
             type='button'
             onClick={choose(onDelete)}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
+            className='text-destructive hover:bg-danger-bg flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
           >
             <Trash2 className='size-3.5' />
             Xoá
@@ -784,7 +807,7 @@ function TableView({
   onPreview: (item: ServerBlock) => void;
 }) {
   return (
-    <div className='border-border overflow-hidden rounded-lg border bg-white'>
+    <div className='border-border bg-card overflow-hidden rounded-lg border'>
       <Table>
         <TableHeader>
           <TableRow>
@@ -831,7 +854,7 @@ function TableView({
                       ))}
                     </div>
                   ) : (
-                    <span className='text-muted-foreground'>—</span>
+                    <span className='text-muted-foreground'>-</span>
                   )}
                 </TableCell>
                 <TableCell>
@@ -882,7 +905,7 @@ function TableView({
                       onClick={() => onDelete(it)}
                       title='Xoá'
                     >
-                      <Trash2 className='size-3.5 text-rose-600' />
+                      <Trash2 className='text-destructive size-3.5' />
                     </Button>
                   </div>
                 </TableCell>
@@ -954,7 +977,7 @@ function DetailDrawer({
   };
 
   return (
-    <aside className='border-border flex w-[380px] flex-col border-l bg-white'>
+    <aside className='border-border bg-background flex w-[380px] flex-col border-l'>
       {/* Header */}
       <div className='border-border flex items-start justify-between border-b px-4 py-3'>
         <div className='min-w-0 flex-1'>
@@ -971,7 +994,7 @@ function DetailDrawer({
                   setEditingName(false);
                 }
               }}
-              className='border-border w-full rounded-md border bg-white px-2 py-1 text-sm font-semibold outline-none focus:ring-2 focus:ring-zinc-900/10'
+              className='border-border bg-background focus:ring-foreground/10 w-full rounded-md border px-2 py-1 text-sm font-semibold outline-none focus:ring-2'
             />
           ) : (
             <button
@@ -1085,7 +1108,7 @@ function DetailDrawer({
               key={t}
               type='button'
               onClick={() => removeTag(t)}
-              className='group text-3xs bg-muted text-content-muted flex items-center gap-1 rounded-full px-2 py-0.5 font-medium hover:bg-rose-50 hover:text-rose-700'
+              className='group text-3xs bg-muted text-content-muted hover:bg-danger-bg hover:text-destructive flex items-center gap-1 rounded-full px-2 py-0.5 font-medium'
               title='Click để xoá tag'
             >
               {t}
@@ -1104,13 +1127,13 @@ function DetailDrawer({
               }
             }}
             placeholder='Thêm tag (Enter)…'
-            className='text-2xs border-border flex-1 rounded-md border px-2 py-1 outline-none focus:border-zinc-400'
+            className='text-2xs border-border focus:border-ring flex-1 rounded-md border px-2 py-1 outline-none'
           />
           <button
             type='button'
             onClick={addTag}
             disabled={!tagInput.trim()}
-            className='text-2xs rounded-md bg-zinc-900 px-2.5 py-1 font-medium text-white hover:bg-zinc-700 disabled:opacity-40'
+            className='text-2xs bg-foreground text-background hover:bg-foreground/85 rounded-md px-2.5 py-1 font-medium disabled:opacity-40'
           >
             Thêm
           </button>
@@ -1128,7 +1151,7 @@ function DetailDrawer({
           title={
             editorBlock
               ? 'Mở preview full-screen với layout + animation'
-              : 'Block không có canvas data — preview disabled'
+              : 'Block không có canvas data, preview disabled'
           }
         >
           <Play className='size-3.5' />
@@ -1147,7 +1170,7 @@ function DetailDrawer({
             variant='outline'
             size='sm'
             onClick={onDelete}
-            className='text-rose-600 hover:bg-rose-50'
+            className='text-destructive hover:bg-danger-bg'
           >
             <Trash2 className='size-3.5' />
             Xoá
@@ -1190,16 +1213,8 @@ function ViewBtn({
   label: string;
 }) {
   return (
-    <button
-      type='button'
-      onClick={onClick}
-      title={label}
-      className={cn(
-        'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
-        active ? 'bg-zinc-900 text-white' : 'text-content-muted hover:bg-muted'
-      )}
-    >
+    <Chip selected={active} size='sm' onClick={onClick} title={label}>
       {icon}
-    </button>
+    </Chip>
   );
 }

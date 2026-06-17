@@ -18,9 +18,8 @@ const chipVariants = cva(
         md: 'h-8 px-3',
       },
       selected: {
-        true: 'border-neutral-900 bg-neutral-900 text-neutral-0',
-        false:
-          'border-border bg-background text-neutral-700 hover:bg-neutral-50',
+        true: 'border-foreground bg-foreground text-background',
+        false: 'border-border bg-background text-content-muted hover:bg-muted',
       },
     },
     defaultVariants: { size: 'sm', selected: false },

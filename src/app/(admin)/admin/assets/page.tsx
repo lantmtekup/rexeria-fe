@@ -45,8 +45,8 @@ export default function AdminAssetsPage() {
             Asset toàn hệ thống
           </h1>
           <p className='text-content-muted mt-1 text-sm'>
-            Quản lý hình ảnh, video, tài liệu cho từng brand — upload hộ, tổ
-            chức thư mục, gắn tag.
+            Quản lý hình ảnh, video, tài liệu cho từng brand, upload hộ, tổ chức
+            thư mục, gắn tag.
           </p>
         </div>
         <div className='flex items-center gap-2'>
@@ -57,10 +57,10 @@ export default function AdminAssetsPage() {
             value={brandId}
             onChange={e => setBrandId(e.target.value)}
             disabled={brands.length === 0}
-            className='border-border rounded-lg border bg-white px-3 py-1.5 text-sm outline-none disabled:opacity-50'
+            className='border-border bg-background rounded-lg border px-3 py-1.5 text-sm outline-none disabled:opacity-50'
           >
             {brands.length === 0 ? (
-              <option value=''>—</option>
+              <option value=''>-</option>
             ) : (
               brands.map(b => (
                 <option key={b.id} value={b.id}>

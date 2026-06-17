@@ -18,13 +18,15 @@ import { Label } from '@/components/atoms/label';
 import { Textarea } from '@/components/atoms/textarea';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { Block } from '@/services/rexer/types';
+import type { AdminBlockType, Block } from '@/services/rexer/types';
 
 export interface EditBlockDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Block đang sửa. Null → dialog đóng. */
   block: Block | null;
+  /** Danh sách block_type thật từ BE để chọn (nguồn /block-types). */
+  blockTypes: AdminBlockType[];
   /** Gọi sau khi PATCH thành công để list cập nhật. */
   onSaved: (updated: Block) => void;
 }
@@ -39,10 +41,12 @@ export function EditBlockDialog({
   open,
   onOpenChange,
   block,
+  blockTypes,
   onSaved,
 }: EditBlockDialogProps) {
   const [name, setName] = React.useState('');
   const [description, setDescription] = React.useState('');
+  const [typeCode, setTypeCode] = React.useState('');
   const [tags, setTags] = React.useState<string[]>([]);
   const [tagInput, setTagInput] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
@@ -52,10 +56,25 @@ export function EditBlockDialog({
     if (open && block) {
       setName(block.name ?? '');
       setDescription(block.description ?? '');
+      setTypeCode(block.type_code ?? '');
       setTags(block.tags ?? []);
       setTagInput('');
     }
   }, [open, block]);
+
+  // Nếu type_code hiện tại không nằm trong danh sách BE (block_type cũ/ẩn) thì
+  // vẫn cho hiển thị 1 option cho nó để select không bị trống.
+  const typeOptions = React.useMemo(() => {
+    const opts = blockTypes.map(bt => ({
+      code: bt.type,
+      label: bt.label_vi || bt.type,
+    }));
+    const cur = block?.type_code;
+    if (cur && !opts.some(o => o.code === cur)) {
+      opts.unshift({ code: cur, label: `${cur} (không còn trong catalog)` });
+    }
+    return opts.sort((a, b) => a.label.localeCompare(b.label));
+  }, [blockTypes, block?.type_code]);
 
   const addTag = () => {
     const t = tagInput.trim().toLowerCase();
@@ -79,6 +98,11 @@ export function EditBlockDialog({
         name: trimmedName,
         description: description.trim() || undefined,
         tags,
+        // Chỉ gửi khi đổi loại — BE chưa khai báo type_code trong PATCH nên
+        // tránh gửi thừa (xem comment UpdateBlockRequest).
+        ...(typeCode && typeCode !== block.type_code
+          ? { type_code: typeCode }
+          : {}),
       });
       toast.success(`Đã cập nhật "${updated.name}"`);
       onSaved(updated);
@@ -104,7 +128,7 @@ export function EditBlockDialog({
         <div className='flex flex-col gap-4'>
           <div className='flex flex-col gap-1'>
             <Label htmlFor='eb-name'>
-              Tên <span className='text-rose-600'>*</span>
+              Tên <span className='text-destructive'>*</span>
             </Label>
             <Input
               id='eb-name'
@@ -112,6 +136,31 @@ export function EditBlockDialog({
               onChange={e => setName(e.target.value)}
               placeholder='Hero chia đôi…'
             />
+          </div>
+
+          <div className='flex flex-col gap-1'>
+            <Label htmlFor='eb-type'>Block type</Label>
+            <select
+              id='eb-type'
+              value={typeCode}
+              onChange={e => setTypeCode(e.target.value)}
+              className='border-input bg-background focus:ring-ring/40 h-9 rounded-md border px-2.5 text-sm outline-none focus:ring-2'
+            >
+              {typeOptions.length === 0 && (
+                <option value={typeCode}>{typeCode || '-'}</option>
+              )}
+              {typeOptions.map(o => (
+                <option key={o.code} value={o.code}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            {typeCode !== (block?.type_code ?? '') && (
+              <p className='text-2xs text-amber-600'>
+                Đổi loại sẽ gửi <code>type_code</code> lên BE; kiểm tra lưu xong
+                mở lại có giữ không (BE chưa khai báo field này).
+              </p>
+            )}
           </div>
 
           <div className='flex flex-col gap-1'>

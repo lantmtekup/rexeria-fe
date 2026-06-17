@@ -27,8 +27,8 @@ const PillChip = React.forwardRef<HTMLButtonElement, PillChipProps>(
         className={cn(
           'rounded-pill inline-flex h-8 cursor-pointer items-center gap-2 px-3 text-sm font-medium transition-colors',
           selected
-            ? 'text-neutral-0 bg-neutral-900'
-            : 'text-neutral-500 hover:bg-neutral-50',
+            ? 'bg-foreground text-background'
+            : 'text-content-muted hover:bg-muted',
           className
         )}
         {...props}
@@ -39,8 +39,8 @@ const PillChip = React.forwardRef<HTMLButtonElement, PillChipProps>(
             className={cn(
               'rounded-pill min-w-4 px-1.5 text-xs font-semibold',
               selected
-                ? 'bg-neutral-0/20 text-neutral-0'
-                : 'bg-neutral-100 text-neutral-600'
+                ? 'bg-background/20 text-background'
+                : 'bg-muted text-content-muted'
             )}
           >
             {count}

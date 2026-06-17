@@ -23,6 +23,7 @@ import {
   Users,
 } from 'lucide-react';
 
+import { Button } from '@/components/atoms/button';
 import { Input } from '@/components/atoms/input';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
@@ -140,7 +141,7 @@ export function AdminGlobalUsersPage() {
             Người dùng toàn hệ thống
           </h1>
           <p className='text-content-muted mt-1 text-sm'>
-            List mọi user trong Rexer — admin/staff + brand users. Quản lý brand
+            List mọi user trong Rexer: admin/staff + brand users. Quản lý brand
             profile ở{' '}
             <Link
               href='/admin/users'
@@ -151,15 +152,16 @@ export function AdminGlobalUsersPage() {
             (Khách hàng).
           </p>
         </div>
-        <button
+        <Button
           type='button'
+          variant='neutral'
+          size='sm'
           onClick={load}
           disabled={loading}
-          className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium shadow-sm disabled:opacity-50'
         >
           <RefreshCw className={cn('size-3.5', loading && 'animate-spin')} />
           Refresh
-        </button>
+        </Button>
       </div>
 
       {/* Counts strip */}
@@ -185,7 +187,7 @@ export function AdminGlobalUsersPage() {
       </div>
 
       {/* Toolbar */}
-      <div className='border-border flex flex-wrap items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm'>
+      <div className='border-border bg-card flex flex-wrap items-center gap-2 rounded-2xl border p-2 shadow-sm'>
         <div className='relative max-w-sm flex-1'>
           <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
           <Input
@@ -198,7 +200,7 @@ export function AdminGlobalUsersPage() {
         <select
           value={pageSize}
           onChange={e => setPageSize(Number(e.target.value))}
-          className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium'
+          className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1.5 text-xs font-medium'
         >
           {PAGE_SIZES.map(s => (
             <option key={s} value={s}>
@@ -236,7 +238,7 @@ export function AdminGlobalUsersPage() {
           />
         </FilterGroup>
 
-        <span className='hidden h-4 w-px bg-zinc-200 sm:block' />
+        <span className='bg-border hidden h-4 w-px sm:block' />
 
         <FilterGroup label='Status'>
           <Chip
@@ -265,7 +267,7 @@ export function AdminGlobalUsersPage() {
       </div>
 
       {error && (
-        <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
+        <div className='border-destructive/20 bg-danger-bg text-destructive rounded-lg border px-3 py-2 text-xs'>
           {error}
         </div>
       )}
@@ -276,14 +278,14 @@ export function AdminGlobalUsersPage() {
           <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải users…
         </div>
       ) : users.length === 0 ? (
-        <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
+        <div className='border-border bg-card rounded-2xl border border-dashed p-12 text-center'>
           <Users className='text-muted-foreground mx-auto size-8' />
           <p className='text-content-muted mt-3 text-sm font-semibold'>
             Không có user khớp filter
           </p>
         </div>
       ) : (
-        <div className='border-border overflow-hidden rounded-2xl border bg-white shadow-sm'>
+        <div className='border-border bg-card overflow-hidden rounded-2xl border shadow-sm'>
           <table className='w-full text-sm'>
             <thead>
               <tr className='text-3xs border-border bg-muted/50 text-content-muted border-b text-left font-semibold tracking-[0.15em] uppercase'>
@@ -370,13 +372,13 @@ export function AdminGlobalUsersPage() {
                           )}
                         </Link>
                       ) : (
-                        <span className='text-muted-foreground'>—</span>
+                        <span className='text-muted-foreground'>-</span>
                       )}
                     </td>
                     <td className='text-3xs text-content-muted px-4 py-2 font-mono'>
                       {u.last_login_at
                         ? new Date(u.last_login_at).toLocaleDateString('vi-VN')
-                        : '—'}
+                        : '-'}
                     </td>
                   </tr>
                 );
@@ -388,27 +390,29 @@ export function AdminGlobalUsersPage() {
 
       {/* Pagination */}
       {users.length > 0 && totalPages > 1 && (
-        <div className='border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-2.5 shadow-sm'>
+        <div className='border-border bg-card flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 shadow-sm'>
           <span className='text-2xs text-content-muted'>
             Trang {page}/{totalPages} · {total} users
           </span>
           <div className='flex items-center gap-1'>
-            <button
+            <Button
               type='button'
+              variant='neutral'
+              size='xs'
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className='text-2xs border-border hover:bg-muted rounded-md border px-2 py-1 disabled:opacity-40'
             >
               ‹ Trước
-            </button>
-            <button
+            </Button>
+            <Button
               type='button'
+              variant='neutral'
+              size='xs'
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className='text-2xs border-border hover:bg-muted rounded-md border px-2 py-1 disabled:opacity-40'
             >
               Sau ›
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -459,8 +463,8 @@ function Chip({
   const cls = active
     ? accent
       ? accentActive[accent]
-      : 'bg-zinc-900 text-white shadow-sm'
-    : 'border border-border bg-white text-content-muted hover:bg-muted';
+      : 'bg-foreground text-background shadow-sm'
+    : 'border border-border bg-background text-content-muted hover:bg-muted';
   return (
     <button
       type='button'

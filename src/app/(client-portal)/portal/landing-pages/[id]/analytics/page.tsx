@@ -117,12 +117,12 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
     <PortalShell>
       {error ? (
         <div className='mx-auto max-w-md p-8 text-center'>
-          <div className='rounded-2xl border border-rose-200 bg-rose-50 p-6'>
-            <AlertCircle className='mx-auto size-8 text-rose-600' />
-            <p className='mt-3 text-sm font-semibold text-rose-900'>
+          <div className='border-destructive/20 bg-danger-bg rounded-2xl border p-6'>
+            <AlertCircle className='text-destructive mx-auto size-8' />
+            <p className='text-destructive mt-3 text-sm font-semibold'>
               {t('landingPagesIdAnalytics.openError')}
             </p>
-            <p className='text-2xs mt-1 font-mono text-rose-700'>{error}</p>
+            <p className='text-2xs text-destructive mt-1 font-mono'>{error}</p>
           </div>
         </div>
       ) : !resolvedId || !tab ? (
@@ -135,7 +135,7 @@ export default function PortalLandingAnalyticsPage({ params }: PageProps) {
           {/* Tab switch — segmented gradient xanh nổi bật (style stepper).
               external: Tổng quan ↔ Phễu; thường: Phễu ↔ Theo block. */}
           <div className='flex justify-center pt-4'>
-            <div className='border-border inline-flex rounded-full border bg-white p-1 shadow-sm'>
+            <div className='border-border bg-background inline-flex rounded-full border p-1 shadow-sm'>
               {tabs.map(t => (
                 <button
                   key={t.value}

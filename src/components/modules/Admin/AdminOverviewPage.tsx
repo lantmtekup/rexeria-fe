@@ -113,7 +113,7 @@ export function AdminOverviewPage() {
             <Link
               key={s.href}
               href={s.href}
-              className='border-border hover:border-primary group flex flex-col gap-3 rounded-lg border bg-white p-4 transition-colors'
+              className='border-border hover:border-primary bg-card group flex flex-col gap-3 rounded-lg border p-4 transition-colors'
             >
               <div className='flex items-center justify-between'>
                 <div
@@ -128,7 +128,7 @@ export function AdminOverviewPage() {
               </div>
               <div className='flex items-baseline gap-2'>
                 <span className='text-3xl font-semibold tracking-tight'>
-                  {value === null ? '…' : value < 0 ? '—' : value}
+                  {value === null ? '…' : value < 0 ? '-' : value}
                 </span>
               </div>
               <span className='text-content-muted text-sm'>
@@ -139,7 +139,7 @@ export function AdminOverviewPage() {
         })}
       </div>
 
-      <div className='border-border rounded-lg border bg-white p-4'>
+      <div className='border-border bg-card rounded-lg border p-4'>
         <h2 className='text-sm font-semibold'>{t('overview.quickActions')}</h2>
         <div className='mt-3 flex flex-wrap gap-2'>
           <QuickLink

@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
 import { BlockMiniPreview } from '@/components/modules/CanvasTemplate/block-editor/BlockMiniPreview';
 import {
   deleteSavedBlock,
@@ -53,7 +54,7 @@ const BLOCK_TYPE_GRADIENT: Record<BlockType, string> = Object.fromEntries(
 ) as Record<BlockType, string>;
 
 function fmtDate(iso?: string): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString('vi-VN', {
@@ -64,7 +65,7 @@ function fmtDate(iso?: string): string {
 }
 
 function fmtRelative(iso?: string): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const t = new Date(iso).getTime();
   if (Number.isNaN(t)) return iso;
   const diff = Date.now() - t;
@@ -116,14 +117,16 @@ export function BlockDetailView({
   if (!block) {
     return (
       <div className='mx-auto max-w-3xl px-6 pt-10'>
-        <button
+        <Button
           type='button'
+          variant='neutral'
+          size='sm'
           onClick={() => router.push(backHref)}
-          className='group border-border text-content-muted hover:border-border hover:text-foreground inline-flex items-center gap-2 rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all'
+          className='group rounded-full'
         >
           <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
           Quay lại thư viện
-        </button>
+        </Button>
         <div className='mt-8 overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50/60 to-white p-10 text-center shadow-sm'>
           <div className='mx-auto flex size-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700'>
             <X className='size-6' strokeWidth={2.5} />
@@ -133,7 +136,7 @@ export function BlockDetailView({
           </p>
           <p className='mt-1.5 text-xs text-amber-800/80'>
             Block với id <code className='font-mono'>{blockId}</code> không tồn
-            tại trong storage — có thể đã bị xoá hoặc chưa sync.
+            tại trong storage, có thể đã bị xoá hoặc chưa sync.
           </p>
         </div>
       </div>
@@ -180,7 +183,7 @@ export function BlockDetailView({
       toast.error('Không clone được');
       return;
     }
-    toast.success(`Đã clone — "${dup.name}"`);
+    toast.success(`Đã clone: "${dup.name}"`);
     router.push(`${backHref}/${dup.id}`);
   };
 
@@ -205,7 +208,7 @@ export function BlockDetailView({
         canvas_data: canvasData,
         is_template: false,
       });
-      toast.success('Mở editor — sửa xong dùng 🔖 để cập nhật bản gốc', {
+      toast.success('Mở editor, sửa xong dùng 🔖 để cập nhật bản gốc', {
         id: t,
       });
       router.push(`/portal/blocks/${block.id}/edit?canvas_id=${created.id}`);
@@ -239,18 +242,20 @@ export function BlockDetailView({
 
       {/* ── Top utility bar ─────────────────────────────────────────────── */}
       <header className='flex flex-wrap items-center justify-between gap-3'>
-        <button
+        <Button
           type='button'
+          variant='neutral'
+          size='sm'
           onClick={() => router.push(backHref)}
-          className='group border-border text-content-muted hover:text-foreground inline-flex items-center gap-2 rounded-full border bg-white px-3.5 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900'
+          className='group rounded-full transition-all hover:-translate-x-0.5'
         >
           <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
           Thư viện blocks
-        </button>
+        </Button>
         <button
           type='button'
           onClick={copyId}
-          className='group text-3xs border-border text-content-muted hover:border-border hover:text-foreground inline-flex items-center gap-1.5 rounded-full border bg-white/60 px-2.5 py-1 font-mono shadow-sm backdrop-blur transition-colors hover:bg-white'
+          className='group text-3xs border-border text-content-muted hover:border-border hover:text-foreground bg-background/60 hover:bg-background inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono shadow-sm backdrop-blur transition-colors'
           title='Click để copy block ID'
         >
           <Hash className='size-3' />
@@ -265,7 +270,7 @@ export function BlockDetailView({
       </header>
 
       {/* ── Hero card ───────────────────────────────────────────────────── */}
-      <section className='border-border relative overflow-hidden rounded-3xl border bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-16px_rgba(0,0,0,0.12)]'>
+      <section className='border-border bg-card relative overflow-hidden rounded-3xl border shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_32px_-16px_rgba(0,0,0,0.12)]'>
         {/* Soft gradient wash inside the hero card */}
         <div
           aria-hidden
@@ -314,7 +319,7 @@ export function BlockDetailView({
                     setEditingName(false);
                   }
                 }}
-                className='w-full max-w-2xl rounded-xl border-2 border-zinc-900 bg-white px-3 py-2 text-2xl font-bold tracking-tight outline-none sm:text-3xl'
+                className='border-foreground bg-background w-full max-w-2xl rounded-xl border-2 px-3 py-2 text-2xl font-bold tracking-tight outline-none sm:text-3xl'
               />
             ) : (
               <button
@@ -350,8 +355,8 @@ export function BlockDetailView({
           </div>
 
           {/* Preview — matted frame */}
-          <figure className='mt-7 overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-100 via-zinc-50 to-zinc-100 p-2.5 ring-1 ring-zinc-200/80 ring-inset'>
-            <div className='overflow-hidden rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.05),0_8px_24px_-12px_rgba(0,0,0,0.15)] ring-1 ring-zinc-900/5'>
+          <figure className='ring-border/80 mt-7 overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-100 via-zinc-50 to-zinc-100 p-2.5 ring-1 ring-inset'>
+            <div className='ring-foreground/5 overflow-hidden rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.05),0_8px_24px_-12px_rgba(0,0,0,0.15)] ring-1'>
               <BlockMiniPreview block={block.block} aspect='16 / 9' />
             </div>
           </figure>
@@ -363,7 +368,7 @@ export function BlockDetailView({
         {/* Left col — Details + Tags */}
         <div className='space-y-6 lg:col-span-2'>
           {/* Details */}
-          <div className='border-border rounded-2xl border bg-white p-6 shadow-sm'>
+          <div className='border-border bg-card rounded-2xl border p-6 shadow-sm'>
             <SectionHeader icon={<Layers className='size-3.5' />}>
               Chi tiết
             </SectionHeader>
@@ -379,7 +384,7 @@ export function BlockDetailView({
               <DefRow label='Saved' value={fmtDate(block.createdAt)} />
               <DefRow
                 label='Updated'
-                value={block.updatedAt ? fmtRelative(block.updatedAt) : '—'}
+                value={block.updatedAt ? fmtRelative(block.updatedAt) : '-'}
               />
               <DefRow label='Extras' value={`${extraCount} elements`} />
               <DefRow
@@ -390,7 +395,7 @@ export function BlockDetailView({
                 label='Tags'
                 value={
                   tags.length === 0 ? (
-                    <span className='text-muted-foreground'>—</span>
+                    <span className='text-muted-foreground'>-</span>
                   ) : (
                     `${tags.length} tag${tags.length > 1 ? 's' : ''}`
                   )
@@ -400,14 +405,14 @@ export function BlockDetailView({
           </div>
 
           {/* Tags editor */}
-          <div className='border-border rounded-2xl border bg-white p-6 shadow-sm'>
+          <div className='border-border bg-card rounded-2xl border p-6 shadow-sm'>
             <SectionHeader icon={<Tag className='size-3.5' />}>
               Tags
             </SectionHeader>
             <div className='mt-4 flex flex-wrap items-center gap-1.5'>
               {tags.length === 0 && (
                 <span className='text-muted-foreground text-xs italic'>
-                  Chưa có tag — thêm để dễ filter trong thư viện
+                  Chưa có tag, thêm để dễ filter trong thư viện
                 </span>
               )}
               {tags.map(t => (
@@ -415,7 +420,7 @@ export function BlockDetailView({
                   key={t}
                   type='button'
                   onClick={() => removeTag(t)}
-                  className='group text-2xs border-border bg-muted text-content-muted inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium transition-all hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
+                  className='group text-2xs border-border bg-muted text-content-muted hover:border-destructive/20 hover:bg-danger-bg hover:text-destructive inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium transition-all'
                   title='Click để xoá tag'
                 >
                   <span>{t}</span>
@@ -436,24 +441,24 @@ export function BlockDetailView({
                     }
                   }}
                   placeholder='Thêm tag (Enter)…'
-                  className='border-border bg-muted w-full rounded-lg border py-2 pr-3 pl-9 text-xs transition-colors outline-none focus:border-zinc-400 focus:bg-white focus:ring-2 focus:ring-zinc-900/5'
+                  className='border-border bg-muted focus:border-ring focus:bg-background focus:ring-foreground/5 w-full rounded-lg border py-2 pr-3 pl-9 text-xs transition-colors outline-none focus:ring-2'
                 />
               </div>
-              <button
+              <Button
+                size='sm'
                 type='button'
                 onClick={addTag}
                 disabled={!tagInput.trim()}
-                className='rounded-lg bg-zinc-900 px-3.5 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40'
               >
                 Thêm
-              </button>
+              </Button>
             </div>
           </div>
         </div>
 
         {/* Right col — Sticky action rail */}
         <aside className='lg:sticky lg:top-6 lg:self-start'>
-          <div className='border-border rounded-2xl border bg-white p-5 shadow-sm'>
+          <div className='border-border bg-card rounded-2xl border p-5 shadow-sm'>
             <SectionHeader icon={<Sparkles className='size-3.5' />}>
               Hành động
             </SectionHeader>
@@ -485,18 +490,20 @@ export function BlockDetailView({
 
             {/* Secondary actions */}
             <div className='mt-2 grid grid-cols-2 gap-2'>
-              <button
+              <Button
                 type='button'
+                variant='neutral'
+                size='sm'
                 onClick={handleDuplicate}
-                className='group border-border text-content-muted hover:text-foreground inline-flex items-center justify-center gap-1.5 rounded-lg border bg-white px-3 py-2 text-xs font-medium transition-all hover:border-zinc-900'
+                className='group'
               >
                 <Copy className='size-3.5' />
                 Duplicate
-              </button>
+              </Button>
               <button
                 type='button'
                 onClick={handleDelete}
-                className='group border-border text-content-muted inline-flex items-center justify-center gap-1.5 rounded-lg border bg-white px-3 py-2 text-xs font-medium transition-all hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
+                className='group border-border text-content-muted bg-background hover:border-destructive/20 hover:bg-danger-bg hover:text-destructive inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-all'
               >
                 <Trash2 className='size-3.5' />
                 Xoá

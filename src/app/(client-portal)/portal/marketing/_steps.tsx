@@ -11,10 +11,11 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 import { FeatureField, InfoTip } from '@/components/molecules/FeatureField';
-import { cn } from '@/lib/cn';
 import type { CampaignObjective } from '@/services/rexer/types';
 
 import {
@@ -258,15 +259,17 @@ function BriefFields({
             {/* Nút thêm ô mô tả — luôn ở CUỐI cụm, dưới mọi ô extra. */}
             <div className='grid grid-cols-[140px_1fr] gap-4'>
               <span />
-              <button
+              <Button
                 type='button'
+                variant='pill'
+                size='sm'
+                className='w-fit'
                 onClick={() =>
                   patchField(f.key, { extras: [...fv.extras, ''] })
                 }
-                className='rounded-pill text-neutral-0 inline-flex h-8 w-fit cursor-pointer items-center gap-1 bg-neutral-900 px-3 text-xs font-semibold hover:bg-neutral-800'
               >
                 <Plus className='size-3.5' /> Add more feature
-              </button>
+              </Button>
             </div>
           </div>
         );
@@ -325,19 +328,14 @@ export function StepCampaign({
         <Label>{t('marketingSteps.channels')}</Label>
         <div className='flex flex-wrap gap-2'>
           {CHANNELS.map(ch => (
-            <button
+            <Chip
               key={ch}
-              type='button'
+              size='sm'
+              selected={value.channels.includes(ch)}
               onClick={() => toggleChannel(ch)}
-              className={cn(
-                'rounded-full border px-3 py-1 text-xs transition-colors',
-                value.channels.includes(ch)
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-background text-content-muted hover:text-foreground'
-              )}
             >
               {ch}
-            </button>
+            </Chip>
           ))}
         </div>
       </div>

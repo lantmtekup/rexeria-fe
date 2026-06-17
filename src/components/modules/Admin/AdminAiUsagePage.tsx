@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import {
   Table,
   TableBody,
@@ -140,24 +141,19 @@ export function AdminAiUsagePage() {
           <p className='text-content-muted text-sm'>{t('aiUsage.subtitle')}</p>
         </div>
         <div className='flex items-center gap-2'>
-          <div className='border-border flex items-center gap-1 rounded-md border bg-white p-1 text-xs'>
+          <div className='flex items-center gap-1'>
             {RANGES.map(r => (
-              <button
+              <Chip
                 key={r.key}
-                type='button'
+                size='sm'
+                selected={range === r.key}
                 onClick={() => setRange(r.key)}
-                className={cn(
-                  'rounded px-2.5 py-1 transition',
-                  range === r.key
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-content-muted hover:bg-muted'
-                )}
               >
                 {t(`aiUsage.range.${r.key}`)}
-              </button>
+              </Chip>
             ))}
           </div>
-          <Button variant='outline' onClick={load} disabled={loading}>
+          <Button variant='neutral' onClick={load} disabled={loading}>
             <RefreshCwIcon
               className={cn('size-4', loading && 'animate-spin')}
             />
@@ -390,7 +386,7 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className='border-border flex flex-col gap-3 rounded-lg border bg-white p-4'>
+    <div className='border-border bg-card flex flex-col gap-3 rounded-lg border p-4'>
       <div
         className={cn(
           'flex size-9 items-center justify-center rounded-md',
@@ -413,7 +409,7 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className='border-border rounded-lg border bg-white'>
+    <div className='border-border bg-card rounded-lg border'>
       <div className='border-border border-b px-4 py-2.5 text-sm font-semibold'>
         {title}
       </div>
@@ -431,7 +427,7 @@ function SeriesCard({
   const t = useTranslations('admin');
   if (data.length === 0) {
     return (
-      <div className='border-border flex h-32 items-center justify-center rounded-lg border bg-white'>
+      <div className='border-border bg-card flex h-32 items-center justify-center rounded-lg border'>
         <p className='text-content-muted text-xs'>{t('aiUsage.empty')}</p>
       </div>
     );
@@ -451,7 +447,7 @@ function SeriesCard({
     .join(' ');
 
   return (
-    <div className='border-border rounded-lg border bg-white p-4'>
+    <div className='border-border bg-card rounded-lg border p-4'>
       <div className='flex items-center justify-between'>
         <div className='text-sm font-semibold'>{t('aiUsage.costOverTime')}</div>
         <div className='text-content-muted text-xs'>

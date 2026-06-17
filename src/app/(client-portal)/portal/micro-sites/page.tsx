@@ -18,6 +18,8 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { useRexer } from '@/services/rexer/use-rexer';
@@ -131,12 +133,9 @@ export default function PortalMicroSitesPage() {
             {t('microSites.subtitle')}
           </p>
         </div>
-        <button
-          onClick={openCreate}
-          className='bg-primary hover:bg-primary-dark inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-white shadow-sm'
-        >
+        <Button size='sm' onClick={openCreate}>
           <Plus className='size-3.5' /> {t('microSites.addBtn')}
-        </button>
+        </Button>
       </section>
 
       {/* Stats */}
@@ -162,7 +161,7 @@ export default function PortalMicroSitesPage() {
       </section>
 
       {/* Filter */}
-      <div className='border-border mt-5 flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3 shadow-sm'>
+      <div className='border-border bg-card mt-5 flex flex-wrap items-center gap-3 rounded-2xl border p-3 shadow-sm'>
         <div className='border-border bg-muted flex flex-1 items-center gap-2 rounded-lg border px-3 py-1.5 lg:max-w-sm'>
           <Search className='text-content-muted size-3.5' />
           <input
@@ -195,7 +194,7 @@ export default function PortalMicroSitesPage() {
       ) : (
         <section className='mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'>
           {filtered.length === 0 ? (
-            <div className='border-border text-content-muted col-span-full rounded-2xl border border-dashed bg-white p-12 text-center text-sm'>
+            <div className='border-border text-content-muted bg-card col-span-full rounded-2xl border border-dashed p-12 text-center text-sm'>
               {sites.length === 0
                 ? t('microSites.emptyNone')
                 : t('microSites.emptyFilter')}
@@ -239,7 +238,7 @@ function SiteCard({
   const up = site.views_trend_pct >= 0;
 
   return (
-    <div className='group border-border overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+    <div className='group border-border bg-card overflow-hidden rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       {/* Cover */}
       <Link
         href={`/portal/micro-sites/${site.id}`}
@@ -303,7 +302,7 @@ function SiteCard({
               <MoreVertical className='size-4' />
             </button>
             {menuOpen && (
-              <div className='border-border absolute right-0 z-10 mt-1 w-32 overflow-hidden rounded-lg border bg-white shadow-lg'>
+              <div className='border-border bg-card absolute right-0 z-10 mt-1 w-32 overflow-hidden rounded-lg border shadow-lg'>
                 <button
                   onClick={onEdit}
                   className='hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
@@ -312,7 +311,7 @@ function SiteCard({
                 </button>
                 <button
                   onClick={onDelete}
-                  className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
+                  className='text-destructive hover:bg-danger-bg flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
                 >
                   <Trash2 className='size-3' /> {t('microSites.delete')}
                 </button>
@@ -327,13 +326,13 @@ function SiteCard({
             {t('microSites.views30d')}
           </span>
           <span className='font-mono text-sm font-bold'>
-            {site.views_30d ? fmtNum(site.views_30d) : '—'}
+            {site.views_30d ? fmtNum(site.views_30d) : '-'}
           </span>
           {site.views_30d > 0 && (
             <span
               className={cn(
                 'text-3xs ml-auto inline-flex items-center gap-0.5 font-semibold',
-                up ? 'text-emerald-600' : 'text-rose-600'
+                up ? 'text-emerald-600' : 'text-destructive'
               )}
             >
               {up ? (
@@ -349,7 +348,7 @@ function SiteCard({
 
         <Link
           href={`/portal/micro-sites/${site.id}`}
-          className='bg-foreground hover:bg-foreground/85 mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white'
+          className='bg-foreground hover:bg-foreground/85 text-background mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium'
         >
           <BarChart3 className='size-3.5' /> {t('microSites.viewAnalytics')}
         </Link>
@@ -368,7 +367,7 @@ function StatCard({
   accent?: 'emerald' | 'amber';
 }) {
   return (
-    <div className='border-border rounded-2xl border bg-white px-4 py-3 shadow-sm'>
+    <div className='border-border bg-card rounded-2xl border px-4 py-3 shadow-sm'>
       <div className='text-2xs text-content-muted font-semibold tracking-wider uppercase'>
         {label}
       </div>
@@ -395,16 +394,8 @@ function FilterBtn({
   onClick: () => void;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'text-2xs rounded-full px-2.5 py-1 font-medium transition-all',
-        active
-          ? 'bg-foreground text-white shadow-sm'
-          : 'border-border text-content-muted hover:bg-muted border bg-white'
-      )}
-    >
+    <Chip size='sm' selected={active} onClick={onClick}>
       {label}
-    </button>
+    </Chip>
   );
 }

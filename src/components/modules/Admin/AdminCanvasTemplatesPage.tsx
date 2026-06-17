@@ -46,6 +46,7 @@ import {
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import { DomainSettingsDialog } from '@/components/dialogs/DomainSettingsDialog';
 import {
   CreateLandingDialog,
@@ -95,7 +96,7 @@ const SORT_OPTIONS: { id: Sort; label: string }[] = [
 const STATUS_CHIP: Record<string, string> = {
   draft: 'bg-amber-100 text-amber-700',
   published: 'bg-emerald-100 text-emerald-700',
-  archived: 'bg-zinc-200 text-content-muted',
+  archived: 'bg-muted text-content-muted',
 };
 
 const TYPE_CHIP: Record<string, string> = {
@@ -254,7 +255,7 @@ export function AdminCanvasTemplatesPage() {
       toast.success(`Đã archive ${okCount} pages`, { id: tid });
     } else {
       toast.error(
-        `${okCount}/${ids.length} OK, ${failCount} lỗi — reload để verify`,
+        `${okCount}/${ids.length} OK, ${failCount} lỗi, reload để verify`,
         { id: tid }
       );
     }
@@ -307,7 +308,7 @@ export function AdminCanvasTemplatesPage() {
       toast.success(`Đã xoá vĩnh viễn ${okCount} pages`, { id: tid });
     } else {
       toast.error(
-        `${okCount}/${ids.length} OK, ${failCount} lỗi — BE có thể chưa ship endpoint`,
+        `${okCount}/${ids.length} OK, ${failCount} lỗi, BE có thể chưa ship endpoint`,
         { id: tid }
       );
     }
@@ -404,7 +405,7 @@ export function AdminCanvasTemplatesPage() {
       </div>
 
       {/* Toolbar — search + sort */}
-      <div className='border-border flex flex-wrap items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm'>
+      <div className='border-border bg-background flex flex-wrap items-center gap-2 rounded-2xl border p-2 shadow-sm'>
         <div className='relative max-w-sm flex-1'>
           <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
           <Input
@@ -420,7 +421,7 @@ export function AdminCanvasTemplatesPage() {
           <select
             value={sort}
             onChange={e => setSort(e.target.value as Sort)}
-            className='border-border text-content-muted hover:bg-muted appearance-none rounded-lg border bg-white py-1.5 pr-3 pl-7 text-xs font-medium outline-none focus:border-zinc-400'
+            className='border-border text-content-muted hover:bg-muted bg-background focus:border-ring appearance-none rounded-lg border py-1.5 pr-3 pl-7 text-xs font-medium outline-none'
             aria-label='Sort'
           >
             {SORT_OPTIONS.map(o => (
@@ -431,7 +432,7 @@ export function AdminCanvasTemplatesPage() {
           </select>
         </div>
 
-        <div className='border-border ml-auto inline-flex items-center gap-0.5 rounded-lg border bg-white p-0.5'>
+        <div className='border-border bg-background ml-auto inline-flex items-center gap-0.5 rounded-lg border p-0.5'>
           <ViewBtn
             active={view === 'grid'}
             onClick={() => setView('grid')}
@@ -475,7 +476,7 @@ export function AdminCanvasTemplatesPage() {
           />
         </FilterGroup>
 
-        <span className='hidden h-4 w-px bg-zinc-200 sm:block' />
+        <span className='bg-muted hidden h-4 w-px sm:block' />
 
         <FilterGroup label='Status'>
           <ChipBtn
@@ -502,13 +503,13 @@ export function AdminCanvasTemplatesPage() {
           />
         </FilterGroup>
 
-        <span className='hidden h-4 w-px bg-zinc-200 sm:block' />
+        <span className='bg-muted hidden h-4 w-px sm:block' />
 
         <FilterGroup label='Brand'>
           <select
             value={brandFilter}
             onChange={e => setBrandFilter(e.target.value)}
-            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-2.5 py-1 text-xs font-medium outline-none'
+            className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1 text-xs font-medium outline-none'
           >
             <option value=''>Tất cả brand</option>
             {brands.map(b => (
@@ -536,7 +537,7 @@ export function AdminCanvasTemplatesPage() {
       </div>
 
       {error && (
-        <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
+        <div className='border-destructive/20 bg-danger-bg text-destructive rounded-lg border px-3 py-2 text-xs'>
           {error}
         </div>
       )}
@@ -547,7 +548,7 @@ export function AdminCanvasTemplatesPage() {
           <RefreshCwIcon className='mr-2 size-4 animate-spin' /> Đang tải pages…
         </div>
       ) : items.length === 0 ? (
-        <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
+        <div className='border-border bg-card rounded-2xl border border-dashed p-12 text-center'>
           <LayoutTemplate className='text-muted-foreground mx-auto size-8' />
           <p className='text-content-muted mt-3 text-sm font-semibold'>
             {hasActiveFilters
@@ -596,7 +597,7 @@ export function AdminCanvasTemplatesPage() {
 
       {/* Bulk action bar — sticky bottom khi có selection ở table view. */}
       {selected.size > 0 && view === 'table' && (
-        <div className='sticky bottom-4 z-30 mx-auto flex w-fit min-w-[320px] items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 shadow-2xl'>
+        <div className='bg-foreground sticky bottom-4 z-30 mx-auto flex w-fit min-w-[320px] items-center gap-3 rounded-xl border border-zinc-700 px-4 py-2.5 shadow-2xl'>
           <span className='text-xs font-medium text-white'>
             Đã chọn{' '}
             <span className='text-2xs rounded-md bg-white/15 px-1.5 py-0.5 font-mono'>
@@ -630,7 +631,7 @@ export function AdminCanvasTemplatesPage() {
               onClick={() => setPurgeModalOpen(true)}
               disabled={bulkBusy}
               className='inline-flex items-center gap-1.5 rounded-md border border-red-500/40 bg-red-950 px-3 py-1.5 text-xs font-medium text-red-100 hover:bg-red-900 disabled:opacity-50'
-              title='Xoá vĩnh viễn — không khôi phục được'
+              title='Xoá vĩnh viễn, không khôi phục được'
             >
               <Flame className='size-3.5' />
               Xoá vĩnh viễn
@@ -715,7 +716,7 @@ function PageCard({
   const gradient =
     TYPE_GRADIENT[item.type] ?? 'from-zinc-400 via-zinc-500 to-zinc-600';
   return (
-    <div className='group border-border hover:border-border flex flex-col rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+    <div className='group border-border hover:border-border bg-card flex flex-col rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       {/* Thumbnail area — gradient placeholder per type. BE Page response
           không trả thumbnail_url; thumbnail_asset_id rỗng cho hầu hết rows.
           Card root no longer clips (overflow-hidden removed) so the ⋮ action
@@ -783,7 +784,7 @@ function PageCard({
           <span className='text-muted-foreground font-mono'>
             {item.updated_at
               ? new Date(item.updated_at).toLocaleDateString('vi-VN')
-              : '—'}
+              : '-'}
           </span>
         </div>
 
@@ -793,7 +794,7 @@ function PageCard({
           </div>
           <Link
             href={`/admin/users/${item.brand_id}`}
-            className='border-border text-content-muted hover:bg-muted inline-flex items-center justify-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium transition-colors'
+            className='border-border text-content-muted hover:bg-muted bg-background inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors'
             title='Mở brand detail'
           >
             <ExternalLink className='size-3' />
@@ -843,14 +844,14 @@ function PageActionMenu({
       <button
         type='button'
         onClick={() => setOpen(o => !o)}
-        className='border-border text-content-muted hover:bg-muted inline-flex h-full items-center justify-center rounded-lg border bg-white px-2 transition-colors'
+        className='border-border text-content-muted hover:bg-muted bg-background inline-flex h-full items-center justify-center rounded-lg border px-2 transition-colors'
         aria-label='Hành động'
         aria-expanded={open}
       >
         <MoreVertical className='size-3.5' />
       </button>
       {open && (
-        <div className='border-border absolute top-full right-0 z-30 mt-1 w-48 overflow-hidden rounded-lg border bg-white shadow-lg'>
+        <div className='border-border bg-card absolute top-full right-0 z-30 mt-1 w-48 overflow-hidden rounded-lg border shadow-lg'>
           {/* Mở editor (canvas) — chỉ landing dựng từ template (không external). */}
           {!page.external_url && (
             <Link
@@ -926,7 +927,7 @@ function PageActionMenu({
               <button
                 type='button'
                 onClick={choose('archive')}
-                className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
+                className='text-destructive hover:bg-danger-bg flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
               >
                 <Archive className='size-3.5' />
                 Archive
@@ -954,8 +955,8 @@ function OpenLandingButton({
     'inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors';
   const enabledCls =
     variant === 'primary'
-      ? 'bg-zinc-900 text-white hover:bg-zinc-700'
-      : 'border border-border bg-white text-content-muted hover:bg-muted';
+      ? 'bg-foreground text-background hover:bg-foreground/85'
+      : 'border border-border bg-background text-content-muted hover:bg-muted';
 
   // External landing → mở thẳng URL ngoài (tab mới).
   if (page.external_url) {
@@ -994,7 +995,7 @@ function OpenLandingButton({
     <Link
       href={publicLandingUrl(segment)}
       className={cn(baseCls, enabledCls)}
-      title='Chưa publish — mở editor'
+      title='Chưa publish, mở editor'
     >
       <Pencil className='size-3.5' />
       Mở editor
@@ -1014,17 +1015,9 @@ function ViewBtn({
   label: string;
 }) {
   return (
-    <button
-      type='button'
-      onClick={onClick}
-      title={label}
-      className={cn(
-        'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
-        active ? 'bg-zinc-900 text-white' : 'text-content-muted hover:bg-muted'
-      )}
-    >
+    <Chip selected={active} size='sm' onClick={onClick} title={label}>
       {icon}
-    </button>
+    </Chip>
   );
 }
 
@@ -1049,14 +1042,14 @@ function TableView({
   const allOn = ids.length > 0 && ids.every(id => selected.has(id));
   const someOn = ids.some(id => selected.has(id));
   return (
-    <div className='border-border rounded-2xl border bg-white'>
+    <div className='border-border bg-card rounded-2xl border'>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className='w-10'>
               <input
                 type='checkbox'
-                className='border-border text-foreground size-3.5 cursor-pointer rounded focus:ring-zinc-400'
+                className='border-border text-foreground focus:ring-ring size-3.5 cursor-pointer rounded'
                 checked={allOn}
                 ref={el => {
                   if (el) el.indeterminate = someOn && !allOn;
@@ -1085,7 +1078,7 @@ function TableView({
                 <TableCell>
                   <input
                     type='checkbox'
-                    className='border-border text-foreground size-3.5 cursor-pointer rounded focus:ring-zinc-400'
+                    className='border-border text-foreground focus:ring-ring size-3.5 cursor-pointer rounded'
                     checked={isSelected}
                     onChange={() => onToggleSelected(p.id)}
                     aria-label={`Chọn ${p.name}`}
@@ -1108,7 +1101,7 @@ function TableView({
                       </code>
                     ) : (
                       <>
-                        {p.slug ? <code>{p.slug}</code> : <span>—</span>}
+                        {p.slug ? <code>{p.slug}</code> : <span>-</span>}
                         <span>·</span>
                         <code>{p.id.slice(0, 12)}…</code>
                       </>
@@ -1153,7 +1146,7 @@ function TableView({
                 <TableCell className='text-content-muted text-xs'>
                   {p.updated_at
                     ? new Date(p.updated_at).toLocaleDateString('vi-VN')
-                    : '—'}
+                    : '-'}
                 </TableCell>
                 <TableCell>
                   <div className='flex items-center justify-end gap-1.5'>
@@ -1201,9 +1194,9 @@ function Pagination({
   add(totalPages);
 
   return (
-    <div className='border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-2.5 shadow-sm'>
+    <div className='border-border bg-background flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 shadow-sm'>
       <span className='text-2xs text-content-muted'>
-        {from}–{to} trong {total}
+        {from}-{to} trong {total}
       </span>
       <div className='flex items-center gap-1'>
         <button
@@ -1231,8 +1224,8 @@ function Pagination({
               className={cn(
                 'text-2xs inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono font-semibold tabular-nums transition-colors',
                 p === page
-                  ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'border-border text-content-muted hover:bg-muted border bg-white'
+                  ? 'bg-foreground text-background shadow-sm'
+                  : 'border-border text-content-muted hover:bg-muted bg-background border'
               )}
             >
               {p}
@@ -1292,8 +1285,8 @@ function ChipBtn({
   const cls = active
     ? accent
       ? accentActive[accent]
-      : 'bg-zinc-900 text-white shadow-sm'
-    : 'border border-border bg-white text-content-muted hover:bg-muted';
+      : 'bg-foreground text-background shadow-sm'
+    : 'border border-border bg-background text-content-muted hover:bg-muted';
   return (
     <button
       type='button'
@@ -1340,7 +1333,7 @@ function HardDeleteConfirmModal({
       onClick={onCancel}
     >
       <div
-        className='w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl'
+        className='bg-card w-full max-w-md rounded-2xl p-6 shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
         <div className='flex items-start gap-3'>
@@ -1374,32 +1367,24 @@ function HardDeleteConfirmModal({
             onChange={e => setTyped(e.target.value)}
             autoFocus
             placeholder={KEYWORD}
-            className='border-border bg-muted mt-1.5 w-full rounded-lg border px-3 py-2 font-mono text-sm outline-none focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-200'
+            className='border-border bg-muted focus:bg-background mt-1.5 w-full rounded-lg border px-3 py-2 font-mono text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200'
           />
         </div>
 
         <div className='mt-5 flex items-center justify-end gap-2'>
-          <button
-            type='button'
-            onClick={onCancel}
-            className='text-content-muted hover:bg-muted rounded-md px-3 py-1.5 text-xs font-medium'
-          >
+          <Button type='button' variant='ghost' size='sm' onClick={onCancel}>
             Huỷ
-          </button>
-          <button
+          </Button>
+          <Button
             type='button'
+            variant='destructive'
+            size='sm'
             onClick={onConfirm}
             disabled={!isConfirmed}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-              isConfirmed
-                ? 'bg-red-600 text-white hover:bg-red-500'
-                : 'bg-muted text-muted-foreground cursor-not-allowed'
-            )}
           >
             <Flame className='size-3.5' />
             Xoá vĩnh viễn {count}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -18,6 +18,7 @@ import {
   X,
 } from 'lucide-react';
 
+import { Button } from '@/components/atoms/button';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type { Brand } from '@/services/rexer/types';
@@ -105,13 +106,13 @@ const ROLE_META: Record<
   },
   staff: {
     label: 'Staff Rexer',
-    description: 'Operator — design template, sửa canvas; không sửa role',
+    description: 'Operator, design template, sửa canvas; không sửa role',
     color: 'bg-amber-500',
     icon: ShieldCheck,
   },
   client_user: {
     label: 'Brand Client',
-    description: 'Khách hàng — xem analytics, upload assets, comment',
+    description: 'Khách hàng, xem analytics, upload assets, comment',
     color: 'bg-teal-500',
     icon: UserPlus,
   },
@@ -208,7 +209,7 @@ export function AdminCreateUserModal({
             (err.status === 404 || err.code === 'ERR_USER_NOT_FOUND')
           ) {
             setError(
-              'User này chưa có tài khoản. Endpoint "Brand có sẵn" chỉ gán user ĐÃ TỒN TẠI — hãy tạo user trước (mode "Tạo brand mới") hoặc để họ tự đăng ký, rồi mới gán vào brand.'
+              'User này chưa có tài khoản. Endpoint "Brand có sẵn" chỉ gán user ĐÃ TỒN TẠI, hãy tạo user trước (mode "Tạo brand mới") hoặc để họ tự đăng ký, rồi mới gán vào brand.'
             );
             return;
           }
@@ -292,7 +293,7 @@ export function AdminCreateUserModal({
       onClick={onClose}
     >
       <div
-        className='my-8 w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl'
+        className='bg-card my-8 w-full max-w-lg overflow-hidden rounded-2xl shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -305,13 +306,15 @@ export function AdminCreateUserModal({
               Tạo user mới
             </h3>
           </div>
-          <button
+          <Button
+            variant='ghost'
+            size='icon'
             onClick={onClose}
-            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
+            className='text-muted-foreground hover:text-content-muted size-7'
             aria-label='Close'
           >
             <X className='size-4' />
-          </button>
+          </Button>
         </div>
 
         {/* Body */}
@@ -333,8 +336,8 @@ export function AdminCreateUserModal({
                     onClick={() => setRole(r)}
                     className={`flex flex-col items-start gap-1.5 rounded-xl border p-3 text-left transition-all ${
                       active
-                        ? 'bg-muted border-zinc-900 shadow-sm'
-                        : 'border-border hover:bg-muted bg-white'
+                        ? 'bg-muted border-foreground shadow-sm'
+                        : 'border-border hover:bg-muted bg-background'
                     }`}
                   >
                     <div
@@ -361,8 +364,8 @@ export function AdminCreateUserModal({
                 tạo {role} qua API. User sẽ được tạo với role mặc định{' '}
                 <code className='rounded bg-amber-100 px-1 font-mono'>
                   client_user
-                </code>{' '}
-                — cần promote qua DB hoặc nhờ BE team add endpoint.
+                </code>
+                , cần promote qua DB hoặc nhờ BE team add endpoint.
               </div>
             </div>
           )}
@@ -395,7 +398,7 @@ export function AdminCreateUserModal({
               required={!autoGenPassword}
               hint={
                 autoGenPassword
-                  ? 'FE sinh 16 ký tự mạnh — hiện sau khi tạo xong'
+                  ? 'FE sinh 16 ký tự mạnh, hiện sau khi tạo xong'
                   : 'Tối thiểu 8 ký tự'
               }
             >
@@ -473,7 +476,7 @@ export function AdminCreateUserModal({
               {brandMode === 'new' ? (
                 <Field
                   label='Tên brand / Company'
-                  hint='Tạo cùng workspace mới — user sẽ là Owner'
+                  hint='Tạo cùng workspace mới, user sẽ là Owner'
                   required
                 >
                   <input
@@ -493,14 +496,14 @@ export function AdminCreateUserModal({
                   <select
                     value={clientId}
                     onChange={e => setClientId(e.target.value)}
-                    className='border-border w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100'
+                    className='border-border bg-background w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100'
                   >
                     {clients.length === 0 && (
                       <option value=''>Chưa có brand nào</option>
                     )}
                     {clients.map(c => (
                       <option key={c.id} value={c.id}>
-                        {c.name} — {c.id.slice(0, 8)}
+                        {c.name} - {c.id.slice(0, 8)}
                       </option>
                     ))}
                   </select>
@@ -510,8 +513,8 @@ export function AdminCreateUserModal({
           )}
 
           {error && (
-            <div className='flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
-              <AlertCircle className='mt-0.5 size-3.5 shrink-0 text-rose-600' />
+            <div className='border-destructive/20 bg-danger-bg text-destructive flex items-start gap-2 rounded-lg border px-3 py-2 text-xs'>
+              <AlertCircle className='text-destructive mt-0.5 size-3.5 shrink-0' />
               <div className='font-mono'>{error}</div>
             </div>
           )}
@@ -541,24 +544,25 @@ export function AdminCreateUserModal({
               <>
                 Endpoint:{' '}
                 <code className='bg-muted rounded px-1'>/auth/register</code>{' '}
-                (fallback — cần promote sau)
+                (fallback, cần promote sau)
               </>
             )}
           </p>
           <div className='flex items-center gap-2'>
-            <button
+            <Button
               type='button'
+              variant='neutral'
+              size='sm'
               onClick={onClose}
               disabled={submitting}
-              className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
             >
               Hủy
-            </button>
-            <button
+            </Button>
+            <Button
               type='button'
+              size='sm'
               onClick={handleSubmit}
               disabled={submitting}
-              className='flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-60'
             >
               {submitting ? (
                 <Loader2 className='size-3.5 animate-spin' />
@@ -566,7 +570,7 @@ export function AdminCreateUserModal({
                 <UserPlus className='size-3.5' />
               )}
               {submitting ? 'Đang tạo...' : 'Tạo user'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -617,7 +621,7 @@ function CredentialsResultModal({
       );
       setTimeout(() => setCopied(null), 1500);
     } else {
-      toast.error('Copy thất bại — bôi đen rồi Cmd/Ctrl+C nhé');
+      toast.error('Copy thất bại, bôi đen rồi Cmd/Ctrl+C nhé');
     }
   };
 
@@ -637,7 +641,7 @@ function CredentialsResultModal({
       onClick={onClose}
     >
       <div
-        className='my-8 w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl'
+        className='bg-card my-8 w-full max-w-lg overflow-hidden rounded-2xl shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
         <div className='border-border flex items-center justify-between border-b px-5 py-3'>
@@ -649,13 +653,15 @@ function CredentialsResultModal({
               Đã tạo user thành công
             </h3>
           </div>
-          <button
+          <Button
+            variant='ghost'
+            size='icon'
             onClick={onClose}
-            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
+            className='text-muted-foreground hover:text-content-muted size-7'
             aria-label='Close'
           >
             <X className='size-4' />
-          </button>
+          </Button>
         </div>
 
         <div className='space-y-4 px-5 py-4'>
@@ -663,7 +669,7 @@ function CredentialsResultModal({
             <div className='flex items-start gap-2 text-xs text-amber-900'>
               <AlertCircle className='mt-0.5 size-3.5 shrink-0 text-amber-600' />
               <div>
-                <span className='font-semibold'>Lưu ngay password</span> — chỉ
+                <span className='font-semibold'>Lưu ngay password</span>, chỉ
                 hiện 1 lần ở đây. Đóng modal là mất, BE không có endpoint xem
                 lại password cũ.
               </div>
@@ -715,10 +721,11 @@ function CredentialsResultModal({
         </div>
 
         <div className='border-border bg-muted/50 flex items-center justify-between gap-3 border-t px-5 py-3'>
-          <button
+          <Button
             type='button'
+            variant='neutral'
+            size='sm'
             onClick={() => copy(summary, 'all')}
-            className='border-border text-content-muted hover:bg-muted flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'
           >
             {copied === 'all' ? (
               <Check className='size-3.5 text-emerald-500' />
@@ -726,14 +733,10 @@ function CredentialsResultModal({
               <Copy className='size-3.5' />
             )}
             Copy tất cả
-          </button>
-          <button
-            type='button'
-            onClick={onClose}
-            className='rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
-          >
+          </Button>
+          <Button type='button' size='sm' onClick={onClose}>
             Xong
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -763,12 +766,12 @@ function CredField({
       </div>
       <div className='mt-1 flex items-center gap-2'>
         <div
-          className={`border-border flex-1 truncate rounded border bg-white px-2 py-1.5 text-sm select-all ${
+          className={`border-border bg-background flex-1 truncate rounded border px-2 py-1.5 text-sm select-all ${
             mono ? 'font-mono' : ''
           }`}
           title={value}
         >
-          {value || <span className='text-muted-foreground'>—</span>}
+          {value || <span className='text-muted-foreground'>-</span>}
         </div>
         <button
           type='button'
@@ -776,7 +779,7 @@ function CredField({
           className={`text-2xs flex items-center gap-1 rounded border px-2 py-1.5 font-medium transition-colors ${
             copied
               ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-              : 'border-border text-content-muted hover:bg-muted bg-white'
+              : 'border-border text-content-muted hover:bg-muted bg-background'
           }`}
           aria-label={`Copy ${label}`}
         >
@@ -811,7 +814,7 @@ function ModeBtn({
       className={`text-2xs flex-1 rounded-lg border px-2.5 py-1 font-medium transition-all disabled:opacity-40 ${
         active
           ? 'border-teal-500 bg-teal-100 text-teal-800'
-          : 'border-border text-content-muted hover:bg-muted bg-white'
+          : 'border-border text-content-muted hover:bg-muted bg-background'
       }`}
     >
       {label}

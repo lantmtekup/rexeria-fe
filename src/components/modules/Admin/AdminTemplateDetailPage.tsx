@@ -43,7 +43,7 @@ import { cn } from '@/lib/cn';
 const STATUS_CHIP: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700',
   draft: 'bg-amber-100 text-amber-700',
-  archived: 'bg-zinc-200 text-content-muted',
+  archived: 'bg-muted text-content-muted',
 };
 
 const PAGE_TYPE_CHIP: Record<string, string> = {
@@ -125,11 +125,11 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
         >
           <ArrowLeft className='size-3.5' /> Quay lại
         </Link>
-        <div className='mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
-          <p className='text-sm font-semibold text-rose-900'>
+        <div className='border-destructive/20 bg-danger-bg mt-6 rounded-2xl border p-6 text-center'>
+          <p className='text-destructive text-sm font-semibold'>
             Không load được template
           </p>
-          <p className='text-2xs mt-1 font-mono text-rose-700'>
+          <p className='text-2xs text-destructive mt-1 font-mono'>
             {error || 'NOT_FOUND'}
           </p>
         </div>
@@ -147,14 +147,14 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
     <div className='mx-auto flex max-w-5xl flex-col gap-5 p-6'>
       <Link
         href='/admin/templates'
-        className='group border-border text-content-muted hover:text-foreground inline-flex items-center gap-2 self-start rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900'
+        className='group border-border text-content-muted hover:text-foreground bg-background hover:border-foreground inline-flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5'
       >
         <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
         Templates
       </Link>
 
       {/* Header */}
-      <section className='border-border relative overflow-hidden rounded-3xl border bg-white shadow-sm'>
+      <section className='border-border bg-card relative overflow-hidden rounded-3xl border shadow-sm'>
         <div className='flex flex-wrap items-start gap-5 p-6 sm:p-7'>
           <div className='border-border aspect-[4/3] w-32 shrink-0 overflow-hidden rounded-xl border bg-gradient-to-br from-zinc-100 to-zinc-200'>
             {template.thumbnail_url ? (
@@ -283,7 +283,7 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
       )}
 
       {/* Current version */}
-      <section className='border-border rounded-2xl border bg-white p-5 shadow-sm'>
+      <section className='border-border bg-card rounded-2xl border p-5 shadow-sm'>
         <h2 className='text-foreground text-sm font-semibold'>
           Current version
         </h2>
@@ -297,7 +297,7 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
             />
             <Field
               label='Renderer key'
-              value={currentVersion.renderer_key ?? '—'}
+              value={currentVersion.renderer_key ?? '-'}
               mono
             />
             <Field
@@ -329,7 +329,7 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
       </section>
 
       {/* Versions list */}
-      <section className='border-border rounded-2xl border bg-white shadow-sm'>
+      <section className='border-border bg-card rounded-2xl border shadow-sm'>
         <div className='border-border flex items-center justify-between border-b px-5 py-3'>
           <h2 className='text-foreground text-sm font-semibold'>
             Tất cả version ({versions.length})
@@ -460,7 +460,7 @@ function EditMetaSection({
   };
 
   return (
-    <section className='border-border flex flex-col gap-4 rounded-2xl border bg-white p-5 shadow-sm'>
+    <section className='border-border bg-card flex flex-col gap-4 rounded-2xl border p-5 shadow-sm'>
       <h2 className='text-foreground text-sm font-semibold'>Sửa metadata</h2>
       <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
         <div className='flex flex-col gap-1.5'>

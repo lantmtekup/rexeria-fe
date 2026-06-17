@@ -13,6 +13,7 @@ import * as React from 'react';
 import { ArrowLeft, Loader2, Plus, Search, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 import { Textarea } from '@/components/atoms/textarea';
@@ -191,7 +192,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
       onClick={onClose}
     >
       <div
-        className='my-8 w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl'
+        className='bg-card my-8 w-full max-w-5xl overflow-hidden rounded-2xl shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
         {selected ? (
@@ -199,15 +200,16 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
           <>
             <div className='border-border flex items-center justify-between border-b px-5 py-3'>
               <div className='flex items-center gap-2.5'>
-                <button
+                <Button
                   type='button'
+                  variant='ghost'
+                  size='icon'
                   onClick={() => setSelected(null)}
                   disabled={adding}
-                  className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5 disabled:opacity-50'
                   aria-label='Quay lại'
                 >
                   <ArrowLeft className='size-4' />
-                </button>
+                </Button>
                 <div className='leading-tight'>
                   <h3 className='text-base font-semibold'>
                     Thông tin block mới
@@ -217,21 +219,22 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                   </p>
                 </div>
               </div>
-              <button
+              <Button
                 type='button'
+                variant='ghost'
+                size='icon'
                 onClick={onClose}
-                className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
                 aria-label='Close'
               >
                 <X className='size-4' />
-              </button>
+              </Button>
             </div>
 
             <div className='max-h-[68vh] overflow-y-auto px-5 py-4'>
               <div className='flex flex-col gap-4'>
                 <div className='flex flex-col gap-1'>
                   <Label htmlFor='ab-name'>
-                    Tên <span className='text-rose-600'>*</span>
+                    Tên <span className='text-destructive'>*</span>
                   </Label>
                   <Input
                     id='ab-name'
@@ -292,24 +295,25 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
               </div>
             </div>
 
-            <div className='border-border flex items-center justify-end gap-2 border-t bg-white px-5 py-3'>
-              <button
+            <div className='border-border bg-card flex items-center justify-end gap-2 border-t px-5 py-3'>
+              <Button
                 type='button'
+                variant='neutral'
+                size='sm'
                 onClick={() => setSelected(null)}
                 disabled={adding}
-                className='border-border hover:bg-muted rounded-lg border px-3 py-1.5 text-sm font-medium disabled:opacity-50'
               >
                 Quay lại
-              </button>
-              <button
+              </Button>
+              <Button
                 type='button'
+                size='sm'
                 onClick={handleCreate}
                 disabled={adding}
-                className='inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:opacity-60'
               >
                 {adding && <Loader2 className='size-3.5 animate-spin' />}
                 Tạo block
-              </button>
+              </Button>
             </div>
           </>
         ) : (
@@ -330,14 +334,15 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                   </p>
                 </div>
               </div>
-              <button
+              <Button
                 type='button'
+                variant='ghost'
+                size='icon'
                 onClick={onClose}
-                className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
                 aria-label='Close'
               >
                 <X className='size-4' />
-              </button>
+              </Button>
             </div>
 
             {/* Search */}
@@ -350,7 +355,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder='Tìm theo tên / type / mô tả…'
-                  className='border-border w-full rounded-lg border bg-white py-2 pr-3 pl-9 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
+                  className='border-border bg-background w-full rounded-lg border py-2 pr-3 pl-9 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
                 />
               </div>
             </div>
@@ -364,7 +369,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                 </div>
               ) : error ? (
                 <div className='py-16 text-center'>
-                  <p className='text-sm font-semibold text-rose-600'>
+                  <p className='text-destructive text-sm font-semibold'>
                     Không tải được danh sách
                   </p>
                   <p className='text-2xs text-content-muted mt-1 font-mono'>
@@ -401,7 +406,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
             </div>
 
             {/* Footer hint */}
-            <div className='text-2xs border-border text-content-muted border-t bg-white px-5 py-2.5'>
+            <div className='text-2xs border-border text-content-muted bg-card border-t px-5 py-2.5'>
               Chọn 1 block type để nhập tên, mô tả + tags trước khi thêm vào thư
               viện.
             </div>
@@ -436,7 +441,7 @@ function CatalogCard({
         }
       }}
       className={cn(
-        'group border-border flex cursor-pointer flex-col overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
+        'group border-border bg-card flex cursor-pointer flex-col overflow-hidden rounded-xl border text-left shadow-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
         'hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/5'
       )}
     >
@@ -460,7 +465,7 @@ function CatalogCard({
 
         {/* Subtle overlay so the thumbnail dims slightly on hover, drawing
             attention to the explicit "+ add" affordance below. */}
-        <div className='pointer-events-none absolute inset-0 bg-white/0 transition-colors group-hover:bg-white/10' />
+        <div className='bg-background/0 group-hover:bg-background/10 pointer-events-none absolute inset-0 transition-colors' />
       </div>
 
       <div className='flex flex-1 flex-col gap-1 p-3.5'>

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import {
   Dialog,
   DialogContent,
@@ -153,20 +154,16 @@ export function CreateMicroSiteDialog({
                 const meta = STATUS_META[s];
                 const active = status === s;
                 return (
-                  <button
+                  <Chip
                     key={s}
-                    type='button'
+                    size='md'
+                    selected={active}
                     onClick={() => setStatus(s)}
-                    className={cn(
-                      'flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-medium transition-colors',
-                      active
-                        ? 'border-primary bg-primary/5 text-foreground ring-primary/15 ring-2'
-                        : 'border-border text-content-muted hover:bg-muted'
-                    )}
+                    className='gap-1.5'
                   >
                     <span className={cn('size-1.5 rounded-full', meta.dot)} />
                     {meta.label}
-                  </button>
+                  </Chip>
                 );
               })}
             </div>
@@ -180,7 +177,7 @@ export function CreateMicroSiteDialog({
               placeholder={t(
                 'microSitesCreateMicroSiteDialog.descriptionPlaceholder'
               )}
-              className='border-border placeholder:text-content-muted focus:border-primary w-full resize-none rounded-md border bg-white px-3 py-2 text-sm outline-none'
+              className='border-border placeholder:text-content-muted focus:border-primary bg-background w-full resize-none rounded-md border px-3 py-2 text-sm outline-none'
             />
           </Field>
         </div>
@@ -225,7 +222,7 @@ function Field({
   return (
     <div>
       <Label className='text-2xs text-content-muted font-semibold tracking-wider uppercase'>
-        {label} {required && <span className='text-rose-500'>*</span>}
+        {label} {required && <span className='text-destructive'>*</span>}
       </Label>
       <div className='mt-1.5'>{children}</div>
       {hint && <p className='text-3xs text-content-muted mt-1'>{hint}</p>}

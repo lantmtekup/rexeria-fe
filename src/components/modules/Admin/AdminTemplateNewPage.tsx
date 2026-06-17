@@ -71,7 +71,7 @@ export function AdminTemplateNewPage() {
     }
     if (!CODE_RE.test(codeT)) {
       toast.error(
-        'Code phải lowercase, bắt đầu bằng chữ, 2–100 ký tự (a-z 0-9 - _)'
+        'Code phải lowercase, bắt đầu bằng chữ, 2-100 ký tự (a-z 0-9 - _)'
       );
       return;
     }
@@ -112,7 +112,7 @@ export function AdminTemplateNewPage() {
     <div className='mx-auto flex max-w-3xl flex-col gap-5 p-6'>
       <Link
         href='/admin/templates'
-        className='group border-border text-content-muted hover:text-foreground inline-flex items-center gap-2 self-start rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900'
+        className='group border-border text-content-muted hover:text-foreground bg-background hover:border-foreground inline-flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5'
       >
         <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
         Templates
@@ -133,12 +133,12 @@ export function AdminTemplateNewPage() {
 
       <form
         onSubmit={handleSubmit}
-        className='border-border flex flex-col gap-4 rounded-2xl border bg-white p-6 shadow-sm'
+        className='border-border bg-card flex flex-col gap-4 rounded-2xl border p-6 shadow-sm'
       >
         {/* Code */}
         <div className='flex flex-col gap-1.5'>
           <Label htmlFor='tpl-code'>
-            Code <span className='text-rose-600'>*</span>
+            Code <span className='text-destructive'>*</span>
           </Label>
           <Input
             id='tpl-code'
@@ -158,7 +158,7 @@ export function AdminTemplateNewPage() {
         <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
           <div className='flex flex-col gap-1.5'>
             <Label htmlFor='tpl-name'>
-              Tên hiển thị <span className='text-rose-600'>*</span>
+              Tên hiển thị <span className='text-destructive'>*</span>
             </Label>
             <Input
               id='tpl-name'
@@ -196,7 +196,7 @@ export function AdminTemplateNewPage() {
         <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
           <div className='flex flex-col gap-1.5'>
             <Label htmlFor='tpl-preview-mode'>
-              Preview mode <span className='text-rose-600'>*</span>
+              Preview mode <span className='text-destructive'>*</span>
             </Label>
             <select
               id='tpl-preview-mode'
@@ -206,7 +206,7 @@ export function AdminTemplateNewPage() {
             >
               {PREVIEW_MODES.map(m => (
                 <option key={m.id} value={m.id}>
-                  {m.label} — {m.hint}
+                  {m.label}: {m.hint}
                 </option>
               ))}
             </select>

@@ -21,11 +21,11 @@ export default function AdminAnalyticsPage() {
         },
         {
           status: 'new',
-          text: 'GET /v1/admin/analytics/templates/summary — KPI per landing page',
+          text: 'GET /v1/admin/analytics/templates/summary: KPI per landing page',
         },
         {
           status: 'new',
-          text: 'GET /v1/admin/analytics/templates/{id}/breakdown — block + action detail',
+          text: 'GET /v1/admin/analytics/templates/{id}/breakdown: block + action detail',
         },
         {
           status: 'new',

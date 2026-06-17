@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type { StaffInboxItem } from '@/services/rexer/types';
@@ -75,7 +77,7 @@ const STATUS_META: Record<string, { label: string; chip: string }> = {
 };
 
 function relativeTime(iso?: string): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const t = new Date(iso).getTime();
   if (Number.isNaN(t)) return iso;
   const diffMin = Math.round((Date.now() - t) / 60_000);
@@ -137,7 +139,7 @@ export function AdminInboxPage() {
     try {
       const updated = await rexerApi.staffInbox.take(id);
       setItems(prev => prev.map(it => (it.id === id ? updated : it)));
-      toast.success('Đã nhận item — bắt đầu xử lý');
+      toast.success('Đã nhận item, bắt đầu xử lý');
     } catch (err) {
       const msg =
         err instanceof RxApiError ? err.code || err.message : 'TAKE_FAILED';
@@ -173,20 +175,21 @@ export function AdminInboxPage() {
             Workload queue
           </h1>
           <p className='text-content-muted mt-1 text-sm'>
-            Items yêu cầu Rexer staff xử lý — comment mới, publish request,
+            Items yêu cầu Rexer staff xử lý: comment mới, publish request,
             onboard brand, v.v. Click <strong>Nhận</strong> để claim →{' '}
             <strong>Đóng</strong> khi xong.
           </p>
         </div>
-        <button
+        <Button
           type='button'
+          variant='neutral'
+          size='sm'
           onClick={load}
           disabled={loading}
-          className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium shadow-sm disabled:opacity-50'
         >
           <RefreshCw className={cn('size-3.5', loading && 'animate-spin')} />
           Refresh
-        </button>
+        </Button>
       </div>
 
       {/* Stats strip */}
@@ -212,36 +215,31 @@ export function AdminInboxPage() {
       </div>
 
       {/* Filters */}
-      <div className='border-border flex flex-wrap items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm'>
+      <div className='border-border bg-card flex flex-wrap items-center gap-2 rounded-2xl border p-2 shadow-sm'>
         <span className='text-3xs text-muted-foreground inline-flex items-center gap-1 px-2 font-semibold tracking-[0.18em] uppercase'>
           <Filter className='size-3' /> Status
         </span>
         {(['all', 'open', 'claimed', 'done'] as const).map(s => (
-          <button
+          <Chip
             key={s}
-            type='button'
+            size='sm'
+            selected={statusFilter === s}
             onClick={() => setStatusFilter(s)}
-            className={cn(
-              'text-2xs rounded-full px-2.5 py-1 font-medium transition-colors',
-              statusFilter === s
-                ? 'bg-zinc-900 text-white shadow-sm'
-                : 'border-border text-content-muted hover:bg-muted border bg-white'
-            )}
           >
             {s === 'all' ? 'Tất cả' : (STATUS_META[s]?.label ?? s)}
-          </button>
+          </Chip>
         ))}
 
         {distinctKinds.length > 0 && (
           <>
-            <span className='ml-2 hidden h-4 w-px bg-zinc-200 sm:block' />
+            <span className='bg-border ml-2 hidden h-4 w-px sm:block' />
             <span className='text-3xs text-muted-foreground inline-flex items-center gap-1 px-2 font-semibold tracking-[0.18em] uppercase'>
               Kind
             </span>
             <select
               value={kindFilter}
               onChange={e => setKindFilter(e.target.value)}
-              className='text-2xs border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-2 py-1 font-medium outline-none'
+              className='text-2xs border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2 py-1 font-medium outline-none'
             >
               <option value='all'>Tất cả</option>
               {distinctKinds.map(k => (
@@ -255,7 +253,7 @@ export function AdminInboxPage() {
       </div>
 
       {error && (
-        <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
+        <div className='border-destructive/20 bg-danger-bg text-destructive rounded-lg border px-3 py-2 text-xs'>
           {error}
         </div>
       )}
@@ -266,13 +264,13 @@ export function AdminInboxPage() {
           <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải inbox…
         </div>
       ) : items.length === 0 ? (
-        <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
+        <div className='border-border bg-card rounded-2xl border border-dashed p-12 text-center'>
           <Inbox className='text-muted-foreground mx-auto size-8' />
           <p className='text-content-muted mt-3 text-sm font-semibold'>
             Inbox sạch
           </p>
           <p className='text-content-muted mt-1 text-xs'>
-            Không có item nào khớp filter — staff team đã catch up.
+            Không có item nào khớp filter, staff team đã catch up.
           </p>
         </div>
       ) : (
@@ -317,7 +315,7 @@ function InboxRow({
   const subject = (item.meta as { subject?: string } | undefined)?.subject;
   const summary = (item.meta as { summary?: string } | undefined)?.summary;
   return (
-    <div className='border-border flex flex-wrap items-start gap-3 rounded-2xl border bg-white p-4 shadow-sm transition-shadow hover:shadow-md'>
+    <div className='border-border bg-card flex flex-wrap items-start gap-3 rounded-2xl border p-4 shadow-sm transition-shadow hover:shadow-md'>
       <div
         className={cn(
           'flex size-10 shrink-0 items-center justify-center rounded-xl text-lg shadow-sm',
@@ -369,7 +367,7 @@ function InboxRow({
             type='button'
             onClick={onTake}
             disabled={acting}
-            className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 disabled:cursor-wait disabled:opacity-60'
+            className='bg-foreground text-background hover:bg-foreground/85 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium disabled:cursor-wait disabled:opacity-60'
           >
             {acting ? (
               <Loader2 className='size-3.5 animate-spin' />

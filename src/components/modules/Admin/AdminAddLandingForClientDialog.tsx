@@ -21,6 +21,7 @@ import * as React from 'react';
 import { Loader2, Send, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Brand, Template, Workspace } from '@/services/rexer/types';
@@ -129,7 +130,7 @@ export function AdminAddLandingForClientDialog({
       <form
         onSubmit={handleSubmit}
         onClick={e => e.stopPropagation()}
-        className='my-16 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
+        className='bg-card my-16 w-full max-w-md overflow-hidden rounded-2xl shadow-2xl'
       >
         <div className='border-border flex items-center justify-between border-b px-5 py-3'>
           <div className='flex items-center gap-2.5'>
@@ -143,14 +144,15 @@ export function AdminAddLandingForClientDialog({
               </p>
             </div>
           </div>
-          <button
+          <Button
             type='button'
+            variant='ghost'
+            size='icon'
             onClick={onClose}
-            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label='Close'
           >
             <X className='size-4' />
-          </button>
+          </Button>
         </div>
 
         <div className='space-y-4 px-5 py-4'>
@@ -164,8 +166,8 @@ export function AdminAddLandingForClientDialog({
               value={name}
               maxLength={200}
               onChange={e => setName(e.target.value)}
-              placeholder='Vd: Hè 2026 — Coca-Cola promo'
-              className='border-border mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              placeholder='Vd: Hè 2026: Coca-Cola promo'
+              className='border-border bg-background mt-1 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             />
           </div>
 
@@ -177,17 +179,15 @@ export function AdminAddLandingForClientDialog({
               value={templateId}
               onChange={e => setTemplateId(e.target.value)}
               disabled={templates.length === 0}
-              className='border-border mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='border-border bg-background mt-1 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             >
               {templates.length === 0 && (
-                <option value=''>
-                  (Chưa có template — tạo template trước)
-                </option>
+                <option value=''>(Chưa có template, tạo template trước)</option>
               )}
               {templates.map(t => (
                 <option key={t.id} value={t.id}>
                   {t.name}
-                  {t.category ? ` — ${t.category}` : ''}
+                  {t.category ? `, ${t.category}` : ''}
                 </option>
               ))}
             </select>
@@ -205,7 +205,7 @@ export function AdminAddLandingForClientDialog({
               value={workspaceId}
               onChange={e => setWorkspaceId(e.target.value)}
               disabled={workspaces.length === 0}
-              className='border-border mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='border-border bg-background mt-1 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             >
               {workspaces.length === 0 && (
                 <option value=''>(Brand chưa có workspace)</option>
@@ -236,7 +236,7 @@ export function AdminAddLandingForClientDialog({
           </div>
 
           {error && (
-            <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
+            <div className='border-destructive/20 bg-danger-bg text-destructive rounded-lg border px-3 py-2 text-xs'>
               {error}
             </div>
           )}
@@ -251,18 +251,19 @@ export function AdminAddLandingForClientDialog({
         </div>
 
         <div className='border-border bg-muted/50 flex items-center justify-end gap-2 border-t px-5 py-3'>
-          <button
+          <Button
             type='button'
+            variant='neutral'
+            size='sm'
             onClick={onClose}
             disabled={submitting}
-            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             Huỷ
-          </button>
-          <button
+          </Button>
+          <Button
             type='submit'
+            size='sm'
             disabled={submitting || !name.trim() || !templateId || !workspaceId}
-            className='inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50'
           >
             {submitting ? (
               <Loader2 className='size-3.5 animate-spin' />
@@ -270,7 +271,7 @@ export function AdminAddLandingForClientDialog({
               <Send className='size-3.5' />
             )}
             {submitting ? 'Đang tạo…' : 'Tạo page'}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

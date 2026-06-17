@@ -16,6 +16,8 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type {
   PortalAdCampaign,
@@ -171,7 +173,7 @@ export function CreateCampaignDialog({
       onClick={onClose}
     >
       <div
-        className='my-8 flex w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl'
+        className='bg-background my-8 flex w-full max-w-xl flex-col overflow-hidden rounded-2xl shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -238,7 +240,7 @@ export function CreateCampaignDialog({
                   <span
                     className={cn(
                       'mx-2 h-px flex-1',
-                      done ? 'bg-emerald-300' : 'bg-zinc-200'
+                      done ? 'bg-emerald-300' : 'bg-muted'
                     )}
                   />
                 )}
@@ -255,7 +257,7 @@ export function CreateCampaignDialog({
               <div>
                 <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
                   {t('adsCreateCampaignDialog.nameLabel')}{' '}
-                  <span className='text-rose-500'>*</span>
+                  <span className='text-destructive'>*</span>
                 </label>
                 <input
                   type='text'
@@ -309,20 +311,15 @@ export function CreateCampaignDialog({
                   {channelOpts.map(c => {
                     const on = channels.includes(c.id);
                     return (
-                      <button
+                      <Chip
                         key={c.id}
-                        type='button'
+                        selected={on}
+                        size='md'
                         onClick={() => toggleChannel(c.id)}
-                        className={cn(
-                          'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
-                          on
-                            ? 'border-blue-500 bg-blue-600 text-white'
-                            : 'border-border text-content-muted hover:bg-muted bg-white'
-                        )}
                       >
                         {on && <Check className='size-3' />}
                         {c.name}
-                      </button>
+                      </Chip>
                     );
                   })}
                 </div>
@@ -405,7 +402,7 @@ export function CreateCampaignDialog({
                 <select
                   value={templateId}
                   onChange={e => setTemplateId(e.target.value)}
-                  className='border-border mt-1.5 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
+                  className='border-border bg-background mt-1.5 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100'
                 >
                   <option value=''>
                     {t('adsCreateCampaignDialog.landingNone')}
@@ -455,21 +452,21 @@ export function CreateCampaignDialog({
 
         {/* Footer */}
         <div className='border-border bg-muted/50 flex items-center justify-between gap-3 border-t px-5 py-3'>
-          <button
+          <Button
             type='button'
+            variant='neutral'
+            size='sm'
             onClick={step === 0 ? onClose : () => setStep(s => s - 1)}
             disabled={saving}
-            className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             {step === 0 ? (
               t('adsCreateCampaignDialog.cancel')
             ) : (
               <>
-                <ChevronLeft className='size-3.5' />{' '}
-                {t('adsCreateCampaignDialog.back')}
+                <ChevronLeft /> {t('adsCreateCampaignDialog.back')}
               </>
             )}
-          </button>
+          </Button>
 
           <div className='text-2xs text-muted-foreground'>
             {t('adsCreateCampaignDialog.stepCounter', {
@@ -479,31 +476,21 @@ export function CreateCampaignDialog({
           </div>
 
           {isLast ? (
-            <button
-              type='button'
-              onClick={submit}
-              disabled={saving}
-              className='inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-60'
-            >
-              {saving ? (
-                <Loader2 className='size-3.5 animate-spin' />
-              ) : (
-                <Check className='size-3.5' />
-              )}
+            <Button type='button' size='sm' onClick={submit} disabled={saving}>
+              {saving ? <Loader2 className='animate-spin' /> : <Check />}
               {saving
                 ? t('adsCreateCampaignDialog.creating')
                 : t('adsCreateCampaignDialog.submit')}
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               type='button'
+              size='sm'
               onClick={() => canNext && setStep(s => s + 1)}
               disabled={!canNext}
-              className='inline-flex items-center gap-1 rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50'
             >
-              {t('adsCreateCampaignDialog.next')}{' '}
-              <ChevronRight className='size-3.5' />
-            </button>
+              {t('adsCreateCampaignDialog.next')} <ChevronRight />
+            </Button>
           )}
         </div>
       </div>
