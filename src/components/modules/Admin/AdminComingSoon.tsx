@@ -27,7 +27,7 @@ export function AdminComingSoon({
 }) {
   return (
     <div className='mx-auto max-w-3xl p-6'>
-      <div className='border-border overflow-hidden rounded-2xl border bg-white shadow-sm'>
+      <div className='border-border bg-card overflow-hidden rounded-2xl border shadow-sm'>
         {/* Header */}
         <div className='border-border border-b bg-gradient-to-br from-indigo-50 via-white to-fuchsia-50 p-6'>
           <div className='flex items-start gap-3'>
@@ -64,7 +64,7 @@ export function AdminComingSoon({
             </div>
             <Link
               href={`/overview/document-BE#${specFile.replace('.md', '').replace('be-', 'be-')}`}
-              className='border-border text-content-muted hover:bg-muted flex items-center gap-1 rounded-lg border bg-white px-2.5 py-1 text-xs font-medium'
+              className='border-border text-content-muted hover:bg-muted bg-background flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium'
             >
               <FileCode2 className='size-3.5' />
               Xem spec
@@ -125,7 +125,7 @@ export function AdminComingSoon({
               </div>
               <Link
                 href={previewHref}
-                className='flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
+                className='bg-foreground text-background hover:bg-foreground/85 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium'
               >
                 {previewLabel}
                 <ExternalLink className='size-3' />

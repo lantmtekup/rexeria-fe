@@ -248,7 +248,7 @@ function PortalShellInner({
 
   return (
     <div className='bg-background text-foreground min-h-screen antialiased'>
-      <header className='border-border sticky top-0 z-30 flex items-center justify-between border-b bg-white/95 px-6 py-3 backdrop-blur'>
+      <header className='border-border bg-background/95 sticky top-0 z-30 flex items-center justify-between border-b px-6 py-3 backdrop-blur'>
         <div className='flex items-center gap-3'>
           {/* Client info */}
           <div className='flex items-center gap-2'>
@@ -274,7 +274,7 @@ function PortalShellInner({
               className={`flex items-center gap-2 rounded-lg border px-2.5 py-1 text-sm transition-all ${
                 wsMenuOpen
                   ? 'border-border bg-muted'
-                  : 'border-border hover:bg-muted bg-white'
+                  : 'border-border hover:bg-muted bg-background'
               }`}
             >
               <div
@@ -299,7 +299,7 @@ function PortalShellInner({
                   className='fixed inset-0 z-30'
                   onClick={() => setWsMenuOpen(false)}
                 />
-                <div className='border-border absolute top-full left-0 z-40 mt-1 w-80 overflow-hidden rounded-xl border bg-white shadow-2xl'>
+                <div className='border-border bg-background absolute top-full left-0 z-40 mt-1 w-80 overflow-hidden rounded-xl border shadow-2xl'>
                   <div className='text-3xs border-border bg-muted/50 text-content-muted border-b px-3 py-2 font-semibold tracking-wider uppercase'>
                     {t('shell.workspacesOf', {
                       count: workspaces.length,
@@ -375,10 +375,10 @@ function PortalShellInner({
         <div className='flex items-center gap-2'>
           <LanguageSwitcher
             locale={locale}
-            className='border-border rounded-lg border bg-white px-2.5 py-1'
+            className='border-border bg-background rounded-lg border px-2.5 py-1'
           />
           {/* Notifications */}
-          <button className='border-border text-content-muted hover:bg-muted relative flex items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1 text-xs font-medium'>
+          <button className='border-border text-content-muted hover:bg-muted bg-background relative flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium'>
             <Bell className='size-3.5' />
             {unreadCount > 0 && (
               <span className='text-3xs absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-rose-500 font-mono font-bold text-white ring-2 ring-white'>
@@ -396,7 +396,7 @@ function PortalShellInner({
             <div className='relative'>
               <button
                 onClick={() => setUserMenuOpen(o => !o)}
-                className='border-border text-content-muted hover:bg-muted flex items-center gap-2 rounded-lg border bg-white px-2 py-1 text-xs font-medium'
+                className='border-border text-content-muted hover:bg-muted bg-background flex items-center gap-2 rounded-lg border px-2 py-1 text-xs font-medium'
               >
                 <div className='text-3xs flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-violet-500 font-mono font-bold text-white'>
                   {(user.display_name ?? user.email ?? '?')
@@ -414,10 +414,10 @@ function PortalShellInner({
                     className='fixed inset-0 z-30'
                     onClick={() => setUserMenuOpen(false)}
                   />
-                  <div className='border-border absolute top-full right-0 z-40 mt-1 w-56 overflow-hidden rounded-xl border bg-white shadow-2xl'>
+                  <div className='border-border bg-background absolute top-full right-0 z-40 mt-1 w-56 overflow-hidden rounded-xl border shadow-2xl'>
                     <div className='border-border border-b px-3 py-2'>
                       <div className='truncate text-sm font-semibold'>
-                        {user.display_name ?? '—'}
+                        {user.display_name ?? '-'}
                       </div>
                       <div className='text-3xs text-content-muted truncate font-mono'>
                         {user.email}
@@ -428,7 +428,7 @@ function PortalShellInner({
                     </div>
                     <button
                       onClick={handleLogout}
-                      className='text-content-muted flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-rose-50 hover:text-rose-700'
+                      className='text-content-muted hover:bg-danger-bg hover:text-destructive flex w-full items-center gap-2 px-3 py-2 text-left text-sm'
                     >
                       <LogOut className='size-3.5' />
                       {t('shell.logout')}
@@ -440,7 +440,7 @@ function PortalShellInner({
           ) : (
             <Link
               href='/sign-in'
-              className='rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
+              className='bg-foreground text-background hover:bg-foreground/85 rounded-lg px-3 py-1.5 text-xs font-medium'
             >
               {t('shell.signIn')}
             </Link>
@@ -450,7 +450,7 @@ function PortalShellInner({
 
       <div className='flex'>
         {/* Side nav */}
-        <aside className='border-border sticky top-[57px] hidden h-[calc(100vh-57px)] w-60 shrink-0 overflow-y-auto border-r bg-white px-3 py-4 lg:block'>
+        <aside className='border-border bg-background sticky top-[57px] hidden h-[calc(100vh-57px)] w-60 shrink-0 overflow-y-auto border-r px-3 py-4 lg:block'>
           <div className='mb-4 rounded-xl bg-gradient-to-br from-rose-50 to-white p-3'>
             <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
               {t('shell.plan')}
@@ -491,20 +491,20 @@ function PortalShellInner({
                       n.group ? 'ml-2' : ''
                     } ${
                       isActive
-                        ? 'bg-zinc-900 text-white shadow-sm'
+                        ? 'bg-foreground text-background shadow-sm'
                         : 'text-content-muted hover:bg-muted'
                     }`}
                   >
                     <Icon
-                      className={`size-4 ${isActive ? 'text-white' : 'text-content-muted'}`}
+                      className={`size-4 ${isActive ? 'text-background' : 'text-content-muted'}`}
                     />
                     <span className='flex-1'>{t(`shell.${n.labelKey}`)}</span>
                     {n.badge !== undefined && n.badge > 0 && (
                       <span
                         className={`text-3xs rounded-full px-1.5 py-0.5 font-mono font-semibold ${
                           isActive
-                            ? 'bg-white/20 text-white'
-                            : 'bg-rose-100 text-rose-700'
+                            ? 'bg-background/20 text-white'
+                            : 'bg-danger-bg text-destructive'
                         }`}
                       >
                         {n.badge}

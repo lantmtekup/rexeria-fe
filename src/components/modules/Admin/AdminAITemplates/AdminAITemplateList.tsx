@@ -127,7 +127,7 @@ export function AdminAITemplateList() {
             {items.map(t => (
               <TableRow key={t.id}>
                 <TableCell className='font-medium'>{t.name}</TableCell>
-                <TableCell>{t.topic ?? '—'}</TableCell>
+                <TableCell>{t.topic ?? '-'}</TableCell>
                 <TableCell>{t.fields?.length ?? 0}</TableCell>
                 <TableCell>{t.blocks?.length ?? 0}</TableCell>
                 <TableCell>

@@ -25,7 +25,13 @@ import { toast } from 'sonner';
 
 import { Input } from '@/components/atoms/input';
 import { Textarea } from '@/components/atoms/textarea';
-import { FontPicker } from '@/components/molecules/FontPicker';
+import {
+  BRAND_COLOR_ROLES,
+  BRAND_FONT_ROLES,
+  brandToken,
+  brandTokenKey,
+  previewColor,
+} from '@/lib/brand-kit';
 import { cn } from '@/lib/cn';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
@@ -416,11 +422,11 @@ function TextControls({
 
       <Sep />
 
-      {/* Font family picker — Vietnamese-friendly Google Fonts */}
+      {/* Font token role — resolves to the brand kit's font at render */}
       <InlineLabel label='Font'>
-        <FontPicker
+        <FontTokenPicker
           value={style?.fontFamily}
-          onChange={fontId => onUpdateStyle({ fontFamily: fontId })}
+          onChange={token => onUpdateStyle({ fontFamily: token })}
         />
       </InlineLabel>
 
@@ -1389,8 +1395,12 @@ function InlineLabel({
   );
 }
 
-// ─────────────────────────────────────────────────────────── COLOR SWATCH
+// ─────────────────────────────────────────── COLOR SWATCH (token roles)
 
+// Controlled color picker: author chooses a brand token ROLE (primary, text…),
+// not a raw hex. Swatches preview with DEFAULT_PREVIEW_KIT; the value stored is
+// `token:<role>` so the real per-brand kit fills the color at render. Legacy raw
+// hex values still show a "custom" marker but the picker only emits tokens.
 function ColorSwatch({
   label,
   value,
@@ -1400,31 +1410,70 @@ function ColorSwatch({
   value: string;
   onChange: (next: string) => void;
 }) {
+  const activeRole = brandTokenKey(value);
   return (
-    <label
-      className='flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-1.5 transition-colors hover:bg-neutral-100'
-      title={value}
+    <div
+      className='flex h-7 items-center gap-1.5 rounded-md px-1.5'
+      title={`${label} (token thương hiệu)`}
     >
       <span className='text-3xs font-mono tracking-[0.08em] text-neutral-400 uppercase'>
         {label}
       </span>
-      <span className='relative inline-flex'>
-        <span
-          className='size-4 rounded-sm ring-1 ring-black/10'
-          style={{ backgroundColor: value }}
-          aria-hidden
-        />
-        <input
-          type='color'
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          className='absolute inset-0 size-4 cursor-pointer opacity-0'
-          aria-label={`Chọn ${label}`}
-        />
-      </span>
-      <span className='text-3xs font-mono text-neutral-500 tabular-nums'>
-        {value.replace('#', '').toUpperCase()}
-      </span>
-    </label>
+      <div className='flex items-center gap-1'>
+        {BRAND_COLOR_ROLES.map(role => {
+          const selected = activeRole === role.key;
+          return (
+            <button
+              key={role.key}
+              type='button'
+              onClick={() => onChange(brandToken(role.key))}
+              title={role.label}
+              aria-label={`${label}: ${role.label}`}
+              className={cn(
+                'size-4 rounded-sm ring-1 ring-black/10 transition',
+                selected && 'ring-2 ring-sky-500 ring-offset-1'
+              )}
+              style={{ backgroundColor: previewColor(role.key) }}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────── FONT PICKER (token roles)
+
+// Controlled font picker: author chooses a brand font ROLE (heading/body),
+// stored as `token:<role>`; the brand kit maps the role to a real font.
+function FontTokenPicker({
+  value,
+  onChange,
+}: {
+  value: string | undefined;
+  onChange: (next: string) => void;
+}) {
+  const activeRole = brandTokenKey(value) ?? BRAND_FONT_ROLES[0].key;
+  return (
+    <div className='flex items-center gap-1'>
+      {BRAND_FONT_ROLES.map(role => {
+        const selected = activeRole === role.key;
+        return (
+          <button
+            key={role.key}
+            type='button'
+            onClick={() => onChange(brandToken(role.key))}
+            className={cn(
+              'text-3xs rounded-md px-2 py-1 transition-colors',
+              selected
+                ? 'bg-neutral-900 text-white'
+                : 'text-neutral-600 hover:bg-neutral-100'
+            )}
+          >
+            {role.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }

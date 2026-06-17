@@ -12,6 +12,7 @@ import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Loader2, Sparkles, X } from 'lucide-react';
 
+import { Button } from '@/components/atoms/button';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Workspace as BEWorkspace } from '@/services/rexer/types';
@@ -118,7 +119,7 @@ export function CreateWorkspaceDialog({
       onClick={onClose}
     >
       <div
-        className='my-12 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
+        className='bg-background my-12 w-full max-w-md overflow-hidden rounded-2xl shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -193,7 +194,7 @@ export function CreateWorkspaceDialog({
           {clientId && (
             <div className='text-2xs bg-muted text-content-muted rounded-lg px-3 py-2'>
               {t('createWorkspaceDialog.clientPreview')}{' '}
-              <code className='rounded bg-white px-1 font-mono'>
+              <code className='bg-background rounded px-1 font-mono'>
                 {clientId.slice(0, 8)}…
               </code>
             </div>
@@ -205,7 +206,7 @@ export function CreateWorkspaceDialog({
           )}
 
           {error && (
-            <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
+            <div className='border-destructive/20 bg-danger-bg text-destructive rounded-lg border px-3 py-2 text-xs'>
               {error}
             </div>
           )}
@@ -213,29 +214,26 @@ export function CreateWorkspaceDialog({
 
         {/* Footer */}
         <div className='border-border bg-muted/50 flex items-center justify-end gap-2 border-t px-5 py-3'>
-          <button
+          <Button
             type='button'
+            variant='neutral'
+            size='sm'
             onClick={onClose}
             disabled={submitting}
-            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             {t('createWorkspaceDialog.cancel')}
-          </button>
-          <button
+          </Button>
+          <Button
             type='button'
+            size='sm'
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className='flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50'
           >
-            {submitting ? (
-              <Loader2 className='size-3.5 animate-spin' />
-            ) : (
-              <Sparkles className='size-3.5' />
-            )}
+            {submitting ? <Loader2 className='animate-spin' /> : <Sparkles />}
             {submitting
               ? t('createWorkspaceDialog.submitting')
               : t('createWorkspaceDialog.submit')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -256,7 +254,7 @@ function Field({
   return (
     <div>
       <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-        {label} {required && <span className='text-rose-500'>*</span>}
+        {label} {required && <span className='text-destructive'>*</span>}
       </label>
       <div className='mt-1'>{children}</div>
       {hint && <p className='text-3xs text-content-muted mt-1'>{hint}</p>}

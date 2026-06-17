@@ -230,7 +230,7 @@ export function CurateTab({ onCount }: { onCount: (n: number) => void }) {
   return (
     <div className='p-4'>
       <div className='text-2xs mb-3 inline-block rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800'>
-        <strong>UI Demo · dữ liệu mẫu</strong> — chọn loại tương tác Rexer track
+        <strong>UI Demo · dữ liệu mẫu</strong>: chọn loại tương tác Rexer track
         trên trang public của khách. Chờ BE wire endpoint analytics events.
       </div>
 
@@ -243,7 +243,7 @@ export function CurateTab({ onCount }: { onCount: (n: number) => void }) {
             <div
               key={k}
               className={cn(
-                'border-border rounded-2xl border bg-white p-3 shadow-sm transition-all',
+                'border-border bg-card rounded-2xl border p-3 shadow-sm transition-all',
                 !on && 'opacity-60'
               )}
             >
@@ -290,7 +290,7 @@ export function CurateTab({ onCount }: { onCount: (n: number) => void }) {
       </div>
 
       {/* Events feed */}
-      <section className='border-border mt-5 overflow-hidden rounded-2xl border bg-white shadow-sm'>
+      <section className='border-border bg-card mt-5 overflow-hidden rounded-2xl border shadow-sm'>
         <div className='border-border flex items-center justify-between border-b px-4 py-2.5'>
           <div className='flex items-center gap-2'>
             <Activity className='size-4' />
@@ -301,7 +301,7 @@ export function CurateTab({ onCount }: { onCount: (n: number) => void }) {
             LIVE
           </span>
         </div>
-        <div className='divide-y divide-zinc-100'>
+        <div className='divide-border divide-y'>
           {EVENTS.map(e => {
             const m = INTERACTIONS[e.kind];
             const Icon = m.icon;

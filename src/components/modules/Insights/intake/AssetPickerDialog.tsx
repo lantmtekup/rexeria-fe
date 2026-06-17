@@ -112,18 +112,13 @@ export function AssetPickerDialog({
 
         <DialogFooter>
           <Button
-            variant='pill-light'
+            variant='neutral'
             size='sm'
             onClick={() => onOpenChange(false)}
           >
             Huỷ
           </Button>
-          <Button
-            variant='pill'
-            size='sm'
-            onClick={confirm}
-            disabled={sel.size === 0}
-          >
+          <Button size='sm' onClick={confirm} disabled={sel.size === 0}>
             Thêm{sel.size > 0 ? ` (${sel.size})` : ''}
           </Button>
         </DialogFooter>

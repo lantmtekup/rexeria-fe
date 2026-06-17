@@ -25,6 +25,8 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { Chip } from '@/components/atoms/chip';
+
 import { fmtFull, fmtNum } from '../_data';
 import { PortalShell } from '../_shell';
 
@@ -486,7 +488,7 @@ export default function PortalCuratePage() {
       </div>
 
       {/* Filter bar */}
-      <div className='border-border mt-5 flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3 shadow-sm'>
+      <div className='border-border bg-background mt-5 flex flex-wrap items-center gap-3 rounded-2xl border p-3 shadow-sm'>
         <div className='border-border bg-muted flex flex-1 items-center gap-2 rounded-lg border px-3 py-1.5 lg:max-w-sm'>
           <Search className='text-muted-foreground size-3.5' />
           <input
@@ -499,19 +501,16 @@ export default function PortalCuratePage() {
         </div>
         <div className='flex flex-wrap items-center gap-1'>
           {(['all', 'page', 'block', 'element'] as const).map(s => (
-            <button
+            <Chip
               key={s}
+              selected={scopeFilter === s}
+              size='sm'
               onClick={() => setScopeFilter(s)}
-              className={`text-2xs rounded-full px-2.5 py-1 font-medium transition-all ${
-                scopeFilter === s
-                  ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'border-border text-content-muted hover:bg-muted border bg-white'
-              }`}
             >
               {s === 'all'
                 ? t('curate.filterAll', { count: allKinds.length })
                 : t(`curate.scope_${s}`)}
-            </button>
+            </Chip>
           ))}
         </div>
       </div>
@@ -529,10 +528,10 @@ export default function PortalCuratePage() {
       </div>
 
       {/* Recent events feed */}
-      <section className='border-border mt-8 rounded-2xl border bg-white shadow-sm'>
+      <section className='border-border bg-card mt-8 rounded-2xl border shadow-sm'>
         <div className='border-border flex items-center justify-between border-b px-5 py-3'>
           <div className='flex items-center gap-2'>
-            <div className='flex size-7 items-center justify-center rounded-lg bg-zinc-900 text-white shadow-sm'>
+            <div className='bg-foreground text-background flex size-7 items-center justify-center rounded-lg shadow-sm'>
               <Activity className='size-4' />
             </div>
             <div>
@@ -543,7 +542,7 @@ export default function PortalCuratePage() {
             </div>
           </div>
         </div>
-        <div className='divide-y divide-zinc-100'>
+        <div className='divide-border divide-y'>
           {FAKE_EVENTS.map(e => (
             <EventRow key={e.id} e={e} />
           ))}
@@ -569,7 +568,7 @@ function StatTile({
   icon: LucideIcon;
 }) {
   return (
-    <div className='border-border overflow-hidden rounded-2xl border bg-white p-4 shadow-sm'>
+    <div className='border-border bg-card overflow-hidden rounded-2xl border p-4 shadow-sm'>
       <div className='flex items-center gap-2.5'>
         <div
           className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${color} text-white shadow-sm`}

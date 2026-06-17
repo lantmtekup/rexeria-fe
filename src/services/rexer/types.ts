@@ -1894,6 +1894,17 @@ export interface AdminBlockType {
   min_dimensions?: { width: number; height: number };
   engine_version?: string;
   supported_slot_types?: string[];
+  // AI recommendation taxonomy (block_types migration 000033) — snake_case khớp
+  // BE. Engine recommend_blocks khớp brief với các tín hiệu này.
+  function?: string;
+  funnel_stage?: string[];
+  goal_tags?: string[];
+  industry_fit?: string[];
+  tone?: string[];
+  page_role?: string;
+  proof_type?: string;
+  needs_media?: string;
+  has_cta?: boolean;
 }
 
 export interface CreateAdminBlockTypeRequest {
@@ -1906,6 +1917,16 @@ export interface CreateAdminBlockTypeRequest {
   is_premium?: boolean;
   schema_version?: string;
   sort_order?: number;
+  // AI recommendation taxonomy (gửi snake_case trực tiếp lên BE).
+  function?: string;
+  funnel_stage?: string[];
+  goal_tags?: string[];
+  industry_fit?: string[];
+  tone?: string[];
+  page_role?: string;
+  proof_type?: string;
+  needs_media?: string;
+  has_cta?: boolean;
 }
 
 export interface UpdateAdminBlockTypeRequest {
@@ -1918,6 +1939,16 @@ export interface UpdateAdminBlockTypeRequest {
   is_premium?: boolean;
   schema_version?: string;
   sort_order?: number;
+  // AI recommendation taxonomy (gửi snake_case trực tiếp lên BE).
+  function?: string;
+  funnel_stage?: string[];
+  goal_tags?: string[];
+  industry_fit?: string[];
+  tone?: string[];
+  page_role?: string;
+  proof_type?: string;
+  needs_media?: string;
+  has_cta?: boolean;
 }
 
 // ── Admin Users (global cross-brand list) ────────────────────────────────
@@ -2253,6 +2284,84 @@ export interface PublicPageResponse {
   template_name?: string;
   template_id?: string;
   template_version_id: string;
+  /** Active brand-kit tokens injected as CSS vars at render (2026-06-15). */
+  brand_kit?: BrandKitTokens;
+  /** Active motion kit — scales animation + sets page-transition style. */
+  motion_kit?: MotionKitData;
+}
+
+// ── Motion Kit (per-brand motion personality) ────────────────────────────
+export interface MotionKitData {
+  easing?: string;
+  duration_scale?: number;
+  transition_style?: 'fade' | 'slide' | 'morph';
+  intensity?: 'subtle' | 'normal' | 'bold';
+}
+
+export interface MotionKit extends MotionKitData {
+  id: string;
+  brand_id: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Template Effects (per-template motion personality) ───────────────────
+// Song song với MotionKit (mức brand) nhưng gắn với template: mỗi template có
+// N bộ hiệu ứng, đúng 1 bộ active. Mirror BE models.TemplateEffect.
+export interface TemplateEffect {
+  id: string;
+  template_id: string;
+  name: string;
+  is_active: boolean;
+  easing: string;
+  duration_scale: number;
+  transition_style: 'fade' | 'slide' | 'morph';
+  intensity: 'subtle' | 'normal' | 'bold';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateTemplateEffectRequest {
+  name: string;
+  easing?: string;
+  duration_scale?: number;
+  transition_style?: 'fade' | 'slide' | 'morph';
+  intensity?: 'subtle' | 'normal' | 'bold';
+  /** Đặt bộ này thành active ngay khi tạo. */
+  activate?: boolean;
+}
+
+export type UpdateTemplateEffectRequest = Partial<
+  Omit<CreateTemplateEffectRequest, 'activate'>
+>;
+
+// ── Brand Kit (controlled design-token layer) ────────────────────────────
+/** Role-keyed token maps; mirrors BE models.BrandKit jsonb columns. */
+export interface BrandKitTokens {
+  colors?: Record<string, string>;
+  fonts?: Record<string, string>;
+  logo?: Record<string, unknown>;
+  tokens?: Record<string, string | number>;
+}
+
+export interface BrandKit extends BrandKitTokens {
+  id: string;
+  brand_id: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateBrandKitRequest extends BrandKitTokens {
+  name: string;
+  activate?: boolean;
+}
+
+export interface UpdateBrandKitRequest extends BrandKitTokens {
+  name?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -2647,6 +2756,12 @@ export interface UpdateBlockRequest {
   settings?: Record<string, unknown>;
   tags?: string[];
   thumbnail_asset_id?: string;
+  /**
+   * Đổi loại block_type của instance đã lưu. BE chưa khai báo field này trong
+   * PATCH /blocks/:id contract (2026-06) — gửi kèm; cần verify persist 2 chiều
+   * khi test (mở → đổi → lưu → mở lại). Nếu không stick thì BE cần cho phép.
+   */
+  type_code?: string;
 }
 
 // ── BlockType (system catalog, canonical mirror of AdminBlockType) ───────

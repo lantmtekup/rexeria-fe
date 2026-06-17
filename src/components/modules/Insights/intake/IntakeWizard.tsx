@@ -663,7 +663,7 @@ export function IntakeWizard({
       {/* Panel chính */}
       <div className='border-border bg-card relative flex min-h-[480px] flex-1 flex-col rounded-2xl border'>
         {(analyzing || hydrating) && (
-          <div className='absolute inset-0 z-10 grid place-items-center rounded-2xl bg-white/85 backdrop-blur-sm'>
+          <div className='bg-background/85 absolute inset-0 z-10 grid place-items-center rounded-2xl backdrop-blur-sm'>
             <div className='text-center'>
               <Loader2 className='mx-auto size-7 animate-spin text-violet-600' />
               <p className='text-content-main mt-3 text-sm font-semibold'>
@@ -786,9 +786,9 @@ export function IntakeWizard({
                   value={workspaceId}
                   onChange={e => setWorkspaceId(e.target.value)}
                   disabled={workspaces.loading}
-                  className='border-border text-content-main focus:border-primary focus:ring-primary/20 w-full appearance-none rounded-xl border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2'
+                  className='border-border text-content-main focus:border-primary focus:ring-primary/20 bg-background w-full appearance-none rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-2'
                 >
-                  <option value=''>—</option>
+                  <option value=''>-</option>
                   {workspaceItems.map(w => (
                     <option key={w.id} value={w.id}>
                       {w.name}
@@ -1497,7 +1497,7 @@ function ReviewCard({ label, value }: { label: string; value?: string }) {
         {label}
       </div>
       <div className='text-content-main text-sm font-medium'>
-        {value || '—'}
+        {value || '-'}
       </div>
     </div>
   );

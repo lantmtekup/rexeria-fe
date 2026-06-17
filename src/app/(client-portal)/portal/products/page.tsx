@@ -17,6 +17,8 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
+import { Button } from '@/components/atoms/button';
+
 import {
   CATEGORY_LABEL,
   FAKE_PRODUCTS,
@@ -147,12 +149,9 @@ export default function PortalProductsPage() {
               loading…
             </span>
           )}
-          <button
-            onClick={openCreate}
-            className='flex items-center gap-1.5 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-orange-600'
-          >
+          <Button size='sm' onClick={openCreate}>
             <Plus className='size-3.5' /> {t('products.addProduct')}
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -167,7 +166,7 @@ export default function PortalProductsPage() {
       />
 
       {/* Filter bar */}
-      <div className='border-border mt-5 flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3 shadow-sm'>
+      <div className='border-border bg-card mt-5 flex flex-wrap items-center gap-3 rounded-2xl border p-3 shadow-sm'>
         <div className='border-border bg-muted flex flex-1 items-center gap-2 rounded-lg border px-3 py-1.5 lg:max-w-sm'>
           <Search className='text-muted-foreground size-3.5' />
           <input
@@ -183,7 +182,7 @@ export default function PortalProductsPage() {
           <CatBtn
             label={`${t('products.filterAll')} · ${counts.all}`}
             active={catFilter === 'all'}
-            color='bg-zinc-900'
+            color='bg-foreground'
             onClick={() => setCatFilter('all')}
           />
           {(Object.keys(CATEGORY_LABEL) as ProductCategory[]).map(c => {
@@ -204,7 +203,7 @@ export default function PortalProductsPage() {
       {/* Products grid */}
       <div className='mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'>
         {filtered.length === 0 ? (
-          <div className='border-border text-content-muted col-span-full rounded-2xl border border-dashed bg-white p-10 text-center text-sm'>
+          <div className='border-border text-content-muted bg-card col-span-full rounded-2xl border border-dashed p-10 text-center text-sm'>
             {t('products.emptyFilter')}
           </div>
         ) : (
@@ -234,7 +233,7 @@ function CatBtn({
       className={`text-2xs rounded-full px-2.5 py-1 font-medium transition-all ${
         active
           ? `${color} text-white shadow-sm`
-          : 'border-border text-content-muted hover:bg-muted border bg-white'
+          : 'border-border text-content-muted hover:bg-muted bg-background border'
       }`}
     >
       {label}
@@ -251,7 +250,7 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
   const maxPrice = Math.max(...p.sizes.map(s => s.price_vnd));
 
   return (
-    <div className='group border-border overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+    <div className='group border-border bg-card overflow-hidden rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       {/* Cover */}
       <div
         className={`relative aspect-[4/3] bg-gradient-to-br ${p.cover_gradient}`}
@@ -326,7 +325,7 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
             {minPrice !== maxPrice && (
               <span className='text-muted-foreground'>
                 {' '}
-                – {maxPrice.toLocaleString('vi-VN')}đ
+                - {maxPrice.toLocaleString('vi-VN')}đ
               </span>
             )}
           </span>
@@ -345,7 +344,7 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
                   <span className='text-foreground font-semibold'>
                     {f.label}
                   </span>
-                  <span className='text-content-muted'> — {f.description}</span>
+                  <span className='text-content-muted'>: {f.description}</span>
                 </div>
               </div>
             ))}
@@ -375,7 +374,7 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
           {p.related_template_ids.length > 0 ? (
             <Link
               href={`/overview/analytics/templates/${p.related_template_ids[0]}?range=30d`}
-              className='flex flex-1 items-center justify-center gap-1 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700'
+              className='bg-foreground text-background hover:bg-foreground/85 flex flex-1 items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors'
             >
               <LayoutTemplate className='size-3' />
               {t('products.linkedLanding', {
@@ -383,16 +382,13 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
               })}
             </Link>
           ) : (
-            <span className='text-2xs border-border text-muted-foreground flex flex-1 items-center justify-center gap-1 rounded-lg border border-dashed bg-white px-3 py-1.5'>
+            <span className='text-2xs border-border text-muted-foreground bg-background flex flex-1 items-center justify-center gap-1 rounded-lg border border-dashed px-3 py-1.5'>
               <Clock className='size-3' /> {t('products.noLanding')}
             </span>
           )}
-          <button
-            onClick={onEdit}
-            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'
-          >
+          <Button variant='neutral' size='sm' onClick={onEdit}>
             {t('products.edit')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -55,7 +55,7 @@ export const FAKE_WORKSPACES: Workspace[] = [
     client_id: 'cli_acme_group',
     slug: 'flagship-cola',
     name: 'Flagship Cola',
-    description: 'Brand chính — original + classic line',
+    description: 'Brand chính: original + classic line',
     logo_initial: 'FC',
     logo_color: 'bg-rose-500',
     industry: 'Beverage',
@@ -170,7 +170,7 @@ export const FAKE_TEMPLATES: PortalTemplate[] = [
   {
     id: 'tpl_01',
     workspace_id: 'ws_coca_main',
-    name: 'Coca-Cola Tết 2026 — Sum vầy ngày Tết',
+    name: 'Coca-Cola Tết 2026: Sum vầy ngày Tết',
     thumbnail_gradient: 'from-rose-400 to-red-500',
     status: 'published',
     views_30d: 12482,
@@ -183,7 +183,7 @@ export const FAKE_TEMPLATES: PortalTemplate[] = [
   {
     id: 'tpl_02',
     workspace_id: 'ws_coca_main',
-    name: 'Coca-Cola Zero Sugar — Sport campaign',
+    name: 'Coca-Cola Zero Sugar: Sport campaign',
     thumbnail_gradient: 'from-zinc-700 to-zinc-900',
     status: 'published',
     views_30d: 9842,
@@ -196,7 +196,7 @@ export const FAKE_TEMPLATES: PortalTemplate[] = [
   {
     id: 'tpl_03',
     workspace_id: 'ws_fanta',
-    name: 'Fanta Watermelon — Hè 2026',
+    name: 'Fanta Watermelon: Hè 2026',
     thumbnail_gradient: 'from-orange-400 to-pink-500',
     status: 'published',
     views_30d: 6540,
@@ -209,7 +209,7 @@ export const FAKE_TEMPLATES: PortalTemplate[] = [
   {
     id: 'tpl_04',
     workspace_id: 'ws_sprite',
-    name: 'Sprite Lemon — Refresh moment',
+    name: 'Sprite Lemon: Refresh moment',
     thumbnail_gradient: 'from-emerald-400 to-lime-500',
     status: 'published',
     views_30d: 4321,
@@ -222,7 +222,7 @@ export const FAKE_TEMPLATES: PortalTemplate[] = [
   {
     id: 'tpl_05',
     workspace_id: 'ws_olympic',
-    name: 'Coca-Cola — Olympic 2026 cheering',
+    name: 'Coca-Cola: Olympic 2026 cheering',
     thumbnail_gradient: 'from-blue-500 to-violet-600',
     status: 'draft',
     views_30d: 0,
@@ -235,7 +235,7 @@ export const FAKE_TEMPLATES: PortalTemplate[] = [
   {
     id: 'tpl_06',
     workspace_id: 'ws_coca_main',
-    name: 'Minute Maid — Health line',
+    name: 'Minute Maid: Health line',
     thumbnail_gradient: 'from-amber-400 to-orange-500',
     status: 'published',
     views_30d: 3120,
@@ -989,7 +989,7 @@ export const FAKE_PRODUCTS: PortalProduct[] = [
     status: 'active',
     cover_gradient: 'from-zinc-800 to-black',
     description:
-      'Vị Coca-Cola sảng khoái không calo, không đường — dành cho lối sống năng động.',
+      'Vị Coca-Cola sảng khoái không calo, không đường, dành cho lối sống năng động.',
     sizes: [
       { label: 'Lon', volume_ml: 330, price_vnd: 12_000 },
       { label: 'Chai', volume_ml: 500, price_vnd: 18_000 },
@@ -1038,7 +1038,7 @@ export const FAKE_PRODUCTS: PortalProduct[] = [
     category: 'carbonated',
     status: 'active',
     cover_gradient: 'from-orange-400 to-amber-500',
-    description: 'Nước cam có ga vị sảng khoái — niềm vui hè không giới hạn.',
+    description: 'Nước cam có ga vị sảng khoái, niềm vui hè không giới hạn.',
     sizes: [
       { label: 'Lon', volume_ml: 330, price_vnd: 11_000 },
       { label: 'Chai', volume_ml: 500, price_vnd: 17_000 },
@@ -1066,7 +1066,7 @@ export const FAKE_PRODUCTS: PortalProduct[] = [
     category: 'carbonated',
     status: 'active',
     cover_gradient: 'from-pink-400 to-rose-500',
-    description: 'Vị dưa hấu mọng nước, ngọt thanh — đặc biệt cho mùa hè 2026.',
+    description: 'Vị dưa hấu mọng nước, ngọt thanh, đặc biệt cho mùa hè 2026.',
     sizes: [
       { label: 'Lon', volume_ml: 330, price_vnd: 12_000 },
       { label: 'Chai', volume_ml: 500, price_vnd: 18_000 },
@@ -1084,7 +1084,7 @@ export const FAKE_PRODUCTS: PortalProduct[] = [
     category: 'carbonated',
     status: 'active',
     cover_gradient: 'from-emerald-400 to-lime-500',
-    description: 'Vị chanh sảng khoái, không caffeine — tỉnh táo tức thì.',
+    description: 'Vị chanh sảng khoái, không caffeine, tỉnh táo tức thì.',
     sizes: [
       { label: 'Lon', volume_ml: 330, price_vnd: 11_000 },
       { label: 'Chai', volume_ml: 500, price_vnd: 17_000 },
@@ -1105,7 +1105,7 @@ export const FAKE_PRODUCTS: PortalProduct[] = [
     category: 'juice',
     status: 'active',
     cover_gradient: 'from-amber-400 to-orange-500',
-    description: 'Nước cam có tép — bổ sung vitamin C hàng ngày.',
+    description: 'Nước cam có tép, bổ sung vitamin C hàng ngày.',
     sizes: [
       { label: 'Chai', volume_ml: 350, price_vnd: 15_000 },
       { label: 'Chai gia đình', volume_ml: 1_000, price_vnd: 35_000 },
@@ -1150,7 +1150,7 @@ export const FAKE_PRODUCTS: PortalProduct[] = [
     status: 'coming_soon',
     cover_gradient: 'from-blue-500 to-violet-600',
     description:
-      'Phiên bản đặc biệt kỷ niệm tài trợ Olympic 2026 — bao bì sưu tầm.',
+      'Phiên bản đặc biệt kỷ niệm tài trợ Olympic 2026, bao bì sưu tầm.',
     sizes: [{ label: 'Lon sưu tầm', volume_ml: 330, price_vnd: 15_000 }],
     ingredients: ['Như Coca-Cola Original'],
     certifications: ['ISO 22000', 'Olympic 2026 official partner'],
@@ -1204,7 +1204,7 @@ export const FAKE_ACTIVITY: ActivityItem[] = [
     actor: 'An (Brand)',
     actor_role: 'brand',
     subject: 'Coca-Cola Tết 2026',
-    excerpt: 'Cần đổi màu CTA sang đỏ đậm hơn — tone luxury hơn cho Tết.',
+    excerpt: 'Cần đổi màu CTA sang đỏ đậm hơn, tone luxury hơn cho Tết.',
     at: '5 giờ trước',
   },
   {

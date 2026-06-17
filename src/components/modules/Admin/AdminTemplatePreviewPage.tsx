@@ -215,7 +215,7 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
           title={`${template?.name ?? 'Template'} preview`}
           srcDoc={preview.preview_html}
           sandbox='allow-same-origin'
-          className='w-full flex-1 border-0 bg-white'
+          className='bg-background w-full flex-1 border-0'
         />
       </div>
     );
@@ -228,7 +228,7 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
         <iframe
           title={`${template?.name ?? 'Template'} preview`}
           src={preview.preview_url}
-          className='w-full flex-1 border-0 bg-white'
+          className='bg-background w-full flex-1 border-0'
         />
       </div>
     );
@@ -264,7 +264,7 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
     <div className='bg-muted flex h-screen flex-col items-center justify-center gap-4 p-8'>
       <Link
         href='/admin/templates'
-        className='border-border text-content-muted hover:bg-muted absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-md border bg-white px-3 py-1.5 text-xs font-medium'
+        className='border-border text-content-muted hover:bg-muted bg-background absolute top-4 left-4 inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium'
       >
         <ArrowLeft className='size-3.5' />
         Templates
@@ -275,12 +275,12 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
           Đang tải preview…
         </div>
       ) : error ? (
-        <div className='max-w-md rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
-          <AlertCircle className='mx-auto size-8 text-rose-600' />
-          <p className='mt-3 text-sm font-semibold text-rose-900'>
+        <div className='border-destructive/20 bg-danger-bg max-w-md rounded-2xl border p-6 text-center'>
+          <AlertCircle className='text-destructive mx-auto size-8' />
+          <p className='text-destructive mt-3 text-sm font-semibold'>
             Không load được preview
           </p>
-          <p className='text-2xs mt-1 font-mono text-rose-700'>{error}</p>
+          <p className='text-2xs text-destructive mt-1 font-mono'>{error}</p>
         </div>
       ) : template?.thumbnail_url ? (
         <>
@@ -288,14 +288,14 @@ export function AdminTemplatePreviewPage({ templateId }: Props) {
           <img
             src={template.thumbnail_url}
             alt={`${template.name} — thumbnail`}
-            className='border-border max-h-[80vh] max-w-[80vw] rounded-2xl border bg-white shadow-xl'
+            className='border-border bg-background max-h-[80vh] max-w-[80vw] rounded-2xl border shadow-xl'
           />
           <p className='text-content-muted text-xs'>
             Template chưa có canvas blocks. Hiển thị thumbnail.
           </p>
         </>
       ) : (
-        <div className='border-border max-w-md rounded-2xl border bg-white p-8 text-center'>
+        <div className='border-border bg-card max-w-md rounded-2xl border p-8 text-center'>
           <p className='text-content-muted text-sm font-semibold'>
             Template chưa có nội dung
           </p>
@@ -316,7 +316,7 @@ function PreviewHeader({
   onClose: () => void;
 }) {
   return (
-    <header className='border-border flex items-center justify-between gap-3 border-b bg-white px-4 py-2'>
+    <header className='border-border bg-background flex items-center justify-between gap-3 border-b px-4 py-2'>
       <button
         type='button'
         onClick={onClose}

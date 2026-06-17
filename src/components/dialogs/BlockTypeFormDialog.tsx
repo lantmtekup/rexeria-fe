@@ -1,9 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { cn } from '@/lib/cn';
 import { Button } from '@/components/atoms/button';
 import {
   Dialog,
@@ -45,6 +46,16 @@ interface FormState {
   sort_order: string;
   is_premium: boolean;
   is_active: boolean;
+  // AI recommendation taxonomy (migration 000033).
+  fn: string; // 'function' là reserved-ish — dùng `fn` trong state
+  page_role: string;
+  proof_type: string;
+  needs_media: string;
+  has_cta: boolean;
+  funnel_stage: string[];
+  goal_tags: string[];
+  tone: string[];
+  industry_fit: string[];
 }
 
 function emptyState(): FormState {
@@ -59,6 +70,15 @@ function emptyState(): FormState {
     sort_order: '',
     is_premium: false,
     is_active: true,
+    fn: '',
+    page_role: '',
+    proof_type: '',
+    needs_media: 'none',
+    has_cta: false,
+    funnel_stage: [],
+    goal_tags: [],
+    tone: [],
+    industry_fit: [],
   };
 }
 
@@ -74,6 +94,15 @@ function fromItem(it: AdminBlockType): FormState {
     sort_order: it.sort_order != null ? String(it.sort_order) : '',
     is_premium: it.is_premium ?? false,
     is_active: it.is_active,
+    fn: it.function ?? '',
+    page_role: it.page_role ?? '',
+    proof_type: it.proof_type ?? '',
+    needs_media: it.needs_media ?? 'none',
+    has_cta: it.has_cta ?? false,
+    funnel_stage: it.funnel_stage ?? [],
+    goal_tags: it.goal_tags ?? [],
+    tone: it.tone ?? [],
+    industry_fit: it.industry_fit ?? [],
   };
 }
 
@@ -81,6 +110,27 @@ function fromItem(it: AdminBlockType): FormState {
 const TYPE_RE = /^[a-z][a-z0-9_]{1,63}$/;
 // hex color #RGB or #RRGGBB.
 const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+// AI taxonomy options — đồng bộ enum BE (validate `oneof`).
+const FUNCTION_OPTS = [
+  'hook',
+  'pain',
+  'value_prop',
+  'how_it_works',
+  'benefits',
+  'social_proof',
+  'objection',
+  'offer',
+  'urgency',
+  'lead_capture',
+  'final_cta',
+];
+const PAGE_ROLE_OPTS = ['opener', 'body', 'closer'];
+const PROOF_TYPE_OPTS = ['logos', 'testimonial', 'stats', 'review'];
+const NEEDS_MEDIA_OPTS = ['image', 'video', 'none'];
+const FUNNEL_OPTS = ['awareness', 'consideration', 'conversion', 'retention'];
+const GOAL_OPTS = ['lead_gen', 'sales', 'awareness', 'launch', 'event'];
+const TONE_OPTS = ['warm', 'minimal', 'bold', 'corporate', 'playful'];
 
 function rxMessage(err: unknown): string {
   if (err instanceof RxApiError) return err.code || err.message || 'API_ERROR';
@@ -99,11 +149,31 @@ export function BlockTypeFormDialog({
     initial ? fromItem(initial) : emptyState()
   );
   const [submitting, setSubmitting] = React.useState(false);
+  const [industryInput, setIndustryInput] = React.useState('');
 
   // Reset state whenever dialog re-opens with a different target.
   React.useEffect(() => {
     if (open) setData(initial ? fromItem(initial) : emptyState());
   }, [open, initial]);
+
+  const toggleIn = (key: 'funnel_stage' | 'goal_tags' | 'tone', v: string) =>
+    setData(d => ({
+      ...d,
+      [key]: d[key].includes(v) ? d[key].filter(x => x !== v) : [...d[key], v],
+    }));
+
+  const addIndustry = () => {
+    const v = industryInput.trim().toLowerCase();
+    if (!v) return;
+    setData(d =>
+      d.industry_fit.includes(v)
+        ? d
+        : { ...d, industry_fit: [...d.industry_fit, v] }
+    );
+    setIndustryInput('');
+  };
+  const removeIndustry = (v: string) =>
+    setData(d => ({ ...d, industry_fit: d.industry_fit.filter(x => x !== v) }));
 
   const handleSubmit = async () => {
     // ── Validate ──
@@ -153,6 +223,15 @@ export function BlockTypeFormDialog({
           sort_order: sortOrder,
           is_premium: data.is_premium,
           is_active: data.is_active,
+          function: data.fn || undefined,
+          funnel_stage: data.funnel_stage,
+          goal_tags: data.goal_tags,
+          industry_fit: data.industry_fit,
+          tone: data.tone,
+          page_role: data.page_role || undefined,
+          proof_type: data.proof_type || undefined,
+          needs_media: data.needs_media || undefined,
+          has_cta: data.has_cta,
         };
         await rexerApi.adminBlockTypes.update(initial.type, body);
         toast.success(`Đã cập nhật "${initial.type}"`);
@@ -167,6 +246,15 @@ export function BlockTypeFormDialog({
           schema_version: data.schema_version.trim() || undefined,
           sort_order: sortOrder,
           is_premium: data.is_premium,
+          function: data.fn || undefined,
+          funnel_stage: data.funnel_stage,
+          goal_tags: data.goal_tags,
+          industry_fit: data.industry_fit,
+          tone: data.tone,
+          page_role: data.page_role || undefined,
+          proof_type: data.proof_type || undefined,
+          needs_media: data.needs_media || undefined,
+          has_cta: data.has_cta,
         };
         await rexerApi.adminBlockTypes.create(body);
         toast.success(`Đã tạo block type "${type}"`);
@@ -346,6 +434,115 @@ export function BlockTypeFormDialog({
               </label>
             )}
           </div>
+
+          {/* ── AI recommendation taxonomy (migration 000033) ── */}
+          <div className='border-border flex flex-col gap-4 rounded-lg border border-dashed p-3'>
+            <div>
+              <p className='text-content-muted text-xs font-semibold tracking-wide uppercase'>
+                Taxonomy cho AI gợi ý
+              </p>
+              <p className='text-2xs text-content-muted mt-0.5'>
+                Engine recommend_blocks khớp brief (mục tiêu / ngành / giai đoạn
+                phễu / tông giọng) với các tín hiệu này khi chọn block.
+              </p>
+            </div>
+
+            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+              <MetaSelect
+                id='blk-fn'
+                label='Function (vai trò trong recipe)'
+                value={data.fn}
+                options={FUNCTION_OPTS}
+                onChange={v => setData(d => ({ ...d, fn: v }))}
+              />
+              <MetaSelect
+                id='blk-page-role'
+                label='Vị trí trang'
+                value={data.page_role}
+                options={PAGE_ROLE_OPTS}
+                onChange={v => setData(d => ({ ...d, page_role: v }))}
+              />
+              <MetaSelect
+                id='blk-proof'
+                label='Loại proof'
+                value={data.proof_type}
+                options={PROOF_TYPE_OPTS}
+                onChange={v => setData(d => ({ ...d, proof_type: v }))}
+              />
+              <MetaSelect
+                id='blk-media'
+                label='Cần media'
+                value={data.needs_media}
+                options={NEEDS_MEDIA_OPTS}
+                placeholder='— none —'
+                onChange={v => setData(d => ({ ...d, needs_media: v }))}
+              />
+            </div>
+
+            <TagToggleGroup
+              label='Giai đoạn phễu (funnel_stage)'
+              options={FUNNEL_OPTS}
+              selected={data.funnel_stage}
+              onToggle={v => toggleIn('funnel_stage', v)}
+            />
+            <TagToggleGroup
+              label='Mục tiêu (goal_tags)'
+              options={GOAL_OPTS}
+              selected={data.goal_tags}
+              onToggle={v => toggleIn('goal_tags', v)}
+            />
+            <TagToggleGroup
+              label='Tông giọng (tone)'
+              options={TONE_OPTS}
+              selected={data.tone}
+              onToggle={v => toggleIn('tone', v)}
+            />
+
+            <div className='flex flex-col gap-1'>
+              <Label htmlFor='blk-industry'>Ngành phù hợp (industry_fit)</Label>
+              {data.industry_fit.length > 0 && (
+                <div className='flex flex-wrap items-center gap-1.5'>
+                  {data.industry_fit.map(v => (
+                    <span
+                      key={v}
+                      className='bg-muted inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs'
+                    >
+                      {v}
+                      <button
+                        type='button'
+                        onClick={() => removeIndustry(v)}
+                        className='text-content-muted hover:text-foreground'
+                        aria-label={`Bỏ ${v}`}
+                      >
+                        <X className='size-3' />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <Input
+                id='blk-industry'
+                value={industryInput}
+                onChange={e => setIndustryInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addIndustry();
+                  }
+                }}
+                onBlur={addIndustry}
+                placeholder='agnostic, saas, fnb… (Enter để thêm)'
+              />
+            </div>
+
+            <label className='inline-flex w-fit cursor-pointer items-center gap-2'>
+              <Switch
+                checked={data.has_cta}
+                onCheckedChange={v => setData(d => ({ ...d, has_cta: v }))}
+              />
+              <span className='text-sm'>Có call-to-action (has_cta)</span>
+            </label>
+          </div>
         </div>
 
         <DialogFooter>
@@ -363,5 +560,80 @@ export function BlockTypeFormDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Native single-select cho 1 thuộc tính taxonomy (option rỗng = không chọn). */
+function MetaSelect({
+  id,
+  label,
+  value,
+  options,
+  onChange,
+  placeholder = '— Không chọn —',
+}: {
+  id: string;
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div className='flex flex-col gap-1'>
+      <Label htmlFor={id}>{label}</Label>
+      <select
+        id={id}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className='border-border h-9 rounded-md border bg-white px-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
+      >
+        <option value=''>{placeholder}</option>
+        {options.map(o => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+/** Nhóm chip bật/tắt cho thuộc tính taxonomy dạng mảng (multi-select). */
+function TagToggleGroup({
+  label,
+  options,
+  selected,
+  onToggle,
+}: {
+  label: string;
+  options: string[];
+  selected: string[];
+  onToggle: (v: string) => void;
+}) {
+  return (
+    <div className='flex flex-col gap-1'>
+      <Label>{label}</Label>
+      <div className='flex flex-wrap gap-1.5'>
+        {options.map(o => {
+          const on = selected.includes(o);
+          return (
+            <button
+              key={o}
+              type='button'
+              onClick={() => onToggle(o)}
+              className={cn(
+                'rounded-full border px-2.5 py-1 text-xs transition-colors',
+                on
+                  ? 'border-indigo-500 bg-indigo-500 text-white'
+                  : 'border-border text-content-muted hover:bg-muted bg-white'
+              )}
+            >
+              {o}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }

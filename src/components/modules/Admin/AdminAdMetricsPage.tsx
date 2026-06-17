@@ -14,6 +14,7 @@ import { BarChart3, Loader2, Megaphone, Pencil, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type {
@@ -61,7 +62,7 @@ function toStatus(s: string): Status {
 
 function channelOf(c: PortalAdCampaign): string {
   const ch = (c.channels ?? [])[0] ?? '';
-  return CHANNEL_LABEL[ch] ?? (ch ? ch : '—');
+  return CHANNEL_LABEL[ch] ?? (ch ? ch : '-');
 }
 
 function metricsFromSummary(m: PortalAdMetricsResponse): {
@@ -113,7 +114,7 @@ export function AdminAdMetricsPage() {
         const rows: AdminCampaign[] = (list.items ?? []).map(c => ({
           id: c.id,
           name: c.name,
-          brand_name: (c.brand_id && nameById.get(c.brand_id)) || '—',
+          brand_name: (c.brand_id && nameById.get(c.brand_id)) || '-',
           status: toStatus(String(c.status)),
           channel: channelOf(c),
           metrics: {
@@ -189,7 +190,7 @@ export function AdminAdMetricsPage() {
           </div>
           <h1 className='mt-1 text-xl font-semibold'>Số liệu quảng cáo</h1>
           <p className='text-content-muted mt-0.5 text-xs'>
-            Chưa đấu API Meta/Google/TikTok — nhân viên Rexer nhập tay số liệu
+            Chưa đấu API Meta/Google/TikTok, nhân viên Rexer nhập tay số liệu
             theo khoảng ngày cho khách hàng thấy hiệu quả.
           </p>
         </div>
@@ -203,7 +204,7 @@ export function AdminAdMetricsPage() {
       </div>
 
       {/* Filter */}
-      <div className='border-border mt-4 flex flex-wrap items-center gap-3 rounded-xl border bg-white p-3 shadow-sm'>
+      <div className='border-border bg-background mt-4 flex flex-wrap items-center gap-3 rounded-xl border p-3 shadow-sm'>
         <div className='border-border bg-muted flex flex-1 items-center gap-2 rounded-lg border px-3 py-1.5 lg:max-w-xs'>
           <Search className='text-content-muted size-3.5' />
           <input
@@ -216,7 +217,7 @@ export function AdminAdMetricsPage() {
         <select
           value={brand}
           onChange={e => setBrand(e.target.value)}
-          className='border-border rounded-lg border bg-white px-3 py-1.5 text-sm outline-none'
+          className='border-border bg-background rounded-lg border px-3 py-1.5 text-sm outline-none'
         >
           <option value='all'>Tất cả brand</option>
           {brands.map(b => (
@@ -228,7 +229,7 @@ export function AdminAdMetricsPage() {
       </div>
 
       {/* Table */}
-      <div className='border-border mt-4 overflow-hidden rounded-2xl border bg-white shadow-sm'>
+      <div className='border-border bg-card mt-4 overflow-hidden rounded-2xl border shadow-sm'>
         <table className='w-full text-sm'>
           <thead>
             <tr className='border-border text-content-muted text-2xs border-b text-left tracking-wider uppercase'>
@@ -290,7 +291,7 @@ export function AdminAdMetricsPage() {
                     <td className='text-content-muted text-3xs px-3 py-2.5 font-mono'>
                       {c.period_from
                         ? `${c.period_from.slice(5)} → ${c.period_to?.slice(5)}`
-                        : '—'}
+                        : '-'}
                     </td>
                     <td className='px-3 py-2.5 text-right font-mono'>
                       {fmt(m.impressions)}
@@ -308,12 +309,13 @@ export function AdminAdMetricsPage() {
                       {fmt(m.conversions)}
                     </td>
                     <td className='px-3 py-2.5 text-right'>
-                      <button
+                      <Button
+                        variant='neutral'
+                        size='xs'
                         onClick={() => setEditing(c)}
-                        className='border-border text-content-muted hover:border-foreground hover:text-foreground inline-flex items-center gap-1 rounded-lg border bg-white px-2.5 py-1 text-xs font-medium'
                       >
                         <Pencil className='size-3' /> Cập nhật
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 );

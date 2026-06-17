@@ -80,12 +80,12 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
   if (error) {
     return (
       <div className='bg-muted flex h-full flex-1 items-center justify-center p-8'>
-        <div className='max-w-md rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
-          <AlertCircle className='mx-auto size-8 text-rose-600' />
-          <p className='mt-3 text-sm font-semibold text-rose-900'>
+        <div className='border-destructive/20 bg-danger-bg max-w-md rounded-2xl border p-6 text-center'>
+          <AlertCircle className='text-destructive mx-auto size-8' />
+          <p className='text-destructive mt-3 text-sm font-semibold'>
             Không mở được editor template
           </p>
-          <p className='text-2xs mt-1 font-mono text-rose-700'>{error}</p>
+          <p className='text-2xs text-destructive mt-1 font-mono'>{error}</p>
         </div>
       </div>
     );
@@ -118,16 +118,16 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
             <Code2 className='mt-0.5 size-5 shrink-0 text-blue-700' />
             <div className='flex-1'>
               <h2 className='text-sm font-semibold text-blue-900'>
-                Code template — sửa source ở repo
+                Code template: sửa source ở repo
               </h2>
               <p className='mt-1 text-xs leading-relaxed text-blue-800'>
                 Template <code className='font-mono'>{template?.code}</code> là
-                code-defined — content + animation lưu trong file TSX, không
-                edit qua WYSIWYG. Sửa code → commit → deploy.
+                code-defined, content + animation lưu trong file TSX, không edit
+                qua WYSIWYG. Sửa code → commit → deploy.
               </p>
             </div>
           </div>
-          <div className='text-2xs text-content-muted mt-4 rounded-lg bg-white p-3 font-mono'>
+          <div className='text-2xs text-content-muted bg-background mt-4 rounded-lg p-3 font-mono'>
             <p className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
               Source files
             </p>
@@ -138,8 +138,8 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
                   src/templates/{template?.code}/
                 </span>
               </li>
-              <li>　├── index.tsx — React component + animation</li>
-              <li>　└── meta.ts — content schema (form fields)</li>
+              <li>　├── index.tsx - React component + animation</li>
+              <li>　└── meta.ts - content schema (form fields)</li>
             </ul>
             <p className='text-3xs text-content-muted mt-3 font-semibold tracking-wider uppercase'>
               Registry
@@ -148,7 +148,7 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
           </div>
         </div>
 
-        <div className='border-border rounded-2xl border bg-white p-5'>
+        <div className='border-border bg-card rounded-2xl border p-5'>
           <h3 className='text-content-muted text-xs font-semibold tracking-wider uppercase'>
             Content fields ({fields.length})
           </h3>
@@ -157,7 +157,7 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
             <code className='font-mono'>page.type_metadata</code>).
           </p>
           {fields.length > 0 && (
-            <ul className='mt-3 divide-y divide-zinc-100'>
+            <ul className='divide-border mt-3 divide-y'>
               {fields.map(f => (
                 <li
                   key={f.key}
@@ -168,7 +168,7 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
                       {f.key}
                     </code>
                     <span className='text-2xs text-content-muted ml-2'>
-                      — {f.label}
+                      - {f.label}
                     </span>
                     {f.hint && (
                       <p className='text-3xs text-content-muted mt-0.5'>
@@ -180,7 +180,9 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
                     <p className='text-3xs text-content-muted font-mono'>
                       {f.type}
                       {f.required && (
-                        <span className='ml-1 font-bold text-rose-600'>*</span>
+                        <span className='text-destructive ml-1 font-bold'>
+                          *
+                        </span>
                       )}
                     </p>
                   </div>
@@ -193,7 +195,7 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
         <div className='flex justify-end gap-2'>
           <Link
             href={`/admin/templates/${templateId}/preview`}
-            className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-2 text-xs font-medium text-white hover:bg-zinc-800'
+            className='bg-foreground text-background hover:bg-foreground/85 inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-medium'
           >
             <Eye className='size-3.5' />
             Xem preview

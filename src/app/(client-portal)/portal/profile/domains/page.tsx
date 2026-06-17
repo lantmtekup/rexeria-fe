@@ -37,6 +37,7 @@ import { useTranslations } from 'next-intl';
 
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { BrandDomain, Page } from '@/services/rexer/types';
+import { Button } from '@/components/atoms/button';
 import { cn } from '@/lib/cn';
 
 import { PortalShell } from '../../_shell';
@@ -100,7 +101,7 @@ const STATUS_META: Record<
   disabled: {
     labelKey: 'statusDisabled',
     chip: 'bg-muted text-content-muted border-border',
-    dot: 'bg-zinc-400',
+    dot: 'bg-muted-foreground',
   },
 };
 
@@ -189,7 +190,7 @@ type TFn = (key: string, values?: Record<string, string | number>) => string;
 /* ─── Helpers ────────────────────────────────────────────────────────── */
 
 function relativeTime(iso: string | undefined, t: TFn): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const ts = new Date(iso).getTime();
   if (Number.isNaN(ts)) return iso;
   const diffMin = Math.round((Date.now() - ts) / 60_000);
@@ -421,7 +422,7 @@ export default function PortalDomainsPage() {
     <PortalShell>
       <Link
         href='/portal/profile'
-        className='group border-border text-content-muted hover:text-foreground inline-flex items-center gap-2 self-start rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900'
+        className='group border-border text-content-muted hover:text-foreground bg-background hover:border-foreground inline-flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5'
       >
         <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
         {t('profileDomains.backProfile')}
@@ -484,20 +485,16 @@ export default function PortalDomainsPage() {
             strong: chunks => <strong>{chunks}</strong>,
           })}
         </p>
-        <button
-          type='button'
-          onClick={() => setAddOpen(true)}
-          className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-zinc-700'
-        >
+        <Button type='button' size='sm' onClick={() => setAddOpen(true)}>
           <Plus className='size-3.5' />
           {t('profileDomains.addDomain')}
-        </button>
+        </Button>
       </div>
 
       {/* Domain list */}
       <section className='mt-5 space-y-4'>
         {domains.length === 0 ? (
-          <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
+          <div className='border-border bg-card rounded-2xl border border-dashed p-12 text-center'>
             <Globe className='text-muted-foreground mx-auto size-8' />
             <p className='text-content-muted mt-3 text-sm font-semibold'>
               {t('profileDomains.emptyTitle')}
@@ -556,7 +553,7 @@ function DomainCard({
     domain.status === 'failed';
 
   return (
-    <div className='border-border overflow-hidden rounded-2xl border bg-white shadow-sm'>
+    <div className='border-border bg-card overflow-hidden rounded-2xl border shadow-sm'>
       {/* Header */}
       <div className='border-border flex flex-wrap items-start gap-3 border-b px-5 py-4'>
         <div className='flex min-w-0 flex-1 items-start gap-3'>
@@ -602,11 +599,11 @@ function DomainCard({
 
         <div className='flex items-center gap-2'>
           {(domain.status === 'pending' || domain.status === 'failed') && (
-            <button
+            <Button
               type='button'
+              size='sm'
               onClick={onVerify}
               disabled={verifying}
-              className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 disabled:cursor-wait disabled:opacity-60'
             >
               {verifying ? (
                 <Loader2 className='size-3.5 animate-spin' />
@@ -616,7 +613,7 @@ function DomainCard({
               {verifying
                 ? t('profileDomains.checking')
                 : t('profileDomains.verifyNow')}
-            </button>
+            </Button>
           )}
           {domain.status === 'verifying' && (
             <span className='inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700'>
@@ -627,7 +624,7 @@ function DomainCard({
           <button
             type='button'
             onClick={onDelete}
-            className='border-border text-content-muted inline-flex size-8 items-center justify-center rounded-lg border bg-white transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700'
+            className='border-border text-content-muted bg-background hover:border-destructive/20 hover:bg-danger-bg hover:text-destructive inline-flex size-8 items-center justify-center rounded-lg border transition-colors'
             title={t('profileDomains.deleteTitle')}
           >
             <Trash2 className='size-3.5' />
@@ -648,7 +645,7 @@ function DomainCard({
             <select
               value={domain.page_id ?? ''}
               onChange={e => onBind(e.target.value)}
-              className='border-border ml-auto min-w-[200px] rounded-lg border bg-white px-2.5 py-1.5 text-sm outline-none focus:border-zinc-900'
+              className='border-border bg-background focus:border-ring ml-auto min-w-[200px] rounded-lg border px-2.5 py-1.5 text-sm outline-none'
             >
               <option value=''>{t('profileDomains.noLandingOption')}</option>
               {pages.map(p => (
@@ -697,7 +694,7 @@ function DomainCard({
         )}
 
         {domain.status === 'failed' && domain.failure_reason && (
-          <div className='mt-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
+          <div className='border-destructive/20 bg-danger-bg text-destructive mt-3 rounded-lg border px-3 py-2 text-xs'>
             <strong>{t('profileDomains.verifyFailedLabel')}</strong>{' '}
             {domain.failure_reason}
           </div>
@@ -753,7 +750,7 @@ function Step({
             ? final
               ? 'bg-emerald-500 text-white'
               : 'bg-violet-500 text-white'
-            : 'border-border text-muted-foreground border bg-white'
+            : 'border-border text-muted-foreground bg-background border'
         )}
       >
         {loading ? (
@@ -761,7 +758,7 @@ function Step({
         ) : active ? (
           <CheckCircle2 className='size-3' />
         ) : (
-          <span className='size-1.5 rounded-full bg-zinc-300' />
+          <span className='bg-input size-1.5 rounded-full' />
         )}
       </div>
       <span
@@ -781,7 +778,7 @@ function Connector({ active }: { active: boolean }) {
     <div
       className={cn(
         'h-px flex-1 transition-colors',
-        active ? 'bg-violet-300' : 'bg-zinc-200'
+        active ? 'bg-violet-300' : 'bg-muted'
       )}
     />
   );
@@ -814,15 +811,15 @@ function DnsRecord({
   };
 
   return (
-    <div className='group border-border relative mt-2 overflow-hidden rounded-xl border bg-zinc-900'>
+    <div className='group border-border bg-foreground relative mt-2 overflow-hidden rounded-xl border'>
       {/* Kind chip */}
-      <div className='text-3xs text-muted-foreground absolute top-0 left-0 rounded-br-lg bg-zinc-800 px-2 py-0.5 font-mono font-bold tracking-wider'>
+      <div className='text-3xs text-muted-foreground bg-foreground/90 absolute top-0 left-0 rounded-br-lg px-2 py-0.5 font-mono font-bold tracking-wider'>
         {kind}
       </div>
       <button
         type='button'
         onClick={copy}
-        className='text-muted-foreground absolute top-1.5 right-1.5 inline-flex size-7 items-center justify-center rounded-md bg-zinc-800 transition-colors hover:bg-zinc-700 hover:text-white'
+        className='text-muted-foreground bg-foreground/90 hover:bg-foreground/85 hover:text-background absolute top-1.5 right-1.5 inline-flex size-7 items-center justify-center rounded-md transition-colors'
         title={t('profileDomains.copyRecordTitle')}
       >
         {copied ? (
@@ -834,7 +831,7 @@ function DnsRecord({
       <div className='text-2xs overflow-x-auto px-3 pt-7 pb-3 font-mono leading-relaxed'>
         <div className='flex flex-wrap items-baseline gap-x-3 whitespace-nowrap'>
           <span className='text-blue-300'>Name</span>
-          <span className='text-white'>{name}</span>
+          <span className='text-background'>{name}</span>
         </div>
         <div className='flex flex-wrap items-baseline gap-x-3 whitespace-nowrap'>
           <span className='text-blue-300'>Value</span>
@@ -886,7 +883,7 @@ function StatCard({
     emerald: 'border-emerald-100 bg-emerald-50/40 text-emerald-700',
     blue: 'border-blue-100 bg-blue-50/40 text-blue-700',
     amber: 'border-amber-100 bg-amber-50/40 text-amber-700',
-    zinc: 'border-border bg-white text-content-muted',
+    zinc: 'border-border bg-card text-content-muted',
   };
   return (
     <div
@@ -947,7 +944,7 @@ function AddDomainDialog({
       <form
         onSubmit={handleSubmit}
         onClick={e => e.stopPropagation()}
-        className='my-12 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
+        className='bg-card my-12 w-full max-w-md overflow-hidden rounded-2xl shadow-2xl'
       >
         <div className='border-border flex items-center justify-between border-b px-5 py-3'>
           <div className='flex items-center gap-2.5'>
@@ -958,21 +955,22 @@ function AddDomainDialog({
               {t('profileDomains.dialogTitle')}
             </h3>
           </div>
-          <button
+          <Button
             type='button'
+            variant='ghost'
+            size='icon'
             onClick={onClose}
-            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label={t('profileDomains.close')}
           >
             <X className='size-4' />
-          </button>
+          </Button>
         </div>
 
         <div className='space-y-4 px-5 py-4'>
           <div>
             <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
               {t('profileDomains.domainLabel')}{' '}
-              <span className='text-rose-500'>*</span>
+              <span className='text-destructive'>*</span>
             </label>
             <input
               autoFocus
@@ -983,7 +981,7 @@ function AddDomainDialog({
                 setError(null);
               }}
               placeholder={t('profileDomains.domainPlaceholder')}
-              className='border-border mt-1 w-full rounded-lg border bg-white px-3 py-2 font-mono text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
+              className='border-border bg-background mt-1 w-full rounded-lg border px-3 py-2 font-mono text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100'
             />
             <p className='text-3xs text-content-muted mt-1'>
               {t('profileDomains.domainHint')}
@@ -1006,7 +1004,7 @@ function AddDomainDialog({
                       'flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-2.5 transition-colors',
                       selected
                         ? 'border-emerald-300 bg-emerald-50/50'
-                        : 'border-border hover:bg-muted bg-white'
+                        : 'border-border hover:bg-muted bg-background'
                     )}
                   >
                     <input
@@ -1032,7 +1030,7 @@ function AddDomainDialog({
           </div>
 
           {error && (
-            <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
+            <div className='border-destructive/20 bg-danger-bg text-destructive rounded-lg border px-3 py-2 text-xs'>
               {error}
             </div>
           )}
@@ -1045,21 +1043,13 @@ function AddDomainDialog({
         </div>
 
         <div className='border-border bg-muted/50 flex items-center justify-end gap-2 border-t px-5 py-3'>
-          <button
-            type='button'
-            onClick={onClose}
-            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'
-          >
+          <Button type='button' variant='neutral' size='sm' onClick={onClose}>
             {t('profileDomains.cancel')}
-          </button>
-          <button
-            type='submit'
-            disabled={!domain.trim()}
-            className='inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50'
-          >
+          </Button>
+          <Button type='submit' size='sm' disabled={!domain.trim()}>
             <Plus className='size-3.5' />
             {t('profileDomains.addDomain')}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

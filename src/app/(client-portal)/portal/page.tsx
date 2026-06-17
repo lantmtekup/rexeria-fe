@@ -43,7 +43,7 @@ const ACTIVITY_META: Record<
   comment_new: { icon: MessageSquare, color: 'bg-amber-500', label: 'Comment' },
   comment_resolved: {
     icon: MessageSquare,
-    color: 'bg-zinc-500',
+    color: 'bg-muted-foreground',
     label: 'Resolved',
   },
   asset_uploaded: { icon: UploadCloud, color: 'bg-blue-500', label: 'Upload' },
@@ -96,7 +96,7 @@ export default function PortalDashboardPage() {
   return (
     <PortalShell>
       {/* Hero */}
-      <section className='border-border relative mb-6 overflow-hidden rounded-2xl border bg-white p-6 shadow-sm'>
+      <section className='border-border bg-card relative mb-6 overflow-hidden rounded-2xl border p-6 shadow-sm'>
         <div className='absolute inset-0 bg-gradient-to-br from-rose-50 via-white to-amber-50 opacity-70' />
         <div
           className='absolute -top-8 -right-8 size-36 rounded-full bg-rose-200 blur-3xl'
@@ -183,7 +183,7 @@ export default function PortalDashboardPage() {
 
       {/* Trend chart */}
       <section className='mt-6 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]'>
-        <div className='border-border rounded-2xl border bg-white p-5 shadow-sm'>
+        <div className='border-border bg-card rounded-2xl border p-5 shadow-sm'>
           <div className='mb-3 flex items-center justify-between'>
             <div className='flex items-center gap-2'>
               <div className='flex size-7 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm'>
@@ -206,7 +206,7 @@ export default function PortalDashboardPage() {
         </div>
 
         {/* Quick actions */}
-        <div className='border-border rounded-2xl border bg-white p-5 shadow-sm'>
+        <div className='border-border bg-card rounded-2xl border p-5 shadow-sm'>
           <div className='mb-3 flex items-center gap-2'>
             <div className='flex size-7 items-center justify-center rounded-lg bg-violet-500 text-white shadow-sm'>
               <Sparkles className='size-4' />
@@ -235,10 +235,10 @@ export default function PortalDashboardPage() {
       </section>
 
       {/* Recent activity */}
-      <section className='border-border mt-6 rounded-2xl border bg-white p-5 shadow-sm'>
+      <section className='border-border bg-card mt-6 rounded-2xl border p-5 shadow-sm'>
         <div className='mb-3 flex items-center justify-between'>
           <div className='flex items-center gap-2'>
-            <div className='flex size-7 items-center justify-center rounded-lg bg-zinc-900 text-white shadow-sm'>
+            <div className='bg-foreground text-background flex size-7 items-center justify-center rounded-lg shadow-sm'>
               <BarChart3 className='size-4' />
             </div>
             <h3 className='text-sm font-semibold'>
@@ -410,7 +410,7 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className='group border-border hover:border-border flex items-center gap-3 rounded-xl border bg-white p-3 transition-all hover:shadow-sm'
+      className='group border-border hover:border-border bg-card flex items-center gap-3 rounded-xl border p-3 transition-all hover:shadow-sm'
     >
       <div
         className={`flex size-9 shrink-0 items-center justify-center rounded-xl ${c.bg} text-white shadow-sm transition-transform group-hover:scale-110`}

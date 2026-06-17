@@ -20,6 +20,7 @@ import {
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import {
   Dialog,
   DialogContent,
@@ -135,7 +136,7 @@ export function MicroSitesTab({
       }
       setDialogOpen(false);
     } catch {
-      toast.error('Lưu thất bại — kiểm tra lại thông tin');
+      toast.error('Lưu thất bại, kiểm tra lại thông tin');
     }
   };
 
@@ -157,13 +158,9 @@ export function MicroSitesTab({
           Site Rexer code riêng cho khách (host riêng). Đăng ký để quản lý &
           theo dõi views.
         </div>
-        <button
-          type='button'
-          onClick={openNew}
-          className='inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-emerald-700'
-        >
+        <Button size='sm' className='shrink-0' onClick={openNew}>
           <Plus className='size-3.5' /> Thêm micro-site
-        </button>
+        </Button>
       </div>
 
       {loading ? (
@@ -172,7 +169,7 @@ export function MicroSitesTab({
         </div>
       ) : sites.length === 0 ? (
         <div className='text-content-muted px-4 py-10 text-center text-sm'>
-          Khách chưa có micro-site nào — bấm <strong>Thêm micro-site</strong>.
+          Khách chưa có micro-site nào, bấm <strong>Thêm micro-site</strong>.
         </div>
       ) : (
         <div>
@@ -225,10 +222,10 @@ export function MicroSitesTab({
                 <div className='text-3xs text-muted-foreground'>views 30d</div>
               </div>
               <div className='flex shrink-0 items-center gap-1'>
-                <button
-                  type='button'
+                <Button
+                  variant='neutral'
+                  size='xs'
                   onClick={() => setManaging(s)}
-                  className='border-border text-content-muted hover:border-foreground hover:text-foreground inline-flex items-center gap-1 rounded-md border bg-white px-2 py-1 text-xs font-medium'
                   aria-label='Quản lý page & số liệu'
                 >
                   <Layers className='size-3.5' /> Quản lý
@@ -237,7 +234,7 @@ export function MicroSitesTab({
                       {pageCounts[s.id]}
                     </span>
                   ) : null}
-                </button>
+                </Button>
                 <button
                   type='button'
                   onClick={() => openEdit(s)}
@@ -249,7 +246,7 @@ export function MicroSitesTab({
                 <button
                   type='button'
                   onClick={() => handleDelete(s)}
-                  className='inline-flex size-7 items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                  className='text-destructive hover:bg-danger-bg inline-flex size-7 items-center justify-center rounded-md'
                   aria-label='Xoá'
                 >
                   <Trash2 className='size-3.5' />
@@ -329,7 +326,7 @@ function MicroSiteDialog({
             {editing ? 'Sửa micro-site' : 'Thêm micro-site'}
           </DialogTitle>
           <p className='text-content-muted text-xs'>
-            Site Rexer code riêng cho khách — nhập thông tin chung để quản lý.
+            Site Rexer code riêng cho khách, nhập thông tin chung để quản lý.
           </p>
         </DialogHeader>
 
@@ -362,19 +359,14 @@ function MicroSiteDialog({
             </Label>
             <div className='mt-1 inline-flex gap-1'>
               {(['dev', 'live', 'paused'] as const).map(s => (
-                <button
+                <Chip
                   key={s}
-                  type='button'
+                  size='md'
+                  selected={status === s}
                   onClick={() => setStatus(s)}
-                  className={cn(
-                    'rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
-                    status === s
-                      ? 'border-zinc-900 bg-zinc-900 text-white'
-                      : 'border-border text-content-muted hover:bg-muted'
-                  )}
                 >
                   {STATUS_META[s].label}
-                </button>
+                </Chip>
               ))}
             </div>
           </div>
@@ -387,21 +379,21 @@ function MicroSiteDialog({
               onChange={e => setDescription(e.target.value)}
               placeholder='Mô tả ngắn về micro-site…'
               rows={2}
-              className='border-border focus:border-primary mt-1 w-full resize-none rounded-md border bg-white px-3 py-2 text-sm outline-none'
+              className='border-border focus:border-primary bg-background mt-1 w-full resize-none rounded-md border px-3 py-2 text-sm outline-none'
             />
           </div>
         </div>
 
         <DialogFooter>
           <Button
-            variant='pill-light'
+            variant='neutral'
             size='sm'
             onClick={() => onOpenChange(false)}
             disabled={saving}
           >
             Huỷ
           </Button>
-          <Button variant='pill' size='sm' onClick={submit} disabled={saving}>
+          <Button size='sm' onClick={submit} disabled={saving}>
             {saving ? 'Đang lưu…' : editing ? 'Lưu' : 'Thêm site'}
           </Button>
         </DialogFooter>

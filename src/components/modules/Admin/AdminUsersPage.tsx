@@ -29,6 +29,7 @@ import {
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import { Input } from '@/components/atoms/input';
 import {
   Table,
@@ -151,7 +152,7 @@ export function AdminUsersPage() {
     const ids = Array.from(selected);
     if (
       !window.confirm(
-        `Xoá ${ids.length} khách hàng?\n\n⚠️ HARD DELETE — không thể khôi phục. Tất cả memberships, pages, blocks của brand sẽ bị cascade xoá theo BE setup.`
+        `Xoá ${ids.length} khách hàng?\n\n⚠️ HARD DELETE, không thể khôi phục. Tất cả memberships, pages, blocks của brand sẽ bị cascade xoá theo BE setup.`
       )
     )
       return;
@@ -173,7 +174,7 @@ export function AdminUsersPage() {
       toast.success(`Đã xoá ${okCount} brand`, { id: tid });
     } else {
       toast.error(
-        `${okCount}/${ids.length} OK, ${failCount} lỗi — reload để verify`,
+        `${okCount}/${ids.length} OK, ${failCount} lỗi. Reload để verify`,
         { id: tid }
       );
     }
@@ -260,7 +261,7 @@ export function AdminUsersPage() {
       <p className='text-content-muted text-xs'>{t('users.note')}</p>
 
       {/* Toolbar */}
-      <div className='border-border flex flex-wrap items-center gap-2 rounded-2xl border bg-white p-2 shadow-sm'>
+      <div className='border-border bg-card flex flex-wrap items-center gap-2 rounded-2xl border p-2 shadow-sm'>
         <div className='relative max-w-sm flex-1'>
           <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
           <Input
@@ -276,7 +277,7 @@ export function AdminUsersPage() {
           <select
             value={sort}
             onChange={e => setSort(e.target.value as Sort)}
-            className='border-border text-content-muted hover:bg-muted appearance-none rounded-lg border bg-white py-1.5 pr-3 pl-7 text-xs font-medium outline-none focus:border-zinc-400'
+            className='border-border text-content-muted hover:bg-muted bg-background focus:border-ring appearance-none rounded-lg border py-1.5 pr-3 pl-7 text-xs font-medium outline-none'
             aria-label='Sort'
           >
             {SORT_OPTIONS.map(o => (
@@ -290,7 +291,7 @@ export function AdminUsersPage() {
         <select
           value={pageSize}
           onChange={e => setPageSize(Number(e.target.value))}
-          className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium outline-none'
+          className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1.5 text-xs font-medium outline-none'
           aria-label='Items per page'
           title='Số item mỗi trang'
         >
@@ -301,7 +302,7 @@ export function AdminUsersPage() {
           ))}
         </select>
 
-        <div className='border-border ml-auto inline-flex items-center gap-0.5 rounded-lg border bg-white p-0.5'>
+        <div className='border-border bg-background ml-auto inline-flex items-center gap-0.5 rounded-lg border p-0.5'>
           <ViewBtn
             active={view === 'grid'}
             onClick={() => setView('grid')}
@@ -363,7 +364,7 @@ export function AdminUsersPage() {
 
       {errorMessage && (
         <p
-          className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800'
+          className='border-destructive/20 bg-danger-bg text-destructive rounded-lg border px-3 py-2 text-sm'
           role='alert'
         >
           {errorMessage}
@@ -377,7 +378,7 @@ export function AdminUsersPage() {
           hàng…
         </div>
       ) : pageItems.length === 0 ? (
-        <div className='border-border rounded-2xl border border-dashed bg-white p-12 text-center'>
+        <div className='border-border bg-card rounded-2xl border border-dashed p-12 text-center'>
           <Users className='text-muted-foreground mx-auto size-8' />
           <p className='text-content-muted mt-3 text-sm font-semibold'>
             {hasFilters
@@ -415,8 +416,8 @@ export function AdminUsersPage() {
 
       {/* Bulk action bar — sticky bottom khi có selection ở table view. */}
       {selected.size > 0 && view === 'table' && (
-        <div className='sticky bottom-4 z-30 mx-auto flex w-fit min-w-[320px] items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 shadow-2xl'>
-          <span className='text-xs font-medium text-white'>
+        <div className='bg-foreground border-foreground sticky bottom-4 z-30 mx-auto flex w-fit min-w-[320px] items-center gap-3 rounded-xl border px-4 py-2.5 shadow-2xl'>
+          <span className='text-background text-xs font-medium'>
             Đã chọn{' '}
             <span className='text-2xs rounded-md bg-white/15 px-1.5 py-0.5 font-mono'>
               {selected.size}
@@ -432,15 +433,16 @@ export function AdminUsersPage() {
             Bỏ chọn
           </button>
           <div className='h-4 w-px bg-white/20' />
-          <button
+          <Button
             type='button'
+            variant='destructive'
+            size='sm'
             onClick={runBulkDelete}
             disabled={bulkBusy}
-            className='inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-500 disabled:opacity-50'
           >
             <Trash2 className='size-3.5' />
             {bulkBusy ? 'Đang xoá…' : 'Xoá đã chọn'}
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -465,7 +467,7 @@ function ClientCard({ item }: { item: Brand }) {
   return (
     <Link
       href={`/admin/users/${item.id}`}
-      className='group border-border hover:border-border flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'
+      className='group border-border hover:border-border bg-card flex flex-col overflow-hidden rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'
     >
       <div className='flex items-start gap-3 p-4'>
         <Avatar id={item.id} name={item.name} size={48} />
@@ -485,12 +487,12 @@ function ClientCard({ item }: { item: Brand }) {
             statusClass
           )}
         >
-          {item.status || '—'}
+          {item.status || '-'}
         </span>
         <span className='text-3xs text-muted-foreground font-mono'>
           {item.created_at
             ? new Date(item.created_at).toLocaleDateString('vi-VN')
-            : '—'}
+            : '-'}
         </span>
       </div>
     </Link>
@@ -516,14 +518,14 @@ function TableView({
   const allOn = ids.length > 0 && ids.every(id => selected.has(id));
   const someOn = ids.some(id => selected.has(id));
   return (
-    <div className='border-border overflow-hidden rounded-2xl border bg-white'>
+    <div className='border-border bg-card overflow-hidden rounded-2xl border'>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className='w-10'>
               <input
                 type='checkbox'
-                className='border-border text-foreground size-3.5 cursor-pointer rounded focus:ring-zinc-400'
+                className='border-border text-foreground focus:ring-ring size-3.5 cursor-pointer rounded'
                 checked={allOn}
                 ref={el => {
                   if (el) el.indeterminate = someOn && !allOn;
@@ -553,7 +555,7 @@ function TableView({
                 <TableCell>
                   <input
                     type='checkbox'
-                    className='border-border text-foreground size-3.5 cursor-pointer rounded focus:ring-zinc-400'
+                    className='border-border text-foreground focus:ring-ring size-3.5 cursor-pointer rounded'
                     checked={isSelected}
                     onChange={() => onToggleSelected(item.id)}
                     aria-label={`Chọn ${item.name}`}
@@ -580,13 +582,13 @@ function TableView({
                       statusClass
                     )}
                   >
-                    {item.status || '—'}
+                    {item.status || '-'}
                   </span>
                 </TableCell>
                 <TableCell className='text-xs'>
                   {item.created_at
                     ? new Date(item.created_at).toLocaleDateString('vi-VN')
-                    : '—'}
+                    : '-'}
                 </TableCell>
                 <TableCell>
                   <Link
@@ -666,9 +668,9 @@ function Pagination({
   add(totalPages);
 
   return (
-    <div className='border-border flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-2.5 shadow-sm'>
+    <div className='border-border bg-card flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 shadow-sm'>
       <span className='text-2xs text-content-muted'>
-        {from}–{to} trong {total}
+        {from}-{to} trong {total}
       </span>
       <div className='flex items-center gap-1'>
         <button
@@ -688,19 +690,15 @@ function Pagination({
               …
             </span>
           ) : (
-            <button
+            <Chip
               key={p}
-              type='button'
+              size='sm'
+              selected={p === page}
               onClick={() => onChange(p)}
-              className={cn(
-                'text-2xs inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono font-semibold tabular-nums',
-                p === page
-                  ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'border-border text-content-muted hover:bg-muted border bg-white'
-              )}
+              className='min-w-7 rounded-md px-2 font-mono tabular-nums'
             >
               {p}
-            </button>
+            </Chip>
           )
         )}
         <button
@@ -754,8 +752,8 @@ function ChipBtn({
   const cls = active
     ? accent
       ? accentActive[accent]
-      : 'bg-zinc-900 text-white shadow-sm'
-    : 'border border-border bg-white text-content-muted hover:bg-muted';
+      : 'bg-foreground text-background shadow-sm'
+    : 'border border-border bg-background text-content-muted hover:bg-muted';
   return (
     <button
       type='button'
@@ -782,16 +780,15 @@ function ViewBtn({
   label: string;
 }) {
   return (
-    <button
-      type='button'
+    <Chip
+      size='sm'
+      selected={active}
       onClick={onClick}
       title={label}
-      className={cn(
-        'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
-        active ? 'bg-zinc-900 text-white' : 'text-content-muted hover:bg-muted'
-      )}
+      aria-label={label}
+      className='border-0 px-2'
     >
       {icon}
-    </button>
+    </Chip>
   );
 }

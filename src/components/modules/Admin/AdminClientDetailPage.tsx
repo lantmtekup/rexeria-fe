@@ -39,6 +39,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
+import { PillChip } from '@/components/atoms/pill-chip';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import { copyText, generatePassword } from '@/lib/password';
@@ -172,11 +174,11 @@ export function AdminClientDetailPage({ clientId }: Props) {
         >
           <ArrowLeft className='size-3.5' /> Quay lại
         </Link>
-        <div className='mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center'>
+        <div className='border-destructive/20 bg-danger-bg mt-6 rounded-2xl border p-6 text-center'>
           <p className='text-sm font-semibold text-rose-900'>
             Không load được khách hàng
           </p>
-          <p className='text-2xs mt-1 font-mono text-rose-700'>
+          <p className='text-2xs text-destructive mt-1 font-mono'>
             {error || 'NOT_FOUND'}
           </p>
         </div>
@@ -192,14 +194,14 @@ export function AdminClientDetailPage({ clientId }: Props) {
       {/* Breadcrumb */}
       <Link
         href='/admin/users'
-        className='group border-border text-content-muted hover:text-foreground inline-flex items-center gap-2 self-start rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5 hover:border-zinc-900'
+        className='group border-border text-content-muted hover:text-foreground bg-background hover:border-foreground inline-flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm transition-all hover:-translate-x-0.5'
       >
         <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
         Khách hàng
       </Link>
 
       {/* Header card */}
-      <section className='border-border relative overflow-hidden rounded-3xl border bg-white shadow-sm'>
+      <section className='border-border bg-card relative overflow-hidden rounded-3xl border shadow-sm'>
         <div
           aria-hidden
           className='pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-zinc-50/80 to-transparent'
@@ -224,7 +226,7 @@ export function AdminClientDetailPage({ clientId }: Props) {
                   statusClass
                 )}
               >
-                {client.status || '—'}
+                {client.status || '-'}
               </span>
             </div>
             <div className='text-content-muted mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs'>
@@ -288,44 +290,30 @@ export function AdminClientDetailPage({ clientId }: Props) {
       </section>
 
       {/* Tabs */}
-      <nav className='border-border flex flex-wrap items-center gap-1 rounded-2xl border bg-white p-1 shadow-sm'>
+      <nav className='border-border bg-background flex flex-wrap items-center gap-1 rounded-2xl border p-1 shadow-sm'>
         {TABS.map(t => {
           const Icon = t.icon;
           const count = counts[t.id];
           const active = tab === t.id;
           return (
-            <button
+            <PillChip
               key={t.id}
-              type='button'
+              selected={active}
               onClick={() => setTab(t.id)}
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
-                active
-                  ? 'bg-zinc-900 text-white shadow-sm'
-                  : 'text-content-muted hover:bg-muted'
-              )}
-            >
-              <Icon className='size-3.5' />
-              {t.label}
-              {typeof count === 'number' && (
-                <span
-                  className={cn(
-                    'text-3xs inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 font-mono tabular-nums',
-                    active
-                      ? 'bg-white/15 text-white/90'
-                      : 'bg-muted text-content-muted'
-                  )}
-                >
-                  {count}
+              label={
+                <span className='inline-flex items-center gap-1.5'>
+                  <Icon className='size-3.5' />
+                  {t.label}
                 </span>
-              )}
-            </button>
+              }
+              count={typeof count === 'number' ? count : undefined}
+            />
           );
         })}
       </nav>
 
       {/* Tab body */}
-      <section className='border-border rounded-2xl border bg-white shadow-sm'>
+      <section className='border-border bg-card rounded-2xl border shadow-sm'>
         {tab === 'workspaces' && (
           <WorkspacesTab
             clientId={clientId}
@@ -400,13 +388,13 @@ function StatCard({
   value: number | undefined;
 }) {
   return (
-    <div className='border-border rounded-2xl border bg-white px-4 py-3 shadow-sm'>
+    <div className='border-border bg-card rounded-2xl border px-4 py-3 shadow-sm'>
       <div className='text-3xs text-content-muted flex items-center gap-1.5 font-semibold tracking-[0.18em] uppercase'>
         {icon}
         {label}
       </div>
       <div className='text-foreground mt-1 font-mono text-2xl font-bold tabular-nums'>
-        {value ?? <span className='text-muted-foreground'>—</span>}
+        {value ?? <span className='text-muted-foreground'>-</span>}
       </div>
     </div>
   );
@@ -454,7 +442,7 @@ function WorkspacesTab({
           <div className='text-3xs text-muted-foreground font-mono'>
             {ws.created_at
               ? new Date(ws.created_at).toLocaleDateString('vi-VN')
-              : '—'}
+              : '-'}
           </div>
         </div>
       )}
@@ -538,18 +526,14 @@ function LandingsTab({
             ? 'Đang tải…'
             : `${items.length} landing đã assign cho khách`}
         </div>
-        <button
-          type='button'
-          onClick={() => setAddOpen(true)}
-          className='inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-emerald-700'
-        >
+        <Button type='button' size='sm' onClick={() => setAddOpen(true)}>
           <Plus className='size-3.5' />
           Tạo landing mới
-        </button>
+        </Button>
       </div>
 
       {error && (
-        <div className='border-border border-b bg-rose-50 px-4 py-2 text-xs text-rose-800'>
+        <div className='border-border bg-danger-bg text-destructive border-b px-4 py-2 text-xs'>
           {error}
         </div>
       )}
@@ -560,7 +544,7 @@ function LandingsTab({
         </div>
       ) : items.length === 0 ? (
         <div className='text-content-muted px-4 py-10 text-center text-sm'>
-          Khách hàng chưa có landing nào được assign — bấm{' '}
+          Khách hàng chưa có landing nào được assign, bấm{' '}
           <strong>Tạo landing mới</strong> để bắt đầu.
         </div>
       ) : (
@@ -680,7 +664,7 @@ function LandingRow({
           {item.id.slice(0, 12)}… ·{' '}
           {item.updated_at
             ? new Date(item.updated_at).toLocaleDateString('vi-VN')
-            : '—'}
+            : '-'}
         </div>
       </div>
 
@@ -695,7 +679,7 @@ function LandingRow({
           <MoreVertical className='size-3.5' />
         </button>
         {menuOpen && (
-          <div className='border-border absolute top-9 right-0 z-20 w-52 overflow-hidden rounded-lg border bg-white shadow-lg'>
+          <div className='border-border bg-card absolute top-9 right-0 z-20 w-52 overflow-hidden rounded-lg border shadow-lg'>
             <Link
               href={`/canvas-templates/${item.id}`}
               className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
@@ -708,7 +692,7 @@ function LandingRow({
               type='button'
               onClick={() => togglePublish(true)}
               className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
-              title='Publish landing — sinh share_token + URL public'
+              title='Publish landing, sinh share_token + URL public'
             >
               <Rocket className='size-3.5 text-emerald-600' />
               Publish
@@ -717,7 +701,7 @@ function LandingRow({
               type='button'
               onClick={() => togglePublish(false)}
               className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
-              title='Unpublish — invalidate share_token, URL 404'
+              title='Unpublish, invalidate share_token, URL 404'
             >
               <Rocket className='text-content-muted size-3.5 rotate-180' />
               Unpublish
@@ -729,7 +713,7 @@ function LandingRow({
                 setMenuOpen(false);
                 onDelete();
               }}
-              className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
+              className='text-destructive hover:bg-danger-bg flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
             >
               <Trash2 className='size-3.5' />
               Xoá landing
@@ -886,7 +870,7 @@ function MembersTab({
         // Prod không lộ reset_token (chỉ MVP/local trả thẳng) → không đặt được
         // password biết trước. Cần BE thêm endpoint admin-set-password.
         toast.error(
-          'Prod chưa hỗ trợ reset trực tiếp — cần BE thêm endpoint admin đặt mật khẩu. Hiện chỉ chạy trên local (MVP).'
+          'Prod chưa hỗ trợ reset trực tiếp, cần BE thêm endpoint admin đặt mật khẩu. Hiện chỉ chạy trên local (MVP).'
         );
         return;
       }
@@ -943,18 +927,19 @@ function MembersTab({
                     'bg-muted text-content-muted'
                 )}
               >
-                {u.status || '—'}
+                {u.status || '-'}
               </span>
-              <button
+              <Button
                 type='button'
+                variant='neutral'
+                size='sm'
                 onClick={() => handleReset(u.email)}
                 disabled={resetting === u.email}
-                className='border-border text-content-muted hover:text-foreground hover:bg-muted inline-flex items-center gap-1 rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-60'
                 title='Đặt lại mật khẩu cho member'
               >
                 <KeyRound className='size-3.5' />
                 {resetting === u.email ? 'Đang reset…' : 'Reset pass'}
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -987,7 +972,7 @@ function ResetPasswordResultModal({
       toast.success(key === 'all' ? 'Đã copy email + password' : 'Đã copy');
       setTimeout(() => setCopied(null), 1500);
     } else {
-      toast.error('Copy thất bại — bôi đen rồi Cmd/Ctrl+C');
+      toast.error('Copy thất bại, bôi đen rồi Cmd/Ctrl+C');
     }
   };
   const summary = `Email: ${email}\nPassword: ${password}\nLogin: ${typeof window !== 'undefined' ? window.location.origin : ''}/sign-in`;
@@ -998,7 +983,7 @@ function ResetPasswordResultModal({
       onClick={onClose}
     >
       <div
-        className='my-8 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
+        className='bg-card my-8 w-full max-w-md overflow-hidden rounded-2xl shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
         <div className='border-border flex items-center justify-between border-b px-5 py-3'>
@@ -1008,24 +993,26 @@ function ResetPasswordResultModal({
             </div>
             <h3 className='text-base font-semibold'>Đã đặt lại mật khẩu</h3>
           </div>
-          <button
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
             onClick={onClose}
-            className='text-content-muted hover:bg-muted rounded-lg p-1.5'
             aria-label='Close'
           >
             ✕
-          </button>
+          </Button>
         </div>
         <div className='space-y-3 px-5 py-4'>
           <div className='rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900'>
-            <span className='font-semibold'>Lưu ngay password</span> — chỉ hiện
-            1 lần. Gửi cho member để đăng nhập.
+            <span className='font-semibold'>Lưu ngay password</span>, chỉ hiện 1
+            lần. Gửi cho member để đăng nhập.
           </div>
           <div className='border-border bg-muted/60 rounded-lg border p-2.5'>
             <div className='text-3xs text-content-muted font-semibold tracking-wider uppercase'>
               Email
             </div>
-            <div className='border-border mt-1 truncate rounded border bg-white px-2 py-1.5 text-sm select-all'>
+            <div className='border-border bg-background mt-1 truncate rounded border px-2 py-1.5 text-sm select-all'>
               {email}
             </div>
           </div>
@@ -1034,7 +1021,7 @@ function ResetPasswordResultModal({
               Password mới
             </div>
             <div className='mt-1 flex items-center gap-2'>
-              <div className='border-border flex-1 truncate rounded border bg-white px-2 py-1.5 font-mono text-sm select-all'>
+              <div className='border-border bg-background flex-1 truncate rounded border px-2 py-1.5 font-mono text-sm select-all'>
                 {password}
               </div>
               <button
@@ -1044,7 +1031,7 @@ function ResetPasswordResultModal({
                   'text-2xs rounded border px-2 py-1.5 font-medium',
                   copied === 'pw'
                     ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                    : 'border-border text-content-muted hover:bg-muted bg-white'
+                    : 'border-border text-content-muted hover:bg-muted bg-background'
                 )}
               >
                 {copied === 'pw' ? 'Copied' : 'Copy'}
@@ -1053,20 +1040,17 @@ function ResetPasswordResultModal({
           </div>
         </div>
         <div className='border-border bg-muted/50 flex items-center justify-between border-t px-5 py-3'>
-          <button
+          <Button
             type='button'
+            variant='neutral'
+            size='sm'
             onClick={() => copy(summary, 'all')}
-            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'
           >
             {copied === 'all' ? 'Đã copy ✓' : 'Copy tất cả'}
-          </button>
-          <button
-            type='button'
-            onClick={onClose}
-            className='rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
-          >
+          </Button>
+          <Button type='button' size='sm' onClick={onClose}>
             Xong
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -1130,7 +1114,9 @@ function LazyList<T extends { id: string }>({
   }
   if (error) {
     return (
-      <div className='px-4 py-6 text-center text-xs text-rose-700'>{error}</div>
+      <div className='text-destructive px-4 py-6 text-center text-xs'>
+        {error}
+      </div>
     );
   }
   if (!items || items.length === 0) {

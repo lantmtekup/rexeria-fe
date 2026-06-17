@@ -26,6 +26,7 @@ import {
   type ProductInformationValue,
 } from '@/components/modules/Product/ProductInformationEditor';
 import type { MediaAsset } from '@/services/rexer/types';
+import { Button } from '@/components/atoms/button';
 import { cn } from '@/lib/cn';
 
 import {
@@ -166,12 +167,12 @@ const STEPS = [
 
 /** Mẫu fill nhanh — sản phẩm thật từ mint.ca (The Jack Pine 1kg gold coin). */
 const SAMPLE_PRODUCT: ProductInformationValue = {
-  name: 'The Jack Pine by Tom Thomson – 1 Kilo Pure Gold Coin',
+  name: 'The Jack Pine by Tom Thomson: 1 Kilo Pure Gold Coin',
   category: '',
   description:
     'Commemorative 1-kilo pure gold coin celebrating Tom Thomson’s iconic ' +
-    '1916–17 painting. An engraved interpretation of a windswept jack pine ' +
-    'against a distant shoreline — a symbol of Canadian wilderness and ' +
+    '1916-17 painting. An engraved interpretation of a windswept jack pine ' +
+    'against a distant shoreline, a symbol of Canadian wilderness and ' +
     'resilience. The monochromatic gold format emphasises composition and ' +
     'emotional depth over colour.',
   sku: '252469',
@@ -348,7 +349,7 @@ export function ProductFormModal({
       onClick={onClose}
     >
       <div
-        className='my-8 flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl'
+        className='bg-card my-8 flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -372,23 +373,26 @@ export function ProductFormModal({
           </div>
           <div className='flex items-center gap-2'>
             {!isEdit && (
-              <button
+              <Button
                 type='button'
+                variant='neutral'
+                size='xs'
                 onClick={() => setValue(SAMPLE_PRODUCT)}
-                className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1.5 rounded-full border bg-white px-2.5 py-1 text-xs font-medium'
                 title={t('productsProductModal.fillSampleHint')}
               >
                 <FlaskConical className='size-3.5' />
                 {t('productsProductModal.fillSample')}
-              </button>
+              </Button>
             )}
-            <button
+            <Button
+              type='button'
+              variant='ghost'
+              size='icon'
               onClick={onClose}
-              className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
               aria-label='Close'
             >
               <X className='size-4' />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -432,7 +436,7 @@ export function ProductFormModal({
                   <span
                     className={cn(
                       'mx-2 h-px flex-1',
-                      done ? 'bg-emerald-300' : 'bg-zinc-200'
+                      done ? 'bg-emerald-300' : 'bg-border'
                     )}
                   />
                 )}
@@ -449,7 +453,7 @@ export function ProductFormModal({
               <div>
                 <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
                   {t('productsProductModal.nameLabel')}{' '}
-                  <span className='text-rose-500'>*</span>
+                  <span className='text-destructive'>*</span>
                 </label>
                 <input
                   type='text'
@@ -512,14 +516,15 @@ export function ProductFormModal({
                       alt='thumbnail'
                       className='border-border size-20 rounded-lg border object-cover'
                     />
-                    <button
+                    <Button
                       type='button'
+                      variant='neutral'
+                      size='xs'
                       onClick={() => setThumbnail(null)}
-                      className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs'
                     >
                       <Trash2 className='size-3.5' />{' '}
                       {t('productsProductModal.removeBtn')}
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <label className='border-border text-content-muted mt-1.5 flex h-20 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed text-sm hover:border-orange-300 hover:bg-orange-50/40'>
@@ -628,11 +633,12 @@ export function ProductFormModal({
 
         {/* Footer */}
         <div className='border-border bg-muted/50 flex items-center justify-between gap-3 border-t px-5 py-3'>
-          <button
+          <Button
             type='button'
+            variant='neutral'
+            size='sm'
             onClick={step === 0 ? onClose : () => setStep(s => s - 1)}
             disabled={saving}
-            className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             {step === 0 ? (
               t('productsProductModal.cancelBtn')
@@ -642,7 +648,7 @@ export function ProductFormModal({
                 {t('productsProductModal.backBtn')}
               </>
             )}
-          </button>
+          </Button>
 
           <div className='text-2xs text-muted-foreground'>
             {t('productsProductModal.stepCounter', {
@@ -652,11 +658,11 @@ export function ProductFormModal({
           </div>
 
           {isLast ? (
-            <button
+            <Button
               type='button'
+              size='sm'
               onClick={handleSave}
               disabled={saving}
-              className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-60'
             >
               {saving ? (
                 <Loader2 className='size-3.5 animate-spin' />
@@ -668,17 +674,17 @@ export function ProductFormModal({
                 : isEdit
                   ? t('productsProductModal.saveChangesBtn')
                   : t('productsProductModal.createProductBtn')}
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               type='button'
+              size='sm'
               onClick={() => canNext && setStep(s => s + 1)}
               disabled={!canNext}
-              className='inline-flex items-center gap-1 rounded-lg bg-orange-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-orange-600 disabled:opacity-50'
             >
               {t('productsProductModal.nextBtn')}{' '}
               <ChevronRight className='size-3.5' />
-            </button>
+            </Button>
           )}
         </div>
       </div>

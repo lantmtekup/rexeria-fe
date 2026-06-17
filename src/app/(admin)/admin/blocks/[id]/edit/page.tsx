@@ -45,7 +45,7 @@ export default function AdminBlockEditPage() {
         </p>
         <Link
           href='/admin/blocks'
-          className='mt-4 inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
+          className='bg-foreground text-background hover:bg-foreground/85 mt-4 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium'
         >
           <ArrowLeft className='size-3.5' />
           Quay lại Blocks
@@ -58,7 +58,7 @@ export default function AdminBlockEditPage() {
     <div className='relative flex h-screen flex-col'>
       {/* Slim admin-context breadcrumb so the user knows they're still in
           /admin even though the underlying editor takes full viewport. */}
-      <div className='border-border text-content-muted flex items-center gap-2 border-b bg-white px-4 py-2 text-xs'>
+      <div className='border-border text-content-muted bg-background flex items-center gap-2 border-b px-4 py-2 text-xs'>
         <button
           type='button'
           onClick={() => router.push('/admin/blocks')}

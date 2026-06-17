@@ -161,7 +161,7 @@ function Thumb({
     return (
       <div
         className={cn(
-          'border-border shrink-0 overflow-hidden rounded-lg border bg-white',
+          'border-border bg-card shrink-0 overflow-hidden rounded-lg border',
           className
         )}
       >
@@ -180,7 +180,7 @@ function Thumb({
     return (
       <div
         className={cn(
-          'border-border shrink-0 overflow-hidden rounded-lg border bg-white',
+          'border-border bg-card shrink-0 overflow-hidden rounded-lg border',
           className
         )}
       >
@@ -457,7 +457,7 @@ function StageGroup({
         <button
           type='button'
           onClick={onAddBlock}
-          className='border-border text-content-muted hover:bg-card inline-flex items-center gap-1 rounded-lg border bg-white/60 px-2 py-1 text-[11px] font-semibold transition'
+          className='border-border text-content-muted hover:bg-card bg-background/60 inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-semibold transition'
         >
           <Search className='size-3' aria-hidden />{' '}
           {t('blueprint.manualSearch')}
@@ -652,7 +652,7 @@ function TemplateCard({
             <button
               type='button'
               onClick={() => setPreviewOpen(true)}
-              className='text-content-main inline-flex items-center gap-1 rounded-lg bg-white/95 px-2 py-1 text-[11px] font-semibold shadow-sm backdrop-blur transition hover:bg-white'
+              className='text-content-main bg-background/95 hover:bg-background inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold shadow-sm backdrop-blur transition'
             >
               <Expand className='size-3' aria-hidden /> {t('blueprint.preview')}
             </button>
@@ -660,7 +660,7 @@ function TemplateCard({
           <button
             type='button'
             onClick={() => setOpen(true)}
-            className='text-content-main inline-flex items-center gap-1 rounded-lg bg-white/95 px-2 py-1 text-[11px] font-semibold shadow-sm backdrop-blur transition hover:bg-white'
+            className='text-content-main bg-background/95 hover:bg-background inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold shadow-sm backdrop-blur transition'
           >
             <Eye className='size-3' aria-hidden /> {t('blueprint.viewDetail')}
           </button>
@@ -868,7 +868,7 @@ function IconBtn({
       className={cn(
         'inline-flex size-6 items-center justify-center rounded-md transition disabled:opacity-30',
         danger
-          ? 'text-content-muted hover:bg-rose-50 hover:text-rose-600'
+          ? 'text-content-muted hover:bg-danger-bg hover:text-destructive'
           : 'text-content-muted hover:bg-muted'
       )}
     >

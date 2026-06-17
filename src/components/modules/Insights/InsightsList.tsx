@@ -24,6 +24,7 @@ import type {
   InsightReport,
   InsightStatus,
 } from '@/services/rexer/types';
+import { Chip } from '@/components/atoms/chip';
 import { cn } from '@/lib/cn';
 import { AiOrb } from './steps/ui';
 
@@ -142,7 +143,7 @@ export function InsightsList({ basePath }: { basePath: string }) {
       </header>
 
       {/* Filter */}
-      <div className='border-border flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3 shadow-sm'>
+      <div className='border-border bg-card flex flex-wrap items-center gap-3 rounded-2xl border p-3 shadow-sm'>
         <div className='border-border bg-muted flex flex-1 items-center gap-2 rounded-lg border px-3 py-1.5 lg:max-w-sm'>
           <Search className='text-content-muted size-3.5' aria-hidden />
           <input
@@ -154,19 +155,14 @@ export function InsightsList({ basePath }: { basePath: string }) {
         </div>
         <div className='flex flex-wrap items-center gap-1'>
           {FILTERS.map(f => (
-            <button
+            <Chip
               key={f}
-              type='button'
+              size='sm'
+              selected={filter === f}
               onClick={() => setFilter(f)}
-              className={cn(
-                'text-2xs rounded-full px-2.5 py-1 font-medium transition-all',
-                filter === f
-                  ? 'bg-foreground text-white shadow-sm'
-                  : 'border-border text-content-muted hover:bg-muted border bg-white'
-              )}
             >
               {f === 'all' ? t('list.statusAll') : statusLabel(f)}
-            </button>
+            </Chip>
           ))}
         </div>
       </div>
@@ -227,7 +223,7 @@ function ReportCard({
   const goal = r.blueprint?.experience_goal?.primary_goal;
 
   return (
-    <div className='group border-border hover:border-primary/40 relative flex flex-col gap-3 rounded-2xl border bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+    <div className='group border-border hover:border-primary/40 bg-card relative flex flex-col gap-3 rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       {/* Lớp phủ click toàn card → mở chi tiết (button menu nằm trên nhờ z-index) */}
       <Link
         href={href}
@@ -262,7 +258,7 @@ function ReportCard({
             <MoreVertical className='size-4' aria-hidden />
           </button>
           {menuOpen && (
-            <div className='border-border absolute top-7 right-0 z-20 w-32 overflow-hidden rounded-lg border bg-white shadow-lg'>
+            <div className='border-border bg-card absolute top-7 right-0 z-20 w-32 overflow-hidden rounded-lg border shadow-lg'>
               <button
                 type='button'
                 onClick={onRename}
@@ -273,7 +269,7 @@ function ReportCard({
               <button
                 type='button'
                 onClick={onDelete}
-                className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
+                className='text-destructive hover:bg-danger-bg flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
               >
                 <Trash2 className='size-3' aria-hidden /> {deleteLabel}
               </button>
@@ -316,7 +312,7 @@ function EmptyState({
   t: ReturnType<typeof useTranslations>;
 }) {
   return (
-    <div className='border-border flex flex-col items-center rounded-2xl border border-dashed bg-white px-8 py-14 text-center'>
+    <div className='border-border bg-background flex flex-col items-center rounded-2xl border border-dashed px-8 py-14 text-center'>
       <AiOrb size={56} />
       <p className='text-content-main mt-4 text-base font-semibold'>
         {hasAny ? t('list.emptyFilter') : t('list.empty')}

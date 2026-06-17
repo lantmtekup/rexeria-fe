@@ -129,7 +129,7 @@ export function SetupStep({ submitting, onRun, brandLocked }: SetupStepProps) {
   }
 
   const selectClass =
-    'w-full appearance-none rounded-xl border border-border bg-white px-3 py-2.5 text-sm ' +
+    'w-full appearance-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm ' +
     'text-content-main outline-none transition hover:bg-muted ' +
     'focus:border-primary focus:ring-2 focus:ring-primary/20 ' +
     'disabled:cursor-not-allowed disabled:opacity-50';
@@ -157,7 +157,7 @@ export function SetupStep({ submitting, onRun, brandLocked }: SetupStepProps) {
               disabled={workspaces.loading}
               className={selectClass}
             >
-              <option value=''>—</option>
+              <option value=''>-</option>
               {workspaceItems.map(w => (
                 <option key={w.id} value={w.id}>
                   {w.name}
@@ -175,7 +175,7 @@ export function SetupStep({ submitting, onRun, brandLocked }: SetupStepProps) {
               disabled={!workspaceId || products.loading}
               className={selectClass}
             >
-              <option value=''>—</option>
+              <option value=''>-</option>
               {(products.data?.items ?? []).map(p => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -193,7 +193,7 @@ export function SetupStep({ submitting, onRun, brandLocked }: SetupStepProps) {
               disabled={!workspaceId || campaigns.loading}
               className={selectClass}
             >
-              <option value=''>—</option>
+              <option value=''>-</option>
               {(campaigns.data?.items ?? []).map(c => (
                 <option key={c.id} value={c.id}>
                   {c.name}

@@ -6,8 +6,7 @@
  * Wave 3 cutover (2026-05-30): migrated from localStorage `savedBlocks`
  * helper to BE `/v1/blocks`. Endpoints wired:
  *   GET    /v1/blocks                        → list (`rexerApi.blocks.list`)
- *   POST   /v1/blocks                        → create (in AddBuiltinBlockDialog)
- *   PATCH  /v1/blocks/:id                    → rename + tag update
+ *   PATCH  /v1/blocks/:id                    → rename + tag + info update
  *   DELETE /v1/blocks/:id                    → archive
  *   POST   /v1/blocks/:id/clone              → duplicate
  *   POST   /v1/blocks/:id/use                → not used here (canvas editor calls)
@@ -45,6 +44,7 @@ import { toast } from 'sonner';
 
 import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import { Input } from '@/components/atoms/input';
 import { EmptyState } from '@/components/molecules/EmptyState';
 import {
@@ -64,11 +64,14 @@ import type {
 } from '@/components/modules/CanvasTemplate/block-editor/types';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { Block as ServerBlock } from '@/services/rexer/types';
-import { buildLegacyServerBlocks, getLegacyBlock } from '@/blocks/registry';
+import type {
+  AdminBlockType,
+  Block as ServerBlock,
+} from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
 
 import { AddBuiltinBlockDialog } from './AddBuiltinBlockDialog';
+import { EditBlockDialog } from './EditBlockDialog';
 
 type View = 'grid' | 'table';
 
@@ -83,7 +86,7 @@ const BLOCK_TYPE_GRADIENT: Record<BlockType, string> = Object.fromEntries(
 ) as Record<BlockType, string>;
 
 function fmtDate(iso?: string): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString('vi-VN', {
@@ -94,7 +97,7 @@ function fmtDate(iso?: string): string {
 }
 
 function fmtRelative(iso?: string): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const t = new Date(iso).getTime();
   if (Number.isNaN(t)) return iso;
   const diff = Date.now() - t;
@@ -149,41 +152,57 @@ export function AdminBlocksPage() {
     block: EditorBlock;
     name: string;
   } | null>(null);
-  // Legacy preview — render component qua registry, không dùng PreviewMode
-  // vì PreviewMode expect editor Block shape (canvas-template). Holds
-  // schema id để lookup registry + lang switch (vi/en).
-  const [legacyPreviewTarget, setLegacyPreviewTarget] = React.useState<{
-    schemaId: string;
-    name: string;
-  } | null>(null);
+  // Block đang sửa thông tin (name/description/tags) qua EditBlockDialog.
+  const [editTarget, setEditTarget] = React.useState<ServerBlock | null>(null);
+  // Block_type thật từ BE (/block-types) — nguồn cho filter + dialog sửa, thay
+  // registry FE cứng (vốn không phủ block_type chỉ có ở BE).
+  const [blockTypes, setBlockTypes] = React.useState<AdminBlockType[]>([]);
 
   const load = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const r = await rexerApi.blocks.list({ limit: 200 });
-      // Merge legacy registry (POC ported từ 360-cms) ở đầu list. Synthetic
-      // entries có id `legacy:*` — không call BE, render preview qua local
-      // React component. Khi BE seed thật cho 113 blocks → bỏ merge này.
-      const legacy = buildLegacyServerBlocks();
-      setItems([...legacy, ...(r.items ?? [])]);
+      setItems(r.items ?? []);
     } catch (err) {
       setError(rxMessage(err));
-      setItems(buildLegacyServerBlocks());
+      setItems([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  /** Detect legacy synthetic entries. Skip BE actions cho row legacy
-   *  (delete/clone/rename) — chỉ allow preview + detail. */
-  const isLegacyItem = (item: ServerBlock) => item.id.startsWith('legacy:');
-
   React.useEffect(() => {
     load();
   }, [load]);
 
+  // Nạp block_type thật từ BE 1 lần (lỗi → để rỗng, filter fallback theo data).
+  React.useEffect(() => {
+    rexerApi.adminBlockTypes
+      .list()
+      .then(r => setBlockTypes(r.items ?? []))
+      .catch(() => setBlockTypes([]));
+  }, []);
+
   const selected = items.find(i => i.id === selectedId) ?? null;
+
+  // Options filter type: ưu tiên block_type BE; gộp thêm type_code có trong
+  // data mà BE chưa trả (đừng để block nào không lọc được).
+  const typeOptions = React.useMemo(() => {
+    const map = new Map<string, string>();
+    for (const bt of blockTypes) map.set(bt.type, bt.label_vi || bt.type);
+    for (const it of items) {
+      if (!map.has(it.type_code)) {
+        map.set(
+          it.type_code,
+          BLOCK_TYPE_LABEL[it.type_code as BlockType] ?? it.type_code
+        );
+      }
+    }
+    return Array.from(map, ([code, label]) => ({ code, label })).sort((a, b) =>
+      a.label.localeCompare(b.label)
+    );
+  }, [blockTypes, items]);
 
   // Distinct tags across all rows for the filter chip row.
   const allTags = React.useMemo(() => {
@@ -207,16 +226,10 @@ export function AdminBlocksPage() {
   }, [items, search, typeFilter, tagFilter]);
 
   const handleDuplicate = async (id: string) => {
-    if (id.startsWith('legacy:')) {
-      toast.info(
-        'Legacy block là catalog system — clone chưa support. Sẽ enable khi seed BE.'
-      );
-      return;
-    }
     const tid = toast.loading('Đang clone…');
     try {
       const dup = await rexerApi.blocks.clone(id);
-      toast.success(`Đã clone — "${dup.name}"`, { id: tid });
+      toast.success(`Đã clone: "${dup.name}"`, { id: tid });
       await load();
       setSelectedId(dup.id);
     } catch (err) {
@@ -225,10 +238,6 @@ export function AdminBlocksPage() {
   };
 
   const handleDelete = async (block: ServerBlock) => {
-    if (isLegacyItem(block)) {
-      toast.info('Legacy block thuộc system catalog — không xoá được từ UI.');
-      return;
-    }
     if (!window.confirm(`Xoá "${block.name}"?`)) return;
     const tid = toast.loading('Đang xoá…');
     try {
@@ -242,10 +251,6 @@ export function AdminBlocksPage() {
   };
 
   const handleRename = async (id: string, name: string) => {
-    if (id.startsWith('legacy:')) {
-      toast.info('Legacy block — đổi tên trong source code (src/blocks/).');
-      return;
-    }
     const trimmed = name.trim();
     if (!trimmed) return;
     try {
@@ -258,10 +263,6 @@ export function AdminBlocksPage() {
   };
 
   const handleTagsChange = async (id: string, tags: string[]) => {
-    if (id.startsWith('legacy:')) {
-      toast.info('Legacy block — tags fix ở schema source code.');
-      return;
-    }
     const normalised = Array.from(
       new Set(tags.map(t => t.trim().toLowerCase()).filter(t => t.length > 0))
     );
@@ -274,35 +275,17 @@ export function AdminBlocksPage() {
     }
   };
 
-  /**
-   * Edit-in-canvas flow still blocked by Wave 3 work — canvas-editor wrap
-   * needs to load `block.settings` directly instead of round-tripping
-   * through a temp canvas-template id (which is retired post mig 134).
-   */
+  /** Mở dialog sửa thông tin block (name/description/tags). Nội dung canvas
+   *  (settings) vẫn chỉnh trong block editor riêng. */
   const handleEdit = (block: ServerBlock) => {
-    toast.info(
-      `Edit "${block.name}" — flow đang refactor sang block-direct editor (Wave 3). Tạm thời dùng portal block editor để chỉnh.`,
-      { duration: 6000 }
-    );
+    setEditTarget(block);
   };
 
   const handlePreview = (block: ServerBlock) => {
-    if (isLegacyItem(block)) {
-      const schemaId =
-        typeof block.settings?.schemaId === 'string'
-          ? (block.settings.schemaId as string)
-          : null;
-      if (!schemaId || !getLegacyBlock(schemaId)) {
-        toast.error('Legacy block không tìm thấy trong registry.');
-        return;
-      }
-      setLegacyPreviewTarget({ schemaId, name: block.name });
-      return;
-    }
     const editorBlock = parseEditorBlock(block.settings);
     if (!editorBlock) {
       toast.error(
-        'Block này không có canvas data — settings rỗng hoặc shape không tương thích.'
+        'Block này không có canvas data, settings rỗng hoặc shape không tương thích.'
       );
       return;
     }
@@ -322,7 +305,7 @@ export function AdminBlocksPage() {
       {/* Main column */}
       <div className='flex flex-1 flex-col overflow-hidden'>
         {/* Header */}
-        <div className='border-border border-b bg-white px-6 py-4'>
+        <div className='border-border bg-background border-b px-6 py-4'>
           <div className='flex items-start justify-between gap-3'>
             <div>
               <h1 className='text-xl font-semibold'>Blocks</h1>
@@ -332,25 +315,19 @@ export function AdminBlocksPage() {
               </p>
             </div>
             <div className='flex items-center gap-2'>
-              <button
-                type='button'
+              <Button
+                variant='neutral'
+                size='sm'
                 onClick={load}
                 disabled={loading}
-                className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
               >
-                <RefreshCw
-                  className={cn('size-3.5', loading && 'animate-spin')}
-                />
+                <RefreshCw className={cn(loading && 'animate-spin')} />
                 Refresh
-              </button>
-              <button
-                type='button'
-                onClick={() => setCatalogOpen(true)}
-                className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
-              >
-                <Plus className='size-3.5' />
+              </Button>
+              <Button size='sm' onClick={() => setCatalogOpen(true)}>
+                <Plus />
                 Thêm từ thư viện hệ thống
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -365,7 +342,7 @@ export function AdminBlocksPage() {
                 className='pl-8'
               />
             </div>
-            <div className='border-border flex items-center gap-1 rounded-lg border bg-white p-0.5'>
+            <div className='border-border bg-background flex items-center gap-1 rounded-lg border p-0.5'>
               <ViewBtn
                 active={view === 'grid'}
                 onClick={() => setView('grid')}
@@ -389,12 +366,12 @@ export function AdminBlocksPage() {
                 onChange={e =>
                   setTypeFilter(e.target.value as BlockType | 'all')
                 }
-                className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-2.5 py-1 text-xs font-medium outline-none'
+                className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1 text-xs font-medium outline-none'
               >
                 <option value='all'>Tất cả type</option>
-                {(Object.keys(BLOCK_TYPE_LABEL) as BlockType[]).map(t => (
-                  <option key={t} value={t}>
-                    {BLOCK_TYPE_LABEL[t]}
+                {typeOptions.map(o => (
+                  <option key={o.code} value={o.code}>
+                    {o.label}
                   </option>
                 ))}
               </select>
@@ -403,19 +380,14 @@ export function AdminBlocksPage() {
                 <div className='flex items-center gap-1.5'>
                   <Tag className='text-muted-foreground size-3' />
                   {allTags.map(t => (
-                    <button
+                    <Chip
                       key={t}
-                      type='button'
+                      selected={tagFilter === t}
+                      size='sm'
                       onClick={() => setTagFilter(tagFilter === t ? null : t)}
-                      className={cn(
-                        'text-3xs rounded-full border px-2 py-0.5 font-medium transition-colors',
-                        tagFilter === t
-                          ? 'border-zinc-900 bg-zinc-900 text-white'
-                          : 'border-border text-content-muted hover:bg-muted bg-white'
-                      )}
                     >
                       {t}
-                    </button>
+                    </Chip>
                   ))}
                 </div>
               )}
@@ -444,7 +416,7 @@ export function AdminBlocksPage() {
         {/* Body */}
         <div className='bg-muted/40 flex-1 overflow-y-auto p-6'>
           {error && (
-            <div className='mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
+            <div className='border-destructive/20 bg-danger-bg text-destructive mb-3 rounded-lg border px-3 py-2 text-xs'>
               Load blocks thất bại: <code className='font-mono'>{error}</code>
             </div>
           )}
@@ -461,21 +433,9 @@ export function AdminBlocksPage() {
                   : 'Không khớp tìm kiếm'
               }
               description={
-                items.length === 0 ? (
-                  <>
-                    Bấm{' '}
-                    <button
-                      type='button'
-                      onClick={() => setCatalogOpen(true)}
-                      className='text-primary underline'
-                    >
-                      Thêm từ thư viện hệ thống
-                    </button>{' '}
-                    để chọn 1 trong 14 block mẫu — sau đó sửa tuỳ ý.
-                  </>
-                ) : (
-                  'Đổi từ khoá hoặc xoá filter để xem tất cả.'
-                )
+                items.length === 0
+                  ? 'Tạo block trong canvas editor rồi lưu vào thư viện.'
+                  : 'Đổi từ khoá hoặc xoá filter để xem tất cả.'
               }
             />
           ) : view === 'grid' ? (
@@ -485,6 +445,7 @@ export function AdminBlocksPage() {
               onSelect={openDetail}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
+              onEdit={handleEdit}
               onPreview={handlePreview}
             />
           ) : (
@@ -534,13 +495,18 @@ export function AdminBlocksPage() {
         />
       )}
 
-      {legacyPreviewTarget && (
-        <LegacyPreviewOverlay
-          schemaId={legacyPreviewTarget.schemaId}
-          name={legacyPreviewTarget.name}
-          onClose={() => setLegacyPreviewTarget(null)}
-        />
-      )}
+      <EditBlockDialog
+        open={!!editTarget}
+        onOpenChange={open => {
+          if (!open) setEditTarget(null);
+        }}
+        block={editTarget}
+        blockTypes={blockTypes}
+        onSaved={updated => {
+          setItems(prev => prev.map(b => (b.id === updated.id ? updated : b)));
+          setEditTarget(null);
+        }}
+      />
     </div>
   );
 }
@@ -553,6 +519,7 @@ function GridView({
   onSelect,
   onDuplicate,
   onDelete,
+  onEdit,
   onPreview,
 }: {
   items: ServerBlock[];
@@ -560,6 +527,7 @@ function GridView({
   onSelect: (id: string) => void;
   onDuplicate: (id: string) => void;
   onDelete: (item: ServerBlock) => void;
+  onEdit: (item: ServerBlock) => void;
   onPreview: (item: ServerBlock) => void;
 }) {
   return (
@@ -572,6 +540,7 @@ function GridView({
           onClick={() => onSelect(it.id)}
           onDuplicate={() => onDuplicate(it.id)}
           onDelete={() => onDelete(it)}
+          onEdit={() => onEdit(it)}
           onPreview={() => onPreview(it)}
         />
       ))}
@@ -585,6 +554,7 @@ function BlockCard({
   onClick,
   onDuplicate,
   onDelete,
+  onEdit,
   onPreview,
 }: {
   item: ServerBlock;
@@ -592,34 +562,21 @@ function BlockCard({
   onClick: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onEdit: () => void;
   onPreview: () => void;
 }) {
   const type = item.type_code as BlockType;
   const gradient = BLOCK_TYPE_GRADIENT[type] ?? 'from-zinc-400 to-zinc-600';
-  // Legacy item: prefer schema.name → strip `legacy_` prefix from type_code
-  // không meaningful cho admin scan. Default label vẫn fallback type_code.
-  const isLegacy = item.id.startsWith('legacy:');
-  const legacySchemaId =
-    isLegacy && typeof item.settings?.schemaId === 'string'
-      ? (item.settings.schemaId as string)
-      : null;
-  const legacyEntry = legacySchemaId ? getLegacyBlock(legacySchemaId) : null;
-  const legacyCategory =
-    isLegacy && typeof item.settings?.category === 'string'
-      ? (item.settings.category as string)
-      : null;
-  const label = isLegacy
-    ? (legacyCategory ?? 'Legacy')
-    : (BLOCK_TYPE_LABEL[type] ?? item.type_code);
+  const label = BLOCK_TYPE_LABEL[type] ?? item.type_code;
   const editorBlock = parseEditorBlock(item.settings);
   const extraCount = editorBlock?.extraElements?.length ?? 0;
   const hasMobile = !!editorBlock?.contentVi?.mobile;
   return (
     <div
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-xl border bg-white text-left shadow-sm transition-all hover:shadow-md',
+        'group bg-card relative flex flex-col overflow-hidden rounded-xl border text-left shadow-sm transition-all hover:shadow-md',
         active
-          ? 'border-zinc-900 ring-2 ring-zinc-900/10'
+          ? 'border-foreground ring-foreground/10 ring-2'
           : 'border-border hover:border-border'
       )}
     >
@@ -631,7 +588,7 @@ function BlockCard({
             e.stopPropagation();
             onPreview();
           }}
-          className='text-content-muted hover:text-foreground flex size-7 items-center justify-center rounded-full bg-white/85 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all hover:bg-white'
+          className='text-content-muted hover:text-foreground bg-background/85 hover:bg-background flex size-7 items-center justify-center rounded-full shadow-sm ring-1 ring-black/5 backdrop-blur transition-all'
           title='Xem preview (layout + animation)'
           aria-label='Preview block'
         >
@@ -641,6 +598,7 @@ function BlockCard({
           onDetail={onClick}
           onDuplicate={onDuplicate}
           onDelete={onDelete}
+          onEdit={onEdit}
           onPreview={onPreview}
         />
       </div>
@@ -664,8 +622,6 @@ function BlockCard({
         <div className='relative'>
           {editorBlock ? (
             <BlockMiniPreview block={editorBlock} aspect='4 / 3' />
-          ) : legacyEntry ? (
-            <LegacyBlockThumbnail entry={legacyEntry} />
           ) : (
             <div
               className={cn(
@@ -735,11 +691,13 @@ function CardKebabMenu({
   onDetail,
   onDuplicate,
   onDelete,
+  onEdit,
   onPreview,
 }: {
   onDetail: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onEdit: () => void;
   onPreview: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -774,14 +732,14 @@ function CardKebabMenu({
           e.stopPropagation();
           setOpen(o => !o);
         }}
-        className='text-content-muted hover:text-foreground flex size-7 items-center justify-center rounded-full bg-white/85 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all hover:bg-white'
+        className='text-content-muted hover:text-foreground bg-background/85 hover:bg-background flex size-7 items-center justify-center rounded-full shadow-sm ring-1 ring-black/5 backdrop-blur transition-all'
         aria-label='More actions'
         aria-expanded={open}
       >
         <MoreVertical className='size-3.5' />
       </button>
       {open && (
-        <div className='border-border absolute top-9 right-0 z-20 w-48 overflow-hidden rounded-lg border bg-white shadow-lg'>
+        <div className='border-border bg-background absolute top-9 right-0 z-20 w-48 overflow-hidden rounded-lg border shadow-lg'>
           <button
             type='button'
             onClick={choose(onPreview)}
@@ -800,6 +758,14 @@ function CardKebabMenu({
           </button>
           <button
             type='button'
+            onClick={choose(onEdit)}
+            className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
+          >
+            <Pencil className='text-content-muted size-3.5' />
+            Sửa thông tin
+          </button>
+          <button
+            type='button'
             onClick={choose(onDuplicate)}
             className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
           >
@@ -810,7 +776,7 @@ function CardKebabMenu({
           <button
             type='button'
             onClick={choose(onDelete)}
-            className='flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-rose-600 hover:bg-rose-50'
+            className='text-destructive hover:bg-danger-bg flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
           >
             <Trash2 className='size-3.5' />
             Xoá
@@ -841,7 +807,7 @@ function TableView({
   onPreview: (item: ServerBlock) => void;
 }) {
   return (
-    <div className='border-border overflow-hidden rounded-lg border bg-white'>
+    <div className='border-border bg-card overflow-hidden rounded-lg border'>
       <Table>
         <TableHeader>
           <TableRow>
@@ -888,7 +854,7 @@ function TableView({
                       ))}
                     </div>
                   ) : (
-                    <span className='text-muted-foreground'>—</span>
+                    <span className='text-muted-foreground'>-</span>
                   )}
                 </TableCell>
                 <TableCell>
@@ -921,7 +887,7 @@ function TableView({
                       variant='ghost'
                       size='sm'
                       onClick={() => onEdit(it)}
-                      title='Sửa trong canvas (Wave 3)'
+                      title='Sửa thông tin (tên, mô tả, tag)'
                     >
                       <Pencil className='size-3.5' />
                     </Button>
@@ -939,7 +905,7 @@ function TableView({
                       onClick={() => onDelete(it)}
                       title='Xoá'
                     >
-                      <Trash2 className='size-3.5 text-rose-600' />
+                      <Trash2 className='text-destructive size-3.5' />
                     </Button>
                   </div>
                 </TableCell>
@@ -1011,7 +977,7 @@ function DetailDrawer({
   };
 
   return (
-    <aside className='border-border flex w-[380px] flex-col border-l bg-white'>
+    <aside className='border-border bg-background flex w-[380px] flex-col border-l'>
       {/* Header */}
       <div className='border-border flex items-start justify-between border-b px-4 py-3'>
         <div className='min-w-0 flex-1'>
@@ -1028,7 +994,7 @@ function DetailDrawer({
                   setEditingName(false);
                 }
               }}
-              className='border-border w-full rounded-md border bg-white px-2 py-1 text-sm font-semibold outline-none focus:ring-2 focus:ring-zinc-900/10'
+              className='border-border bg-background focus:ring-foreground/10 w-full rounded-md border px-2 py-1 text-sm font-semibold outline-none focus:ring-2'
             />
           ) : (
             <button
@@ -1142,7 +1108,7 @@ function DetailDrawer({
               key={t}
               type='button'
               onClick={() => removeTag(t)}
-              className='group text-3xs bg-muted text-content-muted flex items-center gap-1 rounded-full px-2 py-0.5 font-medium hover:bg-rose-50 hover:text-rose-700'
+              className='group text-3xs bg-muted text-content-muted hover:bg-danger-bg hover:text-destructive flex items-center gap-1 rounded-full px-2 py-0.5 font-medium'
               title='Click để xoá tag'
             >
               {t}
@@ -1161,13 +1127,13 @@ function DetailDrawer({
               }
             }}
             placeholder='Thêm tag (Enter)…'
-            className='text-2xs border-border flex-1 rounded-md border px-2 py-1 outline-none focus:border-zinc-400'
+            className='text-2xs border-border focus:border-ring flex-1 rounded-md border px-2 py-1 outline-none'
           />
           <button
             type='button'
             onClick={addTag}
             disabled={!tagInput.trim()}
-            className='text-2xs rounded-md bg-zinc-900 px-2.5 py-1 font-medium text-white hover:bg-zinc-700 disabled:opacity-40'
+            className='text-2xs bg-foreground text-background hover:bg-foreground/85 rounded-md px-2.5 py-1 font-medium disabled:opacity-40'
           >
             Thêm
           </button>
@@ -1185,7 +1151,7 @@ function DetailDrawer({
           title={
             editorBlock
               ? 'Mở preview full-screen với layout + animation'
-              : 'Block không có canvas data — preview disabled'
+              : 'Block không có canvas data, preview disabled'
           }
         >
           <Play className='size-3.5' />
@@ -1204,7 +1170,7 @@ function DetailDrawer({
             variant='outline'
             size='sm'
             onClick={onDelete}
-            className='text-rose-600 hover:bg-rose-50'
+            className='text-destructive hover:bg-danger-bg'
           >
             <Trash2 className='size-3.5' />
             Xoá
@@ -1247,156 +1213,8 @@ function ViewBtn({
   label: string;
 }) {
   return (
-    <button
-      type='button'
-      onClick={onClick}
-      title={label}
-      className={cn(
-        'text-2xs flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors',
-        active ? 'bg-zinc-900 text-white' : 'text-content-muted hover:bg-muted'
-      )}
-    >
+    <Chip selected={active} size='sm' onClick={onClick} title={label}>
       {icon}
-    </button>
-  );
-}
-
-/* ─── LegacyBlockThumbnail ───────────────────────────────────────────
- * Render component legacy ở size lớn rồi scale down để fit khung
- * 4:3 ratio của card. `transform: scale(...)` + `transform-origin:
- * top left` đảm bảo component thấy viewport full-size (~1280×960) →
- * khi shrink xuống card preview vẫn giữ layout proportions.
- *
- * Pointer-events: none để tránh hover / scroll affect card click. */
-function LegacyBlockThumbnail({
-  entry,
-}: {
-  entry: ReturnType<typeof getLegacyBlock>;
-}) {
-  if (!entry) return null;
-  const { schema, Component } = entry;
-  const content = (schema.defaults.vi ?? {}) as Record<string, unknown>;
-  const SOURCE_W = 1280;
-  const SOURCE_H = 960;
-
-  return (
-    <div className='bg-muted relative aspect-[4/3] overflow-hidden'>
-      <div
-        aria-hidden='true'
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: SOURCE_W,
-          height: SOURCE_H,
-          transform: 'scale(0.25)',
-          transformOrigin: 'top left',
-          pointerEvents: 'none',
-        }}
-      >
-        <Component content={content} editable={false} />
-      </div>
-    </div>
-  );
-}
-
-/* ─── LegacyPreviewOverlay ──────────────────────────────────────────
- * Full-screen modal render legacy block ở viewport thật + toolbar
- * top-bar (name, lang switch vi/en, close). Block dùng position:
- * fixed (delvaux hero), h-screen, vh units — wrapper có `transform:
- * translateZ(0)` tạo new containing block để fixed children stay
- * inside modal (giống pattern PageOverlayView 2026-05-31).
- *
- * ESC key + click backdrop → close. Body scroll lock while open. */
-function LegacyPreviewOverlay({
-  schemaId,
-  name,
-  onClose,
-}: {
-  schemaId: string;
-  name: string;
-  onClose: () => void;
-}) {
-  const [lang, setLang] = React.useState<'vi' | 'en'>('vi');
-  const entry = getLegacyBlock(schemaId);
-
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [onClose]);
-
-  if (!entry) return null;
-  const { Component, schema } = entry;
-  const content = (schema.defaults[lang] ?? schema.defaults.vi ?? {}) as Record<
-    string,
-    unknown
-  >;
-  const availableLangs = Object.keys(schema.defaults);
-
-  return (
-    <div className='fixed inset-0 z-[200] flex flex-col bg-zinc-950'>
-      {/* Toolbar */}
-      <div className='flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-zinc-900 px-4 py-2.5'>
-        <div className='flex min-w-0 items-center gap-3'>
-          <span className='text-3xs inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 font-mono font-bold tracking-wider text-amber-300 uppercase'>
-            Legacy
-          </span>
-          <div className='min-w-0'>
-            <div className='truncate text-sm font-semibold text-white'>
-              {name}
-            </div>
-            <code className='text-3xs text-muted-foreground block truncate font-mono'>
-              {schema.id}
-            </code>
-          </div>
-        </div>
-        <div className='flex items-center gap-2'>
-          {availableLangs.length > 1 && (
-            <div className='flex items-center gap-1 rounded-full border border-white/10 bg-zinc-800 p-0.5'>
-              {availableLangs.map(l => (
-                <button
-                  key={l}
-                  type='button'
-                  onClick={() => setLang(l as 'vi' | 'en')}
-                  className={cn(
-                    'text-3xs rounded-full px-2.5 py-1 font-mono font-bold tracking-wider uppercase transition-colors',
-                    lang === l
-                      ? 'text-foreground bg-white'
-                      : 'text-muted-foreground hover:text-white'
-                  )}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-          )}
-          <button
-            type='button'
-            onClick={onClose}
-            className='text-muted-foreground flex size-8 items-center justify-center rounded-full hover:bg-white/10 hover:text-white'
-            aria-label='Đóng preview'
-            title='Đóng (ESC)'
-          >
-            <X className='size-4' />
-          </button>
-        </div>
-      </div>
-
-      {/* Content — translateZ tạo containing block cho fixed/vh children */}
-      <div
-        className='relative flex-1 overflow-auto bg-white'
-        style={{ transform: 'translateZ(0)' }}
-      >
-        <Component content={content} editable={false} />
-      </div>
-    </div>
+    </Chip>
   );
 }

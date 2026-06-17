@@ -12,6 +12,7 @@ import { useTranslations } from 'next-intl';
 import { Loader2, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 
@@ -93,7 +94,7 @@ export function CreateLandingDialog({
       <form
         onSubmit={handleSubmit}
         onClick={e => e.stopPropagation()}
-        className='my-16 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
+        className='bg-background my-16 w-full max-w-md overflow-hidden rounded-2xl shadow-2xl'
       >
         <div className='border-border flex items-center justify-between border-b px-5 py-3'>
           <div className='flex items-center gap-2.5'>
@@ -104,21 +105,22 @@ export function CreateLandingDialog({
               {t('landingPagesCreateLandingDialog.title')}
             </h3>
           </div>
-          <button
+          <Button
             type='button'
+            variant='ghost'
+            size='icon'
             onClick={onClose}
-            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label={t('landingPagesCreateLandingDialog.closeAria')}
           >
             <X className='size-4' />
-          </button>
+          </Button>
         </div>
 
         <div className='space-y-3 px-5 py-4'>
           <div>
             <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
               {t('landingPagesCreateLandingDialog.nameLabel')}{' '}
-              <span className='text-rose-500'>*</span>
+              <span className='text-destructive'>*</span>
             </label>
             <input
               autoFocus
@@ -127,7 +129,7 @@ export function CreateLandingDialog({
               maxLength={200}
               onChange={e => setName(e.target.value)}
               placeholder={t('landingPagesCreateLandingDialog.namePlaceholder')}
-              className='border-border mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
+              className='border-border bg-background mt-1 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100'
             />
             <p className='text-3xs text-content-muted mt-1'>
               {t('landingPagesCreateLandingDialog.nameHint')}
@@ -135,26 +137,23 @@ export function CreateLandingDialog({
           </div>
 
           {error && (
-            <div className='rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800'>
+            <div className='border-destructive/20 bg-danger-bg text-destructive rounded-lg border px-3 py-2 text-xs'>
               {error}
             </div>
           )}
         </div>
 
         <div className='border-border bg-muted/50 flex items-center justify-end gap-2 border-t px-5 py-3'>
-          <button
+          <Button
             type='button'
+            variant='neutral'
+            size='sm'
             onClick={onClose}
             disabled={submitting}
-            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             {t('landingPagesCreateLandingDialog.cancel')}
-          </button>
-          <button
-            type='submit'
-            disabled={submitting || !name.trim()}
-            className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50'
-          >
+          </Button>
+          <Button type='submit' size='sm' disabled={submitting || !name.trim()}>
             {submitting ? (
               <Loader2 className='size-3.5 animate-spin' />
             ) : (
@@ -163,7 +162,7 @@ export function CreateLandingDialog({
             {submitting
               ? t('landingPagesCreateLandingDialog.submitting')
               : t('landingPagesCreateLandingDialog.submit')}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

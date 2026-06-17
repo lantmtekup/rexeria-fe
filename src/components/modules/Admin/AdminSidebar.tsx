@@ -134,7 +134,7 @@ export function AdminSidebar() {
   };
 
   return (
-    <aside className='border-border flex h-screen w-60 shrink-0 flex-col border-r bg-white'>
+    <aside className='border-border bg-background flex h-screen w-60 shrink-0 flex-col border-r'>
       {/* Brand header */}
       <div className='border-border flex h-14 items-center gap-2 border-b px-4'>
         <div className='text-2xs flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-orange-500 font-mono font-bold text-white shadow-sm'>
@@ -172,7 +172,7 @@ export function AdminSidebar() {
                 className={cn(
                   'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
                   active
-                    ? 'bg-zinc-900 text-white'
+                    ? 'bg-foreground text-background'
                     : 'text-content-muted hover:bg-muted hover:text-foreground'
                 )}
               >

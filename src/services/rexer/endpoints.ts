@@ -97,9 +97,12 @@ import type {
   TemplateListResponse,
   TemplatePreviewResponse,
   TemplateResponse,
+  TemplateEffect,
   TemplateVersion,
   TemplateVersionListResponse,
   TemplateVersionResponse,
+  CreateTemplateEffectRequest,
+  UpdateTemplateEffectRequest,
   UpdateCampaignRequest,
   UpdateProductCategoryRequest,
   UpdateProductRequest,
@@ -289,6 +292,16 @@ function toAdminBlockType(it: Record<string, any>): AdminBlockType {
     engine_version: it.engine_version,
     created_at: it.created_at,
     updated_at: it.updated_at,
+    // AI recommendation taxonomy (migration 000033) — passthrough snake_case.
+    function: it.function,
+    funnel_stage: it.funnel_stage,
+    goal_tags: it.goal_tags,
+    industry_fit: it.industry_fit,
+    tone: it.tone,
+    page_role: it.page_role,
+    proof_type: it.proof_type,
+    needs_media: it.needs_media,
+    has_cta: it.has_cta,
   };
 }
 
@@ -401,6 +414,56 @@ export const rexerApi = {
         body,
       });
       return r.template_version;
+    },
+  },
+  // Hiệu ứng của template (BE template_effects). Reads mở cho mọi user đăng
+  // nhập; mutations (create/update/activate) chỉ staff (BE gate ở internal).
+  templateEffects: {
+    list: async (templateId: string): Promise<TemplateEffect[]> => {
+      const r = await rx<{ items: TemplateEffect[]; total: number }>(
+        `/templates/${templateId}/effects`
+      );
+      return r.items ?? [];
+    },
+    get: async (
+      templateId: string,
+      effectId: string
+    ): Promise<TemplateEffect> => {
+      const r = await rx<{ template_effect: TemplateEffect }>(
+        `/templates/${templateId}/effects/${effectId}`
+      );
+      return r.template_effect;
+    },
+    create: async (
+      templateId: string,
+      body: CreateTemplateEffectRequest
+    ): Promise<TemplateEffect> => {
+      const r = await rx<{ template_effect: TemplateEffect }>(
+        `/templates/${templateId}/effects`,
+        { method: 'POST', body }
+      );
+      return r.template_effect;
+    },
+    update: async (
+      templateId: string,
+      effectId: string,
+      body: UpdateTemplateEffectRequest
+    ): Promise<TemplateEffect> => {
+      const r = await rx<{ template_effect: TemplateEffect }>(
+        `/templates/${templateId}/effects/${effectId}`,
+        { method: 'PATCH', body }
+      );
+      return r.template_effect;
+    },
+    activate: async (
+      templateId: string,
+      effectId: string
+    ): Promise<TemplateEffect> => {
+      const r = await rx<{ template_effect: TemplateEffect }>(
+        `/templates/${templateId}/effects/${effectId}/activate`,
+        { method: 'POST' }
+      );
+      return r.template_effect;
     },
   },
   // `projects` namespace removed — system standardized on canvas-template

@@ -208,7 +208,7 @@ export function localSuggest(
       return {
         text: isPremium
           ? 'Định vị cao cấp → ưu tiên nhấn các tính năng đẳng cấp và yếu tố tạo niềm tin (pháp lý, bảo hành, chứng nhận).'
-          : 'Liệt kê 3–5 tính năng tạo khác biệt rõ nhất; mỗi dòng một ý để AI map vào block.',
+          : 'Liệt kê 3-5 tính năng tạo khác biệt rõ nhất; mỗi dòng một ý để AI map vào block.',
         based_on: ['Thương hiệu'],
       };
     case 'objective':
@@ -223,7 +223,7 @@ export function localSuggest(
       };
     case 'audience':
       return {
-        text: 'Mô tả pain point càng cụ thể càng tốt — đây là tín hiệu chính để AI chèn stage giảm rủi ro (Risk Reducer) vào journey.',
+        text: 'Mô tả pain point càng cụ thể càng tốt. Đây là tín hiệu chính để AI chèn stage giảm rủi ro (Risk Reducer) vào journey.',
         based_on: ['Sản phẩm', 'Mục tiêu'],
       };
     case 'market':

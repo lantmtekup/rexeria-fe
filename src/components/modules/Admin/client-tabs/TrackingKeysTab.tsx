@@ -27,6 +27,7 @@ import {
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import {
   Dialog,
   DialogContent,
@@ -48,7 +49,7 @@ import type {
 const STATUS_META: Record<string, { label: string; chip: string }> = {
   active: { label: 'Active', chip: 'bg-emerald-100 text-emerald-700' },
   disabled: { label: 'Tạm tắt', chip: 'bg-muted text-content-muted' },
-  revoked: { label: 'Đã thu hồi', chip: 'bg-rose-100 text-rose-700' },
+  revoked: { label: 'Đã thu hồi', chip: 'bg-danger-bg text-destructive' },
 };
 
 function statusMeta(s: string) {
@@ -56,10 +57,10 @@ function statusMeta(s: string) {
 }
 
 function fmtDate(iso?: string | null): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
   return isNaN(d.getTime())
-    ? '—'
+    ? '-'
     : d.toLocaleDateString('vi-VN', {
         day: '2-digit',
         month: '2-digit',
@@ -164,7 +165,7 @@ export function TrackingKeysTab({
   const revoke = async (k: TrackingKey) => {
     if (
       !window.confirm(
-        `Thu hồi vĩnh viễn key "${k.name}"? Không hoàn tác — site đang dùng key này sẽ ngừng gửi được analytics.`
+        `Thu hồi vĩnh viễn key "${k.name}"? Không hoàn tác, site đang dùng key này sẽ ngừng gửi được analytics.`
       )
     )
       return;
@@ -188,13 +189,9 @@ export function TrackingKeysTab({
           ngoài gửi analytics về ReXeR (scope theo brand này).
         </div>
         {isInternal && (
-          <button
-            type='button'
-            onClick={openCreate}
-            className='inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-emerald-700'
-          >
+          <Button size='sm' className='shrink-0' onClick={openCreate}>
             <Plus className='size-3.5' /> Tạo key
-          </button>
+          </Button>
         )}
       </div>
 
@@ -295,7 +292,7 @@ export function TrackingKeysTab({
                           title='Thu hồi vĩnh viễn'
                           onClick={() => revoke(k)}
                           disabled={busy}
-                          className='text-rose-500 hover:bg-rose-50'
+                          className='text-destructive hover:bg-danger-bg'
                         >
                           <Trash2 className='size-3.5' />
                         </IconBtn>
@@ -450,7 +447,7 @@ function TrackingKeyFormDialog({
         onCreated(res);
       }
     } catch {
-      toast.error('Lưu thất bại — kiểm tra tên / origins hợp lệ');
+      toast.error('Lưu thất bại, kiểm tra tên / origins hợp lệ');
     } finally {
       setSaving(false);
     }
@@ -498,19 +495,14 @@ function TrackingKeyFormDialog({
               </Label>
               <div className='mt-1 inline-flex gap-1'>
                 {(['active', 'disabled'] as const).map(s => (
-                  <button
+                  <Chip
                     key={s}
-                    type='button'
+                    size='md'
+                    selected={status === s}
                     onClick={() => setStatus(s)}
-                    className={cn(
-                      'rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
-                      status === s
-                        ? 'border-zinc-900 bg-zinc-900 text-white'
-                        : 'border-border text-content-muted hover:bg-muted'
-                    )}
                   >
                     {s === 'active' ? 'Active' : 'Tạm tắt'}
-                  </button>
+                  </Chip>
                 ))}
               </div>
             </div>
@@ -523,7 +515,7 @@ function TrackingKeyFormDialog({
                 <select
                   value={workspaceId}
                   onChange={e => setWorkspaceId(e.target.value)}
-                  className='border-border mt-1 w-full rounded-md border bg-white px-3 py-2 text-sm outline-none'
+                  className='border-border bg-background mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none'
                 >
                   <option value=''>Không gắn workspace</option>
                   {workspaces.map(w => (
@@ -539,14 +531,14 @@ function TrackingKeyFormDialog({
 
         <DialogFooter>
           <Button
-            variant='pill-light'
+            variant='neutral'
             size='sm'
             onClick={() => onOpenChange(false)}
             disabled={saving}
           >
             Huỷ
           </Button>
-          <Button variant='pill' size='sm' onClick={submit} disabled={saving}>
+          <Button size='sm' onClick={submit} disabled={saving}>
             {saving ? 'Đang lưu…' : editing ? 'Lưu' : 'Tạo key'}
           </Button>
         </DialogFooter>
@@ -572,7 +564,7 @@ function OriginTagInput({
   };
 
   return (
-    <div className='border-border focus-within:border-primary mt-1 flex flex-wrap items-center gap-1.5 rounded-md border bg-white px-2 py-1.5'>
+    <div className='border-border focus-within:border-primary bg-background mt-1 flex flex-wrap items-center gap-1.5 rounded-md border px-2 py-1.5'>
       {value.map(o => (
         <span
           key={o}
@@ -629,7 +621,7 @@ function RevealKeyModal({
             <div className='flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800'>
               <TriangleAlert className='mt-0.5 size-4 shrink-0' />
               <span>
-                Key chỉ hiển thị <strong>một lần duy nhất</strong> — không xem
+                Key chỉ hiển thị <strong>một lần duy nhất</strong>, không xem
                 lại được. Copy & lưu ngay; mất thì phải <strong>rotate</strong>.
               </span>
             </div>
@@ -654,7 +646,7 @@ function RevealKeyModal({
         )}
 
         <DialogFooter>
-          <Button variant='pill' size='sm' onClick={onClose}>
+          <Button size='sm' onClick={onClose}>
             Đã lưu, đóng
           </Button>
         </DialogFooter>

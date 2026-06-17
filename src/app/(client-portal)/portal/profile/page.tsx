@@ -25,6 +25,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
 import { useAppSelector } from '@/hooks/useRedux';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
@@ -52,7 +53,7 @@ const FALLBACK_CLIENT: PortalClient = {
   contact_email: FAKE_CLIENT.contact_email,
   contact_phone: FAKE_CLIENT.contact_phone,
   country_code: 'VN',
-  plan: 'Phase 1 — Managed Service',
+  plan: 'Phase 1: Managed Service',
   status: 'active',
   member_count: 4,
   storage_used_gb: FAKE_CLIENT.storage_used_gb,
@@ -316,7 +317,7 @@ export default function PortalProfilePage() {
           </div>
           <a
             href='/portal/profile/domains'
-            className='border-border text-content-muted hover:border-border hover:bg-muted inline-flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium shadow-sm'
+            className='border-border text-content-muted hover:border-border hover:bg-muted bg-background inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium shadow-sm'
           >
             🌐 {t('profile.customDomains')}
           </a>
@@ -335,7 +336,7 @@ export default function PortalProfilePage() {
 
       <div className='mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]'>
         {/* Brand info form */}
-        <section className='border-border rounded-2xl border bg-white p-5 shadow-sm'>
+        <section className='border-border bg-card rounded-2xl border p-5 shadow-sm'>
           <div className='mb-3 flex items-center gap-2'>
             <div className='flex size-7 items-center justify-center rounded-lg bg-rose-500 text-white shadow-sm'>
               <Building2 className='size-4' />
@@ -377,16 +378,16 @@ export default function PortalProfilePage() {
             />
             <Field
               label={t('profile.fieldPlan')}
-              value={client?.plan ?? '—'}
+              value={client?.plan ?? '-'}
               hint={t('profile.fieldPlanHint')}
               readonly
             />
             <div className='pt-2'>
-              <button
+              <Button
                 type='button'
+                size='sm'
                 onClick={handleSave}
                 disabled={saving || pendingClientApi}
-                className='inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50'
               >
                 {saving ? (
                   <Loader2 className='size-3.5 animate-spin' />
@@ -394,7 +395,7 @@ export default function PortalProfilePage() {
                   <Save className='size-3.5' />
                 )}
                 {saving ? t('profile.saving') : t('profile.saveChanges')}
-              </button>
+              </Button>
             </div>
           </div>
         </section>
@@ -419,14 +420,15 @@ export default function PortalProfilePage() {
                 </div>
               )}
               <div className='flex-1'>
-                <button
+                <Button
                   type='button'
+                  variant='neutral'
+                  size='xs'
                   disabled={pendingClientApi}
                   onClick={() => toast.info(t('profile.avatarTodoToast'))}
-                  className='text-2xs border-border hover:bg-muted block rounded-lg border bg-white px-3 py-1 font-medium disabled:opacity-50'
                 >
                   {t('profile.uploadLogo')}
-                </button>
+                </Button>
                 <p className='text-3xs text-content-muted mt-1'>
                   {t('profile.logoHint')}
                 </p>
@@ -434,12 +436,12 @@ export default function PortalProfilePage() {
             </div>
           </div>
 
-          <div className='border-border rounded-2xl border bg-white p-5 shadow-sm'>
+          <div className='border-border bg-card rounded-2xl border p-5 shadow-sm'>
             <div className='text-2xs text-content-muted font-semibold tracking-wider uppercase'>
               Client ID
             </div>
             <code className='text-2xs bg-muted text-content-muted mt-2 block rounded-lg px-2 py-1.5 font-mono break-all'>
-              {client?.id ?? '—'}
+              {client?.id ?? '-'}
             </code>
             <p className='text-2xs text-content-muted mt-2'>
               {t('profile.clientIdHint')}
@@ -448,7 +450,7 @@ export default function PortalProfilePage() {
               <div className='border-border mt-3 grid grid-cols-2 gap-2 border-t pt-3 text-center'>
                 <div>
                   <div className='text-foreground font-mono text-base font-bold tabular-nums'>
-                    {client.member_count ?? '—'}
+                    {client.member_count ?? '-'}
                   </div>
                   <div className='text-3xs text-content-muted tracking-wider uppercase'>
                     Members
@@ -458,7 +460,7 @@ export default function PortalProfilePage() {
                   <div className='text-foreground font-mono text-base font-bold tabular-nums'>
                     {client.storage_used_gb ?? 0}
                     <span className='text-2xs text-muted-foreground'>
-                      /{client.storage_quota_gb ?? '—'}
+                      /{client.storage_quota_gb ?? '-'}
                     </span>
                   </div>
                   <div className='text-3xs text-content-muted tracking-wider uppercase'>
@@ -472,7 +474,7 @@ export default function PortalProfilePage() {
       </div>
 
       {/* Members */}
-      <section className='border-border mt-6 rounded-2xl border bg-white p-5 shadow-sm'>
+      <section className='border-border bg-card mt-6 rounded-2xl border p-5 shadow-sm'>
         <div className='mb-3 flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <div className='flex size-7 items-center justify-center rounded-lg bg-blue-500 text-white shadow-sm'>
@@ -486,16 +488,12 @@ export default function PortalProfilePage() {
             )}
           </div>
           {isOwner && (
-            <button
-              type='button'
-              onClick={() => setInviteOpen(true)}
-              className='flex items-center gap-1.5 rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600 disabled:opacity-50'
-            >
+            <Button type='button' size='sm' onClick={() => setInviteOpen(true)}>
               <UserPlus className='size-3' /> {t('profile.addMember')}
-            </button>
+            </Button>
           )}
         </div>
-        <div className='divide-y divide-zinc-100'>
+        <div className='divide-border divide-y'>
           {members.length === 0 && !loadingMembers ? (
             <div className='text-content-muted py-6 text-center text-xs'>
               {t('profile.emptyMembers')}
@@ -555,7 +553,7 @@ export default function PortalProfilePage() {
                         aria-label={t('profile.roleAria', {
                           name: m.display_name,
                         })}
-                        className='text-2xs border-border text-content-muted rounded-lg border bg-white px-2 py-1 font-medium outline-none focus:border-blue-400 disabled:opacity-50'
+                        className='text-2xs border-border text-content-muted bg-background rounded-lg border px-2 py-1 font-medium outline-none focus:border-blue-400 disabled:opacity-50'
                       >
                         <option value='brand_owner'>Owner</option>
                         <option value='brand_member'>Member</option>
@@ -568,7 +566,7 @@ export default function PortalProfilePage() {
                         aria-label={t('profile.removeAria', {
                           name: m.display_name,
                         })}
-                        className='text-muted-foreground rounded-lg p-1.5 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50'
+                        className='text-muted-foreground hover:bg-danger-bg hover:text-destructive rounded-lg p-1.5 disabled:opacity-50'
                       >
                         {busyMember === m.user_id ? (
                           <Loader2 className='size-3.5 animate-spin' />
@@ -615,7 +613,7 @@ export default function PortalProfilePage() {
 /** Initials viết tắt từ tên brand (vd "Tekup Solutions" → "TS"). */
 function brandInitials(name?: string | null): string {
   const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '—';
+  if (parts.length === 0) return '-';
   return parts
     .slice(0, 2)
     .map(p => p[0]?.toUpperCase() ?? '')
@@ -738,7 +736,7 @@ function InviteMemberDialog({
       onClick={onClose}
     >
       <div
-        className='my-12 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
+        className='bg-card my-12 w-full max-w-md overflow-hidden rounded-2xl shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -756,20 +754,22 @@ function InviteMemberDialog({
               </p>
             </div>
           </div>
-          <button
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
             onClick={onClose}
-            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label='Close'
           >
             <X className='size-4' />
-          </button>
+          </Button>
         </div>
 
         {/* Body */}
         <div className='space-y-4 px-5 py-4'>
           <div>
             <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
-              Email <span className='text-rose-500'>*</span>
+              Email <span className='text-destructive'>*</span>
             </label>
             <input
               type='email'
@@ -785,7 +785,7 @@ function InviteMemberDialog({
           <div>
             <label className='text-3xs text-content-muted block font-semibold tracking-wider uppercase'>
               {t('profile.displayNameLabel')}{' '}
-              <span className='text-rose-500'>*</span>
+              <span className='text-destructive'>*</span>
             </label>
             <input
               type='text'
@@ -856,19 +856,20 @@ function InviteMemberDialog({
 
         {/* Footer */}
         <div className='border-border bg-muted/50 flex items-center justify-end gap-2 border-t px-5 py-3'>
-          <button
+          <Button
             type='button'
+            variant='neutral'
+            size='sm'
             onClick={onClose}
             disabled={submitting}
-            className='border-border text-content-muted hover:bg-muted rounded-lg border bg-white px-3 py-1.5 text-xs font-medium disabled:opacity-50'
           >
             {t('profile.cancel')}
-          </button>
-          <button
+          </Button>
+          <Button
             type='button'
+            size='sm'
             onClick={submit}
             disabled={submitting || !canSubmit}
-            className='flex items-center gap-1.5 rounded-lg bg-blue-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-blue-600 disabled:opacity-50'
           >
             {submitting ? (
               <Loader2 className='size-3.5 animate-spin' />
@@ -876,7 +877,7 @@ function InviteMemberDialog({
               <UserPlus className='size-3.5' />
             )}
             {submitting ? t('profile.creating') : t('profile.createMember')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -923,7 +924,7 @@ function MemberCredentialDialog({
       onClick={onClose}
     >
       <div
-        className='my-12 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl'
+        className='bg-card my-12 w-full max-w-md overflow-hidden rounded-2xl shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
         <div className='border-border flex items-center justify-between gap-3 border-b px-5 py-3.5'>
@@ -935,13 +936,15 @@ function MemberCredentialDialog({
               {t('profile.credCreatedTitle', { name: cred.display_name })}
             </h3>
           </div>
-          <button
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
             onClick={onClose}
-            className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded-lg p-1.5'
             aria-label='Close'
           >
             <X className='size-4' />
-          </button>
+          </Button>
         </div>
 
         <div className='space-y-4 px-5 py-4'>
@@ -968,7 +971,7 @@ function MemberCredentialDialog({
               {t('profile.passwordLabel')}
             </div>
             <div className='flex items-center gap-2'>
-              <code className='border-border flex-1 truncate rounded-lg border bg-white px-3 py-2 font-mono text-sm'>
+              <code className='border-border bg-background flex-1 truncate rounded-lg border px-3 py-2 font-mono text-sm'>
                 {cred.password}
               </code>
               <button
@@ -977,7 +980,7 @@ function MemberCredentialDialog({
                 className={`text-2xs flex items-center gap-1 rounded-lg border px-2.5 py-2 font-medium ${
                   copied === 'password'
                     ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                    : 'border-border text-content-muted hover:bg-muted bg-white'
+                    : 'border-border text-content-muted hover:bg-muted bg-background'
                 }`}
               >
                 {copied === 'password' ? (
@@ -991,10 +994,11 @@ function MemberCredentialDialog({
         </div>
 
         <div className='border-border bg-muted/50 flex items-center justify-between gap-2 border-t px-5 py-3'>
-          <button
+          <Button
             type='button'
+            variant='neutral'
+            size='sm'
             onClick={() => copy(summary, 'all')}
-            className='border-border text-content-muted hover:bg-muted flex items-center gap-1.5 rounded-lg border bg-white px-3 py-1.5 text-xs font-medium'
           >
             {copied === 'all' ? (
               <Check className='size-3.5 text-emerald-500' />
@@ -1002,14 +1006,10 @@ function MemberCredentialDialog({
               <Copy className='size-3.5' />
             )}
             {t('profile.copyAll')}
-          </button>
-          <button
-            type='button'
-            onClick={onClose}
-            className='rounded-lg bg-zinc-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-zinc-700'
-          >
+          </Button>
+          <Button type='button' size='sm' onClick={onClose}>
             {t('profile.done')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -1039,8 +1039,8 @@ function Field({
         value={value}
         readOnly={readonly}
         onChange={e => onChange?.(e.target.value)}
-        className={`border-border mt-1 w-full rounded-lg border px-3 py-1.5 text-sm outline-none focus:border-zinc-400 ${
-          readonly ? 'bg-muted text-content-muted' : 'bg-white'
+        className={`border-border focus:border-ring mt-1 w-full rounded-lg border px-3 py-1.5 text-sm outline-none ${
+          readonly ? 'bg-muted text-content-muted' : 'bg-background'
         }`}
       />
       {hint && <p className='text-3xs text-muted-foreground mt-1'>{hint}</p>}

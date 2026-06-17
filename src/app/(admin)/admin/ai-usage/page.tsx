@@ -20,11 +20,11 @@ export default function Page() {
         },
         {
           status: 'new',
-          text: 'GET /v1/admin/ai-usage — aggregate (group_by=day, from/to)',
+          text: 'GET /v1/admin/ai-usage: aggregate (group_by=day, from/to)',
         },
         {
           status: 'new',
-          text: 'GET /v1/admin/ai-usage/list — list paginate brand-scoped',
+          text: 'GET /v1/admin/ai-usage/list: list paginate brand-scoped',
         },
       ]}
     />

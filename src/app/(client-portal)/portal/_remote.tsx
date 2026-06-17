@@ -531,7 +531,7 @@ function beActivityToPortal(a: BEActivityItem): ActivityItem {
     kind: ACTIVITY_KIND_MAP[a.kind] ?? 'template_updated',
     actor: a.actor_name ?? a.actor_id ?? 'Người dùng',
     actor_role: actorRole === 'brand' ? 'brand' : 'staff',
-    subject: a.title ?? (meta.subject_name as string) ?? a.subject_id ?? '—',
+    subject: a.title ?? (meta.subject_name as string) ?? a.subject_id ?? '-',
     excerpt: meta.excerpt as string | undefined,
     at: relativeTime(a.created_at),
   };

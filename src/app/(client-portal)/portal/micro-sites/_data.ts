@@ -27,7 +27,7 @@ export const STATUS_META: Record<
   paused: {
     label: 'Tạm dừng',
     chip: 'bg-muted text-content-muted',
-    dot: 'bg-zinc-400',
+    dot: 'bg-muted-foreground',
   },
 };
 

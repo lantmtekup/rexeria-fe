@@ -25,17 +25,17 @@ export const HAPPY_CITY_BRIEF: InsightBrief = {
   brand: {
     name: 'Happy City Cà Mau',
     positioning:
-      'Khu đô thị kiểu mẫu đầu tiên tại Cà Mau — tiên phong kiến tạo chuẩn sống văn minh, kết nối và bền vững cho thế hệ mới. Tái định vị từ "Happy Home" (nơi bắt đầu cuộc sống) lên "Happy City" (nơi định hình tương lai). Đáng sống – Đáng tin – Đáng tự hào.',
+      'Khu đô thị kiểu mẫu đầu tiên tại Cà Mau, tiên phong kiến tạo chuẩn sống văn minh, kết nối và bền vững cho thế hệ mới. Tái định vị từ "Happy Home" (nơi bắt đầu cuộc sống) lên "Happy City" (nơi định hình tương lai). Đáng sống, Đáng tin, Đáng tự hào.',
     tone: ['Sang trọng', 'Tin cậy', 'Cảm xúc', 'Hiện đại'],
     visual_identity:
-      'Tông nâu trầm – kem – cam đất (terracotta), phong cách biên tập (editorial) cao cấp; hình ảnh gia đình đa thế hệ ấm áp, ánh sáng tự nhiên.',
+      'Tông nâu trầm, kem, cam đất (terracotta), phong cách biên tập (editorial) cao cấp; hình ảnh gia đình đa thế hệ ấm áp, ánh sáng tự nhiên.',
   },
   product: {
     features: [
       'Khu đô thị kiểu mẫu đầu tiên tại Cà Mau (quy hoạch New CBD mở rộng)',
       'Hạ tầng giao thông & tiện ích đô thị đồng bộ',
       'Tiện ích giáo dục nội khu: mầm non, cấp 1, cấp 2',
-      'Cảnh quan – kiến trúc – không gian sống nâng tầm',
+      'Cảnh quan, kiến trúc, không gian sống nâng tầm',
       'Cộng đồng cư dân văn minh, chọn lọc',
       'Tiềm năng tăng giá ổn định, giữ giá trị tích sản lâu dài',
     ],
@@ -55,8 +55,8 @@ export const HAPPY_CITY_BRIEF: InsightBrief = {
   },
   audience: {
     persona:
-      'Nhóm Upper Middle — trụ cột đang lên của đô thị mới (cán bộ quản lý, chủ doanh nghiệp quy mô vừa, người có vốn tích lũy); và nhóm Elite định hình chuẩn sống mới.',
-    age_range: '32 – 55',
+      'Nhóm Upper Middle, trụ cột đang lên của đô thị mới (cán bộ quản lý, chủ doanh nghiệp quy mô vừa, người có vốn tích lũy); và nhóm Elite định hình chuẩn sống mới.',
+    age_range: '32 - 55',
     behaviours:
       'Sự nghiệp ổn định, tư duy tiến bộ & thực dụng; chọn lọc kỹ trong từng quyết định; ưu tiên môi trường sống văn minh cho con cái; cân nhắc cả giá trị an cư lẫn tiềm năng sinh lời.',
     pain_points: [
@@ -75,7 +75,7 @@ export const HAPPY_CITY_BRIEF: InsightBrief = {
     trends:
       'Cà Mau chuyển mình sau sáp nhập hành chính, bước vào chu kỳ tăng trưởng mới đến 2030; nhu cầu hệ sinh thái sống văn minh, hiện đại, kết nối của tầng lớp trung lưu mới.',
     expectations:
-      'Đô thị kiểu mẫu, quy hoạch chỉn chu, cộng đồng văn minh; cam kết "Làm đúng – Làm đủ – Làm đến cùng" (làm trước rồi mới nói).',
+      'Đô thị kiểu mẫu, quy hoạch chỉn chu, cộng đồng văn minh; cam kết "Làm đúng, Làm đủ, Làm đến cùng" (làm trước rồi mới nói).',
   },
   assets: {
     items: [

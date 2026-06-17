@@ -583,7 +583,7 @@ function BlockPromptRow({
           <Textarea
             value={prompt.prompt_instruction}
             onChange={e => onChange({ prompt_instruction: e.target.value })}
-            placeholder='Ví dụ: Viết tagline 6–10 từ, gây tò mò, dùng product_name…'
+            placeholder='Ví dụ: Viết tagline 6-10 từ, gây tò mò, dùng product_name…'
           />
         </div>
         <div className='grid grid-cols-1 gap-2 md:grid-cols-2'>
@@ -600,7 +600,7 @@ function BlockPromptRow({
               }
               className='border-input bg-background h-9 rounded-md border px-3 text-sm'
             >
-              <option value=''>—</option>
+              <option value=''>-</option>
               {TONES.map(t => (
                 <option key={t} value={t}>
                   {t}
@@ -613,7 +613,7 @@ function BlockPromptRow({
             <Input
               value={prompt.length_constraint ?? ''}
               onChange={e => onChange({ length_constraint: e.target.value })}
-              placeholder='6–10 từ / 200 ký tự…'
+              placeholder='6-10 từ / 200 ký tự…'
             />
           </div>
         </div>

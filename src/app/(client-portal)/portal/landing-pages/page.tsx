@@ -36,6 +36,8 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
+import { PillChip } from '@/components/atoms/pill-chip';
 import { rexerApi } from '@/services/rexer/endpoints';
 
 import { FAKE_TEMPLATES, fmtNum, type PortalTemplate } from '../_data';
@@ -133,15 +135,16 @@ export default function PortalLandingPagesPage() {
           </p>
         </div>
         <div className='flex items-center gap-2'>
-          <button
+          <Button
             type='button'
+            variant='neutral'
+            size='sm'
             onClick={() => setHelpOpen(o => !o)}
-            className='border-border text-content-muted hover:bg-muted inline-flex items-center gap-1.5 rounded-lg border bg-white px-2.5 py-1.5 text-xs font-medium'
             title={t('landingPages.helpTitle')}
           >
             <HelpCircle className='size-3.5' />
             {t('landingPages.help')}
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -150,7 +153,7 @@ export default function PortalLandingPagesPage() {
       <ApiStatusLabel source={source} error={loadError} />
 
       {/* Filter bar */}
-      <div className='border-border mt-5 flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3 shadow-sm'>
+      <div className='border-border bg-background mt-5 flex flex-wrap items-center gap-3 rounded-2xl border p-3 shadow-sm'>
         <div className='border-border bg-muted flex flex-1 items-center gap-2 rounded-lg border px-3 py-1.5 lg:max-w-sm'>
           <Search className='text-muted-foreground size-3.5' />
           <input
@@ -161,35 +164,24 @@ export default function PortalLandingPagesPage() {
             className='placeholder:text-muted-foreground flex-1 bg-transparent text-sm outline-none'
           />
         </div>
-        <div className='border-border inline-flex items-center rounded-lg border bg-white p-0.5'>
+        <div className='border-border bg-background inline-flex items-center rounded-lg border p-0.5'>
           {(['all', 'published', 'draft', 'archived'] as const).map(s => {
             const count =
               s === 'all'
                 ? scopedTemplates.length
                 : countByStatus[s as LandingStatus];
             return (
-              <button
+              <PillChip
                 key={s}
+                label={
+                  s === 'all'
+                    ? t('landingPages.filterAll')
+                    : t(`landingPages.status_${s}`)
+                }
+                count={count}
+                selected={filter === s}
                 onClick={() => setFilter(s)}
-                className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
-                  filter === s
-                    ? 'bg-zinc-900 text-white shadow-sm'
-                    : 'text-content-muted hover:bg-muted'
-                }`}
-              >
-                {s === 'all'
-                  ? t('landingPages.filterAll')
-                  : t(`landingPages.status_${s}`)}
-                <span
-                  className={`text-3xs inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1 font-mono tabular-nums ${
-                    filter === s
-                      ? 'bg-white/15 text-white/90'
-                      : 'bg-muted text-content-muted'
-                  }`}
-                >
-                  {count}
-                </span>
-              </button>
+              />
             );
           })}
         </div>
@@ -198,7 +190,7 @@ export default function PortalLandingPagesPage() {
       {/* Templates grid */}
       <div className='mt-5 grid grid-cols-1 gap-4 md:grid-cols-2'>
         {filtered.length === 0 ? (
-          <div className='border-border text-content-muted col-span-full rounded-2xl border border-dashed bg-white p-10 text-center text-sm'>
+          <div className='border-border text-content-muted bg-card col-span-full rounded-2xl border border-dashed p-10 text-center text-sm'>
             {t('landingPages.emptyFilter')}
           </div>
         ) : (
@@ -252,7 +244,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
   };
 
   return (
-    <div className='group border-border overflow-hidden rounded-2xl border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+    <div className='group border-border bg-card overflow-hidden rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
       {/* Thumbnail */}
       <div
         className={`relative aspect-[16/9] ${thumb ? 'bg-muted' : `bg-gradient-to-br ${t.thumbnail_gradient}`}`}
@@ -269,16 +261,16 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
             <div className='absolute inset-0 bg-black/10' />
             {/* Decorative fake content (placeholder khi chưa có ảnh) */}
             <div className='absolute inset-x-6 bottom-6'>
-              <div className='h-2.5 w-2/3 rounded bg-white/40' />
-              <div className='mt-2 h-1.5 w-1/2 rounded bg-white/30' />
-              <div className='mt-3 h-5 w-20 rounded-md bg-white/80' />
+              <div className='bg-background/40 h-2.5 w-2/3 rounded' />
+              <div className='bg-background/30 mt-2 h-1.5 w-1/2 rounded' />
+              <div className='bg-background/80 mt-3 h-5 w-20 rounded-md' />
             </div>
           </>
         )}
 
         <div className='absolute top-3 left-3 flex items-center gap-1.5'>
           <span
-            className={`text-3xs flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 font-bold backdrop-blur ${status.chip}`}
+            className={`text-3xs bg-background/90 flex items-center gap-1 rounded-full px-2 py-0.5 font-bold backdrop-blur ${status.chip}`}
           >
             <span className={`size-1.5 rounded-full ${status.dot}`} />
             {t.status}
@@ -351,7 +343,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
               href={t.external_url}
               target='_blank'
               rel='noreferrer'
-              className='inline-flex items-center justify-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-zinc-700'
+              className='bg-foreground text-background hover:bg-foreground/85 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors'
               title={tr('landingPages.openExternalTitle', {
                 url: t.external_url,
               })}
@@ -366,7 +358,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
               className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                 isArchived
                   ? 'border-border bg-muted text-muted-foreground pointer-events-none border'
-                  : 'bg-zinc-900 text-white hover:bg-zinc-700'
+                  : 'bg-foreground text-background hover:bg-foreground/85'
               }`}
               title={tr('landingPages.previewTitle')}
             >
@@ -380,7 +372,7 @@ function TemplateCard({ t }: { t: PortalTemplate }) {
             aria-disabled={!isPublished}
             className={`inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
               isPublished
-                ? 'border-border text-content-muted hover:bg-muted bg-white'
+                ? 'border-border text-content-muted hover:bg-muted bg-background'
                 : 'border-border bg-muted text-muted-foreground pointer-events-none'
             }`}
             title={
@@ -459,7 +451,7 @@ function LifecycleHelp({ onClose }: { onClose: () => void }) {
         />
       </div>
 
-      <div className='text-2xs border-border text-content-muted mt-4 rounded-xl border bg-white p-3 leading-relaxed'>
+      <div className='text-2xs border-border text-content-muted bg-card mt-4 rounded-xl border p-3 leading-relaxed'>
         {t.rich('landingPages.phaseNote', {
           strong: chunks => (
             <strong className='text-foreground'>{chunks}</strong>
@@ -483,7 +475,7 @@ function StateCard({
   actions: string[];
 }) {
   return (
-    <div className='border-border rounded-xl border bg-white p-3 shadow-sm'>
+    <div className='border-border bg-card rounded-xl border p-3 shadow-sm'>
       <div className='flex items-center gap-2'>
         <span className={`size-2 rounded-full ${dot}`} />
         <span className='text-foreground text-xs font-semibold'>{name}</span>

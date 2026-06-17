@@ -32,9 +32,9 @@ import type { Brand, Product, ProductStatus } from '@/services/rexer/types';
 const PAGE_SIZE = 20;
 
 const STATUS_BADGE: Record<ProductStatus, string> = {
-  draft: 'bg-neutral-100 text-neutral-700',
+  draft: 'bg-muted text-content-muted',
   active: 'bg-emerald-100 text-emerald-800',
-  archived: 'bg-neutral-200 text-neutral-600',
+  archived: 'bg-muted text-content-muted',
 };
 
 export function AdminProductsPage() {
@@ -144,7 +144,7 @@ export function AdminProductsPage() {
           e.preventDefault();
           setQ(searchInput.trim());
         }}
-        className='border-border flex flex-wrap gap-2 rounded-lg border bg-neutral-50 p-3'
+        className='border-border bg-muted/50 flex flex-wrap gap-2 rounded-lg border p-3'
       >
         <div className='relative min-w-[220px] flex-1'>
           <SearchIcon className='text-content-muted absolute top-1/2 left-3 size-4 -translate-y-1/2' />
@@ -158,7 +158,7 @@ export function AdminProductsPage() {
         <select
           value={brandFilter}
           onChange={e => setBrandFilter(e.target.value)}
-          className='border-border text-content-muted rounded-md border bg-white px-3 py-2 text-sm outline-none'
+          className='border-border text-content-muted bg-background rounded-md border px-3 py-2 text-sm outline-none'
           aria-label='Brand'
         >
           <option value=''>Tất cả brand</option>
@@ -179,7 +179,7 @@ export function AdminProductsPage() {
         </p>
       )}
 
-      <div className='border-border rounded-lg border bg-white'>
+      <div className='border-border bg-card rounded-lg border'>
         <Table>
           <TableHeader>
             <TableRow>
@@ -224,10 +224,10 @@ export function AdminProductsPage() {
                           `${item.brand_id.slice(0, 8)}…`}
                       </Link>
                     ) : (
-                      '—'
+                      '-'
                     )}
                   </TableCell>
-                  <TableCell className='text-xs'>{item.sku || '—'}</TableCell>
+                  <TableCell className='text-xs'>{item.sku || '-'}</TableCell>
                   <TableCell>
                     {item.status ? (
                       <span
@@ -239,13 +239,13 @@ export function AdminProductsPage() {
                         {t(`products.status.${item.status}`)}
                       </span>
                     ) : (
-                      '—'
+                      '-'
                     )}
                   </TableCell>
                   <TableCell className='text-xs'>
                     {item.created_at
                       ? new Date(item.created_at).toLocaleDateString()
-                      : '—'}
+                      : '-'}
                   </TableCell>
                   <TableCell>
                     <Link
@@ -346,7 +346,7 @@ function BrandPickDialog({
           <select
             value={brandId}
             onChange={e => setBrandId(e.target.value)}
-            className='border-border mt-1 w-full rounded-md border bg-white px-3 py-2 text-sm outline-none'
+            className='border-border bg-background mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none'
           >
             <option value=''>Chọn brand…</option>
             {brands.map(b => (
@@ -357,11 +357,10 @@ function BrandPickDialog({
           </select>
         </div>
         <DialogFooter>
-          <Button variant='pill-light' size='sm' onClick={onCancel}>
+          <Button variant='neutral' size='sm' onClick={onCancel}>
             Huỷ
           </Button>
           <Button
-            variant='pill'
             size='sm'
             disabled={!brandId}
             onClick={() => brandId && onPick(brandId)}

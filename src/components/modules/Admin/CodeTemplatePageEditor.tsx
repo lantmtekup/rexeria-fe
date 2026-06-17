@@ -80,8 +80,8 @@ export function CodeTemplatePageEditor({ page, template }: Props) {
   if (!tpl || !meta) {
     // Sanity guard — caller should have checked getCodeTemplate.
     return (
-      <div className='p-8 text-sm text-rose-700'>
-        Template {template.code} không phải code template — không render editor
+      <div className='text-destructive p-8 text-sm'>
+        Template {template.code} không phải code template, không render editor
         này.
       </div>
     );
@@ -114,7 +114,7 @@ export function CodeTemplatePageEditor({ page, template }: Props) {
   return (
     <div className='bg-muted flex h-full min-h-0 flex-1 flex-col'>
       {/* Header */}
-      <header className='border-border flex items-center justify-between gap-3 border-b bg-white px-4 py-2.5'>
+      <header className='border-border bg-background flex items-center justify-between gap-3 border-b px-4 py-2.5'>
         <div className='flex items-center gap-3'>
           <Link
             href='/admin/landing-pages'
@@ -154,7 +154,7 @@ export function CodeTemplatePageEditor({ page, template }: Props) {
       {/* Body — split: form trái, preview phải */}
       <div className='flex min-h-0 flex-1'>
         {/* Form panel */}
-        <aside className='border-border w-[380px] shrink-0 overflow-y-auto border-r bg-white'>
+        <aside className='border-border bg-background w-[380px] shrink-0 overflow-y-auto border-r'>
           {grouped.map(([group, fields]) => (
             <section key={group} className='border-border border-b p-4'>
               <h3 className='text-3xs text-content-muted mb-3 font-semibold tracking-[0.18em] uppercase'>
@@ -205,7 +205,7 @@ function FieldInput({
     <div className='flex flex-col gap-1.5'>
       <Label htmlFor={id} className='text-2xs'>
         {field.label}
-        {field.required && <span className='ml-1 text-rose-600'>*</span>}
+        {field.required && <span className='text-destructive ml-1'>*</span>}
       </Label>
       {(() => {
         switch (field.type) {

@@ -21,7 +21,8 @@
 import { notFound } from 'next/navigation';
 
 import { getCodeTemplate, listCodeTemplates } from '@/templates/registry';
-import type { Page } from '@/services/rexer/types';
+import { brandKitToCssVars, type BrandKitData } from '@/lib/brand-kit';
+import type { MotionKitData, Page } from '@/services/rexer/types';
 
 import { PublicBlockRender } from './_block-render';
 
@@ -53,6 +54,10 @@ interface PublicPageResponse {
   template_name?: string;
   template_id?: string;
   template_version_id: string;
+  /** Active brand kit tokens (colors/fonts/logo/tokens) — BE contract 2026-06-15. */
+  brand_kit?: BrandKitData;
+  /** Active motion kit — animation scale + page-transition style. */
+  motion_kit?: MotionKitData;
 }
 
 async function fetchPublicPage(
@@ -140,7 +145,12 @@ export default async function PublicLanding({ params }: PageProps) {
     const Comp = codeTpl.Component;
     const page = publicToPage(pub);
     const content = (pub.config ?? {}) as Record<string, unknown>;
-    return <Comp page={page} content={content} mode='public' />;
+    // Wrap in brand-kit CSS vars so code templates can opt into var(--bk-*).
+    return (
+      <div style={brandKitToCssVars(pub.brand_kit)}>
+        <Comp page={page} content={content} mode='public' />
+      </div>
+    );
   }
 
   // Block template — try FE render từ canvas_blueprint trong public
@@ -153,7 +163,14 @@ export default async function PublicLanding({ params }: PageProps) {
 
   if (hasBlocks) {
     const page = publicToPage(pub);
-    return <PublicBlockRender page={page} blueprint={blueprint} />;
+    return (
+      <PublicBlockRender
+        page={page}
+        blueprint={blueprint}
+        brandKit={pub.brand_kit}
+        motionKit={pub.motion_kit}
+      />
+    );
   }
 
   // Last resort: legacy BE-rendered HTML iframe.

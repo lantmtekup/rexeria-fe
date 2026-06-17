@@ -21,6 +21,7 @@ import {
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import {
   Dialog,
   DialogContent,
@@ -97,7 +98,7 @@ export function MicroSiteManageDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='max-h-[88vh] overflow-hidden sm:max-w-2xl'>
         <DialogHeader>
-          <DialogTitle>Quản lý micro-site — {siteName}</DialogTitle>
+          <DialogTitle>Quản lý micro-site: {siteName}</DialogTitle>
           <p className='text-content-muted text-xs'>
             Danh sách page + số liệu cơ bản, lưu trên BE.
           </p>
@@ -222,7 +223,7 @@ function PagesPanel({
       onChanged?.();
     } catch {
       toast.error(
-        'Lưu page thất bại — kiểm tra path (duy nhất, bắt đầu bằng /)'
+        'Lưu page thất bại, kiểm tra path (duy nhất, bắt đầu bằng /)'
       );
     } finally {
       setSaving(false);
@@ -247,13 +248,9 @@ function PagesPanel({
         <span className='text-content-muted text-xs'>
           {pages.length} page · cấu trúc các trang của micro-site
         </span>
-        <button
-          type='button'
-          onClick={openNew}
-          className='inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-emerald-700'
-        >
+        <Button size='sm' onClick={openNew}>
           <Plus className='size-3.5' /> Thêm page
-        </button>
+        </Button>
       </div>
 
       {showForm && (
@@ -300,32 +297,27 @@ function PagesPanel({
             </Label>
             <div className='mt-1 inline-flex gap-1'>
               {(['dev', 'live', 'paused'] as const).map(s => (
-                <button
+                <Chip
                   key={s}
-                  type='button'
+                  size='md'
+                  selected={form.status === s}
                   onClick={() => setForm(f => ({ ...f, status: s }))}
-                  className={cn(
-                    'rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors',
-                    form.status === s
-                      ? 'border-zinc-900 bg-zinc-900 text-white'
-                      : 'border-border text-content-muted hover:bg-muted'
-                  )}
                 >
                   {PAGE_STATUS_META[s].label}
-                </button>
+                </Chip>
               ))}
             </div>
           </div>
           <div className='flex justify-end gap-2'>
             <Button
-              variant='pill-light'
+              variant='neutral'
               size='sm'
               onClick={() => setShowForm(false)}
               disabled={saving}
             >
               Huỷ
             </Button>
-            <Button variant='pill' size='sm' onClick={save} disabled={saving}>
+            <Button size='sm' onClick={save} disabled={saving}>
               {saving ? 'Đang lưu…' : editing ? 'Lưu' : 'Thêm'}
             </Button>
           </div>
@@ -338,7 +330,7 @@ function PagesPanel({
         </div>
       ) : pages.length === 0 && !showForm ? (
         <div className='text-content-muted border-border rounded-xl border border-dashed px-4 py-8 text-center text-xs'>
-          Chưa có page nào — bấm <strong>Thêm page</strong> để dựng cấu trúc.
+          Chưa có page nào, bấm <strong>Thêm page</strong> để dựng cấu trúc.
         </div>
       ) : (
         <div className='border-border divide-border divide-y overflow-hidden rounded-xl border'>
@@ -381,7 +373,7 @@ function PagesPanel({
                 <button
                   type='button'
                   onClick={() => remove(p)}
-                  className='inline-flex size-7 items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                  className='text-destructive hover:bg-danger-bg inline-flex size-7 items-center justify-center rounded-md'
                   aria-label='Xoá'
                 >
                   <Trash2 className='size-3.5' />
@@ -531,7 +523,7 @@ function StatsPanel({ siteId }: { siteId: string }) {
           <NumField label='Bounce (%)' value={bounce} onChange={setBounce} />
         </div>
         <div className='flex justify-end'>
-          <Button variant='pill' size='sm' onClick={save} disabled={saving}>
+          <Button size='sm' onClick={save} disabled={saving}>
             {saving ? 'Đang lưu…' : 'Lưu số liệu'}
           </Button>
         </div>

@@ -77,7 +77,7 @@ export default function MicroSiteAnalyticsPage() {
     return (
       <PortalShell>
         <BackLink />
-        <div className='border-border text-content-muted mt-6 rounded-2xl border border-dashed bg-white p-12 text-center text-sm'>
+        <div className='border-border text-content-muted bg-card mt-6 rounded-2xl border border-dashed p-12 text-center text-sm'>
           {t('microSitesId.notFound')}
         </div>
       </PortalShell>
@@ -127,7 +127,7 @@ export default function MicroSiteAnalyticsPage() {
           )}
         </div>
         <div className='flex items-center gap-2'>
-          <span className='border-border text-content-muted rounded-lg border bg-white px-3 py-1.5 text-xs'>
+          <span className='border-border text-content-muted bg-background rounded-lg border px-3 py-1.5 text-xs'>
             {t('microSitesId.last30Days')}
           </span>
           {site.url && (
@@ -135,7 +135,7 @@ export default function MicroSiteAnalyticsPage() {
               href={site.url}
               target='_blank'
               rel='noreferrer'
-              className='bg-foreground hover:bg-foreground/85 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white'
+              className='bg-foreground hover:bg-foreground/85 text-background inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium'
             >
               <ExternalLink className='size-3.5' /> {t('microSitesId.openSite')}
             </a>
@@ -144,7 +144,7 @@ export default function MicroSiteAnalyticsPage() {
       </section>
 
       {!a && (
-        <div className='border-border text-content-muted mt-4 rounded-xl border border-dashed bg-white px-4 py-6 text-center text-sm'>
+        <div className='border-border text-content-muted bg-card mt-4 rounded-xl border border-dashed px-4 py-6 text-center text-sm'>
           {t('microSitesId.noAnalytics')}
         </div>
       )}
@@ -185,7 +185,7 @@ export default function MicroSiteAnalyticsPage() {
 
           {/* Daily chart */}
           {daily.length > 0 && (
-            <section className='border-border mt-4 rounded-2xl border bg-white p-4 shadow-sm'>
+            <section className='border-border bg-card mt-4 rounded-2xl border p-4 shadow-sm'>
               <div className='text-2xs text-content-muted flex items-center gap-1.5 font-semibold tracking-wider uppercase'>
                 <MousePointerClick className='size-3' />{' '}
                 {t('microSitesId.viewsByDay')}
@@ -257,7 +257,7 @@ function BackLink() {
   return (
     <Link
       href='/portal/micro-sites'
-      className='group border-border text-content-muted hover:border-foreground hover:text-foreground inline-flex items-center gap-2 self-start rounded-full border bg-white px-3 py-1.5 text-xs font-medium shadow-sm transition-all'
+      className='group border-border text-content-muted hover:border-foreground hover:text-foreground bg-background inline-flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm transition-all'
     >
       <ArrowLeft className='size-3.5 transition-transform group-hover:-translate-x-0.5' />
       Micro sites
@@ -289,7 +289,7 @@ function Kpi({
 }) {
   const good = delta == null ? null : invertDelta ? delta <= 0 : delta >= 0;
   return (
-    <div className='border-border rounded-2xl border bg-white p-4 shadow-sm'>
+    <div className='border-border bg-card rounded-2xl border p-4 shadow-sm'>
       <div className='flex items-center justify-between'>
         <span
           className={cn(
@@ -303,7 +303,7 @@ function Kpi({
           <span
             className={cn(
               'text-3xs font-semibold',
-              good ? 'text-emerald-600' : 'text-rose-600'
+              good ? 'text-emerald-600' : 'text-destructive'
             )}
           >
             {delta > 0 ? '+' : ''}
@@ -327,7 +327,7 @@ function BreakdownPanel({
   children: React.ReactNode;
 }) {
   return (
-    <div className='border-border rounded-2xl border bg-white p-4 shadow-sm'>
+    <div className='border-border bg-card rounded-2xl border p-4 shadow-sm'>
       <div className='text-2xs text-content-muted mb-3 font-semibold tracking-wider uppercase'>
         {title}
       </div>
