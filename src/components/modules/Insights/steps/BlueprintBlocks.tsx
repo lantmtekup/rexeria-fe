@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
+  Check,
   ChevronDown,
   ChevronUp,
   Expand,
@@ -218,6 +219,9 @@ function BlockRow({
   stageKey,
   onMove,
   onDelete,
+  selectable,
+  selected,
+  onSelect,
 }: {
   block: InsightRecommendedBlock;
   index: number;
@@ -226,6 +230,10 @@ function BlockRow({
   stageKey: string;
   onMove: (dir: -1 | 1) => void;
   onDelete: () => void;
+  /** Chế độ chọn 1 block/stage — render radio + highlight. */
+  selectable?: boolean;
+  selected?: boolean;
+  onSelect?: () => void;
 }) {
   const t = useTranslations('insights');
   const locale = useLocale();
@@ -275,7 +283,27 @@ function BlockRow({
   };
 
   return (
-    <li className='border-border bg-card flex gap-3 rounded-xl border p-3'>
+    <li
+      className={cn(
+        'border-border bg-card flex gap-3 rounded-xl border p-3 transition-colors',
+        selectable && 'cursor-pointer',
+        selected && 'border-primary ring-primary/30 ring-1'
+      )}
+      onClick={selectable ? onSelect : undefined}
+    >
+      {selectable && (
+        <span
+          aria-hidden
+          className={cn(
+            'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border',
+            selected
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border'
+          )}
+        >
+          {selected && <Check className='size-3' />}
+        </span>
+      )}
       <Thumb
         code={block.block_type_code}
         name={block.block_name}
@@ -436,15 +464,23 @@ function StageGroup({
   onAddBlock,
   onMoveBlock,
   onDeleteBlock,
+  selectedCode,
+  onSelectBlock,
 }: {
   stage: InsightBlocksByStage;
   reportId?: string;
   onAddBlock: () => void;
   onMoveBlock: (idx: number, dir: -1 | 1) => void;
   onDeleteBlock: (idx: number) => void;
+  /** Chế độ chọn 1 block/stage. */
+  selectedCode?: string;
+  onSelectBlock?: (code: string) => void;
 }) {
   const t = useTranslations('insights');
   const blocks = stage.blocks ?? [];
+  // Mặc định chọn block đầu khi ở chế độ select mà chưa có lựa chọn.
+  const effectiveSel =
+    selectedCode ?? (onSelectBlock ? blocks[0]?.block_type_code : undefined);
   return (
     <div className='border-border overflow-hidden rounded-xl border'>
       <div className='bg-muted/40 flex items-center gap-2 px-3 py-2.5'>
@@ -478,6 +514,13 @@ function StageGroup({
               stageKey={stage.stage_key}
               onMove={dir => onMoveBlock(i, dir)}
               onDelete={() => onDeleteBlock(i)}
+              selectable={!!onSelectBlock}
+              selected={!!onSelectBlock && b.block_type_code === effectiveSel}
+              onSelect={
+                onSelectBlock
+                  ? () => onSelectBlock(b.block_type_code)
+                  : undefined
+              }
             />
           ))}
         </ul>
@@ -490,10 +533,15 @@ export function BlocksSection({
   blueprint,
   reportId,
   collapsible = true,
+  selected,
+  onSelectBlock,
 }: {
   blueprint: InsightBlueprint;
   reportId?: string;
   collapsible?: boolean;
+  /** Chế độ chọn 1 block/stage: map stage_key → block_type_code đã chọn. */
+  selected?: Record<string, string>;
+  onSelectBlock?: (stageKey: string, code: string) => void;
 }) {
   const t = useTranslations('insights');
   const [stages, setStages] = useState<InsightBlocksByStage[]>(
@@ -579,6 +627,12 @@ export function BlocksSection({
             onAddBlock={() => setAddStageKey(stage.stage_key)}
             onMoveBlock={(i, dir) => moveBlock(stage.stage_key, i, dir)}
             onDeleteBlock={i => deleteBlock(stage.stage_key, i)}
+            selectedCode={selected?.[stage.stage_key]}
+            onSelectBlock={
+              onSelectBlock
+                ? code => onSelectBlock(stage.stage_key, code)
+                : undefined
+            }
           />
         ))}
       </div>

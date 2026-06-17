@@ -28,6 +28,9 @@ export interface BlockEditorCanvas {
   blocks: Block[];
   activeBlockId?: string;
   publish?: PublishMeta;
+  /** Transition cấp template (preset áp cho cả collection block). Mặc định
+   *  'none'. Lưu opaque trong canvas_blueprint JSON — render layer validate. */
+  transition?: string;
 }
 
 // ─── Save (serialize → wire) ────────────────────────────────────────────────
@@ -47,7 +50,8 @@ export interface BlockEditorCanvas {
 export function serializeCanvas(
   blocks: Block[],
   activeBlockId?: string,
-  publish?: PublishMeta
+  publish?: PublishMeta,
+  transition?: string
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {
     // Keep `schema` + `version` (V1 fields) ALONGSIDE the new `schema_version`
@@ -62,6 +66,7 @@ export function serializeCanvas(
   };
   if (activeBlockId) out.active_block_id = activeBlockId;
   if (publish) out.publish = publish;
+  if (transition && transition !== 'none') out.transition = transition;
   return out;
 }
 
@@ -121,11 +126,17 @@ export function parseCanvas(
     (data as { active_block_id?: string; activeBlockId?: string })
       .active_block_id ?? (data as { activeBlockId?: string }).activeBlockId;
 
+  const transition =
+    typeof (data as { transition?: unknown }).transition === 'string'
+      ? (data as { transition: string }).transition
+      : undefined;
+
   return {
     schemaVersion: SCHEMA_VERSION,
     blocks,
     activeBlockId,
     ...(publish ? { publish } : {}),
+    ...(transition ? { transition } : {}),
   };
 }
 

@@ -2,11 +2,34 @@ import type { Metadata } from 'next';
 import './globals.css';
 import SmoothScrollProvider from './components/SmoothScrollProvider';
 
+const TITLE =
+  'The Jack Pine by Tom Thomson | 1 Kilo Pure Gold Coin (2026) | Royal Canadian Mint';
+const DESCRIPTION =
+  "A 1006.1g, 99.99% pure gold proof coin from the Royal Canadian Mint, engraving Tom Thomson's iconic 1916–17 painting. Mintage: 75.";
+
 export const metadata: Metadata = {
-  title:
-    'The Jack Pine by Tom Thomson | 1 Kilo Pure Gold Coin (2026) | Royal Canadian Mint',
-  description:
-    "A 1006.1g, 99.99% pure gold proof coin from the Royal Canadian Mint, engraving Tom Thomson's iconic 1916–17 painting. Mintage: 75.",
+  metadataBase: new URL('https://mintcoin.rexerstudio.com'),
+  title: TITLE,
+  description: DESCRIPTION,
+  icons: {
+    icon: '/mint-icon.png',
+    shortcut: '/mint-icon.png',
+    apple: '/mint-icon.png',
+  },
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: 'https://mintcoin.rexerstudio.com',
+    siteName: 'Royal Canadian Mint',
+    images: [{ url: '/mint-icon.png', width: 78, height: 78 }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ['/mint-icon.png'],
+  },
 };
 
 export default function RootLayout({

@@ -69,6 +69,23 @@ ul {
   display: none;
 }
 
+/* Hotspot marker — gentle in-place pulse (scale, no positional drift).
+   Lives on a wrapper span so it never fights the badge img's hover scale.
+   The global reduced-motion rule below neutralises it for opt-out users. */
+@keyframes hotspot-float {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+.hotspot-float {
+  transform-origin: center center;
+  animation: hotspot-float 2s ease-in-out infinite;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -4,6 +4,7 @@ import * as React from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { CustomEase } from 'gsap/CustomEase';
+import { SplitText } from 'gsap/SplitText';
 import { useGSAP } from '@gsap/react';
 
 import {
@@ -17,7 +18,7 @@ import {
 } from './types';
 
 if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger, CustomEase, useGSAP);
+  gsap.registerPlugin(ScrollTrigger, CustomEase, SplitText, useGSAP);
   gsap.config({ nullTargetWarn: false });
 }
 
@@ -208,12 +209,60 @@ function buildTimeline(
   return tl;
 }
 
+/**
+ * mask-reveal: tách text target thành lines/words (SplitText + mask), stagger
+ * yPercent 100→0 + opacity. SplitText tạo trong scope useGSAP nên context.revert
+ * tự khôi phục DOM khi cleanup. Bỏ qua nếu target rỗng text.
+ */
+function addSplitReveal(
+  tl: gsap.core.Timeline,
+  target: HTMLElement,
+  track: MotionTrack
+) {
+  const splitType = track.split;
+  if (!splitType) return;
+  target.style.animation = 'none';
+  const kfs = [...track.keyframes].sort((a, b) => a.time - b.time);
+  const startMs = kfs[0]?.time ?? 0;
+  const endMs = kfs[kfs.length - 1]?.time ?? startMs + 600;
+  const start = startMs / 1000;
+  const dur = Math.max(0.3, (endMs - startMs) / 1000);
+  const ease = resolveEase(kfs[0]?.easing);
+
+  const split = new SplitText(target, {
+    type: splitType,
+    mask: splitType,
+    linesClass: 'mr-line',
+    wordsClass: 'mr-word',
+  });
+  const pieces = splitType === 'words' ? split.words : split.lines;
+  if (!pieces.length) return;
+
+  tl.set(pieces, { yPercent: 110, opacity: 0 }, start);
+  tl.to(
+    pieces,
+    {
+      yPercent: 0,
+      opacity: 1,
+      duration: dur,
+      ease,
+      stagger: Math.min(0.12, dur / pieces.length),
+    },
+    start
+  );
+}
+
 function addTrack(
   tl: gsap.core.Timeline,
   target: HTMLElement,
   track: MotionTrack,
   motionKit?: MotionKitConfig
 ) {
+  if (track.split) {
+    addSplitReveal(tl, target, track);
+    return;
+  }
+
   const scale =
     motionKit?.durationScale && motionKit.durationScale > 0
       ? motionKit.durationScale

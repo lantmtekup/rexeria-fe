@@ -433,6 +433,125 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'description', label: 'Mô tả', icon: Pilcrow },
     { key: 'imageUrl', label: 'Ảnh 360°', icon: ImageIcon },
   ],
+  text_displace_hero: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'description', label: 'Mô tả', icon: Pilcrow },
+  ],
+  image_trail: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  sticky_scroll_cards: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  gallery_3d_depth: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  parallax_hero: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  lightbox_flip: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  flip_gallery: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  wheel_gallery: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  hover_reveal_list: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  hover_grid_reveal: [
+    BACKGROUND_LAYER,
+    { key: 'imageUrl', label: 'Ảnh', icon: ImageIcon },
+  ],
+  hover_equalizer_heading: [
+    BACKGROUND_LAYER,
+    { key: 'heading', label: 'Tiêu đề', icon: Type },
+  ],
+  image_explosion: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  marquee_band: [
+    BACKGROUND_LAYER,
+    { key: 'text', label: 'Chữ chạy', icon: Type },
+  ],
+  card_showcase: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  story_slides: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  flip_showreel: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  peel_reveal: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  accordion_media: [BACKGROUND_LAYER],
+  pricing_table: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  image_banner: [
+    BACKGROUND_LAYER,
+    { key: 'heading', label: 'Tiêu đề', icon: Type },
+  ],
+  video_gallery: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  spotlight: [BACKGROUND_LAYER, { key: 'title', label: 'Chữ', icon: Type }],
+  process_steps: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  dot_matrix: [BACKGROUND_LAYER, { key: 'title', label: 'Chữ', icon: Type }],
+  interactive_grid: [BACKGROUND_LAYER],
+  pixel_reveal: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  letter_slider: [BACKGROUND_LAYER],
+  svg_morph_overlay: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  gallery_pan_lens: [BACKGROUND_LAYER],
+  seamless_scroll_gallery: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+  ],
+  product_spec_sheet: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'description', label: 'Mô tả', icon: Pilcrow },
+    { key: 'imageUrl', label: 'Ảnh', icon: ImageIcon },
+  ],
 };
 
 export function LayersPanel({

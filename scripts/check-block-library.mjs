@@ -20,10 +20,12 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Soft cap. Current baseline at introduction: 49. Headroom of 3 forces review
-// on the next additions. Bump deliberately (with justification) when a new
-// block type is the right call, not a variant.
-const MAX_BLOCK_TYPES = 52;
+// Soft cap. Baseline at introduction: 49. Bumped to 85 (2026-06) after the
+// CodeGrid animation-block port (feat/anim-block-text-displace) landed ~31 new
+// distinct-DOM block types (card_showcase, story_slides, image_explosion, etc.).
+// Headroom of ~5 forces review on the next additions. Bump deliberately (with
+// justification) when a new block type is the right call, not a variant.
+const MAX_BLOCK_TYPES = 85;
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const file = join(

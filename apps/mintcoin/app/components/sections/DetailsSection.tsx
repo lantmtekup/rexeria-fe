@@ -17,7 +17,9 @@ export default function DetailsSection() {
     const ctx = gsap.context(() => {
       const titleEl = root.querySelector<HTMLElement>('.details__title');
       if (titleEl) {
-        const split = new SplitType(titleEl, { types: 'chars' });
+        // words,chars (not chars-only): word wrappers keep each word intact
+        // so lines never break mid-word ("The Jack Pin|e") on narrow phones.
+        const split = new SplitType(titleEl, { types: 'words,chars' });
         gsap.fromTo(
           split.chars,
           { opacity: 0, y: 24, force3D: true },
@@ -67,7 +69,7 @@ export default function DetailsSection() {
       className='details px-6 pt-32 pb-24 md:pt-40 md:pb-32'
     >
       <div className='mx-auto max-w-3xl text-center'>
-        <h1 className='details__title gpu-layer mb-10 text-6xl font-light tracking-tight md:text-8xl'>
+        <h1 className='details__title gpu-layer mb-10 text-5xl font-light tracking-tight text-balance break-keep md:text-8xl'>
           The Jack Pine
         </h1>
         <p className='data-fade-in mb-5 text-sm leading-relaxed text-neutral-800 md:text-base'>

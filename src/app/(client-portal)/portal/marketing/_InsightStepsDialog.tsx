@@ -14,7 +14,14 @@
  * prod) → fallback toast, UI không vỡ.
  */
 
-import { Check, Loader2, RefreshCw, Sparkles } from 'lucide-react';
+import {
+  Check,
+  Loader2,
+  Plus,
+  RefreshCw,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -33,12 +40,12 @@ import type {
   InsightBlueprintJourney,
   InsightBlueprintBlocks,
   InsightBlueprintTemplates,
+  InsightJourneyStage,
   InsightReport,
   InsightReportStep,
   InsightStepKey,
 } from '@/services/rexer/types';
 
-import { JourneySection } from '@/components/modules/Insights/steps/BlueprintStep';
 import {
   BlocksSection,
   TemplatesSection,
@@ -117,6 +124,8 @@ export function InsightStepsDialog({
   const [ovJourney, setOvJourney] = useState<InsightBlueprintJourney>();
   const [ovBlocks, setOvBlocks] = useState<InsightBlueprintBlocks>();
   const [ovTemplates, setOvTemplates] = useState<InsightBlueprintTemplates>();
+  // Block đã chọn cho mỗi stage (1/stage). Trống → mặc định block đầu của stage.
+  const [selBlocks, setSelBlocks] = useState<Record<string, string>>({});
 
   const bp = report.blueprint;
   const running = report.status === 'queued' || report.status === 'running';
@@ -235,13 +244,23 @@ export function InsightStepsDialog({
 
   // Lưu chỉnh sửa: journey/blocks lên BE (KB3 — BE chỉ nhận 2 phần này);
   // goal-edit gói trong summary để editor ghi vào notes (BE chưa nhận goal).
+  // Thu gọn về 1 block đã chọn / stage (mặc định block đầu nếu chưa chọn).
+  const chosenBlocks: InsightBlueprintBlocks | undefined = blocks && {
+    blocks_by_stage: blocks.blocks_by_stage.map(s => {
+      const code = selBlocks[s.stage_key];
+      const pick =
+        s.blocks.find(b => b.block_type_code === code) ?? s.blocks[0];
+      return { ...s, blocks: pick ? [pick] : s.blocks };
+    }),
+  };
+
   const handleSaveEdits = async () => {
     setSaving(true);
     try {
-      if (journey || blocks) {
+      if (journey || chosenBlocks) {
         await rexerApi.insights.updateBlueprint(report.id, {
           customer_journey: journey,
-          recommended_blocks: blocks,
+          recommended_blocks: chosenBlocks,
         });
       }
       onSaved?.({
@@ -250,7 +269,7 @@ export function InsightStepsDialog({
         goalLabel: goal ? GOAL_LABEL[goal.primary_goal] : undefined,
         goalEdit: goal,
         journeyName: journey?.journey_pattern_name,
-        blockCount,
+        blockCount: chosenBlocks?.blocks_by_stage.length ?? blockCount,
       });
       toast.success(t('marketingInsightStepsDialog.editsSaved'));
     } catch {
@@ -318,16 +337,9 @@ export function InsightStepsDialog({
           )}
 
           {step === 1 && (
-            <StepBody
-              loading={journeyLoading}
-              empty={!journey?.stages?.length}
-              failed={failed}
-            >
+            <StepBody loading={journeyLoading} empty={!journey} failed={failed}>
               {journey && (
-                <JourneySection
-                  blueprint={{ customer_journey: journey }}
-                  collapsible={false}
-                />
+                <JourneyEditable journey={journey} onChange={setOvJourney} />
               )}
             </StepBody>
           )}
@@ -343,6 +355,10 @@ export function InsightStepsDialog({
                   blueprint={{ recommended_blocks: blocks }}
                   reportId={report.id}
                   collapsible={false}
+                  selected={selBlocks}
+                  onSelectBlock={(sk, c) =>
+                    setSelBlocks(p => ({ ...p, [sk]: c }))
+                  }
                 />
               )}
             </StepBody>
@@ -482,6 +498,118 @@ function GoalEditable({
           {t('marketingInsightStepsDialog.aiContentHint')}
         </p>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Customer Journey sửa được: đổi tên pattern, sửa từng stage (tên · intent ·
+ * Why), thêm/xoá stage. Wire vào `setOvJourney`; Save (handleSaveEdits) đã
+ * PATCH `customer_journey` lên BE (updateBlueprint KB3).
+ */
+function JourneyEditable({
+  journey,
+  onChange,
+}: {
+  journey: InsightBlueprintJourney;
+  onChange: (j: InsightBlueprintJourney) => void;
+}) {
+  const t = useTranslations('portal');
+  const stages = journey.stages ?? [];
+
+  const patchStage = (i: number, patch: Partial<InsightJourneyStage>) =>
+    onChange({
+      ...journey,
+      stages: stages.map((s, idx) => (idx === i ? { ...s, ...patch } : s)),
+    });
+  const removeStage = (i: number) =>
+    onChange({ ...journey, stages: stages.filter((_, idx) => idx !== i) });
+  const addStage = () =>
+    onChange({
+      ...journey,
+      stages: [
+        ...stages,
+        {
+          key: `custom-${stages.length + 1}`,
+          name: '',
+          intent: '',
+          rationale: '',
+        },
+      ],
+    });
+
+  const inputCls =
+    'border-input bg-background text-foreground focus:border-foreground/40 h-9 w-full rounded-lg border px-3 text-sm outline-none';
+
+  return (
+    <div className='flex flex-col gap-4'>
+      <div className='flex flex-col gap-1'>
+        <label className='text-content-muted text-xs font-semibold uppercase'>
+          {t('marketingInsightStepsDialog.journeyPatternName')}
+        </label>
+        <input
+          value={journey.journey_pattern_name ?? ''}
+          onChange={e =>
+            onChange({ ...journey, journey_pattern_name: e.target.value })
+          }
+          className={cn(inputCls, 'h-10 font-semibold')}
+        />
+      </div>
+
+      <ol className='flex flex-col gap-3'>
+        {stages.map((s, i) => (
+          <li
+            key={s.key || i}
+            className='border-border bg-muted/20 rounded-xl border p-3'
+          >
+            <div className='flex items-start gap-3'>
+              <span className='bg-primary/10 text-primary mt-1 flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold'>
+                {i + 1}
+              </span>
+              <div className='flex flex-1 flex-col gap-2'>
+                <div className='flex flex-col gap-2 sm:flex-row'>
+                  <input
+                    value={s.name}
+                    onChange={e => patchStage(i, { name: e.target.value })}
+                    placeholder={t('marketingInsightStepsDialog.stageName')}
+                    className={cn(inputCls, 'font-medium')}
+                  />
+                  <input
+                    value={s.intent}
+                    onChange={e => patchStage(i, { intent: e.target.value })}
+                    placeholder={t('marketingInsightStepsDialog.stageIntent')}
+                    className={inputCls}
+                  />
+                </div>
+                <textarea
+                  value={s.rationale}
+                  onChange={e => patchStage(i, { rationale: e.target.value })}
+                  rows={3}
+                  placeholder={t('marketingInsightStepsDialog.stageWhy')}
+                  className='border-input bg-background text-foreground focus:border-foreground/40 w-full resize-y rounded-lg border p-3 text-sm leading-6 outline-none'
+                />
+              </div>
+              <button
+                type='button'
+                onClick={() => removeStage(i)}
+                aria-label={t('marketingInsightStepsDialog.removeStage')}
+                className='text-content-muted hover:bg-destructive/10 hover:text-destructive mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors'
+              >
+                <Trash2 className='size-4' />
+              </button>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <Button variant='outline' size='sm' onClick={addStage} className='w-fit'>
+        <Plus className='size-4' />
+        {t('marketingInsightStepsDialog.addStage')}
+      </Button>
+
+      <p className='text-content-muted text-2xs'>
+        {t('marketingInsightStepsDialog.aiContentHint')}
+      </p>
     </div>
   );
 }

@@ -46,8 +46,39 @@ import { Panorama } from './Panorama';
 import { PhotoGallery } from './PhotoGallery';
 import { Poll } from './Poll';
 import { Quiz } from './Quiz';
+import { FlipGallery } from './FlipGallery';
+import { Gallery3dDepth } from './Gallery3dDepth';
+import { GalleryPanLens } from './GalleryPanLens';
+import { HoverEqualizerHeading } from './HoverEqualizerHeading';
+import { HoverGridReveal } from './HoverGridReveal';
+import { HoverRevealList } from './HoverRevealList';
+import { ImageExplosion } from './ImageExplosion';
+import { ImageTrail } from './ImageTrail';
+import { CardShowcase } from './CardShowcase';
+import { StorySlides } from './StorySlides';
+import { FlipShowreel } from './FlipShowreel';
+import { PeelReveal } from './PeelReveal';
+import { AccordionMedia } from './AccordionMedia';
+import { PricingTable } from './PricingTable';
+import { ImageBanner } from './ImageBanner';
+import { VideoGallery } from './VideoGallery';
+import { Spotlight } from './Spotlight';
+import { ProcessSteps } from './ProcessSteps';
+import { DotMatrix } from './DotMatrix';
+import { InteractiveGrid } from './InteractiveGrid';
+import { PixelReveal } from './PixelReveal';
+import { LetterSlider } from './LetterSlider';
+import { LightboxFlip } from './LightboxFlip';
+import { MarqueeBand } from './MarqueeBand';
+import { ParallaxHero } from './ParallaxHero';
+import { ProductSpecSheet } from './ProductSpecSheet';
+import { SeamlessScrollGallery } from './SeamlessScrollGallery';
+import { SvgMorphOverlay } from './SvgMorphOverlay';
 import { SplitScreen } from './SplitScreen';
+import { StickyScrollCards } from './StickyScrollCards';
 import { Stories } from './Stories';
+import { TextDisplaceHero } from './TextDisplaceHero';
+import { WheelGallery } from './WheelGallery';
 import type {
   Block,
   BlockBackground,
@@ -102,6 +133,37 @@ import type {
   QuizContent,
   SplitScreenContent,
   StoriesContent,
+  TextDisplaceHeroContent,
+  ImageTrailContent,
+  StickyScrollCardsContent,
+  Gallery3dDepthContent,
+  ParallaxHeroContent,
+  LightboxFlipContent,
+  FlipGalleryContent,
+  WheelGalleryContent,
+  HoverRevealListContent,
+  HoverGridRevealContent,
+  HoverEqualizerHeadingContent,
+  ImageExplosionContent,
+  CardShowcaseContent,
+  StorySlidesContent,
+  FlipShowreelContent,
+  PeelRevealContent,
+  AccordionMediaContent,
+  PricingTableContent,
+  ImageBannerContent,
+  VideoGalleryContent,
+  SpotlightContent,
+  ProcessStepsContent,
+  DotMatrixContent,
+  InteractiveGridContent,
+  PixelRevealContent,
+  MarqueeBandContent,
+  LetterSliderContent,
+  SvgMorphOverlayContent,
+  GalleryPanLensContent,
+  SeamlessScrollGalleryContent,
+  ProductSpecSheetContent,
 } from '../types';
 
 interface RenderBlockProps {
@@ -278,6 +340,347 @@ export function RenderBlock({
       return (
         <Panorama
           content={content as PanoramaContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'text_displace_hero':
+      return (
+        <TextDisplaceHero
+          content={content as TextDisplaceHeroContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'image_trail':
+      return (
+        <ImageTrail
+          content={content as ImageTrailContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'sticky_scroll_cards':
+      return (
+        <StickyScrollCards
+          content={content as StickyScrollCardsContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'gallery_3d_depth':
+      return (
+        <Gallery3dDepth
+          content={content as Gallery3dDepthContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'parallax_hero':
+      return (
+        <ParallaxHero
+          content={content as ParallaxHeroContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'lightbox_flip':
+      return (
+        <LightboxFlip
+          content={content as LightboxFlipContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'flip_gallery':
+      return (
+        <FlipGallery
+          content={content as FlipGalleryContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'wheel_gallery':
+      return (
+        <WheelGallery
+          content={content as WheelGalleryContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'hover_reveal_list':
+      return (
+        <HoverRevealList
+          content={content as HoverRevealListContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'hover_grid_reveal':
+      return (
+        <HoverGridReveal
+          content={content as HoverGridRevealContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'hover_equalizer_heading':
+      return (
+        <HoverEqualizerHeading
+          content={content as HoverEqualizerHeadingContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'image_explosion':
+      return (
+        <ImageExplosion
+          content={content as ImageExplosionContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'marquee_band':
+      return (
+        <MarqueeBand
+          content={content as MarqueeBandContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'card_showcase':
+      return (
+        <CardShowcase
+          content={content as CardShowcaseContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'story_slides':
+      return (
+        <StorySlides
+          content={content as StorySlidesContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'flip_showreel':
+      return (
+        <FlipShowreel
+          content={content as FlipShowreelContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'peel_reveal':
+      return (
+        <PeelReveal
+          content={content as PeelRevealContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'accordion_media':
+      return (
+        <AccordionMedia
+          content={content as AccordionMediaContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'pricing_table':
+      return (
+        <PricingTable
+          content={content as PricingTableContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'image_banner':
+      return (
+        <ImageBanner
+          content={content as ImageBannerContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'video_gallery':
+      return (
+        <VideoGallery
+          content={content as VideoGalleryContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'spotlight':
+      return (
+        <Spotlight
+          content={content as SpotlightContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'process_steps':
+      return (
+        <ProcessSteps
+          content={content as ProcessStepsContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'dot_matrix':
+      return (
+        <DotMatrix
+          content={content as DotMatrixContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'interactive_grid':
+      return (
+        <InteractiveGrid
+          content={content as InteractiveGridContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'pixel_reveal':
+      return (
+        <PixelReveal
+          content={content as PixelRevealContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'letter_slider':
+      return (
+        <LetterSlider
+          content={content as LetterSliderContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'svg_morph_overlay':
+      return (
+        <SvgMorphOverlay
+          content={content as SvgMorphOverlayContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'gallery_pan_lens':
+      return (
+        <GalleryPanLens
+          content={content as GalleryPanLensContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'seamless_scroll_gallery':
+      return (
+        <SeamlessScrollGallery
+          content={content as SeamlessScrollGalleryContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'product_spec_sheet':
+      return (
+        <ProductSpecSheet
+          content={content as ProductSpecSheetContent}
           styles={styles}
           background={background}
           order={order}

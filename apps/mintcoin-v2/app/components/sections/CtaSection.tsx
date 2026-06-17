@@ -47,6 +47,9 @@ export default function CtaSection() {
   });
   const [status, setStatus] = useState<SubmitState>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  // Debug: exact upstream cURL (from the proxy) to verify the key with BE.
+  const [curlCmd, setCurlCmd] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useIsomorphicLayoutEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -121,16 +124,31 @@ export default function CtaSection() {
           utm_campaign: params.get('utm_campaign') || undefined,
         }),
       });
+      // Capture the exact upstream cURL the proxy ran (works on ok OR error).
+      const curl = res.headers.get('x-debug-curl');
+      if (curl) setCurlCmd(decodeURIComponent(curl));
       const data = await res.json().catch(() => ({}));
       if (!res.ok)
         throw new Error(
-          data.error || data.message || 'Something went wrong. Please try again.'
+          data.error ||
+            data.message ||
+            'Something went wrong. Please try again.'
         );
       setStatus('success');
       setForm({ name: '', email: '', phone: '', message: '' });
     } catch (err) {
       setStatus('error');
       setErrorMsg((err as Error).message);
+    }
+  };
+
+  const copyCurl = async () => {
+    try {
+      await navigator.clipboard.writeText(curlCmd);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
     }
   };
 
@@ -303,6 +321,27 @@ export default function CtaSection() {
                 advisor about this product.
               </p>
             </form>
+          )}
+
+          {/* Debug — copy the exact upstream cURL to verify the key with BE. */}
+          {curlCmd && (
+            <div className='mt-4 rounded-lg border border-neutral-100/10 bg-neutral-100/[0.02] p-4'>
+              <div className='mb-2 flex items-center justify-between gap-3'>
+                <span className='text-[10px] tracking-[0.18em] text-neutral-500 uppercase'>
+                  Debug · upstream request
+                </span>
+                <button
+                  type='button'
+                  onClick={copyCurl}
+                  className='rounded-full border border-[#c79119]/40 px-3 py-1 text-[10px] tracking-[0.16em] text-[#c79119] uppercase transition-colors hover:bg-[#c79119]/10'
+                >
+                  {copied ? 'Copied ✓' : 'Copy cURL'}
+                </button>
+              </div>
+              <pre className='max-h-40 overflow-auto rounded bg-black/40 p-3 text-[11px] leading-relaxed whitespace-pre-wrap text-neutral-400'>
+                {curlCmd}
+              </pre>
+            </div>
           )}
         </div>
       </div>

@@ -9,6 +9,7 @@ import DetailsSection from './sections/DetailsSection';
 import ProductDetailSection from './sections/ProductDetailSection';
 import ProductVariantSection from './sections/ProductVariantSection';
 import ProductSkuSection from './sections/ProductSkuSection';
+import CtaSection from './sections/CtaSection';
 import { IMG } from '@/lib/image-cdn';
 
 // Shared landing body used by both the public home page (`/`) and the
@@ -113,6 +114,8 @@ export default function LandingContent() {
         />
 
         <ProductSkuSection />
+
+        <CtaSection />
       </main>
 
       <DiscoverPanel

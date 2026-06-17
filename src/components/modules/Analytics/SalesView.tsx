@@ -64,6 +64,62 @@ const METHOD_LABEL: Record<Lead['method'], string> = {
   whitelist: 'Whitelist',
 };
 
+// Form ngoài là schemaless (mỗi landing tự định nghĩa field), nên bảng render
+// động theo `form_data`. `name` lên tiêu đề; email/phone ưu tiên; còn lại giữ
+// nguyên thứ tự. Nhãn quen thuộc có map tiếng Việt, field lạ fallback chính key.
+const FIELD_LABEL: Record<string, string> = {
+  email: 'Email',
+  phone: 'SĐT',
+  message: 'Lời nhắn',
+  company: 'Công ty',
+  budget: 'Ngân sách',
+  note: 'Ghi chú',
+};
+const fieldRank = (k: string) => ({ email: 0, phone: 1 })[k.toLowerCase()] ?? 2;
+const fieldLabel = (k: string) =>
+  FIELD_LABEL[k.toLowerCase()] ?? k.replace(/[_-]+/g, ' ');
+const fieldValue = (v: unknown) =>
+  typeof v === 'string' ? v : v == null ? '' : String(v);
+
+/** Tên hiển thị: ưu tiên form_data.name, rồi cột name derived, cuối là rỗng. */
+function leadName(lead: Lead): string {
+  const fromForm = lead.form_data?.name;
+  if (typeof fromForm === 'string' && fromForm.trim()) return fromForm.trim();
+  return lead.name?.trim() || '(chưa có tên)';
+}
+
+/**
+ * Render các field động dưới tên lead. Lead qua form ngoài có `form_data` →
+ * liệt kê mọi field (trừ `name` đã làm tiêu đề). Lead cũ (GA-style) không có
+ * form_data → fallback hiển thị `contact` như trước để không vỡ dữ liệu cũ.
+ */
+function LeadFields({ lead }: { lead: Lead }) {
+  const fd = lead.form_data;
+  const entries = fd
+    ? Object.entries(fd).filter(
+        ([k, v]) => k.toLowerCase() !== 'name' && fieldValue(v).trim() !== ''
+      )
+    : [];
+
+  if (entries.length === 0) {
+    return <p className='text-content-muted text-xs'>{lead.contact}</p>;
+  }
+
+  entries.sort(([a], [b]) => fieldRank(a) - fieldRank(b));
+  return (
+    <div className='mt-0.5 space-y-0.5'>
+      {entries.map(([k, v]) => (
+        <p key={k} className='text-content-muted line-clamp-2 text-xs'>
+          <span className='text-2xs mr-1 font-semibold tracking-wider uppercase opacity-60'>
+            {fieldLabel(k)}
+          </span>
+          {fieldValue(v)}
+        </p>
+      ))}
+    </div>
+  );
+}
+
 const fmt = (n: number) => n.toLocaleString('vi-VN');
 const usd = (n: number) => `$${n.toLocaleString('en-US')}`;
 
@@ -356,10 +412,8 @@ function LeadRow({
   return (
     <TableRow>
       <TableCell>
-        <p className='text-foreground font-medium'>
-          {lead.name ?? '(chưa có tên)'}
-        </p>
-        <p className='text-content-muted text-xs'>{lead.contact}</p>
+        <p className='text-foreground font-medium'>{leadName(lead)}</p>
+        <LeadFields lead={lead} />
       </TableCell>
       <TableCell>
         <p className='text-sm'>{METHOD_LABEL[lead.method]}</p>
