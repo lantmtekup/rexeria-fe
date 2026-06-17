@@ -108,12 +108,13 @@ export default function AnalyticsOverlay({ onLogout }: Props) {
       const clicks = live?.clicks ?? 0;
       const scroll = live ? Math.round(live.avg_scroll_depth) : 0;
       const ctr = views > 0 ? (clicks / views) * 100 : 0;
-      const rows: [string, string][] = [
-        ['Views', views.toLocaleString()],
-        ['Clicks', clicks.toLocaleString()],
-        ['Avg scroll depth', `${scroll}%`],
-        ['CTR', `${ctr.toFixed(1)}%`],
-      ];
+      // Views always shown (hero). Click-related stats (Clicks + CTR) are only
+      // shown once the block actually has clicks — a block with views but no
+      // clicks still keeps its views / scroll / dwell info.
+      const rows: [string, string][] = [['Views', views.toLocaleString()]];
+      if (clicks > 0) rows.push(['Clicks', clicks.toLocaleString()]);
+      rows.push(['Avg scroll depth', `${scroll}%`]);
+      if (clicks > 0) rows.push(['CTR', `${ctr.toFixed(1)}%`]);
       // Time-on-block — shown only once the BE returns avg_dwell_ms.
       if (live?.avg_dwell_ms != null) {
         rows.push([
@@ -168,10 +169,7 @@ export default function AnalyticsOverlay({ onLogout }: Props) {
       {positions.map(p => {
         if (!p.visible) return null;
         const block = blockById(p.id);
-        // Hide a block's badge/card entirely once data is live and it has no
-        // clicks — keeps the overlay focused on blocks with real interaction.
         const blockClicks = liveBlocks[block.id]?.clicks ?? 0;
-        if (source === 'live' && blockClicks === 0) return null;
         const open = !collapsed[p.id]; // open by default
         const rows = metricsFor(block);
         const [heroLabel, heroValue] = rows[0];
@@ -223,8 +221,8 @@ export default function AnalyticsOverlay({ onLogout }: Props) {
                       ))}
                     </div>
 
-                    {/* Per-hotspot click breakdown (named points) */}
-                    {block.ctas && block.ctas.length > 0 && (
+                    {/* Per-hotspot click breakdown — only once the block has clicks */}
+                    {blockClicks > 0 && block.ctas && block.ctas.length > 0 && (
                       <div className='border-t border-neutral-800 px-4 py-2'>
                         <div className='mb-1 text-[10px] tracking-wider text-amber-300/80 uppercase'>
                           Clicks by point

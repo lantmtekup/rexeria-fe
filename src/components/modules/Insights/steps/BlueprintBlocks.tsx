@@ -1,11 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { createPortal } from 'react-dom';
+import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
   ChevronDown,
   ChevronUp,
+  Expand,
   Eye,
   LayoutGrid,
   LayoutTemplate,
@@ -35,10 +37,12 @@ import type {
 } from '@/services/rexer/types';
 import { AddBlockDialog } from '../../CanvasTemplate/block-editor/AddBlockDialog';
 import { BlockMiniPreview } from '../../CanvasTemplate/block-editor/BlockMiniPreview';
+import { PreviewMode } from '../../CanvasTemplate/block-editor/PreviewMode';
 import { createBlock } from '../../CanvasTemplate/block-editor/factory';
 import {
   BLOCK_TYPE_META,
   type BlockType,
+  type Lang,
 } from '../../CanvasTemplate/block-editor/types';
 import { SectionCard } from './ui';
 
@@ -66,6 +70,59 @@ function thumbGradient(s: string): string {
   return THUMB_GRADIENTS[Math.abs(h) % THUMB_GRADIENTS.length];
 }
 
+/**
+ * AI gợi ý block bằng taxonomy riêng (headline_overlay, ad_story_1080x1920…)
+ * KHÔNG trùng key editor (hero_overlay, stories…). Map fuzzy → editor BlockType
+ * gần nhất để render preview THẬT. Khớp trực tiếp ưu tiên; không khớp → null
+ * (fallback gradient tile + ghi chú catalog).
+ */
+const FUZZY_RULES: [RegExp, BlockType][] = [
+  [/headline.*overlay|hero.*overlay/, 'hero_overlay'],
+  [/stor(y|ies)|reel|1080x1920|9x16/, 'stories'],
+  [/hero|intro|banner|cover/, 'hero_split'],
+  [/gallery|photo|lookbook/, 'photo_gallery'],
+  [/carousel|slider|swipe/, 'image_carousel'],
+  [/booking|form|lead|contact|sign.?up|register/, 'booking_form'],
+  [/\bcta\b|call.?to|button/, 'cta_section'],
+  [/feature|benefit|value|highlight/, 'feature_section'],
+  [/quiz/, 'quiz'],
+  [/poll|vote/, 'poll'],
+  [/faq|question/, 'framer_faq_minimal'],
+  [/quote|testimonial|review/, 'framer_large_quote'],
+  [/stat|metric|number|count/, 'framer_stats_grid'],
+  [/split/, 'split_screen'],
+  [/3d|three.?d/, 'carousel_3d'],
+  [/panorama|360/, 'panorama'],
+  [/flip/, 'flipbook'],
+];
+
+function resolveEditorType(code: string): BlockType | null {
+  if (code in BLOCK_TYPE_META) return code as BlockType;
+  const c = code.toLowerCase();
+  for (const [re, t] of FUZZY_RULES) if (re.test(c)) return t;
+  return null;
+}
+
+/**
+ * Dựng danh sách editor Block từ các block_type_code (taxonomy AI) — resolve
+ * sang editor type gần nhất rồi tạo block mặc định. Code không map được → bỏ
+ * qua. Dùng để preview landing/template thật (xếp chồng trong PreviewMode),
+ * vì template do BE handoff dựng hiện lưu block rỗng (chưa có renderer FE).
+ */
+export function buildBlocksFromCodes(codes: string[]) {
+  return codes
+    .map(code => {
+      const editorType = resolveEditorType(code);
+      if (!editorType) return null;
+      try {
+        return createBlock(editorType);
+      } catch {
+        return null;
+      }
+    })
+    .filter((b): b is NonNullable<typeof b> => b !== null);
+}
+
 function Thumb({
   code,
   name,
@@ -86,17 +143,18 @@ function Thumb({
   const meta = (
     BLOCK_TYPE_META as Record<string, { gradient?: string } | undefined>
   )[code];
-  const isEditorType = kind === 'block' && code in BLOCK_TYPE_META;
-
-  // Editor type → dựng block mặc định (seed) rồi render preview thật.
+  // Editor type (trực tiếp hoặc fuzzy) → dựng block mặc định (seed) rồi
+  // render preview thật.
   const preview = useMemo(() => {
-    if (!isEditorType) return null;
+    if (kind !== 'block') return null;
+    const editorType = resolveEditorType(code);
+    if (!editorType) return null;
     try {
-      return createBlock(code as BlockType);
+      return createBlock(editorType);
     } catch {
       return null;
     }
-  }, [code, isEditorType]);
+  }, [code, kind]);
 
   // Ưu tiên 1: ảnh preview thật từ BE (KB5).
   if (imageUrl && !imgError) {
@@ -170,11 +228,27 @@ function BlockRow({
   onDelete: () => void;
 }) {
   const t = useTranslations('insights');
+  const locale = useLocale();
+  const lang: Lang = locale === 'en' ? 'en' : 'vi';
   const [open, setOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState<Record<string, unknown> | null>(
     null
   );
+
+  // Preview thật khi block là editor type (có trong BLOCK_TYPE_META): dựng
+  // block mặc định rồi render qua BlockMiniPreview. Type lạ (vd framer_*) →
+  // null → dialog hiện ghi chú "chờ BE catalog".
+  const detailPreview = useMemo(() => {
+    const editorType = resolveEditorType(block.block_type_code);
+    if (!editorType) return null;
+    try {
+      return createBlock(editorType);
+    } catch {
+      return null;
+    }
+  }, [block.block_type_code]);
 
   // KB4: sinh nội dung mẫu cho block (khớp props_schema) → hiện trong dialog.
   const generate = async () => {
@@ -228,6 +302,13 @@ function BlockRow({
             label={t('blueprint.viewDetail')}
             onClick={() => setOpen(true)}
           />
+          {detailPreview && (
+            <ActionBtn
+              icon={<Expand className='size-3' aria-hidden />}
+              label={t('blueprint.preview')}
+              onClick={() => setPreviewOpen(true)}
+            />
+          )}
           <ActionBtn
             icon={
               generating ? (
@@ -282,9 +363,20 @@ function BlockRow({
             {block.reason && (
               <DetailRow label={t('blueprint.why')}>{block.reason}</DetailRow>
             )}
-            <p className='text-content-muted border-border rounded-lg border border-dashed p-3 text-xs'>
-              {t('blueprint.previewNote')}
-            </p>
+            {detailPreview ? (
+              <div>
+                <p className='text-content-muted text-2xs mb-1.5 font-semibold tracking-wider uppercase'>
+                  {t('blueprint.preview')}
+                </p>
+                <div className='border-border bg-muted overflow-hidden rounded-lg border'>
+                  <BlockMiniPreview block={detailPreview} aspect='16 / 9' />
+                </div>
+              </div>
+            ) : (
+              <p className='text-content-muted border-border rounded-lg border border-dashed p-3 text-xs'>
+                {t('blueprint.previewNote')}
+              </p>
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -318,6 +410,20 @@ function BlockRow({
           </p>
         </DialogContent>
       </Dialog>
+
+      {/* Preview full block — render editor block thật ở chế độ toàn màn hình
+          (giống /admin/blocks): device toggle + đóng. Portal ra body để thoát
+          transform/overflow của card/dialog (fixed sẽ bị neo nhầm nếu không). */}
+      {previewOpen &&
+        detailPreview &&
+        createPortal(
+          <PreviewMode
+            blocks={[detailPreview]}
+            lang={lang}
+            onClose={() => setPreviewOpen(false)}
+          />,
+          document.body
+        )}
     </li>
   );
 }
@@ -506,8 +612,19 @@ function TemplateCard({
   onUse: () => void;
 }) {
   const t = useTranslations('insights');
+  const locale = useLocale();
+  const lang: Lang = locale === 'en' ? 'en' : 'vi';
   const [open, setOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const codes = tpl.block_codes ?? [];
+
+  // Preview cả template: resolve từng block_code → editor block, render xếp
+  // chồng trong PreviewMode (giống trang public). Code lạ → bỏ qua; còn ≥1
+  // block resolve được thì cho nút Preview.
+  const tplBlocks = useMemo(
+    () => buildBlocksFromCodes(tpl.block_codes ?? []),
+    [tpl.block_codes]
+  );
   // SP1: nhãn nguồn — template thật trong thư viện vs AI tự dựng. Thiếu `source`
   // (report trước SP1) → không hiển thị badge.
   const sourceBadge =
@@ -530,13 +647,24 @@ function TemplateCard({
           imageUrl={tpl.thumbnail_url ?? undefined}
           className='h-36 w-full rounded-none'
         />
-        <button
-          type='button'
-          onClick={() => setOpen(true)}
-          className='text-content-main bg-background/95 hover:bg-background absolute right-2 bottom-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold shadow-sm backdrop-blur transition'
-        >
-          <Eye className='size-3' aria-hidden /> {t('blueprint.viewDetail')}
-        </button>
+        <div className='absolute right-2 bottom-2 flex gap-1.5'>
+          {tplBlocks.length > 0 && (
+            <button
+              type='button'
+              onClick={() => setPreviewOpen(true)}
+              className='text-content-main bg-background/95 hover:bg-background inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold shadow-sm backdrop-blur transition'
+            >
+              <Expand className='size-3' aria-hidden /> {t('blueprint.preview')}
+            </button>
+          )}
+          <button
+            type='button'
+            onClick={() => setOpen(true)}
+            className='text-content-main bg-background/95 hover:bg-background inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold shadow-sm backdrop-blur transition'
+          >
+            <Eye className='size-3' aria-hidden /> {t('blueprint.viewDetail')}
+          </button>
+        </div>
       </div>
       <div className='flex flex-1 flex-col gap-2 p-4'>
         <div className='flex items-start justify-between gap-2'>
@@ -628,6 +756,20 @@ function TemplateCard({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Preview cả template toàn màn hình — xếp chồng các block đã resolve
+          (giống trang public), device toggle + đóng. Portal ra body để thoát
+          transform/overflow của card. */}
+      {previewOpen &&
+        tplBlocks.length > 0 &&
+        createPortal(
+          <PreviewMode
+            blocks={tplBlocks}
+            lang={lang}
+            onClose={() => setPreviewOpen(false)}
+          />,
+          document.body
+        )}
     </div>
   );
 }
