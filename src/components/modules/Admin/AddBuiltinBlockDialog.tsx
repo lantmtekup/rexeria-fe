@@ -77,6 +77,8 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
   // Bước 2: block type đã chọn → form nhập thông tin + metadata trước khi tạo.
   const [selected, setSelected] = React.useState<CatalogItem | null>(null);
   const [formName, setFormName] = React.useState('');
+  // Block type có thể đổi trước khi tạo (create NHẬN type_code — khác edit).
+  const [formType, setFormType] = React.useState<BlockType | ''>('');
   const [formDesc, setFormDesc] = React.useState('');
   const [formTags, setFormTags] = React.useState<string[]>([]);
   const [tagInput, setTagInput] = React.useState('');
@@ -134,6 +136,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
   // Bước 1 → 2: chọn 1 block type, mở form với giá trị mặc định.
   const handleSelect = (item: CatalogItem) => {
     setSelected(item);
+    setFormType(item.type);
     setFormName(item.label);
     setFormDesc(item.description ?? '');
     setFormTags([]);
@@ -157,13 +160,14 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
       toast.error('Tên block không được rỗng');
       return;
     }
+    const type = (formType || selected.type) as BlockType;
     setAdding(true);
     try {
-      const block = createBlock(selected.type);
+      const block = createBlock(type);
       // BE Block.settings: JSONMap opaque — FE serializes the editor Block
       // shape so the canvas editor can reconstruct it on load.
       const created = await rexerApi.blocks.create({
-        type_code: selected.type,
+        type_code: type,
         name,
         description: formDesc.trim() || undefined,
         tags: formTags,
@@ -215,7 +219,10 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                     Thông tin block mới
                   </h3>
                   <p className='text-2xs text-content-muted'>
-                    Loại: <span className='font-mono'>{selected.type}</span>
+                    Loại:{' '}
+                    <span className='font-mono'>
+                      {formType || selected.type}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -243,6 +250,22 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                     onChange={e => setFormName(e.target.value)}
                     placeholder='Hero chia đôi…'
                   />
+                </div>
+
+                <div className='flex flex-col gap-1'>
+                  <Label htmlFor='ab-type'>Block type</Label>
+                  <select
+                    id='ab-type'
+                    value={formType || selected.type}
+                    onChange={e => setFormType(e.target.value as BlockType)}
+                    className='border-input bg-background focus:ring-ring/40 h-9 rounded-md border px-2.5 text-sm outline-none focus:ring-2'
+                  >
+                    {items.map(o => (
+                      <option key={o.type} value={o.type}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className='flex flex-col gap-1'>

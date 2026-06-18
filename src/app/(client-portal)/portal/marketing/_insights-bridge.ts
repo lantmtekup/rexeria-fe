@@ -10,7 +10,10 @@
  * size/màu/thành phần/chứng nhận) ĐƯỢC đưa vào AI thay vì chỉ text concept.
  */
 
-import type { InsightBrief, Product } from '@/services/rexer/types';
+import { serializeCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
+import type { Block } from '@/components/modules/CanvasTemplate/block-editor/types';
+import { rexerApi } from '@/services/rexer/endpoints';
+import type { InsightBrief, Page, Product } from '@/services/rexer/types';
 
 import type { AssetsState } from './_assets';
 import type { BriefField, BriefState, CampaignState } from './_steps';
@@ -147,4 +150,27 @@ export function marketingToInsightInputs(
   ];
 
   return { inputs, coverage };
+}
+
+/**
+ * Tạo landing page TỪ block AI chọn — gửi `canvas_blueprint` (block + transition)
+ * lên `POST /portal/templates` (KHÔNG gửi source_template_id). BE tự dựng
+ * template+version+page. Đúng block, preview khớp, mở BlockEditor.
+ * CHỜ BE bỏ ràng buộc bắt buộc source_template_id
+ * (docs/be-spec-portal-page-from-blueprint-2026-06-17.md) — tới lúc đó call này
+ * 400 `source_template_id is required` → caller hiện toast lỗi.
+ */
+export async function createLandingFromBlueprint(
+  blocks: Block[],
+  name: string,
+  workspaceId: string,
+  transition?: string
+): Promise<Page> {
+  const blueprint = serializeCanvas(blocks, undefined, undefined, transition);
+  const page = await rexerApi.portal.createTemplate({
+    name,
+    workspace_id: workspaceId,
+    canvas_blueprint: blueprint,
+  });
+  return page as unknown as Page;
 }

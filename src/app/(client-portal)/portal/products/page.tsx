@@ -321,12 +321,18 @@ function ProductCard({ p, onEdit }: { p: PortalProduct; onEdit: () => void }) {
             {t('products.price')}
           </span>
           <span className='text-foreground font-mono text-sm font-bold'>
-            {minPrice.toLocaleString('vi-VN')}đ
-            {minPrice !== maxPrice && (
-              <span className='text-muted-foreground'>
-                {' '}
-                - {maxPrice.toLocaleString('vi-VN')}đ
-              </span>
+            {p.price_label ? (
+              p.price_label
+            ) : (
+              <>
+                {minPrice.toLocaleString('vi-VN')}đ
+                {minPrice !== maxPrice && (
+                  <span className='text-muted-foreground'>
+                    {' '}
+                    - {maxPrice.toLocaleString('vi-VN')}đ
+                  </span>
+                )}
+              </>
             )}
           </span>
           <span className='text-3xs bg-muted text-content-muted ml-auto rounded px-1.5 py-0.5 font-mono'>

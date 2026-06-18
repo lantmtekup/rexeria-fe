@@ -153,6 +153,17 @@
       "openError": "Could not open marketing",
       "loading": "Loading…"
     },
+    "marketingNew": {
+      "subtitle": "Enter the basics to create a draft. Brief, AI-Insights and landing come next, each step autosaves.",
+      "nameLabel": "Campaign name",
+      "namePlaceholder": "e.g. Summer 2026 launch",
+      "productLabel": "Product",
+      "productOptional": "(optional)",
+      "loadingProducts": "Loading products…",
+      "noProducts": "No products yet. Create a product before creating a campaign.",
+      "needName": "Enter a campaign name",
+      "createDraft": "Create"
+    },
     "marketingEditor": {
       "needNameProduct": "Campaign name and product required (see Campaign tab)",
       "createdToast": "Created campaign \"{name}\"",
@@ -174,7 +185,8 @@
       "loadingProducts": "Loading…",
       "noProducts": "No products yet",
       "landingLabel": "Attached landing (funnel tracking)",
-      "noInsightsHint": "AI-Insights not run yet. Click the AI-Assistant button in the top bar to analyze your marketing data.",
+      "noInsightsHint": "AI-Insights not run yet. Click below to analyze your marketing data; AI will recommend blocks to build the landing.",
+      "runInsights": "Run AI-Insights",
       "deleteTitle": "Delete marketing?",
       "deleteDesc": "Campaign \"{name}\" (including the brief) will be removed permanently. This cannot be undone.",
       "cancel": "Cancel",
@@ -182,7 +194,9 @@
       "deleting": "Deleting…",
       "createProductFirst": "+ Create a product first",
       "addMore": "New campaign",
-      "continueCta": "Continue"
+      "continueCta": "Continue",
+      "continueHint": "Done with this step? Click Continue",
+      "lastStepHint": "Final step, save the campaign"
     },
     "marketingSteps": {
       "info_marketingConcept": "Overall direction of the campaign — the core value to convey to customers.",
@@ -410,7 +424,9 @@
     "blocksIdEdit": {
       "missingCanvasTitle": "Missing canvas_id — cannot open the editor.",
       "missingCanvasDesc": "Reopen from the block detail page to create a temporary canvas before editing.",
-      "backToDetail": "Back to detail"
+      "backToDetail": "Back to detail",
+      "openEditorFailed": "Couldn't open the editor",
+      "resolving": "Resolving template…"
     },
     "media": {
       "eyebrow": "Library",
@@ -710,6 +726,7 @@
       "generalTab": "General",
       "productTab": "Product",
       "landingTab": "Landing page",
+      "aiInsightsTab": "AI-Insights",
       "aiStrategy": "AI-recommended strategy",
       "aiUnderstanding": "How AI understands the product",
       "aiStructure": "AI-recommended landing structure",
@@ -742,6 +759,7 @@
       "loadingLanding": "Loading landing…",
       "slug": "Slug",
       "openEditor": "Open editor",
+      "preview": "Preview",
       "sourceLibrary": "Library",
       "sourceComposed": "AI-composed",
       "previewTemplate": "Preview template",

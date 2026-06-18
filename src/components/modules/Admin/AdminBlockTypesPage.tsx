@@ -19,7 +19,6 @@
 import * as React from 'react';
 import {
   Blocks,
-  Eye,
   Filter,
   Loader2,
   Pencil,
@@ -29,6 +28,7 @@ import {
   RefreshCw,
   Search,
   Trash2,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -173,9 +173,7 @@ export function AdminBlockTypesPage() {
                 Catalog blocks hệ thống
               </h1>
               <p className='text-content-muted mt-1 text-sm'>
-                Quản lý block types brand dùng để dựng landing/ad/curate. Mỗi
-                type có <code className='font-mono'>props_schema</code> +{' '}
-                <code className='font-mono'>supported_surfaces</code>.
+                Block types brand dùng để dựng landing / ad / curate.
               </p>
             </div>
             <div className='flex items-center gap-2'>
@@ -203,17 +201,13 @@ export function AdminBlockTypesPage() {
             </div>
           </div>
 
-          {/* Stats strip */}
-          <div className='mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5'>
-            <Stat label='Tổng' value={items.length} accent='zinc' />
-            <Stat label='Landing' value={counts.landing} accent='rose' />
-            <Stat label='Ad' value={counts.ad} accent='amber' />
-            <Stat label='Curate' value={counts.curate} accent='violet' />
-            <Stat label='Multi-surface' value={counts.multi} accent='emerald' />
-          </div>
-
-          {/* Toolbar */}
+          {/* Toolbar — filter Surface đã gánh việc đếm/segment nên bỏ stats strip;
+              chỉ giữ 1 dòng đếm gọn. */}
           <div className='mt-4 flex flex-wrap items-center gap-2'>
+            <span className='text-2xs text-content-muted mr-1 font-medium'>
+              {items.length} types
+              {counts.inactive > 0 && ` · ${counts.inactive} disabled`}
+            </span>
             <div className='relative max-w-sm flex-1'>
               <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
               <Input
@@ -279,7 +273,6 @@ export function AdminBlockTypesPage() {
                   active={item.type === selectedCode}
                   onSelect={() => setSelectedCode(item.type)}
                   onToggle={() => handleToggleActive(item)}
-                  onDelete={() => handleDelete(item)}
                 />
               ))}
             </div>
@@ -321,13 +314,11 @@ function BlockTypeCard({
   active,
   onSelect,
   onToggle,
-  onDelete,
 }: {
   item: AdminBlockType;
   active: boolean;
   onSelect: () => void;
   onToggle: () => void;
-  onDelete: () => void;
 }) {
   const cat = item.category ? CATEGORY_META[item.category] : null;
   const surfaces = item.supported_surfaces ?? [];
@@ -412,16 +403,9 @@ function BlockTypeCard({
         )}
       </button>
 
-      {/* Footer actions */}
-      <div className='border-border bg-muted/50 flex items-center gap-1 border-t px-2 py-1.5'>
-        <button
-          type='button'
-          onClick={onSelect}
-          className='text-2xs text-content-muted hover:bg-muted hover:text-foreground inline-flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1 font-medium'
-        >
-          <Eye className='size-3' />
-          Xem
-        </button>
+      {/* Footer — chỉ toggle nhanh; cả thân card đã clickable để mở chi tiết,
+          action nặng (Edit/Xoá) sống trong drawer. */}
+      <div className='border-border bg-muted/50 flex items-center justify-end border-t px-2 py-1.5'>
         <button
           type='button'
           onClick={onToggle}
@@ -438,14 +422,7 @@ function BlockTypeCard({
           ) : (
             <Power className='size-3' />
           )}
-        </button>
-        <button
-          type='button'
-          onClick={onDelete}
-          className='text-2xs text-content-muted hover:bg-danger-bg hover:text-destructive inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 font-medium'
-          title='Xoá'
-        >
-          <Trash2 className='size-3' />
+          {item.is_active ? 'Disable' : 'Enable'}
         </button>
       </div>
     </div>
@@ -492,7 +469,7 @@ function BlockTypeDrawer({
           onClick={onClose}
           aria-label='Close'
         >
-          <Trash2 className='size-4' />
+          <X className='size-4' />
         </Button>
       </div>
 
@@ -685,36 +662,6 @@ function TaxoRow({ label, value }: { label: string; value: string }) {
     <div className='flex items-baseline gap-2'>
       <dt className='text-muted-foreground w-16 shrink-0 font-mono'>{label}</dt>
       <dd className='text-content-muted'>{value}</dd>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: number;
-  accent: 'rose' | 'amber' | 'violet' | 'emerald' | 'zinc';
-}) {
-  const palette: Record<typeof accent, string> = {
-    rose: 'border-rose-100 bg-rose-50/40 text-rose-700',
-    amber: 'border-amber-100 bg-amber-50/40 text-amber-700',
-    violet: 'border-violet-100 bg-violet-50/40 text-violet-700',
-    emerald: 'border-emerald-100 bg-emerald-50/40 text-emerald-700',
-    zinc: 'border-border bg-card text-content-muted',
-  };
-  return (
-    <div
-      className={cn('rounded-xl border px-3 py-2 shadow-sm', palette[accent])}
-    >
-      <div className='text-3xs font-semibold tracking-[0.18em] uppercase opacity-75'>
-        {label}
-      </div>
-      <div className='text-foreground mt-0.5 font-mono text-lg font-bold tabular-nums'>
-        {value}
-      </div>
     </div>
   );
 }

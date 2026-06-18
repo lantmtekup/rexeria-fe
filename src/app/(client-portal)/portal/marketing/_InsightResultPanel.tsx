@@ -27,6 +27,7 @@ import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 
 import { InsightStepsDialog } from './_InsightStepsDialog';
+import { createLandingFromBlueprint } from './_insights-bridge';
 import {
   BlocksSection,
   buildBlocksFromCodes,
@@ -52,6 +53,16 @@ export interface InsightHandoff {
   edit_url: string;
 }
 
+/** Hiệu ứng chuyển trang của landing (per-landing, lưu trong notes campaign).
+ *  BE hiện chỉ render transition từ MotionKit mức brand (page_canonical.go) —
+ *  per-page chưa support → giá trị này lưu sẵn, áp khi BE thêm transition/page. */
+export type TransitionStyle = 'fade' | 'slide' | 'morph';
+const TRANSITION_OPTIONS: { value: TransitionStyle; label: string }[] = [
+  { value: 'fade', label: 'Fade (mờ dần)' },
+  { value: 'slide', label: 'Slide (trượt)' },
+  { value: 'morph', label: 'Morph (biến đổi)' },
+];
+
 export function InsightResultPanel({
   reportId,
   brief,
@@ -59,8 +70,9 @@ export function InsightResultPanel({
   handoff,
   summary,
   autoOpenId,
-  onHandoff,
   onSummary,
+  initialTransition,
+  onLandingCreated,
 }: {
   reportId: string;
   /** InsightBrief đã map từ Marketing — cho popup generate lại từng step. */
@@ -71,17 +83,18 @@ export function InsightResultPanel({
   summary?: InsightSummary;
   /** Chỉ auto-mở popup khi id này == reportId (report vừa chạy phiên này). */
   autoOpenId?: string;
-  /** Lưu kết quả handoff vào notes campaign (editor tự PATCH). */
-  onHandoff: (h: InsightHandoff) => void;
   /** Đẩy tóm tắt kết quả lên editor để lưu vào notes (list card + instant). */
   onSummary?: (s: InsightSummary) => void;
+  /** Transition đã lưu (notes) — seed cho selector khi mở lại. */
+  initialTransition?: TransitionStyle;
+  /** Tạo landing page xong → editor gắn campaign.landing_page_id + lưu transition. */
+  onLandingCreated?: (pageId: string, transition?: TransitionStyle) => void;
 }) {
   const t = useTranslations('portal');
   const locale = useLocale();
   const lang: Lang = locale === 'en' ? 'en' : 'vi';
   const [report, setReport] = useState<InsightReport | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [applying, setApplying] = useState(false);
   const [stepsOpen, setStepsOpen] = useState(false);
   const [landingOpen, setLandingOpen] = useState(false);
   const autoOpened = useRef(false);
@@ -128,35 +141,10 @@ export function InsightResultPanel({
     };
   }, [poll]);
 
-  // Template user chọn để dựng (mặc định cái đầu) — truyền block_codes vào
-  // handoff. Không chọn → BE tự derive từ blueprint.
-  const [picked, setPicked] = useState<number>(0);
-
-  const handleApply = async () => {
-    setApplying(true);
-    try {
-      const tpls = report?.blueprint?.recommended_templates?.templates ?? [];
-      const chosen = tpls[picked];
-      const res = await rexerApi.insights.handoff(
-        reportId,
-        chosen
-          ? { template: { name: chosen.name, block_codes: chosen.block_codes } }
-          : undefined
-      );
-      const h = { template_id: res.template_id, edit_url: res.edit_url };
-      onHandoff(h);
-      setStepsOpen(false);
-      toast.success(t('marketingInsightResultPanel.handoffSuccess'));
-    } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : t('marketingInsightResultPanel.handoffError')
-      );
-    } finally {
-      setApplying(false);
-    }
-  };
+  const [creatingLanding, setCreatingLanding] = useState(false);
+  const [transition, setTransition] = useState<TransitionStyle>(
+    initialTransition ?? 'fade'
+  );
 
   const status = report?.status;
   const bp = report?.blueprint;
@@ -171,6 +159,37 @@ export function InsightResultPanel({
     );
     return buildBlocksFromCodes(codes);
   }, [bp?.recommended_blocks]);
+
+  // Tạo landing TỪ ĐÚNG block AI đã chọn (landingBlocks) → gửi canvas_blueprint
+  // lên BE (from-blueprint). Landing ra là block template → mở BlockEditor +
+  // preview khớp. transition nhúng thẳng vào blueprint (per-page).
+  // BE endpoint: docs/be-spec-portal-page-from-blueprint-2026-06-17.md (chờ BE).
+  const handleCreateLanding = async () => {
+    if (!workspaceId || landingBlocks.length === 0) {
+      toast.error('Chưa có block hoặc workspace để tạo landing.');
+      return;
+    }
+    setCreatingLanding(true);
+    try {
+      const name = summary?.goalLabel
+        ? `Landing: ${summary.goalLabel}`
+        : 'Landing page';
+      const page = await createLandingFromBlueprint(
+        landingBlocks,
+        name,
+        workspaceId,
+        transition
+      );
+      onLandingCreated?.(page.id, transition);
+      toast.success('Đã tạo landing page từ block đã chọn.');
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Tạo landing page thất bại.'
+      );
+    } finally {
+      setCreatingLanding(false);
+    }
+  };
 
   return (
     <div className='border-border bg-muted/30 mt-2 flex flex-col gap-3 rounded-xl border p-4'>
@@ -273,67 +292,8 @@ export function InsightResultPanel({
             />
           )}
 
-          {/* Template gợi ý — user CHỌN 1 cái để dựng (block_codes truyền vào
-              handoff). Mỗi template hiện block bên trong + lý do phù hợp. */}
-          {!!bp?.recommended_templates?.templates?.length && !handoff && (
-            <Field label={t('marketingInsightResultPanel.pickTemplate')}>
-              <div className='flex flex-col gap-2'>
-                {bp.recommended_templates.templates.map((tpl, i) => (
-                  <button
-                    key={tpl.name}
-                    type='button'
-                    onClick={() => setPicked(i)}
-                    className={cn(
-                      'rounded-lg border p-3 text-left transition-colors',
-                      picked === i
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/40'
-                    )}
-                  >
-                    <div className='flex items-center justify-between gap-2'>
-                      <span className='text-foreground text-sm font-semibold'>
-                        {tpl.name}
-                      </span>
-                      <span
-                        className={cn(
-                          'flex size-4 shrink-0 items-center justify-center rounded-full border',
-                          picked === i
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'border-border'
-                        )}
-                      >
-                        {picked === i && <Check className='size-3' />}
-                      </span>
-                    </div>
-                    {tpl.description && (
-                      <p className='text-content-muted mt-0.5 text-xs'>
-                        {tpl.description}
-                      </p>
-                    )}
-                    {!!tpl.block_codes?.length && (
-                      <div className='mt-1.5 flex flex-wrap gap-1'>
-                        {tpl.block_codes.map(code => (
-                          <span
-                            key={code}
-                            className='bg-muted text-content-muted text-2xs rounded px-1.5 py-0.5'
-                          >
-                            {code}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {tpl.why_fit && (
-                      <p className='text-content-muted text-2xs mt-1 italic'>
-                        {t('marketingInsightResultPanel.whyFit', {
-                          reason: tpl.why_fit,
-                        })}
-                      </p>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </Field>
-          )}
+          {/* Bỏ list "chọn template" — bước cuối giờ tạo thẳng landing page từ
+              block đã chọn (nút "Tạo landing page" bên dưới). */}
 
           {handoff ? (
             <div className='border-border flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2'>
@@ -364,7 +324,26 @@ export function InsightResultPanel({
               </div>
             </div>
           ) : (
-            <div className='flex flex-wrap gap-2'>
+            <div className='flex flex-wrap items-end gap-2'>
+              {/* Hiệu ứng chuyển trang (per-landing, lưu notes — chờ BE render). */}
+              <label className='flex flex-col gap-1'>
+                <span className='text-content-muted text-2xs font-medium'>
+                  Hiệu ứng chuyển trang
+                </span>
+                <select
+                  value={transition}
+                  onChange={e =>
+                    setTransition(e.target.value as TransitionStyle)
+                  }
+                  className='border-border bg-background text-foreground h-8 rounded-lg border px-2 text-xs'
+                >
+                  {TRANSITION_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <Button
                 size='sm'
                 variant='outline'
@@ -373,14 +352,18 @@ export function InsightResultPanel({
                 <Sparkles className='size-4' />{' '}
                 {t('marketingInsightResultPanel.viewSteps')}
               </Button>
-              <Button size='sm' onClick={handleApply} disabled={applying}>
-                {applying ? (
+              <Button
+                size='sm'
+                onClick={handleCreateLanding}
+                disabled={creatingLanding || landingBlocks.length === 0}
+              >
+                {creatingLanding ? (
                   <>
-                    <Loader2 className='size-4 animate-spin' />{' '}
-                    {t('marketingInsightResultPanel.building')}
+                    <Loader2 className='size-4 animate-spin' /> Đang tạo
+                    landing…
                   </>
                 ) : (
-                  t('marketingInsightResultPanel.useResult')
+                  'Tạo landing page'
                 )}
               </Button>
             </div>
@@ -396,9 +379,8 @@ export function InsightResultPanel({
           brief={brief}
           workspaceId={workspaceId}
           savedGoal={summary?.goalEdit}
-          applying={applying}
-          onApply={handleApply}
           onSaved={onSummary}
+          onLandingCreated={onLandingCreated}
         />
       )}
 

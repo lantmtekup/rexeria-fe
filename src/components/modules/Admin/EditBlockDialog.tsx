@@ -98,8 +98,7 @@ export function EditBlockDialog({
         name: trimmedName,
         description: description.trim() || undefined,
         tags,
-        // Chỉ gửi khi đổi loại — BE chưa khai báo type_code trong PATCH nên
-        // tránh gửi thừa (xem comment UpdateBlockRequest).
+        // Đổi loại block: gửi type_code (BE đã hỗ trợ PATCH /blocks 2026-06-18).
         ...(typeCode && typeCode !== block.type_code
           ? { type_code: typeCode }
           : {}),
@@ -157,8 +156,8 @@ export function EditBlockDialog({
             </select>
             {typeCode !== (block?.type_code ?? '') && (
               <p className='text-2xs text-amber-600'>
-                Đổi loại sẽ gửi <code>type_code</code> lên BE; kiểm tra lưu xong
-                mở lại có giữ không (BE chưa khai báo field này).
+                ⚠ Đổi loại block: settings hiện tại được dựng cho loại cũ — nội
+                dung có thể cần chỉnh lại trong block editor sau khi lưu.
               </p>
             )}
           </div>

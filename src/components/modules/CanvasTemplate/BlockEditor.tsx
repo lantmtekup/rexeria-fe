@@ -1055,6 +1055,9 @@ export function BlockEditor({
         canRedo={canvas.canRedo}
         isPublished={!!publishState.publish?.published}
         isMotionPreviewing={motionPreview.previewing}
+        // Back = quay lại màn làm việc trước đó (vd campaign editor) thay vì
+        // đẩy về /canvas-templates mặc định.
+        onBack={() => router.back()}
       />
 
       {loadError && (

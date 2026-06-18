@@ -87,6 +87,13 @@ const PRIMARY_CFG: Record<
   budget: { labelKey: 'primaryBudgetLabel', phKey: 'primaryBudgetPh' },
 };
 
+/** Định dạng tiền: bỏ ký tự không phải số rồi nhóm hàng nghìn (vi-VN).
+ *  Lưu raw digits trong state, chỉ format khi hiển thị. */
+const groupDigits = (v?: string): string => {
+  const d = (v ?? '').replace(/\D/g, '');
+  return d ? Number(d).toLocaleString('vi-VN') : '';
+};
+
 const OBJECTIVES: { value: CampaignObjective; infoKey: string }[] = [
   { value: 'awareness', infoKey: 'objAwareness' },
   { value: 'traffic', infoKey: 'objTraffic' },
@@ -204,14 +211,30 @@ function BriefFields({
                   <div className='text-foreground text-xs font-semibold'>
                     {t(`marketingSteps.${primary.labelKey}`)}
                   </div>
-                  <input
-                    className='text-foreground placeholder:text-content-muted mt-0.5 w-full border-0 bg-transparent p-0 text-sm outline-none'
-                    placeholder={t(`marketingSteps.${primary.phKey}`)}
-                    value={fv.primary ?? ''}
-                    onChange={e =>
-                      patchField(f.key, { primary: e.target.value })
-                    }
-                  />
+                  <div className='flex items-baseline gap-1'>
+                    <input
+                      inputMode={f.primary === 'budget' ? 'numeric' : undefined}
+                      className='text-foreground placeholder:text-content-muted mt-0.5 w-full border-0 bg-transparent p-0 text-sm outline-none'
+                      placeholder={t(`marketingSteps.${primary.phKey}`)}
+                      // Budget: hiển thị phân cách nghìn (vi-VN), lưu raw digits.
+                      value={
+                        f.primary === 'budget'
+                          ? groupDigits(fv.primary)
+                          : (fv.primary ?? '')
+                      }
+                      onChange={e =>
+                        patchField(f.key, {
+                          primary:
+                            f.primary === 'budget'
+                              ? e.target.value.replace(/\D/g, '')
+                              : e.target.value,
+                        })
+                      }
+                    />
+                    {f.primary === 'budget' && fv.primary && (
+                      <span className='text-content-muted text-xs'>đ</span>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

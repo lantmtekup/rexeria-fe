@@ -96,6 +96,16 @@ export function beProductToPortal(p: BEProduct): PortalProduct {
     };
   });
 
+  // Giá thật: nếu product có feature "Giá…"/"Price" thì tách ra làm price_label
+  // (hiện ở ô GIÁ thay placeholder), không để trong list features → khỏi trùng
+  // + khỏi lệch với giá giả. BE chưa có field giá nên product không khai vẫn
+  // dùng price_vnd placeholder.
+  const allFeatures = (p.features ?? []).map(f => ({
+    label: f.label ?? '',
+    description: f.description ?? '',
+  }));
+  const isPrice = (label: string) => /giá|price/i.test(label);
+
   return {
     id: p.id,
     name: p.name,
@@ -105,6 +115,7 @@ export function beProductToPortal(p: BEProduct): PortalProduct {
     cover_gradient: gradientFor(p.id),
     thumbnail_url: p.thumbnail_url || undefined,
     description: p.description ?? '',
+    price_label: allFeatures.find(f => isPrice(f.label))?.description,
     sizes:
       sizes.length > 0
         ? sizes
@@ -112,10 +123,7 @@ export function beProductToPortal(p: BEProduct): PortalProduct {
     colors: p.colors?.map(c => ({ name: c.name, hex: c.hex })),
     ingredients: p.ingredients ?? [],
     certifications: (p.certifications ?? []).map(c => c.name),
-    features: (p.features ?? []).map(f => ({
-      label: f.label ?? '',
-      description: f.description ?? '',
-    })),
+    features: allFeatures.filter(f => !isPrice(f.label)),
     related_template_ids: [],
     created_at: p.created_at ?? new Date().toISOString(),
   };

@@ -3,12 +3,7 @@
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
 
-import {
-  DEFAULT_WORKSPACE_ID,
-  FAKE_CLIENT,
-  FAKE_WORKSPACES,
-  type Workspace,
-} from './_data';
+import { FAKE_CLIENT, FAKE_WORKSPACES, type Workspace } from './_data';
 
 /**
  * Context published by `PortalShell` carrying the live list of workspaces
@@ -32,15 +27,28 @@ export const WorkspaceListContext = React.createContext<Workspace[] | null>(
  * find it in `FAKE_WORKSPACES` and silently fell back to `FAKE_WORKSPACES[0]`
  * — the chip in the header refused to update.
  */
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function useActiveWorkspace(): Workspace {
   const sp = useSearchParams();
   const live = React.useContext(WorkspaceListContext);
-  const id = sp.get('ws') || DEFAULT_WORKSPACE_ID;
+  const urlId = sp.get('ws') || undefined;
 
+  // Đã có workspace thật (live đã nạp) → ưu tiên theo ?ws=, không thì cái đầu.
   if (live && live.length > 0) {
-    return live.find(w => w.id === id) ?? live[0];
+    return (urlId && live.find(w => w.id === urlId)) || live[0];
   }
-  return FAKE_WORKSPACES.find(w => w.id === id) ?? FAKE_WORKSPACES[0];
+
+  // Live CHƯA nạp xong: nếu ?ws= là UUID thật thì tin nó (dựng workspace tối
+  // thiểu mang đúng id) — TRÁNH leak id FAKE 'ws_coca_main' (không phải UUID)
+  // vào API call → BE 400 "Invalid request". Không có ?ws= hợp lệ → demo.
+  if (urlId && UUID_RE.test(urlId)) {
+    return { ...FAKE_WORKSPACES[0], id: urlId };
+  }
+  return (
+    (urlId && FAKE_WORKSPACES.find(w => w.id === urlId)) || FAKE_WORKSPACES[0]
+  );
 }
 
 /**

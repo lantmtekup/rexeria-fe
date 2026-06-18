@@ -832,9 +832,6 @@ function TableView({
               >
                 <TableCell>
                   <div className='font-medium'>{it.name}</div>
-                  <div className='text-3xs text-muted-foreground font-mono'>
-                    {it.id}
-                  </div>
                 </TableCell>
                 <TableCell>
                   <Badge variant='secondary' className='text-3xs font-mono'>

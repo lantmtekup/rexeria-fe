@@ -1039,9 +1039,8 @@ export interface CreateCampaignRequest {
   /** Lifecycle — defaults to `draft` when omitted. */
   status?: 'draft' | 'active' | 'paused' | 'completed';
 }
-export type UpdateCampaignRequest = Partial<
-  Omit<CreateCampaignRequest, 'product_id'>
->;
+// product_id ĐỔI được khi update (probe BE 2026-06: PATCH product_id → 200).
+export type UpdateCampaignRequest = Partial<CreateCampaignRequest>;
 export interface CampaignMetrics {
   campaign_id: string;
   utm_campaign?: string;
@@ -2000,7 +1999,12 @@ export interface CreatePortalTemplateRequest {
   width?: number;
   height?: number;
   workspace_id?: string;
+  /** OPTIONAL: clone từ template có sẵn. Bỏ trống nếu gửi `canvas_blueprint`. */
   source_template_id?: string;
+  /** Dựng landing TỪ block (đúng 1 trong source_template_id | canvas_blueprint).
+   *  CHỜ BE bỏ ràng buộc bắt buộc source_template_id — xem
+   *  docs/be-spec-portal-page-from-blueprint-2026-06-17.md. */
+  canvas_blueprint?: Record<string, unknown>;
 }
 
 // ── Portal Ads ────────────────────────────────────────────────────────────
@@ -2756,11 +2760,7 @@ export interface UpdateBlockRequest {
   settings?: Record<string, unknown>;
   tags?: string[];
   thumbnail_asset_id?: string;
-  /**
-   * Đổi loại block_type của instance đã lưu. BE chưa khai báo field này trong
-   * PATCH /blocks/:id contract (2026-06) — gửi kèm; cần verify persist 2 chiều
-   * khi test (mở → đổi → lưu → mở lại). Nếu không stick thì BE cần cho phép.
-   */
+  /** Đổi loại block đã lưu — BE hỗ trợ PATCH /blocks/:id (impl 2026-06-18). */
   type_code?: string;
 }
 

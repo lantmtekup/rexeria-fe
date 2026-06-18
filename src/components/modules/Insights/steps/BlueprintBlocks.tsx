@@ -535,6 +535,7 @@ export function BlocksSection({
   collapsible = true,
   selected,
   onSelectBlock,
+  onBlocksChange,
 }: {
   blueprint: InsightBlueprint;
   reportId?: string;
@@ -542,6 +543,11 @@ export function BlocksSection({
   /** Chế độ chọn 1 block/stage: map stage_key → block_type_code đã chọn. */
   selected?: Record<string, string>;
   onSelectBlock?: (stageKey: string, code: string) => void;
+  /** Báo cho parent mỗi khi stages đổi (add/xoá/di chuyển) → parent giữ state
+   *  đồng bộ (không mất block khi remount/chuyển step). */
+  onBlocksChange?: (blocks: {
+    blocks_by_stage: InsightBlocksByStage[];
+  }) => void;
 }) {
   const t = useTranslations('insights');
   const [stages, setStages] = useState<InsightBlocksByStage[]>(
@@ -558,6 +564,7 @@ export function BlocksSection({
   const mutate = (next: InsightBlocksByStage[]) => {
     const prev = stages;
     setStages(next);
+    onBlocksChange?.({ blocks_by_stage: next }); // sync lên parent ngay
     if (!reportId) return; // không có report (vd preview) → chỉ local
     rexerApi.insights
       .updateBlueprint(reportId, {
@@ -566,6 +573,7 @@ export function BlocksSection({
       .then(() => toast.success(t('blueprint.saved')))
       .catch(() => {
         setStages(prev);
+        onBlocksChange?.({ blocks_by_stage: prev }); // rollback parent
         toast.error(t('blueprint.saveFailed'));
       });
   };
