@@ -28,14 +28,22 @@ import {
   RefreshCw,
   Search,
   Trash2,
-  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
 import { Chip } from '@/components/atoms/chip';
 import { Input } from '@/components/atoms/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/atoms/table';
 import { BlockTypeFormDialog } from '@/components/dialogs/BlockTypeFormDialog';
+import { TablePagination } from '@/components/molecules/TablePagination';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type { AdminBlockType } from '@/services/rexer/types';
@@ -73,16 +81,27 @@ export function AdminBlockTypesPage() {
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
   const [surface, setSurface] = React.useState<SurfaceFilter>('all');
   const [showInactive, setShowInactive] = React.useState(false);
-  const [selectedCode, setSelectedCode] = React.useState<string | null>(null);
   const [formOpen, setFormOpen] = React.useState(false);
   const [formInitial, setFormInitial] = React.useState<AdminBlockType | null>(
     null
   );
+  const [page, setPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(20);
 
   React.useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(t);
   }, [search]);
+
+  // Reset về trang 1 khi đổi filter/search (kết quả thay đổi).
+  React.useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, surface, showInactive]);
+
+  const paged = React.useMemo(
+    () => items.slice((page - 1) * pageSize, page * pageSize),
+    [items, page, pageSize]
+  );
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -156,8 +175,6 @@ export function AdminBlockTypesPage() {
       toast.error(`Xoá thất bại: ${msg}`);
     }
   };
-
-  const selected = items.find(it => it.type === selectedCode) ?? null;
 
   return (
     <div className='flex h-[calc(100vh-3.5rem)]'>
@@ -265,37 +282,163 @@ export function AdminBlockTypesPage() {
               </p>
             </div>
           ) : (
-            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
-              {items.map(item => (
-                <BlockTypeCard
-                  key={item.type}
-                  item={item}
-                  active={item.type === selectedCode}
-                  onSelect={() => setSelectedCode(item.type)}
-                  onToggle={() => handleToggleActive(item)}
+            <div className='border-border bg-card overflow-x-auto rounded-xl border'>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Block</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Surfaces</TableHead>
+                    <TableHead>Funnel</TableHead>
+                    <TableHead>Goals</TableHead>
+                    <TableHead>Tone</TableHead>
+                    <TableHead>Media / CTA</TableHead>
+                    <TableHead className='text-center'>Status</TableHead>
+                    <TableHead className='text-right'>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paged.map(item => {
+                    const cat = item.category
+                      ? CATEGORY_META[item.category]
+                      : null;
+                    const surfaces = item.supported_surfaces ?? [];
+                    return (
+                      <TableRow
+                        key={item.type}
+                        onClick={() => {
+                          setFormInitial(item);
+                          setFormOpen(true);
+                        }}
+                        className={cn(
+                          'cursor-pointer',
+                          !item.is_active && 'opacity-55'
+                        )}
+                      >
+                        <TableCell>
+                          <code className='text-foreground font-mono text-xs font-bold'>
+                            {item.type}
+                          </code>
+                          <div className='text-content-muted mt-0.5 text-xs'>
+                            {item.label_vi}
+                          </div>
+                        </TableCell>
+                        <TableCell className='text-content-muted text-xs whitespace-nowrap'>
+                          {cat?.label ?? item.category ?? '—'}
+                        </TableCell>
+                        <TableCell>
+                          <div className='flex flex-wrap gap-1'>
+                            {surfaces.length === 0 && (
+                              <span className='text-content-muted text-xs'>
+                                —
+                              </span>
+                            )}
+                            {surfaces.map(s => {
+                              const meta = SURFACE_META[s];
+                              return (
+                                <span
+                                  key={s}
+                                  className={cn(
+                                    'text-3xs inline-flex items-center rounded-full border px-1.5 py-0.5 font-bold tracking-wider uppercase',
+                                    meta?.chip ??
+                                      'border-border bg-muted text-content-muted'
+                                  )}
+                                >
+                                  {meta?.label ?? s}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </TableCell>
+                        <TableCell className='text-2xs text-content-muted'>
+                          {item.funnel_stage?.length
+                            ? item.funnel_stage.join(', ')
+                            : '—'}
+                        </TableCell>
+                        <TableCell className='text-2xs text-content-muted'>
+                          {item.goal_tags?.length
+                            ? item.goal_tags.join(', ')
+                            : '—'}
+                        </TableCell>
+                        <TableCell className='text-2xs text-content-muted'>
+                          {item.tone?.length ? item.tone.join(', ') : '—'}
+                        </TableCell>
+                        <TableCell className='text-2xs text-content-muted whitespace-nowrap'>
+                          {item.needs_media && item.needs_media !== 'none'
+                            ? item.needs_media
+                            : '—'}
+                          {item.has_cta && ' · CTA'}
+                        </TableCell>
+                        <TableCell className='text-center'>
+                          <span
+                            className={cn(
+                              'inline-block size-2 rounded-full',
+                              item.is_active ? 'bg-emerald-500' : 'bg-zinc-300'
+                            )}
+                            title={item.is_active ? 'Active' : 'Disabled'}
+                          />
+                        </TableCell>
+                        <TableCell onClick={e => e.stopPropagation()}>
+                          <div className='flex items-center justify-end gap-0.5'>
+                            <button
+                              type='button'
+                              onClick={() => {
+                                setFormInitial(item);
+                                setFormOpen(true);
+                              }}
+                              className='text-content-muted hover:bg-muted hover:text-foreground inline-flex size-7 items-center justify-center rounded-md'
+                              title='Sửa'
+                            >
+                              <Pencil className='size-3.5' />
+                            </button>
+                            <button
+                              type='button'
+                              onClick={() => handleToggleActive(item)}
+                              className={cn(
+                                'hover:bg-muted inline-flex size-7 items-center justify-center rounded-md',
+                                item.is_active
+                                  ? 'text-content-muted hover:text-amber-700'
+                                  : 'text-content-muted hover:text-emerald-700'
+                              )}
+                              title={item.is_active ? 'Disable' : 'Enable'}
+                            >
+                              {item.is_active ? (
+                                <PowerOff className='size-3.5' />
+                              ) : (
+                                <Power className='size-3.5' />
+                              )}
+                            </button>
+                            <button
+                              type='button'
+                              onClick={() => handleDelete(item)}
+                              className='text-content-muted hover:bg-danger-bg hover:text-destructive inline-flex size-7 items-center justify-center rounded-md'
+                              title='Xoá'
+                            >
+                              <Trash2 className='size-3.5' />
+                            </button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              <div className='border-border border-t px-2'>
+                <TablePagination
+                  total={items.length}
+                  page={page}
+                  pageSize={pageSize}
+                  onPageChange={setPage}
+                  onPageSizeChange={s => {
+                    setPageSize(s);
+                    setPage(1);
+                  }}
                 />
-              ))}
+              </div>
             </div>
           )}
         </div>
       </div>
-
-      {/* Detail drawer */}
-      {selected && (
-        <BlockTypeDrawer
-          item={selected}
-          onClose={() => setSelectedCode(null)}
-          onToggle={() => handleToggleActive(selected)}
-          onDelete={() => {
-            handleDelete(selected);
-            setSelectedCode(null);
-          }}
-          onEdit={() => {
-            setFormInitial(selected);
-            setFormOpen(true);
-          }}
-        />
-      )}
 
       <BlockTypeFormDialog
         open={formOpen}
@@ -303,365 +446,6 @@ export function AdminBlockTypesPage() {
         initial={formInitial}
         onSaved={load}
       />
-    </div>
-  );
-}
-
-/* ─── Card ───────────────────────────────────────────────────────────── */
-
-function BlockTypeCard({
-  item,
-  active,
-  onSelect,
-  onToggle,
-}: {
-  item: AdminBlockType;
-  active: boolean;
-  onSelect: () => void;
-  onToggle: () => void;
-}) {
-  const cat = item.category ? CATEGORY_META[item.category] : null;
-  const surfaces = item.supported_surfaces ?? [];
-  return (
-    <div
-      className={cn(
-        'group bg-card flex flex-col overflow-hidden rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
-        active
-          ? 'border-foreground ring-foreground/10 ring-2'
-          : 'border-border hover:border-border',
-        !item.is_active && 'opacity-60'
-      )}
-    >
-      <button
-        type='button'
-        onClick={onSelect}
-        className='flex flex-1 flex-col gap-2 p-4 text-left'
-      >
-        <div className='flex items-start justify-between gap-2'>
-          <div className='flex items-center gap-2'>
-            {item.accent_color ? (
-              <span
-                className='inline-block size-3 shrink-0 rounded'
-                style={{ backgroundColor: item.accent_color }}
-                aria-hidden
-              />
-            ) : (
-              cat && (
-                <span className='text-lg' aria-hidden>
-                  {cat.emoji}
-                </span>
-              )
-            )}
-            <code className='text-foreground font-mono text-xs font-bold'>
-              {item.type}
-            </code>
-          </div>
-          <div className='flex items-center gap-1'>
-            {item.is_premium && (
-              <span className='text-3xs rounded-full bg-amber-100 px-1.5 py-0.5 font-bold tracking-wider text-amber-700 uppercase'>
-                premium
-              </span>
-            )}
-            {!item.is_active && (
-              <span className='text-3xs text-content-muted bg-muted rounded-full px-1.5 py-0.5 font-bold tracking-wider uppercase'>
-                disabled
-              </span>
-            )}
-          </div>
-        </div>
-        <div className='text-foreground text-sm font-semibold'>
-          {item.label_vi}
-        </div>
-        {item.description_vi && (
-          <p className='text-2xs text-content-muted line-clamp-2 leading-snug'>
-            {item.description_vi}
-          </p>
-        )}
-
-        {/* Surfaces */}
-        <div className='mt-1 flex flex-wrap gap-1'>
-          {surfaces.map(s => {
-            const meta = SURFACE_META[s];
-            return (
-              <span
-                key={s}
-                className={cn(
-                  'text-3xs inline-flex items-center rounded-full border px-1.5 py-0.5 font-bold tracking-wider uppercase',
-                  meta?.chip ?? 'border-border bg-muted text-content-muted'
-                )}
-              >
-                {meta?.label ?? s}
-              </span>
-            );
-          })}
-        </div>
-
-        {item.min_dimensions && (
-          <p className='text-3xs text-muted-foreground font-mono'>
-            {item.min_dimensions.width}×{item.min_dimensions.height}px
-          </p>
-        )}
-      </button>
-
-      {/* Footer — chỉ toggle nhanh; cả thân card đã clickable để mở chi tiết,
-          action nặng (Edit/Xoá) sống trong drawer. */}
-      <div className='border-border bg-muted/50 flex items-center justify-end border-t px-2 py-1.5'>
-        <button
-          type='button'
-          onClick={onToggle}
-          className={cn(
-            'text-2xs hover:bg-muted inline-flex items-center justify-center gap-1 rounded-md px-2 py-1 font-medium',
-            item.is_active
-              ? 'text-content-muted hover:text-amber-700'
-              : 'text-content-muted hover:text-emerald-700'
-          )}
-          title={item.is_active ? 'Disable type' : 'Enable type'}
-        >
-          {item.is_active ? (
-            <PowerOff className='size-3' />
-          ) : (
-            <Power className='size-3' />
-          )}
-          {item.is_active ? 'Disable' : 'Enable'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Drawer ─────────────────────────────────────────────────────────── */
-
-function BlockTypeDrawer({
-  item,
-  onClose,
-  onToggle,
-  onDelete,
-  onEdit,
-}: {
-  item: AdminBlockType;
-  onClose: () => void;
-  onToggle: () => void;
-  onDelete: () => void;
-  onEdit: () => void;
-}) {
-  return (
-    <aside className='border-border bg-card flex w-[420px] flex-col border-l'>
-      <div className='border-border flex items-start justify-between border-b px-4 py-3'>
-        <div className='min-w-0 flex-1'>
-          <div className='flex items-center gap-2'>
-            {item.accent_color && (
-              <span
-                className='inline-block size-3 shrink-0 rounded'
-                style={{ backgroundColor: item.accent_color }}
-                aria-hidden
-              />
-            )}
-            <code className='text-foreground font-mono text-sm font-bold'>
-              {item.type}
-            </code>
-          </div>
-          <p className='text-content-muted mt-0.5 text-xs'>{item.label_vi}</p>
-        </div>
-        <Button
-          type='button'
-          variant='ghost'
-          size='icon'
-          onClick={onClose}
-          aria-label='Close'
-        >
-          <X className='size-4' />
-        </Button>
-      </div>
-
-      <div className='flex-1 overflow-y-auto px-4 py-4 text-xs'>
-        {item.description_vi && (
-          <p className='text-content-muted leading-relaxed'>
-            {item.description_vi}
-          </p>
-        )}
-        {item.label_en && (
-          <p className='text-2xs text-content-muted mt-1'>
-            <span className='text-muted-foreground font-mono'>EN:</span>{' '}
-            {item.label_en}
-            {item.description_en ? `: ${item.description_en}` : ''}
-          </p>
-        )}
-
-        <Section title='Surfaces'>
-          <div className='flex flex-wrap gap-1.5'>
-            {(item.supported_surfaces ?? []).map(s => {
-              const meta = SURFACE_META[s];
-              return (
-                <span
-                  key={s}
-                  className={cn(
-                    'text-3xs inline-flex items-center rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase',
-                    meta?.chip ?? 'border-border bg-muted text-content-muted'
-                  )}
-                >
-                  {meta?.label ?? s}
-                </span>
-              );
-            })}
-          </div>
-        </Section>
-
-        {item.category && (
-          <Section title='Category'>
-            <span className='text-content-muted text-xs'>
-              {CATEGORY_META[item.category]?.emoji}{' '}
-              {CATEGORY_META[item.category]?.label ?? item.category}
-            </span>
-          </Section>
-        )}
-
-        {(item.function ||
-          item.page_role ||
-          item.proof_type ||
-          item.has_cta ||
-          (item.needs_media && item.needs_media !== 'none') ||
-          item.funnel_stage?.length ||
-          item.goal_tags?.length ||
-          item.tone?.length ||
-          item.industry_fit?.length) && (
-          <Section title='AI taxonomy'>
-            <dl className='flex flex-col gap-1.5'>
-              {item.function && (
-                <TaxoRow label='Function' value={item.function} />
-              )}
-              {item.page_role && (
-                <TaxoRow label='Vị trí' value={item.page_role} />
-              )}
-              {!!item.funnel_stage?.length && (
-                <TaxoRow label='Funnel' value={item.funnel_stage.join(', ')} />
-              )}
-              {!!item.goal_tags?.length && (
-                <TaxoRow label='Goals' value={item.goal_tags.join(', ')} />
-              )}
-              {!!item.tone?.length && (
-                <TaxoRow label='Tone' value={item.tone.join(', ')} />
-              )}
-              {!!item.industry_fit?.length && (
-                <TaxoRow
-                  label='Industry'
-                  value={item.industry_fit.join(', ')}
-                />
-              )}
-              {item.proof_type && (
-                <TaxoRow label='Proof' value={item.proof_type} />
-              )}
-              {item.needs_media && item.needs_media !== 'none' && (
-                <TaxoRow label='Media' value={item.needs_media} />
-              )}
-              <TaxoRow label='CTA' value={item.has_cta ? 'có' : 'không'} />
-            </dl>
-          </Section>
-        )}
-
-        {item.min_dimensions && (
-          <Section title='Min dimensions'>
-            <code className='text-2xs text-content-muted font-mono'>
-              {item.min_dimensions.width} × {item.min_dimensions.height}px
-            </code>
-          </Section>
-        )}
-
-        {item.engine_version && (
-          <Section title='Engine'>
-            <code className='text-2xs bg-muted text-content-muted rounded px-1.5 py-0.5 font-mono'>
-              {item.engine_version}
-            </code>
-          </Section>
-        )}
-
-        {item.supported_slot_types && item.supported_slot_types.length > 0 && (
-          <Section title='Supported slot types'>
-            <div className='flex flex-wrap gap-1'>
-              {item.supported_slot_types.map(s => (
-                <code
-                  key={s}
-                  className='text-3xs bg-muted text-content-muted rounded px-1.5 py-0.5 font-mono'
-                >
-                  {s}
-                </code>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        <Section title='Props schema'>
-          <pre className='text-3xs border-border bg-muted text-content-muted overflow-x-auto rounded-lg border p-3 font-mono leading-relaxed'>
-            {JSON.stringify(item.props_schema ?? {}, null, 2)}
-          </pre>
-        </Section>
-      </div>
-
-      {/* Drawer footer actions */}
-      <div className='border-border border-t px-4 py-3'>
-        <div className='grid grid-cols-3 gap-2'>
-          <Button
-            type='button'
-            variant='neutral'
-            size='sm'
-            onClick={onEdit}
-            className='w-full'
-          >
-            <Pencil className='size-3.5' />
-            Edit
-          </Button>
-          <Button
-            type='button'
-            variant='neutral'
-            size='sm'
-            onClick={onToggle}
-            className='w-full'
-          >
-            {item.is_active ? (
-              <PowerOff className='size-3.5' />
-            ) : (
-              <Power className='size-3.5' />
-            )}
-            {item.is_active ? 'Disable' : 'Enable'}
-          </Button>
-          <Button
-            type='button'
-            variant='destructive'
-            size='sm'
-            onClick={onDelete}
-            className='w-full'
-          >
-            <Trash2 className='size-3.5' />
-            Xoá
-          </Button>
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className='mt-4'>
-      <div className='text-3xs text-muted-foreground mb-1.5 font-semibold tracking-[0.18em] uppercase'>
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-/** Một dòng label/value cho block AI taxonomy trong drawer. */
-function TaxoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className='flex items-baseline gap-2'>
-      <dt className='text-muted-foreground w-16 shrink-0 font-mono'>{label}</dt>
-      <dd className='text-content-muted'>{value}</dd>
     </div>
   );
 }

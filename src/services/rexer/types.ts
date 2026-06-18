@@ -1879,11 +1879,10 @@ export interface AdminBlockType {
   label_en?: string;
   description_vi?: string;
   description_en?: string;
-  accent_color?: string; // hex, replaces icon
   is_active: boolean;
-  is_premium?: boolean;
-  schema_version?: string; // canvas engine version
-  sort_order?: number;
+  /** Ảnh preview block type trong catalog (BE block_type.preview_image_url). */
+  preview_image_url?: string;
+  icon_name?: string;
   created_at?: string;
   updated_at?: string;
   // Future fields (architecture spec §4.2) — not shipped by BE yet:
@@ -1912,10 +1911,7 @@ export interface CreateAdminBlockTypeRequest {
   label_en?: string;
   description_vi?: string;
   description_en?: string;
-  accent_color?: string;
-  is_premium?: boolean;
-  schema_version?: string;
-  sort_order?: number;
+  preview_image_url?: string;
   // AI recommendation taxonomy (gửi snake_case trực tiếp lên BE).
   function?: string;
   funnel_stage?: string[];
@@ -1933,11 +1929,8 @@ export interface UpdateAdminBlockTypeRequest {
   label_en?: string;
   description_vi?: string;
   description_en?: string;
-  accent_color?: string;
   is_active?: boolean;
-  is_premium?: boolean;
-  schema_version?: string;
-  sort_order?: number;
+  preview_image_url?: string;
   // AI recommendation taxonomy (gửi snake_case trực tiếp lên BE).
   function?: string;
   funnel_stage?: string[];
@@ -2753,6 +2746,8 @@ export interface CreateBlockRequest {
   scope?: BlockScope;
   tags?: string[];
   description?: string;
+  /** Media asset id cho thumbnail tuỳ chỉnh (BE create nhận — block.go). */
+  thumbnail_asset_id?: string;
 }
 export interface UpdateBlockRequest {
   name?: string;

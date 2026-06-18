@@ -23,10 +23,8 @@ import * as React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Bookmark,
-  Calendar,
   Copy,
   Eye,
-  Hash,
   LayoutGrid,
   Loader2,
   MoreVertical,
@@ -42,7 +40,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import { Chip } from '@/components/atoms/chip';
 import { Input } from '@/components/atoms/input';
@@ -57,6 +54,7 @@ import {
 } from '@/components/atoms/table';
 import { BlockMiniPreview } from '@/components/modules/CanvasTemplate/block-editor/BlockMiniPreview';
 import { PreviewMode } from '@/components/modules/CanvasTemplate/block-editor/PreviewMode';
+import { TablePagination } from '@/components/molecules/TablePagination';
 import { BLOCK_TYPE_META } from '@/components/modules/CanvasTemplate/block-editor/types';
 import type {
   Block as EditorBlock,
@@ -157,6 +155,8 @@ export function AdminBlocksPage() {
   // Block_type thật từ BE (/block-types) — nguồn cho filter + dialog sửa, thay
   // registry FE cứng (vốn không phủ block_type chỉ có ở BE).
   const [blockTypes, setBlockTypes] = React.useState<AdminBlockType[]>([]);
+  const [page, setPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(20);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -183,8 +183,6 @@ export function AdminBlocksPage() {
       .then(r => setBlockTypes(r.items ?? []))
       .catch(() => setBlockTypes([]));
   }, []);
-
-  const selected = items.find(i => i.id === selectedId) ?? null;
 
   // Options filter type: ưu tiên block_type BE; gộp thêm type_code có trong
   // data mà BE chưa trả (đừng để block nào không lọc được).
@@ -225,6 +223,16 @@ export function AdminBlocksPage() {
     });
   }, [items, search, typeFilter, tagFilter]);
 
+  // Reset trang khi đổi filter; slice client-side cho cả grid + table.
+  React.useEffect(() => {
+    setPage(1);
+  }, [search, typeFilter, tagFilter]);
+
+  const paged = React.useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page, pageSize]
+  );
+
   const handleDuplicate = async (id: string) => {
     const tid = toast.loading('Đang clone…');
     try {
@@ -247,31 +255,6 @@ export function AdminBlocksPage() {
       await load();
     } catch (err) {
       toast.error(`Xoá thất bại: ${rxMessage(err)}`, { id: tid });
-    }
-  };
-
-  const handleRename = async (id: string, name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    try {
-      await rexerApi.blocks.update(id, { name: trimmed });
-      toast.success('Đã đổi tên');
-      await load();
-    } catch (err) {
-      toast.error(`Đổi tên thất bại: ${rxMessage(err)}`);
-    }
-  };
-
-  const handleTagsChange = async (id: string, tags: string[]) => {
-    const normalised = Array.from(
-      new Set(tags.map(t => t.trim().toLowerCase()).filter(t => t.length > 0))
-    );
-    try {
-      await rexerApi.blocks.update(id, { tags: normalised });
-      toast.success('Đã cập nhật tag');
-      await load();
-    } catch (err) {
-      toast.error(`Cập nhật tag thất bại: ${rxMessage(err)}`);
     }
   };
 
@@ -298,6 +281,17 @@ export function AdminBlocksPage() {
     } else {
       setSelectedId(id);
     }
+  };
+
+  // Click vào 1 block → mở Preview (layout + animation) ngay. Admin bỏ drawer;
+  // portal vẫn vào route chi tiết riêng. Edit/Clone/Xoá nằm ở action mỗi hàng/card.
+  const handleRowClick = (id: string) => {
+    if (isPortal) {
+      openDetail(id);
+      return;
+    }
+    const block = items.find(b => b.id === id);
+    if (block) handlePreview(block);
   };
 
   return (
@@ -440,9 +434,9 @@ export function AdminBlocksPage() {
             />
           ) : view === 'grid' ? (
             <GridView
-              items={filtered}
+              items={paged}
               selectedId={selectedId}
-              onSelect={openDetail}
+              onSelect={handleRowClick}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
               onEdit={handleEdit}
@@ -450,31 +444,30 @@ export function AdminBlocksPage() {
             />
           ) : (
             <TableView
-              items={filtered}
+              items={paged}
               selectedId={selectedId}
-              onSelect={openDetail}
+              onSelect={handleRowClick}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
               onEdit={handleEdit}
               onPreview={handlePreview}
             />
           )}
+
+          {!loading && filtered.length > 0 && (
+            <TablePagination
+              total={filtered.length}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={s => {
+                setPageSize(s);
+                setPage(1);
+              }}
+            />
+          )}
         </div>
       </div>
-
-      {/* Drawer (admin only — portal uses dedicated detail route) */}
-      {!isPortal && selected && (
-        <DetailDrawer
-          block={selected}
-          onClose={() => setSelectedId(null)}
-          onRename={name => handleRename(selected.id, name)}
-          onTagsChange={tags => handleTagsChange(selected.id, tags)}
-          onDuplicate={() => handleDuplicate(selected.id)}
-          onDelete={() => handleDelete(selected)}
-          onEdit={() => handleEdit(selected)}
-          onPreview={() => handlePreview(selected)}
-        />
-      )}
 
       <AddBuiltinBlockDialog
         open={catalogOpen}
@@ -811,6 +804,7 @@ function TableView({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className='w-28'>Thumbnail</TableHead>
             <TableHead>Tên</TableHead>
             <TableHead className='w-36'>Block type</TableHead>
             <TableHead className='w-32'>Tags</TableHead>
@@ -831,12 +825,34 @@ function TableView({
                 onClick={() => onSelect(it.id)}
               >
                 <TableCell>
+                  {it.thumbnail_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={it.thumbnail_url}
+                      alt={it.name}
+                      className='border-border h-[54px] w-24 rounded-md border object-cover'
+                    />
+                  ) : editorBlock ? (
+                    <div className='border-border bg-card w-24 overflow-hidden rounded-md border'>
+                      <BlockMiniPreview block={editorBlock} aspect='16 / 9' />
+                    </div>
+                  ) : (
+                    <div className='bg-muted text-content-muted text-3xs flex h-[54px] w-24 items-center justify-center rounded-md'>
+                      no preview
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
                   <div className='font-medium'>{it.name}</div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant='secondary' className='text-3xs font-mono'>
+                  <div className='text-foreground text-sm'>
+                    {BLOCK_TYPE_LABEL[it.type_code as BlockType] ??
+                      it.type_code}
+                  </div>
+                  <code className='text-3xs text-muted-foreground font-mono'>
                     {it.type_code}
-                  </Badge>
+                  </code>
                 </TableCell>
                 <TableCell>
                   {it.tags && it.tags.length > 0 ? (
@@ -911,289 +927,6 @@ function TableView({
           })}
         </TableBody>
       </Table>
-    </div>
-  );
-}
-
-/* ─── Drawer ─────────────────────────────────────────────────────────── */
-
-function DetailDrawer({
-  block,
-  onClose,
-  onRename,
-  onTagsChange,
-  onDuplicate,
-  onDelete,
-  onEdit,
-  onPreview,
-}: {
-  block: ServerBlock;
-  onClose: () => void;
-  onRename: (name: string) => void;
-  onTagsChange: (tags: string[]) => void;
-  onDuplicate: () => void;
-  onDelete: () => void;
-  onEdit: () => Promise<void> | void;
-  onPreview: () => void;
-}) {
-  const [editingName, setEditingName] = React.useState(false);
-  const [nameInput, setNameInput] = React.useState(block.name);
-  const [tagInput, setTagInput] = React.useState('');
-  const type = block.type_code as BlockType;
-  const gradient = BLOCK_TYPE_GRADIENT[type] ?? 'from-zinc-400 to-zinc-600';
-  const label = BLOCK_TYPE_LABEL[type] ?? block.type_code;
-  const tags = block.tags ?? [];
-  const editorBlock = parseEditorBlock(block.settings);
-
-  React.useEffect(() => {
-    setNameInput(block.name);
-    setEditingName(false);
-    setTagInput('');
-  }, [block.id, block.name]);
-
-  const commitName = () => {
-    if (nameInput.trim() && nameInput !== block.name) {
-      onRename(nameInput.trim());
-    }
-    setEditingName(false);
-  };
-
-  const addTag = () => {
-    const t = tagInput.trim().toLowerCase();
-    if (!t) return;
-    if (tags.includes(t)) {
-      setTagInput('');
-      return;
-    }
-    onTagsChange([...tags, t]);
-    setTagInput('');
-  };
-
-  const removeTag = (t: string) => {
-    onTagsChange(tags.filter(x => x !== t));
-  };
-
-  return (
-    <aside className='border-border bg-background flex w-[380px] flex-col border-l'>
-      {/* Header */}
-      <div className='border-border flex items-start justify-between border-b px-4 py-3'>
-        <div className='min-w-0 flex-1'>
-          {editingName ? (
-            <input
-              autoFocus
-              value={nameInput}
-              onChange={e => setNameInput(e.target.value)}
-              onBlur={commitName}
-              onKeyDown={e => {
-                if (e.key === 'Enter') commitName();
-                if (e.key === 'Escape') {
-                  setNameInput(block.name);
-                  setEditingName(false);
-                }
-              }}
-              className='border-border bg-background focus:ring-foreground/10 w-full rounded-md border px-2 py-1 text-sm font-semibold outline-none focus:ring-2'
-            />
-          ) : (
-            <button
-              type='button'
-              onClick={() => setEditingName(true)}
-              className='group flex items-center gap-1.5 text-left'
-              title='Click để đổi tên'
-            >
-              <span className='truncate text-sm font-semibold'>
-                {block.name}
-              </span>
-              <Pencil className='text-muted-foreground group-hover:text-content-muted size-3' />
-            </button>
-          )}
-          <div className='text-3xs text-content-muted mt-0.5 font-mono'>
-            {block.id}
-          </div>
-        </div>
-        <button
-          type='button'
-          onClick={onClose}
-          className='text-muted-foreground hover:bg-muted hover:text-content-muted rounded p-1'
-          aria-label='Close'
-        >
-          <X className='size-4' />
-        </button>
-      </div>
-
-      {/* Preview */}
-      <div className='px-4 pt-4'>
-        <div className='border-border relative overflow-hidden rounded-lg border'>
-          {editorBlock ? (
-            <BlockMiniPreview block={editorBlock} aspect='16 / 9' />
-          ) : (
-            <div
-              className={cn(
-                'flex aspect-video items-center justify-center bg-gradient-to-br text-white/80',
-                gradient
-              )}
-            >
-              <Bookmark className='size-10 opacity-80' />
-            </div>
-          )}
-          <span
-            className={cn(
-              'text-3xs absolute top-2 left-2 rounded bg-gradient-to-br px-1.5 py-0.5 font-mono font-bold tracking-widest text-white/95 uppercase shadow-sm',
-              gradient
-            )}
-          >
-            {label}
-          </span>
-          <div className='text-3xs absolute right-0 bottom-0 left-0 flex items-center justify-between bg-black/20 px-2 py-1 text-white/80 backdrop-blur'>
-            <span>
-              {editorBlock?.contentVi?.mobile
-                ? '📱 desktop + mobile'
-                : '🖥 desktop only'}
-            </span>
-            <span>{editorBlock?.extraElements?.length ?? 0} extras</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Metadata */}
-      <div className='space-y-3 px-4 py-4 text-xs'>
-        <MetaRow
-          icon={<Hash className='size-3' />}
-          label='Block type'
-          value={<span className='text-2xs font-mono'>{block.type_code}</span>}
-        />
-        <MetaRow
-          icon={<Calendar className='size-3' />}
-          label='Saved'
-          value={fmtDate(block.created_at)}
-        />
-        {block.updated_at && block.updated_at !== block.created_at && (
-          <MetaRow
-            icon={<Calendar className='size-3' />}
-            label='Updated'
-            value={fmtRelative(block.updated_at)}
-          />
-        )}
-        <MetaRow
-          icon={<Bookmark className='size-3' />}
-          label='Extras'
-          value={`${editorBlock?.extraElements?.length ?? 0} elements`}
-        />
-        <MetaRow
-          icon={<RefreshCw className='size-3' />}
-          label='Usage'
-          value={`${block.usage_count ?? 0} ×`}
-        />
-        <MetaRow
-          icon={<Hash className='size-3' />}
-          label='Scope'
-          value={<span className='text-2xs font-mono'>{block.scope}</span>}
-        />
-      </div>
-
-      {/* Tags */}
-      <div className='border-border border-t px-4 py-3'>
-        <div className='text-3xs text-content-muted mb-1.5 flex items-center gap-1 font-semibold tracking-wider uppercase'>
-          <Tag className='size-3' />
-          Tags
-        </div>
-        <div className='flex flex-wrap items-center gap-1'>
-          {tags.length === 0 && (
-            <span className='text-2xs text-muted-foreground'>Chưa có tag</span>
-          )}
-          {tags.map(t => (
-            <button
-              key={t}
-              type='button'
-              onClick={() => removeTag(t)}
-              className='group text-3xs bg-muted text-content-muted hover:bg-danger-bg hover:text-destructive flex items-center gap-1 rounded-full px-2 py-0.5 font-medium'
-              title='Click để xoá tag'
-            >
-              {t}
-              <X className='size-2.5 opacity-0 group-hover:opacity-100' />
-            </button>
-          ))}
-        </div>
-        <div className='mt-2 flex items-center gap-1.5'>
-          <input
-            value={tagInput}
-            onChange={e => setTagInput(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                addTag();
-              }
-            }}
-            placeholder='Thêm tag (Enter)…'
-            className='text-2xs border-border focus:border-ring flex-1 rounded-md border px-2 py-1 outline-none'
-          />
-          <button
-            type='button'
-            onClick={addTag}
-            disabled={!tagInput.trim()}
-            className='text-2xs bg-foreground text-background hover:bg-foreground/85 rounded-md px-2.5 py-1 font-medium disabled:opacity-40'
-          >
-            Thêm
-          </button>
-        </div>
-      </div>
-
-      {/* Footer actions */}
-      <div className='border-border mt-auto border-t px-4 py-3'>
-        {/* Primary action — most-used = visual preview */}
-        <Button
-          size='sm'
-          onClick={onPreview}
-          className='mb-1.5 w-full'
-          disabled={!editorBlock}
-          title={
-            editorBlock
-              ? 'Mở preview full-screen với layout + animation'
-              : 'Block không có canvas data, preview disabled'
-          }
-        >
-          <Play className='size-3.5' />
-          Preview (layout + animation)
-        </Button>
-        <div className='grid grid-cols-3 gap-1.5'>
-          <Button variant='outline' size='sm' onClick={onEdit}>
-            <Pencil className='size-3.5' />
-            Edit
-          </Button>
-          <Button variant='outline' size='sm' onClick={onDuplicate}>
-            <Copy className='size-3.5' />
-            Clone
-          </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={onDelete}
-            className='text-destructive hover:bg-danger-bg'
-          >
-            <Trash2 className='size-3.5' />
-            Xoá
-          </Button>
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-function MetaRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: React.ReactNode;
-}) {
-  return (
-    <div className='flex items-center justify-between gap-2'>
-      <div className='text-3xs text-content-muted flex items-center gap-1.5 font-semibold tracking-wider uppercase'>
-        {icon}
-        {label}
-      </div>
-      <div className='text-foreground'>{value}</div>
     </div>
   );
 }

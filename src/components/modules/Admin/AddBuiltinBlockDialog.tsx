@@ -10,9 +10,18 @@
  */
 
 import * as React from 'react';
-import { ArrowLeft, Loader2, Plus, Search, Sparkles, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  ImagePlus,
+  Loader2,
+  Plus,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
+import { uploadImageAsset } from '@/lib/upload/media-asset';
 import { Button } from '@/components/atoms/button';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
@@ -82,6 +91,10 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
   const [formDesc, setFormDesc] = React.useState('');
   const [formTags, setFormTags] = React.useState<string[]>([]);
   const [tagInput, setTagInput] = React.useState('');
+  const [thumbUrl, setThumbUrl] = React.useState<string | null>(null);
+  const [thumbAssetId, setThumbAssetId] = React.useState<string | null>(null);
+  const [uploadingThumb, setUploadingThumb] = React.useState(false);
+  const fileRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (!open) return;
@@ -141,6 +154,22 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
     setFormDesc(item.description ?? '');
     setFormTags([]);
     setTagInput('');
+    setThumbUrl(null);
+    setThumbAssetId(null);
+  };
+
+  const pickThumb = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadingThumb(true);
+    uploadImageAsset(file)
+      .then(asset => {
+        setThumbAssetId(asset.id);
+        setThumbUrl(asset.public_url ?? null);
+      })
+      .catch(() => toast.error('Tải ảnh thất bại'))
+      .finally(() => setUploadingThumb(false));
   };
 
   const addTag = () => {
@@ -173,6 +202,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
         tags: formTags,
         settings: block as unknown as Record<string, unknown>,
         scope: 'brand_private',
+        ...(thumbAssetId ? { thumbnail_asset_id: thumbAssetId } : {}),
       });
       toast.success(`Đã thêm "${created.name}" vào thư viện`);
       onAdded?.(created.id);
@@ -266,6 +296,56 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div className='flex flex-col gap-1'>
+                  <Label>Thumbnail</Label>
+                  <div className='flex items-center gap-3'>
+                    <div className='border-border bg-muted relative aspect-[16/9] w-32 shrink-0 overflow-hidden rounded-lg border'>
+                      {thumbUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={thumbUrl}
+                          alt='thumbnail'
+                          className='absolute inset-0 size-full object-cover'
+                        />
+                      ) : (
+                        <div className='text-muted-foreground flex size-full items-center justify-center'>
+                          <ImagePlus className='size-5' />
+                        </div>
+                      )}
+                    </div>
+                    <div className='min-w-0'>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        onClick={() => fileRef.current?.click()}
+                        disabled={uploadingThumb}
+                      >
+                        {uploadingThumb ? (
+                          <Loader2 className='size-3.5 animate-spin' />
+                        ) : (
+                          <ImagePlus className='size-3.5' />
+                        )}
+                        {uploadingThumb
+                          ? 'Đang tải…'
+                          : thumbUrl
+                            ? 'Đổi ảnh'
+                            : 'Tải ảnh'}
+                      </Button>
+                      <p className='text-3xs text-muted-foreground mt-1'>
+                        Tuỳ chọn. Bỏ trống → tự render từ nội dung block.
+                      </p>
+                    </div>
+                    <input
+                      ref={fileRef}
+                      type='file'
+                      accept='image/*'
+                      className='hidden'
+                      onChange={pickThumb}
+                    />
+                  </div>
                 </div>
 
                 <div className='flex flex-col gap-1'>

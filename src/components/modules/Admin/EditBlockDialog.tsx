@@ -1,9 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2, X } from 'lucide-react';
+import { ImagePlus, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { uploadImageAsset } from '@/lib/upload/media-asset';
 import { Button } from '@/components/atoms/button';
 import {
   Dialog,
@@ -50,6 +51,10 @@ export function EditBlockDialog({
   const [tags, setTags] = React.useState<string[]>([]);
   const [tagInput, setTagInput] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
+  const [thumbUrl, setThumbUrl] = React.useState<string | null>(null);
+  const [thumbAssetId, setThumbAssetId] = React.useState<string | null>(null);
+  const [uploading, setUploading] = React.useState(false);
+  const fileRef = React.useRef<HTMLInputElement>(null);
 
   // Nạp lại form mỗi khi mở với block khác.
   React.useEffect(() => {
@@ -59,8 +64,24 @@ export function EditBlockDialog({
       setTypeCode(block.type_code ?? '');
       setTags(block.tags ?? []);
       setTagInput('');
+      setThumbUrl(block.thumbnail_url ?? null);
+      setThumbAssetId(null);
     }
   }, [open, block]);
+
+  const pickThumb = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploading(true);
+    uploadImageAsset(file)
+      .then(asset => {
+        setThumbAssetId(asset.id);
+        setThumbUrl(asset.public_url ?? null);
+      })
+      .catch(err => toast.error(`Tải ảnh lỗi: ${rxMessage(err)}`))
+      .finally(() => setUploading(false));
+  };
 
   // Nếu type_code hiện tại không nằm trong danh sách BE (block_type cũ/ẩn) thì
   // vẫn cho hiển thị 1 option cho nó để select không bị trống.
@@ -102,6 +123,8 @@ export function EditBlockDialog({
         ...(typeCode && typeCode !== block.type_code
           ? { type_code: typeCode }
           : {}),
+        // Thumbnail tuỳ chỉnh — chỉ gửi khi user vừa upload ảnh mới.
+        ...(thumbAssetId ? { thumbnail_asset_id: thumbAssetId } : {}),
       });
       toast.success(`Đã cập nhật "${updated.name}"`);
       onSaved(updated);
@@ -135,6 +158,52 @@ export function EditBlockDialog({
               onChange={e => setName(e.target.value)}
               placeholder='Hero chia đôi…'
             />
+          </div>
+
+          <div className='flex flex-col gap-1'>
+            <Label>Thumbnail</Label>
+            <div className='flex items-center gap-3'>
+              <div className='border-border bg-muted relative aspect-[16/9] w-32 shrink-0 overflow-hidden rounded-lg border'>
+                {thumbUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={thumbUrl}
+                    alt='thumbnail'
+                    className='absolute inset-0 size-full object-cover'
+                  />
+                ) : (
+                  <div className='text-muted-foreground flex size-full items-center justify-center'>
+                    <ImagePlus className='size-5' />
+                  </div>
+                )}
+              </div>
+              <div className='min-w-0'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <Loader2 className='size-3.5 animate-spin' />
+                  ) : (
+                    <ImagePlus className='size-3.5' />
+                  )}
+                  {uploading ? 'Đang tải…' : thumbUrl ? 'Đổi ảnh' : 'Tải ảnh'}
+                </Button>
+                <p className='text-3xs text-muted-foreground mt-1'>
+                  Ảnh đại diện block. Bỏ trống → tự render từ nội dung.
+                </p>
+              </div>
+              <input
+                ref={fileRef}
+                type='file'
+                accept='image/*'
+                className='hidden'
+                onChange={pickThumb}
+              />
+            </div>
           </div>
 
           <div className='flex flex-col gap-1'>

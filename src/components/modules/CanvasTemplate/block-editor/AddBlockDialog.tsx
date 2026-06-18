@@ -232,6 +232,11 @@ export function AddBlockDialog({
     } else {
       onPickSaved(instantiateSavedBlock(entry));
     }
+    // Tăng usage_count cho BE saved block (id uuid; legacy `legacy:` thì bỏ).
+    // Fire-and-forget — không chặn việc chèn block, lỗi thì nuốt.
+    if (!entry.id.startsWith('legacy:')) {
+      void rexerApi.blocks.use(entry.id).catch(() => {});
+    }
     onOpenChange(false);
   };
 
