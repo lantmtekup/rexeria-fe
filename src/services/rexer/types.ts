@@ -3210,6 +3210,8 @@ export interface CreateInsightReportBody {
    */
   selections?: InsightSelections;
   parent_report_id?: string;
+  /** Ngôn ngữ cho toàn bộ prose AI sinh trong blueprint (vi|en). Rỗng → BE mặc định vi. */
+  lang?: 'vi' | 'en';
 }
 
 // ── Wizard v2 (interactive intake) — xem docs/be-spec-insights-wizard-v2 ──────
@@ -3321,6 +3323,8 @@ export interface GenerateBlockContentBody {
   report_id: string;
   block_type_code: string;
   stage_key?: string;
+  /** Ngôn ngữ cho copy sinh ra (vi|en). Rỗng → theo ngôn ngữ đã chọn lúc tạo report. */
+  lang?: 'vi' | 'en';
 }
 
 /** Response generate-content: payload khớp props_schema của block type. */

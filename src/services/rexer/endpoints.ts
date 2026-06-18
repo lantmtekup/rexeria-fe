@@ -3,6 +3,7 @@
  * data from `src/services/rexer/types.ts`.
  */
 import { rx } from './client';
+import { currentInsightLang } from './insightLang';
 import {
   isAiTemplateMockEnabled,
   mockGenerateAiTemplate,
@@ -2051,7 +2052,7 @@ export const rexerApi = {
     create: async (body: CreateInsightReportBody) => {
       const r = await rx<InsightReportResponse>('/insights/reports', {
         method: 'POST',
-        body,
+        body: { ...body, lang: body.lang ?? currentInsightLang() },
       });
       return r.report;
     },
@@ -2112,7 +2113,7 @@ export const rexerApi = {
     generateBlockContent: (body: GenerateBlockContentBody) =>
       rx<GenerateBlockContentResponse>('/insights/blocks/generate-content', {
         method: 'POST',
-        body,
+        body: { ...body, lang: body.lang ?? currentInsightLang() },
       }),
 
     // ── Wizard v2: thao tác tương tác đồng bộ (xem be-spec-insights-wizard-v2) ──
@@ -2127,11 +2128,12 @@ export const rexerApi = {
       workspace_id?: string;
       product_id?: string;
       campaign_id?: string;
+      lang?: 'vi' | 'en';
     }): Promise<InsightSuggestResponse | null> => {
       try {
         return await rx<InsightSuggestResponse>('/insights/suggest', {
           method: 'POST',
-          body,
+          body: { ...body, lang: body.lang ?? currentInsightLang() },
         });
       } catch {
         return null;
@@ -2144,11 +2146,12 @@ export const rexerApi = {
       workspace_id?: string;
       product_id?: string;
       campaign_id?: string;
+      lang?: 'vi' | 'en';
     }): Promise<ClassifyGoalResponse | null> => {
       try {
         return await rx<ClassifyGoalResponse>('/insights/classify-goal', {
           method: 'POST',
-          body,
+          body: { ...body, lang: body.lang ?? currentInsightLang() },
         });
       } catch {
         return null;
@@ -2163,11 +2166,12 @@ export const rexerApi = {
       workspace_id?: string;
       product_id?: string;
       campaign_id?: string;
+      lang?: 'vi' | 'en';
     }): Promise<SuggestJourneyResponse | null> => {
       try {
         return await rx<SuggestJourneyResponse>('/insights/suggest-journey', {
           method: 'POST',
-          body,
+          body: { ...body, lang: body.lang ?? currentInsightLang() },
         });
       } catch {
         return null;
