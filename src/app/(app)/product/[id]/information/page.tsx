@@ -7,8 +7,8 @@ import { Download, PaletteIcon, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
-import { AddCategoryDialog } from '@/components/dialogs/AddCategoryDialog';
-import { ApiUrlDialog } from '@/components/dialogs/ApiUrlDialog';
+import { AddCategoryDialog } from '@/components/modules/Product/AddCategoryDialog';
+import { ApiUrlDialog } from '@/components/modules/Product/ApiUrlDialog';
 import {
   ProductInformationEditor,
   emptyProductInformation,

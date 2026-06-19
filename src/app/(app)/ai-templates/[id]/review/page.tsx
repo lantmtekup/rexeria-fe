@@ -13,8 +13,8 @@ import { SectionHeader } from '@/components/molecules/SectionHeader';
 import { serializeCanvas } from '@/components/modules/block-editor/serialize';
 import { BlockReviewCard } from '@/components/modules/CanvasTemplate/ai/BlockReviewCard';
 import { VersionHistoryDrawer } from '@/components/modules/CanvasTemplate/ai/VersionHistoryDrawer';
-import { ImageSuggestionDialog } from '@/components/dialogs/ImageSuggestionDialog';
-import { RegenerateBlockDialog } from '@/components/dialogs/RegenerateBlockDialog';
+import { ImageSuggestionDialog } from '@/components/modules/CanvasTemplate/ai/ImageSuggestionDialog';
+import { RegenerateBlockDialog } from '@/components/modules/CanvasTemplate/ai/RegenerateBlockDialog';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type {

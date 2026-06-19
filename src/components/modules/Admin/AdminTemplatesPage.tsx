@@ -43,8 +43,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/atoms/table';
-import { CreateTemplateDialog } from '@/components/dialogs/CreateTemplateDialog';
-import { UseTemplateDialog } from '@/components/dialogs/UseTemplateDialog';
+import { CreateTemplateDialog } from '@/components/modules/Template/CreateTemplateDialog';
+import { UseTemplateDialog } from '@/components/modules/Template/UseTemplateDialog';
 import { TemplateEffectsDialog } from '@/components/modules/CanvasTemplate/TemplateEffectsDialog';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';

@@ -47,11 +47,11 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
 import { Chip } from '@/components/atoms/chip';
-import { DomainSettingsDialog } from '@/components/dialogs/DomainSettingsDialog';
+import { DomainSettingsDialog } from '@/components/modules/Admin/DomainSettingsDialog';
 import {
   CreateLandingDialog,
   EditLandingDialog,
-} from '@/components/dialogs/LandingFormDialog';
+} from '@/components/modules/Admin/LandingFormDialog';
 import { Input } from '@/components/atoms/input';
 import {
   Table,
