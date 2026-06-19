@@ -76,6 +76,8 @@ const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
 export function AdminBlockTypesPage() {
   const [items, setItems] = React.useState<AdminBlockType[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [bulkDeleting, setBulkDeleting] = React.useState(false);
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [error, setError] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
@@ -93,9 +95,10 @@ export function AdminBlockTypesPage() {
     return () => clearTimeout(t);
   }, [search]);
 
-  // Reset về trang 1 khi đổi filter/search (kết quả thay đổi).
+  // Reset về trang 1 + bỏ chọn khi đổi filter/search (kết quả thay đổi).
   React.useEffect(() => {
     setPage(1);
+    setSelected(new Set());
   }, [debouncedSearch, surface, showInactive]);
 
   const paged = React.useMemo(
@@ -161,7 +164,8 @@ export function AdminBlockTypesPage() {
   const handleDelete = async (item: AdminBlockType) => {
     if (
       !window.confirm(
-        `Xoá block type "${item.type}"?\n\nMọi block đang dùng type này sẽ bị orphan.`
+        `Xoá loại block "${item.type}"?\n\nChỉ xoá được khi KHÔNG còn block nào dùng loại này. ` +
+          `Nếu chỉ muốn ẩn khỏi danh mục, hãy Tắt (disable) thay vì xoá.`
       )
     )
       return;
@@ -170,10 +174,79 @@ export function AdminBlockTypesPage() {
       toast.success(`Đã xoá ${item.type}`);
       load();
     } catch (err) {
+      // FK blocks.type_code → block_types.code (RESTRICT): còn block dùng loại
+      // này thì BE chặn (hiện trả 500 — chờ BE map về 409, xem be-audit §23).
+      const inUse =
+        err instanceof RxApiError && (err.status === 500 || err.status === 409);
+      if (inUse) {
+        toast.error(
+          `Không xoá được "${item.type}" — vẫn còn block đang dùng loại này. ` +
+            `Hãy xoá/đổi loại các block đó ở trang Blocks, hoặc Tắt (disable) loại này.`
+        );
+        return;
+      }
       const msg =
         err instanceof RxApiError ? err.code || err.message : 'DELETE_FAILED';
       toast.error(`Xoá thất bại: ${msg}`);
     }
+  };
+
+  // ── Chọn nhiều (bulk select) — selected giữ `type` (PK). ──────────────────
+  const toggleOne = (code: string) =>
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+
+  // Select-all thao tác trên TRANG hiện tại (paged); selection vẫn giữ qua các trang.
+  const pageCodes = paged.map(i => i.type);
+  const allOnPage =
+    pageCodes.length > 0 && pageCodes.every(c => selected.has(c));
+  const someOnPage = pageCodes.some(c => selected.has(c));
+  const toggleSelectAll = () =>
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (allOnPage) pageCodes.forEach(c => next.delete(c));
+      else pageCodes.forEach(c => next.add(c));
+      return next;
+    });
+
+  // Xoá các loại đã chọn. Tuần tự để không đập BE; loại còn block dùng bị FK
+  // chặn (500/409) → bỏ qua, báo lại cuối.
+  const handleBulkDelete = async () => {
+    const codes = Array.from(selected);
+    if (codes.length === 0) return;
+    if (
+      !window.confirm(
+        `Xoá ${codes.length} loại block đã chọn?\n\n` +
+          `KHÔNG hoàn tác được. Loại nào còn block đang dùng sẽ KHÔNG xoá được (giữ lại).`
+      )
+    )
+      return;
+    setBulkDeleting(true);
+    let ok = 0;
+    const failed: string[] = [];
+    for (const code of codes) {
+      try {
+        await rexerApi.adminBlockTypes.remove(code);
+        ok += 1;
+      } catch {
+        failed.push(code);
+      }
+    }
+    setBulkDeleting(false);
+    setSelected(new Set());
+    if (ok > 0) toast.success(`Đã xoá ${ok} loại block`);
+    if (failed.length > 0) {
+      const head = failed.slice(0, 5).join(', ');
+      toast.error(
+        `${failed.length} loại không xoá được (còn block đang dùng): ${head}` +
+          (failed.length > 5 ? '…' : '')
+      );
+    }
+    load();
   };
 
   return (
@@ -184,13 +257,15 @@ export function AdminBlockTypesPage() {
           <div className='flex flex-wrap items-end justify-between gap-3'>
             <div>
               <div className='text-3xs text-content-muted flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
-                <Blocks className='size-3' /> Block types catalog
+                <Blocks className='size-3' /> Danh mục loại block
               </div>
               <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
-                Catalog blocks hệ thống
+                Danh mục loại block (hệ thống)
               </h1>
               <p className='text-content-muted mt-1 text-sm'>
-                Block types brand dùng để dựng landing / ad / curate.
+                Khai báo các <b>loại</b> block (code + metadata), không chứa nội
+                dung. Block thật tạo từ đây ở mục{' '}
+                <span className='font-medium'>Blocks</span>.
               </p>
             </div>
             <div className='flex items-center gap-2'>
@@ -213,7 +288,7 @@ export function AdminBlockTypesPage() {
                 }}
               >
                 <Plus className='size-3.5' />
-                Tạo block type
+                Tạo loại block
               </Button>
             </div>
           </div>
@@ -275,10 +350,10 @@ export function AdminBlockTypesPage() {
             <div className='border-border bg-card rounded-2xl border border-dashed p-12 text-center'>
               <Blocks className='text-muted-foreground mx-auto size-8' />
               <p className='text-content-muted mt-3 text-sm font-semibold'>
-                Không có block type nào
+                Chưa có loại block nào
               </p>
               <p className='text-content-muted mt-1 text-xs'>
-                Bấm &ldquo;Tạo block type&rdquo; hoặc đổi filter.
+                Bấm &ldquo;Tạo loại block&rdquo; hoặc đổi filter.
               </p>
             </div>
           ) : (
@@ -286,6 +361,18 @@ export function AdminBlockTypesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className='w-10'>
+                      <input
+                        type='checkbox'
+                        className='border-border text-foreground focus:ring-ring size-3.5 cursor-pointer rounded'
+                        checked={allOnPage}
+                        ref={el => {
+                          if (el) el.indeterminate = someOnPage && !allOnPage;
+                        }}
+                        onChange={toggleSelectAll}
+                        aria-label='Chọn tất cả trên trang'
+                      />
+                    </TableHead>
                     <TableHead>Block</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Surfaces</TableHead>
@@ -312,9 +399,19 @@ export function AdminBlockTypesPage() {
                         }}
                         className={cn(
                           'cursor-pointer',
-                          !item.is_active && 'opacity-55'
+                          !item.is_active && 'opacity-55',
+                          selected.has(item.type) && 'bg-muted'
                         )}
                       >
+                        <TableCell onClick={e => e.stopPropagation()}>
+                          <input
+                            type='checkbox'
+                            className='border-border text-foreground focus:ring-ring size-3.5 cursor-pointer rounded'
+                            checked={selected.has(item.type)}
+                            onChange={() => toggleOne(item.type)}
+                            aria-label={`Chọn ${item.type}`}
+                          />
+                        </TableCell>
                         <TableCell>
                           <code className='text-foreground font-mono text-xs font-bold'>
                             {item.type}
@@ -439,6 +536,41 @@ export function AdminBlockTypesPage() {
           )}
         </div>
       </div>
+
+      {/* Thanh hành động khi đã chọn (bulk) — sticky đáy, theo mẫu canvas page. */}
+      {selected.size > 0 && (
+        <div className='bg-foreground sticky bottom-4 z-30 mx-auto flex w-fit min-w-[320px] items-center gap-3 rounded-xl border border-zinc-700 px-4 py-2.5 shadow-2xl'>
+          <span className='text-xs font-medium text-white'>
+            Đã chọn{' '}
+            <span className='text-2xs rounded-md bg-white/15 px-1.5 py-0.5 font-mono'>
+              {selected.size}
+            </span>{' '}
+            loại block
+          </span>
+          <button
+            type='button'
+            onClick={() => setSelected(new Set())}
+            disabled={bulkDeleting}
+            className='text-2xs rounded-md px-2 py-1 font-medium text-white/70 hover:bg-white/10 disabled:opacity-50'
+          >
+            Bỏ chọn
+          </button>
+          <div className='h-4 w-px bg-white/20' />
+          <button
+            type='button'
+            onClick={handleBulkDelete}
+            disabled={bulkDeleting}
+            className='inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-500 disabled:opacity-50'
+          >
+            {bulkDeleting ? (
+              <Loader2 className='size-3.5 animate-spin' />
+            ) : (
+              <Trash2 className='size-3.5' />
+            )}
+            {bulkDeleting ? 'Đang xoá…' : 'Xoá đã chọn'}
+          </button>
+        </div>
+      )}
 
       <BlockTypeFormDialog
         open={formOpen}

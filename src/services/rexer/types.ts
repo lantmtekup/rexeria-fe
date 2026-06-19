@@ -2706,7 +2706,38 @@ export type BlockScope =
   | 'brand_team'
   | 'brand_public';
 
-export interface Block {
+/** Taxonomy AI-recommend per-block (BE shipped 2026-06-19 — persist ở Block,
+ *  seed từ block_type khi tạo). Đồng bộ enum BlockTaxonomyFields. */
+export interface BlockAITaxonomy {
+  function?: string;
+  page_role?: string;
+  proof_type?: string;
+  needs_media?: string;
+  has_cta?: boolean;
+  funnel_stage?: string[];
+  goal_tags?: string[];
+  tone?: string[];
+  industry_fit?: string[];
+}
+
+/** Vòng đời duyệt block (BE field `status`, migration 000035 — chờ BE 2026-06-19).
+ *  Flow marketing↔dev: draft (brief) → in_dev → review → published; changes_requested
+ *  = trả lại sửa. Block legacy (status rỗng) coi như `published`. */
+export type BlockStatus =
+  | 'draft'
+  | 'in_dev'
+  | 'review'
+  | 'changes_requested'
+  | 'published';
+
+export interface BlockReviewFields {
+  /** Trạng thái duyệt (BE 000035). Rỗng = legacy → coi như published. */
+  status?: BlockStatus;
+  /** Ghi chú nội bộ: brief từ marketing + comment review (BE 000035). */
+  review_note?: string;
+}
+
+export interface Block extends BlockAITaxonomy, BlockReviewFields {
   id: string;
   type_code: string;
   brand_id?: string;
@@ -2737,7 +2768,7 @@ export interface BlockListResponse {
 export interface BlockResponse {
   block: Block;
 }
-export interface CreateBlockRequest {
+export interface CreateBlockRequest extends BlockAITaxonomy, BlockReviewFields {
   type_code: string;
   name: string;
   settings: Record<string, unknown>;
@@ -2749,7 +2780,7 @@ export interface CreateBlockRequest {
   /** Media asset id cho thumbnail tuỳ chỉnh (BE create nhận — block.go). */
   thumbnail_asset_id?: string;
 }
-export interface UpdateBlockRequest {
+export interface UpdateBlockRequest extends BlockAITaxonomy, BlockReviewFields {
   name?: string;
   description?: string;
   settings?: Record<string, unknown>;
@@ -3099,6 +3130,9 @@ export interface InsightRecommendedBlock {
   reason: string;
   /** Ảnh preview enrich từ catalog (KB5) — worker non-dev mới gắn. */
   preview_image_url?: string;
+  /** Hybrid (BE 2026-06-19): brand block instance khớp stage → dùng block thật;
+   *  rỗng → fallback block_type_code (composed catalog). */
+  block_id?: string;
 }
 
 /** Nhóm block đề xuất theo từng stage của journey. */
