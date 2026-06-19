@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/atoms/input';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
+import { isBlockUsable } from '@/lib/block-status';
 
 import { BlockMiniPreview } from './BlockMiniPreview';
 import { createBlock } from './factory';
@@ -181,6 +182,8 @@ export function AddBlockDialog({
       beItems = [];
     }
     const items = beItems
+      // Chỉ block đã publish mới cho dựng trang (legacy status rỗng → usable).
+      .filter(isBlockUsable)
       .map(serverToSavedBlock)
       .filter((b): b is SavedBlock => b !== null);
     setSaved(items);

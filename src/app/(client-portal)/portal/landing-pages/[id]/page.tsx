@@ -22,7 +22,7 @@ import { useTranslations } from 'next-intl';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';
 
-import { CodeTemplatePageEditor } from '@/components/modules/Admin/CodeTemplatePageEditor';
+import { CodeTemplatePageEditor } from '@/components/modules/Template/CodeTemplatePageEditor';
 import { BlockEditor } from '@/components/modules/CanvasTemplate/BlockEditor';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';

@@ -5,6 +5,13 @@ import { ImagePlus, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { uploadImageAsset } from '@/lib/upload/media-asset';
+import {
+  BlockTaxonomyFields,
+  emptyTaxonomy,
+  taxonomyFrom,
+  taxonomyToPayload,
+  type BlockTaxonomyValue,
+} from '@/components/dialogs/BlockTaxonomyFields';
 import { Button } from '@/components/atoms/button';
 import {
   Dialog,
@@ -19,7 +26,16 @@ import { Label } from '@/components/atoms/label';
 import { Textarea } from '@/components/atoms/textarea';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { AdminBlockType, Block } from '@/services/rexer/types';
+import type {
+  AdminBlockType,
+  Block,
+  BlockStatus,
+} from '@/services/rexer/types';
+import {
+  BLOCK_STATUS_META,
+  BLOCK_STATUS_ORDER,
+  effectiveBlockStatus,
+} from '@/lib/block-status';
 
 export interface EditBlockDialogProps {
   open: boolean;
@@ -55,6 +71,9 @@ export function EditBlockDialog({
   const [thumbAssetId, setThumbAssetId] = React.useState<string | null>(null);
   const [uploading, setUploading] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
+  const [tax, setTax] = React.useState<BlockTaxonomyValue>(emptyTaxonomy());
+  const [status, setStatus] = React.useState<BlockStatus>('draft');
+  const [reviewNote, setReviewNote] = React.useState('');
 
   // Nạp lại form mỗi khi mở với block khác.
   React.useEffect(() => {
@@ -66,6 +85,9 @@ export function EditBlockDialog({
       setTagInput('');
       setThumbUrl(block.thumbnail_url ?? null);
       setThumbAssetId(null);
+      setTax(taxonomyFrom(block));
+      setStatus(effectiveBlockStatus(block));
+      setReviewNote(block.review_note ?? '');
     }
   }, [open, block]);
 
@@ -125,6 +147,11 @@ export function EditBlockDialog({
           : {}),
         // Thumbnail tuỳ chỉnh — chỉ gửi khi user vừa upload ảnh mới.
         ...(thumbAssetId ? { thumbnail_asset_id: thumbAssetId } : {}),
+        // Taxonomy AI per-block (BE persist từ 2026-06-19).
+        ...taxonomyToPayload(tax),
+        // Lifecycle duyệt (BE 000035 — chờ deploy).
+        status,
+        review_note: reviewNote.trim() || undefined,
       });
       toast.success(`Đã cập nhật "${updated.name}"`);
       onSaved(updated);
@@ -276,6 +303,41 @@ export function EditBlockDialog({
               placeholder='Nhập tag rồi Enter…'
             />
           </div>
+
+          {/* Lifecycle duyệt: trạng thái + ghi chú nội bộ (brief / review). */}
+          <div className='border-border bg-muted/30 flex flex-col gap-3 rounded-lg border p-3'>
+            <div className='flex flex-col gap-1'>
+              <Label htmlFor='eb-status'>Trạng thái duyệt</Label>
+              <select
+                id='eb-status'
+                value={status}
+                onChange={e => setStatus(e.target.value as BlockStatus)}
+                className='border-input bg-background focus:ring-ring/40 h-9 rounded-md border px-2.5 text-sm outline-none focus:ring-2'
+              >
+                {BLOCK_STATUS_ORDER.map(s => (
+                  <option key={s} value={s}>
+                    {BLOCK_STATUS_META[s].label} — {BLOCK_STATUS_META[s].hint}
+                  </option>
+                ))}
+              </select>
+              <p className='text-3xs text-muted-foreground'>
+                Chỉ block <b>Đã publish</b> mới hiện cho user dùng (picker, AI
+                gợi ý, trang public).
+              </p>
+            </div>
+            <div className='flex flex-col gap-1'>
+              <Label htmlFor='eb-note'>Ghi chú nội bộ (brief / review)</Label>
+              <Textarea
+                id='eb-note'
+                value={reviewNote}
+                rows={3}
+                onChange={e => setReviewNote(e.target.value)}
+                placeholder='Marketing: mô tả block cần làm. Dev/Reviewer: ghi chú khi bàn giao / trả lại…'
+              />
+            </div>
+          </div>
+
+          <BlockTaxonomyFields value={tax} onChange={setTax} />
         </div>
 
         <DialogFooter>

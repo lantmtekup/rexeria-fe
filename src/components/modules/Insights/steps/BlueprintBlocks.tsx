@@ -36,15 +36,16 @@ import type {
   InsightRecommendedBlock,
   InsightRecommendedTemplate,
 } from '@/services/rexer/types';
-import { AddBlockDialog } from '../../CanvasTemplate/block-editor/AddBlockDialog';
-import { BlockMiniPreview } from '../../CanvasTemplate/block-editor/BlockMiniPreview';
-import { PreviewMode } from '../../CanvasTemplate/block-editor/PreviewMode';
-import { createBlock } from '../../CanvasTemplate/block-editor/factory';
+import { AddBlockDialog } from '../../block-editor/AddBlockDialog';
+import { BlockMiniPreview } from '../../block-editor/BlockMiniPreview';
+import { PreviewMode } from '../../block-editor/PreviewMode';
+import { createBlock } from '../../block-editor/factory';
 import {
   BLOCK_TYPE_META,
+  type Block,
   type BlockType,
   type Lang,
-} from '../../CanvasTemplate/block-editor/types';
+} from '../../block-editor/types';
 import { SectionCard } from './ui';
 
 /**
@@ -122,6 +123,43 @@ export function buildBlocksFromCodes(codes: string[]) {
       }
     })
     .filter((b): b is NonNullable<typeof b> => b !== null);
+}
+
+/**
+ * Hybrid build (BE 2026-06-19): mỗi recommended block có `block_id` → dùng
+ * BLOCK THẬT của brand (fetch `blocks.get`, lấy settings = editor Block, gán id
+ * mới). Không có block_id → fallback factory theo `block_type_code`.
+ * Dùng cho cả preview lẫn tạo landing → khớp đúng block AI chọn.
+ */
+export async function buildBlocksFromRecommended(
+  recs: { block_id?: string; block_type_code: string }[]
+) {
+  const out: Block[] = [];
+  for (const r of recs) {
+    if (r.block_id) {
+      try {
+        const real = await rexerApi.blocks.get(r.block_id);
+        const s = real.settings as Record<string, unknown> | undefined;
+        if (s && typeof s === 'object' && 'blockType' in s) {
+          const eb = structuredClone(s) as unknown as Block;
+          eb.id = `b_${Math.random().toString(36).slice(2, 10)}`;
+          out.push(eb);
+          continue;
+        }
+      } catch {
+        /* block_id hỏng → rơi xuống fallback catalog bên dưới */
+      }
+    }
+    const editorType = resolveEditorType(r.block_type_code);
+    if (editorType) {
+      try {
+        out.push(createBlock(editorType));
+      } catch {
+        /* skip */
+      }
+    }
+  }
+  return out;
 }
 
 function Thumb({

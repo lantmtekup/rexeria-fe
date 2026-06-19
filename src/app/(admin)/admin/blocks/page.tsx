@@ -1,11 +1,11 @@
 import { Suspense } from 'react';
 
-import { AdminBlocksPage } from '@/components/modules/Admin/AdminBlocksPage';
+import { BlocksPage } from '@/components/modules/Blocks/BlocksPage';
 
 export default function Page() {
   return (
     <Suspense fallback={<div className='p-6 text-sm'>Loading…</div>}>
-      <AdminBlocksPage />
+      <BlocksPage />
     </Suspense>
   );
 }

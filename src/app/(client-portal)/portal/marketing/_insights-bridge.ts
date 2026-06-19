@@ -10,8 +10,8 @@
  * size/màu/thành phần/chứng nhận) ĐƯỢC đưa vào AI thay vì chỉ text concept.
  */
 
-import { serializeCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
-import type { Block } from '@/components/modules/CanvasTemplate/block-editor/types';
+import { serializeCanvas } from '@/components/modules/block-editor/serialize';
+import type { Block } from '@/components/modules/block-editor/types';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { InsightBrief, Page, Product } from '@/services/rexer/types';
 

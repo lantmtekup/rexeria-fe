@@ -16,12 +16,9 @@ import { useLocale } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
 import * as React from 'react';
 
-import { PreviewMode } from '@/components/modules/CanvasTemplate/block-editor/PreviewMode';
-import { parseCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
-import type {
-  Block,
-  Lang,
-} from '@/components/modules/CanvasTemplate/block-editor/types';
+import { PreviewMode } from '@/components/modules/block-editor/PreviewMode';
+import { parseCanvas } from '@/components/modules/block-editor/serialize';
+import type { Block, Lang } from '@/components/modules/block-editor/types';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 

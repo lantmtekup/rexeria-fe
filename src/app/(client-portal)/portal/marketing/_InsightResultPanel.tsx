@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 
@@ -30,10 +30,10 @@ import { InsightStepsDialog } from './_InsightStepsDialog';
 import { createLandingFromBlueprint } from './_insights-bridge';
 import {
   BlocksSection,
-  buildBlocksFromCodes,
+  buildBlocksFromRecommended,
 } from '@/components/modules/Insights/steps/BlueprintBlocks';
-import { PreviewMode } from '@/components/modules/CanvasTemplate/block-editor/PreviewMode';
-import type { Lang } from '@/components/modules/CanvasTemplate/block-editor/types';
+import { PreviewMode } from '@/components/modules/block-editor/PreviewMode';
+import type { Block, Lang } from '@/components/modules/block-editor/types';
 import {
   GOAL_LABEL,
   deriveSummary,
@@ -149,15 +149,30 @@ export function InsightResultPanel({
   const status = report?.status;
   const bp = report?.blueprint;
 
-  // Landing preview: dựng từ recommended_blocks (taxonomy AI → editor block
-  // gần nhất, theo đúng thứ tự stage). KHÔNG dùng template BE handoff vì nó
-  // hiện lưu block rỗng (chưa có renderer FE). Code không map được → bỏ qua.
-  const landingBlocks = useMemo(() => {
+  // Landing preview: dựng từ recommended_blocks. Hybrid (BE 2026-06-19): block
+  // có `block_id` → dùng BLOCK THẬT của brand (fetch settings); không có →
+  // fallback editor block gần nhất theo block_type_code. Theo đúng thứ tự stage.
+  // KHÔNG dùng template BE handoff vì nó hiện lưu block rỗng (chưa có renderer).
+  const [landingBlocks, setLandingBlocks] = useState<Block[]>([]);
+  useEffect(() => {
     const stages = bp?.recommended_blocks?.blocks_by_stage ?? [];
-    const codes = stages.flatMap(s =>
-      (s.blocks ?? []).map(b => b.block_type_code)
+    const recs = stages.flatMap(s =>
+      (s.blocks ?? []).map(b => ({
+        block_id: b.block_id,
+        block_type_code: b.block_type_code,
+      }))
     );
-    return buildBlocksFromCodes(codes);
+    if (recs.length === 0) {
+      setLandingBlocks([]);
+      return;
+    }
+    let alive = true;
+    buildBlocksFromRecommended(recs).then(blocks => {
+      if (alive) setLandingBlocks(blocks);
+    });
+    return () => {
+      alive = false;
+    };
   }, [bp?.recommended_blocks]);
 
   // Tạo landing TỪ ĐÚNG block AI đã chọn (landingBlocks) → gửi canvas_blueprint

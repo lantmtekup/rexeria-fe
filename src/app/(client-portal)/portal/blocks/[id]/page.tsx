@@ -9,7 +9,7 @@
 import * as React from 'react';
 import { useParams } from 'next/navigation';
 
-import { BlockDetailView } from '@/components/modules/Admin/BlockDetailView';
+import { BlockDetailView } from '@/components/modules/Blocks/BlockDetailView';
 
 import { PortalShell } from '../../_shell';
 

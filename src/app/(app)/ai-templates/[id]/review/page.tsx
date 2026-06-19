@@ -10,7 +10,7 @@ import { Badge } from '@/components/atoms/badge';
 import { Button } from '@/components/atoms/button';
 import { Spinner } from '@/components/atoms/spinner';
 import { SectionHeader } from '@/components/molecules/SectionHeader';
-import { serializeCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
+import { serializeCanvas } from '@/components/modules/block-editor/serialize';
 import { BlockReviewCard } from '@/components/modules/CanvasTemplate/ai/BlockReviewCard';
 import { VersionHistoryDrawer } from '@/components/modules/CanvasTemplate/ai/VersionHistoryDrawer';
 import { ImageSuggestionDialog } from '@/components/dialogs/ImageSuggestionDialog';

@@ -22,9 +22,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AlertCircle, ArrowLeft, Loader2, Pencil } from 'lucide-react';
 
-import { PreviewMode } from '@/components/modules/CanvasTemplate/block-editor/PreviewMode';
-import { parseCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
-import type { Block } from '@/components/modules/CanvasTemplate/block-editor/types';
+import { PreviewMode } from '@/components/modules/block-editor/PreviewMode';
+import { parseCanvas } from '@/components/modules/block-editor/serialize';
+import type { Block } from '@/components/modules/block-editor/types';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type {

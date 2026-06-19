@@ -2,12 +2,12 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-import { createBlock } from '@/components/modules/CanvasTemplate/block-editor/factory';
+import { createBlock } from '@/components/modules/block-editor/factory';
 import type {
   Block,
   BlockContent,
   BlockType,
-} from '@/components/modules/CanvasTemplate/block-editor/types';
+} from '@/components/modules/block-editor/types';
 
 /**
  * Convert an image (or Figma frame rendered as image) into a block ready

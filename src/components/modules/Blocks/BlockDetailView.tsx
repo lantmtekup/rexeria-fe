@@ -28,7 +28,7 @@ import {
 import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
-import { BlockMiniPreview } from '@/components/modules/CanvasTemplate/block-editor/BlockMiniPreview';
+import { BlockMiniPreview } from '@/components/modules/block-editor/BlockMiniPreview';
 import {
   deleteSavedBlock,
   duplicateSavedBlock,
@@ -37,10 +37,10 @@ import {
   subscribeSavedBlocks,
   updateSavedBlockTags,
   type SavedBlock,
-} from '@/components/modules/CanvasTemplate/block-editor/savedBlocks';
-import { serializeCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
-import { BLOCK_TYPE_META } from '@/components/modules/CanvasTemplate/block-editor/types';
-import type { BlockType } from '@/components/modules/CanvasTemplate/block-editor/types';
+} from '@/components/modules/block-editor/savedBlocks';
+import { serializeCanvas } from '@/components/modules/block-editor/serialize';
+import { BLOCK_TYPE_META } from '@/components/modules/block-editor/types';
+import type { BlockType } from '@/components/modules/block-editor/types';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
 

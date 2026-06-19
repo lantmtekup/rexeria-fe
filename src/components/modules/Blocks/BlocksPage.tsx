@@ -52,21 +52,28 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/atoms/table';
-import { BlockMiniPreview } from '@/components/modules/CanvasTemplate/block-editor/BlockMiniPreview';
-import { PreviewMode } from '@/components/modules/CanvasTemplate/block-editor/PreviewMode';
+import { BlockMiniPreview } from '@/components/modules/block-editor/BlockMiniPreview';
+import { PreviewMode } from '@/components/modules/block-editor/PreviewMode';
 import { TablePagination } from '@/components/molecules/TablePagination';
-import { BLOCK_TYPE_META } from '@/components/modules/CanvasTemplate/block-editor/types';
+import { BLOCK_TYPE_META } from '@/components/modules/block-editor/types';
 import type {
   Block as EditorBlock,
   BlockType,
-} from '@/components/modules/CanvasTemplate/block-editor/types';
+} from '@/components/modules/block-editor/types';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type {
   AdminBlockType,
   Block as ServerBlock,
+  BlockStatus,
 } from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
+import {
+  BLOCK_STATUS_META,
+  BLOCK_STATUS_ORDER,
+  BlockStatusBadge,
+  effectiveBlockStatus,
+} from '@/lib/block-status';
 
 import { AddBuiltinBlockDialog } from './AddBuiltinBlockDialog';
 import { EditBlockDialog } from './EditBlockDialog';
@@ -126,7 +133,7 @@ function parseEditorBlock(
   return settings as unknown as EditorBlock;
 }
 
-export function AdminBlocksPage() {
+export function BlocksPage() {
   const router = useRouter();
   const pathname = usePathname();
   // Brand portal mounts this component at /portal/blocks. In that context the
@@ -141,6 +148,9 @@ export function AdminBlocksPage() {
   const [view, setView] = React.useState<View>('table');
   const [search, setSearch] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState<BlockType | 'all'>('all');
+  const [statusFilter, setStatusFilter] = React.useState<BlockStatus | 'all'>(
+    'all'
+  );
   const [tagFilter, setTagFilter] = React.useState<string | null>(null);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [catalogOpen, setCatalogOpen] = React.useState(false);
@@ -202,6 +212,26 @@ export function AdminBlocksPage() {
     );
   }, [blockTypes, items]);
 
+  // Số block đã có theo type_code → chip "đã có N" trong dialog thêm block.
+  const typeCounts = React.useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const it of items) m[it.type_code] = (m[it.type_code] ?? 0) + 1;
+    return m;
+  }, [items]);
+
+  // Đếm block theo trạng thái → strip thống kê (bấm = lọc nhanh).
+  const statusCounts = React.useMemo(() => {
+    const m: Record<BlockStatus, number> = {
+      draft: 0,
+      in_dev: 0,
+      review: 0,
+      changes_requested: 0,
+      published: 0,
+    };
+    for (const it of items) m[effectiveBlockStatus(it)]++;
+    return m;
+  }, [items]);
+
   // Distinct tags across all rows for the filter chip row.
   const allTags = React.useMemo(() => {
     const s = new Set<string>();
@@ -213,6 +243,8 @@ export function AdminBlocksPage() {
     const q = search.trim().toLowerCase();
     return items.filter(e => {
       if (typeFilter !== 'all' && e.type_code !== typeFilter) return false;
+      if (statusFilter !== 'all' && effectiveBlockStatus(e) !== statusFilter)
+        return false;
       if (tagFilter && !(e.tags ?? []).includes(tagFilter)) return false;
       if (!q) return true;
       return (
@@ -221,12 +253,12 @@ export function AdminBlocksPage() {
         (e.tags ?? []).some(t => t.includes(q))
       );
     });
-  }, [items, search, typeFilter, tagFilter]);
+  }, [items, search, typeFilter, statusFilter, tagFilter]);
 
   // Reset trang khi đổi filter; slice client-side cho cả grid + table.
   React.useEffect(() => {
     setPage(1);
-  }, [search, typeFilter, tagFilter]);
+  }, [search, typeFilter, statusFilter, tagFilter]);
 
   const paged = React.useMemo(
     () => filtered.slice((page - 1) * pageSize, page * pageSize),
@@ -320,10 +352,51 @@ export function AdminBlocksPage() {
               </Button>
               <Button size='sm' onClick={() => setCatalogOpen(true)}>
                 <Plus />
-                Thêm từ thư viện hệ thống
+                Tạo mới
               </Button>
             </div>
           </div>
+
+          {/* Thống kê block theo trạng thái — tile bấm để lọc + thanh tỉ lệ. */}
+          {items.length > 0 && (
+            <div className='mt-4 flex flex-col gap-3'>
+              <div className='grid grid-cols-3 gap-2.5 lg:grid-cols-6'>
+                <StatTile
+                  label='Tất cả'
+                  value={items.length}
+                  active={statusFilter === 'all'}
+                  onClick={() => setStatusFilter('all')}
+                />
+                {BLOCK_STATUS_ORDER.map(s => (
+                  <StatTile
+                    key={s}
+                    label={BLOCK_STATUS_META[s].label}
+                    value={statusCounts[s]}
+                    dot={BLOCK_STATUS_META[s].dot}
+                    active={statusFilter === s}
+                    onClick={() =>
+                      setStatusFilter(statusFilter === s ? 'all' : s)
+                    }
+                  />
+                ))}
+              </div>
+              {/* Thanh tỉ lệ: nhìn 1 phát thấy ngay phân bổ trạng thái. */}
+              <div className='bg-muted flex h-1.5 w-full overflow-hidden rounded-full'>
+                {BLOCK_STATUS_ORDER.map(s =>
+                  statusCounts[s] > 0 ? (
+                    <div
+                      key={s}
+                      className={cn('h-full', BLOCK_STATUS_META[s].dot)}
+                      style={{
+                        width: `${(statusCounts[s] / items.length) * 100}%`,
+                      }}
+                      title={`${BLOCK_STATUS_META[s].label}: ${statusCounts[s]}`}
+                    />
+                  ) : null
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Search + view toggle */}
           <div className='mt-4 flex items-center gap-3'>
@@ -370,6 +443,21 @@ export function AdminBlocksPage() {
                 ))}
               </select>
 
+              <select
+                value={statusFilter}
+                onChange={e =>
+                  setStatusFilter(e.target.value as BlockStatus | 'all')
+                }
+                className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1 text-xs font-medium outline-none'
+              >
+                <option value='all'>Tất cả trạng thái</option>
+                {BLOCK_STATUS_ORDER.map(s => (
+                  <option key={s} value={s}>
+                    {BLOCK_STATUS_META[s].label}
+                  </option>
+                ))}
+              </select>
+
               {allTags.length > 0 && (
                 <div className='flex items-center gap-1.5'>
                   <Tag className='text-muted-foreground size-3' />
@@ -386,11 +474,14 @@ export function AdminBlocksPage() {
                 </div>
               )}
 
-              {(typeFilter !== 'all' || tagFilter) && (
+              {(typeFilter !== 'all' ||
+                statusFilter !== 'all' ||
+                tagFilter) && (
                 <button
                   type='button'
                   onClick={() => {
                     setTypeFilter('all');
+                    setStatusFilter('all');
                     setTagFilter(null);
                   }}
                   className='text-3xs text-content-muted hover:text-foreground ml-1 inline-flex items-center gap-1'
@@ -472,6 +563,7 @@ export function AdminBlocksPage() {
       <AddBuiltinBlockDialog
         open={catalogOpen}
         onClose={() => setCatalogOpen(false)}
+        counts={typeCounts}
         onAdded={id => {
           load();
           openDetail(id);
@@ -645,8 +737,11 @@ function BlockCard({
           )}
         </div>
         <div className='flex flex-1 flex-col gap-1.5 p-3'>
-          <div className='text-foreground truncate text-sm font-semibold'>
-            {item.name}
+          <div className='flex items-center justify-between gap-2'>
+            <div className='text-foreground truncate text-sm font-semibold'>
+              {item.name}
+            </div>
+            <BlockStatusBadge status={item.status} className='shrink-0' />
           </div>
           <div className='text-3xs text-content-muted font-mono'>
             {item.type_code}
@@ -677,6 +772,48 @@ function BlockCard({
         </div>
       </div>
     </div>
+  );
+}
+
+/** Ô thống kê 1 trạng thái — số to, dot màu + nhãn, bấm để lọc. */
+function StatTile({
+  label,
+  value,
+  dot,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  dot?: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      className={cn(
+        'bg-card flex flex-col gap-1.5 rounded-xl border px-3.5 py-3 text-left transition-colors',
+        active
+          ? 'border-primary ring-primary/15 ring-2'
+          : 'border-border hover:border-primary/40 hover:bg-muted/40'
+      )}
+    >
+      <span className='inline-flex items-center gap-1.5'>
+        {dot ? (
+          <span className={cn('size-2 rounded-full', dot)} />
+        ) : (
+          <span className='bg-foreground/70 size-2 rounded-full' />
+        )}
+        <span className='text-content-muted truncate text-xs font-medium'>
+          {label}
+        </span>
+      </span>
+      <span className='text-2xl font-bold tracking-[-0.02em] tabular-nums'>
+        {value}
+      </span>
+    </button>
   );
 }
 
@@ -806,6 +943,7 @@ function TableView({
           <TableRow>
             <TableHead className='w-28'>Thumbnail</TableHead>
             <TableHead>Tên</TableHead>
+            <TableHead className='w-32'>Trạng thái</TableHead>
             <TableHead className='w-36'>Block type</TableHead>
             <TableHead className='w-32'>Tags</TableHead>
             <TableHead className='w-24'>Extras</TableHead>
@@ -844,6 +982,17 @@ function TableView({
                 </TableCell>
                 <TableCell>
                   <div className='font-medium'>{it.name}</div>
+                  {it.review_note && (
+                    <div
+                      className='text-3xs text-muted-foreground mt-0.5 max-w-[16rem] truncate'
+                      title={it.review_note}
+                    >
+                      📝 {it.review_note}
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <BlockStatusBadge status={it.status} />
                 </TableCell>
                 <TableCell>
                   <div className='text-foreground text-sm'>
