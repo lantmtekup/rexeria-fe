@@ -25,6 +25,7 @@ import {
   Bookmark,
   Copy,
   Eye,
+  FlaskConical,
   LayoutGrid,
   Loader2,
   MoreVertical,
@@ -411,6 +412,17 @@ export function BlocksPage() {
               </p>
             </div>
             <div className='flex items-center gap-2'>
+              {!isPortal && (
+                <Button
+                  variant='neutral'
+                  size='sm'
+                  onClick={() => router.push('/admin/blocks/preview')}
+                  title='Xem & seed block code từ src/blocks (dev)'
+                >
+                  <FlaskConical />
+                  Dev preview
+                </Button>
+              )}
               <Button
                 variant='neutral'
                 size='sm'
