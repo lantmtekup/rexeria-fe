@@ -47,7 +47,7 @@ import type {
 
 import {
   BlocksSection,
-  buildBlocksFromCodes,
+  buildBlocksFromRecommended,
 } from '@/components/modules/Insights/steps/BlueprintBlocks';
 import { createLandingFromBlueprint } from './_insights-bridge';
 import { ConfidenceRing } from '@/components/modules/Insights/steps/ui';
@@ -240,16 +240,24 @@ export function InsightStepsDialog({
   // mở BlockEditor + đúng block. BE endpoint chờ:
   // docs/be-spec-portal-page-from-blueprint-2026-06-17.md.
   const handleCreateLanding = async () => {
-    const codes = (chosenBlocks?.blocks_by_stage ?? []).flatMap(s =>
-      (s.blocks ?? []).map(b => b.block_type_code)
+    const recs = (chosenBlocks?.blocks_by_stage ?? []).flatMap(s =>
+      (s.blocks ?? []).map(b => ({
+        block_id: b.block_id,
+        block_type_code: b.block_type_code,
+      }))
     );
-    const built = buildBlocksFromCodes(codes);
-    if (!workspaceId || built.length === 0) {
+    if (!workspaceId || recs.length === 0) {
       toast.error('Chưa có block hoặc workspace để tạo landing.');
       return;
     }
     setCreatingLanding(true);
     try {
+      // Hybrid (BE 2026-06-19): block_id → block thật, else fallback catalog.
+      const built = await buildBlocksFromRecommended(recs);
+      if (built.length === 0) {
+        toast.error('Không dựng được block nào từ kết quả AI.');
+        return;
+      }
       const name = goal
         ? `Landing: ${GOAL_LABEL[goal.primary_goal]}`
         : 'Landing page';
