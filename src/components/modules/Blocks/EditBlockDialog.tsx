@@ -26,11 +26,8 @@ import { Label } from '@/components/atoms/label';
 import { Textarea } from '@/components/atoms/textarea';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type {
-  AdminBlockType,
-  Block,
-  BlockStatus,
-} from '@/services/rexer/types';
+import type { Block, BlockStatus } from '@/services/rexer/types';
+import { BLOCK_TYPE_META } from '@/components/modules/block-editor/types';
 import {
   BLOCK_STATUS_META,
   BLOCK_STATUS_ORDER,
@@ -42,8 +39,6 @@ export interface EditBlockDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Block đang sửa. Null → dialog đóng. */
   block: Block | null;
-  /** Danh sách block_type thật từ BE để chọn (nguồn /block-types). */
-  blockTypes: AdminBlockType[];
   /** Gọi sau khi PATCH thành công để list cập nhật. */
   onSaved: (updated: Block) => void;
 }
@@ -58,7 +53,6 @@ export function EditBlockDialog({
   open,
   onOpenChange,
   block,
-  blockTypes,
   onSaved,
 }: EditBlockDialogProps) {
   const [name, setName] = React.useState('');
@@ -105,19 +99,20 @@ export function EditBlockDialog({
       .finally(() => setUploading(false));
   };
 
-  // Nếu type_code hiện tại không nằm trong danh sách BE (block_type cũ/ẩn) thì
-  // vẫn cho hiển thị 1 option cho nó để select không bị trống.
+  // Options từ registry FE BLOCK_TYPE_META (nguồn duy nhất). Nếu type_code hiện
+  // tại không nằm trong registry (type cũ/đã gỡ) thì vẫn thêm 1 option để select
+  // không bị trống.
   const typeOptions = React.useMemo(() => {
-    const opts = blockTypes.map(bt => ({
-      code: bt.type,
-      label: bt.label_vi || bt.type,
+    const opts = Object.values(BLOCK_TYPE_META).map(m => ({
+      code: m.type as string,
+      label: m.adminLabel || m.label,
     }));
     const cur = block?.type_code;
     if (cur && !opts.some(o => o.code === cur)) {
       opts.unshift({ code: cur, label: `${cur} (không còn trong catalog)` });
     }
     return opts.sort((a, b) => a.label.localeCompare(b.label));
-  }, [blockTypes, block?.type_code]);
+  }, [block?.type_code]);
 
   const addTag = () => {
     const t = tagInput.trim().toLowerCase();

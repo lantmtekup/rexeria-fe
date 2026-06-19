@@ -60,7 +60,16 @@ import { useMotionPreview } from '@/components/modules/block-editor/hooks/useMot
 import { usePublishState } from '@/components/modules/block-editor/hooks/usePublishState';
 
 interface BlockEditorProps {
-  templateId: string;
+  /** Canvas template id (chế độ template/landing). Để trống khi mở ở block
+   *  mode (sửa 1 saved block trực tiếp — xem `savedBlockDirectId`). */
+  templateId?: string;
+  /**
+   * BLOCK-DIRECT mode: id của 1 saved block. Khi set (và không có templateId),
+   * editor load thẳng `blocks.get(id).settings` làm canvas, KHÔNG tạo template
+   * tạm, KHÔNG autosave-template. Lưu qua nút 🔖 (SaveBlockDialog overwrite →
+   * blocks.update). Đúng bản chất "đang sửa block".
+   */
+  savedBlockDirectId?: string;
   /**
    * When set, after canvas loads run `applyProduct(product)` once. Wired
    * from the campaign detail page link `?apply_product=<id>` so user lands
@@ -155,6 +164,7 @@ function rxErrorMessage(err: unknown): string {
 
 export function BlockEditor({
   templateId,
+  savedBlockDirectId,
   autoApplyProductId,
   pageSlug,
   pageId,
@@ -164,6 +174,8 @@ export function BlockEditor({
   onPageSlugChange,
 }: BlockEditorProps) {
   const router = useRouter();
+  // Block-direct: sửa thẳng 1 saved block, không qua canvas-template.
+  const blockMode = !!savedBlockDirectId && !templateId;
 
   // ── Hooks ───────────────────────────────────────────────────────────────
   const [template, setTemplate] = React.useState<CanvasTemplate | null>(null);
@@ -173,6 +185,8 @@ export function BlockEditor({
   const [currentVersion, setCurrentVersion] =
     React.useState<TemplateVersionType | null>(null);
   const [savingVersion, setSavingVersion] = React.useState(false);
+  // Block-direct save (blocks.update) — thay cho Save Version (template) khi block mode.
+  const [savingBlock, setSavingBlock] = React.useState(false);
   const canvas = useCanvasState();
   const deviceState = useDeviceLang();
   const selection = useElementSelection();
@@ -183,9 +197,10 @@ export function BlockEditor({
 
   // Autosave — payload built from latest canvas + publish state at save time.
   const autosave = useAutosave({
-    templateId,
+    templateId: templateId ?? '',
     version: template?.version,
-    enabled: !!template,
+    // Block mode lưu qua nút 🔖 (blocks.update), KHÔNG autosave-template.
+    enabled: !blockMode && !!template,
     buildPayload: () =>
       serializeCanvas(
         canvas.blocks,
@@ -207,7 +222,7 @@ export function BlockEditor({
 
   // AI apply-product hook (uses autosave + canvas).
   const ai = useAiApplyProduct({
-    templateId,
+    templateId: templateId ?? '',
     lang: deviceState.lang,
     getBlocks: () => canvas.blocks,
     getCanvasEtag: () => template?.canvas_etag,
@@ -231,7 +246,8 @@ export function BlockEditor({
   // `/admin/blocks` "Edit" flow appends `?saved_block_id=<id>` so the
   // save-block dialog lights up in overwrite mode instead of fork-as-new.
   const searchParams = useSearchParams();
-  const editingSavedBlockId = searchParams?.get('saved_block_id') ?? undefined;
+  const editingSavedBlockId =
+    savedBlockDirectId ?? searchParams?.get('saved_block_id') ?? undefined;
   const [layersCollapsed, setLayersCollapsed] = React.useState(false);
   // Transition cấp template (preset áp cho cả collection block). Lưu vào
   // canvas_blueprint qua serializeCanvas → public/preview render áp.
@@ -259,8 +275,58 @@ export function BlockEditor({
       setLoading(true);
       setLoadError(null);
       try {
+        // ── Block-direct mode: load thẳng từ saved block, không qua template.
+        if (blockMode && savedBlockDirectId) {
+          const blk = await withTimeout(
+            rexerApi.blocks.get(savedBlockDirectId),
+            LOAD_TIMEOUT_MS
+          );
+          if (cancelled) return;
+          const settings = blk.settings as Record<string, unknown> | undefined;
+          if (!settings || !('blockType' in settings)) {
+            setLoadError('Block không có canvas data hợp lệ để sửa.');
+            return;
+          }
+          // Roundtrip serialize→parse để chuẩn hoá shape giống template load.
+          const wire = serializeCanvas(
+            [
+              settings as unknown as Parameters<
+                typeof serializeCanvas
+              >[0][number],
+            ],
+            String(settings.id ?? '')
+          );
+          const parsed = parseCanvas(wire);
+          const blocks = parsed?.blocks ?? [];
+          // Synthetic template meta để UI render (block mode không có template thật).
+          setTemplate({
+            id: savedBlockDirectId,
+            name: blk.name,
+            description: blk.description ?? undefined,
+            width: 800,
+            height: 600,
+            engine: 'block_editor',
+            engine_version: '2.0',
+            canvas_etag: '',
+            version: 1,
+            is_active: true,
+            is_template: false,
+            thumbnail_url: blk.thumbnail_url,
+            created_by: blk.created_by,
+            updated_by: blk.updated_by,
+            created_at: blk.created_at,
+            updated_at: blk.updated_at,
+            canvas_data: wire,
+          } as CanvasTemplate);
+          canvas.reset(blocks, blocks[0]?.id ?? null);
+          setTransition(parsed?.transition ?? 'none');
+          publishState.setPublish(undefined);
+          setLoading(false);
+          return;
+        }
+
         const tplRes = await withTimeout(
-          rexerApi.templates.get(templateId),
+          rexerApi.templates.get(templateId as string),
           LOAD_TIMEOUT_MS
         );
         if (cancelled) return;
@@ -292,7 +358,7 @@ export function BlockEditor({
           let headVer: TemplateVersionType | null = null;
           try {
             const versList = await withTimeout(
-              rexerApi.templates.versions(templateId),
+              rexerApi.templates.versions(templateId!),
               LOAD_TIMEOUT_MS
             );
             const items = versList.items ?? [];
@@ -309,7 +375,7 @@ export function BlockEditor({
           const targetVerId = headVer?.id ?? currentVerId;
           if (targetVerId) {
             const ver = await withTimeout(
-              rexerApi.templates.version(templateId, targetVerId),
+              rexerApi.templates.version(templateId!, targetVerId),
               LOAD_TIMEOUT_MS
             );
             if (cancelled) return;
@@ -360,7 +426,7 @@ export function BlockEditor({
         // schema để tránh nhánh schema bị regress.
         if (tpl.draft_canvas_blueprint) {
           rexerApi.templates
-            .versions(templateId)
+            .versions(templateId!)
             .then(list => {
               if (cancelled) return;
               const head = (
@@ -479,7 +545,7 @@ export function BlockEditor({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId]);
+  }, [templateId, savedBlockDirectId, blockMode]);
 
   // Auto-apply product when launched from campaign detail link (`?apply_product=<id>`).
   const autoAppliedRef = React.useRef(false);
@@ -786,6 +852,29 @@ export function BlockEditor({
     selection.endInlineEdit();
   };
 
+  // ── Save (block-direct) ──────────────────────────────────────────────────
+  // Block mode: ghi thẳng block hiện tại về saved block (blocks.update settings
+  // + type_code đồng bộ). KHÔNG đụng template/version.
+  const handleSaveBlockDirect = async () => {
+    if (!savedBlockDirectId || !activeBlock) {
+      toast.error('Chưa có block để lưu.');
+      return;
+    }
+    setSavingBlock(true);
+    try {
+      await rexerApi.blocks.update(savedBlockDirectId, {
+        type_code: activeBlock.blockType,
+        settings: activeBlock as unknown as Record<string, unknown>,
+      });
+      autosave.reset();
+      toast.success('Đã lưu block');
+    } catch (err) {
+      toast.error(`Lưu thất bại: ${rxErrorMessage(err)}`);
+    } finally {
+      setSavingBlock(false);
+    }
+  };
+
   // ── Save Version ────────────────────────────────────────────────────────
   // Commit current draft canvas_blueprint as a new immutable version.
   // Bump LUÔN từ max(version_no) trong template — chứ ko phải từ
@@ -1041,8 +1130,12 @@ export function BlockEditor({
         }
         onApplyProduct={() => setProductPickerOpen(true)}
         onImportFromImage={() => setImportOpen(true)}
-        onDuplicate={() => setDuplicateOpen(true)}
-        onSaveBlock={activeBlock ? () => setSaveBlockOpen(true) : undefined}
+        onDuplicate={blockMode ? undefined : () => setDuplicateOpen(true)}
+        onSaveBlock={
+          !blockMode && activeBlock ? () => setSaveBlockOpen(true) : undefined
+        }
+        onSaveBlockDirect={blockMode ? handleSaveBlockDirect : undefined}
+        savingBlockDirect={savingBlock}
         onPreview={() => setPreviewing(true)}
         onUndo={() => {
           canvas.undo();
@@ -1076,7 +1169,11 @@ export function BlockEditor({
           commit point to an immutable TemplateVersion. Template mới (chưa
           có version nào) vẫn hiện bar — Save Version sẽ tạo v1.0.0 đầu
           tiên. */}
-      {template && (
+      {/* Block-direct: nút "Lưu block" đã chuyển lên header (slot CTA) thay
+          cho hàng banner riêng — bỏ 1 hàng + hết trùng status/nút. Trạng thái
+          chưa-lưu nay chỉ hiện ở SaveDot trên header. */}
+
+      {template && !blockMode && (
         <div className='border-border bg-muted/80 flex items-center justify-between gap-2 border-b px-4 py-1.5 text-xs'>
           <div className='text-content-muted flex items-center gap-2'>
             <span className='text-3xs text-muted-foreground font-mono tracking-wider uppercase'>
@@ -1195,6 +1292,7 @@ export function BlockEditor({
             onRemove={handleRemoveBlock}
             onReorder={handleReorderBlocks}
             onZoomChange={deviceState.setZoom}
+            hideTabs={blockMode}
           />
         </div>
 
@@ -1249,16 +1347,19 @@ export function BlockEditor({
         />
       )}
 
-      {/* Transition cấp template — áp cho cả collection block. */}
-      <div className='absolute bottom-4 left-4 z-40'>
-        <TransitionSelect
-          value={transition}
-          onChange={v => {
-            setTransition(v);
-            autosave.markDirty();
-          }}
-        />
-      </div>
+      {/* Transition cấp template — áp cho cả collection block. Block mode chỉ
+          có 1 block nên không cần transition giữa các block → ẩn. */}
+      {!blockMode && (
+        <div className='absolute bottom-4 left-4 z-40'>
+          <TransitionSelect
+            value={transition}
+            onChange={v => {
+              setTransition(v);
+              autosave.markDirty();
+            }}
+          />
+        </div>
+      )}
 
       {activeBlock && (
         <MotionTimelineModal
@@ -1275,7 +1376,7 @@ export function BlockEditor({
       <PublishDialog
         open={publishOpen}
         onOpenChange={setPublishOpen}
-        templateId={templateId}
+        templateId={templateId ?? ''}
         pageSlug={pageSlug}
         pageId={pageId}
         pageName={pageName}
@@ -1319,39 +1420,43 @@ export function BlockEditor({
         onConfirm={handleDuplicateConfirm}
       />
 
-      <SaveBlockDialog
-        open={saveBlockOpen}
-        block={activeBlock ?? null}
-        onOpenChange={setSaveBlockOpen}
-        editingSavedBlockId={editingSavedBlockId}
-        onOverwriteSuccess={async () => {
-          // The /admin/blocks "Edit" flow creates a throwaway canvas just to
-          // host the block during editing. After we've written the changes
-          // back to the saved-blocks library, the canvas template is garbage
-          // — clean it up so it doesn't clutter the /canvas-templates list.
-          // Guard: only auto-delete if the canvas name matches the marker the
-          // Edit flow stamps on creation (`[Editing] ...`). Prevents a
-          // hand-crafted `?saved_block_id=...` URL from nuking a real canvas.
-          const isScratch = template?.name?.startsWith('[Editing] ') ?? false;
-          if (isScratch) {
-            try {
-              await rexerApi.canvasTemplates.remove(templateId);
-            } catch (err) {
-              // eslint-disable-next-line no-console
-              console.warn(
-                '[BlockEditor] could not auto-delete scratch canvas',
-                err
-              );
+      {/* Block mode đã có nút "Lưu block" (ghi đè trực tiếp) → bỏ luôn icon +
+          popup "Cập nhật block trong thư viện" cho khỏi trùng. */}
+      {!blockMode && (
+        <SaveBlockDialog
+          open={saveBlockOpen}
+          block={activeBlock ?? null}
+          onOpenChange={setSaveBlockOpen}
+          editingSavedBlockId={editingSavedBlockId}
+          onOverwriteSuccess={async () => {
+            // The /admin/blocks "Edit" flow creates a throwaway canvas just to
+            // host the block during editing. After we've written the changes
+            // back to the saved-blocks library, the canvas template is garbage
+            // — clean it up so it doesn't clutter the /canvas-templates list.
+            // Guard: only auto-delete if the canvas name matches the marker the
+            // Edit flow stamps on creation (`[Editing] ...`). Prevents a
+            // hand-crafted `?saved_block_id=...` URL from nuking a real canvas.
+            const isScratch = template?.name?.startsWith('[Editing] ') ?? false;
+            if (isScratch) {
+              try {
+                await rexerApi.canvasTemplates.remove(templateId as string);
+              } catch (err) {
+                // eslint-disable-next-line no-console
+                console.warn(
+                  '[BlockEditor] could not auto-delete scratch canvas',
+                  err
+                );
+              }
             }
-          }
-          // Brand portal mounts the editor under /portal/blocks/.../edit.
-          // Send them back to the portal library — otherwise admin default.
-          const inPortal =
-            typeof window !== 'undefined' &&
-            window.location.pathname.startsWith('/portal/blocks');
-          router.push(inPortal ? '/portal/blocks' : '/admin/blocks');
-        }}
-      />
+            // Brand portal mounts the editor under /portal/blocks/.../edit.
+            // Send them back to the portal library — otherwise admin default.
+            const inPortal =
+              typeof window !== 'undefined' &&
+              window.location.pathname.startsWith('/portal/blocks');
+            router.push(inPortal ? '/portal/blocks' : '/admin/blocks');
+          }}
+        />
+      )}
 
       <ReviewChangesDialog
         open={ai.reviewState !== null}

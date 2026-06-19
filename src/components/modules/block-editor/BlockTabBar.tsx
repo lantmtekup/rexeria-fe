@@ -33,6 +33,8 @@ interface BlockTabBarProps {
   onRemove?: (id: string) => void;
   onReorder?: (nextOrder: Block[]) => void;
   onZoomChange: (zoom: number) => void;
+  /** Block mode: chỉ có 1 block nên ẩn dải tab + nút thêm, chỉ giữ thanh zoom. */
+  hideTabs?: boolean;
 }
 
 const ZOOM_MIN = 25;
@@ -49,10 +51,20 @@ export function BlockTabBar({
   onRemove,
   onReorder,
   onZoomChange,
+  hideTabs,
 }: BlockTabBarProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
   );
+
+  // Block mode: chỉ 1 block → bỏ dải tab + nút thêm, chỉ giữ thanh zoom (canh giữa).
+  if (hideTabs) {
+    return (
+      <div className='flex justify-center border-t border-neutral-200 bg-white px-4 py-2'>
+        <ZoomControls zoom={zoom} onChange={onZoomChange} />
+      </div>
+    );
+  }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;

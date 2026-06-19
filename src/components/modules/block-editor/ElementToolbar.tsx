@@ -11,7 +11,6 @@ import {
   ChevronDown,
   ImageIcon,
   Italic,
-  Layers,
   Loader2,
   Plus,
   RotateCcw,
@@ -113,6 +112,30 @@ const ELEMENT_LABEL: Record<string, string> = {
   [BACKGROUND_LAYER_KEY]: 'Nền',
 };
 
+/** Mọi key ảnh đều quy về kind 'image' — bắt cả các field động chưa khai báo
+ *  trong ELEMENT_KIND (vd `image2Url`, `image3Url`, `logoUrl`, `avatarUrl`).
+ *  Tránh trường hợp ảnh rơi về mặc định 'text' rồi hiện nhầm control chữ. */
+function isImageKey(key: string): boolean {
+  return (
+    /(image|photo|logo|avatar|thumbnail|picture|cover)/i.test(key) ||
+    /url$/i.test(key)
+  );
+}
+
+function resolveKind(key: string): ElementKind {
+  return ELEMENT_KIND[key] ?? (isImageKey(key) ? 'image' : 'text');
+}
+
+function resolveLabel(key: string, kind: ElementKind): string {
+  if (ELEMENT_LABEL[key]) return ELEMENT_LABEL[key];
+  if (kind === 'image') {
+    // image2Url → "Ảnh 2", imageUrl → "Ảnh".
+    const n = key.match(/(\d+)/)?.[1];
+    return n ? `Ảnh ${n}` : 'Ảnh';
+  }
+  return key;
+}
+
 interface ElementToolbarProps {
   block: Block;
   lang: Lang;
@@ -139,7 +162,6 @@ export function ElementToolbar({
   onUpdateStyle,
   onResetStyle,
   onUpdateBackground,
-  onSyncVariant,
 }: ElementToolbarProps) {
   // Tablet renders desktop layout — slim banner makes the read-only state explicit.
   if (device === 'tablet') {
@@ -155,39 +177,12 @@ export function ElementToolbar({
     );
   }
 
-  if (!selectedKey) {
-    return (
-      <div className='flex h-10 shrink-0 items-center gap-2 border-b border-neutral-200/80 bg-neutral-50/70 px-3'>
-        <Layers className='size-3 text-neutral-400' />
-        <span className='text-2xs tracking-tight text-neutral-500'>
-          Đang sửa{' '}
-          <span className='text-3xs font-mono font-semibold tracking-[0.14em] text-neutral-700 uppercase'>
-            {device === 'mobile' ? 'Mobile' : 'Desktop'}
-          </span>{' '}
-          · click vào element trên canvas (hoặc chọn lớp ở phải) để bắt đầu
-        </span>
-        {onSyncVariant && (
-          <button
-            type='button'
-            onClick={() =>
-              onSyncVariant(
-                device === 'mobile' ? 'desktop' : 'mobile',
-                device === 'mobile' ? 'mobile' : 'desktop'
-              )
-            }
-            className='text-3xs ml-auto flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-white px-2 font-semibold tracking-tight text-neutral-700 ring-1 ring-neutral-200/80 transition-colors hover:text-neutral-900 hover:ring-neutral-300'
-          >
-            {device === 'mobile'
-              ? 'Copy Desktop → Mobile'
-              : 'Copy Mobile → Desktop'}
-          </button>
-        )}
-      </div>
-    );
-  }
+  // Chưa chọn element → ẩn hẳn thanh toolbar (không hiện banner hướng dẫn) để
+  // canvas có thêm chỗ. Toolbar chỉ xuất hiện khi đang sửa 1 element cụ thể.
+  if (!selectedKey) return null;
 
-  const kind = ELEMENT_KIND[selectedKey] ?? 'text';
-  const label = ELEMENT_LABEL[selectedKey] ?? selectedKey;
+  const kind = resolveKind(selectedKey);
+  const label = resolveLabel(selectedKey, kind);
   const variant = editingVariantOf(device);
   const langContent = lang === 'vi' ? block.contentVi : block.contentEn;
   // Read content for the variant being edited, falling back to desktop

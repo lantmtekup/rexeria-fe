@@ -13,6 +13,7 @@ import {
   Package,
   Play,
   Redo2,
+  Save,
   Smartphone,
   Tablet,
   Undo2,
@@ -36,7 +37,8 @@ interface BlockEditorHeaderProps {
   onAi: () => void;
   onApplyProduct: () => void;
   onImportFromImage: () => void;
-  onDuplicate: () => void;
+  /** Optional — ẩn nút Duplicate khi không khả dụng (vd block-direct mode). */
+  onDuplicate?: () => void;
   onPreview: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -46,6 +48,14 @@ interface BlockEditorHeaderProps {
    *  /p/{slug} của page instance; share-token legacy đã bị BE gỡ). */
   onPublish?: () => void;
   onSaveBlock?: () => void;
+  /** Nhãn cho icon Bookmark — block mode dùng "Đổi tên & lưu…" để phân biệt
+   *  với nút primary "Lưu block". Mặc định "Lưu block vào thư viện". */
+  saveBlockLabel?: string;
+  /** Block-direct mode: ghi đè block thẳng (không qua dialog). Khi set →
+   *  header hiện nút primary "Lưu block" ở slot CTA (thay nút Xuất bản, vốn
+   *  vắng mặt trong block mode vì không có page để publish). */
+  onSaveBlockDirect?: () => void;
+  savingBlockDirect?: boolean;
   onPlayMotionPreview: () => void;
   onOpenMotionEditor: () => void;
   canUndo: boolean;
@@ -86,6 +96,9 @@ export function BlockEditorHeader({
   onRedo,
   onPublish,
   onSaveBlock,
+  saveBlockLabel = 'Lưu block vào thư viện',
+  onSaveBlockDirect,
+  savingBlockDirect,
   onPlayMotionPreview,
   onOpenMotionEditor,
   canUndo,
@@ -125,9 +138,6 @@ export function BlockEditorHeader({
       )}
 
       <div className='flex min-w-0 items-baseline gap-2'>
-        <span className='text-3xs font-semibold tracking-[0.18em] text-neutral-400 uppercase'>
-          Block
-        </span>
         <h1 className='truncate text-sm font-semibold tracking-tight text-neutral-900'>
           {blockName}
         </h1>
@@ -221,15 +231,17 @@ export function BlockEditorHeader({
         <IconBtn onClick={onApplyProduct} label='Áp dụng sản phẩm vào canvas'>
           <Package className='size-4' />
         </IconBtn>
-        <IconBtn
-          onClick={onDuplicate}
-          disabled={duplicating}
-          label={duplicating ? 'Đang nhân bản…' : 'Lưu thành của tôi'}
-        >
-          <Copy className='size-4' />
-        </IconBtn>
+        {onDuplicate && (
+          <IconBtn
+            onClick={onDuplicate}
+            disabled={duplicating}
+            label={duplicating ? 'Đang nhân bản…' : 'Lưu thành của tôi'}
+          >
+            <Copy className='size-4' />
+          </IconBtn>
+        )}
         {onSaveBlock ? (
-          <IconBtn onClick={onSaveBlock} label='Lưu block vào thư viện'>
+          <IconBtn onClick={onSaveBlock} label={saveBlockLabel}>
             <Bookmark className='size-4' />
           </IconBtn>
         ) : null}
@@ -252,6 +264,24 @@ export function BlockEditorHeader({
         >
           <Globe2 className='size-3.5' />
           {isPublished ? 'Đã xuất bản' : 'Xuất bản'}
+        </button>
+      ) : null}
+
+      {onSaveBlockDirect ? (
+        <button
+          type='button'
+          onClick={onSaveBlockDirect}
+          disabled={savingBlockDirect}
+          title='Ghi đè block hiện tại trong thư viện'
+          className={cn(
+            'text-2xs ml-1 flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-3 font-semibold tracking-tight transition-colors',
+            'shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_0_rgba(0,0,0,0.04)]',
+            'bg-neutral-900 text-white hover:bg-neutral-700',
+            'disabled:cursor-wait disabled:opacity-60'
+          )}
+        >
+          <Save className='size-3.5' />
+          {savingBlockDirect ? 'Đang lưu…' : 'Lưu block'}
         </button>
       ) : null}
     </header>

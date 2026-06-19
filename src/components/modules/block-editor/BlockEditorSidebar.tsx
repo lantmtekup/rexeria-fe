@@ -79,15 +79,12 @@ export function BlockEditorSidebar({
         >
           Motion
         </TabBtn>
-        <span className='text-3xs ml-auto flex items-center px-3 text-neutral-400'>
-          {isMotion ? 'Preset theo element' : 'Kéo để sắp xếp · Click để sửa'}
-        </span>
         {onCollapse && (
           <button
             type='button'
             aria-label='Ẩn bảng lớp'
             onClick={onCollapse}
-            className='flex size-9 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+            className='ml-auto flex size-9 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
           >
             <PanelRightClose className='size-4' />
           </button>

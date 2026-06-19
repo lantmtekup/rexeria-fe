@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import {
-  BlocksIcon,
   BookmarkIcon,
   ImagesIcon,
   InboxIcon,
@@ -14,6 +13,7 @@ import {
   LightbulbIcon,
   LogOutIcon,
   MegaphoneIcon,
+  MenuIcon,
   MessageSquareIcon,
   PackageIcon,
   SparklesIcon,
@@ -76,12 +76,6 @@ const NAV: NavItem[] = [
     group: 'Content',
   },
   {
-    href: '/admin/block-types',
-    labelKey: 'nav.blockTypes',
-    icon: BlocksIcon,
-    group: 'Content',
-  },
-  {
     href: '/admin/assets',
     labelKey: 'nav.assets',
     icon: ImagesIcon,
@@ -126,6 +120,20 @@ export function AdminSidebar() {
   const user = useAppSelector(s => s.auth.user);
   const locale = useLocale();
   const localeEnum = locale === 'en' ? Locale.EN : Locale.VI;
+  const [collapsed, setCollapsed] = React.useState(false);
+
+  // Khôi phục trạng thái thu gọn từ localStorage (chỉ chạy client).
+  React.useEffect(() => {
+    setCollapsed(localStorage.getItem('admin-sidebar-collapsed') === '1');
+  }, []);
+
+  const toggleCollapsed = () => {
+    setCollapsed(prev => {
+      const next = !prev;
+      localStorage.setItem('admin-sidebar-collapsed', next ? '1' : '0');
+      return next;
+    });
+  };
 
   const handleLogout = async () => {
     await dispatch(logoutThunk());
@@ -134,18 +142,41 @@ export function AdminSidebar() {
   };
 
   return (
-    <aside className='border-border bg-background flex h-screen w-60 shrink-0 flex-col border-r'>
+    <aside
+      className={cn(
+        'border-border bg-background flex h-screen shrink-0 flex-col border-r transition-[width] duration-200',
+        collapsed ? 'w-16' : 'w-60'
+      )}
+    >
       {/* Brand header */}
-      <div className='border-border flex h-14 items-center gap-2 border-b px-4'>
-        <div className='text-2xs flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-orange-500 font-mono font-bold text-white shadow-sm'>
-          RX
-        </div>
-        <div className='leading-tight'>
-          <div className='text-sm font-semibold tracking-tight'>Rexer</div>
-          <div className='text-3xs text-muted-foreground font-semibold tracking-wider uppercase'>
-            Admin Console
-          </div>
-        </div>
+      <div
+        className={cn(
+          'border-border flex h-14 items-center border-b',
+          collapsed ? 'justify-center px-2' : 'gap-2 px-4'
+        )}
+      >
+        <button
+          type='button'
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
+          aria-expanded={!collapsed}
+          className='text-content-muted hover:bg-muted hover:text-foreground flex size-8 shrink-0 items-center justify-center rounded-md transition-colors'
+        >
+          <MenuIcon className='size-5' />
+        </button>
+        {!collapsed && (
+          <>
+            <div className='text-2xs flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-orange-500 font-mono font-bold text-white shadow-sm'>
+              RX
+            </div>
+            <div className='leading-tight'>
+              <div className='text-sm font-semibold tracking-tight'>Rexer</div>
+              <div className='text-3xs text-muted-foreground font-semibold tracking-wider uppercase'>
+                Admin Console
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Nav */}
@@ -160,30 +191,33 @@ export function AdminSidebar() {
           const Icon = n.icon;
           const showGroup =
             n.group && (i === 0 || NAV[i - 1].group !== n.group);
+          const label = (() => {
+            try {
+              return t(n.labelKey);
+            } catch {
+              return n.labelKey;
+            }
+          })();
           return (
             <div key={n.href}>
-              {showGroup && (
+              {showGroup && !collapsed && (
                 <div className='text-3xs text-muted-foreground mt-3 mb-1 px-2.5 font-bold tracking-wider uppercase'>
                   {n.group}
                 </div>
               )}
               <Link
                 href={n.href}
+                title={collapsed ? label : undefined}
                 className={cn(
-                  'flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
+                  'flex items-center gap-2.5 rounded-md py-2 text-sm font-medium transition-colors',
+                  collapsed ? 'justify-center px-0' : 'px-2.5',
                   active
                     ? 'bg-foreground text-background'
                     : 'text-content-muted hover:bg-muted hover:text-foreground'
                 )}
               >
                 <Icon className='size-4 shrink-0' />
-                {(() => {
-                  try {
-                    return t(n.labelKey);
-                  } catch {
-                    return n.labelKey;
-                  }
-                })()}
+                {!collapsed && label}
               </Link>
             </div>
           );
@@ -193,35 +227,63 @@ export function AdminSidebar() {
       {/* Footer: user + logout */}
       <div className='border-border border-t p-3'>
         {user && (
-          <div className='bg-muted mb-2 flex items-center gap-2 rounded-lg px-2.5 py-2'>
-            <div className='text-3xs flex size-7 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-violet-500 font-mono font-bold text-white'>
+          <div
+            className={cn(
+              'bg-muted mb-2 flex items-center rounded-lg',
+              collapsed ? 'justify-center p-1.5' : 'gap-2 px-2.5 py-2'
+            )}
+          >
+            <div
+              className='text-3xs flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-violet-500 font-mono font-bold text-white'
+              title={
+                collapsed
+                  ? (user.display_name ?? user.email ?? undefined)
+                  : undefined
+              }
+            >
               {(user.display_name ?? user.email ?? '?')
                 .slice(0, 2)
                 .toUpperCase()}
             </div>
-            <div className='min-w-0 flex-1 leading-tight'>
-              <div className='text-foreground truncate text-xs font-semibold'>
-                {user.display_name ?? user.email}
+            {!collapsed && (
+              <div className='min-w-0 flex-1 leading-tight'>
+                <div className='text-foreground truncate text-xs font-semibold'>
+                  {user.display_name ?? user.email}
+                </div>
+                <div className='text-3xs text-content-muted truncate'>
+                  {user.role ?? user.principal_type}
+                </div>
               </div>
-              <div className='text-3xs text-content-muted truncate'>
-                {user.role ?? user.principal_type}
-              </div>
-            </div>
+            )}
           </div>
         )}
-        <div className='flex items-center justify-between gap-2'>
-          <LanguageSwitcher locale={localeEnum} variant='default' />
+        {collapsed ? (
           <Button
             type='button'
             variant='outline'
             size='sm'
             onClick={handleLogout}
-            className='gap-1'
+            aria-label={t('logout')}
+            title={t('logout')}
+            className='w-full justify-center px-0'
           >
             <LogOutIcon className='size-3.5' />
-            {t('logout')}
           </Button>
-        </div>
+        ) : (
+          <div className='flex items-center justify-between gap-2'>
+            <LanguageSwitcher locale={localeEnum} variant='default' />
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={handleLogout}
+              className='gap-1'
+            >
+              <LogOutIcon className='size-3.5' />
+              {t('logout')}
+            </Button>
+          </div>
+        )}
       </div>
     </aside>
   );
