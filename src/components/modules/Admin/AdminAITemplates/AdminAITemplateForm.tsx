@@ -11,7 +11,7 @@ import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 import { Switch } from '@/components/atoms/switch';
 import { Textarea } from '@/components/atoms/textarea';
-import { AdminTestPromptDialog } from '@/components/dialogs/AdminTestPromptDialog';
+import { AdminTestPromptDialog } from '@/components/modules/Admin/AdminAITemplates/AdminTestPromptDialog';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type {

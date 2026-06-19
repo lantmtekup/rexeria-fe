@@ -1039,9 +1039,8 @@ export interface CreateCampaignRequest {
   /** Lifecycle — defaults to `draft` when omitted. */
   status?: 'draft' | 'active' | 'paused' | 'completed';
 }
-export type UpdateCampaignRequest = Partial<
-  Omit<CreateCampaignRequest, 'product_id'>
->;
+// product_id ĐỔI được khi update (probe BE 2026-06: PATCH product_id → 200).
+export type UpdateCampaignRequest = Partial<CreateCampaignRequest>;
 export interface CampaignMetrics {
   campaign_id: string;
   utm_campaign?: string;
@@ -1880,11 +1879,10 @@ export interface AdminBlockType {
   label_en?: string;
   description_vi?: string;
   description_en?: string;
-  accent_color?: string; // hex, replaces icon
   is_active: boolean;
-  is_premium?: boolean;
-  schema_version?: string; // canvas engine version
-  sort_order?: number;
+  /** Ảnh preview block type trong catalog (BE block_type.preview_image_url). */
+  preview_image_url?: string;
+  icon_name?: string;
   created_at?: string;
   updated_at?: string;
   // Future fields (architecture spec §4.2) — not shipped by BE yet:
@@ -1913,10 +1911,7 @@ export interface CreateAdminBlockTypeRequest {
   label_en?: string;
   description_vi?: string;
   description_en?: string;
-  accent_color?: string;
-  is_premium?: boolean;
-  schema_version?: string;
-  sort_order?: number;
+  preview_image_url?: string;
   // AI recommendation taxonomy (gửi snake_case trực tiếp lên BE).
   function?: string;
   funnel_stage?: string[];
@@ -1934,11 +1929,8 @@ export interface UpdateAdminBlockTypeRequest {
   label_en?: string;
   description_vi?: string;
   description_en?: string;
-  accent_color?: string;
   is_active?: boolean;
-  is_premium?: boolean;
-  schema_version?: string;
-  sort_order?: number;
+  preview_image_url?: string;
   // AI recommendation taxonomy (gửi snake_case trực tiếp lên BE).
   function?: string;
   funnel_stage?: string[];
@@ -2000,7 +1992,12 @@ export interface CreatePortalTemplateRequest {
   width?: number;
   height?: number;
   workspace_id?: string;
+  /** OPTIONAL: clone từ template có sẵn. Bỏ trống nếu gửi `canvas_blueprint`. */
   source_template_id?: string;
+  /** Dựng landing TỪ block (đúng 1 trong source_template_id | canvas_blueprint).
+   *  CHỜ BE bỏ ràng buộc bắt buộc source_template_id — xem
+   *  docs/be-spec-portal-page-from-blueprint-2026-06-17.md. */
+  canvas_blueprint?: Record<string, unknown>;
 }
 
 // ── Portal Ads ────────────────────────────────────────────────────────────
@@ -2749,6 +2746,8 @@ export interface CreateBlockRequest {
   scope?: BlockScope;
   tags?: string[];
   description?: string;
+  /** Media asset id cho thumbnail tuỳ chỉnh (BE create nhận — block.go). */
+  thumbnail_asset_id?: string;
 }
 export interface UpdateBlockRequest {
   name?: string;
@@ -2756,11 +2755,7 @@ export interface UpdateBlockRequest {
   settings?: Record<string, unknown>;
   tags?: string[];
   thumbnail_asset_id?: string;
-  /**
-   * Đổi loại block_type của instance đã lưu. BE chưa khai báo field này trong
-   * PATCH /blocks/:id contract (2026-06) — gửi kèm; cần verify persist 2 chiều
-   * khi test (mở → đổi → lưu → mở lại). Nếu không stick thì BE cần cho phép.
-   */
+  /** Đổi loại block đã lưu — BE hỗ trợ PATCH /blocks/:id (impl 2026-06-18). */
   type_code?: string;
 }
 

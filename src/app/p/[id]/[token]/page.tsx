@@ -9,16 +9,16 @@ import { Spinner } from '@/components/atoms/spinner';
 import { AuthHydrator } from '@/components/modules/Auth/AuthHydrator';
 import { StatsAnnotationOverlay } from '@/components/modules/Analytics/StatsAnnotationOverlay';
 import { useBlockTracking, useInitTracker } from '@/lib/analytics/use-tracker';
-import { RenderBlock } from '@/components/modules/CanvasTemplate/block-editor/blocks/renderBlock';
+import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
 import {
   MotionBlockRoot,
   MotionProvider,
-} from '@/components/modules/CanvasTemplate/block-editor/motion/runtime';
-import type { BlockMotion } from '@/components/modules/CanvasTemplate/block-editor/motion/types';
+} from '@/components/modules/block-editor/motion/runtime';
+import type { BlockMotion } from '@/components/modules/block-editor/motion/types';
 import {
   parseCanvas,
   type BlockEditorCanvas,
-} from '@/components/modules/CanvasTemplate/block-editor/serialize';
+} from '@/components/modules/block-editor/serialize';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 

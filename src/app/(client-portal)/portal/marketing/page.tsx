@@ -24,6 +24,7 @@ import { rexerApi } from '@/services/rexer/endpoints';
 import type { Campaign } from '@/services/rexer/types';
 
 import { PortalShell } from '../_shell';
+import { NewCampaignDialog } from './_NewCampaignDialog';
 
 // BE chưa có marketing teams — avatar stack hiển thị placeholder cố định.
 const PLACEHOLDER_MEMBERS = ['An Bùi', 'Châu Đỗ', 'Dũng Lê', 'Hà Mai'];
@@ -33,9 +34,27 @@ interface MarketingGroup {
   createdAt?: string;
   campaigns: Campaign[];
   active: boolean;
+  /** Trạng thái đại diện của nhóm (ưu tiên active > paused > draft > completed). */
+  status: string;
   /** Tóm tắt AI-Insights lấy từ notes (nếu có) — hiện chip trên card. */
   insight?: { goalLabel?: string; handed?: boolean };
 }
+
+/** Nhãn + màu cho từng trạng thái campaign (hiện hết, kể cả nháp). */
+const CAMPAIGN_STATUS: Record<
+  string,
+  { label: string; dot: string; text: string }
+> = {
+  active: {
+    label: 'Đang chạy',
+    dot: 'bg-emerald-500',
+    text: 'text-emerald-700',
+  },
+  draft: { label: 'Nháp', dot: 'bg-amber-500', text: 'text-amber-700' },
+  paused: { label: 'Tạm dừng', dot: 'bg-orange-500', text: 'text-orange-700' },
+  completed: { label: 'Hoàn tất', dot: 'bg-blue-500', text: 'text-blue-700' },
+};
+const STATUS_RANK = ['active', 'paused', 'draft', 'completed'];
 
 function readInsight(c: Campaign): MarketingGroup['insight'] | undefined {
   try {
@@ -64,6 +83,10 @@ function groupCampaigns(items: Campaign[]): MarketingGroup[] {
       .sort()[0],
     campaigns,
     active: campaigns.some(c => c.status === 'active'),
+    status:
+      STATUS_RANK.find(s => campaigns.some(c => c.status === s)) ??
+      campaigns[0]?.status ??
+      'draft',
     insight: campaigns.map(readInsight).find(Boolean),
   }));
 }
@@ -85,6 +108,7 @@ export default function PortalMarketingPage() {
 function MarketingInner() {
   const t = useTranslations('portal');
   const [campaigns, setCampaigns] = useState<Campaign[] | null>(null);
+  const [newOpen, setNewOpen] = useState(false);
 
   const reload = useCallback(() => {
     rexerApi.campaigns
@@ -110,10 +134,8 @@ function MarketingInner() {
             review build
           </Badge>
         </div>
-        <Button size='sm' asChild>
-          <Link href='/portal/marketing/new'>
-            <Plus className='size-4' /> Add more Marketing
-          </Link>
+        <Button size='sm' onClick={() => setNewOpen(true)}>
+          <Plus className='size-4' /> Add more Marketing
         </Button>
       </header>
 
@@ -122,7 +144,7 @@ function MarketingInner() {
           <Spinner className='size-4' /> {t('marketing.loading')}
         </div>
       ) : campaigns.length === 0 ? (
-        <MarketingEmpty />
+        <MarketingEmpty onNew={() => setNewOpen(true)} />
       ) : (
         <div className='grid gap-4 xl:grid-cols-2'>
           {groupCampaigns(campaigns).map(g => (
@@ -130,6 +152,8 @@ function MarketingInner() {
           ))}
         </div>
       )}
+
+      <NewCampaignDialog open={newOpen} onOpenChange={setNewOpen} />
     </div>
   );
 }
@@ -186,14 +210,19 @@ function MarketingCard({ group }: { group: MarketingGroup }) {
         </div>
         <div>
           <p className='text-content-muted mb-1.5 text-xs'>Status</p>
-          <span className='inline-flex items-center gap-1.5 text-sm font-medium'>
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 text-sm font-medium',
+              (CAMPAIGN_STATUS[group.status] ?? CAMPAIGN_STATUS.draft).text
+            )}
+          >
             <span
               className={cn(
                 'size-2 rounded-full',
-                group.active ? 'bg-emerald-500' : 'bg-red-500'
+                (CAMPAIGN_STATUS[group.status] ?? CAMPAIGN_STATUS.draft).dot
               )}
             />
-            {group.active ? 'Active' : 'Stop'}
+            {(CAMPAIGN_STATUS[group.status] ?? CAMPAIGN_STATUS.draft).label}
           </span>
         </div>
       </Link>
@@ -232,7 +261,7 @@ function MarketingCard({ group }: { group: MarketingGroup }) {
 }
 
 /** Empty state theo Figma 2031-11972: icon + "Marketing is empty" + nút đen. */
-function MarketingEmpty() {
+function MarketingEmpty({ onNew }: { onNew: () => void }) {
   return (
     <div className='flex flex-col items-center justify-center gap-1 py-24'>
       <Network className='text-content-muted size-16' strokeWidth={1.5} />
@@ -240,10 +269,8 @@ function MarketingEmpty() {
         Marketing is empty
       </h2>
       <p className='text-content-muted text-sm'>Create your first marketing</p>
-      <Button asChild className='mt-4 rounded-full' size='lg'>
-        <Link href='/portal/marketing/new'>
-          <Plus className='size-4' /> Create Marketing
-        </Link>
+      <Button onClick={onNew} className='mt-4 rounded-full' size='lg'>
+        <Plus className='size-4' /> Create Marketing
       </Button>
     </div>
   );

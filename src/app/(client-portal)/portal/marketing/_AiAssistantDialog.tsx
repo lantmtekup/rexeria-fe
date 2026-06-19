@@ -63,18 +63,40 @@ export function AiAssistantDialog({
   const filled = coverage.filter(c => c.ok).length;
 
   const handleRun = async () => {
-    if (!workspaceId) {
-      toast.error(t('marketingAiAssistantDialog.missingWorkspace'));
-      return;
-    }
     setRunning(true);
     try {
+      // workspaceId từ useActiveWorkspace có thể là FAKE (vd 'ws_coca_main')
+      // khi editor không có ?ws= / context workspace chưa hydrate → BE reject
+      // ("Invalid request": field workspace_id phải UUID). Guard: nếu không
+      // phải UUID, lấy workspace thật (mặc định) từ /me/workspaces.
+      const isUuid = (s?: string) =>
+        !!s &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          s
+        );
+      let wsId = workspaceId;
+      if (!isUuid(wsId)) {
+        try {
+          const mem = await rexerApi.workspaces.myMemberships();
+          const w =
+            mem.find(m => (m.workspace as { is_default?: boolean }).is_default)
+              ?.workspace ?? mem[0]?.workspace;
+          wsId = w?.id;
+        } catch {
+          /* để rơi xuống check bên dưới */
+        }
+      }
+      if (!isUuid(wsId)) {
+        toast.error(t('marketingAiAssistantDialog.missingWorkspace'));
+        setRunning(false);
+        return;
+      }
       const report = await rexerApi.insights.create({
-        workspace_id: workspaceId,
+        workspace_id: wsId!,
         product_id: productId || undefined,
         campaign_id: campaignId,
         title: campaign.name
-          ? `Marketing — ${campaign.name}`
+          ? `Marketing: ${campaign.name}`
           : 'Marketing brief',
         inputs,
       });

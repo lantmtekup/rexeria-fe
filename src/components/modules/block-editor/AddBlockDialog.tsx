@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/atoms/input';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
+import { isBlockUsable } from '@/lib/block-status';
 
 import { BlockMiniPreview } from './BlockMiniPreview';
 import { createBlock } from './factory';
@@ -181,6 +182,8 @@ export function AddBlockDialog({
       beItems = [];
     }
     const items = beItems
+      // Chỉ block đã publish mới cho dựng trang (legacy status rỗng → usable).
+      .filter(isBlockUsable)
       .map(serverToSavedBlock)
       .filter((b): b is SavedBlock => b !== null);
     setSaved(items);
@@ -231,6 +234,11 @@ export function AddBlockDialog({
       onPick(entry.block.blockType);
     } else {
       onPickSaved(instantiateSavedBlock(entry));
+    }
+    // Tăng usage_count cho BE saved block (id uuid; legacy `legacy:` thì bỏ).
+    // Fire-and-forget — không chặn việc chèn block, lỗi thì nuốt.
+    if (!entry.id.startsWith('legacy:')) {
+      void rexerApi.blocks.use(entry.id).catch(() => {});
     }
     onOpenChange(false);
   };

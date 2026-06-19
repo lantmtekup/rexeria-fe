@@ -13,28 +13,28 @@ import type {
   TemplateVersion as TemplateVersionType,
 } from '@/services/rexer/types';
 
-import { AddBlockDialog } from './block-editor/AddBlockDialog';
-import { BlockEditorHeader } from './block-editor/BlockEditorHeader';
-import { BlockEditorSidebar } from './block-editor/BlockEditorSidebar';
-import { BlockPreview } from './block-editor/BlockPreview';
-import { BlockTabBar } from './block-editor/BlockTabBar';
-import { DuplicateTemplateDialog } from './block-editor/DuplicateTemplateDialog';
-import { SaveBlockDialog } from './block-editor/SaveBlockDialog';
-import { ElementToolbar } from './block-editor/ElementToolbar';
-import { ImportBlockDialog } from './block-editor/ImportBlockDialog';
-import { PreviewMode } from './block-editor/PreviewMode';
-import { TransitionSelect } from './block-editor/transitions/TransitionSelect';
-import { ProductPickerDialog } from './block-editor/ProductPickerDialog';
-import { PublishDialog } from './block-editor/PublishDialog';
-import { ReviewChangesDialog } from './block-editor/ReviewChangesDialog';
-import { MotionTimelineModal } from './block-editor/motion/timeline/MotionTimelineModal';
-import type { BlockMotion } from './block-editor/motion/types';
-import { createBlock } from './block-editor/factory';
+import { AddBlockDialog } from '@/components/modules/block-editor/AddBlockDialog';
+import { BlockEditorHeader } from '@/components/modules/block-editor/BlockEditorHeader';
+import { BlockEditorSidebar } from '@/components/modules/block-editor/BlockEditorSidebar';
+import { BlockPreview } from '@/components/modules/block-editor/BlockPreview';
+import { BlockTabBar } from '@/components/modules/block-editor/BlockTabBar';
+import { DuplicateTemplateDialog } from '@/components/modules/block-editor/DuplicateTemplateDialog';
+import { SaveBlockDialog } from '@/components/modules/block-editor/SaveBlockDialog';
+import { ElementToolbar } from '@/components/modules/block-editor/ElementToolbar';
+import { ImportBlockDialog } from '@/components/modules/block-editor/ImportBlockDialog';
+import { PreviewMode } from '@/components/modules/block-editor/PreviewMode';
+import { TransitionSelect } from '@/components/modules/block-editor/transitions/TransitionSelect';
+import { ProductPickerDialog } from '@/components/modules/block-editor/ProductPickerDialog';
+import { PublishDialog } from '@/components/modules/block-editor/PublishDialog';
+import { ReviewChangesDialog } from '@/components/modules/block-editor/ReviewChangesDialog';
+import { MotionTimelineModal } from '@/components/modules/block-editor/motion/timeline/MotionTimelineModal';
+import type { BlockMotion } from '@/components/modules/block-editor/motion/types';
+import { createBlock } from '@/components/modules/block-editor/factory';
 import {
   parseCanvas,
   seedBlocks,
   serializeCanvas,
-} from './block-editor/serialize';
+} from '@/components/modules/block-editor/serialize';
 import {
   type BlockBackground,
   type BlockContent,
@@ -43,21 +43,21 @@ import {
   type ElementStyle,
   type ElementStylesMap,
   type ExtraElementKind,
-} from './block-editor/types';
+} from '@/components/modules/block-editor/types';
 import {
   bringToFront,
   makeExtraElement,
   patchExtraElement,
   sendToBack,
-} from './block-editor/extraElements';
-import { ExtraElementToolbar } from './block-editor/ExtraElementToolbar';
-import { useAiApplyProduct } from './block-editor/hooks/useAiApplyProduct';
-import { useAutosave } from './block-editor/hooks/useAutosave';
-import { useCanvasState } from './block-editor/hooks/useCanvasState';
-import { useDeviceLang } from './block-editor/hooks/useDeviceLang';
-import { useElementSelection } from './block-editor/hooks/useElementSelection';
-import { useMotionPreview } from './block-editor/hooks/useMotionPreview';
-import { usePublishState } from './block-editor/hooks/usePublishState';
+} from '@/components/modules/block-editor/extraElements';
+import { ExtraElementToolbar } from '@/components/modules/block-editor/ExtraElementToolbar';
+import { useAiApplyProduct } from '@/components/modules/block-editor/hooks/useAiApplyProduct';
+import { useAutosave } from '@/components/modules/block-editor/hooks/useAutosave';
+import { useCanvasState } from '@/components/modules/block-editor/hooks/useCanvasState';
+import { useDeviceLang } from '@/components/modules/block-editor/hooks/useDeviceLang';
+import { useElementSelection } from '@/components/modules/block-editor/hooks/useElementSelection';
+import { useMotionPreview } from '@/components/modules/block-editor/hooks/useMotionPreview';
+import { usePublishState } from '@/components/modules/block-editor/hooks/usePublishState';
 
 interface BlockEditorProps {
   templateId: string;
@@ -676,7 +676,9 @@ export function BlockEditor({
 
   const handlePatchExtraElement = (
     id: string,
-    patch: Partial<import('./block-editor/types').ExtraElement>
+    patch: Partial<
+      import('@/components/modules/block-editor/types').ExtraElement
+    >
   ) => {
     if (tabletReadOnly()) return;
     canvas.mutateActive(b => {
@@ -925,7 +927,9 @@ export function BlockEditor({
     autosave.markDirty();
   };
 
-  const handleAddSavedBlock = (block: import('./block-editor/types').Block) => {
+  const handleAddSavedBlock = (
+    block: import('@/components/modules/block-editor/types').Block
+  ) => {
     canvas.mutate(draft => {
       draft.push(block);
     });
@@ -1055,6 +1059,9 @@ export function BlockEditor({
         canRedo={canvas.canRedo}
         isPublished={!!publishState.publish?.published}
         isMotionPreviewing={motionPreview.previewing}
+        // Back = quay lại màn làm việc trước đó (vd campaign editor) thay vì
+        // đẩy về /canvas-templates mặc định.
+        onBack={() => router.back()}
       />
 
       {loadError && (

@@ -153,6 +153,17 @@
       "openError": "Không mở được marketing",
       "loading": "Đang tải…"
     },
+    "marketingNew": {
+      "subtitle": "Nhập thông tin cơ bản để tạo nháp. Brief, AI-Insights và landing điền tiếp ở bước sau, mỗi bước tự lưu.",
+      "nameLabel": "Tên chiến dịch",
+      "namePlaceholder": "Vd: Ra mắt BST Hè 2026",
+      "productLabel": "Sản phẩm",
+      "productOptional": "(tuỳ chọn)",
+      "loadingProducts": "Đang tải sản phẩm…",
+      "noProducts": "Chưa có sản phẩm. Tạo sản phẩm trước khi tạo chiến dịch.",
+      "needName": "Nhập tên chiến dịch",
+      "createDraft": "Tạo"
+    },
     "marketingEditor": {
       "needNameProduct": "Cần tên campaign và sản phẩm (xem mục Campaign)",
       "createdToast": "Đã tạo campaign \"{name}\"",
@@ -174,7 +185,8 @@
       "loadingProducts": "Đang tải…",
       "noProducts": "Chưa có sản phẩm",
       "landingLabel": "Landing gắn kèm (đo phễu)",
-      "noInsightsHint": "Chưa chạy AI-Insights. Bấm nút AI-Assistant trên thanh đầu để phân tích từ dữ liệu Marketing.",
+      "noInsightsHint": "Chưa chạy AI-Insights. Bấm nút bên dưới để phân tích từ dữ liệu Marketing, AI sẽ đề xuất block dựng landing.",
+      "runInsights": "Chạy AI-Insights",
       "deleteTitle": "Xoá marketing?",
       "deleteDesc": "Campaign “{name}” (kèm brief) sẽ bị xoá khỏi hệ thống. Không hoàn tác được.",
       "cancel": "Huỷ",
@@ -182,7 +194,9 @@
       "deleting": "Đang xoá…",
       "createProductFirst": "+ Tạo sản phẩm trước",
       "addMore": "Thêm chiến dịch",
-      "continueCta": "Tiếp tục"
+      "continueCta": "Tiếp tục",
+      "continueHint": "Xong bước này thì bấm Tiếp tục",
+      "lastStepHint": "Bước cuối, lưu chiến dịch"
     },
     "marketingSteps": {
       "info_marketingConcept": "Định hướng tổng thể của chiến dịch — giá trị cốt lõi muốn truyền tải tới khách hàng.",
@@ -410,7 +424,9 @@
     "blocksIdEdit": {
       "missingCanvasTitle": "Thiếu canvas_id — không thể mở editor.",
       "missingCanvasDesc": "Mở lại từ trang chi tiết block để tạo canvas tạm trước khi sửa.",
-      "backToDetail": "Quay lại chi tiết"
+      "backToDetail": "Quay lại chi tiết",
+      "openEditorFailed": "Không mở được editor",
+      "resolving": "Đang resolve template…"
     },
     "media": {
       "eyebrow": "Thư viện",
@@ -710,6 +726,7 @@
       "generalTab": "Thông tin chung",
       "productTab": "Product",
       "landingTab": "Landing page",
+      "aiInsightsTab": "AI-Insights",
       "aiStrategy": "Chiến lược AI đề xuất",
       "aiUnderstanding": "AI hiểu sản phẩm",
       "aiStructure": "Cấu trúc landing AI đề xuất",
@@ -742,6 +759,7 @@
       "loadingLanding": "Đang tải landing…",
       "slug": "Đường dẫn",
       "openEditor": "Mở editor",
+      "preview": "Xem trước",
       "sourceLibrary": "Thư viện",
       "sourceComposed": "AI dựng",
       "previewTemplate": "Xem mẫu trang",

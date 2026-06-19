@@ -4,14 +4,23 @@
  * Editor campaign dùng chung create/edit (`/portal/marketing/new` + `/[id]`).
  * Layout: 1 rail dọc DUY NHẤT, gom 2 nhóm (review UX 2026-06-15):
  *   THÔNG TIN: Discovery · Concept · Assets · Sản phẩm  (nuôi AI)
- *   KẾ HOẠCH:  Chiến dịch (mục tiêu/ngân sách/kênh/thời gian) · Landing page
- *   AI:        AI-Insights (chỉ hiện khi đã chạy)
- * Bỏ tab ngang lồng trong rail (2 tầng nav đá nhau). Mỗi mục là 1 panel
+ *   KẾ HOẠCH:  AI-Insights · Landing page
+ * Tab "Chiến dịch" cũ (tên/mục tiêu/ngân sách/kênh/thời gian) đã bỏ — tên set
+ * ở popup tạo, objective/ngân sách giữ default + brief Plan đã có ngân sách
+ * (tránh trùng + rối, theo yêu cầu 2026-06-17). State `campaign` vẫn giữ default
+ * để persist BE. Bỏ tab ngang lồng trong rail (2 tầng nav đá nhau). Mỗi mục là 1 panel
  * (_CampaignPanels). BE chưa có entity Marketing → brief sống trong
  * `campaign.notes` (JSON); blueprint AI fetch 1 lần ở đây rồi truyền xuống.
  */
 
-import { ArrowLeft, FlaskConical, Plus, Sparkles, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  FlaskConical,
+  Plus,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -32,8 +41,12 @@ import type { Campaign, Product } from '@/services/rexer/types';
 import { useActiveWorkspace } from '../_workspace';
 
 import { AiAssistantDialog } from './_AiAssistantDialog';
-import { GeneralPanel, LandingPanel, ProductPanel } from './_CampaignPanels';
-import { InsightResultPanel, type InsightHandoff } from './_InsightResultPanel';
+import { LandingPanel, ProductPanel } from './_CampaignPanels';
+import {
+  InsightResultPanel,
+  type InsightHandoff,
+  type TransitionStyle,
+} from './_InsightResultPanel';
 import { marketingToInsightInputs } from './_insights-bridge';
 import { type InsightSummary } from './_insights-labels';
 import { HAPPY_CITY_BRIEF, HAPPY_CITY_CAMPAIGN } from './_seed';
@@ -55,14 +68,15 @@ type SectionKey =
   | 'landing'
   | 'insights';
 
-// Continue đi tuần tự theo rail: brief → sản phẩm → chiến dịch → landing → Lưu.
-// `insights` ngoài luồng (chỉ hiện khi đã chạy AI).
+// Continue đi tuần tự theo rail: brief → sản phẩm → AI-Insights → landing →
+// Lưu. AI-Insights là cầu nối brief→landing nên nằm ngay trước Landing (đọc
+// brief → đẻ block → Landing clone từ template thư viện AI gợi ý).
 const STEP_FLOW: SectionKey[] = [
   'discovery',
   'concept',
   'assets',
   'product',
-  'campaign',
+  'insights',
   'landing',
 ];
 const LAST_STEP: SectionKey = STEP_FLOW[STEP_FLOW.length - 1];
@@ -84,7 +98,7 @@ const RAIL_GROUPS: {
   {
     label: 'marketingCampaignTabs.groupPlan',
     items: [
-      { key: 'campaign', label: 'marketingCampaignTabs.secCampaign' },
+      { key: 'insights', label: 'marketingCampaignTabs.aiInsightsTab' },
       { key: 'landing', label: 'marketingCampaignTabs.landingTab' },
     ],
   },
@@ -138,6 +152,28 @@ function parseSummary(notes?: string): InsightSummary | undefined {
   }
 }
 
+/** Hiệu ứng chuyển trang của landing (per-landing) lưu trong notes. */
+function parseTransition(notes?: string): TransitionStyle | undefined {
+  try {
+    const v = notes ? JSON.parse(notes)?.landing_transition_style : undefined;
+    return v === 'fade' || v === 'slide' || v === 'morph' ? v : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Danh sách product_id (nhiều SP) lưu trong notes. */
+function parseProductIds(notes?: string): string[] {
+  try {
+    const a = notes ? JSON.parse(notes)?.product_ids : null;
+    return Array.isArray(a)
+      ? a.filter((x): x is string => typeof x === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+}
+
 function parseBrief(notes?: string): BriefState {
   try {
     const b = notes ? JSON.parse(notes)?.marketing_brief : null;
@@ -175,13 +211,24 @@ export function MarketingEditor({
   const ws = useActiveWorkspace();
   const [section, setSection] = useState<SectionKey>('discovery');
   const [products, setProducts] = useState<Product[] | null>(null);
-  const [productId, setProductId] = useState(initial?.product_id ?? '');
+  // Nhiều SP: primary = product_id (BE), thêm = notes.product_ids. Gộp + unique.
+  const [productIds, setProductIds] = useState<string[]>(() => {
+    const arr = [
+      ...(initial?.product_id ? [initial.product_id] : []),
+      ...parseProductIds(initial?.notes),
+    ];
+    return [...new Set(arr)];
+  });
   const [brief, setBrief] = useState<BriefState>(parseBrief(initial?.notes));
   const [assets, setAssets] = useState<AssetsState>(
     parseAssets(initial?.notes)
   );
   const [landingId, setLandingId] = useState<string | undefined>(
     initial?.landing_page_id ?? undefined
+  );
+  // Hiệu ứng chuyển trang per-landing (lưu notes, chờ BE render per-page).
+  const [landingTransition, setLandingTransition] = useState<TransitionStyle>(
+    parseTransition(initial?.notes) ?? 'fade'
   );
   const [campaign, setCampaign] = useState<CampaignState>({
     name: initial?.name ?? '',
@@ -194,12 +241,13 @@ export function MarketingEditor({
     endDate: toDateInput(initial?.end_date),
   });
   const [saving, setSaving] = useState(false);
+  const [savingStep, setSavingStep] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [reportId, setReportId] = useState<string | undefined>(
     parseReportId(initial?.notes)
   );
-  const [handoff, setHandoff] = useState<InsightHandoff | undefined>(
+  const [handoff] = useState<InsightHandoff | undefined>(
     parseHandoff(initial?.notes)
   );
   const [summary, setSummary] = useState<InsightSummary | undefined>(
@@ -216,35 +264,85 @@ export function MarketingEditor({
       .list({ limit: 50 })
       .then(r => {
         setProducts(r.items ?? []);
-        if (mode === 'create' && r.items?.[0]) setProductId(r.items[0].id);
+        if (r.items?.[0] && productIds.length === 0)
+          setProductIds([r.items[0].id]);
       })
       .catch(() => setProducts([]));
   }, [mode]);
 
-  const product = products?.find(p => p.id === productId);
+  const product = products?.find(p => p.id === productIds[0]);
 
   // Notes = nguồn lưu duy nhất cho brief/assets + liên kết AI-Insights.
   const buildNotes = (over?: {
     reportId?: string;
     handoff?: InsightHandoff;
     summary?: InsightSummary;
+    landingTransition?: TransitionStyle;
   }) =>
     JSON.stringify({
       marketing_brief: { ...brief, assets },
+      product_ids: productIds,
       insight_report_id: over?.reportId ?? reportId,
       insight_handoff: over?.handoff ?? handoff,
       insight_summary: over?.summary ?? summary,
+      landing_transition_style: over?.landingTransition ?? landingTransition,
     });
 
+  // Edit mode autosave: ghi notes ngay để brief + liên kết AI không mất khi
+  // rời trang chưa bấm Lưu. Create mode chưa có id → bỏ qua (lưu lúc bấm Tạo).
+  const persistNotes = async (over?: Parameters<typeof buildNotes>[0]) => {
+    if (mode !== 'edit' || !initial) return;
+    try {
+      await rexerApi.campaigns.update(initial.id, { notes: buildNotes(over) });
+    } catch {
+      /* không chặn flow — notes sẽ được ghi lại khi bấm Lưu */
+    }
+  };
+
+  // Autosave cả bước: PATCH toàn bộ field campaign (name/objective/budget/
+  // dates/landing/notes) mỗi khi qua bước — rời trang không mất, resume được.
+  const persistStep = async () => {
+    if (mode !== 'edit' || !initial) return;
+    await rexerApi.campaigns.update(initial.id, {
+      name: campaign.name.trim() || initial.name,
+      product_id: productIds[0] || initial.product_id,
+      objective: campaign.objective,
+      channels: campaign.channels.length ? campaign.channels : undefined,
+      budget_amount: campaign.budget ? Number(campaign.budget) : undefined,
+      budget_currency: campaign.budget ? campaign.currency : undefined,
+      start_date: campaign.startDate || undefined,
+      end_date: campaign.endDate || undefined,
+      landing_page_id: landingId,
+      notes: buildNotes(),
+    });
+  };
+
+  // Nút "Lưu" mỗi step: lưu giá trị đang nhập mà KHÔNG qua bước sau.
+  const handleSaveStep = async () => {
+    if (mode !== 'edit' || !initial) return;
+    setSavingStep(true);
+    try {
+      await persistStep();
+      toast.success(t('marketingEditor.savedToast'));
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t('marketingEditor.saveFailed')
+      );
+    } finally {
+      setSavingStep(false);
+    }
+  };
+
   const handleSave = async () => {
-    if (!campaign.name.trim() || !productId) {
+    if (!campaign.name.trim() || productIds.length === 0) {
       toast.error(t('marketingEditor.needNameProduct'));
-      setSection('campaign');
+      setSection('product');
       return;
     }
     setSaving(true);
     const body = {
       name: campaign.name.trim(),
+      product_id: productIds[0],
       brand_id: product?.brand_id,
       objective: campaign.objective,
       channels: campaign.channels.length ? campaign.channels : undefined,
@@ -259,7 +357,6 @@ export function MarketingEditor({
       if (mode === 'create') {
         await rexerApi.campaigns.create({
           ...body,
-          product_id: productId,
           status: 'active',
         });
         toast.success(
@@ -283,49 +380,41 @@ export function MarketingEditor({
     setReportId(id);
     setFreshReportId(id); // report mới → popup auto-mở 1 lần
     setSection('insights'); // nhảy sang tab kết quả
-    // Edit mode: ghi luôn vào notes để không mất khi rời trang chưa bấm Lưu.
-    if (mode === 'edit' && initial) {
-      try {
-        await rexerApi.campaigns.update(initial.id, {
-          notes: buildNotes({ reportId: id }),
-        });
-      } catch {
-        // notes sẽ được ghi lại khi user bấm Lưu — không chặn flow.
-      }
-    }
+    await persistNotes({ reportId: id });
   };
 
   // Tóm tắt kết quả AI (goal/journey/blocks) → lưu vào notes cho list card +
-  // panel hiện ngay không cần poll. Edit mode PATCH luôn.
+  // panel hiện ngay không cần poll.
   const handleSummary = async (s: InsightSummary) => {
     setSummary(s);
-    if (mode === 'edit' && initial) {
-      try {
-        await rexerApi.campaigns.update(initial.id, {
-          notes: buildNotes({ summary: s }),
-        });
-      } catch {
-        /* ghi lại khi bấm Lưu */
-      }
-    }
+    await persistNotes({ summary: s });
   };
 
-  const handleHandoff = async (h: InsightHandoff) => {
-    setHandoff(h);
+  // Tạo landing page xong (từ block đã chọn) → gắn vào campaign + sang tab
+  // Landing. Edit mode PATCH luôn để không mất khi rời trang chưa bấm Lưu.
+  const handleLandingCreated = async (
+    pageId: string,
+    transition?: TransitionStyle
+  ) => {
+    setLandingId(pageId);
+    if (transition) setLandingTransition(transition);
+    setSection('landing');
     if (mode === 'edit' && initial) {
       try {
         await rexerApi.campaigns.update(initial.id, {
-          notes: buildNotes({ handoff: h }),
+          landing_page_id: pageId,
+          // Ghi kèm transition vào notes (state set async → truyền override).
+          notes: buildNotes({ landingTransition: transition }),
         });
       } catch {
-        // ghi lại khi bấm Lưu.
+        /* sẽ lưu lại khi bấm Lưu */
       }
     }
   };
 
   // Continue đi tuần tự rail Discovery → Concept → Assets → Campaign, tới
   // Campaign thì Lưu/Tạo. Chặn sang step mới nếu section thiếu thông tin.
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (section === 'discovery' || section === 'concept') {
       const missing = missingBriefFields(section, brief);
       if (missing.length) {
@@ -351,8 +440,24 @@ export function MarketingEditor({
     }
     setShowErrors(false);
     const i = STEP_FLOW.indexOf(section);
-    if (i >= 0 && i < STEP_FLOW.length - 1) setSection(STEP_FLOW[i + 1]);
-    else handleSave();
+    if (i >= 0 && i < STEP_FLOW.length - 1) {
+      // Lưu LÊN SERVER trước khi qua bước. Server từ chối (vd 403) → báo lỗi
+      // + KHÔNG qua bước, để user biết dữ liệu chưa lên server (không im lặng).
+      setSavingStep(true);
+      try {
+        await persistStep();
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : t('marketingEditor.saveFailed')
+        );
+        return;
+      } finally {
+        setSavingStep(false);
+      }
+      setSection(STEP_FLOW[i + 1]);
+    } else {
+      handleSave(); // bước cuối: PATCH đầy đủ + về list
+    }
   };
 
   const handleDelete = async () => {
@@ -386,6 +491,8 @@ export function MarketingEditor({
               ? t('marketingEditor.createTitle')
               : (initial?.name ?? '')}
           </h1>
+          {/* Fill sample: bơm brief + campaign mẫu (HAPPY_CITY) để test nhanh —
+              đè dữ liệu đang nhập, dùng cho draft/test. */}
           <Button
             variant='outline'
             size='sm'
@@ -422,28 +529,6 @@ export function MarketingEditor({
               <Plus className='bg-foreground text-background size-4 rounded-full p-0.5' />
               {t('marketingEditor.addMore')}
             </button>
-            <button
-              type='button'
-              onClick={() => setAiOpen(true)}
-              title={t('marketingEditor.aiAssistantTitle')}
-              className='inline-flex items-center gap-1.5 bg-gradient-to-r from-sky-100 via-sky-50 to-emerald-50 px-4 text-sm font-semibold text-blue-600 transition-opacity hover:opacity-80'
-            >
-              <Sparkles className='size-4' /> AI-Assistant
-            </button>
-            <button
-              type='button'
-              onClick={handleContinue}
-              disabled={saving}
-              className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center px-5 text-sm font-semibold transition-colors disabled:opacity-60'
-            >
-              {saving
-                ? t('marketingEditor.saving')
-                : section === LAST_STEP || section === 'insights'
-                  ? mode === 'create'
-                    ? t('marketingEditor.createCta')
-                    : t('marketingEditor.saveCta')
-                  : t('marketingEditor.continueCta')}
-            </button>
           </div>
         </div>
       </div>
@@ -464,30 +549,15 @@ export function MarketingEditor({
                 ))}
               </RailGroup>
             ))}
-            {/* Nhóm AI — chỉ hiện khi đã chạy AI. */}
-            {reportId && (
-              <RailGroup label={t('marketingCampaignTabs.groupAi')}>
-                <RailItem
-                  label='AI-Insights'
-                  active={section === 'insights'}
-                  onClick={() => setSection('insights')}
-                  icon={<Sparkles className='size-4 text-blue-600' />}
-                />
-              </RailGroup>
-            )}
           </nav>
         </aside>
 
         <main className='flex-1 px-6 py-5'>
-          {section === 'campaign' ? (
-            <GeneralPanel campaign={campaign} onCampaignChange={setCampaign} />
-          ) : section === 'product' ? (
+          {section === 'product' ? (
             <ProductPanel
-              mode={mode}
               products={products}
-              productId={productId}
-              onProductIdChange={setProductId}
-              product={product}
+              productIds={productIds}
+              onProductIdsChange={setProductIds}
             />
           ) : section === 'landing' ? (
             <LandingPanel
@@ -506,13 +576,23 @@ export function MarketingEditor({
                 handoff={handoff}
                 summary={summary}
                 autoOpenId={freshReportId}
-                onHandoff={handleHandoff}
                 onSummary={handleSummary}
+                initialTransition={landingTransition}
+                onLandingCreated={handleLandingCreated}
               />
             ) : (
-              <p className='text-content-muted text-sm'>
-                {t('marketingEditor.noInsightsHint')}
-              </p>
+              <div className='border-border bg-muted/20 flex flex-col items-start gap-3 rounded-xl border p-6'>
+                <span className='inline-flex items-center gap-1.5 text-sm font-semibold'>
+                  <Sparkles className='size-4 text-blue-600' /> AI-Insights
+                </span>
+                <p className='text-content-muted max-w-md text-sm'>
+                  {t('marketingEditor.noInsightsHint')}
+                </p>
+                <Button onClick={() => setAiOpen(true)}>
+                  <Sparkles className='size-4' />{' '}
+                  {t('marketingEditor.runInsights')}
+                </Button>
+              </div>
             )
           ) : (
             <StepMarketing
@@ -524,6 +604,37 @@ export function MarketingEditor({
               showErrors={showErrors}
             />
           )}
+
+          {/* Nút Continue ngay cuối từng step — rõ ràng cho user biết khi nào
+              qua bước sau (AI-Insights có action riêng nên bỏ qua). */}
+          {section !== 'insights' && (
+            <div className='border-border mt-8 flex items-center justify-end gap-3 border-t pt-5'>
+              <span className='text-content-muted text-xs'>
+                {section === LAST_STEP
+                  ? t('marketingEditor.lastStepHint')
+                  : t('marketingEditor.continueHint')}
+              </span>
+              <Button
+                variant='neutral'
+                onClick={handleSaveStep}
+                disabled={savingStep || saving}
+              >
+                {savingStep
+                  ? t('marketingEditor.saving')
+                  : t('marketingEditor.saveCta')}
+              </Button>
+              <Button onClick={handleContinue} disabled={saving || savingStep}>
+                {saving
+                  ? t('marketingEditor.saving')
+                  : section === LAST_STEP
+                    ? mode === 'create'
+                      ? t('marketingEditor.createCta')
+                      : t('marketingEditor.saveCta')
+                    : t('marketingEditor.continueCta')}
+                {section !== LAST_STEP && <ArrowRight className='size-4' />}
+              </Button>
+            </div>
+          )}
         </main>
       </div>
 
@@ -533,7 +644,7 @@ export function MarketingEditor({
         brief={brief}
         assets={assets}
         campaign={campaign}
-        productId={productId}
+        productId={productIds[0]}
         product={product}
         campaignId={mode === 'edit' ? initial?.id : undefined}
         workspaceId={ws?.id}

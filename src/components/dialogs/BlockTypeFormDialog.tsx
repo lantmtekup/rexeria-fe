@@ -1,9 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2, X } from 'lucide-react';
+import { ImagePlus, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { uploadImageAsset } from '@/lib/upload/media-asset';
 import { cn } from '@/lib/cn';
 import { Button } from '@/components/atoms/button';
 import {
@@ -41,10 +42,7 @@ interface FormState {
   label_en: string;
   description_vi: string;
   description_en: string;
-  accent_color: string;
-  schema_version: string;
-  sort_order: string;
-  is_premium: boolean;
+  preview_image_url: string;
   is_active: boolean;
   // AI recommendation taxonomy (migration 000033).
   fn: string; // 'function' là reserved-ish — dùng `fn` trong state
@@ -65,10 +63,7 @@ function emptyState(): FormState {
     label_en: '',
     description_vi: '',
     description_en: '',
-    accent_color: '',
-    schema_version: '',
-    sort_order: '',
-    is_premium: false,
+    preview_image_url: '',
     is_active: true,
     fn: '',
     page_role: '',
@@ -89,10 +84,7 @@ function fromItem(it: AdminBlockType): FormState {
     label_en: it.label_en ?? '',
     description_vi: it.description_vi ?? '',
     description_en: it.description_en ?? '',
-    accent_color: it.accent_color ?? '',
-    schema_version: it.schema_version ?? '',
-    sort_order: it.sort_order != null ? String(it.sort_order) : '',
-    is_premium: it.is_premium ?? false,
+    preview_image_url: it.preview_image_url ?? '',
     is_active: it.is_active,
     fn: it.function ?? '',
     page_role: it.page_role ?? '',
@@ -108,8 +100,6 @@ function fromItem(it: AdminBlockType): FormState {
 
 // BE convention — block type code: snake_case, lowercase, 2-64 chars.
 const TYPE_RE = /^[a-z][a-z0-9_]{1,63}$/;
-// hex color #RGB or #RRGGBB.
-const HEX_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 // AI taxonomy options — đồng bộ enum BE (validate `oneof`).
 const FUNCTION_OPTS = [
@@ -150,6 +140,21 @@ export function BlockTypeFormDialog({
   );
   const [submitting, setSubmitting] = React.useState(false);
   const [industryInput, setIndustryInput] = React.useState('');
+  const [previewUploading, setPreviewUploading] = React.useState(false);
+  const previewFileRef = React.useRef<HTMLInputElement>(null);
+
+  const pickPreview = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setPreviewUploading(true);
+    uploadImageAsset(file)
+      .then(asset =>
+        setData(d => ({ ...d, preview_image_url: asset.public_url ?? '' }))
+      )
+      .catch(() => toast.error('Tải ảnh thất bại'))
+      .finally(() => setPreviewUploading(false));
+  };
 
   // Reset state whenever dialog re-opens with a different target.
   React.useEffect(() => {
@@ -195,21 +200,6 @@ export function BlockTypeFormDialog({
       toast.error('Label VI không được rỗng');
       return;
     }
-    const accent = data.accent_color.trim();
-    if (accent && !HEX_RE.test(accent)) {
-      toast.error('Accent color phải là hex (#RGB hoặc #RRGGBB)');
-      return;
-    }
-    let sortOrder: number | undefined;
-    if (data.sort_order.trim()) {
-      const n = Number(data.sort_order);
-      if (!Number.isFinite(n) || !Number.isInteger(n)) {
-        toast.error('Sort order phải là số nguyên');
-        return;
-      }
-      sortOrder = n;
-    }
-
     setSubmitting(true);
     try {
       if (isEdit && initial) {
@@ -218,10 +208,7 @@ export function BlockTypeFormDialog({
           label_en: data.label_en.trim() || undefined,
           description_vi: data.description_vi.trim() || undefined,
           description_en: data.description_en.trim() || undefined,
-          accent_color: accent || undefined,
-          schema_version: data.schema_version.trim() || undefined,
-          sort_order: sortOrder,
-          is_premium: data.is_premium,
+          preview_image_url: data.preview_image_url.trim() || undefined,
           is_active: data.is_active,
           function: data.fn || undefined,
           funnel_stage: data.funnel_stage,
@@ -242,10 +229,7 @@ export function BlockTypeFormDialog({
           label_en: data.label_en.trim() || undefined,
           description_vi: data.description_vi.trim() || undefined,
           description_en: data.description_en.trim() || undefined,
-          accent_color: accent || undefined,
-          schema_version: data.schema_version.trim() || undefined,
-          sort_order: sortOrder,
-          is_premium: data.is_premium,
+          preview_image_url: data.preview_image_url.trim() || undefined,
           function: data.fn || undefined,
           funnel_stage: data.funnel_stage,
           goal_tags: data.goal_tags,
@@ -360,71 +344,65 @@ export function BlockTypeFormDialog({
             </div>
           </div>
 
-          {/* Accent color + schema_version + sort_order */}
-          <div className='grid grid-cols-1 gap-3 sm:grid-cols-3'>
-            <div className='flex flex-col gap-1'>
-              <Label htmlFor='blk-accent'>Accent color</Label>
-              <div className='flex items-center gap-2'>
-                <input
-                  type='color'
-                  value={
-                    HEX_RE.test(data.accent_color)
-                      ? data.accent_color
-                      : '#888888'
-                  }
-                  onChange={e =>
-                    setData(d => ({ ...d, accent_color: e.target.value }))
-                  }
-                  className='border-border size-9 cursor-pointer rounded border bg-white p-0.5'
-                  aria-label='accent color picker'
-                />
+          {/* Preview image (ảnh đại diện block type trong catalog) */}
+          <div className='flex flex-col gap-1'>
+            <Label>Ảnh preview</Label>
+            <div className='flex items-center gap-3'>
+              <div className='border-border bg-muted relative aspect-[16/9] w-32 shrink-0 overflow-hidden rounded-lg border'>
+                {data.preview_image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={data.preview_image_url}
+                    alt='preview'
+                    className='absolute inset-0 size-full object-cover'
+                  />
+                ) : (
+                  <div className='text-muted-foreground flex size-full items-center justify-center'>
+                    <ImagePlus className='size-5' />
+                  </div>
+                )}
+              </div>
+              <div className='min-w-0 flex-1'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={() => previewFileRef.current?.click()}
+                  disabled={previewUploading}
+                >
+                  {previewUploading ? (
+                    <Loader2 className='size-3.5 animate-spin' />
+                  ) : (
+                    <ImagePlus className='size-3.5' />
+                  )}
+                  {previewUploading
+                    ? 'Đang tải…'
+                    : data.preview_image_url
+                      ? 'Đổi ảnh'
+                      : 'Tải ảnh'}
+                </Button>
                 <Input
-                  id='blk-accent'
-                  value={data.accent_color}
+                  value={data.preview_image_url}
                   onChange={e =>
-                    setData(d => ({ ...d, accent_color: e.target.value }))
+                    setData(d => ({ ...d, preview_image_url: e.target.value }))
                   }
-                  placeholder='#ff5500'
-                  className='font-mono'
+                  placeholder='hoặc dán URL ảnh…'
+                  className='mt-1.5 text-xs'
                 />
               </div>
-            </div>
-            <div className='flex flex-col gap-1'>
-              <Label htmlFor='blk-schema-ver'>Schema version</Label>
-              <Input
-                id='blk-schema-ver'
-                value={data.schema_version}
-                onChange={e =>
-                  setData(d => ({ ...d, schema_version: e.target.value }))
-                }
-                placeholder='v1'
-                className='font-mono'
-              />
-            </div>
-            <div className='flex flex-col gap-1'>
-              <Label htmlFor='blk-sort'>Sort order</Label>
-              <Input
-                id='blk-sort'
-                type='number'
-                value={data.sort_order}
-                onChange={e =>
-                  setData(d => ({ ...d, sort_order: e.target.value }))
-                }
-                placeholder='100'
+              <input
+                ref={previewFileRef}
+                type='file'
+                accept='image/*'
+                className='hidden'
+                onChange={pickPreview}
               />
             </div>
           </div>
 
-          {/* Switches */}
-          <div className='border-border bg-muted/40 flex flex-wrap items-center gap-6 rounded-lg border px-3 py-2'>
-            <label className='inline-flex cursor-pointer items-center gap-2'>
-              <Switch
-                checked={data.is_premium}
-                onCheckedChange={v => setData(d => ({ ...d, is_premium: v }))}
-              />
-              <span className='text-sm'>Premium</span>
-            </label>
-            {isEdit && (
+          {/* Active — chỉ field này có ý nghĩa ở BE (bật/tắt block khỏi catalog) */}
+          {isEdit && (
+            <div className='border-border bg-muted/40 flex items-center gap-6 rounded-lg border px-3 py-2'>
               <label className='inline-flex cursor-pointer items-center gap-2'>
                 <Switch
                   checked={data.is_active}
@@ -432,8 +410,8 @@ export function BlockTypeFormDialog({
                 />
                 <span className='text-sm'>Active</span>
               </label>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* ── AI recommendation taxonomy (migration 000033) ── */}
           <div className='border-border flex flex-col gap-4 rounded-lg border border-dashed p-3'>

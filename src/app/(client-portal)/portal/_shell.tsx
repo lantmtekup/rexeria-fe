@@ -438,12 +438,17 @@ function PortalShellInner({
               )}
             </div>
           ) : (
-            <Link
-              href='/sign-in'
+            <button
+              type='button'
+              // Hard nav (KHÔNG <Link> soft): middleware redirect /sign-in →
+              // /portal khi Router Cache còn tính dưới cookie cũ → click <Link>
+              // bị bật về /portal ("ko mở gì cả"). window.location buộc request
+              // mới qua middleware. Cùng lý do với logout (xem handleLogout).
+              onClick={() => window.location.assign('/sign-in')}
               className='bg-foreground text-background hover:bg-foreground/85 rounded-lg px-3 py-1.5 text-xs font-medium'
             >
               {t('shell.signIn')}
-            </Link>
+            </button>
           )}
         </div>
       </header>

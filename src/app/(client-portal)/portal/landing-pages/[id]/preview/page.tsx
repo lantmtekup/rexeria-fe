@@ -1,37 +1,42 @@
 'use client';
 
 /**
- * Brand-side preview of a landing page.
+ * Brand-side preview of a landing page — render THẬT từ canvas_blueprint của
+ * version page đang pin (chạy cho cả DRAFT, vì `/p/{slug}` chỉ render bản đã
+ * publish → draft 404).
  *
- * Wave 2 of FE canonical cutover: legacy canvas_data preview was tied to the
- * `/canvas-templates/:id/canvas` endpoint which is gone post-Migration 134.
- * Canonical preview will resolve:
- *   1. Page via `rexerApi.pages.get(id)` (+ active_release_id)
- *   2. Template version (canvas_blueprint + slot_schema)
- *   3. Latest page_revision (config_json slot values)
- *   4. Merge slot bindings → renderable block tree → existing RenderBlock pipe
- *
- * This stitching lives in a yet-to-be-built `lib/renderPage.ts` (Wave 3).
- * For now this route renders a placeholder so brands know preview is being
- * rebuilt rather than hitting a 404.
+ * Resolve: pages.get(id) → template_version_id → (fan-out templates) template_id
+ * → templates.version(template_id, version_id).canvas_blueprint → parseCanvas →
+ * blocks → <PreviewMode> (render client-side, không cần publish).
+ * External landing (external_url) → mở thẳng URL ngoài.
  */
 
-import * as React from 'react';
-import { useTranslations } from 'next-intl';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Construction, Loader2 } from 'lucide-react';
+import * as React from 'react';
 
+import { PreviewMode } from '@/components/modules/block-editor/PreviewMode';
+import { parseCanvas } from '@/components/modules/block-editor/serialize';
+import type { Block, Lang } from '@/components/modules/block-editor/types';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { Page } from '@/services/rexer/types';
+
+function rxMessage(err: unknown): string {
+  if (err instanceof RxApiError) return err.code || err.message || 'API_ERROR';
+  if (err instanceof Error) return err.message;
+  return 'LOAD_FAILED';
+}
 
 export default function PortalLandingPreviewPage() {
-  const t = useTranslations('portal');
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const locale = useLocale();
+  const lang: Lang = locale === 'en' ? 'en' : 'vi';
   const id = params?.id ?? '';
 
-  const [page, setPage] = React.useState<Page | null>(null);
+  const [blocks, setBlocks] = React.useState<Block[] | null>(null);
+  const [transition, setTransition] = React.useState<string | undefined>();
   const [status, setStatus] = React.useState<'loading' | 'ok' | 'error'>(
     'loading'
   );
@@ -40,23 +45,52 @@ export default function PortalLandingPreviewPage() {
   React.useEffect(() => {
     if (!id) return;
     let cancelled = false;
+    setStatus('loading');
+    setError(null);
+
     (async () => {
-      setStatus('loading');
       try {
-        const p = await rexerApi.pages.get(id);
+        const page = await rexerApi.pages.get(id);
         if (cancelled) return;
-        setPage(p);
+        // External landing → mở URL ngoài, không render canvas.
+        if (page.external_url) {
+          window.location.href = page.external_url;
+          return;
+        }
+        const versionId = page.template_version_id;
+        if (!versionId) throw new Error('Page chưa có template_version_id');
+
+        // version_id → template_id: fan-out (BE chưa có GET version theo id).
+        const templates = await rexerApi.templates.list({ limit: 500 });
+        const items = templates.items ?? [];
+        const matches = await Promise.all(
+          items.map(async tpl => {
+            if (tpl.current_version_id === versionId) return tpl;
+            try {
+              const vl = await rexerApi.templates.versions(tpl.id);
+              return (vl.items ?? []).some(v => v.id === versionId)
+                ? tpl
+                : null;
+            } catch {
+              return null;
+            }
+          })
+        );
+        const tpl = matches.find(Boolean);
+        if (!tpl) throw new Error('Không tìm thấy template chứa version');
+
+        const ver = await rexerApi.templates.version(tpl.id, versionId);
+        if (cancelled) return;
+        const parsed = parseCanvas(ver.canvas_blueprint);
+        const bp = ver.canvas_blueprint as { transition?: string } | undefined;
+        setBlocks(parsed?.blocks ?? []);
+        setTransition(bp?.transition);
         setStatus('ok');
       } catch (err) {
-        if (cancelled) return;
-        setStatus('error');
-        const msg =
-          err instanceof RxApiError
-            ? err.code || err.message
-            : err instanceof Error
-              ? err.message
-              : 'LOAD_FAILED';
-        setError(msg);
+        if (!cancelled) {
+          setError(rxMessage(err));
+          setStatus('error');
+        }
       }
     })();
     return () => {
@@ -72,46 +106,53 @@ export default function PortalLandingPreviewPage() {
     );
   }
 
-  return (
-    <div className='mx-auto max-w-2xl p-10'>
-      <button
-        type='button'
-        onClick={() => router.push('/portal/landing-pages')}
-        className='text-content-muted hover:text-foreground inline-flex items-center gap-1.5 text-sm'
-      >
-        <ArrowLeft className='size-4' /> Landing pages
-      </button>
-      <div className='mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center'>
-        <Construction className='mx-auto size-7 text-amber-700' />
-        <p className='mt-3 text-sm font-semibold text-amber-900'>
-          {t('landingPagesIdPreview.rebuildingTitle')}
-        </p>
-        <p className='mt-2 text-xs text-amber-800'>
-          {t('landingPagesIdPreview.rebuildingDesc')}
-        </p>
-        {status === 'error' && (
-          <p className='text-3xs mt-2 font-mono text-amber-800/80'>
-            (debug) {error}
+  if (status === 'error' || !blocks) {
+    return (
+      <div className='mx-auto max-w-2xl p-10'>
+        <button
+          type='button'
+          onClick={() => router.push('/portal/landing-pages')}
+          className='text-content-muted hover:text-foreground inline-flex items-center gap-1.5 text-sm'
+        >
+          <ArrowLeft className='size-4' /> Landing pages
+        </button>
+        <div className='border-destructive/20 bg-danger-bg mt-8 rounded-2xl border p-8 text-center'>
+          <p className='text-destructive text-sm font-semibold'>
+            Không tải được preview
           </p>
-        )}
-        {page && (
-          <div className='text-2xs bg-card mt-4 inline-flex flex-col gap-1 rounded-lg border border-amber-300 px-4 py-3 text-left'>
-            <div>
-              <span className='text-content-muted'>Page:</span>{' '}
-              <strong>{page.name}</strong>
-            </div>
-            <div>
-              <span className='text-content-muted'>Status:</span> {page.status}
-            </div>
-            <div>
-              <span className='text-content-muted'>Type:</span> {page.type}
-            </div>
-            <div className='text-3xs text-content-muted font-mono'>
-              {page.id}
-            </div>
-          </div>
-        )}
+          {error && (
+            <p className='text-2xs text-destructive/80 mt-1 font-mono'>
+              {error}
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+    );
+  }
+
+  if (blocks.length === 0) {
+    return (
+      <div className='mx-auto max-w-2xl p-10 text-center'>
+        <button
+          type='button'
+          onClick={() => router.back()}
+          className='text-content-muted hover:text-foreground inline-flex items-center gap-1.5 text-sm'
+        >
+          <ArrowLeft className='size-4' /> Quay lại
+        </button>
+        <p className='text-content-muted mt-8 text-sm'>
+          Landing chưa có block nào để xem trước.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <PreviewMode
+      blocks={blocks}
+      lang={lang}
+      transition={transition}
+      onClose={() => router.back()}
+    />
   );
 }

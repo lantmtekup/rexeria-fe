@@ -10,19 +10,19 @@
 
 import * as React from 'react';
 
-import { RenderBlock } from '@/components/modules/CanvasTemplate/block-editor/blocks/renderBlock';
+import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
 import {
   MotionBlockRoot,
   MotionProvider,
-} from '@/components/modules/CanvasTemplate/block-editor/motion/runtime';
-import type { BlockMotion } from '@/components/modules/CanvasTemplate/block-editor/motion/types';
-import { parseCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
-import { SmoothScroll } from '@/components/modules/CanvasTemplate/block-editor/transitions/SmoothScroll';
+} from '@/components/modules/block-editor/motion/runtime';
+import type { BlockMotion } from '@/components/modules/block-editor/motion/types';
+import { parseCanvas } from '@/components/modules/block-editor/serialize';
+import { SmoothScroll } from '@/components/modules/block-editor/transitions/SmoothScroll';
 import {
   TemplateTransitions,
   asTransition,
   isVerticalTransition,
-} from '@/components/modules/CanvasTemplate/block-editor/transitions/TemplateTransitions';
+} from '@/components/modules/block-editor/transitions/TemplateTransitions';
 import { brandKitToCssVars, type BrandKitData } from '@/lib/brand-kit';
 import type { MotionKitData, Page } from '@/services/rexer/types';
 

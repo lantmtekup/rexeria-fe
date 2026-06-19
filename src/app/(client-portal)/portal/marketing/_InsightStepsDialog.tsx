@@ -39,7 +39,6 @@ import type {
   InsightBlueprintGoal,
   InsightBlueprintJourney,
   InsightBlueprintBlocks,
-  InsightBlueprintTemplates,
   InsightJourneyStage,
   InsightReport,
   InsightReportStep,
@@ -48,13 +47,14 @@ import type {
 
 import {
   BlocksSection,
-  TemplatesSection,
+  buildBlocksFromCodes,
 } from '@/components/modules/Insights/steps/BlueprintBlocks';
+import { createLandingFromBlueprint } from './_insights-bridge';
 import { ConfidenceRing } from '@/components/modules/Insights/steps/ui';
 
 import { GOAL_LABEL, type InsightSummary } from './_insights-labels';
 
-const STEPS = ['Experience Goal', 'Customer Journey', 'Blocks', 'Templates'];
+const STEPS = ['Experience Goal', 'Customer Journey', 'Blocks', 'Landing'];
 const GOAL_OPTIONS = Object.keys(GOAL_LABEL) as (keyof typeof GOAL_LABEL)[];
 
 /* ── Trích output_payload của từng step trace (canonical key) ───────────── */
@@ -79,14 +79,6 @@ function asBlocks(s?: InsightReportStep): InsightBlueprintBlocks | undefined {
     ? (o as InsightBlueprintBlocks)
     : undefined;
 }
-function asTemplates(
-  s?: InsightReportStep
-): InsightBlueprintTemplates | undefined {
-  const o = s?.output_payload as Partial<InsightBlueprintTemplates> | undefined;
-  return Array.isArray(o?.templates)
-    ? (o as InsightBlueprintTemplates)
-    : undefined;
-}
 
 export function InsightStepsDialog({
   open,
@@ -95,9 +87,8 @@ export function InsightStepsDialog({
   brief,
   workspaceId,
   savedGoal,
-  applying,
-  onApply,
   onSaved,
+  onLandingCreated,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -107,11 +98,10 @@ export function InsightStepsDialog({
   workspaceId?: string;
   /** Goal đã sửa lần trước (lưu trong notes) — seed lại khi mở. */
   savedGoal?: InsightBlueprintGoal;
-  applying?: boolean;
-  /** Bấm "Áp dụng" ở step cuối → handoff dựng template. */
-  onApply: () => void;
   /** Lưu chỉnh sửa: PATCH journey/blocks lên BE + đẩy summary (kèm goal) lên. */
   onSaved?: (s: InsightSummary) => void;
+  /** Tạo landing page xong (từ block đã chọn) → editor gắn campaign.landing_page_id. */
+  onLandingCreated?: (pageId: string) => void;
 }) {
   const t = useTranslations('portal');
   const [step, setStep] = useState(0);
@@ -123,9 +113,9 @@ export function InsightStepsDialog({
   );
   const [ovJourney, setOvJourney] = useState<InsightBlueprintJourney>();
   const [ovBlocks, setOvBlocks] = useState<InsightBlueprintBlocks>();
-  const [ovTemplates, setOvTemplates] = useState<InsightBlueprintTemplates>();
   // Block đã chọn cho mỗi stage (1/stage). Trống → mặc định block đầu của stage.
   const [selBlocks, setSelBlocks] = useState<Record<string, string>>({});
+  const [creatingLanding, setCreatingLanding] = useState(false);
 
   const bp = report.blueprint;
   const running = report.status === 'queued' || report.status === 'running';
@@ -142,10 +132,6 @@ export function InsightStepsDialog({
     ovBlocks ??
     asBlocks(stepOf(report, 'recommend_blocks')) ??
     bp?.recommended_blocks;
-  const templates =
-    ovTemplates ??
-    asTemplates(stepOf(report, 'recommend_templates')) ??
-    bp?.recommended_templates;
 
   // Loading mỗi step: chưa có data + report còn đang chạy (step đó chưa xong).
   const goalLoading =
@@ -217,7 +203,6 @@ export function InsightStepsDialog({
         const r = await rexerApi.insights.get(rep.id);
         if (r.status === 'succeeded') {
           setOvBlocks(r.blueprint?.recommended_blocks);
-          setOvTemplates(r.blueprint?.recommended_templates);
           toast.success(t('marketingInsightStepsDialog.regeneratedBlocks'));
           return;
         }
@@ -236,10 +221,6 @@ export function InsightStepsDialog({
   const regenerate = [regenGoal, regenJourney, regenBlocks, regenBlocks][step];
   const blockCount =
     blocks?.blocks_by_stage?.reduce((n, s) => n + s.blocks.length, 0) ?? 0;
-  const templatesLoading =
-    !templates?.templates?.length &&
-    running &&
-    !isDone(stepOf(report, 'recommend_templates'));
   const canApply = report.status === 'succeeded';
 
   // Lưu chỉnh sửa: journey/blocks lên BE (KB3 — BE chỉ nhận 2 phần này);
@@ -252,6 +233,60 @@ export function InsightStepsDialog({
         s.blocks.find(b => b.block_type_code === code) ?? s.blocks[0];
       return { ...s, blocks: pick ? [pick] : s.blocks };
     }),
+  };
+
+  // Step cuối: tạo landing TỪ ĐÚNG block đã chọn (chosenBlocks, 1/stage) → gửi
+  // canvas_blueprint lên BE (from-blueprint). Landing ra là block template →
+  // mở BlockEditor + đúng block. BE endpoint chờ:
+  // docs/be-spec-portal-page-from-blueprint-2026-06-17.md.
+  const handleCreateLanding = async () => {
+    const codes = (chosenBlocks?.blocks_by_stage ?? []).flatMap(s =>
+      (s.blocks ?? []).map(b => b.block_type_code)
+    );
+    const built = buildBlocksFromCodes(codes);
+    if (!workspaceId || built.length === 0) {
+      toast.error('Chưa có block hoặc workspace để tạo landing.');
+      return;
+    }
+    setCreatingLanding(true);
+    try {
+      const name = goal
+        ? `Landing: ${GOAL_LABEL[goal.primary_goal]}`
+        : 'Landing page';
+      const page = await createLandingFromBlueprint(built, name, workspaceId);
+      onLandingCreated?.(page.id);
+      toast.success('Đã tạo landing page từ block đã chọn.');
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Tạo landing page thất bại.'
+      );
+    } finally {
+      setCreatingLanding(false);
+    }
+  };
+
+  // Auto-save IM LẶNG (không toast) — gọi khi chuyển step / đóng dialog để
+  // block thêm thủ công + chỉnh journey không mất khi đã qua step mới.
+  const persistSilently = async () => {
+    if (!onSaved) return; // dialog read-only (không có onSaved) → bỏ qua
+    if (!journey && !chosenBlocks) return;
+    try {
+      await rexerApi.insights.updateBlueprint(report.id, {
+        customer_journey: journey,
+        recommended_blocks: chosenBlocks,
+      });
+      onSaved({
+        status: 'succeeded',
+        goal: goal?.primary_goal,
+        goalLabel: goal ? GOAL_LABEL[goal.primary_goal] : undefined,
+        goalEdit: goal,
+        journeyName: journey?.journey_pattern_name,
+        blockCount: chosenBlocks?.blocks_by_stage.length ?? blockCount,
+      });
+    } catch {
+      /* im lặng — không chặn nav; bấm "Lưu" để retry hiện lỗi rõ */
+    }
   };
 
   const handleSaveEdits = async () => {
@@ -280,7 +315,14 @@ export function InsightStepsDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={o => {
+        // Đóng dialog (X / click ngoài) → persist nốt edit chưa lưu.
+        if (!o) void persistSilently();
+        onOpenChange(o);
+      }}
+    >
       <DialogContent className='max-h-[90vh] !w-[96vw] !max-w-[1150px]'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
@@ -359,6 +401,7 @@ export function InsightStepsDialog({
                   onSelectBlock={(sk, c) =>
                     setSelBlocks(p => ({ ...p, [sk]: c }))
                   }
+                  onBlocksChange={setOvBlocks}
                 />
               )}
             </StepBody>
@@ -366,13 +409,17 @@ export function InsightStepsDialog({
 
           {step === 3 && (
             <StepBody
-              loading={templatesLoading}
-              empty={!templates?.templates?.length}
+              loading={false}
+              empty={!chosenBlocks?.blocks_by_stage?.length}
               failed={failed}
             >
-              {!!templates?.templates?.length && (
-                <TemplatesSection
-                  blueprint={{ recommended_templates: templates }}
+              <p className='text-content-muted mb-2 text-xs'>
+                Landing page sẽ được dựng từ các block đã chọn dưới đây.
+              </p>
+              {!!chosenBlocks?.blocks_by_stage?.length && (
+                <BlocksSection
+                  blueprint={{ recommended_blocks: chosenBlocks }}
+                  reportId={report.id}
                   collapsible={false}
                 />
               )}
@@ -385,7 +432,10 @@ export function InsightStepsDialog({
           <Button
             variant='ghost'
             size='sm'
-            onClick={() => setStep(s => s - 1)}
+            onClick={() => {
+              void persistSilently();
+              setStep(s => s - 1);
+            }}
             disabled={step === 0 || busy}
           >
             Back
@@ -408,7 +458,7 @@ export function InsightStepsDialog({
               variant='outline'
               size='sm'
               onClick={regenerate}
-              disabled={busy || applying}
+              disabled={busy || creatingLanding}
             >
               {busy ? (
                 <Loader2 className='size-4 animate-spin' />
@@ -420,7 +470,10 @@ export function InsightStepsDialog({
             {step < STEPS.length - 1 ? (
               <Button
                 size='sm'
-                onClick={() => setStep(s => s + 1)}
+                onClick={() => {
+                  void persistSilently();
+                  setStep(s => s + 1);
+                }}
                 disabled={busy}
               >
                 Next
@@ -428,17 +481,22 @@ export function InsightStepsDialog({
             ) : (
               <Button
                 size='sm'
-                onClick={onApply}
-                disabled={busy || applying || !canApply}
+                onClick={handleCreateLanding}
+                disabled={busy || creatingLanding || !canApply}
                 title={
                   canApply
                     ? undefined
                     : t('marketingInsightStepsDialog.applyTooltip')
                 }
               >
-                {applying
-                  ? t('marketingInsightStepsDialog.building')
-                  : t('marketingInsightStepsDialog.apply')}
+                {creatingLanding ? (
+                  <>
+                    <Loader2 className='size-4 animate-spin' /> Đang tạo
+                    landing…
+                  </>
+                ) : (
+                  'Tạo landing page'
+                )}
               </Button>
             )}
           </div>

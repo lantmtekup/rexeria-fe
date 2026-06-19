@@ -21,7 +21,7 @@ import { useSearchParams } from 'next/navigation';
 import { Loader2, AlertCircle } from 'lucide-react';
 
 import { BlockEditor } from '@/components/modules/CanvasTemplate/BlockEditor';
-import { CodeTemplatePageEditor } from '@/components/modules/Admin/CodeTemplatePageEditor';
+import { CodeTemplatePageEditor } from '@/components/modules/Template/CodeTemplatePageEditor';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Page, Template } from '@/services/rexer/types';

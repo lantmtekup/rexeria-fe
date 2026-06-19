@@ -1,7 +1,7 @@
 import { use } from 'react';
 import { MoreVertical, Plus } from 'lucide-react';
 
-import { CampaignAnalyticsDialog } from '@/components/dialogs/CampaignAnalyticsDialog';
+import { CampaignAnalyticsDialog } from '@/components/modules/Marketing/CampaignAnalyticsDialog';
 import { FeatureField } from '@/components/molecules/FeatureField';
 import { MarketingDetailShell } from '@/components/modules/Product/MarketingDetailShell';
 import {

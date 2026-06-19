@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 
-import { AdminBlocksPage } from '@/components/modules/Admin/AdminBlocksPage';
+import { BlocksPage } from '@/components/modules/Blocks/BlocksPage';
 
 import { PortalShell } from '../_shell';
 
@@ -22,7 +22,7 @@ export default function PortalBlocksPage() {
           <div className='text-content-muted p-6 text-sm'>Loading…</div>
         }
       >
-        <AdminBlocksPage />
+        <BlocksPage />
       </Suspense>
     </PortalShell>
   );

@@ -22,13 +22,10 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
-import { BlockMiniPreview } from '@/components/modules/CanvasTemplate/block-editor/BlockMiniPreview';
-import { parseCanvas } from '@/components/modules/CanvasTemplate/block-editor/serialize';
-import { BLOCK_TYPE_META } from '@/components/modules/CanvasTemplate/block-editor/types';
-import type {
-  Block,
-  BlockType,
-} from '@/components/modules/CanvasTemplate/block-editor/types';
+import { BlockMiniPreview } from '@/components/modules/block-editor/BlockMiniPreview';
+import { parseCanvas } from '@/components/modules/block-editor/serialize';
+import { BLOCK_TYPE_META } from '@/components/modules/block-editor/types';
+import type { Block, BlockType } from '@/components/modules/block-editor/types';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { BlockBreakdownRow } from '@/services/rexer/types';
 import { getCodeTemplate } from '@/templates/registry';

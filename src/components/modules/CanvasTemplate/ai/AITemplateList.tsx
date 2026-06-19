@@ -9,7 +9,7 @@ import { Input } from '@/components/atoms/input';
 import { Spinner } from '@/components/atoms/spinner';
 import { EmptyState } from '@/components/molecules/EmptyState';
 import { SectionHeader } from '@/components/molecules/SectionHeader';
-import { AIInputFormDialog } from '@/components/dialogs/AIInputFormDialog';
+import { AIInputFormDialog } from '@/components/modules/CanvasTemplate/ai/AIInputFormDialog';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type { AITemplate } from '@/services/rexer/types';

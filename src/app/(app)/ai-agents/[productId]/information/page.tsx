@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
 import { Spinner } from '@/components/atoms/spinner';
-import { ProductPickerDialog } from '@/components/modules/CanvasTemplate/block-editor/ProductPickerDialog';
+import { ProductPickerDialog } from '@/components/modules/block-editor/ProductPickerDialog';
 import {
   ProductInformationEditor,
   emptyProductInformation,

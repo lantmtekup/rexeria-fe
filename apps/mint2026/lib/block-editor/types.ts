@@ -462,6 +462,13 @@ export interface ImageTrailContent {
    * rê chuột thật thì tự tắt. Default false.
    */
   autoDemo?: boolean;
+  /**
+   * Khi `autoDemo` bật: thay vì lang thang ngẫu nhiên, con trỏ ảo vẽ theo nét
+   * của chuỗi này (ví dụ "2026" hoặc "M") → các ảnh xếp thành hình chữ/số rồi
+   * giữ một nhịp, mờ đi và lặp lại. Hỗ trợ ký tự: 0-9 và M. Default rỗng (lang
+   * thang ngẫu nhiên như cũ).
+   */
+  autoDemoText?: string;
 }
 
 /**

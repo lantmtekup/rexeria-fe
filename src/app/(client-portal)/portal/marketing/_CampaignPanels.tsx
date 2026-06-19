@@ -10,122 +10,125 @@
  * KẾT QUẢ: block đã chọn + đúng 1 template (không phải list lúc suggestion).
  */
 
-import { ArrowUpRight, Eye, Layers, Package, Pencil } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Check,
+  Eye,
+  Layers,
+  Package,
+  Pencil,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/atoms/badge';
+import { Button } from '@/components/atoms/button';
 import { Label } from '@/components/atoms/label';
-import { LandingPagePicker } from '@/components/molecules/LandingPagePicker';
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Page, Product } from '@/services/rexer/types';
 
-import { StepCampaign, type CampaignState } from './_steps';
-
-const SELECT_CLASS =
-  'border-input bg-background h-10 w-full rounded-md border px-3 text-sm outline-none disabled:opacity-60';
-
 const PANEL_CLASS = 'flex max-w-2xl flex-col gap-4';
-
-// ── KẾ HOẠCH · Chiến dịch ─────────────────────────────────────────────────────
-
-/** Panel "Chiến dịch": chỉ tham số campaign (gợi ý AI nằm ở tab AI-Insights). */
-export function GeneralPanel({
-  campaign,
-  onCampaignChange,
-}: {
-  campaign: CampaignState;
-  onCampaignChange: (c: CampaignState) => void;
-}) {
-  return (
-    <div className={PANEL_CLASS}>
-      <StepCampaign value={campaign} onChange={onCampaignChange} />
-    </div>
-  );
-}
 
 // ── THÔNG TIN · Sản phẩm ──────────────────────────────────────────────────────
 
 /** Panel "Sản phẩm": chọn product + chi tiết điểm bán. */
 export function ProductPanel({
-  mode,
   products,
-  productId,
-  onProductIdChange,
-  product,
+  productIds,
+  onProductIdsChange,
 }: {
-  mode: 'create' | 'edit';
   products: Product[] | null;
-  productId: string;
-  onProductIdChange: (id: string) => void;
-  product?: Product;
+  productIds: string[];
+  onProductIdsChange: (ids: string[]) => void;
 }) {
   const t = useTranslations('portal');
+  // Chọn nhiều SP. Primary = phần tử đầu (→ campaign.product_id). Không cho bỏ
+  // hết vì BE cần ≥1 product_id.
+  const toggle = (id: string) => {
+    const has = productIds.includes(id);
+    if (has && productIds.length === 1) return;
+    onProductIdsChange(
+      has ? productIds.filter(x => x !== id) : [...productIds, id]
+    );
+  };
+  const selected = (products ?? []).filter(p => productIds.includes(p.id));
+
   return (
     <div className={PANEL_CLASS}>
       <div className='grid gap-1.5'>
-        <Label htmlFor='me-product'>{t('marketingEditor.productLabel')}</Label>
-        <select
-          id='me-product'
-          className={SELECT_CLASS}
-          value={productId}
-          onChange={e => onProductIdChange(e.target.value)}
-          disabled={mode === 'edit' || !products?.length}
-        >
-          {products === null && (
-            <option>{t('marketingEditor.loadingProducts')}</option>
+        <Label>
+          {t('marketingEditor.productLabel')}
+          {productIds.length > 0 && (
+            <span className='text-content-muted ml-1 font-normal'>
+              ({productIds.length})
+            </span>
           )}
-          {products?.length === 0 && (
-            <option>{t('marketingEditor.noProducts')}</option>
-          )}
-          {products?.map(p => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        {products?.length === 0 && (
+        </Label>
+        {products === null ? (
+          <p className='text-content-muted text-sm'>
+            {t('marketingEditor.loadingProducts')}
+          </p>
+        ) : products.length === 0 ? (
           <Link
             href='/portal/products'
             className='text-primary text-xs font-medium hover:underline'
           >
             {t('marketingEditor.createProductFirst')}
           </Link>
+        ) : (
+          <div className='border-border max-h-64 overflow-y-auto rounded-lg border'>
+            {products.map(p => {
+              const on = productIds.includes(p.id);
+              return (
+                <button
+                  key={p.id}
+                  type='button'
+                  onClick={() => toggle(p.id)}
+                  className={cn(
+                    'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors',
+                    on ? 'bg-primary/5' : 'hover:bg-muted'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'flex size-4 shrink-0 items-center justify-center rounded border',
+                      on
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-input'
+                    )}
+                  >
+                    {on && <Check className='size-3' />}
+                  </span>
+                  <span className='text-foreground truncate'>{p.name}</span>
+                </button>
+              );
+            })}
+          </div>
         )}
       </div>
 
-      <ProductDetailCard product={product} />
+      {selected.map(p => (
+        <ProductDetailCard key={p.id} product={p} />
+      ))}
     </div>
   );
 }
 
 // ── KẾ HOẠCH · Landing page ───────────────────────────────────────────────────
 
-/** Panel "Landing page": chọn landing + chi tiết landing đã gắn (kết quả cuối —
- *  không hiện gì về AI ở đây; gợi ý AI sống ở tab AI-Insights). */
+/** Panel "Landing page": chỉ hiện landing đã gắn (kết quả cuối) — bỏ dropdown
+ *  chọn thủ công (landing tạo từ AI-Insights). Gợi ý AI sống ở tab AI-Insights. */
 export function LandingPanel({
-  brandId,
   landingId,
-  onLandingChange,
 }: {
   brandId?: string;
   landingId?: string;
-  onLandingChange: (id?: string) => void;
+  onLandingChange?: (id?: string) => void;
 }) {
-  const t = useTranslations('portal');
   return (
     <div className={PANEL_CLASS}>
-      <div className='grid gap-1.5'>
-        <Label>{t('marketingEditor.landingLabel')}</Label>
-        <LandingPagePicker
-          brandId={brandId}
-          value={landingId}
-          onChange={onLandingChange}
-        />
-      </div>
-
       <LandingDetailCard landingId={landingId} />
     </div>
   );
@@ -348,95 +351,86 @@ function LandingDetailCard({ landingId }: { landingId?: string }) {
   if (!page) return null;
 
   const url = page.external_url || undefined;
+  // Xem trước: external → URL ngoài; nội bộ → route preview render canvas
+  // client-side (chạy cả DRAFT — `/p/{slug}` chỉ có khi đã publish).
+  const previewUrl =
+    page.external_url || `/portal/landing-pages/${landingId}/preview`;
   return (
-    <div className='border-border flex flex-col gap-3 rounded-xl border p-4'>
-      <div className='flex gap-4'>
+    <div className='border-border flex flex-col gap-4 rounded-xl border p-4'>
+      {/* Banner ảnh landing — nổi hình, có status overlay */}
+      <div className='bg-muted relative aspect-[16/9] w-full overflow-hidden rounded-xl'>
         {page.thumbnail_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={page.thumbnail_url}
             alt={page.name}
-            className='h-16 w-24 shrink-0 rounded-lg object-cover'
+            className='h-full w-full object-cover'
           />
         ) : (
-          <div className='bg-muted flex h-16 w-24 shrink-0 items-center justify-center rounded-lg'>
-            <Layers className='text-content-muted size-6' />
+          <div className='from-muted to-muted/40 flex h-full w-full items-center justify-center bg-gradient-to-br'>
+            <Layers className='text-content-muted size-10' strokeWidth={1.5} />
           </div>
         )}
-        <div className='flex min-w-0 flex-1 flex-col gap-1'>
-          <div className='flex flex-wrap items-center gap-2'>
-            <span className='text-foreground text-sm font-semibold'>
-              {page.name}
-            </span>
-            <Badge
-              variant='secondary'
-              className={cn('text-2xs', PAGE_STATUS_CLASS[page.status])}
-            >
-              {page.status}
-            </Badge>
-            <Badge variant='outline' className='text-2xs'>
-              {page.type}
-            </Badge>
-          </div>
-          <span className='text-content-muted text-xs'>
-            {t('marketingCampaignTabs.slug')}: /{page.slug}
-          </span>
-          {url && (
-            <a
-              href={url}
-              target='_blank'
-              rel='noreferrer'
-              className='text-primary inline-flex w-fit items-center gap-0.5 text-xs hover:underline'
-            >
-              {url} <ArrowUpRight className='size-3' />
-            </a>
+        <Badge
+          variant='secondary'
+          className={cn(
+            'text-2xs absolute top-2 left-2 shadow-sm',
+            PAGE_STATUS_CLASS[page.status]
           )}
-        </div>
+        >
+          {page.status}
+        </Badge>
       </div>
 
-      <div className='flex flex-wrap gap-3'>
-        {/* Trang landing thật: external → URL ngoài; nội bộ đã publish → /p/{slug}. */}
-        {page.external_url ? (
+      {/* Tên + loại + đường dẫn */}
+      <div className='flex flex-col gap-1'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <span className='text-foreground text-base font-semibold'>
+            {page.name}
+          </span>
+          <Badge variant='outline' className='text-2xs'>
+            {page.type}
+          </Badge>
+        </div>
+        <span className='text-content-muted text-xs'>
+          {t('marketingCampaignTabs.slug')}: /{page.slug}
+        </span>
+        {url && (
           <a
-            href={page.external_url}
+            href={url}
             target='_blank'
             rel='noreferrer'
-            className='text-primary inline-flex items-center gap-1 text-xs font-medium hover:underline'
+            className='text-primary inline-flex w-fit items-center gap-0.5 text-xs hover:underline'
           >
-            <Eye className='size-3' />
-            {t('marketingCampaignTabs.viewLivePage')}{' '}
-            <ArrowUpRight className='size-3' />
+            {url} <ArrowUpRight className='size-3' />
           </a>
-        ) : (
-          page.status === 'published' && (
-            <a
-              href={`/p/${page.slug}`}
-              target='_blank'
-              rel='noreferrer'
-              className='text-primary inline-flex items-center gap-1 text-xs font-medium hover:underline'
-            >
-              <Eye className='size-3' />
-              {t('marketingCampaignTabs.viewLivePage')}{' '}
-              <ArrowUpRight className='size-3' />
-            </a>
-          )
+        )}
+      </div>
+
+      {/* Hành động — Preview nổi (primary) + Mở editor + Analytics */}
+      <div className='flex flex-wrap items-center gap-2'>
+        <Button
+          size='sm'
+          onClick={() => window.open(previewUrl, '_blank', 'noopener')}
+        >
+          <Eye className='size-4' />
+          {t('marketingCampaignTabs.preview')}
+        </Button>
+        {!page.external_url && (
+          <Button size='sm' variant='outline' asChild>
+            <Link href={`/portal/landing-pages/${landingId}`}>
+              <Pencil className='size-4' />
+              {t('marketingCampaignTabs.openEditor')}
+            </Link>
+          </Button>
         )}
         <Link
           href={`/portal/landing-pages/${landingId}/analytics`}
-          className='text-primary inline-flex items-center gap-1 text-xs font-medium hover:underline'
+          className='text-primary ml-auto inline-flex items-center gap-1 text-xs font-medium hover:underline'
         >
           {t('marketingCampaignTabs.viewAnalytics')}{' '}
           <ArrowUpRight className='size-3' />
         </Link>
-        {!page.external_url && (
-          <Link
-            href={`/portal/landing-pages/${landingId}`}
-            className='text-primary inline-flex items-center gap-1 text-xs font-medium hover:underline'
-          >
-            <Pencil className='size-3' />
-            {t('marketingCampaignTabs.openEditor')}
-          </Link>
-        )}
       </div>
     </div>
   );

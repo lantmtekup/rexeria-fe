@@ -10,20 +10,33 @@
  */
 
 import * as React from 'react';
-import { ArrowLeft, Loader2, Plus, Search, Sparkles, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  ImagePlus,
+  Loader2,
+  Plus,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
+import { uploadImageAsset } from '@/lib/upload/media-asset';
+import {
+  BlockTaxonomyFields,
+  emptyTaxonomy,
+  taxonomyFrom,
+  taxonomyToPayload,
+  type BlockTaxonomyValue,
+} from '@/components/dialogs/BlockTaxonomyFields';
 import { Button } from '@/components/atoms/button';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 import { Textarea } from '@/components/atoms/textarea';
-import { BlockMiniPreview } from '@/components/modules/CanvasTemplate/block-editor/BlockMiniPreview';
-import { createBlock } from '@/components/modules/CanvasTemplate/block-editor/factory';
-import type {
-  Block,
-  BlockType,
-} from '@/components/modules/CanvasTemplate/block-editor/types';
-import { BLOCK_TYPE_META } from '@/components/modules/CanvasTemplate/block-editor/types';
+import { BlockMiniPreview } from '@/components/modules/block-editor/BlockMiniPreview';
+import { createBlock } from '@/components/modules/block-editor/factory';
+import type { Block, BlockType } from '@/components/modules/block-editor/types';
+import { BLOCK_TYPE_META } from '@/components/modules/block-editor/types';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
@@ -33,15 +46,36 @@ interface CatalogItem {
   label: string;
   description: string;
   gradient: string;
+  /** FE đã có renderer (factory + canvas) cho type này? false → tạo được nhưng
+   *  block hiện placeholder "chưa có giao diện" tới khi FE ship renderer. */
+  renderable: boolean;
+  /** Taxonomy mặc định lấy từ block_type — seed cho block mới (block tự override). */
+  tax: BlockTaxonomyValue;
 }
 
 // Tập canvas block type mà factory dựng + preview được (loại `legacy_embed` vì
-// cần schemaId). Thư viện hệ thống = giao của BE active block_types với tập này;
-// các code BE không render được trên canvas (ad_*, cta_button, feature_grid…)
-// bị loại để không tạo ra block hỏng.
+// cần schemaId). Type ngoài tập này VẪN tạo được, nhưng render ra placeholder
+// (RenderBlock default case) tới khi FE bổ sung renderer.
 const RENDERABLE: Set<string> = new Set(
   Object.keys(BLOCK_TYPE_META).filter(t => t !== 'legacy_embed')
 );
+
+function genId() {
+  return `b_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/** Settings cho block type CHƯA có renderer: block hợp lệ tối thiểu (content
+ *  rỗng) để editor/preview không vỡ — RenderBlock default vẽ placeholder. */
+function placeholderSettings(type: BlockType, name: string): Block {
+  return {
+    id: genId(),
+    blockType: type,
+    name,
+    contentVi: { desktop: {} as Block['contentVi']['desktop'] },
+    contentEn: { desktop: {} as Block['contentEn']['desktop'] },
+    isVisible: true,
+  };
+}
 
 const DEFAULT_GRADIENT = 'from-zinc-400 to-zinc-600';
 
@@ -65,26 +99,54 @@ interface Props {
   onClose: () => void;
   /** Fires after a built-in block is added to the saved-blocks library. */
   onAdded?: (id: string) => void;
+  /** Số block đã có trong thư viện theo type_code → chip "đã có N" trên card. */
+  counts?: Record<string, number>;
 }
 
-export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
+export function AddBuiltinBlockDialog({
+  open,
+  onClose,
+  onAdded,
+  counts,
+}: Props) {
   const [search, setSearch] = React.useState('');
   const [adding, setAdding] = React.useState(false);
   // Catalog nạp thật từ BE `/v1/block-types` mỗi lần mở dialog.
   const [items, setItems] = React.useState<CatalogItem[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  // Bước 2: block type đã chọn → form nhập thông tin + metadata trước khi tạo.
-  const [selected, setSelected] = React.useState<CatalogItem | null>(null);
+  // View mặc định = form nhập thông tin (mở dialog là vào thẳng). Catalog là
+  // tuỳ chọn: bấm "Duyệt thư viện" để chọn trực quan → 'browse'.
+  const [view, setView] = React.useState<'form' | 'browse'>('form');
   const [formName, setFormName] = React.useState('');
+  // Block type có thể đổi trước khi tạo (create NHẬN type_code — khác edit).
+  const [formType, setFormType] = React.useState<BlockType | ''>('');
   const [formDesc, setFormDesc] = React.useState('');
+  // Ghi chú nội bộ / brief — block mới luôn vào trạng thái 'draft' để chờ duyệt.
+  const [formNote, setFormNote] = React.useState('');
   const [formTags, setFormTags] = React.useState<string[]>([]);
   const [tagInput, setTagInput] = React.useState('');
+  const [formTax, setFormTax] =
+    React.useState<BlockTaxonomyValue>(emptyTaxonomy());
+  const [thumbUrl, setThumbUrl] = React.useState<string | null>(null);
+  const [thumbAssetId, setThumbAssetId] = React.useState<string | null>(null);
+  const [uploadingThumb, setUploadingThumb] = React.useState(false);
+  const fileRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (!open) return;
+    // Mở dialog → reset về form trống, view = form.
     setSearch('');
-    setSelected(null);
+    setView('form');
+    setFormName('');
+    setFormType('');
+    setFormDesc('');
+    setFormNote('');
+    setFormTags([]);
+    setTagInput('');
+    setFormTax(emptyTaxonomy());
+    setThumbUrl(null);
+    setThumbAssetId(null);
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -93,7 +155,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
       .then(r => {
         if (cancelled) return;
         const mapped: CatalogItem[] = (r.items ?? [])
-          .filter(t => t.is_active && RENDERABLE.has(t.type))
+          .filter(t => t.is_active)
           .map(t => ({
             type: t.type as BlockType,
             label: t.label_vi || t.type,
@@ -101,8 +163,20 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
             gradient:
               BLOCK_TYPE_META[t.type as BlockType]?.gradient ??
               DEFAULT_GRADIENT,
-          }));
+            renderable: RENDERABLE.has(t.type),
+            tax: taxonomyFrom(t),
+          }))
+          // Type có renderer lên trước cho dễ chọn; còn lại (placeholder) xuống dưới.
+          .sort((a, b) => Number(b.renderable) - Number(a.renderable));
         setItems(mapped);
+        // Seed sẵn type mặc định (cái đầu) để form có giá trị ngay, user đổi sau.
+        const def = mapped[0];
+        if (def) {
+          setFormType(def.type);
+          setFormName(def.label);
+          setFormDesc(def.description ?? '');
+          setFormTax(def.tax);
+        }
       })
       .catch(err => {
         if (cancelled) return;
@@ -131,13 +205,40 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
       c.description.toLowerCase().includes(q)
   );
 
-  // Bước 1 → 2: chọn 1 block type, mở form với giá trị mặc định.
-  const handleSelect = (item: CatalogItem) => {
-    setSelected(item);
-    setFormName(item.label);
+  // Seed form theo 1 block type. keepName=true → giữ tên user đang nhập (chỉ
+  // điền khi rỗng); false → ghi đè tên = label của type.
+  const applyType = (item: CatalogItem, opts?: { keepName?: boolean }) => {
+    setFormType(item.type);
     setFormDesc(item.description ?? '');
-    setFormTags([]);
-    setTagInput('');
+    setFormTax(item.tax); // seed taxonomy mặc định từ block_type
+    setFormName(prev => (opts?.keepName && prev.trim() ? prev : item.label));
+  };
+
+  // Đổi type trong <select> ở form: giữ tên user, cập nhật default desc/tax.
+  const selectType = (code: BlockType) => {
+    const item = items.find(i => i.type === code);
+    if (item) applyType(item, { keepName: true });
+    else setFormType(code);
+  };
+
+  // Bấm 1 card trong "Duyệt thư viện" → seed đầy đủ (gồm tên) + quay về form.
+  const chooseFromCatalog = (item: CatalogItem) => {
+    applyType(item);
+    setView('form');
+  };
+
+  const pickThumb = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadingThumb(true);
+    uploadImageAsset(file)
+      .then(asset => {
+        setThumbAssetId(asset.id);
+        setThumbUrl(asset.public_url ?? null);
+      })
+      .catch(() => toast.error('Tải ảnh thất bại'))
+      .finally(() => setUploadingThumb(false));
   };
 
   const addTag = () => {
@@ -151,24 +252,39 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
 
   // Bước 2: tạo block thật với thông tin + metadata người dùng nhập.
   const handleCreate = async () => {
-    if (!selected) return;
     const name = formName.trim();
     if (!name) {
       toast.error('Tên block không được rỗng');
       return;
     }
+    if (!formType) {
+      toast.error('Chưa chọn block type');
+      return;
+    }
+    const type = formType as BlockType;
+    // Type có renderer → settings đầy đủ từ factory; chưa có → placeholder hợp lệ.
+    const hasRenderer =
+      items.find(i => i.type === type)?.renderable ?? RENDERABLE.has(type);
     setAdding(true);
     try {
-      const block = createBlock(selected.type);
+      const block = hasRenderer
+        ? createBlock(type)
+        : placeholderSettings(type, name);
       // BE Block.settings: JSONMap opaque — FE serializes the editor Block
       // shape so the canvas editor can reconstruct it on load.
       const created = await rexerApi.blocks.create({
-        type_code: selected.type,
+        type_code: type,
         name,
         description: formDesc.trim() || undefined,
         tags: formTags,
         settings: block as unknown as Record<string, unknown>,
         scope: 'brand_private',
+        ...(thumbAssetId ? { thumbnail_asset_id: thumbAssetId } : {}),
+        // Taxonomy AI per-block (BE persist từ 2026-06-19).
+        ...taxonomyToPayload(formTax),
+        // Block mới luôn vào 'draft' → marketing/dev xử lý rồi mới publish.
+        status: 'draft',
+        review_note: formNote.trim() || undefined,
       });
       toast.success(`Đã thêm "${created.name}" vào thư viện`);
       onAdded?.(created.id);
@@ -195,39 +311,44 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
         className='bg-card my-8 w-full max-w-5xl overflow-hidden rounded-2xl shadow-2xl'
         onClick={e => e.stopPropagation()}
       >
-        {selected ? (
-          /* ───── Bước 2: form nhập thông tin + metadata trước khi tạo ───── */
+        {view === 'form' ? (
+          /* ───── Form nhập thông tin (mặc định khi mở dialog) ───── */
           <>
             <div className='border-border flex items-center justify-between border-b px-5 py-3'>
               <div className='flex items-center gap-2.5'>
+                <div className='flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-sm'>
+                  <Plus className='size-4' strokeWidth={2.5} />
+                </div>
+                <div className='leading-tight'>
+                  <h3 className='text-base font-semibold'>Tạo block mới</h3>
+                  <p className='text-2xs text-content-muted'>
+                    Loại: <span className='font-mono'>{formType || '—'}</span>
+                  </p>
+                </div>
+              </div>
+              <div className='flex items-center gap-1.5'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={() => {
+                    setSearch('');
+                    setView('browse');
+                  }}
+                  disabled={adding}
+                >
+                  <Sparkles className='size-3.5' /> Duyệt thư viện
+                </Button>
                 <Button
                   type='button'
                   variant='ghost'
                   size='icon'
-                  onClick={() => setSelected(null)}
-                  disabled={adding}
-                  aria-label='Quay lại'
+                  onClick={onClose}
+                  aria-label='Close'
                 >
-                  <ArrowLeft className='size-4' />
+                  <X className='size-4' />
                 </Button>
-                <div className='leading-tight'>
-                  <h3 className='text-base font-semibold'>
-                    Thông tin block mới
-                  </h3>
-                  <p className='text-2xs text-content-muted'>
-                    Loại: <span className='font-mono'>{selected.type}</span>
-                  </p>
-                </div>
               </div>
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon'
-                onClick={onClose}
-                aria-label='Close'
-              >
-                <X className='size-4' />
-              </Button>
             </div>
 
             <div className='max-h-[68vh] overflow-y-auto px-5 py-4'>
@@ -246,6 +367,90 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                 </div>
 
                 <div className='flex flex-col gap-1'>
+                  <Label htmlFor='ab-type'>Block type</Label>
+                  <select
+                    id='ab-type'
+                    value={formType}
+                    onChange={e => selectType(e.target.value as BlockType)}
+                    disabled={loading || items.length === 0}
+                    className='border-input bg-background focus:ring-ring/40 h-9 rounded-md border px-2.5 text-sm outline-none focus:ring-2 disabled:opacity-60'
+                  >
+                    {loading && <option value=''>Đang tải block types…</option>}
+                    {!loading && items.length === 0 && (
+                      <option value=''>Không có block type</option>
+                    )}
+                    {items.map(o => (
+                      <option key={o.type} value={o.type}>
+                        {o.label}
+                        {o.renderable ? '' : ' — placeholder'}
+                      </option>
+                    ))}
+                  </select>
+                  {error && (
+                    <p className='text-2xs text-destructive'>{error}</p>
+                  )}
+                  {!(
+                    items.find(i => i.type === formType)?.renderable ?? true
+                  ) && (
+                    <p className='text-2xs rounded-md bg-amber-50 px-2 py-1.5 text-amber-700'>
+                      ⚠ Loại này chưa có giao diện ở FE. Block vẫn tạo được
+                      nhưng hiện ô “chưa có renderer”; sẽ tự đẹp lại khi FE bổ
+                      sung.
+                    </p>
+                  )}
+                </div>
+
+                <div className='flex flex-col gap-1'>
+                  <Label>Thumbnail</Label>
+                  <div className='flex items-center gap-3'>
+                    <div className='border-border bg-muted relative aspect-[16/9] w-32 shrink-0 overflow-hidden rounded-lg border'>
+                      {thumbUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={thumbUrl}
+                          alt='thumbnail'
+                          className='absolute inset-0 size-full object-cover'
+                        />
+                      ) : (
+                        <div className='text-muted-foreground flex size-full items-center justify-center'>
+                          <ImagePlus className='size-5' />
+                        </div>
+                      )}
+                    </div>
+                    <div className='min-w-0'>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        onClick={() => fileRef.current?.click()}
+                        disabled={uploadingThumb}
+                      >
+                        {uploadingThumb ? (
+                          <Loader2 className='size-3.5 animate-spin' />
+                        ) : (
+                          <ImagePlus className='size-3.5' />
+                        )}
+                        {uploadingThumb
+                          ? 'Đang tải…'
+                          : thumbUrl
+                            ? 'Đổi ảnh'
+                            : 'Tải ảnh'}
+                      </Button>
+                      <p className='text-3xs text-muted-foreground mt-1'>
+                        Tuỳ chọn. Bỏ trống → tự render từ nội dung block.
+                      </p>
+                    </div>
+                    <input
+                      ref={fileRef}
+                      type='file'
+                      accept='image/*'
+                      className='hidden'
+                      onChange={pickThumb}
+                    />
+                  </div>
+                </div>
+
+                <div className='flex flex-col gap-1'>
                   <Label htmlFor='ab-desc'>Mô tả</Label>
                   <Textarea
                     id='ab-desc'
@@ -254,6 +459,22 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                     onChange={e => setFormDesc(e.target.value)}
                     placeholder='Ghi chú ngắn về block này…'
                   />
+                </div>
+
+                <div className='flex flex-col gap-1'>
+                  <Label htmlFor='ab-note'>Ghi chú nội bộ (brief)</Label>
+                  <Textarea
+                    id='ab-note'
+                    value={formNote}
+                    rows={2}
+                    onChange={e => setFormNote(e.target.value)}
+                    placeholder='Marketing mô tả block cần làm để dev triển khai…'
+                  />
+                  <p className='text-3xs text-muted-foreground'>
+                    Block mới vào trạng thái{' '}
+                    <b className='text-amber-700'>Nháp</b> — cần review &amp;
+                    publish ở trang Blocks trước khi user dùng.
+                  </p>
                 </div>
 
                 <div className='flex flex-col gap-1'>
@@ -292,6 +513,8 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                     placeholder='Nhập tag rồi Enter…'
                   />
                 </div>
+
+                <BlockTaxonomyFields value={formTax} onChange={setFormTax} />
               </div>
             </div>
 
@@ -300,16 +523,16 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                 type='button'
                 variant='neutral'
                 size='sm'
-                onClick={() => setSelected(null)}
+                onClick={onClose}
                 disabled={adding}
               >
-                Quay lại
+                Huỷ
               </Button>
               <Button
                 type='button'
                 size='sm'
                 onClick={handleCreate}
-                disabled={adding}
+                disabled={adding || loading || !formType}
               >
                 {adding && <Loader2 className='size-3.5 animate-spin' />}
                 Tạo block
@@ -317,17 +540,23 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
             </div>
           </>
         ) : (
-          /* ───── Bước 1: chọn block type từ catalog BE ───── */
+          /* ───── Duyệt thư viện hệ thống (tuỳ chọn) — chọn type trực quan ───── */
           <>
             {/* Header */}
             <div className='border-border flex items-center justify-between border-b px-5 py-3'>
               <div className='flex items-center gap-2.5'>
-                <div className='flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-sm'>
-                  <Sparkles className='size-4' />
-                </div>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='icon'
+                  onClick={() => setView('form')}
+                  aria-label='Quay lại form'
+                >
+                  <ArrowLeft className='size-4' />
+                </Button>
                 <div className='leading-tight'>
                   <h3 className='text-base font-semibold'>
-                    Thêm block từ thư viện hệ thống
+                    Duyệt thư viện hệ thống
                   </h3>
                   <p className='text-2xs text-content-muted'>
                     {filtered.length} / {items.length} block types · từ BE
@@ -398,7 +627,8 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
                     <CatalogCard
                       key={item.type}
                       item={item}
-                      onAdd={() => handleSelect(item)}
+                      count={counts?.[item.type] ?? 0}
+                      onAdd={() => chooseFromCatalog(item)}
                     />
                   ))}
                 </div>
@@ -407,8 +637,8 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
 
             {/* Footer hint */}
             <div className='text-2xs border-border text-content-muted bg-card border-t px-5 py-2.5'>
-              Chọn 1 block type để nhập tên, mô tả + tags trước khi thêm vào thư
-              viện.
+              Bấm 1 block type để quay lại form với tên/mô tả/taxonomy mặc định
+              của type đó.
             </div>
           </>
         )}
@@ -421,9 +651,11 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
 
 function CatalogCard({
   item,
+  count,
   onAdd,
 }: {
   item: CatalogItem;
+  count: number;
   onAdd: () => void;
 }) {
   // Wrapper is a div role=button — BlockMiniPreview contains carousel prev/next
@@ -445,11 +677,26 @@ function CatalogCard({
         'hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/5'
       )}
     >
-      {/* Real preview thumbnail — same renderer the saved-blocks library
-          uses. Wrapped in a soft mat so heterogeneous block backgrounds
-          (pure white hero vs dark overlay) still look intentional. */}
+      {/* Real preview thumbnail — same renderer the saved-blocks library uses.
+          Type chưa có renderer → placeholder tĩnh (không gọi factory để khỏi vỡ). */}
       <div className='border-border relative aspect-[4/3] overflow-hidden border-b bg-gradient-to-br from-zinc-100 to-zinc-50'>
-        <BlockMiniPreview block={getPreviewBlock(item.type)} aspect='4 / 3' />
+        {item.renderable ? (
+          <BlockMiniPreview block={getPreviewBlock(item.type)} aspect='4 / 3' />
+        ) : (
+          <div className='text-muted-foreground flex size-full flex-col items-center justify-center gap-1.5 px-3 text-center'>
+            <ImagePlus className='size-6 opacity-50' />
+            <span className='text-3xs leading-tight'>
+              Chưa có giao diện — tạo ra block placeholder
+            </span>
+          </div>
+        )}
+
+        {/* Chip "đã có N" — báo type này đã có sẵn block trong thư viện. */}
+        {count > 0 && (
+          <span className='text-3xs absolute top-2 right-2 inline-flex items-center rounded-md bg-emerald-600/95 px-1.5 py-0.5 font-semibold text-white shadow-sm'>
+            đã có {count}
+          </span>
+        )}
 
         {/* Type pill — small accent so users can still scan block type at
             a glance, but no longer dominates the card the way the giant
@@ -470,8 +717,13 @@ function CatalogCard({
 
       <div className='flex flex-1 flex-col gap-1 p-3.5'>
         <div className='flex items-center justify-between gap-2'>
-          <span className='text-foreground text-sm font-semibold'>
+          <span className='text-foreground inline-flex items-center gap-1.5 text-sm font-semibold'>
             {item.label}
+            {!item.renderable && (
+              <span className='rounded bg-amber-100 px-1 py-0.5 text-[9px] font-medium text-amber-700'>
+                placeholder
+              </span>
+            )}
           </span>
           <span className='border-border bg-muted text-muted-foreground flex size-6 items-center justify-center rounded-full border transition-all group-hover:border-indigo-500 group-hover:bg-indigo-500 group-hover:text-white'>
             <Plus className='size-3' strokeWidth={2.5} />

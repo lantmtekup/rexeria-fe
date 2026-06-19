@@ -53,6 +53,9 @@ interface BlockEditorHeaderProps {
   isPublished: boolean;
   isMotionPreviewing: boolean;
   backHref?: string;
+  /** Nếu set → nút back gọi hàm này (vd router.back về màn trước) thay vì đi
+   *  `backHref`. Ưu tiên hơn backHref. */
+  onBack?: () => void;
 }
 
 const DEVICE_BUTTONS: {
@@ -90,20 +93,36 @@ export function BlockEditorHeader({
   isPublished,
   isMotionPreviewing,
   backHref = '/canvas-templates',
+  onBack,
 }: BlockEditorHeaderProps) {
   const status: SaveStatus = saving ? 'saving' : dirty ? 'dirty' : 'saved';
+
+  const backClass =
+    'flex size-8 shrink-0 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900';
 
   return (
     <header className='flex h-12 shrink-0 items-center gap-2.5 border-b border-neutral-200/80 bg-white px-3'>
       {/* ── LEFT · back + crumb + save dot ─────────────────────────── */}
-      <Link
-        href={backHref}
-        aria-label='Quay lại'
-        title='Quay lại'
-        className='flex size-8 shrink-0 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900'
-      >
-        <ArrowLeft className='size-4' />
-      </Link>
+      {onBack ? (
+        <button
+          type='button'
+          onClick={onBack}
+          aria-label='Quay lại'
+          title='Quay lại'
+          className={backClass}
+        >
+          <ArrowLeft className='size-4' />
+        </button>
+      ) : (
+        <Link
+          href={backHref}
+          aria-label='Quay lại'
+          title='Quay lại'
+          className={backClass}
+        >
+          <ArrowLeft className='size-4' />
+        </Link>
+      )}
 
       <div className='flex min-w-0 items-baseline gap-2'>
         <span className='text-3xs font-semibold tracking-[0.18em] text-neutral-400 uppercase'>

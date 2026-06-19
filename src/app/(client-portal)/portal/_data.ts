@@ -940,6 +940,9 @@ export type PortalProduct = {
    *  of the gradient placeholder. */
   thumbnail_url?: string;
   description: string;
+  /** Giá thật hiển thị (chuỗi nguyên gốc, vd "$1,539.95 CAD"). Khi có thì
+   *  card hiện giá này thay cho price_vnd placeholder. Lấy từ feature "Giá…". */
+  price_label?: string;
   sizes: { label: string; volume_ml: number; price_vnd: number }[];
   colors?: { name: string; hex: string }[];
   ingredients: string[];
