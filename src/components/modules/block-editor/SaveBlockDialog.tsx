@@ -123,6 +123,10 @@ export function SaveBlockDialog({
     try {
       const updated = await rexerApi.blocks.update(editingSavedBlockId, {
         name: trimmed,
+        // Đồng bộ type_code theo block hiện tại — nếu user đổi design sang loại
+        // khác (vd swap sang framer_aestha_editorial) thì cột type_code khớp luôn
+        // với settings.blockType, tránh lệch metadata.
+        type_code: block.blockType,
         settings: block as unknown as Record<string, unknown>,
       });
       toast.success(`Đã cập nhật "${trimmed}"`);

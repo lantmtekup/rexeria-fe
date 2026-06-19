@@ -1869,80 +1869,6 @@ export interface UpdatePortalMeRequest {
   avatar_url?: string;
 }
 
-// ── Admin Block Types catalog (BE actual shape) ───────────────────
-// Note: BE shape diverges from architecture spec §4.2 — no supported_surfaces,
-// no props_schema, no category yet. Adapter rebuilds those if BE ships later.
-
-export interface AdminBlockType {
-  type: string; // primary key — BE uses 'type' not 'code'
-  label_vi: string;
-  label_en?: string;
-  description_vi?: string;
-  description_en?: string;
-  is_active: boolean;
-  /** Ảnh preview block type trong catalog (BE block_type.preview_image_url). */
-  preview_image_url?: string;
-  icon_name?: string;
-  created_at?: string;
-  updated_at?: string;
-  // Future fields (architecture spec §4.2) — not shipped by BE yet:
-  supported_surfaces?: string[];
-  props_schema?: Record<string, unknown>;
-  category?: string;
-  min_dimensions?: { width: number; height: number };
-  engine_version?: string;
-  supported_slot_types?: string[];
-  // AI recommendation taxonomy (block_types migration 000033) — snake_case khớp
-  // BE. Engine recommend_blocks khớp brief với các tín hiệu này.
-  function?: string;
-  funnel_stage?: string[];
-  goal_tags?: string[];
-  industry_fit?: string[];
-  tone?: string[];
-  page_role?: string;
-  proof_type?: string;
-  needs_media?: string;
-  has_cta?: boolean;
-}
-
-export interface CreateAdminBlockTypeRequest {
-  type: string;
-  label_vi: string;
-  label_en?: string;
-  description_vi?: string;
-  description_en?: string;
-  preview_image_url?: string;
-  // AI recommendation taxonomy (gửi snake_case trực tiếp lên BE).
-  function?: string;
-  funnel_stage?: string[];
-  goal_tags?: string[];
-  industry_fit?: string[];
-  tone?: string[];
-  page_role?: string;
-  proof_type?: string;
-  needs_media?: string;
-  has_cta?: boolean;
-}
-
-export interface UpdateAdminBlockTypeRequest {
-  label_vi?: string;
-  label_en?: string;
-  description_vi?: string;
-  description_en?: string;
-  is_active?: boolean;
-  preview_image_url?: string;
-  // AI recommendation taxonomy (gửi snake_case trực tiếp lên BE).
-  function?: string;
-  funnel_stage?: string[];
-  goal_tags?: string[];
-  industry_fit?: string[];
-  tone?: string[];
-  page_role?: string;
-  proof_type?: string;
-  needs_media?: string;
-  has_cta?: boolean;
-}
-
 // ── Admin Users (global cross-brand list) ────────────────────────────────
 
 export interface AdminUser {
@@ -2788,14 +2714,6 @@ export interface UpdateBlockRequest extends BlockAITaxonomy, BlockReviewFields {
   thumbnail_asset_id?: string;
   /** Đổi loại block đã lưu — BE hỗ trợ PATCH /blocks/:id (impl 2026-06-18). */
   type_code?: string;
-}
-
-// ── BlockType (system catalog, canonical mirror of AdminBlockType) ───────
-// AdminBlockType in legacy section already matches BE canonical shape —
-// re-export under canonical alias for code-mod clarity.
-export type CanonicalBlockType = AdminBlockType;
-export interface BlockTypeListResponse {
-  items: CanonicalBlockType[];
 }
 
 // ── AI Job (canonical async pattern) ─────────────────────────────────────

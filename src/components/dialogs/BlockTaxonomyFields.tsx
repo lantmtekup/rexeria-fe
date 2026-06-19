@@ -4,7 +4,7 @@
  * Field "Taxonomy cho AI gợi ý" dùng chung — engine `recommend_blocks` khớp brief
  * (mục tiêu / ngành / giai đoạn phễu / tông giọng) với các tín hiệu này.
  *
- * Trước đây sống ở `block_type` (BlockTypeFormDialog). Đã chuyển xuống **per-block**
+ * Trước đây sống ở block_type form. Đã chuyển xuống **per-block**
  * (sửa ở /admin/blocks). Component này tái dùng cho cả tạo + sửa block.
  */
 
@@ -68,7 +68,7 @@ export function emptyTaxonomy(): BlockTaxonomyValue {
   };
 }
 
-/** Dựng value từ object BE (Block hoặc AdminBlockType — đều dùng snake_case). */
+/** Dựng value từ object BE (Block — dùng snake_case). */
 export function taxonomyFrom(
   src?: Partial<BlockTaxonomyValue> | null
 ): BlockTaxonomyValue {

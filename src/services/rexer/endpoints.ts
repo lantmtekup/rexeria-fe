@@ -167,10 +167,6 @@ import type {
   CreateTrackingKeyResponse,
   // Server-backed saved blocks
   SavedBlockListResponse,
-  // Admin block-types catalog
-  AdminBlockType,
-  CreateAdminBlockTypeRequest,
-  UpdateAdminBlockTypeRequest,
   // Admin global users
   AdminUser,
   // P0.2 + P0.3 (be-todo.md)
@@ -270,40 +266,6 @@ function unwrapBrand(r: BrandResponse | Brand): Brand {
     return (r as BrandResponse).brand;
   }
   return r as Brand;
-}
-
-// A2 (be-response §A2): map item từ catalog `/block-types`
-// (code/name/description/…) sang shape `AdminBlockType` (type/label_vi/…) mà
-// admin UI đang dùng. `accent_color`/`is_premium`/`sort_order` BE catalog không
-// trả → undefined (UI xử lý optional).
-function toAdminBlockType(it: Record<string, any>): AdminBlockType {
-  return {
-    type: it.code ?? it.type,
-    label_vi: it.name ?? it.label_vi ?? it.code,
-    label_en: it.name ?? it.label_en,
-    description_vi: it.description ?? it.description_vi,
-    is_active: it.is_active ?? true,
-    preview_image_url: it.preview_image_url,
-    icon_name: it.icon_name,
-    category: it.category,
-    supported_surfaces: it.supported_surfaces,
-    props_schema: it.props_schema,
-    min_dimensions: it.min_dimensions,
-    supported_slot_types: it.supported_slot_types,
-    engine_version: it.engine_version,
-    created_at: it.created_at,
-    updated_at: it.updated_at,
-    // AI recommendation taxonomy (migration 000033) — passthrough snake_case.
-    function: it.function,
-    funnel_stage: it.funnel_stage,
-    goal_tags: it.goal_tags,
-    industry_fit: it.industry_fit,
-    tone: it.tone,
-    page_role: it.page_role,
-    proof_type: it.proof_type,
-    needs_media: it.needs_media,
-    has_cta: it.has_cta,
-  };
 }
 
 export const rexerApi = {
@@ -1499,38 +1461,6 @@ export const rexerApi = {
   },
 
   // ── Staff inbox (admin/staff task queue) ──────────────────────────────
-  // ── Admin block-types catalog (architecture spec §4.2) ────────────────
-  adminBlockTypes: {
-    // A2 (be-response §A2): GET list/read canonical là `/block-types`
-    // (shape khác: code/name/description). `/admin/block-types` CHỈ có
-    // POST/PATCH/DELETE. Map catalog → AdminBlockType (type=code,
-    // label_vi=name…). Filter `is_active` làm client-side (BE list chưa
-    // hỗ trợ ?is_active) — xem AdminBlockTypesPage.
-    list: async (query?: {
-      surface?: string;
-      category?: string;
-      q?: string;
-    }): Promise<{ items: AdminBlockType[] }> => {
-      const r = await rx<{ items: Array<Record<string, any>> }>(
-        '/block-types',
-        { query }
-      );
-      return { items: (r.items ?? []).map(toAdminBlockType) };
-    },
-    get: async (code: string): Promise<AdminBlockType> =>
-      toAdminBlockType(await rx<Record<string, any>>(`/block-types/${code}`)),
-    create: (body: CreateAdminBlockTypeRequest) =>
-      rx<AdminBlockType>('/admin/block-types', { method: 'POST', body }),
-    update: (code: string, body: UpdateAdminBlockTypeRequest) =>
-      rx<AdminBlockType>(`/admin/block-types/${code}`, {
-        method: 'PATCH',
-        body,
-      }),
-    remove: (code: string) =>
-      rx<{ message?: string }>(`/admin/block-types/${code}`, {
-        method: 'DELETE',
-      }),
-  },
 
   // ── Admin Users (global, cross-brand) — per audit BE shipped 2026-05-24
   adminUsers: {
@@ -1982,16 +1912,6 @@ export const rexerApi = {
     /** Increment usage_count when a block is added to a template/page. */
     use: (id: string) =>
       rx<{ usage_count: number }>(`/blocks/${id}/use`, { method: 'POST' }),
-  },
-
-  // ── BlockTypes public read (admin CRUD already at `adminBlockTypes`) ─
-  blockTypes: {
-    list: (query?: {
-      surface?: PageType;
-      category?: string;
-      is_active?: boolean;
-    }) => rx<{ items: unknown[] }>('/block-types', { query }),
-    get: (code: string) => rx<unknown>(`/block-types/${code}`),
   },
 
   // ── AI Jobs (canonical async, replaces 8 legacy `ai.*` endpoints) ────

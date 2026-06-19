@@ -22,15 +22,6 @@ import { BLOCK_TYPE_META, type Block, type BlockType } from './types';
 import { RxApiError } from '@/services/rexer/client';
 import type { Block as ServerBlock } from '@/services/rexer/types';
 
-/** Public /v1/block-types item shape (legacy naming — `code`/`name`/
- *  `is_active`). Admin /v1/admin/block-types uses canonical `type`/`label_vi`
- *  but this dialog only needs the public read which all roles can hit. */
-interface BeBlockType {
-  code: string;
-  name?: string;
-  is_active: boolean;
-}
-
 /** Wave 3 migration 2026-05-31: Saved blocks tab loads from `/v1/blocks`
  *  (same source as /admin/blocks list page) instead of localStorage. Each
  *  ServerBlock.settings should be an FE editor Block (saved via the Save
@@ -163,11 +154,6 @@ export function AddBlockDialog({
   // BE-backed saved blocks — same source as /admin/blocks list page.
   // Null = loading; array = loaded (may be empty).
   const [saved, setSaved] = React.useState<SavedBlock[] | null>(null);
-  // BE block-types catalog — filter `is_active` source-of-truth.
-  // Null = loading; Set<code> = loaded; empty Set = nothing active.
-  const [activeCodes, setActiveCodes] = React.useState<Set<string> | null>(
-    null
-  );
 
   const reloadSaved = React.useCallback(async () => {
     setSaved(null);
@@ -195,30 +181,9 @@ export function AddBlockDialog({
     void reloadSaved();
   }, [open, reloadSaved]);
 
-  // Load BE block-types + filter is_active. Show only types both FE knows
-  // how to render (ORDERED_TYPES) AND admin has marked active.
-  React.useEffect(() => {
-    if (!open) return;
-    setActiveCodes(null);
-    rexerApi.blockTypes
-      .list({ is_active: true })
-      .then(r => {
-        const items = (r.items ?? []) as BeBlockType[];
-        setActiveCodes(
-          new Set(items.filter(b => b.is_active).map(b => b.code))
-        );
-      })
-      .catch(() => {
-        // BE down? Fail open — show all FE types so editor remains usable.
-        setActiveCodes(new Set(ORDERED_TYPES));
-      });
-  }, [open]);
-
-  // Active types = FE-supported intersected with BE active set.
-  const visibleTypes = React.useMemo(() => {
-    if (!activeCodes) return [];
-    return ORDERED_TYPES.filter(t => activeCodes.has(t));
-  }, [activeCodes]);
+  // Block cơ bản = mọi type FE biết render (registry BLOCK_TYPE_META, thứ tự
+  // ORDERED_TYPES). Không còn phụ thuộc catalog BE — type sống trong code.
+  const visibleTypes = ORDERED_TYPES;
 
   // Default-instance preview block per type — built once so the live
   // BlockMiniPreview cards don't recreate on every dialog re-render.
@@ -243,7 +208,8 @@ export function AddBlockDialog({
     onOpenChange(false);
   };
 
-  const loadingTypes = activeCodes === null;
+  // Type luôn sẵn từ registry (đồng bộ) — chỉ còn thư viện saved là async.
+  const loadingTypes = false;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

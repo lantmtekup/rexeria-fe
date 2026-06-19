@@ -29,6 +29,7 @@ import {
   Loader2,
   MoreVertical,
   Pencil,
+  PencilRuler,
   Play,
   Plus,
   RefreshCw,
@@ -62,11 +63,7 @@ import type {
 } from '@/components/modules/block-editor/types';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type {
-  AdminBlockType,
-  Block as ServerBlock,
-  BlockStatus,
-} from '@/services/rexer/types';
+import type { Block as ServerBlock, BlockStatus } from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
 import {
   BLOCK_STATUS_META,
@@ -153,6 +150,9 @@ export function BlocksPage() {
   );
   const [tagFilter, setTagFilter] = React.useState<string | null>(null);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  // Bulk select (xoá nhiều) — giữ id, chung cho cả grid + table.
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = React.useState(false);
   const [catalogOpen, setCatalogOpen] = React.useState(false);
   // Preview overlay — null = closed. Holds parsed editor Block + label for
   // <PreviewMode> (full-screen layout + animation playback per device).
@@ -162,9 +162,6 @@ export function BlocksPage() {
   } | null>(null);
   // Block đang sửa thông tin (name/description/tags) qua EditBlockDialog.
   const [editTarget, setEditTarget] = React.useState<ServerBlock | null>(null);
-  // Block_type thật từ BE (/block-types) — nguồn cho filter + dialog sửa, thay
-  // registry FE cứng (vốn không phủ block_type chỉ có ở BE).
-  const [blockTypes, setBlockTypes] = React.useState<AdminBlockType[]>([]);
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(20);
 
@@ -186,31 +183,20 @@ export function BlocksPage() {
     load();
   }, [load]);
 
-  // Nạp block_type thật từ BE 1 lần (lỗi → để rỗng, filter fallback theo data).
-  React.useEffect(() => {
-    rexerApi.adminBlockTypes
-      .list()
-      .then(r => setBlockTypes(r.items ?? []))
-      .catch(() => setBlockTypes([]));
-  }, []);
-
-  // Options filter type: ưu tiên block_type BE; gộp thêm type_code có trong
-  // data mà BE chưa trả (đừng để block nào không lọc được).
+  // Options filter type: từ registry FE BLOCK_TYPE_META (nguồn duy nhất) + gộp
+  // thêm type_code có trong data mà registry chưa phủ (đừng để block nào không lọc được).
   const typeOptions = React.useMemo(() => {
     const map = new Map<string, string>();
-    for (const bt of blockTypes) map.set(bt.type, bt.label_vi || bt.type);
+    for (const [code, label] of Object.entries(BLOCK_TYPE_LABEL)) {
+      map.set(code, label);
+    }
     for (const it of items) {
-      if (!map.has(it.type_code)) {
-        map.set(
-          it.type_code,
-          BLOCK_TYPE_LABEL[it.type_code as BlockType] ?? it.type_code
-        );
-      }
+      if (!map.has(it.type_code)) map.set(it.type_code, it.type_code);
     }
     return Array.from(map, ([code, label]) => ({ code, label })).sort((a, b) =>
       a.label.localeCompare(b.label)
     );
-  }, [blockTypes, items]);
+  }, [items]);
 
   // Số block đã có theo type_code → chip "đã có N" trong dialog thêm block.
   const typeCounts = React.useMemo(() => {
@@ -255,9 +241,10 @@ export function BlocksPage() {
     });
   }, [items, search, typeFilter, statusFilter, tagFilter]);
 
-  // Reset trang khi đổi filter; slice client-side cho cả grid + table.
+  // Reset trang + bỏ chọn khi đổi filter; slice client-side cho cả grid + table.
   React.useEffect(() => {
     setPage(1);
+    setSelected(new Set());
   }, [search, typeFilter, statusFilter, tagFilter]);
 
   const paged = React.useMemo(
@@ -277,7 +264,15 @@ export function BlocksPage() {
     }
   };
 
+  // Chỉ cho xoá block ở trạng thái Nháp (draft) — block đã/đang dùng (in_dev,
+  // review, published…) không được xoá để tránh mất nội dung đang chạy.
+  const isDraft = (b: ServerBlock) => effectiveBlockStatus(b) === 'draft';
+
   const handleDelete = async (block: ServerBlock) => {
+    if (!isDraft(block)) {
+      toast.error('Chỉ xoá được block ở trạng thái Nháp (draft).');
+      return;
+    }
     if (!window.confirm(`Xoá "${block.name}"?`)) return;
     const tid = toast.loading('Đang xoá…');
     try {
@@ -290,10 +285,85 @@ export function BlocksPage() {
     }
   };
 
+  // ── Bulk select ──────────────────────────────────────────────────────────
+  // Chỉ cho chọn block draft (non-draft bị chặn xoá nên không chọn được).
+  const toggleSelect = (id: string) =>
+    setSelected(prev => {
+      const block = items.find(b => b.id === id);
+      if (block && !isDraft(block)) return prev;
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  // Select-all CHỈ thao tác trên block draft của TRANG hiện tại (paged); selection
+  // giữ qua các trang. Block không phải draft không cho chọn (xoá bị chặn).
+  const pageDraftIds = paged.filter(isDraft).map(b => b.id);
+  const allOnPage =
+    pageDraftIds.length > 0 && pageDraftIds.every(id => selected.has(id));
+  const someOnPage = pageDraftIds.some(id => selected.has(id));
+  const toggleSelectAll = () =>
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (allOnPage) pageDraftIds.forEach(id => next.delete(id));
+      else pageDraftIds.forEach(id => next.add(id));
+      return next;
+    });
+
+  // Xoá (archive) các block đã chọn — tuần tự để không đập BE; lỗi nào bỏ qua,
+  // báo lại cuối.
+  const handleBulkDelete = async () => {
+    // Defensive: chỉ archive block còn ở trạng thái draft.
+    const ids = Array.from(selected).filter(id => {
+      const b = items.find(x => x.id === id);
+      return b && isDraft(b);
+    });
+    if (ids.length === 0) {
+      toast.error('Chỉ xoá được block ở trạng thái Nháp (draft).');
+      return;
+    }
+    if (
+      !window.confirm(
+        `Xoá ${ids.length} block đã chọn?\n\nKHÔNG hoàn tác được (archive).`
+      )
+    )
+      return;
+    setBulkDeleting(true);
+    let ok = 0;
+    const failed: string[] = [];
+    for (const id of ids) {
+      try {
+        await rexerApi.blocks.archive(id);
+        ok += 1;
+      } catch {
+        failed.push(id);
+      }
+    }
+    setBulkDeleting(false);
+    setSelected(new Set());
+    if (selectedId && ids.includes(selectedId)) setSelectedId(null);
+    if (ok > 0) toast.success(`Đã xoá ${ok} block`);
+    if (failed.length > 0) toast.error(`${failed.length} block không xoá được`);
+    await load();
+  };
+
   /** Mở dialog sửa thông tin block (name/description/tags). Nội dung canvas
    *  (settings) vẫn chỉnh trong block editor riêng. */
   const handleEdit = (block: ServerBlock) => {
     setEditTarget(block);
+  };
+
+  // Mở block trên CANVAS editor (block-direct): điều hướng thẳng tới route edit,
+  // editor load `blocks.get` → canvas, sửa xong dùng 🔖 ghi đè bản gốc
+  // (blocks.update). KHÔNG còn tạo canvas-template tạm.
+  const handleOpenCanvas = (block: ServerBlock) => {
+    const editorBlock = parseEditorBlock(block.settings);
+    if (!editorBlock) {
+      toast.error('Block không có canvas data hợp lệ để sửa trên editor.');
+      return;
+    }
+    router.push(`${detailBase}/${block.id}/edit`);
   };
 
   const handlePreview = (block: ServerBlock) => {
@@ -527,20 +597,32 @@ export function BlocksPage() {
             <GridView
               items={paged}
               selectedId={selectedId}
+              selected={selected}
+              onToggleSelect={toggleSelect}
               onSelect={handleRowClick}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
               onEdit={handleEdit}
+              onOpenCanvas={handleOpenCanvas}
+              openingCanvas={null}
               onPreview={handlePreview}
             />
           ) : (
             <TableView
               items={paged}
               selectedId={selectedId}
+              selected={selected}
+              onToggleSelect={toggleSelect}
+              allOnPage={allOnPage}
+              someOnPage={someOnPage}
+              selectAllDisabled={pageDraftIds.length === 0}
+              onToggleAll={toggleSelectAll}
               onSelect={handleRowClick}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
               onEdit={handleEdit}
+              onOpenCanvas={handleOpenCanvas}
+              openingCanvas={null}
               onPreview={handlePreview}
             />
           )}
@@ -586,12 +668,46 @@ export function BlocksPage() {
           if (!open) setEditTarget(null);
         }}
         block={editTarget}
-        blockTypes={blockTypes}
         onSaved={updated => {
           setItems(prev => prev.map(b => (b.id === updated.id ? updated : b)));
           setEditTarget(null);
         }}
       />
+
+      {/* Thanh hành động bulk — fixed đáy giữa, hiện khi đã chọn block. */}
+      {selected.size > 0 && (
+        <div className='bg-foreground fixed bottom-4 left-1/2 z-40 flex w-fit min-w-[320px] -translate-x-1/2 items-center gap-3 rounded-xl border border-zinc-700 px-4 py-2.5 shadow-2xl'>
+          <span className='text-xs font-medium text-white'>
+            Đã chọn{' '}
+            <span className='text-2xs rounded-md bg-white/15 px-1.5 py-0.5 font-mono'>
+              {selected.size}
+            </span>{' '}
+            block
+          </span>
+          <button
+            type='button'
+            onClick={() => setSelected(new Set())}
+            disabled={bulkDeleting}
+            className='text-2xs rounded-md px-2 py-1 font-medium text-white/70 hover:bg-white/10 disabled:opacity-50'
+          >
+            Bỏ chọn
+          </button>
+          <div className='h-4 w-px bg-white/20' />
+          <button
+            type='button'
+            onClick={handleBulkDelete}
+            disabled={bulkDeleting}
+            className='inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-500 disabled:opacity-50'
+          >
+            {bulkDeleting ? (
+              <Loader2 className='size-3.5 animate-spin' />
+            ) : (
+              <Trash2 className='size-3.5' />
+            )}
+            {bulkDeleting ? 'Đang xoá…' : 'Xoá đã chọn'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -601,18 +717,26 @@ export function BlocksPage() {
 function GridView({
   items,
   selectedId,
+  selected,
+  onToggleSelect,
   onSelect,
   onDuplicate,
   onDelete,
   onEdit,
+  onOpenCanvas,
+  openingCanvas,
   onPreview,
 }: {
   items: ServerBlock[];
   selectedId: string | null;
+  selected: Set<string>;
+  onToggleSelect: (id: string) => void;
   onSelect: (id: string) => void;
   onDuplicate: (id: string) => void;
   onDelete: (item: ServerBlock) => void;
   onEdit: (item: ServerBlock) => void;
+  onOpenCanvas: (item: ServerBlock) => void;
+  openingCanvas: string | null;
   onPreview: (item: ServerBlock) => void;
 }) {
   return (
@@ -622,10 +746,14 @@ function GridView({
           key={it.id}
           item={it}
           active={it.id === selectedId}
+          checked={selected.has(it.id)}
+          onToggleSelect={() => onToggleSelect(it.id)}
           onClick={() => onSelect(it.id)}
           onDuplicate={() => onDuplicate(it.id)}
           onDelete={() => onDelete(it)}
           onEdit={() => onEdit(it)}
+          onOpenCanvas={() => onOpenCanvas(it)}
+          opening={openingCanvas === it.id}
           onPreview={() => onPreview(it)}
         />
       ))}
@@ -636,18 +764,26 @@ function GridView({
 function BlockCard({
   item,
   active,
+  checked,
+  onToggleSelect,
   onClick,
   onDuplicate,
   onDelete,
   onEdit,
+  onOpenCanvas,
+  opening,
   onPreview,
 }: {
   item: ServerBlock;
   active: boolean;
+  checked: boolean;
+  onToggleSelect: () => void;
   onClick: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onOpenCanvas: () => void;
+  opening: boolean;
   onPreview: () => void;
 }) {
   const type = item.type_code as BlockType;
@@ -656,15 +792,36 @@ function BlockCard({
   const editorBlock = parseEditorBlock(item.settings);
   const extraCount = editorBlock?.extraElements?.length ?? 0;
   const hasMobile = !!editorBlock?.contentVi?.mobile;
+  // Chỉ block Nháp (draft) mới chọn được để xoá.
+  const draft = effectiveBlockStatus(item) === 'draft';
   return (
     <div
       className={cn(
         'group bg-card relative flex flex-col overflow-hidden rounded-xl border text-left shadow-sm transition-all hover:shadow-md',
-        active
+        active || checked
           ? 'border-foreground ring-foreground/10 ring-2'
           : 'border-border hover:border-border'
       )}
     >
+      {/* Checkbox chọn để xoá hàng loạt — chỉ block Nháp; hiện khi chọn / hover. */}
+      {draft && (
+        <label
+          onClick={e => e.stopPropagation()}
+          className={cn(
+            'bg-background/85 absolute top-2 left-2 z-20 flex size-6 cursor-pointer items-center justify-center rounded-md shadow-sm ring-1 ring-black/5 backdrop-blur transition-opacity',
+            checked ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          )}
+        >
+          <input
+            type='checkbox'
+            checked={checked}
+            onChange={onToggleSelect}
+            className='size-3.5 cursor-pointer rounded'
+            aria-label={`Chọn ${item.name}`}
+          />
+        </label>
+      )}
+
       <div className='absolute top-2 right-2 z-10 flex items-center gap-1'>
         {/* Quick preview button — opens full-screen layout + animation */}
         <button
@@ -684,6 +841,8 @@ function BlockCard({
           onDuplicate={onDuplicate}
           onDelete={onDelete}
           onEdit={onEdit}
+          onOpenCanvas={onOpenCanvas}
+          opening={opening}
           onPreview={onPreview}
         />
       </div>
@@ -705,7 +864,16 @@ function BlockCard({
         className='flex flex-1 cursor-pointer flex-col text-left'
       >
         <div className='relative'>
-          {editorBlock ? (
+          {/* Ưu tiên thumbnail custom (BE thumbnail_url) → preview render từ
+              settings → gradient placeholder. Khớp precedence với TableView. */}
+          {item.thumbnail_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={item.thumbnail_url}
+              alt={item.name}
+              className='aspect-[4/3] w-full object-cover'
+            />
+          ) : editorBlock ? (
             <BlockMiniPreview block={editorBlock} aspect='4 / 3' />
           ) : (
             <div
@@ -822,12 +990,16 @@ function CardKebabMenu({
   onDuplicate,
   onDelete,
   onEdit,
+  onOpenCanvas,
+  opening,
   onPreview,
 }: {
   onDetail: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onOpenCanvas: () => void;
+  opening: boolean;
   onPreview: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -896,6 +1068,19 @@ function CardKebabMenu({
           </button>
           <button
             type='button'
+            onClick={choose(onOpenCanvas)}
+            disabled={opening}
+            className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs disabled:opacity-50'
+          >
+            {opening ? (
+              <Loader2 className='size-3.5 animate-spin' />
+            ) : (
+              <PencilRuler className='text-content-muted size-3.5' />
+            )}
+            Sửa trên canvas
+          </button>
+          <button
+            type='button'
             onClick={choose(onDuplicate)}
             className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
           >
@@ -922,18 +1107,34 @@ function CardKebabMenu({
 function TableView({
   items,
   selectedId,
+  selected,
+  onToggleSelect,
+  allOnPage,
+  someOnPage,
+  selectAllDisabled,
+  onToggleAll,
   onSelect,
   onDuplicate,
   onDelete,
   onEdit,
+  onOpenCanvas,
+  openingCanvas,
   onPreview,
 }: {
   items: ServerBlock[];
   selectedId: string | null;
+  selected: Set<string>;
+  onToggleSelect: (id: string) => void;
+  allOnPage: boolean;
+  someOnPage: boolean;
+  selectAllDisabled: boolean;
+  onToggleAll: () => void;
   onSelect: (id: string) => void;
   onDuplicate: (id: string) => void;
   onDelete: (item: ServerBlock) => void;
   onEdit: (item: ServerBlock) => Promise<void> | void;
+  onOpenCanvas: (item: ServerBlock) => void;
+  openingCanvas: string | null;
   onPreview: (item: ServerBlock) => void;
 }) {
   return (
@@ -941,6 +1142,24 @@ function TableView({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className='w-10'>
+              <input
+                type='checkbox'
+                className='border-border size-3.5 cursor-pointer rounded disabled:cursor-not-allowed disabled:opacity-40'
+                checked={allOnPage}
+                disabled={selectAllDisabled}
+                ref={el => {
+                  if (el) el.indeterminate = someOnPage && !allOnPage;
+                }}
+                onChange={onToggleAll}
+                aria-label='Chọn tất cả block Nháp trên trang'
+                title={
+                  selectAllDisabled
+                    ? 'Không có block Nháp nào trên trang để chọn'
+                    : 'Chọn tất cả block Nháp'
+                }
+              />
+            </TableHead>
             <TableHead className='w-28'>Thumbnail</TableHead>
             <TableHead>Tên</TableHead>
             <TableHead className='w-32'>Trạng thái</TableHead>
@@ -955,13 +1174,33 @@ function TableView({
         <TableBody>
           {items.map(it => {
             const editorBlock = parseEditorBlock(it.settings);
+            const draft = effectiveBlockStatus(it) === 'draft';
             return (
               <TableRow
                 key={it.id}
-                data-state={it.id === selectedId ? 'selected' : undefined}
+                data-state={
+                  it.id === selectedId || selected.has(it.id)
+                    ? 'selected'
+                    : undefined
+                }
                 className='cursor-pointer'
                 onClick={() => onSelect(it.id)}
               >
+                <TableCell onClick={e => e.stopPropagation()}>
+                  <input
+                    type='checkbox'
+                    className='border-border size-3.5 cursor-pointer rounded disabled:cursor-not-allowed disabled:opacity-40'
+                    checked={selected.has(it.id)}
+                    disabled={!draft}
+                    onChange={() => onToggleSelect(it.id)}
+                    aria-label={`Chọn ${it.name}`}
+                    title={
+                      draft
+                        ? `Chọn ${it.name}`
+                        : 'Chỉ chọn/xoá được block Nháp (draft)'
+                    }
+                  />
+                </TableCell>
                 <TableCell>
                   {it.thumbnail_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -1052,6 +1291,19 @@ function TableView({
                       title='Sửa thông tin (tên, mô tả, tag)'
                     >
                       <Pencil className='size-3.5' />
+                    </Button>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={() => onOpenCanvas(it)}
+                      disabled={openingCanvas === it.id}
+                      title='Sửa nội dung trên canvas editor'
+                    >
+                      {openingCanvas === it.id ? (
+                        <Loader2 className='size-3.5 animate-spin' />
+                      ) : (
+                        <PencilRuler className='size-3.5' />
+                      )}
                     </Button>
                     <Button
                       variant='ghost'
