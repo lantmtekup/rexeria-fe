@@ -143,7 +143,7 @@ export default function Vault() {
           href='#invite'
           className='rounded-full border border-[#c9a96e]/50 px-4 py-1.5 text-[11px] font-semibold tracking-wide text-[#c9a96e] transition-colors hover:bg-[#c9a96e]/10'
         >
-          Đăng ký sở hữu
+          Reserve yours
         </a>
       </header>
 
@@ -152,7 +152,11 @@ export default function Vault() {
         {/* lớp tương tác: di chuột → coin hiện theo vệt (re-skin nền tối) */}
         <div className='absolute inset-0'>
           <ImageTrail
-            content={{ images: COIN_IMAGES, autoDemo: true }}
+            content={{
+              images: COIN_IMAGES,
+              autoDemo: true,
+              autoDemoText: '2026',
+            }}
             background={{ color: '#08070a' }}
             className='!h-full !min-h-screen !rounded-none'
           />
@@ -164,14 +168,14 @@ export default function Vault() {
             Royal Canadian Mint · 2026
           </p>
           <h1
-            className='text-5xl leading-[0.95] font-light tracking-tight md:text-8xl'
-            style={{ fontFamily: 'Georgia, serif' }}
+            className='text-6xl leading-[0.95] font-light tracking-[-0.01em] md:text-8xl'
+            style={{ fontFamily: 'var(--font-display), Georgia, serif' }}
           >
-            Bộ sưu tập của một năm.
+            The collection of a year.
           </h1>
-          <p className='mt-5 max-w-md text-sm leading-relaxed text-white/60'>
-            30 bảo vật vàng &amp; bạc nguyên chất — đúc giới hạn, mỗi đồng một
-            câu chuyện.
+          <p className='mt-6 max-w-md text-sm leading-relaxed text-white/60'>
+            Thirty treasures in pure gold and silver. Struck in limited mintage,
+            each with its own story.
           </p>
           <div className='vault-hint-pill mt-8 inline-flex items-center gap-2.5 rounded-full border border-[#c9a96e]/40 bg-[#c9a96e]/10 py-2.5 pr-5 pl-2.5 backdrop-blur-sm'>
             <span className='vault-hint-ring relative flex size-9 items-center justify-center rounded-full border border-[#c9a96e]/50 bg-[#08070a]/40'>
@@ -184,12 +188,9 @@ export default function Vault() {
               </svg>
             </span>
             <span className='vault-hint-text text-[11px] font-semibold tracking-[0.2em] text-[#c9a96e] uppercase'>
-              Di chuột để đánh thức hầm bảo vật
+              Move your cursor to wake the vault
             </span>
           </div>
-          <span className='absolute bottom-10 text-xs text-white/40'>
-            ↓ Cuộn để bước vào
-          </span>
         </div>
       </section>
 
@@ -202,8 +203,8 @@ export default function Vault() {
           >
             <Gallery3dDepth
               content={{
-                eyebrow: 'Cửa hầm mở ra',
-                title: '30 bảo vật, một bộ sưu tập',
+                eyebrow: 'The vault opens',
+                title: '30 treasures, one collection',
                 images: COIN_IMAGES.slice(0, 6),
               }}
               className='!h-screen !min-h-screen !w-full !rounded-none'
@@ -222,11 +223,9 @@ export default function Vault() {
           {/* nhãn hồi — gập vào panel để giữ full-screen liền mạch */}
           <div className='absolute top-20 left-6 z-30 md:left-10'>
             <p className='text-[11px] tracking-[0.3em] text-[#c9a96e] uppercase'>
-              II · Bộ sưu tập
+              II · The Collection
             </p>
-            <p className='mt-1 text-xs text-white/40'>
-              Most coveted · giá cao → thấp
-            </p>
+            <p className='mt-1 text-xs text-white/40'>Most coveted first</p>
           </div>
           <div
             ref={spotRef}
@@ -272,11 +271,11 @@ export default function Vault() {
             <div className='pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center bg-gradient-to-t from-[#08070a] via-[#08070a]/85 to-transparent px-6 pt-20 pb-12 text-center'>
               <span className='mb-2 rounded-full border border-[#c9a96e]/40 px-3 py-1 text-[10px] tracking-[0.18em] text-[#c9a96e] uppercase'>
                 {activeCoin.metal}
-                {activeCoin.weight ? ` · ${activeCoin.weight}` : ''} · Limited
+                {activeCoin.weight ? ` · ${activeCoin.weight}` : ''}
               </span>
               <h2
                 className='max-w-2xl text-2xl leading-tight font-light md:text-3xl'
-                style={{ fontFamily: 'Georgia, serif' }}
+                style={{ fontFamily: 'var(--font-display), Georgia, serif' }}
               >
                 {activeCoin.name}
               </h2>
@@ -288,7 +287,7 @@ export default function Vault() {
                 onClick={() => setSelected(activeCoin)}
                 className='pointer-events-auto mt-4 rounded-full bg-white/10 px-5 py-2 text-xs font-semibold text-white backdrop-blur transition-colors hover:bg-white/20'
               >
-                Xem chi tiết →
+                View details →
               </button>
             </div>
           )}
@@ -304,38 +303,41 @@ export default function Vault() {
       <section className='flex min-h-screen flex-col items-center justify-center px-6'>
         <div className='mb-12 text-center'>
           <p className='text-[11px] tracking-[0.3em] text-[#c9a96e] uppercase'>
-            III · Vì sao đáng sở hữu
+            III · The Craft
           </p>
-          <p className='mt-1 text-sm text-white/40'>
-            Tay nghề · khan hiếm · di sản
-          </p>
+          <h2
+            className='mt-3 text-3xl leading-tight font-light md:text-4xl'
+            style={{ fontFamily: 'var(--font-display), Georgia, serif' }}
+          >
+            Why each coin is worth holding.
+          </h2>
         </div>
         <div className='w-full max-w-6xl'>
           <AccordionMedia
             content={{
               items: [
                 {
-                  title: 'Vàng nguyên chất 99.99%',
+                  title: '99.99% Pure Gold',
                   description:
-                    'Mỗi đồng đúc từ kim loại quý đạt chuẩn cao nhất — giá trị bền theo thời gian.',
+                    'Each coin is struck from precious metal of the highest standard. Value that endures over time.',
                   imageUrl: CRAFT_IMG.gold,
                 },
                 {
-                  title: 'Mintage giới hạn',
+                  title: 'Limited Mintage',
                   description:
-                    'Số lượng được niêm phong, không bao giờ đúc thêm — sự khan hiếm tạo nên giá trị.',
+                    'The mintage is sealed and never struck again. Scarcity is what creates the value.',
                   imageUrl: CRAFT_IMG.vault,
                 },
                 {
-                  title: 'Hoàn thiện Proof',
+                  title: 'Proof Finish',
                   description:
-                    'Đánh bóng thủ công, sắc nét từng chi tiết hoa văn — chuẩn sưu tầm.',
+                    'Hand-polished to collector grade, every detail of the engraving razor-sharp.',
                   imageUrl: CRAFT_IMG.proof,
                 },
                 {
-                  title: 'Bảo chứng Royal Canadian Mint',
+                  title: 'Backed by the Royal Canadian Mint',
                   description:
-                    'Phát hành bởi xưởng đúc tiền quốc gia Canada — uy tín hơn một thế kỷ.',
+                    "Issued by Canada's national mint, trusted for over a century.",
                   imageUrl: CRAFT_IMG.heritage,
                 },
               ],
@@ -377,17 +379,17 @@ export default function Vault() {
         />
         <div className='relative z-10 flex w-full flex-col items-center'>
           <p className='mb-3 text-[11px] tracking-[0.3em] text-[#c9a96e] uppercase'>
-            IV · Lời mời
+            IV · The Invitation
           </p>
           <h2
             className='max-w-2xl text-3xl leading-tight font-light md:text-5xl'
-            style={{ fontFamily: 'Georgia, serif' }}
+            style={{ fontFamily: 'var(--font-display), Georgia, serif' }}
           >
-            Giữ một bảo vật trước khi nó tan vào lịch sử.
+            Claim a treasure before it fades into history.
           </h2>
           <LeadForm />
           <p className='mt-4 text-xs text-white/40'>
-            Phát hành giới hạn · ưu tiên danh sách collector
+            Limited release. Priority for the collector list.
           </p>
         </div>
       </section>
@@ -404,7 +406,7 @@ function LeadForm() {
   if (done)
     return (
       <p className='mt-9 rounded-full border border-[#c9a96e]/40 px-6 py-3 text-sm text-[#c9a96e]'>
-        Cảm ơn! Chúng tôi sẽ liên hệ khi bộ sưu tập mở bán.
+        Thank you! We will reach out when the collection goes on sale.
       </p>
     );
   return (
@@ -418,14 +420,14 @@ function LeadForm() {
       <input
         required
         type='email'
-        placeholder='Email của bạn'
+        placeholder='Your email'
         className='h-12 flex-1 rounded-full border border-white/15 bg-white/[0.04] px-5 text-sm text-white outline-none placeholder:text-white/40 focus:border-[#c9a96e]'
       />
       <button
         type='submit'
         className='h-12 rounded-full bg-[#c9a96e] px-7 text-sm font-semibold text-[#08070a] transition-transform hover:-translate-y-0.5'
       >
-        Đăng ký sở hữu
+        Reserve yours
       </button>
     </form>
   );
@@ -458,11 +460,11 @@ function CoinDetail({ coin, onClose }: { coin: Coin; onClose: () => void }) {
         <div className='flex flex-col justify-center'>
           <span className='mb-3 text-[11px] tracking-[0.2em] text-[#c9a96e] uppercase'>
             {coin.metal}
-            {coin.weight ? ` · ${coin.weight}` : ''} · Limited edition
+            {coin.weight ? ` · ${coin.weight}` : ''}, Limited edition
           </span>
           <h2
             className='text-3xl leading-tight font-light text-white md:text-4xl'
-            style={{ fontFamily: 'Georgia, serif' }}
+            style={{ fontFamily: 'var(--font-display), Georgia, serif' }}
           >
             {coin.name}
           </h2>
@@ -470,15 +472,15 @@ function CoinDetail({ coin, onClose }: { coin: Coin; onClose: () => void }) {
             {coin.price}
           </p>
           <p className='mt-4 text-sm leading-relaxed text-white/60'>
-            Một kiệt tác đúc giới hạn từ Royal Canadian Mint — kim loại quý
-            nguyên chất, hoàn thiện proof. Sở hữu ngay khi còn cơ hội.
+            A limited-mintage masterpiece from the Royal Canadian Mint. Pure
+            precious metal, proof finish. Own it while you still can.
           </p>
           <div className='mt-7 flex flex-wrap gap-3'>
             <button
               type='button'
               className='rounded-full bg-[#c9a96e] px-6 py-3 text-sm font-semibold text-[#08070a]'
             >
-              Đăng ký sở hữu
+              Reserve yours
             </button>
             <a
               href={coin.url}
@@ -486,14 +488,14 @@ function CoinDetail({ coin, onClose }: { coin: Coin; onClose: () => void }) {
               rel='noreferrer'
               className='rounded-full border border-white/20 px-6 py-3 text-sm font-semibold text-white/80 transition-colors hover:bg-white/10'
             >
-              Xem trên Mint.ca ↗
+              View on Mint.ca ↗
             </a>
           </div>
         </div>
         <button
           type='button'
           onClick={onClose}
-          aria-label='Đóng'
+          aria-label='Close'
           className='absolute -top-3 -right-3 flex size-9 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur hover:bg-white/20'
         >
           ✕
