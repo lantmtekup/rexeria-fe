@@ -107,6 +107,12 @@ const ORDERED_TYPES: BlockType[] = [
   'mint_variants',
   'mint_discover',
   'mint_sku',
+  'mintv2_emblem',
+  'mintv2_manifesto',
+  'mintv2_works',
+  'mintv2_services',
+  'mintv2_process',
+  'mintv2_cta',
   // ── Interactive / Other ──────────────────────────────────
   'text_displace_hero',
   'image_trail',

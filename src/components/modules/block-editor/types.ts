@@ -91,6 +91,13 @@ export type BlockType =
   | 'mint_hero'
   | 'mint_variants'
   | 'mint_discover'
+  // ── Mintcoin-v2 sections ──
+  | 'mintv2_emblem'
+  | 'mintv2_services'
+  | 'mintv2_manifesto'
+  | 'mintv2_process'
+  | 'mintv2_cta'
+  | 'mintv2_works'
   // Wrapper cho legacy/framer block (render qua schemaId trong registry).
   // Không edit inline — chèn nguyên khối thiết kế vào canvas.
   | 'legacy_embed';
@@ -269,6 +276,83 @@ export interface MintDiscoverContent {
   mainImage: string;
   mainAlt: string;
   tabs: MintDiscoverTab[];
+}
+
+// ── Mintcoin-v2 sections (port từ apps/mintcoin-v2) ──────────────────────
+/** Emblem — coin trung tâm + tranh nền 2 bên, title + copy. */
+export interface MintV2EmblemContent {
+  title: string;
+  description: string;
+  coinUrl: string;
+  decorUrl: string;
+}
+
+export interface MintV2ServiceItem {
+  key: string;
+  label: string;
+  preview: string;
+  caption: string;
+}
+
+/** Services — heading lớn + danh sách chọn (trái) + ảnh preview (phải). */
+export interface MintV2ServicesContent {
+  eyebrow: string;
+  title: string;
+  items: MintV2ServiceItem[];
+}
+
+/** Manifesto — copy serif + 4 panel xám wipe 2-phase (panel/line decor cố định). */
+export interface MintV2ManifestoContent {
+  text: string;
+}
+
+export interface MintV2ProcessStep {
+  key: string;
+  no: string;
+  title: string;
+  body: string;
+}
+
+/** Process — center-line scrub + các step zigzag (fade-up). */
+export interface MintV2ProcessContent {
+  eyebrow: string;
+  title: string;
+  steps: MintV2ProcessStep[];
+}
+
+export interface MintV2Contact {
+  key: string;
+  label: string;
+  value: string;
+}
+
+/** Cta — headline + copy + contact strip + form lead-capture. */
+export interface MintV2CtaContent {
+  eyebrow: string;
+  title: string;
+  description: string;
+  buyLabel: string;
+  buyUrl: string;
+  contacts: MintV2Contact[];
+}
+
+export interface MintV2WorkCard {
+  key: string;
+  number: string;
+  jpLabel: string;
+  category: string;
+  title: string;
+  hero: string;
+  backdrop: string;
+  thumbs: string[];
+  bgClass: string;
+}
+
+/** Works — gallery hover-morph card (zigzag) + lightbox. */
+export interface MintV2WorksContent {
+  eyebrow: string;
+  title: string;
+  cards: MintV2WorkCard[];
 }
 
 export interface CtaSectionContent {
@@ -1256,6 +1340,12 @@ export type BlockContent =
   | MintHeroContent
   | MintVariantsContent
   | MintDiscoverContent
+  | MintV2EmblemContent
+  | MintV2ServicesContent
+  | MintV2ManifestoContent
+  | MintV2ProcessContent
+  | MintV2CtaContent
+  | MintV2WorksContent
   | CtaSectionContent
   | ImageCarouselContent
   | StoriesContent
@@ -1939,6 +2029,66 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Mint Discover',
     aiLabelVi: 'section khám phá chi tiết coin (hotspot + drawer)',
     aiLabelEn: 'coin detail discover section (hotspots + drawer)',
+  },
+  mintv2_emblem: {
+    type: 'mintv2_emblem',
+    label: 'MintV2 · Emblem',
+    accent: '#c79119',
+    adminLabel: 'MintV2 Emblem',
+    gradient: 'from-amber-300 to-yellow-600',
+    defaultName: 'Emblem',
+    aiLabelVi: 'coin trung tâm + tranh nền 2 bên, title lớn (drop + reveal)',
+    aiLabelEn: 'centre coin emblem with flanking art + big title',
+  },
+  mintv2_services: {
+    type: 'mintv2_services',
+    label: 'MintV2 · Services',
+    accent: '#c79119',
+    adminLabel: 'MintV2 Services',
+    gradient: 'from-yellow-500 to-amber-700',
+    defaultName: 'Services',
+    aiLabelVi: 'heading lớn + danh sách chọn + ảnh preview đổi theo mục',
+    aiLabelEn: 'big heading + selector list + swapping preview image',
+  },
+  mintv2_manifesto: {
+    type: 'mintv2_manifesto',
+    label: 'MintV2 · Manifesto',
+    accent: '#c79119',
+    adminLabel: 'MintV2 Manifesto',
+    gradient: 'from-amber-500 to-yellow-700',
+    defaultName: 'Manifesto',
+    aiLabelVi: 'tuyên ngôn serif + 4 panel xám wipe theo scroll (2 pha)',
+    aiLabelEn: 'serif manifesto with 4-panel gray wipe on scroll',
+  },
+  mintv2_process: {
+    type: 'mintv2_process',
+    label: 'MintV2 · Process',
+    accent: '#c79119',
+    adminLabel: 'MintV2 Process',
+    gradient: 'from-yellow-600 to-amber-800',
+    defaultName: 'Process',
+    aiLabelVi: 'timeline các bước zigzag + đường giữa vẽ theo scroll',
+    aiLabelEn: 'zigzag step timeline with scroll-drawn centre line',
+  },
+  mintv2_cta: {
+    type: 'mintv2_cta',
+    label: 'MintV2 · CTA',
+    accent: '#c79119',
+    adminLabel: 'MintV2 CTA',
+    gradient: 'from-amber-400 to-yellow-700',
+    defaultName: 'CTA',
+    aiLabelVi: 'CTA cuối: headline + contact + form lead-capture',
+    aiLabelEn: 'closing CTA: headline + contact + lead-capture form',
+  },
+  mintv2_works: {
+    type: 'mintv2_works',
+    label: 'MintV2 · Works',
+    accent: '#c79119',
+    adminLabel: 'MintV2 Works',
+    gradient: 'from-amber-500 to-yellow-800',
+    defaultName: 'Works',
+    aiLabelVi: 'gallery card hover-morph (thumb bay vào) + lightbox',
+    aiLabelEn: 'hover-morph gallery cards (fly-in thumbs) + lightbox',
   },
   image_carousel: {
     type: 'image_carousel',

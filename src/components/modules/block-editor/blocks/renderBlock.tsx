@@ -8,6 +8,12 @@ import { MintSku } from './MintSku';
 import { MintHero } from './MintHero';
 import { MintVariants } from './MintVariants';
 import { MintDiscover } from './MintDiscover';
+import { MintV2Emblem } from './MintV2Emblem';
+import { MintV2Services } from './MintV2Services';
+import { MintV2Manifesto } from './MintV2Manifesto';
+import { MintV2Process } from './MintV2Process';
+import { MintV2Cta } from './MintV2Cta';
+import { MintV2Works } from './MintV2Works';
 import { FeatureSection } from './FeatureSection';
 import { Flipbook } from './Flipbook';
 import { FramerAesthaEditorial } from './FramerAesthaEditorial';
@@ -96,6 +102,12 @@ import type {
   MintHeroContent,
   MintVariantsContent,
   MintDiscoverContent,
+  MintV2EmblemContent,
+  MintV2ServicesContent,
+  MintV2ManifestoContent,
+  MintV2ProcessContent,
+  MintV2CtaContent,
+  MintV2WorksContent,
   ElementPositionsMap,
   ElementStylesMap,
   FeatureSectionContent,
@@ -317,6 +329,72 @@ export function RenderBlock({
       return (
         <MintDiscover
           content={content as MintDiscoverContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'mintv2_emblem':
+      return (
+        <MintV2Emblem
+          content={content as MintV2EmblemContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'mintv2_services':
+      return (
+        <MintV2Services
+          content={content as MintV2ServicesContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'mintv2_manifesto':
+      return (
+        <MintV2Manifesto
+          content={content as MintV2ManifestoContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'mintv2_process':
+      return (
+        <MintV2Process
+          content={content as MintV2ProcessContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'mintv2_cta':
+      return (
+        <MintV2Cta
+          content={content as MintV2CtaContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'mintv2_works':
+      return (
+        <MintV2Works
+          content={content as MintV2WorksContent}
           styles={styles}
           background={background}
           order={order}

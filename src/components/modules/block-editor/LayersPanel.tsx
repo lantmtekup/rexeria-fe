@@ -403,6 +403,43 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'heroLine2', label: 'Overlay dòng 2', icon: Type },
     { key: 'heroLine3', label: 'Overlay dòng 3', icon: Type },
   ],
+  mintv2_emblem: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'description', label: 'Mô tả', icon: Pilcrow },
+    { key: 'coinUrl', label: 'Ảnh coin', icon: ImageIcon },
+    { key: 'decorUrl', label: 'Ảnh nền (tranh)', icon: ImageIcon },
+  ],
+  mintv2_services: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề lớn', icon: Type },
+    { key: 'items', label: 'Danh sách mục', icon: ListChecks },
+  ],
+  mintv2_manifesto: [
+    BACKGROUND_LAYER,
+    { key: 'text', label: 'Tuyên ngôn', icon: Pilcrow },
+  ],
+  mintv2_process: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề lớn', icon: Type },
+    { key: 'steps', label: 'Các bước', icon: ListChecks },
+  ],
+  mintv2_cta: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'description', label: 'Mô tả', icon: Pilcrow },
+    { key: 'contacts', label: 'Liên hệ', icon: ListChecks },
+    { key: 'buyLabel', label: 'Link mua', icon: Type },
+  ],
+  mintv2_works: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề lớn', icon: Type },
+    { key: 'cards', label: 'Các card', icon: ListChecks },
+  ],
   mint_discover: [
     BACKGROUND_LAYER,
     { key: 'mainImage', label: 'Ảnh coin', icon: ImageIcon },

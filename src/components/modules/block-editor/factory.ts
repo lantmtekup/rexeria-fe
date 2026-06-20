@@ -13,6 +13,12 @@ import type {
   MintHeroContent,
   MintVariantsContent,
   MintDiscoverContent,
+  MintV2EmblemContent,
+  MintV2ServicesContent,
+  MintV2ManifestoContent,
+  MintV2ProcessContent,
+  MintV2CtaContent,
+  MintV2WorksContent,
   FeatureSectionContent,
   FlipbookContent,
   FramerArpeggioHeroContent,
@@ -342,6 +348,192 @@ const MINT_DISCOVER_VI: MintDiscoverContent = {
       img: MINT_IMG.coinReverse,
       dotX: 38,
       dotY: 62,
+    },
+  ],
+};
+
+// ── Mintcoin-v2 defaults (nội dung gốc English, dùng chung VI/EN) ─────────
+const MINTV2_FRAME48 =
+  'https://d10zufojjcedud.cloudfront.net/coin-nextjs/frames/frame-048.webp';
+
+const MINTV2_EMBLEM_VI: MintV2EmblemContent = {
+  title: 'The Jack Pine',
+  description: 'A 1006.1 g, 99.99% pure gold proof coin. Mintage 75 worldwide.',
+  coinUrl: MINT_IMG.coinObverse,
+  decorUrl: MINT_IMG.painting,
+};
+
+const MINTV2_SERVICES_VI: MintV2ServicesContent = {
+  eyebrow: 'Two Dimensions',
+  title: 'HERITAGE & CRAFT',
+  items: [
+    {
+      key: 'thomson',
+      label: 'Tom Thomson Heritage',
+      preview: MINT_IMG.painting,
+      caption: 'Painted 1916–17, Algonquin Park',
+    },
+    {
+      key: 'engraving',
+      label: 'Engraving Craft',
+      preview: MINT_IMG.coinReverse,
+      caption: 'Master engravers · hand-finished relief',
+    },
+    {
+      key: 'gold',
+      label: '99.99% Pure Gold',
+      preview: MINTV2_FRAME48,
+      caption: '1006.1 g · .99999 fineness',
+    },
+    {
+      key: 'mintage',
+      label: 'Limited Mintage 75',
+      preview: MINT_IMG.coinPackaging,
+      caption: 'Each coin individually serialised',
+    },
+    {
+      key: 'effigy',
+      label: 'King Charles III Effigy',
+      preview: MINT_IMG.coinObverse,
+      caption: 'By Canadian artist Steven Rosati',
+    },
+  ],
+};
+
+const MINTV2_MANIFESTO_VI: MintV2ManifestoContent = {
+  text: 'Forged in 99.99% pure Canadian gold — mastery in every detail, artistry in every strike. We refine, we honour, we endure.',
+};
+
+const MINTV2_PROCESS_VI: MintV2ProcessContent = {
+  eyebrow: 'The Making',
+  title: 'From Brush to Strike',
+  steps: [
+    {
+      key: 's1',
+      no: '01',
+      title: 'The Painting',
+      body: 'Tom Thomson paints The Jack Pine at Algonquin Park, capturing a windswept tree above an Ontario lake (1916–17).',
+    },
+    {
+      key: 's2',
+      no: '02',
+      title: 'Engraving Sketch',
+      body: 'RCM master engravers translate the brushwork into millimetric relief — every needle, crag, and ripple plotted by hand.',
+    },
+    {
+      key: 's3',
+      no: '03',
+      title: 'Die Cutting',
+      body: "Reverse and obverse dies are CNC-cut to the engraver's spec, then hand-finished for proof-level polish and frost zones.",
+    },
+    {
+      key: 's4',
+      no: '04',
+      title: 'The Strike',
+      body: '1006.1 g of .99999 fine gold blanks are struck under specialised dies designed for kilo-scale coins. Multiple strikes ensure relief depth.',
+    },
+    {
+      key: 's5',
+      no: '05',
+      title: 'Presentation',
+      body: 'Each coin is encapsulated and presented in a Royal Canadian Mint–branded wooden case with black beauty box and serialised certificate.',
+    },
+  ],
+};
+
+const MINTV2_CTA_VI: MintV2CtaContent = {
+  eyebrow: 'Mintage 75 Worldwide',
+  title: 'Reserve Yours',
+  description:
+    'Leave your details and an advisor will reach out to secure your allocation before the edition closes — a 1006.1 g, 99.99% pure gold proof coin.',
+  buyLabel: 'Or buy directly online →',
+  buyUrl:
+    'https://www.mint.ca/en/shop/coins/2026/the-jack-pine-by-tom-thomson-1-kilo-pure-gold-coin',
+  contacts: [
+    {
+      key: 'c1',
+      label: 'Customer Service',
+      value: '1-800-267-1871 · Mon–Fri 8:30 am – 6 pm ET',
+    },
+    {
+      key: 'c2',
+      label: 'Mailing Address',
+      value: 'Royal Canadian Mint, 320 Sussex Drive, Ottawa K1A 0G8',
+    },
+  ],
+};
+
+const MINTV2_CDN = 'https://d10zufojjcedud.cloudfront.net/coin-nextjs';
+const mintv2Frame = (n: number) =>
+  `${MINTV2_CDN}/frames/frame-${String(n).padStart(3, '0')}.webp`;
+
+const MINTV2_WORKS_VI: MintV2WorksContent = {
+  eyebrow: 'The Details',
+  title: 'Forged in Gold',
+  cards: [
+    {
+      key: 'w1',
+      number: '01',
+      jpLabel: 'I',
+      category: 'Engraving Detail',
+      title: 'LONE PINE',
+      hero: MINT_IMG.coinObverse,
+      backdrop: MINT_IMG.coinObverse,
+      thumbs: [
+        MINT_IMG.coinObverse,
+        mintv2Frame(12),
+        mintv2Frame(36),
+        MINT_IMG.painting,
+      ],
+      bgClass: 'bg-[#efe9dc]',
+    },
+    {
+      key: 'w2',
+      number: '02',
+      jpLabel: 'II',
+      category: 'Polish Finish',
+      title: 'SKY & WATER',
+      hero: MINT_IMG.coinReverse,
+      backdrop: MINT_IMG.coinReverse,
+      thumbs: [
+        MINT_IMG.coinReverse,
+        mintv2Frame(48),
+        mintv2Frame(72),
+        MINT_IMG.painting,
+      ],
+      bgClass: 'bg-[#efe9dc]',
+    },
+    {
+      key: 'w3',
+      number: '03',
+      jpLabel: 'III',
+      category: 'Die Geometry',
+      title: 'SERRATED EDGE',
+      hero: mintv2Frame(84),
+      backdrop: MINT_IMG.painting,
+      thumbs: [
+        mintv2Frame(6),
+        mintv2Frame(28),
+        mintv2Frame(84),
+        MINT_IMG.coinPackaging,
+      ],
+      bgClass: 'bg-[#efe9dc]',
+    },
+    {
+      key: 'w4',
+      number: '04',
+      jpLabel: 'IV',
+      category: 'Effigy Portrait',
+      title: 'CHARLES III',
+      hero: MINT_IMG.coinPackaging,
+      backdrop: MINT_IMG.coinPackaging,
+      thumbs: [
+        MINT_IMG.coinPackaging,
+        MINT_IMG.coinObverse,
+        mintv2Frame(96),
+        MINT_IMG.heroStorefront,
+      ],
+      bgClass: 'bg-[#efe9dc]',
     },
   ],
 };
@@ -2443,6 +2635,12 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   mint_hero: MINT_HERO_VI,
   mint_variants: MINT_VARIANTS_VI,
   mint_discover: MINT_DISCOVER_VI,
+  mintv2_emblem: MINTV2_EMBLEM_VI,
+  mintv2_services: MINTV2_SERVICES_VI,
+  mintv2_manifesto: MINTV2_MANIFESTO_VI,
+  mintv2_process: MINTV2_PROCESS_VI,
+  mintv2_cta: MINTV2_CTA_VI,
+  mintv2_works: MINTV2_WORKS_VI,
   image_carousel: CAROUSEL_VI,
   stories: STORIES_VI,
   split_screen: SPLIT_VI,
@@ -2530,6 +2728,12 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   mint_hero: MINT_HERO_VI,
   mint_variants: MINT_VARIANTS_VI,
   mint_discover: MINT_DISCOVER_VI,
+  mintv2_emblem: MINTV2_EMBLEM_VI,
+  mintv2_services: MINTV2_SERVICES_VI,
+  mintv2_manifesto: MINTV2_MANIFESTO_VI,
+  mintv2_process: MINTV2_PROCESS_VI,
+  mintv2_cta: MINTV2_CTA_VI,
+  mintv2_works: MINTV2_WORKS_VI,
   image_carousel: CAROUSEL_EN,
   stories: STORIES_EN,
   split_screen: SPLIT_EN,
