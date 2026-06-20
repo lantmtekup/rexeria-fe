@@ -56,6 +56,8 @@ interface BlockEditorHeaderProps {
    *  vắng mặt trong block mode vì không có page để publish). */
   onSaveBlockDirect?: () => void;
   savingBlockDirect?: boolean;
+  /** Control transition (cấp template) — render cạnh trạng thái lưu. */
+  transitionControl?: React.ReactNode;
   onPlayMotionPreview: () => void;
   onOpenMotionEditor: () => void;
   canUndo: boolean;
@@ -99,6 +101,7 @@ export function BlockEditorHeader({
   saveBlockLabel = 'Lưu block vào thư viện',
   onSaveBlockDirect,
   savingBlockDirect,
+  transitionControl,
   onPlayMotionPreview,
   onOpenMotionEditor,
   canUndo,
@@ -143,6 +146,11 @@ export function BlockEditorHeader({
         </h1>
       </div>
       <SaveDot status={status} />
+
+      {/* Transition control — đặt cạnh trạng thái lưu (thay vì nổi góc dưới). */}
+      {transitionControl && (
+        <div className='ml-1 shrink-0'>{transitionControl}</div>
+      )}
 
       {/* push the rest right */}
       <div className='flex-1' />

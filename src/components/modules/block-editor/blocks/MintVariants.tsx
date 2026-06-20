@@ -10,11 +10,11 @@
  */
 import * as React from 'react';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import DiscoverPanel from '@/templates/mint-coint/components/DiscoverPanel';
 import { IMG } from '@/templates/mint-coint/lib/image-cdn';
 
+import { useBlockMotion } from '../motion/LandingMotion';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -29,7 +29,6 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
-import { useContainerMobile } from './useContainerMobile';
 
 interface Props {
   content: MintVariantsContent;
@@ -49,7 +48,6 @@ export function MintVariants({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
-  const isMobile = useContainerMobile(rootRef);
   const variants = content.variants ?? [];
   const [active, setActive] = React.useState(variants[0]?.key ?? '');
   const [discoverOpen, setDiscoverOpen] = React.useState(false);
@@ -61,28 +59,46 @@ export function MintVariants({
       positionStyle(positions, key)
     );
 
-  React.useEffect(() => {
-    if (isMobile) return; // parallax desktop-only (đo theo container)
+  useBlockMotion(rootRef, ({ scroller, isMobile }) => {
+    if (isMobile) return; // desktop-only (đo theo container)
     const root = rootRef.current;
     if (!root) return;
-    gsap.registerPlugin(ScrollTrigger);
-    const ctx = gsap.context(() => {
-      gsap.utils.toArray<HTMLElement>('.js-parallax', root).forEach(el => {
-        gsap.to(el, {
-          y: el.getAttribute('data-y') || '-100',
-          ease: 'power4',
+    gsap.utils.toArray<HTMLElement>('.js-parallax', root).forEach(el => {
+      gsap.to(el, {
+        y: el.getAttribute('data-y') || '-100',
+        ease: 'power4',
+        scrollTrigger: {
+          trigger: el,
+          scroller,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1,
+          invalidateOnRefresh: true,
+        },
+      });
+    });
+    // Zoom ảnh coin theo scroll (scrub): nhỏ → lớn dần khi section đi qua.
+    const coin = root.querySelector<HTMLElement>('.mint-variants__coin');
+    if (coin) {
+      gsap.fromTo(
+        coin,
+        { scale: 0.88 },
+        {
+          scale: 1.12,
+          ease: 'none',
+          transformOrigin: 'center center',
           scrollTrigger: {
-            trigger: el,
+            trigger: root,
+            scroller,
             start: 'top bottom',
             end: 'bottom top',
             scrub: 1,
             invalidateOnRefresh: true,
           },
-        });
-      });
-    }, root);
-    return () => ctx.revert();
-  }, [isMobile]);
+        }
+      );
+    }
+  });
 
   return (
     <section
@@ -125,13 +141,17 @@ export function MintVariants({
             data-y='-20'
           >
             {activeVariant && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={activeVariant.key}
-                src={activeVariant.image}
-                alt={`Coin — ${activeVariant.label}`}
-                className='pointer-events-none h-[45vh] w-auto object-contain transition-opacity duration-300 @2xl:h-[55vh]'
-              />
+              // Wrapper ổn định cho zoom-scrub (img có key → remount khi đổi
+              // swatch; wrapper không remount nên ScrollTrigger giữ target).
+              <div className='mint-variants__coin gpu-layer'>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  key={activeVariant.key}
+                  src={activeVariant.image}
+                  alt={`Coin — ${activeVariant.label}`}
+                  className='pointer-events-none h-[45vh] w-auto object-contain transition-opacity duration-300 @2xl:h-[55vh]'
+                />
+              </div>
             )}
             <span className='pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover/info:opacity-100'>
               <span className='flex items-center gap-2 rounded-full bg-black px-5 py-3 text-[11px] tracking-[0.2em] whitespace-nowrap text-white uppercase shadow-xl'>

@@ -12,11 +12,11 @@
  */
 import * as React from 'react';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import SplitType from 'split-type';
 
 import { IMG } from '@/templates/mint-coint/lib/image-cdn';
 
+import { useLandingMotion } from '../motion/LandingMotion';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -57,6 +57,7 @@ export function MintHero({
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const overlayRef = React.useRef<HTMLDivElement>(null);
   const isMobile = useContainerMobile(sectionRef);
+  const { scroller, requestRefresh } = useLandingMotion();
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -66,7 +67,6 @@ export function MintHero({
 
   // ── Canvas frame-scrub (port, isMobile từ container) ─────────────────────
   React.useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx2d = canvas.getContext('2d');
@@ -135,7 +135,7 @@ export function MintHero({
               recomputeLayout();
               draw();
             }
-            if (loadedCount === FRAME_TOTAL) ScrollTrigger.refresh();
+            if (loadedCount === FRAME_TOTAL) requestRefresh();
           });
       };
       images.push(img);
@@ -152,6 +152,7 @@ export function MintHero({
           snap: 'frame',
           ease: 'none',
           scrollTrigger: {
+            scroller,
             trigger: '.hero-rotate',
             start: 'top top',
             end: 'bottom bottom',
@@ -166,6 +167,7 @@ export function MintHero({
         autoAlpha: 0,
         ease: 'sine.out',
         scrollTrigger: {
+          scroller,
           trigger: '.hero__img',
           start: 'top top',
           end: '+=150%',
@@ -183,6 +185,7 @@ export function MintHero({
         snap: 'frame',
         ease: 'none',
         scrollTrigger: {
+          scroller,
           trigger: '.intro',
           start: 'top top',
           end: '+=150%',
@@ -203,7 +206,7 @@ export function MintHero({
       resizeT = setTimeout(() => {
         recomputeLayout();
         draw();
-        ScrollTrigger.refresh();
+        requestRefresh();
       }, 150);
     };
     window.addEventListener('resize', onResize);
@@ -212,11 +215,10 @@ export function MintHero({
       if (resizeT) clearTimeout(resizeT);
       ctx.revert();
     };
-  }, [isMobile]);
+  }, [isMobile, scroller, requestRefresh]);
 
   // ── Overlay text entrance + parallax (port từ HeroOverlayText) ───────────
   React.useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
     const root = overlayRef.current;
     if (!root) return;
     const ctx = gsap.context(() => {
@@ -254,6 +256,7 @@ export function MintHero({
           opacity: 0.4,
           ease: 'none',
           scrollTrigger: {
+            scroller,
             trigger: '.hero__img',
             start: 'top top',
             end: 'bottom top',
@@ -264,7 +267,7 @@ export function MintHero({
       }
     }, root);
     return () => ctx.revert();
-  }, []);
+  }, [scroller]);
 
   const overlay = (
     <div

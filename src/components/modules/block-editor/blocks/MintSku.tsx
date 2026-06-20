@@ -9,9 +9,9 @@
 
 import * as React from 'react';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import SplitType from 'split-type';
 
+import { useBlockMotion } from '../motion/LandingMotion';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -52,36 +52,33 @@ export function MintSku({
       positionStyle(positions, key)
     );
 
-  React.useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
+  useBlockMotion(rootRef, ({ scroller }) => {
     const root = rootRef.current;
     if (!root) return;
-    const ctx = gsap.context(() => {
-      const titleEl = root.querySelector<HTMLElement>('.mint-sku__name span');
-      if (!titleEl) return;
-      const split = new SplitType(titleEl, { types: 'words,chars' });
-      gsap.fromTo(
-        split.chars,
-        { opacity: 0, y: 30, force3D: true },
-        {
-          opacity: 1,
-          y: 0,
-          force3D: true,
-          ease: 'power2.out',
-          stagger: 0.03,
-          duration: 0.6,
-          scrollTrigger: {
-            trigger: titleEl,
-            start: 'top 80%',
-            end: 'top 50%',
-            toggleActions: 'play none none reverse',
-            invalidateOnRefresh: true,
-          },
-        }
-      );
-    }, root);
-    return () => ctx.revert();
-  }, []);
+    const titleEl = root.querySelector<HTMLElement>('.mint-sku__name span');
+    if (!titleEl) return;
+    const split = new SplitType(titleEl, { types: 'words,chars' });
+    gsap.fromTo(
+      split.chars,
+      { opacity: 0, y: 30, force3D: true },
+      {
+        opacity: 1,
+        y: 0,
+        force3D: true,
+        ease: 'power2.out',
+        stagger: 0.03,
+        duration: 0.6,
+        scrollTrigger: {
+          trigger: titleEl,
+          scroller,
+          start: 'top 80%',
+          end: 'top 50%',
+          toggleActions: 'play none none reverse',
+          invalidateOnRefresh: true,
+        },
+      }
+    );
+  });
 
   return (
     <section

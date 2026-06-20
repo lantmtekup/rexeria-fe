@@ -12,8 +12,8 @@
  */
 import * as React from 'react';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
+import { useBlockMotion } from '../motion/LandingMotion';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -108,14 +108,14 @@ export function MintDiscover({
   }, [activeTab]);
 
   // Scrub fade/scale (variant 2 desktop = scale, còn lại fade).
-  React.useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    const root = sectionRef.current;
-    if (!root) return;
-    const ctx = gsap.context(() => {
+  useBlockMotion(
+    sectionRef,
+    ({ scroller, isMobile: mobile }) => {
+      const root = sectionRef.current;
+      if (!root) return;
       const img = root.querySelector<HTMLElement>('.zoomin-img');
       if (!img) return;
-      if (variant === '2' && !isMobile) {
+      if (variant === '2' && !mobile) {
         gsap.fromTo(
           img,
           { autoAlpha: 0, scale: 0.7 },
@@ -125,6 +125,7 @@ export function MintDiscover({
             ease: 'none',
             scrollTrigger: {
               trigger: root,
+              scroller,
               start: 'top bottom',
               end: 'center center',
               scrub: 1,
@@ -142,6 +143,7 @@ export function MintDiscover({
             ease: 'sine.out',
             scrollTrigger: {
               trigger: root,
+              scroller,
               start: 'top 85%',
               toggleActions: 'play none none reverse',
               invalidateOnRefresh: true,
@@ -149,9 +151,9 @@ export function MintDiscover({
           }
         );
       }
-    }, root);
-    return () => ctx.revert();
-  }, [variant, isMobile]);
+    },
+    [variant]
+  );
 
   const tabOpen = activeTab !== null;
   const tabData = activeTab ? tabs.find(t => t.key === activeTab) : null;

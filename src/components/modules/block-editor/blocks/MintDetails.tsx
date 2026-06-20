@@ -11,9 +11,9 @@
 
 import * as React from 'react';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import SplitType from 'split-type';
 
+import { useBlockMotion } from '../motion/LandingMotion';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -54,49 +54,51 @@ export function MintDetails({
       positionStyle(positions, key)
     );
 
-  React.useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
+  useBlockMotion(rootRef, ({ scroller }) => {
     const root = rootRef.current;
     if (!root) return;
-    const ctx = gsap.context(() => {
-      const titleEl = root.querySelector<HTMLElement>('.mint-details__title');
-      if (titleEl) {
-        const split = new SplitType(titleEl, { types: 'chars' });
-        gsap.fromTo(
-          split.chars,
-          { opacity: 0, y: 24, force3D: true },
-          {
-            opacity: 1,
-            y: 0,
-            force3D: true,
-            stagger: 0.04,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: titleEl,
-              start: 'top 85%',
-              end: 'top 50%',
-              toggleActions: 'play none none reverse',
-              invalidateOnRefresh: true,
-            },
-          }
-        );
-      }
-      gsap.utils.toArray<HTMLElement>('.mint-details__p', root).forEach(el => {
-        gsap.fromTo(
-          el,
-          { opacity: 0, y: 20 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 1,
-            ease: 'sine.out',
-            scrollTrigger: { trigger: el, start: 'top 85%', end: 'bottom 85%' },
-          }
-        );
-      });
-    }, root);
-    return () => ctx.revert();
-  }, []);
+    const titleEl = root.querySelector<HTMLElement>('.mint-details__title');
+    if (titleEl) {
+      const split = new SplitType(titleEl, { types: 'chars' });
+      gsap.fromTo(
+        split.chars,
+        { opacity: 0, y: 24, force3D: true },
+        {
+          opacity: 1,
+          y: 0,
+          force3D: true,
+          stagger: 0.04,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: titleEl,
+            scroller,
+            start: 'top 85%',
+            end: 'top 50%',
+            toggleActions: 'play none none reverse',
+            invalidateOnRefresh: true,
+          },
+        }
+      );
+    }
+    gsap.utils.toArray<HTMLElement>('.mint-details__p', root).forEach(el => {
+      gsap.fromTo(
+        el,
+        { opacity: 0, y: 20 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 1,
+          ease: 'sine.out',
+          scrollTrigger: {
+            trigger: el,
+            scroller,
+            start: 'top 85%',
+            end: 'bottom 85%',
+          },
+        }
+      );
+    });
+  });
 
   return (
     <section
