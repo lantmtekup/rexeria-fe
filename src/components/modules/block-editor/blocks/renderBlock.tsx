@@ -292,11 +292,38 @@ export function RenderBlock({
         />
       );
     case 'mint_hero':
-      return <MintHero content={content as MintHeroContent} />;
+      return (
+        <MintHero
+          content={content as MintHeroContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
     case 'mint_variants':
-      return <MintVariants content={content as MintVariantsContent} />;
+      return (
+        <MintVariants
+          content={content as MintVariantsContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
     case 'mint_discover':
-      return <MintDiscover content={content as MintDiscoverContent} />;
+      return (
+        <MintDiscover
+          content={content as MintDiscoverContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
     case 'image_carousel':
       return (
         <ImageCarousel

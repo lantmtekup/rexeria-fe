@@ -87,7 +87,7 @@ export function MintSku({
     <section
       ref={rootRef}
       style={blockBackgroundStyle(background)}
-      className='relative h-[50vh] w-full overflow-hidden bg-neutral-100'
+      className='@container relative h-[50vh] w-full overflow-hidden bg-neutral-100'
     >
       <div className='relative h-full w-full'>
         {/* z-0 painting */}
@@ -115,7 +115,7 @@ export function MintSku({
         {/* z-10 ghost title */}
         <h2
           data-element-key='title'
-          style={{ fontSize: 'clamp(48px, 9vw, 130px)', ...styleOf('title') }}
+          style={{ fontSize: 'clamp(40px, 9cqi, 130px)', ...styleOf('title') }}
           className={selectableClass(
             activeKey === 'title',
             'mint-sku__name pointer-events-none absolute inset-0 z-10 grid place-items-center px-6 text-center leading-[1.05] font-light tracking-tight text-white/25'
@@ -134,7 +134,7 @@ export function MintSku({
             style={styleOf('packagingUrl')}
             className={selectableClass(
               activeKey === 'packagingUrl',
-              'pointer-events-auto h-[58vh] w-auto -translate-y-[100px] object-contain drop-shadow-[0_25px_50px_rgba(0,0,0,0.7)] md:h-[64vh]'
+              'pointer-events-auto h-[58vh] w-auto -translate-y-[100px] object-contain drop-shadow-[0_25px_50px_rgba(0,0,0,0.7)] @2xl:h-[64vh]'
             )}
           />
         </div>

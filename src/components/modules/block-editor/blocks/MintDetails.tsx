@@ -102,7 +102,7 @@ export function MintDetails({
     <section
       ref={rootRef}
       style={blockBackgroundStyle(background)}
-      className='relative w-full px-6 pt-32 pb-24 md:pt-40 md:pb-32'
+      className='@container relative w-full px-6 pt-32 pb-24 @2xl:pt-40 @2xl:pb-32'
     >
       <div className='mx-auto max-w-3xl text-center'>
         <h1
@@ -110,7 +110,7 @@ export function MintDetails({
           style={styleOf('title')}
           className={selectableClass(
             activeKey === 'title',
-            'mint-details__title mb-10 text-6xl font-light tracking-tight md:text-8xl'
+            'mint-details__title mb-10 text-5xl font-light tracking-tight @2xl:text-8xl'
           )}
         >
           {content.title}
@@ -120,7 +120,7 @@ export function MintDetails({
           style={styleOf('paragraph1')}
           className={selectableClass(
             activeKey === 'paragraph1',
-            'mint-details__p mb-5 text-sm leading-relaxed text-neutral-800 md:text-base'
+            'mint-details__p mb-5 text-sm leading-relaxed text-neutral-800 @2xl:text-base'
           )}
         >
           {content.paragraph1}
@@ -130,7 +130,7 @@ export function MintDetails({
           style={styleOf('paragraph2')}
           className={selectableClass(
             activeKey === 'paragraph2',
-            'mint-details__p text-sm leading-relaxed text-neutral-800 md:text-base'
+            'mint-details__p text-sm leading-relaxed text-neutral-800 @2xl:text-base'
           )}
         >
           {content.paragraph2}
