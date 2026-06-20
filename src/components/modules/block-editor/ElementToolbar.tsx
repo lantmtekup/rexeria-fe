@@ -53,6 +53,8 @@ import {
   type ImageCarouselContent,
   type ImageTransform,
   type Lang,
+  type MintDiscoverContent,
+  type MintVariantsContent,
   type PhotoGalleryContent,
 } from './types';
 
@@ -64,6 +66,8 @@ type ElementKind =
   | 'photos'
   | 'reasons'
   | 'slides'
+  | 'mintVariants'
+  | 'mintTabs'
   | 'background';
 
 export const BACKGROUND_LAYER_KEY = '__background__';
@@ -88,6 +92,8 @@ const ELEMENT_KIND: Record<string, ElementKind> = {
   photos: 'photos',
   reasons: 'reasons',
   slides: 'slides',
+  variants: 'mintVariants',
+  tabs: 'mintTabs',
   [BACKGROUND_LAYER_KEY]: 'background',
 };
 
@@ -109,6 +115,8 @@ const ELEMENT_LABEL: Record<string, string> = {
   photos: 'Bộ ảnh',
   reasons: 'Lý do',
   slides: 'Slides',
+  variants: 'Biến thể (swatch)',
+  tabs: 'Hotspot / chi tiết',
   [BACKGROUND_LAYER_KEY]: 'Nền',
 };
 
@@ -319,6 +327,18 @@ export function ElementToolbar({
         {kind === 'slides' && (
           <SlidesControls
             content={content as ImageCarouselContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'mintVariants' && (
+          <MintVariantsControls
+            content={content as MintVariantsContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'mintTabs' && (
+          <MintTabsControls
+            content={content as MintDiscoverContent}
             onContentChange={onContentChange}
           />
         )}
@@ -1187,6 +1207,197 @@ function ReasonsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm lý do' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── MINT VARIANTS (swatch picker)
+
+function MintVariantsControls({
+  content,
+  onContentChange,
+}: {
+  content: MintVariantsContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const variants = content.variants ?? [];
+  const update = (i: number, patch: Partial<(typeof variants)[number]>) =>
+    onContentChange({
+      ...content,
+      variants: variants.map((v, idx) => (idx === i ? { ...v, ...patch } : v)),
+    } as BlockContent);
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      variants: variants.filter((_, idx) => idx !== i),
+    } as BlockContent);
+  const add = () =>
+    onContentChange({
+      ...content,
+      variants: [
+        ...variants,
+        {
+          key: `v_${Date.now().toString(36)}`,
+          label: 'Biến thể mới',
+          ref: '',
+          swatch: '',
+          image: '',
+        },
+      ],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Biến thể (swatch)'
+      preview={`${variants.length} mục`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {variants.map((v, i) => (
+          <div
+            key={v.key || i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={v.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Tên biến thể'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={v.swatch}
+              onChange={e => update(i, { swatch: e.target.value })}
+              placeholder='URL ảnh swatch (nút tròn)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={v.image}
+              onChange={e => update(i, { image: e.target.value })}
+              placeholder='URL ảnh hiển thị chính'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm biến thể' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── MINT TABS (hotspot detail)
+
+function MintTabsControls({
+  content,
+  onContentChange,
+}: {
+  content: MintDiscoverContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const tabs = content.tabs ?? [];
+  const update = (i: number, patch: Partial<(typeof tabs)[number]>) =>
+    onContentChange({
+      ...content,
+      tabs: tabs.map((t, idx) => (idx === i ? { ...t, ...patch } : t)),
+    } as BlockContent);
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      tabs: tabs.filter((_, idx) => idx !== i),
+    } as BlockContent);
+  const add = () =>
+    onContentChange({
+      ...content,
+      tabs: [
+        ...tabs,
+        {
+          key: `t_${Date.now().toString(36)}`,
+          label: 'Điểm mới',
+          desc: 'Mô tả chi tiết.',
+          img: '',
+          dotX: 50,
+          dotY: 50,
+        },
+      ],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Hotspot / chi tiết'
+      preview={`${tabs.length} hotspot`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {tabs.map((t, i) => (
+          <div
+            key={t.key || i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={t.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Tiêu đề hotspot'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={t.desc}
+              onChange={e => update(i, { desc: e.target.value })}
+              placeholder='Mô tả'
+              className='min-h-16 resize-none border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={t.img}
+              onChange={e => update(i, { img: e.target.value })}
+              placeholder='URL ảnh trong drawer'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <div className='flex items-center gap-2'>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                Dot X%
+                <Input
+                  type='number'
+                  min={0}
+                  max={100}
+                  value={t.dotX}
+                  onChange={e => update(i, { dotX: Number(e.target.value) })}
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+              </label>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                Dot Y%
+                <Input
+                  type='number'
+                  min={0}
+                  max={100}
+                  value={t.dotY}
+                  onChange={e => update(i, { dotY: Number(e.target.value) })}
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+              </label>
+            </div>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm hotspot' />
     </PopoverTrigger>
   );
 }

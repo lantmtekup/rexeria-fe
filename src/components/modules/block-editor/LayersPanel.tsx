@@ -395,6 +395,7 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'titleLine1', label: 'Tiêu đề dòng 1', icon: Type },
     { key: 'titleLine2', label: 'Tiêu đề dòng 2', icon: Type },
+    { key: 'variants', label: 'Biến thể (swatch)', icon: Grid3x3 },
   ],
   mint_hero: [
     BACKGROUND_LAYER,
@@ -406,6 +407,7 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'mainImage', label: 'Ảnh coin', icon: ImageIcon },
     { key: 'mainAlt', label: 'Alt ảnh', icon: Type },
+    { key: 'tabs', label: 'Hotspot / chi tiết', icon: ListChecks },
   ],
   image_carousel: [
     BACKGROUND_LAYER,
