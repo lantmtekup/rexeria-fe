@@ -28,7 +28,17 @@ const FRAME_EXT = '.webp';
 //   the frame INDEX (just a number, not a DOM property) so the canvas
 //   drawImage still drives the rotation. No transform = no iOS layer
 //   recomposition = no jank.
-export default function HeroIntroSection() {
+interface Props {
+  heroLine1?: string;
+  heroLine2?: string;
+  heroLine3?: string;
+}
+
+export default function HeroIntroSection({
+  heroLine1,
+  heroLine2,
+  heroLine3,
+}: Props = {}) {
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -248,7 +258,11 @@ export default function HeroIntroSection() {
               className='h-full w-full -translate-y-[50px] object-cover object-center opacity-95'
             />
           </div>
-          <HeroOverlayText />
+          <HeroOverlayText
+            line1={heroLine1}
+            line2={heroLine2}
+            line3={heroLine3}
+          />
         </div>
 
         {/* Rotation section — 200vh tall so sticky child has 100vh of
@@ -281,7 +295,11 @@ export default function HeroIntroSection() {
             className='h-full w-full object-contain object-center opacity-95'
           />
         </div>
-        <HeroOverlayText />
+        <HeroOverlayText
+          line1={heroLine1}
+          line2={heroLine2}
+          line3={heroLine3}
+        />
       </div>
 
       <div className='intro absolute top-1/2 right-0 left-0 h-screen w-full bg-neutral-900'>

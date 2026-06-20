@@ -12,7 +12,17 @@ import { useIsomorphicLayoutEffect } from '../lib/use-isomorphic-layout-effect';
 // drifts the text downward as the user scrolls through the hero — text
 // appears to "linger" while the background image scrolls away.
 // pointer-events:none so it never catches scroll or clicks.
-export default function HeroOverlayText() {
+interface Props {
+  line1?: string;
+  line2?: string;
+  line3?: string;
+}
+
+export default function HeroOverlayText({
+  line1 = 'The Jack Pine',
+  line2 = 'by Tom Thomson',
+  line3 = '1 kilo Pure Gold Coin',
+}: Props = {}) {
   const ref = useRef<HTMLDivElement>(null);
 
   useIsomorphicLayoutEffect(() => {
@@ -88,10 +98,11 @@ export default function HeroOverlayText() {
         <div className='h-line mb-4 h-px w-16 bg-gradient-to-r from-[#e6b94a] via-[#c79119] to-transparent md:mb-5 md:w-24' />
 
         <h2 className='h-title text-2xl leading-[1.15] font-light tracking-[0.04em] drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)] md:text-4xl lg:text-[44px]'>
-          The Jack Pine
+          {line1}
           <br />
-          by Tom Thomson
-          <br />1 kilo Pure Gold Coin
+          {line2}
+          <br />
+          {line3}
         </h2>
       </div>
     </div>

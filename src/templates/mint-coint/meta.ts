@@ -14,20 +14,81 @@ export const meta: TemplateMeta = {
     'Premium product landing — Tom Thomson Jack Pine 1kg gold coin. ' +
     'Pinned scenes, smooth scroll (Lenis), GSAP scroll-triggered ' +
     'animations, variant picker, discover panel.',
+  // Keys phải khớp `MintContent` ở lib/content.ts (resolveContent merge theo
+  // key). Default = chuỗi gốc → bỏ trống thì render y nguyên.
   contentSchema: {
     fields: [
       {
-        key: 'title',
-        label: 'Tên sản phẩm',
+        key: 'heroLine1',
+        label: 'Hero — dòng 1',
         type: 'text',
-        default: 'The Jack Pine by Tom Thomson',
-        hint: 'Hiện ở meta title + một số chỗ heading',
+        default: 'The Jack Pine',
+        group: 'Hero',
       },
       {
-        key: 'subtitle',
-        label: 'Subtitle',
+        key: 'heroLine2',
+        label: 'Hero — dòng 2',
         type: 'text',
-        default: '1 Kilo Pure Gold Coin (2026)',
+        default: 'by Tom Thomson',
+        group: 'Hero',
+      },
+      {
+        key: 'heroLine3',
+        label: 'Hero — dòng 3',
+        type: 'text',
+        default: '1 kilo Pure Gold Coin',
+        group: 'Hero',
+      },
+      {
+        key: 'detailsTitle',
+        label: 'Details — tiêu đề',
+        type: 'text',
+        default: 'The Jack Pine',
+        group: 'Details',
+      },
+      {
+        key: 'detailsParagraph1',
+        label: 'Details — đoạn 1',
+        type: 'longText',
+        default:
+          "A 1006.1 g, 99.99% pure gold proof coin from the Royal Canadian Mint — a monumental tribute to Tom Thomson's iconic 1916–17 landscape, struck in a mintage of just 75 worldwide. The reverse captures the lone, windswept pine rising against a sunset over an Ontario lake; the obverse bears Steven Rosati's effigy of His Majesty King Charles III.",
+        group: 'Details',
+      },
+      {
+        key: 'detailsParagraph2',
+        label: 'Details — đoạn 2',
+        type: 'longText',
+        default:
+          "101.6 mm in diameter with a serrated edge and $2,500 face value. Encapsulated in a Royal Canadian Mint wooden case with black beauty box and serialised certificate — a piece of Canada's cultural heritage rendered in pure gold.",
+        group: 'Details',
+      },
+      {
+        key: 'variantTitleLine1',
+        label: 'Variants — title dòng 1',
+        type: 'text',
+        default: '99.99%',
+        group: 'Variants',
+      },
+      {
+        key: 'variantTitleLine2',
+        label: 'Variants — title dòng 2',
+        type: 'text',
+        default: 'Pure Gold',
+        group: 'Variants',
+      },
+      {
+        key: 'skuTitle',
+        label: 'SKU — tiêu đề lớn',
+        type: 'text',
+        default: 'The Jack Pine 1 kilo',
+        group: 'SKU',
+      },
+      {
+        key: 'panelTitle',
+        label: 'Discover panel — tiêu đề',
+        type: 'text',
+        default: 'The Jack Pine by Tom Thomson — 1 Kilo Pure Gold Coin',
+        group: 'Discover',
       },
     ],
   },

@@ -20,6 +20,7 @@ interface Props {
   onClose: () => void;
   initialView?: ViewKey;
   images: ViewImages;
+  title?: string;
 }
 
 // Side-drawer detail panel with per-view image swiper. Slides in from
@@ -29,6 +30,7 @@ export default function DiscoverPanel({
   onClose,
   initialView = 'reverse',
   images,
+  title = 'The Jack Pine by Tom Thomson — 1 Kilo Pure Gold Coin',
 }: Props) {
   const [view, setView] = useState<ViewKey>(initialView);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -116,7 +118,7 @@ export default function DiscoverPanel({
 
           <div className='mb-2 flex items-start justify-between gap-4'>
             <h2 className='text-2xl leading-tight font-light tracking-tight md:text-[26px]'>
-              The Jack Pine by Tom Thomson — 1 Kilo Pure Gold Coin
+              {title}
             </h2>
             <span className='mt-1 shrink-0 border border-black/20 px-3 py-1.5 text-[10px] tracking-[0.18em] whitespace-nowrap uppercase'>
               Mintage 75

@@ -85,6 +85,12 @@ export type BlockType =
   | 'framer_aestha_project_detail'
   | 'framer_perform_about'
   | 'framer_perform_pricing'
+  // ── Mint-coint sections tách thành data block (port từ src/templates) ──
+  | 'mint_details'
+  | 'mint_sku'
+  | 'mint_hero'
+  | 'mint_variants'
+  | 'mint_discover'
   // Wrapper cho legacy/framer block (render qua schemaId trong registry).
   // Không edit inline — chèn nguyên khối thiết kế vào canvas.
   | 'legacy_embed';
@@ -210,6 +216,59 @@ export interface BookingFormContent {
   reasons: BookingReason[];
   submitText: string;
   noteText: string;
+}
+
+/** Mint-coint "details" section (port). Title + 2 đoạn mô tả. */
+export interface MintDetailsContent {
+  title: string;
+  paragraph1: string;
+  paragraph2: string;
+}
+
+/** Mint-coint "sku-cta" section (port). Ghost title lớn + ảnh nền/packaging. */
+export interface MintSkuContent {
+  title: string;
+  paintingUrl: string;
+  packagingUrl: string;
+}
+
+/** Mint-coint "hero" section (port). 3 dòng overlay (canvas scrub giữ nội bộ). */
+export interface MintHeroContent {
+  heroLine1: string;
+  heroLine2: string;
+  heroLine3: string;
+}
+
+export interface MintVariantItem {
+  key: string;
+  label: string;
+  swatch: string;
+  image: string;
+  ref: string;
+}
+
+/** Mint-coint "variants" section (port). Swatch picker + parallax title. */
+export interface MintVariantsContent {
+  titleLine1: string;
+  titleLine2: string;
+  variants: MintVariantItem[];
+}
+
+export interface MintDiscoverTab {
+  key: string;
+  label: string;
+  desc: string;
+  img: string;
+  dotX: number;
+  dotY: number;
+}
+
+/** Mint-coint "discover" section (port). Hotspot + drawer (tự chứa). */
+export interface MintDiscoverContent {
+  variant: '1' | '2';
+  mainImage: string;
+  mainAlt: string;
+  tabs: MintDiscoverTab[];
 }
 
 export interface CtaSectionContent {
@@ -1192,6 +1251,11 @@ export type BlockContent =
   | FeatureSectionContent
   | PhotoGalleryContent
   | BookingFormContent
+  | MintDetailsContent
+  | MintSkuContent
+  | MintHeroContent
+  | MintVariantsContent
+  | MintDiscoverContent
   | CtaSectionContent
   | ImageCarouselContent
   | StoriesContent
@@ -1825,6 +1889,56 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'CTA',
     aiLabelVi: 'section call-to-action cuối trang',
     aiLabelEn: 'closing call-to-action section',
+  },
+  mint_details: {
+    type: 'mint_details',
+    label: 'Mint · Details',
+    accent: '#a16207',
+    adminLabel: 'Mint Details',
+    gradient: 'from-amber-500 to-yellow-700',
+    defaultName: 'Mint Details',
+    aiLabelVi: 'section mô tả chi tiết sản phẩm (tiêu đề + 2 đoạn)',
+    aiLabelEn: 'product details section (title + 2 paragraphs)',
+  },
+  mint_sku: {
+    type: 'mint_sku',
+    label: 'Mint · SKU',
+    accent: '#a16207',
+    adminLabel: 'Mint SKU',
+    gradient: 'from-yellow-600 to-amber-800',
+    defaultName: 'Mint SKU',
+    aiLabelVi: 'section showcase SKU cuối trang (tiêu đề lớn)',
+    aiLabelEn: 'closing SKU showcase section (large title)',
+  },
+  mint_hero: {
+    type: 'mint_hero',
+    label: 'Mint · Hero',
+    accent: '#a16207',
+    adminLabel: 'Mint Hero',
+    gradient: 'from-amber-400 to-yellow-600',
+    defaultName: 'Mint Hero',
+    aiLabelVi: 'hero coin với canvas xoay + overlay 3 dòng',
+    aiLabelEn: 'coin hero with rotating canvas + 3-line overlay',
+  },
+  mint_variants: {
+    type: 'mint_variants',
+    label: 'Mint · Variants',
+    accent: '#a16207',
+    adminLabel: 'Mint Variants',
+    gradient: 'from-yellow-500 to-amber-700',
+    defaultName: 'Mint Variants',
+    aiLabelVi: 'section chọn biến thể sản phẩm (swatch picker)',
+    aiLabelEn: 'product variant picker section',
+  },
+  mint_discover: {
+    type: 'mint_discover',
+    label: 'Mint · Discover',
+    accent: '#a16207',
+    adminLabel: 'Mint Discover',
+    gradient: 'from-amber-600 to-yellow-800',
+    defaultName: 'Mint Discover',
+    aiLabelVi: 'section khám phá chi tiết coin (hotspot + drawer)',
+    aiLabelEn: 'coin detail discover section (hotspots + drawer)',
   },
   image_carousel: {
     type: 'image_carousel',

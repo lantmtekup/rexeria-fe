@@ -5,8 +5,18 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import SplitType from 'split-type';
 
+interface Props {
+  title?: string;
+  paragraph1?: string;
+  paragraph2?: string;
+}
+
 // Title with char-by-char fade-up entrance + paragraph fade-in.
-export default function DetailsSection() {
+export default function DetailsSection({
+  title = 'The Jack Pine',
+  paragraph1 = "A 1006.1 g, 99.99% pure gold proof coin from the Royal Canadian Mint — a monumental tribute to Tom Thomson's iconic 1916–17 landscape, struck in a mintage of just 75 worldwide. The reverse captures the lone, windswept pine rising against a sunset over an Ontario lake; the obverse bears Steven Rosati's effigy of His Majesty King Charles III.",
+  paragraph2 = "101.6 mm in diameter with a serrated edge and $2,500 face value. Encapsulated in a Royal Canadian Mint wooden case with black beauty box and serialised certificate — a piece of Canada's cultural heritage rendered in pure gold.",
+}: Props = {}) {
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -68,21 +78,13 @@ export default function DetailsSection() {
     >
       <div className='mx-auto max-w-3xl text-center'>
         <h1 className='details__title gpu-layer mb-10 text-6xl font-light tracking-tight md:text-8xl'>
-          The Jack Pine
+          {title}
         </h1>
         <p className='data-fade-in mb-5 text-sm leading-relaxed text-neutral-800 md:text-base'>
-          A 1006.1 g, 99.99% pure gold proof coin from the Royal Canadian Mint —
-          a monumental tribute to Tom Thomson&apos;s iconic 1916–17 landscape,
-          struck in a mintage of just 75 worldwide. The reverse captures the
-          lone, windswept pine rising against a sunset over an Ontario lake; the
-          obverse bears Steven Rosati&apos;s effigy of His Majesty King Charles
-          III.
+          {paragraph1}
         </p>
         <p className='data-fade-in text-sm leading-relaxed text-neutral-800 md:text-base'>
-          101.6 mm in diameter with a serrated edge and $2,500 face value.
-          Encapsulated in a Royal Canadian Mint wooden case with black beauty
-          box and serialised certificate — a piece of Canada&apos;s cultural
-          heritage rendered in pure gold.
+          {paragraph2}
         </p>
       </div>
     </section>

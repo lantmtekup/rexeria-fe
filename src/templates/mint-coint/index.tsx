@@ -8,9 +8,9 @@
  * Public mode (`/p/{slug}`): apply html/body global styles cho immersive
  * full-page experience (scroll lock, no scrollbar) qua useEffect.
  *
- * Per-page customization (page.type_metadata): hiện chỉ title/subtitle
- * (meta fields). Có thể mở rộng schema để brand override hero image,
- * variant labels, etc. — sửa meta.ts + thread props vào sections.
+ * Per-page customization (page.type_metadata): content brand-identity được
+ * gom ở `lib/content.ts` (resolveContent) rồi thread xuống từng section. Mỗi
+ * field có default = chuỗi gốc nên content rỗng → render y nguyên bản gốc.
  */
 
 import * as React from 'react';
@@ -25,14 +25,22 @@ import ProductDetailSection from './components/sections/ProductDetailSection';
 import ProductVariantSection from './components/sections/ProductVariantSection';
 import ProductSkuSection from './components/sections/ProductSkuSection';
 import { IMG } from './lib/image-cdn';
+import { resolveContent } from './lib/content';
 import { meta as mintCointMeta } from './meta';
 import { useSectionTracking } from '../_tracking/use-section-tracking';
 import type { TemplateProps } from '../types';
 
 import './styles.css';
 
-export default function MintCointTemplate({ page, mode }: TemplateProps) {
+export default function MintCointTemplate({
+  page,
+  content,
+  mode,
+}: TemplateProps) {
   const [discoverOpen, setDiscoverOpen] = React.useState(false);
+  // Brand content (merge page.type_metadata lên default). Memo để tránh tạo
+  // object mới mỗi render.
+  const c = React.useMemo(() => resolveContent(content), [content]);
 
   // Per-section tracking (chỉ public mode — preview/edit fire pollute
   // prod data). Hook tự dedup view event 1 lần per session per section.
@@ -82,10 +90,18 @@ export default function MintCointTemplate({ page, mode }: TemplateProps) {
       <Header />
       <main>
         <div data-rexer-section='hero'>
-          <HeroIntroSection />
+          <HeroIntroSection
+            heroLine1={c.heroLine1}
+            heroLine2={c.heroLine2}
+            heroLine3={c.heroLine3}
+          />
         </div>
         <div data-rexer-section='details'>
-          <DetailsSection />
+          <DetailsSection
+            title={c.detailsTitle}
+            paragraph1={c.detailsParagraph1}
+            paragraph2={c.detailsParagraph2}
+          />
         </div>
         <div data-rexer-section='discover-reverse'>
           <ProductDetailSection
@@ -150,6 +166,8 @@ export default function MintCointTemplate({ page, mode }: TemplateProps) {
           <ProductVariantSection
             id='information'
             onOpenDiscover={() => setDiscoverOpen(true)}
+            titleLine1={c.variantTitleLine1}
+            titleLine2={c.variantTitleLine2}
             variants={[
               {
                 key: 'reverse',
@@ -176,12 +194,13 @@ export default function MintCointTemplate({ page, mode }: TemplateProps) {
           />
         </div>
         <div data-rexer-section='sku-cta'>
-          <ProductSkuSection />
+          <ProductSkuSection title={c.skuTitle} />
         </div>
       </main>
       <DiscoverPanel
         open={discoverOpen}
         onClose={() => setDiscoverOpen(false)}
+        title={c.panelTitle}
         images={{
           reverse: [IMG.coinReverse, IMG.coinRevLeft, IMG.coinRevRight],
           obverse: [IMG.coinObverse, IMG.coinReverse, IMG.coinRevLeft],

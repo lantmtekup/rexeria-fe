@@ -16,6 +16,8 @@ interface Props {
   id?: string;
   variants: Variant[];
   onOpenDiscover?: () => void;
+  titleLine1?: string;
+  titleLine2?: string;
 }
 
 // Pinned section showing the active variant's hero image with a swatch
@@ -25,6 +27,8 @@ export default function ProductVariantSection({
   id,
   variants,
   onOpenDiscover,
+  titleLine1 = '99.99%',
+  titleLine2 = 'Pure Gold',
 }: Props) {
   const sectionRef = useRef<HTMLElement>(null);
   const [active, setActive] = useState<string>(variants[0]?.key ?? '');
@@ -71,7 +75,7 @@ export default function ProductVariantSection({
         <div className='pointer-events-none absolute inset-0 z-0 flex items-center justify-center px-6 text-center'>
           <div className='content-bottom js-parallax gpu-layer' data-y='60'>
             <h2 className='text-[12vw] leading-[1.05] font-light tracking-tight text-neutral-300/80 md:text-[10vw]'>
-              99.99% <br /> Pure Gold
+              {titleLine1} <br /> {titleLine2}
             </h2>
           </div>
         </div>

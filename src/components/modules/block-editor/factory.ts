@@ -1,5 +1,6 @@
 import { BLOCK_TYPE_META } from './types';
 import { MEDIA, pickMedia } from './blocks/sample-media';
+import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
 import type {
   Block,
   BlockContent,
@@ -7,6 +8,11 @@ import type {
   BookingFormContent,
   Carousel3dContent,
   CtaSectionContent,
+  MintDetailsContent,
+  MintSkuContent,
+  MintHeroContent,
+  MintVariantsContent,
+  MintDiscoverContent,
   FeatureSectionContent,
   FlipbookContent,
   FramerArpeggioHeroContent,
@@ -261,6 +267,85 @@ const BOOKING_EN: BookingFormContent = {
 };
 
 // ── CTA Section ─────────────────────────────────────────────────────────
+// Mint-coint port — default = brand text gốc (xem templates/mint-coint/lib/content.ts).
+const MINT_DETAILS_VI: MintDetailsContent = {
+  title: 'The Jack Pine',
+  paragraph1:
+    "A 1006.1 g, 99.99% pure gold proof coin from the Royal Canadian Mint — a monumental tribute to Tom Thomson's iconic 1916–17 landscape, struck in a mintage of just 75 worldwide. The reverse captures the lone, windswept pine rising against a sunset over an Ontario lake; the obverse bears Steven Rosati's effigy of His Majesty King Charles III.",
+  paragraph2:
+    "101.6 mm in diameter with a serrated edge and $2,500 face value. Encapsulated in a Royal Canadian Mint wooden case with black beauty box and serialised certificate — a piece of Canada's cultural heritage rendered in pure gold.",
+};
+const MINT_SKU_VI: MintSkuContent = {
+  title: 'The Jack Pine 1 kilo',
+  paintingUrl:
+    'https://d10zufojjcedud.cloudfront.net/coin-nextjs/jackpine-painting.webp',
+  packagingUrl:
+    'https://d10zufojjcedud.cloudfront.net/coin-nextjs/coin-packaging.webp',
+};
+const MINT_HERO_VI: MintHeroContent = {
+  heroLine1: 'The Jack Pine',
+  heroLine2: 'by Tom Thomson',
+  heroLine3: '1 kilo Pure Gold Coin',
+};
+const MINT_VARIANTS_VI: MintVariantsContent = {
+  titleLine1: '99.99%',
+  titleLine2: 'Pure Gold',
+  variants: [
+    {
+      key: 'reverse',
+      label: 'Reverse',
+      ref: 'rcm-252469',
+      swatch: MINT_IMG.coinReverse,
+      image: MINT_IMG.coinReverse,
+    },
+    {
+      key: 'obverse',
+      label: 'Obverse',
+      ref: 'rcm-252469',
+      swatch: MINT_IMG.coinObverse,
+      image: MINT_IMG.coinObverse,
+    },
+    {
+      key: 'packaging',
+      label: 'Packaging',
+      ref: 'rcm-252469',
+      swatch: MINT_IMG.coinPackaging,
+      image: MINT_IMG.coinPackaging,
+    },
+  ],
+};
+const MINT_DISCOVER_VI: MintDiscoverContent = {
+  variant: '1',
+  mainImage: MINT_IMG.coinReverse,
+  mainAlt: 'Jack Pine Gold Coin — reverse',
+  tabs: [
+    {
+      key: 'tab1',
+      label: 'The Lone Pine',
+      desc: "Tom Thomson's windswept jack pine, rising from rocky ground above a northern lake. The kilo-sized canvas lifts every needle, branch and crag into 99.99% pure gold relief.",
+      img: MINT_IMG.coinReverse,
+      dotX: 50,
+      dotY: 30,
+    },
+    {
+      key: 'tab2',
+      label: 'Sky and Water',
+      desc: "A monochromatic field of polished and frosted gold replaces the painting's sunset palette, deepening the impact of Thomson's dynamic composition.",
+      img: MINT_IMG.coinReverse,
+      dotX: 62,
+      dotY: 62,
+    },
+    {
+      key: 'tab3',
+      label: 'Serrated Edge',
+      desc: '101.6 mm in diameter with a serrated edge — a tactile signature of Royal Canadian Mint craftsmanship at this scale.',
+      img: MINT_IMG.coinReverse,
+      dotX: 38,
+      dotY: 62,
+    },
+  ],
+};
+
 const CTA_VI: CtaSectionContent = {
   eyebrow: 'SẴN SÀNG?',
   title: 'Đến tham quan căn hộ mẫu cuối tuần này',
@@ -2353,6 +2438,11 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   photo_gallery: GALLERY_VI,
   booking_form: BOOKING_VI,
   cta_section: CTA_VI,
+  mint_details: MINT_DETAILS_VI,
+  mint_sku: MINT_SKU_VI,
+  mint_hero: MINT_HERO_VI,
+  mint_variants: MINT_VARIANTS_VI,
+  mint_discover: MINT_DISCOVER_VI,
   image_carousel: CAROUSEL_VI,
   stories: STORIES_VI,
   split_screen: SPLIT_VI,
@@ -2435,6 +2525,11 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   photo_gallery: GALLERY_EN,
   booking_form: BOOKING_EN,
   cta_section: CTA_EN,
+  mint_details: MINT_DETAILS_VI,
+  mint_sku: MINT_SKU_VI,
+  mint_hero: MINT_HERO_VI,
+  mint_variants: MINT_VARIANTS_VI,
+  mint_discover: MINT_DISCOVER_VI,
   image_carousel: CAROUSEL_EN,
   stories: STORIES_EN,
   split_screen: SPLIT_EN,

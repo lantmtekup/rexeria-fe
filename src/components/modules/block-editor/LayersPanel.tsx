@@ -379,6 +379,18 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'primaryText', label: 'CTA chính', icon: MousePointerClick },
     { key: 'secondaryText', label: 'CTA phụ', icon: MousePointerClick },
   ],
+  mint_details: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'paragraph1', label: 'Đoạn 1', icon: Pilcrow },
+    { key: 'paragraph2', label: 'Đoạn 2', icon: Pilcrow },
+  ],
+  mint_sku: [
+    BACKGROUND_LAYER,
+    { key: 'title', label: 'Tiêu đề lớn', icon: Type },
+    { key: 'paintingUrl', label: 'Ảnh nền (painting)', icon: ImageIcon },
+    { key: 'packagingUrl', label: 'Ảnh packaging', icon: ImageIcon },
+  ],
   image_carousel: [
     BACKGROUND_LAYER,
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },

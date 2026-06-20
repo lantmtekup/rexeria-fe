@@ -5,9 +5,15 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import SplitType from 'split-type';
 
+interface Props {
+  title?: string;
+}
+
 // Final SKU showcase: layered painting + coin + giant title that splits and
 // animates in char-by-char as the user scrolls past.
-export default function ProductSkuSection() {
+export default function ProductSkuSection({
+  title = 'The Jack Pine 1 kilo',
+}: Props = {}) {
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -104,7 +110,7 @@ export default function ProductSkuSection() {
           className='product-sku__name gpu-layer pointer-events-none absolute inset-0 z-10 grid place-items-center px-6 text-center leading-[1.05] font-light tracking-tight text-white/25'
           style={{ fontSize: 'clamp(48px, 9vw, 130px)' }}
         >
-          <span>The Jack Pine 1 kilo</span>
+          <span>{title}</span>
         </h2>
 
         {/* z-20 — coin in front, centered */}

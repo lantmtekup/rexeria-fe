@@ -102,6 +102,11 @@ const ORDERED_TYPES: BlockType[] = [
   // ── Footer / CTA ─────────────────────────────────────────
   'framer_contact_footer',
   'cta_section',
+  'mint_hero',
+  'mint_details',
+  'mint_variants',
+  'mint_discover',
+  'mint_sku',
   // ── Interactive / Other ──────────────────────────────────
   'text_displace_hero',
   'image_trail',

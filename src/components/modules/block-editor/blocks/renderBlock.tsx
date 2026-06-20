@@ -3,6 +3,11 @@ import * as React from 'react';
 import { BookingForm } from './BookingForm';
 import { Carousel3d } from './Carousel3d';
 import { CtaSection } from './CtaSection';
+import { MintDetails } from './MintDetails';
+import { MintSku } from './MintSku';
+import { MintHero } from './MintHero';
+import { MintVariants } from './MintVariants';
+import { MintDiscover } from './MintDiscover';
 import { FeatureSection } from './FeatureSection';
 import { Flipbook } from './Flipbook';
 import { FramerAesthaEditorial } from './FramerAesthaEditorial';
@@ -86,6 +91,11 @@ import type {
   BookingFormContent,
   Carousel3dContent,
   CtaSectionContent,
+  MintDetailsContent,
+  MintSkuContent,
+  MintHeroContent,
+  MintVariantsContent,
+  MintDiscoverContent,
   ElementPositionsMap,
   ElementStylesMap,
   FeatureSectionContent,
@@ -259,6 +269,34 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
+    case 'mint_details':
+      return (
+        <MintDetails
+          content={content as MintDetailsContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'mint_sku':
+      return (
+        <MintSku
+          content={content as MintSkuContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'mint_hero':
+      return <MintHero content={content as MintHeroContent} />;
+    case 'mint_variants':
+      return <MintVariants content={content as MintVariantsContent} />;
+    case 'mint_discover':
+      return <MintDiscover content={content as MintDiscoverContent} />;
     case 'image_carousel':
       return (
         <ImageCarousel
