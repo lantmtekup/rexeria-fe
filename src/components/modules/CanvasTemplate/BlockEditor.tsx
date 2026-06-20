@@ -966,11 +966,23 @@ export function BlockEditor({
           // public luôn nhận đúng bản mới nhất (tránh publish version cũ khi
           // user sửa nhưng quên "Save Version").
           const committed = await handleSaveVersion();
-          const verId = committed?.id ?? currentVersion?.id;
-          await rexerApi.pages.publish(
-            pageId,
-            verId ? { template_version_id: verId } : undefined
-          );
+          // Commit thất bại (vd BE từ chối block_type "unknown block type") →
+          // KHÔNG fallback publish version cũ. Trước đây fallback
+          // `currentVersion?.id` khiến publish 1 version rỗng/cũ mà vẫn trả 201
+          // → trang public trắng âm thầm. Giờ abort + revert toggle + báo rõ.
+          if (!committed) {
+            publishState.togglePublish(); // revert optimistic published=true
+            autosave.markDirty();
+            await autosave.flush({ silent: true });
+            toast.error(
+              'Chưa publish được: commit version mới thất bại (xem lỗi phía trên). Sửa rồi thử lại — KHÔNG publish bản cũ.',
+              { duration: 8000 }
+            );
+            return;
+          }
+          await rexerApi.pages.publish(pageId, {
+            template_version_id: committed.id,
+          });
         } else {
           await rexerApi.pages.unpublish(pageId);
         }
