@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn';
 
 import { ExtraElementOverlay } from './ExtraElementOverlay';
 import { RenderBlock } from './blocks/renderBlock';
+import { LandingMotionRoot } from './motion/LandingMotion';
 import { MotionBlockRoot, MotionProvider } from './motion/runtime';
 import type { BlockMotion, EditorMode } from './motion/types';
 import { readVariant, type Block, type Device, type Lang } from './types';
@@ -350,76 +351,78 @@ export function BlockPreview({
         at the original 1280/834/390 width → horizontal scroll appears even
         when the rendered artwork fits.
       */}
-      <div
-        className='shrink-0'
-        style={{
-          width: baseWidth * scale,
-          height: innerHeight * scale,
-        }}
-      >
+      <LandingMotionRoot scrollerRef={surfaceRef} enableSmooth={false}>
         <div
-          ref={innerRef}
-          // `@container` stays on the original-sized element so container
-          // queries (`@2xl:` / `@4xl:`) match the *logical* device width
-          // (1280 / 834 / 390) — independent of the user-controlled zoom.
-          className='@container origin-top-left transition-transform duration-150'
+          className='shrink-0'
           style={{
-            width: baseWidth,
-            transform: `scale(${scale})`,
-            // Preview brand-kit tokens so `token:*` element styles resolve to
-            // sensible colors/fonts while authoring (real per-brand kit fills
-            // these at render).
-            ...brandKitToCssVars(DEFAULT_PREVIEW_KIT),
+            width: baseWidth * scale,
+            height: innerHeight * scale,
           }}
         >
           <div
-            data-element-key='__background__'
-            data-testid='active-block-preview'
-            className={cn(
-              'relative w-full overflow-hidden rounded-md bg-white shadow-xl ring-1 ring-black/5',
-              selectedElementKey === '__background__' &&
-                'outline outline-2 outline-offset-2 outline-sky-500'
-            )}
+            ref={innerRef}
+            // `@container` stays on the original-sized element so container
+            // queries (`@2xl:` / `@4xl:`) match the *logical* device width
+            // (1280 / 834 / 390) — independent of the user-controlled zoom.
+            className='@container origin-top-left transition-transform duration-150'
+            style={{
+              width: baseWidth,
+              transform: `scale(${scale})`,
+              // Preview brand-kit tokens so `token:*` element styles resolve to
+              // sensible colors/fonts while authoring (real per-brand kit fills
+              // these at render).
+              ...brandKitToCssVars(DEFAULT_PREVIEW_KIT),
+            }}
           >
-            <MotionProvider
-              mode={effectiveMode}
-              motion={motionForDevice}
-              scrollerEl={surfaceRef.current}
-              previewNonce={motionPreviewNonce}
-              previewElement={motionPreviewElement}
+            <div
+              data-element-key='__background__'
+              data-testid='active-block-preview'
+              className={cn(
+                'relative w-full overflow-hidden rounded-md bg-white shadow-xl ring-1 ring-black/5',
+                selectedElementKey === '__background__' &&
+                  'outline outline-2 outline-offset-2 outline-sky-500'
+              )}
             >
-              <MotionBlockRoot>
-                {/*
+              <MotionProvider
+                mode={effectiveMode}
+                motion={motionForDevice}
+                scrollerEl={surfaceRef.current}
+                previewNonce={motionPreviewNonce}
+                previewElement={motionPreviewElement}
+              >
+                <MotionBlockRoot>
+                  {/*
                 Re-mount RenderBlock when block/device/lang change so the
                 CSS `animate-in` keyframes fire fresh on every tab switch
                 (otherwise React reconciles same nodes → no animation).
               */}
-                <RenderBlock
-                  key={`${block.id}:${device}:${lang}`}
-                  block={block}
-                  content={content}
-                  styles={styles}
-                  background={background}
-                  order={order}
-                  positions={positions}
-                  activeKey={selectedElementKey}
-                />
-              </MotionBlockRoot>
-            </MotionProvider>
-            {/* User-added free-drag elements layered on top of the block. */}
-            <ExtraElementOverlay
-              elements={block.extraElements ?? []}
-              selectedId={selectedExtraElementId}
-              scale={scale}
-              readOnly={device === 'tablet'}
-              onSelect={id => onSelectExtraElement?.(id)}
-              onCommitPosition={(id, pos) =>
-                onCommitExtraElementPosition?.(id, pos)
-              }
-            />
+                  <RenderBlock
+                    key={`${block.id}:${device}:${lang}`}
+                    block={block}
+                    content={content}
+                    styles={styles}
+                    background={background}
+                    order={order}
+                    positions={positions}
+                    activeKey={selectedElementKey}
+                  />
+                </MotionBlockRoot>
+              </MotionProvider>
+              {/* User-added free-drag elements layered on top of the block. */}
+              <ExtraElementOverlay
+                elements={block.extraElements ?? []}
+                selectedId={selectedExtraElementId}
+                scale={scale}
+                readOnly={device === 'tablet'}
+                onSelect={id => onSelectExtraElement?.(id)}
+                onCommitPosition={(id, pos) =>
+                  onCommitExtraElementPosition?.(id, pos)
+                }
+              />
+            </div>
           </div>
         </div>
-      </div>
+      </LandingMotionRoot>
     </div>
   );
 }

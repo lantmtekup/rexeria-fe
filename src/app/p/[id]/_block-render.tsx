@@ -17,7 +17,7 @@ import {
 } from '@/components/modules/block-editor/motion/runtime';
 import type { BlockMotion } from '@/components/modules/block-editor/motion/types';
 import { parseCanvas } from '@/components/modules/block-editor/serialize';
-import { SmoothScroll } from '@/components/modules/block-editor/transitions/SmoothScroll';
+import { LandingMotionRoot } from '@/components/modules/block-editor/motion/LandingMotion';
 import {
   TemplateTransitions,
   asTransition,
@@ -101,11 +101,11 @@ export function PublicBlockRender({
   // block so `token:*` element styles resolve to the brand's palette/fonts.
   return (
     <div className='min-h-screen bg-white' style={brandKitToCssVars(brandKit)}>
-      <SmoothScroll enabled={isVerticalTransition(transition)}>
-        <main className='@container mx-auto w-full max-w-[1280px] px-4 py-6 md:py-10'>
+      <LandingMotionRoot enableSmooth={isVerticalTransition(transition)}>
+        <main className='w-full'>
           <TemplateTransitions transition={transition} items={items} />
         </main>
-      </SmoothScroll>
+      </LandingMotionRoot>
       <footer className='text-3xs border-t border-neutral-200 bg-white px-6 py-4 text-center tracking-widest text-neutral-400 uppercase'>
         Tạo bằng REXER · {visible.length} block · {page.slug}
       </footer>

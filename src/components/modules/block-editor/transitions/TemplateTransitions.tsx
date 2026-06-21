@@ -7,6 +7,7 @@ import { useGSAP } from '@gsap/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
+import { useLandingMotion } from '../motion/LandingMotion';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -264,6 +265,9 @@ function TabsLayout({ items, className }: Omit<Props, 'transition'>) {
 /** Parallax — mỗi layer dịch khác tốc độ theo scroll. */
 function ParallaxStack({ items, className }: Omit<Props, 'transition'>) {
   const ref = React.useRef<HTMLDivElement>(null);
+  // Lấy scroller từ nền (window cho /p, surface cho editor/preview) — đồng bộ
+  // với LandingMotionRoot (refresh tập trung), không hardcode window.
+  const { scroller } = useLandingMotion();
   useGSAP(
     () => {
       if (reduced()) return;
@@ -279,15 +283,17 @@ function ParallaxStack({ items, className }: Omit<Props, 'transition'>) {
             ease: 'none',
             scrollTrigger: {
               trigger: el,
+              scroller: scroller ?? undefined,
               start: 'top bottom',
               end: 'bottom top',
               scrub: 1,
+              invalidateOnRefresh: true,
             },
           }
         );
       });
     },
-    { scope: ref }
+    { scope: ref, dependencies: [scroller] }
   );
   return (
     <div ref={ref} className={cn(STACK, className)}>

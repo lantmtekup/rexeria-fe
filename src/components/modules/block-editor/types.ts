@@ -85,6 +85,19 @@ export type BlockType =
   | 'framer_aestha_project_detail'
   | 'framer_perform_about'
   | 'framer_perform_pricing'
+  // ── Mint-coint sections tách thành data block (port từ src/templates) ──
+  | 'mint_details'
+  | 'mint_sku'
+  | 'mint_hero'
+  | 'mint_variants'
+  | 'mint_discover'
+  // ── Mintcoin-v2 sections ──
+  | 'mintv2_emblem'
+  | 'mintv2_services'
+  | 'mintv2_manifesto'
+  | 'mintv2_process'
+  | 'mintv2_cta'
+  | 'mintv2_works'
   // Wrapper cho legacy/framer block (render qua schemaId trong registry).
   // Không edit inline — chèn nguyên khối thiết kế vào canvas.
   | 'legacy_embed';
@@ -210,6 +223,136 @@ export interface BookingFormContent {
   reasons: BookingReason[];
   submitText: string;
   noteText: string;
+}
+
+/** Mint-coint "details" section (port). Title + 2 đoạn mô tả. */
+export interface MintDetailsContent {
+  title: string;
+  paragraph1: string;
+  paragraph2: string;
+}
+
+/** Mint-coint "sku-cta" section (port). Ghost title lớn + ảnh nền/packaging. */
+export interface MintSkuContent {
+  title: string;
+  paintingUrl: string;
+  packagingUrl: string;
+}
+
+/** Mint-coint "hero" section (port). 3 dòng overlay (canvas scrub giữ nội bộ). */
+export interface MintHeroContent {
+  heroLine1: string;
+  heroLine2: string;
+  heroLine3: string;
+}
+
+export interface MintVariantItem {
+  key: string;
+  label: string;
+  swatch: string;
+  image: string;
+  ref: string;
+}
+
+/** Mint-coint "variants" section (port). Swatch picker + parallax title. */
+export interface MintVariantsContent {
+  titleLine1: string;
+  titleLine2: string;
+  variants: MintVariantItem[];
+}
+
+export interface MintDiscoverTab {
+  key: string;
+  label: string;
+  desc: string;
+  img: string;
+  dotX: number;
+  dotY: number;
+}
+
+/** Mint-coint "discover" section (port). Hotspot + drawer (tự chứa). */
+export interface MintDiscoverContent {
+  variant: '1' | '2';
+  mainImage: string;
+  mainAlt: string;
+  tabs: MintDiscoverTab[];
+}
+
+// ── Mintcoin-v2 sections (port từ apps/mintcoin-v2) ──────────────────────
+/** Emblem — coin trung tâm + tranh nền 2 bên, title + copy. */
+export interface MintV2EmblemContent {
+  title: string;
+  description: string;
+  coinUrl: string;
+  decorUrl: string;
+}
+
+export interface MintV2ServiceItem {
+  key: string;
+  label: string;
+  preview: string;
+  caption: string;
+}
+
+/** Services — heading lớn + danh sách chọn (trái) + ảnh preview (phải). */
+export interface MintV2ServicesContent {
+  eyebrow: string;
+  title: string;
+  items: MintV2ServiceItem[];
+}
+
+/** Manifesto — copy serif + 4 panel xám wipe 2-phase (panel/line decor cố định). */
+export interface MintV2ManifestoContent {
+  text: string;
+}
+
+export interface MintV2ProcessStep {
+  key: string;
+  no: string;
+  title: string;
+  body: string;
+}
+
+/** Process — center-line scrub + các step zigzag (fade-up). */
+export interface MintV2ProcessContent {
+  eyebrow: string;
+  title: string;
+  steps: MintV2ProcessStep[];
+}
+
+export interface MintV2Contact {
+  key: string;
+  label: string;
+  value: string;
+}
+
+/** Cta — headline + copy + contact strip + form lead-capture. */
+export interface MintV2CtaContent {
+  eyebrow: string;
+  title: string;
+  description: string;
+  buyLabel: string;
+  buyUrl: string;
+  contacts: MintV2Contact[];
+}
+
+export interface MintV2WorkCard {
+  key: string;
+  number: string;
+  jpLabel: string;
+  category: string;
+  title: string;
+  hero: string;
+  backdrop: string;
+  thumbs: string[];
+  bgClass: string;
+}
+
+/** Works — gallery hover-morph card (zigzag) + lightbox. */
+export interface MintV2WorksContent {
+  eyebrow: string;
+  title: string;
+  cards: MintV2WorkCard[];
 }
 
 export interface CtaSectionContent {
@@ -1192,6 +1335,17 @@ export type BlockContent =
   | FeatureSectionContent
   | PhotoGalleryContent
   | BookingFormContent
+  | MintDetailsContent
+  | MintSkuContent
+  | MintHeroContent
+  | MintVariantsContent
+  | MintDiscoverContent
+  | MintV2EmblemContent
+  | MintV2ServicesContent
+  | MintV2ManifestoContent
+  | MintV2ProcessContent
+  | MintV2CtaContent
+  | MintV2WorksContent
   | CtaSectionContent
   | ImageCarouselContent
   | StoriesContent
@@ -1825,6 +1979,116 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'CTA',
     aiLabelVi: 'section call-to-action cuối trang',
     aiLabelEn: 'closing call-to-action section',
+  },
+  mint_details: {
+    type: 'mint_details',
+    label: 'Mint · Details',
+    accent: '#a16207',
+    adminLabel: 'Mint Details',
+    gradient: 'from-amber-500 to-yellow-700',
+    defaultName: 'Mint Details',
+    aiLabelVi: 'section mô tả chi tiết sản phẩm (tiêu đề + 2 đoạn)',
+    aiLabelEn: 'product details section (title + 2 paragraphs)',
+  },
+  mint_sku: {
+    type: 'mint_sku',
+    label: 'Mint · SKU',
+    accent: '#a16207',
+    adminLabel: 'Mint SKU',
+    gradient: 'from-yellow-600 to-amber-800',
+    defaultName: 'Mint SKU',
+    aiLabelVi: 'section showcase SKU cuối trang (tiêu đề lớn)',
+    aiLabelEn: 'closing SKU showcase section (large title)',
+  },
+  mint_hero: {
+    type: 'mint_hero',
+    label: 'Mint · Hero',
+    accent: '#a16207',
+    adminLabel: 'Mint Hero',
+    gradient: 'from-amber-400 to-yellow-600',
+    defaultName: 'Mint Hero',
+    aiLabelVi: 'hero coin với canvas xoay + overlay 3 dòng',
+    aiLabelEn: 'coin hero with rotating canvas + 3-line overlay',
+  },
+  mint_variants: {
+    type: 'mint_variants',
+    label: 'Mint · Variants',
+    accent: '#a16207',
+    adminLabel: 'Mint Variants',
+    gradient: 'from-yellow-500 to-amber-700',
+    defaultName: 'Mint Variants',
+    aiLabelVi: 'section chọn biến thể sản phẩm (swatch picker)',
+    aiLabelEn: 'product variant picker section',
+  },
+  mint_discover: {
+    type: 'mint_discover',
+    label: 'Mint · Discover',
+    accent: '#a16207',
+    adminLabel: 'Mint Discover',
+    gradient: 'from-amber-600 to-yellow-800',
+    defaultName: 'Mint Discover',
+    aiLabelVi: 'section khám phá chi tiết coin (hotspot + drawer)',
+    aiLabelEn: 'coin detail discover section (hotspots + drawer)',
+  },
+  mintv2_emblem: {
+    type: 'mintv2_emblem',
+    label: 'MintV2 · Emblem',
+    accent: '#c79119',
+    adminLabel: 'MintV2 Emblem',
+    gradient: 'from-amber-300 to-yellow-600',
+    defaultName: 'Emblem',
+    aiLabelVi: 'coin trung tâm + tranh nền 2 bên, title lớn (drop + reveal)',
+    aiLabelEn: 'centre coin emblem with flanking art + big title',
+  },
+  mintv2_services: {
+    type: 'mintv2_services',
+    label: 'MintV2 · Services',
+    accent: '#c79119',
+    adminLabel: 'MintV2 Services',
+    gradient: 'from-yellow-500 to-amber-700',
+    defaultName: 'Services',
+    aiLabelVi: 'heading lớn + danh sách chọn + ảnh preview đổi theo mục',
+    aiLabelEn: 'big heading + selector list + swapping preview image',
+  },
+  mintv2_manifesto: {
+    type: 'mintv2_manifesto',
+    label: 'MintV2 · Manifesto',
+    accent: '#c79119',
+    adminLabel: 'MintV2 Manifesto',
+    gradient: 'from-amber-500 to-yellow-700',
+    defaultName: 'Manifesto',
+    aiLabelVi: 'tuyên ngôn serif + 4 panel xám wipe theo scroll (2 pha)',
+    aiLabelEn: 'serif manifesto with 4-panel gray wipe on scroll',
+  },
+  mintv2_process: {
+    type: 'mintv2_process',
+    label: 'MintV2 · Process',
+    accent: '#c79119',
+    adminLabel: 'MintV2 Process',
+    gradient: 'from-yellow-600 to-amber-800',
+    defaultName: 'Process',
+    aiLabelVi: 'timeline các bước zigzag + đường giữa vẽ theo scroll',
+    aiLabelEn: 'zigzag step timeline with scroll-drawn centre line',
+  },
+  mintv2_cta: {
+    type: 'mintv2_cta',
+    label: 'MintV2 · CTA',
+    accent: '#c79119',
+    adminLabel: 'MintV2 CTA',
+    gradient: 'from-amber-400 to-yellow-700',
+    defaultName: 'CTA',
+    aiLabelVi: 'CTA cuối: headline + contact + form lead-capture',
+    aiLabelEn: 'closing CTA: headline + contact + lead-capture form',
+  },
+  mintv2_works: {
+    type: 'mintv2_works',
+    label: 'MintV2 · Works',
+    accent: '#c79119',
+    adminLabel: 'MintV2 Works',
+    gradient: 'from-amber-500 to-yellow-800',
+    defaultName: 'Works',
+    aiLabelVi: 'gallery card hover-morph (thumb bay vào) + lightbox',
+    aiLabelEn: 'hover-morph gallery cards (fly-in thumbs) + lightbox',
   },
   image_carousel: {
     type: 'image_carousel',

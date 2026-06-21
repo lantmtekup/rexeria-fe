@@ -7,6 +7,7 @@ import { Monitor, Smartphone, Tablet, X } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 
+import { LandingMotionRoot } from './motion/LandingMotion';
 import { RenderBlock } from './blocks/renderBlock';
 import { MotionBlockRoot, MotionProvider } from './motion/runtime';
 import type { BlockMotion } from './motion/types';
@@ -153,52 +154,54 @@ export function PreviewMode({
           </div>
         </header>
 
-        <div ref={scrollerRef} className='flex-1 overflow-auto p-8'>
-          <div
-            className='@container mx-auto transition-[max-width] duration-200'
-            style={{ maxWidth: DEVICE_WIDTH[device] }}
-          >
-            {visible.length === 0 ? (
-              <div className='rounded-lg border border-white/10 bg-white/5 p-12 text-center text-sm text-white/60'>
-                Chưa có block nào hiển thị.
-              </div>
-            ) : (
-              <TemplateTransitions
-                transition={asTransition(transition)}
-                items={visible.map(block => {
-                  const langContent =
-                    lang === 'vi' ? block.contentVi : block.contentEn;
-                  const content =
-                    readVariant(langContent, device) ?? langContent.desktop;
-                  const styles = readVariant(block.elementStyles, device);
-                  const background = readVariant(block.background, device);
-                  const order = readVariant(block.elementOrder, device);
-                  const motion = readVariant(block.motion, device) as
-                    | BlockMotion
-                    | undefined;
-                  return (
-                    <MotionProvider
-                      key={block.id}
-                      mode='preview'
-                      motion={motion}
-                      scrollerEl={scrollerRef.current}
-                    >
-                      <MotionBlockRoot className='overflow-hidden rounded-md bg-white shadow-2xl ring-1 ring-black/10'>
-                        <RenderBlock
-                          block={block}
-                          content={content}
-                          styles={styles}
-                          background={background}
-                          order={order}
-                        />
-                      </MotionBlockRoot>
-                    </MotionProvider>
-                  );
-                })}
-              />
-            )}
+        <LandingMotionRoot scrollerRef={scrollerRef} enableSmooth={false}>
+          <div ref={scrollerRef} className='flex-1 overflow-auto p-8'>
+            <div
+              className='@container mx-auto transition-[max-width] duration-200'
+              style={{ maxWidth: DEVICE_WIDTH[device] }}
+            >
+              {visible.length === 0 ? (
+                <div className='rounded-lg border border-white/10 bg-white/5 p-12 text-center text-sm text-white/60'>
+                  Chưa có block nào hiển thị.
+                </div>
+              ) : (
+                <TemplateTransitions
+                  transition={asTransition(transition)}
+                  items={visible.map(block => {
+                    const langContent =
+                      lang === 'vi' ? block.contentVi : block.contentEn;
+                    const content =
+                      readVariant(langContent, device) ?? langContent.desktop;
+                    const styles = readVariant(block.elementStyles, device);
+                    const background = readVariant(block.background, device);
+                    const order = readVariant(block.elementOrder, device);
+                    const motion = readVariant(block.motion, device) as
+                      | BlockMotion
+                      | undefined;
+                    return (
+                      <MotionProvider
+                        key={block.id}
+                        mode='preview'
+                        motion={motion}
+                        scrollerEl={scrollerRef.current}
+                      >
+                        <MotionBlockRoot className='overflow-hidden rounded-md bg-white shadow-2xl ring-1 ring-black/10'>
+                          <RenderBlock
+                            block={block}
+                            content={content}
+                            styles={styles}
+                            background={background}
+                            order={order}
+                          />
+                        </MotionBlockRoot>
+                      </MotionProvider>
+                    );
+                  })}
+                />
+              )}
+            </div>
           </div>
-        </div>
+        </LandingMotionRoot>
       </div>
     </div>
   );

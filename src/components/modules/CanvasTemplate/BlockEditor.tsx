@@ -1148,6 +1148,18 @@ export function BlockEditor({
         }
         onSaveBlockDirect={blockMode ? handleSaveBlockDirect : undefined}
         savingBlockDirect={savingBlock}
+        transitionControl={
+          blockMode ? undefined : (
+            <TransitionSelect
+              value={transition}
+              placement='down'
+              onChange={v => {
+                setTransition(v);
+                autosave.markDirty();
+              }}
+            />
+          )
+        }
         onPreview={() => setPreviewing(true)}
         onUndo={() => {
           canvas.undo();
@@ -1224,7 +1236,7 @@ export function BlockEditor({
       )}
 
       <div className='relative flex min-h-0 flex-1 overflow-hidden'>
-        <div className='flex min-w-0 flex-1 flex-col'>
+        <div className='flex min-h-0 min-w-0 flex-1 flex-col'>
           {activeBlock && selectedExtraElementId ? (
             (() => {
               const el = activeBlock.extraElements?.find(
@@ -1359,19 +1371,8 @@ export function BlockEditor({
         />
       )}
 
-      {/* Transition cấp template — áp cho cả collection block. Block mode chỉ
-          có 1 block nên không cần transition giữa các block → ẩn. */}
-      {!blockMode && (
-        <div className='absolute bottom-4 left-4 z-40'>
-          <TransitionSelect
-            value={transition}
-            onChange={v => {
-              setTransition(v);
-              autosave.markDirty();
-            }}
-          />
-        </div>
-      )}
+      {/* Transition cấp template đã chuyển lên header (cạnh trạng thái lưu)
+          qua prop transitionControl — bỏ control nổi góc dưới. */}
 
       {activeBlock && (
         <MotionTimelineModal

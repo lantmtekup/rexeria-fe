@@ -19,10 +19,13 @@ export function TransitionSelect({
   value,
   onChange,
   className,
+  placement = 'up',
 }: {
   value: string;
   onChange: (v: TemplateTransition) => void;
   className?: string;
+  /** Hướng mở dropdown: 'up' (mặc định, khi nổi ở đáy) hoặc 'down' (header). */
+  placement?: 'up' | 'down';
 }) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
@@ -42,7 +45,12 @@ export function TransitionSelect({
   return (
     <div ref={ref} className={cn('relative', className)}>
       {open && (
-        <div className='border-border absolute bottom-full left-0 z-50 mb-2 w-80 overflow-hidden rounded-xl border bg-white shadow-xl'>
+        <div
+          className={cn(
+            'border-border absolute left-0 z-50 w-80 overflow-hidden rounded-xl border bg-white shadow-xl',
+            placement === 'down' ? 'top-full mt-2' : 'bottom-full mb-2'
+          )}
+        >
           <div className='text-3xs text-content-muted border-border border-b px-4 py-2.5 font-semibold tracking-[0.18em] uppercase'>
             Transition · áp dụng cho cả collection
           </div>

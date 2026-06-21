@@ -205,9 +205,11 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
     );
   }
 
-  // Block template — WYSIWYG editor (existing flow)
+  // Block template — WYSIWYG editor (existing flow).
+  // h-[100dvh]: bó chiều cao = viewport để canvas scroll NỘI BỘ (block cao như
+  // hero 300vh không đẩy cả trang scroll). Trước dùng h-full → không bị bó.
   return (
-    <div className='flex h-full flex-1 flex-col'>
+    <div className='flex h-[100dvh] flex-col overflow-hidden'>
       <BlockEditor templateId={templateId} />
     </div>
   );
