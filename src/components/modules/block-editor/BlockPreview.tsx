@@ -141,6 +141,11 @@ export function BlockPreview({
   // Set true on pointerup of a real drag; consumed by the next click event
   // so a drag doesn't also trigger element selection toggling.
   const justDraggedRef = React.useRef(false);
+  // Key text được tương tác gần nhất. Double-click vào title nằm trong flow có
+  // thể để click thứ 2 rơi xuống nền (toolbar chọn đẩy element vài px) → selection
+  // bị ghi đè bằng `__background__`. Ref này giữ key text từ click thứ NHẤT để
+  // handleDoubleClick fallback chính xác (ổn định cho mọi block).
+  const lastTextKeyRef = React.useRef<string | null>(null);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (editingKey) return;
@@ -217,6 +222,7 @@ export function BlockPreview({
     if (el && surfaceRef.current?.contains(el)) {
       const key = el.getAttribute('data-element-key');
       if (!key) return;
+      if (TEXT_KEYS.has(key)) lastTextKeyRef.current = key;
       onSelectElement(key, el.getBoundingClientRect());
       return;
     }
@@ -226,8 +232,21 @@ export function BlockPreview({
   const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     const el = target.closest<HTMLElement>('[data-element-key]');
-    if (!el || !surfaceRef.current?.contains(el)) return;
-    const key = el.getAttribute('data-element-key');
+    let key =
+      el && surfaceRef.current?.contains(el)
+        ? el.getAttribute('data-element-key')
+        : null;
+    // Fallback: double-click có thể resolve về nền/section khi click thứ 2 lệch
+    // (toolbar chọn đẩy flow element vài px giữa 2 nhịp click). Nếu đang chọn sẵn
+    // 1 element text thì sửa luôn element đó → double-click-to-edit ổn định cho
+    // mọi block (kể cả title nằm trong flow như Vault·Craft).
+    if (!key || !TEXT_KEYS.has(key)) {
+      const fallback =
+        selectedElementKey && TEXT_KEYS.has(selectedElementKey)
+          ? selectedElementKey
+          : lastTextKeyRef.current;
+      if (fallback && TEXT_KEYS.has(fallback)) key = fallback;
+    }
     if (!key || !TEXT_KEYS.has(key)) return;
     onStartInlineEdit(key);
   };

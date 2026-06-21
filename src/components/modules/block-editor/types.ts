@@ -100,6 +100,12 @@ export type BlockType =
   | 'mintv2_works'
   // ── Import từ 360-admin-cms ──
   | 'linea_portfolio'
+  // ── Mint2026 "The Vault" ──
+  | 'mint_vault_hero'
+  | 'mint_vault_craft'
+  | 'mint_vault_reveal'
+  | 'mint_vault_collection'
+  | 'mint_vault_invitation'
   // Wrapper cho legacy/framer block (render qua schemaId trong registry).
   // Không edit inline — chèn nguyên khối thiết kế vào canvas.
   | 'legacy_embed';
@@ -371,6 +377,62 @@ export interface LineaPortfolioContent {
   items: LineaPortfolioItem[];
   bgColor: string;
   textColor: string;
+}
+
+// ── Mint2026 "The Vault" sections (tách từ apps/mint2026) ─────────────────
+/** Vault Hero — image-trail tương tác + overlay text. */
+export interface MintVaultHeroContent {
+  eyebrow: string;
+  title: string;
+  description: string;
+  hintText: string;
+  images: string[];
+}
+
+export interface MintVaultCraftItem {
+  title: string;
+  description: string;
+  imageUrl: string;
+}
+
+/** Vault Craft — heading + accordion media (proof). */
+export interface MintVaultCraftContent {
+  eyebrow: string;
+  title: string;
+  items: MintVaultCraftItem[];
+}
+
+/** Vault Reveal — gallery 3D "cửa hầm" + parallax sticky. */
+export interface MintVaultRevealContent {
+  eyebrow: string;
+  title: string;
+  images: string[];
+}
+
+/** Vault Invitation — nền coin-explosion + spotlight + lead form. */
+export interface MintVaultInvitationContent {
+  eyebrow: string;
+  title: string;
+  note: string;
+  backgroundImageUrl: string;
+  images: string[];
+}
+
+export interface MintVaultCoin {
+  key: string;
+  name: string;
+  image: string;
+  metal: string;
+  weight: string;
+  price: string;
+  url: string;
+}
+
+/** Vault Collection — cuộn ngang (pin) coin + tilt + spotlight + panel info. */
+export interface MintVaultCollectionContent {
+  eyebrow: string;
+  subLabel: string;
+  coins: MintVaultCoin[];
 }
 
 export interface CtaSectionContent {
@@ -1365,6 +1427,11 @@ export type BlockContent =
   | MintV2CtaContent
   | MintV2WorksContent
   | LineaPortfolioContent
+  | MintVaultHeroContent
+  | MintVaultCraftContent
+  | MintVaultRevealContent
+  | MintVaultCollectionContent
+  | MintVaultInvitationContent
   | CtaSectionContent
   | ImageCarouselContent
   | StoriesContent
@@ -2118,6 +2185,56 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Portfolio',
     aiLabelVi: 'portfolio: heading + lưới 9 ảnh ticker 3 cột cuộn ngược chiều',
     aiLabelEn: 'portfolio heading + 9-image 3-column scrolling ticker',
+  },
+  mint_vault_hero: {
+    type: 'mint_vault_hero',
+    label: 'Vault · Hero',
+    accent: '#c9a96e',
+    adminLabel: 'Vault Hero',
+    gradient: 'from-amber-300 to-yellow-700',
+    defaultName: 'Vault Hero',
+    aiLabelVi: 'hero coin image-trail theo chuột + overlay tiêu đề',
+    aiLabelEn: 'cursor image-trail coin hero + title overlay',
+  },
+  mint_vault_craft: {
+    type: 'mint_vault_craft',
+    label: 'Vault · Craft',
+    accent: '#c9a96e',
+    adminLabel: 'Vault Craft',
+    gradient: 'from-amber-400 to-yellow-800',
+    defaultName: 'Vault Craft',
+    aiLabelVi: 'heading + accordion media (lý do đáng sở hữu)',
+    aiLabelEn: 'heading + accordion media proof points',
+  },
+  mint_vault_reveal: {
+    type: 'mint_vault_reveal',
+    label: 'Vault · Reveal',
+    accent: '#c9a96e',
+    adminLabel: 'Vault Reveal',
+    gradient: 'from-amber-300 to-yellow-700',
+    defaultName: 'Vault Reveal',
+    aiLabelVi: 'gallery 3D "cửa hầm" + parallax sticky theo scroll',
+    aiLabelEn: '3D vault-door gallery + sticky scroll parallax',
+  },
+  mint_vault_collection: {
+    type: 'mint_vault_collection',
+    label: 'Vault · Collection',
+    accent: '#c9a96e',
+    adminLabel: 'Vault Collection',
+    gradient: 'from-amber-500 to-yellow-800',
+    defaultName: 'Vault Collection',
+    aiLabelVi: 'cuộn ngang (pin) bộ sưu tập coin + tilt + spotlight',
+    aiLabelEn: 'pinned horizontal coin collection + tilt + spotlight',
+  },
+  mint_vault_invitation: {
+    type: 'mint_vault_invitation',
+    label: 'Vault · Invitation',
+    accent: '#c9a96e',
+    adminLabel: 'Vault Invitation',
+    gradient: 'from-amber-400 to-yellow-700',
+    defaultName: 'Vault Invitation',
+    aiLabelVi: 'CTA cuối: coin-explosion nền + spotlight + lead form',
+    aiLabelEn: 'closing CTA: coin-explosion bg + spotlight + lead form',
   },
   image_carousel: {
     type: 'image_carousel',

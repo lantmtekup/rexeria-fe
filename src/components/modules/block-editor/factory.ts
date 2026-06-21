@@ -20,6 +20,12 @@ import type {
   MintV2CtaContent,
   MintV2WorksContent,
   LineaPortfolioContent,
+  MintVaultHeroContent,
+  MintVaultCraftContent,
+  MintVaultRevealContent,
+  MintVaultCollectionContent,
+  MintVaultInvitationContent,
+  MintVaultCoin,
   FeatureSectionContent,
   FlipbookContent,
   FramerArpeggioHeroContent,
@@ -560,6 +566,149 @@ const LINEA_PORTFOLIO_VI: LineaPortfolioContent = {
     { img: LINEA_IMG('1460925895917-afdab827c52f') },
     { img: LINEA_IMG('1551434678-e076c223a692') },
     { img: LINEA_IMG('1556761175-5973dc0f32e7') },
+  ],
+};
+
+// ── Mint2026 "The Vault" defaults ────────────────────────────────────────
+const VAULT_U = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=900&q=75`;
+
+const MINT_VAULT_HERO_VI: MintVaultHeroContent = {
+  eyebrow: 'Royal Canadian Mint · 2026',
+  title: 'The collection of a year.',
+  description:
+    'Thirty treasures in pure gold and silver. Struck in limited mintage, each with its own story.',
+  hintText: 'Move your cursor to wake the vault',
+  images: [
+    MINT_IMG.coinObverse,
+    MINT_IMG.coinReverse,
+    MINT_IMG.coinPackaging,
+    MINT_IMG.painting,
+    VAULT_U('1610375461246-83df859d849d'),
+    VAULT_U('1624365169364-0640dd10e180'),
+    VAULT_U('1543699565-003b8adda5fc'),
+    VAULT_U('1622467827417-bbe2237067a9'),
+  ],
+};
+
+const MINT_VAULT_CRAFT_VI: MintVaultCraftContent = {
+  eyebrow: 'III · The Craft',
+  title: 'Why each coin is worth holding.',
+  items: [
+    {
+      title: '99.99% Pure Gold',
+      description:
+        'Each coin is struck from precious metal of the highest standard. Value that endures over time.',
+      imageUrl: VAULT_U('1624365169364-0640dd10e180'),
+    },
+    {
+      title: 'Limited Mintage',
+      description:
+        'The mintage is sealed and never struck again. Scarcity is what creates the value.',
+      imageUrl: VAULT_U('1582139329536-e7284fece509'),
+    },
+    {
+      title: 'Proof Finish',
+      description:
+        'Hand-polished to collector grade, every detail of the engraving razor-sharp.',
+      imageUrl: VAULT_U('1628058494685-6c2f796ac24a'),
+    },
+    {
+      title: 'Backed by the Royal Canadian Mint',
+      description:
+        "Issued by Canada's national mint, trusted for over a century.",
+      imageUrl: VAULT_U('1640549755250-04d2751c5aba'),
+    },
+  ],
+};
+
+const MINT_VAULT_REVEAL_VI: MintVaultRevealContent = {
+  eyebrow: 'The vault opens',
+  title: '30 treasures, one collection',
+  images: [
+    MINT_IMG.coinObverse,
+    MINT_IMG.coinReverse,
+    MINT_IMG.coinPackaging,
+    MINT_IMG.painting,
+    VAULT_U('1610375461246-83df859d849d'),
+    VAULT_U('1624365169364-0640dd10e180'),
+  ],
+};
+
+const MINT_VAULT_COIN = (
+  key: string,
+  name: string,
+  image: string,
+  metal: string,
+  weight: string,
+  price: string
+): MintVaultCoin => ({ key, name, image, metal, weight, price, url: '#' });
+
+const MINT_VAULT_COLLECTION_VI: MintVaultCollectionContent = {
+  eyebrow: 'II · The Collection',
+  subLabel: 'Most coveted first',
+  coins: [
+    MINT_VAULT_COIN(
+      'c1',
+      'The Jack Pine — 1 Kilo Pure Gold',
+      MINT_IMG.coinReverse,
+      'Gold',
+      '1 kg',
+      '$89,950'
+    ),
+    MINT_VAULT_COIN(
+      'c2',
+      'Charles III Effigy — 5 oz Gold',
+      MINT_IMG.coinObverse,
+      'Gold',
+      '5 oz',
+      '$49,900'
+    ),
+    MINT_VAULT_COIN(
+      'c3',
+      'Maple Heritage — 1 oz Gold Proof',
+      VAULT_U('1610375461246-83df859d849d'),
+      'Gold',
+      '1 oz',
+      '$3,250'
+    ),
+    MINT_VAULT_COIN(
+      'c4',
+      'Northern Lights — 2 oz Silver',
+      VAULT_U('1624365169364-0640dd10e180'),
+      'Silver',
+      '2 oz',
+      '$249'
+    ),
+    MINT_VAULT_COIN(
+      'c5',
+      'Presentation Case Edition',
+      MINT_IMG.coinPackaging,
+      'Gold',
+      '1 oz',
+      '$3,490'
+    ),
+    MINT_VAULT_COIN(
+      'c6',
+      'The Source Painting Tribute',
+      MINT_IMG.painting,
+      'Gold',
+      '1 oz',
+      '$3,150'
+    ),
+  ],
+};
+
+const MINT_VAULT_INVITATION_VI: MintVaultInvitationContent = {
+  eyebrow: 'IV · The Invitation',
+  title: 'Claim a treasure before it fades into history.',
+  note: 'Limited release. Priority for the collector list.',
+  backgroundImageUrl: VAULT_U('1624365169364-0640dd10e180'),
+  images: [
+    MINT_IMG.coinObverse,
+    MINT_IMG.coinReverse,
+    MINT_IMG.coinPackaging,
+    VAULT_U('1610375461246-83df859d849d'),
   ],
 };
 
@@ -2690,6 +2839,11 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   mintv2_cta: MINTV2_CTA_VI,
   mintv2_works: MINTV2_WORKS_VI,
   linea_portfolio: LINEA_PORTFOLIO_VI,
+  mint_vault_hero: MINT_VAULT_HERO_VI,
+  mint_vault_craft: MINT_VAULT_CRAFT_VI,
+  mint_vault_reveal: MINT_VAULT_REVEAL_VI,
+  mint_vault_collection: MINT_VAULT_COLLECTION_VI,
+  mint_vault_invitation: MINT_VAULT_INVITATION_VI,
   image_carousel: CAROUSEL_VI,
   stories: STORIES_VI,
   split_screen: SPLIT_VI,
@@ -2784,6 +2938,11 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   mintv2_cta: MINTV2_CTA_VI,
   mintv2_works: MINTV2_WORKS_VI,
   linea_portfolio: LINEA_PORTFOLIO_VI,
+  mint_vault_hero: MINT_VAULT_HERO_VI,
+  mint_vault_craft: MINT_VAULT_CRAFT_VI,
+  mint_vault_reveal: MINT_VAULT_REVEAL_VI,
+  mint_vault_collection: MINT_VAULT_COLLECTION_VI,
+  mint_vault_invitation: MINT_VAULT_INVITATION_VI,
   image_carousel: CAROUSEL_EN,
   stories: STORIES_EN,
   split_screen: SPLIT_EN,
