@@ -28,7 +28,7 @@ const KINDS: Array<{
   kind: ExtraElementKind;
   label: string;
   hint: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
 }> = [
   {
     kind: 'text',

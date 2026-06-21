@@ -27,7 +27,7 @@ interface Props {
 
 const KIND_META: Record<
   ExtraElementKind,
-  { label: string; icon: React.ElementType }
+  { label: string; icon: React.ComponentType<{ className?: string }> }
 > = {
   text: { label: 'Text', icon: Type },
   edit_text: { label: 'Edit text', icon: TextCursorInput },

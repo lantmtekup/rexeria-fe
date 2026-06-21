@@ -37,7 +37,11 @@ type StatusFilter = 'all' | 'active' | 'pending' | 'disabled';
 
 const ROLE_META: Record<
   string,
-  { label: string; chip: string; icon: React.ElementType }
+  {
+    label: string;
+    chip: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }
 > = {
   admin: {
     label: 'Admin',

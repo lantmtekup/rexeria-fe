@@ -52,7 +52,7 @@ import {
 export interface LayerElement {
   key: string;
   label: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 interface LayersPanelProps {

@@ -594,7 +594,7 @@ export function MarketingEditor({
                 </Button>
               </div>
             )
-          ) : (
+          ) : section === 'campaign' ? null : (
             <StepMarketing
               section={section}
               brief={brief}
