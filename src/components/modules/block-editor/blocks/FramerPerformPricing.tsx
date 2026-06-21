@@ -1,7 +1,22 @@
+'use client';
+
+/**
+ * Data-block "Framer · Perform Pricing" (port từ 360-admin-cms
+ * framer-perform-pricing).
+ *
+ * Design SOURCE 360: nền trắng, header căn giữa (eyebrow + heading + subheading),
+ * các pricing card xếp chồng theo sticky scroll (ảnh trái 1:1 + price/title/
+ * feature-checklist/CTA pill bên phải).
+ *
+ * Theo contract nền GSAP: header fade-up + từng card fade-up (stagger) qua
+ * useBlockMotion (thay framer-motion whileInView gốc + CSS animate-in).
+ * @container + container-query (@2xl/cqi) thay md:/lg:; data-element-key +
+ * styleOf cho inline-edit (mảng tiers → data-element-key trên container 'tiers').
+ */
 import * as React from 'react';
+import gsap from 'gsap';
 
-import { cn } from '@/lib/cn';
-
+import { useBlockMotion } from '../motion/LandingMotion';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -17,22 +32,14 @@ import {
   selectableClass,
 } from './applyStyle';
 
-interface FramerPerformPricingProps {
+interface Props {
   content: FramerPerformPricingContent;
   styles?: ElementStylesMap;
   background?: BlockBackground;
   order?: string[];
   positions?: ElementPositionsMap;
   activeKey?: string | null;
-  className?: string;
 }
-
-/**
- * Framer Perform Pricing — nền trắng, header căn giữa,
- * các pricing card xếp chồng (ảnh trái + thông tin phải mỗi card).
- * Port từ `src/blocks/framer-perform-pricing`.
- * Responsive bằng container-query, không dùng viewport breakpoint.
- */
 
 const EYEBROW_STYLE: React.CSSProperties = {
   fontFamily: '"Manrope", system-ui, sans-serif',
@@ -91,6 +98,7 @@ const CTA_STYLE: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: 14,
+  alignSelf: 'flex-start',
   backgroundColor: '#f3f3f4',
   color: '#0c0c0c',
   borderRadius: 999,
@@ -106,18 +114,17 @@ const CTA_STYLE: React.CSSProperties = {
 function CheckIcon() {
   return (
     <svg
-      width='18'
-      height='18'
-      viewBox='0 0 18 18'
+      width='20'
+      height='20'
+      viewBox='0 0 20 20'
       fill='none'
       aria-hidden
-      style={{ flexShrink: 0, marginTop: 3 }}
+      style={{ flexShrink: 0, marginTop: 4 }}
     >
-      <circle cx='9' cy='9' r='9' fill='#f3f3f4' />
       <path
-        d='M5.5 9l2.5 2.5 4.5-5'
+        d='M4 10.5l4 4 8-8'
         stroke='#0c0c0c'
-        strokeWidth='1.5'
+        strokeWidth='1.8'
         strokeLinecap='round'
         strokeLinejoin='round'
       />
@@ -125,7 +132,7 @@ function CheckIcon() {
   );
 }
 
-/** Arrow-right SVG cho CTA pill */
+/** Arrow SVG cho CTA pill */
 function ArrowIcon() {
   return (
     <span
@@ -142,11 +149,11 @@ function ArrowIcon() {
         flexShrink: 0,
       }}
     >
-      <svg width='16' height='16' viewBox='0 0 16 16' fill='none'>
+      <svg width='14' height='14' viewBox='0 0 14 14' fill='none'>
         <path
-          d='M3 8h10M9 4l4 4-4 4'
-          stroke='#ffffff'
-          strokeWidth='1.5'
+          d='M3.5 10.5L10.5 3.5M10.5 3.5H4.5M10.5 3.5V9.5'
+          stroke='currentColor'
+          strokeWidth='1.6'
           strokeLinecap='round'
           strokeLinejoin='round'
         />
@@ -162,8 +169,9 @@ export function FramerPerformPricing({
   order,
   positions,
   activeKey,
-  className,
-}: FramerPerformPricingProps) {
+}: Props) {
+  const rootRef = React.useRef<HTMLElement>(null);
+  const tiers = Array.isArray(content.tiers) ? content.tiers : [];
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -171,22 +179,60 @@ export function FramerPerformPricing({
       positionStyle(positions, key)
     );
 
-  const tiers: Array<{
-    imageUrl: string;
-    price: string;
-    title: string;
-    features: string;
-    ctaLabel: string;
-    ctaHref: string;
-  }> = Array.isArray(content.tiers) ? content.tiers : [];
+  useBlockMotion(rootRef, ({ scroller }) => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    // Header fade-up (thay HEADER_FADE whileInView gốc)
+    const header = root.querySelector<HTMLElement>('.fpp-header');
+    if (header) {
+      gsap.fromTo(
+        header,
+        { opacity: 0, y: 24 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.7,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: header,
+            scroller,
+            start: 'top 85%',
+            toggleActions: 'play none none reverse',
+            invalidateOnRefresh: true,
+          },
+        }
+      );
+    }
+
+    // Mỗi card fade-up (thay CARD_FADE whileInView gốc), stagger theo card
+    gsap.utils.toArray<HTMLElement>('.fpp-card', root).forEach((card, i) => {
+      gsap.fromTo(
+        card,
+        { opacity: 0, y: 60 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power3.out',
+          delay: i * 0.08,
+          scrollTrigger: {
+            trigger: card,
+            scroller,
+            start: 'top 85%',
+            toggleActions: 'play none none reverse',
+            invalidateOnRefresh: true,
+          },
+        }
+      );
+    });
+  });
 
   return (
-    <div
+    <section
+      ref={rootRef}
       style={blockBackgroundStyle(background)}
-      className={cn(
-        'animate-in fade-in zoom-in-95 @container relative w-full overflow-hidden rounded-md bg-white duration-700 ease-out',
-        className
-      )}
+      className='framer-perform-pricing @container relative w-full overflow-hidden bg-white'
     >
       <div
         style={{
@@ -198,6 +244,7 @@ export function FramerPerformPricing({
       >
         {/* ── Header ── */}
         <div
+          className='fpp-header'
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -211,7 +258,7 @@ export function FramerPerformPricing({
           <span
             data-element-key='eyebrow'
             style={composeStyle(EYEBROW_STYLE, styleOf('eyebrow'))}
-            className={selectableClass(activeKey === 'eyebrow')}
+            className={selectableClass(activeKey === 'eyebrow', 'inline-block')}
           >
             {content.eyebrow}
           </span>
@@ -235,12 +282,16 @@ export function FramerPerformPricing({
           )}
         </div>
 
-        {/* ── Stack pricing cards ── */}
-        <div style={{ position: 'relative' }}>
+        {/* ── Stack pricing cards (sticky) — mảng tiers, 1 element-key 'tiers' ── */}
+        <div
+          data-element-key='tiers'
+          style={composeStyle({ position: 'relative' }, styleOf('tiers'))}
+          className={selectableClass(activeKey === 'tiers')}
+        >
           {tiers.map((tier, idx) => {
             const featureLines = (tier.features ?? '')
               .split('\n')
-              .map((l: string) => l.trim())
+              .map(l => l.trim())
               .filter(Boolean);
 
             return (
@@ -248,27 +299,29 @@ export function FramerPerformPricing({
                 key={idx}
                 style={{
                   position: 'sticky',
-                  top: `${80 + idx * 12}px`,
+                  // Tất cả card sticky cùng top → card sau cover 100% card trước
+                  // (no peek), tránh line tối ở mép như SOURCE 360.
+                  top: 80,
+                  zIndex: idx + 1,
                   paddingBottom: 'clamp(40px, 6cqi, 80px)',
                 }}
               >
-                <div
+                <article
+                  className='fpp-card grid'
                   style={{
                     backgroundColor: '#ffffff',
                     borderRadius: 'clamp(20px, 2cqi, 32px)',
                     boxShadow:
                       '0 1px 3px rgba(16,24,40,0.06), 0 12px 40px -8px rgba(16,24,40,0.12)',
                     padding: 'clamp(16px, 1.6cqi, 24px)',
-                    display: 'grid',
                     gridTemplateColumns: 'minmax(280px, 1fr) 1.1fr',
                     gap: 'clamp(24px, 4cqi, 56px)',
                     alignItems: 'stretch',
                     overflow: 'hidden',
                   }}
                 >
-                  {/* Ảnh trái */}
+                  {/* Ảnh trái (1:1) */}
                   <div
-                    data-element-key={`tiers[${idx}].imageUrl`}
                     style={composeStyle(
                       tier.imageUrl
                         ? {
@@ -276,18 +329,17 @@ export function FramerPerformPricing({
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
                           }
-                        : { backgroundColor: '#e6e7ea' },
+                        : {
+                            background:
+                              'linear-gradient(135deg, #d9dadd 0%, #b8babf 100%)',
+                          },
                       {
                         position: 'relative',
                         width: '100%',
                         aspectRatio: '1 / 1',
                         borderRadius: 'clamp(16px, 1.6cqi, 24px)',
                         overflow: 'hidden',
-                      },
-                      styleOf(`tiers[${idx}].imageUrl`)
-                    )}
-                    className={selectableClass(
-                      activeKey === `tiers[${idx}].imageUrl`
+                      }
                     )}
                   />
 
@@ -301,50 +353,20 @@ export function FramerPerformPricing({
                         'clamp(16px, 2cqi, 32px) clamp(8px, 1.5cqi, 24px)',
                     }}
                   >
-                    <p
-                      data-element-key={`tiers[${idx}].price`}
-                      style={composeStyle(
-                        CARD_PRICE_STYLE,
-                        styleOf(`tiers[${idx}].price`)
-                      )}
-                      className={selectableClass(
-                        activeKey === `tiers[${idx}].price`
-                      )}
-                    >
-                      {tier.price}
-                    </p>
+                    <p style={CARD_PRICE_STYLE}>{tier.price}</p>
 
-                    <p
-                      data-element-key={`tiers[${idx}].title`}
-                      style={composeStyle(
-                        CARD_TITLE_STYLE,
-                        styleOf(`tiers[${idx}].title`)
-                      )}
-                      className={selectableClass(
-                        activeKey === `tiers[${idx}].title`
-                      )}
-                    >
-                      {tier.title}
-                    </p>
+                    <p style={CARD_TITLE_STYLE}>{tier.title || 'Plan'}</p>
 
-                    {/* Feature list */}
                     {featureLines.length > 0 && (
                       <ul
-                        data-element-key={`tiers[${idx}].features`}
-                        style={composeStyle(
-                          {
-                            listStyle: 'none',
-                            padding: 0,
-                            margin: '0 0 clamp(28px, 4cqi, 48px)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 'clamp(12px, 1.4cqi, 18px)',
-                          },
-                          styleOf(`tiers[${idx}].features`)
-                        )}
-                        className={selectableClass(
-                          activeKey === `tiers[${idx}].features`
-                        )}
+                        style={{
+                          listStyle: 'none',
+                          padding: 0,
+                          margin: '0 0 clamp(28px, 4cqi, 48px)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 'clamp(14px, 1.4cqi, 18px)',
+                        }}
                       >
                         {featureLines.map((feat, fIdx) => (
                           <li
@@ -362,29 +384,30 @@ export function FramerPerformPricing({
                       </ul>
                     )}
 
-                    {/* CTA */}
                     <a
-                      data-element-key={`tiers[${idx}].ctaLabel`}
-                      href={tier.ctaHref ?? '#'}
-                      style={composeStyle(
-                        CTA_STYLE,
-                        { alignSelf: 'flex-start' },
-                        styleOf(`tiers[${idx}].ctaLabel`)
-                      )}
-                      className={selectableClass(
-                        activeKey === `tiers[${idx}].ctaLabel`
-                      )}
+                      href={tier.ctaHref || '#'}
+                      aria-label={tier.ctaLabel || 'Get in touch'}
+                      style={CTA_STYLE}
                     >
-                      {tier.ctaLabel}
+                      <span>{tier.ctaLabel || 'Get in touch'}</span>
                       <ArrowIcon />
                     </a>
                   </div>
-                </div>
+                </article>
               </div>
             );
           })}
         </div>
       </div>
-    </div>
+
+      <style>{`
+        @container (max-width: 809px) {
+          .framer-perform-pricing .fpp-card {
+            grid-template-columns: 1fr !important;
+            gap: 0 !important;
+          }
+        }
+      `}</style>
+    </section>
   );
 }

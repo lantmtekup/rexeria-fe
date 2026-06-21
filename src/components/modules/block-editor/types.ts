@@ -98,6 +98,8 @@ export type BlockType =
   | 'mintv2_process'
   | 'mintv2_cta'
   | 'mintv2_works'
+  // ── Import từ 360-admin-cms ──
+  | 'linea_portfolio'
   // Wrapper cho legacy/framer block (render qua schemaId trong registry).
   // Không edit inline — chèn nguyên khối thiết kế vào canvas.
   | 'legacy_embed';
@@ -353,6 +355,22 @@ export interface MintV2WorksContent {
   eyebrow: string;
   title: string;
   cards: MintV2WorkCard[];
+}
+
+// ── Import từ 360-admin-cms (port theo contract) ─────────────────────────
+export interface LineaPortfolioItem {
+  img: string;
+}
+
+/** Linea Portfolio — eyebrow + heading 3 phần + ticker 9 ảnh (3 cột cuộn). */
+export interface LineaPortfolioContent {
+  eyebrow: string;
+  headingPre: string;
+  headingAccent: string;
+  headingPost: string;
+  items: LineaPortfolioItem[];
+  bgColor: string;
+  textColor: string;
 }
 
 export interface CtaSectionContent {
@@ -1346,6 +1364,7 @@ export type BlockContent =
   | MintV2ProcessContent
   | MintV2CtaContent
   | MintV2WorksContent
+  | LineaPortfolioContent
   | CtaSectionContent
   | ImageCarouselContent
   | StoriesContent
@@ -2089,6 +2108,16 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Works',
     aiLabelVi: 'gallery card hover-morph (thumb bay vào) + lightbox',
     aiLabelEn: 'hover-morph gallery cards (fly-in thumbs) + lightbox',
+  },
+  linea_portfolio: {
+    type: 'linea_portfolio',
+    label: 'Linea · Portfolio',
+    accent: '#121212',
+    adminLabel: 'Linea Portfolio',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Portfolio',
+    aiLabelVi: 'portfolio: heading + lưới 9 ảnh ticker 3 cột cuộn ngược chiều',
+    aiLabelEn: 'portfolio heading + 9-image 3-column scrolling ticker',
   },
   image_carousel: {
     type: 'image_carousel',

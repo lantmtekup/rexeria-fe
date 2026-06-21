@@ -14,6 +14,7 @@ import { MintV2Manifesto } from './MintV2Manifesto';
 import { MintV2Process } from './MintV2Process';
 import { MintV2Cta } from './MintV2Cta';
 import { MintV2Works } from './MintV2Works';
+import { LineaPortfolio } from './LineaPortfolio';
 import { FeatureSection } from './FeatureSection';
 import { Flipbook } from './Flipbook';
 import { FramerAesthaEditorial } from './FramerAesthaEditorial';
@@ -108,6 +109,7 @@ import type {
   MintV2ProcessContent,
   MintV2CtaContent,
   MintV2WorksContent,
+  LineaPortfolioContent,
   ElementPositionsMap,
   ElementStylesMap,
   FeatureSectionContent,
@@ -395,6 +397,17 @@ export function RenderBlock({
       return (
         <MintV2Works
           content={content as MintV2WorksContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'linea_portfolio':
+      return (
+        <LineaPortfolio
+          content={content as LineaPortfolioContent}
           styles={styles}
           background={background}
           order={order}

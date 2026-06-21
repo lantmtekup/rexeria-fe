@@ -440,6 +440,14 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'title', label: 'Tiêu đề lớn', icon: Type },
     { key: 'cards', label: 'Các card', icon: ListChecks },
   ],
+  linea_portfolio: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'headingPre', label: 'Tiêu đề (trước)', icon: Type },
+    { key: 'headingAccent', label: 'Tiêu đề (nhấn)', icon: Type },
+    { key: 'headingPost', label: 'Tiêu đề (sau)', icon: Type },
+    { key: 'items', label: 'Lưới ảnh', icon: Grid3x3 },
+  ],
   mint_discover: [
     BACKGROUND_LAYER,
     { key: 'mainImage', label: 'Ảnh coin', icon: ImageIcon },

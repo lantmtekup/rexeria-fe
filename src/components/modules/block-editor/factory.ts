@@ -19,6 +19,7 @@ import type {
   MintV2ProcessContent,
   MintV2CtaContent,
   MintV2WorksContent,
+  LineaPortfolioContent,
   FeatureSectionContent,
   FlipbookContent,
   FramerArpeggioHeroContent,
@@ -535,6 +536,30 @@ const MINTV2_WORKS_VI: MintV2WorksContent = {
       ],
       bgClass: 'bg-[#efe9dc]',
     },
+  ],
+};
+
+// ── Import từ 360-admin-cms ──────────────────────────────────────────────
+const LINEA_IMG = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=600&q=70`;
+
+const LINEA_PORTFOLIO_VI: LineaPortfolioContent = {
+  eyebrow: 'Works',
+  headingPre: 'Collaboration that',
+  headingAccent: 'moved',
+  headingPost: 'the needle.',
+  bgColor: '#ffffff',
+  textColor: '#121212',
+  items: [
+    { img: LINEA_IMG('1517245386807-bb43f82c33c4') },
+    { img: LINEA_IMG('1487014679447-9f8336841d58') },
+    { img: LINEA_IMG('1486312338219-ce68d2c6f44d') },
+    { img: LINEA_IMG('1498050108023-c5249f4df085') },
+    { img: LINEA_IMG('1467232004584-a241de8bcf5d') },
+    { img: LINEA_IMG('1531403009284-440f080d1e12') },
+    { img: LINEA_IMG('1460925895917-afdab827c52f') },
+    { img: LINEA_IMG('1551434678-e076c223a692') },
+    { img: LINEA_IMG('1556761175-5973dc0f32e7') },
   ],
 };
 
@@ -1556,7 +1581,28 @@ const FRAMER_BUNGEE_HERO_VI: FramerBungeeHeroContent = {
   link3Label: 'X',
   link3Url: 'https://x.com/',
   marqueeSpeed: 40,
-  cardImages: [],
+  cardImages: [
+    {
+      imageUrl:
+        'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=70',
+    },
+    {
+      imageUrl:
+        'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=70',
+    },
+    {
+      imageUrl:
+        'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=70',
+    },
+    {
+      imageUrl:
+        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=70',
+    },
+    {
+      imageUrl:
+        'https://images.unsplash.com/photo-1487014679447-9f8336841d58?auto=format&fit=crop&w=800&q=70',
+    },
+  ],
 };
 const FRAMER_BUNGEE_HERO_EN: FramerBungeeHeroContent = {
   ...FRAMER_BUNGEE_HERO_VI,
@@ -2240,11 +2286,13 @@ const FRAMER_VS_COLLINS_PROJECTS_EN: FramerVsCollinsProjectsContent = {
 };
 
 // ── Framer-native: Avexa Bento ─────────────────────────────────────────
+const AVEXA_IMG = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=800&q=70`;
 const FRAMER_AVEXA_BENTO_VI: FramerAvexaBentoContent = {
-  card1ImageUrl: '',
+  card1ImageUrl: AVEXA_IMG('1454165804606-c3d57bc86b40'),
   card1Title: 'Chiến lược dẫn đầu',
   card1Desc: 'Mọi quyết định đều dựa trên sự rõ ràng, không phải phỏng đoán.',
-  card2ImageUrl: '',
+  card2ImageUrl: AVEXA_IMG('1513364776144-60967b0f800f'),
   card2Title: 'Chất lượng hơn số lượng',
   card2Caption:
     'Chúng tôi tập trung vào ít dự án hơn để mang lại kết quả tốt hơn.',
@@ -2252,15 +2300,15 @@ const FRAMER_AVEXA_BENTO_VI: FramerAvexaBentoContent = {
   card3Sub: 'Hỗ trợ ưu tiên',
   card3BadgeBrand: 'Rexer',
   card3BadgeLabel: 'Ticket hỗ trợ',
-  card4ImageUrl: '',
+  card4ImageUrl: AVEXA_IMG('1497366216548-37526070297c'),
   card4Title: 'Giải pháp tuỳ chỉnh',
   card4Desc:
     'Không có một kích cỡ nào phù hợp tất cả — mọi thứ được định hình cho mục tiêu của bạn.',
-  card5ImageUrl: '',
+  card5ImageUrl: AVEXA_IMG('1522071820081-009f0129c71c'),
   card5Title: 'Quy trình hợp tác',
   card5Caption: 'Chúng tôi làm việc cùng bạn, không chỉ cho bạn.',
-  card6Image1Url: '',
-  card6Image2Url: '',
+  card6Image1Url: AVEXA_IMG('1559136555-9303baea8ebd'),
+  card6Image2Url: AVEXA_IMG('1551434678-e076c223a692'),
   card6Title: 'Sáng tạo gặp thực tiễn',
   card6Desc: 'Thiết kế thông minh thực sự hoạt động trong thế giới thực.',
 };
@@ -2641,6 +2689,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   mintv2_process: MINTV2_PROCESS_VI,
   mintv2_cta: MINTV2_CTA_VI,
   mintv2_works: MINTV2_WORKS_VI,
+  linea_portfolio: LINEA_PORTFOLIO_VI,
   image_carousel: CAROUSEL_VI,
   stories: STORIES_VI,
   split_screen: SPLIT_VI,
@@ -2734,6 +2783,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   mintv2_process: MINTV2_PROCESS_VI,
   mintv2_cta: MINTV2_CTA_VI,
   mintv2_works: MINTV2_WORKS_VI,
+  linea_portfolio: LINEA_PORTFOLIO_VI,
   image_carousel: CAROUSEL_EN,
   stories: STORIES_EN,
   split_screen: SPLIT_EN,

@@ -110,6 +110,7 @@ const ORDERED_TYPES: BlockType[] = [
   'mintv2_emblem',
   'mintv2_manifesto',
   'mintv2_works',
+  'linea_portfolio',
   'mintv2_services',
   'mintv2_process',
   'mintv2_cta',

@@ -1,7 +1,25 @@
+'use client';
+
+/**
+ * Data-block "Hero - 01 (Perform v1)" (port từ 360-admin-cms framer-perform-hero).
+ *
+ * Design SOURCE: perform.framer.website hero — full-bleed motion-blur bg,
+ * eyebrow + headline (per-char entrance) + subtitle + pill CTA + 5-star review,
+ * content trái tối đa 720px, overlay gradient ngang từ trái. Manrope 72/500/-0.05em.
+ *
+ * Theo contract nền GSAP (R1–R6):
+ *  - Title char-stagger qua SplitType + gsap.fromTo (thay framer-motion spring gốc).
+ *  - Mọi entrance (bg fade, eyebrow/subtitle/cta/review fade-up) qua useBlockMotion
+ *    với scrollTrigger {trigger, scroller, start:'top 85%',
+ *    toggleActions:'play none none reverse', invalidateOnRefresh:true}.
+ *  - @container + đơn vị cqi thay md:/lg:.
+ *  - data-element-key + styleOf(key) + selectableClass cho mỗi element editable.
+ */
 import * as React from 'react';
+import gsap from 'gsap';
+import SplitType from 'split-type';
 
-import { cn } from '@/lib/cn';
-
+import { useBlockMotion } from '../motion/LandingMotion';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -17,25 +35,18 @@ import {
   selectableClass,
 } from './applyStyle';
 
-interface FramerPerformHeroProps {
+interface Props {
   content: FramerPerformHeroContent;
   styles?: ElementStylesMap;
   background?: BlockBackground;
   order?: string[];
   positions?: ElementPositionsMap;
   activeKey?: string | null;
-  className?: string;
 }
-
-/**
- * Hero - 01 (Perform v1): Manrope 72/500 + dark-overlay bg + pill CTA + star reviews.
- * Port từ `src/blocks/framer-perform-hero`. Content bên trái, tối đa 720px,
- * overlay gradient ngang từ trái. Responsive bằng container-query.
- */
 
 const TITLE_STYLE: React.CSSProperties = {
   fontFamily: '"Manrope", system-ui, sans-serif',
-  fontSize: 'clamp(32px, 6cqi, 72px)',
+  fontSize: 'clamp(40px, 6cqi, 72px)',
   fontWeight: 500,
   lineHeight: '1.2em',
   letterSpacing: '-0.05em',
@@ -51,8 +62,8 @@ export function FramerPerformHero({
   order,
   positions,
   activeKey,
-  className,
-}: FramerPerformHeroProps) {
+}: Props) {
+  const rootRef = React.useRef<HTMLElement>(null);
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -65,13 +76,91 @@ export function FramerPerformHero({
     .split('\n')
     .filter(Boolean);
 
+  useBlockMotion(
+    rootRef,
+    ({ scroller }) => {
+      const root = rootRef.current;
+      if (!root) return;
+
+      // Background image — fade-in.
+      const bg = root.querySelector<HTMLElement>('.perform-bg');
+      if (bg) {
+        gsap.fromTo(
+          bg,
+          { opacity: 0 },
+          {
+            opacity: 1,
+            duration: 1.2,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: root,
+              scroller,
+              start: 'top 85%',
+              toggleActions: 'play none none reverse',
+              invalidateOnRefresh: true,
+            },
+          }
+        );
+      }
+
+      // Title — per-character spring-ish entrance (SplitType chars).
+      root
+        .querySelectorAll<HTMLElement>('.perform-title')
+        .forEach((line, lineIdx) => {
+          const split = new SplitType(line, { types: 'chars' });
+          gsap.fromTo(
+            split.chars,
+            { yPercent: 110, opacity: 0 },
+            {
+              yPercent: 0,
+              opacity: 1,
+              duration: 1.2,
+              ease: 'power3.out',
+              stagger: 0.035,
+              delay: lineIdx * 0.15,
+              scrollTrigger: {
+                trigger: line,
+                scroller,
+                start: 'top 85%',
+                toggleActions: 'play none none reverse',
+                invalidateOnRefresh: true,
+              },
+            }
+          );
+        });
+
+      // Eyebrow / subtitle / CTA / review — staggered fade-up.
+      gsap.utils
+        .toArray<HTMLElement>('.perform-reveal', root)
+        .forEach((el, i) => {
+          gsap.fromTo(
+            el,
+            { y: 24, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.8,
+              ease: 'power3.out',
+              delay: i * 0.08,
+              scrollTrigger: {
+                trigger: el,
+                scroller,
+                start: 'top 85%',
+                toggleActions: 'play none none reverse',
+                invalidateOnRefresh: true,
+              },
+            }
+          );
+        });
+    },
+    [titleLines.length]
+  );
+
   return (
-    <div
+    <section
+      ref={rootRef}
       style={blockBackgroundStyle(background)}
-      className={cn(
-        'animate-in fade-in zoom-in-95 @container relative flex min-h-[clamp(460px,90cqi,900px)] w-full flex-col overflow-hidden rounded-md duration-700 ease-out',
-        className
-      )}
+      className='perform-hero @container relative flex min-h-[clamp(460px,90cqi,900px)] w-full flex-col overflow-hidden rounded-md'
     >
       {/* Background image */}
       <div
@@ -88,7 +177,7 @@ export function FramerPerformHero({
         )}
         className={selectableClass(
           activeKey === 'backgroundUrl',
-          'absolute inset-0'
+          'perform-bg absolute inset-0'
         )}
       />
 
@@ -124,7 +213,7 @@ export function FramerPerformHero({
             },
             styleOf('eyebrow')
           )}
-          className={selectableClass(activeKey === 'eyebrow')}
+          className={selectableClass(activeKey === 'eyebrow', 'perform-reveal')}
         >
           <span
             aria-hidden='true'
@@ -148,14 +237,18 @@ export function FramerPerformHero({
           </span>
         </div>
 
-        {/* Title lines */}
+        {/* Title lines — per-char stagger */}
         <div
           data-element-key='title'
           style={composeStyle({ marginBottom: 24 }, styleOf('title'))}
           className={selectableClass(activeKey === 'title')}
         >
           {titleLines.map((line, i) => (
-            <h1 key={i} style={TITLE_STYLE}>
+            <h1
+              key={i}
+              className='perform-title overflow-hidden'
+              style={TITLE_STYLE}
+            >
               {line}
             </h1>
           ))}
@@ -168,7 +261,10 @@ export function FramerPerformHero({
             { marginBottom: 32, maxWidth: 520 },
             styleOf('subtitle')
           )}
-          className={selectableClass(activeKey === 'subtitle')}
+          className={selectableClass(
+            activeKey === 'subtitle',
+            'perform-reveal'
+          )}
         >
           <p
             style={{
@@ -185,7 +281,7 @@ export function FramerPerformHero({
         </div>
 
         {/* CTA pill */}
-        <div style={{ marginBottom: 48 }}>
+        <div className='perform-reveal' style={{ marginBottom: 48 }}>
           <a
             data-element-key='ctaLabel'
             href={content.ctaHref || '#start'}
@@ -223,7 +319,10 @@ export function FramerPerformHero({
             { display: 'flex', alignItems: 'center', gap: 12 },
             styleOf('reviewCount')
           )}
-          className={selectableClass(activeKey === 'reviewCount')}
+          className={selectableClass(
+            activeKey === 'reviewCount',
+            'perform-reveal'
+          )}
         >
           <div
             aria-label={`${reviewStars} out of 5 stars`}
@@ -254,6 +353,6 @@ export function FramerPerformHero({
           </span>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
