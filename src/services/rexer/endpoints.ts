@@ -1475,6 +1475,28 @@ export const rexerApi = {
         '/admin/users',
         { query }
       ),
+    // Create an internal (admin/staff) user. Sets principal_type + role on the
+    // BE (staff → principal_type='user'+role='staff'; admin → both 'admin').
+    // Returns generated_password only when `password` is omitted.
+    create: (body: {
+      email: string;
+      display_name: string;
+      role: 'admin' | 'staff';
+      password?: string;
+    }) =>
+      rx<{ user: AdminUser; generated_password?: string }>('/admin/users', {
+        method: 'POST',
+        body,
+      }),
+    // Promote/demote an existing user's role.
+    updateRole: (
+      userId: string,
+      body: { role: 'admin' | 'staff' | 'client_user' }
+    ) =>
+      rx<{ user: AdminUser }>(`/admin/users/${userId}/role`, {
+        method: 'PATCH',
+        body,
+      }),
   },
 
   staffInbox: {
