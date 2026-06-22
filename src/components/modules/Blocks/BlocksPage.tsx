@@ -20,9 +20,12 @@
  */
 
 import * as React from 'react';
+import * as Popover from '@radix-ui/react-popover';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Bookmark,
+  Check,
+  ChevronDown,
   Copy,
   Eye,
   FlaskConical,
@@ -149,7 +152,7 @@ export function BlocksPage() {
   const [statusFilter, setStatusFilter] = React.useState<BlockStatus | 'all'>(
     'all'
   );
-  const [tagFilter, setTagFilter] = React.useState<string | null>(null);
+  const [tagFilter, setTagFilter] = React.useState<string[]>([]);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   // Bulk select (xoá nhiều) — giữ id, chung cho cả grid + table.
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
@@ -232,7 +235,12 @@ export function BlocksPage() {
       if (typeFilter !== 'all' && e.type_code !== typeFilter) return false;
       if (statusFilter !== 'all' && effectiveBlockStatus(e) !== statusFilter)
         return false;
-      if (tagFilter && !(e.tags ?? []).includes(tagFilter)) return false;
+      // Multi-tag: block phải chứa TẤT CẢ tag đã chọn (AND — lọc thu hẹp).
+      if (
+        tagFilter.length > 0 &&
+        !tagFilter.every(t => (e.tags ?? []).includes(t))
+      )
+        return false;
       if (!q) return true;
       return (
         e.name.toLowerCase().includes(q) ||
@@ -402,14 +410,10 @@ export function BlocksPage() {
       {/* Main column */}
       <div className='flex flex-1 flex-col overflow-hidden'>
         {/* Header */}
-        <div className='border-border bg-background border-b px-6 py-4'>
+        <div className='border-border bg-background border-b px-4 py-3'>
           <div className='flex items-start justify-between gap-3'>
             <div>
               <h1 className='text-xl font-semibold'>Blocks</h1>
-              <p className='text-content-muted mt-0.5 text-xs'>
-                Thư viện block dùng chung cho mọi landing page · {items.length}{' '}
-                blocks
-              </p>
             </div>
             <div className='flex items-center gap-2'>
               {!isPortal && (
@@ -439,50 +443,34 @@ export function BlocksPage() {
             </div>
           </div>
 
-          {/* Thống kê block theo trạng thái — tile bấm để lọc + thanh tỉ lệ. */}
+          {/* Thống kê trạng thái — chip bấm để lọc nhanh. Gọn 1 hàng để chừa
+              chiều cao cho list nội dung. */}
           {items.length > 0 && (
-            <div className='mt-4 flex flex-col gap-3'>
-              <div className='grid grid-cols-3 gap-2.5 lg:grid-cols-6'>
+            <div className='mt-2 flex flex-wrap items-center gap-1.5'>
+              <StatTile
+                label='Tất cả'
+                value={items.length}
+                active={statusFilter === 'all'}
+                onClick={() => setStatusFilter('all')}
+              />
+              {BLOCK_STATUS_ORDER.map(s => (
                 <StatTile
-                  label='Tất cả'
-                  value={items.length}
-                  active={statusFilter === 'all'}
-                  onClick={() => setStatusFilter('all')}
+                  key={s}
+                  label={BLOCK_STATUS_META[s].label}
+                  value={statusCounts[s]}
+                  dot={BLOCK_STATUS_META[s].dot}
+                  active={statusFilter === s}
+                  onClick={() =>
+                    setStatusFilter(statusFilter === s ? 'all' : s)
+                  }
                 />
-                {BLOCK_STATUS_ORDER.map(s => (
-                  <StatTile
-                    key={s}
-                    label={BLOCK_STATUS_META[s].label}
-                    value={statusCounts[s]}
-                    dot={BLOCK_STATUS_META[s].dot}
-                    active={statusFilter === s}
-                    onClick={() =>
-                      setStatusFilter(statusFilter === s ? 'all' : s)
-                    }
-                  />
-                ))}
-              </div>
-              {/* Thanh tỉ lệ: nhìn 1 phát thấy ngay phân bổ trạng thái. */}
-              <div className='bg-muted flex h-1.5 w-full overflow-hidden rounded-full'>
-                {BLOCK_STATUS_ORDER.map(s =>
-                  statusCounts[s] > 0 ? (
-                    <div
-                      key={s}
-                      className={cn('h-full', BLOCK_STATUS_META[s].dot)}
-                      style={{
-                        width: `${(statusCounts[s] / items.length) * 100}%`,
-                      }}
-                      title={`${BLOCK_STATUS_META[s].label}: ${statusCounts[s]}`}
-                    />
-                  ) : null
-                )}
-              </div>
+              ))}
             </div>
           )}
 
-          {/* Search + view toggle */}
-          <div className='mt-4 flex items-center gap-3'>
-            <div className='relative max-w-md flex-1'>
+          {/* Search + filter + view — gộp 1 hàng ngang cho gọn. */}
+          <div className='mt-2 flex flex-wrap items-center gap-2'>
+            <div className='relative min-w-[180px] flex-1'>
               <Search className='text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2' />
               <Input
                 placeholder='Tìm theo tên / block type / tag…'
@@ -491,6 +479,64 @@ export function BlocksPage() {
                 className='pl-8'
               />
             </div>
+
+            <select
+              value={typeFilter}
+              onChange={e => setTypeFilter(e.target.value as BlockType | 'all')}
+              className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1.5 text-xs font-medium outline-none'
+            >
+              <option value='all'>Tất cả type</option>
+              {typeOptions.map(o => (
+                <option key={o.code} value={o.code}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={e =>
+                setStatusFilter(e.target.value as BlockStatus | 'all')
+              }
+              className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1.5 text-xs font-medium outline-none'
+            >
+              <option value='all'>Tất cả trạng thái</option>
+              {BLOCK_STATUS_ORDER.map(s => (
+                <option key={s} value={s}>
+                  {BLOCK_STATUS_META[s].label}
+                </option>
+              ))}
+            </select>
+
+            {allTags.length > 0 && (
+              <TagMultiSelect
+                allTags={allTags}
+                value={tagFilter}
+                onChange={setTagFilter}
+              />
+            )}
+
+            {(typeFilter !== 'all' ||
+              statusFilter !== 'all' ||
+              tagFilter.length > 0) && (
+              <button
+                type='button'
+                onClick={() => {
+                  setTypeFilter('all');
+                  setStatusFilter('all');
+                  setTagFilter([]);
+                }}
+                className='text-3xs text-content-muted hover:text-foreground inline-flex items-center gap-1'
+              >
+                <X className='size-3' />
+                Clear
+              </button>
+            )}
+
+            <div className='text-3xs text-content-muted ml-auto'>
+              {filtered.length} / {items.length}
+            </div>
+
             <div className='border-border bg-background flex items-center gap-1 rounded-lg border p-0.5'>
               <ViewBtn
                 active={view === 'grid'}
@@ -506,82 +552,10 @@ export function BlocksPage() {
               />
             </div>
           </div>
-
-          {/* Filter strip */}
-          {(allTags.length > 0 || items.length > 0) && (
-            <div className='mt-3 flex flex-wrap items-center gap-2'>
-              <select
-                value={typeFilter}
-                onChange={e =>
-                  setTypeFilter(e.target.value as BlockType | 'all')
-                }
-                className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1 text-xs font-medium outline-none'
-              >
-                <option value='all'>Tất cả type</option>
-                {typeOptions.map(o => (
-                  <option key={o.code} value={o.code}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={statusFilter}
-                onChange={e =>
-                  setStatusFilter(e.target.value as BlockStatus | 'all')
-                }
-                className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1 text-xs font-medium outline-none'
-              >
-                <option value='all'>Tất cả trạng thái</option>
-                {BLOCK_STATUS_ORDER.map(s => (
-                  <option key={s} value={s}>
-                    {BLOCK_STATUS_META[s].label}
-                  </option>
-                ))}
-              </select>
-
-              {allTags.length > 0 && (
-                <div className='flex items-center gap-1.5'>
-                  <Tag className='text-muted-foreground size-3' />
-                  {allTags.map(t => (
-                    <Chip
-                      key={t}
-                      selected={tagFilter === t}
-                      size='sm'
-                      onClick={() => setTagFilter(tagFilter === t ? null : t)}
-                    >
-                      {t}
-                    </Chip>
-                  ))}
-                </div>
-              )}
-
-              {(typeFilter !== 'all' ||
-                statusFilter !== 'all' ||
-                tagFilter) && (
-                <button
-                  type='button'
-                  onClick={() => {
-                    setTypeFilter('all');
-                    setStatusFilter('all');
-                    setTagFilter(null);
-                  }}
-                  className='text-3xs text-content-muted hover:text-foreground ml-1 inline-flex items-center gap-1'
-                >
-                  <X className='size-3' />
-                  Clear
-                </button>
-              )}
-
-              <div className='text-3xs text-content-muted ml-auto'>
-                {filtered.length} / {items.length}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Body */}
-        <div className='bg-muted/40 flex-1 overflow-y-auto p-6'>
+        <div className='bg-muted/40 flex-1 overflow-y-auto px-4 py-3'>
           {error && (
             <div className='border-destructive/20 bg-danger-bg text-destructive mb-3 rounded-lg border px-3 py-2 text-xs'>
               Load blocks thất bại: <code className='font-mono'>{error}</code>
@@ -956,6 +930,99 @@ function BlockCard({
 }
 
 /** Ô thống kê 1 trạng thái — số to, dot màu + nhãn, bấm để lọc. */
+/** Lọc tag nhiều cùng lúc — popover checkbox + search, scale khi nhiều tag. */
+function TagMultiSelect({
+  allTags,
+  value,
+  onChange,
+}: {
+  allTags: string[];
+  value: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [q, setQ] = React.useState('');
+  const shown = q
+    ? allTags.filter(t => t.toLowerCase().includes(q.toLowerCase()))
+    : allTags;
+  const toggle = (t: string) =>
+    onChange(value.includes(t) ? value.filter(x => x !== t) : [...value, t]);
+  const label = value.length === 0 ? 'Tất cả tag' : `${value.length} tag`;
+
+  return (
+    <Popover.Root>
+      <Popover.Trigger asChild>
+        <button
+          type='button'
+          className={cn(
+            'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors outline-none',
+            value.length > 0
+              ? 'border-primary bg-primary/5 text-foreground'
+              : 'border-border text-content-muted hover:bg-muted bg-background'
+          )}
+        >
+          <Tag className='size-3' />
+          {label}
+          <ChevronDown className='size-3 opacity-60' />
+        </button>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          align='start'
+          sideOffset={4}
+          className='border-border bg-background z-50 w-56 rounded-lg border p-1.5 shadow-lg'
+        >
+          <input
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder='Tìm tag…'
+            className='border-border bg-background focus:ring-ring/40 mb-1 h-7 w-full rounded-md border px-2 text-xs outline-none focus:ring-2'
+          />
+          <div className='max-h-56 overflow-y-auto'>
+            {shown.length === 0 ? (
+              <p className='text-3xs text-content-muted px-2 py-2'>
+                Không có tag
+              </p>
+            ) : (
+              shown.map(t => {
+                const on = value.includes(t);
+                return (
+                  <button
+                    key={t}
+                    type='button'
+                    onClick={() => toggle(t)}
+                    className='hover:bg-muted flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs'
+                  >
+                    <span
+                      className={cn(
+                        'flex size-3.5 shrink-0 items-center justify-center rounded border',
+                        on
+                          ? 'bg-foreground border-foreground text-background'
+                          : 'border-border'
+                      )}
+                    >
+                      {on && <Check className='size-2.5' />}
+                    </span>
+                    <span className='truncate'>{t}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+          {value.length > 0 && (
+            <button
+              type='button'
+              onClick={() => onChange([])}
+              className='text-3xs text-content-muted hover:text-foreground mt-1 w-full px-2 py-1 text-left'
+            >
+              Bỏ chọn tất cả
+            </button>
+          )}
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+
 function StatTile({
   label,
   value,
@@ -974,23 +1041,17 @@ function StatTile({
       type='button'
       onClick={onClick}
       className={cn(
-        'bg-card flex flex-col gap-1.5 rounded-xl border px-3.5 py-3 text-left transition-colors',
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
         active
-          ? 'border-primary ring-primary/15 ring-2'
-          : 'border-border hover:border-primary/40 hover:bg-muted/40'
+          ? 'border-primary bg-primary/5 text-foreground ring-primary/20 ring-1'
+          : 'border-border text-content-muted hover:border-primary/40 hover:bg-muted/40'
       )}
     >
-      <span className='inline-flex items-center gap-1.5'>
-        {dot ? (
-          <span className={cn('size-2 rounded-full', dot)} />
-        ) : (
-          <span className='bg-foreground/70 size-2 rounded-full' />
-        )}
-        <span className='text-content-muted truncate text-xs font-medium'>
-          {label}
-        </span>
-      </span>
-      <span className='text-2xl font-bold tracking-[-0.02em] tabular-nums'>
+      <span
+        className={cn('size-1.5 rounded-full', dot ?? 'bg-foreground/70')}
+      />
+      {label}
+      <span className='text-foreground font-semibold tabular-nums'>
         {value}
       </span>
     </button>
@@ -1175,7 +1236,7 @@ function TableView({
             <TableHead className='w-28'>Thumbnail</TableHead>
             <TableHead>Tên</TableHead>
             <TableHead className='w-32'>Trạng thái</TableHead>
-            <TableHead className='w-36'>Block type</TableHead>
+            <TableHead className='w-36'>Mapping code</TableHead>
             <TableHead className='w-32'>Tags</TableHead>
             <TableHead className='w-24'>Extras</TableHead>
             <TableHead className='w-20'>Usage</TableHead>

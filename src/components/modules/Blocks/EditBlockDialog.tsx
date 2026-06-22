@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import * as Tabs from '@radix-ui/react-tabs';
 import { ImagePlus, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -16,7 +17,6 @@ import { Button } from '@/components/atoms/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -27,7 +27,11 @@ import { Textarea } from '@/components/atoms/textarea';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Block, BlockStatus } from '@/services/rexer/types';
-import { BLOCK_TYPE_META } from '@/components/modules/block-editor/types';
+import {
+  BLOCK_TYPE_META,
+  type BlockType,
+} from '@/components/modules/block-editor/types';
+import { createBlock } from '@/components/modules/block-editor/factory';
 import {
   BLOCK_STATUS_META,
   BLOCK_STATUS_ORDER,
@@ -69,6 +73,7 @@ export function EditBlockDialog({
   const [tax, setTax] = React.useState<BlockTaxonomyValue>(emptyTaxonomy());
   const [status, setStatus] = React.useState<BlockStatus>('draft');
   const [reviewNote, setReviewNote] = React.useState('');
+  const [tab, setTab] = React.useState('info');
 
   // Nạp lại form mỗi khi mở với block khác.
   React.useEffect(() => {
@@ -83,6 +88,7 @@ export function EditBlockDialog({
       setTax(taxonomyFrom(block));
       setStatus(effectiveBlockStatus(block));
       setReviewNote(block.review_note ?? '');
+      setTab('info');
     }
   }, [open, block]);
 
@@ -128,19 +134,38 @@ export function EditBlockDialog({
     if (!block) return;
     const trimmedName = name.trim();
     if (!trimmedName) {
+      setTab('info');
       toast.error('Tên block không được rỗng');
       return;
     }
     setSubmitting(true);
     try {
+      // Đổi loại block → rebuild `settings` sang block mặc định của type mới,
+      // để nhãn + nội dung/preview khớp NGAY (settings cũ dựng cho type cũ nên
+      // vô dụng + gây lệch type_code vs settings.blockType). Giữ lại id editor
+      // block để định danh ổn định.
+      const typeChanged = !!typeCode && typeCode !== block.type_code;
+      let typePatch: {
+        type_code?: string;
+        settings?: Record<string, unknown>;
+      } = {};
+      if (typeChanged) {
+        const fresh = createBlock(typeCode as BlockType);
+        fresh.name = trimmedName;
+        const prevId = (block.settings as { id?: string } | undefined)?.id;
+        if (prevId) fresh.id = prevId;
+        typePatch = {
+          type_code: typeCode,
+          settings: fresh as unknown as Record<string, unknown>,
+        };
+      }
+
       const updated = await rexerApi.blocks.update(block.id, {
         name: trimmedName,
         description: description.trim() || undefined,
         tags,
-        // Đổi loại block: gửi type_code (BE đã hỗ trợ PATCH /blocks 2026-06-18).
-        ...(typeCode && typeCode !== block.type_code
-          ? { type_code: typeCode }
-          : {}),
+        // Đổi loại block: gửi type_code + settings mới (BE hỗ trợ PATCH 2026-06-18).
+        ...typePatch,
         // Thumbnail tuỳ chỉnh — chỉ gửi khi user vừa upload ảnh mới.
         ...(thumbAssetId ? { thumbnail_asset_id: thumbAssetId } : {}),
         // Taxonomy AI per-block (BE persist từ 2026-06-19).
@@ -161,147 +186,200 @@ export function EditBlockDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='max-h-[88vh] overflow-y-auto sm:max-w-xl'>
+      <DialogContent
+        aria-describedby={undefined}
+        className='max-h-[88vh] overflow-y-auto sm:max-w-xl'
+      >
         <DialogHeader>
           <DialogTitle>Sửa thông tin block</DialogTitle>
-          <DialogDescription>
-            Cập nhật tên, mô tả, tag. Nội dung canvas (settings) chỉnh trong
-            block editor, không sửa ở đây.
-          </DialogDescription>
         </DialogHeader>
 
-        <div className='flex flex-col gap-4'>
-          <div className='flex flex-col gap-1'>
-            <Label htmlFor='eb-name'>
-              Tên <span className='text-destructive'>*</span>
-            </Label>
-            <Input
-              id='eb-name'
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder='Hero chia đôi…'
-            />
-          </div>
+        <Tabs.Root value={tab} onValueChange={setTab}>
+          <Tabs.List className='border-border mb-4 flex gap-1 border-b'>
+            <Tabs.Trigger
+              value='info'
+              className='data-[state=active]:border-foreground data-[state=active]:text-foreground text-muted-foreground -mb-px border-b-2 border-transparent px-3 py-2 text-sm font-medium transition-colors'
+            >
+              Thông tin
+            </Tabs.Trigger>
+            <Tabs.Trigger
+              value='mapping'
+              className='data-[state=active]:border-foreground data-[state=active]:text-foreground text-muted-foreground -mb-px border-b-2 border-transparent px-3 py-2 text-sm font-medium transition-colors'
+            >
+              Phân loại
+            </Tabs.Trigger>
+            <Tabs.Trigger
+              value='review'
+              className='data-[state=active]:border-foreground data-[state=active]:text-foreground text-muted-foreground -mb-px border-b-2 border-transparent px-3 py-2 text-sm font-medium transition-colors'
+            >
+              Duyệt
+            </Tabs.Trigger>
+          </Tabs.List>
 
-          <div className='flex flex-col gap-1'>
-            <Label>Thumbnail</Label>
-            <div className='flex items-center gap-3'>
-              <div className='border-border bg-muted relative aspect-[16/9] w-32 shrink-0 overflow-hidden rounded-lg border'>
-                {thumbUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={thumbUrl}
-                    alt='thumbnail'
-                    className='absolute inset-0 size-full object-cover'
-                  />
-                ) : (
-                  <div className='text-muted-foreground flex size-full items-center justify-center'>
-                    <ImagePlus className='size-5' />
-                  </div>
-                )}
-              </div>
-              <div className='min-w-0'>
-                <Button
-                  type='button'
-                  variant='outline'
-                  size='sm'
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploading}
-                >
-                  {uploading ? (
-                    <Loader2 className='size-3.5 animate-spin' />
-                  ) : (
-                    <ImagePlus className='size-3.5' />
-                  )}
-                  {uploading ? 'Đang tải…' : thumbUrl ? 'Đổi ảnh' : 'Tải ảnh'}
-                </Button>
-                <p className='text-3xs text-muted-foreground mt-1'>
-                  Ảnh đại diện block. Bỏ trống → tự render từ nội dung.
-                </p>
-              </div>
-              <input
-                ref={fileRef}
-                type='file'
-                accept='image/*'
-                className='hidden'
-                onChange={pickThumb}
+          {/* ── Tab 1: Thông tin (marketing) ───────────────────── */}
+          <Tabs.Content
+            value='info'
+            className='flex flex-col gap-4 focus:outline-none'
+          >
+            <div className='flex flex-col gap-1'>
+              <Label htmlFor='eb-name'>
+                Tên <span className='text-destructive'>*</span>
+              </Label>
+              <Input
+                id='eb-name'
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder='Hero chia đôi…'
               />
             </div>
-          </div>
 
-          <div className='flex flex-col gap-1'>
-            <Label htmlFor='eb-type'>Block type</Label>
-            <select
-              id='eb-type'
-              value={typeCode}
-              onChange={e => setTypeCode(e.target.value)}
-              className='border-input bg-background focus:ring-ring/40 h-9 rounded-md border px-2.5 text-sm outline-none focus:ring-2'
-            >
-              {typeOptions.length === 0 && (
-                <option value={typeCode}>{typeCode || '-'}</option>
-              )}
-              {typeOptions.map(o => (
-                <option key={o.code} value={o.code}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-            {typeCode !== (block?.type_code ?? '') && (
-              <p className='text-2xs text-amber-600'>
-                ⚠ Đổi loại block: settings hiện tại được dựng cho loại cũ — nội
-                dung có thể cần chỉnh lại trong block editor sau khi lưu.
-              </p>
-            )}
-          </div>
-
-          <div className='flex flex-col gap-1'>
-            <Label htmlFor='eb-desc'>Mô tả</Label>
-            <Textarea
-              id='eb-desc'
-              value={description}
-              rows={3}
-              onChange={e => setDescription(e.target.value)}
-              placeholder='Ghi chú ngắn về block này…'
-            />
-          </div>
-
-          <div className='flex flex-col gap-1'>
-            <Label htmlFor='eb-tags'>Tags</Label>
-            <div className='flex flex-wrap items-center gap-1.5'>
-              {tags.map(t => (
-                <span
-                  key={t}
-                  className='bg-muted inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs'
-                >
-                  {t}
-                  <button
+            <div className='flex flex-col gap-1'>
+              <Label>Thumbnail</Label>
+              <div className='flex items-center gap-3'>
+                <div className='border-border bg-muted relative aspect-[16/9] w-32 shrink-0 overflow-hidden rounded-lg border'>
+                  {thumbUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={thumbUrl}
+                      alt='thumbnail'
+                      className='absolute inset-0 size-full object-cover'
+                    />
+                  ) : (
+                    <div className='text-muted-foreground flex size-full items-center justify-center'>
+                      <ImagePlus className='size-5' />
+                    </div>
+                  )}
+                </div>
+                <div className='min-w-0'>
+                  <Button
                     type='button'
-                    onClick={() => removeTag(t)}
-                    className='text-content-muted hover:text-foreground'
-                    aria-label={`Bỏ tag ${t}`}
+                    variant='outline'
+                    size='sm'
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploading}
                   >
-                    <X className='size-3' />
-                  </button>
-                </span>
-              ))}
+                    {uploading ? (
+                      <Loader2 className='size-3.5 animate-spin' />
+                    ) : (
+                      <ImagePlus className='size-3.5' />
+                    )}
+                    {uploading ? 'Đang tải…' : thumbUrl ? 'Đổi ảnh' : 'Tải ảnh'}
+                  </Button>
+                  <p className='text-3xs text-muted-foreground mt-1'>
+                    Ảnh đại diện block. Bỏ trống → tự render từ nội dung.
+                  </p>
+                </div>
+                <input
+                  ref={fileRef}
+                  type='file'
+                  accept='image/*'
+                  className='hidden'
+                  onChange={pickThumb}
+                />
+              </div>
             </div>
-            <Input
-              id='eb-tags'
-              value={tagInput}
-              onChange={e => setTagInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addTag();
-                }
-              }}
-              onBlur={addTag}
-              placeholder='Nhập tag rồi Enter…'
-            />
-          </div>
 
-          {/* Lifecycle duyệt: trạng thái + ghi chú nội bộ (brief / review). */}
-          <div className='border-border bg-muted/30 flex flex-col gap-3 rounded-lg border p-3'>
+            <div className='flex flex-col gap-1'>
+              <Label htmlFor='eb-desc'>Mô tả</Label>
+              <Textarea
+                id='eb-desc'
+                value={description}
+                rows={3}
+                onChange={e => setDescription(e.target.value)}
+                placeholder='Ghi chú ngắn về block này…'
+              />
+            </div>
+
+            <div className='flex flex-col gap-1'>
+              <Label htmlFor='eb-type'>Mapping code</Label>
+              <p className='text-2xs text-muted-foreground'>
+                Code/component dùng để render block này (dev gắn code đã viết
+                vào block).
+              </p>
+              <select
+                id='eb-type'
+                value={typeCode}
+                onChange={e => setTypeCode(e.target.value)}
+                className='border-input bg-background focus:ring-ring/40 h-9 rounded-md border px-2.5 text-sm outline-none focus:ring-2'
+              >
+                {typeOptions.length === 0 && (
+                  <option value={typeCode}>{typeCode || '-'}</option>
+                )}
+                {typeOptions.map(o => (
+                  <option key={o.code} value={o.code}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              {typeCode !== (block?.type_code ?? '') && (
+                <p className='text-2xs text-amber-600'>
+                  ⚠ Đổi loại block: nội dung sẽ được DỰNG LẠI theo mặc định của
+                  loại mới khi lưu (nội dung cũ bị thay). Mở block editor để
+                  chỉnh tiếp.
+                </p>
+              )}
+            </div>
+
+            <div className='flex flex-col gap-1'>
+              <Label htmlFor='eb-tags'>Tags</Label>
+              <div className='flex flex-wrap items-center gap-1.5'>
+                {tags.map(t => (
+                  <span
+                    key={t}
+                    className='bg-muted inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs'
+                  >
+                    {t}
+                    <button
+                      type='button'
+                      onClick={() => removeTag(t)}
+                      className='text-content-muted hover:text-foreground'
+                      aria-label={`Bỏ tag ${t}`}
+                    >
+                      <X className='size-3' />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <Input
+                id='eb-tags'
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
+                onBlur={addTag}
+                placeholder='Nhập tag rồi Enter…'
+              />
+            </div>
+
+            <div className='flex flex-col gap-1'>
+              <Label htmlFor='eb-note'>Ghi chú nội bộ (brief / review)</Label>
+              <Textarea
+                id='eb-note'
+                value={reviewNote}
+                rows={3}
+                onChange={e => setReviewNote(e.target.value)}
+                placeholder='Marketing: mô tả block cần làm. Dev/Reviewer: ghi chú khi bàn giao / trả lại…'
+              />
+            </div>
+          </Tabs.Content>
+
+          {/* ── Tab 2: Phân loại (taxonomy AI) ──────────────────── */}
+          <Tabs.Content
+            value='mapping'
+            className='flex flex-col gap-4 focus:outline-none'
+          >
+            <BlockTaxonomyFields value={tax} onChange={setTax} />
+          </Tabs.Content>
+
+          {/* ── Tab 3: Duyệt (quy trình) ────────────────────────── */}
+          <Tabs.Content
+            value='review'
+            className='flex flex-col gap-4 focus:outline-none'
+          >
             <div className='flex flex-col gap-1'>
               <Label htmlFor='eb-status'>Trạng thái duyệt</Label>
               <select
@@ -321,23 +399,11 @@ export function EditBlockDialog({
                 gợi ý, trang public).
               </p>
             </div>
-            <div className='flex flex-col gap-1'>
-              <Label htmlFor='eb-note'>Ghi chú nội bộ (brief / review)</Label>
-              <Textarea
-                id='eb-note'
-                value={reviewNote}
-                rows={3}
-                onChange={e => setReviewNote(e.target.value)}
-                placeholder='Marketing: mô tả block cần làm. Dev/Reviewer: ghi chú khi bàn giao / trả lại…'
-              />
-            </div>
-          </div>
 
-          {/* Lịch sử đổi trạng thái — theo dõi tiến độ (ai đổi, lúc nào). */}
-          {block && <BlockStatusHistory block={block} />}
-
-          <BlockTaxonomyFields value={tax} onChange={setTax} />
-        </div>
+            {/* Lịch sử đổi trạng thái — theo dõi tiến độ (ai đổi, lúc nào). */}
+            {block && <BlockStatusHistory block={block} />}
+          </Tabs.Content>
+        </Tabs.Root>
 
         <DialogFooter>
           <Button
