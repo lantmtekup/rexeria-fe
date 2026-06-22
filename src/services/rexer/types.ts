@@ -2716,6 +2716,33 @@ export interface UpdateBlockRequest extends BlockAITaxonomy, BlockReviewFields {
   type_code?: string;
 }
 
+/**
+ * Một dòng lịch sử hoạt động của block — chủ yếu để theo dõi tiến độ
+ * (đổi trạng thái duyệt: AI đổi, từ status nào sang nào, lúc nào).
+ * BE map từ bảng `activity_logs` (entity_type='block') qua endpoint
+ * `GET /v1/blocks/:id/activity`. Với block cũ chưa có log (hoặc lỗi mạng), FE
+ * tự dựng timeline tối giản từ created_at/updated_at của block.
+ */
+export interface BlockActivity {
+  id: string;
+  block_id: string;
+  actor_id: string;
+  /** display_name của actor (BE join từ bảng users). Có thể rỗng. */
+  actor_name?: string;
+  /** 'block.created' | 'block.status_change' | 'block.updated' | … */
+  action: string;
+  /** Status trước/sau khi đổi (chỉ có với action='block.status_change'). */
+  from_status?: BlockStatus | null;
+  to_status?: BlockStatus | null;
+  /** Ghi chú review tại thời điểm đổi (nếu có). */
+  review_note?: string;
+  /** = activity_logs.occurred_at */
+  created_at: string;
+}
+export interface BlockActivityResponse {
+  items: BlockActivity[];
+}
+
 // ── AI Job (canonical async pattern) ─────────────────────────────────────
 export type AIJobType =
   | 'template_draft'
