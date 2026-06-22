@@ -86,7 +86,7 @@ export function FramerYumeHero({
     <div className={cn('@container', className)}>
       <div
         style={blockBackgroundStyle(background)}
-        className='flex h-full w-full justify-center overflow-hidden rounded-md bg-white px-5 pt-35 pb-10 text-black @3xl:h-screen @3xl:px-7.5 @3xl:pb-20 @4xl:px-20'
+        className='flex h-full w-full justify-center overflow-hidden rounded-md bg-white px-5 pt-16.75 pb-10 text-black @3xl:h-screen @3xl:px-7.5 @3xl:pt-14.75 @3xl:pb-20 @4xl:px-20 @4xl:pt-11.75'
       >
         <div className='flex w-full max-w-[1600px] flex-col gap-8.5 @3xl:justify-between @4xl:gap-0'>
           {/* Profile Section: tên + avatar */}
