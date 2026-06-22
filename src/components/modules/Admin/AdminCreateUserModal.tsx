@@ -240,14 +240,18 @@ export function AdminCreateUserModal({
           description: email,
         });
       } else {
-        await rexerApi.auth.register({
+        // role === 'admin' || 'staff' → BE-canonical internal-user endpoint.
+        // POST /v1/admin/users sets principal_type + role đúng (staff →
+        // principal_type='user'+role='staff', admin → cả hai 'admin'), nên
+        // user vào được /admin. Thay cho /auth/register cũ (luôn ra client_user).
+        await rexerApi.adminUsers.create({
           email,
+          display_name: displayName,
+          role,
           password: effectivePassword,
-          full_name: displayName,
-          company_name: 'Rexer Internal',
         });
-        toast.warning(`Đã tạo user nhưng role mặc định = client_user`, {
-          description: `Cần BE expose endpoint promote role → ${role}. Hiện chỉ có thể đổi qua DB.`,
+        toast.success(`Đã tạo ${ROLE_META[role].label}`, {
+          description: email,
         });
       }
 
@@ -354,21 +358,6 @@ export function AdminCreateUserModal({
               })}
             </div>
           </div>
-
-          {/* Warning cho admin/staff */}
-          {(role === 'admin' || role === 'staff') && (
-            <div className='flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800'>
-              <AlertCircle className='mt-0.5 size-3.5 shrink-0 text-amber-600' />
-              <div>
-                <span className='font-semibold'>BE chưa expose endpoint</span>{' '}
-                tạo {role} qua API. User sẽ được tạo với role mặc định{' '}
-                <code className='rounded bg-amber-100 px-1 font-mono'>
-                  client_user
-                </code>
-                , cần promote qua DB hoặc nhờ BE team add endpoint.
-              </div>
-            </div>
-          )}
 
           {/* Common fields */}
           <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
@@ -543,8 +532,9 @@ export function AdminCreateUserModal({
             {(role === 'admin' || role === 'staff') && (
               <>
                 Endpoint:{' '}
-                <code className='bg-muted rounded px-1'>/auth/register</code>{' '}
-                (fallback, cần promote sau)
+                <code className='bg-muted rounded px-1'>
+                  POST /v1/admin/users
+                </code>
               </>
             )}
           </p>
