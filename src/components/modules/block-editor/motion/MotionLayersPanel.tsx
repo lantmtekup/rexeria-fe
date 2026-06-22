@@ -13,7 +13,7 @@ import {
 
 import { cn } from '@/lib/cn';
 
-import { ELEMENTS_BY_TYPE, type LayerElement } from '../LayersPanel';
+import { elementsForType, type LayerElement } from '../LayersPanel';
 import type { Block, Device } from '../types';
 
 import { emptyMotion } from './timeline/utils';
@@ -52,7 +52,7 @@ const TRIGGERS: { value: MotionTrigger; label: string }[] = [
 
 function useAnimatableElements(block: Block): LayerElement[] {
   return React.useMemo(() => {
-    const base = ELEMENTS_BY_TYPE[block.blockType] ?? [];
+    const base = elementsForType(block.blockType);
     return base.filter(el => !el.key.startsWith('__'));
   }, [block.blockType]);
 }

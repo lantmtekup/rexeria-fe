@@ -16,6 +16,7 @@ import { cn } from '@/lib/cn';
 import { isBlockUsable } from '@/lib/block-status';
 
 import { BlockMiniPreview } from './BlockMiniPreview';
+import { REGISTERED_TYPES } from './blocks/_registry/registry';
 import { createBlock } from './factory';
 import { instantiateSavedBlock, type SavedBlock } from './savedBlocks';
 import { BLOCK_TYPE_META, type Block, type BlockType } from './types';
@@ -200,7 +201,11 @@ export function AddBlockDialog({
 
   // Block cơ bản = mọi type FE biết render (registry BLOCK_TYPE_META, thứ tự
   // ORDERED_TYPES). Không còn phụ thuộc catalog BE — type sống trong code.
-  const visibleTypes = ORDERED_TYPES;
+  // Block đã migrate sang BlockDef tự xuất hiện (không cần thêm vào ORDERED_TYPES).
+  const visibleTypes = React.useMemo(() => {
+    const extra = REGISTERED_TYPES.filter(t => !ORDERED_TYPES.includes(t));
+    return [...ORDERED_TYPES, ...extra];
+  }, []);
 
   // Default-instance preview block per type — built once so the live
   // BlockMiniPreview cards don't recreate on every dialog re-render.

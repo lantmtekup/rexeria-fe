@@ -374,7 +374,7 @@ export function BlockDetailView({
             </SectionHeader>
             <dl className='mt-4 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3'>
               <DefRow
-                label='Block type'
+                label='Mapping code'
                 value={
                   <code className='text-2xs bg-muted text-content-muted rounded px-1.5 py-0.5 font-mono'>
                     {type}

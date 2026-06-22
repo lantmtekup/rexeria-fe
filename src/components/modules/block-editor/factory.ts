@@ -1,4 +1,5 @@
 import { BLOCK_TYPE_META } from './types';
+import { getBlockDef } from './blocks/_registry/registry';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
 import type {
@@ -3026,12 +3027,18 @@ function genId() {
 export function createBlock(type: BlockType): Block {
   // New blocks start with `mobile` undefined so the renderer falls back to
   // `desktop`. User customizes mobile later via the Mobile device toggle.
+  // Registry-first: block đã có BlockDef thì lấy name + default từ def.
+  const reg = getBlockDef(type);
   return {
     id: genId(),
     blockType: type,
-    name: NAME_BY_TYPE[type],
-    contentVi: { desktop: structuredClone(DEFAULTS_VI[type]) },
-    contentEn: { desktop: structuredClone(DEFAULTS_EN[type]) },
+    name: reg ? reg.meta.defaultName : NAME_BY_TYPE[type],
+    contentVi: {
+      desktop: structuredClone(reg ? reg.defaultContent.vi : DEFAULTS_VI[type]),
+    },
+    contentEn: {
+      desktop: structuredClone(reg ? reg.defaultContent.en : DEFAULTS_EN[type]),
+    },
     isVisible: true,
   };
 }
@@ -3056,5 +3063,7 @@ export function defaultContentFor(
   type: BlockType,
   lang: 'vi' | 'en'
 ): BlockContent {
+  const reg = getBlockDef(type);
+  if (reg) return structuredClone(reg.defaultContent[lang]);
   return structuredClone(lang === 'vi' ? DEFAULTS_VI[type] : DEFAULTS_EN[type]);
 }

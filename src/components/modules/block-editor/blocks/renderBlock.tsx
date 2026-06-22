@@ -96,6 +96,7 @@ import { StickyScrollCards } from './StickyScrollCards';
 import { Stories } from './Stories';
 import { TextDisplaceHero } from './TextDisplaceHero';
 import { WheelGallery } from './WheelGallery';
+import { getBlockDef } from './_registry/registry';
 import type {
   Block,
   BlockBackground,
@@ -226,6 +227,22 @@ export function RenderBlock({
   activeKey,
   fallback,
 }: RenderBlockProps) {
+  // Registry-first: block đã có BlockDef thì render thẳng từ def, KHÔNG cần
+  // case trong switch dưới (xem blocks/_registry/registry.ts).
+  const def = getBlockDef(block.blockType);
+  if (def) {
+    const Comp = def.component;
+    return (
+      <Comp
+        content={content}
+        styles={styles}
+        background={background}
+        order={order}
+        positions={positions}
+        activeKey={activeKey}
+      />
+    );
+  }
   switch (block.blockType) {
     case 'hero_split':
       return (
@@ -909,7 +926,7 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'framer_yume_hero':
+    // `framer_yume_hero` đã chuyển sang registry (intercept ở đầu hàm).
     case 'framer_yuya_hero':
       // Yuya ≈ Yume (cùng design) → dùng chung renderer + content shape.
       return (

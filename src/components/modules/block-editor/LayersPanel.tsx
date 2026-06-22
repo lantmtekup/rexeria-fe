@@ -39,6 +39,7 @@ import { cn } from '@/lib/cn';
 
 import { AddExtraElementButton } from './AddExtraElementButton';
 import { ExtraElementsList } from './ExtraElementsList';
+import { getBlockDef } from './blocks/_registry/registry';
 import {
   editingVariantOf,
   hasMobileOverride,
@@ -53,6 +54,12 @@ export interface LayerElement {
   key: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  /**
+   * Kiểu field cho ElementToolbar — registry-driven. Khai trong BlockDef để
+   * editor biết hiện control gì (ô text / textarea / image picker) mà KHÔNG
+   * phải đoán theo tên key. Bỏ trống → fallback heuristic cũ.
+   */
+  fieldType?: 'text' | 'textarea' | 'image';
 }
 
 interface LayersPanelProps {
@@ -96,14 +103,7 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'backgroundUrl', label: 'Ảnh nền', icon: ImageIcon },
     { key: 'ctaText', label: 'Nút CTA', icon: MousePointerClick },
   ],
-  framer_yume_hero: [
-    BACKGROUND_LAYER,
-    { key: 'firstName', label: 'Tên (dòng 1)', icon: Type },
-    { key: 'lastName', label: 'Họ (dòng 2)', icon: Type },
-    { key: 'avatarUrl', label: 'Ảnh avatar', icon: ImageIcon },
-    { key: 'email', label: 'Email', icon: Type },
-    { key: 'bio', label: 'Bio', icon: Pilcrow },
-  ],
+  // `framer_yume_hero` đã chuyển sang registry (elementsForType lấy từ def).
   framer_yuya_hero: [
     BACKGROUND_LAYER,
     { key: 'firstName', label: 'Tên (dòng 1)', icon: Type },
@@ -663,6 +663,16 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
   ],
 };
 
+/**
+ * Element con của 1 block — registry-first (BlockDef.elements + layer nền),
+ * fallback map ELEMENTS_BY_TYPE cho block CHƯA migrate sang registry.
+ */
+export function elementsForType(type: BlockType): LayerElement[] {
+  const def = getBlockDef(type);
+  if (def) return [BACKGROUND_LAYER, ...def.elements];
+  return ELEMENTS_BY_TYPE[type] ?? [];
+}
+
 export function LayersPanel({
   block,
   device,
@@ -677,7 +687,7 @@ export function LayersPanel({
   const extras = block.extraElements ?? [];
   const showExtraSection = !!onAddExtraElement;
   const baseElements = React.useMemo(
-    () => ELEMENTS_BY_TYPE[block.blockType] ?? [],
+    () => elementsForType(block.blockType),
     [block.blockType]
   );
 

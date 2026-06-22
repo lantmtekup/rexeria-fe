@@ -37,7 +37,9 @@ import { rexerApi } from '@/services/rexer/endpoints';
 import type { AIBlockType } from '@/services/rexer/types';
 
 import { FEATURE_ICON_OPTIONS } from './blocks/FeatureSection';
+import { getBlockDef } from './blocks/_registry/registry';
 import { buildAiPrompt } from './buildAiPrompt';
+import type { LayerElement } from './LayersPanel';
 import { ImagePicker } from './ImagePicker';
 import {
   editingVariantOf,
@@ -130,7 +132,22 @@ function isImageKey(key: string): boolean {
   );
 }
 
-function resolveKind(key: string): ElementKind {
+/** fieldType khai trong BlockDef (registry) cho element này, nếu có. */
+function defFieldType(
+  block: Block,
+  key: string
+): LayerElement['fieldType'] | undefined {
+  return getBlockDef(block.blockType)?.elements.find(e => e.key === key)
+    ?.fieldType;
+}
+
+function resolveKind(
+  key: string,
+  fieldType?: LayerElement['fieldType']
+): ElementKind {
+  // Registry-first: BlockDef khai tường minh thì theo đó, KHÔNG đoán theo tên.
+  if (fieldType === 'image') return 'image';
+  if (fieldType === 'text' || fieldType === 'textarea') return 'text';
   return ELEMENT_KIND[key] ?? (isImageKey(key) ? 'image' : 'text');
 }
 
@@ -189,7 +206,8 @@ export function ElementToolbar({
   // canvas có thêm chỗ. Toolbar chỉ xuất hiện khi đang sửa 1 element cụ thể.
   if (!selectedKey) return null;
 
-  const kind = resolveKind(selectedKey);
+  const fieldType = defFieldType(block, selectedKey);
+  const kind = resolveKind(selectedKey, fieldType);
   const label = resolveLabel(selectedKey, kind);
   const variant = editingVariantOf(device);
   const langContent = lang === 'vi' ? block.contentVi : block.contentEn;
@@ -285,6 +303,7 @@ export function ElementToolbar({
         {kind === 'text' && (
           <TextControls
             fieldKey={selectedKey}
+            multiline={fieldType ? fieldType === 'textarea' : undefined}
             content={content}
             style={style}
             onContentChange={onContentChange}
@@ -381,6 +400,7 @@ export function ElementToolbar({
 
 function TextControls({
   fieldKey,
+  multiline,
   content,
   style,
   onContentChange,
@@ -388,6 +408,8 @@ function TextControls({
   onResetStyle,
 }: {
   fieldKey: string;
+  /** Registry-driven: true = textarea, false = 1 dòng. undefined = đoán theo key. */
+  multiline?: boolean;
   content: BlockContent;
   style?: ElementStyle;
   onContentChange: (next: BlockContent) => void;
@@ -399,9 +421,10 @@ function TextControls({
       ? ((content as Record<string, string>)[fieldKey] ?? '')
       : '';
   const isLong =
-    fieldKey === 'description' ||
-    fieldKey === 'subtitle' ||
-    fieldKey === 'noteText';
+    multiline ??
+    (fieldKey === 'description' ||
+      fieldKey === 'subtitle' ||
+      fieldKey === 'noteText');
   const fontSize = style?.fontSize ?? '';
 
   const setField = (next: string) => {
