@@ -8,7 +8,7 @@
  * content trái tối đa 720px, overlay gradient ngang từ trái. Manrope 72/500/-0.05em.
  *
  * Theo contract nền GSAP (R1–R6):
- *  - Title char-stagger qua SplitType + gsap.fromTo (thay framer-motion spring gốc).
+ *  - Title char-stagger qua framer-motion (motion.span + useInView, delay i*0.07).
  *  - Mọi entrance (bg fade, eyebrow/subtitle/cta/review fade-up) qua useBlockMotion
  *    với scrollTrigger {trigger, scroller, start:'top 85%',
  *    toggleActions:'play none none reverse', invalidateOnRefresh:true}.
@@ -16,8 +16,8 @@
  *  - data-element-key + styleOf(key) + selectableClass cho mỗi element editable.
  */
 import * as React from 'react';
+import { motion, useInView } from 'framer-motion';
 import gsap from 'gsap';
-import SplitType from 'split-type';
 
 import { useBlockMotion } from '../motion/LandingMotion';
 import type {
@@ -46,7 +46,7 @@ interface Props {
 
 const TITLE_STYLE: React.CSSProperties = {
   fontFamily: '"Manrope", system-ui, sans-serif',
-  fontSize: 'clamp(40px, 6cqi, 72px)',
+  fontSize: 'clamp(40px, 7.5cqi, 72px)',
   fontWeight: 500,
   lineHeight: '1.2em',
   letterSpacing: '-0.05em',
@@ -54,6 +54,49 @@ const TITLE_STYLE: React.CSSProperties = {
   margin: 0,
   textShadow: '0 2px 24px rgba(0, 0, 0, 0.35)',
 };
+
+function StaggeredTitleLine({
+  text,
+  style,
+}: {
+  text: string;
+  style: React.CSSProperties;
+}) {
+  const ref = React.useRef<HTMLHeadingElement>(null);
+  const isInView = useInView(ref, { once: true });
+
+  const charVariants = {
+    hidden: { opacity: 0 },
+    show: (i: number) => ({
+      opacity: 1,
+      transition: { delay: i * 0.07 },
+    }),
+  };
+
+  const letters = Array.from(text);
+
+  return (
+    <motion.h1
+      ref={ref}
+      className='perform-title overflow-hidden'
+      style={style}
+      initial='hidden'
+      animate={isInView ? 'show' : 'hidden'}
+    >
+      {letters.map((char, i) => (
+        <motion.span
+          key={`${char}-${i}`}
+          aria-hidden='true'
+          variants={charVariants}
+          custom={i}
+          style={{ whiteSpace: 'pre-line' }}
+        >
+          {char}
+        </motion.span>
+      ))}
+    </motion.h1>
+  );
+}
 
 export function FramerPerformHero({
   content,
@@ -75,6 +118,14 @@ export function FramerPerformHero({
   const titleLines = (content.title || 'Level Up Your\nPerformance')
     .split('\n')
     .filter(Boolean);
+
+  const TITLE_CHAR_DURATION = 0.4;
+  const TITLE_CHAR_STAGGER = 0.07;
+  const titleTotalDuration =
+    titleLines.reduce(
+      (acc, line) => Math.max(acc, (line.length - 1) * TITLE_CHAR_STAGGER),
+      0
+    ) + TITLE_CHAR_DURATION;
 
   useBlockMotion(
     rootRef,
@@ -103,32 +154,6 @@ export function FramerPerformHero({
         );
       }
 
-      // Title — per-character spring-ish entrance (SplitType chars).
-      root
-        .querySelectorAll<HTMLElement>('.perform-title')
-        .forEach((line, lineIdx) => {
-          const split = new SplitType(line, { types: 'chars' });
-          gsap.fromTo(
-            split.chars,
-            { yPercent: 110, opacity: 0 },
-            {
-              yPercent: 0,
-              opacity: 1,
-              duration: 1.2,
-              ease: 'power3.out',
-              stagger: 0.035,
-              delay: lineIdx * 0.15,
-              scrollTrigger: {
-                trigger: line,
-                scroller,
-                start: 'top 85%',
-                toggleActions: 'play none none reverse',
-                invalidateOnRefresh: true,
-              },
-            }
-          );
-        });
-
       // Eyebrow / subtitle / CTA / review — staggered fade-up.
       gsap.utils
         .toArray<HTMLElement>('.perform-reveal', root)
@@ -141,7 +166,7 @@ export function FramerPerformHero({
               opacity: 1,
               duration: 0.8,
               ease: 'power3.out',
-              delay: i * 0.08,
+              delay: titleTotalDuration + i * 0.08 + 100,
               scrollTrigger: {
                 trigger: el,
                 scroller,
@@ -160,7 +185,7 @@ export function FramerPerformHero({
     <section
       ref={rootRef}
       style={blockBackgroundStyle(background)}
-      className='perform-hero @container relative flex min-h-[clamp(460px,90cqi,900px)] w-full flex-col overflow-hidden rounded-md'
+      className='perform-hero @container relative flex h-screen w-full flex-col overflow-hidden'
     >
       {/* Background image */}
       <div
@@ -169,6 +194,7 @@ export function FramerPerformHero({
           content.backgroundUrl
             ? {
                 backgroundImage: `url("${content.backgroundUrl.replace(/"/g, '%22')}")`,
+                // backgroundImage: `url("https://framerusercontent.com/images/HVyxp24CVuPAzhxz8dQ1Xyyjk.jpg?scale-down-to=2048&width=2445&height=1350")`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
               }
@@ -191,166 +217,210 @@ export function FramerPerformHero({
         }}
       />
 
-      {/* Content column — left-aligned, max 720px */}
+      {/* Content column — left-aligned */}
       <div
-        className='relative z-[2] flex flex-col justify-center'
-        style={{
-          minHeight: 'inherit',
-          padding: 'clamp(24px, 5cqi, 64px)',
-          maxWidth: 720,
-          fontFamily: '"Manrope", system-ui, sans-serif',
-        }}
+        className='flex h-full w-full flex-1 items-center justify-center'
+        style={{}}
       >
-        {/* Eyebrow */}
         <div
-          data-element-key='eyebrow'
-          style={composeStyle(
-            {
-              marginBottom: 24,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-            },
-            styleOf('eyebrow')
-          )}
-          className={selectableClass(activeKey === 'eyebrow', 'perform-reveal')}
-        >
-          <span
-            aria-hidden='true'
-            style={{
-              width: 24,
-              height: 1,
-              background: 'rgba(255,255,255,0.6)',
-              display: 'inline-block',
-              flexShrink: 0,
-            }}
-          />
-          <span
-            style={{
-              fontSize: 'clamp(12px, 1.2cqi, 14px)',
-              fontWeight: 500,
-              color: 'rgba(255,255,255,0.85)',
-              letterSpacing: 0.2,
-            }}
-          >
-            {content.eyebrow || 'Experienced triathlon coach'}
-          </span>
-        </div>
-
-        {/* Title lines — per-char stagger */}
-        <div
-          data-element-key='title'
-          style={composeStyle({ marginBottom: 24 }, styleOf('title'))}
-          className={selectableClass(activeKey === 'title')}
-        >
-          {titleLines.map((line, i) => (
-            <h1
-              key={i}
-              className='perform-title overflow-hidden'
-              style={TITLE_STYLE}
-            >
-              {line}
-            </h1>
-          ))}
-        </div>
-
-        {/* Subtitle */}
-        <div
-          data-element-key='subtitle'
-          style={composeStyle(
-            { marginBottom: 32, maxWidth: 520 },
-            styleOf('subtitle')
-          )}
-          className={selectableClass(
-            activeKey === 'subtitle',
-            'perform-reveal'
-          )}
-        >
-          <p
-            style={{
-              fontFamily: '"Manrope", system-ui, sans-serif',
-              fontSize: 'clamp(14px, 1.4cqi, 16px)',
-              lineHeight: 1.55,
-              color: 'rgba(255,255,255,0.85)',
-              margin: 0,
-            }}
-          >
-            {content.subtitle ||
-              'Improve your triathlon performance with personalized training plans guided by an experienced coach committed to your success.'}
-          </p>
-        </div>
-
-        {/* CTA pill */}
-        <div className='perform-reveal' style={{ marginBottom: 48 }}>
-          <a
-            data-element-key='ctaLabel'
-            href={content.ctaHref || '#start'}
-            aria-label={content.ctaLabel || 'Start now'}
-            style={composeStyle(
-              {
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: 'clamp(11px, 1.2cqi, 14px) clamp(16px, 2cqi, 22px)',
-                background: '#ffffff',
-                color: '#0c0c0c',
-                borderRadius: 999,
-                fontSize: 'clamp(13px, 1.3cqi, 15px)',
-                fontWeight: 500,
-                textDecoration: 'none',
-                lineHeight: 1,
-                fontFamily: '"Manrope", system-ui, sans-serif',
-              },
-              styleOf('ctaLabel')
-            )}
-            className={selectableClass(activeKey === 'ctaLabel')}
-          >
-            <span>{content.ctaLabel || 'Start now'}</span>
-            <span aria-hidden='true' style={{ fontSize: 16, lineHeight: 1 }}>
-              ↗
-            </span>
-          </a>
-        </div>
-
-        {/* Star reviews */}
-        <div
-          data-element-key='reviewCount'
-          style={composeStyle(
-            { display: 'flex', alignItems: 'center', gap: 12 },
-            styleOf('reviewCount')
-          )}
-          className={selectableClass(
-            activeKey === 'reviewCount',
-            'perform-reveal'
-          )}
+          className='flex w-[90%] max-w-[350px] @3xl:max-w-[770px] @4xl:w-full @4xl:max-w-[1120px]'
+          style={{
+            fontFamily: '"Manrope", system-ui, sans-serif',
+          }}
         >
           <div
-            aria-label={`${reviewStars} out of 5 stars`}
-            style={{ display: 'inline-flex', gap: 2 }}
-          >
-            {Array.from({ length: 5 }).map((_, i) => (
-              <span
-                key={i}
-                aria-hidden='true'
-                style={{
-                  fontSize: 14,
-                  color: i < reviewStars ? '#ffffff' : 'rgba(255,255,255,0.3)',
-                }}
-              >
-                ★
-              </span>
-            ))}
-          </div>
-          <span
+            className='relative z-[2] flex flex-1 flex-col justify-center gap-16 @lg:basis-1/2'
             style={{
-              fontSize: 'clamp(12px, 1.2cqi, 14px)',
-              fontWeight: 500,
-              color: 'rgba(255,255,255,0.85)',
+              minHeight: 'inherit',
+              // padding: 'clamp(24px, 5cqi, 64px)',
               fontFamily: '"Manrope", system-ui, sans-serif',
             }}
           >
-            {content.reviewCount || '100+ Positive Client Reviews'}
-          </span>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 40,
+              }}
+            >
+              {/* Wrap info */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                }}
+              >
+                {/* Eyebrow */}
+                <div
+                  data-element-key='eyebrow'
+                  style={composeStyle(
+                    {
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                    },
+                    styleOf('eyebrow')
+                  )}
+                  className={selectableClass(
+                    activeKey === 'eyebrow',
+                    'perform-reveal'
+                  )}
+                >
+                  <span
+                    aria-hidden='true'
+                    style={{
+                      width: 48,
+                      height: 1,
+                      background: 'rgba(255,255,255,0.6)',
+                      display: 'inline-block',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 'clamp(14px, 1.2cqi, 16px)',
+                      fontWeight: 500,
+                      color: 'rgba(255,255,255,0.85)',
+                      letterSpacing: 0.2,
+                    }}
+                  >
+                    {content.eyebrow || 'Experienced triathlon coach'}
+                  </span>
+                </div>
+
+                {/* Title lines — per-char stagger (framer-motion StaggeredFade port). */}
+                <div
+                  data-element-key='title'
+                  style={composeStyle({}, styleOf('title'))}
+                  className={selectableClass(activeKey === 'title')}
+                >
+                  <span className='whitespace-pre-line'>
+                    <StaggeredTitleLine
+                      text={content?.title}
+                      style={TITLE_STYLE}
+                    />
+                  </span>
+                </div>
+
+                {/* Subtitle */}
+                <div
+                  data-element-key='subtitle'
+                  style={composeStyle({}, styleOf('subtitle'))}
+                  className={selectableClass(
+                    activeKey === 'subtitle',
+                    'perform-reveal'
+                  )}
+                >
+                  <p
+                    style={{
+                      fontFamily: '"Manrope", system-ui, sans-serif',
+                      fontSize: 'clamp(14px, 1.4cqi, 16px)',
+                      lineHeight: 1.55,
+                      color: 'rgba(255,255,255,0.85)',
+                      margin: 0,
+                    }}
+                  >
+                    {content.subtitle ||
+                      'Improve your triathlon performance with personalized training plans guided by an experienced coach committed to your success.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* CTA pill */}
+              <div className='perform-reveal'>
+                <a
+                  data-element-key='ctaLabel'
+                  href={content.ctaHref || '#start'}
+                  aria-label={content.ctaLabel || 'Start now'}
+                  style={composeStyle(
+                    {
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding:
+                        'clamp(4px, 1.2cqi, 6px) 4px clamp(4px, 1.2cqi, 6px) clamp(16px, 2cqi, 22px)',
+                      background: '#ffffff',
+                      color: '#0c0c0c',
+                      borderRadius: 999,
+                      fontSize: 'clamp(13px, 1.3cqi, 15px)',
+                      fontWeight: 500,
+                      textDecoration: 'none',
+                      lineHeight: 1,
+                      fontFamily: '"Manrope", system-ui, sans-serif',
+                    },
+                    styleOf('ctaLabel')
+                  )}
+                  className={selectableClass(activeKey === 'ctaLabel', 'group')}
+                >
+                  <span>{content.ctaLabel || 'Start now'}</span>
+                  <span
+                    aria-hidden='true'
+                    className='inline-flex items-center justify-center transition-transform duration-300 group-hover:rotate-45'
+                    style={{
+                      width: 40,
+                      height: 40,
+                      fontSize: 20,
+                      lineHeight: 1,
+                      borderRadius: '50%',
+                      backgroundColor: '#0c0c0c',
+                      color: '#ffffff',
+                    }}
+                  >
+                    ↗
+                  </span>
+                </a>
+              </div>
+            </div>
+
+            {/* Star reviews */}
+            <div
+              data-element-key='reviewCount'
+              style={composeStyle(
+                {
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                  borderLeftWidth: 2,
+                  padding: '8px 0 8px 24px',
+                },
+                styleOf('reviewCount')
+              )}
+              className={selectableClass(
+                activeKey === 'reviewCount',
+                'perform-reveal'
+              )}
+            >
+              <div
+                aria-label={`${reviewStars} out of 5 stars`}
+                style={{ display: 'inline-flex', gap: 2 }}
+              >
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <span
+                    key={i}
+                    aria-hidden='true'
+                    style={{
+                      fontSize: 24,
+                      color:
+                        i < reviewStars ? '#ffffff' : 'rgba(255,255,255,0.3)',
+                    }}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+              <span
+                style={{
+                  fontSize: 'clamp(12px, 1.2cqi, 16px)',
+                  fontWeight: 500,
+                  color: 'rgba(255,255,255,0.85)',
+                  fontFamily: '"Manrope", system-ui, sans-serif',
+                }}
+              >
+                {content.reviewCount || '100+ Positive Client Reviews'}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
