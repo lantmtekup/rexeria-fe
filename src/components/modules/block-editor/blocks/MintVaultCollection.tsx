@@ -252,29 +252,6 @@ export function MintVaultCollection({
       className='@container relative w-full bg-[#08070a] text-white'
     >
       <div className='sticky top-0 h-screen overflow-hidden'>
-        <div className='absolute top-20 left-6 z-30 @2xl:left-10'>
-          <p
-            data-element-key='eyebrow'
-            style={styleOf('eyebrow')}
-            className={selectableClass(
-              activeKey === 'eyebrow',
-              'text-[11px] tracking-[0.3em] text-[#c9a96e] uppercase'
-            )}
-          >
-            {content.eyebrow}
-          </p>
-          <p
-            data-element-key='subLabel'
-            style={styleOf('subLabel')}
-            className={selectableClass(
-              activeKey === 'subLabel',
-              'mt-1 text-xs text-white/40'
-            )}
-          >
-            {content.subLabel}
-          </p>
-        </div>
-
         <div
           ref={spotRef}
           className='pointer-events-none absolute inset-0'
