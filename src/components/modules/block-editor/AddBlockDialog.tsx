@@ -61,6 +61,7 @@ const ORDERED_TYPES: BlockType[] = [
   'framer_yume_hero',
   'framer_yuya_hero',
   'framer_arpeggio_hero',
+  'framer_arpeggio_hero_v2',
   'framer_delvaux_hero_intro',
   'framer_hero',
   'framer_perform_hero',

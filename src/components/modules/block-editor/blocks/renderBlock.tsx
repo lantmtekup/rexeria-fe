@@ -25,6 +25,7 @@ import { Flipbook } from './Flipbook';
 import { FramerAesthaEditorial } from './FramerAesthaEditorial';
 import { FramerAesthaProjectDetail } from './FramerAesthaProjectDetail';
 import { FramerArpeggioHero } from './FramerArpeggioHero';
+import { FramerArpeggioHeroV2 } from './FramerArpeggioHeroV2';
 import { FramerAvexaBento } from './FramerAvexaBento';
 import { FramerAvexaHero } from './FramerAvexaHero';
 import { FramerBungeeHero } from './FramerBungeeHero';
@@ -127,6 +128,7 @@ import type {
   FramerAesthaEditorialContent,
   FramerAesthaProjectDetailContent,
   FramerArpeggioHeroContent,
+  FramerArpeggioHeroV2Content,
   FramerAvexaBentoContent,
   FramerAvexaHeroContent,
   FramerBungeeHeroContent,
@@ -926,6 +928,17 @@ export function RenderBlock({
       return (
         <FramerArpeggioHero
           content={content as FramerArpeggioHeroContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'framer_arpeggio_hero_v2':
+      return (
+        <FramerArpeggioHeroV2
+          content={content as FramerArpeggioHeroV2Content}
           styles={styles}
           background={background}
           order={order}

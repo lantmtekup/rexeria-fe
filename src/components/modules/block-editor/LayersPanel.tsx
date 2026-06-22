@@ -121,6 +121,15 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'wordmark', label: 'Wordmark', icon: Type },
     { key: 'wordmarkSuffix', label: 'Ký hiệu', icon: Type },
   ],
+  framer_arpeggio_hero_v2: [
+    BACKGROUND_LAYER,
+    { key: 'backgroundUrl', label: 'Ảnh nền', icon: ImageIcon },
+    { key: 'headline', label: 'Tiêu đề', icon: Type },
+    { key: 'subtitle', label: 'Subtitle', icon: Pilcrow },
+    { key: 'topRightLabel', label: 'Nhãn góc phải', icon: Type },
+    { key: 'wordmark', label: 'Wordmark', icon: Type },
+    { key: 'wordmarkSuffix', label: 'Ký hiệu', icon: Type },
+  ],
   framer_delvaux_hero_intro: [
     BACKGROUND_LAYER,
     { key: 'storefrontImageUrl', label: 'Ảnh storefront', icon: ImageIcon },
