@@ -37,7 +37,7 @@ interface FeatureSectionProps {
   className?: string;
 }
 
-const ICON_MAP: Record<string, React.ElementType> = {
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Home,
   Building2,
   Compass,

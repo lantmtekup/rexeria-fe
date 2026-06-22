@@ -62,7 +62,10 @@ const KIND_LABEL: Record<ExtraElementKind, string> = {
   spin_wheel: 'Vòng quay',
 };
 
-const KIND_ICON: Record<ExtraElementKind, React.ElementType> = {
+const KIND_ICON: Record<
+  ExtraElementKind,
+  React.ComponentType<{ className?: string }>
+> = {
   text: Type,
   edit_text: TextCursorInput,
   photo: ImageIcon,

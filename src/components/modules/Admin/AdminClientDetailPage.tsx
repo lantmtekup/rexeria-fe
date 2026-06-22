@@ -79,7 +79,11 @@ type TabKey =
   | 'tracking-keys'
   | 'assets';
 
-const TABS: { id: TabKey; label: string; icon: React.ElementType }[] = [
+const TABS: {
+  id: TabKey;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
   { id: 'workspaces', label: 'Workspaces', icon: Building2 },
   { id: 'landings', label: 'Landing pages', icon: LayoutTemplate },
   { id: 'blocks', label: 'Blocks', icon: Bookmark },

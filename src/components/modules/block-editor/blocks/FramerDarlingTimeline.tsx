@@ -1,7 +1,25 @@
+'use client';
+
+/**
+ * Data-block "Framer · Darling Timeline" (port từ 360-admin-cms
+ * framer-darling-timeline — clone darling.framer.website "The Day").
+ *
+ * Timeline 2 cột zig-zag: header căn giữa (heading + intro); cột sống dọc giữa
+ * với chấm tròn mỗi mốc; item lẻ bên phải, item chẵn bên trái — mỗi item có
+ * giờ, tên (serif), mô tả, ảnh.
+ *
+ * Contract nền GSAP (R1–R6): BỎ framer-motion hoàn toàn.
+ * - Spine fill: source dùng framer-motion useScroll/useTransform (height 0→100%)
+ *   → CHUYỂN sang GSAP ScrollTrigger scrub (scaleY 0→1, endTrigger = item cuối),
+ *   giống MintV2Process .process-line.
+ * - Header + item entrance (slide-in trái/phải): gsap.fromTo + toggleActions.
+ * - @container query (@2xl) thay md:/lg:. data-element-key + styleOf cho mỗi
+ *   element; mảng items → data-element-key 'items'. Ảnh: div backgroundImage.
+ */
 import * as React from 'react';
+import gsap from 'gsap';
 
-import { cn } from '@/lib/cn';
-
+import { useBlockMotion } from '../motion/LandingMotion';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -17,21 +35,14 @@ import {
   selectableClass,
 } from './applyStyle';
 
-interface FramerDarlingTimelineProps {
+interface Props {
   content: FramerDarlingTimelineContent;
   styles?: ElementStylesMap;
   background?: BlockBackground;
   order?: string[];
   positions?: ElementPositionsMap;
   activeKey?: string | null;
-  className?: string;
 }
-
-/**
- * Darling Timeline (Framer), framer-native. Port từ `src/blocks/framer-darling-timeline`:
- * nền kem #f4eed8, header căn giữa, cột sống dọc, các item xen kẽ trái/phải với dấu chấm.
- * Không dùng thẻ <img> — dùng div backgroundImage.
- */
 
 const HEADING_STYLE: React.CSSProperties = {
   fontFamily: '"Libre Caslon Condensed", Georgia, serif',
@@ -86,8 +97,9 @@ export function FramerDarlingTimeline({
   order,
   positions,
   activeKey,
-  className,
-}: FramerDarlingTimelineProps) {
+}: Props) {
+  const rootRef = React.useRef<HTMLElement>(null);
+  const items = Array.isArray(content.items) ? content.items : [];
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -95,32 +107,101 @@ export function FramerDarlingTimeline({
       positionStyle(positions, key)
     );
 
-  const items: Array<{
-    time: string;
-    title: string;
-    description: string;
-    imageUrl: string;
-  }> = Array.isArray(content.items) ? content.items : [];
+  useBlockMotion(rootRef, ({ scroller }) => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    // Spine fill — was framer-motion useScroll → useTransform(height 0→100%).
+    // Now GSAP ScrollTrigger scrub: scaleY 0→1, endTrigger = last row (giống
+    // MintV2Process .process-line). transformOrigin top để fill chảy từ trên.
+    const fill = root.querySelector<HTMLElement>('.darling-spine-fill');
+    const lastRow = root.querySelector<HTMLElement>('.darling-row:last-child');
+    if (fill) {
+      gsap.fromTo(
+        fill,
+        { scaleY: 0, transformOrigin: 'top center' },
+        {
+          scaleY: 1,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: root,
+            scroller,
+            start: 'top 65%',
+            endTrigger: lastRow ?? root,
+            end: lastRow ? 'bottom center' : 'bottom 75%',
+            scrub: 0.8,
+            invalidateOnRefresh: true,
+          },
+        }
+      );
+    }
+
+    // Header entrance — fade-up.
+    const header = root.querySelector<HTMLElement>('.darling-header');
+    if (header) {
+      gsap.fromTo(
+        header,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 1,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: header,
+            scroller,
+            start: 'top 85%',
+            toggleActions: 'play none none reverse',
+            invalidateOnRefresh: true,
+          },
+        }
+      );
+    }
+
+    // Item entrance — slide-in từ bên phải (item phải) / bên trái (item trái).
+    gsap.utils.toArray<HTMLElement>('.darling-row', root).forEach(row => {
+      const dir = row.dataset.side === 'right' ? 60 : -60;
+      gsap.fromTo(
+        row,
+        { opacity: 0, x: dir },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 1,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: row,
+            scroller,
+            start: 'top 80%',
+            toggleActions: 'play none none reverse',
+            invalidateOnRefresh: true,
+          },
+        }
+      );
+    });
+  });
 
   return (
-    <div
-      style={blockBackgroundStyle(background)}
-      className={cn(
-        'animate-in fade-in zoom-in-95 @container relative w-full overflow-hidden bg-[#f4eed8] duration-700 ease-out',
-        className
-      )}
+    <section
+      ref={rootRef}
+      style={{
+        position: 'relative',
+        color: '#1f1d14',
+        fontFamily:
+          '"Libre Caslon Condensed", "Libre Caslon Text", Georgia, serif',
+        ...blockBackgroundStyle(background),
+      }}
+      className='darling-timeline @container relative w-full overflow-hidden bg-[#f4eed8]'
     >
       <div
         style={{
           padding:
             'clamp(80px, 12cqi, 200px) clamp(20px, 5cqi, 80px) clamp(100px, 14cqi, 240px)',
-          fontFamily:
-            '"Libre Caslon Condensed", "Libre Caslon Text", Georgia, serif',
-          color: '#1f1d14',
         }}
       >
         {/* Header */}
         <div
+          className='darling-header'
           style={{
             maxWidth: 720,
             margin: '0 auto clamp(60px, 12cqi, 180px)',
@@ -145,140 +226,123 @@ export function FramerDarlingTimeline({
 
         {/* Timeline stage */}
         <div style={{ position: 'relative', maxWidth: 1320, margin: '0 auto' }}>
-          {/* Vertical spine */}
+          {/* Vertical spine — base (light) layer */}
           <div
             aria-hidden
+            className='absolute top-0 bottom-0 left-2 w-px @2xl:left-1/2 @2xl:-translate-x-1/2'
+            style={{ background: 'rgba(31,29,20,0.18)', pointerEvents: 'none' }}
+          />
+          {/* Spine fill overlay — scaleY grows with scroll (GSAP scrub) */}
+          <div
+            aria-hidden
+            className='darling-spine-fill absolute top-0 bottom-0 left-2 w-px @2xl:left-1/2 @2xl:-translate-x-1/2'
             style={{
-              position: 'absolute',
-              left: '50%',
-              top: 0,
-              bottom: 0,
-              width: 1,
-              background: 'rgba(31,29,20,0.18)',
-              transform: 'translateX(-50%)',
+              background: 'rgba(31,29,20,0.75)',
+              transform: 'scaleY(0)',
+              transformOrigin: 'top center',
               pointerEvents: 'none',
+              willChange: 'transform',
             }}
           />
 
-          {items.map((item, idx) => {
-            const isRight = idx % 2 === 0;
-            return (
-              <div
-                key={idx}
-                style={{
-                  position: 'relative',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 'clamp(32px, 5cqi, 80px)',
-                  paddingBottom:
-                    idx < items.length - 1 ? 'clamp(60px, 10cqi, 160px)' : 0,
-                }}
-                className='@[0px]:!grid-cols-1 @[600px]:!grid-cols-2'
-              >
-                {/* Dot on spine */}
-                <span
-                  aria-hidden
-                  style={{
-                    position: 'absolute',
-                    left: '50%',
-                    top: 0,
-                    width: 11,
-                    height: 11,
-                    borderRadius: 999,
-                    background: '#1f1d14',
-                    transform: 'translate(-50%, -2px)',
-                    zIndex: 1,
-                  }}
-                />
-
-                {/* Content — right side on even (0,2,4…), left side on odd */}
+          <div data-element-key='items'>
+            {items.map((item, idx) => {
+              const isRight = idx % 2 === 0; // first item on right (matches source)
+              return (
                 <div
-                  style={
-                    isRight
-                      ? {
-                          gridColumn: '2 / 3',
-                          paddingLeft: 'clamp(16px, 3cqi, 56px)',
-                          textAlign: 'left',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'flex-start',
-                        }
-                      : {
-                          gridColumn: '1 / 2',
-                          paddingRight: 'clamp(16px, 3cqi, 56px)',
-                          textAlign: 'right',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'flex-end',
-                        }
-                  }
+                  key={idx}
+                  data-side={isRight ? 'right' : 'left'}
+                  className='darling-row relative grid grid-cols-1 gap-0 pl-10 @2xl:grid-cols-2 @2xl:gap-[clamp(40px,5cqi,80px)] @2xl:pl-0'
+                  style={{
+                    paddingBottom:
+                      idx < items.length - 1 ? 'clamp(56px, 10cqi, 160px)' : 0,
+                  }}
                 >
-                  <p
-                    data-element-key={`items.${idx}.time`}
-                    style={composeStyle(
-                      TIME_STYLE,
-                      styleOf(`items.${idx}.time`)
-                    )}
-                    className={selectableClass(
-                      activeKey === `items.${idx}.time`
-                    )}
-                  >
-                    {item.time}
-                  </p>
-                  <h3
-                    data-element-key={`items.${idx}.title`}
-                    style={composeStyle(
-                      TITLE_STYLE,
-                      styleOf(`items.${idx}.title`)
-                    )}
-                    className={selectableClass(
-                      activeKey === `items.${idx}.title`
-                    )}
-                  >
-                    {item.title}
-                  </h3>
-                  <p
-                    data-element-key={`items.${idx}.description`}
-                    style={composeStyle(
-                      DESC_STYLE,
-                      styleOf(`items.${idx}.description`)
-                    )}
-                    className={selectableClass(
-                      activeKey === `items.${idx}.description`
-                    )}
-                  >
-                    {item.description}
-                  </p>
-
-                  {/* Image — div with backgroundImage, no <img> */}
-                  <div
-                    data-element-key={`items.${idx}.imageUrl`}
-                    style={composeStyle(
-                      item.imageUrl
-                        ? {
-                            backgroundImage: `url("${item.imageUrl.replace(/"/g, '%22')}")`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                          }
-                        : { background: '#d8d2bc' },
-                      {
-                        width: '100%',
-                        maxWidth: 540,
-                        aspectRatio: '4 / 3',
-                        overflow: 'hidden',
-                      },
-                      styleOf(`items.${idx}.imageUrl`)
-                    )}
-                    className={selectableClass(
-                      activeKey === `items.${idx}.imageUrl`
-                    )}
+                  {/* Dot on spine */}
+                  <span
+                    aria-hidden
+                    className='absolute top-0 left-2 z-[1] h-[11px] w-[11px] -translate-x-1/2 rounded-full @2xl:left-1/2'
+                    style={{
+                      background: '#1f1d14',
+                      transform: 'translate(-50%, -2px)',
+                    }}
                   />
+
+                  {/* Content side — right on even (0,2,4…), left on odd */}
+                  <div
+                    className={
+                      isRight
+                        ? 'flex flex-col items-start text-left @2xl:col-[2/3] @2xl:pl-[clamp(20px,3cqi,56px)]'
+                        : 'flex flex-col items-start text-left @2xl:col-[1/2] @2xl:items-end @2xl:pr-[clamp(20px,3cqi,56px)] @2xl:text-right'
+                    }
+                  >
+                    <p
+                      data-element-key={`items.${idx}.time`}
+                      style={composeStyle(
+                        TIME_STYLE,
+                        styleOf(`items.${idx}.time`)
+                      )}
+                      className={selectableClass(
+                        activeKey === `items.${idx}.time`
+                      )}
+                    >
+                      {item.time}
+                    </p>
+                    <h3
+                      data-element-key={`items.${idx}.title`}
+                      style={composeStyle(
+                        TITLE_STYLE,
+                        styleOf(`items.${idx}.title`)
+                      )}
+                      className={selectableClass(
+                        activeKey === `items.${idx}.title`
+                      )}
+                    >
+                      {item.title}
+                    </h3>
+                    <p
+                      data-element-key={`items.${idx}.description`}
+                      style={composeStyle(
+                        DESC_STYLE,
+                        styleOf(`items.${idx}.description`)
+                      )}
+                      className={selectableClass(
+                        activeKey === `items.${idx}.description`
+                      )}
+                    >
+                      {item.description}
+                    </p>
+
+                    {/* Image — div backgroundImage, không dùng <img> */}
+                    <div
+                      data-element-key={`items.${idx}.imageUrl`}
+                      style={composeStyle(
+                        item.imageUrl
+                          ? {
+                              backgroundImage: `url("${item.imageUrl.replace(/"/g, '%22')}")`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
+                            }
+                          : { background: '#d8d2bc' },
+                        {
+                          width: '100%',
+                          maxWidth: 540,
+                          aspectRatio: '4 / 3',
+                          overflow: 'hidden',
+                        },
+                        styleOf(`items.${idx}.imageUrl`)
+                      )}
+                      className={selectableClass(
+                        activeKey === `items.${idx}.imageUrl`
+                      )}
+                    />
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -52,7 +52,7 @@ import {
 export interface LayerElement {
   key: string;
   label: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 interface LayersPanelProps {
@@ -439,6 +439,48 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
     { key: 'title', label: 'Tiêu đề lớn', icon: Type },
     { key: 'cards', label: 'Các card', icon: ListChecks },
+  ],
+  linea_portfolio: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'headingPre', label: 'Tiêu đề (trước)', icon: Type },
+    { key: 'headingAccent', label: 'Tiêu đề (nhấn)', icon: Type },
+    { key: 'headingPost', label: 'Tiêu đề (sau)', icon: Type },
+    { key: 'items', label: 'Lưới ảnh', icon: Grid3x3 },
+  ],
+  mint_vault_hero: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'description', label: 'Mô tả', icon: Pilcrow },
+    { key: 'hintText', label: 'Gợi ý cursor', icon: Type },
+    { key: 'images', label: 'Ảnh trail', icon: Grid3x3 },
+  ],
+  mint_vault_craft: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'items', label: 'Mục accordion', icon: ListChecks },
+  ],
+  mint_vault_reveal: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'images', label: 'Ảnh gallery', icon: Grid3x3 },
+  ],
+  mint_vault_collection: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'subLabel', label: 'Nhãn phụ', icon: Type },
+    { key: 'coins', label: 'Bộ sưu tập coin', icon: ListChecks },
+  ],
+  mint_vault_invitation: [
+    BACKGROUND_LAYER,
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
+    { key: 'title', label: 'Tiêu đề', icon: Type },
+    { key: 'note', label: 'Ghi chú', icon: Pilcrow },
+    { key: 'backgroundImageUrl', label: 'Ảnh nền', icon: ImageIcon },
+    { key: 'images', label: 'Ảnh explosion', icon: Grid3x3 },
   ],
   mint_discover: [
     BACKGROUND_LAYER,

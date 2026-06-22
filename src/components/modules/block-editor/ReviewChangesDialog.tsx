@@ -38,7 +38,10 @@ export interface ReviewChangesDialogProps {
   onApply: (accept: AcceptMap) => void;
 }
 
-const GROUP_ICON: Record<DiffGroup, React.ElementType> = {
+const GROUP_ICON: Record<
+  DiffGroup,
+  React.ComponentType<{ className?: string }>
+> = {
   text: Type,
   image: ImageIcon,
   list: ListChecks,
@@ -371,7 +374,7 @@ function InlineStat({
   count,
   title,
 }: {
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   count: number;
   title: string;
 }) {
@@ -400,7 +403,7 @@ function FilterPill({
   count,
   onClick,
 }: {
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   count: number;
   onClick: () => void;

@@ -107,7 +107,11 @@ const STATUS_META: Record<
 
 const TARGET_META: Record<
   TargetType,
-  { labelKey: string; icon: React.ElementType; descriptionKey: string }
+  {
+    labelKey: string;
+    icon: React.ComponentType<{ className?: string }>;
+    descriptionKey: string;
+  }
 > = {
   landing: {
     labelKey: 'targetLandingLabel',

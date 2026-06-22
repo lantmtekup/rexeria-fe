@@ -72,7 +72,7 @@ interface BlockEditorHeaderProps {
 
 const DEVICE_BUTTONS: {
   value: Device;
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
 }[] = [
   { value: 'desktop', icon: Monitor, label: 'Desktop' },

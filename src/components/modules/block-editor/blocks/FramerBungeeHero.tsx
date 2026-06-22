@@ -1,9 +1,23 @@
 'use client';
 
+/**
+ * Hero - 05 (Bungee) — port từ 360-admin-cms `framer-bungee-hero`.
+ *
+ * Design 360: corner "g" + "+" deco, wordmark to ở giữa, subtitle, info row
+ * (timer dọc trái + 3 link phải), dải ảnh bo góc xen kẽ auto-scroll vô hạn dưới.
+ *
+ * Theo contract nền GSAP (landing-motion-foundation R1–R6):
+ * - Marquee ảnh = ambient CSS @keyframes (giống LineaPortfolio ticker — KHÔNG
+ *   phải scroll-anim nên không cần useBlockMotion). Tốc độ qua --bungee-speed.
+ * - Entrance reveal (wordmark/subtitle/info row) = useBlockMotion → gsap.fromTo
+ *   + scrollTrigger {trigger, scroller, start:'top 85%', toggleActions, invalidate}.
+ *   BỎ animate-in + framer-motion.
+ * - @container + đơn vị cqi (R2), data-element-key + selectableClass mỗi element.
+ */
 import * as React from 'react';
+import gsap from 'gsap';
 
-import { cn } from '@/lib/cn';
-
+import { useBlockMotion } from '../motion/LandingMotion';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -19,22 +33,14 @@ import {
   selectableClass,
 } from './applyStyle';
 
-interface FramerBungeeHeroProps {
+interface Props {
   content: FramerBungeeHeroContent;
   styles?: ElementStylesMap;
   background?: BlockBackground;
   order?: string[];
   positions?: ElementPositionsMap;
   activeKey?: string | null;
-  className?: string;
 }
-
-/**
- * Hero - 05 (Bungee): wordmark image + subtitle + timer/link row +
- * CSS-animated marquee strip. Port từ `src/blocks/framer-bungee-hero`.
- * Marquee dùng @keyframes trong <style> scoped, tốc độ qua CSS custom prop
- * `--bungee-speed`. Thay <img> bằng backgroundImage div. Container-query only.
- */
 
 const SUBTITLE_STYLE: React.CSSProperties = {
   fontFamily: '"Inter Display", "Inter", system-ui, sans-serif',
@@ -63,8 +69,8 @@ export function FramerBungeeHero({
   order,
   positions,
   activeKey,
-  className,
-}: FramerBungeeHeroProps) {
+}: Props) {
+  const rootRef = React.useRef<HTMLElement>(null);
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -78,17 +84,54 @@ export function FramerBungeeHero({
     : [];
   const doubled = [...cards, ...cards];
 
+  // Entrance reveal — wordmark/subtitle/info row fade-up theo scroll (R1, R3).
+  useBlockMotion(rootRef, ({ scroller }) => {
+    const root = rootRef.current;
+    if (!root) return;
+    const targets = root.querySelectorAll<HTMLElement>('.bungee-reveal');
+    if (!targets.length) return;
+    gsap.fromTo(
+      targets,
+      { opacity: 0, y: 20 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: 'power3.out',
+        stagger: 0.08,
+        scrollTrigger: {
+          trigger: root,
+          scroller,
+          start: 'top 85%',
+          toggleActions: 'play none none reverse',
+          invalidateOnRefresh: true,
+        },
+      }
+    );
+  });
+
   return (
-    <div
-      style={blockBackgroundStyle(background)}
-      className={cn(
-        'animate-in fade-in zoom-in-95 @container relative flex w-full flex-col items-center overflow-hidden rounded-md bg-white duration-700 ease-out',
-        className
+    <section
+      ref={rootRef}
+      style={composeStyle(
+        {
+          position: 'relative',
+          width: '100%',
+          minHeight: 'clamp(560px, 100vh, 980px)',
+          overflow: 'hidden',
+          background: '#ffffff',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        },
+        blockBackgroundStyle(background)
       )}
+      className='bungee-hero @container'
     >
-      {/* Scoped styles for marquee animation */}
+      {/* Scoped styles — ambient marquee keyframes + container-query tweaks */}
       <style>{`
-        .bungee-hero-marquee {
+        .bungee-hero :where(a) { text-decoration: none; color: inherit; }
+        .bungee-marquee {
           width: 100%;
           margin-top: clamp(24px, 4cqi, 56px);
           height: clamp(220px, 36cqi, 480px);
@@ -97,21 +140,20 @@ export function FramerBungeeHero({
           -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 6%, rgba(0,0,0,1) 94%, rgba(0,0,0,0) 100%);
           mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 6%, rgba(0,0,0,1) 94%, rgba(0,0,0,0) 100%);
         }
-        .bungee-hero-track {
+        .bungee-track {
           display: flex;
           gap: 12px;
           height: 100%;
           width: max-content;
-          animation: bungee-hero-scroll var(--bungee-speed, 40s) linear infinite;
+          will-change: transform;
+          animation: bungee-scroll var(--bungee-speed, 40s) linear infinite;
         }
-        @keyframes bungee-hero-scroll {
+        @keyframes bungee-scroll {
           from { transform: translateX(0); }
           to   { transform: translateX(-50%); }
         }
-        @media (prefers-reduced-motion: reduce) {
-          .bungee-hero-track { animation: none; }
-        }
-        .bungee-hero-card {
+        .bungee-marquee:hover .bungee-track { animation-play-state: paused; }
+        .bungee-card {
           flex: 0 0 auto;
           width: clamp(120px, 16cqi, 200px);
           height: 100%;
@@ -119,13 +161,33 @@ export function FramerBungeeHero({
           background: #e8e8ea;
           position: relative;
         }
-        .bungee-hero-card-a {
+        .bungee-card-a {
           border-top-left-radius: 80px;
           border-bottom-right-radius: 80px;
         }
-        .bungee-hero-card-b {
+        .bungee-card-b {
           border-top-right-radius: 80px;
           border-bottom-left-radius: 80px;
+        }
+        @container (max-width: 809px) {
+          .bungee-hero { min-height: auto !important; }
+          .bungee-marquee { height: clamp(180px, 52cqi, 320px); }
+          .bungee-card { width: clamp(110px, 32cqi, 160px); }
+          .bungee-card-a, .bungee-card-b {
+            border-top-left-radius: 48px;
+            border-bottom-right-radius: 48px;
+            border-top-right-radius: 0;
+            border-bottom-left-radius: 0;
+          }
+          .bungee-card-b {
+            border-top-right-radius: 48px;
+            border-bottom-left-radius: 48px;
+            border-top-left-radius: 0;
+            border-bottom-right-radius: 0;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .bungee-track { animation: none; }
         }
       `}</style>
 
@@ -134,8 +196,8 @@ export function FramerBungeeHero({
         aria-hidden='true'
         style={{
           position: 'absolute',
-          top: 24,
-          left: 24,
+          top: 'clamp(16px, 2cqi, 24px)',
+          left: 'clamp(16px, 2cqi, 24px)',
           fontSize: 24,
           fontWeight: 700,
           letterSpacing: '-0.04em',
@@ -153,8 +215,8 @@ export function FramerBungeeHero({
         aria-hidden='true'
         style={{
           position: 'absolute',
-          top: 24,
-          right: 24,
+          top: 'clamp(16px, 2cqi, 24px)',
+          right: 'clamp(16px, 2cqi, 24px)',
           width: 28,
           height: 28,
           display: 'flex',
@@ -174,7 +236,7 @@ export function FramerBungeeHero({
         </svg>
       </div>
 
-      {/* Main content area */}
+      {/* Main content — tight vertical stack */}
       <div
         className='relative z-[2] flex w-full flex-col items-center'
         style={{
@@ -207,7 +269,10 @@ export function FramerBungeeHero({
               : undefined,
             styleOf('wordmarkUrl')
           )}
-          className={selectableClass(activeKey === 'wordmarkUrl')}
+          className={selectableClass(
+            activeKey === 'wordmarkUrl',
+            'bungee-reveal'
+          )}
           aria-label='Wordmark'
         >
           {!content.wordmarkUrl && (
@@ -227,9 +292,9 @@ export function FramerBungeeHero({
           )}
         </div>
 
-        {/* Subtitle */}
+        {/* Subtitle — tight gap to wordmark */}
         <div
-          className='w-full text-center'
+          className='bungee-reveal w-full text-center'
           style={{ marginTop: 'clamp(10px, 1.5cqi, 20px)' }}
         >
           <h4
@@ -241,9 +306,9 @@ export function FramerBungeeHero({
           </h4>
         </div>
 
-        {/* Timer + social links row */}
+        {/* Info row — timer left + links right */}
         <div
-          className='flex w-full items-end justify-between'
+          className='bungee-reveal flex w-full items-end justify-between'
           style={{
             gap: 24,
             marginTop: 'clamp(16px, 2.5cqi, 32px)',
@@ -272,12 +337,17 @@ export function FramerBungeeHero({
 
           {/* Social links */}
           <div
-            style={{
-              ...LINK_ROW_STYLE,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-            }}
+            data-element-key='links'
+            style={composeStyle(
+              {
+                ...LINK_ROW_STYLE,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+              },
+              styleOf('links')
+            )}
+            className={selectableClass(activeKey === 'links')}
           >
             <a
               data-element-key='link1Label'
@@ -328,29 +398,32 @@ export function FramerBungeeHero({
         </div>
       </div>
 
-      {/* Marquee image strip */}
+      {/* Marquee strip — infinite auto-scroll (ambient CSS) */}
       {doubled.length > 0 && (
         <div
-          className='bungee-hero-marquee'
-          style={{ ['--bungee-speed' as string]: `${marqueeSpeed}s` }}
+          data-element-key='cardImages'
+          className={selectableClass(
+            activeKey === 'cardImages',
+            'bungee-marquee'
+          )}
+          style={composeStyle(
+            { ['--bungee-speed' as string]: `${marqueeSpeed}s` },
+            styleOf('cardImages')
+          )}
           aria-label='Image strip'
         >
-          <div className='bungee-hero-track'>
+          <div className='bungee-track'>
             {doubled.map((c, i) => {
               const isA = i % 2 === 0;
               return (
                 <div
                   key={i}
-                  className={`bungee-hero-card ${isA ? 'bungee-hero-card-a' : 'bungee-hero-card-b'}`}
-                  style={
-                    c.imageUrl
-                      ? {
-                          backgroundImage: `url("${c.imageUrl.replace(/"/g, '%22')}")`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                        }
-                      : undefined
-                  }
+                  className={`bungee-card ${isA ? 'bungee-card-a' : 'bungee-card-b'}`}
+                  style={{
+                    backgroundImage: `url("${c.imageUrl.replace(/"/g, '%22')}")`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
                   aria-hidden='true'
                 />
               );
@@ -358,6 +431,6 @@ export function FramerBungeeHero({
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }
