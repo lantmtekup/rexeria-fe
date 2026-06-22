@@ -221,6 +221,7 @@ import type {
   LeadsListResponse,
   LeadStatus,
   Block,
+  BlockActivityResponse,
   BlockListResponse,
   BlockResponse,
   BlockScope,
@@ -1934,6 +1935,13 @@ export const rexerApi = {
     /** Increment usage_count when a block is added to a template/page. */
     use: (id: string) =>
       rx<{ usage_count: number }>(`/blocks/${id}/use`, { method: 'POST' }),
+    /**
+     * Lịch sử hoạt động của block (đổi trạng thái duyệt: ai, từ→sang, lúc nào)
+     * để theo dõi tiến độ. BE map từ activity_logs. Block cũ chưa có log → items
+     * rỗng; lỗi mạng → caller tự fallback dựng từ created_at/updated_at.
+     */
+    activity: (id: string) =>
+      rx<BlockActivityResponse>(`/blocks/${id}/activity`),
   },
 
   // ── AI Jobs (canonical async, replaces 8 legacy `ai.*` endpoints) ────

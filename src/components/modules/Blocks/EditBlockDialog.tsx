@@ -33,6 +33,7 @@ import {
   BLOCK_STATUS_ORDER,
   effectiveBlockStatus,
 } from '@/lib/block-status';
+import { BlockStatusHistory } from '@/components/modules/Blocks/BlockStatusHistory';
 
 export interface EditBlockDialogProps {
   open: boolean;
@@ -331,6 +332,9 @@ export function EditBlockDialog({
               />
             </div>
           </div>
+
+          {/* Lịch sử đổi trạng thái — theo dõi tiến độ (ai đổi, lúc nào). */}
+          {block && <BlockStatusHistory block={block} />}
 
           <BlockTaxonomyFields value={tax} onChange={setTax} />
         </div>
