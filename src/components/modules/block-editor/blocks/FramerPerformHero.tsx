@@ -58,12 +58,15 @@ const TITLE_STYLE: React.CSSProperties = {
 function StaggeredTitleLine({
   text,
   style,
+  startInView,
 }: {
   text: string;
   style: React.CSSProperties;
+  startInView?: boolean;
 }) {
   const ref = React.useRef<HTMLHeadingElement>(null);
-  const isInView = useInView(ref, { once: true });
+  const localInView = useInView(ref, { once: true });
+  const isInView = startInView ?? localInView;
 
   const charVariants = {
     hidden: { opacity: 0 },
@@ -73,7 +76,7 @@ function StaggeredTitleLine({
     }),
   };
 
-  const letters = Array.from(text);
+  const letters = Array.from(text ?? '');
 
   return (
     <motion.h1
@@ -98,6 +101,32 @@ function StaggeredTitleLine({
   );
 }
 
+function RevealOnView({
+  isInView,
+  delay,
+  children,
+  className,
+  style,
+}: {
+  isInView: boolean;
+  delay: number;
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <motion.div
+      className={className}
+      style={style}
+      initial={{ opacity: 0, y: 24 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export function FramerPerformHero({
   content,
   styles,
@@ -107,6 +136,10 @@ export function FramerPerformHero({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
+  const isRootInView = useInView(rootRef, {
+    once: true,
+    margin: '0px 0px -15% 0px',
+  });
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -126,6 +159,8 @@ export function FramerPerformHero({
       (acc, line) => Math.max(acc, (line.length - 1) * TITLE_CHAR_STAGGER),
       0
     ) + TITLE_CHAR_DURATION;
+  const REVEAL_BASE_DELAY = titleTotalDuration;
+  const REVEAL_STAGGER = 0.08;
 
   useBlockMotion(
     rootRef,
@@ -133,15 +168,16 @@ export function FramerPerformHero({
       const root = rootRef.current;
       if (!root) return;
 
-      // Background image — fade-in.
+      // Background image — fade-in + zoom out from 105% to 100%.
       const bg = root.querySelector<HTMLElement>('.perform-bg');
       if (bg) {
         gsap.fromTo(
           bg,
-          { opacity: 0 },
+          { opacity: 0, scale: 1.05 },
           {
             opacity: 1,
-            duration: 1.2,
+            scale: 1,
+            duration: 1.4,
             ease: 'power2.out',
             scrollTrigger: {
               trigger: root,
@@ -154,29 +190,7 @@ export function FramerPerformHero({
         );
       }
 
-      // Eyebrow / subtitle / CTA / review — staggered fade-up.
-      gsap.utils
-        .toArray<HTMLElement>('.perform-reveal', root)
-        .forEach((el, i) => {
-          gsap.fromTo(
-            el,
-            { y: 24, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.8,
-              ease: 'power3.out',
-              delay: titleTotalDuration + i * 0.08 + 100,
-              scrollTrigger: {
-                trigger: el,
-                scroller,
-                start: 'top 85%',
-                toggleActions: 'play none none reverse',
-                invalidateOnRefresh: true,
-              },
-            }
-          );
-        });
+      // Eyebrow / subtitle / CTA / review — handled bằng RevealOnView (framer-motion),
     },
     [titleLines.length]
   );
@@ -194,7 +208,6 @@ export function FramerPerformHero({
           content.backgroundUrl
             ? {
                 backgroundImage: `url("${content.backgroundUrl.replace(/"/g, '%22')}")`,
-                // backgroundImage: `url("https://framerusercontent.com/images/HVyxp24CVuPAzhxz8dQ1Xyyjk.jpg?scale-down-to=2048&width=2445&height=1350")`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
               }
@@ -252,7 +265,9 @@ export function FramerPerformHero({
                 }}
               >
                 {/* Eyebrow */}
-                <div
+                <RevealOnView
+                  isInView={isRootInView}
+                  delay={REVEAL_BASE_DELAY + 0 * REVEAL_STAGGER}
                   data-element-key='eyebrow'
                   style={composeStyle(
                     {
@@ -262,10 +277,7 @@ export function FramerPerformHero({
                     },
                     styleOf('eyebrow')
                   )}
-                  className={selectableClass(
-                    activeKey === 'eyebrow',
-                    'perform-reveal'
-                  )}
+                  className={selectableClass(activeKey === 'eyebrow')}
                 >
                   <span
                     aria-hidden='true'
@@ -287,7 +299,7 @@ export function FramerPerformHero({
                   >
                     {content.eyebrow || 'Experienced triathlon coach'}
                   </span>
-                </div>
+                </RevealOnView>
 
                 {/* Title lines — per-char stagger (framer-motion StaggeredFade port). */}
                 <div
@@ -299,18 +311,18 @@ export function FramerPerformHero({
                     <StaggeredTitleLine
                       text={content?.title}
                       style={TITLE_STYLE}
+                      startInView={isRootInView}
                     />
                   </span>
                 </div>
 
                 {/* Subtitle */}
-                <div
+                <RevealOnView
+                  isInView={isRootInView}
+                  delay={REVEAL_BASE_DELAY + 2 * REVEAL_STAGGER}
                   data-element-key='subtitle'
                   style={composeStyle({}, styleOf('subtitle'))}
-                  className={selectableClass(
-                    activeKey === 'subtitle',
-                    'perform-reveal'
-                  )}
+                  className={selectableClass(activeKey === 'subtitle')}
                 >
                   <p
                     style={{
@@ -324,11 +336,14 @@ export function FramerPerformHero({
                     {content.subtitle ||
                       'Improve your triathlon performance with personalized training plans guided by an experienced coach committed to your success.'}
                   </p>
-                </div>
+                </RevealOnView>
               </div>
 
               {/* CTA pill */}
-              <div className='perform-reveal'>
+              <RevealOnView
+                isInView={isRootInView}
+                delay={REVEAL_BASE_DELAY + 4 * REVEAL_STAGGER}
+              >
                 <a
                   data-element-key='ctaLabel'
                   href={content.ctaHref || '#start'}
@@ -370,11 +385,13 @@ export function FramerPerformHero({
                     ↗
                   </span>
                 </a>
-              </div>
+              </RevealOnView>
             </div>
 
             {/* Star reviews */}
-            <div
+            <RevealOnView
+              isInView={isRootInView}
+              delay={REVEAL_BASE_DELAY + 6 * REVEAL_STAGGER}
               data-element-key='reviewCount'
               style={composeStyle(
                 {
@@ -386,10 +403,7 @@ export function FramerPerformHero({
                 },
                 styleOf('reviewCount')
               )}
-              className={selectableClass(
-                activeKey === 'reviewCount',
-                'perform-reveal'
-              )}
+              className={selectableClass(activeKey === 'reviewCount')}
             >
               <div
                 aria-label={`${reviewStars} out of 5 stars`}
@@ -419,7 +433,7 @@ export function FramerPerformHero({
               >
                 {content.reviewCount || '100+ Positive Client Reviews'}
               </span>
-            </div>
+            </RevealOnView>
           </div>
         </div>
       </div>
