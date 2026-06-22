@@ -1615,7 +1615,7 @@ const FRAMER_YUME_HERO_VI: FramerYumeHeroContent = {
   firstName: 'YUME',
   lastName: 'YASKUMI',
   avatarUrl:
-    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80',
+    'https://framerusercontent.com/images/j1OWdec3GtorzmtyEO583X355k.png',
   email: 'hello@yume.com',
   bio: "Hello, I'm a freelancer specializing in minimal design with 10 years of expertise — based in Tokyo, working remote. Let's create!",
 };

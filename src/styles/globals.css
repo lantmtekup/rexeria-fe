@@ -302,3 +302,46 @@ select {
 .animate-soft-rise {
   animation: block-soft-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+/* Hero-level rise — 88px offset để match Framer Yume appear animation */
+@keyframes block-soft-rise-hero {
+  from {
+    opacity: 0;
+    transform: translateY(88px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-soft-rise-hero {
+  animation: block-soft-rise-hero 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Avatar scale-in — match Framer Yume avatar appear (zoom từ nhỏ ra) */
+@keyframes block-scale-in-hero {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-scale-in-hero {
+  animation: block-scale-in-hero 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Name mask reveal — chữ trượt lên từ sau overflow-hidden wrapper */
+@keyframes block-text-reveal {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.animate-text-reveal {
+  animation: block-text-reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
