@@ -1,0 +1,46 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import MotionSection from '@/components/MotionSection.astro';
+---
+
+<Layout title="GSAP Clone — starter">
+  <main>
+    <section class="min-h-screen flex items-center justify-center px-8">
+      <h1 class="hero-title font-display text-6xl md:text-8xl tracking-tight text-balance">
+        Replace this with the cloned hero.
+      </h1>
+    </section>
+
+    <MotionSection preset="reveal-up" class="py-32 px-8 max-w-5xl mx-auto">
+      <h2 class="text-4xl md:text-5xl font-display mb-6">Section title</h2>
+      <p class="text-lg text-zinc-400 max-w-prose">
+        Generated sections go here. Each <code>MotionSection</code> picks up a
+        scroll-triggered reveal automatically. Use the extracted
+        <code>animations.json</code> to add custom GSAP calls in
+        <code>src/scripts/animations.ts</code>.
+      </p>
+    </MotionSection>
+
+    <MotionSection preset="reveal-up" class="py-32 px-8 max-w-5xl mx-auto">
+      <div class="grid md:grid-cols-3 gap-6">
+        {[1, 2, 3].map((n) => (
+          <article class="reveal-up bg-zinc-900 rounded-2xl p-6">
+            <h3 class="font-display text-2xl mb-2">Card {n}</h3>
+            <p class="text-zinc-400">Sample card content.</p>
+          </article>
+        ))}
+      </div>
+    </MotionSection>
+
+    <section class="h-[200vh] relative">
+      <div class="sticky top-0 h-screen overflow-hidden flex items-center justify-center">
+        <img
+          class="parallax absolute inset-0 w-full h-full object-cover opacity-50"
+          src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=1600"
+          alt=""
+        />
+        <h2 class="relative font-display text-5xl md:text-7xl">Pinned hero</h2>
+      </div>
+    </section>
+  </main>
+</Layout>

@@ -1,0 +1,21 @@
+---
+/**
+ * Reusable wrapper for scroll-triggered sections. Adds a class hook that
+ * `src/scripts/animations.ts` picks up via `gsap.utils.toArray('.reveal-up')`.
+ *
+ * Props:
+ *   preset = 'reveal-up' | 'parallax' | 'fade'
+ *   class  = additional Tailwind classes
+ */
+interface Props {
+  preset?: 'reveal-up' | 'parallax' | 'fade';
+  class?: string;
+  id?: string;
+}
+const { preset = 'reveal-up', class: className = '', id } = Astro.props;
+const cls = `${preset} ${className}`.trim();
+---
+
+<section id={id} class={cls}>
+  <slot />
+</section>
