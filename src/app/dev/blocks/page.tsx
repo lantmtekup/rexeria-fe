@@ -3,16 +3,17 @@
 /**
  * DEV preview cho DATA-BLOCK (src/components/modules/block-editor/blocks/*).
  *
- * Layout: top bar (không đè block) + vùng cuộn riêng làm SCROLLER → block render
+ * Layout: top bar fixed (gọn, không chiếm layout) + vùng cuộn full viewport làm SCROLLER → block render
  * qua RenderBlock + content mặc định (createBlock) trong LandingMotionRoot
  * (scroller = vùng cuộn). Sticky/pin/scrub của block neo đúng vào vùng cuộn (như
  * PreviewMode / /p), không bị toolbar che. Sửa file block → save → hot-reload.
  *
- * URL: /dev/blocks?type=mint_vault_collection
+ * URL: /dev/blocks?type=framer_arpeggio_hero_v2
  */
 import * as React from 'react';
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
 
+import { cn } from '@/lib/cn';
 import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
 import { createBlock } from '@/components/modules/block-editor/factory';
 import { LandingMotionRoot } from '@/components/modules/block-editor/motion/LandingMotion';
@@ -32,7 +33,7 @@ const DEVICES = [
 type DeviceId = (typeof DEVICES)[number]['id'];
 
 export default function DevBlocksPage() {
-  const [type, setType] = React.useState<BlockType>('mint_vault_hero');
+  const [type, setType] = React.useState<BlockType>('framer_arpeggio_hero_v2');
   const [device, setDevice] = React.useState<DeviceId>('desktop');
   const scrollerRef = React.useRef<HTMLDivElement>(null);
 
@@ -50,50 +51,56 @@ export default function DevBlocksPage() {
   const width = DEVICES.find(d => d.id === device)!.w;
 
   return (
-    <div className='flex h-screen flex-col bg-neutral-900'>
-      {/* ── Top bar (không đè block) ───────────────────────────────── */}
-      <header className='flex h-12 shrink-0 items-center gap-3 border-b border-white/10 bg-[#0d0d10] px-4 text-white'>
-        <span className='text-[10px] font-bold tracking-[0.22em] text-amber-400/90 uppercase'>
-          Dev · Block
+    <div className='relative h-screen bg-neutral-900'>
+      {/* ── Top bar fixed, gọn — không chiếm chiều cao layout ───────── */}
+      <header className='fixed inset-x-0 top-0 z-50 flex h-7 items-center gap-2 border-b border-white/10 bg-[#0d0d10]/90 px-2 backdrop-blur-sm'>
+        <span className='shrink-0 text-[8px] font-bold tracking-[0.16em] text-amber-400/90 uppercase'>
+          Dev
         </span>
 
         <select
           value={type}
           onChange={e => setType(e.target.value as BlockType)}
-          className='h-8 max-w-[300px] min-w-[220px] rounded-md border border-white/15 bg-white/5 px-2 text-sm text-white outline-none focus:border-amber-400'
+          aria-label='Block type'
+          className='h-[18px] max-w-[200px] min-w-0 flex-1 truncate rounded border border-white/15 bg-white/5 px-1 py-0 text-[9px]! leading-none text-white outline-none focus:border-amber-400 sm:max-w-[240px] sm:min-w-[160px] sm:flex-none'
         >
           {TYPES.map(t => (
-            <option key={t} value={t} className='bg-[#0d0d10]'>
+            <option key={t} value={t} className='bg-[#0d0d10] text-[9px]'>
               {BLOCK_TYPE_META[t]?.label ?? t}
             </option>
           ))}
         </select>
 
-        <code className='hidden text-xs text-white/40 sm:block'>{type}</code>
+        <code className='hidden max-w-[120px] truncate text-[8px] text-white/35 md:block'>
+          {type}
+        </code>
 
-        <div className='ml-auto flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 p-0.5'>
+        <div className='ml-auto flex shrink-0 items-center gap-0.5 rounded border border-white/10 bg-white/5 p-px'>
           {DEVICES.map(({ id, icon: Icon, w }) => (
             <button
               key={id}
               type='button'
               onClick={() => setDevice(id)}
               title={`${id}${w ? ` · ${w}px` : ' · full'}`}
-              className={`flex size-7 items-center justify-center rounded transition-colors ${
+              aria-label={`${id} preview`}
+              aria-pressed={device === id}
+              className={cn(
+                'flex size-5 items-center justify-center rounded-sm transition-colors',
                 device === id
                   ? 'bg-amber-400 text-neutral-900'
                   : 'text-white/60 hover:bg-white/10'
-              }`}
+              )}
             >
-              <Icon className='size-4' />
+              <Icon className='size-3' />
             </button>
           ))}
         </div>
       </header>
 
-      {/* ── Vùng cuộn = scroller cho block (sticky/pin neo vào đây) ──── */}
+      {/* ── Vùng cuộn full viewport = scroller cho block ─────────────── */}
       <div
         ref={scrollerRef}
-        className='relative flex-1 overflow-auto bg-neutral-200'
+        className='relative h-screen overflow-auto bg-neutral-200'
       >
         <LandingMotionRoot scrollerRef={scrollerRef} enableSmooth={false}>
           <div

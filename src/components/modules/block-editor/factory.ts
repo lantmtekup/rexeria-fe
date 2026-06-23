@@ -1,6 +1,7 @@
 import { BLOCK_TYPE_META } from './types';
 import { getBlockDef } from './blocks/_registry/registry';
 import { MEDIA, pickMedia } from './blocks/sample-media';
+import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
 import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
 import type {
   Block,
@@ -30,6 +31,7 @@ import type {
   FeatureSectionContent,
   FlipbookContent,
   FramerArpeggioHeroContent,
+  FramerArpeggioHeroV2Content,
   FramerAvexaHeroContent,
   FramerMobiusHeroContent,
   FramerBungeeHeroContent,
@@ -1642,6 +1644,19 @@ const FRAMER_ARPEGGIO_HERO_EN: FramerArpeggioHeroContent = {
   ...FRAMER_ARPEGGIO_HERO_VI,
 };
 
+// ── Framer-native: Hero - Arpeggio v2 ───────────────────────────────────
+const FRAMER_ARPEGGIO_HERO_V2_VI: FramerArpeggioHeroV2Content = {
+  backgroundUrl: ARPEGGIO_HERO_V2_BG,
+  headline: 'One subscription,\nunlimited design iterations.',
+  subtitle: 'Freedom beyond the traditional project scope',
+  topRightLabel: 'The Creative Agency—',
+  wordmark: 'Arpeggio',
+  wordmarkSuffix: '',
+};
+const FRAMER_ARPEGGIO_HERO_V2_EN: FramerArpeggioHeroV2Content = {
+  ...FRAMER_ARPEGGIO_HERO_V2_VI,
+};
+
 // ── Framer-native: Delvaux Hero Intro ───────────────────────────────────
 const FRAMER_DELVAUX_HERO_INTRO_VI: FramerDelvauxHeroIntroContent = {
   storefrontImageUrl:
@@ -2929,6 +2944,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_yume_hero: FRAMER_YUME_HERO_VI,
   framer_yuya_hero: FRAMER_YUYA_HERO_VI,
   framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_VI,
+  framer_arpeggio_hero_v2: FRAMER_ARPEGGIO_HERO_V2_VI,
   framer_delvaux_hero_intro: FRAMER_DELVAUX_HERO_INTRO_VI,
   framer_hero: FRAMER_HERO_VI,
   framer_perform_hero: FRAMER_PERFORM_HERO_VI,
@@ -3029,6 +3045,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_yume_hero: FRAMER_YUME_HERO_EN,
   framer_yuya_hero: FRAMER_YUYA_HERO_EN,
   framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_EN,
+  framer_arpeggio_hero_v2: FRAMER_ARPEGGIO_HERO_V2_EN,
   framer_delvaux_hero_intro: FRAMER_DELVAUX_HERO_INTRO_EN,
   framer_hero: FRAMER_HERO_EN,
   framer_perform_hero: FRAMER_PERFORM_HERO_EN,

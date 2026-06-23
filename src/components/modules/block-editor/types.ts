@@ -54,6 +54,7 @@ export type BlockType =
   | 'framer_yume_hero'
   | 'framer_yuya_hero'
   | 'framer_arpeggio_hero'
+  | 'framer_arpeggio_hero_v2'
   | 'framer_delvaux_hero_intro'
   | 'framer_hero'
   | 'framer_perform_hero'
@@ -976,6 +977,16 @@ export interface FramerArpeggioHeroContent {
   wordmarkSuffix: string;
 }
 
+/** Hero - Arpeggio v2: fork độc lập từ v1, cùng layout + layer keys. */
+export interface FramerArpeggioHeroV2Content {
+  backgroundUrl: string;
+  headline: string;
+  subtitle: string;
+  topRightLabel: string;
+  wordmark: string;
+  wordmarkSuffix: string;
+}
+
 /**
  * Bento - 01 (Avexa Why-Us): 6-card bento grid 3-col. Migrate từ
  * `src/blocks/framer-avexa-bento`.
@@ -1502,6 +1513,7 @@ export type BlockContent =
   | ProductSpecSheetContent
   | FramerYumeHeroContent
   | FramerArpeggioHeroContent
+  | FramerArpeggioHeroV2Content
   | FramerDelvauxHeroIntroContent
   | FramerHeroContent
   | FramerPerformHeroContent
@@ -2684,6 +2696,16 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Hero - 03 (Arpeggio)',
     aiLabelVi: 'block hero ảnh nền + wordmark lớn',
     aiLabelEn: 'full-bleed hero with large wordmark',
+  },
+  framer_arpeggio_hero_v2: {
+    type: 'framer_arpeggio_hero_v2',
+    label: 'Hero - Arpeggio v2',
+    accent: '#FF4D2E',
+    adminLabel: 'Hero - Arpeggio v2',
+    gradient: 'from-orange-500 to-red-600',
+    defaultName: 'Hero - Arpeggio v2',
+    aiLabelVi: 'block hero Arpeggio v2 (ảnh nền + wordmark lớn)',
+    aiLabelEn: 'Arpeggio v2 hero with large wordmark',
   },
   framer_mobius_hero: {
     type: 'framer_mobius_hero',
