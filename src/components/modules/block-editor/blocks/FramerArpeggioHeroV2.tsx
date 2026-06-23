@@ -150,7 +150,7 @@ const AGENCY_LABEL_STYLE: React.CSSProperties = {
 };
 
 const HERO_WORDMARK_STYLE: React.CSSProperties = {
-  fontWeight: 600,
+  fontWeight: 700,
   lineHeight: 1.05,
   color: ACCENT,
   margin: 0,
@@ -394,38 +394,6 @@ const ArpeggioGridOverlay = ({ flashDone }: ArpeggioGridOverlayProps) => {
   );
 };
 
-const ArpeggioHeroHeader = () => (
-  <header className='flex items-center justify-between gap-3 pt-4 @2xl:gap-4 @2xl:pt-8 @4xl:pt-12'>
-    <nav
-      aria-label='Social links'
-      className={cn(
-        'flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 @2xl:gap-x-3 @4xl:gap-x-5',
-        'text-3xs font-sans font-medium tracking-[0.1em] text-[#FF4D2E] uppercase @2xl:text-xs @4xl:text-lg'
-      )}
-    >
-      {['WA', 'X', 'IG', 'LI', 'EMAIL'].map(label => (
-        <span key={label} className='shrink-0'>
-          {label}
-        </span>
-      ))}
-    </nav>
-    <button
-      type='button'
-      aria-label='Open menu'
-      className='flex size-11 shrink-0 flex-col items-center justify-center gap-[5px] p-1'
-      tabIndex={0}
-    >
-      {Array.from({ length: 2 }, (_, index) => (
-        <span
-          key={index}
-          aria-hidden
-          className='block h-[2px] w-6 rounded-full bg-[#FF4D2E] @2xl:w-7 @4xl:w-8'
-        />
-      ))}
-    </button>
-  </header>
-);
-
 const ArpeggioHeroCopy = ({
   content,
   activeKey,
@@ -434,15 +402,15 @@ const ArpeggioHeroCopy = ({
 }: ArpeggioHeroCopyProps) => (
   <div
     ref={ref}
-    className='flex flex-col gap-4 will-change-transform @2xl:flex-row @2xl:items-start @2xl:justify-between @2xl:gap-8 @4xl:gap-20'
+    className='flex flex-col justify-end gap-4 will-change-transform @2xl:flex-row @2xl:items-start @2xl:justify-between @2xl:gap-8 @3xl:flex-col @3xl:items-start @3xl:justify-start @4xl:flex-row @4xl:items-start @4xl:justify-between @4xl:gap-20'
   >
-    <div className='w-full min-w-0 @2xl:min-w-[min(100%,420px)] @2xl:flex-[1_1_0]'>
+    <div className='flex w-full min-w-0 flex-col justify-end gap-6 @2xl:min-w-[min(100%,420px)] @2xl:flex-[1_1_0] @3xl:flex @3xl:flex-col @3xl:items-start @3xl:justify-start @3xl:gap-20 @4xl:gap-0'>
       <h1
         data-element-key='headline'
         style={composeStyle(HEADLINE_STYLE, styleOf('headline'))}
         className={selectableClass(
           activeKey === 'headline',
-          'text-3xl @2xl:text-4xl @4xl:text-[60px]'
+          'text-2xl @2xl:text-4xl @3xl:text-[60px] @4xl:text-[60px]'
         )}
       >
         <div
@@ -451,22 +419,36 @@ const ArpeggioHeroCopy = ({
           }}
         />
       </h1>
+
+      {content.topRightLabel ? (
+        <div
+          data-element-key='topRightLabel'
+          style={composeStyle(AGENCY_LABEL_STYLE, styleOf('topRightLabel'))}
+          className={selectableClass(
+            activeKey === 'topRightLabel',
+            'w-full shrink-0 text-right text-6xl @2xl:max-w-[220px] @2xl:text-right @2xl:text-3xl @3xl:max-w-[340px] @3xl:text-[60px] @4xl:hidden @4xl:max-w-[280px] @4xl:text-[48px]'
+          )}
+        >
+          {content.topRightLabel}
+        </div>
+      ) : null}
+
       {content.subtitle ? (
         <div
           data-element-key='subtitle'
           style={styleOf('subtitle')}
           className={selectableClass(
             activeKey === 'subtitle',
-            'mt-3 flex w-full max-w-full gap-2 @2xl:mt-5 @2xl:max-w-[50%] @2xl:gap-3'
+            'mt-3 flex w-full max-w-full gap-2 @2xl:mt-5 @2xl:max-w-[70%] @2xl:gap-3 @4xl:max-w-[60%]'
           )}
         >
           <div
             aria-hidden
-            className='mt-1 size-3 shrink-0 rounded-full border-[3px] border-[#FF4D2E] @2xl:mt-1.5 @2xl:size-4 @2xl:border-4 @4xl:size-6 @4xl:border-6'
+            className='mt-1 size-5 shrink-0 rounded-full border-[5px] border-[#FF4D2E] @2xl:mt-1.5 @2xl:size-4 @2xl:border-4 @3xl:size-5 @3xl:border-5 @4xl:size-6 @4xl:border-6'
           />
           <p
             style={SUBTITLE_STYLE}
-            className='text-sm leading-snug @2xl:text-xl @4xl:text-[30px]'
+            className='text-xl leading-snug @2xl:text-xl @3xl:text-[32px] @4xl:text-[30px]'
           >
             {content.subtitle}
           </p>
@@ -480,7 +462,7 @@ const ArpeggioHeroCopy = ({
         style={composeStyle(AGENCY_LABEL_STYLE, styleOf('topRightLabel'))}
         className={selectableClass(
           activeKey === 'topRightLabel',
-          'w-full shrink-0 text-left text-3xl @2xl:max-w-[220px] @2xl:text-right @2xl:text-3xl @4xl:max-w-[280px] @4xl:text-[48px]'
+          'hidden w-full shrink-0 text-left text-3xl @2xl:max-w-[220px] @2xl:text-right @2xl:text-3xl @4xl:block @4xl:max-w-[280px] @4xl:text-[48px]'
         )}
       >
         {content.topRightLabel}
@@ -793,12 +775,11 @@ export function FramerArpeggioHeroV2({
       <ArpeggioGridOverlay flashDone={flashDone} />
       <div
         className={cn(
-          'relative z-[2] flex h-full min-h-0 flex-1 flex-col',
+          'relative z-[2] mb-10 flex h-full min-h-0 flex-1 flex-col @3xl:mb-5 @4xl:mb-0',
           CONTENT_SHELL
         )}
       >
-        <ArpeggioHeroHeader />
-        <div className='flex min-h-0 flex-1 flex-col justify-center'>
+        <div className='flex min-h-0 flex-1 flex-col justify-end @3xl:justify-center'>
           <ArpeggioHeroCopy
             ref={copyRef}
             content={content}
