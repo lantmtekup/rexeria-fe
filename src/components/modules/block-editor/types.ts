@@ -59,6 +59,7 @@ export type BlockType =
   | 'framer_perform_hero'
   | 'framer_perform_hero_v2'
   | 'framer_bungee_hero'
+  | 'framer_bungee_hero_v2'
   | 'framer_mobius_hero'
   | 'framer_avexa_hero'
   | 'framer_intro_redefined'
@@ -1118,6 +1119,33 @@ export interface FramerBungeeHeroContent {
 }
 
 /**
+ * Hero - Bungee v2: port theo recon spec từ framer-recon (selector
+ * `header[data-framer-name="Header"]`). Cấu trúc giống V1 nhưng refactor theo
+ * contract R1–R6 GSAP + ảnh rexel từ framerusercontent.com.
+ * - wordmarkUrl — SVG/ảnh "Bungee®" (fallback text "Bungee®")
+ * - subtitle — tagline (mặc định "Creative studio based in Gotham.")
+ * - timerLabel — nhãn thời gian góc trái ("( 00:44 NY )")
+ * - link1Label/Url, link2Label/Url, link3Label/Url — 3 social (BE/DR/X)
+ * - marqueeSpeed — chu kỳ marquee CSS (giây). Mặc định 50.
+ * - cardImages — mảng ảnh trong dải marquee dưới
+ * - accentColor — màu accent tổng thể (mặc định rgb(30,30,30))
+ */
+export interface FramerBungeeHeroV2Content {
+  wordmarkUrl: string;
+  subtitle: string;
+  timerLabel: string;
+  link1Label: string;
+  link1Url: string;
+  link2Label: string;
+  link2Url: string;
+  link3Label: string;
+  link3Url: string;
+  marqueeSpeed: number;
+  cardImages: Array<{ imageUrl: string }>;
+  accentColor: string;
+}
+
+/**
  * Hero - Mobius: wordmark cực to dưới cùng, stack ảnh scatter giữa trang,
  * intro text + nav trên. Port từ `src/blocks/framer-mobius-hero`.
  */
@@ -1479,6 +1507,7 @@ export type BlockContent =
   | FramerPerformHeroContent
   | FramerPerformHeroV2Content
   | FramerBungeeHeroContent
+  | FramerBungeeHeroV2Content
   | FramerMobiusHeroContent
   | FramerAvexaHeroContent
   | FramerIntroRedefinedContent
@@ -2726,6 +2755,18 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Hero - Bungee',
     aiLabelVi: 'block hero studio sáng: wordmark + marquee ảnh cuộn',
     aiLabelEn: 'light studio hero with wordmark + scrolling image marquee',
+  },
+  framer_bungee_hero_v2: {
+    type: 'framer_bungee_hero_v2',
+    label: 'Hero - Bungee v2',
+    accent: 'rgb(30,30,30)',
+    adminLabel: 'Hero - Bungee v2',
+    gradient: 'from-gray-100 to-white',
+    defaultName: 'Hero - Bungee v2',
+    aiLabelVi:
+      'block hero studio Bungee v2 (recon spec): wordmark + marquee ảnh + GSAP R1–R6',
+    aiLabelEn:
+      'Bungee studio hero v2 (recon spec): wordmark + image marquee + GSAP R1–R6',
   },
   framer_intro_redefined: {
     type: 'framer_intro_redefined',

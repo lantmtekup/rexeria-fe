@@ -8,11 +8,13 @@
  * PoC: mới migrate `framer_yume_hero`. ~80 block còn lại vẫn chạy đường cũ.
  */
 import type { BlockType } from '../../types';
+import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
 import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   framer_yume_hero: framerYumeHeroDef as BlockDef,
+  framer_bungee_hero_v2: framerBungeeHeroV2Def as BlockDef,
 };
 
 export function getBlockDef(type: BlockType): BlockDef | undefined {

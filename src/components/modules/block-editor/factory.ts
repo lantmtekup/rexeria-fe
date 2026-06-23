@@ -33,6 +33,7 @@ import type {
   FramerAvexaHeroContent,
   FramerMobiusHeroContent,
   FramerBungeeHeroContent,
+  FramerBungeeHeroV2Content,
   FramerDelvauxHeroIntroContent,
   FramerExploreCtaContent,
   FramerHeroContent,
@@ -1759,6 +1760,47 @@ const FRAMER_BUNGEE_HERO_EN: FramerBungeeHeroContent = {
   subtitle: 'Creative studio based in Hanoi.',
 };
 
+// ── Framer-native: Hero - Bungee v2 (recon spec) ─────────────────────────
+const FRAMER_BUNGEE_HERO_V2_VI: FramerBungeeHeroV2Content = {
+  wordmarkUrl: '',
+  subtitle: 'Studio sáng tạo đặt tại Gotham.',
+  timerLabel: 'HN',
+  link1Label: 'BE',
+  link1Url: 'https://www.behance.net/',
+  link2Label: 'DR',
+  link2Url: 'https://dribbble.com/',
+  link3Label: 'X',
+  link3Url: 'https://x.com/',
+  marqueeSpeed: 30,
+  cardImages: [
+    {
+      imageUrl:
+        'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=70',
+    },
+    {
+      imageUrl:
+        'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=70',
+    },
+    {
+      imageUrl:
+        'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=70',
+    },
+    {
+      imageUrl:
+        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=70',
+    },
+    {
+      imageUrl:
+        'https://images.unsplash.com/photo-1487014679447-9f8336841d58?auto=format&fit=crop&w=800&q=70',
+    },
+  ],
+  accentColor: 'rgb(30, 30, 30)',
+};
+const FRAMER_BUNGEE_HERO_V2_EN: FramerBungeeHeroV2Content = {
+  ...FRAMER_BUNGEE_HERO_V2_VI,
+  subtitle: 'Creative studio based in Gotham.',
+};
+
 // ── Framer-native: Hero - Mobius ─────────────────────────────────────────────
 const FRAMER_MOBIUS_HERO_VI: FramerMobiusHeroContent = {
   brand: 'Mobius',
@@ -2892,6 +2934,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_perform_hero: FRAMER_PERFORM_HERO_VI,
   framer_perform_hero_v2: FRAMER_PERFORM_HERO_V2_VI,
   framer_bungee_hero: FRAMER_BUNGEE_HERO_VI,
+  framer_bungee_hero_v2: FRAMER_BUNGEE_HERO_V2_VI,
   framer_mobius_hero: FRAMER_MOBIUS_HERO_VI,
   framer_avexa_hero: FRAMER_AVEXA_HERO_VI,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_VI,
@@ -2991,6 +3034,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_perform_hero: FRAMER_PERFORM_HERO_EN,
   framer_perform_hero_v2: FRAMER_PERFORM_HERO_V2_EN,
   framer_bungee_hero: FRAMER_BUNGEE_HERO_EN,
+  framer_bungee_hero_v2: FRAMER_BUNGEE_HERO_V2_EN,
   framer_mobius_hero: FRAMER_MOBIUS_HERO_EN,
   framer_avexa_hero: FRAMER_AVEXA_HERO_EN,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_EN,
