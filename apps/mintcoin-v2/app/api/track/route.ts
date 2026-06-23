@@ -13,7 +13,7 @@ const BASE =
 
 // The Origin the ReXeR tracking key is registered against (its prod domain).
 const TRACK_ORIGIN =
-  process.env.REXER_TRACK_ORIGIN || 'https://mintcoin-v2.vercel.app';
+  process.env.REXER_TRACK_ORIGIN || 'https://mintcoin-v2.rexerstudio.com';
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,6 +33,12 @@ export async function POST(req: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         Origin: TRACK_ORIGIN,
+        // Forward visitor's real browser UA — BE anti-bot rejects the default
+        // Worker fetch UA as "Suspicious user-agent" (429 BOT_REJECTED), which
+        // silently dropped every event. Fallback to a browser UA server-side.
+        'user-agent':
+          req.headers.get('user-agent') ||
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
         ...(key ? { 'X-ReXeR-Key': key } : {}),
       },
       body: bodyText,

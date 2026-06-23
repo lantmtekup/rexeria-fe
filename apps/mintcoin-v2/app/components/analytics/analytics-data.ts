@@ -36,14 +36,14 @@ export const REXER_API_BASE =
 // REQUIRED: slug or UUID of this page in ReXeR. v2 is a distinct landing design
 // from `mintcoin`, so it tracks under its own page id (separate block keys).
 // 👇 EDIT THIS LINE (or set NEXT_PUBLIC_REXER_PAGE_ID).
-const PAGE_ID_FALLBACK = 'the-jack-pine-1-kg-landing-v2';
+const PAGE_ID_FALLBACK = '51d4d576-b7b2-43e6-946c-813828e98bb1';
 export const REXER_PAGE_ID =
   process.env.NEXT_PUBLIC_REXER_PAGE_ID || PAGE_ID_FALLBACK;
 
 // Publishable tracking key (pk_live_…) — write-only, scopes events to the brand
 // & passes anti-spam. Minted by staff/admin in the ReXeR portal (shown once).
 // 👇 PASTE YOUR pk_live_ KEY HERE (or set NEXT_PUBLIC_REXER_TRACKING_KEY).
-const TRACKING_KEY_FALLBACK = 'pk_live_ZlNfRIW-nFVwjDpe23e6SVKYDM_NZreX';
+const TRACKING_KEY_FALLBACK = 'pk_live_OMA0doREpP58wEV2OE7liZv5FRgav_v2';
 export const REXER_TRACKING_KEY =
   process.env.NEXT_PUBLIC_REXER_TRACKING_KEY || TRACKING_KEY_FALLBACK;
 

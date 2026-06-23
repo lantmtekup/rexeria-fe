@@ -27,7 +27,7 @@ export default function AnalyticsOverlay({ onLogout }: Props) {
   const [positions, setPositions] = useState<BadgePos[]>([]);
   // Cards are open by default — track which blocks the user collapsed.
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-  const [range, setRange] = useState<(typeof RANGES)[number]>('7d');
+  const [range, setRange] = useState<(typeof RANGES)[number]>('30d');
   const [source, setSource] = useState<Source>('loading');
   const [summary, setSummary] = useState<PageSummary | null>(null);
   const [liveBlocks, setLiveBlocks] = useState<Record<string, BlockRow>>({});
