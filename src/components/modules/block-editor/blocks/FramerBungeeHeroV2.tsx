@@ -1,29 +1,5 @@
 'use client';
 
-/**
- * Hero - Bungee v2 — port từ framer-recon spec `recon-bungee-hero`.
- *
- * Recon selector: `header[data-framer-name="Header"]` của
- * https://bungee.framer.website/. Domain: "Creative studio based in Gotham.".
- *
- * Layout khớp recon:
- *  - corner deco "g" top-left + plus icon top-right
- *  - wordmark "Bungee®" giữa, subtitle dưới wordmark
- *  - info row: timer label trái + 3 social link (BE/DR/X) phải
- *  - dải marquee ảnh auto-scroll vô hạn dưới cùng (bo góc xen kẽ)
- *  - bg #ffffff desktop, edge-fade ngang + edge-fade đáy
- *
- * Theo contract GSAP R1–R6 (`docs/landing-motion-foundation.md`):
- *  - Entrance reveal (wordmark / subtitle / info row) = useBlockMotion
- *    → gsap.fromTo + scrollTrigger {trigger, scroller, start:'top 85%',
- *    toggleActions:'play none none reverse', invalidateOnRefresh:true}.
- *  - Marquee ảnh = ambient CSS @keyframes (không cần scroll-anim). Tốc độ
- *    qua CSS var `--bungee-v2-speed`. Pause khi hover.
- *  - BỎ animate-in Tailwind class + framer-motion. BỎ @media — dùng @container.
- *  - R5: marquee nằm trong block root @container; overlay/edge-fade là con
- *    trực tiếp nên không phá pin.
- *  - Reduced-motion: tắt entrance translate (chỉ opacity)
- */
 import * as React from 'react';
 import gsap from 'gsap';
 
@@ -72,8 +48,6 @@ const LINK_ROW_STYLE: React.CSSProperties = {
   color: 'rgb(30, 30, 30)',
 };
 
-// ===== Wordmark auto-fit helpers =====
-// Binary-search fontSize sao cho textEl.scrollWidth <= container.clientWidth.
 const fitHeroWordmarkFontSize = (
   container: HTMLElement,
   textEl: HTMLElement,
@@ -81,7 +55,8 @@ const fitHeroWordmarkFontSize = (
   minPx: number
 ) => {
   const maxWidth = container.clientWidth;
-  if (maxWidth <= 0) return minPx;
+  const maxHeight = container.clientHeight;
+  if (maxWidth <= 0 || maxHeight <= 0) return minPx;
 
   let lo = minPx;
   let hi = maxPx;
@@ -90,7 +65,9 @@ const fitHeroWordmarkFontSize = (
   while (lo <= hi) {
     const mid = Math.floor((lo + hi) / 2);
     textEl.style.fontSize = `${mid}px`;
-    if (textEl.scrollWidth <= maxWidth) {
+    const fitsWidth = textEl.scrollWidth <= maxWidth;
+    const fitsHeight = textEl.clientHeight <= maxHeight;
+    if (fitsWidth && fitsHeight) {
       best = mid;
       lo = mid + 1;
     } else {
@@ -141,8 +118,6 @@ export function FramerBungeeHeroV2({
   const doubled = [...cards, ...cards];
   const accent = content.accentColor || 'rgb(30, 30, 30)';
 
-  // Live clock — hiển thị giờ local cùng timerLabel, update mỗi 30s để bám sát
-  // phút thay đổi mà không re-render liên tục. SSR-safe: khởi tạo '', set sau mount.
   const [clockText, setClockText] = React.useState<string>('');
   React.useEffect(() => {
     const formatClock = () => {
@@ -330,6 +305,9 @@ export function FramerBungeeHeroV2({
         .bungee-v2-hero { min-height: auto !important; }
         .bungee-v2-marquee { height: clamp(180px, 132cqi, 520px); }
         .bungee-v2-card { width: clamp(110px, 45cqi, 180px); }
+        @media (prefers-reduced-motion: reduce) {
+          .bungee-v2-track { animation: none; }
+        }
         }
         @container (max-width: 809px) {
           .bungee-v2-hero { min-height: auto !important; }
@@ -353,7 +331,6 @@ export function FramerBungeeHeroV2({
         }
       `}</style>
 
-      {/* Main content — tight vertical stack */}
       <div
         className='relative z-[2] flex w-full flex-col items-center'
         style={{
@@ -376,7 +353,9 @@ export function FramerBungeeHeroV2({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              overflow: 'hidden',
+              paddingTop: '0.18em',
+              paddingBottom: '0.22em',
+              overflow: content.wordmarkUrl ? 'hidden' : 'visible',
             },
             content.wordmarkUrl
               ? {
@@ -409,7 +388,6 @@ export function FramerBungeeHeroV2({
           )}
         </div>
 
-        {/* Subtitle — tight gap to wordmark, fades in last (A3) */}
         <div
           className='bungee-v2-reveal w-full text-center'
           style={{ marginTop: 'clamp(10px, 1.5cqi, 20px)' }}
@@ -428,7 +406,6 @@ export function FramerBungeeHeroV2({
           </h4>
         </div>
 
-        {/* Info row — timer left + links right */}
         <div
           className='bungee-v2-reveal mt-auto flex w-full items-end justify-between @3xl:mt-10 @3xl:pt-30 @4xl:pt-0'
           style={{
@@ -436,7 +413,6 @@ export function FramerBungeeHeroV2({
             paddingBottom: 'clamp(16px, 2cqi, 24px)',
           }}
         >
-          {/* Timer label */}
           <div
             data-element-key='timerLabel'
             style={composeStyle(
@@ -459,7 +435,6 @@ export function FramerBungeeHeroV2({
             <span>{`( ${clockText ? `${clockText} ` : ''}${content.timerLabel || 'NY'} )`}</span>
           </div>
 
-          {/* Social links */}
           <div
             data-element-key='links'
             style={composeStyle(
@@ -522,7 +497,6 @@ export function FramerBungeeHeroV2({
         </div>
       </div>
 
-      {/* Marquee strip — infinite auto-scroll (ambient CSS) */}
       {doubled.length > 0 && (
         <div
           data-element-key='cardImages'
