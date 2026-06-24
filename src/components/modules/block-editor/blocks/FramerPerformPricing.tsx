@@ -1,18 +1,5 @@
 'use client';
 
-/**
- * Data-block "Framer · Perform Pricing" (port từ 360-admin-cms
- * framer-perform-pricing).
- *
- * Design SOURCE 360: nền trắng, header căn giữa (eyebrow + heading + subheading),
- * các pricing card xếp chồng theo sticky scroll (ảnh trái 1:1 + price/title/
- * feature-checklist/CTA pill bên phải).
- *
- * Theo contract nền GSAP: header fade-up + từng card fade-up (stagger) qua
- * useBlockMotion (thay framer-motion whileInView gốc + CSS animate-in).
- * @container + container-query (@2xl/cqi) thay md:/lg:; data-element-key +
- * styleOf cho inline-edit (mảng tiers → data-element-key trên container 'tiers').
- */
 import * as React from 'react';
 import gsap from 'gsap';
 
@@ -183,6 +170,29 @@ export function FramerPerformPricing({
     const root = rootRef.current;
     if (!root) return;
 
+    const cardEls = gsap.utils.toArray<HTMLElement>('.fpp-card', root);
+    if (cardEls.length < 2) return;
+
+    const reduceMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    if (reduceMotion) {
+      gsap.set(cardEls, { clearProps: 'all', scale: 1, y: 0 });
+      const stage = root.querySelector<HTMLElement>('.fpp-stage');
+      if (stage) stage.style.position = 'static';
+      const rail = root.querySelector<HTMLElement>('.fpp-rail');
+      if (rail) rail.style.height = 'auto';
+      cardEls.forEach(c => {
+        const wrap = c.parentElement;
+        if (wrap) {
+          wrap.style.position = 'relative';
+          wrap.style.top = 'auto';
+        }
+      });
+      return;
+    }
+
     // Header fade-up (thay HEADER_FADE whileInView gốc)
     const header = root.querySelector<HTMLElement>('.fpp-header');
     if (header) {
@@ -205,25 +215,40 @@ export function FramerPerformPricing({
       );
     }
 
-    // Mỗi card fade-up (thay CARD_FADE whileInView gốc), stagger theo card
-    gsap.utils.toArray<HTMLElement>('.fpp-card', root).forEach((card, i) => {
-      gsap.fromTo(
+    const n = cardEls.length;
+
+    cardEls.forEach((card, i) => {
+      if (i === 0) return;
+      gsap.set(card, { y: '100%', scale: 0.9 });
+    });
+
+    const tl = gsap.timeline({
+      defaults: { ease: 'none' },
+      scrollTrigger: {
+        trigger: root,
+        scroller,
+        start: 'top top',
+        end: `+=${(n - 1) * 100}%`,
+        scrub: 0.5,
+        invalidateOnRefresh: true,
+      },
+    });
+
+    cardEls.forEach((card, i) => {
+      if (i === 0) return;
+      const segStart = (i - 1) / (n - 1);
+      const scaleEnd = (i - 1 + 0.4) / (n - 1);
+      tl.fromTo(
         card,
-        { opacity: 0, y: 60 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          delay: i * 0.08,
-          scrollTrigger: {
-            trigger: card,
-            scroller,
-            start: 'top 85%',
-            toggleActions: 'play none none reverse',
-            invalidateOnRefresh: true,
-          },
-        }
+        { y: '160%', scale: 0.9 },
+        { y: '0%', ease: 'none' },
+        segStart - 0.15
+      );
+      tl.fromTo(
+        card,
+        { scale: 0.9 },
+        { scale: 1, ease: 'power3.out' },
+        scaleEnd
       );
     });
   });
@@ -232,7 +257,7 @@ export function FramerPerformPricing({
     <section
       ref={rootRef}
       style={blockBackgroundStyle(background)}
-      className='framer-perform-pricing @container relative w-full overflow-hidden bg-white'
+      className='framer-perform-pricing @container relative w-full bg-white'
     >
       <div
         style={{
@@ -282,33 +307,46 @@ export function FramerPerformPricing({
           )}
         </div>
 
-        {/* ── Stack pricing cards (sticky) — mảng tiers, 1 element-key 'tiers' ── */}
         <div
           data-element-key='tiers'
-          style={composeStyle({ position: 'relative' }, styleOf('tiers'))}
-          className={selectableClass(activeKey === 'tiers')}
+          className={`fpp-rail ${selectableClass(activeKey === 'tiers')}`}
+          style={composeStyle(
+            {
+              position: 'relative',
+              height: `${tiers.length * 100}vh`,
+            },
+            styleOf('tiers')
+          )}
         >
-          {tiers.map((tier, idx) => {
-            const featureLines = (tier.features ?? '')
-              .split('\n')
-              .map(l => l.trim())
-              .filter(Boolean);
+          <div
+            className='fpp-stage'
+            style={{
+              position: 'sticky',
+              top: 80,
+              height: '100vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingBottom: 'clamp(16px, 2.4cqi, 32px)',
+              overflow: 'hidden',
+            }}
+          >
+            {tiers.map((tier, idx) => {
+              const featureLines = (tier.features ?? '')
+                .split('\n')
+                .map(l => l.trim())
+                .filter(Boolean);
 
-            return (
-              <div
-                key={idx}
-                style={{
-                  position: 'sticky',
-                  // Tất cả card sticky cùng top → card sau cover 100% card trước
-                  // (no peek), tránh line tối ở mép như SOURCE 360.
-                  top: 80,
-                  zIndex: idx + 1,
-                  paddingBottom: 'clamp(40px, 6cqi, 80px)',
-                }}
-              >
+              return (
                 <article
+                  key={idx}
                   className='fpp-card grid'
                   style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: 'min(1120px, calc(100% - clamp(40px, 8cqi, 96px)))',
+                    height: 'clamp(380px, 56vh, 540px)',
+                    zIndex: idx + 1,
                     backgroundColor: '#ffffff',
                     borderRadius: 'clamp(20px, 2cqi, 32px)',
                     boxShadow:
@@ -318,6 +356,7 @@ export function FramerPerformPricing({
                     gap: 'clamp(24px, 4cqi, 56px)',
                     alignItems: 'stretch',
                     overflow: 'hidden',
+                    willChange: 'transform',
                   }}
                 >
                   {/* Ảnh trái (1:1) */}
@@ -394,17 +433,49 @@ export function FramerPerformPricing({
                     </a>
                   </div>
                 </article>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
 
       <style>{`
         @container (max-width: 809px) {
+          /* Mobile/tablet: vẫn giữ sticky deck-scroll y như desktop (GSAP
+             scrub pinned stage). Chỉ thu nhỏ card để layout 1 cột gọn trong
+             viewport, KHÔNG ép stage về position: static (sẽ mất animation). */
+          .framer-perform-pricing .fpp-stage {
+            top: 24px !important;
+            height: 100vh !important;
+            padding-bottom: 24px !important;
+            box-sizing: border-box !important;
+          }
           .framer-perform-pricing .fpp-card {
+            width: calc(100% - 24px) !important;
+            height: min(74vh, 640px) !important;
             grid-template-columns: 1fr !important;
-            gap: 0 !important;
+            grid-template-rows: 180px 1fr !important;
+            gap: 12px !important;
+            padding: 14px !important;
+            border-radius: 18px !important;
+          }
+          .framer-perform-pricing .fpp-card > div:first-child {
+            aspect-ratio: auto !important;
+            width: 100% !important;
+            height: 100% !important;
+          }
+        }
+        @container (max-width: 480px) {
+          .framer-perform-pricing .fpp-stage {
+            top: 16px !important;
+            padding-bottom: 16px !important;
+          }
+          .framer-perform-pricing .fpp-card {
+            height: min(80vh, 600px) !important;
+            padding: 12px !important;
+          }
+          .framer-perform-pricing .fpp-card {
+            grid-template-rows: 140px 1fr !important;
           }
         }
       `}</style>
