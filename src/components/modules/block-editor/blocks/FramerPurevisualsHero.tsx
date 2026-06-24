@@ -1,8 +1,17 @@
 'use client';
 
+/**
+ * Hero - PureVisuals: 2 panel ảnh 50/50 phủ kín, cuộn → tách ra (trái/phải) để
+ * lộ heading lớn dưới nền. Port từ `recon-purevisuals-hero/spec.md` §9.
+ *
+ * "Pin" bằng CSS: outer cao (track) + inner `position: sticky` (iOS-safe, KHÔNG
+ * GSAP `pin` — pin trên iOS hay giật). GSAP chỉ scrub xPercent panel + reveal
+ * text theo tiến trình cuộn qua outer. Plugin ScrollTrigger do `LandingMotionRoot`
+ * đăng ký (không register trong block). Reduced-motion: CSS @media bỏ track +
+ * hiện text. @container/cqi thay md:/lg:.
+ */
 import * as React from 'react';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { useBlockMotion } from '../motion/LandingMotion';
 import type {
@@ -20,10 +29,6 @@ import {
   selectableClass,
 } from './applyStyle';
 
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
-
 interface Props {
   content: FramerPurevisualsHeroContent;
   styles?: ElementStylesMap;
@@ -36,15 +41,24 @@ interface Props {
 const MONO_STACK =
   '"JetBrains Mono", "JetBrains Mono Placeholder", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
-const ROOT_STYLE: React.CSSProperties = {
+// Outer = track cuộn (sticky inner giữ 1 viewport, dư ra ~120dvh để scrub).
+const OUTER_STYLE: React.CSSProperties = {
   position: 'relative',
   width: '100%',
-  minHeight: 'clamp(560px, 100vh, 980px)',
-  overflow: 'hidden',
-  // Nền mặc định (sau khi 2 panel tách ra). Layer chữ `text` đè lên.
+  height: '220dvh',
   backgroundColor: '#ffffff',
+};
+
+// Inner sticky = "pin" bằng CSS (1 viewport, đứng yên khi cuộn qua track).
+// containerType ở ĐÂY (không phải outer) — container-type trên outer có thể
+// can thiệp position:sticky của con. cqi/@container vẫn = full width.
+const STICKY_STYLE: React.CSSProperties = {
+  position: 'sticky',
+  top: 0,
+  height: '100dvh',
+  overflow: 'hidden',
   isolation: 'isolate',
-  containerType: 'size',
+  containerType: 'inline-size',
 };
 
 const PANEL_BASE_STYLE: React.CSSProperties = {
@@ -54,7 +68,7 @@ const PANEL_BASE_STYLE: React.CSSProperties = {
   width: '50%',
   overflow: 'hidden',
   contain: 'paint',
-  willChange: 'transform, opacity',
+  willChange: 'transform',
   zIndex: 2,
 };
 
@@ -154,8 +168,21 @@ export function FramerPurevisualsHero({
 
   const [leftIndex, setLeftIndex] = React.useState(0);
   const [rightIndex, setRightIndex] = React.useState(0);
+  // Carousel chỉ chạy khi block trong viewport (IntersectionObserver) — tránh
+  // setState/re-render mỗi 2s khi block đã cuộn khỏi màn hình.
+  const [inView, setInView] = React.useState(true);
   React.useEffect(() => {
-    if (leftImages.length <= 1) {
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), {
+      threshold: 0,
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  React.useEffect(() => {
+    if (!inView || leftImages.length <= 1) {
       setLeftIndex(0);
       return;
     }
@@ -163,9 +190,9 @@ export function FramerPurevisualsHero({
       setLeftIndex(i => (i + 1) % leftImages.length);
     }, 2000);
     return () => window.clearInterval(id);
-  }, [leftImages.length]);
+  }, [inView, leftImages.length]);
   React.useEffect(() => {
-    if (rightImages.length <= 1) {
+    if (!inView || rightImages.length <= 1) {
       setRightIndex(0);
       return;
     }
@@ -173,7 +200,7 @@ export function FramerPurevisualsHero({
       setRightIndex(i => (i + 1) % rightImages.length);
     }, 2000);
     return () => window.clearInterval(id);
-  }, [rightImages.length]);
+  }, [inView, rightImages.length]);
 
   const leftSrc = leftImages[leftIndex] ?? leftImages[0] ?? '';
   const rightSrc = rightImages[rightIndex] ?? rightImages[0] ?? '';
@@ -185,67 +212,34 @@ export function FramerPurevisualsHero({
     const right = rightRef.current;
     if (!root || !text || !left || !right) return;
 
-    const reduce = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-    if (reduce) {
-      gsap.set([left, right], {
-        xPercent: 0,
-        scale: 1,
-      });
-      gsap.set(text, {
-        opacity: 1,
-        yPercent: 0,
-        filter: 'blur(0px)',
-      });
-      return;
-    }
+    // Reduced-motion: layout do CSS @media lo (track gập, panel ẩn, text hiện).
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    gsap.set([left, right], {
-      xPercent: 0,
-      scale: 1,
-    });
-    gsap.set(text, {
-      opacity: 0,
-      yPercent: 100,
-      filter: 'blur(8px)',
-    });
+    gsap.set([left, right], { xPercent: 0 });
+    gsap.set(text, { opacity: 0, yPercent: 100, filter: 'blur(8px)' });
 
-    const scrollTl = gsap.timeline({
+    // Scrub theo tiến trình cuộn qua OUTER (sticky inner giữ viewport). KHÔNG
+    // `pin` — dùng CSS sticky, an toàn iOS.
+    const tl = gsap.timeline({
+      defaults: { ease: 'none' },
       scrollTrigger: {
         trigger: root,
         scroller,
         start: 'top top',
-        end: '+=120%',
-        pin: true,
-        pinSpacing: true,
+        end: 'bottom bottom',
         scrub: 0.6,
-        anticipatePin: 1,
         invalidateOnRefresh: true,
         fastScrollEnd: true,
       },
     });
 
-    scrollTl
-      .to(left, { xPercent: -100, ease: 'none', duration: 1 }, 0)
-      .to(right, { xPercent: 100, ease: 'none', duration: 1 }, 0)
-      .fromTo(
+    tl.to(left, { xPercent: -100, duration: 1 }, 0)
+      .to(right, { xPercent: 100, duration: 1 }, 0)
+      .to(
         text,
-        { yPercent: 100, opacity: 0, filter: 'blur(8px)' },
-        {
-          yPercent: 0,
-          opacity: 1,
-          filter: 'blur(0px)',
-          ease: 'none',
-          duration: 1,
-        },
+        { yPercent: 0, opacity: 1, filter: 'blur(0px)', duration: 1 },
         0
       );
-
-    if (typeof window !== 'undefined') {
-      // useBlockMotion đã gọi requestRefresh() sau build, không cần lặp.
-      // window.load đã được LandingMotionRoot đăng ký.
-    }
   });
 
   return (
@@ -253,11 +247,11 @@ export function FramerPurevisualsHero({
       ref={rootRef}
       data-block='framer-purevisuals-hero'
       style={composeStyle(
-        ROOT_STYLE,
+        OUTER_STYLE,
         { backgroundColor: bgColor },
         blockBackgroundStyle(background)
       )}
-      className='pvh-hero @container'
+      className='pvh-hero'
     >
       <style>{`
         .pvh-hero :where(h1, h2, h3, h4, p) { margin: 0; }
@@ -265,8 +259,10 @@ export function FramerPurevisualsHero({
           outline: 2px solid currentColor;
           outline-offset: 4px;
         }
-        /* Reduced motion: panels invisible, text fully revealed + interactive. */
+        /* Reduced-motion: bỏ track cuộn (outer về 1 viewport), panel ẩn, text
+           hiện đầy đủ + tương tác được. */
         @media (prefers-reduced-motion: reduce) {
+          .pvh-hero { height: 100dvh !important; }
           .pvh-hero [data-pvh-panel] { opacity: 0 !important; }
           .pvh-hero [data-pvh-text] {
             opacity: 1 !important;
@@ -275,7 +271,7 @@ export function FramerPurevisualsHero({
             pointer-events: auto !important;
           }
         }
-          @container (max-width: 479px) {
+        @container (max-width: 479px) {
           .pvh-hero [data-pvh-panel='left'] {
             top: 0 !important;
             left: 0 !important;
@@ -294,106 +290,102 @@ export function FramerPurevisualsHero({
         }
       `}</style>
 
-      {/* LEFT PANEL — 50% width */}
-      <div
-        ref={leftRef}
-        data-pvh-panel='left'
-        data-element-key='leftImageUrl'
-        aria-hidden='true'
-        style={composeStyle(
-          PANEL_LEFT_STYLE,
-          leftSrc
-            ? {
-                backgroundImage: `url("${leftSrc.replace(/"/g, '%22')}")`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }
-            : { backgroundColor: '#1a1a1a' },
-          styleOf('leftImageUrl')
-        )}
-      >
-        {leftSrc ? (
-          <img
-            src={leftSrc}
-            alt=''
-            loading='eager'
-            decoding='async'
-            style={PANEL_IMAGE_STYLE}
-          />
-        ) : null}
-      </div>
-
-      {/* RIGHT PANEL — 50% width */}
-      <div
-        ref={rightRef}
-        data-pvh-panel='right'
-        data-element-key='rightImageUrl'
-        aria-hidden='true'
-        style={composeStyle(
-          PANEL_RIGHT_STYLE,
-          rightSrc
-            ? {
-                backgroundImage: `url("${rightSrc.replace(/"/g, '%22')}")`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }
-            : { backgroundColor: '#262626' },
-          styleOf('rightImageUrl')
-        )}
-      >
-        {rightSrc ? (
-          <img
-            src={rightSrc}
-            alt=''
-            loading='eager'
-            decoding='async'
-            style={PANEL_IMAGE_STYLE}
-          />
-        ) : null}
-      </div>
-
-      {/* TEXT LAYER — sits under panels, rises on scroll */}
-      <div
-        ref={textRef}
-        data-pvh-text
-        style={composeStyle(TEXT_LAYER_STYLE, { color: textColor })}
-      >
+      {/* Sticky inner = "pin" bằng CSS — giữ 1 viewport khi cuộn qua track.
+          `@container` ở đây để cqi + @3xl: của text/panel resolve theo width này. */}
+      <div className='@container' style={STICKY_STYLE}>
+        {/* LEFT PANEL — 50% width */}
         <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            transform: 'translateY(-5cqi)',
-          }}
+          ref={leftRef}
+          data-pvh-panel='left'
+          data-element-key='leftImageUrl'
+          aria-hidden='true'
+          className={selectableClass(activeKey === 'leftImageUrl')}
+          style={composeStyle(
+            PANEL_LEFT_STYLE,
+            leftSrc ? {} : { backgroundColor: '#1a1a1a' },
+            styleOf('leftImageUrl')
+          )}
         >
-          <h1
-            data-element-key='heading'
-            className={selectableClass(activeKey === 'heading')}
-            style={composeStyle(HEADING_STYLE, styleOf('heading'))}
+          {leftSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={leftSrc}
+              alt=''
+              loading='eager'
+              decoding='async'
+              style={PANEL_IMAGE_STYLE}
+            />
+          ) : null}
+        </div>
+
+        {/* RIGHT PANEL — 50% width */}
+        <div
+          ref={rightRef}
+          data-pvh-panel='right'
+          data-element-key='rightImageUrl'
+          aria-hidden='true'
+          className={selectableClass(activeKey === 'rightImageUrl')}
+          style={composeStyle(
+            PANEL_RIGHT_STYLE,
+            rightSrc ? {} : { backgroundColor: '#262626' },
+            styleOf('rightImageUrl')
+          )}
+        >
+          {rightSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={rightSrc}
+              alt=''
+              loading='eager'
+              decoding='async'
+              style={PANEL_IMAGE_STYLE}
+            />
+          ) : null}
+        </div>
+
+        {/* TEXT LAYER — nằm dưới panel, trồi lên khi cuộn */}
+        <div
+          ref={textRef}
+          data-pvh-text
+          style={composeStyle(TEXT_LAYER_STYLE, { color: textColor })}
+        >
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              transform: 'translateY(-5cqi)',
+            }}
           >
-            {heading}
-          </h1>
-          <div className='flex flex-col items-center gap-2 @3xl:flex-row @3xl:items-start @3xl:justify-between'>
-            <p
-              data-element-key='eyebrow'
-              className={selectableClass(
-                activeKey === 'eyebrow',
-                'text-center @3xl:text-left'
-              )}
-              style={composeStyle(SUBHEADING_STYLE, styleOf('eyebrow'))}
+            <h1
+              data-element-key='heading'
+              className={selectableClass(activeKey === 'heading')}
+              style={composeStyle(HEADING_STYLE, styleOf('heading'))}
             >
-              {eyebrow}
-            </p>
-            <p
-              data-element-key='subheading'
-              className={selectableClass(
-                activeKey === 'subheading',
-                'text-center @3xl:text-right'
-              )}
-              style={composeStyle(SUBHEADING_STYLE, styleOf('subheading'))}
-            >
-              {subheading}
-            </p>
+              {heading}
+            </h1>
+            <div className='flex flex-col items-center gap-2 @3xl:flex-row @3xl:items-start @3xl:justify-between'>
+              <p
+                data-element-key='eyebrow'
+                className={selectableClass(
+                  activeKey === 'eyebrow',
+                  'text-center @3xl:text-left'
+                )}
+                style={composeStyle(SUBHEADING_STYLE, styleOf('eyebrow'))}
+              >
+                {eyebrow}
+              </p>
+              <p
+                data-element-key='subheading'
+                className={selectableClass(
+                  activeKey === 'subheading',
+                  'text-center @3xl:text-right'
+                )}
+                style={composeStyle(SUBHEADING_STYLE, styleOf('subheading'))}
+              >
+                {subheading}
+              </p>
+            </div>
           </div>
         </div>
       </div>

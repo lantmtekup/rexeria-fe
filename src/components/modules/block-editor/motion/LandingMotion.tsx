@@ -153,7 +153,7 @@ export function useBlockMotion(
   const buildRef = React.useRef(build);
   buildRef.current = build;
 
-  React.useLayoutEffect(() => {
+  React.useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
     const ctx = gsap.context(() => {
