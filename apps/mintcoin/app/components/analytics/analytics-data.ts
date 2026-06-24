@@ -34,14 +34,14 @@ export const REXER_API_BASE =
 
 // REQUIRED: slug or UUID of this page in ReXeR.
 // 👇 EDIT THIS LINE (or set NEXT_PUBLIC_REXER_PAGE_ID).
-const PAGE_ID_FALLBACK = 'the-jack-pine-1-kg-landing';
+const PAGE_ID_FALLBACK = 'd64e6932-c047-43a8-9064-96df28b7dc78';
 export const REXER_PAGE_ID =
   process.env.NEXT_PUBLIC_REXER_PAGE_ID || PAGE_ID_FALLBACK;
 
 // Publishable tracking key (pk_live_…) — write-only, scopes events to the brand
 // & passes anti-spam. Minted by staff/admin in the ReXeR portal (shown once).
 // 👇 PASTE YOUR pk_live_ KEY HERE (or set NEXT_PUBLIC_REXER_TRACKING_KEY).
-const TRACKING_KEY_FALLBACK = 'pk_live_OrP3cAmksCbkNCLIxKUTKkSs6EzOWlkI';
+const TRACKING_KEY_FALLBACK = 'pk_live_al9kc5qrlOK7FntzDnpz3TXAr-hG0rjj';
 export const REXER_TRACKING_KEY =
   process.env.NEXT_PUBLIC_REXER_TRACKING_KEY || TRACKING_KEY_FALLBACK;
 
@@ -73,5 +73,11 @@ export const ANALYTICS_BLOCKS: AnalyticsBlock[] = [
     ],
   },
   { id: 'information', label: 'Variants', selector: '#information' },
-  { id: 'sku', label: 'SKU / Buy', selector: '#sku' },
+  {
+    id: 'contact',
+    label: 'Register Interest',
+    selector: '#contact',
+    // Closing CTA form — the register-interest submit button.
+    ctas: [{ id: 'cta-register', label: 'Register Interest' }],
+  },
 ];

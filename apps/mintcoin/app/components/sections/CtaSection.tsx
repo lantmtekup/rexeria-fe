@@ -5,21 +5,23 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useIsomorphicLayoutEffect } from '@/lib/use-isomorphic-layout-effect';
 
-// Closing call-to-action — final dark section with a register-interest form
-// (username + password) so a visitor can leave their credentials to reserve
+// Closing call-to-action — final dark section with a leave-your-details form
+// (email + phone + note) so a visitor can register their interest to reserve
 // the coin. On-brand with the rest of the luxury composition. Children fade
 // up once on scroll-in.
 export default function CtaSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [note, setNote] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) return;
+    if (!email.trim() || !phone.trim()) return;
     // No backend wired yet — capture locally and confirm. Swap this for a
-    // real POST (e.g. /api/register) when the endpoint exists.
+    // real POST (e.g. /api/reserve) when the endpoint exists. The note is
+    // optional; email + phone are the required contact details.
     setSubmitted(true);
   };
 
@@ -59,12 +61,13 @@ export default function CtaSection() {
         <div className='cta-fade mx-auto mb-8 h-px w-16 bg-gradient-to-r from-transparent via-[#c79119] to-transparent md:w-24' />
 
         <h2 className='cta-fade text-4xl font-light tracking-tight text-balance md:text-5xl'>
-          Reserve your coin
+          Register your interest
         </h2>
 
         <p className='cta-fade mx-auto mt-6 max-w-sm text-sm leading-relaxed text-neutral-400 md:text-base'>
-          Only 75 will ever be struck. Register your details to reserve The Jack
-          Pine 1 Kilo Pure Gold Coin.
+          Only 75 will ever be struck. Leave your contact details and the Royal
+          Canadian Mint will be in touch to reserve your Jack Pine 1 Kilo Pure
+          Gold Coin.
         </p>
 
         {submitted ? (
@@ -72,8 +75,8 @@ export default function CtaSection() {
             className='cta-fade mx-auto mt-10 max-w-sm text-base text-[#e6b94a]'
             role='status'
           >
-            Thank you — your registration has been received. The Royal Canadian
-            Mint will be in touch.
+            Thank you — your details have been received. The Royal Canadian Mint
+            will be in touch.
           </p>
         ) : (
           <form
@@ -82,41 +85,60 @@ export default function CtaSection() {
           >
             <div className='flex flex-col gap-1.5'>
               <label
-                htmlFor='cta-username'
+                htmlFor='cta-email'
                 className='text-[11px] tracking-[0.18em] text-neutral-400 uppercase'
               >
-                Username
+                Email
               </label>
               <input
-                id='cta-username'
-                name='username'
-                type='text'
-                autoComplete='username'
+                id='cta-email'
+                name='email'
+                type='email'
+                autoComplete='email'
                 required
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                placeholder='Enter your username'
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder='your@email.com'
                 className='w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-white transition-colors duration-200 placeholder:text-neutral-500 focus:border-[#c79119] focus:outline-none'
               />
             </div>
 
             <div className='flex flex-col gap-1.5'>
               <label
-                htmlFor='cta-password'
+                htmlFor='cta-phone'
                 className='text-[11px] tracking-[0.18em] text-neutral-400 uppercase'
               >
-                Password
+                Phone
               </label>
               <input
-                id='cta-password'
-                name='password'
-                type='password'
-                autoComplete='new-password'
+                id='cta-phone'
+                name='phone'
+                type='tel'
+                autoComplete='tel'
+                inputMode='tel'
                 required
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder='Create a password'
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                placeholder='+1 (000) 000-0000'
                 className='w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-white transition-colors duration-200 placeholder:text-neutral-500 focus:border-[#c79119] focus:outline-none'
+              />
+            </div>
+
+            <div className='flex flex-col gap-1.5'>
+              <label
+                htmlFor='cta-note'
+                className='text-[11px] tracking-[0.18em] text-neutral-400 uppercase'
+              >
+                Note <span className='text-neutral-600'>(optional)</span>
+              </label>
+              <textarea
+                id='cta-note'
+                name='note'
+                rows={3}
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                placeholder='Anything you’d like us to know…'
+                className='w-full resize-none rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-sm text-white transition-colors duration-200 placeholder:text-neutral-500 focus:border-[#c79119] focus:outline-none'
               />
             </div>
 

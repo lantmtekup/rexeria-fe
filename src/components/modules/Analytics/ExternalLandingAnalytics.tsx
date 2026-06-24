@@ -24,7 +24,7 @@ import {
   Send,
   Users,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
@@ -37,7 +37,6 @@ import type {
 } from '@/services/rexer/types';
 
 import { AreaChart, Card, MetricTile } from './dashboard-bits';
-import { buildExternalDemo } from './external-demo';
 
 const RANGES: { value: AnalyticsRange; label: string }[] = [
   { value: '7d', label: '7 ngày' },
@@ -66,8 +65,6 @@ export function ExternalLandingAnalytics({
   const [sections, setSections] = useState<PageAnalyticsBreakdownRow[]>([]);
   const [ctas, setCtas] = useState<PageAnalyticsBreakdownRow[]>([]);
   const [trackingKey, setTrackingKey] = useState<TrackingKey | null>(null);
-  // null = auto (demo khi chưa có traffic thật); true/false = người dùng ép.
-  const [demoOverride, setDemoOverride] = useState<boolean | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,17 +87,32 @@ export function ExternalLandingAnalytics({
           .sources(pageId, { range })
           .then(r => r.items ?? [])
           .catch(() => []),
-        rexerApi.pages.analytics
-          .breakdown(pageId, { group_by: 'dimensions.section_id', range })
-          .then(r => r.items ?? [])
-          .catch(() => []),
-        // Không lọc event_type: gom theo cta_id mọi event mang cta_id — bắt
-        // được cả `cta_click` (mintcoin thật) lẫn `click` (seed/funnel). Key
-        // rỗng (event không có cta_id) lọc bỏ ở dưới.
-        rexerApi.pages.analytics
-          .breakdown(pageId, { group_by: 'dimensions.cta_id', range })
-          .then(r => (r.items ?? []).filter(it => it.key))
-          .catch(() => []),
+        // Ưu tiên gom theo `section_label` (tên đẹp site gửi kèm — khớp overlay
+        // trên trang). Chưa có event mang label (data cũ) → fallback `section_id`
+        // thô để card không rỗng.
+        (async () => {
+          const byLabel = await rexerApi.pages.analytics
+            .breakdown(pageId, { group_by: 'dimensions.section_label', range })
+            .then(r => (r.items ?? []).filter(it => it.key))
+            .catch(() => []);
+          if (byLabel.length) return byLabel;
+          return rexerApi.pages.analytics
+            .breakdown(pageId, { group_by: 'dimensions.section_id', range })
+            .then(r => r.items ?? [])
+            .catch(() => []);
+        })(),
+        // CTA: ưu tiên `cta_label`, fallback `cta_id`. Key rỗng lọc bỏ.
+        (async () => {
+          const byLabel = await rexerApi.pages.analytics
+            .breakdown(pageId, { group_by: 'dimensions.cta_label', range })
+            .then(r => (r.items ?? []).filter(it => it.key))
+            .catch(() => []);
+          if (byLabel.length) return byLabel;
+          return rexerApi.pages.analytics
+            .breakdown(pageId, { group_by: 'dimensions.cta_id', range })
+            .then(r => (r.items ?? []).filter(it => it.key))
+            .catch(() => []);
+        })(),
         rexerApi.trackingKeys
           .list({ limit: 50 })
           .then(r => r.items ?? [])
@@ -130,55 +142,26 @@ export function ExternalLandingAnalytics({
     };
   }, [pageId, range]);
 
-  const realViews = summary?.page_views ?? 0;
-  const realTrendTotal = trendSeries.reduce((s, v) => s + v, 0);
-  // Có lượt xem thật chưa? (mintcoin custom chỉ bắn section/cta nên số này
-  // thường = 0 dù section breakdown có data.)
-  const hasRealTraffic = realViews > 0 || realTrendTotal > 0;
-  const demo = demoOverride ?? !hasRealTraffic;
-
-  const demoData = useMemo(
-    () => buildExternalDemo(pageId, new Date()),
-    [pageId]
-  );
-
-  // View model: demo → bộ tất định; thật → từ endpoint.
-  const views = demo ? demoData.pageViews : realViews;
-  const visitors = demo
-    ? demoData.uniqueVisitors
-    : (summary?.unique_visitors ?? 0);
-  const clicks = demo ? demoData.clicks : (summary?.clicks ?? 0);
-  const conversions = demo ? demoData.conversions : (summary?.conversions ?? 0);
+  // Demo data đã gỡ — luôn hiển thị SỐ THẬT (empty-state lo trường hợp 0).
+  const views = summary?.page_views ?? 0;
+  const visitors = summary?.unique_visitors ?? 0;
+  const clicks = summary?.clicks ?? 0;
+  const conversions = summary?.conversions ?? 0;
   const ctr = views > 0 ? (clicks / views) * 100 : 0;
 
-  // Trend + sources có thể thiếu riêng dù trang đã có traffic thật (endpoint
-  // chưa deploy / direct bị ẩn). Fallback demo theo TỪNG card + gắn tag để
-  // không nhầm với số thật.
-  const demoTrend = demoData.trend.map(t => t.value);
-  const trendIsDemo = demo || trendSeries.length === 0;
-  const trendValues = demo
-    ? demoTrend
-    : trendSeries.length > 0
-      ? trendSeries
-      : demoTrend;
-
-  const realSources = sources.map(s => ({
+  const trendValues = trendSeries;
+  const sourceRows = sources.map(s => ({
     label: s.utm_source || 'direct',
     value: s.visits,
   }));
-  const sourcesIsDemo = demo || realSources.length === 0;
-  const sourceRows = demo
-    ? demoData.sources
-    : realSources.length > 0
-      ? realSources
-      : demoData.sources;
-
-  const sectionRows = demo
-    ? demoData.sections
-    : sections.map(s => ({ label: s.key || '—', value: s.metrics.count ?? 0 }));
-  const ctaRows = demo
-    ? demoData.ctas
-    : ctas.map(c => ({ label: c.key || '—', value: c.metrics.count ?? 0 }));
+  const sectionRows = sections.map(s => ({
+    label: s.key || '—',
+    value: s.metrics.count ?? 0,
+  }));
+  const ctaRows = ctas.map(c => ({
+    label: c.key || '—',
+    value: c.metrics.count ?? 0,
+  }));
 
   return (
     <div className='mx-auto w-full max-w-6xl px-4 pt-4 pb-16 sm:px-6'>
@@ -201,11 +184,6 @@ export function ExternalLandingAnalytics({
           )}
         </div>
         <div className='flex items-center gap-2'>
-          <DemoToggle
-            demo={demo}
-            onToggle={() => setDemoOverride(!demo)}
-            disabled={hasRealTraffic ? false : true}
-          />
           <div className='border-border bg-muted inline-flex rounded-lg border p-0.5'>
             {RANGES.map(r => (
               <button
@@ -226,15 +204,11 @@ export function ExternalLandingAnalytics({
         </div>
       </div>
 
-      {demo ? (
-        <DemoBanner hasRealTraffic={hasRealTraffic} pageId={pageId} />
-      ) : (
-        <ConnectionBanner
-          trackingKey={trackingKey}
-          hasData={views > 0}
-          pageId={pageId}
-        />
-      )}
+      <ConnectionBanner
+        trackingKey={trackingKey}
+        hasData={views > 0}
+        pageId={pageId}
+      />
 
       {/* KPI tiles */}
       <div className='mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4'>
@@ -251,7 +225,7 @@ export function ExternalLandingAnalytics({
 
       {/* Trend */}
       <div className='mt-3'>
-        <Card title='Lượt xem theo ngày' tag={trendIsDemo ? 'demo' : range}>
+        <Card title='Lượt xem theo ngày' tag={range}>
           {trendValues.length > 0 ? (
             <AreaChart series={trendValues} />
           ) : (
@@ -265,17 +239,14 @@ export function ExternalLandingAnalytics({
 
       {/* Sources + breakdown */}
       <div className='mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2'>
-        <Card
-          title='Nguồn truy cập'
-          tag={sourcesIsDemo ? 'demo' : 'utm_source'}
-        >
+        <Card title='Nguồn truy cập' tag='utm_source'>
           <BreakdownList
             loading={loading}
             rows={sourceRows}
             emptyText='Chưa có dữ liệu nguồn (traffic direct bị BE ẩn).'
           />
         </Card>
-        <Card title='Theo section' tag='section_id'>
+        <Card title='Theo section' tag='section'>
           <BreakdownList
             loading={loading}
             rows={sectionRows}
@@ -286,7 +257,7 @@ export function ExternalLandingAnalytics({
 
       {ctaRows.length > 0 && (
         <div className='mt-3'>
-          <Card title='Click theo CTA' tag='cta_id'>
+          <Card title='Click theo CTA' tag='cta'>
             <BreakdownList
               loading={loading}
               rows={ctaRows}
@@ -300,73 +271,6 @@ export function ExternalLandingAnalytics({
 }
 
 /* ── bits ──────────────────────────────────────────────────────────────── */
-
-function DemoToggle({
-  demo,
-  onToggle,
-  disabled,
-}: {
-  demo: boolean;
-  onToggle: () => void;
-  disabled: boolean;
-}) {
-  return (
-    <button
-      type='button'
-      onClick={onToggle}
-      disabled={disabled}
-      title={
-        disabled
-          ? 'Chưa có lượt xem thật — đang hiển thị dữ liệu demo'
-          : demo
-            ? 'Đang xem demo — bấm để xem dữ liệu thật'
-            : 'Bấm để xem dữ liệu demo'
-      }
-      className={cn(
-        'rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors',
-        demo
-          ? 'border-violet-300 bg-violet-100 text-violet-700'
-          : 'border-border text-content-muted hover:bg-muted bg-white',
-        disabled && 'cursor-not-allowed opacity-70'
-      )}
-    >
-      {demo ? 'Dữ liệu demo' : 'Dữ liệu thật'}
-    </button>
-  );
-}
-
-function DemoBanner({
-  hasRealTraffic,
-  pageId,
-}: {
-  hasRealTraffic: boolean;
-  pageId: string;
-}) {
-  return (
-    <div className='mt-4 flex flex-wrap items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-xs text-violet-800'>
-      <span className='text-2xs rounded bg-violet-200 px-1.5 py-0.5 font-mono font-bold tracking-wider uppercase'>
-        Dữ liệu demo
-      </span>
-      {hasRealTraffic ? (
-        <span>
-          Đang xem số minh hoạ 7 ngày. Bấm “Dữ liệu thật” để xem số thực tế.
-        </span>
-      ) : (
-        <span>
-          Landing chưa có lượt xem thật (site ngoài chưa bắn{' '}
-          <code className='rounded bg-violet-100 px-1 font-mono'>
-            page_view
-          </code>{' '}
-          với{' '}
-          <code className='rounded bg-violet-100 px-1 font-mono'>
-            page_id={pageId.slice(0, 8)}…
-          </code>
-          ). Số dưới đây là demo để xem layout.
-        </span>
-      )}
-    </div>
-  );
-}
 
 function ConnectionBanner({
   trackingKey,

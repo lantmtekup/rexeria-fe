@@ -8,7 +8,6 @@ import HeroIntroSection from './sections/HeroIntroSection';
 import DetailsSection from './sections/DetailsSection';
 import ProductDetailSection from './sections/ProductDetailSection';
 import ProductVariantSection from './sections/ProductVariantSection';
-import ProductSkuSection from './sections/ProductSkuSection';
 import CtaSection from './sections/CtaSection';
 import { IMG } from '@/lib/image-cdn';
 
@@ -112,8 +111,6 @@ export default function LandingContent() {
             },
           ]}
         />
-
-        <ProductSkuSection />
 
         <CtaSection />
       </main>

@@ -12,7 +12,7 @@ import {
 // server-side here, identical to the /api/track proxy. Also forwards a real
 // User-Agent (the backend rejects bot-like UAs).
 const TRACK_ORIGIN =
-  process.env.REXER_TRACK_ORIGIN || 'https://mintcoin-v2.vercel.app';
+  process.env.REXER_TRACK_ORIGIN || 'https://mintcoin-v2.rexerstudio.com';
 
 // FE-only test mode: while the BE /v1/forms/submit is not yet open to the
 // publishable key (returns 401), set REXER_FORMS_MOCK=1 to fake a 201 success

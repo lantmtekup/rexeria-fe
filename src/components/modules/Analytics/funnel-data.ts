@@ -88,10 +88,15 @@ export function useFunnelAnalytics(pageId: string, range: DateRange) {
             leads: s.leads,
           })),
           blocks: blocksRes.items.map(b => ({
-            block: b.block_key,
+            // Tên đẹp (section_label site gửi kèm) khi BE trả `label`; chưa có
+            // thì fallback `block_key` thô. Đồng bộ với overlay trên site.
+            block: b.label ?? b.block_key,
             views: b.views,
             clicks: b.clicks,
-            dwellSec: Math.round((b.total_dwell_ms ?? 0) / 1000),
+            // BE `/blocks` trả `avg_dwell_ms` (per-view, ms) — KHÔNG có
+            // `total_dwell_ms` (đó là field của /breakdown). Tổng dwell =
+            // avg_dwell_ms × views → giây. (Trước đọc nhầm field → luôn 0s.)
+            dwellSec: Math.round(((b.avg_dwell_ms ?? 0) * b.views) / 1000),
           })),
           visitsByDay,
           visitsDeltaPct,

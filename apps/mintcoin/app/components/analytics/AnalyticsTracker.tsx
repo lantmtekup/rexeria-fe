@@ -34,6 +34,17 @@ export default function AnalyticsTracker() {
     const idForEl = (el: Element) =>
       ANALYTICS_BLOCKS.find(b => el.matches(b.selector))?.id ?? null;
 
+    // Human label for a block / CTA — sent as `section_label` / `cta_label`
+    // dimensions so the ReXeR portal can show the same friendly names as the
+    // on-site overlay instead of the raw section_id ('discover' → 'Product
+    // Detail · Reverse'). The label is defined once in ANALYTICS_BLOCKS.
+    const labelForBlock = (id?: string) =>
+      ANALYTICS_BLOCKS.find(b => b.id === id)?.label;
+    const labelForCta = (sectionId: string | undefined, ctaId: string) =>
+      ANALYTICS_BLOCKS.find(b => b.id === sectionId)?.ctas?.find(
+        c => c.id === ctaId
+      )?.label;
+
     const flush = (id: string) => {
       const s = state.get(id);
       if (!s) return;
@@ -44,8 +55,10 @@ export default function AnalyticsTracker() {
       if (s.dwell < 250) return; // ignore quick fly-bys
       // block_view is the event_type the BE counts as a block view; scroll_pct
       // in metrics feeds avg_scroll_depth. One per enter→exit cycle.
+      const label = labelForBlock(id);
       track('block_view', {
         sectionId: id,
+        dimensions: label ? { section_label: label } : undefined,
         metrics: {
           dwell_ms: Math.round(s.dwell),
           scroll_pct: Math.round(s.maxScroll),
@@ -94,10 +107,17 @@ export default function AnalyticsTracker() {
       if (!cta) return;
       // Attribute the click to the block whose anchor element contains it.
       const sectionId = ANALYTICS_BLOCKS.find(b => cta.closest(b.selector))?.id;
+      const ctaId = cta.getAttribute('data-cta-id') || 'unknown';
+      const sectionLabel = labelForBlock(sectionId);
+      const ctaLabel = labelForCta(sectionId, ctaId);
+      const dims: Record<string, string> = {};
+      if (sectionLabel) dims.section_label = sectionLabel;
+      if (ctaLabel) dims.cta_label = ctaLabel;
       // block_click counts toward both block clicks and summary clicks.
       track('block_click', {
-        ctaId: cta.getAttribute('data-cta-id') || 'unknown',
+        ctaId,
         sectionId,
+        dimensions: Object.keys(dims).length ? dims : undefined,
       });
     };
     document.addEventListener('click', onClick);
