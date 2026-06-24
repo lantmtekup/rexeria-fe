@@ -1,5 +1,15 @@
 'use client';
 
+/**
+ * Data-block "Framer · Perform Pricing" (port từ 360-admin-cms).
+ *
+ * Header (eyebrow + heading + subheading) căn giữa, rồi STICKY DECK-SCROLL các
+ * pricing card: card xếp chồng absolute trong `.fpp-stage` (position: sticky),
+ * cuộn → từng card trượt + scale lên đè card trước (GSAP scrub, KHÔNG `pin` —
+ * dùng CSS sticky cho iOS-safe). Animation qua `useBlockMotion` + `scroller`.
+ * Reduced-motion: CSS @media bỏ deck-scroll → card về luồng dọc. @container/cqi
+ * thay md:/lg:; data-element-key + styleOf cho inline-edit (mảng tiers → 'tiers').
+ */
 import * as React from 'react';
 import gsap from 'gsap';
 
@@ -178,18 +188,10 @@ export function FramerPerformPricing({
     ).matches;
 
     if (reduceMotion) {
-      gsap.set(cardEls, { clearProps: 'all', scale: 1, y: 0 });
-      const stage = root.querySelector<HTMLElement>('.fpp-stage');
-      if (stage) stage.style.position = 'static';
-      const rail = root.querySelector<HTMLElement>('.fpp-rail');
-      if (rail) rail.style.height = 'auto';
-      cardEls.forEach(c => {
-        const wrap = c.parentElement;
-        if (wrap) {
-          wrap.style.position = 'relative';
-          wrap.style.top = 'auto';
-        }
-      });
+      // Bỏ deck-scroll: layout do CSS @media (prefers-reduced-motion) lo —
+      // card về luồng dọc bình thường. (Trước đây mutate .style imperative
+      // nhưng KHÔNG reset position:absolute;inset:0 của card → card chồng nhau
+      // + stage collapse → user reduced-motion chỉ thấy 1 thẻ.) GSAP bỏ qua.
       return;
     }
 
@@ -313,7 +315,7 @@ export function FramerPerformPricing({
           style={composeStyle(
             {
               position: 'relative',
-              height: `${tiers.length * 100}vh`,
+              height: `${tiers.length * 100}dvh`,
             },
             styleOf('tiers')
           )}
@@ -323,7 +325,7 @@ export function FramerPerformPricing({
             style={{
               position: 'sticky',
               top: 80,
-              height: '100vh',
+              height: '100dvh',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -345,7 +347,7 @@ export function FramerPerformPricing({
                     position: 'absolute',
                     inset: 0,
                     width: 'min(1120px, calc(100% - clamp(40px, 8cqi, 96px)))',
-                    height: 'clamp(380px, 56vh, 540px)',
+                    height: 'clamp(380px, 56dvh, 540px)',
                     zIndex: idx + 1,
                     backgroundColor: '#ffffff',
                     borderRadius: 'clamp(20px, 2cqi, 32px)',
@@ -446,13 +448,13 @@ export function FramerPerformPricing({
              viewport, KHÔNG ép stage về position: static (sẽ mất animation). */
           .framer-perform-pricing .fpp-stage {
             top: 24px !important;
-            height: 100vh !important;
+            height: 100dvh !important;
             padding-bottom: 24px !important;
             box-sizing: border-box !important;
           }
           .framer-perform-pricing .fpp-card {
             width: calc(100% - 24px) !important;
-            height: min(74vh, 640px) !important;
+            height: min(74dvh, 640px) !important;
             grid-template-columns: 1fr !important;
             grid-template-rows: 180px 1fr !important;
             gap: 12px !important;
@@ -471,11 +473,32 @@ export function FramerPerformPricing({
             padding-bottom: 16px !important;
           }
           .framer-perform-pricing .fpp-card {
-            height: min(80vh, 600px) !important;
+            height: min(80dvh, 600px) !important;
             padding: 12px !important;
           }
           .framer-perform-pricing .fpp-card {
             grid-template-rows: 140px 1fr !important;
+          }
+        }
+        /* Reduced-motion: bỏ deck-scroll — rail/stage về luồng thường, card
+           xếp DỌC (không absolute/sticky nên không chồng nhau). GSAP đã bail. */
+        @media (prefers-reduced-motion: reduce) {
+          .framer-perform-pricing .fpp-rail {
+            height: auto !important;
+          }
+          .framer-perform-pricing .fpp-stage {
+            position: static !important;
+            height: auto !important;
+            overflow: visible !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: clamp(24px, 4cqi, 48px) !important;
+            padding-bottom: 0 !important;
+          }
+          .framer-perform-pricing .fpp-card {
+            position: relative !important;
+            inset: auto !important;
+            transform: none !important;
           }
         }
       `}</style>
