@@ -42,12 +42,6 @@ const STAGES: {
     sub: 'form submit · bàn giao',
     style: 'handoff',
   },
-  {
-    key: 'sql',
-    label: 'Lead đạt chuẩn (SQL)',
-    sub: 'qualified',
-    style: 'sales',
-  },
   { key: 'deals', label: 'Chốt · Mua coin', sub: 'deal', style: 'sales' },
 ];
 

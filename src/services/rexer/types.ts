@@ -674,6 +674,9 @@ export interface ImageStat {
 export interface BlockBreakdownRow {
   block_id: string;
   block_type: string | null;
+  /** Human label (from `dimensions.section_label` the site sends). Present once
+   *  the BE surfaces it on `/blocks`; FE falls back to `block_key` until then. */
+  label?: string | null;
   views: number;
   clicks: number;
   unique_viewers: number;

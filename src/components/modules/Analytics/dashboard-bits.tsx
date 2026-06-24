@@ -92,23 +92,56 @@ export function MetricTile({
 
 /* ── Area chart (visits theo ngày) — SVG thuần, không thêm dependency ───── */
 
+// Nội suy monotone cubic (Fritsch–Carlson): vẫn mượt nhưng KHÔNG overshoot ra
+// ngoài khoảng giá trị 2 điểm kề. Đường cũ dùng Catmull-Rom (chia /6) bị undershoot
+// xuống dưới 0 ngay trước một spike (vd dải dài toàn 0 rồi nhảy vọt) → vẽ ra lượt
+// xem "âm". Monotone giữ đường nằm trong [0, max] khi data toàn ≥ 0.
 function smoothPath(pts: [number, number][]): string {
-  if (pts.length < 2) return '';
+  const n = pts.length;
+  if (n === 0) return '';
+  if (n === 1) return `M ${pts[0][0]} ${pts[0][1]}`;
+
+  const dx: number[] = [];
+  const slope: number[] = [];
+  for (let i = 0; i < n - 1; i++) {
+    const h = pts[i + 1][0] - pts[i][0];
+    dx.push(h);
+    slope.push(h === 0 ? 0 : (pts[i + 1][1] - pts[i][1]) / h);
+  }
+
+  // Tangent tại mỗi điểm; 0 ở cực trị cục bộ để chặn overshoot.
+  const m: number[] = new Array(n);
+  m[0] = slope[0];
+  m[n - 1] = slope[n - 2];
+  for (let i = 1; i < n - 1; i++) {
+    m[i] = slope[i - 1] * slope[i] <= 0 ? 0 : (slope[i - 1] + slope[i]) / 2;
+  }
+  // Ràng buộc monotonic (vòng tròn bán kính 3) — điều kiện đủ để không overshoot.
+  for (let i = 0; i < n - 1; i++) {
+    if (slope[i] === 0) {
+      m[i] = 0;
+      m[i + 1] = 0;
+      continue;
+    }
+    const a = m[i] / slope[i];
+    const b = m[i + 1] / slope[i];
+    const s = a * a + b * b;
+    if (s > 9) {
+      const t = 3 / Math.sqrt(s);
+      m[i] = t * a * slope[i];
+      m[i + 1] = t * b * slope[i];
+    }
+  }
+
+  // Hermite → cubic Bézier.
   let d = `M ${pts[0][0]} ${pts[0][1]}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[Math.max(0, i - 1)];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[Math.min(pts.length - 1, i + 2)];
-    const c1: [number, number] = [
-      p1[0] + (p2[0] - p0[0]) / 6,
-      p1[1] + (p2[1] - p0[1]) / 6,
-    ];
-    const c2: [number, number] = [
-      p2[0] - (p3[0] - p1[0]) / 6,
-      p2[1] - (p3[1] - p1[1]) / 6,
-    ];
-    d += ` C ${c1[0]} ${c1[1]}, ${c2[0]} ${c2[1]}, ${p2[0]} ${p2[1]}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i];
+    const c1x = pts[i][0] + h / 3;
+    const c1y = pts[i][1] + (m[i] * h) / 3;
+    const c2x = pts[i + 1][0] - h / 3;
+    const c2y = pts[i + 1][1] - (m[i + 1] * h) / 3;
+    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${pts[i + 1][0]} ${pts[i + 1][1]}`;
   }
   return d;
 }
@@ -134,7 +167,15 @@ export function AreaChart({ series }: { series: number[] }) {
 
   const yTicks = [0, 0.25, 0.5, 0.75, 1].map(f => Math.round(yMax * f));
   const every = Math.max(1, Math.ceil(series.length / 14));
-  const fmtDay = (i: number) => String(i + 1).padStart(2, '0');
+  // Nhãn = ngày dương lịch THẬT, không phải số thứ tự 1..N. Chuỗi zero-filled
+  // 1 slot/ngày kết thúc ở hôm nay (slot cuối = hôm nay), nên slot i ứng với
+  // (hôm nay − (N−1−i)) ngày. Lỗi cũ (i+1) khiến spike ở ngày thật 23 hiện nhãn
+  // "29" → trông như có data tương lai.
+  const fmtDay = (i: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (series.length - 1 - i));
+    return String(d.getDate()).padStart(2, '0');
+  };
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className='w-full' role='img'>
