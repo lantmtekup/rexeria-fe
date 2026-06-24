@@ -49,6 +49,7 @@ export const REXER_TRACKING_KEY =
 
 // Anchored to the unique class on each v2 <section>, in page-scroll order.
 export const ANALYTICS_BLOCKS: AnalyticsBlock[] = [
+  { id: 'hero', label: 'Hero', selector: '.hero' },
   { id: 'emblem', label: 'Emblem', selector: '.emblem' },
   { id: 'manifesto', label: 'Manifesto', selector: '.manifesto' },
   { id: 'works', label: 'Works', selector: '.works' },

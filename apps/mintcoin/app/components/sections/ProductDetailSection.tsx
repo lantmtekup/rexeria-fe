@@ -27,15 +27,16 @@ interface Props {
   tabs: Tab[];
 }
 
-// Reusable product detail block that matches the Delvaux reference pattern:
+// Reusable product detail block (Delvaux reference pattern):
 //   - Big product image fills the section
-//   - SMALL hotspot dots (32px) positioned ON specific points of the product
-//   - Each dot is an arrow icon inside a thin-bordered circle
-//   - Hovering a dot scales it up and slides a label beside it
-//   - Clicking opens a side panel with the feature description
+//   - SMALL hotspot dots positioned ON specific points of the product
+//   - Clicking a dot opens a full side panel (drawer) with the feature
 //
-// Replaces the previous design (large pill buttons stacked vertically with
-// always-visible labels) which didn't match the luxury minimal aesthetic.
+// SCROLL-SEQUENCE (2026-06): the section is now TALL with a `sticky` inner
+// wrapper (CSS sticky, NOT GSAP pin — iOS-safe). As the user scrolls through,
+// `scrollStep` advances 0→N-1; the matching hotspot lights up and an inline
+// info card reveals that feature's text — so the user sees every detail just
+// by scrolling, like auto-clicking each hotspot. Click → full drawer still works.
 export default function ProductDetailSection({
   id,
   variant,
@@ -46,6 +47,11 @@ export default function ProductDetailSection({
   const sectionRef = useRef<HTMLElement>(null);
   const imgScrollRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  // Scroll-driven sequence: which hotspot is currently revealed (0…N-1), and
+  // whether the section is in its pinned range (controls info-card visibility).
+  const [scrollStep, setScrollStep] = useState(0);
+  const [inPin, setInPin] = useState(false);
+  const lastStepRef = useRef(0);
   // Track mobile breakpoint so the click-hotspot animation + drawer slide
   // direction can be tailored: desktop slides drawer in from right + zooms
   // the coin 2× leftward; mobile slides from bottom + only nudges the
@@ -61,21 +67,15 @@ export default function ProductDetailSection({
   }, []);
 
   // Center the default scroll position of the pannable image on mobile.
-  // Without this, the image lands flush-left (showing only the heel side)
-  // — the more interesting middle (crystal embellishment + heel curve) is
-  // hidden behind the right edge until the user manually swipes.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const el = imgScrollRef.current;
     if (!el) return;
     const center = () => {
-      // Only center on mobile — desktop uses object-cover, no scroll.
       if (window.innerWidth >= 768) return;
       const offset = (el.scrollWidth - el.clientWidth) / 2;
       if (offset > 0) el.scrollLeft = offset;
     };
-    // Defer one tick so the image has finished its initial layout pass
-    // (otherwise scrollWidth equals clientWidth and we don't centre).
     const t = setTimeout(center, 50);
     window.addEventListener('resize', center);
     return () => {
@@ -84,12 +84,7 @@ export default function ProductDetailSection({
     };
   }, []);
 
-  // Lock body scroll while the drawer is open. iOS Safari ignores
-  // `body { overflow: hidden }` for native scroll, AND the leftover
-  // style state combined with off-screen GPU layers caused scroll to
-  // freeze after close. Solution: the position:fixed + top: -scrollY
-  // pattern. Saves scroll position, fixes body, restores both on close.
-  // Works on iOS, Android, desktop.
+  // Lock body scroll while the drawer is open (iOS-safe position:fixed pattern).
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const lenis = (window as unknown as LenisGlobal).__lenis;
@@ -117,7 +112,6 @@ export default function ProductDetailSection({
     }
 
     return () => {
-      // Defensive cleanup if component unmounts while drawer open.
       if (body.style.position === 'fixed') {
         const savedY = parseInt(body.dataset.scrollY || '0', 10);
         body.style.position = '';
@@ -139,210 +133,202 @@ export default function ProductDetailSection({
 
     const ctx = gsap.context(() => {
       const img = root.querySelector<HTMLElement>('.zoomin-img');
-      if (!img) return;
 
-      const mobile = window.matchMedia('(max-width: 767px)').matches;
-
-      // VISIBILITY: one-time fade-in that plays once and STAYS. Critical —
-      // opening a hotspot drawer locks the body (position:fixed) which resets
-      // window.scrollY to 0; a reversible/scrubbed autoAlpha would then revert
-      // to 0 and the zoomed coin vanishes behind the drawer (the empty-left
-      // bug). `once` + no-reverse keeps it visible regardless of scroll resets.
-      gsap.fromTo(
-        img,
-        { autoAlpha: 0 },
-        {
-          autoAlpha: 1,
-          duration: 1.0,
-          ease: 'sine.out',
-          scrollTrigger: {
-            trigger: root,
-            start: 'top 85%',
-            once: true,
-            invalidateOnRefresh: true,
-          },
-        }
-      );
-
-      // CINEMATIC SCALE (variant 2 desktop only): scrub scale separately from
-      // visibility, so a scroll reset can shrink it harmlessly but never hide it.
-      if (variant === '2' && !mobile) {
+      // VISIBILITY: one-time fade-in that plays once and STAYS.
+      if (img) {
         gsap.fromTo(
           img,
-          { scale: 0.7 },
+          { autoAlpha: 0 },
           {
-            scale: 1.1,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: root,
-              start: 'top bottom',
-              end: 'center center',
-              scrub: 1,
-              fastScrollEnd: true,
-              invalidateOnRefresh: true,
-            },
+            autoAlpha: 1,
+            duration: 1.0,
+            ease: 'sine.out',
+            scrollTrigger: { trigger: root, start: 'top 85%', once: true },
           }
         );
+
+        // Zoom-in as the coin enters; completes by the time the sticky pin
+        // engages (end 'top top'), then holds while the sequence plays.
+        if (
+          variant === '2' &&
+          !window.matchMedia('(max-width: 767px)').matches
+        ) {
+          gsap.fromTo(
+            img,
+            { scale: 0.78 },
+            {
+              scale: 1.05,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: root,
+                start: 'top bottom',
+                end: 'top top',
+                scrub: 1,
+                invalidateOnRefresh: true,
+              },
+            }
+          );
+        }
       }
+
+      // SCROLL SEQUENCE: map scroll progress through the tall section to a
+      // hotspot step. `floor(progress * N)` advances 0→N-1 as you scroll;
+      // `inPin` toggles the info-card while the sticky coin is on screen.
+      ScrollTrigger.create({
+        trigger: root,
+        start: 'top top',
+        end: 'bottom bottom',
+        invalidateOnRefresh: true,
+        onToggle: self => setInPin(self.isActive),
+        onUpdate: self => {
+          const step = Math.min(
+            Math.floor(self.progress * tabs.length),
+            tabs.length - 1
+          );
+          if (step !== lastStepRef.current) {
+            lastStepRef.current = step;
+            setScrollStep(step);
+          }
+        },
+      });
     }, root);
 
     return () => ctx.revert();
-  }, []);
+  }, [tabs.length, variant]);
 
   const tabOpen = activeTab !== null;
   const tabData = activeTab ? tabs.find(t => t.key === activeTab) : null;
+  const stepTab = tabs[scrollStep];
+  // Info card shows while pinned and no drawer is open.
+  const cardVisible = inPin && !tabOpen;
+  const dark = variant === '2';
 
   return (
     <section
       id={id}
       ref={sectionRef}
       data-variant={variant}
-      // Mobile: 70vh (was 100vh). On portrait phones the image was
-      // stretching vertically, exaggerating the shoe to feel awkwardly
-      // tall. 70vh keeps the image aspect closer to its natural 1.6:1
-      // landscape ratio. Desktop unchanged.
-      className={`product-detail relative h-[70vh] w-full overflow-hidden md:h-screen ${
-        variant === '2' ? 'bg-neutral-900 text-white' : 'bg-neutral-100'
-      }`}
-      // `touch-action: pan-y` tells iOS "vertical scroll has priority,
-      // never wait to disambiguate tap vs scroll." Without it, every
-      // touch on the section paused 100-200ms while iOS decided if the
-      // user was tapping a hotspot button or trying to scroll — that's
-      // why scroll felt "treo" inside these two coin sections.
-      style={{ touchAction: 'pan-y' }}
+      className='product-detail relative w-full'
+      // Tall scroll track: ~120vh per hotspot so each step gets a comfortable
+      // scroll band. The inner wrapper is `sticky`, so the coin holds while the
+      // page scrolls through these bands.
+      style={{ height: `${Math.max(tabs.length, 2) * 120}vh` }}
     >
-      {/* Wrapper: contain:paint pre-warms a GPU layer at parse time so
-          first scroll-into-view doesn't pay rasterisation cost.
-          data-lenis-prevent intentionally NOT used — caused micro-pause
-          in Lenis scroll handling at viewport entry. */}
-      {/*
-        Panel-open animation REWRITE:
-        Original used `transition: width / flex-basis` on both image and
-        side panel — both are LAYOUT properties, so every animation frame
-        re-ran layout + reflow on the image, hotspots, and panel content
-        ("hơi giật"). Layout transitions cost ~10-15ms per frame on a
-        full-viewport section.
-
-        New approach uses ONLY `transform: translateX` (compositor-only):
-        - Image wrapper: stays full-width, always.
-        - Panel: absolute right:0, width 50% on desktop. When closed,
-          transform: translateX(100%) (off-screen right). When open,
-          translateX(0). Pure GPU work — no layout, no reflow.
-        - Visually the panel slides IN OVER the image's right half. The
-          image is partially hidden behind it. Same 2-column read as the
-          flex version, but rendered cheaply.
-      */}
       <div
-        className='content relative h-full w-full'
-        // `contain: paint` removed on mobile — combined with the wrapper
-        // transform layer, it pinned a sub-tree to its own paint context
-        // which froze iOS scroll at section boundaries. Desktop still
-        // gets contain via the wrapper-image's GPU layer below.
-        style={!isMobile ? { contain: 'paint' } : undefined}
+        className={`sticky top-0 h-[70vh] w-full overflow-hidden md:h-screen ${
+          dark ? 'bg-neutral-900 text-white' : 'bg-neutral-100'
+        }`}
+        style={{ touchAction: 'pan-y' }}
       >
-        {/* Image fills the section. On MOBILE the image is wider than the
-            portrait viewport so users can pan horizontally to see the full
-            shoe; on DESKTOP it cover-fits the section as before. */}
-        {/* When a hotspot opens the drawer (right 50% on md+), the coin
-            wrapper slides left and scales 2× so the focused detail sits
-            in the centre of the visible left half instead of being hidden
-            under the panel. Hotspots scale together with the image so they
-            stay pinned to coin features. Pure transform = compositor-only,
-            no layout reflow. */}
         <div
-          className='wrapper-image absolute inset-0'
-          style={{
-            // Mobile drawer covers from bottom, so horizontal shift is
-            // wasted — keep the coin centred and zoom modestly (1.15×).
-            // Desktop slides the coin 25% left + 2× zoom to fit inside
-            // the visible half not covered by the right-side drawer.
-            transform: tabOpen
-              ? isMobile
-                ? 'translate3d(0, 0, 0) scale(1.15)'
-                : 'translate3d(-25%, 0, 0) scale(2)'
-              : 'none',
-            transformOrigin: 'center center',
-            transition: 'transform 700ms cubic-bezier(0.22, 1, 0.36, 1)',
-            // `will-change` only while drawer is open. Permanent
-            // will-change forces a GPU layer to exist at all times,
-            // which on iOS held the section in a state that interfered
-            // with native scroll momentum at the section boundary.
-            willChange: tabOpen ? 'transform' : 'auto',
-          }}
+          className='content relative h-full w-full'
+          style={!isMobile ? { contain: 'paint' } : undefined}
         >
-          {/*
-            Pannable wrapper:
-            - Mobile (<md): overflow-x:auto + touch-pan-x → user drags
-              horizontally to reveal the right half of the image.
-              data-lenis-prevent stops Lenis from intercepting touch
-              gestures here so horizontal swipe works without nudging
-              the page vertically.
-            - Desktop (md+): overflow-x:hidden → image cover-fits.
-            The inner container width auto-sizes to the image's natural
-            ratio on mobile (h-full + w-auto), and stretches to 100% on
-            desktop. Hotspots live INSIDE this inner container so their
-            xPct/yPct stay anchored to the image as the user pans. */}
-          {/* Coin photos are circular with transparent backgrounds and the
-              subject fills the frame edge-to-edge — `object-cover` cropped
-              the rim. Switched to `object-contain` plus generous padding
-              so the entire coin reads, with comfortable breathing space.
-              Mobile pan disabled for the same reason: nothing to pan when
-              the whole circle is already visible. */}
           <div
-            ref={imgScrollRef}
-            className='img product-detail-pan relative h-full w-full overflow-hidden'
+            className='wrapper-image absolute inset-0'
+            style={{
+              transform: tabOpen
+                ? isMobile
+                  ? 'translate3d(0, 0, 0) scale(1.15)'
+                  : 'translate3d(-25%, 0, 0) scale(2)'
+                : 'none',
+              transformOrigin: 'center center',
+              transition: 'transform 700ms cubic-bezier(0.22, 1, 0.36, 1)',
+              willChange: tabOpen ? 'transform' : 'auto',
+            }}
           >
-            <div className='relative h-full w-full p-6 md:p-16'>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={mainImage}
-                alt={mainAlt}
-                loading='eager'
-                decoding='async'
-                fetchPriority='high'
-                className='zoomin-img h-full w-full object-contain select-none'
-                draggable={false}
-              />
+            <div
+              ref={imgScrollRef}
+              className='img product-detail-pan relative h-full w-full overflow-hidden'
+            >
+              <div className='relative h-full w-full p-6 md:p-16'>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={mainImage}
+                  alt={mainAlt}
+                  loading='eager'
+                  decoding='async'
+                  fetchPriority='high'
+                  className='zoomin-img h-full w-full object-contain select-none'
+                  draggable={false}
+                />
 
-              {/* Hotspots positioned relative to the padded container.
-                  Coordinates approximate; tune dotX/dotY in page.tsx if a
-                  pin lands off the visible coin. Hidden while a drawer is
-                  open so they don't blow up 2× with the zoomed coin. */}
-              <div
-                style={{
-                  opacity: tabOpen ? 0 : 1,
-                  pointerEvents: tabOpen ? 'none' : 'auto',
-                  transition: 'opacity 300ms ease',
-                }}
-              >
-                {tabs.map(t => (
-                  <Hotspot
-                    key={t.key}
-                    xPct={t.dotX}
-                    yPct={t.dotY}
-                    label={t.label}
-                    onClick={() =>
-                      setActiveTab(activeTab === t.key ? null : t.key)
-                    }
-                  />
-                ))}
+                {/* Hotspots. The scroll-active one is highlighted; clicking any
+                    still opens the full drawer. Hidden while a drawer is open. */}
+                <div
+                  style={{
+                    opacity: tabOpen ? 0 : 1,
+                    pointerEvents: tabOpen ? 'none' : 'auto',
+                    transition: 'opacity 300ms ease',
+                  }}
+                >
+                  {tabs.map((t, i) => (
+                    <Hotspot
+                      key={t.key}
+                      xPct={t.dotX}
+                      yPct={t.dotY}
+                      label={t.label}
+                      active={inPin && scrollStep === i}
+                      onClick={() =>
+                        setActiveTab(activeTab === t.key ? null : t.key)
+                      }
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Inline info card — reveals the current hotspot's text as the user
+              scrolls (no scroll-lock). Desktop: bottom-left. Mobile: bottom. */}
+          {stepTab && (
+            <div
+              className='pointer-events-none absolute right-4 bottom-6 left-4 z-[20] md:right-auto md:bottom-12 md:left-12 md:max-w-md'
+              style={{
+                opacity: cardVisible ? 1 : 0,
+                transform: cardVisible ? 'translateY(0)' : 'translateY(12px)',
+                transition: 'opacity 400ms ease, transform 400ms ease',
+              }}
+            >
+              <div
+                key={stepTab.key}
+                className={`fade-step rounded-2xl px-5 py-4 shadow-xl backdrop-blur-md md:px-7 md:py-6 ${
+                  dark
+                    ? 'bg-white/10 text-white'
+                    : 'bg-white/80 text-neutral-900'
+                }`}
+              >
+                <div
+                  className={`mb-1 font-mono text-[10px] tracking-[0.2em] uppercase ${
+                    dark ? 'text-white/50' : 'text-neutral-500'
+                  }`}
+                >
+                  {String(scrollStep + 1).padStart(2, '0')} / {tabs.length}
+                </div>
+                <h3 className='font-serif text-xl md:text-2xl'>
+                  {stepTab.label}
+                </h3>
+                <p
+                  className={`mt-2 text-sm leading-relaxed ${
+                    dark ? 'text-white/70' : 'text-neutral-600'
+                  }`}
+                >
+                  {stepTab.desc}
+                </p>
+                <div
+                  className={`mt-3 text-[11px] ${
+                    dark ? 'text-white/40' : 'text-neutral-400'
+                  }`}
+                >
+                  Bấm vào điểm sáng để xem ảnh chi tiết →
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/*
-        Drawer rendered AT SECTION ROOT (not inside .content), with
-        position:fixed so it covers the WHOLE viewport — not just the
-        bounds of the product-detail section. Mirrors the Astro original
-        which sets body.overflow=hidden and overlays a full-page panel.
-        Backdrop dim layer fades in/out with the drawer for the standard
-        modal feel.
-      */}
-      {/* Backdrop — dims the page behind the drawer. pointer-events
-          gated by tabOpen so when the drawer is closed nothing intercepts
-          clicks on the section beneath. */}
+      {/* Backdrop — dims the page behind the drawer. */}
       <div
         className='fixed inset-0 z-[1900] bg-black/40 transition-opacity duration-500'
         style={{
@@ -353,12 +339,7 @@ export default function ProductDetailSection({
         aria-hidden='true'
       />
 
-      {/* Drawer — mobile slides UP from bottom (88vh tall sheet),
-          desktop slides in from right (half viewport). z-[1950] above
-          backdrop. `willChange` + `pointerEvents` gated by tabOpen so
-          the off-screen drawer doesn't keep a live GPU layer at z-1950
-          intercepting iOS scroll events after close (the same bug
-          pattern previously fixed on .wrapper-image). */}
+      {/* Drawer — mobile slides up from bottom, desktop in from right. */}
       <div
         className={`fixed z-[1950] bg-white shadow-2xl ${
           isMobile
@@ -380,11 +361,6 @@ export default function ProductDetailSection({
         aria-hidden={!tabOpen}
       >
         {tabData && (
-          // `data-lenis-prevent` stops Lenis from swallowing the wheel/touch
-          // events on this panel — without it, the smooth-scroll engine
-          // (paused on body) still ate scroll inside the drawer, so the
-          // user couldn't reach the image below the description.
-          // `overscroll-contain` keeps inertia from bleeding back to body.
           <div
             className='tab active relative h-full overflow-y-auto overscroll-contain p-8 md:p-12'
             data-lenis-prevent
@@ -439,20 +415,17 @@ export default function ProductDetailSection({
 }
 
 // ── Hotspot dot ────────────────────────────────────────────────────
-// Astro/Delvaux pattern: minimalist plain WHITE circle with subtle ring,
-// no arrow icon and no label visible by default. Hover scales it up and
-// fades a small text label in to the right. Click opens the side panel.
-// (Earlier version had a permanent arrow + always-visible label which read
-// as a generic UI button instead of the editorial pin Delvaux uses.)
 function Hotspot({
   xPct,
   yPct,
   label,
+  active,
   onClick,
 }: {
   xPct: number;
   yPct: number;
   label: string;
+  active: boolean;
   onClick: () => void;
 }) {
   return (
@@ -461,30 +434,37 @@ function Hotspot({
       onClick={onClick}
       data-cta-id={`hotspot-${label.toLowerCase().replace(/\s+/g, '-')}`}
       className='group absolute -translate-x-1/2 -translate-y-1/2'
-      // `touch-action: manipulation` skips iOS's 300ms tap-vs-double-tap
-      // detection and lets vertical scroll pass through the button
-      // immediately if the finger moves at all. Without this, even a
-      // touch that starts on a hotspot button would block the start
-      // of a scroll gesture.
       style={{ left: `${xPct}%`, top: `${yPct}%`, touchAction: 'manipulation' }}
       aria-label={`Open ${label}`}
     >
-      {/* Hotspot marker = the RCM crown badge image. The wrapper span carries
-          the gentle float animation; the img keeps the hover-scale so the two
-          transforms don't fight. */}
+      {/* Scroll-active or hover → scale up + glow ring so the user's eye tracks
+          the hotspot the inline card is describing. */}
       <span className='hotspot-float block'>
+        {active && (
+          <span
+            className='absolute inset-0 -z-10 animate-ping rounded-full bg-amber-300/50'
+            aria-hidden='true'
+          />
+        )}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src='/mint-icon.png'
           alt=''
           aria-hidden='true'
           draggable={false}
-          className='h-10 w-10 rounded-full shadow-lg drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)] transition-transform duration-300 select-none group-hover:scale-110'
+          className={`h-10 w-10 rounded-full shadow-lg drop-shadow-[0_2px_8px_rgba(0,0,0,0.35)] transition-transform duration-300 select-none group-hover:scale-110 ${
+            active ? 'scale-125 ring-2 ring-amber-300' : ''
+          }`}
         />
       </span>
-      {/* Hover label (desktop). Absolutely positioned + pointer-events-none so
-          it never expands the button box or overlaps/blocks the coin. */}
-      <span className='pointer-events-none absolute top-1/2 left-12 -translate-x-1 -translate-y-1/2 rounded-full bg-white/95 px-3 py-1 text-[10px] tracking-[0.18em] whitespace-nowrap text-black uppercase opacity-0 shadow-sm transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100'>
+      {/* Label — shows on hover, and stays visible while scroll-active. */}
+      <span
+        className={`pointer-events-none absolute top-1/2 left-12 -translate-y-1/2 rounded-full bg-white/95 px-3 py-1 text-[10px] tracking-[0.18em] whitespace-nowrap text-black uppercase shadow-sm transition-all duration-300 ${
+          active
+            ? 'translate-x-0 opacity-100'
+            : '-translate-x-1 opacity-0 group-hover:translate-x-0 group-hover:opacity-100'
+        }`}
+      >
         {label}
       </span>
     </button>

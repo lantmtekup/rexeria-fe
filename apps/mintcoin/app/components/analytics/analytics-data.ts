@@ -73,4 +73,11 @@ export const ANALYTICS_BLOCKS: AnalyticsBlock[] = [
     ],
   },
   { id: 'information', label: 'Variants', selector: '#information' },
+  {
+    id: 'contact',
+    label: 'Register Interest',
+    selector: '#contact',
+    // Closing CTA form — the register-interest submit button.
+    ctas: [{ id: 'cta-register', label: 'Register Interest' }],
+  },
 ];
