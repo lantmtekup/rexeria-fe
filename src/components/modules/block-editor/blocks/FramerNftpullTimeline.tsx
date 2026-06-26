@@ -166,7 +166,10 @@ export function TimelineSection({
     >
       <div
         className={cn(
-          'flex w-full flex-1 flex-col-reverse gap-6 @3xl:flex-row',
+          // Mobile: card trên, badge dưới (cùng cột, có gap-6 để tách hàng
+          // rõ ràng — tránh badge đè lên article như trước).
+          // Desktop (≥3xl): hàng ngang, justify theo side.
+          'flex w-full flex-1 flex-col-reverse items-start gap-6 @3xl:flex-row',
           isRight
             ? 'pl-0 @2xl:justify-end @2xl:pl-0 @3xl:pl-12'
             : 'pr-0 @2xl:justify-start @2xl:pr-0 @3xl:pr-12'
@@ -179,7 +182,10 @@ export function TimelineSection({
             styleOf('card'),
             isAt3xl ? CARD_STYLE_MASK : undefined
           )}
-          className={selectableClass(activeKey === 'card', 'nftpull-card')}
+          className={selectableClass(
+            activeKey === 'card',
+            'nftpull-card mt-12 @3xl:mt-0'
+          )}
         >
           <h3
             data-element-key='title'
@@ -295,9 +301,6 @@ export function FramerNftpullTimeline({
 
     const cards = root.querySelectorAll<HTMLElement>('.nftpull-card');
     if (cards.length && !isMobile) {
-      // Desktop: fade-in (opacity 0.1→1) + trượt từ dưới (y) theo thời
-      // gian 1s. rotateX tách riêng và đi theo SCRUB (tốc độ cuộn)
-      // thay vì theo thời gian — góc xoay phụ thuộc vào scroll position.
       cards.forEach(card => {
         gsap.set(card, {
           transformPerspective: 1500,
@@ -405,7 +408,7 @@ export function FramerNftpullTimeline({
               trigger: badge,
               scroller,
               start: 'top 100%',
-              end: 'top 80%',
+              end: 'top 60%',
               scrub: 0.6,
               invalidateOnRefresh: true,
             },
@@ -517,7 +520,10 @@ export function FramerNftpullTimeline({
             }}
           />
 
-          <div data-element-key='items' className='flex flex-col gap-12'>
+          <div
+            data-element-key='items'
+            className='flex flex-col gap-0 @3xl:gap-12'
+          >
             {items.map((item, idx) => (
               <TimelineSection
                 key={idx}
