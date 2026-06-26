@@ -98,6 +98,7 @@ const ORDERED_TYPES: BlockType[] = [
   'framer_team_directory',
   // ── Timeline / FAQ ───────────────────────────────────────
   'framer_darling_timeline',
+  'framer_nftpull_timeline',
   'framer_faq_minimal',
   // ── Stats / Signature ────────────────────────────────────
   'framer_stats_grid',
