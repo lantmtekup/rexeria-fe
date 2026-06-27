@@ -51,7 +51,6 @@ const VALID_BLOCK_TYPES: ReadonlySet<BlockType> = new Set([
   'hero_split',
   'hero_overlay',
   'feature_section',
-  'photo_gallery',
   'booking_form',
   'cta_section',
 ]);
@@ -76,11 +75,7 @@ const SCHEMA_DESCRIPTION = `Available block types and their content schemas:
      "features": [{"icon": string (Lucide icon name like "TreePine"|"Waves"|"ShieldCheck"|"Sparkles"|"Home"|"Camera"),
                    "label": string, "body": string}, ...3-4 items] }
 
-4. photo_gallery — eyebrow+title+description above a grid of captioned photos.
-   { "eyebrow": string, "title": string, "description": string,
-     "photos": [{"url": string, "caption": string}, ...3-6 items] }
-
-5. booking_form — pitch text + list of reasons + submit button.
+4. booking_form — pitch text + list of reasons + submit button.
    { "eyebrow": string, "title": string, "description": string,
      "reasons": [{"label": string, "value": string}, ...3 items],
      "submitText": string, "noteText": string }

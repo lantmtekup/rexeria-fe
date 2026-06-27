@@ -130,15 +130,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'ctaLabel', label: 'Nút CTA', icon: MousePointerClick },
     { key: 'reviewCount', label: 'Đánh giá', icon: Type },
   ],
-  framer_mobius_hero: [
-    BACKGROUND_LAYER,
-    { key: 'brand', label: 'Brand wordmark', icon: Type },
-    { key: 'introBody', label: 'Mô tả giới thiệu', icon: Pilcrow },
-    { key: 'navItems', label: 'Nav links', icon: Grid3x3 },
-    { key: 'cards', label: 'Photo stack', icon: Grid3x3 },
-    { key: 'location', label: 'Location', icon: Type },
-    { key: 'copyright', label: 'Copyright', icon: Type },
-  ],
   framer_intro_redefined: [
     BACKGROUND_LAYER,
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
@@ -193,12 +184,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
     { key: 'title', label: 'Tiêu đề', icon: Type },
     { key: 'images', label: 'Ảnh', icon: Grid3x3 },
-  ],
-  framer_horizontal_scroll: [
-    BACKGROUND_LAYER,
-    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
-    { key: 'title', label: 'Tiêu đề', icon: Type },
-    { key: 'items', label: 'Ảnh + caption', icon: Grid3x3 },
   ],
   framer_clarity_services: [
     BACKGROUND_LAYER,
@@ -260,13 +245,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'title', label: 'Tiêu đề', icon: Type },
     { key: 'description', label: 'Mô tả', icon: Pilcrow },
     { key: 'features', label: 'Danh sách tiện ích', icon: Grid3x3 },
-  ],
-  photo_gallery: [
-    BACKGROUND_LAYER,
-    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
-    { key: 'title', label: 'Tiêu đề', icon: Type },
-    { key: 'description', label: 'Mô tả', icon: Pilcrow },
-    { key: 'photos', label: 'Bộ ảnh', icon: ImageIcon },
   ],
   booking_form: [
     BACKGROUND_LAYER,
@@ -494,10 +472,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'title', label: 'Tiêu đề', icon: Type },
   ],
-  hover_grid_reveal: [
-    BACKGROUND_LAYER,
-    { key: 'imageUrl', label: 'Ảnh', icon: ImageIcon },
-  ],
   hover_equalizer_heading: [
     BACKGROUND_LAYER,
     { key: 'heading', label: 'Tiêu đề', icon: Type },
@@ -521,14 +495,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
   ],
   accordion_media: [BACKGROUND_LAYER],
   pricing_table: [
-    BACKGROUND_LAYER,
-    { key: 'title', label: 'Tiêu đề', icon: Type },
-  ],
-  image_banner: [
-    BACKGROUND_LAYER,
-    { key: 'heading', label: 'Tiêu đề', icon: Type },
-  ],
-  video_gallery: [
     BACKGROUND_LAYER,
     { key: 'title', label: 'Tiêu đề', icon: Type },
   ],

@@ -82,7 +82,6 @@ const FUZZY_RULES: [RegExp, BlockType][] = [
   [/headline.*overlay|hero.*overlay/, 'hero_overlay'],
   [/stor(y|ies)|reel|1080x1920|9x16/, 'stories'],
   [/hero|intro|banner|cover/, 'hero_split'],
-  [/gallery|photo|lookbook/, 'photo_gallery'],
   [/carousel|slider|swipe/, 'image_carousel'],
   [/booking|form|lead|contact|sign.?up|register/, 'booking_form'],
   [/\bcta\b|call.?to|button/, 'cta_section'],

@@ -32,13 +32,11 @@ import type {
   FeatureSectionContent,
   FlipbookContent,
   FramerArpeggioHeroV2Content,
-  FramerMobiusHeroContent,
   FramerBungeeHeroV2Content,
   FramerPurevisualsHeroContent,
   FramerExploreCtaContent,
   FramerPerformHeroContent,
   FramerIntroRedefinedContent,
-  FramerHorizontalScrollContent,
   FramerImageStaggerContent,
   FramerLargeQuoteContent,
   FramerParadigmTitleContent,
@@ -60,15 +58,12 @@ import type {
   FlipGalleryContent,
   WheelGalleryContent,
   HoverRevealListContent,
-  HoverGridRevealContent,
   HoverEqualizerHeadingContent,
   ImageExplosionContent,
   StorySlidesContent,
   PeelRevealContent,
   AccordionMediaContent,
   PricingTableContent,
-  ImageBannerContent,
-  VideoGalleryContent,
   SpotlightContent,
   ProcessStepsContent,
   DotMatrixContent,
@@ -79,7 +74,6 @@ import type {
   SvgMorphOverlayContent,
   SeamlessScrollGalleryContent,
   ProductSpecSheetContent,
-  PhotoGalleryContent,
   PollContent,
   QuizContent,
   SplitScreenContent,
@@ -209,34 +203,6 @@ const FEATURE_EN: FeatureSectionContent = {
       label: 'Premium amenities',
       body: 'Gym, spa, lounge — never leave the project.',
     },
-  ],
-};
-
-// ── Photo Gallery ───────────────────────────────────────────────────────
-const GALLERY_VI: PhotoGalleryContent = {
-  eyebrow: 'THƯ VIỆN ẢNH',
-  title: 'Không gian sống thực tế',
-  description:
-    'Hình ảnh thực tế từ căn hộ mẫu — bàn giao nội thất hoàn thiện cao cấp.',
-  photos: [
-    { url: HOUSE_IMG, caption: 'Mặt ngoài' },
-    { url: ROOM_IMG, caption: 'Phòng khách' },
-    { url: KITCHEN_IMG, caption: 'Bếp & bàn ăn' },
-    { url: POOL_IMG, caption: 'Hồ bơi vô cực' },
-    { url: GARDEN_IMG, caption: 'Vườn cảnh' },
-  ],
-};
-const GALLERY_EN: PhotoGalleryContent = {
-  eyebrow: 'PHOTO GALLERY',
-  title: 'Real living spaces',
-  description:
-    'Photos from the show unit — handed over with premium furnished interiors.',
-  photos: [
-    { url: HOUSE_IMG, caption: 'Exterior' },
-    { url: ROOM_IMG, caption: 'Living room' },
-    { url: KITCHEN_IMG, caption: 'Kitchen & dining' },
-    { url: POOL_IMG, caption: 'Infinity pool' },
-    { url: GARDEN_IMG, caption: 'Garden' },
   ],
 };
 
@@ -1185,18 +1151,6 @@ const HOVER_REVEAL_LIST_EN: HoverRevealListContent = {
   title: 'Featured projects',
 };
 
-const HOVER_GRID_REVEAL_VI: HoverGridRevealContent = {
-  imageUrl: MEDIA.architecture[3],
-  cols: 16,
-  rows: 11,
-  overlayColor: '#fd5530',
-  blockColor: '#fff989',
-  resetMs: 300,
-};
-const HOVER_GRID_REVEAL_EN: HoverGridRevealContent = {
-  ...HOVER_GRID_REVEAL_VI,
-};
-
 const HOVER_EQ_HEADING_VI: HoverEqualizerHeadingContent = {
   heading: 'TRẢI NGHIỆM',
   peak: 2.2,
@@ -1364,41 +1318,6 @@ const PRICING_TABLE_EN: PricingTableContent = {
       features: ['Unlimited', 'Dedicated SLA', 'CRM integration'],
     },
   ],
-};
-
-const IMAGE_BANNER_VI: ImageBannerContent = {
-  imageUrl: MEDIA.architecture[1],
-  heading: 'Hơn cả một nơi ở',
-  description:
-    'Mỗi chi tiết được thiết kế để bạn cảm thấy như ở nhà, giữa sự thanh lịch.',
-};
-const IMAGE_BANNER_EN: ImageBannerContent = {
-  imageUrl: MEDIA.architecture[1],
-  heading: 'More Than a Stay',
-  description:
-    'Every detail is designed to make you feel at home amid quiet elegance.',
-};
-
-const VIDEO_GALLERY_VI: VideoGalleryContent = {
-  title: 'Thước phim',
-  videos: [
-    {
-      src: 'https://cdn.coverr.co/videos/coverr-a-city-at-night-9476/1080p.mp4',
-      title: 'Đêm thành phố',
-    },
-    {
-      src: 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-forest-2633/1080p.mp4',
-      title: 'Rừng xanh',
-    },
-    {
-      src: 'https://cdn.coverr.co/videos/coverr-waves-on-the-beach-1409/1080p.mp4',
-      title: 'Sóng biển',
-    },
-  ],
-};
-const VIDEO_GALLERY_EN: VideoGalleryContent = {
-  ...VIDEO_GALLERY_VI,
-  title: 'Reel',
 };
 
 const SPOTLIGHT_VI: SpotlightContent = {
@@ -1657,49 +1576,6 @@ const FRAMER_PUREVISUALS_HERO_EN: FramerPurevisualsHeroContent = {
   ...FRAMER_PUREVISUALS_HERO_VI,
 };
 
-// ── Framer-native: Hero - Mobius ─────────────────────────────────────────────
-const FRAMER_MOBIUS_HERO_VI: FramerMobiusHeroContent = {
-  brand: 'Mobius',
-  introBody: 'A creative studio building bold experiences for the modern web.',
-  navItems: [
-    { label: 'Work', href: '#work' },
-    { label: 'About', href: '#about' },
-    { label: 'Contact', href: '#contact' },
-  ],
-  cards: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&q=80',
-      href: '#',
-      rotation: -6,
-      offsetX: -60,
-      offsetY: -20,
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80',
-      href: '#',
-      rotation: 3,
-      offsetX: 40,
-      offsetY: 20,
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1493397212122-2b85dda8106b?w=800&q=80',
-      href: '#',
-      rotation: 10,
-      offsetX: 100,
-      offsetY: -30,
-    },
-  ],
-  copyright: '© 2025 Mobius',
-  location: 'Ho Chi Minh City, Vietnam',
-  bgColor: '#f5f0eb',
-};
-const FRAMER_MOBIUS_HERO_EN: FramerMobiusHeroContent = {
-  ...FRAMER_MOBIUS_HERO_VI,
-};
-
 // ── Framer-native: Intro Redefined ──────────────────────────────────────
 const FRAMER_INTRO_REDEFINED_VI: FramerIntroRedefinedContent = {
   eyebrow: 'Epictower Onsen',
@@ -1948,68 +1824,6 @@ const FRAMER_IMAGE_STAGGER_EN: FramerImageStaggerContent = {
       imageUrl:
         'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=800&q=80',
       alt: 'Bathroom',
-    },
-  ],
-};
-
-// ── Framer-native: Horizontal Scroll ────────────────────────────────────
-const FRAMER_HORIZONTAL_SCROLL_VI: FramerHorizontalScrollContent = {
-  eyebrow: 'BỘ SƯU TẬP',
-  title: 'Khám phá các thiết kế',
-  items: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80',
-      label: 'Biệt thự Hà Nội',
-      caption: 'Nhà ở • 2024',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
-      label: 'Penthouse Sky',
-      caption: 'Nội thất • 2024',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80',
-      label: 'Resort Phú Quốc',
-      caption: 'Thương mại • 2023',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80',
-      label: 'Villa Đà Lạt',
-      caption: 'Nhà nghỉ dưỡng • 2023',
-    },
-  ],
-};
-const FRAMER_HORIZONTAL_SCROLL_EN: FramerHorizontalScrollContent = {
-  eyebrow: 'COLLECTION',
-  title: 'Explore the designs',
-  items: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80',
-      label: 'Hanoi Villa',
-      caption: 'Residential • 2024',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
-      label: 'Sky Penthouse',
-      caption: 'Interior • 2024',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80',
-      label: 'Phu Quoc Resort',
-      caption: 'Commercial • 2023',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80',
-      label: 'Da Lat Villa',
-      caption: 'Hospitality • 2023',
     },
   ],
 };
@@ -2508,7 +2322,6 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_VI,
   hero_overlay: HERO_OVERLAY_VI,
   feature_section: FEATURE_VI,
-  photo_gallery: GALLERY_VI,
   booking_form: BOOKING_VI,
   cta_section: CTA_VI,
   mint_details: MINT_DETAILS_VI,
@@ -2545,15 +2358,12 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   flip_gallery: FLIP_GALLERY_VI,
   wheel_gallery: WHEEL_GALLERY_VI,
   hover_reveal_list: HOVER_REVEAL_LIST_VI,
-  hover_grid_reveal: HOVER_GRID_REVEAL_VI,
   hover_equalizer_heading: HOVER_EQ_HEADING_VI,
   image_explosion: IMAGE_EXPLOSION_VI,
   story_slides: STORY_SLIDES_VI,
   peel_reveal: PEEL_REVEAL_VI,
   accordion_media: ACCORDION_MEDIA_VI,
   pricing_table: PRICING_TABLE_VI,
-  image_banner: IMAGE_BANNER_VI,
-  video_gallery: VIDEO_GALLERY_VI,
   spotlight: SPOTLIGHT_VI,
   process_steps: PROCESS_STEPS_VI,
   dot_matrix: DOT_MATRIX_VI,
@@ -2570,7 +2380,6 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_perform_hero: FRAMER_PERFORM_HERO_VI,
   framer_bungee_hero_v2: FRAMER_BUNGEE_HERO_V2_VI,
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_VI,
-  framer_mobius_hero: FRAMER_MOBIUS_HERO_VI,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_VI,
   framer_paradigm_title: FRAMER_PARADIGM_TITLE_VI,
   framer_explore_cta: FRAMER_EXPLORE_CTA_VI,
@@ -2580,7 +2389,6 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_projects_grid: FRAMER_PROJECTS_GRID_VI,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_VI,
   framer_image_stagger: FRAMER_IMAGE_STAGGER_VI,
-  framer_horizontal_scroll: FRAMER_HORIZONTAL_SCROLL_VI,
   framer_clarity_services: FRAMER_CLARITY_SERVICES_VI,
   framer_velora_services: FRAMER_VELORA_SERVICES_VI,
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_VI,
@@ -2597,7 +2405,6 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
   hero_overlay: HERO_OVERLAY_EN,
   feature_section: FEATURE_EN,
-  photo_gallery: GALLERY_EN,
   booking_form: BOOKING_EN,
   cta_section: CTA_EN,
   mint_details: MINT_DETAILS_VI,
@@ -2634,15 +2441,12 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   flip_gallery: FLIP_GALLERY_EN,
   wheel_gallery: WHEEL_GALLERY_EN,
   hover_reveal_list: HOVER_REVEAL_LIST_EN,
-  hover_grid_reveal: HOVER_GRID_REVEAL_EN,
   hover_equalizer_heading: HOVER_EQ_HEADING_EN,
   image_explosion: IMAGE_EXPLOSION_EN,
   story_slides: STORY_SLIDES_EN,
   peel_reveal: PEEL_REVEAL_EN,
   accordion_media: ACCORDION_MEDIA_EN,
   pricing_table: PRICING_TABLE_EN,
-  image_banner: IMAGE_BANNER_EN,
-  video_gallery: VIDEO_GALLERY_EN,
   spotlight: SPOTLIGHT_EN,
   process_steps: PROCESS_STEPS_EN,
   dot_matrix: DOT_MATRIX_EN,
@@ -2659,7 +2463,6 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_perform_hero: FRAMER_PERFORM_HERO_EN,
   framer_bungee_hero_v2: FRAMER_BUNGEE_HERO_V2_EN,
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_EN,
-  framer_mobius_hero: FRAMER_MOBIUS_HERO_EN,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_EN,
   framer_paradigm_title: FRAMER_PARADIGM_TITLE_EN,
   framer_explore_cta: FRAMER_EXPLORE_CTA_EN,
@@ -2669,7 +2472,6 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_projects_grid: FRAMER_PROJECTS_GRID_EN,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_EN,
   framer_image_stagger: FRAMER_IMAGE_STAGGER_EN,
-  framer_horizontal_scroll: FRAMER_HORIZONTAL_SCROLL_EN,
   framer_clarity_services: FRAMER_CLARITY_SERVICES_EN,
   framer_velora_services: FRAMER_VELORA_SERVICES_EN,
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_EN,

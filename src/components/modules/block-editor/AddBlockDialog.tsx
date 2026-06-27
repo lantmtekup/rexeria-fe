@@ -65,7 +65,6 @@ const ORDERED_TYPES: BlockType[] = [
   'framer_perform_hero',
   'framer_bungee_hero_v2',
   'framer_purevisuals_hero',
-  'framer_mobius_hero',
   // ── Content / Editorial ─────────────────────────────────
   'framer_intro_redefined',
   'framer_paradigm_title',
@@ -82,9 +81,7 @@ const ORDERED_TYPES: BlockType[] = [
   // ── Projects / Gallery ───────────────────────────────────
   'framer_projects_grid',
   'framer_vs_collins_projects',
-  'framer_horizontal_scroll',
   'framer_image_stagger',
-  'photo_gallery',
   // ── Team / People ────────────────────────────────────────
   'framer_team_directory',
   // ── Timeline / FAQ ───────────────────────────────────────
@@ -123,7 +120,6 @@ const ORDERED_TYPES: BlockType[] = [
   'flip_gallery',
   'wheel_gallery',
   'hover_reveal_list',
-  'hover_grid_reveal',
   'hover_equalizer_heading',
   'image_explosion',
   'marquee_band',
@@ -131,8 +127,6 @@ const ORDERED_TYPES: BlockType[] = [
   'peel_reveal',
   'accordion_media',
   'pricing_table',
-  'image_banner',
-  'video_gallery',
   'spotlight',
   'process_steps',
   'dot_matrix',

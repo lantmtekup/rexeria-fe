@@ -55,7 +55,6 @@ export const MOCK_BLOCKS: Block[] = [
   },
   buildBlock('b2', 'hero_overlay'),
   buildBlock('b3', 'feature_section'),
-  buildBlock('b4', 'photo_gallery'),
   buildBlock('b5', 'booking_form'),
   buildBlock('b6', 'cta_section'),
 ];

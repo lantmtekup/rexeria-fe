@@ -5,7 +5,6 @@ export type BlockType =
   | 'hero_split'
   | 'hero_overlay'
   | 'feature_section'
-  | 'photo_gallery'
   | 'booking_form'
   | 'cta_section'
   | 'image_carousel'
@@ -26,7 +25,6 @@ export type BlockType =
   | 'flip_gallery'
   | 'wheel_gallery'
   | 'hover_reveal_list'
-  | 'hover_grid_reveal'
   | 'hover_equalizer_heading'
   | 'image_explosion'
   | 'marquee_band'
@@ -38,8 +36,6 @@ export type BlockType =
   | 'peel_reveal'
   | 'accordion_media'
   | 'pricing_table'
-  | 'image_banner'
-  | 'video_gallery'
   | 'spotlight'
   | 'process_steps'
   | 'dot_matrix'
@@ -54,7 +50,6 @@ export type BlockType =
   | 'framer_perform_hero'
   | 'framer_bungee_hero_v2'
   | 'framer_purevisuals_hero'
-  | 'framer_mobius_hero'
   | 'framer_intro_redefined'
   | 'framer_paradigm_title'
   | 'framer_explore_cta'
@@ -64,7 +59,6 @@ export type BlockType =
   | 'framer_projects_grid'
   | 'framer_team_directory'
   | 'framer_image_stagger'
-  | 'framer_horizontal_scroll'
   | 'framer_clarity_services'
   | 'framer_velora_services'
   | 'framer_faq_minimal'
@@ -200,13 +194,6 @@ export interface GalleryPhoto {
   url: string;
   caption: string;
   transform?: ImageTransform;
-}
-
-export interface PhotoGalleryContent {
-  eyebrow: string;
-  title: string;
-  description: string;
-  photos: GalleryPhoto[];
 }
 
 export interface BookingReason {
@@ -758,19 +745,6 @@ export interface HoverRevealListContent {
   items: { label: string; imageUrl: string }[];
 }
 
-/** Hover grid reveal — ảnh phủ lưới ô sáng theo vệt chuột (port CodeGrid 046). */
-export interface HoverGridRevealContent {
-  imageUrl: string;
-  cols?: number;
-  rows?: number;
-  /** Màu overlay (blend screen). Default #fd5530. */
-  overlayColor?: string;
-  /** Màu ô sáng (blend hard-light). Default #fff989. */
-  blockColor?: string;
-  /** Thời gian ô mờ lại (ms). Default 300. */
-  resetMs?: number;
-}
-
 /** Hover equalizer heading — chữ giãn scaleY theo con trỏ (port CodeGrid 049). */
 export interface HoverEqualizerHeadingContent {
   heading: string;
@@ -815,19 +789,6 @@ export interface PricingTableContent {
     features: string[];
     highlighted?: boolean;
   }[];
-}
-
-/** Image banner — ảnh nền full-bleed + heading/description reveal. */
-export interface ImageBannerContent {
-  imageUrl: string;
-  heading: string;
-  description?: string;
-}
-
-/** Video gallery — lưới video hover-to-play. */
-export interface VideoGalleryContent {
-  title?: string;
-  videos: { src: string; poster?: string; title?: string }[];
 }
 
 /** Spotlight — section tối, đèn rọi radial bám chuột làm sáng chữ. */
@@ -1036,26 +997,6 @@ export interface FramerPurevisualsHeroContent {
 }
 
 /**
- * Hero - Mobius: wordmark cực to dưới cùng, stack ảnh scatter giữa trang,
- * intro text + nav trên. Port từ `src/blocks/framer-mobius-hero`.
- */
-export interface FramerMobiusHeroContent {
-  brand: string;
-  introBody: string;
-  navItems: Array<{ label: string; href: string }>;
-  cards: Array<{
-    imageUrl: string;
-    href: string;
-    rotation: number;
-    offsetX: number;
-    offsetY: number;
-  }>;
-  copyright: string;
-  location: string;
-  bgColor: string;
-}
-
-/**
  * Intro Redefined: nền trắng, eyebrow góc phải (DM Mono), tiêu đề italic
  * serif cực lớn (Abril Fatface), đoạn body bên dưới.
  */
@@ -1153,17 +1094,6 @@ export interface FramerImageStaggerContent {
   eyebrow: string;
   title: string;
   images: Array<{ imageUrl: string; alt: string }>;
-}
-
-/**
- * Horizontal Scroll: nền #F5F3EE, eyebrow + Abril Fatface title,
- * hàng card cuộn ngang với ảnh tỉ lệ 4:5.
- * Port từ `src/blocks/framer-horizontal-scroll`.
- */
-export interface FramerHorizontalScrollContent {
-  eyebrow: string;
-  title: string;
-  items: Array<{ imageUrl: string; label: string; caption: string }>;
 }
 
 /**
@@ -1289,7 +1219,6 @@ export type BlockContent =
   | HeroSplitContent
   | HeroOverlayContent
   | FeatureSectionContent
-  | PhotoGalleryContent
   | BookingFormContent
   | MintDetailsContent
   | MintSkuContent
@@ -1326,15 +1255,12 @@ export type BlockContent =
   | FlipGalleryContent
   | WheelGalleryContent
   | HoverRevealListContent
-  | HoverGridRevealContent
   | HoverEqualizerHeadingContent
   | ImageExplosionContent
   | StorySlidesContent
   | PeelRevealContent
   | AccordionMediaContent
   | PricingTableContent
-  | ImageBannerContent
-  | VideoGalleryContent
   | SpotlightContent
   | ProcessStepsContent
   | DotMatrixContent
@@ -1350,7 +1276,6 @@ export type BlockContent =
   | FramerPerformHeroContent
   | FramerBungeeHeroV2Content
   | FramerPurevisualsHeroContent
-  | FramerMobiusHeroContent
   | FramerIntroRedefinedContent
   | FramerParadigmTitleContent
   | FramerExploreCtaContent
@@ -1360,7 +1285,6 @@ export type BlockContent =
   | FramerProjectsGridContent
   | FramerTeamDirectoryContent
   | FramerImageStaggerContent
-  | FramerHorizontalScrollContent
   | FramerAesthaEditorialContent
   | FramerPerformAboutContent
   | FramerPerformPricingContent
@@ -1902,16 +1826,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'section tiện ích / điểm nổi bật',
     aiLabelEn: 'feature highlights section',
   },
-  photo_gallery: {
-    type: 'photo_gallery',
-    label: 'Gallery',
-    accent: '#7c3aed',
-    adminLabel: 'Photo Gallery',
-    gradient: 'from-pink-400 to-fuchsia-500',
-    defaultName: 'Thư viện ảnh',
-    aiLabelVi: 'thư viện ảnh',
-    aiLabelEn: 'photo gallery',
-  },
   booking_form: {
     type: 'booking_form',
     label: 'Booking',
@@ -2272,16 +2186,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'danh sách tên, hover hiện ảnh bám chuột',
     aiLabelEn: 'name list revealing image on hover',
   },
-  hover_grid_reveal: {
-    type: 'hover_grid_reveal',
-    label: 'Hover Grid Reveal',
-    accent: '#0f0f0f',
-    adminLabel: 'Hover Grid Reveal',
-    gradient: 'from-yellow-400 to-orange-600',
-    defaultName: 'Hover Grid Reveal',
-    aiLabelVi: 'ảnh phủ lưới ô sáng theo vệt chuột',
-    aiLabelEn: 'image with grid cells lighting on hover',
-  },
   hover_equalizer_heading: {
     type: 'hover_equalizer_heading',
     label: 'Hover Equalizer Heading',
@@ -2351,26 +2255,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Pricing Table',
     aiLabelVi: 'bảng giá các gói dịch vụ',
     aiLabelEn: 'pricing plans table',
-  },
-  image_banner: {
-    type: 'image_banner',
-    label: 'Image Banner',
-    accent: '#0f0f0f',
-    adminLabel: 'Image Banner',
-    gradient: 'from-slate-500 to-zinc-700',
-    defaultName: 'Image Banner',
-    aiLabelVi: 'ảnh nền lớn + tiêu đề hiện fade-up',
-    aiLabelEn: 'full-bleed image banner with revealing heading',
-  },
-  video_gallery: {
-    type: 'video_gallery',
-    label: 'Video Gallery',
-    accent: '#0f0f0f',
-    adminLabel: 'Video Gallery',
-    gradient: 'from-red-500 to-rose-600',
-    defaultName: 'Video Gallery',
-    aiLabelVi: 'lưới video hover để phát',
-    aiLabelEn: 'grid of videos that play on hover',
   },
   spotlight: {
     type: 'spotlight',
@@ -2491,16 +2375,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Hero - Arpeggio v2',
     aiLabelVi: 'block hero Arpeggio v2 (ảnh nền + wordmark lớn)',
     aiLabelEn: 'Arpeggio v2 hero with large wordmark',
-  },
-  framer_mobius_hero: {
-    type: 'framer_mobius_hero',
-    label: 'Hero - Mobius',
-    accent: '#0d0d0d',
-    adminLabel: 'Hero - Mobius',
-    gradient: 'from-neutral-800 to-neutral-950',
-    defaultName: 'Hero - Mobius',
-    aiLabelVi: 'block hero wordmark khổng lồ + stack ảnh scatter',
-    aiLabelEn: 'hero with giant wordmark + scattered photo stack',
   },
   framer_perform_hero: {
     type: 'framer_perform_hero',
@@ -2626,16 +2500,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Image Stagger',
     aiLabelVi: 'lưới ảnh bất đối xứng 12 cột',
     aiLabelEn: 'asymmetric 12-column image stagger grid',
-  },
-  framer_horizontal_scroll: {
-    type: 'framer_horizontal_scroll',
-    label: 'Horizontal Scroll',
-    accent: '#1a1a18',
-    adminLabel: 'Horizontal Scroll',
-    gradient: 'from-stone-400 to-neutral-500',
-    defaultName: 'Horizontal Scroll',
-    aiLabelVi: 'hàng card cuộn ngang 4:5',
-    aiLabelEn: 'horizontally scrollable card row with 4:5 images',
   },
   framer_faq_minimal: {
     type: 'framer_faq_minimal',

@@ -10,7 +10,6 @@ import type {
   HeroOverlayContent,
   HeroSplitContent,
   Lang,
-  PhotoGalleryContent,
 } from './types';
 
 interface CopyTemplate {
@@ -145,20 +144,6 @@ function mapFeatureSection(
   };
 }
 
-function mapPhotoGallery(
-  content: PhotoGalleryContent,
-  product: Product,
-  copy: CopyTemplate
-): PhotoGalleryContent {
-  return {
-    ...content,
-    eyebrow: copy.galleryEyebrow,
-    title: product.name,
-    description: product.description || copy.fallbackDescription,
-    // photos require media bindings → caller passes them separately if available.
-  };
-}
-
 function mapBookingForm(
   content: BookingFormContent,
   product: Product,
@@ -229,8 +214,6 @@ function mapContent(
       return mapHeroOverlay(c as HeroOverlayContent, product, copy);
     case 'feature_section':
       return mapFeatureSection(c as FeatureSectionContent, product, copy);
-    case 'photo_gallery':
-      return mapPhotoGallery(c as PhotoGalleryContent, product, copy);
     case 'booking_form':
       return mapBookingForm(c as BookingFormContent, product, copy);
     case 'cta_section':

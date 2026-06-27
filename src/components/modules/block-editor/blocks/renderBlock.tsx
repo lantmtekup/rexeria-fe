@@ -28,11 +28,9 @@ import { FramerClarityServices } from './FramerClarityServices';
 import { FramerDarlingTimeline } from './FramerDarlingTimeline';
 import { FramerExploreCta } from './FramerExploreCta';
 import { FramerFaqMinimal } from './FramerFaqMinimal';
-import { FramerHorizontalScroll } from './FramerHorizontalScroll';
 import { FramerImageStagger } from './FramerImageStagger';
 import { FramerIntroRedefined } from './FramerIntroRedefined';
 import { FramerLargeQuote } from './FramerLargeQuote';
-import { FramerMobiusHero } from './FramerMobiusHero';
 import { FramerParadigmTitle } from './FramerParadigmTitle';
 import { FramerPerformAbout } from './FramerPerformAbout';
 import { FramerPerformHero } from './FramerPerformHero';
@@ -50,13 +48,11 @@ import { HeroSplit } from './HeroSplit';
 import { ImageCarousel } from './ImageCarousel';
 import { LegacyEmbed } from './LegacyEmbed';
 import { Panorama } from './Panorama';
-import { PhotoGallery } from './PhotoGallery';
 import { Poll } from './Poll';
 import { Quiz } from './Quiz';
 import { FlipGallery } from './FlipGallery';
 import { Gallery3dDepth } from './Gallery3dDepth';
 import { HoverEqualizerHeading } from './HoverEqualizerHeading';
-import { HoverGridReveal } from './HoverGridReveal';
 import { HoverRevealList } from './HoverRevealList';
 import { ImageExplosion } from './ImageExplosion';
 import { ImageTrail } from './ImageTrail';
@@ -64,8 +60,6 @@ import { StorySlides } from './StorySlides';
 import { PeelReveal } from './PeelReveal';
 import { AccordionMedia } from './AccordionMedia';
 import { PricingTable } from './PricingTable';
-import { ImageBanner } from './ImageBanner';
-import { VideoGallery } from './VideoGallery';
 import { Spotlight } from './Spotlight';
 import { ProcessSteps } from './ProcessSteps';
 import { DotMatrix } from './DotMatrix';
@@ -118,11 +112,9 @@ import type {
   FramerDarlingTimelineContent,
   FramerExploreCtaContent,
   FramerFaqMinimalContent,
-  FramerHorizontalScrollContent,
   FramerImageStaggerContent,
   FramerIntroRedefinedContent,
   FramerLargeQuoteContent,
-  FramerMobiusHeroContent,
   FramerParadigmTitleContent,
   FramerPerformAboutContent,
   FramerPerformHeroContent,
@@ -140,7 +132,6 @@ import type {
   ImageCarouselContent,
   LegacyEmbedContent,
   PanoramaContent,
-  PhotoGalleryContent,
   PollContent,
   QuizContent,
   SplitScreenContent,
@@ -154,15 +145,12 @@ import type {
   FlipGalleryContent,
   WheelGalleryContent,
   HoverRevealListContent,
-  HoverGridRevealContent,
   HoverEqualizerHeadingContent,
   ImageExplosionContent,
   StorySlidesContent,
   PeelRevealContent,
   AccordionMediaContent,
   PricingTableContent,
-  ImageBannerContent,
-  VideoGalleryContent,
   SpotlightContent,
   ProcessStepsContent,
   DotMatrixContent,
@@ -244,17 +232,6 @@ export function RenderBlock({
       return (
         <FeatureSection
           content={content as FeatureSectionContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'photo_gallery':
-      return (
-        <PhotoGallery
-          content={content as PhotoGalleryContent}
           styles={styles}
           background={background}
           order={order}
@@ -658,17 +635,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'hover_grid_reveal':
-      return (
-        <HoverGridReveal
-          content={content as HoverGridRevealContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'hover_equalizer_heading':
       return (
         <HoverEqualizerHeading
@@ -739,28 +705,6 @@ export function RenderBlock({
       return (
         <PricingTable
           content={content as PricingTableContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'image_banner':
-      return (
-        <ImageBanner
-          content={content as ImageBannerContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'video_gallery':
-      return (
-        <VideoGallery
-          content={content as VideoGalleryContent}
           styles={styles}
           background={background}
           order={order}
@@ -884,17 +828,6 @@ export function RenderBlock({
       return (
         <FramerArpeggioHeroV2
           content={content as FramerArpeggioHeroV2Content}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_mobius_hero':
-      return (
-        <FramerMobiusHero
-          content={content as FramerMobiusHeroContent}
           styles={styles}
           background={background}
           order={order}
@@ -1027,17 +960,6 @@ export function RenderBlock({
       return (
         <FramerImageStagger
           content={content as FramerImageStaggerContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_horizontal_scroll':
-      return (
-        <FramerHorizontalScroll
-          content={content as FramerHorizontalScrollContent}
           styles={styles}
           background={background}
           order={order}
