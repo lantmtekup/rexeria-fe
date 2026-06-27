@@ -202,6 +202,13 @@ export function BlocksPage() {
     return m;
   }, [items]);
 
+  // type_code đã được map vào ít nhất 1 block → EditBlockDialog ẩn khỏi combobox
+  // Mapping code (dev chỉ thấy block mới code chưa assign).
+  const usedTypeCodes = React.useMemo(
+    () => new Set(Object.keys(typeCounts)),
+    [typeCounts]
+  );
+
   // Đếm block theo trạng thái → strip thống kê (bấm = lọc nhanh).
   const statusCounts = React.useMemo(() => {
     const m: Record<BlockStatus, number> = {
@@ -371,7 +378,19 @@ export function BlocksPage() {
   // Preview = mở DEV preview page (/dev/blocks?id=…) ở tab mới — full layout +
   // animation, scroll/pin neo đúng viewport. id-mode fetch block thật rồi render
   // đúng settings đã lưu (quan trọng cho type dùng chung như hero_split).
+  //
+  // Guard id rỗng: nếu server trả block không có `id` (sai field / thiếu
+  // migrate) thì KHÔNG mở tab default ngầm — báo lỗi rõ + dump object ra
+  // console để soi đúng field BE trả về, thay vì lặng lẽ rơi về arpeggio.
   const handlePreview = (block: ServerBlock) => {
+    if (!block.id) {
+      // eslint-disable-next-line no-console
+      console.warn('[blocks] preview: block thiếu id từ server →', block);
+      toast.error(
+        `Block "${block.name}" không có id từ server — không mở preview được (xem console).`
+      );
+      return;
+    }
     window.open(
       `/dev/blocks?id=${encodeURIComponent(block.id)}`,
       '_blank',
@@ -637,6 +656,7 @@ export function BlocksPage() {
           if (!open) setEditTarget(null);
         }}
         block={editTarget}
+        usedTypeCodes={usedTypeCodes}
         onSaved={updated => {
           setItems(prev => prev.map(b => (b.id === updated.id ? updated : b)));
           setEditTarget(null);

@@ -1,10 +1,19 @@
 'use client';
 
 import * as React from 'react';
+import * as Popover from '@radix-ui/react-popover';
 import * as Tabs from '@radix-ui/react-tabs';
-import { ImagePlus, Loader2, X } from 'lucide-react';
+import {
+  Check,
+  ChevronsUpDown,
+  ImagePlus,
+  Loader2,
+  Search,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
+import { cn } from '@/lib/cn';
 import { uploadImageAsset } from '@/lib/upload/media-asset';
 import {
   BlockTaxonomyFields,
@@ -46,6 +55,144 @@ export interface EditBlockDialogProps {
   block: Block | null;
   /** Gọi sau khi PATCH thành công để list cập nhật. */
   onSaved: (updated: Block) => void;
+  /**
+   * type_code đã được map vào ít nhất 1 block ("đã assign"). Combobox Mapping
+   * code ẩn các type này (giữ lại type của chính block hiện tại) để dev chỉ
+   * thấy block mới code xong chưa gán. Bật "Hiện cả type đã mapping" để xem hết.
+   */
+  usedTypeCodes?: Set<string>;
+}
+
+interface MappingOption {
+  code: string;
+  label: string;
+}
+
+/**
+ * Combobox chọn Mapping code: search theo tên + ẩn type đã mapping.
+ * Thay cho native `<select>` 98 option phẳng. Theo mẫu IconPicker (Popover +
+ * search). Luôn giữ option của `currentCode` (kể cả khi nó đã "đã dùng") để
+ * trigger hiển thị đúng giá trị đang chọn.
+ */
+function MappingCodeCombobox({
+  value,
+  onChange,
+  options,
+  usedTypeCodes,
+  currentCode,
+}: {
+  value: string;
+  onChange: (code: string) => void;
+  options: MappingOption[];
+  usedTypeCodes?: Set<string>;
+  currentCode?: string;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState('');
+  const [showAll, setShowAll] = React.useState(false);
+
+  const usedCount = React.useMemo(
+    () =>
+      usedTypeCodes
+        ? options.filter(
+            o => usedTypeCodes.has(o.code) && o.code !== currentCode
+          ).length
+        : 0,
+    [options, usedTypeCodes, currentCode]
+  );
+
+  const visible = React.useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return options.filter(o => {
+      // Ẩn type đã mapping (trừ type của chính block này) khi chưa bật showAll.
+      const used = usedTypeCodes?.has(o.code) && o.code !== currentCode;
+      if (used && !showAll) return false;
+      if (!q) return true;
+      return (
+        o.label.toLowerCase().includes(q) || o.code.toLowerCase().includes(q)
+      );
+    });
+  }, [options, query, showAll, usedTypeCodes, currentCode]);
+
+  const activeLabel =
+    options.find(o => o.code === value)?.label || value || 'Chọn mapping code';
+
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger asChild>
+        <button
+          type='button'
+          id='eb-type'
+          className='border-input bg-background hover:border-ring/60 focus:ring-ring/40 flex h-9 items-center justify-between gap-2 rounded-md border px-2.5 text-sm outline-none focus:ring-2'
+        >
+          <span className='truncate'>{activeLabel}</span>
+          <ChevronsUpDown className='text-muted-foreground size-3.5 shrink-0' />
+        </button>
+      </Popover.Trigger>
+      {/* KHÔNG Portal: Dialog dùng RemoveScroll khoá scroll ngoài dialog →
+          popover portalled (ngoài DOM dialog) bị chặn wheel. Render in-place
+          (vẫn position:fixed nên không bị overflow dialog cắt) để list scroll
+          được. */}
+      <Popover.Content
+        align='start'
+        sideOffset={6}
+        onOpenAutoFocus={e => e.preventDefault()}
+        className='border-border bg-popover z-50 w-[var(--radix-popover-trigger-width)] min-w-72 rounded-md border p-2 shadow-xl ring-1 ring-black/5 outline-none'
+      >
+        <div className='border-border bg-muted/40 mb-2 flex items-center gap-1.5 rounded-md border px-2'>
+          <Search className='text-muted-foreground size-3.5 shrink-0' />
+          <input
+            autoFocus
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder='Tìm theo tên (vd: hero, gallery)…'
+            className='h-7 flex-1 bg-transparent text-xs outline-none'
+          />
+        </div>
+        <div className='max-h-64 overflow-y-auto'>
+          {visible.map(o => {
+            const active = o.code === value;
+            return (
+              <button
+                key={o.code}
+                type='button'
+                onClick={() => {
+                  onChange(o.code);
+                  setOpen(false);
+                  setQuery('');
+                }}
+                className={cn(
+                  'flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors',
+                  active
+                    ? 'bg-foreground text-background'
+                    : 'hover:bg-muted text-foreground'
+                )}
+              >
+                <span className='truncate'>{o.label}</span>
+                {active && <Check className='size-3.5 shrink-0' />}
+              </button>
+            );
+          })}
+          {visible.length === 0 && (
+            <div className='text-2xs text-muted-foreground py-4 text-center'>
+              Không tìm thấy mapping code phù hợp
+            </div>
+          )}
+        </div>
+        {usedCount > 0 && (
+          <button
+            type='button'
+            onClick={() => setShowAll(s => !s)}
+            className='text-2xs text-muted-foreground hover:text-foreground border-border mt-1 w-full border-t pt-1.5 text-center transition-colors'
+          >
+            {showAll
+              ? `Ẩn ${usedCount} type đã mapping`
+              : `Hiện cả ${usedCount} type đã mapping`}
+          </button>
+        )}
+      </Popover.Content>
+    </Popover.Root>
+  );
 }
 
 function rxMessage(err: unknown): string {
@@ -59,6 +206,7 @@ export function EditBlockDialog({
   onOpenChange,
   block,
   onSaved,
+  usedTypeCodes,
 }: EditBlockDialogProps) {
   const [name, setName] = React.useState('');
   const [description, setDescription] = React.useState('');
@@ -296,21 +444,13 @@ export function EditBlockDialog({
                 Code/component dùng để render block này (dev gắn code đã viết
                 vào block).
               </p>
-              <select
-                id='eb-type'
+              <MappingCodeCombobox
                 value={typeCode}
-                onChange={e => setTypeCode(e.target.value)}
-                className='border-input bg-background focus:ring-ring/40 h-9 rounded-md border px-2.5 text-sm outline-none focus:ring-2'
-              >
-                {typeOptions.length === 0 && (
-                  <option value={typeCode}>{typeCode || '-'}</option>
-                )}
-                {typeOptions.map(o => (
-                  <option key={o.code} value={o.code}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                onChange={setTypeCode}
+                options={typeOptions}
+                usedTypeCodes={usedTypeCodes}
+                currentCode={block?.type_code}
+              />
               {typeCode !== (block?.type_code ?? '') && (
                 <p className='text-2xs text-amber-600'>
                   ⚠ Đổi loại block: nội dung sẽ được DỰNG LẠI theo mặc định của
