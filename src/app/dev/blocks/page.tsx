@@ -3,22 +3,37 @@
 /**
  * DEV preview cho DATA-BLOCK (src/components/modules/block-editor/blocks/*).
  *
- * Layout: top bar fixed (gọn, không chiếm layout) + vùng cuộn full viewport làm SCROLLER → block render
- * qua RenderBlock + content mặc định (createBlock) trong LandingMotionRoot
- * (scroller = vùng cuộn). Sticky/pin/scrub của block neo đúng vào vùng cuộn (như
- * PreviewMode / /p), không bị toolbar che. Sửa file block → save → hot-reload.
+ * Hai chế độ qua query string:
+ *  - `?type=<blockType>` → render DEFAULT content của type đó (createBlock) để
+ *    dev xem nhanh 1 loại block. Dùng dropdown để duyệt qua các type.
+ *  - `?id=<blockId>`     → fetch block thật từ BE rồi render đúng SETTINGS đã lưu
+ *    (mỗi block 1 thiết kế riêng — quan trọng cho các type dùng chung như
+ *    hero_split). Đây là cái nút Preview ở danh sách block mở ra.
  *
- * URL: /dev/blocks?type=framer_arpeggio_hero_v2
+ * Layout: top bar fixed (gọn) + vùng cuộn full viewport làm SCROLLER → block
+ * render qua RenderBlock trong LandingMotionRoot (scroller = vùng cuộn).
+ * Sticky/pin/scrub neo đúng vào vùng cuộn (như PreviewMode / /p). Motion config
+ * của block thật được áp qua MotionProvider giống PreviewMode.
+ *
+ * URL: /dev/blocks?type=framer_arpeggio_hero_v2  hoặc  /dev/blocks?id=<uuid>
  */
 import * as React from 'react';
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
+import { rexerApi } from '@/services/rexer/endpoints';
 import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
 import { createBlock } from '@/components/modules/block-editor/factory';
 import { LandingMotionRoot } from '@/components/modules/block-editor/motion/LandingMotion';
 import {
+  MotionProvider,
+  MotionBlockRoot,
+} from '@/components/modules/block-editor/motion/runtime';
+import type { BlockMotion } from '@/components/modules/block-editor/motion/types';
+import {
   BLOCK_TYPE_META,
+  readVariant,
+  type Block,
   type BlockType,
 } from '@/components/modules/block-editor/types';
 
@@ -32,23 +47,109 @@ const DEVICES = [
 ] as const;
 type DeviceId = (typeof DEVICES)[number]['id'];
 
+/** Parse `Block.settings` (BE) → editor Block. FE ghi nguyên editor Block vào
+ *  settings lúc tạo nên round-trip được. Null nếu shape không hợp lệ. */
+function parseEditorBlock(
+  settings: Record<string, unknown> | undefined
+): Block | null {
+  if (!settings || typeof settings !== 'object') return null;
+  if (!('blockType' in settings)) return null;
+  return settings as unknown as Block;
+}
+
 export default function DevBlocksPage() {
-  const [type, setType] = React.useState<BlockType>('framer_arpeggio_hero_v2');
   const [device, setDevice] = React.useState<DeviceId>('desktop');
   const scrollerRef = React.useRef<HTMLDivElement>(null);
 
+  // Chế độ render: 'type' (default content theo type) hoặc 'id' (block thật).
+  const [mode, setMode] = React.useState<'type' | 'id'>('type');
+  const [type, setType] = React.useState<BlockType>('framer_arpeggio_hero_v2');
+  const [blockId, setBlockId] = React.useState<string | null>(null);
+  const [fetched, setFetched] = React.useState<Block | null>(null);
+  const [loadErr, setLoadErr] = React.useState<string | null>(null);
+
+  // Đọc query 1 lần khi mount → quyết định chế độ.
   React.useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get('type');
+    const sp = new URLSearchParams(window.location.search);
+    const id = sp.get('id');
+    if (id) {
+      setMode('id');
+      setBlockId(id);
+      return;
+    }
+    const q = sp.get('type');
     if (q && (TYPES as string[]).includes(q)) setType(q as BlockType);
   }, []);
+
+  // id-mode: fetch block thật, parse settings → editor Block.
   React.useEffect(() => {
+    if (mode !== 'id' || !blockId) return;
+    let alive = true;
+    setLoadErr(null);
+    setFetched(null);
+    rexerApi.blocks
+      .get(blockId)
+      .then(b => {
+        if (!alive) return;
+        const editor = parseEditorBlock(b.settings);
+        if (!editor) {
+          setLoadErr(
+            'Block này không có canvas data (settings rỗng / shape không tương thích) để preview.'
+          );
+          return;
+        }
+        setFetched(editor);
+        setType(editor.blockType); // đồng bộ dropdown cho có ngữ cảnh
+      })
+      .catch(e => {
+        if (alive)
+          setLoadErr(e instanceof Error ? e.message : 'Lỗi tải block.');
+      });
+    return () => {
+      alive = false;
+    };
+  }, [mode, blockId]);
+
+  // type-mode: giữ URL ?type=… sync khi đổi dropdown.
+  React.useEffect(() => {
+    if (mode !== 'type') return;
     const u = new URL(window.location.href);
     u.searchParams.set('type', type);
+    u.searchParams.delete('id');
     window.history.replaceState(null, '', u.toString());
-  }, [type]);
+  }, [type, mode]);
 
-  const block = React.useMemo(() => createBlock(type), [type]);
+  // Đổi dropdown → luôn về type-mode (duyệt default content).
+  const onPickType = (t: BlockType) => {
+    setMode('type');
+    setBlockId(null);
+    setFetched(null);
+    setLoadErr(null);
+    setType(t);
+  };
+
+  // Block để render: id-mode dùng block fetch về; type-mode dùng default.
+  const block = React.useMemo<Block | null>(
+    () => (mode === 'id' ? fetched : createBlock(type)),
+    [mode, fetched, type]
+  );
+
   const width = DEVICES.find(d => d.id === device)!.w;
+  const dev = device; // 'desktop' | 'tablet' | 'mobile' khớp Device
+
+  // Resolve content/styles/bg/order/motion theo device (giống PreviewMode).
+  const resolved = React.useMemo(() => {
+    if (!block) return null;
+    const content =
+      readVariant(block.contentVi, dev) ?? block.contentVi.desktop;
+    return {
+      content,
+      styles: readVariant(block.elementStyles, dev),
+      background: readVariant(block.background, dev),
+      order: readVariant(block.elementOrder, dev),
+      motion: readVariant(block.motion, dev) as BlockMotion | undefined,
+    };
+  }, [block, dev]);
 
   return (
     <div className='relative h-screen bg-neutral-900'>
@@ -60,7 +161,7 @@ export default function DevBlocksPage() {
 
         <select
           value={type}
-          onChange={e => setType(e.target.value as BlockType)}
+          onChange={e => onPickType(e.target.value as BlockType)}
           aria-label='Block type'
           className='h-[18px] max-w-[200px] min-w-0 flex-1 truncate rounded border border-white/15 bg-white/5 px-1 py-0 text-[9px]! leading-none text-white outline-none focus:border-amber-400 sm:max-w-[240px] sm:min-w-[160px] sm:flex-none'
         >
@@ -71,8 +172,8 @@ export default function DevBlocksPage() {
           ))}
         </select>
 
-        <code className='hidden max-w-[120px] truncate text-[8px] text-white/35 md:block'>
-          {type}
+        <code className='hidden max-w-[160px] truncate text-[8px] text-white/35 md:block'>
+          {mode === 'id' ? (fetched ? `id · ${fetched.name}` : 'id · …') : type}
         </code>
 
         <div className='ml-auto flex shrink-0 items-center gap-0.5 rounded border border-white/10 bg-white/5 p-px'>
@@ -104,18 +205,39 @@ export default function DevBlocksPage() {
       >
         <LandingMotionRoot scrollerRef={scrollerRef} enableSmooth={false}>
           <div
-            className='mx-auto bg-white'
+            className='@container mx-auto bg-white'
             style={
               width
                 ? { maxWidth: width, boxShadow: '0 0 0 1px rgba(0,0,0,0.08)' }
                 : undefined
             }
           >
-            <RenderBlock
-              key={`${type}:${device}`}
-              block={block}
-              content={block.contentVi.desktop}
-            />
+            {mode === 'id' && loadErr ? (
+              <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-500'>
+                {loadErr}
+              </div>
+            ) : mode === 'id' && !block ? (
+              <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-400'>
+                Đang tải block…
+              </div>
+            ) : block && resolved ? (
+              <MotionProvider
+                key={`${mode}:${block.id ?? type}:${device}`}
+                mode='preview'
+                motion={resolved.motion}
+                scrollerEl={scrollerRef.current}
+              >
+                <MotionBlockRoot>
+                  <RenderBlock
+                    block={block}
+                    content={resolved.content}
+                    styles={resolved.styles}
+                    background={resolved.background}
+                    order={resolved.order}
+                  />
+                </MotionBlockRoot>
+              </MotionProvider>
+            ) : null}
           </div>
         </LandingMotionRoot>
       </div>
