@@ -3,6 +3,7 @@
 import * as React from 'react';
 import gsap from 'gsap';
 
+import { useIsomorphicLayoutEffect } from '@/lib/use-isomorphic-layout-effect';
 import { useBlockMotion } from '../motion/LandingMotion';
 import type {
   BlockBackground,
@@ -139,7 +140,7 @@ export function FramerBungeeHeroV2({
     HERO_WORDMARK_MAX_MOBILE_PX
   );
 
-  React.useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (content.wordmarkUrl) return;
     const container = wordmarkContainerRef.current;
     const textEl = wordmarkTextRef.current;
@@ -244,7 +245,7 @@ export function FramerBungeeHeroV2({
         {
           position: 'relative',
           width: '100%',
-          minHeight: 'clamp(560px, 100vh, 980px)',
+          minHeight: 'clamp(560px, 100dvh, 980px)',
           overflow: 'hidden',
           background: '#ffffff',
           color: accent,
