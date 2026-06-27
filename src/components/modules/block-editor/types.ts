@@ -61,6 +61,7 @@ export type BlockType =
   | 'framer_perform_hero_v2'
   | 'framer_bungee_hero'
   | 'framer_bungee_hero_v2'
+  | 'framer_purevisuals_hero'
   | 'framer_mobius_hero'
   | 'framer_avexa_hero'
   | 'framer_intro_redefined'
@@ -1157,6 +1158,27 @@ export interface FramerBungeeHeroV2Content {
 }
 
 /**
+ * Hero - PureVisuals: 2 flash panel 50/50 đập vào nhau khi load, scroll
+ * tách ra để lộ heading. Port từ `recon-purevisuals-hero/spec.md` §9.
+ *
+ * - leftImageUrl / rightImageUrl — 2 ảnh panel trái / phải
+ * - eyebrow — dòng nhỏ phía trên heading (DM Mono)
+ * - heading — heading lớn JetBrains Mono 180px (clamp theo container)
+ * - subheading — sub heading dưới (JetBrains Mono 18px)
+ * - bgColor — màu nền sau khi 2 panel tách ra (mặc định #0a0a0a)
+ * - textColor — màu chữ (mặc định #ffffff)
+ */
+export interface FramerPurevisualsHeroContent {
+  leftImageUrl: string | string[];
+  rightImageUrl: string | string[];
+  eyebrow: string;
+  heading: string;
+  subheading: string;
+  bgColor: string;
+  textColor: string;
+}
+
+/**
  * Hero - Mobius: wordmark cực to dưới cùng, stack ảnh scatter giữa trang,
  * intro text + nav trên. Port từ `src/blocks/framer-mobius-hero`.
  */
@@ -1520,6 +1542,7 @@ export type BlockContent =
   | FramerPerformHeroV2Content
   | FramerBungeeHeroContent
   | FramerBungeeHeroV2Content
+  | FramerPurevisualsHeroContent
   | FramerMobiusHeroContent
   | FramerAvexaHeroContent
   | FramerIntroRedefinedContent
@@ -2789,6 +2812,18 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
       'block hero studio Bungee v2 (recon spec): wordmark + marquee ảnh + GSAP R1–R6',
     aiLabelEn:
       'Bungee studio hero v2 (recon spec): wordmark + image marquee + GSAP R1–R6',
+  },
+  framer_purevisuals_hero: {
+    type: 'framer_purevisuals_hero',
+    label: 'Hero - PureVisuals',
+    accent: '#0a0a0a',
+    adminLabel: 'Hero - PureVisuals',
+    gradient: 'from-neutral-900 to-neutral-700',
+    defaultName: 'Hero - PureVisuals',
+    aiLabelVi:
+      'block hero PureVisuals (recon spec): 2 flash panel 50/50 đập vào giữa rồi scroll tách ra để lộ heading',
+    aiLabelEn:
+      'PureVisuals hero (recon spec): two 50/50 flash panels that converge on load and split on scroll to reveal heading',
   },
   framer_intro_redefined: {
     type: 'framer_intro_redefined',
