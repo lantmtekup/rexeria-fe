@@ -83,10 +83,7 @@ export type BlockType =
   | 'mint_vault_craft'
   | 'mint_vault_reveal'
   | 'mint_vault_collection'
-  | 'mint_vault_invitation'
-  // Wrapper cho legacy/framer block (render qua schemaId trong registry).
-  // Không edit inline — chèn nguyên khối thiết kế vào canvas.
-  | 'legacy_embed';
+  | 'mint_vault_invitation';
 
 export interface HeroSplitStat {
   value: string;
@@ -831,13 +828,6 @@ export interface ProductSpecSheetContent {
   specLabel?: string;
 }
 
-/** Legacy/framer block embed — chỉ giữ schemaId; renderer tra registry. */
-export interface LegacyEmbedContent {
-  schemaId: string;
-  /** Tên hiển thị (từ schema.name) để UI editor show. */
-  legacyName?: string;
-}
-
 /**
  * Hero - Yume (framer-native): 2 dòng tên cực to + avatar tròn top-right +
  * email/bio bottom row. Migrate từ `src/blocks/framer-yume-hero`. `avatar`
@@ -1219,7 +1209,6 @@ export type BlockContent =
   | FramerSignatureFeatureContent
   | FramerVsCollinsProjectsContent
   | FramerClarityServicesContent
-  | LegacyEmbedContent
   | Record<string, unknown>;
 
 /**
@@ -2472,15 +2461,5 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'stack pricing card: ảnh trái + giá/tính năng/CTA phải mỗi card',
     aiLabelEn:
       'stacked pricing cards: image left + price/features/CTA right per card',
-  },
-  legacy_embed: {
-    type: 'legacy_embed',
-    label: 'Legacy block',
-    accent: '#475569',
-    adminLabel: 'Legacy block',
-    gradient: 'from-slate-500 to-slate-700',
-    defaultName: 'Legacy block',
-    aiLabelVi: 'block thiết kế sẵn (legacy/framer)',
-    aiLabelEn: 'pre-designed legacy/framer block',
   },
 };

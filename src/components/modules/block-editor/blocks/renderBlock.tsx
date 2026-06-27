@@ -43,7 +43,6 @@ import { FramerYumeHero } from './FramerYumeHero';
 import { HeroOverlay } from './HeroOverlay';
 import { HeroSplit } from './HeroSplit';
 import { ImageCarousel } from './ImageCarousel';
-import { LegacyEmbed } from './LegacyEmbed';
 import { Panorama } from './Panorama';
 import { Poll } from './Poll';
 import { Quiz } from './Quiz';
@@ -121,7 +120,6 @@ import type {
   HeroOverlayContent,
   HeroSplitContent,
   ImageCarouselContent,
-  LegacyEmbedContent,
   PanoramaContent,
   PollContent,
   QuizContent,
@@ -966,8 +964,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'legacy_embed':
-      return <LegacyEmbed content={content as LegacyEmbedContent} />;
     default:
       return (
         <>

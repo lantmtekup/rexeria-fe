@@ -2163,8 +2163,6 @@ const NAME_BY_TYPE: Record<BlockType, string> = Object.fromEntries(
   Object.values(BLOCK_TYPE_META).map(m => [m.type, m.defaultName])
 ) as Record<BlockType, string>;
 
-const LEGACY_EMBED_EMPTY: BlockContent = { schemaId: '' };
-
 const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_VI,
   hero_overlay: HERO_OVERLAY_VI,
@@ -2240,7 +2238,6 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
   framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_VI,
-  legacy_embed: LEGACY_EMBED_EMPTY,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
@@ -2317,7 +2314,6 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
   framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_EN,
-  legacy_embed: LEGACY_EMBED_EMPTY,
 };
 
 function genId() {
@@ -2339,22 +2335,6 @@ export function createBlock(type: BlockType): Block {
     contentEn: {
       desktop: structuredClone(reg ? reg.defaultContent.en : DEFAULTS_EN[type]),
     },
-    isVisible: true,
-  };
-}
-
-/**
- * Create a `legacy_embed` block wrapping a registry legacy/framer block.
- * The renderer resolves the design via `getLegacyBlock(schemaId)`.
- */
-export function createLegacyBlock(schemaId: string, name: string): Block {
-  const content: BlockContent = { schemaId, legacyName: name };
-  return {
-    id: genId(),
-    blockType: 'legacy_embed',
-    name: name || 'Legacy block',
-    contentVi: { desktop: structuredClone(content) },
-    contentEn: { desktop: structuredClone(content) },
     isVisible: true,
   };
 }
