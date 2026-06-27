@@ -2562,54 +2562,64 @@ const FRAMER_AVEXA_BENTO_EN: FramerAvexaBentoContent = {
 
 // ── Framer-native: Clarity Services ────────────────────────────────────
 const FRAMER_CLARITY_SERVICES_VI: FramerClarityServicesContent = {
-  bgColor: '#f8faf2',
+  bgColor: '#ffffff',
   cardBg: '#f3f6e6',
-  centerImageUrl: '',
+  centerImageUrl:
+    'https://framerusercontent.com/images/jOJJM3SIzRix55uIXIomAXX4YIk.png',
   services: [
     {
-      iconUrl: '',
+      iconUrl:
+        'https://framerusercontent.com/images/ugycgoOkv3p1p1LgDNQKUj0DMw.svg',
       title: 'Tư vấn chiến lược',
       description: 'Xác định hướng đi rõ ràng cho doanh nghiệp của bạn.',
     },
     {
-      iconUrl: '',
+      iconUrl:
+        'https://framerusercontent.com/images/hkvMklMx6UMQAP554YRJlGFEC38.svg?width=52&height=52',
       title: 'Thiết kế thương hiệu',
       description: 'Xây dựng bản sắc thương hiệu mạnh mẽ và nhất quán.',
     },
     {
-      iconUrl: '',
+      iconUrl:
+        'https://framerusercontent.com/images/wcJdPBWrhic7UC9lCPXawWPP6OM.svg?width=52&height=52',
       title: 'Phát triển kỹ thuật số',
       description: 'Giải pháp công nghệ hiện đại phục vụ tăng trưởng.',
     },
     {
-      iconUrl: '',
+      iconUrl:
+        'https://framerusercontent.com/images/nvcIvRkMNCueCZAw3q3pHxc3mc4.svg?width=52&height=52',
       title: 'Tối ưu hoá hiệu suất',
       description: 'Cải thiện kết quả thông qua phân tích dữ liệu.',
     },
   ],
 };
 const FRAMER_CLARITY_SERVICES_EN: FramerClarityServicesContent = {
-  bgColor: '#f8faf2',
+  bgColor: '#ffffff',
   cardBg: '#f3f6e6',
-  centerImageUrl: '',
+  centerImageUrl:
+    'https://framerusercontent.com/images/jOJJM3SIzRix55uIXIomAXX4YIk.png',
   services: [
     {
-      iconUrl: '',
+      iconUrl:
+        'https://framerusercontent.com/images/ugycgoOkv3p1p1LgDNQKUj0DMw.svg',
       title: 'Strategy Consulting',
       description: 'Define a clear direction for your business.',
     },
     {
-      iconUrl: '',
+      iconUrl:
+        'https://framerusercontent.com/images/hkvMklMx6UMQAP554YRJlGFEC38.svg?width=52&height=52',
       title: 'Brand Design',
       description: 'Build a strong, consistent brand identity.',
     },
     {
-      iconUrl: '',
+      iconUrl:
+        'https://framerusercontent.com/images/wcJdPBWrhic7UC9lCPXawWPP6OM.svg?width=52&height=52',
       title: 'Digital Development',
       description: 'Modern technology solutions for growth.',
     },
     {
-      iconUrl: '',
+      iconUrl:
+        'https://framerusercontent.com/images/nvcIvRkMNCueCZAw3q3pHxc3mc4.svg?width=52&height=52',
       title: 'Performance Optimization',
       description: 'Improve results through data analysis.',
     },
