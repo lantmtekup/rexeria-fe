@@ -136,13 +136,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'title', label: 'Tiêu đề', icon: Type },
     { key: 'body', label: 'Nội dung', icon: Pilcrow },
   ],
-  framer_paradigm_title: [
-    BACKGROUND_LAYER,
-    { key: 'titleTop', label: 'Dòng trên', icon: Type },
-    { key: 'titleBottom', label: 'Dòng dưới', icon: Type },
-    { key: 'imageUrl', label: 'Ảnh giữa', icon: ImageIcon },
-    { key: 'overlayText', label: 'Text overlay', icon: Type },
-  ],
   framer_explore_cta: [
     BACKGROUND_LAYER,
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
@@ -155,12 +148,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'title', label: 'Tiêu đề', icon: Type },
     { key: 'body', label: 'Nội dung', icon: Pilcrow },
     { key: 'signature', label: 'Chữ ký', icon: Type },
-  ],
-  framer_large_quote: [
-    BACKGROUND_LAYER,
-    { key: 'quote', label: 'Trích dẫn', icon: Pilcrow },
-    { key: 'author', label: 'Tác giả', icon: Type },
-    { key: 'role', label: 'Vai trò', icon: Type },
   ],
   framer_stats_grid: [
     BACKGROUND_LAYER,
@@ -189,10 +176,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'centerImageUrl', label: 'Ảnh giữa', icon: ImageIcon },
     { key: 'services', label: 'Dịch vụ', icon: Grid3x3 },
-  ],
-  framer_velora_services: [
-    BACKGROUND_LAYER,
-    { key: 'items', label: 'Dịch vụ', icon: Grid3x3 },
   ],
   framer_aestha_editorial: [
     BACKGROUND_LAYER,
@@ -489,15 +472,7 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'title', label: 'Tiêu đề', icon: Type },
   ],
-  peel_reveal: [
-    BACKGROUND_LAYER,
-    { key: 'title', label: 'Tiêu đề', icon: Type },
-  ],
   accordion_media: [BACKGROUND_LAYER],
-  pricing_table: [
-    BACKGROUND_LAYER,
-    { key: 'title', label: 'Tiêu đề', icon: Type },
-  ],
   spotlight: [BACKGROUND_LAYER, { key: 'title', label: 'Chữ', icon: Type }],
   process_steps: [
     BACKGROUND_LAYER,
@@ -510,10 +485,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'title', label: 'Tiêu đề', icon: Type },
   ],
   letter_slider: [BACKGROUND_LAYER],
-  svg_morph_overlay: [
-    BACKGROUND_LAYER,
-    { key: 'title', label: 'Tiêu đề', icon: Type },
-  ],
   seamless_scroll_gallery: [
     BACKGROUND_LAYER,
     { key: 'title', label: 'Tiêu đề', icon: Type },

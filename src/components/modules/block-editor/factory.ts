@@ -38,8 +38,6 @@ import type {
   FramerPerformHeroContent,
   FramerIntroRedefinedContent,
   FramerImageStaggerContent,
-  FramerLargeQuoteContent,
-  FramerParadigmTitleContent,
   FramerProjectsGridContent,
   FramerStatsGridContent,
   FramerTeamDirectoryContent,
@@ -61,9 +59,7 @@ import type {
   HoverEqualizerHeadingContent,
   ImageExplosionContent,
   StorySlidesContent,
-  PeelRevealContent,
   AccordionMediaContent,
-  PricingTableContent,
   SpotlightContent,
   ProcessStepsContent,
   DotMatrixContent,
@@ -71,7 +67,6 @@ import type {
   PixelRevealContent,
   MarqueeBandContent,
   LetterSliderContent,
-  SvgMorphOverlayContent,
   SeamlessScrollGalleryContent,
   ProductSpecSheetContent,
   PollContent,
@@ -83,7 +78,6 @@ import type {
   FramerSignatureFeatureContent,
   FramerVsCollinsProjectsContent,
   FramerClarityServicesContent,
-  FramerVeloraServicesContent,
   FramerAesthaEditorialContent,
   FramerPerformAboutContent,
   FramerPerformPricingContent,
@@ -1213,14 +1207,6 @@ const STORY_SLIDES_EN: StorySlidesContent = {
   ],
 };
 
-const PEEL_REVEAL_VI: PeelRevealContent = {
-  title: 'Happy City',
-  imageUrl: MEDIA.architecture[0],
-};
-const PEEL_REVEAL_EN: PeelRevealContent = {
-  ...PEEL_REVEAL_VI,
-};
-
 const ACCORDION_MEDIA_VI: AccordionMediaContent = {
   items: [
     {
@@ -1259,63 +1245,6 @@ const ACCORDION_MEDIA_EN: AccordionMediaContent = {
       title: 'Legacy',
       description: 'Each work tells a story that endures over time.',
       imageUrl: MEDIA.nature[1],
-    },
-  ],
-};
-
-const PRICING_TABLE_VI: PricingTableContent = {
-  title: 'Bảng giá',
-  plans: [
-    {
-      name: 'Cơ bản',
-      price: '0đ',
-      period: 'tháng',
-      features: ['1 landing page', 'Phân tích cơ bản', 'Hỗ trợ email'],
-    },
-    {
-      name: 'Chuyên nghiệp',
-      price: '990k',
-      period: 'tháng',
-      highlighted: true,
-      features: [
-        '10 landing page',
-        'AI-Insights',
-        'Tên miền riêng',
-        'Hỗ trợ ưu tiên',
-      ],
-    },
-    {
-      name: 'Doanh nghiệp',
-      price: 'Liên hệ',
-      features: ['Không giới hạn', 'SLA riêng', 'Tích hợp CRM'],
-    },
-  ],
-};
-const PRICING_TABLE_EN: PricingTableContent = {
-  title: 'Pricing',
-  plans: [
-    {
-      name: 'Basic',
-      price: '$0',
-      period: 'mo',
-      features: ['1 landing page', 'Basic analytics', 'Email support'],
-    },
-    {
-      name: 'Pro',
-      price: '$39',
-      period: 'mo',
-      highlighted: true,
-      features: [
-        '10 landing pages',
-        'AI-Insights',
-        'Custom domain',
-        'Priority support',
-      ],
-    },
-    {
-      name: 'Enterprise',
-      price: 'Contact',
-      features: ['Unlimited', 'Dedicated SLA', 'CRM integration'],
     },
   ],
 };
@@ -1415,18 +1344,6 @@ const LETTER_SLIDER_VI: LetterSliderContent = {
   ],
 };
 const LETTER_SLIDER_EN: LetterSliderContent = { ...LETTER_SLIDER_VI };
-
-const SVG_MORPH_OVERLAY_VI: SvgMorphOverlayContent = {
-  title: 'Khám phá bộ sưu tập',
-  images: pickMedia(4, 20),
-  overlayColor: '#36301d',
-  toggleLabel: 'Mở bộ sưu tập',
-};
-const SVG_MORPH_OVERLAY_EN: SvgMorphOverlayContent = {
-  ...SVG_MORPH_OVERLAY_VI,
-  title: 'Explore the collection',
-  toggleLabel: 'Open catalog',
-};
 
 const SEAMLESS_SCROLL_GALLERY_VI: SeamlessScrollGalleryContent = {
   title: 'Dự án tiêu biểu',
@@ -1588,22 +1505,6 @@ const FRAMER_INTRO_REDEFINED_EN: FramerIntroRedefinedContent = {
   body: 'A living space that transcends the boundaries of ordinary luxury — where nature merges with contemporary architecture.',
 };
 
-// ── Framer-native: Paradigm Title ───────────────────────────────────────
-const FRAMER_PARADIGM_TITLE_VI: FramerParadigmTitleContent = {
-  titleTop: 'Khám phá một mô hình mới',
-  titleBottom: 'Về Sức Khỏe & Wellness',
-  imageUrl:
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&q=80',
-  overlayText: 'Trải Nghiệm Đặc Quyền',
-};
-const FRAMER_PARADIGM_TITLE_EN: FramerParadigmTitleContent = {
-  titleTop: 'Explore a new paradigm',
-  titleBottom: 'In Residential Wellness',
-  imageUrl:
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&q=80',
-  overlayText: 'Signature Experiences',
-};
-
 // ── Framer-native: Explore CTA ──────────────────────────────────────────
 const FRAMER_EXPLORE_CTA_VI: FramerExploreCtaContent = {
   eyebrow: 'KHÁM PHÁ',
@@ -1630,20 +1531,6 @@ const FRAMER_STUDIO_MANIFESTO_EN: FramerStudioManifestoContent = {
   title: 'Our approach',
   body: 'We believe the best architecture serves people — not only beautiful in form but nourishing to the soul and connecting communities.',
   signature: '— Studio Rexer, 2025',
-};
-
-// ── Framer-native: Large Quote ──────────────────────────────────────────
-const FRAMER_LARGE_QUOTE_VI: FramerLargeQuoteContent = {
-  quote: 'Kiến trúc là âm nhạc được đóng băng trong không gian.',
-  author: 'Nguyễn Văn A',
-  role: 'GIÁM ĐỐC SÁNG TẠO',
-  variant: 'light',
-};
-const FRAMER_LARGE_QUOTE_EN: FramerLargeQuoteContent = {
-  quote: 'Architecture is music frozen in space.',
-  author: 'John Smith',
-  role: 'CREATIVE DIRECTOR',
-  variant: 'light',
 };
 
 // ── Framer-native: Stats Grid ───────────────────────────────────────────
@@ -2102,46 +1989,6 @@ const FRAMER_CLARITY_SERVICES_EN: FramerClarityServicesContent = {
   ],
 };
 
-// ── Framer-native: Velora Services ─────────────────────────────────────
-const FRAMER_VELORA_SERVICES_VI: FramerVeloraServicesContent = {
-  items: [
-    {
-      title: 'Thiết kế thương hiệu',
-      description: 'Định hình bản sắc thương hiệu độc đáo và đáng nhớ.',
-      imageUrl: '',
-    },
-    {
-      title: 'Chiến lược nội dung',
-      description: 'Xây dựng câu chuyện thương hiệu kết nối với khách hàng.',
-      imageUrl: '',
-    },
-    {
-      title: 'Phát triển kỹ thuật số',
-      description: 'Giải pháp số hiện đại giúp doanh nghiệp tăng trưởng.',
-      imageUrl: '',
-    },
-  ],
-};
-const FRAMER_VELORA_SERVICES_EN: FramerVeloraServicesContent = {
-  items: [
-    {
-      title: 'Brand Design',
-      description: 'Shape a unique and memorable brand identity.',
-      imageUrl: '',
-    },
-    {
-      title: 'Content Strategy',
-      description: 'Build brand stories that connect with customers.',
-      imageUrl: '',
-    },
-    {
-      title: 'Digital Development',
-      description: 'Modern digital solutions to grow your business.',
-      imageUrl: '',
-    },
-  ],
-};
-
 // ── Framer-native: Aestha Editorial ────────────────────────────────────
 const FRAMER_AESTHA_EDITORIAL_VI: FramerAesthaEditorialContent = {
   brand: 'RAMSA',
@@ -2361,9 +2208,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   hover_equalizer_heading: HOVER_EQ_HEADING_VI,
   image_explosion: IMAGE_EXPLOSION_VI,
   story_slides: STORY_SLIDES_VI,
-  peel_reveal: PEEL_REVEAL_VI,
   accordion_media: ACCORDION_MEDIA_VI,
-  pricing_table: PRICING_TABLE_VI,
   spotlight: SPOTLIGHT_VI,
   process_steps: PROCESS_STEPS_VI,
   dot_matrix: DOT_MATRIX_VI,
@@ -2371,7 +2216,6 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   pixel_reveal: PIXEL_REVEAL_VI,
   marquee_band: MARQUEE_BAND_VI,
   letter_slider: LETTER_SLIDER_VI,
-  svg_morph_overlay: SVG_MORPH_OVERLAY_VI,
   seamless_scroll_gallery: SEAMLESS_SCROLL_GALLERY_VI,
   product_spec_sheet: PRODUCT_SPEC_SHEET_VI,
   framer_yume_hero: FRAMER_YUME_HERO_VI,
@@ -2381,16 +2225,13 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_bungee_hero_v2: FRAMER_BUNGEE_HERO_V2_VI,
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_VI,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_VI,
-  framer_paradigm_title: FRAMER_PARADIGM_TITLE_VI,
   framer_explore_cta: FRAMER_EXPLORE_CTA_VI,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_VI,
-  framer_large_quote: FRAMER_LARGE_QUOTE_VI,
   framer_stats_grid: FRAMER_STATS_GRID_VI,
   framer_projects_grid: FRAMER_PROJECTS_GRID_VI,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_VI,
   framer_image_stagger: FRAMER_IMAGE_STAGGER_VI,
   framer_clarity_services: FRAMER_CLARITY_SERVICES_VI,
-  framer_velora_services: FRAMER_VELORA_SERVICES_VI,
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_VI,
   framer_darling_timeline: FRAMER_DARLING_TIMELINE_VI,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.vi,
@@ -2444,9 +2285,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hover_equalizer_heading: HOVER_EQ_HEADING_EN,
   image_explosion: IMAGE_EXPLOSION_EN,
   story_slides: STORY_SLIDES_EN,
-  peel_reveal: PEEL_REVEAL_EN,
   accordion_media: ACCORDION_MEDIA_EN,
-  pricing_table: PRICING_TABLE_EN,
   spotlight: SPOTLIGHT_EN,
   process_steps: PROCESS_STEPS_EN,
   dot_matrix: DOT_MATRIX_EN,
@@ -2454,7 +2293,6 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   pixel_reveal: PIXEL_REVEAL_EN,
   marquee_band: MARQUEE_BAND_EN,
   letter_slider: LETTER_SLIDER_EN,
-  svg_morph_overlay: SVG_MORPH_OVERLAY_EN,
   seamless_scroll_gallery: SEAMLESS_SCROLL_GALLERY_EN,
   product_spec_sheet: PRODUCT_SPEC_SHEET_EN,
   framer_yume_hero: FRAMER_YUME_HERO_EN,
@@ -2464,16 +2302,13 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_bungee_hero_v2: FRAMER_BUNGEE_HERO_V2_EN,
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_EN,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_EN,
-  framer_paradigm_title: FRAMER_PARADIGM_TITLE_EN,
   framer_explore_cta: FRAMER_EXPLORE_CTA_EN,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_EN,
-  framer_large_quote: FRAMER_LARGE_QUOTE_EN,
   framer_stats_grid: FRAMER_STATS_GRID_EN,
   framer_projects_grid: FRAMER_PROJECTS_GRID_EN,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_EN,
   framer_image_stagger: FRAMER_IMAGE_STAGGER_EN,
   framer_clarity_services: FRAMER_CLARITY_SERVICES_EN,
-  framer_velora_services: FRAMER_VELORA_SERVICES_EN,
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_EN,
   framer_darling_timeline: FRAMER_DARLING_TIMELINE_EN,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.en,

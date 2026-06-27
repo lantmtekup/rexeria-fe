@@ -30,8 +30,6 @@ import { FramerExploreCta } from './FramerExploreCta';
 import { FramerFaqMinimal } from './FramerFaqMinimal';
 import { FramerImageStagger } from './FramerImageStagger';
 import { FramerIntroRedefined } from './FramerIntroRedefined';
-import { FramerLargeQuote } from './FramerLargeQuote';
-import { FramerParadigmTitle } from './FramerParadigmTitle';
 import { FramerPerformAbout } from './FramerPerformAbout';
 import { FramerPerformHero } from './FramerPerformHero';
 import { FramerPerformPricing } from './FramerPerformPricing';
@@ -40,7 +38,6 @@ import { FramerSignatureFeature } from './FramerSignatureFeature';
 import { FramerStatsGrid } from './FramerStatsGrid';
 import { FramerStudioManifesto } from './FramerStudioManifesto';
 import { FramerTeamDirectory } from './FramerTeamDirectory';
-import { FramerVeloraServices } from './FramerVeloraServices';
 import { FramerVsCollinsProjects } from './FramerVsCollinsProjects';
 import { FramerYumeHero } from './FramerYumeHero';
 import { HeroOverlay } from './HeroOverlay';
@@ -57,9 +54,7 @@ import { HoverRevealList } from './HoverRevealList';
 import { ImageExplosion } from './ImageExplosion';
 import { ImageTrail } from './ImageTrail';
 import { StorySlides } from './StorySlides';
-import { PeelReveal } from './PeelReveal';
 import { AccordionMedia } from './AccordionMedia';
-import { PricingTable } from './PricingTable';
 import { Spotlight } from './Spotlight';
 import { ProcessSteps } from './ProcessSteps';
 import { DotMatrix } from './DotMatrix';
@@ -71,7 +66,6 @@ import { MarqueeBand } from './MarqueeBand';
 import { ParallaxHero } from './ParallaxHero';
 import { ProductSpecSheet } from './ProductSpecSheet';
 import { SeamlessScrollGallery } from './SeamlessScrollGallery';
-import { SvgMorphOverlay } from './SvgMorphOverlay';
 import { SplitScreen } from './SplitScreen';
 import { StickyScrollCards } from './StickyScrollCards';
 import { Stories } from './Stories';
@@ -114,8 +108,6 @@ import type {
   FramerFaqMinimalContent,
   FramerImageStaggerContent,
   FramerIntroRedefinedContent,
-  FramerLargeQuoteContent,
-  FramerParadigmTitleContent,
   FramerPerformAboutContent,
   FramerPerformHeroContent,
   FramerPerformPricingContent,
@@ -124,7 +116,6 @@ import type {
   FramerStatsGridContent,
   FramerStudioManifestoContent,
   FramerTeamDirectoryContent,
-  FramerVeloraServicesContent,
   FramerVsCollinsProjectsContent,
   FramerYumeHeroContent,
   HeroOverlayContent,
@@ -148,9 +139,7 @@ import type {
   HoverEqualizerHeadingContent,
   ImageExplosionContent,
   StorySlidesContent,
-  PeelRevealContent,
   AccordionMediaContent,
-  PricingTableContent,
   SpotlightContent,
   ProcessStepsContent,
   DotMatrixContent,
@@ -158,7 +147,6 @@ import type {
   PixelRevealContent,
   MarqueeBandContent,
   LetterSliderContent,
-  SvgMorphOverlayContent,
   SeamlessScrollGalleryContent,
   ProductSpecSheetContent,
 } from '../types';
@@ -679,32 +667,10 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'peel_reveal':
-      return (
-        <PeelReveal
-          content={content as PeelRevealContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'accordion_media':
       return (
         <AccordionMedia
           content={content as AccordionMediaContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'pricing_table':
-      return (
-        <PricingTable
-          content={content as PricingTableContent}
           styles={styles}
           background={background}
           order={order}
@@ -778,17 +744,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'svg_morph_overlay':
-      return (
-        <SvgMorphOverlay
-          content={content as SvgMorphOverlayContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'seamless_scroll_gallery':
       return (
         <SeamlessScrollGallery
@@ -846,17 +801,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'framer_velora_services':
-      return (
-        <FramerVeloraServices
-          content={content as FramerVeloraServicesContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'framer_perform_hero':
       return (
         <FramerPerformHero
@@ -879,17 +823,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'framer_paradigm_title':
-      return (
-        <FramerParadigmTitle
-          content={content as FramerParadigmTitleContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'framer_explore_cta':
       return (
         <FramerExploreCta
@@ -905,17 +838,6 @@ export function RenderBlock({
       return (
         <FramerStudioManifesto
           content={content as FramerStudioManifestoContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_large_quote':
-      return (
-        <FramerLargeQuote
-          content={content as FramerLargeQuoteContent}
           styles={styles}
           background={background}
           order={order}

@@ -89,7 +89,6 @@ const FUZZY_RULES: [RegExp, BlockType][] = [
   [/quiz/, 'quiz'],
   [/poll|vote/, 'poll'],
   [/faq|question/, 'framer_faq_minimal'],
-  [/quote|testimonial|review/, 'framer_large_quote'],
   [/stat|metric|number|count/, 'framer_stats_grid'],
   [/split/, 'split_screen'],
   [/3d|three.?d/, 'carousel_3d'],
