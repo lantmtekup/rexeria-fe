@@ -90,7 +90,6 @@ function FramerClarityServiceCard({
   return (
     <div
       style={{
-        maxHeight: 'clamp(209px,15cqi,209)',
         height: '100%',
         borderRadius: cardRadius,
         padding: cardPad,

@@ -2576,27 +2576,32 @@ const FRAMER_CLARITY_SERVICES_VI: FramerClarityServicesContent = {
   ],
 };
 const FRAMER_CLARITY_SERVICES_EN: FramerClarityServicesContent = {
-  bgColor: '#f8faf2',
+  bgColor: '#ffffff',
   cardBg: '#f3f6e6',
-  centerImageUrl: '',
+  centerImageUrl:
+    'https://framerusercontent.com/images/jOJJM3SIzRix55uIXIomAXX4YIk.png',
   services: [
     {
-      iconUrl: '',
+      iconUrl:
+        'https://framerusercontent.com/images/ugycgoOkv3p1p1LgDNQKUj0DMw.svg',
       title: 'Strategy Consulting',
       description: 'Define a clear direction for your business.',
     },
     {
-      iconUrl: '',
+      iconUrl:
+        'https://framerusercontent.com/images/hkvMklMx6UMQAP554YRJlGFEC38.svg?width=52&height=52',
       title: 'Brand Design',
       description: 'Build a strong, consistent brand identity.',
     },
     {
-      iconUrl: '',
+      iconUrl:
+        'https://framerusercontent.com/images/wcJdPBWrhic7UC9lCPXawWPP6OM.svg?width=52&height=52',
       title: 'Digital Development',
       description: 'Modern technology solutions for growth.',
     },
     {
-      iconUrl: '',
+      iconUrl:
+        'https://framerusercontent.com/images/nvcIvRkMNCueCZAw3q3pHxc3mc4.svg?width=52&height=52',
       title: 'Performance Optimization',
       description: 'Improve results through data analysis.',
     },
