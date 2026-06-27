@@ -2751,7 +2751,9 @@ export type AIJobType =
   | 'template_draft'
   | 'slot_suggest'
   | 'page_optimize'
-  | 'image_generate';
+  | 'image_generate'
+  | 'apply_product'
+  | 'multi_channel_adapt';
 export type AIJobStatus = 'queued' | 'running' | 'succeeded' | 'failed';
 
 export interface AIJob {
@@ -2772,6 +2774,72 @@ export interface AIJob {
 }
 export interface AIJobResponse {
   job: AIJob;
+}
+
+// ── AI-Automation: Apply Product (be-ai-automation-spec.md) ───────────────
+export type AIApplyTargetMode = 'new_page' | 'rewrite';
+
+export interface AIApplyProductInput {
+  product_id: string;
+  target_mode: AIApplyTargetMode;
+  /** required when target_mode = new_page */
+  template_id?: string;
+  workspace_id?: string;
+  page_name?: string;
+  /** required when target_mode = rewrite */
+  page_id?: string;
+  expected_canvas_etag?: string;
+  lang?: 'vi' | 'en';
+  brief?: string;
+}
+
+export interface AIApplyStats {
+  blocks_total: number;
+  blocks_rewritten: number;
+  blocks_skipped: number;
+  fields_rewritten: number;
+  image_bindings_replaced: number;
+  image_bindings_kept: number;
+}
+
+/** Shape of `AIJob.output_payload` for an `apply_product` job. */
+export interface AIApplyProductOutput {
+  page_id: string;
+  revision_no: number;
+  canvas_etag: string;
+  source: 'ai' | 'stub';
+  model: string;
+  applied: AIApplyStats;
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+    cache_read_input_tokens?: number;
+  };
+}
+
+// ── AI-Automation: Multi-channel adapt ────────────────────────────────────
+export type AIChannel = 'landing' | 'ad' | 'curate' | 'email';
+
+export interface AIMultiChannelInput {
+  source_page_id: string;
+  channels: AIChannel[];
+  lang?: 'vi' | 'en';
+  brief?: string;
+}
+
+export interface AIMultiChannelChannelResult {
+  channel: AIChannel;
+  status: 'created' | 'failed';
+  page_id?: string;
+  blocks_kept?: number;
+  error?: string;
+}
+
+/** Shape of `AIJob.output_payload` for a `multi_channel_adapt` job. */
+export interface AIMultiChannelOutput {
+  source_page_id: string;
+  model: string;
+  channels: AIMultiChannelChannelResult[];
 }
 
 export interface AITemplateDraftInput {
