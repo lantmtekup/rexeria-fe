@@ -58,7 +58,6 @@ import {
   TableRow,
 } from '@/components/atoms/table';
 import { BlockMiniPreview } from '@/components/modules/block-editor/BlockMiniPreview';
-import { PreviewMode } from '@/components/modules/block-editor/PreviewMode';
 import { TablePagination } from '@/components/molecules/TablePagination';
 import { BLOCK_TYPE_META } from '@/components/modules/block-editor/types';
 import type {
@@ -158,12 +157,6 @@ export function BlocksPage() {
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = React.useState(false);
   const [catalogOpen, setCatalogOpen] = React.useState(false);
-  // Preview overlay — null = closed. Holds parsed editor Block + label for
-  // <PreviewMode> (full-screen layout + animation playback per device).
-  const [previewTarget, setPreviewTarget] = React.useState<{
-    block: EditorBlock;
-    name: string;
-  } | null>(null);
   // Block đang sửa thông tin (name/description/tags) qua EditBlockDialog.
   const [editTarget, setEditTarget] = React.useState<ServerBlock | null>(null);
   const [page, setPage] = React.useState(1);
@@ -375,15 +368,15 @@ export function BlocksPage() {
     router.push(`${detailBase}/${block.id}/edit`);
   };
 
+  // Preview = mở DEV preview page (/dev/blocks?id=…) ở tab mới — full layout +
+  // animation, scroll/pin neo đúng viewport. id-mode fetch block thật rồi render
+  // đúng settings đã lưu (quan trọng cho type dùng chung như hero_split).
   const handlePreview = (block: ServerBlock) => {
-    const editorBlock = parseEditorBlock(block.settings);
-    if (!editorBlock) {
-      toast.error(
-        'Block này không có canvas data, settings rỗng hoặc shape không tương thích.'
-      );
-      return;
-    }
-    setPreviewTarget({ block: editorBlock, name: block.name });
+    window.open(
+      `/dev/blocks?id=${encodeURIComponent(block.id)}`,
+      '_blank',
+      'noopener'
+    );
   };
 
   const openDetail = (id: string) => {
@@ -637,16 +630,6 @@ export function BlocksPage() {
           openDetail(id);
         }}
       />
-
-      {/* Full-screen layout + animation preview overlay. PreviewMode handles
-          its own enter/exit animation + device responsive frame. */}
-      {previewTarget && (
-        <PreviewMode
-          blocks={[previewTarget.block]}
-          lang='vi'
-          onClose={() => setPreviewTarget(null)}
-        />
-      )}
 
       <EditBlockDialog
         open={!!editTarget}
