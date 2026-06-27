@@ -1,0 +1,123 @@
+/* ================================================================
+   Ad Showcase — scoped wrapper.
+   Tất cả biến + style chỉ áp dưới `.ad-showcase-root` để KHÔNG leak
+   vào phần còn lại của rexerai (Tailwind/global). ads.css/ads-extra.css
+   dùng toàn class riêng (.ad-wrap, .cd-, .hotspot-ad-…) nên an toàn.
+   ================================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+.ad-showcase-root {
+  /* Font tokens (custom PP Writer/SF Pro/BrownStd fallback gracefully). */
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Outfit', system-ui, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --writer: 'Cormorant Garamond', Georgia, serif;
+  --sf: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --brown: 'Cormorant Garamond', Georgia, serif;
+  --gold: #b8965a;
+  --gold-bright: #d4af6e;
+  --gold-dim: #8a7040;
+}
+
+/* ── Phone frame (mobile-first) ─────────────────────────────────── */
+.adsc-phone {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  aspect-ratio: 300 / 620;
+  border-radius: 38px;
+  padding: 9px;
+  background: linear-gradient(150deg, #1c1c20, #050506);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 22px 50px -18px rgba(10, 28, 56, 0.55);
+}
+.adsc-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 30px;
+  overflow: hidden;
+  background: #0b0b09;
+  isolation: isolate;
+}
+/* Notch */
+.adsc-phone::after {
+  content: '';
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 22px;
+  background: #050506;
+  border-radius: 0 0 14px 14px;
+  z-index: 30;
+}
+/* Ad fills the screen; ads.css roots (.ad-wrap etc.) are width/height 100%. */
+.adsc-screen > * {
+  width: 100%;
+  height: 100%;
+}
+
+/* Lớp bắt click trong GALLERY: tap mở trang chi tiết, ad bên dưới chỉ để
+   xem (auto-animation vẫn chạy) — tương tác đầy đủ ở trang chi tiết. */
+.adsc-tap {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  cursor: pointer;
+}
+
+/* ── Trang chi tiết (full interactive) ──────────────────────────── */
+.adsc-detail {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: radial-gradient(circle at 50% 0%, #12233f, #06080d 70%);
+}
+.adsc-detail-phone {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  aspect-ratio: 360 / 740;
+}
+/* Khung phone bọc InterscrollerPreview (giống /preview site cũ). `.isp` là
+   height:100% nên chỉ cần container có kích thước phone — component tự overlay
+   ad cố định theo rect của `.isp` (resizeAd). */
+.adsc-isp-phone {
+  width: 100%;
+  max-width: 384px;
+  height: min(82vh, 800px);
+  margin: 0 auto;
+  border-radius: 46px;
+  padding: 11px;
+  background: linear-gradient(150deg, #1c1c20, #050506);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 22px 55px -18px rgba(10, 28, 56, 0.6);
+}
+.adsc-isp-phone .isp {
+  border-radius: 36px;
+}
+
+/* Placeholder trước khi lazy-mount */
+.adsc-skeleton {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(
+      circle at 50% 35%,
+      rgba(184, 150, 90, 0.18),
+      transparent 60%
+    ),
+    #0b0b09;
+  color: rgba(255, 255, 255, 0.45);
+  font: 500 11px/1.4 var(--sans);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}

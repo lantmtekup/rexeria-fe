@@ -12,6 +12,7 @@ import { cn } from '@/lib/cn';
 const NAV = [
   { href: '/rexer', label: 'Home' },
   { href: '/rexer/studio', label: 'Studio' },
+  { href: '/rexer/ads', label: 'Ads' },
   { href: '/rexer/about', label: 'About us' },
   { href: '/rexer/projects', label: 'Projects' },
   { href: '/rexer/contact', label: 'Contact' },

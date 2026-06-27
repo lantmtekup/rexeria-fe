@@ -33,6 +33,17 @@ const eslintConfig = [
     },
   },
   {
+    // Ad-format components vendored từ ads_demo-rexer (showcase /rexer/ads).
+    // Giữ sát source — nới các rule house không hợp với JS port (props nhận
+    // nhưng không render, <img> nền quảng cáo, deps effect theo style gốc).
+    files: ['src/components/landing/ad-showcase/ads/**/*.{js,jsx}'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@next/next/no-img-element': 'off',
+      'react-hooks/exhaustive-deps': 'off',
+    },
+  },
+  {
     // Block templates must use container queries (`@2xl:` / `@4xl:`), not
     // viewport breakpoints (`md:` / `lg:` / etc.) — see
     // docs/canvas-block-responsive-spec.md §R1. Editor pages are exempt.
