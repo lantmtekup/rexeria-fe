@@ -70,8 +70,8 @@ const CARD_BASE_STYLE: React.CSSProperties = {
 };
 
 const CARD_STYLE_MASK: React.CSSProperties = {
-  WebkitMaskImage: `url('https://framerusercontent.com/images/8H79lPpnpMbUcZcj9K2ZdjHk.png')`,
-  maskImage: `url('https://framerusercontent.com/images/8H79lPpnpMbUcZcj9K2ZdjHk.png')`,
+  WebkitMaskImage: `url('/landing/nftpull/card-mask.png')`,
+  maskImage: `url('/landing/nftpull/card-mask.png')`,
   WebkitMaskSize: '100% 100%',
   maskSize: '100% 100%',
   WebkitMaskRepeat: 'no-repeat',
@@ -98,8 +98,8 @@ const CARD_DESC_STYLE: React.CSSProperties = {
 };
 
 const BADGE_BASE_STYLE: React.CSSProperties = {
-  WebkitMaskImage: `url('https://framerusercontent.com/images/s1u845am8UHe6Aq61wr2tAgG2sM.png')`,
-  maskImage: `url('https://framerusercontent.com/images/s1u845am8UHe6Aq61wr2tAgG2sM.png')`,
+  WebkitMaskImage: `url('/landing/nftpull/badge-mask.png')`,
+  maskImage: `url('/landing/nftpull/badge-mask.png')`,
   WebkitMaskSize: '100% 100%',
   maskSize: '100% 100%',
   WebkitMaskRepeat: 'no-repeat',
@@ -177,8 +177,8 @@ export function TimelineSection({
           // Desktop (≥3xl): hàng ngang, justify theo side.
           'flex w-full flex-1 flex-col-reverse items-start gap-6 @3xl:flex-row',
           isRight
-            ? 'pl-0 @2xl:justify-end @2xl:pl-0 @3xl:pl-12'
-            : 'pr-0 @2xl:justify-start @2xl:pr-0 @3xl:pr-12'
+            ? '@3xl:justify-end @3xl:pl-12'
+            : '@3xl:justify-start @3xl:pr-12'
         )}
       >
         <article
@@ -496,14 +496,15 @@ export function FramerNftpullTimeline({
         >
           <div
             aria-hidden
-            className='absolute top-0 bottom-0 left-1/2 hidden w-[2px] -translate-x-1/2 @4xl:block'
+            className='absolute top-0 bottom-0 left-1/2 hidden w-[2px] -translate-x-1/2 @3xl:block'
             style={{
+              background: 'rgba(255,255,255,0.12)',
               pointerEvents: 'none',
             }}
           />
           <div
             aria-hidden
-            className='nftpull-spine-fill absolute top-0 bottom-0 left-1/2 hidden w-[3px] -translate-x-1/2 @4xl:block'
+            className='nftpull-spine-fill absolute top-0 bottom-0 left-1/2 hidden w-[3px] -translate-x-1/2 @3xl:block'
             style={{
               background:
                 'linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.1) 100%)',

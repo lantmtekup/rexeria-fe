@@ -2992,9 +2992,9 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     gradient: 'from-neutral-700 to-neutral-900',
     defaultName: 'Why-Go Timeline',
     aiLabelVi:
-      'timeline nền tối, cột sống dọc gradient, card dark surface xen kẽ trái/phải',
+      'timeline nền tối, cột sống dọc gradient, card dark surface xen kẽ trái/phải, badge số trên spine',
     aiLabelEn:
-      'dark timeline with vertical gradient spine and alternating dark cards',
+      'dark timeline with vertical gradient spine and alternating dark cards, numbered badges on the spine',
   },
   framer_signature_feature: {
     type: 'framer_signature_feature',

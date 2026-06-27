@@ -19,6 +19,38 @@ import type { FramerNftpullTimelineContent } from '../../../types';
 import type { BlockDef } from '../types';
 
 const VI: FramerNftpullTimelineContent = {
+  heading: 'Vì sao chọn NFTpull',
+  intro:
+    'Nền tảng của chúng tôi không chỉ là một sàn NFT — đó là không gian mới mẻ, thú vị được tạo ra để hỗ trợ nhà sáng tạo số và mang đến những phần thưởng hấp dẫn.',
+  items: [
+    {
+      number: '1',
+      title: 'Giao diện thân thiện',
+      description:
+        'Thao tác dễ dàng với thiết kế gọn gàng, trực quan giúp quản lý tài sản số nhẹ nhàng, bất kể bạn ở trình độ nào.',
+    },
+    {
+      number: '2',
+      title: 'Bảo mật mạnh mẽ',
+      description:
+        'Bảo vệ khoản đầu tư của bạn bằng các giao thức bảo mật tân tiến, gồm xác thực hai lớp và mã hoá đầu-cuối.',
+    },
+    {
+      number: '3',
+      title: 'Thông tin thị trường thời gian thực',
+      description:
+        'Luôn dẫn đầu với dữ liệu thị trường thời gian thực, phân tích xu hướng và các đợt drop tuyển chọn — tất cả trong một dashboard cho cả nhà sáng tạo lẫn nhà sưu tầm.',
+    },
+    {
+      number: '4',
+      title: 'Công cụ tương tác',
+      description:
+        'Phát triển cộng đồng với bộ công cụ tương tác tích hợp: đấu giá, drop, nội dung giới hạn và cơ chế thưởng giữ chân người sưu tầm.',
+    },
+  ],
+};
+
+const EN: FramerNftpullTimelineContent = {
   heading: 'Why Go with NFTpull',
   intro:
     'Our platform isn’t just another NFT marketplace — it’s a fun new space designed to help digital creators and give them some awesome rewards.',
@@ -33,7 +65,7 @@ const VI: FramerNftpullTimelineContent = {
       number: '2',
       title: 'Cool Security Features',
       description:
-        'Protect your valuable investments with state-of-the-art security protocols, including robust two-factor authentic and end-to-end encryption.',
+        'Protect your valuable investments with state-of-the-art security protocols, including robust two-factor authentication and end-to-end encryption.',
     },
     {
       number: '3',
@@ -50,12 +82,6 @@ const VI: FramerNftpullTimelineContent = {
   ],
 };
 
-const EN: FramerNftpullTimelineContent = {
-  ...VI,
-  intro:
-    'Our platform isn’t just another NFT marketplace — it’s a fun new space designed to help digital creators and give them some awesome rewards.',
-};
-
 export const framerNftpullTimelineDef: BlockDef<FramerNftpullTimelineContent> =
   {
     type: 'framer_nftpull_timeline',
@@ -67,9 +93,9 @@ export const framerNftpullTimelineDef: BlockDef<FramerNftpullTimelineContent> =
       gradient: 'from-neutral-700 to-neutral-900',
       defaultName: 'Why-Go Timeline',
       aiLabelVi:
-        'timeline nền tối, cột sống dọc gradient, card dark surface xen kẽ trái/phải, badge số trên spine (recon spec)',
+        'timeline nền tối, cột sống dọc gradient, card dark surface xen kẽ trái/phải, badge số trên spine',
       aiLabelEn:
-        'dark timeline with vertical gradient spine and alternating dark cards, numbered badges on the spine (recon spec)',
+        'dark timeline with vertical gradient spine and alternating dark cards, numbered badges on the spine',
     },
     component: FramerNftpullTimeline,
     defaultContent: { vi: VI, en: EN },
