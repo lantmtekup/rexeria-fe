@@ -24,15 +24,10 @@ import { FeatureSection } from './FeatureSection';
 import { Flipbook } from './Flipbook';
 import { FramerAesthaEditorial } from './FramerAesthaEditorial';
 import { FramerArpeggioHeroV2 } from './FramerArpeggioHeroV2';
-import { FramerAvexaHero } from './FramerAvexaHero';
 import { FramerClarityServices } from './FramerClarityServices';
 import { FramerDarlingTimeline } from './FramerDarlingTimeline';
-import { FramerDelvauxHeroIntro } from './FramerDelvauxHeroIntro';
 import { FramerExploreCta } from './FramerExploreCta';
 import { FramerFaqMinimal } from './FramerFaqMinimal';
-import { FramerFinneganExpertise } from './FramerFinneganExpertise';
-import { FramerFirmaFeatured } from './FramerFirmaFeatured';
-import { FramerHero } from './FramerHero';
 import { FramerHorizontalScroll } from './FramerHorizontalScroll';
 import { FramerImageStagger } from './FramerImageStagger';
 import { FramerIntroRedefined } from './FramerIntroRedefined';
@@ -60,14 +55,12 @@ import { Poll } from './Poll';
 import { Quiz } from './Quiz';
 import { FlipGallery } from './FlipGallery';
 import { Gallery3dDepth } from './Gallery3dDepth';
-import { GalleryPanLens } from './GalleryPanLens';
 import { HoverEqualizerHeading } from './HoverEqualizerHeading';
 import { HoverGridReveal } from './HoverGridReveal';
 import { HoverRevealList } from './HoverRevealList';
 import { ImageExplosion } from './ImageExplosion';
 import { ImageTrail } from './ImageTrail';
 import { StorySlides } from './StorySlides';
-import { FlipShowreel } from './FlipShowreel';
 import { PeelReveal } from './PeelReveal';
 import { AccordionMedia } from './AccordionMedia';
 import { PricingTable } from './PricingTable';
@@ -121,15 +114,10 @@ import type {
   FlipbookContent,
   FramerAesthaEditorialContent,
   FramerArpeggioHeroV2Content,
-  FramerAvexaHeroContent,
   FramerClarityServicesContent,
   FramerDarlingTimelineContent,
-  FramerDelvauxHeroIntroContent,
   FramerExploreCtaContent,
   FramerFaqMinimalContent,
-  FramerFinneganExpertiseContent,
-  FramerFirmaFeaturedContent,
-  FramerHeroContent,
   FramerHorizontalScrollContent,
   FramerImageStaggerContent,
   FramerIntroRedefinedContent,
@@ -170,7 +158,6 @@ import type {
   HoverEqualizerHeadingContent,
   ImageExplosionContent,
   StorySlidesContent,
-  FlipShowreelContent,
   PeelRevealContent,
   AccordionMediaContent,
   PricingTableContent,
@@ -184,7 +171,6 @@ import type {
   MarqueeBandContent,
   LetterSliderContent,
   SvgMorphOverlayContent,
-  GalleryPanLensContent,
   SeamlessScrollGalleryContent,
   ProductSpecSheetContent,
 } from '../types';
@@ -727,17 +713,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'flip_showreel':
-      return (
-        <FlipShowreel
-          content={content as FlipShowreelContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'peel_reveal':
       return (
         <PeelReveal
@@ -870,17 +845,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'gallery_pan_lens':
-      return (
-        <GalleryPanLens
-          content={content as GalleryPanLensContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'seamless_scroll_gallery':
       return (
         <SeamlessScrollGallery
@@ -938,17 +902,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'framer_avexa_hero':
-      return (
-        <FramerAvexaHero
-          content={content as FramerAvexaHeroContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'framer_clarity_services':
       return (
         <FramerClarityServices
@@ -964,39 +917,6 @@ export function RenderBlock({
       return (
         <FramerVeloraServices
           content={content as FramerVeloraServicesContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_firma_featured':
-      return (
-        <FramerFirmaFeatured
-          content={content as FramerFirmaFeaturedContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_delvaux_hero_intro':
-      return (
-        <FramerDelvauxHeroIntro
-          content={content as FramerDelvauxHeroIntroContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_hero':
-      return (
-        <FramerHero
-          content={content as FramerHeroContent}
           styles={styles}
           background={background}
           order={order}
@@ -1129,17 +1049,6 @@ export function RenderBlock({
       return (
         <FramerFaqMinimal
           content={content as FramerFaqMinimalContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_finnegan_expertise':
-      return (
-        <FramerFinneganExpertise
-          content={content as FramerFinneganExpertiseContent}
           styles={styles}
           background={background}
           order={order}

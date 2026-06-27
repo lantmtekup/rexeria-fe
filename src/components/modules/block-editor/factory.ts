@@ -32,13 +32,10 @@ import type {
   FeatureSectionContent,
   FlipbookContent,
   FramerArpeggioHeroV2Content,
-  FramerAvexaHeroContent,
   FramerMobiusHeroContent,
   FramerBungeeHeroV2Content,
   FramerPurevisualsHeroContent,
-  FramerDelvauxHeroIntroContent,
   FramerExploreCtaContent,
-  FramerHeroContent,
   FramerPerformHeroContent,
   FramerIntroRedefinedContent,
   FramerHorizontalScrollContent,
@@ -67,7 +64,6 @@ import type {
   HoverEqualizerHeadingContent,
   ImageExplosionContent,
   StorySlidesContent,
-  FlipShowreelContent,
   PeelRevealContent,
   AccordionMediaContent,
   PricingTableContent,
@@ -81,7 +77,6 @@ import type {
   MarqueeBandContent,
   LetterSliderContent,
   SvgMorphOverlayContent,
-  GalleryPanLensContent,
   SeamlessScrollGalleryContent,
   ProductSpecSheetContent,
   PhotoGalleryContent,
@@ -90,13 +85,11 @@ import type {
   SplitScreenContent,
   StoriesContent,
   FramerFaqMinimalContent,
-  FramerFinneganExpertiseContent,
   FramerDarlingTimelineContent,
   FramerSignatureFeatureContent,
   FramerVsCollinsProjectsContent,
   FramerClarityServicesContent,
   FramerVeloraServicesContent,
-  FramerFirmaFeaturedContent,
   FramerAesthaEditorialContent,
   FramerPerformAboutContent,
   FramerPerformPricingContent,
@@ -1266,12 +1259,6 @@ const STORY_SLIDES_EN: StorySlidesContent = {
   ],
 };
 
-const FLIP_SHOWREEL_VI: FlipShowreelContent = {
-  title: 'Happy City',
-  imageUrl: MEDIA.architecture[0],
-};
-const FLIP_SHOWREEL_EN: FlipShowreelContent = { ...FLIP_SHOWREEL_VI };
-
 const PEEL_REVEAL_VI: PeelRevealContent = {
   title: 'Happy City',
   imageUrl: MEDIA.architecture[0],
@@ -1522,13 +1509,6 @@ const SVG_MORPH_OVERLAY_EN: SvgMorphOverlayContent = {
   toggleLabel: 'Open catalog',
 };
 
-const GALLERY_PAN_LENS_VI: GalleryPanLensContent = {
-  images: pickMedia(9, 11),
-  radius: 260,
-  maxScale: 2.4,
-};
-const GALLERY_PAN_LENS_EN: GalleryPanLensContent = { ...GALLERY_PAN_LENS_VI };
-
 const SEAMLESS_SCROLL_GALLERY_VI: SeamlessScrollGalleryContent = {
   title: 'Dự án tiêu biểu',
   images: pickMedia(7, 16),
@@ -1593,36 +1573,6 @@ const FRAMER_ARPEGGIO_HERO_V2_VI: FramerArpeggioHeroV2Content = {
 };
 const FRAMER_ARPEGGIO_HERO_V2_EN: FramerArpeggioHeroV2Content = {
   ...FRAMER_ARPEGGIO_HERO_V2_VI,
-};
-
-// ── Framer-native: Delvaux Hero Intro ───────────────────────────────────
-const FRAMER_DELVAUX_HERO_INTRO_VI: FramerDelvauxHeroIntroContent = {
-  storefrontImageUrl:
-    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&q=80',
-  productImageUrl:
-    'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1200&q=80',
-  productAlt: 'Sản phẩm nổi bật',
-};
-const FRAMER_DELVAUX_HERO_INTRO_EN: FramerDelvauxHeroIntroContent = {
-  ...FRAMER_DELVAUX_HERO_INTRO_VI,
-  productAlt: 'Featured product',
-};
-
-// ── Framer-native: Framer Hero ──────────────────────────────────────────
-const FRAMER_HERO_VI: FramerHeroContent = {
-  logo: 'ecopark',
-  navLink: 'Liên hệ',
-  navHref: '#contact',
-  title: 'Sống cùng thiên nhiên\nTắm trong thanh thản',
-  backgroundUrl:
-    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1600&q=80',
-};
-const FRAMER_HERO_EN: FramerHeroContent = {
-  logo: 'ecopark',
-  navLink: 'Contact',
-  navHref: '#contact',
-  title: 'Live with Nature\nBathe in Serenity',
-  backgroundUrl: FRAMER_HERO_VI.backgroundUrl,
 };
 
 // ── Framer-native: Perform Hero v1 ──────────────────────────────────────
@@ -1748,21 +1698,6 @@ const FRAMER_MOBIUS_HERO_VI: FramerMobiusHeroContent = {
 };
 const FRAMER_MOBIUS_HERO_EN: FramerMobiusHeroContent = {
   ...FRAMER_MOBIUS_HERO_VI,
-};
-
-// ── Framer-native: Hero - Avexa ──────────────────────────────────────────────
-const FRAMER_AVEXA_HERO_VI: FramerAvexaHeroContent = {
-  backgroundUrl:
-    'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1600&q=80',
-  brandMark: 'Avexa',
-  topHeading: 'Defining the future\nof modern living.',
-  tagline: 'Where craft meets culture,\nand beauty lives in detail.',
-  wordmark: 'Avexa',
-  wordmarkSuffix: '®',
-  wordmarkAfter: 'Studio',
-};
-const FRAMER_AVEXA_HERO_EN: FramerAvexaHeroContent = {
-  ...FRAMER_AVEXA_HERO_VI,
 };
 
 // ── Framer-native: Intro Redefined ──────────────────────────────────────
@@ -2124,68 +2059,6 @@ const FRAMER_FAQ_MINIMAL_EN: FramerFaqMinimalContent = {
   ],
 };
 
-// ── Framer-native: Finnegan Expertise ──────────────────────────────────
-const FRAMER_FINNEGAN_EXPERTISE_VI: FramerFinneganExpertiseContent = {
-  heading: 'Chuyên Môn',
-  cardBg: '#e85a2c',
-  slides: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80',
-      title: 'Thiết kế thương hiệu',
-      description:
-        'Xây dựng bản sắc thương hiệu độc đáo và nhất quán trên mọi nền tảng.',
-      bgColor: '#e85a2c',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80',
-      title: 'Phát triển web',
-      description:
-        'Tạo ra các trang web nhanh, đẹp và dễ sử dụng với công nghệ hiện đại.',
-      bgColor: '#2c7be8',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1551434678-e076c223a692?w=1200&q=80',
-      title: 'Chiến lược nội dung',
-      description:
-        'Lên kế hoạch và thực thi nội dung thu hút, chuyển đổi khách hàng tiềm năng.',
-      bgColor: '#1f9d55',
-    },
-  ],
-};
-const FRAMER_FINNEGAN_EXPERTISE_EN: FramerFinneganExpertiseContent = {
-  heading: 'My Expertise',
-  cardBg: '#e85a2c',
-  slides: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80',
-      title: 'Brand Design',
-      description:
-        'Building a unique and consistent brand identity across all platforms.',
-      bgColor: '#e85a2c',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80',
-      title: 'Web Development',
-      description:
-        'Creating fast, beautiful, and user-friendly websites with modern technology.',
-      bgColor: '#2c7be8',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1551434678-e076c223a692?w=1200&q=80',
-      title: 'Content Strategy',
-      description:
-        'Planning and executing compelling content that converts potential customers.',
-      bgColor: '#1f9d55',
-    },
-  ],
-};
-
 // ── Framer-native: Darling Timeline ────────────────────────────────────
 const FRAMER_DARLING_TIMELINE_VI: FramerDarlingTimelineContent = {
   heading: 'Hành Trình',
@@ -2455,26 +2328,6 @@ const FRAMER_VELORA_SERVICES_EN: FramerVeloraServicesContent = {
   ],
 };
 
-// ── Framer-native: Firma Featured ──────────────────────────────────────
-const FRAMER_FIRMA_FEATURED_VI: FramerFirmaFeaturedContent = {
-  imageUrl: '',
-  category: 'CHIẾN LƯỢC / KỸ THUẬT SỐ',
-  heading: 'Dự án nổi bật',
-  description:
-    'Một câu chuyện thương hiệu mạnh mẽ bắt đầu từ sự rõ ràng về mục tiêu và khách hàng.',
-  ctaLabel: 'Xem case study',
-  ctaHref: '#',
-};
-const FRAMER_FIRMA_FEATURED_EN: FramerFirmaFeaturedContent = {
-  imageUrl: '',
-  category: 'STRATEGY / DIGITAL',
-  heading: 'Featured Project',
-  description:
-    'A strong brand story starts with clarity about goals and customers.',
-  ctaLabel: 'Case Study',
-  ctaHref: '#',
-};
-
 // ── Framer-native: Aestha Editorial ────────────────────────────────────
 const FRAMER_AESTHA_EDITORIAL_VI: FramerAesthaEditorialContent = {
   brand: 'RAMSA',
@@ -2696,7 +2549,6 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   hover_equalizer_heading: HOVER_EQ_HEADING_VI,
   image_explosion: IMAGE_EXPLOSION_VI,
   story_slides: STORY_SLIDES_VI,
-  flip_showreel: FLIP_SHOWREEL_VI,
   peel_reveal: PEEL_REVEAL_VI,
   accordion_media: ACCORDION_MEDIA_VI,
   pricing_table: PRICING_TABLE_VI,
@@ -2710,19 +2562,15 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   marquee_band: MARQUEE_BAND_VI,
   letter_slider: LETTER_SLIDER_VI,
   svg_morph_overlay: SVG_MORPH_OVERLAY_VI,
-  gallery_pan_lens: GALLERY_PAN_LENS_VI,
   seamless_scroll_gallery: SEAMLESS_SCROLL_GALLERY_VI,
   product_spec_sheet: PRODUCT_SPEC_SHEET_VI,
   framer_yume_hero: FRAMER_YUME_HERO_VI,
   framer_yuya_hero: FRAMER_YUYA_HERO_VI,
   framer_arpeggio_hero_v2: FRAMER_ARPEGGIO_HERO_V2_VI,
-  framer_delvaux_hero_intro: FRAMER_DELVAUX_HERO_INTRO_VI,
-  framer_hero: FRAMER_HERO_VI,
   framer_perform_hero: FRAMER_PERFORM_HERO_VI,
   framer_bungee_hero_v2: FRAMER_BUNGEE_HERO_V2_VI,
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_VI,
   framer_mobius_hero: FRAMER_MOBIUS_HERO_VI,
-  framer_avexa_hero: FRAMER_AVEXA_HERO_VI,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_VI,
   framer_paradigm_title: FRAMER_PARADIGM_TITLE_VI,
   framer_explore_cta: FRAMER_EXPLORE_CTA_VI,
@@ -2735,9 +2583,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_horizontal_scroll: FRAMER_HORIZONTAL_SCROLL_VI,
   framer_clarity_services: FRAMER_CLARITY_SERVICES_VI,
   framer_velora_services: FRAMER_VELORA_SERVICES_VI,
-  framer_firma_featured: FRAMER_FIRMA_FEATURED_VI,
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_VI,
-  framer_finnegan_expertise: FRAMER_FINNEGAN_EXPERTISE_VI,
   framer_darling_timeline: FRAMER_DARLING_TIMELINE_VI,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
@@ -2792,7 +2638,6 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hover_equalizer_heading: HOVER_EQ_HEADING_EN,
   image_explosion: IMAGE_EXPLOSION_EN,
   story_slides: STORY_SLIDES_EN,
-  flip_showreel: FLIP_SHOWREEL_EN,
   peel_reveal: PEEL_REVEAL_EN,
   accordion_media: ACCORDION_MEDIA_EN,
   pricing_table: PRICING_TABLE_EN,
@@ -2806,19 +2651,15 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   marquee_band: MARQUEE_BAND_EN,
   letter_slider: LETTER_SLIDER_EN,
   svg_morph_overlay: SVG_MORPH_OVERLAY_EN,
-  gallery_pan_lens: GALLERY_PAN_LENS_EN,
   seamless_scroll_gallery: SEAMLESS_SCROLL_GALLERY_EN,
   product_spec_sheet: PRODUCT_SPEC_SHEET_EN,
   framer_yume_hero: FRAMER_YUME_HERO_EN,
   framer_yuya_hero: FRAMER_YUYA_HERO_EN,
   framer_arpeggio_hero_v2: FRAMER_ARPEGGIO_HERO_V2_EN,
-  framer_delvaux_hero_intro: FRAMER_DELVAUX_HERO_INTRO_EN,
-  framer_hero: FRAMER_HERO_EN,
   framer_perform_hero: FRAMER_PERFORM_HERO_EN,
   framer_bungee_hero_v2: FRAMER_BUNGEE_HERO_V2_EN,
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_EN,
   framer_mobius_hero: FRAMER_MOBIUS_HERO_EN,
-  framer_avexa_hero: FRAMER_AVEXA_HERO_EN,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_EN,
   framer_paradigm_title: FRAMER_PARADIGM_TITLE_EN,
   framer_explore_cta: FRAMER_EXPLORE_CTA_EN,
@@ -2831,9 +2672,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_horizontal_scroll: FRAMER_HORIZONTAL_SCROLL_EN,
   framer_clarity_services: FRAMER_CLARITY_SERVICES_EN,
   framer_velora_services: FRAMER_VELORA_SERVICES_EN,
-  framer_firma_featured: FRAMER_FIRMA_FEATURED_EN,
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_EN,
-  framer_finnegan_expertise: FRAMER_FINNEGAN_EXPERTISE_EN,
   framer_darling_timeline: FRAMER_DARLING_TIMELINE_EN,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,

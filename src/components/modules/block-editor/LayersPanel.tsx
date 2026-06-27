@@ -121,19 +121,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'wordmark', label: 'Wordmark', icon: Type },
     { key: 'wordmarkSuffix', label: 'Ký hiệu', icon: Type },
   ],
-  framer_delvaux_hero_intro: [
-    BACKGROUND_LAYER,
-    { key: 'storefrontImageUrl', label: 'Ảnh storefront', icon: ImageIcon },
-    { key: 'productImageUrl', label: 'Ảnh sản phẩm', icon: ImageIcon },
-    { key: 'productAlt', label: 'Alt sản phẩm', icon: Type },
-  ],
-  framer_hero: [
-    BACKGROUND_LAYER,
-    { key: 'backgroundUrl', label: 'Ảnh nền', icon: ImageIcon },
-    { key: 'logo', label: 'Logo', icon: Type },
-    { key: 'navLink', label: 'Nav link', icon: MousePointerClick },
-    { key: 'title', label: 'Tiêu đề', icon: Type },
-  ],
   framer_perform_hero: [
     BACKGROUND_LAYER,
     { key: 'backgroundUrl', label: 'Ảnh nền', icon: ImageIcon },
@@ -151,16 +138,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'cards', label: 'Photo stack', icon: Grid3x3 },
     { key: 'location', label: 'Location', icon: Type },
     { key: 'copyright', label: 'Copyright', icon: Type },
-  ],
-  framer_avexa_hero: [
-    BACKGROUND_LAYER,
-    { key: 'backgroundUrl', label: 'Ảnh nền', icon: ImageIcon },
-    { key: 'brandMark', label: 'Brand mark', icon: Type },
-    { key: 'topHeading', label: 'Heading', icon: Type },
-    { key: 'tagline', label: 'Tagline', icon: Pilcrow },
-    { key: 'wordmark', label: 'Wordmark', icon: Type },
-    { key: 'wordmarkSuffix', label: 'Ký hiệu', icon: Type },
-    { key: 'wordmarkAfter', label: 'Wordmark sau', icon: Type },
   ],
   framer_intro_redefined: [
     BACKGROUND_LAYER,
@@ -232,14 +209,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'items', label: 'Dịch vụ', icon: Grid3x3 },
   ],
-  framer_firma_featured: [
-    BACKGROUND_LAYER,
-    { key: 'imageUrl', label: 'Ảnh dự án', icon: ImageIcon },
-    { key: 'category', label: 'Danh mục', icon: Type },
-    { key: 'heading', label: 'Tên dự án', icon: Type },
-    { key: 'description', label: 'Mô tả', icon: Pilcrow },
-    { key: 'ctaLabel', label: 'Nhãn CTA', icon: MousePointerClick },
-  ],
   framer_aestha_editorial: [
     BACKGROUND_LAYER,
     { key: 'brand', label: 'Brand', icon: Type },
@@ -267,11 +236,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'title', label: 'Tiêu đề', icon: Type },
     { key: 'ctaText', label: 'Nút CTA', icon: MousePointerClick },
     { key: 'items', label: 'Câu hỏi', icon: ListChecks },
-  ],
-  framer_finnegan_expertise: [
-    BACKGROUND_LAYER,
-    { key: 'heading', label: 'Tiêu đề ghost', icon: Type },
-    { key: 'slides', label: 'Expertise cards', icon: Grid3x3 },
   ],
   framer_darling_timeline: [
     BACKGROUND_LAYER,
@@ -551,10 +515,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'title', label: 'Tiêu đề', icon: Type },
   ],
-  flip_showreel: [
-    BACKGROUND_LAYER,
-    { key: 'title', label: 'Tiêu đề', icon: Type },
-  ],
   peel_reveal: [
     BACKGROUND_LAYER,
     { key: 'title', label: 'Tiêu đề', icon: Type },
@@ -588,7 +548,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'title', label: 'Tiêu đề', icon: Type },
   ],
-  gallery_pan_lens: [BACKGROUND_LAYER],
   seamless_scroll_gallery: [
     BACKGROUND_LAYER,
     { key: 'title', label: 'Tiêu đề', icon: Type },
