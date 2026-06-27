@@ -2787,6 +2787,14 @@ const FRAMER_PERFORM_ABOUT_VI: FramerPerformAboutContent = {
       textRest:
         'giúp vận động viên xây dựng sức mạnh và tự tin để vượt qua giới hạn.',
     },
+    {
+      imageUrl:
+        'https://framerusercontent.com/images/o1iEuFuB1ARuwoXcEgQQTV0CYbw.png',
+      textHighlight:
+        'Cùng nhau, chúng ta sẽ phá vỡ mọi rào cản và khơi dậy tiềm năng của bạn,',
+      textRest:
+        'biến mỗi cột mốc thành một thắng lợi thông qua sự huấn luyện được cá nhân hóa.',
+    },
   ],
 };
 const FRAMER_PERFORM_ABOUT_EN: FramerPerformAboutContent = {
