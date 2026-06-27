@@ -23,14 +23,9 @@ import { MintVaultInvitation } from './MintVaultInvitation';
 import { FeatureSection } from './FeatureSection';
 import { Flipbook } from './Flipbook';
 import { FramerAesthaEditorial } from './FramerAesthaEditorial';
-import { FramerAesthaProjectDetail } from './FramerAesthaProjectDetail';
-import { FramerArpeggioHero } from './FramerArpeggioHero';
 import { FramerArpeggioHeroV2 } from './FramerArpeggioHeroV2';
-import { FramerAvexaBento } from './FramerAvexaBento';
 import { FramerAvexaHero } from './FramerAvexaHero';
-import { FramerBungeeHero } from './FramerBungeeHero';
 import { FramerClarityServices } from './FramerClarityServices';
-import { FramerContactFooter } from './FramerContactFooter';
 import { FramerDarlingTimeline } from './FramerDarlingTimeline';
 import { FramerDelvauxHeroIntro } from './FramerDelvauxHeroIntro';
 import { FramerExploreCta } from './FramerExploreCta';
@@ -46,7 +41,6 @@ import { FramerMobiusHero } from './FramerMobiusHero';
 import { FramerParadigmTitle } from './FramerParadigmTitle';
 import { FramerPerformAbout } from './FramerPerformAbout';
 import { FramerPerformHero } from './FramerPerformHero';
-import { FramerPerformHeroV2 } from './FramerPerformHeroV2';
 import { FramerPerformPricing } from './FramerPerformPricing';
 import { FramerProjectsGrid } from './FramerProjectsGrid';
 import { FramerSignatureFeature } from './FramerSignatureFeature';
@@ -72,7 +66,6 @@ import { HoverGridReveal } from './HoverGridReveal';
 import { HoverRevealList } from './HoverRevealList';
 import { ImageExplosion } from './ImageExplosion';
 import { ImageTrail } from './ImageTrail';
-import { CardShowcase } from './CardShowcase';
 import { StorySlides } from './StorySlides';
 import { FlipShowreel } from './FlipShowreel';
 import { PeelReveal } from './PeelReveal';
@@ -127,14 +120,9 @@ import type {
   FeatureSectionContent,
   FlipbookContent,
   FramerAesthaEditorialContent,
-  FramerAesthaProjectDetailContent,
-  FramerArpeggioHeroContent,
   FramerArpeggioHeroV2Content,
-  FramerAvexaBentoContent,
   FramerAvexaHeroContent,
-  FramerBungeeHeroContent,
   FramerClarityServicesContent,
-  FramerContactFooterContent,
   FramerDarlingTimelineContent,
   FramerDelvauxHeroIntroContent,
   FramerExploreCtaContent,
@@ -150,7 +138,6 @@ import type {
   FramerParadigmTitleContent,
   FramerPerformAboutContent,
   FramerPerformHeroContent,
-  FramerPerformHeroV2Content,
   FramerPerformPricingContent,
   FramerProjectsGridContent,
   FramerSignatureFeatureContent,
@@ -182,7 +169,6 @@ import type {
   HoverGridRevealContent,
   HoverEqualizerHeadingContent,
   ImageExplosionContent,
-  CardShowcaseContent,
   StorySlidesContent,
   FlipShowreelContent,
   PeelRevealContent,
@@ -730,17 +716,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'card_showcase':
-      return (
-        <CardShowcase
-          content={content as CardShowcaseContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'story_slides':
       return (
         <StorySlides
@@ -941,17 +916,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'framer_arpeggio_hero':
-      return (
-        <FramerArpeggioHero
-          content={content as FramerArpeggioHeroContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'framer_arpeggio_hero_v2':
       return (
         <FramerArpeggioHeroV2
@@ -978,17 +942,6 @@ export function RenderBlock({
       return (
         <FramerAvexaHero
           content={content as FramerAvexaHeroContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_avexa_bento':
-      return (
-        <FramerAvexaBento
-          content={content as FramerAvexaBentoContent}
           styles={styles}
           background={background}
           order={order}
@@ -1055,28 +1008,6 @@ export function RenderBlock({
       return (
         <FramerPerformHero
           content={content as FramerPerformHeroContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_perform_hero_v2':
-      return (
-        <FramerPerformHeroV2
-          content={content as FramerPerformHeroV2Content}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_bungee_hero':
-      return (
-        <FramerBungeeHero
-          content={content as FramerBungeeHeroContent}
           styles={styles}
           background={background}
           order={order}
@@ -1194,17 +1125,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'framer_contact_footer':
-      return (
-        <FramerContactFooter
-          content={content as FramerContactFooterContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'framer_faq_minimal':
       return (
         <FramerFaqMinimal
@@ -1264,17 +1184,6 @@ export function RenderBlock({
       return (
         <FramerAesthaEditorial
           content={content as FramerAesthaEditorialContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_aestha_project_detail':
-      return (
-        <FramerAesthaProjectDetail
-          content={content as FramerAesthaProjectDetailContent}
           styles={styles}
           background={background}
           order={order}

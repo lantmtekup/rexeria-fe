@@ -35,7 +35,6 @@ export type BlockType =
   | 'gallery_pan_lens'
   | 'seamless_scroll_gallery'
   | 'product_spec_sheet'
-  | 'card_showcase'
   | 'story_slides'
   | 'flip_showreel'
   | 'peel_reveal'
@@ -53,13 +52,10 @@ export type BlockType =
   // BE phải có code tương ứng active trong catalog block_types.
   | 'framer_yume_hero'
   | 'framer_yuya_hero'
-  | 'framer_arpeggio_hero'
   | 'framer_arpeggio_hero_v2'
   | 'framer_delvaux_hero_intro'
   | 'framer_hero'
   | 'framer_perform_hero'
-  | 'framer_perform_hero_v2'
-  | 'framer_bungee_hero'
   | 'framer_bungee_hero_v2'
   | 'framer_purevisuals_hero'
   | 'framer_mobius_hero'
@@ -74,11 +70,9 @@ export type BlockType =
   | 'framer_team_directory'
   | 'framer_image_stagger'
   | 'framer_horizontal_scroll'
-  | 'framer_avexa_bento'
   | 'framer_clarity_services'
   | 'framer_velora_services'
   | 'framer_firma_featured'
-  | 'framer_contact_footer'
   | 'framer_faq_minimal'
   | 'framer_finnegan_expertise'
   | 'framer_darling_timeline'
@@ -86,7 +80,6 @@ export type BlockType =
   | 'framer_signature_feature'
   | 'framer_vs_collins_projects'
   | 'framer_aestha_editorial'
-  | 'framer_aestha_project_detail'
   | 'framer_perform_about'
   | 'framer_perform_pricing'
   // ── Mint-coint sections tách thành data block (port từ src/templates) ──
@@ -801,13 +794,6 @@ export interface ImageExplosionContent {
   images: string[];
 }
 
-/** Card showcase — lưới thẻ (ảnh + tiêu đề + phụ đề), reveal fade-up stagger. */
-export interface CardShowcaseContent {
-  /** Tiêu đề section (tùy chọn). */
-  title?: string;
-  cards: { imageUrl: string; title: string; subtitle?: string }[];
-}
-
 /** Story slides — slide tự chạy kiểu IG-stories + thanh index progress. */
 export interface StorySlidesContent {
   slides: { imageUrl: string; title: string; subtitle?: string }[];
@@ -965,20 +951,6 @@ export interface FramerYumeHeroContent {
  *  registry legacy. `bgColor` của legacy map sang native background layer. */
 export type FramerYuyaHeroContent = FramerYumeHeroContent;
 
-/**
- * Hero - 03 (Arpeggio): ảnh nền portrait full-bleed + headline trái +
- * agency label phải + wordmark đỏ cực to dưới cùng. Migrate từ
- * `src/blocks/framer-arpeggio-hero` (`backgroundImage{url,alt}` → `backgroundUrl`).
- */
-export interface FramerArpeggioHeroContent {
-  backgroundUrl: string;
-  headline: string;
-  subtitle: string;
-  topRightLabel: string;
-  wordmark: string;
-  wordmarkSuffix: string;
-}
-
 /** Hero - Arpeggio v2: fork độc lập từ v1, cùng layout + layer keys. */
 export interface FramerArpeggioHeroV2Content {
   backgroundUrl: string;
@@ -987,33 +959,6 @@ export interface FramerArpeggioHeroV2Content {
   topRightLabel: string;
   wordmark: string;
   wordmarkSuffix: string;
-}
-
-/**
- * Bento - 01 (Avexa Why-Us): 6-card bento grid 3-col. Migrate từ
- * `src/blocks/framer-avexa-bento`.
- */
-export interface FramerAvexaBentoContent {
-  card1ImageUrl: string;
-  card1Title: string;
-  card1Desc: string;
-  card2ImageUrl: string;
-  card2Title: string;
-  card2Caption: string;
-  card3Big: string;
-  card3Sub: string;
-  card3BadgeBrand: string;
-  card3BadgeLabel: string;
-  card4ImageUrl: string;
-  card4Title: string;
-  card4Desc: string;
-  card5ImageUrl: string;
-  card5Title: string;
-  card5Caption: string;
-  card6Image1Url: string;
-  card6Image2Url: string;
-  card6Title: string;
-  card6Desc: string;
 }
 
 /** Service item cho FramerClarityServicesContent. */
@@ -1097,38 +1042,6 @@ export interface FramerPerformHeroContent {
   backgroundUrl: string;
   reviewStars: number;
   reviewCount: string;
-}
-
-/**
- * Hero - Perform v2: Manrope centred layout 72/54px title, subtitle 544px,
- * pill CTA + gold star reviews. Port từ `src/blocks/framer-perform-hero-v2`.
- */
-export interface FramerPerformHeroV2Content {
-  eyebrow: string;
-  title: string;
-  subtitle: string;
-  buttonText: string;
-  buttonHref: string;
-  reviewsText: string;
-  bgImageUrl: string;
-}
-
-/**
- * Hero - Bungee: wordmark image + subtitle + timer/links + CSS marquee strip.
- * Port từ `src/blocks/framer-bungee-hero`.
- */
-export interface FramerBungeeHeroContent {
-  wordmarkUrl: string;
-  subtitle: string;
-  timerLabel: string;
-  link1Label: string;
-  link1Url: string;
-  link2Label: string;
-  link2Url: string;
-  link3Label: string;
-  link3Url: string;
-  marqueeSpeed: number;
-  cardImages: Array<{ imageUrl: string }>;
 }
 
 /**
@@ -1343,21 +1256,6 @@ export interface FramerAesthaEditorialContent {
 }
 
 /**
- * Aestha Project Detail: 3 cột — tiêu đề sticky trái, body giữa, stack ảnh phải.
- * Port từ `src/blocks/framer-aestha-project-detail`.
- */
-export interface FramerAesthaProjectDetailContent {
-  projectTitle: string;
-  sectionLabel: string;
-  body: string;
-  images: Array<{ imageUrl: string; aspect: string }>;
-  nextLabel: string;
-  nextProjectText: string;
-  nextProjectHref: string;
-  navLinks: Array<{ label: string; href: string }>;
-}
-
-/**
  * Perform About: nền đen, hàng xếp chồng text trái + ảnh phải.
  * Port từ `src/blocks/framer-perform-about`.
  */
@@ -1385,19 +1283,6 @@ export interface FramerPerformPricingContent {
     ctaLabel: string;
     ctaHref: string;
   }>;
-}
-
-/**
- * Contact Footer: nền đen, greeting italic cực to + email xanh lá (#00940c),
- * lưới nav/social, copyright phía dưới.
- * Port từ `src/blocks/framer-contact-footer`.
- */
-export interface FramerContactFooterContent {
-  greeting: string;
-  email: string;
-  copyright: string;
-  navLinks: Array<{ label: string; href: string }>;
-  socialLinks: Array<{ label: string; href: string }>;
 }
 
 /**
@@ -1532,7 +1417,6 @@ export type BlockContent =
   | HoverGridRevealContent
   | HoverEqualizerHeadingContent
   | ImageExplosionContent
-  | CardShowcaseContent
   | StorySlidesContent
   | FlipShowreelContent
   | PeelRevealContent
@@ -1552,13 +1436,10 @@ export type BlockContent =
   | SeamlessScrollGalleryContent
   | ProductSpecSheetContent
   | FramerYumeHeroContent
-  | FramerArpeggioHeroContent
   | FramerArpeggioHeroV2Content
   | FramerDelvauxHeroIntroContent
   | FramerHeroContent
   | FramerPerformHeroContent
-  | FramerPerformHeroV2Content
-  | FramerBungeeHeroContent
   | FramerBungeeHeroV2Content
   | FramerPurevisualsHeroContent
   | FramerMobiusHeroContent
@@ -1574,17 +1455,14 @@ export type BlockContent =
   | FramerImageStaggerContent
   | FramerHorizontalScrollContent
   | FramerAesthaEditorialContent
-  | FramerAesthaProjectDetailContent
   | FramerPerformAboutContent
   | FramerPerformPricingContent
-  | FramerContactFooterContent
   | FramerFaqMinimalContent
   | FramerFinneganExpertiseContent
   | FramerDarlingTimelineContent
   | FramerNftpullTimelineContent
   | FramerSignatureFeatureContent
   | FramerVsCollinsProjectsContent
-  | FramerAvexaBentoContent
   | FramerClarityServicesContent
   | FramerVeloraServicesContent
   | FramerFirmaFeaturedContent
@@ -2529,16 +2407,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'dải chữ lớn chạy ngang vô tận',
     aiLabelEn: 'large text marquee scrolling horizontally',
   },
-  card_showcase: {
-    type: 'card_showcase',
-    label: 'Card Showcase',
-    accent: '#0f0f0f',
-    adminLabel: 'Card Showcase',
-    gradient: 'from-sky-500 to-indigo-600',
-    defaultName: 'Card Showcase',
-    aiLabelVi: 'lưới thẻ ảnh hiện lên fade-up khi cuộn tới',
-    aiLabelEn: 'grid of image cards revealing fade-up on scroll',
-  },
   story_slides: {
     type: 'story_slides',
     label: 'Story Slides',
@@ -2729,16 +2597,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'block hero tối giản hai tầng (tên lớn + avatar)',
     aiLabelEn: 'minimal two-tier hero block (big name + avatar)',
   },
-  framer_arpeggio_hero: {
-    type: 'framer_arpeggio_hero',
-    label: 'Hero - Arpeggio',
-    accent: '#FF4D2E',
-    adminLabel: 'Hero - Arpeggio',
-    gradient: 'from-orange-500 to-red-600',
-    defaultName: 'Hero - 03 (Arpeggio)',
-    aiLabelVi: 'block hero ảnh nền + wordmark lớn',
-    aiLabelEn: 'full-bleed hero with large wordmark',
-  },
   framer_arpeggio_hero_v2: {
     type: 'framer_arpeggio_hero_v2',
     label: 'Hero - Arpeggio v2',
@@ -2799,26 +2657,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'block hero tối Manrope + overlay gradient + CTA pill',
     aiLabelEn:
       'dark hero with Manrope typography + gradient overlay + pill CTA',
-  },
-  framer_perform_hero_v2: {
-    type: 'framer_perform_hero_v2',
-    label: 'Hero - Perform v2',
-    accent: '#ffffff',
-    adminLabel: 'Hero - Perform v2',
-    gradient: 'from-neutral-800 to-black',
-    defaultName: 'Hero - Perform v2',
-    aiLabelVi: 'block hero Manrope căn giữa + CTA pill + đánh giá sao vàng',
-    aiLabelEn: 'centred Manrope hero + pill CTA + gold star reviews',
-  },
-  framer_bungee_hero: {
-    type: 'framer_bungee_hero',
-    label: 'Hero - Bungee',
-    accent: 'rgb(30,30,30)',
-    adminLabel: 'Hero - Bungee',
-    gradient: 'from-gray-100 to-white',
-    defaultName: 'Hero - Bungee',
-    aiLabelVi: 'block hero studio sáng: wordmark + marquee ảnh cuộn',
-    aiLabelEn: 'light studio hero with wordmark + scrolling image marquee',
   },
   framer_bungee_hero_v2: {
     type: 'framer_bungee_hero_v2',
@@ -2944,16 +2782,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'hàng card cuộn ngang 4:5',
     aiLabelEn: 'horizontally scrollable card row with 4:5 images',
   },
-  framer_contact_footer: {
-    type: 'framer_contact_footer',
-    label: 'Contact Footer',
-    accent: '#00940c',
-    adminLabel: 'Contact Footer',
-    gradient: 'from-neutral-900 to-neutral-700',
-    defaultName: 'Contact Footer',
-    aiLabelVi: 'footer liên hệ nền đen, greeting italic + email xanh lá',
-    aiLabelEn: 'dark footer with italic greeting and green email',
-  },
   framer_faq_minimal: {
     type: 'framer_faq_minimal',
     label: 'FAQ Minimal',
@@ -3017,18 +2845,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'lưới 12 cột dự án phân tán, hover overlay',
     aiLabelEn: '12-column scattered project grid with hover overlay',
   },
-  framer_avexa_bento: {
-    type: 'framer_avexa_bento',
-    label: 'Avexa Bento',
-    accent: 'rgb(255,98,0)',
-    adminLabel: 'Bento Grid (Avexa)',
-    gradient: 'from-orange-400 to-orange-600',
-    defaultName: 'Bento Grid',
-    aiLabelVi:
-      'lưới bento 6 card (chiến lược, chất lượng, 24/7, tailored, collaborative, creative)',
-    aiLabelEn:
-      '6-card bento grid (strategy, quality, 24/7, tailored, collaborative, creative)',
-  },
   framer_clarity_services: {
     type: 'framer_clarity_services',
     label: 'Clarity Services',
@@ -3074,18 +2890,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
       'trang editorial: cột brand sticky trái + stack 3 ảnh so le phải',
     aiLabelEn:
       'editorial layout: sticky brand column left + staggered image stack right',
-  },
-  framer_aestha_project_detail: {
-    type: 'framer_aestha_project_detail',
-    label: 'Aestha Project Detail',
-    accent: '#1A1A1A',
-    adminLabel: 'Project Detail (Aestha)',
-    gradient: 'from-neutral-600 to-neutral-800',
-    defaultName: 'Chi tiết dự án',
-    aiLabelVi:
-      'trang chi tiết dự án: tiêu đề sticky trái, body giữa, stack ảnh phải',
-    aiLabelEn:
-      'project detail: sticky title left, body center, image stack right',
   },
   framer_perform_about: {
     type: 'framer_perform_about',
