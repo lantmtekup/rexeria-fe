@@ -82,6 +82,7 @@ export type BlockType =
   | 'framer_faq_minimal'
   | 'framer_finnegan_expertise'
   | 'framer_darling_timeline'
+  | 'framer_nftpull_timeline'
   | 'framer_signature_feature'
   | 'framer_vs_collins_projects'
   | 'framer_aestha_editorial'
@@ -1443,6 +1444,23 @@ export interface FramerDarlingTimelineContent {
 }
 
 /**
+ * NFTpull Why-Go Timeline: nền tối (~#0e0e0e), header căn giữa (heading +
+ * intro), cột sống dọc gradient giữa màn hình, các item xen kẽ trái/phải với
+ * chấm tròn đánh số + card dark surface (#3a3b3f) với title + mô tả.
+ * Port từ framer-recon `recon-nftpull-why-go` (URL https://nftpull.framer.website/,
+ * selector `section[data-framer-name="Why Go Sections"]`).
+ */
+export interface FramerNftpullTimelineContent {
+  heading: string;
+  intro: string;
+  items: Array<{
+    number: string;
+    title: string;
+    description: string;
+  }>;
+}
+
+/**
  * Signature Feature: nền #f4f4f0, căn giữa, eyebrow + tiêu đề xanh lá
  * (Aboreto), ảnh full-width, danh sách bullet.
  * Port từ `src/blocks/framer-signature-feature`.
@@ -1563,6 +1581,7 @@ export type BlockContent =
   | FramerFaqMinimalContent
   | FramerFinneganExpertiseContent
   | FramerDarlingTimelineContent
+  | FramerNftpullTimelineContent
   | FramerSignatureFeatureContent
   | FramerVsCollinsProjectsContent
   | FramerAvexaBentoContent
@@ -2964,6 +2983,18 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Timeline',
     aiLabelVi: 'timeline nền kem, cột sống dọc, item xen kẽ trái/phải',
     aiLabelEn: 'cream timeline with vertical spine and alternating items',
+  },
+  framer_nftpull_timeline: {
+    type: 'framer_nftpull_timeline',
+    label: 'Why-Go Timeline',
+    accent: '#0e0e0e',
+    adminLabel: 'NFTpull Why-Go Timeline',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Why-Go Timeline',
+    aiLabelVi:
+      'timeline nền tối, cột sống dọc gradient, card dark surface xen kẽ trái/phải, badge số trên spine',
+    aiLabelEn:
+      'dark timeline with vertical gradient spine and alternating dark cards, numbered badges on the spine',
   },
   framer_signature_feature: {
     type: 'framer_signature_feature',
