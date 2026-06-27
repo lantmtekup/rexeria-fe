@@ -128,6 +128,8 @@ export interface TimelineSectionProps {
   >;
   number: React.ReactNode;
   side?: TimelineSide;
+  /** Tiền tố key của row (vd `items.0`) — element con scoped để selectable/style riêng từng item. */
+  keyPrefix: string;
   styles?: ElementStylesMap;
   order?: string[];
   positions?: ElementPositionsMap;
@@ -140,6 +142,7 @@ export function TimelineSection({
   article,
   number,
   side = 'right',
+  keyPrefix,
   styles,
   order,
   positions,
@@ -148,11 +151,14 @@ export function TimelineSection({
   className,
 }: TimelineSectionProps) {
   const isRight = side === 'right';
+  // Element con scoped theo row: `items.${idx}.<field>` để mỗi item
+  // selectable/style/drag riêng (khớp data-element-key BlockPreview đọc thô).
+  const fullKey = (key: string) => `${keyPrefix}.${key}`;
   const styleOf = (key: string) =>
     composeStyle(
-      elementStyleOf(styles, key),
-      orderStyle(order, key),
-      positionStyle(positions, key)
+      elementStyleOf(styles, fullKey(key)),
+      orderStyle(order, fullKey(key)),
+      positionStyle(positions, fullKey(key))
     );
 
   return (
@@ -176,34 +182,34 @@ export function TimelineSection({
         )}
       >
         <article
-          data-element-key='card'
+          data-element-key={fullKey('card')}
           style={composeStyle(
             CARD_BASE_STYLE,
             styleOf('card'),
             isAt3xl ? CARD_STYLE_MASK : undefined
           )}
           className={selectableClass(
-            activeKey === 'card',
+            activeKey === fullKey('card'),
             'nftpull-card mt-12 @3xl:mt-0'
           )}
         >
           <h3
-            data-element-key='title'
+            data-element-key={fullKey('title')}
             style={composeStyle(CARD_TITLE_STYLE, styleOf('title'))}
-            className={selectableClass(activeKey === 'title')}
+            className={selectableClass(activeKey === fullKey('title'))}
           >
             {article.title}
           </h3>
           <p
-            data-element-key='description'
+            data-element-key={fullKey('description')}
             style={composeStyle(CARD_DESC_STYLE, styleOf('description'))}
-            className={selectableClass(activeKey === 'description')}
+            className={selectableClass(activeKey === fullKey('description'))}
           >
             {article.description}
           </p>
         </article>
         <div
-          data-element-key='number'
+          data-element-key={fullKey('number')}
           className={cn(
             'nftpull-badge z-2',
             isRight ? '@3xl:order-first' : '@3xl:order-last'
@@ -230,18 +236,6 @@ export function FramerNftpullTimeline({
 
   const isMobileContainer = useContainerMobile(rootRef, CARD_AT_3XL_MIN_WIDTH);
   const isAt3xl = !isMobileContainer;
-
-  const rowStyles = (idx: number): ElementStylesMap | undefined => {
-    if (!styles) return undefined;
-    const prefix = `items.${idx}`;
-    const scoped: ElementStylesMap = {};
-    for (const [k, v] of Object.entries(styles)) {
-      if (k.startsWith(`${prefix}.`)) {
-        scoped[k.slice(prefix.length + 1)] = v;
-      }
-    }
-    return scoped;
-  };
 
   useBlockMotion(rootRef, ({ scroller, isMobile }) => {
     const root = rootRef.current;
@@ -533,7 +527,8 @@ export function FramerNftpullTimeline({
                 }}
                 number={item.number}
                 side={idx % 2 === 0 ? 'left' : 'right'}
-                styles={rowStyles(idx)}
+                keyPrefix={`items.${idx}`}
+                styles={styles}
                 order={order}
                 positions={positions}
                 activeKey={activeKey}
