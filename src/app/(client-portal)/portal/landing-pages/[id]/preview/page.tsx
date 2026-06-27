@@ -57,6 +57,32 @@ export default function PortalLandingPreviewPage() {
           window.location.href = page.external_url;
           return;
         }
+
+        // 1) Ưu tiên canvas THẬT của page: revision mới nhất (chứa nội dung đã
+        //    chỉnh / AI-Automation áp). Page chưa từng lưu canvas → fallback (2).
+        try {
+          const revs = await rexerApi.pages.revisions(id, { limit: 50 });
+          if (cancelled) return;
+          const latest =
+            (revs.items ?? []).find(
+              r => r.revision_no === revs.latest_revision_no
+            ) ?? (revs.items ?? [])[0];
+          const parsedRev = latest?.config_json
+            ? parseCanvas(latest.config_json)
+            : null;
+          if (parsedRev?.blocks?.length) {
+            setBlocks(parsedRev.blocks);
+            setTransition(
+              (latest!.config_json as { transition?: string }).transition
+            );
+            setStatus('ok');
+            return;
+          }
+        } catch {
+          /* không có revision → dùng blueprint template bên dưới */
+        }
+
+        // 2) Fallback: blueprint của template version (page mới, chưa lưu canvas).
         const versionId = page.template_version_id;
         if (!versionId) throw new Error('Page chưa có template_version_id');
 
