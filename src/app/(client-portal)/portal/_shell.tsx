@@ -18,6 +18,7 @@ import {
   Settings,
   Sparkles,
   Target,
+  Wand2,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -79,6 +80,12 @@ const NAV: NavItem[] = [
     href: '/portal/landing-pages',
     labelKey: 'navLandingPages',
     icon: LayoutTemplate,
+    group: 'Rexer Product',
+  },
+  {
+    href: '/portal/ai-automation',
+    labelKey: 'navAiAutomation',
+    icon: Wand2,
     group: 'Rexer Product',
   },
   {

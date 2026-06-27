@@ -233,6 +233,8 @@ import type {
   AISlotSuggestInput,
   AIPageOptimizeInput,
   AIImageGenerateInput,
+  AIApplyProductInput,
+  AIMultiChannelInput,
   AISlotSuggestion,
   RespondAISlotSuggestionRequest,
   TrackEventInput,
@@ -1969,6 +1971,22 @@ export const rexerApi = {
     },
     imageGenerate: async (body: AIImageGenerateInput): Promise<AIJob> => {
       const r = await rx<AIJobResponse>('/ai/image-generate', {
+        method: 'POST',
+        body,
+      });
+      return r.job;
+    },
+    /** AI-Automation: áp 1 product vào template (new_page) hoặc page (rewrite). */
+    applyProduct: async (body: AIApplyProductInput): Promise<AIJob> => {
+      const r = await rx<AIJobResponse>('/ai/apply-product', {
+        method: 'POST',
+        body,
+      });
+      return r.job;
+    },
+    /** AI-Automation: 1 master page → biến thể theo nhiều kênh. */
+    multiChannelAdapt: async (body: AIMultiChannelInput): Promise<AIJob> => {
+      const r = await rx<AIJobResponse>('/ai/multi-channel-adapt', {
         method: 'POST',
         body,
       });

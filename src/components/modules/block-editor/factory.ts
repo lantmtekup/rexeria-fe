@@ -37,6 +37,7 @@ import type {
   FramerMobiusHeroContent,
   FramerBungeeHeroContent,
   FramerBungeeHeroV2Content,
+  FramerPurevisualsHeroContent,
   FramerDelvauxHeroIntroContent,
   FramerExploreCtaContent,
   FramerHeroContent,
@@ -1817,6 +1818,22 @@ const FRAMER_BUNGEE_HERO_V2_EN: FramerBungeeHeroV2Content = {
   subtitle: 'Creative studio based in Gotham.',
 };
 
+// ── Framer-native: Hero - PureVisuals (Flash Screen Reveal) ──────────────────
+const FRAMER_PUREVISUALS_HERO_VI: FramerPurevisualsHeroContent = {
+  leftImageUrl:
+    'https://framerusercontent.com/images/47vWLizj8nJWWX1ItmZK8MEspc.png',
+  rightImageUrl:
+    'https://framerusercontent.com/images/YDcBLDpZXBmQp6m1BDMjM5L5s.png',
+  eyebrow: 'PureVisuals',
+  heading: 'PureVisuals',
+  subheading: 'Blending creativity & strategy',
+  bgColor: '#ffffff',
+  textColor: '#0a0a0a',
+};
+const FRAMER_PUREVISUALS_HERO_EN: FramerPurevisualsHeroContent = {
+  ...FRAMER_PUREVISUALS_HERO_VI,
+};
+
 // ── Framer-native: Hero - Mobius ─────────────────────────────────────────────
 const FRAMER_MOBIUS_HERO_VI: FramerMobiusHeroContent = {
   brand: 'Mobius',
@@ -2771,6 +2788,14 @@ const FRAMER_PERFORM_ABOUT_VI: FramerPerformAboutContent = {
       textRest:
         'giúp vận động viên xây dựng sức mạnh và tự tin để vượt qua giới hạn.',
     },
+    {
+      imageUrl:
+        'https://framerusercontent.com/images/o1iEuFuB1ARuwoXcEgQQTV0CYbw.png',
+      textHighlight:
+        'Cùng nhau, chúng ta sẽ phá vỡ mọi rào cản và khơi dậy tiềm năng của bạn,',
+      textRest:
+        'biến mỗi cột mốc thành một thắng lợi thông qua sự huấn luyện được cá nhân hóa.',
+    },
   ],
 };
 const FRAMER_PERFORM_ABOUT_EN: FramerPerformAboutContent = {
@@ -2952,6 +2977,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_perform_hero_v2: FRAMER_PERFORM_HERO_V2_VI,
   framer_bungee_hero: FRAMER_BUNGEE_HERO_VI,
   framer_bungee_hero_v2: FRAMER_BUNGEE_HERO_V2_VI,
+  framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_VI,
   framer_mobius_hero: FRAMER_MOBIUS_HERO_VI,
   framer_avexa_hero: FRAMER_AVEXA_HERO_VI,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_VI,
@@ -3054,6 +3080,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_perform_hero_v2: FRAMER_PERFORM_HERO_V2_EN,
   framer_bungee_hero: FRAMER_BUNGEE_HERO_EN,
   framer_bungee_hero_v2: FRAMER_BUNGEE_HERO_V2_EN,
+  framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_EN,
   framer_mobius_hero: FRAMER_MOBIUS_HERO_EN,
   framer_avexa_hero: FRAMER_AVEXA_HERO_EN,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_EN,

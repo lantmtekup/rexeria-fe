@@ -34,6 +34,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { cn } from '@/lib/cn';
 
 interface Props {
   content: FramerDarlingTimelineContent;
@@ -55,7 +56,7 @@ const HEADING_STYLE: React.CSSProperties = {
 };
 
 const INTRO_STYLE: React.CSSProperties = {
-  fontFamily: '"Libre Caslon Condensed", "Libre Caslon Text", Georgia, serif',
+  fontFamily: '"Cormorant Garamond", serif',
   fontSize: 'clamp(15px, 1.4cqi, 20px)',
   lineHeight: 1.55,
   color: 'rgba(31,29,20,0.7)',
@@ -64,15 +65,16 @@ const INTRO_STYLE: React.CSSProperties = {
 };
 
 const TIME_STYLE: React.CSSProperties = {
-  fontSize: 'clamp(12px, 1.05cqi, 16px)',
+  fontSize: 'clamp(16px, 1.05cqi, 18px)',
+  fontWeight: 400,
   letterSpacing: '0.04em',
   color: 'rgba(31,29,20,0.7)',
   margin: '0 0 clamp(10px, 1.5cqi, 20px)',
-  fontFamily: '"Libre Caslon Condensed", Georgia, serif',
+  fontFamily: '"Cormorant Garamond", serif',
 };
 
 const TITLE_STYLE: React.CSSProperties = {
-  fontFamily: '"Libre Caslon Condensed", Georgia, serif',
+  fontFamily: '"Cormorant Garamond", serif',
   fontWeight: 400,
   fontSize: 'clamp(28px, 4.2cqi, 64px)',
   letterSpacing: '-0.01em',
@@ -82,12 +84,12 @@ const TITLE_STYLE: React.CSSProperties = {
 };
 
 const DESC_STYLE: React.CSSProperties = {
-  fontFamily: '"Libre Caslon Condensed", "Libre Caslon Text", Georgia, serif',
-  fontSize: 'clamp(13px, 1.25cqi, 18px)',
+  fontFamily: '"Cormorant Garamond", serif',
+  fontSize: 'clamp(16px, 1.25cqi, 18px)',
   lineHeight: 1.55,
   color: 'rgba(31,29,20,0.78)',
   margin: '0 0 clamp(20px, 3cqi, 44px)',
-  maxWidth: '44ch',
+  // maxWidth: '44ch',
 };
 
 export function FramerDarlingTimeline({
@@ -157,28 +159,6 @@ export function FramerDarlingTimeline({
         }
       );
     }
-
-    // Item entrance — slide-in từ bên phải (item phải) / bên trái (item trái).
-    gsap.utils.toArray<HTMLElement>('.darling-row', root).forEach(row => {
-      const dir = row.dataset.side === 'right' ? 60 : -60;
-      gsap.fromTo(
-        row,
-        { opacity: 0, x: dir },
-        {
-          opacity: 1,
-          x: 0,
-          duration: 1,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: row,
-            scroller,
-            start: 'top 80%',
-            toggleActions: 'play none none reverse',
-            invalidateOnRefresh: true,
-          },
-        }
-      );
-    });
   });
 
   return (
@@ -226,18 +206,21 @@ export function FramerDarlingTimeline({
 
         {/* Timeline stage */}
         <div style={{ position: 'relative', maxWidth: 1320, margin: '0 auto' }}>
-          {/* Vertical spine — base (light) layer */}
+          {/* Vertical spine — base (light) layer
+              Mobile: ẩn (render per-row trong mỗi row, đổi X theo isRight).
+              Desktop: spine toàn stage ở giữa 50%. */}
           <div
             aria-hidden
-            className='absolute top-0 bottom-0 left-2 w-px @2xl:left-1/2 @2xl:-translate-x-1/2'
-            style={{ background: 'rgba(31,29,20,0.18)', pointerEvents: 'none' }}
+            className='absolute top-0 bottom-0 left-2 hidden w-[3px] @2xl:left-1/2 @2xl:block @2xl:-translate-x-1/2'
+            style={{ background: 'rgb(227, 223, 207)', pointerEvents: 'none' }}
           />
-          {/* Spine fill overlay — scaleY grows with scroll (GSAP scrub) */}
+          {/* Spine fill overlay — scaleY grows with scroll (GSAP scrub)
+              Mobile: ẩn (per-row render ở dưới, không scrub — animation chỉ chạy desktop). */}
           <div
             aria-hidden
-            className='darling-spine-fill absolute top-0 bottom-0 left-2 w-px @2xl:left-1/2 @2xl:-translate-x-1/2'
+            className='darling-spine-fill absolute top-0 bottom-0 left-2 hidden w-[3px] @2xl:left-1/2 @2xl:block @2xl:-translate-x-1/2'
             style={{
-              background: 'rgba(31,29,20,0.75)',
+              background: 'rgb(131, 135, 118)',
               transform: 'scaleY(0)',
               transformOrigin: 'top center',
               pointerEvents: 'none',
@@ -252,19 +235,35 @@ export function FramerDarlingTimeline({
                 <div
                   key={idx}
                   data-side={isRight ? 'right' : 'left'}
-                  className='darling-row relative grid grid-cols-1 gap-0 pl-10 @2xl:grid-cols-2 @2xl:gap-[clamp(40px,5cqi,80px)] @2xl:pl-0'
+                  className={cn(
+                    'darling-row relative grid grid-cols-1 gap-0 @2xl:grid-cols-2 @2xl:gap-[clamp(40px,5cqi,80px)] @2xl:pl-0',
+                    isRight ? 'pr-10 @2xl:pr-0' : 'pl-10'
+                  )}
                   style={{
                     paddingBottom:
                       idx < items.length - 1 ? 'clamp(56px, 10cqi, 160px)' : 0,
                   }}
                 >
+                  <span
+                    aria-hidden
+                    className={
+                      'absolute top-0 h-full w-[3px] @2xl:hidden ' +
+                      (isRight ? 'right-2.5' : 'left-2.5')
+                    }
+                    style={{ background: 'rgb(227, 223, 207)' }}
+                  />
+
                   {/* Dot on spine */}
                   <span
                     aria-hidden
-                    className='absolute top-0 left-2 z-[1] h-[11px] w-[11px] -translate-x-1/2 rounded-full @2xl:left-1/2'
+                    className={
+                      'absolute top-0 z-[1] h-[11px] w-[11px] rounded-full ring-6 ring-[#f4eed8] @2xl:left-1/2 @2xl:-translate-x-1/2 ' +
+                      (isRight
+                        ? 'right-3 translate-x-1/2'
+                        : 'left-3 -translate-x-1/2')
+                    }
                     style={{
-                      background: '#1f1d14',
-                      transform: 'translate(-50%, -2px)',
+                      background: '#838776',
                     }}
                   />
 
@@ -306,9 +305,11 @@ export function FramerDarlingTimeline({
                         DESC_STYLE,
                         styleOf(`items.${idx}.description`)
                       )}
-                      className={selectableClass(
-                        activeKey === `items.${idx}.description`
-                      )}
+                      className={
+                        selectableClass(
+                          activeKey === `items.${idx}.description`
+                        ) + (isRight ? '' : 'text-right')
+                      }
                     >
                       {item.description}
                     </p>
