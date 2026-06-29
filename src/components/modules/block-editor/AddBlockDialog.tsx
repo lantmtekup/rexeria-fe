@@ -70,6 +70,7 @@ const ORDERED_TYPES: BlockType[] = [
   'framer_studio_manifesto',
   'framer_explore_cta',
   'framer_aestha_editorial',
+  'masterise_home_inside',
   // ── Features / Services ──────────────────────────────────
   'feature_section',
   'framer_clarity_services',

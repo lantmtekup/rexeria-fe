@@ -3,6 +3,7 @@ import { getBlockDef } from './blocks/_registry/registry';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
+import { masteriseHomeInsideDef } from './blocks/_registry/defs/masteriseHomeInside';
 import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
 import type {
   Block,
@@ -2236,6 +2237,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
+  masterise_home_inside: masteriseHomeInsideDef.defaultContent.vi,
   framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_VI,
 };
@@ -2312,6 +2314,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
+  masterise_home_inside: masteriseHomeInsideDef.defaultContent.en,
   framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_EN,
 };

@@ -12,12 +12,14 @@ import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
+import { masteriseHomeInsideDef } from './defs/masteriseHomeInside';
 import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   framer_yume_hero: framerYumeHeroDef as BlockDef,
   framer_bungee_hero_v2: framerBungeeHeroV2Def as BlockDef,
   framer_nftpull_timeline: framerNftpullTimelineDef as BlockDef,
+  masterise_home_inside: masteriseHomeInsideDef as BlockDef,
   framer_purevisuals_hero: framerPurevisualsHeroDef as BlockDef,
 };
 
