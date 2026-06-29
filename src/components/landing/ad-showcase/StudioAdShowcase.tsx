@@ -29,10 +29,8 @@ const slugify = (s: string) =>
     .replace(/^-|-$/g, '');
 
 /** Mã mở khoá full catalog cho sales — KHÔNG phải security, chỉ là cổng demo.
- *  Mở `?full=<mã>` hoặc gõ vào ô; lưu localStorage để lần sau khỏi nhập.
- *  Đổi mã qua env NEXT_PUBLIC_ADS_FULL_CODE (build-time). */
+ *  Mở `?full=<mã>` để xem full. Đổi mã qua env NEXT_PUBLIC_ADS_FULL_CODE. */
 const FULL_CODE = process.env.NEXT_PUBLIC_ADS_FULL_CODE ?? 'rexer2026';
-const FULL_KEY = 'ads_full_unlocked';
 
 type AdItem = {
   id: string;
@@ -159,58 +157,6 @@ function CategoryNav({
   );
 }
 
-/** Ô nhập mã mở khoá — sales gõ mã (hoặc dùng `?full=<mã>`) để xem full. */
-function UnlockForm({ onUnlock }: { onUnlock: () => void }) {
-  const [code, setCode] = React.useState('');
-  const [err, setErr] = React.useState(false);
-
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (code.trim() === FULL_CODE) {
-      try {
-        localStorage.setItem(FULL_KEY, '1');
-      } catch {
-        // localStorage chặn (private mode) — vẫn mở cho phiên hiện tại.
-      }
-      onUnlock();
-    } else {
-      setErr(true);
-    }
-  };
-
-  return (
-    <form
-      onSubmit={submit}
-      className='mx-auto mt-6 flex max-w-sm flex-col gap-2'
-    >
-      <div className='flex gap-2'>
-        <input
-          type='text'
-          value={code}
-          onChange={e => {
-            setCode(e.target.value);
-            setErr(false);
-          }}
-          placeholder='Nhập mã mở khoá'
-          aria-label='Mã mở khoá'
-          className='rounded-pill h-11 flex-1 border border-neutral-300 bg-white px-5 text-sm text-neutral-900 outline-none focus:border-[#b8965a]'
-        />
-        <button
-          type='submit'
-          className='rounded-pill inline-flex h-11 shrink-0 items-center bg-[#b8965a] px-6 text-sm font-medium text-white transition-transform duration-300 hover:scale-105'
-        >
-          Mở khoá
-        </button>
-      </div>
-      {err && (
-        <p className='text-xs text-red-500'>
-          Mã không đúng — hỏi ReXeR Studio.
-        </p>
-      )}
-    </form>
-  );
-}
-
 export function StudioAdShowcase() {
   const dispatch = useAppDispatch();
   const { user } = useAuthRole();
@@ -223,20 +169,15 @@ export function StudioAdShowcase() {
     dispatch(fetchMeThunk());
   }, [dispatch]);
 
-  // Mã mở khoá: ?full=<mã> hoặc đã lưu localStorage → mở full (không cần login,
-  // không dính cookie cross-subdomain). Đây là đường chính cho sales demo.
+  // Mã mở khoá CHỈ qua query `?full=<mã>` (không lưu, không dính cookie). URL
+  // trơn luôn là teaser; sales bookmark link `?full=...` để demo full.
   const [unlocked, setUnlocked] = React.useState(false);
   React.useEffect(() => {
     try {
       const q = new URLSearchParams(window.location.search).get('full');
-      if (q && q === FULL_CODE) {
-        localStorage.setItem(FULL_KEY, '1');
-        setUnlocked(true);
-        return;
-      }
-      if (localStorage.getItem(FULL_KEY) === '1') setUnlocked(true);
+      if (q && q === FULL_CODE) setUnlocked(true);
     } catch {
-      // window/localStorage không khả dụng — giữ teaser.
+      // window không khả dụng (SSR) — giữ teaser.
     }
   }, []);
 
@@ -333,23 +274,6 @@ export function StudioAdShowcase() {
                   offset={idx % 2 === 1 ? 'sm:mt-20 lg:mt-28' : ''}
                 />
               ))}
-            </div>
-          </section>
-
-          {/* Cổng mã mở khoá — sales nhập mã (hoặc dùng ?full=<mã>) để xem full. */}
-          <section className='mx-auto max-w-6xl px-6 pb-4'>
-            <div className='rounded-3xl border border-neutral-200 bg-neutral-50 px-6 py-12 text-center'>
-              <p className='text-xs font-medium tracking-[0.18em] text-[#b8965a] uppercase'>
-                Preview
-              </p>
-              <h3 className='mt-3 text-2xl font-semibold tracking-tight text-neutral-900'>
-                Đây mới là {teaserItems.length}/{total} format
-              </h3>
-              <p className='mx-auto mt-2 max-w-md text-sm text-neutral-500'>
-                Nhập mã để mở khoá toàn bộ {total} block quảng cáo tương tác và
-                demo trực tiếp cho khách hàng. (Liên hệ ReXeR Studio để lấy mã.)
-              </p>
-              <UnlockForm onUnlock={() => setUnlocked(true)} />
             </div>
           </section>
         </>
