@@ -1035,8 +1035,6 @@ export interface FramerAesthaEditorialContent {
 }
 
 /**
-<<<<<<< HEAD
-=======
  * Estancia About Us: nền tan #E7DECF, heading center + CTA pill + grid 3 ảnh
  * chân dung với stat dưới (2012 / 320+ / 200+). Port từ
  * `https://estancia.framer.website/` — block `[data-framer-name="Section - About"]`.
@@ -1058,22 +1056,6 @@ export interface FramerEstanciaAboutUsContent {
 }
 
 /**
- * Aestha Project Detail: 3 cột — tiêu đề sticky trái, body giữa, stack ảnh phải.
- * Port từ `src/blocks/framer-aestha-project-detail`.
- */
-export interface FramerAesthaProjectDetailContent {
-  projectTitle: string;
-  sectionLabel: string;
-  body: string;
-  images: Array<{ imageUrl: string; aspect: string }>;
-  nextLabel: string;
-  nextProjectText: string;
-  nextProjectHref: string;
-  navLinks: Array<{ label: string; href: string }>;
-}
-
-/**
->>>>>>> 9507f84 (feat: framer estancia about us)
  * Perform About: nền đen, hàng xếp chồng text trái + ảnh phải.
  * Port từ `src/blocks/framer-perform-about`.
  */
