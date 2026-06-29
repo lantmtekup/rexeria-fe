@@ -9,56 +9,97 @@ import { cn } from '@/lib/cn';
 
 import type { RunStatus, Step } from './_shared';
 
-const STEPS: { id: Step; label: string }[] = [
-  { id: 'setup', label: 'Chọn' },
-  { id: 'running', label: 'AI tạo' },
-  { id: 'results', label: 'Kết quả' },
+const STEPS: { id: Step; label: string; sub: string }[] = [
+  { id: 'template', label: 'Bản gốc', sub: 'Chọn trang khuôn' },
+  { id: 'product', label: 'Sản phẩm', sub: 'Chọn sản phẩm' },
+  { id: 'running', label: 'AI tạo', sub: 'Sinh landing' },
+  { id: 'results', label: 'Kết quả', sub: 'Xem & xuất bản' },
 ];
 
-/** Header gradient AI + chỉ báo bước. */
-export function WizardHeader({ step }: { step: Step }) {
+/** Header gradient AI + thanh tiến trình 4 bước (chỉnh chu). Bước đã qua bấm
+ *  được để quay lại (qua `onStepClick`); bước chưa tới thì khoá. */
+export function WizardHeader({
+  step,
+  onStepClick,
+}: {
+  step: Step;
+  onStepClick?: (step: Step) => void;
+}) {
   const activeIdx = STEPS.findIndex(s => s.id === step);
   return (
-    <header className='mb-7'>
-      <div className='flex items-center gap-3'>
-        <span className='bg-ai-gradient text-primary-600 flex size-10 shrink-0 items-center justify-center rounded-xl'>
+    <header className='mb-8'>
+      <div className='flex items-start gap-3'>
+        <span className='bg-ai-gradient text-primary-600 flex size-11 shrink-0 items-center justify-center rounded-xl shadow-sm'>
           <Sparkles className='size-5' />
         </span>
         <div>
-          <h1 className='text-xl font-bold tracking-tight'>AI-Automation</h1>
-          <p className='text-content-muted text-sm'>
-            Nhân 1 trải nghiệm đã duyệt ra nhiều sản phẩm, AI tự map nội dung.
+          <p className='text-primary text-2xs mb-0.5 font-semibold tracking-[0.12em] uppercase'>
+            AI-Automation
           </p>
+          <h1 className='text-2xl leading-tight font-bold tracking-tight'>
+            Một bản gốc, nhiều landing
+          </h1>
         </div>
       </div>
-      <ol className='mt-5 flex items-center gap-2'>
-        {STEPS.map((s, i) => (
-          <li key={s.id} className='flex items-center gap-2'>
-            <span
-              className={cn(
-                'flex items-center gap-1.5 text-xs font-medium',
-                i <= activeIdx ? 'text-foreground' : 'text-content-muted'
-              )}
+
+      <ol className='mt-7 flex items-center'>
+        {STEPS.map((s, i) => {
+          const state =
+            i < activeIdx ? 'done' : i === activeIdx ? 'active' : 'todo';
+          const clickable = state === 'done' && !!onStepClick;
+          const isLast = i === STEPS.length - 1;
+          return (
+            <li
+              key={s.id}
+              className={cn('flex items-center', !isLast && 'flex-1')}
             >
-              <span
+              <button
+                type='button'
+                disabled={!clickable}
+                onClick={() => clickable && onStepClick?.(s.id)}
                 className={cn(
-                  'text-3xs flex size-5 items-center justify-center rounded-full font-semibold',
-                  i < activeIdx
-                    ? 'bg-primary text-primary-foreground'
-                    : i === activeIdx
-                      ? 'text-primary ring-primary ring-1'
-                      : 'bg-muted text-content-muted'
+                  'flex items-center gap-2.5 text-left',
+                  clickable && 'cursor-pointer'
                 )}
               >
-                {i < activeIdx ? <Check className='size-3' /> : i + 1}
-              </span>
-              {s.label}
-            </span>
-            {i < STEPS.length - 1 && (
-              <span className='bg-border h-px w-8' aria-hidden />
-            )}
-          </li>
-        ))}
+                <span
+                  className={cn(
+                    'flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors',
+                    state === 'active' &&
+                      'bg-primary text-primary-foreground ring-primary/20 ring-4',
+                    state === 'done' && 'bg-primary text-primary-foreground',
+                    state === 'todo' &&
+                      'border-border text-content-muted bg-background border'
+                  )}
+                >
+                  {state === 'done' ? <Check className='size-4' /> : i + 1}
+                </span>
+                <span className='hidden flex-col leading-tight sm:flex'>
+                  <span
+                    className={cn(
+                      'text-sm font-semibold',
+                      state === 'todo'
+                        ? 'text-content-muted'
+                        : 'text-foreground'
+                    )}
+                  >
+                    {s.label}
+                  </span>
+                  <span className='text-content-muted text-2xs'>{s.sub}</span>
+                </span>
+              </button>
+              {!isLast && (
+                <span
+                  className={cn(
+                    'mx-3 h-0.5 flex-1 rounded-full transition-colors',
+                    i < activeIdx ? 'bg-primary' : 'bg-border'
+                  )}
+                  aria-hidden
+                />
+              )}
+            </li>
+          );
+        })}
       </ol>
     </header>
   );

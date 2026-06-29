@@ -13,6 +13,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 
 import { rexerApi } from '@/services/rexer/endpoints';
+import { useActiveWorkspace } from '@/app/(client-portal)/portal/_workspace';
 import type {
   AIApplyProductOutput,
   AIChannel,
@@ -25,12 +26,13 @@ import type {
 import { WizardHeader } from './_bits';
 import { PREVIEW_HREF, type RunItem, type Step } from './_shared';
 import { pollAiJob } from './pollAiJob';
+import { StepProduct, StepTemplate } from './StepSetup';
 import { StepResults } from './StepResults';
 import { StepRunning } from './StepRunning';
-import { StepSetup } from './StepSetup';
 
 export function AiAutomation() {
   const router = useRouter();
+  const activeWs = useActiveWorkspace();
 
   const [templates, setTemplates] = React.useState<Template[]>([]);
   const [products, setProducts] = React.useState<Product[]>([]);
@@ -38,11 +40,13 @@ export function AiAutomation() {
   const [loading, setLoading] = React.useState(true);
 
   const [templateId, setTemplateId] = React.useState('');
-  const [workspaceId, setWorkspaceId] = React.useState('');
+  // Mặc định theo workspace đang active (?ws= / switcher của portal). Danh sách
+  // membership chỉ để đổ vào selector — không ghi đè lựa chọn đang có.
+  const [workspaceId, setWorkspaceId] = React.useState(activeWs.id);
   const [productIds, setProductIds] = React.useState<Set<string>>(new Set());
   const [brief, setBrief] = React.useState('');
 
-  const [step, setStep] = React.useState<Step>('setup');
+  const [step, setStep] = React.useState<Step>('template');
   const [runItems, setRunItems] = React.useState<RunItem[]>([]);
 
   const [mcPageId, setMcPageId] = React.useState('');
@@ -76,7 +80,7 @@ export function AiAutomation() {
       setProducts(prod);
       setWorkspaces(ws);
       if (tpl[0]) setTemplateId(tpl[0].id);
-      if (ws[0]) setWorkspaceId(ws[0].id);
+      setWorkspaceId(prev => prev || ws[0]?.id || '');
       setLoading(false);
     })();
     return () => {
@@ -88,7 +92,14 @@ export function AiAutomation() {
     () => products.filter(p => productIds.has(p.id)),
     [products, productIds]
   );
-  const canRun = !!templateId && !!workspaceId && productIds.size > 0;
+  const canNext = !!templateId && !!workspaceId;
+  const canRun = canNext && productIds.size > 0;
+  const selectedTemplate = templates.find(t => t.id === templateId) ?? null;
+
+  // Stepper: chỉ cho quay lại bước chọn đã qua (không nhảy lúc đang chạy).
+  const onStepClick = (s: Step) => {
+    if ((s === 'template' || s === 'product') && step !== 'running') setStep(s);
+  };
 
   const toggleProduct = (id: string) =>
     setProductIds(prev => {
@@ -177,24 +188,33 @@ export function AiAutomation() {
 
   return (
     <div className='mx-auto w-full max-w-5xl'>
-      <WizardHeader step={step} />
+      <WizardHeader step={step} onStepClick={onStepClick} />
 
-      {step === 'setup' && (
-        <StepSetup
+      {step === 'template' && (
+        <StepTemplate
           loading={loading}
           templates={templates}
-          products={products}
           workspaces={workspaces}
           templateId={templateId}
           setTemplateId={setTemplateId}
           workspaceId={workspaceId}
           setWorkspaceId={setWorkspaceId}
+          canNext={canNext}
+          onNext={() => setStep('product')}
+        />
+      )}
+
+      {step === 'product' && (
+        <StepProduct
+          template={selectedTemplate}
+          products={products}
           productIds={productIds}
           toggleProduct={toggleProduct}
           brief={brief}
           setBrief={setBrief}
           canRun={canRun}
           onRun={runAutomation}
+          onBack={() => setStep('template')}
         />
       )}
 
@@ -206,7 +226,7 @@ export function AiAutomation() {
           succeeded={succeeded}
           onView={view}
           onRestart={() => {
-            setStep('setup');
+            setStep('template');
             setRunItems([]);
             setMcResult(null);
             setMcPageId('');

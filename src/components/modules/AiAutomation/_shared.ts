@@ -4,7 +4,7 @@ import type {
   AIJobStatus,
 } from '@/services/rexer/types';
 
-export type Step = 'setup' | 'running' | 'results';
+export type Step = 'template' | 'product' | 'running' | 'results';
 export type RunStatus = AIJobStatus | 'enqueuing';
 
 export interface RunItem {

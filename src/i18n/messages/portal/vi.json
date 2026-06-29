@@ -163,7 +163,14 @@
       "loadingProducts": "Đang tải sản phẩm…",
       "noProducts": "Chưa có sản phẩm. Tạo sản phẩm trước khi tạo chiến dịch.",
       "needName": "Nhập tên chiến dịch",
-      "createDraft": "Tạo"
+      "createDraft": "Tạo nháp",
+      "searchPlaceholder": "Tìm sản phẩm…",
+      "selectAll": "Chọn tất cả",
+      "clearAll": "Bỏ chọn",
+      "selectedSuffix": "đã chọn",
+      "primaryBadge": "Chính",
+      "primaryHint": "Sản phẩm đầu tiên là sản phẩm chính của chiến dịch.",
+      "noMatch": "Không tìm thấy sản phẩm phù hợp."
     },
     "marketingEditor": {
       "needNameProduct": "Cần tên campaign và sản phẩm (xem mục Campaign)",
