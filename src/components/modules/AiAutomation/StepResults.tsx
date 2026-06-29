@@ -111,7 +111,7 @@ export function StepResults(props: Props) {
       {succeeded.length > 0 && (
         <section className='border-border bg-muted/30 space-y-4 rounded-xl border p-4'>
           <h3 className='flex items-center gap-1.5 text-sm font-semibold'>
-            <Rocket className='size-4' /> Launch across channels (1 click)
+            <Rocket className='size-4' /> Đẩy sang các kênh (1 chạm)
           </h3>
           <div className='flex flex-wrap items-end gap-4'>
             <div className='space-y-1'>

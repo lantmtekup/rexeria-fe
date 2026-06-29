@@ -163,7 +163,14 @@
       "loadingProducts": "Loading products…",
       "noProducts": "No products yet. Create a product before creating a campaign.",
       "needName": "Enter a campaign name",
-      "createDraft": "Create"
+      "createDraft": "Create draft",
+      "searchPlaceholder": "Search products…",
+      "selectAll": "Select all",
+      "clearAll": "Clear",
+      "selectedSuffix": "selected",
+      "primaryBadge": "Primary",
+      "primaryHint": "The first product is the campaign's primary product.",
+      "noMatch": "No matching products."
     },
     "marketingEditor": {
       "needNameProduct": "Campaign name and product required (see Campaign tab)",
