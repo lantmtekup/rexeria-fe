@@ -1,5 +1,6 @@
 import { BLOCK_TYPE_META } from './types';
 import { getBlockDef } from './blocks/_registry/registry';
+import { framerEstanciaAboutUsDef } from './blocks/_registry/defs/framerEstanciaAboutUs';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
@@ -2238,6 +2239,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
   framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_VI,
+  framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.vi,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
@@ -2314,6 +2316,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
   framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_EN,
+  framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.en,
 };
 
 function genId() {
