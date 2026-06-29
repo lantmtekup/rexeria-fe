@@ -19,6 +19,15 @@
   --gold-dim: #8a7040;
 }
 
+/* Category nav: ẩn scrollbar ngang (vẫn vuốt/scroll được). */
+.adsc-nav-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.adsc-nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* ── Phone frame (mobile-first) ─────────────────────────────────── */
 .adsc-phone {
   position: relative;
