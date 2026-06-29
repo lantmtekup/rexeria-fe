@@ -49,9 +49,14 @@
   border-radius: 30px;
   overflow: hidden;
   /* Safari/WebKit không clip border-radius+overflow:hidden khi con có
-     transform/clip-path (vd slider day-night) → góc vuông thò ra. clip-path
-     clip mọi descendant kể cả transformed, tôn trọng bo góc. */
+     transform/clip-path (vd slider day-night) → góc vuông thò ra ngoài khung.
+     clip-path inset chưa đủ trên một số bản Safari → thêm hack -webkit-mask
+     (mask đặc, không fade): buộc Safari rasterize + clip nội dung vào border-box
+     gồm bo góc. translateZ(0) ép layer riêng để mask ăn chắc. */
   clip-path: inset(0 round 30px);
+  -webkit-mask-image: linear-gradient(#fff, #fff);
+  mask-image: linear-gradient(#fff, #fff);
+  transform: translateZ(0);
   background: #0b0b09;
   isolation: isolate;
 }
