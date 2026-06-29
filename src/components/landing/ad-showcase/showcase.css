@@ -48,6 +48,10 @@
   height: 100%;
   border-radius: 30px;
   overflow: hidden;
+  /* Safari/WebKit không clip border-radius+overflow:hidden khi con có
+     transform/clip-path (vd slider day-night) → góc vuông thò ra. clip-path
+     clip mọi descendant kể cả transformed, tôn trọng bo góc. */
+  clip-path: inset(0 round 30px);
   background: #0b0b09;
   isolation: isolate;
 }
