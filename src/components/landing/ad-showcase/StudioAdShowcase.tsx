@@ -28,6 +28,12 @@ const slugify = (s: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
+/** Mã mở khoá full catalog cho sales — KHÔNG phải security, chỉ là cổng demo.
+ *  Mở `?full=<mã>` hoặc gõ vào ô; lưu localStorage để lần sau khỏi nhập.
+ *  Đổi mã qua env NEXT_PUBLIC_ADS_FULL_CODE (build-time). */
+const FULL_CODE = process.env.NEXT_PUBLIC_ADS_FULL_CODE ?? 'rexer2026';
+const FULL_KEY = 'ads_full_unlocked';
+
 type AdItem = {
   id: string;
   name: string;
@@ -153,16 +159,89 @@ function CategoryNav({
   );
 }
 
+/** Ô nhập mã mở khoá — sales gõ mã (hoặc dùng `?full=<mã>`) để xem full. */
+function UnlockForm({ onUnlock }: { onUnlock: () => void }) {
+  const [code, setCode] = React.useState('');
+  const [err, setErr] = React.useState(false);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (code.trim() === FULL_CODE) {
+      try {
+        localStorage.setItem(FULL_KEY, '1');
+      } catch {
+        // localStorage chặn (private mode) — vẫn mở cho phiên hiện tại.
+      }
+      onUnlock();
+    } else {
+      setErr(true);
+    }
+  };
+
+  return (
+    <form
+      onSubmit={submit}
+      className='mx-auto mt-6 flex max-w-sm flex-col gap-2'
+    >
+      <div className='flex gap-2'>
+        <input
+          type='text'
+          value={code}
+          onChange={e => {
+            setCode(e.target.value);
+            setErr(false);
+          }}
+          placeholder='Nhập mã mở khoá'
+          aria-label='Mã mở khoá'
+          className='rounded-pill h-11 flex-1 border border-neutral-300 bg-white px-5 text-sm text-neutral-900 outline-none focus:border-[#b8965a]'
+        />
+        <button
+          type='submit'
+          className='rounded-pill inline-flex h-11 shrink-0 items-center bg-[#b8965a] px-6 text-sm font-medium text-white transition-transform duration-300 hover:scale-105'
+        >
+          Mở khoá
+        </button>
+      </div>
+      {err && (
+        <p className='text-xs text-red-500'>
+          Mã không đúng — hỏi ReXeR Studio.
+        </p>
+      )}
+    </form>
+  );
+}
+
 export function StudioAdShowcase() {
   const dispatch = useAppDispatch();
   const { user } = useAuthRole();
   const isLoggedIn = !!user;
 
-  // Landing không tự hydrate auth → chủ động hỏi /auth/me (gửi cookie). Sales
-  // đã đăng nhập sẽ thấy full; khách vãng lai 401 → giữ chế độ teaser.
+  // Landing không tự hydrate auth → hỏi /auth/me (gửi cookie). Đăng nhập
+  // same-origin sẽ tự mở; nhưng cookie không chia sẻ qua subdomain nên đây
+  // CHỈ là đường phụ — đường chính cho sales là mã mở khoá bên dưới.
   React.useEffect(() => {
     dispatch(fetchMeThunk());
   }, [dispatch]);
+
+  // Mã mở khoá: ?full=<mã> hoặc đã lưu localStorage → mở full (không cần login,
+  // không dính cookie cross-subdomain). Đây là đường chính cho sales demo.
+  const [unlocked, setUnlocked] = React.useState(false);
+  React.useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search).get('full');
+      if (q && q === FULL_CODE) {
+        localStorage.setItem(FULL_KEY, '1');
+        setUnlocked(true);
+        return;
+      }
+      if (localStorage.getItem(FULL_KEY) === '1') setUnlocked(true);
+    } catch {
+      // window/localStorage không khả dụng — giữ teaser.
+    }
+  }, []);
+
+  // Full khi: đăng nhập same-origin HOẶC có mã mở khoá.
+  const isFull = isLoggedIn || unlocked;
 
   // Teaser (chưa login): gộp block thành MỘT lưới liên tiếp — KHÔNG tách theo
   // category, KHÔNG filter nav. Đăng nhập mới mở full + nav category.
@@ -200,15 +279,15 @@ export function StudioAdShowcase() {
     );
     els.forEach(el => io.observe(el));
     return () => io.disconnect();
-  }, [isLoggedIn]);
+  }, [isFull]);
 
   return (
     <div className='ad-showcase-root bg-white pt-20 sm:pt-[100px]'>
       <span id='adsc-top' className='block' />
 
-      {isLoggedIn ? (
+      {isFull ? (
         <>
-          {/* Đã đăng nhập → full catalog + nav category để nhảy nhanh khi demo. */}
+          {/* Full (đăng nhập same-origin hoặc có mã) → catalog + nav category. */}
           <CategoryNav
             groups={GROUP_LIST}
             total={total}
@@ -257,7 +336,7 @@ export function StudioAdShowcase() {
             </div>
           </section>
 
-          {/* Cổng login — đăng nhập để mở full catalog + nav category. */}
+          {/* Cổng mã mở khoá — sales nhập mã (hoặc dùng ?full=<mã>) để xem full. */}
           <section className='mx-auto max-w-6xl px-6 pb-4'>
             <div className='rounded-3xl border border-neutral-200 bg-neutral-50 px-6 py-12 text-center'>
               <p className='text-xs font-medium tracking-[0.18em] text-[#b8965a] uppercase'>
@@ -267,15 +346,10 @@ export function StudioAdShowcase() {
                 Đây mới là {teaserItems.length}/{total} format
               </h3>
               <p className='mx-auto mt-2 max-w-md text-sm text-neutral-500'>
-                Đăng nhập để mở khoá toàn bộ {total} block quảng cáo tương tác
-                và demo trực tiếp cho khách hàng.
+                Nhập mã để mở khoá toàn bộ {total} block quảng cáo tương tác và
+                demo trực tiếp cho khách hàng. (Liên hệ ReXeR Studio để lấy mã.)
               </p>
-              <Link
-                href='/sign-in'
-                className='rounded-pill mt-6 inline-flex h-11 items-center bg-[#b8965a] px-7 text-sm font-medium text-white no-underline transition-transform duration-300 hover:scale-105'
-              >
-                Đăng nhập để xem đủ
-              </Link>
+              <UnlockForm onUnlock={() => setUnlocked(true)} />
             </div>
           </section>
         </>
