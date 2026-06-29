@@ -31,23 +31,13 @@ import type {
   MintVaultCoin,
   FeatureSectionContent,
   FlipbookContent,
-  FramerArpeggioHeroContent,
   FramerArpeggioHeroV2Content,
-  FramerAvexaHeroContent,
-  FramerMobiusHeroContent,
-  FramerBungeeHeroContent,
   FramerBungeeHeroV2Content,
   FramerPurevisualsHeroContent,
-  FramerDelvauxHeroIntroContent,
   FramerExploreCtaContent,
-  FramerHeroContent,
   FramerPerformHeroContent,
-  FramerPerformHeroV2Content,
   FramerIntroRedefinedContent,
-  FramerHorizontalScrollContent,
   FramerImageStaggerContent,
-  FramerLargeQuoteContent,
-  FramerParadigmTitleContent,
   FramerProjectsGridContent,
   FramerStatsGridContent,
   FramerTeamDirectoryContent,
@@ -66,17 +56,10 @@ import type {
   FlipGalleryContent,
   WheelGalleryContent,
   HoverRevealListContent,
-  HoverGridRevealContent,
   HoverEqualizerHeadingContent,
   ImageExplosionContent,
-  CardShowcaseContent,
   StorySlidesContent,
-  FlipShowreelContent,
-  PeelRevealContent,
   AccordionMediaContent,
-  PricingTableContent,
-  ImageBannerContent,
-  VideoGalleryContent,
   SpotlightContent,
   ProcessStepsContent,
   DotMatrixContent,
@@ -84,27 +67,18 @@ import type {
   PixelRevealContent,
   MarqueeBandContent,
   LetterSliderContent,
-  SvgMorphOverlayContent,
-  GalleryPanLensContent,
   SeamlessScrollGalleryContent,
   ProductSpecSheetContent,
-  PhotoGalleryContent,
   PollContent,
   QuizContent,
   SplitScreenContent,
   StoriesContent,
-  FramerContactFooterContent,
   FramerFaqMinimalContent,
-  FramerFinneganExpertiseContent,
   FramerDarlingTimelineContent,
   FramerSignatureFeatureContent,
   FramerVsCollinsProjectsContent,
-  FramerAvexaBentoContent,
   FramerClarityServicesContent,
-  FramerVeloraServicesContent,
-  FramerFirmaFeaturedContent,
   FramerAesthaEditorialContent,
-  FramerAesthaProjectDetailContent,
   FramerPerformAboutContent,
   FramerPerformPricingContent,
 } from './types';
@@ -223,34 +197,6 @@ const FEATURE_EN: FeatureSectionContent = {
       label: 'Premium amenities',
       body: 'Gym, spa, lounge — never leave the project.',
     },
-  ],
-};
-
-// ── Photo Gallery ───────────────────────────────────────────────────────
-const GALLERY_VI: PhotoGalleryContent = {
-  eyebrow: 'THƯ VIỆN ẢNH',
-  title: 'Không gian sống thực tế',
-  description:
-    'Hình ảnh thực tế từ căn hộ mẫu — bàn giao nội thất hoàn thiện cao cấp.',
-  photos: [
-    { url: HOUSE_IMG, caption: 'Mặt ngoài' },
-    { url: ROOM_IMG, caption: 'Phòng khách' },
-    { url: KITCHEN_IMG, caption: 'Bếp & bàn ăn' },
-    { url: POOL_IMG, caption: 'Hồ bơi vô cực' },
-    { url: GARDEN_IMG, caption: 'Vườn cảnh' },
-  ],
-};
-const GALLERY_EN: PhotoGalleryContent = {
-  eyebrow: 'PHOTO GALLERY',
-  title: 'Real living spaces',
-  description:
-    'Photos from the show unit — handed over with premium furnished interiors.',
-  photos: [
-    { url: HOUSE_IMG, caption: 'Exterior' },
-    { url: ROOM_IMG, caption: 'Living room' },
-    { url: KITCHEN_IMG, caption: 'Kitchen & dining' },
-    { url: POOL_IMG, caption: 'Infinity pool' },
-    { url: GARDEN_IMG, caption: 'Garden' },
   ],
 };
 
@@ -1199,18 +1145,6 @@ const HOVER_REVEAL_LIST_EN: HoverRevealListContent = {
   title: 'Featured projects',
 };
 
-const HOVER_GRID_REVEAL_VI: HoverGridRevealContent = {
-  imageUrl: MEDIA.architecture[3],
-  cols: 16,
-  rows: 11,
-  overlayColor: '#fd5530',
-  blockColor: '#fff989',
-  resetMs: 300,
-};
-const HOVER_GRID_REVEAL_EN: HoverGridRevealContent = {
-  ...HOVER_GRID_REVEAL_VI,
-};
-
 const HOVER_EQ_HEADING_VI: HoverEqualizerHeadingContent = {
   heading: 'TRẢI NGHIỆM',
   peak: 2.2,
@@ -1230,48 +1164,6 @@ const IMAGE_EXPLOSION_EN: ImageExplosionContent = {
   ...IMAGE_EXPLOSION_VI,
   eyebrow: 'SCROLL HERE',
   title: 'Experience explosion',
-};
-
-const CARD_SHOWCASE_VI: CardShowcaseContent = {
-  title: 'Dự án tiêu biểu',
-  cards: [
-    {
-      imageUrl: MEDIA.architecture[0],
-      title: 'Happy City',
-      subtitle: 'Khu đô thị kiểu mẫu',
-    },
-    {
-      imageUrl: MEDIA.interior[0],
-      title: 'Maison Noir',
-      subtitle: 'Không gian sống sang trọng',
-    },
-    {
-      imageUrl: MEDIA.nature[1],
-      title: 'Riverside',
-      subtitle: 'Bên dòng sông xanh',
-    },
-  ],
-};
-const CARD_SHOWCASE_EN: CardShowcaseContent = {
-  ...CARD_SHOWCASE_VI,
-  title: 'Featured Projects',
-  cards: [
-    {
-      imageUrl: MEDIA.architecture[0],
-      title: 'Happy City',
-      subtitle: 'Model urban district',
-    },
-    {
-      imageUrl: MEDIA.interior[0],
-      title: 'Maison Noir',
-      subtitle: 'Luxury living space',
-    },
-    {
-      imageUrl: MEDIA.nature[1],
-      title: 'Riverside',
-      subtitle: 'By the green river',
-    },
-  ],
 };
 
 const STORY_SLIDES_VI: StorySlidesContent = {
@@ -1315,20 +1207,6 @@ const STORY_SLIDES_EN: StorySlidesContent = {
   ],
 };
 
-const FLIP_SHOWREEL_VI: FlipShowreelContent = {
-  title: 'Happy City',
-  imageUrl: MEDIA.architecture[0],
-};
-const FLIP_SHOWREEL_EN: FlipShowreelContent = { ...FLIP_SHOWREEL_VI };
-
-const PEEL_REVEAL_VI: PeelRevealContent = {
-  title: 'Happy City',
-  imageUrl: MEDIA.architecture[0],
-};
-const PEEL_REVEAL_EN: PeelRevealContent = {
-  ...PEEL_REVEAL_VI,
-};
-
 const ACCORDION_MEDIA_VI: AccordionMediaContent = {
   items: [
     {
@@ -1369,98 +1247,6 @@ const ACCORDION_MEDIA_EN: AccordionMediaContent = {
       imageUrl: MEDIA.nature[1],
     },
   ],
-};
-
-const PRICING_TABLE_VI: PricingTableContent = {
-  title: 'Bảng giá',
-  plans: [
-    {
-      name: 'Cơ bản',
-      price: '0đ',
-      period: 'tháng',
-      features: ['1 landing page', 'Phân tích cơ bản', 'Hỗ trợ email'],
-    },
-    {
-      name: 'Chuyên nghiệp',
-      price: '990k',
-      period: 'tháng',
-      highlighted: true,
-      features: [
-        '10 landing page',
-        'AI-Insights',
-        'Tên miền riêng',
-        'Hỗ trợ ưu tiên',
-      ],
-    },
-    {
-      name: 'Doanh nghiệp',
-      price: 'Liên hệ',
-      features: ['Không giới hạn', 'SLA riêng', 'Tích hợp CRM'],
-    },
-  ],
-};
-const PRICING_TABLE_EN: PricingTableContent = {
-  title: 'Pricing',
-  plans: [
-    {
-      name: 'Basic',
-      price: '$0',
-      period: 'mo',
-      features: ['1 landing page', 'Basic analytics', 'Email support'],
-    },
-    {
-      name: 'Pro',
-      price: '$39',
-      period: 'mo',
-      highlighted: true,
-      features: [
-        '10 landing pages',
-        'AI-Insights',
-        'Custom domain',
-        'Priority support',
-      ],
-    },
-    {
-      name: 'Enterprise',
-      price: 'Contact',
-      features: ['Unlimited', 'Dedicated SLA', 'CRM integration'],
-    },
-  ],
-};
-
-const IMAGE_BANNER_VI: ImageBannerContent = {
-  imageUrl: MEDIA.architecture[1],
-  heading: 'Hơn cả một nơi ở',
-  description:
-    'Mỗi chi tiết được thiết kế để bạn cảm thấy như ở nhà, giữa sự thanh lịch.',
-};
-const IMAGE_BANNER_EN: ImageBannerContent = {
-  imageUrl: MEDIA.architecture[1],
-  heading: 'More Than a Stay',
-  description:
-    'Every detail is designed to make you feel at home amid quiet elegance.',
-};
-
-const VIDEO_GALLERY_VI: VideoGalleryContent = {
-  title: 'Thước phim',
-  videos: [
-    {
-      src: 'https://cdn.coverr.co/videos/coverr-a-city-at-night-9476/1080p.mp4',
-      title: 'Đêm thành phố',
-    },
-    {
-      src: 'https://cdn.coverr.co/videos/coverr-aerial-view-of-a-forest-2633/1080p.mp4',
-      title: 'Rừng xanh',
-    },
-    {
-      src: 'https://cdn.coverr.co/videos/coverr-waves-on-the-beach-1409/1080p.mp4',
-      title: 'Sóng biển',
-    },
-  ],
-};
-const VIDEO_GALLERY_EN: VideoGalleryContent = {
-  ...VIDEO_GALLERY_VI,
-  title: 'Reel',
 };
 
 const SPOTLIGHT_VI: SpotlightContent = {
@@ -1559,25 +1345,6 @@ const LETTER_SLIDER_VI: LetterSliderContent = {
 };
 const LETTER_SLIDER_EN: LetterSliderContent = { ...LETTER_SLIDER_VI };
 
-const SVG_MORPH_OVERLAY_VI: SvgMorphOverlayContent = {
-  title: 'Khám phá bộ sưu tập',
-  images: pickMedia(4, 20),
-  overlayColor: '#36301d',
-  toggleLabel: 'Mở bộ sưu tập',
-};
-const SVG_MORPH_OVERLAY_EN: SvgMorphOverlayContent = {
-  ...SVG_MORPH_OVERLAY_VI,
-  title: 'Explore the collection',
-  toggleLabel: 'Open catalog',
-};
-
-const GALLERY_PAN_LENS_VI: GalleryPanLensContent = {
-  images: pickMedia(9, 11),
-  radius: 260,
-  maxScale: 2.4,
-};
-const GALLERY_PAN_LENS_EN: GalleryPanLensContent = { ...GALLERY_PAN_LENS_VI };
-
 const SEAMLESS_SCROLL_GALLERY_VI: SeamlessScrollGalleryContent = {
   title: 'Dự án tiêu biểu',
   images: pickMedia(7, 16),
@@ -1631,21 +1398,6 @@ const FRAMER_YUME_HERO_EN: FramerYumeHeroContent = { ...FRAMER_YUME_HERO_VI };
 const FRAMER_YUYA_HERO_VI: FramerYumeHeroContent = { ...FRAMER_YUME_HERO_VI };
 const FRAMER_YUYA_HERO_EN: FramerYumeHeroContent = { ...FRAMER_YUME_HERO_VI };
 
-// ── Framer-native: Hero - 03 (Arpeggio) ─────────────────────────────────
-// Port từ src/blocks/framer-arpeggio-hero/schema.ts (backgroundImage → backgroundUrl).
-const FRAMER_ARPEGGIO_HERO_VI: FramerArpeggioHeroContent = {
-  backgroundUrl:
-    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=1600&q=80',
-  headline: 'One subscription,\nunlimited design iterations.',
-  subtitle: 'Freedom beyond the traditional project scope',
-  topRightLabel: 'The Creative Agency—',
-  wordmark: 'Arpeggio',
-  wordmarkSuffix: '®',
-};
-const FRAMER_ARPEGGIO_HERO_EN: FramerArpeggioHeroContent = {
-  ...FRAMER_ARPEGGIO_HERO_VI,
-};
-
 // ── Framer-native: Hero - Arpeggio v2 ───────────────────────────────────
 const FRAMER_ARPEGGIO_HERO_V2_VI: FramerArpeggioHeroV2Content = {
   backgroundUrl: ARPEGGIO_HERO_V2_BG,
@@ -1657,36 +1409,6 @@ const FRAMER_ARPEGGIO_HERO_V2_VI: FramerArpeggioHeroV2Content = {
 };
 const FRAMER_ARPEGGIO_HERO_V2_EN: FramerArpeggioHeroV2Content = {
   ...FRAMER_ARPEGGIO_HERO_V2_VI,
-};
-
-// ── Framer-native: Delvaux Hero Intro ───────────────────────────────────
-const FRAMER_DELVAUX_HERO_INTRO_VI: FramerDelvauxHeroIntroContent = {
-  storefrontImageUrl:
-    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1600&q=80',
-  productImageUrl:
-    'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1200&q=80',
-  productAlt: 'Sản phẩm nổi bật',
-};
-const FRAMER_DELVAUX_HERO_INTRO_EN: FramerDelvauxHeroIntroContent = {
-  ...FRAMER_DELVAUX_HERO_INTRO_VI,
-  productAlt: 'Featured product',
-};
-
-// ── Framer-native: Framer Hero ──────────────────────────────────────────
-const FRAMER_HERO_VI: FramerHeroContent = {
-  logo: 'ecopark',
-  navLink: 'Liên hệ',
-  navHref: '#contact',
-  title: 'Sống cùng thiên nhiên\nTắm trong thanh thản',
-  backgroundUrl:
-    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1600&q=80',
-};
-const FRAMER_HERO_EN: FramerHeroContent = {
-  logo: 'ecopark',
-  navLink: 'Contact',
-  navHref: '#contact',
-  title: 'Live with Nature\nBathe in Serenity',
-  backgroundUrl: FRAMER_HERO_VI.backgroundUrl,
 };
 
 // ── Framer-native: Perform Hero v1 ──────────────────────────────────────
@@ -1712,69 +1434,6 @@ const FRAMER_PERFORM_HERO_EN: FramerPerformHeroContent = {
   backgroundUrl: FRAMER_PERFORM_HERO_VI.backgroundUrl,
   reviewStars: 5,
   reviewCount: '100+ Positive Client Reviews',
-};
-
-// ── Framer-native: Perform Hero v2 ──────────────────────────────────────
-const FRAMER_PERFORM_HERO_V2_VI: FramerPerformHeroV2Content = {
-  eyebrow: 'Huấn luyện viên ba môn phối hợp giàu kinh nghiệm',
-  title: 'Nâng Tầm Hiệu Suất Của Bạn',
-  subtitle:
-    'Cải thiện thành tích với kế hoạch tập luyện được cá nhân hóa từ huấn luyện viên tận tâm.',
-  buttonText: 'Bắt đầu ngay',
-  buttonHref: '#start',
-  reviewsText: '100+ đánh giá tích cực',
-  bgImageUrl:
-    'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1600&q=80',
-};
-const FRAMER_PERFORM_HERO_V2_EN: FramerPerformHeroV2Content = {
-  eyebrow: 'Experienced triathlon coach',
-  title: 'Level Up Your Performance',
-  subtitle:
-    'Improve your triathlon performance with personalized training plans guided by an experienced coach.',
-  buttonText: 'Start now',
-  buttonHref: '#start',
-  reviewsText: '100+ Positive Client Reviews',
-  bgImageUrl: FRAMER_PERFORM_HERO_V2_VI.bgImageUrl,
-};
-
-// ── Framer-native: Bungee Hero ──────────────────────────────────────────
-const FRAMER_BUNGEE_HERO_VI: FramerBungeeHeroContent = {
-  wordmarkUrl: '',
-  subtitle: 'Studio sáng tạo đặt tại Hà Nội.',
-  timerLabel: 'HN',
-  link1Label: 'BE',
-  link1Url: 'https://www.behance.net/',
-  link2Label: 'DR',
-  link2Url: 'https://dribbble.com/',
-  link3Label: 'X',
-  link3Url: 'https://x.com/',
-  marqueeSpeed: 40,
-  cardImages: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=70',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=70',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=70',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=70',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1487014679447-9f8336841d58?auto=format&fit=crop&w=800&q=70',
-    },
-  ],
-};
-const FRAMER_BUNGEE_HERO_EN: FramerBungeeHeroContent = {
-  ...FRAMER_BUNGEE_HERO_VI,
-  subtitle: 'Creative studio based in Hanoi.',
 };
 
 // ── Framer-native: Hero - Bungee v2 (recon spec) ─────────────────────────
@@ -1834,64 +1493,6 @@ const FRAMER_PUREVISUALS_HERO_EN: FramerPurevisualsHeroContent = {
   ...FRAMER_PUREVISUALS_HERO_VI,
 };
 
-// ── Framer-native: Hero - Mobius ─────────────────────────────────────────────
-const FRAMER_MOBIUS_HERO_VI: FramerMobiusHeroContent = {
-  brand: 'Mobius',
-  introBody: 'A creative studio building bold experiences for the modern web.',
-  navItems: [
-    { label: 'Work', href: '#work' },
-    { label: 'About', href: '#about' },
-    { label: 'Contact', href: '#contact' },
-  ],
-  cards: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&q=80',
-      href: '#',
-      rotation: -6,
-      offsetX: -60,
-      offsetY: -20,
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80',
-      href: '#',
-      rotation: 3,
-      offsetX: 40,
-      offsetY: 20,
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1493397212122-2b85dda8106b?w=800&q=80',
-      href: '#',
-      rotation: 10,
-      offsetX: 100,
-      offsetY: -30,
-    },
-  ],
-  copyright: '© 2025 Mobius',
-  location: 'Ho Chi Minh City, Vietnam',
-  bgColor: '#f5f0eb',
-};
-const FRAMER_MOBIUS_HERO_EN: FramerMobiusHeroContent = {
-  ...FRAMER_MOBIUS_HERO_VI,
-};
-
-// ── Framer-native: Hero - Avexa ──────────────────────────────────────────────
-const FRAMER_AVEXA_HERO_VI: FramerAvexaHeroContent = {
-  backgroundUrl:
-    'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1600&q=80',
-  brandMark: 'Avexa',
-  topHeading: 'Defining the future\nof modern living.',
-  tagline: 'Where craft meets culture,\nand beauty lives in detail.',
-  wordmark: 'Avexa',
-  wordmarkSuffix: '®',
-  wordmarkAfter: 'Studio',
-};
-const FRAMER_AVEXA_HERO_EN: FramerAvexaHeroContent = {
-  ...FRAMER_AVEXA_HERO_VI,
-};
-
 // ── Framer-native: Intro Redefined ──────────────────────────────────────
 const FRAMER_INTRO_REDEFINED_VI: FramerIntroRedefinedContent = {
   eyebrow: 'Epictower Onsen',
@@ -1902,22 +1503,6 @@ const FRAMER_INTRO_REDEFINED_EN: FramerIntroRedefinedContent = {
   eyebrow: 'Epictower Onsen',
   title: 'Life Style Redefined.',
   body: 'A living space that transcends the boundaries of ordinary luxury — where nature merges with contemporary architecture.',
-};
-
-// ── Framer-native: Paradigm Title ───────────────────────────────────────
-const FRAMER_PARADIGM_TITLE_VI: FramerParadigmTitleContent = {
-  titleTop: 'Khám phá một mô hình mới',
-  titleBottom: 'Về Sức Khỏe & Wellness',
-  imageUrl:
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&q=80',
-  overlayText: 'Trải Nghiệm Đặc Quyền',
-};
-const FRAMER_PARADIGM_TITLE_EN: FramerParadigmTitleContent = {
-  titleTop: 'Explore a new paradigm',
-  titleBottom: 'In Residential Wellness',
-  imageUrl:
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&q=80',
-  overlayText: 'Signature Experiences',
 };
 
 // ── Framer-native: Explore CTA ──────────────────────────────────────────
@@ -1946,20 +1531,6 @@ const FRAMER_STUDIO_MANIFESTO_EN: FramerStudioManifestoContent = {
   title: 'Our approach',
   body: 'We believe the best architecture serves people — not only beautiful in form but nourishing to the soul and connecting communities.',
   signature: '— Studio Rexer, 2025',
-};
-
-// ── Framer-native: Large Quote ──────────────────────────────────────────
-const FRAMER_LARGE_QUOTE_VI: FramerLargeQuoteContent = {
-  quote: 'Kiến trúc là âm nhạc được đóng băng trong không gian.',
-  author: 'Nguyễn Văn A',
-  role: 'GIÁM ĐỐC SÁNG TẠO',
-  variant: 'light',
-};
-const FRAMER_LARGE_QUOTE_EN: FramerLargeQuoteContent = {
-  quote: 'Architecture is music frozen in space.',
-  author: 'John Smith',
-  role: 'CREATIVE DIRECTOR',
-  variant: 'light',
 };
 
 // ── Framer-native: Stats Grid ───────────────────────────────────────────
@@ -2144,102 +1715,6 @@ const FRAMER_IMAGE_STAGGER_EN: FramerImageStaggerContent = {
   ],
 };
 
-// ── Framer-native: Horizontal Scroll ────────────────────────────────────
-const FRAMER_HORIZONTAL_SCROLL_VI: FramerHorizontalScrollContent = {
-  eyebrow: 'BỘ SƯU TẬP',
-  title: 'Khám phá các thiết kế',
-  items: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80',
-      label: 'Biệt thự Hà Nội',
-      caption: 'Nhà ở • 2024',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
-      label: 'Penthouse Sky',
-      caption: 'Nội thất • 2024',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80',
-      label: 'Resort Phú Quốc',
-      caption: 'Thương mại • 2023',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80',
-      label: 'Villa Đà Lạt',
-      caption: 'Nhà nghỉ dưỡng • 2023',
-    },
-  ],
-};
-const FRAMER_HORIZONTAL_SCROLL_EN: FramerHorizontalScrollContent = {
-  eyebrow: 'COLLECTION',
-  title: 'Explore the designs',
-  items: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80',
-      label: 'Hanoi Villa',
-      caption: 'Residential • 2024',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
-      label: 'Sky Penthouse',
-      caption: 'Interior • 2024',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80',
-      label: 'Phu Quoc Resort',
-      caption: 'Commercial • 2023',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=600&q=80',
-      label: 'Da Lat Villa',
-      caption: 'Hospitality • 2023',
-    },
-  ],
-};
-
-// ── Framer-native: Contact Footer ──────────────────────────────────────
-const FRAMER_CONTACT_FOOTER_VI: FramerContactFooterContent = {
-  greeting: 'Liên hệ với chúng tôi',
-  email: 'hello@rexer.ai',
-  copyright: '© 2025 Rexer. Bảo lưu mọi quyền.',
-  navLinks: [
-    { label: 'Trang chủ', href: '#' },
-    { label: 'Dịch vụ', href: '#' },
-    { label: 'Dự án', href: '#' },
-    { label: 'Liên hệ', href: '#' },
-  ],
-  socialLinks: [
-    { label: 'Facebook', href: '#' },
-    { label: 'Instagram', href: '#' },
-    { label: 'LinkedIn', href: '#' },
-  ],
-};
-const FRAMER_CONTACT_FOOTER_EN: FramerContactFooterContent = {
-  greeting: 'Say Hello!',
-  email: 'hello@rexer.ai',
-  copyright: '© 2025 Rexer. All rights reserved.',
-  navLinks: [
-    { label: 'Home', href: '#' },
-    { label: 'Services', href: '#' },
-    { label: 'Projects', href: '#' },
-    { label: 'Contact', href: '#' },
-  ],
-  socialLinks: [
-    { label: 'Facebook', href: '#' },
-    { label: 'Instagram', href: '#' },
-    { label: 'LinkedIn', href: '#' },
-  ],
-};
-
 // ── Framer-native: FAQ Minimal ──────────────────────────────────────────
 const FRAMER_FAQ_MINIMAL_VI: FramerFaqMinimalContent = {
   title: 'Câu hỏi thường gặp?',
@@ -2281,68 +1756,6 @@ const FRAMER_FAQ_MINIMAL_EN: FramerFaqMinimalContent = {
       question: 'How long does a project take?',
       answer:
         'Depending on the scope, projects typically take between 2 and 8 weeks.',
-    },
-  ],
-};
-
-// ── Framer-native: Finnegan Expertise ──────────────────────────────────
-const FRAMER_FINNEGAN_EXPERTISE_VI: FramerFinneganExpertiseContent = {
-  heading: 'Chuyên Môn',
-  cardBg: '#e85a2c',
-  slides: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80',
-      title: 'Thiết kế thương hiệu',
-      description:
-        'Xây dựng bản sắc thương hiệu độc đáo và nhất quán trên mọi nền tảng.',
-      bgColor: '#e85a2c',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80',
-      title: 'Phát triển web',
-      description:
-        'Tạo ra các trang web nhanh, đẹp và dễ sử dụng với công nghệ hiện đại.',
-      bgColor: '#2c7be8',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1551434678-e076c223a692?w=1200&q=80',
-      title: 'Chiến lược nội dung',
-      description:
-        'Lên kế hoạch và thực thi nội dung thu hút, chuyển đổi khách hàng tiềm năng.',
-      bgColor: '#1f9d55',
-    },
-  ],
-};
-const FRAMER_FINNEGAN_EXPERTISE_EN: FramerFinneganExpertiseContent = {
-  heading: 'My Expertise',
-  cardBg: '#e85a2c',
-  slides: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80',
-      title: 'Brand Design',
-      description:
-        'Building a unique and consistent brand identity across all platforms.',
-      bgColor: '#e85a2c',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&q=80',
-      title: 'Web Development',
-      description:
-        'Creating fast, beautiful, and user-friendly websites with modern technology.',
-      bgColor: '#2c7be8',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1551434678-e076c223a692?w=1200&q=80',
-      title: 'Content Strategy',
-      description:
-        'Planning and executing compelling content that converts potential customers.',
-      bgColor: '#1f9d55',
     },
   ],
 };
@@ -2510,56 +1923,6 @@ const FRAMER_VS_COLLINS_PROJECTS_EN: FramerVsCollinsProjectsContent = {
   ],
 };
 
-// ── Framer-native: Avexa Bento ─────────────────────────────────────────
-const AVEXA_IMG = (id: string) =>
-  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=800&q=70`;
-const FRAMER_AVEXA_BENTO_VI: FramerAvexaBentoContent = {
-  card1ImageUrl: AVEXA_IMG('1454165804606-c3d57bc86b40'),
-  card1Title: 'Chiến lược dẫn đầu',
-  card1Desc: 'Mọi quyết định đều dựa trên sự rõ ràng, không phải phỏng đoán.',
-  card2ImageUrl: AVEXA_IMG('1513364776144-60967b0f800f'),
-  card2Title: 'Chất lượng hơn số lượng',
-  card2Caption:
-    'Chúng tôi tập trung vào ít dự án hơn để mang lại kết quả tốt hơn.',
-  card3Big: '24/7',
-  card3Sub: 'Hỗ trợ ưu tiên',
-  card3BadgeBrand: 'Rexer',
-  card3BadgeLabel: 'Ticket hỗ trợ',
-  card4ImageUrl: AVEXA_IMG('1497366216548-37526070297c'),
-  card4Title: 'Giải pháp tuỳ chỉnh',
-  card4Desc:
-    'Không có một kích cỡ nào phù hợp tất cả — mọi thứ được định hình cho mục tiêu của bạn.',
-  card5ImageUrl: AVEXA_IMG('1522071820081-009f0129c71c'),
-  card5Title: 'Quy trình hợp tác',
-  card5Caption: 'Chúng tôi làm việc cùng bạn, không chỉ cho bạn.',
-  card6Image1Url: AVEXA_IMG('1559136555-9303baea8ebd'),
-  card6Image2Url: AVEXA_IMG('1551434678-e076c223a692'),
-  card6Title: 'Sáng tạo gặp thực tiễn',
-  card6Desc: 'Thiết kế thông minh thực sự hoạt động trong thế giới thực.',
-};
-const FRAMER_AVEXA_BENTO_EN: FramerAvexaBentoContent = {
-  card1ImageUrl: '',
-  card1Title: 'Strategy-First Approach',
-  card1Desc: 'Every decision is rooted in clarity, not guesswork.',
-  card2ImageUrl: '',
-  card2Title: 'Quality Over Quantity, Always',
-  card2Caption: 'We focus on fewer projects to deliver better outcomes.',
-  card3Big: '24/7',
-  card3Sub: 'Priority Support',
-  card3BadgeBrand: 'Rexer',
-  card3BadgeLabel: 'Support Ticket',
-  card4ImageUrl: '',
-  card4Title: 'Tailored Solutions',
-  card4Desc: 'No one-size-fits-all — everything is shaped to fit your goals.',
-  card5ImageUrl: '',
-  card5Title: 'Collaborative Process',
-  card5Caption: 'We work with you, not just for you.',
-  card6Image1Url: '',
-  card6Image2Url: '',
-  card6Title: 'Creative Meets Practical',
-  card6Desc: 'Smart design that actually works in the real world.',
-};
-
 // ── Framer-native: Clarity Services ────────────────────────────────────
 const FRAMER_CLARITY_SERVICES_VI: FramerClarityServicesContent = {
   bgColor: '#ffffff',
@@ -2626,66 +1989,6 @@ const FRAMER_CLARITY_SERVICES_EN: FramerClarityServicesContent = {
   ],
 };
 
-// ── Framer-native: Velora Services ─────────────────────────────────────
-const FRAMER_VELORA_SERVICES_VI: FramerVeloraServicesContent = {
-  items: [
-    {
-      title: 'Thiết kế thương hiệu',
-      description: 'Định hình bản sắc thương hiệu độc đáo và đáng nhớ.',
-      imageUrl: '',
-    },
-    {
-      title: 'Chiến lược nội dung',
-      description: 'Xây dựng câu chuyện thương hiệu kết nối với khách hàng.',
-      imageUrl: '',
-    },
-    {
-      title: 'Phát triển kỹ thuật số',
-      description: 'Giải pháp số hiện đại giúp doanh nghiệp tăng trưởng.',
-      imageUrl: '',
-    },
-  ],
-};
-const FRAMER_VELORA_SERVICES_EN: FramerVeloraServicesContent = {
-  items: [
-    {
-      title: 'Brand Design',
-      description: 'Shape a unique and memorable brand identity.',
-      imageUrl: '',
-    },
-    {
-      title: 'Content Strategy',
-      description: 'Build brand stories that connect with customers.',
-      imageUrl: '',
-    },
-    {
-      title: 'Digital Development',
-      description: 'Modern digital solutions to grow your business.',
-      imageUrl: '',
-    },
-  ],
-};
-
-// ── Framer-native: Firma Featured ──────────────────────────────────────
-const FRAMER_FIRMA_FEATURED_VI: FramerFirmaFeaturedContent = {
-  imageUrl: '',
-  category: 'CHIẾN LƯỢC / KỸ THUẬT SỐ',
-  heading: 'Dự án nổi bật',
-  description:
-    'Một câu chuyện thương hiệu mạnh mẽ bắt đầu từ sự rõ ràng về mục tiêu và khách hàng.',
-  ctaLabel: 'Xem case study',
-  ctaHref: '#',
-};
-const FRAMER_FIRMA_FEATURED_EN: FramerFirmaFeaturedContent = {
-  imageUrl: '',
-  category: 'STRATEGY / DIGITAL',
-  heading: 'Featured Project',
-  description:
-    'A strong brand story starts with clarity about goals and customers.',
-  ctaLabel: 'Case Study',
-  ctaHref: '#',
-};
-
 // ── Framer-native: Aestha Editorial ────────────────────────────────────
 const FRAMER_AESTHA_EDITORIAL_VI: FramerAesthaEditorialContent = {
   brand: 'RAMSA',
@@ -2721,58 +2024,6 @@ const FRAMER_AESTHA_EDITORIAL_EN: FramerAesthaEditorialContent = {
     'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80',
   ctaText: 'EXPLORE MORE',
   ctaHref: '/projects',
-  navLinks: [
-    { label: 'Projects', href: '/projects' },
-    { label: 'Studio', href: '/studio' },
-    { label: 'Contact', href: '/contact' },
-  ],
-};
-
-// ── Framer-native: Aestha Project Detail ───────────────────────────────
-const FRAMER_AESTHA_PROJECT_DETAIL_VI: FramerAesthaProjectDetailContent = {
-  projectTitle: 'TẦM NHÌN',
-  sectionLabel: 'Khái niệm',
-  body: 'Tọa lạc giữa lòng đô thị, dự án là biểu tượng cho phong cách sống đẳng cấp — nơi mỗi chi tiết đều được tinh chỉnh cho nhịp sống hiện đại.\n\nTòa tháp 36 tầng với 62 căn hộ cao cấp từ studio đến penthouse 4 phòng ngủ.',
-  images: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80',
-      aspect: '5:4',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80',
-      aspect: '4:5',
-    },
-  ],
-  nextLabel: 'Dự án tiếp theo',
-  nextProjectText: 'Kiến trúc',
-  nextProjectHref: '#',
-  navLinks: [
-    { label: 'Dự án', href: '/projects' },
-    { label: 'Studio', href: '/studio' },
-    { label: 'Liên hệ', href: '/contact' },
-  ],
-};
-const FRAMER_AESTHA_PROJECT_DETAIL_EN: FramerAesthaProjectDetailContent = {
-  projectTitle: 'VISION',
-  sectionLabel: 'Concept',
-  body: 'Nestled in the heart of the city, the project embodies refined urban living — every detail tuned to the demands of modern luxury.\n\nA 36-story tower housing 62 sophisticated condominiums from studios to four-bedroom penthouses.',
-  images: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80',
-      aspect: '5:4',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80',
-      aspect: '4:5',
-    },
-  ],
-  nextLabel: 'Next project',
-  nextProjectText: 'Architecture',
-  nextProjectHref: '#',
   navLinks: [
     { label: 'Projects', href: '/projects' },
     { label: 'Studio', href: '/studio' },
@@ -2912,13 +2163,10 @@ const NAME_BY_TYPE: Record<BlockType, string> = Object.fromEntries(
   Object.values(BLOCK_TYPE_META).map(m => [m.type, m.defaultName])
 ) as Record<BlockType, string>;
 
-const LEGACY_EMBED_EMPTY: BlockContent = { schemaId: '' };
-
 const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_VI,
   hero_overlay: HERO_OVERLAY_VI,
   feature_section: FEATURE_VI,
-  photo_gallery: GALLERY_VI,
   booking_form: BOOKING_VI,
   cta_section: CTA_VI,
   mint_details: MINT_DETAILS_VI,
@@ -2955,17 +2203,10 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   flip_gallery: FLIP_GALLERY_VI,
   wheel_gallery: WHEEL_GALLERY_VI,
   hover_reveal_list: HOVER_REVEAL_LIST_VI,
-  hover_grid_reveal: HOVER_GRID_REVEAL_VI,
   hover_equalizer_heading: HOVER_EQ_HEADING_VI,
   image_explosion: IMAGE_EXPLOSION_VI,
-  card_showcase: CARD_SHOWCASE_VI,
   story_slides: STORY_SLIDES_VI,
-  flip_showreel: FLIP_SHOWREEL_VI,
-  peel_reveal: PEEL_REVEAL_VI,
   accordion_media: ACCORDION_MEDIA_VI,
-  pricing_table: PRICING_TABLE_VI,
-  image_banner: IMAGE_BANNER_VI,
-  video_gallery: VIDEO_GALLERY_VI,
   spotlight: SPOTLIGHT_VI,
   process_steps: PROCESS_STEPS_VI,
   dot_matrix: DOT_MATRIX_VI,
@@ -2973,55 +2214,35 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   pixel_reveal: PIXEL_REVEAL_VI,
   marquee_band: MARQUEE_BAND_VI,
   letter_slider: LETTER_SLIDER_VI,
-  svg_morph_overlay: SVG_MORPH_OVERLAY_VI,
-  gallery_pan_lens: GALLERY_PAN_LENS_VI,
   seamless_scroll_gallery: SEAMLESS_SCROLL_GALLERY_VI,
   product_spec_sheet: PRODUCT_SPEC_SHEET_VI,
   framer_yume_hero: FRAMER_YUME_HERO_VI,
   framer_yuya_hero: FRAMER_YUYA_HERO_VI,
-  framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_VI,
   framer_arpeggio_hero_v2: FRAMER_ARPEGGIO_HERO_V2_VI,
-  framer_delvaux_hero_intro: FRAMER_DELVAUX_HERO_INTRO_VI,
-  framer_hero: FRAMER_HERO_VI,
   framer_perform_hero: FRAMER_PERFORM_HERO_VI,
-  framer_perform_hero_v2: FRAMER_PERFORM_HERO_V2_VI,
-  framer_bungee_hero: FRAMER_BUNGEE_HERO_VI,
   framer_bungee_hero_v2: FRAMER_BUNGEE_HERO_V2_VI,
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_VI,
-  framer_mobius_hero: FRAMER_MOBIUS_HERO_VI,
-  framer_avexa_hero: FRAMER_AVEXA_HERO_VI,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_VI,
-  framer_paradigm_title: FRAMER_PARADIGM_TITLE_VI,
   framer_explore_cta: FRAMER_EXPLORE_CTA_VI,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_VI,
-  framer_large_quote: FRAMER_LARGE_QUOTE_VI,
   framer_stats_grid: FRAMER_STATS_GRID_VI,
   framer_projects_grid: FRAMER_PROJECTS_GRID_VI,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_VI,
   framer_image_stagger: FRAMER_IMAGE_STAGGER_VI,
-  framer_horizontal_scroll: FRAMER_HORIZONTAL_SCROLL_VI,
-  framer_avexa_bento: FRAMER_AVEXA_BENTO_VI,
   framer_clarity_services: FRAMER_CLARITY_SERVICES_VI,
-  framer_velora_services: FRAMER_VELORA_SERVICES_VI,
-  framer_firma_featured: FRAMER_FIRMA_FEATURED_VI,
-  framer_contact_footer: FRAMER_CONTACT_FOOTER_VI,
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_VI,
-  framer_finnegan_expertise: FRAMER_FINNEGAN_EXPERTISE_VI,
   framer_darling_timeline: FRAMER_DARLING_TIMELINE_VI,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
-  framer_aestha_project_detail: FRAMER_AESTHA_PROJECT_DETAIL_VI,
   framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_VI,
-  legacy_embed: LEGACY_EMBED_EMPTY,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
   hero_overlay: HERO_OVERLAY_EN,
   feature_section: FEATURE_EN,
-  photo_gallery: GALLERY_EN,
   booking_form: BOOKING_EN,
   cta_section: CTA_EN,
   mint_details: MINT_DETAILS_VI,
@@ -3058,17 +2279,10 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   flip_gallery: FLIP_GALLERY_EN,
   wheel_gallery: WHEEL_GALLERY_EN,
   hover_reveal_list: HOVER_REVEAL_LIST_EN,
-  hover_grid_reveal: HOVER_GRID_REVEAL_EN,
   hover_equalizer_heading: HOVER_EQ_HEADING_EN,
   image_explosion: IMAGE_EXPLOSION_EN,
-  card_showcase: CARD_SHOWCASE_EN,
   story_slides: STORY_SLIDES_EN,
-  flip_showreel: FLIP_SHOWREEL_EN,
-  peel_reveal: PEEL_REVEAL_EN,
   accordion_media: ACCORDION_MEDIA_EN,
-  pricing_table: PRICING_TABLE_EN,
-  image_banner: IMAGE_BANNER_EN,
-  video_gallery: VIDEO_GALLERY_EN,
   spotlight: SPOTLIGHT_EN,
   process_steps: PROCESS_STEPS_EN,
   dot_matrix: DOT_MATRIX_EN,
@@ -3076,49 +2290,30 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   pixel_reveal: PIXEL_REVEAL_EN,
   marquee_band: MARQUEE_BAND_EN,
   letter_slider: LETTER_SLIDER_EN,
-  svg_morph_overlay: SVG_MORPH_OVERLAY_EN,
-  gallery_pan_lens: GALLERY_PAN_LENS_EN,
   seamless_scroll_gallery: SEAMLESS_SCROLL_GALLERY_EN,
   product_spec_sheet: PRODUCT_SPEC_SHEET_EN,
   framer_yume_hero: FRAMER_YUME_HERO_EN,
   framer_yuya_hero: FRAMER_YUYA_HERO_EN,
-  framer_arpeggio_hero: FRAMER_ARPEGGIO_HERO_EN,
   framer_arpeggio_hero_v2: FRAMER_ARPEGGIO_HERO_V2_EN,
-  framer_delvaux_hero_intro: FRAMER_DELVAUX_HERO_INTRO_EN,
-  framer_hero: FRAMER_HERO_EN,
   framer_perform_hero: FRAMER_PERFORM_HERO_EN,
-  framer_perform_hero_v2: FRAMER_PERFORM_HERO_V2_EN,
-  framer_bungee_hero: FRAMER_BUNGEE_HERO_EN,
   framer_bungee_hero_v2: FRAMER_BUNGEE_HERO_V2_EN,
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_EN,
-  framer_mobius_hero: FRAMER_MOBIUS_HERO_EN,
-  framer_avexa_hero: FRAMER_AVEXA_HERO_EN,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_EN,
-  framer_paradigm_title: FRAMER_PARADIGM_TITLE_EN,
   framer_explore_cta: FRAMER_EXPLORE_CTA_EN,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_EN,
-  framer_large_quote: FRAMER_LARGE_QUOTE_EN,
   framer_stats_grid: FRAMER_STATS_GRID_EN,
   framer_projects_grid: FRAMER_PROJECTS_GRID_EN,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_EN,
   framer_image_stagger: FRAMER_IMAGE_STAGGER_EN,
-  framer_horizontal_scroll: FRAMER_HORIZONTAL_SCROLL_EN,
-  framer_avexa_bento: FRAMER_AVEXA_BENTO_EN,
   framer_clarity_services: FRAMER_CLARITY_SERVICES_EN,
-  framer_velora_services: FRAMER_VELORA_SERVICES_EN,
-  framer_firma_featured: FRAMER_FIRMA_FEATURED_EN,
-  framer_contact_footer: FRAMER_CONTACT_FOOTER_EN,
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_EN,
-  framer_finnegan_expertise: FRAMER_FINNEGAN_EXPERTISE_EN,
   framer_darling_timeline: FRAMER_DARLING_TIMELINE_EN,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
-  framer_aestha_project_detail: FRAMER_AESTHA_PROJECT_DETAIL_EN,
   framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_EN,
-  legacy_embed: LEGACY_EMBED_EMPTY,
 };
 
 function genId() {
@@ -3140,22 +2335,6 @@ export function createBlock(type: BlockType): Block {
     contentEn: {
       desktop: structuredClone(reg ? reg.defaultContent.en : DEFAULTS_EN[type]),
     },
-    isVisible: true,
-  };
-}
-
-/**
- * Create a `legacy_embed` block wrapping a registry legacy/framer block.
- * The renderer resolves the design via `getLegacyBlock(schemaId)`.
- */
-export function createLegacyBlock(schemaId: string, name: string): Block {
-  const content: BlockContent = { schemaId, legacyName: name };
-  return {
-    id: genId(),
-    blockType: 'legacy_embed',
-    name: name || 'Legacy block',
-    contentVi: { desktop: structuredClone(content) },
-    contentEn: { desktop: structuredClone(content) },
     isVisible: true,
   };
 }

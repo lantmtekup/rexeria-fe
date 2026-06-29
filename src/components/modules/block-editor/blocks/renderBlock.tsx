@@ -23,63 +23,37 @@ import { MintVaultInvitation } from './MintVaultInvitation';
 import { FeatureSection } from './FeatureSection';
 import { Flipbook } from './Flipbook';
 import { FramerAesthaEditorial } from './FramerAesthaEditorial';
-import { FramerAesthaProjectDetail } from './FramerAesthaProjectDetail';
-import { FramerArpeggioHero } from './FramerArpeggioHero';
 import { FramerArpeggioHeroV2 } from './FramerArpeggioHeroV2';
-import { FramerAvexaBento } from './FramerAvexaBento';
-import { FramerAvexaHero } from './FramerAvexaHero';
-import { FramerBungeeHero } from './FramerBungeeHero';
 import { FramerClarityServices } from './FramerClarityServices';
-import { FramerContactFooter } from './FramerContactFooter';
 import { FramerDarlingTimeline } from './FramerDarlingTimeline';
-import { FramerDelvauxHeroIntro } from './FramerDelvauxHeroIntro';
 import { FramerExploreCta } from './FramerExploreCta';
 import { FramerFaqMinimal } from './FramerFaqMinimal';
-import { FramerFinneganExpertise } from './FramerFinneganExpertise';
-import { FramerFirmaFeatured } from './FramerFirmaFeatured';
-import { FramerHero } from './FramerHero';
-import { FramerHorizontalScroll } from './FramerHorizontalScroll';
 import { FramerImageStagger } from './FramerImageStagger';
 import { FramerIntroRedefined } from './FramerIntroRedefined';
-import { FramerLargeQuote } from './FramerLargeQuote';
-import { FramerMobiusHero } from './FramerMobiusHero';
-import { FramerParadigmTitle } from './FramerParadigmTitle';
 import { FramerPerformAbout } from './FramerPerformAbout';
 import { FramerPerformHero } from './FramerPerformHero';
-import { FramerPerformHeroV2 } from './FramerPerformHeroV2';
 import { FramerPerformPricing } from './FramerPerformPricing';
 import { FramerProjectsGrid } from './FramerProjectsGrid';
 import { FramerSignatureFeature } from './FramerSignatureFeature';
 import { FramerStatsGrid } from './FramerStatsGrid';
 import { FramerStudioManifesto } from './FramerStudioManifesto';
 import { FramerTeamDirectory } from './FramerTeamDirectory';
-import { FramerVeloraServices } from './FramerVeloraServices';
 import { FramerVsCollinsProjects } from './FramerVsCollinsProjects';
 import { FramerYumeHero } from './FramerYumeHero';
 import { HeroOverlay } from './HeroOverlay';
 import { HeroSplit } from './HeroSplit';
 import { ImageCarousel } from './ImageCarousel';
-import { LegacyEmbed } from './LegacyEmbed';
 import { Panorama } from './Panorama';
-import { PhotoGallery } from './PhotoGallery';
 import { Poll } from './Poll';
 import { Quiz } from './Quiz';
 import { FlipGallery } from './FlipGallery';
 import { Gallery3dDepth } from './Gallery3dDepth';
-import { GalleryPanLens } from './GalleryPanLens';
 import { HoverEqualizerHeading } from './HoverEqualizerHeading';
-import { HoverGridReveal } from './HoverGridReveal';
 import { HoverRevealList } from './HoverRevealList';
 import { ImageExplosion } from './ImageExplosion';
 import { ImageTrail } from './ImageTrail';
-import { CardShowcase } from './CardShowcase';
 import { StorySlides } from './StorySlides';
-import { FlipShowreel } from './FlipShowreel';
-import { PeelReveal } from './PeelReveal';
 import { AccordionMedia } from './AccordionMedia';
-import { PricingTable } from './PricingTable';
-import { ImageBanner } from './ImageBanner';
-import { VideoGallery } from './VideoGallery';
 import { Spotlight } from './Spotlight';
 import { ProcessSteps } from './ProcessSteps';
 import { DotMatrix } from './DotMatrix';
@@ -91,7 +65,6 @@ import { MarqueeBand } from './MarqueeBand';
 import { ParallaxHero } from './ParallaxHero';
 import { ProductSpecSheet } from './ProductSpecSheet';
 import { SeamlessScrollGallery } from './SeamlessScrollGallery';
-import { SvgMorphOverlay } from './SvgMorphOverlay';
 import { SplitScreen } from './SplitScreen';
 import { StickyScrollCards } from './StickyScrollCards';
 import { Stories } from './Stories';
@@ -127,45 +100,27 @@ import type {
   FeatureSectionContent,
   FlipbookContent,
   FramerAesthaEditorialContent,
-  FramerAesthaProjectDetailContent,
-  FramerArpeggioHeroContent,
   FramerArpeggioHeroV2Content,
-  FramerAvexaBentoContent,
-  FramerAvexaHeroContent,
-  FramerBungeeHeroContent,
   FramerClarityServicesContent,
-  FramerContactFooterContent,
   FramerDarlingTimelineContent,
-  FramerDelvauxHeroIntroContent,
   FramerExploreCtaContent,
   FramerFaqMinimalContent,
-  FramerFinneganExpertiseContent,
-  FramerFirmaFeaturedContent,
-  FramerHeroContent,
-  FramerHorizontalScrollContent,
   FramerImageStaggerContent,
   FramerIntroRedefinedContent,
-  FramerLargeQuoteContent,
-  FramerMobiusHeroContent,
-  FramerParadigmTitleContent,
   FramerPerformAboutContent,
   FramerPerformHeroContent,
-  FramerPerformHeroV2Content,
   FramerPerformPricingContent,
   FramerProjectsGridContent,
   FramerSignatureFeatureContent,
   FramerStatsGridContent,
   FramerStudioManifestoContent,
   FramerTeamDirectoryContent,
-  FramerVeloraServicesContent,
   FramerVsCollinsProjectsContent,
   FramerYumeHeroContent,
   HeroOverlayContent,
   HeroSplitContent,
   ImageCarouselContent,
-  LegacyEmbedContent,
   PanoramaContent,
-  PhotoGalleryContent,
   PollContent,
   QuizContent,
   SplitScreenContent,
@@ -179,17 +134,10 @@ import type {
   FlipGalleryContent,
   WheelGalleryContent,
   HoverRevealListContent,
-  HoverGridRevealContent,
   HoverEqualizerHeadingContent,
   ImageExplosionContent,
-  CardShowcaseContent,
   StorySlidesContent,
-  FlipShowreelContent,
-  PeelRevealContent,
   AccordionMediaContent,
-  PricingTableContent,
-  ImageBannerContent,
-  VideoGalleryContent,
   SpotlightContent,
   ProcessStepsContent,
   DotMatrixContent,
@@ -197,8 +145,6 @@ import type {
   PixelRevealContent,
   MarqueeBandContent,
   LetterSliderContent,
-  SvgMorphOverlayContent,
-  GalleryPanLensContent,
   SeamlessScrollGalleryContent,
   ProductSpecSheetContent,
 } from '../types';
@@ -272,17 +218,6 @@ export function RenderBlock({
       return (
         <FeatureSection
           content={content as FeatureSectionContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'photo_gallery':
-      return (
-        <PhotoGallery
-          content={content as PhotoGalleryContent}
           styles={styles}
           background={background}
           order={order}
@@ -686,17 +621,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'hover_grid_reveal':
-      return (
-        <HoverGridReveal
-          content={content as HoverGridRevealContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'hover_equalizer_heading':
       return (
         <HoverEqualizerHeading
@@ -730,17 +654,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'card_showcase':
-      return (
-        <CardShowcase
-          content={content as CardShowcaseContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'story_slides':
       return (
         <StorySlides
@@ -752,65 +665,10 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'flip_showreel':
-      return (
-        <FlipShowreel
-          content={content as FlipShowreelContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'peel_reveal':
-      return (
-        <PeelReveal
-          content={content as PeelRevealContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'accordion_media':
       return (
         <AccordionMedia
           content={content as AccordionMediaContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'pricing_table':
-      return (
-        <PricingTable
-          content={content as PricingTableContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'image_banner':
-      return (
-        <ImageBanner
-          content={content as ImageBannerContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'video_gallery':
-      return (
-        <VideoGallery
-          content={content as VideoGalleryContent}
           styles={styles}
           background={background}
           order={order}
@@ -884,28 +742,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'svg_morph_overlay':
-      return (
-        <SvgMorphOverlay
-          content={content as SvgMorphOverlayContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'gallery_pan_lens':
-      return (
-        <GalleryPanLens
-          content={content as GalleryPanLensContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'seamless_scroll_gallery':
       return (
         <SeamlessScrollGallery
@@ -941,54 +777,10 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'framer_arpeggio_hero':
-      return (
-        <FramerArpeggioHero
-          content={content as FramerArpeggioHeroContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'framer_arpeggio_hero_v2':
       return (
         <FramerArpeggioHeroV2
           content={content as FramerArpeggioHeroV2Content}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_mobius_hero':
-      return (
-        <FramerMobiusHero
-          content={content as FramerMobiusHeroContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_avexa_hero':
-      return (
-        <FramerAvexaHero
-          content={content as FramerAvexaHeroContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_avexa_bento':
-      return (
-        <FramerAvexaBento
-          content={content as FramerAvexaBentoContent}
           styles={styles}
           background={background}
           order={order}
@@ -1007,50 +799,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'framer_velora_services':
-      return (
-        <FramerVeloraServices
-          content={content as FramerVeloraServicesContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_firma_featured':
-      return (
-        <FramerFirmaFeatured
-          content={content as FramerFirmaFeaturedContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_delvaux_hero_intro':
-      return (
-        <FramerDelvauxHeroIntro
-          content={content as FramerDelvauxHeroIntroContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_hero':
-      return (
-        <FramerHero
-          content={content as FramerHeroContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'framer_perform_hero':
       return (
         <FramerPerformHero
@@ -1062,43 +810,10 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'framer_perform_hero_v2':
-      return (
-        <FramerPerformHeroV2
-          content={content as FramerPerformHeroV2Content}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_bungee_hero':
-      return (
-        <FramerBungeeHero
-          content={content as FramerBungeeHeroContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'framer_intro_redefined':
       return (
         <FramerIntroRedefined
           content={content as FramerIntroRedefinedContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_paradigm_title':
-      return (
-        <FramerParadigmTitle
-          content={content as FramerParadigmTitleContent}
           styles={styles}
           background={background}
           order={order}
@@ -1121,17 +836,6 @@ export function RenderBlock({
       return (
         <FramerStudioManifesto
           content={content as FramerStudioManifestoContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_large_quote':
-      return (
-        <FramerLargeQuote
-          content={content as FramerLargeQuoteContent}
           styles={styles}
           background={background}
           order={order}
@@ -1183,43 +887,10 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'framer_horizontal_scroll':
-      return (
-        <FramerHorizontalScroll
-          content={content as FramerHorizontalScrollContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_contact_footer':
-      return (
-        <FramerContactFooter
-          content={content as FramerContactFooterContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'framer_faq_minimal':
       return (
         <FramerFaqMinimal
           content={content as FramerFaqMinimalContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
-    case 'framer_finnegan_expertise':
-      return (
-        <FramerFinneganExpertise
-          content={content as FramerFinneganExpertiseContent}
           styles={styles}
           background={background}
           order={order}
@@ -1271,17 +942,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'framer_aestha_project_detail':
-      return (
-        <FramerAesthaProjectDetail
-          content={content as FramerAesthaProjectDetailContent}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
-      );
     case 'framer_perform_about':
       return (
         <FramerPerformAbout
@@ -1304,8 +964,6 @@ export function RenderBlock({
           activeKey={activeKey}
         />
       );
-    case 'legacy_embed':
-      return <LegacyEmbed content={content as LegacyEmbedContent} />;
     default:
       return (
         <>

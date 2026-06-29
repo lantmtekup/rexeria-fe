@@ -57,7 +57,6 @@ import {
   type Lang,
   type MintDiscoverContent,
   type MintVariantsContent,
-  type PhotoGalleryContent,
 } from './types';
 
 type ElementKind =
@@ -65,7 +64,6 @@ type ElementKind =
   | 'image'
   | 'stats'
   | 'features'
-  | 'photos'
   | 'reasons'
   | 'slides'
   | 'mintVariants'
@@ -91,7 +89,6 @@ const ELEMENT_KIND: Record<string, ElementKind> = {
   backgroundUrl: 'image',
   stats: 'stats',
   features: 'features',
-  photos: 'photos',
   reasons: 'reasons',
   slides: 'slides',
   variants: 'mintVariants',
@@ -114,7 +111,6 @@ const ELEMENT_LABEL: Record<string, string> = {
   backgroundUrl: 'Ảnh nền',
   stats: 'Thống kê',
   features: 'Tiện ích',
-  photos: 'Bộ ảnh',
   reasons: 'Lý do',
   slides: 'Slides',
   variants: 'Biến thể (swatch)',
@@ -328,12 +324,6 @@ export function ElementToolbar({
         {kind === 'features' && (
           <FeaturesControls
             content={content as FeatureSectionContent}
-            onContentChange={onContentChange}
-          />
-        )}
-        {kind === 'photos' && (
-          <PhotosControls
-            content={content as PhotoGalleryContent}
             onContentChange={onContentChange}
           />
         )}
@@ -889,88 +879,6 @@ function FeaturesControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm tiện ích' />
-    </PopoverTrigger>
-  );
-}
-
-// ─────────────────────────────────────────────────────────── PHOTOS
-
-function PhotosControls({
-  content,
-  onContentChange,
-}: {
-  content: PhotoGalleryContent;
-  onContentChange: (next: BlockContent) => void;
-}) {
-  const update = (
-    i: number,
-    patch: Partial<PhotoGalleryContent['photos'][number]>
-  ) => {
-    onContentChange({
-      ...content,
-      photos: content.photos.map((p, idx) =>
-        idx === i ? { ...p, ...patch } : p
-      ),
-    });
-  };
-  const remove = (i: number) =>
-    onContentChange({
-      ...content,
-      photos: content.photos.filter((_, idx) => idx !== i),
-    });
-  const add = () =>
-    onContentChange({
-      ...content,
-      photos: [
-        ...content.photos,
-        {
-          url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
-          caption: 'Mô tả ảnh',
-        },
-      ],
-    });
-
-  return (
-    <PopoverTrigger
-      label='Bộ ảnh'
-      preview={`${content.photos.length} ảnh`}
-      width={440}
-    >
-      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
-        {content.photos.map((photo, i) => (
-          <div
-            key={i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
-          >
-            <div className='flex items-center justify-between'>
-              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
-                Ảnh {i + 1}
-              </span>
-              <button
-                type='button'
-                onClick={() => remove(i)}
-                aria-label='Xoá'
-                className='flex size-7 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
-              >
-                <Trash2 className='size-3.5' />
-              </button>
-            </div>
-            <ImagePicker
-              value={photo.url}
-              onChange={url => update(i, { url })}
-              transform={photo.transform}
-              onTransformChange={transform => update(i, { transform })}
-            />
-            <Input
-              value={photo.caption}
-              onChange={e => update(i, { caption: e.target.value })}
-              placeholder='Caption (để trống nếu không cần)'
-              className='h-8 border-neutral-200 bg-white text-xs'
-            />
-          </div>
-        ))}
-      </div>
-      <AddRow onAdd={add} label='Thêm ảnh' />
     </PopoverTrigger>
   );
 }

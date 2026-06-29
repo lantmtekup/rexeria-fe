@@ -18,10 +18,11 @@
  * URL: /dev/blocks?type=framer_arpeggio_hero_v2  hoặc  /dev/blocks?id=<uuid>
  */
 import * as React from 'react';
-import { Monitor, Smartphone, Tablet } from 'lucide-react';
+import { LayoutGrid, Loader2, Monitor, Smartphone, Tablet } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
+import { BlockMiniPreview } from '@/components/modules/block-editor/BlockMiniPreview';
 import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
 import { createBlock } from '@/components/modules/block-editor/factory';
 import { LandingMotionRoot } from '@/components/modules/block-editor/motion/LandingMotion';
@@ -68,9 +69,19 @@ export default function DevBlocksPage() {
   const [fetched, setFetched] = React.useState<Block | null>(null);
   const [loadErr, setLoadErr] = React.useState<string | null>(null);
 
+  // View 'gallery' = lưới design CHƯA mapping (0 instance trong DB) để duyệt +
+  // xử lý gọn. `usedCodes` = type_code đã có ≥1 block (fetch từ BE 1 lần).
+  const [view, setView] = React.useState<'single' | 'gallery'>('single');
+  const [usedCodes, setUsedCodes] = React.useState<Set<string> | null>(null);
+  const [galleryErr, setGalleryErr] = React.useState<string | null>(null);
+
   // Đọc query 1 lần khi mount → quyết định chế độ.
   React.useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
+    if (sp.get('view') === 'unmapped') {
+      setView('gallery');
+      return;
+    }
     const id = sp.get('id');
     if (id) {
       setMode('id');
@@ -80,6 +91,37 @@ export default function DevBlocksPage() {
     const q = sp.get('type');
     if (q && (TYPES as string[]).includes(q)) setType(q as BlockType);
   }, []);
+
+  // Gallery: fetch type_code đã dùng (mọi scope, phân trang) — 1 lần khi mở.
+  React.useEffect(() => {
+    if (view !== 'gallery' || usedCodes !== null) return;
+    let alive = true;
+    setGalleryErr(null);
+    (async () => {
+      try {
+        const used = new Set<string>();
+        for (let p = 1; p <= 20; p++) {
+          const r = await rexerApi.blocks.list({ limit: 100, page: p });
+          const items = r.items ?? [];
+          for (const b of items) used.add(b.type_code);
+          if (items.length < 100) break;
+        }
+        if (alive) setUsedCodes(used);
+      } catch (e) {
+        if (alive)
+          setGalleryErr(e instanceof Error ? e.message : 'Lỗi tải danh sách.');
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [view, usedCodes]);
+
+  // Design chưa mapping = type trong code mà 0 block nào dùng.
+  const unmappedTypes = React.useMemo(
+    () => (usedCodes ? TYPES.filter(t => !usedCodes.has(t)) : []),
+    [usedCodes]
+  );
 
   // id-mode: fetch block thật, parse settings → editor Block.
   React.useEffect(() => {
@@ -119,8 +161,9 @@ export default function DevBlocksPage() {
     window.history.replaceState(null, '', u.toString());
   }, [type, mode]);
 
-  // Đổi dropdown → luôn về type-mode (duyệt default content).
+  // Đổi dropdown / click card gallery → về single + type-mode (default content).
   const onPickType = (t: BlockType) => {
+    setView('single');
     setMode('type');
     setBlockId(null);
     setFetched(null);
@@ -176,7 +219,24 @@ export default function DevBlocksPage() {
           {mode === 'id' ? (fetched ? `id · ${fetched.name}` : 'id · …') : type}
         </code>
 
-        <div className='ml-auto flex shrink-0 items-center gap-0.5 rounded border border-white/10 bg-white/5 p-px'>
+        {/* Toggle gallery "Chưa mapping" */}
+        <button
+          type='button'
+          onClick={() => setView(v => (v === 'gallery' ? 'single' : 'gallery'))}
+          aria-pressed={view === 'gallery'}
+          title='Design chưa mapping'
+          className={cn(
+            'ml-auto flex h-[18px] shrink-0 items-center gap-1 rounded border px-1.5 text-[9px] leading-none transition-colors',
+            view === 'gallery'
+              ? 'border-amber-400 bg-amber-400 text-neutral-900'
+              : 'border-white/15 bg-white/5 text-white/70 hover:bg-white/10'
+          )}
+        >
+          <LayoutGrid className='size-2.5' />
+          Chưa mapping
+        </button>
+
+        <div className='flex shrink-0 items-center gap-0.5 rounded border border-white/10 bg-white/5 p-px'>
           {DEVICES.map(({ id, icon: Icon, w }) => (
             <button
               key={id}
@@ -198,9 +258,68 @@ export default function DevBlocksPage() {
         </div>
       </header>
 
+      {/* ── Gallery: design CHƯA mapping ─────────────────────────────── */}
+      {view === 'gallery' ? (
+        <div className='h-screen overflow-auto bg-neutral-950 px-4 pt-10 pb-16'>
+          <div className='mx-auto max-w-6xl'>
+            {galleryErr ? (
+              <p className='py-12 text-center text-sm text-red-400'>
+                {galleryErr}
+              </p>
+            ) : usedCodes === null ? (
+              <p className='flex items-center justify-center gap-2 py-12 text-sm text-white/50'>
+                <Loader2 className='size-4 animate-spin' /> Đang đối chiếu DB…
+              </p>
+            ) : (
+              <>
+                <div className='mb-4 flex items-baseline gap-2'>
+                  <h1 className='text-sm font-semibold text-white'>
+                    Design chưa mapping
+                  </h1>
+                  <span className='text-xs text-white/40'>
+                    {unmappedTypes.length} / {TYPES.length} type · 0 instance
+                  </span>
+                </div>
+                {unmappedTypes.length === 0 ? (
+                  <p className='py-12 text-center text-sm text-white/50'>
+                    Mọi design đều đã được mapping 🎉
+                  </p>
+                ) : (
+                  <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4'>
+                    {unmappedTypes.map(t => (
+                      <button
+                        key={t}
+                        type='button'
+                        onClick={() => onPickType(t)}
+                        title={t}
+                        className='group flex flex-col gap-1.5 overflow-hidden rounded-lg border border-white/10 bg-white/[0.03] p-2 text-left transition-colors hover:border-amber-400/60 hover:bg-white/[0.06]'
+                      >
+                        <div className='overflow-hidden rounded-md border border-white/10 bg-white'>
+                          <BlockMiniPreview
+                            block={createBlock(t)}
+                            aspect='16 / 10'
+                          />
+                        </div>
+                        <span className='truncate px-0.5 text-[11px] font-medium text-white/80 group-hover:text-white'>
+                          {BLOCK_TYPE_META[t]?.label ?? t}
+                        </span>
+                        <span className='truncate px-0.5 text-[9px] text-white/30'>
+                          {t}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+
       {/* ── Vùng cuộn full viewport = scroller cho block ─────────────── */}
       <div
         ref={scrollerRef}
+        hidden={view === 'gallery'}
         className='relative h-screen overflow-auto bg-neutral-200'
       >
         <LandingMotionRoot scrollerRef={scrollerRef} enableSmooth={false}>

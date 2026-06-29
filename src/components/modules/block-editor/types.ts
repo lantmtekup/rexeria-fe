@@ -5,7 +5,6 @@ export type BlockType =
   | 'hero_split'
   | 'hero_overlay'
   | 'feature_section'
-  | 'photo_gallery'
   | 'booking_form'
   | 'cta_section'
   | 'image_carousel'
@@ -26,23 +25,14 @@ export type BlockType =
   | 'flip_gallery'
   | 'wheel_gallery'
   | 'hover_reveal_list'
-  | 'hover_grid_reveal'
   | 'hover_equalizer_heading'
   | 'image_explosion'
   | 'marquee_band'
   | 'letter_slider'
-  | 'svg_morph_overlay'
-  | 'gallery_pan_lens'
   | 'seamless_scroll_gallery'
   | 'product_spec_sheet'
-  | 'card_showcase'
   | 'story_slides'
-  | 'flip_showreel'
-  | 'peel_reveal'
   | 'accordion_media'
-  | 'pricing_table'
-  | 'image_banner'
-  | 'video_gallery'
   | 'spotlight'
   | 'process_steps'
   | 'dot_matrix'
@@ -53,40 +43,24 @@ export type BlockType =
   // BE phải có code tương ứng active trong catalog block_types.
   | 'framer_yume_hero'
   | 'framer_yuya_hero'
-  | 'framer_arpeggio_hero'
   | 'framer_arpeggio_hero_v2'
-  | 'framer_delvaux_hero_intro'
-  | 'framer_hero'
   | 'framer_perform_hero'
-  | 'framer_perform_hero_v2'
-  | 'framer_bungee_hero'
   | 'framer_bungee_hero_v2'
   | 'framer_purevisuals_hero'
-  | 'framer_mobius_hero'
-  | 'framer_avexa_hero'
   | 'framer_intro_redefined'
-  | 'framer_paradigm_title'
   | 'framer_explore_cta'
   | 'framer_studio_manifesto'
-  | 'framer_large_quote'
   | 'framer_stats_grid'
   | 'framer_projects_grid'
   | 'framer_team_directory'
   | 'framer_image_stagger'
-  | 'framer_horizontal_scroll'
-  | 'framer_avexa_bento'
   | 'framer_clarity_services'
-  | 'framer_velora_services'
-  | 'framer_firma_featured'
-  | 'framer_contact_footer'
   | 'framer_faq_minimal'
-  | 'framer_finnegan_expertise'
   | 'framer_darling_timeline'
   | 'framer_nftpull_timeline'
   | 'framer_signature_feature'
   | 'framer_vs_collins_projects'
   | 'framer_aestha_editorial'
-  | 'framer_aestha_project_detail'
   | 'framer_perform_about'
   | 'framer_perform_pricing'
   // ── Mint-coint sections tách thành data block (port từ src/templates) ──
@@ -109,10 +83,7 @@ export type BlockType =
   | 'mint_vault_craft'
   | 'mint_vault_reveal'
   | 'mint_vault_collection'
-  | 'mint_vault_invitation'
-  // Wrapper cho legacy/framer block (render qua schemaId trong registry).
-  // Không edit inline — chèn nguyên khối thiết kế vào canvas.
-  | 'legacy_embed';
+  | 'mint_vault_invitation';
 
 export interface HeroSplitStat {
   value: string;
@@ -214,13 +185,6 @@ export interface GalleryPhoto {
   url: string;
   caption: string;
   transform?: ImageTransform;
-}
-
-export interface PhotoGalleryContent {
-  eyebrow: string;
-  title: string;
-  description: string;
-  photos: GalleryPhoto[];
 }
 
 export interface BookingReason {
@@ -772,19 +736,6 @@ export interface HoverRevealListContent {
   items: { label: string; imageUrl: string }[];
 }
 
-/** Hover grid reveal — ảnh phủ lưới ô sáng theo vệt chuột (port CodeGrid 046). */
-export interface HoverGridRevealContent {
-  imageUrl: string;
-  cols?: number;
-  rows?: number;
-  /** Màu overlay (blend screen). Default #fd5530. */
-  overlayColor?: string;
-  /** Màu ô sáng (blend hard-light). Default #fff989. */
-  blockColor?: string;
-  /** Thời gian ô mờ lại (ms). Default 300. */
-  resetMs?: number;
-}
-
 /** Hover equalizer heading — chữ giãn scaleY theo con trỏ (port CodeGrid 049). */
 export interface HoverEqualizerHeadingContent {
   heading: string;
@@ -801,13 +752,6 @@ export interface ImageExplosionContent {
   images: string[];
 }
 
-/** Card showcase — lưới thẻ (ảnh + tiêu đề + phụ đề), reveal fade-up stagger. */
-export interface CardShowcaseContent {
-  /** Tiêu đề section (tùy chọn). */
-  title?: string;
-  cards: { imageUrl: string; title: string; subtitle?: string }[];
-}
-
 /** Story slides — slide tự chạy kiểu IG-stories + thanh index progress. */
 export interface StorySlidesContent {
   slides: { imageUrl: string; title: string; subtitle?: string }[];
@@ -815,46 +759,9 @@ export interface StorySlidesContent {
   duration?: number;
 }
 
-/** Flip showreel — headline + visual morph layout theo scroll (GSAP Flip). */
-export interface FlipShowreelContent {
-  title?: string;
-  imageUrl: string;
-}
-
-/** Peel reveal — ảnh phóng + clip-path "lột" mở theo scroll pin (sticky). */
-export interface PeelRevealContent {
-  title?: string;
-  imageUrl: string;
-}
-
 /** Accordion media — hàng panel ngang, panel active nở (ảnh + tiêu đề + mô tả). */
 export interface AccordionMediaContent {
   items: { title: string; description: string; imageUrl: string }[];
-}
-
-/** Pricing table — bảng giá các gói. */
-export interface PricingTableContent {
-  title?: string;
-  plans: {
-    name: string;
-    price: string;
-    period?: string;
-    features: string[];
-    highlighted?: boolean;
-  }[];
-}
-
-/** Image banner — ảnh nền full-bleed + heading/description reveal. */
-export interface ImageBannerContent {
-  imageUrl: string;
-  heading: string;
-  description?: string;
-}
-
-/** Video gallery — lưới video hover-to-play. */
-export interface VideoGalleryContent {
-  title?: string;
-  videos: { src: string; poster?: string; title?: string }[];
 }
 
 /** Spotlight — section tối, đèn rọi radial bám chuột làm sáng chữ. */
@@ -903,24 +810,6 @@ export interface LetterSliderContent {
   slides: { title: string; imageUrl: string }[];
 }
 
-/** SVG morph overlay — màn màu dâng dạng sóng lộ lưới sản phẩm (port CodeGrid 038). */
-export interface SvgMorphOverlayContent {
-  title?: string;
-  images: string[];
-  /** Màu overlay. Default #36301d. */
-  overlayColor?: string;
-  toggleLabel?: string;
-}
-
-/** Gallery pan + lens — ảnh lớn pan theo chuột, phồng quanh con trỏ (port CodeGrid 015). */
-export interface GalleryPanLensContent {
-  images: string[];
-  /** Bán kính lens (px). Default 260. */
-  radius?: number;
-  /** Scale tối đa khi con trỏ ở tâm. Default 2.4. */
-  maxScale?: number;
-}
-
 /** Seamless scroll gallery — dải ảnh cuộn ngang vô tận liền mạch (port CodeGrid 238). */
 export interface SeamlessScrollGalleryContent {
   title?: string;
@@ -937,13 +826,6 @@ export interface ProductSpecSheetContent {
   imageUrl: string;
   specs: { label: string; value: string }[];
   specLabel?: string;
-}
-
-/** Legacy/framer block embed — chỉ giữ schemaId; renderer tra registry. */
-export interface LegacyEmbedContent {
-  schemaId: string;
-  /** Tên hiển thị (từ schema.name) để UI editor show. */
-  legacyName?: string;
 }
 
 /**
@@ -965,20 +847,6 @@ export interface FramerYumeHeroContent {
  *  registry legacy. `bgColor` của legacy map sang native background layer. */
 export type FramerYuyaHeroContent = FramerYumeHeroContent;
 
-/**
- * Hero - 03 (Arpeggio): ảnh nền portrait full-bleed + headline trái +
- * agency label phải + wordmark đỏ cực to dưới cùng. Migrate từ
- * `src/blocks/framer-arpeggio-hero` (`backgroundImage{url,alt}` → `backgroundUrl`).
- */
-export interface FramerArpeggioHeroContent {
-  backgroundUrl: string;
-  headline: string;
-  subtitle: string;
-  topRightLabel: string;
-  wordmark: string;
-  wordmarkSuffix: string;
-}
-
 /** Hero - Arpeggio v2: fork độc lập từ v1, cùng layout + layer keys. */
 export interface FramerArpeggioHeroV2Content {
   backgroundUrl: string;
@@ -987,33 +855,6 @@ export interface FramerArpeggioHeroV2Content {
   topRightLabel: string;
   wordmark: string;
   wordmarkSuffix: string;
-}
-
-/**
- * Bento - 01 (Avexa Why-Us): 6-card bento grid 3-col. Migrate từ
- * `src/blocks/framer-avexa-bento`.
- */
-export interface FramerAvexaBentoContent {
-  card1ImageUrl: string;
-  card1Title: string;
-  card1Desc: string;
-  card2ImageUrl: string;
-  card2Title: string;
-  card2Caption: string;
-  card3Big: string;
-  card3Sub: string;
-  card3BadgeBrand: string;
-  card3BadgeLabel: string;
-  card4ImageUrl: string;
-  card4Title: string;
-  card4Desc: string;
-  card5ImageUrl: string;
-  card5Title: string;
-  card5Caption: string;
-  card6Image1Url: string;
-  card6Image2Url: string;
-  card6Title: string;
-  card6Desc: string;
 }
 
 /** Service item cho FramerClarityServicesContent. */
@@ -1034,56 +875,6 @@ export interface FramerClarityServicesContent {
   services: FramerClarityServiceItem[];
 }
 
-/** Service item cho FramerVeloraServicesContent. */
-export interface FramerVeloraServiceItem {
-  title: string;
-  description: string;
-  imageUrl: string;
-}
-
-/**
- * Velora Services: numbered list (01, 02, 03…) — 3-col row (số+tiêu đề | mô tả | ảnh)
- * với divider. Migrate từ `src/blocks/framer-velora-services`.
- */
-export interface FramerVeloraServicesContent {
-  items: FramerVeloraServiceItem[];
-}
-
-/**
- * Firma Featured: ảnh lấp đầy nửa trái, panel trắng đè từ phải với text + CTA.
- * Migrate từ `src/blocks/framer-firma-featured`.
- */
-export interface FramerFirmaFeaturedContent {
-  imageUrl: string;
-  category: string;
-  heading: string;
-  description: string;
-  ctaLabel: string;
-  ctaHref: string;
-}
-
-/**
- * Delvaux Hero Intro: 2 panels chồng — storefront full-bleed trên,
- * product centered nền sáng dưới. Port từ `src/blocks/delvaux-hero-intro`.
- */
-export interface FramerDelvauxHeroIntroContent {
-  storefrontImageUrl: string;
-  productImageUrl: string;
-  productAlt: string;
-}
-
-/**
- * Framer Hero: landscape image full-bleed + serif italic title dưới-trái
- * + minimal top nav. Port từ `src/blocks/framer-hero`.
- */
-export interface FramerHeroContent {
-  logo: string;
-  navLink: string;
-  navHref: string;
-  title: string;
-  backgroundUrl: string;
-}
-
 /**
  * Hero - Perform v1: Manrope 72/500, dark-overlay bg, pill CTA, star reviews,
  * content bên trái. Port từ `src/blocks/framer-perform-hero`.
@@ -1097,38 +888,6 @@ export interface FramerPerformHeroContent {
   backgroundUrl: string;
   reviewStars: number;
   reviewCount: string;
-}
-
-/**
- * Hero - Perform v2: Manrope centred layout 72/54px title, subtitle 544px,
- * pill CTA + gold star reviews. Port từ `src/blocks/framer-perform-hero-v2`.
- */
-export interface FramerPerformHeroV2Content {
-  eyebrow: string;
-  title: string;
-  subtitle: string;
-  buttonText: string;
-  buttonHref: string;
-  reviewsText: string;
-  bgImageUrl: string;
-}
-
-/**
- * Hero - Bungee: wordmark image + subtitle + timer/links + CSS marquee strip.
- * Port từ `src/blocks/framer-bungee-hero`.
- */
-export interface FramerBungeeHeroContent {
-  wordmarkUrl: string;
-  subtitle: string;
-  timerLabel: string;
-  link1Label: string;
-  link1Url: string;
-  link2Label: string;
-  link2Url: string;
-  link3Label: string;
-  link3Url: string;
-  marqueeSpeed: number;
-  cardImages: Array<{ imageUrl: string }>;
 }
 
 /**
@@ -1180,41 +939,6 @@ export interface FramerPurevisualsHeroContent {
 }
 
 /**
- * Hero - Mobius: wordmark cực to dưới cùng, stack ảnh scatter giữa trang,
- * intro text + nav trên. Port từ `src/blocks/framer-mobius-hero`.
- */
-export interface FramerMobiusHeroContent {
-  brand: string;
-  introBody: string;
-  navItems: Array<{ label: string; href: string }>;
-  cards: Array<{
-    imageUrl: string;
-    href: string;
-    rotation: number;
-    offsetX: number;
-    offsetY: number;
-  }>;
-  copyright: string;
-  location: string;
-  bgColor: string;
-}
-
-/**
- * Hero - Avexa: ảnh portrait nền full-bleed, brand mark trên-trái,
- * heading trên-phải, tagline italic dưới-trái, wordmark cam+trắng dưới-phải.
- * Accent: rgb(255,98,0). Port từ `src/blocks/framer-avexa-hero`.
- */
-export interface FramerAvexaHeroContent {
-  backgroundUrl: string;
-  brandMark: string;
-  topHeading: string;
-  tagline: string;
-  wordmark: string;
-  wordmarkSuffix: string;
-  wordmarkAfter: string;
-}
-
-/**
  * Intro Redefined: nền trắng, eyebrow góc phải (DM Mono), tiêu đề italic
  * serif cực lớn (Abril Fatface), đoạn body bên dưới.
  */
@@ -1222,17 +946,6 @@ export interface FramerIntroRedefinedContent {
   eyebrow: string;
   title: string;
   body: string;
-}
-
-/**
- * Paradigm Title: 2 dòng text trên + dưới ảnh full-width, overlay text
- * trên ảnh. Port từ `src/blocks/framer-paradigm-title`.
- */
-export interface FramerParadigmTitleContent {
-  titleTop: string;
-  titleBottom: string;
-  imageUrl: string;
-  overlayText: string;
 }
 
 /**
@@ -1255,17 +968,6 @@ export interface FramerStudioManifestoContent {
   title: string;
   body: string;
   signature: string;
-}
-
-/**
- * Large Quote: trích dẫn italic serif cực lớn + tác giả + vai trò.
- * `variant = 'dark'` dùng nền #1A1A1A; mặc định sáng (#F5F3EE).
- */
-export interface FramerLargeQuoteContent {
-  quote: string;
-  author: string;
-  role: string;
-  variant: string;
 }
 
 /**
@@ -1315,17 +1017,6 @@ export interface FramerImageStaggerContent {
 }
 
 /**
- * Horizontal Scroll: nền #F5F3EE, eyebrow + Abril Fatface title,
- * hàng card cuộn ngang với ảnh tỉ lệ 4:5.
- * Port từ `src/blocks/framer-horizontal-scroll`.
- */
-export interface FramerHorizontalScrollContent {
-  eyebrow: string;
-  title: string;
-  items: Array<{ imageUrl: string; label: string; caption: string }>;
-}
-
-/**
  * Aestha Editorial: cột brand sticky trái + 3 ảnh so le phải + CTA cuối.
  * Port từ `src/blocks/framer-aestha-editorial`.
  */
@@ -1339,21 +1030,6 @@ export interface FramerAesthaEditorialContent {
   image3Url: string;
   ctaText: string;
   ctaHref: string;
-  navLinks: Array<{ label: string; href: string }>;
-}
-
-/**
- * Aestha Project Detail: 3 cột — tiêu đề sticky trái, body giữa, stack ảnh phải.
- * Port từ `src/blocks/framer-aestha-project-detail`.
- */
-export interface FramerAesthaProjectDetailContent {
-  projectTitle: string;
-  sectionLabel: string;
-  body: string;
-  images: Array<{ imageUrl: string; aspect: string }>;
-  nextLabel: string;
-  nextProjectText: string;
-  nextProjectHref: string;
   navLinks: Array<{ label: string; href: string }>;
 }
 
@@ -1388,19 +1064,6 @@ export interface FramerPerformPricingContent {
 }
 
 /**
- * Contact Footer: nền đen, greeting italic cực to + email xanh lá (#00940c),
- * lưới nav/social, copyright phía dưới.
- * Port từ `src/blocks/framer-contact-footer`.
- */
-export interface FramerContactFooterContent {
-  greeting: string;
-  email: string;
-  copyright: string;
-  navLinks: Array<{ label: string; href: string }>;
-  socialLinks: Array<{ label: string; href: string }>;
-}
-
-/**
  * FAQ Minimal: nền trắng, 2 cột (tiêu đề + CTA trái, accordion phải),
  * divider mỏng. Port từ `src/blocks/framer-faq-minimal`.
  */
@@ -1409,22 +1072,6 @@ export interface FramerFaqMinimalContent {
   ctaText: string;
   ctaHref: string;
   items: Array<{ question: string; answer: string }>;
-}
-
-/**
- * Finnegan Expertise: nền tối #0a0a0a, ghost heading cực to,
- * các thẻ chuyên môn xếp chồng (ảnh trái + panel màu phải).
- * Port từ `src/blocks/framer-finnegan-expertise`.
- */
-export interface FramerFinneganExpertiseContent {
-  heading: string;
-  cardBg: string;
-  slides: Array<{
-    imageUrl: string;
-    title: string;
-    description: string;
-    bgColor: string;
-  }>;
 }
 
 /**
@@ -1492,7 +1139,6 @@ export type BlockContent =
   | HeroSplitContent
   | HeroOverlayContent
   | FeatureSectionContent
-  | PhotoGalleryContent
   | BookingFormContent
   | MintDetailsContent
   | MintSkuContent
@@ -1529,17 +1175,10 @@ export type BlockContent =
   | FlipGalleryContent
   | WheelGalleryContent
   | HoverRevealListContent
-  | HoverGridRevealContent
   | HoverEqualizerHeadingContent
   | ImageExplosionContent
-  | CardShowcaseContent
   | StorySlidesContent
-  | FlipShowreelContent
-  | PeelRevealContent
   | AccordionMediaContent
-  | PricingTableContent
-  | ImageBannerContent
-  | VideoGalleryContent
   | SpotlightContent
   | ProcessStepsContent
   | DotMatrixContent
@@ -1547,48 +1186,29 @@ export type BlockContent =
   | PixelRevealContent
   | MarqueeBandContent
   | LetterSliderContent
-  | SvgMorphOverlayContent
-  | GalleryPanLensContent
   | SeamlessScrollGalleryContent
   | ProductSpecSheetContent
   | FramerYumeHeroContent
-  | FramerArpeggioHeroContent
   | FramerArpeggioHeroV2Content
-  | FramerDelvauxHeroIntroContent
-  | FramerHeroContent
   | FramerPerformHeroContent
-  | FramerPerformHeroV2Content
-  | FramerBungeeHeroContent
   | FramerBungeeHeroV2Content
   | FramerPurevisualsHeroContent
-  | FramerMobiusHeroContent
-  | FramerAvexaHeroContent
   | FramerIntroRedefinedContent
-  | FramerParadigmTitleContent
   | FramerExploreCtaContent
   | FramerStudioManifestoContent
-  | FramerLargeQuoteContent
   | FramerStatsGridContent
   | FramerProjectsGridContent
   | FramerTeamDirectoryContent
   | FramerImageStaggerContent
-  | FramerHorizontalScrollContent
   | FramerAesthaEditorialContent
-  | FramerAesthaProjectDetailContent
   | FramerPerformAboutContent
   | FramerPerformPricingContent
-  | FramerContactFooterContent
   | FramerFaqMinimalContent
-  | FramerFinneganExpertiseContent
   | FramerDarlingTimelineContent
   | FramerNftpullTimelineContent
   | FramerSignatureFeatureContent
   | FramerVsCollinsProjectsContent
-  | FramerAvexaBentoContent
   | FramerClarityServicesContent
-  | FramerVeloraServicesContent
-  | FramerFirmaFeaturedContent
-  | LegacyEmbedContent
   | Record<string, unknown>;
 
 /**
@@ -2119,16 +1739,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'section tiện ích / điểm nổi bật',
     aiLabelEn: 'feature highlights section',
   },
-  photo_gallery: {
-    type: 'photo_gallery',
-    label: 'Gallery',
-    accent: '#7c3aed',
-    adminLabel: 'Photo Gallery',
-    gradient: 'from-pink-400 to-fuchsia-500',
-    defaultName: 'Thư viện ảnh',
-    aiLabelVi: 'thư viện ảnh',
-    aiLabelEn: 'photo gallery',
-  },
   booking_form: {
     type: 'booking_form',
     label: 'Booking',
@@ -2489,16 +2099,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'danh sách tên, hover hiện ảnh bám chuột',
     aiLabelEn: 'name list revealing image on hover',
   },
-  hover_grid_reveal: {
-    type: 'hover_grid_reveal',
-    label: 'Hover Grid Reveal',
-    accent: '#0f0f0f',
-    adminLabel: 'Hover Grid Reveal',
-    gradient: 'from-yellow-400 to-orange-600',
-    defaultName: 'Hover Grid Reveal',
-    aiLabelVi: 'ảnh phủ lưới ô sáng theo vệt chuột',
-    aiLabelEn: 'image with grid cells lighting on hover',
-  },
   hover_equalizer_heading: {
     type: 'hover_equalizer_heading',
     label: 'Hover Equalizer Heading',
@@ -2529,16 +2129,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'dải chữ lớn chạy ngang vô tận',
     aiLabelEn: 'large text marquee scrolling horizontally',
   },
-  card_showcase: {
-    type: 'card_showcase',
-    label: 'Card Showcase',
-    accent: '#0f0f0f',
-    adminLabel: 'Card Showcase',
-    gradient: 'from-sky-500 to-indigo-600',
-    defaultName: 'Card Showcase',
-    aiLabelVi: 'lưới thẻ ảnh hiện lên fade-up khi cuộn tới',
-    aiLabelEn: 'grid of image cards revealing fade-up on scroll',
-  },
   story_slides: {
     type: 'story_slides',
     label: 'Story Slides',
@@ -2549,26 +2139,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'slide tự chạy kiểu story có thanh tiến trình',
     aiLabelEn: 'auto-advancing story slides with progress bars',
   },
-  flip_showreel: {
-    type: 'flip_showreel',
-    label: 'Flip Showreel',
-    accent: '#0f0f0f',
-    adminLabel: 'Flip Showreel',
-    gradient: 'from-amber-500 to-pink-600',
-    defaultName: 'Flip Showreel',
-    aiLabelVi: 'tiêu đề + ảnh morph layout khi cuộn (Flip)',
-    aiLabelEn: 'headline + visual morphing layout on scroll (Flip)',
-  },
-  peel_reveal: {
-    type: 'peel_reveal',
-    label: 'Peel Reveal',
-    accent: '#0f0f0f',
-    adminLabel: 'Peel Reveal',
-    gradient: 'from-fuchsia-500 to-purple-600',
-    defaultName: 'Peel Reveal',
-    aiLabelVi: 'ảnh phóng to + lột mặt nạ mở dần khi cuộn',
-    aiLabelEn: 'image scaling up + clip-path peel reveal on scroll',
-  },
   accordion_media: {
     type: 'accordion_media',
     label: 'Accordion Media',
@@ -2578,36 +2148,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Accordion Media',
     aiLabelVi: 'accordion ảnh ngang, panel active nở rộng',
     aiLabelEn: 'horizontal image accordion, active panel expands',
-  },
-  pricing_table: {
-    type: 'pricing_table',
-    label: 'Pricing Table',
-    accent: '#0f0f0f',
-    adminLabel: 'Pricing Table',
-    gradient: 'from-emerald-500 to-green-600',
-    defaultName: 'Pricing Table',
-    aiLabelVi: 'bảng giá các gói dịch vụ',
-    aiLabelEn: 'pricing plans table',
-  },
-  image_banner: {
-    type: 'image_banner',
-    label: 'Image Banner',
-    accent: '#0f0f0f',
-    adminLabel: 'Image Banner',
-    gradient: 'from-slate-500 to-zinc-700',
-    defaultName: 'Image Banner',
-    aiLabelVi: 'ảnh nền lớn + tiêu đề hiện fade-up',
-    aiLabelEn: 'full-bleed image banner with revealing heading',
-  },
-  video_gallery: {
-    type: 'video_gallery',
-    label: 'Video Gallery',
-    accent: '#0f0f0f',
-    adminLabel: 'Video Gallery',
-    gradient: 'from-red-500 to-rose-600',
-    defaultName: 'Video Gallery',
-    aiLabelVi: 'lưới video hover để phát',
-    aiLabelEn: 'grid of videos that play on hover',
   },
   spotlight: {
     type: 'spotlight',
@@ -2669,26 +2209,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'slider sản phẩm, chữ mở từng ký tự',
     aiLabelEn: 'product slider revealing letters one by one',
   },
-  svg_morph_overlay: {
-    type: 'svg_morph_overlay',
-    label: 'SVG Morph Overlay',
-    accent: '#0f0f0f',
-    adminLabel: 'SVG Morph Overlay',
-    gradient: 'from-amber-700 to-yellow-900',
-    defaultName: 'SVG Morph Overlay',
-    aiLabelVi: 'màn màu dâng dạng sóng lộ lưới sản phẩm',
-    aiLabelEn: 'wave overlay morph revealing a product grid',
-  },
-  gallery_pan_lens: {
-    type: 'gallery_pan_lens',
-    label: 'Gallery Pan + Lens',
-    accent: '#0f0f0f',
-    adminLabel: 'Gallery Pan + Lens',
-    gradient: 'from-teal-500 to-cyan-700',
-    defaultName: 'Gallery Pan + Lens',
-    aiLabelVi: 'ảnh lớn pan theo chuột, phồng quanh con trỏ',
-    aiLabelEn: 'large gallery panning with a lens-zoom cursor',
-  },
   seamless_scroll_gallery: {
     type: 'seamless_scroll_gallery',
     label: 'Seamless Scroll Gallery',
@@ -2729,16 +2249,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'block hero tối giản hai tầng (tên lớn + avatar)',
     aiLabelEn: 'minimal two-tier hero block (big name + avatar)',
   },
-  framer_arpeggio_hero: {
-    type: 'framer_arpeggio_hero',
-    label: 'Hero - Arpeggio',
-    accent: '#FF4D2E',
-    adminLabel: 'Hero - Arpeggio',
-    gradient: 'from-orange-500 to-red-600',
-    defaultName: 'Hero - 03 (Arpeggio)',
-    aiLabelVi: 'block hero ảnh nền + wordmark lớn',
-    aiLabelEn: 'full-bleed hero with large wordmark',
-  },
   framer_arpeggio_hero_v2: {
     type: 'framer_arpeggio_hero_v2',
     label: 'Hero - Arpeggio v2',
@@ -2748,46 +2258,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Hero - Arpeggio v2',
     aiLabelVi: 'block hero Arpeggio v2 (ảnh nền + wordmark lớn)',
     aiLabelEn: 'Arpeggio v2 hero with large wordmark',
-  },
-  framer_mobius_hero: {
-    type: 'framer_mobius_hero',
-    label: 'Hero - Mobius',
-    accent: '#0d0d0d',
-    adminLabel: 'Hero - Mobius',
-    gradient: 'from-neutral-800 to-neutral-950',
-    defaultName: 'Hero - Mobius',
-    aiLabelVi: 'block hero wordmark khổng lồ + stack ảnh scatter',
-    aiLabelEn: 'hero with giant wordmark + scattered photo stack',
-  },
-  framer_avexa_hero: {
-    type: 'framer_avexa_hero',
-    label: 'Hero - Avexa',
-    accent: 'rgb(255,98,0)',
-    adminLabel: 'Hero - Avexa',
-    gradient: 'from-orange-500 to-orange-700',
-    defaultName: 'Hero - Avexa',
-    aiLabelVi: 'block hero portrait + wordmark cam trắng góc phải',
-    aiLabelEn: 'portrait hero with orange/white corner wordmark',
-  },
-  framer_delvaux_hero_intro: {
-    type: 'framer_delvaux_hero_intro',
-    label: 'Hero - Delvaux Intro',
-    accent: '#c8a96e',
-    adminLabel: 'Hero - Delvaux Intro',
-    gradient: 'from-stone-400 to-stone-600',
-    defaultName: 'Hero - Delvaux Intro',
-    aiLabelVi: 'block giới thiệu hai panel: storefront → sản phẩm',
-    aiLabelEn: 'two-panel storefront → product reveal hero',
-  },
-  framer_hero: {
-    type: 'framer_hero',
-    label: 'Hero - Framer',
-    accent: '#e8eae3',
-    adminLabel: 'Hero - Framer',
-    gradient: 'from-green-700 to-teal-800',
-    defaultName: 'Hero - Framer',
-    aiLabelVi: 'block hero ảnh landscape + tiêu đề nghiêng serif dưới-trái',
-    aiLabelEn: 'landscape hero with italic serif title bottom-left',
   },
   framer_perform_hero: {
     type: 'framer_perform_hero',
@@ -2799,26 +2269,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'block hero tối Manrope + overlay gradient + CTA pill',
     aiLabelEn:
       'dark hero with Manrope typography + gradient overlay + pill CTA',
-  },
-  framer_perform_hero_v2: {
-    type: 'framer_perform_hero_v2',
-    label: 'Hero - Perform v2',
-    accent: '#ffffff',
-    adminLabel: 'Hero - Perform v2',
-    gradient: 'from-neutral-800 to-black',
-    defaultName: 'Hero - Perform v2',
-    aiLabelVi: 'block hero Manrope căn giữa + CTA pill + đánh giá sao vàng',
-    aiLabelEn: 'centred Manrope hero + pill CTA + gold star reviews',
-  },
-  framer_bungee_hero: {
-    type: 'framer_bungee_hero',
-    label: 'Hero - Bungee',
-    accent: 'rgb(30,30,30)',
-    adminLabel: 'Hero - Bungee',
-    gradient: 'from-gray-100 to-white',
-    defaultName: 'Hero - Bungee',
-    aiLabelVi: 'block hero studio sáng: wordmark + marquee ảnh cuộn',
-    aiLabelEn: 'light studio hero with wordmark + scrolling image marquee',
   },
   framer_bungee_hero_v2: {
     type: 'framer_bungee_hero_v2',
@@ -2854,16 +2304,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'block intro nền trắng, tiêu đề serif italic lớn',
     aiLabelEn: 'white-background intro with large italic serif title',
   },
-  framer_paradigm_title: {
-    type: 'framer_paradigm_title',
-    label: 'Paradigm Title',
-    accent: '#111111',
-    adminLabel: 'Paradigm Title',
-    gradient: 'from-neutral-100 to-neutral-300',
-    defaultName: 'Paradigm Title',
-    aiLabelVi: 'block tiêu đề 2 dòng + ảnh full-width + overlay text',
-    aiLabelEn: 'two-line title + full-width image with overlay text',
-  },
   framer_explore_cta: {
     type: 'framer_explore_cta',
     label: 'Explore CTA',
@@ -2883,16 +2323,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Studio Manifesto',
     aiLabelVi: 'block nội dung dạng tuyên ngôn + chữ ký',
     aiLabelEn: 'manifesto-style content block with signature',
-  },
-  framer_large_quote: {
-    type: 'framer_large_quote',
-    label: 'Large Quote',
-    accent: '#1A1A1A',
-    adminLabel: 'Large Quote',
-    gradient: 'from-stone-200 to-stone-400',
-    defaultName: 'Large Quote',
-    aiLabelVi: 'block trích dẫn lớn italic serif + tác giả',
-    aiLabelEn: 'large italic serif pull quote with author attribution',
   },
   framer_stats_grid: {
     type: 'framer_stats_grid',
@@ -2934,26 +2364,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'lưới ảnh bất đối xứng 12 cột',
     aiLabelEn: 'asymmetric 12-column image stagger grid',
   },
-  framer_horizontal_scroll: {
-    type: 'framer_horizontal_scroll',
-    label: 'Horizontal Scroll',
-    accent: '#1a1a18',
-    adminLabel: 'Horizontal Scroll',
-    gradient: 'from-stone-400 to-neutral-500',
-    defaultName: 'Horizontal Scroll',
-    aiLabelVi: 'hàng card cuộn ngang 4:5',
-    aiLabelEn: 'horizontally scrollable card row with 4:5 images',
-  },
-  framer_contact_footer: {
-    type: 'framer_contact_footer',
-    label: 'Contact Footer',
-    accent: '#00940c',
-    adminLabel: 'Contact Footer',
-    gradient: 'from-neutral-900 to-neutral-700',
-    defaultName: 'Contact Footer',
-    aiLabelVi: 'footer liên hệ nền đen, greeting italic + email xanh lá',
-    aiLabelEn: 'dark footer with italic greeting and green email',
-  },
   framer_faq_minimal: {
     type: 'framer_faq_minimal',
     label: 'FAQ Minimal',
@@ -2963,16 +2373,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'FAQ Minimal',
     aiLabelVi: 'FAQ nền trắng 2 cột, accordion câu hỏi',
     aiLabelEn: 'minimal white FAQ with two-column accordion',
-  },
-  framer_finnegan_expertise: {
-    type: 'framer_finnegan_expertise',
-    label: 'Expertise',
-    accent: '#e85a2c',
-    adminLabel: 'Finnegan Expertise',
-    gradient: 'from-neutral-900 to-neutral-700',
-    defaultName: 'Expertise',
-    aiLabelVi: 'thẻ chuyên môn nền tối, ghost heading + ảnh + panel màu',
-    aiLabelEn: 'dark expertise cards with ghost heading and colored panels',
   },
   framer_darling_timeline: {
     type: 'framer_darling_timeline',
@@ -3017,18 +2417,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'lưới 12 cột dự án phân tán, hover overlay',
     aiLabelEn: '12-column scattered project grid with hover overlay',
   },
-  framer_avexa_bento: {
-    type: 'framer_avexa_bento',
-    label: 'Avexa Bento',
-    accent: 'rgb(255,98,0)',
-    adminLabel: 'Bento Grid (Avexa)',
-    gradient: 'from-orange-400 to-orange-600',
-    defaultName: 'Bento Grid',
-    aiLabelVi:
-      'lưới bento 6 card (chiến lược, chất lượng, 24/7, tailored, collaborative, creative)',
-    aiLabelEn:
-      '6-card bento grid (strategy, quality, 24/7, tailored, collaborative, creative)',
-  },
   framer_clarity_services: {
     type: 'framer_clarity_services',
     label: 'Clarity Services',
@@ -3041,28 +2429,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelEn:
       '3-col grid: 2 service cards left, portrait image center, 2 cards right',
   },
-  framer_velora_services: {
-    type: 'framer_velora_services',
-    label: 'Velora Services',
-    accent: '#0c0c0c',
-    adminLabel: 'Services List (Velora)',
-    gradient: 'from-neutral-700 to-neutral-900',
-    defaultName: 'Danh sách dịch vụ',
-    aiLabelVi: 'danh sách dịch vụ đánh số (01, 02, 03…) 3-col với ảnh',
-    aiLabelEn: 'numbered service list (01, 02, 03…) in 3-col rows with image',
-  },
-  framer_firma_featured: {
-    type: 'framer_firma_featured',
-    label: 'Firma Featured',
-    accent: '#0c0c0c',
-    adminLabel: 'Featured Project (Firma)',
-    gradient: 'from-stone-600 to-stone-900',
-    defaultName: 'Dự án nổi bật',
-    aiLabelVi:
-      'ảnh full-bleed trái, panel trắng đè từ phải với heading serif + CTA',
-    aiLabelEn:
-      'image full-bleed left, white panel overlapping from right with serif heading + CTA',
-  },
   framer_aestha_editorial: {
     type: 'framer_aestha_editorial',
     label: 'Aestha Editorial',
@@ -3074,18 +2440,6 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
       'trang editorial: cột brand sticky trái + stack 3 ảnh so le phải',
     aiLabelEn:
       'editorial layout: sticky brand column left + staggered image stack right',
-  },
-  framer_aestha_project_detail: {
-    type: 'framer_aestha_project_detail',
-    label: 'Aestha Project Detail',
-    accent: '#1A1A1A',
-    adminLabel: 'Project Detail (Aestha)',
-    gradient: 'from-neutral-600 to-neutral-800',
-    defaultName: 'Chi tiết dự án',
-    aiLabelVi:
-      'trang chi tiết dự án: tiêu đề sticky trái, body giữa, stack ảnh phải',
-    aiLabelEn:
-      'project detail: sticky title left, body center, image stack right',
   },
   framer_perform_about: {
     type: 'framer_perform_about',
@@ -3107,15 +2461,5 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'stack pricing card: ảnh trái + giá/tính năng/CTA phải mỗi card',
     aiLabelEn:
       'stacked pricing cards: image left + price/features/CTA right per card',
-  },
-  legacy_embed: {
-    type: 'legacy_embed',
-    label: 'Legacy block',
-    accent: '#475569',
-    adminLabel: 'Legacy block',
-    gradient: 'from-slate-500 to-slate-700',
-    defaultName: 'Legacy block',
-    aiLabelVi: 'block thiết kế sẵn (legacy/framer)',
-    aiLabelEn: 'pre-designed legacy/framer block',
   },
 };

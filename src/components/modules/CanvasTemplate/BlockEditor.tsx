@@ -854,17 +854,44 @@ export function BlockEditor({
 
   // ── Save (block-direct) ──────────────────────────────────────────────────
   // Block mode: ghi thẳng block hiện tại về saved block (blocks.update settings
-  // + type_code đồng bộ). KHÔNG đụng template/version.
+  // + name + type_code đồng bộ). KHÔNG đụng template/version.
+  //
+  // Các step (đúng thứ tự — đây là chỗ hay quên):
+  //   1. endInlineEdit() — chốt inline-edit đang mở để text/style vừa gõ được
+  //      commit vào canvas trước khi snapshot (tránh mất ký tự cuối khi bấm Lưu
+  //      lúc con trỏ còn trong ô).
+  //   2. Lấy block TƯƠI nhất từ canvas (block mode chỉ có đúng 1 block).
+  //   3. Chuẩn hoá serialize→parse y như lúc LOAD (BlockEditor + /dev/blocks?id=)
+  //      → `settings` lưu xuống là single editor Block canonical (đã migrate
+  //      v1→v2, wrap DeviceVariants). Nhờ vậy preview ?id (parseEditorBlock cast
+  //      thẳng settings) render khớp 100% với editor.
+  //   4. update name + type_code + settings, rồi reset cờ dirty.
   const handleSaveBlockDirect = async () => {
-    if (!savedBlockDirectId || !activeBlock) {
+    if (!savedBlockDirectId) {
       toast.error('Chưa có block để lưu.');
       return;
     }
+    // 1. Chốt inline-edit đang mở.
+    selection.endInlineEdit();
+
+    // 2. Block tươi nhất từ canvas.
+    const block = canvas.activeBlock;
+    if (!block) {
+      toast.error('Chưa có block để lưu.');
+      return;
+    }
+
+    // 3. Chuẩn hoá về single editor Block canonical (mirror load).
+    const wire = serializeCanvas([block], block.id);
+    const normalized = parseCanvas(wire)?.blocks[0] ?? block;
+
     setSavingBlock(true);
     try {
+      // 4. Persist.
       await rexerApi.blocks.update(savedBlockDirectId, {
-        type_code: activeBlock.blockType,
-        settings: activeBlock as unknown as Record<string, unknown>,
+        type_code: normalized.blockType,
+        name: normalized.name,
+        settings: normalized as unknown as Record<string, unknown>,
       });
       autosave.reset();
       toast.success('Đã lưu block');
