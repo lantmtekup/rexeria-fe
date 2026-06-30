@@ -192,6 +192,13 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'testimonials', label: 'Testimonials', icon: Grid3x3 },
   ],
+  housent_our_excellence: [
+    BACKGROUND_LAYER,
+    { key: 'badge', label: 'Badge', icon: Type },
+    { key: 'heading', label: 'Tiêu đề', icon: Type },
+    { key: 'body', label: 'Mô tả', icon: Pilcrow },
+    { key: 'items', label: 'Satellite items', icon: Grid3x3 },
+  ],
   framer_perform_pricing: [
     BACKGROUND_LAYER,
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },

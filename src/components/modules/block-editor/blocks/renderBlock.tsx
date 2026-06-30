@@ -34,6 +34,7 @@ import { FramerPerformAbout } from './FramerPerformAbout';
 import { FramerPerformHero } from './FramerPerformHero';
 import { FramerPerformPricing } from './FramerPerformPricing';
 import { FramerProjectsGrid } from './FramerProjectsGrid';
+import { HousentOurExcellence } from './HousentOurExcellence';
 import { FramerSignatureFeature } from './FramerSignatureFeature';
 import { FramerStatsGrid } from './FramerStatsGrid';
 import { FramerStudioManifesto } from './FramerStudioManifesto';
@@ -116,6 +117,7 @@ import type {
   FramerStudioManifestoContent,
   FramerTeamDirectoryContent,
   FramerVsCollinsProjectsContent,
+  HousentOurExcellenceContent,
   FramerYumeHeroContent,
   HeroOverlayContent,
   HeroSplitContent,
@@ -957,6 +959,17 @@ export function RenderBlock({
       return (
         <FramerPerformPricing
           content={content as FramerPerformPricingContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'housent_our_excellence':
+      return (
+        <HousentOurExcellence
+          content={content as HousentOurExcellenceContent}
           styles={styles}
           background={background}
           order={order}

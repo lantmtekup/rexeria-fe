@@ -73,6 +73,7 @@ import type {
   QuizContent,
   SplitScreenContent,
   StoriesContent,
+  HousentOurExcellenceContent,
   FramerFaqMinimalContent,
   FramerDarlingTimelineContent,
   FramerSignatureFeatureContent,
@@ -2079,6 +2080,35 @@ const FRAMER_PERFORM_ABOUT_EN: FramerPerformAboutContent = {
   ],
 };
 
+// ── Framer-native: Housent Our Excellence ────────────────────────────
+// Port từ recon-housent-our-excellence (housent.webflow.io). Badge + heading
+// + body ở giữa, 8 satellite icon-item xếp vòng tròn (desktop ≥ 896 px) hoặc
+// stack dọc (mobile/tablet). Icon là tên lucide-react.
+const HOUSENT_OUR_EXCELLENCE_ITEMS = [
+  { label: 'Verified Legality', icon: 'ShieldCheck' },
+  { label: 'Market Stability', icon: 'BarChart3' },
+  { label: 'Future Appreciation', icon: 'Sun' },
+  { label: 'Strategic Location', icon: 'MapPin' },
+  { label: 'Seamless Closing', icon: 'KeyRound' },
+  { label: 'Portfolio Diversification', icon: 'Briefcase' },
+  { label: 'Sustainable Growth', icon: 'Leaf' },
+  { label: 'High Yield Potential', icon: 'TrendingUp' },
+];
+
+const HOUSENT_OUR_EXCELLENCE_VI: HousentOurExcellenceContent = {
+  badge: 'Foundation of Trust',
+  heading: 'Our Excellence',
+  body: 'Chúng tôi kết hợp chuyên môn địa phương với phân tích cấp tổ chức để mang đến một môi trường đầu tư bất động sản an toàn và sinh lời cao.',
+  items: HOUSENT_OUR_EXCELLENCE_ITEMS,
+};
+
+const HOUSENT_OUR_EXCELLENCE_EN: HousentOurExcellenceContent = {
+  badge: 'Foundation of Trust',
+  heading: 'Our Excellence',
+  body: 'We combine localized expertise with institutional-grade analysis to provide a safe and high-yielding environment for your property investments.',
+  items: HOUSENT_OUR_EXCELLENCE_ITEMS,
+};
+
 // ── Framer-native: Perform Pricing ─────────────────────────────────────
 const FRAMER_PERFORM_PRICING_VI: FramerPerformPricingContent = {
   eyebrow: 'Pricing',
@@ -2234,6 +2264,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_darling_timeline: FRAMER_DARLING_TIMELINE_VI,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
+  housent_our_excellence: HOUSENT_OUR_EXCELLENCE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
   framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
@@ -2310,6 +2341,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_darling_timeline: FRAMER_DARLING_TIMELINE_EN,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
+  housent_our_excellence: HOUSENT_OUR_EXCELLENCE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
   framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
