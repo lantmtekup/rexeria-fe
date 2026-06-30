@@ -12,6 +12,7 @@ export default function ConfiguratorAd({
   brandName,
   headline,
   cta,
+  ctaFont = "'Cormorant Garamond', Georgia, serif",
 }) {
   const [selections, setSelections] = useState(() => {
     const init = {};
@@ -28,7 +29,7 @@ export default function ConfiguratorAd({
   const currentCarImage = selections['style']?.overlayImage || baseImage;
 
   return (
-    <AdWrapper brandName={brandName} headline={headline} cta={cta}>
+    <AdWrapper brandName={brandName} headline={headline} cta={cta} ctaFont={ctaFont}>
       <div className='cfg-ad'>
         <div className='cfg-preview'>
           <div

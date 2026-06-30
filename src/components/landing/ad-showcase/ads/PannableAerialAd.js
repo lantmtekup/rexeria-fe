@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useSwipe } from './shared/SwipeHandler';
 
 const DEFAULT_IMAGE =
@@ -103,10 +103,13 @@ export default function PannableAerialAd({
   hotspots = DEFAULT_HOTSPOTS,
   hint = DEFAULT_HINT,
   alt = 'Aerial view',
+  cta,
+  ctaFont = "'Outfit', system-ui, sans-serif",
 }) {
   const offsetRef = useRef(0);
   const detailRef = useRef(null);
   const maxOffsetRef = useRef(0);
+  const imgRef = useRef(null);
   const [offset, setOffset] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [detail, setDetail] = useState(null);
@@ -161,6 +164,15 @@ export default function PannableAerialAd({
     [initialX]
   );
 
+  // Catch cache-hit: khi ảnh đã có sẵn trong browser cache, onLoad có thể fire
+  // synchronous trước khi React attach listener → state loaded bị kẹt ở false.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) {
+      handleImageLoad({ target: img });
+    }
+  }, [imageUrl, handleImageLoad]);
+
   const openDetail = h => {
     detailRef.current = h;
     setDetail(h);
@@ -178,8 +190,8 @@ export default function PannableAerialAd({
         className='aerial-track'
         style={{ transform: `translateX(${offset}px)` }}
       >
-        {}
         <img
+          ref={imgRef}
           src={imageUrl}
           alt={alt}
           className='aerial-img'
@@ -245,6 +257,22 @@ export default function PannableAerialAd({
               <CtaArrow />
             </button>
           </div>
+        </div>
+      )}
+      {!detail && (
+        <div
+          className='ad-wrap-cta-bar'
+          style={ctaFont ? { fontFamily: ctaFont } : undefined}
+        >
+          <a
+            href={(typeof cta === 'object' && cta?.href) || '#'}
+            target='_blank'
+            rel='noopener noreferrer'
+            className='ad-wrap-cta'
+          >
+            {(typeof cta === 'string' ? cta : cta?.label) || 'Explore Now'}
+            <span className='ad-wrap-cta-arrow' />
+          </a>
         </div>
       )}
     </div>

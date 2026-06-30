@@ -7,6 +7,8 @@ export default function DisplacementGalleryAd({
   slides = [],
   brandName,
   headline,
+  cta,
+  ctaFont = "'Cormorant Garamond', serif",
 }) {
   const [current, setCurrent] = useState(0);
   const [next, setNext] = useState(null);
@@ -35,7 +37,7 @@ export default function DisplacementGalleryAd({
   const goToNext = () => goTo((activeDot + 1) % total);
 
   return (
-    <AdWrapper brandName={brandName}>
+    <AdWrapper brandName={brandName} cta={cta} ctaFont={ctaFont}>
       <div className='dg-ad' onClick={goToNext} style={{ cursor: 'pointer' }}>
         {/* Base layer — stays static, no transition (avoids opacity snap-back flash) */}
         <div

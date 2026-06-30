@@ -96,14 +96,13 @@ function MouseIcon() {
  */
 export default function PannableAd({
   imageUrl,
-  imageWidth = 3000,
-  imageHeight = 1000,
   initialX = 20,
   indicators = true,
   brandName,
   headline,
-  subtitle,
   hotspots = [],
+  cta,
+  ctaFont = "'Outfit', system-ui, sans-serif",
   children,
 }) {
   const offsetRef = useRef(0);
@@ -195,7 +194,7 @@ export default function PannableAd({
   const panProgress = max > 0 ? Math.abs(offset / max) * 100 : 0;
 
   return (
-    <AdWrapper brandName={brandName}>
+    <AdWrapper brandName={brandName} cta={cta} ctaFont={ctaFont}>
       <div className='pannable-ad' ref={ref}>
         {headline && <div className='pannable-ad-title'>{headline}</div>}
         <div
@@ -251,15 +250,6 @@ export default function PannableAd({
           )}
         </div>
 
-        {/* Drag indicators */}
-        {indicators && !hasInteracted && (
-          <div className='pannable-ad-indicators'>
-            <div className='pannable-ad-arrow pannable-ad-arrow--left'>‹</div>
-            <span>Drag to explore</span>
-            <div className='pannable-ad-arrow pannable-ad-arrow--right'>›</div>
-          </div>
-        )}
-
         {/* Bottom instruction bar */}
         <div className='pannable-ad-hintbar'>
           <div className='pannable-ad-hintbar-icons'>
@@ -270,7 +260,6 @@ export default function PannableAd({
             Hold and drag the mouse to experience it
           </div>
         </div>
-
         {/* Progress bar */}
         <div className='pannable-ad-progress'>
           <div

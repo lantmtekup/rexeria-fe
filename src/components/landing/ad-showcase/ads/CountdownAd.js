@@ -14,6 +14,7 @@ export default function CountdownAd({
   subtitle,
   brandName,
   cta,
+  ctaFont = "'Cormorant Garamond', serif",
   expiredMessage = 'Now Open!',
   style = 'flip',
 }) {
@@ -47,7 +48,7 @@ export default function CountdownAd({
     : [];
 
   return (
-    <AdWrapper brandName={brandName} cta={cta}>
+    <AdWrapper brandName={brandName} cta={cta} ctaFont={ctaFont}>
       <div className='cd-ad'>
         {/* Background */}
         {backgroundImage && (

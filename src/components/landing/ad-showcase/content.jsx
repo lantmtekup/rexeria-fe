@@ -43,6 +43,7 @@ export const GROUPS = [
             backgroundImage='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/hostpot/background.webp'
             headline={'Discover Every\nDetail'}
             hintIcon='https://d10zufojjcedud.cloudfront.net/ad-showcase/icons/hostpot/click_dot.svg'
+            ctaFont="'Cormorant Garamond', serif"
             hotspots={[
               {
                 id: 'grand-apt',
@@ -56,7 +57,7 @@ export const GROUPS = [
               {
                 id: 'pool-bar',
                 x: 4,
-                y: 54,
+                y: 53.5,
                 label: 'Pool Bar',
                 description:
                   'Enjoy delicious drinks & soothing music for a romantic evening.',
@@ -65,7 +66,7 @@ export const GROUPS = [
               {
                 id: 'infinity-pool',
                 x: 97,
-                y: 75,
+                y: 70,
                 label: 'Infinity Pool',
                 description: 'A stunning 40sqm swimming pool.',
                 direction: 'right',

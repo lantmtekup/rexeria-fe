@@ -20,10 +20,11 @@ export default function HotspotAd({
   brandName,
   headline,
   cta,
+  ctaFont = "'Cormorant Garamond', serif",
   hintIcon,
 }) {
   return (
-    <AdWrapper brandName={brandName} cta={cta} showCta={false} theme='light'>
+    <AdWrapper brandName={brandName} cta={cta} ctaFont={ctaFont}>
       <div className='hotspot-ad'>
         <div className='hostpot-ad-title'>{headline}</div>
         {/* Background */}

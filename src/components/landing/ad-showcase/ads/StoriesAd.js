@@ -12,6 +12,7 @@ export default function StoriesAd({
   duration = 5000,
   brandName,
   cta,
+  ctaFont = "'Cormorant Garamond', Georgia, serif",
 }) {
   const [current, setCurrent] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -62,7 +63,7 @@ export default function StoriesAd({
   const story = stories[current];
 
   return (
-    <AdWrapper brandName={brandName} showBrandBar={false} showCta={false}>
+    <AdWrapper brandName={brandName} showBrandBar={false} cta={cta} ctaFont={ctaFont}>
       <div className='stories-ad' onClick={handleTap}>
         <div
           className='stories-content'

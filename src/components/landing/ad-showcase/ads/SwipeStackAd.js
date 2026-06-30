@@ -12,7 +12,13 @@ const POSITION_CLASSES = [
   'swstack-card--back',
 ];
 
-export default function SwipeStackAd({ cards = [], brandName, headline, cta }) {
+export default function SwipeStackAd({
+  cards = [],
+  brandName,
+  headline,
+  cta,
+  ctaFont = "'Outfit', sans-serif",
+}) {
   const [frontIndex, setFrontIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -86,7 +92,7 @@ export default function SwipeStackAd({ cards = [], brandName, headline, cta }) {
   const headingText = headline || 'Swipe to Explore';
 
   return (
-    <AdWrapper brandName={brandName} cta={cta} theme='light'>
+    <AdWrapper brandName={brandName} cta={cta} ctaFont={ctaFont}>
       <div
         className='swstack-ad'
         onMouseMove={handleMove}
