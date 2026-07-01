@@ -1,5 +1,6 @@
 import { BLOCK_TYPE_META } from './types';
 import { getBlockDef } from './blocks/_registry/registry';
+import { framerFlatWhiteProcessDef } from './blocks/_registry/defs/framerFlatWhiteProcess';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
@@ -2224,6 +2225,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_VI,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_VI,
   framer_explore_cta: FRAMER_EXPLORE_CTA_VI,
+  framer_flat_white_process: framerFlatWhiteProcessDef.defaultContent.vi,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_VI,
   framer_stats_grid: FRAMER_STATS_GRID_VI,
   framer_projects_grid: FRAMER_PROJECTS_GRID_VI,
@@ -2300,6 +2302,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_EN,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_EN,
   framer_explore_cta: FRAMER_EXPLORE_CTA_EN,
+  framer_flat_white_process: framerFlatWhiteProcessDef.defaultContent.en,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_EN,
   framer_stats_grid: FRAMER_STATS_GRID_EN,
   framer_projects_grid: FRAMER_PROJECTS_GRID_EN,
