@@ -1649,21 +1649,21 @@
 
 .swstack-card--front {
   left: 20.9%;
-  top: 28.45%;
+  top: 24.45%;
   width: 58.4%;
   height: 35.67%;
   z-index: 3;
 }
 .swstack-card--mid {
   left: 34.1%;
-  top: 30.75%;
+  top: 26.75%;
   width: 50.68%;
   height: 31.07%;
   z-index: 2;
 }
 .swstack-card--back {
   left: 50%;
-  top: 33.89%;
+  top: 29.89%;
   width: 40.23%;
   height: 24.79%;
   z-index: 1;
@@ -1671,7 +1671,7 @@
 
 .swstack-info {
   position: absolute;
-  top: 68%;
+  top: 64.5%;
   left: 50%;
   transform: translateX(-50%);
   width: max-content;
@@ -1744,7 +1744,7 @@
 
 .swstack-hint {
   position: absolute;
-  top: 82%;
+  top: 76%;
   left: 50%;
   transform: translateX(-50%);
   width: 50px;

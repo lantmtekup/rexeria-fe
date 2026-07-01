@@ -48,12 +48,12 @@
   right: 0;
   z-index: 15;
   text-align: center;
-  padding: 0 24px;
+  padding: 0 8px;
   pointer-events: none;
 }
 .ad-wrap-headline {
   font-family: var(--serif, 'Cormorant Garamond', serif);
-  font-size: clamp(24px, 5vw, 40px);
+  font-size: 34px;
   font-weight: 400;
   line-height: 1.15;
   color: inherit;
@@ -84,11 +84,11 @@
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 20;
+  z-index: 200;
   display: flex;
   justify-content: center;
   padding: 0 24px 24px;
-  background: linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+  /* background: linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, transparent 100%); */
 }
 .ad-wrap-cta {
   display: inline-flex;
@@ -139,7 +139,7 @@
 
 .hostpot-ad-title {
   font-family: var(--writer, 'PP Writer', serif);
-  font-size: 36px;
+  font-size: 34px;
   color: #1a1a1a;
   font-weight: 400;
   line-height: 1.2;
@@ -192,14 +192,12 @@
   border-radius: 6px;
   padding: 4px 12px;
   width: fit-content;
-  max-width: 100%;
   flex-shrink: 0;
   overflow: hidden;
   white-space: nowrap;
   transition:
     background 1s ease,
     width 1.4s cubic-bezier(0.16, 1, 0.3, 1),
-    max-width 1.4s cubic-bezier(0.16, 1, 0.3, 1),
     padding 1.4s cubic-bezier(0.16, 1, 0.3, 1),
     grid-template-rows 1.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -208,7 +206,6 @@
 @starting-style {
   .hs-inline {
     width: 0;
-    max-width: 0;
     padding-left: 0;
     padding-right: 0;
   }
@@ -216,15 +213,14 @@
 
 .hs-point--open .hs-inline {
   background: #bc8169;
-  width: var(--hs-open-w, 200px);
-  max-width: var(--hs-open-w, 200px);
+  width: var(--hs-open-w, fit-content);
   padding: 4px 12px;
   grid-template-rows: auto 1fr;
   white-space: normal;
   transition:
     background 1s ease,
     width 1.4s cubic-bezier(0.16, 1, 0.3, 1),
-    max-width 1.4s cubic-bezier(0.16, 1, 0.3, 1),
+    padding 1.4s cubic-bezier(0.16, 1, 0.3, 1),
     grid-template-rows 1.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -239,8 +235,9 @@
 
 .hs-inline-desc {
   font-family: var(--writer, 'PP Writer', serif);
-  width: 0;
+  width: 100%;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
   opacity: 0;
   font-size: 14px;
@@ -248,16 +245,12 @@
   color: #fff;
   line-height: 22px;
   white-space: normal;
-  transition:
-    width 1.4s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 0.6s ease-in-out;
+  contain: inline-size; /* giống PannableAd: cô lập desc, không kéo card rộng khi đóng */
+  transition: opacity 0.6s ease-in-out;
 }
 .hs-point--open .hs-inline-desc {
-  width: calc(var(--hs-open-w, 200px) - 24px);
   opacity: 1;
-  transition:
-    width 1.4s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 0.6s ease;
+  transition: opacity 0.6s ease;
 }
 
 .hs-point--open .hs-core {
@@ -529,7 +522,7 @@
 
 .hotspot-ad-hint {
   position: absolute;
-  bottom: 30px;
+  bottom: 80px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
@@ -583,7 +576,7 @@
   z-index: 10;
   text-align: center;
   font-family: var(--sf);
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 400;
   color: white;
   pointer-events: none;
@@ -615,14 +608,13 @@
 }
 
 .pan-item-card {
-  display: grid; /* grid → track = title max-content; row 2 = desc, collapse 0fr → 1fr */
-  grid-template-rows: auto 0fr; /* row 2 collapsed khi đóng */
+  display: grid;
+  grid-template-rows: auto 0fr; /* row 2 collapse khi đóng */
   background: #00000066;
   border: 1px solid #ffffffcc;
   border-radius: 6px;
   padding: 4px 12px;
-  width: fit-content;
-  max-width: 260px;
+  width: fit-content; /* = title width (desc bị contain, không contribute) */
   min-width: 0;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -646,26 +638,44 @@
   white-space: nowrap;
 }
 
+/* contain: inline-size → desc cô lập về inline-size với parent.
+   Kết quả: width:100% vẫn conform theo title, nhưng KHÔNG contribute
+   vào intrinsic max-content của card → card = title width only. */
 .pan-item-desc {
+  display: none;
   font-family: var(--sf);
   font-size: 14px;
   font-weight: 400;
   color: #ffffff;
   line-height: 22px;
   margin-top: 3px;
-  width: 100%; /* conform theo grid track (= title width) */
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
+  contain: inline-size;
+  word-break: break-word;
+  overflow-wrap: anywhere;
   overflow: hidden;
-  opacity: 0;
-  transition: opacity 0.3s ease;
 }
 
 .pan-item-card--open {
-  grid-template-rows: auto 1fr; /* row 2 mở ra theo height: auto của nội dung */
+  grid-template-rows: auto 1fr; /* mở row 2 cho desc */
 }
 
 .pan-item-card--open .pan-item-desc {
-  opacity: 1;
+  display: block;
+  animation: panDescFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes panDescFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .pannable-ad-track {
@@ -690,7 +700,7 @@
 /* Bottom instruction bar */
 .pannable-ad-hintbar {
   position: absolute;
-  bottom: 20px;
+  bottom: 80px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
@@ -826,7 +836,7 @@
   width: 100%;
   text-align: center;
   font-family: var(--brown, 'BrownStd', Georgia, serif);
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 400;
   color: #fff;
   z-index: 5;
@@ -959,7 +969,7 @@
 
 .gallery-ad-dots {
   position: absolute;
-  bottom: 45px;
+  bottom: 90px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
@@ -1292,7 +1302,7 @@
   display: flex; align-items: center; justify-content: center; */
   position: relative;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2406,14 +2416,14 @@
 }
 .dg-headline h2 {
   font-family: var(--serif, serif);
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 400;
   color: #fff;
   margin: 0;
 }
 .dg-caption {
   position: absolute;
-  bottom: 73px;
+  bottom: 120px;
   left: 50%;
   right: 0;
   text-align: center;
@@ -3313,7 +3323,7 @@
 .cfg-preview-base {
   position: absolute;
   inset: 0;
-  top: 15%;
+  top: 30%;
   background-size: 135%;
   background-position: center left;
   background-repeat: no-repeat;
@@ -3327,13 +3337,13 @@
   mix-blend-mode: overlay;
 }
 .cfg-options {
-  padding: 20px 20px 40px 20px;
+  padding: 20px 20px 90px 20px;
   background: #000000;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
+  gap: 24px;
 }
 .cfg-option-group {
   width: 100%;
@@ -3683,7 +3693,7 @@
   right: 0;
   text-align: center;
   font-family: var(--serif, 'Cormorant Garamond', serif);
-  font-size: 36 px;
+  font-size: 34px;
   font-weight: 400;
   color: #ffffff;
   line-height: 1.15;
@@ -3835,7 +3845,7 @@
   animation: quizFadeIn 0.2s ease;
 }
 .stories-text {
-  padding: 24px 16px 16px;
+  padding: 0 16px 90px 16px;
   background: linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
 }
 .stories-text h3 {
@@ -4133,7 +4143,7 @@
 
 .aerial-hint {
   position: absolute;
-  bottom: 30px;
+  bottom: 80px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -4198,7 +4208,7 @@
 }
 .aerial-detail-label {
   color: #fff;
-  font-family: var(--sans, 'Outfit', 'SFU Futura', sans-serif);
+  font-family: var(--serif, 'Cormorant Garamond', serif);
   font-size: 12px;
   font-weight: 400;
   letter-spacing: 0.1em;

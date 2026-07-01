@@ -19,12 +19,13 @@ import TapToPlayAd from './ads/TapToPlayAd';
 import CountdownAd from './ads/CountdownAd';
 import ConfiguratorAd from './ads/ConfiguratorAd';
 import StoriesAd from './ads/StoriesAd';
+import { ROUTER } from '@/settings/constants/router';
 
 const U = (id, w = 1200) =>
   `https://images.unsplash.com/photo-${id}?w=${w}&q=70&fm=webp&auto=format`;
 const IMG = { skyline: U('1486406146926-c627a92ad1ab', 1600) };
 const BRAND = { brandName: '', showBrandBar: false };
-const CTA = { label: 'Explore Now', href: '#' };
+const CTA = { label: 'Explore Now', href: ROUTER.LANDING.HOME };
 
 /** @typedef {{id:string,name:string,desc:string,by:'Nguyên'|'Thảo',render:()=>JSX.Element}} AdEntry */
 
@@ -43,6 +44,7 @@ export const GROUPS = [
             backgroundImage='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/hostpot/background.webp'
             headline={'Discover Every\nDetail'}
             hintIcon='https://d10zufojjcedud.cloudfront.net/ad-showcase/icons/hostpot/click_dot.svg'
+            ctaFont="'Cormorant Garamond', serif"
             hotspots={[
               {
                 id: 'grand-apt',
@@ -56,7 +58,7 @@ export const GROUPS = [
               {
                 id: 'pool-bar',
                 x: 4,
-                y: 54,
+                y: 53.5,
                 label: 'Pool Bar',
                 description:
                   'Enjoy delicious drinks & soothing music for a romantic evening.',
@@ -65,7 +67,7 @@ export const GROUPS = [
               {
                 id: 'infinity-pool',
                 x: 97,
-                y: 75,
+                y: 70,
                 label: 'Infinity Pool',
                 description: 'A stunning 40sqm swimming pool.',
                 direction: 'right',

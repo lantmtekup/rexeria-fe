@@ -8,11 +8,19 @@ export default function PannableShoppableAd({
   ctas = [],
   brandName,
   headline,
+  cta,
+  ctaFont = "'Outfit', system-ui, sans-serif",
 }) {
   const [activeId, setActiveId] = useState(null);
 
   return (
-    <PannableAd imageUrl={imageUrl} brandName={brandName} headline={headline}>
+    <PannableAd
+      imageUrl={imageUrl}
+      brandName={brandName}
+      headline={headline}
+      cta={cta}
+      ctaFont={ctaFont}
+    >
       {ctas.map(c => (
         <a
           key={c.id}

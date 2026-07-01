@@ -16,6 +16,7 @@ export default function PannableHotspotAd({
   headline,
   subtitle,
   cta,
+  ctaFont = "'Outfit', system-ui, sans-serif",
 }) {
   return (
     <PannableAd
@@ -26,6 +27,7 @@ export default function PannableHotspotAd({
       headline={headline}
       subtitle={subtitle}
       cta={cta}
+      ctaFont={ctaFont}
     >
       <PanHotspotSystem hotspots={hotspots} />
     </PannableAd>

@@ -120,13 +120,9 @@ function CategoryNav({
   onJump: (id: string) => void;
 }) {
   const pill = (isOn: boolean) =>
-    `inline-flex shrink-0 items-center gap-1.5 rounded-pill border px-4 py-1.5 text-sm font-medium no-underline transition-colors ${
-      isOn
-        ? 'border-transparent bg-[#b8965a] text-white'
-        : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-neutral-900'
-    }`;
+    `group inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-pill border px-4 py-1.5 text-sm font-medium no-underline ${isOn ? 'border-transparent bg-[#b8965a] text-white' : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-neutral-900'}`;
   const count = (isOn: boolean) =>
-    `text-xs ${isOn ? 'text-white/70' : 'text-neutral-400'}`;
+    `text-xs transition-colors duration-75 ${isOn ? 'text-white' : 'text-neutral-400 group-hover:text-neutral-900'}`;
 
   return (
     <nav className='sticky top-16 z-40 border-b border-neutral-200/70 bg-white/85 backdrop-blur'>
@@ -223,7 +219,7 @@ export function StudioAdShowcase() {
   }, [isFull]);
 
   return (
-    <div className='ad-showcase-root bg-white pt-20 sm:pt-[100px]'>
+    <div className='ad-showcase-root bg-white'>
       <span id='adsc-top' className='block' />
 
       {isFull ? (

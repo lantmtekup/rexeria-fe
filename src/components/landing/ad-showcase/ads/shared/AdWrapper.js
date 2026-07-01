@@ -1,6 +1,9 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
+import Link from 'next/link';
+
+import { ROUTER } from '@/settings/constants/router';
 
 /**
  * Common wrapper for all ad formats.
@@ -11,9 +14,10 @@ import { useRef, useEffect, useState } from 'react';
  * @param {string}  props.brandLogo     - Logo URL (optional)
  * @param {string}  props.headline      - Ad headline
  * @param {string}  props.subtitle      - Subtitle text
- * @param {Object}  props.cta           - { label, href }
+ * @param {string | {label?: string, href?: string}} [props.cta]
+ * @param {string}  [props.ctaFont]     - CSS font-family cho nút CTA
  * @param {boolean} props.showBrandBar  - Show top brand bar (default true)
- * @param {boolean} props.showCta       - Show bottom CTA (default true)
+ * @param {boolean} props.showCta       - Show bottom CTA bar (default true)
  * @param {string}  props.theme         - 'dark' | 'light' (default 'dark')
  * @param {React.ReactNode} props.children
  */
@@ -22,7 +26,8 @@ export default function AdWrapper({
   brandLogo,
   headline,
   subtitle,
-  cta,
+  cta = { label: 'Explore Now', href: ROUTER.LANDING.HOME },
+  ctaFont,
   showBrandBar = true,
   showCta = true,
   theme = 'dark',
@@ -31,7 +36,6 @@ export default function AdWrapper({
   const wrapperRef = useRef(null);
   const [inView, setInView] = useState(false);
 
-  // Track viewport visibility
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
@@ -42,6 +46,11 @@ export default function AdWrapper({
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
+
+  const ctaLabel =
+    typeof cta === 'string' ? cta : (cta?.label ?? 'Explore Now');
+  const ctaHref =
+    typeof cta === 'object' && cta?.href ? cta.href : ROUTER.LANDING.HOME;
 
   return (
     <div
@@ -69,18 +78,16 @@ export default function AdWrapper({
       {/* Main content */}
       <div className='ad-wrap-content'>{children}</div>
 
-      {/* CTA bar */}
-      {showCta && cta && (
+      {showCta && (
         <div className='ad-wrap-cta-bar'>
-          <a
-            href={cta.href}
+          <Link
+            href={ctaHref}
             className='ad-wrap-cta'
-            target='_blank'
-            rel='noopener noreferrer'
+            style={ctaFont ? { fontFamily: ctaFont } : undefined}
           >
-            {cta.label}
+            {ctaLabel}
             <span className='ad-wrap-cta-arrow' />
-          </a>
+          </Link>
         </div>
       )}
     </div>

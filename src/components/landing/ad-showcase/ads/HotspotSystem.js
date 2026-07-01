@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from '@/lib/cn';
 import { useState, useRef, useEffect } from 'react';
 
 export default function HotspotSystem({ hotspots = [] }) {
@@ -61,7 +62,11 @@ export default function HotspotSystem({ hotspots = [] }) {
             ref={el => {
               pointRefs.current[h.id] = el;
             }}
-            className={`hs-point${isRight ? 'hs-point--right' : ''}${isOpen ? 'hs-point--open' : ''}`}
+            className={cn(
+              'hs-point',
+              isRight && 'hs-point--right',
+              isOpen && 'hs-point--open'
+            )}
             style={
               isRight
                 ? { right: `${100 - h.x}%`, top: `${h.y}%` }

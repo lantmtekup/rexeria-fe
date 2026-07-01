@@ -1,12 +1,19 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { cn } from '@/lib/cn';
 import AdWrapper from './shared/AdWrapper';
 
 const CARD_STEP = 270;
 const SNAP_THRESHOLD = 60;
 
-export default function Carousel3DAd({ items = [], brandName, headline }) {
+export default function Carousel3DAd({
+  items = [],
+  brandName,
+  headline,
+  cta,
+  ctaFont = "'Cormorant Garamond', Georgia, serif",
+}) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
   const isDragging = useRef(false);
@@ -37,7 +44,7 @@ export default function Carousel3DAd({ items = [], brandName, headline }) {
   };
 
   return (
-    <AdWrapper brandName={brandName} showCta={false}>
+    <AdWrapper brandName={brandName} cta={cta} ctaFont={ctaFont}>
       <div
         className='c3d-ad'
         onTouchStart={e => onStart(e.touches[0].clientX)}
@@ -61,7 +68,7 @@ export default function Carousel3DAd({ items = [], brandName, headline }) {
             return (
               <div
                 key={i}
-                className={`c3d-card${isActive ? 'c3d-card--active' : ''}`}
+                className={cn('c3d-card', isActive && 'c3d-card--active')}
                 style={{
                   transform: `translateX(calc(-50% + ${x}px)) translateY(-50%) scale(${isActive ? 1 : 0.75})`,
                   transition:

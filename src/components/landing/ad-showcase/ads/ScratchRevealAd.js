@@ -9,6 +9,8 @@ export default function ScratchRevealAd({
   couponCode = 'amz005',
   brushSize = 44,
   revealThreshold = 40,
+  cta,
+  ctaFont = "'Cormorant Garamond', Georgia, serif",
 }) {
   const canvasRef = useRef(null);
   const adRef = useRef(null);
@@ -21,9 +23,16 @@ export default function ScratchRevealAd({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    canvas.width = canvas.offsetWidth * 2;
-    canvas.height = canvas.offsetHeight * 2;
-    document.fonts.ready.then(() => drawCover(canvas));
+    // Defer to next frame so the parent (.isp-ad-fixed → cascade .scratch-ad)
+    // has finished its layout pass. Without this, offsetWidth is 0 at mount
+    // because InterscrollerPreview's resizeAd useEffect (parent) hasn't run
+    // yet — child useEffects fire bottom-up.
+    const raf = requestAnimationFrame(() => {
+      canvas.width = canvas.offsetWidth * 2;
+      canvas.height = canvas.offsetHeight * 2;
+      document.fonts.ready.then(() => drawCover(canvas));
+    });
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   const scratch = useCallback(
@@ -124,7 +133,7 @@ export default function ScratchRevealAd({
   };
 
   return (
-    <AdWrapper showBrandBar={false} showCta={false} theme='dark'>
+    <AdWrapper showBrandBar={false} cta={cta} ctaFont={ctaFont} theme='dark'>
       <div className='scratch-ad' ref={adRef}>
         {/* Photo background — visible through canvas scratch holes */}
         <div

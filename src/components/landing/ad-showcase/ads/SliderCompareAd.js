@@ -13,6 +13,8 @@ export default function SliderCompareAd({
   brandName,
   headline,
   subtitle,
+  cta,
+  ctaFont = "'Cormorant Garamond', serif",
 }) {
   const containerRef = useRef(null);
   const [position, setPosition] = useState(initialPosition);
@@ -65,7 +67,12 @@ export default function SliderCompareAd({
   );
 
   return (
-    <AdWrapper brandName={brandName} subtitle={subtitle}>
+    <AdWrapper
+      brandName={brandName}
+      subtitle={subtitle}
+      cta={cta}
+      ctaFont={ctaFont}
+    >
       <div
         className='slider-ad'
         ref={containerRef}

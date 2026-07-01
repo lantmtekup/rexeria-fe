@@ -32,9 +32,9 @@
 .adsc-phone {
   position: relative;
   width: 100%;
-  max-width: 300px;
+  max-width: 360px;
   margin: 0 auto;
-  aspect-ratio: 300 / 620;
+  aspect-ratio: 360 / 744;
   border-radius: 38px;
   padding: 9px;
   background: linear-gradient(150deg, #1c1c20, #050506);

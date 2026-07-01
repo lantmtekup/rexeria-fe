@@ -15,12 +15,14 @@ export default function TapToPlayAd({
   headline,
   subtitle,
   endCard,
+  cta,
+  ctaFont = "'Cormorant Garamond', Georgia, serif",
 }) {
   const [started, setStarted] = useState(false);
   const [ended, setEnded] = useState(false);
 
   return (
-    <AdWrapper brandName={brandName}>
+    <AdWrapper brandName={brandName} cta={cta} ctaFont={ctaFont}>
       <div className='ttp-ad'>
         {!started ? (
           <>

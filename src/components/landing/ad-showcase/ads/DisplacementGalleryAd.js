@@ -7,6 +7,8 @@ export default function DisplacementGalleryAd({
   slides = [],
   brandName,
   headline,
+  cta,
+  ctaFont = "'Cormorant Garamond', serif",
 }) {
   const [current, setCurrent] = useState(0);
   const [next, setNext] = useState(null);
@@ -35,7 +37,7 @@ export default function DisplacementGalleryAd({
   const goToNext = () => goTo((activeDot + 1) % total);
 
   return (
-    <AdWrapper brandName={brandName}>
+    <AdWrapper brandName={brandName} cta={cta} ctaFont={ctaFont}>
       <div className='dg-ad' onClick={goToNext} style={{ cursor: 'pointer' }}>
         {/* Base layer — stays static, no transition (avoids opacity snap-back flash) */}
         <div
@@ -46,7 +48,7 @@ export default function DisplacementGalleryAd({
         {/* Incoming slide fades in on top; when done, base swaps image seamlessly */}
         {next !== null && (
           <div
-            key={next}
+            key={`entering-${next}`}
             className='dg-slide dg-slide--entering'
             style={{ backgroundImage: `url(${slides[next]?.imageUrl})` }}
           />
@@ -61,7 +63,7 @@ export default function DisplacementGalleryAd({
 
         {/* Caption — synced to activeDot so it updates as new slide fades in */}
         {slides[activeDot]?.title && (
-          <div className='dg-caption' key={activeDot}>
+          <div className='dg-caption' key={`caption-${activeDot}`}>
             <span>{slides[activeDot].title}</span>
             {slides[activeDot].subtitle && <p>{slides[activeDot].subtitle}</p>}
           </div>
