@@ -10,7 +10,7 @@ export default function ScratchRevealAd({
   brushSize = 44,
   revealThreshold = 40,
   cta,
-  ctaFont = "'Outfit', system-ui, sans-serif",
+  ctaFont = "'Cormorant Garamond', Georgia, serif",
 }) {
   const canvasRef = useRef(null);
   const adRef = useRef(null);

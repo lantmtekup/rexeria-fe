@@ -1,6 +1,9 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
+import Link from 'next/link';
+
+import { ROUTER } from '@/settings/constants/router';
 
 /**
  * Common wrapper for all ad formats.
@@ -23,7 +26,7 @@ export default function AdWrapper({
   brandLogo,
   headline,
   subtitle,
-  cta = { label: 'Explore Now', href: '#' },
+  cta = { label: 'Explore Now', href: ROUTER.LANDING.HOME },
   ctaFont,
   showBrandBar = true,
   showCta = true,
@@ -46,7 +49,8 @@ export default function AdWrapper({
 
   const ctaLabel =
     typeof cta === 'string' ? cta : (cta?.label ?? 'Explore Now');
-  const ctaHref = typeof cta === 'object' && cta?.href ? cta.href : '#';
+  const ctaHref =
+    typeof cta === 'object' && cta?.href ? cta.href : ROUTER.LANDING.HOME;
 
   return (
     <div
@@ -76,16 +80,14 @@ export default function AdWrapper({
 
       {showCta && (
         <div className='ad-wrap-cta-bar'>
-          <a
+          <Link
             href={ctaHref}
             className='ad-wrap-cta'
             style={ctaFont ? { fontFamily: ctaFont } : undefined}
-            target='_blank'
-            rel='noopener noreferrer'
           >
             {ctaLabel}
             <span className='ad-wrap-cta-arrow' />
-          </a>
+          </Link>
         </div>
       )}
     </div>

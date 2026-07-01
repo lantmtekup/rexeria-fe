@@ -17,37 +17,69 @@
 .isp-bar {
   display: flex;
   align-items: center;
-  padding: 6px 14px;
-  background: #f5f5f5;
-  border-bottom: 1px solid #eaeaea;
+  padding: 10px 22px;
+  background: linear-gradient(180deg, #f7f7f7 0%, #ebebeb 100%);
+  border-bottom: 1px solid #dcdcdc;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 1px 2px rgba(0, 0, 0, 0.04);
   flex-shrink: 0;
-  min-height: 36px;
+  min-height: 38px;
   gap: 10px;
   z-index: 100;
 }
 .isp-bar-x {
-  font-size: 11px;
-  color: #aaa;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  flex-shrink: 0;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+.isp-bar-x:hover {
+  color: #374151;
 }
 .isp-bar-center {
   flex: 1;
+  min-width: 0;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  line-height: 1.15;
 }
 .isp-bar-title {
-  display: block;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
-  color: #333;
+  color: #1f2937;
+  letter-spacing: -0.01em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .isp-bar-url {
-  display: block;
-  font-size: 8px;
-  color: #aaa;
+  font-size: 10px;
+  color: #9ca3af;
+  letter-spacing: 0.01em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .isp-bar-menu {
-  font-size: 12px;
-  color: #aaa;
-  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  flex-shrink: 0;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+.isp-bar-menu:hover {
+  color: #374151;
 }
 
 /* Scroll container */
@@ -87,14 +119,14 @@
   height: 100vh;
   height: 100dvh;
   z-index: 1;
-  clip-path: inset(0);
-  -webkit-clip-path: inset(0);
+  /* clip-path: inset(0); */
+  /* -webkit-clip-path: inset(0); */
 }
 
 .isp-ad-fixed {
   position: fixed;
-  /* top/left/width/height set by JS to match phone container */
   overflow: hidden;
+  border-radius: var(--isp-radius, 47px);
 }
 
 .isp-ad-content {
@@ -172,25 +204,112 @@
 .isp-expand {
   position: absolute;
   right: 0;
-  top: 30%;
+  top: 24%;
   transform: translateY(-50%);
   z-index: 30;
   background: #1a1a18;
   color: #fff;
-  padding: 10px 5px;
-  border-radius: 5px 0 0 5px;
+  padding: 14px 8px;
+  border: none; /* button reset */
+  border-radius: 8px 0 0 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 11px;
+  font-family: var(--writer, 'PP Writer', serif);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
+  box-shadow:
+    -2px 2px 8px rgba(0, 0, 0, 0.18),
+    inset 1px 0 0 rgba(255, 255, 255, 0.06);
+  transition:
+    background 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    padding 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.isp-expand:hover {
+  background: #2a2a28;
+  box-shadow:
+    -3px 3px 12px rgba(0, 0, 0, 0.28),
+    inset 1px 0 0 rgba(255, 255, 255, 0.1);
+}
+.isp-expand:active {
+  transform: translateY(-50%) scale(0.95);
+}
+.isp-expand:focus-visible {
+  outline: 2px solid #b8965a;
+  outline-offset: -3px;
 }
 .isp-expand-label {
   writing-mode: vertical-lr;
-  font-size: 7px;
-  letter-spacing: 2px;
+  font-size: 8px;
   font-weight: 700;
+  transition: opacity 0.4s ease;
+}
+.isp-expand-icon {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.isp--expanded .isp-expand {
+  background: #b8965a;
+  color: #1a1a18;
+  box-shadow:
+    -2px 2px 12px rgba(184, 150, 90, 0.35),
+    inset 1px 0 0 rgba(255, 255, 255, 0.12);
+}
+.isp--expanded .isp-expand:hover {
+  background: #c4a368;
+  box-shadow:
+    -3px 3px 14px rgba(184, 150, 90, 0.45),
+    inset 1px 0 0 rgba(255, 255, 255, 0.15);
+}
+.isp--expanded .isp-expand:focus-visible {
+  outline-color: #1a1a18;
+}
+
+.isp--expanded .isp-bar {
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+.isp-ad-container--expanded {
+  flex: 1;
+  position: relative;
+  height: auto;
+  overflow: hidden;
+  z-index: 1;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  opacity: 0;
+  /* Pure opacity fade-in, mượt nhất có thể:
+     - 1.1s: đủ chậm để eye theo kịp, không bị "snappy"
+     - cubic-bezier(0.4, 0, 0.2, 1): Material "standard easing" — smooth đều 2 đầu
+     - Pure opacity 0→1, KHÔNG translateY/scale → chỉ fade-in đơn thuần */
+  animation: sceneFadeIn 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes sceneFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.isp-bar {
+  transition:
+    opacity 1s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Scroll hint */
@@ -208,6 +327,7 @@
   font-weight: 500;
   white-space: nowrap;
   animation: ispFade 2s ease infinite;
+  transition: opacity 0.4s ease-out;
 }
 @keyframes ispFade {
   0%,

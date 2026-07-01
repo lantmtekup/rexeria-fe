@@ -67,7 +67,12 @@ export default function SliderCompareAd({
   );
 
   return (
-    <AdWrapper brandName={brandName} subtitle={subtitle} cta={cta} ctaFont={ctaFont}>
+    <AdWrapper
+      brandName={brandName}
+      subtitle={subtitle}
+      cta={cta}
+      ctaFont={ctaFont}
+    >
       <div
         className='slider-ad'
         ref={containerRef}

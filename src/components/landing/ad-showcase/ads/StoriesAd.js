@@ -63,7 +63,12 @@ export default function StoriesAd({
   const story = stories[current];
 
   return (
-    <AdWrapper brandName={brandName} showBrandBar={false} cta={cta} ctaFont={ctaFont}>
+    <AdWrapper
+      brandName={brandName}
+      showBrandBar={false}
+      cta={cta}
+      ctaFont={ctaFont}
+    >
       <div className='stories-ad' onClick={handleTap}>
         <div
           className='stories-content'

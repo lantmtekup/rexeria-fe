@@ -12,7 +12,7 @@ export default function Carousel3DAd({
   brandName,
   headline,
   cta,
-  ctaFont = "'Outfit', sans-serif",
+  ctaFont = "'Cormorant Garamond', Georgia, serif",
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [dragX, setDragX] = useState(0);

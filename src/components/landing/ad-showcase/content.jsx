@@ -19,12 +19,13 @@ import TapToPlayAd from './ads/TapToPlayAd';
 import CountdownAd from './ads/CountdownAd';
 import ConfiguratorAd from './ads/ConfiguratorAd';
 import StoriesAd from './ads/StoriesAd';
+import { ROUTER } from '@/settings/constants/router';
 
 const U = (id, w = 1200) =>
   `https://images.unsplash.com/photo-${id}?w=${w}&q=70&fm=webp&auto=format`;
 const IMG = { skyline: U('1486406146926-c627a92ad1ab', 1600) };
 const BRAND = { brandName: '', showBrandBar: false };
-const CTA = { label: 'Explore Now', href: '#' };
+const CTA = { label: 'Explore Now', href: ROUTER.LANDING.HOME };
 
 /** @typedef {{id:string,name:string,desc:string,by:'Nguyên'|'Thảo',render:()=>JSX.Element}} AdEntry */
 

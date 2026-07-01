@@ -48,7 +48,7 @@ export default function DisplacementGalleryAd({
         {/* Incoming slide fades in on top; when done, base swaps image seamlessly */}
         {next !== null && (
           <div
-            key={next}
+            key={`entering-${next}`}
             className='dg-slide dg-slide--entering'
             style={{ backgroundImage: `url(${slides[next]?.imageUrl})` }}
           />
@@ -63,7 +63,7 @@ export default function DisplacementGalleryAd({
 
         {/* Caption — synced to activeDot so it updates as new slide fades in */}
         {slides[activeDot]?.title && (
-          <div className='dg-caption' key={activeDot}>
+          <div className='dg-caption' key={`caption-${activeDot}`}>
             <span>{slides[activeDot].title}</span>
             {slides[activeDot].subtitle && <p>{slides[activeDot].subtitle}</p>}
           </div>

@@ -29,7 +29,12 @@ export default function ConfiguratorAd({
   const currentCarImage = selections['style']?.overlayImage || baseImage;
 
   return (
-    <AdWrapper brandName={brandName} headline={headline} cta={cta} ctaFont={ctaFont}>
+    <AdWrapper
+      brandName={brandName}
+      headline={headline}
+      cta={cta}
+      ctaFont={ctaFont}
+    >
       <div className='cfg-ad'>
         <div className='cfg-preview'>
           <div

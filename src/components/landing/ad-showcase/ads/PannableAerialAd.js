@@ -173,6 +173,31 @@ export default function PannableAerialAd({
     }
   }, [imageUrl, handleImageLoad]);
 
+  // FIX (port từ PannableAd.js): khi bọc trong InterscrollerPreview, khung
+  // `.isp-ad-fixed` (position:fixed) được JS set width/height SAU mount bằng
+  // resizeAd(). Lúc onLoad container.clientWidth có thể = 0 → maxPan=0 →
+  // clampOffset luôn trả 0 → kéo ngang bị khoá cứng. ResizeObserver theo dõi
+  // container, recompute maxPan + re-clamp offset khi size đổi (giữ vị trí
+  // tương đối, không reset về initialX).
+  useEffect(() => {
+    const img = imgRef.current;
+    const container = img?.parentElement?.parentElement;
+    if (!img || !container || typeof ResizeObserver === 'undefined') return;
+    const recompute = () => {
+      const maxPan = Math.max(0, img.offsetWidth - container.clientWidth);
+      maxOffsetRef.current = maxPan;
+      const clamped = Math.max(-maxPan, Math.min(0, offsetRef.current));
+      if (clamped !== offsetRef.current) {
+        offsetRef.current = clamped;
+        setOffset(clamped);
+      }
+    };
+    const ro = new ResizeObserver(recompute);
+    ro.observe(container);
+    recompute();
+    return () => ro.disconnect();
+  }, []);
+
   const openDetail = h => {
     detailRef.current = h;
     setDetail(h);

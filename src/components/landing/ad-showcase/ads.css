@@ -139,7 +139,7 @@
 
 .hostpot-ad-title {
   font-family: var(--writer, 'PP Writer', serif);
-  font-size: 36px;
+  font-size: 34px;
   color: #1a1a1a;
   font-weight: 400;
   line-height: 1.2;
@@ -576,7 +576,7 @@
   z-index: 10;
   text-align: center;
   font-family: var(--sf);
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 400;
   color: white;
   pointer-events: none;
@@ -836,7 +836,7 @@
   width: 100%;
   text-align: center;
   font-family: var(--brown, 'BrownStd', Georgia, serif);
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 400;
   color: #fff;
   z-index: 5;
@@ -969,7 +969,7 @@
 
 .gallery-ad-dots {
   position: absolute;
-  bottom: 45px;
+  bottom: 90px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
@@ -2416,14 +2416,14 @@
 }
 .dg-headline h2 {
   font-family: var(--serif, serif);
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 400;
   color: #fff;
   margin: 0;
 }
 .dg-caption {
   position: absolute;
-  bottom: 73px;
+  bottom: 120px;
   left: 50%;
   right: 0;
   text-align: center;
@@ -3693,7 +3693,7 @@
   right: 0;
   text-align: center;
   font-family: var(--serif, 'Cormorant Garamond', serif);
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 400;
   color: #ffffff;
   line-height: 1.15;
