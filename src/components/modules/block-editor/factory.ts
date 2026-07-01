@@ -81,6 +81,7 @@ import type {
   FramerAesthaEditorialContent,
   FramerPerformAboutContent,
   FramerPerformPricingContent,
+  FramerFirmaTemplateStrategyDigitalContent,
 } from './types';
 
 const HOUSE_IMG =
@@ -2157,6 +2158,25 @@ const FRAMER_PERFORM_PRICING_EN: FramerPerformPricingContent = {
   ],
 };
 
+// ── Framer-native: Firma — Strategy / Digital (case-study card) ────────
+// Port từ firma-template.framer.website (selector `.framer-1fpfh1m`).
+const FRAMER_FIRMA_STRATEGY_DIGITAL_VI: FramerFirmaTemplateStrategyDigitalContent =
+  {
+    imageUrl:
+      'https://framerusercontent.com/images/B4jxrHJqCYeKMdfyNVrqx2Gp4.jpg',
+    eyebrow: 'CHIẾN LƯỢC / SỐ',
+    heading: 'Common Future Co.',
+    body: 'Common Future Co. đến với chúng tôi với sứ mệnh lớn nhưng chưa rõ cách truyền tải. Chúng tôi bắt đầu bằng việc tái định vị thông điệp, đặt họ vào vị thế tiên phong nhưng vẫn gần gũi.',
+    linkLabel: 'Case Study',
+    linkHref: '#case-study',
+  };
+const FRAMER_FIRMA_STRATEGY_DIGITAL_EN: FramerFirmaTemplateStrategyDigitalContent =
+  {
+    ...FRAMER_FIRMA_STRATEGY_DIGITAL_VI,
+    eyebrow: 'STRATEGY / DIGITAL',
+    body: 'Common Future Co. came to us with a big mission but little clarity on how to communicate it. We began by rethinking their messaging, positioning them as forward-thinking yet accessible.',
+  };
+
 // Derive từ registry BLOCK_TYPE_META (nguồn duy nhất) — thêm block type mới
 // chỉ cần thêm 1 entry ở types.ts, map này tự đầy đủ.
 const NAME_BY_TYPE: Record<BlockType, string> = Object.fromEntries(
@@ -2238,6 +2258,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
   framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_VI,
+  framer_firma_template_strategy_digital: FRAMER_FIRMA_STRATEGY_DIGITAL_VI,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
@@ -2314,6 +2335,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
   framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_EN,
+  framer_firma_template_strategy_digital: FRAMER_FIRMA_STRATEGY_DIGITAL_EN,
 };
 
 function genId() {

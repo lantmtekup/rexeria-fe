@@ -28,6 +28,7 @@ import { FramerClarityServices } from './FramerClarityServices';
 import { FramerDarlingTimeline } from './FramerDarlingTimeline';
 import { FramerExploreCta } from './FramerExploreCta';
 import { FramerFaqMinimal } from './FramerFaqMinimal';
+import { FramerFirmaTemplateStrategyDigital } from './FramerFirmaTemplateStrategyDigital';
 import { FramerImageStagger } from './FramerImageStagger';
 import { FramerIntroRedefined } from './FramerIntroRedefined';
 import { FramerPerformAbout } from './FramerPerformAbout';
@@ -105,6 +106,7 @@ import type {
   FramerDarlingTimelineContent,
   FramerExploreCtaContent,
   FramerFaqMinimalContent,
+  FramerFirmaTemplateStrategyDigitalContent,
   FramerImageStaggerContent,
   FramerIntroRedefinedContent,
   FramerPerformAboutContent,
@@ -814,6 +816,17 @@ export function RenderBlock({
       return (
         <FramerIntroRedefined
           content={content as FramerIntroRedefinedContent}
+          styles={styles}
+          background={background}
+          order={order}
+          positions={positions}
+          activeKey={activeKey}
+        />
+      );
+    case 'framer_firma_template_strategy_digital':
+      return (
+        <FramerFirmaTemplateStrategyDigital
+          content={content as FramerFirmaTemplateStrategyDigitalContent}
           styles={styles}
           background={background}
           order={order}

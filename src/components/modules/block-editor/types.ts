@@ -63,6 +63,7 @@ export type BlockType =
   | 'framer_aestha_editorial'
   | 'framer_perform_about'
   | 'framer_perform_pricing'
+  | 'framer_firma_template_strategy_digital'
   // ── Mint-coint sections tách thành data block (port từ src/templates) ──
   | 'mint_details'
   | 'mint_sku'
@@ -1064,6 +1065,18 @@ export interface FramerPerformPricingContent {
 }
 
 /**
+ * Firma Template — Strategy / Digital: case-study hero card 2 cột.
+ */
+export interface FramerFirmaTemplateStrategyDigitalContent {
+  imageUrl: string;
+  eyebrow: string;
+  heading: string;
+  body: string;
+  linkLabel: string;
+  linkHref: string;
+}
+
+/**
  * FAQ Minimal: nền trắng, 2 cột (tiêu đề + CTA trái, accordion phải),
  * divider mỏng. Port từ `src/blocks/framer-faq-minimal`.
  */
@@ -1203,6 +1216,7 @@ export type BlockContent =
   | FramerAesthaEditorialContent
   | FramerPerformAboutContent
   | FramerPerformPricingContent
+  | FramerFirmaTemplateStrategyDigitalContent
   | FramerFaqMinimalContent
   | FramerDarlingTimelineContent
   | FramerNftpullTimelineContent
@@ -2461,5 +2475,17 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'stack pricing card: ảnh trái + giá/tính năng/CTA phải mỗi card',
     aiLabelEn:
       'stacked pricing cards: image left + price/features/CTA right per card',
+  },
+  framer_firma_template_strategy_digital: {
+    type: 'framer_firma_template_strategy_digital',
+    label: 'Firma — Strategy/Digital',
+    accent: '#000000',
+    adminLabel: 'Firma — Case Study Card',
+    gradient: 'from-stone-50 to-stone-200',
+    defaultName: 'Case Study Card',
+    aiLabelVi:
+      'block case-study 2 cột (recon spec): ảnh chân dung vuông trái + card trắng phải với eyebrow, heading serif, body, link gạch chân reveal-on-hover',
+    aiLabelEn:
+      'two-column case-study block (recon spec): square portrait image left + white card right with eyebrow, serif heading, body, underline-reveal-on-hover link',
   },
 };
