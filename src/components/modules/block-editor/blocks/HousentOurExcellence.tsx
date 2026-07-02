@@ -93,7 +93,6 @@ const STICKY_STYLE: React.CSSProperties = {
   height: '100dvh',
   overflow: 'hidden',
   isolation: 'isolate',
-  containerType: 'inline-size',
 };
 
 const BADGE_WRAPPER_STYLE: React.CSSProperties = {
@@ -126,7 +125,7 @@ const BADGE_TEXT_STYLE: React.CSSProperties = {
 const HEADING_STYLE: React.CSSProperties = {
   fontFamily: "'Google Sans Flex', 'Inter', system-ui, sans-serif",
   fontSize: 'clamp(32px, 6.5cqi, 64px)',
-  fontWeight: 50,
+  fontWeight: 500,
   lineHeight: 1.2,
   letterSpacing: '-0.024em',
   color: '#3b322d',
@@ -195,13 +194,14 @@ function labelRadialOffset(
   const rad = (angleDeg * Math.PI) / 180;
   const dx = (Math.cos(rad) * distance).toFixed(2);
   const dy = (Math.sin(rad) * distance).toFixed(2);
-  if (index === 2) {
-    return `translate(-10%, -50%) translate(${dx}px, ${dy}px)`;
-  }
-  if (index === 6) {
-    return `translate(-90%, -50%) translate(${dx}px, ${dy}px)`;
-  }
-  return `translate(-50%, -50%) translate(${dx}px, ${dy}px)`;
+  // Anchor the label box so text sits on the OUTSIDE of its satellite icon,
+  // not under it. Right-half items (cos > 0) push label to the right of the
+  // icon; left-half items (cos < 0) push to the left; top/bottom (cos ≈ 0)
+  // stay centered. Works for any total, not just 8.
+  const eps = 0.05;
+  const anchorX =
+    Math.cos(rad) > eps ? '-10%' : Math.cos(rad) < -eps ? '-90%' : '-50%';
+  return `translate(${anchorX}, -50%) translate(${dx}px, ${dy}px)`;
 }
 
 export function HousentOurExcellence({
@@ -407,19 +407,26 @@ export function HousentOurExcellence({
         <div className='mt-12 grid w-full grid-cols-1 flex-col gap-6 @3xl:grid-cols-2'>
           {items.map((item, i) => {
             const Icon = ICONS[item.icon] ?? ShieldCheck;
+            const itemKey = `item-${i}`;
             return (
               <div
                 key={`stk-${i}`}
-                className='hoe-satellite flex items-center gap-4'
-                data-element-key={`item-${i}`}
+                className={selectableClass(
+                  activeKey === itemKey,
+                  'hoe-satellite flex items-center gap-4'
+                )}
+                data-element-key={itemKey}
               >
                 <span
-                  style={ITEM_ICON_BTN_STYLE}
+                  style={composeStyle(ITEM_ICON_BTN_STYLE, styleOf(itemKey))}
                   className='flex items-center justify-center rounded-full border @3xl:hidden!'
                 >
                   <Icon style={{ width: 22, height: 22 }} strokeWidth={1.5} />
                 </span>
-                <p className='p-4' style={ITEM_LABEL_STYLE}>
+                <p
+                  className='p-4'
+                  style={composeStyle(ITEM_LABEL_STYLE, styleOf(itemKey))}
+                >
                   {item.label}
                 </p>
               </div>
@@ -504,6 +511,7 @@ export function HousentOurExcellence({
           <div className='absolute inset-0'>
             {items.map((item, i) => {
               const Icon = ICONS[item.icon] ?? ShieldCheck;
+              const itemKey = `item-${i}`;
               const wrapperStyle = satellitePosition(
                 i,
                 Math.max(items.length, 1)
@@ -515,30 +523,39 @@ export function HousentOurExcellence({
               return (
                 <div
                   key={`rad-${i}`}
-                  className='hoe-satellite-desktop'
+                  className={selectableClass(
+                    activeKey === itemKey,
+                    'hoe-satellite-desktop'
+                  )}
                   style={wrapperStyle}
-                  data-element-key={`item-${i}`}
+                  data-element-key={itemKey}
                 >
                   <span
-                    style={{
-                      ...ITEM_ICON_BTN_STYLE,
-                      position: 'absolute',
-                      left: 0,
-                      top: 0,
-                      transform: 'translate(-50%, -50%)',
-                    }}
+                    style={composeStyle(
+                      ITEM_ICON_BTN_STYLE,
+                      {
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        transform: 'translate(-50%, -50%)',
+                      },
+                      styleOf(itemKey)
+                    )}
                     className='flex items-center justify-center rounded-full border transition-transform hover:scale-105'
                   >
                     <Icon style={{ width: 24, height: 24 }} strokeWidth={1.5} />
                   </span>
                   <p
-                    style={{
-                      ...ITEM_LABEL_STYLE,
-                      position: 'absolute',
-                      left: 0,
-                      top: 0,
-                      transform: labelOffset,
-                    }}
+                    style={composeStyle(
+                      ITEM_LABEL_STYLE,
+                      {
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        transform: labelOffset,
+                      },
+                      styleOf(itemKey)
+                    )}
                   >
                     {item.label}
                   </p>

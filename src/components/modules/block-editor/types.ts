@@ -1077,10 +1077,10 @@ export interface HousentOurExcellenceContent {
   body: string;
   items: Array<{
     label: string;
-    /** lucide-react icon name; render inline-svg (no asset URL). */
     icon: string;
   }>;
 }
+
 export interface FramerFaqMinimalContent {
   title: string;
   ctaText: string;
