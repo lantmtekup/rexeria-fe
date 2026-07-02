@@ -55,10 +55,7 @@ export function FramerFirmaTemplateStrategyDigital({
 
   const [hovered, setHovered] = React.useState(false);
 
-  const heading = (content.heading || 'Common Future Co.').replace(
-    / (\S+)$/,
-    ' $1'
-  );
+  const heading = (content.heading ?? '').replace(/ (\S+)$/, ' $1');
 
   return (
     <section
@@ -110,7 +107,7 @@ export function FramerFirmaTemplateStrategyDigital({
                 styleOf('eyebrow')
               )}
             >
-              {content.eyebrow || 'STRATEGY / DIGITAL'}
+              {content.eyebrow}
             </p>
 
             <div className='flex w-auto flex-col items-center gap-4 @3xl:gap-6'>
@@ -141,8 +138,7 @@ export function FramerFirmaTemplateStrategyDigital({
                   styleOf('body')
                 )}
               >
-                {content.body ||
-                  'Common Future Co. came to us with a big mission but little clarity on how to communicate it. We began by rethinking their messaging, positioning them as forward-thinking yet accessible.'}
+                {content.body}
               </p>
             </div>
           </div>
@@ -191,7 +187,7 @@ export function FramerFirmaTemplateStrategyDigital({
               className='relative z-10 flex flex-col'
             >
               <strong className='font-sans text-base leading-[26.4px] font-bold text-black'>
-                {content.linkLabel || 'Case Study'}
+                {content.linkLabel}
               </strong>
 
               {/* Underline — origin right, scaleX 1→0 (co từ trái sang phải) */}
