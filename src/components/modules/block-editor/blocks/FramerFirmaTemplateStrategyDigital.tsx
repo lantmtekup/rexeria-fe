@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { motion, type Transition } from 'framer-motion';
 
 import { findFont } from '@/lib/fonts';
 
@@ -21,6 +22,12 @@ import {
 
 const GEIST_FONT = findFont('geist').family;
 const PLAYFAIR_FONT = findFont('playfair').family;
+
+const linkTransition: Transition = {
+  type: 'tween',
+  duration: 0.3,
+  ease: 'easeOut',
+};
 
 interface Props {
   content: FramerFirmaTemplateStrategyDigitalContent;
@@ -45,6 +52,13 @@ export function FramerFirmaTemplateStrategyDigital({
       orderStyle(order, key),
       positionStyle(positions, key)
     );
+
+  const [hovered, setHovered] = React.useState(false);
+
+  const heading = (content.heading || 'Common Future Co.').replace(
+    / (\S+)$/,
+    ' $1'
+  );
 
   return (
     <section
@@ -82,7 +96,7 @@ export function FramerFirmaTemplateStrategyDigital({
         {/* Card */}
         <div
           data-element-key='card'
-          className='relative flex w-auto flex-col items-start justify-start gap-8 bg-white px-4 @md:justify-between @md:gap-0 @md:px-0 @3xl:min-h-[unset] @3xl:w-140 @3xl:justify-start @3xl:gap-10 @4xl:h-[50%] @4xl:min-h-75 @4xl:w-auto'
+          className='relative flex w-auto flex-col items-start justify-start gap-8 bg-white px-4 @3xl:min-h-[unset] @3xl:w-140 @3xl:justify-start @3xl:gap-10 @4xl:h-[50%] @4xl:min-h-75 @4xl:w-auto @4xl:justify-between @4xl:gap-0 @4xl:px-0'
         >
           <div className='absolute -inset-16 z-0 hidden overflow-hidden bg-white @4xl:block'></div>
           <div className='z-10 flex flex-col items-center justify-start gap-6 @4xl:w-120'>
@@ -113,7 +127,7 @@ export function FramerFirmaTemplateStrategyDigital({
                     styleOf('heading')
                   )}
                 >
-                  {content.heading || 'Common Future Co.'}
+                  {heading}
                 </h2>
               </div>
 
@@ -134,47 +148,63 @@ export function FramerFirmaTemplateStrategyDigital({
             </div>
           </div>
 
-          <a
+          <motion.a
             data-element-key='linkLabel'
             href={content.linkHref || '#'}
             aria-label={content.linkLabel || 'Case Study'}
             className={selectableClass(
               activeKey === 'linkLabel',
-              'firma-cascade group inline-flex h-10 items-center gap-2.5 text-black no-underline outline-none'
+              'firma-cascade group relative inline-flex h-10 items-center gap-2.5 text-black no-underline outline-none'
             )}
             style={styleOf('linkLabel')}
+            onHoverStart={() => setHovered(true)}
+            onHoverEnd={() => setHovered(false)}
           >
-            {/* Icon: Dot width fit (6×6) → grows to 40×40 + Arrow slide from left → center. Hover trigger = <a class="group"> */}
-            <span
+            <motion.span
               aria-hidden
-              className='relative flex h-1.5 w-1.5 shrink-0 items-center justify-center overflow-visible transition-all duration-200 ease-out group-hover:h-10 group-hover:w-10'
-            >
-              {/* Black dot - fills container (inset-0), grows theo width/height của container */}
-              <span className='absolute inset-0 rounded-full bg-black' />
+              layout
+              transition={linkTransition}
+              className={
+                hovered
+                  ? 'h-10 w-10 shrink-0 rounded-full bg-black'
+                  : 'h-1 w-1 shrink-0 rounded-full bg-black'
+              }
+            />
 
-              {/* Arrow - inside dot, slide từ mép trái (-translate-x-3) → center + fade-in */}
+            <motion.span
+              aria-hidden
+              className='pointer-events-none absolute top-1/2 left-5 z-10 -translate-x-1/2 -translate-y-1/2'
+              animate={{ x: hovered ? 0 : -32, opacity: hovered ? 1 : 0 }}
+              transition={linkTransition}
+            >
               <svg
                 xmlns='http://www.w3.org/2000/svg'
                 viewBox='0 0 256 256'
-                className='h-4 w-4 -translate-x-3 fill-white opacity-0 transition-all duration-200 ease-out group-hover:translate-x-0 group-hover:opacity-100'
+                className='h-4.5 w-4.5 fill-white'
               >
                 <path d='M224.49,136.49l-72,72a12,12,0,0,1-17-17L187,140H40a12,12,0,0,1,0-24H187L135.51,64.48a12,12,0,0,1,17-17l72,72A12,12,0,0,1,224.49,136.49Z' />
               </svg>
-            </span>
+            </motion.span>
 
-            {/* Text + Underline */}
-            <span className='relative z-10 flex flex-col'>
+            <motion.span
+              layout
+              transition={linkTransition}
+              className='relative z-10 flex flex-col'
+            >
               <strong className='font-sans text-base leading-[26.4px] font-bold text-black'>
                 {content.linkLabel || 'Case Study'}
               </strong>
 
-              {/* Underline - origin-right + scale-x-0: co từ TRÁI qua PHẢI (width giảm dần → 0px tại origin-right) */}
-              <section
+              {/* Underline — origin right, scaleX 1→0 (co từ trái sang phải) */}
+              <motion.span
                 aria-hidden
-                className='-mt-0.5 block h-px w-full origin-right scale-x-100 bg-black transition-transform duration-200 ease-out group-hover:scale-x-0'
+                className='-mt-0.5 block h-px w-full bg-black'
+                style={{ transformOrigin: 'right' }}
+                animate={{ scaleX: hovered ? 0 : 1 }}
+                transition={linkTransition}
               />
-            </span>
-          </a>
+            </motion.span>
+          </motion.a>
         </div>
       </div>
     </section>

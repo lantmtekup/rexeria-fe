@@ -2478,11 +2478,11 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
   },
   framer_firma_template_strategy_digital: {
     type: 'framer_firma_template_strategy_digital',
-    label: 'Firma — Strategy/Digital',
+    label: 'Firma Project Card',
     accent: '#000000',
-    adminLabel: 'Firma — Case Study Card',
+    adminLabel: 'Project Card (Firma)',
     gradient: 'from-stone-50 to-stone-200',
-    defaultName: 'Case Study Card',
+    defaultName: 'Project Card',
     aiLabelVi:
       'block case-study 2 cột (recon spec): ảnh chân dung vuông trái + card trắng phải với eyebrow, heading serif, body, link gạch chân reveal-on-hover',
     aiLabelEn:
