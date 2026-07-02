@@ -4,6 +4,7 @@ import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullT
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
 import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
+import { framerIgnitexStepDef } from './blocks/_registry/defs/framerIgnitexStep';
 import type {
   Block,
   BlockContent,
@@ -2225,6 +2226,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_VI,
   framer_explore_cta: FRAMER_EXPLORE_CTA_VI,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_VI,
+  framer_ignitex_step: framerIgnitexStepDef.defaultContent.vi,
   framer_stats_grid: FRAMER_STATS_GRID_VI,
   framer_projects_grid: FRAMER_PROJECTS_GRID_VI,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_VI,
@@ -2301,6 +2303,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_EN,
   framer_explore_cta: FRAMER_EXPLORE_CTA_EN,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_EN,
+  framer_ignitex_step: framerIgnitexStepDef.defaultContent.en,
   framer_stats_grid: FRAMER_STATS_GRID_EN,
   framer_projects_grid: FRAMER_PROJECTS_GRID_EN,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_EN,

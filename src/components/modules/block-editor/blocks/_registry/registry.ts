@@ -10,6 +10,7 @@
 import type { BlockType } from '../../types';
 import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
+import { framerIgnitexStepDef } from './defs/framerIgnitexStep';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
 import type { BlockDef } from './types';
@@ -18,6 +19,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   framer_yume_hero: framerYumeHeroDef as BlockDef,
   framer_bungee_hero_v2: framerBungeeHeroV2Def as BlockDef,
   framer_nftpull_timeline: framerNftpullTimelineDef as BlockDef,
+  framer_ignitex_step: framerIgnitexStepDef as BlockDef,
   framer_purevisuals_hero: framerPurevisualsHeroDef as BlockDef,
 };
 

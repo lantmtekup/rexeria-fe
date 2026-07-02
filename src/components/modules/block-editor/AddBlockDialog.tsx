@@ -68,6 +68,7 @@ const ORDERED_TYPES: BlockType[] = [
   // ── Content / Editorial ─────────────────────────────────
   'framer_intro_redefined',
   'framer_studio_manifesto',
+  'framer_ignitex_step',
   'framer_explore_cta',
   'framer_aestha_editorial',
   // ── Features / Services ──────────────────────────────────
