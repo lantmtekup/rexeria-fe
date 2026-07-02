@@ -9,14 +9,17 @@
  * - Container max-width 1380px, flex column, gap 50 → 30 mobile.
  * - Heading h2 center (Onest 56/44/34, ls -0.06em, lh 1.1) +
  *   CTA pill "About us" (bg #3e362e, text #e7decf, Onest 16/14, 600).
- * - Stats grid 3 cột desktop → 1 cột mobile, gap 100 → 14px.
+ * - Stats grid 3 cột desktop → 1 cột mobile, gap 100 → 32 mobile (class
+ *   `gap-8` không bị inline `gap: 8` đè như trước).
  *   Mỗi card: ảnh chân dung 3:4 (#e7decf khung) + value h3 (Onest 40/32/26)
  *   + label p (Onest 16/14).
  *
  * Animation (R1, R3): useBlockMotion + gsap.fromTo — fade-up 16px cho
  * heading/CTA/3 cards, stagger 0.08s, start 'top 85%', toggleActions reverse.
  * Initial states trong recon (Section 8): opacity 0 + translateY(10px) trên
- * heading/CTA containers.
+ * heading/CTA containers. Honor `prefers-reduced-motion`: block tự check
+ * matchMedia ở đầu callback `useBlockMotion` (vì hook chỉ là gsap.context
+ * wrapper, không short-circuit) → snap về final state, bỏ qua fade-up + parallax.
  *
  * Parallax desktop (P2): stats grid di chuyển theo trục Y chậm hơn scroll
  * để tạo chiều sâu — toàn bộ card là một khối thống nhất (ảnh + text đi cùng).
@@ -28,8 +31,7 @@
  * Framer 3-tier override 56/44/34) + recon extracted.json.
  *
  * Responsive: container-query với cqi (R2).
- * Accessibility: aria-label cho CTA, role=img + aria-label cho ảnh,
- * prefers-reduced-motion honored tự động bởi useBlockMotion.
+ * Accessibility: aria-label cho CTA, role=img + aria-label cho ảnh.
  */
 import * as React from 'react';
 import gsap from 'gsap';
@@ -178,6 +180,24 @@ export function FramerEstanciaAboutUs({
   useBlockMotion(rootRef, ({ scroller, isMobile }) => {
     const root = rootRef.current;
     if (!root) return;
+    // Honor `prefers-reduced-motion`: skip fade-up + parallax tween, just snap
+    // to final state. `useBlockMotion` itself doesn't short-circuit (it's a
+    // generic gsap.context wrapper), so each block with motion owns this check.
+    if (
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      const targets = root.querySelectorAll<HTMLElement>(
+        '[data-estancia-reveal]'
+      );
+      targets.forEach(t => {
+        t.style.opacity = '1';
+        t.style.transform = 'none';
+      });
+      const stats = statsRef.current;
+      if (stats) stats.style.transform = 'none';
+      return;
+    }
     const targets = root.querySelectorAll<HTMLElement>(
       '[data-estancia-reveal]'
     );
@@ -269,26 +289,33 @@ export function FramerEstanciaAboutUs({
         >
           <h2
             data-estancia-reveal
-            data-element-key='headingText'
-            style={composeStyle(HEADING_STYLE, styleOf('headingText'))}
-            className={selectableClass(activeKey === 'headingText')}
+            data-element-key='heading'
+            style={composeStyle(HEADING_STYLE, styleOf('heading'))}
+            className={selectableClass(activeKey === 'heading')}
           >
             {content.heading}
           </h2>
 
-          {/* CTA pill "About us" — bundle page.html: framer-Dark */}
+          {/* CTA pill "About us" — bundle page.html: framer-Dark.
+           * Tách 2 hit-target: `ctaHref` trên <a> cho link (click icon/padding/
+           * hover overlay), `ctaText` trên <span> cho chữ (double-click → inline
+           * edit). Match registry keys `ctaText` + `ctaHref`. */}
           <a
             data-estancia-reveal
-            data-element-key='cta'
+            data-element-key='ctaHref'
             href={ctaHref}
             aria-label={content.ctaText}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
-            style={composeStyle(CTA_BUTTON_STYLE, styleOf('cta'))}
-            className={selectableClass(activeKey === 'cta')}
+            style={composeStyle(CTA_BUTTON_STYLE, styleOf('ctaHref'))}
+            className={selectableClass(activeKey === 'ctaHref')}
           >
             <StarIcon size={14} color={'#e7decf'} />
-            <span style={{ position: 'relative', zIndex: 1 }}>
+            <span
+              data-element-key='ctaText'
+              style={{ position: 'relative', zIndex: 1 }}
+              className={selectableClass(activeKey === 'ctaText')}
+            >
               {content.ctaText}
             </span>
             <span
@@ -315,7 +342,6 @@ export function FramerEstanciaAboutUs({
               flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              gap: 8,
               width: '100%',
               position: 'relative',
               zIndex: 2,
@@ -353,12 +379,11 @@ export function FramerEstanciaAboutUs({
               style={composeStyle(STAT_CARD_STYLE, styleOf(card.key))}
               className={cn(
                 selectableClass(activeKey === card.key),
-                'desktop-mt-' + card.key,
                 card.desktopMtClass
               )}
             >
               <div
-                data-element-key={`${card.key}Image`}
+                data-element-key={`${card.key}ImageUrl`}
                 role='img'
                 aria-label={`${card.value} — ${card.label}`}
                 style={composeStyle(
@@ -368,9 +393,9 @@ export function FramerEstanciaAboutUs({
                       }
                     : {},
                   STAT_IMAGE_STYLE,
-                  styleOf(`${card.key}Image`)
+                  styleOf(`${card.key}ImageUrl`)
                 )}
-                className={selectableClass(activeKey === `${card.key}Image`)}
+                className={selectableClass(activeKey === `${card.key}ImageUrl`)}
               />
               <h3
                 data-element-key={`${card.key}Value`}
