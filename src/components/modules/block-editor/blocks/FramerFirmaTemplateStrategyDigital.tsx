@@ -66,18 +66,18 @@ export function FramerFirmaTemplateStrategyDigital({
       className='@container relative h-screen w-full max-w-full bg-white'
       data-block-type='framer_firma_template_strategy_digital'
     >
-      <div className='relative flex h-full w-full flex-col items-center justify-start gap-10 overflow-hidden @4xl:flex-row @4xl:items-center @4xl:justify-start @4xl:gap-0'>
+      <div className='relative flex h-full w-full flex-col items-center justify-start gap-10 overflow-hidden @4xl:flex-row @4xl:items-center @4xl:justify-center @4xl:gap-0'>
         <a
           data-element-key='imageUrl'
           href={content.linkHref || '#'}
           aria-label={content.heading || 'Case study'}
           className={selectableClass(
             activeKey === 'imageUrl',
-            'firma-image group relative block aspect-auto h-100 w-full min-w-0 flex-none overflow-hidden @3xl:h-140 @3xl:w-190 @3xl:flex-none @3xl:shrink-0 @4xl:aspect-square @4xl:h-full @4xl:flex-1'
+            'firma-image group relative block aspect-auto h-100 w-full min-w-0 flex-none overflow-hidden @3xl:h-140 @3xl:w-190 @3xl:flex-none @3xl:shrink-0 @4xl:aspect-square @4xl:h-full @4xl:w-auto'
           )}
           style={composeStyle(undefined, styleOf('imageUrl'))}
         >
-          <div className='relative h-full w-full overflow-hidden bg-white @3xl:h-full'>
+          <div className='absolute inset-0 overflow-hidden bg-white'>
             {
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -85,9 +85,8 @@ export function FramerFirmaTemplateStrategyDigital({
                 alt={content.heading || 'Case study portrait'}
                 loading='lazy'
                 decoding='async'
-                // @ts-expect-error fetchPriority
-                fetchpriority='high'
-                className='block h-full w-full object-cover @4xl:w-[calc(100%+200px)]'
+                fetchPriority='high'
+                className='block h-full w-full max-w-none object-cover @4xl:w-[calc(100%+200px)]'
               />
             }
           </div>
