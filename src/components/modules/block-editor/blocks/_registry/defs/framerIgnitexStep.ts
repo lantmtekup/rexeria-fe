@@ -22,10 +22,8 @@ import type { BlockDef } from '../types';
 
 const VI: FramerIgnitexStepContent = {
   preTitle: 'From concept to launch',
-  leftTop: 'Your',
-  leftMiddle: 'ideas',
-  leftPreBrand: 'into',
-  leftBrand: 'Brand',
+  leftTop: 'Your ideas',
+  leftBottom: 'into Brand',
   rightTop: 'transform',
   rightBottom: 'stories',
   cards: [
@@ -84,22 +82,15 @@ export const framerIgnitexStepDef: BlockDef<FramerIgnitexStepContent> = {
     { key: 'leftColumn', label: 'Left title column', icon: Pilcrow },
     { key: 'leftTop', label: 'Left - dòng 1', icon: Type, fieldType: 'text' },
     {
-      key: 'leftMiddle',
-      label: 'Left - dòng 2',
+      key: 'leftBottom',
+      label: 'Left - dòng 2 (chứa Brand ở cuối)',
       icon: Type,
       fieldType: 'text',
     },
     {
-      key: 'leftPreBrand',
-      label: 'Left - dòng 3 (trước Brand)',
+      key: 'leftBottom-serif',
+      label: 'Left - chữ Brand (serif, tự động từ từ cuối)',
       icon: Type,
-      fieldType: 'text',
-    },
-    {
-      key: 'leftBrand',
-      label: 'Left - chữ Brand (serif)',
-      icon: Type,
-      fieldType: 'text',
     },
     { key: 'rightColumn', label: 'Right title column', icon: Pilcrow },
     { key: 'rightTop', label: 'Right - dòng 1', icon: Type, fieldType: 'text' },

@@ -272,11 +272,23 @@ export function FramerIgnitexStep({
 
   const preTitle = content.preTitle || 'From concept to launch';
   const leftTop = content.leftTop || 'Your';
-  const leftMiddle = content.leftMiddle || 'ideas';
-  const leftPreBrand = content.leftPreBrand || 'into';
-  const leftBrand = content.leftBrand || 'Brand';
+  const leftBottom = content.leftBottom || 'into Brand';
   const rightTop = content.rightTop || 'transform';
   const rightBottom = content.rightBottom || 'stories';
+
+  // Split leftBottom into leading text + last word. Last word gets the serif
+  // (Great Vibes) treatment; leading keeps Geist. Handles empty / single-word
+  // / extra-whitespace inputs.
+  const splitLeftBottom = React.useMemo(() => {
+    const trimmed = leftBottom.trim();
+    if (!trimmed) return { leading: '', last: '' };
+    const tokens = trimmed.split(/\s+/);
+    if (tokens.length === 1) return { leading: '', last: tokens[0] };
+    return {
+      leading: tokens.slice(0, -1).join(' '),
+      last: tokens[tokens.length - 1],
+    };
+  }, [leftBottom]);
   const cards = React.useMemo<FramerIgnitexStepCard[]>(
     () =>
       Array.isArray(content.cards) && content.cards.length > 0
@@ -443,14 +455,14 @@ export function FramerIgnitexStep({
           {/* LEFT title column: "Your ideas / into [Brand]" */}
           <div className='flex @4xl:hidden'>
             <h2
-              data-element-key='leftTop'
-              style={composeStyle(HEADING_STYLE, styleOf('leftTop'))}
+              data-element-key='mobileHeading'
+              style={composeStyle(HEADING_STYLE, styleOf('mobileHeading'))}
               className={selectableClass(
-                activeKey === 'leftTop',
+                activeKey === 'mobileHeading',
                 'fist-h2 max-w-[400px] text-center'
               )}
             >
-              {`${leftTop} ${leftMiddle} ${rightTop} ${leftPreBrand} ${leftBrand} ${rightBottom}`}
+              {`${leftTop} ${rightTop} ${leftBottom} ${rightBottom}`}
             </h2>
           </div>
 
@@ -469,39 +481,44 @@ export function FramerIgnitexStep({
               style={composeStyle(HEADING_STYLE, styleOf('leftTop'))}
               className={selectableClass(activeKey === 'leftTop', 'fist-h2')}
             >
-              {`${leftTop} ${leftMiddle}`}
+              {leftTop}
             </h2>
-            <div
-              style={{
-                display: 'inline-flex',
-                flexDirection: 'row',
-                alignItems: 'baseline',
-                gap: 'clamp(8px, 0.7cqi, 14px)',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-              }}
+            <h2
+              data-element-key='leftBottom'
+              style={composeStyle(
+                HEADING_STYLE,
+                {
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: 'clamp(8px, 0.7cqi, 14px)',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                },
+                styleOf('leftBottom')
+              )}
+              className={selectableClass(activeKey === 'leftBottom', 'fist-h2')}
             >
-              <h2
-                data-element-key='leftPreBrand'
-                style={composeStyle(HEADING_STYLE, styleOf('leftPreBrand'))}
-                className={selectableClass(
-                  activeKey === 'leftPreBrand',
-                  'fist-h2'
-                )}
-              >
-                {leftPreBrand}
-              </h2>
-              <span
-                data-element-key='leftBrand'
-                className={selectableClass(
-                  activeKey === 'leftBrand',
-                  'fist-serif'
-                )}
-                style={composeStyle(SERIF_WORD_STYLE, styleOf('leftBrand'))}
-              >
-                {leftBrand}
-              </span>
-            </div>
+              {splitLeftBottom.leading && (
+                <span className='fist-h2' style={HEADING_STYLE}>
+                  {splitLeftBottom.leading}
+                </span>
+              )}
+              {splitLeftBottom.last && (
+                <span
+                  data-element-key='leftBottom-serif'
+                  className={selectableClass(
+                    activeKey === 'leftBottom-serif',
+                    'fist-serif'
+                  )}
+                  style={composeStyle(
+                    SERIF_WORD_STYLE,
+                    styleOf('leftBottom-serif')
+                  )}
+                >
+                  {splitLeftBottom.last}
+                </span>
+              )}
+            </h2>
           </div>
 
           {/* CENTER: stack of 3 step cards — translateY từ bottom lên */}

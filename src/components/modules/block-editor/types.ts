@@ -1015,9 +1015,7 @@ export interface FramerIgnitexStepCard {
 export interface FramerIgnitexStepContent {
   preTitle: string;
   leftTop: string;
-  leftMiddle: string;
-  leftPreBrand: string;
-  leftBrand: string;
+  leftBottom: string;
   rightTop: string;
   rightBottom: string;
   cards: FramerIgnitexStepCard[];
