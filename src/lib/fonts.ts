@@ -148,6 +148,14 @@ export const FONTS: FontDef[] = [
     category: 'mono',
     weights: [400, 500, 700],
   },
+  {
+    id: 'geist-mono',
+    label: 'Geist Mono',
+    family: `'Geist Mono', ${SYSTEM_FALLBACK_MONO}`,
+    category: 'mono',
+    weights: [400, 500, 700],
+    note: 'Monospace editorial (sustainit)',
+  },
 ];
 
 export const DEFAULT_FONT_ID = 'inter';

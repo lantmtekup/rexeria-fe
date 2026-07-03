@@ -12,6 +12,7 @@ import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
+import { sustainitOurExpertiseDef } from './defs/sustainitOurExpertise';
 import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
@@ -19,6 +20,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   framer_bungee_hero_v2: framerBungeeHeroV2Def as BlockDef,
   framer_nftpull_timeline: framerNftpullTimelineDef as BlockDef,
   framer_purevisuals_hero: framerPurevisualsHeroDef as BlockDef,
+  sustainit_our_expertise: sustainitOurExpertiseDef as BlockDef,
 };
 
 export function getBlockDef(type: BlockType): BlockDef | undefined {

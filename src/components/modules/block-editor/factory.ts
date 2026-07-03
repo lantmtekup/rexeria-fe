@@ -1,6 +1,7 @@
 import { BLOCK_TYPE_META } from './types';
 import { getBlockDef } from './blocks/_registry/registry';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
+import { sustainitOurExpertiseDef } from './blocks/_registry/defs/sustainitOurExpertise';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
 import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
@@ -2233,6 +2234,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_VI,
   framer_darling_timeline: FRAMER_DARLING_TIMELINE_VI,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.vi,
+  sustainit_our_expertise: sustainitOurExpertiseDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
@@ -2309,6 +2311,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_EN,
   framer_darling_timeline: FRAMER_DARLING_TIMELINE_EN,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.en,
+  sustainit_our_expertise: sustainitOurExpertiseDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
