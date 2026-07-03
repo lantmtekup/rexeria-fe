@@ -91,7 +91,8 @@ const PILL_BASE_STYLE: React.CSSProperties = {
   alignItems: 'center',
   gap: '8px',
   padding: '8px 12px',
-  backgroundColor: '#747E90',
+  backgroundColor: 'transparent',
+  border: '1px solid rgba(255, 255, 255, 0.2)',
   borderRadius: '99px',
   fontSize: '12px',
   fontWeight: 600,
@@ -174,7 +175,6 @@ const STEP_BODY_STYLE: React.CSSProperties = {
   fontWeight: 400,
   lineHeight: 1.4,
   letterSpacing: '-0.02em',
-  color: '#D6D9E2',
   margin: 0,
 };
 
@@ -249,6 +249,7 @@ export function FramerFlatWhiteProcess({
 
   const bgColor = content.bgColor || '#747E90';
   const textColor = content.textColor || '#FFFFFF';
+  const bodyTextColor = content.bodyTextColor || '#D6D9E2';
   const label = content.label || 'OUR PROCESS';
   const headline = content.headline || 'Our Process';
   const steps = React.useMemo<FramerFlatWhiteProcessStep[]>(
@@ -463,8 +464,9 @@ export function FramerFlatWhiteProcess({
             text={label}
             baseStyle={{}}
             className='fwp-label-words'
-            activeKey={null}
-            elementKey='label-text'
+            activeKey={activeKey}
+            elementKey='label'
+            styles={styles}
           />
         </div>
 
@@ -516,18 +518,29 @@ export function FramerFlatWhiteProcess({
 
             {steps.map((step, idx) => {
               const stepKey = `step-${idx}`;
-              const pos = STEP_POSITIONS[idx] ?? STEP_POSITIONS[0];
+              // Defensive guard: STEP_POSITIONS chỉ có 3 entry khớp với 3 step
+              // mặc định. Nếu content có > 3 step, các step dư xếp tuyến tính
+              // dưới step cuối (top = lastTop + N*20%) thay vì đè lên
+              // STEP_POSITIONS[0]. Nếu sau này có UI thêm step, hãy mở rộng
+              // STEP_POSITIONS tương ứng.
+              const basePos =
+                STEP_POSITIONS[Math.min(idx, STEP_POSITIONS.length - 1)] ??
+                STEP_POSITIONS[0];
+              const extraOffset =
+                Math.max(0, idx - (STEP_POSITIONS.length - 1)) * 20;
               const stepPositionStyle: React.CSSProperties = {
-                top: pos.top,
-                ...(pos.left !== undefined ? { left: pos.left } : {}),
-                ...(pos.right !== undefined ? { right: pos.right } : {}),
+                top: `calc(${basePos.top} + ${extraOffset}%)`,
+                ...(basePos.left !== undefined ? { left: basePos.left } : {}),
+                ...(basePos.right !== undefined
+                  ? { right: basePos.right }
+                  : {}),
               };
               return (
                 <div
                   key={`${step.number}-${idx}`}
                   data-fwp-step
                   data-element-key={stepKey}
-                  data-fwp-align={pos.left !== undefined ? 'left' : 'right'}
+                  data-fwp-align={basePos.left !== undefined ? 'left' : 'right'}
                   className={`fwp-step fwp-step-${idx} ${selectableClass(activeKey === stepKey)}`.trim()}
                   style={composeStyle(
                     STEP_CARD_STYLE,
@@ -561,7 +574,7 @@ export function FramerFlatWhiteProcess({
                   />
                   <WordReveal
                     text={step.body}
-                    baseStyle={STEP_BODY_STYLE}
+                    baseStyle={{ ...STEP_BODY_STYLE, color: bodyTextColor }}
                     className='fwp-step-body'
                     activeKey={activeKey}
                     elementKey={`${stepKey}-body`}
