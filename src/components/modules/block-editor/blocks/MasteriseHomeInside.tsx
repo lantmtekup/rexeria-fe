@@ -417,6 +417,7 @@ export function MasteriseHomeInside({
                   : false
               }
               speed={300}
+              breakpointsBase='container'
               breakpoints={{
                 768: { slidesPerView: 1.2, spaceBetween: 30 },
                 1024: { slidesPerView: 2, spaceBetween: 44 },
@@ -426,7 +427,7 @@ export function MasteriseHomeInside({
               {slides.map(slide => (
                 <SwiperSlide key={slide.id}>
                   <div
-                    className='w-full, relative h-auto'
+                    className='relative h-auto w-full'
                     style={{
                       width: '100%',
                     }}
