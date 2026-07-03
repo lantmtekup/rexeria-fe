@@ -149,14 +149,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'body', label: 'Nội dung', icon: Pilcrow },
     { key: 'signature', label: 'Chữ ký', icon: Type },
   ],
-  framer_firma_template_strategy_digital: [
-    BACKGROUND_LAYER,
-    { key: 'imageUrl', label: 'Ảnh chân dung', icon: ImageIcon },
-    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
-    { key: 'heading', label: 'Tiêu đề', icon: Type },
-    { key: 'body', label: 'Nội dung', icon: Pilcrow },
-    { key: 'linkLabel', label: 'Nhãn link', icon: MousePointerClick },
-  ],
   framer_stats_grid: [
     BACKGROUND_LAYER,
     { key: 'backgroundUrl', label: 'Ảnh nền', icon: ImageIcon },

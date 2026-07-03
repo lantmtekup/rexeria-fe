@@ -60,7 +60,7 @@ export function FramerFirmaTemplateStrategyDigital({
   return (
     <section
       style={composeStyle(undefined, blockBackgroundStyle(background))}
-      className='@container relative h-screen w-full max-w-full bg-white'
+      className='@container relative min-h-svh w-full max-w-full bg-white @3xl:h-screen'
       data-block-type='framer_firma_template_strategy_digital'
     >
       <div className='relative flex h-full w-full flex-col items-center justify-start gap-10 overflow-hidden @4xl:flex-row @4xl:items-center @4xl:justify-center @4xl:gap-0'>
@@ -80,7 +80,6 @@ export function FramerFirmaTemplateStrategyDigital({
               <img
                 src={content.imageUrl}
                 alt={content.heading || 'Case study portrait'}
-                loading='lazy'
                 decoding='async'
                 fetchPriority='high'
                 className='block h-full w-full max-w-none object-cover @4xl:w-[calc(100%+200px)]'
@@ -89,11 +88,7 @@ export function FramerFirmaTemplateStrategyDigital({
           </div>
         </a>
 
-        {/* Card */}
-        <div
-          data-element-key='card'
-          className='relative flex w-auto flex-col items-start justify-start gap-8 bg-white px-4 @3xl:min-h-[unset] @3xl:w-140 @3xl:justify-start @3xl:gap-10 @4xl:h-[50%] @4xl:min-h-75 @4xl:w-auto @4xl:justify-between @4xl:gap-0 @4xl:px-0'
-        >
+        <div className='relative flex w-auto flex-col items-start justify-start gap-8 bg-white px-4 @3xl:min-h-[unset] @3xl:w-140 @3xl:justify-start @3xl:gap-10 @4xl:h-[50%] @4xl:min-h-75 @4xl:w-auto @4xl:justify-between @4xl:gap-0 @4xl:px-0'>
           <div className='absolute -inset-16 z-0 hidden overflow-hidden bg-white @4xl:block'></div>
           <div className='z-10 flex flex-col items-center justify-start gap-6 @4xl:w-120'>
             <p
@@ -116,7 +111,7 @@ export function FramerFirmaTemplateStrategyDigital({
                   data-element-key='heading'
                   className={selectableClass(
                     activeKey === 'heading',
-                    'm-0 text-[64px] leading-[0.9] font-medium tracking-tighter text-black'
+                    'm-0 text-[52px] leading-[0.9] font-medium tracking-tighter text-black @4xl:text-[64px]'
                   )}
                   style={composeStyle(
                     { fontFamily: PLAYFAIR_FONT },
