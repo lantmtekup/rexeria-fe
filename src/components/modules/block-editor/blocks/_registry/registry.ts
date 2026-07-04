@@ -8,6 +8,12 @@
  * PoC: mới migrate `framer_yume_hero`. ~80 block còn lại vẫn chạy đường cũ.
  */
 import type { BlockType } from '../../types';
+import { delvauxDetailsDef } from './defs/delvauxDetails';
+import { delvauxHeaderDef } from './defs/delvauxHeader';
+import { delvauxHeroDef } from './defs/delvauxHero';
+import { delvauxProductDef } from './defs/delvauxProduct';
+import { delvauxSubnavDef } from './defs/delvauxSubnav';
+import { delvauxVariantDef } from './defs/delvauxVariant';
 import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
@@ -19,6 +25,12 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   framer_bungee_hero_v2: framerBungeeHeroV2Def as BlockDef,
   framer_nftpull_timeline: framerNftpullTimelineDef as BlockDef,
   framer_purevisuals_hero: framerPurevisualsHeroDef as BlockDef,
+  delvaux_header: delvauxHeaderDef as BlockDef,
+  delvaux_subnav: delvauxSubnavDef as BlockDef,
+  delvaux_hero: delvauxHeroDef as BlockDef,
+  delvaux_details: delvauxDetailsDef as BlockDef,
+  delvaux_product: delvauxProductDef as BlockDef,
+  delvaux_variant: delvauxVariantDef as BlockDef,
 };
 
 export function getBlockDef(type: BlockType): BlockDef | undefined {
