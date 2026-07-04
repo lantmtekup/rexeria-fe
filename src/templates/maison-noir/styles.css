@@ -23,8 +23,8 @@
   --accent2: #e8d9b5;
   --line: rgba(233, 217, 181, 0.16);
   --card: rgba(233, 217, 181, 0.05);
-  --serif: 'Cormorant Garamond', Georgia, serif;
-  --sans: 'Jost', system-ui, sans-serif;
+  --serif: var(--font-mz-serif, 'Cormorant Garamond'), Georgia, serif;
+  --sans: var(--font-mz-sans, 'Jost'), system-ui, sans-serif;
 
   .grain {
     position: fixed;

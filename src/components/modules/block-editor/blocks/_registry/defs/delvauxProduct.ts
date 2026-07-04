@@ -12,7 +12,7 @@
  */
 import { Image as ImageIcon, Pilcrow, Type } from 'lucide-react';
 
-import { DelvauxProduct } from '../../DelvauxProduct';
+import dynamic from 'next/dynamic';
 import type { DelvauxProductContent } from '../../../types';
 import type { BlockDef } from '../types';
 
@@ -67,7 +67,10 @@ export const delvauxProductDef: BlockDef<DelvauxProductContent> = {
     aiLabelEn:
       'large centered product image with hotspots: tap a dot → detail panel slides in from the right, scroll zoom entrance',
   },
-  component: DelvauxProduct,
+  // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
+  component: dynamic(() =>
+    import('../../DelvauxProduct').then(m => m.DelvauxProduct)
+  ),
   defaultContent: { vi: VI, en: EN },
   elements: [
     {

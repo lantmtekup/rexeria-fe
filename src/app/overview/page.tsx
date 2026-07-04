@@ -418,17 +418,15 @@ const MODULES: Module[] = [
         id: 'III.04',
         actor: 'System',
         title: 'Khởi tạo Admin lần đầu',
-        goal: 'Auto-seed admin khi deploy môi trường mới.',
+        goal: 'Admin đầu tiên được BE quản lý — FE không tự seed.',
         steps: [
           <>
-            Đọc <code>INIT_ADMIN_USERNAME / EMAIL / PASSWORD</code> khi server
-            start.
+            Admin/staff tạo qua BE <code>POST /v1/admin/users</code> (không còn
+            flow <code>INIT_ADMIN_*</code> phía FE — gỡ theo audit 2026-07-04).
           </>,
           <>
-            Nếu chưa có admin → tạo account role <code>ADMIN</code>.
-          </>,
-          <>
-            Log <code>[ensureInitialAdmin] Created</code> ra console.
+            Đăng nhập qua Rexer BE <code>/v1/auth/login</code>; FE chỉ giữ
+            cookie gate đã ký.
           </>,
         ],
       },

@@ -19,7 +19,7 @@ import {
   Type,
 } from 'lucide-react';
 
-import { FramerBungeeHeroV2 } from '../../FramerBungeeHeroV2';
+import dynamic from 'next/dynamic';
 import type { FramerBungeeHeroV2Content } from '../../../types';
 import type { BlockDef } from '../types';
 
@@ -94,7 +94,10 @@ export const framerBungeeHeroV2Def: BlockDef<FramerBungeeHeroV2Content> = {
     aiLabelEn:
       'Bungee studio hero v2 (recon spec): wordmark + image marquee + GSAP R1–R6',
   },
-  component: FramerBungeeHeroV2,
+  // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
+  component: dynamic(() =>
+    import('../../FramerBungeeHeroV2').then(m => m.FramerBungeeHeroV2)
+  ),
   defaultContent: { vi: VI, en: EN },
   elements: [
     {

@@ -18,7 +18,9 @@
  * Server component — fetch xảy ra ở Next.js server (Node runtime).
  */
 
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 
 import { getCodeTemplate, listCodeTemplates } from '@/templates/registry';
 import { brandKitToCssVars, type BrandKitData } from '@/lib/brand-kit';
@@ -33,10 +35,17 @@ interface PageProps {
   searchParams: Promise<{ embed?: string }>;
 }
 
-const REXER_BE =
-  process.env.NEXT_PUBLIC_REXER_API ??
-  process.env.REXER_API ??
-  'https://rexerai.tekupsoftware.com';
+// Fail loud khi thiếu env — KHÔNG fallback prod URL: env cấu hình sai mà
+// âm thầm đọc prod là footgun (audit FE 2026-07-04 P4).
+const REXER_BE = (() => {
+  const v = process.env.NEXT_PUBLIC_REXER_API ?? process.env.REXER_API;
+  if (!v) {
+    throw new Error(
+      'NEXT_PUBLIC_REXER_API (hoặc REXER_API) chưa cấu hình — bắt buộc cho /p/[id]'
+    );
+  }
+  return v.replace(/\/+$/, '');
+})();
 
 /**
  * Shape của `/v1/public/pages/{slug}`. BE contract 2026-06-04 §2b xác nhận
@@ -63,20 +72,26 @@ interface PublicPageResponse {
   motion_kit?: MotionKitData;
 }
 
-async function fetchPublicPage(
-  slug: string
-): Promise<PublicPageResponse | null> {
-  try {
-    const res = await fetch(
-      `${REXER_BE}/v1/public/pages/${encodeURIComponent(slug)}`,
-      { cache: 'no-store' }
-    );
-    if (!res.ok) return null;
-    return (await res.json()) as PublicPageResponse;
-  } catch {
-    return null;
+/**
+ * Trang published là immutable per `release_no` → cache SSR với revalidate
+ * 60s + tag để publish/unpublish purge chủ động qua `/api/revalidate-page`
+ * (audit FE 2026-07-04 P2). Bọc React `cache()` để generateMetadata + page
+ * component share đúng 1 lần gọi BE mỗi request (P3).
+ */
+const fetchPublicPage = cache(
+  async (slug: string): Promise<PublicPageResponse | null> => {
+    try {
+      const res = await fetch(
+        `${REXER_BE}/v1/public/pages/${encodeURIComponent(slug)}`,
+        { next: { revalidate: 60, tags: ['public-page', `page:${slug}`] } }
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as PublicPageResponse;
+    } catch {
+      return null;
+    }
   }
-}
+);
 
 /** Resolve code-template entry cho public page.
  *  Primary: `template_code` (BE contract §2b) → registry key, exact match.
@@ -106,7 +121,9 @@ function findCodeTemplateByName(name: string | undefined) {
 /** Fallback BE-rendered HTML (legacy block renderer §15 placeholder). */
 async function fetchBeHtml(slug: string): Promise<string | null> {
   try {
-    const res = await fetch(`${REXER_BE}/p/${slug}`, { cache: 'no-store' });
+    const res = await fetch(`${REXER_BE}/p/${slug}`, {
+      next: { revalidate: 60, tags: ['public-page', `page:${slug}`] },
+    });
     if (!res.ok) return null;
     return await res.text();
   } catch {
@@ -134,6 +151,42 @@ function publicToPage(p: PublicPageResponse): Page {
     updated_by: '',
     created_at: p.published_at,
     updated_at: p.published_at,
+  };
+}
+
+/**
+ * Metadata per-page cho SEO/social share (audit FE 2026-07-04 P3) — trước
+ * đây mọi landing published ship title/OG của root layout. Dùng chung
+ * fetchPublicPage (React cache) nên không tốn thêm round-trip BE.
+ */
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { id: slug } = await params;
+  const pub = await fetchPublicPage(slug);
+  if (!pub) return {};
+  const cfg = (pub.config ?? {}) as {
+    seo?: { title?: string; description?: string; image?: string };
+    description?: string;
+  };
+  const title = cfg.seo?.title || pub.name;
+  const description = cfg.seo?.description ?? cfg.description;
+  const image = cfg.seo?.image;
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      ...(image ? { images: [{ url: image }] } : {}),
+    },
+    twitter: {
+      card: image ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      ...(image ? { images: [image] } : {}),
+    },
   };
 }
 
