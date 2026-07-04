@@ -91,6 +91,8 @@ export type BlockType =
   | 'delvaux_details'
   | 'delvaux_product'
   | 'delvaux_variant'
+  | 'q80_experience'
+  | 'q80_menu'
   // ── Interactive ad creative (clone từ 360-admin-cms, xem PageMetadataAd) ──
   | 'interactive_ad_widget';
 
@@ -1302,6 +1304,125 @@ export interface DelvauxVariantContent {
   skuPersonUrl: string;
 }
 
+/**
+ * Quadplex80 — journey engine (migrate từ quadplex80.com, Nuxt+WebGL L5):
+ * block sticky nhiều viewport tái hiện virtual-scroll journey của bản gốc —
+ * gate ENTER EXPERIENCE + loader, cảnh three.js (GLB tòa 111W57 + billboard
+ * mây/tòa nhà + HDR + lens flare, thông số ĐO từ bundle gốc), 4+ slide suite
+ * chuyển bằng shader wipe (trích nguyên logic gl-slides gốc), drawer chi tiết
+ * suite, overlay floorplans, overlay "see the view" (press & hold, video
+ * timelapse), section contact, sound toggle. Component: `blocks/Q80Experience.tsx`.
+ * Phối hợp với `q80_menu` qua window events `q80:goto`/`q80:slide`/`q80:overlay`.
+ */
+export interface Q80SuiteItem {
+  /** Anchor/id nội bộ (gốc: great-room | guest-suite | sunset-lounge | crown-suite). */
+  slug: string;
+  title: string;
+  /** Nhãn tầng hiển thị (gốc: "80th Floor"). */
+  floorDisplay: string;
+  /** Ảnh nền fullscreen của slide. */
+  imageUrl: string;
+  /** Video timelapse "see the view" (mp4). '' = dùng ảnh imageUrl thay. */
+  viewVideoUrl: string;
+  viewVideoThumbUrl: string;
+  /** Mô tả trong drawer chi tiết (text thuần). */
+  desc: string;
+  /** Ảnh nhỏ trong drawer. */
+  thumbnailUrl: string;
+  /** Ảnh floorplan + PDF tải về. */
+  floorplanUrl: string;
+  floorplanPdfUrl: string;
+}
+export interface Q80InfoItem {
+  title: string;
+  text: string;
+}
+export interface Q80ExperienceContent {
+  // ── Gate/intro (màn "Above The Clouds") ──
+  introTitle: string;
+  introText: string;
+  enterLabel: string;
+  enterNoSoundLabel: string;
+  loadingLabel: string;
+  // ── Slide 01 home/overview ──
+  homeEyebrow: string;
+  homeTitle: string;
+  homeText: string;
+  homePrice: string;
+  overviewLabel: string;
+  overviewTitle: string;
+  overviewDesc: string;
+  overviewThumbUrl: string;
+  overviewFloorplanPdfUrl: string;
+  /** Video timelapse view của slide home (overlay press & hold). */
+  homeViewVideoUrl: string;
+  homeViewVideoLabel: string;
+  // ── Bảng unit info + features (overlay floorplans) ──
+  infoItems: Q80InfoItem[];
+  features: string[];
+  floorplansLabel: string;
+  // ── 4 suite ──
+  suites: Q80SuiteItem[];
+  // ── Contact ──
+  contactEyebrow: string;
+  contactTitle: string;
+  contactSubtitle: string;
+  email: string;
+  phone: string;
+  // ── Sound ──
+  ambientUrl: string;
+  backgroundUrl: string;
+  soundLabel: string;
+  // ── Copy phụ ──
+  scrollLabel: string;
+  pressHoldLabel: string;
+  seeViewLabel: string;
+  // ── Asset cảnh 3D (đổi được để re-skin) ──
+  glbUrl: string;
+  hdrUrl: string;
+  cloudTintUrl: string;
+  introCloudUrl: string;
+  /** 5 lớp mây billboard (layer0→layer4 gốc). */
+  layerUrls: string[];
+  /** 4 tòa nhà lân cận (building0..building3new gốc). */
+  buildingUrls: string[];
+  flare1Url: string;
+  flare2Url: string;
+}
+
+/**
+ * Quadplex80 — chrome cố định: logo 111W57 giữa trên, nút MENU (overlay vàng
+ * fullscreen: ảnh tháp + link 01..07 + footer), nút INQUIRE, số điện thoại.
+ * Trên /p portal fixed (hasRoot && scroller===null); editor render in-flow.
+ * Điều khiển journey qua window event `q80:goto`. Component: `blocks/Q80Menu.tsx`.
+ */
+export interface Q80MenuLink {
+  label: string;
+  /** 'home' | slug suite | 'floorplans' | 'contact'. */
+  target: string;
+}
+export interface Q80CreditItem {
+  title: string;
+  text: string;
+}
+export interface Q80MenuContent {
+  logoText: string;
+  menuLabel: string;
+  closeLabel: string;
+  inquireLabel: string;
+  inquireUrl: string;
+  menuImageUrl: string;
+  links: Q80MenuLink[];
+  mainSiteLabel: string;
+  mainSiteUrl: string;
+  creditsLabel: string;
+  creditsTitle: string;
+  credits: Q80CreditItem[];
+  legalLabel: string;
+  legalText: string;
+  phone: string;
+}
+
 export type BlockContent =
   | HeroSplitContent
   | HeroOverlayContent
@@ -1383,6 +1504,8 @@ export type BlockContent =
   | DelvauxDetailsContent
   | DelvauxProductContent
   | DelvauxVariantContent
+  | Q80ExperienceContent
+  | Q80MenuContent
   | Record<string, unknown>;
 
 /**
@@ -2715,5 +2838,29 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
       'chọn biến thể màu: swatch đổi ảnh sản phẩm + accordion FAQ, phong cách cao cấp',
     aiLabelEn:
       'color-variant selector: swatches swap product image + FAQ accordion, luxury tone',
+  },
+  q80_experience: {
+    type: 'q80_experience',
+    label: 'Experience - 3D Journey',
+    accent: '#7c7262',
+    adminLabel: 'Experience - 3D Journey',
+    gradient: 'from-sky-200 to-white',
+    defaultName: 'Experience - 3D Journey',
+    aiLabelVi:
+      'journey 3D bất động sản cao cấp: gate enter + cảnh WebGL tòa tháp trên mây + slide suite chuyển shader + contact, cuộn điều khiển toàn bộ',
+    aiLabelEn:
+      'luxury real-estate 3D journey: enter gate + WebGL tower-above-clouds scene + shader-wipe suite slides + contact, fully scroll-driven',
+  },
+  q80_menu: {
+    type: 'q80_menu',
+    label: 'Menu - Fullscreen Gold',
+    accent: '#7c7262',
+    adminLabel: 'Menu - Fullscreen Gold',
+    gradient: 'from-amber-100 to-stone-200',
+    defaultName: 'Menu - Fullscreen Gold',
+    aiLabelVi:
+      'chrome cố định: logo serif + nút menu mở overlay vàng fullscreen (ảnh + link đánh số) + nút inquire',
+    aiLabelEn:
+      'fixed chrome: serif logo + hamburger opening gold fullscreen overlay (image + numbered links) + inquire button',
   },
 };
