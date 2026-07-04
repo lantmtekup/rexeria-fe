@@ -413,11 +413,16 @@ const ArpeggioHeroCopy = ({
           'text-2xl @2xl:text-4xl @3xl:text-[60px] @4xl:text-[60px]'
         )}
       >
-        <div
-          dangerouslySetInnerHTML={{
-            __html: content.headline.replace('\n', '<br />'),
-          }}
-        />
+        {/* headline là input của brand user — render text thuần (không
+            innerHTML) để chặn stored XSS trên trang published. */}
+        <div>
+          {content.headline.split('\n').map((line, i, arr) => (
+            <React.Fragment key={i}>
+              {line}
+              {i < arr.length - 1 ? <br /> : null}
+            </React.Fragment>
+          ))}
+        </div>
       </h1>
 
       {content.topRightLabel ? (

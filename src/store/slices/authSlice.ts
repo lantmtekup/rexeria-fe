@@ -45,15 +45,10 @@ export const loginThunk = createAsyncThunk<
     const res = await rexerApi.auth.login({ email, password });
     // Mirror a local signed cookie so the middleware can gate app routes and
     // route the user home by role (admin → /admin, brand → /portal).
+    // Role/scope do route tự verify với BE /v1/auth/me — không gửi từ client.
     await fetch('/api/auth/session-set', {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        role: res.user.role ?? res.user.principal_type ?? '',
-        // scope='brand' → middleware/root page route về /portal (§C1).
-        scope: res.brand?.id ? 'brand' : 'platform',
-      }),
     });
     return {
       id: res.user.id,
