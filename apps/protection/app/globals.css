@@ -1,0 +1,64 @@
+@import 'tailwindcss';
+
+/* ── Zona Pro (self-host woff2 thật từ site gốc) ───────────────────────── */
+@font-face {
+  font-family: 'Zona Pro';
+  src: url('/fonts/zonapro-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Zona Pro';
+  src: url('/fonts/zonapro-semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme inline {
+  --font-zona: 'Zona Pro', system-ui, sans-serif;
+  --color-brand-yellow: #fcc200;
+  --color-brand-grey: #5b6670;
+  --color-brand-bg: #f2f2f2;
+  --color-brand-teal: #3bb6a6;
+}
+
+:root {
+  --yellow: #fcc200;
+  --grey: #5b6670;
+  --bg: #f2f2f2;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--grey);
+  font-family: 'Zona Pro', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Heading pattern: chấm cuối màu vàng (site dùng khắp nơi: downloads. fabrics.) */
+.dot::after {
+  content: '.';
+  color: var(--yellow);
+}
