@@ -60,6 +60,7 @@ import {
 import { BlockMiniPreview } from '@/components/modules/block-editor/BlockMiniPreview';
 import { TablePagination } from '@/components/molecules/TablePagination';
 import { BLOCK_TYPE_META } from '@/components/modules/block-editor/types';
+import { migrateBlockV1toV2 } from '@/components/modules/block-editor/serialize';
 import type {
   Block as EditorBlock,
   BlockType,
@@ -130,7 +131,9 @@ function parseEditorBlock(
 ): EditorBlock | null {
   if (!settings || typeof settings !== 'object') return null;
   if (!('blockType' in settings)) return null;
-  return settings as unknown as EditorBlock;
+  // migrate thay vì cast thẳng: settings dạng cũ (content phẳng, chưa bọc
+  // {desktop}) vẫn preview được — no-op với block đã đúng shape.
+  return migrateBlockV1toV2(settings);
 }
 
 export function BlocksPage() {

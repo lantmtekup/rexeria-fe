@@ -144,8 +144,11 @@ export function parseCanvas(
  * Wrap legacy 1.0 block fields into 2.0 DeviceVariants shape. Mobile is left
  * unset so the renderer falls back to desktop until the user customizes.
  * No-op when block already has DeviceVariants (e.g. parsed 2.0 input).
+ *
+ * Exported: các nơi parse `Block.settings` (BE) → editor Block dùng chung để
+ * settings dạng cũ (content phẳng, chưa bọc {desktop}) không crash preview.
  */
-function migrateBlockV1toV2(b: Record<string, unknown>): Block {
+export function migrateBlockV1toV2(b: Record<string, unknown>): Block {
   const wrap = <T>(value: T | undefined): DeviceVariants<T> | undefined =>
     value === undefined ? undefined : { desktop: value };
 

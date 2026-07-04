@@ -84,7 +84,12 @@ export function PublicBlockRender({
         motion={motion}
         motionKit={motionConfig}
       >
-        <MotionBlockRoot className='overflow-hidden rounded-md bg-white shadow-sm ring-1 ring-black/5'>
+        {/* KHÔNG overflow-hidden/rounded/ring ở wrapper public: (1) chặn
+            `position: sticky` bên trong block (hero frame-scrub, variant pin
+            2-stage của bộ Delvaux render trắng); (2) landing thật không có
+            viền/bo góc giữa các section. Block nào cần clip tự set
+            overflow-hidden trên section của nó. */}
+        <MotionBlockRoot className='relative'>
           <RenderBlock
             block={block}
             content={content}

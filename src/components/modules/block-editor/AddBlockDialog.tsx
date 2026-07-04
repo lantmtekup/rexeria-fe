@@ -139,6 +139,13 @@ const ORDERED_TYPES: BlockType[] = [
   'quiz',
   'poll',
   'booking_form',
+  // ── Delvaux clone ──
+  'delvaux_header',
+  'delvaux_subnav',
+  'delvaux_hero',
+  'delvaux_details',
+  'delvaux_product',
+  'delvaux_variant',
 ];
 
 export function AddBlockDialog({

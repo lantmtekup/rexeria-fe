@@ -1,5 +1,11 @@
 import { BLOCK_TYPE_META } from './types';
 import { getBlockDef } from './blocks/_registry/registry';
+import { delvauxDetailsDef } from './blocks/_registry/defs/delvauxDetails';
+import { delvauxHeaderDef } from './blocks/_registry/defs/delvauxHeader';
+import { delvauxHeroDef } from './blocks/_registry/defs/delvauxHero';
+import { delvauxProductDef } from './blocks/_registry/defs/delvauxProduct';
+import { delvauxSubnavDef } from './blocks/_registry/defs/delvauxSubnav';
+import { delvauxVariantDef } from './blocks/_registry/defs/delvauxVariant';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
@@ -2233,6 +2239,12 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_VI,
   framer_darling_timeline: FRAMER_DARLING_TIMELINE_VI,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.vi,
+  delvaux_header: delvauxHeaderDef.defaultContent.vi,
+  delvaux_subnav: delvauxSubnavDef.defaultContent.vi,
+  delvaux_hero: delvauxHeroDef.defaultContent.vi,
+  delvaux_details: delvauxDetailsDef.defaultContent.vi,
+  delvaux_product: delvauxProductDef.defaultContent.vi,
+  delvaux_variant: delvauxVariantDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
@@ -2309,6 +2321,12 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_EN,
   framer_darling_timeline: FRAMER_DARLING_TIMELINE_EN,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.en,
+  delvaux_header: delvauxHeaderDef.defaultContent.en,
+  delvaux_subnav: delvauxSubnavDef.defaultContent.en,
+  delvaux_hero: delvauxHeroDef.defaultContent.en,
+  delvaux_details: delvauxDetailsDef.defaultContent.en,
+  delvaux_product: delvauxProductDef.defaultContent.en,
+  delvaux_variant: delvauxVariantDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,

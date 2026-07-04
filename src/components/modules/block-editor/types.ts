@@ -83,7 +83,14 @@ export type BlockType =
   | 'mint_vault_craft'
   | 'mint_vault_reveal'
   | 'mint_vault_collection'
-  | 'mint_vault_invitation';
+  | 'mint_vault_invitation'
+  // ── Delvaux clone sections ──
+  | 'delvaux_header'
+  | 'delvaux_subnav'
+  | 'delvaux_hero'
+  | 'delvaux_details'
+  | 'delvaux_product'
+  | 'delvaux_variant';
 
 export interface HeroSplitStat {
   value: string;
@@ -1135,6 +1142,124 @@ export interface FramerVsCollinsProjectsContent {
   }>;
 }
 
+/**
+ * Header - Logo (section `.header` của delvaux-clone): thanh logo căn giữa.
+ * Component: `blocks/DelvauxHeader.tsx`.
+ */
+export interface DelvauxHeaderContent {
+  logoUrl: string;
+  logoText: string;
+}
+
+/**
+ * Sub-nav nổi (thanh `.sticky-menu` của delvaux-clone): pill trắng dán đáy
+ * viewport, gồm các anchor link nhảy tới section + nút "Book" + nút "BUY NOW".
+ * Trên /p là `position: fixed` (portal ra body); trong editor render in-flow
+ * để không đè lên chrome. Component: `blocks/DelvauxSubnav.tsx`.
+ */
+export interface DelvauxSubnavLink {
+  label: string;
+  /** id của section đích (vd 'description' | 'discover' | 'information'). */
+  targetId: string;
+}
+export interface DelvauxSubnavContent {
+  links: DelvauxSubnavLink[];
+  bookLabel: string;
+  bookUrl: string;
+  buyLabel: string;
+  buyUrl: string;
+}
+
+/**
+ * Hero - Scroll Video (section `.hero` của delvaux-clone): ảnh sản phẩm đóng
+ * khung (padding 80px như gốc) scale 0.9→1 khi vào trang, rồi scale 1→2 + fade
+ * theo scroll; phía sau là lớp "intro" — frame-sequence canvas (như canvas
+ * 143-frame gốc) HOẶC video scrubbed — hiện dần và tua theo tiến trình scroll.
+ * Component: `blocks/DelvauxHero.tsx`.
+ */
+export interface DelvauxHeroContent {
+  videoUrl: string;
+  posterUrl: string;
+  /** Heading overlay tuỳ chọn — bản gốc KHÔNG có chữ trên hero; để '' nếu muốn giống gốc. */
+  heading: string;
+  subheading: string;
+  /** 0–1: độ tối lớp overlay phủ trên media. */
+  overlayOpacity: number;
+  /** Mẫu URL frame-sequence, `{i}` = chỉ số frame 1-based (vd `.../img{i}.jpg`). '' = không dùng. */
+  frameUrlPattern: string;
+  /** Số frame của sequence (bản gốc 143). */
+  frameCount: number;
+  /** Danh sách URL frame TƯỜNG MINH (ưu tiên hơn pattern) — dùng khi media
+   *  lưu trên CDN/S3 với key không tuần tự (mỗi asset một uuid). */
+  frameUrls?: string[];
+}
+
+/**
+ * Story - Editorial (section `.details` của delvaux-clone): tiêu đề căn giữa
+ * mask-reveal + 2 đoạn mô tả fade-up. Component: `blocks/DelvauxDetails.tsx`.
+ */
+export interface DelvauxDetailsContent {
+  title: string;
+  body1: string;
+  body2: string;
+}
+
+/**
+ * Product - Hotspots (section `.product-detail` của delvaux-clone): ảnh sản
+ * phẩm lớn căn giữa (100vh) + các hotspot tròn định vị theo % trên ảnh; bấm
+ * hotspot → panel trắng trượt vào từ phải với tiêu đề + mô tả + media (video
+ * autoplay hoặc ảnh). Entrance: ảnh scale 2→1 scrub theo scroll (animate-zoomin
+ * gốc). Component: `blocks/DelvauxProduct.tsx`.
+ */
+export interface DelvauxProductHotspot {
+  title: string;
+  desc: string;
+  mediaUrl: string;
+  mediaType: 'image' | 'video';
+  /** Vị trí hotspot trên khung ảnh, % (0–100) tính từ trái/trên. */
+  x: number;
+  y: number;
+}
+export interface DelvauxProductContent {
+  /** Ảnh sản phẩm chính (nền trong suốt như PNG gốc là đẹp nhất). */
+  imageUrl: string;
+  /** Màu quầng sáng blur sau sản phẩm (gốc #a77c63). */
+  glowColor: string;
+  hotspots: DelvauxProductHotspot[];
+}
+
+/**
+ * Product - Variant (section `.product-variant` của delvaux-clone): cột giữa
+ * hẹp (max 440px) chứa ảnh sản phẩm, "ghost title" serif khổng lồ mờ phía sau,
+ * dãy dot màu dưới ảnh (đổi dot → swap ảnh), parallax nhẹ theo scroll. Nút
+ * "More information" mở popup trượt từ phải (như `.content-discover` gốc) chứa
+ * accordion chi tiết. Component: `blocks/DelvauxVariant.tsx`.
+ */
+export interface DelvauxVariantOption {
+  label: string;
+  ref: string;
+  color: string;
+  imageUrl: string;
+}
+export interface DelvauxVariantFaq {
+  question: string;
+  answer: string;
+}
+export interface DelvauxVariantContent {
+  title: string;
+  variants: DelvauxVariantOption[];
+  faqs: DelvauxVariantFaq[];
+  /** Nhãn nút mở popup chi tiết (gốc: "More information"). */
+  moreInfoLabel: string;
+  /** Stage 2 "product-sku" (gốc: pin 150%, cuộn quá nửa → media full-bleed +
+   *  tên sản phẩm serif trắng khổng lồ reveal theo ký tự + ảnh model). */
+  skuName: string;
+  skuMediaUrl: string;
+  skuMediaType: 'video' | 'image';
+  /** Ảnh model/person hiện sau cùng (gốc person3.png). '' = bỏ qua. */
+  skuPersonUrl: string;
+}
+
 export type BlockContent =
   | HeroSplitContent
   | HeroOverlayContent
@@ -1209,6 +1334,12 @@ export type BlockContent =
   | FramerSignatureFeatureContent
   | FramerVsCollinsProjectsContent
   | FramerClarityServicesContent
+  | DelvauxHeaderContent
+  | DelvauxSubnavContent
+  | DelvauxHeroContent
+  | DelvauxDetailsContent
+  | DelvauxProductContent
+  | DelvauxVariantContent
   | Record<string, unknown>;
 
 /**
@@ -2461,5 +2592,75 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'stack pricing card: ảnh trái + giá/tính năng/CTA phải mỗi card',
     aiLabelEn:
       'stacked pricing cards: image left + price/features/CTA right per card',
+  },
+  delvaux_header: {
+    type: 'delvaux_header',
+    label: 'Header - Logo',
+    accent: '#000000',
+    adminLabel: 'Header - Logo',
+    gradient: 'from-white to-neutral-100',
+    defaultName: 'Header - Logo',
+    aiLabelVi: 'thanh header tối giản chỉ có logo căn giữa',
+    aiLabelEn: 'minimal centered logo header bar',
+  },
+  delvaux_subnav: {
+    type: 'delvaux_subnav',
+    label: 'Sub-nav - Floating Pill',
+    accent: '#111111',
+    adminLabel: 'Sub-nav - Floating Pill',
+    gradient: 'from-white to-neutral-200',
+    defaultName: 'Sub-nav - Floating Pill',
+    aiLabelVi:
+      'thanh điều hướng pill trắng nổi dán đáy màn hình: anchor link tới section + nút mua hàng',
+    aiLabelEn:
+      'floating white pill sub-nav pinned to viewport bottom: section anchors + buy button',
+  },
+  delvaux_hero: {
+    type: 'delvaux_hero',
+    label: 'Hero - Scroll Video',
+    accent: '#0a0a0a',
+    adminLabel: 'Hero - Scroll Video',
+    gradient: 'from-neutral-900 to-neutral-700',
+    defaultName: 'Hero - Scroll Video',
+    aiLabelVi:
+      'hero cinematic: video dán sticky tua theo scroll + heading overlay, phong cách cao cấp',
+    aiLabelEn:
+      'cinematic hero: sticky scroll-scrubbed video + overlay heading, luxury tone',
+  },
+  delvaux_details: {
+    type: 'delvaux_details',
+    label: 'Story - Editorial',
+    accent: '#000000',
+    adminLabel: 'Story - Editorial',
+    gradient: 'from-neutral-100 to-white',
+    defaultName: 'Story - Editorial',
+    aiLabelVi:
+      'block kể chuyện sản phẩm căn giữa: tiêu đề mask-reveal + 2 đoạn mô tả, phong cách editorial cao cấp',
+    aiLabelEn:
+      'centered editorial product-story block: masked title reveal + 2 paragraphs, luxury tone',
+  },
+  delvaux_product: {
+    type: 'delvaux_product',
+    label: 'Product - Feature Cards',
+    accent: '#111111',
+    adminLabel: 'Product - Feature Cards',
+    gradient: 'from-neutral-200 to-white',
+    defaultName: 'Product - Feature Cards',
+    aiLabelVi:
+      'hàng thẻ đặc điểm sản phẩm: mỗi thẻ tiêu đề + ảnh/video, entrance zoom-in theo scroll',
+    aiLabelEn:
+      'row of product feature cards: title + image/video each, scroll zoom-in entrance',
+  },
+  delvaux_variant: {
+    type: 'delvaux_variant',
+    label: 'Product - Variant',
+    accent: '#764733',
+    adminLabel: 'Product - Variant',
+    gradient: 'from-amber-100 to-white',
+    defaultName: 'Product - Variant',
+    aiLabelVi:
+      'chọn biến thể màu: swatch đổi ảnh sản phẩm + accordion FAQ, phong cách cao cấp',
+    aiLabelEn:
+      'color-variant selector: swatches swap product image + FAQ accordion, luxury tone',
   },
 };
