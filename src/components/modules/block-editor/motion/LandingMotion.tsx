@@ -28,11 +28,17 @@ interface LandingMotionValue {
   scroller: HTMLElement | null;
   /** Yêu cầu refresh ScrollTrigger (debounce + vài nhịp trễ bắt ảnh load). */
   requestRefresh: () => void;
+  /** true khi đang nằm trong LandingMotionRoot. Mặc định (mini-preview,
+   *  thumbnail, ngữ cảnh không có root) = false — block dựa vào cờ này để
+   *  KHÔNG portal các phần tử position:fixed ra body (vd header/sub-nav
+   *  Delvaux) khi chỉ đang render preview nhỏ. */
+  hasRoot: boolean;
 }
 
 const LandingMotionContext = React.createContext<LandingMotionValue>({
   scroller: null,
   requestRefresh: () => {},
+  hasRoot: false,
 });
 
 export function LandingMotionRoot({
@@ -105,7 +111,7 @@ export function LandingMotionRoot({
   }, [scrollerRef, enableSmooth, requestRefresh]);
 
   const value = React.useMemo(
-    () => ({ scroller, requestRefresh }),
+    () => ({ scroller, requestRefresh, hasRoot: true }),
     [scroller, requestRefresh]
   );
   return (

@@ -25,6 +25,7 @@ import { rexerApi } from '@/services/rexer/endpoints';
 import { BlockMiniPreview } from '@/components/modules/block-editor/BlockMiniPreview';
 import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
 import { createBlock } from '@/components/modules/block-editor/factory';
+import { migrateBlockV1toV2 } from '@/components/modules/block-editor/serialize';
 import { LandingMotionRoot } from '@/components/modules/block-editor/motion/LandingMotion';
 import {
   MotionProvider,
@@ -55,7 +56,9 @@ function parseEditorBlock(
 ): Block | null {
   if (!settings || typeof settings !== 'object') return null;
   if (!('blockType' in settings)) return null;
-  return settings as unknown as Block;
+  // migrate thay vì cast thẳng: settings dạng cũ (content phẳng) được bọc
+  // {desktop} — no-op với block đã đúng shape.
+  return migrateBlockV1toV2(settings);
 }
 
 export default function DevBlocksPage() {

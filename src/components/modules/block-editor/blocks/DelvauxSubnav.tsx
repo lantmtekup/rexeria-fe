@@ -55,8 +55,10 @@ export function DelvauxSubnav({
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
   const pillRef = React.useRef<HTMLDivElement>(null);
-  const { scroller } = useLandingMotion();
-  const isPublic = scroller === null;
+  const { scroller, hasRoot } = useLandingMotion();
+  // Chỉ portal fixed khi thật sự ở trang render (LandingMotionRoot + window
+  // scroller = /p). Mini-preview/thumbnail không có root → render in-flow.
+  const isPublic = hasRoot && scroller === null;
   const [mounted, setMounted] = React.useState(false);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   // variant stage "done" → morph pill (Book hiện, links ẩn)

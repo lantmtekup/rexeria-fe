@@ -51,8 +51,10 @@ export function DelvauxHeader({
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
   const logoRef = React.useRef<HTMLDivElement>(null);
-  const { scroller } = useLandingMotion();
-  const isPublic = scroller === null;
+  const { scroller, hasRoot } = useLandingMotion();
+  // Chỉ portal fixed khi thật sự ở trang render (LandingMotionRoot + window
+  // scroller = /p). Mini-preview/thumbnail không có root → render in-flow.
+  const isPublic = hasRoot && scroller === null;
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
 
