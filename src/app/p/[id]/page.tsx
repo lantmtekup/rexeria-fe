@@ -28,6 +28,9 @@ import { PublicBlockRender } from './_block-render';
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  /** `?embed=1` — set when the page is iframed on a partner site (interactive
+   *  ad creative embed). Strips the "Tạo bằng REXER" footer. */
+  searchParams: Promise<{ embed?: string }>;
 }
 
 const REXER_BE =
@@ -134,8 +137,12 @@ function publicToPage(p: PublicPageResponse): Page {
   };
 }
 
-export default async function PublicLanding({ params }: PageProps) {
+export default async function PublicLanding({
+  params,
+  searchParams,
+}: PageProps) {
   const { id: slug } = await params;
+  const { embed } = await searchParams;
   const pub = await fetchPublicPage(slug);
   if (!pub) notFound();
 
@@ -169,6 +176,7 @@ export default async function PublicLanding({ params }: PageProps) {
         blueprint={blueprint}
         brandKit={pub.brand_kit}
         motionKit={pub.motion_kit}
+        embed={embed === '1'}
       />
     );
   }

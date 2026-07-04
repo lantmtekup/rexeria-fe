@@ -54,6 +54,7 @@ import {
   type HeroSplitContent,
   type ImageCarouselContent,
   type ImageTransform,
+  type InteractiveAdWidgetContent,
   type Lang,
   type MintDiscoverContent,
   type MintVariantsContent,
@@ -66,6 +67,7 @@ type ElementKind =
   | 'features'
   | 'reasons'
   | 'slides'
+  | 'interactiveAd'
   | 'mintVariants'
   | 'mintTabs'
   | 'background';
@@ -139,15 +141,30 @@ function defFieldType(
 
 function resolveKind(
   key: string,
-  fieldType?: LayerElement['fieldType']
+  fieldType?: LayerElement['fieldType'],
+  blockType?: Block['blockType']
 ): ElementKind {
   // Registry-first: BlockDef khai tường minh thì theo đó, KHÔNG đoán theo tên.
   if (fieldType === 'image') return 'image';
   if (fieldType === 'text' || fieldType === 'textarea') return 'text';
+  // `slides` trùng tên field giữa image_carousel và interactive_ad_widget
+  // nhưng shape khác hẳn nhau — phải phân biệt theo blockType, KHÔNG được
+  // đổi tên key này khác với field thật trong content (nếu không sẽ vỡ
+  // handleDelete/patch vốn ghi thẳng theo `selectedKey`).
+  if (key === 'slides' && blockType === 'interactive_ad_widget') {
+    return 'interactiveAd';
+  }
   return ELEMENT_KIND[key] ?? (isImageKey(key) ? 'image' : 'text');
 }
 
-function resolveLabel(key: string, kind: ElementKind): string {
+function resolveLabel(
+  key: string,
+  kind: ElementKind,
+  blockType?: Block['blockType']
+): string {
+  if (key === 'slides' && blockType === 'interactive_ad_widget') {
+    return 'Slides quảng cáo';
+  }
   if (ELEMENT_LABEL[key]) return ELEMENT_LABEL[key];
   if (kind === 'image') {
     // image2Url → "Ảnh 2", imageUrl → "Ảnh".
@@ -203,8 +220,8 @@ export function ElementToolbar({
   if (!selectedKey) return null;
 
   const fieldType = defFieldType(block, selectedKey);
-  const kind = resolveKind(selectedKey, fieldType);
-  const label = resolveLabel(selectedKey, kind);
+  const kind = resolveKind(selectedKey, fieldType, block.blockType);
+  const label = resolveLabel(selectedKey, kind, block.blockType);
   const variant = editingVariantOf(device);
   const langContent = lang === 'vi' ? block.contentVi : block.contentEn;
   // Read content for the variant being edited, falling back to desktop
@@ -336,6 +353,12 @@ export function ElementToolbar({
         {kind === 'slides' && (
           <SlidesControls
             content={content as ImageCarouselContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'interactiveAd' && (
+          <InteractiveAdControls
+            content={content as InteractiveAdWidgetContent}
             onContentChange={onContentChange}
           />
         )}
@@ -1067,6 +1090,350 @@ function SlidesControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm slide' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────────── INTERACTIVE AD WIDGET
+
+function InteractiveAdControls({
+  content,
+  onContentChange,
+}: {
+  content: InteractiveAdWidgetContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const slides = content.slides ?? [];
+
+  const updateSlide = (
+    i: number,
+    patch: Partial<InteractiveAdWidgetContent['slides'][number]>
+  ) =>
+    onContentChange({
+      ...content,
+      slides: slides.map((s, idx) => (idx === i ? { ...s, ...patch } : s)),
+    });
+  const removeSlide = (i: number) =>
+    onContentChange({
+      ...content,
+      slides: slides.filter((_, idx) => idx !== i),
+    });
+  const moveSlide = (i: number, dir: -1 | 1) => {
+    const next = slides.slice();
+    const j = i + dir;
+    if (j < 0 || j >= next.length) return;
+    [next[i], next[j]] = [next[j], next[i]];
+    onContentChange({ ...content, slides: next });
+  };
+  const addSlide = () =>
+    onContentChange({
+      ...content,
+      slides: [
+        ...slides,
+        {
+          id: `ad_${Math.random().toString(36).slice(2, 8)}`,
+          backgroundType: 'image' as const,
+          backgroundUrl:
+            'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1600&q=80',
+          hotspots: [],
+          ctas: [],
+        },
+      ],
+    });
+
+  const addHotspot = (i: number) =>
+    updateSlide(i, {
+      hotspots: [
+        ...slides[i].hotspots,
+        {
+          id: `hs_${Math.random().toString(36).slice(2, 8)}`,
+          xPct: 50,
+          yPct: 50,
+          label: '',
+        },
+      ],
+    });
+  const updateHotspot = (
+    i: number,
+    hIdx: number,
+    patch: Partial<
+      InteractiveAdWidgetContent['slides'][number]['hotspots'][number]
+    >
+  ) =>
+    updateSlide(i, {
+      hotspots: slides[i].hotspots.map((h, idx) =>
+        idx === hIdx ? { ...h, ...patch } : h
+      ),
+    });
+  const removeHotspot = (i: number, hIdx: number) =>
+    updateSlide(i, {
+      hotspots: slides[i].hotspots.filter((_, idx) => idx !== hIdx),
+    });
+
+  const addCta = (i: number) =>
+    updateSlide(i, {
+      ctas: [
+        ...slides[i].ctas,
+        {
+          id: `cta_${Math.random().toString(36).slice(2, 8)}`,
+          label: 'Tìm hiểu thêm',
+          href: '#',
+          style: 'primary' as const,
+        },
+      ],
+    });
+  const updateCta = (
+    i: number,
+    cIdx: number,
+    patch: Partial<InteractiveAdWidgetContent['slides'][number]['ctas'][number]>
+  ) =>
+    updateSlide(i, {
+      ctas: slides[i].ctas.map((c, idx) =>
+        idx === cIdx ? { ...c, ...patch } : c
+      ),
+    });
+  const removeCta = (i: number, cIdx: number) =>
+    updateSlide(i, {
+      ctas: slides[i].ctas.filter((_, idx) => idx !== cIdx),
+    });
+
+  return (
+    <PopoverTrigger
+      label='Quảng cáo'
+      preview={`${slides.length} slide`}
+      width={520}
+    >
+      <div className='mb-2 flex flex-col gap-2 rounded-md border border-neutral-200 bg-neutral-50/60 p-2'>
+        <p className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+          Cấu hình chung
+        </p>
+        <div className='flex items-center gap-3'>
+          <label className='text-2xs inline-flex shrink-0 items-center gap-1 text-neutral-600'>
+            <input
+              type='checkbox'
+              checked={content.closeable ?? true}
+              onChange={e =>
+                onContentChange({ ...content, closeable: e.target.checked })
+              }
+            />
+            Cho phép đóng
+          </label>
+          <label className='text-2xs inline-flex shrink-0 items-center gap-1 text-neutral-600'>
+            <input
+              type='checkbox'
+              checked={(content.autoplayMs ?? 0) > 0}
+              onChange={e =>
+                onContentChange({
+                  ...content,
+                  autoplayMs: e.target.checked ? 4500 : 0,
+                })
+              }
+            />
+            Autoplay
+          </label>
+          <input
+            type='number'
+            min={1000}
+            max={20000}
+            step={500}
+            value={content.autoplayMs ?? 0}
+            onChange={e =>
+              onContentChange({
+                ...content,
+                autoplayMs: Math.max(0, Number(e.target.value) || 0),
+              })
+            }
+            disabled={!content.autoplayMs}
+            className='text-2xs h-7 w-20 rounded-md bg-white px-1.5 text-center font-mono ring-1 ring-neutral-200 focus:outline-none disabled:opacity-50'
+            placeholder='ms'
+          />
+        </div>
+      </div>
+
+      <div className='flex max-h-96 flex-col gap-2 overflow-y-auto pr-1'>
+        {slides.map((slide, i) => (
+          <div
+            key={slide.id}
+            className='flex flex-col gap-2 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Slide {i + 1}
+              </span>
+              <div className='flex items-center gap-1'>
+                <button
+                  type='button'
+                  onClick={() => moveSlide(i, -1)}
+                  disabled={i === 0}
+                  aria-label='Lên trên'
+                  className='flex size-6 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40'
+                >
+                  ↑
+                </button>
+                <button
+                  type='button'
+                  onClick={() => moveSlide(i, 1)}
+                  disabled={i === slides.length - 1}
+                  aria-label='Xuống dưới'
+                  className='flex size-6 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40'
+                >
+                  ↓
+                </button>
+                <button
+                  type='button'
+                  onClick={() => removeSlide(i)}
+                  aria-label='Xoá slide'
+                  className='flex size-7 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                >
+                  <Trash2 className='size-3.5' />
+                </button>
+              </div>
+            </div>
+
+            <div className='flex items-center gap-2'>
+              <select
+                value={slide.backgroundType}
+                onChange={e =>
+                  updateSlide(i, {
+                    backgroundType: e.target.value as 'image' | 'video',
+                  })
+                }
+                className='text-2xs h-8 rounded-md border border-neutral-200 bg-white px-2'
+              >
+                <option value='image'>Ảnh</option>
+                <option value='video'>Video</option>
+              </select>
+              <Input
+                value={slide.backgroundUrl}
+                onChange={e =>
+                  updateSlide(i, { backgroundUrl: e.target.value })
+                }
+                placeholder='URL ảnh/video nền'
+                className='text-2xs h-8 flex-1 border-neutral-200 bg-white'
+              />
+            </div>
+            {slide.backgroundType === 'image' && (
+              <ImagePicker
+                value={slide.backgroundUrl}
+                onChange={url => updateSlide(i, { backgroundUrl: url })}
+              />
+            )}
+
+            {/* Hotspots */}
+            <div className='flex flex-col gap-1.5 rounded-md bg-neutral-50/60 p-1.5'>
+              <p className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Hotspot ({slide.hotspots.length})
+              </p>
+              {slide.hotspots.map((h, hIdx) => (
+                <div key={h.id} className='flex items-center gap-1'>
+                  <input
+                    type='number'
+                    min={0}
+                    max={100}
+                    value={h.xPct}
+                    onChange={e =>
+                      updateHotspot(i, hIdx, { xPct: Number(e.target.value) })
+                    }
+                    className='text-2xs h-7 w-12 rounded-md border border-neutral-200 bg-white px-1 text-center font-mono'
+                    title='X %'
+                  />
+                  <input
+                    type='number'
+                    min={0}
+                    max={100}
+                    value={h.yPct}
+                    onChange={e =>
+                      updateHotspot(i, hIdx, { yPct: Number(e.target.value) })
+                    }
+                    className='text-2xs h-7 w-12 rounded-md border border-neutral-200 bg-white px-1 text-center font-mono'
+                    title='Y %'
+                  />
+                  <Input
+                    value={h.label}
+                    onChange={e =>
+                      updateHotspot(i, hIdx, { label: e.target.value })
+                    }
+                    placeholder='Nhãn'
+                    className='text-2xs h-7 flex-1 border-neutral-200 bg-white'
+                  />
+                  <select
+                    value={h.ctaId ?? ''}
+                    onChange={e =>
+                      updateHotspot(i, hIdx, {
+                        ctaId: e.target.value || undefined,
+                      })
+                    }
+                    className='text-2xs h-7 rounded-md border border-neutral-200 bg-white px-1'
+                  >
+                    <option value=''>— CTA —</option>
+                    {slide.ctas.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.label || c.id}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type='button'
+                    onClick={() => removeHotspot(i, hIdx)}
+                    aria-label='Xoá hotspot'
+                    className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                  >
+                    <Trash2 className='size-3' />
+                  </button>
+                </div>
+              ))}
+              <AddRow onAdd={() => addHotspot(i)} label='Thêm hotspot' />
+            </div>
+
+            {/* CTAs */}
+            <div className='flex flex-col gap-1.5 rounded-md bg-neutral-50/60 p-1.5'>
+              <p className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                CTA ({slide.ctas.length})
+              </p>
+              {slide.ctas.map((c, cIdx) => (
+                <div key={c.id} className='flex items-center gap-1'>
+                  <Input
+                    value={c.label}
+                    onChange={e =>
+                      updateCta(i, cIdx, { label: e.target.value })
+                    }
+                    placeholder='Nhãn nút'
+                    className='text-2xs h-7 flex-1 border-neutral-200 bg-white'
+                  />
+                  <Input
+                    value={c.href}
+                    onChange={e => updateCta(i, cIdx, { href: e.target.value })}
+                    placeholder='https://…'
+                    className='text-2xs h-7 flex-1 border-neutral-200 bg-white'
+                  />
+                  <select
+                    value={c.style}
+                    onChange={e =>
+                      updateCta(i, cIdx, {
+                        style: e.target.value as 'primary' | 'secondary',
+                      })
+                    }
+                    className='text-2xs h-7 rounded-md border border-neutral-200 bg-white px-1'
+                  >
+                    <option value='primary'>Chính</option>
+                    <option value='secondary'>Phụ</option>
+                  </select>
+                  <button
+                    type='button'
+                    onClick={() => removeCta(i, cIdx)}
+                    aria-label='Xoá CTA'
+                    className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                  >
+                    <Trash2 className='size-3' />
+                  </button>
+                </div>
+              ))}
+              <AddRow onAdd={() => addCta(i)} label='Thêm CTA' />
+            </div>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={addSlide} label='Thêm slide' />
     </PopoverTrigger>
   );
 }

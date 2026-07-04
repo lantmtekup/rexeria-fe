@@ -18,6 +18,7 @@ import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
+import { interactiveAdWidgetDef } from './defs/interactiveAdWidget';
 import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
@@ -31,6 +32,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   delvaux_details: delvauxDetailsDef as BlockDef,
   delvaux_product: delvauxProductDef as BlockDef,
   delvaux_variant: delvauxVariantDef as BlockDef,
+  interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
 };
 
 export function getBlockDef(type: BlockType): BlockDef | undefined {

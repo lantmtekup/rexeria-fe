@@ -90,7 +90,9 @@ export type BlockType =
   | 'delvaux_hero'
   | 'delvaux_details'
   | 'delvaux_product'
-  | 'delvaux_variant';
+  | 'delvaux_variant'
+  // ── Interactive ad creative (clone từ 360-admin-cms, xem PageMetadataAd) ──
+  | 'interactive_ad_widget';
 
 export interface HeroSplitStat {
   value: string;
@@ -439,6 +441,46 @@ export interface ImageCarouselContent {
   autoplayMs?: number;
   showPagination?: boolean;
   showNavArrows?: boolean;
+}
+
+/**
+ * Interactive ad creative — clone của tính năng "quảng cáo tương tác" từ
+ * 360-admin-cms (xem PageMetadataAdInteractive ở services/rexer/types.ts).
+ * Một block duy nhất, atomic: nhiều slide, mỗi slide có ảnh/video nền +
+ * hotspot định vị theo % + nút CTA. Khác `ImageCarouselContent` ở chỗ mỗi
+ * slide còn mang hotspots/ctas riêng thay vì chỉ caption tĩnh.
+ */
+export interface InteractiveAdHotspot {
+  id: string;
+  xPct: number; // 0..100
+  yPct: number; // 0..100
+  label: string;
+  /** Liên kết tới 1 cta trong cùng slide — click hotspot mở/điều hướng theo cta đó. */
+  ctaId?: string;
+}
+
+export interface InteractiveAdCta {
+  id: string;
+  label: string;
+  href: string;
+  style: 'primary' | 'secondary';
+}
+
+export interface InteractiveAdSlide {
+  id: string;
+  backgroundType: 'image' | 'video';
+  backgroundUrl: string;
+  /** Auto-advance khi slide này đang active; 0/undefined = dùng autoplayMs chung. */
+  durationMs?: number;
+  hotspots: InteractiveAdHotspot[];
+  ctas: InteractiveAdCta[];
+}
+
+export interface InteractiveAdWidgetContent {
+  slides: InteractiveAdSlide[];
+  closeable: boolean;
+  /** Auto-advance interval ms mặc định cho mọi slide; 0/undefined = manual only. */
+  autoplayMs?: number;
 }
 
 /**
@@ -1284,6 +1326,7 @@ export type BlockContent =
   | MintVaultInvitationContent
   | CtaSectionContent
   | ImageCarouselContent
+  | InteractiveAdWidgetContent
   | StoriesContent
   | SplitScreenContent
   | QuizContent
@@ -2069,6 +2112,16 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Slide ảnh',
     aiLabelVi: 'slide ảnh chuyển động',
     aiLabelEn: 'image carousel / slider',
+  },
+  interactive_ad_widget: {
+    type: 'interactive_ad_widget',
+    label: 'Quảng cáo tương tác',
+    accent: '#7c3aed',
+    adminLabel: 'Interactive Ad',
+    gradient: 'from-violet-500 to-fuchsia-600',
+    defaultName: 'Quảng cáo tương tác',
+    aiLabelVi: 'widget quảng cáo nhiều slide có hotspot và nút CTA',
+    aiLabelEn: 'multi-slide ad widget with hotspots and CTA buttons',
   },
   stories: {
     type: 'stories',

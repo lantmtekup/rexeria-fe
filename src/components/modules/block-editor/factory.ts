@@ -52,6 +52,7 @@ import type {
   HeroOverlayContent,
   HeroSplitContent,
   ImageCarouselContent,
+  InteractiveAdWidgetContent,
   PanoramaContent,
   TextDisplaceHeroContent,
   ImageTrailContent,
@@ -730,6 +731,37 @@ const CAROUSEL_EN: ImageCarouselContent = {
   autoplayMs: 4500,
   showPagination: true,
   showNavArrows: true,
+};
+
+// ── Interactive ad widget ───────────────────────────────────────────────
+const INTERACTIVE_AD_WIDGET: InteractiveAdWidgetContent = {
+  slides: [
+    {
+      id: 'slide-1',
+      backgroundType: 'image',
+      backgroundUrl:
+        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80',
+      hotspots: [
+        {
+          id: 'hotspot-1',
+          xPct: 50,
+          yPct: 50,
+          label: 'Xem chi tiết',
+          ctaId: 'cta-1',
+        },
+      ],
+      ctas: [
+        {
+          id: 'cta-1',
+          label: 'Tìm hiểu thêm',
+          href: '#',
+          style: 'primary',
+        },
+      ],
+    },
+  ],
+  closeable: true,
+  autoplayMs: 4500,
 };
 
 // ── Stories ─────────────────────────────────────────────────────────────
@@ -2192,6 +2224,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   mint_vault_reveal: MINT_VAULT_REVEAL_VI,
   mint_vault_collection: MINT_VAULT_COLLECTION_VI,
   mint_vault_invitation: MINT_VAULT_INVITATION_VI,
+  interactive_ad_widget: INTERACTIVE_AD_WIDGET,
   image_carousel: CAROUSEL_VI,
   stories: STORIES_VI,
   split_screen: SPLIT_VI,
@@ -2274,6 +2307,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   mint_vault_reveal: MINT_VAULT_REVEAL_VI,
   mint_vault_collection: MINT_VAULT_COLLECTION_VI,
   mint_vault_invitation: MINT_VAULT_INVITATION_VI,
+  interactive_ad_widget: INTERACTIVE_AD_WIDGET,
   image_carousel: CAROUSEL_EN,
   stories: STORIES_EN,
   split_screen: SPLIT_EN,

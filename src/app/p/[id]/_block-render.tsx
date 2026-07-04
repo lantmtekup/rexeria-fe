@@ -4,8 +4,13 @@
  * FE-side block template render cho `/p/[slug]` public route. Parse
  * canvas_blueprint từ BE public response → loop blocks → render qua
  * `RenderBlock` + MotionProvider (mode='production'). Mirror logic
- * của admin overlay view nhưng tối giản — không có data-block-id wrapper
- * vì public render không host StatsAnnotationOverlay.
+ * của admin overlay view nhưng tối giản.
+ *
+ * Tracking: `useInitTracker`/`useBlockTracking` + wrapper `data-block-id`/
+ * `data-block-type` (trước đây route này KHÔNG có, chỉ `[token]/page.tsx`
+ * mới có — nghĩa là mọi lượt xem `/p/[slug]` trần không hề được đo). Vá
+ * lại để interactive ad creative (và mọi page khác qua route này) đo được
+ * page_view/click/block_view thật khi nhúng iframe lên site đối tác.
  */
 
 import * as React from 'react';
@@ -24,6 +29,7 @@ import {
   isVerticalTransition,
 } from '@/components/modules/block-editor/transitions/TemplateTransitions';
 import { brandKitToCssVars, type BrandKitData } from '@/lib/brand-kit';
+import { useBlockTracking, useInitTracker } from '@/lib/analytics/use-tracker';
 import type { MotionKitData, Page } from '@/services/rexer/types';
 
 interface Props {
@@ -33,6 +39,8 @@ interface Props {
   brandKit?: BrandKitData;
   /** Active motion kit → scales every block's GSAP timeline. */
   motionKit?: MotionKitData;
+  /** `?embed=1` — nhúng iframe lên site đối tác. Ẩn footer "Tạo bằng REXER". */
+  embed?: boolean;
 }
 
 function adaptCanvas(
@@ -46,15 +54,64 @@ function adaptCanvas(
   return { schema_version: '2.0', blocks, transition };
 }
 
+/** `*.tekup.vn` matches `foo.tekup.vn` and `tekup.vn` itself. */
+function hostMatches(host: string, pattern: string): boolean {
+  if (pattern === host) return true;
+  if (pattern.startsWith('*.')) {
+    const base = pattern.slice(2);
+    return host === base || host.endsWith(`.${base}`);
+  }
+  return false;
+}
+
+/**
+ * Domain allowlist — CHECK PHÍA CLIENT, TẠM THỜI (honor-system, dễ bypass
+ * bằng cách strip script). BE chưa enforce server-side — xem
+ * docs/be-spec-interactive-ad-creative-2026-07-02.md §3. Chỉ áp dụng cho
+ * page type='ad' có khai `interactive.allowed_domains`; page khác luôn qua.
+ */
+function useAdDomainAllowed(page: Page): boolean {
+  const [allowed, setAllowed] = React.useState(true);
+  React.useEffect(() => {
+    if (page.type !== 'ad') return;
+    const meta = page.type_metadata as {
+      interactive?: { allowed_domains?: string[] };
+    };
+    const domains = meta?.interactive?.allowed_domains;
+    if (!domains || domains.length === 0) return;
+    if (!document.referrer) return; // mở trực tiếp (không nhúng) → luôn cho qua
+    try {
+      const referrerHost = new URL(document.referrer).hostname;
+      setAllowed(domains.some(d => hostMatches(referrerHost, d)));
+    } catch {
+      setAllowed(true);
+    }
+  }, [page]);
+  return allowed;
+}
+
 export function PublicBlockRender({
   page,
   blueprint,
   brandKit,
   motionKit,
+  embed,
 }: Props) {
+  useInitTracker(page.id);
+  useBlockTracking();
+  const domainAllowed = useAdDomainAllowed(page);
+
   const parsed = parseCanvas(adaptCanvas(blueprint));
   const visible = parsed?.blocks.filter(b => b.isVisible) ?? [];
   const transition = asTransition(parsed?.transition);
+
+  if (!domainAllowed) {
+    return (
+      <div className='flex min-h-screen items-center justify-center bg-neutral-950 text-sm text-white/50'>
+        Domain này chưa được phép nhúng ad creative.
+      </div>
+    );
+  }
 
   // Map the BE motion kit (snake_case) to the runtime config the GSAP layer
   // reads (durationScale + easing). transition_style drives page transitions
@@ -89,15 +146,17 @@ export function PublicBlockRender({
             2-stage của bộ Delvaux render trắng); (2) landing thật không có
             viền/bo góc giữa các section. Block nào cần clip tự set
             overflow-hidden trên section của nó. */}
-        <MotionBlockRoot className='relative'>
-          <RenderBlock
-            block={block}
-            content={content}
-            styles={styles}
-            background={background}
-            order={order}
-          />
-        </MotionBlockRoot>
+        <div data-block-id={block.id} data-block-type={block.blockType}>
+          <MotionBlockRoot className='relative'>
+            <RenderBlock
+              block={block}
+              content={content}
+              styles={styles}
+              background={background}
+              order={order}
+            />
+          </MotionBlockRoot>
+        </div>
       </MotionProvider>
     );
   });
@@ -111,9 +170,11 @@ export function PublicBlockRender({
           <TemplateTransitions transition={transition} items={items} />
         </main>
       </LandingMotionRoot>
-      <footer className='text-3xs border-t border-neutral-200 bg-white px-6 py-4 text-center tracking-widest text-neutral-400 uppercase'>
-        Tạo bằng REXER · {visible.length} block · {page.slug}
-      </footer>
+      {embed ? null : (
+        <footer className='text-3xs border-t border-neutral-200 bg-white px-6 py-4 text-center tracking-widest text-neutral-400 uppercase'>
+          Tạo bằng REXER · {visible.length} block · {page.slug}
+        </footer>
+      )}
     </div>
   );
 }

@@ -47,6 +47,7 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
 import { Chip } from '@/components/atoms/chip';
+import { PillChip } from '@/components/atoms/pill-chip';
 import { DomainSettingsDialog } from '@/components/modules/Admin/DomainSettingsDialog';
 import {
   CreateLandingDialog,
@@ -391,7 +392,7 @@ export function AdminCanvasTemplatesPage() {
           </p>
         </div>
         <div className='flex items-center gap-2'>
-          <Button variant='outline' onClick={load} disabled={loading}>
+          <Button variant='neutral' onClick={load} disabled={loading}>
             <RefreshCwIcon
               className={cn('size-4', loading && 'animate-spin')}
             />
@@ -404,135 +405,131 @@ export function AdminCanvasTemplatesPage() {
         </div>
       </div>
 
-      {/* Toolbar — search + sort */}
-      <div className='border-border bg-background flex flex-wrap items-center gap-2 rounded-2xl border p-2 shadow-sm'>
-        <div className='relative max-w-sm flex-1'>
-          <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
-          <Input
-            placeholder='Tìm theo tên / slug…'
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className='pl-9'
-          />
+      {/* Toolbar — search + sort + view, filters below a hairline */}
+      <div className='border-border bg-background flex flex-col gap-3 rounded-2xl border p-3 shadow-sm'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <div className='relative max-w-sm flex-1'>
+            <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
+            <Input
+              placeholder='Tìm theo tên / slug…'
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className='pl-9'
+            />
+          </div>
+
+          <div className='relative inline-flex items-center'>
+            <ArrowDownUp className='text-muted-foreground pointer-events-none absolute left-2.5 size-3.5' />
+            <select
+              value={sort}
+              onChange={e => setSort(e.target.value as Sort)}
+              className='border-border text-content-muted hover:bg-muted bg-background focus:border-ring h-9 appearance-none rounded-lg border py-1.5 pr-3 pl-7 text-xs font-medium outline-none'
+              aria-label='Sort'
+            >
+              {SORT_OPTIONS.map(o => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className='border-border bg-background ml-auto inline-flex items-center gap-0.5 rounded-lg border p-0.5'>
+            <ViewBtn
+              active={view === 'grid'}
+              onClick={() => setView('grid')}
+              icon={<LayoutGrid className='size-3.5' />}
+              label='Grid'
+            />
+            <ViewBtn
+              active={view === 'table'}
+              onClick={() => setView('table')}
+              icon={<TableIcon className='size-3.5' />}
+              label='Table'
+            />
+          </div>
         </div>
 
-        <div className='relative inline-flex items-center'>
-          <ArrowDownUp className='text-muted-foreground pointer-events-none absolute left-2.5 size-3.5' />
-          <select
-            value={sort}
-            onChange={e => setSort(e.target.value as Sort)}
-            className='border-border text-content-muted hover:bg-muted bg-background focus:border-ring appearance-none rounded-lg border py-1.5 pr-3 pl-7 text-xs font-medium outline-none'
-            aria-label='Sort'
-          >
-            {SORT_OPTIONS.map(o => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        <div className='border-border flex flex-wrap items-center gap-2 border-t pt-3'>
+          <FilterGroup label='Type'>
+            <PillChip
+              label='Tất cả'
+              selected={typeFilter === 'all'}
+              onClick={() => setTypeFilter('all')}
+            />
+            <PillChip
+              label='Landing'
+              selected={typeFilter === 'landing'}
+              onClick={() => setTypeFilter('landing')}
+            />
+            <PillChip
+              label='Ad'
+              selected={typeFilter === 'ad'}
+              onClick={() => setTypeFilter('ad')}
+            />
+            <PillChip
+              label='Curate'
+              selected={typeFilter === 'curate'}
+              onClick={() => setTypeFilter('curate')}
+            />
+          </FilterGroup>
 
-        <div className='border-border bg-background ml-auto inline-flex items-center gap-0.5 rounded-lg border p-0.5'>
-          <ViewBtn
-            active={view === 'grid'}
-            onClick={() => setView('grid')}
-            icon={<LayoutGrid className='size-3.5' />}
-            label='Grid'
-          />
-          <ViewBtn
-            active={view === 'table'}
-            onClick={() => setView('table')}
-            icon={<TableIcon className='size-3.5' />}
-            label='Table'
-          />
-        </div>
-      </div>
+          <span className='bg-border hidden h-4 w-px sm:block' />
 
-      {/* Filter chips */}
-      <div className='flex flex-wrap items-center gap-2'>
-        <FilterGroup label='Type'>
-          <ChipBtn
-            active={typeFilter === 'all'}
-            onClick={() => setTypeFilter('all')}
-            label='Tất cả'
-          />
-          <ChipBtn
-            active={typeFilter === 'landing'}
-            onClick={() => setTypeFilter('landing')}
-            label='Landing'
-            accent='rose'
-          />
-          <ChipBtn
-            active={typeFilter === 'ad'}
-            onClick={() => setTypeFilter('ad')}
-            label='Ad'
-            accent='amber'
-          />
-          <ChipBtn
-            active={typeFilter === 'curate'}
-            onClick={() => setTypeFilter('curate')}
-            label='Curate'
-            accent='violet'
-          />
-        </FilterGroup>
+          <FilterGroup label='Status'>
+            <PillChip
+              label='Tất cả'
+              selected={statusFilter === 'all'}
+              onClick={() => setStatusFilter('all')}
+            />
+            <PillChip
+              label='Draft'
+              selected={statusFilter === 'draft'}
+              onClick={() => setStatusFilter('draft')}
+            />
+            <PillChip
+              label='Published'
+              selected={statusFilter === 'published'}
+              onClick={() => setStatusFilter('published')}
+            />
+            <PillChip
+              label='Archived'
+              selected={statusFilter === 'archived'}
+              onClick={() => setStatusFilter('archived')}
+            />
+          </FilterGroup>
 
-        <span className='bg-muted hidden h-4 w-px sm:block' />
+          <span className='bg-border hidden h-4 w-px sm:block' />
 
-        <FilterGroup label='Status'>
-          <ChipBtn
-            active={statusFilter === 'all'}
-            onClick={() => setStatusFilter('all')}
-            label='Tất cả'
-          />
-          <ChipBtn
-            active={statusFilter === 'draft'}
-            onClick={() => setStatusFilter('draft')}
-            label='Draft'
-            accent='amber'
-          />
-          <ChipBtn
-            active={statusFilter === 'published'}
-            onClick={() => setStatusFilter('published')}
-            label='Published'
-            accent='emerald'
-          />
-          <ChipBtn
-            active={statusFilter === 'archived'}
-            onClick={() => setStatusFilter('archived')}
-            label='Archived'
-          />
-        </FilterGroup>
+          <FilterGroup label='Brand'>
+            <select
+              value={brandFilter}
+              onChange={e => setBrandFilter(e.target.value)}
+              className='border-border text-content-muted hover:bg-muted bg-background h-8 rounded-lg border px-2.5 text-xs font-medium outline-none'
+            >
+              <option value=''>Tất cả brand</option>
+              {brands.map(b => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </FilterGroup>
 
-        <span className='bg-muted hidden h-4 w-px sm:block' />
+          {hasActiveFilters && (
+            <button
+              type='button'
+              onClick={clearFilters}
+              className='text-content-muted hover:text-foreground ml-1 inline-flex items-center gap-1 text-xs'
+            >
+              <XIcon className='size-3' />
+              Clear
+            </button>
+          )}
 
-        <FilterGroup label='Brand'>
-          <select
-            value={brandFilter}
-            onChange={e => setBrandFilter(e.target.value)}
-            className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1 text-xs font-medium outline-none'
-          >
-            <option value=''>Tất cả brand</option>
-            {brands.map(b => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </FilterGroup>
-
-        {hasActiveFilters && (
-          <button
-            type='button'
-            onClick={clearFilters}
-            className='text-2xs text-content-muted hover:text-foreground ml-1 inline-flex items-center gap-1'
-          >
-            <XIcon className='size-3' />
-            Clear
-          </button>
-        )}
-
-        <div className='text-3xs text-content-muted ml-auto'>
-          {items.length} / {total}
+          <div className='text-content-muted ml-auto text-xs'>
+            {items.length} / {total}
+          </div>
         </div>
       </div>
 
@@ -1262,42 +1259,6 @@ function FilterGroup({
       </span>
       <div className='inline-flex items-center gap-1'>{children}</div>
     </div>
-  );
-}
-
-function ChipBtn({
-  active,
-  onClick,
-  label,
-  accent,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  accent?: 'rose' | 'amber' | 'violet' | 'emerald';
-}) {
-  const accentActive: Record<NonNullable<typeof accent>, string> = {
-    rose: 'bg-rose-600 text-white shadow-sm',
-    amber: 'bg-amber-500 text-white shadow-sm',
-    violet: 'bg-violet-600 text-white shadow-sm',
-    emerald: 'bg-emerald-600 text-white shadow-sm',
-  };
-  const cls = active
-    ? accent
-      ? accentActive[accent]
-      : 'bg-foreground text-background shadow-sm'
-    : 'border border-border bg-background text-content-muted hover:bg-muted';
-  return (
-    <button
-      type='button'
-      onClick={onClick}
-      className={cn(
-        'text-2xs rounded-full px-2.5 py-1 font-medium transition-colors',
-        cls
-      )}
-    >
-      {label}
-    </button>
   );
 }
 

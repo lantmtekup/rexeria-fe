@@ -8,6 +8,7 @@ import {
   BookmarkIcon,
   ImagesIcon,
   InboxIcon,
+  LayersIcon,
   LayoutDashboardIcon,
   LayoutTemplateIcon,
   LightbulbIcon,
@@ -45,6 +46,11 @@ const NAV: NavItem[] = [
   },
   { href: '/admin/products', labelKey: 'nav.products', icon: PackageIcon },
   { href: '/admin/ads', labelKey: 'nav.ads', icon: MegaphoneIcon },
+  {
+    href: '/admin/ad-creatives',
+    labelKey: 'nav.adCreatives',
+    icon: LayersIcon,
+  },
   {
     href: '/admin/landing-pages',
     labelKey: 'nav.canvasTemplates',

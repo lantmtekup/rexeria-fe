@@ -8,6 +8,7 @@ import {
   ChevronsUpDown,
   FolderOpen,
   Globe,
+  Layers,
   LayoutDashboard,
   LayoutTemplate,
   Lightbulb,
@@ -68,6 +69,12 @@ const NAV: NavItem[] = [
     href: '/portal/ads',
     labelKey: 'navAds',
     icon: Megaphone,
+    group: 'Rexer Product',
+  },
+  {
+    href: '/portal/ad-creatives',
+    labelKey: 'navAdCreatives',
+    icon: Layers,
     group: 'Rexer Product',
   },
   {

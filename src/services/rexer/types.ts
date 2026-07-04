@@ -398,6 +398,10 @@ export interface CreateTemplateRequest {
   category?: string; // maxLength 64
   tags?: string[];
   thumbnail_url?: string; // maxLength 512
+  /** BE spec §2.1b (docs/be-spec-interactive-ad-creative-2026-07-02.md) —
+   * discriminator so pages.create({type}) can match a template. Omit → BE
+   * defaults to 'landing'. Required to be 'ad' for interactive ad creatives. */
+  target_page_type?: 'landing' | 'ad' | 'curate' | 'email';
 }
 
 export interface TemplateListResponse {
@@ -2466,9 +2470,37 @@ export interface PageMetadataAd {
     | 'instagram_square'
     | 'story_1080x1920'
     | 'youtube_thumbnail'
+    // Interactive ad-creative widget (carousel + hotspot + CTA), rendered by
+    // the `interactive_ad_widget` block — see PageMetadataAdInteractive.
+    | 'interactive_widget'
     | string;
   dimensions: { width: number; height: number };
   duration_sec?: number;
+  /** Only present/meaningful when format === 'interactive_widget'. */
+  interactive?: PageMetadataAdInteractive;
+}
+// Wrapper config for the interactive ad-creative widget — layout/trigger
+// mirror PageMetadataCurate's shape. allowed_domains/freq_cap are enforced
+// client-side only until BE ships server-side checks (docs/be-spec-
+// interactive-ad-creative-2026-07-02.md) — the FE fields exist now so the
+// editor can persist them ahead of that enforcement landing.
+export interface PageMetadataAdInteractive {
+  layout: 'floating_bottom' | 'sticky_top' | 'inline' | 'modal';
+  trigger: 'on_load' | 'scroll_pct' | 'exit_intent' | string;
+  trigger_config: {
+    delay_ms?: number;
+    scroll_threshold_pct?: number;
+  };
+  closeable: boolean;
+  freq_cap_per_visitor_per_day?: number;
+  allowed_domains?: string[];
+  ab_test?: {
+    enabled: boolean;
+    variant_release_ids: string[];
+    split_pct: number[];
+  };
+  /** Set once BE extends `embed-snippet` to accept `type === 'ad'`. */
+  embed_token?: string;
 }
 export interface PageMetadataCurate {
   trigger:
