@@ -59,11 +59,11 @@ function CoinModal({
       aria-modal='true'
       aria-label={coin.name}
       onClick={onClose}
-      className='fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-5 backdrop-blur-sm'
+      className='@container fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-5 backdrop-blur-sm'
     >
       <div
         onClick={e => e.stopPropagation()}
-        className='relative grid w-full max-w-2xl grid-cols-1 overflow-hidden rounded-2xl bg-[#0f0d0a] text-white shadow-2xl md:grid-cols-2'
+        className='relative grid w-full max-w-2xl grid-cols-1 overflow-hidden rounded-2xl bg-[#0f0d0a] text-white shadow-2xl @3xl:grid-cols-2'
       >
         <div className='flex aspect-square items-center justify-center bg-black/30 p-6'>
           {/* eslint-disable-next-line @next/next/no-img-element */}

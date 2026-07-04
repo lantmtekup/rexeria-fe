@@ -110,9 +110,10 @@ export function BlockDetailView({
     });
   }, [blockId]);
 
+  const blockName = block?.name;
   React.useEffect(() => {
-    if (block) setNameInput(block.name);
-  }, [block?.id, block?.name]);
+    if (blockName !== undefined) setNameInput(blockName);
+  }, [blockName]);
 
   if (!block) {
     return (

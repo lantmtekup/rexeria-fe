@@ -19,6 +19,8 @@ const protectedRoutes = [
   // cookie, nhưng vẫn gate ở middleware để user logout không thấy khung
   // portal (defense-in-depth).
   '/portal',
+  // Doc/demo nội bộ — không cố ý public (audit FE 2026-07-04 Q7).
+  '/overview',
 ];
 
 const authRoutes = ['/dang-nhap', '/quen-mat-khau', '/sign-in'];
