@@ -19,6 +19,16 @@ import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
 import { interactiveAdWidgetDef } from './defs/interactiveAdWidget';
+import { springsContactFooterDef } from './defs/springsContactFooter';
+import { springsDesignDef } from './defs/springsDesign';
+import { springsHeaderDef } from './defs/springsHeader';
+import { springsHeroDef } from './defs/springsHero';
+import { springsInteriorsDef } from './defs/springsInteriors';
+import { springsIntroDef } from './defs/springsIntro';
+import { springsMapDef } from './defs/springsMap';
+import { springsNaturePlaceDef } from './defs/springsNaturePlace';
+import { springsResidencesDef } from './defs/springsResidences';
+import { springsWellnessDef } from './defs/springsWellness';
 import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
@@ -33,6 +43,16 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   delvaux_product: delvauxProductDef as BlockDef,
   delvaux_variant: delvauxVariantDef as BlockDef,
   interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
+  springs_header: springsHeaderDef as BlockDef,
+  springs_hero: springsHeroDef as BlockDef,
+  springs_intro: springsIntroDef as BlockDef,
+  springs_wellness: springsWellnessDef as BlockDef,
+  springs_nature_place: springsNaturePlaceDef as BlockDef,
+  springs_map: springsMapDef as BlockDef,
+  springs_design: springsDesignDef as BlockDef,
+  springs_residences: springsResidencesDef as BlockDef,
+  springs_interiors: springsInteriorsDef as BlockDef,
+  springs_contact_footer: springsContactFooterDef as BlockDef,
 };
 
 export function getBlockDef(type: BlockType): BlockDef | undefined {

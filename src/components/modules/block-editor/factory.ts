@@ -7,6 +7,16 @@ import { delvauxProductDef } from './blocks/_registry/defs/delvauxProduct';
 import { delvauxSubnavDef } from './blocks/_registry/defs/delvauxSubnav';
 import { delvauxVariantDef } from './blocks/_registry/defs/delvauxVariant';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
+import { springsContactFooterDef } from './blocks/_registry/defs/springsContactFooter';
+import { springsDesignDef } from './blocks/_registry/defs/springsDesign';
+import { springsHeaderDef } from './blocks/_registry/defs/springsHeader';
+import { springsHeroDef } from './blocks/_registry/defs/springsHero';
+import { springsInteriorsDef } from './blocks/_registry/defs/springsInteriors';
+import { springsIntroDef } from './blocks/_registry/defs/springsIntro';
+import { springsMapDef } from './blocks/_registry/defs/springsMap';
+import { springsNaturePlaceDef } from './blocks/_registry/defs/springsNaturePlace';
+import { springsResidencesDef } from './blocks/_registry/defs/springsResidences';
+import { springsWellnessDef } from './blocks/_registry/defs/springsWellness';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
 import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
@@ -2278,6 +2288,16 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   delvaux_details: delvauxDetailsDef.defaultContent.vi,
   delvaux_product: delvauxProductDef.defaultContent.vi,
   delvaux_variant: delvauxVariantDef.defaultContent.vi,
+  springs_header: springsHeaderDef.defaultContent.vi,
+  springs_hero: springsHeroDef.defaultContent.vi,
+  springs_intro: springsIntroDef.defaultContent.vi,
+  springs_wellness: springsWellnessDef.defaultContent.vi,
+  springs_nature_place: springsNaturePlaceDef.defaultContent.vi,
+  springs_map: springsMapDef.defaultContent.vi,
+  springs_design: springsDesignDef.defaultContent.vi,
+  springs_residences: springsResidencesDef.defaultContent.vi,
+  springs_interiors: springsInteriorsDef.defaultContent.vi,
+  springs_contact_footer: springsContactFooterDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
@@ -2361,6 +2381,16 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   delvaux_details: delvauxDetailsDef.defaultContent.en,
   delvaux_product: delvauxProductDef.defaultContent.en,
   delvaux_variant: delvauxVariantDef.defaultContent.en,
+  springs_header: springsHeaderDef.defaultContent.en,
+  springs_hero: springsHeroDef.defaultContent.en,
+  springs_intro: springsIntroDef.defaultContent.en,
+  springs_wellness: springsWellnessDef.defaultContent.en,
+  springs_nature_place: springsNaturePlaceDef.defaultContent.en,
+  springs_map: springsMapDef.defaultContent.en,
+  springs_design: springsDesignDef.defaultContent.en,
+  springs_residences: springsResidencesDef.defaultContent.en,
+  springs_interiors: springsInteriorsDef.defaultContent.en,
+  springs_contact_footer: springsContactFooterDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
