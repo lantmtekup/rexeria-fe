@@ -52,6 +52,7 @@ import { readymagMarqueeDef } from './blocks/_registry/defs/readymagMarquee';
 import { readymagProjectsDef } from './blocks/_registry/defs/readymagProjects';
 import { readymagFooterDef } from './blocks/_registry/defs/readymagFooter';
 import { protectionScrollytellingDef } from './blocks/_registry/defs/protectionScrollytelling';
+import { framerFlatWhiteProcessDef } from './blocks/_registry/defs/framerFlatWhiteProcess';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { springsContactFooterDef } from './blocks/_registry/defs/springsContactFooter';
 import { springsDesignDef } from './blocks/_registry/defs/springsDesign';
@@ -2343,6 +2344,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_VI,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_VI,
   framer_explore_cta: FRAMER_EXPLORE_CTA_VI,
+  framer_flat_white_process: framerFlatWhiteProcessDef.defaultContent.vi,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_VI,
   framer_ignitex_step: framerIgnitexStepDef.defaultContent.vi,
   framer_stats_grid: FRAMER_STATS_GRID_VI,
@@ -2487,6 +2489,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_EN,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_EN,
   framer_explore_cta: FRAMER_EXPLORE_CTA_EN,
+  framer_flat_white_process: framerFlatWhiteProcessDef.defaultContent.en,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_EN,
   framer_ignitex_step: framerIgnitexStepDef.defaultContent.en,
   framer_stats_grid: FRAMER_STATS_GRID_EN,

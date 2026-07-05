@@ -49,6 +49,7 @@ export type BlockType =
   | 'framer_purevisuals_hero'
   | 'framer_intro_redefined'
   | 'framer_explore_cta'
+  | 'framer_flat_white_process'
   | 'framer_studio_manifesto'
   | 'framer_stats_grid'
   | 'framer_projects_grid'
@@ -1152,6 +1153,29 @@ export interface FramerExploreCtaContent {
 }
 
 /**
+ * Flat White — "Our Process": nền #747E90, label pill "/ OUR PROCESS",
+ * headline lớn, 3 step card dọc (001 Discover / 002 Design / 003 Deliver),
+ * body text màu #D6D9E2, có SVG divider cong động (2 lớp). Port từ
+ * `recon-flat-white-our-process/spec.md`. Animation GSAP R1–R6 qua
+ * `useBlockMotion`: word-by-word reveal theo stagger + SVG line draw.
+ */
+export interface FramerFlatWhiteProcessStep {
+  /** Số thứ tự hiển thị trong pill (vd "001"). */
+  number: string;
+  title: string;
+  body: string;
+}
+
+export interface FramerFlatWhiteProcessContent {
+  label: string;
+  headline: string;
+  steps: FramerFlatWhiteProcessStep[];
+  bgColor: string;
+  textColor: string;
+  bodyTextColor: string;
+}
+
+/**
  * Studio Manifesto: nền #F5F3EE, eyebrow DM Mono, tiêu đề italic serif
  * lớn, đoạn body thụt đầu dòng, chữ ký ở cuối.
  */
@@ -2155,6 +2179,7 @@ export type BlockContent =
   | FramerPurevisualsHeroContent
   | FramerIntroRedefinedContent
   | FramerExploreCtaContent
+  | FramerFlatWhiteProcessContent
   | FramerStudioManifestoContent
   | FramerStatsGridContent
   | FramerProjectsGridContent
@@ -3315,6 +3340,18 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Explore CTA',
     aiLabelVi: 'block CTA căn giữa + link underline dạng [ LABEL ]',
     aiLabelEn: 'centered CTA section with bracketed underline link',
+  },
+  framer_flat_white_process: {
+    type: 'framer_flat_white_process',
+    label: 'Flat White - Our Process',
+    accent: '#747E90',
+    adminLabel: 'Flat White - Our Process',
+    gradient: 'from-slate-500 to-slate-700',
+    defaultName: 'Flat White - Our Process',
+    aiLabelVi:
+      'block Flat White "Our Process" (recon spec): nền xám, pill label, headline lớn, 3 step card dọc, body màu #D6D9E2, có SVG divider cong động',
+    aiLabelEn:
+      'Flat White "Our Process" (recon spec): gray background, pill label, large headline, 3 vertical step cards, body text #D6D9E2, animated curved SVG divider',
   },
   framer_studio_manifesto: {
     type: 'framer_studio_manifesto',

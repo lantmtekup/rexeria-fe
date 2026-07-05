@@ -70,6 +70,7 @@ const ORDERED_TYPES: BlockType[] = [
   'framer_studio_manifesto',
   'framer_ignitex_step',
   'framer_explore_cta',
+  'framer_flat_white_process',
   'framer_aestha_editorial',
   // ── Features / Services ──────────────────────────────────
   'feature_section',
