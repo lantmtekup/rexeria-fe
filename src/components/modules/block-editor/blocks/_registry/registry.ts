@@ -76,6 +76,7 @@ import { springsMapDef } from './defs/springsMap';
 import { springsNaturePlaceDef } from './defs/springsNaturePlace';
 import { springsResidencesDef } from './defs/springsResidences';
 import { springsWellnessDef } from './defs/springsWellness';
+import { sustainitOurExpertiseDef } from './defs/sustainitOurExpertise';
 import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
@@ -147,6 +148,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   springs_residences: springsResidencesDef as BlockDef,
   springs_interiors: springsInteriorsDef as BlockDef,
   springs_contact_footer: springsContactFooterDef as BlockDef,
+  sustainit_our_expertise: sustainitOurExpertiseDef as BlockDef,
 };
 
 export function getBlockDef(type: BlockType): BlockDef | undefined {

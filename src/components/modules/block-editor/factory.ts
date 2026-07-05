@@ -63,6 +63,7 @@ import { springsMapDef } from './blocks/_registry/defs/springsMap';
 import { springsNaturePlaceDef } from './blocks/_registry/defs/springsNaturePlace';
 import { springsResidencesDef } from './blocks/_registry/defs/springsResidences';
 import { springsWellnessDef } from './blocks/_registry/defs/springsWellness';
+import { sustainitOurExpertiseDef } from './blocks/_registry/defs/sustainitOurExpertise';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
 import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
@@ -2411,6 +2412,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   springs_residences: springsResidencesDef.defaultContent.vi,
   springs_interiors: springsInteriorsDef.defaultContent.vi,
   springs_contact_footer: springsContactFooterDef.defaultContent.vi,
+  sustainit_our_expertise: sustainitOurExpertiseDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
@@ -2551,6 +2553,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   springs_residences: springsResidencesDef.defaultContent.en,
   springs_interiors: springsInteriorsDef.defaultContent.en,
   springs_contact_footer: springsContactFooterDef.defaultContent.en,
+  sustainit_our_expertise: sustainitOurExpertiseDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,

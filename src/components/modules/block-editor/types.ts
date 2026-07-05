@@ -154,7 +154,9 @@ export type BlockType =
   | 'springs_design'
   | 'springs_residences'
   | 'springs_interiors'
-  | 'springs_contact_footer';
+  | 'springs_contact_footer'
+  // ── Sustainit (Readymag source) ──
+  | 'sustainit_our_expertise';
 
 export interface HeroSplitStat {
   value: string;
@@ -1027,6 +1029,40 @@ export interface FramerClarityServicesContent {
   cardBg: string;
   centerImageUrl: string;
   services: FramerClarityServiceItem[];
+}
+
+/**
+ * Sustainit "Our Expertise" — nguồn Readymag (sustainit.space). Geist Mono,
+ * ink #282828 + accent green #B6FF3D. 4 expertise item trong grid 2×2 với cell
+ * vuông (aspect-ratio 1/1) ở desktop; tablet 2-col auto height; mobile 1-col.
+ */
+export interface SustainitExpertiseItem {
+  /** Ảnh hero của item (organic/biotech texture). */
+  imageUrl: string;
+  /** Tiêu đề ALL-CAPS, vd "BIOTECH STRATEGY AND INNOVATION SCOUTING". */
+  title: string;
+  /** Phụ đề trong ngoặc, vd "An R&D department for your brand". */
+  subtitle: string;
+  /** Danh sách bullet (3 dòng). */
+  bullets: string[];
+  color: string;
+}
+
+export interface SustainitOurExpertiseContent {
+  /** Marker index nhỏ ở góc, vd "(01 — 04)". */
+  indexLabel: string;
+  /** Tiêu đề section (có pill xanh sau nó). */
+  heading: string;
+  /** Dòng intro dưới heading. */
+  intro: string;
+  /** Màu nền section. */
+  bgColor: string;
+  /** Màu pill accent sau heading. */
+  accentColor: string;
+  /** 4 item. */
+  items: SustainitExpertiseItem[];
+  /** Nhãn CTA cuối, vd "Work with us". */
+  ctaLabel: string;
 }
 
 /**
@@ -2100,6 +2136,7 @@ export type BlockContent =
   | SpringsResidencesContent
   | SpringsInteriorsContent
   | SpringsContactFooterContent
+  | SustainitOurExpertiseContent
   | Record<string, unknown>;
 
 /**
@@ -4039,5 +4076,17 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi:
       'form liên hệ + footer: địa chỉ, điện thoại, email, link mạng xã hội',
     aiLabelEn: 'contact form + footer: address, phone, email, social links',
+  },
+  sustainit_our_expertise: {
+    type: 'sustainit_our_expertise',
+    label: 'Sustainit - Our Expertise',
+    accent: '#B6FF3D',
+    adminLabel: 'Sustainit - Our Expertise',
+    gradient: 'from-lime-300 to-neutral-200',
+    defaultName: 'Sustainit - Our Expertise',
+    aiLabelVi:
+      'grid 2×2 cell vuông: 4 expertise item (ảnh + tiêu đề ALL-CAPS + bullets), Geist Mono, accent xanh',
+    aiLabelEn:
+      '2×2 square-cell grid: 4 expertise items (image + ALL-CAPS title + bullets), Geist Mono, green accent',
   },
 };
