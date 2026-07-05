@@ -67,6 +67,7 @@ import { springsWellnessDef } from './blocks/_registry/defs/springsWellness';
 import { sustainitOurExpertiseDef } from './blocks/_registry/defs/sustainitOurExpertise';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
+import { masteriseHomeInsideDef } from './blocks/_registry/defs/masteriseHomeInside';
 import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
 import { framerIgnitexStepDef } from './blocks/_registry/defs/framerIgnitexStep';
 import type {
@@ -2452,6 +2453,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   housent_our_excellence: HOUSENT_OUR_EXCELLENCE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
+  masterise_home_inside: masteriseHomeInsideDef.defaultContent.vi,
   framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_VI,
   framer_firma_template_strategy_digital:
@@ -2598,6 +2600,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   housent_our_excellence: HOUSENT_OUR_EXCELLENCE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
+  masterise_home_inside: masteriseHomeInsideDef.defaultContent.en,
   framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_EN,
   framer_firma_template_strategy_digital:

@@ -38,6 +38,7 @@ export type BlockType =
   | 'dot_matrix'
   | 'interactive_grid'
   | 'pixel_reveal'
+  | 'masterise_home_inside'
   // ── Framer-native blocks (migrate từ src/blocks/ legacy → native) ──────
   // Mỗi design framer = 1 block_type riêng, render native + edit inline được.
   // BE phải có code tương ứng active trong catalog block_types.
@@ -1211,6 +1212,20 @@ export interface FramerProjectsGridContent {
   }>;
 }
 
+export interface MasteriseHomeInsideSlide {
+  id: string;
+  imageUrl: string;
+  alt: string;
+  caption?: string;
+}
+
+export interface MasteriseHomeInsideContent {
+  headingLine1: string;
+  headingLine2: string;
+  body: string;
+  slides: MasteriseHomeInsideSlide[];
+}
+
 /**
  * IgniteX — "Step Section": pre-title pill "From concept to launch" +
  * 3-column layout (left "Your / ideas / into Brand", center 3 step cards,
@@ -2197,6 +2212,7 @@ export type BlockContent =
   | FramerStudioManifestoContent
   | FramerStatsGridContent
   | FramerProjectsGridContent
+  | MasteriseHomeInsideContent
   | FramerTeamDirectoryContent
   | FramerImageStaggerContent
   | FramerAesthaEditorialContent
@@ -3518,6 +3534,18 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
       'trang editorial: cột brand sticky trái + stack 3 ảnh so le phải',
     aiLabelEn:
       'editorial layout: sticky brand column left + staggered image stack right',
+  },
+  masterise_home_inside: {
+    type: 'masterise_home_inside',
+    label: 'Masterise Home Inside',
+    accent: '#c64a26',
+    adminLabel: 'Masterise — Hệ tiện ích trong nhà',
+    gradient: 'from-orange-100 to-orange-200',
+    defaultName: 'Hệ tiện ích trong nhà',
+    aiLabelVi:
+      'section Masterise, heading 2 dòng cam #c64a26 ("Hệ tiện ích / trong nhà") + body mô tả + Swiper carousel 5 slide ảnh (slidesPerView 1/1.2/2) + 2 nút prev/next tròn viền cam',
+    aiLabelEn:
+      'Masterise section, 2-line orange #c64a26 heading ("Indoor amenities") + body description + Swiper 5-slide image carousel (1/1.2/2 slides per view) + 2 round prev/next buttons with orange border',
   },
   framer_perform_about: {
     type: 'framer_perform_about',

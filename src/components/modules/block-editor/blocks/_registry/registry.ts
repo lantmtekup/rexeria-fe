@@ -80,6 +80,7 @@ import { springsNaturePlaceDef } from './defs/springsNaturePlace';
 import { springsResidencesDef } from './defs/springsResidences';
 import { springsWellnessDef } from './defs/springsWellness';
 import { sustainitOurExpertiseDef } from './defs/sustainitOurExpertise';
+import { masteriseHomeInsideDef } from './defs/masteriseHomeInside';
 import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
@@ -88,6 +89,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   framer_flat_white_process: framerFlatWhiteProcessDef as BlockDef,
   framer_nftpull_timeline: framerNftpullTimelineDef as BlockDef,
   framer_ignitex_step: framerIgnitexStepDef as BlockDef,
+  masterise_home_inside: masteriseHomeInsideDef as BlockDef,
   framer_purevisuals_hero: framerPurevisualsHeroDef as BlockDef,
   delvaux_header: delvauxHeaderDef as BlockDef,
   delvaux_subnav: delvauxSubnavDef as BlockDef,
