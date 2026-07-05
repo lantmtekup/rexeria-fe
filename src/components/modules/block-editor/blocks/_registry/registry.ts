@@ -19,6 +19,14 @@ import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
+import { nordhavenHeroDef } from './defs/nordhavenHero';
+import { nordhavenAboutDef } from './defs/nordhavenAbout';
+import { nordhavenServicesDef } from './defs/nordhavenServices';
+import { nordhavenPropertiesDef } from './defs/nordhavenProperties';
+import { nordhavenTestimonialsDef } from './defs/nordhavenTestimonials';
+import { nordhavenFaqDef } from './defs/nordhavenFaq';
+import { nordhavenGalleryDef } from './defs/nordhavenGallery';
+import { nordhavenFooterDef } from './defs/nordhavenFooter';
 import { lumeaAmenitiesDef } from './defs/lumeaAmenities';
 import { lumeaFooterDef } from './defs/lumeaFooter';
 import { lumeaGalleryDef } from './defs/lumeaGallery';
@@ -77,6 +85,14 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   lumea_testimonial: lumeaTestimonialDef as BlockDef,
   lumea_gallery: lumeaGalleryDef as BlockDef,
   lumea_footer: lumeaFooterDef as BlockDef,
+  nordhaven_hero: nordhavenHeroDef as BlockDef,
+  nordhaven_about: nordhavenAboutDef as BlockDef,
+  nordhaven_services: nordhavenServicesDef as BlockDef,
+  nordhaven_properties: nordhavenPropertiesDef as BlockDef,
+  nordhaven_testimonials: nordhavenTestimonialsDef as BlockDef,
+  nordhaven_faq: nordhavenFaqDef as BlockDef,
+  nordhaven_gallery: nordhavenGalleryDef as BlockDef,
+  nordhaven_footer: nordhavenFooterDef as BlockDef,
   interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
   brightedge_hero: brightedgeHeroDef as BlockDef,
 };

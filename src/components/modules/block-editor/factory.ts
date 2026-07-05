@@ -28,6 +28,14 @@ import { lumeaAmenitiesDef } from './blocks/_registry/defs/lumeaAmenities';
 import { lumeaTestimonialDef } from './blocks/_registry/defs/lumeaTestimonial';
 import { lumeaGalleryDef } from './blocks/_registry/defs/lumeaGallery';
 import { lumeaFooterDef } from './blocks/_registry/defs/lumeaFooter';
+import { nordhavenHeroDef } from './blocks/_registry/defs/nordhavenHero';
+import { nordhavenAboutDef } from './blocks/_registry/defs/nordhavenAbout';
+import { nordhavenServicesDef } from './blocks/_registry/defs/nordhavenServices';
+import { nordhavenPropertiesDef } from './blocks/_registry/defs/nordhavenProperties';
+import { nordhavenTestimonialsDef } from './blocks/_registry/defs/nordhavenTestimonials';
+import { nordhavenFaqDef } from './blocks/_registry/defs/nordhavenFaq';
+import { nordhavenGalleryDef } from './blocks/_registry/defs/nordhavenGallery';
+import { nordhavenFooterDef } from './blocks/_registry/defs/nordhavenFooter';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
@@ -2343,6 +2351,14 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   lumea_testimonial: lumeaTestimonialDef.defaultContent.vi,
   lumea_gallery: lumeaGalleryDef.defaultContent.vi,
   lumea_footer: lumeaFooterDef.defaultContent.vi,
+  nordhaven_hero: nordhavenHeroDef.defaultContent.vi,
+  nordhaven_about: nordhavenAboutDef.defaultContent.vi,
+  nordhaven_services: nordhavenServicesDef.defaultContent.vi,
+  nordhaven_properties: nordhavenPropertiesDef.defaultContent.vi,
+  nordhaven_testimonials: nordhavenTestimonialsDef.defaultContent.vi,
+  nordhaven_faq: nordhavenFaqDef.defaultContent.vi,
+  nordhaven_gallery: nordhavenGalleryDef.defaultContent.vi,
+  nordhaven_footer: nordhavenFooterDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
@@ -2449,6 +2465,14 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   lumea_testimonial: lumeaTestimonialDef.defaultContent.en,
   lumea_gallery: lumeaGalleryDef.defaultContent.en,
   lumea_footer: lumeaFooterDef.defaultContent.en,
+  nordhaven_hero: nordhavenHeroDef.defaultContent.en,
+  nordhaven_about: nordhavenAboutDef.defaultContent.en,
+  nordhaven_services: nordhavenServicesDef.defaultContent.en,
+  nordhaven_properties: nordhavenPropertiesDef.defaultContent.en,
+  nordhaven_testimonials: nordhavenTestimonialsDef.defaultContent.en,
+  nordhaven_faq: nordhavenFaqDef.defaultContent.en,
+  nordhaven_gallery: nordhavenGalleryDef.defaultContent.en,
+  nordhaven_footer: nordhavenFooterDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,

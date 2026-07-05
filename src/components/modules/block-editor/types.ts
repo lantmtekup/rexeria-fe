@@ -115,6 +115,14 @@ export type BlockType =
   | 'lumea_testimonial'
   | 'lumea_gallery'
   | 'lumea_footer'
+  | 'nordhaven_hero'
+  | 'nordhaven_about'
+  | 'nordhaven_services'
+  | 'nordhaven_properties'
+  | 'nordhaven_testimonials'
+  | 'nordhaven_faq'
+  | 'nordhaven_gallery'
+  | 'nordhaven_footer'
   // ── Interactive ad creative (clone từ 360-admin-cms, xem PageMetadataAd) ──
   | 'interactive_ad_widget'
   // ── Framer clone: BrightEdge agency template (layout/animation only —
@@ -1659,6 +1667,65 @@ export interface LumeaFooterContent {
   copyright: string;
 }
 
+// ── Nordhaven (architecture studio template, clone từ nordhaven.webflow.io) ──
+export interface NordhavenHeroContent {
+  wordmark: string;
+  imageUrl: string;
+}
+export interface NordhavenAboutContent {
+  eyebrow: string;
+  title: string;
+  text: string;
+}
+export interface NordhavenServiceItem {
+  title: string;
+  description: string;
+}
+export interface NordhavenServicesContent {
+  eyebrow: string;
+  title: string;
+  items: NordhavenServiceItem[];
+}
+export interface NordhavenPropertyItem {
+  imageUrl: string;
+  price: string;
+  name: string;
+  location: string;
+}
+export interface NordhavenPropertiesContent {
+  eyebrow: string;
+  title: string;
+  items: NordhavenPropertyItem[];
+}
+export interface NordhavenTestimonialItem {
+  quote: string;
+  name: string;
+  role: string;
+}
+export interface NordhavenTestimonialsContent {
+  eyebrow: string;
+  title: string;
+  items: NordhavenTestimonialItem[];
+}
+export interface NordhavenFaqItem {
+  question: string;
+  answer: string;
+}
+export interface NordhavenFaqContent {
+  eyebrow: string;
+  title: string;
+  items: NordhavenFaqItem[];
+}
+export interface NordhavenGalleryContent {
+  title: string;
+  images: string[];
+}
+export interface NordhavenFooterContent {
+  brand: string;
+  links: string[];
+  copyright: string;
+}
+
 export type BlockContent =
   | HeroSplitContent
   | BrightedgeHeroContent
@@ -1669,6 +1736,14 @@ export type BlockContent =
   | LumeaTestimonialContent
   | LumeaGalleryContent
   | LumeaFooterContent
+  | NordhavenHeroContent
+  | NordhavenAboutContent
+  | NordhavenServicesContent
+  | NordhavenPropertiesContent
+  | NordhavenTestimonialsContent
+  | NordhavenFaqContent
+  | NordhavenGalleryContent
+  | NordhavenFooterContent
   | HousentHeroContent
   | HousentStatsContent
   | HousentListingsContent
@@ -3344,5 +3419,87 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Footer - Serif Brand',
     aiLabelVi: 'footer nâu đậm: brand serif lớn + tagline + link + legal',
     aiLabelEn: 'dark footer: big serif brand + tagline + links + legal',
+  },
+  nordhaven_hero: {
+    type: 'nordhaven_hero',
+    label: 'Hero - Masked Wordmark',
+    accent: '#111111',
+    adminLabel: 'Hero - Masked Wordmark',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'Hero - Masked Wordmark',
+    aiLabelVi:
+      'chữ khổng lồ wordmark mask ảnh kiến trúc + ảnh nền, nền gần đen',
+    aiLabelEn:
+      'giant wordmark masking an architecture photo over a dark background',
+  },
+  nordhaven_about: {
+    type: 'nordhaven_about',
+    label: 'About - Uppercase Statement',
+    accent: '#111111',
+    adminLabel: 'About - Uppercase Statement',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'About - Uppercase Statement',
+    aiLabelVi: 'câu lớn uppercase + đoạn mô tả trên nền đen',
+    aiLabelEn: 'large uppercase statement + copy on a dark background',
+  },
+  nordhaven_services: {
+    type: 'nordhaven_services',
+    label: 'Services - Divided List',
+    accent: '#111111',
+    adminLabel: 'Services - Divided List',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'Services - Divided List',
+    aiLabelVi: 'list dịch vụ hàng ngang phân cách (số + tiêu đề + mô tả)',
+    aiLabelEn: 'divided service list (index + title + description)',
+  },
+  nordhaven_properties: {
+    type: 'nordhaven_properties',
+    label: 'Properties - Dark Grid',
+    accent: '#111111',
+    adminLabel: 'Properties - Dark Grid',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'Properties - Dark Grid',
+    aiLabelVi: 'lưới card bất động sản nền tối (ảnh + giá + tên + địa điểm)',
+    aiLabelEn: 'dark property grid (image + price + name + location)',
+  },
+  nordhaven_testimonials: {
+    type: 'nordhaven_testimonials',
+    label: 'Testimonials - Dark Cards',
+    accent: '#111111',
+    adminLabel: 'Testimonials - Dark Cards',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'Testimonials - Dark Cards',
+    aiLabelVi: 'lưới card đánh giá nền tối viền mảnh',
+    aiLabelEn: 'dark testimonial card grid with thin borders',
+  },
+  nordhaven_faq: {
+    type: 'nordhaven_faq',
+    label: 'FAQ - Dark Accordion',
+    accent: '#111111',
+    adminLabel: 'FAQ - Dark Accordion',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'FAQ - Dark Accordion',
+    aiLabelVi: 'accordion FAQ nền tối 2 cột',
+    aiLabelEn: 'dark two-column FAQ accordion',
+  },
+  nordhaven_gallery: {
+    type: 'nordhaven_gallery',
+    label: 'Gallery - Architecture Grid',
+    accent: '#111111',
+    adminLabel: 'Gallery - Architecture Grid',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'Gallery - Architecture Grid',
+    aiLabelVi: 'lưới ảnh kiến trúc nền tối',
+    aiLabelEn: 'dark architecture image grid',
+  },
+  nordhaven_footer: {
+    type: 'nordhaven_footer',
+    label: 'Footer - Wordmark',
+    accent: '#111111',
+    adminLabel: 'Footer - Wordmark',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'Footer - Wordmark',
+    aiLabelVi: 'footer nền đen: wordmark lớn + link + legal',
+    aiLabelEn: 'dark footer: big wordmark + links + legal',
   },
 };
