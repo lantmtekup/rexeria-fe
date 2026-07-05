@@ -62,6 +62,7 @@ export type BlockType =
   | 'framer_vs_collins_projects'
   | 'framer_aestha_editorial'
   | 'framer_perform_about'
+  | 'framer_ignitex_step'
   | 'framer_perform_pricing'
   // ── Mint-coint sections tách thành data block (port từ src/templates) ──
   | 'mint_details'
@@ -1185,6 +1186,32 @@ export interface FramerProjectsGridContent {
 }
 
 /**
+ * IgniteX — "Step Section": pre-title pill "From concept to launch" +
+ * 3-column layout (left "Your / ideas / into Brand", center 3 step cards,
+ * right "transform / stories"). Nền trắng, Geist 60/500 cho heading,
+ * Great Vibes 62/400 cho "Brand", Geist 28/500 cho card title,
+ * Geist 18/500 cho body. Port từ `recon-ignitex-step-section/spec.md`
+ * (selector `[data-framer-name='Step Section']`, URL
+ * https://ignitex-wbs.framer.website/). Animation GSAP R1–R6 qua
+ * `useBlockMotion` (fade-up + sparkle rotate).
+ */
+export interface FramerIgnitexStepCard {
+  title: string;
+  body: string;
+  mainImageUrl?: string;
+  subImageUrl?: string;
+}
+
+export interface FramerIgnitexStepContent {
+  preTitle: string;
+  leftTop: string;
+  leftBottom: string;
+  rightTop: string;
+  rightBottom: string;
+  cards: FramerIgnitexStepCard[];
+}
+
+/**
  * Team Directory: nền #F5F3EE, DM Mono eyebrow, Abril Fatface title,
  * danh sách hàng ngang có divider cho từng thành viên.
  * Port từ `src/blocks/framer-team-directory`.
@@ -2117,6 +2144,7 @@ export type BlockContent =
   | FramerNftpullTimelineContent
   | FramerSignatureFeatureContent
   | FramerVsCollinsProjectsContent
+  | FramerIgnitexStepContent
   | FramerClarityServicesContent
   | DelvauxHeaderContent
   | DelvauxSubnavContent
@@ -3377,6 +3405,18 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
       'lưới 3 cột: 2 card dịch vụ trái, ảnh portrait giữa, 2 card phải',
     aiLabelEn:
       '3-col grid: 2 service cards left, portrait image center, 2 cards right',
+  },
+  framer_ignitex_step: {
+    type: 'framer_ignitex_step',
+    label: 'IgniteX - Step Section',
+    accent: '#05080c',
+    adminLabel: 'IgniteX - Step Section',
+    gradient: 'from-stone-100 to-stone-300',
+    defaultName: 'Step Section',
+    aiLabelVi:
+      'block IgniteX "Step Section" (recon spec): nền trắng, pill "From concept to launch", 3-cột (trái "Your ideas into Brand" + giữa 3 step card + phải "transform stories"), Geist 60/500 cho heading + Great Vibes 62/400 cho "Brand", card Geist 28/500 title + Geist 18/500 body #5b5b5b',
+    aiLabelEn:
+      'IgniteX "Step Section" (recon spec): white background, "From concept to launch" pill, 3-column (left "Your ideas into Brand" + center 3 step cards + right "transform stories"), Geist 60/500 heading + Great Vibes 62/400 for "Brand", card Geist 28/500 title + Geist 18/500 body #5b5b5b',
   },
   framer_aestha_editorial: {
     type: 'framer_aestha_editorial',
