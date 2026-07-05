@@ -18,6 +18,11 @@ import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
+import { housentCtaDef } from './defs/housentCta';
+import { housentFooterDef } from './defs/housentFooter';
+import { housentHeroDef } from './defs/housentHero';
+import { housentListingsDef } from './defs/housentListings';
+import { housentStatsDef } from './defs/housentStats';
 import { interactiveAdWidgetDef } from './defs/interactiveAdWidget';
 import { q80ExperienceDef } from './defs/q80Experience';
 import { q80MenuDef } from './defs/q80Menu';
@@ -36,6 +41,11 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   delvaux_variant: delvauxVariantDef as BlockDef,
   q80_experience: q80ExperienceDef as BlockDef,
   q80_menu: q80MenuDef as BlockDef,
+  housent_hero: housentHeroDef as BlockDef,
+  housent_stats: housentStatsDef as BlockDef,
+  housent_listings: housentListingsDef as BlockDef,
+  housent_cta: housentCtaDef as BlockDef,
+  housent_footer: housentFooterDef as BlockDef,
   interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
 };
 

@@ -8,6 +8,11 @@ import { delvauxSubnavDef } from './blocks/_registry/defs/delvauxSubnav';
 import { delvauxVariantDef } from './blocks/_registry/defs/delvauxVariant';
 import { q80ExperienceDef } from './blocks/_registry/defs/q80Experience';
 import { q80MenuDef } from './blocks/_registry/defs/q80Menu';
+import { housentHeroDef } from './blocks/_registry/defs/housentHero';
+import { housentStatsDef } from './blocks/_registry/defs/housentStats';
+import { housentListingsDef } from './blocks/_registry/defs/housentListings';
+import { housentCtaDef } from './blocks/_registry/defs/housentCta';
+import { housentFooterDef } from './blocks/_registry/defs/housentFooter';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
@@ -2282,6 +2287,11 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   delvaux_variant: delvauxVariantDef.defaultContent.vi,
   q80_experience: q80ExperienceDef.defaultContent.vi,
   q80_menu: q80MenuDef.defaultContent.vi,
+  housent_hero: housentHeroDef.defaultContent.vi,
+  housent_stats: housentStatsDef.defaultContent.vi,
+  housent_listings: housentListingsDef.defaultContent.vi,
+  housent_cta: housentCtaDef.defaultContent.vi,
+  housent_footer: housentFooterDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
@@ -2367,6 +2377,11 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   delvaux_variant: delvauxVariantDef.defaultContent.en,
   q80_experience: q80ExperienceDef.defaultContent.en,
   q80_menu: q80MenuDef.defaultContent.en,
+  housent_hero: housentHeroDef.defaultContent.en,
+  housent_stats: housentStatsDef.defaultContent.en,
+  housent_listings: housentListingsDef.defaultContent.en,
+  housent_cta: housentCtaDef.defaultContent.en,
+  housent_footer: housentFooterDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,

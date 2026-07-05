@@ -93,6 +93,12 @@ export type BlockType =
   | 'delvaux_variant'
   | 'q80_experience'
   | 'q80_menu'
+  // ── Housent (real-estate template, clone từ housent.webflow.io) ──
+  | 'housent_hero'
+  | 'housent_stats'
+  | 'housent_listings'
+  | 'housent_cta'
+  | 'housent_footer'
   // ── Interactive ad creative (clone từ 360-admin-cms, xem PageMetadataAd) ──
   | 'interactive_ad_widget';
 
@@ -112,6 +118,15 @@ export const DEFAULT_IMAGE_TRANSFORM: ImageTransform = {
 };
 
 /**
+ * Click-through link attached to an arbitrary element (Editor V2).
+ * Applied via event delegation at render time, not a real `<a>` tag.
+ */
+export interface ElementLink {
+  href: string;
+  target?: '_self' | '_blank';
+}
+
+/**
  * Per-element style overrides applied on top of the block's default
  * presentation.
  */
@@ -124,6 +139,19 @@ export interface ElementStyle {
   textAlign?: 'left' | 'center' | 'right' | 'justify';
   /** Font id from `src/lib/fonts.ts` (e.g. `inter`, `be-vietnam-pro`). */
   fontFamily?: string;
+  /** Explicit size in px (Editor V2). undefined = auto (natural layout). */
+  width?: number;
+  height?: number;
+  /** Per-element fill — `token:*` role or raw CSS color. */
+  backgroundColor?: string;
+  /** 0..1 */
+  opacity?: number;
+  borderRadius?: number; // px
+  /** Full CSS box-shadow value (preset-driven in the inspector UI). */
+  boxShadow?: string;
+  /** px → `filter: blur(Npx)` */
+  blur?: number;
+  link?: ElementLink;
 }
 
 export type ElementStylesMap = Record<string, ElementStyle | undefined>;
@@ -1423,8 +1451,65 @@ export interface Q80MenuContent {
   phone: string;
 }
 
+// ── Housent (real-estate template) ──
+export interface HousentHeroContent {
+  badge: string;
+  title: string;
+  subtitle: string;
+  searchPlaceholder: string;
+  searchLabel: string;
+  imageUrl: string;
+}
+
+export interface HousentStatItem {
+  value: string;
+  label: string;
+}
+export interface HousentStatsContent {
+  eyebrow: string;
+  stats: HousentStatItem[];
+}
+
+export interface HousentListingItem {
+  imageUrl: string;
+  price: string;
+  name: string;
+  address: string;
+  specs: string;
+}
+export interface HousentListingsContent {
+  eyebrow: string;
+  title: string;
+  items: HousentListingItem[];
+}
+
+export interface HousentCtaContent {
+  title: string;
+  subtitle: string;
+  buttonLabel: string;
+  buttonUrl: string;
+  imageUrl: string;
+}
+
+export interface HousentFooterColumn {
+  title: string;
+  links: string[];
+}
+export interface HousentFooterContent {
+  brand: string;
+  prompt: string;
+  email: string;
+  columns: HousentFooterColumn[];
+  copyright: string;
+}
+
 export type BlockContent =
   | HeroSplitContent
+  | HousentHeroContent
+  | HousentStatsContent
+  | HousentListingsContent
+  | HousentCtaContent
+  | HousentFooterContent
   | HeroOverlayContent
   | FeatureSectionContent
   | BookingFormContent
@@ -2862,5 +2947,61 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
       'chrome cố định: logo serif + nút menu mở overlay vàng fullscreen (ảnh + link đánh số) + nút inquire',
     aiLabelEn:
       'fixed chrome: serif logo + hamburger opening gold fullscreen overlay (image + numbered links) + inquire button',
+  },
+  housent_hero: {
+    type: 'housent_hero',
+    label: 'Hero - Real Estate Search',
+    accent: '#e8622c',
+    adminLabel: 'Hero - Real Estate Search',
+    gradient: 'from-orange-100 to-stone-200',
+    defaultName: 'Hero - Real Estate Search',
+    aiLabelVi:
+      'hero bất động sản 2 cột: badge + tiêu đề lớn + thanh tìm kiếm bên trái, ảnh toà nhà bo góc bên phải',
+    aiLabelEn:
+      'real-estate hero, two columns: badge + big heading + search bar on the left, rounded building photo on the right',
+  },
+  housent_stats: {
+    type: 'housent_stats',
+    label: 'Stats - Dark Band',
+    accent: '#e8622c',
+    adminLabel: 'Stats - Dark Band',
+    gradient: 'from-stone-800 to-neutral-900',
+    defaultName: 'Stats - Dark Band',
+    aiLabelVi: 'dải chỉ số nền tối: hàng 4-5 số liệu lớn màu cam + nhãn',
+    aiLabelEn: 'dark stats band: row of 4-5 big orange metrics with labels',
+  },
+  housent_listings: {
+    type: 'housent_listings',
+    label: 'Listings - Property Grid',
+    accent: '#e8622c',
+    adminLabel: 'Listings - Property Grid',
+    gradient: 'from-orange-100 to-stone-200',
+    defaultName: 'Listings - Property Grid',
+    aiLabelVi:
+      'lưới card bất động sản: ảnh + giá + tên + địa chỉ + thông số bed/bath/diện tích',
+    aiLabelEn:
+      'property listing grid: image + price + name + address + bed/bath/area specs',
+  },
+  housent_cta: {
+    type: 'housent_cta',
+    label: 'CTA - Orange Banner',
+    accent: '#e8622c',
+    adminLabel: 'CTA - Orange Banner',
+    gradient: 'from-orange-400 to-orange-600',
+    defaultName: 'CTA - Orange Banner',
+    aiLabelVi: 'băng CTA cam bo góc lớn: tiêu đề trắng + nút hành động',
+    aiLabelEn: 'large rounded orange CTA banner: white heading + action button',
+  },
+  housent_footer: {
+    type: 'housent_footer',
+    label: 'Footer - Dark Columns',
+    accent: '#e8622c',
+    adminLabel: 'Footer - Dark Columns',
+    gradient: 'from-stone-800 to-neutral-900',
+    defaultName: 'Footer - Dark Columns',
+    aiLabelVi:
+      'footer nền tối: brand + prompt "cần hỗ trợ?" + nhóm cột link + hàng legal',
+    aiLabelEn:
+      'dark footer: brand + "need assistance?" prompt + link columns + legal row',
   },
 };
