@@ -123,6 +123,12 @@ export type BlockType =
   | 'nordhaven_faq'
   | 'nordhaven_gallery'
   | 'nordhaven_footer'
+  | 'firma_hero'
+  | 'firma_statement'
+  | 'firma_work'
+  | 'firma_testimonial'
+  | 'firma_services'
+  | 'firma_footer'
   // ── Interactive ad creative (clone từ 360-admin-cms, xem PageMetadataAd) ──
   | 'interactive_ad_widget'
   // ── Framer clone: BrightEdge agency template (layout/animation only —
@@ -1726,6 +1732,47 @@ export interface NordhavenFooterContent {
   copyright: string;
 }
 
+// ── Firma (creative agency Framer template, clone từ firma-template.framer.website) ──
+export interface FirmaHeroContent {
+  titleLead: string;
+  titleAccent: string;
+  subtitle: string;
+  imageUrl: string;
+}
+export interface FirmaStatementContent {
+  eyebrow: string;
+  title: string;
+}
+export interface FirmaWorkItem {
+  imageUrl: string;
+  name: string;
+  category: string;
+}
+export interface FirmaWorkContent {
+  title: string;
+  count: string;
+  items: FirmaWorkItem[];
+}
+export interface FirmaTestimonialContent {
+  quote: string;
+  authors: string[];
+}
+export interface FirmaServiceItem {
+  title: string;
+  description: string;
+}
+export interface FirmaServicesContent {
+  title: string;
+  count: string;
+  items: FirmaServiceItem[];
+}
+export interface FirmaFooterContent {
+  title: string;
+  email: string;
+  links: string[];
+  copyright: string;
+}
+
 export type BlockContent =
   | HeroSplitContent
   | BrightedgeHeroContent
@@ -1744,6 +1791,12 @@ export type BlockContent =
   | NordhavenFaqContent
   | NordhavenGalleryContent
   | NordhavenFooterContent
+  | FirmaHeroContent
+  | FirmaStatementContent
+  | FirmaWorkContent
+  | FirmaTestimonialContent
+  | FirmaServicesContent
+  | FirmaFooterContent
   | HousentHeroContent
   | HousentStatsContent
   | HousentListingsContent
@@ -3501,5 +3554,66 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Footer - Wordmark',
     aiLabelVi: 'footer nền đen: wordmark lớn + link + legal',
     aiLabelEn: 'dark footer: big wordmark + links + legal',
+  },
+  firma_hero: {
+    type: 'firma_hero',
+    label: 'Hero - Editorial Serif',
+    accent: '#8a7f6a',
+    adminLabel: 'Hero - Editorial Serif',
+    gradient: 'from-stone-100 to-stone-300',
+    defaultName: 'Hero - Editorial Serif',
+    aiLabelVi: 'hero serif tao nha + subtext + anh lon bo goc tren nen kem',
+    aiLabelEn:
+      'editorial serif hero + subtext + large rounded image on a cream background',
+  },
+  firma_statement: {
+    type: 'firma_statement',
+    label: 'Statement - Serif Centered',
+    accent: '#8a7f6a',
+    adminLabel: 'Statement - Serif Centered',
+    gradient: 'from-stone-100 to-stone-300',
+    defaultName: 'Statement - Serif Centered',
+    aiLabelVi: 'cau lon serif can giua + eyebrow tren nen kem',
+    aiLabelEn: 'large centered serif statement + eyebrow on cream',
+  },
+  firma_work: {
+    type: 'firma_work',
+    label: 'Work - Project Grid',
+    accent: '#8a7f6a',
+    adminLabel: 'Work - Project Grid',
+    gradient: 'from-stone-100 to-stone-300',
+    defaultName: 'Work - Project Grid',
+    aiLabelVi: 'luoi project (anh + ten + category) serif',
+    aiLabelEn: 'project grid (image + name + category) serif',
+  },
+  firma_testimonial: {
+    type: 'firma_testimonial',
+    label: 'Testimonial - Dark Serif',
+    accent: '#8a7f6a',
+    adminLabel: 'Testimonial - Dark Serif',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'Testimonial - Dark Serif',
+    aiLabelVi: 'trich dan serif lon nen toi + hang ten tac gia',
+    aiLabelEn: 'large serif quote on dark + author row',
+  },
+  firma_services: {
+    type: 'firma_services',
+    label: 'Services - Divided List',
+    accent: '#8a7f6a',
+    adminLabel: 'Services - Divided List',
+    gradient: 'from-stone-100 to-stone-300',
+    defaultName: 'Services - Divided List',
+    aiLabelVi: 'list dich vu phan cach serif',
+    aiLabelEn: 'divided service list serif',
+  },
+  firma_footer: {
+    type: 'firma_footer',
+    label: 'Footer - CTA Serif',
+    accent: '#8a7f6a',
+    adminLabel: 'Footer - CTA Serif',
+    gradient: 'from-stone-100 to-stone-300',
+    defaultName: 'Footer - CTA Serif',
+    aiLabelVi: 'footer CTA serif lon + email + link tren nen kem',
+    aiLabelEn: 'large serif CTA footer + email + links on cream',
   },
 };

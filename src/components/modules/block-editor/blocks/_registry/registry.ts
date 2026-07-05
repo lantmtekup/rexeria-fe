@@ -19,6 +19,12 @@ import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
+import { firmaHeroDef } from './defs/firmaHero';
+import { firmaStatementDef } from './defs/firmaStatement';
+import { firmaWorkDef } from './defs/firmaWork';
+import { firmaTestimonialDef } from './defs/firmaTestimonial';
+import { firmaServicesDef } from './defs/firmaServices';
+import { firmaFooterDef } from './defs/firmaFooter';
 import { nordhavenHeroDef } from './defs/nordhavenHero';
 import { nordhavenAboutDef } from './defs/nordhavenAbout';
 import { nordhavenServicesDef } from './defs/nordhavenServices';
@@ -93,6 +99,12 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   nordhaven_faq: nordhavenFaqDef as BlockDef,
   nordhaven_gallery: nordhavenGalleryDef as BlockDef,
   nordhaven_footer: nordhavenFooterDef as BlockDef,
+  firma_hero: firmaHeroDef as BlockDef,
+  firma_statement: firmaStatementDef as BlockDef,
+  firma_work: firmaWorkDef as BlockDef,
+  firma_testimonial: firmaTestimonialDef as BlockDef,
+  firma_services: firmaServicesDef as BlockDef,
+  firma_footer: firmaFooterDef as BlockDef,
   interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
   brightedge_hero: brightedgeHeroDef as BlockDef,
 };

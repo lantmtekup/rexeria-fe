@@ -36,6 +36,12 @@ import { nordhavenTestimonialsDef } from './blocks/_registry/defs/nordhavenTesti
 import { nordhavenFaqDef } from './blocks/_registry/defs/nordhavenFaq';
 import { nordhavenGalleryDef } from './blocks/_registry/defs/nordhavenGallery';
 import { nordhavenFooterDef } from './blocks/_registry/defs/nordhavenFooter';
+import { firmaHeroDef } from './blocks/_registry/defs/firmaHero';
+import { firmaStatementDef } from './blocks/_registry/defs/firmaStatement';
+import { firmaWorkDef } from './blocks/_registry/defs/firmaWork';
+import { firmaTestimonialDef } from './blocks/_registry/defs/firmaTestimonial';
+import { firmaServicesDef } from './blocks/_registry/defs/firmaServices';
+import { firmaFooterDef } from './blocks/_registry/defs/firmaFooter';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
@@ -2359,6 +2365,12 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   nordhaven_faq: nordhavenFaqDef.defaultContent.vi,
   nordhaven_gallery: nordhavenGalleryDef.defaultContent.vi,
   nordhaven_footer: nordhavenFooterDef.defaultContent.vi,
+  firma_hero: firmaHeroDef.defaultContent.vi,
+  firma_statement: firmaStatementDef.defaultContent.vi,
+  firma_work: firmaWorkDef.defaultContent.vi,
+  firma_testimonial: firmaTestimonialDef.defaultContent.vi,
+  firma_services: firmaServicesDef.defaultContent.vi,
+  firma_footer: firmaFooterDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
@@ -2473,6 +2485,12 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   nordhaven_faq: nordhavenFaqDef.defaultContent.en,
   nordhaven_gallery: nordhavenGalleryDef.defaultContent.en,
   nordhaven_footer: nordhavenFooterDef.defaultContent.en,
+  firma_hero: firmaHeroDef.defaultContent.en,
+  firma_statement: firmaStatementDef.defaultContent.en,
+  firma_work: firmaWorkDef.defaultContent.en,
+  firma_testimonial: firmaTestimonialDef.defaultContent.en,
+  firma_services: firmaServicesDef.defaultContent.en,
+  firma_footer: firmaFooterDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
