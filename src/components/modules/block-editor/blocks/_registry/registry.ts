@@ -19,6 +19,9 @@ import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
+import { readymagMarqueeDef } from './defs/readymagMarquee';
+import { readymagProjectsDef } from './defs/readymagProjects';
+import { readymagFooterDef } from './defs/readymagFooter';
 import { ignitexHeroDef } from './defs/ignitexHero';
 import { ignitexServicesDef } from './defs/ignitexServices';
 import { ignitexProjectsDef } from './defs/ignitexProjects';
@@ -117,6 +120,9 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   ignitex_about: ignitexAboutDef as BlockDef,
   ignitex_cta: ignitexCtaDef as BlockDef,
   ignitex_footer: ignitexFooterDef as BlockDef,
+  readymag_marquee: readymagMarqueeDef as BlockDef,
+  readymag_projects: readymagProjectsDef as BlockDef,
+  readymag_footer: readymagFooterDef as BlockDef,
   interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
   brightedge_hero: brightedgeHeroDef as BlockDef,
 };

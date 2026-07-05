@@ -135,6 +135,9 @@ export type BlockType =
   | 'ignitex_about'
   | 'ignitex_cta'
   | 'ignitex_footer'
+  | 'readymag_marquee'
+  | 'readymag_projects'
+  | 'readymag_footer'
   // ── Interactive ad creative (clone từ 360-admin-cms, xem PageMetadataAd) ──
   | 'interactive_ad_widget'
   // ── Framer clone: BrightEdge agency template (layout/animation only —
@@ -1826,6 +1829,26 @@ export interface IgnitexFooterContent {
   copyright: string;
 }
 
+// ── Readymag "RADIUS" (brutalist portfolio, clone từ readymag.com/designs/5969202) ──
+export interface ReadymagMarqueeContent {
+  text: string;
+  pill: string;
+}
+export interface ReadymagProjectItem {
+  no: string;
+  name: string;
+  role: string;
+  imageUrl: string;
+}
+export interface ReadymagProjectsContent {
+  items: ReadymagProjectItem[];
+}
+export interface ReadymagFooterContent {
+  brand: string;
+  links: string[];
+  copyright: string;
+}
+
 export type BlockContent =
   | HeroSplitContent
   | BrightedgeHeroContent
@@ -1856,6 +1879,9 @@ export type BlockContent =
   | IgnitexAboutContent
   | IgnitexCtaContent
   | IgnitexFooterContent
+  | ReadymagMarqueeContent
+  | ReadymagProjectsContent
+  | ReadymagFooterContent
   | HousentHeroContent
   | HousentStatsContent
   | HousentListingsContent
@@ -3736,5 +3762,36 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Footer - Wordmark',
     aiLabelVi: 'wordmark + email + link + legal nen toi',
     aiLabelEn: 'wordmark + email + links + legal on dark',
+  },
+  readymag_marquee: {
+    type: 'readymag_marquee',
+    label: 'Marquee - Brutalist Band',
+    accent: '#000000',
+    adminLabel: 'Marquee - Brutalist Band',
+    gradient: 'from-neutral-100 to-neutral-300',
+    defaultName: 'Marquee - Brutalist Band',
+    aiLabelVi: 'bang chay ngang chu uppercase + pill book call, vien den',
+    aiLabelEn: 'scrolling uppercase marquee + book call pill with black border',
+  },
+  readymag_projects: {
+    type: 'readymag_projects',
+    label: 'Projects - Brutalist Grid',
+    accent: '#000000',
+    adminLabel: 'Projects - Brutalist Grid',
+    gradient: 'from-neutral-100 to-neutral-300',
+    defaultName: 'Projects - Brutalist Grid',
+    aiLabelVi: 'luoi brutalist: card danh so ten lon xen card anh oval nen den',
+    aiLabelEn:
+      'brutalist grid: numbered name cards alternating with black oval image cards',
+  },
+  readymag_footer: {
+    type: 'readymag_footer',
+    label: 'Footer - Big Wordmark',
+    accent: '#000000',
+    adminLabel: 'Footer - Big Wordmark',
+    gradient: 'from-neutral-100 to-neutral-300',
+    defaultName: 'Footer - Big Wordmark',
+    aiLabelVi: 'wordmark khong lo + link, nen trang vien den',
+    aiLabelEn: 'giant wordmark + links, white with black border',
   },
 };
