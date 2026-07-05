@@ -16,6 +16,7 @@ import { delvauxProductDef } from './defs/delvauxProduct';
 import { delvauxSubnavDef } from './defs/delvauxSubnav';
 import { delvauxVariantDef } from './defs/delvauxVariant';
 import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
+import { framerFirmaTemplateStrategyDigitalDef } from './defs/framerFirmaTemplateStrategyDigital';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerIgnitexStepDef } from './defs/framerIgnitexStep';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
@@ -151,6 +152,8 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   springs_interiors: springsInteriorsDef as BlockDef,
   springs_contact_footer: springsContactFooterDef as BlockDef,
   sustainit_our_expertise: sustainitOurExpertiseDef as BlockDef,
+  framer_firma_template_strategy_digital:
+    framerFirmaTemplateStrategyDigitalDef as BlockDef,
 };
 
 export function getBlockDef(type: BlockType): BlockDef | undefined {

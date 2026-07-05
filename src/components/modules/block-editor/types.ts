@@ -64,6 +64,7 @@ export type BlockType =
   | 'framer_perform_about'
   | 'framer_ignitex_step'
   | 'framer_perform_pricing'
+  | 'framer_firma_template_strategy_digital'
   // ── Mint-coint sections tách thành data block (port từ src/templates) ──
   | 'mint_details'
   | 'mint_sku'
@@ -1970,6 +1971,29 @@ export interface SpringsIntroContent {
   description: string;
 }
 
+/**
+ * Firma Template — Strategy / Digital: case-study hero card 2 cột.
+ */
+export interface FramerFirmaTemplateStrategyDigitalContent {
+  imageUrl: string;
+  eyebrow: string;
+  heading: string;
+  body: string;
+  linkLabel: string;
+  linkHref: string;
+}
+
+/**
+ * FAQ Minimal: nền trắng, 2 cột (tiêu đề + CTA trái, accordion phải),
+ * divider mỏng. Port từ `src/blocks/framer-faq-minimal`.
+ */
+export interface FramerFaqMinimalContent {
+  title: string;
+  ctaText: string;
+  ctaHref: string;
+  items: Array<{ question: string; answer: string }>;
+}
+
 export interface SpringsWellnessContent {
   heading: string;
   description: string;
@@ -2139,6 +2163,7 @@ export type BlockContent =
   | FramerAesthaEditorialContent
   | FramerPerformAboutContent
   | FramerPerformPricingContent
+  | FramerFirmaTemplateStrategyDigitalContent
   | FramerFaqMinimalContent
   | FramerDarlingTimelineContent
   | FramerNftpullTimelineContent
@@ -4128,5 +4153,17 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
       'grid 2×2 cell vuông: 4 expertise item (ảnh + tiêu đề ALL-CAPS + bullets), Geist Mono, accent xanh',
     aiLabelEn:
       '2×2 square-cell grid: 4 expertise items (image + ALL-CAPS title + bullets), Geist Mono, green accent',
+  },
+  framer_firma_template_strategy_digital: {
+    type: 'framer_firma_template_strategy_digital',
+    label: 'Firma Project Card',
+    accent: '#000000',
+    adminLabel: 'Project Card (Firma)',
+    gradient: 'from-stone-50 to-stone-200',
+    defaultName: 'Project Card',
+    aiLabelVi:
+      'block case-study 2 cột (recon spec): ảnh chân dung vuông trái + card trắng phải với eyebrow, heading serif, body, link gạch chân reveal-on-hover',
+    aiLabelEn:
+      'two-column case-study block (recon spec): square portrait image left + white card right with eyebrow, serif heading, body, underline-reveal-on-hover link',
   },
 };

@@ -148,6 +148,7 @@ import type {
   FramerPerformAboutContent,
   FramerPerformPricingContent,
 } from './types';
+import { framerFirmaTemplateStrategyDigitalDef } from './blocks/_registry/defs/framerFirmaTemplateStrategyDigital';
 
 const HOUSE_IMG =
   'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80';
@@ -2420,6 +2421,8 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
   framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_VI,
+  framer_firma_template_strategy_digital:
+    framerFirmaTemplateStrategyDigitalDef.defaultContent.vi,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
@@ -2562,6 +2565,8 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
   framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_EN,
+  framer_firma_template_strategy_digital:
+    framerFirmaTemplateStrategyDigitalDef.defaultContent.en,
 };
 
 function genId() {

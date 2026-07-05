@@ -77,6 +77,7 @@ const ORDERED_TYPES: BlockType[] = [
   'framer_perform_about',
   'framer_perform_pricing',
   // ── Projects / Gallery ───────────────────────────────────
+  'framer_firma_template_strategy_digital',
   'framer_projects_grid',
   'framer_vs_collins_projects',
   'framer_image_stagger',
