@@ -219,6 +219,9 @@ const BLOCK_RENDERERS: Record<string, BlockRenderer> = {
   framer_yuya_hero: lazyBlock(() =>
     import('./FramerYumeHero').then(m => m.FramerYumeHero)
   ),
+  housent_our_excellence: lazyBlock(() =>
+    import('./HousentOurExcellence').then(m => m.HousentOurExcellence)
+  ),
 };
 
 interface RenderBlockProps {

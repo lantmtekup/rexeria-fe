@@ -66,6 +66,7 @@ export type BlockType =
   | 'framer_ignitex_step'
   | 'framer_perform_pricing'
   | 'framer_firma_template_strategy_digital'
+  | 'housent_our_excellence'
   // ── Mint-coint sections tách thành data block (port từ src/templates) ──
   | 'mint_details'
   | 'mint_sku'
@@ -2008,9 +2009,22 @@ export interface FramerFirmaTemplateStrategyDigitalContent {
 }
 
 /**
- * FAQ Minimal: nền trắng, 2 cột (tiêu đề + CTA trái, accordion phải),
- * divider mỏng. Port từ `src/blocks/framer-faq-minimal`.
+ * Housent Our Excellence: nền trắng, badge "Foundation of Trust" + heading
+ * "Our Excellence" + body trung tâm, 8 satellite items (icon + label) xếp
+ * theo vòng tròn desktop / stack dọc mobile. Cảm hứng GSAP ScrollTrigger từ
+ * housent.webflow.io — entrance là circle-items fade-up + badge reveal.
+ * Port từ recon-housent-our-excellence.
  */
+export interface HousentOurExcellenceContent {
+  badge: string;
+  heading: string;
+  body: string;
+  items: Array<{
+    label: string;
+    icon: string;
+  }>;
+}
+
 export interface FramerFaqMinimalContent {
   title: string;
   ctaText: string;
@@ -2189,6 +2203,7 @@ export type BlockContent =
   | FramerPerformAboutContent
   | FramerPerformPricingContent
   | FramerFirmaTemplateStrategyDigitalContent
+  | HousentOurExcellenceContent
   | FramerFaqMinimalContent
   | FramerDarlingTimelineContent
   | FramerNftpullTimelineContent
@@ -3402,6 +3417,18 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Image Stagger',
     aiLabelVi: 'lưới ảnh bất đối xứng 12 cột',
     aiLabelEn: 'asymmetric 12-column image stagger grid',
+  },
+  housent_our_excellence: {
+    type: 'housent_our_excellence',
+    label: 'Housent Excellence',
+    accent: '#ff810a',
+    adminLabel: 'Our Excellence (Housent)',
+    gradient: 'from-stone-100 to-stone-200',
+    defaultName: 'Our Excellence',
+    aiLabelVi:
+      'block Our Excellence: badge + heading + body giữa, 8 satellite icon-item xếp vòng tròn (desktop) hoặc stack dọc (mobile)',
+    aiLabelEn:
+      'Our Excellence block: center badge+heading+body with 8 satellite icon items on a radial circle (desktop) or stacked list (mobile)',
   },
   framer_faq_minimal: {
     type: 'framer_faq_minimal',
