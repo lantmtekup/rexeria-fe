@@ -129,6 +129,12 @@ export type BlockType =
   | 'firma_testimonial'
   | 'firma_services'
   | 'firma_footer'
+  | 'ignitex_hero'
+  | 'ignitex_services'
+  | 'ignitex_projects'
+  | 'ignitex_about'
+  | 'ignitex_cta'
+  | 'ignitex_footer'
   // ── Interactive ad creative (clone từ 360-admin-cms, xem PageMetadataAd) ──
   | 'interactive_ad_widget'
   // ── Framer clone: BrightEdge agency template (layout/animation only —
@@ -1773,6 +1779,53 @@ export interface FirmaFooterContent {
   copyright: string;
 }
 
+// ── IgniteX (digital agency Framer template, clone từ ignitex-wbs.framer.website) ──
+export interface IgnitexHeroContent {
+  location: string;
+  titleLead: string;
+  titleTrail: string;
+  subtitle: string;
+  imageUrl: string;
+  services: string[];
+}
+export interface IgnitexServiceItem {
+  title: string;
+  description: string;
+}
+export interface IgnitexServicesContent {
+  title: string;
+  items: IgnitexServiceItem[];
+}
+export interface IgnitexProjectItem {
+  imageUrl: string;
+  name: string;
+  tag: string;
+}
+export interface IgnitexProjectsContent {
+  title: string;
+  count: string;
+  items: IgnitexProjectItem[];
+}
+export interface IgnitexStatItem {
+  value: string;
+  label: string;
+}
+export interface IgnitexAboutContent {
+  eyebrow: string;
+  title: string;
+  stats: IgnitexStatItem[];
+}
+export interface IgnitexCtaContent {
+  title: string;
+  buttonLabel: string;
+}
+export interface IgnitexFooterContent {
+  brand: string;
+  email: string;
+  links: string[];
+  copyright: string;
+}
+
 export type BlockContent =
   | HeroSplitContent
   | BrightedgeHeroContent
@@ -1797,6 +1850,12 @@ export type BlockContent =
   | FirmaTestimonialContent
   | FirmaServicesContent
   | FirmaFooterContent
+  | IgnitexHeroContent
+  | IgnitexServicesContent
+  | IgnitexProjectsContent
+  | IgnitexAboutContent
+  | IgnitexCtaContent
+  | IgnitexFooterContent
   | HousentHeroContent
   | HousentStatsContent
   | HousentListingsContent
@@ -3615,5 +3674,67 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Footer - CTA Serif',
     aiLabelVi: 'footer CTA serif lon + email + link tren nen kem',
     aiLabelEn: 'large serif CTA footer + email + links on cream',
+  },
+  ignitex_hero: {
+    type: 'ignitex_hero',
+    label: 'Hero - 3D Big Type',
+    accent: '#111111',
+    adminLabel: 'Hero - 3D Big Type',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'Hero - 3D Big Type',
+    aiLabelVi:
+      'chu Design & Strategy khong lo tren anh 3D nen toi + list dich vu',
+    aiLabelEn:
+      'giant Design & Strategy type over a 3D image on dark + service list',
+  },
+  ignitex_services: {
+    type: 'ignitex_services',
+    label: 'Services - Solutions List',
+    accent: '#111111',
+    adminLabel: 'Services - Solutions List',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'Services - Solutions List',
+    aiLabelVi: 'list dich vu danh so phan cach nen toi',
+    aiLabelEn: 'numbered divided service list on dark',
+  },
+  ignitex_projects: {
+    type: 'ignitex_projects',
+    label: 'Projects - Dark Grid',
+    accent: '#111111',
+    adminLabel: 'Projects - Dark Grid',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'Projects - Dark Grid',
+    aiLabelVi: 'luoi project nen toi (anh + ten + tag)',
+    aiLabelEn: 'dark project grid (image + name + tag)',
+  },
+  ignitex_about: {
+    type: 'ignitex_about',
+    label: 'About - Stats Row',
+    accent: '#111111',
+    adminLabel: 'About - Stats Row',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'About - Stats Row',
+    aiLabelVi: 'cau lon + hang mini-stat nen toi',
+    aiLabelEn: 'large statement + mini-stat row on dark',
+  },
+  ignitex_cta: {
+    type: 'ignitex_cta',
+    label: 'CTA - Big Type',
+    accent: '#111111',
+    adminLabel: 'CTA - Big Type',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'CTA - Big Type',
+    aiLabelVi: 'heading khong lo + nut nen toi',
+    aiLabelEn: 'giant CTA heading + button on dark',
+  },
+  ignitex_footer: {
+    type: 'ignitex_footer',
+    label: 'Footer - Wordmark',
+    accent: '#111111',
+    adminLabel: 'Footer - Wordmark',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'Footer - Wordmark',
+    aiLabelVi: 'wordmark + email + link + legal nen toi',
+    aiLabelEn: 'wordmark + email + links + legal on dark',
   },
 };

@@ -19,6 +19,12 @@ import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
+import { ignitexHeroDef } from './defs/ignitexHero';
+import { ignitexServicesDef } from './defs/ignitexServices';
+import { ignitexProjectsDef } from './defs/ignitexProjects';
+import { ignitexAboutDef } from './defs/ignitexAbout';
+import { ignitexCtaDef } from './defs/ignitexCta';
+import { ignitexFooterDef } from './defs/ignitexFooter';
 import { firmaHeroDef } from './defs/firmaHero';
 import { firmaStatementDef } from './defs/firmaStatement';
 import { firmaWorkDef } from './defs/firmaWork';
@@ -105,6 +111,12 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   firma_testimonial: firmaTestimonialDef as BlockDef,
   firma_services: firmaServicesDef as BlockDef,
   firma_footer: firmaFooterDef as BlockDef,
+  ignitex_hero: ignitexHeroDef as BlockDef,
+  ignitex_services: ignitexServicesDef as BlockDef,
+  ignitex_projects: ignitexProjectsDef as BlockDef,
+  ignitex_about: ignitexAboutDef as BlockDef,
+  ignitex_cta: ignitexCtaDef as BlockDef,
+  ignitex_footer: ignitexFooterDef as BlockDef,
   interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
   brightedge_hero: brightedgeHeroDef as BlockDef,
 };

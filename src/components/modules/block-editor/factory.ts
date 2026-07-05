@@ -42,6 +42,12 @@ import { firmaWorkDef } from './blocks/_registry/defs/firmaWork';
 import { firmaTestimonialDef } from './blocks/_registry/defs/firmaTestimonial';
 import { firmaServicesDef } from './blocks/_registry/defs/firmaServices';
 import { firmaFooterDef } from './blocks/_registry/defs/firmaFooter';
+import { ignitexHeroDef } from './blocks/_registry/defs/ignitexHero';
+import { ignitexServicesDef } from './blocks/_registry/defs/ignitexServices';
+import { ignitexProjectsDef } from './blocks/_registry/defs/ignitexProjects';
+import { ignitexAboutDef } from './blocks/_registry/defs/ignitexAbout';
+import { ignitexCtaDef } from './blocks/_registry/defs/ignitexCta';
+import { ignitexFooterDef } from './blocks/_registry/defs/ignitexFooter';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
@@ -2371,6 +2377,12 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   firma_testimonial: firmaTestimonialDef.defaultContent.vi,
   firma_services: firmaServicesDef.defaultContent.vi,
   firma_footer: firmaFooterDef.defaultContent.vi,
+  ignitex_hero: ignitexHeroDef.defaultContent.vi,
+  ignitex_services: ignitexServicesDef.defaultContent.vi,
+  ignitex_projects: ignitexProjectsDef.defaultContent.vi,
+  ignitex_about: ignitexAboutDef.defaultContent.vi,
+  ignitex_cta: ignitexCtaDef.defaultContent.vi,
+  ignitex_footer: ignitexFooterDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
@@ -2491,6 +2503,12 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   firma_testimonial: firmaTestimonialDef.defaultContent.en,
   firma_services: firmaServicesDef.defaultContent.en,
   firma_footer: firmaFooterDef.defaultContent.en,
+  ignitex_hero: ignitexHeroDef.defaultContent.en,
+  ignitex_services: ignitexServicesDef.defaultContent.en,
+  ignitex_projects: ignitexProjectsDef.defaultContent.en,
+  ignitex_about: ignitexAboutDef.defaultContent.en,
+  ignitex_cta: ignitexCtaDef.defaultContent.en,
+  ignitex_footer: ignitexFooterDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
