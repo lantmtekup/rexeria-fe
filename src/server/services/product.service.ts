@@ -32,7 +32,12 @@ export const productService = {
     const { page, limit, search } = query;
     const filter: FilterQuery<ProductDoc> = { isDeleted: { $ne: true } };
     if (search) {
-      filter.name = { $regex: search, $options: 'i' };
+      // Escape metachar + cap độ dài: input user đi thẳng vào $regex có thể
+      // là pattern catastrophic (ReDoS). Chỉ cần substring match literal.
+      const escaped = search
+        .slice(0, 100)
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.name = { $regex: escaped, $options: 'i' };
     }
     const [items, total] = await Promise.all([
       ProductModel.find(filter)

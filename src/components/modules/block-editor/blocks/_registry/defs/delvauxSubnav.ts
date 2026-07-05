@@ -9,7 +9,7 @@
  */
 import { Link2, MousePointerClick, Type } from 'lucide-react';
 
-import { DelvauxSubnav } from '../../DelvauxSubnav';
+import dynamic from 'next/dynamic';
 import type { DelvauxSubnavContent } from '../../../types';
 import type { BlockDef } from '../types';
 
@@ -41,7 +41,10 @@ export const delvauxSubnavDef: BlockDef<DelvauxSubnavContent> = {
     aiLabelEn:
       'floating white pill sub-nav pinned to viewport bottom: section anchors + buy button',
   },
-  component: DelvauxSubnav,
+  // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
+  component: dynamic(() =>
+    import('../../DelvauxSubnav').then(m => m.DelvauxSubnav)
+  ),
   defaultContent: { vi: VI, en: EN },
   elements: [
     { key: 'links', label: 'Anchor links', icon: Link2, fieldType: 'text' },

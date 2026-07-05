@@ -11,7 +11,7 @@
  */
 import { HelpCircle, Palette, Type } from 'lucide-react';
 
-import { DelvauxVariant } from '../../DelvauxVariant';
+import dynamic from 'next/dynamic';
 import type { DelvauxVariantContent } from '../../../types';
 import type { BlockDef } from '../types';
 
@@ -83,7 +83,10 @@ export const delvauxVariantDef: BlockDef<DelvauxVariantContent> = {
     aiLabelEn:
       'color-variant selector: swatches swap product image + FAQ accordion, luxury tone',
   },
-  component: DelvauxVariant,
+  // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
+  component: dynamic(() =>
+    import('../../DelvauxVariant').then(m => m.DelvauxVariant)
+  ),
   defaultContent: { vi: VI, en: EN },
   elements: [
     { key: 'title', label: 'Tiêu đề (ghost)', icon: Type, fieldType: 'text' },

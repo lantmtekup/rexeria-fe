@@ -4,6 +4,19 @@
  */
 import { rx } from './client';
 import { currentInsightLang } from './insightLang';
+
+/**
+ * Best-effort purge cache SSR trang public sau publish/unpublish/activate —
+ * `/p/[slug]` cache 60s + tag 'public-page' (xem /api/revalidate-page).
+ * Không await chặn flow editor; fail thì cache tự hết hạn sau 60s.
+ */
+const revalidatePublicPages = (): void => {
+  if (typeof window === 'undefined') return;
+  void fetch('/api/revalidate-page', {
+    method: 'POST',
+    credentials: 'include',
+  }).catch(() => undefined);
+};
 import {
   isAiTemplateMockEnabled,
   mockGenerateAiTemplate,
@@ -1743,24 +1756,35 @@ export const rexerApi = {
       rx<PublishPageValidateResponse>(`/pages/${id}/publish/validate`, {
         method: 'POST',
       }),
-    publish: (id: string, body?: PublishPageRequest) =>
-      rx<PublishPageResponse>(`/pages/${id}/publish`, {
+    publish: async (id: string, body?: PublishPageRequest) => {
+      const res = await rx<PublishPageResponse>(`/pages/${id}/publish`, {
         method: 'POST',
         body: body ?? {},
-      }),
-    unpublish: (id: string) =>
-      rx<{ message?: string }>(`/pages/${id}/unpublish`, { method: 'POST' }),
+      });
+      revalidatePublicPages();
+      return res;
+    },
+    unpublish: async (id: string) => {
+      const res = await rx<{ message?: string }>(`/pages/${id}/unpublish`, {
+        method: 'POST',
+      });
+      revalidatePublicPages();
+      return res;
+    },
 
     releases: {
       list: (pageId: string) =>
         rx<PageReleaseListResponse>(`/pages/${pageId}/releases`),
       get: (pageId: string, releaseId: string) =>
         rx<PageRelease>(`/pages/${pageId}/releases/${releaseId}`),
-      activate: (pageId: string, releaseId: string) =>
-        rx<{ message?: string }>(
+      activate: async (pageId: string, releaseId: string) => {
+        const res = await rx<{ message?: string }>(
           `/pages/${pageId}/releases/${releaseId}/activate`,
           { method: 'POST' }
-        ),
+        );
+        revalidatePublicPages();
+        return res;
+      },
     },
 
     /** Ad-type only — download rendered PNG/MP4. */

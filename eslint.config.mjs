@@ -52,9 +52,7 @@ const eslintConfig = [
     // Block templates must use container queries (`@2xl:` / `@4xl:`), not
     // viewport breakpoints (`md:` / `lg:` / etc.) — see
     // docs/canvas-block-responsive-spec.md §R1. Editor pages are exempt.
-    files: [
-      'src/components/modules/CanvasTemplate/block-editor/blocks/**/*.{ts,tsx}',
-    ],
+    files: ['src/components/modules/block-editor/blocks/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-syntax': [
         'error',

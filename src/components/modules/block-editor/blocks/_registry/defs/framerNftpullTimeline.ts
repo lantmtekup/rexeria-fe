@@ -14,7 +14,7 @@
  */
 import { Pilcrow, Type } from 'lucide-react';
 
-import { FramerNftpullTimeline } from '../../FramerNftpullTimeline';
+import dynamic from 'next/dynamic';
 import type { FramerNftpullTimelineContent } from '../../../types';
 import type { BlockDef } from '../types';
 
@@ -97,7 +97,10 @@ export const framerNftpullTimelineDef: BlockDef<FramerNftpullTimelineContent> =
       aiLabelEn:
         'dark timeline with vertical gradient spine and alternating dark cards, numbered badges on the spine',
     },
-    component: FramerNftpullTimeline,
+    // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
+    component: dynamic(() =>
+      import('../../FramerNftpullTimeline').then(m => m.FramerNftpullTimeline)
+    ),
     defaultContent: { vi: VI, en: EN },
     elements: [
       { key: 'heading', label: 'Heading', icon: Type, fieldType: 'text' },

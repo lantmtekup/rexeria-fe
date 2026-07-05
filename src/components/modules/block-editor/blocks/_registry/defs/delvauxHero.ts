@@ -10,7 +10,7 @@
  */
 import { Film, Image as ImageIcon, Layers, Pilcrow, Type } from 'lucide-react';
 
-import { DelvauxHero } from '../../DelvauxHero';
+import dynamic from 'next/dynamic';
 import { DELVAUX_HERO_FRAMES } from './delvauxHeroFrames';
 import type { DelvauxHeroContent } from '../../../types';
 import type { BlockDef } from '../types';
@@ -43,7 +43,10 @@ export const delvauxHeroDef: BlockDef<DelvauxHeroContent> = {
     aiLabelEn:
       'cinematic hero: framed image scales and fades on scroll, revealing a scroll-scrubbed frame-sequence/video',
   },
-  component: DelvauxHero,
+  // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
+  component: dynamic(() =>
+    import('../../DelvauxHero').then(m => m.DelvauxHero)
+  ),
   defaultContent: { vi: VI, en: EN },
   elements: [
     {

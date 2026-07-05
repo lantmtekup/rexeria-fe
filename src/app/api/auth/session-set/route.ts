@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { SignJWT } from 'jose';
 
 import { constants } from '@/settings/constants';
@@ -8,12 +8,16 @@ export const runtime = 'nodejs';
 /**
  * After the sign-in form POSTs to the REXER backend (via `/api/rexer/auth/login`)
  * we ping this route so the Next.js middleware can gate app routes on the
- * presence of a signed `_access_token` cookie. The payload is not used for
- * authorization — only the cookie's *existence* and signature validity, plus a
- * non-authoritative `role` claim used purely to pick the post-login landing
- * page (`/admin` vs `/portal`).
+ * presence of a signed `_access_token` cookie.
+ *
+ * Role + scope là claim để middleware + root `/` page route user home mà
+ * không cần round-trip BE mỗi request. Chúng KHÔNG lấy từ body client
+ * (forgeable) — route này tự verify với BE `/v1/auth/me` bằng chính session
+ * cookie BE vừa set (same-origin qua rewrite `/api/rexer`), rồi mới ký claim.
+ * `scope` = 'brand' nếu user gắn brand (→ /portal), 'platform' nếu không.
+ * Xem roleHomePath (§C1).
  */
-export async function POST(req: Request): Promise<NextResponse> {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     return NextResponse.json(
@@ -21,18 +25,46 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 500 }
     );
   }
-  // Role + scope là claim để middleware + root `/` page route user home mà
-  // không cần round-trip BE. `scope` = 'brand' nếu user gắn brand (→ /portal),
-  // 'platform' nếu không (platform admin/staff). Xem roleHomePath (§C1).
+
+  const beBase = (
+    process.env.NEXT_PUBLIC_REXER_API ??
+    process.env.REXER_API ??
+    ''
+  ).replace(/\/+$/, '');
+  if (!beBase) {
+    return NextResponse.json(
+      { success: false, error: 'REXER_API missing' },
+      { status: 500 }
+    );
+  }
+
   let role = '';
   let scope = '';
   try {
-    const body = await req.json();
-    if (typeof body?.role === 'string') role = body.role;
-    if (typeof body?.scope === 'string') scope = body.scope;
+    const meRes = await fetch(`${beBase}/v1/auth/me`, {
+      headers: { cookie: req.headers.get('cookie') ?? '' },
+      cache: 'no-store',
+    });
+    if (!meRes.ok) {
+      // Không có session BE hợp lệ → không mint cookie gate.
+      return NextResponse.json(
+        { success: false, error: 'UNAUTHENTICATED' },
+        { status: 401 }
+      );
+    }
+    const me = (await meRes.json()) as {
+      user?: { role?: string; principal_type?: string };
+      brand?: { id?: string };
+    };
+    role = me.user?.role ?? me.user?.principal_type ?? '';
+    scope = me.brand?.id ? 'brand' : 'platform';
   } catch {
-    // No / invalid JSON body — keep the defaults.
+    return NextResponse.json(
+      { success: false, error: 'BE_UNREACHABLE' },
+      { status: 502 }
+    );
   }
+
   const token = await new SignJWT({ sub: 'rexer-session', role, scope })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()

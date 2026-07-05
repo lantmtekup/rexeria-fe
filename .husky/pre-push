@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Quality gate trước khi push (audit FE 2026-07-04 Q1) — repo chưa có CI,
+# type-check chạy ở đây để regression type không ship lọt.
+yarn type-check

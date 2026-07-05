@@ -99,11 +99,11 @@ function Lightbox({
       aria-modal='true'
       aria-label={item.title}
       onClick={onClose}
-      className='fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm md:p-8'
+      className='@container fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm @3xl:p-8'
     >
       <div
         onClick={e => e.stopPropagation()}
-        className='relative grid w-full max-w-2xl grid-cols-1 overflow-hidden rounded-xl bg-[#0f0f0f] text-neutral-100 shadow-2xl md:grid-cols-2'
+        className='relative grid w-full max-w-2xl grid-cols-1 overflow-hidden rounded-xl bg-[#0f0f0f] text-neutral-100 shadow-2xl @3xl:grid-cols-2'
       >
         <div className='relative aspect-square bg-neutral-900'>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -113,11 +113,11 @@ function Lightbox({
             className='absolute inset-0 h-full w-full object-cover'
           />
         </div>
-        <div className='flex flex-col justify-center p-7 md:p-9'>
+        <div className='flex flex-col justify-center p-7 @3xl:p-9'>
           <span className='mb-3 text-[11px] tracking-[0.28em] text-[#c79119] uppercase'>
             The Jack Pine · 1 kilo gold
           </span>
-          <h3 className='mb-4 font-serif text-2xl leading-tight text-neutral-50 md:text-3xl'>
+          <h3 className='mb-4 font-serif text-2xl leading-tight text-neutral-50 @3xl:text-3xl'>
             {item.title}
           </h3>
           <p className='text-sm leading-relaxed text-neutral-300'>
