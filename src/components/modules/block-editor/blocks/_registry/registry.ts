@@ -19,6 +19,7 @@ import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
+import { protectionScrollytellingDef } from './defs/protectionScrollytelling';
 import { readymagMarqueeDef } from './defs/readymagMarquee';
 import { readymagProjectsDef } from './defs/readymagProjects';
 import { readymagFooterDef } from './defs/readymagFooter';
@@ -123,6 +124,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   readymag_marquee: readymagMarqueeDef as BlockDef,
   readymag_projects: readymagProjectsDef as BlockDef,
   readymag_footer: readymagFooterDef as BlockDef,
+  protection_scrollytelling: protectionScrollytellingDef as BlockDef,
   interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
   brightedge_hero: brightedgeHeroDef as BlockDef,
 };

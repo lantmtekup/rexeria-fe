@@ -51,6 +51,7 @@ import { ignitexFooterDef } from './blocks/_registry/defs/ignitexFooter';
 import { readymagMarqueeDef } from './blocks/_registry/defs/readymagMarquee';
 import { readymagProjectsDef } from './blocks/_registry/defs/readymagProjects';
 import { readymagFooterDef } from './blocks/_registry/defs/readymagFooter';
+import { protectionScrollytellingDef } from './blocks/_registry/defs/protectionScrollytelling';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
@@ -2389,6 +2390,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   readymag_marquee: readymagMarqueeDef.defaultContent.vi,
   readymag_projects: readymagProjectsDef.defaultContent.vi,
   readymag_footer: readymagFooterDef.defaultContent.vi,
+  protection_scrollytelling: protectionScrollytellingDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
@@ -2518,6 +2520,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   readymag_marquee: readymagMarqueeDef.defaultContent.en,
   readymag_projects: readymagProjectsDef.defaultContent.en,
   readymag_footer: readymagFooterDef.defaultContent.en,
+  protection_scrollytelling: protectionScrollytellingDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,

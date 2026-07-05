@@ -138,6 +138,7 @@ export type BlockType =
   | 'readymag_marquee'
   | 'readymag_projects'
   | 'readymag_footer'
+  | 'protection_scrollytelling'
   // ── Interactive ad creative (clone từ 360-admin-cms, xem PageMetadataAd) ──
   | 'interactive_ad_widget'
   // ── Framer clone: BrightEdge agency template (layout/animation only —
@@ -1849,6 +1850,21 @@ export interface ReadymagFooterContent {
   copyright: string;
 }
 
+// ── Protection (technical fabrics scrollytelling, clone từ en.protection.gr) ──
+export interface ProtectionSection {
+  title: string;
+  more: string;
+}
+export interface ProtectionScrollytellingContent {
+  tagline1: string;
+  tagline2: string;
+  subtitle: string;
+  framePattern: string;
+  frameCount: number;
+  accent: string;
+  sections: ProtectionSection[];
+}
+
 export type BlockContent =
   | HeroSplitContent
   | BrightedgeHeroContent
@@ -1882,6 +1898,7 @@ export type BlockContent =
   | ReadymagMarqueeContent
   | ReadymagProjectsContent
   | ReadymagFooterContent
+  | ProtectionScrollytellingContent
   | HousentHeroContent
   | HousentStatsContent
   | HousentListingsContent
@@ -3793,5 +3810,17 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Footer - Big Wordmark',
     aiLabelVi: 'wordmark khong lo + link, nen trang vien den',
     aiLabelEn: 'giant wordmark + links, white with black border',
+  },
+  protection_scrollytelling: {
+    type: 'protection_scrollytelling',
+    label: 'Hero - Frame Scrollytelling',
+    accent: '#FCC200',
+    adminLabel: 'Hero - Frame Scrollytelling',
+    gradient: 'from-amber-100 to-neutral-200',
+    defaultName: 'Hero - Frame Scrollytelling',
+    aiLabelVi:
+      'hero pin canvas 240 frame theo scroll: tagline truot len roi section title cycle, cham cuoi vang',
+    aiLabelEn:
+      'pinned 240-frame canvas scrollytelling hero: tagline slides up then section titles cycle',
   },
 };
