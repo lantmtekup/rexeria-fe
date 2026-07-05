@@ -53,6 +53,7 @@ import { readymagProjectsDef } from './blocks/_registry/defs/readymagProjects';
 import { readymagFooterDef } from './blocks/_registry/defs/readymagFooter';
 import { protectionScrollytellingDef } from './blocks/_registry/defs/protectionScrollytelling';
 import { framerFlatWhiteProcessDef } from './blocks/_registry/defs/framerFlatWhiteProcess';
+import { framerEstanciaAboutUsDef } from './blocks/_registry/defs/framerEstanciaAboutUs';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { springsContactFooterDef } from './blocks/_registry/defs/springsContactFooter';
 import { springsDesignDef } from './blocks/_registry/defs/springsDesign';
@@ -2458,6 +2459,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_perform_pricing: FRAMER_PERFORM_PRICING_VI,
   framer_firma_template_strategy_digital:
     framerFirmaTemplateStrategyDigitalDef.defaultContent.vi,
+  framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.vi,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
@@ -2605,6 +2607,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_perform_pricing: FRAMER_PERFORM_PRICING_EN,
   framer_firma_template_strategy_digital:
     framerFirmaTemplateStrategyDigitalDef.defaultContent.en,
+  framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.en,
 };
 
 function genId() {

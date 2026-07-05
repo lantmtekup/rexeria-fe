@@ -68,6 +68,7 @@ export type BlockType =
   | 'framer_perform_pricing'
   | 'framer_firma_template_strategy_digital'
   | 'housent_our_excellence'
+  | 'framer_estancia_about_us'
   // ── Mint-coint sections tách thành data block (port từ src/templates) ──
   | 'mint_details'
   | 'mint_sku'
@@ -1292,6 +1293,27 @@ export interface FramerAesthaEditorialContent {
 }
 
 /**
+ * Estancia About Us: nền tan #E7DECF, heading center + CTA pill + grid 3 ảnh
+ * chân dung với stat dưới (2012 / 320+ / 200+). Port từ
+ * `https://estancia.framer.website/` — block `[data-framer-name="Section - About"]`.
+ * Mobile: grid 3 cột → 1 cột (flex-direction: row → column), gap 100 → 14px.
+ */
+export interface FramerEstanciaAboutUsContent {
+  heading: string;
+  ctaText: string;
+  ctaHref: string;
+  card1ImageUrl: string;
+  card1Value: string;
+  card1Label: string;
+  card2ImageUrl: string;
+  card2Value: string;
+  card2Label: string;
+  card3ImageUrl: string;
+  card3Value: string;
+  card3Label: string;
+}
+
+/**
  * Perform About: nền đen, hàng xếp chồng text trái + ảnh phải.
  * Port từ `src/blocks/framer-perform-about`.
  */
@@ -2216,6 +2238,7 @@ export type BlockContent =
   | FramerTeamDirectoryContent
   | FramerImageStaggerContent
   | FramerAesthaEditorialContent
+  | FramerEstanciaAboutUsContent
   | FramerPerformAboutContent
   | FramerPerformPricingContent
   | FramerFirmaTemplateStrategyDigitalContent
@@ -4257,5 +4280,17 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
       'block case-study 2 cột (recon spec): ảnh chân dung vuông trái + card trắng phải với eyebrow, heading serif, body, link gạch chân reveal-on-hover',
     aiLabelEn:
       'two-column case-study block (recon spec): square portrait image left + white card right with eyebrow, serif heading, body, underline-reveal-on-hover link',
+  },
+  framer_estancia_about_us: {
+    type: 'framer_estancia_about_us',
+    label: 'Estancia About Us',
+    accent: '#e7decf',
+    adminLabel: 'About Us (Estancia)',
+    gradient: 'from-amber-100 to-amber-200',
+    defaultName: 'About Us',
+    aiLabelVi:
+      'section nền tan #E7DECF, heading center + pill "About us" + grid 3 ảnh chân dung với stat (2012 / 320+ / 200+)',
+    aiLabelEn:
+      'tan #E7DECF section, centered heading + "About us" pill CTA + 3 portrait photo cards with stats (2012 / 320+ / 200+)',
   },
 };
