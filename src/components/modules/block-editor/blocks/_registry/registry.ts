@@ -8,6 +8,7 @@
  * PoC: mới migrate `framer_yume_hero`. ~80 block còn lại vẫn chạy đường cũ.
  */
 import type { BlockType } from '../../types';
+import { brightedgeHeroDef } from './defs/brightedgeHero';
 import { delvauxDetailsDef } from './defs/delvauxDetails';
 import { delvauxHeaderDef } from './defs/delvauxHeader';
 import { delvauxHeroDef } from './defs/delvauxHero';
@@ -18,6 +19,14 @@ import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
+import { lumeaAmenitiesDef } from './defs/lumeaAmenities';
+import { lumeaFooterDef } from './defs/lumeaFooter';
+import { lumeaGalleryDef } from './defs/lumeaGallery';
+import { lumeaHandcraftedDef } from './defs/lumeaHandcrafted';
+import { lumeaHeroDef } from './defs/lumeaHero';
+import { lumeaImmersiveDef } from './defs/lumeaImmersive';
+import { lumeaStatementDef } from './defs/lumeaStatement';
+import { lumeaTestimonialDef } from './defs/lumeaTestimonial';
 import { housentAboutDef } from './defs/housentAbout';
 import { housentBlogsDef } from './defs/housentBlogs';
 import { housentCtaDef } from './defs/housentCta';
@@ -60,7 +69,16 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   housent_faq: housentFaqDef as BlockDef,
   housent_testimonial: housentTestimonialDef as BlockDef,
   housent_blogs: housentBlogsDef as BlockDef,
+  lumea_hero: lumeaHeroDef as BlockDef,
+  lumea_statement: lumeaStatementDef as BlockDef,
+  lumea_immersive: lumeaImmersiveDef as BlockDef,
+  lumea_handcrafted: lumeaHandcraftedDef as BlockDef,
+  lumea_amenities: lumeaAmenitiesDef as BlockDef,
+  lumea_testimonial: lumeaTestimonialDef as BlockDef,
+  lumea_gallery: lumeaGalleryDef as BlockDef,
+  lumea_footer: lumeaFooterDef as BlockDef,
   interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
+  brightedge_hero: brightedgeHeroDef as BlockDef,
 };
 
 export function getBlockDef(type: BlockType): BlockDef | undefined {

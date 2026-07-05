@@ -106,6 +106,15 @@ export type BlockType =
   | 'housent_faq'
   | 'housent_testimonial'
   | 'housent_blogs'
+  // ── Lumea (luxury real-estate template, clone từ lumea-eco.webflow.io) ──
+  | 'lumea_hero'
+  | 'lumea_statement'
+  | 'lumea_immersive'
+  | 'lumea_handcrafted'
+  | 'lumea_amenities'
+  | 'lumea_testimonial'
+  | 'lumea_gallery'
+  | 'lumea_footer'
   // ── Interactive ad creative (clone từ 360-admin-cms, xem PageMetadataAd) ──
   | 'interactive_ad_widget'
   // ── Framer clone: BrightEdge agency template (layout/animation only —
@@ -1606,9 +1615,60 @@ export interface HousentBlogsContent {
   items: HousentBlogItem[];
 }
 
+// ── Lumea (luxury real-estate template, clone từ lumea-eco.webflow.io) ──
+export interface LumeaHeroContent {
+  eyebrow: string;
+  title: string;
+  primaryCta: string;
+  secondaryCta: string;
+  imageUrl: string;
+}
+export interface LumeaStatementContent {
+  eyebrow: string;
+  title: string;
+}
+export interface LumeaFeatureContent {
+  eyebrow: string;
+  title: string;
+  text: string;
+  imageUrl: string;
+  reverse: boolean;
+}
+export interface LumeaAmenityItem {
+  title: string;
+  description: string;
+}
+export interface LumeaAmenitiesContent {
+  eyebrow: string;
+  title: string;
+  items: LumeaAmenityItem[];
+}
+export interface LumeaTestimonialContent {
+  quote: string;
+  name: string;
+  role: string;
+}
+export interface LumeaGalleryContent {
+  title: string;
+  images: string[];
+}
+export interface LumeaFooterContent {
+  brand: string;
+  tagline: string;
+  links: string[];
+  copyright: string;
+}
+
 export type BlockContent =
   | HeroSplitContent
   | BrightedgeHeroContent
+  | LumeaHeroContent
+  | LumeaStatementContent
+  | LumeaFeatureContent
+  | LumeaAmenitiesContent
+  | LumeaTestimonialContent
+  | LumeaGalleryContent
+  | LumeaFooterContent
   | HousentHeroContent
   | HousentStatsContent
   | HousentListingsContent
@@ -2442,6 +2502,17 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     aiLabelVi: 'widget quảng cáo nhiều slide có hotspot và nút CTA',
     aiLabelEn: 'multi-slide ad widget with hotspots and CTA buttons',
   },
+  brightedge_hero: {
+    type: 'brightedge_hero',
+    label: 'Hero - BrightEdge',
+    accent: '#f55733',
+    adminLabel: 'Hero - BrightEdge',
+    gradient: 'from-orange-500 to-neutral-700',
+    defaultName: 'Hero - BrightEdge',
+    aiLabelVi: 'hero 2 cột: tiêu đề lớn + avatar stack + ảnh + badge tròn',
+    aiLabelEn:
+      'split hero: big heading + avatar stack + image + circular badge',
+  },
   stories: {
     type: 'stories',
     label: 'Stories',
@@ -3189,5 +3260,89 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     defaultName: 'Blogs - Post Grid',
     aiLabelVi: 'lưới bài viết: ảnh + category + tiêu đề + ngày',
     aiLabelEn: 'blog post grid: image + category + title + date',
+  },
+  lumea_hero: {
+    type: 'lumea_hero',
+    label: 'Hero - Luxury Fullbleed',
+    accent: '#a68a5b',
+    adminLabel: 'Hero - Luxury Fullbleed',
+    gradient: 'from-stone-800 to-neutral-900',
+    defaultName: 'Hero - Luxury Fullbleed',
+    aiLabelVi:
+      'hero full-bleed ảnh nội thất + overlay tối, eyebrow + heading serif lớn + 2 nút',
+    aiLabelEn:
+      'full-bleed interior hero with dark overlay, eyebrow + big serif heading + two CTAs',
+  },
+  lumea_statement: {
+    type: 'lumea_statement',
+    label: 'Statement - Centered Serif',
+    accent: '#a68a5b',
+    adminLabel: 'Statement - Centered Serif',
+    gradient: 'from-amber-100 to-stone-300',
+    defaultName: 'Statement - Centered Serif',
+    aiLabelVi: 'câu tuyên ngôn serif lớn căn giữa trên nền kem',
+    aiLabelEn: 'large centered serif statement on a cream background',
+  },
+  lumea_immersive: {
+    type: 'lumea_immersive',
+    label: 'Feature - Image Left',
+    accent: '#a68a5b',
+    adminLabel: 'Feature - Image Left',
+    gradient: 'from-amber-100 to-stone-300',
+    defaultName: 'Feature - Image Left',
+    aiLabelVi: 'feature 2 cột: ảnh trái + heading serif và mô tả phải',
+    aiLabelEn: 'two-column feature: image left + serif heading and copy right',
+  },
+  lumea_handcrafted: {
+    type: 'lumea_handcrafted',
+    label: 'Feature - Image Right',
+    accent: '#a68a5b',
+    adminLabel: 'Feature - Image Right',
+    gradient: 'from-amber-100 to-stone-300',
+    defaultName: 'Feature - Image Right',
+    aiLabelVi: 'feature 2 cột đảo: heading serif và mô tả trái + ảnh phải',
+    aiLabelEn:
+      'reversed two-column feature: serif heading and copy left + image right',
+  },
+  lumea_amenities: {
+    type: 'lumea_amenities',
+    label: 'Amenities - Dark Grid',
+    accent: '#a68a5b',
+    adminLabel: 'Amenities - Dark Grid',
+    gradient: 'from-stone-800 to-neutral-900',
+    defaultName: 'Amenities - Dark Grid',
+    aiLabelVi:
+      'lưới tiện ích nền nâu đậm: heading serif + danh sách tiêu đề/mô tả',
+    aiLabelEn: 'dark amenity grid: serif heading + title/description list',
+  },
+  lumea_testimonial: {
+    type: 'lumea_testimonial',
+    label: 'Testimonial - Serif Quote',
+    accent: '#a68a5b',
+    adminLabel: 'Testimonial - Serif Quote',
+    gradient: 'from-amber-100 to-stone-300',
+    defaultName: 'Testimonial - Serif Quote',
+    aiLabelVi: 'trích dẫn serif lớn căn giữa + tên + vai trò',
+    aiLabelEn: 'large centered serif quote + name + role',
+  },
+  lumea_gallery: {
+    type: 'lumea_gallery',
+    label: 'Gallery - Interior Grid',
+    accent: '#a68a5b',
+    adminLabel: 'Gallery - Interior Grid',
+    gradient: 'from-amber-100 to-stone-300',
+    defaultName: 'Gallery - Interior Grid',
+    aiLabelVi: 'lưới ảnh nội thất bo góc + heading serif',
+    aiLabelEn: 'rounded interior image grid + serif heading',
+  },
+  lumea_footer: {
+    type: 'lumea_footer',
+    label: 'Footer - Serif Brand',
+    accent: '#a68a5b',
+    adminLabel: 'Footer - Serif Brand',
+    gradient: 'from-stone-800 to-neutral-900',
+    defaultName: 'Footer - Serif Brand',
+    aiLabelVi: 'footer nâu đậm: brand serif lớn + tagline + link + legal',
+    aiLabelEn: 'dark footer: big serif brand + tagline + links + legal',
   },
 };

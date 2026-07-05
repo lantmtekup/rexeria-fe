@@ -20,6 +20,14 @@ import { housentValuesDef } from './blocks/_registry/defs/housentValues';
 import { housentFaqDef } from './blocks/_registry/defs/housentFaq';
 import { housentTestimonialDef } from './blocks/_registry/defs/housentTestimonial';
 import { housentBlogsDef } from './blocks/_registry/defs/housentBlogs';
+import { lumeaHeroDef } from './blocks/_registry/defs/lumeaHero';
+import { lumeaStatementDef } from './blocks/_registry/defs/lumeaStatement';
+import { lumeaImmersiveDef } from './blocks/_registry/defs/lumeaImmersive';
+import { lumeaHandcraftedDef } from './blocks/_registry/defs/lumeaHandcrafted';
+import { lumeaAmenitiesDef } from './blocks/_registry/defs/lumeaAmenities';
+import { lumeaTestimonialDef } from './blocks/_registry/defs/lumeaTestimonial';
+import { lumeaGalleryDef } from './blocks/_registry/defs/lumeaGallery';
+import { lumeaFooterDef } from './blocks/_registry/defs/lumeaFooter';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
@@ -67,6 +75,7 @@ import type {
   HeroSplitContent,
   ImageCarouselContent,
   InteractiveAdWidgetContent,
+  BrightedgeHeroContent,
   PanoramaContent,
   TextDisplaceHeroContent,
   ImageTrailContent,
@@ -745,6 +754,25 @@ const CAROUSEL_EN: ImageCarouselContent = {
   autoplayMs: 4500,
   showPagination: true,
   showNavArrows: true,
+};
+
+// ── BrightEdge hero (clone layout/animation — copy/ảnh placeholder) ─────
+const BRIGHTEDGE_HERO: BrightedgeHeroContent = {
+  eyebrow: 'Chúng tôi là studio thiết kế số',
+  heading: 'Sáng tạo',
+  subtitle:
+    'Từ ý tưởng đến hiện thực — thiết kế đẹp có sức mạnh thu hút mọi ánh nhìn.',
+  ctaLabel: 'Gặp đội ngũ',
+  ctaHref: '#team',
+  avatars: [
+    { id: 'a1', imageUrl: '' },
+    { id: 'a2', imageUrl: '' },
+    { id: 'a3', imageUrl: '' },
+    { id: 'a4', imageUrl: '' },
+  ],
+  badgeText: 'SÁNG TẠO • Ý TƯỞNG • GIẢI PHÁP • ',
+  badgeSubtext: 'Kiến tạo giá trị khác biệt',
+  imageUrl: '',
 };
 
 // ── Interactive ad widget ───────────────────────────────────────────────
@@ -2239,6 +2267,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   mint_vault_collection: MINT_VAULT_COLLECTION_VI,
   mint_vault_invitation: MINT_VAULT_INVITATION_VI,
   interactive_ad_widget: INTERACTIVE_AD_WIDGET,
+  brightedge_hero: BRIGHTEDGE_HERO,
   image_carousel: CAROUSEL_VI,
   stories: STORIES_VI,
   split_screen: SPLIT_VI,
@@ -2306,6 +2335,14 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   housent_faq: housentFaqDef.defaultContent.vi,
   housent_testimonial: housentTestimonialDef.defaultContent.vi,
   housent_blogs: housentBlogsDef.defaultContent.vi,
+  lumea_hero: lumeaHeroDef.defaultContent.vi,
+  lumea_statement: lumeaStatementDef.defaultContent.vi,
+  lumea_immersive: lumeaImmersiveDef.defaultContent.vi,
+  lumea_handcrafted: lumeaHandcraftedDef.defaultContent.vi,
+  lumea_amenities: lumeaAmenitiesDef.defaultContent.vi,
+  lumea_testimonial: lumeaTestimonialDef.defaultContent.vi,
+  lumea_gallery: lumeaGalleryDef.defaultContent.vi,
+  lumea_footer: lumeaFooterDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
@@ -2336,6 +2373,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   mint_vault_collection: MINT_VAULT_COLLECTION_VI,
   mint_vault_invitation: MINT_VAULT_INVITATION_VI,
   interactive_ad_widget: INTERACTIVE_AD_WIDGET,
+  brightedge_hero: BRIGHTEDGE_HERO,
   image_carousel: CAROUSEL_EN,
   stories: STORIES_EN,
   split_screen: SPLIT_EN,
@@ -2403,6 +2441,14 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   housent_faq: housentFaqDef.defaultContent.en,
   housent_testimonial: housentTestimonialDef.defaultContent.en,
   housent_blogs: housentBlogsDef.defaultContent.en,
+  lumea_hero: lumeaHeroDef.defaultContent.en,
+  lumea_statement: lumeaStatementDef.defaultContent.en,
+  lumea_immersive: lumeaImmersiveDef.defaultContent.en,
+  lumea_handcrafted: lumeaHandcraftedDef.defaultContent.en,
+  lumea_amenities: lumeaAmenitiesDef.defaultContent.en,
+  lumea_testimonial: lumeaTestimonialDef.defaultContent.en,
+  lumea_gallery: lumeaGalleryDef.defaultContent.en,
+  lumea_footer: lumeaFooterDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
