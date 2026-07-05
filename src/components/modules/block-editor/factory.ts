@@ -13,6 +13,13 @@ import { housentStatsDef } from './blocks/_registry/defs/housentStats';
 import { housentListingsDef } from './blocks/_registry/defs/housentListings';
 import { housentCtaDef } from './blocks/_registry/defs/housentCta';
 import { housentFooterDef } from './blocks/_registry/defs/housentFooter';
+import { housentAboutDef } from './blocks/_registry/defs/housentAbout';
+import { housentExcellenceDef } from './blocks/_registry/defs/housentExcellence';
+import { housentSolutionsDef } from './blocks/_registry/defs/housentSolutions';
+import { housentValuesDef } from './blocks/_registry/defs/housentValues';
+import { housentFaqDef } from './blocks/_registry/defs/housentFaq';
+import { housentTestimonialDef } from './blocks/_registry/defs/housentTestimonial';
+import { housentBlogsDef } from './blocks/_registry/defs/housentBlogs';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
@@ -2292,6 +2299,13 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   housent_listings: housentListingsDef.defaultContent.vi,
   housent_cta: housentCtaDef.defaultContent.vi,
   housent_footer: housentFooterDef.defaultContent.vi,
+  housent_about: housentAboutDef.defaultContent.vi,
+  housent_excellence: housentExcellenceDef.defaultContent.vi,
+  housent_solutions: housentSolutionsDef.defaultContent.vi,
+  housent_values: housentValuesDef.defaultContent.vi,
+  housent_faq: housentFaqDef.defaultContent.vi,
+  housent_testimonial: housentTestimonialDef.defaultContent.vi,
+  housent_blogs: housentBlogsDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
@@ -2382,6 +2396,13 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   housent_listings: housentListingsDef.defaultContent.en,
   housent_cta: housentCtaDef.defaultContent.en,
   housent_footer: housentFooterDef.defaultContent.en,
+  housent_about: housentAboutDef.defaultContent.en,
+  housent_excellence: housentExcellenceDef.defaultContent.en,
+  housent_solutions: housentSolutionsDef.defaultContent.en,
+  housent_values: housentValuesDef.defaultContent.en,
+  housent_faq: housentFaqDef.defaultContent.en,
+  housent_testimonial: housentTestimonialDef.defaultContent.en,
+  housent_blogs: housentBlogsDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,

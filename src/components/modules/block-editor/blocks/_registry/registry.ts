@@ -18,11 +18,18 @@ import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
+import { housentAboutDef } from './defs/housentAbout';
+import { housentBlogsDef } from './defs/housentBlogs';
 import { housentCtaDef } from './defs/housentCta';
+import { housentExcellenceDef } from './defs/housentExcellence';
+import { housentFaqDef } from './defs/housentFaq';
 import { housentFooterDef } from './defs/housentFooter';
 import { housentHeroDef } from './defs/housentHero';
 import { housentListingsDef } from './defs/housentListings';
+import { housentSolutionsDef } from './defs/housentSolutions';
 import { housentStatsDef } from './defs/housentStats';
+import { housentTestimonialDef } from './defs/housentTestimonial';
+import { housentValuesDef } from './defs/housentValues';
 import { interactiveAdWidgetDef } from './defs/interactiveAdWidget';
 import { q80ExperienceDef } from './defs/q80Experience';
 import { q80MenuDef } from './defs/q80Menu';
@@ -46,6 +53,13 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   housent_listings: housentListingsDef as BlockDef,
   housent_cta: housentCtaDef as BlockDef,
   housent_footer: housentFooterDef as BlockDef,
+  housent_about: housentAboutDef as BlockDef,
+  housent_excellence: housentExcellenceDef as BlockDef,
+  housent_solutions: housentSolutionsDef as BlockDef,
+  housent_values: housentValuesDef as BlockDef,
+  housent_faq: housentFaqDef as BlockDef,
+  housent_testimonial: housentTestimonialDef as BlockDef,
+  housent_blogs: housentBlogsDef as BlockDef,
   interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
 };
 

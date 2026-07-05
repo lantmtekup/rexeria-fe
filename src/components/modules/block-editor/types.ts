@@ -99,8 +99,18 @@ export type BlockType =
   | 'housent_listings'
   | 'housent_cta'
   | 'housent_footer'
+  | 'housent_about'
+  | 'housent_excellence'
+  | 'housent_solutions'
+  | 'housent_values'
+  | 'housent_faq'
+  | 'housent_testimonial'
+  | 'housent_blogs'
   // ── Interactive ad creative (clone từ 360-admin-cms, xem PageMetadataAd) ──
-  | 'interactive_ad_widget';
+  | 'interactive_ad_widget'
+  // ── Framer clone: BrightEdge agency template (layout/animation only —
+  // copy + ảnh là placeholder, xem docs/be-audit ghi chú license) ──
+  | 'brightedge_hero';
 
 export interface HeroSplitStat {
   value: string;
@@ -511,6 +521,27 @@ export interface InteractiveAdWidgetContent {
   closeable: boolean;
   /** Auto-advance interval ms mặc định cho mọi slide; 0/undefined = manual only. */
   autoplayMs?: number;
+}
+
+/**
+ * Hero 2 cột clone layout/animation từ 1 template Framer đã mua (xem
+ * docs/be-audit ghi chú license) — KHÔNG mang copy/ảnh gốc, mọi field dưới
+ * đây là placeholder để user tự thay nội dung thật.
+ */
+export interface BrightedgeHeroAvatar {
+  id: string;
+  imageUrl: string;
+}
+export interface BrightedgeHeroContent {
+  eyebrow: string;
+  heading: string;
+  subtitle: string;
+  ctaLabel: string;
+  ctaHref: string;
+  avatars: BrightedgeHeroAvatar[];
+  badgeText: string;
+  badgeSubtext: string;
+  imageUrl: string;
 }
 
 /**
@@ -1503,13 +1534,93 @@ export interface HousentFooterContent {
   copyright: string;
 }
 
+export interface HousentAboutPoint {
+  value: string;
+  label: string;
+}
+export interface HousentAboutContent {
+  eyebrow: string;
+  title: string;
+  text: string;
+  points: HousentAboutPoint[];
+}
+
+export interface HousentFeatureItem {
+  title: string;
+  description: string;
+}
+export interface HousentExcellenceContent {
+  eyebrow: string;
+  title: string;
+  items: HousentFeatureItem[];
+}
+
+export interface HousentSolutionItem {
+  icon: string;
+  title: string;
+  description: string;
+}
+export interface HousentSolutionsContent {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  items: HousentSolutionItem[];
+}
+
+export interface HousentValuesContent {
+  eyebrow: string;
+  title: string;
+  items: HousentFeatureItem[];
+}
+
+export interface HousentFaqItem {
+  question: string;
+  answer: string;
+}
+export interface HousentFaqContent {
+  eyebrow: string;
+  title: string;
+  items: HousentFaqItem[];
+}
+
+export interface HousentTestimonialItem {
+  quote: string;
+  name: string;
+  role: string;
+}
+export interface HousentTestimonialContent {
+  eyebrow: string;
+  title: string;
+  items: HousentTestimonialItem[];
+}
+
+export interface HousentBlogItem {
+  imageUrl: string;
+  category: string;
+  title: string;
+  date: string;
+}
+export interface HousentBlogsContent {
+  eyebrow: string;
+  title: string;
+  items: HousentBlogItem[];
+}
+
 export type BlockContent =
   | HeroSplitContent
+  | BrightedgeHeroContent
   | HousentHeroContent
   | HousentStatsContent
   | HousentListingsContent
   | HousentCtaContent
   | HousentFooterContent
+  | HousentAboutContent
+  | HousentExcellenceContent
+  | HousentSolutionsContent
+  | HousentValuesContent
+  | HousentFaqContent
+  | HousentTestimonialContent
+  | HousentBlogsContent
   | HeroOverlayContent
   | FeatureSectionContent
   | BookingFormContent
@@ -3003,5 +3114,80 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
       'footer nền tối: brand + prompt "cần hỗ trợ?" + nhóm cột link + hàng legal',
     aiLabelEn:
       'dark footer: brand + "need assistance?" prompt + link columns + legal row',
+  },
+  housent_about: {
+    type: 'housent_about',
+    label: 'About - Split Intro',
+    accent: '#e8622c',
+    adminLabel: 'About - Split Intro',
+    gradient: 'from-orange-100 to-stone-200',
+    defaultName: 'About - Split Intro',
+    aiLabelVi:
+      'giới thiệu 2 cột: tiêu đề lớn trái + đoạn mô tả và mini-stat phải',
+    aiLabelEn:
+      'two-column intro: big heading left + description and mini-stats right',
+  },
+  housent_excellence: {
+    type: 'housent_excellence',
+    label: 'Excellence - Numbered List',
+    accent: '#e8622c',
+    adminLabel: 'Excellence - Numbered List',
+    gradient: 'from-stone-800 to-neutral-900',
+    defaultName: 'Excellence - Numbered List',
+    aiLabelVi: 'danh sách ưu điểm đánh số trong vòng tròn trên nền tối',
+    aiLabelEn:
+      'numbered excellence list with circular indices on a dark background',
+  },
+  housent_solutions: {
+    type: 'housent_solutions',
+    label: 'Solutions - Service Cards',
+    accent: '#e8622c',
+    adminLabel: 'Solutions - Service Cards',
+    gradient: 'from-orange-100 to-stone-200',
+    defaultName: 'Solutions - Service Cards',
+    aiLabelVi: 'lưới card dịch vụ: icon + tiêu đề + mô tả',
+    aiLabelEn: 'service card grid: icon + title + description',
+  },
+  housent_values: {
+    type: 'housent_values',
+    label: 'Values - Principle Stack',
+    accent: '#e8622c',
+    adminLabel: 'Values - Principle Stack',
+    gradient: 'from-orange-100 to-stone-200',
+    defaultName: 'Values - Principle Stack',
+    aiLabelVi: 'stack nguyên tắc: số thứ tự + tiêu đề + mô tả, hàng phân cách',
+    aiLabelEn: 'principle stack: index + title + description in divided rows',
+  },
+  housent_faq: {
+    type: 'housent_faq',
+    label: 'FAQ - Accordion',
+    accent: '#e8622c',
+    adminLabel: 'FAQ - Accordion',
+    gradient: 'from-stone-800 to-neutral-900',
+    defaultName: 'FAQ - Accordion',
+    aiLabelVi:
+      'FAQ accordion nền tối: heading trái + danh sách câu hỏi mở/đóng phải',
+    aiLabelEn:
+      'dark FAQ accordion: heading left + expandable question list right',
+  },
+  housent_testimonial: {
+    type: 'housent_testimonial',
+    label: 'Testimonial - Quote Cards',
+    accent: '#e8622c',
+    adminLabel: 'Testimonial - Quote Cards',
+    gradient: 'from-orange-100 to-stone-200',
+    defaultName: 'Testimonial - Quote Cards',
+    aiLabelVi: 'lưới card đánh giá: trích dẫn + tên + vai trò',
+    aiLabelEn: 'testimonial card grid: quote + name + role',
+  },
+  housent_blogs: {
+    type: 'housent_blogs',
+    label: 'Blogs - Post Grid',
+    accent: '#e8622c',
+    adminLabel: 'Blogs - Post Grid',
+    gradient: 'from-orange-100 to-stone-200',
+    defaultName: 'Blogs - Post Grid',
+    aiLabelVi: 'lưới bài viết: ảnh + category + tiêu đề + ngày',
+    aiLabelEn: 'blog post grid: image + category + title + date',
   },
 };
