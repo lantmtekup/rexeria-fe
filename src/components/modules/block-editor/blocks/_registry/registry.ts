@@ -66,6 +66,16 @@ import { housentValuesDef } from './defs/housentValues';
 import { interactiveAdWidgetDef } from './defs/interactiveAdWidget';
 import { q80ExperienceDef } from './defs/q80Experience';
 import { q80MenuDef } from './defs/q80Menu';
+import { springsContactFooterDef } from './defs/springsContactFooter';
+import { springsDesignDef } from './defs/springsDesign';
+import { springsHeaderDef } from './defs/springsHeader';
+import { springsHeroDef } from './defs/springsHero';
+import { springsInteriorsDef } from './defs/springsInteriors';
+import { springsIntroDef } from './defs/springsIntro';
+import { springsMapDef } from './defs/springsMap';
+import { springsNaturePlaceDef } from './defs/springsNaturePlace';
+import { springsResidencesDef } from './defs/springsResidences';
+import { springsWellnessDef } from './defs/springsWellness';
 import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
@@ -127,6 +137,16 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   protection_scrollytelling: protectionScrollytellingDef as BlockDef,
   interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
   brightedge_hero: brightedgeHeroDef as BlockDef,
+  springs_header: springsHeaderDef as BlockDef,
+  springs_hero: springsHeroDef as BlockDef,
+  springs_intro: springsIntroDef as BlockDef,
+  springs_wellness: springsWellnessDef as BlockDef,
+  springs_nature_place: springsNaturePlaceDef as BlockDef,
+  springs_map: springsMapDef as BlockDef,
+  springs_design: springsDesignDef as BlockDef,
+  springs_residences: springsResidencesDef as BlockDef,
+  springs_interiors: springsInteriorsDef as BlockDef,
+  springs_contact_footer: springsContactFooterDef as BlockDef,
 };
 
 export function getBlockDef(type: BlockType): BlockDef | undefined {

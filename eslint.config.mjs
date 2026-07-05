@@ -11,6 +11,11 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  {
+    // Các app standalone trong apps/* (mint2026, protection…) có toolchain +
+    // eslint riêng, không chịu convention của host app rexerai.
+    ignores: ['apps/**'],
+  },
   ...compat.extends('next/core-web-vitals', 'next/typescript', 'prettier'),
   {
     plugins: {

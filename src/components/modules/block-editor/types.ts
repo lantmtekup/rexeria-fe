@@ -143,7 +143,18 @@ export type BlockType =
   | 'interactive_ad_widget'
   // ── Framer clone: BrightEdge agency template (layout/animation only —
   // copy + ảnh là placeholder, xem docs/be-audit ghi chú license) ──
-  | 'brightedge_hero';
+  | 'brightedge_hero'
+  // ── Springs Estate clone sections (springs.estate, real-estate landing) ──
+  | 'springs_header'
+  | 'springs_hero'
+  | 'springs_intro'
+  | 'springs_wellness'
+  | 'springs_nature_place'
+  | 'springs_map'
+  | 'springs_design'
+  | 'springs_residences'
+  | 'springs_interiors'
+  | 'springs_contact_footer';
 
 export interface HeroSplitStat {
   value: string;
@@ -1865,6 +1876,93 @@ export interface ProtectionScrollytellingContent {
   sections: ProtectionSection[];
 }
 
+/**
+ * Springs Estate clone (springs.estate — real-estate wellness residences
+ * landing, static-built site, mirrored 1:1 qua web-clone skill). 10 section,
+ * theo đúng thứ tự DOM gốc. Components: `blocks/Springs*.tsx`.
+ */
+export interface SpringsNavLink {
+  label: string;
+  href: string;
+}
+export interface SpringsHeaderContent {
+  logoText: string;
+  menuLabel: string;
+  residencesLabel: string;
+  contactLabel: string;
+  navLinks: SpringsNavLink[];
+}
+
+export interface SpringsHeroContent {
+  /** 6 ảnh tường ảnh chéo (gốc: preloader-left-1/2/3 + right-1/2/3). */
+  galleryImages: string[];
+  eyebrow: string;
+  heading: string;
+  subheading: string;
+}
+
+export interface SpringsIntroContent {
+  statement: string;
+  tagline: string;
+  description: string;
+}
+
+export interface SpringsWellnessContent {
+  heading: string;
+  description: string;
+  images: string[];
+}
+
+export interface SpringsNaturePlaceContent {
+  natureHeading: string;
+  natureDescription: string;
+  natureImage: string;
+  placeHeading: string;
+  placeDescription: string;
+  placeCaption: string;
+  placeImage: string;
+}
+
+export interface SpringsMapContent {
+  heading: string;
+  description: string;
+  mapImage: string;
+}
+
+export interface SpringsDesignSlide {
+  subtitle: string;
+  text: string;
+  imageUrl: string;
+}
+export interface SpringsDesignContent {
+  heading: string;
+  slides: SpringsDesignSlide[];
+}
+
+export interface SpringsResidencesContent {
+  heading: string;
+  description: string;
+  images: string[];
+}
+
+export interface SpringsInteriorsContent {
+  heading: string;
+  description: string;
+  images: string[];
+}
+
+export interface SpringsContactFooterContent {
+  contactHeading: string;
+  contactDescription: string;
+  submitLabel: string;
+  footerLogoText: string;
+  footerAddress: string;
+  footerPhone: string;
+  footerEmail: string;
+  footerLinks: SpringsNavLink[];
+  footerCopyright: string;
+}
+
 export type BlockContent =
   | HeroSplitContent
   | BrightedgeHeroContent
@@ -1992,6 +2090,16 @@ export type BlockContent =
   | DelvauxVariantContent
   | Q80ExperienceContent
   | Q80MenuContent
+  | SpringsHeaderContent
+  | SpringsHeroContent
+  | SpringsIntroContent
+  | SpringsWellnessContent
+  | SpringsNaturePlaceContent
+  | SpringsMapContent
+  | SpringsDesignContent
+  | SpringsResidencesContent
+  | SpringsInteriorsContent
+  | SpringsContactFooterContent
   | Record<string, unknown>;
 
 /**
@@ -3822,5 +3930,114 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
       'hero pin canvas 240 frame theo scroll: tagline truot len roi section title cycle, cham cuoi vang',
     aiLabelEn:
       'pinned 240-frame canvas scrollytelling hero: tagline slides up then section titles cycle',
+  },
+  springs_header: {
+    type: 'springs_header',
+    label: 'Springs - Header',
+    accent: '#173620',
+    adminLabel: 'Springs - Header',
+    gradient: 'from-emerald-950 to-emerald-800',
+    defaultName: 'Springs - Header',
+    aiLabelVi:
+      'header bất động sản: logo giữa, menu + residences + contact us, icon yêu thích',
+    aiLabelEn:
+      'real-estate header: centered logo, menu + residences + contact us, favourite icon',
+  },
+  springs_hero: {
+    type: 'springs_hero',
+    label: 'Springs - Hero',
+    accent: '#173620',
+    adminLabel: 'Springs - Hero',
+    gradient: 'from-emerald-950 to-emerald-700',
+    defaultName: 'Springs - Hero',
+    aiLabelVi:
+      'hero tường ảnh chéo 6 ô + tiêu đề serif lớn, entrance scroll reveal',
+    aiLabelEn:
+      'diagonal 6-photo wall hero + large serif headline, scroll reveal entrance',
+  },
+  springs_intro: {
+    type: 'springs_intro',
+    label: 'Springs - Intro',
+    accent: '#173620',
+    adminLabel: 'Springs - Intro',
+    gradient: 'from-emerald-900 to-emerald-600',
+    defaultName: 'Springs - Intro',
+    aiLabelVi: 'câu tuyên ngôn thương hiệu, serif lớn giữa trang',
+    aiLabelEn: 'brand statement, large centered serif copy',
+  },
+  springs_wellness: {
+    type: 'springs_wellness',
+    label: 'Springs - Wellness',
+    accent: '#2f6b4f',
+    adminLabel: 'Springs - Wellness',
+    gradient: 'from-emerald-800 to-emerald-500',
+    defaultName: 'Springs - Wellness',
+    aiLabelVi: 'section wellness: tiêu đề + mô tả + dải ảnh slider',
+    aiLabelEn: 'wellness section: heading + description + image slider strip',
+  },
+  springs_nature_place: {
+    type: 'springs_nature_place',
+    label: 'Springs - Nature & Place',
+    accent: '#2f6b4f',
+    adminLabel: 'Springs - Nature & Place',
+    gradient: 'from-emerald-800 to-lime-600',
+    defaultName: 'Springs - Nature & Place',
+    aiLabelVi:
+      'sticky 2 slide: Nature (ảnh thiên nhiên) rồi Place (video/ảnh khu vực)',
+    aiLabelEn:
+      'sticky 2-slide sequence: Nature (nature imagery) then Place (area video/image)',
+  },
+  springs_map: {
+    type: 'springs_map',
+    label: 'Springs - Map',
+    accent: '#173620',
+    adminLabel: 'Springs - Map',
+    gradient: 'from-emerald-950 to-emerald-700',
+    defaultName: 'Springs - Map',
+    aiLabelVi: 'bản đồ vị trí dự án + caption',
+    aiLabelEn: 'project location map + caption',
+  },
+  springs_design: {
+    type: 'springs_design',
+    label: 'Springs - Design',
+    accent: '#173620',
+    adminLabel: 'Springs - Design',
+    gradient: 'from-stone-800 to-stone-500',
+    defaultName: 'Springs - Design',
+    aiLabelVi:
+      'kiến trúc: nhiều slide sticky, mỗi slide tiêu đề phụ + text + ảnh',
+    aiLabelEn:
+      'architecture: multiple sticky slides, each with subtitle + text + image',
+  },
+  springs_residences: {
+    type: 'springs_residences',
+    label: 'Springs - Residences',
+    accent: '#173620',
+    adminLabel: 'Springs - Residences',
+    gradient: 'from-stone-700 to-stone-400',
+    defaultName: 'Springs - Residences',
+    aiLabelVi: 'gallery căn hộ: tiêu đề + mô tả + dải ảnh phối cảnh',
+    aiLabelEn: 'residences gallery: heading + description + render image strip',
+  },
+  springs_interiors: {
+    type: 'springs_interiors',
+    label: 'Springs - Interiors',
+    accent: '#173620',
+    adminLabel: 'Springs - Interiors',
+    gradient: 'from-amber-900 to-amber-600',
+    defaultName: 'Springs - Interiors',
+    aiLabelVi: 'gallery nội thất: tiêu đề + mô tả + dải ảnh slider',
+    aiLabelEn: 'interiors gallery: heading + description + image slider strip',
+  },
+  springs_contact_footer: {
+    type: 'springs_contact_footer',
+    label: 'Springs - Contact & Footer',
+    accent: '#0d1f14',
+    adminLabel: 'Springs - Contact & Footer',
+    gradient: 'from-neutral-950 to-emerald-950',
+    defaultName: 'Springs - Contact & Footer',
+    aiLabelVi:
+      'form liên hệ + footer: địa chỉ, điện thoại, email, link mạng xã hội',
+    aiLabelEn: 'contact form + footer: address, phone, email, social links',
   },
 };
