@@ -167,7 +167,14 @@ export function PublicBlockRender({
     <div className='min-h-screen bg-white' style={brandKitToCssVars(brandKit)}>
       <LandingMotionRoot enableSmooth={isVerticalTransition(transition)}>
         <main className='w-full'>
-          <TemplateTransitions transition={transition} items={items} />
+          {/* `!gap-0`: trang published là landing full-bleed — gap mặc định
+              của PlainStack (gap-3/4) tạo sọc trắng giữa các section (lộ rõ
+              với block full-viewport như q80_experience). */}
+          <TemplateTransitions
+            transition={transition}
+            items={items}
+            className='!gap-0'
+          />
         </main>
       </LandingMotionRoot>
       {embed ? null : (

@@ -146,6 +146,8 @@ const ORDERED_TYPES: BlockType[] = [
   'delvaux_details',
   'delvaux_product',
   'delvaux_variant',
+  'q80_experience',
+  'q80_menu',
 ];
 
 export function AddBlockDialog({

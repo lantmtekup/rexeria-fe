@@ -6,6 +6,8 @@ import { delvauxHeroDef } from './blocks/_registry/defs/delvauxHero';
 import { delvauxProductDef } from './blocks/_registry/defs/delvauxProduct';
 import { delvauxSubnavDef } from './blocks/_registry/defs/delvauxSubnav';
 import { delvauxVariantDef } from './blocks/_registry/defs/delvauxVariant';
+import { q80ExperienceDef } from './blocks/_registry/defs/q80Experience';
+import { q80MenuDef } from './blocks/_registry/defs/q80Menu';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
@@ -2278,6 +2280,8 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   delvaux_details: delvauxDetailsDef.defaultContent.vi,
   delvaux_product: delvauxProductDef.defaultContent.vi,
   delvaux_variant: delvauxVariantDef.defaultContent.vi,
+  q80_experience: q80ExperienceDef.defaultContent.vi,
+  q80_menu: q80MenuDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
@@ -2361,6 +2365,8 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   delvaux_details: delvauxDetailsDef.defaultContent.en,
   delvaux_product: delvauxProductDef.defaultContent.en,
   delvaux_variant: delvauxVariantDef.defaultContent.en,
+  q80_experience: q80ExperienceDef.defaultContent.en,
+  q80_menu: q80MenuDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
   framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
