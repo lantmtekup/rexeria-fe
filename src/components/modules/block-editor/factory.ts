@@ -70,6 +70,7 @@ import { MEDIA, pickMedia } from './blocks/sample-media';
 import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
 import { masteriseHomeInsideDef } from './blocks/_registry/defs/masteriseHomeInside';
 import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
+import { readymagCaseSectionDef } from './blocks/_registry/defs/readymagCaseSection';
 import { framerIgnitexStepDef } from './blocks/_registry/defs/framerIgnitexStep';
 import type {
   Block,
@@ -2459,6 +2460,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_perform_pricing: FRAMER_PERFORM_PRICING_VI,
   framer_firma_template_strategy_digital:
     framerFirmaTemplateStrategyDigitalDef.defaultContent.vi,
+  readymag_case_section: readymagCaseSectionDef.defaultContent.vi,
   framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.vi,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
@@ -2607,6 +2609,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_perform_pricing: FRAMER_PERFORM_PRICING_EN,
   framer_firma_template_strategy_digital:
     framerFirmaTemplateStrategyDigitalDef.defaultContent.en,
+  readymag_case_section: readymagCaseSectionDef.defaultContent.en,
   framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.en,
 };
 

@@ -145,6 +145,7 @@ const ORDERED_TYPES: BlockType[] = [
   'quiz',
   'poll',
   'booking_form',
+  'readymag_case_section',
   // ── Delvaux clone ──
   'delvaux_header',
   'delvaux_subnav',
