@@ -69,6 +69,7 @@ export type BlockType =
   | 'framer_firma_template_strategy_digital'
   | 'housent_our_excellence'
   | 'framer_estancia_about_us'
+  | 'readymag_case_section'
   // ── Mint-coint sections tách thành data block (port từ src/templates) ──
   | 'mint_details'
   | 'mint_sku'
@@ -1069,6 +1070,43 @@ export interface SustainitOurExpertiseContent {
   items: SustainitExpertiseItem[];
   /** Nhãn CTA cuối, vd "Work with us". */
   ctaLabel: string;
+}
+
+/**
+ * Readymag Case Section — vertical 3-column layout (image-stack left, bio
+ * middle, wordmark right) with a scroll-driven case cycle. The block plays
+ * through N cases as the user scrolls; each case has a name (bold prefix),
+ * body description, link CTA, and one image. Inspired by Readymag's
+ * `animation-container` Cases pattern, ported to GSAP scrub.
+ *
+ * - `cases[].key`  — stable key, used by editor to track element edits
+ * - `cases[].name` — case-name bolded at start of the bio paragraph
+ * - `cases[].body` — bio body (continues after the bolded name)
+ * - `cases[].linkText` / `linkHref` — "View case →" CTA
+ * - `cases[].imageUrl` — case photo (rendered in the left image-stack)
+ * - `bgColor` — page background color (default `#ffffff`)
+ * - `textColor` — primary text color (default `#000000`)
+ * - `accentColor` — link color (default `#0000ee`)
+ * - `wordmarkColor` — color for the big case-name wordmark (default textColor)
+ *
+ * Port từ framer-recon `recon-readymag-cases` (URL
+ * https://readymag.com/designs/6263403/, selector `article.page`).
+ */
+export interface ReadymagCaseItem {
+  key: string;
+  name: string;
+  body: string;
+  linkText: string;
+  linkHref: string;
+  imageUrl: string;
+}
+
+export interface ReadymagCaseSectionContent {
+  cases: ReadymagCaseItem[];
+  bgColor: string;
+  textColor: string;
+  accentColor: string;
+  wordmarkColor: string;
 }
 
 /**
@@ -2268,6 +2306,7 @@ export type BlockContent =
   | SpringsResidencesContent
   | SpringsInteriorsContent
   | SpringsContactFooterContent
+  | ReadymagCaseSectionContent
   | SustainitOurExpertiseContent
   | Record<string, unknown>;
 
@@ -4280,6 +4319,18 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
       'block case-study 2 cột (recon spec): ảnh chân dung vuông trái + card trắng phải với eyebrow, heading serif, body, link gạch chân reveal-on-hover',
     aiLabelEn:
       'two-column case-study block (recon spec): square portrait image left + white card right with eyebrow, serif heading, body, underline-reveal-on-hover link',
+  },
+  readymag_case_section: {
+    type: 'readymag_case_section',
+    label: 'Readymag Cases',
+    accent: '#000000',
+    adminLabel: 'Readymag Cases',
+    gradient: 'from-stone-100 to-stone-300',
+    defaultName: 'Cases',
+    aiLabelVi:
+      'section cases Readymag: 3-cột tuyệt đối (ảnh trái + bio giữa + wordmark phải) với case-cycle scroll-driven (GSAP scrub R1–R6)',
+    aiLabelEn:
+      'Readymag cases: 3-column absolute layout (image-stack left + bio middle + wordmark right) with scroll-driven case cycle (GSAP scrub R1–R6)',
   },
   framer_estancia_about_us: {
     type: 'framer_estancia_about_us',

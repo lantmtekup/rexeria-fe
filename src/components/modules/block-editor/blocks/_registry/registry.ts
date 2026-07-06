@@ -81,6 +81,7 @@ import { springsNaturePlaceDef } from './defs/springsNaturePlace';
 import { springsResidencesDef } from './defs/springsResidences';
 import { springsWellnessDef } from './defs/springsWellness';
 import { sustainitOurExpertiseDef } from './defs/sustainitOurExpertise';
+import { readymagCaseSectionDef } from './defs/readymagCaseSection';
 import { masteriseHomeInsideDef } from './defs/masteriseHomeInside';
 import type { BlockDef } from './types';
 
@@ -159,6 +160,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   sustainit_our_expertise: sustainitOurExpertiseDef as BlockDef,
   framer_firma_template_strategy_digital:
     framerFirmaTemplateStrategyDigitalDef as BlockDef,
+  readymag_case_section: readymagCaseSectionDef as BlockDef,
   framer_estancia_about_us: framerEstanciaAboutUsDef as BlockDef,
 };
 
