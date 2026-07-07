@@ -68,31 +68,36 @@ function ExpertiseCell({
 
   const imgKey = `items[${index}].imageUrl`;
   const titleKey = `items[${index}].title`;
-  const subtitleKey = `items[${index}].subtitle`;
   const bulletsKey = `items[${index}].bullets`;
 
   const imgUrl = safeUrl(item.imageUrl);
   const bullets = Array.isArray(item.bullets) ? item.bullets : [];
+  const cellBg = imgUrl ? `url("${imgUrl}")` : undefined;
 
   return (
-    <article className={cn('soe-cell group', 'aspect-square')}>
+    <article
+      className={cn('soe-cell group', 'relative aspect-square overflow-hidden')}
+      style={{ ['--soe-cell-img' as string]: cellBg ?? 'none' }}
+    >
       <div
         data-element-key={imgKey}
-        className={cn(
-          'soe-cell-img',
-          'absolute inset-0 aspect-auto h-full w-full'
-        )}
+        className='soe-cell-img absolute'
         style={composeStyle(
           {
-            backgroundImage: imgUrl ? `url("${imgUrl}")` : undefined,
-            backgroundSize: 'cover',
+            backgroundImage: cellBg,
+            backgroundSize: 'contain',
             backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
           },
           styleOf(imgKey)
         )}
       >
         <span className='sr-only'>{item.title}</span>
       </div>
+
+      {cellBg ? (
+        <div className='soe-cell-overlay absolute' aria-hidden='true' />
+      ) : null}
 
       <div
         className='soe-cell-text flex flex-col'
@@ -102,21 +107,14 @@ function ExpertiseCell({
         }}
       >
         <div
-          className='soe-cell-card z-50 flex h-fit! w-[70%]! flex-col items-start justify-start rounded-3xl bg-white py-4! py-8 @3xl:h-[80%]! @4xl:h-[60%]! @4xl:w-[50%]! @4xl:gap-8!'
+          className='soe-cell-card z-50 flex h-fit! w-[70%]! cursor-default flex-col items-start justify-start rounded-3xl bg-white py-4! py-8 text-left @3xl:h-[80%]! @4xl:h-[60%]! @4xl:w-[50%]! @4xl:gap-8!'
           style={{ border: `1px solid ${item.color}` }}
         >
           <h3
             data-element-key={titleKey}
             style={composeStyle(
               {
-                margin: 0,
-                fontFamily: MONO,
-                fontSize: 'clamp(13px, 1.5cqi, 18px)',
-                fontWeight: 400,
-                lineHeight: 1.2,
-                letterSpacing: '0.02em',
-                textTransform: 'uppercase',
-                color: INK,
+                textAlign: 'left',
               },
               styleOf(titleKey)
             )}
@@ -125,10 +123,13 @@ function ExpertiseCell({
               selectableClass(activeKey === titleKey)
             )}
           >
-            {item.title || 'Expertise title'}
+            {item.title || 'Expertise title'}{' '}
+            <span className='font-normal text-gray-500'>
+              ({item.subtitle || 'Subtitle'})
+            </span>
           </h3>
 
-          {item.subtitle ? (
+          {/* {item.subtitle ? (
             <p
               data-element-key={subtitleKey}
               style={composeStyle(
@@ -139,6 +140,7 @@ function ExpertiseCell({
                   fontWeight: 400,
                   lineHeight: 1.4,
                   color: INK,
+                  textAlign: 'left',
                 },
                 styleOf(subtitleKey)
               )}
@@ -149,7 +151,7 @@ function ExpertiseCell({
             >
               ({item.subtitle})
             </p>
-          ) : null}
+          ) : null} */}
 
           <ul
             data-element-key={bulletsKey}
@@ -160,7 +162,6 @@ function ExpertiseCell({
                 listStyle: 'none',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 'clamp(4px, 0.5cqi, 8px)',
                 fontFamily: MONO,
                 fontSize: 'clamp(11px, 1.1cqi, 13px)',
                 fontWeight: 400,
@@ -178,7 +179,7 @@ function ExpertiseCell({
               <li key={i} style={{ display: 'flex', gap: '0.3em' }}>
                 <span
                   aria-hidden='true'
-                  className='mt-1 mr-4 -ml-1 flex size-1.5 shrink-0 rounded-full bg-black p-0.5 @4xl:mr-8'
+                  className='mt-1 mr-4 -ml-1 flex size-1.5 shrink-0 rounded-full bg-black p-0.5 @4xl:mr-6'
                   style={{ border: `2px solid ${item.color}` }}
                 />
                 <span>{b}</span>
@@ -336,7 +337,12 @@ export function SustainitOurExpertise({
     <section
       ref={rootRef}
       style={composeStyle(
-        { background: bgColor, color: INK, fontFamily: MONO },
+        {
+          background: bgColor,
+          color: INK,
+          fontFamily: MONO,
+          ['--soe-bg' as string]: bgColor,
+        },
         blockBackgroundStyle(background)
       )}
       className={cn(
@@ -491,6 +497,15 @@ export function SustainitOurExpertise({
                 .soe-grid {
                     position: relative;
                 }
+                .soe-cell {
+                    background-color: var(--soe-bg, #F4F4F2);
+                }
+                .soe-cell-text {
+                    position: relative;
+                    z-index: 2;
+                    width: 100%;
+                    height: 100%;
+                }
                 .soe-grid-line {
                     position: absolute;
                     background: ${INK};
@@ -535,19 +550,38 @@ export function SustainitOurExpertise({
                     background: #ffffff;
                     width: 60%;
                     height: 60%;
+                    pointer-events: auto;
                     transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
                                 box-shadow 0.6s cubic-bezier(0.22, 1, 0.36, 1);
                     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
                 }
-                /* Khi hover cell -> ảnh nền blur + card nổi lên */
+                .soe-cell-img,
+                .soe-cell-overlay {
+                    inset: 0;
+                    background-size: contain;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    pointer-events: none;
+                }
                 .soe-cell-img {
-                    transition: filter 1s cubic-bezier(0.22, 1, 0.36, 1),
-                                transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+                    z-index: 0;
+                    transition: opacity 1s cubic-bezier(0.22, 1, 0.36, 1);
                 }
-                .soe-cell:hover .soe-cell-img {
-                    filter: blur(15px);
+                .soe-cell-overlay {
+                    z-index: 1;
+                    background-image: var(--soe-cell-img);
+                    filter: blur(14px);
+                    opacity: 0;
+                    transition: opacity 1s cubic-bezier(0.22, 1, 0.36, 1);
                 }
-                .soe-cell:hover .soe-cell-card {
+                /* Chỉ khi hover card chữ: crossfade sang ảnh blur + card nổi */
+                .soe-cell:has(.soe-cell-card:hover) .soe-cell-overlay {
+                    opacity: 1;
+                }
+                .soe-cell:has(.soe-cell-card:hover) .soe-cell-img {
+                    opacity: 0;
+                }
+                .soe-cell-card:hover {
                     transform: translate(-50%, -50%) translateY(-4px);
                     box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
                 }
@@ -567,14 +601,17 @@ export function SustainitOurExpertise({
                 /* Tôn trọng prefers-reduced-motion */
                 @media (prefers-reduced-motion: reduce) {
                     .soe-cell-img,
+                    .soe-cell-overlay,
                     .soe-cell-card {
                         transition: none !important;
                     }
-                    .soe-cell:hover .soe-cell-img {
-                        filter: none;
-                        transform: none;
+                    .soe-cell:has(.soe-cell-card:hover) .soe-cell-overlay {
+                        opacity: 0;
                     }
-                    .soe-cell:hover .soe-cell-card {
+                    .soe-cell:has(.soe-cell-card:hover) .soe-cell-img {
+                        opacity: 1;
+                    }
+                    .soe-cell-card:hover {
                         transform: translate(-50%, -50%);
                     }
                 }

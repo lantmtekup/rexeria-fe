@@ -62,6 +62,7 @@ function parseEditorBlock(
 }
 
 export default function DevBlocksPage() {
+  const [routeReady, setRouteReady] = React.useState(false);
   const [device, setDevice] = React.useState<DeviceId>('desktop');
   const scrollerRef = React.useRef<HTMLDivElement>(null);
 
@@ -78,21 +79,25 @@ export default function DevBlocksPage() {
   const [usedCodes, setUsedCodes] = React.useState<Set<string> | null>(null);
   const [galleryErr, setGalleryErr] = React.useState<string | null>(null);
 
-  // Đọc query 1 lần khi mount → quyết định chế độ.
-  React.useEffect(() => {
+  // Đọc query sớm (layout effect) — TRƯỚC mọi effect khác, và KHÔNG ghi đè `?id=`
+  // bằng `?type=` (effect sync type cũ gây race → mọi preview rơi về arpeggio).
+  React.useLayoutEffect(() => {
     const sp = new URLSearchParams(window.location.search);
     if (sp.get('view') === 'unmapped') {
       setView('gallery');
+      setRouteReady(true);
       return;
     }
     const id = sp.get('id');
     if (id) {
       setMode('id');
       setBlockId(id);
+      setRouteReady(true);
       return;
     }
     const q = sp.get('type');
     if (q && (TYPES as string[]).includes(q)) setType(q as BlockType);
+    setRouteReady(true);
   }, []);
 
   // Gallery: fetch type_code đã dùng (mọi scope, phân trang) — 1 lần khi mở.
@@ -155,15 +160,6 @@ export default function DevBlocksPage() {
     };
   }, [mode, blockId]);
 
-  // type-mode: giữ URL ?type=… sync khi đổi dropdown.
-  React.useEffect(() => {
-    if (mode !== 'type') return;
-    const u = new URL(window.location.href);
-    u.searchParams.set('type', type);
-    u.searchParams.delete('id');
-    window.history.replaceState(null, '', u.toString());
-  }, [type, mode]);
-
   // Đổi dropdown / click card gallery → về single + type-mode (default content).
   const onPickType = (t: BlockType) => {
     setView('single');
@@ -172,6 +168,10 @@ export default function DevBlocksPage() {
     setFetched(null);
     setLoadErr(null);
     setType(t);
+    const u = new URL(window.location.href);
+    u.searchParams.set('type', t);
+    u.searchParams.delete('id');
+    window.history.replaceState(null, '', u.toString());
   };
 
   // Block để render: id-mode dùng block fetch về; type-mode dùng default.
@@ -295,7 +295,7 @@ export default function DevBlocksPage() {
                         type='button'
                         onClick={() => onPickType(t)}
                         title={t}
-                        className='group flex flex-col gap-1.5 overflow-hidden rounded-lg border border-white/10 bg-white/[0.03] p-2 text-left transition-colors hover:border-amber-400/60 hover:bg-white/[0.06]'
+                        className='group flex flex-col gap-1.5 overflow-hidden rounded-lg border border-white/10 bg-white/3 p-2 text-left transition-colors hover:border-amber-400/60 hover:bg-white/6'
                       >
                         <div className='overflow-hidden rounded-md border border-white/10 bg-white'>
                           <BlockMiniPreview
@@ -334,7 +334,11 @@ export default function DevBlocksPage() {
                 : undefined
             }
           >
-            {mode === 'id' && loadErr ? (
+            {!routeReady ? (
+              <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-400'>
+                Đang chuẩn bị preview…
+              </div>
+            ) : mode === 'id' && loadErr ? (
               <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-500'>
                 {loadErr}
               </div>

@@ -67,7 +67,6 @@ const PANEL_BASE_STYLE: React.CSSProperties = {
   height: '100%',
   width: '50%',
   overflow: 'hidden',
-  contain: 'paint',
   willChange: 'transform',
   zIndex: 2,
 };
@@ -82,12 +81,288 @@ const PANEL_RIGHT_STYLE: React.CSSProperties = {
   right: 0,
 };
 
-const PANEL_IMAGE_STYLE: React.CSSProperties = {
+/** Nhịp đổi ảnh carousel panel (ms). */
+const CAROUSEL_INTERVAL_MS = 1400;
+const CAROUSEL_BLUR_PX = 5;
+/** Độ mờ tối đa của lớp wash ấm khi chuyển ảnh (0–1). */
+const CAROUSEL_BLUR_PEAK = 0.32;
+const CAROUSEL_CROSSFADE_S = 0.48;
+const CAROUSEL_WASH_OUT_S = 0.42;
+/** Tint kem ấm — tránh flash trắng lạnh. */
+const CAROUSEL_WASH_COLOR = 'rgba(255, 236, 210, 0.07)';
+
+const PANEL_CAROUSEL_LAYER_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
   width: '100%',
   height: '100%',
+  minWidth: '100%',
+  minHeight: '100%',
+  transform: 'translate(-50%, -50%)',
   objectFit: 'cover',
   display: 'block',
+  willChange: 'opacity',
 };
+
+const PANEL_CAROUSEL_WRAP_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  overflow: 'hidden',
+  transform: 'translateZ(0)',
+  backfaceVisibility: 'hidden',
+};
+
+const PANEL_CAROUSEL_BLUR_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  zIndex: 2,
+  pointerEvents: 'none',
+  opacity: 0,
+  backgroundColor: CAROUSEL_WASH_COLOR,
+  backdropFilter: `blur(${CAROUSEL_BLUR_PX}px)`,
+  WebkitBackdropFilter: `blur(${CAROUSEL_BLUR_PX}px)`,
+  willChange: 'opacity',
+};
+
+/** Preload + decode trước khi crossfade — tránh flash khi gán src lên layer ẩn. */
+const loadImage = (src: string): Promise<void> =>
+  new Promise((resolve, reject) => {
+    if (!src) {
+      resolve();
+      return;
+    }
+    const img = new Image();
+    const finish = () => {
+      if (typeof img.decode === 'function') {
+        img
+          .decode()
+          .then(() => resolve())
+          .catch(() => resolve());
+        return;
+      }
+      resolve();
+    };
+    img.onload = finish;
+    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+    img.src = src;
+    if (img.complete) finish();
+  });
+
+interface PanelCarouselProps {
+  images: string[];
+  inView: boolean;
+  isScrolling: boolean;
+  scrollActiveRef: React.MutableRefObject<boolean>;
+}
+
+/** Hai lớp img + overlay blur crossfade; pause khi đang scroll scrub. */
+function PurevisualsPanelCarousel({
+  images,
+  inView,
+  isScrolling,
+  scrollActiveRef,
+}: PanelCarouselProps) {
+  const layerARef = React.useRef<HTMLImageElement>(null);
+  const layerBRef = React.useRef<HTMLImageElement>(null);
+  const blurRef = React.useRef<HTMLDivElement>(null);
+  const indexRef = React.useRef(0);
+  const activeLayerRef = React.useRef<0 | 1>(0);
+  const transitioningRef = React.useRef(false);
+  const tweenRef = React.useRef<gsap.core.Timeline | null>(null);
+
+  React.useEffect(() => {
+    if (!isScrolling) return;
+
+    tweenRef.current?.kill();
+    tweenRef.current = null;
+    transitioningRef.current = false;
+
+    const layerA = layerARef.current;
+    const layerB = layerBRef.current;
+    const blurEl = blurRef.current;
+    if (!layerA || !layerB) return;
+
+    const active = activeLayerRef.current;
+    gsap.set(active === 0 ? layerA : layerB, { opacity: 1 });
+    gsap.set(active === 0 ? layerB : layerA, { opacity: 0 });
+    if (blurEl) gsap.set(blurEl, { opacity: 0 });
+  }, [isScrolling]);
+
+  React.useEffect(() => {
+    if (images.length === 0) return;
+
+    const layerA = layerARef.current;
+    const layerB = layerBRef.current;
+    if (!layerA || !layerB) return;
+
+    const resetToFirst = () => {
+      indexRef.current = 0;
+      activeLayerRef.current = 0;
+      transitioningRef.current = false;
+      tweenRef.current?.kill();
+      tweenRef.current = null;
+      const initialSrc = images[0];
+      layerA.src = initialSrc;
+      layerB.src = initialSrc;
+      gsap.set(layerA, { opacity: 1 });
+      gsap.set(layerB, { opacity: 0 });
+      if (blurRef.current) gsap.set(blurRef.current, { opacity: 0 });
+    };
+
+    resetToFirst();
+
+    if (images.length <= 1 || !inView) return;
+
+    const isReduced = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    const advance = async () => {
+      if (
+        transitioningRef.current ||
+        images.length <= 1 ||
+        scrollActiveRef.current
+      ) {
+        return;
+      }
+
+      const nextIndex = (indexRef.current + 1) % images.length;
+      const nextSrc = images[nextIndex];
+      const activeLayer = activeLayerRef.current;
+      const outgoing = activeLayer === 0 ? layerA : layerB;
+      const incoming = activeLayer === 0 ? layerB : layerA;
+      const blurEl = blurRef.current;
+
+      transitioningRef.current = true;
+
+      try {
+        await loadImage(nextSrc);
+      } catch {
+        transitioningRef.current = false;
+        return;
+      }
+
+      if (scrollActiveRef.current) {
+        transitioningRef.current = false;
+        return;
+      }
+
+      incoming.src = nextSrc;
+      gsap.set(incoming, { opacity: 0 });
+
+      if (isReduced) {
+        gsap.set(outgoing, { opacity: 0 });
+        gsap.set(incoming, { opacity: 1 });
+        activeLayerRef.current = activeLayer === 0 ? 1 : 0;
+        indexRef.current = nextIndex;
+        transitioningRef.current = false;
+        return;
+      }
+
+      tweenRef.current?.kill();
+
+      if (!blurEl) {
+        gsap.set(incoming, { opacity: 1 });
+        gsap.set(outgoing, { opacity: 0 });
+        activeLayerRef.current = activeLayer === 0 ? 1 : 0;
+        indexRef.current = nextIndex;
+        transitioningRef.current = false;
+        return;
+      }
+
+      tweenRef.current = gsap
+        .timeline({
+          onComplete: () => {
+            activeLayerRef.current = activeLayer === 0 ? 1 : 0;
+            indexRef.current = nextIndex;
+            transitioningRef.current = false;
+            gsap.set(outgoing, { opacity: 0 });
+            gsap.set(incoming, { opacity: 1 });
+            if (blurEl) gsap.set(blurEl, { opacity: 0 });
+            const preloadIndex = (nextIndex + 1) % images.length;
+            loadImage(images[preloadIndex]).catch(() => {});
+          },
+        })
+        .to(
+          blurEl,
+          {
+            opacity: CAROUSEL_BLUR_PEAK,
+            duration: CAROUSEL_CROSSFADE_S * 0.5,
+            ease: 'sine.inOut',
+          },
+          0
+        )
+        .to(
+          outgoing,
+          {
+            opacity: 0,
+            duration: CAROUSEL_CROSSFADE_S,
+            ease: 'sine.inOut',
+          },
+          0
+        )
+        .to(
+          incoming,
+          {
+            opacity: 1,
+            duration: CAROUSEL_CROSSFADE_S,
+            ease: 'sine.inOut',
+          },
+          CAROUSEL_CROSSFADE_S * 0.22
+        )
+        .to(
+          blurEl,
+          {
+            opacity: 0,
+            duration: CAROUSEL_WASH_OUT_S,
+            ease: 'sine.inOut',
+          },
+          CAROUSEL_CROSSFADE_S * 0.28
+        );
+    };
+
+    if (images.length > 1) {
+      loadImage(images[1]).catch(() => {});
+    }
+
+    const id = window.setInterval(advance, CAROUSEL_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(id);
+      tweenRef.current?.kill();
+      transitioningRef.current = false;
+    };
+  }, [images, inView, isScrolling, scrollActiveRef]);
+
+  if (images.length === 0) return null;
+
+  const initialSrc = images[0];
+
+  return (
+    <div style={PANEL_CAROUSEL_WRAP_STYLE}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        ref={layerARef}
+        src={initialSrc}
+        alt=''
+        loading='eager'
+        decoding='async'
+        style={PANEL_CAROUSEL_LAYER_STYLE}
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        ref={layerBRef}
+        src={initialSrc}
+        alt=''
+        loading='eager'
+        decoding='async'
+        style={PANEL_CAROUSEL_LAYER_STYLE}
+      />
+      <div ref={blurRef} aria-hidden='true' style={PANEL_CAROUSEL_BLUR_STYLE} />
+    </div>
+  );
+}
 
 const HEADING_STYLE: React.CSSProperties = {
   fontFamily: MONO_STACK,
@@ -166,10 +441,21 @@ export function FramerPurevisualsHero({
     [content.rightImageUrl]
   );
 
-  const [leftIndex, setLeftIndex] = React.useState(0);
-  const [rightIndex, setRightIndex] = React.useState(0);
+  const scrollActiveRef = React.useRef(false);
+  const [isScrolling, setIsScrolling] = React.useState(false);
+  const scrollIdleTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
+  React.useEffect(
+    () => () => {
+      if (scrollIdleTimerRef.current) clearTimeout(scrollIdleTimerRef.current);
+    },
+    []
+  );
+
   // Carousel chỉ chạy khi block trong viewport (IntersectionObserver) — tránh
-  // setState/re-render mỗi 2s khi block đã cuộn khỏi màn hình.
+  // interval/tween khi block đã cuộn khỏi màn hình.
   const [inView, setInView] = React.useState(true);
   React.useEffect(() => {
     const el = rootRef.current;
@@ -181,30 +467,6 @@ export function FramerPurevisualsHero({
     return () => io.disconnect();
   }, []);
 
-  React.useEffect(() => {
-    if (!inView || leftImages.length <= 1) {
-      setLeftIndex(0);
-      return;
-    }
-    const id = window.setInterval(() => {
-      setLeftIndex(i => (i + 1) % leftImages.length);
-    }, 2000);
-    return () => window.clearInterval(id);
-  }, [inView, leftImages.length]);
-  React.useEffect(() => {
-    if (!inView || rightImages.length <= 1) {
-      setRightIndex(0);
-      return;
-    }
-    const id = window.setInterval(() => {
-      setRightIndex(i => (i + 1) % rightImages.length);
-    }, 2000);
-    return () => window.clearInterval(id);
-  }, [inView, rightImages.length]);
-
-  const leftSrc = leftImages[leftIndex] ?? leftImages[0] ?? '';
-  const rightSrc = rightImages[rightIndex] ?? rightImages[0] ?? '';
-
   useBlockMotion(rootRef, ({ scroller }) => {
     const root = rootRef.current;
     const text = textRef.current;
@@ -215,8 +477,18 @@ export function FramerPurevisualsHero({
     // Reduced-motion: layout do CSS @media lo (track gập, panel ẩn, text hiện).
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    gsap.set([left, right], { xPercent: 0 });
+    gsap.set([left, right], { xPercent: 0, force3D: true });
     gsap.set(text, { opacity: 0, yPercent: 100, filter: 'blur(8px)' });
+
+    const markScrolling = () => {
+      scrollActiveRef.current = true;
+      setIsScrolling(true);
+      if (scrollIdleTimerRef.current) clearTimeout(scrollIdleTimerRef.current);
+      scrollIdleTimerRef.current = setTimeout(() => {
+        scrollActiveRef.current = false;
+        setIsScrolling(false);
+      }, 220);
+    };
 
     // Scrub theo tiến trình cuộn qua OUTER (sticky inner giữ viewport). KHÔNG
     // `pin` — dùng CSS sticky, an toàn iOS.
@@ -230,11 +502,12 @@ export function FramerPurevisualsHero({
         scrub: 0.6,
         invalidateOnRefresh: true,
         fastScrollEnd: true,
+        onUpdate: markScrolling,
       },
     });
 
-    tl.to(left, { xPercent: -100, duration: 1 }, 0)
-      .to(right, { xPercent: 100, duration: 1 }, 0)
+    tl.to(left, { xPercent: -100, duration: 1, force3D: true }, 0)
+      .to(right, { xPercent: 100, duration: 1, force3D: true }, 0)
       .to(
         text,
         { yPercent: 0, opacity: 1, filter: 'blur(0px)', duration: 1 },
@@ -302,18 +575,16 @@ export function FramerPurevisualsHero({
           className={selectableClass(activeKey === 'leftImageUrl')}
           style={composeStyle(
             PANEL_LEFT_STYLE,
-            leftSrc ? {} : { backgroundColor: '#1a1a1a' },
+            leftImages.length > 0 ? {} : { backgroundColor: '#1a1a1a' },
             styleOf('leftImageUrl')
           )}
         >
-          {leftSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={leftSrc}
-              alt=''
-              loading='eager'
-              decoding='async'
-              style={PANEL_IMAGE_STYLE}
+          {leftImages.length > 0 ? (
+            <PurevisualsPanelCarousel
+              images={leftImages}
+              inView={inView}
+              isScrolling={isScrolling}
+              scrollActiveRef={scrollActiveRef}
             />
           ) : null}
         </div>
@@ -327,18 +598,16 @@ export function FramerPurevisualsHero({
           className={selectableClass(activeKey === 'rightImageUrl')}
           style={composeStyle(
             PANEL_RIGHT_STYLE,
-            rightSrc ? {} : { backgroundColor: '#262626' },
+            rightImages.length > 0 ? {} : { backgroundColor: '#262626' },
             styleOf('rightImageUrl')
           )}
         >
-          {rightSrc ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={rightSrc}
-              alt=''
-              loading='eager'
-              decoding='async'
-              style={PANEL_IMAGE_STYLE}
+          {rightImages.length > 0 ? (
+            <PurevisualsPanelCarousel
+              images={rightImages}
+              inView={inView}
+              isScrolling={isScrolling}
+              scrollActiveRef={scrollActiveRef}
             />
           ) : null}
         </div>

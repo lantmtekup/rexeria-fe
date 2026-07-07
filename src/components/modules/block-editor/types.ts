@@ -3,6 +3,9 @@ export type Device = 'desktop' | 'tablet' | 'mobile';
 
 export type BlockType =
   | 'hero_split'
+  | 'altura_olympus'
+  | 'hero_scroll'
+  | 'scroll_mattis'
   | 'hero_overlay'
   | 'feature_section'
   | 'booking_form'
@@ -258,6 +261,29 @@ export interface HeroSplitContent {
   stats: HeroSplitStat[];
   ctaText: string;
   ctaLink: string;
+}
+
+export interface AlturaOlympusFeature {
+  label: string;
+  icon: string;
+}
+
+export interface AlturaOlympusContent {
+  eyebrow: string;
+  heading: string;
+  description: string;
+  features: AlturaOlympusFeature[];
+  ctaText: string;
+  ctaLink: string;
+}
+
+export interface HeroScrollContent {
+  title: string;
+  subtitle: string;
+}
+
+export interface ScrollMattisContent {
+  portfolioLabel: string;
 }
 
 export interface HeroOverlayContent {
@@ -1133,7 +1159,7 @@ export interface FramerPerformHeroContent {
  * - timerLabel — nhãn thời gian góc trái ("( 00:44 NY )")
  * - link1Label/Url, link2Label/Url, link3Label/Url — 3 social (BE/DR/X)
  * - marqueeSpeed — chu kỳ marquee CSS (giây). Mặc định 50.
- * - cardImages — mảng ảnh trong dải marquee dưới
+ * - cardImages — mảng ảnh/video trong dải marquee dưới (imageUrl hoặc videoUrl)
  * - accentColor — màu accent tổng thể (mặc định rgb(30,30,30))
  */
 export interface FramerBungeeHeroV2Content {
@@ -1147,7 +1173,7 @@ export interface FramerBungeeHeroV2Content {
   link3Label: string;
   link3Url: string;
   marqueeSpeed: number;
-  cardImages: Array<{ imageUrl: string }>;
+  cardImages: Array<{ imageUrl?: string; videoUrl?: string }>;
   accentColor: string;
 }
 
@@ -2165,6 +2191,9 @@ export interface SpringsContactFooterContent {
 
 export type BlockContent =
   | HeroSplitContent
+  | AlturaOlympusContent
+  | HeroScrollContent
+  | ScrollMattisContent
   | BrightedgeHeroContent
   | LumeaHeroContent
   | LumeaStatementContent
@@ -2886,6 +2915,58 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     defaultName: 'Hero Split',
     aiLabelVi: 'block hero (chia đôi)',
     aiLabelEn: 'split-layout hero block',
+  },
+  hero_scroll: {
+    type: 'hero_scroll',
+    category: 'hero',
+    style: 'modern',
+    tags: ['hero', 'scroll'],
+    status: 'draft',
+    responsive: true,
+    updatedAt: '2026-07-07',
+    label: 'Hero Scroll',
+    accent: '#171717',
+    adminLabel: 'Hero Scroll',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Hero Scroll',
+    aiLabelVi: 'block hero scroll (placeholder)',
+    aiLabelEn: 'scroll-linked hero block (placeholder)',
+  },
+  altura_olympus: {
+    type: 'altura_olympus',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['scroll', 'split', 'gallery'],
+    status: 'draft',
+    responsive: true,
+    updatedAt: '2026-07-07',
+    label: 'Altura Olympus',
+    accent: '#457B6D',
+    adminLabel: 'Altura Olympus',
+    gradient: 'from-emerald-800 to-neutral-900',
+    defaultName: 'Altura Olympus',
+    aiLabelVi:
+      'scroll split 50/50: ảnh trái đè ảnh phải → thoát → content trái + ảnh phải scrub m1-m4',
+    aiLabelEn:
+      '50/50 scroll split: left image overlays right → exits → left content + right image scrub m1-m4',
+  },
+  scroll_mattis: {
+    type: 'scroll_mattis',
+    category: 'hero',
+    style: 'modern',
+    tags: ['scroll'],
+    status: 'draft',
+    responsive: true,
+    updatedAt: '2026-07-07',
+    label: 'Scroll - Mattis',
+    accent: '#171717',
+    adminLabel: 'Scroll - Mattis',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Scroll - Mattis',
+    aiLabelVi:
+      'scroll reveal 3 slide (ảnh, video, ảnh): slide active thu nhỏ + mờ, slide kế zoom in thay thế theo cuộn',
+    aiLabelEn:
+      'scroll reveal with 3 slides (image, video, image): active slide shrinks and fades while the next zooms in',
   },
   hero_overlay: {
     type: 'hero_overlay',

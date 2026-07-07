@@ -3,6 +3,7 @@
 import * as React from 'react';
 import gsap from 'gsap';
 
+import { resolveColorValue } from '@/lib/brand-kit';
 import { useIsomorphicLayoutEffect } from '@/lib/use-isomorphic-layout-effect';
 import { useBlockMotion } from '../motion/LandingMotion';
 import type {
@@ -114,10 +115,13 @@ export function FramerBungeeHeroV2({
 
   const marqueeSpeed = Number(content.marqueeSpeed ?? 30);
   const cards = Array.isArray(content.cardImages)
-    ? content.cardImages.filter(c => c?.imageUrl)
+    ? content.cardImages.filter(c => c?.imageUrl || c?.videoUrl)
     : [];
   const doubled = [...cards, ...cards];
   const accent = content.accentColor || 'rgb(30, 30, 30)';
+  const sectionBg = background?.color
+    ? resolveColorValue(background.color)
+    : '#ffffff';
 
   const [clockText, setClockText] = React.useState<string>('');
   React.useEffect(() => {
@@ -247,11 +251,12 @@ export function FramerBungeeHeroV2({
           width: '100%',
           minHeight: 'clamp(560px, 100dvh, 980px)',
           overflow: 'hidden',
-          background: '#ffffff',
+          background: sectionBg,
           color: accent,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          ['--bungee-v2-bg' as string]: sectionBg,
         },
         blockBackgroundStyle(background)
       )}
@@ -261,18 +266,57 @@ export function FramerBungeeHeroV2({
           NOTE: CSS-only animation là ambient (R5 safe) — không tạo ScrollTrigger. */}
       <style>{`
         .bungee-v2-hero :where(a) { text-decoration: none; color: inherit; }
-        .bungee-v2-marquee {
+        .bungee-v2-marquee-wrap {
           width: 100%;
           margin-top: clamp(20px, 3.5cqi, 44px);
-          height: clamp(220px, 36cqi, 520px);
-          overflow: hidden;
           position: relative;
-          -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 6%, rgba(0,0,0,1) 94%, rgba(0,0,0,0) 100%),
-                            linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
-          -webkit-mask-composite: source-in;
-          mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 6%, rgba(0,0,0,1) 94%, rgba(0,0,0,0) 100%),
-                       linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
-          mask-composite: intersect;
+          -webkit-mask-image: linear-gradient(
+            to right,
+            transparent 0%,
+            rgba(0, 0, 0, 0.18) 5%,
+            rgba(0, 0, 0, 0.55) 9%,
+            rgba(0, 0, 0, 0.88) 13%,
+            black 18%,
+            black 82%,
+            rgba(0, 0, 0, 0.88) 87%,
+            rgba(0, 0, 0, 0.55) 91%,
+            rgba(0, 0, 0, 0.18) 95%,
+            transparent 100%
+          );
+          mask-image: linear-gradient(
+            to right,
+            transparent 0%,
+            rgba(0, 0, 0, 0.18) 5%,
+            rgba(0, 0, 0, 0.55) 9%,
+            rgba(0, 0, 0, 0.88) 13%,
+            black 18%,
+            black 82%,
+            rgba(0, 0, 0, 0.88) 87%,
+            rgba(0, 0, 0, 0.55) 91%,
+            rgba(0, 0, 0, 0.18) 95%,
+            transparent 100%
+          );
+        }
+        .bungee-v2-marquee {
+          width: 100%;
+          height: clamp(220px, 36cqi, 520px);
+          position: relative;
+          -webkit-mask-image: linear-gradient(
+            to bottom,
+            black 0%,
+            black 52%,
+            rgba(0, 0, 0, 0.72) 68%,
+            rgba(0, 0, 0, 0.35) 82%,
+            transparent 100%
+          );
+          mask-image: linear-gradient(
+            to bottom,
+            black 0%,
+            black 52%,
+            rgba(0, 0, 0, 0.72) 68%,
+            rgba(0, 0, 0, 0.35) 82%,
+            transparent 100%
+          );
         }
         .bungee-v2-track {
           display: flex;
@@ -301,6 +345,13 @@ export function FramerBungeeHeroV2({
         .bungee-v2-card-b {
           border-top-right-radius: 80px;
           border-bottom-left-radius: 80px;
+        }
+        .bungee-v2-card video {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
         @container (max-width: 1023px) {
         .bungee-v2-hero { min-height: auto !important; }
@@ -501,29 +552,48 @@ export function FramerBungeeHeroV2({
       {doubled.length > 0 && (
         <div
           data-element-key='cardImages'
-          className='bungee-v2-marquee bungee-v2-reveal'
-          style={composeStyle(
-            { ['--bungee-v2-speed' as string]: `${marqueeSpeed}s` },
-            styleOf('cardImages')
-          )}
-          aria-label='Image strip'
+          className='bungee-v2-marquee-wrap bungee-v2-reveal'
+          style={styleOf('cardImages')}
         >
-          <div className='bungee-v2-track'>
-            {doubled.map((c, i) => {
-              const isA = i % 2 === 0;
-              return (
-                <div
-                  key={i}
-                  className={`bungee-v2-card ${isA ? 'bungee-v2-card-a' : 'bungee-v2-card-b'}`}
-                  style={{
-                    backgroundImage: `url("${c.imageUrl.replace(/"/g, '%22')}")`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                  }}
-                  aria-hidden='true'
-                />
-              );
-            })}
+          <div
+            className='bungee-v2-marquee'
+            style={{ ['--bungee-v2-speed' as string]: `${marqueeSpeed}s` }}
+            aria-label='Image strip'
+          >
+            <div className='bungee-v2-track'>
+              {doubled.map((c, i) => {
+                const isA = i % 2 === 0;
+                const safeVideoUrl = c.videoUrl?.replace(/"/g, '%22');
+                const safeImageUrl = c.imageUrl?.replace(/"/g, '%22');
+                return (
+                  <div
+                    key={i}
+                    className={`bungee-v2-card ${isA ? 'bungee-v2-card-a' : 'bungee-v2-card-b'}`}
+                    style={
+                      safeVideoUrl
+                        ? undefined
+                        : {
+                            backgroundImage: `url("${safeImageUrl}")`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                          }
+                    }
+                    aria-hidden='true'
+                  >
+                    {safeVideoUrl && (
+                      <video
+                        src={safeVideoUrl}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload='auto'
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
