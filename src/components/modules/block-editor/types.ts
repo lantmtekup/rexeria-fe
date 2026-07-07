@@ -5339,7 +5339,7 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'section cases Readymag: 3-cột tuyệt đối (ảnh trái + bio giữa + wordmark phải) với case-cycle scroll-driven (GSAP scrub R1–R6)',
     aiLabelEn:
       'Readymag cases: 3-column absolute layout (image-stack left + bio middle + wordmark right) with scroll-driven case cycle (GSAP scrub R1–R6)',
-  },
+  } as any,
   framer_estancia_about_us: {
     type: 'framer_estancia_about_us',
     category: 'intro',
