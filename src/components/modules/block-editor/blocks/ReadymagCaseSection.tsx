@@ -45,7 +45,12 @@ const STICKY_INNER_STYLE: React.CSSProperties = {
   height: '100dvh',
   overflow: 'hidden',
   isolation: 'isolate',
+  zIndex: 2,
 };
+
+const IMAGE_SCALE = 1.22;
+
+const BIO_GAP = 'clamp(20px, 3.5cqi, 48px)';
 
 const BIO_TEXT_STYLE_BASE: React.CSSProperties = {
   fontSize: 'clamp(12px, 1.4cqi, 16px)',
@@ -285,6 +290,9 @@ export function ReadymagCaseSection({
               position: 'absolute',
               inset: 0,
               containerType: 'inline-size',
+              ['--rmc-img-left' as string]: IMAGE_COL_LEFT,
+              ['--rmc-img-width' as string]: IMAGE_COL_WIDTH,
+              ['--rmc-bio-gap' as string]: BIO_GAP,
             }}
           >
             <div
@@ -292,11 +300,13 @@ export function ReadymagCaseSection({
               data-element-key='cases'
               style={{
                 position: 'absolute',
-                left: '50%',
+                left: `calc(var(--rmc-img-left) + var(--rmc-img-width) * ${IMAGE_SCALE} + var(--rmc-bio-gap))`,
                 top: '50%',
-                transform: 'translate(-50%, -50%)',
+                transform: 'translateY(-50%)',
                 width: BIO_WIDTH,
+                maxWidth: `calc(100% - var(--rmc-img-left) - var(--rmc-img-width) * ${IMAGE_SCALE} - var(--rmc-bio-gap) - clamp(180px, 28cqi, 400px))`,
                 maxHeight: 'clamp(160px, 30cqi, 240px)',
+                zIndex: 2,
               }}
             >
               {cases.map((c, i) => {
@@ -352,6 +362,7 @@ export function ReadymagCaseSection({
                 right: 'clamp(20px, 3.5cqi, 56px)',
                 bottom: 'clamp(14px, 4.5cqi, 56px)',
                 width: 'clamp(180px, 26cqi, 360px)',
+                zIndex: 2,
               }}
             >
               {cases.map((c, i) => {
@@ -409,7 +420,7 @@ export function ReadymagCaseSection({
           width: IMAGE_COL_WIDTH,
           height: '100%',
           pointerEvents: 'none',
-          zIndex: 0,
+          zIndex: 1,
         }}
       >
         {cases.map((c, i) => {
@@ -442,9 +453,10 @@ export function ReadymagCaseSection({
                   objectFit: 'cover',
                   background: '#e8e8ea',
                   display: 'block',
-                  transform: isActive ? 'scale(1.22)' : 'scale(1)',
+                  transform: isActive ? `scale(${IMAGE_SCALE})` : 'scale(1)',
                   transformOrigin: 'left center',
                   transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                  willChange: 'transform',
                 }}
               />
             </div>

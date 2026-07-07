@@ -9,6 +9,9 @@ import { delvauxVariantDef } from './blocks/_registry/defs/delvauxVariant';
 import { q80ExperienceDef } from './blocks/_registry/defs/q80Experience';
 import { q80MenuDef } from './blocks/_registry/defs/q80Menu';
 import { housentHeroDef } from './blocks/_registry/defs/housentHero';
+import { alturaOlympusDef } from './blocks/_registry/defs/alturaOlympus';
+import { heroScrollDef } from './blocks/_registry/defs/heroScroll';
+import { scrollMattisDef } from './blocks/_registry/defs/scrollMattis';
 import { housentStatsDef } from './blocks/_registry/defs/housentStats';
 import { housentListingsDef } from './blocks/_registry/defs/housentListings';
 import { housentCtaDef } from './blocks/_registry/defs/housentCta';
@@ -1573,23 +1576,35 @@ const FRAMER_BUNGEE_HERO_V2_VI: FramerBungeeHeroV2Content = {
   cardImages: [
     {
       imageUrl:
-        'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=70',
+        'https://framerusercontent.com/images/LOSSn1XuJFxdkQeIdkzwe48fY.png',
+    },
+    {
+      videoUrl:
+        'https://framerusercontent.com/assets/o6ocbBu8Ta7VUr372p01yKOGtY.mp4',
     },
     {
       imageUrl:
-        'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=70',
+        'https://framerusercontent.com/images/ui0xiw6ho8t85E3453z1YpP1M.png',
     },
     {
       imageUrl:
-        'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=70',
+        'https://framerusercontent.com/images/GGQuG2gM9TePsmC84XEwEaDl3g.png',
+    },
+    {
+      videoUrl:
+        'https://framerusercontent.com/assets/y2VIDcwXz3puEBTpkCi51q9buBs.mp4',
     },
     {
       imageUrl:
-        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=70',
+        'https://framerusercontent.com/images/Fih75Xv1jAnsMiQgavGmyB6AgI.png',
     },
     {
       imageUrl:
-        'https://images.unsplash.com/photo-1487014679447-9f8336841d58?auto=format&fit=crop&w=800&q=70',
+        'https://framerusercontent.com/images/HfoXDGQsWsPpJU5TGy2N63TFYnc.png',
+    },
+    {
+      imageUrl:
+        'https://framerusercontent.com/images/mGQ8JCIsW2AAEHxOugX4Lrge2s.png',
     },
   ],
   accentColor: 'rgb(30, 30, 30)',
@@ -2316,6 +2331,9 @@ const NAME_BY_TYPE: Record<BlockType, string> = Object.fromEntries(
 
 const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_VI,
+  altura_olympus: alturaOlympusDef.defaultContent.vi,
+  hero_scroll: heroScrollDef.defaultContent.vi,
+  scroll_mattis: scrollMattisDef.defaultContent.vi,
   hero_overlay: HERO_OVERLAY_VI,
   feature_section: FEATURE_VI,
   booking_form: BOOKING_VI,
@@ -2465,6 +2483,9 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
+  altura_olympus: alturaOlympusDef.defaultContent.en,
+  hero_scroll: heroScrollDef.defaultContent.en,
+  scroll_mattis: scrollMattisDef.defaultContent.en,
   hero_overlay: HERO_OVERLAY_EN,
   feature_section: FEATURE_EN,
   booking_form: BOOKING_EN,

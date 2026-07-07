@@ -133,7 +133,10 @@ export default async function RootLayout({
         />
         <link rel='stylesheet' href={GOOGLE_FONTS_HREF} />
       </head>
-      <body className={`${inter.variable} bg-background antialiased`}>
+      <body
+        className={`${inter.variable} bg-background antialiased`}
+        suppressHydrationWarning
+      >
         <Providers locale={locale} messages={messages} timezone={timezone}>
           {children}
           <Toaster position='top-right' />

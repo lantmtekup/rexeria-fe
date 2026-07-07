@@ -62,6 +62,9 @@ import { housentExcellenceDef } from './defs/housentExcellence';
 import { housentFaqDef } from './defs/housentFaq';
 import { housentFooterDef } from './defs/housentFooter';
 import { housentHeroDef } from './defs/housentHero';
+import { alturaOlympusDef } from './defs/alturaOlympus';
+import { heroScrollDef } from './defs/heroScroll';
+import { scrollMattisDef } from './defs/scrollMattis';
 import { housentListingsDef } from './defs/housentListings';
 import { housentSolutionsDef } from './defs/housentSolutions';
 import { housentStatsDef } from './defs/housentStats';
@@ -102,6 +105,9 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   q80_experience: q80ExperienceDef as BlockDef,
   q80_menu: q80MenuDef as BlockDef,
   housent_hero: housentHeroDef as BlockDef,
+  altura_olympus: alturaOlympusDef as BlockDef,
+  hero_scroll: heroScrollDef as BlockDef,
+  scroll_mattis: scrollMattisDef as BlockDef,
   housent_stats: housentStatsDef as BlockDef,
   housent_listings: housentListingsDef as BlockDef,
   housent_cta: housentCtaDef as BlockDef,
