@@ -11,6 +11,7 @@ import * as React from 'react';
 
 import { SpringsContactFooter } from '@/components/modules/block-editor/blocks/SpringsContactFooter';
 import { SpringsDesign } from '@/components/modules/block-editor/blocks/SpringsDesign';
+import { SpringsGallery } from '@/components/modules/block-editor/blocks/SpringsGallery';
 import { SpringsHeader } from '@/components/modules/block-editor/blocks/SpringsHeader';
 import { SpringsHero } from '@/components/modules/block-editor/blocks/SpringsHero';
 import { SpringsInteriors } from '@/components/modules/block-editor/blocks/SpringsInteriors';
@@ -21,6 +22,7 @@ import { SpringsResidences } from '@/components/modules/block-editor/blocks/Spri
 import { SpringsWellness } from '@/components/modules/block-editor/blocks/SpringsWellness';
 import { springsContactFooterDef } from '@/components/modules/block-editor/blocks/_registry/defs/springsContactFooter';
 import { springsDesignDef } from '@/components/modules/block-editor/blocks/_registry/defs/springsDesign';
+import { springsGalleryDef } from '@/components/modules/block-editor/blocks/_registry/defs/springsGallery';
 import { springsHeaderDef } from '@/components/modules/block-editor/blocks/_registry/defs/springsHeader';
 import { springsHeroDef } from '@/components/modules/block-editor/blocks/_registry/defs/springsHero';
 import { springsInteriorsDef } from '@/components/modules/block-editor/blocks/_registry/defs/springsInteriors';
@@ -36,6 +38,7 @@ export default function SpringsTemplatePreview() {
     <LandingMotionRoot>
       <main>
         <SpringsHeader content={springsHeaderDef.defaultContent.en} />
+        <SpringsGallery content={springsGalleryDef.defaultContent.en} />
         <SpringsHero content={springsHeroDef.defaultContent.en} />
         <SpringsIntro content={springsIntroDef.defaultContent.en} />
         <SpringsWellness content={springsWellnessDef.defaultContent.en} />

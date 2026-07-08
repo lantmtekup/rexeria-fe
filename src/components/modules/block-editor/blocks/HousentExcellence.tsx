@@ -27,8 +27,8 @@ interface HousentExcellenceProps {
   className?: string;
 }
 
-/** Housent `.feature-circle-section` — "Our Excellence": list feature đánh số
- *  trong vòng tròn + tiêu đề + mô tả. Responsive: mobile 1 cột, tablet 2. */
+/** Housent `.feature-circle-section` — hàng card ảnh tòa nhà bo góc. Mỗi card:
+ *  ảnh nền + lớp phủ tối, label nhỏ + value lớn ở đáy. Mobile scroll ngang. */
 export function HousentExcellence({
   content,
   styles,
@@ -49,7 +49,7 @@ export function HousentExcellence({
     <div
       style={blockBackgroundStyle(background)}
       className={cn(
-        '@container w-full bg-[#17120f] px-6 py-16 text-white @2xl:px-12 @2xl:py-24',
+        '@container w-full bg-[#0f0c0a] px-6 py-16 text-white @2xl:px-12 @2xl:py-24',
         className
       )}
     >
@@ -81,19 +81,27 @@ export function HousentExcellence({
           style={styleOf('items')}
           className={selectableClass(
             activeKey === 'items',
-            'mt-12 grid grid-cols-1 gap-x-12 gap-y-10 @2xl:grid-cols-2'
+            'mt-12 grid grid-cols-2 gap-4 @2xl:grid-cols-4 @2xl:gap-6'
           )}
         >
           {items.map((it, i) => (
-            <div key={i} className='flex gap-5 border-t border-white/10 pt-6'>
-              <span className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e8622c] text-sm font-semibold text-[#e8622c]'>
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <div>
-                <h3 className='text-lg font-semibold'>{it.title}</h3>
-                <p className='mt-2 text-sm leading-relaxed text-white/60'>
-                  {it.description}
-                </p>
+            <div
+              key={i}
+              className='relative aspect-[3/4] overflow-hidden rounded-2xl bg-[#241d18]'
+            >
+              {it.image ? (
+                <img
+                  src={it.image}
+                  alt={it.label}
+                  className='absolute inset-0 h-full w-full object-cover'
+                />
+              ) : null}
+              <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent' />
+              <div className='absolute inset-x-0 bottom-0 p-5'>
+                <div className='text-xs text-white/70'>{it.label}</div>
+                <div className='mt-1 text-2xl font-semibold tracking-tight @2xl:text-3xl'>
+                  {it.value}
+                </div>
               </div>
             </div>
           ))}

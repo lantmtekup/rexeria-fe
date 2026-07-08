@@ -1,31 +1,38 @@
-/** BlockDef `housent_values` — principle stack. */
-import { ListChecks, Sparkles, Type } from 'lucide-react';
+/** BlockDef `housent_values` — nền tối, heading trái + card nguyên tắc phải. */
+import { ListChecks, Pilcrow, Sparkles, Type } from 'lucide-react';
 
 import { HousentValues } from '../../HousentValues';
 import type { HousentValuesContent } from '../../../types';
 import type { BlockDef } from '../types';
 
 const VI: HousentValuesContent = {
-  eyebrow: 'Our Principles',
+  eyebrow: 'Our Strategy',
   title: 'The Principles That Guide Our Expertise',
+  subtitle:
+    'A systematic commitment to architectural quality, data-integrity, and long-term asset security.',
   items: [
     {
-      title: 'Integrity first',
+      icon: '⛨',
+      title: 'Structural Integrity',
+      description: '',
+    },
+    {
+      icon: '❑',
+      title: 'Absolute Transparency',
       description:
-        'We only recommend what we would choose for our own families.',
+        'Trust is built on clarity. We eliminate complexity through verified documentation and full disclosure on every property transaction.',
     },
     {
-      title: 'Radical transparency',
-      description: 'Every number, every clause, explained in plain language.',
-    },
-    {
-      title: 'Long-term value',
+      icon: '❧',
+      title: 'Sustainable Build',
       description:
-        'We optimise for the home you love years from now, not just today.',
+        'We prioritize assets that integrate eco-certified materials and climate-resilient engineering, aligning with global sustainability standards.',
     },
     {
-      title: 'Relentless service',
-      description: 'Available whenever a decision needs to be made.',
+      icon: '☺',
+      title: 'Personalized Advisory',
+      description:
+        'Every investor is unique. We adapt our strategy to fit your specific preferences, financial objectives, and acquisition timelines.',
     },
   ],
 };
@@ -35,19 +42,22 @@ export const housentValuesDef: BlockDef<HousentValuesContent> = {
   type: 'housent_values',
   meta: {
     type: 'housent_values',
-    label: 'Values - Principle Stack',
+    label: 'Values - Principle Cards',
     accent: '#e8622c',
-    adminLabel: 'Values - Principle Stack',
-    gradient: 'from-orange-100 to-stone-200',
-    defaultName: 'Values - Principle Stack',
-    aiLabelVi: 'stack nguyên tắc: số thứ tự + tiêu đề + mô tả, hàng phân cách',
-    aiLabelEn: 'principle stack: index + title + description in divided rows',
+    adminLabel: 'Values - Principle Cards',
+    gradient: 'from-stone-800 to-neutral-900',
+    defaultName: 'Values - Principle Cards',
+    aiLabelVi:
+      'nền tối, 2 cột: tiêu đề lớn bên trái, các card nguyên tắc bên phải (mỗi card gom 2 mục icon + tiêu đề + mô tả)',
+    aiLabelEn:
+      'dark background, two columns: big heading on the left, principle cards on the right (each card groups 2 items with icon + title + description)',
   },
   component: HousentValues,
   defaultContent: { vi: VI, en: EN },
   elements: [
     { key: 'eyebrow', label: 'Eyebrow', icon: Sparkles, fieldType: 'text' },
     { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+    { key: 'subtitle', label: 'Phụ đề', icon: Pilcrow, fieldType: 'textarea' },
     { key: 'items', label: 'Nguyên tắc', icon: ListChecks },
   ],
 };

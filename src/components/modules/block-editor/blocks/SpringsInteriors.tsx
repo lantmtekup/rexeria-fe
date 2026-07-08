@@ -1,17 +1,21 @@
 'use client';
 
 /**
- * Block "Springs - Interiors" (section `.l-interiors` / `#interiors` của
- * springs-estate-clone) — bản gốc là sticky 2-layer parallax phức tạp (ảnh
- * nền full-bleed + slider ảnh nội thất + cụm thumbnail đổi ảnh). Ở đây rút
- * gọn thành: tiêu đề "Interiors" (phải-canh, serif lớn) + đoạn mô tả phụ, và
- * MỘT dải slider ảnh nội thất cuộn ngang (scroll-snap, kéo tay/touch) — thay
- * cho cơ chế content-animation JS gốc.
+ * Block "Springs - Interiors" — port đầy đủ section `.l-interiors` /
+ * `#interiors` gốc: STICKY PIN 300vh, 2 beat nối tiếp trong cùng 1 pin (gốc
+ * `clip-path curtain` + `height:350vh; margin-top:-200vh`):
+ *   (1) "intro" — ảnh nền full-bleed zoom-out (gốc `data-parallax-0-0 scale
+ *       (1.2)` → `--250-0 scale(1.0)`), tiêu đề phải-canh giữa dọc + mô tả
+ *       neo góc dưới-trái (gốc `.l-interiors__intro-caption` /
+ *       `.l-interiors__intro__text`).
+ *   (2) "slider" — crossfade sang ảnh nội thất chính + rail thumbnail dọc
+ *       bên phải để đổi ảnh (gốc `.l-interiors__slider-thumb__links`, click
+ *       đổi `.is-active`) — thumbnail click là tương tác thật (state cục
+ *       bộ), không phụ thuộc vị trí cuộn.
  *
- * `images` là dữ liệu nội dung dạng mảng (không có fieldType "list" trong
- * LayersPanel hiện tại — chỉ text/textarea/image đơn), nên KHÔNG gắn
- * `data-element-key` riêng cho từng ảnh; heading/description mới là 2 phần
- * tử chọn được trên canvas.
+ * ⚠ Giống mọi scroll-block trong repo: scrub chỉ chạy đầy đủ trên trang
+ * publish `/p`. Trong editor canvas không có scroll → hiển thị FRAME ĐẦU
+ * (beat 1, ảnh intro) — đúng trạng thái ban đầu, không phải lỗi.
  *
  * Font thật của bản gốc (self-host tại springs.estate/assets/fonts):
  *   - "Victor Serif" (tiêu đề, VictorSerif-40Regular.woff2)
@@ -20,9 +24,14 @@
  * Nạp qua @font-face trỏ thẳng CDN gốc (không self-host lại) — khai báo lặp
  * giữa các block Springs vô hại, trình duyệt chỉ tải 1 lần.
  *
- * Motion: heading/description fade-up khi cuộn vào viewport; các ảnh trong
- * dải slider stagger-in (fade + rise nhẹ) cùng lúc. Tôn trọng
- * prefers-reduced-motion. Mobile: dải cuộn ngang scroll-snap chạm tay được.
+ * `images` là dữ liệu nội dung dạng mảng (không có fieldType "list" trong
+ * LayersPanel hiện tại — chỉ text/textarea/image đơn), nên KHÔNG gắn
+ * `data-element-key` riêng cho từng ảnh; heading/description/introImage mới
+ * là các phần tử chọn được trên canvas.
+ *
+ * Mobile (`useContainerMobile`): bản gốc `is-hidden--md-down` tắt hẳn trên
+ * mobile. Ở đây GIỮ hiển thị (tĩnh, không pin) — heading/mô tả + dải slider
+ * ảnh cuộn ngang chạm tay được, khác biệt có chủ đích so với gốc.
  */
 import * as React from 'react';
 import gsap from 'gsap';
@@ -42,6 +51,12 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useContainerMobile } from './useContainerMobile';
+
+/** clip-path đầy đủ / ẩn-dưới-đáy — cùng quy ước `SpringsHero.tsx`/`SpringsMap.tsx`. */
+const INTERIORS_CLIP_FULL = 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)';
+const INTERIORS_CLIP_HIDDEN_BOTTOM =
+  'polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%)';
 
 /** Serif dùng cho tiêu đề — bản gốc: Victor Serif. */
 export const SPRINGS_INTERIORS_FONT_SERIF =
@@ -51,8 +66,8 @@ export const SPRINGS_INTERIORS_FONT_SERIF =
 export const SPRINGS_INTERIORS_FONT_BODY =
   "'TT Commons Pro', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif";
 
-/** Nền sáng nhẹ của section (bản gốc dùng ảnh nền tối; ở đây rút gọn slider
- *  đứng trên nền cream sáng để ảnh nổi bật, giữ mạch sáng/tối xen kẽ). */
+/** Nền cream sáng của section (mobile tĩnh + khung section desktop quanh
+ *  pin) — giữ mạch sáng/tối xen kẽ giữa các block Springs. */
 export const SPRINGS_INTERIORS_BG = '#f4f1e9';
 
 /** Chữ chính — xanh ink đậm (đối lập nền cream), đồng bộ SpringsIntro. */
@@ -82,7 +97,9 @@ export function SpringsInteriors({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
+  const isMobile = useContainerMobile(rootRef);
   const images = Array.isArray(content.images) ? content.images : [];
+  const [activeIndex, setActiveIndex] = React.useState(0);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -96,75 +113,108 @@ export function SpringsInteriors({
     ({ scroller, requestRefresh }) => {
       const root = rootRef.current;
       if (!root) return;
-      const reduce = window.matchMedia(
-        '(prefers-reduced-motion: reduce)'
-      ).matches;
-      if (reduce) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
+      if (root.clientWidth > 0 && root.clientWidth < 768) return;
 
+      const sticky = root.querySelector<HTMLElement>(
+        '.springs-interiors-sticky'
+      );
+      const introWrap = root.querySelector<HTMLElement>(
+        '.springs-interiors-intro'
+      );
+      const introInner = root.querySelector<HTMLElement>(
+        '.springs-interiors-intro-inner'
+      );
       const heading = root.querySelector<HTMLElement>(
         '.springs-interiors-heading'
       );
       const description = root.querySelector<HTMLElement>(
         '.springs-interiors-description'
       );
-      const slides = root.querySelectorAll<HTMLElement>(
-        '.springs-interiors-slide'
+      const sliderWrap = root.querySelector<HTMLElement>(
+        '.springs-interiors-slider'
       );
+      if (!sticky) return;
 
       const tl = gsap.timeline({
-        defaults: { ease: 'power3.out' },
+        defaults: { ease: 'none' },
         scrollTrigger: {
           trigger: root,
           scroller,
-          start: 'top 78%',
-          toggleActions: 'play none none reverse',
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 1,
+          pin: sticky,
+          pinSpacing: false,
+          pinType: 'transform',
+          anticipatePin: 1,
           invalidateOnRefresh: true,
         },
       });
 
+      // Beat 1 — intro: curtain reveal + zoom-out (gốc scale 1.2→1.0).
+      if (introWrap) {
+        tl.fromTo(
+          introWrap,
+          { clipPath: INTERIORS_CLIP_HIDDEN_BOTTOM },
+          { clipPath: INTERIORS_CLIP_FULL, duration: 0.22 },
+          0
+        );
+      }
+      if (introInner) {
+        tl.fromTo(introInner, { scale: 1.2 }, { scale: 1, duration: 0.55 }, 0);
+      }
       if (heading) {
-        tl.from(heading, { autoAlpha: 0, y: 32, duration: 0.8 }, 0);
+        tl.fromTo(
+          heading,
+          { autoAlpha: 0, y: 24 },
+          { autoAlpha: 1, y: 0, duration: 0.18 },
+          0.15
+        );
       }
       if (description) {
-        tl.from(description, { autoAlpha: 0, y: 24, duration: 0.7 }, 0.12);
-      }
-      if (slides.length) {
-        tl.from(
-          slides,
-          {
-            autoAlpha: 0,
-            y: 36,
-            duration: 0.7,
-            stagger: 0.12,
-          },
+        tl.fromTo(
+          description,
+          { autoAlpha: 0, y: 24 },
+          { autoAlpha: 1, y: 0, duration: 0.18 },
           0.2
         );
       }
 
-      // Ảnh slider load bất đồng bộ có thể đổi chiều cao — refresh sau khi mount.
-      requestRefresh();
+      // Beat 2 — slider: crossfade từ intro sang slider + rail thumbnail.
+      if (introWrap) {
+        tl.to(introWrap, { autoAlpha: 0, duration: 0.15 }, 0.62);
+      }
+      if (sliderWrap) {
+        tl.fromTo(
+          sliderWrap,
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: 0.2 },
+          0.58
+        );
+      }
+
+      root.querySelectorAll('img').forEach(img => {
+        if (!(img as HTMLImageElement).complete) {
+          img.addEventListener('load', requestRefresh, { once: true });
+        }
+      });
     },
-    [images.join('|')]
+    [images.join('|'), isMobile]
   );
 
-  return (
-    <section
-      ref={rootRef}
-      style={composeStyle(
-        { background: SPRINGS_INTERIORS_BG },
-        blockBackgroundStyle(background)
-      )}
-      className='springs-interiors @container relative w-full overflow-hidden'
-    >
-      <style>{SPRINGS_INTERIORS_FONT_CSS}</style>
+  const activeImage = images[activeIndex] ?? images[0];
 
-      <div
-        className='mx-auto flex w-full max-w-[1400px] flex-col items-end text-right @2xl:px-0'
-        style={{
-          padding:
-            'clamp(64px, 10cqi, 140px) clamp(20px, 6cqi, 64px) clamp(32px, 5cqi, 64px)',
-        }}
-      >
+  // `onPhoto`: overlay đè lên ảnh intro (desktop) → chữ kem sáng. `onCream`:
+  // đứng trên nền cream phẳng (mobile) → chữ ink đậm.
+  const renderIntroCaption = (variant: 'onPhoto' | 'onCream') => {
+    const inkColor = variant === 'onPhoto' ? '#f5e8d1' : SPRINGS_INTERIORS_INK;
+    const descColor =
+      variant === 'onPhoto' ? 'rgba(245,232,209,0.82)' : SPRINGS_INTERIORS_INK;
+    return (
+      <React.Fragment>
         <h2
           data-element-key='heading'
           className={selectableClass(
@@ -179,7 +229,7 @@ export function SpringsInteriors({
               fontSize: 'clamp(36px, 6cqi, 76px)',
               lineHeight: 1.05,
               letterSpacing: '-0.01em',
-              color: SPRINGS_INTERIORS_INK,
+              color: inkColor,
             },
             styleOf('heading')
           )}
@@ -201,8 +251,8 @@ export function SpringsInteriors({
                 fontWeight: 400,
                 fontSize: 'clamp(15px, 1.6cqi, 19px)',
                 lineHeight: 1.6,
-                color: SPRINGS_INTERIORS_INK,
-                opacity: 0.72,
+                color: descColor,
+                opacity: variant === 'onPhoto' ? 1 : 0.72,
                 maxWidth: '46ch',
                 marginTop: 'clamp(16px, 2.6cqi, 28px)',
               },
@@ -212,36 +262,177 @@ export function SpringsInteriors({
             {content.description}
           </p>
         ) : null}
-      </div>
+      </React.Fragment>
+    );
+  };
 
-      {/* Dải slider ảnh nội thất — cuộn ngang, scroll-snap, kéo tay/touch trên
-          mọi kích thước (bản gốc chỉ có desktop-slider + mobile carousel
-          riêng; ở đây gộp 1 dải responsive dùng chung). */}
-      {images.length ? (
+  // ── Mobile: gốc ẩn hẳn (`is-hidden--md-down`) — ở đây giữ tĩnh, không pin. ─
+  if (isMobile) {
+    return (
+      <section
+        ref={rootRef}
+        style={composeStyle(
+          { background: SPRINGS_INTERIORS_BG },
+          blockBackgroundStyle(background)
+        )}
+        className='springs-interiors @container relative w-full overflow-hidden'
+      >
+        <style>{SPRINGS_INTERIORS_FONT_CSS}</style>
+
         <div
-          className='springs-interiors-track flex w-full gap-[clamp(8px,1.6cqi,20px)] overflow-x-auto'
+          className='mx-auto flex w-full max-w-[1400px] flex-col items-end text-right'
           style={{
-            padding: '0 clamp(20px, 6cqi, 64px) clamp(64px, 9cqi, 120px)',
-            scrollSnapType: 'x proximity',
-            WebkitOverflowScrolling: 'touch',
+            padding:
+              'clamp(48px, 10cqi, 96px) clamp(20px, 6cqi, 40px) clamp(24px, 5cqi, 40px)',
           }}
         >
-          {images.map((src, i) => (
+          {renderIntroCaption('onCream')}
+        </div>
+
+        {images.length ? (
+          <div
+            className='springs-interiors-track flex w-full gap-[clamp(8px,1.6cqi,20px)] overflow-x-auto'
+            style={{
+              padding: '0 clamp(20px, 6cqi, 40px) clamp(48px, 9cqi, 80px)',
+              scrollSnapType: 'x proximity',
+              WebkitOverflowScrolling: 'touch',
+            }}
+          >
+            {images.map((src, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={`${src}-${i}`}
+                src={src}
+                alt={`${content.heading || 'Interiors'} ${i + 1}`}
+                loading={i < 2 ? 'eager' : 'lazy'}
+                className='h-[clamp(260px,60cqi,420px)] w-[clamp(200px,45cqi,320px)] shrink-0 object-cover'
+                style={{
+                  scrollSnapAlign: 'start',
+                  borderRadius: 'clamp(2px, 0.4cqi, 6px)',
+                }}
+              />
+            ))}
+          </div>
+        ) : null}
+      </section>
+    );
+  }
+
+  // ── Desktop: sticky pin 300vh, 2 beat (intro → slider). ──────────────────
+  return (
+    <section
+      ref={rootRef}
+      style={composeStyle(
+        { height: '300vh', background: SPRINGS_INTERIORS_BG },
+        blockBackgroundStyle(background)
+      )}
+      className='springs-interiors @container relative w-full'
+    >
+      <style>{SPRINGS_INTERIORS_FONT_CSS}</style>
+
+      <div className='springs-interiors-sticky relative h-[100svh] w-full overflow-hidden'>
+        {/* Beat 1: intro — ảnh nền full-bleed + heading/description overlay. */}
+        <div
+          className='springs-interiors-intro absolute inset-0 z-[1]'
+          style={{ clipPath: INTERIORS_CLIP_HIDDEN_BOTTOM }}
+        >
+          {content.introImage ? (
+            <div
+              data-element-key='introImage'
+              className={selectableClass(
+                activeKey === 'introImage',
+                'springs-interiors-intro-inner absolute inset-0'
+              )}
+              style={styleOf('introImage')}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={content.introImage}
+                alt=''
+                aria-hidden='true'
+                className='h-full w-full object-cover'
+              />
+            </div>
+          ) : null}
+          {/* Scrim tối dần về phía phải — đủ tương phản cho caption phải-canh
+              mà không phủ tối toàn ảnh (ảnh gốc có thể sáng/nhiều chi tiết). */}
+          <div
+            aria-hidden='true'
+            className='pointer-events-none absolute inset-0'
+            style={{
+              background:
+                'linear-gradient(100deg, rgba(10,20,15,0) 35%, rgba(10,20,15,0.55) 68%, rgba(10,20,15,0.72) 100%)',
+            }}
+          />
+          <div
+            className='relative flex h-full w-full items-center justify-end'
+            style={{ padding: 'clamp(40px, 6cqi, 80px)' }}
+          >
+            <div
+              className='flex flex-col items-end text-right'
+              style={{
+                maxWidth: '60%',
+                textShadow: '0 2px 16px rgba(10,20,15,0.35)',
+              }}
+            >
+              {renderIntroCaption('onPhoto')}
+            </div>
+          </div>
+        </div>
+
+        {/* Beat 2: slider — ảnh chính + rail thumbnail dọc bên phải. */}
+        <div
+          className='springs-interiors-slider absolute inset-0 z-[2]'
+          style={{ opacity: 0 }}
+        >
+          {activeImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              key={`${src}-${i}`}
-              src={src}
-              alt={`${content.heading || 'Interiors'} ${i + 1}`}
-              loading={i < 2 ? 'eager' : 'lazy'}
-              className='springs-interiors-slide h-[clamp(260px,42cqi,560px)] w-[clamp(200px,32cqi,420px)] shrink-0 object-cover'
-              style={{
-                scrollSnapAlign: 'start',
-                borderRadius: 'clamp(2px, 0.4cqi, 6px)',
-              }}
+              src={activeImage}
+              alt={content.heading || 'Interiors'}
+              className='h-full w-full object-cover'
             />
-          ))}
+          ) : null}
+          {images.length > 1 ? (
+            <div
+              className='absolute top-1/2 flex -translate-y-1/2 flex-col'
+              style={{
+                right: 'clamp(20px, 3cqi, 48px)',
+                gap: 'clamp(4px, 0.6cqi, 6px)',
+              }}
+            >
+              {images.map((src, i) => (
+                <button
+                  key={`${src}-${i}`}
+                  type='button'
+                  onClick={() => setActiveIndex(i)}
+                  aria-label={`Interior ${i + 1}`}
+                  className='cursor-pointer overflow-hidden'
+                  style={{
+                    width: 'clamp(44px, 4.2cqi, 60px)',
+                    height: 'clamp(44px, 4.2cqi, 60px)',
+                    border:
+                      i === activeIndex
+                        ? '1.5px solid #f5e8d1'
+                        : '1.5px solid transparent',
+                    padding: i === activeIndex ? '4px' : 0,
+                    background: 'transparent',
+                    borderRadius: '2px',
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={src}
+                    alt=''
+                    aria-hidden='true'
+                    className='h-full w-full object-cover'
+                  />
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      </div>
     </section>
   );
 }

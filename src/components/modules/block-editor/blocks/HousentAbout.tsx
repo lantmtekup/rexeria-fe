@@ -28,8 +28,8 @@ interface HousentAboutProps {
 }
 
 /**
- * Housent who-we-are — `.who-we-are-section`. 2 cột: heading lớn trái + đoạn
- * mô tả phải, dưới là hàng mini-stat. Responsive: mobile stack.
+ * Housent `.who-we-are-section` — intro 1 cột canh giữa. Hàng đầu: badge bo
+ * viền (trái) + nút CTA đen (phải). Dưới: heading lớn + 2 đoạn mô tả. Nền be.
  */
 export function HousentAbout({
   content,
@@ -46,7 +46,6 @@ export function HousentAbout({
       orderStyle(order, key),
       positionStyle(positions, key)
     );
-  const points = content.points ?? [];
 
   return (
     <div
@@ -56,51 +55,75 @@ export function HousentAbout({
         className
       )}
     >
-      <div className='mx-auto grid max-w-6xl grid-cols-1 gap-10 @2xl:grid-cols-2 @2xl:gap-16'>
-        <div>
+      <div className='mx-auto max-w-5xl'>
+        {/* Hàng trên: badge trái + CTA phải */}
+        <div className='flex items-center justify-between gap-4'>
           {content.eyebrow ? (
             <span
               data-element-key='eyebrow'
               style={styleOf('eyebrow')}
               className={selectableClass(
                 activeKey === 'eyebrow',
-                'text-2xs mb-4 block font-semibold tracking-[0.24em] text-[#e8622c] uppercase'
+                'text-2xs inline-flex items-center gap-2 rounded-md bg-white px-2.5 py-1.5 font-mono font-medium tracking-[0.16em] text-[#2b2621] uppercase'
               )}
             >
+              <span className='size-2.5 rounded-sm bg-[#ff810a]' />
               {content.eyebrow}
             </span>
           ) : null}
+          {content.ctaText ? (
+            <button
+              type='button'
+              data-element-key='ctaText'
+              style={styleOf('ctaText')}
+              className={selectableClass(
+                activeKey === 'ctaText',
+                'text-2xs inline-flex shrink-0 items-center gap-2 rounded-md bg-[#201d1c] px-4 py-3 font-mono font-medium tracking-[0.12em] text-white uppercase'
+              )}
+            >
+              <span className='text-[#ff810a]'>+</span>
+              {content.ctaText}
+            </button>
+          ) : null}
+        </div>
+
+        {/* Heading + body: canh giữa */}
+        <div className='mx-auto mt-10 max-w-3xl text-center @2xl:mt-16'>
           <h2
             data-element-key='title'
             style={styleOf('title')}
             className={selectableClass(
               activeKey === 'title',
-              'text-3xl font-semibold tracking-tight text-[#2b2621] @2xl:text-5xl'
+              'text-4xl font-semibold tracking-tight text-[#2b2621] @2xl:text-6xl'
             )}
           >
             {content.title}
           </h2>
-        </div>
-        <div className='flex flex-col gap-6'>
-          <p
-            data-element-key='text'
-            style={styleOf('text')}
-            className={selectableClass(
-              activeKey === 'text',
-              'text-base leading-relaxed text-[#6b6058] @2xl:text-lg'
-            )}
-          >
-            {content.text}
-          </p>
-          <div className='grid grid-cols-2 gap-6'>
-            {points.map((pt, i) => (
-              <div key={i} className='border-t border-[#2b2621]/10 pt-4'>
-                <div className='text-2xl font-semibold text-[#2b2621]'>
-                  {pt.value}
-                </div>
-                <div className='mt-1 text-sm text-[#8a7f76]'>{pt.label}</div>
-              </div>
-            ))}
+          <div className='mx-auto mt-8 flex max-w-2xl flex-col gap-5 text-left'>
+            {content.text ? (
+              <p
+                data-element-key='text'
+                style={styleOf('text')}
+                className={selectableClass(
+                  activeKey === 'text',
+                  'text-base leading-relaxed text-[#6b6058]'
+                )}
+              >
+                {content.text}
+              </p>
+            ) : null}
+            {content.text2 ? (
+              <p
+                data-element-key='text2'
+                style={styleOf('text2')}
+                className={selectableClass(
+                  activeKey === 'text2',
+                  'text-base leading-relaxed text-[#6b6058]'
+                )}
+              >
+                {content.text2}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>

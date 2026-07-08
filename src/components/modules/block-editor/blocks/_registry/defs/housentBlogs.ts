@@ -1,5 +1,5 @@
 /** BlockDef `housent_blogs` — blog post grid. */
-import { Newspaper, Sparkles, Type } from 'lucide-react';
+import { AlignLeft, Newspaper, Sparkles, Type } from 'lucide-react';
 
 import { HousentBlogs } from '../../HousentBlogs';
 import type { HousentBlogsContent } from '../../../types';
@@ -7,8 +7,10 @@ import type { BlockDef } from '../types';
 
 const F = 'https://cdn.prod.website-files.com/69c8ec3d62ab7aba560d580f';
 const VI: HousentBlogsContent = {
-  eyebrow: 'Insights',
+  eyebrow: 'The Journal',
   title: 'Deep structural intelligence',
+  subtitle:
+    'Field notes on the market, the buying process, and the small decisions that add up.',
   items: [
     {
       imageUrl: `${F}/69ca0307f1ac92b4ecaaefcb_HighLight%20Card%20Image%2001.webp`,
@@ -49,6 +51,7 @@ export const housentBlogsDef: BlockDef<HousentBlogsContent> = {
   elements: [
     { key: 'eyebrow', label: 'Eyebrow', icon: Sparkles, fieldType: 'text' },
     { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+    { key: 'subtitle', label: 'Mô tả', icon: AlignLeft, fieldType: 'text' },
     { key: 'items', label: 'Bài viết', icon: Newspaper },
   ],
 };

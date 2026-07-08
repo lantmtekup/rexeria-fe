@@ -1,5 +1,5 @@
-/** BlockDef `housent_about` — who-we-are split intro. */
-import { Hash, Pilcrow, Sparkles, Type } from 'lucide-react';
+/** BlockDef `housent_about` — who-we-are intro 1 cột canh giữa. */
+import { MousePointerClick, Pilcrow, Sparkles, Type } from 'lucide-react';
 
 import { HousentAbout } from '../../HousentAbout';
 import type { HousentAboutContent } from '../../../types';
@@ -7,14 +7,11 @@ import type { BlockDef } from '../types';
 
 const VI: HousentAboutContent = {
   eyebrow: 'Who We Are',
-  title: 'Architecting trust in every square meter',
-  text: 'For over fifteen years we have guided buyers and sellers through every kind of market. Verified listings, transparent pricing and advisors who treat your goals as their own — that is how we build lasting confidence.',
-  points: [
-    { value: '15+ yrs', label: 'On the market' },
-    { value: '12k+', label: 'Homes matched' },
-    { value: '40+', label: 'Expert advisors' },
-    { value: '98%', label: 'Would recommend' },
-  ],
+  title: 'Architecting Trust in Every Square Meter',
+  text: 'We are redefining the industry standard. By neutralizing the noise of the market, we transform raw analytics into clear, human-centric property solutions. Transparency isn’t just a word for us — it’s our core architecture, ensuring every transaction is rooted in real-time verified data.',
+  text2:
+    'Experience a secure, digital-first approach to real estate. We combine structural precision with high-end technology to make your journey effortless. Whether building a local home or a worldwide portfolio, we empower you with the clarity needed to make bold, informed decisions.',
+  ctaText: 'Explore Us',
 };
 const EN: HousentAboutContent = { ...VI };
 
@@ -28,16 +25,22 @@ export const housentAboutDef: BlockDef<HousentAboutContent> = {
     gradient: 'from-orange-100 to-stone-200',
     defaultName: 'About - Split Intro',
     aiLabelVi:
-      'giới thiệu 2 cột: tiêu đề lớn trái + đoạn mô tả và mini-stat phải',
+      'giới thiệu 1 cột canh giữa: badge + nút CTA trên đầu, tiêu đề lớn, 2 đoạn mô tả',
     aiLabelEn:
-      'two-column intro: big heading left + description and mini-stats right',
+      'centered intro: badge + CTA button on top, big heading, two body paragraphs',
   },
   component: HousentAbout,
   defaultContent: { vi: VI, en: EN },
   elements: [
-    { key: 'eyebrow', label: 'Eyebrow', icon: Sparkles, fieldType: 'text' },
+    { key: 'eyebrow', label: 'Badge', icon: Sparkles, fieldType: 'text' },
     { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
-    { key: 'text', label: 'Mô tả', icon: Pilcrow, fieldType: 'textarea' },
-    { key: 'points', label: 'Mini-stat', icon: Hash },
+    { key: 'text', label: 'Đoạn 1', icon: Pilcrow, fieldType: 'textarea' },
+    { key: 'text2', label: 'Đoạn 2', icon: Pilcrow, fieldType: 'textarea' },
+    {
+      key: 'ctaText',
+      label: 'Nút CTA',
+      icon: MousePointerClick,
+      fieldType: 'text',
+    },
   ],
 };

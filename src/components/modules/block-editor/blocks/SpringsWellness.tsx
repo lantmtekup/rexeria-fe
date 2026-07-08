@@ -2,20 +2,29 @@
 
 /**
  * Block "Springs - Wellness" (section `.l-wellness` / `#wellness` của
- * springs-estate-clone) — bản gốc là 1 sticky đôi (desktop: canvas WebGL
- * gradient + slider ảnh crossfade theo "chương" Spa/Yoga/Fitness/Café; mobile:
- * carousel ngang) rất nặng JS. Ở đây rút gọn thành: heading "Wellness" +
- * mô tả ngắn bên trên 1 dải ảnh ngang cuộn được (scroll-snap, KHÔNG WebGL),
- * có lớp gradient wash xanh rêu/teal phía sau mô phỏng nền webgl gốc.
+ * springs-estate-clone) — ĐÍNH CHÍNH so với ghi chú cũ (từng đoán nhầm có
+ * "chương" Spa/Yoga/Fitness/Café dạng WebGL chapter-swap — đọc lại source
+ * thật KHÔNG thấy nav/chapter nào, chỉ có: `.l-wellness__webgl-title`
+ * (eyebrow "Essence of Self-Care" + heading "Wellness", canh phải) và
+ * `.l-wellness__slider` — mỗi ảnh trong slider có `data-plugin="parallax"`
+ * clip-path reveal riêng (gốc `--120-0` ẩn dưới đáy → `--220-0` hiện trọn,
+ * CÙNG shape với `CLIP_HIDDEN_BOTTOM`/`CLIP_FULL` đã dùng ở
+ * `SpringsMap.tsx`). Ở đây port ĐÚNG 2 phần này: tagline+heading canh phải,
+ * và mỗi ảnh trong dải có ScrollTrigger riêng animate clip-path khi cuộn tới
+ * (không phải fade+rise đơn thuần như bản trước) — KHÔNG dựng canvas WebGL
+ * thật (`.l-wellness__webgl-circle` xấp xỉ bằng radial-gradient tĩnh, giữ
+ * nguyên như bản trước, R1: không thêm runtime nặng ngoài GSAP).
  *
  * Font thật của bản gốc (trỏ thẳng CDN springs.estate, không self-host lại —
  * khai báo lặp giữa các block Springs vô hại, trình duyệt chỉ tải 1 lần):
  *   - "Victor Serif" (heading)
- *   - "TT Commons Pro" (mô tả)
+ *   - "TT Commons Pro" (tagline + mô tả)
  *
- * Motion: heading/description fade-up khi cuộn vào viewport; dải ảnh stagger
- * vào sau. Tất cả qua useBlockMotion (R1–R6), scroller trên mọi
- * scrollTrigger, honor prefers-reduced-motion.
+ * Motion: heading/description fade-up khi cuộn vào viewport; MỖI ảnh trong
+ * dải có ScrollTrigger riêng animate `clip-path` (hidden-bottom → full) khi
+ * cuộn tới, toggleActions play/reverse (không scrub — khớp cảm giác "reveal
+ * khi vào viewport" của bản gốc hơn là 1 pin dài). Tất cả qua useBlockMotion
+ * (R1–R6), scroller trên mọi scrollTrigger, honor prefers-reduced-motion.
  */
 import * as React from 'react';
 import gsap from 'gsap';
@@ -53,6 +62,11 @@ export const SPRINGS_WELLNESS_FONT_CSS = `
 @font-face { font-family: 'TT Commons Pro'; src: url('https://springs.estate/assets/fonts/TTCommonsPro-Md.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
 .springs-wellness-strip::-webkit-scrollbar { display: none; }
 `;
+
+/** clip-path đầy đủ / ẩn-dưới-đáy — cùng quy ước `SpringsMap.tsx`. */
+const WELLNESS_CLIP_FULL = 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)';
+const WELLNESS_CLIP_HIDDEN_BOTTOM =
+  'polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%)';
 
 interface Props {
   content: SpringsWellnessContent;
@@ -126,18 +140,32 @@ export function SpringsWellness({
           0.12
         );
       }
-      if (slides.length) {
-        tl.from(
-          slides,
-          {
-            autoAlpha: 0,
-            y: isMobile ? 24 : 40,
-            duration: 0.7,
-            stagger: 0.12,
-          },
-          0.24
+      // Mỗi ảnh: clip-path reveal riêng khi cuộn tới (gốc `data-parallax`
+      // `--120-0` ẩn dưới đáy → `--220-0` hiện trọn), không phải fade+rise
+      // đơn thuần — khớp cảm giác "curtain reveal" của bản gốc.
+      slides.forEach((slide, i) => {
+        const clip = slide.querySelector<HTMLElement>(
+          '.springs-wellness-slide-clip'
         );
-      }
+        if (!clip) return;
+        gsap.fromTo(
+          clip,
+          { clipPath: WELLNESS_CLIP_HIDDEN_BOTTOM },
+          {
+            clipPath: WELLNESS_CLIP_FULL,
+            duration: 0.9,
+            ease: 'power2.out',
+            delay: (i % 2) * 0.08,
+            scrollTrigger: {
+              trigger: slide,
+              scroller,
+              start: isMobile ? 'top 90%' : 'top 85%',
+              toggleActions: 'play none none reverse',
+              invalidateOnRefresh: true,
+            },
+          }
+        );
+      });
 
       // R4: strip đổi chiều cao khi từng ảnh load xong → refresh lại trigger math.
       root
@@ -180,9 +208,30 @@ export function SpringsWellness({
         }}
       >
         <div
-          className='flex flex-col @4xl:flex-row @4xl:items-end @4xl:justify-between'
-          style={{ gap: 'clamp(16px, 3cqi, 28px)' }}
+          className='flex flex-col items-end text-right'
+          style={{ gap: 'clamp(8px, 1.2cqi, 14px)' }}
         >
+          {content.tagline ? (
+            <p
+              data-element-key='tagline'
+              className={selectableClass(
+                activeKey === 'tagline',
+                'springs-wellness-tagline'
+              )}
+              style={composeStyle(
+                {
+                  margin: 0,
+                  fontFamily: SPRINGS_WELLNESS_FONT_BODY,
+                  fontWeight: 400,
+                  fontSize: 'clamp(14px, 1.5cqi, 17px)',
+                  color: 'rgba(243,241,233,0.7)',
+                },
+                styleOf('tagline')
+              )}
+            >
+              {content.tagline}
+            </p>
+          ) : null}
           <h2
             data-element-key='heading'
             className={selectableClass(
@@ -253,13 +302,15 @@ export function SpringsWellness({
                 borderRadius: 'clamp(8px, 1.4cqi, 20px)',
               }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={src}
-                alt={`${content.heading || 'Wellness'} ${i + 1}`}
-                className='h-full w-full object-cover'
-                loading='lazy'
-              />
+              <div className='springs-wellness-slide-clip h-full w-full'>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt={`${content.heading || 'Wellness'} ${i + 1}`}
+                  className='h-full w-full object-cover'
+                  loading='lazy'
+                />
+              </div>
             </div>
           ))}
         </div>

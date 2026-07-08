@@ -1,5 +1,5 @@
-/** BlockDef `housent_solutions` — service cards. */
-import { LayoutGrid, Pilcrow, Sparkles, Type } from 'lucide-react';
+/** BlockDef `housent_solutions` — 2-cột: heading trái + list mục có checklist. */
+import { LayoutList, Pilcrow, Sparkles, Type } from 'lucide-react';
 
 import { HousentSolutions } from '../../HousentSolutions';
 import type { HousentSolutionsContent } from '../../../types';
@@ -9,42 +9,53 @@ const VI: HousentSolutionsContent = {
   eyebrow: 'What We Do',
   title: 'Our Complete Property Solutions',
   subtitle:
-    'We help you find the perfect home or sell your current one at the best price with zero hassle.',
+    'From strategy recognition to long-term rental management, we provide a full spectrum of real-estate services to manage and grow your real-estate assets.',
   items: [
     {
-      icon: '⌂',
-      title: 'Buy a home',
+      title: 'Buy & Sell Properties',
       description:
-        'Curated, verified listings matched to your budget and lifestyle.',
+        'We help you find the perfect home or sell your current one at the best price with zero hassle.',
+      features: [
+        'Verified listings',
+        'Market analysis',
+        'Legal team',
+        'Paperwork support',
+      ],
     },
     {
-      icon: '⇅',
-      title: 'Sell a property',
+      title: 'Rental Management',
       description:
-        'Data-driven pricing and marketing that closes at the best value.',
+        'A marketing-grade network that secures the best tenants and protects your rental income.',
+      features: [
+        'Tenant placement',
+        'Legal agreement',
+        'Walk-in inspection',
+        'Market rent optimization',
+      ],
+      image:
+        'https://cdn.prod.website-files.com/690cfcee9951c3898eab7661/69461d9a42ac4da0e95074ba_About%20Gallery%20%287%29.webp',
     },
     {
-      icon: '⌘',
-      title: 'Rent & manage',
+      title: 'Property Management',
       description:
-        'Full-service leasing and management for owners and tenants.',
+        'Taking care of your property so you can enjoy a stress-free ownership experience.',
+      features: [
+        'Tenant screening',
+        'Facility maintenance',
+        'Portfolio growth',
+        'Risk management',
+      ],
     },
     {
-      icon: '✦',
-      title: 'Invest',
+      title: 'Investment Consulting',
       description:
-        'Portfolio guidance backed by deep local market intelligence.',
-    },
-    {
-      icon: '◎',
-      title: 'Valuation',
-      description: 'Accurate, transparent appraisals in minutes.',
-    },
-    {
-      icon: '☎',
-      title: 'Advisory',
-      description:
-        'One dedicated advisor from first viewing to final signature.',
+        'Portfolio-driven advice to help you make bold, informed decisions in every market cycle.',
+      features: [
+        'ROI analysis',
+        'Future trends',
+        'Portfolio growth',
+        'Paperwork support',
+      ],
     },
   ],
 };
@@ -54,13 +65,15 @@ export const housentSolutionsDef: BlockDef<HousentSolutionsContent> = {
   type: 'housent_solutions',
   meta: {
     type: 'housent_solutions',
-    label: 'Solutions - Service Cards',
+    label: 'Solutions - Split List',
     accent: '#e8622c',
-    adminLabel: 'Solutions - Service Cards',
+    adminLabel: 'Solutions - Split List',
     gradient: 'from-orange-100 to-stone-200',
-    defaultName: 'Solutions - Service Cards',
-    aiLabelVi: 'lưới card dịch vụ: icon + tiêu đề + mô tả',
-    aiLabelEn: 'service card grid: icon + title + description',
+    defaultName: 'Solutions - Split List',
+    aiLabelVi:
+      'bố cục 2 cột: tiêu đề lớn bên trái, danh sách dịch vụ bên phải (mỗi mục có tiêu đề + mô tả + checklist tính năng), xen 1 ảnh',
+    aiLabelEn:
+      'two-column layout: big heading on the left, vertical service list on the right (each item has title + description + feature checklist), with one inline image',
   },
   component: HousentSolutions,
   defaultContent: { vi: VI, en: EN },
@@ -68,6 +81,6 @@ export const housentSolutionsDef: BlockDef<HousentSolutionsContent> = {
     { key: 'eyebrow', label: 'Eyebrow', icon: Sparkles, fieldType: 'text' },
     { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
     { key: 'subtitle', label: 'Phụ đề', icon: Pilcrow, fieldType: 'textarea' },
-    { key: 'items', label: 'Dịch vụ', icon: LayoutGrid },
+    { key: 'items', label: 'Dịch vụ', icon: LayoutList },
   ],
 };

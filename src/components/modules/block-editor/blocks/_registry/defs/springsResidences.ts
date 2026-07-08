@@ -1,7 +1,8 @@
 /**
  * BlockDef cho `springs_residences` — gallery "Residences" của
  * springs-estate-clone (section `.l-residences`, dòng 5717-6604 index.html):
- * heading + mô tả ngắn + dải ảnh render các toà nhà residence.
+ * heading + mô tả ngắn + slideshow pin 3 nhịp (ảnh + caption loại căn hộ,
+ * gốc `.l-residences__caption__type`: "Flats" / "Townhouses" / "Penthouses").
  * Component: `blocks/SpringsResidences.tsx`.
  */
 import { Heading, Pilcrow } from 'lucide-react';
@@ -24,6 +25,7 @@ const VI: SpringsResidencesContent = {
   description:
     'Căn hộ, nhà phố sân vườn và penthouse duplex trong một khu dân cư yên tĩnh, phủ đầy màu xanh.',
   images: RESIDENCE_IMAGES,
+  captions: ['Căn hộ', 'Nhà phố liền kề', 'Penthouse'],
 };
 
 const EN: SpringsResidencesContent = {
@@ -31,6 +33,7 @@ const EN: SpringsResidencesContent = {
   description:
     'Apartments, terraced townhouses, and duplex penthouses in a quiet, green neighborhood.',
   images: RESIDENCE_IMAGES,
+  captions: ['Flats', 'Townhouses', 'Penthouses'],
 };
 
 export const springsResidencesDef: BlockDef<SpringsResidencesContent> = {
@@ -42,8 +45,10 @@ export const springsResidencesDef: BlockDef<SpringsResidencesContent> = {
     adminLabel: 'Springs - Residences',
     gradient: 'from-stone-700 to-stone-400',
     defaultName: 'Springs - Residences',
-    aiLabelVi: 'gallery căn hộ: tiêu đề + mô tả + dải ảnh phối cảnh',
-    aiLabelEn: 'residences gallery: heading + description + render image strip',
+    aiLabelVi:
+      'sticky pin slideshow 3 nhịp: ảnh phối cảnh crossfade + caption loại căn hộ + progress bar',
+    aiLabelEn:
+      'sticky pin 3-beat slideshow: crossfading render images + unit-type caption + progress bar',
   },
   component: SpringsResidences,
   defaultContent: { vi: VI, en: EN },

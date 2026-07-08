@@ -2,11 +2,17 @@
 
 /**
  * Block "Springs - Design" (section `.l-design` / `#design` của
- * springs-estate-clone) — bản gốc là 1 chuỗi 3-4 slide sticky-scroll với
- * parallax ảnh + reveal chữ theo từng nhịp cuộn (`l-design__slide--1..4`).
- * Ở đây rút gọn thành: heading "Design" + chuỗi card (ảnh + phụ đề + đoạn
- * văn) xếp dọc (mobile) / so le trái-phải (desktop từ @2xl) — KHÔNG replicate
- * cơ chế pin/parallax gốc, chỉ giữ tinh thần "mỗi tầng một góc nhìn".
+ * springs-estate-clone) — bản gốc là 1 chuỗi 4 slide sticky-scroll cao khác
+ * nhau (`l-design__slide--1..4`, mỗi slide 150-350svh riêng, layout khác
+ * nhau: curtain-reveal / 2-cột row / ảnh+content offset margin-top:100vh) —
+ * quá khác biệt về cấu trúc để dựng lại 1:1 pin-per-slide mà không phá vỡ
+ * layout card hiện có (đã hợp lý cho CMS block). Ở đây GIỮ layout card xếp
+ * dọc/so le hiện tại nhưng PORT lại phần chuyển động ảnh mà bản gốc luôn có
+ * ở mọi slide (`data-parallax-pattern="designMoveRightImage"` /
+ * `"designMoveLeftImage"` — ảnh trôi ngang theo hướng luân phiên khi cuộn
+ * qua card): mỗi card giờ có 1 ScrollTrigger `scrub` riêng dịch chuyển ảnh
+ * theo trục X (card lẻ trôi phải, card chẵn trôi trái) — SONG SONG với
+ * ScrollTrigger entrance fade+rise cũ (2 trigger độc lập, không xung đột).
  *
  * Copy + ảnh THẬT từ springs.estate (asset gốc, không self-host lại):
  *  - Slide 1: "Inspired Architecture" — câu mở đầu về toà nhà pha lê.
@@ -137,6 +143,31 @@ export function SpringsDesign({
             invalidateOnRefresh: true,
           },
         });
+
+        // Ảnh trôi ngang theo hướng luân phiên khi cuộn qua card (gốc
+        // `data-parallax-pattern="designMoveRightImage"/"designMoveLeftImage"`).
+        const imgInner = card.querySelector<HTMLElement>(
+          '.springs-design-slide-img-inner'
+        );
+        if (imgInner) {
+          const direction = i % 2 === 0 ? 1 : -1;
+          gsap.fromTo(
+            imgInner,
+            { xPercent: -6 * direction },
+            {
+              xPercent: 6 * direction,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: card,
+                scroller,
+                start: 'top bottom',
+                end: 'bottom top',
+                scrub: true,
+                invalidateOnRefresh: true,
+              },
+            }
+          );
+        }
       });
 
       // R4: ảnh load xong (async) → refresh trigger math.
@@ -217,13 +248,18 @@ export function SpringsDesign({
                 }}
               >
                 {slide.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={slide.imageUrl}
-                    alt={slide.subtitle || content.heading || 'Design'}
-                    className='springs-design-slide-img h-full w-full'
-                    style={{ objectFit: 'cover', display: 'block' }}
-                  />
+                  <div
+                    className='springs-design-slide-img-inner h-full'
+                    style={{ width: '112%', marginLeft: '-6%' }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={slide.imageUrl}
+                      alt={slide.subtitle || content.heading || 'Design'}
+                      className='springs-design-slide-img h-full w-full'
+                      style={{ objectFit: 'cover', display: 'block' }}
+                    />
+                  </div>
                 ) : null}
               </div>
 

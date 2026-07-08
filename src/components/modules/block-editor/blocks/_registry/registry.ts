@@ -75,6 +75,7 @@ import { q80ExperienceDef } from './defs/q80Experience';
 import { q80MenuDef } from './defs/q80Menu';
 import { springsContactFooterDef } from './defs/springsContactFooter';
 import { springsDesignDef } from './defs/springsDesign';
+import { springsGalleryDef } from './defs/springsGallery';
 import { springsHeaderDef } from './defs/springsHeader';
 import { springsHeroDef } from './defs/springsHero';
 import { springsInteriorsDef } from './defs/springsInteriors';
@@ -154,6 +155,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
   brightedge_hero: brightedgeHeroDef as BlockDef,
   springs_header: springsHeaderDef as BlockDef,
+  springs_gallery: springsGalleryDef as BlockDef,
   springs_hero: springsHeroDef as BlockDef,
   springs_intro: springsIntroDef as BlockDef,
   springs_wellness: springsWellnessDef as BlockDef,

@@ -23,6 +23,7 @@
  */
 import * as React from 'react';
 import gsap from 'gsap';
+import { CustomEase } from 'gsap/CustomEase';
 
 import { useBlockMotion } from '../motion/LandingMotion';
 import type {
@@ -78,7 +79,7 @@ const ROOT_STYLE: React.CSSProperties = {
 const CONTAINER_STYLE: React.CSSProperties = {
   position: 'relative',
   width: '100%',
-  maxWidth: 'min(1200px, 100% - 24px)',
+  maxWidth: 'min(1416px, 100% - 24px)',
   marginInline: 'auto',
   padding: 'clamp(60px, 11.5cqi, 164px) clamp(20px, 7.8cqi, 112px) 0',
   display: 'flex',
@@ -181,6 +182,16 @@ const STEP_BODY_STYLE: React.CSSProperties = {
 const DIVIDER_PATH =
   'M232.488 0C232.488 46.2989 269.981 83.8525 316.279 83.9273L975.782 84.9935C1099.37 85.1932 1199.11 186.067 1197.91 309.646C1196.73 431.828 1097.32 530.197 975.135 529.997C856.628 529.803 711.976 529.566 598.349 529.38C480.719 529.188 329.837 528.941 209.135 528.744C94.1047 528.555 0.731262 621.631 0.50032 736.661C0.269118 851.82 93.5111 945.323 208.671 945.415L861.46 945.931C970.456 946.018 1058.77 1034.4 1058.77 1143.4C1058.77 1252.98 969.54 1341.6 859.96 1340.86L628.689 1339.28C576.127 1338.93 533.326 1381.44 533.326 1434';
 
+/** Framer appear-effect easing (từ spec section 9: cubic-bezier(.44,0,.56,1)).
+ *  Đăng ký 1 lần, tái dùng qua id 'fwpFramerEase'. */
+const FRAMER_EASE_ID = 'fwpFramerEase';
+function ensureFramerEase(): string {
+  if (typeof window !== 'undefined' && !CustomEase.get(FRAMER_EASE_ID)) {
+    CustomEase.create(FRAMER_EASE_ID, 'M0,0 C0.44,0 0.56,1 1,1');
+  }
+  return FRAMER_EASE_ID;
+}
+
 function tokenize(text: string): string[] {
   return text.split(/(\s+)/);
 }
@@ -276,6 +287,8 @@ export function FramerFlatWhiteProcess({
         return;
       }
 
+      const framerEase = ensureFramerEase();
+
       const staggerWords = (
         container: HTMLElement | null | undefined,
         duration: number,
@@ -309,10 +322,10 @@ export function FramerFlatWhiteProcess({
       };
 
       const labelEl = root.querySelector<HTMLElement>('.fwp-label');
-      staggerWords(labelEl, 0.3, 'power3.out', 0.1, 0);
+      staggerWords(labelEl, 0.5, framerEase, 0.03, 0);
 
       const headlineEl = root.querySelector<HTMLElement>('.fwp-headline');
-      staggerWords(headlineEl, 0.3, 'power3.out', 0.1, 0.1);
+      staggerWords(headlineEl, 0.5, framerEase, 0.03, 0.1);
 
       const PARALLAX_RANGE = [6, 9, 12] as const;
       const stepEls = root.querySelectorAll<HTMLElement>('[data-fwp-step]');

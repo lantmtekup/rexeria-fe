@@ -1,12 +1,16 @@
 'use client';
 
 /**
- * Block "Springs - Intro" (section `.l-intro` / `#about` của
- * springs-estate-clone) — bản gốc là 1 sticky-scroll phức tạp (parallax ảnh
- * + reveal chữ). Ở đây rút gọn thành đúng phần "brand statement" tĩnh: câu
- * lớn serif "Open the doors of Springs and step into your true self" +
- * đoạn mô tả phụ bên dưới, không ảnh — 1 khoảng lặng "thở" giữa hero và các
- * section nội dung tiếp theo (padding dọc rộng, nền sáng nhẹ).
+ * Block "Springs - Intro" — port section `.l-intro__content` gốc của
+ * springs-estate-clone (`#about` → sub-layer thứ 2 trong pin của Hero, gốc
+ * `data-parallax--230-0 translateY(0%)` → `--500-0 translateY(110%)`). Ở
+ * đây TÁCH thành 1 block tĩnh riêng đứng sau Hero (thay vì nhồi thêm 1 beat
+ * vào timeline pin 600vh của `SpringsHero`, vốn đã đủ phức tạp) — nhưng vẫn
+ * giữ đúng cặp nội dung gốc: câu tuyên ngôn serif lớn "Open the doors of
+ * Springs and step into your true self" ĐI KÈM 1 ảnh (`opening-2`, gốc
+ * `.l-intro__content-image`) — không còn "không ảnh" như bản trước. Layout
+ * 2 cột: text trái / ảnh phải (desktop, khớp `col--md-4 offset--md-2` +
+ * `ml-layout` gốc), xếp dọc text-trên-ảnh-dưới ở mobile.
  *
  * Font thật của bản gốc (self-host tại springs.estate/assets/fonts):
  *   - "Victor Serif" (câu lớn, VictorSerif-40Regular.woff2)
@@ -102,6 +106,7 @@ export function SpringsIntro({
       const description = root.querySelector<HTMLElement>(
         '.springs-intro-description'
       );
+      const image = root.querySelector<HTMLElement>('.springs-intro-image');
 
       const tl = gsap.timeline({
         defaults: { ease: 'power3.out' },
@@ -123,6 +128,10 @@ export function SpringsIntro({
       if (description) {
         tl.from(description, { autoAlpha: 0, y: 28, duration: 0.8 }, 0.28);
       }
+      // Ảnh: rise-up + fade — cùng tinh thần translateY(110%→0%) gốc.
+      if (image) {
+        tl.from(image, { autoAlpha: 0, yPercent: 12, duration: 1 }, 0.16);
+      }
     },
     []
   );
@@ -138,85 +147,110 @@ export function SpringsIntro({
     >
       <style>{SPRINGS_FONT_CSS}</style>
       <div
-        className='mx-auto flex w-full max-w-[960px] flex-col items-center text-center'
+        className='mx-auto flex w-full max-w-[1400px] flex-col items-center gap-[clamp(32px,6cqi,64px)] text-center @2xl:flex-row @2xl:items-center @2xl:text-left'
         style={{
           padding:
-            'clamp(96px, 16cqi, 220px) clamp(20px, 6cqi, 64px) clamp(96px, 16cqi, 220px)',
+            'clamp(64px, 12cqi, 160px) clamp(20px, 6cqi, 64px) clamp(64px, 12cqi, 160px)',
         }}
       >
-        {content.tagline ? (
-          <p
-            data-element-key='tagline'
+        <div className='flex w-full flex-col items-center @2xl:w-5/12 @2xl:shrink-0 @2xl:items-start'>
+          {content.tagline ? (
+            <p
+              data-element-key='tagline'
+              className={selectableClass(
+                activeKey === 'tagline',
+                'springs-intro-tagline'
+              )}
+              style={composeStyle(
+                {
+                  margin: 0,
+                  fontFamily: SPRINGS_FONT_BODY,
+                  fontWeight: 500,
+                  fontSize: 'clamp(12px, 1.4cqi, 15px)',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: SPRINGS_INK,
+                  opacity: 0.6,
+                  marginBottom: 'clamp(16px, 2.4cqi, 28px)',
+                },
+                styleOf('tagline')
+              )}
+            >
+              {content.tagline}
+            </p>
+          ) : null}
+
+          <h2
+            data-element-key='statement'
             className={selectableClass(
-              activeKey === 'tagline',
-              'springs-intro-tagline'
+              activeKey === 'statement',
+              'springs-intro-statement'
             )}
             style={composeStyle(
               {
                 margin: 0,
-                fontFamily: SPRINGS_FONT_BODY,
-                fontWeight: 500,
-                fontSize: 'clamp(12px, 1.4cqi, 15px)',
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
+                fontFamily: SPRINGS_FONT_SERIF,
+                fontWeight: 400,
+                fontSize: 'clamp(32px, 5.4cqi, 64px)',
+                lineHeight: 1.2,
+                letterSpacing: '-0.01em',
                 color: SPRINGS_INK,
-                opacity: 0.6,
-                marginBottom: 'clamp(16px, 2.4cqi, 28px)',
               },
-              styleOf('tagline')
+              styleOf('statement')
             )}
           >
-            {content.tagline}
-          </p>
-        ) : null}
+            {content.statement}
+          </h2>
 
-        <h2
-          data-element-key='statement'
+          {content.description ? (
+            <p
+              data-element-key='description'
+              className={selectableClass(
+                activeKey === 'description',
+                'springs-intro-description'
+              )}
+              style={composeStyle(
+                {
+                  margin: 0,
+                  fontFamily: SPRINGS_FONT_BODY,
+                  fontWeight: 400,
+                  fontSize: 'clamp(15px, 1.6cqi, 19px)',
+                  lineHeight: 1.6,
+                  color: SPRINGS_INK,
+                  opacity: 0.72,
+                  maxWidth: '46ch',
+                  marginTop: 'clamp(24px, 3.6cqi, 40px)',
+                },
+                styleOf('description')
+              )}
+            >
+              {content.description}
+            </p>
+          ) : null}
+        </div>
+
+        <div
+          data-element-key='image'
           className={selectableClass(
-            activeKey === 'statement',
-            'springs-intro-statement'
+            activeKey === 'image',
+            'springs-intro-image w-full overflow-hidden @2xl:w-7/12'
           )}
           style={composeStyle(
             {
-              margin: 0,
-              fontFamily: SPRINGS_FONT_SERIF,
-              fontWeight: 400,
-              fontSize: 'clamp(32px, 5.4cqi, 64px)',
-              lineHeight: 1.2,
-              letterSpacing: '-0.01em',
-              color: SPRINGS_INK,
+              aspectRatio: '4 / 3',
+              borderRadius: '4px',
             },
-            styleOf('statement')
+            styleOf('image')
           )}
         >
-          {content.statement}
-        </h2>
-
-        {content.description ? (
-          <p
-            data-element-key='description'
-            className={selectableClass(
-              activeKey === 'description',
-              'springs-intro-description'
-            )}
-            style={composeStyle(
-              {
-                margin: 0,
-                fontFamily: SPRINGS_FONT_BODY,
-                fontWeight: 400,
-                fontSize: 'clamp(15px, 1.6cqi, 19px)',
-                lineHeight: 1.6,
-                color: SPRINGS_INK,
-                opacity: 0.72,
-                maxWidth: '46ch',
-                marginTop: 'clamp(24px, 3.6cqi, 40px)',
-              },
-              styleOf('description')
-            )}
-          >
-            {content.description}
-          </p>
-        ) : null}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={content.image}
+            alt=''
+            aria-hidden='true'
+            className='h-full w-full object-cover'
+          />
+        </div>
       </div>
     </section>
   );

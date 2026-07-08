@@ -28,8 +28,9 @@ interface HousentListingsProps {
 }
 
 /**
- * Housent listings — `.property-section` của housent.webflow.io. Lưới card
- * bất động sản (ảnh + giá + tên + địa chỉ + thông số bed/bath/area).
+ * Housent listings — `.property-section` của housent.webflow.io. Eyebrow chấm
+ * cam + filter tabs bên phải. Mỗi card: badge trạng thái góc trái, giá pill góc
+ * phải, chips beds/baths/area + nút DETAILS phủ đáy ảnh, tên + địa chỉ có pin.
  * Responsive: mobile 1 cột, tablet 2, desktop 3.
  */
 export function HousentListings({
@@ -48,6 +49,7 @@ export function HousentListings({
       positionStyle(positions, key)
     );
   const items = content.items ?? [];
+  const filters = content.filters ?? [];
 
   return (
     <div
@@ -58,7 +60,7 @@ export function HousentListings({
       )}
     >
       <div className='mx-auto max-w-6xl'>
-        <div className='mb-10 flex flex-col gap-3 @2xl:mb-14 @2xl:flex-row @2xl:items-end @2xl:justify-between'>
+        <div className='mb-10 flex flex-col gap-6 @2xl:mb-14 @2xl:flex-row @2xl:items-end @2xl:justify-between'>
           <div>
             {content.eyebrow ? (
               <span
@@ -66,9 +68,10 @@ export function HousentListings({
                 style={styleOf('eyebrow')}
                 className={selectableClass(
                   activeKey === 'eyebrow',
-                  'text-2xs mb-3 block font-semibold tracking-[0.24em] text-[#e8622c] uppercase'
+                  'text-2xs mb-4 inline-flex items-center gap-2 rounded-full bg-[#e8622c]/10 px-3 py-1.5 font-semibold tracking-[0.24em] text-[#e8622c] uppercase'
                 )}
               >
+                <span className='size-1.5 rounded-full bg-[#e8622c]' />
                 {content.eyebrow}
               </span>
             ) : null}
@@ -83,6 +86,30 @@ export function HousentListings({
               {content.title}
             </h2>
           </div>
+          {filters.length ? (
+            <div
+              data-element-key='filters'
+              style={styleOf('filters')}
+              className={selectableClass(
+                activeKey === 'filters',
+                'flex flex-wrap gap-2'
+              )}
+            >
+              {filters.map((f, i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-medium',
+                    i === 0
+                      ? 'bg-[#e8622c] text-white'
+                      : 'bg-white text-[#2b2621]'
+                  )}
+                >
+                  {f}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div
@@ -94,11 +121,8 @@ export function HousentListings({
           )}
         >
           {items.map((it, i) => (
-            <div
-              key={i}
-              className='group flex flex-col overflow-hidden rounded-2xl bg-white'
-            >
-              <div className='relative aspect-[4/3] overflow-hidden'>
+            <div key={i} className='group flex flex-col'>
+              <div className='relative aspect-[4/5] overflow-hidden rounded-2xl'>
                 {it.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -109,23 +133,44 @@ export function HousentListings({
                 ) : (
                   <div className='absolute inset-0 bg-[#e6ddd5]' />
                 )}
+                {it.status ? (
+                  <span className='text-2xs absolute top-3 left-3 rounded-md bg-[#e8622c] px-2.5 py-1 font-semibold tracking-[0.1em] text-white uppercase'>
+                    {it.status}
+                  </span>
+                ) : null}
                 {it.price ? (
-                  <span className='absolute top-3 left-3 rounded-full bg-[#17120f] px-3 py-1.5 text-xs font-semibold text-white'>
+                  <span className='absolute top-3 right-3 rounded-md bg-white/95 px-3 py-1.5 text-sm font-semibold text-[#2b2621]'>
                     {it.price}
                   </span>
                 ) : null}
+                <div className='absolute inset-x-3 bottom-3 flex items-end justify-between gap-2'>
+                  <div className='flex flex-col gap-1.5'>
+                    {[it.beds, it.baths, it.area]
+                      .filter(Boolean)
+                      .map((sp, k) => (
+                        <span
+                          key={k}
+                          className='text-2xs inline-flex w-fit items-center gap-1.5 rounded-md bg-black/55 px-2.5 py-1 font-medium text-white backdrop-blur-sm'
+                        >
+                          {sp}
+                        </span>
+                      ))}
+                  </div>
+                  <span className='inline-flex items-center gap-1.5 rounded-md bg-[#17120f] px-3 py-2 text-xs font-semibold text-white'>
+                    <span className='text-[#e8622c]'>+</span>
+                    Details
+                  </span>
+                </div>
               </div>
-              <div className='flex flex-col gap-2 p-5'>
-                <h3 className='text-lg font-semibold text-[#2b2621]'>
+              <div className='flex flex-col gap-1.5 px-1 pt-4'>
+                <h3 className='text-xl font-semibold tracking-tight text-[#2b2621]'>
                   {it.name}
                 </h3>
-                <p className='text-sm text-[#8a7f76]'>{it.address}</p>
-                {it.specs ? (
-                  <div className='mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#6b6058]'>
-                    {it.specs.split('·').map((sp, k) => (
-                      <span key={k}>{sp.trim()}</span>
-                    ))}
-                  </div>
+                {it.address ? (
+                  <p className='inline-flex items-center gap-1.5 text-sm text-[#8a7f76]'>
+                    <span className='text-[#e8622c]'>◍</span>
+                    {it.address}
+                  </p>
                 ) : null}
               </div>
             </div>

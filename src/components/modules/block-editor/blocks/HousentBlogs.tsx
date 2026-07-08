@@ -54,29 +54,44 @@ export function HousentBlogs({
       )}
     >
       <div className='mx-auto max-w-6xl'>
-        <div className='mb-10 max-w-2xl @2xl:mb-14'>
-          {content.eyebrow ? (
-            <span
-              data-element-key='eyebrow'
-              style={styleOf('eyebrow')}
+        <div className='mb-10 flex flex-col gap-6 @2xl:mb-14 @3xl:flex-row @3xl:items-end @3xl:justify-between'>
+          <div className='max-w-2xl'>
+            {content.eyebrow ? (
+              <span
+                data-element-key='eyebrow'
+                style={styleOf('eyebrow')}
+                className={selectableClass(
+                  activeKey === 'eyebrow',
+                  'text-2xs mb-4 inline-flex items-center gap-2 rounded-full bg-[#e8622c]/15 px-3 py-1.5 font-semibold tracking-[0.24em] text-[#e8622c] uppercase'
+                )}
+              >
+                <span className='size-1.5 rounded-full bg-[#e8622c]' />
+                {content.eyebrow}
+              </span>
+            ) : null}
+            <h2
+              data-element-key='title'
+              style={styleOf('title')}
               className={selectableClass(
-                activeKey === 'eyebrow',
-                'text-2xs mb-3 block font-semibold tracking-[0.24em] text-[#e8622c] uppercase'
+                activeKey === 'title',
+                'text-3xl font-semibold tracking-tight text-[#2b2621] @2xl:text-5xl'
               )}
             >
-              {content.eyebrow}
-            </span>
+              {content.title}
+            </h2>
+          </div>
+          {content.subtitle ? (
+            <p
+              data-element-key='subtitle'
+              style={styleOf('subtitle')}
+              className={selectableClass(
+                activeKey === 'subtitle',
+                'max-w-sm text-base text-[#8a7f76]'
+              )}
+            >
+              {content.subtitle}
+            </p>
           ) : null}
-          <h2
-            data-element-key='title'
-            style={styleOf('title')}
-            className={selectableClass(
-              activeKey === 'title',
-              'text-3xl font-semibold tracking-tight text-[#2b2621] @2xl:text-5xl'
-            )}
-          >
-            {content.title}
-          </h2>
         </div>
         <div
           data-element-key='items'
@@ -91,9 +106,9 @@ export function HousentBlogs({
               key={i}
               href='#'
               onClick={e => e.preventDefault()}
-              className='group flex flex-col overflow-hidden rounded-2xl bg-white'
+              className='group flex flex-col'
             >
-              <div className='relative aspect-[16/10] overflow-hidden'>
+              <div className='relative aspect-[16/10] overflow-hidden rounded-2xl'>
                 {it.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -104,15 +119,19 @@ export function HousentBlogs({
                 ) : (
                   <div className='absolute inset-0 bg-[#e6ddd5]' />
                 )}
+                <span className='absolute bottom-3 left-3 flex size-9 items-center justify-center rounded-full bg-white/90 text-lg leading-none text-[#2b2621] shadow-sm transition-colors group-hover:bg-white'>
+                  +
+                </span>
               </div>
-              <div className='flex flex-col gap-2 p-6'>
-                <span className='text-2xs font-semibold tracking-[0.16em] text-[#e8622c] uppercase'>
+              <h3 className='mt-5 text-lg font-semibold text-[#2b2621]'>
+                {it.title}
+              </h3>
+              <div className='mt-3 flex items-center gap-3'>
+                <span className='text-2xs inline-flex items-center gap-1.5 rounded-full bg-[#e8e2da] px-2.5 py-1 font-semibold tracking-[0.16em] text-[#6f655c] uppercase'>
+                  <span className='size-1.5 rounded-full bg-[#e8622c]' />
                   {it.category}
                 </span>
-                <h3 className='text-lg font-semibold text-[#2b2621]'>
-                  {it.title}
-                </h3>
-                <span className='mt-1 text-xs text-[#8a7f76]'>{it.date}</span>
+                <span className='text-xs text-[#8a7f76]'>{it.date}</span>
               </div>
             </a>
           ))}

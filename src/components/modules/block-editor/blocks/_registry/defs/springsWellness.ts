@@ -20,6 +20,7 @@ const WELLNESS_IMAGES = [1, 2, 3, 4].map(
 );
 
 const VI: SpringsWellnessContent = {
+  tagline: 'Tinh hoa của sự chăm sóc bản thân',
   heading: 'Wellness',
   description:
     'Springs mang sự chăm sóc bản thân về ngay trong ngôi nhà của bạn. Với hạ tầng thư giãn được thiết kế chu đáo, không gian này giúp bạn tái tạo năng lượng cho cả cơ thể lẫn tâm trí, để lại cảm giác tươi mới và cân bằng trọn vẹn.',
@@ -27,6 +28,7 @@ const VI: SpringsWellnessContent = {
 };
 
 const EN: SpringsWellnessContent = {
+  tagline: 'Essence of Self-Care',
   heading: 'Wellness',
   description:
     'Springs brings wellness right into your home. With a thoughtfully designed infrastructure for relaxation, it rejuvenates your body and mind, leaving you refreshed and perfectly balanced.',
@@ -43,13 +45,19 @@ export const springsWellnessDef: BlockDef<SpringsWellnessContent> = {
     gradient: 'from-emerald-900 to-teal-950',
     defaultName: 'Springs - Wellness',
     aiLabelVi:
-      'section wellness: heading serif + mô tả ngắn trên dải ảnh spa/thư giãn cuộn ngang, nền gradient xanh rêu/teal',
+      'section wellness: eyebrow + heading serif canh phải, dải ảnh spa/thư giãn với clip-path reveal riêng từng ảnh, nền gradient xanh rêu/teal',
     aiLabelEn:
-      'wellness section: serif heading + short description over a horizontal spa/lifestyle image strip, green/teal gradient wash',
+      'wellness section: right-aligned eyebrow + serif heading, spa/lifestyle image strip with per-image clip-path reveal, green/teal gradient wash',
   },
   component: SpringsWellness,
   defaultContent: { vi: VI, en: EN },
   elements: [
+    {
+      key: 'tagline',
+      label: 'Dòng nhỏ (eyebrow)',
+      icon: Type,
+      fieldType: 'text',
+    },
     {
       key: 'heading',
       label: 'Tiêu đề',

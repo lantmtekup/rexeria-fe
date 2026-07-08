@@ -18,6 +18,9 @@ const VI: HousentHeroContent = {
   searchLabel: 'Find Property',
   imageUrl:
     'https://cdn.prod.website-files.com/69c8ec3d62ab7aba560d580f/69c9108b1fcc04bd7a40744b_3f75fad6acae920f99115d66b0f868ec_Hero%20Image.webp',
+  footerLeft: 'LONDON, UK 14:45',
+  footerCenter: 'HERITAGE © EST. 1997',
+  footerRight: 'NEW YORK, NY 09:45',
 };
 
 const EN: HousentHeroContent = { ...VI };
@@ -49,5 +52,13 @@ export const housentHeroDef: BlockDef<HousentHeroContent> = {
       fieldType: 'text',
     },
     { key: 'image', label: 'Ảnh hero', icon: ImageIcon, fieldType: 'image' },
+    { key: 'footerLeft', label: 'Footer trái', icon: Type, fieldType: 'text' },
+    {
+      key: 'footerCenter',
+      label: 'Footer giữa',
+      icon: Type,
+      fieldType: 'text',
+    },
+    { key: 'footerRight', label: 'Footer phải', icon: Type, fieldType: 'text' },
   ],
 };

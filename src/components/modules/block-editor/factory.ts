@@ -61,6 +61,7 @@ import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullT
 import { springsContactFooterDef } from './blocks/_registry/defs/springsContactFooter';
 import { springsDesignDef } from './blocks/_registry/defs/springsDesign';
 import { springsHeaderDef } from './blocks/_registry/defs/springsHeader';
+import { springsGalleryDef } from './blocks/_registry/defs/springsGallery';
 import { springsHeroDef } from './blocks/_registry/defs/springsHero';
 import { springsInteriorsDef } from './blocks/_registry/defs/springsInteriors';
 import { springsIntroDef } from './blocks/_registry/defs/springsIntro';
@@ -2459,6 +2460,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   readymag_footer: readymagFooterDef.defaultContent.vi,
   protection_scrollytelling: protectionScrollytellingDef.defaultContent.vi,
   springs_header: springsHeaderDef.defaultContent.vi,
+  springs_gallery: springsGalleryDef.defaultContent.vi,
   springs_hero: springsHeroDef.defaultContent.vi,
   springs_intro: springsIntroDef.defaultContent.vi,
   springs_wellness: springsWellnessDef.defaultContent.vi,
@@ -2611,6 +2613,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   readymag_footer: readymagFooterDef.defaultContent.en,
   protection_scrollytelling: protectionScrollytellingDef.defaultContent.en,
   springs_header: springsHeaderDef.defaultContent.en,
+  springs_gallery: springsGalleryDef.defaultContent.en,
   springs_hero: springsHeroDef.defaultContent.en,
   springs_intro: springsIntroDef.defaultContent.en,
   springs_wellness: springsWellnessDef.defaultContent.en,

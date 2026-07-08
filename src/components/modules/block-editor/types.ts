@@ -156,6 +156,7 @@ export type BlockType =
   | 'brightedge_hero'
   // ── Springs Estate clone sections (springs.estate, real-estate landing) ──
   | 'springs_header'
+  | 'springs_gallery'
   | 'springs_hero'
   | 'springs_intro'
   | 'springs_wellness'
@@ -1724,6 +1725,9 @@ export interface HousentHeroContent {
   searchPlaceholder: string;
   searchLabel: string;
   imageUrl: string;
+  footerLeft: string;
+  footerCenter: string;
+  footerRight: string;
 }
 
 export interface HousentStatItem {
@@ -1737,14 +1741,18 @@ export interface HousentStatsContent {
 
 export interface HousentListingItem {
   imageUrl: string;
+  status: string;
   price: string;
   name: string;
   address: string;
-  specs: string;
+  beds: string;
+  baths: string;
+  area: string;
 }
 export interface HousentListingsContent {
   eyebrow: string;
   title: string;
+  filters: string[];
   items: HousentListingItem[];
 }
 
@@ -1768,31 +1776,35 @@ export interface HousentFooterContent {
   copyright: string;
 }
 
-export interface HousentAboutPoint {
-  value: string;
-  label: string;
-}
 export interface HousentAboutContent {
   eyebrow: string;
   title: string;
   text: string;
-  points: HousentAboutPoint[];
+  text2: string;
+  ctaText: string;
 }
 
 export interface HousentFeatureItem {
+  icon: string;
   title: string;
   description: string;
+}
+export interface HousentExcellenceCard {
+  image: string;
+  label: string;
+  value: string;
 }
 export interface HousentExcellenceContent {
   eyebrow: string;
   title: string;
-  items: HousentFeatureItem[];
+  items: HousentExcellenceCard[];
 }
 
 export interface HousentSolutionItem {
-  icon: string;
   title: string;
   description: string;
+  features: string[];
+  image?: string;
 }
 export interface HousentSolutionsContent {
   eyebrow: string;
@@ -1804,6 +1816,7 @@ export interface HousentSolutionsContent {
 export interface HousentValuesContent {
   eyebrow: string;
   title: string;
+  subtitle: string;
   items: HousentFeatureItem[];
 }
 
@@ -1814,17 +1827,22 @@ export interface HousentFaqItem {
 export interface HousentFaqContent {
   eyebrow: string;
   title: string;
+  subtitle: string;
+  ctaLabel: string;
+  ctaAvatar: string;
   items: HousentFaqItem[];
 }
 
 export interface HousentTestimonialItem {
   quote: string;
+  avatar: string;
   name: string;
   role: string;
 }
 export interface HousentTestimonialContent {
   eyebrow: string;
   title: string;
+  subtitle: string;
   items: HousentTestimonialItem[];
 }
 
@@ -1837,6 +1855,7 @@ export interface HousentBlogItem {
 export interface HousentBlogsContent {
   eyebrow: string;
   title: string;
+  subtitle: string;
   items: HousentBlogItem[];
 }
 
@@ -2083,18 +2102,28 @@ export interface SpringsHeaderContent {
   navLinks: SpringsNavLink[];
 }
 
+export interface SpringsGalleryContent {
+  /** 6 ảnh (gốc `0.preloader/preloader-left-1/2/3` + `preloader-right-1/2/3`),
+   *  chia 2 cột x 3 ảnh, mỗi cột crossfade tuần tự khi cuộn qua pin. */
+  images: string[];
+}
+
 export interface SpringsHeroContent {
-  /** 6 ảnh tường ảnh chéo (gốc: preloader-left-1/2/3 + right-1/2/3). */
-  galleryImages: string[];
-  eyebrow: string;
-  heading: string;
-  subheading: string;
+  /** h1 opening — gốc "Premium Living\nwith Unrivaled Views" (\n = xuống dòng). */
+  title: string;
+  /** Subtitle dưới h1 — gốc "Apartments, terraced townhouses...". */
+  subtitle: string;
+  /** Ảnh nền lớn thu hẹp bằng clip-path khi cuộn (gốc `intro-image`). */
+  backgroundImage: string;
+  /** 3 ảnh cột phải reveal tuần tự khi cuộn (gốc opening-1/3/2). */
+  revealImages: string[];
 }
 
 export interface SpringsIntroContent {
   statement: string;
   tagline: string;
   description: string;
+  image: string;
 }
 
 /**
@@ -2134,6 +2163,7 @@ export interface FramerFaqMinimalContent {
 }
 
 export interface SpringsWellnessContent {
+  tagline: string;
   heading: string;
   description: string;
   images: string[];
@@ -2169,11 +2199,13 @@ export interface SpringsResidencesContent {
   heading: string;
   description: string;
   images: string[];
+  captions: string[];
 }
 
 export interface SpringsInteriorsContent {
   heading: string;
   description: string;
+  introImage: string;
   images: string[];
 }
 
@@ -2326,6 +2358,7 @@ export type BlockContent =
   | Q80ExperienceContent
   | Q80MenuContent
   | SpringsHeaderContent
+  | SpringsGalleryContent
   | SpringsHeroContent
   | SpringsIntroContent
   | SpringsWellnessContent
@@ -5141,6 +5174,24 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     aiLabelEn:
       'real-estate header: centered logo, menu + residences + contact us, favourite icon',
   },
+  springs_gallery: {
+    type: 'springs_gallery',
+    category: 'hero',
+    style: 'luxury',
+    tags: ['clone', 'springs', 'bds'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-08',
+    label: 'Springs - Gallery Intro',
+    accent: '#173620',
+    adminLabel: 'Springs - Gallery Intro',
+    gradient: 'from-emerald-950 to-emerald-800',
+    defaultName: 'Springs - Gallery Intro',
+    aiLabelVi:
+      'intro gallery pin 200vh: preloader fade + 2 cột ảnh xoay chéo crossfade tuần tự trước khi vào Hero',
+    aiLabelEn:
+      'pinned 200vh intro gallery: preloader fade + 2 diagonally-rotated columns crossfading images before the Hero',
+  },
   springs_hero: {
     type: 'springs_hero',
     category: 'hero',
@@ -5148,16 +5199,16 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     tags: ['clone', 'springs', 'bds'],
     status: 'ready',
     responsive: true,
-    updatedAt: '2026-07-05',
+    updatedAt: '2026-07-08',
     label: 'Springs - Hero',
     accent: '#173620',
     adminLabel: 'Springs - Hero',
     gradient: 'from-emerald-950 to-emerald-700',
     defaultName: 'Springs - Hero',
     aiLabelVi:
-      'hero tường ảnh chéo 6 ô + tiêu đề serif lớn, entrance scroll reveal',
+      'hero sticky-scroll 600vh: tiêu đề fade-up, ảnh nền thu hẹp clip-path, 3 ảnh reveal tuần tự',
     aiLabelEn:
-      'diagonal 6-photo wall hero + large serif headline, scroll reveal entrance',
+      'sticky-scroll hero 600vh: title fade-up, background clip-path narrow, 3 images sequential reveal',
   },
   springs_intro: {
     type: 'springs_intro',
@@ -5166,14 +5217,16 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     tags: ['clone', 'springs', 'bds'],
     status: 'ready',
     responsive: true,
-    updatedAt: '2026-07-05',
+    updatedAt: '2026-07-08',
     label: 'Springs - Intro',
     accent: '#173620',
     adminLabel: 'Springs - Intro',
     gradient: 'from-emerald-900 to-emerald-600',
     defaultName: 'Springs - Intro',
-    aiLabelVi: 'câu tuyên ngôn thương hiệu, serif lớn giữa trang',
-    aiLabelEn: 'brand statement, large centered serif copy',
+    aiLabelVi:
+      'khoảng lặng thương hiệu: câu tuyên ngôn serif lớn + đoạn mô tả phụ, đi kèm 1 ảnh, nền cream',
+    aiLabelEn:
+      'brand-statement pause: large serif statement + supporting paragraph paired with an image, cream background',
   },
   springs_wellness: {
     type: 'springs_wellness',
@@ -5182,14 +5235,16 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     tags: ['clone', 'springs', 'bds', 'wellness'],
     status: 'ready',
     responsive: true,
-    updatedAt: '2026-07-05',
+    updatedAt: '2026-07-08',
     label: 'Springs - Wellness',
     accent: '#2f6b4f',
     adminLabel: 'Springs - Wellness',
     gradient: 'from-emerald-800 to-emerald-500',
     defaultName: 'Springs - Wellness',
-    aiLabelVi: 'section wellness: tiêu đề + mô tả + dải ảnh slider',
-    aiLabelEn: 'wellness section: heading + description + image slider strip',
+    aiLabelVi:
+      'section wellness: eyebrow + heading serif canh phải, dải ảnh spa/thư giãn với clip-path reveal riêng từng ảnh, nền gradient xanh rêu/teal',
+    aiLabelEn:
+      'wellness section: right-aligned eyebrow + serif heading, spa/lifestyle image strip with per-image clip-path reveal, green/teal gradient wash',
   },
   springs_nature_place: {
     type: 'springs_nature_place',
@@ -5198,16 +5253,16 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     tags: ['clone', 'springs', 'bds'],
     status: 'ready',
     responsive: true,
-    updatedAt: '2026-07-05',
+    updatedAt: '2026-07-08',
     label: 'Springs - Nature & Place',
     accent: '#2f6b4f',
     adminLabel: 'Springs - Nature & Place',
     gradient: 'from-emerald-800 to-lime-600',
     defaultName: 'Springs - Nature & Place',
     aiLabelVi:
-      'sticky 2 slide: Nature (ảnh thiên nhiên) rồi Place (video/ảnh khu vực)',
+      '2 sticky pin nối tiếp: Nature rồi Place, curtain-reveal clip-path + zoom-out parallax + caption trồi lên muộn',
     aiLabelEn:
-      'sticky 2-slide sequence: Nature (nature imagery) then Place (area video/image)',
+      '2 chained sticky pins: Nature then Place, clip-path curtain reveal + zoom-out parallax + late-rising caption',
   },
   springs_map: {
     type: 'springs_map',
@@ -5216,14 +5271,16 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     tags: ['clone', 'springs', 'bds', 'map'],
     status: 'ready',
     responsive: true,
-    updatedAt: '2026-07-05',
+    updatedAt: '2026-07-08',
     label: 'Springs - Map',
     accent: '#173620',
     adminLabel: 'Springs - Map',
     gradient: 'from-emerald-950 to-emerald-700',
     defaultName: 'Springs - Map',
-    aiLabelVi: 'bản đồ vị trí dự án + caption',
-    aiLabelEn: 'project location map + caption',
+    aiLabelVi:
+      'sticky pin 220vh: ảnh bản đồ curtain-reveal + zoom nhẹ, caption trồi lên muộn ở nửa sau',
+    aiLabelEn:
+      'sticky pin 220vh: map image curtain reveal + subtle zoom, caption rises late in the second half',
   },
   springs_design: {
     type: 'springs_design',
@@ -5232,16 +5289,16 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     tags: ['clone', 'springs', 'bds', 'design'],
     status: 'ready',
     responsive: true,
-    updatedAt: '2026-07-05',
+    updatedAt: '2026-07-08',
     label: 'Springs - Design',
     accent: '#173620',
     adminLabel: 'Springs - Design',
     gradient: 'from-stone-800 to-stone-500',
     defaultName: 'Springs - Design',
     aiLabelVi:
-      'kiến trúc: nhiều slide sticky, mỗi slide tiêu đề phụ + text + ảnh',
+      'kiến trúc: chuỗi card so le trái-phải, mỗi ảnh trôi ngang luân phiên (parallax) khi cuộn qua',
     aiLabelEn:
-      'architecture: multiple sticky slides, each with subtitle + text + image',
+      'architecture: alternating left-right card sequence, each image drifts horizontally (parallax) on scroll',
   },
   springs_residences: {
     type: 'springs_residences',
@@ -5250,14 +5307,16 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     tags: ['clone', 'springs', 'bds'],
     status: 'ready',
     responsive: true,
-    updatedAt: '2026-07-05',
+    updatedAt: '2026-07-08',
     label: 'Springs - Residences',
     accent: '#173620',
     adminLabel: 'Springs - Residences',
     gradient: 'from-stone-700 to-stone-400',
     defaultName: 'Springs - Residences',
-    aiLabelVi: 'gallery căn hộ: tiêu đề + mô tả + dải ảnh phối cảnh',
-    aiLabelEn: 'residences gallery: heading + description + render image strip',
+    aiLabelVi:
+      'sticky pin slideshow 3 nhịp: ảnh phối cảnh crossfade + caption loại căn hộ + progress bar',
+    aiLabelEn:
+      'sticky pin 3-beat slideshow: crossfading render images + unit-type caption + progress bar',
   },
   springs_interiors: {
     type: 'springs_interiors',
@@ -5266,14 +5325,16 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     tags: ['clone', 'springs', 'bds', 'interior'],
     status: 'ready',
     responsive: true,
-    updatedAt: '2026-07-05',
+    updatedAt: '2026-07-08',
     label: 'Springs - Interiors',
     accent: '#173620',
     adminLabel: 'Springs - Interiors',
     gradient: 'from-amber-900 to-amber-600',
     defaultName: 'Springs - Interiors',
-    aiLabelVi: 'gallery nội thất: tiêu đề + mô tả + dải ảnh slider',
-    aiLabelEn: 'interiors gallery: heading + description + image slider strip',
+    aiLabelVi:
+      'sticky pin 2 beat: ảnh intro full-bleed + tiêu đề "Interiors" phải-canh → crossfade sang slider ảnh nội thất + rail thumbnail',
+    aiLabelEn:
+      'sticky pin 2-beat: full-bleed intro image + right-aligned "Interiors" heading → crossfades to interior slider with thumbnail rail',
   },
   springs_contact_footer: {
     type: 'springs_contact_footer',
@@ -5330,6 +5391,12 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
   },
   readymag_case_section: {
     type: 'readymag_case_section',
+    category: 'portfolio',
+    style: 'minimal',
+    tags: ['readymag', 'clone', 'portfolio', 'scroll-driven'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-05',
     label: 'Readymag Cases',
     accent: '#000000',
     adminLabel: 'Readymag Cases',
