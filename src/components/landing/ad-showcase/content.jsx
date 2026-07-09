@@ -99,8 +99,8 @@ export const GROUPS = [
                 id: 'sofa',
                 x: 35,
                 y: 55,
-                xDesktop: 35,
-                yDesktop: 55,
+                xDesktop: 33,
+                yDesktop: 59,
                 label: 'Luxury Comfort Sofa',
                 description:
                   'Crafted for relaxation with refined details and exceptional comfort.',
@@ -109,8 +109,8 @@ export const GROUPS = [
                 id: 'table',
                 x: 46,
                 y: 73,
-                xDesktop: 46,
-                yDesktop: 73,
+                xDesktop: 50,
+                yDesktop: 83,
                 label: 'Contemporary Accent Table',
                 description:
                   'Elegant proportions and sophisticated finishes create a timeless focal point.',
@@ -120,7 +120,7 @@ export const GROUPS = [
                 x: 66.2,
                 y: 53.5,
                 xDesktop: 66.2,
-                yDesktop: 53.5,
+                yDesktop: 55,
                 label: 'Modern Bar Chair',
                 description:
                   'Upholstered comfort and sleek craftsmanship designed for contemporary living spaces.',

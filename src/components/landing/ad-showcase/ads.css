@@ -582,6 +582,11 @@
   pointer-events: none;
 }
 
+.dv-mode-desktop .pannable-ad-title {
+  text-align: left;
+  padding-left: 60px;
+}
+
 /* Hotspot item: dot + card row (Approach 3: grid 2-row) */
 .pan-item {
   position: absolute;
@@ -684,9 +689,16 @@
   position: relative;
   will-change: transform;
 }
+.pannable-ad-track--desktop {
+  height: 100%;
+  width: 100%;
+}
 .pannable-ad-img {
   display: block;
   pointer-events: none;
+}
+.pannable-ad-img--desktop {
+  height: 100%;
 }
 .pannable-ad-overlay {
   position: absolute;
@@ -735,6 +747,25 @@
   max-width: 100%;
   overflow-wrap: break-word;
   word-break: break-word;
+}
+
+.dv-mode-desktop .pannable-ad-hintbar {
+  left: 60px;
+  right: auto;
+  transform: none;
+  align-items: flex-start;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.dv-mode-desktop .pannable-ad-hintbar-text {
+  max-width: 300px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.dv-mode-desktop .pannable-ad-hintbar-icons {
+  gap: 8px;
 }
 
 .pannable-ad-indicators {
