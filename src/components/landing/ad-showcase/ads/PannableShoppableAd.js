@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import PannableAd from './PannableAd';
+import { useDeviceView } from './shared/useDeviceView';
 
 export default function PannableShoppableAd({
   imageUrl,
@@ -12,6 +13,9 @@ export default function PannableShoppableAd({
   ctaFont = "'Outfit', system-ui, sans-serif",
 }) {
   const [activeId, setActiveId] = useState(null);
+
+  const { device } = useDeviceView();
+  const isDesktop = device === 'desktop';
 
   return (
     <PannableAd
@@ -26,7 +30,10 @@ export default function PannableShoppableAd({
           key={c.id}
           href={c.href}
           className='ps-cta-pin'
-          style={{ left: `${c.x}%`, top: `${c.y}%` }}
+          style={{
+            left: `${isDesktop && c.xDesktop !== undefined ? c.xDesktop : c.x}%`,
+            top: `${isDesktop && c.yDesktop !== undefined ? c.yDesktop : c.y}%`,
+          }}
           target='_blank'
           rel='noopener noreferrer'
           onMouseDown={e => e.stopPropagation()}

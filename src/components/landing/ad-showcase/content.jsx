@@ -185,8 +185,8 @@ export const GROUPS = [
                 id: 'amora',
                 x: 28,
                 y: 53,
-                xDesktop: 28,
-                yDesktop: 53,
+                xDesktop: 31,
+                yDesktop: 63,
                 imageUrl:
                   'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/sofa.webp',
                 label: 'Amora Armchair',
@@ -198,7 +198,7 @@ export const GROUPS = [
                 x: 49,
                 y: 57,
                 xDesktop: 49,
-                yDesktop: 57,
+                yDesktop: 68,
                 imageUrl:
                   'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/chair.webp',
                 label: 'Eichholtz Leiza Chair',
@@ -210,7 +210,7 @@ export const GROUPS = [
                 x: 50,
                 y: 84,
                 xDesktop: 50,
-                yDesktop: 84,
+                yDesktop: 92,
                 imageUrl:
                   'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/carpet.webp',
                 label: 'Ligne Pure',
