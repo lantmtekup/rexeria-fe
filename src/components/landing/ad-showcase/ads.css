@@ -2415,7 +2415,7 @@
   position: absolute;
   inset: 0;
   background-size: cover;
-  background-position: center;
+  background-position: 50% 65%;
   transition:
     opacity 1.2s ease,
     filter 1.2s ease;
