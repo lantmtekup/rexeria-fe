@@ -1,0 +1,183 @@
+/* ================================================================
+   Device Toggle (mobile / desktop) & Desktop Frame
+   Phạm vi: scoped dưới .ad-showcase-root (đã có ở StudioAdDetail /
+   StudioAdShowcase). Class prefix `dv-` để không xung đột với
+   ads.css (.ad-*), preview.css (.pv-*) hay showcase.css (.adsc-*).
+   ================================================================ */
+
+/* ── Toggle pill (cố định góc phải-trên) ───────────────────── */
+.ad-showcase-root .dv-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 110;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 9999px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    0 8px 24px -8px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.ad-showcase-root .dv-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  color: #6b7280; /* neutral-500 */
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.12s ease;
+}
+
+.ad-showcase-root .dv-toggle-btn:hover {
+  color: #111827; /* neutral-900 */
+}
+
+.ad-showcase-root .dv-toggle-btn:active {
+  transform: scale(0.94);
+}
+
+.ad-showcase-root .dv-toggle-btn.is-active {
+  background: #b8965a; /* gold đồng bộ showcase */
+  color: #ffffff;
+}
+
+.ad-showcase-root .dv-toggle-btn:focus-visible {
+  outline: 2px solid #b8965a;
+  outline-offset: 2px;
+}
+
+.ad-showcase-root .dv-toggle-btn svg {
+  display: block;
+}
+
+/* ── Desktop frame ─────────────────────────────────────────── */
+.ad-showcase-root .dv-desktop {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: radial-gradient(circle at 50% 0%, #12233f, #06080d 70%);
+  overflow: auto;
+}
+
+.ad-showcase-root .dv-desktop-window {
+  position: relative;
+  width: 100%;
+  height: min(86vh, 840px);
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 30px 90px -24px rgba(0, 0, 0, 0.55),
+    0 6px 18px -4px rgba(0, 0, 0, 0.25);
+}
+
+.ad-showcase-root .dv-desktop-chrome {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #ececec;
+  border-bottom: 1px solid #d4d4d4;
+  flex-shrink: 0;
+}
+
+.ad-showcase-root .dv-desktop-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.ad-showcase-root .dv-desktop-dot--red {
+  background: #ff5f57;
+}
+.ad-showcase-root .dv-desktop-dot--yellow {
+  background: #febc2e;
+}
+.ad-showcase-root .dv-desktop-dot--green {
+  background: #28c840;
+}
+
+.ad-showcase-root .dv-desktop-urlbar {
+  flex: 1;
+  margin-left: 12px;
+  padding: 6px 12px;
+  background: #ffffff;
+  border-radius: 6px;
+  font:
+    500 12px/1 'Outfit',
+    system-ui,
+    sans-serif;
+  color: #6b7280;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ad-showcase-root .dv-desktop-content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #0b0b09;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+/* Không ép width/height 100% lên ad — ad tự quyết định (mobile-first). */
+.ad-showcase-root .dv-desktop-content > * {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Mobile mode phủ bằng DeviceFrame ────────────────────────
+   .pv-page vốn đã fixed inset; khi đặt trong fixed parent .ad-showcase-root
+   thì pv-page trở thành layer phụ — set lại position cho gọn layout. */
+.ad-showcase-root .pv-page {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 500px) {
+  .ad-showcase-root .dv-toggle {
+    top: 12px;
+    right: 12px;
+  }
+  .ad-showcase-root .dv-toggle-btn {
+    width: 32px;
+    height: 28px;
+  }
+  .ad-showcase-root .dv-desktop {
+    padding: 8px;
+  }
+  .ad-showcase-root .dv-desktop-chrome {
+    padding: 8px 10px;
+  }
+}

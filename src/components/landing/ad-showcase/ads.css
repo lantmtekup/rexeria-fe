@@ -4141,6 +4141,39 @@
   border-right: 8px solid #cdae76;
 }
 
+/* Desktop: increase hostpot-ad-title top spacing */
+.dv-mode-desktop .hostpot-ad-title {
+  color: #ffffff;
+  text-align: left;
+  font-size: 36px;
+  left: 60px;
+  top: 150px;
+}
+
+.dv-mode-desktop .hotspot-ad-hint {
+  left: 17%;
+}
+
+.dv-mode-desktop .hotspot-ad-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0.55) 20%,
+      rgba(0, 0, 0, 0.1) 45%,
+      transparent 80%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(146, 145, 145, 0.2) 89.23%,
+      rgba(31, 31, 31, 0.2) 94.61%
+    );
+}
+
 .aerial-hint {
   position: absolute;
   bottom: 80px;
@@ -4299,4 +4332,33 @@
       opacity: 1;
     }
   }
+}
+
+.dv-mode-mobile .hs-label,
+.dv-mode-mobile .hs-card,
+.dv-mode-mobile .vp-play-overlay,
+.dv-mode-mobile .slider-ad-label,
+.dv-mode-mobile .gallery-ad-arrow,
+.dv-mode-mobile .vs-back,
+.dv-mode-mobile .ts-back,
+.dv-mode-mobile .bs-back,
+.dv-mode-mobile .pv-toggle-tabs,
+.dv-mode-mobile .isv-nav-btn {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* Use opacity-only dissolve on mobile (no blur) */
+.dv-mode-mobile .dg-slide--entering {
+  filter: none !important;
+}
+@keyframes dgEnterMobile {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.dv-mode-mobile .dg-slide--entering {
+  animation-name: dgEnterMobile;
 }
