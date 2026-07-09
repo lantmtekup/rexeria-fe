@@ -19,7 +19,6 @@ type FormValues = {
   email: string;
   password: string;
   confirm_password: string;
-  company_name?: string;
 };
 
 export default function RexerSignUpForm() {
@@ -38,7 +37,6 @@ export default function RexerSignUpForm() {
           email: z.string().min(1, tVal('required')).email(tVal('email')),
           password: z.string().min(8, tVal('minLength')),
           confirm_password: z.string().min(1, tVal('required')),
-          company_name: z.string().max(200).optional().or(z.literal('')),
         })
         .refine(v => v.password === v.confirm_password, {
           path: ['confirm_password'],
@@ -54,7 +52,6 @@ export default function RexerSignUpForm() {
       email: '',
       password: '',
       confirm_password: '',
-      company_name: '',
     },
   });
 
@@ -66,9 +63,11 @@ export default function RexerSignUpForm() {
         full_name: values.display_name,
         email: values.email,
         password: values.password,
-        ...(values.company_name?.trim()
-          ? { company_name: values.company_name.trim() }
-          : {}),
+        // Không hỏi user tên công ty nữa — LUÔN gửi 1 tên mặc định để kích
+        // hoạt đúng cơ chế BE đã có sẵn (company_name có giá trị → tự tạo
+        // brand + workspace mặc định, xem docs/be-alpha-spec.md). User đổi
+        // tên workspace sau trong app nếu muốn — không chặn ở bước đăng ký.
+        company_name: `${values.display_name.trim()} Workspace`,
       });
       router.replace(
         `/sign-in?registered=1&email=${encodeURIComponent(values.email)}`
@@ -88,8 +87,7 @@ export default function RexerSignUpForm() {
     form.formState.errors.display_name?.message ||
     form.formState.errors.email?.message ||
     form.formState.errors.password?.message ||
-    form.formState.errors.confirm_password?.message ||
-    form.formState.errors.company_name?.message;
+    form.formState.errors.confirm_password?.message;
 
   const apiMessage = apiError
     ? (() => {
@@ -156,18 +154,6 @@ export default function RexerSignUpForm() {
               )}
               aria-invalid={Boolean(form.formState.errors.confirm_password)}
               {...form.register('confirm_password')}
-            />
-            <div className='bg-border h-px' />
-            <input
-              type='text'
-              autoComplete='organization'
-              placeholder={t('companyNamePlaceholder')}
-              className={cn(
-                'text-foreground placeholder:text-content-muted block w-full px-4 py-4 text-sm outline-none focus:bg-neutral-50',
-                form.formState.errors.company_name && 'bg-danger-bg'
-              )}
-              aria-invalid={Boolean(form.formState.errors.company_name)}
-              {...form.register('company_name')}
             />
           </div>
 
