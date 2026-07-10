@@ -384,7 +384,12 @@ export function BlockPreview({
   /** Image field currently showing the upload popover (opened by click). */
   const [imageEditKey, setImageEditKey] = React.useState<string | null>(null);
   const chipPointerInsideRef = React.useRef(false);
+  const hoverClearTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   const imagePopoverOpen = imageEditKey !== null;
+  const imagePopoverOpenRef = React.useRef(imagePopoverOpen);
+  imagePopoverOpenRef.current = imagePopoverOpen;
 
   const canShowHoverChrome =
     device !== 'tablet' &&
@@ -393,25 +398,42 @@ export function BlockPreview({
     !spaceHeld &&
     !isPanning;
 
+  const cancelHoverClear = React.useCallback(() => {
+    if (hoverClearTimerRef.current == null) return;
+    clearTimeout(hoverClearTimerRef.current);
+    hoverClearTimerRef.current = null;
+  }, []);
+
+  // Delay clear so the pointer can cross the gap between element → chip
+  // without the chip unmounting mid-travel.
   const clearHover = React.useCallback(() => {
-    if (chipPointerInsideRef.current || imagePopoverOpen) return;
-    setHoveredKey(null);
-    setHoveredRect(null);
-  }, [imagePopoverOpen]);
+    if (chipPointerInsideRef.current || imagePopoverOpenRef.current) return;
+    cancelHoverClear();
+    hoverClearTimerRef.current = setTimeout(() => {
+      hoverClearTimerRef.current = null;
+      if (chipPointerInsideRef.current || imagePopoverOpenRef.current) return;
+      setHoveredKey(null);
+      setHoveredRect(null);
+    }, 160);
+  }, [cancelHoverClear]);
 
   const forceClearHover = React.useCallback(() => {
+    cancelHoverClear();
     chipPointerInsideRef.current = false;
     setHoveredKey(null);
     setHoveredRect(null);
-  }, []);
+  }, [cancelHoverClear]);
 
   const setHoverFromElement = React.useCallback(
     (el: HTMLElement, key: string) => {
+      cancelHoverClear();
       setHoveredKey(key);
       setHoveredRect(el.getBoundingClientRect());
     },
-    []
+    [cancelHoverClear]
   );
+
+  React.useEffect(() => () => cancelHoverClear(), [cancelHoverClear]);
 
   /**
    * Activate exactly one element — never falls back to another key.
@@ -816,10 +838,8 @@ export function BlockPreview({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
       onPointerLeave={() => {
-        if (!chipPointerInsideRef.current && !imagePopoverOpen) {
-          setHoveredKey(null);
-          setHoveredRect(null);
-        }
+        if (chipPointerInsideRef.current || imagePopoverOpen) return;
+        clearHover();
       }}
       data-selected-key={selectedElementKey ?? ''}
       className={cn(
@@ -967,13 +987,13 @@ export function BlockPreview({
             }}
             onContentChange={next => onContentChange?.(next)}
             onChipPointerEnter={() => {
+              cancelHoverClear();
               chipPointerInsideRef.current = true;
             }}
             onChipPointerLeave={() => {
               chipPointerInsideRef.current = false;
               if (!imagePopoverOpen) {
-                setHoveredKey(null);
-                setHoveredRect(null);
+                clearHover();
               }
             }}
           />
