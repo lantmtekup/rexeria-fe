@@ -126,14 +126,22 @@ export function CanvasElementEditChip({
   return (
     <div
       data-canvas-edit-chip-root='true'
-      className='pointer-events-none absolute z-30'
+      // pointer-events-auto so enter/leave fire (needed to keep hover alive).
+      // Extra padding bridges the 8px visual gap to the element — without it,
+      // moving toward the chip crosses empty space and clearHover unmounts us.
+      className='pointer-events-auto absolute z-30'
       style={{
         top,
         left,
         transform: 'translate(-100%, -100%)',
+        paddingBottom: 14,
+        paddingRight: 14,
+        marginBottom: -14,
+        marginRight: -14,
       }}
       onPointerEnter={onChipPointerEnter}
       onPointerLeave={onChipPointerLeave}
+      onPointerDown={stopPointer}
     >
       {isImageAction ? (
         <Popover.Root open={imageOpen} onOpenChange={onImageOpenChange}>
@@ -158,12 +166,20 @@ export function CanvasElementEditChip({
               collisionPadding={12}
               className='z-50 w-[min(420px,calc(100vw-24px))] rounded-lg border border-neutral-200 bg-white p-3 shadow-xl outline-none'
               onOpenAutoFocus={e => e.preventDefault()}
+              // File dialog steals focus — keep popover mounted so ImagePicker
+              // (and its <input type="file">) survives until onChange fires.
+              onFocusOutside={e => e.preventDefault()}
               onPointerDownOutside={e => {
                 const t = e.target as HTMLElement;
-                if (t.closest('[data-canvas-edit-chip-root]')) {
+                if (
+                  t.closest('[data-canvas-edit-chip-root]') ||
+                  t.closest('[data-radix-popper-content-wrapper]')
+                ) {
                   e.preventDefault();
                 }
               }}
+              onPointerEnter={onChipPointerEnter}
+              onPointerLeave={onChipPointerLeave}
             >
               <p className='text-3xs mb-2 font-semibold tracking-widest text-neutral-500 uppercase'>
                 {meta.label}
