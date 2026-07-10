@@ -92,11 +92,6 @@ const IMAGE_HOLD_Y = 4;
 const LEFT_PANEL_ENTER_SCALE = 0.992;
 const LEFT_CONTENT_ENTER_SCALE = 0.98;
 
-/** cover = m1 (frame đầu), companion = m2, seq = m2/m3/m4. */
-const COVER_IMAGE = ALTURA_OLYMPUS_IMAGES[0];
-const COMPANION_IMAGE = ALTURA_OLYMPUS_IMAGES[1];
-const SEQ_IMAGES = ALTURA_OLYMPUS_IMAGES.slice(1);
-
 const RESPONSIVE = {
   pad: 'clamp(24px, 5cqi, 56px)',
   padRight: 'clamp(20px, 4cqi, 40px)',
@@ -171,8 +166,17 @@ export const AlturaOlympus = ({
       ? content.features
       : FALLBACK_FEATURES;
 
+  // cover = m1 (frame đầu), companion = m2, seq = m2/m3/m4 — user có thể ghi
+  // đè từng ảnh; rỗng → dùng ảnh mặc định.
+  const coverImage = content.coverImageUrl || ALTURA_OLYMPUS_IMAGES[0];
+  const image2 = content.image2Url || ALTURA_OLYMPUS_IMAGES[1];
+  const image3 = content.image3Url || ALTURA_OLYMPUS_IMAGES[2];
+  const image4 = content.image4Url || ALTURA_OLYMPUS_IMAGES[3];
+  const companionImage = image2;
+  const seqImages = [image2, image3, image4];
+
   const loadedRef = React.useRef(0);
-  const totalImages = SEQ_IMAGES.length + 2; // cover + companion + seq
+  const totalImages = seqImages.length + 2; // cover + companion + seq
   const handleImgLoad = () => {
     loadedRef.current += 1;
     if (loadedRef.current >= totalImages) requestRefresh();
@@ -530,13 +534,16 @@ export const AlturaOlympus = ({
 
         {/* z1 — companion m2 (nửa phải), tĩnh, hiện lúc split */}
         <div
-          className='altura-olympus__companion altura-olympus__right-half'
+          data-element-key='image2Url'
+          className={selectableClass(
+            activeKey === 'image2Url',
+            'altura-olympus__companion altura-olympus__right-half'
+          )}
           style={{ ...RIGHT_HALF, zIndex: 1, backgroundColor: '#171717' }}
-          aria-hidden='true'
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={COMPANION_IMAGE}
+            src={companionImage}
             alt=''
             onLoad={handleImgLoad}
             className='h-full w-full object-cover'
@@ -546,13 +553,16 @@ export const AlturaOlympus = ({
 
         {/* z2 — cover m1 (nửa trái), trượt một chiều đè companion */}
         <div
-          className='altura-olympus__cover altura-olympus__left-half will-change-transform'
+          data-element-key='coverImageUrl'
+          className={selectableClass(
+            activeKey === 'coverImageUrl',
+            'altura-olympus__cover altura-olympus__left-half will-change-transform'
+          )}
           style={{ ...LEFT_HALF, zIndex: 2 }}
-          aria-hidden='true'
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={COVER_IMAGE}
+            src={coverImage}
             alt=''
             onLoad={handleImgLoad}
             className='h-full w-full object-cover'
@@ -561,23 +571,29 @@ export const AlturaOlympus = ({
         </div>
 
         {/* z3+ — right panel cố định, ảnh sau đè lên ảnh trước */}
-        {SEQ_IMAGES.map((src, i) => (
-          <div
-            key={i}
-            className='altura-olympus__seq-layer altura-olympus__right-half will-change-transform'
-            style={{ ...RIGHT_HALF, zIndex: 3 + i }}
-            aria-hidden='true'
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={src}
-              alt=''
-              onLoad={handleImgLoad}
-              className='h-full w-full object-cover'
-              draggable={false}
-            />
-          </div>
-        ))}
+        {seqImages.map((src, i) => {
+          const key = (['image2Url', 'image3Url', 'image4Url'] as const)[i];
+          return (
+            <div
+              key={i}
+              data-element-key={key}
+              className={selectableClass(
+                activeKey === key,
+                'altura-olympus__seq-layer altura-olympus__right-half will-change-transform'
+              )}
+              style={{ ...RIGHT_HALF, zIndex: 3 + i }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={src}
+                alt=''
+                onLoad={handleImgLoad}
+                className='h-full w-full object-cover'
+                draggable={false}
+              />
+            </div>
+          );
+        })}
       </div>
     </section>
   );

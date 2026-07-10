@@ -33,6 +33,14 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+
+/** Content keys holding per-instance overrides for the 4 stacked images. */
+const IMAGE_KEYS = [
+  'image1Url',
+  'image2Url',
+  'image3Url',
+  'image4Url',
+] as const;
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
 import { useContainerMobile } from './useContainerMobile';
 
@@ -110,11 +118,16 @@ export function HeroScroll({
   // 3 transition (m1→m2→m3→m4) + hold đầu/cuối trước khi cuộn sang section.
   const trackHeight = isMobile ? '300dvh' : '400dvh';
 
+  // User có thể ghi đè từng ảnh (image1Url..image4Url); rỗng → dùng ảnh mặc định.
+  const images = HERO_SCROLL_IMAGES.map(
+    (fallback, i) => content[IMAGE_KEYS[i]] || fallback
+  );
+
   // Đếm ảnh đã load → refresh scrub sau khi layout ổn định (R4).
   const loadedRef = React.useRef(0);
   const handleImgLoad = () => {
     loadedRef.current += 1;
-    if (loadedRef.current >= HERO_SCROLL_IMAGES.length) requestRefresh();
+    if (loadedRef.current >= images.length) requestRefresh();
   };
 
   // Ambient: 4 ô góc nhấp nháy — tách khỏi scroll timeline để không rebuild ST.
@@ -245,11 +258,15 @@ export function HeroScroll({
     >
       {/* Sticky stage giữ viewport trong lúc scrub (an toàn iOS, không GSAP pin). */}
       <div className='sticky top-0 h-dvh w-full overflow-hidden bg-neutral-950'>
-        {HERO_SCROLL_IMAGES.map((src, i) => (
+        {images.map((src, i) => (
           <div
             key={i}
-            className='hero-scroll__layer absolute inset-0 overflow-hidden will-change-transform'
-            style={{ zIndex: HERO_SCROLL_IMAGES.length - i }}
+            data-element-key={IMAGE_KEYS[i]}
+            className={selectableClass(
+              activeKey === IMAGE_KEYS[i],
+              'hero-scroll__layer absolute inset-0 overflow-hidden will-change-transform'
+            )}
+            style={{ zIndex: images.length - i }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -272,8 +289,7 @@ export function HeroScroll({
               'pointer-events-auto text-[9cqi] leading-[0.9] font-medium tracking-tight text-white'
             )}
           >
-            {'John Maxwell'}
-            {/* {content.title || 'John Maxwell'} */}
+            {content.title || 'John Maxwell'}
           </h1>
           <p
             data-element-key='subtitle'

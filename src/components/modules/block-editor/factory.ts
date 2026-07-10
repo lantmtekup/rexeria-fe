@@ -71,7 +71,6 @@ import { springsResidencesDef } from './blocks/_registry/defs/springsResidences'
 import { springsWellnessDef } from './blocks/_registry/defs/springsWellness';
 import { sustainitOurExpertiseDef } from './blocks/_registry/defs/sustainitOurExpertise';
 import { MEDIA, pickMedia } from './blocks/sample-media';
-import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
 import { masteriseHomeInsideDef } from './blocks/_registry/defs/masteriseHomeInside';
 import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
 import { readymagCaseSectionDef } from './blocks/_registry/defs/readymagCaseSection';
@@ -1525,8 +1524,12 @@ const FRAMER_YUYA_HERO_VI: FramerYumeHeroContent = { ...FRAMER_YUME_HERO_VI };
 const FRAMER_YUYA_HERO_EN: FramerYumeHeroContent = { ...FRAMER_YUME_HERO_VI };
 
 // ── Framer-native: Hero - Arpeggio v2 ───────────────────────────────────
+// Default trỏ URL S3 (uploaded 2026-07-10) thay vì asset local —
+// src/assets/images/arpeggio_hero_v2/hero.avif vẫn giữ làm fallback cuối
+// cùng trong FramerArpeggioHeroV2.tsx (`backgroundUrl || ARPEGGIO_HERO_V2_BG`).
 const FRAMER_ARPEGGIO_HERO_V2_VI: FramerArpeggioHeroV2Content = {
-  backgroundUrl: ARPEGGIO_HERO_V2_BG,
+  backgroundUrl:
+    'https://d10zufojjcedud.cloudfront.net/uploads/2d028b4d-641a-4696-920b-4f5dcf86bf39/arpeggio_hero_v2_bg.avif',
   headline: 'One subscription,\nunlimited design iterations.',
   subtitle: 'Freedom beyond the traditional project scope',
   topRightLabel: 'The Creative Agency—',

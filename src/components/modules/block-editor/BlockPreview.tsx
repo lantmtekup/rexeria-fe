@@ -54,7 +54,7 @@ interface BlockPreviewProps {
    * BlockEditor uses this to auto-fit so users don't have to scroll on first
    * load when the desktop frame (1280px) is wider than the viewport.
    */
-  onAutoFitZoom?: (percentage: number) => void;
+  onAutoFitZoom?: (percentage: number, force?: boolean) => void;
   // ── ExtraElements (free-drag user-added objects) ────────────────────────
   selectedExtraElementId?: string | null;
   onSelectExtraElement?: (id: string | null) => void;
@@ -69,6 +69,27 @@ const DEVICE_WIDTH: Record<Device, number> = {
   tablet: 834,
   mobile: 390,
 };
+
+/**
+ * Block types that pin content with native `position: sticky` + viewport
+ * (`dvh`) units instead of GSAP `pin` (docs/landing-motion-foundation.md §5).
+ * `sticky` mis-measures inside a `transform: scale()` ancestor, so the
+ * auto-fit-to-width zoom (which wraps the canvas in exactly that transform)
+ * must not shrink these below 100% — otherwise the sticky stage renders
+ * blank/misplaced in the editor even though `/p` always renders correctly.
+ */
+const STICKY_SCROLL_BLOCK_TYPES = new Set<Block['blockType']>([
+  'hero_scroll',
+  'altura_olympus',
+  'framer_aestha_editorial',
+  'framer_ignitex_step',
+  'framer_perform_about',
+  'framer_perform_pricing',
+  'framer_purevisuals_hero',
+  'housent_our_excellence',
+  'readymag_case_section',
+  'scroll_mattis',
+]);
 
 /** Element keys that map to a single string field — eligible for inline edit. */
 const TEXT_KEYS = new Set([
@@ -258,7 +279,15 @@ export function BlockPreview({
   // of full block. We re-fire whenever `device` changes so toggling Mobile
   // (390px) → Desktop (1280px) refits properly.
   React.useEffect(() => {
-    if (!onAutoFitZoom || !surfaceRef.current) return;
+    if (!onAutoFitZoom) return;
+    // Sticky/pin scroll-reveal blocks mis-measure under `transform: scale()`
+    // (see STICKY_SCROLL_BLOCK_TYPES) — force 100% instead of shrinking to
+    // fit, so the sticky stage previews correctly instead of rendering blank.
+    if (STICKY_SCROLL_BLOCK_TYPES.has(block.blockType)) {
+      onAutoFitZoom(100, true);
+      return;
+    }
+    if (!surfaceRef.current) return;
     const surface = surfaceRef.current;
     // Inner area = surface clientWidth minus the p-8 padding (32px each side).
     const innerWidth = Math.max(0, surface.clientWidth - 64);
@@ -266,7 +295,7 @@ export function BlockPreview({
     const fitPct = Math.floor((innerWidth / baseWidth) * 100);
     const clamped = Math.min(100, Math.max(20, fitPct));
     onAutoFitZoom(clamped);
-  }, [device, baseWidth, onAutoFitZoom]);
+  }, [device, baseWidth, onAutoFitZoom, block.blockType]);
 
   // Track the inner content's natural (unscaled) height so the outer wrapper
   // can reserve `scaledWidth × scaledHeight` in layout flow. Without this,
@@ -386,7 +415,14 @@ export function BlockPreview({
             className='@container origin-top-left transition-transform duration-150'
             style={{
               width: baseWidth,
-              transform: `scale(${scale})`,
+              // Omit `transform` entirely at 100% instead of `scale(1)` — ANY
+              // non-`none` transform value (even an identity scale) makes the
+              // browser treat this ancestor as a new containing block, which
+              // breaks native `position: sticky` in blocks like HeroScroll
+              // (docs/landing-motion-foundation.md §5). Only apply the scale
+              // when actually zooming, so sticky/pin blocks render correctly
+              // at 100%.
+              ...(scale !== 1 ? { transform: `scale(${scale})` } : {}),
               // Preview brand-kit tokens so `token:*` element styles resolve to
               // sensible colors/fonts while authoring (real per-brand kit fills
               // these at render).

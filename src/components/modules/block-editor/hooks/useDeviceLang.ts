@@ -26,8 +26,10 @@ export interface UseDeviceLangApi {
   setDevice: (next: Device) => void;
   setZoom: (next: number) => void;
   /** Apply an auto-fit zoom suggestion from BlockPreview — silently ignored
-   *  if the user has already moved the slider. */
-  applyAutoFitZoom: (pct: number) => void;
+   *  if the user has already moved the slider, unless `force` is set (used
+   *  for blocks that render incorrectly away from 100%, e.g. sticky/pin
+   *  scroll-reveal blocks — see STICKY_SCROLL_BLOCK_TYPES in BlockPreview). */
+  applyAutoFitZoom: (pct: number, force?: boolean) => void;
 }
 
 export function useDeviceLang(
@@ -45,8 +47,8 @@ export function useDeviceLang(
     setZoomRaw(next);
   }, []);
 
-  const applyAutoFitZoom = React.useCallback((pct: number) => {
-    if (userTouchedRef.current) return;
+  const applyAutoFitZoom = React.useCallback((pct: number, force = false) => {
+    if (userTouchedRef.current && !force) return;
     setZoomRaw(pct);
   }, []);
 

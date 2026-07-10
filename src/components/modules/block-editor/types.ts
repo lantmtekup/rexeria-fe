@@ -276,15 +276,31 @@ export interface AlturaOlympusContent {
   features: AlturaOlympusFeature[];
   ctaText: string;
   ctaLink: string;
+  /** Per-instance overrides for the 4 scrub images (cover=m1, m2 doubles as
+   *  companion + first seq layer). Falls back to the baked default asset. */
+  coverImageUrl?: string;
+  image2Url?: string;
+  image3Url?: string;
+  image4Url?: string;
 }
 
 export interface HeroScrollContent {
   title: string;
   subtitle: string;
+  /** Per-instance overrides for the 4 stacked reveal images (m1→m4 reveal
+   *  order). Falls back to the baked default asset when unset. */
+  image1Url?: string;
+  image2Url?: string;
+  image3Url?: string;
+  image4Url?: string;
 }
 
 export interface ScrollMattisContent {
   portfolioLabel: string;
+  /** Per-instance overrides for the 2 static slide images (slide 2 is video,
+   *  already an external URL). Falls back to the baked default asset. */
+  slide1ImageUrl?: string;
+  slide3ImageUrl?: string;
 }
 
 export interface HeroOverlayContent {

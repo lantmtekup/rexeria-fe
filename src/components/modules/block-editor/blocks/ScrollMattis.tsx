@@ -131,10 +131,25 @@ export function ScrollMattis({
 
   const trackHeight = isMobile ? '300dvh' : '380dvh';
 
+  // User có thể ghi đè 2 ảnh tĩnh (slide video giữ nguyên); rỗng → ảnh mặc định.
+  const items = React.useMemo(
+    () =>
+      SCROLL_MATTIS_ITEMS.map(item => {
+        if (item.index === 1 && content.slide1ImageUrl) {
+          return { ...item, src: content.slide1ImageUrl };
+        }
+        if (item.index === 3 && content.slide3ImageUrl) {
+          return { ...item, src: content.slide3ImageUrl };
+        }
+        return item;
+      }),
+    [content.slide1ImageUrl, content.slide3ImageUrl]
+  );
+
   const loadedRef = React.useRef(0);
   const handleMediaLoad = () => {
     loadedRef.current += 1;
-    if (loadedRef.current >= SCROLL_MATTIS_ITEMS.length) requestRefresh();
+    if (loadedRef.current >= items.length) requestRefresh();
   };
 
   useBlockMotion(
@@ -244,7 +259,7 @@ export function ScrollMattis({
       <style>{GRAIN_CSS}</style>
       <div className='sticky top-0 h-dvh min-h-dvh w-full overflow-hidden bg-neutral-950'>
         {/* Backgrounds — full-bleed media + big word, slide up on scroll */}
-        {SCROLL_MATTIS_ITEMS.map((slide, i) => (
+        {items.map((slide, i) => (
           <div
             key={slide.index}
             className={cn(
@@ -284,7 +299,7 @@ export function ScrollMattis({
             background), running horizontally as an infinite marquee and
             crossfading per slide (synced with num/meta labels). */}
         <div className='pointer-events-none absolute inset-0 z-20 overflow-hidden'>
-          {SCROLL_MATTIS_ITEMS.map((slide, i) => {
+          {items.map((slide, i) => {
             const unit = `${slide.bgWord} `;
             return (
               <div
@@ -327,7 +342,7 @@ export function ScrollMattis({
         <div className='pointer-events-none absolute inset-0 z-30 flex items-center justify-center px-[4cqi] pb-[5cqi] @2xl:px-0 @2xl:pb-0'>
           <div className='relative w-[82cqi] max-w-[850px] @2xl:w-[64cqi]'>
             <div className='relative isolate aspect-video w-full overflow-hidden rounded-[2px] bg-neutral-900 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]'>
-              {SCROLL_MATTIS_ITEMS.map((slide, i) => (
+              {items.map((slide, i) => (
                 <div
                   key={slide.index}
                   className={cn(
@@ -362,7 +377,7 @@ export function ScrollMattis({
               ))}
             </div>
 
-            {SCROLL_MATTIS_ITEMS.map((slide, i) => (
+            {items.map((slide, i) => (
               <span
                 key={slide.index}
                 className={cn(
@@ -385,7 +400,7 @@ export function ScrollMattis({
                 minHeight: RESPONSIVE.metaMinH,
               }}
             >
-              {SCROLL_MATTIS_ITEMS.map((slide, i) => (
+              {items.map((slide, i) => (
                 <div
                   key={slide.index}
                   className={cn(
