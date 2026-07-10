@@ -52,9 +52,33 @@ export const heroScrollDef: BlockDef<HeroScrollContent> = {
   elements: [
     { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
     { key: 'subtitle', label: 'Phụ đề', icon: Type, fieldType: 'text' },
-    { key: 'image1Url', label: 'Ảnh 1', icon: ImageIcon, fieldType: 'image' },
-    { key: 'image2Url', label: 'Ảnh 2', icon: ImageIcon, fieldType: 'image' },
-    { key: 'image3Url', label: 'Ảnh 3', icon: ImageIcon, fieldType: 'image' },
-    { key: 'image4Url', label: 'Ảnh 4', icon: ImageIcon, fieldType: 'image' },
+    {
+      key: 'image1Url',
+      label: 'Ảnh 1',
+      groupId: 'image',
+      icon: ImageIcon,
+      fieldType: 'image',
+    },
+    {
+      key: 'image2Url',
+      label: 'Ảnh 2',
+      groupId: 'image',
+      icon: ImageIcon,
+      fieldType: 'image',
+    },
+    {
+      key: 'image3Url',
+      label: 'Ảnh 3',
+      groupId: 'image',
+      icon: ImageIcon,
+      fieldType: 'image',
+    },
+    {
+      key: 'image4Url',
+      label: 'Ảnh 4',
+      groupId: 'image',
+      icon: ImageIcon,
+      fieldType: 'image',
+    },
   ],
 };

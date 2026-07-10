@@ -9,13 +9,13 @@ import {
   Eye,
   Globe2,
   ImagePlus,
-  Monitor,
+  // Monitor,
   Package,
   Play,
   Redo2,
   Save,
-  Smartphone,
-  Tablet,
+  // Smartphone,
+  // Tablet,
   Undo2,
 } from 'lucide-react';
 
@@ -70,24 +70,26 @@ interface BlockEditorHeaderProps {
   onBack?: () => void;
 }
 
-const DEVICE_BUTTONS: {
-  value: Device;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}[] = [
-  { value: 'desktop', icon: Monitor, label: 'Desktop' },
-  { value: 'tablet', icon: Tablet, label: 'Tablet' },
-  { value: 'mobile', icon: Smartphone, label: 'Mobile' },
-];
+// const DEVICE_BUTTONS: {
+//   value: Device;
+//   icon: React.ComponentType<{ className?: string }>;
+//   label: string;
+// }[] = [
+//   { value: 'desktop', icon: Monitor, label: 'Desktop' },
+//   { value: 'tablet', icon: Tablet, label: 'Tablet' },
+//   { value: 'mobile', icon: Smartphone, label: 'Mobile' },
+// ];
 
 export function BlockEditorHeader({
   blockName,
   lang,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   device,
   saving,
   dirty,
   duplicating,
   onLangChange,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onDeviceChange,
   onAi,
   onApplyProduct,
@@ -167,7 +169,7 @@ export function BlockEditorHeader({
 
       <Divider />
 
-      <SegmentedGroup ariaLabel='Thiết bị xem trước'>
+      {/* <SegmentedGroup ariaLabel='Thiết bị xem trước'>
         {DEVICE_BUTTONS.map(({ value, icon: Icon, label }) => (
           <SegmentedButton
             key={value}
@@ -180,7 +182,7 @@ export function BlockEditorHeader({
             <Icon className='size-3.5' />
           </SegmentedButton>
         ))}
-      </SegmentedGroup>
+      </SegmentedGroup> */}
 
       <SegmentedGroup ariaLabel='Chế độ chỉnh sửa'>
         <SegmentedButton

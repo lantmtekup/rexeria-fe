@@ -16,7 +16,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Maximize2, Minus, Plus, X } from 'lucide-react';
+import { Maximize, Maximize2, Minus, Plus, X } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 
@@ -33,6 +33,8 @@ interface BlockTabBarProps {
   onRemove?: (id: string) => void;
   onReorder?: (nextOrder: Block[]) => void;
   onZoomChange: (zoom: number) => void;
+  /** Fit device frame to the visible canvas surface. */
+  onFitToFrame?: () => void;
   /** Block mode: chỉ có 1 block nên ẩn dải tab + nút thêm, chỉ giữ thanh zoom. */
   hideTabs?: boolean;
 }
@@ -51,6 +53,7 @@ export function BlockTabBar({
   onRemove,
   onReorder,
   onZoomChange,
+  onFitToFrame,
   hideTabs,
 }: BlockTabBarProps) {
   const sensors = useSensors(
@@ -58,10 +61,17 @@ export function BlockTabBar({
   );
 
   // Block mode: chỉ 1 block → bỏ dải tab + nút thêm, chỉ giữ thanh zoom (canh giữa).
+  // Absolute trong cột canvas — không chiếm chiều cao; co theo panel Lớp mở/đóng.
   if (hideTabs) {
     return (
-      <div className='flex justify-center border-t border-neutral-200 bg-white px-4 py-2'>
-        <ZoomControls zoom={zoom} onChange={onZoomChange} />
+      <div className='pointer-events-none absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-3'>
+        <div className='pointer-events-auto rounded-lg shadow-lg'>
+          <ZoomControls
+            zoom={zoom}
+            onChange={onZoomChange}
+            onFitToFrame={onFitToFrame}
+          />
+        </div>
       </div>
     );
   }
@@ -76,44 +86,50 @@ export function BlockTabBar({
   };
 
   return (
-    <div className='flex items-end gap-3 border-t border-neutral-200 bg-white px-4 py-3'>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={blocks.map(b => b.id)}
-          strategy={horizontalListSortingStrategy}
+    <div className='pointer-events-none absolute inset-x-0 bottom-0 z-20 px-3 pb-3'>
+      <div className='pointer-events-auto flex items-end gap-3 rounded-xl border border-neutral-200 bg-white/95 px-3 py-2.5 shadow-lg backdrop-blur-sm'>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          {/* min-w-0: cho phép flex item co đúng cách để overflow-x-auto cuộn
+          <SortableContext
+            items={blocks.map(b => b.id)}
+            strategy={horizontalListSortingStrategy}
+          >
+            {/* min-w-0: cho phép flex item co đúng cách để overflow-x-auto cuộn
               trong strip thay vì collapse rồi để nút "Thêm block" tràn đè lên
               ZoomControls ở viewport hẹp (QA F1). */}
-          <div className='flex min-w-0 flex-1 items-end gap-2 overflow-x-auto pb-1'>
-            {blocks.map((block, index) => (
-              <SortableTab
-                key={block.id}
-                block={block}
-                index={index}
-                lang={lang}
-                active={block.id === activeId}
-                onSelect={onSelect}
-                onRemove={onRemove}
-              />
-            ))}
-            <button
-              type='button'
-              onClick={onAdd}
-              aria-label='Thêm block'
-              className='ml-1 flex h-[64px] w-[88px] shrink-0 cursor-pointer items-center justify-center rounded-md border border-dashed border-neutral-300 text-neutral-500 transition-colors hover:border-neutral-900 hover:text-neutral-900'
-            >
-              <Plus className='size-4' />
-            </button>
-          </div>
-        </SortableContext>
-      </DndContext>
+            <div className='flex min-w-0 flex-1 items-end gap-2 overflow-x-auto pb-1'>
+              {blocks.map((block, index) => (
+                <SortableTab
+                  key={block.id}
+                  block={block}
+                  index={index}
+                  lang={lang}
+                  active={block.id === activeId}
+                  onSelect={onSelect}
+                  onRemove={onRemove}
+                />
+              ))}
+              <button
+                type='button'
+                onClick={onAdd}
+                aria-label='Thêm block'
+                className='ml-1 flex h-[64px] w-[88px] shrink-0 cursor-pointer items-center justify-center rounded-md border border-dashed border-neutral-300 text-neutral-500 transition-colors hover:border-neutral-900 hover:text-neutral-900'
+              >
+                <Plus className='size-4' />
+              </button>
+            </div>
+          </SortableContext>
+        </DndContext>
 
-      <ZoomControls zoom={zoom} onChange={onZoomChange} />
+        <ZoomControls
+          zoom={zoom}
+          onChange={onZoomChange}
+          onFitToFrame={onFitToFrame}
+        />
+      </div>
     </div>
   );
 }
@@ -259,9 +275,11 @@ function ThumbnailRenderer({ block, lang }: { block: Block; lang: Lang }) {
 function ZoomControls({
   zoom,
   onChange,
+  onFitToFrame,
 }: {
   zoom: number;
   onChange: (next: number) => void;
+  onFitToFrame?: () => void;
 }) {
   const clamp = (n: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, n));
   return (
@@ -279,7 +297,7 @@ function ZoomControls({
         type='range'
         min={ZOOM_MIN}
         max={ZOOM_MAX}
-        step={ZOOM_STEP}
+        step={1}
         value={zoom}
         onChange={e => onChange(Number(e.target.value))}
         className='h-1 w-24 accent-neutral-900'
@@ -297,13 +315,25 @@ function ZoomControls({
       <span className='text-2xs min-w-[36px] text-right font-medium text-neutral-600 tabular-nums'>
         {Math.round(zoom)}%
       </span>
+      {onFitToFrame && (
+        <button
+          type='button'
+          aria-label='Vừa khung hiện tại'
+          title='Vừa khung hiện tại'
+          onClick={onFitToFrame}
+          className='flex size-6 cursor-pointer items-center justify-center rounded text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900'
+        >
+          <Maximize2 className='size-3.5' />
+        </button>
+      )}
       <button
         type='button'
-        aria-label='Vừa khung 100%'
+        aria-label='Zoom 100%'
+        title='Zoom 100%'
         onClick={() => onChange(100)}
         className='flex size-6 cursor-pointer items-center justify-center rounded text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900'
       >
-        <Maximize2 className='size-3.5' />
+        <Maximize className='size-3.5' />
       </button>
     </div>
   );

@@ -26,7 +26,6 @@ import { Input } from '@/components/atoms/input';
 import { Textarea } from '@/components/atoms/textarea';
 import {
   BRAND_COLOR_ROLES,
-  BRAND_FONT_ROLES,
   brandToken,
   brandTokenKey,
   previewColor,
@@ -37,10 +36,10 @@ import { rexerApi } from '@/services/rexer/endpoints';
 import type { AIBlockType } from '@/services/rexer/types';
 
 import { FEATURE_ICON_OPTIONS } from './blocks/FeatureSection';
-import { getBlockDef } from './blocks/_registry/registry';
 import { buildAiPrompt } from './buildAiPrompt';
-import type { LayerElement } from './LayersPanel';
 import { ImagePicker } from './ImagePicker';
+import { getContentAt, setContentAt } from './contentPath';
+import { BACKGROUND_LAYER_KEY, resolveElementMeta } from './resolveElementKind';
 import {
   editingVariantOf,
   readVariant,
@@ -60,119 +59,7 @@ import {
   type MintVariantsContent,
 } from './types';
 
-type ElementKind =
-  | 'text'
-  | 'image'
-  | 'stats'
-  | 'features'
-  | 'reasons'
-  | 'slides'
-  | 'interactiveAd'
-  | 'mintVariants'
-  | 'mintTabs'
-  | 'background';
-
-export const BACKGROUND_LAYER_KEY = '__background__';
-
-const ELEMENT_KIND: Record<string, ElementKind> = {
-  eyebrow: 'text',
-  title: 'text',
-  heading: 'text',
-  text: 'text',
-  tag: 'text',
-  description: 'text',
-  subtitle: 'text',
-  ctaText: 'text',
-  submitText: 'text',
-  noteText: 'text',
-  primaryText: 'text',
-  secondaryText: 'text',
-  imageUrl: 'image',
-  backgroundUrl: 'image',
-  stats: 'stats',
-  features: 'features',
-  reasons: 'reasons',
-  slides: 'slides',
-  variants: 'mintVariants',
-  tabs: 'mintTabs',
-  [BACKGROUND_LAYER_KEY]: 'background',
-};
-
-const ELEMENT_LABEL: Record<string, string> = {
-  eyebrow: 'Eyebrow',
-  title: 'Tiêu đề',
-  tag: 'Tag',
-  description: 'Mô tả',
-  subtitle: 'Mô tả',
-  ctaText: 'Nút CTA',
-  submitText: 'Nút gửi',
-  noteText: 'Ghi chú',
-  primaryText: 'Nút CTA chính',
-  secondaryText: 'Nút CTA phụ',
-  imageUrl: 'Ảnh hero',
-  backgroundUrl: 'Ảnh nền',
-  stats: 'Thống kê',
-  features: 'Tiện ích',
-  reasons: 'Lý do',
-  slides: 'Slides',
-  variants: 'Biến thể (swatch)',
-  tabs: 'Hotspot / chi tiết',
-  [BACKGROUND_LAYER_KEY]: 'Nền',
-};
-
-/** Mọi key ảnh đều quy về kind 'image' — bắt cả các field động chưa khai báo
- *  trong ELEMENT_KIND (vd `image2Url`, `image3Url`, `logoUrl`, `avatarUrl`).
- *  Tránh trường hợp ảnh rơi về mặc định 'text' rồi hiện nhầm control chữ. */
-function isImageKey(key: string): boolean {
-  return (
-    /(image|photo|logo|avatar|thumbnail|picture|cover)/i.test(key) ||
-    /url$/i.test(key)
-  );
-}
-
-/** fieldType khai trong BlockDef (registry) cho element này, nếu có. */
-function defFieldType(
-  block: Block,
-  key: string
-): LayerElement['fieldType'] | undefined {
-  return getBlockDef(block.blockType)?.elements.find(e => e.key === key)
-    ?.fieldType;
-}
-
-function resolveKind(
-  key: string,
-  fieldType?: LayerElement['fieldType'],
-  blockType?: Block['blockType']
-): ElementKind {
-  // Registry-first: BlockDef khai tường minh thì theo đó, KHÔNG đoán theo tên.
-  if (fieldType === 'image') return 'image';
-  if (fieldType === 'text' || fieldType === 'textarea') return 'text';
-  // `slides` trùng tên field giữa image_carousel và interactive_ad_widget
-  // nhưng shape khác hẳn nhau — phải phân biệt theo blockType, KHÔNG được
-  // đổi tên key này khác với field thật trong content (nếu không sẽ vỡ
-  // handleDelete/patch vốn ghi thẳng theo `selectedKey`).
-  if (key === 'slides' && blockType === 'interactive_ad_widget') {
-    return 'interactiveAd';
-  }
-  return ELEMENT_KIND[key] ?? (isImageKey(key) ? 'image' : 'text');
-}
-
-function resolveLabel(
-  key: string,
-  kind: ElementKind,
-  blockType?: Block['blockType']
-): string {
-  if (key === 'slides' && blockType === 'interactive_ad_widget') {
-    return 'Slides quảng cáo';
-  }
-  if (ELEMENT_LABEL[key]) return ELEMENT_LABEL[key];
-  if (kind === 'image') {
-    // image2Url → "Ảnh 2", imageUrl → "Ảnh".
-    const n = key.match(/(\d+)/)?.[1];
-    return n ? `Ảnh ${n}` : 'Ảnh';
-  }
-  return key;
-}
+export { BACKGROUND_LAYER_KEY };
 
 interface ElementToolbarProps {
   block: Block;
@@ -204,9 +91,9 @@ export function ElementToolbar({
   // Tablet renders desktop layout — slim banner makes the read-only state explicit.
   if (device === 'tablet') {
     return (
-      <div className='flex h-10 shrink-0 items-center gap-2 border-b border-amber-200/70 bg-amber-50/60 px-3'>
+      <div className='mx-3 mt-3 flex h-11 items-center gap-2 rounded-xl border border-amber-200/60 bg-amber-50/95 px-3.5 shadow-[0_8px_30px_rgba(15,15,15,0.05)] backdrop-blur-md'>
         <div className='size-1.5 rounded-full bg-amber-500' aria-hidden />
-        <span className='text-2xs text-amber-800'>
+        <span className='text-[11px] text-amber-900'>
           Tablet đang xem layout{' '}
           <strong className='font-semibold'>Desktop</strong> (chỉ đọc) — chuyển
           Desktop hoặc Mobile để chỉnh sửa.
@@ -219,9 +106,10 @@ export function ElementToolbar({
   // canvas có thêm chỗ. Toolbar chỉ xuất hiện khi đang sửa 1 element cụ thể.
   if (!selectedKey) return null;
 
-  const fieldType = defFieldType(block, selectedKey);
-  const kind = resolveKind(selectedKey, fieldType, block.blockType);
-  const label = resolveLabel(selectedKey, kind, block.blockType);
+  const { kind, fieldType, label } = resolveElementMeta(
+    block.blockType,
+    selectedKey
+  );
   const variant = editingVariantOf(device);
   const langContent = lang === 'vi' ? block.contentVi : block.contentEn;
   // Read content for the variant being edited, falling back to desktop
@@ -244,10 +132,7 @@ export function ElementToolbar({
     if (kind === 'text' || kind === 'image') nextValue = '';
     else nextValue = [];
 
-    onContentChange({
-      ...c,
-      [selectedKey]: nextValue,
-    } as BlockContent);
+    onContentChange(setContentAt(c, selectedKey, nextValue) as BlockContent);
     if (kind === 'text') onResetStyle();
     toast.success(`Đã xoá ${label.toLowerCase()}`);
     onClose();
@@ -277,11 +162,15 @@ export function ElementToolbar({
         block_name: block.name,
       });
       const c = res.content as Record<string, unknown>;
-      if (selectedKey in c) {
-        onContentChange({
-          ...(content as Record<string, unknown>),
-          [selectedKey]: c[selectedKey],
-        } as BlockContent);
+      const nextValue = getContentAt(c, selectedKey);
+      if (nextValue !== undefined) {
+        onContentChange(
+          setContentAt(
+            content as Record<string, unknown>,
+            selectedKey,
+            nextValue
+          ) as BlockContent
+        );
         toast.success(
           res.source === 'ai'
             ? `AI đã đề xuất ${label}`
@@ -302,17 +191,22 @@ export function ElementToolbar({
   };
 
   return (
-    <div className='flex h-11 shrink-0 items-center gap-1.5 border-b border-neutral-200/80 bg-neutral-50/60 px-2.5'>
-      {/* Element label pill — refined indigo accent */}
-      <div className='text-3xs flex shrink-0 items-center gap-1.5 rounded-md bg-indigo-50/80 px-2 py-1 font-semibold tracking-[0.14em] text-indigo-700 uppercase'>
-        <span className='size-1.5 rounded-full bg-indigo-500' aria-hidden />
-        {label}
+    <div className='mx-3 mt-2.5 flex min-h-9 items-center gap-2 rounded-lg border border-neutral-200/70 bg-white/95 px-2.5 py-1.5 shadow-[0_6px_20px_rgba(15,15,15,0.06),0_1px_2px_rgba(15,15,15,0.04)] backdrop-blur-md'>
+      {/* Element identity */}
+      <div className='flex shrink-0 items-center gap-1.5 pl-0.5'>
+        <span
+          className='size-1.5 shrink-0 rounded-full bg-sky-500'
+          aria-hidden
+        />
+        <span className='text-[10px] font-semibold tracking-[0.04em] text-neutral-800 uppercase'>
+          {label}
+        </span>
       </div>
 
       <Sep />
 
-      {/* Contextual controls track — borderless, separated by hairline dividers */}
-      <div className='flex min-w-0 flex-1 items-center gap-1 overflow-x-auto'>
+      {/* Contextual controls */}
+      <div className='flex min-w-0 flex-1 [scrollbar-width:none] items-center gap-1.5 overflow-x-auto py-0.5 [&::-webkit-scrollbar]:hidden'>
         {kind === 'text' && (
           <TextControls
             fieldKey={selectedKey}
@@ -326,7 +220,6 @@ export function ElementToolbar({
         )}
         {kind === 'image' && (
           <ImageControls
-            block={block}
             fieldKey={selectedKey}
             content={content}
             onContentChange={onContentChange}
@@ -382,16 +275,15 @@ export function ElementToolbar({
         )}
       </div>
 
-      {/* Right · AI · delete · close */}
-      <Sep />
-      <div className='flex shrink-0 items-center gap-0.5'>
+      {/* Actions */}
+      <div className='flex shrink-0 items-center gap-0.5 border-l border-neutral-200/80 pl-2'>
         <AiButton onAi={handleAi} blockType={block.blockType} />
         <button
           type='button'
           onClick={handleDelete}
           aria-label='Xoá nội dung'
           title='Xoá nội dung'
-          className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-rose-50 hover:text-rose-600'
+          className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-rose-50 hover:text-rose-600'
         >
           <Trash2 className='size-3.5' />
         </button>
@@ -400,9 +292,9 @@ export function ElementToolbar({
           onClick={onClose}
           aria-label='Bỏ chọn'
           title='Bỏ chọn'
-          className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900'
+          className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-800'
         >
-          <X className='size-4' />
+          <X className='size-3.5' />
         </button>
       </div>
     </div>
@@ -429,9 +321,10 @@ function TextControls({
   onUpdateStyle: (patch: ElementStyle) => void;
   onResetStyle: () => void;
 }) {
+  const c = content as Record<string, unknown>;
   const value =
-    typeof (content as Record<string, unknown>)[fieldKey] === 'string'
-      ? ((content as Record<string, string>)[fieldKey] ?? '')
+    typeof getContentAt(c, fieldKey) === 'string'
+      ? ((getContentAt(c, fieldKey) as string) ?? '')
       : '';
   const isLong =
     multiline ??
@@ -441,15 +334,18 @@ function TextControls({
   const fontSize = style?.fontSize ?? '';
 
   const setField = (next: string) => {
-    onContentChange({
-      ...(content as Record<string, unknown>),
-      [fieldKey]: next,
-    } as BlockContent);
+    onContentChange(
+      setContentAt(
+        content as Record<string, unknown>,
+        fieldKey,
+        next
+      ) as BlockContent
+    );
   };
 
   return (
     <>
-      {/* Inline text input (compact for short, popover for long) */}
+      {/* Inline text input — takes remaining space; long text uses popover */}
       {isLong ? (
         <PopoverTrigger
           label='Nội dung'
@@ -469,23 +365,12 @@ function TextControls({
           value={value}
           onChange={e => setField(e.target.value)}
           placeholder='Nội dung…'
-          className='h-7 w-56 rounded-md bg-white px-2 text-xs text-neutral-900 ring-1 ring-neutral-200/80 transition-shadow placeholder:text-neutral-400 hover:ring-neutral-300 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
+          className='h-7 min-w-[16rem] flex-1 rounded-md bg-neutral-50 px-2.5 text-[12px] text-neutral-900 ring-1 ring-neutral-200/70 transition-shadow placeholder:text-neutral-400 hover:ring-neutral-300 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:outline-none'
         />
       )}
 
       <Sep />
 
-      {/* Font token role — resolves to the brand kit's font at render */}
-      <InlineLabel label='Font'>
-        <FontTokenPicker
-          value={style?.fontFamily}
-          onChange={token => onUpdateStyle({ fontFamily: token })}
-        />
-      </InlineLabel>
-
-      <Sep />
-
-      {/* Font size — borderless inline label + mono number */}
       <InlineLabel label='Cỡ'>
         <input
           type='number'
@@ -498,14 +383,13 @@ function TextControls({
             onUpdateStyle({ fontSize: n });
           }}
           placeholder='—'
-          className='text-2xs h-7 w-12 rounded-md bg-white px-1.5 font-mono text-neutral-900 tabular-nums ring-1 ring-neutral-200/80 transition-shadow placeholder:text-neutral-400 hover:ring-neutral-300 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
+          className='h-7 w-11 rounded-md bg-neutral-50 px-1.5 font-mono text-[11px] text-neutral-900 tabular-nums ring-1 ring-neutral-200/70 transition-shadow placeholder:text-neutral-400 hover:ring-neutral-300 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:outline-none'
         />
       </InlineLabel>
 
       <Sep />
 
-      {/* Style toggles — direct row, no group border */}
-      <div className='flex items-center'>
+      <div className='flex items-center gap-px rounded-md bg-neutral-50/80 p-px ring-1 ring-neutral-200/60'>
         <ToolbarBtn
           active={style?.fontWeight === 700}
           onClick={() =>
@@ -558,8 +442,7 @@ function TextControls({
 
       <Sep />
 
-      {/* Alignment */}
-      <div className='flex items-center'>
+      <div className='flex items-center gap-px rounded-md bg-neutral-50/80 p-px ring-1 ring-neutral-200/60'>
         <ToolbarBtn
           active={style?.textAlign === 'left'}
           onClick={() => onUpdateStyle({ textAlign: 'left' })}
@@ -592,7 +475,6 @@ function TextControls({
 
       <Sep />
 
-      {/* Color */}
       <ColorSwatch
         label='Màu'
         value={style?.color ?? '#111111'}
@@ -604,7 +486,7 @@ function TextControls({
         onClick={onResetStyle}
         title='Khôi phục style mặc định'
         aria-label='Khôi phục style mặc định'
-        className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900'
+        className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-800'
       >
         <RotateCcw className='size-3.5' />
       </button>
@@ -615,12 +497,10 @@ function TextControls({
 // ─────────────────────────────────────────────────────────── IMAGE CONTROLS
 
 function ImageControls({
-  block,
   fieldKey,
   content,
   onContentChange,
 }: {
-  block: Block;
   fieldKey: string;
   content: BlockContent;
   onContentChange: (next: BlockContent) => void;
@@ -633,13 +513,13 @@ function ImageControls({
         : null;
 
   const c = content as Record<string, unknown>;
-  const url = (c[fieldKey] as string) ?? '';
+  const url = (getContentAt(c, fieldKey) as string) ?? '';
   const transform = transformKey
     ? (c[transformKey] as ImageTransform | undefined)
     : undefined;
 
   const setUrl = (next: string) => {
-    onContentChange({ ...c, [fieldKey]: next } as BlockContent);
+    onContentChange(setContentAt(c, fieldKey, next) as BlockContent);
   };
   const setTransform = (next: ImageTransform) => {
     if (!transformKey) return;
@@ -648,17 +528,12 @@ function ImageControls({
 
   return (
     <>
-      <span className='text-3xs font-mono tracking-[0.08em] text-neutral-400 uppercase'>
-        {block.blockType.replace('_', ' ')}
-      </span>
-
-      <Sep />
-
       <PopoverTrigger
-        label='Quản lý ảnh'
-        preview={url ? '✓ Đã chọn ảnh' : 'Chưa chọn'}
+        label='Ảnh'
+        preview={url ? 'Đã chọn' : 'Chưa chọn'}
         icon={<ImageIcon className='size-3.5' />}
         width={420}
+        primary
       >
         <ImagePicker
           value={url}
@@ -1731,9 +1606,9 @@ function AiButton({
           type='button'
           aria-label='AI tạo nội dung'
           title='AI tạo nội dung'
-          className='text-3xs flex h-7 cursor-pointer items-center gap-1 rounded-md bg-neutral-900 px-2.5 font-semibold tracking-tight text-white transition-colors hover:bg-neutral-700'
+          className='flex h-7 cursor-pointer items-center gap-1 rounded-md bg-neutral-900 px-2.5 text-[10px] font-semibold tracking-wide text-white transition-colors hover:bg-neutral-800'
         >
-          <Sparkles className='size-3 text-violet-300' />
+          <Sparkles className='size-3.5 text-sky-300' />
           AI
         </button>
       </Popover.Trigger>
@@ -1801,12 +1676,15 @@ function PopoverTrigger({
   preview,
   icon,
   width = 360,
+  primary = false,
   children,
 }: {
   label: string;
   preview: string;
   icon?: React.ReactNode;
   width?: number;
+  /** Emphasize as the main action in a sparse toolbar (e.g. image manage). */
+  primary?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -1814,22 +1692,48 @@ function PopoverTrigger({
       <Popover.Trigger asChild>
         <button
           type='button'
-          className='text-2xs flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-white px-2 font-medium text-neutral-700 ring-1 ring-neutral-200/80 transition-colors hover:text-neutral-900 hover:ring-neutral-300'
+          className={cn(
+            'flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2.5 text-[11px] font-medium transition-colors',
+            primary
+              ? 'bg-neutral-900 text-white hover:bg-neutral-800'
+              : 'bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200/70 hover:bg-white hover:text-neutral-900 hover:ring-neutral-300'
+          )}
         >
-          {icon}
-          <span className='text-3xs font-mono tracking-tight text-neutral-400'>
+          {icon ? (
+            <span
+              className={cn(
+                'shrink-0',
+                primary ? 'text-white/80' : 'text-neutral-500'
+              )}
+            >
+              {icon}
+            </span>
+          ) : null}
+          <span className={cn(primary ? 'text-white' : 'text-neutral-800')}>
             {label}
           </span>
-          <span className='max-w-[140px] truncate'>{preview}</span>
-          <ChevronDown className='size-3 text-neutral-400' />
+          <span
+            className={cn(
+              'max-w-[9rem] truncate text-[11px]',
+              primary ? 'text-white/55' : 'text-neutral-400'
+            )}
+          >
+            {preview}
+          </span>
+          <ChevronDown
+            className={cn(
+              'size-3.5 shrink-0',
+              primary ? 'text-white/50' : 'text-neutral-400'
+            )}
+          />
         </button>
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
           align='start'
-          sideOffset={8}
+          sideOffset={10}
           style={{ width }}
-          className='z-50 flex flex-col gap-2 rounded-lg border border-neutral-200/80 bg-white p-3 shadow-[0_8px_24px_rgba(0,0,0,0.08),0_2px_4px_rgba(0,0,0,0.04)] outline-none'
+          className='z-50 flex flex-col gap-2.5 rounded-xl border border-neutral-200/80 bg-white p-3.5 shadow-[0_12px_40px_rgba(15,15,15,0.1),0_2px_6px_rgba(15,15,15,0.04)] outline-none'
         >
           {children}
         </Popover.Content>
@@ -1855,9 +1759,9 @@ function ToolbarBtn({
       aria-label={label}
       aria-pressed={active}
       className={cn(
-        'flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900',
+        'flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900',
         active &&
-          'bg-neutral-900/[0.92] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-neutral-900 hover:text-white',
+          'bg-neutral-900 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-neutral-900 hover:text-white',
         className
       )}
       {...props}
@@ -1872,7 +1776,7 @@ function AddRow({ onAdd, label }: { onAdd: () => void; label: string }) {
     <button
       type='button'
       onClick={onAdd}
-      className='flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border border-dashed border-neutral-300 py-1.5 text-xs font-medium text-neutral-500 hover:border-neutral-900 hover:text-neutral-900'
+      className='flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-neutral-300 py-2 text-xs font-medium text-neutral-500 hover:border-neutral-900 hover:text-neutral-900'
     >
       <Plus className='size-3.5' />
       {label}
@@ -1881,7 +1785,7 @@ function AddRow({ onAdd, label }: { onAdd: () => void; label: string }) {
 }
 
 function Sep() {
-  return <div className='h-5 w-px shrink-0 bg-neutral-200' />;
+  return <div className='mx-0.5 h-5 w-px shrink-0 bg-neutral-200/90' />;
 }
 
 function InlineLabel({
@@ -1892,8 +1796,8 @@ function InlineLabel({
   children: React.ReactNode;
 }) {
   return (
-    <span className='flex items-center gap-1.5'>
-      <span className='text-3xs font-mono tracking-[0.08em] text-neutral-400 uppercase'>
+    <span className='flex items-center gap-2'>
+      <span className='text-[10px] font-medium tracking-[0.06em] text-neutral-400 uppercase'>
         {label}
       </span>
       {children}
@@ -1944,42 +1848,6 @@ function ColorSwatch({
           );
         })}
       </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────── FONT PICKER (token roles)
-
-// Controlled font picker: author chooses a brand font ROLE (heading/body),
-// stored as `token:<role>`; the brand kit maps the role to a real font.
-function FontTokenPicker({
-  value,
-  onChange,
-}: {
-  value: string | undefined;
-  onChange: (next: string) => void;
-}) {
-  const activeRole = brandTokenKey(value) ?? BRAND_FONT_ROLES[0].key;
-  return (
-    <div className='flex items-center gap-1'>
-      {BRAND_FONT_ROLES.map(role => {
-        const selected = activeRole === role.key;
-        return (
-          <button
-            key={role.key}
-            type='button'
-            onClick={() => onChange(brandToken(role.key))}
-            className={cn(
-              'text-3xs rounded-md px-2 py-1 transition-colors',
-              selected
-                ? 'bg-neutral-900 text-white'
-                : 'text-neutral-600 hover:bg-neutral-100'
-            )}
-          >
-            {role.label}
-          </button>
-        );
-      })}
     </div>
   );
 }
