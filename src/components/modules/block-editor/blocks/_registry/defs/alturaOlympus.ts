@@ -1,7 +1,16 @@
 /**
  * BlockDef cho `altura_olympus` — scroll split 50/50 + image sequence.
+ * Text CMS + 4 ảnh + feature labels đều content editable.
  */
-import { Link, MousePointerClick, Pilcrow, Type } from 'lucide-react';
+import {
+  Image as ImageIcon,
+  Link,
+  MousePointerClick,
+  Pilcrow,
+  Type,
+} from 'lucide-react';
+
+import { ALTURA_OLYMPUS_IMAGES } from '@/assets/images/altura_olympus';
 
 import { AlturaOlympus } from '../../AlturaOlympus';
 import type { AlturaOlympusContent } from '../../../types';
@@ -24,6 +33,10 @@ const VI: AlturaOlympusContent = {
   features: DEFAULT_FEATURES,
   ctaText: 'Discover',
   ctaLink: '#',
+  image1Url: ALTURA_OLYMPUS_IMAGES[0],
+  image2Url: ALTURA_OLYMPUS_IMAGES[1],
+  image3Url: ALTURA_OLYMPUS_IMAGES[2],
+  image4Url: ALTURA_OLYMPUS_IMAGES[3],
 };
 
 const EN: AlturaOlympusContent = { ...VI };
@@ -60,5 +73,50 @@ export const alturaOlympusDef: BlockDef<AlturaOlympusContent> = {
       fieldType: 'text',
     },
     { key: 'ctaLink', label: 'Link CTA', icon: Link, fieldType: 'text' },
+    {
+      key: 'image1Url',
+      label: 'Ảnh 1 (cover)',
+      icon: ImageIcon,
+      fieldType: 'image',
+    },
+    { key: 'image2Url', label: 'Ảnh 2', icon: ImageIcon, fieldType: 'image' },
+    { key: 'image3Url', label: 'Ảnh 3', icon: ImageIcon, fieldType: 'image' },
+    { key: 'image4Url', label: 'Ảnh 4', icon: ImageIcon, fieldType: 'image' },
+    {
+      key: 'features[0].label',
+      label: 'Feature 1',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'features[1].label',
+      label: 'Feature 2',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'features[2].label',
+      label: 'Feature 3',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'features[3].label',
+      label: 'Feature 4',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'features[4].label',
+      label: 'Feature 5',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'features[5].label',
+      label: 'Feature 6',
+      icon: Type,
+      fieldType: 'text',
+    },
   ],
 };

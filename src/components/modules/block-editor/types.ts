@@ -275,15 +275,46 @@ export interface AlturaOlympusContent {
   features: AlturaOlympusFeature[];
   ctaText: string;
   ctaLink: string;
+  /** 4 ảnh scrub (m1 cover → m2 companion/seq → m3 → m4). Fallback assets nếu thiếu. */
+  image1Url?: string;
+  image2Url?: string;
+  image3Url?: string;
+  image4Url?: string;
 }
 
 export interface HeroScrollContent {
   title: string;
   subtitle: string;
+  /** 4 ảnh scroll-reveal (m1→m4). Fallback assets nếu thiếu. */
+  image1Url?: string;
+  image2Url?: string;
+  image3Url?: string;
+  image4Url?: string;
 }
 
 export interface ScrollMattisContent {
   portfolioLabel: string;
+  /** 3 slide media (ảnh / video / ảnh). Fallback assets nếu thiếu. */
+  slide1Url?: string;
+  slide2Url?: string;
+  slide3Url?: string;
+  /** Chữ marquee chạy ngang (bgWord) theo slide. */
+  slide1BgWord?: string;
+  slide2BgWord?: string;
+  slide3BgWord?: string;
+  /** Meta dưới khung letterbox. */
+  slide1Title?: string;
+  slide2Title?: string;
+  slide3Title?: string;
+  slide1Category1?: string;
+  slide1Category2?: string;
+  slide2Category1?: string;
+  slide2Category2?: string;
+  slide3Category1?: string;
+  slide3Category2?: string;
+  slide1Year?: string;
+  slide2Year?: string;
+  slide3Year?: string;
 }
 
 export interface HeroOverlayContent {

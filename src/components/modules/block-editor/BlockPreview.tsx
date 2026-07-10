@@ -82,6 +82,31 @@ const TEXT_KEYS = new Set([
   'noteText',
   'primaryText',
   'secondaryText',
+  'portfolioLabel',
+  // ScrollMattis — chữ chạy + meta per slide
+  'slide1BgWord',
+  'slide2BgWord',
+  'slide3BgWord',
+  'slide1Title',
+  'slide2Title',
+  'slide3Title',
+  'slide1Category1',
+  'slide1Category2',
+  'slide2Category1',
+  'slide2Category2',
+  'slide3Category1',
+  'slide3Category2',
+  'slide1Year',
+  'slide2Year',
+  'slide3Year',
+  // AlturaOlympus features
+  'features[0].label',
+  'features[1].label',
+  'features[2].label',
+  'features[3].label',
+  'features[4].label',
+  'features[5].label',
+  'heading',
 ]);
 
 export function BlockPreview({
