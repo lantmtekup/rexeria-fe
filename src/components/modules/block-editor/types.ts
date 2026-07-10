@@ -276,9 +276,8 @@ export interface AlturaOlympusContent {
   features: AlturaOlympusFeature[];
   ctaText: string;
   ctaLink: string;
-  /** Per-instance overrides for the 4 scrub images (cover=m1, m2 doubles as
-   *  companion + first seq layer). Falls back to the baked default asset. */
-  coverImageUrl?: string;
+  /** 4 ảnh scrub (m1 cover → m2 companion/seq → m3 → m4). Fallback assets nếu thiếu. */
+  image1Url?: string;
   image2Url?: string;
   image3Url?: string;
   image4Url?: string;
@@ -287,8 +286,7 @@ export interface AlturaOlympusContent {
 export interface HeroScrollContent {
   title: string;
   subtitle: string;
-  /** Per-instance overrides for the 4 stacked reveal images (m1→m4 reveal
-   *  order). Falls back to the baked default asset when unset. */
+  /** 4 ảnh scroll-reveal (m1→m4). Fallback assets nếu thiếu. */
   image1Url?: string;
   image2Url?: string;
   image3Url?: string;
@@ -297,10 +295,27 @@ export interface HeroScrollContent {
 
 export interface ScrollMattisContent {
   portfolioLabel: string;
-  /** Per-instance overrides for the 2 static slide images (slide 2 is video,
-   *  already an external URL). Falls back to the baked default asset. */
-  slide1ImageUrl?: string;
-  slide3ImageUrl?: string;
+  /** 3 slide media (ảnh / video / ảnh). Fallback assets nếu thiếu. */
+  slide1Url?: string;
+  slide2Url?: string;
+  slide3Url?: string;
+  /** Chữ marquee chạy ngang (bgWord) theo slide. */
+  slide1BgWord?: string;
+  slide2BgWord?: string;
+  slide3BgWord?: string;
+  /** Meta dưới khung letterbox. */
+  slide1Title?: string;
+  slide2Title?: string;
+  slide3Title?: string;
+  slide1Category1?: string;
+  slide1Category2?: string;
+  slide2Category1?: string;
+  slide2Category2?: string;
+  slide3Category1?: string;
+  slide3Category2?: string;
+  slide1Year?: string;
+  slide2Year?: string;
+  slide3Year?: string;
 }
 
 export interface HeroOverlayContent {

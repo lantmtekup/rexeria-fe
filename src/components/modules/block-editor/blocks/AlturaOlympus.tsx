@@ -10,6 +10,10 @@
  *
  * Motion contract R1–R6: useBlockMotion + CSS sticky (không GSAP pin).
  * Flat absolute layers dưới .sticky → 1 stacking context, z-index chuẩn.
+ *
+ * Editor canvas (`data-testid=active-block-preview`): layout tĩnh 1 viewport —
+ * content trái + lưới 2×2 ảnh editable (không scrub — BlockPreview scale gãy sticky).
+ * PreviewMode / Play / `/p`: full scrub.
  */
 
 import * as React from 'react';
@@ -92,6 +96,15 @@ const IMAGE_HOLD_Y = 4;
 const LEFT_PANEL_ENTER_SCALE = 0.992;
 const LEFT_CONTENT_ENTER_SCALE = 0.98;
 
+const IMAGE_KEYS = [
+  'image1Url',
+  'image2Url',
+  'image3Url',
+  'image4Url',
+] as const;
+
+const IMAGE_LABELS = ['Cover', 'Ảnh 2', 'Ảnh 3', 'Ảnh 4'] as const;
+
 const RESPONSIVE = {
   pad: 'clamp(24px, 5cqi, 56px)',
   padRight: 'clamp(20px, 4cqi, 40px)',
@@ -136,6 +149,11 @@ const RIGHT_HALF: React.CSSProperties = {
   overflow: 'hidden',
 };
 
+const resolveImages = (content: AlturaOlympusContent): string[] =>
+  IMAGE_KEYS.map(
+    (key, i) => content[key]?.trim() || ALTURA_OLYMPUS_IMAGES[i] || ''
+  ).filter(Boolean);
+
 export const AlturaOlympus = ({
   content,
   styles,
@@ -146,8 +164,20 @@ export const AlturaOlympus = ({
   className,
 }: AlturaOlympusProps) => {
   const rootRef = React.useRef<HTMLElement>(null);
-  const { requestRefresh } = useLandingMotion();
+  const { hasRoot, requestRefresh } = useLandingMotion();
   const isMobile = useContainerMobile(rootRef);
+
+  // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play.
+  const [isCanvas, setIsCanvas] = React.useState(true);
+  React.useLayoutEffect(() => {
+    if (!hasRoot) {
+      setIsCanvas(false);
+      return;
+    }
+    setIsCanvas(
+      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
+    );
+  }, [hasRoot]);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -156,7 +186,12 @@ export const AlturaOlympus = ({
       positionStyle(positions, key)
     );
 
-  const trackHeight = isMobile ? '380dvh' : '460dvh';
+  const images = React.useMemo(() => resolveImages(content), [content]);
+  const coverImage = images[0] || ALTURA_OLYMPUS_IMAGES[0];
+  const companionImage = images[1] || ALTURA_OLYMPUS_IMAGES[1];
+  const seqImages = images.slice(1);
+
+  const trackHeight = isCanvas ? undefined : isMobile ? '380dvh' : '460dvh';
   const eyebrow = content.eyebrow?.trim() || FALLBACK_EYEBROW;
   const heading = content.heading?.trim() || FALLBACK_HEADING;
   const description = content.description?.trim() || FALLBACK_DESCRIPTION;
@@ -166,17 +201,8 @@ export const AlturaOlympus = ({
       ? content.features
       : FALLBACK_FEATURES;
 
-  // cover = m1 (frame đầu), companion = m2, seq = m2/m3/m4 — user có thể ghi
-  // đè từng ảnh; rỗng → dùng ảnh mặc định.
-  const coverImage = content.coverImageUrl || ALTURA_OLYMPUS_IMAGES[0];
-  const image2 = content.image2Url || ALTURA_OLYMPUS_IMAGES[1];
-  const image3 = content.image3Url || ALTURA_OLYMPUS_IMAGES[2];
-  const image4 = content.image4Url || ALTURA_OLYMPUS_IMAGES[3];
-  const companionImage = image2;
-  const seqImages = [image2, image3, image4];
-
   const loadedRef = React.useRef(0);
-  const totalImages = seqImages.length + 2; // cover + companion + seq
+  const totalImages = Math.max(images.length, 1);
   const handleImgLoad = () => {
     loadedRef.current += 1;
     if (loadedRef.current >= totalImages) requestRefresh();
@@ -187,6 +213,7 @@ export const AlturaOlympus = ({
     ({ scroller }) => {
       const root = rootRef.current;
       if (!root) return;
+      if (!hasRoot || isCanvas) return;
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
       const leftPanel = root.querySelector<HTMLElement>(
@@ -196,14 +223,14 @@ export const AlturaOlympus = ({
         '.altura-olympus__content'
       );
       const cover = root.querySelector<HTMLElement>('.altura-olympus__cover');
-      const coverImage = cover?.querySelector<HTMLElement>('img');
-      const companionImage = root.querySelector<HTMLElement>(
+      const coverImg = cover?.querySelector<HTMLElement>('img');
+      const companionImg = root.querySelector<HTMLElement>(
         '.altura-olympus__companion img'
       );
       const seqLayers = Array.from(
         root.querySelectorAll<HTMLElement>('.altura-olympus__seq-layer')
       );
-      const seqImages = seqLayers
+      const seqImgs = seqLayers
         .map(layer => layer.querySelector<HTMLElement>('img'))
         .filter((img): img is HTMLElement => Boolean(img));
       if (!cover || seqLayers.length === 0) return;
@@ -225,13 +252,13 @@ export const AlturaOlympus = ({
       });
       gsap.set(cover, { xPercent: 0, yPercent: 0, force3D: true });
       gsap.set(seqLayers, { yPercent: 100, force3D: true });
-      gsap.set([coverImage, companionImage].filter(Boolean), {
+      gsap.set([coverImg, companionImg].filter(Boolean), {
         yPercent: -2,
         scale: 1.04,
         transformOrigin: 'center center',
         force3D: true,
       });
-      gsap.set(seqImages, {
+      gsap.set(seqImgs, {
         yPercent: IMAGE_PARALLAX_Y,
         scale: IMAGE_ENTER_SCALE,
         transformOrigin: 'center center',
@@ -286,7 +313,7 @@ export const AlturaOlympus = ({
         HOLD_START + 0.12
       );
       tl.to(
-        [coverImage, companionImage].filter(Boolean),
+        [coverImg, companionImg].filter(Boolean),
         {
           yPercent: 2,
           scale: 1,
@@ -298,7 +325,7 @@ export const AlturaOlympus = ({
 
       // Phase 3 — right panel cố định, layer sau trượt lên phủ layer trước.
       seqLayers.forEach((layer, i) => {
-        const image = seqImages[i];
+        const image = seqImgs[i];
         tl.to(
           layer,
           { yPercent: 0, duration: DUR_IMAGE_STEP, force3D: true },
@@ -327,14 +354,175 @@ export const AlturaOlympus = ({
         );
       });
     },
-    [isMobile]
+    [isMobile, hasRoot, isCanvas, images]
+  );
+
+  const contentPanel = (
+    <div
+      className='altura-olympus__content flex flex-col'
+      style={{
+        padding: RESPONSIVE.pad,
+        paddingRight: RESPONSIVE.padRight,
+        gap: RESPONSIVE.contentGap,
+      }}
+    >
+      <div className='flex flex-col' style={{ gap: RESPONSIVE.headingGap }}>
+        <div className='flex items-center gap-2.5'>
+          <span
+            aria-hidden='true'
+            className='shrink-0'
+            style={{
+              width: 11,
+              height: 11,
+              backgroundColor: EYEBROW_DOT,
+            }}
+          />
+          <p
+            data-element-key='eyebrow'
+            style={composeStyle(
+              {
+                fontSize: RESPONSIVE.eyebrowFont,
+                letterSpacing: '0.08em',
+                color: '#6b7280',
+              },
+              styleOf('eyebrow')
+            )}
+            className={selectableClass(activeKey === 'eyebrow', 'font-normal')}
+          >
+            {eyebrow}
+          </p>
+        </div>
+
+        <h2
+          data-element-key='heading'
+          style={composeStyle(
+            {
+              fontSize: RESPONSIVE.headingFont,
+              lineHeight: 1.08,
+              fontFamily:
+                "'Playfair Display', 'Cormorant Garamond', 'Times New Roman', Georgia, serif",
+              color: '#111827',
+              fontWeight: 400,
+              letterSpacing: '-0.02em',
+            },
+            styleOf('heading')
+          )}
+          className={selectableClass(activeKey === 'heading')}
+        >
+          {heading}
+        </h2>
+      </div>
+
+      <p
+        data-element-key='description'
+        style={composeStyle(
+          {
+            fontSize: RESPONSIVE.bodyFont,
+            lineHeight: 1.6,
+            color: '#6b7280',
+            maxWidth: '38ch',
+          },
+          styleOf('description')
+        )}
+        className={selectableClass(activeKey === 'description')}
+      >
+        {description}
+      </p>
+
+      <div
+        className='grid grid-cols-2'
+        style={{
+          columnGap: RESPONSIVE.gridGapX,
+          rowGap: RESPONSIVE.gridGapY,
+        }}
+      >
+        {features.map((feat, i) => {
+          const Icon = ICONS[feat.icon] ?? Crosshair;
+          return (
+            <div key={i} className='flex items-center gap-3'>
+              <span
+                className='flex shrink-0 items-center justify-center rounded-full border border-neutral-300/90 bg-white/40'
+                style={{
+                  width: RESPONSIVE.iconSize,
+                  height: RESPONSIVE.iconSize,
+                }}
+                aria-hidden='true'
+              >
+                <Icon
+                  style={{
+                    width: '50%',
+                    height: '50%',
+                    color: '#9ca3af',
+                  }}
+                  strokeWidth={1.35}
+                />
+              </span>
+              <span
+                data-element-key={`features[${i}].label`}
+                style={composeStyle(
+                  {
+                    fontSize: RESPONSIVE.featureFont,
+                    color: '#4b5563',
+                    lineHeight: 1.35,
+                  },
+                  styleOf(`features[${i}].label`)
+                )}
+                className={selectableClass(
+                  activeKey === `features[${i}].label`,
+                  'font-normal'
+                )}
+              >
+                {feat.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <a
+        href={content.ctaLink || '#'}
+        data-element-key='ctaText'
+        style={composeStyle(
+          {
+            display: 'inline-flex',
+            alignSelf: 'flex-start',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: 'clamp(4px, 0.8cqi, 12px)',
+            padding: `${RESPONSIVE.ctaPadY} ${RESPONSIVE.ctaPadX}`,
+            fontSize: RESPONSIVE.ctaFont,
+            fontWeight: 500,
+            color: '#ffffff',
+            backgroundColor: CTA_BG,
+            borderRadius: 8,
+            textDecoration: 'none',
+            minWidth: 'clamp(120px, 18cqi, 160px)',
+          },
+          styleOf('ctaText')
+        )}
+        className={selectableClass(
+          activeKey === 'ctaText',
+          'transition-opacity hover:opacity-90'
+        )}
+        tabIndex={0}
+        aria-label={ctaText}
+        onClick={e => {
+          if (isCanvas) e.preventDefault();
+        }}
+      >
+        {ctaText}
+      </a>
+    </div>
   );
 
   return (
     <section
       ref={rootRef}
       data-block='altura-olympus'
-      style={{ height: trackHeight, ...blockBackgroundStyle(background) }}
+      style={{
+        ...(trackHeight ? { height: trackHeight } : undefined),
+        ...blockBackgroundStyle(background),
+      }}
       className={cn(
         'altura-olympus @container relative w-full bg-white',
         className
@@ -366,222 +554,99 @@ export const AlturaOlympus = ({
         }
       `}</style>
 
-      <div className='altura-olympus__sticky' style={STICKY_STYLE}>
-        {/* z0 — content CMS (nửa trái), luôn hiển thị, bị cover che lúc đầu */}
+      {isCanvas ? (
         <div
-          className='altura-olympus__left-panel altura-olympus__left-half flex flex-col justify-center will-change-transform'
-          style={{ ...LEFT_HALF, zIndex: 0, backgroundColor: LEFT_BG }}
+          className='relative flex min-h-[520px] w-full flex-col @2xl:min-h-[560px] @2xl:flex-row'
+          style={{ containerType: 'inline-size' }}
         >
+          {/* Content — luôn lộ (không cover) để edit text/CTA/features */}
           <div
-            className='altura-olympus__content flex flex-col'
-            style={{
-              padding: RESPONSIVE.pad,
-              paddingRight: RESPONSIVE.padRight,
-              gap: RESPONSIVE.contentGap,
-            }}
+            className='flex w-full flex-col justify-center @2xl:w-1/2'
+            style={{ backgroundColor: LEFT_BG }}
           >
-            <div
-              className='flex flex-col'
-              style={{ gap: RESPONSIVE.headingGap }}
-            >
-              <div className='flex items-center gap-2.5'>
-                <span
-                  aria-hidden='true'
-                  className='shrink-0'
-                  style={{
-                    width: 11,
-                    height: 11,
-                    backgroundColor: EYEBROW_DOT,
-                  }}
-                />
-                <p
-                  data-element-key='eyebrow'
-                  style={composeStyle(
-                    {
-                      fontSize: RESPONSIVE.eyebrowFont,
-                      letterSpacing: '0.08em',
-                      color: '#6b7280',
-                    },
-                    styleOf('eyebrow')
-                  )}
+            {contentPanel}
+          </div>
+
+          {/* 4 ảnh editable — lưới 2×2 */}
+          <div className='grid w-full grid-cols-2 grid-rows-2 gap-2 bg-neutral-950 p-2 @2xl:w-1/2'>
+            {IMAGE_KEYS.map((key, i) => {
+              const src = images[i];
+              if (!src) return null;
+              return (
+                <div
+                  key={key}
+                  data-element-key={key}
+                  style={styleOf(key)}
                   className={selectableClass(
-                    activeKey === 'eyebrow',
-                    'font-normal'
+                    activeKey === key,
+                    'relative min-h-0 overflow-hidden rounded-lg ring-1 ring-white/10'
                   )}
                 >
-                  {eyebrow}
-                </p>
-              </div>
-
-              <h2
-                data-element-key='heading'
-                style={composeStyle(
-                  {
-                    fontSize: RESPONSIVE.headingFont,
-                    lineHeight: 1.08,
-                    fontFamily:
-                      "'Playfair Display', 'Cormorant Garamond', 'Times New Roman', Georgia, serif",
-                    color: '#111827',
-                    fontWeight: 400,
-                    letterSpacing: '-0.02em',
-                  },
-                  styleOf('heading')
-                )}
-                className={selectableClass(activeKey === 'heading')}
-              >
-                {heading}
-              </h2>
-            </div>
-
-            <p
-              data-element-key='description'
-              style={composeStyle(
-                {
-                  fontSize: RESPONSIVE.bodyFont,
-                  lineHeight: 1.6,
-                  color: '#6b7280',
-                  maxWidth: '38ch',
-                },
-                styleOf('description')
-              )}
-              className={selectableClass(activeKey === 'description')}
-            >
-              {description}
-            </p>
-
-            <div
-              className='grid grid-cols-2'
-              style={{
-                columnGap: RESPONSIVE.gridGapX,
-                rowGap: RESPONSIVE.gridGapY,
-              }}
-            >
-              {features.map((feat, i) => {
-                const Icon = ICONS[feat.icon] ?? Crosshair;
-                return (
-                  <div key={i} className='flex items-center gap-3'>
-                    <span
-                      className='flex shrink-0 items-center justify-center rounded-full border border-neutral-300/90 bg-white/40'
-                      style={{
-                        width: RESPONSIVE.iconSize,
-                        height: RESPONSIVE.iconSize,
-                      }}
-                      aria-hidden='true'
-                    >
-                      <Icon
-                        style={{
-                          width: '50%',
-                          height: '50%',
-                          color: '#9ca3af',
-                        }}
-                        strokeWidth={1.35}
-                      />
-                    </span>
-                    <span
-                      data-element-key={`features[${i}].label`}
-                      style={composeStyle(
-                        {
-                          fontSize: RESPONSIVE.featureFont,
-                          color: '#4b5563',
-                          lineHeight: 1.35,
-                        },
-                        styleOf(`features[${i}].label`)
-                      )}
-                      className={selectableClass(
-                        activeKey === `features[${i}].label`,
-                        'font-normal'
-                      )}
-                    >
-                      {feat.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <a
-              href={content.ctaLink || '#'}
-              data-element-key='ctaText'
-              style={composeStyle(
-                {
-                  display: 'inline-flex',
-                  alignSelf: 'flex-start',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginTop: 'clamp(4px, 0.8cqi, 12px)',
-                  padding: `${RESPONSIVE.ctaPadY} ${RESPONSIVE.ctaPadX}`,
-                  fontSize: RESPONSIVE.ctaFont,
-                  fontWeight: 500,
-                  color: '#ffffff',
-                  backgroundColor: CTA_BG,
-                  borderRadius: 8,
-                  textDecoration: 'none',
-                  minWidth: 'clamp(120px, 18cqi, 160px)',
-                },
-                styleOf('ctaText')
-              )}
-              className={selectableClass(
-                activeKey === 'ctaText',
-                'transition-opacity hover:opacity-90'
-              )}
-              tabIndex={0}
-              aria-label={ctaText}
-            >
-              {ctaText}
-            </a>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={src}
+                    alt={IMAGE_LABELS[i]}
+                    onLoad={handleImgLoad}
+                    className='pointer-events-none h-full w-full object-cover'
+                    draggable={false}
+                  />
+                  <span className='pointer-events-none absolute top-2 left-2 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-white uppercase'>
+                    {IMAGE_LABELS[i]}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
+      ) : (
+        <div className='altura-olympus__sticky' style={STICKY_STYLE}>
+          {/* z0 — content CMS (nửa trái), luôn hiển thị, bị cover che lúc đầu */}
+          <div
+            className='altura-olympus__left-panel altura-olympus__left-half flex flex-col justify-center will-change-transform'
+            style={{ ...LEFT_HALF, zIndex: 0, backgroundColor: LEFT_BG }}
+          >
+            {contentPanel}
+          </div>
 
-        {/* z1 — companion m2 (nửa phải), tĩnh, hiện lúc split */}
-        <div
-          data-element-key='image2Url'
-          className={selectableClass(
-            activeKey === 'image2Url',
-            'altura-olympus__companion altura-olympus__right-half'
-          )}
-          style={{ ...RIGHT_HALF, zIndex: 1, backgroundColor: '#171717' }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={companionImage}
-            alt=''
-            onLoad={handleImgLoad}
-            className='h-full w-full object-cover'
-            draggable={false}
-          />
-        </div>
+          {/* z1 — companion m2 (nửa phải), tĩnh, hiện lúc split */}
+          <div
+            className='altura-olympus__companion altura-olympus__right-half'
+            style={{ ...RIGHT_HALF, zIndex: 1, backgroundColor: '#171717' }}
+            aria-hidden='true'
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={companionImage}
+              alt=''
+              onLoad={handleImgLoad}
+              className='h-full w-full object-cover'
+              draggable={false}
+            />
+          </div>
 
-        {/* z2 — cover m1 (nửa trái), trượt một chiều đè companion */}
-        <div
-          data-element-key='coverImageUrl'
-          className={selectableClass(
-            activeKey === 'coverImageUrl',
-            'altura-olympus__cover altura-olympus__left-half will-change-transform'
-          )}
-          style={{ ...LEFT_HALF, zIndex: 2 }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={coverImage}
-            alt=''
-            onLoad={handleImgLoad}
-            className='h-full w-full object-cover'
-            draggable={false}
-          />
-        </div>
+          {/* z2 — cover m1 (nửa trái), trượt một chiều đè companion */}
+          <div
+            className='altura-olympus__cover altura-olympus__left-half will-change-transform'
+            style={{ ...LEFT_HALF, zIndex: 2 }}
+            aria-hidden='true'
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={coverImage}
+              alt=''
+              onLoad={handleImgLoad}
+              className='h-full w-full object-cover'
+              draggable={false}
+            />
+          </div>
 
-        {/* z3+ — right panel cố định, ảnh sau đè lên ảnh trước */}
-        {seqImages.map((src, i) => {
-          const key = (['image2Url', 'image3Url', 'image4Url'] as const)[i];
-          return (
+          {/* z3+ — right panel cố định, ảnh sau đè lên ảnh trước */}
+          {seqImages.map((src, i) => (
             <div
-              key={i}
-              data-element-key={key}
-              className={selectableClass(
-                activeKey === key,
-                'altura-olympus__seq-layer altura-olympus__right-half will-change-transform'
-              )}
+              key={IMAGE_KEYS[i + 1] ?? i}
+              className='altura-olympus__seq-layer altura-olympus__right-half will-change-transform'
               style={{ ...RIGHT_HALF, zIndex: 3 + i }}
+              aria-hidden='true'
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -592,9 +657,9 @@ export const AlturaOlympus = ({
                 draggable={false}
               />
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 };

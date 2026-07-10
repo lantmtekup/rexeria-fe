@@ -1,23 +1,65 @@
 /**
  * BlockDef cho `scroll_mattis` — scroll reveal "Box Mode" 3 slide (ảnh, video,
- * ảnh). Slide active thu nhỏ + mờ, slide kế zoom in thay thế theo scroll.
- * Default 2 ảnh tĩnh trỏ URL S3 (uploaded 2026-07-10) thay vì asset local —
- * src/assets/images/scroll_mattis/*.{jpg,webp} vẫn giữ làm fallback cuối
- * cùng trong ScrollMattis.tsx cho block cũ chưa có field. Slide video giữ
- * nguyên URL ngoài (framerusercontent.com), không thuộc phạm vi migrate.
+ * ảnh). Media + chữ marquee (bgWord) + meta (title/categories/year) đều editable.
+ * Default slide1/slide3 (ảnh tĩnh) trỏ URL S3 (uploaded 2026-07-10) thay vì
+ * asset local — src/assets/images/scroll_mattis/*.{jpg,webp} vẫn giữ làm
+ * fallback cuối cùng trong ScrollMattis.tsx cho block cũ chưa có field.
+ * Slide2 (video) giữ nguyên URL ngoài (framerusercontent.com) — không thuộc
+ * phạm vi migrate.
  */
-import { ImageIcon, Type } from 'lucide-react';
+import { Image as ImageIcon, Type } from 'lucide-react';
+
+import { SCROLL_MATTIS_ITEMS } from '@/assets/images/scroll_mattis';
 
 import { ScrollMattis } from '../../ScrollMattis';
 import type { ScrollMattisContent } from '../../../types';
 import type { BlockDef } from '../types';
 
+const SLIDE1_S3_URL =
+  'https://d10zufojjcedud.cloudfront.net/uploads/4d265660-8757-4da1-875d-29b776737f57/scroll_mattis_m1.jpg';
+const SLIDE3_S3_URL =
+  'https://d10zufojjcedud.cloudfront.net/uploads/05f6ad58-40dc-4c33-8ee2-5b199402fa0d/scroll_mattis_m2.webp';
+
+const slideDefaults = (i: 0 | 1 | 2) => {
+  const s = SCROLL_MATTIS_ITEMS[i];
+  const n = (i + 1) as 1 | 2 | 3;
+  return {
+    [`slide${n}Url`]: s.src,
+    [`slide${n}BgWord`]: s.bgWord,
+    [`slide${n}Title`]: s.title,
+    [`slide${n}Category1`]: s.categories[0],
+    [`slide${n}Category2`]: s.categories[1],
+    [`slide${n}Year`]: s.year,
+  } as Pick<
+    ScrollMattisContent,
+    | 'slide1Url'
+    | 'slide2Url'
+    | 'slide3Url'
+    | 'slide1BgWord'
+    | 'slide2BgWord'
+    | 'slide3BgWord'
+    | 'slide1Title'
+    | 'slide2Title'
+    | 'slide3Title'
+    | 'slide1Category1'
+    | 'slide1Category2'
+    | 'slide2Category1'
+    | 'slide2Category2'
+    | 'slide3Category1'
+    | 'slide3Category2'
+    | 'slide1Year'
+    | 'slide2Year'
+    | 'slide3Year'
+  >;
+};
+
 const VI: ScrollMattisContent = {
   portfolioLabel: 'PORTFOLIO',
-  slide1ImageUrl:
-    'https://d10zufojjcedud.cloudfront.net/uploads/4d265660-8757-4da1-875d-29b776737f57/scroll_mattis_m1.jpg',
-  slide3ImageUrl:
-    'https://d10zufojjcedud.cloudfront.net/uploads/05f6ad58-40dc-4c33-8ee2-5b199402fa0d/scroll_mattis_m2.webp',
+  ...slideDefaults(0),
+  ...slideDefaults(1),
+  ...slideDefaults(2),
+  slide1Url: SLIDE1_S3_URL,
+  slide3Url: SLIDE3_S3_URL,
 };
 const EN: ScrollMattisContent = { ...VI };
 
@@ -38,18 +80,114 @@ export const scrollMattisDef: BlockDef<ScrollMattisContent> = {
   component: ScrollMattis,
   defaultContent: { vi: VI, en: EN },
   elements: [
-    {
-      key: 'slide1ImageUrl',
-      label: 'Ảnh slide 1',
-      icon: ImageIcon,
-      fieldType: 'image',
-    },
-    {
-      key: 'slide3ImageUrl',
-      label: 'Ảnh slide 3',
-      icon: ImageIcon,
-      fieldType: 'image',
-    },
     { key: 'portfolioLabel', label: 'Nhãn góc', icon: Type, fieldType: 'text' },
+    {
+      key: 'slide1Url',
+      label: 'Slide 1 — media',
+      icon: ImageIcon,
+      fieldType: 'image',
+    },
+    {
+      key: 'slide1BgWord',
+      label: 'Slide 1 — chữ chạy',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide1Title',
+      label: 'Slide 1 — title',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide1Category1',
+      label: 'Slide 1 — category 1',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide1Category2',
+      label: 'Slide 1 — category 2',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide1Year',
+      label: 'Slide 1 — năm',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide2Url',
+      label: 'Slide 2 — media',
+      icon: ImageIcon,
+      fieldType: 'image',
+    },
+    {
+      key: 'slide2BgWord',
+      label: 'Slide 2 — chữ chạy',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide2Title',
+      label: 'Slide 2 — title',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide2Category1',
+      label: 'Slide 2 — category 1',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide2Category2',
+      label: 'Slide 2 — category 2',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide2Year',
+      label: 'Slide 2 — năm',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide3Url',
+      label: 'Slide 3 — media',
+      icon: ImageIcon,
+      fieldType: 'image',
+    },
+    {
+      key: 'slide3BgWord',
+      label: 'Slide 3 — chữ chạy',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide3Title',
+      label: 'Slide 3 — title',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide3Category1',
+      label: 'Slide 3 — category 1',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide3Category2',
+      label: 'Slide 3 — category 2',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'slide3Year',
+      label: 'Slide 3 — năm',
+      icon: Type,
+      fieldType: 'text',
+    },
   ],
 };

@@ -1,11 +1,12 @@
 /**
  * BlockDef cho `hero_scroll` — hero scroll-reveal cinematic: 4 ảnh (m1-m4)
  * xếp chồng, mỗi ảnh fullscreen rồi thu nhỏ về khung giữa theo scroll; ảnh sau
- * lộ ra khi ảnh trước còn ~40%. Default content trỏ thẳng URL S3 (uploaded
- * 2026-07-10) thay vì asset local — src/assets/images/hero_scroll/*.png vẫn
- * giữ làm fallback cuối cùng trong HeroScroll.tsx cho block cũ chưa có field.
+ * lộ ra khi ảnh trước còn ~40%. Title/subtitle + 4 ảnh đều content editable.
+ * Default trỏ URL S3 (uploaded 2026-07-10) thay vì asset local —
+ * src/assets/images/hero_scroll/*.png vẫn giữ làm fallback cuối cùng trong
+ * HeroScroll.tsx cho block cũ chưa có field.
  */
-import { ImageIcon, Type } from 'lucide-react';
+import { Image as ImageIcon, Type } from 'lucide-react';
 
 import { HeroScroll } from '../../HeroScroll';
 import type { HeroScrollContent } from '../../../types';
@@ -49,11 +50,11 @@ export const heroScrollDef: BlockDef<HeroScrollContent> = {
   component: HeroScroll,
   defaultContent: { vi: VI, en: EN },
   elements: [
+    { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+    { key: 'subtitle', label: 'Phụ đề', icon: Type, fieldType: 'text' },
     { key: 'image1Url', label: 'Ảnh 1', icon: ImageIcon, fieldType: 'image' },
     { key: 'image2Url', label: 'Ảnh 2', icon: ImageIcon, fieldType: 'image' },
     { key: 'image3Url', label: 'Ảnh 3', icon: ImageIcon, fieldType: 'image' },
     { key: 'image4Url', label: 'Ảnh 4', icon: ImageIcon, fieldType: 'image' },
-    { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
-    { key: 'subtitle', label: 'Phụ đề', icon: Type, fieldType: 'text' },
   ],
 };
