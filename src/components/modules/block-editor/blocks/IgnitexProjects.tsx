@@ -6,6 +6,7 @@ import type {
   BlockBackground,
   ElementPositionsMap,
   ElementStylesMap,
+  IgnitexProjectItem,
   IgnitexProjectsContent,
 } from '../types';
 import {
@@ -27,6 +28,69 @@ interface IgnitexProjectsProps {
   className?: string;
 }
 
+interface ProjectCardProps {
+  item: IgnitexProjectItem;
+  index: number;
+  activeKey?: string | null;
+  styleOf: (key: string) => React.CSSProperties | undefined;
+}
+
+const ProjectCard = ({ item, index, activeKey, styleOf }: ProjectCardProps) => {
+  const imageKey = `items[${index}].imageUrl`;
+  const nameKey = `items[${index}].name`;
+  const tagKey = `items[${index}].tag`;
+
+  return (
+    <a
+      href='#'
+      onClick={e => e.preventDefault()}
+      className='group flex flex-col'
+    >
+      <div
+        data-element-key={imageKey}
+        style={styleOf(imageKey)}
+        className={selectableClass(
+          activeKey === imageKey,
+          'relative aspect-[4/3] overflow-hidden rounded-xl'
+        )}
+      >
+        {item.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.imageUrl}
+            alt={item.name}
+            className='pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105'
+          />
+        ) : (
+          <div className='pointer-events-none absolute inset-0 bg-[#1a1a1a]' />
+        )}
+      </div>
+      <div className='mt-4 flex items-baseline justify-between gap-3'>
+        <h3
+          data-element-key={nameKey}
+          style={styleOf(nameKey)}
+          className={selectableClass(
+            activeKey === nameKey,
+            'text-xl font-medium'
+          )}
+        >
+          {item.name}
+        </h3>
+        <span
+          data-element-key={tagKey}
+          style={styleOf(tagKey)}
+          className={selectableClass(
+            activeKey === tagKey,
+            'shrink-0 text-xs tracking-wide text-white/45 uppercase'
+          )}
+        >
+          {item.tag}
+        </span>
+      </div>
+    </a>
+  );
+};
+
 /** IgniteX projects — lưới project (ảnh + tên + tag) nền tối. 1/2 cột. */
 export function IgnitexProjects({
   content,
@@ -44,6 +108,7 @@ export function IgnitexProjects({
       positionStyle(positions, k)
     );
   const items = content.items ?? [];
+
   return (
     <div
       style={blockBackgroundStyle(background)}
@@ -64,44 +129,26 @@ export function IgnitexProjects({
           >
             {content.title}
           </h2>
-          <span className='font-serif text-sm text-white/40 italic'>
+          <span
+            data-element-key='count'
+            style={styleOf('count')}
+            className={selectableClass(
+              activeKey === 'count',
+              'font-serif text-sm text-white/40 italic'
+            )}
+          >
             {content.count}
           </span>
         </div>
-        <div
-          data-element-key='items'
-          style={styleOf('items')}
-          className={selectableClass(
-            activeKey === 'items',
-            'grid grid-cols-1 gap-6 @xl:grid-cols-2'
-          )}
-        >
+        <div className='grid grid-cols-1 gap-6 @xl:grid-cols-2'>
           {items.map((it, i) => (
-            <a
+            <ProjectCard
               key={i}
-              href='#'
-              onClick={e => e.preventDefault()}
-              className='group flex flex-col'
-            >
-              <div className='relative aspect-[4/3] overflow-hidden rounded-xl'>
-                {it.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={it.imageUrl}
-                    alt={it.name}
-                    className='absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105'
-                  />
-                ) : (
-                  <div className='absolute inset-0 bg-[#1a1a1a]' />
-                )}
-              </div>
-              <div className='mt-4 flex items-baseline justify-between'>
-                <h3 className='text-xl font-medium'>{it.name}</h3>
-                <span className='text-xs tracking-wide text-white/45 uppercase'>
-                  {it.tag}
-                </span>
-              </div>
-            </a>
+              item={it}
+              index={i}
+              activeKey={activeKey}
+              styleOf={styleOf}
+            />
           ))}
         </div>
       </div>

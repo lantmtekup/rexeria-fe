@@ -18,6 +18,10 @@ import { BlockEditorHeader } from '@/components/modules/block-editor/BlockEditor
 import { BlockEditorSidebar } from '@/components/modules/block-editor/BlockEditorSidebar';
 import { BlockPreview } from '@/components/modules/block-editor/BlockPreview';
 import { BlockTabBar } from '@/components/modules/block-editor/BlockTabBar';
+import {
+  getContentAt,
+  setContentAt,
+} from '@/components/modules/block-editor/contentPath';
 import { DuplicateTemplateDialog } from '@/components/modules/block-editor/DuplicateTemplateDialog';
 import { SaveBlockDialog } from '@/components/modules/block-editor/SaveBlockDialog';
 import { ElementToolbar } from '@/components/modules/block-editor/ElementToolbar';
@@ -194,6 +198,7 @@ export function BlockEditor({
     onElementSelect: selection.selectKey,
   });
   const publishState = usePublishState();
+  const [fitRequestKey, setFitRequestKey] = React.useState(0);
 
   // Autosave — payload built from latest canvas + publish state at save time.
   const autosave = useAutosave({
@@ -833,7 +838,8 @@ export function BlockEditor({
     const current =
       (editVariant === 'mobile' ? langContent.mobile : undefined) ??
       langContent.desktop;
-    if ((current as Record<string, unknown>)[key] === value) {
+    const currentRecord = current as Record<string, unknown>;
+    if (getContentAt(currentRecord, key) === value) {
       selection.endInlineEdit();
       return;
     }
@@ -842,10 +848,11 @@ export function BlockEditor({
       const baseContent =
         (editVariant === 'mobile' ? variants.mobile : undefined) ??
         variants.desktop;
-      const nextContent: BlockContent = {
-        ...(baseContent as Record<string, unknown>),
-        [key]: value,
-      } as BlockContent;
+      const nextContent = setContentAt(
+        baseContent as Record<string, unknown>,
+        key,
+        value
+      ) as BlockContent;
       b[langKey] = { ...variants, [editVariant]: nextContent };
     });
     autosave.markDirty();
@@ -1153,6 +1160,12 @@ export function BlockEditor({
     | BlockMotion
     | undefined;
 
+  // Eye → overlay PreviewMode (layout/render khớp /dev/blocks, không mở tab).
+  // Live canvas — xem đúng bản đang edit (kể cả chưa lưu).
+  const handlePreview = () => {
+    setPreviewing(true);
+  };
+
   return (
     <div className='relative flex h-full min-h-0 flex-1 flex-col bg-neutral-100'>
       <BlockEditorHeader
@@ -1187,7 +1200,7 @@ export function BlockEditor({
             />
           )
         }
-        onPreview={() => setPreviewing(true)}
+        onPreview={handlePreview}
         onUndo={() => {
           canvas.undo();
           autosave.markDirty();
@@ -1263,7 +1276,8 @@ export function BlockEditor({
       )}
 
       <div className='relative flex min-h-0 flex-1 overflow-hidden'>
-        <div className='flex min-h-0 min-w-0 flex-1 flex-col'>
+        <div className='relative flex min-h-0 min-w-0 flex-1 flex-col'>
+          {/* Overlay toolbar — absolute so show/hide never pushes the canvas. */}
           {activeBlock && selectedExtraElementId ? (
             (() => {
               const el = activeBlock.extraElements?.find(
@@ -1271,43 +1285,51 @@ export function BlockEditor({
               );
               if (!el) return null;
               return (
-                <ExtraElementToolbar
-                  element={el}
-                  onChange={patch =>
-                    handlePatchExtraElement(selectedExtraElementId, patch)
-                  }
-                  onDelete={() =>
-                    handleRemoveExtraElement(selectedExtraElementId)
-                  }
-                  onClose={() => setSelectedExtraElementId(null)}
-                  onBringToFront={() =>
-                    handleBringExtraToFront(selectedExtraElementId)
-                  }
-                  onSendToBack={() =>
-                    handleSendExtraToBack(selectedExtraElementId)
-                  }
-                />
+                <div className='pointer-events-none absolute inset-x-0 top-0 z-40'>
+                  <div className='pointer-events-auto'>
+                    <ExtraElementToolbar
+                      element={el}
+                      onChange={patch =>
+                        handlePatchExtraElement(selectedExtraElementId, patch)
+                      }
+                      onDelete={() =>
+                        handleRemoveExtraElement(selectedExtraElementId)
+                      }
+                      onClose={() => setSelectedExtraElementId(null)}
+                      onBringToFront={() =>
+                        handleBringExtraToFront(selectedExtraElementId)
+                      }
+                      onSendToBack={() =>
+                        handleSendExtraToBack(selectedExtraElementId)
+                      }
+                    />
+                  </div>
+                </div>
               );
             })()
           ) : activeBlock ? (
-            <ElementToolbar
-              block={activeBlock}
-              lang={deviceState.lang}
-              device={deviceState.device}
-              selectedKey={selection.selectedKey}
-              onClose={() => selection.selectKey(null)}
-              onContentChange={updateActiveContent}
-              onUpdateStyle={patch => {
-                if (!selection.selectedKey) return;
-                handleUpdateElementStyle(selection.selectedKey, patch);
-              }}
-              onResetStyle={() => {
-                if (!selection.selectedKey) return;
-                handleResetElementStyle(selection.selectedKey);
-              }}
-              onUpdateBackground={handleUpdateBackground}
-              onSyncVariant={syncVariant}
-            />
+            <div className='pointer-events-none absolute inset-x-0 top-0 z-40'>
+              <div className='pointer-events-auto'>
+                <ElementToolbar
+                  block={activeBlock}
+                  lang={deviceState.lang}
+                  device={deviceState.device}
+                  selectedKey={selection.selectedKey}
+                  onClose={() => selection.selectKey(null)}
+                  onContentChange={updateActiveContent}
+                  onUpdateStyle={patch => {
+                    if (!selection.selectedKey) return;
+                    handleUpdateElementStyle(selection.selectedKey, patch);
+                  }}
+                  onResetStyle={() => {
+                    if (!selection.selectedKey) return;
+                    handleResetElementStyle(selection.selectedKey);
+                  }}
+                  onUpdateBackground={handleUpdateBackground}
+                  onSyncVariant={syncVariant}
+                />
+              </div>
+            </div>
           ) : null}
           {activeBlock ? (
             <BlockPreview
@@ -1322,10 +1344,13 @@ export function BlockEditor({
               onCommitInlineEdit={handleCommitInlineEdit}
               onCancelInlineEdit={selection.endInlineEdit}
               onCommitElementPosition={handleCommitElementPosition}
+              onContentChange={updateActiveContent}
               motionMode={motionPreview.previewing ? 'preview' : 'edit'}
               motionPreviewNonce={motionPreview.nonce}
               motionPreviewElement={motionPreview.previewElement}
               onAutoFitZoom={deviceState.applyAutoFitZoom}
+              onZoomChange={deviceState.setZoom}
+              fitRequestKey={fitRequestKey}
               selectedExtraElementId={selectedExtraElementId}
               onSelectExtraElement={setSelectedExtraElementId}
               onCommitExtraElementPosition={handleCommitExtraElementPosition}
@@ -1343,6 +1368,7 @@ export function BlockEditor({
             onRemove={handleRemoveBlock}
             onReorder={handleReorderBlocks}
             onZoomChange={deviceState.setZoom}
+            onFitToFrame={() => setFitRequestKey(k => k + 1)}
             hideTabs={blockMode}
           />
         </div>

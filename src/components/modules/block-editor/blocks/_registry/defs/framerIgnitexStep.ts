@@ -103,18 +103,22 @@ export const framerIgnitexStepDef: BlockDef<FramerIgnitexStepContent> = {
     ...(VI.cards.flatMap((_, idx): LayerElement[] => [
       {
         key: `card-${idx}`,
-        label: `Card ${idx + 1} (khung)`,
+        label: 'khung',
+        groupId: `card-${idx}`,
+        groupLabel: `Card ${idx + 1}`,
         icon: Type,
       },
       {
         key: `card-${idx}-title`,
-        label: `Card ${idx + 1} title`,
+        label: 'title',
+        groupId: `card-${idx}`,
         icon: Type,
         fieldType: 'text',
       },
       {
         key: `card-${idx}-body`,
-        label: `Card ${idx + 1} body`,
+        label: 'body',
+        groupId: `card-${idx}`,
         icon: Pilcrow,
         fieldType: 'textarea',
       },

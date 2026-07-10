@@ -86,24 +86,29 @@ export const framerFlatWhiteProcessDef: BlockDef<FramerFlatWhiteProcessContent> 
       ...(VI.steps.flatMap((_, idx): LayerElement[] => [
         {
           key: `step-${idx}`,
-          label: `Step ${idx + 1} (khung)`,
+          label: 'khung',
+          groupId: `step-${idx}`,
+          groupLabel: `Step ${idx + 1}`,
           icon: Type,
         },
         {
           key: `step-${idx}-pill`,
-          label: `Step ${idx + 1} pill`,
+          label: 'pill',
+          groupId: `step-${idx}`,
           icon: Type,
           fieldType: 'text',
         },
         {
           key: `step-${idx}-title`,
-          label: `Step ${idx + 1} title`,
+          label: 'title',
+          groupId: `step-${idx}`,
           icon: Pilcrow,
           fieldType: 'textarea',
         },
         {
           key: `step-${idx}-body`,
-          label: `Step ${idx + 1} body`,
+          label: 'body',
+          groupId: `step-${idx}`,
           icon: Pilcrow,
           fieldType: 'textarea',
         },

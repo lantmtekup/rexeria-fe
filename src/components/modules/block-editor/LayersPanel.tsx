@@ -23,10 +23,12 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
+  ChevronRight,
   FormInput,
   Grid3x3,
   GripVertical,
   Image as ImageIcon,
+  Layers as LayersIcon,
   ListChecks,
   MousePointerClick,
   Paintbrush,
@@ -60,6 +62,53 @@ export interface LayerElement {
    * phải đoán theo tên key. Bỏ trống → fallback heuristic cũ.
    */
   fieldType?: 'text' | 'textarea' | 'image';
+  /**
+   * Cùng `groupId` → gom thành 1 folder collapsible trong panel Lớp.
+   * Opt-in: block không khai vẫn list phẳng.
+   */
+  groupId?: string;
+  /** Nhãn group (vd. "Slide 1") — chỉ cần trên phần tử đầu của group. */
+  groupLabel?: string;
+}
+
+/** View-model node for the layers tree (1-level groups). */
+export type LayerTreeNode =
+  | { kind: 'leaf'; element: LayerElement }
+  | {
+      kind: 'group';
+      groupId: string;
+      label: string;
+      children: LayerElement[];
+    };
+
+/**
+ * Build a 1-level tree from ordered elements. Contiguous runs that share
+ * `groupId` become a group; everything else stays a top-level leaf.
+ */
+export function buildLayerTree(ordered: LayerElement[]): LayerTreeNode[] {
+  const nodes: LayerTreeNode[] = [];
+  let i = 0;
+  while (i < ordered.length) {
+    const el = ordered[i];
+    if (!el.groupId) {
+      nodes.push({ kind: 'leaf', element: el });
+      i += 1;
+      continue;
+    }
+    const groupId = el.groupId;
+    const children: LayerElement[] = [];
+    while (i < ordered.length && ordered[i].groupId === groupId) {
+      children.push(ordered[i]);
+      i += 1;
+    }
+    nodes.push({
+      kind: 'group',
+      groupId,
+      label: children[0]?.groupLabel ?? groupId,
+      children,
+    });
+  }
+  return nodes;
 }
 
 interface LayersPanelProps {
@@ -532,6 +581,11 @@ export function LayersPanel({
     () => elementsForType(block.blockType),
     [block.blockType]
   );
+  const elementByKey = React.useMemo(() => {
+    const map = new Map<string, LayerElement>();
+    for (const e of baseElements) map.set(e.key, e);
+    return map;
+  }, [baseElements]);
 
   // Stored order for the active variant (or fall back to the natural order).
   // Background layer is never reorderable so we keep it pinned at top.
@@ -543,23 +597,85 @@ export function LayersPanel({
   );
   // Merge: any keys in storedOrder first (filtered to existing), then any
   // baseElement keys not yet in stored order (handles new fields gracefully).
+  // Always pin background at index 0.
   const order = React.useMemo<string[]>(() => {
-    if (!storedOrder?.length) return naturalOrder;
+    const withoutBg = (keys: string[]) =>
+      keys.filter(k => k !== BACKGROUND_LAYER_KEY);
+    if (!storedOrder?.length) {
+      return naturalOrder[0] === BACKGROUND_LAYER_KEY
+        ? naturalOrder
+        : [BACKGROUND_LAYER_KEY, ...withoutBg(naturalOrder)];
+    }
     const set = new Set(storedOrder);
     const merged = [
       ...storedOrder.filter(k => baseElements.some(e => e.key === k)),
       ...naturalOrder.filter(k => !set.has(k)),
     ];
-    return merged;
+    return [BACKGROUND_LAYER_KEY, ...withoutBg(merged)];
   }, [storedOrder, naturalOrder, baseElements]);
 
   const orderedElements = React.useMemo(
     () =>
       order
-        .map(key => baseElements.find(e => e.key === key))
+        .map(key => elementByKey.get(key))
         .filter((e): e is LayerElement => Boolean(e)),
-    [order, baseElements]
+    [order, elementByKey]
   );
+
+  const tree = React.useMemo(
+    () => buildLayerTree(orderedElements),
+    [orderedElements]
+  );
+  const hasGroups = tree.some(n => n.kind === 'group');
+
+  // Collapse state — default open; persist per block in sessionStorage.
+  const collapseStorageKey = `layers-collapsed:${block.id}`;
+  const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
+  const skipCollapseSaveRef = React.useRef(true);
+
+  React.useEffect(() => {
+    skipCollapseSaveRef.current = true;
+    try {
+      const raw = sessionStorage.getItem(collapseStorageKey);
+      setCollapsed(raw ? (JSON.parse(raw) as Record<string, boolean>) : {});
+    } catch {
+      setCollapsed({});
+    }
+  }, [collapseStorageKey]);
+
+  React.useEffect(() => {
+    if (skipCollapseSaveRef.current) {
+      skipCollapseSaveRef.current = false;
+      return;
+    }
+    try {
+      sessionStorage.setItem(collapseStorageKey, JSON.stringify(collapsed));
+    } catch {
+      /* ignore quota */
+    }
+  }, [collapseStorageKey, collapsed]);
+
+  // Auto-expand group that contains the selected key.
+  React.useEffect(() => {
+    if (!selectedKey) return;
+    const el = elementByKey.get(selectedKey);
+    if (!el?.groupId) return;
+    setCollapsed(prev => {
+      if (!prev[el.groupId!]) return prev;
+      const next = { ...prev };
+      delete next[el.groupId!];
+      return next;
+    });
+  }, [selectedKey, elementByKey]);
+
+  const toggleGroup = (groupId: string) => {
+    setCollapsed(prev => {
+      const next = { ...prev };
+      if (next[groupId]) delete next[groupId];
+      else next[groupId] = true;
+      return next;
+    });
+  };
 
   // Mouse + touch sensors split — TouchSensor needs a small delay to
   // distinguish drag from scroll on mobile. MouseSensor uses distance so
@@ -592,20 +708,46 @@ export function LayersPanel({
     setDragState(s => ({ ...s, overKey: (event.over?.id as string) ?? null }));
   };
 
+  const sameReorderScope = (a: string, b: string) => {
+    if (a === BACKGROUND_LAYER_KEY || b === BACKGROUND_LAYER_KEY) return false;
+    const ga = elementByKey.get(a)?.groupId ?? null;
+    const gb = elementByKey.get(b)?.groupId ?? null;
+    return ga === gb;
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     let didReorder = false;
     if (over && active.id !== over.id) {
-      const oldIndex = order.indexOf(active.id as string);
-      const newIndex = order.indexOf(over.id as string);
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const next = arrayMove(order, oldIndex, newIndex);
-        onReorder?.(next);
-        didReorder = true;
+      const activeId = active.id as string;
+      const overId = over.id as string;
+      if (sameReorderScope(activeId, overId)) {
+        const scopeId = elementByKey.get(activeId)?.groupId ?? null;
+        // Reorder only within the scope slice so groups stay contiguous.
+        const scopeKeys = order.filter(k => {
+          if (k === BACKGROUND_LAYER_KEY) return false;
+          const g = elementByKey.get(k)?.groupId ?? null;
+          return g === scopeId;
+        });
+        const oldInScope = scopeKeys.indexOf(activeId);
+        const newInScope = scopeKeys.indexOf(overId);
+        if (oldInScope !== -1 && newInScope !== -1) {
+          const nextScope = arrayMove(scopeKeys, oldInScope, newInScope);
+          let si = 0;
+          const next = order.map(k => {
+            if (k === BACKGROUND_LAYER_KEY) return k;
+            const g = elementByKey.get(k)?.groupId ?? null;
+            if (g !== scopeId) return k;
+            const replaced = nextScope[si];
+            si += 1;
+            return replaced;
+          });
+          onReorder?.(next);
+          didReorder = true;
+        }
       }
     }
     setDragState({ activeKey: null, overKey: null, didReorder });
-    // Clear `didReorder` flash after a short delay.
     if (didReorder) {
       window.setTimeout(
         () => setDragState(s => ({ ...s, didReorder: false })),
@@ -619,7 +761,7 @@ export function LayersPanel({
   };
 
   const labelOf = (key: string | null) =>
-    key ? (baseElements.find(e => e.key === key)?.label ?? key) : null;
+    key ? (elementByKey.get(key)?.label ?? key) : null;
 
   // Suppress unused warning for `variant` — kept for potential future variant-aware UI.
   void variant;
@@ -631,6 +773,11 @@ export function LayersPanel({
       </div>
     );
   }
+
+  // Sortable ids: everything except pinned background.
+  const sortableIds = orderedElements
+    .filter(e => e.key !== BACKGROUND_LAYER_KEY)
+    .map(e => e.key);
 
   // Drive a visible status banner so users can confirm the drag system is alive.
   const isDragging = dragState.activeKey !== null;
@@ -646,7 +793,43 @@ export function LayersPanel({
         : '')
     : dragState.didReorder
       ? '✓ Đã đổi thứ tự'
-      : 'Sẵn sàng — kéo lớp để sắp xếp';
+      : hasGroups
+        ? 'Sẵn sàng — kéo trong cùng nhóm để sắp xếp'
+        : 'Sẵn sàng — kéo lớp để sắp xếp';
+
+  const renderLeaf = (element: LayerElement, nested: boolean) => {
+    const isOver = dragState.overKey === element.key;
+    const overFromAbove =
+      isOver &&
+      dragState.activeKey !== null &&
+      order.indexOf(dragState.activeKey) > order.indexOf(element.key);
+    const pinned = element.key === BACKGROUND_LAYER_KEY;
+    return (
+      <LayerRow
+        key={element.key}
+        element={element}
+        active={selectedKey === element.key}
+        nested={nested}
+        pinned={pinned}
+        isAnyDragging={dragState.activeKey !== null}
+        dropIndicator={isOver ? (overFromAbove ? 'above' : 'below') : null}
+        hasStyle={
+          element.key === BACKGROUND_LAYER_KEY
+            ? !!block.background?.desktop
+            : !!block.elementStyles?.desktop?.[element.key]
+        }
+        color={
+          element.key === BACKGROUND_LAYER_KEY
+            ? block.background?.desktop?.color
+            : block.elementStyles?.desktop?.[element.key]?.color
+        }
+        mobileOverride={hasMobileOverride(block, element.key)}
+        onSelect={() =>
+          onSelectKey(selectedKey === element.key ? null : element.key)
+        }
+      />
+    );
+  };
 
   return (
     <div
@@ -698,42 +881,30 @@ export function LayersPanel({
         onDragCancel={handleDragCancel}
       >
         <SortableContext
-          items={orderedElements.map(e => e.key)}
+          items={sortableIds}
           strategy={verticalListSortingStrategy}
         >
           <div className='flex flex-col gap-1.5'>
-            {orderedElements.map(element => {
-              const isOver = dragState.overKey === element.key;
-              const overFromAbove =
-                isOver &&
-                dragState.activeKey !== null &&
-                order.indexOf(dragState.activeKey) > order.indexOf(element.key);
+            {tree.map(node => {
+              if (node.kind === 'leaf') {
+                return renderLeaf(node.element, false);
+              }
+              const isCollapsed = !!collapsed[node.groupId];
+              const childSelected = node.children.some(
+                c => c.key === selectedKey
+              );
               return (
-                <LayerRow
-                  key={element.key}
-                  element={element}
-                  active={selectedKey === element.key}
-                  isAnyDragging={dragState.activeKey !== null}
-                  dropIndicator={
-                    isOver ? (overFromAbove ? 'above' : 'below') : null
-                  }
-                  hasStyle={
-                    element.key === BACKGROUND_LAYER_KEY
-                      ? !!block.background?.desktop
-                      : !!block.elementStyles?.desktop?.[element.key]
-                  }
-                  color={
-                    element.key === BACKGROUND_LAYER_KEY
-                      ? block.background?.desktop?.color
-                      : block.elementStyles?.desktop?.[element.key]?.color
-                  }
-                  mobileOverride={hasMobileOverride(block, element.key)}
-                  onSelect={() =>
-                    onSelectKey(
-                      selectedKey === element.key ? null : element.key
-                    )
-                  }
-                />
+                <div key={node.groupId} className='flex flex-col gap-1'>
+                  <GroupHeader
+                    label={node.label}
+                    count={node.children.length}
+                    collapsed={isCollapsed}
+                    highlight={childSelected}
+                    onToggle={() => toggleGroup(node.groupId)}
+                  />
+                  {!isCollapsed &&
+                    node.children.map(child => renderLeaf(child, true))}
+                </div>
               );
             })}
           </div>
@@ -748,9 +919,7 @@ export function LayersPanel({
         >
           {dragState.activeKey
             ? (() => {
-                const el = baseElements.find(
-                  e => e.key === dragState.activeKey
-                );
+                const el = elementByKey.get(dragState.activeKey);
                 if (!el) return null;
                 return <DragGhost element={el} />;
               })()
@@ -758,9 +927,49 @@ export function LayersPanel({
         </DragOverlay>
       </DndContext>
       <p className='text-3xs mt-1 text-neutral-400'>
-        Click 1 lớp để mở popup chỉnh sửa. Kéo (≥4px) để sắp xếp lại.
+        {hasGroups
+          ? 'Click lớp để chỉnh sửa. Kéo trong cùng nhóm để sắp xếp.'
+          : 'Click 1 lớp để mở popup chỉnh sửa. Kéo (≥4px) để sắp xếp lại.'}
       </p>
     </div>
+  );
+}
+
+function GroupHeader({
+  label,
+  count,
+  collapsed,
+  highlight,
+  onToggle,
+}: {
+  label: string;
+  count: number;
+  collapsed: boolean;
+  highlight: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type='button'
+      onClick={onToggle}
+      aria-expanded={!collapsed}
+      className={cn(
+        'flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors',
+        highlight
+          ? 'bg-sky-50 text-sky-900'
+          : 'bg-neutral-100/80 text-neutral-700 hover:bg-neutral-100'
+      )}
+    >
+      <ChevronRight
+        className={cn(
+          'size-3.5 shrink-0 text-neutral-500 transition-transform',
+          !collapsed && 'rotate-90'
+        )}
+      />
+      <LayersIcon className='size-3.5 shrink-0 text-neutral-500' />
+      <span className='flex-1 truncate text-xs font-semibold'>{label}</span>
+      <span className='text-3xs text-neutral-400 tabular-nums'>{count}</span>
+    </button>
   );
 }
 
@@ -771,6 +980,8 @@ function LayerRow({
   mobileOverride,
   isAnyDragging,
   dropIndicator,
+  nested,
+  pinned,
   onSelect,
 }: {
   element: LayerElement;
@@ -782,6 +993,9 @@ function LayerRow({
   isAnyDragging: boolean;
   /** Where the drop indicator line should render relative to this row. */
   dropIndicator: 'above' | 'below' | null;
+  nested?: boolean;
+  /** Background — not draggable. */
+  pinned?: boolean;
   onSelect: () => void;
 }) {
   const {
@@ -792,7 +1006,7 @@ function LayerRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: element.key });
+  } = useSortable({ id: element.key, disabled: pinned });
 
   const sortableStyle: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -810,6 +1024,7 @@ function LayerRow({
       data-dragging={isDragging ? 'true' : undefined}
       className={cn(
         'group relative flex items-center gap-2 rounded-md border bg-white px-2 py-2 transition-all select-none',
+        nested && 'ml-4',
         active
           ? 'border-sky-500 ring-1 ring-sky-500'
           : 'border-neutral-200 hover:border-sky-400 hover:bg-sky-50/50',
@@ -820,7 +1035,7 @@ function LayerRow({
       )}
     >
       {/* ── Drop indicator line (Figma/Canva style) ────────────────────── */}
-      {dropIndicator && (
+      {dropIndicator && !pinned && (
         <span
           aria-hidden
           className={cn(
@@ -837,22 +1052,31 @@ function LayerRow({
       )}
 
       {/* ── Dedicated drag handle (clearer affordance, like Notion/Figma) */}
-      <button
-        ref={setActivatorNodeRef}
-        type='button'
-        {...attributes}
-        {...listeners}
-        aria-label={`Kéo để sắp xếp ${element.label}`}
-        title='Kéo để sắp xếp'
-        data-testid={`layer-drag-handle-${element.key}`}
-        className={cn(
-          'flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded transition-colors select-none active:cursor-grabbing',
-          'text-neutral-300 hover:bg-sky-100 hover:text-sky-700',
-          isDragging && 'cursor-grabbing bg-sky-100 text-sky-700'
-        )}
-      >
-        <GripVertical className='size-4' />
-      </button>
+      {pinned ? (
+        <span
+          className='flex size-7 shrink-0 items-center justify-center text-neutral-200'
+          aria-hidden
+        >
+          <GripVertical className='size-4' />
+        </span>
+      ) : (
+        <button
+          ref={setActivatorNodeRef}
+          type='button'
+          {...attributes}
+          {...listeners}
+          aria-label={`Kéo để sắp xếp ${element.label}`}
+          title='Kéo để sắp xếp'
+          data-testid={`layer-drag-handle-${element.key}`}
+          className={cn(
+            'flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded transition-colors select-none active:cursor-grabbing',
+            'text-neutral-300 hover:bg-sky-100 hover:text-sky-700',
+            isDragging && 'cursor-grabbing bg-sky-100 text-sky-700'
+          )}
+        >
+          <GripVertical className='size-4' />
+        </button>
+      )}
 
       {/* ── Click target for selection (separate from drag) ──────────── */}
       <button

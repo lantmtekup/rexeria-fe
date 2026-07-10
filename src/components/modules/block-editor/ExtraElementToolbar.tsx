@@ -88,7 +88,7 @@ export function ExtraElementToolbar({
 }: Props) {
   const Icon = KIND_ICON[element.kind];
   return (
-    <div className='flex h-10 shrink-0 items-center gap-2 border-b border-sky-200/80 bg-sky-50/60 px-3 text-xs'>
+    <div className='mx-3 mt-3 flex h-11 items-center gap-2.5 rounded-xl border border-sky-200/70 bg-sky-50/95 px-3.5 text-xs shadow-[0_8px_30px_rgba(15,15,15,0.05)] backdrop-blur-md'>
       <span className='inline-flex items-center gap-1.5 font-semibold text-sky-900'>
         <Icon className='size-3.5' />
         {KIND_LABEL[element.kind]}
