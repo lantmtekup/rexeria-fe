@@ -246,7 +246,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'badge', label: 'Badge', icon: Type },
     { key: 'heading', label: 'Tiêu đề', icon: Type },
     { key: 'body', label: 'Mô tả', icon: Pilcrow },
-    { key: 'items', label: 'Satellite items', icon: Grid3x3 },
   ],
   framer_perform_pricing: [
     BACKGROUND_LAYER,

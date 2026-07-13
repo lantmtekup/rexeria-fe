@@ -3,17 +3,12 @@
  * `recon-ignitex-step-section` (selector `[data-framer-name='Step Section']`,
  * URL https://ignitex-wbs.framer.website/).
  *
- * Animation spec được port sang GSAP R1–R6 (qua `useBlockMotion` trong
- * component):
- *   - Pre-title + 2 title columns + 3 cards: fade-up + opacity
- *     (duration 0.8s, stagger 0.15s, ease 'power3.out' ≈ Framer
- *      `cubic-bezier(0.22, 1, 0.36, 1)`).
- *   - Sparkle icons: continuous rotate (decoration only).
+ * Content phẳng + groupId theo pattern ScrollMattis / Readymag Cases:
+ * mỗi card là 1 folder trong LayersPanel (Card 1…3) với title + body.
  *
- * Component: `blocks/FramerIgnitexStep.tsx`. Renderer tự quản animation
- * qua `useBlockMotion`.
+ * Component: `blocks/FramerIgnitexStep.tsx`.
  */
-import { Pilcrow, Type } from 'lucide-react';
+import { Image as ImageIcon, Pilcrow, Type } from 'lucide-react';
 
 import { FramerIgnitexStep } from '../../FramerIgnitexStep';
 import type { LayerElement } from '../../../LayersPanel';
@@ -26,36 +21,51 @@ const VI: FramerIgnitexStepContent = {
   leftBottom: 'into Brand',
   rightTop: 'transform',
   rightBottom: 'stories',
-  cards: [
-    {
-      title: 'Discover & Define',
-      body: 'We dive deep into your goals, audience, and brand to uncover insights and define a clear direction.',
-      mainImageUrl:
-        'https://framerusercontent.com/images/9pSg9VbHyOzgvjgKg8ZxafAC9Y.svg',
-      subImageUrl:
-        'https://framerusercontent.com/images/ux3d5Re26BvQ1hMY6HFoUzaWtHA.svg',
-    },
-    {
-      title: 'Design & Build',
-      body: 'With strategy in place, we craft stunning visuals and high-performing digital solutions tailored to your needs.',
-      mainImageUrl:
-        'https://framerusercontent.com/images/FKdtn2NzI19PvdqikGNTBvGO8M.svg',
-      subImageUrl:
-        'https://framerusercontent.com/images/nJnhkgaAyHW1ZSoDX71zT6bWucA.svg',
-    },
-    {
-      title: 'Launch & Grow',
-      body: 'We bring your vision to life, optimize for performance, and support your ongoing success post-launch.',
-      mainImageUrl:
-        'https://framerusercontent.com/images/qijKgqD5sm0TZqlD52en6tHZeQ.svg',
-      subImageUrl:
-        'https://framerusercontent.com/images/Q7x7MuONdp0b9SNGrEqqnmMw.svg',
-    },
-  ],
+  card1Title: 'Discover & Define',
+  card1Body:
+    'We dive deep into your goals, audience, and brand to uncover insights and define a clear direction.',
+  card1MainImageUrl:
+    'https://framerusercontent.com/images/9pSg9VbHyOzgvjgKg8ZxafAC9Y.svg',
+  card2Title: 'Design & Build',
+  card2Body:
+    'With strategy in place, we craft stunning visuals and high-performing digital solutions tailored to your needs.',
+  card2MainImageUrl:
+    'https://framerusercontent.com/images/FKdtn2NzI19PvdqikGNTBvGO8M.svg',
+  card3Title: 'Launch & Grow',
+  card3Body:
+    'We bring your vision to life, optimize for performance, and support your ongoing success post-launch.',
+  card3MainImageUrl:
+    'https://framerusercontent.com/images/qijKgqD5sm0TZqlD52en6tHZeQ.svg',
 };
 
-const EN: FramerIgnitexStepContent = {
-  ...VI,
+const EN: FramerIgnitexStepContent = { ...VI };
+
+const cardElements = (n: 1 | 2 | 3): LayerElement[] => {
+  const groupId = `card${n}`;
+  return [
+    {
+      key: `card${n}Title`,
+      label: 'title',
+      groupId,
+      groupLabel: `Card ${n}`,
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: `card${n}Body`,
+      label: 'body',
+      groupId,
+      icon: Pilcrow,
+      fieldType: 'textarea',
+    },
+    {
+      key: `card${n}MainImageUrl`,
+      label: 'ảnh',
+      groupId,
+      icon: ImageIcon,
+      fieldType: 'image',
+    },
+  ];
 };
 
 export const framerIgnitexStepDef: BlockDef<FramerIgnitexStepContent> = {
@@ -74,25 +84,15 @@ export const framerIgnitexStepDef: BlockDef<FramerIgnitexStepContent> = {
   },
   component: FramerIgnitexStep,
   defaultContent: { vi: VI, en: EN },
-  // Element con: pre-title pill, 2 title columns (left + right), và mỗi
-  // card có title + body để user chỉnh text. Illustration giữ SVG glyph
-  // cố định (compass / monitor+phone / rocket) — không editable.
   elements: [
-    { key: 'preTitle', label: 'Pre-title pill', icon: Type, fieldType: 'text' },
-    { key: 'leftColumn', label: 'Left title column', icon: Pilcrow },
+    { key: 'preTitle', label: 'Pre-title', icon: Type, fieldType: 'text' },
     { key: 'leftTop', label: 'Left - dòng 1', icon: Type, fieldType: 'text' },
     {
       key: 'leftBottom',
-      label: 'Left - dòng 2 (chứa Brand ở cuối)',
+      label: 'Left - dòng 2',
       icon: Type,
       fieldType: 'text',
     },
-    {
-      key: 'leftBottom-serif',
-      label: 'Left - chữ Brand (serif, tự động từ từ cuối)',
-      icon: Type,
-    },
-    { key: 'rightColumn', label: 'Right title column', icon: Pilcrow },
     { key: 'rightTop', label: 'Right - dòng 1', icon: Type, fieldType: 'text' },
     {
       key: 'rightBottom',
@@ -100,28 +100,8 @@ export const framerIgnitexStepDef: BlockDef<FramerIgnitexStepContent> = {
       icon: Type,
       fieldType: 'text',
     },
-    ...(VI.cards.flatMap((_, idx): LayerElement[] => [
-      {
-        key: `card-${idx}`,
-        label: 'khung',
-        groupId: `card-${idx}`,
-        groupLabel: `Card ${idx + 1}`,
-        icon: Type,
-      },
-      {
-        key: `card-${idx}-title`,
-        label: 'title',
-        groupId: `card-${idx}`,
-        icon: Type,
-        fieldType: 'text',
-      },
-      {
-        key: `card-${idx}-body`,
-        label: 'body',
-        groupId: `card-${idx}`,
-        icon: Pilcrow,
-        fieldType: 'textarea',
-      },
-    ]) as LayerElement[]),
+    ...cardElements(1),
+    ...cardElements(2),
+    ...cardElements(3),
   ],
 };

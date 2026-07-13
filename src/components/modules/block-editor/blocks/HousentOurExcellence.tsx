@@ -16,12 +16,13 @@ import {
 
 import { cn } from '@/lib/cn';
 
-import { useBlockMotion } from '../motion/LandingMotion';
+import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
 import type {
   BlockBackground,
   ElementPositionsMap,
   ElementStylesMap,
   HousentOurExcellenceContent,
+  HousentOurExcellenceItem,
 } from '../types';
 import {
   blockBackgroundStyle,
@@ -45,26 +46,11 @@ interface HousentOurExcellenceProps {
 /**
  * Housent Our Excellence — radial layout port từ housent.webflow.io.
  *
- * Cấu trúc:
- *  - Section lớn, padding-top scale theo container (60 → 100 → 140 px).
- *  - Center stack (badge pill + heading + body) căn giữa tuyệt đối.
- *  - 8 satellite items đặt theo vòng tròn quanh center (desktop ≥ 896 px)
- *    bằng cách tính (cos/sin)*radius trên từng item; mobile collapse về
- *    vertical icon-list bên dưới center stack.
- *  - Desktop animation (scrub qua outer + sticky inner):
- *      • Outer = track (cao ~220dvh) để có "quãng" scroll để scrub.
- *      • Inner sticky giữ viewport; satellites + center stack scrub reveal
- *        theo tiến trình cuộn: item 0 sớm nhất → item 7 cuối.
- *      • KHÔNG GSAP `pin` — dùng CSS sticky (iOS-safe).
- *  - Mobile/tablet animation: GSAP ScrollTrigger dạng `toggleActions`
- *    (1-shot play on enter, reverse on leave) cho badge → heading → body → satellites.
- *  - Reduced-motion: layout gập về 1 viewport, hiện đầy đủ không animation.
- *  - Tokens tuyền inline (font, color, padding) qua composeStyle(styleOf(key)).
+ * Content phẳng + groupId (ScrollMattis / Readymag Cases):
+ *   item1Label / item1Icon … item8Label / item8Icon.
+ * Editor canvas → lưới editable (không sticky/scrub ẩn satellites).
  */
 
-// ── Icon registry ───────────────────────────────────────────────────
-// icon trong content là string (lucide-react name); map sang component.
-// Thêm icon mới: import + thêm vào đây + (optional) thêm default vào factory.
 const ICONS: Record<string, LucideIcon> = {
   ShieldCheck,
   BarChart3,
@@ -74,6 +60,48 @@ const ICONS: Record<string, LucideIcon> = {
   Briefcase,
   Leaf,
   TrendingUp,
+};
+
+const DEFAULT_ITEMS: HousentOurExcellenceItem[] = [
+  { label: 'Verified Legality', icon: 'ShieldCheck' },
+  { label: 'Market Stability', icon: 'BarChart3' },
+  { label: 'Future Appreciation', icon: 'Sun' },
+  { label: 'Strategic Location', icon: 'MapPin' },
+  { label: 'Seamless Closing', icon: 'KeyRound' },
+  { label: 'Portfolio Diversification', icon: 'Briefcase' },
+  { label: 'Sustainable Growth', icon: 'Leaf' },
+  { label: 'High Yield Potential', icon: 'TrendingUp' },
+];
+
+const ITEM_KEYS = [
+  { label: 'item1Label', icon: 'item1Icon' },
+  { label: 'item2Label', icon: 'item2Icon' },
+  { label: 'item3Label', icon: 'item3Icon' },
+  { label: 'item4Label', icon: 'item4Icon' },
+  { label: 'item5Label', icon: 'item5Icon' },
+  { label: 'item6Label', icon: 'item6Icon' },
+  { label: 'item7Label', icon: 'item7Icon' },
+  { label: 'item8Label', icon: 'item8Icon' },
+] as const;
+
+type ItemFieldKey =
+  (typeof ITEM_KEYS)[number][keyof (typeof ITEM_KEYS)[number]];
+
+const pick = (content: HousentOurExcellenceContent, key: ItemFieldKey) =>
+  content[key]?.trim() || '';
+
+const resolveItems = (
+  content: HousentOurExcellenceContent
+): HousentOurExcellenceItem[] => {
+  const legacy = Array.isArray(content.items) ? content.items : [];
+  const resolved = ITEM_KEYS.map((keys, i) => {
+    const prev = legacy[i] ?? DEFAULT_ITEMS[i];
+    return {
+      label: pick(content, keys.label) || prev?.label || '',
+      icon: pick(content, keys.icon) || prev?.icon || 'ShieldCheck',
+    };
+  }).filter(it => it.label || it.icon);
+  return resolved.length > 0 ? resolved : DEFAULT_ITEMS;
 };
 
 const SECTION_BASE_STYLE: React.CSSProperties = {
@@ -194,10 +222,6 @@ function labelRadialOffset(
   const rad = (angleDeg * Math.PI) / 180;
   const dx = (Math.cos(rad) * distance).toFixed(2);
   const dy = (Math.sin(rad) * distance).toFixed(2);
-  // Anchor the label box so text sits on the OUTSIDE of its satellite icon,
-  // not under it. Right-half items (cos > 0) push label to the right of the
-  // icon; left-half items (cos < 0) push to the left; top/bottom (cos ≈ 0)
-  // stay centered. Works for any total, not just 8.
   const eps = 0.05;
   const anchorX =
     Math.cos(rad) > eps ? '-10%' : Math.cos(rad) < -eps ? '-90%' : '-50%';
@@ -216,6 +240,18 @@ export function HousentOurExcellence({
   const rootRef = React.useRef<HTMLElement>(null);
   const desktopInnerRef = React.useRef<HTMLDivElement>(null);
   const desktopCenterRef = React.useRef<HTMLDivElement>(null);
+  const { hasRoot } = useLandingMotion();
+
+  const [isCanvas, setIsCanvas] = React.useState(true);
+  React.useLayoutEffect(() => {
+    if (!hasRoot) {
+      setIsCanvas(false);
+      return;
+    }
+    setIsCanvas(
+      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
+    );
+  }, [hasRoot]);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -224,25 +260,18 @@ export function HousentOurExcellence({
       positionStyle(positions, key)
     );
 
-  const items = React.useMemo(
-    () => (Array.isArray(content.items) ? content.items : []),
-    [content.items]
-  );
+  const items = React.useMemo(() => resolveItems(content), [content]);
 
-  // Desktop ≥ 896 px: scrub qua outer (sticky inner giữ viewport). KHÔNG
-  // `pin` — dùng CSS sticky, an toàn iOS.
   useBlockMotion(
     rootRef,
     ({ scroller }) => {
       const root = rootRef.current;
       const inner = desktopInnerRef.current;
       const center = desktopCenterRef.current;
-      if (!root || !inner || !center) return;
+      if (!root || !inner || !center || isCanvas) return;
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         return;
       }
-
-      // Chỉ chạy trên desktop (≥ 896 px).
       if (!window.matchMedia('(min-width: 896px)').matches) return;
 
       const satellites = gsap.utils.toArray<HTMLElement>(
@@ -289,14 +318,14 @@ export function HousentOurExcellence({
         });
       }
     },
-    [items.length]
+    [items.length, isCanvas]
   );
 
   useBlockMotion(
     rootRef,
     ({ scroller }) => {
       const root = rootRef.current;
-      if (!root) return;
+      if (!root || isCanvas) return;
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       if (window.matchMedia('(min-width: 896px)').matches) return;
 
@@ -357,8 +386,91 @@ export function HousentOurExcellence({
         );
       }
     },
-    [items.length, 'mobile']
+    [items.length, isCanvas]
   );
+
+  const renderItemRow = (item: HousentOurExcellenceItem, i: number) => {
+    const keys = ITEM_KEYS[i];
+    if (!keys) return null;
+    const Icon = ICONS[item.icon] ?? ShieldCheck;
+    return (
+      <div key={`stk-${i}`} className='hoe-satellite flex items-center gap-4'>
+        <span
+          data-element-key={keys.icon}
+          className={selectableClass(
+            activeKey === keys.icon,
+            'flex items-center justify-center rounded-full border'
+          )}
+          style={composeStyle(ITEM_ICON_BTN_STYLE, styleOf(keys.icon))}
+        >
+          <Icon
+            style={{ width: 22, height: 22, pointerEvents: 'none' }}
+            strokeWidth={1.5}
+          />
+        </span>
+        <p
+          data-element-key={keys.label}
+          className={selectableClass(activeKey === keys.label, 'p-4')}
+          style={composeStyle(ITEM_LABEL_STYLE, styleOf(keys.label))}
+        >
+          {item.label}
+        </p>
+      </div>
+    );
+  };
+
+  // ── Editor canvas: hiện đủ badge/heading/body + 8 items ──
+  if (isCanvas) {
+    return (
+      <section
+        ref={rootRef}
+        data-canvas-edit='true'
+        className={cn('@container relative w-full bg-white py-10', className)}
+        style={composeStyle(
+          SECTION_BASE_STYLE,
+          { minHeight: 420 },
+          blockBackgroundStyle(background)
+        )}
+      >
+        <div
+          className='mx-auto flex w-full max-w-lg flex-col items-center px-6'
+          style={{ width: 'clamp(280px, 100%, 580px)' }}
+        >
+          <div
+            data-element-key='badge'
+            className={selectableClass(activeKey === 'badge', 'hoe-badge')}
+            style={composeStyle(BADGE_WRAPPER_STYLE, styleOf('badge'))}
+          >
+            <span style={BADGE_DOT_STYLE} aria-hidden='true' />
+            <p style={BADGE_TEXT_STYLE}>{content.badge}</p>
+          </div>
+
+          <h2
+            data-element-key='heading'
+            className={selectableClass(activeKey === 'heading', 'hoe-heading')}
+            style={composeStyle(HEADING_STYLE, styleOf('heading'))}
+          >
+            {content.heading}
+          </h2>
+
+          <p
+            data-element-key='body'
+            className={selectableClass(
+              activeKey === 'body',
+              'hoe-body text-center'
+            )}
+            style={composeStyle(BODY_STYLE, styleOf('body'))}
+          >
+            {content.body}
+          </p>
+        </div>
+
+        <div className='mx-auto mt-10 grid w-full max-w-3xl grid-cols-1 gap-4 px-6 @2xl:grid-cols-2'>
+          {items.map((item, i) => renderItemRow(item, i))}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -404,55 +516,29 @@ export function HousentOurExcellence({
           </p>
         </div>
 
-        <div className='mt-12 grid w-full grid-cols-1 flex-col gap-6 @3xl:grid-cols-2'>
-          {items.map((item, i) => {
-            const Icon = ICONS[item.icon] ?? ShieldCheck;
-            const itemKey = `item-${i}`;
-            return (
-              <div
-                key={`stk-${i}`}
-                className={selectableClass(
-                  activeKey === itemKey,
-                  'hoe-satellite flex items-center gap-4'
-                )}
-                data-element-key={itemKey}
-              >
-                <span
-                  style={composeStyle(ITEM_ICON_BTN_STYLE, styleOf(itemKey))}
-                  className='flex items-center justify-center rounded-full border @3xl:hidden!'
-                >
-                  <Icon style={{ width: 22, height: 22 }} strokeWidth={1.5} />
-                </span>
-                <p
-                  className='p-4'
-                  style={composeStyle(ITEM_LABEL_STYLE, styleOf(itemKey))}
-                >
-                  {item.label}
-                </p>
-              </div>
-            );
-          })}
+        <div className='mt-12 grid w-full grid-cols-1 gap-6 @3xl:grid-cols-2'>
+          {items.map((item, i) => renderItemRow(item, i))}
         </div>
       </div>
 
-      {/* Desktop */}
+      {/* Desktop radial */}
       <section
         aria-label='Housent Our Excellence (radial)'
         className='hoe-desktop hidden @4xl:block'
         style={OUTER_STYLE}
       >
         <style>{`
-                    @media (prefers-reduced-motion: reduce) {
-                        .hoe-desktop { height: 100dvh !important; }
-                        .hoe-desktop .hoe-badge,
-                        .hoe-desktop .hoe-heading,
-                        .hoe-desktop .hoe-body,
-                        .hoe-desktop .hoe-satellite-desktop {
-                            opacity: 1 !important;
-                            transform: none !important;
-                        }
-                    }
-                `}</style>
+          @media (prefers-reduced-motion: reduce) {
+            .hoe-desktop { height: 100dvh !important; }
+            .hoe-desktop .hoe-badge,
+            .hoe-desktop .hoe-heading,
+            .hoe-desktop .hoe-body,
+            .hoe-desktop .hoe-satellite-desktop {
+              opacity: 1 !important;
+              transform: none !important;
+            }
+          }
+        `}</style>
 
         <div ref={desktopInnerRef} className='@container' style={STICKY_STYLE}>
           <div
@@ -510,8 +596,9 @@ export function HousentOurExcellence({
 
           <div className='absolute inset-0'>
             {items.map((item, i) => {
+              const keys = ITEM_KEYS[i];
+              if (!keys) return null;
               const Icon = ICONS[item.icon] ?? ShieldCheck;
-              const itemKey = `item-${i}`;
               const wrapperStyle = satellitePosition(
                 i,
                 Math.max(items.length, 1)
@@ -523,14 +610,11 @@ export function HousentOurExcellence({
               return (
                 <div
                   key={`rad-${i}`}
-                  className={selectableClass(
-                    activeKey === itemKey,
-                    'hoe-satellite-desktop'
-                  )}
+                  className='hoe-satellite-desktop'
                   style={wrapperStyle}
-                  data-element-key={itemKey}
                 >
                   <span
+                    data-element-key={keys.icon}
                     style={composeStyle(
                       ITEM_ICON_BTN_STYLE,
                       {
@@ -539,13 +623,20 @@ export function HousentOurExcellence({
                         top: 0,
                         transform: 'translate(-50%, -50%)',
                       },
-                      styleOf(itemKey)
+                      styleOf(keys.icon)
                     )}
-                    className='flex items-center justify-center rounded-full border transition-transform hover:scale-105'
+                    className={selectableClass(
+                      activeKey === keys.icon,
+                      'flex items-center justify-center rounded-full border transition-transform hover:scale-105'
+                    )}
                   >
-                    <Icon style={{ width: 24, height: 24 }} strokeWidth={1.5} />
+                    <Icon
+                      style={{ width: 24, height: 24, pointerEvents: 'none' }}
+                      strokeWidth={1.5}
+                    />
                   </span>
                   <p
+                    data-element-key={keys.label}
                     style={composeStyle(
                       ITEM_LABEL_STYLE,
                       {
@@ -554,8 +645,9 @@ export function HousentOurExcellence({
                         top: 0,
                         transform: labelOffset,
                       },
-                      styleOf(itemKey)
+                      styleOf(keys.label)
                     )}
+                    className={selectableClass(activeKey === keys.label)}
                   >
                     {item.label}
                   </p>

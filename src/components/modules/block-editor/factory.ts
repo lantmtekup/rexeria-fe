@@ -18,6 +18,7 @@ import { housentCtaDef } from './blocks/_registry/defs/housentCta';
 import { housentFooterDef } from './blocks/_registry/defs/housentFooter';
 import { housentAboutDef } from './blocks/_registry/defs/housentAbout';
 import { housentExcellenceDef } from './blocks/_registry/defs/housentExcellence';
+import { housentOurExcellenceDef } from './blocks/_registry/defs/housentOurExcellence';
 import { housentSolutionsDef } from './blocks/_registry/defs/housentSolutions';
 import { housentValuesDef } from './blocks/_registry/defs/housentValues';
 import { housentFaqDef } from './blocks/_registry/defs/housentFaq';
@@ -146,7 +147,6 @@ import type {
   QuizContent,
   SplitScreenContent,
   StoriesContent,
-  HousentOurExcellenceContent,
   FramerFaqMinimalContent,
   FramerDarlingTimelineContent,
   FramerSignatureFeatureContent,
@@ -2221,33 +2221,8 @@ const FRAMER_PERFORM_ABOUT_EN: FramerPerformAboutContent = {
 };
 
 // ── Framer-native: Housent Our Excellence ────────────────────────────
-// Port từ recon-housent-our-excellence (housent.webflow.io). Badge + heading
-// + body ở giữa, 8 satellite icon-item xếp vòng tròn (desktop ≥ 896 px) hoặc
-// stack dọc (mobile/tablet). Icon là tên lucide-react.
-const HOUSENT_OUR_EXCELLENCE_ITEMS = [
-  { label: 'Verified Legality', icon: 'ShieldCheck' },
-  { label: 'Market Stability', icon: 'BarChart3' },
-  { label: 'Future Appreciation', icon: 'Sun' },
-  { label: 'Strategic Location', icon: 'MapPin' },
-  { label: 'Seamless Closing', icon: 'KeyRound' },
-  { label: 'Portfolio Diversification', icon: 'Briefcase' },
-  { label: 'Sustainable Growth', icon: 'Leaf' },
-  { label: 'High Yield Potential', icon: 'TrendingUp' },
-];
-
-const HOUSENT_OUR_EXCELLENCE_VI: HousentOurExcellenceContent = {
-  badge: 'Foundation of Trust',
-  heading: 'Our Excellence',
-  body: 'Chúng tôi kết hợp chuyên môn địa phương với phân tích cấp tổ chức để mang đến một môi trường đầu tư bất động sản an toàn và sinh lời cao.',
-  items: HOUSENT_OUR_EXCELLENCE_ITEMS,
-};
-
-const HOUSENT_OUR_EXCELLENCE_EN: HousentOurExcellenceContent = {
-  badge: 'Foundation of Trust',
-  heading: 'Our Excellence',
-  body: 'We combine localized expertise with institutional-grade analysis to provide a safe and high-yielding environment for your property investments.',
-  items: HOUSENT_OUR_EXCELLENCE_ITEMS,
-};
+const HOUSENT_OUR_EXCELLENCE_VI = housentOurExcellenceDef.defaultContent.vi;
+const HOUSENT_OUR_EXCELLENCE_EN = housentOurExcellenceDef.defaultContent.en;
 
 // ── Framer-native: Perform Pricing ─────────────────────────────────────
 const FRAMER_PERFORM_PRICING_VI: FramerPerformPricingContent = {

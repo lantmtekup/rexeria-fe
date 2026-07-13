@@ -59,6 +59,7 @@ import { housentAboutDef } from './defs/housentAbout';
 import { housentBlogsDef } from './defs/housentBlogs';
 import { housentCtaDef } from './defs/housentCta';
 import { housentExcellenceDef } from './defs/housentExcellence';
+import { housentOurExcellenceDef } from './defs/housentOurExcellence';
 import { housentFaqDef } from './defs/housentFaq';
 import { housentFooterDef } from './defs/housentFooter';
 import { housentHeroDef } from './defs/housentHero';
@@ -115,6 +116,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   housent_footer: housentFooterDef as BlockDef,
   housent_about: housentAboutDef as BlockDef,
   housent_excellence: housentExcellenceDef as BlockDef,
+  housent_our_excellence: housentOurExcellenceDef as BlockDef,
   housent_solutions: housentSolutionsDef as BlockDef,
   housent_values: housentValuesDef as BlockDef,
   housent_faq: housentFaqDef as BlockDef,
