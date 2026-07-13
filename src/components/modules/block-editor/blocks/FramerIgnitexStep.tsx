@@ -3,7 +3,7 @@
 import * as React from 'react';
 import gsap from 'gsap';
 
-import { useBlockMotion } from '../motion/LandingMotion';
+import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -33,16 +33,63 @@ const DEFAULT_CARDS: FramerIgnitexStepCard[] = [
   {
     title: 'Discover & Define',
     body: 'We dive deep into your goals, audience, and brand to uncover insights and define a clear direction.',
+    mainImageUrl:
+      'https://framerusercontent.com/images/9pSg9VbHyOzgvjgKg8ZxafAC9Y.svg',
   },
   {
     title: 'Design & Build',
     body: 'With strategy in place, we craft stunning visuals and high-performing digital solutions tailored to your needs.',
+    mainImageUrl:
+      'https://framerusercontent.com/images/FKdtn2NzI19PvdqikGNTBvGO8M.svg',
   },
   {
     title: 'Launch & Grow',
     body: 'We bring your vision to life, optimize for performance, and support your ongoing success post-launch.',
+    mainImageUrl:
+      'https://framerusercontent.com/images/qijKgqD5sm0TZqlD52en6tHZeQ.svg',
   },
 ];
+
+const CARD_KEYS = [
+  {
+    title: 'card1Title',
+    body: 'card1Body',
+    imageUrl: 'card1MainImageUrl',
+  },
+  {
+    title: 'card2Title',
+    body: 'card2Body',
+    imageUrl: 'card2MainImageUrl',
+  },
+  {
+    title: 'card3Title',
+    body: 'card3Body',
+    imageUrl: 'card3MainImageUrl',
+  },
+] as const;
+
+type CardFieldKey =
+  (typeof CARD_KEYS)[number][keyof (typeof CARD_KEYS)[number]];
+
+const pick = (content: FramerIgnitexStepContent, key: CardFieldKey) =>
+  content[key]?.trim() || '';
+
+const resolveCards = (
+  content: FramerIgnitexStepContent
+): FramerIgnitexStepCard[] => {
+  const legacy = Array.isArray(content.cards) ? content.cards : [];
+  const resolved = CARD_KEYS.map((keys, i) => {
+    const prev = legacy[i] ?? DEFAULT_CARDS[i];
+    return {
+      title: pick(content, keys.title) || prev?.title || '',
+      body: pick(content, keys.body) || prev?.body || '',
+      mainImageUrl:
+        pick(content, keys.imageUrl) || prev?.mainImageUrl || undefined,
+      subImageUrl: prev?.subImageUrl,
+    };
+  }).filter(c => c.title || c.body || c.mainImageUrl);
+  return resolved.length > 0 ? resolved : DEFAULT_CARDS;
+};
 
 const FONT_STACK =
   '"Geist", "Geist Placeholder", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
@@ -262,6 +309,19 @@ export function FramerIgnitexStep({
   const leftColumnRef = React.useRef<HTMLDivElement>(null);
   const rightColumnRef = React.useRef<HTMLDivElement>(null);
   const cardsStackRef = React.useRef<HTMLDivElement>(null);
+  const { hasRoot } = useLandingMotion();
+
+  // Editor canvas → layout tĩnh editable (giống ScrollMattis / Readymag Cases).
+  const [isCanvas, setIsCanvas] = React.useState(true);
+  React.useLayoutEffect(() => {
+    if (!hasRoot) {
+      setIsCanvas(false);
+      return;
+    }
+    setIsCanvas(
+      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
+    );
+  }, [hasRoot]);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -276,9 +336,6 @@ export function FramerIgnitexStep({
   const rightTop = content.rightTop || 'transform';
   const rightBottom = content.rightBottom || 'stories';
 
-  // Split leftBottom into leading text + last word. Last word gets the serif
-  // (Great Vibes) treatment; leading keeps Geist. Handles empty / single-word
-  // / extra-whitespace inputs.
   const splitLeftBottom = React.useMemo(() => {
     const trimmed = leftBottom.trim();
     if (!trimmed) return { leading: '', last: '' };
@@ -289,19 +346,14 @@ export function FramerIgnitexStep({
       last: tokens[tokens.length - 1],
     };
   }, [leftBottom]);
-  const cards = React.useMemo<FramerIgnitexStepCard[]>(
-    () =>
-      Array.isArray(content.cards) && content.cards.length > 0
-        ? content.cards
-        : DEFAULT_CARDS,
-    [content.cards]
-  );
+
+  const cards = React.useMemo(() => resolveCards(content), [content]);
 
   useBlockMotion(
     rootRef,
     ({ scroller }) => {
       const root = rootRef.current;
-      if (!root) return;
+      if (!root || isCanvas) return;
 
       const reduce =
         typeof window !== 'undefined' &&
@@ -342,8 +394,208 @@ export function FramerIgnitexStep({
         .to(right, { x: 0, duration: 0.5 }, 0.5)
         .to(stack, { yPercent: -10, opacity: 1, duration: 1 }, 0.5);
     },
-    [cards.length]
+    [cards.length, isCanvas]
   );
+
+  const renderCard = (card: FramerIgnitexStepCard, idx: number) => {
+    const keys = CARD_KEYS[idx];
+    if (!keys) return null;
+    return (
+      <div
+        key={`card-${idx}`}
+        data-fist-card-index={idx}
+        className={`fist-card fist-card-${idx}`}
+        style={CARD_STYLE}
+      >
+        <div style={CARD_HEADER_STYLE} className='fist-card-header'>
+          <h3
+            data-element-key={keys.title}
+            style={composeStyle(CARD_TITLE_STYLE, styleOf(keys.title))}
+            className={selectableClass(
+              activeKey === keys.title,
+              'fist-card-title'
+            )}
+          >
+            {card.title}
+          </h3>
+          <span
+            data-fist-sparkle
+            style={composeStyle(SPARKLE_ROW_STYLE)}
+            className='fist-sparkle-row'
+            aria-hidden='true'
+          >
+            {SPARKLE_GLYPH(14)}
+            {SPARKLE_GLYPH(14)}
+            {SPARKLE_GLYPH(14)}
+          </span>
+        </div>
+
+        {card.mainImageUrl ? (
+          <div
+            data-element-key={keys.imageUrl}
+            className={selectableClass(
+              activeKey === keys.imageUrl,
+              'fist-illustration'
+            )}
+            style={composeStyle(
+              ILLUSTRATION_WRAPPER_STYLE,
+              ILLUSTRATION_IMAGE_STYLE,
+              styleOf(keys.imageUrl)
+            )}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={card.mainImageUrl}
+              alt=''
+              aria-hidden='true'
+              className='fist-illustration-main'
+              style={{ ...MAIN_IMAGE_STYLE, pointerEvents: 'none' }}
+            />
+          </div>
+        ) : (
+          <div
+            data-element-key={keys.imageUrl}
+            className={selectableClass(
+              activeKey === keys.imageUrl,
+              'fist-illustration'
+            )}
+            style={composeStyle(
+              ILLUSTRATION_WRAPPER_STYLE,
+              {
+                minHeight: 80,
+                background: '#f5f5f5',
+                borderRadius: 8,
+              },
+              styleOf(keys.imageUrl)
+            )}
+          />
+        )}
+
+        <p
+          data-element-key={keys.body}
+          style={composeStyle(CARD_BODY_STYLE, styleOf(keys.body))}
+          className={selectableClass(activeKey === keys.body, 'fist-card-body')}
+        >
+          {card.body}
+        </p>
+      </div>
+    );
+  };
+
+  // ── Editor canvas: layout tĩnh, hiện đủ headings + 3 cards ──
+  if (isCanvas) {
+    return (
+      <section
+        ref={rootRef}
+        data-block='framer-ignitex-step'
+        data-canvas-edit='true'
+        style={composeStyle(
+          ROOT_STYLE,
+          { height: 'auto', minHeight: 480, padding: '32px 20px' },
+          blockBackgroundStyle(background)
+        )}
+        className='fist-root fist-canvas @container'
+      >
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Great+Vibes:wght@400&family=Geist:wght@500;600&display=swap');
+          .fist-root :where(h1, h2, h3, h4, p, span) { margin: 0; padding: 0; }
+        `}</style>
+
+        <span
+          data-element-key='preTitle'
+          className={selectableClass(
+            activeKey === 'preTitle',
+            'fist-pre-title'
+          )}
+          style={composeStyle(
+            PRE_TITLE_STYLE,
+            { marginBottom: 24 },
+            styleOf('preTitle')
+          )}
+        >
+          {SPARKLE_GLYPH(12)}
+          <span>{preTitle}</span>
+        </span>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr)',
+            gap: 20,
+            alignItems: 'start',
+            maxWidth: 1100,
+            marginInline: 'auto',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <h2
+              data-element-key='leftTop'
+              style={composeStyle(
+                HEADING_STYLE,
+                { marginLeft: 0, textAlign: 'left' },
+                styleOf('leftTop')
+              )}
+              className={selectableClass(activeKey === 'leftTop')}
+            >
+              {leftTop}
+            </h2>
+            <h2
+              data-element-key='leftBottom'
+              style={composeStyle(
+                HEADING_STYLE,
+                {
+                  marginLeft: 0,
+                  textAlign: 'left',
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: 10,
+                  flexWrap: 'wrap',
+                },
+                styleOf('leftBottom')
+              )}
+              className={selectableClass(activeKey === 'leftBottom')}
+            >
+              {splitLeftBottom.leading ? (
+                <span style={HEADING_STYLE}>{splitLeftBottom.leading}</span>
+              ) : null}
+              {splitLeftBottom.last ? (
+                <span style={SERIF_WORD_STYLE}>{splitLeftBottom.last}</span>
+              ) : null}
+            </h2>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {cards.map((card, idx) => renderCard(card, idx))}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <h2
+              data-element-key='rightTop'
+              style={composeStyle(
+                HEADING_STYLE,
+                { marginLeft: 0, textAlign: 'left' },
+                styleOf('rightTop')
+              )}
+              className={selectableClass(activeKey === 'rightTop')}
+            >
+              {rightTop}
+            </h2>
+            <h2
+              data-element-key='rightBottom'
+              style={composeStyle(
+                HEADING_STYLE,
+                { marginLeft: 0, textAlign: 'left' },
+                styleOf('rightBottom')
+              )}
+              className={selectableClass(activeKey === 'rightBottom')}
+            >
+              {rightBottom}
+            </h2>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -363,9 +615,6 @@ export function FramerIgnitexStep({
           outline: 2px solid currentColor;
           outline-offset: 4px;
         }
-        /* Tablet (≤1023px) + mobile (≤671px): bỏ sticky + scrub, dùng stack
-           dọc tĩnh. Outer về height tự nhiên (auto), sticky inner mất
-           position:sticky, content dùng flex-col. */
         @container (max-width: 1023px) {
           .fist-outer-track { height: auto !important; }
           .fist-sticky-inner {
@@ -414,8 +663,6 @@ export function FramerIgnitexStep({
             max-width: 100% !important;
           }
         }
-        /* Reduced-motion: outer về auto, sticky inner mất sticky, mọi
-           transform reset về 0, opacity 1. */
         @media (prefers-reduced-motion: reduce) {
           .fist-outer-track { height: auto !important; }
           .fist-sticky-inner {
@@ -452,13 +699,12 @@ export function FramerIgnitexStep({
         </span>
 
         <div style={CONTENT_ABS_STYLE} className='fist-content'>
-          {/* LEFT title column: "Your ideas / into [Brand]" */}
           <div className='flex @4xl:hidden'>
             <h2
-              data-element-key='mobileHeading'
-              style={composeStyle(HEADING_STYLE, styleOf('mobileHeading'))}
+              data-element-key='leftTop'
+              style={composeStyle(HEADING_STYLE, styleOf('leftTop'))}
               className={selectableClass(
-                activeKey === 'mobileHeading',
+                activeKey === 'leftTop',
                 'fist-h2 max-w-[400px] text-center'
               )}
             >
@@ -468,12 +714,8 @@ export function FramerIgnitexStep({
 
           <div
             ref={leftColumnRef}
-            data-element-key='leftColumn'
             data-fist-anim='left'
-            className={selectableClass(
-              activeKey === 'leftColumn',
-              'fist-title-column fist-left hidden @4xl:flex'
-            )}
+            className='fist-title-column fist-left hidden @4xl:flex'
             style={composeStyle(TITLE_COLUMN_STYLE, styleOf('leftColumn'))}
           >
             <h2
@@ -505,15 +747,8 @@ export function FramerIgnitexStep({
               )}
               {splitLeftBottom.last && (
                 <span
-                  data-element-key='leftBottom-serif'
-                  className={selectableClass(
-                    activeKey === 'leftBottom-serif',
-                    'fist-serif'
-                  )}
-                  style={composeStyle(
-                    SERIF_WORD_STYLE,
-                    styleOf('leftBottom-serif')
-                  )}
+                  className='fist-serif'
+                  style={composeStyle(SERIF_WORD_STYLE)}
                 >
                   {splitLeftBottom.last}
                 </span>
@@ -521,109 +756,19 @@ export function FramerIgnitexStep({
             </h2>
           </div>
 
-          {/* CENTER: stack of 3 step cards — translateY từ bottom lên */}
           <div
             ref={cardsStackRef}
-            data-element-key='cardsStack'
             data-fist-anim='cards'
             style={CARDS_STACK_STYLE}
             className='fist-cards-stack'
           >
-            {cards.map((card, idx) => {
-              const cardKey = `card-${idx}`;
-              return (
-                <div
-                  key={`${card.title}-${idx}`}
-                  data-element-key={cardKey}
-                  data-fist-card-index={idx}
-                  className={selectableClass(
-                    activeKey === cardKey,
-                    `fist-card fist-card-${idx}`
-                  )}
-                  style={composeStyle(CARD_STYLE, styleOf(cardKey))}
-                >
-                  <div style={CARD_HEADER_STYLE} className='fist-card-header'>
-                    <h3
-                      data-element-key={`${cardKey}-title`}
-                      style={composeStyle(
-                        CARD_TITLE_STYLE,
-                        styleOf(`${cardKey}-title`)
-                      )}
-                      className={selectableClass(
-                        activeKey === `${cardKey}-title`,
-                        'fist-card-title'
-                      )}
-                    >
-                      {card.title}
-                    </h3>
-                    <span
-                      data-fist-sparkle
-                      style={composeStyle(SPARKLE_ROW_STYLE)}
-                      className='fist-sparkle-row'
-                      aria-hidden='true'
-                    >
-                      {SPARKLE_GLYPH(14)}
-                      {SPARKLE_GLYPH(14)}
-                      {SPARKLE_GLYPH(14)}
-                    </span>
-                  </div>
-
-                  {card.mainImageUrl && (
-                    <div
-                      style={composeStyle(
-                        ILLUSTRATION_WRAPPER_STYLE,
-                        ILLUSTRATION_IMAGE_STYLE
-                      )}
-                      className='fist-illustration'
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={card.mainImageUrl}
-                        alt=''
-                        aria-hidden='true'
-                        className='fist-illustration-main'
-                        style={MAIN_IMAGE_STYLE}
-                      />
-                      {/* {card.subImageUrl && (
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                <img
-                                                    src={card.subImageUrl}
-                                                    alt=''
-                                                    aria-hidden='true'
-                                                    className='fist-illustration-sub'
-                                                    style={SUB_IMAGE_STYLE}
-                                                />
-                                            )} */}
-                    </div>
-                  )}
-
-                  <p
-                    data-element-key={`${cardKey}-body`}
-                    style={composeStyle(
-                      CARD_BODY_STYLE,
-                      styleOf(`${cardKey}-body`)
-                    )}
-                    className={selectableClass(
-                      activeKey === `${cardKey}-body`,
-                      'fist-card-body'
-                    )}
-                  >
-                    {card.body}
-                  </p>
-                </div>
-              );
-            })}
+            {cards.map((card, idx) => renderCard(card, idx))}
           </div>
 
-          {/* RIGHT title column: "transform / stories" */}
           <div
             ref={rightColumnRef}
-            data-element-key='rightColumn'
             data-fist-anim='right'
-            className={selectableClass(
-              activeKey === 'rightColumn',
-              'fist-title-column fist-right hidden @4xl:flex'
-            )}
+            className='fist-title-column fist-right hidden @4xl:flex'
             style={composeStyle(
               TITLE_COLUMN_STYLE,
               { alignItems: 'flex-start' },

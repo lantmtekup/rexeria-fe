@@ -1159,8 +1159,35 @@ export interface ReadymagCaseItem {
   imageUrl: string;
 }
 
+/** Flat editable fields (ScrollMattis pattern). `cases[]` = legacy fallback. */
 export interface ReadymagCaseSectionContent {
-  cases: ReadymagCaseItem[];
+  case1Name?: string;
+  case1Body?: string;
+  case1LinkText?: string;
+  case1LinkHref?: string;
+  case1ImageUrl?: string;
+  case2Name?: string;
+  case2Body?: string;
+  case2LinkText?: string;
+  case2LinkHref?: string;
+  case2ImageUrl?: string;
+  case3Name?: string;
+  case3Body?: string;
+  case3LinkText?: string;
+  case3LinkHref?: string;
+  case3ImageUrl?: string;
+  case4Name?: string;
+  case4Body?: string;
+  case4LinkText?: string;
+  case4LinkHref?: string;
+  case4ImageUrl?: string;
+  case5Name?: string;
+  case5Body?: string;
+  case5LinkText?: string;
+  case5LinkHref?: string;
+  case5ImageUrl?: string;
+  /** Legacy nested array — resolveCases fallback. */
+  cases?: ReadymagCaseItem[];
   bgColor: string;
   textColor: string;
   accentColor: string;
@@ -1340,13 +1367,24 @@ export interface FramerIgnitexStepCard {
   subImageUrl?: string;
 }
 
+/** Flat card fields (ScrollMattis pattern). `cards[]` = legacy fallback. */
 export interface FramerIgnitexStepContent {
   preTitle: string;
   leftTop: string;
   leftBottom: string;
   rightTop: string;
   rightBottom: string;
-  cards: FramerIgnitexStepCard[];
+  card1Title?: string;
+  card1Body?: string;
+  card1MainImageUrl?: string;
+  card2Title?: string;
+  card2Body?: string;
+  card2MainImageUrl?: string;
+  card3Title?: string;
+  card3Body?: string;
+  card3MainImageUrl?: string;
+  /** Legacy nested array — resolveCards fallback. */
+  cards?: FramerIgnitexStepCard[];
 }
 
 /**
@@ -2175,15 +2213,36 @@ export interface FramerFirmaTemplateStrategyDigitalContent {
  * theo vòng tròn desktop / stack dọc mobile. Cảm hứng GSAP ScrollTrigger từ
  * housent.webflow.io — entrance là circle-items fade-up + badge reveal.
  * Port từ recon-housent-our-excellence.
+ *
+ * Flat item fields (ScrollMattis pattern). `items[]` = legacy fallback.
  */
+export interface HousentOurExcellenceItem {
+  label: string;
+  icon: string;
+}
+
 export interface HousentOurExcellenceContent {
   badge: string;
   heading: string;
   body: string;
-  items: Array<{
-    label: string;
-    icon: string;
-  }>;
+  item1Label?: string;
+  item1Icon?: string;
+  item2Label?: string;
+  item2Icon?: string;
+  item3Label?: string;
+  item3Icon?: string;
+  item4Label?: string;
+  item4Icon?: string;
+  item5Label?: string;
+  item5Icon?: string;
+  item6Label?: string;
+  item6Icon?: string;
+  item7Label?: string;
+  item7Icon?: string;
+  item8Label?: string;
+  item8Icon?: string;
+  /** Legacy nested array — resolveItems fallback. */
+  items?: HousentOurExcellenceItem[];
 }
 
 export interface FramerFaqMinimalContent {

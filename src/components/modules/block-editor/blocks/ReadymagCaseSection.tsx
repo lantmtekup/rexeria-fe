@@ -4,7 +4,7 @@ import * as React from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-import { useBlockMotion } from '../motion/LandingMotion';
+import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -18,6 +18,7 @@ import {
   elementStyleOf,
   orderStyle,
   positionStyle,
+  selectableClass,
 } from './applyStyle';
 
 interface Props {
@@ -97,6 +98,70 @@ const TRAIL_BUFFER_VH = 10;
 const MOBILE_STEP_VH = 90;
 const MOBILE_TRAIL_VH = 30;
 
+const CASE_KEYS = [
+  {
+    name: 'case1Name',
+    body: 'case1Body',
+    linkText: 'case1LinkText',
+    linkHref: 'case1LinkHref',
+    imageUrl: 'case1ImageUrl',
+  },
+  {
+    name: 'case2Name',
+    body: 'case2Body',
+    linkText: 'case2LinkText',
+    linkHref: 'case2LinkHref',
+    imageUrl: 'case2ImageUrl',
+  },
+  {
+    name: 'case3Name',
+    body: 'case3Body',
+    linkText: 'case3LinkText',
+    linkHref: 'case3LinkHref',
+    imageUrl: 'case3ImageUrl',
+  },
+  {
+    name: 'case4Name',
+    body: 'case4Body',
+    linkText: 'case4LinkText',
+    linkHref: 'case4LinkHref',
+    imageUrl: 'case4ImageUrl',
+  },
+  {
+    name: 'case5Name',
+    body: 'case5Body',
+    linkText: 'case5LinkText',
+    linkHref: 'case5LinkHref',
+    imageUrl: 'case5ImageUrl',
+  },
+] as const;
+
+type CaseFieldKey =
+  (typeof CASE_KEYS)[number][keyof (typeof CASE_KEYS)[number]];
+
+const pick = (content: ReadymagCaseSectionContent, key: CaseFieldKey) =>
+  content[key]?.trim() || '';
+
+const LEGACY_KEYS = ['fold', 'lune', 'arca', 'still', 'signal'] as const;
+
+/** Resolve 5 cases từ flat fields; fallback `cases[]` legacy. */
+const resolveCases = (
+  content: ReadymagCaseSectionContent
+): ReadymagCaseItem[] => {
+  const legacy = Array.isArray(content.cases) ? content.cases : [];
+  return CASE_KEYS.map((keys, i) => {
+    const prev = legacy[i];
+    return {
+      key: prev?.key || LEGACY_KEYS[i] || `case${i + 1}`,
+      name: pick(content, keys.name) || prev?.name || '',
+      body: pick(content, keys.body) || prev?.body || '',
+      linkText: pick(content, keys.linkText) || prev?.linkText || '',
+      linkHref: pick(content, keys.linkHref) || prev?.linkHref || '#',
+      imageUrl: pick(content, keys.imageUrl) || prev?.imageUrl || '',
+    };
+  }).filter(c => c.name || c.body || c.imageUrl);
+};
+
 export function ReadymagCaseSection({
   content,
   styles,
@@ -106,10 +171,6 @@ export function ReadymagCaseSection({
   activeKey,
   className,
 }: Props) {
-  // `activeKey` thuộc Props chung của block layer (dùng cho LayersPanel
-  // selection highlight). Block này tự quản lý active index qua scroll,
-  // không consume prop — giữ reference để tránh unused warning.
-  void activeKey;
   const styleOf = React.useCallback(
     (key: string) =>
       composeStyle(
@@ -120,10 +181,7 @@ export function ReadymagCaseSection({
     [styles, order, positions]
   );
 
-  const cases = React.useMemo<ReadymagCaseItem[]>(
-    () => (Array.isArray(content.cases) ? content.cases : []).slice(0, 24),
-    [content.cases]
-  );
+  const cases = React.useMemo(() => resolveCases(content), [content]);
   const caseCount = cases.length;
   const isValid = caseCount > 0;
 
@@ -139,6 +197,20 @@ export function ReadymagCaseSection({
   const wordRefs = React.useRef<Array<HTMLHeadingElement | null>>([]);
 
   const [activeIndex, setActiveIndex] = React.useState(0);
+  const { hasRoot } = useLandingMotion();
+
+  // Editor canvas → lưới editable tất cả cases (giống ScrollMattis).
+  // Sticky+scroll hide inactive text nên không edit được trên canvas.
+  const [isCanvas, setIsCanvas] = React.useState(true);
+  React.useLayoutEffect(() => {
+    if (!hasRoot) {
+      setIsCanvas(false);
+      return;
+    }
+    setIsCanvas(
+      !!outerRef.current?.closest('[data-testid="active-block-preview"]')
+    );
+  }, [hasRoot]);
 
   React.useEffect(() => {
     imageRefs.current.length = caseCount;
@@ -151,7 +223,7 @@ export function ReadymagCaseSection({
     ({ scroller, requestRefresh }) => {
       const outer = outerRef.current;
       const inner = innerRef.current;
-      if (!outer || !inner || !isValid) return;
+      if (!outer || !inner || !isValid || isCanvas) return;
 
       const reduce = window.matchMedia(
         '(prefers-reduced-motion: reduce)'
@@ -203,7 +275,7 @@ export function ReadymagCaseSection({
         requestRefresh();
       });
     },
-    [caseCount, isValid]
+    [caseCount, isValid, isCanvas]
   );
 
   const bioTextStyle = composeStyle(BIO_TEXT_STYLE_BASE, styleOf('bio'));
@@ -212,6 +284,162 @@ export function ReadymagCaseSection({
     { color: wordmarkColor },
     styleOf('wordmark')
   );
+
+  // ── Editor canvas: lưới tất cả cases (không sticky / không hide inactive) ──
+  if (isCanvas) {
+    return (
+      <section
+        ref={outerRef}
+        style={composeStyle(
+          TRACK_STYLE,
+          { height: 'auto', minHeight: 420 },
+          { background: bgColor, color: textColor },
+          blockBackgroundStyle(background)
+        )}
+        className={`readymag-cases readymag-cases--canvas @container ${className ?? ''}`}
+        data-block='readymag-case-section'
+        data-case-count={caseCount}
+        data-canvas-edit='true'
+      >
+        <style>{`
+          .readymag-cases--canvas :where(a) { text-decoration: none; color: inherit; }
+          .readymag-cases-bio-link:hover { opacity: 0.7; }
+        `}</style>
+
+        {!isValid ? (
+          <div
+            style={{
+              display: 'grid',
+              placeItems: 'center',
+              minHeight: 320,
+              opacity: 0.5,
+              fontSize: 14,
+            }}
+          >
+            (Chưa có case — chỉnh Case 1…5 trong LayersPanel)
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: 16,
+              padding: 16,
+              containerType: 'inline-size',
+            }}
+          >
+            {cases.map((c, i) => {
+              const keys = CASE_KEYS[i];
+              if (!keys) return null;
+              return (
+                <div
+                  key={`edit-${c.key}`}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
+                    padding: 12,
+                    border: '1px solid rgba(0,0,0,0.12)',
+                    borderRadius: 8,
+                    background: '#fff',
+                  }}
+                >
+                  <div
+                    data-element-key={keys.imageUrl}
+                    className={selectableClass(activeKey === keys.imageUrl)}
+                    style={composeStyle(
+                      {
+                        width: '100%',
+                        aspectRatio: '158 / 217',
+                        overflow: 'hidden',
+                        background: '#e8e8ea',
+                      },
+                      styleOf(keys.imageUrl)
+                    )}
+                  >
+                    {c.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={c.imageUrl}
+                        alt={c.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    ) : null}
+                  </div>
+
+                  <h2
+                    data-element-key={keys.name}
+                    style={composeStyle(
+                      {
+                        fontSize: 'clamp(18px, 4cqi, 28px)',
+                        fontWeight: 800,
+                        lineHeight: 1.1,
+                        letterSpacing: '-0.02em',
+                        margin: 0,
+                        color: wordmarkColor,
+                      },
+                      styleOf(keys.name)
+                    )}
+                    className={selectableClass(activeKey === keys.name)}
+                  >
+                    {c.name || `Case ${i + 1}`}
+                  </h2>
+
+                  <p
+                    style={composeStyle(
+                      {
+                        fontSize: 13,
+                        lineHeight: 1.45,
+                        margin: 0,
+                        fontWeight: 500,
+                      },
+                      bioTextStyle
+                    )}
+                  >
+                    <span
+                      data-element-key={keys.body}
+                      style={styleOf(keys.body)}
+                      className={selectableClass(activeKey === keys.body)}
+                    >
+                      {c.body || '— mô tả'}
+                    </span>
+                  </p>
+
+                  <a
+                    href={c.linkHref || '#'}
+                    data-element-key={keys.linkHref}
+                    className={selectableClass(
+                      activeKey === keys.linkHref,
+                      'readymag-cases-bio-link'
+                    )}
+                    style={composeStyle(
+                      BIO_LINK_STYLE_BASE,
+                      { color: accentColor, marginTop: 0 },
+                      styleOf(keys.linkHref)
+                    )}
+                  >
+                    <span
+                      data-element-key={keys.linkText}
+                      style={styleOf(keys.linkText)}
+                      className={selectableClass(activeKey === keys.linkText)}
+                    >
+                      {c.linkText || 'View case →'}
+                    </span>
+                  </a>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    );
+  }
 
   const trackHeight = `${
     100 + Math.max(0, caseCount - 1) * CASE_STEP_VH + TRAIL_BUFFER_VH
@@ -297,7 +525,6 @@ export function ReadymagCaseSection({
           >
             <div
               className='readymag-cases-bio'
-              data-element-key='cases'
               style={{
                 position: 'absolute',
                 left: `calc(var(--rmc-img-left) + var(--rmc-img-width) * ${IMAGE_SCALE} + var(--rmc-bio-gap))`,
@@ -310,6 +537,8 @@ export function ReadymagCaseSection({
               }}
             >
               {cases.map((c, i) => {
+                const keys = CASE_KEYS[i];
+                if (!keys) return null;
                 const isActive = i === activeIndex;
                 return (
                   <div
@@ -317,7 +546,6 @@ export function ReadymagCaseSection({
                     ref={el => {
                       bioRefs.current[i] = el;
                     }}
-                    data-element-key={`cases.${i}.bio`}
                     style={{
                       position: 'absolute',
                       inset: 0,
@@ -329,25 +557,43 @@ export function ReadymagCaseSection({
                   >
                     <p style={bioTextStyle}>
                       <span
+                        data-element-key={keys.name}
                         style={composeStyle(
                           BIO_NAME_STYLE_BASE,
-                          styleOf(`cases.${i}.name`)
+                          styleOf(keys.name)
                         )}
+                        className={selectableClass(activeKey === keys.name)}
                       >
                         {c.name}
                       </span>
-                      {c.body}
+                      <span
+                        data-element-key={keys.body}
+                        style={styleOf(keys.body)}
+                        className={selectableClass(activeKey === keys.body)}
+                      >
+                        {c.body}
+                      </span>
                     </p>
                     <a
                       href={c.linkHref || '#'}
-                      className='readymag-cases-bio-link'
+                      data-element-key={keys.linkHref}
+                      className={selectableClass(
+                        activeKey === keys.linkHref,
+                        'readymag-cases-bio-link'
+                      )}
                       style={composeStyle(
                         BIO_LINK_STYLE_BASE,
                         { color: accentColor },
-                        styleOf(`cases.${i}.link`)
+                        styleOf(keys.linkHref)
                       )}
                     >
-                      {c.linkText || 'View case →'}
+                      <span
+                        data-element-key={keys.linkText}
+                        style={styleOf(keys.linkText)}
+                        className={selectableClass(activeKey === keys.linkText)}
+                      >
+                        {c.linkText || 'View case →'}
+                      </span>
                     </a>
                   </div>
                 );
@@ -356,7 +602,6 @@ export function ReadymagCaseSection({
 
             <div
               className='readymag-cases-wordmark'
-              data-element-key='cases'
               style={{
                 position: 'absolute',
                 right: 'clamp(20px, 3.5cqi, 56px)',
@@ -366,6 +611,8 @@ export function ReadymagCaseSection({
               }}
             >
               {cases.map((c, i) => {
+                const keys = CASE_KEYS[i];
+                if (!keys) return null;
                 const isActive = i === activeIndex;
                 return (
                   <h2
@@ -373,9 +620,10 @@ export function ReadymagCaseSection({
                     ref={el => {
                       wordRefs.current[i] = el;
                     }}
-                    data-element-key={`cases.${i}.wordmark`}
+                    data-element-key={keys.name}
                     style={{
                       ...wordmarkStyle,
+                      ...styleOf(keys.name),
                       position: 'absolute',
                       inset: 0,
                       opacity: isActive ? 1 : 0,
@@ -383,6 +631,7 @@ export function ReadymagCaseSection({
                       pointerEvents: isActive ? 'auto' : 'none',
                       transition: 'opacity 0.4s ease',
                     }}
+                    className={selectableClass(activeKey === keys.name)}
                   >
                     {c.name}
                   </h2>
@@ -412,18 +661,18 @@ export function ReadymagCaseSection({
 
       <div
         className='readymag-cases-image-column hidden @4xl:block'
-        data-element-key='cases'
         style={{
           position: 'absolute',
           top: 0,
           left: IMAGE_COL_LEFT,
           width: IMAGE_COL_WIDTH,
           height: '100%',
-          pointerEvents: 'none',
           zIndex: 1,
         }}
       >
         {cases.map((c, i) => {
+          const keys = CASE_KEYS[i];
+          if (!keys) return null;
           const isActive = i === activeIndex;
           return (
             <div
@@ -431,16 +680,20 @@ export function ReadymagCaseSection({
               ref={el => {
                 imageRefs.current[i] = el;
               }}
-              data-element-key={`cases.${i}.image`}
-              style={{
-                position: 'absolute',
-                top: `${50 + i * CASE_STEP_VH}dvh`,
-                left: 0,
-                width: '100%',
-                aspectRatio: '158 / 217',
-                overflow: 'visible',
-                pointerEvents: 'none',
-              }}
+              data-element-key={keys.imageUrl}
+              className={selectableClass(activeKey === keys.imageUrl)}
+              style={composeStyle(
+                {
+                  position: 'absolute',
+                  top: `${50 + i * CASE_STEP_VH}dvh`,
+                  left: 0,
+                  width: '100%',
+                  aspectRatio: '158 / 217',
+                  overflow: 'visible',
+                  pointerEvents: 'auto',
+                },
+                styleOf(keys.imageUrl)
+              )}
             >
               <img
                 src={c.imageUrl}
@@ -457,6 +710,7 @@ export function ReadymagCaseSection({
                   transformOrigin: 'left center',
                   transition: 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)',
                   willChange: 'transform',
+                  pointerEvents: 'none',
                 }}
               />
             </div>
@@ -466,6 +720,8 @@ export function ReadymagCaseSection({
 
       <MobileReadymagCases
         cases={cases}
+        activeKey={activeKey}
+        styleOf={styleOf}
         bgColor={bgColor}
         textColor={textColor}
         accentColor={accentColor}
@@ -480,6 +736,8 @@ export function ReadymagCaseSection({
 
 interface MobileReadymagCasesProps {
   cases: ReadymagCaseItem[];
+  activeKey?: string | null;
+  styleOf: (key: string) => React.CSSProperties | undefined;
   bgColor: string;
   textColor: string;
   accentColor: string;
@@ -491,6 +749,8 @@ interface MobileReadymagCasesProps {
 
 function MobileReadymagCases({
   cases,
+  activeKey,
+  styleOf,
   bgColor,
   textColor,
   accentColor,
@@ -615,6 +875,8 @@ function MobileReadymagCases({
         }}
       >
         {cases.map((c, i) => {
+          const keys = CASE_KEYS[i];
+          if (!keys) return null;
           const isActive = i === activeIndex;
           return (
             <div
@@ -622,7 +884,6 @@ function MobileReadymagCases({
               ref={el => {
                 itemRefs.current[i] = el;
               }}
-              data-element-key={`cases.${i}.mobile`}
               className='readymag-cases-mobile-item'
               style={{
                 position: 'absolute',
@@ -640,12 +901,17 @@ function MobileReadymagCases({
               }}
             >
               <div
-                style={{
-                  width: '100%',
-                  aspectRatio: '3 / 2',
-                  overflow: 'hidden',
-                  background: '#e8e8ea',
-                }}
+                data-element-key={keys.imageUrl}
+                className={selectableClass(activeKey === keys.imageUrl)}
+                style={composeStyle(
+                  {
+                    width: '100%',
+                    aspectRatio: '3 / 2',
+                    overflow: 'hidden',
+                    background: '#e8e8ea',
+                  },
+                  styleOf(keys.imageUrl)
+                )}
               >
                 <img
                   src={c.imageUrl}
@@ -657,6 +923,7 @@ function MobileReadymagCases({
                     height: '100%',
                     objectFit: 'cover',
                     display: 'block',
+                    pointerEvents: 'none',
                   }}
                 />
               </div>
@@ -670,26 +937,60 @@ function MobileReadymagCases({
                 }}
               >
                 <h2
-                  style={{
-                    ...(wordmarkStyle ?? {}),
-                    textAlign: 'left',
-                    margin: 0,
-                  }}
+                  data-element-key={keys.name}
+                  style={composeStyle(
+                    {
+                      ...(wordmarkStyle ?? {}),
+                      textAlign: 'left',
+                      margin: 0,
+                    },
+                    styleOf(keys.name)
+                  )}
+                  className={selectableClass(activeKey === keys.name)}
                 >
                   {c.name}
                 </h2>
 
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <p style={bioTextStyle ?? {}}>
-                    <span style={BIO_NAME_STYLE_BASE}>{c.name}</span>
-                    {c.body}
+                    <span
+                      data-element-key={keys.name}
+                      style={composeStyle(
+                        BIO_NAME_STYLE_BASE,
+                        styleOf(keys.name)
+                      )}
+                      className={selectableClass(activeKey === keys.name)}
+                    >
+                      {c.name}
+                    </span>
+                    <span
+                      data-element-key={keys.body}
+                      style={styleOf(keys.body)}
+                      className={selectableClass(activeKey === keys.body)}
+                    >
+                      {c.body}
+                    </span>
                   </p>
                   <a
                     href={c.linkHref || '#'}
-                    className='readymag-cases-bio-link'
-                    style={composeStyle(bioLinkStyle, { color: accentColor })}
+                    data-element-key={keys.linkHref}
+                    className={selectableClass(
+                      activeKey === keys.linkHref,
+                      'readymag-cases-bio-link'
+                    )}
+                    style={composeStyle(
+                      bioLinkStyle,
+                      { color: accentColor },
+                      styleOf(keys.linkHref)
+                    )}
                   >
-                    {c.linkText || 'View case →'}
+                    <span
+                      data-element-key={keys.linkText}
+                      style={styleOf(keys.linkText)}
+                      className={selectableClass(activeKey === keys.linkText)}
+                    >
+                      {c.linkText || 'View case →'}
+                    </span>
                   </a>
                 </div>
               </div>
