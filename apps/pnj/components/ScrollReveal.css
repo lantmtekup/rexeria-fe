@@ -1,0 +1,11 @@
+.scroll-reveal {
+  margin: 0;
+}
+
+.scroll-reveal-text {
+  /* line-height comes from Tailwind textClassName */
+}
+
+.word {
+  display: inline-block;
+}
