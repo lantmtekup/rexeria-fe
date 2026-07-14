@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -94,15 +94,8 @@ const scrollToY = (y: number) => {
   });
 };
 
-// Quiet left rail for desktop — micro ticks + whisper labels.
-// Scroll targets use ScrollTrigger pin starts (not raw #id offsets).
 export default function StickyMenu() {
   const [activeId, setActiveId] = useState<NavId | null>(null);
-
-  const activeIndex = useMemo(
-    () => NAV_LINKS.findIndex(l => l.id === activeId),
-    [activeId]
-  );
 
   const updateActive = useCallback(() => {
     const y = getScrollY();
@@ -125,7 +118,6 @@ export default function StickyMenu() {
     const onScroll = () => updateActive();
     const onRefresh = () => updateActive();
 
-    // Spy via ScrollTrigger + Lenis — avoid a raw window scroll listener.
     const spy = ScrollTrigger.create({
       start: 0,
       end: 'max',
@@ -181,46 +173,24 @@ export default function StickyMenu() {
     setActiveId(id);
   };
 
-  // Contact sits on a dark field — invert the rail so it stays legible.
-  const onDark = activeId === 'contact';
-  const progress =
-    activeIndex < 0 ? 0 : activeIndex / Math.max(NAV_LINKS.length - 1, 1);
+  const handleBuyNow = () => {
+    const y = getSectionScrollY('contact');
+    if (y === null) return;
+    scrollToY(y);
+  };
 
   return (
     <aside
-      className='pointer-events-none fixed top-1/2 left-4 z-[45] hidden -translate-y-1/2 md:block lg:left-5'
+      className='pointer-events-none fixed inset-x-0 bottom-0 z-[45] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4 sm:pb-4 md:px-6'
       aria-label='Page sections'
     >
-      <nav
-        className={`group/rail pointer-events-auto relative transition-colors duration-500 ${
-          onDark ? 'text-white' : 'text-[#003468]'
-        }`}
-      >
-        {/* Track centered in the 12px marker column */}
-        <span
-          aria-hidden='true'
-          className='pointer-events-none absolute top-2 bottom-2 left-0 w-3'
-        >
-          <span
-            className={`absolute inset-y-0 left-1/2 w-px -translate-x-1/2 ${
-              onDark ? 'bg-white/20' : 'bg-[#003468]/12'
-            }`}
-          />
-          <span
-            className={`absolute top-0 left-1/2 w-px origin-top -translate-x-1/2 transition-[height,background-color] duration-500 ease-out ${
-              onDark ? 'bg-[#d4af37]/80' : 'bg-[#003468]/45'
-            }`}
-            style={{ height: `${progress * 100}%` }}
-          />
-        </span>
-
-        <ul className='relative flex flex-col gap-7'>
-          {NAV_LINKS.map(({ id, label }, index) => {
+      <nav className='pointer-events-auto mx-auto flex w-fit max-w-full items-center gap-3 bg-white py-1.5 pr-1.5 pl-3 shadow-[0_-4px_24px_rgba(0,0,0,0.12)] sm:gap-6 sm:py-2 sm:pr-2 sm:pl-6'>
+        <ul className='flex min-w-0 [scrollbar-width:none] items-center gap-3 overflow-x-auto [-ms-overflow-style:none] sm:gap-6 [&::-webkit-scrollbar]:hidden'>
+          {NAV_LINKS.map(({ id, label }) => {
             const isActive = activeId === id;
-            const isPast = activeIndex >= 0 && index < activeIndex;
 
             return (
-              <li key={id}>
+              <li key={id} className='shrink-0'>
                 <a
                   href={`#${id}`}
                   data-cta-id={`nav-${id}`}
@@ -229,47 +199,34 @@ export default function StickyMenu() {
                   tabIndex={0}
                   onClick={e => handleNavClick(e, id)}
                   onKeyDown={e => handleKeyDown(e, id)}
-                  className='group/item grid grid-cols-[12px_auto] items-center gap-3.5 outline-none focus-visible:rounded-sm focus-visible:ring-1 focus-visible:ring-current/40'
+                  className={`text-xs whitespace-nowrap transition-colors duration-200 outline-none focus-visible:ring-1 focus-visible:ring-neutral-400 sm:text-sm ${
+                    isActive
+                      ? 'text-neutral-900'
+                      : 'text-neutral-500 hover:text-neutral-800'
+                  }`}
                 >
-                  <span
-                    aria-hidden='true'
-                    className='relative z-10 flex h-3 w-3 items-center justify-center'
-                  >
-                    <span
-                      className={`block h-1.5 w-1.5 rotate-45 transition-[transform,background-color] duration-300 ease-out ${
-                        isActive
-                          ? onDark
-                            ? 'scale-[1.35] bg-[#d4af37]'
-                            : 'scale-[1.35] bg-[#003468]'
-                          : isPast
-                            ? onDark
-                              ? 'bg-white/55'
-                              : 'bg-[#003468]/40'
-                            : onDark
-                              ? 'bg-white/25 group-hover/item:bg-white/60'
-                              : 'bg-[#003468]/20 group-hover/item:bg-[#003468]/50'
-                      }`}
-                    />
-                  </span>
-
-                  <span
-                    className={`text-[9px] font-normal tracking-[0.22em] whitespace-nowrap uppercase transition-[opacity,transform,color] duration-300 ease-out ${
-                      isActive
-                        ? onDark
-                          ? 'translate-x-0 text-white/90 opacity-100'
-                          : 'translate-x-0 text-[#003468]/85 opacity-100'
-                        : onDark
-                          ? '-translate-x-1 text-white/50 opacity-0 group-hover/item:!opacity-90 group-hover/rail:translate-x-0 group-hover/rail:opacity-35'
-                          : '-translate-x-1 text-[#003468]/50 opacity-0 group-hover/item:!opacity-80 group-hover/rail:translate-x-0 group-hover/rail:opacity-30'
-                    }`}
-                  >
-                    {label}
-                  </span>
+                  {label}
                 </a>
               </li>
             );
           })}
         </ul>
+
+        <button
+          type='button'
+          data-cta-id='nav-buy-now'
+          aria-label='Buy now'
+          tabIndex={0}
+          onClick={handleBuyNow}
+          onKeyDown={e => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            handleBuyNow();
+          }}
+          className='shrink-0 bg-black px-3.5 py-2.5 text-[10px] font-medium tracking-[0.12em] text-white uppercase transition-colors duration-200 outline-none hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 sm:px-7 sm:py-3.5 sm:text-sm'
+        >
+          Buy now
+        </button>
       </nav>
     </aside>
   );
