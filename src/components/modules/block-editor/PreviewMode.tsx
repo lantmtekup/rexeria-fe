@@ -2,7 +2,7 @@
 
 /**
  * Full-viewport preview overlay — cùng layout/render path với `/dev/blocks`:
- * device frame = vùng cuộn (width cố định 390/834/1280), LandingMotionRoot +
+ * device frame = vùng cuộn (width cố định 390/834/1440), LandingMotionRoot +
  * MotionProvider(mode=preview) + RenderBlock. Sticky/pin/scrub neo vào frame.
  *
  * Khác `/dev/blocks`: nhận blocks live từ editor (chưa cần save), overlay

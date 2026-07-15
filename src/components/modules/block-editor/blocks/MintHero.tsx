@@ -4,7 +4,7 @@
  * Data-block "Mint · Hero" (P3/d) — self-contained, container-query.
  * Fork từ template HeroIntroSection + HeroOverlayText, nhưng:
  *  - isMobile đo qua useContainerMobile (ResizeObserver khung block) thay
- *    window.matchMedia(viewport) → preview editor (390/834/1280) đúng.
+ *    window.matchMedia(viewport) → preview editor (390/834/1440) đúng.
  *  - overlay 3 dòng: container-query font (@2xl/@4xl) + data-element-key
  *    (inline-edit qua panel; overlay pointer-events-none nên không click canvas).
  *  - canvas frame-scrub + GSAP pin giữ NGUYÊN (chạy đúng trên /p; trong editor

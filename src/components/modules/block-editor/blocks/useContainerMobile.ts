@@ -10,7 +10,7 @@ import { CONTAINER_MOBILE_BREAKPOINT } from '../deviceFrame';
  *
  * Khác `window.matchMedia('(max-width:767px)')` (đo viewport thật) — hook này
  * đo chính khung block qua ResizeObserver, nên hoạt động đúng trong preview
- * editor (khung device 390/834/1280) lẫn trên trang `/p` thật. Dùng cho các
+ * editor (khung device 390/834/1440) lẫn trên trang `/p` thật. Dùng cho các
  * block port từ template để thay logic isMobile viewport-based.
  *
  * Sync đo trong useLayoutEffect (trước paint) để tránh frame đầu luôn `false`

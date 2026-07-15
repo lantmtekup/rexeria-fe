@@ -332,7 +332,7 @@ export function PnjStickyMenu({
   const pill = (
     <nav
       className={cn(
-        'pointer-events-auto mx-auto flex w-fit max-w-full items-center gap-2.5 bg-white py-1 pr-1 pl-3 shadow-[0_-4px_24px_rgba(0,0,0,0.10)] ring-1 ring-black/5 @sm:gap-4 @sm:py-1.5 @sm:pr-1.5 @sm:pl-4',
+        'pointer-events-auto mx-auto flex w-fit max-w-full items-center gap-3 bg-white py-1.5 pr-1.5 pl-3 shadow-[0_-4px_24px_rgba(0,0,0,0.12)] ring-1 ring-black/5 @2xl:gap-6 @2xl:py-2 @2xl:pr-2 @2xl:pl-6',
         className
       )}
       aria-label='Page sections'
@@ -343,7 +343,7 @@ export function PnjStickyMenu({
         style={styleOf('items')}
         className={selectableClass(
           activeKey === 'items',
-          'relative flex min-w-0 [scrollbar-width:none] items-center gap-2.5 overflow-x-auto [-ms-overflow-style:none] @sm:gap-4 [&::-webkit-scrollbar]:hidden'
+          'relative flex min-w-0 [scrollbar-width:none] items-center gap-3 overflow-x-auto [-ms-overflow-style:none] @2xl:gap-6 [&::-webkit-scrollbar]:hidden'
         )}
       >
         {items.map((item, i) => {
@@ -370,7 +370,7 @@ export function PnjStickyMenu({
                 className={selectableClass(
                   activeKey === `items[${i}].label`,
                   cn(
-                    'inline-block py-0.5 text-[11px] whitespace-nowrap transition-colors duration-200 outline-none focus-visible:ring-1 focus-visible:ring-neutral-400 @sm:py-1 @sm:text-[13px]',
+                    'inline-block py-0.5 text-xs whitespace-nowrap transition-colors duration-200 outline-none focus-visible:ring-1 focus-visible:ring-neutral-400 @2xl:py-1 @2xl:text-sm',
                     isActive
                       ? 'text-neutral-900'
                       : 'text-neutral-500 hover:text-neutral-800'
@@ -408,7 +408,7 @@ export function PnjStickyMenu({
             style={styleOf('ctaText')}
             className={selectableClass(
               activeKey === 'ctaText',
-              'shrink-0 bg-black px-3 py-2 text-[9px] font-medium tracking-[0.12em] text-white uppercase no-underline transition-colors duration-200 outline-none hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 @sm:px-5 @sm:py-2.5 @sm:text-xs'
+              'shrink-0 bg-black px-3.5 py-2.5 text-[10px] font-medium tracking-[0.12em] text-white uppercase no-underline transition-colors duration-200 outline-none hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 @2xl:px-7 @2xl:py-3.5 @2xl:text-sm'
             )}
           >
             {ctaText}
@@ -425,7 +425,7 @@ export function PnjStickyMenu({
             style={styleOf('ctaText')}
             className={selectableClass(
               activeKey === 'ctaText',
-              'shrink-0 bg-black px-3 py-2 text-[9px] font-medium tracking-[0.12em] text-white uppercase transition-colors duration-200 outline-none hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 @sm:px-5 @sm:py-2.5 @sm:text-xs'
+              'shrink-0 bg-black px-3.5 py-2.5 text-[10px] font-medium tracking-[0.12em] text-white uppercase transition-colors duration-200 outline-none hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 @2xl:px-7 @2xl:py-3.5 @2xl:text-sm'
             )}
           >
             {ctaText}
@@ -438,7 +438,7 @@ export function PnjStickyMenu({
   const overlayAside = (
     <aside
       className={cn(
-        'pointer-events-none inset-x-0 bottom-0 z-[49] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] @sm:px-4 @sm:pb-10 @md:px-6',
+        'pointer-events-none inset-x-0 bottom-0 z-[49] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] @2xl:px-4 @2xl:pb-4 @4xl:px-6',
         inFrame ? 'absolute' : 'fixed'
       )}
       aria-hidden={false}
@@ -460,7 +460,7 @@ export function PnjStickyMenu({
         ? createPortal(overlayAside, portalHost)
         : !useFixed && (
             <aside
-              className='flex w-full justify-center px-3 py-3 @sm:px-4 @md:px-6'
+              className='flex w-full justify-center px-3 py-3 @2xl:px-4 @4xl:px-6'
               aria-hidden={false}
             >
               {pill}

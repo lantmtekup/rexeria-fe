@@ -6,7 +6,7 @@
  *
  * - /p: portal `fixed top:0` → document.body
  * - PreviewMode: portal `absolute top:0` → `[data-device-frame]` (neo trong
- *   khung 390/834/1280, không trải full browser)
+ *   khung 390/834/1440, không trải full browser)
  * - Editor canvas: khung `min-h-svh` + logo absolute top (để chọn/sửa)
  */
 

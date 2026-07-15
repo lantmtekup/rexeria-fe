@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 
+import { DEVICE_FRAME_WIDTH } from './deviceFrame';
 import { RenderBlock } from './blocks/renderBlock';
 import type { Block, Lang } from './types';
 
@@ -12,7 +13,7 @@ export function BlockSceneThumb({ block, lang }: { block: Block; lang: Lang }) {
   const styles = block.elementStyles?.desktop;
   const background = block.background?.desktop;
   const order = block.elementOrder?.desktop;
-  const baseWidth = 1280;
+  const baseWidth = DEVICE_FRAME_WIDTH.desktop;
   const ref = React.useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = React.useState(0.087);
 
@@ -27,7 +28,7 @@ export function BlockSceneThumb({ block, lang }: { block: Block; lang: Lang }) {
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [baseWidth]);
 
   const inner = (
     <RenderBlock

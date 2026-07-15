@@ -63,7 +63,7 @@ interface BlockPreviewProps {
    * Fired on mount + whenever `device` changes with the zoom % needed to fit
    * the device frame fully in the visible canvas surface (clamped 20–100%).
    * BlockEditor uses this to auto-fit so users don't have to scroll on first
-   * load when the desktop frame (1280px) is wider than the viewport.
+   * load when the desktop frame (1440px) is wider than the viewport.
    */
   onAutoFitZoom?: (percentage: number, force?: boolean) => void;
   /** Ctrl/Cmd + wheel zoom — same clamp as BlockTabBar ZoomControls. */
@@ -874,7 +874,7 @@ export function BlockPreview({
         Outer wrapper reserves `scaledWidth × scaledHeight` in layout so the
         surface scrollbar reflects what the user actually sees. Without it,
         `transform: scale(...)` shrinks the visual but leaves the layout box
-        at the original 1280/834/390 width → horizontal scroll appears even
+        at the original 1440/834/390 width → horizontal scroll appears even
         when the rendered artwork fits. Pan translate lives here (not on the
         scaled inner) so sticky/pin blocks keep a clean containing block.
       */}
@@ -894,7 +894,7 @@ export function BlockPreview({
             ref={innerRef}
             // `@container` stays on the original-sized element so container
             // queries (`@2xl:` / `@4xl:`) match the *logical* device width
-            // (1280 / 834 / 390) — independent of the user-controlled zoom.
+            // (1440 / 834 / 390) — independent of the user-controlled zoom.
             className='@container origin-top-left'
             style={{
               width: baseWidth,
