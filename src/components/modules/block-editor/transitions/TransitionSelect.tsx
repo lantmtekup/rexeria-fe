@@ -20,12 +20,15 @@ export function TransitionSelect({
   onChange,
   className,
   placement = 'up',
+  variant = 'default',
 }: {
   value: string;
   onChange: (v: TemplateTransition) => void;
   className?: string;
   /** Hướng mở dropdown: 'up' (mặc định, khi nổi ở đáy) hoặc 'down' (header). */
   placement?: 'up' | 'down';
+  /** `compact` — một dòng, nhỏ gọn cho header. */
+  variant?: 'default' | 'compact';
 }) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
@@ -95,18 +98,42 @@ export function TransitionSelect({
       <button
         type='button'
         onClick={() => setOpen(o => !o)}
-        className='border-border flex w-44 items-center gap-2 rounded-lg border bg-white px-3 py-2 text-left shadow-sm transition hover:bg-neutral-50'
+        title={`Transition: ${currentMeta?.label ?? current}`}
+        aria-label={`Transition: ${currentMeta?.label ?? current}`}
+        className={cn(
+          'border-border flex items-center gap-1.5 rounded-md border bg-white text-left shadow-sm transition hover:bg-neutral-50',
+          variant === 'compact'
+            ? 'h-7 max-w-[9.5rem] px-2'
+            : 'w-44 gap-2 rounded-lg px-3 py-2'
+        )}
       >
-        <Zap className='text-primary size-4 shrink-0' />
+        <Zap
+          className={cn(
+            'text-primary shrink-0',
+            variant === 'compact' ? 'size-3.5' : 'size-4'
+          )}
+        />
         <span className='min-w-0 flex-1'>
-          <span className='text-3xs text-content-muted block leading-none font-semibold tracking-[0.16em] uppercase'>
-            Transition
-          </span>
-          <span className='text-foreground block truncate text-sm font-semibold'>
+          {variant === 'default' && (
+            <span className='text-3xs text-content-muted block leading-none font-semibold tracking-[0.16em] uppercase'>
+              Transition
+            </span>
+          )}
+          <span
+            className={cn(
+              'text-foreground block truncate font-semibold',
+              variant === 'compact' ? 'text-2xs' : 'text-sm'
+            )}
+          >
             {currentMeta?.label}
           </span>
         </span>
-        <ChevronDown className='text-content-muted size-4 shrink-0' />
+        <ChevronDown
+          className={cn(
+            'text-content-muted shrink-0',
+            variant === 'compact' ? 'size-3' : 'size-4'
+          )}
+        />
       </button>
     </div>
   );

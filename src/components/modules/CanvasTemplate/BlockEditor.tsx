@@ -15,9 +15,10 @@ import type {
 
 import { AddBlockDialog } from '@/components/modules/block-editor/AddBlockDialog';
 import { BlockEditorHeader } from '@/components/modules/block-editor/BlockEditorHeader';
+import { BlockSceneRail } from '@/components/modules/block-editor/BlockSceneRail';
 import { BlockEditorSidebar } from '@/components/modules/block-editor/BlockEditorSidebar';
 import { BlockPreview } from '@/components/modules/block-editor/BlockPreview';
-import { BlockTabBar } from '@/components/modules/block-editor/BlockTabBar';
+import { CanvasZoomBar } from '@/components/modules/block-editor/CanvasZoomBar';
 import {
   getContentAt,
   setContentAt,
@@ -33,6 +34,11 @@ import { PublishDialog } from '@/components/modules/block-editor/PublishDialog';
 import { ReviewChangesDialog } from '@/components/modules/block-editor/ReviewChangesDialog';
 import { MotionTimelineModal } from '@/components/modules/block-editor/motion/timeline/MotionTimelineModal';
 import type { BlockMotion } from '@/components/modules/block-editor/motion/types';
+import {
+  PNJ_PARAGRAPH_KEY_RE,
+  resolvePnjParagraphs,
+  setPnjParagraphAt,
+} from '@/components/modules/block-editor/blocks/PnjDetails';
 import { createBlock } from '@/components/modules/block-editor/factory';
 import {
   parseCanvas,
@@ -40,6 +46,7 @@ import {
   serializeCanvas,
 } from '@/components/modules/block-editor/serialize';
 import {
+  type Block,
   type BlockBackground,
   type BlockContent,
   type BlockMotionStored,
@@ -47,6 +54,7 @@ import {
   type ElementStyle,
   type ElementStylesMap,
   type ExtraElementKind,
+  type PnjDetailsContent,
 } from '@/components/modules/block-editor/types';
 import {
   bringToFront,
@@ -160,6 +168,35 @@ function bumpVersion(v: string): string {
   return v + '-r2';
 }
 
+function activeBlockStorageKey(templateId: string): string {
+  return `rexer-editor:active-block:${templateId}`;
+}
+
+function readStoredActiveBlockId(templateId: string): string | null {
+  try {
+    return sessionStorage.getItem(activeBlockStorageKey(templateId));
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredActiveBlockId(templateId: string, blockId: string): void {
+  try {
+    sessionStorage.setItem(activeBlockStorageKey(templateId), blockId);
+  } catch {
+    /* ignore quota */
+  }
+}
+
+/** Chọn active block hợp lệ — tránh fallback ngầm về blocks[0]. */
+function resolveActiveBlockId(
+  blocks: Block[],
+  preferred?: string | null
+): string | null {
+  if (preferred && blocks.some(b => b.id === preferred)) return preferred;
+  return blocks[0]?.id ?? null;
+}
+
 function rxErrorMessage(err: unknown): string {
   if (err instanceof RxApiError) return err.message || err.code;
   if (err instanceof Error) return err.message;
@@ -199,6 +236,8 @@ export function BlockEditor({
   });
   const publishState = usePublishState();
   const [fitRequestKey, setFitRequestKey] = React.useState(0);
+  /** Tránh fetch + reset canvas khi effect load chạy lại cùng template/block. */
+  const loadedCanvasKeyRef = React.useRef<string | null>(null);
 
   // Autosave — payload built from latest canvas + publish state at save time.
   const autosave = useAutosave({
@@ -276,7 +315,14 @@ export function BlockEditor({
   // preview được.
   React.useEffect(() => {
     let cancelled = false;
+    const canvasKey = blockMode
+      ? `block:${savedBlockDirectId}`
+      : `tpl:${templateId}`;
+    const skipReload = loadedCanvasKeyRef.current === canvasKey;
+
     (async () => {
+      if (skipReload) return;
+
       setLoading(true);
       setLoadError(null);
       try {
@@ -323,9 +369,13 @@ export function BlockEditor({
             updated_at: blk.updated_at,
             canvas_data: wire,
           } as CanvasTemplate);
-          canvas.reset(blocks, blocks[0]?.id ?? null);
+          canvas.reset(
+            blocks,
+            resolveActiveBlockId(blocks, parsed?.activeBlockId)
+          );
           setTransition(parsed?.transition ?? 'none');
           publishState.setPublish(undefined);
+          loadedCanvasKeyRef.current = canvasKey;
           setLoading(false);
           return;
         }
@@ -507,8 +557,16 @@ export function BlockEditor({
           '· isFreshTemplate?',
           isFreshTemplate
         );
-        canvas.reset(initial, parsed?.activeBlockId ?? initial[0]?.id ?? null);
+        const storedActive = templateId
+          ? readStoredActiveBlockId(templateId)
+          : null;
+        const resolvedActive = resolveActiveBlockId(
+          initial,
+          parsed?.activeBlockId ?? storedActive
+        );
+        canvas.reset(initial, resolvedActive);
         setTransition(parsed?.transition ?? 'none');
+        loadedCanvasKeyRef.current = canvasKey;
         // Publish state source-of-truth precedence:
         //   1. BE Page.status === 'published' (canonical, set qua
         //      pages.publish — survives Save Version commit clearing draft)
@@ -541,7 +599,7 @@ export function BlockEditor({
         if (cancelled) return;
         setLoadError(rxErrorMessage(err));
         const seeded = seedBlocks();
-        canvas.reset(seeded, seeded[0]?.id ?? null);
+        canvas.reset(seeded, resolveActiveBlockId(seeded));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -579,10 +637,18 @@ export function BlockEditor({
   const editVariant = deviceState.editVariant;
   const langKey = deviceState.lang === 'vi' ? 'contentVi' : 'contentEn';
 
-  const updateActiveContent = (next: BlockContent) => {
+  const updateActiveContent = (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => {
     if (tabletReadOnly()) return;
     canvas.mutateActive(b => {
-      b[langKey] = { ...b[langKey], [editVariant]: next };
+      const variants = b[langKey];
+      const prev =
+        (editVariant === 'mobile' ? variants.mobile : undefined) ??
+        variants.desktop;
+      const resolved =
+        typeof next === 'function' ? next(prev as BlockContent) : next;
+      b[langKey] = { ...variants, [editVariant]: resolved };
     });
     autosave.markDirty();
   };
@@ -777,13 +843,6 @@ export function BlockEditor({
     autosave.markDirty();
   };
 
-  const handleReorderBlocks = (
-    next: Parameters<typeof canvas.replaceBlocks>[0]
-  ) => {
-    canvas.replaceBlocks(next);
-    autosave.markDirty();
-  };
-
   // ── Variant sync (Desktop ↔ Mobile copy) ───────────────────────────────
   const syncVariant = (
     from: 'desktop' | 'mobile',
@@ -839,7 +898,16 @@ export function BlockEditor({
       (editVariant === 'mobile' ? langContent.mobile : undefined) ??
       langContent.desktop;
     const currentRecord = current as Record<string, unknown>;
-    if (getContentAt(currentRecord, key) === value) {
+    const paraMatch = key.match(PNJ_PARAGRAPH_KEY_RE);
+    const currentValue = paraMatch
+      ? (resolvePnjParagraphs(
+          current as PnjDetailsContent & {
+            paragraph1?: string;
+            paragraph2?: string;
+          }
+        )[Number(paraMatch[1])] ?? '')
+      : getContentAt(currentRecord, key);
+    if (currentValue === value) {
       selection.endInlineEdit();
       return;
     }
@@ -848,11 +916,21 @@ export function BlockEditor({
       const baseContent =
         (editVariant === 'mobile' ? variants.mobile : undefined) ??
         variants.desktop;
-      const nextContent = setContentAt(
-        baseContent as Record<string, unknown>,
-        key,
-        value
-      ) as BlockContent;
+      // paragraphs[i]: preserve full list (setContentAt collapses when array missing).
+      const nextContent = paraMatch
+        ? (setPnjParagraphAt(
+            baseContent as PnjDetailsContent & {
+              paragraph1?: string;
+              paragraph2?: string;
+            },
+            Number(paraMatch[1]),
+            value
+          ) as BlockContent)
+        : (setContentAt(
+            baseContent as Record<string, unknown>,
+            key,
+            value
+          ) as BlockContent);
       b[langKey] = { ...variants, [editVariant]: nextContent };
     });
     autosave.markDirty();
@@ -1059,6 +1137,9 @@ export function BlockEditor({
       draft.push(created);
     });
     canvas.setActiveId(created.id);
+    if (templateId && !blockMode) {
+      writeStoredActiveBlockId(templateId, created.id);
+    }
     autosave.markDirty();
   };
 
@@ -1069,6 +1150,9 @@ export function BlockEditor({
       draft.push(block);
     });
     canvas.setActiveId(block.id);
+    if (templateId && !blockMode) {
+      writeStoredActiveBlockId(templateId, block.id);
+    }
     autosave.markDirty();
   };
 
@@ -1083,8 +1167,39 @@ export function BlockEditor({
       if (nextActive === id) nextActive = draft[0]?.id ?? null;
     });
     if (nextActive !== canvas.activeId) canvas.setActiveId(nextActive);
+    if (nextActive && templateId && !blockMode) {
+      writeStoredActiveBlockId(templateId, nextActive);
+    }
     autosave.markDirty();
   };
+
+  const handleSelectBlock = React.useCallback(
+    (id: string) => {
+      if (!canvas.blocks.some(b => b.id === id)) return;
+      if (canvas.activeId === id) return;
+      canvas.setActiveId(id);
+      selection.selectKey(null);
+      setSelectedExtraElementId(null);
+      if (templateId && !blockMode) {
+        writeStoredActiveBlockId(templateId, id);
+        autosave.markDirty();
+      }
+    },
+    [canvas, templateId, blockMode, selection, autosave]
+  );
+
+  const handleReorderBlocks = (nextOrder: Block[]) => {
+    canvas.replaceBlocks(nextOrder);
+    autosave.markDirty();
+  };
+
+  const handlePreview = React.useCallback(() => {
+    if (templateId && !blockMode && canvas.activeId) {
+      writeStoredActiveBlockId(templateId, canvas.activeId);
+      autosave.markDirty();
+    }
+    setPreviewing(true);
+  }, [templateId, blockMode, canvas.activeId, autosave]);
 
   // ── Duplicate ───────────────────────────────────────────────────────────
   const handleDuplicateConfirm = async (name: string) => {
@@ -1162,9 +1277,6 @@ export function BlockEditor({
 
   // Eye → overlay PreviewMode (layout/render khớp /dev/blocks, không mở tab).
   // Live canvas — xem đúng bản đang edit (kể cả chưa lưu).
-  const handlePreview = () => {
-    setPreviewing(true);
-  };
 
   return (
     <div className='relative flex h-full min-h-0 flex-1 flex-col bg-neutral-100'>
@@ -1193,6 +1305,7 @@ export function BlockEditor({
             <TransitionSelect
               value={transition}
               placement='down'
+              variant='compact'
               onChange={v => {
                 setTransition(v);
                 autosave.markDirty();
@@ -1200,6 +1313,11 @@ export function BlockEditor({
             />
           )
         }
+        committedVersion={
+          template && !blockMode ? (currentVersion?.version ?? null) : undefined
+        }
+        onSaveVersion={template && !blockMode ? handleSaveVersion : undefined}
+        savingVersion={savingVersion}
         onPreview={handlePreview}
         onUndo={() => {
           canvas.undo();
@@ -1228,52 +1346,7 @@ export function BlockEditor({
         </div>
       )}
 
-      {/* Draft / version bar — show committed version + Save Version action.
-          Autosave handles the draft buffer silently; this bar is the explicit
-          commit point to an immutable TemplateVersion. Template mới (chưa
-          có version nào) vẫn hiện bar — Save Version sẽ tạo v1.0.0 đầu
-          tiên. */}
-      {/* Block-direct: nút "Lưu block" đã chuyển lên header (slot CTA) thay
-          cho hàng banner riêng — bỏ 1 hàng + hết trùng status/nút. Trạng thái
-          chưa-lưu nay chỉ hiện ở SaveDot trên header. */}
-
-      {template && !blockMode && (
-        <div className='border-border bg-muted/80 flex items-center justify-between gap-2 border-b px-4 py-1.5 text-xs'>
-          <div className='text-content-muted flex items-center gap-2'>
-            <span className='text-3xs text-muted-foreground font-mono tracking-wider uppercase'>
-              {currentVersion ? 'committed' : 'chưa có version'}
-            </span>
-            {currentVersion ? (
-              <code className='text-2xs text-content-muted rounded bg-white px-1.5 py-0.5 font-mono ring-1 ring-zinc-200'>
-                v{currentVersion.version}
-              </code>
-            ) : (
-              <code className='text-2xs rounded bg-amber-50 px-1.5 py-0.5 font-mono text-amber-800 ring-1 ring-amber-200'>
-                draft only
-              </code>
-            )}
-            <span className='text-muted-foreground'>·</span>
-            <span className='text-2xs'>
-              autosave ghi{' '}
-              <code className='font-mono'>draft_canvas_blueprint</code> · click{' '}
-              <strong>Save Version</strong> để commit immutable
-            </span>
-          </div>
-          <button
-            type='button'
-            onClick={handleSaveVersion}
-            disabled={savingVersion}
-            className='text-2xs inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-2.5 py-1 font-medium text-white shadow-sm transition-colors hover:bg-zinc-700 disabled:cursor-wait disabled:opacity-60'
-            title={
-              currentVersion
-                ? `Tạo immutable version mới (next: v${bumpVersion(currentVersion.version)})`
-                : 'Commit version đầu tiên (v1.0.0)'
-            }
-          >
-            {savingVersion ? 'Đang commit…' : 'Save Version'}
-          </button>
-        </div>
-      )}
+      {/* Block-direct: nút "Lưu block" đã chuyển lên header (slot CTA). */}
 
       <div className='relative flex min-h-0 flex-1 overflow-hidden'>
         <div className='relative flex min-h-0 min-w-0 flex-1 flex-col'>
@@ -1358,20 +1431,24 @@ export function BlockEditor({
           ) : (
             <EmptyState onAdd={() => setAddOpen(true)} />
           )}
-          <BlockTabBar
-            blocks={canvas.blocks}
-            activeId={activeBlock?.id ?? null}
-            lang={deviceState.lang}
+          <CanvasZoomBar
             zoom={deviceState.zoom}
-            onSelect={canvas.setActiveId}
+            onChange={deviceState.setZoom}
+            onFitToFrame={() => setFitRequestKey(k => k + 1)}
+          />
+        </div>
+
+        {!blockMode && (
+          <BlockSceneRail
+            blocks={canvas.blocks}
+            activeId={canvas.activeId}
+            lang={deviceState.lang}
+            onSelect={handleSelectBlock}
             onAdd={() => setAddOpen(true)}
             onRemove={handleRemoveBlock}
             onReorder={handleReorderBlocks}
-            onZoomChange={deviceState.setZoom}
-            onFitToFrame={() => setFitRequestKey(k => k + 1)}
-            hideTabs={blockMode}
           />
-        </div>
+        )}
 
         {activeBlock && !layersCollapsed && (
           <BlockEditorSidebar
@@ -1471,6 +1548,9 @@ export function BlockEditor({
             draft.push(block);
           });
           canvas.setActiveId(block.id);
+          if (templateId && !blockMode) {
+            writeStoredActiveBlockId(templateId, block.id);
+          }
           autosave.markDirty();
           toast.success(`Đã thêm block "${block.name}" từ AI`);
         }}
