@@ -139,7 +139,7 @@ export default async function RootLayout({
       >
         <Providers locale={locale} messages={messages} timezone={timezone}>
           {children}
-          <Toaster position='top-right' />
+          <Toaster position='bottom-right' />
         </Providers>
       </body>
     </html>

@@ -14,6 +14,7 @@ import { heroScrollDef } from './blocks/_registry/defs/heroScroll';
 import { scrollMattisDef } from './blocks/_registry/defs/scrollMattis';
 import { pnjHeroDef } from './blocks/_registry/defs/pnjHero';
 import { pnjDetailsDef } from './blocks/_registry/defs/pnjDetails';
+import { mintDiscoverDef } from './blocks/_registry/defs/mintDiscover';
 import { pnjVariantDef } from './blocks/_registry/defs/pnjVariant';
 import { pnjHeaderDef } from './blocks/_registry/defs/pnjHeader';
 import { pnjStickyMenuDef } from './blocks/_registry/defs/pnjStickyMenu';
@@ -93,7 +94,6 @@ import type {
   MintSkuContent,
   MintHeroContent,
   MintVariantsContent,
-  MintDiscoverContent,
   MintV2EmblemContent,
   MintV2ServicesContent,
   MintV2ManifestoContent,
@@ -359,38 +359,30 @@ const MINT_VARIANTS_VI: MintVariantsContent = {
       image: MINT_IMG.coinPackaging,
     },
   ],
+  discover: {
+    title: 'The Jack Pine by Tom Thomson — 1 Kilo Pure Gold Coin',
+    badge: 'Mintage 75',
+    subtitle: '99.99% Pure Gold · Proof',
+    dimensions: 'Weight: 1006.1 g / Diameter: 101.6 mm / Edge: Serrated',
+    faceValue: 'CAD $2,500',
+    detailsText: [
+      'REF. 252469',
+      'Composition: 99.99% pure gold',
+      'Weight: 1006.1 g',
+      'Diameter: 101.6 mm · Edge: serrated',
+      'Finish: proof',
+      'Face value: CAD $2,500',
+      'Worldwide mintage: 75',
+      'Obverse effigy: Steven Rosati',
+      'Reverse: Tom Thomson’s “The Jack Pine” (1916–17)',
+    ].join('\n'),
+    packagingText:
+      'Encapsulated and presented in a Royal Canadian Mint-branded wooden case with black beauty box. Includes a serialised certificate of authenticity.',
+    shippingText:
+      'Shipped fully insured. International availability subject to Royal Canadian Mint regional policies.',
+  },
 };
-const MINT_DISCOVER_VI: MintDiscoverContent = {
-  variant: '1',
-  mainImage: MINT_IMG.coinReverse,
-  mainAlt: 'Jack Pine Gold Coin — reverse',
-  tabs: [
-    {
-      key: 'tab1',
-      label: 'The Lone Pine',
-      desc: "Tom Thomson's windswept jack pine, rising from rocky ground above a northern lake. The kilo-sized canvas lifts every needle, branch and crag into 99.99% pure gold relief.",
-      img: MINT_IMG.coinReverse,
-      dotX: 50,
-      dotY: 30,
-    },
-    {
-      key: 'tab2',
-      label: 'Sky and Water',
-      desc: "A monochromatic field of polished and frosted gold replaces the painting's sunset palette, deepening the impact of Thomson's dynamic composition.",
-      img: MINT_IMG.coinReverse,
-      dotX: 62,
-      dotY: 62,
-    },
-    {
-      key: 'tab3',
-      label: 'Serrated Edge',
-      desc: '101.6 mm in diameter with a serrated edge — a tactile signature of Royal Canadian Mint craftsmanship at this scale.',
-      img: MINT_IMG.coinReverse,
-      dotX: 38,
-      dotY: 62,
-    },
-  ],
-};
+// mint_discover defaults → mintDiscoverDef (registry)
 
 // ── Mintcoin-v2 defaults (nội dung gốc English, dùng chung VI/EN) ─────────
 const MINTV2_FRAME48 =
@@ -2327,7 +2319,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   mint_sku: MINT_SKU_VI,
   mint_hero: MINT_HERO_VI,
   mint_variants: MINT_VARIANTS_VI,
-  mint_discover: MINT_DISCOVER_VI,
+  mint_discover: mintDiscoverDef.defaultContent.vi,
   pnj_hero: pnjHeroDef.defaultContent.vi,
   pnj_details: pnjDetailsDef.defaultContent.vi,
   pnj_variant: pnjVariantDef.defaultContent.vi,
@@ -2486,7 +2478,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   mint_sku: MINT_SKU_VI,
   mint_hero: MINT_HERO_VI,
   mint_variants: MINT_VARIANTS_VI,
-  mint_discover: MINT_DISCOVER_VI,
+  mint_discover: mintDiscoverDef.defaultContent.en,
   pnj_hero: pnjHeroDef.defaultContent.en,
   pnj_details: pnjDetailsDef.defaultContent.en,
   pnj_variant: pnjVariantDef.defaultContent.en,

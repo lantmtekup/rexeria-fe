@@ -375,6 +375,19 @@ export function ElementToolbar({
               onContentChange={onContentChange}
             />
           ))}
+        {kind === 'mintDiscoverVariant' && (
+          <MintDiscoverVariantControls
+            content={content as MintDiscoverContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'mintDiscoverSurface' && (
+          <MintDiscoverSurfaceControls
+            style={style}
+            onUpdateStyle={onUpdateStyle}
+            onResetStyle={onResetStyle}
+          />
+        )}
         {kind === 'pnjFrames' && (
           <PnjFramesJsonControls
             content={content as PnjHeroContent}
@@ -1667,6 +1680,68 @@ function MintVariantsControls({
       </div>
       <AddRow onAdd={add} label='Thêm biến thể' />
     </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── MINT DISCOVER (variant / surface)
+
+function MintDiscoverVariantControls({
+  content,
+  onContentChange,
+}: {
+  content: MintDiscoverContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const variant = content.variant ?? '1';
+  return (
+    <div className='flex min-w-0 items-center gap-2'>
+      <span className='text-[10px] font-medium tracking-wide text-neutral-500 uppercase'>
+        Theme
+      </span>
+      <select
+        value={variant}
+        onChange={e =>
+          onContentChange({
+            ...content,
+            variant: e.target.value as '1' | '2',
+          } as BlockContent)
+        }
+        className='h-8 min-w-[14rem] rounded-md border border-neutral-200 bg-white px-2 text-xs text-neutral-900'
+        aria-label='Theme variant'
+      >
+        <option value='1'>Variant 1 — Reverse (nền sáng)</option>
+        <option value='2'>Variant 2 — Obverse (nền tối)</option>
+      </select>
+    </div>
+  );
+}
+
+function MintDiscoverSurfaceControls({
+  style,
+  onUpdateStyle,
+  onResetStyle,
+}: {
+  style?: ElementStyle;
+  onUpdateStyle: (patch: ElementStyle) => void;
+  onResetStyle: () => void;
+}) {
+  return (
+    <>
+      <ColorSwatch
+        label='Nền thẻ'
+        value={style?.backgroundColor ?? 'rgba(255,255,255,0.8)'}
+        onChange={c => onUpdateStyle({ backgroundColor: c })}
+      />
+      <button
+        type='button'
+        onClick={onResetStyle}
+        title='Khôi phục style mặc định'
+        aria-label='Khôi phục style mặc định'
+        className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-800'
+      >
+        <RotateCcw className='size-3.5' />
+      </button>
+    </>
   );
 }
 
