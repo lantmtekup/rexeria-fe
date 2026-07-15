@@ -397,11 +397,27 @@ export interface MintVariantItem {
   ref: string;
 }
 
+/** Thông tin hiển thị trong Discover drawer của Mint · Variants (CMS-editable).
+ *  Nhập liệu qua panel Lớp (folder "Drawer chi tiết") — drawer không mở trên
+ *  canvas nên các field này sửa bằng toolbar chứ không inline. */
+export interface MintDiscoverInfo {
+  title: string;
+  badge: string;
+  subtitle: string;
+  dimensions: string;
+  faceValue: string;
+  detailsText: string;
+  packagingText: string;
+  shippingText: string;
+}
+
 /** Mint-coint "variants" section (port). Swatch picker + parallax title. */
 export interface MintVariantsContent {
   titleLine1: string;
   titleLine2: string;
   variants: MintVariantItem[];
+  /** Optional — content cũ (seed trước khi thêm drawer CMS) có thể thiếu field. */
+  discover?: MintDiscoverInfo;
 }
 
 export interface MintDiscoverTab {

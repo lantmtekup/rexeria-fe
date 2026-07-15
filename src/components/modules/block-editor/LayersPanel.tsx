@@ -47,6 +47,7 @@ import { ExtraElementsList } from './ExtraElementsList';
 import { resolvePnjParagraphs } from './blocks/PnjDetails';
 import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
+import { mintDiscoverTabElements } from './blocks/_registry/defs/mintDiscover';
 import { pnjStickyMenuItemElements } from './blocks/_registry/defs/pnjStickyMenu';
 import { getBlockDef } from './blocks/_registry/registry';
 import {
@@ -60,6 +61,7 @@ import {
   type PnjHeroContent,
   type PnjVariantItem,
   type PnjStickyMenuItem,
+  type MintDiscoverTab,
 } from './types';
 
 export interface LayerElement {
@@ -329,6 +331,55 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'titleLine1', label: 'Tiêu đề dòng 1', icon: Type },
     { key: 'titleLine2', label: 'Tiêu đề dòng 2', icon: Type },
     { key: 'variants', label: 'Biến thể (swatch)', icon: Grid3x3 },
+    {
+      key: 'discover.title',
+      label: 'Tiêu đề',
+      icon: Type,
+      groupId: 'discover',
+      groupLabel: 'Drawer chi tiết',
+    },
+    {
+      key: 'discover.badge',
+      label: 'Nhãn (mintage)',
+      icon: Type,
+      groupId: 'discover',
+    },
+    {
+      key: 'discover.subtitle',
+      label: 'Phụ đề',
+      icon: Type,
+      groupId: 'discover',
+    },
+    {
+      key: 'discover.dimensions',
+      label: 'Kích thước',
+      icon: Pilcrow,
+      groupId: 'discover',
+    },
+    {
+      key: 'discover.faceValue',
+      label: 'Face value',
+      icon: Type,
+      groupId: 'discover',
+    },
+    {
+      key: 'discover.detailsText',
+      label: 'Chi tiết',
+      icon: Pilcrow,
+      groupId: 'discover',
+    },
+    {
+      key: 'discover.packagingText',
+      label: 'Đóng gói',
+      icon: Pilcrow,
+      groupId: 'discover',
+    },
+    {
+      key: 'discover.shippingText',
+      label: 'Vận chuyển',
+      icon: Pilcrow,
+      groupId: 'discover',
+    },
   ],
   mint_hero: [
     BACKGROUND_LAYER,
@@ -660,6 +711,41 @@ export function elementsForType(
         icon: ListChecks,
       },
       { key: 'ctaText', label: 'CTA', icon: Type, fieldType: 'text' },
+    ];
+  }
+  if (type === 'mint_discover') {
+    const raw = content?.tabs;
+    const tabs = Array.isArray(raw)
+      ? (raw as MintDiscoverTab[]).filter(
+          t => t && typeof t === 'object' && typeof t.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'variant', label: 'Theme variant', icon: LayersIcon },
+      {
+        key: 'mainImage',
+        label: 'Ảnh coin',
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+      {
+        key: 'mainAlt',
+        label: 'Alt ảnh',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'cardSurface',
+        label: 'Thẻ info (nền)',
+        icon: LayersIcon,
+      },
+      ...mintDiscoverTabElements(tabs),
+      {
+        key: 'tabs',
+        label: 'Hotspot / chi tiết',
+        icon: ListChecks,
+      },
     ];
   }
   if (type === 'pnj_sticky_menu') {

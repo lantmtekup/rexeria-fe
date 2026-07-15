@@ -22,6 +22,8 @@ export type ElementKind =
   | 'pnjStickyMenuItems'
   | 'pnjFrames'
   | 'pnjScrim'
+  | 'mintDiscoverVariant'
+  | 'mintDiscoverSurface'
   | 'background';
 
 export const BACKGROUND_LAYER_KEY = '__background__';
@@ -125,6 +127,15 @@ export function resolveKind(
   // Nested variant fields: variants[0].label / .desc / .highlights → text
   if (/^variants\[\d+\]\.image$/.test(key)) return 'image';
   if (/^variants\[\d+\]\.(label|desc|highlights)$/.test(key)) return 'text';
+  if (/^tabs\[\d+\]\.image$/.test(key)) return 'image';
+  if (/^tabs\[\d+\]\.img$/.test(key)) return 'image';
+  if (/^tabs\[\d+\]\.(label|desc)$/.test(key)) return 'text';
+  if (key === 'variant' && blockType === 'mint_discover') {
+    return 'mintDiscoverVariant';
+  }
+  if (key === 'cardSurface' && blockType === 'mint_discover') {
+    return 'mintDiscoverSurface';
+  }
   if (/^items\[\d+\]\.label$/.test(key)) return 'text';
   if (/^items\[\d+\]\.link$/.test(key)) return 'text';
   return ELEMENT_KIND[key] ?? (isImageKey(key) ? 'image' : 'text');
@@ -156,6 +167,17 @@ export function resolveLabel(
   const navLink = key.match(/^items\[(\d+)\]\.link$/);
   if (navLink) return `Link mục ${Number(navLink[1]) + 1}`;
   if (key === 'items' && blockType === 'pnj_sticky_menu') return 'Menu items';
+  const tabLabel = key.match(/^tabs\[(\d+)\]\.label$/);
+  if (tabLabel) return `Hotspot ${Number(tabLabel[1]) + 1} · tiêu đề`;
+  const tabDesc = key.match(/^tabs\[(\d+)\]\.desc$/);
+  if (tabDesc) return `Hotspot ${Number(tabDesc[1]) + 1} · mô tả`;
+  const tabImg = key.match(/^tabs\[(\d+)\]\.img$/);
+  if (tabImg) return `Hotspot ${Number(tabImg[1]) + 1} · ảnh drawer`;
+  if (key === 'variant' && blockType === 'mint_discover')
+    return 'Theme variant';
+  if (key === 'cardSurface' && blockType === 'mint_discover') {
+    return 'Thẻ info (nền)';
+  }
   const fromDef = blockType
     ? getBlockDef(blockType)?.elements.find(e => e.key === key)?.label
     : undefined;
@@ -241,6 +263,63 @@ export function resolveElementMeta(
       fieldType: 'text',
       label: `Link mục ${Number(navLink[1]) + 1}`,
     };
+  }
+  const tabLabel = key.match(/^tabs\[(\d+)\]\.label$/);
+  if (tabLabel && blockType === 'mint_discover') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Hotspot ${Number(tabLabel[1]) + 1} · tiêu đề`,
+    };
+  }
+  const tabDesc = key.match(/^tabs\[(\d+)\]\.desc$/);
+  if (tabDesc && blockType === 'mint_discover') {
+    return {
+      kind: 'text',
+      fieldType: 'textarea',
+      label: `Hotspot ${Number(tabDesc[1]) + 1} · mô tả`,
+    };
+  }
+  const tabImg = key.match(/^tabs\[(\d+)\]\.img$/);
+  if (tabImg && blockType === 'mint_discover') {
+    return {
+      kind: 'image',
+      fieldType: 'image',
+      label: `Hotspot ${Number(tabImg[1]) + 1} · ảnh drawer`,
+    };
+  }
+  if (key === 'variant' && blockType === 'mint_discover') {
+    return {
+      kind: 'mintDiscoverVariant',
+      fieldType: undefined,
+      label: 'Theme variant',
+    };
+  }
+  if (key === 'cardSurface' && blockType === 'mint_discover') {
+    return {
+      kind: 'mintDiscoverSurface',
+      fieldType: undefined,
+      label: 'Thẻ info (nền)',
+    };
+  }
+  if (blockType === 'mint_variants' && key.startsWith('discover.')) {
+    const DISCOVER_META: Record<
+      string,
+      { fieldType: 'text' | 'textarea'; label: string }
+    > = {
+      title: { fieldType: 'text', label: 'Drawer · Tiêu đề' },
+      badge: { fieldType: 'text', label: 'Drawer · Nhãn (mintage)' },
+      subtitle: { fieldType: 'text', label: 'Drawer · Phụ đề' },
+      dimensions: { fieldType: 'textarea', label: 'Drawer · Kích thước' },
+      faceValue: { fieldType: 'text', label: 'Drawer · Face value' },
+      detailsText: { fieldType: 'textarea', label: 'Drawer · Chi tiết' },
+      packagingText: { fieldType: 'textarea', label: 'Drawer · Đóng gói' },
+      shippingText: { fieldType: 'textarea', label: 'Drawer · Vận chuyển' },
+    };
+    const meta = DISCOVER_META[key.slice('discover.'.length)];
+    if (meta) {
+      return { kind: 'text', fieldType: meta.fieldType, label: meta.label };
+    }
   }
   const fieldType = defFieldType(blockType, key);
   const kind = resolveKind(key, fieldType, blockType);

@@ -108,6 +108,7 @@ const STICKY_SCROLL_BLOCK_TYPES = new Set<Block['blockType']>([
   'scroll_mattis',
   'pnj_variant',
   'pnj_details',
+  'mint_discover',
 ]);
 
 /** Overlay chrome (header/nav) — canvas căn top, không center tạo khoảng hở. */

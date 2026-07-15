@@ -94,6 +94,7 @@ import { pnjVariantDef } from './defs/pnjVariant';
 import { pnjHeaderDef } from './defs/pnjHeader';
 import { pnjStickyMenuDef } from './defs/pnjStickyMenu';
 import { pnjCtaDef } from './defs/pnjCta';
+import { mintDiscoverDef } from './defs/mintDiscover';
 import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
@@ -103,6 +104,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   pnj_header: pnjHeaderDef as BlockDef,
   pnj_sticky_menu: pnjStickyMenuDef as BlockDef,
   pnj_cta: pnjCtaDef as BlockDef,
+  mint_discover: mintDiscoverDef as BlockDef,
   framer_yume_hero: framerYumeHeroDef as BlockDef,
   framer_bungee_hero_v2: framerBungeeHeroV2Def as BlockDef,
   framer_flat_white_process: framerFlatWhiteProcessDef as BlockDef,

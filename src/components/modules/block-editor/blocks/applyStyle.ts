@@ -31,6 +31,9 @@ export function elementStyleOf(
   if (s.textDecoration) out.textDecoration = s.textDecoration;
   if (s.textAlign) out.textAlign = s.textAlign;
   if (s.fontFamily) out.fontFamily = resolveFontValue(s.fontFamily);
+  if (s.backgroundColor)
+    out.backgroundColor = resolveColorValue(s.backgroundColor);
+  if (typeof s.opacity === 'number') out.opacity = s.opacity;
   if (Object.keys(out).length === 0) return undefined;
   return out;
 }
