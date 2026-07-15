@@ -129,7 +129,10 @@ export function AdminSidebar() {
   const [collapsed, setCollapsed] = React.useState(false);
 
   const isBlockEditorRoute = React.useMemo(
-    () => /^\/admin\/blocks\/[^/]+\/edit\/?$/.test(pathname ?? ''),
+    () =>
+      /^\/admin\/blocks\/[^/]+\/edit\/?$/.test(pathname ?? '') ||
+      /^\/admin\/templates\/[^/]+\/edit\/?$/.test(pathname ?? '') ||
+      /^\/admin\/landing-pages\/[^/]+\/?$/.test(pathname ?? ''),
     [pathname]
   );
 

@@ -16,6 +16,9 @@ export type ElementKind =
   | 'interactiveAd'
   | 'mintVariants'
   | 'mintTabs'
+  | 'pnjParagraphs'
+  | 'pnjVariants'
+  | 'pnjStickyMenuItems'
   | 'background';
 
 export const BACKGROUND_LAYER_KEY = '__background__';
@@ -43,6 +46,8 @@ const ELEMENT_KIND: Record<string, ElementKind> = {
   slides: 'slides',
   variants: 'mintVariants',
   tabs: 'mintTabs',
+  hotspots: 'mintTabs',
+  paragraphs: 'pnjParagraphs',
   [BACKGROUND_LAYER_KEY]: 'background',
 };
 
@@ -66,6 +71,8 @@ const ELEMENT_LABEL: Record<string, string> = {
   slides: 'Slides',
   variants: 'Biến thể (swatch)',
   tabs: 'Hotspot / chi tiết',
+  hotspots: 'Hotspot / chi tiết',
+  paragraphs: 'Đoạn văn',
   [BACKGROUND_LAYER_KEY]: 'Nền',
 };
 
@@ -95,6 +102,20 @@ export function resolveKind(
   if (key === 'slides' && blockType === 'interactive_ad_widget') {
     return 'interactiveAd';
   }
+  // PNJ variant chapters vs Mint swatch variants — cùng key `variants`.
+  if (key === 'variants' && blockType === 'pnj_variant') {
+    return 'pnjVariants';
+  }
+  if (key === 'items' && blockType === 'pnj_sticky_menu') {
+    return 'pnjStickyMenuItems';
+  }
+  // Nested paragraph slots: paragraphs[0] → text (inline edit).
+  if (/^paragraphs\[\d+\]$/.test(key)) return 'text';
+  // Nested variant fields: variants[0].label / .desc / .highlights → text
+  if (/^variants\[\d+\]\.image$/.test(key)) return 'image';
+  if (/^variants\[\d+\]\.(label|desc|highlights)$/.test(key)) return 'text';
+  if (/^items\[\d+\]\.label$/.test(key)) return 'text';
+  if (/^items\[\d+\]\.link$/.test(key)) return 'text';
   return ELEMENT_KIND[key] ?? (isImageKey(key) ? 'image' : 'text');
 }
 
@@ -106,6 +127,22 @@ export function resolveLabel(
   if (key === 'slides' && blockType === 'interactive_ad_widget') {
     return 'Slides quảng cáo';
   }
+  const paraMatch = key.match(/^paragraphs\[(\d+)\]$/);
+  if (paraMatch) return `Đoạn ${Number(paraMatch[1]) + 1}`;
+  const variantLabel = key.match(/^variants\[(\d+)\]\.label$/);
+  if (variantLabel) return `Nhãn góc ${Number(variantLabel[1]) + 1}`;
+  const variantDesc = key.match(/^variants\[(\d+)\]\.desc$/);
+  if (variantDesc) return `Mô tả góc ${Number(variantDesc[1]) + 1}`;
+  const variantImg = key.match(/^variants\[(\d+)\]\.image$/);
+  if (variantImg) return `Ảnh góc ${Number(variantImg[1]) + 1}`;
+  const variantHl = key.match(/^variants\[(\d+)\]\.highlights$/);
+  if (variantHl) return `Highlights góc ${Number(variantHl[1]) + 1}`;
+  if (key === 'variants' && blockType === 'pnj_variant') return 'Góc nhìn';
+  const navLabel = key.match(/^items\[(\d+)\]\.label$/);
+  if (navLabel) return `Nhãn mục ${Number(navLabel[1]) + 1}`;
+  const navLink = key.match(/^items\[(\d+)\]\.link$/);
+  if (navLink) return `Link mục ${Number(navLink[1]) + 1}`;
+  if (key === 'items' && blockType === 'pnj_sticky_menu') return 'Menu items';
   const fromDef = blockType
     ? getBlockDef(blockType)?.elements.find(e => e.key === key)?.label
     : undefined;
@@ -128,6 +165,62 @@ export function resolveElementMeta(
   blockType: BlockType,
   key: string
 ): ResolvedElementMeta {
+  if (/^paragraphs\[\d+\]$/.test(key)) {
+    const n = Number(key.match(/^paragraphs\[(\d+)\]$/)?.[1] ?? 0);
+    return {
+      kind: 'text',
+      fieldType: 'textarea',
+      label: `Đoạn ${n + 1}`,
+    };
+  }
+  const vImg = key.match(/^variants\[(\d+)\]\.image$/);
+  if (vImg && blockType === 'pnj_variant') {
+    return {
+      kind: 'image',
+      fieldType: 'image',
+      label: `Ảnh góc ${Number(vImg[1]) + 1}`,
+    };
+  }
+  const vLabel = key.match(/^variants\[(\d+)\]\.label$/);
+  if (vLabel && blockType === 'pnj_variant') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Nhãn góc ${Number(vLabel[1]) + 1}`,
+    };
+  }
+  const vDesc = key.match(/^variants\[(\d+)\]\.desc$/);
+  if (vDesc && blockType === 'pnj_variant') {
+    return {
+      kind: 'text',
+      fieldType: 'textarea',
+      label: `Mô tả góc ${Number(vDesc[1]) + 1}`,
+    };
+  }
+  const vHl = key.match(/^variants\[(\d+)\]\.highlights$/);
+  if (vHl && blockType === 'pnj_variant') {
+    return {
+      kind: 'text',
+      fieldType: 'textarea',
+      label: `Highlights góc ${Number(vHl[1]) + 1}`,
+    };
+  }
+  const navLabel = key.match(/^items\[(\d+)\]\.label$/);
+  if (navLabel && blockType === 'pnj_sticky_menu') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Nhãn mục ${Number(navLabel[1]) + 1}`,
+    };
+  }
+  const navLink = key.match(/^items\[(\d+)\]\.link$/);
+  if (navLink && blockType === 'pnj_sticky_menu') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Link mục ${Number(navLink[1]) + 1}`,
+    };
+  }
   const fieldType = defFieldType(blockType, key);
   const kind = resolveKind(key, fieldType, blockType);
   const label = resolveLabel(key, kind, blockType);

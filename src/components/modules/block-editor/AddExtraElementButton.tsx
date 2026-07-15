@@ -108,9 +108,9 @@ export function AddExtraElementButton({ onPick, disabled }: Props) {
           type='button'
           disabled={disabled}
           className={cn(
-            'inline-flex h-7 w-full items-center justify-center gap-1.5 rounded-md text-xs font-medium ring-1 transition-colors',
-            'bg-neutral-900 text-white ring-neutral-900 hover:bg-neutral-800',
-            'disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-400 disabled:ring-neutral-200'
+            'inline-flex h-7 w-full items-center justify-center gap-1 rounded-md text-xs font-medium ring-1 transition-colors',
+            'bg-white text-neutral-700 ring-neutral-200 hover:bg-neutral-50 hover:ring-neutral-300',
+            'disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-400 disabled:ring-neutral-100'
           )}
         >
           <Plus className='size-3.5' /> Thêm element

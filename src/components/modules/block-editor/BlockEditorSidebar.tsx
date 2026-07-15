@@ -60,11 +60,11 @@ export function BlockEditorSidebar({
   const isMotion = activeTab === 'motion';
   return (
     <aside
-      className='flex w-[280px] shrink-0 flex-col border-l border-neutral-200 bg-neutral-50'
+      className='flex w-[252px] shrink-0 flex-col border-l border-neutral-200 bg-neutral-50'
       data-testid='block-editor-sidebar'
     >
       {/* Tab strip */}
-      <div className='flex items-stretch border-b border-neutral-200 bg-white'>
+      <div className='flex h-9 items-stretch border-b border-neutral-200 bg-white'>
         <TabBtn
           active={!isMotion}
           onClick={() => onChangeTab?.('layers')}
@@ -84,9 +84,9 @@ export function BlockEditorSidebar({
             type='button'
             aria-label='Ẩn bảng lớp'
             onClick={onCollapse}
-            className='ml-auto flex size-9 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+            className='ml-auto flex size-8 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
           >
-            <PanelRightClose className='size-4' />
+            <PanelRightClose className='size-3.5' />
           </button>
         )}
       </div>
@@ -139,7 +139,7 @@ function TabBtn({
       data-testid={testId}
       data-active={active ? 'true' : 'false'}
       className={cn(
-        'relative flex h-9 cursor-pointer items-center px-4 text-xs font-semibold tracking-widest uppercase transition-colors',
+        'relative flex h-full cursor-pointer items-center px-3 text-xs font-semibold tracking-wide uppercase transition-colors',
         active ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-700'
       )}
     >

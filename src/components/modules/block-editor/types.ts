@@ -79,6 +79,13 @@ export type BlockType =
   | 'mint_hero'
   | 'mint_variants'
   | 'mint_discover'
+  // ── PNJ (Citizen L Arcly) — port từ apps/pnj ──
+  | 'pnj_hero'
+  | 'pnj_details'
+  | 'pnj_variant'
+  | 'pnj_header'
+  | 'pnj_sticky_menu'
+  | 'pnj_cta'
   // ── Mintcoin-v2 sections ──
   | 'mintv2_emblem'
   | 'mintv2_services'
@@ -412,6 +419,107 @@ export interface MintDiscoverContent {
   mainImage: string;
   mainAlt: string;
   tabs: MintDiscoverTab[];
+}
+
+/** PNJ hero hotspot (canvas scroll-step + drawer). */
+export interface PnjHeroHotspot {
+  key: string;
+  label: string;
+  desc: string;
+  img: string;
+  /** Dot position — % of canvas container. */
+  dotX: number;
+  dotY: number;
+}
+
+/**
+ * PNJ hero — storefront + overlay copy + canvas frame-scrub + hotspots.
+ * Port từ apps/pnj HeroIntroSection.
+ * Frame sequence hardcoded từ public/pnj (không CMS-editable).
+ */
+export interface PnjHeroContent {
+  subtitle: string;
+  titleLine1: string;
+  titleLine2: string;
+  storefrontUrl: string;
+  hotspots: PnjHeroHotspot[];
+}
+
+/**
+ * PNJ details — pin + scrub word-reveal (title + N đoạn).
+ * Port từ apps/pnj DetailsSection.
+ */
+export interface PnjDetailsContent {
+  title: string;
+  /** Đoạn văn (thêm/xoá trong editor). */
+  paragraphs: string[];
+}
+
+/** Một góc nhìn sản phẩm trong PNJ · Variant. */
+export interface PnjVariantItem {
+  key: string;
+  label: string;
+  desc: string;
+  image: string;
+  highlights: string[];
+}
+
+/**
+ * PNJ variant — pin + scrub chapters (ảnh + copy theo góc nhìn).
+ * Port từ apps/pnj ProductVariantSection.
+ */
+export interface PnjVariantContent {
+  ctaText: string;
+  variants: PnjVariantItem[];
+}
+
+/** Một mục trong thanh sticky menu PNJ. */
+export interface PnjStickyMenuItem {
+  key: string;
+  label: string;
+  /** Section id (vd `discover`) hoặc URL https://… */
+  link: string;
+}
+
+/**
+ * PNJ header — logo cố định góc trên, thu nhỏ khi scroll.
+ * Port từ apps/pnj Header.
+ */
+export interface PnjHeaderContent {
+  logoUrl: string;
+  logoAlt: string;
+  /** URL ngoài hoặc `#` / path nội bộ. Để trống = không điều hướng. */
+  logoHref: string;
+}
+
+/**
+ * PNJ sticky menu — thanh điều hướng cố định đáy viewport.
+ * Port từ apps/pnj StickyMenu.
+ */
+export interface PnjStickyMenuContent {
+  items: PnjStickyMenuItem[];
+  ctaText: string;
+  /** Section id hoặc URL https://… */
+  ctaLink: string;
+}
+
+/**
+ * PNJ CTA — section tối cuối trang với form "để lại thông tin"
+ * (email + phone + note). Port từ apps/pnj CtaSection.
+ * Chưa nối backend — submit chỉ hiện thông báo cảm ơn cục bộ.
+ */
+export interface PnjCtaContent {
+  title: string;
+  subtitle: string;
+  emailLabel: string;
+  emailPlaceholder: string;
+  phoneLabel: string;
+  phonePlaceholder: string;
+  noteLabel: string;
+  notePlaceholder: string;
+  submitText: string;
+  /** Thông báo sau khi gửi (chỉ hiện trên /p, không hiện trong editor). */
+  successMessage: string;
 }
 
 // ── Mintcoin-v2 sections (port từ apps/mintcoin-v2) ──────────────────────
@@ -2368,6 +2476,12 @@ export type BlockContent =
   | MintHeroContent
   | MintVariantsContent
   | MintDiscoverContent
+  | PnjHeroContent
+  | PnjDetailsContent
+  | PnjVariantContent
+  | PnjHeaderContent
+  | PnjStickyMenuContent
+  | PnjCtaContent
   | MintV2EmblemContent
   | MintV2ServicesContent
   | MintV2ManifestoContent
@@ -2963,6 +3077,7 @@ export type BlockCategory =
   | 'faq'
   | 'header'
   | 'footer'
+  | 'navigation'
   | 'cta'
   | 'feature'
   | 'listing'
@@ -3234,6 +3349,113 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     defaultName: 'Mint Discover',
     aiLabelVi: 'section khám phá chi tiết coin (hotspot + drawer)',
     aiLabelEn: 'coin detail discover section (hotspots + drawer)',
+  },
+  pnj_hero: {
+    type: 'pnj_hero',
+    category: 'hero',
+    style: 'luxury',
+    tags: ['pnj', 'hero', 'watch', 'citizen'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-14',
+    label: 'PNJ · Hero',
+    accent: '#003468',
+    adminLabel: 'PNJ Hero',
+    gradient: 'from-blue-900 to-slate-800',
+    defaultName: 'PNJ Hero',
+    aiLabelVi:
+      'hero PNJ: ảnh storefront + overlay chữ + canvas scrub frame + hotspot drawer',
+    aiLabelEn:
+      'PNJ hero: storefront image + overlay copy + canvas frame scrub + hotspot drawer',
+  },
+  pnj_details: {
+    type: 'pnj_details',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['pnj', 'details', 'editorial', 'citizen'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-14',
+    label: 'PNJ · Details',
+    accent: '#003468',
+    adminLabel: 'PNJ Details',
+    gradient: 'from-slate-100 to-blue-50',
+    defaultName: 'PNJ Details',
+    aiLabelVi:
+      'section mô tả PNJ: pin scroll + word reveal tiêu đề và các đoạn văn',
+    aiLabelEn:
+      'PNJ details section: pinned scroll with word-reveal title and paragraphs',
+  },
+  pnj_variant: {
+    type: 'pnj_variant',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['pnj', 'variant', 'product', 'citizen'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-14',
+    label: 'PNJ · Variant',
+    accent: '#003468',
+    adminLabel: 'PNJ Variant',
+    gradient: 'from-neutral-100 to-slate-200',
+    defaultName: 'PNJ Variant',
+    aiLabelVi:
+      'section góc nhìn sản phẩm PNJ: pin scrub đổi ảnh + mô tả + highlights + CTA',
+    aiLabelEn:
+      'PNJ product views section: pinned scrub of image chapters + copy + highlights + CTA',
+  },
+  pnj_header: {
+    type: 'pnj_header',
+    category: 'navigation',
+    style: 'luxury',
+    tags: ['pnj', 'header', 'logo', 'citizen'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-15',
+    label: 'PNJ · Header',
+    accent: '#003468',
+    adminLabel: 'PNJ Header',
+    gradient: 'from-white to-neutral-100',
+    defaultName: 'PNJ Header',
+    aiLabelVi: 'header PNJ: logo fixed top trong suốt, thu nhỏ khi scroll',
+    aiLabelEn:
+      'PNJ fixed-top logo header: transparent over hero, shrinks on scroll',
+  },
+  pnj_sticky_menu: {
+    type: 'pnj_sticky_menu',
+    category: 'navigation',
+    style: 'luxury',
+    tags: ['pnj', 'nav', 'sticky', 'citizen'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-15',
+    label: 'PNJ · Sticky Menu',
+    accent: '#003468',
+    adminLabel: 'PNJ Sticky Menu',
+    gradient: 'from-white to-neutral-200',
+    defaultName: 'PNJ Sticky Menu',
+    aiLabelVi:
+      'thanh menu cố định đáy màn hình PNJ: anchor link tới section hoặc URL + nút CTA',
+    aiLabelEn:
+      'PNJ fixed bottom nav: section anchors or external URLs + CTA button',
+  },
+  pnj_cta: {
+    type: 'pnj_cta',
+    category: 'cta',
+    style: 'luxury',
+    tags: ['pnj', 'cta', 'form', 'contact', 'citizen'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-15',
+    label: 'PNJ · CTA',
+    accent: '#c79119',
+    adminLabel: 'PNJ CTA',
+    gradient: 'from-neutral-900 to-neutral-800',
+    defaultName: 'PNJ CTA',
+    aiLabelVi:
+      'section CTA tối cuối trang PNJ: tiêu đề + mô tả + form email/phone/note + nút đăng ký',
+    aiLabelEn:
+      'PNJ closing CTA section: dark form with title, copy and email/phone/note register form',
   },
   mintv2_emblem: {
     type: 'mintv2_emblem',
