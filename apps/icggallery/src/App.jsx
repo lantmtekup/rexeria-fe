@@ -9,6 +9,7 @@ import Model3DModal from './Model3DModal.jsx';
 import AuthorPanel from './AuthorPanel.jsx';
 import { ZoneOverlay } from './Zones.jsx';
 import { usePathDraft, PathEditorPanel } from './path-editor.jsx';
+import { useLightSettings, LightEditorPanel } from './light-editor.jsx';
 import { FLOORS, FLOOR_KEYS, floorFromPath } from './floors.js';
 
 const IS_AUTHOR =
@@ -17,6 +18,9 @@ const IS_AUTHOR =
 const IS_PATH_EDITOR =
   typeof window !== 'undefined' &&
   new URLSearchParams(window.location.search).has('patheditor');
+const IS_LIGHT_EDITOR =
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).has('light');
 // ?shot — chế độ chụp tự động (Playwright): auto-enter, camera snap không lerp,
 // canvas giữ buffer để toDataURL, window.__setProgress(t) set scroll trực tiếp.
 const IS_SHOT =
@@ -53,6 +57,9 @@ export default function App() {
   const [focus, setFocus] = useState(null); // zone the camera flies to
   const [dollhouse, setDollhouse] = useState(false); // POV ↔ isometric overview
   const [pathDraft, setPathDraft] = usePathDraft(floor, IS_PATH_EDITOR);
+  // Lighting always applies (baked defaults + any saved designer draft); the
+  // editor panel (?light) lets the designer tune it live.
+  const [light, setLight] = useLightSettings(floor, cfg.lighting);
   const isInline = z => z.type === 'image-inline' || z.type === 'video-inline';
   const inlineZones = useMemo(() => zones.filter(isInline), [zones]);
   const hotspotZones = useMemo(
@@ -233,6 +240,7 @@ export default function App() {
               onHotspot={openZone}
               dollhouse={dollhouse}
               pathDraft={pathDraft}
+              light={light}
             />
           </Suspense>
         </Canvas>
@@ -303,6 +311,15 @@ export default function App() {
           draft={pathDraft}
           setDraft={setPathDraft}
           progressRef={progressRef}
+        />
+      )}
+
+      {entered && IS_LIGHT_EDITOR && (
+        <LightEditorPanel
+          floor={floor}
+          light={light}
+          setLight={setLight}
+          floorLighting={cfg.lighting}
         />
       )}
 
