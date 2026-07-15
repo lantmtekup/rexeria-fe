@@ -18,11 +18,13 @@
  * URL: /dev/blocks?type=framer_arpeggio_hero_v2  hoặc  /dev/blocks?id=<uuid>
  */
 import * as React from 'react';
-import { LayoutGrid, Loader2, Monitor, Smartphone, Tablet } from 'lucide-react';
+import { LayoutGrid, Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { BlockMiniPreview } from '@/components/modules/block-editor/BlockMiniPreview';
+import { DevicePreviewFrame } from '@/components/modules/block-editor/DevicePreviewFrame';
+import { DeviceSwitcher } from '@/components/modules/block-editor/DeviceSwitcher';
 import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
 import { createBlock } from '@/components/modules/block-editor/factory';
 import { migrateBlockV1toV2 } from '@/components/modules/block-editor/serialize';
@@ -37,17 +39,12 @@ import {
   readVariant,
   type Block,
   type BlockType,
+  type Device,
 } from '@/components/modules/block-editor/types';
 
 const TYPES = (Object.keys(BLOCK_TYPE_META) as BlockType[]).sort((a, b) =>
   (BLOCK_TYPE_META[a]?.label ?? a).localeCompare(BLOCK_TYPE_META[b]?.label ?? b)
 );
-const DEVICES = [
-  { id: 'desktop', icon: Monitor, w: null as number | null },
-  { id: 'tablet', icon: Tablet, w: 834 },
-  { id: 'mobile', icon: Smartphone, w: 390 },
-] as const;
-type DeviceId = (typeof DEVICES)[number]['id'];
 
 /** Parse `Block.settings` (BE) → editor Block. FE ghi nguyên editor Block vào
  *  settings lúc tạo nên round-trip được. Null nếu shape không hợp lệ. */
@@ -63,7 +60,7 @@ function parseEditorBlock(
 
 export default function DevBlocksPage() {
   const [routeReady, setRouteReady] = React.useState(false);
-  const [device, setDevice] = React.useState<DeviceId>('desktop');
+  const [device, setDevice] = React.useState<Device>('desktop');
   const scrollerRef = React.useRef<HTMLDivElement>(null);
 
   // Chế độ render: 'type' (default content theo type) hoặc 'id' (block thật).
@@ -180,7 +177,6 @@ export default function DevBlocksPage() {
     [mode, fetched, type]
   );
 
-  const width = DEVICES.find(d => d.id === device)!.w;
   const dev = device; // 'desktop' | 'tablet' | 'mobile' khớp Device
 
   // Resolve content/styles/bg/order/motion theo device (giống PreviewMode).
@@ -239,26 +235,11 @@ export default function DevBlocksPage() {
           Chưa mapping
         </button>
 
-        <div className='flex shrink-0 items-center gap-0.5 rounded border border-white/10 bg-white/5 p-px'>
-          {DEVICES.map(({ id, icon: Icon, w }) => (
-            <button
-              key={id}
-              type='button'
-              onClick={() => setDevice(id)}
-              title={`${id}${w ? ` · ${w}px` : ' · full'}`}
-              aria-label={`${id} preview`}
-              aria-pressed={device === id}
-              className={cn(
-                'flex size-5 items-center justify-center rounded-sm transition-colors',
-                device === id
-                  ? 'bg-amber-400 text-neutral-900'
-                  : 'text-white/60 hover:bg-white/10'
-              )}
-            >
-              <Icon className='size-3' />
-            </button>
-          ))}
-        </div>
+        <DeviceSwitcher
+          device={device}
+          onChange={setDevice}
+          variant='preview'
+        />
       </header>
 
       {/* ── Gallery: design CHƯA mapping ─────────────────────────────── */}
@@ -319,20 +300,16 @@ export default function DevBlocksPage() {
         </div>
       ) : null}
 
-      {/* ── Vùng cuộn full viewport = scroller cho block ─────────────── */}
+      {/* ── Device frame = scroller (căn giữa) ───────────────────────── */}
       <div
-        ref={scrollerRef}
         hidden={view === 'gallery'}
-        className='relative h-screen overflow-auto bg-neutral-200'
+        className='relative h-screen overflow-hidden bg-neutral-200 pt-7'
       >
         <LandingMotionRoot scrollerRef={scrollerRef} enableSmooth={false}>
-          <div
-            className='@container mx-auto bg-white'
-            style={
-              width
-                ? { maxWidth: width, boxShadow: '0 0 0 1px rgba(0,0,0,0.08)' }
-                : undefined
-            }
+          <DevicePreviewFrame
+            device={device}
+            chromeOffset='1.75rem'
+            scrollerRef={scrollerRef}
           >
             {!routeReady ? (
               <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-400'>
@@ -364,7 +341,7 @@ export default function DevBlocksPage() {
                 </MotionBlockRoot>
               </MotionProvider>
             ) : null}
-          </div>
+          </DevicePreviewFrame>
         </LandingMotionRoot>
       </div>
     </div>

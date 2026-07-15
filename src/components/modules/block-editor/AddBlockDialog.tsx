@@ -104,6 +104,7 @@ const ORDERED_TYPES: BlockType[] = [
   'pnj_hero',
   'pnj_details',
   'pnj_variant',
+  'pnj_header',
   'pnj_sticky_menu',
   'pnj_cta',
   'mintv2_emblem',

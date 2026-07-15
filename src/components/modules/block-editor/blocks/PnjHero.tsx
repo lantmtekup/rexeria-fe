@@ -7,10 +7,10 @@
  * Motion R1–R6:
  * - useLandingMotion (scroller + requestRefresh)
  * - useContainerMobile (editor canvas width, không matchMedia viewport)
- * - Desktop + Mobile: CSS sticky (.pnj-hero-pin) + 1 timeline scrub (no GSAP
- *   pin) → storefront giữ chỗ, canvas kéo lên (yPercent) đè lên, storefront
- *   fade, rồi frame-scrub + scale/radius. Mobile chỉ khác thông số (frames
- *   mobile, DPR cap, scrub, endScale/endRadius, scroll budget).
+ * - Desktop: CSS sticky (.pnj-hero-pin) + 1 timeline scrub (no GSAP pin)
+ *   → canvas yPercent đè storefront, fade, rồi frame-scrub + scale/radius.
+ * - Mobile: storefront scroll tự nhiên → sticky `.pnj-hero-rotate` scrub
+ *   frame index + scale/radius (start vuông; không yPercent / fade).
  * - Editor canvas (`active-block-preview`): storefront + overlay chữ tĩnh
  *   (không opacity:0 / yPercent ẩn); không scrub / không track dài
  * - KHÔNG gsap.registerPlugin
@@ -48,6 +48,8 @@ import {
 const FRAME_EXT = '.webp';
 const PANEL_BG = 'rgba(0, 39, 78, 0.88)';
 const RING_OFFSET = '#0a0a0a';
+/** Khớp Tailwind `@2xl:` container (672px) — xem deviceFrame.ts. */
+const MOBILE_BREAKPOINT = 672;
 
 /** Frame sequence — fixed under public/pnj (not CMS-editable). */
 const FRAMES_DESKTOP = { total: 76, prefix: '/pnj/frames/frame-' };
@@ -57,7 +59,11 @@ const RESPONSIVE = {
   subtitleFont: 'clamp(12px, 1.6cqi, 16px)',
   titleFont: 'clamp(22px, 4.2cqi, 48px)',
   overlayPadX: 'clamp(24px, 5cqi, 80px)',
-  overlayPadB: 'clamp(64px, 8cqi, 96px)',
+  /**
+   * Lift from bottom toward mid. Uses `bottom: %` (height-relative) — not
+   * padding-% (width-relative) — so mobile/narrow frames lift the same.
+   */
+  overlayBottom: '28%',
   lineWidth: 'clamp(48px, 6cqi, 96px)',
 } as const;
 
@@ -86,7 +92,7 @@ export function PnjHero({
   const overlayRef = React.useRef<HTMLDivElement>(null);
   const forceDrawRef = React.useRef<(() => void) | null>(null);
   const hotspotApiRef = React.useRef<HotspotOverlayHandle | null>(null);
-  const isMobile = useContainerMobile(sectionRef);
+  const isMobile = useContainerMobile(sectionRef, MOBILE_BREAKPOINT);
   const { hasRoot, scroller, requestRefresh } = useLandingMotion();
 
   // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play (cũng có scroller).
@@ -107,7 +113,7 @@ export function PnjHero({
   const inPinRef = React.useRef(false);
 
   const hotspots = content.hotspots ?? [];
-  useDrawerScrollLock(activeTab);
+  useDrawerScrollLock(activeTab, isMobile);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -128,7 +134,7 @@ export function PnjHero({
   const hotspotCount = Math.max(hotspots.length, 1);
   // Scroll budget cho frame-scrub + hotspots (svh của viewport).
   const trackVh = isMobile ? 100 + hotspotCount * 50 : 120 + hotspotCount * 60;
-  // Tall shell — sticky pin giữ chỗ; canvas kéo lên + frame-scrub chia budget này.
+  // Desktop tall shell — sticky pin giữ chỗ; canvas kéo lên + frame-scrub.
   const totalVh = Math.max(300, trackVh + 100);
 
   // ── Canvas frame-scrub ───────────────────────────────────────────────────
@@ -140,6 +146,13 @@ export function PnjHero({
     if (!canvas || !section) return;
     const ctx2d = canvas.getContext('2d');
     if (!ctx2d) return;
+
+    // Gate: đợi layout có width + isMobile khớp đo thật — tránh load 76
+    // frame desktop trước khi ResizeObserver flip sang mobile.
+    const width = section.clientWidth;
+    if (width === 0) return;
+    const measuredMobile = width < MOBILE_BREAKPOINT;
+    if (measuredMobile !== isMobile) return;
 
     const FRAMES = isMobile ? FRAMES_MOBILE : FRAMES_DESKTOP;
     const FRAME_TOTAL = FRAMES.total;
@@ -157,8 +170,9 @@ export function PnjHero({
     let lastDrawn = -1;
     let rafScheduled = false;
 
-    // Timeline: 0→0.5 canvas kéo lên; 0.5→1 frame-scrub + hotspots.
-    const HOTSPOT_PHASE_START = 0.5;
+    // Desktop timeline: 0→0.5 canvas kéo lên; 0.5→1 frame-scrub + hotspots.
+    // Mobile: hotspot phase = full rotate progress (0→1).
+    const HOTSPOT_PHASE_START = isMobile ? 0 : 0.5;
 
     const syncHotspotFromScroll = (self: ScrollTrigger) => {
       if (hotspots.length === 0) return;
@@ -176,7 +190,9 @@ export function PnjHero({
       }
 
       const hotspotProgress =
-        (self.progress - HOTSPOT_PHASE_START) / (1 - HOTSPOT_PHASE_START);
+        HOTSPOT_PHASE_START >= 1
+          ? self.progress
+          : (self.progress - HOTSPOT_PHASE_START) / (1 - HOTSPOT_PHASE_START);
       const step = Math.min(
         Math.floor(hotspotProgress * hotspots.length),
         hotspots.length - 1
@@ -261,6 +277,9 @@ export function PnjHero({
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    const endScale = reduced || reduceMotion ? 1 : isMobile ? 0.92 : 0.88;
+    const endRadius = reduced || reduceMotion ? 0 : isMobile ? 16 : 24;
+
     const ctx = gsap.context(() => {
       gsap.fromTo(
         '.pnj-hero__img-ken',
@@ -275,28 +294,74 @@ export function PnjHero({
       );
       gsap.set('.pnj-hero__img-wrap', { scale: 1 });
 
-      const endScale = reduced || reduceMotion ? 1 : isMobile ? 0.92 : 0.88;
-      const endRadius = reduced || reduceMotion ? 0 : isMobile ? 16 : 24;
+      if (reduced) {
+        gsap.set('.pnj-hero-canvas-frame', {
+          scale: endScale,
+          borderRadius: endRadius,
+          transformOrigin: '50% 50%',
+        });
+        if (!isMobile) {
+          gsap.set('.pnj-hero-canvas-wrap', { yPercent: 0 });
+          gsap.set('.pnj-hero__img', { autoAlpha: 0 });
+        }
+        draw();
+        return;
+      }
 
-      // Desktop + Mobile: CSS sticky giữ chỗ (compositor, không giật) + 1
-      // timeline scrub. KHÔNG dùng GSAP pin — pin transform trên
-      // element-scroller trễ 1 frame.
-      gsap.set('.pnj-hero-canvas-wrap', { yPercent: reduced ? 0 : 100 });
+      // ── Mobile: sticky rotate — scrub frame + scale/radius (start vuông) ──
+      if (isMobile) {
+        const rotate = section.querySelector<HTMLElement>('.pnj-hero-rotate');
+        if (!rotate) return;
+
+        // Chưa scrub: full-bleed vuông (radius 0). Bo góc chỉ khi scale chạy.
+        gsap.set('.pnj-hero-canvas-frame', {
+          scale: 1,
+          borderRadius: 0,
+          transformOrigin: '50% 50%',
+        });
+
+        const scrubOpts = {
+          trigger: rotate,
+          scroller,
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: SCRUB,
+          fastScrollEnd: true,
+          invalidateOnRefresh: true,
+        };
+
+        gsap.to(state, {
+          frame: FRAME_TOTAL - 1,
+          snap: 'frame',
+          ease: 'none',
+          onUpdate: draw,
+          scrollTrigger: {
+            ...scrubOpts,
+            onToggle: (self: ScrollTrigger) => syncHotspotFromScroll(self),
+            onUpdate: (self: ScrollTrigger) => syncHotspotFromScroll(self),
+          },
+        });
+
+        gsap.fromTo(
+          '.pnj-hero-canvas-frame',
+          { scale: 1, borderRadius: 0, transformOrigin: '50% 50%' },
+          {
+            scale: endScale,
+            borderRadius: endRadius,
+            ease: 'none',
+            scrollTrigger: { ...scrubOpts },
+          }
+        );
+        return;
+      }
+
+      // ── Desktop: sticky pin + yPercent canvas + fade + frame-scrub ───────
+      gsap.set('.pnj-hero-canvas-wrap', { yPercent: 100 });
       gsap.set('.pnj-hero-canvas-frame', {
         scale: 1,
         borderRadius: 0,
         transformOrigin: '50% 50%',
       });
-
-      if (reduced) {
-        gsap.set('.pnj-hero__img', { autoAlpha: 0 });
-        gsap.set('.pnj-hero-canvas-frame', {
-          scale: endScale,
-          borderRadius: endRadius,
-        });
-        draw();
-        return;
-      }
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -314,15 +379,18 @@ export function PnjHero({
         },
       });
 
-      // Giai đoạn 1: canvas kéo lên + storefront lùi/mờ.
       tl.to('.pnj-hero-canvas-wrap', { yPercent: 0, ease: 'none' }, 0);
       tl.to('.pnj-hero__img-wrap', { scale: 1.04, ease: 'none' }, 0);
       tl.to('.pnj-hero__img', { autoAlpha: 0, ease: 'none' }, 0.35);
 
-      // Giai đoạn 2: frame-scrub + thu khung + bo góc.
       tl.to(
         state,
-        { frame: FRAME_TOTAL - 1, ease: 'none', onUpdate: draw },
+        {
+          frame: FRAME_TOTAL - 1,
+          snap: 'frame',
+          ease: 'none',
+          onUpdate: draw,
+        },
         0.5
       );
       tl.fromTo(
@@ -342,9 +410,12 @@ export function PnjHero({
       }, 150);
     };
     window.addEventListener('resize', onResize);
+    const vv = window.visualViewport;
+    vv?.addEventListener('resize', onResize);
 
     return () => {
       window.removeEventListener('resize', onResize);
+      vv?.removeEventListener('resize', onResize);
       if (resizeT) clearTimeout(resizeT);
       forceDrawRef.current = null;
       ctx.revert();
@@ -358,6 +429,7 @@ export function PnjHero({
     scroller,
     requestRefresh,
     totalVh,
+    trackVh,
   ]);
 
   // ── Overlay entrance + scrub fade ────────────────────────────────────────
@@ -461,7 +533,7 @@ export function PnjHero({
         activeTab={activeTab}
         ringOffsetColor={RING_OFFSET}
         panelBackgroundColor={PANEL_BG}
-        reduceMotion={reduceMotion}
+        reduceMotion={reduceMotion || isMobile}
         exclusive
         onHotspotClick={handleHotspotClick}
       />
@@ -480,14 +552,16 @@ export function PnjHero({
   const heroCopy = (
     <div
       ref={overlayRef}
-      className='pnj-hero__copy pointer-events-none absolute inset-0 z-30 flex items-end'
-      style={{
-        paddingLeft: RESPONSIVE.overlayPadX,
-        paddingRight: RESPONSIVE.overlayPadX,
-        paddingBottom: RESPONSIVE.overlayPadB,
-      }}
+      className='pnj-hero__copy pointer-events-none absolute inset-0 z-30'
     >
-      <div className='pnj-hero-parallax w-full max-w-xl'>
+      <div
+        className='pnj-hero-parallax absolute w-full max-w-xl'
+        style={{
+          bottom: RESPONSIVE.overlayBottom,
+          left: RESPONSIVE.overlayPadX,
+          right: RESPONSIVE.overlayPadX,
+        }}
+      >
         <div className='mb-2 overflow-hidden'>
           <p
             data-element-key='subtitle'
@@ -555,10 +629,20 @@ export function PnjHero({
     </div>
   );
 
-  const renderHeroImg = (outerClass: string) => (
+  const renderHeroImg = (outerClass: string, withWillChange: boolean) => (
     <div className={outerClass}>
-      <div className='pnj-hero__img-wrap h-full w-full origin-center will-change-transform'>
-        <div className='pnj-hero__img-ken h-full w-full origin-center will-change-transform'>
+      <div
+        className={cn(
+          'pnj-hero__img-wrap h-full w-full origin-center',
+          withWillChange && 'will-change-transform'
+        )}
+      >
+        <div
+          className={cn(
+            'pnj-hero__img-ken h-full w-full origin-center',
+            withWillChange && 'will-change-transform'
+          )}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             data-element-key='storefrontUrl'
@@ -615,7 +699,8 @@ export function PnjHero({
       >
         <div className='relative min-h-[520px] w-full overflow-hidden'>
           {renderHeroImg(
-            'pnj-hero__img relative z-10 aspect-4/5 w-full overflow-hidden bg-[#f7f5f3] @2xl:aspect-16/10'
+            'pnj-hero__img relative z-10 aspect-4/5 w-full overflow-hidden bg-[#f7f5f3] @2xl:aspect-16/10',
+            false
           )}
 
           {hotspots.length > 0 ? (
@@ -659,8 +744,37 @@ export function PnjHero({
     );
   }
 
-  // Desktop + Mobile: 1 wrapper sticky .pnj-hero-pin (h-svh) chứa 2 lớp
-  // absolute chồng nhau (storefront dưới, canvas trên); section giữ height.
+  // Mobile: storefront normal flow → sticky canvas scrub (apps/pnj shape).
+  if (isMobile) {
+    return (
+      <section
+        ref={sectionRef}
+        style={blockBackgroundStyle(background)}
+        className={cn('pnj-hero @container relative w-full', className)}
+      >
+        {renderHeroImg(
+          'pnj-hero__img relative h-svh min-h-svh w-full overflow-hidden bg-[#f7f5f3]',
+          false
+        )}
+
+        <section
+          id='discover'
+          className='pnj-hero-rotate relative w-full bg-white'
+          style={{ height: `${trackVh}svh` }}
+        >
+          <div className='pnj-hero-canvas-wrap sticky top-0 h-svh min-h-svh w-full overflow-hidden'>
+            <div ref={behindRef} className='relative h-full w-full'>
+              {canvasFrame}
+            </div>
+          </div>
+        </section>
+
+        {drawer}
+      </section>
+    );
+  }
+
+  // Desktop: sticky .pnj-hero-pin chứa storefront + canvas chồng nhau.
   return (
     <section
       ref={sectionRef}
@@ -673,7 +787,8 @@ export function PnjHero({
     >
       <div className='pnj-hero-pin sticky top-0 h-svh min-h-svh w-full overflow-hidden bg-white'>
         {renderHeroImg(
-          'pnj-hero__img absolute inset-0 z-10 h-full w-full overflow-hidden bg-[#f7f5f3]'
+          'pnj-hero__img absolute inset-0 z-10 h-full w-full overflow-hidden bg-[#f7f5f3]',
+          true
         )}
         <div className='pnj-hero-canvas-wrap absolute inset-0 z-20 h-full w-full overflow-hidden will-change-transform'>
           <div ref={behindRef} className='relative h-full w-full'>

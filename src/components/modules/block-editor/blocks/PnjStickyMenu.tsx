@@ -1,20 +1,24 @@
 'use client';
 
 /**
- * PNJ · Sticky Menu — thanh điều hướng cố định đáy viewport.
+ * PNJ · Sticky Menu — thanh điều hướng cố định đáy viewport / device frame.
  * Port từ apps/pnj StickyMenu.tsx.
  *
  * - Link không chứa https → scroll tới section (id / #id)
  * - Link có https → mở tab mới
- * - PreviewMode / /p: fixed đáy viewport; chỉ editor canvas: in-flow.
+ * - /p: `fixed` đáy viewport
+ * - PreviewMode: portal `absolute` đáy → `[data-device-frame]`
+ * - Editor canvas: in-flow
  */
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { cn } from '@/lib/cn';
 
 import { useLandingMotion } from '../motion/LandingMotion';
+import { isDeviceFrameHost, resolveDrawerPortalHost } from '../previewPortal';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -125,6 +129,7 @@ export function PnjStickyMenu({
   const { scroller, hasRoot } = useLandingMotion();
   const [mounted, setMounted] = React.useState(false);
   const [isCanvas, setIsCanvas] = React.useState(false);
+  const [portalHost, setPortalHost] = React.useState<HTMLElement | null>(null);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   // Thanh active trượt dưới list — toạ độ content (bù scrollLeft vì list
   // cuộn ngang được trên mobile).
@@ -146,13 +151,14 @@ export function PnjStickyMenu({
 
   // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play (cũng có scroller).
   React.useLayoutEffect(() => {
-    if (!rootRef.current) return;
-    setIsCanvas(
-      !!rootRef.current.closest('[data-testid="active-block-preview"]')
-    );
+    const root = rootRef.current;
+    if (!root) return;
+    setIsCanvas(!!root.closest('[data-testid="active-block-preview"]'));
+    setPortalHost(resolveDrawerPortalHost(root));
   }, [mounted, hasRoot]);
 
   const useFixed = mounted && !isCanvas;
+  const inFrame = isDeviceFrameHost(portalHost);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -429,6 +435,18 @@ export function PnjStickyMenu({
     </nav>
   );
 
+  const overlayAside = (
+    <aside
+      className={cn(
+        'pointer-events-none inset-x-0 bottom-0 z-[49] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] @sm:px-4 @sm:pb-10 @md:px-6',
+        inFrame ? 'absolute' : 'fixed'
+      )}
+      aria-hidden={false}
+    >
+      {pill}
+    </aside>
+  );
+
   return (
     <section
       ref={rootRef}
@@ -438,16 +456,16 @@ export function PnjStickyMenu({
         useFixed && 'h-0 overflow-visible'
       )}
     >
-      <aside
-        className={cn(
-          useFixed
-            ? 'pointer-events-none fixed inset-x-0 bottom-0 z-[49] px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] @sm:px-4 @sm:pb-3 @md:px-6'
-            : 'flex w-full justify-center px-3 py-3 @sm:px-4 @md:px-6'
-        )}
-        aria-hidden={false}
-      >
-        {pill}
-      </aside>
+      {useFixed && portalHost
+        ? createPortal(overlayAside, portalHost)
+        : !useFixed && (
+            <aside
+              className='flex w-full justify-center px-3 py-3 @sm:px-4 @md:px-6'
+              aria-hidden={false}
+            >
+              {pill}
+            </aside>
+          )}
     </section>
   );
 }

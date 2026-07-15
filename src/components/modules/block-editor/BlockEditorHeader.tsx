@@ -19,6 +19,7 @@ import {
 
 import { cn } from '@/lib/cn';
 
+import { DeviceSwitcher } from './DeviceSwitcher';
 import type { Device, Lang } from './types';
 
 export type HeaderTab = Lang | 'ai';
@@ -76,13 +77,11 @@ interface BlockEditorHeaderProps {
 export function BlockEditorHeader({
   blockName,
   lang,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   device,
   saving,
   dirty,
   duplicating,
   onLangChange,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onDeviceChange,
   onAi,
   onApplyProduct,
@@ -158,6 +157,14 @@ export function BlockEditorHeader({
         <IconBtn onClick={onRedo} disabled={!canRedo} label='Làm lại (⌘⇧Z)'>
           <Redo2 className='size-3.5' />
         </IconBtn>
+
+        <Divider />
+
+        <DeviceSwitcher
+          device={device}
+          onChange={onDeviceChange}
+          variant='editor'
+        />
 
         <Divider />
 
