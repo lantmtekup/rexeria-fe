@@ -15,6 +15,7 @@ import { scrollMattisDef } from './blocks/_registry/defs/scrollMattis';
 import { pnjHeroDef } from './blocks/_registry/defs/pnjHero';
 import { pnjDetailsDef } from './blocks/_registry/defs/pnjDetails';
 import { pnjVariantDef } from './blocks/_registry/defs/pnjVariant';
+import { pnjHeaderDef } from './blocks/_registry/defs/pnjHeader';
 import { pnjStickyMenuDef } from './blocks/_registry/defs/pnjStickyMenu';
 import { pnjCtaDef } from './blocks/_registry/defs/pnjCta';
 import { housentStatsDef } from './blocks/_registry/defs/housentStats';
@@ -2330,6 +2331,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   pnj_hero: pnjHeroDef.defaultContent.vi,
   pnj_details: pnjDetailsDef.defaultContent.vi,
   pnj_variant: pnjVariantDef.defaultContent.vi,
+  pnj_header: pnjHeaderDef.defaultContent.vi,
   pnj_sticky_menu: pnjStickyMenuDef.defaultContent.vi,
   pnj_cta: pnjCtaDef.defaultContent.vi,
   mintv2_emblem: MINTV2_EMBLEM_VI,
@@ -2488,6 +2490,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   pnj_hero: pnjHeroDef.defaultContent.en,
   pnj_details: pnjDetailsDef.defaultContent.en,
   pnj_variant: pnjVariantDef.defaultContent.en,
+  pnj_header: pnjHeaderDef.defaultContent.en,
   pnj_sticky_menu: pnjStickyMenuDef.defaultContent.en,
   pnj_cta: pnjCtaDef.defaultContent.en,
   mintv2_emblem: MINTV2_EMBLEM_VI,

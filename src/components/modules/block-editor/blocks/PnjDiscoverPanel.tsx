@@ -1,9 +1,9 @@
-/* eslint-disable no-restricted-syntax */
 'use client';
 
 /**
  * PNJ · Discover drawer — port từ apps/pnj DiscoverPanel.
- * Portal to document.body; scales `behindRef` content on open (giống HotspotDrawer).
+ * Portal vào device frame (preview) hoặc document.body (/p); scales
+ * `behindRef` content on open (giống HotspotDrawer).
  */
 import * as React from 'react';
 import { createPortal } from 'react-dom';
@@ -17,6 +17,7 @@ import 'swiper/css/pagination';
 import { useIsomorphicLayoutEffect } from '@/lib/use-isomorphic-layout-effect';
 
 import type { PnjVariantItem } from '../types';
+import { isDeviceFrameHost, resolveDrawerPortalHost } from '../previewPortal';
 import { useDrawerScrollLock } from './PnjHeroHotspots';
 
 interface Props {
@@ -55,12 +56,18 @@ export function PnjDiscoverPanel({
   const didInitRef = React.useRef(false);
   const [mounted, setMounted] = React.useState(false);
   const [portalAlive, setPortalAlive] = React.useState(false);
+  const [portalHost, setPortalHost] = React.useState<HTMLElement | null>(null);
 
-  useDrawerScrollLock(open ? 'pnj-discover' : null);
+  useDrawerScrollLock(open ? 'pnj-discover' : null, isMobile);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  React.useLayoutEffect(() => {
+    if (!mounted) return;
+    setPortalHost(resolveDrawerPortalHost(behindRef?.current ?? null));
+  }, [mounted, behindRef, open]);
 
   React.useEffect(() => {
     if (open) setPortalAlive(true);
@@ -159,13 +166,17 @@ export function PnjDiscoverPanel({
     };
   }, [behindRef]);
 
-  if (!mounted || !portalAlive || variants.length === 0) return null;
+  if (!mounted || !portalAlive || !portalHost || variants.length === 0)
+    return null;
+
+  const inFrame = isDeviceFrameHost(portalHost);
+  const posClass = inFrame ? 'absolute' : 'fixed';
 
   return createPortal(
     <>
       <div
         ref={backdropRef}
-        className='fixed inset-0 z-[1900] bg-black'
+        className={`${posClass} inset-0 z-[1900] bg-black`}
         style={{ pointerEvents: open ? 'auto' : 'none' }}
         onClick={onClose}
         aria-hidden='true'
@@ -173,10 +184,10 @@ export function PnjDiscoverPanel({
       />
       <div
         ref={panelRef}
-        className={`fixed z-[1950] flex bg-white shadow-2xl ${
+        className={`${posClass} z-[1950] flex bg-white shadow-2xl ${
           isMobile
-            ? 'right-0 bottom-0 left-0 h-[88svh] w-full flex-col rounded-t-2xl'
-            : 'top-0 right-0 h-screen w-[80%] flex-row lg:w-[75%]'
+            ? 'right-0 bottom-0 left-0 h-[88%] max-h-[88svh] w-full flex-col rounded-t-2xl'
+            : 'top-0 right-0 h-full w-[80%] flex-row @4xl:w-[75%]'
         }`}
         style={{ pointerEvents: open ? 'auto' : 'none' }}
         role='dialog'
@@ -185,7 +196,7 @@ export function PnjDiscoverPanel({
         onClick={e => e.stopPropagation()}
         data-lenis-prevent
       >
-        <div className='relative min-h-[40vh] min-w-0 flex-1 overflow-hidden bg-neutral-100 md:min-h-full'>
+        <div className='relative min-h-[40vh] min-w-0 flex-1 overflow-hidden bg-neutral-100 @2xl:min-h-full'>
           {slides.length > 0 && (
             <Swiper
               key={viewKey}
@@ -247,7 +258,7 @@ export function PnjDiscoverPanel({
           </button>
         </div>
 
-        <div className='flex w-full flex-col overflow-y-auto bg-white px-8 py-10 md:w-[420px] lg:w-[460px]'>
+        <div className='flex w-full flex-col overflow-y-auto bg-white px-8 py-10 @2xl:w-[420px] @4xl:w-[460px]'>
           <button
             type='button'
             onClick={onClose}
@@ -262,7 +273,7 @@ export function PnjDiscoverPanel({
           </button>
 
           <div className='mb-2 flex items-start justify-between gap-4'>
-            <h2 className='text-2xl leading-tight font-light tracking-tight text-[#003468] md:text-[26px]'>
+            <h2 className='text-2xl leading-tight font-light tracking-tight text-[#003468] @2xl:text-[26px]'>
               Citizen L Arcly Nữ
             </h2>
             <span className='mt-1 shrink-0 border border-[#003468]/20 px-3 py-1.5 text-[10px] tracking-[0.18em] whitespace-nowrap text-[#003468] uppercase'>
@@ -301,52 +312,33 @@ export function PnjDiscoverPanel({
             </div>
           </div>
 
-          <div className='flex items-start justify-between gap-6 border-t border-black/10 py-5 text-sm'>
-            <span className='shrink-0'>Thông số</span>
-            <span className='text-right text-neutral-700'>
-              Máy Eco-Drive · Kính sapphire · Dây kim loại
+          <div className='mt-2 mb-8 flex items-baseline justify-between gap-4'>
+            <span className='text-2xl font-light tracking-tight text-[#003468]'>
+              Liên hệ cửa hàng
+            </span>
+            <span className='text-xs tracking-wide text-neutral-400 uppercase'>
+              Giá tại PNJ
             </span>
           </div>
 
-          <div className='mb-8 flex items-center justify-between border-t border-b border-black/10 py-5 text-sm'>
-            <span>Xuất xứ</span>
-            <span className='text-neutral-700'>Nhật Bản</span>
-          </div>
+          <a
+            href='#contact'
+            onClick={onClose}
+            data-cta-id='discover-cta'
+            className='mb-10 inline-flex min-h-11 items-center justify-center bg-[#003468] px-6 text-xs font-medium tracking-[0.18em] text-white uppercase transition-colors hover:bg-[#002750]'
+          >
+            Để lại thông tin
+          </a>
 
-          {activeVariant?.highlights.length ? (
-            <ul className='mb-6 space-y-2 border-t border-black/10 pt-4 text-sm text-neutral-600'>
-              {activeVariant.highlights.map(item => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          ) : null}
-
-          <details className='border-t border-black/10 py-4'>
+          <details className='border-t border-black/10 py-4' open>
             <summary className='flex cursor-pointer list-none justify-between text-sm'>
-              <span>Chi tiết</span>
-              <span className='text-lg leading-none'>+</span>
-            </summary>
-            <div className='pt-4 text-sm text-neutral-600'>
-              <p>REF. EM1006-51Y</p>
-              <p className='mt-3'>{activeVariant?.desc}</p>
-              <ul className='mt-2 list-inside list-disc space-y-1'>
-                <li>Công nghệ Eco-Drive (năng lượng ánh sáng)</li>
-                <li>Vỏ thép không gỉ hai tông màu</li>
-                <li>Mặt số xà cừ hồng với họa tiết hoa</li>
-                <li>Kim cương vạch giờ và ba viên kim cương nổi</li>
-                <li>Mặt kính sapphire chống trầy</li>
-                <li>Dây kim loại liên kết</li>
-              </ul>
-            </div>
-          </details>
-          <details className='border-t border-black/10 py-4'>
-            <summary className='flex cursor-pointer list-none justify-between text-sm'>
-              <span>Chất liệu</span>
+              <span>Chi tiết sản phẩm</span>
               <span className='text-lg leading-none'>+</span>
             </summary>
             <p className='pt-4 text-sm text-neutral-600'>
-              Thép không gỉ bạc và vàng hồng, mặt số xà cừ, kính sapphire. Hoàn
-              thiện bóng cao cấp phù hợp trang phục hàng ngày và sự kiện.
+              Đồng hồ Citizen L Arcly dành cho nữ với công nghệ Eco-Drive sạc
+              bằng ánh sáng. Thiết kế tinh xảo, phù hợp phong cách hiện đại và
+              thanh lịch.
             </p>
           </details>
           <details className='border-t border-b border-black/10 py-4'>
@@ -362,6 +354,6 @@ export function PnjDiscoverPanel({
         </div>
       </div>
     </>,
-    document.body
+    portalHost
   );
 }

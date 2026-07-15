@@ -1497,6 +1497,7 @@ export function BlockEditor({
           blocks={canvas.blocks}
           lang={deviceState.lang}
           transition={transition}
+          initialDevice={deviceState.device}
           onClose={() => setPreviewing(false)}
         />
       )}

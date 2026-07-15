@@ -91,6 +91,7 @@ import { masteriseHomeInsideDef } from './defs/masteriseHomeInside';
 import { pnjHeroDef } from './defs/pnjHero';
 import { pnjDetailsDef } from './defs/pnjDetails';
 import { pnjVariantDef } from './defs/pnjVariant';
+import { pnjHeaderDef } from './defs/pnjHeader';
 import { pnjStickyMenuDef } from './defs/pnjStickyMenu';
 import { pnjCtaDef } from './defs/pnjCta';
 import type { BlockDef } from './types';
@@ -99,6 +100,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   pnj_hero: pnjHeroDef as BlockDef,
   pnj_details: pnjDetailsDef as BlockDef,
   pnj_variant: pnjVariantDef as BlockDef,
+  pnj_header: pnjHeaderDef as BlockDef,
   pnj_sticky_menu: pnjStickyMenuDef as BlockDef,
   pnj_cta: pnjCtaDef as BlockDef,
   framer_yume_hero: framerYumeHeroDef as BlockDef,

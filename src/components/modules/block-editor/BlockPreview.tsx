@@ -6,6 +6,7 @@ import { brandKitToCssVars, DEFAULT_PREVIEW_KIT } from '@/lib/brand-kit';
 import { cn } from '@/lib/cn';
 
 import { CanvasElementEditChip } from './CanvasElementEditChip';
+import { DEVICE_FRAME_WIDTH } from './deviceFrame';
 import { ExtraElementOverlay } from './ExtraElementOverlay';
 import { RenderBlock } from './blocks/renderBlock';
 import { LandingMotionRoot } from './motion/LandingMotion';
@@ -86,12 +87,6 @@ const ZOOM_MAX = 200;
 
 const clampZoom = (n: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, n));
 
-const DEVICE_WIDTH: Record<Device, number> = {
-  desktop: 1280,
-  tablet: 834,
-  mobile: 390,
-};
-
 /**
  * Block types that pin content with native `position: sticky` + viewport
  * (`dvh`) units instead of GSAP `pin` (docs/landing-motion-foundation.md §5).
@@ -113,6 +108,13 @@ const STICKY_SCROLL_BLOCK_TYPES = new Set<Block['blockType']>([
   'scroll_mattis',
   'pnj_variant',
   'pnj_details',
+]);
+
+/** Overlay chrome (header/nav) — canvas căn top, không center tạo khoảng hở. */
+const OVERLAY_TOP_BLOCK_TYPES = new Set<Block['blockType']>([
+  'pnj_header',
+  'delvaux_header',
+  'springs_header',
 ]);
 
 /**
@@ -166,7 +168,7 @@ export function BlockPreview({
   const background = readVariant(block.background, device);
   const order = readVariant(block.elementOrder, device);
   const positions = readVariant(block.elementPositions, device);
-  const baseWidth = DEVICE_WIDTH[device];
+  const baseWidth = DEVICE_FRAME_WIDTH[device];
   const scale = zoom / 100;
   const surfaceRef = React.useRef<HTMLDivElement>(null);
 
@@ -845,7 +847,10 @@ export function BlockPreview({
       }}
       data-selected-key={selectedElementKey ?? ''}
       className={cn(
-        'relative flex flex-1 touch-none items-center justify-center overflow-hidden p-8 pb-20',
+        'relative flex flex-1 touch-none overflow-hidden p-8 pb-20',
+        OVERLAY_TOP_BLOCK_TYPES.has(block.blockType)
+          ? 'items-start justify-center pt-4'
+          : 'items-center justify-center',
         '[&_[data-inline-editing=true]]:cursor-text [&_[data-inline-editing=true]]:rounded-sm [&_[data-inline-editing=true]]:bg-sky-50/80 [&_[data-inline-editing=true]]:outline [&_[data-inline-editing=true]]:outline-2 [&_[data-inline-editing=true]]:outline-offset-2 [&_[data-inline-editing=true]]:outline-sky-500',
         '[&_[data-canvas-hovered=true]]:outline [&_[data-canvas-hovered=true]]:outline-1 [&_[data-canvas-hovered=true]]:outline-offset-2 [&_[data-canvas-hovered=true]]:outline-sky-400/70',
         // Selected element gets a grab cursor so users know it's draggable.

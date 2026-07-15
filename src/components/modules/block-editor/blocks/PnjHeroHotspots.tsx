@@ -2,7 +2,8 @@
 
 /**
  * Hotspot overlay + drawer for PnjHero — port từ apps/pnj ProductHotspotUI.
- * Drawer portals to document.body so @container on the block root không clip.
+ * Drawer portal vào `[data-device-frame]` (preview) hoặc `document.body` (/p)
+ * để không bị clip bởi @container trên block root.
  */
 import * as React from 'react';
 import { createPortal } from 'react-dom';
@@ -10,6 +11,7 @@ import gsap from 'gsap';
 
 import { useIsomorphicLayoutEffect } from '@/lib/use-isomorphic-layout-effect';
 
+import { isDeviceFrameHost, resolveDrawerPortalHost } from '../previewPortal';
 import type { PnjHeroHotspot } from '../types';
 
 interface LenisGlobal {
@@ -32,8 +34,13 @@ const isLightBackground = (color: string) => {
   return (r * 299 + g * 587 + b * 114) / 1000 > 180;
 };
 
-/** Body scroll lock while drawer open — desktop giữ pin canvas (không fixed body). */
-export const useDrawerScrollLock = (activeTab: string | null) => {
+/** Body scroll lock while drawer open — desktop giữ pin canvas (không fixed body).
+ *  `isMobile` phải đến từ container width (useContainerMobile), không matchMedia
+ *  viewport — để đúng trong preview frame 390/834. */
+export const useDrawerScrollLock = (
+  activeTab: string | null,
+  isMobile = false
+) => {
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     const lenis = (window as unknown as LenisGlobal).__lenis;
@@ -56,7 +63,6 @@ export const useDrawerScrollLock = (activeTab: string | null) => {
     };
 
     if (activeTab !== null) {
-      const isMobile = window.matchMedia('(max-width: 767px)').matches;
       if (isMobile) {
         const scrollY = window.scrollY;
         body.dataset.scrollY = String(scrollY);
@@ -80,7 +86,7 @@ export const useDrawerScrollLock = (activeTab: string | null) => {
       unlock();
       lenis?.start();
     };
-  }, [activeTab]);
+  }, [activeTab, isMobile]);
 };
 
 function Hotspot({
@@ -260,10 +266,16 @@ export function HotspotDrawer({
   // Keep portal mounted through close animation; unmount when fully closed
   // so BlockMiniPreview (/admin/blocks) never paints fixed black/white overlays.
   const [portalAlive, setPortalAlive] = React.useState(false);
+  const [portalHost, setPortalHost] = React.useState<HTMLElement | null>(null);
 
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  React.useLayoutEffect(() => {
+    if (!mounted) return;
+    setPortalHost(resolveDrawerPortalHost(behindRef?.current ?? null));
+  }, [mounted, behindRef, open]);
 
   React.useEffect(() => {
     if (open) setPortalAlive(true);
@@ -284,7 +296,17 @@ export function HotspotDrawer({
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const duration = reduceMotion ? 0 : 0.55;
     const behind = behindRef?.current ?? null;
-    const tick = () => onBehindTickRef.current?.();
+
+    // Coalesce forceDraw to 1×/frame — parent transform blanks canvas; don't
+    // stampede drawImage on every GSAP tick.
+    let tickRaf = 0;
+    const tick = () => {
+      if (tickRaf) return;
+      tickRaf = requestAnimationFrame(() => {
+        tickRaf = 0;
+        onBehindTickRef.current?.();
+      });
+    };
 
     const behindOpen = isMobile
       ? { scale: 0.96, x: 0, borderRadius: 12 }
@@ -343,6 +365,7 @@ export function HotspotDrawer({
     tick();
 
     return () => {
+      if (tickRaf) cancelAnimationFrame(tickRaf);
       tl.kill();
       if (tlRef.current === tl) tlRef.current = null;
     };
@@ -357,23 +380,28 @@ export function HotspotDrawer({
     };
   }, [behindRef]);
 
-  if (!mounted || !portalAlive) return null;
+  if (!mounted || !portalAlive || !portalHost) return null;
+
+  // Preview device frame: absolute so drawer stays inside the simulated
+  // device. Public /p (body host): fixed to viewport.
+  const inFrame = isDeviceFrameHost(portalHost);
+  const posClass = inFrame ? 'absolute' : 'fixed';
 
   return createPortal(
     <>
       <div
         ref={backdropRef}
-        className='fixed inset-0 z-[1900] bg-black'
+        className={`${posClass} inset-0 z-[1900] bg-black`}
         style={{ pointerEvents: open ? 'auto' : 'none' }}
         onClick={onClose}
         aria-hidden='true'
       />
       <div
         ref={panelRef}
-        className={`fixed z-[1950] bg-white shadow-2xl ${
+        className={`${posClass} z-[1950] bg-white shadow-2xl ${
           isMobile
-            ? 'right-0 bottom-0 left-0 h-[88svh] w-full rounded-t-2xl'
-            : 'top-0 right-0 h-screen w-1/2'
+            ? 'right-0 bottom-0 left-0 h-[88%] max-h-[88svh] w-full rounded-t-2xl'
+            : 'top-0 right-0 h-full w-1/2'
         }`}
         style={{ pointerEvents: open ? 'auto' : 'none' }}
         role='dialog'
@@ -454,7 +482,7 @@ export function HotspotDrawer({
         )}
       </div>
     </>,
-    document.body
+    portalHost
   );
 }
 

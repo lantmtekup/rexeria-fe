@@ -2,18 +2,19 @@
 
 /**
  * Full-viewport preview overlay — cùng layout/render path với `/dev/blocks`:
- * scroller = vùng cuộn full height, LandingMotionRoot + MotionProvider(mode=preview)
- * + RenderBlock. Sticky/pin/scrub neo đúng như trang dev preview.
+ * device frame = vùng cuộn (width cố định 390/834/1280), LandingMotionRoot +
+ * MotionProvider(mode=preview) + RenderBlock. Sticky/pin/scrub neo vào frame.
  *
  * Khác `/dev/blocks`: nhận blocks live từ editor (chưa cần save), overlay
  * trong app (không mở tab mới).
  */
 
 import * as React from 'react';
-import { Monitor, Smartphone, Tablet, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
-import { cn } from '@/lib/cn';
-
+import { DevicePreviewFrame } from './DevicePreviewFrame';
+import { DeviceSwitcher } from './DeviceSwitcher';
+import { DEVICE_FRAME_WIDTH } from './deviceFrame';
 import { LandingMotionRoot } from './motion/LandingMotion';
 import { RenderBlock } from './blocks/renderBlock';
 import { MotionBlockRoot, MotionProvider } from './motion/runtime';
@@ -24,39 +25,32 @@ import {
 } from './transitions/TemplateTransitions';
 import { readVariant, type Block, type Device, type Lang } from './types';
 
+/** PreviewMode chrome bar = h-7 */
+const PREVIEW_CHROME = '1.75rem';
+
 interface PreviewModeProps {
   blocks: Block[];
   lang: Lang;
   onClose: () => void;
   /** Preset transition cấp template (none/fade/roll-up/swipe/tabs/parallax). */
   transition?: string;
+  /** Device đang chọn trên canvas editor — giữ khi mở preview. */
+  initialDevice?: Device;
 }
-
-/** Desktop = full width (null); tablet/mobile = khung cố định — khớp /dev/blocks. */
-const DEVICE_MAX_WIDTH: Record<Device, number | null> = {
-  desktop: null,
-  tablet: 834,
-  mobile: 390,
-};
-
-const DEVICE_BUTTONS: {
-  value: Device;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}[] = [
-  { value: 'desktop', icon: Monitor, label: 'Desktop' },
-  { value: 'tablet', icon: Tablet, label: 'Tablet' },
-  { value: 'mobile', icon: Smartphone, label: 'Mobile' },
-];
 
 export function PreviewMode({
   blocks,
   lang,
   onClose,
   transition,
+  initialDevice = 'desktop',
 }: PreviewModeProps) {
-  const [device, setDevice] = React.useState<Device>('desktop');
+  const [device, setDevice] = React.useState<Device>(initialDevice);
   const scrollerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    setDevice(initialDevice);
+  }, [initialDevice]);
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -67,38 +61,26 @@ export function PreviewMode({
   }, [onClose]);
 
   const visible = blocks.filter(b => b.isVisible);
-  const maxWidth = DEVICE_MAX_WIDTH[device];
 
   return (
-    <div className='fixed inset-0 z-50 bg-neutral-900'>
+    <div
+      className='fixed inset-0 z-50 bg-neutral-900'
+      data-landing-preview='true'
+    >
       {/* Top bar fixed, gọn — mirror /dev/blocks */}
-      <header className='fixed inset-x-0 top-0 z-50 flex h-7 items-center gap-2 border-b border-white/10 bg-[#0d0d10]/90 px-2 backdrop-blur-sm'>
+      <header className='fixed inset-x-0 top-0 z-60 flex h-7 items-center gap-2 border-b border-white/10 bg-[#0d0d10]/90 px-2 backdrop-blur-sm'>
         <span className='shrink-0 text-[8px] font-bold tracking-[0.16em] text-amber-400/90 uppercase'>
           Preview
         </span>
         <span className='min-w-0 flex-1 truncate text-[9px] text-white/40'>
-          {visible.length}/{blocks.length} block
+          {visible.length}/{blocks.length} block · {DEVICE_FRAME_WIDTH[device]}
+          px
         </span>
-        <div className='flex shrink-0 items-center gap-0.5 rounded border border-white/10 bg-white/5 p-px'>
-          {DEVICE_BUTTONS.map(({ value, icon: Icon, label }) => (
-            <button
-              key={value}
-              type='button'
-              onClick={() => setDevice(value)}
-              title={label}
-              aria-label={label}
-              aria-pressed={device === value}
-              className={cn(
-                'flex size-5 items-center justify-center rounded-sm transition-colors',
-                device === value
-                  ? 'bg-amber-400 text-neutral-900'
-                  : 'text-white/60 hover:bg-white/10'
-              )}
-            >
-              <Icon className='size-3' />
-            </button>
-          ))}
-        </div>
+        <DeviceSwitcher
+          device={device}
+          onChange={setDevice}
+          variant='preview'
+        />
         <button
           type='button'
           onClick={onClose}
@@ -109,22 +91,13 @@ export function PreviewMode({
         </button>
       </header>
 
-      {/* Vùng cuộn full viewport = scroller — khớp /dev/blocks */}
-      <div
-        ref={scrollerRef}
-        className='relative h-screen overflow-auto bg-neutral-200 pt-7'
-      >
+      {/* Outer: no scroll — device frame scrolls internally (centered). */}
+      <div className='relative h-screen overflow-hidden bg-neutral-200 pt-7'>
         <LandingMotionRoot scrollerRef={scrollerRef} enableSmooth={false}>
-          <div
-            className='@container mx-auto bg-white'
-            style={
-              maxWidth
-                ? {
-                    maxWidth,
-                    boxShadow: '0 0 0 1px rgba(0,0,0,0.08)',
-                  }
-                : undefined
-            }
+          <DevicePreviewFrame
+            device={device}
+            chromeOffset={PREVIEW_CHROME}
+            scrollerRef={scrollerRef}
           >
             {visible.length === 0 ? (
               <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-500'>
@@ -133,6 +106,7 @@ export function PreviewMode({
             ) : (
               <TemplateTransitions
                 transition={asTransition(transition)}
+                className='gap-0!'
                 items={visible.map(block => {
                   const langContent =
                     lang === 'vi' ? block.contentVi : block.contentEn;
@@ -165,7 +139,7 @@ export function PreviewMode({
                 })}
               />
             )}
-          </div>
+          </DevicePreviewFrame>
         </LandingMotionRoot>
       </div>
     </div>

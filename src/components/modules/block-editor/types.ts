@@ -83,6 +83,7 @@ export type BlockType =
   | 'pnj_hero'
   | 'pnj_details'
   | 'pnj_variant'
+  | 'pnj_header'
   | 'pnj_sticky_menu'
   | 'pnj_cta'
   // ── Mintcoin-v2 sections ──
@@ -478,6 +479,17 @@ export interface PnjStickyMenuItem {
   label: string;
   /** Section id (vd `discover`) hoặc URL https://… */
   link: string;
+}
+
+/**
+ * PNJ header — logo cố định góc trên, thu nhỏ khi scroll.
+ * Port từ apps/pnj Header.
+ */
+export interface PnjHeaderContent {
+  logoUrl: string;
+  logoAlt: string;
+  /** URL ngoài hoặc `#` / path nội bộ. Để trống = không điều hướng. */
+  logoHref: string;
 }
 
 /**
@@ -2467,6 +2479,7 @@ export type BlockContent =
   | PnjHeroContent
   | PnjDetailsContent
   | PnjVariantContent
+  | PnjHeaderContent
   | PnjStickyMenuContent
   | PnjCtaContent
   | MintV2EmblemContent
@@ -3390,6 +3403,23 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'section góc nhìn sản phẩm PNJ: pin scrub đổi ảnh + mô tả + highlights + CTA',
     aiLabelEn:
       'PNJ product views section: pinned scrub of image chapters + copy + highlights + CTA',
+  },
+  pnj_header: {
+    type: 'pnj_header',
+    category: 'navigation',
+    style: 'luxury',
+    tags: ['pnj', 'header', 'logo', 'citizen'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-15',
+    label: 'PNJ · Header',
+    accent: '#003468',
+    adminLabel: 'PNJ Header',
+    gradient: 'from-white to-neutral-100',
+    defaultName: 'PNJ Header',
+    aiLabelVi: 'header PNJ: logo fixed top trong suốt, thu nhỏ khi scroll',
+    aiLabelEn:
+      'PNJ fixed-top logo header: transparent over hero, shrinks on scroll',
   },
   pnj_sticky_menu: {
     type: 'pnj_sticky_menu',
