@@ -39,6 +39,11 @@ import {
   resolvePnjParagraphs,
   setPnjParagraphAt,
 } from '@/components/modules/block-editor/blocks/PnjDetails';
+import {
+  PNJ_HERO_TITLE_LINE_KEY_RE,
+  resolvePnjHeroTitleLines,
+  setPnjHeroTitleLineAt,
+} from '@/components/modules/block-editor/blocks/pnjHeroTitleLines';
 import { createBlock } from '@/components/modules/block-editor/factory';
 import {
   parseCanvas,
@@ -55,6 +60,7 @@ import {
   type ElementStylesMap,
   type ExtraElementKind,
   type PnjDetailsContent,
+  type PnjHeroContent,
 } from '@/components/modules/block-editor/types';
 import {
   bringToFront,
@@ -899,6 +905,7 @@ export function BlockEditor({
       langContent.desktop;
     const currentRecord = current as Record<string, unknown>;
     const paraMatch = key.match(PNJ_PARAGRAPH_KEY_RE);
+    const titleLineMatch = key.match(PNJ_HERO_TITLE_LINE_KEY_RE);
     const currentValue = paraMatch
       ? (resolvePnjParagraphs(
           current as PnjDetailsContent & {
@@ -906,7 +913,11 @@ export function BlockEditor({
             paragraph2?: string;
           }
         )[Number(paraMatch[1])] ?? '')
-      : getContentAt(currentRecord, key);
+      : titleLineMatch
+        ? (resolvePnjHeroTitleLines(current as PnjHeroContent)[
+            Number(titleLineMatch[1])
+          ] ?? '')
+        : getContentAt(currentRecord, key);
     if (currentValue === value) {
       selection.endInlineEdit();
       return;
@@ -916,21 +927,30 @@ export function BlockEditor({
       const baseContent =
         (editVariant === 'mobile' ? variants.mobile : undefined) ??
         variants.desktop;
-      // paragraphs[i]: preserve full list (setContentAt collapses when array missing).
-      const nextContent = paraMatch
-        ? (setPnjParagraphAt(
-            baseContent as PnjDetailsContent & {
-              paragraph1?: string;
-              paragraph2?: string;
-            },
-            Number(paraMatch[1]),
-            value
-          ) as BlockContent)
-        : (setContentAt(
-            baseContent as Record<string, unknown>,
-            key,
-            value
-          ) as BlockContent);
+      // paragraphs[i] / titleLines[i]: preserve full list (setContentAt collapses).
+      let nextContent: BlockContent;
+      if (paraMatch) {
+        nextContent = setPnjParagraphAt(
+          baseContent as PnjDetailsContent & {
+            paragraph1?: string;
+            paragraph2?: string;
+          },
+          Number(paraMatch[1]),
+          value
+        ) as BlockContent;
+      } else if (titleLineMatch) {
+        nextContent = setPnjHeroTitleLineAt(
+          baseContent as PnjHeroContent,
+          Number(titleLineMatch[1]),
+          value
+        ) as BlockContent;
+      } else {
+        nextContent = setContentAt(
+          baseContent as Record<string, unknown>,
+          key,
+          value
+        ) as BlockContent;
+      }
       b[langKey] = { ...variants, [editVariant]: nextContent };
     });
     autosave.markDirty();

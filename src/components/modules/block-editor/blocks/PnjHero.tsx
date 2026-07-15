@@ -44,16 +44,14 @@ import {
   useDrawerScrollLock,
   type HotspotOverlayHandle,
 } from './PnjHeroHotspots';
+import { resolvePnjHeroFrames } from './pnjHeroFrames';
+import { resolvePnjHeroScrim } from './pnjHeroScrim';
+import { resolvePnjHeroTitleLines } from './pnjHeroTitleLines';
 
-const FRAME_EXT = '.webp';
 const PANEL_BG = 'rgba(0, 39, 78, 0.88)';
 const RING_OFFSET = '#0a0a0a';
 /** Khớp Tailwind `@2xl:` container (672px) — xem deviceFrame.ts. */
 const MOBILE_BREAKPOINT = 672;
-
-/** Frame sequence — fixed under public/pnj (not CMS-editable). */
-const FRAMES_DESKTOP = { total: 76, prefix: '/pnj/frames/frame-' };
-const FRAMES_MOBILE = { total: 32, prefix: '/pnj/frames-mobile/frame-' };
 
 const RESPONSIVE = {
   subtitleFont: 'clamp(12px, 1.6cqi, 16px)',
@@ -113,6 +111,18 @@ export function PnjHero({
   const inPinRef = React.useRef(false);
 
   const hotspots = content.hotspots ?? [];
+  const titleLines = React.useMemo(
+    () => resolvePnjHeroTitleLines(content),
+    [content.titleLines, content.titleLine1, content.titleLine2]
+  );
+  const framesConfig = React.useMemo(
+    () => resolvePnjHeroFrames({ frames: content.frames }),
+    [content.frames]
+  );
+  const scrim = React.useMemo(
+    () => resolvePnjHeroScrim({ scrim: content.scrim }),
+    [content.scrim]
+  );
   useDrawerScrollLock(activeTab, isMobile);
 
   const styleOf = (key: string) =>
@@ -131,11 +141,11 @@ export function PnjHero({
     return () => mq.removeEventListener('change', sync);
   }, []);
 
-  const hotspotCount = Math.max(hotspots.length, 1);
-  // Scroll budget cho frame-scrub + hotspots (svh của viewport).
-  const trackVh = isMobile ? 100 + hotspotCount * 50 : 120 + hotspotCount * 60;
+  const hotspotCount = hotspots.length;
+  // Scroll budget cho frame-scrub + hotspots (svh) — hơi dài hơn để scrub chậm/mượt.
+  const trackVh = isMobile ? 120 + hotspotCount * 60 : 150 + hotspotCount * 75;
   // Desktop tall shell — sticky pin giữ chỗ; canvas kéo lên + frame-scrub.
-  const totalVh = Math.max(300, trackVh + 100);
+  const totalVh = Math.max(360, trackVh + 120);
 
   // ── Canvas frame-scrub ───────────────────────────────────────────────────
   React.useEffect(() => {
@@ -154,11 +164,13 @@ export function PnjHero({
     const measuredMobile = width < MOBILE_BREAKPOINT;
     if (measuredMobile !== isMobile) return;
 
-    const FRAMES = isMobile ? FRAMES_MOBILE : FRAMES_DESKTOP;
+    const FRAMES = isMobile ? framesConfig.mobile : framesConfig.desktop;
     const FRAME_TOTAL = FRAMES.total;
     const FRAME_PREFIX = FRAMES.prefix;
+    const FRAME_EXT = framesConfig.ext;
     const DPR_CAP = isMobile ? 1.0 : 1.5;
-    const SCRUB = isMobile ? 0.45 : 1;
+    // Scrub lag (giây) — cao hơn một chút → cảm giác mượt, ít giật theo wheel.
+    const SCRUB = isMobile ? 0.6 : 1.25;
 
     const images: HTMLImageElement[] = [];
     let loadedCount = 0;
@@ -430,6 +442,7 @@ export function PnjHero({
     requestRefresh,
     totalVh,
     trackVh,
+    framesConfig,
   ]);
 
   // ── Overlay entrance + scrub fade ────────────────────────────────────────
@@ -507,14 +520,7 @@ export function PnjHero({
     }, root);
 
     return () => ctx.revert();
-  }, [
-    isCanvas,
-    hasRoot,
-    scroller,
-    content.subtitle,
-    content.titleLine1,
-    content.titleLine2,
-  ]);
+  }, [isCanvas, hasRoot, scroller, content.subtitle, titleLines]);
 
   const tabOpen = activeTab !== null;
   const tabData = activeTab
@@ -593,37 +599,34 @@ export function PnjHero({
         <h2
           className='pnj-hero-title'
           style={{
-            fontSize: RESPONSIVE.titleFont,
-            lineHeight: 1.15,
-            fontWeight: 500,
-            color: '#003468',
             margin: 0,
           }}
         >
-          <span className='block overflow-hidden pb-1'>
-            <span
-              data-element-key='titleLine1'
-              className={selectableClass(
-                activeKey === 'titleLine1',
-                'pnj-hero-title-inner pointer-events-auto block'
-              )}
-              style={styleOf('titleLine1')}
-            >
-              {content.titleLine1}
-            </span>
-          </span>
-          <span className='block overflow-hidden pb-1'>
-            <span
-              data-element-key='titleLine2'
-              className={selectableClass(
-                activeKey === 'titleLine2',
-                'pnj-hero-title-inner pointer-events-auto block'
-              )}
-              style={styleOf('titleLine2')}
-            >
-              {content.titleLine2}
-            </span>
-          </span>
+          {titleLines.map((line, i) => {
+            const key = `titleLines[${i}]`;
+            return (
+              <span key={key} className='block overflow-hidden pb-1'>
+                <span
+                  data-element-key={key}
+                  className={selectableClass(
+                    activeKey === key,
+                    'pnj-hero-title-inner pointer-events-auto block'
+                  )}
+                  style={composeStyle(
+                    {
+                      fontSize: RESPONSIVE.titleFont,
+                      lineHeight: 1.15,
+                      fontWeight: 500,
+                      color: '#003468',
+                    },
+                    styleOf(key)
+                  )}
+                >
+                  {line}
+                </span>
+              </span>
+            );
+          })}
         </h2>
       </div>
     </div>
@@ -647,7 +650,7 @@ export function PnjHero({
           <img
             data-element-key='storefrontUrl'
             src={content.storefrontUrl}
-            alt={content.titleLine1}
+            alt={titleLines[0] || content.subtitle || ''}
             decoding='async'
             fetchPriority='high'
             className={selectableClass(
@@ -658,14 +661,38 @@ export function PnjHero({
           />
         </div>
       </div>
-      <div
-        aria-hidden
-        className='pointer-events-none absolute inset-0 z-10 bg-gradient-to-t from-[#003468]/14 via-white/25 to-transparent'
-      />
-      <div
-        aria-hidden
-        className='pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[55%] bg-[radial-gradient(ellipse_at_bottom_left,rgba(255,255,255,0.72)_0%,rgba(255,255,255,0.28)_42%,transparent_72%)]'
-      />
+      {scrim.layers.map((layer, i) => {
+        const hasBox =
+          layer.top !== undefined ||
+          layer.right !== undefined ||
+          layer.bottom !== undefined ||
+          layer.left !== undefined ||
+          layer.height !== undefined ||
+          layer.width !== undefined;
+        return (
+          <div
+            key={`scrim-${i}`}
+            aria-hidden
+            className='pointer-events-none absolute z-10'
+            style={{
+              ...(hasBox
+                ? {
+                    top: layer.top ?? 0,
+                    right: layer.right ?? 0,
+                    bottom: layer.bottom ?? 0,
+                    left: layer.left ?? 0,
+                    height: layer.height,
+                    width: layer.width,
+                  }
+                : { inset: 0 }),
+              ...(layer.opacity !== undefined
+                ? { opacity: layer.opacity }
+                : null),
+              background: layer.background,
+            }}
+          />
+        );
+      })}
       {heroCopy}
     </div>
   );
@@ -683,9 +710,9 @@ export function PnjHero({
 
   // Editor canvas: 1 viewport tĩnh — storefront + chữ hiện đủ để chọn/sửa.
   if (isCanvas) {
+    const frameSeq = isMobile ? framesConfig.mobile : framesConfig.desktop;
     const framePreview =
-      hotspots[0]?.img ||
-      `${isMobile ? FRAMES_MOBILE.prefix : FRAMES_DESKTOP.prefix}001${FRAME_EXT}`;
+      hotspots[0]?.img || `${frameSeq.prefix}001${framesConfig.ext}`;
 
     return (
       <section

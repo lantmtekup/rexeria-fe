@@ -2,8 +2,17 @@
  * BlockDef cho `pnj_hero` — hero PNJ (Citizen L Arcly): storefront + overlay
  * chữ + canvas frame-scrub + hotspot drawer. Port từ apps/pnj HeroIntroSection.
  * Path A registry.
+ *
+ * Title lines expand trong LayersPanel từ `titleLines[]` (không list cứng
+ * titleLine1/2 ở đây).
  */
-import { Image as ImageIcon, ListChecks, Type } from 'lucide-react';
+import {
+  Blend,
+  Film,
+  Image as ImageIcon,
+  ListChecks,
+  Type,
+} from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { PnjHeroContent } from '../../../types';
@@ -11,8 +20,7 @@ import type { BlockDef } from '../types';
 
 const VI: PnjHeroContent = {
   subtitle: 'CITIZEN',
-  titleLine1: 'Đồng Hồ Citizen',
-  titleLine2: 'L Arcly Nữ Dây Kim Loại',
+  titleLines: ['Đồng Hồ Citizen', 'L Arcly Nữ Dây Kim Loại'],
   storefrontUrl: '/pnj/bg-hero.png',
   hotspots: [
     {
@@ -53,8 +61,7 @@ const VI: PnjHeroContent = {
 const EN: PnjHeroContent = {
   ...VI,
   subtitle: 'CITIZEN',
-  titleLine1: 'Citizen Watch',
-  titleLine2: 'L Arcly Ladies Metal Bracelet',
+  titleLines: ['Citizen Watch', 'L Arcly Ladies Metal Bracelet'],
   hotspots: [
     {
       key: 'discover-specs',
@@ -114,17 +121,11 @@ export const pnjHeroDef: BlockDef<PnjHeroContent> = {
       icon: Type,
       fieldType: 'text',
     },
+    // titleLines slots expand in LayersPanel.elementsForType(pnj_hero)
     {
-      key: 'titleLine1',
-      label: 'Tiêu đề dòng 1',
-      icon: Type,
-      fieldType: 'text',
-    },
-    {
-      key: 'titleLine2',
-      label: 'Tiêu đề dòng 2',
-      icon: Type,
-      fieldType: 'text',
+      key: 'titleLines',
+      label: 'Thêm / quản lý tiêu đề',
+      icon: ListChecks,
     },
     {
       key: 'storefrontUrl',
@@ -136,6 +137,16 @@ export const pnjHeroDef: BlockDef<PnjHeroContent> = {
       key: 'hotspots',
       label: 'Hotspot / chi tiết',
       icon: ListChecks,
+    },
+    {
+      key: 'frames',
+      label: 'Frame sequence / JSON',
+      icon: Film,
+    },
+    {
+      key: 'scrim',
+      label: 'Lớp mờ / scrim',
+      icon: Blend,
     },
   ],
 };
