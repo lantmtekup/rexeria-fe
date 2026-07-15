@@ -41,6 +41,24 @@ import {
   resolvePnjParagraphs,
   setPnjParagraphAt,
 } from './blocks/PnjDetails';
+import {
+  isPnjHeroFramesConfig,
+  MINT_FRAMES_EXAMPLE,
+  PNJ_HERO_FRAMES_DEFAULT,
+  resolvePnjHeroFrames,
+} from './blocks/pnjHeroFrames';
+import {
+  isPnjHeroScrimConfig,
+  PNJ_HERO_SCRIM_PNJ_LAYERS,
+  PNJ_HERO_SCRIM_PRESET_IDS,
+  PNJ_HERO_SCRIM_PRESET_LABELS,
+  resolvePnjHeroScrim,
+} from './blocks/pnjHeroScrim';
+import {
+  PNJ_HERO_TITLE_LINE_KEY_RE,
+  resolvePnjHeroTitleLines,
+  setPnjHeroTitleLineAt,
+} from './blocks/pnjHeroTitleLines';
 import { buildAiPrompt } from './buildAiPrompt';
 import { ImagePicker } from './ImagePicker';
 import { getContentAt, setContentAt } from './contentPath';
@@ -142,11 +160,30 @@ export function ElementToolbar({
     }
     if (!window.confirm(`Xoá nội dung "${label}"?`)) return;
 
+    if (kind === 'pnjFrames') {
+      const next = { ...c };
+      delete next.frames;
+      onContentChange(next as BlockContent);
+      toast.success('Đã reset frame sequence về mặc định PNJ');
+      onClose();
+      return;
+    }
+
+    if (kind === 'pnjScrim') {
+      const next = { ...c };
+      delete next.scrim;
+      onContentChange(next as BlockContent);
+      toast.success('Đã reset lớp mờ về mặc định PNJ');
+      onClose();
+      return;
+    }
+
     let nextValue: unknown;
     if (kind === 'text' || kind === 'image') nextValue = '';
     else nextValue = [];
 
     const paraMatch = selectedKey.match(PNJ_PARAGRAPH_KEY_RE);
+    const titleLineMatch = selectedKey.match(PNJ_HERO_TITLE_LINE_KEY_RE);
     if (paraMatch) {
       const index = Number(paraMatch[1]);
       onContentChange(
@@ -156,6 +193,16 @@ export function ElementToolbar({
               paragraph1?: string;
               paragraph2?: string;
             },
+            index,
+            ''
+          ) as BlockContent
+      );
+    } else if (titleLineMatch) {
+      const index = Number(titleLineMatch[1]);
+      onContentChange(
+        prev =>
+          setPnjHeroTitleLineAt(
+            prev as PnjHeroContent,
             index,
             ''
           ) as BlockContent
@@ -195,6 +242,7 @@ export function ElementToolbar({
       const nextValue = getContentAt(c, selectedKey);
       if (nextValue !== undefined) {
         const paraMatch = selectedKey.match(PNJ_PARAGRAPH_KEY_RE);
+        const titleLineMatch = selectedKey.match(PNJ_HERO_TITLE_LINE_KEY_RE);
         if (paraMatch && typeof nextValue === 'string') {
           onContentChange(
             prev =>
@@ -204,6 +252,15 @@ export function ElementToolbar({
                   paragraph2?: string;
                 },
                 Number(paraMatch[1]),
+                nextValue
+              ) as BlockContent
+          );
+        } else if (titleLineMatch && typeof nextValue === 'string') {
+          onContentChange(
+            prev =>
+              setPnjHeroTitleLineAt(
+                prev as PnjHeroContent,
+                Number(titleLineMatch[1]),
                 nextValue
               ) as BlockContent
           );
@@ -308,7 +365,7 @@ export function ElementToolbar({
         )}
         {kind === 'mintTabs' &&
           (block.blockType === 'pnj_hero' ? (
-            <PnjHotspotsJsonControls
+            <PnjHotspotsControls
               content={content as PnjHeroContent}
               onContentChange={onContentChange}
             />
@@ -318,9 +375,27 @@ export function ElementToolbar({
               onContentChange={onContentChange}
             />
           ))}
+        {kind === 'pnjFrames' && (
+          <PnjFramesJsonControls
+            content={content as PnjHeroContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'pnjScrim' && (
+          <PnjScrimControls
+            content={content as PnjHeroContent}
+            onContentChange={onContentChange}
+          />
+        )}
         {kind === 'pnjParagraphs' && (
           <PnjParagraphsControls
             content={content as PnjDetailsContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'pnjTitleLines' && (
+          <PnjTitleLinesControls
+            content={content as PnjHeroContent}
             onContentChange={onContentChange}
           />
         )}
@@ -395,6 +470,8 @@ function TextControls({
   const c = content as Record<string, unknown>;
   const paraMatch = fieldKey.match(PNJ_PARAGRAPH_KEY_RE);
   const paraIndex = paraMatch ? Number(paraMatch[1]) : -1;
+  const titleLineMatch = fieldKey.match(PNJ_HERO_TITLE_LINE_KEY_RE);
+  const titleLineIndex = titleLineMatch ? Number(titleLineMatch[1]) : -1;
   const highlightsMatch = fieldKey.match(/^variants\[(\d+)\]\.highlights$/);
   const rawAt = getContentAt(c, fieldKey);
   const value = paraMatch
@@ -404,15 +481,18 @@ function TextControls({
           paragraph2?: string;
         }
       )[paraIndex] ?? '')
-    : highlightsMatch
-      ? Array.isArray(rawAt)
-        ? (rawAt as string[]).join('\n')
+    : titleLineMatch
+      ? (resolvePnjHeroTitleLines(content as PnjHeroContent)[titleLineIndex] ??
+        '')
+      : highlightsMatch
+        ? Array.isArray(rawAt)
+          ? (rawAt as string[]).join('\n')
+          : typeof rawAt === 'string'
+            ? rawAt
+            : ''
         : typeof rawAt === 'string'
           ? rawAt
-          : ''
-      : typeof rawAt === 'string'
-        ? rawAt
-        : '';
+          : '';
   const isLong =
     multiline ??
     (fieldKey === 'description' ||
@@ -433,6 +513,17 @@ function TextControls({
               paragraph2?: string;
             },
             paraIndex,
+            next
+          ) as BlockContent
+      );
+      return;
+    }
+    if (titleLineMatch) {
+      onContentChange(
+        prev =>
+          setPnjHeroTitleLineAt(
+            prev as PnjHeroContent,
+            titleLineIndex,
             next
           ) as BlockContent
       );
@@ -1770,6 +1861,84 @@ function PnjParagraphsControls({
   );
 }
 
+// ─────────────────────────────────────────── PNJ HERO TITLE LINES
+
+function PnjTitleLinesControls({
+  content,
+  onContentChange,
+}: {
+  content: PnjHeroContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const titleLines = resolvePnjHeroTitleLines(content);
+
+  const write = (updater: (lines: string[]) => string[]) => {
+    onContentChange(prev => {
+      const c = prev as PnjHeroContent;
+      const nextLines = updater(resolvePnjHeroTitleLines(c));
+      const next = { ...c, titleLines: nextLines } as Record<string, unknown>;
+      delete next.titleLine1;
+      delete next.titleLine2;
+      return next as BlockContent;
+    });
+  };
+
+  const update = (i: number, value: string) =>
+    write(lines => lines.map((line, idx) => (idx === i ? value : line)));
+  const remove = (i: number) => {
+    if (titleLines.length <= 1) {
+      toast.error('Cần ít nhất 1 dòng tiêu đề');
+      return;
+    }
+    write(lines => lines.filter((_, idx) => idx !== i));
+  };
+  const add = () => write(lines => [...lines, 'Dòng tiêu đề mới']);
+
+  return (
+    <PopoverTrigger
+      label='Tiêu đề dòng'
+      preview={`${titleLines.length} dòng`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {titleLines.map((line, i) => (
+          <div
+            key={`title-line-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-2xs font-semibold tracking-wide text-neutral-500 uppercase'>
+                Dòng {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá dòng ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={line}
+              onChange={e => update(i, e.target.value)}
+              placeholder='Nội dung tiêu đề'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm dòng tiêu đề' />
+    </PopoverTrigger>
+  );
+}
+
 // ─────────────────────────────────────────── PNJ VARIANT CHAPTERS
 
 function PnjVariantsControls({
@@ -1975,33 +2144,9 @@ function PnjStickyMenuItemsControls({
   );
 }
 
-// ─────────────────────────────────────────── PNJ HOTSPOTS (JSON)
+// ─────────────────────────────────────────── PNJ HOTSPOTS (form)
 
-const PNJ_HOTSPOT_HINT = `[
-  {
-    "key": "discover-specs",
-    "label": "Thông số kỹ thuật",
-    "desc": "Dòng 1\\nDòng 2",
-    "img": "/pnj/frames/frame-001.webp",
-    "dotX": 60,
-    "dotY": 42
-  }
-]`;
-
-function isPnjHotspot(value: unknown): value is PnjHeroHotspot {
-  if (!value || typeof value !== 'object') return false;
-  const h = value as Record<string, unknown>;
-  return (
-    typeof h.key === 'string' &&
-    typeof h.label === 'string' &&
-    typeof h.desc === 'string' &&
-    typeof h.img === 'string' &&
-    typeof h.dotX === 'number' &&
-    typeof h.dotY === 'number'
-  );
-}
-
-function PnjHotspotsJsonControls({
+function PnjHotspotsControls({
   content,
   onContentChange,
 }: {
@@ -2009,51 +2154,197 @@ function PnjHotspotsJsonControls({
   onContentChange: (next: BlockContent) => void;
 }) {
   const hotspots = content.hotspots ?? [];
+
+  const update = (i: number, patch: Partial<PnjHeroHotspot>) =>
+    onContentChange({
+      ...content,
+      hotspots: hotspots.map((h, idx) => (idx === i ? { ...h, ...patch } : h)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      hotspots: hotspots.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      hotspots: [
+        ...hotspots,
+        {
+          key: `hs_${Date.now().toString(36)}`,
+          label: 'Điểm mới',
+          desc: 'Mô tả chi tiết.',
+          img: '',
+          dotX: 50,
+          dotY: 50,
+        },
+      ],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Hotspot / chi tiết'
+      preview={`${hotspots.length} hotspot`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {hotspots.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có hotspot — block chỉ scrub frame, không drawer.
+          </p>
+        ) : null}
+        {hotspots.map((h, i) => (
+          <div
+            key={h.key || i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={h.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Tiêu đề hotspot'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá hotspot'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={h.desc}
+              onChange={e => update(i, { desc: e.target.value })}
+              placeholder='Mô tả'
+              className='min-h-16 resize-none border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={h.img}
+              onChange={e => update(i, { img: e.target.value })}
+              placeholder='URL ảnh trong drawer'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <div className='flex items-center gap-2'>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                Dot X%
+                <Input
+                  type='number'
+                  min={0}
+                  max={100}
+                  value={h.dotX}
+                  onChange={e => update(i, { dotX: Number(e.target.value) })}
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+              </label>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                Dot Y%
+                <Input
+                  type='number'
+                  min={0}
+                  max={100}
+                  value={h.dotY}
+                  onChange={e => update(i, { dotY: Number(e.target.value) })}
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+              </label>
+            </div>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm hotspot' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── PNJ FRAMES (JSON)
+
+const PNJ_FRAMES_HINT = JSON.stringify(PNJ_HERO_FRAMES_DEFAULT, null, 2);
+
+function PnjFramesJsonControls({
+  content,
+  onContentChange,
+}: {
+  content: PnjHeroContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const resolved = resolvePnjHeroFrames(content);
   const [draft, setDraft] = React.useState(() =>
-    JSON.stringify(hotspots, null, 2)
+    JSON.stringify(content.frames ?? PNJ_HERO_FRAMES_DEFAULT, null, 2)
   );
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    setDraft(JSON.stringify(content.hotspots ?? [], null, 2));
+    setDraft(
+      JSON.stringify(content.frames ?? PNJ_HERO_FRAMES_DEFAULT, null, 2)
+    );
     setError(null);
-  }, [content.hotspots]);
+  }, [content.frames]);
 
   const handleApply = () => {
     try {
       const parsed: unknown = JSON.parse(draft);
-      if (!Array.isArray(parsed)) {
-        setError('JSON phải là một mảng hotspot.');
-        toast.error('JSON hotspot không hợp lệ');
-        return;
-      }
-      if (!parsed.every(isPnjHotspot)) {
+      if (!isPnjHeroFramesConfig(parsed)) {
         setError(
-          'Mỗi item cần: key, label, desc, img (string), dotX, dotY (number).'
+          'Cần object: desktop/mobile mỗi cái { total: number > 0, prefix: string }, ext? string.'
         );
-        toast.error('JSON hotspot sai schema');
+        toast.error('JSON frames sai schema');
         return;
       }
       setError(null);
       onContentChange({
         ...content,
-        hotspots: parsed,
+        frames: {
+          desktop: {
+            total: Math.floor(parsed.desktop.total),
+            prefix: parsed.desktop.prefix.trim(),
+          },
+          mobile: {
+            total: Math.floor(parsed.mobile.total),
+            prefix: parsed.mobile.prefix.trim(),
+          },
+          ...(parsed.ext !== undefined
+            ? { ext: parsed.ext.trim() || undefined }
+            : {}),
+        },
       } as BlockContent);
-      toast.success(`Đã cập nhật ${parsed.length} hotspot`);
+      toast.success(
+        `Đã cập nhật frames · ${Math.floor(parsed.desktop.total)} desktop · ${Math.floor(parsed.mobile.total)} mobile`
+      );
     } catch {
       setError('Không parse được JSON.');
       toast.error('JSON không hợp lệ');
     }
   };
 
+  const handleReset = () => {
+    const next = { ...content } as Record<string, unknown>;
+    delete next.frames;
+    onContentChange(next as BlockContent);
+    setDraft(JSON.stringify(PNJ_HERO_FRAMES_DEFAULT, null, 2));
+    setError(null);
+    toast.success('Đã reset về frame PNJ mặc định');
+  };
+
+  const handleLoadMintExample = () => {
+    setDraft(JSON.stringify(MINT_FRAMES_EXAMPLE, null, 2));
+    setError(null);
+  };
+
+  const isCustom = content.frames !== undefined;
+
   return (
     <PopoverTrigger
-      label='Hotspot / JSON'
-      preview={`${hotspots.length} hotspot`}
+      label='Frames / JSON'
+      preview={`${resolved.desktop.total} · ${resolved.mobile.total}${isCustom ? '' : ' (mặc định)'}`}
       width={520}
     >
       <p className='text-2xs mb-2 text-neutral-500'>
-        Mảng JSON — mỗi item: key, label, desc, img, dotX, dotY (%).
+        Object JSON — desktop/mobile: total + prefix (URL tới frame-001.webp =
+        prefix + 001 + ext). Để trống / Reset = PNJ mặc định.
       </p>
       <Textarea
         value={draft}
@@ -2061,24 +2352,177 @@ function PnjHotspotsJsonControls({
           setDraft(e.target.value);
           setError(null);
         }}
-        placeholder={PNJ_HOTSPOT_HINT}
+        placeholder={PNJ_FRAMES_HINT}
         spellCheck={false}
         data-lenis-prevent
         className='field-sizing-fixed h-64 max-h-[50vh] min-h-0 resize-y overflow-y-auto overscroll-contain border-neutral-200 bg-white font-mono text-[11px] leading-relaxed'
-        aria-label='Hotspots JSON'
+        aria-label='Frames JSON'
       />
       {error && (
         <p className='text-2xs mt-1.5 text-rose-600' role='alert'>
           {error}
         </p>
       )}
-      <button
-        type='button'
-        onClick={handleApply}
-        className='mt-2 flex h-8 w-full cursor-pointer items-center justify-center rounded-md bg-neutral-900 text-xs font-medium text-white transition-colors hover:bg-neutral-800'
-      >
-        Áp dụng JSON
-      </button>
+      <div className='mt-2 flex flex-col gap-1.5'>
+        <button
+          type='button'
+          onClick={handleApply}
+          className='flex h-8 w-full cursor-pointer items-center justify-center rounded-md bg-neutral-900 text-xs font-medium text-white transition-colors hover:bg-neutral-800'
+        >
+          Áp dụng JSON
+        </button>
+        <div className='flex gap-1.5'>
+          <button
+            type='button'
+            onClick={handleLoadMintExample}
+            className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-50 text-xs font-medium text-neutral-700 ring-1 ring-neutral-200/70 transition-colors hover:bg-white'
+          >
+            Mẫu Mint CDN
+          </button>
+          <button
+            type='button'
+            onClick={handleReset}
+            className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-50 text-xs font-medium text-neutral-700 ring-1 ring-neutral-200/70 transition-colors hover:bg-white'
+          >
+            Reset PNJ mặc định
+          </button>
+        </div>
+      </div>
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── PNJ SCRIM (preset + JSON)
+
+function PnjScrimControls({
+  content,
+  onContentChange,
+}: {
+  content: PnjHeroContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const resolved = resolvePnjHeroScrim(content);
+  const [draft, setDraft] = React.useState(() =>
+    JSON.stringify(resolved.layers, null, 2)
+  );
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setDraft(JSON.stringify(resolvePnjHeroScrim(content).layers, null, 2));
+    setError(null);
+  }, [content.scrim]);
+
+  const preview = resolved.isCustom
+    ? `custom · ${resolved.layers.length} layer`
+    : PNJ_HERO_SCRIM_PRESET_LABELS[resolved.presetId];
+
+  const handlePreset = (preset: (typeof PNJ_HERO_SCRIM_PRESET_IDS)[number]) => {
+    onContentChange({
+      ...content,
+      scrim: { preset },
+    } as BlockContent);
+    toast.success(`Scrim: ${PNJ_HERO_SCRIM_PRESET_LABELS[preset]}`);
+  };
+
+  const handleApplyJson = () => {
+    try {
+      const parsed: unknown = JSON.parse(draft);
+      if (!Array.isArray(parsed)) {
+        setError('JSON phải là mảng layers.');
+        toast.error('JSON scrim không hợp lệ');
+        return;
+      }
+      const candidate = { layers: parsed };
+      if (!isPnjHeroScrimConfig(candidate)) {
+        setError(
+          'Mỗi layer cần background (string); top/right/bottom/left/height/width? string; opacity? number.'
+        );
+        toast.error('JSON scrim sai schema');
+        return;
+      }
+      setError(null);
+      onContentChange({
+        ...content,
+        scrim: {
+          preset: content.scrim?.preset ?? 'pnj',
+          layers: candidate.layers,
+        },
+      } as BlockContent);
+      toast.success(
+        `Đã cập nhật ${candidate.layers?.length ?? 0} lớp mờ (custom)`
+      );
+    } catch {
+      setError('Không parse được JSON.');
+      toast.error('JSON không hợp lệ');
+    }
+  };
+
+  const handleReset = () => {
+    const next = { ...content } as Record<string, unknown>;
+    delete next.scrim;
+    onContentChange(next as BlockContent);
+    setDraft(JSON.stringify(PNJ_HERO_SCRIM_PNJ_LAYERS, null, 2));
+    setError(null);
+    toast.success('Đã reset lớp mờ về PNJ mặc định');
+  };
+
+  return (
+    <PopoverTrigger label='Lớp mờ' preview={preview} width={480}>
+      <p className='text-2xs mb-2 text-neutral-500'>
+        Preset nhanh hoặc JSON layers (background CSS + vị trí tùy chọn).
+      </p>
+      <div className='mb-2 flex flex-wrap gap-1.5'>
+        {PNJ_HERO_SCRIM_PRESET_IDS.map(id => {
+          const active = !resolved.isCustom && resolved.presetId === id;
+          return (
+            <button
+              key={id}
+              type='button'
+              onClick={() => handlePreset(id)}
+              className={cn(
+                'h-7 cursor-pointer rounded-md px-2.5 text-[11px] font-medium transition-colors',
+                active
+                  ? 'bg-neutral-900 text-white'
+                  : 'bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200/70 hover:bg-white'
+              )}
+            >
+              {PNJ_HERO_SCRIM_PRESET_LABELS[id]}
+            </button>
+          );
+        })}
+      </div>
+      <Textarea
+        value={draft}
+        onChange={e => {
+          setDraft(e.target.value);
+          setError(null);
+        }}
+        spellCheck={false}
+        data-lenis-prevent
+        className='field-sizing-fixed h-48 max-h-[40vh] min-h-0 resize-y overflow-y-auto overscroll-contain border-neutral-200 bg-white font-mono text-[11px] leading-relaxed'
+        aria-label='Scrim layers JSON'
+      />
+      {error && (
+        <p className='text-2xs mt-1.5 text-rose-600' role='alert'>
+          {error}
+        </p>
+      )}
+      <div className='mt-2 flex gap-1.5'>
+        <button
+          type='button'
+          onClick={handleApplyJson}
+          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-900 text-xs font-medium text-white transition-colors hover:bg-neutral-800'
+        >
+          Áp dụng JSON
+        </button>
+        <button
+          type='button'
+          onClick={handleReset}
+          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-50 text-xs font-medium text-neutral-700 ring-1 ring-neutral-200/70 transition-colors hover:bg-white'
+        >
+          Reset PNJ
+        </button>
+      </div>
     </PopoverTrigger>
   );
 }
@@ -2317,12 +2761,33 @@ function InlineLabel({
   );
 }
 
-// ─────────────────────────────────────────── COLOR SWATCH (token roles)
+// ─────────────────────────────────────────── COLOR SWATCH (token + custom hex)
 
-// Controlled color picker: author chooses a brand token ROLE (primary, text…),
-// not a raw hex. Swatches preview with DEFAULT_PREVIEW_KIT; the value stored is
-// `token:<role>` so the real per-brand kit fills the color at render. Legacy raw
-// hex values still show a "custom" marker but the picker only emits tokens.
+function normalizeCssColor(raw: string): string | null {
+  const s = raw.trim();
+  if (!s) return null;
+  if (/^(rgb|rgba|hsl|hsla)\(/i.test(s)) return s;
+  const withHash = s.startsWith('#') ? s : `#${s}`;
+  if (/^#([0-9a-fA-F]{3})$/.test(withHash)) {
+    const [, a, b, c] = withHash.match(/^#(.)(.)(.)$/)!;
+    return `#${a}${a}${b}${b}${c}${c}`.toLowerCase();
+  }
+  if (/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(withHash)) {
+    return withHash.toLowerCase();
+  }
+  return null;
+}
+
+/** Display value for the hex field — raw color as-is, token → preview hex. */
+function colorInputDisplay(value: string): string {
+  const role = brandTokenKey(value);
+  if (role) return previewColor(role);
+  if (/^#|^rgb|^hsl/i.test(value.trim())) return value.trim();
+  return value;
+}
+
+// Brand token swatches + free-form hex/rgb. Tokens store `token:<role>`;
+// custom colors store raw CSS so `resolveColorValue` passes them through.
 function ColorSwatch({
   label,
   value,
@@ -2333,10 +2798,53 @@ function ColorSwatch({
   onChange: (next: string) => void;
 }) {
   const activeRole = brandTokenKey(value);
+  const isCustom = !activeRole;
+  const [draft, setDraft] = React.useState(() => colorInputDisplay(value));
+  const [hexError, setHexError] = React.useState(false);
+  const valueRef = React.useRef(value);
+  const draftRef = React.useRef(draft);
+  const onChangeRef = React.useRef(onChange);
+  valueRef.current = value;
+  draftRef.current = draft;
+  onChangeRef.current = onChange;
+
+  React.useEffect(() => {
+    setDraft(colorInputDisplay(value));
+    setHexError(false);
+  }, [value]);
+
+  // Commit pending hex on unmount — clicking canvas closes the toolbar
+  // without firing input blur, which used to drop the typed color.
+  React.useEffect(() => {
+    return () => {
+      const next = normalizeCssColor(draftRef.current);
+      if (!next) return;
+      if (next === valueRef.current) return;
+      if (next === colorInputDisplay(valueRef.current)) return;
+      onChangeRef.current(next);
+    };
+  }, []);
+
+  const commitHex = (raw: string, { soft = false } = {}) => {
+    const next = normalizeCssColor(raw);
+    if (!next) {
+      if (!soft) {
+        setHexError(true);
+        setDraft(colorInputDisplay(value));
+      }
+      return;
+    }
+    setHexError(false);
+    if (next !== value) onChange(next);
+  };
+
+  const nativeColor =
+    normalizeCssColor(colorInputDisplay(value))?.slice(0, 7) ?? '#111111';
+
   return (
     <div
       className='flex h-7 items-center gap-1.5 rounded-md px-1.5'
-      title={`${label} (token thương hiệu)`}
+      title={`${label} — token thương hiệu hoặc mã màu`}
     >
       <span className='text-3xs font-mono tracking-[0.08em] text-neutral-400 uppercase'>
         {label}
@@ -2360,6 +2868,47 @@ function ColorSwatch({
           );
         })}
       </div>
+      <span className='mx-0.5 h-4 w-px shrink-0 bg-neutral-200' aria-hidden />
+      <label className='relative size-4 shrink-0 cursor-pointer overflow-hidden rounded-sm ring-1 ring-black/10'>
+        <span
+          className='pointer-events-none absolute inset-0'
+          style={{ backgroundColor: nativeColor }}
+          aria-hidden
+        />
+        <input
+          type='color'
+          value={nativeColor}
+          onChange={e => onChange(e.target.value.toLowerCase())}
+          aria-label={`${label}: chọn màu`}
+          className='absolute inset-0 cursor-pointer opacity-0'
+        />
+      </label>
+      <Input
+        value={draft}
+        onChange={e => {
+          const next = e.target.value;
+          setDraft(next);
+          setHexError(false);
+          // Live-apply when the typed value is already a complete valid color.
+          commitHex(next, { soft: true });
+        }}
+        onBlur={() => commitHex(draft)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commitHex(draft);
+          }
+        }}
+        placeholder='#hex'
+        spellCheck={false}
+        aria-label={`${label}: mã màu`}
+        aria-invalid={hexError}
+        className={cn(
+          'h-6 w-[5.5rem] border-neutral-200 bg-white px-1.5 font-mono text-[10px] tracking-tight',
+          isCustom && 'ring-1 ring-sky-400/60',
+          hexError && 'border-rose-400 text-rose-600'
+        )}
+      />
     </div>
   );
 }

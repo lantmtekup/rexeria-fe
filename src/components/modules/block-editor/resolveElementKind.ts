@@ -17,8 +17,11 @@ export type ElementKind =
   | 'mintVariants'
   | 'mintTabs'
   | 'pnjParagraphs'
+  | 'pnjTitleLines'
   | 'pnjVariants'
   | 'pnjStickyMenuItems'
+  | 'pnjFrames'
+  | 'pnjScrim'
   | 'background';
 
 export const BACKGROUND_LAYER_KEY = '__background__';
@@ -48,6 +51,9 @@ const ELEMENT_KIND: Record<string, ElementKind> = {
   tabs: 'mintTabs',
   hotspots: 'mintTabs',
   paragraphs: 'pnjParagraphs',
+  titleLines: 'pnjTitleLines',
+  frames: 'pnjFrames',
+  scrim: 'pnjScrim',
   [BACKGROUND_LAYER_KEY]: 'background',
 };
 
@@ -73,6 +79,9 @@ const ELEMENT_LABEL: Record<string, string> = {
   tabs: 'Hotspot / chi tiết',
   hotspots: 'Hotspot / chi tiết',
   paragraphs: 'Đoạn văn',
+  titleLines: 'Tiêu đề dòng',
+  frames: 'Frame sequence',
+  scrim: 'Lớp mờ / scrim',
   [BACKGROUND_LAYER_KEY]: 'Nền',
 };
 
@@ -111,6 +120,8 @@ export function resolveKind(
   }
   // Nested paragraph slots: paragraphs[0] → text (inline edit).
   if (/^paragraphs\[\d+\]$/.test(key)) return 'text';
+  // Nested PNJ hero title lines: titleLines[0] → text.
+  if (/^titleLines\[\d+\]$/.test(key)) return 'text';
   // Nested variant fields: variants[0].label / .desc / .highlights → text
   if (/^variants\[\d+\]\.image$/.test(key)) return 'image';
   if (/^variants\[\d+\]\.(label|desc|highlights)$/.test(key)) return 'text';
@@ -129,6 +140,8 @@ export function resolveLabel(
   }
   const paraMatch = key.match(/^paragraphs\[(\d+)\]$/);
   if (paraMatch) return `Đoạn ${Number(paraMatch[1]) + 1}`;
+  const titleLineMatch = key.match(/^titleLines\[(\d+)\]$/);
+  if (titleLineMatch) return `Tiêu đề dòng ${Number(titleLineMatch[1]) + 1}`;
   const variantLabel = key.match(/^variants\[(\d+)\]\.label$/);
   if (variantLabel) return `Nhãn góc ${Number(variantLabel[1]) + 1}`;
   const variantDesc = key.match(/^variants\[(\d+)\]\.desc$/);
@@ -171,6 +184,14 @@ export function resolveElementMeta(
       kind: 'text',
       fieldType: 'textarea',
       label: `Đoạn ${n + 1}`,
+    };
+  }
+  if (/^titleLines\[\d+\]$/.test(key)) {
+    const n = Number(key.match(/^titleLines\[(\d+)\]$/)?.[1] ?? 0);
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Tiêu đề dòng ${n + 1}`,
     };
   }
   const vImg = key.match(/^variants\[(\d+)\]\.image$/);

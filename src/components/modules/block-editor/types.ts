@@ -432,17 +432,76 @@ export interface PnjHeroHotspot {
   dotY: number;
 }
 
+/** One device frame sequence (prefix + padded index + ext). */
+export interface PnjHeroFrameSequence {
+  total: number;
+  prefix: string;
+}
+
+/**
+ * Optional CMS frame config for PnjHero.
+ * Omit from content → runtime falls back to PNJ defaults (`/pnj/frames`).
+ */
+export interface PnjHeroFramesConfig {
+  desktop: PnjHeroFrameSequence;
+  mobile: PnjHeroFrameSequence;
+  /** File extension including dot. Default `.webp`. */
+  ext?: string;
+}
+
 /**
  * PNJ hero — storefront + overlay copy + canvas frame-scrub + hotspots.
  * Port từ apps/pnj HeroIntroSection.
- * Frame sequence hardcoded từ public/pnj (không CMS-editable).
+ * Frame sequence defaults to public/pnj; override via optional `frames` JSON.
  */
 export interface PnjHeroContent {
   subtitle: string;
-  titleLine1: string;
-  titleLine2: string;
+  /**
+   * Tiêu đề nhiều dòng (thêm/xoá trên canvas).
+   * Legacy: `titleLine1` / `titleLine2` vẫn được resolve nếu thiếu mảng này.
+   */
+  titleLines?: string[];
+  /** @deprecated Prefer `titleLines`. */
+  titleLine1?: string;
+  /** @deprecated Prefer `titleLines`. */
+  titleLine2?: string;
   storefrontUrl: string;
   hotspots: PnjHeroHotspot[];
+  /** Optional — omit = PNJ defaults (/pnj/frames). */
+  frames?: PnjHeroFramesConfig;
+  /** Optional storefront scrim — omit = PNJ dual-gradient default. */
+  scrim?: PnjHeroScrimConfig;
+}
+
+/** Named scrim presets for PnjHero storefront wash. */
+export type PnjHeroScrimPresetId =
+  | 'pnj'
+  | 'none'
+  | 'softLight'
+  | 'softDark'
+  | 'mint'
+  | 'navyFade';
+
+/** One absolute overlay layer on the storefront image. */
+export interface PnjHeroScrimLayer {
+  /** CSS `background` (linear/radial/solid). */
+  background: string;
+  top?: string;
+  right?: string;
+  bottom?: string;
+  left?: string;
+  height?: string;
+  width?: string;
+  opacity?: number;
+}
+
+/**
+ * Storefront scrim config. Omit from content → PNJ default layers.
+ * Non-empty `layers` replaces the named preset entirely.
+ */
+export interface PnjHeroScrimConfig {
+  preset?: PnjHeroScrimPresetId;
+  layers?: PnjHeroScrimLayer[];
 }
 
 /**

@@ -23,7 +23,9 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
+  Blend,
   ChevronRight,
+  Film,
   FormInput,
   Grid3x3,
   GripVertical,
@@ -43,6 +45,7 @@ import { cn } from '@/lib/cn';
 import { AddExtraElementButton } from './AddExtraElementButton';
 import { ExtraElementsList } from './ExtraElementsList';
 import { resolvePnjParagraphs } from './blocks/PnjDetails';
+import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
 import { pnjStickyMenuItemElements } from './blocks/_registry/defs/pnjStickyMenu';
 import { getBlockDef } from './blocks/_registry/registry';
@@ -54,6 +57,7 @@ import {
   type BlockType,
   type Device,
   type ExtraElementKind,
+  type PnjHeroContent,
   type PnjVariantItem,
   type PnjStickyMenuItem,
 } from './types';
@@ -563,6 +567,7 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
  * Element con của 1 block — registry-first (BlockDef.elements + layer nền),
  * fallback map ELEMENTS_BY_TYPE cho block CHƯA migrate sang registry.
  * `pnj_details`: expand `paragraphs[i]` từ content.
+ * `pnj_hero`: expand `titleLines[i]` từ content.
  * `pnj_variant`: expand từng góc với groupId (pattern ScrollMattis).
  */
 export function elementsForType(
@@ -589,6 +594,53 @@ export function elementsForType(
         key: 'paragraphs',
         label: 'Thêm / quản lý đoạn',
         icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'pnj_hero') {
+    const lines = resolvePnjHeroTitleLines(
+      (content ?? {}) as unknown as PnjHeroContent
+    );
+    const titleSlots = lines.map((_, i) => ({
+      key: `titleLines[${i}]`,
+      label: `Tiêu đề dòng ${i + 1}`,
+      icon: Type,
+      fieldType: 'text' as const,
+    }));
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'subtitle',
+        label: 'Subtitle / brand',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      ...titleSlots,
+      {
+        key: 'titleLines',
+        label: 'Thêm / quản lý tiêu đề',
+        icon: ListChecks,
+      },
+      {
+        key: 'storefrontUrl',
+        label: 'Ảnh storefront',
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+      {
+        key: 'hotspots',
+        label: 'Hotspot / chi tiết',
+        icon: ListChecks,
+      },
+      {
+        key: 'frames',
+        label: 'Frame sequence / JSON',
+        icon: Film,
+      },
+      {
+        key: 'scrim',
+        label: 'Lớp mờ / scrim',
+        icon: Blend,
       },
     ];
   }

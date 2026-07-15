@@ -6,9 +6,9 @@
  *
  * - Link không chứa https → scroll tới section (id / #id)
  * - Link có https → mở tab mới
- * - /p: `fixed` đáy viewport
- * - PreviewMode: portal `absolute` đáy → `[data-device-frame]`
- * - Editor canvas: in-flow
+ * - /p + PreviewMode (có LandingMotionRoot): portal fixed/absolute đáy
+ * - Editor canvas (`active-block-preview`): in-flow
+ * - BlockMiniPreview (không hasRoot): in-flow trong thumbnail
  */
 import * as React from 'react';
 import { createPortal } from 'react-dom';
@@ -157,7 +157,9 @@ export function PnjStickyMenu({
     setPortalHost(resolveDrawerPortalHost(root));
   }, [mounted, hasRoot]);
 
-  const useFixed = mounted && !isCanvas;
+  // hasRoot: false trong BlockMiniPreview (/admin/blocks) — không portal fixed
+  // ra body. Khớp PnjHeader / DelvauxSubnav.
+  const useFixed = mounted && hasRoot && !isCanvas;
   const inFrame = isDeviceFrameHost(portalHost);
 
   const styleOf = (key: string) =>
