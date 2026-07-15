@@ -26,6 +26,14 @@ import type { Block } from '../types';
 
 const HISTORY_CAP = 50;
 
+function resolveValidActiveId(
+  blocks: Block[],
+  preferred?: string | null
+): string | null {
+  if (preferred && blocks.some(b => b.id === preferred)) return preferred;
+  return blocks[0]?.id ?? null;
+}
+
 interface CanvasState {
   blocks: Block[];
   activeId: string | null;
@@ -89,13 +97,18 @@ function reducer(state: CanvasState, action: Action): CanvasState {
     case 'reset': {
       return {
         blocks: action.blocks,
-        activeId: action.activeId ?? state.activeId,
+        activeId: resolveValidActiveId(
+          action.blocks,
+          action.activeId ?? state.activeId
+        ),
         undoStack: [],
         redoStack: [],
       };
     }
     case 'setActiveId': {
       if (state.activeId === action.id) return state;
+      if (action.id && !state.blocks.some(b => b.id === action.id))
+        return state;
       return { ...state, activeId: action.id };
     }
   }

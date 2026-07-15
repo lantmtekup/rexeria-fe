@@ -72,14 +72,16 @@ export function setContentAt(
 
     const obj = { ...(current as Record<string, unknown>) };
     const child = obj[part];
-    obj[part] = setAt(
-      child != null && typeof child === 'object'
-        ? child
-        : typeof nextPart === 'number'
-          ? []
-          : {},
-      idx + 1
-    );
+    // Indexing into a string (mishaped array field) — wrap so we don't wipe siblings.
+    const nextCurrent =
+      typeof nextPart === 'number' && typeof child === 'string'
+        ? [child]
+        : child != null && typeof child === 'object'
+          ? child
+          : typeof nextPart === 'number'
+            ? []
+            : {};
+    obj[part] = setAt(nextCurrent, idx + 1);
     return obj;
   };
 

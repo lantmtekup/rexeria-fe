@@ -36,6 +36,11 @@ import { rexerApi } from '@/services/rexer/endpoints';
 import type { AIBlockType } from '@/services/rexer/types';
 
 import { FEATURE_ICON_OPTIONS } from './blocks/FeatureSection';
+import {
+  PNJ_PARAGRAPH_KEY_RE,
+  resolvePnjParagraphs,
+  setPnjParagraphAt,
+} from './blocks/PnjDetails';
 import { buildAiPrompt } from './buildAiPrompt';
 import { ImagePicker } from './ImagePicker';
 import { getContentAt, setContentAt } from './contentPath';
@@ -57,6 +62,13 @@ import {
   type Lang,
   type MintDiscoverContent,
   type MintVariantsContent,
+  type PnjDetailsContent,
+  type PnjHeroContent,
+  type PnjHeroHotspot,
+  type PnjVariantContent,
+  type PnjVariantItem,
+  type PnjStickyMenuContent,
+  type PnjStickyMenuItem,
 } from './types';
 
 export { BACKGROUND_LAYER_KEY };
@@ -67,7 +79,9 @@ interface ElementToolbarProps {
   device: Device;
   selectedKey: string | null;
   onClose: () => void;
-  onContentChange: (next: BlockContent) => void;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
   onUpdateStyle: (patch: ElementStyle) => void;
   onResetStyle: () => void;
   onUpdateBackground: (next: BlockBackground | undefined) => void;
@@ -132,7 +146,23 @@ export function ElementToolbar({
     if (kind === 'text' || kind === 'image') nextValue = '';
     else nextValue = [];
 
-    onContentChange(setContentAt(c, selectedKey, nextValue) as BlockContent);
+    const paraMatch = selectedKey.match(PNJ_PARAGRAPH_KEY_RE);
+    if (paraMatch) {
+      const index = Number(paraMatch[1]);
+      onContentChange(
+        prev =>
+          setPnjParagraphAt(
+            prev as PnjDetailsContent & {
+              paragraph1?: string;
+              paragraph2?: string;
+            },
+            index,
+            ''
+          ) as BlockContent
+      );
+    } else {
+      onContentChange(setContentAt(c, selectedKey, nextValue) as BlockContent);
+    }
     if (kind === 'text') onResetStyle();
     toast.success(`Đã xoá ${label.toLowerCase()}`);
     onClose();
@@ -164,13 +194,28 @@ export function ElementToolbar({
       const c = res.content as Record<string, unknown>;
       const nextValue = getContentAt(c, selectedKey);
       if (nextValue !== undefined) {
-        onContentChange(
-          setContentAt(
-            content as Record<string, unknown>,
-            selectedKey,
-            nextValue
-          ) as BlockContent
-        );
+        const paraMatch = selectedKey.match(PNJ_PARAGRAPH_KEY_RE);
+        if (paraMatch && typeof nextValue === 'string') {
+          onContentChange(
+            prev =>
+              setPnjParagraphAt(
+                prev as PnjDetailsContent & {
+                  paragraph1?: string;
+                  paragraph2?: string;
+                },
+                Number(paraMatch[1]),
+                nextValue
+              ) as BlockContent
+          );
+        } else {
+          onContentChange(
+            setContentAt(
+              content as Record<string, unknown>,
+              selectedKey,
+              nextValue
+            ) as BlockContent
+          );
+        }
         toast.success(
           res.source === 'ai'
             ? `AI đã đề xuất ${label}`
@@ -261,9 +306,33 @@ export function ElementToolbar({
             onContentChange={onContentChange}
           />
         )}
-        {kind === 'mintTabs' && (
-          <MintTabsControls
-            content={content as MintDiscoverContent}
+        {kind === 'mintTabs' &&
+          (block.blockType === 'pnj_hero' ? (
+            <PnjHotspotsJsonControls
+              content={content as PnjHeroContent}
+              onContentChange={onContentChange}
+            />
+          ) : (
+            <MintTabsControls
+              content={content as MintDiscoverContent}
+              onContentChange={onContentChange}
+            />
+          ))}
+        {kind === 'pnjParagraphs' && (
+          <PnjParagraphsControls
+            content={content as PnjDetailsContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'pnjVariants' && (
+          <PnjVariantsControls
+            content={content as PnjVariantContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'pnjStickyMenuItems' && (
+          <PnjStickyMenuItemsControls
+            content={content as PnjStickyMenuContent}
             onContentChange={onContentChange}
           />
         )}
@@ -317,29 +386,72 @@ function TextControls({
   multiline?: boolean;
   content: BlockContent;
   style?: ElementStyle;
-  onContentChange: (next: BlockContent) => void;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
   onUpdateStyle: (patch: ElementStyle) => void;
   onResetStyle: () => void;
 }) {
   const c = content as Record<string, unknown>;
-  const value =
-    typeof getContentAt(c, fieldKey) === 'string'
-      ? ((getContentAt(c, fieldKey) as string) ?? '')
-      : '';
+  const paraMatch = fieldKey.match(PNJ_PARAGRAPH_KEY_RE);
+  const paraIndex = paraMatch ? Number(paraMatch[1]) : -1;
+  const highlightsMatch = fieldKey.match(/^variants\[(\d+)\]\.highlights$/);
+  const rawAt = getContentAt(c, fieldKey);
+  const value = paraMatch
+    ? (resolvePnjParagraphs(
+        content as PnjDetailsContent & {
+          paragraph1?: string;
+          paragraph2?: string;
+        }
+      )[paraIndex] ?? '')
+    : highlightsMatch
+      ? Array.isArray(rawAt)
+        ? (rawAt as string[]).join('\n')
+        : typeof rawAt === 'string'
+          ? rawAt
+          : ''
+      : typeof rawAt === 'string'
+        ? rawAt
+        : '';
   const isLong =
     multiline ??
     (fieldKey === 'description' ||
       fieldKey === 'subtitle' ||
-      fieldKey === 'noteText');
+      fieldKey === 'noteText' ||
+      !!highlightsMatch);
   const fontSize = style?.fontSize ?? '';
 
   const setField = (next: string) => {
+    // paragraphs[i]: không dùng setContentAt — sẽ tạo mảng 1 phần tử và mất đoạn khác
+    // khi content.paragraphs chưa phải array (legacy paragraph1/2).
+    if (paraMatch) {
+      onContentChange(
+        prev =>
+          setPnjParagraphAt(
+            prev as PnjDetailsContent & {
+              paragraph1?: string;
+              paragraph2?: string;
+            },
+            paraIndex,
+            next
+          ) as BlockContent
+      );
+      return;
+    }
+    // highlights: textarea → string[] (mỗi dòng 1 mục)
+    const writeValue: unknown = highlightsMatch
+      ? next
+          .split('\n')
+          .map(s => s.trim())
+          .filter(Boolean)
+      : next;
     onContentChange(
-      setContentAt(
-        content as Record<string, unknown>,
-        fieldKey,
-        next
-      ) as BlockContent
+      prev =>
+        setContentAt(
+          prev as Record<string, unknown>,
+          fieldKey,
+          writeValue
+        ) as BlockContent
     );
   };
 
@@ -1575,6 +1687,402 @@ function MintTabsControls({
   );
 }
 
+// ─────────────────────────────────────────── PNJ DETAILS PARAGRAPHS
+
+function PnjParagraphsControls({
+  content,
+  onContentChange,
+}: {
+  content: PnjDetailsContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const paragraphs = resolvePnjParagraphs(content);
+
+  /** Append/update against LATEST store content (tránh closure ghi đè mất đoạn cũ). */
+  const write = (updater: (paras: string[]) => string[]) => {
+    onContentChange(prev => {
+      const c = prev as PnjDetailsContent & {
+        paragraph1?: string;
+        paragraph2?: string;
+      };
+      const nextParas = updater(resolvePnjParagraphs(c));
+      const next = { ...c, paragraphs: nextParas } as Record<string, unknown>;
+      // Drop legacy keys so canvas không còn dual-source.
+      delete next.paragraph1;
+      delete next.paragraph2;
+      return next as BlockContent;
+    });
+  };
+
+  const update = (i: number, value: string) =>
+    write(paras => paras.map((p, idx) => (idx === i ? value : p)));
+  const remove = (i: number) => {
+    if (paragraphs.length <= 1) {
+      toast.error('Cần ít nhất 1 đoạn văn');
+      return;
+    }
+    write(paras => paras.filter((_, idx) => idx !== i));
+  };
+  const add = () => write(paras => [...paras, 'Đoạn văn mới.']);
+
+  return (
+    <PopoverTrigger
+      label='Đoạn văn'
+      preview={`${paragraphs.length} đoạn`}
+      width={480}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {paragraphs.map((p, i) => (
+          <div
+            key={`para-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-2xs font-semibold tracking-wide text-neutral-500 uppercase'>
+                Đoạn {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá đoạn ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={p}
+              onChange={e => update(i, e.target.value)}
+              placeholder='Nội dung đoạn văn'
+              className='field-sizing-fixed min-h-20 resize-y overflow-y-auto border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm đoạn văn' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── PNJ VARIANT CHAPTERS
+
+function PnjVariantsControls({
+  content,
+  onContentChange,
+}: {
+  content: PnjVariantContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const variants = content.variants ?? [];
+
+  const write = (updater: (list: PnjVariantItem[]) => PnjVariantItem[]) => {
+    onContentChange(prev => {
+      const c = prev as PnjVariantContent;
+      return {
+        ...c,
+        variants: updater([...(c.variants ?? [])]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<PnjVariantItem>) =>
+    write(list => list.map((v, idx) => (idx === i ? { ...v, ...patch } : v)));
+
+  const remove = (i: number) => {
+    if (variants.length <= 1) {
+      toast.error('Cần ít nhất 1 góc nhìn');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        key: `v_${Date.now().toString(36)}`,
+        label: 'Góc mới',
+        desc: 'Mô tả góc nhìn sản phẩm.',
+        image: '/pnj/frames/frame-001.webp',
+        highlights: ['Điểm nổi bật 1', 'Điểm nổi bật 2'],
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Góc nhìn'
+      preview={`${variants.length} góc`}
+      width={480}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {variants.map((v, i) => (
+          <div
+            key={v.key || i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={v.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn góc nhìn'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá góc ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={v.desc}
+              onChange={e => update(i, { desc: e.target.value })}
+              placeholder='Mô tả'
+              className='field-sizing-fixed min-h-16 resize-y overflow-y-auto border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={v.image}
+              onChange={e => update(i, { image: e.target.value })}
+              placeholder='URL ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Textarea
+              value={(v.highlights ?? []).join('\n')}
+              onChange={e =>
+                update(i, {
+                  highlights: e.target.value
+                    .split('\n')
+                    .map(s => s.trim())
+                    .filter(Boolean),
+                })
+              }
+              placeholder='Highlights — mỗi dòng 1 mục'
+              className='field-sizing-fixed min-h-14 resize-y overflow-y-auto border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm góc nhìn' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── PNJ STICKY MENU ITEMS
+
+function PnjStickyMenuItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: PnjStickyMenuContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = content.items ?? [];
+
+  const write = (
+    updater: (list: PnjStickyMenuItem[]) => PnjStickyMenuItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as PnjStickyMenuContent;
+      return {
+        ...c,
+        items: updater([...(c.items ?? [])]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<PnjStickyMenuItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 mục menu');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        key: `nav_${Date.now().toString(36)}`,
+        label: 'Mục mới',
+        link: 'section-id',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Menu items'
+      preview={`${items.length} mục`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={item.key || i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={item.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn (title)'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá mục ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={item.link}
+              onChange={e => update(i, { link: e.target.value })}
+              placeholder='Link — section id (vd: contact) hoặc https://…'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm mục menu' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── PNJ HOTSPOTS (JSON)
+
+const PNJ_HOTSPOT_HINT = `[
+  {
+    "key": "discover-specs",
+    "label": "Thông số kỹ thuật",
+    "desc": "Dòng 1\\nDòng 2",
+    "img": "/pnj/frames/frame-001.webp",
+    "dotX": 60,
+    "dotY": 42
+  }
+]`;
+
+function isPnjHotspot(value: unknown): value is PnjHeroHotspot {
+  if (!value || typeof value !== 'object') return false;
+  const h = value as Record<string, unknown>;
+  return (
+    typeof h.key === 'string' &&
+    typeof h.label === 'string' &&
+    typeof h.desc === 'string' &&
+    typeof h.img === 'string' &&
+    typeof h.dotX === 'number' &&
+    typeof h.dotY === 'number'
+  );
+}
+
+function PnjHotspotsJsonControls({
+  content,
+  onContentChange,
+}: {
+  content: PnjHeroContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const hotspots = content.hotspots ?? [];
+  const [draft, setDraft] = React.useState(() =>
+    JSON.stringify(hotspots, null, 2)
+  );
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setDraft(JSON.stringify(content.hotspots ?? [], null, 2));
+    setError(null);
+  }, [content.hotspots]);
+
+  const handleApply = () => {
+    try {
+      const parsed: unknown = JSON.parse(draft);
+      if (!Array.isArray(parsed)) {
+        setError('JSON phải là một mảng hotspot.');
+        toast.error('JSON hotspot không hợp lệ');
+        return;
+      }
+      if (!parsed.every(isPnjHotspot)) {
+        setError(
+          'Mỗi item cần: key, label, desc, img (string), dotX, dotY (number).'
+        );
+        toast.error('JSON hotspot sai schema');
+        return;
+      }
+      setError(null);
+      onContentChange({
+        ...content,
+        hotspots: parsed,
+      } as BlockContent);
+      toast.success(`Đã cập nhật ${parsed.length} hotspot`);
+    } catch {
+      setError('Không parse được JSON.');
+      toast.error('JSON không hợp lệ');
+    }
+  };
+
+  return (
+    <PopoverTrigger
+      label='Hotspot / JSON'
+      preview={`${hotspots.length} hotspot`}
+      width={520}
+    >
+      <p className='text-2xs mb-2 text-neutral-500'>
+        Mảng JSON — mỗi item: key, label, desc, img, dotX, dotY (%).
+      </p>
+      <Textarea
+        value={draft}
+        onChange={e => {
+          setDraft(e.target.value);
+          setError(null);
+        }}
+        placeholder={PNJ_HOTSPOT_HINT}
+        spellCheck={false}
+        data-lenis-prevent
+        className='field-sizing-fixed h-64 max-h-[50vh] min-h-0 resize-y overflow-y-auto overscroll-contain border-neutral-200 bg-white font-mono text-[11px] leading-relaxed'
+        aria-label='Hotspots JSON'
+      />
+      {error && (
+        <p className='text-2xs mt-1.5 text-rose-600' role='alert'>
+          {error}
+        </p>
+      )}
+      <button
+        type='button'
+        onClick={handleApply}
+        className='mt-2 flex h-8 w-full cursor-pointer items-center justify-center rounded-md bg-neutral-900 text-xs font-medium text-white transition-colors hover:bg-neutral-800'
+      >
+        Áp dụng JSON
+      </button>
+    </PopoverTrigger>
+  );
+}
+
 // ─────────────────────────────────────────────────────────── AI BUTTON
 
 function AiButton({
@@ -1775,7 +2283,11 @@ function AddRow({ onAdd, label }: { onAdd: () => void; label: string }) {
   return (
     <button
       type='button'
-      onClick={onAdd}
+      onClick={e => {
+        e.preventDefault();
+        e.stopPropagation();
+        onAdd();
+      }}
       className='flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-neutral-300 py-2 text-xs font-medium text-neutral-500 hover:border-neutral-900 hover:text-neutral-900'
     >
       <Plus className='size-3.5' />

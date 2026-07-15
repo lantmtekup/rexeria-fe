@@ -29,6 +29,7 @@ import {
   GripVertical,
   Image as ImageIcon,
   Layers as LayersIcon,
+  Link2,
   ListChecks,
   MousePointerClick,
   Paintbrush,
@@ -41,6 +42,9 @@ import { cn } from '@/lib/cn';
 
 import { AddExtraElementButton } from './AddExtraElementButton';
 import { ExtraElementsList } from './ExtraElementsList';
+import { resolvePnjParagraphs } from './blocks/PnjDetails';
+import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
+import { pnjStickyMenuItemElements } from './blocks/_registry/defs/pnjStickyMenu';
 import { getBlockDef } from './blocks/_registry/registry';
 import {
   editingVariantOf,
@@ -50,6 +54,8 @@ import {
   type BlockType,
   type Device,
   type ExtraElementKind,
+  type PnjVariantItem,
+  type PnjStickyMenuItem,
 } from './types';
 
 export interface LayerElement {
@@ -556,9 +562,79 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
 /**
  * Element con của 1 block — registry-first (BlockDef.elements + layer nền),
  * fallback map ELEMENTS_BY_TYPE cho block CHƯA migrate sang registry.
+ * `pnj_details`: expand `paragraphs[i]` từ content.
+ * `pnj_variant`: expand từng góc với groupId (pattern ScrollMattis).
  */
-export function elementsForType(type: BlockType): LayerElement[] {
+export function elementsForType(
+  type: BlockType,
+  content?: Record<string, unknown> | null
+): LayerElement[] {
   const def = getBlockDef(type);
+  if (type === 'pnj_details') {
+    // Same normalize as canvas/toolbar — tránh layers lệch khi còn legacy paragraph1/2.
+    const list = resolvePnjParagraphs(
+      (content ?? {}) as unknown as Parameters<typeof resolvePnjParagraphs>[0]
+    );
+    const slots = list.map((_, i) => ({
+      key: `paragraphs[${i}]`,
+      label: `Đoạn ${i + 1}`,
+      icon: Pilcrow,
+      fieldType: 'textarea' as const,
+    }));
+    return [
+      BACKGROUND_LAYER,
+      { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      ...slots,
+      {
+        key: 'paragraphs',
+        label: 'Thêm / quản lý đoạn',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'pnj_variant') {
+    const raw = content?.variants;
+    const variants = Array.isArray(raw)
+      ? (raw as PnjVariantItem[]).filter(
+          v => v && typeof v === 'object' && typeof v.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...pnjVariantItemElements(variants),
+      {
+        key: 'variants',
+        label: 'Thêm / quản lý góc',
+        icon: ListChecks,
+      },
+      { key: 'ctaText', label: 'CTA', icon: Type, fieldType: 'text' },
+    ];
+  }
+  if (type === 'pnj_sticky_menu') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as PnjStickyMenuItem[]).filter(
+          item =>
+            item && typeof item === 'object' && typeof item.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...pnjStickyMenuItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
+      { key: 'ctaText', label: 'Nút CTA', icon: Type, fieldType: 'text' },
+      {
+        key: 'ctaLink',
+        label: 'Link CTA',
+        icon: Link2,
+        fieldType: 'text',
+      },
+    ];
+  }
   if (def) return [BACKGROUND_LAYER, ...def.elements];
   return ELEMENTS_BY_TYPE[type] ?? [];
 }
@@ -576,10 +652,11 @@ export function LayersPanel({
 }: LayersPanelProps) {
   const extras = block.extraElements ?? [];
   const showExtraSection = !!onAddExtraElement;
-  const baseElements = React.useMemo(
-    () => elementsForType(block.blockType),
-    [block.blockType]
-  );
+  const baseElements = React.useMemo(() => {
+    const content = (readVariant(block.contentVi, device) ??
+      block.contentVi?.desktop) as Record<string, unknown> | undefined;
+    return elementsForType(block.blockType, content);
+  }, [block.blockType, block.contentVi, device]);
   const elementByKey = React.useMemo(() => {
     const map = new Map<string, LayerElement>();
     for (const e of baseElements) map.set(e.key, e);
@@ -625,7 +702,6 @@ export function LayersPanel({
     () => buildLayerTree(orderedElements),
     [orderedElements]
   );
-  const hasGroups = tree.some(n => n.kind === 'group');
 
   // Collapse state — default open; persist per block in sessionStorage.
   const collapseStorageKey = `layers-collapsed:${block.id}`;
@@ -778,23 +854,18 @@ export function LayersPanel({
     .filter(e => e.key !== BACKGROUND_LAYER_KEY)
     .map(e => e.key);
 
-  // Drive a visible status banner so users can confirm the drag system is alive.
+  // Drive a visible status banner — chỉ hiện khi đang kéo hoặc vừa reorder.
   const isDragging = dragState.activeKey !== null;
+  const showStatusBanner = isDragging || dragState.didReorder;
   const statusTone = isDragging
     ? 'bg-sky-50 text-sky-700 ring-sky-200'
-    : dragState.didReorder
-      ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-      : 'bg-neutral-50 text-neutral-600 ring-neutral-200';
+    : 'bg-emerald-50 text-emerald-700 ring-emerald-200';
   const statusLabel = isDragging
     ? `Đang kéo: ${labelOf(dragState.activeKey)}` +
       (dragState.overKey && dragState.overKey !== dragState.activeKey
-        ? ` → thả vào ${labelOf(dragState.overKey)}`
+        ? ` → ${labelOf(dragState.overKey)}`
         : '')
-    : dragState.didReorder
-      ? '✓ Đã đổi thứ tự'
-      : hasGroups
-        ? 'Sẵn sàng — kéo trong cùng nhóm để sắp xếp'
-        : 'Sẵn sàng — kéo lớp để sắp xếp';
+    : 'Đã đổi thứ tự';
 
   const renderLeaf = (element: LayerElement, nested: boolean) => {
     const isOver = dragState.overKey === element.key;
@@ -832,11 +903,11 @@ export function LayersPanel({
 
   return (
     <div
-      className='flex flex-col gap-2 p-3'
+      className='flex flex-col gap-1.5 p-2'
       data-drag-state={isDragging ? 'dragging' : 'idle'}
     >
       {showExtraSection ? (
-        <section className='flex flex-col gap-1.5 rounded-md bg-white p-2 ring-1 ring-neutral-200'>
+        <section className='flex flex-col gap-1 rounded-md bg-white p-1.5 ring-1 ring-neutral-200/80'>
           <AddExtraElementButton onPick={kind => onAddExtraElement?.(kind)} />
           {extras.length > 0 ? (
             <ExtraElementsList
@@ -849,27 +920,24 @@ export function LayersPanel({
         </section>
       ) : null}
 
-      {/* Status banner — visible drag state for debugging / UX confirmation. */}
-      <div
-        className={cn(
-          'text-2xs flex items-center gap-2 rounded-md px-2.5 py-1.5 font-medium ring-1 transition-colors',
-          statusTone
-        )}
-        role='status'
-        aria-live='polite'
-      >
-        <span
+      {showStatusBanner && (
+        <div
           className={cn(
-            'size-1.5 shrink-0 rounded-full',
-            isDragging
-              ? 'animate-pulse bg-sky-500'
-              : dragState.didReorder
-                ? 'bg-emerald-500'
-                : 'bg-neutral-400'
+            'text-2xs flex items-center gap-2 rounded-md px-2 py-1 font-medium ring-1 transition-colors',
+            statusTone
           )}
-        />
-        <span className='flex-1 truncate'>{statusLabel}</span>
-      </div>
+          role='status'
+          aria-live='polite'
+        >
+          <span
+            className={cn(
+              'size-1.5 shrink-0 rounded-full',
+              isDragging ? 'animate-pulse bg-sky-500' : 'bg-emerald-500'
+            )}
+          />
+          <span className='flex-1 truncate'>{statusLabel}</span>
+        </div>
+      )}
 
       <DndContext
         sensors={sensors}
@@ -883,7 +951,7 @@ export function LayersPanel({
           items={sortableIds}
           strategy={verticalListSortingStrategy}
         >
-          <div className='flex flex-col gap-1.5'>
+          <div className='flex flex-col gap-1'>
             {tree.map(node => {
               if (node.kind === 'leaf') {
                 return renderLeaf(node.element, false);
@@ -925,11 +993,6 @@ export function LayersPanel({
             : null}
         </DragOverlay>
       </DndContext>
-      <p className='text-3xs mt-1 text-neutral-400'>
-        {hasGroups
-          ? 'Click lớp để chỉnh sửa. Kéo trong cùng nhóm để sắp xếp.'
-          : 'Click 1 lớp để mở popup chỉnh sửa. Kéo (≥4px) để sắp xếp lại.'}
-      </p>
     </div>
   );
 }
@@ -1022,7 +1085,7 @@ function LayerRow({
       data-layer-key={element.key}
       data-dragging={isDragging ? 'true' : undefined}
       className={cn(
-        'group relative flex items-center gap-2 rounded-md border bg-white px-2 py-2 transition-all select-none',
+        'group relative flex items-center gap-1.5 rounded-md border bg-white px-1.5 py-1.5 transition-all select-none',
         nested && 'ml-4',
         active
           ? 'border-sky-500 ring-1 ring-sky-500'

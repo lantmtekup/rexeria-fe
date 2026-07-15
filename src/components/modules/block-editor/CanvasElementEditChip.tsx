@@ -44,7 +44,10 @@ function chipIcon(kind: ElementKind) {
     kind === 'slides' ||
     kind === 'interactiveAd' ||
     kind === 'mintVariants' ||
-    kind === 'mintTabs'
+    kind === 'mintTabs' ||
+    kind === 'pnjParagraphs' ||
+    kind === 'pnjVariants' ||
+    kind === 'pnjStickyMenuItems'
   ) {
     return List;
   }

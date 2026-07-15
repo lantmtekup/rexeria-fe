@@ -101,6 +101,11 @@ const ORDERED_TYPES: BlockType[] = [
   'mint_variants',
   'mint_discover',
   'mint_sku',
+  'pnj_hero',
+  'pnj_details',
+  'pnj_variant',
+  'pnj_sticky_menu',
+  'pnj_cta',
   'mintv2_emblem',
   'mintv2_manifesto',
   'mintv2_works',
@@ -167,30 +172,33 @@ export function AddBlockDialog({
   // Null = loading; array = loaded (may be empty).
   const [saved, setSaved] = React.useState<SavedBlock[] | null>(null);
 
-  const reloadSaved = React.useCallback(async () => {
-    setSaved(null);
-    // Chỉ BE saved blocks (`/v1/blocks`) — KHÔNG merge legacy/framer registry
-    // nữa: legacy block chèn vào canvas sẽ thành `legacy_embed` (ngoài catalog)
-    // → BE reject khi commit version. Legacy vẫn browse được ở /admin/blocks.
-    let beItems: ServerBlock[] = [];
-    try {
-      const r = await rexerApi.blocks.list({ limit: 200 });
-      beItems = r.items ?? [];
-    } catch {
-      beItems = [];
-    }
-    const items = beItems
-      // Chỉ block đã publish mới cho dựng trang (legacy status rỗng → usable).
-      .filter(isBlockUsable)
-      .map(serverToSavedBlock)
-      .filter((b): b is SavedBlock => b !== null);
-    setSaved(items);
-  }, []);
+  const reloadSaved = React.useCallback(
+    async (opts?: { keepStale?: boolean }) => {
+      if (!opts?.keepStale) setSaved(null);
+      // Chỉ BE saved blocks (`/v1/blocks`) — KHÔNG merge legacy/framer registry
+      // nữa: legacy block chèn vào canvas sẽ thành `legacy_embed` (ngoài catalog)
+      // → BE reject khi commit version. Legacy vẫn browse được ở /admin/blocks.
+      let beItems: ServerBlock[] = [];
+      try {
+        const r = await rexerApi.blocks.list({ limit: 200 });
+        beItems = r.items ?? [];
+      } catch {
+        beItems = [];
+      }
+      const items = beItems
+        // Chỉ block đã publish mới cho dựng trang (legacy status rỗng → usable).
+        .filter(isBlockUsable)
+        .map(serverToSavedBlock)
+        .filter((b): b is SavedBlock => b !== null);
+      setSaved(items);
+    },
+    []
+  );
 
   // Reload saved blocks each time dialog opens (matches /admin/blocks freshness).
   React.useEffect(() => {
     if (!open) return;
-    void reloadSaved();
+    void reloadSaved({ keepStale: true });
   }, [open, reloadSaved]);
 
   // Block cơ bản = mọi type FE biết render (registry BLOCK_TYPE_META, thứ tự
@@ -238,7 +246,8 @@ export function AddBlockDialog({
         </DialogHeader>
 
         {/* Single scrollable list — KHÔNG tab. Thư viện block (nội dung thật,
-            cùng nguồn /admin/blocks) trước, rồi block cơ bản. */}
+            cùng nguồn /admin/blocks) trước, rồi block cơ bản. Preview lazy
+            + Suspense per-card (LazyBlockPreview) — không bubble lên route. */}
         <div className='-mr-1 flex-1 space-y-6 overflow-y-auto pr-1'>
           {loadingTypes && saved === null ? (
             <div className='flex items-center justify-center py-12 text-sm text-neutral-500'>
@@ -295,7 +304,7 @@ export function AddBlockDialog({
                           )}
                         >
                           <div className='pointer-events-none overflow-hidden rounded-md border border-neutral-100 bg-neutral-50'>
-                            <BlockMiniPreview
+                            <LazyBlockPreview
                               block={previewByType[type]}
                               aspect='16 / 10'
                             />
@@ -324,6 +333,49 @@ export function AddBlockDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * Lazy mount + per-card Suspense — mỗi preview load chunk next/dynamic riêng.
+ * Suspense bọc từng card (không bọc cả grid) để một card suspend không làm
+ * cả modal nhảy về fallback liên tục.
+ */
+function LazyBlockPreview({
+  block,
+  aspect = '16 / 10',
+}: {
+  block: Block;
+  aspect?: string;
+}) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = React.useState(false);
+
+  React.useEffect(() => {
+    const el = ref.current;
+    if (!el || visible) return;
+    const io = new IntersectionObserver(
+      entries => {
+        if (entries.some(e => e.isIntersecting)) setVisible(true);
+      },
+      { rootMargin: '200px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [visible]);
+
+  if (!visible) {
+    return <div ref={ref} className='aspect-16/10 w-full bg-neutral-100' />;
+  }
+
+  return (
+    <React.Suspense
+      fallback={
+        <div className='aspect-16/10 w-full animate-pulse bg-neutral-100' />
+      }
+    >
+      <BlockMiniPreview block={block} aspect={aspect} />
+    </React.Suspense>
   );
 }
 
@@ -425,7 +477,7 @@ function SavedCard({
         {/* Real live preview — same renderer as /admin/blocks grid. Inner
             interactive elements are inert so the card stays one click target. */}
         <div className='pointer-events-none'>
-          <BlockMiniPreview block={entry.block} aspect='16 / 10' />
+          <LazyBlockPreview block={entry.block} aspect='16 / 10' />
         </div>
       </div>
       <div className='flex items-center gap-1 px-1'>
