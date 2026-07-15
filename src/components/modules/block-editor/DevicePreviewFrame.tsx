@@ -26,10 +26,10 @@ interface DevicePreviewFrameProps {
  * Fixed-width device shell for PreviewMode / `/dev/blocks`.
  *
  * Structure:
- * - Outer `[data-device-frame]`: viewport-tall, centered, NOT scrolling —
- *   portal host for header / sticky menu (`absolute` top/bottom).
- * - Inner scroller: `@container` + overflow-y — blocks scroll here so
- *   container queries + useContainerMobile measure the logical width.
+ * - Outer `[data-device-frame]`: `@container` + viewport-tall, centered, NOT
+ *   scrolling — portal host for header / sticky menu (`absolute` top/bottom).
+ * - Inner scroller: overflow-y — blocks scroll here; inherits container width
+ *   for queries / useContainerMobile.
  *
  * Do NOT wrap in `transform: scale()` — breaks sticky/pin.
  */
@@ -48,7 +48,7 @@ export function DevicePreviewFrame({
       <div
         data-device-frame='true'
         data-device={device}
-        className='relative shrink-0 overflow-hidden bg-white'
+        className='@container relative shrink-0 overflow-hidden bg-white'
         style={{
           width,
           height: `calc(100vh - ${chromeOffset})`,
