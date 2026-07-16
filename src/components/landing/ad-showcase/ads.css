@@ -582,6 +582,11 @@
   pointer-events: none;
 }
 
+.dv-mode-desktop .pannable-ad-title {
+  text-align: left;
+  padding-left: 60px;
+}
+
 /* Hotspot item: dot + card row (Approach 3: grid 2-row) */
 .pan-item {
   position: absolute;
@@ -684,9 +689,16 @@
   position: relative;
   will-change: transform;
 }
+.pannable-ad-track--desktop {
+  height: 100%;
+  width: 100%;
+}
 .pannable-ad-img {
   display: block;
   pointer-events: none;
+}
+.pannable-ad-img--desktop {
+  height: 100%;
 }
 .pannable-ad-overlay {
   position: absolute;
@@ -735,6 +747,25 @@
   max-width: 100%;
   overflow-wrap: break-word;
   word-break: break-word;
+}
+
+.dv-mode-desktop .pannable-ad-hintbar {
+  left: 60px;
+  right: auto;
+  transform: none;
+  align-items: flex-start;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.dv-mode-desktop .pannable-ad-hintbar-text {
+  max-width: 300px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.dv-mode-desktop .pannable-ad-hintbar-icons {
+  gap: 8px;
 }
 
 .pannable-ad-indicators {
@@ -1298,8 +1329,6 @@
    FORMAT: Countdown Ad
    ================================================================ */
 .cd-ad {
-  /* position: relative; width: 100%; height: 100%;
-  display: flex; align-items: center; justify-content: center; */
   position: relative;
   width: 100%;
   height: 100%;
@@ -1347,6 +1376,57 @@
   margin-top: 40px;
   margin-bottom: 0px;
   line-height: 1.4;
+}
+
+/* Nhóm bên phải: đồng hồ countdown + subtitle (mobile: xếp dọc, canh giữa) */
+.cd-right {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* ----- Desktop: chia cd-content thành 2 phần flex ----------------
+   Trái = title, Phải = đồng hồ + subtitle (flex column) ----------- */
+.dv-mode-desktop .cd-content {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(32px, 6vw, 80px);
+  max-width: 1000px;
+  text-align: left;
+}
+.dv-mode-desktop .cd-title {
+  flex: 1;
+  margin-bottom: 0;
+  text-align: left;
+  font-size: clamp(40px, 4vw, 64px);
+}
+.dv-mode-desktop .cd-right {
+  width: auto;
+  flex-shrink: 0;
+  align-items: center;
+}
+.dv-mode-desktop .cd-subtitle {
+  margin-top: 28px;
+  font-size: clamp(19px, 1.8vw, 26px);
+  text-align: center;
+}
+.dv-mode-desktop .cd-units--flip .cd-flip {
+  width: clamp(40px, 3.4vw, 56px);
+  height: clamp(54px, 4.6vw, 74px);
+  border-radius: 10px;
+}
+.dv-mode-desktop .cd-units--flip .cd-flip span {
+  font-size: clamp(30px, 2.6vw, 44px);
+}
+.dv-mode-desktop .cd-separator {
+  height: auto;
+  font-size: clamp(28px, 2.4vw, 40px);
+}
+
+.dv-mode-desktop .cd-unit-value {
+  gap: 8px;
 }
 
 .cd-units {
@@ -2384,7 +2464,7 @@
   position: absolute;
   inset: 0;
   background-size: cover;
-  background-position: center;
+  background-position: 50% 65%;
   transition:
     opacity 1.2s ease,
     filter 1.2s ease;
@@ -2898,6 +2978,21 @@
   }
 }
 
+.dv-mode-desktop .scratch-brand-reveal {
+  display: none;
+}
+.dv-mode-desktop .scratch-reward-text {
+  font-size: 40px;
+  line-height: 46px;
+}
+.dv-mode-desktop .scratch-coupon {
+  width: 240px;
+  padding: 8px 10px 8px 20px;
+}
+.dv-mode-desktop .scratch-coupon-code {
+  font-size: 22px;
+}
+
 /* Custom round cursor */
 .scratch-cursor {
   position: absolute;
@@ -3298,6 +3393,11 @@
 /* ================================================================
    FORMAT: Configurator Ad
    ================================================================ */
+/* Cả 3 phần (headline · preview · options) nằm trong cùng 1 section.
+   Mobile: flex column (headline trên → xe giữa → options dưới).
+   Desktop: flex row (headline trái · xe giữa · options phải).
+   Preview absolute inset:0 nên xe luôn "nổi" ở giữa section, headline &
+   options là 2 flex item thật, dễ canh theo breakpoint. */
 .cfg-ad {
   position: relative;
   width: 100%;
@@ -3305,27 +3405,23 @@
   background: #000000;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   font-family:
     system-ui,
     -apple-system,
     sans-serif;
 }
 .cfg-preview {
-  flex: 1.5;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 40px;
-  width: 100%;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
 }
 .cfg-preview-base {
   position: absolute;
   inset: 0;
-  top: 30%;
   background-size: 135%;
-  background-position: center left;
+  background-position: 10% 40%;
   background-repeat: no-repeat;
   transition: background-image 0.3s ease-in-out;
 }
@@ -3336,7 +3432,22 @@
   background-position: center;
   mix-blend-mode: overlay;
 }
+.cfg-headline {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 44px 16px 0;
+  font-family: var(--serif, 'Cormorant Garamond', serif);
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.15;
+  color: #ffffff;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+  white-space: pre-line;
+}
 .cfg-options {
+  position: relative;
+  z-index: 2;
   padding: 20px 20px 90px 20px;
   background: #000000;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -3415,6 +3526,42 @@
   background: #ffffff;
   padding: 2px 8px;
   border-radius: 4px;
+}
+
+.dv-mode-desktop .cfg-ad {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dv-mode-desktop .cfg-headline {
+  flex: 0 0 36%;
+  width: 36%;
+  text-align: left;
+  padding: 0 24px 0 clamp(40px, 5vw, 72px);
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.dv-mode-desktop .cfg-preview-base {
+  background-size: auto 45%;
+  background-position: 55% center;
+}
+
+.dv-mode-desktop .cfg-options {
+  flex: 0 0 clamp(240px, 24vw, 320px);
+  width: clamp(240px, 24vw, 320px);
+  justify-content: center;
+  gap: clamp(40px, 8vh, 96px);
+  padding: 48px clamp(24px, 3vw, 48px) 90px;
+  background: transparent;
+  border-top: none;
+}
+.dv-mode-desktop .cfg-option-label {
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  text-transform: none;
+  font-weight: 600;
 }
 
 /* ================================================================
@@ -3686,6 +3833,13 @@
   cursor: grabbing;
 }
 
+/* Wrapper vô hình ở mobile (display: contents — không ảnh hưởng absolute
+   positioning của headline/hint so với .c3d-ad); desktop biến thành cột
+   flex 50% bên trái (xem .dv-mode-desktop bên dưới). */
+.c3d-left {
+  display: contents;
+}
+
 .c3d-headline {
   position: absolute;
   top: 60px;
@@ -3780,6 +3934,93 @@
   height: 12px;
 }
 
+/* Desktop-only spin icon (oval track image + arrows + hand), thay thế
+   text "drag to spin" của mobile. Ẩn mặc định, chỉ hiện khi desktop
+   (xem .dv-mode-desktop bên dưới). */
+.c3d-spin-icon {
+  display: none;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  width: 117px;
+  height: 34px;
+}
+
+.c3d-spin-icon-track {
+  position: absolute;
+  top: 50%;
+  left: 80%;
+  width: 100%;
+  height: auto;
+  transform: translate(-50%, -50%);
+  display: block;
+}
+
+.c3d-spin-icon-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.c3d-spin-icon-arrow--left {
+  left: -2px;
+}
+
+.c3d-spin-icon-arrow--right {
+  right: -2px;
+}
+
+.c3d-spin-icon-hand {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 16px;
+  margin-left: 70px;
+}
+
+/* Desktop: 2 cột 50/50 — trái là headline + hint, phải là track. */
+.dv-mode-desktop .c3d-ad {
+  display: flex;
+  align-items: center;
+}
+
+.dv-mode-desktop .c3d-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 28px;
+  flex: 0 0 40%;
+  width: 40%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0 40px 0 64px;
+}
+
+.dv-mode-desktop .c3d-headline {
+  position: static;
+  text-align: left;
+  margin: 0;
+}
+
+.dv-mode-desktop .c3d-hint {
+  display: none;
+}
+
+.dv-mode-desktop .c3d-spin-icon {
+  display: flex;
+}
+
+.dv-mode-desktop .c3d-track {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  flex: 0 0 50%;
+  width: 50%;
+  height: 100%;
+}
+
 /* ================================================================
    FORMAT: Stories Ad
    ================================================================ */
@@ -3857,6 +4098,22 @@
 .stories-text p {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.6);
+}
+
+.dv-mode-desktop .stories-content {
+  background-position: 50% 60%;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+}
+.dv-mode-desktop .stories-text h3 {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+.dv-mode-desktop .stories-text p {
+  font-size: 18px;
+  line-height: 1.5;
+
+  max-width: 40%;
 }
 .stories-cta {
   display: block;
@@ -4141,6 +4398,39 @@
   border-right: 8px solid #cdae76;
 }
 
+/* Desktop: increase hostpot-ad-title top spacing */
+.dv-mode-desktop .hostpot-ad-title {
+  color: #ffffff;
+  text-align: left;
+  font-size: 36px;
+  left: 60px;
+  top: 150px;
+}
+
+.dv-mode-desktop .hotspot-ad-hint {
+  left: 17%;
+}
+
+.dv-mode-desktop .hotspot-ad-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0.55) 20%,
+      rgba(0, 0, 0, 0.1) 45%,
+      transparent 80%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(146, 145, 145, 0.2) 89.23%,
+      rgba(31, 31, 31, 0.2) 94.61%
+    );
+}
+
 .aerial-hint {
   position: absolute;
   bottom: 80px;
@@ -4272,6 +4562,111 @@
   cursor: pointer;
 }
 
+.dv-mode-desktop .aerial-hint {
+  left: 15%;
+  width: 300px;
+}
+
+.dv-mode-desktop .aerial-hint-cursor {
+  width: 24px;
+  height: 28px;
+  margin-bottom: 8px;
+}
+
+.dv-mode-desktop .aerial-hint-text {
+  font-family: var(--sans, 'Outfit', 'SFU Futura', sans-serif);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.1em;
+  text-align: center;
+  color: #ffffff;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* ===== Desktop detail: horizontal layout (image left 60%, panel right 40%) ===== */
+.dv-mode-desktop .aerial-detail {
+  display: grid;
+  grid-template-columns: 60% 40%;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    'media content'
+    'media cta';
+}
+
+/* Bỏ hộp body để img + content trở thành grid item trực tiếp của .aerial-detail */
+.dv-mode-desktop .aerial-detail-body {
+  display: contents;
+}
+
+.dv-mode-desktop .aerial-detail-img {
+  grid-area: media;
+  width: 100%;
+  height: 100%;
+}
+
+.dv-mode-desktop .aerial-detail-content {
+  grid-area: content;
+  padding: 40px 56px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.dv-mode-desktop .aerial-detail-title {
+  margin: 0;
+  font-size: 40px;
+}
+
+.dv-mode-desktop .aerial-detail-desc {
+  margin: 28px 0 0;
+  font-size: 18px;
+  line-height: 30px;
+}
+
+/* Nút EXPLORE full width, sát đáy panel phải */
+.dv-mode-desktop .aerial-detail-cta-wrap {
+  grid-area: cta;
+  padding: 0;
+}
+
+.dv-mode-desktop .aerial-detail-cta {
+  height: 64px;
+}
+
+/* Close wrapper trong body: mặc định ẩn, chỉ hiện ở desktop */
+.aerial-detail-close-desktop {
+  display: none;
+}
+
+/* Desktop: ẩn thanh bar đen (close của mobile), dùng close trong body */
+.dv-mode-desktop .aerial-detail-bar {
+  display: none;
+}
+
+/* Close góc trên phải panel kem, absolute so với .aerial-detail */
+.dv-mode-desktop .aerial-detail-close-desktop {
+  display: block;
+  position: absolute;
+  top: 68px;
+  right: 28px;
+  z-index: 100;
+}
+
+.dv-mode-desktop .aerial-detail-close-desktop .aerial-detail-close {
+  padding: 6px;
+}
+
+.dv-mode-desktop .aerial-detail-close-desktop svg {
+  width: 20px;
+  height: 20px;
+}
+
+.dv-mode-desktop .aerial-detail-close-desktop svg path {
+  stroke: #0e0e0e;
+}
+
 /* ===== MOBILE PERFORMANCE: disable heavy effects ===== */
 @media (max-width: 768px) {
   .hs-label,
@@ -4299,4 +4694,33 @@
       opacity: 1;
     }
   }
+}
+
+.dv-mode-mobile .hs-label,
+.dv-mode-mobile .hs-card,
+.dv-mode-mobile .vp-play-overlay,
+.dv-mode-mobile .slider-ad-label,
+.dv-mode-mobile .gallery-ad-arrow,
+.dv-mode-mobile .vs-back,
+.dv-mode-mobile .ts-back,
+.dv-mode-mobile .bs-back,
+.dv-mode-mobile .pv-toggle-tabs,
+.dv-mode-mobile .isv-nav-btn {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* Use opacity-only dissolve on mobile (no blur) */
+.dv-mode-mobile .dg-slide--entering {
+  filter: none !important;
+}
+@keyframes dgEnterMobile {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.dv-mode-mobile .dg-slide--entering {
+  animation-name: dgEnterMobile;
 }

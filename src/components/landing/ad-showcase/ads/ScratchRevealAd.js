@@ -230,11 +230,22 @@ function drawCover(canvas) {
   const ctx = canvas.getContext('2d');
   const W = canvas.width,
     H = canvas.height;
-  const sx = W / 440,
-    sy = H / 956;
 
   ctx.fillStyle = '#1e1e1e';
   ctx.fillRect(0, 0, W, H);
+
+  // Desktop = canvas ngang (landscape) → text bên trái, hộp quà ở giữa.
+  // Mobile = canvas dọc → layout gốc (mọi thứ canh giữa theo chiều dọc).
+  if (W / H > 1.4) {
+    drawCoverDesktop(ctx, W, H);
+  } else {
+    drawCoverMobile(ctx, W, H);
+  }
+}
+
+function drawCoverMobile(ctx, W, H) {
+  const sx = W / 440,
+    sy = H / 956;
 
   ctx.fillStyle = '#ffffff';
   ctx.font = `400 ${Math.round(40 * sy)}px 'Cormorant Garamond', Georgia, serif`;
@@ -322,4 +333,89 @@ function drawCover(canvas) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillText('Scratch to Discover', W / 2, 531 * sy);
+}
+
+function drawCoverDesktop(ctx, W, H) {
+  const cx = W / 2,
+    cy = H / 2;
+  const r = 0.13 * H;
+
+  // Vòng tròn glow ở giữa
+  const grad = ctx.createLinearGradient(
+    cx - 0.56 * r,
+    cy + 0.83 * r,
+    cx + 0.56 * r,
+    cy - 0.83 * r
+  );
+  grad.addColorStop(0.1044, 'rgba(153,153,153,0.3)');
+  grad.addColorStop(0.8542, 'rgba(255,255,255,0.3)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.save();
+  ctx.filter = `blur(${0.026 * H}px)`;
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 0.0045 * H;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Hộp quà — u = đơn vị design (mobile: bán kính circle = 68 units)
+  const u = r / 68;
+  ctx.fillStyle = '#fcfdff';
+  ctx.fillRect(cx - 40 * u, cy - 27 * u, 80 * u, 16 * u); // nắp
+  ctx.fillRect(cx - 36 * u, cy - 11 * u, 72 * u, 48 * u); // thân
+  ctx.fillStyle = '#b19563';
+  ctx.fillRect(cx - 4.5 * u, cy - 27 * u, 9 * u, 16 * u);
+  ctx.fillRect(cx - 5 * u, cy - 11 * u, 9 * u, 48 * u);
+  const bx = cx - 0.5 * u,
+    by = cy - 27 * u;
+  ctx.beginPath();
+  ctx.moveTo(bx, by);
+  ctx.bezierCurveTo(
+    bx - 8 * u,
+    by - 7 * u,
+    bx - 21 * u,
+    by - 18 * u,
+    bx - 14 * u,
+    by - 18 * u
+  );
+  ctx.bezierCurveTo(bx - 7 * u, by - 18 * u, bx - 2 * u, by - 9 * u, bx, by);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(bx, by);
+  ctx.bezierCurveTo(
+    bx + 8 * u,
+    by - 7 * u,
+    bx + 21 * u,
+    by - 18 * u,
+    bx + 14 * u,
+    by - 18 * u
+  );
+  ctx.bezierCurveTo(bx + 7 * u, by - 18 * u, bx + 2 * u, by - 9 * u, bx, by);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(bx, by - 5 * u, 4.5 * u, 3.5 * u, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Text canh trái, giữa theo chiều dọc
+  const leftX = 0.045 * W;
+  const brandSize = Math.round(0.06 * H);
+  const ctaSize = Math.round(0.03 * H);
+  const gap = 0.07 * H;
+  const blockH = brandSize + gap + ctaSize;
+  let y = cy - blockH / 2;
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `400 ${brandSize}px 'Cormorant Garamond', Georgia, serif`;
+  ctx.fillText('ReXeR Studio.', leftX, y);
+
+  y += brandSize + gap;
+  ctx.font = `700 ${ctaSize}px 'SF Pro Display', -apple-system, sans-serif`;
+  ctx.fillText('Scratch to Discover', leftX, y);
 }

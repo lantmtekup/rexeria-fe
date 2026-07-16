@@ -50,6 +50,8 @@ export const GROUPS = [
                 id: 'grand-apt',
                 x: 34,
                 y: 30,
+                xDesktop: 47,
+                yDesktop: 35,
                 label: 'Grand Apartment',
                 description:
                   'A spacious apartment with good ventilation, fully furnished and equipped with modern amenities.',
@@ -59,6 +61,8 @@ export const GROUPS = [
                 id: 'pool-bar',
                 x: 4,
                 y: 53.5,
+                xDesktop: 54,
+                yDesktop: 61,
                 label: 'Pool Bar',
                 description:
                   'Enjoy delicious drinks & soothing music for a romantic evening.',
@@ -68,6 +72,8 @@ export const GROUPS = [
                 id: 'infinity-pool',
                 x: 97,
                 y: 70,
+                xDesktop: 95,
+                yDesktop: 70,
                 label: 'Infinity Pool',
                 description: 'A stunning 40sqm swimming pool.',
                 direction: 'right',
@@ -93,6 +99,8 @@ export const GROUPS = [
                 id: 'sofa',
                 x: 35,
                 y: 55,
+                xDesktop: 33,
+                yDesktop: 59,
                 label: 'Luxury Comfort Sofa',
                 description:
                   'Crafted for relaxation with refined details and exceptional comfort.',
@@ -101,6 +109,8 @@ export const GROUPS = [
                 id: 'table',
                 x: 46,
                 y: 73,
+                xDesktop: 50,
+                yDesktop: 83,
                 label: 'Contemporary Accent Table',
                 description:
                   'Elegant proportions and sophisticated finishes create a timeless focal point.',
@@ -109,6 +119,8 @@ export const GROUPS = [
                 id: 'chair',
                 x: 66.2,
                 y: 53.5,
+                xDesktop: 66.2,
+                yDesktop: 55,
                 label: 'Modern Bar Chair',
                 description:
                   'Upholstered comfort and sleek craftsmanship designed for contemporary living spaces.',
@@ -130,6 +142,8 @@ export const GROUPS = [
                 id: 'a',
                 x: 20,
                 y: 50,
+                xDesktop: 20,
+                yDesktop: 50,
                 label: 'Tower A',
                 description: '45 floors, river view',
               },
@@ -137,6 +151,8 @@ export const GROUPS = [
                 id: 'b',
                 x: 50,
                 y: 40,
+                xDesktop: 50,
+                yDesktop: 40,
                 label: 'Central Park',
                 description: '2ha gardens',
               },
@@ -144,6 +160,8 @@ export const GROUPS = [
                 id: 'c',
                 x: 80,
                 y: 50,
+                xDesktop: 80,
+                yDesktop: 50,
                 label: 'Tower B',
                 description: '40 floors, city view',
               },
@@ -167,6 +185,8 @@ export const GROUPS = [
                 id: 'amora',
                 x: 28,
                 y: 53,
+                xDesktop: 31,
+                yDesktop: 63,
                 imageUrl:
                   'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/sofa.webp',
                 label: 'Amora Armchair',
@@ -177,6 +197,8 @@ export const GROUPS = [
                 id: 'eichholtz',
                 x: 49,
                 y: 57,
+                xDesktop: 49,
+                yDesktop: 68,
                 imageUrl:
                   'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/chair.webp',
                 label: 'Eichholtz Leiza Chair',
@@ -187,6 +209,8 @@ export const GROUPS = [
                 id: 'ligne',
                 x: 50,
                 y: 84,
+                xDesktop: 50,
+                yDesktop: 92,
                 imageUrl:
                   'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/carpet.webp',
                 label: 'Ligne Pure',
@@ -421,11 +445,11 @@ export const GROUPS = [
       {
         id: 'countdown',
         name: 'Countdown',
-        desc: 'Real-time minute:second countdown',
+        desc: 'Real-time hour:minute:second countdown',
         by: 'Thảo',
         render: () => (
           <CountdownAd
-            targetDate='2026-07-15T10:00:00'
+            targetTime='15:00'
             backgroundImage='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/countdown/1.webp'
             title='ReXeR Studio.'
             subtitle={
