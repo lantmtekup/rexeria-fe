@@ -855,7 +855,7 @@ export function BlockPreview({
           ? 'items-start justify-center pt-4'
           : 'items-center justify-center',
         '[&_[data-inline-editing=true]]:cursor-text [&_[data-inline-editing=true]]:rounded-sm [&_[data-inline-editing=true]]:bg-sky-50/80 [&_[data-inline-editing=true]]:outline [&_[data-inline-editing=true]]:outline-2 [&_[data-inline-editing=true]]:outline-offset-2 [&_[data-inline-editing=true]]:outline-sky-500',
-        '[&_[data-canvas-hovered=true]]:outline [&_[data-canvas-hovered=true]]:outline-1 [&_[data-canvas-hovered=true]]:outline-offset-2 [&_[data-canvas-hovered=true]]:outline-sky-400/70',
+        '[&_[data-canvas-hovered=true]]:cursor-pointer [&_[data-canvas-hovered=true]]:outline [&_[data-canvas-hovered=true]]:outline-1 [&_[data-canvas-hovered=true]]:outline-offset-2 [&_[data-canvas-hovered=true]]:outline-sky-400/70',
         // Selected element gets a grab cursor so users know it's draggable.
         // Bracket-targeting via `data-element-key` matches the selected key.
         selectedElementKey &&

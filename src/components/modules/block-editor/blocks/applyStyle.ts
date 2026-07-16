@@ -68,8 +68,13 @@ export function blockBackgroundStyle(
 
 export function selectableClass(active: boolean, base?: string): string {
   return cn(
-    'cursor-pointer outline-offset-2 transition-[outline] duration-100 hover:outline hover:outline-1 hover:outline-dashed hover:outline-sky-400',
-    active && 'outline outline-2 outline-sky-500 hover:outline-sky-500',
+    // Hover feedback while editing is handled by BlockPreview.tsx's own
+    // pointer-tracked `data-canvas-hovered` attribute (scoped to the editor
+    // canvas only) — no native `:hover` here, since these same block
+    // components also render on the public `/p/:slug` page, where a raw
+    // `hover:outline` would incorrectly show the editor's selection outline.
+    'outline-offset-2 transition-[outline] duration-100',
+    active && 'outline outline-2 outline-sky-500',
     base
   );
 }
