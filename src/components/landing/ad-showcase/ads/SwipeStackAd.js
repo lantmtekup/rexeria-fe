@@ -104,6 +104,15 @@ export default function SwipeStackAd({
         <div className='swstack-stage'>
           <h2 className='swstack-heading'>{headingText}</h2>
 
+          {/* Ghost mờ nghiêng phía trái, sau thẻ front */}
+          {active && (
+            <div
+              className='swstack-ghost swstack-ghost--near'
+              style={{ backgroundImage: `url(${active.imageUrl})` }}
+              aria-hidden='true'
+            />
+          )}
+
           {Array.from({ length: visibleCount }).map((_, offset) => {
             const card = cardAt(offset);
             const slotIdx = (frontIndex + offset) % cards.length;

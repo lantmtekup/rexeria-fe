@@ -88,6 +88,10 @@
   background: #ffffff;
   border-radius: 14px;
   overflow: hidden;
+  /* .isp-ad-fixed (position: fixed, không bị window's overflow:hidden clip)
+     đọc biến này để bo góc khớp khung browser thay vì mặc định 47px của
+     màn hình iPhone (preview.css .pv-screen) — tránh hở viền trắng ở 2 góc dưới. */
+  --isp-radius: 14px;
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.18),
     0 30px 90px -24px rgba(0, 0, 0, 0.55),

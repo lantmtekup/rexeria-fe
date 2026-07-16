@@ -445,11 +445,11 @@ export const GROUPS = [
       {
         id: 'countdown',
         name: 'Countdown',
-        desc: 'Real-time minute:second countdown',
+        desc: 'Real-time hour:minute:second countdown',
         by: 'Thảo',
         render: () => (
           <CountdownAd
-            targetDate='2026-07-15T10:00:00'
+            targetTime='15:00'
             backgroundImage='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/countdown/1.webp'
             title='ReXeR Studio.'
             subtitle={

@@ -29,13 +29,9 @@ export default function ConfiguratorAd({
   const currentCarImage = selections['style']?.overlayImage || baseImage;
 
   return (
-    <AdWrapper
-      brandName={brandName}
-      headline={headline}
-      cta={cta}
-      ctaFont={ctaFont}
-    >
+    <AdWrapper brandName={brandName} cta={cta} ctaFont={ctaFont}>
       <div className='cfg-ad'>
+        {/* Xe: absolute canh giữa section, nằm sau headline + options. */}
         <div className='cfg-preview'>
           <div
             className='cfg-preview-base'
@@ -44,6 +40,8 @@ export default function ConfiguratorAd({
             }}
           />
         </div>
+
+        {headline && <div className='cfg-headline'>{headline}</div>}
 
         <div className='cfg-options'>
           {options.map(opt => (
