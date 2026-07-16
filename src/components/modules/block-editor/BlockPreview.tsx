@@ -109,6 +109,7 @@ const STICKY_SCROLL_BLOCK_TYPES = new Set<Block['blockType']>([
   'pnj_variant',
   'pnj_details',
   'mint_discover',
+  'mint_vault_collection',
 ]);
 
 /** Overlay chrome (header/nav) — canvas căn top, không center tạo khoảng hở. */
