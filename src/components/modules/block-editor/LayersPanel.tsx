@@ -54,6 +54,7 @@ import { mintV2ServicesItemElements } from './blocks/_registry/defs/mintV2Servic
 import { mintV2WorksCardElements } from './blocks/_registry/defs/mintV2Works';
 import { mintVaultCoinElements } from './blocks/mintVaultCollectionElements';
 import { mintVaultCraftItemElements } from './blocks/mintVaultCraftElements';
+import { mintVaultRevealImageElements } from './blocks/mintVaultRevealElements';
 import { pnjStickyMenuItemElements } from './blocks/_registry/defs/pnjStickyMenu';
 import { getBlockDef } from './blocks/_registry/registry';
 import {
@@ -457,12 +458,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'title', label: 'Tiêu đề', icon: Type },
     { key: 'items', label: 'Mục accordion', icon: ListChecks },
   ],
-  mint_vault_reveal: [
-    BACKGROUND_LAYER,
-    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
-    { key: 'title', label: 'Tiêu đề', icon: Type },
-    { key: 'images', label: 'Ảnh gallery', icon: Grid3x3 },
-  ],
   mint_vault_collection: [
     BACKGROUND_LAYER,
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
@@ -835,6 +830,25 @@ export function elementsForType(
         key: 'items',
         label: 'Thêm / quản lý mục',
         icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'mint_vault_reveal') {
+    const raw = content?.images;
+    const images = Array.isArray(raw)
+      ? (raw as unknown[]).filter(
+          (src): src is string => typeof src === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      ...mintVaultRevealImageElements(images),
+      {
+        key: 'images',
+        label: 'Thêm / quản lý ảnh',
+        icon: Grid3x3,
       },
     ];
   }

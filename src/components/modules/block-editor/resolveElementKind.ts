@@ -24,6 +24,7 @@ export type ElementKind =
   | 'mintV2ProcessSteps'
   | 'mintVaultCraftItems'
   | 'mintVaultCoins'
+  | 'mintVaultImages'
   | 'fill'
   | 'pnjFrames'
   | 'pnjScrim'
@@ -32,6 +33,17 @@ export type ElementKind =
   | 'background';
 
 export const BACKGROUND_LAYER_KEY = '__background__';
+
+/**
+ * Block Vault dùng `images: string[]` (trail / gallery 3D / explosion) → nhãn
+ * list manager. Cần chặn trước fallback `isImageKey` — `/image/i` khớp cả
+ * "images" nên `images` rơi vào kind `image` và ImageControls ghi 1 URL đè cả mảng.
+ */
+const MINT_VAULT_IMAGE_LABEL = new Map<BlockType, string>([
+  ['mint_vault_reveal', 'Ảnh gallery'],
+  ['mint_vault_hero', 'Ảnh trail'],
+  ['mint_vault_invitation', 'Ảnh explosion'],
+]);
 
 const ELEMENT_KIND: Record<string, ElementKind> = {
   eyebrow: 'text',
@@ -126,6 +138,10 @@ export function resolveKind(
   if (key === 'coins' && blockType === 'mint_vault_collection') {
     return 'mintVaultCoins';
   }
+  // Vault: `images` là mảng string[] (list manager) — xem MINT_VAULT_IMAGE_LABEL.
+  if (key === 'images' && blockType && MINT_VAULT_IMAGE_LABEL.has(blockType)) {
+    return 'mintVaultImages';
+  }
   if (key === 'items' && blockType === 'pnj_sticky_menu') {
     return 'pnjStickyMenuItems';
   }
@@ -154,6 +170,8 @@ export function resolveKind(
   ) {
     return 'text';
   }
+  // Nested Vault gallery slots: images[0] → image.
+  if (/^images\[\d+\]$/.test(key)) return 'image';
   // Nested paragraph slots: paragraphs[0] → text (inline edit).
   if (/^paragraphs\[\d+\]$/.test(key)) return 'text';
   // Nested PNJ hero title lines: titleLines[0] → text.
@@ -216,6 +234,11 @@ export function resolveLabel(
   if (key === 'variants' && blockType === 'pnj_variant') return 'Góc nhìn';
   if (key === 'coins' && blockType === 'mint_vault_collection') {
     return 'Bộ sưu tập coin';
+  }
+  const galleryImg = key.match(/^images\[(\d+)\]$/);
+  if (galleryImg) return `Ảnh ${Number(galleryImg[1]) + 1}`;
+  if (key === 'images' && blockType && MINT_VAULT_IMAGE_LABEL.has(blockType)) {
+    return MINT_VAULT_IMAGE_LABEL.get(blockType)!;
   }
   const navLabel = key.match(/^items\[(\d+)\]\.label$/);
   if (navLabel && blockType === 'mintv2_services') {
@@ -295,6 +318,21 @@ export function resolveElementMeta(
       kind: 'text',
       fieldType: 'text',
       label: `Tiêu đề dòng ${n + 1}`,
+    };
+  }
+  const galleryImg = key.match(/^images\[(\d+)\]$/);
+  if (galleryImg) {
+    return {
+      kind: 'image',
+      fieldType: 'image',
+      label: `Ảnh ${Number(galleryImg[1]) + 1}`,
+    };
+  }
+  if (key === 'images' && MINT_VAULT_IMAGE_LABEL.has(blockType)) {
+    return {
+      kind: 'mintVaultImages',
+      fieldType: undefined,
+      label: MINT_VAULT_IMAGE_LABEL.get(blockType)!,
     };
   }
   const vImg = key.match(/^variants\[(\d+)\]\.image$/);

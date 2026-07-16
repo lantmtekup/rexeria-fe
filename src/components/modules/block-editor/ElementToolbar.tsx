@@ -468,6 +468,13 @@ export function ElementToolbar({
             onContentChange={onContentChange}
           />
         )}
+        {kind === 'mintVaultImages' && (
+          <MintVaultImagesControls
+            label={label}
+            content={content as { images?: string[] }}
+            onContentChange={onContentChange}
+          />
+        )}
         {kind === 'background' && (
           <BackgroundControls
             background={readVariant(block.background, device)}
@@ -2504,6 +2511,98 @@ function MintVaultCraftItemsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm mục' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── VAULT IMAGES (string[])
+
+const VAULT_IMAGE_DEFAULT =
+  'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1200&q=80';
+
+/**
+ * List manager cho `images: string[]` — dùng chung mint_vault_reveal (gallery
+ * 3D) / mint_vault_hero (trail) / mint_vault_invitation (explosion). Content
+ * nhận rộng vì 3 block khác type nhưng cùng shape mảng ảnh.
+ */
+function MintVaultImagesControls({
+  label,
+  content,
+  onContentChange,
+}: {
+  label: string;
+  content: { images?: string[] };
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const images = Array.isArray(content.images) ? content.images : [];
+
+  const write = (updater: (list: string[]) => string[]) => {
+    onContentChange(prev => {
+      const c = prev as { images?: string[] };
+      const prevImages = Array.isArray(c.images) ? c.images : [];
+      return {
+        ...c,
+        images: updater([...prevImages]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, value: string) =>
+    write(list => list.map((src, idx) => (idx === i ? value : src)));
+
+  const remove = (i: number) => {
+    if (images.length <= 1) {
+      toast.error('Cần ít nhất 1 ảnh');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () => write(list => [...list, VAULT_IMAGE_DEFAULT]);
+
+  return (
+    <PopoverTrigger
+      label={label}
+      preview={`${images.length} ảnh`}
+      icon={<ImageIcon className='size-3.5' />}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {images.map((src, i) => (
+          <div
+            key={i}
+            className='flex items-center gap-2 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt=''
+              className='size-9 shrink-0 rounded object-cover ring-1 ring-neutral-200'
+            />
+            <Input
+              value={src}
+              onChange={e => update(i, e.target.value)}
+              placeholder='URL ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <button
+              type='button'
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                remove(i);
+              }}
+              aria-label={`Xoá ảnh ${i + 1}`}
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+            >
+              <Trash2 className='size-3.5' />
+            </button>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm ảnh' />
     </PopoverTrigger>
   );
 }
