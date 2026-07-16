@@ -517,7 +517,7 @@ const MINTV2_WORKS_VI: MintV2WorksContent = {
         mintv2Frame(36),
         MINT_IMG.painting,
       ],
-      bgClass: 'bg-[#efe9dc]',
+      bgColor: '#efe9dc',
     },
     {
       key: 'w2',
@@ -533,7 +533,7 @@ const MINTV2_WORKS_VI: MintV2WorksContent = {
         mintv2Frame(72),
         MINT_IMG.painting,
       ],
-      bgClass: 'bg-[#efe9dc]',
+      bgColor: '#efe9dc',
     },
     {
       key: 'w3',
@@ -549,7 +549,7 @@ const MINTV2_WORKS_VI: MintV2WorksContent = {
         mintv2Frame(84),
         MINT_IMG.coinPackaging,
       ],
-      bgClass: 'bg-[#efe9dc]',
+      bgColor: '#efe9dc',
     },
     {
       key: 'w4',
@@ -565,7 +565,7 @@ const MINTV2_WORKS_VI: MintV2WorksContent = {
         mintv2Frame(96),
         MINT_IMG.heroStorefront,
       ],
-      bgClass: 'bg-[#efe9dc]',
+      bgColor: '#efe9dc',
     },
   ],
 };

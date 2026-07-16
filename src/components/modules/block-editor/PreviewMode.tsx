@@ -12,6 +12,8 @@
 import * as React from 'react';
 import { X } from 'lucide-react';
 
+import { brandKitToCssVars, DEFAULT_PREVIEW_KIT } from '@/lib/brand-kit';
+
 import { DevicePreviewFrame } from './DevicePreviewFrame';
 import { DeviceSwitcher } from './DeviceSwitcher';
 import { DEVICE_FRAME_WIDTH } from './deviceFrame';
@@ -99,46 +101,49 @@ export function PreviewMode({
             chromeOffset={PREVIEW_CHROME}
             scrollerRef={scrollerRef}
           >
-            {visible.length === 0 ? (
-              <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-500'>
-                Chưa có block nào hiển thị.
-              </div>
-            ) : (
-              <TemplateTransitions
-                transition={asTransition(transition)}
-                className='gap-0!'
-                items={visible.map(block => {
-                  const langContent =
-                    lang === 'vi' ? block.contentVi : block.contentEn;
-                  const content =
-                    readVariant(langContent, device) ?? langContent.desktop;
-                  const styles = readVariant(block.elementStyles, device);
-                  const background = readVariant(block.background, device);
-                  const order = readVariant(block.elementOrder, device);
-                  const motion = readVariant(block.motion, device) as
-                    | BlockMotion
-                    | undefined;
-                  return (
-                    <MotionProvider
-                      key={`${block.id}:${device}`}
-                      mode='preview'
-                      motion={motion}
-                      scrollerEl={scrollerRef.current}
-                    >
-                      <MotionBlockRoot>
-                        <RenderBlock
-                          block={block}
-                          content={content}
-                          styles={styles}
-                          background={background}
-                          order={order}
-                        />
-                      </MotionBlockRoot>
-                    </MotionProvider>
-                  );
-                })}
-              />
-            )}
+            {/* Mirror BlockPreview: resolve `token:*` colors/fonts in Play. */}
+            <div style={brandKitToCssVars(DEFAULT_PREVIEW_KIT)}>
+              {visible.length === 0 ? (
+                <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-500'>
+                  Chưa có block nào hiển thị.
+                </div>
+              ) : (
+                <TemplateTransitions
+                  transition={asTransition(transition)}
+                  className='gap-0!'
+                  items={visible.map(block => {
+                    const langContent =
+                      lang === 'vi' ? block.contentVi : block.contentEn;
+                    const content =
+                      readVariant(langContent, device) ?? langContent.desktop;
+                    const styles = readVariant(block.elementStyles, device);
+                    const background = readVariant(block.background, device);
+                    const order = readVariant(block.elementOrder, device);
+                    const motion = readVariant(block.motion, device) as
+                      | BlockMotion
+                      | undefined;
+                    return (
+                      <MotionProvider
+                        key={`${block.id}:${device}`}
+                        mode='preview'
+                        motion={motion}
+                        scrollerEl={scrollerRef.current}
+                      >
+                        <MotionBlockRoot>
+                          <RenderBlock
+                            block={block}
+                            content={content}
+                            styles={styles}
+                            background={background}
+                            order={order}
+                          />
+                        </MotionBlockRoot>
+                      </MotionProvider>
+                    );
+                  })}
+                />
+              )}
+            </div>
           </DevicePreviewFrame>
         </LandingMotionRoot>
       </div>

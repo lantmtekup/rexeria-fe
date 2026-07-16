@@ -21,7 +21,7 @@
 
 import * as React from 'react';
 import * as Popover from '@radix-ui/react-popover';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   Bookmark,
   Check,
@@ -120,6 +120,76 @@ function rxMessage(err: unknown): string {
   return 'Unexpected error';
 }
 
+const SEARCH_DEBOUNCE_MS = 300;
+
+type BlocksUrlFilters = {
+  q: string;
+  type: BlockType | 'all';
+  status: BlockStatus | 'all';
+  tags: string[];
+  page: number;
+  view: View;
+};
+
+function parseBlocksUrlFilters(
+  sp: URLSearchParams | { get: (key: string) => string | null }
+): BlocksUrlFilters {
+  const q = sp.get('q')?.trim() ?? '';
+  const typeRaw = sp.get('type');
+  const statusRaw = sp.get('status');
+  const tagsRaw = sp.get('tags');
+  const pageRaw = Number(sp.get('page') ?? '1');
+  const viewRaw = sp.get('view');
+
+  const status: BlockStatus | 'all' =
+    statusRaw && (BLOCK_STATUS_ORDER as string[]).includes(statusRaw)
+      ? (statusRaw as BlockStatus)
+      : 'all';
+
+  return {
+    q,
+    type: (typeRaw as BlockType) || 'all',
+    status,
+    tags: tagsRaw
+      ? tagsRaw
+          .split(',')
+          .map(t => t.trim())
+          .filter(Boolean)
+      : [],
+    page: Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1,
+    view: viewRaw === 'grid' || viewRaw === 'table' ? viewRaw : 'table',
+  };
+}
+
+/** Sync filter → URL không qua Next router (tránh loading.tsx / mất focus ô search). */
+function replaceBlocksUrlFilters(
+  pathname: string,
+  filters: {
+    q: string;
+    type: BlockType | 'all';
+    status: BlockStatus | 'all';
+    tags: string[];
+    page: number;
+    view: View;
+  }
+) {
+  if (typeof window === 'undefined') return;
+  const sp = new URLSearchParams();
+  const q = filters.q.trim();
+  if (q) sp.set('q', q);
+  if (filters.type !== 'all') sp.set('type', filters.type);
+  if (filters.status !== 'all') sp.set('status', filters.status);
+  if (filters.tags.length > 0) sp.set('tags', filters.tags.join(','));
+  if (filters.page > 1) sp.set('page', String(filters.page));
+  if (filters.view !== 'table') sp.set('view', filters.view);
+
+  const qs = sp.toString();
+  const next = qs ? `${pathname}?${qs}` : pathname;
+  const current = `${window.location.pathname}${window.location.search}`;
+  if (next === current) return;
+  window.history.replaceState(null, '', next);
+}
+
 /**
  * Try parsing `Block.settings` back to an editor Block. FE writes editor
  * Block as-is into settings on create, so the round-trip works for blocks
@@ -139,22 +209,33 @@ function parseEditorBlock(
 export function BlocksPage() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   // Brand portal mounts this component at /portal/blocks. In that context the
   // side-drawer is replaced by a dedicated detail route (/portal/blocks/[id])
   // so the URL clearly reads as portal — admin/staff still get the drawer.
   const isPortal = pathname?.startsWith('/portal') ?? false;
   const detailBase = isPortal ? '/portal/blocks' : '/admin/blocks';
 
+  const [initialFilters] = React.useState(() =>
+    parseBlocksUrlFilters(searchParams)
+  );
+
   const [items, setItems] = React.useState<ServerBlock[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [view, setView] = React.useState<View>('table');
-  const [search, setSearch] = React.useState('');
-  const [typeFilter, setTypeFilter] = React.useState<BlockType | 'all'>('all');
-  const [statusFilter, setStatusFilter] = React.useState<BlockStatus | 'all'>(
-    'all'
+  const [view, setView] = React.useState<View>(initialFilters.view);
+  // searchInput: gõ ngay; search: debounce → filter + URL (tránh re-render nặng mỗi ký tự).
+  const [searchInput, setSearchInput] = React.useState(initialFilters.q);
+  const [search, setSearch] = React.useState(initialFilters.q);
+  const [typeFilter, setTypeFilter] = React.useState<BlockType | 'all'>(
+    initialFilters.type
   );
-  const [tagFilter, setTagFilter] = React.useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = React.useState<BlockStatus | 'all'>(
+    initialFilters.status
+  );
+  const [tagFilter, setTagFilter] = React.useState<string[]>(
+    initialFilters.tags
+  );
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   // Bulk select (xoá nhiều) — giữ id, chung cho cả grid + table.
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
@@ -162,8 +243,9 @@ export function BlocksPage() {
   const [catalogOpen, setCatalogOpen] = React.useState(false);
   // Block đang sửa thông tin (name/description/tags) qua EditBlockDialog.
   const [editTarget, setEditTarget] = React.useState<ServerBlock | null>(null);
-  const [page, setPage] = React.useState(1);
+  const [page, setPage] = React.useState(initialFilters.page);
   const [pageSize, setPageSize] = React.useState(20);
+  const skipPageResetRef = React.useRef(true);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -182,6 +264,25 @@ export function BlocksPage() {
   React.useEffect(() => {
     load();
   }, [load]);
+
+  // Debounce ô search → apply filter (không chặn typing).
+  React.useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  // Sync filter đã apply lên URL (replaceState — không soft-nav).
+  React.useEffect(() => {
+    if (!pathname) return;
+    replaceBlocksUrlFilters(pathname, {
+      q: search,
+      type: typeFilter,
+      status: statusFilter,
+      tags: tagFilter,
+      page,
+      view,
+    });
+  }, [pathname, search, typeFilter, statusFilter, tagFilter, page, view]);
 
   // Options filter type: từ registry FE BLOCK_TYPE_META (nguồn duy nhất) + gộp
   // thêm type_code có trong data mà registry chưa phủ (đừng để block nào không lọc được).
@@ -253,8 +354,12 @@ export function BlocksPage() {
     });
   }, [items, search, typeFilter, statusFilter, tagFilter]);
 
-  // Reset trang + bỏ chọn khi đổi filter; slice client-side cho cả grid + table.
+  // Reset trang + bỏ chọn khi đổi filter (bỏ qua lần hydrate URL đầu).
   React.useEffect(() => {
+    if (skipPageResetRef.current) {
+      skipPageResetRef.current = false;
+      return;
+    }
     setPage(1);
     setSelected(new Set());
   }, [search, typeFilter, statusFilter, tagFilter]);
@@ -263,6 +368,14 @@ export function BlocksPage() {
     () => filtered.slice((page - 1) * pageSize, page * pageSize),
     [filtered, page, pageSize]
   );
+
+  const handleClearFilters = () => {
+    setSearchInput('');
+    setSearch('');
+    setTypeFilter('all');
+    setStatusFilter('all');
+    setTagFilter([]);
+  };
 
   const handleDuplicate = async (id: string) => {
     const tid = toast.loading('Đang clone…');
@@ -489,9 +602,10 @@ export function BlocksPage() {
               <Search className='text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2' />
               <Input
                 placeholder='Tìm theo tên / block type / tag…'
-                value={search}
-                onChange={e => setSearch(e.target.value)}
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
                 className='pl-8'
+                aria-label='Tìm kiếm blocks'
               />
             </div>
 
@@ -531,17 +645,15 @@ export function BlocksPage() {
               />
             )}
 
-            {(typeFilter !== 'all' ||
+            {(searchInput.trim() !== '' ||
+              typeFilter !== 'all' ||
               statusFilter !== 'all' ||
               tagFilter.length > 0) && (
               <button
                 type='button'
-                onClick={() => {
-                  setTypeFilter('all');
-                  setStatusFilter('all');
-                  setTagFilter([]);
-                }}
+                onClick={handleClearFilters}
                 className='text-3xs text-content-muted hover:text-foreground inline-flex items-center gap-1'
+                aria-label='Xoá bộ lọc'
               >
                 <X className='size-3' />
                 Clear

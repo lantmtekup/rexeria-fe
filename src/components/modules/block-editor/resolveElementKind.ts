@@ -20,6 +20,9 @@ export type ElementKind =
   | 'pnjTitleLines'
   | 'pnjVariants'
   | 'pnjStickyMenuItems'
+  | 'mintV2ServicesItems'
+  | 'mintV2ProcessSteps'
+  | 'fill'
   | 'pnjFrames'
   | 'pnjScrim'
   | 'mintDiscoverVariant'
@@ -120,6 +123,15 @@ export function resolveKind(
   if (key === 'items' && blockType === 'pnj_sticky_menu') {
     return 'pnjStickyMenuItems';
   }
+  if (key === 'items' && blockType === 'mintv2_services') {
+    return 'mintV2ServicesItems';
+  }
+  if (key === 'steps' && blockType === 'mintv2_process') {
+    return 'mintV2ProcessSteps';
+  }
+  if ((key === 'line' || key === 'dot') && blockType === 'mintv2_process') {
+    return 'fill';
+  }
   // Nested paragraph slots: paragraphs[0] → text (inline edit).
   if (/^paragraphs\[\d+\]$/.test(key)) return 'text';
   // Nested PNJ hero title lines: titleLines[0] → text.
@@ -138,6 +150,21 @@ export function resolveKind(
   }
   if (/^items\[\d+\]\.label$/.test(key)) return 'text';
   if (/^items\[\d+\]\.link$/.test(key)) return 'text';
+  if (/^items\[\d+\]\.caption$/.test(key) && blockType === 'mintv2_services') {
+    return 'text';
+  }
+  if (/^items\[\d+\]\.preview$/.test(key) && blockType === 'mintv2_services') {
+    return 'image';
+  }
+  if (
+    /^steps\[\d+\]\.(no|title|body)$/.test(key) &&
+    blockType === 'mintv2_process'
+  ) {
+    return 'text';
+  }
+  if ((key === 'line' || key === 'dot') && blockType === 'mintv2_process') {
+    return 'fill';
+  }
   return ELEMENT_KIND[key] ?? (isImageKey(key) ? 'image' : 'text');
 }
 
@@ -163,10 +190,36 @@ export function resolveLabel(
   if (variantHl) return `Highlights góc ${Number(variantHl[1]) + 1}`;
   if (key === 'variants' && blockType === 'pnj_variant') return 'Góc nhìn';
   const navLabel = key.match(/^items\[(\d+)\]\.label$/);
+  if (navLabel && blockType === 'mintv2_services') {
+    return `Mục ${Number(navLabel[1]) + 1} · Nhãn`;
+  }
   if (navLabel) return `Nhãn mục ${Number(navLabel[1]) + 1}`;
   const navLink = key.match(/^items\[(\d+)\]\.link$/);
   if (navLink) return `Link mục ${Number(navLink[1]) + 1}`;
+  const svcCaption = key.match(/^items\[(\d+)\]\.caption$/);
+  if (svcCaption && blockType === 'mintv2_services') {
+    return `Mục ${Number(svcCaption[1]) + 1} · Caption`;
+  }
+  const svcPreview = key.match(/^items\[(\d+)\]\.preview$/);
+  if (svcPreview && blockType === 'mintv2_services') {
+    return `Mục ${Number(svcPreview[1]) + 1} · Ảnh preview`;
+  }
   if (key === 'items' && blockType === 'pnj_sticky_menu') return 'Menu items';
+  if (key === 'items' && blockType === 'mintv2_services') {
+    return 'Thêm / quản lý mục';
+  }
+  const stepField = key.match(/^steps\[(\d+)\]\.(no|title|body)$/);
+  if (stepField && blockType === 'mintv2_process') {
+    const labels: Record<string, string> = {
+      no: 'Số bước',
+      title: 'Tiêu đề',
+      body: 'Mô tả',
+    };
+    return `Bước ${Number(stepField[1]) + 1} · ${labels[stepField[2]] ?? stepField[2]}`;
+  }
+  if (key === 'steps' && blockType === 'mintv2_process') {
+    return 'Thêm / quản lý bước';
+  }
   const tabLabel = key.match(/^tabs\[(\d+)\]\.label$/);
   if (tabLabel) return `Hotspot ${Number(tabLabel[1]) + 1} · tiêu đề`;
   const tabDesc = key.match(/^tabs\[(\d+)\]\.desc$/);
@@ -288,6 +341,95 @@ export function resolveElementMeta(
       label: `Hotspot ${Number(tabImg[1]) + 1} · ảnh drawer`,
     };
   }
+  const svcText = key.match(/^items\[(\d+)\]\.(label|caption)$/);
+  if (svcText && blockType === 'mintv2_services') {
+    const field = svcText[2];
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      caption: 'Caption',
+    };
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Mục ${Number(svcText[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  const svcPreview = key.match(/^items\[(\d+)\]\.preview$/);
+  if (svcPreview && blockType === 'mintv2_services') {
+    return {
+      kind: 'image',
+      fieldType: 'image',
+      label: `Mục ${Number(svcPreview[1]) + 1} · Ảnh preview`,
+    };
+  }
+  const processStep = key.match(/^steps\[(\d+)\]\.(no|title|body)$/);
+  if (processStep && blockType === 'mintv2_process') {
+    const field = processStep[2];
+    const labels: Record<string, string> = {
+      no: 'Số bước',
+      title: 'Tiêu đề',
+      body: 'Mô tả',
+    };
+    return {
+      kind: 'text',
+      fieldType: field === 'body' ? 'textarea' : 'text',
+      label: `Bước ${Number(processStep[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  if (key === 'steps' && blockType === 'mintv2_process') {
+    return {
+      kind: 'mintV2ProcessSteps',
+      fieldType: undefined,
+      label: 'Thêm / quản lý bước',
+    };
+  }
+  if (key === 'line' && blockType === 'mintv2_process') {
+    return {
+      kind: 'fill',
+      fieldType: undefined,
+      label: 'Đường timeline',
+    };
+  }
+  if (key === 'dot' && blockType === 'mintv2_process') {
+    return {
+      kind: 'fill',
+      fieldType: undefined,
+      label: 'Chấm bước',
+    };
+  }
+  const worksText = key.match(
+    /^cards\[(\d+)\]\.(jpLabel|category|title|bgColor)$/
+  );
+  if (worksText && blockType === 'mintv2_works') {
+    const field = worksText[2];
+    const labels: Record<string, string> = {
+      jpLabel: 'Nhãn JP',
+      category: 'Category',
+      title: 'Tiêu đề',
+      bgColor: 'Màu nền',
+    };
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Card ${Number(worksText[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  const worksImg = key.match(/^cards\[(\d+)\]\.(hero|backdrop)$/);
+  if (worksImg && blockType === 'mintv2_works') {
+    return {
+      kind: 'image',
+      fieldType: 'image',
+      label: `Card ${Number(worksImg[1]) + 1} · ${worksImg[2]}`,
+    };
+  }
+  const worksThumb = key.match(/^cards\[(\d+)\]\.thumbs\[(\d+)\]$/);
+  if (worksThumb && blockType === 'mintv2_works') {
+    return {
+      kind: 'image',
+      fieldType: 'image',
+      label: `Card ${Number(worksThumb[1]) + 1} · Thumb ${Number(worksThumb[2]) + 1}`,
+    };
+  }
   if (key === 'variant' && blockType === 'mint_discover') {
     return {
       kind: 'mintDiscoverVariant',
@@ -300,6 +442,13 @@ export function resolveElementMeta(
       kind: 'mintDiscoverSurface',
       fieldType: undefined,
       label: 'Thẻ info (nền)',
+    };
+  }
+  if (key === 'items' && blockType === 'mintv2_services') {
+    return {
+      kind: 'mintV2ServicesItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý mục',
     };
   }
   if (blockType === 'mint_variants' && key.startsWith('discover.')) {

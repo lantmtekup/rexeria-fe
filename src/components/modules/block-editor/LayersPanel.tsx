@@ -35,6 +35,7 @@ import {
   ListChecks,
   MousePointerClick,
   Paintbrush,
+  Palette,
   Pilcrow,
   SquareDashed,
   Type,
@@ -48,6 +49,9 @@ import { resolvePnjParagraphs } from './blocks/PnjDetails';
 import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
 import { mintDiscoverTabElements } from './blocks/_registry/defs/mintDiscover';
+import { mintV2ProcessStepElements } from './blocks/_registry/defs/mintV2Process';
+import { mintV2ServicesItemElements } from './blocks/_registry/defs/mintV2Services';
+import { mintV2WorksCardElements } from './blocks/_registry/defs/mintV2Works';
 import { pnjStickyMenuItemElements } from './blocks/_registry/defs/pnjStickyMenu';
 import { getBlockDef } from './blocks/_registry/registry';
 import {
@@ -62,6 +66,9 @@ import {
   type PnjVariantItem,
   type PnjStickyMenuItem,
   type MintDiscoverTab,
+  type MintV2ProcessStep,
+  type MintV2ServiceItem,
+  type MintV2WorkCard,
 } from './types';
 
 export interface LayerElement {
@@ -396,9 +403,9 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
   ],
   mintv2_services: [
     BACKGROUND_LAYER,
-    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
-    { key: 'title', label: 'Tiêu đề lớn', icon: Type },
-    { key: 'items', label: 'Danh sách mục', icon: ListChecks },
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+    { key: 'title', label: 'Tiêu đề lớn', icon: Type, fieldType: 'text' },
+    // items expand via elementsForType(mintv2_services) + mintV2ServicesItemElements
   ],
   mintv2_manifesto: [
     BACKGROUND_LAYER,
@@ -406,9 +413,9 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
   ],
   mintv2_process: [
     BACKGROUND_LAYER,
-    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
-    { key: 'title', label: 'Tiêu đề lớn', icon: Type },
-    { key: 'steps', label: 'Các bước', icon: ListChecks },
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+    { key: 'title', label: 'Tiêu đề lớn', icon: Type, fieldType: 'text' },
+    // line/dot + steps expand via elementsForType(mintv2_process)
   ],
   mintv2_cta: [
     BACKGROUND_LAYER,
@@ -422,7 +429,7 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
     { key: 'title', label: 'Tiêu đề lớn', icon: Type },
-    { key: 'cards', label: 'Các card', icon: ListChecks },
+    // cards expand via elementsForType(mintv2_works) + mintV2WorksCardElements
   ],
   linea_portfolio: [
     BACKGROUND_LAYER,
@@ -744,6 +751,66 @@ export function elementsForType(
       {
         key: 'tabs',
         label: 'Hotspot / chi tiết',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'mintv2_services') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as MintV2ServiceItem[]).filter(
+          item =>
+            item && typeof item === 'object' && typeof item.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'title', label: 'Tiêu đề lớn', icon: Type, fieldType: 'text' },
+      ...mintV2ServicesItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'mintv2_process') {
+    const raw = content?.steps;
+    const steps = Array.isArray(raw)
+      ? (raw as MintV2ProcessStep[]).filter(
+          s => s && typeof s === 'object' && typeof s.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'title', label: 'Tiêu đề lớn', icon: Type, fieldType: 'text' },
+      { key: 'line', label: 'Đường timeline', icon: Palette },
+      { key: 'dot', label: 'Chấm bước', icon: Palette },
+      ...mintV2ProcessStepElements(steps),
+      {
+        key: 'steps',
+        label: 'Thêm / quản lý bước',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'mintv2_works') {
+    const raw = content?.cards;
+    const cards = Array.isArray(raw)
+      ? (raw as MintV2WorkCard[]).filter(
+          c => c && typeof c === 'object' && typeof c.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'title', label: 'Tiêu đề lớn', icon: Type, fieldType: 'text' },
+      ...mintV2WorksCardElements(cards),
+      {
+        key: 'cards',
+        label: 'Thêm / quản lý card',
         icon: ListChecks,
       },
     ];
