@@ -28,7 +28,13 @@ import { use } from 'react';
 import Link from 'next/link';
 import { AlertCircle, ArrowLeft, Code2, Eye, Loader2 } from 'lucide-react';
 
+import { Link2 } from 'lucide-react';
+
+import { Button } from '@/components/atoms/button';
 import { BlockEditor } from '@/components/modules/CanvasTemplate/BlockEditor';
+import { PublishTemplateDemoDialog } from '@/components/modules/Template/PublishTemplateDemoDialog';
+import { TemplatePreviewAction } from '@/components/modules/Template/TemplatePreviewAction';
+import { getDemoPageMapping } from '@/lib/templateDemoPage';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Template } from '@/services/rexer/types';
@@ -52,6 +58,7 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
 
   const [template, setTemplate] = React.useState<Template | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [demoDialogOpen, setDemoDialogOpen] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -193,13 +200,13 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
         </div>
 
         <div className='flex justify-end gap-2'>
-          <Link
-            href={`/admin/templates/${templateId}/preview`}
+          <TemplatePreviewAction
+            template={template!}
             className='bg-foreground text-background hover:bg-foreground/85 inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-medium'
           >
             <Eye className='size-3.5' />
             Xem preview
-          </Link>
+          </TemplatePreviewAction>
         </div>
       </div>
     );
@@ -208,9 +215,37 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
   // Block template — WYSIWYG editor (existing flow).
   // h-[100dvh]: bó chiều cao = viewport để canvas scroll NỘI BỘ (block cao như
   // hero 300vh không đẩy cả trang scroll). Trước dùng h-full → không bị bó.
+  const demoMapping = getDemoPageMapping(templateId);
+
   return (
     <div className='flex h-screen flex-col overflow-hidden'>
-      <BlockEditor templateId={templateId} />
+      <div className='border-border bg-background flex shrink-0 items-center justify-end gap-2 border-b px-3 py-1.5'>
+        {demoMapping ? (
+          <Button asChild size='sm' variant='outline'>
+            <Link href={`/admin/landing-pages/${demoMapping.pageId}`}>
+              <Link2 className='size-3.5' />
+              Xem link demo
+            </Link>
+          </Button>
+        ) : (
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={() => setDemoDialogOpen(true)}
+          >
+            <Link2 className='size-3.5' />
+            Tạo link demo
+          </Button>
+        )}
+      </div>
+      <div className='min-h-0 flex-1'>
+        <BlockEditor templateId={templateId} />
+      </div>
+      <PublishTemplateDemoDialog
+        open={demoDialogOpen}
+        onOpenChange={setDemoDialogOpen}
+        template={template}
+      />
     </div>
   );
 }

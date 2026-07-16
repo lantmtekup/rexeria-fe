@@ -44,6 +44,7 @@ import {
   TableRow,
 } from '@/components/atoms/table';
 import { CreateTemplateDialog } from '@/components/modules/Template/CreateTemplateDialog';
+import { TemplatePreviewAction } from '@/components/modules/Template/TemplatePreviewAction';
 import { UseTemplateDialog } from '@/components/modules/Template/UseTemplateDialog';
 import { TemplateEffectsDialog } from '@/components/modules/CanvasTemplate/TemplateEffectsDialog';
 import { rexerApi } from '@/services/rexer/endpoints';
@@ -606,11 +607,9 @@ function TemplateCard({
     'bg-muted text-content-muted';
   return (
     <div className='group border-border hover:border-border bg-card flex flex-col overflow-hidden rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
-      <Link
-        href={`/admin/templates/${item.id}/preview`}
-        target='_blank'
-        rel='noopener noreferrer'
-        className='border-border relative block aspect-[16/10] overflow-hidden border-b bg-gradient-to-br from-zinc-100 via-zinc-200/60 to-zinc-100'
+      <TemplatePreviewAction
+        template={item}
+        className='border-border relative block aspect-[16/10] w-full overflow-hidden border-b bg-gradient-to-br from-zinc-100 via-zinc-200/60 to-zinc-100'
         title='Preview'
       >
         {item.thumbnail_url ? (
@@ -640,7 +639,7 @@ function TemplateCard({
             {item.category}
           </span>
         )}
-      </Link>
+      </TemplatePreviewAction>
 
       <div className='flex flex-1 flex-col gap-2 p-3.5'>
         <div className='flex items-start justify-between gap-2'>
@@ -686,15 +685,13 @@ function TemplateCard({
         </div>
 
         <div className='mt-1 grid grid-cols-[1fr_1fr_auto] gap-1.5'>
-          <Link
-            href={`/admin/templates/${item.id}/preview`}
-            target='_blank'
-            rel='noopener noreferrer'
+          <TemplatePreviewAction
+            template={item}
             className='border-border text-content-muted hover:bg-muted bg-background inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors'
           >
             <Eye className='size-3.5' />
             Preview
-          </Link>
+          </TemplatePreviewAction>
           <button
             type='button'
             onClick={onUse}
@@ -908,7 +905,7 @@ function TableView({
               />
             </TableHead>
             <TableHead className='w-20'>Thumb</TableHead>
-            <TableHead>{col.name}</TableHead>
+            <TableHead className='max-w-[420px]'>{col.name}</TableHead>
             <TableHead className='w-32'>{col.code}</TableHead>
             <TableHead className='w-28'>{col.status}</TableHead>
             <TableHead className='w-40'>{col.created}</TableHead>
@@ -951,8 +948,8 @@ function TableView({
                     )}
                   </Link>
                 </TableCell>
-                <TableCell>
-                  <div className='font-medium'>{item.name}</div>
+                <TableCell className='max-w-[420px]'>
+                  <div className='truncate font-medium'>{item.name}</div>
                   {item.description && (
                     <div className='text-content-muted truncate text-xs'>
                       {item.description}
@@ -977,15 +974,13 @@ function TableView({
                 </TableCell>
                 <TableCell>
                   <div className='flex items-center justify-end gap-1.5'>
-                    <Link
-                      href={`/admin/templates/${item.id}/preview`}
-                      target='_blank'
-                      rel='noopener noreferrer'
+                    <TemplatePreviewAction
+                      template={item}
                       className='border-border text-content-muted hover:bg-muted bg-background inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium'
                     >
                       <Eye className='size-3' />
                       Preview
-                    </Link>
+                    </TemplatePreviewAction>
                     <button
                       type='button'
                       onClick={() => onUse(item)}

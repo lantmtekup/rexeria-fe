@@ -20,6 +20,7 @@ import {
   Check,
   Copy,
   Eye,
+  Link2,
   Loader2,
   Pencil,
   RefreshCw,
@@ -27,10 +28,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { Button } from '@/components/atoms/button';
+import { Button, buttonVariants } from '@/components/atoms/button';
 import { Input } from '@/components/atoms/input';
 import { Label } from '@/components/atoms/label';
 import { Textarea } from '@/components/atoms/textarea';
+import { PublishTemplateDemoDialog } from '@/components/modules/Template/PublishTemplateDemoDialog';
+import { TemplatePreviewAction } from '@/components/modules/Template/TemplatePreviewAction';
+import { getDemoPageMapping } from '@/lib/templateDemoPage';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type {
@@ -72,6 +76,8 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
   const [error, setError] = React.useState<string | null>(null);
   const [editing, setEditing] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const [demoDialogOpen, setDemoDialogOpen] = React.useState(false);
+  const demoMapping = getDemoPageMapping(templateId);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -245,18 +251,36 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
               />
               Refresh
             </Button>
-            <Button asChild size='sm' variant='outline'>
-              <Link href={`/admin/templates/${templateId}/preview`}>
-                <Eye className='size-3.5' />
-                Preview
-              </Link>
-            </Button>
+            <TemplatePreviewAction
+              template={template}
+              className={buttonVariants({ size: 'sm', variant: 'outline' })}
+            >
+              <Eye className='size-3.5' />
+              Preview
+            </TemplatePreviewAction>
             <Button asChild size='sm'>
               <Link href={`/admin/templates/${templateId}/edit`}>
                 <Pencil className='size-3.5' />
                 Mở editor
               </Link>
             </Button>
+            {demoMapping ? (
+              <Button asChild size='sm' variant='outline'>
+                <Link href={`/admin/landing-pages/${demoMapping.pageId}`}>
+                  <Link2 className='size-3.5' />
+                  Xem link demo
+                </Link>
+              </Button>
+            ) : (
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={() => setDemoDialogOpen(true)}
+              >
+                <Link2 className='size-3.5' />
+                Tạo link demo
+              </Button>
+            )}
             <Button
               variant='outline'
               size='sm'
@@ -378,6 +402,12 @@ export function AdminTemplateDetailPage({ templateId }: Props) {
           </ul>
         )}
       </section>
+
+      <PublishTemplateDemoDialog
+        open={demoDialogOpen}
+        onOpenChange={setDemoDialogOpen}
+        template={template}
+      />
     </div>
   );
 }
