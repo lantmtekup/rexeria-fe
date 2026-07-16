@@ -664,7 +664,10 @@ export interface MintV2WorkCard {
   hero: string;
   backdrop: string;
   thumbs: string[];
-  bgClass: string;
+  /** Panel background hex (e.g. `#efe9dc`). */
+  bgColor: string;
+  /** @deprecated Prefer `bgColor`. Legacy Tailwind class e.g. `bg-[#efe9dc]`. */
+  bgClass?: string;
 }
 
 /** Works — gallery hover-morph card (zigzag) + lightbox. */

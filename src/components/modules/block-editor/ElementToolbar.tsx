@@ -34,6 +34,7 @@ import { cn } from '@/lib/cn';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { AIBlockType } from '@/services/rexer/types';
+import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
 
 import { FEATURE_ICON_OPTIONS } from './blocks/FeatureSection';
 import {
@@ -80,6 +81,10 @@ import {
   type Lang,
   type MintDiscoverContent,
   type MintVariantsContent,
+  type MintV2ProcessContent,
+  type MintV2ProcessStep,
+  type MintV2ServiceItem,
+  type MintV2ServicesContent,
   type PnjDetailsContent,
   type PnjHeroContent,
   type PnjHeroHotspot,
@@ -388,6 +393,17 @@ export function ElementToolbar({
             onResetStyle={onResetStyle}
           />
         )}
+        {kind === 'fill' && (
+          <FillColorControls
+            style={style}
+            onUpdateStyle={onUpdateStyle}
+            onResetStyle={onResetStyle}
+            label={selectedKey === 'dot' ? 'Màu chấm' : 'Màu đường'}
+            fallback={
+              selectedKey === 'dot' ? '#c79119' : 'rgba(199, 145, 25, 0.6)'
+            }
+          />
+        )}
         {kind === 'pnjFrames' && (
           <PnjFramesJsonControls
             content={content as PnjHeroContent}
@@ -421,6 +437,18 @@ export function ElementToolbar({
         {kind === 'pnjStickyMenuItems' && (
           <PnjStickyMenuItemsControls
             content={content as PnjStickyMenuContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'mintV2ServicesItems' && (
+          <MintV2ServicesItemsControls
+            content={content as MintV2ServicesContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'mintV2ProcessSteps' && (
+          <MintV2ProcessStepsControls
+            content={content as MintV2ProcessContent}
             onContentChange={onContentChange}
           />
         )}
@@ -1745,6 +1773,40 @@ function MintDiscoverSurfaceControls({
   );
 }
 
+/** Style-only fill (timeline line, dots, …) — không có content text. */
+function FillColorControls({
+  style,
+  onUpdateStyle,
+  onResetStyle,
+  label,
+  fallback,
+}: {
+  style?: ElementStyle;
+  onUpdateStyle: (patch: ElementStyle) => void;
+  onResetStyle: () => void;
+  label: string;
+  fallback: string;
+}) {
+  return (
+    <>
+      <ColorSwatch
+        label={label}
+        value={style?.backgroundColor ?? style?.color ?? fallback}
+        onChange={c => onUpdateStyle({ backgroundColor: c })}
+      />
+      <button
+        type='button'
+        onClick={onResetStyle}
+        title='Khôi phục style mặc định'
+        aria-label='Khôi phục style mặc định'
+        className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-800'
+      >
+        <RotateCcw className='size-3.5' />
+      </button>
+    </>
+  );
+}
+
 // ─────────────────────────────────────────── MINT TABS (hotspot detail)
 
 function MintTabsControls({
@@ -2215,6 +2277,212 @@ function PnjStickyMenuItemsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm mục menu' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── MINTV2 PROCESS STEPS
+
+function MintV2ProcessStepsControls({
+  content,
+  onContentChange,
+}: {
+  content: MintV2ProcessContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const steps = Array.isArray(content.steps) ? content.steps : [];
+
+  const write = (
+    updater: (list: MintV2ProcessStep[]) => MintV2ProcessStep[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as MintV2ProcessContent;
+      const prevSteps = Array.isArray(c.steps) ? c.steps : [];
+      return {
+        ...c,
+        steps: updater([...prevSteps]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<MintV2ProcessStep>) =>
+    write(list =>
+      list.map((step, idx) => (idx === i ? { ...step, ...patch } : step))
+    );
+
+  const remove = (i: number) => {
+    if (steps.length <= 1) {
+      toast.error('Cần ít nhất 1 bước');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => {
+      const nextNo = String(list.length + 1).padStart(2, '0');
+      return [
+        ...list,
+        {
+          key: `s_${Date.now().toString(36)}`,
+          no: nextNo,
+          title: 'New Step',
+          body: 'Describe this step…',
+        },
+      ];
+    });
+
+  return (
+    <PopoverTrigger
+      label='Danh sách bước'
+      preview={`${steps.length} bước`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {steps.map((step, i) => (
+          <div
+            key={step.key || i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={step.no ?? ''}
+                onChange={e => update(i, { no: e.target.value })}
+                placeholder='01'
+                className='h-8 w-16 shrink-0 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <Input
+                value={step.title ?? ''}
+                onChange={e => update(i, { title: e.target.value })}
+                placeholder='Tiêu đề'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá bước ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={step.body ?? ''}
+              onChange={e => update(i, { body: e.target.value })}
+              placeholder='Mô tả'
+              rows={2}
+              className='min-h-0 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm bước' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── MINTV2 SERVICES ITEMS
+
+function MintV2ServicesItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: MintV2ServicesContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = Array.isArray(content.items) ? content.items : [];
+
+  const write = (
+    updater: (list: MintV2ServiceItem[]) => MintV2ServiceItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as MintV2ServicesContent;
+      const prevItems = Array.isArray(c.items) ? c.items : [];
+      return {
+        ...c,
+        items: updater([...prevItems]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<MintV2ServiceItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 mục');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        key: `svc_${Date.now().toString(36)}`,
+        label: 'Mục mới',
+        preview: MINT_IMG.painting,
+        caption: 'Caption',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách mục'
+      preview={`${items.length} mục`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={item.key || i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={item.label ?? ''}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá mục ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={item.caption ?? ''}
+              onChange={e => update(i, { caption: e.target.value })}
+              placeholder='Caption'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={item.preview ?? ''}
+              onChange={url => update(i, { preview: url })}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm mục' />
     </PopoverTrigger>
   );
 }

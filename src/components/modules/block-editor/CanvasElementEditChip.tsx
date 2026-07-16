@@ -49,6 +49,8 @@ function chipIcon(kind: ElementKind) {
     kind === 'pnjTitleLines' ||
     kind === 'pnjVariants' ||
     kind === 'pnjStickyMenuItems' ||
+    kind === 'mintV2ServicesItems' ||
+    kind === 'mintV2ProcessSteps' ||
     kind === 'pnjFrames' ||
     kind === 'pnjScrim'
   ) {
