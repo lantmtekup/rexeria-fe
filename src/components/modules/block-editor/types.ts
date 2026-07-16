@@ -730,6 +730,10 @@ export interface MintVaultInvitationContent {
   note: string;
   backgroundImageUrl: string;
   images: string[];
+  /** Chữ trên form lead — sửa qua Layers (không gắn key lên <input> thật). */
+  emailPlaceholder: string;
+  submitText: string;
+  successMessage: string;
 }
 
 export interface MintVaultCoin {
