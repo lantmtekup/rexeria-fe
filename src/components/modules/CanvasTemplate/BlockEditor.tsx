@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Spinner } from '@/components/atoms/spinner';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
+import { ALL_BLOCK_SURFACES } from '@/services/rexer/types';
 import type {
   CanvasTemplate,
   TemplateVersion as TemplateVersionType,
@@ -997,6 +998,9 @@ export function BlockEditor({
         type_code: normalized.blockType,
         name: normalized.name,
         settings: normalized as unknown as Record<string, unknown>,
+        // Luôn gửi kèm — nếu entry cũ bị BE lưu supported_surfaces=[] (bug
+        // trước khi field này tồn tại ở FE), lần lưu này tự sửa luôn.
+        supported_surfaces: ALL_BLOCK_SURFACES,
       });
       autosave.reset();
       toast.success('Đã lưu block');
