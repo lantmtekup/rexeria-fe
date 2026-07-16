@@ -24,6 +24,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   Blend,
+  CheckCircle,
   ChevronRight,
   Film,
   FormInput,
@@ -52,6 +53,10 @@ import { mintDiscoverTabElements } from './blocks/_registry/defs/mintDiscover';
 import { mintV2ProcessStepElements } from './blocks/_registry/defs/mintV2Process';
 import { mintV2ServicesItemElements } from './blocks/_registry/defs/mintV2Services';
 import { mintV2WorksCardElements } from './blocks/_registry/defs/mintV2Works';
+import { mintVaultCoinElements } from './blocks/mintVaultCollectionElements';
+import { mintVaultCraftItemElements } from './blocks/mintVaultCraftElements';
+import { mintVaultInvitationImageElements } from './blocks/mintVaultInvitationElements';
+import { mintVaultRevealImageElements } from './blocks/mintVaultRevealElements';
 import { pnjStickyMenuItemElements } from './blocks/_registry/defs/pnjStickyMenu';
 import { getBlockDef } from './blocks/_registry/registry';
 import {
@@ -69,6 +74,8 @@ import {
   type MintV2ProcessStep,
   type MintV2ServiceItem,
   type MintV2WorkCard,
+  type MintVaultCoin,
+  type MintVaultCraftItem,
 } from './types';
 
 export interface LayerElement {
@@ -453,12 +460,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'title', label: 'Tiêu đề', icon: Type },
     { key: 'items', label: 'Mục accordion', icon: ListChecks },
   ],
-  mint_vault_reveal: [
-    BACKGROUND_LAYER,
-    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
-    { key: 'title', label: 'Tiêu đề', icon: Type },
-    { key: 'images', label: 'Ảnh gallery', icon: Grid3x3 },
-  ],
   mint_vault_collection: [
     BACKGROUND_LAYER,
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
@@ -467,10 +468,38 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
   ],
   mint_vault_invitation: [
     BACKGROUND_LAYER,
-    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
-    { key: 'title', label: 'Tiêu đề', icon: Type },
-    { key: 'note', label: 'Ghi chú', icon: Pilcrow },
-    { key: 'backgroundImageUrl', label: 'Ảnh nền', icon: ImageIcon },
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+    { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+    { key: 'note', label: 'Ghi chú', icon: Pilcrow, fieldType: 'textarea' },
+    // Cụm form — groupId liền kề mới gom thành 1 folder (buildLayerTree).
+    {
+      key: 'emailPlaceholder',
+      label: 'Placeholder',
+      groupId: 'form',
+      groupLabel: 'Form lead',
+      icon: FormInput,
+      fieldType: 'text',
+    },
+    {
+      key: 'submitText',
+      label: 'Nút gửi',
+      groupId: 'form',
+      icon: MousePointerClick,
+      fieldType: 'text',
+    },
+    {
+      key: 'successMessage',
+      label: 'Lời cảm ơn',
+      groupId: 'form',
+      icon: CheckCircle,
+      fieldType: 'textarea',
+    },
+    {
+      key: 'backgroundImageUrl',
+      label: 'Ảnh nền',
+      icon: ImageIcon,
+      fieldType: 'image',
+    },
     { key: 'images', label: 'Ảnh explosion', icon: Grid3x3 },
   ],
   mint_discover: [
@@ -811,6 +840,112 @@ export function elementsForType(
       {
         key: 'cards',
         label: 'Thêm / quản lý card',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'mint_vault_craft') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as MintVaultCraftItem[]).filter(
+          it => it && typeof it === 'object' && typeof it.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      ...mintVaultCraftItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'mint_vault_reveal') {
+    const raw = content?.images;
+    const images = Array.isArray(raw)
+      ? (raw as unknown[]).filter(
+          (src): src is string => typeof src === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      ...mintVaultRevealImageElements(images),
+      {
+        key: 'images',
+        label: 'Thêm / quản lý ảnh',
+        icon: Grid3x3,
+      },
+    ];
+  }
+  if (type === 'mint_vault_invitation') {
+    const raw = content?.images;
+    const images = Array.isArray(raw)
+      ? (raw as unknown[]).filter(
+          (src): src is string => typeof src === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      { key: 'note', label: 'Ghi chú', icon: Pilcrow, fieldType: 'textarea' },
+      // Cụm form — groupId liền kề mới gom thành 1 folder (buildLayerTree).
+      {
+        key: 'emailPlaceholder',
+        label: 'Placeholder',
+        groupId: 'form',
+        groupLabel: 'Form lead',
+        icon: FormInput,
+        fieldType: 'text',
+      },
+      {
+        key: 'submitText',
+        label: 'Nút gửi',
+        groupId: 'form',
+        icon: MousePointerClick,
+        fieldType: 'text',
+      },
+      {
+        key: 'successMessage',
+        label: 'Lời cảm ơn',
+        groupId: 'form',
+        icon: CheckCircle,
+        fieldType: 'textarea',
+      },
+      {
+        key: 'backgroundImageUrl',
+        label: 'Ảnh nền',
+        icon: ImageIcon,
+        fieldType: 'image',
+      },
+      ...mintVaultInvitationImageElements(images),
+      {
+        key: 'images',
+        label: 'Thêm / quản lý ảnh',
+        icon: Grid3x3,
+      },
+    ];
+  }
+  if (type === 'mint_vault_collection') {
+    const raw = content?.coins;
+    const coins = Array.isArray(raw)
+      ? (raw as MintVaultCoin[]).filter(
+          c => c && typeof c === 'object' && typeof c.name === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'subLabel', label: 'Nhãn phụ', icon: Type, fieldType: 'text' },
+      ...mintVaultCoinElements(coins),
+      {
+        key: 'coins',
+        label: 'Thêm / quản lý coin',
         icon: ListChecks,
       },
     ];

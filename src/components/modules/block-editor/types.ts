@@ -730,6 +730,10 @@ export interface MintVaultInvitationContent {
   note: string;
   backgroundImageUrl: string;
   images: string[];
+  /** Chữ trên form lead — sửa qua Layers (không gắn key lên <input> thật). */
+  emailPlaceholder: string;
+  submitText: string;
+  successMessage: string;
 }
 
 export interface MintVaultCoin {
@@ -1060,6 +1064,13 @@ export interface ImageTrailContent {
    * rê chuột thật thì tự tắt. Default false.
    */
   autoDemo?: boolean;
+  /**
+   * Chế độ "vẽ chữ": con trỏ ảo đi theo nét chữ để ảnh xếp thành `autoDemoText`
+   * (vd "2026"), giữ 1.5s rồi mờ và vẽ lại. Cần `autoDemo: true`.
+   * CHỈ hỗ trợ ký tự `0` `2` `6` `M` — ký tự khác bị bỏ qua; không còn ký tự
+   * nào hợp lệ → rơi về attract mode thường.
+   */
+  autoDemoText?: string;
 }
 
 /**

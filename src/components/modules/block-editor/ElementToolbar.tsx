@@ -85,6 +85,10 @@ import {
   type MintV2ProcessStep,
   type MintV2ServiceItem,
   type MintV2ServicesContent,
+  type MintVaultCraftContent,
+  type MintVaultCraftItem,
+  type MintVaultCollectionContent,
+  type MintVaultCoin,
   type PnjDetailsContent,
   type PnjHeroContent,
   type PnjHeroHotspot,
@@ -449,6 +453,25 @@ export function ElementToolbar({
         {kind === 'mintV2ProcessSteps' && (
           <MintV2ProcessStepsControls
             content={content as MintV2ProcessContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'mintVaultCraftItems' && (
+          <MintVaultCraftItemsControls
+            content={content as MintVaultCraftContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'mintVaultCoins' && (
+          <MintVaultCoinsControls
+            content={content as MintVaultCollectionContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'mintVaultImages' && (
+          <MintVaultImagesControls
+            label={label}
+            content={content as { images?: string[] }}
             onContentChange={onContentChange}
           />
         )}
@@ -2383,6 +2406,326 @@ function MintV2ProcessStepsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm bước' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── VAULT CRAFT ITEMS
+
+const CRAFT_DEFAULT_IMG =
+  'https://images.unsplash.com/photo-1624365169364-0640dd10e180?auto=format&fit=crop&w=1200&q=80';
+
+function MintVaultCraftItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: MintVaultCraftContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = Array.isArray(content.items) ? content.items : [];
+
+  const write = (
+    updater: (list: MintVaultCraftItem[]) => MintVaultCraftItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as MintVaultCraftContent;
+      const prevItems = Array.isArray(c.items) ? c.items : [];
+      return {
+        ...c,
+        items: updater([...prevItems]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<MintVaultCraftItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 mục');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        title: 'New proof',
+        description: 'Describe this proof point…',
+        imageUrl: CRAFT_DEFAULT_IMG,
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách mục'
+      preview={`${items.length} mục`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={item.title ?? ''}
+                onChange={e => update(i, { title: e.target.value })}
+                placeholder='Tiêu đề'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá mục ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={item.description ?? ''}
+              onChange={e => update(i, { description: e.target.value })}
+              placeholder='Mô tả'
+              rows={2}
+              className='min-h-0 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={item.imageUrl ?? ''}
+              onChange={e => update(i, { imageUrl: e.target.value })}
+              placeholder='URL ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm mục' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── VAULT IMAGES (string[])
+
+const VAULT_IMAGE_DEFAULT =
+  'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=1200&q=80';
+
+/**
+ * List manager cho `images: string[]` — dùng chung mint_vault_reveal (gallery
+ * 3D) / mint_vault_hero (trail) / mint_vault_invitation (explosion). Content
+ * nhận rộng vì 3 block khác type nhưng cùng shape mảng ảnh.
+ */
+function MintVaultImagesControls({
+  label,
+  content,
+  onContentChange,
+}: {
+  label: string;
+  content: { images?: string[] };
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const images = Array.isArray(content.images) ? content.images : [];
+
+  const write = (updater: (list: string[]) => string[]) => {
+    onContentChange(prev => {
+      const c = prev as { images?: string[] };
+      const prevImages = Array.isArray(c.images) ? c.images : [];
+      return {
+        ...c,
+        images: updater([...prevImages]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, value: string) =>
+    write(list => list.map((src, idx) => (idx === i ? value : src)));
+
+  const remove = (i: number) => {
+    if (images.length <= 1) {
+      toast.error('Cần ít nhất 1 ảnh');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () => write(list => [...list, VAULT_IMAGE_DEFAULT]);
+
+  return (
+    <PopoverTrigger
+      label={label}
+      preview={`${images.length} ảnh`}
+      icon={<ImageIcon className='size-3.5' />}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {images.map((src, i) => (
+          <div
+            key={i}
+            className='flex items-center gap-2 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt=''
+              className='size-9 shrink-0 rounded object-cover ring-1 ring-neutral-200'
+            />
+            <Input
+              value={src}
+              onChange={e => update(i, e.target.value)}
+              placeholder='URL ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <button
+              type='button'
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                remove(i);
+              }}
+              aria-label={`Xoá ảnh ${i + 1}`}
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+            >
+              <Trash2 className='size-3.5' />
+            </button>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm ảnh' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── MINT VAULT COLLECTION COINS
+let mintVaultCoinSeq = 0;
+
+function MintVaultCoinsControls({
+  content,
+  onContentChange,
+}: {
+  content: MintVaultCollectionContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const coins = Array.isArray(content.coins) ? content.coins : [];
+
+  const write = (updater: (list: MintVaultCoin[]) => MintVaultCoin[]) => {
+    onContentChange(prev => {
+      const c = prev as MintVaultCollectionContent;
+      const prevCoins = Array.isArray(c.coins) ? c.coins : [];
+      return { ...c, coins: updater([...prevCoins]) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<MintVaultCoin>) =>
+    write(list =>
+      list.map((coin, idx) => (idx === i ? { ...coin, ...patch } : coin))
+    );
+
+  const remove = (i: number) => {
+    if (coins.length <= 1) {
+      toast.error('Cần ít nhất 1 coin');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () => {
+    mintVaultCoinSeq += 1;
+    write(list => [
+      ...list,
+      {
+        key: `coin-${Date.now()}-${mintVaultCoinSeq}`,
+        name: 'New coin',
+        image: MINT_IMG.coinReverse,
+        metal: 'Gold',
+        weight: '1 oz',
+        price: '$0',
+        url: '#',
+      },
+    ]);
+  };
+
+  return (
+    <PopoverTrigger
+      label='Bộ sưu tập coin'
+      preview={`${coins.length} coin`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {coins.map((coin, i) => (
+          <div
+            key={coin.key ?? i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={coin.name ?? ''}
+                onChange={e => update(i, { name: e.target.value })}
+                placeholder='Tên coin'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá coin ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <div className='flex gap-2'>
+              <Input
+                value={coin.metal ?? ''}
+                onChange={e => update(i, { metal: e.target.value })}
+                placeholder='Kim loại'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+              <Input
+                value={coin.weight ?? ''}
+                onChange={e => update(i, { weight: e.target.value })}
+                placeholder='Trọng lượng'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+              <Input
+                value={coin.price ?? ''}
+                onChange={e => update(i, { price: e.target.value })}
+                placeholder='Giá'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+            </div>
+            <Input
+              value={coin.image ?? ''}
+              onChange={e => update(i, { image: e.target.value })}
+              placeholder='URL ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={coin.url ?? ''}
+              onChange={e => update(i, { url: e.target.value })}
+              placeholder='Link mint.ca (tuỳ chọn)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm coin' />
     </PopoverTrigger>
   );
 }

@@ -22,6 +22,9 @@ export type ElementKind =
   | 'pnjStickyMenuItems'
   | 'mintV2ServicesItems'
   | 'mintV2ProcessSteps'
+  | 'mintVaultCraftItems'
+  | 'mintVaultCoins'
+  | 'mintVaultImages'
   | 'fill'
   | 'pnjFrames'
   | 'pnjScrim'
@@ -30,6 +33,17 @@ export type ElementKind =
   | 'background';
 
 export const BACKGROUND_LAYER_KEY = '__background__';
+
+/**
+ * Block Vault dùng `images: string[]` (trail / gallery 3D / explosion) → nhãn
+ * list manager. Cần chặn trước fallback `isImageKey` — `/image/i` khớp cả
+ * "images" nên `images` rơi vào kind `image` và ImageControls ghi 1 URL đè cả mảng.
+ */
+const MINT_VAULT_IMAGE_LABEL = new Map<BlockType, string>([
+  ['mint_vault_reveal', 'Ảnh gallery'],
+  ['mint_vault_hero', 'Ảnh trail'],
+  ['mint_vault_invitation', 'Ảnh explosion'],
+]);
 
 const ELEMENT_KIND: Record<string, ElementKind> = {
   eyebrow: 'text',
@@ -72,6 +86,9 @@ const ELEMENT_LABEL: Record<string, string> = {
   ctaText: 'Nút CTA',
   submitText: 'Nút gửi',
   noteText: 'Ghi chú',
+  note: 'Ghi chú',
+  emailPlaceholder: 'Placeholder email',
+  successMessage: 'Lời cảm ơn',
   primaryText: 'Nút CTA chính',
   secondaryText: 'Nút CTA phụ',
   imageUrl: 'Ảnh hero',
@@ -120,6 +137,14 @@ export function resolveKind(
   if (key === 'variants' && blockType === 'pnj_variant') {
     return 'pnjVariants';
   }
+  // Vault collection: `coins` là mảng (list manager), KHÔNG phải text.
+  if (key === 'coins' && blockType === 'mint_vault_collection') {
+    return 'mintVaultCoins';
+  }
+  // Vault: `images` là mảng string[] (list manager) — xem MINT_VAULT_IMAGE_LABEL.
+  if (key === 'images' && blockType && MINT_VAULT_IMAGE_LABEL.has(blockType)) {
+    return 'mintVaultImages';
+  }
   if (key === 'items' && blockType === 'pnj_sticky_menu') {
     return 'pnjStickyMenuItems';
   }
@@ -129,9 +154,27 @@ export function resolveKind(
   if (key === 'steps' && blockType === 'mintv2_process') {
     return 'mintV2ProcessSteps';
   }
+  if (key === 'items' && blockType === 'mint_vault_craft') {
+    return 'mintVaultCraftItems';
+  }
   if ((key === 'line' || key === 'dot') && blockType === 'mintv2_process') {
     return 'fill';
   }
+  // Vault craft proof fields: items[0].imageUrl → image; title/description → text
+  if (
+    /^items\[\d+\]\.imageUrl$/.test(key) &&
+    blockType === 'mint_vault_craft'
+  ) {
+    return 'image';
+  }
+  if (
+    /^items\[\d+\]\.(title|description)$/.test(key) &&
+    blockType === 'mint_vault_craft'
+  ) {
+    return 'text';
+  }
+  // Nested Vault gallery slots: images[0] → image.
+  if (/^images\[\d+\]$/.test(key)) return 'image';
   // Nested paragraph slots: paragraphs[0] → text (inline edit).
   if (/^paragraphs\[\d+\]$/.test(key)) return 'text';
   // Nested PNJ hero title lines: titleLines[0] → text.
@@ -139,6 +182,9 @@ export function resolveKind(
   // Nested variant fields: variants[0].label / .desc / .highlights → text
   if (/^variants\[\d+\]\.image$/.test(key)) return 'image';
   if (/^variants\[\d+\]\.(label|desc|highlights)$/.test(key)) return 'text';
+  // Vault collection coin fields: coins[0].image → image; name/price/metal/weight → text
+  if (/^coins\[\d+\]\.image$/.test(key)) return 'image';
+  if (/^coins\[\d+\]\.(name|price|metal|weight)$/.test(key)) return 'text';
   if (/^tabs\[\d+\]\.image$/.test(key)) return 'image';
   if (/^tabs\[\d+\]\.img$/.test(key)) return 'image';
   if (/^tabs\[\d+\]\.(label|desc)$/.test(key)) return 'text';
@@ -189,6 +235,14 @@ export function resolveLabel(
   const variantHl = key.match(/^variants\[(\d+)\]\.highlights$/);
   if (variantHl) return `Highlights góc ${Number(variantHl[1]) + 1}`;
   if (key === 'variants' && blockType === 'pnj_variant') return 'Góc nhìn';
+  if (key === 'coins' && blockType === 'mint_vault_collection') {
+    return 'Bộ sưu tập coin';
+  }
+  const galleryImg = key.match(/^images\[(\d+)\]$/);
+  if (galleryImg) return `Ảnh ${Number(galleryImg[1]) + 1}`;
+  if (key === 'images' && blockType && MINT_VAULT_IMAGE_LABEL.has(blockType)) {
+    return MINT_VAULT_IMAGE_LABEL.get(blockType)!;
+  }
   const navLabel = key.match(/^items\[(\d+)\]\.label$/);
   if (navLabel && blockType === 'mintv2_services') {
     return `Mục ${Number(navLabel[1]) + 1} · Nhãn`;
@@ -269,12 +323,73 @@ export function resolveElementMeta(
       label: `Tiêu đề dòng ${n + 1}`,
     };
   }
+  const galleryImg = key.match(/^images\[(\d+)\]$/);
+  if (galleryImg) {
+    return {
+      kind: 'image',
+      fieldType: 'image',
+      label: `Ảnh ${Number(galleryImg[1]) + 1}`,
+    };
+  }
+  if (key === 'images' && MINT_VAULT_IMAGE_LABEL.has(blockType)) {
+    return {
+      kind: 'mintVaultImages',
+      fieldType: undefined,
+      label: MINT_VAULT_IMAGE_LABEL.get(blockType)!,
+    };
+  }
   const vImg = key.match(/^variants\[(\d+)\]\.image$/);
   if (vImg && blockType === 'pnj_variant') {
     return {
       kind: 'image',
       fieldType: 'image',
       label: `Ảnh góc ${Number(vImg[1]) + 1}`,
+    };
+  }
+  const coinImg = key.match(/^coins\[(\d+)\]\.image$/);
+  if (coinImg && blockType === 'mint_vault_collection') {
+    return {
+      kind: 'image',
+      fieldType: 'image',
+      label: `Ảnh coin ${Number(coinImg[1]) + 1}`,
+    };
+  }
+  const coinText = key.match(/^coins\[(\d+)\]\.(name|price|metal|weight)$/);
+  if (coinText && blockType === 'mint_vault_collection') {
+    const labels: Record<string, string> = {
+      name: 'Tên',
+      price: 'Giá',
+      metal: 'Kim loại',
+      weight: 'Trọng lượng',
+    };
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Coin ${Number(coinText[1]) + 1} · ${labels[coinText[2]] ?? coinText[2]}`,
+    };
+  }
+  const craftImg = key.match(/^items\[(\d+)\]\.imageUrl$/);
+  if (craftImg && blockType === 'mint_vault_craft') {
+    return {
+      kind: 'image',
+      fieldType: 'image',
+      label: `Mục ${Number(craftImg[1]) + 1} · Ảnh`,
+    };
+  }
+  const craftText = key.match(/^items\[(\d+)\]\.(title|description)$/);
+  if (craftText && blockType === 'mint_vault_craft') {
+    const field = craftText[2];
+    return {
+      kind: 'text',
+      fieldType: field === 'description' ? 'textarea' : 'text',
+      label: `Mục ${Number(craftText[1]) + 1} · ${field === 'description' ? 'Mô tả' : 'Tiêu đề'}`,
+    };
+  }
+  if (key === 'items' && blockType === 'mint_vault_craft') {
+    return {
+      kind: 'mintVaultCraftItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý mục',
     };
   }
   const vLabel = key.match(/^variants\[(\d+)\]\.label$/);

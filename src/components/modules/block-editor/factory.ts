@@ -735,6 +735,10 @@ const MINT_VAULT_INVITATION_VI: MintVaultInvitationContent = {
     MINT_IMG.coinPackaging,
     VAULT_U('1610375461246-83df859d849d'),
   ],
+  emailPlaceholder: 'Your email',
+  submitText: 'Reserve yours',
+  successMessage:
+    'Thank you! We will reach out when the collection goes on sale.',
 };
 
 const CTA_VI: CtaSectionContent = {
