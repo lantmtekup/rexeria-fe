@@ -169,6 +169,7 @@ export type BlockType =
   | 'springs_wellness'
   | 'springs_nature_place'
   | 'springs_map'
+  | 'real_estate_location'
   | 'springs_design'
   | 'springs_residences'
   | 'springs_interiors'
@@ -2472,6 +2473,19 @@ export interface SpringsMapContent {
   mapImage: string;
 }
 
+/**
+ * Port section `3. Vị trí` + `4. MaP` của template Framer real-estate-1
+ * (apps/real-estate-1). Nguồn là 2 sibling absolute trên canvas 372px cố định,
+ * gộp lại thành 1 block: 3 dòng chữ ở trên, video bản đồ full-bleed ở dưới.
+ */
+export interface RealEstateLocationContent {
+  eyebrow: string;
+  title: string;
+  description: string;
+  /** Clip bản đồ chạy loop (mp4). */
+  videoUrl: string;
+}
+
 export interface SpringsDesignSlide {
   subtitle: string;
   text: string;
@@ -2657,6 +2671,7 @@ export type BlockContent =
   | SpringsWellnessContent
   | SpringsNaturePlaceContent
   | SpringsMapContent
+  | RealEstateLocationContent
   | SpringsDesignContent
   | SpringsResidencesContent
   | SpringsInteriorsContent
@@ -5682,6 +5697,24 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'sticky pin 220vh: ảnh bản đồ curtain-reveal + zoom nhẹ, caption trồi lên muộn ở nửa sau',
     aiLabelEn:
       'sticky pin 220vh: map image curtain reveal + subtle zoom, caption rises late in the second half',
+  },
+  real_estate_location: {
+    type: 'real_estate_location',
+    category: 'location',
+    style: 'luxury',
+    tags: ['clone', 'real-estate', 'bds', 'map', 'framer'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-17',
+    label: 'Real Estate - Vị trí & Bản đồ',
+    accent: '#009336',
+    adminLabel: 'Real Estate - Vị trí & Bản đồ',
+    gradient: 'from-amber-50 to-emerald-700',
+    defaultName: 'Real Estate - Vị trí & Bản đồ',
+    aiLabelVi:
+      'section vị trí: eyebrow + tiêu đề + mô tả canh giữa, dưới là video bản đồ full-bleed chạy loop; chữ fade-up lần lượt khi cuộn tới',
+    aiLabelEn:
+      'location section: centered eyebrow + title + description above a full-bleed looping map video; text fades up in sequence on scroll',
   },
   springs_design: {
     type: 'springs_design',
