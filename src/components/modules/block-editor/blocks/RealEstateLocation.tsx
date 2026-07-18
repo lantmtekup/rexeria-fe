@@ -25,7 +25,8 @@
  *
  * 2. THÊM font. Bản apps cố tình bỏ trống fontFamily để style editor thắng;
  *    trên host điều đó làm section mất hẳn chất chữ gốc. Nay self-host 2 file
- *    woff2 + khai @font-face ngay trong block (đúng pattern SpringsMap.tsx).
+ *    woff2 → `public/real-estate/fonts/`, khai @font-face trong helper dùng
+ *    chung `realEstateFonts.ts` (block `real_estate_hero` xài lại y hệt).
  *
  * 3. THÊM entrance. Nguồn có appear effect per-line mà bản apps bỏ; nay dựng
  *    lại bằng GSAP (xem useBlockMotion bên dưới).
@@ -50,48 +51,15 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
-
-// Màu gốc: framer.css / inline `--framer-text-color` trong Page.tsx.
-const GREEN = 'rgb(0, 147, 54)';
-const BROWN = 'rgb(116, 96, 74)';
-// Nền trang, framer.css:1907 `.framer-AUAI2.framer-19nsx14`.
-const SAND = '#f8f1e9';
-
-/**
- * Khoảng hở trên của block — 104px trên canvas 372 = 27.96cqi.
- *
- * KHÔNG phải số ước lượng, nhưng cũng KHÔNG lấy từ sibling ngay trước. Đo thật:
- *
- *   1.1 Intro (.framer-rgbiud)   top 516  + height 272 → đáy 788
- *   3. Vị trí (.framer-17ozd8c)  top 1368            → hở 580px
- *
- * 580px đó là LỖ HỔNG do designer xoá section `2.` (PORTING.md), không mang ý
- * đồ thiết kế nào — dùng nó làm padding là sai. Khoảng hở section-to-section
- * thật của bản gốc nằm ở đầu kia:
- *
- *   4. MaP (.framer-umdqut)      top 1687 + height 209 → đáy 1896
- *   5. Tổng quan (.framer-45fl36) top 2000            → hở 104px
- *
- * 104/372 = 27.96cqi. Đáy để full-bleed (map vốn đã tràn viền ngang, và block
- * kế tiếp tự mang 104px padding trên của nó) → xếp đúng thứ tự thì nhịp gốc
- * được tái tạo nguyên vẹn, không cộng dồn.
- */
-const RE_SECTION_GAP = 'clamp(40px, 27.96cqi, 120px)';
-
-/**
- * Bản gốc khai SVN-Adero SemiBold và Light thành HAI family riêng (không phải
- * 2 weight của một family) — mirror đúng vậy, nên `fontWeight: 400` trên title
- * là chính xác: bản thân face đã là semibold.
- * Nguồn: app/framer.css:44-69, self-host woff2 → public/real-estate/fonts/.
- */
-const FONT_HEADING =
-  "'SVN-Adero SemiBold', 'Be Vietnam Pro', system-ui, sans-serif";
-const FONT_BODY = "'SVN-Adero Light', 'Be Vietnam Pro', system-ui, sans-serif";
-
-const FONT_CSS = `
-@font-face { font-family: 'SVN-Adero SemiBold'; src: url('/real-estate/fonts/Nuz7kEROxLMDh3fFgoJzqDWnYU.woff2') format('woff2'); font-display: swap; }
-@font-face { font-family: 'SVN-Adero Light'; src: url('/real-estate/fonts/ka6swfnIlD5Xj0Y3BnE0cOpnuw.woff2') format('woff2'); font-display: swap; }
-`;
+import {
+  BROWN,
+  FONT_BODY,
+  FONT_CSS,
+  FONT_HEADING,
+  GREEN,
+  RE_SECTION_GAP,
+  SAND,
+} from './realEstateFonts';
 
 export function RealEstateLocation({
   content,

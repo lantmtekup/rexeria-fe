@@ -194,6 +194,15 @@ export function resolveKind(
   if (key === 'cardSurface' && blockType === 'mint_discover') {
     return 'mintDiscoverSurface';
   }
+  // Real Estate banner: `stats` (mảng) là list manager, còn stats[i].label /
+  // .value là 2 dòng chữ rời — chặn trước fallback để khỏi phụ thuộc việc
+  // BlockDef có khai sẵn đúng số cặp hay không (user thêm/xoá được).
+  if (
+    /^stats\[\d+\]\.(label|value)$/.test(key) &&
+    blockType === 'real_estate_hero'
+  ) {
+    return 'text';
+  }
   if (/^items\[\d+\]\.label$/.test(key)) return 'text';
   if (/^items\[\d+\]\.link$/.test(key)) return 'text';
   if (/^items\[\d+\]\.caption$/.test(key) && blockType === 'mintv2_services') {
@@ -242,6 +251,12 @@ export function resolveLabel(
   if (galleryImg) return `Ảnh ${Number(galleryImg[1]) + 1}`;
   if (key === 'images' && blockType && MINT_VAULT_IMAGE_LABEL.has(blockType)) {
     return MINT_VAULT_IMAGE_LABEL.get(blockType)!;
+  }
+  const reStat = key.match(/^stats\[(\d+)\]\.(label|value)$/);
+  if (reStat && blockType === 'real_estate_hero') {
+    return `Thông số ${Number(reStat[1]) + 1} · ${
+      reStat[2] === 'label' ? 'Nhãn' : 'Giá trị'
+    }`;
   }
   const navLabel = key.match(/^items\[(\d+)\]\.label$/);
   if (navLabel && blockType === 'mintv2_services') {
@@ -454,6 +469,16 @@ export function resolveElementMeta(
       kind: 'image',
       fieldType: 'image',
       label: `Hotspot ${Number(tabImg[1]) + 1} · ảnh drawer`,
+    };
+  }
+  const reStatField = key.match(/^stats\[(\d+)\]\.(label|value)$/);
+  if (reStatField && blockType === 'real_estate_hero') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Thông số ${Number(reStatField[1]) + 1} · ${
+        reStatField[2] === 'label' ? 'Nhãn' : 'Giá trị'
+      }`,
     };
   }
   const svcText = key.match(/^items\[(\d+)\]\.(label|caption)$/);

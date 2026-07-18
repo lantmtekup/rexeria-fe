@@ -74,6 +74,7 @@ import { springsHeroDef } from './blocks/_registry/defs/springsHero';
 import { springsInteriorsDef } from './blocks/_registry/defs/springsInteriors';
 import { springsIntroDef } from './blocks/_registry/defs/springsIntro';
 import { springsMapDef } from './blocks/_registry/defs/springsMap';
+import { realEstateHeroDef } from './blocks/_registry/defs/realEstateHero';
 import { realEstateLocationDef } from './blocks/_registry/defs/realEstateLocation';
 import { springsNaturePlaceDef } from './blocks/_registry/defs/springsNaturePlace';
 import { springsResidencesDef } from './blocks/_registry/defs/springsResidences';
@@ -2454,6 +2455,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   springs_nature_place: springsNaturePlaceDef.defaultContent.vi,
   springs_map: springsMapDef.defaultContent.vi,
   real_estate_location: realEstateLocationDef.defaultContent.vi,
+  real_estate_hero: realEstateHeroDef.defaultContent.vi,
   springs_design: springsDesignDef.defaultContent.vi,
   springs_residences: springsResidencesDef.defaultContent.vi,
   springs_interiors: springsInteriorsDef.defaultContent.vi,
@@ -2614,6 +2616,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   springs_nature_place: springsNaturePlaceDef.defaultContent.en,
   springs_map: springsMapDef.defaultContent.en,
   real_estate_location: realEstateLocationDef.defaultContent.en,
+  real_estate_hero: realEstateHeroDef.defaultContent.en,
   springs_design: springsDesignDef.defaultContent.en,
   springs_residences: springsResidencesDef.defaultContent.en,
   springs_interiors: springsInteriorsDef.defaultContent.en,

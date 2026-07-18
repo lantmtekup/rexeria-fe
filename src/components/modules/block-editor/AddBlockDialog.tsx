@@ -65,6 +65,7 @@ const ORDERED_TYPES: BlockType[] = [
   'framer_perform_hero',
   'framer_bungee_hero_v2',
   'framer_purevisuals_hero',
+  'real_estate_hero',
   // ── Content / Editorial ─────────────────────────────────
   'framer_intro_redefined',
   'framer_studio_manifesto',

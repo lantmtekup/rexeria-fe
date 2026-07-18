@@ -170,6 +170,7 @@ export type BlockType =
   | 'springs_nature_place'
   | 'springs_map'
   | 'real_estate_location'
+  | 'real_estate_hero'
   | 'springs_design'
   | 'springs_residences'
   | 'springs_interiors'
@@ -2486,6 +2487,22 @@ export interface RealEstateLocationContent {
   videoUrl: string;
 }
 
+/** Một cặp nhãn/giá trị trong hàng thông số đáy banner (vd "VỊ TRÍ" / "ĐẮC ĐỊA"). */
+export interface RealEstateHeroStat {
+  label: string;
+  value: string;
+}
+
+/**
+ * Port section `1. Banner` của template Framer real-estate-1
+ * (apps/real-estate-1): ảnh full-bleed parallax + gradient đen từ đáy + ba cặp
+ * thông số canh giữa sát đáy.
+ */
+export interface RealEstateHeroContent {
+  imageUrl: string;
+  stats: RealEstateHeroStat[];
+}
+
 export interface SpringsDesignSlide {
   subtitle: string;
   text: string;
@@ -2672,6 +2689,7 @@ export type BlockContent =
   | SpringsNaturePlaceContent
   | SpringsMapContent
   | RealEstateLocationContent
+  | RealEstateHeroContent
   | SpringsDesignContent
   | SpringsResidencesContent
   | SpringsInteriorsContent
@@ -5715,6 +5733,26 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'section vị trí: eyebrow + tiêu đề + mô tả canh giữa, dưới là video bản đồ full-bleed chạy loop; chữ fade-up lần lượt khi cuộn tới',
     aiLabelEn:
       'location section: centered eyebrow + title + description above a full-bleed looping map video; text fades up in sequence on scroll',
+  },
+  real_estate_hero: {
+    type: 'real_estate_hero',
+    category: 'hero',
+    style: 'luxury',
+    tags: ['clone', 'real-estate', 'bds', 'hero', 'banner', 'framer'],
+    status: 'ready',
+    // Co giãn theo container (cqi), không viewport unit — nhưng aspect 372/454
+    // giữ nguyên mọi tier vì nguồn là canvas 372 cố định, zero media query.
+    responsive: true,
+    updatedAt: '2026-07-17',
+    label: 'Real Estate - Banner',
+    accent: '#009336',
+    adminLabel: 'Real Estate - Banner',
+    gradient: 'from-amber-50 to-emerald-700',
+    defaultName: 'Real Estate - Banner',
+    aiLabelVi:
+      'banner mở đầu: ảnh full-bleed trôi parallax nhẹ khi cuộn, phủ gradient đen từ đáy, ba cặp thông số (nhãn + giá trị) canh giữa sát đáy',
+    aiLabelEn:
+      'opening banner: full-bleed image drifting with subtle scroll parallax, black bottom gradient scrim, three centred label/value stat pairs near the bottom',
   },
   springs_design: {
     type: 'springs_design',

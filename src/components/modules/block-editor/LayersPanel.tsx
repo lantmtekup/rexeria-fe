@@ -48,6 +48,7 @@ import { AddExtraElementButton } from './AddExtraElementButton';
 import { ExtraElementsList } from './ExtraElementsList';
 import { resolvePnjParagraphs } from './blocks/PnjDetails';
 import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
+import { realEstateHeroStatElements } from './blocks/_registry/defs/realEstateHero';
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
 import { mintDiscoverTabElements } from './blocks/_registry/defs/mintDiscover';
 import { mintV2ProcessStepElements } from './blocks/_registry/defs/mintV2Process';
@@ -70,6 +71,7 @@ import {
   type PnjHeroContent,
   type PnjVariantItem,
   type PnjStickyMenuItem,
+  type RealEstateHeroStat,
   type MintDiscoverTab,
   type MintV2ProcessStep,
   type MintV2ServiceItem,
@@ -747,6 +749,29 @@ export function elementsForType(
         icon: ListChecks,
       },
       { key: 'ctaText', label: 'CTA', icon: Type, fieldType: 'text' },
+    ];
+  }
+  if (type === 'real_estate_hero') {
+    const raw = content?.stats;
+    const stats = Array.isArray(raw)
+      ? (raw as RealEstateHeroStat[]).filter(
+          s => s && typeof s === 'object' && typeof s.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'imageUrl',
+        label: 'Ảnh banner',
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+      ...realEstateHeroStatElements(stats),
+      {
+        key: 'stats',
+        label: 'Thêm / quản lý thông số',
+        icon: ListChecks,
+      },
     ];
   }
   if (type === 'mint_discover') {

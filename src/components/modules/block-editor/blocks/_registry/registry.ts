@@ -82,6 +82,7 @@ import { springsHeroDef } from './defs/springsHero';
 import { springsInteriorsDef } from './defs/springsInteriors';
 import { springsIntroDef } from './defs/springsIntro';
 import { springsMapDef } from './defs/springsMap';
+import { realEstateHeroDef } from './defs/realEstateHero';
 import { realEstateLocationDef } from './defs/realEstateLocation';
 import { springsNaturePlaceDef } from './defs/springsNaturePlace';
 import { springsResidencesDef } from './defs/springsResidences';
@@ -185,6 +186,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   springs_nature_place: springsNaturePlaceDef as BlockDef,
   springs_map: springsMapDef as BlockDef,
   real_estate_location: realEstateLocationDef as BlockDef,
+  real_estate_hero: realEstateHeroDef as BlockDef,
   springs_design: springsDesignDef as BlockDef,
   springs_residences: springsResidencesDef as BlockDef,
   springs_interiors: springsInteriorsDef as BlockDef,
