@@ -74,6 +74,7 @@ const ORDERED_TYPES: BlockType[] = [
   'framer_flat_white_process',
   'framer_aestha_editorial',
   'masterise_home_inside',
+  'real_estate_info',
   // ── Features / Services ──────────────────────────────────
   'feature_section',
   'framer_clarity_services',

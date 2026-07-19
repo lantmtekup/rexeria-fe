@@ -171,6 +171,7 @@ export type BlockType =
   | 'springs_map'
   | 'real_estate_location'
   | 'real_estate_hero'
+  | 'real_estate_info'
   | 'springs_design'
   | 'springs_residences'
   | 'springs_interiors'
@@ -2503,6 +2504,21 @@ export interface RealEstateHeroContent {
   stats: RealEstateHeroStat[];
 }
 
+/**
+ * Port section `1.1 Intro` của template Framer real-estate-1
+ * (apps/real-estate-1): icon mặt trời + tiêu đề + mô tả, canh giữa.
+ *
+ * Bản apps hard-code icon thành hằng `ICON_SVG` inline. Ở host icon là field
+ * ảnh: author đổi được từ Layers, và bỏ luôn được `<clipPath>` của bản gốc —
+ * id trong đó đụng nhau khi block xuất hiện 2 lần trên cùng một trang.
+ */
+export interface RealEstateInfoContent {
+  /** Icon trang trí phía trên tiêu đề (mặc định: sunburst xanh của template). */
+  iconUrl: string;
+  title: string;
+  description: string;
+}
+
 export interface SpringsDesignSlide {
   subtitle: string;
   text: string;
@@ -2690,6 +2706,7 @@ export type BlockContent =
   | SpringsMapContent
   | RealEstateLocationContent
   | RealEstateHeroContent
+  | RealEstateInfoContent
   | SpringsDesignContent
   | SpringsResidencesContent
   | SpringsInteriorsContent
@@ -5753,6 +5770,26 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'banner mở đầu: ảnh full-bleed trôi parallax nhẹ khi cuộn, phủ gradient đen từ đáy, ba cặp thông số (nhãn + giá trị) canh giữa sát đáy',
     aiLabelEn:
       'opening banner: full-bleed image drifting with subtle scroll parallax, black bottom gradient scrim, three centred label/value stat pairs near the bottom',
+  },
+  real_estate_info: {
+    type: 'real_estate_info',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', 'real-estate', 'bds', 'intro', 'framer'],
+    status: 'ready',
+    // Cùng lý do `real_estate_hero`: nguồn là canvas 372 cố định, zero media
+    // query — co giãn tuyến tính theo cqi, không cần breakpoint.
+    responsive: true,
+    updatedAt: '2026-07-18',
+    label: 'Real Estate - Giới thiệu',
+    accent: '#009336',
+    adminLabel: 'Real Estate - Giới thiệu',
+    gradient: 'from-amber-50 to-emerald-700',
+    defaultName: 'Real Estate - Giới thiệu',
+    aiLabelVi:
+      'section giới thiệu ngắn: icon trang trí + tiêu đề + đoạn mô tả canh giữa; ba khối fade-up lần lượt khi cuộn tới',
+    aiLabelEn:
+      'short intro section: decorative icon above a centred title and description; the three blocks fade up in sequence on scroll',
   },
   springs_design: {
     type: 'springs_design',
