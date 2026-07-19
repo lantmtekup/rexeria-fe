@@ -49,6 +49,7 @@ import { ExtraElementsList } from './ExtraElementsList';
 import { resolvePnjParagraphs } from './blocks/PnjDetails';
 import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
 import { realEstateHeroStatElements } from './blocks/_registry/defs/realEstateHero';
+import { realEstateOverviewStatElements } from './blocks/_registry/defs/realEstateOverview';
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
 import { mintDiscoverTabElements } from './blocks/_registry/defs/mintDiscover';
 import { mintV2ProcessStepElements } from './blocks/_registry/defs/mintV2Process';
@@ -72,6 +73,7 @@ import {
   type PnjVariantItem,
   type PnjStickyMenuItem,
   type RealEstateHeroStat,
+  type RealEstateOverviewStat,
   type MintDiscoverTab,
   type MintV2ProcessStep,
   type MintV2ServiceItem,
@@ -772,6 +774,26 @@ export function elementsForType(
         label: 'Thêm / quản lý thông số',
         icon: ListChecks,
       },
+    ];
+  }
+  if (type === 'real_estate_overview') {
+    const raw = content?.stats;
+    const stats = Array.isArray(raw)
+      ? (raw as RealEstateOverviewStat[]).filter(
+          s => s && typeof s === 'object' && typeof s.text === 'string'
+        )
+      : [];
+    // Không có mục list manager: số hạng mục cố định 6 (mỗi icon gắn ngữ nghĩa
+    // riêng với chữ của nó) — xem docblock `defs/realEstateOverview.ts`.
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      ...realEstateOverviewStatElements(stats),
     ];
   }
   if (type === 'mint_discover') {

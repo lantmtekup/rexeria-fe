@@ -203,6 +203,11 @@ export function resolveKind(
   ) {
     return 'text';
   }
+  // Real Estate tổng quan: mỗi hạng mục là icon (ảnh) + một dòng chữ.
+  if (blockType === 'real_estate_overview') {
+    if (/^stats\[\d+\]\.text$/.test(key)) return 'text';
+    if (/^stats\[\d+\]\.iconUrl$/.test(key)) return 'image';
+  }
   if (/^items\[\d+\]\.label$/.test(key)) return 'text';
   if (/^items\[\d+\]\.link$/.test(key)) return 'text';
   if (/^items\[\d+\]\.caption$/.test(key) && blockType === 'mintv2_services') {
@@ -256,6 +261,12 @@ export function resolveLabel(
   if (reStat && blockType === 'real_estate_hero') {
     return `Thông số ${Number(reStat[1]) + 1} · ${
       reStat[2] === 'label' ? 'Nhãn' : 'Giá trị'
+    }`;
+  }
+  const reOverview = key.match(/^stats\[(\d+)\]\.(text|iconUrl)$/);
+  if (reOverview && blockType === 'real_estate_overview') {
+    return `Hạng mục ${Number(reOverview[1]) + 1} · ${
+      reOverview[2] === 'text' ? 'Nội dung' : 'Icon'
     }`;
   }
   const navLabel = key.match(/^items\[(\d+)\]\.label$/);
@@ -478,6 +489,18 @@ export function resolveElementMeta(
       fieldType: 'text',
       label: `Thông số ${Number(reStatField[1]) + 1} · ${
         reStatField[2] === 'label' ? 'Nhãn' : 'Giá trị'
+      }`,
+    };
+  }
+  const reOverviewField = key.match(/^stats\[(\d+)\]\.(text|iconUrl)$/);
+  if (reOverviewField && blockType === 'real_estate_overview') {
+    const isText = reOverviewField[2] === 'text';
+    return {
+      kind: isText ? 'text' : 'image',
+      // Chữ có ngắt dòng thủ công `\n` → textarea, không phải input 1 dòng.
+      fieldType: isText ? 'textarea' : 'image',
+      label: `Hạng mục ${Number(reOverviewField[1]) + 1} · ${
+        isText ? 'Nội dung' : 'Icon'
       }`,
     };
   }

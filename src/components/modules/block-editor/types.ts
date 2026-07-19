@@ -172,6 +172,7 @@ export type BlockType =
   | 'real_estate_location'
   | 'real_estate_hero'
   | 'real_estate_info'
+  | 'real_estate_overview'
   | 'springs_design'
   | 'springs_residences'
   | 'springs_interiors'
@@ -2519,6 +2520,31 @@ export interface RealEstateInfoContent {
   description: string;
 }
 
+/** Một hạng mục trong lưới tổng quan: icon tròn ở trên, chữ canh giữa ở dưới. */
+export interface RealEstateOverviewStat {
+  /**
+   * Icon tròn (đĩa trắng + line art xanh). Là field ảnh chứ không phải SVG
+   * inline, cùng lý do với `RealEstateInfoContent.iconUrl` ở trên.
+   */
+  iconUrl: string;
+  /** `\n` ép xuống dòng — nguồn ngắt dòng thủ công giữa các cụm. */
+  text: string;
+}
+
+/**
+ * Port section `5. Tổng quan dự án` của template Framer real-estate-1
+ * (apps/real-estate-1): tiêu đề 2 dòng canh giữa + lưới 2 cột × 3 hàng, mỗi ô
+ * là một icon tròn trên một dòng chữ.
+ *
+ * Số hạng mục cố định 6 như nguồn — mỗi icon gắn ngữ nghĩa riêng với chữ của
+ * nó, nên không mở list manager add/xoá (xem docblock component).
+ */
+export interface RealEstateOverviewContent {
+  /** `\n` ép xuống dòng — nguồn tách title thành 2 dòng để stagger từng dòng. */
+  title: string;
+  stats: RealEstateOverviewStat[];
+}
+
 export interface SpringsDesignSlide {
   subtitle: string;
   text: string;
@@ -2707,6 +2733,7 @@ export type BlockContent =
   | RealEstateLocationContent
   | RealEstateHeroContent
   | RealEstateInfoContent
+  | RealEstateOverviewContent
   | SpringsDesignContent
   | SpringsResidencesContent
   | SpringsInteriorsContent
@@ -5790,6 +5817,27 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'section giới thiệu ngắn: icon trang trí + tiêu đề + đoạn mô tả canh giữa; ba khối fade-up lần lượt khi cuộn tới',
     aiLabelEn:
       'short intro section: decorative icon above a centred title and description; the three blocks fade up in sequence on scroll',
+  },
+  real_estate_overview: {
+    type: 'real_estate_overview',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', 'real-estate', 'bds', 'overview', 'framer'],
+    status: 'ready',
+    // Cùng lý do `real_estate_info`: canvas 372 cố định, zero media query.
+    // Lưới giữ 2 cột ở mọi bề rộng như nguồn, chỉ cap lại chiều rộng cột nội
+    // dung — nên không có breakpoint nào để hỏng.
+    responsive: true,
+    updatedAt: '2026-07-19',
+    label: 'Real Estate - Tổng quan',
+    accent: '#009336',
+    adminLabel: 'Real Estate - Tổng quan',
+    gradient: 'from-amber-50 to-emerald-700',
+    defaultName: 'Real Estate - Tổng quan',
+    aiLabelVi:
+      'section tổng quan dự án: tiêu đề 2 dòng canh giữa, dưới là lưới 2 cột × 3 hàng gồm 6 icon tròn, mỗi icon kèm một dòng thông số; tiêu đề rồi từng ô fade-up lần lượt khi cuộn tới',
+    aiLabelEn:
+      'project overview section: a centred two-line title above a 2×3 grid of six circular icons, each captioned with one project figure; title then each cell fades up in sequence on scroll',
   },
   springs_design: {
     type: 'springs_design',
