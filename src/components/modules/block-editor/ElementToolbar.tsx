@@ -423,9 +423,19 @@ export function ElementToolbar({
             style={style}
             onUpdateStyle={onUpdateStyle}
             onResetStyle={onResetStyle}
-            label={selectedKey === 'dot' ? 'Màu chấm' : 'Màu đường'}
+            label={
+              selectedKey === 'contentSurface'
+                ? 'Nền cột nội dung'
+                : selectedKey === 'dot'
+                  ? 'Màu chấm'
+                  : 'Màu đường'
+            }
             fallback={
-              selectedKey === 'dot' ? '#c79119' : 'rgba(199, 145, 25, 0.6)'
+              selectedKey === 'contentSurface'
+                ? '#ffffff'
+                : selectedKey === 'dot'
+                  ? '#c79119'
+                  : 'rgba(199, 145, 25, 0.6)'
             }
           />
         )}

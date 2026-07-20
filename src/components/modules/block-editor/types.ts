@@ -169,6 +169,13 @@ export type BlockType =
   | 'springs_wellness'
   | 'springs_nature_place'
   | 'springs_map'
+  | 'real_estate_location'
+  | 'real_estate_hero'
+  | 'real_estate_info'
+  | 'real_estate_overview'
+  | 'real_estate_highlights'
+  | 'real_estate_villa'
+  | 'real_estate_utilities'
   | 'springs_design'
   | 'springs_residences'
   | 'springs_interiors'
@@ -2472,6 +2479,166 @@ export interface SpringsMapContent {
   mapImage: string;
 }
 
+/**
+ * Port section `3. Vị trí` + `4. MaP` của template Framer real-estate-1
+ * (apps/real-estate-1). Nguồn là 2 sibling absolute trên canvas 372px cố định,
+ * gộp lại thành 1 block: 3 dòng chữ ở trên, video bản đồ full-bleed ở dưới.
+ */
+export interface RealEstateLocationContent {
+  eyebrow: string;
+  title: string;
+  description: string;
+  /** Clip bản đồ chạy loop (mp4). */
+  videoUrl: string;
+}
+
+/** Một cặp nhãn/giá trị trong hàng thông số đáy banner (vd "VỊ TRÍ" / "ĐẮC ĐỊA"). */
+export interface RealEstateHeroStat {
+  label: string;
+  value: string;
+}
+
+/**
+ * Port section `1. Banner` của template Framer real-estate-1
+ * (apps/real-estate-1): ảnh full-bleed parallax + gradient đen từ đáy + ba cặp
+ * thông số canh giữa sát đáy.
+ */
+export interface RealEstateHeroContent {
+  imageUrl: string;
+  stats: RealEstateHeroStat[];
+}
+
+/**
+ * Port section `1.1 Intro` của template Framer real-estate-1
+ * (apps/real-estate-1): icon mặt trời + tiêu đề + mô tả, canh giữa.
+ *
+ * Bản apps hard-code icon thành hằng `ICON_SVG` inline. Ở host icon là field
+ * ảnh: author đổi được từ Layers, và bỏ luôn được `<clipPath>` của bản gốc —
+ * id trong đó đụng nhau khi block xuất hiện 2 lần trên cùng một trang.
+ */
+export interface RealEstateInfoContent {
+  /** Icon trang trí phía trên tiêu đề (mặc định: sunburst xanh của template). */
+  iconUrl: string;
+  title: string;
+  description: string;
+  /**
+   * Ảnh đại diện dưới phần mô tả — nguồn là component `2. Hình đại diện`
+   * (`HNhIDiN`), 372×454 @ top 852. Khi cuộn tới, khung mask co lại còn
+   * 306×374 trong khi ảnh giữ nguyên kích thước → hiệu ứng crop-in.
+   */
+  imageUrl: string;
+}
+
+/** Một hạng mục trong lưới tổng quan: icon tròn ở trên, chữ canh giữa ở dưới. */
+export interface RealEstateOverviewStat {
+  /**
+   * Icon tròn (đĩa trắng + line art xanh). Là field ảnh chứ không phải SVG
+   * inline, cùng lý do với `RealEstateInfoContent.iconUrl` ở trên.
+   */
+  iconUrl: string;
+  /** `\n` ép xuống dòng — nguồn ngắt dòng thủ công giữa các cụm. */
+  text: string;
+}
+
+/**
+ * Port section `5. Tổng quan dự án` của template Framer real-estate-1
+ * (apps/real-estate-1): tiêu đề 2 dòng canh giữa + lưới 2 cột × 3 hàng, mỗi ô
+ * là một icon tròn trên một dòng chữ.
+ *
+ * Số hạng mục cố định 6 như nguồn — mỗi icon gắn ngữ nghĩa riêng với chữ của
+ * nó, nên không mở list manager add/xoá (xem docblock component).
+ */
+export interface RealEstateOverviewContent {
+  /** `\n` ép xuống dòng — nguồn tách title thành 2 dòng để stagger từng dòng. */
+  title: string;
+  stats: RealEstateOverviewStat[];
+}
+
+/** Một card trong track ngang "Điểm nổi trội": ảnh tròn + số lớn + một dòng chữ. */
+export interface RealEstateHighlightItem {
+  /**
+   * Số thứ tự HIỂN THỊ, do author nhập ("1.", "2."…) chứ không suy từ index —
+   * giữ đúng nguồn, nơi dấu chấm nằm trong chuỗi và author có thể đánh số khác.
+   */
+  number: string;
+  text: string;
+  /** Ảnh vuông, bị crop tròn bằng `border-radius` (nguồn khai `99%`). */
+  imageUrl: string;
+}
+
+/**
+ * Port section `6. Điểm nổi trội dự án` của template Framer real-estate-1
+ * (apps/real-estate-1): tiêu đề + mô tả canh giữa, dưới là dãy card trượt ngang
+ * theo tiến độ cuộn của chính section.
+ *
+ * Số card cố định 4 như nguồn — không mở list manager, cùng lý do với
+ * `RealEstateOverviewContent` (xem docblock component).
+ */
+export interface RealEstateHighlightsContent {
+  title: string;
+  description: string;
+  items: RealEstateHighlightItem[];
+}
+
+/** Một slide trong carousel "Biệt thự": ảnh ngang + tên loại hình + mô tả. */
+export interface RealEstateVillaSlide {
+  title: string;
+  description: string;
+  /** Ảnh ngang, tỉ lệ 322/264 theo canvas nguồn. */
+  imageUrl: string;
+}
+
+/**
+ * Port section `7. Biệt thự` của template Framer real-estate-1
+ * (apps/real-estate-1): eyebrow + tiêu đề canh giữa, dưới là carousel 4 slide
+ * kèm counter, dots và hai nút prev/next.
+ *
+ * Slider của NGUỒN không advance được — đo bản live thì counter đứng nguyên
+ * "1/4" qua mọi thao tác, vì callback tap bị truyền vào một component sinh tự
+ * động và không bao giờ fire. Bản này dựng lại slider THẬT (cùng nội dung, cùng
+ * tỉ lệ, thêm dots + phím mũi tên) thay vì chép lại một control chết.
+ *
+ * Số slide cố định 4 như nguồn — không mở list manager, cùng lý do với
+ * `RealEstateHighlightsContent` (xem docblock component).
+ */
+export interface RealEstateVillaContent {
+  eyebrow: string;
+  title: string;
+  slides: RealEstateVillaSlide[];
+}
+
+/** Một ô trong lưới nội khu: icon line art ở trên, label 2 dòng ở dưới. */
+export interface RealEstateUtilityItem {
+  /**
+   * Icon line art nâu. Là field ảnh chứ không phải SVG inline, cùng lý do với
+   * `RealEstateOverviewStat.iconUrl` — cộng thêm một lý do riêng: sáu icon này
+   * nặng ~40KB (riêng icon BBQ 19KB), inline vào bundle block là phí.
+   */
+  iconUrl: string;
+  /** `\n` ép xuống dòng — nguồn ngắt dòng thủ công giữa hai cụm chữ. */
+  label: string;
+}
+
+/**
+ * Port section `8. Nội khu` của template Framer real-estate-1
+ * (apps/real-estate-1): tiêu đề canh giữa + lưới 2 cột × 3 hàng, mỗi ô là một
+ * icon line art trên một label 2 dòng.
+ *
+ * Nguồn CÓ vẽ thêm một ảnh PNG full-bleed trong mỗi ô, nhưng wrapper của nó
+ * compute ra `opacity: 0` và giữ nguyên kể cả khi hover — ảnh KHÔNG BAO GIỜ
+ * hiện trên trang thật. Cũng không có card chrome: nền ô, hở cột và hở hàng
+ * đều sample đúng `rgb(248,241,233)` y hệt nền trang, ô không viền/đổ bóng.
+ * Nên section đọc ra là một dải sand phẳng với 6 cụm icon/label, không phải 6
+ * panel — và bản port bỏ hẳn lớp ảnh đó thay vì chép một thứ vô hình.
+ *
+ * Số ô cố định 6 như nguồn — không mở list manager, cùng lý do với
+ * `RealEstateOverviewContent` (xem docblock component).
+ */
+export interface RealEstateUtilitiesContent {
+  title: string;
+  items: RealEstateUtilityItem[];
+}
+
 export interface SpringsDesignSlide {
   subtitle: string;
   text: string;
@@ -2657,6 +2824,13 @@ export type BlockContent =
   | SpringsWellnessContent
   | SpringsNaturePlaceContent
   | SpringsMapContent
+  | RealEstateLocationContent
+  | RealEstateHeroContent
+  | RealEstateInfoContent
+  | RealEstateOverviewContent
+  | RealEstateHighlightsContent
+  | RealEstateVillaContent
+  | RealEstateUtilitiesContent
   | SpringsDesignContent
   | SpringsResidencesContent
   | SpringsInteriorsContent
@@ -5682,6 +5856,148 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'sticky pin 220vh: ảnh bản đồ curtain-reveal + zoom nhẹ, caption trồi lên muộn ở nửa sau',
     aiLabelEn:
       'sticky pin 220vh: map image curtain reveal + subtle zoom, caption rises late in the second half',
+  },
+  real_estate_location: {
+    type: 'real_estate_location',
+    category: 'location',
+    style: 'luxury',
+    tags: ['clone', 'real-estate', 'bds', 'map', 'framer'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-17',
+    label: 'Real Estate - Vị trí & Bản đồ',
+    accent: '#009336',
+    adminLabel: 'Real Estate - Vị trí & Bản đồ',
+    gradient: 'from-amber-50 to-emerald-700',
+    defaultName: 'Real Estate - Vị trí & Bản đồ',
+    aiLabelVi:
+      'section vị trí: eyebrow + tiêu đề + mô tả canh giữa, dưới là video bản đồ full-bleed chạy loop; chữ fade-up lần lượt khi cuộn tới',
+    aiLabelEn:
+      'location section: centered eyebrow + title + description above a full-bleed looping map video; text fades up in sequence on scroll',
+  },
+  real_estate_hero: {
+    type: 'real_estate_hero',
+    category: 'hero',
+    style: 'luxury',
+    tags: ['clone', 'real-estate', 'bds', 'hero', 'banner', 'framer'],
+    status: 'ready',
+    // Co giãn theo container (cqi), không viewport unit — nhưng aspect 372/454
+    // giữ nguyên mọi tier vì nguồn là canvas 372 cố định, zero media query.
+    responsive: true,
+    updatedAt: '2026-07-17',
+    label: 'Real Estate - Banner',
+    accent: '#009336',
+    adminLabel: 'Real Estate - Banner',
+    gradient: 'from-amber-50 to-emerald-700',
+    defaultName: 'Real Estate - Banner',
+    aiLabelVi:
+      'banner mở đầu: ảnh full-bleed trôi parallax nhẹ khi cuộn, phủ gradient đen từ đáy, ba cặp thông số (nhãn + giá trị) canh giữa sát đáy',
+    aiLabelEn:
+      'opening banner: full-bleed image drifting with subtle scroll parallax, black bottom gradient scrim, three centred label/value stat pairs near the bottom',
+  },
+  real_estate_info: {
+    type: 'real_estate_info',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', 'real-estate', 'bds', 'intro', 'framer'],
+    status: 'ready',
+    // Cùng lý do `real_estate_hero`: nguồn là canvas 372 cố định, zero media
+    // query — co giãn tuyến tính theo cqi, không cần breakpoint.
+    responsive: true,
+    updatedAt: '2026-07-18',
+    label: 'Real Estate - Giới thiệu',
+    accent: '#009336',
+    adminLabel: 'Real Estate - Giới thiệu',
+    gradient: 'from-amber-50 to-emerald-700',
+    defaultName: 'Real Estate - Giới thiệu',
+    aiLabelVi:
+      'section giới thiệu ngắn: icon trang trí + tiêu đề + đoạn mô tả canh giữa, dưới cùng là ảnh đại diện; chữ fade-up lần lượt, ảnh crop-in khi cuộn tới',
+    aiLabelEn:
+      'short intro section: decorative icon above a centred title and description, closing with a feature image; text fades up in sequence, the image crops in on scroll',
+  },
+  real_estate_overview: {
+    type: 'real_estate_overview',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', 'real-estate', 'bds', 'overview', 'framer'],
+    status: 'ready',
+    // Cùng lý do `real_estate_info`: canvas 372 cố định, zero media query.
+    // Lưới giữ 2 cột ở mọi bề rộng như nguồn, chỉ cap lại chiều rộng cột nội
+    // dung — nên không có breakpoint nào để hỏng.
+    responsive: true,
+    updatedAt: '2026-07-19',
+    label: 'Real Estate - Tổng quan',
+    accent: '#009336',
+    adminLabel: 'Real Estate - Tổng quan',
+    gradient: 'from-amber-50 to-emerald-700',
+    defaultName: 'Real Estate - Tổng quan',
+    aiLabelVi:
+      'section tổng quan dự án: tiêu đề 2 dòng canh giữa, dưới là lưới 2 cột × 3 hàng gồm 6 icon tròn, mỗi icon kèm một dòng thông số; tiêu đề rồi từng ô fade-up lần lượt khi cuộn tới',
+    aiLabelEn:
+      'project overview section: a centred two-line title above a 2×3 grid of six circular icons, each captioned with one project figure; title then each cell fades up in sequence on scroll',
+  },
+  real_estate_highlights: {
+    type: 'real_estate_highlights',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', 'real-estate', 'bds', 'highlights', 'scroll', 'framer'],
+    status: 'ready',
+    // Card giữ tỉ lệ 249/359 và tự là container riêng, nên nội dung bên trong
+    // co giãn theo card chứ không theo viewport — không breakpoint nào để hỏng.
+    // Trên canvas editor block đổi sang lưới wrap để chọn được đủ 4 card.
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'Real Estate - Điểm nổi trội',
+    accent: '#009336',
+    adminLabel: 'Real Estate - Điểm nổi trội',
+    gradient: 'from-amber-50 to-emerald-700',
+    defaultName: 'Real Estate - Điểm nổi trội',
+    aiLabelVi:
+      'section điểm nổi trội dự án: tiêu đề và mô tả canh giữa, dưới là dãy card ảnh tròn kèm số thứ tự lớn màu xanh, trượt ngang theo tiến độ cuộn của section',
+    aiLabelEn:
+      'project highlights section: a centred title and description above a row of cards with circular photos and large green ordinals, the row sliding horizontally as the section scrolls past',
+  },
+  real_estate_villa: {
+    type: 'real_estate_villa',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', 'real-estate', 'bds', 'villa', 'carousel', 'framer'],
+    status: 'ready',
+    // Mỗi slide tự là container riêng nên tỉ lệ ảnh/chữ giữ nguyên ở mọi bề
+    // rộng — zero media query. Trên canvas editor block đổi sang lưới 2 cột để
+    // chọn được cả 4 slide (carousel chỉ render 1 slide một lúc).
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'Real Estate - Biệt thự',
+    accent: '#009336',
+    adminLabel: 'Real Estate - Biệt thự',
+    gradient: 'from-amber-50 to-emerald-700',
+    defaultName: 'Real Estate - Biệt thự',
+    aiLabelVi:
+      'section các loại hình biệt thự: eyebrow và tiêu đề canh giữa, dưới là carousel ảnh kèm tên loại hình, mô tả, counter và nút chuyển slide',
+    aiLabelEn:
+      'villa typologies section: a centred eyebrow and title above an image carousel with the typology name, description, a slide counter and prev/next controls',
+  },
+  real_estate_utilities: {
+    type: 'real_estate_utilities',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', 'real-estate', 'bds', 'utilities', 'amenities', 'framer'],
+    status: 'ready',
+    // Lưới giữ 2 cột ở mọi bề rộng như nguồn, chỉ cap chiều rộng cột nội dung —
+    // không breakpoint nào để hỏng. Ô cao theo nội dung nên label 3 dòng cũng
+    // không tràn.
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'Real Estate - Nội khu tiện ích',
+    accent: '#009336',
+    adminLabel: 'Real Estate - Nội khu tiện ích',
+    gradient: 'from-amber-50 to-emerald-700',
+    defaultName: 'Real Estate - Nội khu tiện ích',
+    aiLabelVi:
+      'section nội khu tiện ích: tiêu đề canh giữa, dưới là lưới 2 cột × 3 hàng gồm 6 icon line art nâu, mỗi icon kèm tên tiện ích 2 dòng; tiêu đề rồi từng ô fade-up lần lượt khi cuộn tới',
+    aiLabelEn:
+      'on-site amenities section: a centred title above a 2×3 grid of six brown line-art icons, each captioned with a two-line amenity name; title then each cell fades up in sequence on scroll',
   },
   springs_design: {
     type: 'springs_design',

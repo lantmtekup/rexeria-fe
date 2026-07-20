@@ -74,6 +74,13 @@ import { springsHeroDef } from './blocks/_registry/defs/springsHero';
 import { springsInteriorsDef } from './blocks/_registry/defs/springsInteriors';
 import { springsIntroDef } from './blocks/_registry/defs/springsIntro';
 import { springsMapDef } from './blocks/_registry/defs/springsMap';
+import { realEstateHeroDef } from './blocks/_registry/defs/realEstateHero';
+import { realEstateInfoDef } from './blocks/_registry/defs/realEstateInfo';
+import { realEstateLocationDef } from './blocks/_registry/defs/realEstateLocation';
+import { realEstateHighlightsDef } from './blocks/_registry/defs/realEstateHighlights';
+import { realEstateOverviewDef } from './blocks/_registry/defs/realEstateOverview';
+import { realEstateUtilitiesDef } from './blocks/_registry/defs/realEstateUtilities';
+import { realEstateVillaDef } from './blocks/_registry/defs/realEstateVilla';
 import { springsNaturePlaceDef } from './blocks/_registry/defs/springsNaturePlace';
 import { springsResidencesDef } from './blocks/_registry/defs/springsResidences';
 import { springsWellnessDef } from './blocks/_registry/defs/springsWellness';
@@ -2452,6 +2459,13 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   springs_wellness: springsWellnessDef.defaultContent.vi,
   springs_nature_place: springsNaturePlaceDef.defaultContent.vi,
   springs_map: springsMapDef.defaultContent.vi,
+  real_estate_location: realEstateLocationDef.defaultContent.vi,
+  real_estate_hero: realEstateHeroDef.defaultContent.vi,
+  real_estate_info: realEstateInfoDef.defaultContent.vi,
+  real_estate_overview: realEstateOverviewDef.defaultContent.vi,
+  real_estate_highlights: realEstateHighlightsDef.defaultContent.vi,
+  real_estate_villa: realEstateVillaDef.defaultContent.vi,
+  real_estate_utilities: realEstateUtilitiesDef.defaultContent.vi,
   springs_design: springsDesignDef.defaultContent.vi,
   springs_residences: springsResidencesDef.defaultContent.vi,
   springs_interiors: springsInteriorsDef.defaultContent.vi,
@@ -2611,6 +2625,13 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   springs_wellness: springsWellnessDef.defaultContent.en,
   springs_nature_place: springsNaturePlaceDef.defaultContent.en,
   springs_map: springsMapDef.defaultContent.en,
+  real_estate_location: realEstateLocationDef.defaultContent.en,
+  real_estate_hero: realEstateHeroDef.defaultContent.en,
+  real_estate_info: realEstateInfoDef.defaultContent.en,
+  real_estate_overview: realEstateOverviewDef.defaultContent.en,
+  real_estate_highlights: realEstateHighlightsDef.defaultContent.en,
+  real_estate_villa: realEstateVillaDef.defaultContent.en,
+  real_estate_utilities: realEstateUtilitiesDef.defaultContent.en,
   springs_design: springsDesignDef.defaultContent.en,
   springs_residences: springsResidencesDef.defaultContent.en,
   springs_interiors: springsInteriorsDef.defaultContent.en,

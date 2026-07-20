@@ -48,6 +48,11 @@ import { AddExtraElementButton } from './AddExtraElementButton';
 import { ExtraElementsList } from './ExtraElementsList';
 import { resolvePnjParagraphs } from './blocks/PnjDetails';
 import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
+import { realEstateHeroStatElements } from './blocks/_registry/defs/realEstateHero';
+import { realEstateHighlightItemElements } from './blocks/_registry/defs/realEstateHighlights';
+import { realEstateOverviewStatElements } from './blocks/_registry/defs/realEstateOverview';
+import { realEstateUtilityItemElements } from './blocks/_registry/defs/realEstateUtilities';
+import { realEstateVillaSlideElements } from './blocks/_registry/defs/realEstateVilla';
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
 import { delvauxProductHotspotElements } from './blocks/_registry/defs/delvauxProduct';
 import {
@@ -80,6 +85,11 @@ import {
   type PnjHeroContent,
   type PnjVariantItem,
   type PnjStickyMenuItem,
+  type RealEstateHeroStat,
+  type RealEstateOverviewStat,
+  type RealEstateHighlightItem,
+  type RealEstateVillaSlide,
+  type RealEstateUtilityItem,
   type MintDiscoverTab,
   type MintV2ProcessStep,
   type MintV2ServiceItem,
@@ -855,6 +865,130 @@ export function elementsForType(
         fieldType: 'image',
         groupId: 'sku',
       },
+    ];
+  }
+  if (type === 'real_estate_hero') {
+    const raw = content?.stats;
+    const stats = Array.isArray(raw)
+      ? (raw as RealEstateHeroStat[]).filter(
+          s => s && typeof s === 'object' && typeof s.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'imageUrl',
+        label: 'Ảnh banner',
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+      ...realEstateHeroStatElements(stats),
+      {
+        key: 'stats',
+        label: 'Thêm / quản lý thông số',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'real_estate_overview') {
+    const raw = content?.stats;
+    const stats = Array.isArray(raw)
+      ? (raw as RealEstateOverviewStat[]).filter(
+          s => s && typeof s === 'object' && typeof s.text === 'string'
+        )
+      : [];
+    // Không có mục list manager: số hạng mục cố định 6 (mỗi icon gắn ngữ nghĩa
+    // riêng với chữ của nó) — xem docblock `defs/realEstateOverview.ts`.
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      ...realEstateOverviewStatElements(stats),
+    ];
+  }
+  if (type === 'real_estate_highlights') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as RealEstateHighlightItem[]).filter(
+          it => it && typeof it === 'object' && typeof it.text === 'string'
+        )
+      : [];
+    // Không có mục list manager: số card cố định 4 như nguồn — xem docblock
+    // `defs/realEstateHighlights.ts`.
+    return [
+      // BACKGROUND_LAYER = nền NGOÀI (của cả block); `contentSurface` = dải nền
+      // 372 phía trong. Hai lớp tách bạch, sửa độc lập.
+      BACKGROUND_LAYER,
+      { key: 'contentSurface', label: 'Nền cột nội dung', icon: Palette },
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'description',
+        label: 'Mô tả',
+        icon: Pilcrow,
+        fieldType: 'textarea' as const,
+      },
+      ...realEstateHighlightItemElements(items),
+    ];
+  }
+  if (type === 'real_estate_villa') {
+    const raw = content?.slides;
+    const slides = Array.isArray(raw)
+      ? (raw as RealEstateVillaSlide[]).filter(
+          s => s && typeof s === 'object' && typeof s.title === 'string'
+        )
+      : [];
+    // Không có mục list manager: số slide cố định 4 như nguồn — xem docblock
+    // `defs/realEstateVilla.ts`.
+    return [
+      // BACKGROUND_LAYER = nền NGOÀI (của cả block); `cardSurface` = nền thẻ
+      // phía trong. Hai lớp tách bạch, sửa độc lập.
+      BACKGROUND_LAYER,
+      {
+        key: 'eyebrow',
+        label: 'Nhãn nhỏ',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      { key: 'cardSurface', label: 'Nền thẻ', icon: Palette },
+      ...realEstateVillaSlideElements(slides),
+    ];
+  }
+  if (type === 'real_estate_utilities') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as RealEstateUtilityItem[]).filter(
+          it => it && typeof it === 'object' && typeof it.label === 'string'
+        )
+      : [];
+    // Không có mục list manager: số ô cố định 6 như nguồn — xem docblock
+    // `defs/realEstateUtilities.ts`.
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      // Style-only, MỘT key cho cả 6 ô — phải khớp `elements[]` trong
+      // `defs/realEstateUtilities.ts`, nếu không panel Lớp và toolbar lệch nhau.
+      { key: 'cardSurface', label: 'Viền & nền ô', icon: Palette },
+      ...realEstateUtilityItemElements(items),
     ];
   }
   if (type === 'mint_discover') {

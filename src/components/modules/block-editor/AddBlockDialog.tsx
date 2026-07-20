@@ -65,6 +65,7 @@ const ORDERED_TYPES: BlockType[] = [
   'framer_perform_hero',
   'framer_bungee_hero_v2',
   'framer_purevisuals_hero',
+  'real_estate_hero',
   // ── Content / Editorial ─────────────────────────────────
   'framer_intro_redefined',
   'framer_studio_manifesto',
@@ -73,6 +74,11 @@ const ORDERED_TYPES: BlockType[] = [
   'framer_flat_white_process',
   'framer_aestha_editorial',
   'masterise_home_inside',
+  'real_estate_info',
+  'real_estate_overview',
+  'real_estate_highlights',
+  'real_estate_villa',
+  'real_estate_utilities',
   // ── Features / Services ──────────────────────────────────
   'feature_section',
   'framer_clarity_services',
