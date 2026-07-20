@@ -4,34 +4,37 @@
  * Block "Product - Hotspots" (section `.product-detail` của delvaux-clone) —
  * bám sát cơ chế + thị giác gốc:
  *
- *  - Section 100vh, ảnh sản phẩm căn giữa (gốc cao 730px), quầng sáng màu
- *    (#a77c63, blur 90px, opacity .4) phía sau.
- *  - Entrance `animate-zoomin`: ảnh scale 2 / y -150 (origin top center)
- *    scrub về 1 (start 'top 103%', end '+=100%', scrub 0.5). HOTSPOT chỉ hiện
- *    khi zoom xong (gốc: `.done .button-circle {opacity 1}`).
- *  - Hotspot gốc: vòng tròn rỗng 20px viền trắng 2px + vòng pulse
- *    (keyframes `scalebutton` 4s) — KHÔNG phải đĩa trắng; hover hiện nhãn
- *    uppercase nhỏ; đang mở → icon đóng (X) + nhãn "CLOSE".
- *  - Bấm hotspot → panel trắng trượt vào từ phải (width 0 → 600px, 1s) chứa
- *    tiêu đề serif 36px + mô tả 14px + media (video autoplay); ảnh sản phẩm
- *    dồn trái và phóng to (gốc scale 2.5, ở đây 2.2 + translate nhẹ).
- *  - Mở/đóng panel dispatch `delvaux:overlay` để sub-nav ẩn (`.hide` gốc).
+ *  - Section ~100vh, ảnh căn giữa (cao 730px desktop), quầng sáng phía sau.
+ *  - Entrance zoom scrub trên `.img` (scale 2 / y -150 → 1). HOTSPOT chỉ hiện
+ *    khi `.delvaux-product-done` (progress > 0.99) — ảnh đã về giữa màn.
+ *  - Bấm hotspot: snap section giữa scroller → flex ảnh max 50% + panel
+ *    width 0 → min(50%, 600px); sau 1s ảnh scale+translate theo preset tab.
+ *  - Mobile: panel portal full-frame; ảnh scale nhẹ (~1.15).
+ *  - Khi mở: khóa scroll (body + preview scroller) + `delvaux:overlay`.
  *
- * Section gắn id='discover' để sub-nav anchor tới.
+ * Canvas: force done + flat hotspot cards. Preview/`/p`: production UX.
+ *
+ * Section id='discover' cho sub-nav anchor.
  */
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-import { useBlockMotion } from '../motion/LandingMotion';
+import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { isDeviceFrameHost, resolveDrawerPortalHost } from '../previewPortal';
 import {
   DELVAUX_BG,
   DELVAUX_FONT_BODY,
   DELVAUX_FONT_CSS,
   DELVAUX_FONT_HEADING,
 } from './delvauxTheme';
+import { useDrawerScrollLock } from './PnjHeroHotspots';
+import { useContainerMobile } from './useContainerMobile';
 import type {
   BlockBackground,
   DelvauxProductContent,
+  DelvauxProductHotspot,
   ElementPositionsMap,
   ElementStylesMap,
 } from '../types';
@@ -44,6 +47,8 @@ import {
   selectableClass,
 } from './applyStyle';
 
+gsap.registerPlugin(ScrollTrigger);
+
 interface Props {
   content: DelvauxProductContent;
   styles?: ElementStylesMap;
@@ -53,8 +58,13 @@ interface Props {
   activeKey?: string | null;
 }
 
-/* CSS trạng thái/keyframes (structural, không phải design token editable):
- * vòng pulse hotspot như `scalebutton` gốc + ẩn hotspot tới khi zoom done. */
+/** Open transforms từ style-ryo product-1 `.content.active.tabN .img img`. */
+const OPEN_FOCUS = [
+  { scale: 2.5, tx: 50, ty: 100 },
+  { scale: 2.5, tx: -20, ty: 0 },
+  { scale: 2, tx: 100, ty: -90 },
+] as const;
+
 const PRODUCT_CSS = `
 @keyframes delvaux-scalebutton {
   0% { transform: scale(1); opacity: 1; }
@@ -66,16 +76,51 @@ const PRODUCT_CSS = `
 .delvaux-product .delvaux-product-spot {
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   transition: opacity 0.3s ease;
 }
 .delvaux-product.delvaux-product-done .delvaux-product-spot {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
 }
 .delvaux-product .delvaux-product-spot-pulse {
   animation: delvaux-scalebutton 4s infinite;
 }
+/* Gốc style-ryo: .wrapper-image không overflow:hidden — ảnh scale tràn tới drawer */
+.delvaux-product .delvaux-product-image-col,
+.delvaux-product .delvaux-product-zoom {
+  overflow: visible !important;
+}
+body.delvaux-product-scroll-lock,
+html.delvaux-product-scroll-lock {
+  overflow: hidden !important;
+  touch-action: none;
+}
+[data-landing-preview-scroller].delvaux-product-scroll-lock {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  touch-action: none;
+}
 `;
+
+const titleBase = {
+  margin: 0,
+  fontFamily: DELVAUX_FONT_HEADING,
+  fontWeight: 400,
+  fontSize: 'clamp(24px, 2.9cqi, 36px)',
+  lineHeight: 1.2,
+  color: '#000000',
+} as const;
+
+const descBase = {
+  marginTop: 'clamp(16px, 2cqi, 24px)',
+  marginBottom: 0,
+  fontFamily: DELVAUX_FONT_BODY,
+  fontSize: 'clamp(13px, 1.4cqi, 14px)',
+  lineHeight: 1.55,
+  color: '#111111',
+} as const;
 
 export function DelvauxProduct({
   content,
@@ -86,7 +131,36 @@ export function DelvauxProduct({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  const { hasRoot, scroller } = useLandingMotion();
+  const isMobile = useContainerMobile(rootRef);
   const [openIdx, setOpenIdx] = React.useState<number | null>(null);
+  /** Giữ width panel trong lúc slide-out — tránh chữ bóp khi width → 0 (như gốc closeTab). */
+  const [shellExpanded, setShellExpanded] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
+  const [portalHost, setPortalHost] = React.useState<HTMLElement | null>(null);
+  const snappingRef = React.useRef(false);
+
+  // Mặc định false — SSR `/p` phải khớp production (không data-canvas-edit).
+  // Canvas editor: useLayoutEffect set true khi trong active-block-preview.
+  const [isCanvas, setIsCanvas] = React.useState(false);
+  React.useLayoutEffect(() => {
+    if (!hasRoot) {
+      setIsCanvas(false);
+      return;
+    }
+    setIsCanvas(
+      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
+    );
+  }, [hasRoot]);
+
+  React.useEffect(() => setMounted(true), []);
+
+  React.useLayoutEffect(() => {
+    if (!mounted || isCanvas || !isMobile) return;
+    setPortalHost(resolveDrawerPortalHost(rootRef.current));
+  }, [mounted, openIdx, isCanvas, isMobile]);
+
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -96,99 +170,511 @@ export function DelvauxProduct({
 
   const hotspots = content.hotspots ?? [];
   const isOpen = openIdx !== null;
+  const openSpot = openIdx !== null ? (hotspots[openIdx] ?? null) : null;
   const glow = content.glowColor || '#a77c63';
+
+  const resolveScrollRoot = React.useCallback((): HTMLElement | null => {
+    return (
+      scroller ??
+      (rootRef.current?.closest(
+        '[data-landing-preview-scroller]'
+      ) as HTMLElement | null) ??
+      null
+    );
+  }, [scroller]);
+
+  const isProductDone = React.useCallback(
+    () => !!rootRef.current?.classList.contains('delvaux-product-done'),
+    []
+  );
+
+  /** Gốc: scrollTo căn section vào viewport trước khi mở hotspot. */
+  const snapSectionToCenter = React.useCallback((): Promise<void> => {
+    return new Promise(resolve => {
+      const root = rootRef.current;
+      if (!root) {
+        resolve();
+        return;
+      }
+      const scrollRoot = resolveScrollRoot();
+      if (scrollRoot) {
+        const rootRect = root.getBoundingClientRect();
+        const scrollerRect = scrollRoot.getBoundingClientRect();
+        const sectionTop =
+          scrollRoot.scrollTop + (rootRect.top - scrollerRect.top);
+        const viewportH = scrollRoot.clientHeight;
+        const sectionH = root.offsetHeight;
+        const targetY = Math.max(0, sectionTop - (viewportH - sectionH));
+        scrollRoot.scrollTo({ top: targetY, behavior: 'smooth' });
+        window.setTimeout(resolve, 450);
+        return;
+      }
+      const sectionTop = root.getBoundingClientRect().top + window.scrollY;
+      const targetY = Math.max(
+        0,
+        sectionTop - (window.innerHeight - root.offsetHeight)
+      );
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+      window.setTimeout(resolve, 450);
+    });
+  }, [resolveScrollRoot]);
+
+  const handleClose = React.useCallback(() => setOpenIdx(null), []);
+
+  // Gốc closeTabProductDetail: dịch panel ra (x/translate) trước, width → 0 sau.
+  React.useEffect(() => {
+    if (openIdx !== null) {
+      setShellExpanded(true);
+      return;
+    }
+    const t = window.setTimeout(() => setShellExpanded(false), 900);
+    return () => window.clearTimeout(t);
+  }, [openIdx]);
+
+  const handleSpotClick = React.useCallback(
+    async (i: number) => {
+      if (isCanvas || snappingRef.current) return;
+      if (openIdx === i) {
+        setOpenIdx(null);
+        return;
+      }
+      // Gốc: chỉ tương tác khi .done (ảnh đã về giữa).
+      if (!isProductDone()) return;
+
+      snappingRef.current = true;
+      try {
+        await snapSectionToCenter();
+        if (!isProductDone()) return;
+        setOpenIdx(i);
+      } finally {
+        snappingRef.current = false;
+      }
+    },
+    [isCanvas, openIdx, isProductDone, snapSectionToCenter]
+  );
+
+  // Gốc: $("body").addClass("overflow-hidden"). Preview cuộn trong
+  // [data-landing-preview-scroller] — khóa scroller + đóng băng ST scrub.
+  useDrawerScrollLock(!isCanvas && isOpen ? 'delvaux-product' : null, isMobile);
+  React.useEffect(() => {
+    if (isCanvas || !isOpen) return;
+
+    const html = document.documentElement;
+    const body = document.body;
+    const scrollRoot = resolveScrollRoot();
+    const lenis = (
+      window as unknown as { __lenis?: { stop: () => void; start: () => void } }
+    ).__lenis;
+
+    const lockedY = scrollRoot ? scrollRoot.scrollTop : window.scrollY;
+    html.classList.add('delvaux-product-scroll-lock');
+    body.classList.add('delvaux-product-scroll-lock');
+    scrollRoot?.classList.add('delvaux-product-scroll-lock');
+    lenis?.stop();
+
+    const root = rootRef.current;
+    const triggers = ScrollTrigger.getAll().filter(t => t.trigger === root);
+    triggers.forEach(t => t.disable(false));
+
+    // Bỏ transform GSAP trên .zoom; chỉ img scale như gốc.
+    const zoom = root?.querySelector<HTMLElement>('.delvaux-product-zoom');
+    if (zoom) gsap.set(zoom, { scale: 1, x: 0, y: 0, clearProps: 'transform' });
+
+    const freezeScroll = () => {
+      if (scrollRoot) {
+        if (scrollRoot.scrollTop !== lockedY) scrollRoot.scrollTop = lockedY;
+        return;
+      }
+      if (window.scrollY !== lockedY) window.scrollTo(0, lockedY);
+    };
+    const blockWheel = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('[data-delvaux-product-panel]')) return;
+      e.preventDefault();
+    };
+
+    scrollRoot?.addEventListener('scroll', freezeScroll, { passive: true });
+    window.addEventListener('scroll', freezeScroll, { passive: true });
+    scrollRoot?.addEventListener('wheel', blockWheel, {
+      passive: false,
+      capture: true,
+    });
+    scrollRoot?.addEventListener('touchmove', blockWheel, {
+      passive: false,
+      capture: true,
+    });
+    window.addEventListener('wheel', blockWheel, {
+      passive: false,
+      capture: true,
+    });
+
+    return () => {
+      html.classList.remove('delvaux-product-scroll-lock');
+      body.classList.remove('delvaux-product-scroll-lock');
+      scrollRoot?.classList.remove('delvaux-product-scroll-lock');
+      scrollRoot?.removeEventListener('scroll', freezeScroll);
+      window.removeEventListener('scroll', freezeScroll);
+      scrollRoot?.removeEventListener('wheel', blockWheel, true);
+      scrollRoot?.removeEventListener('touchmove', blockWheel, true);
+      window.removeEventListener('wheel', blockWheel, true);
+      triggers.forEach(t => t.enable());
+      lenis?.start();
+      ScrollTrigger.update();
+    };
+  }, [isOpen, isCanvas, resolveScrollRoot]);
 
   useBlockMotion(
     rootRef,
-    ({ scroller, requestRefresh }) => {
+    ({ scroller: motionScroller, requestRefresh, isMobile: motionMobile }) => {
       const root = rootRef.current;
       if (!root) return;
+      if (isCanvas) {
+        root.classList.add('delvaux-product-done');
+        return;
+      }
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        root.classList.add('delvaux-product-done'); // vẫn hiện hotspot
+        root.classList.add('delvaux-product-done');
         return;
       }
 
-      // animate-zoomin gốc: scale 2, origin top center, y -150 → scrub về 1;
-      // xong (p≥0.98) → thêm class done để hotspot hiện ra.
       const zoom = root.querySelector<HTMLElement>('.delvaux-product-zoom');
-      if (zoom) {
-        gsap.fromTo(
-          zoom,
-          { scale: 2, transformOrigin: 'top center', y: -150 },
-          {
-            scale: 1,
-            y: 0,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: root,
-              scroller,
-              start: 'top 103%',
-              end: '+=100%',
-              scrub: 0.5,
-              invalidateOnRefresh: true,
-              onUpdate: self => {
-                root.classList.toggle(
-                  'delvaux-product-done',
-                  self.progress >= 0.98
-                );
-              },
-            },
-          }
-        );
-      } else {
+      if (!zoom) {
         root.classList.add('delvaux-product-done');
+        return;
       }
 
-      // R4: refresh sau khi ảnh sản phẩm load.
+      // Gốc animateZoomIn: y -150 desktop / -70 mobile; end +=100% / +=65%.
+      const yFrom = motionMobile ? -70 : -150;
+      const endPct = motionMobile ? 65 : 100;
+
+      const setDone = (done: boolean) => {
+        root.classList.toggle('delvaux-product-done', done);
+        if (!done) setOpenIdx(null);
+      };
+
+      gsap.fromTo(
+        zoom,
+        { scale: 2, transformOrigin: 'top center', y: yFrom },
+        {
+          scale: 1,
+          y: 0,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: root,
+            scroller: motionScroller,
+            start: 'top 103%',
+            end: `+=${endPct}%`,
+            scrub: 0.5,
+            invalidateOnRefresh: true,
+            onEnterBack: () => setDone(false),
+            onLeaveBack: () => setDone(false),
+            onUpdate: self => {
+              // Gốc: progress > 0.99
+              setDone(self.progress > 0.99);
+            },
+          },
+        }
+      );
+
       const img = root.querySelector<HTMLImageElement>('.delvaux-product-img');
       if (img && !img.complete) {
         img.addEventListener('load', requestRefresh, { once: true });
       }
     },
-    []
+    [isCanvas]
   );
 
-  // Mở panel → play video tab + báo sub-nav ẩn (gốc: sticky-menu.hide).
-  const panelRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
+    if (isCanvas) return;
     window.dispatchEvent(
-      new CustomEvent('delvaux:overlay', { detail: { open: openIdx !== null } })
+      new CustomEvent('delvaux:overlay', { detail: { open: isOpen } })
     );
-    if (openIdx === null) return;
-    const vid = panelRef.current?.querySelector<HTMLVideoElement>(
-      `[data-tab='${openIdx}'] video`
-    );
+    if (!isOpen) return;
+    const vid = panelRef.current?.querySelector<HTMLVideoElement>('video');
     vid?.play().catch(() => {});
     return () => {
       window.dispatchEvent(
         new CustomEvent('delvaux:overlay', { detail: { open: false } })
       );
     };
-  }, [openIdx]);
+  }, [isOpen, isCanvas, openIdx]);
+
+  React.useEffect(() => {
+    if (isCanvas || !isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenIdx(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, isCanvas]);
+
+  // ── Editor canvas ──
+  if (isCanvas) {
+    return (
+      <section
+        ref={rootRef}
+        id='discover'
+        data-canvas-edit='true'
+        style={composeStyle(
+          { background: DELVAUX_BG, minHeight: 520 },
+          blockBackgroundStyle(background)
+        )}
+        className='delvaux-product delvaux-product-done @container relative w-full overflow-hidden'
+      >
+        <style suppressHydrationWarning>{DELVAUX_FONT_CSS}</style>
+        <style suppressHydrationWarning>{PRODUCT_CSS}</style>
+        <div
+          className='mx-auto flex w-full max-w-3xl flex-col items-center px-4 py-8'
+          style={{ gap: 'clamp(24px, 4cqi, 40px)' }}
+        >
+          <div
+            className='delvaux-product-zoom relative'
+            style={{ height: 'min(50vh, 420px)' }}
+          >
+            <div
+              aria-hidden='true'
+              className='absolute rounded-full'
+              style={{
+                bottom: '10%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 'clamp(180px, 28cqi, 320px)',
+                height: 'clamp(180px, 28cqi, 320px)',
+                background: glow,
+                filter: 'blur(90px)',
+                opacity: 0.4,
+                zIndex: 0,
+              }}
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              data-element-key='imageUrl'
+              src={content.imageUrl}
+              alt='Product'
+              className={selectableClass(
+                activeKey === 'imageUrl',
+                'delvaux-product-img relative block'
+              )}
+              style={composeStyle(
+                {
+                  height: '100%',
+                  width: 'auto',
+                  objectFit: 'contain',
+                  zIndex: 1,
+                },
+                styleOf('imageUrl')
+              )}
+            />
+            {hotspots.map((spot, i) => (
+              <span
+                key={`spot-edit-${i}`}
+                aria-hidden='true'
+                className='delvaux-product-spot absolute z-[2] flex items-center justify-center'
+                style={{
+                  left: `${spot.x}%`,
+                  top: `${spot.y}%`,
+                  transform: 'translate(-50%, -50%)',
+                  width: '20px',
+                  height: '20px',
+                  border: '2px solid #ffffff',
+                  borderRadius: '9999px',
+                  boxShadow: '0 0 6px rgba(0,0,0,0.18)',
+                }}
+              />
+            ))}
+          </div>
+
+          <div className='grid w-full grid-cols-1 gap-4 @2xl:grid-cols-3'>
+            {hotspots.map((spot, i) => {
+              const titleKey = `hotspots[${i}].title`;
+              const descKey = `hotspots[${i}].desc`;
+              const mediaKey = `hotspots[${i}].mediaUrl`;
+              return (
+                <div
+                  key={`hs-card-${i}`}
+                  className='flex flex-col text-left'
+                  style={{
+                    background: '#ffffff',
+                    padding: 'clamp(16px, 2.5cqi, 24px)',
+                    border: '1px solid #e8e8e8',
+                  }}
+                >
+                  <h3
+                    data-element-key={titleKey}
+                    style={composeStyle(titleBase, styleOf(titleKey))}
+                    className={selectableClass(activeKey === titleKey)}
+                  >
+                    {spot.title || `Hotspot ${i + 1}`}
+                  </h3>
+                  <p
+                    data-element-key={descKey}
+                    style={composeStyle(descBase, styleOf(descKey))}
+                    className={selectableClass(activeKey === descKey)}
+                  >
+                    {spot.desc || 'Mô tả'}
+                  </p>
+                  <div
+                    className='w-full'
+                    style={{
+                      marginTop: 'clamp(12px, 2cqi, 20px)',
+                      aspectRatio: '465 / 348',
+                      background: '#f3f3f3',
+                    }}
+                  >
+                    {spot.mediaType === 'video' && spot.mediaUrl ? (
+                      <video
+                        data-element-key={mediaKey}
+                        muted
+                        playsInline
+                        preload='metadata'
+                        src={spot.mediaUrl}
+                        className={selectableClass(
+                          activeKey === mediaKey,
+                          'h-full w-full'
+                        )}
+                        style={composeStyle(
+                          { objectFit: 'cover' },
+                          styleOf(mediaKey)
+                        )}
+                      />
+                    ) : spot.mediaUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        data-element-key={mediaKey}
+                        src={spot.mediaUrl}
+                        alt={spot.title}
+                        className={selectableClass(
+                          activeKey === mediaKey,
+                          'h-full w-full'
+                        )}
+                        style={composeStyle(
+                          { objectFit: 'cover' },
+                          styleOf(mediaKey)
+                        )}
+                      />
+                    ) : (
+                      <div
+                        data-element-key={mediaKey}
+                        className={selectableClass(
+                          activeKey === mediaKey,
+                          'flex h-full w-full items-center justify-center'
+                        )}
+                        style={composeStyle(
+                          {
+                            fontFamily: DELVAUX_FONT_BODY,
+                            fontSize: 'clamp(12px, 1.3cqi, 13px)',
+                            color: 'rgba(17,17,17,0.4)',
+                          },
+                          styleOf(mediaKey)
+                        )}
+                      >
+                        Media URL
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // ── Production ──
+  // Gốc: scale + translate per tab trên img (delay 1s).
+  const focus =
+    openIdx !== null ? (OPEN_FOCUS[openIdx] ?? OPEN_FOCUS[0]) : OPEN_FOCUS[0];
+  const openScale = isMobile ? 1.15 : focus.scale;
+  const openTx = isMobile ? 0 : focus.tx;
+  const openTy = isMobile ? 0 : focus.ty;
+  // Width chỉ thu sau khi tab đã slide-out — không reflow/bóp chữ lúc đóng.
+  const panelWidthPx = shellExpanded
+    ? isMobile
+      ? '100%'
+      : 'min(50%, 600px)'
+    : '0px';
+  const imgHeight = isMobile ? 'min(65svh, 480px)' : '730px';
+  const layoutOpen = shellExpanded && !isMobile;
+
+  const panelBody =
+    openSpot && openIdx !== null ? (
+      <HotspotPanelBody
+        spot={openSpot}
+        idx={openIdx}
+        activeKey={activeKey}
+        styleOf={styleOf}
+        onClose={handleClose}
+      />
+    ) : null;
+
+  const inFrame = isDeviceFrameHost(portalHost);
+  const mobilePortal =
+    isMobile && isOpen && mounted && portalHost && panelBody
+      ? createPortal(
+          <div
+            ref={panelRef}
+            data-delvaux-product-panel=''
+            className={
+              inFrame
+                ? 'absolute inset-y-0 right-0 z-[1950] h-full w-full bg-white'
+                : 'fixed inset-y-0 right-0 z-[1950] h-full w-full bg-white'
+            }
+            role='dialog'
+            aria-modal='true'
+            data-lenis-prevent
+          >
+            {panelBody}
+          </div>,
+          portalHost
+        )
+      : null;
 
   return (
     <section
       ref={rootRef}
       id='discover'
       style={composeStyle(
-        { background: DELVAUX_BG },
+        { background: DELVAUX_BG, height: '100svh' },
         blockBackgroundStyle(background)
       )}
       className='delvaux-product @container relative w-full overflow-hidden'
     >
-      <style>{DELVAUX_FONT_CSS}</style>
-      <style>{PRODUCT_CSS}</style>
-      <div className='flex w-full' style={{ minHeight: 'min(100svh, 900px)' }}>
-        {/* Ảnh sản phẩm + hotspots — căn giữa khi đóng, dồn trái khi mở */}
+      <style suppressHydrationWarning>{DELVAUX_FONT_CSS}</style>
+      <style suppressHydrationWarning>{PRODUCT_CSS}</style>
+      <div
+        className={
+          layoutOpen
+            ? 'delvaux-product-content is-active flex h-full w-full'
+            : 'delvaux-product-content flex h-full w-full'
+        }
+        data-lenis-prevent
+        style={{
+          alignItems: 'center',
+          // Gốc .content.active: space-between + overflow hidden
+          justifyContent: layoutOpen ? 'space-between' : 'center',
+          overflow: shellExpanded ? 'hidden' : 'visible',
+        }}
+      >
+        {/*
+          Gốc .wrapper-image: width max-content; height 100vh; .active → max-width 50%.
+          Không overflow:hidden — scale tràn sang khoảng trống tới drawer.
+        */}
         <div
-          className='flex flex-1 items-center justify-center'
-          style={{ transition: 'all 0.7s ease' }}
+          className='delvaux-product-image-col relative flex h-full items-center justify-center'
+          style={{
+            width: 'max-content',
+            maxWidth: layoutOpen ? '50%' : '100%',
+            margin: layoutOpen ? '0' : '0 auto',
+            transition: 'max-width 1s ease',
+            overflow: 'visible',
+            zIndex: 1,
+          }}
         >
           <div
             className='delvaux-product-zoom relative'
-            style={{ height: 'min(73svh, 730px)' }}
+            style={{ height: imgHeight, overflow: 'visible' }}
           >
-            {/* Quầng sáng màu phía sau (gốc: ::before 400px blur 90px) */}
             <div
               aria-hidden='true'
               className='absolute rounded-full'
@@ -217,11 +703,12 @@ export function DelvauxProduct({
                 {
                   height: '100%',
                   width: 'auto',
+                  maxWidth: 'none',
                   objectFit: 'contain',
                   transition: 'transform 0.7s ease',
-                  transitionDelay: isOpen ? '0.4s' : '0s',
+                  transitionDelay: isOpen ? '1s' : '0s',
                   transform: isOpen
-                    ? 'scale(2.2) translate(30px, 60px)'
+                    ? `scale(${openScale}) translate(${openTx}px, ${openTy}px)`
                     : 'scale(1)',
                   zIndex: 1,
                 },
@@ -229,28 +716,35 @@ export function DelvauxProduct({
               )}
             />
 
-            {/* Hotspots — vòng tròn rỗng + pulse như gốc, vị trí % theo khung ảnh */}
             {hotspots.map((spot, i) => {
               const opened = openIdx === i;
-              if (isOpen && !opened) return null; // gốc: siblings d-none
+              if (isOpen && !opened) return null;
+              // Khi mở: giữ CLOSE trong khung (gốc reposition button ~30%/58%)
+              const spotLeft = opened
+                ? Math.min(Math.max(spot.x, 18), 82)
+                : spot.x;
+              const spotTop = opened
+                ? Math.min(Math.max(spot.y, 18), 82)
+                : spot.y;
               return (
                 <button
                   key={`spot-${i}`}
                   type='button'
                   aria-expanded={opened}
                   aria-label={spot.title}
-                  onClick={() => setOpenIdx(opened ? null : i)}
+                  onClick={() => {
+                    void handleSpotClick(i);
+                  }}
                   className='delvaux-product-spot group absolute z-[2] flex min-h-10 min-w-10 items-center justify-center'
                   style={{
-                    left: `${spot.x}%`,
-                    top: `${spot.y}%`,
+                    left: `${spotLeft}%`,
+                    top: `${spotTop}%`,
                     transform: 'translate(-50%, -50%)',
                     width: '40px',
                     height: '40px',
                   }}
                 >
                   {opened ? (
-                    // đang mở → icon X trắng (gốc: product-detail-close.svg)
                     <span
                       aria-hidden='true'
                       className='relative block'
@@ -282,7 +776,6 @@ export function DelvauxProduct({
                     </span>
                   ) : (
                     <>
-                      {/* vòng tĩnh 20px viền trắng 2px */}
                       <span
                         aria-hidden='true'
                         className='absolute rounded-full'
@@ -293,7 +786,6 @@ export function DelvauxProduct({
                           boxShadow: '0 0 6px rgba(0,0,0,0.18)',
                         }}
                       />
-                      {/* vòng pulse (scalebutton 4s) */}
                       <span
                         aria-hidden='true'
                         className='delvaux-product-spot-pulse absolute rounded-full'
@@ -305,16 +797,16 @@ export function DelvauxProduct({
                       />
                     </>
                   )}
-                  {/* nhãn uppercase nhỏ hiện khi hover (gốc: .text 8px trắng) */}
                   <span
                     className='pointer-events-none absolute left-full ml-2 whitespace-nowrap opacity-0 transition-opacity duration-300 group-hover:opacity-100'
                     style={{
                       fontFamily: DELVAUX_FONT_BODY,
-                      fontSize: '9px',
+                      fontSize: 'clamp(8px, 0.9cqi, 9px)',
                       letterSpacing: '1px',
                       textTransform: 'uppercase',
                       color: '#ffffff',
                       textShadow: '0 0 4px rgba(0,0,0,0.7)',
+                      ...(opened ? { opacity: 1 } : {}),
                     }}
                   >
                     {opened ? 'CLOSE' : spot.title}
@@ -325,141 +817,162 @@ export function DelvauxProduct({
           </div>
         </div>
 
-        {/* Panel chi tiết — trượt vào từ phải (gốc: width 0 → 600px, 1s) */}
-        <div
-          ref={panelRef}
-          className='relative overflow-hidden'
-          style={{
-            width: isOpen ? 'min(600px, 82cqw)' : '0px',
-            transition: 'width 1s ease',
-          }}
-        >
-          {hotspots.map((spot, i) => {
-            const opened = openIdx === i;
-            return (
-              <div
-                key={`tab-${i}`}
-                data-tab={i}
-                className='absolute top-0 right-0 flex h-full w-full flex-col justify-end'
-                style={{
-                  background: '#ffffff',
-                  padding: 'clamp(24px, 5cqi, 64px)',
-                  transform: opened ? 'translateX(0)' : 'translateX(100%)',
-                  transition: 'transform 1s ease 0.2s',
-                  zIndex: opened ? 2 : 1,
-                  minWidth: 'min(600px, 82cqw)',
-                }}
-              >
-                <h3
-                  data-element-key={`hotspot-${i}-title`}
-                  style={composeStyle(
-                    {
-                      margin: 0,
-                      fontFamily: DELVAUX_FONT_HEADING,
-                      fontWeight: 400,
-                      fontSize: 'clamp(24px, 2.9cqi, 36px)',
-                      lineHeight: 1.2,
-                      color: '#000000',
-                    },
-                    styleOf(`hotspot-${i}-title`)
-                  )}
-                  className={selectableClass(
-                    activeKey === `hotspot-${i}-title`
-                  )}
-                >
-                  {spot.title}
-                </h3>
-                <p
-                  data-element-key={`hotspot-${i}-desc`}
-                  style={composeStyle(
-                    {
-                      marginTop: 'clamp(16px, 2cqi, 24px)',
-                      marginBottom: 0,
-                      fontFamily: DELVAUX_FONT_BODY,
-                      fontSize: '14px',
-                      lineHeight: '22px',
-                      color: '#111111',
-                    },
-                    styleOf(`hotspot-${i}-desc`)
-                  )}
-                  className={selectableClass(activeKey === `hotspot-${i}-desc`)}
-                >
-                  {spot.desc}
-                </p>
-
+        {/* Desktop panel — gốc: slide translate trước, width → 0 sau (tránh bóp chữ) */}
+        {!isMobile ? (
+          <div
+            ref={panelRef}
+            data-delvaux-product-panel=''
+            className='relative z-[2] h-full shrink-0 overflow-hidden'
+            style={{
+              width: panelWidthPx,
+              // Đóng: chờ tab slide (~0.85s) rồi mới thu width
+              transition: shellExpanded
+                ? 'width 1s ease'
+                : 'width 0.5s ease 0.2s',
+            }}
+            role={isOpen ? 'dialog' : undefined}
+            aria-modal={isOpen ? true : undefined}
+          >
+            {hotspots.map((spot, i) => {
+              const opened = openIdx === i;
+              return (
                 <div
-                  className='w-full'
+                  key={`tab-${i}`}
+                  data-tab={i}
+                  className='absolute inset-y-0 right-0 h-full'
                   style={{
-                    marginTop: 'clamp(24px, 3.2cqi, 40px)',
-                    aspectRatio: '465 / 348',
-                  }}
-                >
-                  {spot.mediaType === 'video' ? (
-                    <video
-                      loop
-                      muted
-                      playsInline
-                      src={spot.mediaUrl}
-                      className='h-full w-full'
-                      style={{ objectFit: 'cover' }}
-                    />
-                  ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={spot.mediaUrl}
-                      alt={spot.title}
-                      className='h-full w-full'
-                      style={{ objectFit: 'cover' }}
-                    />
-                  )}
-                </div>
-
-                {/* nút đóng (gốc: 40px, border #e8e8e8, right/top 54px) */}
-                <button
-                  type='button'
-                  aria-label='Đóng'
-                  onClick={() => setOpenIdx(null)}
-                  className='absolute z-[3] flex items-center justify-center rounded-full'
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    right: 'clamp(20px, 4.2cqi, 54px)',
-                    top: 'clamp(20px, 4.2cqi, 54px)',
-                    border: '1px solid #e8e8e8',
+                    // Width cố định theo shell mở — không co theo parent lúc đóng
+                    width: 'min(50cqw, 600px)',
+                    maxWidth: '100%',
                     background: '#ffffff',
-                    cursor: 'pointer',
+                    transform: opened ? 'translateX(0)' : 'translateX(100%)',
+                    // Mở: delay 0.7s; đóng: slide ngay (gốc closeTab)
+                    transition: opened
+                      ? 'transform 1s ease 0.7s'
+                      : 'transform 0.85s ease 0s',
+                    zIndex: opened ? 2 : 1,
                   }}
                 >
-                  <svg
-                    width='12'
-                    height='13'
-                    viewBox='0 0 12 13'
-                    fill='none'
-                    xmlns='http://www.w3.org/2000/svg'
-                  >
-                    <line
-                      x1='0.484835'
-                      y1='11.4848'
-                      x2='11.0914'
-                      y2='0.878233'
-                      stroke='black'
-                      strokeWidth='0.75'
-                    />
-                    <line
-                      x1='1.01517'
-                      y1='0.984835'
-                      x2='11.6218'
-                      y2='11.5914'
-                      stroke='black'
-                      strokeWidth='0.75'
-                    />
-                  </svg>
-                </button>
-              </div>
-            );
-          })}
-        </div>
+                  <HotspotPanelBody
+                    spot={spot}
+                    idx={i}
+                    activeKey={activeKey}
+                    styleOf={styleOf}
+                    onClose={handleClose}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
+
+      {mobilePortal}
     </section>
+  );
+}
+
+function HotspotPanelBody({
+  spot,
+  idx,
+  activeKey,
+  styleOf,
+  onClose,
+}: {
+  spot: DelvauxProductHotspot;
+  idx: number;
+  activeKey?: string | null;
+  styleOf: (key: string) => React.CSSProperties | undefined;
+  onClose: () => void;
+}) {
+  const titleKey = `hotspots[${idx}].title`;
+  const descKey = `hotspots[${idx}].desc`;
+  const mediaKey = `hotspots[${idx}].mediaUrl`;
+
+  return (
+    <div
+      className='relative flex h-full w-full flex-col justify-end overflow-y-auto'
+      data-lenis-prevent
+      style={{ padding: 'clamp(24px, 5cqi, 64px)' }}
+    >
+      <button
+        type='button'
+        aria-label='Đóng'
+        onClick={onClose}
+        className='absolute z-[3] flex items-center justify-center rounded-full'
+        style={{
+          width: '40px',
+          height: '40px',
+          right: 'clamp(20px, 4.2cqi, 54px)',
+          top: 'clamp(20px, 4.2cqi, 54px)',
+          border: '1px solid #e8e8e8',
+          background: '#ffffff',
+          cursor: 'pointer',
+        }}
+      >
+        <svg width='12' height='13' viewBox='0 0 12 13' fill='none'>
+          <line
+            x1='0.48'
+            y1='11.48'
+            x2='11.09'
+            y2='0.88'
+            stroke='black'
+            strokeWidth='0.75'
+          />
+          <line
+            x1='1.02'
+            y1='0.98'
+            x2='11.62'
+            y2='11.59'
+            stroke='black'
+            strokeWidth='0.75'
+          />
+        </svg>
+      </button>
+
+      <h3
+        data-element-key={titleKey}
+        style={composeStyle(titleBase, styleOf(titleKey))}
+        className={selectableClass(activeKey === titleKey)}
+      >
+        {spot.title}
+      </h3>
+      <p
+        data-element-key={descKey}
+        style={composeStyle(descBase, styleOf(descKey))}
+        className={selectableClass(activeKey === descKey)}
+      >
+        {spot.desc}
+      </p>
+
+      <div
+        className='w-full'
+        style={{
+          marginTop: 'clamp(24px, 3.2cqi, 40px)',
+          aspectRatio: '465 / 348',
+        }}
+      >
+        {spot.mediaType === 'video' ? (
+          <video
+            data-element-key={mediaKey}
+            loop
+            muted
+            playsInline
+            src={spot.mediaUrl}
+            className={selectableClass(activeKey === mediaKey, 'h-full w-full')}
+            style={composeStyle({ objectFit: 'cover' }, styleOf(mediaKey))}
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            data-element-key={mediaKey}
+            src={spot.mediaUrl}
+            alt={spot.title}
+            className={selectableClass(activeKey === mediaKey, 'h-full w-full')}
+            style={composeStyle({ objectFit: 'cover' }, styleOf(mediaKey))}
+          />
+        )}
+      </div>
+    </div>
   );
 }

@@ -42,6 +42,7 @@ import {
   resolvePnjParagraphs,
   setPnjParagraphAt,
 } from './blocks/PnjDetails';
+import { DELVAUX_HERO_FRAMES } from './blocks/_registry/defs/delvauxHeroFrames';
 import {
   isPnjHeroFramesConfig,
   MINT_FRAMES_EXAMPLE,
@@ -89,6 +90,14 @@ import {
   type MintVaultCraftItem,
   type MintVaultCollectionContent,
   type MintVaultCoin,
+  type DelvauxHeroContent,
+  type DelvauxProductContent,
+  type DelvauxProductHotspot,
+  type DelvauxSubnavContent,
+  type DelvauxSubnavLink,
+  type DelvauxVariantContent,
+  type DelvauxVariantFaq,
+  type DelvauxVariantOption,
   type PnjDetailsContent,
   type PnjHeroContent,
   type PnjHeroHotspot,
@@ -174,6 +183,18 @@ export function ElementToolbar({
       delete next.frames;
       onContentChange(next as BlockContent);
       toast.success('Đã reset frame sequence về mặc định PNJ');
+      onClose();
+      return;
+    }
+
+    if (kind === 'delvauxFrames') {
+      onContentChange({
+        ...c,
+        frameUrls: [...DELVAUX_HERO_FRAMES],
+        frameCount: DELVAUX_HERO_FRAMES.length,
+        frameUrlPattern: '',
+      } as BlockContent);
+      toast.success('Đã reset chuỗi frame về mặc định Delvaux');
       onClose();
       return;
     }
@@ -421,6 +442,36 @@ export function ElementToolbar({
         {kind === 'pnjFrames' && (
           <PnjFramesJsonControls
             content={content as PnjHeroContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'delvauxFrames' && (
+          <DelvauxFramesControls
+            content={content as DelvauxHeroContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'delvauxHotspots' && (
+          <DelvauxHotspotsControls
+            content={content as DelvauxProductContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'delvauxVariants' && (
+          <DelvauxVariantsControls
+            content={content as DelvauxVariantContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'delvauxFaqs' && (
+          <DelvauxFaqsControls
+            content={content as DelvauxVariantContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'delvauxSubnavLinks' && (
+          <DelvauxSubnavLinksControls
+            content={content as DelvauxSubnavContent}
             onContentChange={onContentChange}
           />
         )}
@@ -3083,6 +3134,606 @@ function PnjFramesJsonControls({
             Reset PNJ mặc định
           </button>
         </div>
+      </div>
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── DELVAUX PRODUCT HOTSPOTS
+
+function DelvauxHotspotsControls({
+  content,
+  onContentChange,
+}: {
+  content: DelvauxProductContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const hotspots = content.hotspots ?? [];
+
+  const update = (i: number, patch: Partial<DelvauxProductHotspot>) =>
+    onContentChange({
+      ...content,
+      hotspots: hotspots.map((h, idx) => (idx === i ? { ...h, ...patch } : h)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      hotspots: hotspots.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      hotspots: [
+        ...hotspots,
+        {
+          title: 'Điểm mới',
+          desc: 'Mô tả chi tiết hotspot.',
+          mediaType: 'image',
+          mediaUrl: '',
+          x: 50,
+          y: 50,
+        },
+      ],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Hotspot'
+      preview={`${hotspots.length} hotspot`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {hotspots.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có hotspot — thêm điểm trên ảnh sản phẩm.
+          </p>
+        ) : null}
+        {hotspots.map((h, i) => (
+          <div
+            key={`dvx-hs-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={h.title}
+                onChange={e => update(i, { title: e.target.value })}
+                placeholder='Tiêu đề hotspot'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá hotspot'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={h.desc}
+              onChange={e => update(i, { desc: e.target.value })}
+              placeholder='Mô tả'
+              className='min-h-16 resize-none border-neutral-200 bg-white text-xs'
+            />
+            <div className='flex items-center gap-2'>
+              <label className='text-2xs flex items-center gap-1 text-neutral-500'>
+                Loại
+                <select
+                  value={h.mediaType}
+                  onChange={e =>
+                    update(i, {
+                      mediaType: e.target.value === 'video' ? 'video' : 'image',
+                    })
+                  }
+                  className='h-8 rounded-md border border-neutral-200 bg-white px-1.5 text-xs text-neutral-800'
+                  aria-label={`Media type hotspot ${i + 1}`}
+                >
+                  <option value='image'>Ảnh</option>
+                  <option value='video'>Video</option>
+                </select>
+              </label>
+              <Input
+                value={h.mediaUrl}
+                onChange={e => update(i, { mediaUrl: e.target.value })}
+                placeholder='URL media'
+                className='h-8 flex-1 border-neutral-200 bg-white text-xs'
+              />
+            </div>
+            <div className='flex items-center gap-2'>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                Dot X%
+                <Input
+                  type='number'
+                  min={0}
+                  max={100}
+                  value={h.x}
+                  onChange={e => update(i, { x: Number(e.target.value) })}
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+              </label>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                Dot Y%
+                <Input
+                  type='number'
+                  min={0}
+                  max={100}
+                  value={h.y}
+                  onChange={e => update(i, { y: Number(e.target.value) })}
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+              </label>
+            </div>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm hotspot' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── DELVAUX SUBNAV LINKS
+
+function DelvauxSubnavLinksControls({
+  content,
+  onContentChange,
+}: {
+  content: DelvauxSubnavContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const links = content.links ?? [];
+
+  const update = (i: number, patch: Partial<DelvauxSubnavLink>) =>
+    onContentChange({
+      ...content,
+      links: links.map((l, idx) => (idx === i ? { ...l, ...patch } : l)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      links: links.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      links: [
+        ...links,
+        {
+          label: 'Link mới',
+          targetId: 'section-id',
+        },
+      ],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Anchor links'
+      preview={`${links.length} link`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {links.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có link — thêm anchor tới section id.
+          </p>
+        ) : null}
+        {links.map((l, i) => (
+          <div
+            key={`dvx-nav-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={l.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá link'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={l.targetId}
+              onChange={e => update(i, { targetId: e.target.value })}
+              placeholder='Section id (vd: description)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm link' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── DELVAUX VARIANT (swatches + FAQ)
+
+function DelvauxVariantsControls({
+  content,
+  onContentChange,
+}: {
+  content: DelvauxVariantContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const variants = content.variants ?? [];
+
+  const update = (i: number, patch: Partial<DelvauxVariantOption>) =>
+    onContentChange({
+      ...content,
+      variants: variants.map((v, idx) => (idx === i ? { ...v, ...patch } : v)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      variants: variants.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      variants: [
+        ...variants,
+        {
+          label: 'Màu mới',
+          ref: '',
+          color: '#764733',
+          imageUrl: '',
+        },
+      ],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Màu (swatch)'
+      preview={`${variants.length} màu`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {variants.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có màu — thêm biến thể swatch.
+          </p>
+        ) : null}
+        {variants.map((v, i) => (
+          <div
+            key={`dvx-var-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={v.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn màu'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá màu'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <div className='flex items-center gap-2'>
+              <Input
+                value={v.ref}
+                onChange={e => update(i, { ref: e.target.value })}
+                placeholder='REF'
+                className='h-8 flex-1 border-neutral-200 bg-white text-xs'
+              />
+              <Input
+                value={v.color}
+                onChange={e => update(i, { color: e.target.value })}
+                placeholder='#hex'
+                className='h-8 w-24 border-neutral-200 bg-white text-xs'
+                aria-label={`Màu swatch ${i + 1}`}
+              />
+            </div>
+            <Input
+              value={v.imageUrl}
+              onChange={e => update(i, { imageUrl: e.target.value })}
+              placeholder='URL ảnh sản phẩm'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm màu' />
+    </PopoverTrigger>
+  );
+}
+
+function DelvauxFaqsControls({
+  content,
+  onContentChange,
+}: {
+  content: DelvauxVariantContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const faqs = content.faqs ?? [];
+
+  const update = (i: number, patch: Partial<DelvauxVariantFaq>) =>
+    onContentChange({
+      ...content,
+      faqs: faqs.map((f, idx) => (idx === i ? { ...f, ...patch } : f)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      faqs: faqs.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      faqs: [
+        ...faqs,
+        {
+          question: 'Câu hỏi mới',
+          answer: '',
+        },
+      ],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger label='FAQ' preview={`${faqs.length} mục`} width={460}>
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {faqs.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có FAQ — thêm câu hỏi / trả lời.
+          </p>
+        ) : null}
+        {faqs.map((f, i) => (
+          <div
+            key={`dvx-faq-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={f.question}
+                onChange={e => update(i, { question: e.target.value })}
+                placeholder='Câu hỏi'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá FAQ'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={f.answer}
+              onChange={e => update(i, { answer: e.target.value })}
+              placeholder='Trả lời'
+              className='min-h-16 resize-none border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm FAQ' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── DELVAUX FRAMES (pattern + JSON)
+
+function resolveDelvauxFrameCount(content: DelvauxHeroContent): number {
+  if (Array.isArray(content.frameUrls) && content.frameUrls.length > 1) {
+    return content.frameUrls.length;
+  }
+  const pattern = content.frameUrlPattern ?? '';
+  const n = Number(content.frameCount) || 0;
+  if (pattern.includes('{i}') && n > 1) return n;
+  return 0;
+}
+
+function DelvauxFramesControls({
+  content,
+  onContentChange,
+}: {
+  content: DelvauxHeroContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const listCount = Array.isArray(content.frameUrls)
+    ? content.frameUrls.length
+    : 0;
+  const usesList = listCount > 1;
+  const count = resolveDelvauxFrameCount(content);
+  const isDefault =
+    usesList &&
+    listCount === DELVAUX_HERO_FRAMES.length &&
+    content.frameUrls?.[0] === DELVAUX_HERO_FRAMES[0];
+
+  const [pattern, setPattern] = React.useState(
+    () => content.frameUrlPattern ?? ''
+  );
+  const [frameCount, setFrameCount] = React.useState(() =>
+    String(content.frameCount > 1 ? content.frameCount : 96)
+  );
+  const [draft, setDraft] = React.useState(() =>
+    JSON.stringify(usesList ? content.frameUrls : DELVAUX_HERO_FRAMES, null, 2)
+  );
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setPattern(content.frameUrlPattern ?? '');
+    setFrameCount(String(content.frameCount > 1 ? content.frameCount : 96));
+    const list =
+      Array.isArray(content.frameUrls) && content.frameUrls.length > 1
+        ? content.frameUrls
+        : DELVAUX_HERO_FRAMES;
+    setDraft(JSON.stringify(list, null, 2));
+    setError(null);
+  }, [content.frameUrls, content.frameUrlPattern, content.frameCount]);
+
+  const handleApplyPattern = () => {
+    const trimmed = pattern.trim();
+    const n = Math.floor(Number(frameCount));
+    if (!trimmed.includes('{i}')) {
+      setError('URL phải chứa {i} (chỉ số frame 1-based).');
+      toast.error('Pattern thiếu {i}');
+      return;
+    }
+    if (!Number.isFinite(n) || n < 2) {
+      setError('Số frame phải ≥ 2.');
+      toast.error('Số frame không hợp lệ');
+      return;
+    }
+    setError(null);
+    onContentChange({
+      ...content,
+      frameUrlPattern: trimmed,
+      frameCount: n,
+      frameUrls: [],
+    } as BlockContent);
+    toast.success(`Đã áp dụng pattern · ${n} frames`);
+  };
+
+  const handleApplyJson = () => {
+    try {
+      const parsed: unknown = JSON.parse(draft);
+      if (
+        !Array.isArray(parsed) ||
+        parsed.length < 2 ||
+        !parsed.every(u => typeof u === 'string' && u.trim().length > 0)
+      ) {
+        setError('JSON phải là mảng ≥ 2 URL string.');
+        toast.error('JSON frames sai schema');
+        return;
+      }
+      const urls = parsed.map(u => (u as string).trim());
+      setError(null);
+      onContentChange({
+        ...content,
+        frameUrls: urls,
+        frameCount: urls.length,
+        frameUrlPattern: '',
+      } as BlockContent);
+      toast.success(`Đã cập nhật chuỗi frame · ${urls.length} frames`);
+    } catch {
+      setError('Không parse được JSON.');
+      toast.error('JSON không hợp lệ');
+    }
+  };
+
+  const handleReset = () => {
+    onContentChange({
+      ...content,
+      frameUrls: [...DELVAUX_HERO_FRAMES],
+      frameCount: DELVAUX_HERO_FRAMES.length,
+      frameUrlPattern: '',
+    } as BlockContent);
+    setDraft(JSON.stringify(DELVAUX_HERO_FRAMES, null, 2));
+    setPattern('');
+    setFrameCount(String(DELVAUX_HERO_FRAMES.length));
+    setError(null);
+    toast.success(
+      `Đã reset chuỗi frame · ${DELVAUX_HERO_FRAMES.length} frames`
+    );
+  };
+
+  const modeLabel = isDefault
+    ? ' (mặc định)'
+    : usesList
+      ? ' (JSON)'
+      : count > 0
+        ? ' (pattern)'
+        : '';
+
+  return (
+    <PopoverTrigger
+      label='Chuỗi frame'
+      preview={`${count || 0} frames${modeLabel}`}
+      width={520}
+    >
+      <p className='text-2xs mb-2 text-neutral-500'>
+        Lớp intro tua theo scroll sau khi ảnh khung fade. Dùng pattern URL có
+        {' {i} '}hoặc dán JSON mảng URL (CDN uuid).
+      </p>
+
+      <p className='text-2xs mb-1 font-medium text-neutral-700'>
+        Pattern nhanh
+      </p>
+      <Input
+        value={pattern}
+        onChange={e => {
+          setPattern(e.target.value);
+          setError(null);
+        }}
+        placeholder='https://cdn.example.com/frame-{i}.jpg'
+        className='mb-1.5 h-8 border-neutral-200 bg-white font-mono text-[11px]'
+        aria-label='Frame URL pattern'
+      />
+      <div className='mb-2 flex gap-1.5'>
+        <Input
+          type='number'
+          min={2}
+          value={frameCount}
+          onChange={e => {
+            setFrameCount(e.target.value);
+            setError(null);
+          }}
+          className='h-8 w-24 border-neutral-200 bg-white text-xs'
+          aria-label='Số frame'
+        />
+        <button
+          type='button'
+          onClick={handleApplyPattern}
+          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-900 text-xs font-medium text-white transition-colors hover:bg-neutral-800'
+        >
+          Áp dụng pattern
+        </button>
+      </div>
+
+      <p className='text-2xs mb-1 font-medium text-neutral-700'>
+        JSON mảng URL
+      </p>
+      <Textarea
+        value={draft}
+        onChange={e => {
+          setDraft(e.target.value);
+          setError(null);
+        }}
+        spellCheck={false}
+        data-lenis-prevent
+        className='mb-2 field-sizing-fixed h-40 max-h-[40vh] min-h-0 resize-y overflow-y-auto overscroll-contain border-neutral-200 bg-white font-mono text-[11px] leading-relaxed'
+        aria-label='Frames JSON array'
+      />
+      {error && (
+        <p className='text-2xs mb-2 text-rose-600' role='alert'>
+          {error}
+        </p>
+      )}
+      <div className='flex gap-1.5'>
+        <button
+          type='button'
+          onClick={handleApplyJson}
+          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-900 text-xs font-medium text-white transition-colors hover:bg-neutral-800'
+        >
+          Áp dụng JSON
+        </button>
+        <button
+          type='button'
+          onClick={handleReset}
+          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-50 text-xs font-medium text-neutral-700 ring-1 ring-neutral-200/70 transition-colors hover:bg-white'
+        >
+          Reset mặc định
+        </button>
       </div>
     </PopoverTrigger>
   );

@@ -7,14 +7,14 @@
  * (fade-up stagger). Style gốc: h1 64/72 #000, p 16/24 #111, cột giữa 50%.
  * Animation đi qua useBlockMotion (GSAP R1–R6) — không Lenis/plugin trong block.
  *
- * Lưu ý: default content là copy generic, KHÔNG dùng nguyên văn Delvaux (bản
- * quyền — xem NOTES.md của clone). Thay nội dung thật qua editor.
+ * Canvas editor: skip SplitType + scrub (title/body luôn visible, DOM không
+ * bị tách) — PreviewMode + `/p` giữ production motion.
  */
 import * as React from 'react';
 import gsap from 'gsap';
 import SplitType from 'split-type';
 
-import { useBlockMotion } from '../motion/LandingMotion';
+import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
 import {
   DELVAUX_BG,
   DELVAUX_FONT_BODY,
@@ -54,6 +54,20 @@ export function DelvauxDetails({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
+  const splitsRef = React.useRef<SplitType[]>([]);
+  const { hasRoot } = useLandingMotion();
+
+  const [isCanvas, setIsCanvas] = React.useState(true);
+  React.useLayoutEffect(() => {
+    if (!hasRoot) {
+      setIsCanvas(false);
+      return;
+    }
+    setIsCanvas(
+      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
+    );
+  }, [hasRoot]);
+
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -61,73 +75,92 @@ export function DelvauxDetails({
       positionStyle(positions, key)
     );
 
-  useBlockMotion(rootRef, ({ scroller }) => {
-    const root = rootRef.current;
-    if (!root) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const revertSplits = () => {
+    splitsRef.current.forEach(s => s.revert());
+    splitsRef.current = [];
+  };
 
-    const title = root.querySelector<HTMLElement>('.delvaux-details-title');
-    const bodies = root.querySelectorAll<HTMLElement>('.delvaux-details-body');
+  React.useEffect(() => () => revertSplits(), []);
 
-    // Gốc: `data-splitting data-effect-one` — từng KÝ TỰ trượt lên từ dưới
-    // (mask overflow-hidden), stagger nhẹ. Dùng SplitType (như MintV2Works).
-    if (title) {
-      const split = new SplitType(title, { types: 'words,chars' });
-      // mask theo TỪ: chars trượt trong khung word (overflow hidden)
-      if (split.words?.length) {
-        gsap.set(split.words, {
-          overflow: 'hidden',
-          display: 'inline-block',
-          verticalAlign: 'top',
-        });
+  useBlockMotion(
+    rootRef,
+    ({ scroller }) => {
+      const root = rootRef.current;
+      if (!root) return;
+      // Teardown SplitType trước mọi rebuild (canvas ↔ preview / content đổi).
+      revertSplits();
+      // Editor canvas: không SplitType (phá DOM edit) / không ẩn body opacity 0.
+      if (isCanvas) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const title = root.querySelector<HTMLElement>('.delvaux-details-title');
+      const bodies = root.querySelectorAll<HTMLElement>(
+        '.delvaux-details-body'
+      );
+
+      // Gốc: `data-splitting data-effect-one` — từng KÝ TỰ trượt lên từ dưới
+      // (mask overflow-hidden), stagger nhẹ. Dùng SplitType (như MintV2Works).
+      if (title) {
+        const split = new SplitType(title, { types: 'words,chars' });
+        splitsRef.current.push(split);
+        // mask theo TỪ: chars trượt trong khung word (overflow hidden)
+        if (split.words?.length) {
+          gsap.set(split.words, {
+            overflow: 'hidden',
+            display: 'inline-block',
+            verticalAlign: 'top',
+          });
+        }
+        if (split.chars?.length) {
+          gsap.fromTo(
+            split.chars,
+            { yPercent: 110 },
+            {
+              yPercent: 0,
+              stagger: 0.02,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: root,
+                scroller,
+                start: 'top 95%',
+                end: 'top 40%',
+                scrub: 1,
+                invalidateOnRefresh: true,
+              },
+            }
+          );
+        }
       }
-      if (split.chars?.length) {
+
+      if (bodies.length) {
         gsap.fromTo(
-          split.chars,
-          { yPercent: 110 },
+          bodies,
+          { opacity: 0, y: 24 },
           {
-            yPercent: 0,
-            stagger: 0.02,
+            opacity: 1,
+            y: 0,
+            stagger: 0.12,
             ease: 'none',
             scrollTrigger: {
               trigger: root,
               scroller,
-              start: 'top 95%',
-              end: 'top 40%',
+              start: 'top 92%',
+              end: 'top 70%',
               scrub: 1,
               invalidateOnRefresh: true,
             },
           }
         );
       }
-    }
-
-    if (bodies.length) {
-      gsap.fromTo(
-        bodies,
-        { opacity: 0, y: 24 },
-        {
-          opacity: 1,
-          y: 0,
-          stagger: 0.12,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: root,
-            scroller,
-            start: 'top 92%',
-            end: 'top 70%',
-            scrub: 1,
-            invalidateOnRefresh: true,
-          },
-        }
-      );
-    }
-  });
+    },
+    [isCanvas, content.title, content.body1, content.body2]
+  );
 
   return (
     <section
       ref={rootRef}
       id='description'
+      data-canvas-edit={isCanvas ? 'true' : undefined}
       style={composeStyle(
         { background: DELVAUX_BG },
         blockBackgroundStyle(background)
