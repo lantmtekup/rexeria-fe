@@ -49,7 +49,9 @@ import { ExtraElementsList } from './ExtraElementsList';
 import { resolvePnjParagraphs } from './blocks/PnjDetails';
 import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
 import { realEstateHeroStatElements } from './blocks/_registry/defs/realEstateHero';
+import { realEstateHighlightItemElements } from './blocks/_registry/defs/realEstateHighlights';
 import { realEstateOverviewStatElements } from './blocks/_registry/defs/realEstateOverview';
+import { realEstateVillaSlideElements } from './blocks/_registry/defs/realEstateVilla';
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
 import { mintDiscoverTabElements } from './blocks/_registry/defs/mintDiscover';
 import { mintV2ProcessStepElements } from './blocks/_registry/defs/mintV2Process';
@@ -74,6 +76,8 @@ import {
   type PnjStickyMenuItem,
   type RealEstateHeroStat,
   type RealEstateOverviewStat,
+  type RealEstateHighlightItem,
+  type RealEstateVillaSlide,
   type MintDiscoverTab,
   type MintV2ProcessStep,
   type MintV2ServiceItem,
@@ -794,6 +798,64 @@ export function elementsForType(
         fieldType: 'text' as const,
       },
       ...realEstateOverviewStatElements(stats),
+    ];
+  }
+  if (type === 'real_estate_highlights') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as RealEstateHighlightItem[]).filter(
+          it => it && typeof it === 'object' && typeof it.text === 'string'
+        )
+      : [];
+    // Không có mục list manager: số card cố định 4 như nguồn — xem docblock
+    // `defs/realEstateHighlights.ts`.
+    return [
+      // BACKGROUND_LAYER = nền NGOÀI (của cả block); `contentSurface` = dải nền
+      // 372 phía trong. Hai lớp tách bạch, sửa độc lập.
+      BACKGROUND_LAYER,
+      { key: 'contentSurface', label: 'Nền cột nội dung', icon: Palette },
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'description',
+        label: 'Mô tả',
+        icon: Pilcrow,
+        fieldType: 'textarea' as const,
+      },
+      ...realEstateHighlightItemElements(items),
+    ];
+  }
+  if (type === 'real_estate_villa') {
+    const raw = content?.slides;
+    const slides = Array.isArray(raw)
+      ? (raw as RealEstateVillaSlide[]).filter(
+          s => s && typeof s === 'object' && typeof s.title === 'string'
+        )
+      : [];
+    // Không có mục list manager: số slide cố định 4 như nguồn — xem docblock
+    // `defs/realEstateVilla.ts`.
+    return [
+      // BACKGROUND_LAYER = nền NGOÀI (của cả block); `cardSurface` = nền thẻ
+      // phía trong. Hai lớp tách bạch, sửa độc lập.
+      BACKGROUND_LAYER,
+      {
+        key: 'eyebrow',
+        label: 'Nhãn nhỏ',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      { key: 'cardSurface', label: 'Nền thẻ', icon: Palette },
+      ...realEstateVillaSlideElements(slides),
     ];
   }
   if (type === 'mint_discover') {

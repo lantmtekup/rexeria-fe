@@ -76,6 +76,8 @@ const ORDERED_TYPES: BlockType[] = [
   'masterise_home_inside',
   'real_estate_info',
   'real_estate_overview',
+  'real_estate_highlights',
+  'real_estate_villa',
   // ── Features / Services ──────────────────────────────────
   'feature_section',
   'framer_clarity_services',

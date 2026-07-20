@@ -208,6 +208,21 @@ export function resolveKind(
     if (/^stats\[\d+\]\.text$/.test(key)) return 'text';
     if (/^stats\[\d+\]\.iconUrl$/.test(key)) return 'image';
   }
+  // Real Estate điểm nổi trội: mỗi card là ảnh + số thứ tự + một dòng chữ.
+  // Phải chặn TRƯỚC các fallback `items[i].*` chung ngay bên dưới.
+  if (blockType === 'real_estate_highlights') {
+    if (/^items\[\d+\]\.imageUrl$/.test(key)) return 'image';
+    if (/^items\[\d+\]\.(number|text)$/.test(key)) return 'text';
+    // Dải nền 372 phía sau — chỉ có màu, không có nội dung.
+    if (key === 'contentSurface') return 'fill';
+  }
+  // Real Estate biệt thự: mỗi slide là ảnh + tên loại hình + mô tả.
+  if (blockType === 'real_estate_villa') {
+    if (/^slides\[\d+\]\.imageUrl$/.test(key)) return 'image';
+    if (/^slides\[\d+\]\.(title|description)$/.test(key)) return 'text';
+    // Nền thẻ — chỉ có màu, không có nội dung.
+    if (key === 'cardSurface') return 'fill';
+  }
   if (/^items\[\d+\]\.label$/.test(key)) return 'text';
   if (/^items\[\d+\]\.link$/.test(key)) return 'text';
   if (/^items\[\d+\]\.caption$/.test(key) && blockType === 'mintv2_services') {
@@ -268,6 +283,30 @@ export function resolveLabel(
     return `Hạng mục ${Number(reOverview[1]) + 1} · ${
       reOverview[2] === 'text' ? 'Nội dung' : 'Icon'
     }`;
+  }
+  const reHighlight = key.match(/^items\[(\d+)\]\.(number|text|imageUrl)$/);
+  if (reHighlight && blockType === 'real_estate_highlights') {
+    const labels: Record<string, string> = {
+      number: 'Số thứ tự',
+      text: 'Nội dung',
+      imageUrl: 'Ảnh',
+    };
+    return `Điểm nổi trội ${Number(reHighlight[1]) + 1} · ${labels[reHighlight[2]]}`;
+  }
+  if (key === 'contentSurface' && blockType === 'real_estate_highlights') {
+    return 'Nền cột nội dung';
+  }
+  const reVilla = key.match(/^slides\[(\d+)\]\.(title|description|imageUrl)$/);
+  if (reVilla && blockType === 'real_estate_villa') {
+    const labels: Record<string, string> = {
+      title: 'Tên loại hình',
+      description: 'Mô tả',
+      imageUrl: 'Ảnh',
+    };
+    return `Slide ${Number(reVilla[1]) + 1} · ${labels[reVilla[2]]}`;
+  }
+  if (key === 'cardSurface' && blockType === 'real_estate_villa') {
+    return 'Nền thẻ';
   }
   const navLabel = key.match(/^items\[(\d+)\]\.label$/);
   if (navLabel && blockType === 'mintv2_services') {
@@ -503,6 +542,54 @@ export function resolveElementMeta(
         isText ? 'Nội dung' : 'Icon'
       }`,
     };
+  }
+  const reHighlightField = key.match(
+    /^items\[(\d+)\]\.(number|text|imageUrl)$/
+  );
+  if (reHighlightField && blockType === 'real_estate_highlights') {
+    const field = reHighlightField[2];
+    const labels: Record<string, string> = {
+      number: 'Số thứ tự',
+      text: 'Nội dung',
+      imageUrl: 'Ảnh',
+    };
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      // Chữ trong card dài và hay xuống dòng → textarea; số thì 1 dòng.
+      fieldType:
+        field === 'imageUrl' ? 'image' : field === 'text' ? 'textarea' : 'text',
+      label: `Điểm nổi trội ${Number(reHighlightField[1]) + 1} · ${labels[field]}`,
+    };
+  }
+  if (key === 'contentSurface' && blockType === 'real_estate_highlights') {
+    // Style-only như `line`/`dot` của mintv2_process → không có fieldType.
+    return { kind: 'fill', fieldType: undefined, label: 'Nền cột nội dung' };
+  }
+  const reVillaField = key.match(
+    /^slides\[(\d+)\]\.(title|description|imageUrl)$/
+  );
+  if (reVillaField && blockType === 'real_estate_villa') {
+    const field = reVillaField[2];
+    const labels: Record<string, string> = {
+      title: 'Tên loại hình',
+      description: 'Mô tả',
+      imageUrl: 'Ảnh',
+    };
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      // Mô tả slide dài nhiều dòng → textarea; tên loại hình 1 dòng.
+      fieldType:
+        field === 'imageUrl'
+          ? 'image'
+          : field === 'description'
+            ? 'textarea'
+            : 'text',
+      label: `Slide ${Number(reVillaField[1]) + 1} · ${labels[field]}`,
+    };
+  }
+  if (key === 'cardSurface' && blockType === 'real_estate_villa') {
+    // Style-only như `contentSurface` của real_estate_highlights → no fieldType.
+    return { kind: 'fill', fieldType: undefined, label: 'Nền thẻ' };
   }
   const svcText = key.match(/^items\[(\d+)\]\.(label|caption)$/);
   if (svcText && blockType === 'mintv2_services') {
