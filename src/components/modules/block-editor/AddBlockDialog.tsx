@@ -78,6 +78,7 @@ const ORDERED_TYPES: BlockType[] = [
   'real_estate_overview',
   'real_estate_highlights',
   'real_estate_villa',
+  'real_estate_utilities',
   // ── Features / Services ──────────────────────────────────
   'feature_section',
   'framer_clarity_services',

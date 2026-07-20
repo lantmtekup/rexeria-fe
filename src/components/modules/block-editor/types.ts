@@ -175,6 +175,7 @@ export type BlockType =
   | 'real_estate_overview'
   | 'real_estate_highlights'
   | 'real_estate_villa'
+  | 'real_estate_utilities'
   | 'springs_design'
   | 'springs_residences'
   | 'springs_interiors'
@@ -2600,6 +2601,38 @@ export interface RealEstateVillaContent {
   slides: RealEstateVillaSlide[];
 }
 
+/** Một ô trong lưới nội khu: icon line art ở trên, label 2 dòng ở dưới. */
+export interface RealEstateUtilityItem {
+  /**
+   * Icon line art nâu. Là field ảnh chứ không phải SVG inline, cùng lý do với
+   * `RealEstateOverviewStat.iconUrl` — cộng thêm một lý do riêng: sáu icon này
+   * nặng ~40KB (riêng icon BBQ 19KB), inline vào bundle block là phí.
+   */
+  iconUrl: string;
+  /** `\n` ép xuống dòng — nguồn ngắt dòng thủ công giữa hai cụm chữ. */
+  label: string;
+}
+
+/**
+ * Port section `8. Nội khu` của template Framer real-estate-1
+ * (apps/real-estate-1): tiêu đề canh giữa + lưới 2 cột × 3 hàng, mỗi ô là một
+ * icon line art trên một label 2 dòng.
+ *
+ * Nguồn CÓ vẽ thêm một ảnh PNG full-bleed trong mỗi ô, nhưng wrapper của nó
+ * compute ra `opacity: 0` và giữ nguyên kể cả khi hover — ảnh KHÔNG BAO GIỜ
+ * hiện trên trang thật. Cũng không có card chrome: nền ô, hở cột và hở hàng
+ * đều sample đúng `rgb(248,241,233)` y hệt nền trang, ô không viền/đổ bóng.
+ * Nên section đọc ra là một dải sand phẳng với 6 cụm icon/label, không phải 6
+ * panel — và bản port bỏ hẳn lớp ảnh đó thay vì chép một thứ vô hình.
+ *
+ * Số ô cố định 6 như nguồn — không mở list manager, cùng lý do với
+ * `RealEstateOverviewContent` (xem docblock component).
+ */
+export interface RealEstateUtilitiesContent {
+  title: string;
+  items: RealEstateUtilityItem[];
+}
+
 export interface SpringsDesignSlide {
   subtitle: string;
   text: string;
@@ -2791,6 +2824,7 @@ export type BlockContent =
   | RealEstateOverviewContent
   | RealEstateHighlightsContent
   | RealEstateVillaContent
+  | RealEstateUtilitiesContent
   | SpringsDesignContent
   | SpringsResidencesContent
   | SpringsInteriorsContent
@@ -5937,6 +5971,27 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'section các loại hình biệt thự: eyebrow và tiêu đề canh giữa, dưới là carousel ảnh kèm tên loại hình, mô tả, counter và nút chuyển slide',
     aiLabelEn:
       'villa typologies section: a centred eyebrow and title above an image carousel with the typology name, description, a slide counter and prev/next controls',
+  },
+  real_estate_utilities: {
+    type: 'real_estate_utilities',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', 'real-estate', 'bds', 'utilities', 'amenities', 'framer'],
+    status: 'ready',
+    // Lưới giữ 2 cột ở mọi bề rộng như nguồn, chỉ cap chiều rộng cột nội dung —
+    // không breakpoint nào để hỏng. Ô cao theo nội dung nên label 3 dòng cũng
+    // không tràn.
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'Real Estate - Nội khu tiện ích',
+    accent: '#009336',
+    adminLabel: 'Real Estate - Nội khu tiện ích',
+    gradient: 'from-amber-50 to-emerald-700',
+    defaultName: 'Real Estate - Nội khu tiện ích',
+    aiLabelVi:
+      'section nội khu tiện ích: tiêu đề canh giữa, dưới là lưới 2 cột × 3 hàng gồm 6 icon line art nâu, mỗi icon kèm tên tiện ích 2 dòng; tiêu đề rồi từng ô fade-up lần lượt khi cuộn tới',
+    aiLabelEn:
+      'on-site amenities section: a centred title above a 2×3 grid of six brown line-art icons, each captioned with a two-line amenity name; title then each cell fades up in sequence on scroll',
   },
   springs_design: {
     type: 'springs_design',

@@ -79,6 +79,7 @@ import { realEstateInfoDef } from './blocks/_registry/defs/realEstateInfo';
 import { realEstateLocationDef } from './blocks/_registry/defs/realEstateLocation';
 import { realEstateHighlightsDef } from './blocks/_registry/defs/realEstateHighlights';
 import { realEstateOverviewDef } from './blocks/_registry/defs/realEstateOverview';
+import { realEstateUtilitiesDef } from './blocks/_registry/defs/realEstateUtilities';
 import { realEstateVillaDef } from './blocks/_registry/defs/realEstateVilla';
 import { springsNaturePlaceDef } from './blocks/_registry/defs/springsNaturePlace';
 import { springsResidencesDef } from './blocks/_registry/defs/springsResidences';
@@ -2464,6 +2465,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   real_estate_overview: realEstateOverviewDef.defaultContent.vi,
   real_estate_highlights: realEstateHighlightsDef.defaultContent.vi,
   real_estate_villa: realEstateVillaDef.defaultContent.vi,
+  real_estate_utilities: realEstateUtilitiesDef.defaultContent.vi,
   springs_design: springsDesignDef.defaultContent.vi,
   springs_residences: springsResidencesDef.defaultContent.vi,
   springs_interiors: springsInteriorsDef.defaultContent.vi,
@@ -2629,6 +2631,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   real_estate_overview: realEstateOverviewDef.defaultContent.en,
   real_estate_highlights: realEstateHighlightsDef.defaultContent.en,
   real_estate_villa: realEstateVillaDef.defaultContent.en,
+  real_estate_utilities: realEstateUtilitiesDef.defaultContent.en,
   springs_design: springsDesignDef.defaultContent.en,
   springs_residences: springsResidencesDef.defaultContent.en,
   springs_interiors: springsInteriorsDef.defaultContent.en,

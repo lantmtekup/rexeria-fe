@@ -223,6 +223,13 @@ export function resolveKind(
     // Nền thẻ — chỉ có màu, không có nội dung.
     if (key === 'cardSurface') return 'fill';
   }
+  // Real Estate nội khu: mỗi ô là icon (ảnh) + label 2 dòng. `label` cũng trúng
+  // fallback chung ngay bên dưới nên kind vẫn đúng, nhưng `iconUrl` thì không —
+  // phải chặn ở đây.
+  if (blockType === 'real_estate_utilities') {
+    if (/^items\[\d+\]\.iconUrl$/.test(key)) return 'image';
+    if (/^items\[\d+\]\.label$/.test(key)) return 'text';
+  }
   if (/^items\[\d+\]\.label$/.test(key)) return 'text';
   if (/^items\[\d+\]\.link$/.test(key)) return 'text';
   if (/^items\[\d+\]\.caption$/.test(key) && blockType === 'mintv2_services') {
@@ -307,6 +314,14 @@ export function resolveLabel(
   }
   if (key === 'cardSurface' && blockType === 'real_estate_villa') {
     return 'Nền thẻ';
+  }
+  // Phải đứng TRƯỚC `navLabel` bên dưới — nếu không `items[i].label` của nội
+  // khu sẽ nhận nhãn chung "Nhãn mục N".
+  const reUtility = key.match(/^items\[(\d+)\]\.(label|iconUrl)$/);
+  if (reUtility && blockType === 'real_estate_utilities') {
+    return `Tiện ích ${Number(reUtility[1]) + 1} · ${
+      reUtility[2] === 'label' ? 'Nội dung' : 'Icon'
+    }`;
   }
   const navLabel = key.match(/^items\[(\d+)\]\.label$/);
   if (navLabel && blockType === 'mintv2_services') {
@@ -590,6 +605,18 @@ export function resolveElementMeta(
   if (key === 'cardSurface' && blockType === 'real_estate_villa') {
     // Style-only như `contentSurface` của real_estate_highlights → no fieldType.
     return { kind: 'fill', fieldType: undefined, label: 'Nền thẻ' };
+  }
+  const reUtilityField = key.match(/^items\[(\d+)\]\.(label|iconUrl)$/);
+  if (reUtilityField && blockType === 'real_estate_utilities') {
+    const isLabel = reUtilityField[2] === 'label';
+    return {
+      kind: isLabel ? 'text' : 'image',
+      // Label có ngắt dòng thủ công `\n` → textarea, không phải input 1 dòng.
+      fieldType: isLabel ? 'textarea' : 'image',
+      label: `Tiện ích ${Number(reUtilityField[1]) + 1} · ${
+        isLabel ? 'Nội dung' : 'Icon'
+      }`,
+    };
   }
   const svcText = key.match(/^items\[(\d+)\]\.(label|caption)$/);
   if (svcText && blockType === 'mintv2_services') {

@@ -87,6 +87,7 @@ import { realEstateInfoDef } from './defs/realEstateInfo';
 import { realEstateLocationDef } from './defs/realEstateLocation';
 import { realEstateHighlightsDef } from './defs/realEstateHighlights';
 import { realEstateOverviewDef } from './defs/realEstateOverview';
+import { realEstateUtilitiesDef } from './defs/realEstateUtilities';
 import { realEstateVillaDef } from './defs/realEstateVilla';
 import { springsNaturePlaceDef } from './defs/springsNaturePlace';
 import { springsResidencesDef } from './defs/springsResidences';
@@ -195,6 +196,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   real_estate_overview: realEstateOverviewDef as BlockDef,
   real_estate_highlights: realEstateHighlightsDef as BlockDef,
   real_estate_villa: realEstateVillaDef as BlockDef,
+  real_estate_utilities: realEstateUtilitiesDef as BlockDef,
   springs_design: springsDesignDef as BlockDef,
   springs_residences: springsResidencesDef as BlockDef,
   springs_interiors: springsInteriorsDef as BlockDef,

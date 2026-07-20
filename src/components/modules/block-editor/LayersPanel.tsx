@@ -51,6 +51,7 @@ import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
 import { realEstateHeroStatElements } from './blocks/_registry/defs/realEstateHero';
 import { realEstateHighlightItemElements } from './blocks/_registry/defs/realEstateHighlights';
 import { realEstateOverviewStatElements } from './blocks/_registry/defs/realEstateOverview';
+import { realEstateUtilityItemElements } from './blocks/_registry/defs/realEstateUtilities';
 import { realEstateVillaSlideElements } from './blocks/_registry/defs/realEstateVilla';
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
 import { mintDiscoverTabElements } from './blocks/_registry/defs/mintDiscover';
@@ -78,6 +79,7 @@ import {
   type RealEstateOverviewStat,
   type RealEstateHighlightItem,
   type RealEstateVillaSlide,
+  type RealEstateUtilityItem,
   type MintDiscoverTab,
   type MintV2ProcessStep,
   type MintV2ServiceItem,
@@ -856,6 +858,26 @@ export function elementsForType(
       },
       { key: 'cardSurface', label: 'Nền thẻ', icon: Palette },
       ...realEstateVillaSlideElements(slides),
+    ];
+  }
+  if (type === 'real_estate_utilities') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as RealEstateUtilityItem[]).filter(
+          it => it && typeof it === 'object' && typeof it.label === 'string'
+        )
+      : [];
+    // Không có mục list manager: số ô cố định 6 như nguồn — xem docblock
+    // `defs/realEstateUtilities.ts`.
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      ...realEstateUtilityItemElements(items),
     ];
   }
   if (type === 'mint_discover') {
