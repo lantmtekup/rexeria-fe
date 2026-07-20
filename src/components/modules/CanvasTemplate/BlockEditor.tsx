@@ -1296,8 +1296,7 @@ export function BlockEditor({
     autosave.state.kind === 'error';
   const activeBlock = canvas.activeBlock;
   const motionForActiveVariant = activeBlock?.motion?.[editVariant] as
-    | BlockMotion
-    | undefined;
+    BlockMotion | undefined;
 
   // Eye → overlay PreviewMode (layout/render khớp /dev/blocks, không mở tab).
   // Live canvas — xem đúng bản đang edit (kể cả chưa lưu).

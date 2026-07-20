@@ -590,12 +590,7 @@ export interface CoolHunterFooterContent {
 
 /** Named scrim presets for PnjHero storefront wash. */
 export type PnjHeroScrimPresetId =
-  | 'pnj'
-  | 'none'
-  | 'softLight'
-  | 'softDark'
-  | 'mint'
-  | 'navyFade';
+  'pnj' | 'none' | 'softLight' | 'softDark' | 'mint' | 'navyFade';
 
 /** One absolute overlay layer on the storefront image. */
 export interface PnjHeroScrimLayer {
@@ -3044,10 +3039,7 @@ export interface ExtraElementStyle {
  * animation > plain.
  */
 export type TextAnimationMode =
-  | 'none'
-  | 'fade-up'
-  | 'typewriter'
-  | 'split-slide-up';
+  'none' | 'fade-up' | 'typewriter' | 'split-slide-up';
 
 export interface TextCounterConfig {
   /** Starting value of the count-up. Defaults to 0. */

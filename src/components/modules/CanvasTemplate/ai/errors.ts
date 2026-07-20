@@ -29,9 +29,7 @@ export interface ParsedGeneric {
 }
 
 export type ParsedAITemplateError =
-  | ParsedMissingRequired
-  | ParsedRegenLimit
-  | ParsedGeneric;
+  ParsedMissingRequired | ParsedRegenLimit | ParsedGeneric;
 
 export function parseAITemplateError(err: unknown): ParsedAITemplateError {
   if (!(err instanceof RxApiError)) {
