@@ -17,17 +17,21 @@
  *
  * Heading overlay TUỲ CHỌN — bản gốc không có chữ trên hero (mặc định '').
  * Toàn bộ motion qua useBlockMotion (R1–R6), scroller trên mọi scrollTrigger.
+ *
+ * Canvas editor: flat edit surface (không 300vh / không scrub) — PreviewMode
+ * + `/p` giữ production sticky + motion.
  */
 import * as React from 'react';
 import gsap from 'gsap';
 
-import { useBlockMotion } from '../motion/LandingMotion';
+import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
 import {
   DELVAUX_BG,
   DELVAUX_FONT_BODY,
   DELVAUX_FONT_CSS,
   DELVAUX_FONT_HEADING,
 } from './delvauxTheme';
+import { useContainerMobile } from './useContainerMobile';
 import type {
   BlockBackground,
   DelvauxHeroContent,
@@ -75,9 +79,37 @@ export function DelvauxHero({
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
-  const urls = frameUrls(content);
+  const mobileCanvasRef = React.useRef<HTMLCanvasElement>(null);
+  const { hasRoot } = useLandingMotion();
+  const isMobile = useContainerMobile(rootRef);
+
+  const [isCanvas, setIsCanvas] = React.useState(true);
+  React.useLayoutEffect(() => {
+    if (!hasRoot) {
+      setIsCanvas(false);
+      return;
+    }
+    setIsCanvas(
+      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
+    );
+  }, [hasRoot]);
+
+  const urlsKey = [
+    Array.isArray(content.frameUrls) ? content.frameUrls.join('|') : '',
+    content.frameUrlPattern ?? '',
+    String(content.frameCount ?? 0),
+  ].join('::');
+  const urls = React.useMemo(
+    () => frameUrls(content),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by urlsKey
+    [urlsKey]
+  );
   const hasFrames = urls.length > 0;
+  /** Legacy only — không expose Layers; chạy khi content cũ còn videoUrl. */
   const hasVideo = !hasFrames && Boolean(content.videoUrl);
+  const midFrameSrc = hasFrames
+    ? (urls[Math.min(Math.floor(urls.length / 2), urls.length - 1)] ?? urls[0])
+    : '';
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -86,11 +118,37 @@ export function DelvauxHero({
       positionStyle(positions, key)
     );
 
+  // Mobile production: draw a static mid-sequence frame (apps STATIC_FRAME).
+  React.useLayoutEffect(() => {
+    if (isCanvas || !isMobile || !hasFrames) return;
+    const canvas = mobileCanvasRef.current;
+    if (!canvas) return;
+    const ctx2d = canvas.getContext('2d');
+    if (!ctx2d) return;
+
+    const staticIdx = Math.min(Math.floor(urls.length / 2), urls.length - 1);
+    const im = new Image();
+    im.src = urls[staticIdx] ?? urls[0];
+    const draw = () => {
+      if (!im.complete || !im.naturalWidth) return;
+      canvas.width = im.naturalWidth;
+      canvas.height = im.naturalHeight;
+      ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+      ctx2d.drawImage(im, 0, 0);
+    };
+    if (im.complete) draw();
+    else im.onload = draw;
+  }, [isCanvas, isMobile, hasFrames, urlsKey, urls]);
+
   useBlockMotion(
     rootRef,
     ({ scroller, requestRefresh }) => {
       const root = rootRef.current;
       if (!root) return;
+      // Editor canvas: flat edit surface — no pin/scrub.
+      if (isCanvas) return;
+      // Mobile production: static frame (drawn above) — skip scrub like apps.
+      if (isMobile) return;
       const reduce = window.matchMedia(
         '(prefers-reduced-motion: reduce)'
       ).matches;
@@ -217,51 +275,69 @@ export function DelvauxHero({
         });
       }
     },
-    [hasFrames, hasVideo, urls.join('|')]
+    [hasFrames, hasVideo, urlsKey, isCanvas, isMobile]
   );
 
-  const clampOpacity = Math.min(Math.max(content.overlayOpacity ?? 0, 0), 1);
+  const headingBase = {
+    margin: 0,
+    fontFamily: DELVAUX_FONT_HEADING,
+    fontWeight: 400,
+    fontSize: 'clamp(32px, 6cqi, 72px)',
+    lineHeight: 1.1,
+    color: '#111111',
+  } as const;
 
-  return (
-    <section
-      ref={rootRef}
-      style={composeStyle(
-        { background: DELVAUX_BG },
-        blockBackgroundStyle(background)
-      )}
-      className='delvaux-hero @container relative w-full'
-    >
-      <style>{DELVAUX_FONT_CSS}</style>
-      {/* Section cao 300vh như gốc; lớp viewport dán sticky. */}
-      <div className='delvaux-hero-tall' style={{ height: '300vh' }}>
-        <div className='sticky top-0 h-screen w-full overflow-hidden'>
-          {/* Lớp intro (SAU): canvas frame-seq / video scrub / ảnh full-bleed. */}
-          <div
-            className='delvaux-hero-intro absolute inset-0'
-            style={{ opacity: 0 }}
-          >
-            {hasFrames ? (
-              <canvas
-                ref={canvasRef}
-                className='delvaux-hero-canvas h-full w-full'
-                style={{ objectFit: 'cover' }}
+  const subheadingBase = {
+    marginTop: 'clamp(12px, 1.8cqi, 20px)',
+    fontFamily: DELVAUX_FONT_BODY,
+    fontSize: 'clamp(13px, 1.5cqi, 18px)',
+    letterSpacing: '0.06em',
+    color: 'rgba(17,17,17,0.72)',
+  } as const;
+
+  // ── Editor canvas: flat edit surface (no 300vh / no scrub) ──
+  if (isCanvas) {
+    return (
+      <section
+        ref={rootRef}
+        data-canvas-edit='true'
+        style={composeStyle(
+          { background: DELVAUX_BG, minHeight: 480 },
+          blockBackgroundStyle(background)
+        )}
+        className='delvaux-hero @container relative w-full'
+      >
+        <style>{DELVAUX_FONT_CSS}</style>
+        <div
+          className='relative w-full overflow-hidden'
+          style={{ height: 'min(70vh, 640px)' }}
+        >
+          {/* Intro layer preview (visible — no scrub hide) */}
+          <div className='delvaux-hero-intro absolute inset-0'>
+            {hasFrames && midFrameSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                data-element-key='frameUrls'
+                src={midFrameSrc}
+                alt={`Chuỗi frame intro · ${urls.length} frames`}
+                className={selectableClass(
+                  activeKey === 'frameUrls',
+                  'delvaux-hero-frames h-full w-full'
+                )}
+                style={composeStyle(
+                  { objectFit: 'cover' },
+                  styleOf('frameUrls')
+                )}
               />
             ) : hasVideo ? (
               <video
-                data-element-key='videoUrl'
-                className={selectableClass(
-                  activeKey === 'videoUrl',
-                  'delvaux-hero-video'
-                )}
+                className='delvaux-hero-video h-full w-full'
                 src={content.videoUrl}
                 poster={content.posterUrl || undefined}
                 muted
                 playsInline
-                preload='auto'
-                style={composeStyle(
-                  { width: '100%', height: '100%', objectFit: 'cover' },
-                  styleOf('videoUrl')
-                )}
+                preload='metadata'
+                style={{ objectFit: 'cover' }}
               />
             ) : content.posterUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -272,17 +348,35 @@ export function DelvauxHero({
                 className='delvaux-hero-intro-img h-full w-full'
                 style={{ objectFit: 'cover' }}
               />
-            ) : null}
+            ) : (
+              <div
+                data-element-key='frameUrls'
+                className={selectableClass(
+                  activeKey === 'frameUrls',
+                  'flex h-full w-full items-center justify-center'
+                )}
+                style={composeStyle(
+                  {
+                    background: '#e8e8e8',
+                    color: 'rgba(17,17,17,0.4)',
+                    fontFamily: DELVAUX_FONT_BODY,
+                    fontSize: 'clamp(12px, 1.4cqi, 14px)',
+                  },
+                  styleOf('frameUrls')
+                )}
+              >
+                Chuỗi frame intro
+              </div>
+            )}
           </div>
 
-          {/* Lớp ảnh ĐÓNG KHUNG (TRƯỚC) — `.hero__img` gốc: padding 80px 80px 0. */}
+          {/* Framed poster */}
           <div
             className='delvaux-hero-frame absolute inset-0'
             style={{
               padding:
                 'clamp(24px, 6.25cqi, 80px) clamp(24px, 6.25cqi, 80px) 0',
               transformOrigin: 'bottom',
-              willChange: 'transform',
             }}
           >
             {content.posterUrl ? (
@@ -305,14 +399,153 @@ export function DelvauxHero({
                   styleOf('posterUrl')
                 )}
               />
+            ) : (
+              <div
+                data-element-key='posterUrl'
+                className={selectableClass(
+                  activeKey === 'posterUrl',
+                  'delvaux-hero-poster flex h-full w-full items-center justify-center'
+                )}
+                style={composeStyle(
+                  {
+                    background: '#d4d4d4',
+                    color: 'rgba(17,17,17,0.45)',
+                    fontFamily: DELVAUX_FONT_BODY,
+                    fontSize: 'clamp(13px, 1.5cqi, 15px)',
+                  },
+                  styleOf('posterUrl')
+                )}
+              >
+                Ảnh chính
+              </div>
+            )}
+          </div>
+
+          {/* Always show copy nodes so Layers + canvas select work */}
+          <div
+            className='delvaux-hero-copy absolute inset-x-0 top-0 flex flex-col items-center text-center'
+            style={{ paddingTop: 'clamp(48px, 10cqi, 96px)' }}
+          >
+            <h1
+              data-element-key='heading'
+              style={composeStyle(headingBase, styleOf('heading'))}
+              className={selectableClass(activeKey === 'heading')}
+            >
+              {content.heading || 'Tiêu đề (tuỳ chọn)'}
+            </h1>
+            <p
+              data-element-key='subheading'
+              style={composeStyle(subheadingBase, styleOf('subheading'))}
+              className={selectableClass(activeKey === 'subheading')}
+            >
+              {content.subheading || 'Phụ đề (tuỳ chọn)'}
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // ── Production (PreviewMode + /p): sticky 300vh + scrub (desktop) ──
+  // Mobile: single viewport, static mid-frame / poster — no scrub.
+  const trackHeight = isMobile ? '100vh' : '300vh';
+
+  return (
+    <section
+      ref={rootRef}
+      style={composeStyle(
+        { background: DELVAUX_BG },
+        blockBackgroundStyle(background)
+      )}
+      className='delvaux-hero @container relative w-full'
+    >
+      <style>{DELVAUX_FONT_CSS}</style>
+      <div className='delvaux-hero-tall' style={{ height: trackHeight }}>
+        <div className='sticky top-0 h-screen w-full overflow-hidden'>
+          {/* Lớp intro (SAU): canvas frame-seq / video scrub / ảnh full-bleed. */}
+          <div
+            className='delvaux-hero-intro absolute inset-0'
+            style={{ opacity: isMobile ? 1 : 0 }}
+          >
+            {hasFrames ? (
+              <canvas
+                ref={isMobile ? mobileCanvasRef : canvasRef}
+                className='delvaux-hero-canvas h-full w-full'
+                style={{ objectFit: 'cover' }}
+              />
+            ) : hasVideo ? (
+              <video
+                className='delvaux-hero-video h-full w-full'
+                src={content.videoUrl}
+                poster={content.posterUrl || undefined}
+                muted
+                playsInline
+                preload='auto'
+                style={{ objectFit: 'cover' }}
+              />
+            ) : content.posterUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                aria-hidden='true'
+                src={content.posterUrl}
+                alt=''
+                className='delvaux-hero-intro-img h-full w-full'
+                style={{ objectFit: 'cover' }}
+              />
             ) : null}
           </div>
 
-          {/* overlay tối (mặc định 0 — bản gốc không có) */}
-          {clampOpacity > 0 ? (
+          {/* Lớp ảnh ĐÓNG KHUNG (TRƯỚC) — `.hero__img` gốc: padding 80px 80px 0.
+              Mobile: hide framed layer so static intro fills the viewport. */}
+          {!isMobile ? (
             <div
-              className='pointer-events-none absolute inset-0'
-              style={{ background: '#000000', opacity: clampOpacity }}
+              className='delvaux-hero-frame absolute inset-0'
+              style={{
+                padding:
+                  'clamp(24px, 6.25cqi, 80px) clamp(24px, 6.25cqi, 80px) 0',
+                transformOrigin: 'bottom',
+                willChange: 'transform',
+              }}
+            >
+              {content.posterUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  data-element-key='posterUrl'
+                  src={content.posterUrl}
+                  alt={content.heading || 'Hero'}
+                  className={selectableClass(
+                    activeKey === 'posterUrl',
+                    'delvaux-hero-poster'
+                  )}
+                  style={composeStyle(
+                    {
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'top',
+                    },
+                    styleOf('posterUrl')
+                  )}
+                />
+              ) : null}
+            </div>
+          ) : content.posterUrl && !hasFrames && !hasVideo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              data-element-key='posterUrl'
+              src={content.posterUrl}
+              alt={content.heading || 'Hero'}
+              className={selectableClass(
+                activeKey === 'posterUrl',
+                'delvaux-hero-poster absolute inset-0 h-full w-full'
+              )}
+              style={composeStyle(
+                {
+                  objectFit: 'cover',
+                  objectPosition: 'top',
+                },
+                styleOf('posterUrl')
+              )}
             />
           ) : null}
 
@@ -324,17 +557,7 @@ export function DelvauxHero({
             >
               <h1
                 data-element-key='heading'
-                style={composeStyle(
-                  {
-                    margin: 0,
-                    fontFamily: DELVAUX_FONT_HEADING,
-                    fontWeight: 400,
-                    fontSize: 'clamp(32px, 6cqi, 72px)',
-                    lineHeight: 1.1,
-                    color: '#111111',
-                  },
-                  styleOf('heading')
-                )}
+                style={composeStyle(headingBase, styleOf('heading'))}
                 className={selectableClass(activeKey === 'heading')}
               >
                 {content.heading}
@@ -342,16 +565,7 @@ export function DelvauxHero({
               {content.subheading ? (
                 <p
                   data-element-key='subheading'
-                  style={composeStyle(
-                    {
-                      marginTop: 'clamp(12px, 1.8cqi, 20px)',
-                      fontFamily: DELVAUX_FONT_BODY,
-                      fontSize: 'clamp(13px, 1.5cqi, 18px)',
-                      letterSpacing: '0.06em',
-                      color: 'rgba(17,17,17,0.72)',
-                    },
-                    styleOf('subheading')
-                  )}
+                  style={composeStyle(subheadingBase, styleOf('subheading'))}
                   className={selectableClass(activeKey === 'subheading')}
                 >
                   {content.subheading}

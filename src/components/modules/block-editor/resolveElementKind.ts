@@ -28,6 +28,11 @@ export type ElementKind =
   | 'fill'
   | 'pnjFrames'
   | 'pnjScrim'
+  | 'delvauxFrames'
+  | 'delvauxHotspots'
+  | 'delvauxVariants'
+  | 'delvauxFaqs'
+  | 'delvauxSubnavLinks'
   | 'mintDiscoverVariant'
   | 'mintDiscoverSurface'
   | 'background';
@@ -137,6 +142,44 @@ export function resolveKind(
   if (key === 'variants' && blockType === 'pnj_variant') {
     return 'pnjVariants';
   }
+  // Delvaux color swatches vs Mint/PNJ variants — cùng key `variants`.
+  if (key === 'variants' && blockType === 'delvaux_variant') {
+    return 'delvauxVariants';
+  }
+  if (key === 'faqs' && blockType === 'delvaux_variant') {
+    return 'delvauxFaqs';
+  }
+  if (key === 'links' && blockType === 'delvaux_subnav') {
+    return 'delvauxSubnavLinks';
+  }
+  if (
+    /^links\[\d+\]\.(label|targetId)$/.test(key) &&
+    blockType === 'delvaux_subnav'
+  ) {
+    return 'text';
+  }
+  // Delvaux product hotspots vs Mint/PNJ hero hotspots — cùng key `hotspots`.
+  if (key === 'hotspots' && blockType === 'delvaux_product') {
+    return 'delvauxHotspots';
+  }
+  if (
+    /^hotspots\[\d+\]\.(title|desc|mediaUrl)$/.test(key) &&
+    blockType === 'delvaux_product'
+  ) {
+    return 'text';
+  }
+  if (
+    /^variants\[\d+\]\.(label|ref|color|imageUrl)$/.test(key) &&
+    blockType === 'delvaux_variant'
+  ) {
+    return key.endsWith('.imageUrl') ? 'image' : 'text';
+  }
+  if (
+    /^faqs\[\d+\]\.(question|answer)$/.test(key) &&
+    blockType === 'delvaux_variant'
+  ) {
+    return 'text';
+  }
   // Vault collection: `coins` là mảng (list manager), KHÔNG phải text.
   if (key === 'coins' && blockType === 'mint_vault_collection') {
     return 'mintVaultCoins';
@@ -226,6 +269,42 @@ export function resolveLabel(
   if (paraMatch) return `Đoạn ${Number(paraMatch[1]) + 1}`;
   const titleLineMatch = key.match(/^titleLines\[(\d+)\]$/);
   if (titleLineMatch) return `Tiêu đề dòng ${Number(titleLineMatch[1]) + 1}`;
+  if (key === 'variants' && blockType === 'delvaux_variant') {
+    return 'Thêm / quản lý màu';
+  }
+  if (key === 'faqs' && blockType === 'delvaux_variant') {
+    return 'Thêm / quản lý FAQ';
+  }
+  if (key === 'links' && blockType === 'delvaux_subnav') {
+    return 'Thêm / quản lý link';
+  }
+  const delvauxLinkLabel = key.match(/^links\[(\d+)\]\.(label|targetId)$/);
+  if (delvauxLinkLabel && blockType === 'delvaux_subnav') {
+    const field = delvauxLinkLabel[2];
+    return `Link ${Number(delvauxLinkLabel[1]) + 1} · ${
+      field === 'label' ? 'Nhãn' : 'Section id'
+    }`;
+  }
+  const delvauxVarLabel = key.match(
+    /^variants\[(\d+)\]\.(label|ref|color|imageUrl)$/
+  );
+  if (delvauxVarLabel && blockType === 'delvaux_variant') {
+    const field = delvauxVarLabel[2];
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      ref: 'REF',
+      color: 'Màu',
+      imageUrl: 'Ảnh',
+    };
+    return `Màu ${Number(delvauxVarLabel[1]) + 1} · ${labels[field] ?? field}`;
+  }
+  const delvauxFaqLabel = key.match(/^faqs\[(\d+)\]\.(question|answer)$/);
+  if (delvauxFaqLabel && blockType === 'delvaux_variant') {
+    const field = delvauxFaqLabel[2];
+    return `FAQ ${Number(delvauxFaqLabel[1]) + 1} · ${
+      field === 'question' ? 'Câu hỏi' : 'Trả lời'
+    }`;
+  }
   const variantLabel = key.match(/^variants\[(\d+)\]\.label$/);
   if (variantLabel) return `Nhãn góc ${Number(variantLabel[1]) + 1}`;
   const variantDesc = key.match(/^variants\[(\d+)\]\.desc$/);
@@ -235,6 +314,21 @@ export function resolveLabel(
   const variantHl = key.match(/^variants\[(\d+)\]\.highlights$/);
   if (variantHl) return `Highlights góc ${Number(variantHl[1]) + 1}`;
   if (key === 'variants' && blockType === 'pnj_variant') return 'Góc nhìn';
+  if (key === 'hotspots' && blockType === 'delvaux_product') {
+    return 'Thêm / quản lý hotspot';
+  }
+  const delvauxHsLabel = key.match(
+    /^hotspots\[(\d+)\]\.(title|desc|mediaUrl)$/
+  );
+  if (delvauxHsLabel && blockType === 'delvaux_product') {
+    const field = delvauxHsLabel[2];
+    const labels: Record<string, string> = {
+      title: 'Tiêu đề',
+      desc: 'Mô tả',
+      mediaUrl: 'Media',
+    };
+    return `Hotspot ${Number(delvauxHsLabel[1]) + 1} · ${labels[field] ?? field}`;
+  }
   if (key === 'coins' && blockType === 'mint_vault_collection') {
     return 'Bộ sưu tập coin';
   }
@@ -564,6 +658,94 @@ export function resolveElementMeta(
       kind: 'mintV2ServicesItems',
       fieldType: undefined,
       label: 'Thêm / quản lý mục',
+    };
+  }
+  if (key === 'frameUrls' && blockType === 'delvaux_hero') {
+    return {
+      kind: 'delvauxFrames',
+      fieldType: undefined,
+      label: 'Chuỗi frame intro',
+    };
+  }
+  if (key === 'hotspots' && blockType === 'delvaux_product') {
+    return {
+      kind: 'delvauxHotspots',
+      fieldType: undefined,
+      label: 'Thêm / quản lý hotspot',
+    };
+  }
+  if (key === 'variants' && blockType === 'delvaux_variant') {
+    return {
+      kind: 'delvauxVariants',
+      fieldType: undefined,
+      label: 'Thêm / quản lý màu',
+    };
+  }
+  if (key === 'faqs' && blockType === 'delvaux_variant') {
+    return {
+      kind: 'delvauxFaqs',
+      fieldType: undefined,
+      label: 'Thêm / quản lý FAQ',
+    };
+  }
+  if (key === 'links' && blockType === 'delvaux_subnav') {
+    return {
+      kind: 'delvauxSubnavLinks',
+      fieldType: undefined,
+      label: 'Thêm / quản lý link',
+    };
+  }
+  const delvauxNavLink = key.match(/^links\[(\d+)\]\.(label|targetId)$/);
+  if (delvauxNavLink && blockType === 'delvaux_subnav') {
+    const field = delvauxNavLink[2];
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Link ${Number(delvauxNavLink[1]) + 1} · ${
+        field === 'label' ? 'Nhãn' : 'Section id'
+      }`,
+    };
+  }
+  const delvauxHs = key.match(/^hotspots\[(\d+)\]\.(title|desc|mediaUrl)$/);
+  if (delvauxHs && blockType === 'delvaux_product') {
+    const field = delvauxHs[2];
+    const labels: Record<string, string> = {
+      title: 'Tiêu đề',
+      desc: 'Mô tả',
+      mediaUrl: 'Media (URL)',
+    };
+    return {
+      kind: 'text',
+      fieldType: field === 'desc' ? 'textarea' : 'text',
+      label: `Hotspot ${Number(delvauxHs[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  const delvauxVar = key.match(
+    /^variants\[(\d+)\]\.(label|ref|color|imageUrl)$/
+  );
+  if (delvauxVar && blockType === 'delvaux_variant') {
+    const field = delvauxVar[2];
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      ref: 'REF',
+      color: 'Màu swatch',
+      imageUrl: 'Ảnh',
+    };
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      fieldType: field === 'imageUrl' ? 'image' : 'text',
+      label: `Màu ${Number(delvauxVar[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  const delvauxFaq = key.match(/^faqs\[(\d+)\]\.(question|answer)$/);
+  if (delvauxFaq && blockType === 'delvaux_variant') {
+    const field = delvauxFaq[2];
+    return {
+      kind: 'text',
+      fieldType: field === 'answer' ? 'textarea' : 'text',
+      label: `FAQ ${Number(delvauxFaq[1]) + 1} · ${
+        field === 'question' ? 'Câu hỏi' : 'Trả lời'
+      }`,
     };
   }
   if (blockType === 'mint_variants' && key.startsWith('discover.')) {

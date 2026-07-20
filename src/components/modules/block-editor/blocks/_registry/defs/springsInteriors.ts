@@ -75,9 +75,7 @@ export const springsInteriorsDef: BlockDef<SpringsInteriorsContent> = {
       icon: ImageIcon,
       fieldType: 'image',
     },
-    // `images` là mảng nội dung, không có `data-element-key` riêng từng ảnh
-    // (LayerElement/fieldType hiện chỉ hỗ trợ text/textarea/image đơn) — nên
-    // KHÔNG đưa vào `elements`, giống cách `frameUrls` của delvaux_hero không
-    // xuất hiện trong danh sách layer chọn được.
+    // `images` là mảng CDN nội bộ — không đưa vào `elements` (không chỉnh từng
+    // URL trên Layers; LayerElement hiện chỉ hỗ trợ text/textarea/image đơn).
   ],
 };

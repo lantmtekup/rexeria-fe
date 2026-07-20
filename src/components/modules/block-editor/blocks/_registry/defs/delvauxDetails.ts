@@ -45,8 +45,27 @@ export const delvauxDetailsDef: BlockDef<DelvauxDetailsContent> = {
   ),
   defaultContent: { vi: VI, en: EN },
   elements: [
-    { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
-    { key: 'body1', label: 'Đoạn 1', icon: Pilcrow, fieldType: 'textarea' },
-    { key: 'body2', label: 'Đoạn 2', icon: Pilcrow, fieldType: 'textarea' },
+    {
+      key: 'title',
+      label: 'Tiêu đề',
+      icon: Type,
+      fieldType: 'text',
+      groupId: 'copy',
+      groupLabel: 'Nội dung',
+    },
+    {
+      key: 'body1',
+      label: 'Đoạn 1',
+      icon: Pilcrow,
+      fieldType: 'textarea',
+      groupId: 'copy',
+    },
+    {
+      key: 'body2',
+      label: 'Đoạn 2',
+      icon: Pilcrow,
+      fieldType: 'textarea',
+      groupId: 'copy',
+    },
   ],
 };

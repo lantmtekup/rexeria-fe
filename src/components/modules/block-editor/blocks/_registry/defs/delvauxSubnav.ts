@@ -1,24 +1,24 @@
 /**
  * BlockDef cho `delvaux_subnav` — thanh `.sticky-menu` của delvaux-clone: pill
- * trắng nổi dán đáy viewport gồm anchor link tới section (description /
- * discover / information — trùng id gắn sẵn trên DelvauxDetails/Product/
- * Variant) + nút "Book" + nút "BUY NOW" đen.
+ * trắng nổi dán đáy viewport gồm anchor link tới section + nút Book + BUY NOW.
  *
- * Trên /p pill là position fixed (portal ra body); trong editor render in-flow
- * như một dải preview. Component: `blocks/DelvauxSubnav.tsx`. Path A.
+ * Layers: expand links[i].label / targetId + managers; CTAs có URL riêng.
  */
-import { Link2, MousePointerClick, Type } from 'lucide-react';
+import { Link2, ListChecks, MousePointerClick, Type } from 'lucide-react';
 
 import dynamic from 'next/dynamic';
-import type { DelvauxSubnavContent } from '../../../types';
+import type { LayerElement } from '../../../LayersPanel';
+import type { DelvauxSubnavContent, DelvauxSubnavLink } from '../../../types';
 import type { BlockDef } from '../types';
 
+const DEFAULT_LINKS: DelvauxSubnavLink[] = [
+  { label: 'Description', targetId: 'description' },
+  { label: 'Discover', targetId: 'discover' },
+  { label: 'Information', targetId: 'information' },
+];
+
 const VI: DelvauxSubnavContent = {
-  links: [
-    { label: 'Description', targetId: 'description' },
-    { label: 'Discover', targetId: 'discover' },
-    { label: 'Information', targetId: 'information' },
-  ],
+  links: DEFAULT_LINKS,
   bookLabel: 'Book an appointment',
   bookUrl: '',
   buyLabel: 'buy now',
@@ -26,6 +26,34 @@ const VI: DelvauxSubnavContent = {
 };
 
 const EN: DelvauxSubnavContent = { ...VI };
+
+/** Layers folders — 1 group / anchor link. */
+export const delvauxSubnavLinkElements = (
+  links: DelvauxSubnavLink[]
+): LayerElement[] => {
+  const list = links.length > 0 ? links : DEFAULT_LINKS;
+  return list.flatMap((link, i) => {
+    const groupId = `link${i}`;
+    const groupLabel = link.label?.trim() || `Link ${i + 1}`;
+    return [
+      {
+        key: `links[${i}].label`,
+        label: 'Nhãn',
+        groupId,
+        groupLabel,
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: `links[${i}].targetId`,
+        label: 'Section id',
+        groupId,
+        icon: Link2,
+        fieldType: 'text' as const,
+      },
+    ];
+  });
+};
 
 export const delvauxSubnavDef: BlockDef<DelvauxSubnavContent> = {
   type: 'delvaux_subnav',
@@ -41,19 +69,46 @@ export const delvauxSubnavDef: BlockDef<DelvauxSubnavContent> = {
     aiLabelEn:
       'floating white pill sub-nav pinned to viewport bottom: section anchors + buy button',
   },
-  // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
   component: dynamic(() =>
     import('../../DelvauxSubnav').then(m => m.DelvauxSubnav)
   ),
   defaultContent: { vi: VI, en: EN },
   elements: [
-    { key: 'links', label: 'Anchor links', icon: Link2, fieldType: 'text' },
-    { key: 'bookLabel', label: 'Nút đặt lịch', icon: Type, fieldType: 'text' },
+    ...delvauxSubnavLinkElements(DEFAULT_LINKS),
+    {
+      key: 'links',
+      label: 'Thêm / quản lý link',
+      icon: ListChecks,
+    },
+    {
+      key: 'bookLabel',
+      label: 'Nút đặt lịch',
+      icon: Type,
+      fieldType: 'text',
+      groupId: 'book',
+      groupLabel: 'Book',
+    },
+    {
+      key: 'bookUrl',
+      label: 'URL đặt lịch',
+      icon: Link2,
+      fieldType: 'text',
+      groupId: 'book',
+    },
     {
       key: 'buyLabel',
       label: 'Nút mua ngay',
       icon: MousePointerClick,
       fieldType: 'text',
+      groupId: 'buy',
+      groupLabel: 'Buy',
+    },
+    {
+      key: 'buyUrl',
+      label: 'URL mua ngay',
+      icon: Link2,
+      fieldType: 'text',
+      groupId: 'buy',
     },
   ],
 };
