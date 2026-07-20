@@ -50,6 +50,7 @@ import { resolvePnjParagraphs } from './blocks/PnjDetails';
 import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
 import { realEstateHeroStatElements } from './blocks/_registry/defs/realEstateHero';
 import { realEstateHighlightItemElements } from './blocks/_registry/defs/realEstateHighlights';
+import { coolHunterGalleryItemElements } from './blocks/_registry/defs/coolHunterGallery';
 import { realEstateOverviewStatElements } from './blocks/_registry/defs/realEstateOverview';
 import { realEstateUtilityItemElements } from './blocks/_registry/defs/realEstateUtilities';
 import { realEstateVillaSlideElements } from './blocks/_registry/defs/realEstateVilla';
@@ -88,6 +89,7 @@ import {
   type RealEstateHeroStat,
   type RealEstateOverviewStat,
   type RealEstateHighlightItem,
+  type CoolHunterGalleryItem,
   type RealEstateVillaSlide,
   type RealEstateUtilityItem,
   type MintDiscoverTab,
@@ -749,6 +751,47 @@ export function elementsForType(
         label: 'Lớp mờ / scrim',
         icon: Blend,
       },
+    ];
+  }
+  if (type === 'cool_hunter_hero') {
+    // Cùng normalize với canvas/toolbar → layers không lệch số dòng tiêu đề.
+    const lines = resolvePnjHeroTitleLines(
+      (content ?? {}) as unknown as PnjHeroContent
+    );
+    const titleSlots = lines.map((_, i) => ({
+      key: `titleLines[${i}]`,
+      label: `Tiêu đề dòng ${i + 1}`,
+      icon: Type,
+      fieldType: 'text' as const,
+    }));
+    return [
+      BACKGROUND_LAYER,
+      { key: 'logoUrl', label: 'Logo', icon: ImageIcon, fieldType: 'image' },
+      ...titleSlots,
+      {
+        key: 'titleLines',
+        label: 'Thêm / quản lý tiêu đề',
+        icon: ListChecks,
+      },
+      {
+        key: 'imageUrl',
+        label: 'Ảnh hero',
+        icon: ImageIcon,
+        fieldType: 'image',
+      },
+    ];
+  }
+  if (type === 'cool_hunter_gallery') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as CoolHunterGalleryItem[]).filter(
+          it => it && typeof it === 'object'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...coolHunterGalleryItemElements(items),
+      { key: 'label', label: 'Nhãn dọc', icon: Type, fieldType: 'text' },
     ];
   }
   if (type === 'pnj_variant') {

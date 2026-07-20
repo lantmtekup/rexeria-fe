@@ -110,6 +110,13 @@ export type BlockType =
   | 'delvaux_variant'
   | 'q80_experience'
   | 'q80_menu'
+  // ── Cool Hunter (editorial, port từ apps/cool-hunter) ──
+  | 'cool_hunter_hero'
+  | 'cool_hunter_story'
+  | 'cool_hunter_gallery'
+  | 'cool_hunter_product'
+  | 'cool_hunter_quote'
+  | 'cool_hunter_footer'
   // ── Housent (real-estate template, clone từ housent.webflow.io) ──
   | 'housent_hero'
   | 'housent_stats'
@@ -494,6 +501,91 @@ export interface PnjHeroContent {
   frames?: PnjHeroFramesConfig;
   /** Optional storefront scrim — omit = PNJ dual-gradient default. */
   scrim?: PnjHeroScrimConfig;
+}
+
+/**
+ * Cool Hunter hero — logo bar + tiêu đề nhiều dòng + khung ảnh scrub từ
+ * 78%×75% (desktop) / 92%×78% (mobile) lên full stage. Port từ
+ * apps/cool-hunter Hero.tsx (Header logo gộp luôn vào block này).
+ *
+ * Tiêu đề render 2 lần: bản đen nằm dưới, bản trắng bị khung ảnh clip →
+ * chữ đổi màu per-pixel đúng mép ảnh khi ảnh phủ qua.
+ */
+export interface CoolHunterHeroContent {
+  logoUrl?: string;
+  logoAlt?: string;
+  /** Tiêu đề nhiều dòng (thêm/xoá trên canvas) — dùng chung plumbing với PnjHero. */
+  titleLines?: string[];
+  imageUrl?: string;
+  imageAlt?: string;
+}
+
+/**
+ * Cool Hunter Story — hai đoạn văn + khung ảnh scrub 4 beat (pin→sticky).
+ * Port từ apps/cool-hunter StorySection.tsx.
+ */
+export interface CoolHunterStoryContent {
+  text1?: string;
+  text2?: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  /** Nhãn dọc bên phải (desktop): "01 - Welcome". */
+  label?: string;
+}
+
+/**
+ * Cool Hunter Gallery — dải ngang 3 ảnh+caption scrub (stack → row → scroll).
+ * Port từ apps/cool-hunter GallerySection.tsx.
+ */
+export interface CoolHunterGalleryItem {
+  imageUrl?: string;
+  imageAlt?: string;
+  text?: string;
+}
+
+export interface CoolHunterGalleryContent {
+  items?: CoolHunterGalleryItem[];
+  /** Nhãn dọc bên phải (desktop): "02 - Lake Wehapa". */
+  label?: string;
+}
+
+/**
+ * Cool Hunter Product — mask bg scale + title + product table + panel copy.
+ * Port từ apps/cool-hunter ProductSection.tsx.
+ */
+export interface CoolHunterProductContent {
+  title?: string;
+  body?: string;
+  bgUrl?: string;
+  productUrl?: string;
+  productAlt?: string;
+  /** Nhãn dọc bên phải (desktop): "03 - Architecture". */
+  label?: string;
+}
+
+/**
+ * Cool Hunter Quote — quote giữa + ảnh kéo từ phải phủ màn (veil nhạt dần).
+ * Port từ apps/cool-hunter QuoteSection.tsx.
+ */
+export interface CoolHunterQuoteContent {
+  quote?: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  /** Nhãn dọc bên phải (desktop): "04 - Interior Design". */
+  label?: string;
+}
+
+/**
+ * Cool Hunter Footer — CTA signup + icon; ảnh nền dâng từ dưới (scrub, không pin).
+ * Port từ apps/cool-hunter FooterSection.tsx.
+ */
+export interface CoolHunterFooterContent {
+  bgUrl?: string;
+  iconUrl?: string;
+  /** Hỗ trợ xuống dòng bằng \\n. */
+  title?: string;
+  ctaText?: string;
+  ctaHref?: string;
 }
 
 /** Named scrim presets for PnjHero storefront wash. */
@@ -2733,6 +2825,12 @@ export type BlockContent =
   | MintVariantsContent
   | MintDiscoverContent
   | PnjHeroContent
+  | CoolHunterHeroContent
+  | CoolHunterStoryContent
+  | CoolHunterGalleryContent
+  | CoolHunterProductContent
+  | CoolHunterQuoteContent
+  | CoolHunterFooterContent
   | PnjDetailsContent
   | PnjVariantContent
   | PnjHeaderContent
@@ -3630,6 +3728,114 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'hero PNJ: ảnh storefront + overlay chữ + canvas scrub frame + hotspot drawer',
     aiLabelEn:
       'PNJ hero: storefront image + overlay copy + canvas frame scrub + hotspot drawer',
+  },
+  cool_hunter_hero: {
+    type: 'cool_hunter_hero',
+    category: 'hero',
+    style: 'minimal',
+    tags: ['cool-hunter', 'hero', 'scroll', 'scrub'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'Cool Hunter · Hero',
+    accent: '#111111',
+    adminLabel: 'Cool Hunter Hero',
+    gradient: 'from-neutral-800 to-neutral-950',
+    defaultName: 'Cool Hunter Hero',
+    aiLabelVi:
+      'hero Cool Hunter: logo + tiêu đề serif, khung ảnh scrub phóng to phủ chữ (chữ đổi đen ↔ trắng)',
+    aiLabelEn:
+      'Cool Hunter hero: logo + serif title, image frame scrubs to full bleed over the copy (title flips black ↔ white)',
+  },
+  cool_hunter_story: {
+    type: 'cool_hunter_story',
+    category: 'intro',
+    style: 'minimal',
+    tags: ['cool-hunter', 'story', 'scroll', 'scrub'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'Cool Hunter · Story',
+    accent: '#111111',
+    adminLabel: 'Cool Hunter Story',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Cool Hunter Story',
+    aiLabelVi:
+      'story Cool Hunter: hai đoạn văn + khung ảnh scrub 4 beat (text/ảnh trượt rồi đổi chỗ)',
+    aiLabelEn:
+      'Cool Hunter story: two copy blocks + image frame 4-beat scrub (text and image swap positions)',
+  },
+  cool_hunter_gallery: {
+    type: 'cool_hunter_gallery',
+    category: 'gallery',
+    style: 'minimal',
+    tags: ['cool-hunter', 'gallery', 'scroll', 'scrub'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'Cool Hunter · Gallery',
+    accent: '#111111',
+    adminLabel: 'Cool Hunter Gallery',
+    gradient: 'from-neutral-600 to-neutral-900',
+    defaultName: 'Cool Hunter Gallery',
+    aiLabelVi:
+      'gallery Cool Hunter: 3 ảnh+caption scrub ngang (stack → hàng → cuộn, text fade theo nhịp)',
+    aiLabelEn:
+      'Cool Hunter gallery: 3 image+caption horizontal scrub (stack → row → scroll, text fades in beat)',
+  },
+  cool_hunter_product: {
+    type: 'cool_hunter_product',
+    category: 'feature',
+    style: 'minimal',
+    tags: ['cool-hunter', 'product', 'scroll', 'scrub'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'Cool Hunter · Product',
+    accent: '#111111',
+    adminLabel: 'Cool Hunter Product',
+    gradient: 'from-neutral-500 to-neutral-800',
+    defaultName: 'Cool Hunter Product',
+    aiLabelVi:
+      'product Cool Hunter: mask bg scale + tiêu đề + bàn sản phẩm + panel chữ scrub',
+    aiLabelEn:
+      'Cool Hunter product: mask bg scale + title + product table + copy panel scrub',
+  },
+  cool_hunter_quote: {
+    type: 'cool_hunter_quote',
+    category: 'intro',
+    style: 'minimal',
+    tags: ['cool-hunter', 'quote', 'scroll', 'scrub'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'Cool Hunter · Quote',
+    accent: '#e8e3d8',
+    adminLabel: 'Cool Hunter Quote',
+    gradient: 'from-stone-300 to-neutral-700',
+    defaultName: 'Cool Hunter Quote',
+    aiLabelVi:
+      'quote Cool Hunter: câu trích dẫn giữa + ảnh kéo từ phải phủ màn (veil nhạt dần)',
+    aiLabelEn:
+      'Cool Hunter quote: centered pull-quote covered by image wipe from the right (veil fades)',
+  },
+  cool_hunter_footer: {
+    type: 'cool_hunter_footer',
+    category: 'cta',
+    style: 'minimal',
+    tags: ['cool-hunter', 'footer', 'cta', 'scrub'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'Cool Hunter · Footer',
+    accent: '#111111',
+    adminLabel: 'Cool Hunter Footer',
+    gradient: 'from-neutral-200 to-neutral-800',
+    defaultName: 'Cool Hunter Footer',
+    aiLabelVi:
+      'footer Cool Hunter: icon + tiêu đề CTA + nút Sign Up, ảnh nền dâng từ dưới khi scroll',
+    aiLabelEn:
+      'Cool Hunter footer: icon + CTA headline + Sign Up button, background image rises on scroll',
   },
   pnj_details: {
     type: 'pnj_details',
