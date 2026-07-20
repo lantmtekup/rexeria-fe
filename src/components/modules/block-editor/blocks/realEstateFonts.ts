@@ -15,15 +15,40 @@ export const BROWN = 'rgb(116, 96, 74)';
 export const SAND = '#f8f1e9';
 
 /**
+ * Bề rộng cột nội dung — KHOÁ ở 372px (chính là bề rộng canvas Framer nguồn) và
+ * canh giữa ở MỌI breakpoint. `100cqw` để dưới 372 thì co theo khung thay vì
+ * tràn; phải là `cqw` chứ không phải `vw` vì block sống trong device frame của
+ * editor, nơi bề rộng khung khác bề rộng cửa sổ.
+ *
+ * Dùng trên một `<div className='@container mx-auto' style={{ width: RE_CONTENT_W }}>`.
+ * Lớp đó BẮT BUỘC phải riêng: một element không query được chính container-type
+ * của nó, nên `@container` và `width` nằm cùng chỗ thì `cqi` bên trong vẫn
+ * resolve theo container tổ tiên.
+ *
+ * Lớp này re-scope mọi `cqi` bên trong về 372, nên các con số cqi transcribe từ
+ * canvas gốc ra THẲNG pixel gốc — đó là lý do không block real-estate nào còn
+ * cần `clamp()`. Clamp chỉ tồn tại hồi cột còn co theo container, để chặn chữ
+ * phình ở desktop; nay cột đã khoá thì clamp chỉ làm sai tỉ lệ gốc.
+ */
+export const RE_CONTENT_W = 'min(100cqw, 372px)';
+
+/**
  * Khoảng hở TRÊN của một section real-estate — 104px trên canvas 372 =
  * 27.96cqi. Đo `4. MaP` (đáy 1896) → `5. Tổng quan` (top 2000). KHÔNG dùng
  * khoảng hở 580px phía trên `3. Vị trí`: đó là lỗ hổng do designer xoá section
  * `2.`, không mang ý đồ thiết kế (xem PORTING.md).
  *
+ * Suy từ `RE_CONTENT_W` chứ không phải `cqi` trần: block bọc ngoài là full-bleed
+ * nên `27.96cqi` ở đó đo theo bề rộng BLOCK (1440 trên canvas desktop) chứ không
+ * theo cột 372 — bản `clamp(40px, 27.96cqi, 120px)` cũ vì vậy luôn kịch trần
+ * 120px ở desktop, lệch khỏi cột vừa khoá. Công thức này ra đúng 104px ở mọi bề
+ * rộng ≥372 và co theo khung khi <372, lại cho cùng kết quả dù đặt TRONG hay
+ * NGOÀI lớp `@container` 372 (vì `min()` đều kẹp về 372).
+ *
  * Section ĐẦU TIÊN của trang (`1. Banner`, top:0) KHÔNG dùng hằng này — nó
  * không có section nào phía trước.
  */
-export const RE_SECTION_GAP = 'clamp(40px, 27.96cqi, 120px)';
+export const RE_SECTION_GAP = `calc(${RE_CONTENT_W} * 0.2796)`;
 
 /**
  * Bản gốc khai SemiBold và Light thành HAI family riêng (không phải 2 weight

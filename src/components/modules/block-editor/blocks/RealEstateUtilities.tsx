@@ -20,12 +20,11 @@ import {
   BROWN,
   FONT_BODY,
   FONT_HEADING,
+  RE_CONTENT_W,
   RE_SECTION_GAP,
   SAND,
   FONT_CSS,
 } from './realEstateFonts';
-
-const CONTENT_W = 'min(100cqw, 372px)';
 
 export function RealEstateUtilities({
   content,
@@ -90,7 +89,7 @@ export function RealEstateUtilities({
       <div
         style={{ paddingTop: RE_SECTION_GAP, paddingBottom: RE_SECTION_GAP }}
       >
-        <div className='@container mx-auto' style={{ width: CONTENT_W }}>
+        <div className='@container mx-auto' style={{ width: RE_CONTENT_W }}>
           <div className='mx-auto w-[87.1cqi]'>
             <h2
               data-appear
@@ -114,7 +113,7 @@ export function RealEstateUtilities({
             </h2>
 
             <div
-              className='grid grid-cols-2 gap-x-[3.18cqi] gap-y-[15.9cqi]'
+              className='grid grid-cols-2 gap-x-[3.18cqi] gap-y-[3.18cqi]'
               style={{
                 marginTop: '10.6cqi',
               }}
@@ -126,7 +125,20 @@ export function RealEstateUtilities({
                   <div
                     key={i}
                     data-appear
-                    className='flex flex-col items-center'
+                    data-element-key='cardSurface'
+                    className={cn(
+                      selectableClass(activeKey === 'cardSurface'),
+                      'flex flex-col items-center'
+                    )}
+                    style={composeStyle(
+                      {
+                        border: '1px solid rgba(116, 96, 74, 0.2)',
+                        borderRadius: '1.08cqi',
+                        paddingTop: '6.45cqi',
+                        paddingBottom: '6.45cqi',
+                      },
+                      styleOf('cardSurface')
+                    )}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img

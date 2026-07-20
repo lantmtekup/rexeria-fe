@@ -1,78 +1,5 @@
 'use client';
 
-/**
- * Block "Real Estate - Biệt thự" — port section Framer `7. Biệt thự`
- * (apps/real-estate-1). Graduate từ `apps/real-estate-1/lib/blocks/Villa.tsx`,
- * nơi mọi con số dưới đây đã được đo trên canvas 372px cố định (xem
- * apps/real-estate-1/PORTING.md).
- *
- * Hình học nguồn (.framer-dimkb5, 324x871, top 3664):
- *
- *   eyebrow   top:0    — 14px xanh
- *   title     top:63   w:300 — 23px nâu
- *   slider    top:197  w:322 — cao 674
- *     ảnh     0,0    322x264
- *     title   24,303 w:275  23px nâu
- *     desc    24,358 w:275  14px nâu
- *     counter 27,606        12px nâu
- *
- * ---------------------------------------------------------------------------
- * VÌ SAO SLIDER ĐƯỢC DỰNG LẠI CHỨ KHÔNG TÁI DÙNG — đọc trước khi "đơn giản hoá".
- *
- * Slider nguồn (components/canvas/BiTTh.tsx) là 935 dòng sinh tự động, hình học
- * nằm trong framer.css dưới một scope riêng (.framer-WyRBZ), chạy bằng một máy
- * variant `cycleOrder` 4 entry.
- *
- * Nó KHÔNG advance. Đo trên trang live: counter đứng nguyên 1/4 qua cả hai nút
- * mũi tên, qua click ảnh và qua drag-swipe. Callback tap của từng variant được
- * truyền vào một component sinh tự động lồng bên trong dưới dạng prop `tGA9atO8Q`
- * và không bao giờ fire. Truyền thẳng `variant` thì lại chạy — đó chính là cách
- * nội dung 4 slide dưới đây được khôi phục — nhưng khách truy cập không có đường
- * nào tới slide 2-4, nên bản ship thực tế là một slide tĩnh đeo nhãn "1/4".
- *
- * ĐÍNH CHÍNH (đọc lại nguồn 2026-07-20): dây nối TRONG nguồn thật ra đủ —
- * `BiTTh.tsx:121-132` dựng 4 `activeVariantCallback` và `RxaUrrPA.tsx:55-62` map
- * `tGA9atO8Q` → `onTap`. Lý do bấm không ăn nằm ở chỗ khác, và PORTING.md:315
- * đã ghi: badge "Made in Framer" (`framer-TLVk2`) fixed góc dưới phải đè lên
- * đúng hai nút, nên `elementFromPoint` trúng badge chứ không trúng nút.
- *
- * Kết luận không đổi: bản generated vẫn không dùng lại được trên host (không có
- * gì ở đây định nghĩa .framer-WyRBZ). Nên đây là slider dựng lại: cùng nội dung,
- * cùng tỉ lệ, cùng bộ control, prev/next + phím mũi tên chạy được, không phụ
- * thuộc framer.css.
- * ---------------------------------------------------------------------------
- *
- * Khác biệt CÓ CHỦ ĐÍCH so với bản apps — theo đúng quy ước 5 block anh em
- * `RealEstateLocation` / `RealEstateHero` / `RealEstateInfo` /
- * `RealEstateOverview` / `RealEstateHighlights` đã lập:
- *
- * 1. THÊM font. Bản apps cố tình bỏ trống fontFamily để style editor thắng;
- *    trên host điều đó làm section mất hẳn chất chữ gốc. Nguồn dùng SVN-Adero
- *    SemiBold (eyebrow) và Light (tiêu đề, chữ trong slide).
- *
- * 2. THÊM entrance. Bản apps không có motion nào. Dựng bằng GSAP với NGUYÊN
- *    timing của `RealEstateInfo` / `RealEstateOverview` / `RealEstateHighlights`
- *    — cùng họ section thì cùng cảm giác.
- *
- * 3. Padding dọc dùng `RE_SECTION_GAP` thay cho `py-[clamp(40px,16.7cqi,120px)]`
- *    của bản apps, đồng bộ với 5 block anh em.
- *
- * 4. Nền `SAND` thay cho nền trong suốt của bản apps, đồng bộ Info/Overview/
- *    Highlights.
- *
- * 5. Key ảnh đổi `slides[i].image` → `slides[i].imageUrl`. Bản apps lệch khỏi
- *    tên field thật trong content; host resolve `fieldType` theo ĐÚNG đường dẫn
- *    field nên key cũ sẽ không bao giờ ra control ảnh. Anh em dùng
- *    `items[i].imageUrl` / `stats[i].iconUrl` — cùng quy ước.
- *
- * NHÁNH CANVAS. Carousel chỉ render MỘT slide, nên trên canvas slide 2-4 không
- * có node `data-element-key` để chọn/sửa — author không cách nào chạm tới. Trên
- * canvas đổi sang lưới 2 cột hiện đủ 4 slide; PreviewMode và `/p` giữ nguyên
- * carousel của bản production.
- *
- * Số slide CỐ ĐỊNH 4, không mở list manager: `StatsControls` sẵn có là generic
- * trên `{value,label}[]` nên không tái dùng được cho `{title,description,imageUrl}`.
- */
 import * as React from 'react';
 import gsap from 'gsap';
 
@@ -94,26 +21,14 @@ import {
   FONT_BODY,
   FONT_HEADING,
   GREEN,
+  RE_CONTENT_W,
   RE_SECTION_GAP,
   SAND,
   FONT_CSS,
 } from './realEstateFonts';
 
-/**
- * Bề rộng cột nội dung — KHOÁ ở 372px (chính là bề rộng canvas Framer nguồn) và
- * canh giữa ở MỌI breakpoint, đúng như `RealEstateHighlights`. `100cqw` để dưới
- * 372 thì co theo khung thay vì tràn; phải là `cqw` chứ không phải `vw` vì block
- * sống trong device frame của editor, nơi bề rộng khung khác bề rộng cửa sổ.
- *
- * Cột đã khoá nên mọi `cqi` bên trong ra THẲNG pixel gốc — vì vậy các `clamp()`
- * trần của bản apps bị bỏ: chúng chỉ tồn tại để chặn chữ phình khi cột còn co
- * theo container. Dưới 372 thì cột và chữ cùng co một nhịp.
- *
- *   thẻ 322/372 = 86.6%   hở 12/372 = 3.23%   thụt 24/322 = 7.45%
- */
-const CONTENT_W = 'min(100cqw, 372px)';
-const CARD_W = `calc(${CONTENT_W} * 0.866)`;
-const GAP_X = `calc(${CONTENT_W} * 0.0323)`;
+const CARD_W = `calc(${RE_CONTENT_W} * 0.866)`;
+const GAP_X = `calc(${RE_CONTENT_W} * 0.0323)`;
 
 export function RealEstateVilla({
   content,
@@ -131,11 +46,10 @@ export function RealEstateVilla({
   const count = slides.length;
   const [index, setIndex] = React.useState(0);
 
-  // Canvas editor (author) vs PreviewMode / `/p` (production).
   const [isCanvas, setIsCanvas] = React.useState(true);
   React.useLayoutEffect(() => {
     if (!hasRoot) {
-      setIsCanvas(false); // `/p` công khai — không có LandingMotion root
+      setIsCanvas(false);
       return;
     }
     setIsCanvas(
@@ -151,8 +65,6 @@ export function RealEstateVilla({
     [count]
   );
 
-  // Giữ index hợp lệ khi danh sách slide co lại dưới chân (editor có thể xoá
-  // slide trong lúc block đang mount).
   React.useEffect(() => {
     if (index > count - 1) setIndex(Math.max(0, count - 1));
   }, [count, index]);
@@ -169,7 +81,6 @@ export function RealEstateVilla({
     ({ scroller, requestRefresh }) => {
       const root = rootRef.current;
       if (!root) return;
-      // Phải return TRƯỚC fromTo — nếu không các node kẹt ở opacity:0.
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
       gsap.fromTo(
@@ -191,7 +102,6 @@ export function RealEstateVilla({
         }
       );
 
-      // Ảnh load xong → chiều cao block chốt lại, ScrollTrigger phải đo lại.
       root.querySelectorAll('img').forEach(img => {
         if (!img.complete) {
           img.addEventListener('load', requestRefresh, { once: true });
@@ -206,9 +116,7 @@ export function RealEstateVilla({
   const isFirstRender = React.useRef(true);
 
   React.useEffect(() => {
-    // Lưới canvas không có carousel → không có gì để chuyển.
     if (isCanvas) return;
-    // Lần render đầu đã có entrance `[data-appear]` lo, đừng chồng thêm.
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
@@ -272,7 +180,6 @@ export function RealEstateVilla({
     );
   };
 
-  /** Chữ slide. Nguồn thụt vào 24 trên 322 = 7.45cqi, rộng 275 = 85.4cqi. */
   const renderSlideText = (slide: RealEstateVillaSlide, i: number) => {
     const titleKey = `slides[${i}].title`;
     const descKey = `slides[${i}].description`;
@@ -327,7 +234,6 @@ export function RealEstateVilla({
     </div>
   );
 
-  /** Eyebrow + tiêu đề, canh giữa — dùng chung cho cả hai nhánh. */
   const header = (
     <>
       <p
@@ -379,7 +285,6 @@ export function RealEstateVilla({
 
   const padY = {
     paddingTop: RE_SECTION_GAP,
-    paddingBottom: RE_SECTION_GAP,
   };
 
   if (isCanvas) {
@@ -392,7 +297,7 @@ export function RealEstateVilla({
       >
         <style>{FONT_CSS}</style>
         <div style={padY}>
-          <div className='@container mx-auto' style={{ width: CONTENT_W }}>
+          <div className='@container mx-auto' style={{ width: RE_CONTENT_W }}>
             {header}
           </div>
 
@@ -402,7 +307,7 @@ export function RealEstateVilla({
               width: `calc(${CARD_W} * 2 + ${GAP_X})`,
               maxWidth: '100%',
               gap: GAP_X,
-              marginTop: `calc(${CONTENT_W} * 0.145)`,
+              marginTop: `calc(${RE_CONTENT_W} * 0.145)`,
             }}
           >
             {slides.map((s, i) => renderCard(s, i))}
@@ -412,7 +317,6 @@ export function RealEstateVilla({
     );
   }
 
-  // ── Nhánh production (PreviewMode + `/p`): carousel một slide ──────────────
   const slide = slides[index];
 
   return (
@@ -423,7 +327,7 @@ export function RealEstateVilla({
     >
       <style>{FONT_CSS}</style>
       <div style={padY}>
-        <div className='@container mx-auto' style={{ width: CONTENT_W }}>
+        <div className='@container mx-auto' style={{ width: RE_CONTENT_W }}>
           {header}
 
           {slide ? (
@@ -507,9 +411,7 @@ export function RealEstateVilla({
                         aria-live='polite'
                         className='absolute inset-0 flex items-center justify-center'
                         style={{
-                          // Nguồn dùng SemiBold cho counter, không phải Light.
                           fontFamily: FONT_HEADING,
-                          // 12px trên khung 322 = 3.73cqi.
                           fontSize: '3.73cqi',
                           lineHeight: 1.479,
                           color: BROWN,

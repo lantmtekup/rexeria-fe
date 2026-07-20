@@ -13,7 +13,7 @@
  * dùng `StatsControls`): control đó generic trên `{value,label}[]`, không khớp
  * `{iconUrl,label}`. Số ô cố định 6 như nguồn.
  */
-import { Image as ImageIcon, Pilcrow, Type } from 'lucide-react';
+import { Image as ImageIcon, Palette, Pilcrow, Type } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { LayerElement } from '../../../LayersPanel';
@@ -110,6 +110,12 @@ export const realEstateUtilitiesDef: BlockDef<RealEstateUtilitiesContent> = {
   defaultContent: { vi: VI, en: EN },
   elements: [
     { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+    // Style-only (kind `fill`, không có fieldType) như `cardSurface` của
+    // realEstateVilla: viền + nền ô, chỉ có style chứ không có nội dung. MỘT
+    // key dùng chung cho cả 6 ô — đổi viền là đổi đồng loạt. Nguồn Framer KHÔNG
+    // có viền (xem docblock `RealEstateUtilities.tsx`); đây là yêu cầu thiết kế
+    // thêm vào, nên để author chỉnh được thay vì chôn cứng.
+    { key: 'cardSurface', label: 'Viền & nền ô', icon: Palette },
     ...realEstateUtilityItemElements(VI_ITEMS),
   ],
 };

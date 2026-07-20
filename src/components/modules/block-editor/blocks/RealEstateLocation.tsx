@@ -1,40 +1,5 @@
 'use client';
 
-/**
- * Block "Real Estate - Vị trí & Bản đồ" — port của section Framer `3. Vị trí`
- * + `4. MaP` (apps/real-estate-1). Graduate từ `apps/real-estate-1/lib/blocks/
- * Location.tsx`, nơi mọi con số dưới đây đã được suy ra từ `app/framer.css`
- * trên canvas 372px cố định (xem apps/real-estate-1/PORTING.md).
- *
- * Bản gốc là 2 sibling absolute, KHÔNG phải 1 node
- * (apps/real-estate-1/components/canvas/Page.tsx:1295-1435):
- *
- *   .framer-17ozd8c   top:1368  326x257  — ba dòng chữ
- *   .framer-umdqut    top:1687  372x209  — video bản đồ + badge xoay
- *
- * DOM order ngược với visual order ở đó (map emit trước), nên `top` mới là thứ
- * quyết định layout: chữ 1368-1625, map 1687-1896. Chữ trên, map dưới.
- *
- * Khác biệt CÓ CHỦ ĐÍCH so với bản apps:
- *
- * 1. BỎ badge <Xoay/> ("LIÊN KẾT VÙNG" xoay 360°/10s). Badge đó cần 257 dòng
- *    scope `.framer-KgUaE` trong app/framer.css (app nạp global qua layout —
- *    host không có global đó), cộng toàn bộ runtime shim `components/framer/`
- *    (~1.100 dòng) và framer-motion. Host chạy GSAP. Bản apps đã cảnh báo sẵn
- *    coupling này. Muốn có lại badge: viết mới self-contained, đừng kéo shim.
- *
- * 2. THÊM font. Bản apps cố tình bỏ trống fontFamily để style editor thắng;
- *    trên host điều đó làm section mất hẳn chất chữ gốc. Nay self-host 2 file
- *    woff2 → `public/real-estate/fonts/`, khai @font-face trong helper dùng
- *    chung `realEstateFonts.ts` (block `real_estate_hero` xài lại y hệt).
- *
- * 3. THÊM entrance. Nguồn có appear effect per-line mà bản apps bỏ; nay dựng
- *    lại bằng GSAP (xem useBlockMotion bên dưới).
- *
- * 4. THÊM padding trên. Bản apps có padding dọc = 0 vì trên canvas 372 section
- *    nằm ở `top:1368`, khoảng cách do page flow lo. Xếp chồng trong host thì
- *    eyebrow sẽ dính đáy block trước. Xem RE_SECTION_GAP.
- */
 import * as React from 'react';
 import gsap from 'gsap';
 
@@ -57,6 +22,7 @@ import {
   FONT_CSS,
   FONT_HEADING,
   GREEN,
+  RE_CONTENT_W,
   RE_SECTION_GAP,
   SAND,
 } from './realEstateFonts';
@@ -79,19 +45,9 @@ export function RealEstateLocation({
       positionStyle(positions, key)
     );
 
-  /**
-   * Entrance. Nguồn (Page.tsx `textEffect`): tokenization 'line', trigger
-   * 'onInView', animation3 `{opacity:.001, y:10}`, transition3 `{type:'spring',
-   * bounce:0, duration:.7, delay:.075}`, startDelay .1.
-   *
-   * Spring bounce:0 = không nảy → 'power2.out' là xấp xỉ sát nhất trong GSAP.
-   * Stagger theo ELEMENT, không theo ký tự: PORTING.md gọi stagger per-character
-   * là "cách chắc chắn nhất làm trang sai cảm giác".
-   */
   useBlockMotion(rootRef, ({ scroller, requestRefresh }) => {
     const root = rootRef.current;
     if (!root) return;
-    // Phải return TRƯỚC fromTo — nếu không các node kẹt ở opacity:0.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     gsap.fromTo(
@@ -121,114 +77,95 @@ export function RealEstateLocation({
     <div
       ref={rootRef}
       style={composeStyle(
-        { backgroundColor: SAND, paddingTop: RE_SECTION_GAP },
+        { backgroundColor: SAND },
         blockBackgroundStyle(background)
       )}
       className={cn('@container w-full overflow-hidden', className)}
     >
       <style>{FONT_CSS}</style>
 
-      <div className='flex flex-col items-center'>
-        {/* Chữ. Nguồn: canh giữa trong box 326px, tức ~87.6cqi của canvas. */}
-        <div className='flex w-[min(87.6cqi,640px)] flex-col items-center text-center'>
-          <p
-            data-appear
-            data-element-key='eyebrow'
-            className={selectableClass(activeKey === 'eyebrow')}
-            style={composeStyle(
-              {
-                // 14px trên 372 = 3.76cqi; line-height 23.6592/14 = 1.69.
-                fontFamily: FONT_HEADING,
-                fontSize: 'clamp(12px, 3.76cqi, 16px)',
-                lineHeight: 1.69,
-                color: GREEN,
-              },
-              styleOf('eyebrow')
-            )}
-          >
-            {content.eyebrow}
-          </p>
-
-          <h2
-            data-appear
-            data-element-key='title'
-            className={selectableClass(activeKey === 'title')}
-            style={composeStyle(
-              {
-                // 23px trên 372 = 6.18cqi; line-height 31.5456/23 = 1.372.
-                fontFamily: FONT_HEADING,
-                fontSize: 'clamp(22px, 6.18cqi, 40px)',
-                lineHeight: 1.372,
-                color: BROWN,
-                // Face đã là semibold → 400 là đúng, không phải 600.
-                fontWeight: 400,
-                // Hở gốc: title top 63 − eyebrow height 23.66 ≈ 39px = 10.5cqi.
-                marginTop: 'clamp(16px, 10.5cqi, 44px)',
-              },
-              styleOf('title')
-            )}
-          >
-            {content.title}
-          </h2>
-
-          <p
-            data-appear
-            data-element-key='description'
-            className={selectableClass(activeKey === 'description')}
-            style={composeStyle(
-              {
-                fontFamily: FONT_BODY,
-                fontSize: 'clamp(13px, 3.76cqi, 17px)',
-                lineHeight: 1.69,
-                color: BROWN,
-                // Hở gốc: description top 138 − khối title ≈ 12px = 3.2cqi.
-                marginTop: 'clamp(8px, 3.2cqi, 18px)',
-              },
-              styleOf('description')
-            )}
-          >
-            {content.description}
-          </p>
-        </div>
-
-        {/* Map. Nguồn: full-bleed 372x209 (tỉ lệ 372/209 ≈ 16:9), overflow hidden.
-            Hở đo từ description chứ không từ box section: box .framer-17ozd8c cố
-            định 257px nhưng nội dung kết thúc ở 233, nên 62px hở box-to-box
-            (1625 → 1687) thực chất là 86px hở thị giác (1601 → 1687). Layout này
-            cao theo nội dung, nên lấy 86. 86/372 = 23.1cqi.
-
-            `videoUrl` (không phải `map`) làm data-element-key: key hit-test canvas,
-            elements[] trong BlockDef và field path trong content phải trùng nhau —
-            chọn map trên canvas thì toolbar hiện đúng ô URL. */}
+      <div className='@container mx-auto' style={{ width: RE_CONTENT_W }}>
         <div
-          data-appear
-          data-element-key='videoUrl'
-          className={cn(
-            selectableClass(activeKey === 'videoUrl'),
-            'relative aspect-[372/209] w-full overflow-hidden'
-          )}
-          style={composeStyle(
-            { marginTop: 'clamp(32px, 23.1cqi, 96px)' },
-            styleOf('videoUrl')
-          )}
+          className='flex flex-col items-center'
+          style={{ paddingTop: RE_SECTION_GAP }}
         >
-          {/* Shim Video của Framer bỏ qua có chủ đích: nó thêm plumbing
-              useInView play/pause không cần ở đây, và config `objectFit`/`loop`/
-              `muted`/`playsinline`/`controls` của nó rút gọn lại đúng bằng bốn
-              attribute này. `srcType` gốc là 'Upload' nên Framer resolve
-              `srcFile` — sibling `srcUrl` (MLWPbW1dUQawJLhhun3dBwpgJak.mp4) là
-              config chết, không port. */}
-          {content.videoUrl ? (
-            <video
-              key={content.videoUrl}
-              src={content.videoUrl}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className='h-full w-full object-cover'
-            />
-          ) : null}
+          <div className='flex w-[87.6cqi] flex-col items-center text-center'>
+            <p
+              data-appear
+              data-element-key='eyebrow'
+              className={selectableClass(activeKey === 'eyebrow')}
+              style={composeStyle(
+                {
+                  fontFamily: FONT_HEADING,
+                  fontSize: '3.76cqi',
+                  lineHeight: 1.69,
+                  color: GREEN,
+                },
+                styleOf('eyebrow')
+              )}
+            >
+              {content.eyebrow}
+            </p>
+
+            <h2
+              data-appear
+              data-element-key='title'
+              className={selectableClass(activeKey === 'title')}
+              style={composeStyle(
+                {
+                  fontFamily: FONT_HEADING,
+                  fontSize: '6.18cqi',
+                  lineHeight: 1.372,
+                  color: BROWN,
+                  fontWeight: 400,
+                  marginTop: '10.5cqi',
+                },
+                styleOf('title')
+              )}
+            >
+              {content.title}
+            </h2>
+
+            <p
+              data-appear
+              data-element-key='description'
+              className={selectableClass(activeKey === 'description')}
+              style={composeStyle(
+                {
+                  fontFamily: FONT_BODY,
+                  fontSize: '3.76cqi',
+                  lineHeight: 1.69,
+                  color: BROWN,
+                  marginTop: '3.2cqi',
+                },
+                styleOf('description')
+              )}
+            >
+              {content.description}
+            </p>
+          </div>
+
+          <div
+            data-appear
+            data-element-key='videoUrl'
+            className={cn(
+              selectableClass(activeKey === 'videoUrl'),
+              'relative aspect-[372/209] w-full overflow-hidden'
+            )}
+            style={composeStyle({ marginTop: '23.1cqi' }, styleOf('videoUrl'))}
+          >
+            {content.videoUrl ? (
+              <video
+                key={content.videoUrl}
+                src={content.videoUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className='h-full w-full object-cover'
+              />
+            ) : null}
+          </div>
         </div>
       </div>
     </div>

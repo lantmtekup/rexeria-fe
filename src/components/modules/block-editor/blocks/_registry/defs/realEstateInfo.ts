@@ -19,12 +19,15 @@ import type { RealEstateInfoContent } from '../../../types';
 import type { BlockDef } from '../types';
 
 const ICON = '/real-estate/intro-sunburst.svg';
+/** Nguồn `GCDPQ3koavRx4KMJM3QV1gqsx4.jpg` (4096×2305), copy nội bộ. */
+const IMAGE = '/real-estate/intro-feature.jpg';
 
 const VI: RealEstateInfoContent = {
   iconUrl: ICON,
   title: 'Real Estates',
   description:
     'Dự án đầu tư xây dựng mới khu nhà ở thấp tầng, tạo nên một khu dân cư có hệ thống hạ tầng kỹ thuật, xã hội đồng bộ và các công trình nhà ở với kiến trúc hiện đại.',
+  imageUrl: IMAGE,
 };
 
 const EN: RealEstateInfoContent = {
@@ -32,6 +35,7 @@ const EN: RealEstateInfoContent = {
   title: 'Real Estates',
   description:
     'A new low-rise residential development, forming a neighbourhood with complete technical and social infrastructure alongside homes of contemporary architecture.',
+  imageUrl: IMAGE,
 };
 
 export const realEstateInfoDef: BlockDef<RealEstateInfoContent> = {
@@ -44,9 +48,9 @@ export const realEstateInfoDef: BlockDef<RealEstateInfoContent> = {
     gradient: 'from-amber-50 to-emerald-700',
     defaultName: 'Real Estate - Giới thiệu',
     aiLabelVi:
-      'section giới thiệu ngắn: icon trang trí + tiêu đề + đoạn mô tả canh giữa; ba khối fade-up lần lượt khi cuộn tới',
+      'section giới thiệu ngắn: icon trang trí + tiêu đề + đoạn mô tả canh giữa, dưới cùng là ảnh đại diện; chữ fade-up lần lượt, ảnh crop-in khi cuộn tới',
     aiLabelEn:
-      'short intro section: decorative icon above a centred title and description; the three blocks fade up in sequence on scroll',
+      'short intro section: decorative icon above a centred title and description, closing with a feature image; text fades up in sequence, the image crops in on scroll',
   },
   // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
   component: dynamic(() =>
@@ -61,6 +65,12 @@ export const realEstateInfoDef: BlockDef<RealEstateInfoContent> = {
       label: 'Mô tả',
       icon: Pilcrow,
       fieldType: 'textarea',
+    },
+    {
+      key: 'imageUrl',
+      label: 'Ảnh đại diện',
+      icon: ImageIcon,
+      fieldType: 'image',
     },
   ],
 };

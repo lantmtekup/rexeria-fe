@@ -877,6 +877,9 @@ export function elementsForType(
         icon: Type,
         fieldType: 'text' as const,
       },
+      // Style-only, MỘT key cho cả 6 ô — phải khớp `elements[]` trong
+      // `defs/realEstateUtilities.ts`, nếu không panel Lớp và toolbar lệch nhau.
+      { key: 'cardSurface', label: 'Viền & nền ô', icon: Palette },
       ...realEstateUtilityItemElements(items),
     ];
   }

@@ -2521,6 +2521,12 @@ export interface RealEstateInfoContent {
   iconUrl: string;
   title: string;
   description: string;
+  /**
+   * Ảnh đại diện dưới phần mô tả — nguồn là component `2. Hình đại diện`
+   * (`HNhIDiN`), 372×454 @ top 852. Khi cuộn tới, khung mask co lại còn
+   * 306×374 trong khi ảnh giữ nguyên kích thước → hiệu ứng crop-in.
+   */
+  imageUrl: string;
 }
 
 /** Một hạng mục trong lưới tổng quan: icon tròn ở trên, chữ canh giữa ở dưới. */
@@ -5905,9 +5911,9 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     gradient: 'from-amber-50 to-emerald-700',
     defaultName: 'Real Estate - Giới thiệu',
     aiLabelVi:
-      'section giới thiệu ngắn: icon trang trí + tiêu đề + đoạn mô tả canh giữa; ba khối fade-up lần lượt khi cuộn tới',
+      'section giới thiệu ngắn: icon trang trí + tiêu đề + đoạn mô tả canh giữa, dưới cùng là ảnh đại diện; chữ fade-up lần lượt, ảnh crop-in khi cuộn tới',
     aiLabelEn:
-      'short intro section: decorative icon above a centred title and description; the three blocks fade up in sequence on scroll',
+      'short intro section: decorative icon above a centred title and description, closing with a feature image; text fades up in sequence, the image crops in on scroll',
   },
   real_estate_overview: {
     type: 'real_estate_overview',
