@@ -41,7 +41,15 @@ export const delvauxHeaderDef: BlockDef<DelvauxHeaderContent> = {
       label: 'Logo (ảnh)',
       icon: ImageIcon,
       fieldType: 'image',
+      groupId: 'brand',
+      groupLabel: 'Thương hiệu',
     },
-    { key: 'logoText', label: 'Logo (chữ)', icon: Type, fieldType: 'text' },
+    {
+      key: 'logoText',
+      label: 'Logo (chữ)',
+      icon: Type,
+      fieldType: 'text',
+      groupId: 'brand',
+    },
   ],
 };

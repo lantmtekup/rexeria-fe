@@ -111,6 +111,8 @@ const STICKY_SCROLL_BLOCK_TYPES = new Set<Block['blockType']>([
   'mint_discover',
   'mint_vault_collection',
   'mint_vault_reveal',
+  'delvaux_hero',
+  'delvaux_variant',
 ]);
 
 /** Overlay chrome (header/nav) — canvas căn top, không center tạo khoảng hở. */

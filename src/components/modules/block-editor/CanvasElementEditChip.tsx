@@ -52,7 +52,12 @@ function chipIcon(kind: ElementKind) {
     kind === 'mintV2ServicesItems' ||
     kind === 'mintV2ProcessSteps' ||
     kind === 'pnjFrames' ||
-    kind === 'pnjScrim'
+    kind === 'pnjScrim' ||
+    kind === 'delvauxFrames' ||
+    kind === 'delvauxHotspots' ||
+    kind === 'delvauxVariants' ||
+    kind === 'delvauxFaqs' ||
+    kind === 'delvauxSubnavLinks'
   ) {
     return List;
   }

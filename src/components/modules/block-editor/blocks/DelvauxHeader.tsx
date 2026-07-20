@@ -3,19 +3,21 @@
 /**
  * Block "Header - Logo" (section `.header` của delvaux-clone): logo căn giữa.
  *
- * Bám gốc: header là `position: fixed` (top, z 999, width max-content căn
- * giữa) — luôn nhìn thấy khi cuộn; logo svg gốc 140×14 (height 14px desktop,
+ * Bám gốc: header `position: fixed` (top, z 999, width max-content căn giữa)
+ * — luôn nhìn thấy khi cuộn; logo svg gốc 140×14 (height 14px desktop,
  * 8.5px mobile); entrance trượt từ trên xuống (`transitionLogo`: -70px → 0, 1s).
  *
- * Hai chế độ render (giống DelvauxSubnav):
- *  - /p (scroller = window): portal ra body, `position: fixed` đúng gốc.
- *  - editor canvas: render in-flow để không đè chrome admin.
+ * Ba bề mặt (apps-port-host / PnjHeader):
+ *  - Editor canvas: in-flow, chọn/sửa logo
+ *  - PreviewMode: portal `absolute` → `[data-device-frame]`
+ *  - /p: portal `fixed` → document.body
  */
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import gsap from 'gsap';
 
 import { useLandingMotion } from '../motion/LandingMotion';
+import { isDeviceFrameHost, resolveDrawerPortalHost } from '../previewPortal';
 import { DELVAUX_FONT_BODY, DELVAUX_FONT_CSS } from './delvauxTheme';
 import type {
   BlockBackground,
@@ -51,12 +53,28 @@ export function DelvauxHeader({
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
   const logoRef = React.useRef<HTMLDivElement>(null);
-  const { scroller, hasRoot } = useLandingMotion();
-  // Chỉ portal fixed khi thật sự ở trang render (LandingMotionRoot + window
-  // scroller = /p). Mini-preview/thumbnail không có root → render in-flow.
-  const isPublic = hasRoot && scroller === null;
+  const { hasRoot } = useLandingMotion();
+
   const [mounted, setMounted] = React.useState(false);
+  const [isCanvas, setIsCanvas] = React.useState(false);
+  const [portalHost, setPortalHost] = React.useState<HTMLElement | null>(null);
+
   React.useEffect(() => setMounted(true), []);
+
+  React.useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    if (!hasRoot) {
+      setIsCanvas(false);
+      setPortalHost(resolveDrawerPortalHost(root));
+      return;
+    }
+    setIsCanvas(!!root.closest('[data-testid="active-block-preview"]'));
+    setPortalHost(resolveDrawerPortalHost(root));
+  }, [mounted, hasRoot]);
+
+  const useFixed = mounted && hasRoot && !isCanvas;
+  const inFrame = isDeviceFrameHost(portalHost);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -67,6 +85,7 @@ export function DelvauxHeader({
 
   // keyframes `transitionLogo` gốc: translateY(-70px) → 0 trong 1s.
   React.useEffect(() => {
+    if (!mounted) return;
     const logo = logoRef.current;
     if (!logo) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -74,7 +93,7 @@ export function DelvauxHeader({
     return () => {
       tween.kill();
     };
-  }, [mounted, isPublic]);
+  }, [mounted, useFixed, isCanvas]);
 
   const inner = (
     <div
@@ -89,7 +108,6 @@ export function DelvauxHeader({
           src={content.logoUrl}
           alt={content.logoText || 'Logo'}
           style={composeStyle(
-            // logo.svg gốc 140×14 → desktop 14px, mobile nhỏ hơn (gốc 8.5px)
             { height: 'clamp(9px, 1cqi, 14px)', width: 'auto' },
             styleOf('logoUrl')
           )}
@@ -117,20 +135,20 @@ export function DelvauxHeader({
     </div>
   );
 
-  return (
-    <header
-      ref={rootRef}
-      style={blockBackgroundStyle(background)}
-      className='delvaux-header @container relative w-full'
-    >
-      <style>{DELVAUX_FONT_CSS}</style>
-      {isPublic && mounted ? (
-        // /p: header dán cố định trên cùng, căn giữa như gốc (z 999).
-        createPortal(
+  // Overlay: Preview (absolute in device frame) + /p (fixed on body)
+  if (useFixed && portalHost) {
+    return (
+      <header
+        ref={rootRef}
+        style={blockBackgroundStyle(background)}
+        className='delvaux-header @container relative m-0 h-0 min-h-0 w-full overflow-visible border-0 p-0'
+      >
+        <style>{DELVAUX_FONT_CSS}</style>
+        {createPortal(
           <div
             className='delvaux-header-fixed'
             style={{
-              position: 'fixed',
+              position: inFrame ? 'absolute' : 'fixed',
               top: 0,
               left: '50%',
               transform: 'translateX(-50%)',
@@ -140,11 +158,35 @@ export function DelvauxHeader({
           >
             {inner}
           </div>,
-          document.body
-        )
-      ) : (
-        <div className='flex w-full items-center justify-center'>{inner}</div>
-      )}
+          portalHost
+        )}
+      </header>
+    );
+  }
+
+  // Trước mount / chờ portal host — placeholder h-0 (không tạo sọc).
+  if (!mounted || (hasRoot && !isCanvas)) {
+    return (
+      <header
+        ref={rootRef}
+        style={blockBackgroundStyle(background)}
+        className='delvaux-header @container relative m-0 h-0 min-h-0 w-full overflow-visible border-0 p-0'
+      >
+        <style>{DELVAUX_FONT_CSS}</style>
+      </header>
+    );
+  }
+
+  // Editor canvas: in-flow để chọn/sửa logo
+  return (
+    <header
+      ref={rootRef}
+      data-canvas-edit='true'
+      style={composeStyle({ minHeight: 72 }, blockBackgroundStyle(background))}
+      className='delvaux-header @container relative w-full'
+    >
+      <style>{DELVAUX_FONT_CSS}</style>
+      <div className='flex w-full items-center justify-center'>{inner}</div>
     </header>
   );
 }

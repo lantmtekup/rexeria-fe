@@ -49,6 +49,11 @@ import { ExtraElementsList } from './ExtraElementsList';
 import { resolvePnjParagraphs } from './blocks/PnjDetails';
 import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
+import { delvauxProductHotspotElements } from './blocks/_registry/defs/delvauxProduct';
+import {
+  delvauxFaqElements,
+  delvauxVariantItemElements,
+} from './blocks/_registry/defs/delvauxVariant';
 import { mintDiscoverTabElements } from './blocks/_registry/defs/mintDiscover';
 import { mintV2ProcessStepElements } from './blocks/_registry/defs/mintV2Process';
 import { mintV2ServicesItemElements } from './blocks/_registry/defs/mintV2Services';
@@ -58,6 +63,7 @@ import { mintVaultCraftItemElements } from './blocks/mintVaultCraftElements';
 import { mintVaultInvitationImageElements } from './blocks/mintVaultInvitationElements';
 import { mintVaultRevealImageElements } from './blocks/mintVaultRevealElements';
 import { pnjStickyMenuItemElements } from './blocks/_registry/defs/pnjStickyMenu';
+import { delvauxSubnavLinkElements } from './blocks/_registry/defs/delvauxSubnav';
 import { getBlockDef } from './blocks/_registry/registry';
 import {
   editingVariantOf,
@@ -67,6 +73,10 @@ import {
   type BlockType,
   type Device,
   type ExtraElementKind,
+  type DelvauxProductHotspot,
+  type DelvauxSubnavLink,
+  type DelvauxVariantFaq,
+  type DelvauxVariantOption,
   type PnjHeroContent,
   type PnjVariantItem,
   type PnjStickyMenuItem,
@@ -749,6 +759,104 @@ export function elementsForType(
       { key: 'ctaText', label: 'CTA', icon: Type, fieldType: 'text' },
     ];
   }
+  if (type === 'delvaux_product') {
+    const raw = content?.hotspots;
+    const hotspots = Array.isArray(raw)
+      ? (raw as DelvauxProductHotspot[]).filter(
+          h => h && typeof h === 'object' && typeof h.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'imageUrl',
+        label: 'Ảnh sản phẩm',
+        icon: ImageIcon,
+        fieldType: 'image',
+        groupId: 'product',
+        groupLabel: 'Sản phẩm',
+      },
+      {
+        key: 'glowColor',
+        label: 'Màu quầng sáng',
+        icon: Palette,
+        fieldType: 'text',
+        groupId: 'product',
+      },
+      ...delvauxProductHotspotElements(hotspots),
+      {
+        key: 'hotspots',
+        label: 'Thêm / quản lý hotspot',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'delvaux_variant') {
+    const rawVariants = content?.variants;
+    const variants = Array.isArray(rawVariants)
+      ? (rawVariants as DelvauxVariantOption[]).filter(
+          v => v && typeof v === 'object' && typeof v.label === 'string'
+        )
+      : [];
+    const rawFaqs = content?.faqs;
+    const faqs = Array.isArray(rawFaqs)
+      ? (rawFaqs as DelvauxVariantFaq[]).filter(
+          f => f && typeof f === 'object' && typeof f.question === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'title',
+        label: 'Tiêu đề (ghost)',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'stage1',
+        groupLabel: 'Stage 1',
+      },
+      {
+        key: 'moreInfoLabel',
+        label: 'Nhãn nút thông tin',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'stage1',
+      },
+      ...delvauxVariantItemElements(variants),
+      {
+        key: 'variants',
+        label: 'Thêm / quản lý màu',
+        icon: ListChecks,
+      },
+      ...delvauxFaqElements(faqs),
+      {
+        key: 'faqs',
+        label: 'Thêm / quản lý FAQ',
+        icon: ListChecks,
+      },
+      {
+        key: 'skuName',
+        label: 'Tên SKU (stage 2)',
+        icon: Type,
+        fieldType: 'textarea',
+        groupId: 'sku',
+        groupLabel: 'Stage 2 · SKU',
+      },
+      {
+        key: 'skuMediaUrl',
+        label: 'Media SKU (URL)',
+        icon: ImageIcon,
+        fieldType: 'text',
+        groupId: 'sku',
+      },
+      {
+        key: 'skuPersonUrl',
+        label: 'Ảnh model',
+        icon: ImageIcon,
+        fieldType: 'image',
+        groupId: 'sku',
+      },
+    ];
+  }
   if (type === 'mint_discover') {
     const raw = content?.tabs;
     const tabs = Array.isArray(raw)
@@ -972,6 +1080,53 @@ export function elementsForType(
         label: 'Link CTA',
         icon: Link2,
         fieldType: 'text',
+      },
+    ];
+  }
+  if (type === 'delvaux_subnav') {
+    const raw = content?.links;
+    const links = Array.isArray(raw)
+      ? (raw as DelvauxSubnavLink[]).filter(
+          l => l && typeof l === 'object' && typeof l.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...delvauxSubnavLinkElements(links),
+      {
+        key: 'links',
+        label: 'Thêm / quản lý link',
+        icon: ListChecks,
+      },
+      {
+        key: 'bookLabel',
+        label: 'Nút đặt lịch',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'book',
+        groupLabel: 'Book',
+      },
+      {
+        key: 'bookUrl',
+        label: 'URL đặt lịch',
+        icon: Link2,
+        fieldType: 'text',
+        groupId: 'book',
+      },
+      {
+        key: 'buyLabel',
+        label: 'Nút mua ngay',
+        icon: MousePointerClick,
+        fieldType: 'text',
+        groupId: 'buy',
+        groupLabel: 'Buy',
+      },
+      {
+        key: 'buyUrl',
+        label: 'URL mua ngay',
+        icon: Link2,
+        fieldType: 'text',
+        groupId: 'buy',
       },
     ];
   }
