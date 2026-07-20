@@ -12,6 +12,12 @@ import { housentHeroDef } from './blocks/_registry/defs/housentHero';
 import { alturaOlympusDef } from './blocks/_registry/defs/alturaOlympus';
 import { heroScrollDef } from './blocks/_registry/defs/heroScroll';
 import { scrollMattisDef } from './blocks/_registry/defs/scrollMattis';
+import { coolHunterHeroDef } from './blocks/_registry/defs/coolHunterHero';
+import { coolHunterStoryDef } from './blocks/_registry/defs/coolHunterStory';
+import { coolHunterGalleryDef } from './blocks/_registry/defs/coolHunterGallery';
+import { coolHunterProductDef } from './blocks/_registry/defs/coolHunterProduct';
+import { coolHunterQuoteDef } from './blocks/_registry/defs/coolHunterQuote';
+import { coolHunterFooterDef } from './blocks/_registry/defs/coolHunterFooter';
 import { pnjHeroDef } from './blocks/_registry/defs/pnjHero';
 import { pnjDetailsDef } from './blocks/_registry/defs/pnjDetails';
 import { mintDiscoverDef } from './blocks/_registry/defs/mintDiscover';
@@ -2331,6 +2337,12 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   mint_hero: MINT_HERO_VI,
   mint_variants: MINT_VARIANTS_VI,
   mint_discover: mintDiscoverDef.defaultContent.vi,
+  cool_hunter_hero: coolHunterHeroDef.defaultContent.vi,
+  cool_hunter_story: coolHunterStoryDef.defaultContent.vi,
+  cool_hunter_gallery: coolHunterGalleryDef.defaultContent.vi,
+  cool_hunter_product: coolHunterProductDef.defaultContent.vi,
+  cool_hunter_quote: coolHunterQuoteDef.defaultContent.vi,
+  cool_hunter_footer: coolHunterFooterDef.defaultContent.vi,
   pnj_hero: pnjHeroDef.defaultContent.vi,
   pnj_details: pnjDetailsDef.defaultContent.vi,
   pnj_variant: pnjVariantDef.defaultContent.vi,
@@ -2497,6 +2509,12 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   mint_hero: MINT_HERO_VI,
   mint_variants: MINT_VARIANTS_VI,
   mint_discover: mintDiscoverDef.defaultContent.en,
+  cool_hunter_hero: coolHunterHeroDef.defaultContent.en,
+  cool_hunter_story: coolHunterStoryDef.defaultContent.en,
+  cool_hunter_gallery: coolHunterGalleryDef.defaultContent.en,
+  cool_hunter_product: coolHunterProductDef.defaultContent.en,
+  cool_hunter_quote: coolHunterQuoteDef.defaultContent.en,
+  cool_hunter_footer: coolHunterFooterDef.defaultContent.en,
   pnj_hero: pnjHeroDef.defaultContent.en,
   pnj_details: pnjDetailsDef.defaultContent.en,
   pnj_variant: pnjVariantDef.defaultContent.en,

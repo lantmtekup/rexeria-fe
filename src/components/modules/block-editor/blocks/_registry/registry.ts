@@ -105,9 +105,21 @@ import { mintDiscoverDef } from './defs/mintDiscover';
 import { mintV2ProcessDef } from './defs/mintV2Process';
 import { mintV2ServicesDef } from './defs/mintV2Services';
 import { mintV2WorksDef } from './defs/mintV2Works';
+import { coolHunterHeroDef } from './defs/coolHunterHero';
+import { coolHunterStoryDef } from './defs/coolHunterStory';
+import { coolHunterGalleryDef } from './defs/coolHunterGallery';
+import { coolHunterProductDef } from './defs/coolHunterProduct';
+import { coolHunterQuoteDef } from './defs/coolHunterQuote';
+import { coolHunterFooterDef } from './defs/coolHunterFooter';
 import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
+  cool_hunter_hero: coolHunterHeroDef as BlockDef,
+  cool_hunter_story: coolHunterStoryDef as BlockDef,
+  cool_hunter_gallery: coolHunterGalleryDef as BlockDef,
+  cool_hunter_product: coolHunterProductDef as BlockDef,
+  cool_hunter_quote: coolHunterQuoteDef as BlockDef,
+  cool_hunter_footer: coolHunterFooterDef as BlockDef,
   pnj_hero: pnjHeroDef as BlockDef,
   pnj_details: pnjDetailsDef as BlockDef,
   pnj_variant: pnjVariantDef as BlockDef,
