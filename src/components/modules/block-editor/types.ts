@@ -68,6 +68,14 @@ export type BlockType =
   | 'framer_aestha_editorial'
   | 'framer_perform_about'
   | 'framer_ignitex_step'
+  | 'framer_realestate02_story'
+  | 'framer_realestate02_quote'
+  | 'framer_realestate02_product'
+  | 'framer_realestate02_overview'
+  | 'framer_realestate02_location'
+  | 'framer_realestate02_commute'
+  | 'framer_realestate02_map'
+  | 'framer_realestate02_gallery'
   | 'framer_perform_pricing'
   | 'framer_firma_template_strategy_digital'
   | 'housent_our_excellence'
@@ -1584,6 +1592,107 @@ export interface FramerIgnitexStepContent {
   cards?: FramerIgnitexStepCard[];
 }
 
+export interface FramerRealEstate02StoryContent {
+  slide1Label: string;
+  slide1Body: string;
+  slide1ImageUrl: string;
+  slide2Label: string;
+  slide2Body: string;
+  slide2ImageUrl: string;
+  slide3Label: string;
+  slide3Body: string;
+  slide3ImageUrl: string;
+}
+
+export interface FramerRealEstate02QuoteContent {
+  name: string;
+  role: string;
+  quote: string;
+  buildingImageUrl: string;
+  headshotImageUrl: string;
+}
+
+export interface FramerRealEstate02GalleryContent {
+  /** 2 dòng tiêu đề tách rời trong DOM gốc (không phải wrap) — nối bằng \n. */
+  heading: string;
+  image1Url: string;
+  image2Url: string;
+  image3Url: string;
+  image4Url: string;
+}
+
+export interface FramerRealEstate02ProductContent {
+  bodyText: string;
+  photoUrl: string;
+}
+
+export interface FramerRealEstate02OverviewContent {
+  title1: string;
+  title2: string;
+  description: string;
+  subheadingLine1: string;
+  subheadingLine2: string;
+  subheadingLine3: string;
+  towerImageUrl: string;
+  personImageUrl: string;
+  panoramaImageUrl: string;
+}
+
+/**
+ * RealEstate02 "5. Hình" (LOCATION) — collage 3 ảnh + heading tràn mép, xem
+ * `docs/` recon spec (framer-recon) cho công thức parallax đo được:
+ * photo1 translateY = scrollY*-0.1, photo2/photo3 = scrollY*+0.1 (liên tục,
+ * không clamp), heading trượt ngang 1 lần khi vào viewport.
+ */
+export interface FramerRealEstate02LocationContent {
+  heading: string;
+  photo1Url: string;
+  photo2Url: string;
+  photo3Url: string;
+}
+
+/**
+ * RealEstate02 "6. Location" (COMMUTE) — walk-time ring counter + "By car"
+ * distance list. Named `Commute` (not `Location`) because `Location` was
+ * already taken by the "5. Hình" collage block above. See framer-recon spec
+ * `.tmp-recon/recon-real-estate-2-location-stats/spec.md` for full evidence
+ * (bundle-verified): hero counter is a 3rd-party "Đếm số" code component
+ * (start 0 → walkMinutes, 60ms/step, replays every viewport entry); ring is
+ * Framer's native 2-variant Smart Animate, spring(duration:2, bounce:0); all
+ * text uses Framer's built-in per-character "Appear" effect,
+ * spring(duration:1.5, bounce:0), 75ms/char stagger.
+ */
+export interface FramerRealEstate02CommuteContent {
+  eyebrow: string;
+  heading: string;
+  /** Count-up target for the hero ring stat (0 → this value). String field to
+   *  match this block family's text-input convention; parsed at render time. */
+  walkMinutes: string;
+  carHeading: string;
+  row1Value: string;
+  row1Label: string;
+  row2Value: string;
+  row2Label: string;
+  row3Value: string;
+  row3Label: string;
+  carPhotoUrl: string;
+}
+
+/**
+ * RealEstate02 "7. Map" — ảnh minh hoạ bản đồ tĩnh (đường/công viên + 4 pin
+ * phụ đều bake sẵn trong 1 file SVG) + 1 marker lớn overlay (vector hardcode,
+ * không phải content — giống logic ring SVG cố định trong Commute ở trên).
+ * Marker bập bênh liên tục (KHÔNG phải entrance 1 lần) — đo trực tiếp trên
+ * web mẫu bằng cách lấy mẫu inline `transform` mỗi 250ms trong hơn 10s (bundle
+ * JS không lộ giá trị này vì đây là animation rAF-driven, CDP/WAAPI không bắt
+ * được): translateY dao động 0 → ~5px → 0, chu kỳ ~2.1s. Xem
+ * `.tmp-recon/recon-real-estate-2-commute-map/spec.md` §9 cho toàn bộ bằng
+ * chứng (DOM tree, màu, path SVG marker lấy nguyên văn từ `<symbol>` gốc).
+ */
+export interface FramerRealEstate02MapContent {
+  mapImageUrl: string;
+}
+
 /**
  * Team Directory: nền #F5F3EE, DM Mono eyebrow, Abril Fatface title,
  * danh sách hàng ngang có divider cho từng thành viên.
@@ -2641,6 +2750,14 @@ export type BlockContent =
   | FramerSignatureFeatureContent
   | FramerVsCollinsProjectsContent
   | FramerIgnitexStepContent
+  | FramerRealEstate02StoryContent
+  | FramerRealEstate02QuoteContent
+  | FramerRealEstate02GalleryContent
+  | FramerRealEstate02ProductContent
+  | FramerRealEstate02OverviewContent
+  | FramerRealEstate02LocationContent
+  | FramerRealEstate02CommuteContent
+  | FramerRealEstate02MapContent
   | FramerClarityServicesContent
   | DelvauxHeaderContent
   | DelvauxSubnavContent
@@ -4618,6 +4735,150 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'block IgniteX "Step Section" (recon spec): nền trắng, pill "From concept to launch", 3-cột (trái "Your ideas into Brand" + giữa 3 step card + phải "transform stories"), Geist 60/500 cho heading + Great Vibes 62/400 cho "Brand", card Geist 28/500 title + Geist 18/500 body #5b5b5b',
     aiLabelEn:
       'IgniteX "Step Section" (recon spec): white background, "From concept to launch" pill, 3-column (left "Your ideas into Brand" + center 3 step cards + right "transform stories"), Geist 60/500 heading + Great Vibes 62/400 for "Brand", card Geist 28/500 title + Geist 18/500 body #5b5b5b',
+  },
+  framer_realestate02_story: {
+    type: 'framer_realestate02_story',
+    category: 'gallery',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'carousel'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'RealEstate02 - Story Carousel',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Story Carousel',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Story Carousel',
+    aiLabelVi:
+      'block "story carousel" 3 slide (AESTHETICS/DIVERSITY/SECURITY): card cố định 375×781, ảnh nền full-bleed, tiêu đề lớn 52px màu #c49f8a chồng lên ảnh, panel caption vuông #c49f8a góc dưới-phải chứa nhãn + mô tả + 2 nút điều hướng + bộ đếm N/3',
+    aiLabelEn:
+      '3-slide "story carousel" block (AESTHETICS/DIVERSITY/SECURITY): fixed 375×781 card, full-bleed background image, large 52px #c49f8a title overlapping the image, bottom-right #c49f8a square caption panel with label + description + prev/next buttons + N/3 counter',
+  },
+  framer_realestate02_quote: {
+    type: 'framer_realestate02_quote',
+    category: 'trust',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'quote', 'testimonial'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'RealEstate02 - Architect Quote',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Architect Quote',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Architect Quote',
+    aiLabelVi:
+      'block "quote kiến trúc sư" testimonial: card cố định 375×567 nền #2c2926, header tên + chức danh màu #c49f8a/#66634d, trích dẫn 3 dòng màu #c49f8a, ảnh building crop 234×282 và ảnh headshot 94×129 chồng lên góc dưới-trái',
+    aiLabelEn:
+      '"architect quote" testimonial block: fixed 375×567 card on #2c2926 background, name + role header in #c49f8a/#66634d, 3-line quote in #c49f8a, cropped 234×282 building photo with a 94×129 headshot overlapping its bottom-left corner',
+  },
+  framer_realestate02_product: {
+    type: 'framer_realestate02_product',
+    category: 'amenity',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'editorial'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'RealEstate02 - Landscape Editorial',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Landscape Editorial',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Landscape Editorial',
+    aiLabelVi:
+      'block editorial "landscape" card cố định 375×443 nền #c49f8a: ảnh mask-reveal 281×187 sát góc trên-phải (trượt lên 112px khi vào viewport), đoạn mô tả uppercase #2c2926 11px bên dưới cách 32px, gutter trái 94px để trống',
+    aiLabelEn:
+      'fixed 375×443 "landscape" editorial card on #c49f8a background: 281×187 mask-reveal photo flush to the top-right (slides up 112px on scroll-into-view), uppercase #2c2926 11px description below with a 32px gap, 94px empty left gutter',
+  },
+  framer_realestate02_overview: {
+    type: 'framer_realestate02_overview',
+    category: 'amenity',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'overview', 'panorama'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'RealEstate02 - Overview Panorama',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Overview Panorama',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Overview Panorama',
+    aiLabelVi:
+      'block "overview panorama" card cố định 375×948 nền olive #565440: 2 ảnh top (tháp + người, parallax ngược chiều), heading lớn "Over/View" 64.6px màu #c49f8a, mô tả nhỏ 11px uppercase màu #e9e4dc, heading phụ 3 dòng xếp lệch cố ý tràn 2 mép card, ảnh panorama full-bleed cuối block',
+    aiLabelEn:
+      '"overview panorama" block: fixed 375×948 card on #565440 olive background — 2 top photos (tower + person, opposite-direction parallax), large 64.6px #c49f8a "Over/View" heading, small 11px uppercase #e9e4dc description, 3-line staggered subheading intentionally bleeding past both card edges, full-bleed panorama photo at the bottom',
+  },
+  framer_realestate02_location: {
+    type: 'framer_realestate02_location',
+    category: 'location',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'location', 'parallax', 'collage'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'RealEstate02 - Location Collage',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Location Collage',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Location Collage',
+    aiLabelVi:
+      'block "location collage" card cố định 375×585 nền #e9e4dc: 3 ảnh position-absolute tràn mép trái/phải cố ý (không mask/crop), mỗi ảnh trôi liên tục theo scrollY tuyệt đối (không phải theo % tiến trình cuộn riêng block) — ảnh dưới-trái hệ số -0.1, 2 ảnh phải hệ số +0.1; heading "LOCATION" Inter 300 72px màu #565440 tràn mép trái, trượt ngang 1 lần mỗi khi cuộn vào viewport',
+    aiLabelEn:
+      '"location collage" block: fixed 375×585 card on #e9e4dc background — 3 position-absolute photos deliberately bleeding past the left/right edges (no mask/crop), each drifting continuously with raw absolute scrollY (not the block\'s own scroll-progress) — lower-left photo factor -0.1, the other two +0.1; "LOCATION" heading in Inter 300 72px #565440 bleeding off the left edge, sliding in horizontally each time it re-enters the viewport',
+  },
+  framer_realestate02_commute: {
+    type: 'framer_realestate02_commute',
+    category: 'location',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'location', 'stats', 'counter'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'RealEstate02 - Commute Stats',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Commute Stats',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Commute Stats',
+    aiLabelVi:
+      'block "commute stats" card cố định 375×1038 nền #e9e4dc: vòng tròn tiến trình + số đếm lớn 80px chạy 0→N phút đi bộ (đếm lại mỗi lần cuộn vào viewport), heading mô tả điểm đến, section "BY CAR" màu #c49f8a với ảnh xe top-down + list 3 dòng số phút/tên địa điểm có đường kẻ chia, mọi chữ hiện theo từng ký tự khi cuộn tới',
+    aiLabelEn:
+      '"commute stats" block: fixed 375×1038 card on #e9e4dc background — radial progress ring + large 80px count-up (0→N walk minutes, replays every time it re-enters the viewport), destination heading, #c49f8a "BY CAR" section with a top-down car photo + a 3-row minutes/destination list with divider lines, every text label revealing character-by-character on scroll',
+  },
+  framer_realestate02_map: {
+    type: 'framer_realestate02_map',
+    category: 'location',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'location', 'map'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'RealEstate02 - Location Map',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Location Map',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Location Map',
+    aiLabelVi:
+      'block "location map" card cố định 375×359 nền #e9e4dc: 1 ảnh minh hoạ bản đồ tĩnh full-bleed (đường + công viên + 4 pin phụ vẽ sẵn trong ảnh) cùng 1 marker "R" lớn overlay màu #565440 bập bênh liên tục lên xuống ~5px (không phải hiệu ứng xuất hiện 1 lần)',
+    aiLabelEn:
+      '"location map" block: fixed 375×359 card on #e9e4dc background — one full-bleed static map illustration (roads + parks + 4 secondary pins baked into the image) with one large overlay "R" marker in #565440 continuously bobbing ~5px up and down (not a one-time entrance effect)',
+  },
+  framer_realestate02_gallery: {
+    type: 'framer_realestate02_gallery',
+    category: 'gallery',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'gallery', 'carousel'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'RealEstate02 - Infrastructure Gallery',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Infrastructure Gallery',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Infrastructure Gallery',
+    aiLabelVi:
+      'block "gallery tiện ích" card cố định 375×704, nền trong suốt: tiêu đề lớn 2 dòng "INFRAS/TRUCTURE" màu #c49f8a, slider 4 ảnh tiện ích 307×307 (gap 12px, hé lộ ảnh kế tiếp), 2 nút tròn 35×35 viền #c49f8a điều hướng trước/sau, bộ đếm "N/4" màu #e9e4dc',
+    aiLabelEn:
+      '"infrastructure gallery" block: fixed 375×704 card, transparent background — large 2-line "INFRAS/TRUCTURE" heading in #c49f8a, 4-image amenity slider (307×307, 12px gap, peeking next image), two 35×35 circular #c49f8a-bordered prev/next buttons, "N/4" counter in #e9e4dc',
   },
   framer_aestha_editorial: {
     type: 'framer_aestha_editorial',

@@ -21,6 +21,14 @@ import { framerFlatWhiteProcessDef } from './defs/framerFlatWhiteProcess';
 import { framerEstanciaAboutUsDef } from './defs/framerEstanciaAboutUs';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerIgnitexStepDef } from './defs/framerIgnitexStep';
+import { framerRealEstate02StoryDef } from './defs/framerRealEstate02Story';
+import { framerRealEstate02QuoteDef } from './defs/framerRealEstate02Quote';
+import { framerRealEstate02ProductDef } from './defs/framerRealEstate02Product';
+import { framerRealEstate02OverviewDef } from './defs/framerRealEstate02Overview';
+import { framerRealEstate02LocationDef } from './defs/framerRealEstate02Location';
+import { framerRealEstate02CommuteDef } from './defs/framerRealEstate02Commute';
+import { framerRealEstate02MapDef } from './defs/framerRealEstate02Map';
+import { framerRealEstate02GalleryDef } from './defs/framerRealEstate02Gallery';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
 import { protectionScrollytellingDef } from './defs/protectionScrollytelling';
@@ -116,6 +124,14 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   framer_flat_white_process: framerFlatWhiteProcessDef as BlockDef,
   framer_nftpull_timeline: framerNftpullTimelineDef as BlockDef,
   framer_ignitex_step: framerIgnitexStepDef as BlockDef,
+  framer_realestate02_story: framerRealEstate02StoryDef as BlockDef,
+  framer_realestate02_quote: framerRealEstate02QuoteDef as BlockDef,
+  framer_realestate02_product: framerRealEstate02ProductDef as BlockDef,
+  framer_realestate02_overview: framerRealEstate02OverviewDef as BlockDef,
+  framer_realestate02_location: framerRealEstate02LocationDef as BlockDef,
+  framer_realestate02_commute: framerRealEstate02CommuteDef as BlockDef,
+  framer_realestate02_map: framerRealEstate02MapDef as BlockDef,
+  framer_realestate02_gallery: framerRealEstate02GalleryDef as BlockDef,
   masterise_home_inside: masteriseHomeInsideDef as BlockDef,
   framer_purevisuals_hero: framerPurevisualsHeroDef as BlockDef,
   delvaux_header: delvauxHeaderDef as BlockDef,
