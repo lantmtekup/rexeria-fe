@@ -14,7 +14,8 @@
 import * as React from 'react';
 import gsap from 'gsap';
 
-import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useBlockMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -105,23 +106,13 @@ export function MintVaultInvitation({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
-  const { hasRoot } = useLandingMotion();
   const [email, setEmail] = React.useState('');
   const [status, setStatus] = React.useState<'idle' | 'loading' | 'done'>(
     'idle'
   );
   const images = content.images ?? [];
 
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const styleOf = (key: string) =>
     composeStyle(

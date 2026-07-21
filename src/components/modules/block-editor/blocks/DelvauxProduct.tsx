@@ -31,6 +31,7 @@ import {
 } from './delvauxTheme';
 import { useDrawerScrollLock } from './PnjHeroHotspots';
 import { useContainerMobile } from './useContainerMobile';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   DelvauxProductContent,
@@ -132,7 +133,7 @@ export function DelvauxProduct({
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
   const panelRef = React.useRef<HTMLDivElement>(null);
-  const { hasRoot, scroller } = useLandingMotion();
+  const { scroller } = useLandingMotion();
   const isMobile = useContainerMobile(rootRef);
   const [openIdx, setOpenIdx] = React.useState<number | null>(null);
   /** Giữ width panel trong lúc slide-out — tránh chữ bóp khi width → 0 (như gốc closeTab). */
@@ -140,19 +141,7 @@ export function DelvauxProduct({
   const [mounted, setMounted] = React.useState(false);
   const [portalHost, setPortalHost] = React.useState<HTMLElement | null>(null);
   const snappingRef = React.useRef(false);
-
-  // Mặc định false — SSR `/p` phải khớp production (không data-canvas-edit).
-  // Canvas editor: useLayoutEffect set true khi trong active-block-preview.
-  const [isCanvas, setIsCanvas] = React.useState(false);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   React.useEffect(() => setMounted(true), []);
 
@@ -188,36 +177,63 @@ export function DelvauxProduct({
     []
   );
 
+  /** Tọa độ scroll để section căn đáy viewport (vị trí snap/khóa khi mở hotspot). */
+  const alignedSectionY = React.useCallback((): number | null => {
+    const root = rootRef.current;
+    if (!root) return null;
+    const scrollRoot = resolveScrollRoot();
+    if (scrollRoot) {
+      const rootRect = root.getBoundingClientRect();
+      const scrollerRect = scrollRoot.getBoundingClientRect();
+      const sectionTop =
+        scrollRoot.scrollTop + (rootRect.top - scrollerRect.top);
+      return Math.max(
+        0,
+        sectionTop - (scrollRoot.clientHeight - root.offsetHeight)
+      );
+    }
+    const sectionTop = root.getBoundingClientRect().top + window.scrollY;
+    return Math.max(0, sectionTop - (window.innerHeight - root.offsetHeight));
+  }, [resolveScrollRoot]);
+
   /** Gốc: scrollTo căn section vào viewport trước khi mở hotspot. */
   const snapSectionToCenter = React.useCallback((): Promise<void> => {
     return new Promise(resolve => {
-      const root = rootRef.current;
-      if (!root) {
+      const targetY = alignedSectionY();
+      if (targetY === null) {
         resolve();
         return;
       }
       const scrollRoot = resolveScrollRoot();
       if (scrollRoot) {
-        const rootRect = root.getBoundingClientRect();
-        const scrollerRect = scrollRoot.getBoundingClientRect();
-        const sectionTop =
-          scrollRoot.scrollTop + (rootRect.top - scrollerRect.top);
-        const viewportH = scrollRoot.clientHeight;
-        const sectionH = root.offsetHeight;
-        const targetY = Math.max(0, sectionTop - (viewportH - sectionH));
         scrollRoot.scrollTo({ top: targetY, behavior: 'smooth' });
         window.setTimeout(resolve, 450);
         return;
       }
-      const sectionTop = root.getBoundingClientRect().top + window.scrollY;
-      const targetY = Math.max(
-        0,
-        sectionTop - (window.innerHeight - root.offsetHeight)
-      );
+      // /p: Lenis sở hữu window scroll — scrollTo native 'smooth' sẽ bị Lenis
+      // ghi đè giữa chừng → section lệch, hở section kế tiếp. Phải snap qua Lenis.
+      const lenis = (
+        window as unknown as {
+          __lenis?: {
+            scrollTo: (
+              y: number,
+              opts?: { duration?: number; onComplete?: () => void }
+            ) => void;
+          };
+        }
+      ).__lenis;
+      if (lenis) {
+        lenis.scrollTo(targetY, {
+          duration: 0.45,
+          onComplete: () => resolve(),
+        });
+        window.setTimeout(resolve, 700); // safety — promise chỉ settle 1 lần
+        return;
+      }
       window.scrollTo({ top: targetY, behavior: 'smooth' });
       window.setTimeout(resolve, 450);
     });
-  }, [resolveScrollRoot]);
+  }, [alignedSectionY, resolveScrollRoot]);
 
   const handleClose = React.useCallback(() => setOpenIdx(null), []);
 
@@ -266,11 +282,16 @@ export function DelvauxProduct({
       window as unknown as { __lenis?: { stop: () => void; start: () => void } }
     ).__lenis;
 
-    const lockedY = scrollRoot ? scrollRoot.scrollTop : window.scrollY;
+    // Khóa tại đúng tọa độ section căn đáy viewport — nếu chốt scrollTop hiện tại
+    // trong lúc snap smooth chưa kết thúc thì section đứng lệch, hở section kế.
+    const lockedY =
+      alignedSectionY() ?? (scrollRoot ? scrollRoot.scrollTop : window.scrollY);
     html.classList.add('delvaux-product-scroll-lock');
     body.classList.add('delvaux-product-scroll-lock');
     scrollRoot?.classList.add('delvaux-product-scroll-lock');
     lenis?.stop();
+    if (scrollRoot) scrollRoot.scrollTop = lockedY;
+    else window.scrollTo(0, lockedY);
 
     const root = rootRef.current;
     const triggers = ScrollTrigger.getAll().filter(t => t.trigger === root);
@@ -321,7 +342,7 @@ export function DelvauxProduct({
       lenis?.start();
       ScrollTrigger.update();
     };
-  }, [isOpen, isCanvas, resolveScrollRoot]);
+  }, [isOpen, isCanvas, resolveScrollRoot, alignedSectionY]);
 
   useBlockMotion(
     rootRef,
@@ -347,17 +368,22 @@ export function DelvauxProduct({
       const yFrom = motionMobile ? -70 : -150;
       const endPct = motionMobile ? 65 : 100;
 
+      // Chỉ đụng DOM/state khi trạng thái đổi — onUpdate bắn mỗi frame scrub.
+      let lastDone = root.classList.contains('delvaux-product-done');
       const setDone = (done: boolean) => {
+        if (done === lastDone) return;
+        lastDone = done;
         root.classList.toggle('delvaux-product-done', done);
         if (!done) setOpenIdx(null);
       };
 
       gsap.fromTo(
         zoom,
-        { scale: 2, transformOrigin: 'top center', y: yFrom },
+        { scale: 2, transformOrigin: 'top center', y: yFrom, force3D: true },
         {
           scale: 1,
           y: 0,
+          force3D: true,
           ease: 'none',
           scrollTrigger: {
             trigger: root,
@@ -437,11 +463,10 @@ export function DelvauxProduct({
               style={{
                 bottom: '10%',
                 left: '50%',
-                transform: 'translateX(-50%)',
+                transform: 'translateX(-50%) scale(1.45)',
                 width: 'clamp(180px, 28cqi, 320px)',
                 height: 'clamp(180px, 28cqi, 320px)',
-                background: glow,
-                filter: 'blur(90px)',
+                background: `radial-gradient(circle closest-side, ${glow} 0%, ${glow} 35%, transparent 78%)`,
                 opacity: 0.4,
                 zIndex: 0,
               }}
@@ -648,7 +673,6 @@ export function DelvauxProduct({
             ? 'delvaux-product-content is-active flex h-full w-full'
             : 'delvaux-product-content flex h-full w-full'
         }
-        data-lenis-prevent
         style={{
           alignItems: 'center',
           // Gốc .content.active: space-between + overflow hidden
@@ -673,19 +697,23 @@ export function DelvauxProduct({
         >
           <div
             className='delvaux-product-zoom relative'
-            style={{ height: imgHeight, overflow: 'visible' }}
+            style={{
+              height: imgHeight,
+              overflow: 'visible',
+              willChange: 'transform',
+            }}
           >
+            {/* Radial-gradient thay filter:blur — blur trong phần tử đang scale scrub bắt browser re-rasterize mỗi frame gây giật. scale(1.45) bù độ loang của blur 90px, tâm quầng giữ nguyên. */}
             <div
               aria-hidden='true'
               className='absolute rounded-full'
               style={{
                 bottom: '10%',
                 left: '50%',
-                transform: 'translateX(-50%)',
+                transform: 'translateX(-50%) scale(1.45)',
                 width: 'clamp(220px, 31cqi, 400px)',
                 height: 'clamp(220px, 31cqi, 400px)',
-                background: glow,
-                filter: 'blur(90px)',
+                background: `radial-gradient(circle closest-side, ${glow} 0%, ${glow} 35%, transparent 78%)`,
                 opacity: 0.4,
                 zIndex: 0,
               }}
@@ -695,6 +723,7 @@ export function DelvauxProduct({
               data-element-key='imageUrl'
               src={content.imageUrl}
               alt='Product'
+              decoding='async'
               className={selectableClass(
                 activeKey === 'imageUrl',
                 'delvaux-product-img relative block'

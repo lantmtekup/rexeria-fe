@@ -5,7 +5,8 @@ import gsap from 'gsap';
 
 import { cn } from '@/lib/cn';
 
-import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useBlockMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   RealEstateHighlightItem,
   RealEstateHighlightsContent,
@@ -47,21 +48,11 @@ export function RealEstateHighlights({
   const rootRef = React.useRef<HTMLDivElement>(null);
   const viewportRef = React.useRef<HTMLDivElement>(null);
   const trackRef = React.useRef<HTMLDivElement>(null);
-  const { hasRoot } = useLandingMotion();
 
   const items = Array.isArray(content.items) ? content.items : [];
 
   // Canvas editor (author) vs PreviewMode / `/p` (production).
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const [reduce, setReduce] = React.useState(false);
   React.useLayoutEffect(() => {

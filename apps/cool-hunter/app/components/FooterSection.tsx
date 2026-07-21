@@ -5,7 +5,8 @@ import { gsap, MOTION_CONDITIONS, type MotionConditions } from '../lib/motion';
 
 export default function FooterSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const layerRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const veilRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const mm = gsap.matchMedia(sectionRef);
@@ -13,24 +14,31 @@ export default function FooterSection() {
     mm.add(MOTION_CONDITIONS, context => {
       const { reduce } = context.conditions as MotionConditions;
 
-      gsap.set(layerRef.current, { yPercent: 100, visibility: 'visible' });
+      // Ảnh fade in; dải trắng wipe height từ dưới lên — không pin, giữ size content.
+      gsap.set(frameRef.current, { opacity: 0 });
+      gsap.set(veilRef.current, { height: '100%' });
 
       if (reduce) {
-        gsap.set(layerRef.current, { yPercent: 0 });
+        gsap.set(frameRef.current, { opacity: 1 });
+        gsap.set(veilRef.current, { height: '0%' });
         return;
       }
 
-      // Không pin — ảnh nền dâng từ dưới lên theo đà scroll tới cuối trang
-      gsap.to(layerRef.current, {
-        yPercent: 0,
-        ease: 'none',
+      const tl = gsap.timeline({
+        defaults: { ease: 'none' },
         scrollTrigger: {
           trigger: sectionRef.current,
           start: 'top 75%',
           end: 'bottom bottom',
-          scrub: 0.6,
+          scrub: 0.45,
         },
       });
+
+      tl.to(veilRef.current, { height: '0%', duration: 1 }, 0).to(
+        frameRef.current,
+        { opacity: 1, duration: 1 },
+        0
+      );
     });
 
     return () => mm.revert();
@@ -38,8 +46,7 @@ export default function FooterSection() {
 
   return (
     <section ref={sectionRef} className='relative overflow-hidden bg-white'>
-      {/* Ảnh nền dâng dần từ dưới lên khi scroll */}
-      <div ref={layerRef} className='invisible absolute inset-0'>
+      <div ref={frameRef} className='absolute inset-0 opacity-0'>
         <img
           src='/footer-bg.png'
           alt=''
@@ -47,7 +54,14 @@ export default function FooterSection() {
           className='h-full w-full object-cover'
         />
       </div>
-      <div className='relative z-10 flex flex-col items-center gap-5 px-6 py-10 md:gap-6 md:py-12'>
+
+      {/* Dải trắng wipe — neo top, height 100%→0% → lộ ảnh từ dưới lên */}
+      <div
+        ref={veilRef}
+        className='absolute inset-x-0 top-0 z-10 h-full bg-white'
+      />
+
+      <div className='relative z-20 flex flex-col items-center gap-5 px-6 py-10 md:gap-6 md:py-12'>
         <img
           src='/icon-footer.svg'
           alt=''
@@ -61,7 +75,7 @@ export default function FooterSection() {
         </h2>
         <button
           type='button'
-          className='border border-neutral-900 px-10 py-3 font-sans text-xs tracking-[0.2em] text-neutral-900 uppercase transition-colors hover:bg-neutral-900 hover:text-white md:px-14 md:text-sm'
+          className='cursor-pointer border border-neutral-900 px-10 py-3 font-sans text-xs tracking-[0.2em] text-neutral-900 uppercase transition-colors duration-500 hover:bg-neutral-900 hover:text-white md:px-14 md:text-sm'
         >
           Sign Up
         </button>

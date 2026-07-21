@@ -5,7 +5,8 @@ import gsap from 'gsap';
 
 import { cn } from '@/lib/cn';
 
-import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useBlockMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   CoolHunterQuoteContent,
@@ -35,8 +36,8 @@ interface CoolHunterQuoteProps {
 /**
  * Cool Hunter Quote — port từ apps/cool-hunter QuoteSection.tsx.
  *
- * Quote giữa trên nền warm; ảnh kéo từ phải (xPercent 100→0) phủ màn, veil
- * nhạt dần. Khác apps: pin → sticky (~265dvh), matchMedia → useContainerMobile.
+ * Ảnh cố định (opacity 0→1); dải màu wipe width; chữ giữa viewport fade theo
+ * scroll (không nằm trong thanh → không bị cắt). Khác apps: pin → sticky (~190dvh).
  */
 
 const DISPLAY_FONT = "'Fraunces', 'Playfair Display', 'Times New Roman', serif";
@@ -72,19 +73,10 @@ export function CoolHunterQuote({
   const stageRef = React.useRef<HTMLDivElement>(null);
   const frameRef = React.useRef<HTMLDivElement>(null);
   const veilRef = React.useRef<HTMLDivElement>(null);
-  const { hasRoot } = useLandingMotion();
+  const quoteWrapRef = React.useRef<HTMLDivElement>(null);
   const isMobile = useContainerMobile(rootRef);
 
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -104,13 +96,16 @@ export function CoolHunterQuote({
       const root = rootRef.current;
       const frame = frameRef.current;
       const veil = veilRef.current;
-      if (!root || !frame || !veil || isCanvas) return;
+      const quoteWrap = quoteWrapRef.current;
+      if (!root || !frame || !veil || !quoteWrap || isCanvas) return;
 
       const reduce = window.matchMedia(
         '(prefers-reduced-motion: reduce)'
       ).matches;
 
-      gsap.set(frame, { xPercent: 100, visibility: 'visible' });
+      gsap.set(frame, { opacity: 0 });
+      gsap.set(veil, { width: '100%' });
+      gsap.set(quoteWrap, { opacity: 1 });
 
       const img = frame.querySelector('img');
       if (img && !img.complete) {
@@ -118,8 +113,9 @@ export function CoolHunterQuote({
       }
 
       if (reduce) {
-        gsap.set(frame, { xPercent: 0 });
-        gsap.set(veil, { opacity: 0 });
+        gsap.set(frame, { opacity: 1 });
+        gsap.set(veil, { width: '0%' });
+        gsap.set(quoteWrap, { opacity: 0 });
         return;
       }
 
@@ -130,17 +126,15 @@ export function CoolHunterQuote({
           scroller,
           start: 'top top',
           end: 'bottom bottom',
-          scrub: 0.6,
+          scrub: 0.45,
           invalidateOnRefresh: true,
           fastScrollEnd: true,
         },
       });
 
-      tl.to(frame, { xPercent: 0, duration: 1.2 }).to(
-        veil,
-        { opacity: 0, duration: 0.6 },
-        '-=0.5'
-      );
+      tl.to(veil, { width: '0%', duration: 1 }, 0)
+        .to(frame, { opacity: 1, duration: 1 }, 0)
+        .to(quoteWrap, { opacity: 0, duration: 1 }, 0);
     },
     [isCanvas, imageUrl]
   );
@@ -243,38 +237,21 @@ export function CoolHunterQuote({
     );
   }
 
-  // ── PreviewMode + /p: sticky + image wipe ──
+  // ── PreviewMode + /p: sticky + color wipe reveal ──
   return (
     <section
       ref={rootRef}
       className={cn('@container relative w-full', className)}
       style={composeStyle(
         {
-          height: '265dvh',
+          height: '190dvh',
           backgroundColor: STAGE_BG,
         },
         blockBackgroundStyle(background)
       )}
     >
       <div ref={stageRef} style={STAGE_STYLE}>
-        <div
-          className='absolute inset-0 flex items-center justify-center'
-          style={{ paddingInline: '7%' }}
-        >
-          <h2
-            data-element-key='quote'
-            className={selectableClass(activeKey === 'quote')}
-            style={composeStyle(quoteBase, styleOf('quote'))}
-          >
-            {quote}
-          </h2>
-        </div>
-
-        <div
-          ref={frameRef}
-          className='absolute inset-0'
-          style={{ visibility: 'hidden' }}
-        >
+        <div ref={frameRef} className='absolute inset-0' style={{ opacity: 0 }}>
           <img
             src={imageUrl}
             alt={imageAlt}
@@ -285,11 +262,26 @@ export function CoolHunterQuote({
             )}
             style={styleOf('imageUrl')}
           />
-          <div
-            ref={veilRef}
-            className='absolute inset-0'
-            style={{ backgroundColor: STAGE_BG, opacity: 0.8 }}
-          />
+        </div>
+
+        <div
+          ref={veilRef}
+          className='absolute inset-y-0 left-0 w-full'
+          style={{ backgroundColor: STAGE_BG }}
+        />
+
+        <div
+          ref={quoteWrapRef}
+          className='absolute inset-0 z-10 flex items-center justify-center'
+          style={{ paddingInline: '7%' }}
+        >
+          <h2
+            data-element-key='quote'
+            className={selectableClass(activeKey === 'quote')}
+            style={composeStyle(quoteBase, styleOf('quote'))}
+          >
+            {quote}
+          </h2>
         </div>
 
         {!isMobile && (

@@ -24,7 +24,7 @@
 import * as React from 'react';
 import gsap from 'gsap';
 
-import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useBlockMotion } from '../motion/LandingMotion';
 import {
   DELVAUX_BG,
   DELVAUX_FONT_BODY,
@@ -32,6 +32,7 @@ import {
   DELVAUX_FONT_HEADING,
 } from './delvauxTheme';
 import { useContainerMobile } from './useContainerMobile';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   DelvauxHeroContent,
@@ -80,19 +81,8 @@ export function DelvauxHero({
   const rootRef = React.useRef<HTMLElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const mobileCanvasRef = React.useRef<HTMLCanvasElement>(null);
-  const { hasRoot } = useLandingMotion();
   const isMobile = useContainerMobile(rootRef);
-
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const urlsKey = [
     Array.isArray(content.frameUrls) ? content.frameUrls.join('|') : '',
