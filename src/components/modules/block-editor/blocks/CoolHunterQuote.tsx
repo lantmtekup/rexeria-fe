@@ -36,8 +36,8 @@ interface CoolHunterQuoteProps {
 /**
  * Cool Hunter Quote — port từ apps/cool-hunter QuoteSection.tsx.
  *
- * Ảnh cố định (opacity 0→1); dải màu wipe width; chữ giữa viewport fade theo
- * scroll (không nằm trong thanh → không bị cắt). Khác apps: pin → sticky (~190dvh).
+ * Ảnh fade in; dải màu wipe width — chữ nằm trong dải, đứng yên bị cắt.
+ * Khác apps: pin → sticky (~190dvh).
  */
 
 const DISPLAY_FONT = "'Fraunces', 'Playfair Display', 'Times New Roman', serif";
@@ -46,7 +46,6 @@ const STAGE_BG = '#e8e3d8';
 const DEFAULT_IMAGE = '/cool-hunter/section-6.png';
 const DEFAULT_IMAGE_ALT =
   'A stone patio with charred-wood chairs, a round table and a built-in bench';
-const DEFAULT_LABEL = '04 - Interior Design';
 const DEFAULT_QUOTE =
   '“Modern without being cold, rooted without being backward-looking, and entirely alive to the extraordinary setting it inhabits.”';
 
@@ -73,7 +72,6 @@ export function CoolHunterQuote({
   const stageRef = React.useRef<HTMLDivElement>(null);
   const frameRef = React.useRef<HTMLDivElement>(null);
   const veilRef = React.useRef<HTMLDivElement>(null);
-  const quoteWrapRef = React.useRef<HTMLDivElement>(null);
   const isMobile = useContainerMobile(rootRef);
 
   const isCanvas = useIsCanvasEdit(rootRef);
@@ -88,7 +86,6 @@ export function CoolHunterQuote({
   const quote = content.quote?.trim() || DEFAULT_QUOTE;
   const imageUrl = content.imageUrl?.trim() || DEFAULT_IMAGE;
   const imageAlt = content.imageAlt?.trim() || DEFAULT_IMAGE_ALT;
-  const label = content.label?.trim() || DEFAULT_LABEL;
 
   useBlockMotion(
     rootRef,
@@ -96,8 +93,7 @@ export function CoolHunterQuote({
       const root = rootRef.current;
       const frame = frameRef.current;
       const veil = veilRef.current;
-      const quoteWrap = quoteWrapRef.current;
-      if (!root || !frame || !veil || !quoteWrap || isCanvas) return;
+      if (!root || !frame || !veil || isCanvas) return;
 
       const reduce = window.matchMedia(
         '(prefers-reduced-motion: reduce)'
@@ -105,7 +101,6 @@ export function CoolHunterQuote({
 
       gsap.set(frame, { opacity: 0 });
       gsap.set(veil, { width: '100%' });
-      gsap.set(quoteWrap, { opacity: 1 });
 
       const img = frame.querySelector('img');
       if (img && !img.complete) {
@@ -115,7 +110,6 @@ export function CoolHunterQuote({
       if (reduce) {
         gsap.set(frame, { opacity: 1 });
         gsap.set(veil, { width: '0%' });
-        gsap.set(quoteWrap, { opacity: 0 });
         return;
       }
 
@@ -132,9 +126,11 @@ export function CoolHunterQuote({
         },
       });
 
-      tl.to(veil, { width: '0%', duration: 1 }, 0)
-        .to(frame, { opacity: 1, duration: 1 }, 0)
-        .to(quoteWrap, { opacity: 0, duration: 1 }, 0);
+      tl.to(veil, { width: '0%', duration: 1 }, 0).to(
+        frame,
+        { opacity: 1, duration: 1 },
+        0
+      );
     },
     [isCanvas, imageUrl]
   );
@@ -152,22 +148,6 @@ export function CoolHunterQuote({
     color: '#171717',
   };
 
-  const labelBase: React.CSSProperties = {
-    position: 'absolute',
-    top: '50%',
-    right: 24,
-    zIndex: 10,
-    transform: 'translateY(-50%)',
-    fontFamily:
-      "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
-    fontSize: 11,
-    letterSpacing: '0.2em',
-    textTransform: 'uppercase',
-    color: '#262626',
-    writingMode: 'vertical-rl',
-  };
-
-  // ── Editor canvas: quote + image + label visible ──
   if (isCanvas) {
     return (
       <section
@@ -214,33 +194,15 @@ export function CoolHunterQuote({
               style={styleOf('imageUrl')}
             />
           </div>
-
-          <span
-            data-element-key='label'
-            className={selectableClass(activeKey === 'label', 'self-start')}
-            style={composeStyle(
-              {
-                fontFamily:
-                  "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
-                fontSize: 11,
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                color: '#262626',
-              },
-              styleOf('label')
-            )}
-          >
-            {label}
-          </span>
         </div>
       </section>
     );
   }
 
-  // ── PreviewMode + /p: sticky + color wipe reveal ──
   return (
     <section
       ref={rootRef}
+      data-section='interior-design'
       className={cn('@container relative w-full', className)}
       style={composeStyle(
         {
@@ -266,44 +228,22 @@ export function CoolHunterQuote({
 
         <div
           ref={veilRef}
-          className='absolute inset-y-0 left-0 w-full'
-          style={{ backgroundColor: STAGE_BG }}
-        />
-
-        <div
-          ref={quoteWrapRef}
-          className='absolute inset-0 z-10 flex items-center justify-center'
-          style={{ paddingInline: '7%' }}
+          className='absolute inset-y-0 left-0 z-10 overflow-hidden'
+          style={{ width: '100%', backgroundColor: STAGE_BG }}
         >
-          <h2
-            data-element-key='quote'
-            className={selectableClass(activeKey === 'quote')}
-            style={composeStyle(quoteBase, styleOf('quote'))}
+          <div
+            className='flex h-full items-center justify-center'
+            style={{ width: '100cqw', paddingInline: '7%' }}
           >
-            {quote}
-          </h2>
+            <h2
+              data-element-key='quote'
+              className={selectableClass(activeKey === 'quote')}
+              style={composeStyle(quoteBase, styleOf('quote'))}
+            >
+              {quote}
+            </h2>
+          </div>
         </div>
-
-        {!isMobile && (
-          <span
-            data-element-key='label'
-            className={selectableClass(activeKey === 'label')}
-            style={composeStyle(labelBase, styleOf('label'))}
-          >
-            <span
-              aria-hidden
-              style={{
-                display: 'inline-block',
-                width: 1,
-                height: 40,
-                marginBottom: 12,
-                backgroundColor: '#262626',
-                verticalAlign: 'middle',
-              }}
-            />
-            {label}
-          </span>
-        )}
       </div>
     </section>
   );

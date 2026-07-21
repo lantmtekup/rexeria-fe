@@ -10,76 +10,105 @@ const SECTIONS = [
   { id: 'interior-design', label: '04 - Interior Design' },
 ] as const;
 
-/** Pin tạo `.pin-spacer` bọc section — đo spacer mới đúng quãng scroll. */
-const getSectionBox = (id: string) => {
-  const el = document.querySelector(`[data-section="${id}"]`);
-  if (!el) return null;
-  const spacer = el.parentElement?.classList.contains('pin-spacer')
-    ? el.parentElement
-    : el;
-  return spacer.getBoundingClientRect();
+type ProgressState = {
+  index: number;
+  heightPct: number;
 };
 
-const resolveActive = () => {
+/** Pin tạo `.pin-spacer` bọc section — đo spacer mới đúng quãng scroll. */
+const getSectionSpacer = (id: string) => {
+  const el = document.querySelector(`[data-section="${id}"]`);
+  if (!el) return null;
+  return el.parentElement?.classList.contains('pin-spacer')
+    ? el.parentElement
+    : el;
+};
+
+/**
+ * Một progress 0→1 xuyên suốt toàn bộ hành trình pin.
+ * Thanh đen là một khối thống nhất: cao hơn khi scroll xuống, thấp hơn khi scroll lên.
+ */
+const resolveProgress = (): ProgressState | null => {
   const mid = window.innerHeight * 0.5;
+  let totalRange = 0;
+  const ranges: number[] = [];
+  const boxes: DOMRect[] = [];
+
+  for (const { id } of SECTIONS) {
+    const spacer = getSectionSpacer(id);
+    if (!spacer) return null;
+
+    const box = spacer.getBoundingClientRect();
+    const range = Math.max(0, box.height - window.innerHeight);
+    ranges.push(range);
+    boxes.push(box);
+    totalRange += range;
+  }
+
+  if (totalRange <= 0) return null;
+
+  let passed = 0;
 
   for (let i = 0; i < SECTIONS.length; i++) {
-    const box = getSectionBox(SECTIONS[i].id);
-    if (!box) continue;
-    if (box.top <= mid && box.bottom > mid) return i;
+    const box = boxes[i];
+    const range = ranges[i];
+
+    if (box.top <= mid && box.bottom > mid) {
+      const local = range > 0 ? Math.min(1, Math.max(0, -box.top / range)) : 1;
+      const overall = (passed + local * range) / totalRange;
+
+      return {
+        index: i,
+        heightPct: Math.max(3, overall * 100),
+      };
+    }
+
+    if (box.bottom <= mid) passed += range;
   }
 
   return null;
 };
 
 /**
- * Một rail sticky cố định bên phải.
- * Track xám đứng yên; đoạn đen + label đổi theo section đang active.
- * Active = pin-spacer đang chứa tâm viewport (không dùng top/bottom element
- * vì pin làm bounding box section đứng yên trong lúc scrub).
+ * Rail sticky bên phải: track xám + một thanh đen liên tục từ đỉnh rail.
+ * Label đổi theo section đang ở giữa viewport; chiều cao thanh đen scrub theo
+ * tiến độ scroll tổng (không chia slot theo section).
  */
 export default function SectionProgress() {
-  const [active, setActive] = useState<number | null>(null);
-  const total = SECTIONS.length;
-  const label = active !== null ? SECTIONS[active].label : SECTIONS[0].label;
-  const visible = active !== null;
+  const [progress, setProgress] = useState<ProgressState | null>(null);
+  const label =
+    progress !== null ? SECTIONS[progress.index].label : SECTIONS[0].label;
+  const visible = progress !== null;
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)');
 
-    const syncActive = () => {
+    const syncProgress = () => {
       if (!mq.matches) {
-        setActive(null);
+        setProgress(null);
         return;
       }
-      const found = resolveActive();
-      setActive(prev => (prev === found ? prev : found));
+      setProgress(resolveProgress());
     };
 
-    // Đợi pin của các section khởi tạo xong.
     const boot = window.setTimeout(() => {
       ScrollTrigger.refresh();
-      syncActive();
+      syncProgress();
     }, 0);
 
-    window.addEventListener('scroll', syncActive, { passive: true });
-    window.addEventListener('resize', syncActive);
-    ScrollTrigger.addEventListener('refresh', syncActive);
-    mq.addEventListener('change', syncActive);
+    window.addEventListener('scroll', syncProgress, { passive: true });
+    window.addEventListener('resize', syncProgress);
+    ScrollTrigger.addEventListener('refresh', syncProgress);
+    mq.addEventListener('change', syncProgress);
 
     return () => {
       window.clearTimeout(boot);
-      window.removeEventListener('scroll', syncActive);
-      window.removeEventListener('resize', syncActive);
-      ScrollTrigger.removeEventListener('refresh', syncActive);
-      mq.removeEventListener('change', syncActive);
+      window.removeEventListener('scroll', syncProgress);
+      window.removeEventListener('resize', syncProgress);
+      ScrollTrigger.removeEventListener('refresh', syncProgress);
+      mq.removeEventListener('change', syncProgress);
     };
   }, []);
-
-  const slotPct = 100 / total;
-  // Active cao hơn slot một chút, clamp để không tràn đáy rail.
-  const activePct = slotPct + 6;
-  const activeTop = Math.min(((active ?? 0) / total) * 100, 100 - activePct);
 
   return (
     <div
@@ -95,11 +124,8 @@ export default function SectionProgress() {
       </span>
       <span aria-hidden className='relative h-full w-px bg-neutral-200'>
         <span
-          className='absolute inset-x-0 bg-neutral-900 transition-[top] duration-300 ease-out'
-          style={{
-            top: `${activeTop}%`,
-            height: `${activePct}%`,
-          }}
+          className='absolute inset-x-0 top-0 bg-neutral-900 will-change-[height]'
+          style={{ height: `${progress?.heightPct ?? 0}%` }}
         />
       </span>
     </div>

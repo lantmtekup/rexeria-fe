@@ -29,6 +29,7 @@ export type BlockType =
   | 'wheel_gallery'
   | 'hover_reveal_list'
   | 'hover_equalizer_heading'
+  | 'brutalist_text'
   | 'image_explosion'
   | 'marquee_band'
   | 'letter_slider'
@@ -112,6 +113,7 @@ export type BlockType =
   | 'q80_menu'
   // ── Cool Hunter (editorial, port từ apps/cool-hunter) ──
   | 'cool_hunter_hero'
+  | 'cool_hunter_section_progress'
   | 'cool_hunter_story'
   | 'cool_hunter_gallery'
   | 'cool_hunter_product'
@@ -521,6 +523,19 @@ export interface CoolHunterHeroContent {
 }
 
 /**
+ * Cool Hunter Section Progress — rail tiến độ + nhãn section bên phải.
+ * Port từ apps/cool-hunter SectionProgress.tsx.
+ */
+export interface CoolHunterSectionProgressItem {
+  sectionId: string;
+  label: string;
+}
+
+export interface CoolHunterSectionProgressContent {
+  sections?: CoolHunterSectionProgressItem[];
+}
+
+/**
  * Cool Hunter Story — hai đoạn văn + khung ảnh scrub 4 beat (pin→sticky).
  * Port từ apps/cool-hunter StorySection.tsx.
  */
@@ -590,7 +605,12 @@ export interface CoolHunterFooterContent {
 
 /** Named scrim presets for PnjHero storefront wash. */
 export type PnjHeroScrimPresetId =
-  'pnj' | 'none' | 'softLight' | 'softDark' | 'mint' | 'navyFade';
+  | 'pnj'
+  | 'none'
+  | 'softLight'
+  | 'softDark'
+  | 'mint'
+  | 'navyFade';
 
 /** One absolute overlay layer on the storefront image. */
 export interface PnjHeroScrimLayer {
@@ -1255,6 +1275,19 @@ export interface HoverEqualizerHeadingContent {
   peak?: number;
   /** scaleY 2 ký tự kề bên. Default 1.6. */
   neighbor?: number;
+}
+
+/** Brutalist text — tiêu đề uppercase đậm + trail echo opacity xếp chồng. */
+export interface BrutalistTextContent {
+  heading: string;
+  /** Số ghost layer phía dưới primary. Default 3. */
+  echoCount?: number;
+  /** Khoảng cách dọc giữa các layer (em). Default 0.09. */
+  layerStep?: number;
+  /** Opacity từng ghost (xa → gần primary). */
+  echoOpacities?: number[];
+  textColor?: string;
+  bgColor?: string;
 }
 
 /** Image explosion — ảnh "nổ" bay lên rồi rơi khi cuộn tới (port CodeGrid 246). */
@@ -2821,6 +2854,7 @@ export type BlockContent =
   | MintDiscoverContent
   | PnjHeroContent
   | CoolHunterHeroContent
+  | CoolHunterSectionProgressContent
   | CoolHunterStoryContent
   | CoolHunterGalleryContent
   | CoolHunterProductContent
@@ -2863,6 +2897,7 @@ export type BlockContent =
   | WheelGalleryContent
   | HoverRevealListContent
   | HoverEqualizerHeadingContent
+  | BrutalistTextContent
   | ImageExplosionContent
   | StorySlidesContent
   | AccordionMediaContent
@@ -3039,7 +3074,10 @@ export interface ExtraElementStyle {
  * animation > plain.
  */
 export type TextAnimationMode =
-  'none' | 'fade-up' | 'typewriter' | 'split-slide-up';
+  | 'none'
+  | 'fade-up'
+  | 'typewriter'
+  | 'split-slide-up';
 
 export interface TextCounterConfig {
   /** Starting value of the count-up. Defaults to 0. */
@@ -3721,6 +3759,24 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     aiLabelEn:
       'PNJ hero: storefront image + overlay copy + canvas frame scrub + hotspot drawer',
   },
+  cool_hunter_section_progress: {
+    type: 'cool_hunter_section_progress',
+    category: 'feature',
+    style: 'minimal',
+    tags: ['cool-hunter', 'progress', 'navigation', 'overlay'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'Cool Hunter · Section Progress',
+    accent: '#111111',
+    adminLabel: 'Cool Hunter Section Progress',
+    gradient: 'from-neutral-200 to-neutral-700',
+    defaultName: 'Cool Hunter Section Progress',
+    aiLabelVi:
+      'rail progress Cool Hunter: thanh tiến độ + nhãn section bên phải (desktop)',
+    aiLabelEn:
+      'Cool Hunter section progress rail: right-side scroll progress + section label (desktop)',
+  },
   cool_hunter_hero: {
     type: 'cool_hunter_hero',
     category: 'hero',
@@ -3728,7 +3784,7 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     tags: ['cool-hunter', 'hero', 'scroll', 'scrub'],
     status: 'ready',
     responsive: true,
-    updatedAt: '2026-07-20',
+    updatedAt: '2026-07-21',
     label: 'Cool Hunter · Hero',
     accent: '#111111',
     adminLabel: 'Cool Hunter Hero',
@@ -4430,6 +4486,24 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     defaultName: 'Hover Equalizer Heading',
     aiLabelVi: 'tiêu đề chữ giãn như equalizer khi hover',
     aiLabelEn: 'heading text stretching like an equalizer on hover',
+  },
+  brutalist_text: {
+    type: 'brutalist_text',
+    category: 'interactive',
+    style: 'modern',
+    tags: ['typography', 'brutalist', 'heading', 'animation'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'Brutalist Text',
+    accent: '#000000',
+    adminLabel: 'Brutalist Text',
+    gradient: 'from-neutral-900 to-black',
+    defaultName: 'Brutalist Text',
+    aiLabelVi:
+      'tiêu đề brutalist uppercase đậm, trail echo opacity xếp chồng trên nền đen',
+    aiLabelEn:
+      'bold uppercase brutalist heading with stacked opacity echo trail on black',
   },
   image_explosion: {
     type: 'image_explosion',

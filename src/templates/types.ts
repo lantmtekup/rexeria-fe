@@ -19,7 +19,13 @@ import type { Page } from '@/services/rexer/types';
 
 /** Field types user (admin / brand) có thể fill khi customize content. */
 export type TemplateFieldType =
-  'text' | 'longText' | 'image' | 'url' | 'number' | 'boolean' | 'select';
+  | 'text'
+  | 'longText'
+  | 'image'
+  | 'url'
+  | 'number'
+  | 'boolean'
+  | 'select';
 
 export interface TemplateContentField {
   /** JSON key trong `page.type_metadata`. */

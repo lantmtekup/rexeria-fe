@@ -25,19 +25,19 @@ export function initSmoothScroll() {
   const lenis = new Lenis({
     duration: 1.2,
     lerp: 0.1,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
     smoothWheel: !isMobile,
     smoothTouch: false,
     wheelMultiplier: 1,
   });
 
   lenis.on('scroll', ScrollTrigger.update);
-  gsap.ticker.add((time) => lenis.raf(time * 1000));
+  gsap.ticker.add(time => lenis.raf(time * 1000));
   gsap.ticker.lagSmoothing(0);
 
   // Anchor links → smooth scroll with header offset
-  document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) => {
-    a.addEventListener('click', (e) => {
+  document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
       const id = a.getAttribute('href');
       if (!id || id === '#') return;
       e.preventDefault();

@@ -348,9 +348,13 @@ export const dataCollectionLocal = {
       const f = filters.sort_field;
       items.sort((a, b) => {
         const av = (a.data?.[f] ?? a[f as keyof DataCollectionRecord]) as
-          string | number | undefined;
+          | string
+          | number
+          | undefined;
         const bv = (b.data?.[f] ?? b[f as keyof DataCollectionRecord]) as
-          string | number | undefined;
+          | string
+          | number
+          | undefined;
         if (av === bv) return 0;
         if (av == null) return 1;
         if (bv == null) return -1;

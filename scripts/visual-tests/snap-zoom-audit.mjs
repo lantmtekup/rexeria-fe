@@ -14,7 +14,9 @@ const VIEWPORTS = [
 const browser = await chromium.launch();
 
 for (const v of VIEWPORTS) {
-  const ctx = await browser.newContext({ viewport: { width: v.w, height: v.h } });
+  const ctx = await browser.newContext({
+    viewport: { width: v.w, height: v.h },
+  });
   const page = await ctx.newPage();
 
   await page.goto(url, { waitUntil: 'networkidle' });
@@ -43,7 +45,10 @@ for (const v of VIEWPORTS) {
         .find(t => t && /^\d{2,3}%$/.test(t));
       return {
         surface: surfaceRect
-          ? { w: Math.round(surfaceRect.width), h: Math.round(surfaceRect.height) }
+          ? {
+              w: Math.round(surfaceRect.width),
+              h: Math.round(surfaceRect.height),
+            }
           : null,
         inner: innerRect
           ? { w: Math.round(innerRect.width), h: Math.round(innerRect.height) }
@@ -63,10 +68,18 @@ for (const v of VIEWPORTS) {
     console.log(`\n=== ${v.name} (${v.w}×${v.h}) · ${dev} ===`);
     console.log('zoom shown =', info.zoomLabel);
     console.log('surface (visible)  =', info.surface);
-    console.log('surface scrollW    =', info.scrollWidth, '/ clientW=', info.clientWidth);
+    console.log(
+      'surface scrollW    =',
+      info.scrollWidth,
+      '/ clientW=',
+      info.clientWidth
+    );
     console.log('inner declared w   =', info.innerDeclaredWidth);
     console.log('inner rendered     =', info.inner);
-    console.log('overflowing?       =', info.overflows ? '⚠️ YES (scroll)' : '✓ no');
+    console.log(
+      'overflowing?       =',
+      info.overflows ? '⚠️ YES (scroll)' : '✓ no'
+    );
   }
 
   await page.screenshot({

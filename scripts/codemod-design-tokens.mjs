@@ -22,20 +22,38 @@ const root = args.find(a => !a.startsWith('--')) ?? 'src';
 
 // px → class (8..72). Làm tròn về bậc gần nhất của thang.
 const FONT = [
-  [10.5, 'text-3xs'], [10, 'text-3xs'], [9.5, 'text-3xs'], [9, 'text-3xs'], [8, 'text-3xs'],
-  [11.5, 'text-2xs'], [11, 'text-2xs'],
-  [12.5, 'text-xs'], [12, 'text-xs'],
-  [14, 'text-sm'], [13.5, 'text-sm'], [13, 'text-sm'],
-  [16, 'text-base'], [15, 'text-base'],
-  [18, 'text-lg'], [20, 'text-xl'],
-  [26, 'text-2xl'], [24, 'text-2xl'],
-  [30, 'text-3xl'], [40, 'text-4xl'], [38, 'text-4xl'], [36, 'text-4xl'],
-  [48, 'text-5xl'], [44, 'text-5xl'],
-  [60, 'text-6xl'], [56, 'text-6xl'], [72, 'text-7xl'],
+  [10.5, 'text-3xs'],
+  [10, 'text-3xs'],
+  [9.5, 'text-3xs'],
+  [9, 'text-3xs'],
+  [8, 'text-3xs'],
+  [11.5, 'text-2xs'],
+  [11, 'text-2xs'],
+  [12.5, 'text-xs'],
+  [12, 'text-xs'],
+  [14, 'text-sm'],
+  [13.5, 'text-sm'],
+  [13, 'text-sm'],
+  [16, 'text-base'],
+  [15, 'text-base'],
+  [18, 'text-lg'],
+  [20, 'text-xl'],
+  [26, 'text-2xl'],
+  [24, 'text-2xl'],
+  [30, 'text-3xl'],
+  [40, 'text-4xl'],
+  [38, 'text-4xl'],
+  [36, 'text-4xl'],
+  [48, 'text-5xl'],
+  [44, 'text-5xl'],
+  [60, 'text-6xl'],
+  [56, 'text-6xl'],
+  [72, 'text-7xl'],
 ];
 function fontClass(px) {
   let best = FONT[0];
-  for (const e of FONT) if (Math.abs(e[0] - px) < Math.abs(best[0] - px)) best = e;
+  for (const e of FONT)
+    if (Math.abs(e[0] - px) < Math.abs(best[0] - px)) best = e;
   return best[1];
 }
 
@@ -72,4 +90,6 @@ function walk(p) {
 }
 
 walk(root);
-console.log(`\n${changed} file(s) ${write ? 'changed' : 'would change'}. font-size${doColor ? ' + color(zinc→token)' : ' only'}.`);
+console.log(
+  `\n${changed} file(s) ${write ? 'changed' : 'would change'}. font-size${doColor ? ' + color(zinc→token)' : ' only'}.`
+);

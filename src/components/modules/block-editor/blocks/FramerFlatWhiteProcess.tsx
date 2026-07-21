@@ -4,28 +4,24 @@
  * Flat White — "Our Process": nền #747E90, label pill "/ OUR PROCESS",
  * headline lớn (clamp font-size theo cqi), 3 step card dọc (pill number +
  * title + body màu #D6D9E2), và SVG divider cong động (2 lớp: base track
- * rgba(255,255,255,0.1) + overlay animated #FFFFFF). Port từ
+ * rgba(255,255,255,0.1) + overlay animated). Port từ
  * `recon-flat-white-our-process/spec.md` (Flat White framer site).
  *
- * Animation GSAP R1–R6 qua `useBlockMotion`:
- *   - Label pill + headline: word-by-word reveal (opacity + x), duration
- *     0.3s, stagger 0.1s, ease ≈ power3.out (Framer `cubic-bezier(.22,1,.36,1)`).
- *   - Mỗi step card: fade-in khi vào viewport (opacity + y, duration 0.8s,
- *     ease power2.out, toggleActions reverse). Đồng thời parallax scrub
- *     theo section root (`yPercent` ±6/9/12% tuần tự 3 step → cảm giác
- *     depth layer; ease 'none' + scrub 0.6s).
- *   - SVG overlay: pathLength 0 → 1 trên 3s, ease "power2.out", bắt đầu khi
- *     block vào viewport.
- *   - Reduced-motion: bail-out sớm → element hiện final state.
+ * Motion (hybrid Attribute System + T3):
+ *   - Label / headline: `word-reveal` via useMotionAttributes.
+ *   - Hairline: `line-draw` axis=x, in-view.
+ *   - Step: outer `parallax` + inner `fade-up` (1 driver / element).
+ *   - SVG overlay strokeDashoffset scrub: T3 `useBlockMotion` (không có
+ *     effect path-draw trong catalog).
  *
  * Tuyền inline: mọi token (font-size/color/spacing) đi trong `style={composeStyle(...)}`,
  * responsive qua `clamp(min, N·cqi, max)`. Không `md:`/`lg:`/`vw`.
  */
 import * as React from 'react';
 import gsap from 'gsap';
-import { CustomEase } from 'gsap/CustomEase';
 
 import { useBlockMotion } from '../motion/LandingMotion';
+import { useMotionAttributes } from '../motion/useMotionAttributes';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -68,6 +64,9 @@ const DEFAULT_STEPS: FramerFlatWhiteProcessStep[] = [
     body: 'We implement plans alongside your team, ensuring sustainable results. Our hands-on approach includes support, monitoring and adaptation to embed changes and deliver long-term value.',
   },
 ];
+
+/** px ≈ former yPercent ±6/9/12 on ~card-height depth layers. */
+const STEP_PARALLAX_DISTANCE = [24, 36, 48] as const;
 
 const ROOT_STYLE: React.CSSProperties = {
   position: 'relative',
@@ -182,63 +181,6 @@ const STEP_BODY_STYLE: React.CSSProperties = {
 const DIVIDER_PATH =
   'M232.488 0C232.488 46.2989 269.981 83.8525 316.279 83.9273L975.782 84.9935C1099.37 85.1932 1199.11 186.067 1197.91 309.646C1196.73 431.828 1097.32 530.197 975.135 529.997C856.628 529.803 711.976 529.566 598.349 529.38C480.719 529.188 329.837 528.941 209.135 528.744C94.1047 528.555 0.731262 621.631 0.50032 736.661C0.269118 851.82 93.5111 945.323 208.671 945.415L861.46 945.931C970.456 946.018 1058.77 1034.4 1058.77 1143.4C1058.77 1252.98 969.54 1341.6 859.96 1340.86L628.689 1339.28C576.127 1338.93 533.326 1381.44 533.326 1434';
 
-/** Framer appear-effect easing (từ spec section 9: cubic-bezier(.44,0,.56,1)).
- *  Đăng ký 1 lần, tái dùng qua id 'fwpFramerEase'. */
-const FRAMER_EASE_ID = 'fwpFramerEase';
-function ensureFramerEase(): string {
-  if (typeof window !== 'undefined' && !CustomEase.get(FRAMER_EASE_ID)) {
-    CustomEase.create(FRAMER_EASE_ID, 'M0,0 C0.44,0 0.56,1 1,1');
-  }
-  return FRAMER_EASE_ID;
-}
-
-function tokenize(text: string): string[] {
-  return text.split(/(\s+)/);
-}
-
-function WordReveal({
-  text,
-  baseStyle,
-  className,
-  activeKey,
-  elementKey,
-  styles,
-}: {
-  text: string;
-  baseStyle: React.CSSProperties;
-  className: string;
-  activeKey?: string | null;
-  elementKey: string;
-  styles?: ElementStylesMap;
-}) {
-  const tokens = React.useMemo(() => tokenize(text), [text]);
-  return (
-    <span
-      data-element-key={elementKey}
-      data-fwp-word-wrap
-      className={selectableClass(activeKey === elementKey, className)}
-      style={composeStyle(baseStyle, elementStyleOf(styles, elementKey))}
-    >
-      {tokens.map((tok, i) =>
-        tok === '' ? null : /\s+/.test(tok) ? (
-          <span key={`s-${i}`}>{tok}</span>
-        ) : (
-          <span
-            key={`w-${i}`}
-            data-fwp-word
-            style={{
-              display: 'inline-block',
-              willChange: 'transform, opacity',
-            }}
-          >
-            {tok}
-          </span>
-        )
-      )}
-    </span>
-  );
-}
-
 export function FramerFlatWhiteProcess({
   content,
   styles,
@@ -249,7 +191,6 @@ export function FramerFlatWhiteProcess({
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
   const overlayPathRef = React.useRef<SVGPathElement>(null);
-  const hairlineRef = React.useRef<HTMLHRElement>(null);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -271,148 +212,35 @@ export function FramerFlatWhiteProcess({
     [content.steps]
   );
 
+  useMotionAttributes(rootRef, [steps.length]);
+
+  // T3: SVG path stroke draw — không có effect catalog tương đương.
   useBlockMotion(
     rootRef,
     ({ scroller }) => {
       const root = rootRef.current;
       const overlay = overlayPathRef.current;
-      if (!root) return;
+      if (!root || !overlay) return;
 
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        const words = root.querySelectorAll<HTMLElement>('[data-fwp-word]');
-        if (words.length)
-          gsap.set(words, { opacity: 1, x: 0, clearProps: 'transform' });
-        if (overlay) gsap.set(overlay, { strokeDashoffset: 0 });
-        if (hairlineRef.current) gsap.set(hairlineRef.current, { scaleX: 1 });
+        gsap.set(overlay, { strokeDashoffset: 0 });
         return;
       }
 
-      const framerEase = ensureFramerEase();
-
-      const staggerWords = (
-        container: HTMLElement | null | undefined,
-        duration: number,
-        ease: string,
-        stagger: number,
-        delay: number
-      ) => {
-        if (!container) return;
-        const words =
-          container.querySelectorAll<HTMLElement>('[data-fwp-word]');
-        if (!words.length) return;
-        gsap.fromTo(
-          words,
-          { opacity: 0.001, x: 10 },
-          {
-            opacity: 1,
-            x: 0,
-            duration,
-            ease,
-            stagger,
-            delay,
-            scrollTrigger: {
-              trigger: container,
-              scroller,
-              start: 'top 90%',
-              toggleActions: 'play none none reverse',
-              invalidateOnRefresh: true,
-            },
-          }
-        );
-      };
-
-      const labelEl = root.querySelector<HTMLElement>('.fwp-label');
-      staggerWords(labelEl, 0.5, framerEase, 0.03, 0);
-
-      const headlineEl = root.querySelector<HTMLElement>('.fwp-headline');
-      staggerWords(headlineEl, 0.5, framerEase, 0.03, 0.1);
-
-      const PARALLAX_RANGE = [6, 9, 12] as const;
-      const stepEls = root.querySelectorAll<HTMLElement>('[data-fwp-step]');
-      stepEls.forEach((stepEl, i) => {
-        const range = PARALLAX_RANGE[i] ?? PARALLAX_RANGE[0];
-
-        gsap.fromTo(
-          stepEl,
-          { opacity: 0, y: 18 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 1,
-            ease: 'power2.out',
-            scrollTrigger: {
-              trigger: stepEl,
-              scroller,
-              start: 'top 100%',
-              toggleActions: 'play none none reverse',
-              invalidateOnRefresh: true,
-            },
-          }
-        );
-
-        gsap.fromTo(
-          stepEl,
-          { yPercent: range },
-          {
-            yPercent: -range,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: root,
-              scroller,
-              start: 'top bottom',
-              end: 'bottom top',
-              scrub: 0.6,
-              invalidateOnRefresh: true,
-            },
-          }
-        );
+      const len = overlay.getTotalLength();
+      gsap.set(overlay, { strokeDasharray: len, strokeDashoffset: len });
+      gsap.to(overlay, {
+        strokeDashoffset: 0,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: root,
+          scroller,
+          start: 'top 40%',
+          end: 'bottom top',
+          scrub: 0.6,
+          invalidateOnRefresh: true,
+        },
       });
-
-      if (hairlineRef.current) {
-        gsap.set(hairlineRef.current, {
-          scaleX: 0,
-          transformOrigin: 'left center',
-        });
-        const hairlineTl = gsap.timeline({
-          scrollTrigger: {
-            trigger: root,
-            scroller,
-            start: 'top 80%',
-            toggleActions: 'play none none reverse',
-            invalidateOnRefresh: true,
-          },
-        });
-        hairlineTl
-          .to(hairlineRef.current, {
-            scaleX: 1,
-            duration: 3,
-            ease: 'power2.inOut',
-          })
-          .addLabel('done', '+=0');
-      }
-
-      if (overlay) {
-        const len = overlay.getTotalLength();
-        gsap.set(overlay, { strokeDasharray: len, strokeDashoffset: len });
-
-        const svgTl = gsap.timeline({
-          scrollTrigger: {
-            trigger: root,
-            scroller,
-            start: 'top 40%',
-            end: 'bottom top',
-            scrub: 0.6,
-            invalidateOnRefresh: true,
-          },
-        });
-        svgTl
-          .to(overlay, {
-            strokeDashoffset: 0,
-            duration: 1,
-            ease: 'none',
-          })
-          .addLabel('drawn', '+=0');
-      }
     },
     [steps.length]
   );
@@ -456,9 +284,6 @@ export function FramerFlatWhiteProcess({
           .fwp-step-1 { top: 40% !important; left: 10% !important; right: auto !important; }
           .fwp-step-2 { top: 70% !important; right: 15% !important; left: auto !important; }
         }
-        @media (prefers-reduced-motion: reduce) {
-          .fwp-root [data-fwp-word] { opacity: 1 !important; transform: none !important; }
-        }
       `}</style>
 
       <div style={CONTAINER_STYLE}>
@@ -473,28 +298,41 @@ export function FramerFlatWhiteProcess({
           )}
         >
           <span style={{ opacity: 0.7 }}>/</span>
-          <WordReveal
-            text={label}
-            baseStyle={{}}
-            className='fwp-label-words'
-            activeKey={activeKey}
-            elementKey='label'
-            styles={styles}
-          />
+          <span
+            data-motion='word-reveal'
+            data-motion-duration='0.5'
+            data-motion-stagger='0.03'
+            data-motion-start='top 90%'
+          >
+            {label}
+          </span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <WordReveal
-            text={headline}
-            baseStyle={HEADLINE_STYLE}
-            className='fwp-headline'
-            activeKey={activeKey}
-            elementKey='headline'
-            styles={styles}
-          />
+          <h2
+            data-element-key='headline'
+            data-motion='word-reveal'
+            data-motion-duration='0.5'
+            data-motion-stagger='0.03'
+            data-motion-delay='0.1'
+            data-motion-start='top 90%'
+            className={selectableClass(
+              activeKey === 'headline',
+              'fwp-headline'
+            )}
+            style={composeStyle(HEADLINE_STYLE, styleOf('headline'))}
+          >
+            {headline}
+          </h2>
           <hr
-            ref={hairlineRef}
             data-fwp-hairline
+            data-motion='line-draw'
+            data-motion-axis='x'
+            data-motion-trigger='in-view'
+            data-motion-duration='3'
+            data-motion-ease='power2.inOut'
+            data-motion-start='top 80%'
+            data-motion-trigger-target='root'
             style={composeStyle(HAIRLINE_STYLE, styleOf('headline'))}
           />
           <div style={STEPS_STACK_STYLE} className='fwp-steps-container'>
@@ -548,12 +386,23 @@ export function FramerFlatWhiteProcess({
                   ? { right: basePos.right }
                   : {}),
               };
+              const parallaxDistance =
+                STEP_PARALLAX_DISTANCE[
+                  Math.min(idx, STEP_PARALLAX_DISTANCE.length - 1)
+                ] ?? STEP_PARALLAX_DISTANCE[0];
+
               return (
                 <div
                   key={`${step.number}-${idx}`}
                   data-fwp-step
                   data-element-key={stepKey}
                   data-fwp-align={basePos.left !== undefined ? 'left' : 'right'}
+                  data-motion='parallax'
+                  data-motion-distance={String(parallaxDistance)}
+                  data-motion-scrub='0.6'
+                  data-motion-trigger-target='root'
+                  data-motion-start='top bottom'
+                  data-motion-end='bottom top'
                   className={`fwp-step fwp-step-${idx} ${selectableClass(activeKey === stepKey)}`.trim()}
                   style={composeStyle(
                     STEP_CARD_STYLE,
@@ -562,37 +411,61 @@ export function FramerFlatWhiteProcess({
                   )}
                 >
                   <div
-                    data-element-key={`${stepKey}-pill`}
-                    className={selectableClass(
-                      activeKey === `${stepKey}-pill`,
-                      'fwp-step-pill'
-                    )}
-                    style={composeStyle(
-                      PILL_BASE_STYLE,
-                      { color: textColor },
-                      styleOf(`${stepKey}-pill`)
-                    )}
+                    data-motion='fade-up'
+                    data-motion-distance='18'
+                    data-motion-duration='1'
+                    data-motion-ease='power2.out'
+                    data-motion-start='top 100%'
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                    }}
                   >
-                    <span style={{ opacity: 0.7 }}>/</span>
-                    <span>{step.number}</span>
-                  </div>
+                    <div
+                      data-element-key={`${stepKey}-pill`}
+                      className={selectableClass(
+                        activeKey === `${stepKey}-pill`,
+                        'fwp-step-pill'
+                      )}
+                      style={composeStyle(
+                        PILL_BASE_STYLE,
+                        { color: textColor },
+                        styleOf(`${stepKey}-pill`)
+                      )}
+                    >
+                      <span style={{ opacity: 0.7 }}>/</span>
+                      <span>{step.number}</span>
+                    </div>
 
-                  <WordReveal
-                    text={step.title}
-                    baseStyle={STEP_TITLE_STYLE}
-                    className='fwp-step-title'
-                    activeKey={activeKey}
-                    elementKey={`${stepKey}-title`}
-                    styles={styles}
-                  />
-                  <WordReveal
-                    text={step.body}
-                    baseStyle={{ ...STEP_BODY_STYLE, color: bodyTextColor }}
-                    className='fwp-step-body'
-                    activeKey={activeKey}
-                    elementKey={`${stepKey}-body`}
-                    styles={styles}
-                  />
+                    <h3
+                      data-element-key={`${stepKey}-title`}
+                      className={selectableClass(
+                        activeKey === `${stepKey}-title`,
+                        'fwp-step-title'
+                      )}
+                      style={composeStyle(
+                        STEP_TITLE_STYLE,
+                        styleOf(`${stepKey}-title`)
+                      )}
+                    >
+                      {step.title}
+                    </h3>
+                    <p
+                      data-element-key={`${stepKey}-body`}
+                      className={selectableClass(
+                        activeKey === `${stepKey}-body`,
+                        'fwp-step-body'
+                      )}
+                      style={composeStyle(
+                        STEP_BODY_STYLE,
+                        { color: bodyTextColor },
+                        styleOf(`${stepKey}-body`)
+                      )}
+                    >
+                      {step.body}
+                    </p>
+                  </div>
                 </div>
               );
             })}

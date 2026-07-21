@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Parse a Framer bundle directory and extract animation configs.
  *
@@ -64,12 +66,21 @@ function extractObjectAt(src, from) {
   for (let i = from; i < src.length; i++) {
     const c = src[i];
     if (inStr) {
-      if (esc) { esc = false; continue; }
-      if (c === '\\') { esc = true; continue; }
+      if (esc) {
+        esc = false;
+        continue;
+      }
+      if (c === '\\') {
+        esc = true;
+        continue;
+      }
       if (c === inStr) inStr = null;
       continue;
     }
-    if (c === '"' || c === "'" || c === '`') { inStr = c; continue; }
+    if (c === '"' || c === "'" || c === '`') {
+      inStr = c;
+      continue;
+    }
     if (c === '{') depth++;
     else if (c === '}') {
       depth--;
@@ -131,8 +142,15 @@ function prune(node) {
     if (
       MOTION_KEYS.includes(k) ||
       TRANSITION_KEYS.includes(k) ||
-      k === 'x' || k === 'y' || k === 'scale' || k === 'opacity' || k === 'rotate' ||
-      k === 'clipPath' || k === 'filter' || k === 'keyframes' || k === 'viewport'
+      k === 'x' ||
+      k === 'y' ||
+      k === 'scale' ||
+      k === 'opacity' ||
+      k === 'rotate' ||
+      k === 'clipPath' ||
+      k === 'filter' ||
+      k === 'keyframes' ||
+      k === 'viewport'
     ) {
       out[k] = prune(v);
     }
@@ -143,7 +161,7 @@ function prune(node) {
 const results = [];
 const files = fs
   .readdirSync(dir)
-  .filter((f) => f.endsWith('.js') || f.endsWith('.mjs'));
+  .filter(f => f.endsWith('.js') || f.endsWith('.mjs'));
 
 for (const f of files) {
   const src = fs.readFileSync(path.join(dir, f), 'utf8');
@@ -186,6 +204,6 @@ console.log(
   JSON.stringify(
     { count: uniq.size, items: Array.from(uniq.values()) },
     null,
-    2,
-  ),
+    2
+  )
 );

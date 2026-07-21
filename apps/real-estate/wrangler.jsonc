@@ -6,7 +6,9 @@
   "compatibility_date": "2026-05-01",
   "assets": {
     "directory": "dist",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
   },
-  "routes": [{ "pattern": "real-estate.rexerstudio.com", "custom_domain": true }]
+  "routes": [
+    { "pattern": "real-estate.rexerstudio.com", "custom_domain": true },
+  ],
 }

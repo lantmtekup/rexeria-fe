@@ -3,7 +3,7 @@
  * tiêu đề + bàn sản phẩm + panel chữ scrub. Port từ apps/cool-hunter
  * ProductSection.tsx. Path A registry.
  */
-import { Image as ImageIcon, Tag, TextCursorInput, Type } from 'lucide-react';
+import { Image as ImageIcon, TextCursorInput, Type } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { CoolHunterProductContent } from '../../../types';
@@ -16,7 +16,6 @@ const VI: CoolHunterProductContent = {
   productUrl: '/cool-hunter/product.png',
   productAlt:
     'A round dining table with a whitewashed top and stone pedestal base',
-  label: '03 - Architecture',
 };
 
 const EN: CoolHunterProductContent = {
@@ -71,12 +70,6 @@ export const coolHunterProductDef: BlockDef<CoolHunterProductContent> = {
       icon: ImageIcon,
       fieldType: 'image',
       groupId: 'media',
-    },
-    {
-      key: 'label',
-      label: 'Nhãn dọc',
-      icon: Tag,
-      fieldType: 'text',
     },
   ],
 };

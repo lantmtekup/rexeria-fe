@@ -136,6 +136,7 @@ const ORDERED_TYPES: BlockType[] = [
   'wheel_gallery',
   'hover_reveal_list',
   'hover_equalizer_heading',
+  'brutalist_text',
   'image_explosion',
   'marquee_band',
   'story_slides',

@@ -25,7 +25,7 @@ const ITEMS = [
 // đây nên đổi layout chỉ cần sửa một chỗ.
 const LAYOUT = {
   mobile: { img: 78, text: 78, gap: 8, pin: '+=520%' },
-  desktop: { img: 30, text: 26, gap: 4, pin: '+=330%' },
+  desktop: { img: 30, text: 26, gap: 4, pin: '+=280%', minTextLeft: 64 },
 };
 
 export default function GallerySection() {
@@ -61,10 +61,18 @@ export default function GallerySection() {
       const stackX = (i: number) => -L.img + 12 - i * 10 + firstLeft - slot(i);
 
       // Phase B đặt track = firstLeft (ảnh về x:0) nên phase C chạy từ
-      // firstLeft → firstLeft - travel, không còn từ 0.
+      // firstLeft → trackEnd, không còn từ 0.
       const trackStart = firstLeft;
-      const trackTravel = isMobile ? textSlot(2) : slot(2);
-      const trackEnd = trackStart - trackTravel;
+      const lastIndex = ITEMS.length - 1;
+      // Desktop: ẩn ảnh kế cuối nhưng không kéo quá sang trái để text cuối
+      // bị dính mép — lấy điểm dừng "nhẹ" hơn giữa hai ngưỡng.
+      const trackEnd = isMobile
+        ? firstLeft - textSlot(lastIndex)
+        : Math.max(
+            -(slot(lastIndex - 1) + L.img),
+            LAYOUT.desktop.minTextLeft - textSlot(lastIndex)
+          );
+      const trackTravel = trackStart - trackEnd;
       const C_DUR = 2;
       // Thời điểm (trong phase C) mà text i vừa ló vào mép phải màn hình.
       // Phải bắt lúc nó *vào*, không phải lúc trôi tới mép trái — canh theo

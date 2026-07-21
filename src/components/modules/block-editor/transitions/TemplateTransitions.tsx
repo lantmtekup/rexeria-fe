@@ -13,7 +13,12 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 /** Preset transition cấp template — áp cho cả collection block. */
 export type TemplateTransition =
-  'none' | 'fade' | 'roll-up' | 'swipe' | 'tabs' | 'parallax';
+  | 'none'
+  | 'fade'
+  | 'roll-up'
+  | 'swipe'
+  | 'tabs'
+  | 'parallax';
 
 export const TEMPLATE_TRANSITIONS: {
   id: TemplateTransition;

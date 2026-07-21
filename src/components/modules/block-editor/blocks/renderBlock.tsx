@@ -132,6 +132,9 @@ const BLOCK_RENDERERS: Record<string, BlockRenderer> = {
   hover_equalizer_heading: lazyBlock(() =>
     import('./HoverEqualizerHeading').then(m => m.HoverEqualizerHeading)
   ),
+  brutalist_text: lazyBlock(() =>
+    import('./BrutalistText').then(m => m.BrutalistText)
+  ),
   image_explosion: lazyBlock(() =>
     import('./ImageExplosion').then(m => m.ImageExplosion)
   ),

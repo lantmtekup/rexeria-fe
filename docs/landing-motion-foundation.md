@@ -143,6 +143,12 @@ editor) và `prefers-reduced-motion`.
 
 ### Effect library (`motion/motionLibrary.ts`)
 
+**Agent memory:** mỗi effect có `meta` (summary / whenToUse / whenNotToUse / vs /
+prerequisites / example) trong TypeScript — single source. Skill `motion-pick`
+đọc catalog generate: `.claude/skills/motion-pick/references/effects-catalog.md`
+(`yarn motion:catalog` sau khi sửa meta). Bảng dưới đây là human summary; agent
+phải pick id từ catalog, không invent effect.
+
 | id | đối tượng | mô tả (defaults) |
 |---|---|---|
 | `fade-in` | any | opacity 0→1 (0.6s power2.out) |
@@ -153,8 +159,19 @@ editor) và `prefers-reduced-motion`.
 | `blur-in` | ảnh/chữ | blur 12→0 |
 | `char-reveal` | chữ | SplitText chars+mask, yPercent 110→0 (1.6s power3.out, stagger .06) |
 | `word-reveal` / `line-reveal` | chữ | như trên theo words/lines |
-| `line-draw` | khung | scaleY 0→1, origin top — mặc định trigger **scrub** |
+| `line-draw` | khung | scaleY 0→1, origin top — mặc định trigger **scrub**; `data-motion-axis='x'` → trục ngang |
 | `scale-pop` | khung/any | scale 0→1 back.out(2) (0.4s) |
+| `parallax` | ảnh | trigger **scrub** full-range, y +d→−d (d mặc định 60, override `data-motion-distance`) |
+| `clip-reveal` | ảnh/khung | lộ theo clipPath inset (1s power3.out); hướng qua `data-motion-direction` (down default/up/left/right) |
+| `media-zoom` | ảnh | Ken Burns settle: scale 1.18→1 (1.2s) — đặt lên `<img>` trong wrapper overflow-hidden |
+| `rotate-in` | any | opacity + rotate −8° + y 24 → 0 (0.7s power3.out) |
+| `flip-in` | any | rotateX −55° perspective 800 → 0 (0.8s power3.out) |
+| `counter` | chữ | đếm số 0 → giá trị parse từ text (giữ prefix/suffix, phẩy nghìn, thập phân) — 1.2s |
+| `marquee-loop` | any | xPercent 0→−50 lặp vô hạn (20s, trigger **loop**) — nội dung phải nhân đôi trong JSX |
+| `hover-scale` | any | scale 1→1.06 (0.35s) — trigger **hover**, play/reverse theo pointer, tự skip touch |
+| `hover-lift` | any | y 0→−8 + scale 1.02 — trigger **hover** |
+| `hover-tilt` | any | rotateX/Y 6°/−6° perspective 600 — trigger **hover** |
+| `hover-zoom` | ảnh | scale 1→1.08 trên `<img>` trong wrapper overflow-hidden; listener card cha qua `data-motion-trigger-target='closest:.card'` |
 
 ### Attribute vocabulary
 
@@ -165,13 +182,17 @@ editor) và `prefers-reduced-motion`.
 | `data-motion-ease` | GSAP ease string | `'back.out(2)'` hợp lệ |
 | `data-motion-distance` | px | effect có `distanceVar` (fade-up/down, slide) |
 | `data-motion-origin` | transform-origin | |
-| `data-motion-trigger` | `in-view` (default) / `scrub` / `load` | hover/click: đợt sau |
+| `data-motion-trigger` | `in-view` (default) / `scrub` / `load` / `loop` / `hover` / `click` | hover: play khi pointerenter, reverse khi leave, skip thiết bị không hover; click: toggle. Mọi effect đều dùng được với hover/click (immediateRender off — rest state giữ nguyên tới lần tương tác đầu) |
 | `data-motion-start` / `-end` | ScrollTrigger start/end | default `top 85%` / `bottom top` |
 | `data-motion-scrub` | số = smoothing | default `true` (scrub) |
 | `data-motion-once` | `"true"` | default `play none none reverse` |
-| `data-motion-trigger-target` | `self` (default) / `root` / CSS selector trong root | |
+| `data-motion-trigger-target` | `self` (default) / `root` / `closest:<sel>` / CSS selector trong root | hover/click: element NHẬN listener (vd card cha `closest:.card`) |
 | `data-motion-end-target` | như trên | endTrigger cho scrub |
+| `data-motion-direction` | `down` (default) / `up` / `left` / `right` | clip-reveal — hướng mép reveal di chuyển |
+| `data-motion-axis` | `x` | line-draw trục ngang (scaleX + origin trái) |
+| `data-motion-repeat` / `-yoyo` | số (−1 = vô hạn) / `"true"` | GSAP repeat/yoyo (loop, pulse) |
 | `data-motion-group` | (đặt trên container) | con `in-view` bên trong dùng chung 1 ScrollTrigger trên container; container nhận `-start`/`-once`; con offset bằng `-delay`. Không hỗ trợ group lồng nhau (lấy `closest()`). |
+| `data-motion-stagger-children` | giây (trên group) | con CHƯA khai `-delay` nhận delay = index × bước — grid/list khỏi gắn delay tay |
 
 ### Rule
 

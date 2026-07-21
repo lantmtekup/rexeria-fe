@@ -51,8 +51,8 @@ export default function StorySection() {
           // B: text đẩy lên trên, ảnh vào từ dưới
           .to(p1, { y: '-30vh', duration: 1 }, '+=0.4')
           .from(frame, { yPercent: 120, duration: 1 }, '<')
-          // C: text 1 thoát, ảnh nở cao
-          .to(p1, { autoAlpha: 0, duration: 0.5 }, '+=0.4')
+          // C: text 1 đẩy sang trái, ảnh nở cao
+          .to(p1, { x: '-100vw', duration: 0.8 }, '+=0.4')
           .to(frame, { top: '12%', height: '74%', duration: 1 }, '<')
           // D: ảnh co lại phía trên, text 2 hiện bên dưới
           .to(frame, { height: '42%', duration: 1 }, '+=0.4')
@@ -96,8 +96,8 @@ export default function StorySection() {
         // B: text trượt sang trái, ảnh kéo vào từ phải
         .to(p1, { x: '-47vw', duration: 1 }, '+=0.4')
         .to(frame, { left: '48%', duration: 1 }, '<')
-        // C: text 1 thoát, ảnh nở gần full ngang
-        .to(p1, { autoAlpha: 0, duration: 0.5 }, '+=0.4')
+        // C: text 1 đẩy sang trái, ảnh nở gần full ngang
+        .to(p1, { x: '-110vw', duration: 1 }, '+=0.4')
         .to(frame, { left: '9%', width: '83%', duration: 1 }, '<')
         // D: ảnh co về cột trái, text 2 hiện ra
         .to(frame, { width: '50%', duration: 1 }, '+=0.4')
