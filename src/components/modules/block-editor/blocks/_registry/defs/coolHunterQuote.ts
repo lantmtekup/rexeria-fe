@@ -3,7 +3,7 @@
  * ảnh kéo từ phải phủ màn (veil nhạt dần). Port từ apps/cool-hunter
  * QuoteSection.tsx. Path A registry.
  */
-import { Image as ImageIcon, Tag, Type } from 'lucide-react';
+import { Image as ImageIcon, Type } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { CoolHunterQuoteContent } from '../../../types';
@@ -15,7 +15,6 @@ const VI: CoolHunterQuoteContent = {
   imageUrl: '/cool-hunter/section-6.png',
   imageAlt:
     'A stone patio with charred-wood chairs, a round table and a built-in bench',
-  label: '04 - Interior Design',
 };
 
 const EN: CoolHunterQuoteContent = {
@@ -56,12 +55,6 @@ export const coolHunterQuoteDef: BlockDef<CoolHunterQuoteContent> = {
       fieldType: 'image',
       groupId: 'media',
       groupLabel: 'Ảnh',
-    },
-    {
-      key: 'label',
-      label: 'Nhãn dọc',
-      icon: Tag,
-      fieldType: 'text',
     },
   ],
 };

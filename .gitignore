@@ -57,7 +57,9 @@ package-lock.json
 
 # claude / agent rules + playwright artifacts
 CLAUDE.md
-.claude/
+.claude/*
+!.claude/skills/
+!.claude/skills/**
 tests/e2e/.auth/
 tests/e2e/.artifacts/
 test-results/

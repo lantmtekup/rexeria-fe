@@ -9,19 +9,19 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
     "directory": ".open-next/assets",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
   },
   // Domain thật (zone rexerstudio.com nằm cùng account Cloudflare):
   // - rexerstudio.com        → landing (middleware rewrite / → /rexer)
   // - portal.rexerstudio.com → app (middleware / → sign-in | role home)
   "routes": [
     { "pattern": "rexerstudio.com", "custom_domain": true },
-    { "pattern": "portal.rexerstudio.com", "custom_domain": true }
+    { "pattern": "portal.rexerstudio.com", "custom_domain": true },
   ],
   // Build-time public env được inline lúc `next build` (đọc .env/.env.production).
   // Runtime SECRETS (JWT_SECRET…) KHÔNG để đây — set bằng:
   //   npx wrangler secret put JWT_SECRET
   "vars": {
-    "NEXT_PUBLIC_REXER_API": "https://rexerai.tekupsoftware.com"
-  }
+    "NEXT_PUBLIC_REXER_API": "https://rexerai.tekupsoftware.com",
+  },
 }

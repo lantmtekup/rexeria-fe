@@ -3,7 +3,7 @@
  * ảnh scrub 4 beat (text/ảnh trượt rồi đổi chỗ). Port từ apps/cool-hunter
  * StorySection.tsx. Path A registry.
  */
-import { Image as ImageIcon, Tag, TextCursorInput } from 'lucide-react';
+import { Image as ImageIcon, TextCursorInput } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { CoolHunterStoryContent } from '../../../types';
@@ -17,7 +17,6 @@ const VI: CoolHunterStoryContent = {
   imageUrl: '/cool-hunter/section-2.png',
   imageAlt:
     'A calm living room with a fireplace, oak cabinetry and leaded windows',
-  label: '01 - Welcome',
 };
 
 const EN: CoolHunterStoryContent = {
@@ -65,12 +64,6 @@ export const coolHunterStoryDef: BlockDef<CoolHunterStoryContent> = {
       fieldType: 'image',
       groupId: 'media',
       groupLabel: 'Ảnh',
-    },
-    {
-      key: 'label',
-      label: 'Nhãn dọc',
-      icon: Tag,
-      fieldType: 'text',
     },
   ],
 };

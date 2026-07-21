@@ -5,7 +5,9 @@ const base = 'http://localhost:3000';
 const url = `${base}/canvas-templates/e3e3e3e3-0000-0000-0000-000000000002`;
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 const page = await ctx.newPage();
 
 page.on('pageerror', e => console.log('[pageerror]', e.message));
@@ -16,13 +18,17 @@ await page.waitForTimeout(1500);
 // 1) Click title once → just selects
 await page.locator('[data-element-key="title"]').first().click();
 await page.waitForTimeout(300);
-await page.screenshot({ path: 'scripts/visual-tests/out/inline-1-selected.png' });
+await page.screenshot({
+  path: 'scripts/visual-tests/out/inline-1-selected.png',
+});
 console.log('saved 1-selected (single click → selection only)');
 
 // 2) Double-click title → enter inline edit
 await page.locator('[data-element-key="title"]').first().dblclick();
 await page.waitForTimeout(300);
-await page.screenshot({ path: 'scripts/visual-tests/out/inline-2-editing.png' });
+await page.screenshot({
+  path: 'scripts/visual-tests/out/inline-2-editing.png',
+});
 console.log('saved 2-editing (double-click → contenteditable + outline)');
 
 // 3) Type new content
@@ -34,7 +40,9 @@ console.log('saved 3-typing');
 // 4) Commit via Enter
 await page.keyboard.press('Enter');
 await page.waitForTimeout(400);
-await page.screenshot({ path: 'scripts/visual-tests/out/inline-4-committed.png' });
+await page.screenshot({
+  path: 'scripts/visual-tests/out/inline-4-committed.png',
+});
 console.log('saved 4-committed (Enter → commit, exit edit)');
 
 // 5) Verify the new title persisted in DOM

@@ -8,6 +8,7 @@
  * PoC: mới migrate `framer_yume_hero`. ~80 block còn lại vẫn chạy đường cũ.
  */
 import type { BlockType } from '../../types';
+import { brutalistTextDef } from './defs/brutalistText';
 import { brightedgeHeroDef } from './defs/brightedgeHero';
 import { delvauxDetailsDef } from './defs/delvauxDetails';
 import { delvauxHeaderDef } from './defs/delvauxHeader';
@@ -106,6 +107,7 @@ import { mintV2ProcessDef } from './defs/mintV2Process';
 import { mintV2ServicesDef } from './defs/mintV2Services';
 import { mintV2WorksDef } from './defs/mintV2Works';
 import { coolHunterHeroDef } from './defs/coolHunterHero';
+import { coolHunterSectionProgressDef } from './defs/coolHunterSectionProgress';
 import { coolHunterStoryDef } from './defs/coolHunterStory';
 import { coolHunterGalleryDef } from './defs/coolHunterGallery';
 import { coolHunterProductDef } from './defs/coolHunterProduct';
@@ -115,6 +117,7 @@ import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   cool_hunter_hero: coolHunterHeroDef as BlockDef,
+  cool_hunter_section_progress: coolHunterSectionProgressDef as BlockDef,
   cool_hunter_story: coolHunterStoryDef as BlockDef,
   cool_hunter_gallery: coolHunterGalleryDef as BlockDef,
   cool_hunter_product: coolHunterProductDef as BlockDef,
@@ -195,6 +198,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   protection_scrollytelling: protectionScrollytellingDef as BlockDef,
   interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
   brightedge_hero: brightedgeHeroDef as BlockDef,
+  brutalist_text: brutalistTextDef as BlockDef,
   springs_header: springsHeaderDef as BlockDef,
   springs_gallery: springsGalleryDef as BlockDef,
   springs_hero: springsHeroDef as BlockDef,

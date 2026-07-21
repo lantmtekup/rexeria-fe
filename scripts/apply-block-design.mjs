@@ -47,13 +47,18 @@ function readEnvVar(key) {
   return undefined;
 }
 
-const API = (process.env.REXER_API || readEnvVar('NEXT_PUBLIC_REXER_API') || '')
-  .replace(/\/+$/, '');
+const API = (
+  process.env.REXER_API ||
+  readEnvVar('NEXT_PUBLIC_REXER_API') ||
+  ''
+).replace(/\/+$/, '');
 const EMAIL = process.env.REXER_ADMIN_EMAIL;
 const PASS = process.env.REXER_ADMIN_PASSWORD;
 if (!API) die('Thiếu REXER_API (hoặc NEXT_PUBLIC_REXER_API trong .env).');
 if (!EMAIL || !PASS)
-  die('Thiếu REXER_ADMIN_EMAIL / REXER_ADMIN_PASSWORD (set qua env, đừng hardcode).');
+  die(
+    'Thiếu REXER_ADMIN_EMAIL / REXER_ADMIN_PASSWORD (set qua env, đừng hardcode).'
+  );
 
 const V1 = `${API}/v1`;
 
@@ -106,8 +111,7 @@ async function api(method, path, body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const setCookie = res.headers.getSetCookie?.() ?? [];
-  if (setCookie.length)
-    COOKIE = setCookie.map(c => c.split(';')[0]).join('; ');
+  if (setCookie.length) COOKIE = setCookie.map(c => c.split(';')[0]).join('; ');
   const text = await res.text();
   let data;
   try {
@@ -151,7 +155,8 @@ async function api(method, path, body) {
     type_code: typeCode,
     settings,
   });
-  if (!patch.ok) die(`PATCH thất bại (${patch.status}): ${JSON.stringify(patch.data)}`);
+  if (!patch.ok)
+    die(`PATCH thất bại (${patch.status}): ${JSON.stringify(patch.data)}`);
 
   const after = (await api('GET', `/blocks/${id}`)).data.block ?? {};
   console.log('✓ Done:');

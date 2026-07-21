@@ -1,346 +1,1233 @@
 <!doctype html>
 <html lang="vi">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Happy Home Cà Mau — Khơi mạch tinh hoa cho thế hệ kế thừa</title>
-<meta name="description" content="Khu đô thị kiểu mẫu — Đô thị sân bay, cửa ngõ kết nối toàn cầu tại Cà Mau." />
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Happy Home Cà Mau — Khơi mạch tinh hoa cho thế hệ kế thừa</title>
+    <meta
+      name="description"
+      content="Khu đô thị kiểu mẫu — Đô thị sân bay, cửa ngõ kết nối toàn cầu tại Cà Mau."
+    />
 
-<!-- Prototype Desktop — bám design Figma HHCM (page Cover): palette nâu-mận/nắng/kem,
+    <!-- Prototype Desktop — bám design Figma HHCM (page Cover): palette nâu-mận/nắng/kem,
      font Platypi + Manrope, mood reveal kiểu springs.estate. Fonts qua Google (bản
      thật nên self-host). Lora chỉ làm fallback cho dấu tiếng Việt của headline. -->
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Platypi:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500&family=Manrope:wght@300;400;500;700;800&family=Lora:ital@0;1&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Platypi:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500&family=Manrope:wght@300;400;500;700;800&family=Lora:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
 
-<style>
-  :root{
-    --maroon:#4B1610;        /* nâu-mận chủ đạo */
-    --maroon-d:#3A0F0A;      /* tối hơn cho nền hero */
-    --brick:#732B23;         /* terracotta */
-    --taupe:#5A4536;         /* nâu đất */
-    --sand:#F1BC8C;          /* nắng bình minh — accent + nền footer */
-    --sand-2:#E1CDAD;
-    --cream:#F3EBDE;         /* nền sáng */
-    --cream-2:#E7DDD0;
-    --olive:#40492A;         /* xanh olive (nature) */
-    --paper:#FBF8F2;
-    --ink:#2C1A06;
-    --maxw:1320px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{-webkit-font-smoothing:antialiased}
-  body{font-family:'Manrope',system-ui,sans-serif;font-weight:400;line-height:1.6;color:var(--maroon);background:var(--cream);overflow-x:hidden}
-  h1,h2,h3,.serif{font-family:'Platypi','Lora',Georgia,serif;font-weight:400;line-height:1.06;letter-spacing:-.01em}
-  .it{font-style:italic}
-  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 44px}
-  .eyebrow{font-size:11px;letter-spacing:.34em;text-transform:uppercase;font-weight:600}
-  img{display:block;width:100%;height:100%;object-fit:cover}
-  a{color:inherit;text-decoration:none}
-  section{position:relative}
+    <style>
+      :root {
+        --maroon: #4b1610; /* nâu-mận chủ đạo */
+        --maroon-d: #3a0f0a; /* tối hơn cho nền hero */
+        --brick: #732b23; /* terracotta */
+        --taupe: #5a4536; /* nâu đất */
+        --sand: #f1bc8c; /* nắng bình minh — accent + nền footer */
+        --sand-2: #e1cdad;
+        --cream: #f3ebde; /* nền sáng */
+        --cream-2: #e7ddd0;
+        --olive: #40492a; /* xanh olive (nature) */
+        --paper: #fbf8f2;
+        --ink: #2c1a06;
+        --maxw: 1320px;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        -webkit-font-smoothing: antialiased;
+      }
+      body {
+        font-family: 'Manrope', system-ui, sans-serif;
+        font-weight: 400;
+        line-height: 1.6;
+        color: var(--maroon);
+        background: var(--cream);
+        overflow-x: hidden;
+      }
+      h1,
+      h2,
+      h3,
+      .serif {
+        font-family: 'Platypi', 'Lora', Georgia, serif;
+        font-weight: 400;
+        line-height: 1.06;
+        letter-spacing: -0.01em;
+      }
+      .it {
+        font-style: italic;
+      }
+      .wrap {
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 44px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.34em;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      section {
+        position: relative;
+      }
 
-  /* reveal (springs mood) */
-  .reveal{opacity:0;transform:translateY(36px);transition:opacity 1s cubic-bezier(.22,1,.36,1),transform 1s cubic-bezier(.22,1,.36,1)}
-  .reveal.in{opacity:1;transform:none}
-  .clip{clip-path:inset(0 0 100% 0);transition:clip-path 1.2s cubic-bezier(.65,0,.35,1)}
-  .clip.in{clip-path:inset(0 0 0 0)}
-  .stagger>*{opacity:0;transform:translateY(28px);transition:opacity .85s cubic-bezier(.22,1,.36,1),transform .85s cubic-bezier(.22,1,.36,1)}
-  .stagger.in>*{opacity:1;transform:none}
-  @media(prefers-reduced-motion:reduce){.reveal,.clip,.stagger>*{opacity:1!important;transform:none!important;clip-path:none!important;transition:none!important}}
+      /* reveal (springs mood) */
+      .reveal {
+        opacity: 0;
+        transform: translateY(36px);
+        transition:
+          opacity 1s cubic-bezier(0.22, 1, 0.36, 1),
+          transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .reveal.in {
+        opacity: 1;
+        transform: none;
+      }
+      .clip {
+        clip-path: inset(0 0 100% 0);
+        transition: clip-path 1.2s cubic-bezier(0.65, 0, 0.35, 1);
+      }
+      .clip.in {
+        clip-path: inset(0 0 0 0);
+      }
+      .stagger > * {
+        opacity: 0;
+        transform: translateY(28px);
+        transition:
+          opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+          transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .stagger.in > * {
+        opacity: 1;
+        transform: none;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .reveal,
+        .clip,
+        .stagger > * {
+          opacity: 1 !important;
+          transform: none !important;
+          clip-path: none !important;
+          transition: none !important;
+        }
+      }
 
-  /* header */
-  header{position:fixed;inset:0 0 auto 0;z-index:60;padding:24px 0;color:var(--cream);transition:background .45s,padding .45s}
-  header.solid{background:rgba(58,15,10,.95);padding:14px 0;backdrop-filter:blur(8px);box-shadow:0 12px 40px rgba(0,0,0,.25)}
-  .nav{display:flex;align-items:center;justify-content:space-between}
-  .menu-btn{display:flex;align-items:center;gap:10px;border:1px solid rgba(243,235,222,.4);border-radius:30px;padding:9px 18px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer}
-  .menu-btn i{width:16px;height:8px;border-top:1px solid currentColor;border-bottom:1px solid currentColor}
-  .brand-sm{font-family:'Platypi',serif;font-style:italic;font-size:17px;letter-spacing:.02em}
-  .phone{font-weight:700;letter-spacing:.08em;font-size:14px}
+      /* header */
+      header {
+        position: fixed;
+        inset: 0 0 auto 0;
+        z-index: 60;
+        padding: 24px 0;
+        color: var(--cream);
+        transition:
+          background 0.45s,
+          padding 0.45s;
+      }
+      header.solid {
+        background: rgba(58, 15, 10, 0.95);
+        padding: 14px 0;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+      }
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .menu-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid rgba(243, 235, 222, 0.4);
+        border-radius: 30px;
+        padding: 9px 18px;
+        font-size: 12px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .menu-btn i {
+        width: 16px;
+        height: 8px;
+        border-top: 1px solid currentColor;
+        border-bottom: 1px solid currentColor;
+      }
+      .brand-sm {
+        font-family: 'Platypi', serif;
+        font-style: italic;
+        font-size: 17px;
+        letter-spacing: 0.02em;
+      }
+      .phone {
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        font-size: 14px;
+      }
 
-  /* hero */
-  .hero{min-height:100vh;display:flex;align-items:center;background:var(--maroon-d);color:var(--cream);overflow:hidden}
-  .hero .bg{position:absolute;inset:0;z-index:0}
-  .hero .bg img{transform:scale(1.12);opacity:.42}
-  .hero .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(58,15,10,.55),rgba(58,15,10,.78))}
-  .hero-in{position:relative;z-index:2;width:100%}
-  .hero .top-lines{display:flex;gap:34px;margin-bottom:30px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--sand)}
-  .hero h1{font-size:clamp(46px,7vw,104px);font-weight:300}
-  .hero h1 .it{color:var(--sand)}
-  .hero .sub{margin-top:30px;max-width:600px;font-size:17px;color:rgba(243,235,222,.82);font-weight:300}
-  .explore{margin-top:42px;display:inline-flex;align-items:center;gap:14px;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--cream)}
-  .explore i{width:46px;height:46px;border:1px solid var(--sand);border-radius:50%;display:grid;place-items:center;transition:background .3s,color .3s}
-  .explore:hover i{background:var(--sand);color:var(--maroon)}
+      /* hero */
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        background: var(--maroon-d);
+        color: var(--cream);
+        overflow: hidden;
+      }
+      .hero .bg {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+      }
+      .hero .bg img {
+        transform: scale(1.12);
+        opacity: 0.42;
+      }
+      .hero .bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(58, 15, 10, 0.55),
+          rgba(58, 15, 10, 0.78)
+        );
+      }
+      .hero-in {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+      }
+      .hero .top-lines {
+        display: flex;
+        gap: 34px;
+        margin-bottom: 30px;
+        font-size: 12px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--sand);
+      }
+      .hero h1 {
+        font-size: clamp(46px, 7vw, 104px);
+        font-weight: 300;
+      }
+      .hero h1 .it {
+        color: var(--sand);
+      }
+      .hero .sub {
+        margin-top: 30px;
+        max-width: 600px;
+        font-size: 17px;
+        color: rgba(243, 235, 222, 0.82);
+        font-weight: 300;
+      }
+      .explore {
+        margin-top: 42px;
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        font-size: 13px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--cream);
+      }
+      .explore i {
+        width: 46px;
+        height: 46px;
+        border: 1px solid var(--sand);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        transition:
+          background 0.3s,
+          color 0.3s;
+      }
+      .explore:hover i {
+        background: var(--sand);
+        color: var(--maroon);
+      }
 
-  /* intro */
-  .intro{padding:130px 0 100px;background:var(--cream)}
-  .intro .lead{font-family:'Platypi','Lora',serif;font-size:clamp(26px,3vw,46px);line-height:1.3;max-width:980px;font-weight:300}
-  .intro .lead em{font-style:italic;color:var(--brick)}
-  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:30px;margin-top:74px;border-top:1px solid rgba(75,22,16,.18);padding-top:44px}
-  .stat .n{font-family:'Platypi',serif;font-size:50px;color:var(--brick);font-weight:400}
-  .stat .n small{font-size:20px}
-  .stat .l{font-size:13.5px;color:var(--taupe);margin-top:6px}
+      /* intro */
+      .intro {
+        padding: 130px 0 100px;
+        background: var(--cream);
+      }
+      .intro .lead {
+        font-family: 'Platypi', 'Lora', serif;
+        font-size: clamp(26px, 3vw, 46px);
+        line-height: 1.3;
+        max-width: 980px;
+        font-weight: 300;
+      }
+      .intro .lead em {
+        font-style: italic;
+        color: var(--brick);
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 30px;
+        margin-top: 74px;
+        border-top: 1px solid rgba(75, 22, 16, 0.18);
+        padding-top: 44px;
+      }
+      .stat .n {
+        font-family: 'Platypi', serif;
+        font-size: 50px;
+        color: var(--brick);
+        font-weight: 400;
+      }
+      .stat .n small {
+        font-size: 20px;
+      }
+      .stat .l {
+        font-size: 13.5px;
+        color: var(--taupe);
+        margin-top: 6px;
+      }
 
-  /* connectivity (Đa tầng kết nối) — dark patterned */
-  .conn{padding:120px 0 130px;background:var(--maroon);color:var(--cream);position:relative;overflow:hidden}
-  .conn::before{content:"";position:absolute;inset:0;background-image:repeating-linear-gradient(120deg,rgba(243,235,222,.035) 0 1px,transparent 1px 60px);pointer-events:none}
-  .conn .ttl{text-align:center;font-family:'Platypi',serif;font-style:italic;font-weight:300;font-size:clamp(28px,3.4vw,50px);margin-bottom:70px}
-  .conn .ttl em{color:var(--sand)}
-  .conn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px}
-  .ccard{position:relative}
-  .ccard .ph{aspect-ratio:4/3;border-radius:8px;overflow:hidden;border:1px solid rgba(243,235,222,.14)}
-  .ccard .meta{display:flex;justify-content:space-between;align-items:flex-end;margin-top:16px}
-  .ccard .name{font-family:'Platypi',serif;font-size:20px}
-  .ccard .name small{display:block;font-family:'Manrope';font-size:12px;color:rgba(243,235,222,.55);margin-top:4px;font-weight:300}
-  .ccard .num{font-family:'Platypi',serif;font-style:italic;font-size:64px;line-height:.8;color:var(--sand);opacity:.92}
+      /* connectivity (Đa tầng kết nối) — dark patterned */
+      .conn {
+        padding: 120px 0 130px;
+        background: var(--maroon);
+        color: var(--cream);
+        position: relative;
+        overflow: hidden;
+      }
+      .conn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: repeating-linear-gradient(
+          120deg,
+          rgba(243, 235, 222, 0.035) 0 1px,
+          transparent 1px 60px
+        );
+        pointer-events: none;
+      }
+      .conn .ttl {
+        text-align: center;
+        font-family: 'Platypi', serif;
+        font-style: italic;
+        font-weight: 300;
+        font-size: clamp(28px, 3.4vw, 50px);
+        margin-bottom: 70px;
+      }
+      .conn .ttl em {
+        color: var(--sand);
+      }
+      .conn-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+      }
+      .ccard {
+        position: relative;
+      }
+      .ccard .ph {
+        aspect-ratio: 4/3;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(243, 235, 222, 0.14);
+      }
+      .ccard .meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-top: 16px;
+      }
+      .ccard .name {
+        font-family: 'Platypi', serif;
+        font-size: 20px;
+      }
+      .ccard .name small {
+        display: block;
+        font-family: 'Manrope';
+        font-size: 12px;
+        color: rgba(243, 235, 222, 0.55);
+        margin-top: 4px;
+        font-weight: 300;
+      }
+      .ccard .num {
+        font-family: 'Platypi', serif;
+        font-style: italic;
+        font-size: 64px;
+        line-height: 0.8;
+        color: var(--sand);
+        opacity: 0.92;
+      }
 
-  /* philosophy 4 trụ */
-  .philo{padding:120px 0;background:var(--brick);color:var(--cream)}
-  .philo h2{font-size:clamp(30px,3.6vw,52px);font-weight:300;margin-bottom:56px}
-  .philo h2 .it{color:var(--sand)}
-  .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(243,235,222,.18);border:1px solid rgba(243,235,222,.18)}
-  .pillar{background:var(--brick);padding:38px 30px;min-height:280px}
-  .pillar .k{font-family:'Platypi',serif;font-size:23px;color:var(--sand);margin-bottom:16px}
-  .pillar .idx{font-size:12px;letter-spacing:.2em;color:rgba(243,235,222,.5);margin-bottom:22px}
-  .pillar p{font-size:14.5px;color:rgba(243,235,222,.82);font-weight:300}
+      /* philosophy 4 trụ */
+      .philo {
+        padding: 120px 0;
+        background: var(--brick);
+        color: var(--cream);
+      }
+      .philo h2 {
+        font-size: clamp(30px, 3.6vw, 52px);
+        font-weight: 300;
+        margin-bottom: 56px;
+      }
+      .philo h2 .it {
+        color: var(--sand);
+      }
+      .pillars {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        background: rgba(243, 235, 222, 0.18);
+        border: 1px solid rgba(243, 235, 222, 0.18);
+      }
+      .pillar {
+        background: var(--brick);
+        padding: 38px 30px;
+        min-height: 280px;
+      }
+      .pillar .k {
+        font-family: 'Platypi', serif;
+        font-size: 23px;
+        color: var(--sand);
+        margin-bottom: 16px;
+      }
+      .pillar .idx {
+        font-size: 12px;
+        letter-spacing: 0.2em;
+        color: rgba(243, 235, 222, 0.5);
+        margin-bottom: 22px;
+      }
+      .pillar p {
+        font-size: 14.5px;
+        color: rgba(243, 235, 222, 0.82);
+        font-weight: 300;
+      }
 
-  /* vision/mission */
-  .vm{padding:130px 0;background:var(--cream)}
-  .vm-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px}
-  .vm-card .eyebrow{color:var(--brick);margin-bottom:18px;display:block}
-  .vm-card q{font-family:'Platypi','Lora',serif;font-style:italic;font-size:clamp(20px,2vw,28px);line-height:1.42;display:block}
-  .vm-bar{width:54px;height:2px;background:var(--sand);margin-bottom:6px}
+      /* vision/mission */
+      .vm {
+        padding: 130px 0;
+        background: var(--cream);
+      }
+      .vm-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+      }
+      .vm-card .eyebrow {
+        color: var(--brick);
+        margin-bottom: 18px;
+        display: block;
+      }
+      .vm-card q {
+        font-family: 'Platypi', 'Lora', serif;
+        font-style: italic;
+        font-size: clamp(20px, 2vw, 28px);
+        line-height: 1.42;
+        display: block;
+      }
+      .vm-bar {
+        width: 54px;
+        height: 2px;
+        background: var(--sand);
+        margin-bottom: 6px;
+      }
 
-  /* golf signature */
-  .golf{display:grid;grid-template-columns:1.15fr .85fr;min-height:560px}
-  .golf .img{position:relative;overflow:hidden}
-  .golf .panel{background:var(--taupe);color:var(--cream);display:flex;align-items:center;padding:70px}
-  .golf .panel .eyebrow{color:var(--sand);margin-bottom:22px}
-  .golf .panel h3{font-family:'Platypi',serif;font-style:italic;font-weight:300;font-size:clamp(26px,2.6vw,40px);line-height:1.25}
+      /* golf signature */
+      .golf {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        min-height: 560px;
+      }
+      .golf .img {
+        position: relative;
+        overflow: hidden;
+      }
+      .golf .panel {
+        background: var(--taupe);
+        color: var(--cream);
+        display: flex;
+        align-items: center;
+        padding: 70px;
+      }
+      .golf .panel .eyebrow {
+        color: var(--sand);
+        margin-bottom: 22px;
+      }
+      .golf .panel h3 {
+        font-family: 'Platypi', serif;
+        font-style: italic;
+        font-weight: 300;
+        font-size: clamp(26px, 2.6vw, 40px);
+        line-height: 1.25;
+      }
 
-  /* map / location (cream) */
-  .loc{padding:120px 0;background:var(--cream-2)}
-  .loc h2{font-size:clamp(30px,3.6vw,52px);font-weight:300;max-width:720px;margin:14px 0 50px}
-  .loc h2 .it{color:var(--brick)}
-  .loc-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:50px;align-items:center}
-  .mapbox{aspect-ratio:16/11;border-radius:8px;overflow:hidden;border:1px solid rgba(75,22,16,.18)}
-  .point{padding:24px 0;border-bottom:1px solid rgba(75,22,16,.16);display:flex;justify-content:space-between;align-items:baseline}
-  .point b{font-family:'Platypi',serif;font-weight:400;font-size:19px}
-  .point em{font-style:normal;color:var(--brick);font-size:13px;letter-spacing:.06em}
+      /* map / location (cream) */
+      .loc {
+        padding: 120px 0;
+        background: var(--cream-2);
+      }
+      .loc h2 {
+        font-size: clamp(30px, 3.6vw, 52px);
+        font-weight: 300;
+        max-width: 720px;
+        margin: 14px 0 50px;
+      }
+      .loc h2 .it {
+        color: var(--brick);
+      }
+      .loc-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 50px;
+        align-items: center;
+      }
+      .mapbox {
+        aspect-ratio: 16/11;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid rgba(75, 22, 16, 0.18);
+      }
+      .point {
+        padding: 24px 0;
+        border-bottom: 1px solid rgba(75, 22, 16, 0.16);
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      .point b {
+        font-family: 'Platypi', serif;
+        font-weight: 400;
+        font-size: 19px;
+      }
+      .point em {
+        font-style: normal;
+        color: var(--brick);
+        font-size: 13px;
+        letter-spacing: 0.06em;
+      }
 
-  /* amenities */
-  .amen{padding:130px 0;background:var(--maroon);color:var(--cream)}
-  .amen .top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:52px;gap:30px}
-  .amen h2{font-size:clamp(30px,3.6vw,52px);font-weight:300}
-  .amen h2 .it{color:var(--sand)}
-  .amen .big{font-family:'Platypi',serif;font-size:clamp(60px,8vw,120px);color:var(--sand);line-height:1}
-  .amen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-  .acard{position:relative;aspect-ratio:4/5;border-radius:8px;overflow:hidden}
-  .acard .bg{position:absolute;inset:0;z-index:0}
-  .acard .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(58,15,10,.05),rgba(58,15,10,.75))}
-  .acard .t{position:absolute;left:0;bottom:0;z-index:1;padding:26px;font-family:'Platypi',serif;font-size:22px}
+      /* amenities */
+      .amen {
+        padding: 130px 0;
+        background: var(--maroon);
+        color: var(--cream);
+      }
+      .amen .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 52px;
+        gap: 30px;
+      }
+      .amen h2 {
+        font-size: clamp(30px, 3.6vw, 52px);
+        font-weight: 300;
+      }
+      .amen h2 .it {
+        color: var(--sand);
+      }
+      .amen .big {
+        font-family: 'Platypi', serif;
+        font-size: clamp(60px, 8vw, 120px);
+        color: var(--sand);
+        line-height: 1;
+      }
+      .amen-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 22px;
+      }
+      .acard {
+        position: relative;
+        aspect-ratio: 4/5;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .acard .bg {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+      }
+      .acard .bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(58, 15, 10, 0.05),
+          rgba(58, 15, 10, 0.75)
+        );
+      }
+      .acard .t {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        z-index: 1;
+        padding: 26px;
+        font-family: 'Platypi', serif;
+        font-size: 22px;
+      }
 
-  /* cta */
-  .cta{padding:120px 0;background:var(--cream);text-align:center}
-  .cta h2{font-size:clamp(30px,4vw,58px);font-weight:300;max-width:840px;margin:0 auto 14px}
-  .cta h2 .it{color:var(--brick)}
-  .cta p{color:var(--taupe);max-width:560px;margin:0 auto 36px}
-  .form{display:flex;gap:10px;max-width:520px;margin:0 auto}
-  .form input{flex:1;border:1px solid rgba(75,22,16,.25);background:transparent;padding:16px 18px;border-radius:4px;font:inherit;color:var(--maroon)}
-  .form input:focus{outline:none;border-color:var(--brick)}
-  .btn{background:var(--maroon);color:var(--cream);border:none;padding:16px 32px;border-radius:4px;font:inherit;letter-spacing:.12em;text-transform:uppercase;font-size:12px;cursor:pointer;transition:background .3s,transform .3s}
-  .btn:hover{background:var(--brick);transform:translateY(-2px)}
+      /* cta */
+      .cta {
+        padding: 120px 0;
+        background: var(--cream);
+        text-align: center;
+      }
+      .cta h2 {
+        font-size: clamp(30px, 4vw, 58px);
+        font-weight: 300;
+        max-width: 840px;
+        margin: 0 auto 14px;
+      }
+      .cta h2 .it {
+        color: var(--brick);
+      }
+      .cta p {
+        color: var(--taupe);
+        max-width: 560px;
+        margin: 0 auto 36px;
+      }
+      .form {
+        display: flex;
+        gap: 10px;
+        max-width: 520px;
+        margin: 0 auto;
+      }
+      .form input {
+        flex: 1;
+        border: 1px solid rgba(75, 22, 16, 0.25);
+        background: transparent;
+        padding: 16px 18px;
+        border-radius: 4px;
+        font: inherit;
+        color: var(--maroon);
+      }
+      .form input:focus {
+        outline: none;
+        border-color: var(--brick);
+      }
+      .btn {
+        background: var(--maroon);
+        color: var(--cream);
+        border: none;
+        padding: 16px 32px;
+        border-radius: 4px;
+        font: inherit;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 12px;
+        cursor: pointer;
+        transition:
+          background 0.3s,
+          transform 0.3s;
+      }
+      .btn:hover {
+        background: var(--brick);
+        transform: translateY(-2px);
+      }
 
-  /* footer (peach) */
-  footer{background:var(--sand);color:var(--maroon);padding:70px 0 36px;overflow:hidden}
-  .foot-word{font-family:'Platypi',serif;font-weight:500;font-size:clamp(70px,15vw,200px);line-height:.9;letter-spacing:-.02em;text-align:center;color:var(--maroon);margin:10px 0 60px;position:relative}
-  .foot-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:50px;border-top:1px solid rgba(75,22,16,.25);padding-top:46px}
-  .foot-grid h4{font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;margin-bottom:16px}
-  .foot-grid a{display:block;margin-bottom:9px;opacity:.85}.foot-grid a:hover{opacity:1}
-  .foot-bot{display:flex;justify-content:space-between;margin-top:40px;font-size:12px;opacity:.75;flex-wrap:wrap;gap:8px}
+      /* footer (peach) */
+      footer {
+        background: var(--sand);
+        color: var(--maroon);
+        padding: 70px 0 36px;
+        overflow: hidden;
+      }
+      .foot-word {
+        font-family: 'Platypi', serif;
+        font-weight: 500;
+        font-size: clamp(70px, 15vw, 200px);
+        line-height: 0.9;
+        letter-spacing: -0.02em;
+        text-align: center;
+        color: var(--maroon);
+        margin: 10px 0 60px;
+        position: relative;
+      }
+      .foot-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 1fr;
+        gap: 50px;
+        border-top: 1px solid rgba(75, 22, 16, 0.25);
+        padding-top: 46px;
+      }
+      .foot-grid h4 {
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 16px;
+      }
+      .foot-grid a {
+        display: block;
+        margin-bottom: 9px;
+        opacity: 0.85;
+      }
+      .foot-grid a:hover {
+        opacity: 1;
+      }
+      .foot-bot {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 40px;
+        font-size: 12px;
+        opacity: 0.75;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
 
-  .cur{position:fixed;top:0;left:0;width:34px;height:34px;border:1px solid var(--sand);border-radius:50%;pointer-events:none;z-index:99;transform:translate(-50%,-50%);transition:width .25s,height .25s,background .25s;mix-blend-mode:difference}
-  @media(hover:none){.cur{display:none}}
-</style>
-</head>
-<body>
-<div class="cur" id="cur"></div>
+      .cur {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 34px;
+        height: 34px;
+        border: 1px solid var(--sand);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 99;
+        transform: translate(-50%, -50%);
+        transition:
+          width 0.25s,
+          height 0.25s,
+          background 0.25s;
+        mix-blend-mode: difference;
+      }
+      @media (hover: none) {
+        .cur {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cur" id="cur"></div>
 
-<header id="hdr">
-  <div class="wrap nav">
-    <div class="menu-btn"><i></i> Menu</div>
-    <div class="brand-sm">Happy Home Cà Mau</div>
-    <div class="phone">+84 9348 483 49</div>
-  </div>
-</header>
-
-<!-- HERO -->
-<section class="hero">
-  <div class="bg" id="heroBg"><img src="https://images.unsplash.com/photo-1535131749006-b7f58c99034b?auto=format&fit=crop&w=1900&q=70" alt="" /></div>
-  <div class="wrap hero-in">
-    <div class="top-lines reveal">
-      <span>Cà Mau · Cực tăng trưởng mới Tây Nam Bộ</span>
-      <span>Đô thị sân bay · Cửa ngõ kết nối toàn cầu</span>
-    </div>
-    <h1 class="reveal" style="transition-delay:.1s">Khơi mạch tinh hoa<br/><span class="it">cho thế hệ kế thừa</span></h1>
-    <p class="sub reveal" style="transition-delay:.25s">Khu đô thị kiểu mẫu 192ha định hình chuẩn sống mới tại lõi đô thị sân bay Cà Mau — hiện đại, đồng bộ, bền vững.</p>
-    <a href="#intro" class="explore reveal" style="transition-delay:.35s">Khám phá <i>↓</i></a>
-  </div>
-</section>
-
-<!-- INTRO + STATS -->
-<section class="intro" id="intro">
-  <div class="wrap">
-    <div class="eyebrow reveal" style="color:var(--brick)">Tổng quan dự án</div>
-    <p class="lead reveal" style="margin-top:24px">Từ những giá trị nội sinh của vùng đất, HHCM kiến tạo một khu đô thị <em>đáng sống — đáng tự hào</em> ngay tại quê hương Cà Mau.</p>
-    <div class="stats stagger">
-      <div class="stat"><div class="n">192<small>ha</small></div><div class="l">Tổng quy mô khu đô thị</div></div>
-      <div class="stat"><div class="n">12.5<small>ha</small></div><div class="l">Đại công viên Dream Park</div></div>
-      <div class="stat"><div class="n">2.5<small>ha</small></div><div class="l">Đảo Ngũ Phúc</div></div>
-      <div class="stat"><div class="n">79+</div><div class="l">Hệ sinh thái tiện ích</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- CONNECTIVITY (Đa tầng kết nối) -->
-<section class="conn">
-  <div class="wrap">
-    <div class="ttl reveal">Đa Tầng Kết Nối, <em>Mạch Nguồn Thịnh Vượng</em></div>
-    <div class="conn-grid stagger">
-      <div class="ccard"><div class="ph clip"><img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=900&q=70" alt=""/></div><div class="meta"><div class="name">Sân bay Cà Mau<small>Đô thị sân bay</small></div><div class="num it">01</div></div></div>
-      <div class="ccard"><div class="ph clip"><img src="https://images.unsplash.com/photo-1535131749006-b7f58c99034b?auto=format&fit=crop&w=900&q=70" alt=""/></div><div class="meta"><div class="name">Sân Golf Tân Thành<small>Tiện ích tinh hoa</small></div><div class="num it">02</div></div></div>
-      <div class="ccard"><div class="ph clip"><img src="https://images.unsplash.com/photo-1605281317010-fe5ffe798166?auto=format&fit=crop&w=900&q=70" alt=""/></div><div class="meta"><div class="name">2 Cảng biển<small>Năm Căn · Hòn Khoai</small></div><div class="num it">03</div></div></div>
-      <div class="ccard"><div class="ph clip"><img src="https://images.unsplash.com/photo-1473445730015-841f29a9490b?auto=format&fit=crop&w=900&q=70" alt=""/></div><div class="meta"><div class="name">3 Cây cầu<small>Gành Hào · Năm Căn · Ông Đốc</small></div><div class="num it">04</div></div></div>
-      <div class="ccard"><div class="ph clip"><img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=900&q=70" alt=""/></div><div class="meta"><div class="name">KCN trọng điểm<small>Động lực kinh tế vùng</small></div><div class="num it">05</div></div></div>
-      <div class="ccard"><div class="ph clip"><img src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=900&q=70" alt=""/></div><div class="meta"><div class="name">Cao tốc CM – Cần Thơ<small>Trục liên kết ĐBSCL</small></div><div class="num it">06</div></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- PHILOSOPHY -->
-<section class="philo" id="story">
-  <div class="wrap">
-    <div class="eyebrow reveal" style="color:var(--sand)">Triết lý cốt lõi</div>
-    <h2 class="reveal" style="margin-top:14px">Bốn trụ cột của <span class="it">một chuẩn sống</span></h2>
-    <div class="pillars stagger">
-      <div class="pillar"><div class="idx">01</div><div class="k">Sống Kết Nối</div><p>Không gian nuôi dưỡng quan hệ gia đình, hàng xóm và cộng đồng tinh hoa — dựa trên thấu hiểu nhu cầu cư dân.</p></div>
-      <div class="pillar"><div class="idx">02</div><div class="k">Sống Khai Phóng</div><p>Nơi khai phóng tư duy và phong cách sống bằng những hoạt động cụ thể, giàu cảm hứng.</p></div>
-      <div class="pillar"><div class="idx">03</div><div class="k">Sống Tinh Tế</div><p>Trải nghiệm nâng tầm — vị trí, cảnh quan, kiến trúc, tiện ích, vận hành chuẩn KĐT kiểu mẫu.</p></div>
-      <div class="pillar"><div class="idx">04</div><div class="k">Sống Tự Hào</div><p>Tự hào vì con cái lớn lên trong môi trường tử tế, mỗi cư dân góp phần xây văn minh đô thị.</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- VISION / MISSION -->
-<section class="vm">
-  <div class="wrap vm-grid">
-    <div class="vm-card reveal"><div class="vm-bar"></div><span class="eyebrow">Tầm nhìn</span><q>Kiến tạo một chuẩn sống mới tại Cà Mau, nơi thế hệ hôm nay tận hưởng tiện nghi hiện đại và trao truyền một nền tảng vững bền cho thế hệ mai sau.</q></div>
-    <div class="vm-card reveal" style="transition-delay:.15s"><div class="vm-bar"></div><span class="eyebrow">Sứ mệnh</span><q>Phát triển khu đô thị hiện đại, đồng bộ và bền vững — nơi mỗi gia đình sống an tâm và thế hệ kế thừa được nuôi dưỡng trong cộng đồng văn minh, gắn kết.</q></div>
-  </div>
-</section>
-
-<!-- GOLF SIGNATURE -->
-<section class="golf">
-  <div class="img"><img id="golfImg" src="https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?auto=format&fit=crop&w=1400&q=70" alt="" /></div>
-  <div class="panel">
-    <div>
-      <div class="eyebrow">Biểu tượng tiện ích</div>
-      <h3>Sân Golf Tân Thành —<br/>mảnh ghép hoàn thiện<br/>đô thị tinh hoa</h3>
-    </div>
-  </div>
-</section>
-
-<!-- LOCATION / MAP -->
-<section class="loc" id="loc">
-  <div class="wrap">
-    <div class="eyebrow reveal" style="color:var(--brick)">Toạ độ kết nối</div>
-    <h2 class="reveal">Tâm điểm liên kết vùng <span class="it">Đồng bằng sông Cửu Long</span></h2>
-    <div class="loc-grid">
-      <div class="mapbox clip"><img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1400&q=70" alt="Bản đồ vị trí dự án" /></div>
-      <div class="stagger">
-        <div class="point"><b>Sân bay Cà Mau</b><em>lõi đô thị sân bay</em></div>
-        <div class="point"><b>Cao tốc Cà Mau – Cần Thơ</b><em>kết nối vùng</em></div>
-        <div class="point"><b>Cảng Hòn Khoai · Năm Căn</b><em>cửa ngõ biển</em></div>
-        <div class="point"><b>Trục Quản Lộ – Phụng Hiệp</b><em>Đ. Trần Hưng Đạo, P. Tân Thành</em></div>
+    <header id="hdr">
+      <div class="wrap nav">
+        <div class="menu-btn"><i></i> Menu</div>
+        <div class="brand-sm">Happy Home Cà Mau</div>
+        <div class="phone">+84 9348 483 49</div>
       </div>
-    </div>
-  </div>
-</section>
+    </header>
 
-<!-- AMENITIES -->
-<section class="amen" id="amen">
-  <div class="wrap">
-    <div class="top">
-      <div><div class="eyebrow reveal" style="color:var(--sand)">Hệ sinh thái sống</div><h2 class="reveal" style="margin-top:14px">Tiện ích & hoạt động <span class="it">nội khu</span></h2></div>
-      <div class="big reveal">79+</div>
-    </div>
-    <div class="amen-grid stagger">
-      <div class="acard"><div class="bg"><img src="https://images.unsplash.com/photo-1574362848149-11496d93a7c7?auto=format&fit=crop&w=1000&q=70" alt=""/></div><div class="t">Giáo dục</div></div>
-      <div class="acard"><div class="bg"><img src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1000&q=70" alt=""/></div><div class="t">Y tế</div></div>
-      <div class="acard"><div class="bg"><img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1000&q=70" alt=""/></div><div class="t">Thương mại</div></div>
-      <div class="acard"><div class="bg"><img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1000&q=70" alt=""/></div><div class="t">Đại công viên Dream Park</div></div>
-      <div class="acard"><div class="bg"><img src="https://images.unsplash.com/photo-1505761671935-60b3a7427bad?auto=format&fit=crop&w=1000&q=70" alt=""/></div><div class="t">Tổ hợp giải trí — TMDV 1.1ha</div></div>
-      <div class="acard"><div class="bg"><img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1000&q=70" alt=""/></div><div class="t">Đảo Ngũ Phúc</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- CTA -->
-<section class="cta" id="cta">
-  <div class="wrap">
-    <div class="eyebrow reveal" style="color:var(--brick)">Liên hệ</div>
-    <h2 class="reveal" style="transition-delay:.05s">Đăng ký nhận <span class="it">thông tin & tài liệu</span> dự án</h2>
-    <p class="reveal" style="transition-delay:.1s">Để lại email để nhận brochure, chính sách bán hàng và cập nhật tiến độ Happy Home Cà Mau sớm nhất.</p>
-    <form class="form reveal" style="transition-delay:.15s" onsubmit="return false">
-      <input type="email" placeholder="Email của bạn" />
-      <button class="btn" type="submit">Gửi</button>
-    </form>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="wrap">
-    <div class="foot-word">HAPPY HOME</div>
-    <div class="foot-grid">
-      <div>
-        <h4>Liên hệ</h4>
-        <p style="max-width:320px">Đường Trần Hưng Đạo, tuyến Quản Lộ – Phụng Hiệp, phường Tân Thành, TP Cà Mau.</p>
-        <p style="margin-top:10px;font-weight:700">+84 9348 483 49 · 096 35 123 79</p>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="bg" id="heroBg">
+        <img
+          src="https://images.unsplash.com/photo-1535131749006-b7f58c99034b?auto=format&fit=crop&w=1900&q=70"
+          alt=""
+        />
       </div>
-      <div><h4>Về chúng tôi</h4><a href="#story">Câu chuyện</a><a href="#zone">Quy hoạch & Phân khu</a><a href="#amen">Hệ sinh thái sống</a><a href="#">Tin tức & Truyền thông</a><a href="#">Thư viện</a></div>
-      <div><h4>Khám phá</h4><a href="#">Trang chủ</a><a href="#loc">Vị trí</a><a href="#amen">Tiện ích</a><a href="#cta">Liên hệ</a></div>
-    </div>
-    <div class="foot-bot">
-      <span>Quy định chung · Chính sách · Điều khoản bảo mật</span>
-      <span>© 2026 Happy Home Cà Mau · Website Design by Alpha Creative</span>
-    </div>
-  </div>
-</footer>
+      <div class="wrap hero-in">
+        <div class="top-lines reveal">
+          <span>Cà Mau · Cực tăng trưởng mới Tây Nam Bộ</span>
+          <span>Đô thị sân bay · Cửa ngõ kết nối toàn cầu</span>
+        </div>
+        <h1 class="reveal" style="transition-delay: 0.1s">
+          Khơi mạch tinh hoa<br /><span class="it">cho thế hệ kế thừa</span>
+        </h1>
+        <p class="sub reveal" style="transition-delay: 0.25s">
+          Khu đô thị kiểu mẫu 192ha định hình chuẩn sống mới tại lõi đô thị sân
+          bay Cà Mau — hiện đại, đồng bộ, bền vững.
+        </p>
+        <a href="#intro" class="explore reveal" style="transition-delay: 0.35s"
+          >Khám phá <i>↓</i></a
+        >
+      </div>
+    </section>
 
-<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-<script>
-const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
-const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.16});
-document.querySelectorAll('.reveal,.clip,.stagger').forEach(el=>io.observe(el));
-document.querySelectorAll('.stagger').forEach(s=>[...s.children].forEach((c,i)=>c.style.transitionDelay=(i*.08)+'s'));
-const hdr=document.getElementById('hdr');
-addEventListener('scroll',()=>hdr.classList.toggle('solid',scrollY>60),{passive:true});
-if(!reduce&&window.Lenis&&window.gsap){
-  const lenis=new Lenis({lerp:.09,smoothWheel:true});
-  (function raf(t){lenis.raf(t);requestAnimationFrame(raf);})();
-  gsap.registerPlugin(ScrollTrigger);lenis.on('scroll',ScrollTrigger.update);
-  gsap.to('#heroBg img',{yPercent:16,ease:'none',scrollTrigger:{trigger:'.hero',start:'top top',end:'bottom top',scrub:true}});
-  ['#golfImg'].forEach(s=>gsap.fromTo(s,{yPercent:-8},{yPercent:8,ease:'none',scrollTrigger:{trigger:s,start:'top bottom',end:'bottom top',scrub:true}}));
-}
-const cur=document.getElementById('cur');let cx=0,cy=0,tx=0,ty=0;
-addEventListener('mousemove',e=>{tx=e.clientX;ty=e.clientY;});
-(function loop(){cx+=(tx-cx)*.18;cy+=(ty-cy)*.18;cur.style.transform=`translate(${cx-17}px,${cy-17}px)`;requestAnimationFrame(loop);})();
-document.querySelectorAll('a,button,.pillar,.acard,.ccard,.menu-btn').forEach(el=>{
-  el.addEventListener('mouseenter',()=>{cur.style.width='54px';cur.style.height='54px';cur.style.background='rgba(241,188,140,.2)';});
-  el.addEventListener('mouseleave',()=>{cur.style.width='34px';cur.style.height='34px';cur.style.background='transparent';});
-});
-</script>
-</body>
+    <!-- INTRO + STATS -->
+    <section class="intro" id="intro">
+      <div class="wrap">
+        <div class="eyebrow reveal" style="color: var(--brick)">
+          Tổng quan dự án
+        </div>
+        <p class="lead reveal" style="margin-top: 24px">
+          Từ những giá trị nội sinh của vùng đất, HHCM kiến tạo một khu đô thị
+          <em>đáng sống — đáng tự hào</em> ngay tại quê hương Cà Mau.
+        </p>
+        <div class="stats stagger">
+          <div class="stat">
+            <div class="n">192<small>ha</small></div>
+            <div class="l">Tổng quy mô khu đô thị</div>
+          </div>
+          <div class="stat">
+            <div class="n">12.5<small>ha</small></div>
+            <div class="l">Đại công viên Dream Park</div>
+          </div>
+          <div class="stat">
+            <div class="n">2.5<small>ha</small></div>
+            <div class="l">Đảo Ngũ Phúc</div>
+          </div>
+          <div class="stat">
+            <div class="n">79+</div>
+            <div class="l">Hệ sinh thái tiện ích</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONNECTIVITY (Đa tầng kết nối) -->
+    <section class="conn">
+      <div class="wrap">
+        <div class="ttl reveal">
+          Đa Tầng Kết Nối, <em>Mạch Nguồn Thịnh Vượng</em>
+        </div>
+        <div class="conn-grid stagger">
+          <div class="ccard">
+            <div class="ph clip">
+              <img
+                src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=900&q=70"
+                alt=""
+              />
+            </div>
+            <div class="meta">
+              <div class="name">
+                Sân bay Cà Mau<small>Đô thị sân bay</small>
+              </div>
+              <div class="num it">01</div>
+            </div>
+          </div>
+          <div class="ccard">
+            <div class="ph clip">
+              <img
+                src="https://images.unsplash.com/photo-1535131749006-b7f58c99034b?auto=format&fit=crop&w=900&q=70"
+                alt=""
+              />
+            </div>
+            <div class="meta">
+              <div class="name">
+                Sân Golf Tân Thành<small>Tiện ích tinh hoa</small>
+              </div>
+              <div class="num it">02</div>
+            </div>
+          </div>
+          <div class="ccard">
+            <div class="ph clip">
+              <img
+                src="https://images.unsplash.com/photo-1605281317010-fe5ffe798166?auto=format&fit=crop&w=900&q=70"
+                alt=""
+              />
+            </div>
+            <div class="meta">
+              <div class="name">
+                2 Cảng biển<small>Năm Căn · Hòn Khoai</small>
+              </div>
+              <div class="num it">03</div>
+            </div>
+          </div>
+          <div class="ccard">
+            <div class="ph clip">
+              <img
+                src="https://images.unsplash.com/photo-1473445730015-841f29a9490b?auto=format&fit=crop&w=900&q=70"
+                alt=""
+              />
+            </div>
+            <div class="meta">
+              <div class="name">
+                3 Cây cầu<small>Gành Hào · Năm Căn · Ông Đốc</small>
+              </div>
+              <div class="num it">04</div>
+            </div>
+          </div>
+          <div class="ccard">
+            <div class="ph clip">
+              <img
+                src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&w=900&q=70"
+                alt=""
+              />
+            </div>
+            <div class="meta">
+              <div class="name">
+                KCN trọng điểm<small>Động lực kinh tế vùng</small>
+              </div>
+              <div class="num it">05</div>
+            </div>
+          </div>
+          <div class="ccard">
+            <div class="ph clip">
+              <img
+                src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=900&q=70"
+                alt=""
+              />
+            </div>
+            <div class="meta">
+              <div class="name">
+                Cao tốc CM – Cần Thơ<small>Trục liên kết ĐBSCL</small>
+              </div>
+              <div class="num it">06</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHILOSOPHY -->
+    <section class="philo" id="story">
+      <div class="wrap">
+        <div class="eyebrow reveal" style="color: var(--sand)">
+          Triết lý cốt lõi
+        </div>
+        <h2 class="reveal" style="margin-top: 14px">
+          Bốn trụ cột của <span class="it">một chuẩn sống</span>
+        </h2>
+        <div class="pillars stagger">
+          <div class="pillar">
+            <div class="idx">01</div>
+            <div class="k">Sống Kết Nối</div>
+            <p>
+              Không gian nuôi dưỡng quan hệ gia đình, hàng xóm và cộng đồng tinh
+              hoa — dựa trên thấu hiểu nhu cầu cư dân.
+            </p>
+          </div>
+          <div class="pillar">
+            <div class="idx">02</div>
+            <div class="k">Sống Khai Phóng</div>
+            <p>
+              Nơi khai phóng tư duy và phong cách sống bằng những hoạt động cụ
+              thể, giàu cảm hứng.
+            </p>
+          </div>
+          <div class="pillar">
+            <div class="idx">03</div>
+            <div class="k">Sống Tinh Tế</div>
+            <p>
+              Trải nghiệm nâng tầm — vị trí, cảnh quan, kiến trúc, tiện ích, vận
+              hành chuẩn KĐT kiểu mẫu.
+            </p>
+          </div>
+          <div class="pillar">
+            <div class="idx">04</div>
+            <div class="k">Sống Tự Hào</div>
+            <p>
+              Tự hào vì con cái lớn lên trong môi trường tử tế, mỗi cư dân góp
+              phần xây văn minh đô thị.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISION / MISSION -->
+    <section class="vm">
+      <div class="wrap vm-grid">
+        <div class="vm-card reveal">
+          <div class="vm-bar"></div>
+          <span class="eyebrow">Tầm nhìn</span
+          ><q
+            >Kiến tạo một chuẩn sống mới tại Cà Mau, nơi thế hệ hôm nay tận
+            hưởng tiện nghi hiện đại và trao truyền một nền tảng vững bền cho
+            thế hệ mai sau.</q
+          >
+        </div>
+        <div class="vm-card reveal" style="transition-delay: 0.15s">
+          <div class="vm-bar"></div>
+          <span class="eyebrow">Sứ mệnh</span
+          ><q
+            >Phát triển khu đô thị hiện đại, đồng bộ và bền vững — nơi mỗi gia
+            đình sống an tâm và thế hệ kế thừa được nuôi dưỡng trong cộng đồng
+            văn minh, gắn kết.</q
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- GOLF SIGNATURE -->
+    <section class="golf">
+      <div class="img">
+        <img
+          id="golfImg"
+          src="https://images.unsplash.com/photo-1587174486073-ae5e5cff23aa?auto=format&fit=crop&w=1400&q=70"
+          alt=""
+        />
+      </div>
+      <div class="panel">
+        <div>
+          <div class="eyebrow">Biểu tượng tiện ích</div>
+          <h3>
+            Sân Golf Tân Thành —<br />mảnh ghép hoàn thiện<br />đô thị tinh hoa
+          </h3>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOCATION / MAP -->
+    <section class="loc" id="loc">
+      <div class="wrap">
+        <div class="eyebrow reveal" style="color: var(--brick)">
+          Toạ độ kết nối
+        </div>
+        <h2 class="reveal">
+          Tâm điểm liên kết vùng <span class="it">Đồng bằng sông Cửu Long</span>
+        </h2>
+        <div class="loc-grid">
+          <div class="mapbox clip">
+            <img
+              src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1400&q=70"
+              alt="Bản đồ vị trí dự án"
+            />
+          </div>
+          <div class="stagger">
+            <div class="point">
+              <b>Sân bay Cà Mau</b><em>lõi đô thị sân bay</em>
+            </div>
+            <div class="point">
+              <b>Cao tốc Cà Mau – Cần Thơ</b><em>kết nối vùng</em>
+            </div>
+            <div class="point">
+              <b>Cảng Hòn Khoai · Năm Căn</b><em>cửa ngõ biển</em>
+            </div>
+            <div class="point">
+              <b>Trục Quản Lộ – Phụng Hiệp</b
+              ><em>Đ. Trần Hưng Đạo, P. Tân Thành</em>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AMENITIES -->
+    <section class="amen" id="amen">
+      <div class="wrap">
+        <div class="top">
+          <div>
+            <div class="eyebrow reveal" style="color: var(--sand)">
+              Hệ sinh thái sống
+            </div>
+            <h2 class="reveal" style="margin-top: 14px">
+              Tiện ích & hoạt động <span class="it">nội khu</span>
+            </h2>
+          </div>
+          <div class="big reveal">79+</div>
+        </div>
+        <div class="amen-grid stagger">
+          <div class="acard">
+            <div class="bg">
+              <img
+                src="https://images.unsplash.com/photo-1574362848149-11496d93a7c7?auto=format&fit=crop&w=1000&q=70"
+                alt=""
+              />
+            </div>
+            <div class="t">Giáo dục</div>
+          </div>
+          <div class="acard">
+            <div class="bg">
+              <img
+                src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1000&q=70"
+                alt=""
+              />
+            </div>
+            <div class="t">Y tế</div>
+          </div>
+          <div class="acard">
+            <div class="bg">
+              <img
+                src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1000&q=70"
+                alt=""
+              />
+            </div>
+            <div class="t">Thương mại</div>
+          </div>
+          <div class="acard">
+            <div class="bg">
+              <img
+                src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1000&q=70"
+                alt=""
+              />
+            </div>
+            <div class="t">Đại công viên Dream Park</div>
+          </div>
+          <div class="acard">
+            <div class="bg">
+              <img
+                src="https://images.unsplash.com/photo-1505761671935-60b3a7427bad?auto=format&fit=crop&w=1000&q=70"
+                alt=""
+              />
+            </div>
+            <div class="t">Tổ hợp giải trí — TMDV 1.1ha</div>
+          </div>
+          <div class="acard">
+            <div class="bg">
+              <img
+                src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1000&q=70"
+                alt=""
+              />
+            </div>
+            <div class="t">Đảo Ngũ Phúc</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta" id="cta">
+      <div class="wrap">
+        <div class="eyebrow reveal" style="color: var(--brick)">Liên hệ</div>
+        <h2 class="reveal" style="transition-delay: 0.05s">
+          Đăng ký nhận <span class="it">thông tin & tài liệu</span> dự án
+        </h2>
+        <p class="reveal" style="transition-delay: 0.1s">
+          Để lại email để nhận brochure, chính sách bán hàng và cập nhật tiến độ
+          Happy Home Cà Mau sớm nhất.
+        </p>
+        <form
+          class="form reveal"
+          style="transition-delay: 0.15s"
+          onsubmit="return false;"
+        >
+          <input type="email" placeholder="Email của bạn" />
+          <button class="btn" type="submit">Gửi</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="wrap">
+        <div class="foot-word">HAPPY HOME</div>
+        <div class="foot-grid">
+          <div>
+            <h4>Liên hệ</h4>
+            <p style="max-width: 320px">
+              Đường Trần Hưng Đạo, tuyến Quản Lộ – Phụng Hiệp, phường Tân Thành,
+              TP Cà Mau.
+            </p>
+            <p style="margin-top: 10px; font-weight: 700">
+              +84 9348 483 49 · 096 35 123 79
+            </p>
+          </div>
+          <div>
+            <h4>Về chúng tôi</h4>
+            <a href="#story">Câu chuyện</a
+            ><a href="#zone">Quy hoạch & Phân khu</a
+            ><a href="#amen">Hệ sinh thái sống</a
+            ><a href="#">Tin tức & Truyền thông</a><a href="#">Thư viện</a>
+          </div>
+          <div>
+            <h4>Khám phá</h4>
+            <a href="#">Trang chủ</a><a href="#loc">Vị trí</a
+            ><a href="#amen">Tiện ích</a><a href="#cta">Liên hệ</a>
+          </div>
+        </div>
+        <div class="foot-bot">
+          <span>Quy định chung · Chính sách · Điều khoản bảo mật</span>
+          <span
+            >© 2026 Happy Home Cà Mau · Website Design by Alpha Creative</span
+          >
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <script>
+      const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+      const io = new IntersectionObserver(
+        es =>
+          es.forEach(e => {
+            if (e.isIntersecting) {
+              e.target.classList.add('in');
+              io.unobserve(e.target);
+            }
+          }),
+        { threshold: 0.16 }
+      );
+      document
+        .querySelectorAll('.reveal,.clip,.stagger')
+        .forEach(el => io.observe(el));
+      document
+        .querySelectorAll('.stagger')
+        .forEach(s =>
+          [...s.children].forEach(
+            (c, i) => (c.style.transitionDelay = i * 0.08 + 's')
+          )
+        );
+      const hdr = document.getElementById('hdr');
+      addEventListener(
+        'scroll',
+        () => hdr.classList.toggle('solid', scrollY > 60),
+        { passive: true }
+      );
+      if (!reduce && window.Lenis && window.gsap) {
+        const lenis = new Lenis({ lerp: 0.09, smoothWheel: true });
+        (function raf(t) {
+          lenis.raf(t);
+          requestAnimationFrame(raf);
+        })();
+        gsap.registerPlugin(ScrollTrigger);
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.to('#heroBg img', {
+          yPercent: 16,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: '.hero',
+            start: 'top top',
+            end: 'bottom top',
+            scrub: true,
+          },
+        });
+        ['#golfImg'].forEach(s =>
+          gsap.fromTo(
+            s,
+            { yPercent: -8 },
+            {
+              yPercent: 8,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: s,
+                start: 'top bottom',
+                end: 'bottom top',
+                scrub: true,
+              },
+            }
+          )
+        );
+      }
+      const cur = document.getElementById('cur');
+      let cx = 0,
+        cy = 0,
+        tx = 0,
+        ty = 0;
+      addEventListener('mousemove', e => {
+        tx = e.clientX;
+        ty = e.clientY;
+      });
+      (function loop() {
+        cx += (tx - cx) * 0.18;
+        cy += (ty - cy) * 0.18;
+        cur.style.transform = `translate(${cx - 17}px,${cy - 17}px)`;
+        requestAnimationFrame(loop);
+      })();
+      document
+        .querySelectorAll('a,button,.pillar,.acard,.ccard,.menu-btn')
+        .forEach(el => {
+          el.addEventListener('mouseenter', () => {
+            cur.style.width = '54px';
+            cur.style.height = '54px';
+            cur.style.background = 'rgba(241,188,140,.2)';
+          });
+          el.addEventListener('mouseleave', () => {
+            cur.style.width = '34px';
+            cur.style.height = '34px';
+            cur.style.background = 'transparent';
+          });
+        });
+    </script>
+  </body>
 </html>

@@ -46,7 +46,6 @@ interface CoolHunterStoryProps {
 const DEFAULT_IMAGE = '/cool-hunter/section-2.png';
 const DEFAULT_IMAGE_ALT =
   'A calm living room with a fireplace, oak cabinetry and leaded windows';
-const DEFAULT_LABEL = '01 - Welcome';
 
 const DEFAULT_TEXT_1 =
   "There's a house on a peninsula in rural Alabama that watches the water from three sides. Its architect, Jeffrey Dungan, says he thought of it as a camera, a device for framing and cropping the world outside. Inside, designer Betsy Brown stripped everything back until only the essential remained. What they produced together is something rare: a family home that feels both deeply rooted in place and entirely its own.";
@@ -95,7 +94,6 @@ export function CoolHunterStory({
   const text2 = content.text2?.trim() || DEFAULT_TEXT_2;
   const imageUrl = content.imageUrl?.trim() || DEFAULT_IMAGE;
   const imageAlt = content.imageAlt?.trim() || DEFAULT_IMAGE_ALT;
-  const label = content.label?.trim() || DEFAULT_LABEL;
 
   const text1Base: React.CSSProperties = isMobile
     ? {
@@ -159,20 +157,6 @@ export function CoolHunterStory({
         overflow: 'hidden',
       };
 
-  const labelBase: React.CSSProperties = {
-    position: 'absolute',
-    top: '50%',
-    right: 24,
-    transform: 'translateY(-50%)',
-    fontFamily:
-      "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
-    fontSize: 11,
-    letterSpacing: '0.2em',
-    textTransform: 'uppercase',
-    color: '#262626',
-    writingMode: 'vertical-rl',
-  };
-
   useBlockMotion(
     rootRef,
     ({ scroller, requestRefresh }) => {
@@ -221,7 +205,7 @@ export function CoolHunterStory({
         tl.from(p1, { y: () => stageH() * 0.8, duration: 1 })
           .to(p1, { y: () => -stageH() * 0.3, duration: 1 }, '+=0.4')
           .from(frame, { yPercent: 120, duration: 1 }, '<')
-          .to(p1, { autoAlpha: 0, duration: 0.5 }, '+=0.4')
+          .to(p1, { x: () => -stageW(), duration: 0.8 }, '+=0.4')
           .to(frame, { top: '12%', height: '74%', duration: 1 }, '<')
           .to(frame, { height: '42%', duration: 1 }, '+=0.4')
           .fromTo(
@@ -263,7 +247,7 @@ export function CoolHunterStory({
       tl.from(p1, { y: () => stageH() * 0.9, duration: 1 })
         .to(p1, { x: () => -stageW() * 0.47, duration: 1 }, '+=0.4')
         .to(frame, { left: '48%', duration: 1 }, '<')
-        .to(p1, { autoAlpha: 0, duration: 0.5 }, '+=0.4')
+        .to(p1, { x: () => -stageW() * 1.1, duration: 1 }, '+=0.4')
         .to(frame, { left: '9%', width: '83%', duration: 1 }, '<')
         .to(frame, { width: '50%', duration: 1 }, '+=0.4')
         .fromTo(
@@ -338,24 +322,6 @@ export function CoolHunterStory({
           >
             {text2}
           </p>
-
-          <span
-            data-element-key='label'
-            className={selectableClass(activeKey === 'label', 'self-start')}
-            style={composeStyle(
-              {
-                fontFamily:
-                  "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
-                fontSize: 11,
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                color: '#262626',
-              },
-              styleOf('label')
-            )}
-          >
-            {label}
-          </span>
         </div>
       </section>
     );
@@ -365,6 +331,7 @@ export function CoolHunterStory({
   return (
     <section
       ref={rootRef}
+      data-section='welcome'
       className={cn('@container relative w-full', className)}
       style={composeStyle(
         {
@@ -405,16 +372,6 @@ export function CoolHunterStory({
         >
           {text2}
         </div>
-
-        {!isMobile && (
-          <span
-            data-element-key='label'
-            className={selectableClass(activeKey === 'label')}
-            style={composeStyle(labelBase, styleOf('label'))}
-          >
-            {label}
-          </span>
-        )}
       </div>
     </section>
   );

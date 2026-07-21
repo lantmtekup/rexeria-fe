@@ -6,7 +6,9 @@ const base = 'http://localhost:3000';
 const url = `${base}/product/new/information`;
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 const page = await ctx.newPage();
 
 await page.goto(url, { waitUntil: 'networkidle' });
@@ -23,7 +25,9 @@ if (await colorPlus.count()) {
   await colorPlus.click();
   await page.waitForTimeout(200);
   // Click first preset
-  const presets = page.locator('button[title]').filter({ has: page.locator('span') });
+  const presets = page
+    .locator('button[title]')
+    .filter({ has: page.locator('span') });
   // Pick 3 presets
   for (let i = 0; i < 3; i++) {
     const btn = presets.nth(i);

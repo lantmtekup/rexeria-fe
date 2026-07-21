@@ -36,8 +36,8 @@ interface CoolHunterFooterProps {
 /**
  * Cool Hunter Footer — port từ apps/cool-hunter FooterSection.tsx.
  *
- * Không pin: ảnh nền dâng từ dưới (yPercent 100→0) khi section vào viewport.
- * Canvas: hiện đủ field, skip scrub (bg không để invisible).
+ * Ảnh fade in; dải trắng wipe height từ trên xuống — không pin.
+ * Canvas: hiện đủ field, skip scrub.
  */
 
 const DISPLAY_FONT = "'Fraunces', 'Playfair Display', 'Times New Roman', serif";
@@ -58,7 +58,8 @@ export function CoolHunterFooter({
   className,
 }: CoolHunterFooterProps) {
   const rootRef = React.useRef<HTMLElement>(null);
-  const layerRef = React.useRef<HTMLDivElement>(null);
+  const frameRef = React.useRef<HTMLDivElement>(null);
+  const veilRef = React.useRef<HTMLDivElement>(null);
   const isMobile = useContainerMobile(rootRef);
 
   const isCanvas = useIsCanvasEdit(rootRef);
@@ -81,37 +82,45 @@ export function CoolHunterFooter({
     rootRef,
     ({ scroller, requestRefresh }) => {
       const root = rootRef.current;
-      const layer = layerRef.current;
-      if (!root || !layer || isCanvas) return;
+      const frame = frameRef.current;
+      const veil = veilRef.current;
+      if (!root || !frame || !veil || isCanvas) return;
 
       const reduce = window.matchMedia(
         '(prefers-reduced-motion: reduce)'
       ).matches;
 
-      gsap.set(layer, { yPercent: 100, visibility: 'visible' });
+      gsap.set(frame, { opacity: 0 });
+      gsap.set(veil, { height: '100%' });
 
-      const img = layer.querySelector('img');
+      const img = frame.querySelector('img');
       if (img && !img.complete) {
         img.addEventListener('load', requestRefresh, { once: true });
       }
 
       if (reduce) {
-        gsap.set(layer, { yPercent: 0 });
+        gsap.set(frame, { opacity: 1 });
+        gsap.set(veil, { height: '0%' });
         return;
       }
 
-      gsap.to(layer, {
-        yPercent: 0,
-        ease: 'none',
+      const tl = gsap.timeline({
+        defaults: { ease: 'none' },
         scrollTrigger: {
           trigger: root,
           scroller,
           start: 'top 75%',
           end: 'bottom bottom',
-          scrub: 0.6,
+          scrub: 0.45,
           invalidateOnRefresh: true,
         },
       });
+
+      tl.to(veil, { height: '0%', duration: 1 }, 0).to(
+        frame,
+        { opacity: 1, duration: 1 },
+        0
+      );
     },
     [isCanvas, bgUrl]
   );
@@ -153,7 +162,7 @@ export function CoolHunterFooter({
   const renderCta = () => {
     const classNameCta = selectableClass(
       activeKey === 'ctaText',
-      'transition-colors hover:bg-neutral-900 hover:text-white'
+      'transition-colors duration-500 hover:bg-neutral-900 hover:text-white'
     );
     const style = composeStyle(ctaStyle, styleOf('ctaText'));
 
@@ -195,9 +204,9 @@ export function CoolHunterFooter({
       )}
     >
       <div
-        ref={layerRef}
+        ref={frameRef}
         className='absolute inset-0'
-        style={isCanvas ? undefined : { visibility: 'hidden' }}
+        style={isCanvas ? undefined : { opacity: 0 }}
       >
         <img
           src={bgUrl}
@@ -213,7 +222,16 @@ export function CoolHunterFooter({
       </div>
 
       <div
-        className='relative z-10 flex flex-col items-center'
+        ref={veilRef}
+        className='absolute inset-x-0 top-0 z-10'
+        style={{
+          height: isCanvas ? '0%' : '100%',
+          backgroundColor: '#ffffff',
+        }}
+      />
+
+      <div
+        className='relative z-20 flex flex-col items-center'
         style={{
           gap: isMobile ? 20 : 24,
           paddingInline: 24,

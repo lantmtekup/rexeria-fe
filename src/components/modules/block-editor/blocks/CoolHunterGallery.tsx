@@ -40,13 +40,11 @@ interface CoolHunterGalleryProps {
  * Dải ngang 3 ảnh+caption: stack lệch → hàng → settle + scroll (mobile dừng
  * từng khối; desktop cuộn liền). Text fade theo nhịp.
  *
- * Khác apps: pin → sticky (outer 620/430dvh), viewport matchMedia →
+ * Khác apps: pin → sticky (outer 620/380dvh), viewport matchMedia →
  * useContainerMobile, mọi vw/vh → % stage (offsetWidth/offsetHeight).
  */
 
 const DISPLAY_FONT = "'Fraunces', 'Playfair Display', 'Times New Roman', serif";
-
-const DEFAULT_LABEL = '02 - Lake Wehapa';
 
 const DEFAULT_ITEMS: CoolHunterGalleryItem[] = [
   {
@@ -71,7 +69,7 @@ const DEFAULT_ITEMS: CoolHunterGalleryItem[] = [
 /** Layout numbers as % of stage width (apps used vw). */
 const LAYOUT = {
   mobile: { img: 78, text: 78, gap: 8 },
-  desktop: { img: 30, text: 26, gap: 4 },
+  desktop: { img: 30, text: 26, gap: 4, minTextLeft: 64 },
 };
 
 const STAGE_STYLE: React.CSSProperties = {
@@ -125,7 +123,6 @@ export function CoolHunterGallery({
     () => resolveItems(content.items),
     [content.items]
   );
-  const label = content.label?.trim() || DEFAULT_LABEL;
   const L = isMobile ? LAYOUT.mobile : LAYOUT.desktop;
 
   useBlockMotion(
@@ -160,8 +157,13 @@ export function CoolHunterGallery({
       const stackX = (i: number) => -L.img + 12 - i * 10 + firstLeft - slot(i);
 
       const trackStart = firstLeft;
-      const trackTravel = isMobile ? textSlot(2) : slot(2);
-      const trackEnd = trackStart - trackTravel;
+      const lastIndex = items.length - 1;
+      const trackEnd = isMobile
+        ? firstLeft - textSlot(lastIndex)
+        : Math.max(
+            -(slot(lastIndex - 1) + L.img),
+            LAYOUT.desktop.minTextLeft - textSlot(lastIndex)
+          );
       const C_DUR = 2;
       const textBeat = (i: number) =>
         gsap.utils.clamp(
@@ -209,13 +211,13 @@ export function CoolHunterGallery({
       const cStart = tl.duration() + 0.4;
 
       if (isMobile) {
-        const stops: Array<{ at: number; text?: number }> = [
-          { at: textSlot(0), text: 0 },
-          { at: slot(1) },
-          { at: textSlot(1), text: 1 },
-          { at: slot(2) },
-          { at: textSlot(2), text: 2 },
-        ];
+        const stops: Array<{ at: number; text?: number }> = [];
+        for (let i = 0; i < items.length; i++) {
+          stops.push({ at: textSlot(i), text: i });
+          if (i < lastIndex) {
+            stops.push({ at: slot(i + 1) });
+          }
+        }
         stops.forEach((stop, k) => {
           const pos = k === 0 ? cStart : '+=0.5';
           tl.to(
@@ -257,21 +259,6 @@ export function CoolHunterGallery({
     color: '#171717',
     opacity: 0,
   });
-
-  const labelBase: React.CSSProperties = {
-    position: 'absolute',
-    top: '50%',
-    right: 24,
-    zIndex: 10,
-    transform: 'translateY(-50%)',
-    fontFamily:
-      "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
-    fontSize: 11,
-    letterSpacing: '0.2em',
-    textTransform: 'uppercase',
-    color: '#262626',
-    writingMode: 'vertical-rl',
-  };
 
   // ── Editor canvas: stacked cards, mọi field bấm được ──
   if (isCanvas) {
@@ -325,23 +312,6 @@ export function CoolHunterGallery({
               </div>
             );
           })}
-          <span
-            data-element-key='label'
-            className={selectableClass(activeKey === 'label', 'self-start')}
-            style={composeStyle(
-              {
-                fontFamily:
-                  "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
-                fontSize: 11,
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                color: '#262626',
-              },
-              styleOf('label')
-            )}
-          >
-            {label}
-          </span>
         </div>
       </section>
     );
@@ -351,10 +321,11 @@ export function CoolHunterGallery({
   return (
     <section
       ref={rootRef}
+      data-section='lake-wehapa'
       className={cn('@container relative w-full', className)}
       style={composeStyle(
         {
-          height: isMobile ? '620dvh' : '430dvh',
+          height: isMobile ? '620dvh' : '380dvh',
           backgroundColor: '#ffffff',
         },
         blockBackgroundStyle(background)
@@ -378,7 +349,11 @@ export function CoolHunterGallery({
                 <div
                   data-gallery-img
                   className='h-full flex-none overflow-hidden'
-                  style={{ width: `${L.img}cqw` }}
+                  style={{
+                    position: 'relative',
+                    width: `${L.img}cqw`,
+                    zIndex: items.length - i,
+                  }}
                 >
                   <img
                     src={item.imageUrl}
@@ -403,16 +378,6 @@ export function CoolHunterGallery({
             );
           })}
         </div>
-
-        {!isMobile && (
-          <span
-            data-element-key='label'
-            className={selectableClass(activeKey === 'label')}
-            style={composeStyle(labelBase, styleOf('label'))}
-          >
-            {label}
-          </span>
-        )}
       </div>
     </section>
   );

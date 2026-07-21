@@ -13,7 +13,9 @@ const VIEWPORTS = [
 ];
 
 for (const v of VIEWPORTS) {
-  const ctx = await browser.newContext({ viewport: { width: v.w, height: v.h } });
+  const ctx = await browser.newContext({
+    viewport: { width: v.w, height: v.h },
+  });
   const page = await ctx.newPage();
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1200);

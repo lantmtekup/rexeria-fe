@@ -18,14 +18,23 @@
  *  - data-motion-ease                    — GSAP ease string
  *  - data-motion-distance                — px, override biên độ (effect có distanceVar)
  *  - data-motion-origin                  — transform-origin
- *  - data-motion-trigger                 — in-view (default) | scrub | load
+ *  - data-motion-trigger                 — in-view (default) | scrub | load | loop |
+ *                                          hover (play/reverse theo pointer, skip touch) |
+ *                                          click (toggle)
  *  - data-motion-start|end               — ScrollTrigger start/end
  *  - data-motion-scrub                   — số (smoothing) | mặc định true
  *  - data-motion-once                    — "true" = chạy 1 lần (mặc định play/reverse)
- *  - data-motion-trigger-target          — self (default) | root | CSS selector trong root
+ *  - data-motion-trigger-target          — self (default) | root | 'closest:<sel>' |
+ *                                          CSS selector trong root; với hover/click
+ *                                          đây là element NHẬN listener (card cha)
  *  - data-motion-end-target              — như trên, cho endTrigger (scrub)
+ *  - data-motion-direction               — up|down|left|right (clip-reveal)
+ *  - data-motion-axis                    — 'x' đổi line-draw sang trục ngang
+ *  - data-motion-repeat|yoyo             — GSAP repeat (số, -1 = vô hạn) / "true"
  *  - data-motion-group (trên container)  — các data-motion bên trong dùng chung 1
  *    ScrollTrigger trên container; container nhận start/once; con offset bằng delay.
+ *  - data-motion-stagger-children='0.12' — (trên group) con chưa khai delay nhận
+ *    delay = index × bước — khỏi gắn delay tay từng item trong grid/list.
  *
  * Tuân contract R1–R6 (docs/landing-motion-foundation.md): scroller từ
  * LandingMotion, invalidateOnRefresh, gsap.context revert, refresh tập trung.
@@ -38,6 +47,7 @@ import { SplitText } from 'gsap/SplitText';
 
 import { useLandingMotion } from './LandingMotion';
 import {
+  CLIP_REVEAL_FROM,
   getMotionEffect,
   type MotionEffect,
   type MotionTriggerKind,
@@ -54,8 +64,12 @@ interface ParsedMotion {
   to: Record<string, unknown>;
   duration: number;
   delay: number;
+  /** true khi dev khai delay tường minh — stagger-children không đè lên. */
+  hasDelay: boolean;
   ease: string;
   stagger?: number;
+  repeat?: number;
+  yoyo: boolean;
   trigger: MotionTriggerKind;
   start: string;
   end: string;
@@ -93,9 +107,33 @@ function parseElement(el: HTMLElement): ParsedMotion | null {
 
   const distance = numAttr(el, 'distance');
   if (distance !== undefined && effect.distanceVar) {
-    const base = Number(effect.from[effect.distanceVar] ?? 1);
-    from[effect.distanceVar] = (base < 0 ? -1 : 1) * Math.abs(distance);
+    const v = effect.distanceVar;
+    const sign = (n: unknown) => (Number(n ?? 1) < 0 ? -1 : 1);
+    from[v] = sign(effect.from[v]) * Math.abs(distance);
+    // symmetric (parallax): đổi cả 2 đầu ±d theo dấu gốc của mỗi đầu.
+    if (effect.distanceMode === 'symmetric') {
+      to[v] = sign(effect.to[v]) * Math.abs(distance);
+    }
   }
+
+  // clip-reveal: hướng mép reveal di chuyển (down = lộ từ trên xuống, default).
+  const direction = attr(el, 'direction');
+  if (effect.directional && direction && direction in CLIP_REVEAL_FROM) {
+    from.clipPath =
+      CLIP_REVEAL_FROM[direction as keyof typeof CLIP_REVEAL_FROM];
+  }
+
+  // line-draw ngang: data-motion-axis='x' đổi scaleY→scaleX + origin trái.
+  if (attr(el, 'axis') === 'x' && 'scaleY' in from) {
+    from.scaleX = from.scaleY;
+    delete from.scaleY;
+    if ('scaleY' in to) {
+      to.scaleX = to.scaleY;
+      delete to.scaleY;
+    }
+    from.transformOrigin = 'left center';
+  }
+
   const origin = attr(el, 'origin');
   if (origin) from.transformOrigin = origin;
 
@@ -109,14 +147,17 @@ function parseElement(el: HTMLElement): ParsedMotion | null {
     to,
     duration: numAttr(el, 'duration') ?? effect.defaults.duration,
     delay: numAttr(el, 'delay') ?? 0,
+    hasDelay: attr(el, 'delay') !== undefined,
     ease: attr(el, 'ease') ?? effect.defaults.ease,
     stagger: numAttr(el, 'stagger') ?? effect.defaults.stagger,
+    repeat: numAttr(el, 'repeat') ?? effect.defaults.repeat,
+    yoyo: attr(el, 'yoyo') === 'true',
     trigger,
     start:
       attr(el, 'start') ??
       effect.defaults.start ??
       (trigger === 'scrub' ? 'top bottom' : 'top 85%'),
-    end: attr(el, 'end') ?? 'bottom top',
+    end: attr(el, 'end') ?? effect.defaults.end ?? 'bottom top',
     scrub: numAttr(el, 'scrub') ?? true,
     once: attr(el, 'once') === 'true',
     triggerTarget: attr(el, 'trigger-target'),
@@ -131,7 +172,105 @@ function resolveTarget(
 ): HTMLElement {
   if (!spec || spec === 'self') return fallback;
   if (spec === 'root') return root;
+  // 'closest:.card' — leo lên tổ tiên gần nhất (cho element lặp trong list:
+  // mỗi instance tự tìm card cha của CHÍNH NÓ, không dính card đầu tiên).
+  if (spec.startsWith('closest:')) {
+    return fallback.closest<HTMLElement>(spec.slice(8)) ?? fallback;
+  }
   return root.querySelector<HTMLElement>(spec) ?? fallback;
+}
+
+/**
+ * counter: tween textContent 0 → số parse từ text hiện tại, giữ prefix/suffix
+ * (vd "+1,200 khách" → đếm 0→1200). Restore text gốc khi cleanup (GSAP revert
+ * không đụng textContent).
+ */
+/**
+ * echo-reveal: stagger các `[data-echo-layer]` trong container — từ ghost xa
+ * (offset lớn) lên primary. Giữ opacity đích qua data-echo-opacity.
+ */
+function addEchoReveal(
+  tl: gsap.core.Timeline,
+  parsed: ParsedMotion,
+  position: number
+) {
+  const container = parsed.el;
+  const layers = Array.from(
+    container.querySelectorAll<HTMLElement>('[data-echo-layer]')
+  );
+  if (!layers.length) return;
+
+  const distance = Math.abs(Number(parsed.from.y ?? 32));
+  const step = parsed.stagger ?? 0.07;
+
+  const sorted = [...layers].sort(
+    (a, b) =>
+      parseFloat(b.dataset.echoOffset ?? '0') -
+      parseFloat(a.dataset.echoOffset ?? '0')
+  );
+
+  sorted.forEach((layer, i) => {
+    const offsetEm = parseFloat(layer.dataset.echoOffset ?? '0');
+    const targetOpacity = parseFloat(layer.dataset.echoOpacity ?? '1');
+    const fontSize = parseFloat(getComputedStyle(layer).fontSize) || 16;
+    const targetY = offsetEm * fontSize;
+    const startY = targetY + distance;
+
+    tl.fromTo(
+      layer,
+      { opacity: 0, y: startY },
+      {
+        opacity: targetOpacity,
+        y: targetY,
+        duration: parsed.duration,
+        ease: parsed.ease,
+        immediateRender: false,
+      },
+      position + i * step
+    );
+  });
+}
+
+function addCounter(
+  tl: gsap.core.Timeline,
+  parsed: ParsedMotion,
+  position: number,
+  cleanups: Array<() => void>
+) {
+  const el = parsed.el;
+  const original = el.textContent ?? '';
+  const m = original.match(/-?\d[\d.,]*/);
+  if (!m || m.index === undefined) return;
+  const raw = m[0];
+  const target = parseFloat(raw.replace(/,/g, ''));
+  if (!Number.isFinite(target)) return;
+  const decimals = raw.includes('.') ? (raw.split('.').pop()?.length ?? 0) : 0;
+  const grouped = raw.includes(',');
+  const prefix = original.slice(0, m.index);
+  const suffix = original.slice(m.index + raw.length);
+  const format = (v: number) => {
+    if (decimals) return v.toFixed(decimals);
+    const n = Math.round(v);
+    return grouped ? n.toLocaleString('en-US') : String(n);
+  };
+  cleanups.push(() => {
+    el.textContent = original;
+  });
+  // Seed 0 ngay khi build để không flash số đích trước khi trigger chạy.
+  el.textContent = prefix + format(0) + suffix;
+  const proxy = { val: 0 };
+  tl.to(
+    proxy,
+    {
+      val: target,
+      duration: parsed.duration,
+      ease: parsed.ease,
+      onUpdate: () => {
+        el.textContent = prefix + format(proxy.val) + suffix;
+      },
+    },
+    position
+  );
 }
 
 /** Thêm tween của 1 element vào timeline tại vị trí `position` (giây). */
@@ -139,9 +278,25 @@ function addTween(
   tl: gsap.core.Timeline,
   parsed: ParsedMotion,
   position: number,
-  splits: SplitText[]
+  splits: SplitText[],
+  cleanups: Array<() => void>,
+  opts?: { immediateRender?: boolean }
 ) {
-  const { el, effect, from, to, duration, ease, stagger } = parsed;
+  const { el, effect, from, to, duration, ease, stagger, repeat, yoyo } =
+    parsed;
+  if (effect.special === 'counter') {
+    addCounter(tl, parsed, position, cleanups);
+    return;
+  }
+  if (effect.special === 'echo-reveal') {
+    addEchoReveal(tl, parsed, position);
+    return;
+  }
+  const extra = {
+    ...(repeat !== undefined ? { repeat } : {}),
+    ...(yoyo ? { yoyo: true } : {}),
+    ...(opts?.immediateRender === false ? { immediateRender: false } : {}),
+  };
   if (effect.split) {
     const split = new SplitText(el, {
       type: effect.split,
@@ -155,16 +310,22 @@ function addTween(
           ? split.words
           : split.lines;
     if (!pieces.length) return;
-    tl.fromTo(pieces, from, { ...to, duration, ease, stagger }, position);
+    tl.fromTo(
+      pieces,
+      from,
+      { ...to, duration, ease, stagger, ...extra },
+      position
+    );
     return;
   }
-  tl.fromTo(el, from, { ...to, duration, ease }, position);
+  tl.fromTo(el, from, { ...to, duration, ease, ...extra }, position);
 }
 
 function buildFromAttributes(
   root: HTMLElement,
   scroller: HTMLElement | undefined,
-  splits: SplitText[]
+  splits: SplitText[],
+  cleanups: Array<() => void>
 ) {
   const parsed = Array.from(root.querySelectorAll<HTMLElement>('[data-motion]'))
     .map(parseElement)
@@ -192,6 +353,8 @@ function buildFromAttributes(
   for (const [container, members] of groups) {
     const start = attr(container, 'start') ?? 'top 85%';
     const once = attr(container, 'once') === 'true';
+    // stagger-children: con chưa khai delay tường minh nhận delay = index × bước.
+    const staggerChildren = numAttr(container, 'stagger-children');
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: container,
@@ -203,10 +366,51 @@ function buildFromAttributes(
           : { toggleActions: 'play none none reverse' }),
       },
     });
-    for (const m of members) addTween(tl, m, m.delay, splits);
+    members.forEach((m, i) => {
+      const position =
+        !m.hasDelay && staggerChildren !== undefined
+          ? i * staggerChildren
+          : m.delay;
+      addTween(tl, m, position, splits, cleanups);
+    });
   }
 
   for (const p of standalone) {
+    // hover/click: timeline paused + event listener, không ScrollTrigger.
+    // immediateRender:false — element giữ nguyên rest state tự nhiên cho tới
+    // lần tương tác đầu (hover effect có from = rest nên không nhảy hình).
+    if (p.trigger === 'hover' || p.trigger === 'click') {
+      if (
+        p.trigger === 'hover' &&
+        !window.matchMedia('(hover: hover)').matches
+      ) {
+        continue; // touch device: giữ rest state, không bind hover
+      }
+      const tl = gsap.timeline({ paused: true });
+      addTween(tl, p, p.delay, splits, cleanups, { immediateRender: false });
+      const listenTarget = resolveTarget(root, p.triggerTarget, p.el);
+      if (p.trigger === 'hover') {
+        const enter = () => tl.play();
+        const leave = () => tl.reverse();
+        listenTarget.addEventListener('pointerenter', enter);
+        listenTarget.addEventListener('pointerleave', leave);
+        cleanups.push(() => {
+          listenTarget.removeEventListener('pointerenter', enter);
+          listenTarget.removeEventListener('pointerleave', leave);
+        });
+      } else {
+        let on = false;
+        const toggle = () => {
+          on = !on;
+          if (on) tl.play();
+          else tl.reverse();
+        };
+        listenTarget.addEventListener('click', toggle);
+        cleanups.push(() => listenTarget.removeEventListener('click', toggle));
+      }
+      continue;
+    }
+
     if (p.trigger === 'scrub') {
       const triggerEl = resolveTarget(root, p.triggerTarget, p.el);
       const endEl = p.endTarget
@@ -229,9 +433,10 @@ function buildFromAttributes(
       continue;
     }
 
-    if (p.trigger === 'load') {
+    // load & loop: play ngay, không ScrollTrigger (loop = repeat từ effect).
+    if (p.trigger === 'load' || p.trigger === 'loop') {
       const tl = gsap.timeline();
-      addTween(tl, p, p.delay, splits);
+      addTween(tl, p, p.delay, splits, cleanups);
       continue;
     }
 
@@ -248,7 +453,7 @@ function buildFromAttributes(
           : { toggleActions: 'play none none reverse' }),
       },
     });
-    addTween(tl, p, p.delay, splits);
+    addTween(tl, p, p.delay, splits, cleanups);
   }
 }
 
@@ -276,13 +481,15 @@ export function useMotionAttributes(
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const splits: SplitText[] = [];
+    const cleanups: Array<() => void> = [];
     const ctx = gsap.context(() => {
-      buildFromAttributes(root, scroller ?? undefined, splits);
+      buildFromAttributes(root, scroller ?? undefined, splits, cleanups);
     }, root);
     requestRefresh();
     return () => {
       ctx.revert();
       for (const s of splits) s.revert();
+      for (const fn of cleanups) fn();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scroller, requestRefresh, ...deps]);

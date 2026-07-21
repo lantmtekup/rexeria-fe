@@ -6,7 +6,9 @@ const base = 'http://localhost:3000';
 const url = `${base}/canvas-templates/e3e3e3e3-2000-0000-0000-000000000001`;
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 const page = await ctx.newPage();
 await page.goto(url, { waitUntil: 'networkidle' });
 await page.waitForTimeout(1500);
@@ -40,15 +42,16 @@ if (!titleBox || !eyebrowBox) {
   process.exit(1);
 }
 
-await page.mouse.move(titleBox.x + titleBox.width / 2, titleBox.y + titleBox.height / 2);
+await page.mouse.move(
+  titleBox.x + titleBox.width / 2,
+  titleBox.y + titleBox.height / 2
+);
 await page.mouse.down();
 // Move incrementally so dnd-kit picks up + over events fire.
 await page.mouse.move(titleBox.x + 4, titleBox.y - 10, { steps: 4 });
-await page.mouse.move(
-  eyebrowBox.x + eyebrowBox.width / 2,
-  eyebrowBox.y - 5,
-  { steps: 8 }
-);
+await page.mouse.move(eyebrowBox.x + eyebrowBox.width / 2, eyebrowBox.y - 5, {
+  steps: 8,
+});
 await page.waitForTimeout(300);
 
 await page.screenshot({

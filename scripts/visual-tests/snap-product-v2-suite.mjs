@@ -31,7 +31,9 @@ const token = await new SignJWT({ sub: 'dev-capture', role: 'admin' })
   .sign(secret);
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 await ctx.addCookies([
   { name: '_access_token', value: token, domain: 'localhost', path: '/' },
 ]);
@@ -162,9 +164,7 @@ await page
   .first()
   .click();
 await page.waitForTimeout(800);
-const mineReq = requests
-  .filter(r => r.url.includes('is_template=true'))
-  .pop();
+const mineReq = requests.filter(r => r.url.includes('is_template=true')).pop();
 log(
   '"Của tôi" filter adds is_public_template=false',
   mineReq?.url.includes('is_public_template=false') ?? false,
@@ -179,9 +179,7 @@ const categoryChip = page
 if (await categoryChip.count()) {
   await categoryChip.click();
   await page.waitForTimeout(800);
-  const catReq = requests
-    .filter(r => r.url.includes('is_template=true'))
-    .pop();
+  const catReq = requests.filter(r => r.url.includes('is_template=true')).pop();
   log(
     'Category chip "Thời trang" adds template_category=fashion',
     catReq?.url.includes('template_category=fashion') ?? false
@@ -199,9 +197,7 @@ await page.goto(`${base}/product/new/information`, {
 await page.waitForTimeout(1200);
 
 // Color section: click "+" to open dropdown, click first preset
-const colorAddBtn = page
-  .locator('button[aria-label="Add color"]')
-  .first();
+const colorAddBtn = page.locator('button[aria-label="Add color"]').first();
 log('Color "+" button present', (await colorAddBtn.count()) > 0);
 if (await colorAddBtn.count()) {
   await colorAddBtn.click();
@@ -234,9 +230,7 @@ const upArrows = await page
 log('Reorder up arrows present', upArrows >= 1);
 
 // Verify star (default toggle) buttons
-const starBtns = await page
-  .locator('button[aria-label*="default"]')
-  .count();
+const starBtns = await page.locator('button[aria-label*="default"]').count();
 log('Default-color star buttons present', starBtns >= 1);
 
 // Cert input
@@ -247,14 +241,10 @@ if (await certInput.count()) {
   await certInput.fill('ISO 22000:2018');
   await page.keyboard.press('Enter');
   await page.waitForTimeout(300);
-  const certName = await page
-    .locator('input[value="ISO 22000:2018"]')
-    .count();
+  const certName = await page.locator('input[value="ISO 22000:2018"]').count();
   log('Cert added with structured editor (name input)', certName > 0);
   // Check media_id + url inputs visible
-  const media = await page
-    .locator('input[placeholder*="media_id"]')
-    .count();
+  const media = await page.locator('input[placeholder*="media_id"]').count();
   const urlInput = await page
     .locator('input[placeholder*="URL verify"]')
     .count();
@@ -280,17 +270,31 @@ await page.goto(`${base}/product/e3e3e3e3-2000-0000-0000-000000000001/media`, {
 });
 await page.waitForTimeout(1500);
 
-const t1 = await page.locator('button').filter({ hasText: 'Hero & Lifestyle' }).count();
+const t1 = await page
+  .locator('button')
+  .filter({ hasText: 'Hero & Lifestyle' })
+  .count();
 const t2 = await page.locator('button').filter({ hasText: 'Theo màu' }).count();
-const t3 = await page.locator('button').filter({ hasText: /^Features$/ }).count();
-const t4 = await page.locator('button').filter({ hasText: 'Certifications' }).count();
+const t3 = await page
+  .locator('button')
+  .filter({ hasText: /^Features$/ })
+  .count();
+const t4 = await page
+  .locator('button')
+  .filter({ hasText: 'Certifications' })
+  .count();
 log('Tab "Hero & Lifestyle" present', t1 > 0);
 log('Tab "Theo màu" present', t2 > 0);
 log('Tab "Features" present', t3 > 0);
 log('Tab "Certifications" present', t4 > 0);
 
 // Click each tab and verify it doesn't crash
-for (const tabLabel of ['Theo màu', 'Features', 'Certifications', 'Hero & Lifestyle']) {
+for (const tabLabel of [
+  'Theo màu',
+  'Features',
+  'Certifications',
+  'Hero & Lifestyle',
+]) {
   const btn = page.locator('button').filter({ hasText: tabLabel }).first();
   if (await btn.count()) {
     await btn.click();
@@ -319,9 +323,7 @@ if (failed.length > 0) {
 }
 
 console.log('\n--- Network requests captured (BE wire-up) ---');
-const beRequests = requests.filter(r =>
-  r.url.includes('/api/rexer/products')
-);
+const beRequests = requests.filter(r => r.url.includes('/api/rexer/products'));
 beRequests.forEach(r => {
   const u = new URL(r.url);
   const resp = responses.get(`${r.method} ${r.url}`);

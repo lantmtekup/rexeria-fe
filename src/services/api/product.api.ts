@@ -71,7 +71,9 @@ const request = async <T>(
   });
   const text = await res.text();
   const parsed = (text ? JSON.parse(text) : null) as
-    ApiSuccessResponse<T> | ApiErrorResponse | null;
+    | ApiSuccessResponse<T>
+    | ApiErrorResponse
+    | null;
   if (!res.ok || !parsed || parsed.success === false) {
     throw new ProductApiError(
       parsed && parsed.success === false

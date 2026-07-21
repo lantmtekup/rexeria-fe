@@ -8,7 +8,9 @@ const base = 'http://localhost:3000';
 const url = `${base}/canvas-templates/e3e3e3e3-2000-0000-0000-000000000001`;
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 const page = await ctx.newPage();
 
 page.on('pageerror', e => console.log('[pageerror]', e.message));
@@ -37,8 +39,16 @@ const before = await page.evaluate(() => {
   };
 });
 console.log('=== BEFORE drag ===');
-console.log('eyebrow order=' + before.eyebrow.order, '| top=' + Math.round(before.eyebrow.rectTop), '| text=' + before.eyebrow.text);
-console.log('title   order=' + before.title.order, '| top=' + Math.round(before.title.rectTop), '| text=' + before.title.text);
+console.log(
+  'eyebrow order=' + before.eyebrow.order,
+  '| top=' + Math.round(before.eyebrow.rectTop),
+  '| text=' + before.eyebrow.text
+);
+console.log(
+  'title   order=' + before.title.order,
+  '| top=' + Math.round(before.title.rectTop),
+  '| text=' + before.title.text
+);
 
 // === Drag Title row above Eyebrow row in layers sidebar ===
 // New design: dedicated drag handle button (aria-label="Kéo để sắp xếp <label>").
@@ -61,11 +71,24 @@ console.log('\n=== DRAG ===');
 console.log('Tiêu đề row at y=' + Math.round(titleBox.y));
 console.log('Eyebrow row at y=' + Math.round(eyebrowBox.y));
 
-await page.mouse.move(titleBox.x + titleBox.width / 2, titleBox.y + titleBox.height / 2);
+await page.mouse.move(
+  titleBox.x + titleBox.width / 2,
+  titleBox.y + titleBox.height / 2
+);
 await page.mouse.down();
-await page.mouse.move(titleBox.x + titleBox.width / 2, titleBox.y + titleBox.height / 2 - 10, { steps: 4 });
-await page.mouse.move(eyebrowBox.x + eyebrowBox.width / 2, eyebrowBox.y + eyebrowBox.height / 2, { steps: 8 });
-await page.mouse.move(eyebrowBox.x + eyebrowBox.width / 2, eyebrowBox.y - 5, { steps: 6 });
+await page.mouse.move(
+  titleBox.x + titleBox.width / 2,
+  titleBox.y + titleBox.height / 2 - 10,
+  { steps: 4 }
+);
+await page.mouse.move(
+  eyebrowBox.x + eyebrowBox.width / 2,
+  eyebrowBox.y + eyebrowBox.height / 2,
+  { steps: 8 }
+);
+await page.mouse.move(eyebrowBox.x + eyebrowBox.width / 2, eyebrowBox.y - 5, {
+  steps: 6,
+});
 await page.waitForTimeout(200);
 await page.mouse.up();
 await page.waitForTimeout(800);
@@ -88,8 +111,16 @@ const after = await page.evaluate(() => {
   };
 });
 console.log('\n=== AFTER drag ===');
-console.log('eyebrow order=' + after.eyebrow.order, '| top=' + Math.round(after.eyebrow.rectTop), '| text=' + after.eyebrow.text);
-console.log('title   order=' + after.title.order, '| top=' + Math.round(after.title.rectTop), '| text=' + after.title.text);
+console.log(
+  'eyebrow order=' + after.eyebrow.order,
+  '| top=' + Math.round(after.eyebrow.rectTop),
+  '| text=' + after.eyebrow.text
+);
+console.log(
+  'title   order=' + after.title.order,
+  '| top=' + Math.round(after.title.rectTop),
+  '| text=' + after.title.text
+);
 
 // === SIDEBAR order ===
 const sidebarOrder = await page.evaluate(() => {
@@ -101,9 +132,16 @@ sidebarOrder.forEach((s, i) => console.log(`  ${i}. ${s}`));
 
 // === DIAGNOSTIC ===
 console.log('\n=== DIAGNOSTIC ===');
-const orderApplied = before.eyebrow.order !== after.eyebrow.order || before.title.order !== after.title.order;
-const visualSwap = (before.eyebrow.rectTop < before.title.rectTop) !== (after.eyebrow.rectTop < after.title.rectTop);
+const orderApplied =
+  before.eyebrow.order !== after.eyebrow.order ||
+  before.title.order !== after.title.order;
+const visualSwap =
+  before.eyebrow.rectTop < before.title.rectTop !==
+  after.eyebrow.rectTop < after.title.rectTop;
 console.log('CSS order changed?  ', orderApplied ? '✅ YES' : '❌ NO');
-console.log('Visual position swapped on canvas?', visualSwap ? '✅ YES' : '❌ NO');
+console.log(
+  'Visual position swapped on canvas?',
+  visualSwap ? '✅ YES' : '❌ NO'
+);
 
 await browser.close();

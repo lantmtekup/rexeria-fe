@@ -51,6 +51,7 @@ import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
 import { realEstateHeroStatElements } from './blocks/_registry/defs/realEstateHero';
 import { realEstateHighlightItemElements } from './blocks/_registry/defs/realEstateHighlights';
 import { coolHunterGalleryItemElements } from './blocks/_registry/defs/coolHunterGallery';
+import { coolHunterSectionProgressItemElements } from './blocks/_registry/defs/coolHunterSectionProgress';
 import { realEstateOverviewStatElements } from './blocks/_registry/defs/realEstateOverview';
 import { realEstateUtilityItemElements } from './blocks/_registry/defs/realEstateUtilities';
 import { realEstateVillaSlideElements } from './blocks/_registry/defs/realEstateVilla';
@@ -90,6 +91,7 @@ import {
   type RealEstateOverviewStat,
   type RealEstateHighlightItem,
   type CoolHunterGalleryItem,
+  type CoolHunterSectionProgressItem,
   type RealEstateVillaSlide,
   type RealEstateUtilityItem,
   type MintDiscoverTab,
@@ -633,6 +635,10 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'heading', label: 'Tiêu đề', icon: Type },
   ],
+  brutalist_text: [
+    BACKGROUND_LAYER,
+    { key: 'heading', label: 'Tiêu đề', icon: Type },
+  ],
   image_explosion: [
     BACKGROUND_LAYER,
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
@@ -753,6 +759,23 @@ export function elementsForType(
       },
     ];
   }
+  if (type === 'cool_hunter_section_progress') {
+    const raw = content?.sections;
+    const sections = Array.isArray(raw)
+      ? (raw as CoolHunterSectionProgressItem[]).filter(
+          s => s && typeof s === 'object'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...coolHunterSectionProgressItemElements(sections),
+      {
+        key: 'sections',
+        label: 'Thêm / quản lý section',
+        icon: ListChecks,
+      },
+    ];
+  }
   if (type === 'cool_hunter_hero') {
     // Cùng normalize với canvas/toolbar → layers không lệch số dòng tiêu đề.
     const lines = resolvePnjHeroTitleLines(
@@ -788,11 +811,7 @@ export function elementsForType(
           it => it && typeof it === 'object'
         )
       : [];
-    return [
-      BACKGROUND_LAYER,
-      ...coolHunterGalleryItemElements(items),
-      { key: 'label', label: 'Nhãn dọc', icon: Type, fieldType: 'text' },
-    ];
+    return [BACKGROUND_LAYER, ...coolHunterGalleryItemElements(items)];
   }
   if (type === 'pnj_variant') {
     const raw = content?.variants;

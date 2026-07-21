@@ -6,7 +6,7 @@
  * Số slot mặc định 3 như nguồn — không có list manager; expand theo
  * `content.items` trong LayersPanel (pattern realEstateHighlights).
  */
-import { Image as ImageIcon, Pilcrow, Tag } from 'lucide-react';
+import { Image as ImageIcon, Pilcrow } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { LayerElement } from '../../../LayersPanel';
@@ -38,7 +38,6 @@ const VI_ITEMS: CoolHunterGalleryItem[] = [
 
 const VI: CoolHunterGalleryContent = {
   items: VI_ITEMS,
-  label: '02 - Lake Wehapa',
 };
 
 const EN: CoolHunterGalleryContent = {
@@ -94,13 +93,5 @@ export const coolHunterGalleryDef: BlockDef<CoolHunterGalleryContent> = {
     import('../../CoolHunterGallery').then(m => m.CoolHunterGallery)
   ),
   defaultContent: { vi: VI, en: EN },
-  elements: [
-    ...coolHunterGalleryItemElements(VI_ITEMS),
-    {
-      key: 'label',
-      label: 'Nhãn dọc',
-      icon: Tag,
-      fieldType: 'text',
-    },
-  ],
+  elements: [...coolHunterGalleryItemElements(VI_ITEMS)],
 };

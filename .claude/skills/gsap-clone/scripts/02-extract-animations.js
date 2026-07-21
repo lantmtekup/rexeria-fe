@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Parse a GSAP bundle directory and extract animation configs.
  *
@@ -26,11 +28,15 @@ if (!dir) {
 // fall back to the script's own resolution chain.
 const cwdRequire = createRequire(path.join(process.cwd(), '__noop.js'));
 let parser = null;
-try { parser = cwdRequire('@babel/parser'); }
-catch {
-  try { parser = require('@babel/parser'); }
-  catch {
-    console.error('ℹ️  @babel/parser not found — using regex fallback. For higher accuracy:');
+try {
+  parser = cwdRequire('@babel/parser');
+} catch {
+  try {
+    parser = require('@babel/parser');
+  } catch {
+    console.error(
+      'ℹ️  @babel/parser not found — using regex fallback. For higher accuracy:'
+    );
     console.error('   pnpm add -D @babel/parser');
   }
 }
@@ -39,7 +45,7 @@ catch {
 
 function readAllJs(root) {
   const out = [];
-  const walk = (d) => {
+  const walk = d => {
     for (const e of fs.readdirSync(d, { withFileTypes: true })) {
       const p = path.join(d, e.name);
       if (e.isDirectory()) walk(p);
@@ -74,14 +80,14 @@ function astExtract(src, file) {
     return null;
   }
 
-  const lit = (node) => {
+  const lit = node => {
     if (!node) return undefined;
     if (node.type === 'StringLiteral') return node.value;
     if (node.type === 'NumericLiteral') return node.value;
     if (node.type === 'BooleanLiteral') return node.value;
     if (node.type === 'NullLiteral') return null;
     if (node.type === 'TemplateLiteral' && node.expressions.length === 0) {
-      return node.quasis.map((q) => q.value.cooked).join('');
+      return node.quasis.map(q => q.value.cooked).join('');
     }
     if (node.type === 'ArrayExpression') return node.elements.map(lit);
     if (node.type === 'ObjectExpression') {
@@ -99,7 +105,7 @@ function astExtract(src, file) {
     return undefined;
   };
 
-  const visit = (node) => {
+  const visit = node => {
     if (!node || typeof node !== 'object') return;
     if (node.type === 'CallExpression') {
       const c = node.callee;
@@ -177,12 +183,21 @@ function findBalanced(src, from, openCh, closeCh) {
   for (let i = from; i < src.length; i++) {
     const c = src[i];
     if (str) {
-      if (esc) { esc = false; continue; }
-      if (c === '\\') { esc = true; continue; }
+      if (esc) {
+        esc = false;
+        continue;
+      }
+      if (c === '\\') {
+        esc = true;
+        continue;
+      }
       if (c === str) str = null;
       continue;
     }
-    if (c === '"' || c === "'" || c === '`') { str = c; continue; }
+    if (c === '"' || c === "'" || c === '`') {
+      str = c;
+      continue;
+    }
     if (c === openCh) d++;
     else if (c === closeCh) {
       d--;
@@ -262,13 +277,21 @@ for (const f of files) {
 // Dedupe by JSON shape.
 const seen = new Map();
 for (const r of results) {
-  const key = JSON.stringify({ t: r.type, s: r.selector, v: r.vars, st: r.scrollTrigger });
+  const key = JSON.stringify({
+    t: r.type,
+    s: r.selector,
+    v: r.vars,
+    st: r.scrollTrigger,
+  });
   if (!seen.has(key)) seen.set(key, r);
 }
 
 const items = Array.from(seen.values());
 
 // Counts by type
-const counts = items.reduce((acc, r) => ((acc[r.type] = (acc[r.type] || 0) + 1), acc), {});
+const counts = items.reduce(
+  (acc, r) => ((acc[r.type] = (acc[r.type] || 0) + 1), acc),
+  {}
+);
 
 console.log(JSON.stringify({ count: items.length, counts, items }, null, 2));

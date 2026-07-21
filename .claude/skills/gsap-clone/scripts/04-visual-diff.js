@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Visual diff for GSAP clones — scrolls both pages in fixed-pixel steps
  * (matches GSAP's pixel-driven start/end positions better than %), shoots
@@ -22,27 +24,33 @@ const { createRequire } = require('node:module');
 // the skill folder. Falls back to the script's own require chain.
 const cwdRequire = createRequire(path.join(process.cwd(), '__noop.js'));
 function loadDep(name) {
-  try { return cwdRequire(name); } catch { return require(name); }
+  try {
+    return cwdRequire(name);
+  } catch {
+    return require(name);
+  }
 }
 
 let playwright, pixelmatch, PNG;
 try {
   playwright = loadDep('playwright');
   const pm = loadDep('pixelmatch');
-  pixelmatch = typeof pm === 'function' ? pm : (pm.default || pm);
+  pixelmatch = typeof pm === 'function' ? pm : pm.default || pm;
   PNG = loadDep('pngjs').PNG;
 } catch {
   console.error(
     'Missing deps. In the clone working dir, run:\n' +
       '  pnpm add -D playwright pixelmatch pngjs\n' +
-      '  npx playwright install chromium',
+      '  npx playwright install chromium'
   );
   process.exit(1);
 }
 
 const [ORIG, CLONE, OUT = './diff', STEP_PX = '200'] = process.argv.slice(2);
 if (!ORIG || !CLONE) {
-  console.error('usage: 04-visual-diff.js <ORIGINAL_URL> <CLONE_URL> [output_dir] [step_px]');
+  console.error(
+    'usage: 04-visual-diff.js <ORIGINAL_URL> <CLONE_URL> [output_dir] [step_px]'
+  );
   process.exit(1);
 }
 const STEP = Math.max(50, parseInt(STEP_PX, 10) || 200);
@@ -51,9 +59,9 @@ const VIEWPORT = { width: 1440, height: 900 };
 fs.mkdirSync(OUT, { recursive: true });
 
 async function shotAtY(page, y, p) {
-  await page.evaluate(async (yy) => {
+  await page.evaluate(async yy => {
     window.scrollTo({ top: yy, left: 0, behavior: 'auto' });
-    await new Promise((r) => setTimeout(r, 800));
+    await new Promise(r => setTimeout(r, 800));
   }, y);
   await page.screenshot({ path: p, fullPage: false });
 }
@@ -74,11 +82,14 @@ function diffPngs(aPath, bPath) {
         cb.data[i + 3] = b.data[j + 3];
       }
     }
-    b.data = cb.data; b.width = width; b.height = height;
+    b.data = cb.data;
+    b.width = width;
+    b.height = height;
   }
   const diff = new PNG({ width, height });
   const mismatched = pixelmatch(a.data, b.data, diff.data, width, height, {
-    threshold: 0.12, alpha: 0.35,
+    threshold: 0.12,
+    alpha: 0.35,
   });
   return { diff, similarity: 1 - mismatched / (width * height) };
 }
@@ -105,7 +116,9 @@ function diffPngs(aPath, bPath) {
   const checkpoints = [];
   for (let y = 0; y < H - VIEWPORT.height; y += STEP) checkpoints.push(y);
   checkpoints.push(H - VIEWPORT.height);
-  console.log(`→ ${checkpoints.length} checkpoints (every ${STEP}px, page ≈ ${H}px)`);
+  console.log(
+    `→ ${checkpoints.length} checkpoints (every ${STEP}px, page ≈ ${H}px)`
+  );
 
   await Promise.all([
     pageA.evaluate(() => window.scrollTo(0, 0)),
@@ -125,7 +138,8 @@ function diffPngs(aPath, bPath) {
     const { diff, similarity } = diffPngs(aPath, bPath);
     fs.writeFileSync(dPath, PNG.sync.write(diff));
     report.push({
-      i, y,
+      i,
+      y,
       similarity: Number(similarity.toFixed(4)),
       orig: path.basename(aPath),
       clone: path.basename(bPath),
@@ -137,18 +151,32 @@ function diffPngs(aPath, bPath) {
   const avg = report.reduce((s, r) => s + r.similarity, 0) / report.length;
   fs.writeFileSync(
     path.join(OUT, 'report.json'),
-    JSON.stringify({ original: ORIG, clone: CLONE, viewport: VIEWPORT, avgSimilarity: avg, checkpoints: report }, null, 2),
+    JSON.stringify(
+      {
+        original: ORIG,
+        clone: CLONE,
+        viewport: VIEWPORT,
+        avgSimilarity: avg,
+        checkpoints: report,
+      },
+      null,
+      2
+    )
   );
 
   // Self-contained HTML report
-  const rows = report.map(r => `
+  const rows = report
+    .map(
+      r => `
     <tr class="${r.similarity < 0.95 ? 'low' : ''}">
       <td>${r.i}</td><td>${r.y}px</td>
       <td>${(r.similarity * 100).toFixed(2)}%</td>
       <td><img src="${r.orig}" /></td>
       <td><img src="${r.clone}" /></td>
       <td><img src="${r.diff}" /></td>
-    </tr>`).join('');
+    </tr>`
+    )
+    .join('');
   const html = `<!doctype html><meta charset="utf-8"><title>visual diff</title>
 <style>
   body{font:14px/1.4 system-ui;margin:24px;background:#0f1115;color:#e5e7eb}
@@ -165,15 +193,26 @@ function diffPngs(aPath, bPath) {
 <tbody>${rows}</tbody></table>`;
   fs.writeFileSync(path.join(OUT, 'report.html'), html);
 
-  console.log(`\nAvg: ${(avg * 100).toFixed(2)}%   report → ${path.join(OUT, 'report.html')}`);
+  console.log(
+    `\nAvg: ${(avg * 100).toFixed(2)}%   report → ${path.join(OUT, 'report.html')}`
+  );
   const low = report.filter(r => r.similarity < 0.95);
   if (low.length) {
-    console.log(`Below 95%: ${low.length} checkpoint(s) — iterate on lowest first:`);
-    for (const r of low.sort((a, b) => a.similarity - b.similarity).slice(0, 5)) {
-      console.log(`  cp ${r.i} @ y=${r.y}px — ${(r.similarity * 100).toFixed(2)}%`);
+    console.log(
+      `Below 95%: ${low.length} checkpoint(s) — iterate on lowest first:`
+    );
+    for (const r of low
+      .sort((a, b) => a.similarity - b.similarity)
+      .slice(0, 5)) {
+      console.log(
+        `  cp ${r.i} @ y=${r.y}px — ${(r.similarity * 100).toFixed(2)}%`
+      );
     }
   } else {
     console.log('All ≥ 95% — ship it.');
   }
   await browser.close();
-})().catch((err) => { console.error('FATAL:', err); process.exit(1); });
+})().catch(err => {
+  console.error('FATAL:', err);
+  process.exit(1);
+});

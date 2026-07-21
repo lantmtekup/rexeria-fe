@@ -11,7 +11,7 @@ const V = {
   // bgFrom < fill: wrap (xám + mask) nhỏ ở tâm; scroll phase B scale lên
   // bgScale — cửa sổ ellipse nở, xám phủ viewport.
   mobile: {
-    bgFrom: 0.0,
+    bgFrom: 0.1,
     bgScale: 8.5,
     titleLeft: '5%',
     titleScale: 1,
@@ -20,7 +20,7 @@ const V = {
     scrollEnd: '+=175%',
   },
   desktop: {
-    bgFrom: 0.01,
+    bgFrom: 0.1,
     bgScale: 6,
     titleLeft: '7%',
     titleScale: 1.25,
@@ -91,6 +91,8 @@ export default function ProductSection() {
       gsap.set(product, {
         xPercent: -50,
         yPercent: -50,
+        scale: v.bgFrom,
+        transformOrigin: '50% 40%',
         visibility: 'visible',
       });
       gsap.set(titleRef.current, { xPercent: -50 });
@@ -107,7 +109,7 @@ export default function ProductSection() {
           scale: v.titleScale,
           transformOrigin: 'left center',
         });
-        gsap.set(product, { x: getProdX(), y: v.prodY });
+        gsap.set(product, { x: getProdX(), y: v.prodY, scale: 1 });
         gsap.set(panelFill, {
           scale: 1,
           transformOrigin: 'left top',
@@ -128,8 +130,9 @@ export default function ProductSection() {
         },
       });
 
-      // B: title hiện, wrap scale ở tâm — ellipse nở, xám phủ viewport
+      // B: title hiện, wrap + product scale ở tâm — ellipse nở, xám phủ viewport
       tl.fromTo(bgWrap, { scale: v.bgFrom }, { scale: v.bgScale, duration: 1 })
+        .fromTo(product, { scale: v.bgFrom }, { scale: 1, duration: 1 }, '<')
         .fromTo(
           titleRef.current,
           { autoAlpha: 0, y: -40 },

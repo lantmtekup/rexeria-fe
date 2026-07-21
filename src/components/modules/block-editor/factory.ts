@@ -13,6 +13,7 @@ import { alturaOlympusDef } from './blocks/_registry/defs/alturaOlympus';
 import { heroScrollDef } from './blocks/_registry/defs/heroScroll';
 import { scrollMattisDef } from './blocks/_registry/defs/scrollMattis';
 import { coolHunterHeroDef } from './blocks/_registry/defs/coolHunterHero';
+import { coolHunterSectionProgressDef } from './blocks/_registry/defs/coolHunterSectionProgress';
 import { coolHunterStoryDef } from './blocks/_registry/defs/coolHunterStory';
 import { coolHunterGalleryDef } from './blocks/_registry/defs/coolHunterGallery';
 import { coolHunterProductDef } from './blocks/_registry/defs/coolHunterProduct';
@@ -150,6 +151,7 @@ import type {
   WheelGalleryContent,
   HoverRevealListContent,
   HoverEqualizerHeadingContent,
+  BrutalistTextContent,
   ImageExplosionContent,
   StorySlidesContent,
   AccordionMediaContent,
@@ -1295,6 +1297,17 @@ const HOVER_EQ_HEADING_EN: HoverEqualizerHeadingContent = {
   heading: 'EXPERIENCE',
 };
 
+const BRUTALIST_TEXT_VI: BrutalistTextContent = {
+  heading: 'BRUTALISM',
+  echoCount: 3,
+  layerStep: 0.09,
+  textColor: '#FFFFFF',
+  bgColor: '#000000',
+};
+const BRUTALIST_TEXT_EN: BrutalistTextContent = {
+  ...BRUTALIST_TEXT_VI,
+};
+
 const IMAGE_EXPLOSION_VI: ImageExplosionContent = {
   eyebrow: 'CUỘN TỚI ĐÂY',
   title: 'Bùng nổ trải nghiệm',
@@ -2338,6 +2351,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   mint_variants: MINT_VARIANTS_VI,
   mint_discover: mintDiscoverDef.defaultContent.vi,
   cool_hunter_hero: coolHunterHeroDef.defaultContent.vi,
+  cool_hunter_section_progress: coolHunterSectionProgressDef.defaultContent.vi,
   cool_hunter_story: coolHunterStoryDef.defaultContent.vi,
   cool_hunter_gallery: coolHunterGalleryDef.defaultContent.vi,
   cool_hunter_product: coolHunterProductDef.defaultContent.vi,
@@ -2381,6 +2395,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   wheel_gallery: WHEEL_GALLERY_VI,
   hover_reveal_list: HOVER_REVEAL_LIST_VI,
   hover_equalizer_heading: HOVER_EQ_HEADING_VI,
+  brutalist_text: BRUTALIST_TEXT_VI,
   image_explosion: IMAGE_EXPLOSION_VI,
   story_slides: STORY_SLIDES_VI,
   accordion_media: ACCORDION_MEDIA_VI,
@@ -2510,6 +2525,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   mint_variants: MINT_VARIANTS_VI,
   mint_discover: mintDiscoverDef.defaultContent.en,
   cool_hunter_hero: coolHunterHeroDef.defaultContent.en,
+  cool_hunter_section_progress: coolHunterSectionProgressDef.defaultContent.en,
   cool_hunter_story: coolHunterStoryDef.defaultContent.en,
   cool_hunter_gallery: coolHunterGalleryDef.defaultContent.en,
   cool_hunter_product: coolHunterProductDef.defaultContent.en,
@@ -2553,6 +2569,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   wheel_gallery: WHEEL_GALLERY_EN,
   hover_reveal_list: HOVER_REVEAL_LIST_EN,
   hover_equalizer_heading: HOVER_EQ_HEADING_EN,
+  brutalist_text: BRUTALIST_TEXT_EN,
   image_explosion: IMAGE_EXPLOSION_EN,
   story_slides: STORY_SLIDES_EN,
   accordion_media: ACCORDION_MEDIA_EN,

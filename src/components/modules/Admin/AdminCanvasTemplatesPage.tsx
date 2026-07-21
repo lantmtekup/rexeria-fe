@@ -110,7 +110,12 @@ const TYPE_CHIP: Record<string, string> = {
 const LIMIT = 20;
 
 type PageAction =
-  'publish' | 'unpublish' | 'archive' | 'restore' | 'domain' | 'edit';
+  | 'publish'
+  | 'unpublish'
+  | 'archive'
+  | 'restore'
+  | 'domain'
+  | 'edit';
 
 export function AdminCanvasTemplatesPage() {
   const [items, setItems] = React.useState<Page[]>([]);
