@@ -13,12 +13,9 @@ const CONTENT: FramerRealEstate02OverviewContent = {
   subheadingLine1: 'Breathtaking city',
   subheadingLine2: 'panoramas from',
   subheadingLine3: 'every angle',
-  towerImageUrl:
-    'https://framerusercontent.com/images/A37cioJ3ofYv6kzgSAfbj5CE.jpg',
-  personImageUrl:
-    'https://framerusercontent.com/images/TBxkPdvAwCDACXhsD84eYgRu0.jpg',
-  panoramaImageUrl:
-    'https://framerusercontent.com/images/OGZdgtZkQM1LCgMuYF5OE3eQ1sU.jpg',
+  towerImageUrl: '/realestate02/overview-tower.jpg',
+  personImageUrl: '/realestate02/overview-person.jpg',
+  panoramaImageUrl: '/realestate02/overview-panorama.jpg',
 };
 
 const ELEMENTS: LayerElement[] = [

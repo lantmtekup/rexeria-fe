@@ -9,18 +9,15 @@ const CONTENT: FramerRealEstate02StoryContent = {
   slide1Label: 'AESTHETICS',
   slide1Body:
     'Standing out amidst the urban landscape, Eniteo becomes a tangible symbol of ambition and swift success for its residents. Yet, there is no trace of arrogance in its architecture. Like you, Eniteo is the flesh and blood of the city.',
-  slide1ImageUrl:
-    'https://framerusercontent.com/images/dZbpLH2jQKdcz8hCAhznj81Hng.jpg',
+  slide1ImageUrl: '/realestate02/story-slide1.jpg',
   slide2Label: 'DIVERSITY',
   slide2Body:
     "The ability to spend time together while still maintaining each person's private space is a core principle in the design",
-  slide2ImageUrl:
-    'https://framerusercontent.com/images/S4U6X6GFMTxlJd81VmfiHhxdoE.jpg',
+  slide2ImageUrl: '/realestate02/story-slide2.jpg',
   slide3Label: 'SECURITY',
   slide3Body:
     'Eniteo features a fully enclosed courtyard and a video surveillance system that connects with residents and provides reception around the clock.',
-  slide3ImageUrl:
-    'https://framerusercontent.com/images/PwzYCROy3d7vxv3n75K4cj2vFw.jpg',
+  slide3ImageUrl: '/realestate02/story-slide3.jpg',
 };
 
 const slideElements = (n: 1 | 2 | 3): LayerElement[] => {

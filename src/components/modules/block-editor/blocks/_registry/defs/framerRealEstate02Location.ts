@@ -7,12 +7,9 @@ import type { BlockDef } from '../types';
 
 const CONTENT: FramerRealEstate02LocationContent = {
   heading: 'LOCATION',
-  photo1Url:
-    'https://framerusercontent.com/images/vpATnKpHXX2VVDvSiNXqq1Brqw.jpg',
-  photo2Url:
-    'https://framerusercontent.com/images/PYtNBawJs0Dt1NGlkZLZWLNng.jpg',
-  photo3Url:
-    'https://framerusercontent.com/images/BbtoS0cV5jvSvM4oCt8dAHQsh4.jpg',
+  photo1Url: '/realestate02/location-1.jpg',
+  photo2Url: '/realestate02/location-2.jpg',
+  photo3Url: '/realestate02/location-3.jpg',
 };
 
 const ELEMENTS: LayerElement[] = [

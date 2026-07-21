@@ -6,8 +6,7 @@ import type { FramerRealEstate02MapContent } from '../../../types';
 import type { BlockDef } from '../types';
 
 const CONTENT: FramerRealEstate02MapContent = {
-  mapImageUrl:
-    'https://framerusercontent.com/images/jaMDXy1i1WrFxdAUm79z9rlccdk.svg',
+  mapImageUrl: '/realestate02/map.svg',
 };
 
 const ELEMENTS: LayerElement[] = [

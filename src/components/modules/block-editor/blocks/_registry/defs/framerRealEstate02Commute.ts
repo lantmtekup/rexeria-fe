@@ -16,8 +16,7 @@ const CONTENT: FramerRealEstate02CommuteContent = {
   row2Label: 'TO\nUNIVERSITY',
   row3Value: '20',
   row3Label: 'TO\nPARK',
-  carPhotoUrl:
-    'https://framerusercontent.com/images/cVLAGC5qo3OZO2hI331QKLNkFoo.png',
+  carPhotoUrl: '/realestate02/commute-car.png',
 };
 
 const rowElements = (n: 1 | 2 | 3): LayerElement[] => {

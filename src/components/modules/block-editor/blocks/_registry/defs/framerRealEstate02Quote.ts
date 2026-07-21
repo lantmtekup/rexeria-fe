@@ -10,10 +10,8 @@ const CONTENT: FramerRealEstate02QuoteContent = {
   role: 'Architect Partner at Kamen Studio',
   quote:
     '“The proportions and rhythm of the façades here exist not only in space, but also in time.”',
-  buildingImageUrl:
-    'https://framerusercontent.com/images/agHY1yVGdxbdMPy72NlNgywY8zw.jpg',
-  headshotImageUrl:
-    'https://framerusercontent.com/images/hZygnunA9hSwbeSnZWSDhD9WfFI.png',
+  buildingImageUrl: '/realestate02/quote-building.jpg',
+  headshotImageUrl: '/realestate02/quote-headshot.png',
 };
 
 const ELEMENTS: LayerElement[] = [

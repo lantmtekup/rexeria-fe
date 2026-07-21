@@ -8,8 +8,7 @@ import type { BlockDef } from '../types';
 const CONTENT: FramerRealEstate02ProductContent = {
   bodyText:
     "The landscape at here is anything but ostentatious, and the greenery is not confined by rigid boundaries. Here, bushes aren't trimmed with measuring sticks. Ferns are not banned from brushing against people's feet as they pass. Across the porches and courtyards of Eniteo, the landscaping has been recreated to feel effortlessly natural — and this is how they express their genuine respect for nature.",
-  photoUrl:
-    'https://framerusercontent.com/images/H9o7sklDyJQKV6saynxfX2NXeQ.jpg',
+  photoUrl: '/realestate02/product-photo.jpg',
 };
 
 const ELEMENTS: LayerElement[] = [
