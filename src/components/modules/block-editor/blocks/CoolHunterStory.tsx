@@ -5,7 +5,8 @@ import gsap from 'gsap';
 
 import { cn } from '@/lib/cn';
 
-import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useBlockMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   CoolHunterStoryContent,
@@ -79,19 +80,9 @@ export function CoolHunterStory({
   const p1Ref = React.useRef<HTMLDivElement>(null);
   const frameRef = React.useRef<HTMLDivElement>(null);
   const p2Ref = React.useRef<HTMLDivElement>(null);
-  const { hasRoot } = useLandingMotion();
   const isMobile = useContainerMobile(rootRef);
 
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const styleOf = (key: string) =>
     composeStyle(

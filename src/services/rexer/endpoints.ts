@@ -10,11 +10,13 @@ import { currentInsightLang } from './insightLang';
  * `/p/[slug]` cache 60s + tag 'public-page' (xem /api/revalidate-page).
  * Không await chặn flow editor; fail thì cache tự hết hạn sau 60s.
  */
-const revalidatePublicPages = (): void => {
+const revalidatePublicPages = (slug?: string): void => {
   if (typeof window === 'undefined') return;
   void fetch('/api/revalidate-page', {
     method: 'POST',
     credentials: 'include',
+    headers: slug ? { 'Content-Type': 'application/json' } : undefined,
+    body: slug ? JSON.stringify({ slug }) : undefined,
   }).catch(() => undefined);
 };
 import {
@@ -1756,12 +1758,16 @@ export const rexerApi = {
       rx<PublishPageValidateResponse>(`/pages/${id}/publish/validate`, {
         method: 'POST',
       }),
-    publish: async (id: string, body?: PublishPageRequest) => {
+    publish: async (
+      id: string,
+      body?: PublishPageRequest,
+      opts?: { slug?: string }
+    ) => {
       const res = await rx<PublishPageResponse>(`/pages/${id}/publish`, {
         method: 'POST',
         body: body ?? {},
       });
-      revalidatePublicPages();
+      revalidatePublicPages(opts?.slug);
       return res;
     },
     unpublish: async (id: string) => {

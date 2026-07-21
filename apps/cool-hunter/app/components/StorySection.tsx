@@ -115,6 +115,7 @@ export default function StorySection() {
   return (
     <section
       ref={sectionRef}
+      data-section='welcome'
       className='relative h-svh overflow-hidden bg-white'
     >
       <div
@@ -139,12 +140,6 @@ export default function StorySection() {
       >
         {TEXT_2}
       </div>
-      <span
-        className='absolute top-1/2 right-6 hidden -translate-y-1/2 font-sans text-[11px] tracking-[0.2em] text-neutral-800 uppercase md:block'
-        style={{ writingMode: 'vertical-rl' }}
-      >
-        01 - Welcome
-      </span>
     </section>
   );
 }

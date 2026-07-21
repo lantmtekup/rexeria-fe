@@ -18,6 +18,7 @@ import SplitType from 'split-type';
 import { cn } from '@/lib/cn';
 
 import { useLandingMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import { isDeviceFrameHost, resolveDrawerPortalHost } from '../previewPortal';
 import type {
   BlockBackground,
@@ -650,7 +651,7 @@ export function MintV2Works({
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
   const isMobile = useContainerMobile(rootRef);
-  const { hasRoot, scroller, requestRefresh } = useLandingMotion();
+  const { scroller, requestRefresh } = useLandingMotion();
   const cards = React.useMemo(
     () => (content.cards ?? []).map(normalizeWorkCard),
     [content.cards]
@@ -658,16 +659,7 @@ export function MintV2Works({
   const [active, setActive] = React.useState<LightItem | null>(null);
   const [portalHost, setPortalHost] = React.useState<HTMLElement | null>(null);
 
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   React.useLayoutEffect(() => {
     setPortalHost(resolveDrawerPortalHost(rootRef.current));

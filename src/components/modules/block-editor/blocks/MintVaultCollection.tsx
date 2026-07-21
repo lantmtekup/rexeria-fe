@@ -17,6 +17,7 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 
 import { useLandingMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -169,22 +170,13 @@ export function MintVaultCollection({
   const cardRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
   const pointer = React.useRef({ x: 0, y: 0 });
   const isMobile = useContainerMobile(rootRef);
-  const { hasRoot, scroller, requestRefresh } = useLandingMotion();
+  const { scroller, requestRefresh } = useLandingMotion();
   const coins = Array.isArray(content.coins) ? content.coins : [];
   const [active, setActive] = React.useState(0);
   const [selected, setSelected] = React.useState<MintVaultCoin | null>(null);
 
   // Canvas editor (author) vs PreviewMode/​/p (production).
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false); // /p công khai — không có LandingMotion root
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const styleOf = (key: string) =>
     composeStyle(

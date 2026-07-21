@@ -4,7 +4,8 @@ import * as React from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useBlockMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -197,20 +198,10 @@ export function ReadymagCaseSection({
   const wordRefs = React.useRef<Array<HTMLHeadingElement | null>>([]);
 
   const [activeIndex, setActiveIndex] = React.useState(0);
-  const { hasRoot } = useLandingMotion();
 
   // Editor canvas → lưới editable tất cả cases (giống ScrollMattis).
   // Sticky+scroll hide inactive text nên không edit được trên canvas.
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!outerRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(outerRef);
 
   React.useEffect(() => {
     imageRefs.current.length = caseCount;

@@ -114,11 +114,82 @@ React.useEffect(() => {
 
 ---
 
+## 3b. Motion Attributes (T1/T2) — cách MẶC ĐỊNH cho animation block mới
+
+Thay vì viết GSAP tay, block khai báo animation bằng `data-motion-*` attribute
+trong JSX + gọi hook 1 dòng. 3 tầng:
+
+- **T1**: gắn 1 effect có sẵn lên element + chỉnh timing bằng attribute.
+- **T2**: choreograph nhiều element bằng `data-motion-group` + `data-motion-delay`.
+- **T3**: case đặc biệt (pin, frame-scrub, physics…) → vẫn `useBlockMotion` (R1–R6).
+
+```tsx
+import { useMotionAttributes } from '../motion/useMotionAttributes';
+
+useMotionAttributes(rootRef, [items.length]); // deps khi DOM list đổi
+
+<h2 data-motion='char-reveal'>…</h2>
+
+<li data-motion-group='' data-motion-start='top 80%'>
+  <div data-motion='fade-up' data-motion-distance='30' data-motion-duration='0.9' />
+  <p   data-motion='fade-up' data-motion-delay='0.15' />
+  <span data-motion='scale-pop' data-motion-delay='0.3' />
+</li>
+```
+
+Hook tự lo: scroller + `invalidateOnRefresh` (R3), refresh (R4), cleanup +
+revert SplitText (R6), **skip trên edit-canvas** (rest state ổn định cho
+editor) và `prefers-reduced-motion`.
+
+### Effect library (`motion/motionLibrary.ts`)
+
+| id | đối tượng | mô tả (defaults) |
+|---|---|---|
+| `fade-in` | any | opacity 0→1 (0.6s power2.out) |
+| `fade-up` / `fade-down` | any | y ±24px + fade (override `data-motion-distance`) |
+| `slide-left` / `slide-right` | any | x ±32px + fade |
+| `scale-in` | any | scale .92→1 |
+| `zoom-in` | ảnh | scale .6→1 (0.8s) |
+| `blur-in` | ảnh/chữ | blur 12→0 |
+| `char-reveal` | chữ | SplitText chars+mask, yPercent 110→0 (1.6s power3.out, stagger .06) |
+| `word-reveal` / `line-reveal` | chữ | như trên theo words/lines |
+| `line-draw` | khung | scaleY 0→1, origin top — mặc định trigger **scrub** |
+| `scale-pop` | khung/any | scale 0→1 back.out(2) (0.4s) |
+
+### Attribute vocabulary
+
+| attribute | giá trị | ghi chú |
+|---|---|---|
+| `data-motion` | effect id | bắt buộc; id sai → warn (dev) + bỏ qua |
+| `data-motion-duration` / `-delay` / `-stagger` | giây | default theo effect |
+| `data-motion-ease` | GSAP ease string | `'back.out(2)'` hợp lệ |
+| `data-motion-distance` | px | effect có `distanceVar` (fade-up/down, slide) |
+| `data-motion-origin` | transform-origin | |
+| `data-motion-trigger` | `in-view` (default) / `scrub` / `load` | hover/click: đợt sau |
+| `data-motion-start` / `-end` | ScrollTrigger start/end | default `top 85%` / `bottom top` |
+| `data-motion-scrub` | số = smoothing | default `true` (scrub) |
+| `data-motion-once` | `"true"` | default `play none none reverse` |
+| `data-motion-trigger-target` | `self` (default) / `root` / CSS selector trong root | |
+| `data-motion-end-target` | như trên | endTrigger cho scrub |
+| `data-motion-group` | (đặt trên container) | con `in-view` bên trong dùng chung 1 ScrollTrigger trên container; container nhận `-start`/`-once`; con offset bằng `-delay`. Không hỗ trợ group lồng nhau (lấy `closest()`). |
+
+### Rule
+
+- Block dùng motion attributes thì **không** đồng thời `useBlockMotion` cho cùng
+  element (2 driver GSAP đè nhau). Cùng block có thể mix: attribute cho phần
+  thường + `useBlockMotion` cho phần đặc biệt, miễn khác element.
+- Không gắn track Motion (System B — sidebar Motion tab) lên element đã có
+  `data-motion` — cũng double-drive. (Chặn trong UI là follow-up.)
+- Block pilot tham khảo: `blocks/MintV2Process.tsx` (char-reveal + line-draw
+  scrub + per-step group choreography — tái tạo 100% bản GSAP tay cũ).
+
+---
+
 ## 4. Thêm 1 block mới (checklist)
 
 1. `types.ts`: thêm `BlockType` + `interface XxxContent` + vào union `BlockContent` + `BLOCK_TYPE_META`.
 2. `factory.ts`: default content (VI/EN).
-3. `blocks/Xxx.tsx`: renderer — `@container` root + `data-element-key` cho element + `useBlockMotion` cho animation (R1–R6).
+3. `blocks/Xxx.tsx`: renderer — `@container` root + `data-element-key` cho element + animation bằng **motion attributes** (mục 3b, mặc định) hoặc `useBlockMotion` cho case đặc biệt (R1–R6).
 4. `blocks/renderBlock.tsx`: `case 'xxx'` → `<Xxx content=... styles=... activeKey=.../>`.
 5. `AddBlockDialog.tsx`: thêm vào `ORDERED_TYPES`.
 6. `LayersPanel.tsx`: `ELEMENTS_BY_TYPE['xxx']` (khai báo lớp để chọn/sửa inline). Element mảng (vd list) → thêm kind + control trong `ElementToolbar.tsx`.
@@ -141,6 +212,7 @@ React.useEffect(() => {
 ## 6. Tham chiếu
 
 - Nền: `src/components/modules/block-editor/motion/LandingMotion.tsx`
+- Motion attributes: `motion/motionLibrary.ts` + `motion/useMotionAttributes.ts` (mục 3b)
 - Hook container-mobile: `src/components/modules/block-editor/blocks/useContainerMobile.ts`
 - Block mẫu (đơn giản): `blocks/MintDetails.tsx`, `MintSku.tsx`, `MintVariants.tsx`, `MintDiscover.tsx`
 - Block mẫu (phức tạp, canvas): `blocks/MintHero.tsx`

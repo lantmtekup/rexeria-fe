@@ -1,11 +1,18 @@
 import type { Metadata } from 'next';
-import { Fraunces } from 'next/font/google';
+import { Fraunces, Inter } from 'next/font/google';
 import './globals.css';
 
 const display = Fraunces({
   subsets: ['latin'],
   weight: ['400', '500', '600'],
   variable: '--font-display',
+  display: 'swap',
+});
+
+const sans = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-inter',
   display: 'swap',
 });
 
@@ -18,7 +25,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang='en' className={display.variable} suppressHydrationWarning>
+    <html
+      lang='en'
+      className={`${display.variable} ${sans.variable}`}
+      suppressHydrationWarning
+    >
       <body suppressHydrationWarning>{children}</body>
     </html>
   );

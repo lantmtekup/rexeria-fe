@@ -14,13 +14,14 @@ import * as React from 'react';
 import gsap from 'gsap';
 import SplitType from 'split-type';
 
-import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useBlockMotion } from '../motion/LandingMotion';
 import {
   DELVAUX_BG,
   DELVAUX_FONT_BODY,
   DELVAUX_FONT_CSS,
   DELVAUX_FONT_HEADING,
 } from './delvauxTheme';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   DelvauxDetailsContent,
@@ -55,18 +56,7 @@ export function DelvauxDetails({
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
   const splitsRef = React.useRef<SplitType[]>([]);
-  const { hasRoot } = useLandingMotion();
-
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const styleOf = (key: string) =>
     composeStyle(

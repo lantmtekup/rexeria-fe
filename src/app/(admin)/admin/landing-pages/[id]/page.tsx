@@ -230,6 +230,7 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
         pageStatus={pageStatus}
         pinnedVersionId={pinnedVersionId}
         onPageSlugChange={setPageSlug}
+        onPinnedVersionChange={setPinnedVersionId}
       />
     </div>
   );

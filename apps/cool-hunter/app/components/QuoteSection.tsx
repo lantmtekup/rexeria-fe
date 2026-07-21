@@ -17,11 +17,13 @@ export default function QuoteSection() {
     mm.add(MOTION_CONDITIONS, context => {
       const { reduce } = context.conditions as MotionConditions;
 
-      gsap.set(frameRef.current, { xPercent: 100, visibility: 'visible' });
+      // Ảnh fade in; dải màu wipe width — chữ nằm trong dải, đứng yên bị cắt.
+      gsap.set(frameRef.current, { opacity: 0 });
+      gsap.set(veilRef.current, { width: '100%' });
 
       if (reduce) {
-        gsap.set(frameRef.current, { xPercent: 0 });
-        gsap.set(veilRef.current, { opacity: 0 });
+        gsap.set(frameRef.current, { opacity: 1 });
+        gsap.set(veilRef.current, { width: '0%' });
         return;
       }
 
@@ -30,18 +32,16 @@ export default function QuoteSection() {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: 'top top',
-          end: '+=165%',
-          scrub: 0.6,
+          end: '+=90%',
+          scrub: 0.45,
           pin: true,
         },
       });
 
-      // Ảnh kéo từ phải qua trái phủ dần màn hình; lớp mờ (màu nền) nhạt
-      // dần để ảnh rõ lên khi đã phủ gần hết.
-      tl.to(frameRef.current, { xPercent: 0, duration: 1.2 }).to(
-        veilRef.current,
-        { opacity: 0, duration: 0.6 },
-        '-=0.5'
+      tl.to(veilRef.current, { width: '0%', duration: 1 }, 0).to(
+        frameRef.current,
+        { opacity: 1, duration: 1 },
+        0
       );
     });
 
@@ -51,32 +51,28 @@ export default function QuoteSection() {
   return (
     <section
       ref={sectionRef}
+      data-section='interior-design'
       className='relative h-svh overflow-hidden bg-[#e8e3d8]'
     >
-      <div className='absolute inset-0 flex items-center justify-center px-[7%]'>
-        <h2 className='max-w-[86vw] text-center font-(family-name:--font-display) text-2xl leading-snug text-neutral-900 md:max-w-[62vw] md:text-6xl'>
-          {QUOTE}
-        </h2>
-      </div>
-      <div ref={frameRef} className='invisible absolute inset-0'>
+      <div ref={frameRef} className='absolute inset-0 opacity-0'>
         <img
           src='/section-6.png'
           alt='A stone patio with charred-wood chairs, a round table and a built-in bench'
           className='h-full w-full object-cover'
         />
-        {/* Lớp mờ màu nền phủ trên ảnh, nhạt dần khi scroll */}
-        <div
-          ref={veilRef}
-          className='absolute inset-0 bg-[#e8e3d8] opacity-80'
-        />
       </div>
-      <span
-        className='absolute top-1/2 right-6 z-10 hidden -translate-y-1/2 font-sans text-[11px] tracking-[0.2em] text-neutral-800 uppercase md:block'
-        style={{ writingMode: 'vertical-rl' }}
+
+      {/* Dải màu wipe — chữ w-screen đứng yên, overflow cắt theo mép phải */}
+      <div
+        ref={veilRef}
+        className='absolute inset-y-0 left-0 z-10 w-full overflow-hidden bg-[#e8e3d8]'
       >
-        <span className='mb-3 inline-block h-10 w-px bg-neutral-800' />
-        04 - Interior Design
-      </span>
+        <div className='flex h-full w-screen items-center justify-center px-[7%]'>
+          <h2 className='max-w-[86vw] text-center font-(family-name:--font-display) text-2xl leading-snug text-neutral-900 md:max-w-[62vw] md:text-6xl'>
+            {QUOTE}
+          </h2>
+        </div>
+      </div>
     </section>
   );
 }

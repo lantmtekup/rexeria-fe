@@ -5,7 +5,8 @@ import gsap from 'gsap';
 
 import { cn } from '@/lib/cn';
 
-import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useBlockMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type { RealEstateVillaContent, RealEstateVillaSlide } from '../types';
 import type { BlockRenderProps } from './_registry/types';
 import {
@@ -40,22 +41,12 @@ export function RealEstateVilla({
   className,
 }: BlockRenderProps<RealEstateVillaContent>) {
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const { hasRoot } = useLandingMotion();
 
   const slides = Array.isArray(content.slides) ? content.slides : [];
   const count = slides.length;
   const [index, setIndex] = React.useState(0);
 
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const go = React.useCallback(
     (next: number) => {

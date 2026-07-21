@@ -37,6 +37,7 @@ import {
   selectableClass,
 } from './applyStyle';
 import { useLandingMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import { useContainerMobile } from './useContainerMobile';
 import {
   HotspotDrawer,
@@ -94,16 +95,7 @@ export function PnjHero({
   const { hasRoot, scroller, requestRefresh } = useLandingMotion();
 
   // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play (cũng có scroller).
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!sectionRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(sectionRef);
 
   const [activeTab, setActiveTab] = React.useState<string | null>(null);
   const [reduceMotion, setReduceMotion] = React.useState(false);

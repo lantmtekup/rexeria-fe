@@ -21,7 +21,7 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import gsap from 'gsap';
 
-import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useBlockMotion } from '../motion/LandingMotion';
 import { isDeviceFrameHost, resolveDrawerPortalHost } from '../previewPortal';
 import {
   DELVAUX_BG,
@@ -30,6 +30,7 @@ import {
   DELVAUX_FONT_HEADING,
 } from './delvauxTheme';
 import { useDrawerScrollLock } from './PnjHeroHotspots';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   DelvauxVariantContent,
@@ -118,18 +119,7 @@ export function DelvauxVariant({
   const rootRef = React.useRef<HTMLElement>(null);
   const popupRef = React.useRef<HTMLDivElement>(null);
   const cursorRef = React.useRef<HTMLDivElement>(null);
-  const { hasRoot } = useLandingMotion();
-
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const styleOf = (key: string) =>
     composeStyle(

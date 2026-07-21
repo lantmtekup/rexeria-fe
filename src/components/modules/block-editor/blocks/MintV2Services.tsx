@@ -14,7 +14,8 @@ import SplitType from 'split-type';
 
 import { cn } from '@/lib/cn';
 
-import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useBlockMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -51,20 +52,9 @@ export function MintV2Services({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
-  const { hasRoot } = useLandingMotion();
   const items = Array.isArray(content.items) ? content.items : EMPTY_ITEMS;
   const [activeId, setActiveId] = React.useState(items[0]?.key ?? '');
-  const [isCanvas, setIsCanvas] = React.useState(true);
-
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   // Sync preview panel when Layers/canvas selects an item field.
   React.useEffect(() => {

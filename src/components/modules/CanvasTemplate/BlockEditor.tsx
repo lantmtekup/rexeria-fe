@@ -119,6 +119,8 @@ interface BlockEditorProps {
   /** Callback khi PublishDialog đặt slug mới — để route page reload state.
    *  Optional (no-op nếu không cần refresh). */
   onPageSlugChange?: (slug: string) => void;
+  /** Callback sau republish — cập nhật pinnedVersionId ở route cha. */
+  onPinnedVersionChange?: (versionId: string) => void;
 }
 
 // BE `/canvas-templates/{id}/canvas` endpoint is currently slow (~10s even
@@ -220,6 +222,7 @@ export function BlockEditor({
   pageStatus,
   pinnedVersionId,
   onPageSlugChange,
+  onPinnedVersionChange,
 }: BlockEditorProps) {
   const router = useRouter();
   // Block-direct: sửa thẳng 1 saved block, không qua canvas-template.
@@ -1025,12 +1028,17 @@ export function BlockEditor({
     }
     setSavingVersion(true);
     try {
-      await autosave.flush({ silent: true });
+      // BE createVersion BỎ QUA canvas_blueprint trong body — luôn snapshot từ
+      // templates.draft_canvas_blueprint (be-spec-interactive-ad §0.1). Phải
+      // force-sync draft từ canvas.blocks hiện tại trước khi POST /versions,
+      // kể cả khi autosave chưa dirty (flush thường skip nếu dirty=false).
+      await autosave.flush({ silent: true, force: true });
 
       const payload = serializeCanvas(
         canvas.blocks,
         canvas.activeId ?? undefined,
-        publishState.publish
+        publishState.publish,
+        transition
       );
 
       // Resolve next version string từ HEAD của template (max version_no).
@@ -1116,9 +1124,11 @@ export function BlockEditor({
             );
             return;
           }
-          await rexerApi.pages.publish(pageId, {
-            template_version_id: committed.id,
-          });
+          await rexerApi.pages.publish(
+            pageId,
+            { template_version_id: committed.id },
+            { slug: pageSlug }
+          );
         } else {
           await rexerApi.pages.unpublish(pageId);
         }
@@ -1143,6 +1153,53 @@ export function BlockEditor({
             `BE publish sync thất bại: ${rxErrorMessage(err)} — trạng thái FE đã đổi, refresh để verify`
           );
         }
+      }
+    }
+  };
+
+  const handleRepublish = async () => {
+    if (!template || !pageId || !publishState.publish?.published) return;
+
+    // Luôn commit canvas hiện tại → version mới trước khi republish (giống
+    // publish lần đầu). Nếu chỉ repoint HEAD cũ mà editor còn draft chưa
+    // commit → public vẫn render snapshot cũ.
+    const committed = await handleSaveVersion();
+    if (!committed) {
+      toast.error(
+        'Chưa xuất bản lại được: commit version mới thất bại (xem lỗi phía trên).',
+        { duration: 8000 }
+      );
+      return;
+    }
+
+    try {
+      await rexerApi.pages.publish(
+        pageId,
+        { template_version_id: committed.id },
+        { slug: pageSlug }
+      );
+      publishState.setPublish({
+        ...publishState.publish,
+        publishedAt: new Date().toISOString(),
+      });
+      onPinnedVersionChange?.(committed.id);
+      toast.success('Đã xuất bản lại — trang public hiển thị bản mới nhất');
+    } catch (err) {
+      if (
+        err instanceof RxApiError &&
+        err.code === 'ERR_PAGE_PUBLISH_NOT_READY'
+      ) {
+        const reasons =
+          (err.details as { reasons?: string[] } | undefined)?.reasons ?? [];
+        toast.error('Page chưa sẵn sàng publish', {
+          description:
+            reasons.length > 0 ? reasons.slice(0, 5).join(' · ') : err.message,
+          duration: 8000,
+        });
+      } else {
+        toast.error(
+          `Xuất bản lại thất bại: ${rxErrorMessage(err)} — refresh để verify`
+        );
       }
     }
   };
@@ -1555,6 +1612,7 @@ export function BlockEditor({
         onPageSlugChange={onPageSlugChange}
         publish={publishState.publish}
         onTogglePublish={handlePublishToggle}
+        onRepublish={pageId ? handleRepublish : undefined}
         onRotateToken={handleRotateShareToken}
       />
 

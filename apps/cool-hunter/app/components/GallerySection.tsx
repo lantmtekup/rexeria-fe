@@ -157,17 +157,19 @@ export default function GallerySection() {
   return (
     <section
       ref={sectionRef}
+      data-section='lake-wehapa'
       className='relative h-svh overflow-hidden bg-white'
     >
       <div
         ref={trackRef}
         className='absolute top-[24%] left-0 flex h-[46vh] w-max items-center gap-[8vw] md:top-[21%] md:h-[58vh] md:gap-[4vw]'
       >
-        {ITEMS.map(item => (
+        {ITEMS.map((item, i) => (
           <div key={item.src} className='contents'>
             <div
               data-gallery-img
-              className='h-full w-[78vw] flex-none overflow-hidden md:w-[30vw]'
+              className='relative h-full w-[78vw] flex-none overflow-hidden md:w-[30vw]'
+              style={{ zIndex: ITEMS.length - i }}
             >
               <img
                 src={item.src}
@@ -184,12 +186,6 @@ export default function GallerySection() {
           </div>
         ))}
       </div>
-      <span
-        className='absolute top-1/2 right-6 z-10 hidden -translate-y-1/2 font-sans text-[11px] tracking-[0.2em] text-neutral-800 uppercase md:block'
-        style={{ writingMode: 'vertical-rl' }}
-      >
-        02 - Lake Wehapa
-      </span>
     </section>
   );
 }
