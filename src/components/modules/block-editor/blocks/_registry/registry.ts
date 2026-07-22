@@ -8,6 +8,7 @@
  * PoC: mới migrate `framer_yume_hero`. ~80 block còn lại vẫn chạy đường cũ.
  */
 import type { BlockType } from '../../types';
+import { brutalistTextDef } from './defs/brutalistText';
 import { brightedgeHeroDef } from './defs/brightedgeHero';
 import { delvauxDetailsDef } from './defs/delvauxDetails';
 import { delvauxHeaderDef } from './defs/delvauxHeader';
@@ -91,6 +92,13 @@ import { springsHeroDef } from './defs/springsHero';
 import { springsInteriorsDef } from './defs/springsInteriors';
 import { springsIntroDef } from './defs/springsIntro';
 import { springsMapDef } from './defs/springsMap';
+import { realEstateHeroDef } from './defs/realEstateHero';
+import { realEstateInfoDef } from './defs/realEstateInfo';
+import { realEstateLocationDef } from './defs/realEstateLocation';
+import { realEstateHighlightsDef } from './defs/realEstateHighlights';
+import { realEstateOverviewDef } from './defs/realEstateOverview';
+import { realEstateUtilitiesDef } from './defs/realEstateUtilities';
+import { realEstateVillaDef } from './defs/realEstateVilla';
 import { springsNaturePlaceDef } from './defs/springsNaturePlace';
 import { springsResidencesDef } from './defs/springsResidences';
 import { springsWellnessDef } from './defs/springsWellness';
@@ -107,9 +115,23 @@ import { mintDiscoverDef } from './defs/mintDiscover';
 import { mintV2ProcessDef } from './defs/mintV2Process';
 import { mintV2ServicesDef } from './defs/mintV2Services';
 import { mintV2WorksDef } from './defs/mintV2Works';
+import { coolHunterHeroDef } from './defs/coolHunterHero';
+import { coolHunterSectionProgressDef } from './defs/coolHunterSectionProgress';
+import { coolHunterStoryDef } from './defs/coolHunterStory';
+import { coolHunterGalleryDef } from './defs/coolHunterGallery';
+import { coolHunterProductDef } from './defs/coolHunterProduct';
+import { coolHunterQuoteDef } from './defs/coolHunterQuote';
+import { coolHunterFooterDef } from './defs/coolHunterFooter';
 import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
+  cool_hunter_hero: coolHunterHeroDef as BlockDef,
+  cool_hunter_section_progress: coolHunterSectionProgressDef as BlockDef,
+  cool_hunter_story: coolHunterStoryDef as BlockDef,
+  cool_hunter_gallery: coolHunterGalleryDef as BlockDef,
+  cool_hunter_product: coolHunterProductDef as BlockDef,
+  cool_hunter_quote: coolHunterQuoteDef as BlockDef,
+  cool_hunter_footer: coolHunterFooterDef as BlockDef,
   pnj_hero: pnjHeroDef as BlockDef,
   pnj_details: pnjDetailsDef as BlockDef,
   pnj_variant: pnjVariantDef as BlockDef,
@@ -194,6 +216,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   protection_scrollytelling: protectionScrollytellingDef as BlockDef,
   interactive_ad_widget: interactiveAdWidgetDef as BlockDef,
   brightedge_hero: brightedgeHeroDef as BlockDef,
+  brutalist_text: brutalistTextDef as BlockDef,
   springs_header: springsHeaderDef as BlockDef,
   springs_gallery: springsGalleryDef as BlockDef,
   springs_hero: springsHeroDef as BlockDef,
@@ -201,6 +224,13 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   springs_wellness: springsWellnessDef as BlockDef,
   springs_nature_place: springsNaturePlaceDef as BlockDef,
   springs_map: springsMapDef as BlockDef,
+  real_estate_location: realEstateLocationDef as BlockDef,
+  real_estate_hero: realEstateHeroDef as BlockDef,
+  real_estate_info: realEstateInfoDef as BlockDef,
+  real_estate_overview: realEstateOverviewDef as BlockDef,
+  real_estate_highlights: realEstateHighlightsDef as BlockDef,
+  real_estate_villa: realEstateVillaDef as BlockDef,
+  real_estate_utilities: realEstateUtilitiesDef as BlockDef,
   springs_design: springsDesignDef as BlockDef,
   springs_residences: springsResidencesDef as BlockDef,
   springs_interiors: springsInteriorsDef as BlockDef,

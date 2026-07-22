@@ -44,7 +44,9 @@ const aside = page.locator('aside[aria-label]').first();
 // Scope to the sticky <main> top bar so we don't also match the drawer's
 // internal close button (also "Đóng menu").
 const toggle = page
-  .locator('main button[aria-label="Mở menu"], main button[aria-label="Đóng menu"]')
+  .locator(
+    'main button[aria-label="Mở menu"], main button[aria-label="Đóng menu"]'
+  )
   .first();
 const backdrop = page.locator('div[aria-hidden].fixed.inset-0.z-40').first();
 
@@ -141,11 +143,7 @@ try {
   );
   if (afterDrawerCloseX < 0)
     note('PASS', `Drawer X closed it (left=${afterDrawerCloseX})`);
-  else
-    note(
-      'FAIL',
-      `Drawer X did not close (left=${afterDrawerCloseX})`
-    );
+  else note('FAIL', `Drawer X did not close (left=${afterDrawerCloseX})`);
 
   await page.screenshot({ path: join(OUT, 'mobile/drawer-closed.png') });
 } finally {

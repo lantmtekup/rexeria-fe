@@ -3,19 +3,13 @@
  * `recon-flat-white-our-process` (selector `[data-framer-name="Our Process"]`,
  * URL https://flat-white.framer.website/).
  *
- * Animation spec được port sang GSAP R1–R6 (qua `useBlockMotion` trong
- * component):
- *   - Pattern A: label + headline word-by-word reveal
- *       (300ms / 100ms stagger / ease 'power3.out' ≈ Framer
- *        `cubic-bezier(0.22, 1, 0.36, 1)`).
- *   - Pattern B: step title + body word-by-word reveal
- *       (500ms / 10ms stagger / ease 'power2.inOut' ≈ Framer
- *        `cubic-bezier(0.44, 0, 0.56, 1)`), delayChildren 0.2s.
- *   - Pattern C: SVG overlay path draw (pathLength 0→1 trên 3s, ease
- *       'power2.out').
+ * Motion (hybrid Attribute System + T3):
+ *   - Label / headline: `word-reveal`
+ *   - Hairline: `line-draw` axis=x
+ *   - Steps: outer `parallax` + inner `fade-up`
+ *   - SVG overlay strokeDashoffset scrub: T3 `useBlockMotion`
  *
- * Component: `blocks/FramerFlatWhiteProcess.tsx`. Renderer tự quản animation
- * qua `useBlockMotion`.
+ * Component: `blocks/FramerFlatWhiteProcess.tsx`.
  */
 import { Pilcrow, Type } from 'lucide-react';
 

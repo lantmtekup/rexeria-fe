@@ -42,7 +42,10 @@ export interface UseAutosaveApi {
   /** Mark the canvas dirty; debounced save kicks off after AUTOSAVE_DELAY_MS. */
   markDirty: () => void;
   /** Force an immediate save (cancels any pending debounce). */
-  flush: (opts?: { silent?: boolean }) => Promise<void>;
+  flush: (opts?: {
+    silent?: boolean;
+    /** Ghi đè draft dù dirty=false — bắt buộc trước createVersion vì BE đọc draft, không body. */ force?: boolean;
+  }) => Promise<void>;
   /** Resets state to idle (e.g. after the parent reloads the canvas). */
   reset: () => void;
 }
@@ -113,8 +116,13 @@ export function useAutosave({
   }, []);
 
   const doSave = React.useCallback(
-    async (opts: { silent?: boolean } = {}): Promise<void> => {
-      if (!dirtyRef.current || !enabledRef.current) {
+    async (opts: { silent?: boolean; force?: boolean } = {}): Promise<void> => {
+      if (!enabledRef.current) {
+        // eslint-disable-next-line no-console
+        console.log('[rexer-autosave] doSave skipped — enabled: false');
+        return;
+      }
+      if (!opts.force && !dirtyRef.current) {
         // eslint-disable-next-line no-console
         console.log(
           '[rexer-autosave] doSave skipped — dirty:',
@@ -243,7 +251,7 @@ export function useAutosave({
   }, [doSave, templateId]);
 
   const flush = React.useCallback(
-    async (opts?: { silent?: boolean }) => {
+    async (opts?: { silent?: boolean; force?: boolean }) => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
         debounceRef.current = null;

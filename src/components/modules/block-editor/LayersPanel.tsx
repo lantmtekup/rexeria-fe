@@ -48,7 +48,19 @@ import { AddExtraElementButton } from './AddExtraElementButton';
 import { ExtraElementsList } from './ExtraElementsList';
 import { resolvePnjParagraphs } from './blocks/PnjDetails';
 import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
+import { realEstateHeroStatElements } from './blocks/_registry/defs/realEstateHero';
+import { realEstateHighlightItemElements } from './blocks/_registry/defs/realEstateHighlights';
+import { coolHunterGalleryItemElements } from './blocks/_registry/defs/coolHunterGallery';
+import { coolHunterSectionProgressItemElements } from './blocks/_registry/defs/coolHunterSectionProgress';
+import { realEstateOverviewStatElements } from './blocks/_registry/defs/realEstateOverview';
+import { realEstateUtilityItemElements } from './blocks/_registry/defs/realEstateUtilities';
+import { realEstateVillaSlideElements } from './blocks/_registry/defs/realEstateVilla';
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
+import { delvauxProductHotspotElements } from './blocks/_registry/defs/delvauxProduct';
+import {
+  delvauxFaqElements,
+  delvauxVariantItemElements,
+} from './blocks/_registry/defs/delvauxVariant';
 import { mintDiscoverTabElements } from './blocks/_registry/defs/mintDiscover';
 import { mintV2ProcessStepElements } from './blocks/_registry/defs/mintV2Process';
 import { mintV2ServicesItemElements } from './blocks/_registry/defs/mintV2Services';
@@ -58,6 +70,7 @@ import { mintVaultCraftItemElements } from './blocks/mintVaultCraftElements';
 import { mintVaultInvitationImageElements } from './blocks/mintVaultInvitationElements';
 import { mintVaultRevealImageElements } from './blocks/mintVaultRevealElements';
 import { pnjStickyMenuItemElements } from './blocks/_registry/defs/pnjStickyMenu';
+import { delvauxSubnavLinkElements } from './blocks/_registry/defs/delvauxSubnav';
 import { getBlockDef } from './blocks/_registry/registry';
 import {
   editingVariantOf,
@@ -67,9 +80,20 @@ import {
   type BlockType,
   type Device,
   type ExtraElementKind,
+  type DelvauxProductHotspot,
+  type DelvauxSubnavLink,
+  type DelvauxVariantFaq,
+  type DelvauxVariantOption,
   type PnjHeroContent,
   type PnjVariantItem,
   type PnjStickyMenuItem,
+  type RealEstateHeroStat,
+  type RealEstateOverviewStat,
+  type RealEstateHighlightItem,
+  type CoolHunterGalleryItem,
+  type CoolHunterSectionProgressItem,
+  type RealEstateVillaSlide,
+  type RealEstateUtilityItem,
   type MintDiscoverTab,
   type MintV2ProcessStep,
   type MintV2ServiceItem,
@@ -611,6 +635,10 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'heading', label: 'Tiêu đề', icon: Type },
   ],
+  brutalist_text: [
+    BACKGROUND_LAYER,
+    { key: 'heading', label: 'Tiêu đề', icon: Type },
+  ],
   image_explosion: [
     BACKGROUND_LAYER,
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
@@ -731,6 +759,60 @@ export function elementsForType(
       },
     ];
   }
+  if (type === 'cool_hunter_section_progress') {
+    const raw = content?.sections;
+    const sections = Array.isArray(raw)
+      ? (raw as CoolHunterSectionProgressItem[]).filter(
+          s => s && typeof s === 'object'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...coolHunterSectionProgressItemElements(sections),
+      {
+        key: 'sections',
+        label: 'Thêm / quản lý section',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'cool_hunter_hero') {
+    // Cùng normalize với canvas/toolbar → layers không lệch số dòng tiêu đề.
+    const lines = resolvePnjHeroTitleLines(
+      (content ?? {}) as unknown as PnjHeroContent
+    );
+    const titleSlots = lines.map((_, i) => ({
+      key: `titleLines[${i}]`,
+      label: `Tiêu đề dòng ${i + 1}`,
+      icon: Type,
+      fieldType: 'text' as const,
+    }));
+    return [
+      BACKGROUND_LAYER,
+      { key: 'logoUrl', label: 'Logo', icon: ImageIcon, fieldType: 'image' },
+      ...titleSlots,
+      {
+        key: 'titleLines',
+        label: 'Thêm / quản lý tiêu đề',
+        icon: ListChecks,
+      },
+      {
+        key: 'imageUrl',
+        label: 'Ảnh hero',
+        icon: ImageIcon,
+        fieldType: 'image',
+      },
+    ];
+  }
+  if (type === 'cool_hunter_gallery') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as CoolHunterGalleryItem[]).filter(
+          it => it && typeof it === 'object'
+        )
+      : [];
+    return [BACKGROUND_LAYER, ...coolHunterGalleryItemElements(items)];
+  }
   if (type === 'pnj_variant') {
     const raw = content?.variants;
     const variants = Array.isArray(raw)
@@ -747,6 +829,228 @@ export function elementsForType(
         icon: ListChecks,
       },
       { key: 'ctaText', label: 'CTA', icon: Type, fieldType: 'text' },
+    ];
+  }
+  if (type === 'delvaux_product') {
+    const raw = content?.hotspots;
+    const hotspots = Array.isArray(raw)
+      ? (raw as DelvauxProductHotspot[]).filter(
+          h => h && typeof h === 'object' && typeof h.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'imageUrl',
+        label: 'Ảnh sản phẩm',
+        icon: ImageIcon,
+        fieldType: 'image',
+        groupId: 'product',
+        groupLabel: 'Sản phẩm',
+      },
+      {
+        key: 'glowColor',
+        label: 'Màu quầng sáng',
+        icon: Palette,
+        fieldType: 'text',
+        groupId: 'product',
+      },
+      ...delvauxProductHotspotElements(hotspots),
+      {
+        key: 'hotspots',
+        label: 'Thêm / quản lý hotspot',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'delvaux_variant') {
+    const rawVariants = content?.variants;
+    const variants = Array.isArray(rawVariants)
+      ? (rawVariants as DelvauxVariantOption[]).filter(
+          v => v && typeof v === 'object' && typeof v.label === 'string'
+        )
+      : [];
+    const rawFaqs = content?.faqs;
+    const faqs = Array.isArray(rawFaqs)
+      ? (rawFaqs as DelvauxVariantFaq[]).filter(
+          f => f && typeof f === 'object' && typeof f.question === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'title',
+        label: 'Tiêu đề (ghost)',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'stage1',
+        groupLabel: 'Stage 1',
+      },
+      {
+        key: 'moreInfoLabel',
+        label: 'Nhãn nút thông tin',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'stage1',
+      },
+      ...delvauxVariantItemElements(variants),
+      {
+        key: 'variants',
+        label: 'Thêm / quản lý màu',
+        icon: ListChecks,
+      },
+      ...delvauxFaqElements(faqs),
+      {
+        key: 'faqs',
+        label: 'Thêm / quản lý FAQ',
+        icon: ListChecks,
+      },
+      {
+        key: 'skuName',
+        label: 'Tên SKU (stage 2)',
+        icon: Type,
+        fieldType: 'textarea',
+        groupId: 'sku',
+        groupLabel: 'Stage 2 · SKU',
+      },
+      {
+        key: 'skuMediaUrl',
+        label: 'Media SKU (URL)',
+        icon: ImageIcon,
+        fieldType: 'text',
+        groupId: 'sku',
+      },
+      {
+        key: 'skuPersonUrl',
+        label: 'Ảnh model',
+        icon: ImageIcon,
+        fieldType: 'image',
+        groupId: 'sku',
+      },
+    ];
+  }
+  if (type === 'real_estate_hero') {
+    const raw = content?.stats;
+    const stats = Array.isArray(raw)
+      ? (raw as RealEstateHeroStat[]).filter(
+          s => s && typeof s === 'object' && typeof s.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'imageUrl',
+        label: 'Ảnh banner',
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+      ...realEstateHeroStatElements(stats),
+      {
+        key: 'stats',
+        label: 'Thêm / quản lý thông số',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'real_estate_overview') {
+    const raw = content?.stats;
+    const stats = Array.isArray(raw)
+      ? (raw as RealEstateOverviewStat[]).filter(
+          s => s && typeof s === 'object' && typeof s.text === 'string'
+        )
+      : [];
+    // Không có mục list manager: số hạng mục cố định 6 (mỗi icon gắn ngữ nghĩa
+    // riêng với chữ của nó) — xem docblock `defs/realEstateOverview.ts`.
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      ...realEstateOverviewStatElements(stats),
+    ];
+  }
+  if (type === 'real_estate_highlights') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as RealEstateHighlightItem[]).filter(
+          it => it && typeof it === 'object' && typeof it.text === 'string'
+        )
+      : [];
+    // Không có mục list manager: số card cố định 4 như nguồn — xem docblock
+    // `defs/realEstateHighlights.ts`.
+    return [
+      // BACKGROUND_LAYER = nền NGOÀI (của cả block); `contentSurface` = dải nền
+      // 372 phía trong. Hai lớp tách bạch, sửa độc lập.
+      BACKGROUND_LAYER,
+      { key: 'contentSurface', label: 'Nền cột nội dung', icon: Palette },
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'description',
+        label: 'Mô tả',
+        icon: Pilcrow,
+        fieldType: 'textarea' as const,
+      },
+      ...realEstateHighlightItemElements(items),
+    ];
+  }
+  if (type === 'real_estate_villa') {
+    const raw = content?.slides;
+    const slides = Array.isArray(raw)
+      ? (raw as RealEstateVillaSlide[]).filter(
+          s => s && typeof s === 'object' && typeof s.title === 'string'
+        )
+      : [];
+    // Không có mục list manager: số slide cố định 4 như nguồn — xem docblock
+    // `defs/realEstateVilla.ts`.
+    return [
+      // BACKGROUND_LAYER = nền NGOÀI (của cả block); `cardSurface` = nền thẻ
+      // phía trong. Hai lớp tách bạch, sửa độc lập.
+      BACKGROUND_LAYER,
+      {
+        key: 'eyebrow',
+        label: 'Nhãn nhỏ',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      { key: 'cardSurface', label: 'Nền thẻ', icon: Palette },
+      ...realEstateVillaSlideElements(slides),
+    ];
+  }
+  if (type === 'real_estate_utilities') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as RealEstateUtilityItem[]).filter(
+          it => it && typeof it === 'object' && typeof it.label === 'string'
+        )
+      : [];
+    // Không có mục list manager: số ô cố định 6 như nguồn — xem docblock
+    // `defs/realEstateUtilities.ts`.
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      // Style-only, MỘT key cho cả 6 ô — phải khớp `elements[]` trong
+      // `defs/realEstateUtilities.ts`, nếu không panel Lớp và toolbar lệch nhau.
+      { key: 'cardSurface', label: 'Viền & nền ô', icon: Palette },
+      ...realEstateUtilityItemElements(items),
     ];
   }
   if (type === 'mint_discover') {
@@ -972,6 +1276,53 @@ export function elementsForType(
         label: 'Link CTA',
         icon: Link2,
         fieldType: 'text',
+      },
+    ];
+  }
+  if (type === 'delvaux_subnav') {
+    const raw = content?.links;
+    const links = Array.isArray(raw)
+      ? (raw as DelvauxSubnavLink[]).filter(
+          l => l && typeof l === 'object' && typeof l.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...delvauxSubnavLinkElements(links),
+      {
+        key: 'links',
+        label: 'Thêm / quản lý link',
+        icon: ListChecks,
+      },
+      {
+        key: 'bookLabel',
+        label: 'Nút đặt lịch',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'book',
+        groupLabel: 'Book',
+      },
+      {
+        key: 'bookUrl',
+        label: 'URL đặt lịch',
+        icon: Link2,
+        fieldType: 'text',
+        groupId: 'book',
+      },
+      {
+        key: 'buyLabel',
+        label: 'Nút mua ngay',
+        icon: MousePointerClick,
+        fieldType: 'text',
+        groupId: 'buy',
+        groupLabel: 'Buy',
+      },
+      {
+        key: 'buyUrl',
+        label: 'URL mua ngay',
+        icon: Link2,
+        fieldType: 'text',
+        groupId: 'buy',
       },
     ];
   }

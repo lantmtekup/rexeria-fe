@@ -56,7 +56,10 @@ const tabCount = await page.locator('[data-block-tab-index]').count();
 let startIndex = tabCount - BLOCK_LABELS.length;
 if (startIndex < 0) {
   // Fallback — count differently, use block name span
-  const spans = await page.locator('span').filter({ hasText: /^\d+\./ }).count();
+  const spans = await page
+    .locator('span')
+    .filter({ hasText: /^\d+\./ })
+    .count();
   startIndex = Math.max(0, spans - BLOCK_LABELS.length);
 }
 console.log('total tabs:', tabCount, 'starting from index', startIndex);

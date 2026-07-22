@@ -5,15 +5,13 @@
  *
  * Timeline zigzag: 2 cột 50/50, title/body đổi bên xen kẽ; đường dọc giữa vẽ
  * scaleY 0→1 theo scroll. Per-step fade-up + heading char-stagger.
- * Contract nền GSAP (useBlockMotion + scroller). Container-query (@2xl).
- *  - eyebrow/title + steps[i].{no,title,body} canvas-editable.
- *  - Motion skipped on editor canvas (SplitType mutates heading DOM).
+ * Animation khai báo bằng data-motion-* attributes (Motion Attribute System —
+ * pilot block); runtime useMotionAttributes tự skip trên edit-canvas.
+ * Container-query (@2xl). eyebrow/title + steps[i].{no,title,body} editable.
  */
 import * as React from 'react';
-import gsap from 'gsap';
-import SplitType from 'split-type';
 
-import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useMotionAttributes } from '../motion/useMotionAttributes';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -49,19 +47,7 @@ export function MintV2Process({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
-  const { hasRoot } = useLandingMotion();
   const steps = Array.isArray(content.steps) ? content.steps : EMPTY_STEPS;
-  const [isCanvas, setIsCanvas] = React.useState(true);
-
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -80,98 +66,9 @@ export function MintV2Process({
     return composeStyle({ backgroundColor: fallback }, override, fromToolbar);
   };
 
-  useBlockMotion(
-    rootRef,
-    ({ scroller }) => {
-      if (isCanvas) return;
-      const root = rootRef.current;
-      if (!root) return;
-
-      const line = root.querySelector<HTMLElement>('.process-line');
-      const lastStep = root.querySelector<HTMLElement>(
-        '.process-step:last-child'
-      );
-      if (line) {
-        gsap.fromTo(
-          line,
-          { scaleY: 0, transformOrigin: 'top center' },
-          {
-            scaleY: 1,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: root,
-              scroller,
-              start: 'top 65%',
-              endTrigger: lastStep ?? root,
-              end: lastStep ? 'bottom center' : 'bottom 75%',
-              scrub: 0.8,
-              invalidateOnRefresh: true,
-            },
-          }
-        );
-      }
-
-      gsap.utils.toArray<HTMLElement>('.process-step', root).forEach(step => {
-        const title = step.querySelector<HTMLElement>('.step-title');
-        const body = step.querySelector<HTMLElement>('.step-body');
-        const dot = step.querySelector<HTMLElement>('.step-dot');
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: step,
-            scroller,
-            start: 'top 80%',
-            toggleActions: 'play none none reverse',
-            invalidateOnRefresh: true,
-          },
-        });
-        if (title)
-          tl.fromTo(
-            title,
-            { y: 30, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.9, ease: 'power3.out' },
-            0
-          );
-        if (body)
-          tl.fromTo(
-            body,
-            { y: 20, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.9, ease: 'power3.out' },
-            0.15
-          );
-        if (dot)
-          tl.fromTo(
-            dot,
-            { scale: 0, opacity: 0 },
-            { scale: 1, opacity: 1, duration: 0.4, ease: 'back.out(2)' },
-            0.3
-          );
-      });
-
-      const heading = root.querySelector<HTMLElement>('.process-heading');
-      if (heading) {
-        const split = new SplitType(heading, { types: 'chars' });
-        gsap.fromTo(
-          split.chars,
-          { yPercent: 110, opacity: 0 },
-          {
-            yPercent: 0,
-            opacity: 1,
-            duration: 1.6,
-            ease: 'power3.out',
-            stagger: 0.06,
-            scrollTrigger: {
-              trigger: heading,
-              scroller,
-              start: 'top 85%',
-              toggleActions: 'play none none reverse',
-              invalidateOnRefresh: true,
-            },
-          }
-        );
-      }
-    },
-    [isCanvas]
-  );
+  // Animation gắn qua data-motion-* attributes trong JSX bên dưới; rebuild
+  // khi số step đổi (DOM mới cần bind lại trigger).
+  useMotionAttributes(rootRef, [steps.length]);
 
   return (
     <section
@@ -203,6 +100,7 @@ export function MintV2Process({
           </span>
           <h2
             data-element-key='title'
+            data-motion='char-reveal'
             style={composeStyle(
               {
                 fontFamily: 'Georgia, "Times New Roman", serif',
@@ -229,15 +127,17 @@ export function MintV2Process({
           <div className='absolute top-0 bottom-0 left-2 w-px @2xl:left-1/2 @2xl:-translate-x-1/2'>
             <div
               data-element-key='line'
+              data-motion='line-draw'
+              data-motion-scrub='0.8'
+              data-motion-trigger-target='root'
+              data-motion-start='top 65%'
+              data-motion-end-target='.process-step:last-child'
+              data-motion-end='bottom center'
               className={selectableClass(
                 activeKey === 'line',
                 'process-line h-full w-full'
               )}
-              style={{
-                ...fillStyleOf('line', 'rgba(199, 145, 25, 0.6)'),
-                transform: isCanvas ? 'scaleY(1)' : 'scaleY(0)',
-                transformOrigin: 'top center',
-              }}
+              style={fillStyleOf('line', 'rgba(199, 145, 25, 0.6)')}
             />
           </div>
 
@@ -250,10 +150,14 @@ export function MintV2Process({
               return (
                 <li
                   key={s.key || i}
+                  data-motion-group=''
+                  data-motion-start='top 80%'
                   className='process-step relative grid grid-cols-1 gap-4 py-12 pl-8 first:pt-0 last:pb-0 @2xl:grid-cols-2 @2xl:gap-16 @2xl:py-24 @2xl:pl-0'
                 >
                   <span
                     data-element-key='dot'
+                    data-motion='scale-pop'
+                    data-motion-delay='0.3'
                     aria-hidden='true'
                     style={fillStyleOf('dot', '#c79119')}
                     className={selectableClass(
@@ -268,7 +172,13 @@ export function MintV2Process({
                         : '@2xl:order-2 @2xl:items-start @2xl:pl-12 @2xl:text-left'
                     }`}
                   >
-                    <div className='step-title'>
+                    <div
+                      className='step-title'
+                      data-motion='fade-up'
+                      data-motion-distance='30'
+                      data-motion-duration='0.9'
+                      data-motion-ease='power3.out'
+                    >
                       <div
                         data-element-key={noKey}
                         style={composeStyle(
@@ -313,6 +223,11 @@ export function MintV2Process({
                   >
                     <p
                       data-element-key={bodyKey}
+                      data-motion='fade-up'
+                      data-motion-distance='20'
+                      data-motion-duration='0.9'
+                      data-motion-delay='0.15'
+                      data-motion-ease='power3.out'
                       style={composeStyle(
                         {
                           maxWidth: '28rem',

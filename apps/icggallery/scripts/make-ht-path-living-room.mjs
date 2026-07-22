@@ -15,8 +15,18 @@ import fs from 'node:fs';
 globalThis.URL.createObjectURL ??= () => 'blob:stub';
 globalThis.URL.revokeObjectURL ??= () => {};
 globalThis.document ??= {
-  createElementNS: () => ({ addEventListener() {}, removeEventListener() {}, style: {}, src: '' }),
-  createElement: () => ({ getContext: () => null, addEventListener() {}, removeEventListener() {}, style: {} }),
+  createElementNS: () => ({
+    addEventListener() {},
+    removeEventListener() {},
+    style: {},
+    src: '',
+  }),
+  createElement: () => ({
+    getContext: () => null,
+    addEventListener() {},
+    removeEventListener() {},
+    style: {},
+  }),
 };
 globalThis.self ??= globalThis;
 const THREE = await import('three');
@@ -30,7 +40,10 @@ const FOV_RAD = 0.96; // ~55° — Corona camera FOV không đọc được qua 
 const SAMPLES = 150;
 
 const fbuf = fs.readFileSync(FBX);
-const group = new FBXLoader().parse(fbuf.buffer.slice(fbuf.byteOffset, fbuf.byteOffset + fbuf.byteLength), '');
+const group = new FBXLoader().parse(
+  fbuf.buffer.slice(fbuf.byteOffset, fbuf.byteOffset + fbuf.byteLength),
+  ''
+);
 const clip0 = group.animations[0];
 const mixer = new THREE.AnimationMixer(group);
 mixer.clipAction(clip0).play();
@@ -46,16 +59,26 @@ if (!cam) throw new Error(`Không thấy node ${CAM_NODE} trong FBX`);
 // trôi dần về điểm gần start lúc kết thúc clip.
 const probe = new THREE.Vector3();
 const start = new THREE.Vector3();
-let tPeak = 0, maxDist = -1;
-mixer.setTime(0); group.updateMatrixWorld(true); cam.getWorldPosition(start);
+let tPeak = 0,
+  maxDist = -1;
+mixer.setTime(0);
+group.updateMatrixWorld(true);
+cam.getWorldPosition(start);
 for (let t = 0; t <= clip0.duration + 1e-6; t += 0.005) {
-  mixer.setTime(t); group.updateMatrixWorld(true); cam.getWorldPosition(probe);
+  mixer.setTime(t);
+  group.updateMatrixWorld(true);
+  cam.getWorldPosition(probe);
   const d = probe.distanceTo(start);
-  if (d > maxDist) { maxDist = d; tPeak = t; }
+  if (d > maxDist) {
+    maxDist = d;
+    tPeak = t;
+  }
 }
 const tStart = tPeak;
 const tEnd = clip0.duration;
-console.log(`clip "${clip0.name}" ${clip0.duration.toFixed(2)}s — peak dist ${maxDist.toFixed(1)} @ t=${tPeak.toFixed(3)}s → dùng tour ${tStart.toFixed(2)}..${tEnd.toFixed(2)}s`);
+console.log(
+  `clip "${clip0.name}" ${clip0.duration.toFixed(2)}s — peak dist ${maxDist.toFixed(1)} @ t=${tPeak.toFixed(3)}s → dùng tour ${tStart.toFixed(2)}..${tEnd.toFixed(2)}s`
+);
 
 const DURATION = 4; // giây trong glb (scroll scrub — chỉ cần tỷ lệ)
 const times = new Float32Array(SAMPLES);
@@ -69,13 +92,23 @@ for (let i = 0; i < SAMPLES; i++) {
   group.updateMatrixWorld(true);
   cam.getWorldPosition(p);
   cam.getWorldQuaternion(q);
-  if (i > 0 && q.dot(prevQ) < 0) { q.x *= -1; q.y *= -1; q.z *= -1; q.w *= -1; }
+  if (i > 0 && q.dot(prevQ) < 0) {
+    q.x *= -1;
+    q.y *= -1;
+    q.z *= -1;
+    q.w *= -1;
+  }
   prevQ.copy(q);
   times[i] = (i / (SAMPLES - 1)) * DURATION;
-  positions.set([p.x * UNIT + OFFSET[0], p.y * UNIT + OFFSET[1], p.z * UNIT + OFFSET[2]], i * 3);
+  positions.set(
+    [p.x * UNIT + OFFSET[0], p.y * UNIT + OFFSET[1], p.z * UNIT + OFFSET[2]],
+    i * 3
+  );
   quats.set([q.x, q.y, q.z, q.w], i * 4);
 }
-console.log(`start [${positions.slice(0,3).map((v)=>v.toFixed(2))}] end [${[...positions.slice(-3)].map((v)=>v.toFixed(2))}]`);
+console.log(
+  `start [${positions.slice(0, 3).map(v => v.toFixed(2))}] end [${[...positions.slice(-3)].map(v => v.toFixed(2))}]`
+);
 
 // ---- Merge vào camera_paths.glb (giống make-ht-camera-path.mjs) -----------
 const buf = fs.readFileSync(IN);
@@ -83,10 +116,12 @@ const jsonLen = buf.readUInt32LE(12);
 const g = JSON.parse(buf.toString('utf8', 20, 20 + jsonLen));
 const binStart = 20 + jsonLen + 8;
 let bin = buf.subarray(binStart, binStart + buf.readUInt32LE(20 + jsonLen));
-if (g.nodes.some((n) => n.name === 'ht_empty')) throw new Error('ht_empty đã tồn tại — dùng file base sạch');
+if (g.nodes.some(n => n.name === 'ht_empty'))
+  throw new Error('ht_empty đã tồn tại — dùng file base sạch');
 
-const pad4 = (b) => (b.length % 4 ? Buffer.concat([b, Buffer.alloc(4 - (b.length % 4))]) : b);
-const addBV = (data) => {
+const pad4 = b =>
+  b.length % 4 ? Buffer.concat([b, Buffer.alloc(4 - (b.length % 4))]) : b;
+const addBV = data => {
   bin = pad4(Buffer.from(bin));
   const byteOffset = bin.length;
   const chunk = Buffer.from(data.buffer, data.byteOffset, data.byteLength);
@@ -95,17 +130,34 @@ const addBV = (data) => {
   return g.bufferViews.length - 1;
 };
 const addAcc = (bv, type, count, minMax) => {
-  g.accessors.push({ bufferView: bv, componentType: 5126, count, type, ...(minMax || {}) });
+  g.accessors.push({
+    bufferView: bv,
+    componentType: 5126,
+    count,
+    type,
+    ...(minMax || {}),
+  });
   return g.accessors.length - 1;
 };
-const accTime = addAcc(addBV(times), 'SCALAR', SAMPLES, { min: [0], max: [DURATION] });
+const accTime = addAcc(addBV(times), 'SCALAR', SAMPLES, {
+  min: [0],
+  max: [DURATION],
+});
 const accPos = addAcc(addBV(positions), 'VEC3', SAMPLES);
 const accRot = addAcc(addBV(quats), 'VEC4', SAMPLES);
 g.cameras ??= [];
-g.cameras.push({ name: 'ht_camera', type: 'perspective', perspective: { aspectRatio: 16 / 9, yfov: FOV_RAD, zfar: 1000, znear: 0.1 } });
+g.cameras.push({
+  name: 'ht_camera',
+  type: 'perspective',
+  perspective: { aspectRatio: 16 / 9, yfov: FOV_RAD, zfar: 1000, znear: 0.1 },
+});
 g.nodes.push({ name: 'ht_camera', camera: g.cameras.length - 1 });
 const camNode = g.nodes.length - 1;
-g.nodes.push({ name: 'ht_empty', children: [camNode], translation: [positions[0], positions[1], positions[2]] });
+g.nodes.push({
+  name: 'ht_empty',
+  children: [camNode],
+  translation: [positions[0], positions[1], positions[2]],
+});
 g.scenes[0].nodes.push(g.nodes.length - 1);
 g.animations.push({
   name: 'ht_empty_action',
@@ -121,7 +173,10 @@ g.animations.push({
 bin = pad4(Buffer.from(bin));
 g.buffers[0].byteLength = bin.length;
 let js = Buffer.from(JSON.stringify(g));
-js = js.length % 4 ? Buffer.concat([js, Buffer.alloc(4 - (js.length % 4), 0x20)]) : js;
+js =
+  js.length % 4
+    ? Buffer.concat([js, Buffer.alloc(4 - (js.length % 4), 0x20)])
+    : js;
 const header = Buffer.alloc(20);
 header.write('glTF', 0, 'ascii');
 header.writeUInt32LE(2, 4);

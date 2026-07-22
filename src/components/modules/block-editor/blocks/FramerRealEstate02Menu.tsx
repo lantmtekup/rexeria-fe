@@ -39,7 +39,7 @@ const COLORS = {
 
 const ROOT_STYLE: React.CSSProperties = {
   height: '64px',
-  left: 'calc(49.86666666666669% - 375px / 2)',
+  left: 'calc(49.3% - 375px / 2)',
   overflow: 'visible',
   width: '375px',
   zIndex: 999,

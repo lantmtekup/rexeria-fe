@@ -16,7 +16,8 @@ import {
 
 import { cn } from '@/lib/cn';
 
-import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useBlockMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -240,18 +241,8 @@ export function HousentOurExcellence({
   const rootRef = React.useRef<HTMLElement>(null);
   const desktopInnerRef = React.useRef<HTMLDivElement>(null);
   const desktopCenterRef = React.useRef<HTMLDivElement>(null);
-  const { hasRoot } = useLandingMotion();
 
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const styleOf = (key: string) =>
     composeStyle(

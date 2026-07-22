@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * verify-tokens.js — Compare design tokens in scaffolded code vs recon's
  * extracted.json. Flags drift (typos, copy mistakes, design slop).
@@ -62,7 +64,7 @@ function normalizeHex(v) {
   if (s.startsWith('#')) return s;
   const m = s.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
   if (m) {
-    const hex = (n) => Number(n).toString(16).padStart(2, '0');
+    const hex = n => Number(n).toString(16).padStart(2, '0');
     return '#' + hex(m[1]) + hex(m[2]) + hex(m[3]);
   }
   return null;
@@ -106,10 +108,7 @@ function checkTypography(code, typography) {
 
 function checkColors(code, colors) {
   const findings = [];
-  const all = [
-    ...(colors.backgrounds || []),
-    ...(colors.text_colors || []),
-  ];
+  const all = [...(colors.backgrounds || []), ...(colors.text_colors || [])];
   for (const c of all) {
     const hex = normalizeHex(c.color);
     if (!hex || hex === '#000000' || hex === '#ffffff') continue; // skip
@@ -132,7 +131,7 @@ function checkColors(code, colors) {
 function checkSpacing(code, spacing) {
   const findings = [];
   // Check the most-used padding/gap values appear somewhere in code
-  const top = (arr) => (arr || []).slice(0, 5);
+  const top = arr => (arr || []).slice(0, 5);
   for (const cat of ['paddings', 'gaps']) {
     for (const s of top(spacing[cat])) {
       const value = s.value;
@@ -192,8 +191,8 @@ function main() {
     ...checkAnimations(code, extracted.inline_animation_hints || []),
   ];
 
-  const warns = findings.filter((f) => f.level === 'WARN');
-  const infos = findings.filter((f) => f.level === 'INFO');
+  const warns = findings.filter(f => f.level === 'WARN');
+  const infos = findings.filter(f => f.level === 'INFO');
 
   console.log(`\n━━━ Token verify: ${path.basename(args.component)} ━━━`);
   console.log(`Recon: ${args.recon}`);
@@ -211,15 +210,15 @@ function main() {
         (f.sample ? `  (sample: "${f.sample}")` : '') +
         (f.expected ? `  expected: ${f.expected}` : '') +
         (f.usage ? `  source usage: ${f.usage}` : '') +
-        (f.context ? `  context: ${f.context}` : ''),
+        (f.context ? `  context: ${f.context}` : '')
     );
   }
 
   console.log(
-    `\n${warns.length > 0 ? '❌' : '⚠️ '} ${warns.length} significant drift(s); ${infos.length} minor info(s).`,
+    `\n${warns.length > 0 ? '❌' : '⚠️ '} ${warns.length} significant drift(s); ${infos.length} minor info(s).`
   );
   console.log(
-    'Hint: compare against recon spec.md section 4 (typography) + 5 (colors) + 6 (spacing).',
+    'Hint: compare against recon spec.md section 4 (typography) + 5 (colors) + 6 (spacing).'
   );
 
   process.exit(warns.length > 0 ? 1 : 0);

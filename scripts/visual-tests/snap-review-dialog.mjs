@@ -15,7 +15,9 @@ import { chromium } from 'playwright';
 const base = 'http://localhost:3000';
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 1000 },
+});
 const page = await ctx.newPage();
 
 // Land somewhere — we render the dialog directly into the body via DOM.

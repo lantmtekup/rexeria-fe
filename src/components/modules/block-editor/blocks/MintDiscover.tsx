@@ -15,6 +15,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { cn } from '@/lib/cn';
 
 import { useLandingMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import { isDeviceFrameHost, resolveDrawerPortalHost } from '../previewPortal';
 import type {
   BlockBackground,
@@ -123,16 +124,7 @@ export function MintDiscover({
   const isMobile = useContainerMobile(sectionRef);
   const { hasRoot, scroller, requestRefresh } = useLandingMotion();
 
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!sectionRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(sectionRef);
 
   useDrawerScrollLock(activeTab, isMobile);
 

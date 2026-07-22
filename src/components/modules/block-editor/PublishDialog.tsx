@@ -42,6 +42,8 @@ interface PublishDialogProps {
   onPageSlugChange?: (slug: string) => void;
   publish: PublishMeta | undefined;
   onTogglePublish: () => void;
+  /** Repoint page sang HEAD version + re-snapshot khi page pin version cũ. */
+  onRepublish?: () => Promise<void> | void;
   onRotateToken: () => void;
 }
 
@@ -80,12 +82,14 @@ export function PublishDialog({
   onPageSlugChange,
   publish,
   onTogglePublish,
+  onRepublish,
   onRotateToken,
 }: PublishDialogProps) {
   const [copied, setCopied] = React.useState(false);
   const [slugDraft, setSlugDraft] = React.useState('');
   const [editingSlug, setEditingSlug] = React.useState(false);
   const [savingSlug, setSavingSlug] = React.useState(false);
+  const [republishing, setRepublishing] = React.useState(false);
 
   // Seed slug draft khi dialog mở:
   //   - Có sẵn slug → seed = slug (cho user đổi)
@@ -162,6 +166,16 @@ export function PublishDialog({
   // version cũ (be-audit §13). Warn user nếu diverge.
   const versionStale =
     !!pinnedVersionId && !!headVersionId && pinnedVersionId !== headVersionId;
+
+  const handleRepublish = async () => {
+    if (!onRepublish || republishing) return;
+    setRepublishing(true);
+    try {
+      await onRepublish();
+    } finally {
+      setRepublishing(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -291,25 +305,43 @@ export function PublishDialog({
           )}
 
           {versionStale && (
-            <div className='flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3'>
-              <span className='text-3xs mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-200 font-mono font-bold text-amber-900'>
-                i
-              </span>
-              <div className='text-2xs leading-snug text-amber-900'>
-                <strong className='font-semibold'>Page pin ở version cũ</strong>{' '}
-                — page hiện ở{' '}
-                <code className='font-mono'>
-                  {pinnedVersionId?.slice(0, 8)}
-                </code>
-                , editor đã commit lên{' '}
-                <code className='font-mono'>
-                  {headVersionLabel ?? headVersionId?.slice(0, 8)}
-                </code>
-                . Click <strong>Xuất bản lại</strong> để repoint page sang
-                version mới + re-snapshot. Sau publish,{' '}
-                <code>/p/{pageSlug || '{slug}'}</code> sẽ render content mới
-                nhất.
+            <div className='flex flex-col gap-3 rounded-md border border-amber-300 bg-amber-50 p-3'>
+              <div className='flex items-start gap-2'>
+                <span className='text-3xs mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-200 font-mono font-bold text-amber-900'>
+                  i
+                </span>
+                <div className='text-2xs leading-snug text-amber-900'>
+                  <strong className='font-semibold'>
+                    Page pin ở version cũ
+                  </strong>{' '}
+                  — page hiện ở{' '}
+                  <code className='font-mono'>
+                    {pinnedVersionId?.slice(0, 8)}
+                  </code>
+                  , editor đã commit lên{' '}
+                  <code className='font-mono'>
+                    {headVersionLabel ?? headVersionId?.slice(0, 8)}
+                  </code>
+                  . Xuất bản lại sẽ đồng bộ canvas hiện tại → commit version mới
+                  + repoint page. Sau publish,{' '}
+                  <code>/p/{pageSlug || '{slug}'}</code> sẽ render content mới
+                  nhất.
+                </div>
               </div>
+              {publish?.published && onRepublish && (
+                <Button
+                  type='button'
+                  size='sm'
+                  className='w-full'
+                  disabled={republishing}
+                  onClick={handleRepublish}
+                >
+                  {republishing && (
+                    <Loader2 className='mr-1.5 size-3.5 animate-spin' />
+                  )}
+                  Xuất bản lại
+                </Button>
+              )}
             </div>
           )}
 

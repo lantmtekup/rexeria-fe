@@ -29,6 +29,7 @@ import {
 } from './applyStyle';
 import { DISCOVER_FALLBACK, MintDiscoverPanel } from './MintDiscoverPanel';
 import { useContainerMobile } from './useContainerMobile';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface Props {
   content: MintVariantsContent;
@@ -56,12 +57,7 @@ export function MintVariants({
 
   // Trên editor canvas (active-block-preview) KHÔNG mở drawer khi click coin —
   // để element vẫn chọn/sửa được; drawer chỉ mở ở PreviewMode/Play + /p.
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, []);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const styleOf = (key: string) =>
     composeStyle(

@@ -12,6 +12,13 @@ import { housentHeroDef } from './blocks/_registry/defs/housentHero';
 import { alturaOlympusDef } from './blocks/_registry/defs/alturaOlympus';
 import { heroScrollDef } from './blocks/_registry/defs/heroScroll';
 import { scrollMattisDef } from './blocks/_registry/defs/scrollMattis';
+import { coolHunterHeroDef } from './blocks/_registry/defs/coolHunterHero';
+import { coolHunterSectionProgressDef } from './blocks/_registry/defs/coolHunterSectionProgress';
+import { coolHunterStoryDef } from './blocks/_registry/defs/coolHunterStory';
+import { coolHunterGalleryDef } from './blocks/_registry/defs/coolHunterGallery';
+import { coolHunterProductDef } from './blocks/_registry/defs/coolHunterProduct';
+import { coolHunterQuoteDef } from './blocks/_registry/defs/coolHunterQuote';
+import { coolHunterFooterDef } from './blocks/_registry/defs/coolHunterFooter';
 import { pnjHeroDef } from './blocks/_registry/defs/pnjHero';
 import { pnjDetailsDef } from './blocks/_registry/defs/pnjDetails';
 import { mintDiscoverDef } from './blocks/_registry/defs/mintDiscover';
@@ -74,6 +81,13 @@ import { springsHeroDef } from './blocks/_registry/defs/springsHero';
 import { springsInteriorsDef } from './blocks/_registry/defs/springsInteriors';
 import { springsIntroDef } from './blocks/_registry/defs/springsIntro';
 import { springsMapDef } from './blocks/_registry/defs/springsMap';
+import { realEstateHeroDef } from './blocks/_registry/defs/realEstateHero';
+import { realEstateInfoDef } from './blocks/_registry/defs/realEstateInfo';
+import { realEstateLocationDef } from './blocks/_registry/defs/realEstateLocation';
+import { realEstateHighlightsDef } from './blocks/_registry/defs/realEstateHighlights';
+import { realEstateOverviewDef } from './blocks/_registry/defs/realEstateOverview';
+import { realEstateUtilitiesDef } from './blocks/_registry/defs/realEstateUtilities';
+import { realEstateVillaDef } from './blocks/_registry/defs/realEstateVilla';
 import { springsNaturePlaceDef } from './blocks/_registry/defs/springsNaturePlace';
 import { springsResidencesDef } from './blocks/_registry/defs/springsResidences';
 import { springsWellnessDef } from './blocks/_registry/defs/springsWellness';
@@ -146,6 +160,7 @@ import type {
   WheelGalleryContent,
   HoverRevealListContent,
   HoverEqualizerHeadingContent,
+  BrutalistTextContent,
   ImageExplosionContent,
   StorySlidesContent,
   AccordionMediaContent,
@@ -1291,6 +1306,17 @@ const HOVER_EQ_HEADING_EN: HoverEqualizerHeadingContent = {
   heading: 'EXPERIENCE',
 };
 
+const BRUTALIST_TEXT_VI: BrutalistTextContent = {
+  heading: 'BRUTALISM',
+  echoCount: 3,
+  layerStep: 0.09,
+  textColor: '#FFFFFF',
+  bgColor: '#000000',
+};
+const BRUTALIST_TEXT_EN: BrutalistTextContent = {
+  ...BRUTALIST_TEXT_VI,
+};
+
 const IMAGE_EXPLOSION_VI: ImageExplosionContent = {
   eyebrow: 'CUỘN TỚI ĐÂY',
   title: 'Bùng nổ trải nghiệm',
@@ -2333,6 +2359,13 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   mint_hero: MINT_HERO_VI,
   mint_variants: MINT_VARIANTS_VI,
   mint_discover: mintDiscoverDef.defaultContent.vi,
+  cool_hunter_hero: coolHunterHeroDef.defaultContent.vi,
+  cool_hunter_section_progress: coolHunterSectionProgressDef.defaultContent.vi,
+  cool_hunter_story: coolHunterStoryDef.defaultContent.vi,
+  cool_hunter_gallery: coolHunterGalleryDef.defaultContent.vi,
+  cool_hunter_product: coolHunterProductDef.defaultContent.vi,
+  cool_hunter_quote: coolHunterQuoteDef.defaultContent.vi,
+  cool_hunter_footer: coolHunterFooterDef.defaultContent.vi,
   pnj_hero: pnjHeroDef.defaultContent.vi,
   pnj_details: pnjDetailsDef.defaultContent.vi,
   pnj_variant: pnjVariantDef.defaultContent.vi,
@@ -2371,6 +2404,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   wheel_gallery: WHEEL_GALLERY_VI,
   hover_reveal_list: HOVER_REVEAL_LIST_VI,
   hover_equalizer_heading: HOVER_EQ_HEADING_VI,
+  brutalist_text: BRUTALIST_TEXT_VI,
   image_explosion: IMAGE_EXPLOSION_VI,
   story_slides: STORY_SLIDES_VI,
   accordion_media: ACCORDION_MEDIA_VI,
@@ -2470,6 +2504,13 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   springs_wellness: springsWellnessDef.defaultContent.vi,
   springs_nature_place: springsNaturePlaceDef.defaultContent.vi,
   springs_map: springsMapDef.defaultContent.vi,
+  real_estate_location: realEstateLocationDef.defaultContent.vi,
+  real_estate_hero: realEstateHeroDef.defaultContent.vi,
+  real_estate_info: realEstateInfoDef.defaultContent.vi,
+  real_estate_overview: realEstateOverviewDef.defaultContent.vi,
+  real_estate_highlights: realEstateHighlightsDef.defaultContent.vi,
+  real_estate_villa: realEstateVillaDef.defaultContent.vi,
+  real_estate_utilities: realEstateUtilitiesDef.defaultContent.vi,
   springs_design: springsDesignDef.defaultContent.vi,
   springs_residences: springsResidencesDef.defaultContent.vi,
   springs_interiors: springsInteriorsDef.defaultContent.vi,
@@ -2501,6 +2542,13 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   mint_hero: MINT_HERO_VI,
   mint_variants: MINT_VARIANTS_VI,
   mint_discover: mintDiscoverDef.defaultContent.en,
+  cool_hunter_hero: coolHunterHeroDef.defaultContent.en,
+  cool_hunter_section_progress: coolHunterSectionProgressDef.defaultContent.en,
+  cool_hunter_story: coolHunterStoryDef.defaultContent.en,
+  cool_hunter_gallery: coolHunterGalleryDef.defaultContent.en,
+  cool_hunter_product: coolHunterProductDef.defaultContent.en,
+  cool_hunter_quote: coolHunterQuoteDef.defaultContent.en,
+  cool_hunter_footer: coolHunterFooterDef.defaultContent.en,
   pnj_hero: pnjHeroDef.defaultContent.en,
   pnj_details: pnjDetailsDef.defaultContent.en,
   pnj_variant: pnjVariantDef.defaultContent.en,
@@ -2539,6 +2587,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   wheel_gallery: WHEEL_GALLERY_EN,
   hover_reveal_list: HOVER_REVEAL_LIST_EN,
   hover_equalizer_heading: HOVER_EQ_HEADING_EN,
+  brutalist_text: BRUTALIST_TEXT_EN,
   image_explosion: IMAGE_EXPLOSION_EN,
   story_slides: STORY_SLIDES_EN,
   accordion_media: ACCORDION_MEDIA_EN,
@@ -2638,6 +2687,13 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   springs_wellness: springsWellnessDef.defaultContent.en,
   springs_nature_place: springsNaturePlaceDef.defaultContent.en,
   springs_map: springsMapDef.defaultContent.en,
+  real_estate_location: realEstateLocationDef.defaultContent.en,
+  real_estate_hero: realEstateHeroDef.defaultContent.en,
+  real_estate_info: realEstateInfoDef.defaultContent.en,
+  real_estate_overview: realEstateOverviewDef.defaultContent.en,
+  real_estate_highlights: realEstateHighlightsDef.defaultContent.en,
+  real_estate_villa: realEstateVillaDef.defaultContent.en,
+  real_estate_utilities: realEstateUtilitiesDef.defaultContent.en,
   springs_design: springsDesignDef.defaultContent.en,
   springs_residences: springsResidencesDef.defaultContent.en,
   springs_interiors: springsInteriorsDef.defaultContent.en,

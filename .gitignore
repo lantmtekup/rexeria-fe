@@ -57,7 +57,9 @@ package-lock.json
 
 # claude / agent rules + playwright artifacts
 CLAUDE.md
-.claude/
+.claude/*
+!.claude/skills/
+!.claude/skills/**
 tests/e2e/.auth/
 tests/e2e/.artifacts/
 test-results/
@@ -70,6 +72,15 @@ playwright-report/
 # Recon/extract artifacts (200M+) — local only, khong commit
 recon-archive/
 .tmp-recon/
+
+# node_modules in apps
+/apps/*/node_modules
+
+# build output in apps
+/apps/*/build
+/apps/*/out 
+/apps/*/dist    
+/apps/*/.next    
 
 .agents/skills/framer-clone
 .agents/skills/framer-recon

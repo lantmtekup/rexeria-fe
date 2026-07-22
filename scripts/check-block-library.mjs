@@ -39,9 +39,8 @@ if (!union) {
   console.error('check-block-library: BlockType union not found in', file);
   process.exit(2);
 }
-const count = new Set(
-  [...union[1].matchAll(/'([a-z0-9_]+)'/g)].map(m => m[1])
-).size;
+const count = new Set([...union[1].matchAll(/'([a-z0-9_]+)'/g)].map(m => m[1]))
+  .size;
 
 console.log(`Block types: ${count} / ${MAX_BLOCK_TYPES} (cap)`);
 

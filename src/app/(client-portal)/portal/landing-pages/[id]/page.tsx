@@ -229,6 +229,7 @@ export default function PortalLandingEditorPage() {
         pageStatus={pageStatus}
         pinnedVersionId={pinnedVersionId}
         onPageSlugChange={setPageSlug}
+        onPinnedVersionChange={setPinnedVersionId}
       />
     </div>
   );

@@ -30,7 +30,9 @@ const token = await new SignJWT({ sub: 'dev-capture', role: 'admin' })
   .sign(secret);
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 await ctx.addCookies([
   { name: '_access_token', value: token, domain: 'localhost', path: '/' },
 ]);
@@ -60,7 +62,8 @@ page.on('response', async resp => {
 });
 page.on('pageerror', e => console.log('[pageerror]', e.message));
 page.on('console', m => {
-  if (m.type() === 'error') console.log('[console error]', m.text().slice(0, 200));
+  if (m.type() === 'error')
+    console.log('[console error]', m.text().slice(0, 200));
 });
 
 await page.goto(url, { waitUntil: 'networkidle' });

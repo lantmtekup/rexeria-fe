@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Side-by-side visual diff of two URLs using Playwright + pixelmatch.
  *
@@ -24,11 +26,11 @@ try {
   playwright = require('playwright');
   pixelmatch = require('pixelmatch');
   PNG = require('pngjs').PNG;
-} catch (e) {
+} catch {
   console.error(
     'Missing deps. Install in the working dir:\n' +
       '  pnpm add -D playwright pixelmatch pngjs\n' +
-      '  npx playwright install chromium',
+      '  npx playwright install chromium'
   );
   process.exit(1);
 }
@@ -36,7 +38,7 @@ try {
 const [ORIG, CLONE, OUT = './diff', CHECKPOINTS = '8'] = process.argv.slice(2);
 if (!ORIG || !CLONE) {
   console.error(
-    'usage: visual-diff.js <ORIGINAL_URL> <CLONE_URL> [output_dir] [checkpoints]',
+    'usage: visual-diff.js <ORIGINAL_URL> <CLONE_URL> [output_dir] [checkpoints]'
   );
   process.exit(1);
 }
@@ -47,14 +49,14 @@ fs.mkdirSync(OUT, { recursive: true });
 
 /** Take a screenshot at scroll progress p ∈ [0,1]. */
 async function shotAt(page, p, filepath) {
-  await page.evaluate(async (prog) => {
+  await page.evaluate(async prog => {
     const max = Math.max(
       0,
-      document.documentElement.scrollHeight - window.innerHeight,
+      document.documentElement.scrollHeight - window.innerHeight
     );
     window.scrollTo({ top: max * prog, left: 0, behavior: 'auto' });
     // Allow motion to settle.
-    await new Promise((r) => setTimeout(r, 900));
+    await new Promise(r => setTimeout(r, 900));
   }, p);
   await page.screenshot({ path: filepath, fullPage: false });
 }
@@ -118,7 +120,9 @@ function diffPngs(aPath, bPath) {
     const bPath = path.join(OUT, `clone-${id}.png`);
     const dPath = path.join(OUT, `diff-${id}.png`);
 
-    console.log(`  checkpoint ${i + 1}/${N}  (scroll ${(p * 100).toFixed(0)}%)`);
+    console.log(
+      `  checkpoint ${i + 1}/${N}  (scroll ${(p * 100).toFixed(0)}%)`
+    );
     await Promise.all([shotAt(pageA, p, aPath), shotAt(pageB, p, bPath)]);
 
     const { diff, similarity } = diffPngs(aPath, bPath);
@@ -146,15 +150,14 @@ function diffPngs(aPath, bPath) {
         checkpoints: report,
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 
-  const avg =
-    report.reduce((s, r) => s + r.similarity, 0) / report.length;
+  const avg = report.reduce((s, r) => s + r.similarity, 0) / report.length;
   console.log(`\nAverage similarity: ${(avg * 100).toFixed(2)}%`);
   const low = report
-    .filter((r) => r.similarity < 0.95)
+    .filter(r => r.similarity < 0.95)
     .sort((a, b) => a.similarity - b.similarity);
   if (low.length) {
     console.log(`Below-95% checkpoints (iterate on these):`);
@@ -162,14 +165,14 @@ function diffPngs(aPath, bPath) {
       console.log(
         `  cp ${String(r.checkpoint).padStart(2, '0')}  @ ${(
           r.scrollProgress * 100
-        ).toFixed(0)}%  —  ${(r.similarity * 100).toFixed(2)}%  →  ${r.diff}`,
+        ).toFixed(0)}%  —  ${(r.similarity * 100).toFixed(2)}%  →  ${r.diff}`
       );
     }
   } else {
     console.log('All checkpoints ≥ 95% — ship it.');
   }
   await browser.close();
-})().catch((err) => {
+})().catch(err => {
   console.error('FATAL:', err);
   process.exit(1);
 });

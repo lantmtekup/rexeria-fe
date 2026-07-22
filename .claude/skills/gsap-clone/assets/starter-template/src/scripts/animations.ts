@@ -31,7 +31,7 @@ export function initAnimations(scope: HTMLElement | Document = document) {
     }
 
     // ── Scroll-reveal cards ──────────────────────────────────────
-    gsap.utils.toArray<HTMLElement>('.reveal-up').forEach((el) => {
+    gsap.utils.toArray<HTMLElement>('.reveal-up').forEach(el => {
       gsap.from(el, {
         y: 60,
         opacity: 0,
@@ -42,7 +42,7 @@ export function initAnimations(scope: HTMLElement | Document = document) {
     });
 
     // ── Parallax images ──────────────────────────────────────────
-    gsap.utils.toArray<HTMLElement>('.parallax').forEach((el) => {
+    gsap.utils.toArray<HTMLElement>('.parallax').forEach(el => {
       gsap.to(el, {
         yPercent: -20,
         ease: 'none',

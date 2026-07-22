@@ -41,6 +41,7 @@ import {
   selectableClass,
 } from './applyStyle';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import { useContainerMobile } from './useContainerMobile';
 
 interface ScrollMattisProps {
@@ -183,16 +184,7 @@ export function ScrollMattis({
   const isMobile = useContainerMobile(rootRef);
 
   // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play (cũng có scroller).
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const slides = React.useMemo(() => resolveSlides(content), [content]);
 

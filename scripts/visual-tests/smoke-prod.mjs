@@ -40,7 +40,8 @@ const collect = (page, label) => {
     errs.push(`[pageerror:${label}] ${e.message?.slice(0, 200)}`)
   );
   page.on('console', m => {
-    if (m.type() === 'error') errs.push(`[console:${label}] ${m.text().slice(0, 200)}`);
+    if (m.type() === 'error')
+      errs.push(`[console:${label}] ${m.text().slice(0, 200)}`);
   });
   page.on('requestfailed', r =>
     errs.push(
@@ -62,7 +63,9 @@ const signIn = async page => {
 // ── 1. DESKTOP smoke ────────────────────────────────────────────────
 {
   log('═══ Desktop 1440×900 ═══');
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const ctx = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
+  });
   const page = await ctx.newPage();
   const errs = collect(page, 'desktop');
 
@@ -85,16 +88,23 @@ const signIn = async page => {
 
     await page.waitForTimeout(1500);
     const greeting = await page.locator('h1').first().textContent();
-    note(greeting?.includes('Hi') || greeting?.includes('Welcome') ? 'PASS' : 'FAIL',
-      `Greeting on /home: "${greeting?.slice(0, 60)}"`);
+    note(
+      greeting?.includes('Hi') || greeting?.includes('Welcome')
+        ? 'PASS'
+        : 'FAIL',
+      `Greeting on /home: "${greeting?.slice(0, 60)}"`
+    );
 
     // Spot-check key API responses
     const probe = await page.evaluate(async () => {
       const r = await fetch('/api/rexer/auth/me', { credentials: 'include' });
       const me = await r.text();
-      const rT = await fetch('/api/rexer/canvas-templates?is_active=true&limit=6', {
-        credentials: 'include',
-      });
+      const rT = await fetch(
+        '/api/rexer/canvas-templates?is_active=true&limit=6',
+        {
+          credentials: 'include',
+        }
+      );
       const rP = await fetch('/api/rexer/products?limit=6', {
         credentials: 'include',
       });
@@ -105,11 +115,23 @@ const signIn = async page => {
         meBody: me.slice(0, 200),
       };
     });
-    note(probe.meStatus === 200 ? 'PASS' : 'FAIL', `/auth/me → ${probe.meStatus}`);
-    note(probe.tplStatus === 200 ? 'PASS' : 'FAIL', `/canvas-templates → ${probe.tplStatus}`);
-    note(probe.prdStatus === 200 ? 'PASS' : 'FAIL', `/products → ${probe.prdStatus}`);
+    note(
+      probe.meStatus === 200 ? 'PASS' : 'FAIL',
+      `/auth/me → ${probe.meStatus}`
+    );
+    note(
+      probe.tplStatus === 200 ? 'PASS' : 'FAIL',
+      `/canvas-templates → ${probe.tplStatus}`
+    );
+    note(
+      probe.prdStatus === 200 ? 'PASS' : 'FAIL',
+      `/products → ${probe.prdStatus}`
+    );
 
-    await page.screenshot({ path: join(OUT, 'desktop-home.png'), fullPage: true });
+    await page.screenshot({
+      path: join(OUT, 'desktop-home.png'),
+      fullPage: true,
+    });
 
     // Click first template card
     const tplLink = page.locator('a[href^="/canvas-templates/"]').first();
@@ -157,14 +179,20 @@ const signIn = async page => {
       const winW = document.documentElement.clientWidth;
       return { docW, winW, horiz: docW - winW };
     });
-    if (overflow.horiz <= 1) note('PASS', `No horizontal overflow on /home (docW=${overflow.docW})`);
+    if (overflow.horiz <= 1)
+      note('PASS', `No horizontal overflow on /home (docW=${overflow.docW})`);
     else note('FAIL', `Horizontal overflow ${overflow.horiz}px on /home`);
-    await page.screenshot({ path: join(OUT, 'mobile-home.png'), fullPage: true });
+    await page.screenshot({
+      path: join(OUT, 'mobile-home.png'),
+      fullPage: true,
+    });
 
     // Drawer flow
     const aside = page.locator('aside[aria-label]').first();
     const toggle = page
-      .locator('main button[aria-label="Mở menu"], main button[aria-label="Đóng menu"]')
+      .locator(
+        'main button[aria-label="Mở menu"], main button[aria-label="Đóng menu"]'
+      )
       .first();
     const closedX = await aside.evaluate(el =>
       Math.round(el.getBoundingClientRect().left)
@@ -182,7 +210,9 @@ const signIn = async page => {
       else note('FAIL', `Drawer did not open (left=${openX})`);
       await page.screenshot({ path: join(OUT, 'mobile-drawer-open.png') });
 
-      const drawerClose = page.locator('aside button[aria-label="Đóng menu"]').first();
+      const drawerClose = page
+        .locator('aside button[aria-label="Đóng menu"]')
+        .first();
       if ((await drawerClose.count()) > 0) {
         await drawerClose.click();
         await page.waitForTimeout(400);

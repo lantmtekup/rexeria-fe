@@ -28,6 +28,7 @@
     "apps",
     "packages",
     "recon-archive",
+    "scripts",
     ".open-next",
     ".turbo"
   ]

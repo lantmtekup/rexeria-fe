@@ -5,15 +5,13 @@
  *
  * Self-contained renderer theo pattern data-block: mỗi element có
  * `data-element-key` + composeStyle + selectableClass nên editor chọn/sửa
- * style từng phần (ELEMENTS_BY_TYPE['mint_details']). Giữ GSAP char-split
- * fade-up cho title + fade-in cho 2 đoạn (port từ template DetailsSection).
+ * style từng phần (ELEMENTS_BY_TYPE['mint_details']). Motion: char-reveal
+ * title + fade-up paragraphs qua attribute system.
  */
 
 import * as React from 'react';
-import gsap from 'gsap';
-import SplitType from 'split-type';
 
-import { useBlockMotion } from '../motion/LandingMotion';
+import { useMotionAttributes } from '../motion/useMotionAttributes';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -54,51 +52,7 @@ export function MintDetails({
       positionStyle(positions, key)
     );
 
-  useBlockMotion(rootRef, ({ scroller }) => {
-    const root = rootRef.current;
-    if (!root) return;
-    const titleEl = root.querySelector<HTMLElement>('.mint-details__title');
-    if (titleEl) {
-      const split = new SplitType(titleEl, { types: 'chars' });
-      gsap.fromTo(
-        split.chars,
-        { opacity: 0, y: 24, force3D: true },
-        {
-          opacity: 1,
-          y: 0,
-          force3D: true,
-          stagger: 0.04,
-          ease: 'power2.out',
-          scrollTrigger: {
-            trigger: titleEl,
-            scroller,
-            start: 'top 85%',
-            end: 'top 50%',
-            toggleActions: 'play none none reverse',
-            invalidateOnRefresh: true,
-          },
-        }
-      );
-    }
-    gsap.utils.toArray<HTMLElement>('.mint-details__p', root).forEach(el => {
-      gsap.fromTo(
-        el,
-        { opacity: 0, y: 20 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 1,
-          ease: 'sine.out',
-          scrollTrigger: {
-            trigger: el,
-            scroller,
-            start: 'top 85%',
-            end: 'bottom 85%',
-          },
-        }
-      );
-    });
-  });
+  useMotionAttributes(rootRef);
 
   return (
     <section
@@ -109,30 +63,40 @@ export function MintDetails({
       <div className='mx-auto max-w-3xl text-center'>
         <h1
           data-element-key='title'
+          data-motion='char-reveal'
+          data-motion-stagger='0.04'
           style={styleOf('title')}
           className={selectableClass(
             activeKey === 'title',
-            'mint-details__title mb-10 text-5xl font-light tracking-tight @2xl:text-8xl'
+            'mb-10 text-5xl font-light tracking-tight @2xl:text-8xl'
           )}
         >
           {content.title}
         </h1>
         <p
           data-element-key='paragraph1'
+          data-motion='fade-up'
+          data-motion-distance='20'
+          data-motion-duration='1'
+          data-motion-ease='sine.out'
           style={styleOf('paragraph1')}
           className={selectableClass(
             activeKey === 'paragraph1',
-            'mint-details__p mb-5 text-sm leading-relaxed text-neutral-800 @2xl:text-base'
+            'mb-5 text-sm leading-relaxed text-neutral-800 @2xl:text-base'
           )}
         >
           {content.paragraph1}
         </p>
         <p
           data-element-key='paragraph2'
+          data-motion='fade-up'
+          data-motion-distance='20'
+          data-motion-duration='1'
+          data-motion-ease='sine.out'
           style={styleOf('paragraph2')}
           className={selectableClass(
             activeKey === 'paragraph2',
-            'mint-details__p text-sm leading-relaxed text-neutral-800 @2xl:text-base'
+            'text-sm leading-relaxed text-neutral-800 @2xl:text-base'
           )}
         >
           {content.paragraph2}
