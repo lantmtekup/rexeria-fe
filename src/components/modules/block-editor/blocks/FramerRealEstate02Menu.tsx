@@ -202,7 +202,7 @@ export function FramerRealEstate02Menu({
       )}
       data-block='framer-realestate02-menu'
     >
-      <div className='absolute top-1/2 left-1/2 z-100 -translate-x-1/2 -translate-y-1/2'>
+      <div className='absolute top-1/2 left-1/2 z-1 -translate-x-1/2 -translate-y-1/2'>
         <div style={ROOT_STYLE}>{barContent}</div>
       </div>
     </section>
