@@ -19,6 +19,11 @@ import { delvauxVariantDef } from './defs/delvauxVariant';
 import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerFirmaTemplateStrategyDigitalDef } from './defs/framerFirmaTemplateStrategyDigital';
 import { framerFlatWhiteProcessDef } from './defs/framerFlatWhiteProcess';
+import { framerAesthaEditorialDef } from './defs/framerAesthaEditorial';
+import { aesthaExploreDef } from './defs/aesthaExplore';
+import { aesthaStudioDef } from './defs/aesthaStudio';
+import { aesthaContactDef } from './defs/aesthaContact';
+import { aesthaProjectDef } from './defs/aesthaProject';
 import { framerEstanciaAboutUsDef } from './defs/framerEstanciaAboutUs';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerIgnitexStepDef } from './defs/framerIgnitexStep';
@@ -228,6 +233,11 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   real_estate_hero: realEstateHeroDef as BlockDef,
   real_estate_info: realEstateInfoDef as BlockDef,
   real_estate_overview: realEstateOverviewDef as BlockDef,
+  framer_aestha_editorial: framerAesthaEditorialDef as BlockDef,
+  aestha_explore: aesthaExploreDef as BlockDef,
+  aestha_studio: aesthaStudioDef as BlockDef,
+  aestha_contact: aesthaContactDef as BlockDef,
+  aestha_project: aesthaProjectDef as BlockDef,
   real_estate_highlights: realEstateHighlightsDef as BlockDef,
   real_estate_villa: realEstateVillaDef as BlockDef,
   real_estate_utilities: realEstateUtilitiesDef as BlockDef,

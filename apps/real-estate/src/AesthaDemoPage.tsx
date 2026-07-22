@@ -86,13 +86,13 @@ const IMAGES: ImgSlot[] = [
     src: '/images/landing-v2/hero-tower-closeup-sunset.jpg',
     alt: 'Tòa tháp kiến trúc hoàng hôn',
     width: 1920,
-    height: 1071,
+    height: 1920,
     slotClass: 'img2',
   },
   {
     src: '/images/landing-v2/arch-three-towers-aerial-green.jpg',
     alt: 'Ba tòa tháp nhìn từ trên cao',
-    width: 1440,
+    width: 1840,
     height: 1440,
     slotClass: 'img3',
   },
@@ -219,19 +219,19 @@ function Stage({ onExplore }: { onExplore: () => void }) {
            clearly (Framer reference shows each image individually). */
         .ad-img1 {
           top: clamp(20px, 3vh, 40px);
-          width: min(416px, 60%);
+          width: min(516px, 60%);
           margin-left: 0;
           margin-right: auto;
         }
         .ad-img2 {
-          top: clamp(120px, 16vh, 180px);
-          width: min(432px, 62%);
+          top: clamp(80px, 10vh, 120px);
+          width: min(732px, 82%);
           margin-left: auto;
           margin-right: clamp(0px, 2vw, 24px);
         }
         .ad-img3 {
-          top: clamp(240px, 30vh, 340px);
-          width: min(340px, 48%);
+          top: clamp(440px, 50vh, 540px);
+          width: min(540px, 55%);
           margin-left: clamp(48px, 12vw, 160px);
           margin-right: auto;
         }
@@ -442,13 +442,18 @@ function ExploreView({
           max-width: none;
           margin: 0 auto;
           padding: clamp(24px, 3.5vw, 48px);
-          min-height: 100vh;
+          /* Lock the whole view to one viewport — no vertical scroll.
+             box-sizing:border-box (global reset) keeps padding inside
+             the 100dvh so both columns fill exactly one screen. */
+          height: 100dvh;
+          overflow: hidden;
           position: relative;
         }
         .ev-left {
           display: grid;
           grid-template-rows: auto 1fr auto;
-          min-height: calc(100vh - clamp(48px, 7vw, 96px));
+          height: 100%;
+          min-height: 0;
         }
         .ev-heading {
           font-family: 'Funnel Display', 'Switzer', sans-serif;
@@ -513,7 +518,11 @@ function ExploreView({
           position: relative;
           overflow: hidden;
           background: #EEE;
-          min-height: 60vh;
+          /* Fill the grid row exactly so every image (regardless of its
+             own aspect ratio) renders at the same fixed size, contained
+             within the 100dvh view. object-fit:cover handles the crop. */
+          height: 100%;
+          min-height: 0;
         }
         .ev-image {
           position: absolute;
@@ -528,11 +537,13 @@ function ExploreView({
         .ev-image.is-active { opacity: 1; }
 
         @media (max-width: 900px) {
-          .ev-stage { grid-template-columns: 1fr; gap: 24px; }
-          .ev-left { min-height: auto; grid-template-rows: auto auto auto; }
+          /* Mobile stacks the two columns — release the 100dvh lock so
+             the content can scroll instead of being clipped. */
+          .ev-stage { grid-template-columns: 1fr; gap: 24px; height: auto; overflow: visible; }
+          .ev-left { height: auto; min-height: auto; grid-template-rows: auto auto auto; }
           .ev-list { align-items: center; padding-right: 0; gap: 10px; }
           .ev-item { text-align: center; }
-          .ev-right { aspect-ratio: 4 / 3; min-height: 300px; }
+          .ev-right { height: auto; aspect-ratio: 4 / 3; min-height: 300px; }
         }
         @media (prefers-reduced-motion: reduce) {
           .ev-item, .ev-image { transition: none !important; transform: none !important; }
@@ -868,9 +879,9 @@ function ProjectView({
         }
         .pv-title {
           font-family: 'Funnel Display', 'Switzer', sans-serif;
-          font-size: clamp(40px, 5vw, 72px);
+          font-size: clamp(22px, 2.2vw, 34px);
           font-weight: 500;
-          letter-spacing: -0.02em;
+          letter-spacing: -0.01em;
           line-height: 1;
           margin: 0 0 clamp(48px, 8vh, 96px);
         }
@@ -880,7 +891,9 @@ function ProjectView({
           letter-spacing: 0.14em;
           text-transform: uppercase;
           color: #555;
-          margin: 0 0 16px;
+          margin: 0;
+          flex: 0 0 auto;
+          width: clamp(80px, 12vw, 140px);
         }
         /* Body + next-project share the same middle slot — they
            crossfade based on sentinel state. */
@@ -890,7 +903,14 @@ function ProjectView({
           transition: opacity 0.5s cubic-bezier(0.22,1,0.36,1),
                       transform 0.5s cubic-bezier(0.22,1,0.36,1);
         }
-        .pv-panel-body { opacity: 1; transform: translate3d(0,0,0); }
+        .pv-panel-body {
+          opacity: 1;
+          transform: translate3d(0,0,0);
+          display: flex;
+          flex-direction: row;
+          align-items: flex-start;
+          gap: clamp(24px, 3vw, 56px);
+        }
         .pv-panel-body.is-hidden {
           opacity: 0;
           transform: translate3d(0, -12px, 0);
@@ -898,9 +918,16 @@ function ProjectView({
         }
         .pv-panel-next {
           position: absolute;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 4px;
           opacity: 0;
           transform: translate3d(0, 12px, 0);
           pointer-events: none;
+        }
+        .pv-panel-next .pv-section-label {
+          width: auto;
         }
         .pv-panel-next.is-shown {
           opacity: 1;
@@ -970,6 +997,8 @@ function ProjectView({
           .pv-stage { grid-template-columns: 1fr; gap: 32px; }
           .pv-left { position: static; height: auto; }
           .pv-body { max-width: none; }
+          .pv-panel-body { flex-direction: column; gap: 12px; }
+          .pv-section-label { width: auto; }
         }
       `}</style>
 

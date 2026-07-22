@@ -33,6 +33,16 @@ export type ElementKind =
   | 'delvauxVariants'
   | 'delvauxFaqs'
   | 'delvauxSubnavLinks'
+  | 'aesthaNavLinks'
+  | 'aesthaExploreProjects'
+  | 'aesthaExploreFooterLinks'
+  | 'aesthaStudioTeam'
+  | 'aesthaStudioFooterLinks'
+  | 'aesthaContactSocials'
+  | 'aesthaContactFooterLinks'
+  | 'aesthaProjectBody'
+  | 'aesthaProjectImages'
+  | 'aesthaProjectNavLinks'
   | 'mintDiscoverVariant'
   | 'mintDiscoverSurface'
   | 'background';
@@ -157,6 +167,53 @@ export function resolveKind(
     blockType === 'delvaux_subnav'
   ) {
     return 'text';
+  }
+  // Aestha nav: phải chặn trước fallback `ELEMENT_KIND[key] ?? isImageKey` —
+  // `navLinks` rơi về 'text' thì toolbar ghi 1 string đè cả mảng.
+  if (key === 'navLinks' && blockType === 'framer_aestha_editorial') {
+    return 'aesthaNavLinks';
+  }
+  if (
+    /^navLinks\[\d+\]\.(label|href)$/.test(key) &&
+    blockType === 'framer_aestha_editorial'
+  ) {
+    return 'text';
+  }
+  // Aestha Explore: `projects` / `footerLinks` là mảng động (list manager) —
+  // chặn trước fallback để toolbar không ghi 1 string đè cả mảng.
+  if (blockType === 'aestha_explore') {
+    if (key === 'projects') return 'aesthaExploreProjects';
+    if (key === 'footerLinks') return 'aesthaExploreFooterLinks';
+    if (/^projects\[\d+\]\.img$/.test(key)) return 'image';
+    if (/^projects\[\d+\]\.(label|href|alt)$/.test(key)) return 'text';
+    if (/^footerLinks\[\d+\]\.(label|href)$/.test(key)) return 'text';
+  }
+  // Aestha Studio: `team` / `footerLinks` là mảng động (list manager) — chặn
+  // trước fallback để toolbar không ghi 1 string đè cả mảng.
+  if (blockType === 'aestha_studio') {
+    if (key === 'team') return 'aesthaStudioTeam';
+    if (key === 'footerLinks') return 'aesthaStudioFooterLinks';
+    if (/^team\[\d+\]\.(name|role)$/.test(key)) return 'text';
+    if (/^footerLinks\[\d+\]\.(label|href)$/.test(key)) return 'text';
+  }
+  // Aestha Contact: `socials` / `footerLinks` là mảng động (list manager) —
+  // chặn trước fallback để toolbar không ghi 1 string đè cả mảng.
+  if (blockType === 'aestha_contact') {
+    if (key === 'socials') return 'aesthaContactSocials';
+    if (key === 'footerLinks') return 'aesthaContactFooterLinks';
+    if (/^socials\[\d+\]\.(label|href)$/.test(key)) return 'text';
+    if (/^footerLinks\[\d+\]\.(label|href)$/.test(key)) return 'text';
+  }
+  // Aestha Project: `body` / `images` / `navLinks` là mảng động (list manager)
+  // — chặn trước fallback để toolbar không ghi 1 string đè cả mảng.
+  if (blockType === 'aestha_project') {
+    if (key === 'body') return 'aesthaProjectBody';
+    if (key === 'images') return 'aesthaProjectImages';
+    if (key === 'navLinks') return 'aesthaProjectNavLinks';
+    if (/^body\[\d+\]$/.test(key)) return 'text';
+    if (/^images\[\d+\]\.src$/.test(key)) return 'image';
+    if (/^images\[\d+\]\.alt$/.test(key)) return 'text';
+    if (/^navLinks\[\d+\]\.(label|href)$/.test(key)) return 'text';
   }
   // Delvaux product hotspots vs Mint/PNJ hero hotspots — cùng key `hotspots`.
   if (key === 'hotspots' && blockType === 'delvaux_product') {
@@ -855,6 +912,130 @@ export function resolveElementMeta(
       kind: 'delvauxSubnavLinks',
       fieldType: undefined,
       label: 'Thêm / quản lý link',
+    };
+  }
+  if (key === 'navLinks' && blockType === 'framer_aestha_editorial') {
+    return {
+      kind: 'aesthaNavLinks',
+      fieldType: undefined,
+      label: 'Thêm / quản lý nav',
+    };
+  }
+  const aesthaNavLink = key.match(/^navLinks\[(\d+)\]\.(label|href)$/);
+  if (aesthaNavLink && blockType === 'framer_aestha_editorial') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Nav ${Number(aesthaNavLink[1]) + 1} · ${
+        aesthaNavLink[2] === 'label' ? 'Nhãn' : 'Link'
+      }`,
+    };
+  }
+  if (key === 'projects' && blockType === 'aestha_explore') {
+    return {
+      kind: 'aesthaExploreProjects',
+      fieldType: undefined,
+      label: 'Thêm / quản lý dự án',
+    };
+  }
+  if (key === 'footerLinks' && blockType === 'aestha_explore') {
+    return {
+      kind: 'aesthaExploreFooterLinks',
+      fieldType: undefined,
+      label: 'Thêm / quản lý footer',
+    };
+  }
+  const exploreProject = key.match(/^projects\[(\d+)\]\.(label|href|img|alt)$/);
+  if (exploreProject && blockType === 'aestha_explore') {
+    const field = exploreProject[2];
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      href: 'Link',
+      img: 'Ảnh',
+      alt: 'Alt',
+    };
+    return {
+      kind: field === 'img' ? 'image' : 'text',
+      fieldType: field === 'img' ? 'image' : 'text',
+      label: `Dự án ${Number(exploreProject[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  const exploreFooter = key.match(/^footerLinks\[(\d+)\]\.(label|href)$/);
+  if (exploreFooter && blockType === 'aestha_explore') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Footer ${Number(exploreFooter[1]) + 1} · ${
+        exploreFooter[2] === 'label' ? 'Nhãn' : 'Link'
+      }`,
+    };
+  }
+  if (key === 'team' && blockType === 'aestha_studio') {
+    return {
+      kind: 'aesthaStudioTeam',
+      fieldType: undefined,
+      label: 'Thêm / quản lý team',
+    };
+  }
+  if (key === 'footerLinks' && blockType === 'aestha_studio') {
+    return {
+      kind: 'aesthaStudioFooterLinks',
+      fieldType: undefined,
+      label: 'Thêm / quản lý footer',
+    };
+  }
+  const studioMember = key.match(/^team\[(\d+)\]\.(name|role)$/);
+  if (studioMember && blockType === 'aestha_studio') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Thành viên ${Number(studioMember[1]) + 1} · ${
+        studioMember[2] === 'name' ? 'Tên' : 'Vai trò'
+      }`,
+    };
+  }
+  const studioFooter = key.match(/^footerLinks\[(\d+)\]\.(label|href)$/);
+  if (studioFooter && blockType === 'aestha_studio') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Footer ${Number(studioFooter[1]) + 1} · ${
+        studioFooter[2] === 'label' ? 'Nhãn' : 'Link'
+      }`,
+    };
+  }
+  if (key === 'socials' && blockType === 'aestha_contact') {
+    return {
+      kind: 'aesthaContactSocials',
+      fieldType: undefined,
+      label: 'Thêm / quản lý social',
+    };
+  }
+  if (key === 'footerLinks' && blockType === 'aestha_contact') {
+    return {
+      kind: 'aesthaContactFooterLinks',
+      fieldType: undefined,
+      label: 'Thêm / quản lý footer',
+    };
+  }
+  const contactSocial = key.match(/^socials\[(\d+)\]\.(label|href)$/);
+  if (contactSocial && blockType === 'aestha_contact') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Mạng xã hội ${Number(contactSocial[1]) + 1} · ${
+        contactSocial[2] === 'label' ? 'Nhãn' : 'Link'
+      }`,
+    };
+  }
+  const contactFooter = key.match(/^footerLinks\[(\d+)\]\.(label|href)$/);
+  if (contactFooter && blockType === 'aestha_contact') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Footer ${Number(contactFooter[1]) + 1} · ${
+        contactFooter[2] === 'label' ? 'Nhãn' : 'Link'
+      }`,
     };
   }
   const delvauxNavLink = key.match(/^links\[(\d+)\]\.(label|targetId)$/);

@@ -70,6 +70,19 @@ import { mintVaultCraftItemElements } from './blocks/mintVaultCraftElements';
 import { mintVaultInvitationImageElements } from './blocks/mintVaultInvitationElements';
 import { mintVaultRevealImageElements } from './blocks/mintVaultRevealElements';
 import { pnjStickyMenuItemElements } from './blocks/_registry/defs/pnjStickyMenu';
+import { aesthaNavLinkElements } from './blocks/_registry/defs/framerAesthaEditorial';
+import {
+  aesthaExploreFooterLinkElements,
+  aesthaExploreProjectElements,
+} from './blocks/_registry/defs/aesthaExplore';
+import {
+  aesthaStudioFooterLinkElements,
+  aesthaStudioTeamElements,
+} from './blocks/_registry/defs/aesthaStudio';
+import {
+  aesthaContactFooterLinkElements,
+  aesthaContactSocialElements,
+} from './blocks/_registry/defs/aesthaContact';
 import { delvauxSubnavLinkElements } from './blocks/_registry/defs/delvauxSubnav';
 import { getBlockDef } from './blocks/_registry/registry';
 import {
@@ -84,6 +97,7 @@ import {
   type DelvauxSubnavLink,
   type DelvauxVariantFaq,
   type DelvauxVariantOption,
+  type AesthaExploreProject,
   type PnjHeroContent,
   type PnjVariantItem,
   type PnjStickyMenuItem,
@@ -275,17 +289,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'centerImageUrl', label: 'Ảnh giữa', icon: ImageIcon },
     { key: 'services', label: 'Dịch vụ', icon: Grid3x3 },
-  ],
-  framer_aestha_editorial: [
-    BACKGROUND_LAYER,
-    { key: 'brand', label: 'Brand', icon: Type },
-    { key: 'tagline', label: 'Tagline', icon: Pilcrow },
-    { key: 'description', label: 'Mô tả', icon: Pilcrow },
-    { key: 'image1Url', label: 'Ảnh 1', icon: ImageIcon },
-    { key: 'image2Url', label: 'Ảnh 2', icon: ImageIcon },
-    { key: 'image3Url', label: 'Ảnh 3', icon: ImageIcon },
-    { key: 'ctaText', label: 'Nút CTA', icon: MousePointerClick },
-    { key: 'navLinks', label: 'Nav', icon: Grid3x3 },
   ],
   framer_perform_about: [
     BACKGROUND_LAYER,
@@ -1252,6 +1255,96 @@ export function elementsForType(
         label: 'Thêm / quản lý coin',
         icon: ListChecks,
       },
+    ];
+  }
+  if (type === 'aestha_explore') {
+    const rawProjects = content?.projects;
+    const projects = Array.isArray(rawProjects)
+      ? (rawProjects as Array<{ label?: string }>).filter(
+          p => p && typeof p === 'object'
+        )
+      : [];
+    const rawFooter = content?.footerLinks;
+    const footerLinks = Array.isArray(rawFooter)
+      ? (rawFooter as Array<{ label?: string }>).filter(
+          l => l && typeof l === 'object'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []),
+      ...aesthaExploreProjectElements(projects as AesthaExploreProject[]),
+      { key: 'projects', label: 'Thêm / quản lý dự án', icon: ListChecks },
+      ...aesthaExploreFooterLinkElements(
+        footerLinks as Array<{ label: string; href: string }>
+      ),
+      { key: 'footerLinks', label: 'Thêm / quản lý footer', icon: ListChecks },
+    ];
+  }
+  if (type === 'aestha_studio') {
+    const rawTeam = content?.team;
+    const team = Array.isArray(rawTeam)
+      ? (rawTeam as Array<{ name?: string }>).filter(
+          m => m && typeof m === 'object'
+        )
+      : [];
+    const rawFooter = content?.footerLinks;
+    const footerLinks = Array.isArray(rawFooter)
+      ? (rawFooter as Array<{ label?: string }>).filter(
+          l => l && typeof l === 'object'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []),
+      ...aesthaStudioTeamElements(
+        team as Array<{ name: string; role: string }>
+      ),
+      { key: 'team', label: 'Thêm / quản lý team', icon: ListChecks },
+      ...aesthaStudioFooterLinkElements(
+        footerLinks as Array<{ label: string; href: string }>
+      ),
+      { key: 'footerLinks', label: 'Thêm / quản lý footer', icon: ListChecks },
+    ];
+  }
+  if (type === 'aestha_contact') {
+    const rawSocials = content?.socials;
+    const socials = Array.isArray(rawSocials)
+      ? (rawSocials as Array<{ label?: string }>).filter(
+          s => s && typeof s === 'object'
+        )
+      : [];
+    const rawFooter = content?.footerLinks;
+    const footerLinks = Array.isArray(rawFooter)
+      ? (rawFooter as Array<{ label?: string }>).filter(
+          l => l && typeof l === 'object'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []),
+      ...aesthaContactSocialElements(
+        socials as Array<{ label: string; href: string }>
+      ),
+      { key: 'socials', label: 'Thêm / quản lý social', icon: ListChecks },
+      ...aesthaContactFooterLinkElements(
+        footerLinks as Array<{ label: string; href: string }>
+      ),
+      { key: 'footerLinks', label: 'Thêm / quản lý footer', icon: ListChecks },
+    ];
+  }
+  if (type === 'framer_aestha_editorial') {
+    const raw = content?.navLinks;
+    const links = Array.isArray(raw)
+      ? (raw as Array<{ label: string; href: string }>).filter(
+          l => l && typeof l === 'object' && typeof l.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []),
+      ...aesthaNavLinkElements(links),
+      { key: 'navLinks', label: 'Thêm / quản lý nav', icon: ListChecks },
     ];
   }
   if (type === 'pnj_sticky_menu') {
