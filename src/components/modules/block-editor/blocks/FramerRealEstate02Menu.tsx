@@ -135,8 +135,8 @@ export function FramerRealEstate02Menu({
     top: 0,
   };
 
-  const bar = (
-    <div style={barStyle}>
+  const barContent = (
+    <>
       <div
         data-element-key='label'
         style={composeStyle(LINK_STYLE, styleOf('label'))}
@@ -160,8 +160,10 @@ export function FramerRealEstate02Menu({
           'pointer-events-auto'
         )}
       />
-    </div>
+    </>
   );
+
+  const bar = <div style={barStyle}>{barContent}</div>;
 
   if (useFixed && portalHost) {
     return (
@@ -195,12 +197,14 @@ export function FramerRealEstate02Menu({
     <section
       ref={rootRef}
       className={cn(
-        'frem-root @container relative m-0 min-h-svh w-full overflow-hidden border-0 p-0',
+        'frem-root @container relative m-0 min-h-[50svh] w-full overflow-hidden border-0 p-0',
         className
       )}
       data-block='framer-realestate02-menu'
     >
-      <div className='absolute inset-x-0 top-0 z-100'>{bar}</div>
+      <div className='absolute top-1/2 left-1/2 z-100 -translate-x-1/2 -translate-y-1/2'>
+        <div style={ROOT_STYLE}>{barContent}</div>
+      </div>
     </section>
   );
 }
