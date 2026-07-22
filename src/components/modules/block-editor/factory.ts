@@ -91,6 +91,7 @@ import { framerRealEstate02LocationDef } from './blocks/_registry/defs/framerRea
 import { framerRealEstate02CommuteDef } from './blocks/_registry/defs/framerRealEstate02Commute';
 import { framerRealEstate02MapDef } from './blocks/_registry/defs/framerRealEstate02Map';
 import { framerRealEstate02GalleryDef } from './blocks/_registry/defs/framerRealEstate02Gallery';
+import { framerRealEstate02MenuDef } from './blocks/_registry/defs/framerRealEstate02Menu';
 import type {
   Block,
   BlockContent,
@@ -2401,6 +2402,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_realestate02_commute: framerRealEstate02CommuteDef.defaultContent.vi,
   framer_realestate02_map: framerRealEstate02MapDef.defaultContent.vi,
   framer_realestate02_gallery: framerRealEstate02GalleryDef.defaultContent.vi,
+  framer_realestate02_menu: framerRealEstate02MenuDef.defaultContent.vi,
   framer_stats_grid: FRAMER_STATS_GRID_VI,
   framer_projects_grid: FRAMER_PROJECTS_GRID_VI,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_VI,
@@ -2568,6 +2570,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_realestate02_commute: framerRealEstate02CommuteDef.defaultContent.en,
   framer_realestate02_map: framerRealEstate02MapDef.defaultContent.en,
   framer_realestate02_gallery: framerRealEstate02GalleryDef.defaultContent.en,
+  framer_realestate02_menu: framerRealEstate02MenuDef.defaultContent.en,
   framer_stats_grid: FRAMER_STATS_GRID_EN,
   framer_projects_grid: FRAMER_PROJECTS_GRID_EN,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_EN,

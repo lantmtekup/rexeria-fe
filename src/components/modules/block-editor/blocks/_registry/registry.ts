@@ -29,6 +29,7 @@ import { framerRealEstate02LocationDef } from './defs/framerRealEstate02Location
 import { framerRealEstate02CommuteDef } from './defs/framerRealEstate02Commute';
 import { framerRealEstate02MapDef } from './defs/framerRealEstate02Map';
 import { framerRealEstate02GalleryDef } from './defs/framerRealEstate02Gallery';
+import { framerRealEstate02MenuDef } from './defs/framerRealEstate02Menu';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
 import { protectionScrollytellingDef } from './defs/protectionScrollytelling';
@@ -132,6 +133,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   framer_realestate02_commute: framerRealEstate02CommuteDef as BlockDef,
   framer_realestate02_map: framerRealEstate02MapDef as BlockDef,
   framer_realestate02_gallery: framerRealEstate02GalleryDef as BlockDef,
+  framer_realestate02_menu: framerRealEstate02MenuDef as BlockDef,
   masterise_home_inside: masteriseHomeInsideDef as BlockDef,
   framer_purevisuals_hero: framerPurevisualsHeroDef as BlockDef,
   delvaux_header: delvauxHeaderDef as BlockDef,

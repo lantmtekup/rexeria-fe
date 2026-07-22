@@ -70,3 +70,7 @@ playwright-report/
 # Recon/extract artifacts (200M+) — local only, khong commit
 recon-archive/
 .tmp-recon/
+
+.agents/skills/framer-clone
+.agents/skills/framer-recon
+.agents/skills/framer-clone-host

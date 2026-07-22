@@ -305,6 +305,7 @@ export function FramerRealEstate02Location({
             style={composeStyle(
               {
                 ...HEADING_TEXT_STYLE,
+                color: 'white',
                 position: 'static',
                 whiteSpace: 'normal',
                 fontSize: 'clamp(28px, 9cqi, 48px)',

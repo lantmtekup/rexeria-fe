@@ -69,6 +69,7 @@ const ORDERED_TYPES: BlockType[] = [
   'framer_intro_redefined',
   'framer_studio_manifesto',
   'framer_ignitex_step',
+  'framer_realestate02_menu',
   'framer_realestate02_story',
   'framer_realestate02_quote',
   'framer_realestate02_product',

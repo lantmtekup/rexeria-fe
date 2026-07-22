@@ -76,6 +76,7 @@ export type BlockType =
   | 'framer_realestate02_commute'
   | 'framer_realestate02_map'
   | 'framer_realestate02_gallery'
+  | 'framer_realestate02_menu'
   | 'framer_perform_pricing'
   | 'framer_firma_template_strategy_digital'
   | 'housent_our_excellence'
@@ -1613,7 +1614,6 @@ export interface FramerRealEstate02QuoteContent {
 }
 
 export interface FramerRealEstate02GalleryContent {
-  /** 2 dòng tiêu đề tách rời trong DOM gốc (không phải wrap) — nối bằng \n. */
   heading: string;
   image1Url: string;
   image2Url: string;
@@ -1638,12 +1638,6 @@ export interface FramerRealEstate02OverviewContent {
   panoramaImageUrl: string;
 }
 
-/**
- * RealEstate02 "5. Hình" (LOCATION) — collage 3 ảnh + heading tràn mép, xem
- * `docs/` recon spec (framer-recon) cho công thức parallax đo được:
- * photo1 translateY = scrollY*-0.1, photo2/photo3 = scrollY*+0.1 (liên tục,
- * không clamp), heading trượt ngang 1 lần khi vào viewport.
- */
 export interface FramerRealEstate02LocationContent {
   heading: string;
   photo1Url: string;
@@ -1651,22 +1645,9 @@ export interface FramerRealEstate02LocationContent {
   photo3Url: string;
 }
 
-/**
- * RealEstate02 "6. Location" (COMMUTE) — walk-time ring counter + "By car"
- * distance list. Named `Commute` (not `Location`) because `Location` was
- * already taken by the "5. Hình" collage block above. See framer-recon spec
- * `.tmp-recon/recon-real-estate-2-location-stats/spec.md` for full evidence
- * (bundle-verified): hero counter is a 3rd-party "Đếm số" code component
- * (start 0 → walkMinutes, 60ms/step, replays every viewport entry); ring is
- * Framer's native 2-variant Smart Animate, spring(duration:2, bounce:0); all
- * text uses Framer's built-in per-character "Appear" effect,
- * spring(duration:1.5, bounce:0), 75ms/char stagger.
- */
 export interface FramerRealEstate02CommuteContent {
   eyebrow: string;
   heading: string;
-  /** Count-up target for the hero ring stat (0 → this value). String field to
-   *  match this block family's text-input convention; parsed at render time. */
   walkMinutes: string;
   carHeading: string;
   row1Value: string;
@@ -1678,19 +1659,13 @@ export interface FramerRealEstate02CommuteContent {
   carPhotoUrl: string;
 }
 
-/**
- * RealEstate02 "7. Map" — ảnh minh hoạ bản đồ tĩnh (đường/công viên + 4 pin
- * phụ đều bake sẵn trong 1 file SVG) + 1 marker lớn overlay (vector hardcode,
- * không phải content — giống logic ring SVG cố định trong Commute ở trên).
- * Marker bập bênh liên tục (KHÔNG phải entrance 1 lần) — đo trực tiếp trên
- * web mẫu bằng cách lấy mẫu inline `transform` mỗi 250ms trong hơn 10s (bundle
- * JS không lộ giá trị này vì đây là animation rAF-driven, CDP/WAAPI không bắt
- * được): translateY dao động 0 → ~5px → 0, chu kỳ ~2.1s. Xem
- * `.tmp-recon/recon-real-estate-2-commute-map/spec.md` §9 cho toàn bộ bằng
- * chứng (DOM tree, màu, path SVG marker lấy nguyên văn từ `<symbol>` gốc).
- */
 export interface FramerRealEstate02MapContent {
   mapImageUrl: string;
+}
+
+export interface FramerRealEstate02MenuContent {
+  label: string;
+  menuIconUrl?: string;
 }
 
 /**
@@ -2758,6 +2733,7 @@ export type BlockContent =
   | FramerRealEstate02LocationContent
   | FramerRealEstate02CommuteContent
   | FramerRealEstate02MapContent
+  | FramerRealEstate02MenuContent
   | FramerClarityServicesContent
   | DelvauxHeaderContent
   | DelvauxSubnavContent
@@ -4879,6 +4855,24 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'block "gallery tiện ích" card cố định 375×704, nền trong suốt: tiêu đề lớn 2 dòng "INFRAS/TRUCTURE" màu #c49f8a, slider 4 ảnh tiện ích 307×307 (gap 12px, hé lộ ảnh kế tiếp), 2 nút tròn 35×35 viền #c49f8a điều hướng trước/sau, bộ đếm "N/4" màu #e9e4dc',
     aiLabelEn:
       '"infrastructure gallery" block: fixed 375×704 card, transparent background — large 2-line "INFRAS/TRUCTURE" heading in #c49f8a, 4-image amenity slider (307×307, 12px gap, peeking next image), two 35×35 circular #c49f8a-bordered prev/next buttons, "N/4" counter in #e9e4dc',
+  },
+  framer_realestate02_menu: {
+    type: 'framer_realestate02_menu',
+    category: 'navigation',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'navigation'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-22',
+    label: 'RealEstate02 - Menu',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Menu',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Menu',
+    aiLabelVi:
+      'block "menu" navigation bar dạng pill: flex row chứa label dropdown (chữ Inter 11px uppercase #565440 trên nền tròn #e9e4dc viền #c49f8a border-radius 20px) bên trái + icon hamburger 3 gạch trong circle #e9e4dc viền #c49f8a bên phải; chữ hiện từng ký tự stagger 75ms khi vào viewport',
+    aiLabelEn:
+      '"menu" navigation pill block: flex row with a label pill (Inter 11px uppercase #565440 on #e9e4dc circle with #c49f8a border-radius 20px) on the left + a 3-line hamburger icon inside an #e9e4dc circle with #c49f8a border on the right; text reveals character-by-character with 75ms stagger on scroll-into-view',
   },
   framer_aestha_editorial: {
     type: 'framer_aestha_editorial',
