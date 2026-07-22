@@ -81,3 +81,7 @@ recon-archive/
 /apps/*/out 
 /apps/*/dist    
 /apps/*/.next    
+
+.agents/skills/framer-clone
+.agents/skills/framer-recon
+.agents/skills/framer-clone-host

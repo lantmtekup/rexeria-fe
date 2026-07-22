@@ -312,15 +312,15 @@ export default function DevBlocksPage() {
             scrollerRef={scrollerRef}
           >
             {!routeReady ? (
-              <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-400'>
+              <div className='flex min-h-screen items-center justify-center px-6 text-center text-sm text-neutral-400'>
                 Đang chuẩn bị preview…
               </div>
             ) : mode === 'id' && loadErr ? (
-              <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-500'>
+              <div className='flex min-h-screen items-center justify-center px-6 text-center text-sm text-neutral-500'>
                 {loadErr}
               </div>
             ) : mode === 'id' && !block ? (
-              <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-400'>
+              <div className='flex min-h-screen items-center justify-center px-6 text-center text-sm text-neutral-400'>
                 Đang tải block…
               </div>
             ) : block && resolved ? (
@@ -330,7 +330,7 @@ export default function DevBlocksPage() {
                 motion={resolved.motion}
                 scrollerEl={scrollerRef.current}
               >
-                <MotionBlockRoot>
+                <MotionBlockRoot className='h-full'>
                   <RenderBlock
                     block={block}
                     content={resolved.content}

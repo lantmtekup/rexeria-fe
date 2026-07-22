@@ -72,6 +72,8 @@ import { readymagFooterDef } from './blocks/_registry/defs/readymagFooter';
 import { protectionScrollytellingDef } from './blocks/_registry/defs/protectionScrollytelling';
 import { framerFlatWhiteProcessDef } from './blocks/_registry/defs/framerFlatWhiteProcess';
 import { framerEstanciaAboutUsDef } from './blocks/_registry/defs/framerEstanciaAboutUs';
+import { rolexCollectionHeroDef } from './blocks/_registry/defs/rolexCollectionHero';
+import { rolexNavDef } from './blocks/_registry/defs/rolexNav';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { springsContactFooterDef } from './blocks/_registry/defs/springsContactFooter';
 import { springsDesignDef } from './blocks/_registry/defs/springsDesign';
@@ -2509,6 +2511,8 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
     framerFirmaTemplateStrategyDigitalDef.defaultContent.vi,
   readymag_case_section: readymagCaseSectionDef.defaultContent.vi,
   framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.vi,
+  rolex_collection_hero: rolexCollectionHeroDef.defaultContent.vi,
+  rolex_nav: rolexNavDef.defaultContent.vi,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
@@ -2683,6 +2687,8 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
     framerFirmaTemplateStrategyDigitalDef.defaultContent.en,
   readymag_case_section: readymagCaseSectionDef.defaultContent.en,
   framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.en,
+  rolex_collection_hero: rolexCollectionHeroDef.defaultContent.en,
+  rolex_nav: rolexNavDef.defaultContent.en,
 };
 
 function genId() {

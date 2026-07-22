@@ -190,7 +190,9 @@ export type BlockType =
   | 'springs_interiors'
   | 'springs_contact_footer'
   // ── Sustainit (Readymag source) ──
-  | 'sustainit_our_expertise';
+  | 'sustainit_our_expertise'
+  | 'rolex_collection_hero'
+  | 'rolex_nav';
 
 export interface HeroSplitStat {
   value: string;
@@ -1733,6 +1735,22 @@ export interface FramerImageStaggerContent {
   images: Array<{ imageUrl: string; alt: string }>;
 }
 
+export interface RolexCollectionHeroContent {
+  backgroundUrl: string;
+  mainLetter: string;
+  mainTitle: string;
+  mainDescription: string;
+  heroImageUrl: string;
+  textLinkLabel: string;
+  textLinkHref?: string;
+}
+
+export interface RolexNavContent {
+  navLogoLabel: string;
+  navHomeLabel: string;
+  navBurgerLabel: string;
+}
+
 /**
  * Aestha Editorial: cột brand sticky trái + 3 ảnh so le phải + CTA cuối.
  * Port từ `src/blocks/framer-aestha-editorial`.
@@ -2965,6 +2983,8 @@ export type BlockContent =
   | SpringsContactFooterContent
   | ReadymagCaseSectionContent
   | SustainitOurExpertiseContent
+  | RolexCollectionHeroContent
+  | RolexNavContent
   | Record<string, unknown>;
 
 /**
@@ -6413,5 +6433,39 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'section nền tan #E7DECF, heading center + pill "About us" + grid 3 ảnh chân dung với stat (2012 / 320+ / 200+)',
     aiLabelEn:
       'tan #E7DECF section, centered heading + "About us" pill CTA + 3 portrait photo cards with stats (2012 / 320+ / 200+)',
+  },
+  rolex_collection_hero: {
+    type: 'rolex_collection_hero',
+    category: 'hero',
+    style: 'modern',
+    tags: ['clone', 'framer', 'hero'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-22',
+    label: 'Rolex Collection Hero',
+    accent: '#ffffff',
+    adminLabel: 'Rolex Collection Hero',
+    gradient: 'from-neutral-900 to-black',
+    defaultName: 'Rolex Collection Hero',
+    aiLabelVi:
+      'hero section tối: chữ R lớn + COSMOGRAPH DAYTONA + Ever Oyster + ảnh đồng hồ Rolex + link Contact',
+    aiLabelEn:
+      'dark hero: big R letter + COSMOGRAPH DAYTONA + Ever Oyster + Rolex watch image + Contact link',
+  },
+  rolex_nav: {
+    type: 'rolex_nav',
+    category: 'navigation',
+    style: 'modern',
+    tags: ['clone', 'framer', 'nav'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-22',
+    label: 'Rolex Nav',
+    accent: '#ffffff',
+    adminLabel: 'Rolex Nav',
+    gradient: 'from-neutral-800 to-neutral-900',
+    defaultName: 'Rolex Nav',
+    aiLabelVi: 'nav bar glass với 3 items (logo, home, explore)',
+    aiLabelEn: 'glass nav bar with 3 items (logo, home, explore)',
   },
 };
