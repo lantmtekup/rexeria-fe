@@ -356,20 +356,22 @@ export function FramerAesthaEditorial({
         {content.brand}
       </h1>
 
+      {/* Gap TRÊN — desktop: khoảng brand→tagline (recon §4, clamp 60–132).
+          Mobile: grow để dồn nhóm nội dung xuống giữa (title top / giữa / nav
+          bottom). marginTop của tagline dời vào đây để mobile căn giữa sạch. */}
+      <div className='aestha__gap aestha__gap--top' aria-hidden />
+
       <p
         data-element-key='tagline'
-        style={composeStyle(
-          TAGLINE_STYLE,
-          { marginTop: 'clamp(60px, 11cqi, 132px)' },
-          styleOf('tagline')
-        )}
+        style={composeStyle(TAGLINE_STYLE, styleOf('tagline'))}
         className={selectableClass(activeKey === 'tagline', 'aestha__text')}
       >
         {content.tagline}
       </p>
 
-      {/* Đẩy mô tả + nav xuống đáy cột (recon §4: bio y=637, nav y=843) */}
-      <div style={{ flex: '1 1 auto', minHeight: 24 }} />
+      {/* Gap GIỮA — desktop: grow (đẩy desc+nav xuống đáy, recon §4 bio y=637).
+          Mobile: khe nhỏ giữ tagline + description dính thành 1 nhóm ở giữa. */}
+      <div className='aestha__gap aestha__gap--mid' aria-hidden />
 
       <p
         data-element-key='description'
@@ -378,6 +380,10 @@ export function FramerAesthaEditorial({
       >
         {content.description}
       </p>
+
+      {/* Gap DƯỚI — mobile: grow (ghim nav xuống đáy). Desktop: 0 (nav bám sát
+          description qua marginTop của chính nó). */}
+      <div className='aestha__gap aestha__gap--bottom' aria-hidden />
 
       {navLinks.length > 0 && (
         <nav
@@ -473,10 +479,24 @@ export function FramerAesthaEditorial({
         .aestha__shell { display: flex; flex-direction: column; gap: 0; }
         .aestha__left {
           display: flex; flex-direction: column;
-          padding: 135px 16px;
+          padding: 40px 16px;
           min-height: var(--aestha-vh, 100dvh);
         }
         .aestha__right { position: relative; width: 100%; }
+
+        /* Phân bố dọc cột trái — 3 khe co giãn theo breakpoint.
+           Mobile (<810): top & bottom grow, mid nhỏ → title TOP / nhóm nội dung
+           GIỮA / nav BOTTOM. Desktop: xem override trong @container. */
+        .aestha__gap { flex: 0 0 auto; }
+        .aestha__gap--top { flex: 1 1 auto; min-height: 40px; }
+        .aestha__gap--mid { flex: 0 0 auto; height: 20px; }
+        .aestha__gap--bottom { flex: 1 1 auto; min-height: 40px; }
+
+        /* Tấm phủ trắng CTA. right:3.7% bám mép phải stack ảnh (image2 =
+           31.5%+64.8%=96.3%) ở mọi bề rộng. Mobile: top:0 phủ kín tới đỉnh
+           (ảnh sáng ở trên không lòi ra trên tấm phủ); desktop giữ 32px (recon
+           §6 — để brand/nav cột trái ló ra). Bottom 32px chừa nav ló dưới. */
+        .aestha__cta-sheet { inset: 0 3.7% 32px 0; }
         .aestha__panel {
           position: sticky; top: 0; z-index: 1;
           overflow: hidden;
@@ -485,6 +505,39 @@ export function FramerAesthaEditorial({
         /* Spacer: 64px mobile → 90px desktop (recon §3) — giá trị tuyệt đối,
            KHÔNG dùng cqi vì cqi tính theo container gốc, không phải cột phải. */
         .aestha__spacer { height: 64px; }
+        /* Lead spacer chỉ dùng ở overlay mobile (mặc định ẩn). */
+        .aestha__lead-spacer { display: none; }
+
+        /* ── Overlay tablet/mobile (<810): cột ảnh phải absolute CHỒNG lên
+           cột trái ─────────────────────────────────────────────────────────
+           Base mobile hiện là flex-column (trái xong tới phải). Ở đây đổi
+           preview shell thành grid 1 ô: trái + phải cùng grid-area → xếp lớp.
+           Trái sticky top:0 làm NỀN ghim suốt (ô cao = chiều cao cột phải),
+           phải z-index trên + pointer-events:none để nav/CTA cột trái vẫn
+           bấm được. Lead-spacer 1 viewport đẩy panel ảnh đầu xuống dưới màn
+           hình đầu → màn 1 chỉ hiện brand/text (khớp recon screenshot 1). */
+        .aestha__shell--overlay {
+          display: grid;
+          grid-template-columns: 1fr;
+          grid-template-rows: auto;
+        }
+        .aestha__shell--overlay > .aestha__left {
+          grid-area: 1 / 1;
+          z-index: 0;
+          min-height: 0;
+          height: var(--aestha-vh, 100dvh);
+          position: sticky; top: 0;
+        }
+        .aestha__shell--overlay > .aestha__right {
+          grid-area: 1 / 1;
+          z-index: 1;
+          pointer-events: none;
+        }
+        .aestha__shell--overlay > .aestha__right a { pointer-events: auto; }
+        .aestha__shell--overlay .aestha__lead-spacer {
+          display: block;
+          height: var(--aestha-vh, 100dvh);
+        }
         /* CTA chars: mặc định ẩn + blur, GSAP sẽ animate thành visible.
            Canvas editor KHÔNG chạy motion → reset về visible để user thấy text. */
         .aestha__cta-char {
@@ -508,6 +561,45 @@ export function FramerAesthaEditorial({
           }
           .aestha__right { flex: 1 1 auto; }
           .aestha__spacer { height: 90px; }
+
+          /* Desktop: khôi phục bố cục recon — brand+tagline TRÊN, desc+nav DƯỚI.
+             top = khoảng brand→tagline cố định; mid grow đẩy desc xuống đáy. */
+          .aestha__gap--top {
+            flex: 0 0 auto; min-height: 0;
+            height: clamp(60px, 11cqi, 132px);
+          }
+          .aestha__gap--mid {
+            flex: 1 1 auto; height: auto; min-height: 24px;
+          }
+          .aestha__gap--bottom { flex: 0 0 auto; min-height: 0; height: 0; }
+
+          /* Desktop: tấm phủ CTA chừa 32px trên (brand cột trái ló ra). */
+          .aestha__cta-sheet { inset: 32px 3.7% 32px 0; }
+
+          /* Desktop: overlay shell trở lại flex row (bỏ xếp lớp mobile).
+             Selector --overlay có specificity cao hơn nên phải override tường
+             minh, nếu không rule mobile sẽ đè cả ở desktop. */
+          .aestha__shell--overlay {
+            display: flex;
+            flex-direction: row;
+            gap: 32px;
+          }
+          .aestha__shell--overlay > .aestha__left {
+            grid-area: auto;
+            z-index: auto;
+            flex: 0 0 36.94%;
+            padding: 32px 0 32px 32px;
+            height: var(--aestha-vh, 100dvh);
+            min-height: 0;
+            position: sticky; top: 0;
+          }
+          .aestha__shell--overlay > .aestha__right {
+            grid-area: auto;
+            z-index: auto;
+            flex: 1 1 auto;
+            pointer-events: auto;
+          }
+          .aestha__shell--overlay .aestha__lead-spacer { display: none; }
         }
       `}</style>
 
@@ -551,10 +643,14 @@ export function FramerAesthaEditorial({
         </div>
       ) : (
         /* ── Preview / Play / `/p`: sticky stack thật ── */
-        <div className='aestha__shell'>
+        <div className='aestha__shell aestha__shell--overlay'>
           <div className='aestha__left'>{leftColumn}</div>
 
           <div className='aestha__right'>
+            {/* Overlay mobile: đẩy panel ảnh xuống dưới màn hình đầu để màn 1
+                chỉ hiện cột trái. Desktop: display:none (không ảnh hưởng). */}
+            <div className='aestha__lead-spacer' aria-hidden />
+
             {/* Panel 1–3: 80 / 90 / 100dvh — cao khác nhau chính là hiệu ứng */}
             {IMAGES.map((img, i) => (
               <div
@@ -592,9 +688,9 @@ export function FramerAesthaEditorial({
               style={{ height: 'var(--aestha-vh, 100dvh)' }}
             >
               <div
+                className='aestha__cta-sheet'
                 style={{
                   position: 'absolute',
-                  inset: '32px 32px 32px 0',
                   background: OVERLAY,
                   display: 'flex',
                   alignItems: 'center',
@@ -628,7 +724,19 @@ export function FramerAesthaEditorial({
             .aestha__img--${i + 1} {
               width: ${img.width};
               left: ${img.left};
-              top: ${img.top};
+              top: ${
+                // Ảnh 3 nằm trong panel 100vh — ảnh duy nhất chạm đáy viewport.
+                // Cao ảnh = width × aspect (px cố định) nên trên viewport thấp
+                // hơn mốc recon (~900) nó chạm/lòi đáy. Cap top để luôn chừa
+                // 32px dưới đáy (khớp khe recon ở 900); viewport cao thì recon
+                // top thắng nên bố cục không đổi. Ảnh 1/2 bị panel 80/90vh của
+                // chúng clip nên KHÔNG cap (cap sẽ ép top âm).
+                i === 2
+                  ? `min(${img.top}, calc(100% - ${img.ratio
+                      .split('/')[1]
+                      .trim()}px - 32px))`
+                  : img.top
+              };
               aspect-ratio: ${img.ratio};
             }`
             ).join('')}
