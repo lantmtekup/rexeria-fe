@@ -218,6 +218,7 @@ import type {
   PageType,
   CreatePageRequest,
   UpdatePageRequest,
+  PageRevision,
   PageRevisionListResponse,
   SavePageConfigRequest,
   PageRelease,
@@ -1738,12 +1739,17 @@ export const rexerApi = {
     purge: (id: string) =>
       rx<{ message?: string }>(`/pages/${id}?force=true`, { method: 'DELETE' }),
 
-    /** Autosave config — debounced from form editor. */
-    saveConfig: (id: string, body: SavePageConfigRequest) =>
-      rx<{ revision_no: number; saved_at: string }>(`/pages/${id}/config`, {
+    /** Autosave config — debounced from form editor. BE responds
+     *  `{ revision: PageRevision }` (POST /pages/:id/config), not a flat
+     *  `{revision_no, saved_at}` — this wrapper unwraps it so callers get
+     *  the revision directly. */
+    saveConfig: async (id: string, body: SavePageConfigRequest) => {
+      const res = await rx<{ revision: PageRevision }>(`/pages/${id}/config`, {
         method: 'POST',
         body,
-      }),
+      });
+      return res.revision;
+    },
 
     revisions: (id: string, query?: { page?: number; limit?: number }) =>
       rx<PageRevisionListResponse>(`/pages/${id}/revisions`, { query }),

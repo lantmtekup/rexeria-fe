@@ -1080,6 +1080,34 @@ export function BlockEditor({
           : {}),
       });
       setCurrentVersion(next);
+
+      // Mirror the just-committed canvas into page_revisions. BE Publish()
+      // always prefers the page's own `latest` page_revision over the
+      // repointed template version, whenever that revision already has
+      // blocks — which it always does, since it's seeded from the
+      // template at page-create time and no FE flow ever called
+      // `pages.saveConfig` to replace it. Without this mirror, Publish
+      // keeps re-publishing that page-create-time snapshot forever, no
+      // matter how many "Save Version" commits happen afterward. If this
+      // fails, publish falls back to that same stale snapshot — surface it
+      // loudly rather than letting it fail silently.
+      if (pageId) {
+        try {
+          const revs = await rexerApi.pages.revisions(pageId, { limit: 1 });
+          const latestRev = revs.items?.[0];
+          await rexerApi.pages.saveConfig(pageId, {
+            config_json: latestRev?.config_json ?? {},
+            canvas_blueprint: payload,
+            base_revision_no: latestRev?.revision_no ?? 0,
+          });
+        } catch (err) {
+          toast.error(
+            `Đồng bộ page revision thất bại — publish có thể vẫn hiển thị bản cũ: ${rxErrorMessage(err)}`,
+            { duration: 8000 }
+          );
+        }
+      }
+
       toast.success(`Đã commit version "${next.version}"`);
       return next;
     } catch (err) {

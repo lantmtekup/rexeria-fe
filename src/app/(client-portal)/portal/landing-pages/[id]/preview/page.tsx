@@ -63,10 +63,8 @@ export default function PortalLandingPreviewPage() {
         try {
           const revs = await rexerApi.pages.revisions(id, { limit: 50 });
           if (cancelled) return;
-          const latest =
-            (revs.items ?? []).find(
-              r => r.revision_no === revs.latest_revision_no
-            ) ?? (revs.items ?? [])[0];
+          // BE sorts by changed_at DESC by default → items[0] is the latest.
+          const latest = (revs.items ?? [])[0];
           const parsedRev = latest?.config_json
             ? parseCanvas(latest.config_json)
             : null;
