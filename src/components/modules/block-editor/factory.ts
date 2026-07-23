@@ -97,6 +97,15 @@ import { masteriseHomeInsideDef } from './blocks/_registry/defs/masteriseHomeIns
 import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
 import { readymagCaseSectionDef } from './blocks/_registry/defs/readymagCaseSection';
 import { framerIgnitexStepDef } from './blocks/_registry/defs/framerIgnitexStep';
+import { framerRealEstate02StoryDef } from './blocks/_registry/defs/framerRealEstate02Story';
+import { framerRealEstate02QuoteDef } from './blocks/_registry/defs/framerRealEstate02Quote';
+import { framerRealEstate02ProductDef } from './blocks/_registry/defs/framerRealEstate02Product';
+import { framerRealEstate02OverviewDef } from './blocks/_registry/defs/framerRealEstate02Overview';
+import { framerRealEstate02LocationDef } from './blocks/_registry/defs/framerRealEstate02Location';
+import { framerRealEstate02CommuteDef } from './blocks/_registry/defs/framerRealEstate02Commute';
+import { framerRealEstate02MapDef } from './blocks/_registry/defs/framerRealEstate02Map';
+import { framerRealEstate02GalleryDef } from './blocks/_registry/defs/framerRealEstate02Gallery';
+import { framerRealEstate02MenuDef } from './blocks/_registry/defs/framerRealEstate02Menu';
 import type {
   Block,
   BlockContent,
@@ -2419,6 +2428,15 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_flat_white_process: framerFlatWhiteProcessDef.defaultContent.vi,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_VI,
   framer_ignitex_step: framerIgnitexStepDef.defaultContent.vi,
+  framer_realestate02_story: framerRealEstate02StoryDef.defaultContent.vi,
+  framer_realestate02_quote: framerRealEstate02QuoteDef.defaultContent.vi,
+  framer_realestate02_product: framerRealEstate02ProductDef.defaultContent.vi,
+  framer_realestate02_overview: framerRealEstate02OverviewDef.defaultContent.vi,
+  framer_realestate02_location: framerRealEstate02LocationDef.defaultContent.vi,
+  framer_realestate02_commute: framerRealEstate02CommuteDef.defaultContent.vi,
+  framer_realestate02_map: framerRealEstate02MapDef.defaultContent.vi,
+  framer_realestate02_gallery: framerRealEstate02GalleryDef.defaultContent.vi,
+  framer_realestate02_menu: framerRealEstate02MenuDef.defaultContent.vi,
   framer_stats_grid: FRAMER_STATS_GRID_VI,
   framer_projects_grid: FRAMER_PROJECTS_GRID_VI,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_VI,
@@ -2593,6 +2611,15 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_flat_white_process: framerFlatWhiteProcessDef.defaultContent.en,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_EN,
   framer_ignitex_step: framerIgnitexStepDef.defaultContent.en,
+  framer_realestate02_story: framerRealEstate02StoryDef.defaultContent.en,
+  framer_realestate02_quote: framerRealEstate02QuoteDef.defaultContent.en,
+  framer_realestate02_product: framerRealEstate02ProductDef.defaultContent.en,
+  framer_realestate02_overview: framerRealEstate02OverviewDef.defaultContent.en,
+  framer_realestate02_location: framerRealEstate02LocationDef.defaultContent.en,
+  framer_realestate02_commute: framerRealEstate02CommuteDef.defaultContent.en,
+  framer_realestate02_map: framerRealEstate02MapDef.defaultContent.en,
+  framer_realestate02_gallery: framerRealEstate02GalleryDef.defaultContent.en,
+  framer_realestate02_menu: framerRealEstate02MenuDef.defaultContent.en,
   framer_stats_grid: FRAMER_STATS_GRID_EN,
   framer_projects_grid: FRAMER_PROJECTS_GRID_EN,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_EN,

@@ -20,7 +20,7 @@ import '../styles/globals.css';
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin', 'latin-ext', 'vietnamese'],
-  weight: ['400', '500', '600', '700', '900'],
+  weight: ['300', '400', '500', '600', '700', '900'],
   display: 'swap',
 });
 
