@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans:
+    var(--font-atlas), 'Atlas Grotesk LC Trial', 'Helvetica Neue', Helvetica,
+    Arial, sans-serif;
+}
+
+body {
+  font-family:
+    var(--font-atlas), 'Atlas Grotesk LC Trial', 'Helvetica Neue', Helvetica,
+    Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
