@@ -35,6 +35,7 @@ export type ElementKind =
   | 'delvauxSubnavLinks'
   | 'aesthaNavLinks'
   | 'aesthaExploreProjects'
+  | 'aesthaExploreProjectImages'
   | 'aesthaExploreFooterLinks'
   | 'aesthaStudioTeam'
   | 'aesthaStudioFooterLinks'
@@ -184,6 +185,10 @@ export function resolveKind(
   if (blockType === 'aestha_explore') {
     if (key === 'projects') return 'aesthaExploreProjects';
     if (key === 'footerLinks') return 'aesthaExploreFooterLinks';
+    // List-manager mảng ảnh chi tiết của 1 dự án — chặn TRƯỚC fallback
+    // `isImageKey` (khớp 'images') để không bị coi là 1 ô ảnh đơn.
+    if (/^projects\[\d+\]\.detail\.images$/.test(key))
+      return 'aesthaExploreProjectImages';
     if (/^projects\[\d+\]\.img$/.test(key)) return 'image';
     if (/^projects\[\d+\]\.(label|href|alt)$/.test(key)) return 'text';
     if (/^footerLinks\[\d+\]\.(label|href)$/.test(key)) return 'text';
@@ -943,6 +948,14 @@ export function resolveElementMeta(
       kind: 'aesthaExploreFooterLinks',
       fieldType: undefined,
       label: 'Thêm / quản lý footer',
+    };
+  }
+  const exploreProjImages = key.match(/^projects\[(\d+)\]\.detail\.images$/);
+  if (exploreProjImages && blockType === 'aestha_explore') {
+    return {
+      kind: 'aesthaExploreProjectImages',
+      fieldType: undefined,
+      label: `Dự án ${Number(exploreProjImages[1]) + 1} · Thêm / quản lý ảnh`,
     };
   }
   const exploreProject = key.match(/^projects\[(\d+)\]\.(label|href|img|alt)$/);

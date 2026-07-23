@@ -491,6 +491,16 @@ export function ElementToolbar({
             onContentChange={onContentChange}
           />
         )}
+        {kind === 'aesthaExploreProjectImages' && (
+          <AesthaExploreProjectImagesControls
+            content={content as AesthaExploreContent}
+            onContentChange={onContentChange}
+            projectIndex={Number(
+              selectedKey?.match(/^projects\[(\d+)\]\.detail\.images$/)?.[1] ??
+                -1
+            )}
+          />
+        )}
         {kind === 'aesthaExploreFooterLinks' && (
           <AesthaExploreFooterLinksControls
             content={content as AesthaExploreContent}
@@ -3688,6 +3698,105 @@ function AesthaExploreProjectsControls({
         })}
       </div>
       <AddRow onAdd={add} label='Thêm dự án' />
+    </PopoverTrigger>
+  );
+}
+
+/**
+ * List-manager ảnh chi tiết của MỘT dự án (`projects[projectIndex].detail.images`).
+ * Mở trực tiếp từ row "Thêm / quản lý ảnh" trong nhóm nội dung dự án ở Layers —
+ * thêm/sửa URL/xoá ảnh mà không phải mở popover "Thêm / quản lý dự án".
+ */
+function AesthaExploreProjectImagesControls({
+  content,
+  onContentChange,
+  projectIndex,
+}: {
+  content: AesthaExploreContent;
+  onContentChange: (next: BlockContent) => void;
+  projectIndex: number;
+}) {
+  const projects = content.projects ?? [];
+  const project = projects[projectIndex];
+  const images = Array.isArray(project?.detail?.images)
+    ? project!.detail!.images!
+    : [];
+
+  const patchImages = (next: Array<{ src: string; alt: string }>): void =>
+    onContentChange({
+      ...content,
+      projects: projects.map((p, idx) => {
+        if (idx !== projectIndex) return p;
+        const detail = p.detail ?? { body: [], images: [] };
+        return { ...p, detail: { ...detail, images: next } };
+      }),
+    } as BlockContent);
+
+  const updateImage = (
+    imageIdx: number,
+    patch: { src?: string; alt?: string }
+  ) =>
+    patchImages(
+      images.map((img, i) => (i === imageIdx ? { ...img, ...patch } : img))
+    );
+
+  const addImage = () =>
+    patchImages([
+      ...images,
+      {
+        src: 'https://framerusercontent.com/images/sb7lNvFscO86WspAS6g2Dbumdk4.jpg?width=2364&height=963',
+        alt: `Ảnh ${images.length + 1}`,
+      },
+    ]);
+
+  const removeImage = (imageIdx: number) =>
+    patchImages(images.filter((_, i) => i !== imageIdx));
+
+  if (!project) {
+    return (
+      <PopoverTrigger label='Ảnh chi tiết' preview='—' width={420}>
+        <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+          Không tìm thấy dự án.
+        </p>
+      </PopoverTrigger>
+    );
+  }
+
+  return (
+    <PopoverTrigger
+      label='Ảnh chi tiết'
+      preview={`${images.length} ảnh · ${project.label}`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-1.5 overflow-y-auto pr-1'>
+        {images.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có ảnh — bấm Thêm ảnh.
+          </p>
+        ) : null}
+        {images.map((img, k) => (
+          <div
+            key={`proj-${projectIndex}-img-${k}`}
+            className='flex items-center gap-1.5 rounded border border-neutral-200 bg-white p-1.5'
+          >
+            <Input
+              value={img.src}
+              onChange={e => updateImage(k, { src: e.target.value })}
+              placeholder={`URL ảnh ${k + 1}`}
+              className='text-2xs h-7 border-neutral-200 bg-white'
+            />
+            <button
+              type='button'
+              onClick={() => removeImage(k)}
+              aria-label={`Xoá ảnh ${k + 1}`}
+              className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-rose-500 hover:bg-rose-50'
+            >
+              <Trash2 className='size-3' />
+            </button>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={addImage} label='Thêm ảnh' />
     </PopoverTrigger>
   );
 }

@@ -5,7 +5,7 @@
  * Wide (≥1100px): menu tên dự án phải, hover → crossfade ảnh featured, cursor-dot.
  * Narrow (<1100px): 1 dự án/màn, vuốt trái/phải để duyệt. Path A registry.
  */
-import { ImageIcon, Link2, Type } from 'lucide-react';
+import { ImageIcon, Link2, ListChecks, Type } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { LayerElement } from '../../../LayersPanel';
@@ -231,6 +231,15 @@ export const aesthaExploreProjectElements = (
         fieldType: 'image' as const,
       });
     }
+
+    // Row list-manager: thêm/xoá ảnh chi tiết ngay trong nhóm nội dung dự án
+    // (mở `AesthaExploreProjectImagesControls` theo đúng dự án `i`).
+    elements.push({
+      key: `projects[${i}].detail.images`,
+      label: 'Thêm / quản lý ảnh',
+      groupId: detailGroupId,
+      icon: ListChecks,
+    });
 
     return elements;
   });

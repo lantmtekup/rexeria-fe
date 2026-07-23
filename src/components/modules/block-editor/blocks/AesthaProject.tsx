@@ -45,6 +45,7 @@ import {
 } from './applyStyle';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
 import { useContainerMobile } from './useContainerMobile';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface AesthaProjectProps {
   content: AesthaProjectContent;
@@ -58,6 +59,13 @@ interface AesthaProjectProps {
   onBack?: () => void;
   /** Called when user clicks "next project" */
   onNextProject?: () => void;
+  /**
+   * Ánh xạ key nội bộ (`title`, `body[i]`, `images[i].src`, `navLinks[i].label`…)
+   * sang key CMS của block cha khi được nhúng (vd `AesthaExplore` map
+   * `body[i]` → `projects[P].detail.body[i]`). Mặc định identity → block
+   * `aestha_project` độc lập giữ nguyên hành vi.
+   */
+  keyFor?: (localKey: string) => string;
 }
 
 /* ── Tokens (recon: significant-sheet-415363.framer.app/projects) ─────────── */
@@ -131,24 +139,22 @@ export function AesthaProject({
   className,
   onBack,
   onNextProject,
+  keyFor,
 }: AesthaProjectProps) {
   const rootRef = React.useRef<HTMLDivElement>(null);
   const sentinelRef = React.useRef<HTMLDivElement>(null);
+  const headerRef = React.useRef<HTMLDivElement>(null);
+  const footerRef = React.useRef<HTMLDivElement>(null);
   const { hasRoot } = useLandingMotion();
 
   const isNarrow = useContainerMobile(rootRef, 900);
 
-  // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play/`/p`.
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play/`/p`. Hook default `false`
+  // để SSR `/p` render đúng nhánh production ngay.
+  const isCanvas = useIsCanvasEdit(rootRef);
+
+  // Ánh xạ key nội bộ → key CMS (identity khi dùng như block độc lập).
+  const K = keyFor ?? ((k: string) => k);
 
   const [reduce, setReduce] = React.useState(false);
   React.useLayoutEffect(() => {
@@ -186,6 +192,25 @@ export function AesthaProject({
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
   }, [isCanvas, isNarrow]);
+
+  // Narrow: đo chiều cao header (title) + footer (nav) sticky để mảng concept căn
+  // giữa đúng khoảng trống còn lại của màn đầu (var(--ap-vh) - header - footer).
+  const [barH, setBarH] = React.useState(0);
+  React.useLayoutEffect(() => {
+    if (!isNarrow || isCanvas) {
+      setBarH(0);
+      return;
+    }
+    const hd = headerRef.current;
+    const ft = footerRef.current;
+    if (!hd || !ft) return;
+    const measure = () => setBarH(hd.offsetHeight + ft.offsetHeight);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(hd);
+    ro.observe(ft);
+    return () => ro.disconnect();
+  }, [isNarrow, isCanvas, content]);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -266,9 +291,9 @@ export function AesthaProject({
 
   const titleEl = (
     <h1
-      data-element-key='title'
-      style={composeStyle(TITLE_STYLE, styleOf('title'))}
-      className={selectableClass(activeKey === 'title', 'ap-title')}
+      data-element-key={K('title')}
+      style={composeStyle(TITLE_STYLE, styleOf(K('title')))}
+      className={selectableClass(activeKey === K('title'), 'ap-title')}
     >
       {content.title}
     </h1>
@@ -277,26 +302,29 @@ export function AesthaProject({
   const conceptInner = (
     <>
       <p
-        data-element-key='conceptLabel'
-        style={composeStyle(SECTION_LABEL_STYLE, styleOf('conceptLabel'))}
+        data-element-key={K('conceptLabel')}
+        style={composeStyle(SECTION_LABEL_STYLE, styleOf(K('conceptLabel')))}
         className={selectableClass(
-          activeKey === 'conceptLabel',
+          activeKey === K('conceptLabel'),
           'ap-section-label ap-concept-label'
         )}
       >
         {content.conceptLabel}
       </p>
       <div className='ap-body'>
-        {body.map((p, i) => (
-          <p
-            key={i}
-            data-element-key={`body[${i}]`}
-            style={composeStyle(BODY_P_STYLE, styleOf(`body[${i}]`))}
-            className={selectableClass(activeKey === `body[${i}]`)}
-          >
-            {p}
-          </p>
-        ))}
+        {body.map((p, i) => {
+          const ek = K(`body[${i}]`);
+          return (
+            <p
+              key={i}
+              data-element-key={ek}
+              style={composeStyle(BODY_P_STYLE, styleOf(ek))}
+              className={selectableClass(activeKey === ek)}
+            >
+              {p}
+            </p>
+          );
+        })}
       </div>
     </>
   );
@@ -304,10 +332,10 @@ export function AesthaProject({
   const nextInner = (
     <>
       <p
-        data-element-key='nextHeading'
-        style={composeStyle(SECTION_LABEL_STYLE, styleOf('nextHeading'))}
+        data-element-key={K('nextHeading')}
+        style={composeStyle(SECTION_LABEL_STYLE, styleOf(K('nextHeading')))}
         className={selectableClass(
-          activeKey === 'nextHeading',
+          activeKey === K('nextHeading'),
           'ap-section-label'
         )}
       >
@@ -317,9 +345,10 @@ export function AesthaProject({
         <button
           type='button'
           onClick={onNextProject}
-          style={composeStyle(NEXT_LINK_STYLE, styleOf('nextLabel'))}
+          data-element-key={K('nextLabel')}
+          style={composeStyle(NEXT_LINK_STYLE, styleOf(K('nextLabel')))}
           className={selectableClass(
-            activeKey === 'nextLabel',
+            activeKey === K('nextLabel'),
             'ap-next-link cursor-pointer border-none bg-transparent outline-none focus-visible:underline'
           )}
         >
@@ -328,10 +357,10 @@ export function AesthaProject({
       ) : (
         <a
           href={content.nextHref || '#'}
-          data-element-key='nextLabel'
-          style={composeStyle(NEXT_LINK_STYLE, styleOf('nextLabel'))}
+          data-element-key={K('nextLabel')}
+          style={composeStyle(NEXT_LINK_STYLE, styleOf(K('nextLabel')))}
           className={selectableClass(
-            activeKey === 'nextLabel',
+            activeKey === K('nextLabel'),
             'ap-next-link outline-none focus-visible:underline'
           )}
         >
@@ -366,42 +395,48 @@ export function AesthaProject({
           ← Explore
         </button>
       )}
-      {navLinks.map((link, i) => (
-        <a
-          key={i}
-          href={link.href}
-          data-element-key={`navLinks[${i}].label`}
-          style={composeStyle(NAV_LINK_STYLE, styleOf(`navLinks[${i}].label`))}
-          className={selectableClass(
-            activeKey === `navLinks[${i}].label`,
-            'ap-nav-link hover:opacity-70'
-          )}
-        >
-          {link.label}
-        </a>
-      ))}
+      {navLinks.map((link, i) => {
+        const ek = K(`navLinks[${i}].label`);
+        return (
+          <a
+            key={i}
+            href={link.href}
+            data-element-key={ek}
+            style={composeStyle(NAV_LINK_STYLE, styleOf(ek))}
+            className={selectableClass(
+              activeKey === ek,
+              'ap-nav-link hover:opacity-70'
+            )}
+          >
+            {link.label}
+          </a>
+        );
+      })}
     </nav>
   );
 
   const imagesStack = (withSentinel: boolean) => (
     <section className='ap-right'>
-      {images.map((img, i) => (
-        <div
-          key={i}
-          data-element-key={`images[${i}].src`}
-          style={styleOf(`images[${i}].src`)}
-          className={selectableClass(activeKey === `images[${i}].src`)}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={img.src}
-            alt={img.alt}
-            loading={i === 0 ? 'eager' : 'lazy'}
-            draggable={false}
-            className='ap-img'
-          />
-        </div>
-      ))}
+      {images.map((img, i) => {
+        const ek = K(`images[${i}].src`);
+        return (
+          <div
+            key={i}
+            data-element-key={ek}
+            style={styleOf(ek)}
+            className={selectableClass(activeKey === ek)}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={img.src}
+              alt={img.alt}
+              loading={i === 0 ? 'eager' : 'lazy'}
+              draggable={false}
+              className='ap-img'
+            />
+          </div>
+        );
+      })}
       {withSentinel && (
         <div ref={sentinelRef} className='ap-sentinel' aria-hidden />
       )}
@@ -482,6 +517,51 @@ export function AesthaProject({
         }
         .ap-sentinel { height: 1px; }
 
+        /* ── Narrow (<900px): title = header fixed top · nav = footer fixed
+              bottom (sticky, luôn hiện khi cuộn) · giữa cuộn: concept → ảnh →
+              See next project ── */
+        .ap-narrow {
+          display: flex;
+          flex-direction: column;
+          min-height: var(--ap-vh, 100dvh);
+        }
+        .ap-narrow-header {
+          position: sticky;
+          top: 0;
+          z-index: 20;
+          background: #fff;
+          padding: 24px 24px 16px;
+        }
+        .ap-narrow-header .ap-title { margin-bottom: 0; }
+        /* Mang 1 (concept): can GIUA doc trong khoang trong giua header va footer.
+           Dung min-height (khong phai height) nen content dai chi gian ra + cuon,
+           KHONG tran de header/footer; content ngan thi can giua. */
+        .ap-narrow-intro {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: 8px 24px;
+          box-sizing: border-box;
+        }
+        .ap-narrow-mid { display: flex; flex-direction: column; gap: 12px; }
+        /* Mảng 2: danh sách ảnh (cùng padding ngang với header/footer). */
+        .ap-narrow-images { padding: 0 24px; }
+        /* Mảng 3: See next project. */
+        .ap-narrow-next { padding: clamp(24px, 4cqi, 28px) 24px; }
+        .ap-narrow-next .ap-panel-next {
+          display: flex;
+          align-items: center;
+          gap: 50px;
+        }
+        .ap-narrow-footer {
+          position: sticky;
+          bottom: 0;
+          z-index: 20;
+          margin-top: auto;
+          background: #fff;
+          padding: 16px 24px 24px;
+        }
+
         @container (min-width: 900px) {
           .ap-stage {
             grid-template-columns: minmax(260px, 1fr) 1.2fr;
@@ -513,8 +593,30 @@ export function AesthaProject({
           </aside>
           {imagesStack(false)}
         </div>
+      ) : isNarrow ? (
+        /* ── Narrow (<900px): title = header fixed top · nav = footer fixed
+            bottom (sticky). Giữa cuộn: (1) concept căn giữa màn đầu · (2) danh
+            sách ảnh · (3) See next project ── */
+        <div className='ap-narrow'>
+          <div ref={headerRef} className='ap-narrow-header'>
+            {titleEl}
+          </div>
+          <section
+            className='ap-narrow-intro'
+            style={{ minHeight: `calc(var(--ap-vh, 100dvh) - ${barH}px)` }}
+          >
+            <div className='ap-narrow-mid'>{conceptInner}</div>
+          </section>
+          <div className='ap-narrow-images'>{imagesStack(false)}</div>
+          <section className='ap-narrow-next'>
+            <div className='ap-panel-next'>{nextInner}</div>
+          </section>
+          <div ref={footerRef} className='ap-narrow-footer'>
+            {navEl}
+          </div>
+        </div>
       ) : (
-        /* ── Preview / Play / `/p`: sticky + crossfade thật ── */
+        /* ── Preview / Play / `/p` (wide ≥900px): sticky + crossfade thật ── */
         <div className='ap-stage'>
           <aside
             className='ap-left'

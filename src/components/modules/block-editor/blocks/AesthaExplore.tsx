@@ -41,11 +41,11 @@ import {
 } from './applyStyle';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
 import { useContainerMobile } from './useContainerMobile';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 // Shared tokens
 import {
   BODY_FONT,
-  DISPLAY_FONT,
   EASE_CROSSFADE,
   FOOTER_CURRENT,
   FOOTER_LINK_STYLE,
@@ -61,7 +61,7 @@ const AesthaProject = dynamic(() =>
 );
 
 /* ── View types ─────────────────────────────────────────────────── */
-type ExploreView = 'explore' | 'project' | 'content-preview';
+type ExploreView = 'explore' | 'project';
 
 interface AesthaExploreProps {
   content: AesthaExploreContent;
@@ -77,6 +77,16 @@ interface AesthaExploreProps {
 
 const CROSSFADE: React.CSSProperties = {
   transition: `opacity 250ms 150ms ${EASE_CROSSFADE}`,
+};
+
+/**
+ * Narrow (tablet + mobile): slider trượt ngang. Cả track dịch `translateX` để
+ * cuộn qua dự án kế; song song, slide đang RỜI co `scale(1)→0.8` còn slide đang
+ * VÀO nở `scale(0.8)→1`. Track + scale dùng chung easing/thời lượng nên ăn khớp.
+ */
+const SLIDE_MS = 500;
+const SLIDE_SCALE: React.CSSProperties = {
+  transition: `transform ${SLIDE_MS}ms ${EASE_CROSSFADE}`,
 };
 
 const MENU_IMG_FALLBACK =
@@ -161,8 +171,9 @@ function ArrowUpRight() {
 
 /**
  * Build AesthaProjectContent from an explore project + surrounding context.
- * Converts AesthaExploreProject to AesthaProjectContent for rendering.
- * Content comes from detail field. If detail is not provided, generates placeholders.
+ * Nội dung chi tiết do chính block `aestha_explore` sở hữu qua `project.detail`
+ * (body/images), luôn được seed từ BlockDef → không cần bịa placeholder.
+ * `navLinks` map từ `footerLinks`; `next*` suy ra từ dự án kế tiếp.
  */
 function buildProjectContent(
   project: AesthaExploreProject,
@@ -170,31 +181,21 @@ function buildProjectContent(
   allProjects: AesthaExploreProject[],
   footerLinks: AesthaExploreFooterLink[]
 ): AesthaProjectContent {
-  // Use detail from content if available
   const detail = project.detail;
-  const body = detail?.body ?? [
-    'Khám phá dự án ' +
-      project.label +
-      ' — kiến trúc đương đại kết hợp vật liệu cao cấp.',
-    'Thiết kế tinh tế, công năng tối ưu cho một không gian sống hoàn hảo.',
-    'Liên hệ đội ngũ tư vấn để biết thêm chi tiết.',
-  ];
+  const body = Array.isArray(detail?.body) ? detail!.body! : [];
+  const images = Array.isArray(detail?.images) ? detail!.images! : [];
 
-  // Build nav links from footer links
+  // Build nav links from footer links (key `navLinks[i]` ↔ `footerLinks[i]`).
   const navLinks: AesthaProjectNavLink[] = footerLinks.map(link => ({
     label: link.label,
     href: link.href,
   }));
 
   // Build next project info
-  const nextIndex = (projectIndex + 1) % allProjects.length;
+  const nextIndex = allProjects.length
+    ? (projectIndex + 1) % allProjects.length
+    : 0;
   const nextProject = allProjects[nextIndex];
-
-  // Build images: use detail.images if available, otherwise generate placeholders
-  const images = detail?.images ?? [
-    { src: project.img, alt: project.alt },
-    ...generatePlaceholderImages(project.label, projectIndex),
-  ];
 
   return {
     title: project.label.toUpperCase(),
@@ -202,33 +203,28 @@ function buildProjectContent(
     body,
     images,
     nextHeading: 'Dự án tiếp theo',
-    nextLabel: nextProject.label,
-    nextHref: nextProject.href || '#',
+    nextLabel: nextProject?.label ?? '',
+    nextHref: nextProject?.href || '#',
     navLinks,
   };
 }
 
 /**
- * Generate placeholder images for a project based on label.
+ * Ánh xạ key nội bộ của `AesthaProject` → key CMS của block `aestha_explore`
+ * cho dự án chỉ số `p`. Các field không có tương ứng trong CMS (`conceptLabel`,
+ * `nextHeading`, `nextLabel`) giữ nguyên → hiển thị nhưng không selectable.
  */
-function generatePlaceholderImages(
-  label: string,
-  index: number
-): Array<{ src: string; alt: string }> {
-  // Fallback images that work across projects
-  const fallbacks = [
-    'https://framerusercontent.com/images/WPx9Zr4AV2b97ubrDEMcky10rwA.jpg?width=2364&height=1578',
-    'https://framerusercontent.com/images/sb7lNvFscO86WspAS6g2Dbumdk4.jpg?width=2364&height=963',
-    'https://framerusercontent.com/images/gx0JUIPtvSo4eMJgRkMoqx2HPc.jpg?width=2364&height=1576',
-    'https://framerusercontent.com/images/FeVrkEA94CrUpaD629BKz29Pbs.jpg?width=2364&height=1280',
-  ];
-
-  return fallbacks
-    .slice(index % 2 === 0 ? 0 : 2, (index % 2 === 0 ? 0 : 2) + 2)
-    .map((src, i) => ({
-      src,
-      alt: `${label} image ${i + 2}`,
-    }));
+function keyForProject(p: number): (localKey: string) => string {
+  return localKey => {
+    if (localKey === 'title') return `projects[${p}].label`;
+    const bodyM = localKey.match(/^body\[(\d+)\]$/);
+    if (bodyM) return `projects[${p}].detail.body[${bodyM[1]}]`;
+    const imgM = localKey.match(/^images\[(\d+)\]\.src$/);
+    if (imgM) return `projects[${p}].detail.images[${imgM[1]}].src`;
+    const navM = localKey.match(/^navLinks\[(\d+)\]\.label$/);
+    if (navM) return `footerLinks[${navM[1]}].label`;
+    return localKey;
+  };
 }
 
 export function AesthaExplore({
@@ -246,17 +242,9 @@ export function AesthaExplore({
 
   const isNarrow = useContainerMobile(rootRef, 1100);
 
-  // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play/`/p`.
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play/`/p`. Hook default `false`
+  // để SSR `/p` render đúng nhánh production ngay (không nháy layout editor).
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const [reduce, setReduce] = React.useState(false);
   React.useLayoutEffect(() => {
@@ -274,12 +262,20 @@ export function AesthaExplore({
     }
   }, [isCanvas]);
 
-  // Scroll to top on view change (only in preview/play, not canvas)
+  // Cuộn về đầu khi đổi view HOẶC đổi dự án (next-project) — chỉ preview/play.
+  // Cuộn đúng scroller thật (element overflow trong harness/PreviewMode) và
+  // window cho `/p`. AesthaProject remount qua `key` để reset `atEnd`/entrance.
   React.useEffect(() => {
-    if (typeof window !== 'undefined' && !isCanvas) {
-      window.scrollTo({ top: 0, behavior: 'auto' });
+    if (typeof window === 'undefined' || isCanvas) return;
+    let el: HTMLElement | null = rootRef.current?.parentElement ?? null;
+    while (el) {
+      const ov = getComputedStyle(el).overflowY;
+      if (ov === 'auto' || ov === 'scroll') break;
+      el = el.parentElement;
     }
-  }, [view, isCanvas]);
+    if (el) el.scrollTo({ top: 0, behavior: 'auto' });
+    else window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [view, activeProjectIdx, isCanvas]);
 
   // Effective view: always 'explore' in canvas mode
   const effectiveView = isCanvas ? 'explore' : view;
@@ -342,32 +338,110 @@ export function AesthaExplore({
   const [hovered, setHovered] = React.useState<number | null>(null);
   const wideIndex = activeProjIdx ?? hovered ?? 0;
 
-  // Narrow: 1 dự án/màn, vuốt để chuyển.
-  const [m, setM] = React.useState(0);
-  const go = (dir: number) =>
-    setM(v =>
-      projects.length ? (v + dir + projects.length) % projects.length : 0
-    );
-  const mSafe = projects.length
-    ? ((m % projects.length) + projects.length) % projects.length
-    : 0;
-  const narrowIndex = isCanvas && activeProjIdx != null ? activeProjIdx : mSafe;
+  // ── Narrow: slider 1 dự án/màn — KÉO qua lại + autoplay, LOOP vô hạn mượt ──
+  const N = projects.length;
+  // Loop bằng clone slide đầu/cuối, CHỈ ở runtime nhiều dự án. Canvas/reduce giữ
+  // tĩnh (canvas bám dự án đang chọn ở Layers) → không cần clone.
+  const loop = !isCanvas && !reduce && N > 1;
 
-  // Vuốt bằng pointer thuần (thay `drag='x'` của framer-motion).
-  const swipeStart = React.useRef<number | null>(null);
-  const onPointerDown = (e: React.PointerEvent) => {
-    swipeStart.current = e.clientX;
+  // `pos` = cột đang ở giữa. Khi loop, track render
+  // [clone(cuối), project0..N-1, clone(đầu)] → dự án thật k nằm ở cột k+1; `pos`
+  // chạy 1..N, chạm cột clone (0 hoặc N+1) thì SAU transition nhảy vô hình về cột
+  // thật tương ứng → cuối→đầu vẫn trượt tiếp một hướng, không chạy ngược một mạch.
+  const [pos, setPos] = React.useState(1);
+  const [noTrans, setNoTrans] = React.useState(false); // tắt transition cho cú nhảy
+  const step = (dir: number) => setPos(p => p + dir);
+
+  const centerCol = loop
+    ? pos
+    : isCanvas && activeProjIdx != null
+      ? activeProjIdx
+      : 0;
+
+  // Danh sách cột render: kèm 2 clone hai đầu khi loop, mỗi cột giữ `real` = chỉ
+  // số dự án thật (cho data-element-key / styleOf / mở chi tiết).
+  const columns = loop
+    ? [
+        { p: projects[N - 1], real: N - 1 },
+        ...projects.map((p, i) => ({ p, real: i })),
+        { p: projects[0], real: 0 },
+      ]
+    : projects.map((p, i) => ({ p, real: i }));
+
+  /**
+   * Narrow: click-KÉO thật (không phải vuốt-nhảy). Track bám con trỏ theo `dragX`
+   * suốt lúc kéo (transition tắt), thả ra thì snap sang slide gần nhất rồi bật
+   * transition lại. Scale từng slide nội suy liên tục theo tiến trình kéo:
+   * slide đang ở giữa `scale(1)`, càng rời xa càng về `scale(0.8)` → dự án cũ co
+   * và dự án mới nở NGAY khi kéo, không đợi thả. Kéo chỉ bật khi `loop`.
+   */
+  const [dragX, setDragX] = React.useState(0);
+  const [dragging, setDragging] = React.useState(false);
+  const dragStart = React.useRef<number | null>(null);
+  const dragW = React.useRef(1); // bề rộng 1 slide (khung) đo lúc pointerdown
+  const dragMoved = React.useRef(false); // đã kéo đủ xa? → phân biệt tap vs kéo
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    dragMoved.current = false;
+    if (!loop) return;
+    dragStart.current = e.clientX;
+    dragW.current = e.currentTarget.getBoundingClientRect().width || 1;
+    setDragging(true);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
   };
-  const onPointerUp = (e: React.PointerEvent) => {
-    if (swipeStart.current == null || reduce) {
-      swipeStart.current = null;
-      return;
-    }
-    const dx = e.clientX - swipeStart.current;
-    if (dx < -60) go(1);
-    else if (dx > 60) go(-1);
-    swipeStart.current = null;
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStart.current == null) return;
+    const dx = e.clientX - dragStart.current;
+    if (Math.abs(dx) > 6) dragMoved.current = true;
+    setDragX(dx);
   };
+  const endDrag = () => {
+    if (dragStart.current == null) return;
+    const dx = dragX;
+    const threshold = Math.min(dragW.current * 0.2, 80);
+    if (dx <= -threshold) step(1);
+    else if (dx >= threshold) step(-1);
+    dragStart.current = null;
+    setDragX(0);
+    setDragging(false);
+  };
+
+  // Scale mỗi CỘT theo khoảng cách (đơn vị khung) tới cột giữa. d=0→1; |d|≥1→0.8;
+  // nội suy tuyến tính ở giữa (đúng cả khi kéo).
+  const slideScale = (col: number) => {
+    const d = col - centerCol + dragX / (dragW.current || 1);
+    const c = Math.min(Math.abs(d), 1);
+    return 1 - 0.2 * c;
+  };
+
+  // Autoplay: mỗi 5s sang dự án kế (`pos++`). Tạm dừng khi đang kéo. Loop lo cú
+  // nhảy vô hình ở cột clone → cuối→đầu liền mạch như chuyển thường.
+  React.useEffect(() => {
+    if (!loop || !isNarrow || dragging) return;
+    const id = window.setInterval(() => setPos(p => p + 1), 5000);
+    return () => window.clearInterval(id);
+  }, [loop, isNarrow, dragging]);
+
+  // Chạm cột clone (0 = clone cuối, N+1 = clone đầu) → sau khi transition trượt
+  // xong (SLIDE_MS), tắt transition rồi nhảy về cột thật (N hoặc 1). Cột clone và
+  // cột thật hiển thị cùng ảnh nên cú nhảy hoàn toàn vô hình.
+  React.useEffect(() => {
+    if (!loop || (pos >= 1 && pos <= N)) return;
+    const realCol = pos <= 0 ? N : 1;
+    const id = window.setTimeout(() => {
+      setNoTrans(true);
+      setPos(realCol);
+    }, SLIDE_MS);
+    return () => window.clearTimeout(id);
+  }, [pos, loop, N]);
+
+  // Bật lại transition ở frame kế sau cú nhảy (pos đã ở cột thật, vị trí không đổi
+  // nên không có animation thừa).
+  React.useEffect(() => {
+    if (!noTrans) return;
+    const id = requestAnimationFrame(() => setNoTrans(false));
+    return () => cancelAnimationFrame(id);
+  }, [noTrans]);
 
   /**
    * Entrance on-load (recon: heading fade-up 500ms, menu stagger, ảnh fade).
@@ -466,9 +540,11 @@ export function AesthaExplore({
         className
       )}
     >
-      {/* ── Project detail view (preview/play only, not in canvas) ── */}
+      {/* ── Project detail view (preview/play only, not in canvas) ──
+          `key` remount theo dự án để reset `atEnd`/entrance khi bấm "next". */}
       {effectiveView === 'project' && projects[activeProjectIdx] && (
         <AesthaProject
+          key={activeProjectIdx}
           content={buildProjectContent(
             projects[activeProjectIdx],
             activeProjectIdx,
@@ -480,6 +556,7 @@ export function AesthaExplore({
           order={order}
           positions={positions}
           activeKey={activeKey}
+          keyFor={keyForProject(activeProjectIdx)}
           onBack={() => setView('explore')}
           onNextProject={() => {
             const nextIdx = (activeProjectIdx + 1) % projects.length;
@@ -488,9 +565,11 @@ export function AesthaExplore({
         />
       )}
 
-      {/* ── Explore menu view ── */}
+      {/* ── Explore menu view ──
+          Height bám vùng cuộn thật (1 màn) cho cả canvas lẫn preview/`/p`; các
+          section con dùng `h-full` nên cần height xác định. Trên canvas, fork
+          chi tiết phẳng render TIẾP bên dưới (author cuộn xuống để sửa). */}
       {effectiveView === 'explore' && (
-        /* Wrapper với height cố định cho explore section */
         <div
           style={composeStyle(blockBackgroundStyle(background), {
             height: portH ? `${portH}px` : '100dvh',
@@ -502,68 +581,101 @@ export function AesthaExplore({
               {heading('mb-4 shrink-0')}
 
               <div
-                className='relative flex-1 overflow-hidden'
+                className={cn(
+                  'relative flex-1 cursor-pointer overflow-hidden',
+                  loop && (dragging ? 'cursor-grabbing' : 'cursor-grab')
+                )}
                 style={{ touchAction: 'pan-y' }}
                 onPointerDown={onPointerDown}
-                onPointerUp={onPointerUp}
+                onPointerMove={onPointerMove}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
+                onClick={() => {
+                  // Tap (không kéo) → mở chi tiết dự án ĐANG ở giữa. Đặt onClick ở
+                  // container (phần tử giữ pointer capture) để click luôn nổ.
+                  if (isCanvas || dragMoved.current) return;
+                  setActiveProjectIdx(columns[centerCol]?.real ?? 0);
+                  setView('project');
+                }}
               >
-                {projects.map((p, i) => (
-                  <div
-                    key={i}
-                    data-element-key={`projects[${i}].img`}
-                    aria-hidden={narrowIndex !== i}
-                    style={composeStyle(
-                      {
-                        position: 'absolute',
-                        inset: 0,
-                        opacity: narrowIndex === i ? 1 : 0,
-                        pointerEvents: narrowIndex === i ? 'auto' : 'none',
-                      },
-                      CROSSFADE,
-                      styleOf(`projects[${i}].img`)
-                    )}
-                    className={selectableClass(
-                      activeKey === `projects[${i}].img`
-                    )}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={p.img || MENU_IMG_FALLBACK}
-                      alt={p.alt || 'Project image'}
-                      draggable={false}
-                      loading={i === 0 ? 'eager' : 'lazy'}
-                      className='h-full w-full object-cover transition-transform duration-500 will-change-transform select-none hover:scale-[1.03]'
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {projects[narrowIndex] && (
-                <button
-                  type='button'
-                  onClick={() => {
-                    if (isCanvas) return;
-                    setActiveProjectIdx(narrowIndex);
-                    setView('project');
+                {/* Track: cả dải cột (kèm clone hai đầu khi loop) cuộn ngang.
+                    Track rộng = khung; mỗi cột `w-full shrink-0` nên tràn ngang,
+                    `translateX(-centerCol*100%)` (100% = 1 khung) đưa cột giữa
+                    vào khung. Kéo → bám `dragX` (transition tắt). `noTrans` = cú
+                    nhảy vô hình khi loop qua cột clone. */}
+                <div
+                  className='flex h-full'
+                  style={{
+                    transform: `translateX(calc(-${centerCol * 100}% + ${dragX}px))`,
+                    transition:
+                      dragging || noTrans ? 'none' : SLIDE_SCALE.transition,
                   }}
-                  className='mt-3 flex shrink-0 cursor-pointer items-center justify-between'
-                  aria-label={`Open ${projects[narrowIndex].label}`}
                 >
-                  <span
-                    data-element-key={`projects[${narrowIndex}].label`}
-                    style={composeStyle(
-                      { fontFamily: BODY_FONT, fontSize: 16, color: '#4F4F4F' },
-                      styleOf(`projects[${narrowIndex}].label`)
-                    )}
-                    className={selectableClass(
-                      activeKey === `projects[${narrowIndex}].label`
-                    )}
-                  >
-                    {projects[narrowIndex].label}
-                  </span>
-                  <ArrowUpRight />
-                </button>
-              )}
+                  {columns.map((col, j) => (
+                    <div key={j} className='h-full w-full shrink-0'>
+                      {/* Cả thẻ Project (ảnh + label) là 1 khối: kéo và scale
+                          cùng nhau. Mở chi tiết do container cha lo (onClick). */}
+                      <div
+                        style={{
+                          transformOrigin: 'center',
+                          transform: `scale(${slideScale(j)})`,
+                          transition:
+                            dragging || noTrans
+                              ? 'none'
+                              : SLIDE_SCALE.transition,
+                        }}
+                        className='flex h-full w-full flex-col'
+                      >
+                        <div
+                          data-element-key={`projects[${col.real}].img`}
+                          aria-hidden={centerCol !== j}
+                          style={composeStyle(
+                            {
+                              position: 'relative',
+                              flex: '1 1 0%',
+                              minHeight: 0,
+                              overflow: 'hidden',
+                            },
+                            styleOf(`projects[${col.real}].img`)
+                          )}
+                          className={selectableClass(
+                            activeKey === `projects[${col.real}].img`
+                          )}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={col.p.img || MENU_IMG_FALLBACK}
+                            alt={col.p.alt || 'Project image'}
+                            draggable={false}
+                            loading={col.real === 0 ? 'eager' : 'lazy'}
+                            className='h-full w-full object-cover will-change-transform select-none'
+                          />
+                        </div>
+
+                        <div className='mt-3 flex shrink-0 items-center justify-between'>
+                          <span
+                            data-element-key={`projects[${col.real}].label`}
+                            style={composeStyle(
+                              {
+                                fontFamily: BODY_FONT,
+                                fontSize: 16,
+                                color: '#4F4F4F',
+                              },
+                              styleOf(`projects[${col.real}].label`)
+                            )}
+                            className={selectableClass(
+                              activeKey === `projects[${col.real}].label`
+                            )}
+                          >
+                            {col.p.label}
+                          </span>
+                          <ArrowUpRight />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               {footerNav('mt-4 shrink-0')}
             </section>
@@ -664,211 +776,28 @@ export function AesthaExplore({
           )}
         </div>
       )}
-      {/* ── Canvas Content Preview: Hiển thị flat content dưới explore (canvas only) ── */}
-      {isCanvas && (
-        <CanvasContentPreview
-          content={content}
-          styles={styles}
-          background={background}
-          order={order}
-          positions={positions}
-          activeKey={activeKey}
-        />
+      {/* ── Canvas edit fork: layout chi tiết PHẲNG của dự án đang chọn ──
+          Tái dùng luôn fork `isCanvas` của `AesthaProject` (nó tự phát hiện
+          canvas → render phẳng, KHÔNG sticky). `keyFor` map key nội bộ →
+          key CMS `projects[i].detail.*` để mọi field selectable/styleable.
+          Chọn field body/ảnh của dự án nào trên Layers → nhảy sang dự án đó. */}
+      {isCanvas && projects.length > 0 && (
+        <div data-canvas-edit='true' className='border-t border-neutral-200'>
+          <AesthaProject
+            content={buildProjectContent(
+              projects[activeProjIdx ?? 0],
+              activeProjIdx ?? 0,
+              projects,
+              footerLinks
+            )}
+            styles={styles}
+            order={order}
+            positions={positions}
+            activeKey={activeKey}
+            keyFor={keyForProject(activeProjIdx ?? 0)}
+          />
+        </div>
       )}
-    </div>
-  );
-}
-
-// ============================================================================
-// Canvas Content Preview: Hiển thị flat tất cả nội dung AesthaProject
-// ============================================================================
-/**
- * Canvas Content Preview: Hiển thị flat tất cả nội dung AesthaProject
- * cho mỗi dự án (title, body paragraphs, images) để xem và edit.
- */
-function CanvasContentPreview({
-  content,
-  styles,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  background: _background,
-  order,
-  positions,
-  activeKey,
-}: {
-  content: AesthaExploreContent;
-  styles?: ElementStylesMap;
-  background?: BlockBackground;
-  order?: string[];
-  positions?: ElementPositionsMap;
-  activeKey?: string | null;
-}) {
-  const projects: AesthaExploreProject[] = Array.isArray(content.projects)
-    ? content.projects
-    : [];
-
-  const styleOf = (key: string) =>
-    composeStyle(
-      elementStyleOf(styles, key),
-      orderStyle(order, key),
-      positionStyle(positions, key)
-    );
-
-  if (projects.length === 0) {
-    return (
-      <div className='p-8 text-center text-neutral-500'>
-        Chưa có dự án nào. Thêm dự án trong Layers Panel.
-      </div>
-    );
-  }
-
-  return (
-    <div className='w-full bg-neutral-50 p-4'>
-      <h3 className='mb-4 text-sm font-medium text-neutral-600'>
-        Nội dung AesthaProject (Canvas Preview)
-      </h3>
-
-      {/* Thêm/Bớt Controls */}
-      <div className='mb-4 flex gap-2'>
-        <button
-          type='button'
-          onClick={() => {
-            // This will be handled by the editor's content update
-            // For now, show a visual indicator
-          }}
-          className='rounded border border-neutral-300 bg-white px-3 py-1.5 text-xs hover:bg-neutral-100'
-        >
-          + Thêm Dự Án
-        </button>
-      </div>
-
-      {projects.map((project, projectIdx) => {
-        const detail = project.detail;
-        const body = detail?.body ?? [];
-        const images = detail?.images ?? [];
-
-        return (
-          <div
-            key={projectIdx}
-            className='mb-8 rounded-lg border border-neutral-200 bg-white p-6 shadow-sm'
-          >
-            {/* Project Title */}
-            <div
-              data-element-key={`projects[${projectIdx}].label`}
-              style={composeStyle(
-                {
-                  fontFamily: DISPLAY_FONT,
-                  fontSize: 32,
-                  fontWeight: 600,
-                  color: '#0f0f0f',
-                  marginBottom: 24,
-                },
-                styleOf(`projects[${projectIdx}].label`)
-              )}
-              className={selectableClass(
-                activeKey === `projects[${projectIdx}].label`,
-                'mb-6 text-3xl font-semibold tracking-wide uppercase'
-              )}
-            >
-              {project.label.toUpperCase()}
-            </div>
-
-            {/* Concept Label */}
-            <div
-              style={{
-                fontFamily: BODY_FONT,
-                fontSize: 11,
-                fontWeight: 500,
-                color: '#757575',
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                marginBottom: 20,
-              }}
-            >
-              Concept
-            </div>
-
-            {/* Body Paragraphs */}
-            <div className='mb-6 space-y-4'>
-              {[0, 1, 2].map(j => (
-                <div
-                  key={j}
-                  data-element-key={`projects[${projectIdx}].detail.body[${j}]`}
-                  style={composeStyle(
-                    {
-                      fontFamily: BODY_FONT,
-                      fontSize: 16,
-                      lineHeight: 1.7,
-                      color: '#333333',
-                    },
-                    styleOf(`projects[${projectIdx}].detail.body[${j}]`)
-                  )}
-                  className={selectableClass(
-                    activeKey === `projects[${projectIdx}].detail.body[${j}]`,
-                    'rounded border border-dashed border-transparent p-2 hover:border-blue-300'
-                  )}
-                  contentEditable={false}
-                >
-                  {body[j] ?? `[Body ${j + 1} - Nhấp để sửa]`}
-                </div>
-              ))}
-            </div>
-
-            {/* Images */}
-            <div className='mb-4 flex flex-wrap gap-2'>
-              {images.length === 0 ? (
-                <div className='flex h-[150px] w-[200px] items-center justify-center rounded border-2 border-dashed border-neutral-300 bg-neutral-50 text-sm text-neutral-400'>
-                  Chưa có ảnh — bấm Thêm ảnh ở popover Dự án.
-                </div>
-              ) : null}
-              {images.map((img, k) => (
-                <div
-                  key={k}
-                  data-element-key={`projects[${projectIdx}].detail.images[${k}].src`}
-                  style={composeStyle(
-                    {
-                      width: 200,
-                      height: 150,
-                      objectFit: 'cover' as const,
-                    },
-                    styleOf(`projects[${projectIdx}].detail.images[${k}].src`)
-                  )}
-                  className={selectableClass(
-                    activeKey ===
-                      `projects[${projectIdx}].detail.images[${k}].src`,
-                    'rounded border-2 border-dashed border-transparent hover:border-blue-400'
-                  )}
-                >
-                  {img?.src ? (
-                    <img
-                      src={img.src}
-                      alt={img.alt || `Image ${k + 1}`}
-                      className='h-full w-full rounded object-cover'
-                    />
-                  ) : (
-                    <div className='flex h-full w-full items-center justify-center rounded bg-neutral-100 text-sm text-neutral-400'>
-                      Ảnh {k + 1}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Next Project Link */}
-            <div
-              style={{
-                fontFamily: BODY_FONT,
-                fontSize: 11,
-                color: '#757575',
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                marginTop: 24,
-              }}
-            >
-              Dự án tiếp theo
-            </div>
-          </div>
-        );
-      })}
     </div>
   );
 }
