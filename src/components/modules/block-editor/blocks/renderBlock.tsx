@@ -209,9 +209,7 @@ const BLOCK_RENDERERS: Record<string, BlockRenderer> = {
   framer_vs_collins_projects: lazyBlock(() =>
     import('./FramerVsCollinsProjects').then(m => m.FramerVsCollinsProjects)
   ),
-  framer_aestha_editorial: lazyBlock(() =>
-    import('./FramerAesthaEditorial').then(m => m.FramerAesthaEditorial)
-  ),
+  // framer_aestha_editorial: đã lên registry (Path A) — component lấy từ BlockDef.
   framer_perform_about: lazyBlock(() =>
     import('./FramerPerformAbout').then(m => m.FramerPerformAbout)
   ),

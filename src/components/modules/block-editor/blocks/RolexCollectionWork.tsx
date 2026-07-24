@@ -2,10 +2,12 @@
 
 import * as React from 'react';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { Wallpaper } from 'lucide-react';
 import SplitType from 'split-type';
 
-import { useBlockMotion } from '../motion/LandingMotion';
+import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useMotionAttributes } from '../motion/useMotionAttributes';
+import { getMotionEffect } from '../motion/motionLibrary';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
@@ -41,10 +43,6 @@ const STAGE_STYLE: React.CSSProperties = {
   isolation: 'isolate',
 };
 
-// 1 scroll ≈ 50px sẽ active đúng 1 item kế tiếp — cố định theo px tuyệt đối
-// (không theo %) để không phụ thuộc chiều cao viewport.
-const SCROLL_PX_PER_STAGE = 50;
-
 const CTA_STYLE: React.CSSProperties = {
   position: 'absolute',
   left: '50%',
@@ -63,6 +61,40 @@ const watchDepthForDistance = (distance: number): number => {
   const magnitude = 200 + 50 * Math.abs(distance);
   return distance > 0 ? -magnitude : magnitude;
 };
+
+const SCROLL_PX_PER_STAGE = 120;
+
+const WATCH_HEIGHT_PER_WIDTH = 490 / 350;
+
+const PREFIX_CENTER = 'translate(-50%, -50%) ';
+
+const BG_TRANSITION = 'background-color 300ms ease';
+const CONTAINER_TRANSITION = 'transform 450ms ease';
+const IMAGE_TRANSITION = 'width 250ms ease, height 250ms ease';
+const TITLE_TRANSITION = 'opacity 300ms ease, transform 300ms ease';
+
+const stageBackgroundStyle = (
+  stage: { backgroundColor?: string; backgroundImageUrl?: string } | undefined,
+  fallback: string
+): React.CSSProperties => {
+  const imageUrl = stage?.backgroundImageUrl?.trim();
+  if (imageUrl) {
+    return {
+      backgroundImage: `url("${imageUrl.replace(/"/g, '%22')}")`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    };
+  }
+  return { backgroundColor: stage?.backgroundColor?.trim() || fallback };
+};
+
+const boxStyle = (width: number): React.CSSProperties => ({
+  position: 'absolute',
+  width,
+  height: width * WATCH_HEIGHT_PER_WIDTH,
+  top: '50%',
+  left: '50%',
+});
 
 const DEFAULT_STAGES: RolexCollectionWorkStage[] = [
   {
@@ -110,6 +142,7 @@ const resolveStages = (
     return {
       title: stage.title?.trim() || fallback.title,
       backgroundColor: stage.backgroundColor?.trim() || undefined,
+      backgroundImageUrl: stage.backgroundImageUrl?.trim() || undefined,
       imageUrl: stage.imageUrl?.trim() || fallback.imageUrl,
     };
   });
@@ -126,6 +159,12 @@ export function RolexCollectionWork({
   const rootRef = React.useRef<HTMLElement>(null);
   const stageRef = React.useRef<HTMLDivElement>(null);
   const isCanvas = useIsCanvasEdit(rootRef);
+  useMotionAttributes(rootRef);
+  const activeIndexRef = React.useRef(0);
+  const restoredRef = React.useRef(false);
+  const { scroller } = useLandingMotion();
+  const scrollerLiveRef = React.useRef(scroller);
+  scrollerLiveRef.current = scroller;
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -146,10 +185,10 @@ export function RolexCollectionWork({
       const stage = stageRef.current;
       if (!root || !stage || isCanvas) return;
 
-      const layers = gsap.utils.toArray<HTMLElement>('[data-rcw-layer]', stage);
+      const bg = stage.querySelector<HTMLElement>('[data-rcw-bg]');
       const swings = gsap.utils.toArray<HTMLElement>('[data-rcw-swing]', stage);
       const titles = gsap.utils.toArray<HTMLElement>('[data-rcw-title]', stage);
-      if (!layers.length) return;
+      if (!bg || !swings.length) return;
 
       const containers = swings.map(
         swing => swing.querySelector<HTMLElement>('[data-rcw-container]')!
@@ -171,109 +210,237 @@ export function RolexCollectionWork({
       const splits = titles.map(title =>
         title ? new SplitType(title, { types: 'chars' }) : null
       );
+      titles.forEach(title => {
+        if (!title) return;
+        title.style.opacity = '1';
+        title.style.transform = 'translate(-50%, -50%)';
+      });
 
-      const stageCount = layers.length;
+      const stageCount = swings.length;
       const lastStage = stageCount - 1;
-      // Đối chiếu trực tiếp với capable-seat-351062.framer.app/work (giải mã
-      // ma trận transform thật của cả 7 project): "Image Container" xoay
-      // CÙNG DẤU với wrapper ngoài (không triệt tiêu về 0) — item "future"
-      // bão hòa về -90, item "past" bão hòa về +90. Site mẫu KHÔNG có công
-      // thức width nào cả (container width cố định) — cỡ to/nhỏ giữa các
-      // item hoàn toàn là hệ quả tự nhiên của rotateX thật (chỉ nén chiều
-      // cao, chiều rộng không đổi) kết hợp z-depth tăng dần theo khoảng
-      // cách — không tự bịa gradient riêng. Đo bằng scan 10px trên site mẫu:
-      // mỗi project có cửa sổ "đang xoay" rộng ~250px, điểm bắt đầu của các
-      // project liên tiếp cách nhau đúng 100px/unit → dải bão hòa thật ~2.5
-      // đơn vị khoảng cách (không phải 1) — giữ ROT_BAND rộng để đúng hiệu
-      // ứng phối cảnh mềm mà site mẫu cố ý dùng.
-      const ROT_BAND = 2.5;
-      const WIDTH_INACTIVE = 278;
+      const ROT_BAND = 1;
+      const WIDTH_INACTIVE = 200;
       const WIDTH_ACTIVE = 350;
 
-      // Continuous scroll-linked stack — mọi thuộc tính là hàm liên tục của
-      // scrollPos (số thực), không tween/threshold, nên không thể "đè" nhau:
-      // luôn có đúng 1 trạng thái xác định cho mỗi vị trí cuộn. Ghi thẳng
-      // vào style (không qua gsap.set) vì hàm này chạy trên MỌI frame cuộn.
-      const applyStack = (scrollPos: number) => {
-        layers.forEach((layer, i) => {
-          const closeness = Math.max(0, 1 - Math.abs(i - scrollPos));
-          layer.style.opacity = String(closeness);
-          layer.style.visibility = closeness > 0.01 ? 'visible' : 'hidden';
+      let lastActiveIndex = -1;
+      let introPlayed = false;
+      let introTween: gsap.core.Tween | null = null;
+      const playIntro = () => {
+        if (introPlayed) return;
+        introPlayed = true;
+        const introChars = splits[0]?.chars;
+        const effect = getMotionEffect('char-blur-up-reveal');
+        if (!introChars?.length || !effect) return;
+        introTween = gsap.fromTo(introChars, effect.from, {
+          ...effect.to,
+          duration: 1.4,
+          ease: effect.defaults.ease,
+          stagger: 0.08,
         });
+      };
+
+      const applyStack = (scrollPos: number, instant = false) => {
+        const activeIndex = Math.max(
+          0,
+          Math.min(stageCount - 1, Math.round(scrollPos))
+        );
+        activeIndexRef.current = activeIndex;
+        if (activeIndex !== 0 && introTween) {
+          introTween.kill();
+          introTween = null;
+          const introChars = splits[0]?.chars;
+          if (introChars?.length)
+            gsap.set(introChars, { clearProps: 'filter' });
+        }
+        if (activeIndex === lastActiveIndex && !instant) return;
+        lastActiveIndex = activeIndex;
+
+        if (instant) {
+          bg.style.transition = 'none';
+          containers.forEach(el => {
+            el.style.transition = 'none';
+          });
+          images.forEach(el => {
+            el.style.transition = 'none';
+          });
+        }
+
+        const activeImageUrl = stages[activeIndex]?.backgroundImageUrl?.trim();
+        if (activeImageUrl) {
+          bg.style.backgroundColor = 'transparent';
+          bg.style.backgroundImage = `url("${activeImageUrl.replace(/"/g, '%22')}")`;
+          bg.style.backgroundSize = 'cover';
+          bg.style.backgroundPosition = 'center';
+        } else {
+          bg.style.backgroundImage = 'none';
+          bg.style.backgroundColor =
+            stages[activeIndex]?.backgroundColor?.trim() || 'transparent';
+        }
 
         swings.forEach((swing, j) => {
-          const distance = j - scrollPos;
+          const distance = j - activeIndex;
           const absDistance = Math.abs(distance);
           const rotFactor = Math.min(1, absDistance / ROT_BAND);
-          const sideSign = distance === 0 ? 0 : distance > 0 ? -1 : 1;
           const depth = watchDepthForDistance(distance);
-          const width =
-            WIDTH_ACTIVE - (WIDTH_ACTIVE - WIDTH_INACTIVE) * rotFactor;
+          const sign = distance > 0 ? -1 : 1;
 
-          swing.style.transform = `rotateX(${90 * rotFactor}deg)`;
-          containers[j].style.width = `${width}px`;
+          const imgWidth =
+            j === 0 || j === activeIndex ? WIDTH_ACTIVE : WIDTH_INACTIVE;
+          const imgHeight = imgWidth * WATCH_HEIGHT_PER_WIDTH;
+          images[j].style.width = `${imgWidth}px`;
+          images[j].style.height = `${imgHeight}px`;
+
+          swing.style.zIndex = String(Math.round(1000 - absDistance * 10));
+
+          swing.style.transform = `${PREFIX_CENTER}rotateX(90deg)`;
           containers[j].style.transform =
-            `translateZ(${depth}px) rotateX(${sideSign * 90 * rotFactor}deg)`;
-          images[j].style.transform = `rotateX(${-90 * rotFactor}deg)`;
+            `${PREFIX_CENTER}translateZ(${depth}px) rotateX(${sign * 90 * rotFactor}deg)`;
+          images[j].style.transform = `${PREFIX_CENTER}rotateX(-90deg)`;
         });
 
         splits.forEach((split, i) => {
           if (!split?.chars) return;
-          const distance = i - scrollPos;
-          // Falloff bậc 2 (không tuyến tính) + biên trượt rộng hơn (130%
-          // thay vì 110%) để 2 tiêu đề liền kề không cùng lộ rõ trong lúc
-          // crossfade — tránh chữ đè lên nhau giữa chừng transition.
-          const closenessLinear = Math.max(0, 1 - Math.abs(distance));
-          const opacity = closenessLinear * closenessLinear;
-          const yPercent = Math.max(-1, Math.min(1, distance)) * 130;
+          const isActive = i === activeIndex;
+          const opacity = isActive ? 1 : 0;
+          const yPercent = isActive ? 0 : i > activeIndex ? 130 : -130;
           split.chars.forEach(char => {
+            char.style.transition = instant ? 'none' : TITLE_TRANSITION;
             char.style.opacity = String(opacity);
             char.style.transform = `translateY(${yPercent}%)`;
           });
         });
+
+        if (instant) {
+          void stage.offsetHeight;
+          requestAnimationFrame(() => {
+            bg.style.transition = BG_TRANSITION;
+            containers.forEach(el => {
+              el.style.transition = CONTAINER_TRANSITION;
+            });
+            images.forEach(el => {
+              el.style.transition = IMAGE_TRANSITION;
+            });
+          });
+        }
       };
 
-      applyStack(0);
-
       if (reduce) {
+        applyStack(0, true);
         return () => splits.forEach(s => s?.revert());
       }
 
-      const trigger = ScrollTrigger.create({
-        trigger: root,
-        scroller,
-        start: 'top top',
-        end: 'bottom bottom',
-        invalidateOnRefresh: true,
-        onUpdate: self => applyStack(self.progress * lastStage),
+      const proxy = { pos: 0 };
+      const tween = gsap.to(proxy, {
+        pos: lastStage,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: root,
+          scroller,
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 0.2,
+          invalidateOnRefresh: true,
+          onRefresh: self => {
+            applyStack(self.progress * lastStage, true);
+            playIntro();
+          },
+        },
+        onUpdate: () => applyStack(proxy.pos),
       });
 
+      requestRefresh();
+
       return () => {
-        trigger.kill();
+        tween.scrollTrigger?.kill();
+        tween.kill();
         splits.forEach(s => s?.revert());
       };
     },
     [isCanvas, stages.length]
   );
 
+  React.useEffect(() => {
+    if (isCanvas) return;
+    const key = `rcw-active:${window.location.pathname}`;
+
+    const saveActiveIndex = () => {
+      try {
+        sessionStorage.setItem(key, String(activeIndexRef.current));
+      } catch {}
+    };
+    window.addEventListener('beforeunload', saveActiveIndex);
+    window.addEventListener('pagehide', saveActiveIndex);
+
+    let saved: number | null = null;
+    try {
+      const raw = sessionStorage.getItem(key);
+      const n = raw !== null ? Number(raw) : NaN;
+      if (Number.isInteger(n) && n > 0) saved = n;
+    } catch {}
+
+    const lastStage = stages.length - 1;
+    let restoreTimer: number | null = null;
+    if (saved !== null && saved <= lastStage) {
+      restoreTimer = window.setTimeout(() => {
+        if (restoredRef.current) return;
+        restoredRef.current = true;
+
+        const root = rootRef.current;
+        if (!root) return;
+        const currentScroller = scrollerLiveRef.current;
+        const rootRect = root.getBoundingClientRect();
+        const viewportH = currentScroller
+          ? currentScroller.clientHeight
+          : window.innerHeight;
+        const scrollerTop = currentScroller
+          ? currentScroller.getBoundingClientRect().top
+          : 0;
+        const scrollerScrollTop = currentScroller
+          ? currentScroller.scrollTop
+          : window.scrollY;
+        const start = rootRect.top - scrollerTop + scrollerScrollTop;
+        const end = start + (root.scrollHeight - viewportH);
+        const target = start + (saved / lastStage) * (end - start);
+        (currentScroller || window).scrollTo({
+          top: target,
+          behavior: 'smooth',
+        });
+      }, 900);
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', saveActiveIndex);
+      window.removeEventListener('pagehide', saveActiveIndex);
+      if (restoreTimer !== null) window.clearTimeout(restoreTimer);
+    };
+  }, [isCanvas, stages.length]);
+
   if (isCanvas) {
     return (
       <section
         ref={rootRef}
         data-canvas-edit='true'
-        className='rcw @container relative w-full bg-black'
-        style={composeStyle(
-          { minHeight: 420 },
-          blockBackgroundStyle(background)
-        )}
+        className='rcw @container relative'
+        style={composeStyle(blockBackgroundStyle(background))}
       >
         <style>{FONT_CSS}</style>
-        <div className='flex flex-col gap-3 px-[4cqi] py-[4cqi]'>
+        <div className='flex flex-col gap-6 px-[4cqi] py-[4cqi]'>
+          <p
+            data-element-key='ctaLabel'
+            style={composeStyle(
+              { fontFamily: FONT_BODY, color: 'black', margin: 0 },
+              styleOf('ctaLabel')
+            )}
+            className={selectableClass(activeKey === 'ctaLabel', 'text-4xl')}
+          >
+            {content.ctaLabel}
+          </p>
+
           <div
             data-element-key='introBackgroundUrl'
             className={selectableClass(
               activeKey === 'introBackgroundUrl',
-              'relative h-24 w-full shrink-0 overflow-hidden rounded'
+              'relative h-170 w-full shrink-0 overflow-hidden rounded-xl'
             )}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -283,76 +450,96 @@ export function RolexCollectionWork({
               className='h-full w-full object-cover'
             />
           </div>
-          <p
-            data-element-key='ctaLabel'
-            style={composeStyle(
-              { fontFamily: FONT_BODY, color: '#ffffff', margin: 0 },
-              styleOf('ctaLabel')
-            )}
-            className={selectableClass(activeKey === 'ctaLabel', 'text-sm')}
-          >
-            CTA: {content.ctaLabel}
-          </p>
-          {stages.map((stage, i) => {
-            const titleKey = `stages[${i}].title`;
-            const bgKey = `stages[${i}].backgroundColor`;
-            const imgKey = `stages[${i}].imageUrl`;
-            return (
-              <div
-                key={titleKey}
-                className='flex items-center gap-3 rounded-lg p-3'
-                style={{
-                  backgroundColor: stage.backgroundColor || '#111111',
-                }}
-              >
-                <div
-                  data-element-key={imgKey}
-                  className={selectableClass(
-                    activeKey === imgKey,
-                    'relative h-20 w-14 shrink-0 overflow-hidden rounded bg-black/20'
-                  )}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={stage.imageUrl}
-                    alt={stage.title}
-                    className='h-full w-full object-contain'
-                  />
-                </div>
-                <p
-                  data-element-key={titleKey}
-                  style={composeStyle(
-                    {
-                      fontFamily: FONT_HEADING,
-                      fontWeight: 400,
-                      color: '#ffffff',
-                      margin: 0,
-                      textTransform: 'uppercase',
-                      fontSize: 20,
-                      flex: 1,
-                    },
-                    styleOf(titleKey)
-                  )}
-                  className={selectableClass(activeKey === titleKey)}
-                >
-                  {stage.title}
-                </p>
-                <p
-                  data-element-key={bgKey}
-                  style={composeStyle(
-                    { fontFamily: FONT_BODY, color: '#ffffff', margin: 0 },
-                    styleOf(bgKey)
-                  )}
-                  className={selectableClass(
-                    activeKey === bgKey,
-                    'shrink-0 text-xs opacity-80'
-                  )}
-                >
-                  {stage.backgroundColor || '(nền intro)'}
-                </p>
+
+          <div className='flex items-start gap-6'>
+            <div className='min-w-0 flex-1 overflow-x-auto'>
+              <div className='grid grid-cols-3 gap-6'>
+                {stages.map((stage, i) => {
+                  const titleKey = `stages[${i}].title`;
+                  const bgKey = `stages[${i}].backgroundColor`;
+                  const bgImgKey = `stages[${i}].backgroundImageUrl`;
+                  const imgKey = `stages[${i}].imageUrl`;
+                  return (
+                    <div
+                      key={titleKey}
+                      className='relative flex w-full shrink-0 flex-col items-center gap-4 overflow-hidden rounded-xl p-6'
+                      style={stageBackgroundStyle(stage, '#111111')}
+                    >
+                      <div
+                        data-element-key={bgImgKey}
+                        className={selectableClass(
+                          activeKey === bgImgKey,
+                          'absolute top-6 right-6 z-10 flex h-16 w-16 items-center justify-center overflow-hidden rounded bg-white/10'
+                        )}
+                      >
+                        {stage.backgroundImageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={stage.backgroundImageUrl}
+                            alt=''
+                            className='h-full w-full object-cover'
+                          />
+                        ) : (
+                          <Wallpaper className='h-8 w-8 text-white/70' />
+                        )}
+                      </div>
+                      <div
+                        data-element-key={imgKey}
+                        className={selectableClass(
+                          activeKey === imgKey,
+                          'relative aspect-4/5 w-full overflow-hidden rounded'
+                        )}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={stage.imageUrl}
+                          alt={stage.title}
+                          className='h-full w-full object-cover'
+                        />
+                      </div>
+                      <p
+                        data-element-key={titleKey}
+                        style={composeStyle(
+                          {
+                            fontFamily: FONT_HEADING,
+                            fontWeight: 400,
+                            color: '#ffffff',
+                            margin: 0,
+                            textAlign: 'center',
+                            textTransform: 'uppercase',
+                          },
+                          styleOf(titleKey)
+                        )}
+                        className={selectableClass(
+                          activeKey === titleKey,
+                          'text-[44px]'
+                        )}
+                      >
+                        {stage.title}
+                      </p>
+                      <p
+                        data-element-key={bgKey}
+                        style={composeStyle(
+                          {
+                            fontFamily: FONT_BODY,
+                            color: '#ffffff',
+                            margin: 0,
+                          },
+                          styleOf(bgKey)
+                        )}
+                        className={selectableClass(
+                          activeKey === bgKey,
+                          'w-full truncate text-center text-[11px] opacity-80'
+                        )}
+                      >
+                        {stage.backgroundColor || '(mặc định)'}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          </div>
         </div>
       </section>
     );
@@ -387,47 +574,49 @@ export function RolexCollectionWork({
           />
         </div>
 
-        {stages.map((stage, i) => (
-          <div
-            key={`bg-${i}`}
-            data-rcw-layer
-            className='absolute inset-0'
-            style={{
-              zIndex: 1,
-              backgroundColor: stage.backgroundColor || 'transparent',
-              opacity: i === 0 ? 1 : 0,
-              visibility: i === 0 ? 'visible' : 'hidden',
-            }}
-          />
-        ))}
+        <div
+          data-rcw-bg
+          className='absolute inset-0'
+          style={{
+            zIndex: 1,
+            transition: BG_TRANSITION,
+            ...stageBackgroundStyle(stages[0], 'transparent'),
+          }}
+        />
 
         <div
           className='absolute inset-0'
-          style={{ zIndex: 10, perspective: 700 }}
+          style={{ zIndex: 10, perspective: 500 }}
         >
           {stages.map((stage, i) => {
             const imgKey = `stages[${i}].imageUrl`;
+            const box = boxStyle(200);
+            const boxImg = boxStyle(i === 0 ? 350 : 200);
             return (
               <div
                 key={`swing-${i}`}
                 data-rcw-swing
-                className='absolute inset-0 flex items-center justify-center'
+                className='flex items-center justify-center'
                 style={{
+                  ...box,
+                  zIndex: Math.round(1000 - i * 10),
                   transformStyle: 'preserve-3d',
-                  transform: i === 0 ? 'rotateX(0deg)' : 'rotateX(90deg)',
+                  transform: `${PREFIX_CENTER}rotateX(90deg)`,
+                  willChange: 'transform',
                 }}
               >
                 <div
                   data-rcw-container
-                  className='relative'
                   style={{
+                    ...box,
                     transformStyle: 'preserve-3d',
-                    aspectRatio: '0.714286 / 1',
-                    width: i === 0 ? 350 : 278,
-                    transform:
+                    transform: `${PREFIX_CENTER}${
                       i === 0
                         ? 'translateZ(0px) rotateX(0deg)'
-                        : `translateZ(${watchDepthForDistance(i)}px) rotateX(-90deg)`,
+                        : `translateZ(${watchDepthForDistance(i)}px) rotateX(-90deg)`
+                    }`,
+                    transition: CONTAINER_TRANSITION,
+                    willChange: 'transform',
                   }}
                 >
                   <div
@@ -435,18 +624,29 @@ export function RolexCollectionWork({
                     data-element-key={imgKey}
                     className={selectableClass(
                       activeKey === imgKey,
-                      'absolute inset-0'
+                      'overflow-hidden'
                     )}
                     style={{
-                      transform: i === 0 ? 'rotateX(0deg)' : 'rotateX(-90deg)',
+                      ...boxImg,
+                      transform: `${PREFIX_CENTER}rotateX(-90deg)`,
+                      transition: IMAGE_TRANSITION,
                     }}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={stage.imageUrl}
-                      alt={stage.title}
-                      className='h-full w-full object-contain'
-                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        borderRadius: 'inherit',
+                        inset: 0,
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={stage.imageUrl}
+                        alt={stage.title}
+                        className='h-full w-full object-cover'
+                        style={{ borderRadius: 'inherit' }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -466,10 +666,12 @@ export function RolexCollectionWork({
                   position: 'absolute',
                   top: '50%',
                   left: '50%',
-                  transform: 'translate(-50%, -50%)',
+                  transform: `translate(-50%, -50%) translateY(${i === 0 ? 0 : 130}%)`,
+                  opacity: i === 0 ? 1 : 0,
                   margin: 0,
                   fontFamily: FONT_HEADING,
                   fontWeight: 400,
+                  fontSize: '76px',
                   color: '#ffffff',
                   textAlign: 'center',
                   textTransform: 'uppercase',
@@ -479,10 +681,7 @@ export function RolexCollectionWork({
                 },
                 styleOf(titleKey)
               )}
-              className={selectableClass(
-                activeKey === titleKey,
-                'text-[40px] @2xl:text-[56px] @4xl:text-[65px]'
-              )}
+              className={selectableClass(activeKey === titleKey)}
             >
               {stage.title}
             </p>
@@ -491,6 +690,10 @@ export function RolexCollectionWork({
 
         <p
           data-element-key='ctaLabel'
+          data-motion='word-blur-up-reveal'
+          data-motion-trigger='load'
+          data-motion-delay='0.4'
+          data-motion-duration='0.7'
           style={composeStyle(CTA_STYLE, styleOf('ctaLabel'))}
           className={selectableClass(
             activeKey === 'ctaLabel',

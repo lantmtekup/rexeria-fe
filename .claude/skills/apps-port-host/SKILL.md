@@ -163,7 +163,12 @@ Refs: `pnjCta.ts`, `housentOurExcellence.ts`, `sustainitOurExpertise.ts`. Arrays
    - sticky scrub / pin-track → `STICKY_SCROLL_BLOCK_TYPES`
    - fixed header chrome → `OVERLAY_TOP_BLOCK_TYPES`
 9. **Assets**: put defaults under `public/<brand>/…` (or CDN URLs) in BlockDef `defaultContent`.
-10. **BE seed**: one `blocks` row, `scope=system`, `type_code` = FE block type. Without it: preview + `/p` work; **version commit → 400**. FE repo does not own Go migrations — note the seed as a BE follow-up. Pattern: `scripts/prod-block-catalog.sql`.
+10. **BE seed**: one `blocks` row, `scope=system`, `type_code` = FE block type, `supported_surfaces` set. Without it: preview + `/p` work; **version commit → 400 "does not support surface ... (supports [])"**. Runnable from this repo right now — don't defer as a BE follow-up:
+    ```
+    REXER_ADMIN_EMAIL=<admin> REXER_ADMIN_PASSWORD=<pass> \
+      node scripts/seed-block-surfaces.mjs <type_code>
+    ```
+    Then mirror `type_code` into `scripts/prod-block-catalog.sql`'s `INSERT` array.
 11. **Verify** (section below) before declaring done.
 
 ## Workflow — sub-component / drawer
@@ -200,7 +205,7 @@ Port verify:
 - [ ] Sticky/overlay: STICKY_SCROLL / OVERLAY_TOP sets updated if needed
 - [ ] Drawer (if any): no clip in device frame; scroll lock; Lenis resumes on close
 - [ ] Sub-component: NOT registered as BlockType
-- [ ] BE seed noted (or "preview-only until seed")
+- [ ] BE seed: `node scripts/seed-block-surfaces.mjs <type_code>` actually run (not "noted for later") + mirrored into `scripts/prod-block-catalog.sql`
 ```
 
 If a wiring grep script exists under `framer-clone-host/scripts/`, run it for full blocks.

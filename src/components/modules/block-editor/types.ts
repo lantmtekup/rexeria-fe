@@ -67,8 +67,21 @@ export type BlockType =
   | 'framer_signature_feature'
   | 'framer_vs_collins_projects'
   | 'framer_aestha_editorial'
+  | 'aestha_explore'
+  | 'aestha_studio'
+  | 'aestha_contact'
+  | 'aestha_project'
   | 'framer_perform_about'
   | 'framer_ignitex_step'
+  | 'framer_realestate02_story'
+  | 'framer_realestate02_quote'
+  | 'framer_realestate02_product'
+  | 'framer_realestate02_overview'
+  | 'framer_realestate02_location'
+  | 'framer_realestate02_commute'
+  | 'framer_realestate02_map'
+  | 'framer_realestate02_gallery'
+  | 'framer_realestate02_menu'
   | 'framer_perform_pricing'
   | 'framer_firma_template_strategy_digital'
   | 'housent_our_excellence'
@@ -194,7 +207,8 @@ export type BlockType =
   | 'rolex_collection_hero'
   | 'rolex_collection_nav'
   | 'rolex_collection_contact'
-  | 'rolex_collection_work';
+  | 'rolex_collection_work'
+  | 'rolex_collection_project';
 
 export interface HeroSplitStat {
   value: string;
@@ -1715,6 +1729,81 @@ export interface FramerIgnitexStepContent {
   cards?: FramerIgnitexStepCard[];
 }
 
+export interface FramerRealEstate02StoryContent {
+  slide1Label: string;
+  slide1Body: string;
+  slide1ImageUrl: string;
+  slide2Label: string;
+  slide2Body: string;
+  slide2ImageUrl: string;
+  slide3Label: string;
+  slide3Body: string;
+  slide3ImageUrl: string;
+}
+
+export interface FramerRealEstate02QuoteContent {
+  name: string;
+  role: string;
+  quote: string;
+  buildingImageUrl: string;
+  headshotImageUrl: string;
+}
+
+export interface FramerRealEstate02GalleryContent {
+  heading: string;
+  image1Url: string;
+  image2Url: string;
+  image3Url: string;
+  image4Url: string;
+}
+
+export interface FramerRealEstate02ProductContent {
+  bodyText: string;
+  photoUrl: string;
+}
+
+export interface FramerRealEstate02OverviewContent {
+  title1: string;
+  title2: string;
+  description: string;
+  subheadingLine1: string;
+  subheadingLine2: string;
+  subheadingLine3: string;
+  towerImageUrl: string;
+  personImageUrl: string;
+  panoramaImageUrl: string;
+}
+
+export interface FramerRealEstate02LocationContent {
+  heading: string;
+  photo1Url: string;
+  photo2Url: string;
+  photo3Url: string;
+}
+
+export interface FramerRealEstate02CommuteContent {
+  eyebrow: string;
+  heading: string;
+  walkMinutes: string;
+  carHeading: string;
+  row1Value: string;
+  row1Label: string;
+  row2Value: string;
+  row2Label: string;
+  row3Value: string;
+  row3Label: string;
+  carPhotoUrl: string;
+}
+
+export interface FramerRealEstate02MapContent {
+  mapImageUrl: string;
+}
+
+export interface FramerRealEstate02MenuContent {
+  label: string;
+  menuIconUrl?: string;
+}
+
 /**
  * Team Directory: nền #F5F3EE, DM Mono eyebrow, Abril Fatface title,
  * danh sách hàng ngang có divider cho từng thành viên.
@@ -1758,6 +1847,7 @@ export interface RolexCollectionNavContent {
 export interface RolexCollectionWorkStage {
   title: string;
   backgroundColor?: string;
+  backgroundImageUrl?: string;
   imageUrl: string;
 }
 
@@ -1787,6 +1877,25 @@ export interface RolexContactContent {
   twitterHref?: string;
 }
 
+/** Trang chi tiết dự án (project-details) của rolex_collection — 1 block DUY
+ *  NHẤT dựng lại nguyên trang gốc: Hero split (ảnh + eyebrow + heading lớn
+ *  animation per-char + mô tả) → dải ảnh full-width → 2 ảnh cạnh nhau → dải
+ *  ảnh full-width → split đóng bài (ảnh + subheading + mô tả + glyph). */
+export interface RolexCollectionProjectContent {
+  eyebrow: string;
+  title: string;
+  description: string;
+  heroImageUrl: string;
+  bandImageUrl1: string;
+  pairImageLeftUrl: string;
+  pairImageRightUrl: string;
+  bandImageUrl2: string;
+  closingImageUrl: string;
+  closingSubheading: string;
+  closingParagraph: string;
+  symbol: string;
+}
+
 /**
  * Aestha Editorial: cột brand sticky trái + 3 ảnh so le phải + CTA cuối.
  * Port từ `src/blocks/framer-aestha-editorial`.
@@ -1802,6 +1911,143 @@ export interface FramerAesthaEditorialContent {
   ctaText: string;
   ctaHref: string;
   navLinks: Array<{ label: string; href: string }>;
+}
+
+/** Chi tiết dự án trong trang index EXPLORE — content cho AesthaProject. */
+export interface AesthaExploreProjectDetail {
+  /** Các đoạn mô tả dự án — mỗi phần tử một đoạn `<p>`. */
+  body?: string[];
+  /** Thêm ảnh chi tiết (ngoài ảnh chính img). */
+  images?: AesthaProjectImage[];
+}
+
+export interface AesthaExploreProject {
+  label: string;
+  href: string;
+  img: string;
+  alt: string;
+  /** Chi tiết dự án — hiển thị khi click vào project trong Explore. */
+  detail?: AesthaExploreProjectDetail;
+}
+
+/** Link footer nav (Projects / Studio / Contact). */
+export interface AesthaExploreFooterLink {
+  label: string;
+  href: string;
+}
+
+/**
+ * Aestha Explore: trang index "EXPLORE" (cùng site RAMSA/Aestha).
+ * Wide (≥1100px): hover tên dự án → crossfade ảnh featured, cursor-dot.
+ * Narrow (<1100px): 1 dự án/màn, vuốt để duyệt. Port từ `app/dev/nami-explore`.
+ */
+export interface AesthaExploreContent {
+  heading: string;
+  projects: AesthaExploreProject[];
+  footerLinks: AesthaExploreFooterLink[];
+  /** Nhãn footer đang là trang hiện tại (tô nhạt) — khớp theo `label`. */
+  currentFooterLabel: string;
+}
+
+/** Một thành viên team trong trang STUDIO — tên + vai trò. */
+export interface AesthaStudioMember {
+  name: string;
+  role: string;
+}
+
+/** Link footer nav (Projects / Studio / Contact) — trang STUDIO. */
+export interface AesthaStudioFooterLink {
+  label: string;
+  href: string;
+}
+
+/**
+ * Aestha Studio: trang "STUDIO" / About (cùng site RAMSA/Aestha với
+ * `aestha_explore`). Wordmark + bio + team + ảnh portrait + footer nav.
+ * Wide (≥1200px): full-viewport, cột trái nội dung · ảnh phải cố định 448px,
+ * cursor-dot bám con trỏ. Narrow (<1200px): xếp dọc. Port từ
+ * `app/dev/ramsa-studio/page.tsx`.
+ */
+export interface AesthaStudioContent {
+  wordmark: string;
+  bio: string;
+  team: AesthaStudioMember[];
+  imageUrl: string;
+  imageAlt: string;
+  footerLinks: AesthaStudioFooterLink[];
+  /** Nhãn footer đang là trang hiện tại (tô nhạt) — khớp theo `label`. */
+  currentFooterLabel: string;
+}
+
+/** Một mạng xã hội trong trang CONTACT — nhãn hiển thị + link ngoài. */
+export interface AesthaContactSocial {
+  label: string;
+  href: string;
+}
+
+/** Link footer nav (Projects / Studio / Contact) — trang CONTACT. */
+export interface AesthaContactFooterLink {
+  label: string;
+  href: string;
+}
+
+/**
+ * Aestha Contact: trang "CONTACT" (cùng site RAMSA/Aestha với `aestha_explore`
+ * / `aestha_studio`). Heading + địa chỉ + email/phone + social + ảnh hero +
+ * footer nav. Wide (≥1100px): 2 cột full-viewport (trái CONTACT + địa chỉ, phải
+ * ảnh + email/social); cursor-dot. Narrow (<1100px): xếp dọc (địa chỉ → info →
+ * ảnh). Port từ `app/dev/aestha-contact/page.tsx`.
+ */
+export interface AesthaContactContent {
+  heading: string;
+  /** Địa chỉ nhiều dòng — ngăn cách bằng `\n`, render `white-space: pre-line`. */
+  address: string;
+  /** Nhãn email hiển thị; href suy ra `mailto:${email}`. */
+  email: string;
+  /** Nhãn phone hiển thị; href suy ra `tel:` (bỏ khoảng trắng). */
+  phone: string;
+  imageUrl: string;
+  imageAlt: string;
+  socials: AesthaContactSocial[];
+  footerLinks: AesthaContactFooterLink[];
+  /** Nhãn footer đang là trang hiện tại (tô nhạt) — khớp theo `label`. */
+  currentFooterLabel: string;
+}
+
+/** Một ảnh trong stack cột phải trang PROJECT — nguồn + alt. */
+export interface AesthaProjectImage {
+  src: string;
+  alt: string;
+}
+
+/** Link nav trang PROJECT (Dự án / Studio / Liên hệ). */
+export interface AesthaProjectNavLink {
+  label: string;
+  href: string;
+}
+
+/**
+ * Aestha Project: trang chi tiết dự án (cùng site RAMSA/Aestha với
+ * `aestha_explore` / `aestha_studio` / `aestha_contact`). Cột trái sticky
+ * (tiêu đề + nhãn "Concept" + đoạn mô tả + nav) · cột phải stack ảnh cuộn dọc.
+ * Cuối stack, panel "Concept" crossfade sang panel "See next project".
+ * Narrow (<900px): xếp 1 cột, bỏ sticky. Port từ `ProjectView` trong
+ * `apps/real-estate/src/AesthaDemoPage.tsx`.
+ */
+export interface AesthaProjectContent {
+  title: string;
+  /** Nhãn cột trái, ví dụ "Concept". */
+  conceptLabel: string;
+  /** Các đoạn mô tả dự án — mỗi phần tử một đoạn `<p>`. */
+  body: string[];
+  images: AesthaProjectImage[];
+  /** Nhãn nhóm panel "dự án tiếp theo", ví dụ "See next project". */
+  nextHeading: string;
+  /** Tên dự án tiếp theo (hiển thị dạng title-case). */
+  nextLabel: string;
+  /** Link tới dự án tiếp theo. */
+  nextHref: string;
+  navLinks: AesthaProjectNavLink[];
 }
 
 /**
@@ -2979,6 +3225,10 @@ export type BlockContent =
   | FramerTeamDirectoryContent
   | FramerImageStaggerContent
   | FramerAesthaEditorialContent
+  | AesthaExploreContent
+  | AesthaStudioContent
+  | AesthaContactContent
+  | AesthaProjectContent
   | FramerEstanciaAboutUsContent
   | FramerPerformAboutContent
   | FramerPerformPricingContent
@@ -2990,6 +3240,15 @@ export type BlockContent =
   | FramerSignatureFeatureContent
   | FramerVsCollinsProjectsContent
   | FramerIgnitexStepContent
+  | FramerRealEstate02StoryContent
+  | FramerRealEstate02QuoteContent
+  | FramerRealEstate02GalleryContent
+  | FramerRealEstate02ProductContent
+  | FramerRealEstate02OverviewContent
+  | FramerRealEstate02LocationContent
+  | FramerRealEstate02CommuteContent
+  | FramerRealEstate02MapContent
+  | FramerRealEstate02MenuContent
   | FramerClarityServicesContent
   | DelvauxHeaderContent
   | DelvauxSubnavContent
@@ -3023,6 +3282,7 @@ export type BlockContent =
   | RolexCollectionNavContent
   | RolexContactContent
   | RolexCollectionWorkContent
+  | RolexCollectionProjectContent
   | Record<string, unknown>;
 
 /**
@@ -5123,6 +5383,168 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     aiLabelEn:
       'IgniteX "Step Section" (recon spec): white background, "From concept to launch" pill, 3-column (left "Your ideas into Brand" + center 3 step cards + right "transform stories"), Geist 60/500 heading + Great Vibes 62/400 for "Brand", card Geist 28/500 title + Geist 18/500 body #5b5b5b',
   },
+  framer_realestate02_story: {
+    type: 'framer_realestate02_story',
+    category: 'gallery',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'carousel'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'RealEstate02 - Story Carousel',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Story Carousel',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Story Carousel',
+    aiLabelVi:
+      'block "story carousel" 3 slide (AESTHETICS/DIVERSITY/SECURITY): card cố định 375×781, ảnh nền full-bleed, tiêu đề lớn 52px màu #c49f8a chồng lên ảnh, panel caption vuông #c49f8a góc dưới-phải chứa nhãn + mô tả + 2 nút điều hướng + bộ đếm N/3',
+    aiLabelEn:
+      '3-slide "story carousel" block (AESTHETICS/DIVERSITY/SECURITY): fixed 375×781 card, full-bleed background image, large 52px #c49f8a title overlapping the image, bottom-right #c49f8a square caption panel with label + description + prev/next buttons + N/3 counter',
+  },
+  framer_realestate02_quote: {
+    type: 'framer_realestate02_quote',
+    category: 'trust',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'quote', 'testimonial'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'RealEstate02 - Architect Quote',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Architect Quote',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Architect Quote',
+    aiLabelVi:
+      'block "quote kiến trúc sư" testimonial: card cố định 375×567 nền #2c2926, header tên + chức danh màu #c49f8a/#66634d, trích dẫn 3 dòng màu #c49f8a, ảnh building crop 234×282 và ảnh headshot 94×129 chồng lên góc dưới-trái',
+    aiLabelEn:
+      '"architect quote" testimonial block: fixed 375×567 card on #2c2926 background, name + role header in #c49f8a/#66634d, 3-line quote in #c49f8a, cropped 234×282 building photo with a 94×129 headshot overlapping its bottom-left corner',
+  },
+  framer_realestate02_product: {
+    type: 'framer_realestate02_product',
+    category: 'amenity',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'editorial'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'RealEstate02 - Landscape Editorial',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Landscape Editorial',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Landscape Editorial',
+    aiLabelVi:
+      'block editorial "landscape" card cố định 375×443 nền #c49f8a: ảnh mask-reveal 281×187 sát góc trên-phải (trượt lên 112px khi vào viewport), đoạn mô tả uppercase #2c2926 11px bên dưới cách 32px, gutter trái 94px để trống',
+    aiLabelEn:
+      'fixed 375×443 "landscape" editorial card on #c49f8a background: 281×187 mask-reveal photo flush to the top-right (slides up 112px on scroll-into-view), uppercase #2c2926 11px description below with a 32px gap, 94px empty left gutter',
+  },
+  framer_realestate02_overview: {
+    type: 'framer_realestate02_overview',
+    category: 'amenity',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'overview', 'panorama'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-20',
+    label: 'RealEstate02 - Overview Panorama',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Overview Panorama',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Overview Panorama',
+    aiLabelVi:
+      'block "overview panorama" card cố định 375×948 nền olive #565440: 2 ảnh top (tháp + người, parallax ngược chiều), heading lớn "Over/View" 64.6px màu #c49f8a, mô tả nhỏ 11px uppercase màu #e9e4dc, heading phụ 3 dòng xếp lệch cố ý tràn 2 mép card, ảnh panorama full-bleed cuối block',
+    aiLabelEn:
+      '"overview panorama" block: fixed 375×948 card on #565440 olive background — 2 top photos (tower + person, opposite-direction parallax), large 64.6px #c49f8a "Over/View" heading, small 11px uppercase #e9e4dc description, 3-line staggered subheading intentionally bleeding past both card edges, full-bleed panorama photo at the bottom',
+  },
+  framer_realestate02_location: {
+    type: 'framer_realestate02_location',
+    category: 'location',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'location', 'parallax', 'collage'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'RealEstate02 - Location Collage',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Location Collage',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Location Collage',
+    aiLabelVi:
+      'block "location collage" card cố định 375×585 nền #e9e4dc: 3 ảnh position-absolute tràn mép trái/phải cố ý (không mask/crop), mỗi ảnh trôi liên tục theo scrollY tuyệt đối (không phải theo % tiến trình cuộn riêng block) — ảnh dưới-trái hệ số -0.1, 2 ảnh phải hệ số +0.1; heading "LOCATION" Inter 300 72px màu #565440 tràn mép trái, trượt ngang 1 lần mỗi khi cuộn vào viewport',
+    aiLabelEn:
+      '"location collage" block: fixed 375×585 card on #e9e4dc background — 3 position-absolute photos deliberately bleeding past the left/right edges (no mask/crop), each drifting continuously with raw absolute scrollY (not the block\'s own scroll-progress) — lower-left photo factor -0.1, the other two +0.1; "LOCATION" heading in Inter 300 72px #565440 bleeding off the left edge, sliding in horizontally each time it re-enters the viewport',
+  },
+  framer_realestate02_commute: {
+    type: 'framer_realestate02_commute',
+    category: 'location',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'location', 'stats', 'counter'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'RealEstate02 - Commute Stats',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Commute Stats',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Commute Stats',
+    aiLabelVi:
+      'block "commute stats" card cố định 375×1038 nền #e9e4dc: vòng tròn tiến trình + số đếm lớn 80px chạy 0→N phút đi bộ (đếm lại mỗi lần cuộn vào viewport), heading mô tả điểm đến, section "BY CAR" màu #c49f8a với ảnh xe top-down + list 3 dòng số phút/tên địa điểm có đường kẻ chia, mọi chữ hiện theo từng ký tự khi cuộn tới',
+    aiLabelEn:
+      '"commute stats" block: fixed 375×1038 card on #e9e4dc background — radial progress ring + large 80px count-up (0→N walk minutes, replays every time it re-enters the viewport), destination heading, #c49f8a "BY CAR" section with a top-down car photo + a 3-row minutes/destination list with divider lines, every text label revealing character-by-character on scroll',
+  },
+  framer_realestate02_map: {
+    type: 'framer_realestate02_map',
+    category: 'location',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'location', 'map'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'RealEstate02 - Location Map',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Location Map',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Location Map',
+    aiLabelVi:
+      'block "location map" card cố định 375×359 nền #e9e4dc: 1 ảnh minh hoạ bản đồ tĩnh full-bleed (đường + công viên + 4 pin phụ vẽ sẵn trong ảnh) cùng 1 marker "R" lớn overlay màu #565440 bập bênh liên tục lên xuống ~5px (không phải hiệu ứng xuất hiện 1 lần)',
+    aiLabelEn:
+      '"location map" block: fixed 375×359 card on #e9e4dc background — one full-bleed static map illustration (roads + parks + 4 secondary pins baked into the image) with one large overlay "R" marker in #565440 continuously bobbing ~5px up and down (not a one-time entrance effect)',
+  },
+  framer_realestate02_gallery: {
+    type: 'framer_realestate02_gallery',
+    category: 'gallery',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'gallery', 'carousel'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'RealEstate02 - Infrastructure Gallery',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Infrastructure Gallery',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Infrastructure Gallery',
+    aiLabelVi:
+      'block "gallery tiện ích" card cố định 375×704, nền trong suốt: tiêu đề lớn 2 dòng "INFRAS/TRUCTURE" màu #c49f8a, slider 4 ảnh tiện ích 307×307 (gap 12px, hé lộ ảnh kế tiếp), 2 nút tròn 35×35 viền #c49f8a điều hướng trước/sau, bộ đếm "N/4" màu #e9e4dc',
+    aiLabelEn:
+      '"infrastructure gallery" block: fixed 375×704 card, transparent background — large 2-line "INFRAS/TRUCTURE" heading in #c49f8a, 4-image amenity slider (307×307, 12px gap, peeking next image), two 35×35 circular #c49f8a-bordered prev/next buttons, "N/4" counter in #e9e4dc',
+  },
+  framer_realestate02_menu: {
+    type: 'framer_realestate02_menu',
+    category: 'navigation',
+    style: 'modern',
+    tags: ['clone', 'framer', 'real-estate', 'navigation'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-22',
+    label: 'RealEstate02 - Menu',
+    accent: '#c49f8a',
+    adminLabel: 'RealEstate02 - Menu',
+    gradient: 'from-amber-100 to-orange-200',
+    defaultName: 'Menu',
+    aiLabelVi:
+      'block "menu" navigation bar dạng pill: flex row chứa label dropdown (chữ Inter 11px uppercase #565440 trên nền tròn #e9e4dc viền #c49f8a border-radius 20px) bên trái + icon hamburger 3 gạch trong circle #e9e4dc viền #c49f8a bên phải; chữ hiện từng ký tự stagger 75ms khi vào viewport',
+    aiLabelEn:
+      '"menu" navigation pill block: flex row with a label pill (Inter 11px uppercase #565440 on #e9e4dc circle with #c49f8a border-radius 20px) on the left + a 3-line hamburger icon inside an #e9e4dc circle with #c49f8a border on the right; text reveals character-by-character with 75ms stagger on scroll-into-view',
+  },
   framer_aestha_editorial: {
     type: 'framer_aestha_editorial',
     category: 'intro',
@@ -5140,6 +5562,78 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'trang editorial: cột brand sticky trái + stack 3 ảnh so le phải',
     aiLabelEn:
       'editorial layout: sticky brand column left + staggered image stack right',
+  },
+  aestha_explore: {
+    type: 'aestha_explore',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['clone', 'framer', 'index'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'Aestha Explore',
+    accent: '#0F0F0F',
+    adminLabel: 'Explore index (Aestha)',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Explore',
+    aiLabelVi:
+      'trang index EXPLORE: menu dự án hover đổi ảnh featured (desktop) / vuốt carousel (mobile)',
+    aiLabelEn:
+      'EXPLORE index page: project menu hover-swaps featured image (desktop) / swipe carousel (mobile)',
+  },
+  aestha_studio: {
+    type: 'aestha_studio',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['clone', 'framer', 'about'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'Aestha Studio',
+    accent: '#0F0F0F',
+    adminLabel: 'Studio / About (Aestha)',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Studio',
+    aiLabelVi:
+      'trang STUDIO / About: wordmark + bio + danh sách team + ảnh portrait + footer nav',
+    aiLabelEn:
+      'STUDIO / About page: wordmark + bio + team list + portrait image + footer nav',
+  },
+  aestha_contact: {
+    type: 'aestha_contact',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['clone', 'framer', 'contact'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'Aestha Contact',
+    accent: '#0F0F0F',
+    adminLabel: 'Contact (Aestha)',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Contact',
+    aiLabelVi:
+      'trang CONTACT: heading + địa chỉ + email/phone + social + ảnh hero + footer nav',
+    aiLabelEn:
+      'CONTACT page: heading + address + email/phone + socials + hero image + footer nav',
+  },
+  aestha_project: {
+    type: 'aestha_project',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['clone', 'framer', 'project'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'Aestha Project',
+    accent: '#0F0F0F',
+    adminLabel: 'Project detail (Aestha)',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Project',
+    aiLabelVi:
+      'trang chi tiết dự án: cột trái sticky (tiêu đề + mô tả) · cột phải stack ảnh cuộn, cuối trang đổi sang "dự án tiếp theo"',
+    aiLabelEn:
+      'project detail page: sticky left column (title + concept) · scrolling right image stack, swaps to "next project" at the end',
   },
   masterise_home_inside: {
     type: 'masterise_home_inside',
@@ -6541,5 +7035,23 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'section "SAY HELLO" tối: card kính mờ chứa form liên hệ (tên/email/lời nhắn) bên trái + ảnh chân dung + link Instagram/Twitter bên phải',
     aiLabelEn:
       'dark "SAY HELLO" glass card: contact form (name/email/message) left + portrait photo with Instagram/Twitter links right',
+  },
+  rolex_collection_project: {
+    type: 'rolex_collection_project',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', 'framer', 'project-detail'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-24',
+    label: 'Rolex Collection Project',
+    accent: '#000000',
+    adminLabel: 'Rolex Collection Project',
+    gradient: 'from-neutral-100 to-white',
+    defaultName: 'Rolex Collection Project',
+    aiLabelVi:
+      'toàn bộ trang chi tiết dự án: hero (ảnh + heading animation per-char + mô tả) → dải ảnh full-width → 2 ảnh cạnh nhau → dải ảnh full-width → split đóng bài (ảnh + subheading + mô tả + glyph)',
+    aiLabelEn:
+      'full project-details page: hero (image + per-char animated heading + description) → full-width image band → 2 side-by-side images → full-width image band → closing split (image + subheading + description + glyph)',
   },
 };

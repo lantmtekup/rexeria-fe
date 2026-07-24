@@ -5,7 +5,7 @@
  * version page đang pin (chạy cho cả DRAFT, vì `/p/{slug}` chỉ render bản đã
  * publish → draft 404).
  *
- * Resolve: pages.get(id) → template_version_id → (fan-out templates) template_id
+ * Resolve: pages.get(id) → template_version_id → template_id
  * → templates.version(template_id, version_id).canvas_blueprint → parseCanvas →
  * blocks → <PreviewMode> (render client-side, không cần publish).
  * External landing (external_url) → mở thẳng URL ngoài.
@@ -21,6 +21,7 @@ import { parseCanvas } from '@/components/modules/block-editor/serialize';
 import type { Block, Lang } from '@/components/modules/block-editor/types';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
+import { resolveTemplateFromVersionId } from '@/services/rexer/resolveTemplateFromVersion';
 
 function rxMessage(err: unknown): string {
   if (err instanceof RxApiError) return err.code || err.message || 'API_ERROR';
@@ -63,10 +64,8 @@ export default function PortalLandingPreviewPage() {
         try {
           const revs = await rexerApi.pages.revisions(id, { limit: 50 });
           if (cancelled) return;
-          const latest =
-            (revs.items ?? []).find(
-              r => r.revision_no === revs.latest_revision_no
-            ) ?? (revs.items ?? [])[0];
+          // BE sorts by changed_at DESC by default → items[0] is the latest.
+          const latest = (revs.items ?? [])[0];
           const parsedRev = latest?.config_json
             ? parseCanvas(latest.config_json)
             : null;
@@ -86,25 +85,7 @@ export default function PortalLandingPreviewPage() {
         const versionId = page.template_version_id;
         if (!versionId) throw new Error('Page chưa có template_version_id');
 
-        // version_id → template_id: fan-out (BE chưa có GET version theo id).
-        const templates = await rexerApi.templates.list({ limit: 500 });
-        const items = templates.items ?? [];
-        const matches = await Promise.all(
-          items.map(async tpl => {
-            if (tpl.current_version_id === versionId) return tpl;
-            try {
-              const vl = await rexerApi.templates.versions(tpl.id);
-              return (vl.items ?? []).some(v => v.id === versionId)
-                ? tpl
-                : null;
-            } catch {
-              return null;
-            }
-          })
-        );
-        const tpl = matches.find(Boolean);
-        if (!tpl) throw new Error('Không tìm thấy template chứa version');
-
+        const tpl = await resolveTemplateFromVersionId(versionId);
         const ver = await rexerApi.templates.version(tpl.id, versionId);
         if (cancelled) return;
         const parsed = parseCanvas(ver.canvas_blueprint);

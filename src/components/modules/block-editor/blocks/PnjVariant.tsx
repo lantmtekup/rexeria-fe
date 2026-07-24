@@ -36,6 +36,7 @@ import {
 import { useLandingMotion } from '../motion/LandingMotion';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 import { PnjDiscoverPanel } from './PnjDiscoverPanel';
+import { resolvePnjVariants } from './pnjVariantContent';
 import { useContainerMobile } from './useContainerMobile';
 
 const RESPONSIVE = {
@@ -79,7 +80,7 @@ export function PnjVariant({
   const tlRef = React.useRef<gsap.core.Timeline | null>(null);
   const activeIndexRef = React.useRef(0);
   const { hasRoot, scroller, requestRefresh } = useLandingMotion();
-  const variants = content.variants ?? [];
+  const variants = resolvePnjVariants(content);
   const [discoverOpen, setDiscoverOpen] = React.useState(false);
   const [discoverViewKey, setDiscoverViewKey] = React.useState(
     variants[0]?.key ?? ''
@@ -455,7 +456,6 @@ function CanvasVariantCard({
   const imageKey = `variants[${index}].image`;
   const labelKey = `variants[${index}].label`;
   const descKey = `variants[${index}].desc`;
-  const hlKey = `variants[${index}].highlights`;
 
   return (
     <div className='flex min-w-0 flex-col gap-2 rounded-xl bg-white p-2 ring-1 ring-neutral-200/80'>
@@ -519,21 +519,19 @@ function CanvasVariantCard({
         {variant.desc || 'Mô tả…'}
       </p>
 
-      <ul
-        data-element-key={hlKey}
-        style={styleOf(hlKey)}
-        className={selectableClass(
-          activeKey === hlKey,
-          'm-0 flex list-none flex-col px-1 py-0.5'
-        )}
-      >
+      <ul className='m-0 flex list-none flex-col px-1 py-0.5'>
         {(variant.highlights.length > 0
           ? variant.highlights
           : ['(highlights)']
         ).map((item, hi) => (
           <li
             key={`${item}-${hi}`}
-            className='border-b border-neutral-200/90 py-1.5 text-[11px] font-light text-neutral-600 last:border-b-0'
+            data-element-key={`variants[${index}].highlights[${hi}]`}
+            style={styleOf(`variants[${index}].highlights[${hi}]`)}
+            className={selectableClass(
+              activeKey === `variants[${index}].highlights[${hi}]`,
+              'border-b border-neutral-200/90 py-1.5 text-[11px] font-light text-neutral-600 last:border-b-0'
+            )}
           >
             {item}
           </li>
@@ -672,7 +670,6 @@ function LiveVariantCopy({
 }) {
   const labelKey = `variants[${index}].label`;
   const descKey = `variants[${index}].desc`;
-  const hlKey = `variants[${index}].highlights`;
 
   return (
     <div className='pnj-variant__copy absolute inset-x-0 top-0 flex flex-col gap-5'>
@@ -715,23 +712,26 @@ function LiveVariantCopy({
         {variant.desc}
       </p>
       {variant.highlights.length > 0 && (
-        <ul
-          data-element-key={hlKey}
-          className={selectableClass(
-            activeKey === hlKey,
-            'pointer-events-auto m-0 flex list-none flex-col p-0'
-          )}
-          style={styleOf(hlKey)}
-        >
-          {variant.highlights.map(item => (
-            <li
-              key={item}
-              className='border-b border-neutral-200/90 py-2.5 font-light text-neutral-700 last:border-b-0'
-              style={{ fontSize: RESPONSIVE.descFont }}
-            >
-              {item}
-            </li>
-          ))}
+        <ul className='pointer-events-auto m-0 flex list-none flex-col p-0'>
+          {variant.highlights.map((item, hi) => {
+            const itemKey = `variants[${index}].highlights[${hi}]`;
+            return (
+              <li
+                key={`${item}-${hi}`}
+                data-element-key={itemKey}
+                className={selectableClass(
+                  activeKey === itemKey,
+                  'border-b border-neutral-200/90 py-2.5 font-light text-neutral-700 last:border-b-0'
+                )}
+                style={{
+                  fontSize: RESPONSIVE.descFont,
+                  ...styleOf(itemKey),
+                }}
+              >
+                {item}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

@@ -1,4 +1,4 @@
-import { Image as ImageIcon, Palette, Type } from 'lucide-react';
+import { Image as ImageIcon, Palette, Type, Wallpaper } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { LayerElement } from '../../../LayersPanel';
@@ -82,6 +82,13 @@ export const rolexCollectionWorkStageElements = (
         groupId,
         icon: Palette,
         fieldType: 'text' as const,
+      },
+      {
+        key: `stages[${i}].backgroundImageUrl`,
+        label: 'Ảnh nền (thay cho màu)',
+        groupId,
+        icon: Wallpaper,
+        fieldType: 'image' as const,
       },
     ];
   });

@@ -6,6 +6,11 @@ import { delvauxHeroDef } from './blocks/_registry/defs/delvauxHero';
 import { delvauxProductDef } from './blocks/_registry/defs/delvauxProduct';
 import { delvauxSubnavDef } from './blocks/_registry/defs/delvauxSubnav';
 import { delvauxVariantDef } from './blocks/_registry/defs/delvauxVariant';
+import { framerAesthaEditorialDef } from './blocks/_registry/defs/framerAesthaEditorial';
+import { aesthaExploreDef } from './blocks/_registry/defs/aesthaExplore';
+import { aesthaStudioDef } from './blocks/_registry/defs/aesthaStudio';
+import { aesthaContactDef } from './blocks/_registry/defs/aesthaContact';
+import { aesthaProjectDef } from './blocks/_registry/defs/aesthaProject';
 import { q80ExperienceDef } from './blocks/_registry/defs/q80Experience';
 import { q80MenuDef } from './blocks/_registry/defs/q80Menu';
 import { housentHeroDef } from './blocks/_registry/defs/housentHero';
@@ -76,6 +81,7 @@ import { rolexCollectionHeroDef } from './blocks/_registry/defs/rolexCollectionH
 import { rolexCollectionNavDef } from './blocks/_registry/defs/rolexCollectionNav';
 import { rolexContactDef } from './blocks/_registry/defs/rolexContact';
 import { rolexCollectionWorkDef } from './blocks/_registry/defs/rolexCollectionWork';
+import { rolexCollectionProjectDef } from './blocks/_registry/defs/rolexCollectionProject';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { springsContactFooterDef } from './blocks/_registry/defs/springsContactFooter';
 import { springsDesignDef } from './blocks/_registry/defs/springsDesign';
@@ -101,6 +107,15 @@ import { masteriseHomeInsideDef } from './blocks/_registry/defs/masteriseHomeIns
 import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
 import { readymagCaseSectionDef } from './blocks/_registry/defs/readymagCaseSection';
 import { framerIgnitexStepDef } from './blocks/_registry/defs/framerIgnitexStep';
+import { framerRealEstate02StoryDef } from './blocks/_registry/defs/framerRealEstate02Story';
+import { framerRealEstate02QuoteDef } from './blocks/_registry/defs/framerRealEstate02Quote';
+import { framerRealEstate02ProductDef } from './blocks/_registry/defs/framerRealEstate02Product';
+import { framerRealEstate02OverviewDef } from './blocks/_registry/defs/framerRealEstate02Overview';
+import { framerRealEstate02LocationDef } from './blocks/_registry/defs/framerRealEstate02Location';
+import { framerRealEstate02CommuteDef } from './blocks/_registry/defs/framerRealEstate02Commute';
+import { framerRealEstate02MapDef } from './blocks/_registry/defs/framerRealEstate02Map';
+import { framerRealEstate02GalleryDef } from './blocks/_registry/defs/framerRealEstate02Gallery';
+import { framerRealEstate02MenuDef } from './blocks/_registry/defs/framerRealEstate02Menu';
 import type {
   Block,
   BlockContent,
@@ -177,7 +192,6 @@ import type {
   FramerSignatureFeatureContent,
   FramerVsCollinsProjectsContent,
   FramerClarityServicesContent,
-  FramerAesthaEditorialContent,
   FramerPerformAboutContent,
   FramerPerformPricingContent,
 } from './types';
@@ -2162,48 +2176,6 @@ const FRAMER_CLARITY_SERVICES_EN: FramerClarityServicesContent = {
   ],
 };
 
-// ── Framer-native: Aestha Editorial ────────────────────────────────────
-const FRAMER_AESTHA_EDITORIAL_VI: FramerAesthaEditorialContent = {
-  brand: 'RAMSA',
-  tagline: 'Nơi thanh lịch cổ điển gặp gỡ tinh tế hiện đại.',
-  scrollLabel: 'scroll',
-  description:
-    'Tọa lạc giữa lòng đô thị, dự án là hiện thân cho phong cách sống đẳng cấp — nơi mỗi chi tiết đều được tinh chỉnh cho nhịp sống hiện đại.',
-  image1Url:
-    'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80',
-  image2Url:
-    'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1200&q=80',
-  image3Url:
-    'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80',
-  ctaText: 'KHÁM PHÁ THÊM',
-  ctaHref: '/projects',
-  navLinks: [
-    { label: 'Dự án', href: '/projects' },
-    { label: 'Studio', href: '/studio' },
-    { label: 'Liên hệ', href: '/contact' },
-  ],
-};
-const FRAMER_AESTHA_EDITORIAL_EN: FramerAesthaEditorialContent = {
-  brand: 'RAMSA',
-  tagline: 'Where classic elegance meets modern refinement.',
-  scrollLabel: 'scroll',
-  description:
-    'Nestled in the heart of the city, the project embodies refined urban living — every detail tuned to the demands of modern luxury.',
-  image1Url:
-    'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80',
-  image2Url:
-    'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1200&q=80',
-  image3Url:
-    'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80',
-  ctaText: 'EXPLORE MORE',
-  ctaHref: '/projects',
-  navLinks: [
-    { label: 'Projects', href: '/projects' },
-    { label: 'Studio', href: '/studio' },
-    { label: 'Contact', href: '/contact' },
-  ],
-};
-
 // ── Framer-native: Perform About ───────────────────────────────────────
 const FRAMER_PERFORM_ABOUT_VI: FramerPerformAboutContent = {
   testimonials: [
@@ -2423,6 +2395,15 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_flat_white_process: framerFlatWhiteProcessDef.defaultContent.vi,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_VI,
   framer_ignitex_step: framerIgnitexStepDef.defaultContent.vi,
+  framer_realestate02_story: framerRealEstate02StoryDef.defaultContent.vi,
+  framer_realestate02_quote: framerRealEstate02QuoteDef.defaultContent.vi,
+  framer_realestate02_product: framerRealEstate02ProductDef.defaultContent.vi,
+  framer_realestate02_overview: framerRealEstate02OverviewDef.defaultContent.vi,
+  framer_realestate02_location: framerRealEstate02LocationDef.defaultContent.vi,
+  framer_realestate02_commute: framerRealEstate02CommuteDef.defaultContent.vi,
+  framer_realestate02_map: framerRealEstate02MapDef.defaultContent.vi,
+  framer_realestate02_gallery: framerRealEstate02GalleryDef.defaultContent.vi,
+  framer_realestate02_menu: framerRealEstate02MenuDef.defaultContent.vi,
   framer_stats_grid: FRAMER_STATS_GRID_VI,
   framer_projects_grid: FRAMER_PROJECTS_GRID_VI,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_VI,
@@ -2505,7 +2486,11 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   housent_our_excellence: HOUSENT_OUR_EXCELLENCE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
-  framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
+  framer_aestha_editorial: framerAesthaEditorialDef.defaultContent.vi,
+  aestha_explore: aesthaExploreDef.defaultContent.vi,
+  aestha_studio: aesthaStudioDef.defaultContent.vi,
+  aestha_contact: aesthaContactDef.defaultContent.vi,
+  aestha_project: aesthaProjectDef.defaultContent.vi,
   masterise_home_inside: masteriseHomeInsideDef.defaultContent.vi,
   framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_VI,
@@ -2517,6 +2502,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   rolex_collection_nav: rolexCollectionNavDef.defaultContent.vi,
   rolex_collection_contact: rolexContactDef.defaultContent.vi,
   rolex_collection_work: rolexCollectionWorkDef.defaultContent.vi,
+  rolex_collection_project: rolexCollectionProjectDef.defaultContent.vi,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
@@ -2601,6 +2587,15 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_flat_white_process: framerFlatWhiteProcessDef.defaultContent.en,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_EN,
   framer_ignitex_step: framerIgnitexStepDef.defaultContent.en,
+  framer_realestate02_story: framerRealEstate02StoryDef.defaultContent.en,
+  framer_realestate02_quote: framerRealEstate02QuoteDef.defaultContent.en,
+  framer_realestate02_product: framerRealEstate02ProductDef.defaultContent.en,
+  framer_realestate02_overview: framerRealEstate02OverviewDef.defaultContent.en,
+  framer_realestate02_location: framerRealEstate02LocationDef.defaultContent.en,
+  framer_realestate02_commute: framerRealEstate02CommuteDef.defaultContent.en,
+  framer_realestate02_map: framerRealEstate02MapDef.defaultContent.en,
+  framer_realestate02_gallery: framerRealEstate02GalleryDef.defaultContent.en,
+  framer_realestate02_menu: framerRealEstate02MenuDef.defaultContent.en,
   framer_stats_grid: FRAMER_STATS_GRID_EN,
   framer_projects_grid: FRAMER_PROJECTS_GRID_EN,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_EN,
@@ -2683,7 +2678,11 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   housent_our_excellence: HOUSENT_OUR_EXCELLENCE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
-  framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
+  framer_aestha_editorial: framerAesthaEditorialDef.defaultContent.en,
+  aestha_explore: aesthaExploreDef.defaultContent.en,
+  aestha_studio: aesthaStudioDef.defaultContent.en,
+  aestha_contact: aesthaContactDef.defaultContent.en,
+  aestha_project: aesthaProjectDef.defaultContent.en,
   masterise_home_inside: masteriseHomeInsideDef.defaultContent.en,
   framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_EN,
@@ -2695,6 +2694,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   rolex_collection_nav: rolexCollectionNavDef.defaultContent.en,
   rolex_collection_contact: rolexContactDef.defaultContent.en,
   rolex_collection_work: rolexCollectionWorkDef.defaultContent.en,
+  rolex_collection_project: rolexCollectionProjectDef.defaultContent.en,
 };
 
 function genId() {

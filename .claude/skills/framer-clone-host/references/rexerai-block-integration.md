@@ -187,9 +187,20 @@ If not using the registry, also edit:
 
 ---
 
-## 4. Backend seed (Go BE)
+## 4. Backend seed — DO THIS, don't defer it
 
-rexerai BE is Go + Postgres. `type_code` is a free string (the `block_types` catalog was dropped — see project memory `project_blocks_no_block_type`). For a NEW type to be committable as a page version, BE seeds **one `blocks` row at scope `system`** for it — otherwise version commit → `400 unknown block type`. This is a BE-side task; the FE repo for BE is read-only (`be-readonly-policy`). The block still previews in the editor and renders on `/p/[id]` before the seed; only version-commit is gated.
+rexerai BE is Go + Postgres. `type_code` is a free string (the `block_types` catalog was dropped — see project memory `project_blocks_no_block_type`). For a NEW type to be committable as a page version, BE needs **one `blocks` row at scope `system` with `supported_surfaces` set** — otherwise the FIRST "Save Version" that includes the block fails with `does not support surface "..." (supports [])`.
+
+This is **not** a BE-only task that can be "noted as pending" — it's runnable from this repo, right after registering the type_code, no DB DSN needed:
+
+```
+REXER_ADMIN_EMAIL=<admin> REXER_ADMIN_PASSWORD=<pass> \
+  node scripts/seed-block-surfaces.mjs <type_code> [type_code...]
+```
+
+It logs in via `/auth/login`, then POSTs/PATCHes `/blocks` to create-or-fix the catalog row (idempotent — safe to re-run). Afterwards, mirror the `type_code`(s) into `scripts/prod-block-catalog.sql`'s `INSERT` array so a fresh environment seeded from that SQL file stays consistent.
+
+The block still previews in the editor and renders on `/p/[id]` before this step; only version-commit is gated — which is exactly why it's easy to skip and ship a block that silently breaks on the next "Save Version" someone runs against it. Past incident: `feat: implement aestha page` (2026-07-22) added 5 new type_codes via the registry and skipped this step; "Save Version" broke for anyone using those blocks until it was fixed retroactively via this same script.
 
 ---
 
@@ -206,4 +217,5 @@ rexerai BE is Go + Postgres. `type_code` is a free string (the `block_types` cat
 - [ ] Editor: every element selectable + correct toolbar control
 - [ ] `/p/[id]`: entrance plays on scroll-in, replays on scroll-back
 - [ ] Device picker resize adapts (container query, not viewport)
-- [ ] BE seeded the `type_code` (or noted as pending) for version commit
+- [ ] `node scripts/seed-block-surfaces.mjs <type_code>` run (catalog row + `supported_surfaces` seeded) — NOT "noted as pending", actually run it
+- [ ] `type_code` mirrored into `scripts/prod-block-catalog.sql`'s `INSERT` array

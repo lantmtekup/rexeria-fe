@@ -61,6 +61,13 @@ import {
   resolvePnjHeroTitleLines,
   setPnjHeroTitleLineAt,
 } from './blocks/pnjHeroTitleLines';
+import {
+  PNJ_VARIANT_HIGHLIGHTS_KEY_RE,
+  PNJ_VARIANT_HIGHLIGHT_ITEM_KEY_RE,
+  resolvePnjVariantHighlights,
+  resolvePnjVariants,
+  setPnjVariantHighlightItemAt,
+} from './blocks/pnjVariantContent';
 import { buildAiPrompt } from './buildAiPrompt';
 import { ImagePicker } from './ImagePicker';
 import { getContentAt, setContentAt } from './contentPath';
@@ -94,6 +101,10 @@ import {
   type DelvauxProductContent,
   type DelvauxProductHotspot,
   type DelvauxSubnavContent,
+  type FramerAesthaEditorialContent,
+  type AesthaExploreContent,
+  type AesthaStudioContent,
+  type AesthaContactContent,
   type DelvauxSubnavLink,
   type DelvauxVariantContent,
   type DelvauxVariantFaq,
@@ -475,6 +486,58 @@ export function ElementToolbar({
             onContentChange={onContentChange}
           />
         )}
+        {kind === 'aesthaNavLinks' && (
+          <AesthaNavLinksControls
+            content={content as FramerAesthaEditorialContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'aesthaExploreProjects' && (
+          <AesthaExploreProjectsControls
+            content={content as AesthaExploreContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'aesthaExploreProjectImages' && (
+          <AesthaExploreProjectImagesControls
+            content={content as AesthaExploreContent}
+            onContentChange={onContentChange}
+            projectIndex={Number(
+              selectedKey?.match(/^projects\[(\d+)\]\.detail\.images$/)?.[1] ??
+                -1
+            )}
+          />
+        )}
+        {kind === 'aesthaExploreFooterLinks' && (
+          <AesthaExploreFooterLinksControls
+            content={content as AesthaExploreContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'aesthaStudioTeam' && (
+          <AesthaStudioTeamControls
+            content={content as AesthaStudioContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'aesthaStudioFooterLinks' && (
+          <AesthaStudioFooterLinksControls
+            content={content as AesthaStudioContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'aesthaContactSocials' && (
+          <AesthaContactSocialsControls
+            content={content as AesthaContactContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'aesthaContactFooterLinks' && (
+          <AesthaContactFooterLinksControls
+            content={content as AesthaContactContent}
+            onContentChange={onContentChange}
+          />
+        )}
         {kind === 'pnjScrim' && (
           <PnjScrimControls
             content={content as PnjHeroContent}
@@ -495,6 +558,15 @@ export function ElementToolbar({
         )}
         {kind === 'pnjVariants' && (
           <PnjVariantsControls
+            content={content as PnjVariantContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'pnjVariantHighlights' && (
+          <PnjVariantHighlightsControls
+            variantIndex={Number(
+              selectedKey.match(PNJ_VARIANT_HIGHLIGHTS_KEY_RE)?.[1] ?? 0
+            )}
             content={content as PnjVariantContent}
             onContentChange={onContentChange}
           />
@@ -597,7 +669,7 @@ function TextControls({
   const paraIndex = paraMatch ? Number(paraMatch[1]) : -1;
   const titleLineMatch = fieldKey.match(PNJ_HERO_TITLE_LINE_KEY_RE);
   const titleLineIndex = titleLineMatch ? Number(titleLineMatch[1]) : -1;
-  const highlightsMatch = fieldKey.match(/^variants\[(\d+)\]\.highlights$/);
+  const highlightItemMatch = fieldKey.match(PNJ_VARIANT_HIGHLIGHT_ITEM_KEY_RE);
   const rawAt = getContentAt(c, fieldKey);
   const value = paraMatch
     ? (resolvePnjParagraphs(
@@ -609,12 +681,10 @@ function TextControls({
     : titleLineMatch
       ? (resolvePnjHeroTitleLines(content as PnjHeroContent)[titleLineIndex] ??
         '')
-      : highlightsMatch
-        ? Array.isArray(rawAt)
-          ? (rawAt as string[]).join('\n')
-          : typeof rawAt === 'string'
-            ? rawAt
-            : ''
+      : highlightItemMatch
+        ? (resolvePnjVariants(content as PnjVariantContent)[
+            Number(highlightItemMatch[1])
+          ]?.highlights[Number(highlightItemMatch[2])] ?? '')
         : typeof rawAt === 'string'
           ? rawAt
           : '';
@@ -622,8 +692,7 @@ function TextControls({
     multiline ??
     (fieldKey === 'description' ||
       fieldKey === 'subtitle' ||
-      fieldKey === 'noteText' ||
-      !!highlightsMatch);
+      fieldKey === 'noteText');
   const fontSize = style?.fontSize ?? '';
 
   const setField = (next: string) => {
@@ -654,13 +723,19 @@ function TextControls({
       );
       return;
     }
-    // highlights: textarea → string[] (mỗi dòng 1 mục)
-    const writeValue: unknown = highlightsMatch
-      ? next
-          .split('\n')
-          .map(s => s.trim())
-          .filter(Boolean)
-      : next;
+    if (highlightItemMatch) {
+      onContentChange(
+        prev =>
+          setPnjVariantHighlightItemAt(
+            prev as PnjVariantContent,
+            Number(highlightItemMatch[1]),
+            Number(highlightItemMatch[2]),
+            next
+          ) as BlockContent
+      );
+      return;
+    }
+    const writeValue: unknown = next;
     onContentChange(
       prev =>
         setContentAt(
@@ -2160,6 +2235,113 @@ function PnjTitleLinesControls({
   );
 }
 
+// ─────────────────────────────────────────── PNJ VARIANT HIGHLIGHTS
+
+function PnjVariantHighlightFields({
+  highlights,
+  onChange,
+  onAdd,
+  onRemove,
+}: {
+  highlights: string[];
+  onChange: (index: number, value: string) => void;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+}) {
+  const list = highlights.length > 0 ? highlights : [''];
+
+  return (
+    <div className='flex flex-col gap-1.5'>
+      {list.map((item, hi) => (
+        <div key={`hl-${hi}`} className='flex items-center gap-2'>
+          <Input
+            value={item}
+            onChange={e => onChange(hi, e.target.value)}
+            placeholder={`Highlight ${hi + 1}`}
+            className='h-8 border-neutral-200 bg-white text-xs'
+          />
+          <button
+            type='button'
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              onRemove(hi);
+            }}
+            aria-label={`Xoá highlight ${hi + 1}`}
+            className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+          >
+            <Trash2 className='size-3.5' />
+          </button>
+        </div>
+      ))}
+      <AddRow onAdd={onAdd} label='Thêm highlight' />
+    </div>
+  );
+}
+
+function PnjVariantHighlightsControls({
+  variantIndex,
+  content,
+  onContentChange,
+}: {
+  variantIndex: number;
+  content: PnjVariantContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const variants = resolvePnjVariants(content);
+  const highlights = variants[variantIndex]?.highlights ?? [];
+
+  const write = (updater: (list: string[]) => string[]) => {
+    onContentChange(prev => {
+      const list = [...resolvePnjVariants(prev as PnjVariantContent)];
+      while (list.length <= variantIndex) {
+        list.push({
+          key: `v_${list.length}`,
+          label: '',
+          desc: '',
+          image: '',
+          highlights: [],
+        });
+      }
+      list[variantIndex] = {
+        ...list[variantIndex],
+        highlights: updater(
+          resolvePnjVariantHighlights(list[variantIndex].highlights)
+        ),
+      };
+      return { ...(prev as PnjVariantContent), variants: list } as BlockContent;
+    });
+  };
+
+  const update = (i: number, value: string) =>
+    write(items => items.map((h, idx) => (idx === i ? value : h)));
+  const remove = (i: number) => {
+    if (highlights.length <= 1) {
+      toast.error('Cần ít nhất 1 highlight');
+      return;
+    }
+    write(items => items.filter((_, idx) => idx !== i));
+  };
+  const add = () => write(items => [...items, 'Highlight mới']);
+
+  return (
+    <PopoverTrigger
+      label='Highlights'
+      preview={`${highlights.length} mục`}
+      width={420}
+    >
+      <PnjVariantHighlightFields
+        highlights={highlights}
+        onChange={update}
+        onAdd={add}
+        onRemove={remove}
+      />
+    </PopoverTrigger>
+  );
+}
+
 // ─────────────────────────────────────────── PNJ VARIANT CHAPTERS
 
 function PnjVariantsControls({
@@ -2171,14 +2353,14 @@ function PnjVariantsControls({
     next: BlockContent | ((prev: BlockContent) => BlockContent)
   ) => void;
 }) {
-  const variants = content.variants ?? [];
+  const variants = resolvePnjVariants(content);
 
   const write = (updater: (list: PnjVariantItem[]) => PnjVariantItem[]) => {
     onContentChange(prev => {
       const c = prev as PnjVariantContent;
       return {
         ...c,
-        variants: updater([...(c.variants ?? [])]),
+        variants: updater(resolvePnjVariants(c)),
       } as BlockContent;
     });
   };
@@ -2250,18 +2432,33 @@ function PnjVariantsControls({
               placeholder='URL ảnh'
               className='h-8 border-neutral-200 bg-white text-xs'
             />
-            <Textarea
-              value={(v.highlights ?? []).join('\n')}
-              onChange={e =>
+            <PnjVariantHighlightFields
+              highlights={resolvePnjVariantHighlights(v.highlights)}
+              onChange={(hi, value) =>
                 update(i, {
-                  highlights: e.target.value
-                    .split('\n')
-                    .map(s => s.trim())
-                    .filter(Boolean),
+                  highlights: resolvePnjVariantHighlights(v.highlights).map(
+                    (h, idx) => (idx === hi ? value : h)
+                  ),
                 })
               }
-              placeholder='Highlights — mỗi dòng 1 mục'
-              className='field-sizing-fixed min-h-14 resize-y overflow-y-auto border-neutral-200 bg-white text-xs'
+              onAdd={() =>
+                update(i, {
+                  highlights: [
+                    ...resolvePnjVariantHighlights(v.highlights),
+                    'Highlight mới',
+                  ],
+                })
+              }
+              onRemove={hi => {
+                const current = resolvePnjVariantHighlights(v.highlights);
+                if (current.length <= 1) {
+                  toast.error('Cần ít nhất 1 highlight');
+                  return;
+                }
+                update(i, {
+                  highlights: current.filter((_, idx) => idx !== hi),
+                });
+              }}
             />
           </div>
         ))}
@@ -3355,6 +3552,765 @@ function DelvauxSubnavLinksControls({
   );
 }
 
+// ─────────────────────────────────────────────────── AESTHA EDITORIAL (nav)
+
+function AesthaNavLinksControls({
+  content,
+  onContentChange,
+}: {
+  content: FramerAesthaEditorialContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const links = content.navLinks ?? [];
+
+  const update = (i: number, patch: Partial<{ label: string; href: string }>) =>
+    onContentChange({
+      ...content,
+      navLinks: links.map((l, idx) => (idx === i ? { ...l, ...patch } : l)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      navLinks: links.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      navLinks: [...links, { label: 'Link mới', href: '#' }],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Nav links'
+      preview={`${links.length} link`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {links.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có link — thêm mục nav ở chân cột trái.
+          </p>
+        ) : null}
+        {links.map((l, i) => (
+          <div
+            key={`aestha-nav-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={l.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá link'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={l.href}
+              onChange={e => update(i, { href: e.target.value })}
+              placeholder='Link (vd: /projects)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm link' />
+    </PopoverTrigger>
+  );
+}
+
+// ──────────────────────────────────────── AESTHA EXPLORE (projects + footer)
+
+function AesthaExploreProjectsControls({
+  content,
+  onContentChange,
+}: {
+  content: AesthaExploreContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const projects = content.projects ?? [];
+
+  const update = (
+    i: number,
+    patch: Partial<{ label: string; href: string; img: string; alt: string }>
+  ) =>
+    onContentChange({
+      ...content,
+      projects: projects.map((p, idx) => (idx === i ? { ...p, ...patch } : p)),
+    } as BlockContent);
+
+  const updateImage = (
+    projectIdx: number,
+    imageIdx: number,
+    patch: { src?: string; alt?: string }
+  ) =>
+    onContentChange({
+      ...content,
+      projects: projects.map((p, idx) => {
+        if (idx !== projectIdx) return p;
+        const detail = p.detail ?? { body: [], images: [] };
+        const images = Array.isArray(detail.images) ? [...detail.images] : [];
+        images[imageIdx] = { ...(images[imageIdx] ?? {}), ...patch };
+        return { ...p, detail: { ...detail, images } };
+      }),
+    } as BlockContent);
+
+  const addImage = (projectIdx: number) =>
+    onContentChange({
+      ...content,
+      projects: projects.map((p, idx) => {
+        if (idx !== projectIdx) return p;
+        const detail = p.detail ?? { body: [], images: [] };
+        const images = Array.isArray(detail.images) ? [...detail.images] : [];
+        return {
+          ...p,
+          detail: {
+            ...detail,
+            images: [
+              ...images,
+              {
+                src: 'https://framerusercontent.com/images/sb7lNvFscO86WspAS6g2Dbumdk4.jpg?width=2364&height=963',
+                alt: `Ảnh ${images.length + 1}`,
+              },
+            ],
+          },
+        };
+      }),
+    } as BlockContent);
+
+  const removeImage = (projectIdx: number, imageIdx: number) =>
+    onContentChange({
+      ...content,
+      projects: projects.map((p, idx) => {
+        if (idx !== projectIdx) return p;
+        const detail = p.detail ?? { body: [], images: [] };
+        const images = Array.isArray(detail.images) ? detail.images : [];
+        return {
+          ...p,
+          detail: {
+            ...detail,
+            images: images.filter((_, i) => i !== imageIdx),
+          },
+        };
+      }),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      projects: projects.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      projects: [
+        ...projects,
+        {
+          label: 'Dự án mới',
+          href: '#',
+          img: 'https://framerusercontent.com/images/WPx9Zr4AV2b97ubrDEMcky10rwA.jpg?width=2364&height=1578',
+          alt: 'Dự án mới',
+          detail: {
+            body: [
+              'Mô tả dự án — kiến trúc đương đại kết hợp vật liệu cao cấp.',
+              'Thiết kế tinh tế, công năng tối ưu cho một không gian sống hoàn hảo.',
+              'Liên hệ đội ngũ tư vấn để biết thêm chi tiết.',
+            ],
+            images: [
+              {
+                src: 'https://framerusercontent.com/images/WPx9Zr4AV2b97ubrDEMcky10rwA.jpg?width=2364&height=1578',
+                alt: 'Ảnh 1',
+              },
+              {
+                src: 'https://framerusercontent.com/images/sb7lNvFscO86WspAS6g2Dbumdk4.jpg?width=2364&height=963',
+                alt: 'Ảnh 2',
+              },
+            ],
+          },
+        },
+      ],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Dự án'
+      preview={`${projects.length} dự án`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {projects.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có dự án — thêm mục vào menu EXPLORE.
+          </p>
+        ) : null}
+        {projects.map((p, i) => {
+          const detailImages = Array.isArray(p.detail?.images)
+            ? p.detail!.images!
+            : [];
+          return (
+            <div
+              key={`explore-proj-${i}`}
+              className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            >
+              <div className='flex items-center gap-2'>
+                <Input
+                  value={p.label}
+                  onChange={e => update(i, { label: e.target.value })}
+                  placeholder='Nhãn'
+                  className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                />
+                <button
+                  type='button'
+                  onClick={() => remove(i)}
+                  aria-label='Xoá dự án'
+                  className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                >
+                  <Trash2 className='size-3.5' />
+                </button>
+              </div>
+              <Input
+                value={p.img}
+                onChange={e => update(i, { img: e.target.value })}
+                placeholder='URL ảnh featured'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+              <Input
+                value={p.href}
+                onChange={e => update(i, { href: e.target.value })}
+                placeholder='Link (vd: /projects/haus-loma)'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+
+              {/* Ảnh chi tiết (detail.images) — thêm/xoá tuỳ ý */}
+              <div className='mt-1 flex flex-col gap-1 rounded border border-dashed border-neutral-200 bg-neutral-50/60 p-1.5'>
+                <div className='flex items-center justify-between px-0.5'>
+                  <span className='text-2xs font-medium tracking-wide text-neutral-500 uppercase'>
+                    Ảnh chi tiết ({detailImages.length})
+                  </span>
+                  <button
+                    type='button'
+                    onClick={() => addImage(i)}
+                    aria-label='Thêm ảnh chi tiết'
+                    className='text-2xs flex h-6 cursor-pointer items-center gap-1 rounded px-1.5 font-medium text-neutral-600 hover:bg-white hover:text-neutral-900'
+                  >
+                    <Plus className='size-3' />
+                    Thêm ảnh
+                  </button>
+                </div>
+                {detailImages.length === 0 ? (
+                  <p className='text-2xs rounded border border-dashed border-neutral-200 bg-white px-2 py-2 text-center text-neutral-400'>
+                    Chưa có ảnh — bấm Thêm ảnh.
+                  </p>
+                ) : null}
+                {detailImages.map((img, k) => (
+                  <div
+                    key={`explore-proj-${i}-img-${k}`}
+                    className='flex items-center gap-1.5 rounded border border-neutral-200 bg-white p-1.5'
+                  >
+                    <Input
+                      value={img.src}
+                      onChange={e => updateImage(i, k, { src: e.target.value })}
+                      placeholder={`URL ảnh ${k + 1}`}
+                      className='text-2xs h-7 border-neutral-200 bg-white'
+                    />
+                    <button
+                      type='button'
+                      onClick={() => removeImage(i, k)}
+                      aria-label={`Xoá ảnh ${k + 1}`}
+                      className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-rose-500 hover:bg-rose-50'
+                    >
+                      <Trash2 className='size-3' />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <AddRow onAdd={add} label='Thêm dự án' />
+    </PopoverTrigger>
+  );
+}
+
+/**
+ * List-manager ảnh chi tiết của MỘT dự án (`projects[projectIndex].detail.images`).
+ * Mở trực tiếp từ row "Thêm / quản lý ảnh" trong nhóm nội dung dự án ở Layers —
+ * thêm/sửa URL/xoá ảnh mà không phải mở popover "Thêm / quản lý dự án".
+ */
+function AesthaExploreProjectImagesControls({
+  content,
+  onContentChange,
+  projectIndex,
+}: {
+  content: AesthaExploreContent;
+  onContentChange: (next: BlockContent) => void;
+  projectIndex: number;
+}) {
+  const projects = content.projects ?? [];
+  const project = projects[projectIndex];
+  const images = Array.isArray(project?.detail?.images)
+    ? project!.detail!.images!
+    : [];
+
+  const patchImages = (next: Array<{ src: string; alt: string }>): void =>
+    onContentChange({
+      ...content,
+      projects: projects.map((p, idx) => {
+        if (idx !== projectIndex) return p;
+        const detail = p.detail ?? { body: [], images: [] };
+        return { ...p, detail: { ...detail, images: next } };
+      }),
+    } as BlockContent);
+
+  const updateImage = (
+    imageIdx: number,
+    patch: { src?: string; alt?: string }
+  ) =>
+    patchImages(
+      images.map((img, i) => (i === imageIdx ? { ...img, ...patch } : img))
+    );
+
+  const addImage = () =>
+    patchImages([
+      ...images,
+      {
+        src: 'https://framerusercontent.com/images/sb7lNvFscO86WspAS6g2Dbumdk4.jpg?width=2364&height=963',
+        alt: `Ảnh ${images.length + 1}`,
+      },
+    ]);
+
+  const removeImage = (imageIdx: number) =>
+    patchImages(images.filter((_, i) => i !== imageIdx));
+
+  if (!project) {
+    return (
+      <PopoverTrigger label='Ảnh chi tiết' preview='—' width={420}>
+        <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+          Không tìm thấy dự án.
+        </p>
+      </PopoverTrigger>
+    );
+  }
+
+  return (
+    <PopoverTrigger
+      label='Ảnh chi tiết'
+      preview={`${images.length} ảnh · ${project.label}`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-1.5 overflow-y-auto pr-1'>
+        {images.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có ảnh — bấm Thêm ảnh.
+          </p>
+        ) : null}
+        {images.map((img, k) => (
+          <div
+            key={`proj-${projectIndex}-img-${k}`}
+            className='flex items-center gap-1.5 rounded border border-neutral-200 bg-white p-1.5'
+          >
+            <Input
+              value={img.src}
+              onChange={e => updateImage(k, { src: e.target.value })}
+              placeholder={`URL ảnh ${k + 1}`}
+              className='text-2xs h-7 border-neutral-200 bg-white'
+            />
+            <button
+              type='button'
+              onClick={() => removeImage(k)}
+              aria-label={`Xoá ảnh ${k + 1}`}
+              className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-rose-500 hover:bg-rose-50'
+            >
+              <Trash2 className='size-3' />
+            </button>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={addImage} label='Thêm ảnh' />
+    </PopoverTrigger>
+  );
+}
+
+function AesthaExploreFooterLinksControls({
+  content,
+  onContentChange,
+}: {
+  content: AesthaExploreContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const links = content.footerLinks ?? [];
+
+  const update = (i: number, patch: Partial<{ label: string; href: string }>) =>
+    onContentChange({
+      ...content,
+      footerLinks: links.map((l, idx) => (idx === i ? { ...l, ...patch } : l)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      footerLinks: links.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      footerLinks: [...links, { label: 'Link mới', href: '#' }],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Footer nav'
+      preview={`${links.length} link`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {links.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có link — thêm mục footer nav.
+          </p>
+        ) : null}
+        {links.map((l, i) => (
+          <div
+            key={`explore-foot-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={l.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá link'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={l.href}
+              onChange={e => update(i, { href: e.target.value })}
+              placeholder='Link (vd: /studio)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm link' />
+    </PopoverTrigger>
+  );
+}
+
+function AesthaStudioTeamControls({
+  content,
+  onContentChange,
+}: {
+  content: AesthaStudioContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const team = content.team ?? [];
+
+  const update = (i: number, patch: Partial<{ name: string; role: string }>) =>
+    onContentChange({
+      ...content,
+      team: team.map((mbr, idx) => (idx === i ? { ...mbr, ...patch } : mbr)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      team: team.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      team: [...team, { name: 'Thành viên mới', role: 'Vai trò' }],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Team'
+      preview={`${team.length} thành viên`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {team.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có thành viên — thêm mục vào danh sách team.
+          </p>
+        ) : null}
+        {team.map((mbr, i) => (
+          <div
+            key={`studio-member-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={mbr.name}
+                onChange={e => update(i, { name: e.target.value })}
+                placeholder='Tên'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá thành viên'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={mbr.role}
+              onChange={e => update(i, { role: e.target.value })}
+              placeholder='Vai trò (vd: Interior Stylist)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm thành viên' />
+    </PopoverTrigger>
+  );
+}
+
+function AesthaStudioFooterLinksControls({
+  content,
+  onContentChange,
+}: {
+  content: AesthaStudioContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const links = content.footerLinks ?? [];
+
+  const update = (i: number, patch: Partial<{ label: string; href: string }>) =>
+    onContentChange({
+      ...content,
+      footerLinks: links.map((l, idx) => (idx === i ? { ...l, ...patch } : l)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      footerLinks: links.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      footerLinks: [...links, { label: 'Link mới', href: '#' }],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Footer nav'
+      preview={`${links.length} link`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {links.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có link — thêm mục footer nav.
+          </p>
+        ) : null}
+        {links.map((l, i) => (
+          <div
+            key={`studio-foot-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={l.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá link'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={l.href}
+              onChange={e => update(i, { href: e.target.value })}
+              placeholder='Link (vd: /studio)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm link' />
+    </PopoverTrigger>
+  );
+}
+
+function AesthaContactSocialsControls({
+  content,
+  onContentChange,
+}: {
+  content: AesthaContactContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const socials = content.socials ?? [];
+
+  const update = (i: number, patch: Partial<{ label: string; href: string }>) =>
+    onContentChange({
+      ...content,
+      socials: socials.map((s, idx) => (idx === i ? { ...s, ...patch } : s)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      socials: socials.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      socials: [...socials, { label: 'Social mới', href: '#' }],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Social'
+      preview={`${socials.length} social`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {socials.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có social — thêm mục mạng xã hội.
+          </p>
+        ) : null}
+        {socials.map((s, i) => (
+          <div
+            key={`contact-social-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={s.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn (vd: Instagram)'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá social'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={s.href}
+              onChange={e => update(i, { href: e.target.value })}
+              placeholder='Link (vd: https://instagram.com/…)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm social' />
+    </PopoverTrigger>
+  );
+}
+
+function AesthaContactFooterLinksControls({
+  content,
+  onContentChange,
+}: {
+  content: AesthaContactContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const links = content.footerLinks ?? [];
+
+  const update = (i: number, patch: Partial<{ label: string; href: string }>) =>
+    onContentChange({
+      ...content,
+      footerLinks: links.map((l, idx) => (idx === i ? { ...l, ...patch } : l)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      footerLinks: links.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      footerLinks: [...links, { label: 'Link mới', href: '#' }],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Footer nav'
+      preview={`${links.length} link`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {links.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có link — thêm mục footer nav.
+          </p>
+        ) : null}
+        {links.map((l, i) => (
+          <div
+            key={`contact-foot-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={l.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá link'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={l.href}
+              onChange={e => update(i, { href: e.target.value })}
+              placeholder='Link (vd: /contact)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm link' />
+    </PopoverTrigger>
+  );
+}
 
 // ─────────────────────────────────────────── DELVAUX VARIANT (swatches + FAQ)
 

@@ -19,6 +19,7 @@ export type ElementKind =
   | 'pnjParagraphs'
   | 'pnjTitleLines'
   | 'pnjVariants'
+  | 'pnjVariantHighlights'
   | 'pnjStickyMenuItems'
   | 'mintV2ServicesItems'
   | 'mintV2ProcessSteps'
@@ -33,6 +34,17 @@ export type ElementKind =
   | 'delvauxVariants'
   | 'delvauxFaqs'
   | 'delvauxSubnavLinks'
+  | 'aesthaNavLinks'
+  | 'aesthaExploreProjects'
+  | 'aesthaExploreProjectImages'
+  | 'aesthaExploreFooterLinks'
+  | 'aesthaStudioTeam'
+  | 'aesthaStudioFooterLinks'
+  | 'aesthaContactSocials'
+  | 'aesthaContactFooterLinks'
+  | 'aesthaProjectBody'
+  | 'aesthaProjectImages'
+  | 'aesthaProjectNavLinks'
   | 'mintDiscoverVariant'
   | 'mintDiscoverSurface'
   | 'background';
@@ -142,6 +154,13 @@ export function resolveKind(
   if (key === 'variants' && blockType === 'pnj_variant') {
     return 'pnjVariants';
   }
+  // PNJ variant highlights list — chặn trước fallback text (không ghi string đè mảng).
+  if (
+    /^variants\[\d+\]\.highlights$/.test(key) &&
+    blockType === 'pnj_variant'
+  ) {
+    return 'pnjVariantHighlights';
+  }
   // Delvaux color swatches vs Mint/PNJ variants — cùng key `variants`.
   if (key === 'variants' && blockType === 'delvaux_variant') {
     return 'delvauxVariants';
@@ -157,6 +176,57 @@ export function resolveKind(
     blockType === 'delvaux_subnav'
   ) {
     return 'text';
+  }
+  // Aestha nav: phải chặn trước fallback `ELEMENT_KIND[key] ?? isImageKey` —
+  // `navLinks` rơi về 'text' thì toolbar ghi 1 string đè cả mảng.
+  if (key === 'navLinks' && blockType === 'framer_aestha_editorial') {
+    return 'aesthaNavLinks';
+  }
+  if (
+    /^navLinks\[\d+\]\.(label|href)$/.test(key) &&
+    blockType === 'framer_aestha_editorial'
+  ) {
+    return 'text';
+  }
+  // Aestha Explore: `projects` / `footerLinks` là mảng động (list manager) —
+  // chặn trước fallback để toolbar không ghi 1 string đè cả mảng.
+  if (blockType === 'aestha_explore') {
+    if (key === 'projects') return 'aesthaExploreProjects';
+    if (key === 'footerLinks') return 'aesthaExploreFooterLinks';
+    // List-manager mảng ảnh chi tiết của 1 dự án — chặn TRƯỚC fallback
+    // `isImageKey` (khớp 'images') để không bị coi là 1 ô ảnh đơn.
+    if (/^projects\[\d+\]\.detail\.images$/.test(key))
+      return 'aesthaExploreProjectImages';
+    if (/^projects\[\d+\]\.img$/.test(key)) return 'image';
+    if (/^projects\[\d+\]\.(label|href|alt)$/.test(key)) return 'text';
+    if (/^footerLinks\[\d+\]\.(label|href)$/.test(key)) return 'text';
+  }
+  // Aestha Studio: `team` / `footerLinks` là mảng động (list manager) — chặn
+  // trước fallback để toolbar không ghi 1 string đè cả mảng.
+  if (blockType === 'aestha_studio') {
+    if (key === 'team') return 'aesthaStudioTeam';
+    if (key === 'footerLinks') return 'aesthaStudioFooterLinks';
+    if (/^team\[\d+\]\.(name|role)$/.test(key)) return 'text';
+    if (/^footerLinks\[\d+\]\.(label|href)$/.test(key)) return 'text';
+  }
+  // Aestha Contact: `socials` / `footerLinks` là mảng động (list manager) —
+  // chặn trước fallback để toolbar không ghi 1 string đè cả mảng.
+  if (blockType === 'aestha_contact') {
+    if (key === 'socials') return 'aesthaContactSocials';
+    if (key === 'footerLinks') return 'aesthaContactFooterLinks';
+    if (/^socials\[\d+\]\.(label|href)$/.test(key)) return 'text';
+    if (/^footerLinks\[\d+\]\.(label|href)$/.test(key)) return 'text';
+  }
+  // Aestha Project: `body` / `images` / `navLinks` là mảng động (list manager)
+  // — chặn trước fallback để toolbar không ghi 1 string đè cả mảng.
+  if (blockType === 'aestha_project') {
+    if (key === 'body') return 'aesthaProjectBody';
+    if (key === 'images') return 'aesthaProjectImages';
+    if (key === 'navLinks') return 'aesthaProjectNavLinks';
+    if (/^body\[\d+\]$/.test(key)) return 'text';
+    if (/^images\[\d+\]\.src$/.test(key)) return 'image';
+    if (/^images\[\d+\]\.alt$/.test(key)) return 'text';
+    if (/^navLinks\[\d+\]\.(label|href)$/.test(key)) return 'text';
   }
   // Delvaux product hotspots vs Mint/PNJ hero hotspots — cùng key `hotspots`.
   if (key === 'hotspots' && blockType === 'delvaux_product') {
@@ -222,9 +292,10 @@ export function resolveKind(
   if (/^paragraphs\[\d+\]$/.test(key)) return 'text';
   // Nested PNJ hero title lines: titleLines[0] → text.
   if (/^titleLines\[\d+\]$/.test(key)) return 'text';
-  // Nested variant fields: variants[0].label / .desc / .highlights → text
+  // Nested variant fields: variants[0].label / .desc → text; highlights[i] → text.
   if (/^variants\[\d+\]\.image$/.test(key)) return 'image';
-  if (/^variants\[\d+\]\.(label|desc|highlights)$/.test(key)) return 'text';
+  if (/^variants\[\d+\]\.(label|desc)$/.test(key)) return 'text';
+  if (/^variants\[\d+\]\.highlights\[\d+\]$/.test(key)) return 'text';
   // Vault collection coin fields: coins[0].image → image; name/price/metal/weight → text
   if (/^coins\[\d+\]\.image$/.test(key)) return 'image';
   if (/^coins\[\d+\]\.(name|price|metal|weight)$/.test(key)) return 'text';
@@ -585,9 +656,17 @@ export function resolveElementMeta(
   const vHl = key.match(/^variants\[(\d+)\]\.highlights$/);
   if (vHl && blockType === 'pnj_variant') {
     return {
-      kind: 'text',
-      fieldType: 'textarea',
+      kind: 'pnjVariantHighlights',
+      fieldType: undefined,
       label: `Highlights góc ${Number(vHl[1]) + 1}`,
+    };
+  }
+  const vHlItem = key.match(/^variants\[(\d+)\]\.highlights\[(\d+)\]$/);
+  if (vHlItem && blockType === 'pnj_variant') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Highlight ${Number(vHlItem[2]) + 1} · góc ${Number(vHlItem[1]) + 1}`,
     };
   }
   const navLabel = key.match(/^items\[(\d+)\]\.label$/);
@@ -855,6 +934,138 @@ export function resolveElementMeta(
       kind: 'delvauxSubnavLinks',
       fieldType: undefined,
       label: 'Thêm / quản lý link',
+    };
+  }
+  if (key === 'navLinks' && blockType === 'framer_aestha_editorial') {
+    return {
+      kind: 'aesthaNavLinks',
+      fieldType: undefined,
+      label: 'Thêm / quản lý nav',
+    };
+  }
+  const aesthaNavLink = key.match(/^navLinks\[(\d+)\]\.(label|href)$/);
+  if (aesthaNavLink && blockType === 'framer_aestha_editorial') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Nav ${Number(aesthaNavLink[1]) + 1} · ${
+        aesthaNavLink[2] === 'label' ? 'Nhãn' : 'Link'
+      }`,
+    };
+  }
+  if (key === 'projects' && blockType === 'aestha_explore') {
+    return {
+      kind: 'aesthaExploreProjects',
+      fieldType: undefined,
+      label: 'Thêm / quản lý dự án',
+    };
+  }
+  if (key === 'footerLinks' && blockType === 'aestha_explore') {
+    return {
+      kind: 'aesthaExploreFooterLinks',
+      fieldType: undefined,
+      label: 'Thêm / quản lý footer',
+    };
+  }
+  const exploreProjImages = key.match(/^projects\[(\d+)\]\.detail\.images$/);
+  if (exploreProjImages && blockType === 'aestha_explore') {
+    return {
+      kind: 'aesthaExploreProjectImages',
+      fieldType: undefined,
+      label: `Dự án ${Number(exploreProjImages[1]) + 1} · Thêm / quản lý ảnh`,
+    };
+  }
+  const exploreProject = key.match(/^projects\[(\d+)\]\.(label|href|img|alt)$/);
+  if (exploreProject && blockType === 'aestha_explore') {
+    const field = exploreProject[2];
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      href: 'Link',
+      img: 'Ảnh',
+      alt: 'Alt',
+    };
+    return {
+      kind: field === 'img' ? 'image' : 'text',
+      fieldType: field === 'img' ? 'image' : 'text',
+      label: `Dự án ${Number(exploreProject[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  const exploreFooter = key.match(/^footerLinks\[(\d+)\]\.(label|href)$/);
+  if (exploreFooter && blockType === 'aestha_explore') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Footer ${Number(exploreFooter[1]) + 1} · ${
+        exploreFooter[2] === 'label' ? 'Nhãn' : 'Link'
+      }`,
+    };
+  }
+  if (key === 'team' && blockType === 'aestha_studio') {
+    return {
+      kind: 'aesthaStudioTeam',
+      fieldType: undefined,
+      label: 'Thêm / quản lý team',
+    };
+  }
+  if (key === 'footerLinks' && blockType === 'aestha_studio') {
+    return {
+      kind: 'aesthaStudioFooterLinks',
+      fieldType: undefined,
+      label: 'Thêm / quản lý footer',
+    };
+  }
+  const studioMember = key.match(/^team\[(\d+)\]\.(name|role)$/);
+  if (studioMember && blockType === 'aestha_studio') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Thành viên ${Number(studioMember[1]) + 1} · ${
+        studioMember[2] === 'name' ? 'Tên' : 'Vai trò'
+      }`,
+    };
+  }
+  const studioFooter = key.match(/^footerLinks\[(\d+)\]\.(label|href)$/);
+  if (studioFooter && blockType === 'aestha_studio') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Footer ${Number(studioFooter[1]) + 1} · ${
+        studioFooter[2] === 'label' ? 'Nhãn' : 'Link'
+      }`,
+    };
+  }
+  if (key === 'socials' && blockType === 'aestha_contact') {
+    return {
+      kind: 'aesthaContactSocials',
+      fieldType: undefined,
+      label: 'Thêm / quản lý social',
+    };
+  }
+  if (key === 'footerLinks' && blockType === 'aestha_contact') {
+    return {
+      kind: 'aesthaContactFooterLinks',
+      fieldType: undefined,
+      label: 'Thêm / quản lý footer',
+    };
+  }
+  const contactSocial = key.match(/^socials\[(\d+)\]\.(label|href)$/);
+  if (contactSocial && blockType === 'aestha_contact') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Mạng xã hội ${Number(contactSocial[1]) + 1} · ${
+        contactSocial[2] === 'label' ? 'Nhãn' : 'Link'
+      }`,
+    };
+  }
+  const contactFooter = key.match(/^footerLinks\[(\d+)\]\.(label|href)$/);
+  if (contactFooter && blockType === 'aestha_contact') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Footer ${Number(contactFooter[1]) + 1} · ${
+        contactFooter[2] === 'label' ? 'Nhãn' : 'Link'
+      }`,
     };
   }
   const delvauxNavLink = key.match(/^links\[(\d+)\]\.(label|targetId)$/);

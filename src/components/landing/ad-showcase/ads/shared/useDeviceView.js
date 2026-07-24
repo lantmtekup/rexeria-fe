@@ -3,41 +3,24 @@
 import { useEffect, useState, useCallback } from 'react';
 
 /**
- * Hook đồng bộ chế độ xem mobile/desktop qua localStorage.
+ * Hook đồng bộ chế độ xem mobile/desktop trong cùng tab (in-memory).
  *
- * Key: 'rexerai:ad-device-mode' (string 'mobile' | 'desktop')
- * Default: 'mobile'
+ * Default luôn là 'mobile' mỗi lần vào trang — không đọc/ghi storage
+ * để tránh lần trước chọn desktop bị khôi phục.
  * Broadcast nội bộ tab qua CustomEvent 'rexerai:device-change'
- * để các component cùng page đồng bộ mà không cần thêm storage listener.
+ * để các component cùng page đồng bộ.
  *
  * @returns {{ device: 'mobile'|'desktop', setDevice: (v: 'mobile'|'desktop') => void }}
  */
 
-const STORAGE_KEY = 'rexerai:ad-device-mode';
 const EVENT_NAME = 'rexerai:device-change';
 const VALID = new Set(['mobile', 'desktop']);
 const DEFAULT = 'mobile';
-
-const readStored = () => {
-  if (typeof window === 'undefined') return DEFAULT;
-  try {
-    const v = window.localStorage.getItem(STORAGE_KEY);
-    return VALID.has(v) ? v : DEFAULT;
-  } catch {
-    return DEFAULT;
-  }
-};
 
 export function useDeviceView() {
   const [device, setDeviceState] = useState(
     /** @type {'mobile'|'desktop'} */ (DEFAULT)
   );
-
-  // Hydrate từ localStorage (client-only).
-  useEffect(() => {
-    const stored = readStored();
-    if (stored !== DEFAULT) setDeviceState(stored);
-  }, []);
 
   // Đồng bộ giữa các instance trong cùng tab.
   useEffect(() => {
@@ -55,11 +38,6 @@ export function useDeviceView() {
     if (!VALID.has(/** @type {string} */ (next))) return;
     const value = /** @type {'mobile'|'desktop'} */ (next);
     setDeviceState(value);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, value);
-    } catch {
-      // ignore quota / private-mode errors
-    }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: value }));
     }
@@ -68,5 +46,4 @@ export function useDeviceView() {
   return { device, setDevice };
 }
 
-export const DEVICE_VIEW_STORAGE_KEY = STORAGE_KEY;
 export const DEVICE_VIEW_DEFAULT = DEFAULT;

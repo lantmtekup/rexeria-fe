@@ -19,9 +19,23 @@ import { delvauxVariantDef } from './defs/delvauxVariant';
 import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerFirmaTemplateStrategyDigitalDef } from './defs/framerFirmaTemplateStrategyDigital';
 import { framerFlatWhiteProcessDef } from './defs/framerFlatWhiteProcess';
+import { framerAesthaEditorialDef } from './defs/framerAesthaEditorial';
+import { aesthaExploreDef } from './defs/aesthaExplore';
+import { aesthaStudioDef } from './defs/aesthaStudio';
+import { aesthaContactDef } from './defs/aesthaContact';
+import { aesthaProjectDef } from './defs/aesthaProject';
 import { framerEstanciaAboutUsDef } from './defs/framerEstanciaAboutUs';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerIgnitexStepDef } from './defs/framerIgnitexStep';
+import { framerRealEstate02StoryDef } from './defs/framerRealEstate02Story';
+import { framerRealEstate02QuoteDef } from './defs/framerRealEstate02Quote';
+import { framerRealEstate02ProductDef } from './defs/framerRealEstate02Product';
+import { framerRealEstate02OverviewDef } from './defs/framerRealEstate02Overview';
+import { framerRealEstate02LocationDef } from './defs/framerRealEstate02Location';
+import { framerRealEstate02CommuteDef } from './defs/framerRealEstate02Commute';
+import { framerRealEstate02MapDef } from './defs/framerRealEstate02Map';
+import { framerRealEstate02GalleryDef } from './defs/framerRealEstate02Gallery';
+import { framerRealEstate02MenuDef } from './defs/framerRealEstate02Menu';
 import { framerPurevisualsHeroDef } from './defs/framerPurevisualsHero';
 import { framerYumeHeroDef } from './defs/framerYumeHero';
 import { protectionScrollytellingDef } from './defs/protectionScrollytelling';
@@ -117,6 +131,7 @@ import { rolexCollectionHeroDef } from './defs/rolexCollectionHero';
 import { rolexCollectionNavDef } from './defs/rolexCollectionNav';
 import { rolexContactDef } from './defs/rolexContact';
 import { rolexCollectionWorkDef } from './defs/rolexCollectionWork';
+import { rolexCollectionProjectDef } from './defs/rolexCollectionProject';
 import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
@@ -142,6 +157,15 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   framer_flat_white_process: framerFlatWhiteProcessDef as BlockDef,
   framer_nftpull_timeline: framerNftpullTimelineDef as BlockDef,
   framer_ignitex_step: framerIgnitexStepDef as BlockDef,
+  framer_realestate02_story: framerRealEstate02StoryDef as BlockDef,
+  framer_realestate02_quote: framerRealEstate02QuoteDef as BlockDef,
+  framer_realestate02_product: framerRealEstate02ProductDef as BlockDef,
+  framer_realestate02_overview: framerRealEstate02OverviewDef as BlockDef,
+  framer_realestate02_location: framerRealEstate02LocationDef as BlockDef,
+  framer_realestate02_commute: framerRealEstate02CommuteDef as BlockDef,
+  framer_realestate02_map: framerRealEstate02MapDef as BlockDef,
+  framer_realestate02_gallery: framerRealEstate02GalleryDef as BlockDef,
+  framer_realestate02_menu: framerRealEstate02MenuDef as BlockDef,
   masterise_home_inside: masteriseHomeInsideDef as BlockDef,
   framer_purevisuals_hero: framerPurevisualsHeroDef as BlockDef,
   delvaux_header: delvauxHeaderDef as BlockDef,
@@ -214,6 +238,11 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   real_estate_hero: realEstateHeroDef as BlockDef,
   real_estate_info: realEstateInfoDef as BlockDef,
   real_estate_overview: realEstateOverviewDef as BlockDef,
+  framer_aestha_editorial: framerAesthaEditorialDef as BlockDef,
+  aestha_explore: aesthaExploreDef as BlockDef,
+  aestha_studio: aesthaStudioDef as BlockDef,
+  aestha_contact: aesthaContactDef as BlockDef,
+  aestha_project: aesthaProjectDef as BlockDef,
   real_estate_highlights: realEstateHighlightsDef as BlockDef,
   real_estate_villa: realEstateVillaDef as BlockDef,
   real_estate_utilities: realEstateUtilitiesDef as BlockDef,
@@ -230,6 +259,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   rolex_collection_nav: rolexCollectionNavDef as BlockDef,
   rolex_collection_contact: rolexContactDef as BlockDef,
   rolex_collection_work: rolexCollectionWorkDef as BlockDef,
+  rolex_collection_project: rolexCollectionProjectDef as BlockDef,
 };
 
 export function getBlockDef(type: BlockType): BlockDef | undefined {

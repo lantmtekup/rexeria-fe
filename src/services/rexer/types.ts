@@ -2595,16 +2595,19 @@ export interface PageRevision {
   page_id: string;
   revision_no: number;
   config_json: Record<string, unknown>;
+  /** Page-owned canvas blocks for this revision (omitted when unset). */
+  canvas_blueprint?: Record<string, unknown>;
   changed_by: string;
   changed_at: string;
 }
 export interface PageRevisionListResponse {
   items: PageRevision[];
-  page_id: string;
-  latest_revision_no: number;
+  total: number;
 }
 export interface SavePageConfigRequest {
   config_json: Record<string, unknown>;
+  /** Page-owned canvas blocks to persist on this revision. */
+  canvas_blueprint?: Record<string, unknown>;
   /** Optimistic concurrency — pass the latest revision_no FE has seen. */
   base_revision_no?: number;
 }
