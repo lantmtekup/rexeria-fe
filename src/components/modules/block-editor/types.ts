@@ -67,6 +67,10 @@ export type BlockType =
   | 'framer_signature_feature'
   | 'framer_vs_collins_projects'
   | 'framer_aestha_editorial'
+  | 'aestha_explore'
+  | 'aestha_studio'
+  | 'aestha_contact'
+  | 'aestha_project'
   | 'framer_perform_about'
   | 'framer_ignitex_step'
   | 'framer_realestate02_story'
@@ -1834,6 +1838,143 @@ export interface FramerAesthaEditorialContent {
   navLinks: Array<{ label: string; href: string }>;
 }
 
+/** Chi tiết dự án trong trang index EXPLORE — content cho AesthaProject. */
+export interface AesthaExploreProjectDetail {
+  /** Các đoạn mô tả dự án — mỗi phần tử một đoạn `<p>`. */
+  body?: string[];
+  /** Thêm ảnh chi tiết (ngoài ảnh chính img). */
+  images?: AesthaProjectImage[];
+}
+
+export interface AesthaExploreProject {
+  label: string;
+  href: string;
+  img: string;
+  alt: string;
+  /** Chi tiết dự án — hiển thị khi click vào project trong Explore. */
+  detail?: AesthaExploreProjectDetail;
+}
+
+/** Link footer nav (Projects / Studio / Contact). */
+export interface AesthaExploreFooterLink {
+  label: string;
+  href: string;
+}
+
+/**
+ * Aestha Explore: trang index "EXPLORE" (cùng site RAMSA/Aestha).
+ * Wide (≥1100px): hover tên dự án → crossfade ảnh featured, cursor-dot.
+ * Narrow (<1100px): 1 dự án/màn, vuốt để duyệt. Port từ `app/dev/nami-explore`.
+ */
+export interface AesthaExploreContent {
+  heading: string;
+  projects: AesthaExploreProject[];
+  footerLinks: AesthaExploreFooterLink[];
+  /** Nhãn footer đang là trang hiện tại (tô nhạt) — khớp theo `label`. */
+  currentFooterLabel: string;
+}
+
+/** Một thành viên team trong trang STUDIO — tên + vai trò. */
+export interface AesthaStudioMember {
+  name: string;
+  role: string;
+}
+
+/** Link footer nav (Projects / Studio / Contact) — trang STUDIO. */
+export interface AesthaStudioFooterLink {
+  label: string;
+  href: string;
+}
+
+/**
+ * Aestha Studio: trang "STUDIO" / About (cùng site RAMSA/Aestha với
+ * `aestha_explore`). Wordmark + bio + team + ảnh portrait + footer nav.
+ * Wide (≥1200px): full-viewport, cột trái nội dung · ảnh phải cố định 448px,
+ * cursor-dot bám con trỏ. Narrow (<1200px): xếp dọc. Port từ
+ * `app/dev/ramsa-studio/page.tsx`.
+ */
+export interface AesthaStudioContent {
+  wordmark: string;
+  bio: string;
+  team: AesthaStudioMember[];
+  imageUrl: string;
+  imageAlt: string;
+  footerLinks: AesthaStudioFooterLink[];
+  /** Nhãn footer đang là trang hiện tại (tô nhạt) — khớp theo `label`. */
+  currentFooterLabel: string;
+}
+
+/** Một mạng xã hội trong trang CONTACT — nhãn hiển thị + link ngoài. */
+export interface AesthaContactSocial {
+  label: string;
+  href: string;
+}
+
+/** Link footer nav (Projects / Studio / Contact) — trang CONTACT. */
+export interface AesthaContactFooterLink {
+  label: string;
+  href: string;
+}
+
+/**
+ * Aestha Contact: trang "CONTACT" (cùng site RAMSA/Aestha với `aestha_explore`
+ * / `aestha_studio`). Heading + địa chỉ + email/phone + social + ảnh hero +
+ * footer nav. Wide (≥1100px): 2 cột full-viewport (trái CONTACT + địa chỉ, phải
+ * ảnh + email/social); cursor-dot. Narrow (<1100px): xếp dọc (địa chỉ → info →
+ * ảnh). Port từ `app/dev/aestha-contact/page.tsx`.
+ */
+export interface AesthaContactContent {
+  heading: string;
+  /** Địa chỉ nhiều dòng — ngăn cách bằng `\n`, render `white-space: pre-line`. */
+  address: string;
+  /** Nhãn email hiển thị; href suy ra `mailto:${email}`. */
+  email: string;
+  /** Nhãn phone hiển thị; href suy ra `tel:` (bỏ khoảng trắng). */
+  phone: string;
+  imageUrl: string;
+  imageAlt: string;
+  socials: AesthaContactSocial[];
+  footerLinks: AesthaContactFooterLink[];
+  /** Nhãn footer đang là trang hiện tại (tô nhạt) — khớp theo `label`. */
+  currentFooterLabel: string;
+}
+
+/** Một ảnh trong stack cột phải trang PROJECT — nguồn + alt. */
+export interface AesthaProjectImage {
+  src: string;
+  alt: string;
+}
+
+/** Link nav trang PROJECT (Dự án / Studio / Liên hệ). */
+export interface AesthaProjectNavLink {
+  label: string;
+  href: string;
+}
+
+/**
+ * Aestha Project: trang chi tiết dự án (cùng site RAMSA/Aestha với
+ * `aestha_explore` / `aestha_studio` / `aestha_contact`). Cột trái sticky
+ * (tiêu đề + nhãn "Concept" + đoạn mô tả + nav) · cột phải stack ảnh cuộn dọc.
+ * Cuối stack, panel "Concept" crossfade sang panel "See next project".
+ * Narrow (<900px): xếp 1 cột, bỏ sticky. Port từ `ProjectView` trong
+ * `apps/real-estate/src/AesthaDemoPage.tsx`.
+ */
+export interface AesthaProjectContent {
+  title: string;
+  /** Nhãn cột trái, ví dụ "Concept". */
+  conceptLabel: string;
+  /** Các đoạn mô tả dự án — mỗi phần tử một đoạn `<p>`. */
+  body: string[];
+  images: AesthaProjectImage[];
+  /** Nhãn nhóm panel "dự án tiếp theo", ví dụ "See next project". */
+  nextHeading: string;
+  /** Tên dự án tiếp theo (hiển thị dạng title-case). */
+  nextLabel: string;
+  /** Link tới dự án tiếp theo. */
+  nextHref: string;
+  navLinks: AesthaProjectNavLink[];
+}
+
 /**
  * Estancia About Us: nền tan #E7DECF, heading center + CTA pill + grid 3 ảnh
  * chân dung với stat dưới (2012 / 320+ / 200+). Port từ
@@ -3009,6 +3150,10 @@ export type BlockContent =
   | FramerTeamDirectoryContent
   | FramerImageStaggerContent
   | FramerAesthaEditorialContent
+  | AesthaExploreContent
+  | AesthaStudioContent
+  | AesthaContactContent
+  | AesthaProjectContent
   | FramerEstanciaAboutUsContent
   | FramerPerformAboutContent
   | FramerPerformPricingContent
@@ -5337,6 +5482,78 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'trang editorial: cột brand sticky trái + stack 3 ảnh so le phải',
     aiLabelEn:
       'editorial layout: sticky brand column left + staggered image stack right',
+  },
+  aestha_explore: {
+    type: 'aestha_explore',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['clone', 'framer', 'index'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'Aestha Explore',
+    accent: '#0F0F0F',
+    adminLabel: 'Explore index (Aestha)',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Explore',
+    aiLabelVi:
+      'trang index EXPLORE: menu dự án hover đổi ảnh featured (desktop) / vuốt carousel (mobile)',
+    aiLabelEn:
+      'EXPLORE index page: project menu hover-swaps featured image (desktop) / swipe carousel (mobile)',
+  },
+  aestha_studio: {
+    type: 'aestha_studio',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['clone', 'framer', 'about'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'Aestha Studio',
+    accent: '#0F0F0F',
+    adminLabel: 'Studio / About (Aestha)',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Studio',
+    aiLabelVi:
+      'trang STUDIO / About: wordmark + bio + danh sách team + ảnh portrait + footer nav',
+    aiLabelEn:
+      'STUDIO / About page: wordmark + bio + team list + portrait image + footer nav',
+  },
+  aestha_contact: {
+    type: 'aestha_contact',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['clone', 'framer', 'contact'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'Aestha Contact',
+    accent: '#0F0F0F',
+    adminLabel: 'Contact (Aestha)',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Contact',
+    aiLabelVi:
+      'trang CONTACT: heading + địa chỉ + email/phone + social + ảnh hero + footer nav',
+    aiLabelEn:
+      'CONTACT page: heading + address + email/phone + socials + hero image + footer nav',
+  },
+  aestha_project: {
+    type: 'aestha_project',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['clone', 'framer', 'project'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-21',
+    label: 'Aestha Project',
+    accent: '#0F0F0F',
+    adminLabel: 'Project detail (Aestha)',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Project',
+    aiLabelVi:
+      'trang chi tiết dự án: cột trái sticky (tiêu đề + mô tả) · cột phải stack ảnh cuộn, cuối trang đổi sang "dự án tiếp theo"',
+    aiLabelEn:
+      'project detail page: sticky left column (title + concept) · scrolling right image stack, swaps to "next project" at the end',
   },
   masterise_home_inside: {
     type: 'masterise_home_inside',

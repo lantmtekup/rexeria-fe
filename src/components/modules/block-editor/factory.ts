@@ -6,6 +6,11 @@ import { delvauxHeroDef } from './blocks/_registry/defs/delvauxHero';
 import { delvauxProductDef } from './blocks/_registry/defs/delvauxProduct';
 import { delvauxSubnavDef } from './blocks/_registry/defs/delvauxSubnav';
 import { delvauxVariantDef } from './blocks/_registry/defs/delvauxVariant';
+import { framerAesthaEditorialDef } from './blocks/_registry/defs/framerAesthaEditorial';
+import { aesthaExploreDef } from './blocks/_registry/defs/aesthaExplore';
+import { aesthaStudioDef } from './blocks/_registry/defs/aesthaStudio';
+import { aesthaContactDef } from './blocks/_registry/defs/aesthaContact';
+import { aesthaProjectDef } from './blocks/_registry/defs/aesthaProject';
 import { q80ExperienceDef } from './blocks/_registry/defs/q80Experience';
 import { q80MenuDef } from './blocks/_registry/defs/q80Menu';
 import { housentHeroDef } from './blocks/_registry/defs/housentHero';
@@ -182,7 +187,6 @@ import type {
   FramerSignatureFeatureContent,
   FramerVsCollinsProjectsContent,
   FramerClarityServicesContent,
-  FramerAesthaEditorialContent,
   FramerPerformAboutContent,
   FramerPerformPricingContent,
 } from './types';
@@ -2167,48 +2171,6 @@ const FRAMER_CLARITY_SERVICES_EN: FramerClarityServicesContent = {
   ],
 };
 
-// ── Framer-native: Aestha Editorial ────────────────────────────────────
-const FRAMER_AESTHA_EDITORIAL_VI: FramerAesthaEditorialContent = {
-  brand: 'RAMSA',
-  tagline: 'Nơi thanh lịch cổ điển gặp gỡ tinh tế hiện đại.',
-  scrollLabel: 'scroll',
-  description:
-    'Tọa lạc giữa lòng đô thị, dự án là hiện thân cho phong cách sống đẳng cấp — nơi mỗi chi tiết đều được tinh chỉnh cho nhịp sống hiện đại.',
-  image1Url:
-    'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80',
-  image2Url:
-    'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1200&q=80',
-  image3Url:
-    'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80',
-  ctaText: 'KHÁM PHÁ THÊM',
-  ctaHref: '/projects',
-  navLinks: [
-    { label: 'Dự án', href: '/projects' },
-    { label: 'Studio', href: '/studio' },
-    { label: 'Liên hệ', href: '/contact' },
-  ],
-};
-const FRAMER_AESTHA_EDITORIAL_EN: FramerAesthaEditorialContent = {
-  brand: 'RAMSA',
-  tagline: 'Where classic elegance meets modern refinement.',
-  scrollLabel: 'scroll',
-  description:
-    'Nestled in the heart of the city, the project embodies refined urban living — every detail tuned to the demands of modern luxury.',
-  image1Url:
-    'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80',
-  image2Url:
-    'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1200&q=80',
-  image3Url:
-    'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80',
-  ctaText: 'EXPLORE MORE',
-  ctaHref: '/projects',
-  navLinks: [
-    { label: 'Projects', href: '/projects' },
-    { label: 'Studio', href: '/studio' },
-    { label: 'Contact', href: '/contact' },
-  ],
-};
-
 // ── Framer-native: Perform About ───────────────────────────────────────
 const FRAMER_PERFORM_ABOUT_VI: FramerPerformAboutContent = {
   testimonials: [
@@ -2519,7 +2481,11 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
   housent_our_excellence: HOUSENT_OUR_EXCELLENCE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
-  framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
+  framer_aestha_editorial: framerAesthaEditorialDef.defaultContent.vi,
+  aestha_explore: aesthaExploreDef.defaultContent.vi,
+  aestha_studio: aesthaStudioDef.defaultContent.vi,
+  aestha_contact: aesthaContactDef.defaultContent.vi,
+  aestha_project: aesthaProjectDef.defaultContent.vi,
   masterise_home_inside: masteriseHomeInsideDef.defaultContent.vi,
   framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_VI,
@@ -2702,7 +2668,11 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
   housent_our_excellence: HOUSENT_OUR_EXCELLENCE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
-  framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
+  framer_aestha_editorial: framerAesthaEditorialDef.defaultContent.en,
+  aestha_explore: aesthaExploreDef.defaultContent.en,
+  aestha_studio: aesthaStudioDef.defaultContent.en,
+  aestha_contact: aesthaContactDef.defaultContent.en,
+  aestha_project: aesthaProjectDef.defaultContent.en,
   masterise_home_inside: masteriseHomeInsideDef.defaultContent.en,
   framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
   framer_perform_pricing: FRAMER_PERFORM_PRICING_EN,

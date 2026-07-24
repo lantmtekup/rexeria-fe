@@ -57,7 +57,8 @@ function chipIcon(kind: ElementKind) {
     kind === 'delvauxHotspots' ||
     kind === 'delvauxVariants' ||
     kind === 'delvauxFaqs' ||
-    kind === 'delvauxSubnavLinks'
+    kind === 'delvauxSubnavLinks' ||
+    kind === 'aesthaNavLinks'
   ) {
     return List;
   }

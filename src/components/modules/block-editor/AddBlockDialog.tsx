@@ -88,6 +88,9 @@ const ORDERED_TYPES: BlockType[] = [
   'real_estate_highlights',
   'real_estate_villa',
   'real_estate_utilities',
+  'aestha_explore',
+  'aestha_studio',
+  'aestha_contact',
   // ── Features / Services ──────────────────────────────────
   'feature_section',
   'framer_clarity_services',
