@@ -20,6 +20,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface Props {
   content: FramerRealEstate02StoryContent;
@@ -259,16 +260,11 @@ export function FramerRealEstate02Story({
   const imageInnerRefs = React.useRef<Array<HTMLDivElement | null>>([]);
 
   const [index, setIndex] = React.useState(0);
-  const [isCanvas, setIsCanvas] = React.useState(true);
   const [hoveredNav, setHoveredNav] = React.useState<'prev' | 'next' | null>(
     null
   );
 
-  React.useLayoutEffect(() => {
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, []);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const styleOf = (key: string) =>
     composeStyle(
