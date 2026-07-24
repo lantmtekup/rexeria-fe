@@ -3355,6 +3355,7 @@ function DelvauxSubnavLinksControls({
   );
 }
 
+
 // ─────────────────────────────────────────── DELVAUX VARIANT (swatches + FAQ)
 
 function DelvauxVariantsControls({

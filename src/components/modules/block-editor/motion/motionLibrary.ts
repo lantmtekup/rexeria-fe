@@ -81,10 +81,10 @@ export interface MotionEffect {
   /** Effect chữ: tách bằng SplitText (mask cùng loại) rồi stagger. */
   split?: 'chars' | 'words' | 'lines';
   /**
-   * Trục cho `data-motion-distance` (px) override biên độ from. Dấu lấy theo
-   * giá trị mặc định (fade-down giữ chiều âm).
+   * Trục cho `data-motion-distance` override biên độ from ('x'/'y' tính px,
+   * 'scale' tính hệ số). Dấu lấy theo giá trị mặc định (fade-down giữ chiều âm).
    */
-  distanceVar?: 'x' | 'y';
+  distanceVar?: 'x' | 'y' | 'scale';
   /**
    * Cách áp distance: 'from' (default) chỉ đổi trạng thái đầu (fade-up…);
    * 'symmetric' đổi cả hai đầu ±d (parallax: from +d → to −d).
@@ -345,6 +345,7 @@ export const MOTION_EFFECTS: Record<string, MotionEffect> = {
       trigger: 'in-view',
       start: IN_VIEW_START,
     },
+    distanceVar: 'scale',
     meta: {
       summary: 'Mờ + zoom mạnh từ ~60% → 100% (entrance).',
       whenToUse: [
@@ -364,8 +365,8 @@ export const MOTION_EFFECTS: Record<string, MotionEffect> = {
       tags: ['entrance', 'scale', 'fade', 'image'],
       category: 'entrance',
       prerequisites: [],
-      relevantAttrs: [...ENTRANCE_TIMING],
-      example: `<img data-motion='zoom-in' alt='' />`,
+      relevantAttrs: [...ENTRANCE_TIMING, 'distance'],
+      example: `<img data-motion='zoom-in' data-motion-distance='0.85' alt='' />`,
     },
   },
   'blur-in': {
@@ -430,12 +431,90 @@ export const MOTION_EFFECTS: Record<string, MotionEffect> = {
         { id: 'word-reveal', diff: 'stagger theo từ, nhanh hơn' },
         { id: 'line-reveal', diff: 'stagger theo dòng' },
         { id: 'fade-up', diff: 'cả khối, không split' },
+        {
+          id: 'char-blur-up-reveal',
+          diff: 'char-blur-up-reveal dịch y nhỏ (px) + thêm blur, không phải slide lớn qua mask',
+        },
       ],
       tags: ['text', 'split', 'chars', 'reveal', 'entrance'],
       category: 'text',
       prerequisites: ['Chỉ gắn lên text node (heading/span có chữ)'],
       relevantAttrs: [...ENTRANCE_TIMING, 'stagger'],
       example: `<h2 data-motion='char-reveal'>Heading</h2>`,
+    },
+  },
+  'char-blur-up-reveal': {
+    id: 'char-blur-up-reveal',
+    label: 'Char Blur Up Reveal',
+    appliesTo: ['text'],
+    from: { y: 10, opacity: 0, filter: 'blur(10px)' },
+    to: { y: 0, opacity: 1, filter: 'blur(0px)' },
+    defaults: {
+      duration: 1.2,
+      ease: 'power2.out',
+      trigger: 'in-view',
+      start: IN_VIEW_START,
+      stagger: 0.05,
+    },
+    distanceVar: 'y',
+    split: 'chars',
+    meta: {
+      summary:
+        'Từng chữ cái dịch nhẹ theo trục y (px, không phải % qua mask) kèm mờ→nét cùng lúc, so le trái→phải.',
+      whenToUse: [
+        'Heading ngắn cần dịch chuyển NHẸ (khác char-reveal — đó là slide lớn qua mask) kết hợp blur trong 1 effect',
+      ],
+      whenNotToUse: [
+        'Muốn slide lớn qua mask (yPercent) → char-reveal',
+        'Theo từ thay vì từng chữ → word-blur-up-reveal',
+      ],
+      vs: [
+        {
+          id: 'char-reveal',
+          diff: 'char-reveal trượt yPercent lớn qua mask, không blur; char-blur-up-reveal chỉ dịch y nhỏ (px)',
+        },
+        {
+          id: 'word-blur-up-reveal',
+          diff: 'cùng shape nhưng split theo từ',
+        },
+      ],
+      tags: ['text', 'split', 'chars', 'blur', 'translate', 'entrance'],
+      category: 'text',
+      prerequisites: ['Chỉ gắn lên text node (heading/span có chữ)'],
+      relevantAttrs: [...ENTRANCE_TIMING, 'stagger', 'distance'],
+      example: `<h1 data-motion='char-blur-up-reveal'>SAY HELLO</h1>`,
+    },
+  },
+  'word-blur-up-reveal': {
+    id: 'word-blur-up-reveal',
+    label: 'Word Blur Up Reveal',
+    appliesTo: ['text'],
+    from: { y: 10, opacity: 0, filter: 'blur(10px)' },
+    to: { y: 0, opacity: 1, filter: 'blur(0px)' },
+    defaults: {
+      duration: 1.2,
+      ease: 'power2.out',
+      trigger: 'in-view',
+      start: IN_VIEW_START,
+      stagger: 0.05,
+    },
+    distanceVar: 'y',
+    split: 'words',
+    meta: {
+      summary:
+        'Từng từ dịch nhẹ theo trục y (px, không phải % qua mask) kèm mờ→nét cùng lúc, so le theo thứ tự từ.',
+      whenToUse: [
+        'Đoạn mô tả/tiêu đề cần dịch chuyển NHẸ kết hợp blur trong 1 effect',
+      ],
+      whenNotToUse: ['Theo chữ thay vì theo từ → char-blur-up-reveal'],
+      vs: [
+        { id: 'char-blur-up-reveal', diff: 'cùng shape nhưng split theo chữ' },
+      ],
+      tags: ['text', 'split', 'words', 'blur', 'translate', 'entrance'],
+      category: 'text',
+      prerequisites: ['Chỉ gắn lên text node'],
+      relevantAttrs: [...ENTRANCE_TIMING, 'stagger', 'distance'],
+      example: `<p data-motion='word-blur-up-reveal'>COSMOGRAPH DAYTONA</p>`,
     },
   },
   'word-reveal': {

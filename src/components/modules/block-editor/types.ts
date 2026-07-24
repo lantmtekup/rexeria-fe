@@ -192,7 +192,9 @@ export type BlockType =
   // ── Sustainit (Readymag source) ──
   | 'sustainit_our_expertise'
   | 'rolex_collection_hero'
-  | 'rolex_nav';
+  | 'rolex_collection_nav'
+  | 'rolex_collection_contact'
+  | 'rolex_collection_work';
 
 export interface HeroSplitStat {
   value: string;
@@ -1737,18 +1739,52 @@ export interface FramerImageStaggerContent {
 
 export interface RolexCollectionHeroContent {
   backgroundUrl: string;
+  backgroundTransform?: ImageTransform;
   mainLetter: string;
   mainTitle: string;
   mainDescription: string;
   heroImageUrl: string;
-  textLinkLabel: string;
-  textLinkHref?: string;
 }
 
-export interface RolexNavContent {
-  navLogoLabel: string;
+export interface RolexCollectionNavContent {
   navHomeLabel: string;
-  navBurgerLabel: string;
+  navHomeHref: string;
+  navCollectionLabel: string;
+  navCollectionHref: string;
+  navContactLabel: string;
+  navContactHref: string;
+}
+
+export interface RolexCollectionWorkStage {
+  title: string;
+  backgroundColor?: string;
+  imageUrl: string;
+}
+
+export interface RolexCollectionWorkContent {
+  introBackgroundUrl: string;
+  ctaLabel: string;
+  stages: RolexCollectionWorkStage[];
+}
+
+export interface RolexContactContent {
+  backgroundUrl: string;
+  heading: string;
+  email: string;
+  phone: string;
+  nameLabel: string;
+  namePlaceholder: string;
+  mailLabel: string;
+  mailPlaceholder: string;
+  messageLabel: string;
+  messagePlaceholder: string;
+  submitLabel: string;
+  successMessage: string;
+  portraitUrl: string;
+  instagramLabel: string;
+  instagramHref?: string;
+  twitterLabel: string;
+  twitterHref?: string;
 }
 
 /**
@@ -2984,7 +3020,9 @@ export type BlockContent =
   | ReadymagCaseSectionContent
   | SustainitOurExpertiseContent
   | RolexCollectionHeroContent
-  | RolexNavContent
+  | RolexCollectionNavContent
+  | RolexContactContent
+  | RolexCollectionWorkContent
   | Record<string, unknown>;
 
 /**
@@ -6452,20 +6490,56 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     aiLabelEn:
       'dark hero: big R letter + COSMOGRAPH DAYTONA + Ever Oyster + Rolex watch image + Contact link',
   },
-  rolex_nav: {
-    type: 'rolex_nav',
+  rolex_collection_nav: {
+    type: 'rolex_collection_nav',
     category: 'navigation',
     style: 'modern',
     tags: ['clone', 'framer', 'nav'],
     status: 'ready',
     responsive: true,
     updatedAt: '2026-07-22',
-    label: 'Rolex Nav',
+    label: 'Rolex Collection Nav',
     accent: '#ffffff',
-    adminLabel: 'Rolex Nav',
+    adminLabel: 'Rolex Collection Nav',
     gradient: 'from-neutral-800 to-neutral-900',
-    defaultName: 'Rolex Nav',
-    aiLabelVi: 'nav bar glass với 3 items (logo, home, explore)',
-    aiLabelEn: 'glass nav bar with 3 items (logo, home, explore)',
+    defaultName: 'Rolex Collection Nav',
+    aiLabelVi: 'nav bar glass với 3 items (home, explore collection, contact)',
+    aiLabelEn: 'glass nav bar with 3 items (home, explore collection, contact)',
+  },
+  rolex_collection_work: {
+    type: 'rolex_collection_work',
+    category: 'gallery',
+    style: 'modern',
+    tags: ['clone', 'framer', 'scroll', 'gallery'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-23',
+    label: 'Rolex Collection Work',
+    accent: '#ffffff',
+    adminLabel: 'Rolex Collection Work',
+    gradient: 'from-neutral-900 to-black',
+    defaultName: 'Rolex Collection Work',
+    aiLabelVi:
+      'showcase pin-scroll 7 model đồng hồ Rolex: mỗi giai đoạn đổi màu nền + tiêu đề chữ lớn + ảnh đồng hồ lật 3D (Oyster/Perpetual/Daytona/Submariner/Sea Dweler/Deep Sea/GMT Master)',
+    aiLabelEn:
+      'scroll-pinned 7-stage Rolex watch showcase: each stage swaps background color + large title + 3D-flip watch image (Oyster/Perpetual/Daytona/Submariner/Sea Dweler/Deep Sea/GMT Master)',
+  },
+  rolex_collection_contact: {
+    type: 'rolex_collection_contact',
+    category: 'form',
+    style: 'modern',
+    tags: ['clone', 'framer', 'contact', 'form'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-23',
+    label: 'Rolex Collection Contact',
+    accent: '#ffffff',
+    adminLabel: 'Rolex Collection Contact',
+    gradient: 'from-neutral-800 to-black',
+    defaultName: 'Rolex Collection Contact',
+    aiLabelVi:
+      'section "SAY HELLO" tối: card kính mờ chứa form liên hệ (tên/email/lời nhắn) bên trái + ảnh chân dung + link Instagram/Twitter bên phải',
+    aiLabelEn:
+      'dark "SAY HELLO" glass card: contact form (name/email/message) left + portrait photo with Instagram/Twitter links right',
   },
 };

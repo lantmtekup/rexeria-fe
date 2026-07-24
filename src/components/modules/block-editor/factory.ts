@@ -73,7 +73,9 @@ import { protectionScrollytellingDef } from './blocks/_registry/defs/protectionS
 import { framerFlatWhiteProcessDef } from './blocks/_registry/defs/framerFlatWhiteProcess';
 import { framerEstanciaAboutUsDef } from './blocks/_registry/defs/framerEstanciaAboutUs';
 import { rolexCollectionHeroDef } from './blocks/_registry/defs/rolexCollectionHero';
-import { rolexNavDef } from './blocks/_registry/defs/rolexNav';
+import { rolexCollectionNavDef } from './blocks/_registry/defs/rolexCollectionNav';
+import { rolexContactDef } from './blocks/_registry/defs/rolexContact';
+import { rolexCollectionWorkDef } from './blocks/_registry/defs/rolexCollectionWork';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { springsContactFooterDef } from './blocks/_registry/defs/springsContactFooter';
 import { springsDesignDef } from './blocks/_registry/defs/springsDesign';
@@ -2512,7 +2514,9 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   readymag_case_section: readymagCaseSectionDef.defaultContent.vi,
   framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.vi,
   rolex_collection_hero: rolexCollectionHeroDef.defaultContent.vi,
-  rolex_nav: rolexNavDef.defaultContent.vi,
+  rolex_collection_nav: rolexCollectionNavDef.defaultContent.vi,
+  rolex_collection_contact: rolexContactDef.defaultContent.vi,
+  rolex_collection_work: rolexCollectionWorkDef.defaultContent.vi,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
@@ -2688,7 +2692,9 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   readymag_case_section: readymagCaseSectionDef.defaultContent.en,
   framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.en,
   rolex_collection_hero: rolexCollectionHeroDef.defaultContent.en,
-  rolex_nav: rolexNavDef.defaultContent.en,
+  rolex_collection_nav: rolexCollectionNavDef.defaultContent.en,
+  rolex_collection_contact: rolexContactDef.defaultContent.en,
+  rolex_collection_work: rolexCollectionWorkDef.defaultContent.en,
 };
 
 function genId() {

@@ -14,8 +14,6 @@ const VI: RolexCollectionHeroContent = {
   mainDescription:
     'Ever since its initial launch, the Oyster Perpetual Cosmograph Daytona has been synonymous with performance and victory.',
   heroImageUrl: '/rolex-collection/clock.png',
-  textLinkLabel: 'Contact',
-  textLinkHref: '#contact',
 };
 
 export const rolexCollectionHeroDef: BlockDef<RolexCollectionHeroContent> = {
@@ -57,6 +55,5 @@ export const rolexCollectionHeroDef: BlockDef<RolexCollectionHeroContent> = {
       icon: ImageIcon,
       fieldType: 'image',
     },
-    { key: 'textLinkLabel', label: 'Text link', icon: Type, fieldType: 'text' },
   ],
 };
