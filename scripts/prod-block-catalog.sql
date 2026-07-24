@@ -1,4 +1,4 @@
--- Seed builtin block catalog + canvas settings (22 block: mint/mintv2/framer/linea/vault).
+-- Seed builtin block catalog + canvas settings (mint/mintv2/framer/linea/vault).
 -- Idempotent. Chạy:  psql "<DSN>" -f prod-block-catalog.sql
 BEGIN;
 
@@ -22,6 +22,7 @@ FROM unnest(ARRAY[
   'framer_perform_pricing',
   'framer_darling_timeline',
   'framer_bungee_hero',
+  'framer_aestha_editorial',
   'linea_portfolio',
   'mint_vault_hero',
   'mint_vault_craft',
@@ -30,6 +31,13 @@ FROM unnest(ARRAY[
   'mint_vault_invitation'
 ]::text[]) AS code
 WHERE NOT EXISTS (SELECT 1 FROM public.blocks b WHERE b.type_code = code AND b.archived_at IS NULL);
+
+-- Heal: row tạo trước khi FE gửi supported_surfaces → BE default [] → Save Version 400.
+-- INSERT ở trên không đụng row đã tồn tại, nên phải UPDATE riêng.
+UPDATE public.blocks
+SET supported_surfaces = ARRAY['landing','ad','curate']::text[]
+WHERE archived_at IS NULL
+  AND (supported_surfaces IS NULL OR cardinality(supported_surfaces) = 0);
 
 UPDATE public.blocks SET settings = $rexerblk${"id":"b_j3w8q01v","blockType":"mint_details","name":"Mint Details","contentVi":{"desktop":{"title":"The Jack Pine","paragraph1":"A 1006.1 g, 99.99% pure gold proof coin from the Royal Canadian Mint — a monumental tribute to Tom Thomson's iconic 1916–17 landscape, struck in a mintage of just 75 worldwide. The reverse captures the lone, windswept pine rising against a sunset over an Ontario lake; the obverse bears Steven Rosati's effigy of His Majesty King Charles III.","paragraph2":"101.6 mm in diameter with a serrated edge and $2,500 face value. Encapsulated in a Royal Canadian Mint wooden case with black beauty box and serialised certificate — a piece of Canada's cultural heritage rendered in pure gold."}},"contentEn":{"desktop":{"title":"The Jack Pine","paragraph1":"A 1006.1 g, 99.99% pure gold proof coin from the Royal Canadian Mint — a monumental tribute to Tom Thomson's iconic 1916–17 landscape, struck in a mintage of just 75 worldwide. The reverse captures the lone, windswept pine rising against a sunset over an Ontario lake; the obverse bears Steven Rosati's effigy of His Majesty King Charles III.","paragraph2":"101.6 mm in diameter with a serrated edge and $2,500 face value. Encapsulated in a Royal Canadian Mint wooden case with black beauty box and serialised certificate — a piece of Canada's cultural heritage rendered in pure gold."}},"isVisible":true}$rexerblk$::jsonb
   WHERE type_code = 'mint_details' AND scope='system' AND archived_at IS NULL;

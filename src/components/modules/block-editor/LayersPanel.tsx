@@ -48,6 +48,7 @@ import { AddExtraElementButton } from './AddExtraElementButton';
 import { ExtraElementsList } from './ExtraElementsList';
 import { resolvePnjParagraphs } from './blocks/PnjDetails';
 import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
+import { resolvePnjVariants } from './blocks/pnjVariantContent';
 import { realEstateHeroStatElements } from './blocks/_registry/defs/realEstateHero';
 import { realEstateHighlightItemElements } from './blocks/_registry/defs/realEstateHighlights';
 import { coolHunterGalleryItemElements } from './blocks/_registry/defs/coolHunterGallery';
@@ -99,7 +100,7 @@ import {
   type DelvauxVariantOption,
   type AesthaExploreProject,
   type PnjHeroContent,
-  type PnjVariantItem,
+  type PnjVariantContent,
   type PnjStickyMenuItem,
   type RealEstateHeroStat,
   type RealEstateOverviewStat,
@@ -817,12 +818,9 @@ export function elementsForType(
     return [BACKGROUND_LAYER, ...coolHunterGalleryItemElements(items)];
   }
   if (type === 'pnj_variant') {
-    const raw = content?.variants;
-    const variants = Array.isArray(raw)
-      ? (raw as PnjVariantItem[]).filter(
-          v => v && typeof v === 'object' && typeof v.label === 'string'
-        )
-      : [];
+    const variants = resolvePnjVariants(
+      (content ?? {}) as unknown as PnjVariantContent
+    );
     return [
       BACKGROUND_LAYER,
       ...pnjVariantItemElements(variants),
