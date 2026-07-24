@@ -1,0 +1,484 @@
+/* ================================================================
+   Detail chrome — chỉ dùng bởi StudioAdDetail (.ad-showcase-detail).
+   Light stage #F6F6F6, top bar cân đối. Không đụng khung device.
+   ================================================================ */
+
+.ad-showcase-detail {
+  background: #f6f6f6;
+}
+
+/* ── Top chrome bar ───────────────────────────────────────────── */
+.ad-showcase-detail .pvx-chrome {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 120;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  padding: 18px 28px;
+  pointer-events: none;
+}
+
+.ad-showcase-detail .pvx-chrome > * {
+  pointer-events: auto;
+}
+
+.ad-showcase-detail .pvx-chrome-title {
+  margin: 0;
+  justify-self: center;
+  max-width: min(280px, 42vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--sans, 'Outfit', sans-serif);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #3d3d3d;
+}
+
+.ad-showcase-detail .pvx-chrome-spacer {
+  grid-column: 2 / -1;
+}
+
+/* Back — editorial ghost, không pill */
+.ad-showcase-detail .pv-back {
+  position: static;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 4px 0;
+  font-family: var(--sans, 'Outfit', sans-serif);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #7a7a7a;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition:
+    color 0.28s ease,
+    gap 0.28s ease;
+}
+
+.ad-showcase-detail .pv-back-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  color: #5c5c5c;
+  background: transparent;
+  transition:
+    border-color 0.28s ease,
+    color 0.28s ease,
+    background-color 0.28s ease,
+    transform 0.28s ease;
+}
+
+.ad-showcase-detail .pv-back-text {
+  position: relative;
+  padding-bottom: 1px;
+}
+
+.ad-showcase-detail .pv-back-text::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--gold, #b8965a);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ad-showcase-detail .pv-back:hover {
+  color: #1a1a1a;
+  gap: 12px;
+}
+
+.ad-showcase-detail .pv-back:hover .pv-back-mark {
+  color: #1a1a1a;
+  border-color: rgba(184, 150, 90, 0.45);
+  background: rgba(184, 150, 90, 0.06);
+  transform: translateX(-2px);
+}
+
+.ad-showcase-detail .pv-back:hover .pv-back-text::after {
+  transform: scaleX(1);
+}
+
+.ad-showcase-detail .pv-back:active .pv-back-mark {
+  transform: translateX(-3px) scale(0.96);
+}
+
+.ad-showcase-detail .pv-back:focus-visible {
+  outline: none;
+}
+
+.ad-showcase-detail .pv-back:focus-visible .pv-back-mark {
+  outline: 2px solid var(--gold, #b8965a);
+  outline-offset: 3px;
+}
+
+/* Toggle gắn chrome bar — compact icon-only */
+.ad-showcase-detail .dv-toggle {
+  position: static;
+  justify-self: end;
+}
+
+.ad-showcase-detail .dv-toggle-track {
+  min-width: 0;
+  padding: 2px;
+  border-radius: 10px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.ad-showcase-detail .dv-toggle-thumb {
+  top: 2px;
+  left: 2px;
+  width: calc(50% - 2px);
+  height: calc(100% - 4px);
+  border-radius: 8px;
+  background: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
+}
+
+.ad-showcase-detail .dv-toggle-btn {
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border-radius: 8px;
+}
+
+.ad-showcase-detail .dv-toggle-btn:focus-visible {
+  outline-offset: 2px;
+}
+
+/* ── Light stage (chỉ nền, không đụng khung) ─────────────────── */
+.ad-showcase-detail .pv-page {
+  background: #f6f6f6;
+  padding: 72px 24px 28px;
+  box-sizing: border-box;
+}
+
+/* Phone: tỉ lệ iPhone 393/852, scale vừa trên stage */
+.ad-showcase-detail .pv-phone {
+  height: min(82dvh, 780px);
+  max-height: 780px;
+  max-width: 360px;
+  border-width: 8px;
+  border-radius: 50px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.05),
+    0 18px 48px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.05),
+    inset 0 0 2px rgba(255, 255, 255, 0.05);
+}
+
+.ad-showcase-detail .pv-notch {
+  top: 7px;
+  width: 102px;
+  height: 30px;
+  border-radius: 15px;
+}
+
+.ad-showcase-detail .pv-screen {
+  border-radius: 42px;
+}
+
+.ad-showcase-detail .pv-home-bar {
+  bottom: 7px;
+  width: 120px;
+  height: 4px;
+}
+
+/* Desktop: ẩn Safari bar trong phone; stage light */
+.ad-showcase-detail.dv-mode-desktop .isp-bar {
+  display: none;
+}
+
+.ad-showcase-detail .dv-desktop {
+  background: #f6f6f6;
+  padding: 72px 40px 36px;
+}
+
+/*
+ * Display bezel + browser chrome (3 dots + URL).
+ * Outer lip #1a1a1a; chrome strip tối giản nằm trong bezel.
+ */
+.ad-showcase-detail .dv-desktop-window {
+  width: min(100%, 1040px);
+  height: min(74dvh, 700px);
+  padding: 9px;
+  background: #1a1a1a;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  /* Nội dung trong màn hình không bo — chỉ bezel ngoài bo */
+  --isp-radius: 0;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 18px 48px rgba(0, 0, 0, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.ad-showcase-detail .dv-desktop-chrome {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8px 10px 9px;
+  background: #1a1a1a;
+  border-bottom: 0;
+  border-radius: 0;
+}
+
+.ad-showcase-detail .dv-desktop-dot {
+  width: 10px;
+  height: 10px;
+}
+
+.ad-showcase-detail .dv-desktop-urlbar {
+  flex: 1;
+  margin-left: 8px;
+  padding: 5px 12px;
+  background: #2a2a2a;
+  border-radius: 6px;
+  font:
+    500 11px/1.2 'Outfit',
+    system-ui,
+    sans-serif;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+}
+
+.ad-showcase-detail .dv-desktop-content {
+  flex: 1;
+  min-height: 0;
+  border-radius: 0;
+  overflow: hidden;
+  background: #0b0b09;
+}
+
+/* Fixed ad trong desktop: không inherit bo góc phone */
+.ad-showcase-detail.dv-mode-desktop .isp-ad-fixed {
+  border-radius: 0 !important;
+}
+
+/* ── Not found ──────────────────────────────────────────────── */
+.ad-showcase-detail .pvx-notfound {
+  text-align: center;
+  font-family: var(--sans, 'Outfit', sans-serif);
+  padding: 24px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ad-showcase-detail .pvx-notfound-title {
+  font-family: var(--sans, 'Outfit', sans-serif);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #1a1a1a;
+  margin: 0 0 8px;
+}
+
+.ad-showcase-detail .pvx-notfound-sub {
+  font-size: 14px;
+  color: #6b6b6b;
+  margin: 0 0 24px;
+}
+
+.ad-showcase-detail .pvx-notfound-link {
+  display: inline-block;
+  padding: 10px 22px;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  color: #1a1a1a;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.12s ease;
+}
+
+.ad-showcase-detail .pvx-notfound-link:hover {
+  border-color: rgba(0, 0, 0, 0.16);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.ad-showcase-detail .pvx-notfound-link:active {
+  transform: scale(0.98);
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .ad-showcase-detail .pvx-chrome {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: 10px 12px;
+    padding: 12px 14px;
+  }
+
+  .ad-showcase-detail .pv-back {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .ad-showcase-detail .dv-toggle {
+    grid-row: 1;
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .ad-showcase-detail .pvx-chrome-title {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    justify-self: center;
+    max-width: 100%;
+    font-size: 12px;
+    color: #6b6b6b;
+    font-weight: 500;
+  }
+
+  .ad-showcase-detail .pv-page,
+  .ad-showcase-detail .dv-desktop {
+    padding-top: 84px;
+  }
+
+  .ad-showcase-detail .pv-phone {
+    height: min(78dvh, 700px);
+    max-height: 700px;
+    max-width: 324px;
+    border-radius: 46px;
+  }
+
+  .ad-showcase-detail .dv-desktop {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 24px;
+  }
+
+  .ad-showcase-detail .dv-desktop-window {
+    height: min(68dvh, 600px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad-showcase-root .dv-toggle-thumb {
+    transition: transform 0.01s linear;
+  }
+}
+
+@media (max-width: 500px) {
+  .ad-showcase-detail .pv-page {
+    /* Full-bleed phone: nền đen phía sau vẫn hợp lý khi khung tràn màn */
+    background: #000;
+    padding-top: 0;
+    padding: 0;
+  }
+
+  .ad-showcase-detail .pv-back {
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 130;
+    gap: 8px;
+    padding: 2px 0;
+    color: rgba(255, 255, 255, 0.72);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .ad-showcase-detail .pv-back-mark {
+    width: 26px;
+    height: 26px;
+    border-color: rgba(255, 255, 255, 0.22);
+    color: rgba(255, 255, 255, 0.88);
+    background: rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .ad-showcase-detail .pv-back:hover {
+    color: #ffffff;
+  }
+
+  .ad-showcase-detail .pv-back:hover .pv-back-mark {
+    color: #ffffff;
+    border-color: rgba(212, 175, 110, 0.55);
+    background: rgba(0, 0, 0, 0.42);
+  }
+
+  .ad-showcase-detail .pv-back-text::after {
+    background: var(--gold-bright, #d4af6e);
+  }
+
+  .ad-showcase-detail .pvx-chrome {
+    padding: 0;
+    pointer-events: none;
+  }
+
+  .ad-showcase-detail .pvx-chrome-title {
+    display: none;
+  }
+
+  .ad-showcase-detail .dv-toggle {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 130;
+  }
+
+  .ad-showcase-detail .dv-toggle-track {
+    background: rgba(0, 0, 0, 0.32);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .ad-showcase-detail .dv-toggle-btn {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .ad-showcase-detail .dv-toggle-btn:hover:not(.is-active) {
+    color: rgba(255, 255, 255, 0.82);
+  }
+
+  .ad-showcase-detail .dv-toggle-btn.is-active {
+    color: #1a1a1a;
+  }
+
+  .ad-showcase-detail .dv-toggle-thumb {
+    background: #f6f6f6;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  }
+}

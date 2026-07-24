@@ -7,10 +7,9 @@ import { useMemo } from 'react';
  *
  *  - mobile  → bọc children trong `.pv-phone-area + .pv-phone`
  *              (CSS dùng các class có sẵn trong preview.css — không cần thêm CSS).
- *  - desktop → bọc trong `.dv-desktop-window` (khung browser, định nghĩa ở device-toggle.css).
+ *  - desktop → bọc trong `.dv-desktop-window` (display bezel + chrome 3 dots / URL).
  *
  * Children nhận cùng 1 node — chỉ đổi khung bao quanh.
- * Hook mobile/desktop tùy chỉnh không được truyền props `desktopUrl`, `desktopTitle`.
  *
  * @param {Object} props
  * @param {'mobile'|'desktop'} props.device
@@ -18,7 +17,7 @@ import { useMemo } from 'react';
  * @param {string}             [props.desktopMaxWidth='1200px']
  * @param {string}             [props.desktopUrl]      - hiển thị trên URL bar (decorative)
  * @param {string}             [props.className]
- * @param {string}             [props.urlBarText]      - text URL bar; fallback desktopUrl hoặc 'About:blank'
+ * @param {string}             [props.urlBarText]      - text URL bar; fallback desktopUrl hoặc 'about:blank'
  */
 export default function DeviceFrame({
   device,
