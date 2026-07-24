@@ -98,6 +98,7 @@ const ORDERED_TYPES: BlockType[] = [
   'framer_perform_pricing',
   'housent_our_excellence',
   'framer_estancia_about_us',
+  'rolex_collection_project',
   // ── Projects / Gallery ───────────────────────────────────
   'framer_firma_template_strategy_digital',
   'framer_projects_grid',

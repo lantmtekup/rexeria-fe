@@ -77,6 +77,11 @@ import { readymagFooterDef } from './blocks/_registry/defs/readymagFooter';
 import { protectionScrollytellingDef } from './blocks/_registry/defs/protectionScrollytelling';
 import { framerFlatWhiteProcessDef } from './blocks/_registry/defs/framerFlatWhiteProcess';
 import { framerEstanciaAboutUsDef } from './blocks/_registry/defs/framerEstanciaAboutUs';
+import { rolexCollectionHeroDef } from './blocks/_registry/defs/rolexCollectionHero';
+import { rolexCollectionNavDef } from './blocks/_registry/defs/rolexCollectionNav';
+import { rolexContactDef } from './blocks/_registry/defs/rolexContact';
+import { rolexCollectionWorkDef } from './blocks/_registry/defs/rolexCollectionWork';
+import { rolexCollectionProjectDef } from './blocks/_registry/defs/rolexCollectionProject';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { springsContactFooterDef } from './blocks/_registry/defs/springsContactFooter';
 import { springsDesignDef } from './blocks/_registry/defs/springsDesign';
@@ -2493,6 +2498,11 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
     framerFirmaTemplateStrategyDigitalDef.defaultContent.vi,
   readymag_case_section: readymagCaseSectionDef.defaultContent.vi,
   framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.vi,
+  rolex_collection_hero: rolexCollectionHeroDef.defaultContent.vi,
+  rolex_collection_nav: rolexCollectionNavDef.defaultContent.vi,
+  rolex_collection_contact: rolexContactDef.defaultContent.vi,
+  rolex_collection_work: rolexCollectionWorkDef.defaultContent.vi,
+  rolex_collection_project: rolexCollectionProjectDef.defaultContent.vi,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
@@ -2680,6 +2690,11 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
     framerFirmaTemplateStrategyDigitalDef.defaultContent.en,
   readymag_case_section: readymagCaseSectionDef.defaultContent.en,
   framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.en,
+  rolex_collection_hero: rolexCollectionHeroDef.defaultContent.en,
+  rolex_collection_nav: rolexCollectionNavDef.defaultContent.en,
+  rolex_collection_contact: rolexContactDef.defaultContent.en,
+  rolex_collection_work: rolexCollectionWorkDef.defaultContent.en,
+  rolex_collection_project: rolexCollectionProjectDef.defaultContent.en,
 };
 
 function genId() {

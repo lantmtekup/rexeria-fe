@@ -127,6 +127,11 @@ import { coolHunterGalleryDef } from './defs/coolHunterGallery';
 import { coolHunterProductDef } from './defs/coolHunterProduct';
 import { coolHunterQuoteDef } from './defs/coolHunterQuote';
 import { coolHunterFooterDef } from './defs/coolHunterFooter';
+import { rolexCollectionHeroDef } from './defs/rolexCollectionHero';
+import { rolexCollectionNavDef } from './defs/rolexCollectionNav';
+import { rolexContactDef } from './defs/rolexContact';
+import { rolexCollectionWorkDef } from './defs/rolexCollectionWork';
+import { rolexCollectionProjectDef } from './defs/rolexCollectionProject';
 import type { BlockDef } from './types';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
@@ -250,6 +255,11 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
     framerFirmaTemplateStrategyDigitalDef as BlockDef,
   readymag_case_section: readymagCaseSectionDef as BlockDef,
   framer_estancia_about_us: framerEstanciaAboutUsDef as BlockDef,
+  rolex_collection_hero: rolexCollectionHeroDef as BlockDef,
+  rolex_collection_nav: rolexCollectionNavDef as BlockDef,
+  rolex_collection_contact: rolexContactDef as BlockDef,
+  rolex_collection_work: rolexCollectionWorkDef as BlockDef,
+  rolex_collection_project: rolexCollectionProjectDef as BlockDef,
 };
 
 export function getBlockDef(type: BlockType): BlockDef | undefined {

@@ -7,12 +7,12 @@ Allowlist of valid `data-motion` ids. Pick only from this file. Case pin /
 frame-scrub / Flip / mouse-parallax / carousel → T3 `useBlockMotion`
 (see `docs/landing-motion-foundation.md` §3b).
 
-Total effects: **25**
+Total effects: **27**
 
 ## Index by category
 
 - **entrance**: `blur-in`, `fade-down`, `fade-in`, `fade-up`, `flip-in`, `rotate-in`, `scale-in`, `scale-pop`, `slide-left`, `slide-right`, `zoom-in`
-- **text**: `char-reveal`, `echo-reveal`, `line-reveal`, `word-reveal`
+- **text**: `char-blur-up-reveal`, `char-reveal`, `echo-reveal`, `line-reveal`, `word-blur-up-reveal`, `word-reveal`
 - **scroll**: `line-draw`, `parallax`
 - **image**: `clip-reveal`, `media-zoom`
 - **hover**: `hover-lift`, `hover-scale`, `hover-tilt`, `hover-zoom`
@@ -21,7 +21,7 @@ Total effects: **25**
 
 ## Allowlist (all ids)
 
-`blur-in`, `char-reveal`, `clip-reveal`, `counter`, `echo-reveal`, `fade-down`, `fade-in`, `fade-up`, `flip-in`, `hover-lift`, `hover-scale`, `hover-tilt`, `hover-zoom`, `line-draw`, `line-reveal`, `marquee-loop`, `media-zoom`, `parallax`, `rotate-in`, `scale-in`, `scale-pop`, `slide-left`, `slide-right`, `word-reveal`, `zoom-in`
+`blur-in`, `char-blur-up-reveal`, `char-reveal`, `clip-reveal`, `counter`, `echo-reveal`, `fade-down`, `fade-in`, `fade-up`, `flip-in`, `hover-lift`, `hover-scale`, `hover-tilt`, `hover-zoom`, `line-draw`, `line-reveal`, `marquee-loop`, `media-zoom`, `parallax`, `rotate-in`, `scale-in`, `scale-pop`, `slide-left`, `slide-right`, `word-blur-up-reveal`, `word-reveal`, `zoom-in`
 
 ---
 
@@ -39,6 +39,20 @@ Total effects: **25**
 - defaults: trigger=in-view, duration=0.8, ease=power2.out, start=top 85%
 - example: `<img data-motion='blur-in' alt='' />`
 
+## `char-blur-up-reveal`
+
+- category: text
+- appliesTo: text
+- tags: text, split, chars, blur, translate, entrance
+- summary: Từng chữ cái dịch nhẹ theo trục y (px, không phải % qua mask) kèm mờ→nét cùng lúc, so le trái→phải.
+- whenToUse: Heading ngắn cần dịch chuyển NHẸ (khác char-reveal — đó là slide lớn qua mask) kết hợp blur trong 1 effect
+- whenNotToUse: Muốn slide lớn qua mask (yPercent) → char-reveal; Theo từ thay vì từng chữ → word-blur-up-reveal
+- vs: char-reveal — char-reveal trượt yPercent lớn qua mask, không blur; char-blur-up-reveal chỉ dịch y nhỏ (px); word-blur-up-reveal — cùng shape nhưng split theo từ
+- prerequisites: Chỉ gắn lên text node (heading/span có chữ)
+- relevantAttrs: duration, delay, ease, start, once, stagger, distance
+- defaults: trigger=in-view, duration=1.2, ease=power2.out, start=top 85%, stagger=0.05
+- example: `<h1 data-motion='char-blur-up-reveal'>SAY HELLO</h1>`
+
 ## `char-reveal`
 
 - category: text
@@ -47,7 +61,7 @@ Total effects: **25**
 - summary: Từng chữ cái trượt lên qua mask (SplitText chars + stagger).
 - whenToUse: Hero / section heading cần cinematic letter stagger; Tiêu đề ngắn–trung bình
 - whenNotToUse: Đoạn dài / body → fade-up hoặc line-reveal; Heading nhiều dòng muốn theo dòng → line-reveal; Muốn nhanh hơn theo từ → word-reveal
-- vs: word-reveal — stagger theo từ, nhanh hơn; line-reveal — stagger theo dòng; fade-up — cả khối, không split
+- vs: word-reveal — stagger theo từ, nhanh hơn; line-reveal — stagger theo dòng; fade-up — cả khối, không split; char-blur-up-reveal — char-blur-up-reveal dịch y nhỏ (px) + thêm blur, không phải slide lớn qua mask
 - prerequisites: Chỉ gắn lên text node (heading/span có chữ)
 - relevantAttrs: duration, delay, ease, start, once, stagger
 - defaults: trigger=in-view, duration=1.6, ease=power3.out, start=top 85%, stagger=0.06
@@ -347,6 +361,20 @@ Total effects: **25**
 - defaults: trigger=in-view, duration=0.6, ease=power2.out, start=top 85%
 - example: `<div data-motion='slide-right'>Panel</div>`
 
+## `word-blur-up-reveal`
+
+- category: text
+- appliesTo: text
+- tags: text, split, words, blur, translate, entrance
+- summary: Từng từ dịch nhẹ theo trục y (px, không phải % qua mask) kèm mờ→nét cùng lúc, so le theo thứ tự từ.
+- whenToUse: Đoạn mô tả/tiêu đề cần dịch chuyển NHẸ kết hợp blur trong 1 effect
+- whenNotToUse: Theo chữ thay vì theo từ → char-blur-up-reveal
+- vs: char-blur-up-reveal — cùng shape nhưng split theo chữ
+- prerequisites: Chỉ gắn lên text node
+- relevantAttrs: duration, delay, ease, start, once, stagger, distance
+- defaults: trigger=in-view, duration=1.2, ease=power2.out, start=top 85%, stagger=0.05
+- example: `<p data-motion='word-blur-up-reveal'>COSMOGRAPH DAYTONA</p>`
+
 ## `word-reveal`
 
 - category: text
@@ -371,6 +399,6 @@ Total effects: **25**
 - whenNotToUse: Soft card entrance → scale-in; Ảnh đã full-size, chỉ Ken Burns settle → media-zoom; Hover phóng ảnh → hover-zoom
 - vs: scale-in — scale nhẹ hơn (0.92); media-zoom — settle 1.18→1, không opacity; hover-zoom — chỉ khi hover, không entrance
 - prerequisites: (none)
-- relevantAttrs: duration, delay, ease, start, once
+- relevantAttrs: duration, delay, ease, start, once, distance
 - defaults: trigger=in-view, duration=0.8, ease=power2.out, start=top 85%
-- example: `<img data-motion='zoom-in' alt='' />`
+- example: `<img data-motion='zoom-in' data-motion-distance='0.85' alt='' />`
