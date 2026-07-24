@@ -21,6 +21,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface Props {
   content: FramerRealEstate02OverviewContent;
@@ -248,13 +249,7 @@ export function FramerRealEstate02Overview({
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
 
-  const [isCanvas, setIsCanvas] = React.useState(true);
-
-  React.useLayoutEffect(() => {
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, []);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const panoramaWrapRef = React.useRef<HTMLDivElement>(null);
   const panoramaTrackRef = React.useRef<HTMLDivElement>(null);

@@ -21,6 +21,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface Props {
   content: FramerRealEstate02CommuteContent;
@@ -293,13 +294,7 @@ export function FramerRealEstate02Commute({
   const row3ValueRef = React.useRef<HTMLParagraphElement>(null);
   const row3LabelRef = React.useRef<HTMLDivElement>(null);
 
-  const [isCanvas, setIsCanvas] = React.useState(true);
-
-  React.useLayoutEffect(() => {
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, []);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const styleOf = (key: string) =>
     composeStyle(
