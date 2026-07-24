@@ -11,6 +11,7 @@ import dynamic from 'next/dynamic';
 
 import type { LayerElement } from '../../../LayersPanel';
 import type { PnjVariantContent, PnjVariantItem } from '../../../types';
+import { resolvePnjVariantHighlights } from '../../pnjVariantContent';
 import type { BlockDef } from '../types';
 
 const VI_VARIANTS: PnjVariantItem[] = [
@@ -102,12 +103,18 @@ export const pnjVariantItemElements = (
         icon: Type,
         fieldType: 'textarea' as const,
       },
-      {
-        key: `variants[${i}].highlights`,
-        label: 'highlights',
+      ...resolvePnjVariantHighlights(v.highlights).map((_, hi) => ({
+        key: `variants[${i}].highlights[${hi}]`,
+        label: `highlight ${hi + 1}`,
         groupId,
         icon: ListChecks,
-        fieldType: 'textarea' as const,
+        fieldType: 'text' as const,
+      })),
+      {
+        key: `variants[${i}].highlights`,
+        label: 'quản lý highlights',
+        groupId,
+        icon: ListChecks,
       },
     ];
   });

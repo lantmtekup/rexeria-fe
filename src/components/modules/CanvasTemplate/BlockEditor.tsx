@@ -45,6 +45,14 @@ import {
   resolvePnjHeroTitleLines,
   setPnjHeroTitleLineAt,
 } from '@/components/modules/block-editor/blocks/pnjHeroTitleLines';
+import {
+  PNJ_VARIANT_HIGHLIGHTS_KEY_RE,
+  PNJ_VARIANT_HIGHLIGHT_ITEM_KEY_RE,
+  resolvePnjVariantHighlights,
+  resolvePnjVariants,
+  setPnjVariantHighlightItemAt,
+  setPnjVariantHighlightsAt,
+} from '@/components/modules/block-editor/blocks/pnjVariantContent';
 import { createBlock } from '@/components/modules/block-editor/factory';
 import {
   parseCanvas,
@@ -62,6 +70,7 @@ import {
   type ExtraElementKind,
   type PnjDetailsContent,
   type PnjHeroContent,
+  type PnjVariantContent,
 } from '@/components/modules/block-editor/types';
 import {
   bringToFront,
@@ -910,6 +919,10 @@ export function BlockEditor({
     const currentRecord = current as Record<string, unknown>;
     const paraMatch = key.match(PNJ_PARAGRAPH_KEY_RE);
     const titleLineMatch = key.match(PNJ_HERO_TITLE_LINE_KEY_RE);
+    const variantHighlightsMatch = key.match(PNJ_VARIANT_HIGHLIGHTS_KEY_RE);
+    const variantHighlightItemMatch = key.match(
+      PNJ_VARIANT_HIGHLIGHT_ITEM_KEY_RE
+    );
     const currentValue = paraMatch
       ? (resolvePnjParagraphs(
           current as PnjDetailsContent & {
@@ -921,7 +934,15 @@ export function BlockEditor({
         ? (resolvePnjHeroTitleLines(current as PnjHeroContent)[
             Number(titleLineMatch[1])
           ] ?? '')
-        : getContentAt(currentRecord, key);
+        : variantHighlightsMatch
+          ? resolvePnjVariantHighlights(getContentAt(currentRecord, key)).join(
+              '\n'
+            )
+          : variantHighlightItemMatch
+            ? (resolvePnjVariants(current as PnjVariantContent)[
+                Number(variantHighlightItemMatch[1])
+              ]?.highlights[Number(variantHighlightItemMatch[2])] ?? '')
+            : getContentAt(currentRecord, key);
     if (currentValue === value) {
       selection.endInlineEdit();
       return;
@@ -946,6 +967,19 @@ export function BlockEditor({
         nextContent = setPnjHeroTitleLineAt(
           baseContent as PnjHeroContent,
           Number(titleLineMatch[1]),
+          value
+        ) as BlockContent;
+      } else if (variantHighlightItemMatch) {
+        nextContent = setPnjVariantHighlightItemAt(
+          baseContent as PnjVariantContent,
+          Number(variantHighlightItemMatch[1]),
+          Number(variantHighlightItemMatch[2]),
+          value
+        ) as BlockContent;
+      } else if (variantHighlightsMatch) {
+        nextContent = setPnjVariantHighlightsAt(
+          baseContent as PnjVariantContent,
+          Number(variantHighlightsMatch[1]),
           value
         ) as BlockContent;
       } else {

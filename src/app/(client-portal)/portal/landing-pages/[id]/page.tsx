@@ -26,6 +26,7 @@ import { CodeTemplatePageEditor } from '@/components/modules/Template/CodeTempla
 import { BlockEditor } from '@/components/modules/CanvasTemplate/BlockEditor';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
+import { resolveTemplateFromVersionId } from '@/services/rexer/resolveTemplateFromVersion';
 import type { Page, Template } from '@/services/rexer/types';
 import { getCodeTemplate } from '@/templates/registry';
 
@@ -61,9 +62,16 @@ export default function PortalLandingEditorPage() {
   >(undefined);
   const [error, setError] = React.useState<string | null>(null);
 
+  const resolvedForRawIdRef = React.useRef<string | null>(null);
+
   React.useEffect(() => {
     if (!rawId) return;
     let cancelled = false;
+
+    if (resolvedForRawIdRef.current === rawId && templateId) {
+      return;
+    }
+
     setError(null);
     setTemplateId(null);
     setResolvedTemplate(null);
@@ -94,6 +102,7 @@ export default function PortalLandingEditorPage() {
             try {
               const tplRes = await rexerApi.templates.get(rawId);
               if (cancelled) return;
+              resolvedForRawIdRef.current = rawId;
               setTemplateId(tplRes.template.id);
               return;
             } catch (tplErr) {
@@ -122,28 +131,9 @@ export default function PortalLandingEditorPage() {
           throw new Error('Page không có template_version_id');
         }
 
-        // version_id → template_id: fan-out versions() tìm template chứa version.
-        const templates = await rexerApi.templates.list({ limit: 500 });
-        const items = templates.items ?? [];
-        const matches = await Promise.all(
-          items.map(async tpl => {
-            if (tpl.current_version_id === versionId) return tpl;
-            try {
-              const vl = await rexerApi.templates.versions(tpl.id);
-              const has = (vl.items ?? []).some(v => v.id === versionId);
-              return has ? tpl : null;
-            } catch {
-              return null;
-            }
-          })
-        );
-        const tpl = matches.find(Boolean) ?? null;
+        const tpl = await resolveTemplateFromVersionId(versionId);
         if (cancelled) return;
-        if (!tpl) {
-          throw new Error(
-            `template_version_id "${versionId}" không thuộc template nào (đã probe ${items.length} templates)`
-          );
-        }
+        resolvedForRawIdRef.current = rawId;
         setTemplateId(tpl.id);
         setResolvedTemplate(tpl);
       } catch (err) {
@@ -153,6 +143,7 @@ export default function PortalLandingEditorPage() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawId]);
 
   const backBar = (

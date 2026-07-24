@@ -19,6 +19,7 @@ export type ElementKind =
   | 'pnjParagraphs'
   | 'pnjTitleLines'
   | 'pnjVariants'
+  | 'pnjVariantHighlights'
   | 'pnjStickyMenuItems'
   | 'mintV2ServicesItems'
   | 'mintV2ProcessSteps'
@@ -153,6 +154,13 @@ export function resolveKind(
   if (key === 'variants' && blockType === 'pnj_variant') {
     return 'pnjVariants';
   }
+  // PNJ variant highlights list — chặn trước fallback text (không ghi string đè mảng).
+  if (
+    /^variants\[\d+\]\.highlights$/.test(key) &&
+    blockType === 'pnj_variant'
+  ) {
+    return 'pnjVariantHighlights';
+  }
   // Delvaux color swatches vs Mint/PNJ variants — cùng key `variants`.
   if (key === 'variants' && blockType === 'delvaux_variant') {
     return 'delvauxVariants';
@@ -284,9 +292,10 @@ export function resolveKind(
   if (/^paragraphs\[\d+\]$/.test(key)) return 'text';
   // Nested PNJ hero title lines: titleLines[0] → text.
   if (/^titleLines\[\d+\]$/.test(key)) return 'text';
-  // Nested variant fields: variants[0].label / .desc / .highlights → text
+  // Nested variant fields: variants[0].label / .desc → text; highlights[i] → text.
   if (/^variants\[\d+\]\.image$/.test(key)) return 'image';
-  if (/^variants\[\d+\]\.(label|desc|highlights)$/.test(key)) return 'text';
+  if (/^variants\[\d+\]\.(label|desc)$/.test(key)) return 'text';
+  if (/^variants\[\d+\]\.highlights\[\d+\]$/.test(key)) return 'text';
   // Vault collection coin fields: coins[0].image → image; name/price/metal/weight → text
   if (/^coins\[\d+\]\.image$/.test(key)) return 'image';
   if (/^coins\[\d+\]\.(name|price|metal|weight)$/.test(key)) return 'text';
@@ -647,9 +656,17 @@ export function resolveElementMeta(
   const vHl = key.match(/^variants\[(\d+)\]\.highlights$/);
   if (vHl && blockType === 'pnj_variant') {
     return {
-      kind: 'text',
-      fieldType: 'textarea',
+      kind: 'pnjVariantHighlights',
+      fieldType: undefined,
       label: `Highlights góc ${Number(vHl[1]) + 1}`,
+    };
+  }
+  const vHlItem = key.match(/^variants\[(\d+)\]\.highlights\[(\d+)\]$/);
+  if (vHlItem && blockType === 'pnj_variant') {
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Highlight ${Number(vHlItem[2]) + 1} · góc ${Number(vHlItem[1]) + 1}`,
     };
   }
   const navLabel = key.match(/^items\[(\d+)\]\.label$/);

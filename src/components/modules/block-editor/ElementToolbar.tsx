@@ -61,6 +61,13 @@ import {
   resolvePnjHeroTitleLines,
   setPnjHeroTitleLineAt,
 } from './blocks/pnjHeroTitleLines';
+import {
+  PNJ_VARIANT_HIGHLIGHTS_KEY_RE,
+  PNJ_VARIANT_HIGHLIGHT_ITEM_KEY_RE,
+  resolvePnjVariantHighlights,
+  resolvePnjVariants,
+  setPnjVariantHighlightItemAt,
+} from './blocks/pnjVariantContent';
 import { buildAiPrompt } from './buildAiPrompt';
 import { ImagePicker } from './ImagePicker';
 import { getContentAt, setContentAt } from './contentPath';
@@ -555,6 +562,15 @@ export function ElementToolbar({
             onContentChange={onContentChange}
           />
         )}
+        {kind === 'pnjVariantHighlights' && (
+          <PnjVariantHighlightsControls
+            variantIndex={Number(
+              selectedKey.match(PNJ_VARIANT_HIGHLIGHTS_KEY_RE)?.[1] ?? 0
+            )}
+            content={content as PnjVariantContent}
+            onContentChange={onContentChange}
+          />
+        )}
         {kind === 'pnjStickyMenuItems' && (
           <PnjStickyMenuItemsControls
             content={content as PnjStickyMenuContent}
@@ -653,7 +669,7 @@ function TextControls({
   const paraIndex = paraMatch ? Number(paraMatch[1]) : -1;
   const titleLineMatch = fieldKey.match(PNJ_HERO_TITLE_LINE_KEY_RE);
   const titleLineIndex = titleLineMatch ? Number(titleLineMatch[1]) : -1;
-  const highlightsMatch = fieldKey.match(/^variants\[(\d+)\]\.highlights$/);
+  const highlightItemMatch = fieldKey.match(PNJ_VARIANT_HIGHLIGHT_ITEM_KEY_RE);
   const rawAt = getContentAt(c, fieldKey);
   const value = paraMatch
     ? (resolvePnjParagraphs(
@@ -665,12 +681,10 @@ function TextControls({
     : titleLineMatch
       ? (resolvePnjHeroTitleLines(content as PnjHeroContent)[titleLineIndex] ??
         '')
-      : highlightsMatch
-        ? Array.isArray(rawAt)
-          ? (rawAt as string[]).join('\n')
-          : typeof rawAt === 'string'
-            ? rawAt
-            : ''
+      : highlightItemMatch
+        ? (resolvePnjVariants(content as PnjVariantContent)[
+            Number(highlightItemMatch[1])
+          ]?.highlights[Number(highlightItemMatch[2])] ?? '')
         : typeof rawAt === 'string'
           ? rawAt
           : '';
@@ -678,8 +692,7 @@ function TextControls({
     multiline ??
     (fieldKey === 'description' ||
       fieldKey === 'subtitle' ||
-      fieldKey === 'noteText' ||
-      !!highlightsMatch);
+      fieldKey === 'noteText');
   const fontSize = style?.fontSize ?? '';
 
   const setField = (next: string) => {
@@ -710,13 +723,19 @@ function TextControls({
       );
       return;
     }
-    // highlights: textarea → string[] (mỗi dòng 1 mục)
-    const writeValue: unknown = highlightsMatch
-      ? next
-          .split('\n')
-          .map(s => s.trim())
-          .filter(Boolean)
-      : next;
+    if (highlightItemMatch) {
+      onContentChange(
+        prev =>
+          setPnjVariantHighlightItemAt(
+            prev as PnjVariantContent,
+            Number(highlightItemMatch[1]),
+            Number(highlightItemMatch[2]),
+            next
+          ) as BlockContent
+      );
+      return;
+    }
+    const writeValue: unknown = next;
     onContentChange(
       prev =>
         setContentAt(
@@ -2216,6 +2235,113 @@ function PnjTitleLinesControls({
   );
 }
 
+// ─────────────────────────────────────────── PNJ VARIANT HIGHLIGHTS
+
+function PnjVariantHighlightFields({
+  highlights,
+  onChange,
+  onAdd,
+  onRemove,
+}: {
+  highlights: string[];
+  onChange: (index: number, value: string) => void;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+}) {
+  const list = highlights.length > 0 ? highlights : [''];
+
+  return (
+    <div className='flex flex-col gap-1.5'>
+      {list.map((item, hi) => (
+        <div key={`hl-${hi}`} className='flex items-center gap-2'>
+          <Input
+            value={item}
+            onChange={e => onChange(hi, e.target.value)}
+            placeholder={`Highlight ${hi + 1}`}
+            className='h-8 border-neutral-200 bg-white text-xs'
+          />
+          <button
+            type='button'
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              onRemove(hi);
+            }}
+            aria-label={`Xoá highlight ${hi + 1}`}
+            className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+          >
+            <Trash2 className='size-3.5' />
+          </button>
+        </div>
+      ))}
+      <AddRow onAdd={onAdd} label='Thêm highlight' />
+    </div>
+  );
+}
+
+function PnjVariantHighlightsControls({
+  variantIndex,
+  content,
+  onContentChange,
+}: {
+  variantIndex: number;
+  content: PnjVariantContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const variants = resolvePnjVariants(content);
+  const highlights = variants[variantIndex]?.highlights ?? [];
+
+  const write = (updater: (list: string[]) => string[]) => {
+    onContentChange(prev => {
+      const list = [...resolvePnjVariants(prev as PnjVariantContent)];
+      while (list.length <= variantIndex) {
+        list.push({
+          key: `v_${list.length}`,
+          label: '',
+          desc: '',
+          image: '',
+          highlights: [],
+        });
+      }
+      list[variantIndex] = {
+        ...list[variantIndex],
+        highlights: updater(
+          resolvePnjVariantHighlights(list[variantIndex].highlights)
+        ),
+      };
+      return { ...(prev as PnjVariantContent), variants: list } as BlockContent;
+    });
+  };
+
+  const update = (i: number, value: string) =>
+    write(items => items.map((h, idx) => (idx === i ? value : h)));
+  const remove = (i: number) => {
+    if (highlights.length <= 1) {
+      toast.error('Cần ít nhất 1 highlight');
+      return;
+    }
+    write(items => items.filter((_, idx) => idx !== i));
+  };
+  const add = () => write(items => [...items, 'Highlight mới']);
+
+  return (
+    <PopoverTrigger
+      label='Highlights'
+      preview={`${highlights.length} mục`}
+      width={420}
+    >
+      <PnjVariantHighlightFields
+        highlights={highlights}
+        onChange={update}
+        onAdd={add}
+        onRemove={remove}
+      />
+    </PopoverTrigger>
+  );
+}
+
 // ─────────────────────────────────────────── PNJ VARIANT CHAPTERS
 
 function PnjVariantsControls({
@@ -2227,14 +2353,14 @@ function PnjVariantsControls({
     next: BlockContent | ((prev: BlockContent) => BlockContent)
   ) => void;
 }) {
-  const variants = content.variants ?? [];
+  const variants = resolvePnjVariants(content);
 
   const write = (updater: (list: PnjVariantItem[]) => PnjVariantItem[]) => {
     onContentChange(prev => {
       const c = prev as PnjVariantContent;
       return {
         ...c,
-        variants: updater([...(c.variants ?? [])]),
+        variants: updater(resolvePnjVariants(c)),
       } as BlockContent;
     });
   };
@@ -2306,18 +2432,33 @@ function PnjVariantsControls({
               placeholder='URL ảnh'
               className='h-8 border-neutral-200 bg-white text-xs'
             />
-            <Textarea
-              value={(v.highlights ?? []).join('\n')}
-              onChange={e =>
+            <PnjVariantHighlightFields
+              highlights={resolvePnjVariantHighlights(v.highlights)}
+              onChange={(hi, value) =>
                 update(i, {
-                  highlights: e.target.value
-                    .split('\n')
-                    .map(s => s.trim())
-                    .filter(Boolean),
+                  highlights: resolvePnjVariantHighlights(v.highlights).map(
+                    (h, idx) => (idx === hi ? value : h)
+                  ),
                 })
               }
-              placeholder='Highlights — mỗi dòng 1 mục'
-              className='field-sizing-fixed min-h-14 resize-y overflow-y-auto border-neutral-200 bg-white text-xs'
+              onAdd={() =>
+                update(i, {
+                  highlights: [
+                    ...resolvePnjVariantHighlights(v.highlights),
+                    'Highlight mới',
+                  ],
+                })
+              }
+              onRemove={hi => {
+                const current = resolvePnjVariantHighlights(v.highlights);
+                if (current.length <= 1) {
+                  toast.error('Cần ít nhất 1 highlight');
+                  return;
+                }
+                update(i, {
+                  highlights: current.filter((_, idx) => idx !== hi),
+                });
+              }}
             />
           </div>
         ))}
