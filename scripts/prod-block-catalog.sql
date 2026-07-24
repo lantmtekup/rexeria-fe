@@ -27,6 +27,11 @@ FROM unnest(ARRAY[
   'mint_vault_hero',
   'mint_vault_craft',
   'mint_vault_reveal',
+  'framer_aestha_editorial',
+  'aestha_studio',
+  'aestha_explore',
+  'aestha_project',
+  'aestha_contact',
   'mint_vault_collection',
   'mint_vault_invitation'
 ]::text[]) AS code

@@ -54,7 +54,7 @@ spec.md (framer-recon, ideally --cdp)
    ↓
 [5] Register — Path A: 1 def + registry line.  Path B: factory + renderBlock + LayersPanel + AddBlockDialog
    ↓
-[6] BE seed: 1 `blocks` row (scope=system) for the new type_code, else version commit → 400
+[6] BE seed: `node scripts/seed-block-surfaces.mjs <type_code>` — run it now, else version commit → 400
    ↓
 [7] Verify: tsc clean → editor canvas (select/edit element) → /p[id] (scroll entrance plays)
 ```
@@ -146,7 +146,14 @@ See `references/gsap-motion-contract.md` for the full contract. The short form:
 
 ## Step 6 — BE seed
 
-rexerai BE is **Go + Postgres** (no Supabase, no client-side migration). A new `type_code` needs **one seed `blocks` row at scope `system`**, or committing a version returns `400 unknown block type`. This is a BE task (repo read-only — see project memory `be-readonly-policy`). Until seeded, the block still **previews** in the editor and renders on `/p`, but you can't commit a version with it.
+rexerai BE is **Go + Postgres** (no Supabase, no client-side migration). A new `type_code` needs **one seed `blocks` row at scope `system` with `supported_surfaces` set**, or committing a version returns `400 ... does not support surface ... (supports [])`. Run it — this is **not** a BE-only task to defer, it's a one-liner from this repo, no DB DSN needed:
+
+```
+REXER_ADMIN_EMAIL=<admin> REXER_ADMIN_PASSWORD=<pass> \
+  node scripts/seed-block-surfaces.mjs <type_code>
+```
+
+Then mirror the `type_code` into `scripts/prod-block-catalog.sql`'s `INSERT` array so other environments seeded from that SQL file stay in sync. Until seeded, the block still **previews** in the editor and renders on `/p`, but you can't commit a version with it — this makes the gap easy to miss during dev and easy to ship. (Incident: `feat: implement aestha page` shipped 5 new type_codes without this step; every page using them 400'd on Save Version until fixed retroactively.)
 
 ## Step 7 — Verify
 

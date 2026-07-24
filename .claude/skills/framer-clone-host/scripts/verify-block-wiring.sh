@@ -2,7 +2,8 @@
 #
 # Verify a rexerai native block is wired into every touchpoint.
 # rexerai BE is Go+Postgres — there is NO Supabase RPC / DB call here.
-# The BE `type_code` seed (scope=system) is a separate BE-side task.
+# The BE `type_code` seed (scope=system) is runnable from THIS repo via
+# `node scripts/seed-block-surfaces.mjs <type_code>` — do it now, don't defer.
 #
 # Usage (run from repo root):
 #   bash .claude/skills/framer-clone-host/scripts/verify-block-wiring.sh <type_code> <ComponentName>
@@ -74,6 +75,8 @@ chk "AddBlockDialog ORDERED_TYPES"   "$BE/AddBlockDialog.tsx" "$TYPE"
 
 echo
 echo "pass=$pass fail=$fail"
-echo "Reminder: BE must seed 1 'blocks' row (scope=system) for '$TYPE' or version-commit → 400."
+echo "⚠️  RUN NOW (not later): node scripts/seed-block-surfaces.mjs $TYPE"
+echo "    Skipping this = 'Save Version' 400s the first time anyone uses '$TYPE' on a page."
+echo "    Then mirror '$TYPE' into scripts/prod-block-catalog.sql's INSERT array."
 echo "Next: npx tsc --noEmit  → open editor canvas  → check /p/[id] scroll entrance."
 [[ $fail -eq 0 ]]
