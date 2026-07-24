@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans:
+    var(--font-cormorant), ui-serif, Georgia, 'Times New Roman', serif;
+}
+
+/* Prefer GSAP ScrollTo for CTA scrolls. Keep native smooth off the root —
+   it fights ScrollToPlugin and makes repeat EXPLORE clicks feel sticky. */
