@@ -100,6 +100,9 @@ export type BlockType =
   | 'pnj_header'
   | 'pnj_sticky_menu'
   | 'pnj_cta'
+  // ── The Grand (Masterise) — port từ apps/the-grand ──
+  | 'the_grand_intro'
+  | 'the_grand_location'
   // ── Mintcoin-v2 sections ──
   | 'mintv2_emblem'
   | 'mintv2_services'
@@ -675,6 +678,41 @@ export interface PnjDetailsContent {
   title: string;
   /** Đoạn văn (thêm/xoá trong editor). */
   paragraphs: string[];
+}
+
+/**
+ * The Grand · Intro — section editorial nền nâu (heading + description căn giữa,
+ * tượng sư tử neo đáy). Port từ apps/the-grand Intro.
+ */
+export interface TheGrandIntroContent {
+  heading: string;
+  description: string;
+  /** Ảnh tượng neo đáy giữa. */
+  imageUrl: string;
+  imageAlt: string;
+}
+
+/** 1 địa điểm của section The Grand · Location (item trái ↔ card phải). */
+export interface TheGrandLocationItem {
+  /** Text hiển thị bên trái + tiêu đề card bên phải. */
+  label: string;
+  imageUrl: string;
+  imageAlt?: string;
+  description: string;
+  /** Con số nổi bật, vd '1' hoặc khoảng '3-50'. */
+  statValue: string;
+  /** Đơn vị, vd 'Phút đi xe'. */
+  statUnit: string;
+}
+
+/**
+ * The Grand · Location — section "Vị Trí Độc Tôn": aside trái (heading + danh
+ * sách địa điểm bấm được) ghim đứng yên, cột phải trượt qua từng card khi cuộn.
+ * Port từ apps/the-grand Location.
+ */
+export interface TheGrandLocationContent {
+  heading: string;
+  items: TheGrandLocationItem[];
 }
 
 /** Một góc nhìn sản phẩm trong PNJ · Variant. */
@@ -3180,6 +3218,8 @@ export type BlockContent =
   | PnjHeaderContent
   | PnjStickyMenuContent
   | PnjCtaContent
+  | TheGrandIntroContent
+  | TheGrandLocationContent
   | MintV2EmblemContent
   | MintV2ServicesContent
   | MintV2ManifestoContent
@@ -4306,6 +4346,42 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'section CTA tối cuối trang PNJ: tiêu đề + mô tả + form email/phone/note + nút đăng ký',
     aiLabelEn:
       'PNJ closing CTA section: dark form with title, copy and email/phone/note register form',
+  },
+  the_grand_intro: {
+    type: 'the_grand_intro',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['the-grand', 'intro', 'editorial', 'masterise'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-24',
+    label: 'The Grand · Intro',
+    accent: '#5a3d29',
+    adminLabel: 'The Grand Intro',
+    gradient: 'from-amber-900 to-stone-900',
+    defaultName: 'The Grand Intro',
+    aiLabelVi:
+      'section giới thiệu The Grand: nền nâu gradient, tiêu đề serif + mô tả căn giữa, tượng sư tử neo đáy, entrance fade-up',
+    aiLabelEn:
+      'The Grand intro section: brown gradient backdrop, centered serif title + copy, bottom sculpture, fade-up entrance',
+  },
+  the_grand_location: {
+    type: 'the_grand_location',
+    category: 'location',
+    style: 'luxury',
+    tags: ['the-grand', 'location', 'sticky', 'scrub', 'masterise'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-24',
+    label: 'The Grand · Location',
+    accent: '#0f0b08',
+    adminLabel: 'The Grand Location',
+    gradient: 'from-stone-900 to-amber-950',
+    defaultName: 'The Grand Location',
+    aiLabelVi:
+      'section vị trí The Grand: nền nâu đậm, aside trái ghim (tiêu đề + danh sách địa điểm bấm được), cột phải sticky trượt qua từng card 60% ảnh / 40% info khi cuộn',
+    aiLabelEn:
+      'The Grand location section: dark brown backdrop, pinned left aside (title + clickable place list), right sticky column scrubbing through cards (60% image / 40% info) on scroll',
   },
   mintv2_emblem: {
     type: 'mintv2_emblem',

@@ -33,6 +33,8 @@ import { pnjVariantDef } from './blocks/_registry/defs/pnjVariant';
 import { pnjHeaderDef } from './blocks/_registry/defs/pnjHeader';
 import { pnjStickyMenuDef } from './blocks/_registry/defs/pnjStickyMenu';
 import { pnjCtaDef } from './blocks/_registry/defs/pnjCta';
+import { theGrandIntroDef } from './blocks/_registry/defs/theGrandIntro';
+import { theGrandLocationDef } from './blocks/_registry/defs/theGrandLocation';
 import { housentStatsDef } from './blocks/_registry/defs/housentStats';
 import { housentListingsDef } from './blocks/_registry/defs/housentListings';
 import { housentCtaDef } from './blocks/_registry/defs/housentCta';
@@ -2179,6 +2181,8 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   pnj_header: pnjHeaderDef.defaultContent.vi,
   pnj_sticky_menu: pnjStickyMenuDef.defaultContent.vi,
   pnj_cta: pnjCtaDef.defaultContent.vi,
+  the_grand_intro: theGrandIntroDef.defaultContent.vi,
+  the_grand_location: theGrandLocationDef.defaultContent.vi,
   mintv2_emblem: MINTV2_EMBLEM_VI,
   mintv2_services: MINTV2_SERVICES_VI,
   mintv2_manifesto: MINTV2_MANIFESTO_VI,
@@ -2371,6 +2375,8 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   pnj_header: pnjHeaderDef.defaultContent.en,
   pnj_sticky_menu: pnjStickyMenuDef.defaultContent.en,
   pnj_cta: pnjCtaDef.defaultContent.en,
+  the_grand_intro: theGrandIntroDef.defaultContent.en,
+  the_grand_location: theGrandLocationDef.defaultContent.en,
   mintv2_emblem: MINTV2_EMBLEM_VI,
   mintv2_services: MINTV2_SERVICES_VI,
   mintv2_manifesto: MINTV2_MANIFESTO_VI,

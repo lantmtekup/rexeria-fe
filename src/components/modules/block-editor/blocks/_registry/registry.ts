@@ -119,6 +119,8 @@ import { pnjVariantDef } from './defs/pnjVariant';
 import { pnjHeaderDef } from './defs/pnjHeader';
 import { pnjStickyMenuDef } from './defs/pnjStickyMenu';
 import { pnjCtaDef } from './defs/pnjCta';
+import { theGrandIntroDef } from './defs/theGrandIntro';
+import { theGrandLocationDef } from './defs/theGrandLocation';
 import { mintDiscoverDef } from './defs/mintDiscover';
 import { mintV2ProcessDef } from './defs/mintV2Process';
 import { mintV2ServicesDef } from './defs/mintV2Services';
@@ -151,6 +153,8 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   pnj_header: pnjHeaderDef as BlockDef,
   pnj_sticky_menu: pnjStickyMenuDef as BlockDef,
   pnj_cta: pnjCtaDef as BlockDef,
+  the_grand_intro: theGrandIntroDef as BlockDef,
+  the_grand_location: theGrandLocationDef as BlockDef,
   mint_discover: mintDiscoverDef as BlockDef,
   mintv2_services: mintV2ServicesDef as BlockDef,
   mintv2_process: mintV2ProcessDef as BlockDef,

@@ -169,6 +169,7 @@ const STICKY_SCROLL_BLOCK_TYPES = new Set<Block['blockType']>([
   'housent_our_excellence',
   'readymag_case_section',
   'scroll_mattis',
+  'the_grand_location',
   'pnj_variant',
   'pnj_details',
   'mint_discover',

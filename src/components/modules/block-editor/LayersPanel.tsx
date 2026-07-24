@@ -64,6 +64,8 @@ import { realEstateOverviewStatElements } from './blocks/_registry/defs/realEsta
 import { realEstateUtilityItemElements } from './blocks/_registry/defs/realEstateUtilities';
 import { realEstateVillaSlideElements } from './blocks/_registry/defs/realEstateVilla';
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
+import { theGrandLocationItemElements } from './blocks/_registry/defs/theGrandLocation';
+import { resolveTheGrandLocationItems } from './blocks/theGrandLocationContent';
 import { delvauxProductHotspotElements } from './blocks/_registry/defs/delvauxProduct';
 import {
   delvauxFaqElements,
@@ -115,6 +117,7 @@ import {
   type AesthaExploreProject,
   type PnjHeroContent,
   type PnjVariantContent,
+  type TheGrandLocationContent,
   type PnjStickyMenuItem,
   type RealEstateHeroStat,
   type RealEstateOverviewStat,
@@ -872,6 +875,16 @@ export function elementsForType(
         icon: ListChecks,
       },
       { key: 'ctaText', label: 'CTA', icon: Type, fieldType: 'text' },
+    ];
+  }
+  if (type === 'the_grand_location') {
+    const items = resolveTheGrandLocationItems(
+      (content ?? {}) as unknown as TheGrandLocationContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      ...theGrandLocationItemElements(items),
     ];
   }
   if (type === 'delvaux_product') {

@@ -360,6 +360,13 @@ export function resolveKind(
   }
   // Real Estate điểm nổi trội: mỗi card là ảnh + số thứ tự + một dòng chữ.
   // Phải chặn TRƯỚC các fallback `items[i].*` chung ngay bên dưới.
+  // The Grand · Location: mỗi địa điểm = nhãn / ảnh / mô tả / stat.
+  if (blockType === 'the_grand_location') {
+    if (/^items\[\d+\]\.imageUrl$/.test(key)) return 'image';
+    if (/^items\[\d+\]\.(label|description|statValue|statUnit)$/.test(key)) {
+      return 'text';
+    }
+  }
   if (blockType === 'real_estate_highlights') {
     if (/^items\[\d+\]\.imageUrl$/.test(key)) return 'image';
     if (/^items\[\d+\]\.(number|text)$/.test(key)) return 'text';
@@ -592,6 +599,19 @@ export function resolveLabel(
       reUtility[2] === 'label' ? 'Nội dung' : 'Icon'
     }`;
   }
+  const grandLoc = key.match(
+    /^items\[(\d+)\]\.(label|imageUrl|description|statValue|statUnit)$/
+  );
+  if (grandLoc && blockType === 'the_grand_location') {
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      imageUrl: 'Ảnh',
+      description: 'Mô tả',
+      statValue: 'Số liệu',
+      statUnit: 'Đơn vị',
+    };
+    return `Địa điểm ${Number(grandLoc[1]) + 1} · ${labels[grandLoc[2]] ?? grandLoc[2]}`;
+  }
   const navLabel = key.match(/^items\[(\d+)\]\.label$/);
   if (navLabel && blockType === 'mintv2_services') {
     return `Mục ${Number(navLabel[1]) + 1} · Nhãn`;
@@ -756,6 +776,29 @@ export function resolveElementMeta(
       kind: 'text',
       fieldType: 'text',
       label: `Coin ${Number(coinText[1]) + 1} · ${labels[coinText[2]] ?? coinText[2]}`,
+    };
+  }
+  const grandLocMeta = key.match(
+    /^items\[(\d+)\]\.(label|imageUrl|description|statValue|statUnit)$/
+  );
+  if (grandLocMeta && blockType === 'the_grand_location') {
+    const field = grandLocMeta[2];
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      imageUrl: 'Ảnh',
+      description: 'Mô tả',
+      statValue: 'Số liệu',
+      statUnit: 'Đơn vị',
+    };
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      fieldType:
+        field === 'imageUrl'
+          ? 'image'
+          : field === 'description'
+            ? 'textarea'
+            : 'text',
+      label: `Địa điểm ${Number(grandLocMeta[1]) + 1} · ${labels[field] ?? field}`,
     };
   }
   const craftImg = key.match(/^items\[(\d+)\]\.imageUrl$/);
