@@ -19,6 +19,7 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import gsap from 'gsap';
 
+import { isInternalPathLink } from '../links/linkToken';
 import { useLandingMotion } from '../motion/LandingMotion';
 import { isDeviceFrameHost, resolveDrawerPortalHost } from '../previewPortal';
 import { DELVAUX_FONT_BODY, DELVAUX_FONT_CSS } from './delvauxTheme';
@@ -148,6 +149,9 @@ export function DelvauxSubnav({
   }, [mounted, isCanvas, linkTargetsKey, scroller]);
 
   const handleScrollToTarget = (targetId: string) => (e: React.MouseEvent) => {
+    // A resolved internal page link is real navigation — let the browser take
+    // it instead of looking for an element with that id.
+    if (isInternalPathLink(targetId)) return;
     e.preventDefault();
     if (isCanvas) return;
     document
@@ -205,7 +209,11 @@ export function DelvauxSubnav({
           return (
             <a
               key={`${link.targetId}-${i}`}
-              href={`#${link.targetId}`}
+              href={
+                isInternalPathLink(link.targetId)
+                  ? link.targetId
+                  : `#${link.targetId}`
+              }
               data-element-key={labelKey}
               onClick={handleScrollToTarget(link.targetId)}
               className={selectableClass(

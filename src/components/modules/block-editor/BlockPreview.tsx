@@ -1,14 +1,18 @@
 'use client';
 
+import { LocateFixed } from 'lucide-react';
 import * as React from 'react';
 
 import { brandKitToCssVars, DEFAULT_PREVIEW_KIT } from '@/lib/brand-kit';
 import { cn } from '@/lib/cn';
 
 import { CanvasElementEditChip } from './CanvasElementEditChip';
+import { LinkNav } from './links/LinkNav';
 import { DEVICE_FRAME_WIDTH } from './deviceFrame';
 import { ExtraElementOverlay } from './ExtraElementOverlay';
 import { RenderBlock } from './blocks/renderBlock';
+import { isInspectorKind } from './inspector/kinds';
+import { SelectionToolbar } from './inspector/SelectionToolbar';
 import { LandingMotionRoot } from './motion/LandingMotion';
 import { MotionBlockRoot, MotionProvider } from './motion/runtime';
 import type { BlockMotion, EditorMode } from './motion/types';
@@ -16,6 +20,7 @@ import { isInlineTextKey, resolveElementMeta } from './resolveElementKind';
 import {
   readVariant,
   type Block,
+  type BlockBackground,
   type BlockContent,
   type Device,
   type Lang,
@@ -43,8 +48,21 @@ interface BlockPreviewProps {
     key: string,
     pos: { x: number; y: number }
   ) => void;
-  /** Patch active block content (image upload from canvas hover chip). */
-  onContentChange?: (next: BlockContent) => void;
+  /**
+   * Patch active block content — used by the canvas hover chip (image upload)
+   * and the floating selection toolbar (AI / delete), which needs the
+   * functional form to read the previous value.
+   */
+  onContentChange?: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+  /**
+   * Clear every style override on the selected element. Powers the floating
+   * selection toolbar's reset action.
+   */
+  onResetElementStyle?: () => void;
+  /** Replace the block-level background (selection toolbar delete on `__background__`). */
+  onUpdateBackground?: (next: BlockBackground | undefined) => void;
   /** Editor lifecycle for motion subsystem. Default 'edit' (no-op). */
   motionMode?: EditorMode;
   /**
@@ -88,12 +106,52 @@ const ZOOM_MAX = 200;
 const clampZoom = (n: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, n));
 
 /**
+ * Canvas surface padding — must mirror the `p-8 pb-20` classes on the surface
+ * element. `pb-20` clears the floating zoom bar. Both the fit-zoom math and
+ * the pan clamp measure against this padded box.
+ */
+const SURFACE_PAD_X = 64;
+const SURFACE_PAD_TOP = 32;
+const SURFACE_PAD_BOTTOM = 80;
+
+/**
+ * Free-drag guard: an element must keep at least this many (unscaled) px
+ * inside the device frame. Without it a drag can park content far outside the
+ * frame where it is invisible on canvas AND on `/p` — unrecoverable except by
+ * undo, which users rarely reach for after a few more edits.
+ */
+const DRAG_MIN_VISIBLE = 32;
+
+const clampTo = (v: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, v));
+
+/** Apply free-drag bounds when they exist; pass the raw value through when the
+ *  element was already outside the frame (bounds === null). */
+function clampDrag(
+  x: number,
+  y: number,
+  bounds: { minX: number; maxX: number; minY: number; maxY: number } | null
+) {
+  if (!bounds) return { x, y };
+  return {
+    x: clampTo(x, bounds.minX, bounds.maxX),
+    y: clampTo(y, bounds.minY, bounds.maxY),
+  };
+}
+
+/**
  * Block types that pin content with native `position: sticky` + viewport
  * (`dvh`) units instead of GSAP `pin` (docs/landing-motion-foundation.md §5).
  * `sticky` mis-measures inside a `transform: scale()` ancestor, so the
  * auto-fit-to-width zoom (which wraps the canvas in exactly that transform)
  * must not shrink these below 100% — otherwise the sticky stage renders
  * blank/misplaced in the editor even though `/p` always renders correctly.
+ *
+ * This is only a cheap PRE-FILTER: most of these blocks now fork on
+ * `useIsCanvasEdit` and drop the sticky stage on canvas (HeroScroll renders a
+ * flat 2×2 grid there), so forcing 100% just pushed a frame far wider than the
+ * viewport and made the initial view overflow. `hasStickyStage()` confirms
+ * against the real DOM before we give up on fitting.
  */
 const STICKY_SCROLL_BLOCK_TYPES = new Set<Block['blockType']>([
   'hero_scroll',
@@ -168,6 +226,8 @@ export function BlockPreview({
   fitRequestKey = 0,
   onCommitElementPosition,
   onContentChange,
+  onResetElementStyle,
+  onUpdateBackground,
   selectedExtraElementId = null,
   onSelectExtraElement,
   onCommitExtraElementPosition,
@@ -190,6 +250,11 @@ export function BlockPreview({
     | undefined;
   const effectiveMode: EditorMode = motionMode;
 
+  // Device frame element + its measured (unscaled) height. Declared up here
+  // because the pan clamp needs the content size.
+  const innerRef = React.useRef<HTMLDivElement>(null);
+  const [innerHeight, setInnerHeight] = React.useState<number>(0);
+
   // ── Canvas pan (Figma-style) ─────────────────────────────────────────
   const [pan, setPan] = React.useState({ x: 0, y: 0 });
   const [spaceHeld, setSpaceHeld] = React.useState(false);
@@ -201,6 +266,73 @@ export function BlockPreview({
     baseY: number;
     active: boolean;
   } | null>(null);
+
+  /**
+   * Keep the device frame inside the visible surface. The frame is centred by
+   * flex at `pan = 0`, so the reachable offset on each axis is half the
+   * difference between content and viewport — whichever is bigger. That covers
+   * both directions with one formula:
+   *
+   *   - content larger than viewport → pan until an edge lines up with the
+   *     viewport edge (this is how you scroll a tall block);
+   *   - content smaller → pan until the frame touches the viewport edge.
+   *
+   * Either way the frame can never be pushed fully out of sight, which used to
+   * strand users on an empty canvas with no way back except reloading.
+   */
+  const clampPan = React.useCallback(
+    (p: { x: number; y: number }) => {
+      const surface = surfaceRef.current;
+      if (!surface) return p;
+      // Overlay chrome (header/nav) is top-aligned with `pt-4`, everything
+      // else is vertically centred — the reachable range differs.
+      const topAligned = OVERLAY_TOP_BLOCK_TYPES.has(block.blockType);
+      const padTop = topAligned ? 16 : SURFACE_PAD_TOP;
+      const viewW = Math.max(0, surface.clientWidth - SURFACE_PAD_X);
+      const viewH = Math.max(
+        0,
+        surface.clientHeight - padTop - SURFACE_PAD_BOTTOM
+      );
+      const contentW = baseWidth * scale;
+      const contentH = innerHeight * scale;
+      const maxX = Math.abs(contentW - viewW) / 2;
+      // Height not measured yet (first paint) → don't allow vertical drift.
+      const slackY = contentH > 0 ? viewH - contentH : 0;
+      const [minY, maxY] = topAligned
+        ? [Math.min(0, slackY), Math.max(0, slackY)]
+        : [-Math.abs(slackY) / 2, Math.abs(slackY) / 2];
+      return {
+        x: clampTo(p.x, -maxX, maxX),
+        y: clampTo(p.y, minY, maxY),
+      };
+    },
+    [baseWidth, scale, innerHeight, block.blockType]
+  );
+  // Wheel/touch listeners are bound once with `[]` — they read the live clamp
+  // through this ref instead of re-binding on every zoom/resize.
+  const clampPanRef = React.useRef(clampPan);
+  clampPanRef.current = clampPan;
+
+  /** Clamp the current offset — after zoom out, device switch or resize the
+   *  previously-valid pan can fall outside the new bounds. */
+  const reclampPan = React.useCallback(() => {
+    setPan(p => {
+      const next = clampPan(p);
+      return next.x === p.x && next.y === p.y ? p : next;
+    });
+  }, [clampPan]);
+
+  React.useEffect(() => {
+    reclampPan();
+  }, [reclampPan]);
+
+  React.useEffect(() => {
+    const el = surfaceRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => reclampPan());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [reclampPan]);
 
   React.useEffect(() => {
     const isTypingTarget = (t: EventTarget | null) => {
@@ -290,7 +422,8 @@ export function BlockPreview({
       if (dx === 0 && dy === 0) return;
       e.preventDefault();
       const cur = panStateRef.current;
-      const next = { x: cur.x - dx, y: cur.y - dy };
+      const next = clampPanRef.current({ x: cur.x - dx, y: cur.y - dy });
+      if (next.x === cur.x && next.y === cur.y) return;
       panStateRef.current = next;
       setPan(next);
     };
@@ -338,10 +471,10 @@ export function BlockPreview({
       if (!touchPanRef.active || e.touches.length !== 2) return;
       e.preventDefault();
       const mid = midPoint(e.touches);
-      const next = {
+      const next = clampPanRef.current({
         x: touchPanRef.baseX + (mid.x - touchPanRef.startMidX),
         y: touchPanRef.baseY + (mid.y - touchPanRef.startMidY),
-      };
+      });
       panStateRef.current = next;
       setPan(next);
     };
@@ -380,6 +513,10 @@ export function BlockPreview({
     startClientY: number;
     baseX: number;
     baseY: number;
+    /** Allowed x/y range so the element keeps `DRAG_MIN_VISIBLE` px inside the
+     *  device frame. Null when the element already sits outside — clamping it
+     *  then would yank it back on the first pixel of drag. */
+    bounds: { minX: number; maxX: number; minY: number; maxY: number } | null;
     /** Set to true once the pointer has moved past the drag threshold. */
     active: boolean;
   } | null>(null);
@@ -565,10 +702,45 @@ export function BlockPreview({
       startClientY: e.clientY,
       baseX: base.x,
       baseY: base.y,
+      bounds: computeDragBounds(el, base),
       active: false,
     };
     surfaceRef.current?.setPointerCapture(e.pointerId);
   };
+
+  /**
+   * Translate "stay inside the frame" into the offset space the drag writes.
+   * `L`/`T` (element position relative to the frame) already include `base`,
+   * so the allowed offset is the base shifted by the slack on each side.
+   * Returns null when the element is currently outside the frame — an existing
+   * design may intentionally park something there, and clamping would move it.
+   */
+  function computeDragBounds(el: HTMLElement, base: { x: number; y: number }) {
+    const frame = innerRef.current;
+    if (!frame) return null;
+    const fr = frame.getBoundingClientRect();
+    const er = el.getBoundingClientRect();
+    const s = scale || 1;
+    if (er.width === 0 && er.height === 0) return null;
+    const L = (er.left - fr.left) / s;
+    const T = (er.top - fr.top) / s;
+    const W = er.width / s;
+    const H = er.height / s;
+    const frameW = baseWidth;
+    const frameH = innerHeight > 0 ? innerHeight : fr.height / s;
+    const bounds = {
+      minX: base.x + (DRAG_MIN_VISIBLE - W - L),
+      maxX: base.x + (frameW - DRAG_MIN_VISIBLE - L),
+      minY: base.y + (DRAG_MIN_VISIBLE - H - T),
+      maxY: base.y + (frameH - DRAG_MIN_VISIBLE - T),
+    };
+    const inside =
+      base.x >= bounds.minX &&
+      base.x <= bounds.maxX &&
+      base.y >= bounds.minY &&
+      base.y <= bounds.maxY;
+    return inside ? bounds : null;
+  }
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const p = panRef.current;
@@ -577,7 +749,7 @@ export function BlockPreview({
       const dy = e.clientY - p.startClientY;
       if (!p.active && Math.hypot(dx, dy) < 4) return;
       p.active = true;
-      setPan({ x: p.baseX + dx, y: p.baseY + dy });
+      setPan(clampPan({ x: p.baseX + dx, y: p.baseY + dy }));
       return;
     }
 
@@ -588,8 +760,11 @@ export function BlockPreview({
       if (!d.active && Math.hypot(dxRaw, dyRaw) < 4) return;
       d.active = true;
       const safeScale = scale || 1;
-      const x = d.baseX + dxRaw / safeScale;
-      const y = d.baseY + dyRaw / safeScale;
+      const { x, y } = clampDrag(
+        d.baseX + dxRaw / safeScale,
+        d.baseY + dyRaw / safeScale,
+        d.bounds
+      );
       // Direct DOM write — no React state during move. React's next render
       // (after pointerup → onCommitElementPosition) will land the same value
       // via positionStyle so there's no visual jump.
@@ -636,8 +811,13 @@ export function BlockPreview({
     d.el.style.cursor = '';
     if (!d.active) return; // no real drag — let the click handler select
     const safeScale = scale || 1;
-    const x = Math.round(d.baseX + (e.clientX - d.startClientX) / safeScale);
-    const y = Math.round(d.baseY + (e.clientY - d.startClientY) / safeScale);
+    const pos = clampDrag(
+      d.baseX + (e.clientX - d.startClientX) / safeScale,
+      d.baseY + (e.clientY - d.startClientY) / safeScale,
+      d.bounds
+    );
+    const x = Math.round(pos.x);
+    const y = Math.round(pos.y);
     onCommitElementPosition?.(d.key, { x, y });
     justDraggedRef.current = true;
   };
@@ -714,8 +894,7 @@ export function BlockPreview({
   // Track the inner content's natural (unscaled) height so the outer wrapper
   // can reserve `scaledWidth × scaledHeight` in layout flow — and so Fit can
   // contain the frame in both axes (width + height) like design tools.
-  const innerRef = React.useRef<HTMLDivElement>(null);
-  const [innerHeight, setInnerHeight] = React.useState<number>(0);
+  // (`innerRef` / `innerHeight` are declared above — the pan clamp needs them.)
   React.useEffect(() => {
     const el = innerRef.current;
     if (!el) return;
@@ -728,21 +907,33 @@ export function BlockPreview({
     return () => ro.disconnect();
   }, [block, lang, device]);
 
+  /**
+   * Does the block, AS RENDERED ON CANVAS, actually depend on `position:
+   * sticky`? Type alone isn't enough — the `isCanvas` fork usually replaces
+   * the sticky stage with a flat layout, and only a real sticky node is
+   * broken by the `transform: scale()` that zoom applies.
+   */
+  const hasStickyStage = React.useCallback((): boolean => {
+    if (!STICKY_SCROLL_BLOCK_TYPES.has(block.blockType)) return false;
+    const root = innerRef.current;
+    if (!root) return true; // not rendered yet — assume the worst, re-checked
+    for (const node of root.querySelectorAll<HTMLElement>('*')) {
+      if (getComputedStyle(node).position === 'sticky') return true;
+    }
+    return false;
+  }, [block.blockType]);
+
   // Auto-fit zoom on mount + device change. Contain the device frame in the
-  // visible canvas (width AND height), clamped 20–100%. Sticky/pin blocks
-  // force 100% (transform: scale breaks sticky).
+  // visible canvas (width AND height), clamped 20–100%. Blocks that really do
+  // pin with sticky stay at 100% (transform: scale breaks sticky).
   const computeFitZoom = React.useCallback((): number | null => {
-    if (STICKY_SCROLL_BLOCK_TYPES.has(block.blockType)) return 100;
+    if (hasStickyStage()) return 100;
     if (!surfaceRef.current) return null;
     const surface = surfaceRef.current;
-    // p-8 (32) sides; pb-20 (80) bottom clears the floating action bar.
-    const padX = 64;
-    const padTop = 32;
-    const padBottom = 80;
-    const innerWidth = Math.max(0, surface.clientWidth - padX);
+    const innerWidth = Math.max(0, surface.clientWidth - SURFACE_PAD_X);
     const innerHeightAvail = Math.max(
       0,
-      surface.clientHeight - padTop - padBottom
+      surface.clientHeight - SURFACE_PAD_TOP - SURFACE_PAD_BOTTOM
     );
     if (innerWidth <= 0) return null;
 
@@ -754,29 +945,64 @@ export function BlockPreview({
         : fitW;
     const fitPct = Math.floor(Math.min(fitW, fitH));
     return Math.min(100, Math.max(20, fitPct));
-  }, [baseWidth, block.blockType, innerHeight]);
+  }, [baseWidth, hasStickyStage, innerHeight]);
 
+  /** Sticky blocks are pushed to 100% ONCE per (block, device). The effect
+   *  re-runs on every content remeasure, and forcing there would keep yanking
+   *  the slider back to 100% while the user is zooming. */
+  const forcedZoomKeyRef = React.useRef<string | null>(null);
   React.useEffect(() => {
     if (!onAutoFitZoom) return;
-    const clamped = computeFitZoom();
-    if (clamped == null) return;
-    if (STICKY_SCROLL_BLOCK_TYPES.has(block.blockType)) {
+    const key = `${block.id}:${device}`;
+    if (hasStickyStage()) {
+      if (forcedZoomKeyRef.current === key) return;
+      forcedZoomKeyRef.current = key;
       onAutoFitZoom(100, true);
       return;
     }
+    forcedZoomKeyRef.current = null;
+    const clamped = computeFitZoom();
+    if (clamped == null) return;
     onAutoFitZoom(clamped);
-  }, [device, onAutoFitZoom, block.blockType, computeFitZoom]);
+  }, [device, block.id, onAutoFitZoom, computeFitZoom, hasStickyStage]);
 
-  // Manual Fit button — force apply + reset pan.
-  const prevFitKeyRef = React.useRef(fitRequestKey);
-  React.useEffect(() => {
-    if (fitRequestKey === prevFitKeyRef.current) return;
-    prevFitKeyRef.current = fitRequestKey;
+  /** Back to the initial view: frame centred + zoom re-fitted to the surface. */
+  const resetView = React.useCallback(() => {
     setPan({ x: 0, y: 0 });
     const clamped = computeFitZoom();
     if (clamped == null || !onAutoFitZoom) return;
     onAutoFitZoom(clamped, true);
-  }, [fitRequestKey, computeFitZoom, onAutoFitZoom]);
+  }, [computeFitZoom, onAutoFitZoom]);
+
+  // Manual Fit button (zoom bar) — same reset, driven by a counter prop.
+  const prevFitKeyRef = React.useRef(fitRequestKey);
+  React.useEffect(() => {
+    if (fitRequestKey === prevFitKeyRef.current) return;
+    prevFitKeyRef.current = fitRequestKey;
+    resetView();
+  }, [fitRequestKey, resetView]);
+
+  // Shift+0 — the "I'm lost" escape hatch, mirroring design tools.
+  React.useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== '0' || !e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) {
+        return;
+      }
+      const t = e.target;
+      if (
+        t instanceof HTMLElement &&
+        (t.isContentEditable ||
+          t.closest('[contenteditable]') ||
+          t.closest('input, textarea, select'))
+      ) {
+        return;
+      }
+      e.preventDefault();
+      resetView();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [resetView]);
 
   // Drive contenteditable via DOM when entering edit mode. Pure DOM manipulation
   // keeps each block component dumb (no editing concerns).
@@ -837,10 +1063,35 @@ export function BlockPreview({
     return el?.getBoundingClientRect() ?? hoveredRect;
   }, [chipKey, hoveredKey, hoveredRect, zoom, pan, block, lang, device]);
 
+  const isOffOrigin = pan.x !== 0 || pan.y !== 0;
+
   const hoveredMeta =
     chipKey && (canShowHoverChrome || imagePopoverOpen)
       ? resolveElementMeta(block.blockType, chipKey)
       : null;
+
+  // ── Selection toolbar ─────────────────────────────────────────────────────
+  // Docked to a fixed corner of the canvas, NOT anchored to the element rect.
+  // An element-anchored bar has to re-measure on zoom, pan, surface scroll and
+  // every content keystroke — which reads as the bar jumping around — and for
+  // `__background__` the rect is the whole block, parking it off-screen.
+  // Style/content controls live in the sidebar inspector; only kinds it handles
+  // get this bar, the rest still use the legacy toolbar above the canvas.
+  const selectedMeta =
+    selectedElementKey && device !== 'tablet'
+      ? resolveElementMeta(block.blockType, selectedElementKey)
+      : null;
+
+  const showSelectionToolbar =
+    !!selectedElementKey &&
+    !!selectedMeta &&
+    isInspectorKind(selectedMeta.kind) &&
+    !editingKey &&
+    !selectedExtraElementId &&
+    !imageEditKey &&
+    !!onContentChange &&
+    !!onResetElementStyle &&
+    !!onUpdateBackground;
 
   return (
     <div
@@ -931,31 +1182,37 @@ export function BlockPreview({
                   'outline outline-2 outline-offset-2 outline-sky-500'
               )}
             >
-              <MotionProvider
-                mode={effectiveMode}
-                motion={motionForDevice}
-                scrollerEl={surfaceRef.current}
-                previewNonce={motionPreviewNonce}
-                previewElement={motionPreviewElement}
-              >
-                <MotionBlockRoot>
-                  {/*
+              {/* Blocks the anchor clicks that would otherwise navigate the
+                  whole admin app away when a CTA is clicked while editing.
+                  Capture phase, and deliberately does NOT stopPropagation, so
+                  element selection still works. */}
+              <LinkNav mode='canvas'>
+                <MotionProvider
+                  mode={effectiveMode}
+                  motion={motionForDevice}
+                  scrollerEl={surfaceRef.current}
+                  previewNonce={motionPreviewNonce}
+                  previewElement={motionPreviewElement}
+                >
+                  <MotionBlockRoot>
+                    {/*
                 Re-mount RenderBlock when block/device/lang change so the
                 CSS `animate-in` keyframes fire fresh on every tab switch
                 (otherwise React reconciles same nodes → no animation).
               */}
-                  <RenderBlock
-                    key={`${block.id}:${device}:${lang}`}
-                    block={block}
-                    content={content}
-                    styles={styles}
-                    background={background}
-                    order={order}
-                    positions={positions}
-                    activeKey={selectedElementKey}
-                  />
-                </MotionBlockRoot>
-              </MotionProvider>
+                    <RenderBlock
+                      key={`${block.id}:${device}:${lang}`}
+                      block={block}
+                      content={content}
+                      styles={styles}
+                      background={background}
+                      order={order}
+                      positions={positions}
+                      activeKey={selectedElementKey}
+                    />
+                  </MotionBlockRoot>
+                </MotionProvider>
+              </LinkNav>
               {/* User-added free-drag elements layered on top of the block. */}
               <ExtraElementOverlay
                 elements={block.extraElements ?? []}
@@ -971,6 +1228,27 @@ export function BlockPreview({
           </div>
         </div>
       </LandingMotionRoot>
+
+      {/* Escape hatch — always reachable, highlighted once the view has been
+          moved off centre so a lost user knows where to click. */}
+      <button
+        type='button'
+        onPointerDown={e => e.stopPropagation()}
+        onClick={e => {
+          e.stopPropagation();
+          resetView();
+        }}
+        title='Đưa canvas về vị trí ban đầu (Shift+0)'
+        className={cn(
+          'absolute bottom-3 left-3 z-30 flex cursor-pointer items-center gap-1.5 rounded-md border bg-white/95 px-2.5 py-1.5 text-xs font-medium shadow-sm backdrop-blur transition-colors',
+          isOffOrigin
+            ? 'border-sky-300 text-sky-700 hover:bg-sky-50'
+            : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
+        )}
+      >
+        <LocateFixed className='size-3.5' />
+        Về giữa
+      </button>
 
       {(chipKey &&
         chipRect &&
@@ -1016,6 +1294,28 @@ export function BlockPreview({
           />
         )) ||
         null}
+
+      {showSelectionToolbar && (
+        <div
+          data-canvas-edit-chip-root='true'
+          className='absolute top-3 left-3 z-30'
+          // A bare pointerdown out here reads as "empty canvas" and starts a pan.
+          onPointerDown={e => e.stopPropagation()}
+        >
+          <SelectionToolbar
+            block={block}
+            lang={lang}
+            content={content}
+            selectedKey={selectedElementKey!}
+            kind={selectedMeta!.kind}
+            label={selectedMeta!.label}
+            onContentChange={onContentChange!}
+            onUpdateBackground={onUpdateBackground!}
+            onResetStyle={onResetElementStyle!}
+            onClose={() => onSelectElement(null, null)}
+          />
+        </div>
+      )}
     </div>
   );
 }

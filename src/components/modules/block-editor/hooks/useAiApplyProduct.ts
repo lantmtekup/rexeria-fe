@@ -44,8 +44,18 @@ interface UseAiApplyProductArgs {
   getActiveId: () => string | null;
   /** Current publish meta — used in the debug payload. */
   getPublish: () => unknown;
-  /** Push to history then replace blocks (with optional new active id). */
+  /** Push to history then replace the ACTIVE PAGE's blocks. */
   applyBlocks: (next: Block[], nextActiveId?: string | null) => void;
+  /**
+   * Whether the active page is the home page.
+   *
+   * The BE endpoint takes only `product_id` + etag and reads its own stored
+   * canvas, which under the multi-page mirror is the home page's blocks. So it
+   * would silently diff the AI result against whichever page the user is on
+   * and overwrite it with home's content. Block the flow until BE accepts a
+   * `page_id`.
+   */
+  isHomePage?: () => boolean;
   /** Trigger autosave after blocks change. */
   markDirty: () => void;
 }
@@ -69,6 +79,7 @@ export function useAiApplyProduct({
   getActiveId,
   getPublish,
   applyBlocks,
+  isHomePage,
   markDirty,
 }: UseAiApplyProductArgs): UseAiApplyProductApi {
   const [applying, setApplying] = React.useState(false);
@@ -79,6 +90,12 @@ export function useAiApplyProduct({
   const applyProduct = React.useCallback(
     async (product: Product) => {
       if (applying) return;
+      if (isHomePage && !isHomePage()) {
+        toast.error(
+          'AI áp sản phẩm hiện chỉ chạy trên trang chủ — chuyển về trang chủ rồi thử lại.'
+        );
+        return;
+      }
       setApplying(true);
       const toastId = toast.loading(`AI đang phân tích "${product.name}"…`);
       const requestBody = {
@@ -196,6 +213,7 @@ export function useAiApplyProduct({
       getActiveId,
       getPublish,
       applyBlocks,
+      isHomePage,
       markDirty,
     ]
   );

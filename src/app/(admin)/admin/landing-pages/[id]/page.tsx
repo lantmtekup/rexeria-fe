@@ -200,7 +200,7 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
   }
 
   return (
-    <div className='flex h-full flex-1 flex-col'>
+    <div className='flex h-full min-h-0 flex-1 flex-col overflow-hidden'>
       <BlockEditor
         templateId={templateId}
         autoApplyProductId={autoApplyProductId}

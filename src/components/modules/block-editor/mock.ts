@@ -58,3 +58,9 @@ export const MOCK_BLOCKS: Block[] = [
   buildBlock('b5', 'booking_form'),
   buildBlock('b6', 'cta_section'),
 ];
+
+/** Starter blocks for a brand-new template. Deep-cloned so edits don't mutate
+ *  the shared mock. */
+export function seedBlocks(): Block[] {
+  return JSON.parse(JSON.stringify(MOCK_BLOCKS)) as Block[];
+}

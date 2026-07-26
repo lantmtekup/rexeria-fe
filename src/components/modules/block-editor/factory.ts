@@ -1,3 +1,4 @@
+import { genId } from './ids';
 import { BLOCK_TYPE_META } from './types';
 import { getBlockDef } from './blocks/_registry/registry';
 import { delvauxDetailsDef } from './blocks/_registry/defs/delvauxDetails';
@@ -2696,10 +2697,6 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   rolex_collection_work: rolexCollectionWorkDef.defaultContent.en,
   rolex_collection_project: rolexCollectionProjectDef.defaultContent.en,
 };
-
-function genId() {
-  return `b_${Math.random().toString(36).slice(2, 10)}`;
-}
 
 export function createBlock(type: BlockType): Block {
   // New blocks start with `mobile` undefined so the renderer falls back to

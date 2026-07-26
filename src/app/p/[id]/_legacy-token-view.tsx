@@ -1,7 +1,19 @@
 'use client';
 
+/**
+ * Legacy share-token view — `/p/{templateId}/{shareToken}`.
+ *
+ * Was its own `[token]/page.tsx` route. It had to stop being a route: a
+ * sibling `[...path]` catch-all builds fine next to `[token]`, but Next sorts
+ * `'[]'` before `'[...]'` and matches first-wins, so `[token]` would swallow
+ * every 2-segment URL — including every `/p/{slug}/{sub-page}` — and render
+ * "Trang này chưa được xuất bản". Nothing in the build catches that.
+ *
+ * It is now a plain component that `[...path]/page.tsx` dispatches to when the
+ * URL looks like a share-token link (UUID + token) and no sub-page matches.
+ */
+
 import * as React from 'react';
-import { use } from 'react';
 import Link from 'next/link';
 import { Globe2 } from 'lucide-react';
 
@@ -22,8 +34,11 @@ import {
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 
-interface PageProps {
-  params: Promise<{ id: string; token: string }>;
+interface LegacyTokenViewProps {
+  /** Canvas-template UUID (the first URL segment). */
+  id: string;
+  /** Share token minted by `newShareToken()`. */
+  token: string;
 }
 
 const LOAD_TIMEOUT_MS = 8000;
@@ -44,8 +59,7 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-export default function PublicLandingPage({ params }: PageProps) {
-  const { id, token } = use(params);
+export function LegacyTokenView({ id, token }: LegacyTokenViewProps) {
   // Visitor analytics — page_view + block_view/dwell + click + scroll_depth.
   // `id` là page UUID của canvas đang xem (canvas instance ≡ page) — ingest
   // chỉ nhận page_id (be-fe-handoff Q5).

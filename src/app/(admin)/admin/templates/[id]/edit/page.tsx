@@ -30,7 +30,6 @@ import { AlertCircle, ArrowLeft, Code2, Eye, Loader2 } from 'lucide-react';
 
 import { Link2 } from 'lucide-react';
 
-import { Button } from '@/components/atoms/button';
 import { BlockEditor } from '@/components/modules/CanvasTemplate/BlockEditor';
 import { PublishTemplateDemoDialog } from '@/components/modules/Template/PublishTemplateDemoDialog';
 import { TemplatePreviewAction } from '@/components/modules/Template/TemplatePreviewAction';
@@ -217,29 +216,36 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
   // hero 300vh không đẩy cả trang scroll). Trước dùng h-full → không bị bó.
   const demoMapping = getDemoPageMapping(templateId);
 
+  // Action "link demo" sống trong header của editor (slot `headerActions`) —
+  // không dựng bar riêng phía trên, tránh ăn mất chiều cao canvas.
+  const demoBtnClass =
+    'text-2xs ml-0.5 flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-neutral-200 px-2 font-medium tracking-tight text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900';
+
+  const demoAction = demoMapping ? (
+    <Link
+      href={`/admin/landing-pages/${demoMapping.pageId}`}
+      title='Mở landing page demo của template này'
+      className={demoBtnClass}
+    >
+      <Link2 className='size-3.5' />
+      Xem link demo
+    </Link>
+  ) : (
+    <button
+      type='button'
+      onClick={() => setDemoDialogOpen(true)}
+      title='Xuất bản template này thành landing page demo công khai'
+      className={demoBtnClass}
+    >
+      <Link2 className='size-3.5' />
+      Tạo link demo
+    </button>
+  );
+
   return (
     <div className='flex h-screen flex-col overflow-hidden'>
-      <div className='border-border bg-background flex shrink-0 items-center justify-end gap-2 border-b px-3 py-1.5'>
-        {demoMapping ? (
-          <Button asChild size='sm' variant='outline'>
-            <Link href={`/admin/landing-pages/${demoMapping.pageId}`}>
-              <Link2 className='size-3.5' />
-              Xem link demo
-            </Link>
-          </Button>
-        ) : (
-          <Button
-            size='sm'
-            variant='outline'
-            onClick={() => setDemoDialogOpen(true)}
-          >
-            <Link2 className='size-3.5' />
-            Tạo link demo
-          </Button>
-        )}
-      </div>
       <div className='min-h-0 flex-1'>
-        <BlockEditor templateId={templateId} />
+        <BlockEditor templateId={templateId} headerActions={demoAction} />
       </div>
       <PublishTemplateDemoDialog
         open={demoDialogOpen}

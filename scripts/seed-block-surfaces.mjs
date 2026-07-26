@@ -124,7 +124,9 @@ async function api(method, path, body) {
         supported_surfaces: SURFACES,
       });
       if (!patch.ok)
-        die(`  PATCH thất bại (${patch.status}): ${JSON.stringify(patch.data)}`);
+        die(
+          `  PATCH thất bại (${patch.status}): ${JSON.stringify(patch.data)}`
+        );
       console.log(
         `  ✓ supports=[${(patch.data.block?.supported_surfaces ?? []).join(',')}]`
       );

@@ -15,8 +15,6 @@ import {
   Archive,
   ArrowDownUp,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Eye,
   LayoutGrid,
   LayoutTemplate,
@@ -27,7 +25,6 @@ import {
   Search,
   Sparkles,
   Table as TableIcon,
-  Tag,
   X as XIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -43,6 +40,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/atoms/table';
+import { TablePagination } from '@/components/molecules/TablePagination';
 import { CreateTemplateDialog } from '@/components/modules/Template/CreateTemplateDialog';
 import { TemplatePreviewAction } from '@/components/modules/Template/TemplatePreviewAction';
 import { UseTemplateDialog } from '@/components/modules/Template/UseTemplateDialog';
@@ -63,7 +61,9 @@ const SORT_OPTIONS: { id: Sort; label: string }[] = [
   { id: 'name', label: 'Tên A→Z' },
 ];
 
-const LIMIT = 12;
+/** Shared size + radius + border weight cho hàng filter (khớp Blocks / Landing). */
+const FILTER_CONTROL_CLASS =
+  'border-input text-content-muted hover:bg-muted bg-background h-9 w-40 shrink-0 rounded-md border px-2.5 text-xs font-medium outline-none';
 
 const STATUS_CHIP: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700',
@@ -103,6 +103,7 @@ export function AdminTemplatesPage() {
   // "Tạo template mới" dialog open state.
   const [createOpen, setCreateOpen] = React.useState(false);
   const [page, setPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(20);
   // Bulk selection — chỉ active ở table view (grid view không expose checkbox).
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = React.useState(false);
@@ -114,7 +115,7 @@ export function AdminTemplatesPage() {
 
   React.useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, status, category, sort]);
+  }, [debouncedSearch, status, category, sort, pageSize]);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -284,8 +285,7 @@ export function AdminTemplatesPage() {
   }, [allItems, debouncedSearch, status, category, sort]);
 
   const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / LIMIT));
-  const pageItems = filtered.slice((page - 1) * LIMIT, page * LIMIT);
+  const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const clearFilters = () => {
     setSearch('');
@@ -306,209 +306,196 @@ export function AdminTemplatesPage() {
     : null;
 
   return (
-    <div className='flex flex-col gap-4 p-6'>
-      {/* Header */}
-      <div className='flex flex-wrap items-end justify-between gap-3'>
-        <div>
-          <div className='text-3xs text-content-muted flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
-            <LayoutTemplate className='size-3' /> {t('templates.title')}
+    <div className='flex h-full min-h-0 flex-col overflow-hidden'>
+      {/* Header + filters — shrink-0; list body tự scroll. */}
+      <div className='border-border bg-background shrink-0 border-b px-4 py-3'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div>
+            <h1 className='text-xl font-semibold'>{t('templates.title')}</h1>
+            <p className='text-content-muted mt-0.5 text-xs'>
+              {t('templates.subtitle', { total: allItems.length })}
+            </p>
           </div>
-          <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
-            {t('templates.title')}
-          </h1>
-          <p className='text-content-muted mt-1 text-sm'>
-            {t('templates.subtitle', { total: allItems.length })} · template hệ
-            thống dùng làm preset cho brand clone
-          </p>
-        </div>
-        <div className='flex items-center gap-2'>
-          <Button variant='outline' onClick={load} disabled={loading}>
-            <RefreshCwIcon
-              className={cn('size-4', loading && 'animate-spin')}
-            />
-            {t('refresh')}
-          </Button>
-          <Button
-            onClick={() => setCreateOpen(true)}
-            title={t('templates.create')}
-          >
-            <Sparkles className='size-4' />
-            {t('templates.create')}
-          </Button>
-        </div>
-      </div>
-
-      <p className='text-content-muted text-xs'>{t('templates.note')}</p>
-
-      {/* Toolbar */}
-      <div className='border-border bg-card flex flex-wrap items-center gap-2 rounded-2xl border p-2 shadow-sm'>
-        <div className='relative max-w-sm flex-1'>
-          <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
-          <Input
-            placeholder='Tìm theo tên / code / mô tả / tag…'
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className='pl-9'
-          />
-        </div>
-
-        <div className='relative inline-flex items-center'>
-          <ArrowDownUp className='text-muted-foreground pointer-events-none absolute left-2.5 size-3.5' />
-          <select
-            value={sort}
-            onChange={e => setSort(e.target.value as Sort)}
-            className='border-border text-content-muted hover:bg-muted bg-background focus:border-ring appearance-none rounded-lg border py-1.5 pr-3 pl-7 text-xs font-medium outline-none'
-            aria-label='Sort'
-          >
-            {SORT_OPTIONS.map(o => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className='border-border bg-background ml-auto inline-flex items-center gap-0.5 rounded-lg border p-0.5'>
-          <ViewBtn
-            active={view === 'grid'}
-            onClick={() => setView('grid')}
-            icon={<LayoutGrid className='size-3.5' />}
-            label='Grid'
-          />
-          <ViewBtn
-            active={view === 'table'}
-            onClick={() => setView('table')}
-            icon={<TableIcon className='size-3.5' />}
-            label='Table'
-          />
-        </div>
-      </div>
-
-      {/* Filter chips */}
-      <div className='flex flex-wrap items-center gap-x-3 gap-y-2'>
-        <FilterGroup label='Trạng thái'>
-          <ChipBtn
-            active={status === 'all'}
-            onClick={() => setStatus('all')}
-            label='Tất cả'
-          />
-          <ChipBtn
-            active={status === 'active'}
-            onClick={() => setStatus('active')}
-            label='Active'
-            accent='emerald'
-          />
-          <ChipBtn
-            active={status === 'draft'}
-            onClick={() => setStatus('draft')}
-            label='Draft'
-            accent='amber'
-          />
-          <ChipBtn
-            active={status === 'archived'}
-            onClick={() => setStatus('archived')}
-            label='Archived'
-          />
-        </FilterGroup>
-
-        {categories.length > 0 && (
-          <>
-            <span className='bg-border hidden h-4 w-px sm:block' />
-            <FilterGroup label='Category' icon={<Tag className='size-3' />}>
-              <ChipBtn
-                active={!category}
-                onClick={() => setCategory(null)}
-                label='Tất cả'
+          <div className='flex items-center gap-2'>
+            <Button
+              variant='neutral'
+              size='sm'
+              onClick={load}
+              disabled={loading}
+            >
+              <RefreshCwIcon
+                className={cn('size-4', loading && 'animate-spin')}
               />
-              {categories.map(c => (
-                <ChipBtn
-                  key={c}
-                  active={category === c}
-                  onClick={() => setCategory(c)}
-                  label={c}
-                  accent='violet'
-                />
-              ))}
-            </FilterGroup>
-          </>
-        )}
+              {t('refresh')}
+            </Button>
+            <Button
+              size='sm'
+              onClick={() => setCreateOpen(true)}
+              title={t('templates.create')}
+            >
+              <Sparkles className='size-4' />
+              {t('templates.create')}
+            </Button>
+          </div>
+        </div>
 
-        {hasActiveFilters && (
-          <button
-            type='button'
-            onClick={clearFilters}
-            className='text-2xs text-content-muted hover:text-foreground ml-1 inline-flex items-center gap-1'
+        <div className='mt-2 flex flex-wrap items-center gap-2'>
+          <div className='relative min-w-48 flex-1 basis-56'>
+            <Search className='text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2' />
+            <Input
+              placeholder='Tìm theo tên / code / mô tả / tag…'
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className='border-input h-9 rounded-md pl-8 shadow-none md:text-xs'
+              aria-label='Tìm kiếm templates'
+            />
+          </div>
+
+          <select
+            value={status}
+            onChange={e => setStatus(e.target.value as Status)}
+            className={FILTER_CONTROL_CLASS}
+            aria-label='Lọc theo trạng thái'
           >
-            <XIcon className='size-3' />
-            Clear
-          </button>
-        )}
+            <option value='all'>Tất cả trạng thái</option>
+            <option value='active'>Active</option>
+            <option value='draft'>Draft</option>
+            <option value='archived'>Archived</option>
+          </select>
+
+          {categories.length > 0 && (
+            <select
+              value={category ?? ''}
+              onChange={e => setCategory(e.target.value || null)}
+              className={FILTER_CONTROL_CLASS}
+              aria-label='Lọc theo category'
+            >
+              <option value=''>Tất cả category</option>
+              {categories.map(c => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <div className='relative inline-flex items-center'>
+            <ArrowDownUp className='text-muted-foreground pointer-events-none absolute left-2.5 size-3.5' />
+            <select
+              value={sort}
+              onChange={e => setSort(e.target.value as Sort)}
+              className={cn(FILTER_CONTROL_CLASS, 'appearance-none pr-3 pl-8')}
+              aria-label='Sort'
+            >
+              {SORT_OPTIONS.map(o => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              type='button'
+              onClick={clearFilters}
+              className='text-content-muted hover:text-foreground inline-flex h-9 shrink-0 items-center gap-1 px-1.5 text-xs'
+              aria-label='Xoá bộ lọc'
+            >
+              <XIcon className='size-3.5' />
+              Clear
+            </button>
+          )}
+
+          <div className='text-content-muted ml-auto inline-flex h-9 shrink-0 items-center text-xs tabular-nums'>
+            {pageItems.length} / {total}
+          </div>
+
+          <div className='border-input bg-background flex h-9 shrink-0 items-center gap-0.5 rounded-md border p-0.5'>
+            <ViewBtn
+              active={view === 'grid'}
+              onClick={() => setView('grid')}
+              icon={<LayoutGrid className='size-3.5' />}
+              label='Grid'
+            />
+            <ViewBtn
+              active={view === 'table'}
+              onClick={() => setView('table')}
+              icon={<TableIcon className='size-3.5' />}
+              label='Table'
+            />
+          </div>
+        </div>
       </div>
 
-      {errorMessage && (
-        <p
-          className='border-destructive/20 bg-danger-bg text-destructive rounded-lg border px-3 py-2 text-sm'
-          role='alert'
-        >
-          {errorMessage}
-        </p>
-      )}
-
-      {/* Body */}
-      {loading && allItems.length === 0 ? (
-        <div className='text-content-muted flex items-center justify-center py-16 text-sm'>
-          <RefreshCwIcon className='mr-2 size-4 animate-spin' /> Đang tải
-          template…
-        </div>
-      ) : pageItems.length === 0 ? (
-        <div className='border-border bg-card rounded-2xl border border-dashed p-12 text-center'>
-          <LayoutTemplate className='text-muted-foreground mx-auto size-8' />
-          <p className='text-content-muted mt-3 text-sm font-semibold'>
-            {hasActiveFilters
-              ? 'Không có template nào khớp filter'
-              : t('templates.empty')}
+      <div className='bg-muted/40 min-h-0 flex-1 overflow-y-auto px-4 py-3 pb-6'>
+        {errorMessage && (
+          <p
+            className='border-destructive/20 bg-danger-bg text-destructive mb-3 rounded-lg border px-3 py-2 text-sm'
+            role='alert'
+          >
+            {errorMessage}
           </p>
-          <p className='text-content-muted mt-1 text-xs'>
-            {hasActiveFilters
-              ? 'Thử đổi từ khoá hoặc clear filter.'
-              : t('templates.note')}
-          </p>
-        </div>
-      ) : view === 'grid' ? (
-        <GridView
-          items={pageItems}
-          onUse={setUseTarget}
-          onEffects={setEffectsTarget}
-          onStatusAction={runStatusAction}
-        />
-      ) : (
-        <TableView
-          items={pageItems}
-          col={{
-            name: t('templates.col.name'),
-            code: t('templates.col.code'),
-            status: t('templates.col.status'),
-            created: t('templates.col.created'),
-          }}
-          onUse={setUseTarget}
-          onEffects={setEffectsTarget}
-          onStatusAction={runStatusAction}
-          selected={selected}
-          onToggleSelected={toggleSelected}
-          onToggleSelectAll={toggleSelectAll}
-        />
-      )}
+        )}
 
-      {/* Pagination */}
-      {pageItems.length > 0 && totalPages > 1 && (
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          total={total}
-          limit={LIMIT}
-          onChange={setPage}
-        />
-      )}
+        {/* Body */}
+        {loading && allItems.length === 0 ? (
+          <div className='text-content-muted flex items-center justify-center py-16 text-sm'>
+            <RefreshCwIcon className='mr-2 size-4 animate-spin' /> Đang tải
+            template…
+          </div>
+        ) : pageItems.length === 0 ? (
+          <div className='border-border bg-card rounded-lg border border-dashed p-12 text-center'>
+            <LayoutTemplate className='text-muted-foreground mx-auto size-8' />
+            <p className='text-content-muted mt-3 text-sm font-semibold'>
+              {hasActiveFilters
+                ? 'Không có template nào khớp filter'
+                : t('templates.empty')}
+            </p>
+            <p className='text-content-muted mt-1 text-xs'>
+              {hasActiveFilters
+                ? 'Thử đổi từ khoá hoặc clear filter.'
+                : t('templates.note')}
+            </p>
+          </div>
+        ) : view === 'grid' ? (
+          <GridView
+            items={pageItems}
+            onUse={setUseTarget}
+            onEffects={setEffectsTarget}
+            onStatusAction={runStatusAction}
+          />
+        ) : (
+          <TableView
+            items={pageItems}
+            col={{
+              name: t('templates.col.name'),
+              code: t('templates.col.code'),
+              status: t('templates.col.status'),
+              created: t('templates.col.created'),
+            }}
+            onUse={setUseTarget}
+            onEffects={setEffectsTarget}
+            onStatusAction={runStatusAction}
+            selected={selected}
+            onToggleSelected={toggleSelected}
+            onToggleSelectAll={toggleSelectAll}
+          />
+        )}
+
+        {!loading && pageItems.length > 0 && (
+          <TablePagination
+            total={total}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={s => {
+              setPageSize(s);
+              setPage(1);
+            }}
+          />
+        )}
+      </div>
 
       {/* Bulk action bar — sticky bottom khi có selection. */}
       {selected.size > 0 && view === 'table' && (
@@ -888,7 +875,7 @@ function TableView({
   const allOn = ids.length > 0 && ids.every(id => selected.has(id));
   const someOn = ids.some(id => selected.has(id));
   return (
-    <div className='border-border bg-card rounded-2xl border'>
+    <div className='border-border bg-card overflow-hidden rounded-lg border'>
       <Table>
         <TableHeader>
           <TableRow>
@@ -904,8 +891,7 @@ function TableView({
                 aria-label='Chọn tất cả'
               />
             </TableHead>
-            <TableHead className='w-20'>Thumb</TableHead>
-            <TableHead className='max-w-[420px]'>{col.name}</TableHead>
+            <TableHead className='w-64 min-w-64'>{col.name}</TableHead>
             <TableHead className='w-32'>{col.code}</TableHead>
             <TableHead className='w-28'>{col.status}</TableHead>
             <TableHead className='w-40'>{col.created}</TableHead>
@@ -930,31 +916,35 @@ function TableView({
                   />
                 </TableCell>
                 <TableCell>
-                  <Link
-                    href={`/template/${item.id}`}
-                    className='border-border block aspect-[4/3] w-16 overflow-hidden rounded-md border bg-gradient-to-br from-zinc-100 to-zinc-200'
-                  >
-                    {item.thumbnail_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={item.thumbnail_url}
-                        alt={item.name}
-                        className='size-full object-cover'
-                      />
-                    ) : (
-                      <div className='text-muted-foreground flex h-full items-center justify-center'>
-                        <LayoutTemplate className='size-4' />
+                  <div className='flex w-56 flex-col gap-1.5'>
+                    <Link
+                      href={`/template/${item.id}`}
+                      className='border-border block h-13.5 w-28 overflow-hidden rounded-md border bg-linear-to-br from-zinc-100 to-zinc-200'
+                    >
+                      {item.thumbnail_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.thumbnail_url}
+                          alt={item.name}
+                          className='size-full object-cover'
+                        />
+                      ) : (
+                        <div className='text-muted-foreground flex h-full items-center justify-center'>
+                          <LayoutTemplate className='size-4' />
+                        </div>
+                      )}
+                    </Link>
+                    <div className='min-w-0'>
+                      <div className='text-sm leading-snug font-medium wrap-break-word whitespace-normal'>
+                        {item.name}
                       </div>
-                    )}
-                  </Link>
-                </TableCell>
-                <TableCell className='max-w-[420px]'>
-                  <div className='truncate font-medium'>{item.name}</div>
-                  {item.description && (
-                    <div className='text-content-muted truncate text-xs'>
-                      {item.description}
+                      {item.description && (
+                        <div className='text-content-muted mt-0.5 text-xs leading-snug wrap-break-word whitespace-normal'>
+                          {item.description}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </TableCell>
                 <TableCell className='font-mono text-xs'>{item.code}</TableCell>
                 <TableCell>
@@ -1005,139 +995,7 @@ function TableView({
   );
 }
 
-/* ─── Pagination ────────────────────────────────────────────────────── */
-
-function Pagination({
-  page,
-  totalPages,
-  total,
-  limit,
-  onChange,
-}: {
-  page: number;
-  totalPages: number;
-  total: number;
-  limit: number;
-  onChange: (next: number) => void;
-}) {
-  const from = (page - 1) * limit + 1;
-  const to = Math.min(page * limit, total);
-
-  const pages: (number | 'gap')[] = [];
-  const add = (n: number) => {
-    if (!pages.includes(n) && n >= 1 && n <= totalPages) pages.push(n);
-  };
-  add(1);
-  if (page - 1 > 2) pages.push('gap');
-  add(page - 1);
-  add(page);
-  add(page + 1);
-  if (page + 1 < totalPages - 1) pages.push('gap');
-  add(totalPages);
-
-  return (
-    <div className='border-border bg-card flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 shadow-sm'>
-      <span className='text-2xs text-content-muted'>
-        {from}-{to} trong {total}
-      </span>
-      <div className='flex items-center gap-1'>
-        <button
-          type='button'
-          onClick={() => onChange(Math.max(1, page - 1))}
-          disabled={page <= 1}
-          className='border-border text-content-muted hover:bg-muted inline-flex size-7 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-40'
-        >
-          <ChevronLeft className='size-3.5' />
-        </button>
-        {pages.map((p, i) =>
-          p === 'gap' ? (
-            <span
-              key={`gap-${i}`}
-              className='text-2xs text-muted-foreground px-1'
-            >
-              …
-            </span>
-          ) : (
-            <Chip
-              key={p}
-              size='sm'
-              selected={p === page}
-              onClick={() => onChange(p)}
-              className='min-w-7 rounded-md px-2 font-mono tabular-nums'
-            >
-              {p}
-            </Chip>
-          )
-        )}
-        <button
-          type='button'
-          onClick={() => onChange(Math.min(totalPages, page + 1))}
-          disabled={page >= totalPages}
-          className='border-border text-content-muted hover:bg-muted inline-flex size-7 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-40'
-        >
-          <ChevronRight className='size-3.5' />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 /* ─── Bits ──────────────────────────────────────────────────────────── */
-
-function FilterGroup({
-  label,
-  icon,
-  children,
-}: {
-  label: string;
-  icon?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className='inline-flex items-center gap-1.5'>
-      <span className='text-3xs text-muted-foreground inline-flex items-center gap-1 font-semibold tracking-[0.18em] uppercase'>
-        {icon}
-        {label}
-      </span>
-      <div className='inline-flex flex-wrap items-center gap-1'>{children}</div>
-    </div>
-  );
-}
-
-function ChipBtn({
-  active,
-  onClick,
-  label,
-  accent,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  accent?: 'emerald' | 'amber' | 'violet';
-}) {
-  const accentActive: Record<NonNullable<typeof accent>, string> = {
-    emerald: 'bg-emerald-600 text-white shadow-sm',
-    amber: 'bg-amber-500 text-white shadow-sm',
-    violet: 'bg-violet-600 text-white shadow-sm',
-  };
-  const cls = active
-    ? accent
-      ? accentActive[accent]
-      : 'bg-foreground text-background shadow-sm'
-    : 'border border-border bg-background text-content-muted hover:bg-muted';
-  return (
-    <button
-      type='button'
-      onClick={onClick}
-      className={cn(
-        'text-2xs rounded-full px-2.5 py-1 font-medium transition-colors',
-        cls
-      )}
-    >
-      {label}
-    </button>
-  );
-}
 
 function ViewBtn({
   active,
@@ -1152,12 +1010,12 @@ function ViewBtn({
 }) {
   return (
     <Chip
-      size='sm'
       selected={active}
+      size='md'
       onClick={onClick}
       title={label}
+      className='size-8 rounded-md border-transparent px-0 shadow-none'
       aria-label={label}
-      className='border-0 px-2'
     >
       {icon}
     </Chip>
