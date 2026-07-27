@@ -3,8 +3,8 @@
  * delvaux-clone: ảnh sản phẩm lớn căn giữa + quầng sáng + hotspot; bấm →
  * panel trắng trượt từ phải. Entrance zoom scrub. Path A.
  *
- * Layers: imageUrl + glowColor + expand hotspots[i].* (title/desc/mediaUrl)
- * + manager `hotspots` (x/y/mediaType/add-remove qua ElementToolbar).
+ * Layers: imageUrl + glowColor + expand hotspots[i].* (title/desc/mediaUrl
+ * image-upload) + manager `hotspots` (x/y/mediaType/add-remove qua ElementToolbar).
  */
 import {
   Image as ImageIcon,
@@ -87,10 +87,10 @@ export const delvauxProductHotspotElements = (
       },
       {
         key: `hotspots[${i}].mediaUrl`,
-        label: 'Media (URL)',
+        label: 'Media',
         groupId,
         icon: ImageIcon,
-        fieldType: 'text' as const,
+        fieldType: 'image' as const,
       },
     ];
   });

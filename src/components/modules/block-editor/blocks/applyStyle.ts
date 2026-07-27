@@ -34,6 +34,11 @@ export function elementStyleOf(
   if (s.backgroundColor)
     out.backgroundColor = resolveColorValue(s.backgroundColor);
   if (typeof s.opacity === 'number') out.opacity = s.opacity;
+  if (typeof s.borderRadius === 'number')
+    out.borderRadius = `${s.borderRadius}px`;
+  if (s.boxShadow) out.boxShadow = s.boxShadow;
+  if (typeof s.blur === 'number' && s.blur > 0)
+    out.filter = `blur(${s.blur}px)`;
   if (Object.keys(out).length === 0) return undefined;
   return out;
 }

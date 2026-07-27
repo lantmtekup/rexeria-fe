@@ -17,6 +17,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { cn } from '@/lib/cn';
 
+import { isInternalPathLink } from '../links/linkToken';
 import { useLandingMotion } from '../motion/LandingMotion';
 import { isDeviceFrameHost, resolveDrawerPortalHost } from '../previewPortal';
 import type {
@@ -302,7 +303,9 @@ export function PnjStickyMenu({
   ) => {
     const link = item.link?.trim() ?? '';
     if (!link) return;
-    if (isPnjExternalLink(link)) return;
+    // Let the browser handle real navigation (external URL or an internal
+    // page path); only in-page section ids are scroll-hijacked.
+    if (isPnjExternalLink(link) || isInternalPathLink(link)) return;
     e.preventDefault();
     scrollToSection(link);
   };
@@ -313,7 +316,7 @@ export function PnjStickyMenu({
   ) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     const link = item.link?.trim() ?? '';
-    if (!link || isPnjExternalLink(link)) return;
+    if (!link || isPnjExternalLink(link) || isInternalPathLink(link)) return;
     e.preventDefault();
     scrollToSection(link);
   };
@@ -351,18 +354,23 @@ export function PnjStickyMenu({
         {items.map((item, i) => {
           const link = item.link?.trim() ?? '';
           const external = isPnjExternalLink(link);
-          const sectionId = external ? '' : resolvePnjSectionId(link);
-          const isActive = !external && activeId === (item.key || sectionId);
+          // A resolved internal page link (`/p/{slug}/{sub}`) is navigation,
+          // not a section id — otherwise the href below becomes
+          // `#p/slug/sub` and the click is swallowed.
+          const internalPath = !external && isInternalPathLink(link);
+          const navigates = external || internalPath;
+          const sectionId = navigates ? '' : resolvePnjSectionId(link);
+          const isActive = !navigates && activeId === (item.key || sectionId);
 
           return (
             <li key={item.key || `${sectionId}-${i}`} className='shrink-0'>
               <a
-                href={external ? link : link ? `#${sectionId}` : '#'}
+                href={navigates ? link : link ? `#${sectionId}` : '#'}
                 target={external ? '_blank' : undefined}
                 rel={external ? 'noreferrer noopener' : undefined}
                 data-element-key={`items[${i}].label`}
                 data-cta-id={`nav-${item.key || sectionId}`}
-                data-nav-key={external ? undefined : item.key || sectionId}
+                data-nav-key={navigates ? undefined : item.key || sectionId}
                 aria-label={item.label}
                 aria-current={isActive ? 'true' : undefined}
                 tabIndex={0}

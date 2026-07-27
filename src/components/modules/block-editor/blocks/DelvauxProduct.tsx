@@ -450,12 +450,12 @@ export function DelvauxProduct({
         <style suppressHydrationWarning>{DELVAUX_FONT_CSS}</style>
         <style suppressHydrationWarning>{PRODUCT_CSS}</style>
         <div
-          className='mx-auto flex w-full max-w-3xl flex-col items-center px-4 py-8'
-          style={{ gap: 'clamp(24px, 4cqi, 40px)' }}
+          className='mx-auto flex w-full max-w-5xl flex-col items-center px-4 py-8'
+          style={{ gap: 'clamp(20px, 3cqi, 32px)' }}
         >
           <div
             className='delvaux-product-zoom relative'
-            style={{ height: 'min(50vh, 420px)' }}
+            style={{ height: 'min(42vh, 360px)' }}
           >
             <div
               aria-hidden='true'
@@ -464,8 +464,8 @@ export function DelvauxProduct({
                 bottom: '10%',
                 left: '50%',
                 transform: 'translateX(-50%) scale(1.45)',
-                width: 'clamp(180px, 28cqi, 320px)',
-                height: 'clamp(180px, 28cqi, 320px)',
+                width: 'clamp(160px, 24cqi, 280px)',
+                height: 'clamp(160px, 24cqi, 280px)',
                 background: `radial-gradient(circle closest-side, ${glow} 0%, ${glow} 35%, transparent 78%)`,
                 opacity: 0.4,
                 zIndex: 0,
@@ -499,8 +499,8 @@ export function DelvauxProduct({
                   left: `${spot.x}%`,
                   top: `${spot.y}%`,
                   transform: 'translate(-50%, -50%)',
-                  width: '20px',
-                  height: '20px',
+                  width: '18px',
+                  height: '18px',
                   border: '2px solid #ffffff',
                   borderRadius: '9999px',
                   boxShadow: '0 0 6px rgba(0,0,0,0.18)',
@@ -509,7 +509,7 @@ export function DelvauxProduct({
             ))}
           </div>
 
-          <div className='grid w-full grid-cols-1 gap-4 @2xl:grid-cols-3'>
+          <div className='grid w-full grid-cols-1 items-stretch gap-3 @2xl:grid-cols-3'>
             {hotspots.map((spot, i) => {
               const titleKey = `hotspots[${i}].title`;
               const descKey = `hotspots[${i}].desc`;
@@ -517,32 +517,16 @@ export function DelvauxProduct({
               return (
                 <div
                   key={`hs-card-${i}`}
-                  className='flex flex-col text-left'
+                  className='flex h-full flex-col overflow-hidden text-left'
                   style={{
                     background: '#ffffff',
-                    padding: 'clamp(16px, 2.5cqi, 24px)',
                     border: '1px solid #e8e8e8',
                   }}
                 >
-                  <h3
-                    data-element-key={titleKey}
-                    style={composeStyle(titleBase, styleOf(titleKey))}
-                    className={selectableClass(activeKey === titleKey)}
-                  >
-                    {spot.title || `Hotspot ${i + 1}`}
-                  </h3>
-                  <p
-                    data-element-key={descKey}
-                    style={composeStyle(descBase, styleOf(descKey))}
-                    className={selectableClass(activeKey === descKey)}
-                  >
-                    {spot.desc || 'Mô tả'}
-                  </p>
                   <div
-                    className='w-full'
+                    className='relative w-full shrink-0'
                     style={{
-                      marginTop: 'clamp(12px, 2cqi, 20px)',
-                      aspectRatio: '465 / 348',
+                      aspectRatio: '4 / 3',
                       background: '#f3f3f3',
                     }}
                   >
@@ -587,15 +571,61 @@ export function DelvauxProduct({
                         style={composeStyle(
                           {
                             fontFamily: DELVAUX_FONT_BODY,
-                            fontSize: 'clamp(12px, 1.3cqi, 13px)',
+                            fontSize: '12px',
                             color: 'rgba(17,17,17,0.4)',
                           },
                           styleOf(mediaKey)
                         )}
                       >
-                        Media URL
+                        Chưa có media
                       </div>
                     )}
+                    <span
+                      aria-hidden='true'
+                      className='absolute top-2 left-2 flex size-5 items-center justify-center rounded-full bg-neutral-900 text-[10px] font-medium text-white'
+                    >
+                      {i + 1}
+                    </span>
+                  </div>
+                  <div
+                    className='flex flex-1 flex-col'
+                    style={{
+                      padding: 'clamp(12px, 1.8cqi, 16px)',
+                      gap: '8px',
+                    }}
+                  >
+                    <h3
+                      data-element-key={titleKey}
+                      style={composeStyle(
+                        {
+                          ...titleBase,
+                          fontSize: 'clamp(15px, 1.8cqi, 18px)',
+                          lineHeight: 1.25,
+                        },
+                        styleOf(titleKey)
+                      )}
+                      className={selectableClass(activeKey === titleKey)}
+                    >
+                      {spot.title || `Hotspot ${i + 1}`}
+                    </h3>
+                    <p
+                      data-element-key={descKey}
+                      style={composeStyle(
+                        {
+                          ...descBase,
+                          marginTop: 0,
+                          fontSize: 'clamp(11px, 1.2cqi, 12px)',
+                          lineHeight: 1.45,
+                        },
+                        styleOf(descKey)
+                      )}
+                      className={selectableClass(
+                        activeKey === descKey,
+                        'line-clamp-4'
+                      )}
+                    >
+                      {spot.desc || 'Mô tả'}
+                    </p>
                   </div>
                 </div>
               );

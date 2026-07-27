@@ -28,7 +28,10 @@ import {
   MotionProvider,
 } from '@/components/modules/block-editor/motion/runtime';
 import type { BlockMotion } from '@/components/modules/block-editor/motion/types';
-import { parseCanvas } from '@/components/modules/block-editor/serialize';
+import {
+  adaptCanvasBlueprint,
+  parseCanvas,
+} from '@/components/modules/block-editor/serialize';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Page, Template, TemplateVersion } from '@/services/rexer/types';
@@ -39,20 +42,6 @@ import { StatsAnnotationOverlay } from './StatsAnnotationOverlay';
 interface Props {
   /** Page ID (UUID) — resolve template + version để render. */
   pageId: string;
-}
-
-/**
- * BE canvas_blueprint stores `schema_version: "1.0"`; parseCanvas chỉ
- * accept "2.0". Coerce wrapper.
- */
-function adaptCanvasBlueprint(
-  raw: Record<string, unknown> | undefined
-): Record<string, unknown> | undefined {
-  if (!raw || typeof raw !== 'object') return undefined;
-  const blocks = Array.isArray((raw as { blocks?: unknown }).blocks)
-    ? ((raw as { blocks: unknown[] }).blocks as unknown[])
-    : [];
-  return { schema_version: '2.0', blocks };
 }
 
 export function PageOverlayView({ pageId }: Props) {

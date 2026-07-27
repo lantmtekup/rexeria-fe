@@ -71,6 +71,7 @@ import {
 import { buildAiPrompt } from './buildAiPrompt';
 import { ImagePicker } from './ImagePicker';
 import { getContentAt, setContentAt } from './contentPath';
+import { LinkControls } from './links/LinkControls';
 import { BACKGROUND_LAYER_KEY, resolveElementMeta } from './resolveElementKind';
 import {
   editingVariantOf,
@@ -220,7 +221,7 @@ export function ElementToolbar({
     }
 
     let nextValue: unknown;
-    if (kind === 'text' || kind === 'image') nextValue = '';
+    if (kind === 'text' || kind === 'image' || kind === 'link') nextValue = '';
     else nextValue = [];
 
     const paraMatch = selectedKey.match(PNJ_PARAGRAPH_KEY_RE);
@@ -359,6 +360,13 @@ export function ElementToolbar({
             onContentChange={onContentChange}
             onUpdateStyle={onUpdateStyle}
             onResetStyle={onResetStyle}
+          />
+        )}
+        {kind === 'link' && (
+          <LinkControls
+            fieldKey={selectedKey}
+            content={content}
+            onContentChange={onContentChange}
           />
         )}
         {kind === 'image' && (
@@ -3431,13 +3439,20 @@ function DelvauxHotspotsControls({
                   <option value='video'>Video</option>
                 </select>
               </label>
+            </div>
+            {h.mediaType === 'image' ? (
+              <ImagePicker
+                value={h.mediaUrl}
+                onChange={url => update(i, { mediaUrl: url })}
+              />
+            ) : (
               <Input
                 value={h.mediaUrl}
                 onChange={e => update(i, { mediaUrl: e.target.value })}
-                placeholder='URL media'
-                className='h-8 flex-1 border-neutral-200 bg-white text-xs'
+                placeholder='URL video'
+                className='h-8 border-neutral-200 bg-white text-xs'
               />
-            </div>
+            )}
             <div className='flex items-center gap-2'>
               <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
                 Dot X%

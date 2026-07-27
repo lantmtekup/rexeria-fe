@@ -21,7 +21,17 @@ import {
   MotionProvider,
 } from '@/components/modules/block-editor/motion/runtime';
 import type { BlockMotion } from '@/components/modules/block-editor/motion/types';
-import { parseCanvas } from '@/components/modules/block-editor/serialize';
+import { LinkNav } from '@/components/modules/block-editor/links/LinkNav';
+import { blockAnchorId } from '@/components/modules/block-editor/links/linkToken';
+import { resolveLinksDeep } from '@/components/modules/block-editor/links/resolveLinks';
+import {
+  findHomePage,
+  readSitePages,
+} from '@/components/modules/block-editor/links/sitePages';
+import {
+  adaptCanvasBlueprint,
+  parseCanvas,
+} from '@/components/modules/block-editor/serialize';
 import { LandingMotionRoot } from '@/components/modules/block-editor/motion/LandingMotion';
 import {
   TemplateTransitions,
@@ -35,23 +45,17 @@ import type { MotionKitData, Page } from '@/services/rexer/types';
 interface Props {
   page: Page;
   blueprint: Record<string, unknown>;
+  /** Which page of the template to render. Defaults to home. */
+  activePageId?: string;
+  /** Public slug the template is published under — the `/p/{rootSlug}` prefix
+   *  used to build internal links and to recognise them on click. */
+  rootSlug?: string;
   /** Active brand kit → injected as CSS vars so block token styles resolve. */
   brandKit?: BrandKitData;
   /** Active motion kit → scales every block's GSAP timeline. */
   motionKit?: MotionKitData;
   /** `?embed=1` — nhúng iframe lên site đối tác. Ẩn footer "Tạo bằng REXER". */
   embed?: boolean;
-}
-
-function adaptCanvas(
-  raw: Record<string, unknown> | undefined
-): Record<string, unknown> | undefined {
-  if (!raw || typeof raw !== 'object') return undefined;
-  const blocks = Array.isArray((raw as { blocks?: unknown }).blocks)
-    ? ((raw as { blocks: unknown[] }).blocks as unknown[])
-    : [];
-  const transition = (raw as { transition?: unknown }).transition;
-  return { schema_version: '2.0', blocks, transition };
 }
 
 /** `*.tekup.vn` matches `foo.tekup.vn` and `tekup.vn` itself. */
@@ -82,6 +86,10 @@ function useAdDomainAllowed(page: Page): boolean {
     if (!document.referrer) return; // mở trực tiếp (không nhúng) → luôn cho qua
     try {
       const referrerHost = new URL(document.referrer).hostname;
+      // Navigating between pages of the same template makes the referrer our
+      // OWN host, which is not in `allowed_domains` — without this, clicking
+      // through to a sub-page would show "Domain này chưa được phép nhúng".
+      if (referrerHost === window.location.hostname) return;
       setAllowed(domains.some(d => hostMatches(referrerHost, d)));
     } catch {
       setAllowed(true);
@@ -93,17 +101,41 @@ function useAdDomainAllowed(page: Page): boolean {
 export function PublicBlockRender({
   page,
   blueprint,
+  activePageId,
+  rootSlug,
   brandKit,
   motionKit,
   embed,
 }: Props) {
-  useInitTracker(page.id);
+  const parsed = parseCanvas(adaptCanvasBlueprint(blueprint));
+  const transition = asTransition(parsed?.transition);
+
+  const sitePages = React.useMemo(() => readSitePages(blueprint), [blueprint]);
+  const current = React.useMemo(
+    () => sitePages.find(p => p.id === activePageId) ?? findHomePage(sitePages),
+    [sitePages, activePageId]
+  );
+
+  useInitTracker(page.id, current.isHome ? undefined : current.slug);
   useBlockTracking();
   const domainAllowed = useAdDomainAllowed(page);
 
-  const parsed = parseCanvas(adaptCanvas(blueprint));
-  const visible = parsed?.blocks.filter(b => b.isVisible) ?? [];
-  const transition = asTransition(parsed?.transition);
+  const linkCtx = React.useMemo(
+    () => ({
+      pages: sitePages,
+      rootSlug: rootSlug ?? page.slug,
+      mode: 'public' as const,
+      // `?embed=1` must survive internal navigation or clicking through inside
+      // a partner iframe suddenly shows the "Tạo bằng REXER" footer.
+      search: embed ? '?embed=1' : undefined,
+    }),
+    [sitePages, rootSlug, page.slug, embed]
+  );
+
+  const visible = React.useMemo(
+    () => current.blocks.filter(b => b.isVisible),
+    [current]
+  );
 
   if (!domainAllowed) {
     return (
@@ -129,7 +161,10 @@ export function PublicBlockRender({
   }
 
   const items = visible.map(block => {
-    const content = block.contentVi.desktop;
+    // Rewrite `#page:` / `#block:` tokens into real hrefs. Value-driven and
+    // structurally shared, so blocks whose content has no token get the exact
+    // same object back and their GSAP effect deps don't change identity.
+    const content = resolveLinksDeep(block.contentVi.desktop, linkCtx);
     const styles = block.elementStyles?.desktop;
     const background = block.background?.desktop;
     const order = block.elementOrder?.desktop;
@@ -146,7 +181,11 @@ export function PublicBlockRender({
             2-stage của bộ Delvaux render trắng); (2) landing thật không có
             viền/bo góc giữa các section. Block nào cần clip tự set
             overflow-hidden trên section của nó. */}
-        <div data-block-id={block.id} data-block-type={block.blockType}>
+        <div
+          id={blockAnchorId(block.id)}
+          data-block-id={block.id}
+          data-block-type={block.blockType}
+        >
           <MotionBlockRoot className='relative'>
             <RenderBlock
               block={block}
@@ -166,20 +205,23 @@ export function PublicBlockRender({
   return (
     <div className='min-h-screen bg-white' style={brandKitToCssVars(brandKit)}>
       <LandingMotionRoot enableSmooth={isVerticalTransition(transition)}>
-        <main className='w-full'>
-          {/* `!gap-0`: trang published là landing full-bleed — gap mặc định
-              của PlainStack (gap-3/4) tạo sọc trắng giữa các section (lộ rõ
-              với block full-viewport như q80_experience). */}
-          <TemplateTransitions
-            transition={transition}
-            items={items}
-            className='!gap-0'
-          />
-        </main>
+        <LinkNav mode='public' rootSlug={rootSlug ?? page.slug}>
+          <main className='w-full'>
+            {/* `!gap-0`: trang published là landing full-bleed — gap mặc định
+                của PlainStack (gap-3/4) tạo sọc trắng giữa các section (lộ rõ
+                với block full-viewport như q80_experience). */}
+            <TemplateTransitions
+              transition={transition}
+              items={items}
+              className='!gap-0'
+            />
+          </main>
+        </LinkNav>
       </LandingMotionRoot>
       {embed ? null : (
         <footer className='text-3xs border-t border-neutral-200 bg-white px-6 py-4 text-center tracking-widest text-neutral-400 uppercase'>
-          Tạo bằng REXER · {visible.length} block · {page.slug}
+          Tạo bằng REXER · {visible.length} block ·{' '}
+          {current.isHome ? page.slug : `${page.slug}/${current.slug}`}
         </footer>
       )}
     </div>

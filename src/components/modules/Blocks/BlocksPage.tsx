@@ -122,6 +122,10 @@ function rxMessage(err: unknown): string {
 
 const SEARCH_DEBOUNCE_MS = 300;
 
+/** Shared size + radius + border weight cho hàng filter (khớp Input). */
+const FILTER_CONTROL_CLASS =
+  'border-input text-content-muted hover:bg-muted bg-background h-9 w-40 shrink-0 rounded-md border px-2.5 text-xs font-medium outline-none';
+
 type BlocksUrlFilters = {
   q: string;
   type: BlockType | 'all';
@@ -534,11 +538,17 @@ export function BlocksPage() {
   };
 
   return (
-    <div className='flex h-[calc(100vh-3.5rem)]'>
-      {/* Main column */}
-      <div className='flex flex-1 flex-col overflow-hidden'>
+    <div
+      className={cn(
+        'flex min-h-0',
+        // Admin shell đã h-screen → fill main. Portal còn top bar 57px.
+        isPortal ? 'h-[calc(100vh-57px)]' : 'h-full'
+      )}
+    >
+      {/* Main column — min-h-0 để body scroll được, không bị cắt đáy. */}
+      <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
         {/* Header */}
-        <div className='border-border bg-background border-b px-4 py-3'>
+        <div className='border-border bg-background shrink-0 border-b px-4 py-3'>
           <div className='flex items-start justify-between gap-3'>
             <div>
               <h1 className='text-xl font-semibold'>Blocks</h1>
@@ -596,15 +606,15 @@ export function BlocksPage() {
             </div>
           )}
 
-          {/* Search + filter + view — gộp 1 hàng ngang cho gọn. */}
+          {/* Search + filter + view — gộp 1 hàng ngang, cùng h-9. */}
           <div className='mt-2 flex flex-wrap items-center gap-2'>
-            <div className='relative min-w-[180px] flex-1'>
+            <div className='relative min-w-48 flex-1 basis-56'>
               <Search className='text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2' />
               <Input
                 placeholder='Tìm theo tên / block type / tag…'
                 value={searchInput}
                 onChange={e => setSearchInput(e.target.value)}
-                className='pl-8'
+                className='border-input h-9 rounded-md pl-8 shadow-none md:text-xs'
                 aria-label='Tìm kiếm blocks'
               />
             </div>
@@ -612,7 +622,8 @@ export function BlocksPage() {
             <select
               value={typeFilter}
               onChange={e => setTypeFilter(e.target.value as BlockType | 'all')}
-              className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1.5 text-xs font-medium outline-none'
+              className={FILTER_CONTROL_CLASS}
+              aria-label='Lọc theo type'
             >
               <option value='all'>Tất cả type</option>
               {typeOptions.map(o => (
@@ -627,7 +638,8 @@ export function BlocksPage() {
               onChange={e =>
                 setStatusFilter(e.target.value as BlockStatus | 'all')
               }
-              className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1.5 text-xs font-medium outline-none'
+              className={FILTER_CONTROL_CLASS}
+              aria-label='Lọc theo trạng thái'
             >
               <option value='all'>Tất cả trạng thái</option>
               {BLOCK_STATUS_ORDER.map(s => (
@@ -652,19 +664,19 @@ export function BlocksPage() {
               <button
                 type='button'
                 onClick={handleClearFilters}
-                className='text-3xs text-content-muted hover:text-foreground inline-flex items-center gap-1'
+                className='text-content-muted hover:text-foreground inline-flex h-9 shrink-0 items-center gap-1 px-1.5 text-xs'
                 aria-label='Xoá bộ lọc'
               >
-                <X className='size-3' />
+                <X className='size-3.5' />
                 Clear
               </button>
             )}
 
-            <div className='text-3xs text-content-muted ml-auto'>
+            <div className='text-content-muted ml-auto inline-flex h-9 shrink-0 items-center text-xs tabular-nums'>
               {filtered.length} / {items.length}
             </div>
 
-            <div className='border-border bg-background flex items-center gap-1 rounded-lg border p-0.5'>
+            <div className='border-input bg-background flex h-9 shrink-0 items-center gap-0.5 rounded-md border p-0.5'>
               <ViewBtn
                 active={view === 'grid'}
                 onClick={() => setView('grid')}
@@ -682,7 +694,7 @@ export function BlocksPage() {
         </div>
 
         {/* Body */}
-        <div className='bg-muted/40 flex-1 overflow-y-auto px-4 py-3'>
+        <div className='bg-muted/40 min-h-0 flex-1 overflow-y-auto px-4 py-3 pb-6'>
           {error && (
             <div className='border-destructive/20 bg-danger-bg text-destructive mb-3 rounded-lg border px-3 py-2 text-xs'>
               Load blocks thất bại: <code className='font-mono'>{error}</code>
@@ -1072,15 +1084,18 @@ function TagMultiSelect({
         <button
           type='button'
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors outline-none',
-            value.length > 0
-              ? 'border-primary bg-primary/5 text-foreground'
-              : 'border-border text-content-muted hover:bg-muted bg-background'
+            FILTER_CONTROL_CLASS,
+            'inline-flex items-center justify-between gap-1.5 transition-colors',
+            value.length > 0 &&
+              'border-primary bg-primary/5 text-foreground hover:bg-primary/5'
           )}
+          aria-label='Lọc theo tag'
         >
-          <Tag className='size-3' />
-          {label}
-          <ChevronDown className='size-3 opacity-60' />
+          <span className='inline-flex min-w-0 items-center gap-1.5 truncate'>
+            <Tag className='size-3.5 shrink-0' />
+            <span className='truncate'>{label}</span>
+          </span>
+          <ChevronDown className='size-3.5 shrink-0 opacity-60' />
         </button>
       </Popover.Trigger>
       <Popover.Portal>
@@ -1351,13 +1366,11 @@ function TableView({
                 }
               />
             </TableHead>
-            <TableHead className='w-28'>Thumbnail</TableHead>
-            <TableHead>Tên</TableHead>
+            <TableHead className='w-36'>Block</TableHead>
             <TableHead className='w-32'>Trạng thái</TableHead>
             <TableHead className='w-36'>Mapping code</TableHead>
             <TableHead className='w-32'>Tags</TableHead>
-            <TableHead className='w-24'>Extras</TableHead>
-            <TableHead className='w-20'>Usage</TableHead>
+            <TableHead className='w-28'>Extras / Usage</TableHead>
             <TableHead className='w-32'>Cập nhật</TableHead>
             <TableHead className='w-40' />
           </TableRow>
@@ -1366,6 +1379,8 @@ function TableView({
           {items.map(it => {
             const editorBlock = parseEditorBlock(it.settings);
             const draft = effectiveBlockStatus(it) === 'draft';
+            const extrasCount = editorBlock?.extraElements?.length ?? 0;
+            const usageCount = it.usage_count ?? 0;
             return (
               <TableRow
                 key={it.id}
@@ -1393,33 +1408,37 @@ function TableView({
                   />
                 </TableCell>
                 <TableCell>
-                  {it.thumbnail_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={it.thumbnail_url}
-                      alt={it.name}
-                      className='border-border h-[54px] w-24 rounded-md border object-cover'
-                    />
-                  ) : editorBlock ? (
-                    <div className='border-border bg-card w-24 overflow-hidden rounded-md border'>
-                      <BlockMiniPreview block={editorBlock} aspect='16 / 9' />
+                  <div className='flex w-28 flex-col gap-1.5'>
+                    {it.thumbnail_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={it.thumbnail_url}
+                        alt={it.name}
+                        className='border-border h-13.5 w-full rounded-md border object-cover'
+                      />
+                    ) : editorBlock ? (
+                      <div className='border-border bg-card w-full overflow-hidden rounded-md border'>
+                        <BlockMiniPreview block={editorBlock} aspect='16 / 9' />
+                      </div>
+                    ) : (
+                      <div className='bg-muted text-content-muted text-3xs flex h-13.5 w-full items-center justify-center rounded-md'>
+                        no preview
+                      </div>
+                    )}
+                    <div className='min-w-0'>
+                      <div className='text-sm leading-snug font-medium wrap-break-word whitespace-normal'>
+                        {it.name}
+                      </div>
+                      {it.review_note && (
+                        <div
+                          className='text-3xs text-muted-foreground mt-0.5 wrap-break-word whitespace-normal'
+                          title={it.review_note}
+                        >
+                          📝 {it.review_note}
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className='bg-muted text-content-muted text-3xs flex h-[54px] w-24 items-center justify-center rounded-md'>
-                      no preview
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className='font-medium'>{it.name}</div>
-                  {it.review_note && (
-                    <div
-                      className='text-3xs text-muted-foreground mt-0.5 max-w-[16rem] truncate'
-                      title={it.review_note}
-                    >
-                      📝 {it.review_note}
-                    </div>
-                  )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <BlockStatusBadge status={it.status} />
@@ -1450,14 +1469,10 @@ function TableView({
                   )}
                 </TableCell>
                 <TableCell>
-                  <span className='text-2xs text-content-muted font-mono'>
-                    {editorBlock?.extraElements?.length ?? 0}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className='text-2xs text-content-muted font-mono'>
-                    {it.usage_count ?? 0}
-                  </span>
+                  <div className='text-content-muted text-2xs flex flex-col gap-0.5 font-mono tabular-nums'>
+                    <span title='Extras'>{extrasCount} extras</span>
+                    <span title='Usage'>{usageCount} uses</span>
+                  </div>
                 </TableCell>
                 <TableCell className='text-content-muted text-xs'>
                   {fmtRelative(it.updated_at ?? it.created_at)}
@@ -1535,7 +1550,14 @@ function ViewBtn({
   label: string;
 }) {
   return (
-    <Chip selected={active} size='sm' onClick={onClick} title={label}>
+    <Chip
+      selected={active}
+      size='md'
+      onClick={onClick}
+      title={label}
+      className='size-8 rounded-md border-transparent px-0 shadow-none'
+      aria-label={label}
+    >
       {icon}
     </Chip>
   );

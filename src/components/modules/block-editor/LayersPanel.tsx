@@ -126,7 +126,10 @@ export interface LayerElement {
    * editor biết hiện control gì (ô text / textarea / image picker) mà KHÔNG
    * phải đoán theo tên key. Bỏ trống → fallback heuristic cũ.
    */
-  fieldType?: 'text' | 'textarea' | 'image';
+  /** `'link'` swaps the plain text input for the link picker (internal page /
+   *  scroll to block / external URL). Free text still round-trips, so a field
+   *  left as `'text'` keeps working. */
+  fieldType?: 'text' | 'textarea' | 'image' | 'link';
   /**
    * Cùng `groupId` → gom thành 1 folder collapsible trong panel Lớp.
    * Opt-in: block không khai vẫn list phẳng.

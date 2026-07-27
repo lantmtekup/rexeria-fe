@@ -146,6 +146,8 @@ export function useAutosave({
         Array.isArray((payload as { blocks?: unknown[] }).blocks)
           ? (payload as { blocks: unknown[] }).blocks.length
           : '?',
+        'pages:',
+        (payload as { pages?: unknown[] }).pages?.length ?? '—',
         'payload:',
         payload
       );
@@ -167,7 +169,12 @@ export function useAutosave({
           )
             ? (beTpl.draft_canvas_blueprint as { blocks: unknown[] }).blocks
                 .length
-            : 0
+            : 0,
+          // If this ever reads '—' while the editor shows several pages, BE is
+          // dropping the key and multi-page edits are being silently lost.
+          'pages:',
+          (beTpl.draft_canvas_blueprint as { pages?: unknown[] } | undefined)
+            ?.pages?.length ?? '—'
         );
         if (token.cancelled) return; // a newer save superseded us
         dirtyRef.current = false;

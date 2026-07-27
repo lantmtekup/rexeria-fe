@@ -72,6 +72,11 @@ interface BlockEditorHeaderProps {
   /** Nếu set → nút back gọi hàm này (vd router.back về màn trước) thay vì đi
    *  `backHref`. Ưu tiên hơn backHref. */
   onBack?: () => void;
+  /** Slot cho action riêng của route (vd "Tạo link demo" ở admin template
+   *  edit). Render trong cụm tool bên phải, cạnh nút Xem trước — để route
+   *  không phải dựng thanh bar riêng ăn mất chiều cao canvas. Style do route
+   *  tự lo (giữ h-7 để khớp hàng tool). */
+  headerActions?: React.ReactNode;
 }
 
 export function BlockEditorHeader({
@@ -107,6 +112,7 @@ export function BlockEditorHeader({
   isMotionPreviewing,
   backHref = '/canvas-templates',
   onBack,
+  headerActions,
 }: BlockEditorHeaderProps) {
   const status: SaveStatus = saving ? 'saving' : dirty ? 'dirty' : 'saved';
 
@@ -242,6 +248,8 @@ export function BlockEditorHeader({
         <IconBtn onClick={onPreview} label='Xem trước'>
           <Eye className='size-3.5' />
         </IconBtn>
+
+        {headerActions}
 
         {onPublish ? (
           <button

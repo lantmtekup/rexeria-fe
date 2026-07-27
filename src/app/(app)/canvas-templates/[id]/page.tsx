@@ -16,7 +16,7 @@ export default function CanvasTemplateEditorPage({ params }: PageProps) {
   // editor auto-runs apply-product flow on open.
   const autoApplyProductId = searchParams.get('apply_product') ?? undefined;
   return (
-    <div className='flex h-full flex-1 flex-col'>
+    <div className='flex h-full min-h-0 flex-1 flex-col overflow-hidden'>
       <BlockEditor templateId={id} autoApplyProductId={autoApplyProductId} />
     </div>
   );

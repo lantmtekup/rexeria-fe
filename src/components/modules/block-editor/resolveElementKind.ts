@@ -3,12 +3,14 @@
  * Registry-first (`BlockDef.elements.fieldType`), then key heuristics.
  */
 import { getBlockDef } from './blocks/_registry/registry';
+import { isLinkKey } from './links/linkToken';
 import type { LayerElement } from './LayersPanel';
 import type { BlockType } from './types';
 
 export type ElementKind =
   | 'text'
   | 'image'
+  | 'link'
   | 'stats'
   | 'features'
   | 'reasons'
@@ -145,6 +147,9 @@ export function resolveKind(
   blockType?: BlockType
 ): ElementKind {
   if (fieldType === 'image') return 'image';
+  // Before the 'text' branch: a link field declared as text must not fall
+  // through to the inline contenteditable path.
+  if (fieldType === 'link') return 'link';
   if (fieldType === 'text' || fieldType === 'textarea') return 'text';
   // `slides` overlaps image_carousel vs interactive_ad_widget — distinguish by type.
   if (key === 'slides' && blockType === 'interactive_ad_widget') {
@@ -175,7 +180,10 @@ export function resolveKind(
     /^links\[\d+\]\.(label|targetId)$/.test(key) &&
     blockType === 'delvaux_subnav'
   ) {
-    return 'text';
+    // `targetId` is a link target — must reach the picker, not the plain text
+    // input. These hardcoded branches return before `defFieldType` is read, so
+    // flipping the registry def alone would have no effect here.
+    return key.endsWith('.targetId') ? 'link' : 'text';
   }
   // Aestha nav: phải chặn trước fallback `ELEMENT_KIND[key] ?? isImageKey` —
   // `navLinks` rơi về 'text' thì toolbar ghi 1 string đè cả mảng.
@@ -186,7 +194,7 @@ export function resolveKind(
     /^navLinks\[\d+\]\.(label|href)$/.test(key) &&
     blockType === 'framer_aestha_editorial'
   ) {
-    return 'text';
+    return key.endsWith('.href') ? 'link' : 'text';
   }
   // Aestha Explore: `projects` / `footerLinks` là mảng động (list manager) —
   // chặn trước fallback để toolbar không ghi 1 string đè cả mảng.
@@ -198,8 +206,10 @@ export function resolveKind(
     if (/^projects\[\d+\]\.detail\.images$/.test(key))
       return 'aesthaExploreProjectImages';
     if (/^projects\[\d+\]\.img$/.test(key)) return 'image';
-    if (/^projects\[\d+\]\.(label|href|alt)$/.test(key)) return 'text';
-    if (/^footerLinks\[\d+\]\.(label|href)$/.test(key)) return 'text';
+    if (/^projects\[\d+\]\.href$/.test(key)) return 'link';
+    if (/^projects\[\d+\]\.(label|alt)$/.test(key)) return 'text';
+    if (/^footerLinks\[\d+\]\.label$/.test(key)) return 'text';
+    if (/^footerLinks\[\d+\]\.href$/.test(key)) return 'link';
   }
   // Aestha Studio: `team` / `footerLinks` là mảng động (list manager) — chặn
   // trước fallback để toolbar không ghi 1 string đè cả mảng.
@@ -207,15 +217,18 @@ export function resolveKind(
     if (key === 'team') return 'aesthaStudioTeam';
     if (key === 'footerLinks') return 'aesthaStudioFooterLinks';
     if (/^team\[\d+\]\.(name|role)$/.test(key)) return 'text';
-    if (/^footerLinks\[\d+\]\.(label|href)$/.test(key)) return 'text';
+    if (/^footerLinks\[\d+\]\.label$/.test(key)) return 'text';
+    if (/^footerLinks\[\d+\]\.href$/.test(key)) return 'link';
   }
   // Aestha Contact: `socials` / `footerLinks` là mảng động (list manager) —
   // chặn trước fallback để toolbar không ghi 1 string đè cả mảng.
   if (blockType === 'aestha_contact') {
     if (key === 'socials') return 'aesthaContactSocials';
     if (key === 'footerLinks') return 'aesthaContactFooterLinks';
-    if (/^socials\[\d+\]\.(label|href)$/.test(key)) return 'text';
-    if (/^footerLinks\[\d+\]\.(label|href)$/.test(key)) return 'text';
+    if (/^socials\[\d+\]\.label$/.test(key)) return 'text';
+    if (/^socials\[\d+\]\.href$/.test(key)) return 'link';
+    if (/^footerLinks\[\d+\]\.label$/.test(key)) return 'text';
+    if (/^footerLinks\[\d+\]\.href$/.test(key)) return 'link';
   }
   // Aestha Project: `body` / `images` / `navLinks` là mảng động (list manager)
   // — chặn trước fallback để toolbar không ghi 1 string đè cả mảng.
@@ -236,7 +249,7 @@ export function resolveKind(
     /^hotspots\[\d+\]\.(title|desc|mediaUrl)$/.test(key) &&
     blockType === 'delvaux_product'
   ) {
-    return 'text';
+    return key.endsWith('.mediaUrl') ? 'image' : 'text';
   }
   if (
     /^variants\[\d+\]\.(label|ref|color|imageUrl)$/.test(key) &&
@@ -361,7 +374,16 @@ export function resolveKind(
   if ((key === 'line' || key === 'dot') && blockType === 'mintv2_process') {
     return 'fill';
   }
-  return ELEMENT_KIND[key] ?? (isImageKey(key) ? 'image' : 'text');
+  if (ELEMENT_KIND[key]) return ELEMENT_KIND[key];
+  // Author-time convenience: give link-shaped fields the link picker without
+  // touching all ~43 registry defs that still declare them as 'text'. Typing a
+  // path by hand still works, so this only changes the control shown.
+  //
+  // Deliberately NOT matching `*Url`: that suffix is dominated by image fields
+  // (`imageUrl`, `coverUrl`, `coinUrl`, …) and `isImageKey` already claims it.
+  // A CTA field named `*Url` should declare `fieldType: 'link'` in its def.
+  if (isLinkKey(key)) return 'link';
+  return isImageKey(key) ? 'image' : 'text';
 }
 
 export function resolveLabel(
@@ -680,8 +702,8 @@ export function resolveElementMeta(
   const navLink = key.match(/^items\[(\d+)\]\.link$/);
   if (navLink && blockType === 'pnj_sticky_menu') {
     return {
-      kind: 'text',
-      fieldType: 'text',
+      kind: 'link',
+      fieldType: 'link',
       label: `Link mục ${Number(navLink[1]) + 1}`,
     };
   }
@@ -1085,11 +1107,12 @@ export function resolveElementMeta(
     const labels: Record<string, string> = {
       title: 'Tiêu đề',
       desc: 'Mô tả',
-      mediaUrl: 'Media (URL)',
+      mediaUrl: 'Media',
     };
+    const isMedia = field === 'mediaUrl';
     return {
-      kind: 'text',
-      fieldType: field === 'desc' ? 'textarea' : 'text',
+      kind: isMedia ? 'image' : 'text',
+      fieldType: field === 'desc' ? 'textarea' : isMedia ? 'image' : 'text',
       label: `Hotspot ${Number(delvauxHs[1]) + 1} · ${labels[field] ?? field}`,
     };
   }
@@ -1156,6 +1179,7 @@ export function isInlineTextKey(blockType: BlockType, key: string): boolean {
 export function canvasEditActionLabel(kind: ElementKind): string {
   if (kind === 'image') return 'Đổi ảnh';
   if (kind === 'text') return 'Sửa chữ';
+  if (kind === 'link') return 'Đặt link';
   if (kind === 'background') return 'Nền';
   return 'Chỉnh';
 }
