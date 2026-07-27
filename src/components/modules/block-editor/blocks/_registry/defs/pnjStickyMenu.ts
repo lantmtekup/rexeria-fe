@@ -56,7 +56,7 @@ export const pnjStickyMenuItemElements = (
         label: 'link',
         groupId,
         icon: Link2,
-        fieldType: 'text' as const,
+        fieldType: 'link' as const,
       },
     ];
   });
@@ -92,7 +92,7 @@ export const pnjStickyMenuDef: BlockDef<PnjStickyMenuContent> = {
       key: 'ctaLink',
       label: 'Link CTA',
       icon: MousePointerClick,
-      fieldType: 'text',
+      fieldType: 'link',
     },
   ],
 };

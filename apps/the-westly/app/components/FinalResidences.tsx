@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import {
   gsap,
   ScrollTrigger,
@@ -98,7 +98,7 @@ const PdfIcon = () => (
 export default function FinalResidences() {
   const sectionRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
 
@@ -107,10 +107,33 @@ export default function FinalResidences() {
     mm.add(MOTION_CONDITIONS, ctx => {
       const { finePointer, reduce } = ctx.conditions as MotionConditions;
 
+      const bg = section.querySelector<HTMLElement>('[data-layer="bg"]');
       const ui = section.querySelectorAll<HTMLElement>('[data-ui]');
       const cards = section.querySelectorAll<HTMLElement>(
         '[data-residence-card]'
       );
+
+      if (bg && !reduce) {
+        // The sticky SceneParallax shows through this section until the
+        // background is solid. Ships opaque in the markup (correct without JS)
+        // and fades in only *after* that section's veil has finished, i.e.
+        // onto an already-flat cream viewport — cream over cream is invisible,
+        // so this never draws a hard edge across the scene.
+        gsap.fromTo(
+          bg,
+          { opacity: 0 },
+          {
+            opacity: 1,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: section,
+              start: 'top 30%',
+              end: 'top 16%',
+              scrub: 0.4,
+            },
+          }
+        );
+      }
 
       gsap
         .timeline({
@@ -259,8 +282,15 @@ export default function FinalResidences() {
     <section
       ref={sectionRef}
       id='residences'
-      className='relative w-full bg-[#F3F1EA] py-16 sm:py-20 lg:py-24'
+      className='relative z-10 w-full py-16 sm:py-20 lg:py-24'
     >
+      {/* Background as its own layer so it can fade in over the sticky scene. */}
+      <div
+        data-layer='bg'
+        aria-hidden
+        className='absolute inset-0 -z-10 bg-[#F3F1EA]'
+      />
+
       <div className='mx-auto w-full max-w-6xl px-5 sm:px-8 lg:px-10'>
         <header className='mx-auto max-w-2xl text-center'>
           <h2

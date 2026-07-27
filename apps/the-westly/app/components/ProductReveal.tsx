@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import {
   gsap,
   ScrollTrigger,
@@ -28,16 +28,17 @@ const SHOWCASE = {
 export default function ProductReveal() {
   const sectionRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
 
     const mm = gsap.matchMedia(section);
 
     mm.add(MOTION_CONDITIONS, ctx => {
-      const { isDesktop, finePointer, reduce } =
+      const { isDesktop, isMobile, finePointer, reduce } =
         ctx.conditions as MotionConditions;
 
+      const bg = section.querySelector<HTMLElement>('[data-layer="bg"]');
       const stack = section.querySelector<HTMLElement>('[data-layer="stack"]');
       const photo = section.querySelector<HTMLElement>('[data-layer="photo"]');
       const foreground = section.querySelector<HTMLElement>(
@@ -55,6 +56,28 @@ export default function ProductReveal() {
         return;
 
       gsap.set(photo, { autoAlpha: 0 });
+
+      if (bg && !reduce) {
+        // The sticky SceneReveal shows through this section until the
+        // background is solid. Ships opaque in the markup (correct without JS)
+        // and fades in only *after* that section's veil has finished, i.e. onto
+        // an already-flat cream viewport — cream over cream is invisible, so
+        // this never draws a hard edge across the scene.
+        gsap.fromTo(
+          bg,
+          { opacity: 0 },
+          {
+            opacity: 1,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: section,
+              start: 'top 30%',
+              end: 'top 16%',
+              scrub: 0.4,
+            },
+          }
+        );
+      }
 
       gsap
         .timeline({
@@ -105,9 +128,9 @@ export default function ProductReveal() {
         // Clouds drift gently on scroll — small enough to stay ~30px from the edge.
         gsap.fromTo(
           clouds,
-          { yPercent: isDesktop ? -6 : -4 },
+          { yPercent: isDesktop ? -6 : isMobile ? -5 : -4 },
           {
-            yPercent: isDesktop ? 6 : 4,
+            yPercent: isDesktop ? 6 : isMobile ? 5 : 4,
             ease: 'none',
             scrollTrigger: {
               trigger: section,
@@ -118,12 +141,30 @@ export default function ProductReveal() {
           }
         );
 
+        if (isMobile) {
+          // Skyline moves opposite clouds for layered depth — mobile only.
+          gsap.fromTo(
+            skyline,
+            { yPercent: 2 },
+            {
+              yPercent: -2,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: section,
+                start: 'top bottom',
+                end: 'bottom top',
+                scrub: true,
+              },
+            }
+          );
+        }
+
         // Copy panel drifts opposite for depth — matches ProductShowcase.
         gsap.fromTo(
           copy,
-          { yPercent: isDesktop ? 6 : 3 },
+          { yPercent: isDesktop ? 6 : isMobile ? 4 : 3 },
           {
-            yPercent: isDesktop ? -42 : -22,
+            yPercent: isDesktop ? -42 : isMobile ? -16 : -22,
             ease: 'none',
             scrollTrigger: {
               trigger: section,
@@ -215,16 +256,25 @@ export default function ProductReveal() {
   return (
     <section
       ref={sectionRef}
-      className='relative flex min-h-svh w-full items-center justify-center overflow-x-hidden bg-[#F3F1EA] py-14 sm:py-16 lg:h-screen lg:overflow-hidden lg:py-0'
+      data-blend-next
+      className='relative z-10 flex min-h-svh w-full items-center justify-center overflow-x-hidden py-14 max-lg:min-h-0 max-lg:items-stretch max-lg:justify-start max-lg:py-12 max-lg:pb-16 sm:py-16 sm:max-lg:py-16 sm:max-lg:pb-20 lg:h-screen lg:overflow-hidden lg:py-0'
     >
-      <div className='mx-auto flex w-full max-w-[1440px] flex-col items-stretch px-5 sm:px-8 lg:flex-row lg:items-center lg:px-10'>
+      {/* Background as its own layer so it can fade in over the sticky scene. */}
+      <div
+        data-layer='bg'
+        aria-hidden
+        className='absolute inset-0 -z-10 bg-[#F3F1EA]'
+      />
+
+      <div className='mx-auto flex w-full max-w-[1440px] flex-col items-stretch px-5 max-lg:px-4 sm:px-8 lg:flex-row lg:items-center lg:px-10'>
         <div
           data-layer='stack'
+          data-cursor-id='reveal-stack'
           role='button'
           tabIndex={0}
           aria-pressed='false'
           aria-label='Toggle the finished view'
-          className='relative aspect-[816/552] w-full shrink-0 cursor-pointer overflow-hidden lg:w-[58%]'
+          className='relative aspect-[816/552] w-full shrink-0 cursor-pointer overflow-hidden max-lg:mx-auto max-lg:max-w-[min(100%,34rem)] sm:max-lg:max-w-[min(100%,40rem)] md:max-lg:max-w-none lg:w-[58%]'
         >
           <div
             data-layer='photo'
@@ -255,7 +305,7 @@ export default function ProductReveal() {
 
           <div
             data-layer='clouds'
-            className='absolute top-[3.7%] right-[3.7%] aspect-[738/171] w-[88%] will-change-transform'
+            className='absolute top-[3.7%] right-[3.7%] aspect-[738/171] w-[88%] will-change-transform max-lg:top-[2.5%] max-lg:right-[2.5%] max-lg:w-[90%]'
           >
             <Image
               src={SHOWCASE.images.clouds.src}
@@ -282,17 +332,17 @@ export default function ProductReveal() {
 
         <article
           data-layer='copy'
-          className='relative z-10 -mt-8 w-[min(100%,28rem)] self-center border border-[#6E7A6F33] bg-white px-6 py-8 shadow-[0_20px_50px_-28px_rgba(0,0,0,0.22)] will-change-transform sm:-mt-10 sm:px-8 sm:py-10 lg:-bottom-24 lg:-left-10 lg:mt-0 lg:w-full lg:max-w-140 lg:self-auto lg:p-20'
+          className='relative z-10 -mt-8 w-[min(100%,28rem)] self-center border border-[#6E7A6F33] bg-white px-6 py-8 shadow-[0_20px_50px_-28px_rgba(0,0,0,0.22)] will-change-transform max-lg:mx-auto max-lg:-mt-5 max-lg:w-[min(calc(100%-0.5rem),26rem)] max-lg:px-5 max-lg:py-7 sm:-mt-10 sm:px-8 sm:py-10 sm:max-lg:-mt-7 sm:max-lg:w-[min(100%,28rem)] md:max-lg:-mt-9 lg:-bottom-24 lg:-left-10 lg:mt-0 lg:w-full lg:max-w-140 lg:self-auto lg:p-20'
         >
           <h2
             data-ui
-            className='text-3xl font-medium text-[#6E7A6F] sm:text-4xl lg:text-5xl'
+            className='text-3xl font-medium text-[#6E7A6F] max-sm:text-[1.75rem] max-sm:leading-tight sm:text-4xl lg:text-5xl'
           >
             {SHOWCASE.title}
           </h2>
           <p
             data-ui
-            className='mt-5 text-[15px] leading-relaxed text-[#6E7A6F] sm:mt-6 lg:mt-12.5 lg:text-base'
+            className='mt-5 text-[15px] leading-relaxed text-[#6E7A6F] max-sm:mt-4 max-sm:text-[14px] sm:mt-6 lg:mt-12.5 lg:text-base'
           >
             {SHOWCASE.description}
           </p>
