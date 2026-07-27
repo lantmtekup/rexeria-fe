@@ -1175,6 +1175,35 @@ export function isInlineTextKey(blockType: BlockType, key: string): boolean {
   return resolveElementMeta(blockType, key).kind === 'text';
 }
 
+/**
+ * PNJ sticky menu (and similar) expose label/CTA text on canvas but store
+ * the href on a sibling field — map label → link for the canvas chip.
+ */
+export function resolveSiblingLinkKey(
+  blockType: BlockType,
+  key: string
+): string | null {
+  if (blockType === 'pnj_sticky_menu') {
+    const navLabel = key.match(/^items\[(\d+)\]\.label$/);
+    if (navLabel) return `items[${navLabel[1]}].link`;
+    if (key === 'ctaText') return 'ctaLink';
+  }
+  return null;
+}
+
+/** Reverse of `resolveSiblingLinkKey` — anchor link-only layers to visible text. */
+export function resolveLinkAnchorKey(
+  blockType: BlockType,
+  key: string
+): string {
+  if (blockType === 'pnj_sticky_menu') {
+    const navLink = key.match(/^items\[(\d+)\]\.link$/);
+    if (navLink) return `items[${navLink[1]}].label`;
+    if (key === 'ctaLink') return 'ctaText';
+  }
+  return key;
+}
+
 /** Chip / action label for canvas hover affordance. */
 export function canvasEditActionLabel(kind: ElementKind): string {
   if (kind === 'image') return 'Đổi ảnh';

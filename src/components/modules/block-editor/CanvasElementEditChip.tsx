@@ -2,12 +2,13 @@
 
 import * as React from 'react';
 import * as Popover from '@radix-ui/react-popover';
-import { List, Pencil, Type, Upload } from 'lucide-react';
+import { Link2, List, Pencil, Type, Upload } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 
 import { ImagePicker } from './ImagePicker';
 import { getContentAt, setContentAt } from './contentPath';
+import { LinkControls } from './links/LinkControls';
 import {
   canvasEditActionLabel,
   type ElementKind,
@@ -26,16 +27,28 @@ export interface CanvasElementEditChipProps {
   /** Controlled image popover — parent opens this on element click. */
   imageOpen: boolean;
   onImageOpenChange: (open: boolean) => void;
+  /** Controlled link popover — parent opens this on link click. */
+  linkOpen: boolean;
+  onLinkOpenChange: (open: boolean) => void;
+  /** Content path the link popover edits (element key or sibling link field). */
+  linkFieldKey: string;
+  /** Label-only fields that share a sibling link (sticky menu nav items). */
+  siblingLinkKey?: string | null;
   /** Same activate path as clicking the element itself. */
   onActivate: (key: string) => void;
+  /** Open link picker for a specific content path (label → sibling link). */
+  onOpenLink?: (key: string) => void;
   /** Keep hover alive while pointer is over the chip / popover. */
   onChipPointerEnter: () => void;
   onChipPointerLeave: () => void;
-  onContentChange: (next: BlockContent) => void;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
 }
 
 function chipIcon(kind: ElementKind) {
   if (kind === 'image') return Upload;
+  if (kind === 'link') return Link2;
   if (kind === 'text') return Type;
   if (
     kind === 'stats' ||
@@ -79,10 +92,15 @@ const chipClassName = cn(
   'hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:outline-none'
 );
 
+const chipIconOnlyClassName = cn(chipClassName, 'px-1.5');
+
+const popoverContentClassName =
+  'z-50 rounded-lg border border-neutral-200 bg-white p-3 shadow-xl outline-none';
+
 /**
  * Floating edit affordance. Clicking the chip runs the same activate path as
- * clicking the element. Image popover is controlled by the parent so an
- * element click can open upload immediately.
+ * clicking the element. Image/link popovers are controlled by the parent so an
+ * element click can open upload / link picker immediately.
  */
 export function CanvasElementEditChip({
   elementKey,
@@ -92,7 +110,12 @@ export function CanvasElementEditChip({
   content,
   imageOpen,
   onImageOpenChange,
+  linkOpen,
+  onLinkOpenChange,
+  linkFieldKey,
+  siblingLinkKey,
   onActivate,
+  onOpenLink,
   onChipPointerEnter,
   onChipPointerLeave,
   onContentChange,
@@ -104,6 +127,8 @@ export function CanvasElementEditChip({
   const Icon = chipIcon(meta.kind);
   const actionLabel = canvasEditActionLabel(meta.kind);
   const isImageAction = meta.kind === 'image';
+  const isLinkAction = meta.kind === 'link';
+  const hasSiblingLink = !!siblingLinkKey && meta.kind === 'text';
 
   const stopPointer = (e: React.PointerEvent) => {
     e.stopPropagation();
@@ -113,6 +138,13 @@ export function CanvasElementEditChip({
     e.preventDefault();
     e.stopPropagation();
     onActivate(elementKey);
+  };
+
+  const handleOpenSiblingLink = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!siblingLinkKey) return;
+    onOpenLink?.(siblingLinkKey);
   };
 
   const c = content as Record<string, unknown>;
@@ -131,6 +163,11 @@ export function CanvasElementEditChip({
     onContentChange({ ...c, [transformKey]: next } as BlockContent);
   };
 
+  const linkPopoverLabel =
+    linkFieldKey === elementKey
+      ? meta.label
+      : resolveElementMetaLabel(linkFieldKey);
+
   const label = (
     <>
       <Icon className='size-3.5 shrink-0' aria-hidden />
@@ -138,89 +175,197 @@ export function CanvasElementEditChip({
     </>
   );
 
+  const popoverGuards = {
+    onOpenAutoFocus: (e: Event) => e.preventDefault(),
+    onPointerDownOutside: (e: {
+      preventDefault: () => void;
+      target: EventTarget | null;
+    }) => {
+      const t = e.target as HTMLElement;
+      if (
+        t.closest('[data-canvas-edit-chip-root]') ||
+        t.closest('[data-radix-popper-content-wrapper]')
+      ) {
+        e.preventDefault();
+      }
+    },
+    onPointerEnter: onChipPointerEnter,
+    onPointerLeave: onChipPointerLeave,
+  };
+
+  const linkPopover = (
+    <Popover.Portal>
+      <Popover.Content
+        side='bottom'
+        align='end'
+        sideOffset={8}
+        collisionPadding={12}
+        className={cn(
+          popoverContentClassName,
+          'w-[min(320px,calc(100vw-24px))]'
+        )}
+        {...popoverGuards}
+      >
+        <p className='text-3xs mb-2 font-semibold tracking-widest text-neutral-500 uppercase'>
+          {linkPopoverLabel}
+        </p>
+        <LinkControls
+          fieldKey={linkFieldKey}
+          content={content}
+          onContentChange={onContentChange}
+        />
+      </Popover.Content>
+    </Popover.Portal>
+  );
+
   return (
     <div
       data-canvas-edit-chip-root='true'
-      // pointer-events-auto so enter/leave fire (needed to keep hover alive).
-      // Extra padding bridges the 8px visual gap to the element — without it,
-      // moving toward the chip crosses empty space and clearHover unmounts us.
       className='pointer-events-auto absolute z-30'
       style={{
         top,
         left,
         transform: 'translate(-100%, -100%)',
-        paddingBottom: 14,
-        paddingRight: 14,
-        marginBottom: -14,
-        marginRight: -14,
+        paddingBottom: 28,
+        paddingRight: 28,
+        marginBottom: -28,
+        marginRight: -28,
       }}
       onPointerEnter={onChipPointerEnter}
       onPointerLeave={onChipPointerLeave}
       onPointerDown={stopPointer}
     >
-      {isImageAction ? (
-        <Popover.Root open={imageOpen} onOpenChange={onImageOpenChange}>
-          <Popover.Anchor asChild>
-            <button
-              type='button'
-              data-canvas-edit-chip='true'
-              aria-label={`${actionLabel}: ${meta.label}`}
-              title={`${actionLabel} — ${meta.label}`}
-              onPointerDown={stopPointer}
-              onClick={handleActivateClick}
-              className={chipClassName}
-            >
-              {label}
-            </button>
-          </Popover.Anchor>
-          <Popover.Portal>
-            <Popover.Content
-              side='bottom'
-              align='end'
-              sideOffset={8}
-              collisionPadding={12}
-              className='z-50 w-[min(420px,calc(100vw-24px))] rounded-lg border border-neutral-200 bg-white p-3 shadow-xl outline-none'
-              onOpenAutoFocus={e => e.preventDefault()}
-              // File dialog steals focus — keep popover mounted so ImagePicker
-              // (and its <input type="file">) survives until onChange fires.
-              onFocusOutside={e => e.preventDefault()}
-              onPointerDownOutside={e => {
-                const t = e.target as HTMLElement;
-                if (
-                  t.closest('[data-canvas-edit-chip-root]') ||
-                  t.closest('[data-radix-popper-content-wrapper]')
-                ) {
-                  e.preventDefault();
-                }
-              }}
-              onPointerEnter={onChipPointerEnter}
-              onPointerLeave={onChipPointerLeave}
-            >
-              <p className='text-3xs mb-2 font-semibold tracking-widest text-neutral-500 uppercase'>
-                {meta.label}
-              </p>
-              <ImagePicker
-                value={imageUrl}
-                onChange={setImageUrl}
-                transform={transform}
-                onTransformChange={transformKey ? setTransform : undefined}
-              />
-            </Popover.Content>
-          </Popover.Portal>
-        </Popover.Root>
-      ) : (
-        <button
-          type='button'
-          data-canvas-edit-chip='true'
-          aria-label={`${actionLabel}: ${meta.label}`}
-          title={`${actionLabel} — ${meta.label}`}
-          onClick={handleActivateClick}
-          onPointerDown={stopPointer}
-          className={chipClassName}
-        >
-          {label}
-        </button>
-      )}
+      <div className='flex items-center gap-0.5'>
+        {isImageAction ? (
+          <Popover.Root open={imageOpen} onOpenChange={onImageOpenChange}>
+            <Popover.Anchor asChild>
+              <button
+                type='button'
+                data-canvas-edit-chip='true'
+                aria-label={`${actionLabel}: ${meta.label}`}
+                title={`${actionLabel} — ${meta.label}`}
+                onPointerDown={stopPointer}
+                onClick={handleActivateClick}
+                className={chipClassName}
+              >
+                {label}
+              </button>
+            </Popover.Anchor>
+            <Popover.Portal>
+              <Popover.Content
+                side='bottom'
+                align='end'
+                sideOffset={8}
+                collisionPadding={12}
+                className={cn(
+                  popoverContentClassName,
+                  'w-[min(420px,calc(100vw-24px))]'
+                )}
+                onOpenAutoFocus={e => e.preventDefault()}
+                onFocusOutside={e => e.preventDefault()}
+                onPointerDownOutside={popoverGuards.onPointerDownOutside}
+                onPointerEnter={onChipPointerEnter}
+                onPointerLeave={onChipPointerLeave}
+              >
+                <p className='text-3xs mb-2 font-semibold tracking-widest text-neutral-500 uppercase'>
+                  {meta.label}
+                </p>
+                <ImagePicker
+                  value={imageUrl}
+                  onChange={setImageUrl}
+                  transform={transform}
+                  onTransformChange={transformKey ? setTransform : undefined}
+                />
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
+        ) : isLinkAction ? (
+          <Popover.Root open={linkOpen} onOpenChange={onLinkOpenChange}>
+            <Popover.Anchor asChild>
+              <button
+                type='button'
+                data-canvas-edit-chip='true'
+                aria-label={`${actionLabel}: ${meta.label}`}
+                title={`${actionLabel} — ${meta.label}`}
+                onPointerDown={stopPointer}
+                onClick={handleActivateClick}
+                className={chipClassName}
+              >
+                {label}
+              </button>
+            </Popover.Anchor>
+            {linkPopover}
+          </Popover.Root>
+        ) : (
+          <button
+            type='button'
+            data-canvas-edit-chip='true'
+            aria-label={`${actionLabel}: ${meta.label}`}
+            title={`${actionLabel} — ${meta.label}`}
+            onClick={handleActivateClick}
+            onPointerDown={stopPointer}
+            className={chipClassName}
+          >
+            {label}
+          </button>
+        )}
+
+        {hasSiblingLink && (
+          <Popover.Root
+            open={linkOpen && linkFieldKey === siblingLinkKey}
+            onOpenChange={open => {
+              if (open) {
+                onOpenLink?.(siblingLinkKey);
+              } else {
+                onLinkOpenChange(false);
+              }
+            }}
+          >
+            <Popover.Anchor asChild>
+              <button
+                type='button'
+                data-canvas-edit-chip='true'
+                aria-label={`Đặt link: ${meta.label}`}
+                title={`Đặt link — ${meta.label}`}
+                onPointerDown={stopPointer}
+                onClick={handleOpenSiblingLink}
+                className={chipIconOnlyClassName}
+              >
+                <Link2 className='size-3.5 shrink-0' aria-hidden />
+              </button>
+            </Popover.Anchor>
+            <Popover.Portal>
+              <Popover.Content
+                side='bottom'
+                align='end'
+                sideOffset={8}
+                collisionPadding={12}
+                className={cn(
+                  popoverContentClassName,
+                  'w-[min(320px,calc(100vw-24px))]'
+                )}
+                {...popoverGuards}
+              >
+                <p className='text-3xs mb-2 font-semibold tracking-widest text-neutral-500 uppercase'>
+                  {resolveElementMetaLabel(siblingLinkKey)}
+                </p>
+                <LinkControls
+                  fieldKey={siblingLinkKey}
+                  content={content}
+                  onContentChange={onContentChange}
+                />
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
+        )}
+      </div>
     </div>
   );
+}
+
+function resolveElementMetaLabel(linkFieldKey: string): string {
+  const navLink = linkFieldKey.match(/^items\[(\d+)\]\.link$/);
+  if (navLink) return `Link mục ${Number(navLink[1]) + 1}`;
+  if (linkFieldKey === 'ctaLink') return 'Link CTA';
+  return 'Link';
 }

@@ -1,10 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import {
   gsap,
-  ScrollTrigger,
+  Observer,
   MOTION_CONDITIONS,
   type MotionConditions,
 } from '../lib/motion';
@@ -31,27 +31,38 @@ const LAYER_INSET = {
 export default function SceneReveal() {
   const sectionRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
+
+    // The section is sticky, so its own rect is unreliable for ScrollTrigger
+    // measurement. Everything is triggered off siblings in normal flow: the
+    // wrapper for entry, the dwell spacer for the sweep, the next section for
+    // the hand-off.
+    const wrap = section.parentElement ?? section;
+    const dwell = wrap.querySelector<HTMLElement>('[data-dwell]') ?? wrap;
+    const next = wrap.querySelector<HTMLElement>('[data-blend-next]') ?? wrap;
 
     const mm = gsap.matchMedia(section);
 
     mm.add(MOTION_CONDITIONS, ctx => {
-      const { isDesktop, finePointer, reduce } =
+      const { isDesktop, isMobile, finePointer, reduce } =
         ctx.conditions as MotionConditions;
+      const cleanups: Array<() => void> = [];
 
       const photo = section.querySelector<HTMLElement>('[data-layer="photo"]');
       const far = section.querySelector<HTMLElement>('[data-layer="far"]');
       const near = section.querySelector<HTMLElement>('[data-layer="near"]');
-      if (!photo || !far || !near) return;
+      const veil = section.querySelector<HTMLElement>('[data-layer="veil"]');
+      const stage = section.querySelector<HTMLElement>('[data-stage]');
+      if (!photo || !far || !near || !veil) return;
 
       gsap.set(photo, { autoAlpha: 0 });
       gsap.set([far, near], { autoAlpha: 0 });
 
       const enter = gsap.timeline({
         defaults: { ease: 'power3.out', duration: reduce ? 0 : 1.1 },
-        scrollTrigger: { trigger: section, start: 'top 80%', once: true },
+        scrollTrigger: { trigger: wrap, start: 'top 80%', once: true },
       });
       enter
         .fromTo(
@@ -66,63 +77,106 @@ export default function SceneReveal() {
           0
         );
 
-      let scrubST: ScrollTrigger | undefined | any;
       let revealed = false;
-      let releasePin: (() => void) | undefined;
+      let covered = false;
+      // Suppress section-click toggle after a horizontal drag (whole section
+      // is the toggle target — drag would otherwise flip reveal on release).
+      let suppressClick = false;
       const nearSplit = isDesktop ? 7 : 4;
       const farSplit = isDesktop ? 4 : 2.5;
 
       if (!reduce) {
-        // Pin section while scroll drives layer sweep; release only after full L/R travel.
+        // The section holds still via CSS sticky, so no ScrollTrigger pin: the
+        // dwell spacer below it *is* the sweep's scroll budget (its own height,
+        // 100svh desktop / 60svh mobile — matching the old +=100% / +=60%).
+        // Nothing to enable/disable on reveal either, since document height
+        // never changes and the user can always scroll out.
         // Keep splits well under BLEED so scroll + mouse never flash stage edges.
-        const scrub = gsap.timeline({
-          defaults: { ease: 'none' },
-          scrollTrigger: {
-            trigger: section,
-            start: 'top top',
-            end: isDesktop ? '+=100%' : '+=60%',
-            pin: true,
-            scrub: true,
-            anticipatePin: 1,
-            id: 'scene-reveal-scrub',
-          },
-        });
-        scrubST = scrub.scrollTrigger ?? undefined;
-        scrub
+        // immediateRender stays on (the default): these from states are not the
+        // layers' natural position, so deferring them would leave the layers at
+        // 0 until the trigger first renders and then snap them sideways in a
+        // single frame as the section reaches the top.
+        gsap
+          .timeline({
+            defaults: { ease: 'none' },
+            scrollTrigger: {
+              trigger: dwell,
+              start: 'top bottom',
+              end: 'bottom bottom',
+              scrub: true,
+              id: 'scene-reveal-scrub',
+            },
+          })
+          .fromTo(near, { xPercent: -nearSplit }, { xPercent: nearSplit }, 0)
+          .fromTo(far, { xPercent: farSplit }, { xPercent: -farSplit }, 0);
+
+        // Hand-off to ProductReveal — mirrors the hero: a cream veil (same
+        // colour as that section) washes this one out while it rides up, so the
+        // two resolve to one flat colour with no seam.
+        // Every from state is explicit — an empty one lets GSAP capture
+        // whatever is current at first render, and a refresh mid-scroll then
+        // records the end value as the start, so scrolling back never undoes it.
+        gsap
+          .timeline({
+            defaults: { ease: 'none' },
+            scrollTrigger: {
+              trigger: next,
+              start: 'top bottom',
+              end: 'top 15%',
+              scrub: 0.4,
+              // The whole section is the reveal toggle and the veil is
+              // click-through, so stop it swallowing clicks meant for the
+              // section riding over it.
+              onUpdate: self => {
+                const off = self.progress > 0.6;
+                if (off !== covered) {
+                  covered = off;
+                  section.style.pointerEvents = off ? 'none' : '';
+                }
+              },
+            },
+          })
           .fromTo(
-            near,
-            { xPercent: -nearSplit },
-            { xPercent: nearSplit, immediateRender: false },
-            0
+            veil,
+            { opacity: 0 },
+            { opacity: 1, duration: 0.57, immediateRender: false },
+            0.25
           )
-          .fromTo(
-            far,
-            { xPercent: farSplit },
-            { xPercent: -farSplit, immediateRender: false },
-            0
-          );
+          // Placeholder that pins the timeline's length to 1. A timeline is
+          // only as long as its longest child, so without this the veil would
+          // be stretched to fill the whole scroll range and only go solid at
+          // the very end instead of at 30% from the top.
+          .to({}, { duration: 1 }, 0);
       }
 
-      const freezeY = (fn: () => void) => {
-        const y = window.scrollY;
-        fn();
-        ScrollTrigger.refresh();
-        window.scrollTo({ top: y, left: 0, behavior: 'instant' });
-        requestAnimationFrame(() => {
-          window.scrollTo({ top: y, left: 0, behavior: 'instant' });
-        });
+      const panState = { x: 0 };
+      const DEPTH = { near: 1, far: 0.42, photo: 0.85 } as const;
+
+      const applyPan = (x: number) => {
+        if (revealed) {
+          gsap.set(photo, { x: x * DEPTH.photo });
+          gsap.set([near, far], { x: 0 });
+          return;
+        }
+        gsap.set(near, { x: x * DEPTH.near });
+        gsap.set(far, { x: x * DEPTH.far });
+        gsap.set(photo, { x: 0 });
       };
 
-      const clearReleasePin = () => {
-        if (!releasePin) return;
-        window.removeEventListener('wheel', releasePin);
-        window.removeEventListener('touchstart', releasePin);
-        releasePin = undefined;
+      const resetPan = () => {
+        gsap.killTweensOf(panState);
+        panState.x = 0;
+        gsap.set([near, far, photo], { x: 0 });
       };
 
       const onToggle = () => {
+        if (suppressClick) {
+          suppressClick = false;
+          return;
+        }
         revealed = !revealed;
         const duration = reduce ? 0 : 0.7;
+        resetPan();
 
         gsap.to(photo, {
           autoAlpha: revealed ? 1 : 0,
@@ -137,29 +191,6 @@ export default function SceneReveal() {
           stagger: 0.06,
         });
         section.setAttribute('aria-pressed', String(revealed));
-
-        if (!scrubST) return;
-
-        clearReleasePin();
-
-        // Touch: giữ pin nguyên trạng — disable + refresh() + scrollTo giữa
-        // gesture cuộn gây nhảy scroll; scrub chạy trên layer đã ẩn là vô hại.
-        if (!finePointer) return;
-
-        // Click: only crossfade — do not touch pin/scroll.
-        // Unpin on the next user scroll so photo mode is not trapped by pin.
-        if (revealed) {
-          releasePin = () => {
-            clearReleasePin();
-            if (!revealed || !scrubST?.enabled) return;
-            freezeY(() => scrubST.disable(true));
-          };
-          window.addEventListener('wheel', releasePin, { passive: true });
-          window.addEventListener('touchstart', releasePin, { passive: true });
-          return;
-        }
-
-        freezeY(() => scrubST.enable(true));
       };
 
       const onKeyDown = (e: KeyboardEvent) => {
@@ -171,6 +202,11 @@ export default function SceneReveal() {
       // Whole section is the toggle target — a click anywhere flips the reveal.
       section.addEventListener('click', onToggle);
       section.addEventListener('keydown', onKeyDown);
+      cleanups.push(() => {
+        section.style.pointerEvents = '';
+        section.removeEventListener('click', onToggle);
+        section.removeEventListener('keydown', onKeyDown);
+      });
 
       if (finePointer && !reduce) {
         const follow = { duration: 0.8, ease: 'power3.out' } as const;
@@ -222,19 +258,90 @@ export default function SceneReveal() {
 
         section.addEventListener('mousemove', onMove);
         section.addEventListener('mouseleave', onLeave);
-        return () => {
-          clearReleasePin();
-          section.removeEventListener('click', onToggle);
-          section.removeEventListener('keydown', onKeyDown);
+        cleanups.push(() => {
           section.removeEventListener('mousemove', onMove);
           section.removeEventListener('mouseleave', onLeave);
-        };
+        });
       }
 
+      // Mobile: horizontal drag with depth parallax (near full, far slower).
+      if (isMobile && !reduce) {
+        let maxOffset = 0;
+        let axis: 'x' | 'y' | null = null;
+        let dragTravel = 0;
+
+        const refreshMaxOffset = () => {
+          const bleedPx = (section.offsetWidth * BLEED.x) / 100;
+          const nearScrollPx = (near.offsetWidth * nearSplit) / 100;
+          const bleedRoom = Math.max(0, bleedPx - nearScrollPx);
+          const stageOverflow = stage
+            ? Math.max(0, (stage.offsetWidth - section.clientWidth) / 2)
+            : 0;
+          maxOffset = Math.max(bleedRoom, stageOverflow * 0.55);
+          panState.x = gsap.utils.clamp(-maxOffset, maxOffset, panState.x);
+          applyPan(panState.x);
+        };
+
+        refreshMaxOffset();
+        section.style.touchAction = 'pan-y';
+
+        const observer = Observer.create({
+          target: section,
+          type: 'touch,pointer',
+          dragMinimum: 6,
+          lockAxis: true,
+          onPress: () => {
+            axis = null;
+            dragTravel = 0;
+            gsap.killTweensOf(panState);
+          },
+          onLockAxis: self => {
+            axis = self.axis as 'x' | 'y';
+          },
+          onDrag: self => {
+            if (axis !== 'x' || maxOffset <= 0) return;
+            dragTravel += Math.abs(self.deltaX);
+            panState.x = gsap.utils.clamp(
+              -maxOffset,
+              maxOffset,
+              panState.x + self.deltaX
+            );
+            applyPan(panState.x);
+          },
+          onDragEnd: self => {
+            if (axis !== 'x' || maxOffset <= 0) return;
+            if (dragTravel > 8) suppressClick = true;
+            const projected = gsap.utils.clamp(
+              -maxOffset,
+              maxOffset,
+              panState.x + self.velocityX * 0.18
+            );
+            gsap.to(panState, {
+              x: projected,
+              duration: 0.55,
+              ease: 'power2.out',
+              onUpdate: () => {
+                applyPan(panState.x);
+              },
+            });
+          },
+          onRelease: () => {
+            axis = null;
+          },
+        });
+
+        window.addEventListener('resize', refreshMaxOffset);
+        cleanups.push(() => {
+          observer.kill();
+          window.removeEventListener('resize', refreshMaxOffset);
+          section.style.touchAction = '';
+          resetPan();
+        });
+      }
+
+      if (cleanups.length === 0) return;
       return () => {
-        clearReleasePin();
-        section.removeEventListener('click', onToggle);
-        section.removeEventListener('keydown', onKeyDown);
+        cleanups.forEach(fn => fn());
       };
     });
 
@@ -244,13 +351,17 @@ export default function SceneReveal() {
   return (
     <section
       ref={sectionRef}
+      data-cursor-id='scene-reveal'
       role='button'
       tabIndex={0}
       aria-pressed='false'
       aria-label='Toggle interior view'
-      className='[container-type:size] relative h-svh min-h-120 w-full cursor-pointer overflow-hidden bg-white md:min-h-150'
+      className='[container-type:size] sticky top-0 z-0 h-svh min-h-120 w-full cursor-pointer overflow-hidden bg-white md:min-h-150'
     >
-      <div className='pointer-events-none absolute top-1/2 left-1/2 aspect-[1440/820] w-[max(100cqw,calc(100cqh*1440/820))] -translate-x-1/2 -translate-y-1/2 overflow-hidden'>
+      <div
+        data-stage
+        className='pointer-events-none absolute top-1/2 left-1/2 aspect-[1440/820] w-[max(100cqw,calc(100cqh*1440/820))] -translate-x-1/2 -translate-y-1/2 overflow-hidden'
+      >
         <div
           data-layer='photo'
           className='invisible absolute inset-0 will-change-transform'
@@ -293,6 +404,14 @@ export default function SceneReveal() {
           />
         </div>
       </div>
+
+      {/* Blend veil — same colour as ProductReveal, so this section dissolves
+          into it instead of being cut off by a hard edge. */}
+      <div
+        data-layer='veil'
+        aria-hidden
+        className='pointer-events-none absolute inset-0 z-20 bg-[#F3F1EA] opacity-0'
+      />
     </section>
   );
 }

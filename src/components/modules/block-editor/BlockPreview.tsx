@@ -16,7 +16,12 @@ import { SelectionToolbar } from './inspector/SelectionToolbar';
 import { LandingMotionRoot } from './motion/LandingMotion';
 import { MotionBlockRoot, MotionProvider } from './motion/runtime';
 import type { BlockMotion, EditorMode } from './motion/types';
-import { isInlineTextKey, resolveElementMeta } from './resolveElementKind';
+import {
+  isInlineTextKey,
+  resolveElementMeta,
+  resolveLinkAnchorKey,
+  resolveSiblingLinkKey,
+} from './resolveElementKind';
 import {
   readVariant,
   type Block,
@@ -205,6 +210,26 @@ function findElementByKey(
     if (rect.width > 0 && rect.height > 0) return node;
   }
   return nodes[0];
+}
+
+/** Keep hover alive while the pointer travels from element → edit chip. */
+function isPointerInChipCorridor(
+  clientX: number,
+  clientY: number,
+  elementRect: DOMRect,
+  wideChip: boolean
+): boolean {
+  const chipWidth = wideChip ? 148 : 104;
+  const chipHeight = 28;
+  const bridge = 32;
+  const anchorX = elementRect.right;
+  const anchorY = elementRect.top;
+  return (
+    clientX >= anchorX - chipWidth - bridge &&
+    clientX <= anchorX + bridge &&
+    clientY >= anchorY - chipHeight - 8 - bridge &&
+    clientY <= anchorY + bridge
+  );
 }
 
 export function BlockPreview({
@@ -534,13 +559,17 @@ export function BlockPreview({
   const [hoveredRect, setHoveredRect] = React.useState<DOMRect | null>(null);
   /** Image field currently showing the upload popover (opened by click). */
   const [imageEditKey, setImageEditKey] = React.useState<string | null>(null);
+  /** Link field currently showing the link picker popover (opened by click). */
+  const [linkEditKey, setLinkEditKey] = React.useState<string | null>(null);
   const chipPointerInsideRef = React.useRef(false);
   const hoverClearTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
   const imagePopoverOpen = imageEditKey !== null;
-  const imagePopoverOpenRef = React.useRef(imagePopoverOpen);
-  imagePopoverOpenRef.current = imagePopoverOpen;
+  const linkPopoverOpen = linkEditKey !== null;
+  const canvasPopoverOpen = imagePopoverOpen || linkPopoverOpen;
+  const canvasPopoverOpenRef = React.useRef(canvasPopoverOpen);
+  canvasPopoverOpenRef.current = canvasPopoverOpen;
 
   const canShowHoverChrome =
     device !== 'tablet' &&
@@ -558,11 +587,11 @@ export function BlockPreview({
   // Delay clear so the pointer can cross the gap between element → chip
   // without the chip unmounting mid-travel.
   const clearHover = React.useCallback(() => {
-    if (chipPointerInsideRef.current || imagePopoverOpenRef.current) return;
+    if (chipPointerInsideRef.current || canvasPopoverOpenRef.current) return;
     cancelHoverClear();
     hoverClearTimerRef.current = setTimeout(() => {
       hoverClearTimerRef.current = null;
-      if (chipPointerInsideRef.current || imagePopoverOpenRef.current) return;
+      if (chipPointerInsideRef.current || canvasPopoverOpenRef.current) return;
       setHoveredKey(null);
       setHoveredRect(null);
     }, 160);
@@ -588,7 +617,7 @@ export function BlockPreview({
 
   /**
    * Activate exactly one element — never falls back to another key.
-   * Text → inline edit now; image → upload popover now; else select only.
+   * Text → inline edit now; image → upload popover now; link → link picker now.
    */
   const activateElement = React.useCallback(
     (key: string, rect: DOMRect) => {
@@ -601,6 +630,7 @@ export function BlockPreview({
 
       if (meta.kind === 'text') {
         setImageEditKey(null);
+        setLinkEditKey(null);
         if (isInlineTextKey(block.blockType, key)) {
           lastTextKeyRef.current = key;
           onStartInlineEdit(key);
@@ -609,27 +639,69 @@ export function BlockPreview({
       }
 
       if (meta.kind === 'image') {
+        setLinkEditKey(null);
         setImageEditKey(key);
+        return;
+      }
+
+      if (meta.kind === 'link') {
+        setImageEditKey(null);
+        setLinkEditKey(key);
         return;
       }
 
       // background / complex arrays → select so ElementToolbar shows controls
       setImageEditKey(null);
+      setLinkEditKey(null);
     },
     [block.blockType, device, motionMode, onSelectElement, onStartInlineEdit]
   );
 
+  const openLinkEditor = React.useCallback(
+    (key: string, rect: DOMRect) => {
+      if (device === 'tablet' || motionMode === 'preview') return;
+      setImageEditKey(null);
+      setLinkEditKey(key);
+      onSelectElement(key, rect);
+      const anchorKey = resolveLinkAnchorKey(block.blockType, key);
+      if (anchorKey !== key) {
+        setHoveredKey(anchorKey);
+        setHoveredRect(rect);
+      }
+    },
+    [block.blockType, device, motionMode, onSelectElement]
+  );
+
   // Remeasure chip anchor when zoom/pan/content shifts under a sticky hover.
   React.useEffect(() => {
-    if (!hoveredKey || !surfaceRef.current) return;
-    const el = findElementByKey(surfaceRef.current, hoveredKey);
+    const chipKey =
+      imageEditKey ??
+      hoveredKey ??
+      (linkEditKey ? resolveLinkAnchorKey(block.blockType, linkEditKey) : null);
+    if (!chipKey || !surfaceRef.current) return;
+    const anchorKey = resolveLinkAnchorKey(block.blockType, chipKey);
+    const el =
+      findElementByKey(surfaceRef.current, anchorKey) ??
+      findElementByKey(surfaceRef.current, chipKey);
     if (!el) {
-      setHoveredKey(null);
-      setHoveredRect(null);
+      if (!canvasPopoverOpenRef.current) {
+        setHoveredKey(null);
+        setHoveredRect(null);
+      }
       return;
     }
     setHoveredRect(el.getBoundingClientRect());
-  }, [hoveredKey, zoom, pan, block, lang, device]);
+  }, [
+    hoveredKey,
+    imageEditKey,
+    linkEditKey,
+    zoom,
+    pan,
+    block,
+    lang,
+    device,
+    block.blockType,
+  ]);
 
   // Soft hover ring via DOM attr (avoids Tailwind breakage on keys like features[0].label).
   React.useEffect(() => {
@@ -645,14 +717,15 @@ export function BlockPreview({
   }, [hoveredKey, canShowHoverChrome, selectedElementKey, block, lang, device]);
 
   // Drop hover when entering inline edit / tablet / motion preview.
-  // Keep chip alive while an image popover is open so upload isn't interrupted.
+  // Keep chip alive while an image/link popover is open so edit isn't interrupted.
   React.useEffect(() => {
-    if (canShowHoverChrome || imagePopoverOpen) return;
+    if (canShowHoverChrome || canvasPopoverOpen) return;
     chipPointerInsideRef.current = false;
     setHoveredKey(null);
     setHoveredRect(null);
     setImageEditKey(null);
-  }, [canShowHoverChrome, imagePopoverOpen]);
+    setLinkEditKey(null);
+  }, [canShowHoverChrome, canvasPopoverOpen]);
 
   /** True when pointer is on the device frame (any data-element-key). */
   const isOnDeviceFrame = (target: HTMLElement) => {
@@ -779,15 +852,43 @@ export function BlockPreview({
       clearHover();
       return;
     }
+    if (chipPointerInsideRef.current || canvasPopoverOpenRef.current) return;
+
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+
+    // Corridor from element top-right to chip — prevents clear/switch while
+    // crossing the gap (sticky nav items sit close; without this the chip
+    // jumps away or unmounts before the pointer reaches it).
+    if (hoveredKey && hoveredRect) {
+      const wideChip = !!resolveSiblingLinkKey(block.blockType, hoveredKey);
+      if (isPointerInChipCorridor(clientX, clientY, hoveredRect, wideChip)) {
+        cancelHoverClear();
+        return;
+      }
+    }
+
     const target = e.target as HTMLElement;
     if (target.closest('[data-canvas-edit-chip-root]')) return;
     const el = target.closest<HTMLElement>('[data-element-key]');
     if (el && surfaceRef.current?.contains(el)) {
       const key = el.getAttribute('data-element-key');
       if (key) {
-        // Only re-bind when the hovered element changes — avoids flicker/re-render
-        // on every pixel move within the same target.
-        if (key !== hoveredKey) setHoverFromElement(el, key);
+        if (key !== hoveredKey) {
+          if (hoveredKey && hoveredRect) {
+            const wideChip = !!resolveSiblingLinkKey(
+              block.blockType,
+              hoveredKey
+            );
+            if (
+              isPointerInChipCorridor(clientX, clientY, hoveredRect, wideChip)
+            ) {
+              cancelHoverClear();
+              return;
+            }
+          }
+          setHoverFromElement(el, key);
+        }
         return;
       }
     }
@@ -853,12 +954,20 @@ export function BlockPreview({
         ? el.getAttribute('data-element-key')
         : null;
 
-    // While image popover is open: click elsewhere only dismisses — does NOT
+    // While image/link popover is open: click elsewhere only dismisses — does NOT
     // activate whatever sits under the pointer (other items need their own
     // hover + click).
     if (imageEditKey) {
       if (key === imageEditKey) return;
       setImageEditKey(null);
+      forceClearHover();
+      onSelectElement(null, null);
+      return;
+    }
+    if (linkEditKey) {
+      const anchorKey = resolveLinkAnchorKey(block.blockType, linkEditKey);
+      if (key === linkEditKey || key === anchorKey) return;
+      setLinkEditKey(null);
       forceClearHover();
       onSelectElement(null, null);
       return;
@@ -872,6 +981,7 @@ export function BlockPreview({
 
     // Click outside any element → clear selection; do not touch others.
     setImageEditKey(null);
+    setLinkEditKey(null);
     forceClearHover();
     onSelectElement(null, null);
   };
@@ -1054,21 +1164,49 @@ export function BlockPreview({
     };
   }, [editingKey, onCommitInlineEdit, onCancelInlineEdit]);
 
-  // Chip anchors to the hovered element, or the image being edited if popover is open.
-  const chipKey = imageEditKey ?? hoveredKey;
+  // Chip anchors to the hovered element, or the image/link being edited if popover is open.
+  const chipDisplayKey =
+    imageEditKey ??
+    hoveredKey ??
+    (linkEditKey ? resolveLinkAnchorKey(block.blockType, linkEditKey) : null);
   const chipRect = React.useMemo(() => {
-    if (!chipKey || !surfaceRef.current) return hoveredRect;
-    if (chipKey === hoveredKey && hoveredRect) return hoveredRect;
-    const el = findElementByKey(surfaceRef.current, chipKey);
+    if (!chipDisplayKey || !surfaceRef.current) return hoveredRect;
+    const anchorKey = resolveLinkAnchorKey(block.blockType, chipDisplayKey);
+    if (chipDisplayKey === hoveredKey && hoveredRect) return hoveredRect;
+    const el =
+      findElementByKey(surfaceRef.current, anchorKey) ??
+      findElementByKey(surfaceRef.current, chipDisplayKey);
     return el?.getBoundingClientRect() ?? hoveredRect;
-  }, [chipKey, hoveredKey, hoveredRect, zoom, pan, block, lang, device]);
+  }, [
+    chipDisplayKey,
+    hoveredKey,
+    hoveredRect,
+    zoom,
+    pan,
+    block,
+    lang,
+    device,
+    block.blockType,
+  ]);
+
+  const chipMeta =
+    chipDisplayKey && (canShowHoverChrome || canvasPopoverOpen)
+      ? resolveElementMeta(block.blockType, chipDisplayKey)
+      : null;
+  const chipAnchorKey = chipDisplayKey
+    ? resolveLinkAnchorKey(block.blockType, chipDisplayKey)
+    : null;
+  const siblingLinkKey =
+    chipAnchorKey && chipMeta?.kind === 'text'
+      ? resolveSiblingLinkKey(block.blockType, chipAnchorKey)
+      : null;
+  const linkFieldKey =
+    linkEditKey ??
+    (chipMeta?.kind === 'link' ? chipDisplayKey : siblingLinkKey) ??
+    chipDisplayKey ??
+    '';
 
   const isOffOrigin = pan.x !== 0 || pan.y !== 0;
-
-  const hoveredMeta =
-    chipKey && (canShowHoverChrome || imagePopoverOpen)
-      ? resolveElementMeta(block.blockType, chipKey)
-      : null;
 
   // ── Selection toolbar ─────────────────────────────────────────────────────
   // Docked to a fixed corner of the canvas, NOT anchored to the element rect.
@@ -1089,6 +1227,7 @@ export function BlockPreview({
     !editingKey &&
     !selectedExtraElementId &&
     !imageEditKey &&
+    !linkEditKey &&
     !!onContentChange &&
     !!onResetElementStyle &&
     !!onUpdateBackground;
@@ -1103,7 +1242,7 @@ export function BlockPreview({
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
       onPointerLeave={() => {
-        if (chipPointerInsideRef.current || imagePopoverOpen) return;
+        if (chipPointerInsideRef.current || canvasPopoverOpen) return;
         clearHover();
       }}
       data-selected-key={selectedElementKey ?? ''}
@@ -1250,22 +1389,22 @@ export function BlockPreview({
         Về giữa
       </button>
 
-      {(chipKey &&
+      {(chipDisplayKey &&
         chipRect &&
-        hoveredMeta &&
+        chipMeta &&
         surfaceRef.current &&
-        (canShowHoverChrome || imagePopoverOpen) && (
+        (canShowHoverChrome || canvasPopoverOpen) && (
           <CanvasElementEditChip
-            elementKey={chipKey}
-            meta={hoveredMeta}
+            elementKey={chipDisplayKey}
+            meta={chipMeta}
             rect={chipRect}
             surfaceEl={surfaceRef.current}
             content={content}
-            imageOpen={imageEditKey === chipKey}
+            imageOpen={imageEditKey === chipDisplayKey}
             onImageOpenChange={open => {
               if (open) {
-                setImageEditKey(chipKey);
-                onSelectElement(chipKey, chipRect);
+                setImageEditKey(chipDisplayKey);
+                onSelectElement(chipDisplayKey, chipRect);
               } else {
                 setImageEditKey(null);
                 if (!chipPointerInsideRef.current) {
@@ -1273,9 +1412,23 @@ export function BlockPreview({
                 }
               }
             }}
+            linkOpen={linkPopoverOpen}
+            onLinkOpenChange={open => {
+              if (!open) {
+                setLinkEditKey(null);
+                if (!chipPointerInsideRef.current) {
+                  forceClearHover();
+                }
+              }
+            }}
+            linkFieldKey={linkFieldKey}
+            siblingLinkKey={siblingLinkKey}
+            onOpenLink={key => openLinkEditor(key, chipRect)}
             onActivate={key => {
+              const anchorKey = resolveLinkAnchorKey(block.blockType, key);
               const el = surfaceRef.current
-                ? findElementByKey(surfaceRef.current, key)
+                ? (findElementByKey(surfaceRef.current, anchorKey) ??
+                  findElementByKey(surfaceRef.current, key))
                 : null;
               const rect = el?.getBoundingClientRect() ?? chipRect;
               activateElement(key, rect);
@@ -1287,7 +1440,7 @@ export function BlockPreview({
             }}
             onChipPointerLeave={() => {
               chipPointerInsideRef.current = false;
-              if (!imagePopoverOpen) {
+              if (!canvasPopoverOpen) {
                 clearHover();
               }
             }}

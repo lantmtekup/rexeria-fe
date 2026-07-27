@@ -1,8 +1,9 @@
 import gsap from 'gsap';
+import { Observer } from 'gsap/Observer';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 
-gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+gsap.registerPlugin(Observer, ScrollTrigger, ScrollToPlugin);
 
 // Thanh địa chỉ mobile ẩn/hiện làm đổi viewport height → ScrollTrigger refresh
 // và pin bị nhảy. Bỏ qua resize do browser chrome gây ra.
@@ -85,4 +86,4 @@ export const scrollToTarget = (
   });
 };
 
-export { gsap, ScrollTrigger };
+export { gsap, Observer, ScrollTrigger };
