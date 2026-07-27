@@ -103,6 +103,7 @@ export type BlockType =
   // ── The Grand (Masterise) — port từ apps/the-grand ──
   | 'the_grand_intro'
   | 'the_grand_location'
+  | 'the_grand_service'
   // ── Mintcoin-v2 sections ──
   | 'mintv2_emblem'
   | 'mintv2_services'
@@ -713,6 +714,24 @@ export interface TheGrandLocationItem {
 export interface TheGrandLocationContent {
   heading: string;
   items: TheGrandLocationItem[];
+}
+
+/** 1 dịch vụ của section The Grand · Service (card ảnh trái + info phải). */
+export interface TheGrandServiceItem {
+  /** Tiêu đề dịch vụ, vd 'Dịch vụ ăn uống'. */
+  label: string;
+  imageUrl: string;
+  imageAlt?: string;
+  description: string;
+}
+
+/**
+ * The Grand · Service — section "Dịch Vụ": dải cream tiêu đề dọc bên trái đứng
+ * yên, track card trượt ngang đè lên khi cuộn. Port từ apps/the-grand Service.
+ */
+export interface TheGrandServiceContent {
+  heading: string;
+  items: TheGrandServiceItem[];
 }
 
 /** Một góc nhìn sản phẩm trong PNJ · Variant. */
@@ -3220,6 +3239,7 @@ export type BlockContent =
   | PnjCtaContent
   | TheGrandIntroContent
   | TheGrandLocationContent
+  | TheGrandServiceContent
   | MintV2EmblemContent
   | MintV2ServicesContent
   | MintV2ManifestoContent
@@ -4382,6 +4402,24 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'section vị trí The Grand: nền nâu đậm, aside trái ghim (tiêu đề + danh sách địa điểm bấm được), cột phải sticky trượt qua từng card 60% ảnh / 40% info khi cuộn',
     aiLabelEn:
       'The Grand location section: dark brown backdrop, pinned left aside (title + clickable place list), right sticky column scrubbing through cards (60% image / 40% info) on scroll',
+  },
+  the_grand_service: {
+    type: 'the_grand_service',
+    category: 'services',
+    style: 'luxury',
+    tags: ['the-grand', 'service', 'sticky', 'scrub', 'masterise'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-24',
+    label: 'The Grand · Service',
+    accent: '#f0e8d6',
+    adminLabel: 'The Grand Service',
+    gradient: 'from-amber-100 to-stone-200',
+    defaultName: 'The Grand Service',
+    aiLabelVi:
+      'section dịch vụ The Grand: dải cream tiêu đề dọc bên trái đứng yên, track card (ảnh trái + info phải) trượt ngang đè lên khi cuộn',
+    aiLabelEn:
+      'The Grand service section: cream vertical title strip pinned left, horizontal card track (image left + info right) scrubbing across it on scroll',
   },
   mintv2_emblem: {
     type: 'mintv2_emblem',

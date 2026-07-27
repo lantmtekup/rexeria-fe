@@ -26,6 +26,7 @@ export type ElementKind =
   | 'pnjStickyMenuItems'
   | 'mintV2ServicesItems'
   | 'coolHunterGalleryItems'
+  | 'theGrandServiceItems'
   | 'mintV2ProcessSteps'
   | 'framerDarlingTimelineItems'
   | 'framerPerformPricingTiers'
@@ -288,6 +289,9 @@ export function resolveKind(
   if (key === 'items' && blockType === 'cool_hunter_gallery') {
     return 'coolHunterGalleryItems';
   }
+  if (key === 'items' && blockType === 'the_grand_service') {
+    return 'theGrandServiceItems';
+  }
   if (key === 'steps' && blockType === 'mintv2_process') {
     return 'mintV2ProcessSteps';
   }
@@ -366,6 +370,11 @@ export function resolveKind(
     if (/^items\[\d+\]\.(label|description|statValue|statUnit)$/.test(key)) {
       return 'text';
     }
+  }
+  // The Grand · Service: mỗi dịch vụ = nhãn / ảnh / mô tả.
+  if (blockType === 'the_grand_service') {
+    if (/^items\[\d+\]\.imageUrl$/.test(key)) return 'image';
+    if (/^items\[\d+\]\.(label|description)$/.test(key)) return 'text';
   }
   if (blockType === 'real_estate_highlights') {
     if (/^items\[\d+\]\.imageUrl$/.test(key)) return 'image';
@@ -612,6 +621,15 @@ export function resolveLabel(
     };
     return `Địa điểm ${Number(grandLoc[1]) + 1} · ${labels[grandLoc[2]] ?? grandLoc[2]}`;
   }
+  const grandSvc = key.match(/^items\[(\d+)\]\.(label|imageUrl|description)$/);
+  if (grandSvc && blockType === 'the_grand_service') {
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      imageUrl: 'Ảnh',
+      description: 'Mô tả',
+    };
+    return `Dịch vụ ${Number(grandSvc[1]) + 1} · ${labels[grandSvc[2]] ?? grandSvc[2]}`;
+  }
   const navLabel = key.match(/^items\[(\d+)\]\.label$/);
   if (navLabel && blockType === 'mintv2_services') {
     return `Mục ${Number(navLabel[1]) + 1} · Nhãn`;
@@ -799,6 +817,27 @@ export function resolveElementMeta(
             ? 'textarea'
             : 'text',
       label: `Địa điểm ${Number(grandLocMeta[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  const grandSvcMeta = key.match(
+    /^items\[(\d+)\]\.(label|imageUrl|description)$/
+  );
+  if (grandSvcMeta && blockType === 'the_grand_service') {
+    const field = grandSvcMeta[2];
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      imageUrl: 'Ảnh',
+      description: 'Mô tả',
+    };
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      fieldType:
+        field === 'imageUrl'
+          ? 'image'
+          : field === 'description'
+            ? 'textarea'
+            : 'text',
+      label: `Dịch vụ ${Number(grandSvcMeta[1]) + 1} · ${labels[field] ?? field}`,
     };
   }
   const craftImg = key.match(/^items\[(\d+)\]\.imageUrl$/);
@@ -1210,6 +1249,13 @@ export function resolveElementMeta(
       label: `Ảnh ${Number(reGalleryField[1]) + 1} · ${
         field === 'imageUrl' ? 'Ảnh' : 'Caption'
       }`,
+    };
+  }
+  if (key === 'items' && blockType === 'the_grand_service') {
+    return {
+      kind: 'theGrandServiceItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý dịch vụ',
     };
   }
   if (key === 'frameUrls' && blockType === 'delvaux_hero') {

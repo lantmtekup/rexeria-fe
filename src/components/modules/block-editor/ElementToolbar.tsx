@@ -106,6 +106,8 @@ import {
   type MintV2ProcessStep,
   type MintV2ServiceItem,
   type MintV2ServicesContent,
+  type TheGrandServiceContent,
+  type TheGrandServiceItem,
   type MintVaultCraftContent,
   type MintVaultCraftItem,
   type MintVaultCollectionContent,
@@ -614,6 +616,12 @@ export function ElementToolbar({
         {kind === 'coolHunterGalleryItems' && (
           <CoolHunterGalleryItemsControls
             content={content as CoolHunterGalleryContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'theGrandServiceItems' && (
+          <TheGrandServiceItemsControls
+            content={content as TheGrandServiceContent}
             onContentChange={onContentChange}
           />
         )}
@@ -3685,6 +3693,105 @@ function CoolHunterGalleryItemsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm ảnh' />
+    </PopoverTrigger>
+  );
+}
+
+function TheGrandServiceItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: TheGrandServiceContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = Array.isArray(content.items) ? content.items : [];
+
+  const write = (
+    updater: (list: TheGrandServiceItem[]) => TheGrandServiceItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as TheGrandServiceContent;
+      const prevItems = Array.isArray(c.items) ? c.items : [];
+      return {
+        ...c,
+        items: updater([...prevItems]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<TheGrandServiceItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 dịch vụ');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        label: 'Dịch vụ mới',
+        imageUrl: '/the-grand/dining.png',
+        imageAlt: '',
+        description: 'Mô tả dịch vụ.',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách dịch vụ'
+      preview={`${items.length} dịch vụ`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={item.label ?? ''}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá dịch vụ ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={item.description ?? ''}
+              onChange={e => update(i, { description: e.target.value })}
+              placeholder='Mô tả'
+              rows={3}
+              className='border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={item.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm dịch vụ' />
     </PopoverTrigger>
   );
 }

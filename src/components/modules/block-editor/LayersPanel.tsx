@@ -66,6 +66,8 @@ import { realEstateVillaSlideElements } from './blocks/_registry/defs/realEstate
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
 import { theGrandLocationItemElements } from './blocks/_registry/defs/theGrandLocation';
 import { resolveTheGrandLocationItems } from './blocks/theGrandLocationContent';
+import { theGrandServiceItemElements } from './blocks/_registry/defs/theGrandService';
+import { resolveTheGrandServiceItems } from './blocks/theGrandServiceContent';
 import { delvauxProductHotspotElements } from './blocks/_registry/defs/delvauxProduct';
 import {
   delvauxFaqElements,
@@ -118,6 +120,7 @@ import {
   type PnjHeroContent,
   type PnjVariantContent,
   type TheGrandLocationContent,
+  type TheGrandServiceContent,
   type PnjStickyMenuItem,
   type RealEstateHeroStat,
   type RealEstateOverviewStat,
@@ -885,6 +888,17 @@ export function elementsForType(
       BACKGROUND_LAYER,
       { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
       ...theGrandLocationItemElements(items),
+    ];
+  }
+  if (type === 'the_grand_service') {
+    const items = resolveTheGrandServiceItems(
+      (content ?? {}) as unknown as TheGrandServiceContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      ...theGrandServiceItemElements(items),
+      { key: 'items', label: 'Thêm / quản lý dịch vụ', icon: ListChecks },
     ];
   }
   if (type === 'delvaux_product') {
