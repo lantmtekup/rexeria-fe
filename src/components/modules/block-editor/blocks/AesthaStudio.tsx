@@ -11,6 +11,10 @@
  * ảnh → footer.
  *
  * Motion contract: entrance qua `useBlockMotion` (GSAP) — KHÔNG framer-motion.
+ * Hover roll-swap của wordmark đi qua Motion Attribute System (`data-motion`
+ * hover-roll-down + `useMotionAttributes`) — 2 driver KHÔNG chồng nhau vì
+ * `useBlockMotion` chỉ chạm container `.aestha-studio-content` / `-image`.
+ * Canvas edit dàn phẳng 2 nhãn thành 2 dòng; preview / `/p` giữ mask 1 dòng.
  * `min-[1200px]:` viewport media → `useContainerMobile(rootRef, 1200)` (đo
  * container, đúng trong device frame lẫn `/p`). Tokens tuyền inline + styleOf.
  * Ảnh giữ CDN framerusercontent.com theo asset rule của skill.
@@ -23,7 +27,6 @@ import { cn } from '@/lib/cn';
 
 import type {
   AesthaStudioContent,
-  AesthaStudioFooterLink,
   AesthaStudioMember,
   BlockBackground,
   ElementPositionsMap,
@@ -38,7 +41,11 @@ import {
   selectableClass,
 } from './applyStyle';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useMotionAttributes } from '../motion/useMotionAttributes';
+import { AesthaRollLink } from './AesthaRollLink';
+import { NAV_CLEARANCE } from './aesthaTokens';
 import { useContainerMobile } from './useContainerMobile';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface AesthaStudioProps {
   content: AesthaStudioContent;
@@ -57,7 +64,6 @@ const FONT =
 
 const INK = '#0F0F0F';
 const MUTED = '#4F4F4F';
-const FOOTER_CURRENT = '#E0DEDE';
 
 const WORDMARK_STYLE: React.CSSProperties = {
   fontFamily: FONT,
@@ -91,14 +97,7 @@ const MEMBER_ROLE_STYLE: React.CSSProperties = {
   color: MUTED,
 };
 
-const FOOTER_LINK_STYLE: React.CSSProperties = {
-  fontFamily: FONT,
-  fontSize: 'clamp(12px, 1.7cqi, 20px)',
-  lineHeight: 1.25,
-  fontWeight: 400,
-  color: INK,
-  textDecoration: 'none',
-};
+/* Nav đã tách thành block riêng `aestha_nav` (overlay góc trái dưới). */
 
 /**
  * Cursor-dot bám con trỏ có độ trễ mượt. Đặt `absolute` TRONG section wide
@@ -169,17 +168,9 @@ export function AesthaStudio({
 
   const isNarrow = useContainerMobile(rootRef, 1200);
 
-  // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play/`/p`.
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play/`/p`. Hook default `false`
+  // để SSR `/p` render đúng nhánh production ngay (không nháy layout editor).
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const [reduce, setReduce] = React.useState(false);
   React.useLayoutEffect(() => {
@@ -226,17 +217,17 @@ export function AesthaStudio({
   const team: AesthaStudioMember[] = Array.isArray(content.team)
     ? content.team
     : [];
-  const footerLinks: AesthaStudioFooterLink[] = Array.isArray(
-    content.footerLinks
-  )
-    ? content.footerLinks
-    : [];
 
   /**
    * Entrance on-load (recon: content fade-up delay 0.4s, ảnh fade-up delay
    * 0.2s). Không ScrollTrigger — block 1 viewport (wide) / stack ngắn (narrow).
    * Bezier gốc của Framer không map thẳng sang GSAP → xấp xỉ bằng power ease
    * (đúng tiền lệ AesthaExplore).
+   *
+   * Delay rút ngắn so với recon (0.2/0.4 → 0.05/0.15): 2 container mang
+   * `data-entrance` nên đã ẩn từ frame đầu (xem `public-entrance.css`), delay
+   * gốc để trang mới đứng trắng gần nửa giây sau khi View Transition cross-fade
+   * xong. Thứ tự ảnh-trước-nội-dung + duration/ease giữ nguyên.
    */
   useBlockMotion(rootRef, () => {
     const root = rootRef.current;
@@ -249,27 +240,46 @@ export function AesthaStudio({
       gsap.fromTo(
         imageEl,
         { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.5, delay: 0.2, ease: 'power2.out' }
+        { opacity: 1, y: 0, duration: 0.5, delay: 0.05, ease: 'power2.out' }
       );
     }
     if (contentEl) {
       gsap.fromTo(
         contentEl,
         { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.5, delay: 0.4, ease: 'power1.inOut' }
+        { opacity: 1, y: 0, duration: 0.5, delay: 0.15, ease: 'power1.inOut' }
       );
     }
   }, [isCanvas, hasRoot, reduce, isNarrow]);
+
+  /**
+   * Hover roll-swap của wordmark. Deps gồm `isNarrow` (wide/narrow render 2 cây
+   * DOM khác nhau) và 2 nhãn (đổi text trên canvas → rebuild timeline).
+   */
+  useMotionAttributes(rootRef, [
+    isNarrow,
+    isCanvas,
+    content.wordmark,
+    content.wordmarkHoverLabel,
+  ]);
 
   /* ── Editable renderers (dùng chung 2 branch) ── */
 
   const wordmark = (extraClass: string) => (
     <h1
-      data-element-key='wordmark'
       style={composeStyle(WORDMARK_STYLE, styleOf('wordmark'))}
-      className={selectableClass(activeKey === 'wordmark', extraClass)}
+      className={extraClass}
     >
-      {content.wordmark}
+      <AesthaRollLink
+        label={content.wordmark}
+        hoverLabel={content.wordmarkHoverLabel}
+        href={content.wordmarkHref}
+        labelKey='wordmark'
+        hoverLabelKey='wordmarkHoverLabel'
+        activeKey={activeKey}
+        isCanvas={isCanvas}
+        styleOf={styleOf}
+      />
     </h1>
   );
 
@@ -309,38 +319,9 @@ export function AesthaStudio({
     </ul>
   );
 
-  const footerNav = (extraClass: string) => (
-    <nav
-      aria-label='Sections'
-      className={cn('flex items-center gap-6', extraClass)}
-    >
-      {footerLinks.map((link, i) => {
-        const isCurrent = link.label === content.currentFooterLabel;
-        return (
-          <a
-            key={i}
-            href={link.href}
-            aria-current={isCurrent ? 'page' : undefined}
-            data-element-key={`footerLinks[${i}].label`}
-            style={composeStyle(
-              FOOTER_LINK_STYLE,
-              isCurrent ? { color: FOOTER_CURRENT } : undefined,
-              styleOf(`footerLinks[${i}].label`)
-            )}
-            className={selectableClass(
-              activeKey === `footerLinks[${i}].label`,
-              isCurrent ? undefined : 'hover:opacity-70'
-            )}
-          >
-            {link.label}
-          </a>
-        );
-      })}
-    </nav>
-  );
-
   const imageBox = (wrapClass: string, wrapStyle: React.CSSProperties) => (
     <div
+      data-entrance
       className={cn('aestha-studio-image relative overflow-hidden', wrapClass)}
       style={wrapStyle}
     >
@@ -379,17 +360,19 @@ export function AesthaStudio({
       )}
     >
       {isNarrow ? (
-        /* ── Narrow: xếp dọc ── */
-        <section className='flex h-full w-full flex-col px-4 pt-4 pb-5'>
-          <div className='aestha-studio-content'>
+        /* ── Narrow: xếp dọc. `paddingBottom` chừa chỗ cho block `aestha_nav`
+           overlay (nav portal ra ngoài block nên không tự đẩy ảnh lên). ── */
+        <section
+          className='flex h-full w-full flex-col px-4 pt-4'
+          style={{ paddingBottom: `calc(20px + ${NAV_CLEARANCE})` }}
+        >
+          <div data-entrance className='aestha-studio-content'>
             {wordmark('mb-2')}
             {bio('mb-4')}
             {teamList('mb-5 gap-x-4 gap-y-3')}
           </div>
 
           {imageBox('w-full', { aspectRatio: '358 / 372' })}
-
-          {footerNav('mt-auto pt-6')}
         </section>
       ) : (
         /* ── Wide: full-viewport, cột trái nội dung · ảnh phải ── */
@@ -401,20 +384,27 @@ export function AesthaStudio({
 
           <div className='flex h-full w-full items-stretch gap-8 p-8'>
             {/* Cột trái: wordmark · bio · team · footer */}
-            <div className='aestha-studio-content relative flex-1'>
+            <div
+              data-entrance
+              className='aestha-studio-content relative flex-1'
+            >
               {wordmark('absolute top-0 left-0')}
 
-              {bio('absolute top-[77px] left-0', {
-                width: 'min(562px, 46cqi)',
-                textAlign: 'start',
-              })}
+              {/* Canvas dàn phẳng wordmark thành 2 dòng → đẩy bio xuống, nếu
+                  không nhãn hover đè lên bio (wordmark ở đây là `absolute`
+                  nên không tự đẩy nội dung dưới). */}
+              {bio(
+                cn('absolute left-0', isCanvas ? 'top-[130px]' : 'top-[77px]'),
+                {
+                  width: 'min(562px, 46cqi)',
+                  textAlign: 'start',
+                }
+              )}
 
               {teamList('absolute right-0 bottom-[57px]', {
                 gap: 16,
                 width: 'min(380px, 32cqi)',
               })}
-
-              {footerNav('absolute bottom-0 left-0')}
             </div>
 
             {/* Cột phải: ảnh portrait cố định ~448px, full-height */}

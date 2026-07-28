@@ -123,7 +123,7 @@ import {
   type DelvauxProductContent,
   type DelvauxProductHotspot,
   type DelvauxSubnavContent,
-  type FramerAesthaEditorialContent,
+  type AesthaNavContent,
   type AesthaExploreContent,
   type AesthaStudioContent,
   type AesthaContactContent,
@@ -527,7 +527,7 @@ export function ElementToolbar({
         )}
         {kind === 'aesthaNavLinks' && (
           <AesthaNavLinksControls
-            content={content as FramerAesthaEditorialContent}
+            content={content as AesthaNavContent}
             onContentChange={onContentChange}
           />
         )}
@@ -547,32 +547,14 @@ export function ElementToolbar({
             )}
           />
         )}
-        {kind === 'aesthaExploreFooterLinks' && (
-          <AesthaExploreFooterLinksControls
-            content={content as AesthaExploreContent}
-            onContentChange={onContentChange}
-          />
-        )}
         {kind === 'aesthaStudioTeam' && (
           <AesthaStudioTeamControls
             content={content as AesthaStudioContent}
             onContentChange={onContentChange}
           />
         )}
-        {kind === 'aesthaStudioFooterLinks' && (
-          <AesthaStudioFooterLinksControls
-            content={content as AesthaStudioContent}
-            onContentChange={onContentChange}
-          />
-        )}
         {kind === 'aesthaContactSocials' && (
           <AesthaContactSocialsControls
-            content={content as AesthaContactContent}
-            onContentChange={onContentChange}
-          />
-        )}
-        {kind === 'aesthaContactFooterLinks' && (
-          <AesthaContactFooterLinksControls
             content={content as AesthaContactContent}
             onContentChange={onContentChange}
           />
@@ -4435,13 +4417,13 @@ function DelvauxSubnavLinksControls({
   );
 }
 
-// ─────────────────────────────────────────────────── AESTHA EDITORIAL (nav)
+// ─────────────────────────────────────────────────── AESTHA NAV (block riêng)
 
 function AesthaNavLinksControls({
   content,
   onContentChange,
 }: {
-  content: FramerAesthaEditorialContent;
+  content: AesthaNavContent;
   onContentChange: (next: BlockContent) => void;
 }) {
   const links = content.navLinks ?? [];
@@ -4825,80 +4807,6 @@ function AesthaExploreProjectImagesControls({
   );
 }
 
-function AesthaExploreFooterLinksControls({
-  content,
-  onContentChange,
-}: {
-  content: AesthaExploreContent;
-  onContentChange: (next: BlockContent) => void;
-}) {
-  const links = content.footerLinks ?? [];
-
-  const update = (i: number, patch: Partial<{ label: string; href: string }>) =>
-    onContentChange({
-      ...content,
-      footerLinks: links.map((l, idx) => (idx === i ? { ...l, ...patch } : l)),
-    } as BlockContent);
-
-  const remove = (i: number) =>
-    onContentChange({
-      ...content,
-      footerLinks: links.filter((_, idx) => idx !== i),
-    } as BlockContent);
-
-  const add = () =>
-    onContentChange({
-      ...content,
-      footerLinks: [...links, { label: 'Link mới', href: '#' }],
-    } as BlockContent);
-
-  return (
-    <PopoverTrigger
-      label='Footer nav'
-      preview={`${links.length} link`}
-      width={420}
-    >
-      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
-        {links.length === 0 ? (
-          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
-            Chưa có link — thêm mục footer nav.
-          </p>
-        ) : null}
-        {links.map((l, i) => (
-          <div
-            key={`explore-foot-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
-          >
-            <div className='flex items-center gap-2'>
-              <Input
-                value={l.label}
-                onChange={e => update(i, { label: e.target.value })}
-                placeholder='Nhãn'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
-              />
-              <button
-                type='button'
-                onClick={() => remove(i)}
-                aria-label='Xoá link'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
-              >
-                <Trash2 className='size-3.5' />
-              </button>
-            </div>
-            <Input
-              value={l.href}
-              onChange={e => update(i, { href: e.target.value })}
-              placeholder='Link (vd: /studio)'
-              className='h-8 border-neutral-200 bg-white text-xs'
-            />
-          </div>
-        ))}
-      </div>
-      <AddRow onAdd={add} label='Thêm link' />
-    </PopoverTrigger>
-  );
-}
-
 function AesthaStudioTeamControls({
   content,
   onContentChange,
@@ -4973,80 +4881,6 @@ function AesthaStudioTeamControls({
   );
 }
 
-function AesthaStudioFooterLinksControls({
-  content,
-  onContentChange,
-}: {
-  content: AesthaStudioContent;
-  onContentChange: (next: BlockContent) => void;
-}) {
-  const links = content.footerLinks ?? [];
-
-  const update = (i: number, patch: Partial<{ label: string; href: string }>) =>
-    onContentChange({
-      ...content,
-      footerLinks: links.map((l, idx) => (idx === i ? { ...l, ...patch } : l)),
-    } as BlockContent);
-
-  const remove = (i: number) =>
-    onContentChange({
-      ...content,
-      footerLinks: links.filter((_, idx) => idx !== i),
-    } as BlockContent);
-
-  const add = () =>
-    onContentChange({
-      ...content,
-      footerLinks: [...links, { label: 'Link mới', href: '#' }],
-    } as BlockContent);
-
-  return (
-    <PopoverTrigger
-      label='Footer nav'
-      preview={`${links.length} link`}
-      width={420}
-    >
-      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
-        {links.length === 0 ? (
-          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
-            Chưa có link — thêm mục footer nav.
-          </p>
-        ) : null}
-        {links.map((l, i) => (
-          <div
-            key={`studio-foot-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
-          >
-            <div className='flex items-center gap-2'>
-              <Input
-                value={l.label}
-                onChange={e => update(i, { label: e.target.value })}
-                placeholder='Nhãn'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
-              />
-              <button
-                type='button'
-                onClick={() => remove(i)}
-                aria-label='Xoá link'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
-              >
-                <Trash2 className='size-3.5' />
-              </button>
-            </div>
-            <Input
-              value={l.href}
-              onChange={e => update(i, { href: e.target.value })}
-              placeholder='Link (vd: /studio)'
-              className='h-8 border-neutral-200 bg-white text-xs'
-            />
-          </div>
-        ))}
-      </div>
-      <AddRow onAdd={add} label='Thêm link' />
-    </PopoverTrigger>
-  );
-}
-
 function AesthaContactSocialsControls({
   content,
   onContentChange,
@@ -5117,80 +4951,6 @@ function AesthaContactSocialsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm social' />
-    </PopoverTrigger>
-  );
-}
-
-function AesthaContactFooterLinksControls({
-  content,
-  onContentChange,
-}: {
-  content: AesthaContactContent;
-  onContentChange: (next: BlockContent) => void;
-}) {
-  const links = content.footerLinks ?? [];
-
-  const update = (i: number, patch: Partial<{ label: string; href: string }>) =>
-    onContentChange({
-      ...content,
-      footerLinks: links.map((l, idx) => (idx === i ? { ...l, ...patch } : l)),
-    } as BlockContent);
-
-  const remove = (i: number) =>
-    onContentChange({
-      ...content,
-      footerLinks: links.filter((_, idx) => idx !== i),
-    } as BlockContent);
-
-  const add = () =>
-    onContentChange({
-      ...content,
-      footerLinks: [...links, { label: 'Link mới', href: '#' }],
-    } as BlockContent);
-
-  return (
-    <PopoverTrigger
-      label='Footer nav'
-      preview={`${links.length} link`}
-      width={420}
-    >
-      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
-        {links.length === 0 ? (
-          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
-            Chưa có link — thêm mục footer nav.
-          </p>
-        ) : null}
-        {links.map((l, i) => (
-          <div
-            key={`contact-foot-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
-          >
-            <div className='flex items-center gap-2'>
-              <Input
-                value={l.label}
-                onChange={e => update(i, { label: e.target.value })}
-                placeholder='Nhãn'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
-              />
-              <button
-                type='button'
-                onClick={() => remove(i)}
-                aria-label='Xoá link'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
-              >
-                <Trash2 className='size-3.5' />
-              </button>
-            </div>
-            <Input
-              value={l.href}
-              onChange={e => update(i, { href: e.target.value })}
-              placeholder='Link (vd: /contact)'
-              className='h-8 border-neutral-200 bg-white text-xs'
-            />
-          </div>
-        ))}
-      </div>
-      <AddRow onAdd={add} label='Thêm link' />
     </PopoverTrigger>
   );
 }

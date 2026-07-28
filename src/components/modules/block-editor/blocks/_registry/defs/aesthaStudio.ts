@@ -9,11 +9,7 @@ import { Briefcase, ImageIcon, Link2, Pilcrow, Type, User } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { LayerElement } from '../../../LayersPanel';
-import type {
-  AesthaStudioContent,
-  AesthaStudioFooterLink,
-  AesthaStudioMember,
-} from '../../../types';
+import type { AesthaStudioContent, AesthaStudioMember } from '../../../types';
 import type { BlockDef } from '../types';
 
 // Team (recon: raw/block.html).
@@ -33,36 +29,27 @@ const BIO =
 const HERO_IMG =
   'https://framerusercontent.com/images/ZOD0bzURObuyj6UYJSP6X2Wavc.jpg?scale-down-to=1024&width=1576&height=2364';
 
-const FOOTER_LINKS_VI: AesthaStudioFooterLink[] = [
-  { label: 'Dự án', href: '/projects' },
-  { label: 'Studio', href: '/studio' },
-  { label: 'Liên hệ', href: '/contact' },
-];
-
-const FOOTER_LINKS_EN: AesthaStudioFooterLink[] = [
-  { label: 'Projects', href: '/projects' },
-  { label: 'Studio', href: '/studio' },
-  { label: 'Contact', href: '/contact' },
-];
-
+// Nav (`footerLinks` / `currentFooterLabel`) đã tách sang block `aestha_nav`
+// — không seed nữa; field chỉ còn optional để blueprint cũ không vỡ.
 const VI: AesthaStudioContent = {
   wordmark: 'STUDIO',
+  wordmarkHoverLabel: 'ABOUT US',
+  // Seed rỗng như `aestha_nav`: đích tuỳ trang, user tự set qua LinkControls.
+  wordmarkHref: '',
   bio: BIO,
   team: TEAM,
   imageUrl: HERO_IMG,
   imageAlt: 'Ramsa architectural project — masonry residential tower',
-  footerLinks: FOOTER_LINKS_VI,
-  currentFooterLabel: 'Studio',
 };
 
 const EN: AesthaStudioContent = {
   wordmark: 'STUDIO',
+  wordmarkHoverLabel: 'ABOUT US',
+  wordmarkHref: '',
   bio: BIO,
   team: TEAM,
   imageUrl: HERO_IMG,
   imageAlt: 'Ramsa architectural project — masonry residential tower',
-  footerLinks: FOOTER_LINKS_EN,
-  currentFooterLabel: 'Studio',
 };
 
 /**
@@ -91,28 +78,6 @@ export const aesthaStudioTeamElements = (
     },
   ]);
 
-/** Footer nav — mảng động, expand `footerLinks[i]`. */
-export const aesthaStudioFooterLinkElements = (
-  links: AesthaStudioFooterLink[]
-): LayerElement[] =>
-  links.flatMap((_, i) => [
-    {
-      key: `footerLinks[${i}].label`,
-      label: 'Nhãn',
-      groupId: `foot${i}`,
-      groupLabel: `Footer ${i + 1}`,
-      icon: Type,
-      fieldType: 'text' as const,
-    },
-    {
-      key: `footerLinks[${i}].href`,
-      label: 'Link',
-      groupId: `foot${i}`,
-      icon: Link2,
-      fieldType: 'text' as const,
-    },
-  ]);
-
 export const aesthaStudioDef: BlockDef<AesthaStudioContent> = {
   type: 'aestha_studio',
   meta: {
@@ -129,18 +94,39 @@ export const aesthaStudioDef: BlockDef<AesthaStudioContent> = {
     gradient: 'from-neutral-700 to-neutral-900',
     defaultName: 'Studio',
     aiLabelVi:
-      'trang STUDIO / About: wordmark + bio + danh sách team + ảnh portrait + footer nav',
+      'trang STUDIO / About: wordmark + bio + danh sách team + ảnh portrait',
     aiLabelEn:
-      'STUDIO / About page: wordmark + bio + team list + portrait image + footer nav',
+      'STUDIO / About page: wordmark + bio + team list + portrait image',
   },
   component: dynamic(() =>
     import('../../AesthaStudio').then(m => m.AesthaStudio)
   ),
   defaultContent: { vi: VI, en: EN },
-  // Phần tĩnh. `team` + `footerLinks` được LayersPanel expand động qua các
-  // helper trên — xem branch `aestha_studio` ở đó.
+  // Phần tĩnh. `team` được LayersPanel expand động qua helper trên —
+  // xem branch `aestha_studio` ở đó.
   elements: [
-    { key: 'wordmark', label: 'Wordmark', icon: Type, fieldType: 'text' },
+    {
+      key: 'wordmark',
+      label: 'Wordmark',
+      groupId: 'wordmark',
+      groupLabel: 'Wordmark',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'wordmarkHoverLabel',
+      label: 'Nhãn khi hover',
+      groupId: 'wordmark',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'wordmarkHref',
+      label: 'Link',
+      groupId: 'wordmark',
+      icon: Link2,
+      fieldType: 'link',
+    },
     { key: 'bio', label: 'Bio', icon: Pilcrow, fieldType: 'textarea' },
     { key: 'imageUrl', label: 'Ảnh', icon: ImageIcon, fieldType: 'image' },
     { key: 'imageAlt', label: 'Alt ảnh', icon: Type, fieldType: 'text' },

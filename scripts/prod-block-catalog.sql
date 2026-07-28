@@ -32,6 +32,7 @@ FROM unnest(ARRAY[
   'aestha_explore',
   'aestha_project',
   'aestha_contact',
+  'aestha_nav',
   'mint_vault_collection',
   'mint_vault_invitation'
 ]::text[]) AS code

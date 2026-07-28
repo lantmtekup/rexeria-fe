@@ -11,17 +11,22 @@ import dynamic from 'next/dynamic';
 import type { LayerElement } from '../../../LayersPanel';
 import type {
   AesthaExploreContent,
-  AesthaExploreFooterLink,
   AesthaExploreProject,
 } from '../../../types';
 import type { BlockDef } from '../types';
 
-// Menu → route → ảnh (giữ CDN framerusercontent.com theo asset rule của skill).
+// Menu → ảnh (giữ CDN framerusercontent.com theo asset rule của skill).
 // detail.body chứa content hiển thị khi click vào project.
+//
+// ⚠️ `href` để RỖNG có chủ đích — KHÔNG điền path demo (`/projects/…`). Lý do:
+//  1. Path đó 404 trên site public (path thật là `/p/{rootSlug}/{slug}`).
+//  2. `href` rỗng = block mở view chi tiết nội bộ (`AesthaProject` nhúng) — hành
+//     vi mặc định mong muốn. Điền href là ép điều hướng, khoá luôn view chi tiết.
+// Author gán link thật qua link-picker của toolbar (`fieldType: 'link'`).
 const PROJECTS: AesthaExploreProject[] = [
   {
     label: 'Vision',
-    href: '/projects/haus-loma',
+    href: '',
     img: 'https://framerusercontent.com/images/WPx9Zr4AV2b97ubrDEMcky10rwA.jpg?width=2364&height=1578',
     alt: 'Haus Loma',
     detail: {
@@ -44,7 +49,7 @@ const PROJECTS: AesthaExploreProject[] = [
   },
   {
     label: 'Architecture',
-    href: '/projects/haus-vanta',
+    href: '',
     img: 'https://framerusercontent.com/images/sb7lNvFscO86WspAS6g2Dbumdk4.jpg?width=2364&height=963',
     alt: 'Haus Vanta',
     detail: {
@@ -67,7 +72,7 @@ const PROJECTS: AesthaExploreProject[] = [
   },
   {
     label: 'Interior Experience',
-    href: '/projects/koa-cafe',
+    href: '',
     img: 'https://framerusercontent.com/images/gx0JUIPtvSo4eMJgRkMoqx2HPc.jpg?width=2364&height=1576',
     alt: 'Kōa Café',
     detail: {
@@ -90,7 +95,7 @@ const PROJECTS: AesthaExploreProject[] = [
   },
   {
     label: 'Amenities',
-    href: '/projects/stillspace',
+    href: '',
     img: 'https://framerusercontent.com/images/FeVrkEA94CrUpaD629BKz29Pbs.jpg?width=2364&height=1280',
     alt: 'Stillspace',
     detail: {
@@ -113,7 +118,7 @@ const PROJECTS: AesthaExploreProject[] = [
   },
   {
     label: 'Nami Retreat',
-    href: '/projects/nami-retreat',
+    href: '',
     img: 'https://framerusercontent.com/images/HZvk4A3s8OUaBgUIyPFBUBIzJ0.png?width=1024&height=1024',
     alt: 'Nami Retreat',
     detail: {
@@ -136,30 +141,22 @@ const PROJECTS: AesthaExploreProject[] = [
   },
 ];
 
-const FOOTER_LINKS_VI: AesthaExploreFooterLink[] = [
-  { label: 'Dự án', href: '/projects' },
-  { label: 'Studio', href: '/studio' },
-  { label: 'Liên hệ', href: '/contact' },
-];
-
-const FOOTER_LINKS_EN: AesthaExploreFooterLink[] = [
-  { label: 'Projects', href: '/projects' },
-  { label: 'Studio', href: '/studio' },
-  { label: 'Contact', href: '/contact' },
-];
-
+// Nav (`footerLinks` / `currentFooterLabel`) đã tách sang block `aestha_nav`
+// — không seed nữa; field chỉ còn optional để blueprint cũ không vỡ.
 const VI: AesthaExploreContent = {
   heading: 'EXPLORE',
+  headingHoverLabel: 'VIEW PROJECTS',
+  // Seed rỗng như aestha_nav: đích tuỳ trang, user tự set qua LinkControls.
+  headingHref: '',
   projects: PROJECTS,
-  footerLinks: FOOTER_LINKS_VI,
-  currentFooterLabel: 'Dự án',
 };
 
 const EN: AesthaExploreContent = {
   heading: 'EXPLORE',
+  headingHoverLabel: 'VIEW PROJECTS',
+  // Seed rỗng như aestha_nav: đích tuỳ trang, user tự set qua LinkControls.
+  headingHref: '',
   projects: PROJECTS,
-  footerLinks: FOOTER_LINKS_EN,
-  currentFooterLabel: 'Projects',
 };
 
 /**
@@ -193,7 +190,7 @@ export const aesthaExploreProjectElements = (
         label: 'Link',
         groupId: `proj${i}`,
         icon: Link2,
-        fieldType: 'text' as const,
+        fieldType: 'link' as const,
       },
     ];
 
@@ -244,28 +241,6 @@ export const aesthaExploreProjectElements = (
     return elements;
   });
 
-/** Footer nav — mảng động, expand `footerLinks[i]`. */
-export const aesthaExploreFooterLinkElements = (
-  links: AesthaExploreFooterLink[]
-): LayerElement[] =>
-  links.flatMap((_, i) => [
-    {
-      key: `footerLinks[${i}].label`,
-      label: 'Nhãn',
-      groupId: `foot${i}`,
-      groupLabel: `Footer ${i + 1}`,
-      icon: Type,
-      fieldType: 'text' as const,
-    },
-    {
-      key: `footerLinks[${i}].href`,
-      label: 'Link',
-      groupId: `foot${i}`,
-      icon: Link2,
-      fieldType: 'text' as const,
-    },
-  ]);
-
 export const aesthaExploreDef: BlockDef<AesthaExploreContent> = {
   type: 'aestha_explore',
   meta: {
@@ -290,9 +265,30 @@ export const aesthaExploreDef: BlockDef<AesthaExploreContent> = {
     import('../../AesthaExplore').then(m => m.AesthaExplore)
   ),
   defaultContent: { vi: VI, en: EN },
-  // Phần tĩnh. `projects` + `footerLinks` được LayersPanel expand động qua
-  // các helper trên — xem branch `aestha_explore` ở đó.
+  // Phần tĩnh. `projects` được LayersPanel expand động qua helper trên —
+  // xem branch `aestha_explore` ở đó.
   elements: [
-    { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+    {
+      key: 'heading',
+      label: 'Tiêu đề',
+      groupId: 'heading',
+      groupLabel: 'Tiêu đề',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'headingHoverLabel',
+      label: 'Nhãn khi hover',
+      groupId: 'heading',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'headingHref',
+      label: 'Link',
+      groupId: 'heading',
+      icon: Link2,
+      fieldType: 'link',
+    },
   ],
 };
