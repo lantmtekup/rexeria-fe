@@ -231,6 +231,10 @@ export function FramerDarlingTimeline({
           <div data-element-key='items'>
             {items.map((item, idx) => {
               const isRight = idx % 2 === 0; // first item on right (matches source)
+              const timeKey = `items[${idx}].time`;
+              const titleKey = `items[${idx}].title`;
+              const descriptionKey = `items[${idx}].description`;
+              const imageKey = `items[${idx}].imageUrl`;
               return (
                 <div
                   key={idx}
@@ -276,39 +280,25 @@ export function FramerDarlingTimeline({
                     }
                   >
                     <p
-                      data-element-key={`items.${idx}.time`}
-                      style={composeStyle(
-                        TIME_STYLE,
-                        styleOf(`items.${idx}.time`)
-                      )}
-                      className={selectableClass(
-                        activeKey === `items.${idx}.time`
-                      )}
+                      data-element-key={timeKey}
+                      style={composeStyle(TIME_STYLE, styleOf(timeKey))}
+                      className={selectableClass(activeKey === timeKey)}
                     >
                       {item.time}
                     </p>
                     <h3
-                      data-element-key={`items.${idx}.title`}
-                      style={composeStyle(
-                        TITLE_STYLE,
-                        styleOf(`items.${idx}.title`)
-                      )}
-                      className={selectableClass(
-                        activeKey === `items.${idx}.title`
-                      )}
+                      data-element-key={titleKey}
+                      style={composeStyle(TITLE_STYLE, styleOf(titleKey))}
+                      className={selectableClass(activeKey === titleKey)}
                     >
                       {item.title}
                     </h3>
                     <p
-                      data-element-key={`items.${idx}.description`}
-                      style={composeStyle(
-                        DESC_STYLE,
-                        styleOf(`items.${idx}.description`)
-                      )}
+                      data-element-key={descriptionKey}
+                      style={composeStyle(DESC_STYLE, styleOf(descriptionKey))}
                       className={
-                        selectableClass(
-                          activeKey === `items.${idx}.description`
-                        ) + (isRight ? '' : 'text-right')
+                        selectableClass(activeKey === descriptionKey) +
+                        (isRight ? '' : ' text-right')
                       }
                     >
                       {item.description}
@@ -316,7 +306,7 @@ export function FramerDarlingTimeline({
 
                     {/* Image — div backgroundImage, không dùng <img> */}
                     <div
-                      data-element-key={`items.${idx}.imageUrl`}
+                      data-element-key={imageKey}
                       style={composeStyle(
                         item.imageUrl
                           ? {
@@ -331,11 +321,9 @@ export function FramerDarlingTimeline({
                           aspectRatio: '4 / 3',
                           overflow: 'hidden',
                         },
-                        styleOf(`items.${idx}.imageUrl`)
+                        styleOf(imageKey)
                       )}
-                      className={selectableClass(
-                        activeKey === `items.${idx}.imageUrl`
-                      )}
+                      className={selectableClass(activeKey === imageKey)}
                     />
                   </div>
                 </div>

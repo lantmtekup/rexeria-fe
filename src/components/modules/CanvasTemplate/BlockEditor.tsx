@@ -1363,31 +1363,35 @@ export function BlockEditor({
   };
 
   // ── Block CRUD ──────────────────────────────────────────────────────────
-  const handleAddBlock = (type: BlockType) => {
-    const created = createBlock(type);
+  const handleAddBlocks = (types: BlockType[]) => {
+    if (types.length === 0) return;
+    const created = types.map(t => createBlock(t));
     canvas.mutate(draft => {
-      draft.push(created);
+      draft.push(...created);
     });
-    canvas.setActiveId(created.id);
+    const last = created[created.length - 1];
+    canvas.setActiveId(last.id);
     if (templateId && !blockMode) {
-      writeStoredActiveBlockId(templateId, canvas.activePageId, created.id);
+      writeStoredActiveBlockId(templateId, canvas.activePageId, last.id);
     }
     autosave.markDirty();
   };
 
-  const handleAddSavedBlock = (
-    block: import('@/components/modules/block-editor/types').Block
+  const handleAddSavedBlocks = (
+    blocks: import('@/components/modules/block-editor/types').Block[]
   ) => {
+    if (blocks.length === 0) return;
     // Saved blocks carry their library id. Inserting the same one twice — on
     // two pages, or twice on one page — would duplicate block ids, which makes
     // `mutateBlock` edit the wrong block and conflates the two in analytics.
-    const inserted = { ...block, id: genId() };
+    const inserted = blocks.map(b => ({ ...b, id: genId() }));
     canvas.mutate(draft => {
-      draft.push(inserted);
+      draft.push(...inserted);
     });
-    canvas.setActiveId(inserted.id);
+    const last = inserted[inserted.length - 1];
+    canvas.setActiveId(last.id);
     if (templateId && !blockMode) {
-      writeStoredActiveBlockId(templateId, canvas.activePageId, inserted.id);
+      writeStoredActiveBlockId(templateId, canvas.activePageId, last.id);
     }
     autosave.markDirty();
   };
@@ -1885,8 +1889,8 @@ export function BlockEditor({
         <AddBlockDialog
           open={addOpen}
           onOpenChange={setAddOpen}
-          onPick={handleAddBlock}
-          onPickSaved={handleAddSavedBlock}
+          onPick={handleAddBlocks}
+          onPickSaved={handleAddSavedBlocks}
         />
 
         {previewing && (

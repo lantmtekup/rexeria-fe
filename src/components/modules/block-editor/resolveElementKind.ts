@@ -25,6 +25,8 @@ export type ElementKind =
   | 'pnjStickyMenuItems'
   | 'mintV2ServicesItems'
   | 'mintV2ProcessSteps'
+  | 'framerDarlingTimelineItems'
+  | 'framerPerformPricingTiers'
   | 'mintVaultCraftItems'
   | 'mintVaultCoins'
   | 'mintVaultImages'
@@ -280,6 +282,12 @@ export function resolveKind(
   if (key === 'steps' && blockType === 'mintv2_process') {
     return 'mintV2ProcessSteps';
   }
+  if (key === 'items' && blockType === 'framer_darling_timeline') {
+    return 'framerDarlingTimelineItems';
+  }
+  if (key === 'tiers' && blockType === 'framer_perform_pricing') {
+    return 'framerPerformPricingTiers';
+  }
   if (key === 'items' && blockType === 'mint_vault_craft') {
     return 'mintVaultCraftItems';
   }
@@ -370,6 +378,36 @@ export function resolveKind(
     blockType === 'mintv2_process'
   ) {
     return 'text';
+  }
+  if (
+    /^items\[\d+\]\.(time|title|description)$/.test(key) &&
+    blockType === 'framer_darling_timeline'
+  ) {
+    return 'text';
+  }
+  if (
+    /^items\[\d+\]\.imageUrl$/.test(key) &&
+    blockType === 'framer_darling_timeline'
+  ) {
+    return 'image';
+  }
+  if (
+    /^tiers\[\d+\]\.(price|title|features|ctaLabel)$/.test(key) &&
+    blockType === 'framer_perform_pricing'
+  ) {
+    return 'text';
+  }
+  if (
+    /^tiers\[\d+\]\.imageUrl$/.test(key) &&
+    blockType === 'framer_perform_pricing'
+  ) {
+    return 'image';
+  }
+  if (
+    /^tiers\[\d+\]\.ctaHref$/.test(key) &&
+    blockType === 'framer_perform_pricing'
+  ) {
+    return 'link';
   }
   if ((key === 'line' || key === 'dot') && blockType === 'mintv2_process') {
     return 'fill';
@@ -540,6 +578,38 @@ export function resolveLabel(
   }
   if (key === 'steps' && blockType === 'mintv2_process') {
     return 'Thêm / quản lý bước';
+  }
+  const darlingField = key.match(
+    /^items\[(\d+)\]\.(time|title|description|imageUrl)$/
+  );
+  if (darlingField && blockType === 'framer_darling_timeline') {
+    const labels: Record<string, string> = {
+      time: 'Giờ',
+      title: 'Tiêu đề',
+      description: 'Mô tả',
+      imageUrl: 'Ảnh',
+    };
+    return `Mốc ${Number(darlingField[1]) + 1} · ${labels[darlingField[2]] ?? darlingField[2]}`;
+  }
+  if (key === 'items' && blockType === 'framer_darling_timeline') {
+    return 'Thêm / quản lý mốc';
+  }
+  const tierField = key.match(
+    /^tiers\[(\d+)\]\.(imageUrl|price|title|features|ctaLabel|ctaHref)$/
+  );
+  if (tierField && blockType === 'framer_perform_pricing') {
+    const labels: Record<string, string> = {
+      imageUrl: 'Ảnh',
+      price: 'Giá',
+      title: 'Tên gói',
+      features: 'Tính năng',
+      ctaLabel: 'CTA — Chữ',
+      ctaHref: 'CTA — Link',
+    };
+    return `Gói ${Number(tierField[1]) + 1} · ${labels[tierField[2]] ?? tierField[2]}`;
+  }
+  if (key === 'tiers' && blockType === 'framer_perform_pricing') {
+    return 'Thêm / quản lý gói';
   }
   const tabLabel = key.match(/^tabs\[(\d+)\]\.label$/);
   if (tabLabel) return `Hotspot ${Number(tabLabel[1]) + 1} · tiêu đề`;
@@ -853,6 +923,70 @@ export function resolveElementMeta(
       kind: 'mintV2ProcessSteps',
       fieldType: undefined,
       label: 'Thêm / quản lý bước',
+    };
+  }
+  const darlingField = key.match(
+    /^items\[(\d+)\]\.(time|title|description|imageUrl)$/
+  );
+  if (darlingField && blockType === 'framer_darling_timeline') {
+    const field = darlingField[2];
+    const labels: Record<string, string> = {
+      time: 'Giờ',
+      title: 'Tiêu đề',
+      description: 'Mô tả',
+      imageUrl: 'Ảnh',
+    };
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      fieldType:
+        field === 'imageUrl'
+          ? 'image'
+          : field === 'description'
+            ? 'textarea'
+            : 'text',
+      label: `Mốc ${Number(darlingField[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  if (key === 'items' && blockType === 'framer_darling_timeline') {
+    return {
+      kind: 'framerDarlingTimelineItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý mốc',
+    };
+  }
+  const tierField = key.match(
+    /^tiers\[(\d+)\]\.(imageUrl|price|title|features|ctaLabel|ctaHref)$/
+  );
+  if (tierField && blockType === 'framer_perform_pricing') {
+    const field = tierField[2];
+    const labels: Record<string, string> = {
+      imageUrl: 'Ảnh',
+      price: 'Giá',
+      title: 'Tên gói',
+      features: 'Tính năng',
+      ctaLabel: 'CTA — Chữ',
+      ctaHref: 'CTA — Link',
+    };
+    const kind =
+      field === 'imageUrl' ? 'image' : field === 'ctaHref' ? 'link' : 'text';
+    return {
+      kind,
+      fieldType:
+        field === 'imageUrl'
+          ? 'image'
+          : field === 'ctaHref'
+            ? 'link'
+            : field === 'features'
+              ? 'textarea'
+              : 'text',
+      label: `Gói ${Number(tierField[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  if (key === 'tiers' && blockType === 'framer_perform_pricing') {
+    return {
+      kind: 'framerPerformPricingTiers',
+      fieldType: undefined,
+      label: 'Thêm / quản lý gói',
     };
   }
   if (key === 'line' && blockType === 'mintv2_process') {

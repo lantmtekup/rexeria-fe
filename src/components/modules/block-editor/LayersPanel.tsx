@@ -63,6 +63,8 @@ import {
   delvauxVariantItemElements,
 } from './blocks/_registry/defs/delvauxVariant';
 import { mintDiscoverTabElements } from './blocks/_registry/defs/mintDiscover';
+import { framerDarlingTimelineItemElements } from './blocks/_registry/defs/framerDarlingTimeline';
+import { framerPerformPricingTierElements } from './blocks/_registry/defs/framerPerformPricing';
 import { mintV2ProcessStepElements } from './blocks/_registry/defs/mintV2Process';
 import { mintV2ServicesItemElements } from './blocks/_registry/defs/mintV2Services';
 import { mintV2WorksCardElements } from './blocks/_registry/defs/mintV2Works';
@@ -110,6 +112,8 @@ import {
   type RealEstateVillaSlide,
   type RealEstateUtilityItem,
   type MintDiscoverTab,
+  type FramerDarlingTimelineContent,
+  type FramerPerformPricingContent,
   type MintV2ProcessStep,
   type MintV2ServiceItem,
   type MintV2WorkCard,
@@ -1129,6 +1133,50 @@ export function elementsForType(
       {
         key: 'steps',
         label: 'Thêm / quản lý bước',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'framer_darling_timeline') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as FramerDarlingTimelineContent['items']).filter(
+          it => it && typeof it === 'object' && typeof it.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      { key: 'intro', label: 'Mô tả', icon: Pilcrow, fieldType: 'textarea' },
+      ...framerDarlingTimelineItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý mốc',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'framer_perform_pricing') {
+    const raw = content?.tiers;
+    const tiers = Array.isArray(raw)
+      ? (raw as FramerPerformPricingContent['tiers']).filter(
+          t => t && typeof t === 'object' && typeof t.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      {
+        key: 'subheading',
+        label: 'Mô tả',
+        icon: Pilcrow,
+        fieldType: 'textarea',
+      },
+      ...framerPerformPricingTierElements(tiers),
+      {
+        key: 'tiers',
+        label: 'Thêm / quản lý gói',
         icon: ListChecks,
       },
     ];

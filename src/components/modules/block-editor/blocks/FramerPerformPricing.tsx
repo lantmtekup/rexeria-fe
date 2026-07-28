@@ -28,6 +28,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface Props {
   content: FramerPerformPricingContent;
@@ -159,6 +160,132 @@ function ArrowIcon() {
   );
 }
 
+type Tier = FramerPerformPricingContent['tiers'][number];
+
+function TierCardInfo({
+  tier,
+  idx,
+  activeKey,
+  styleOf,
+  isCanvas,
+}: {
+  tier: Tier;
+  idx: number;
+  activeKey?: string | null;
+  styleOf: (key: string) => React.CSSProperties | undefined;
+  isCanvas: boolean;
+}) {
+  const imageKey = `tiers[${idx}].imageUrl`;
+  const priceKey = `tiers[${idx}].price`;
+  const titleKey = `tiers[${idx}].title`;
+  // const featuresKey = `tiers[${idx}].features`;
+  const ctaLabelKey = `tiers[${idx}].ctaLabel`;
+  const ctaHrefKey = `tiers[${idx}].ctaHref`;
+
+  const featureLines = (tier.features ?? '')
+    .split('\n')
+    .map(l => l.trim())
+    .filter(Boolean);
+
+  return (
+    <>
+      <div
+        data-element-key={imageKey}
+        style={composeStyle(
+          tier.imageUrl
+            ? {
+                backgroundImage: `url("${tier.imageUrl.replace(/"/g, '%22')}")`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }
+            : {
+                background: 'linear-gradient(135deg, #d9dadd 0%, #b8babf 100%)',
+              },
+          {
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '1 / 1',
+            borderRadius: 'clamp(16px, 1.6cqi, 24px)',
+            overflow: 'hidden',
+          },
+          styleOf(imageKey)
+        )}
+        className={selectableClass(activeKey === imageKey)}
+      />
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          padding: 'clamp(16px, 2cqi, 32px) clamp(8px, 1.5cqi, 24px)',
+        }}
+      >
+        <p
+          data-element-key={priceKey}
+          style={composeStyle(CARD_PRICE_STYLE, styleOf(priceKey))}
+          className={selectableClass(activeKey === priceKey)}
+        >
+          {tier.price}
+        </p>
+
+        <p
+          data-element-key={titleKey}
+          style={composeStyle(CARD_TITLE_STYLE, styleOf(titleKey))}
+          className={selectableClass(activeKey === titleKey)}
+        >
+          {tier.title || 'Plan'}
+        </p>
+
+        {featureLines.length > 0 && (
+          <ul
+            style={{
+              listStyle: 'none',
+              padding: 0,
+              margin: '0 0 clamp(28px, 4cqi, 48px)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'clamp(14px, 1.4cqi, 18px)',
+            }}
+          >
+            {featureLines.map((feat, fIdx) => (
+              <li
+                key={fIdx}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 14,
+                }}
+              >
+                <CheckIcon />
+                <span style={FEATURE_ITEM_STYLE}>{feat}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <a
+          data-element-key={ctaHrefKey}
+          href={isCanvas ? undefined : tier.ctaHref || '#'}
+          onClick={isCanvas ? e => e.preventDefault() : undefined}
+          aria-label={tier.ctaLabel || 'Get in touch'}
+          style={composeStyle(CTA_STYLE, styleOf(ctaHrefKey))}
+          className={selectableClass(activeKey === ctaHrefKey)}
+        >
+          <span
+            data-element-key={ctaLabelKey}
+            style={styleOf(ctaLabelKey)}
+            className={selectableClass(activeKey === ctaLabelKey)}
+          >
+            {tier.ctaLabel || 'Get in touch'}
+          </span>
+          <ArrowIcon />
+        </a>
+      </div>
+    </>
+  );
+}
+
 export function FramerPerformPricing({
   content,
   styles,
@@ -168,6 +295,7 @@ export function FramerPerformPricing({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
+  const isCanvas = useIsCanvasEdit(rootRef);
   const tiers = Array.isArray(content.tiers) ? content.tiers : [];
   const styleOf = (key: string) =>
     composeStyle(
@@ -176,84 +304,90 @@ export function FramerPerformPricing({
       positionStyle(positions, key)
     );
 
-  useBlockMotion(rootRef, ({ scroller }) => {
-    const root = rootRef.current;
-    if (!root) return;
+  useBlockMotion(
+    rootRef,
+    ({ scroller }) => {
+      if (isCanvas) return;
 
-    const cardEls = gsap.utils.toArray<HTMLElement>('.fpp-card', root);
-    if (cardEls.length < 2) return;
+      const root = rootRef.current;
+      if (!root) return;
 
-    const reduceMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
+      const cardEls = gsap.utils.toArray<HTMLElement>('.fpp-card', root);
+      if (cardEls.length < 2) return;
 
-    if (reduceMotion) {
-      // Bỏ deck-scroll: layout do CSS @media (prefers-reduced-motion) lo —
-      // card về luồng dọc bình thường. (Trước đây mutate .style imperative
-      // nhưng KHÔNG reset position:absolute;inset:0 của card → card chồng nhau
-      // + stage collapse → user reduced-motion chỉ thấy 1 thẻ.) GSAP bỏ qua.
-      return;
-    }
+      const reduceMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+      ).matches;
 
-    // Header fade-up (thay HEADER_FADE whileInView gốc)
-    const header = root.querySelector<HTMLElement>('.fpp-header');
-    if (header) {
-      gsap.fromTo(
-        header,
-        { opacity: 0, y: 24 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.7,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: header,
-            scroller,
-            start: 'top 85%',
-            toggleActions: 'play none none reverse',
-            invalidateOnRefresh: true,
-          },
-        }
-      );
-    }
+      if (reduceMotion) {
+        // Bỏ deck-scroll: layout do CSS @media (prefers-reduced-motion) lo —
+        // card về luồng dọc bình thường. (Trước đây mutate .style imperative
+        // nhưng KHÔNG reset position:absolute;inset:0 của card → card chồng nhau
+        // + stage collapse → user reduced-motion chỉ thấy 1 thẻ.) GSAP bỏ qua.
+        return;
+      }
 
-    const n = cardEls.length;
+      // Header fade-up (thay HEADER_FADE whileInView gốc)
+      const header = root.querySelector<HTMLElement>('.fpp-header');
+      if (header) {
+        gsap.fromTo(
+          header,
+          { opacity: 0, y: 24 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.7,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: header,
+              scroller,
+              start: 'top 85%',
+              toggleActions: 'play none none reverse',
+              invalidateOnRefresh: true,
+            },
+          }
+        );
+      }
 
-    cardEls.forEach((card, i) => {
-      if (i === 0) return;
-      gsap.set(card, { y: '100%', scale: 0.9 });
-    });
+      const n = cardEls.length;
 
-    const tl = gsap.timeline({
-      defaults: { ease: 'none' },
-      scrollTrigger: {
-        trigger: root,
-        scroller,
-        start: 'top top',
-        end: `+=${(n - 1) * 100}%`,
-        scrub: 0.5,
-        invalidateOnRefresh: true,
-      },
-    });
+      cardEls.forEach((card, i) => {
+        if (i === 0) return;
+        gsap.set(card, { y: '100%', scale: 0.9 });
+      });
 
-    cardEls.forEach((card, i) => {
-      if (i === 0) return;
-      const segStart = (i - 1) / (n - 1);
-      const scaleEnd = (i - 1 + 0.4) / (n - 1);
-      tl.fromTo(
-        card,
-        { y: '160%', scale: 0.9 },
-        { y: '0%', ease: 'none' },
-        segStart - 0.15
-      );
-      tl.fromTo(
-        card,
-        { scale: 0.9 },
-        { scale: 1, ease: 'power3.out' },
-        scaleEnd
-      );
-    });
-  });
+      const tl = gsap.timeline({
+        defaults: { ease: 'none' },
+        scrollTrigger: {
+          trigger: root,
+          scroller,
+          start: 'top top',
+          end: `+=${(n - 1) * 100}%`,
+          scrub: 0.5,
+          invalidateOnRefresh: true,
+        },
+      });
+
+      cardEls.forEach((card, i) => {
+        if (i === 0) return;
+        const segStart = (i - 1) / (n - 1);
+        const scaleEnd = (i - 1 + 0.4) / (n - 1);
+        tl.fromTo(
+          card,
+          { y: '160%', scale: 0.9 },
+          { y: '0%', ease: 'none' },
+          segStart - 0.15
+        );
+        tl.fromTo(
+          card,
+          { scale: 0.9 },
+          { scale: 1, ease: 'power3.out' },
+          scaleEnd
+        );
+      });
+    },
+    [isCanvas]
+  );
 
   return (
     <section
@@ -313,127 +447,82 @@ export function FramerPerformPricing({
           data-element-key='tiers'
           className={`fpp-rail ${selectableClass(activeKey === 'tiers')}`}
           style={composeStyle(
-            {
-              position: 'relative',
-              height: `${tiers.length * 100}dvh`,
-            },
+            isCanvas
+              ? { display: 'flex', flexDirection: 'column', gap: 32 }
+              : { position: 'relative', height: `${tiers.length * 100}dvh` },
             styleOf('tiers')
           )}
         >
           <div
             className='fpp-stage'
-            style={{
-              position: 'sticky',
-              top: 80,
-              height: '100dvh',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingBottom: 'clamp(16px, 2.4cqi, 32px)',
-              overflow: 'hidden',
-            }}
+            data-canvas-edit={isCanvas ? 'true' : undefined}
+            style={
+              isCanvas
+                ? {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 32,
+                  }
+                : {
+                    position: 'sticky',
+                    top: 80,
+                    height: '100dvh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingBottom: 'clamp(16px, 2.4cqi, 32px)',
+                    overflow: 'hidden',
+                  }
+            }
           >
             {tiers.map((tier, idx) => {
-              const featureLines = (tier.features ?? '')
-                .split('\n')
-                .map(l => l.trim())
-                .filter(Boolean);
-
               return (
                 <article
                   key={idx}
                   className='fpp-card grid'
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: 'min(1120px, calc(100% - clamp(40px, 8cqi, 96px)))',
-                    height: 'clamp(380px, 56dvh, 540px)',
-                    zIndex: idx + 1,
-                    backgroundColor: '#ffffff',
-                    borderRadius: 'clamp(20px, 2cqi, 32px)',
-                    boxShadow:
-                      '0 1px 3px rgba(16,24,40,0.06), 0 12px 40px -8px rgba(16,24,40,0.12)',
-                    padding: 'clamp(16px, 1.6cqi, 24px)',
-                    gridTemplateColumns: 'minmax(280px, 1fr) 1.1fr',
-                    gap: 'clamp(24px, 4cqi, 56px)',
-                    alignItems: 'stretch',
-                    overflow: 'hidden',
-                    willChange: 'transform',
-                  }}
+                  style={
+                    isCanvas
+                      ? {
+                          width: '100%',
+                          maxWidth: 1120,
+                          margin: '0 auto',
+                          backgroundColor: '#ffffff',
+                          borderRadius: 'clamp(20px, 2cqi, 32px)',
+                          boxShadow:
+                            '0 1px 3px rgba(16,24,40,0.06), 0 12px 40px -8px rgba(16,24,40,0.12)',
+                          padding: 'clamp(16px, 1.6cqi, 24px)',
+                          gridTemplateColumns: 'minmax(280px, 1fr) 1.1fr',
+                          gap: 'clamp(24px, 4cqi, 56px)',
+                          alignItems: 'stretch',
+                          overflow: 'hidden',
+                        }
+                      : {
+                          position: 'absolute',
+                          inset: 0,
+                          width:
+                            'min(1120px, calc(100% - clamp(40px, 8cqi, 96px)))',
+                          height: 'clamp(380px, 56dvh, 540px)',
+                          zIndex: idx + 1,
+                          backgroundColor: '#ffffff',
+                          borderRadius: 'clamp(20px, 2cqi, 32px)',
+                          boxShadow:
+                            '0 1px 3px rgba(16,24,40,0.06), 0 12px 40px -8px rgba(16,24,40,0.12)',
+                          padding: 'clamp(16px, 1.6cqi, 24px)',
+                          gridTemplateColumns: 'minmax(280px, 1fr) 1.1fr',
+                          gap: 'clamp(24px, 4cqi, 56px)',
+                          alignItems: 'stretch',
+                          overflow: 'hidden',
+                          willChange: 'transform',
+                        }
+                  }
                 >
-                  {/* Ảnh trái (1:1) */}
-                  <div
-                    style={composeStyle(
-                      tier.imageUrl
-                        ? {
-                            backgroundImage: `url("${tier.imageUrl.replace(/"/g, '%22')}")`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                          }
-                        : {
-                            background:
-                              'linear-gradient(135deg, #d9dadd 0%, #b8babf 100%)',
-                          },
-                      {
-                        position: 'relative',
-                        width: '100%',
-                        aspectRatio: '1 / 1',
-                        borderRadius: 'clamp(16px, 1.6cqi, 24px)',
-                        overflow: 'hidden',
-                      }
-                    )}
+                  <TierCardInfo
+                    tier={tier}
+                    idx={idx}
+                    activeKey={activeKey}
+                    styleOf={styleOf}
+                    isCanvas={isCanvas}
                   />
-
-                  {/* Info phải */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      padding:
-                        'clamp(16px, 2cqi, 32px) clamp(8px, 1.5cqi, 24px)',
-                    }}
-                  >
-                    <p style={CARD_PRICE_STYLE}>{tier.price}</p>
-
-                    <p style={CARD_TITLE_STYLE}>{tier.title || 'Plan'}</p>
-
-                    {featureLines.length > 0 && (
-                      <ul
-                        style={{
-                          listStyle: 'none',
-                          padding: 0,
-                          margin: '0 0 clamp(28px, 4cqi, 48px)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 'clamp(14px, 1.4cqi, 18px)',
-                        }}
-                      >
-                        {featureLines.map((feat, fIdx) => (
-                          <li
-                            key={fIdx}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              gap: 14,
-                            }}
-                          >
-                            <CheckIcon />
-                            <span style={FEATURE_ITEM_STYLE}>{feat}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    <a
-                      href={tier.ctaHref || '#'}
-                      aria-label={tier.ctaLabel || 'Get in touch'}
-                      style={CTA_STYLE}
-                    >
-                      <span>{tier.ctaLabel || 'Get in touch'}</span>
-                      <ArrowIcon />
-                    </a>
-                  </div>
                 </article>
               );
             })}

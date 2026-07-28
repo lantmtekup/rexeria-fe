@@ -90,6 +90,8 @@ import {
   type Lang,
   type MintDiscoverContent,
   type MintVariantsContent,
+  type FramerDarlingTimelineContent,
+  type FramerPerformPricingContent,
   type MintV2ProcessContent,
   type MintV2ProcessStep,
   type MintV2ServiceItem,
@@ -594,6 +596,18 @@ export function ElementToolbar({
         {kind === 'mintV2ProcessSteps' && (
           <MintV2ProcessStepsControls
             content={content as MintV2ProcessContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'framerDarlingTimelineItems' && (
+          <FramerDarlingTimelineItemsControls
+            content={content as FramerDarlingTimelineContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'framerPerformPricingTiers' && (
+          <FramerPerformPricingTiersControls
+            content={content as FramerPerformPricingContent}
             onContentChange={onContentChange}
           />
         )}
@@ -2566,6 +2580,256 @@ function PnjStickyMenuItemsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm mục menu' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── FRAMER PERFORM PRICING TIERS
+
+const PERFORM_PRICING_DEFAULT_IMG =
+  'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=1024&q=80';
+
+function FramerPerformPricingTiersControls({
+  content,
+  onContentChange,
+}: {
+  content: FramerPerformPricingContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const tiers = Array.isArray(content.tiers) ? content.tiers : [];
+
+  const write = (
+    updater: (
+      list: FramerPerformPricingContent['tiers']
+    ) => FramerPerformPricingContent['tiers']
+  ) => {
+    onContentChange(prev => {
+      const c = prev as FramerPerformPricingContent;
+      const prevTiers = Array.isArray(c.tiers) ? c.tiers : [];
+      return {
+        ...c,
+        tiers: updater([...prevTiers]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (
+    i: number,
+    patch: Partial<FramerPerformPricingContent['tiers'][number]>
+  ) =>
+    write(list =>
+      list.map((tier, idx) => (idx === i ? { ...tier, ...patch } : tier))
+    );
+
+  const remove = (i: number) => {
+    if (tiers.length <= 1) {
+      toast.error('Cần ít nhất 1 gói');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        imageUrl: PERFORM_PRICING_DEFAULT_IMG,
+        price: '$99/tháng',
+        title: 'Gói mới',
+        features: 'Mô tả tính năng (mỗi dòng một bullet)…',
+        ctaLabel: 'Liên hệ',
+        ctaHref: '#contact',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách gói'
+      preview={`${tiers.length} gói`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {tiers.map((tier, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={tier.title ?? ''}
+                onChange={e => update(i, { title: e.target.value })}
+                placeholder='Tên gói'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <Input
+                value={tier.price ?? ''}
+                onChange={e => update(i, { price: e.target.value })}
+                placeholder='Giá'
+                className='h-8 w-28 shrink-0 border-neutral-200 bg-white text-xs'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá gói ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={tier.features ?? ''}
+              onChange={e => update(i, { features: e.target.value })}
+              placeholder='Tính năng (mỗi dòng một bullet)'
+              rows={3}
+              className='min-h-0 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={tier.imageUrl ?? ''}
+              onChange={e => update(i, { imageUrl: e.target.value })}
+              placeholder='URL ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <div className='flex gap-2'>
+              <Input
+                value={tier.ctaLabel ?? ''}
+                onChange={e => update(i, { ctaLabel: e.target.value })}
+                placeholder='CTA chữ'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+              <Input
+                value={tier.ctaHref ?? ''}
+                onChange={e => update(i, { ctaHref: e.target.value })}
+                placeholder='CTA link'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm gói' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── FRAMER DARLING TIMELINE ITEMS
+
+const DARLING_TIMELINE_DEFAULT_IMG =
+  'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80';
+
+function FramerDarlingTimelineItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: FramerDarlingTimelineContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = Array.isArray(content.items) ? content.items : [];
+
+  const write = (
+    updater: (
+      list: FramerDarlingTimelineContent['items']
+    ) => FramerDarlingTimelineContent['items']
+  ) => {
+    onContentChange(prev => {
+      const c = prev as FramerDarlingTimelineContent;
+      const prevItems = Array.isArray(c.items) ? c.items : [];
+      return {
+        ...c,
+        items: updater([...prevItems]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (
+    i: number,
+    patch: Partial<FramerDarlingTimelineContent['items'][number]>
+  ) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 mốc');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        time: '10:00 SA',
+        title: 'Mốc mới',
+        description: 'Mô tả mốc thời gian…',
+        imageUrl: DARLING_TIMELINE_DEFAULT_IMG,
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách mốc'
+      preview={`${items.length} mốc`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={item.time ?? ''}
+                onChange={e => update(i, { time: e.target.value })}
+                placeholder='9:00 SA'
+                className='h-8 w-24 shrink-0 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <Input
+                value={item.title ?? ''}
+                onChange={e => update(i, { title: e.target.value })}
+                placeholder='Tiêu đề'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá mốc ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={item.description ?? ''}
+              onChange={e => update(i, { description: e.target.value })}
+              placeholder='Mô tả'
+              rows={2}
+              className='min-h-0 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={item.imageUrl ?? ''}
+              onChange={e => update(i, { imageUrl: e.target.value })}
+              placeholder='URL ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm mốc' />
     </PopoverTrigger>
   );
 }
