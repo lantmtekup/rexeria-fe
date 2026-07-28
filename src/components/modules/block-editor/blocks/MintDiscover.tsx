@@ -111,7 +111,7 @@ export function MintDiscover({
   activeKey,
   className,
 }: Props) {
-  const { variant, mainImage, mainAlt, tabs } = content;
+  const { variant, mainImage, mainAlt, tabs = [] } = content;
   const sectionRef = React.useRef<HTMLElement>(null);
   const behindRef = React.useRef<HTMLDivElement>(null);
   const imgScrollRef = React.useRef<HTMLDivElement>(null);

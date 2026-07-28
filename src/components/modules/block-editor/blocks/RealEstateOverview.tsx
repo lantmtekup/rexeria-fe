@@ -145,7 +145,7 @@ export function RealEstateOverview({
               marginTop: '10.75cqi',
             }}
           >
-            {content.stats.map((stat, i) => {
+            {(content.stats ?? []).map((stat, i) => {
               const iconKey = `stats[${i}].iconUrl`;
               const textKey = `stats[${i}].text`;
               return (
