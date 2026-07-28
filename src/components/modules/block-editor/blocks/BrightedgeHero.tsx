@@ -221,7 +221,7 @@ export function BrightedgeHero({
               className={selectableClass(activeKey === 'avatars', 'flex')}
               style={styleOf('avatars')}
             >
-              {content.avatars.map((a, i) => (
+              {(content.avatars ?? []).map((a, i) => (
                 <div
                   key={a.id}
                   className='size-11 shrink-0 overflow-hidden rounded-full ring-2 ring-[#fcfcfc]'

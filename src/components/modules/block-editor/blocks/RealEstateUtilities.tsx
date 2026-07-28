@@ -146,7 +146,7 @@ export function RealEstateUtilities({
                 marginTop: '10.6cqi',
               }}
             >
-              {content.items.map((item, i) => {
+              {(content.items ?? []).map((item, i) => {
                 const iconKey = `items[${i}].iconUrl`;
                 const labelKey = `items[${i}].label`;
                 return (

@@ -114,7 +114,7 @@ export function RealEstateHero({
         />
 
         <div className='absolute bottom-[8.3cqi] left-1/2 flex w-min -translate-x-1/2 flex-row flex-nowrap items-start gap-[10.6cqi]'>
-          {content.stats.map((stat, i) => {
+          {(content.stats ?? []).map((stat, i) => {
             const labelKey = `stats[${i}].label`;
             const valueKey = `stats[${i}].value`;
             return (
