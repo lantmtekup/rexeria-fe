@@ -66,7 +66,7 @@ import { PageTabsBar } from '@/components/modules/block-editor/PageTabsBar';
 import { seedBlocks } from '@/components/modules/block-editor/mock';
 import {
   DEFAULT_PAGE_ID,
-  adaptCanvasBlueprint,
+  // adaptCanvasBlueprint,
   parseCanvas,
   serializeCanvas,
   serializeCanvasPages,
