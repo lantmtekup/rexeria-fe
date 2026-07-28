@@ -74,9 +74,6 @@ const BLOCK_RENDERERS: Record<string, BlockRenderer> = {
   mintv2_works: lazyBlock(() =>
     import('./MintV2Works').then(m => m.MintV2Works)
   ),
-  linea_portfolio: lazyBlock(() =>
-    import('./LineaPortfolio').then(m => m.LineaPortfolio)
-  ),
   mint_vault_hero: lazyBlock(() =>
     import('./MintVaultHero').then(m => m.MintVaultHero)
   ),

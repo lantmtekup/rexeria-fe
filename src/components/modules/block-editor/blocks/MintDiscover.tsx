@@ -70,7 +70,7 @@ const THEME = {
     stageBg: '#171717',
     cardBg: 'rgba(255, 255, 255, 0.1)',
     cardBorder: 'rgba(255, 255, 255, 0.1)',
-    canvasCardBg: 'rgba(255, 255, 255, 0.05)',
+    canvasCardBg: 'rgba(255, 255, 255, 0.06)',
     titleColor: '#ffffff',
     descColor: 'rgba(255, 255, 255, 0.7)',
     metaColor: 'rgba(255, 255, 255, 0.5)',
@@ -319,11 +319,13 @@ export function MintDiscover({
 
   if (tabs.length === 0) return null;
 
-  // ── Editor canvas: static stage + tab grid ─────────────────────────────
+  // ── Editor canvas: stage + hotspot cards (no cardSurface chrome) ───────
+  // cardSurface vẫn style được qua Layers; PreviewMode + /p giữ thẻ info thật.
   if (isCanvas) {
     return (
       <section
         ref={sectionRef}
+        data-canvas-edit='true'
         data-variant={variant}
         style={blockBackgroundStyle(background)}
         className={sectionClass}
@@ -388,30 +390,6 @@ export function MintDiscover({
           </p>
 
           <div className='grid grid-cols-1 gap-3 px-3 pb-4 @2xl:grid-cols-2'>
-            <div
-              data-element-key='cardSurface'
-              style={cardSurfaceStyle}
-              className={selectableClass(
-                activeKey === 'cardSurface',
-                'mx-0 mb-1 rounded-2xl @2xl:col-span-2'
-              )}
-            >
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: RESPONSIVE.cardMeta,
-                  color: theme.metaColor,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Thẻ info (scroll preview)
-              </p>
-              <h3 style={tabLabelStyle(0)}>
-                {tabs[0]?.label ?? 'Hotspot title'}
-              </h3>
-              <p style={tabDescStyle(0)}>{tabs[0]?.desc ?? 'Mô tả…'}</p>
-            </div>
             {tabs.map((t, i) => (
               <CanvasTabCard
                 key={t.key || i}
@@ -644,6 +622,17 @@ function CanvasTabCard({
         backgroundColor: theme.canvasCardBg,
       }}
     >
+      <span
+        style={{
+          fontSize: RESPONSIVE.altFont,
+          fontWeight: 600,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: theme.metaColor,
+        }}
+      >
+        Hotspot {pad2(index)} · {tab.dotX}% × {tab.dotY}%
+      </span>
       <h3
         data-element-key={labelKey}
         style={labelStyle}
@@ -678,9 +667,6 @@ function CanvasTabCard({
           decoding='async'
         />
       ) : null}
-      <span style={{ fontSize: RESPONSIVE.altFont, color: theme.metaColor }}>
-        Dot: {tab.dotX}% × {tab.dotY}%
-      </span>
     </div>
   );
 }

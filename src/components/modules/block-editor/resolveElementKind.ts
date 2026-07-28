@@ -15,6 +15,7 @@ export type ElementKind =
   | 'features'
   | 'reasons'
   | 'slides'
+  | 'scrollMattisSlides'
   | 'interactiveAd'
   | 'mintVariants'
   | 'mintTabs'
@@ -24,12 +25,14 @@ export type ElementKind =
   | 'pnjVariantHighlights'
   | 'pnjStickyMenuItems'
   | 'mintV2ServicesItems'
+  | 'coolHunterGalleryItems'
   | 'mintV2ProcessSteps'
   | 'framerDarlingTimelineItems'
   | 'framerPerformPricingTiers'
   | 'mintVaultCraftItems'
   | 'mintVaultCoins'
   | 'mintVaultImages'
+  | 'lineaPortfolioItems'
   | 'fill'
   | 'pnjFrames'
   | 'pnjScrim'
@@ -153,9 +156,12 @@ export function resolveKind(
   // through to the inline contenteditable path.
   if (fieldType === 'link') return 'link';
   if (fieldType === 'text' || fieldType === 'textarea') return 'text';
-  // `slides` overlaps image_carousel vs interactive_ad_widget — distinguish by type.
+  // `slides` overlaps image_carousel vs interactive_ad_widget vs scroll_mattis.
   if (key === 'slides' && blockType === 'interactive_ad_widget') {
     return 'interactiveAd';
+  }
+  if (key === 'slides' && blockType === 'scroll_mattis') {
+    return 'scrollMattisSlides';
   }
   // PNJ variant chapters vs Mint swatch variants — cùng key `variants`.
   if (key === 'variants' && blockType === 'pnj_variant') {
@@ -279,6 +285,9 @@ export function resolveKind(
   if (key === 'items' && blockType === 'mintv2_services') {
     return 'mintV2ServicesItems';
   }
+  if (key === 'items' && blockType === 'cool_hunter_gallery') {
+    return 'coolHunterGalleryItems';
+  }
   if (key === 'steps' && blockType === 'mintv2_process') {
     return 'mintV2ProcessSteps';
   }
@@ -291,6 +300,9 @@ export function resolveKind(
   if (key === 'items' && blockType === 'mint_vault_craft') {
     return 'mintVaultCraftItems';
   }
+  if (key === 'items' && blockType === 'linea_portfolio') {
+    return 'lineaPortfolioItems';
+  }
   if ((key === 'line' || key === 'dot') && blockType === 'mintv2_process') {
     return 'fill';
   }
@@ -299,6 +311,9 @@ export function resolveKind(
     /^items\[\d+\]\.imageUrl$/.test(key) &&
     blockType === 'mint_vault_craft'
   ) {
+    return 'image';
+  }
+  if (/^items\[\d+\]\.img$/.test(key) && blockType === 'linea_portfolio') {
     return 'image';
   }
   if (
@@ -351,12 +366,24 @@ export function resolveKind(
     // Dải nền 372 phía sau — chỉ có màu, không có nội dung.
     if (key === 'contentSurface') return 'fill';
   }
+  // Cool Hunter Gallery: ảnh + caption.
+  if (blockType === 'cool_hunter_gallery') {
+    if (/^items\[\d+\]\.imageUrl$/.test(key)) return 'image';
+    if (/^items\[\d+\]\.text$/.test(key)) return 'text';
+  }
   // Real Estate biệt thự: mỗi slide là ảnh + tên loại hình + mô tả.
   if (blockType === 'real_estate_villa') {
     if (/^slides\[\d+\]\.imageUrl$/.test(key)) return 'image';
     if (/^slides\[\d+\]\.(title|description)$/.test(key)) return 'text';
     // Nền thẻ — chỉ có màu, không có nội dung.
     if (key === 'cardSurface') return 'fill';
+  }
+  // Scroll Mattis: media + marquee + meta theo slide.
+  if (blockType === 'scroll_mattis') {
+    if (/^slides\[\d+\]\.url$/.test(key)) return 'image';
+    if (/^slides\[\d+\]\.(bgWord|title|category1|category2|year)$/.test(key)) {
+      return 'text';
+    }
   }
   // Real Estate nội khu: mỗi ô là icon (ảnh) + label 2 dòng. `label` cũng trúng
   // fallback chung ngay bên dưới nên kind vẫn đúng, nhưng `iconUrl` thì không —
@@ -540,6 +567,23 @@ export function resolveLabel(
   if (key === 'cardSurface' && blockType === 'real_estate_villa') {
     return 'Nền thẻ';
   }
+  const reMattis = key.match(
+    /^slides\[(\d+)\]\.(url|bgWord|title|category1|category2|year)$/
+  );
+  if (reMattis && blockType === 'scroll_mattis') {
+    const labels: Record<string, string> = {
+      url: 'media',
+      bgWord: 'chữ chạy',
+      title: 'title',
+      category1: 'category 1',
+      category2: 'category 2',
+      year: 'năm',
+    };
+    return `Slide ${Number(reMattis[1]) + 1} · ${labels[reMattis[2]]}`;
+  }
+  if (key === 'slides' && blockType === 'scroll_mattis') {
+    return 'Thêm / quản lý slide';
+  }
   // Phải đứng TRƯỚC `navLabel` bên dưới — nếu không `items[i].label` của nội
   // khu sẽ nhận nhãn chung "Nhãn mục N".
   const reUtility = key.match(/^items\[(\d+)\]\.(label|iconUrl)$/);
@@ -566,6 +610,15 @@ export function resolveLabel(
   if (key === 'items' && blockType === 'pnj_sticky_menu') return 'Menu items';
   if (key === 'items' && blockType === 'mintv2_services') {
     return 'Thêm / quản lý mục';
+  }
+  if (key === 'items' && blockType === 'cool_hunter_gallery') {
+    return 'Thêm / quản lý ảnh';
+  }
+  const reGallery = key.match(/^items\[(\d+)\]\.(imageUrl|text)$/);
+  if (reGallery && blockType === 'cool_hunter_gallery') {
+    return `Ảnh ${Number(reGallery[1]) + 1} · ${
+      reGallery[2] === 'imageUrl' ? 'Ảnh' : 'Caption'
+    }`;
   }
   const stepField = key.match(/^steps\[(\d+)\]\.(no|title|body)$/);
   if (stepField && blockType === 'mintv2_process') {
@@ -713,6 +766,14 @@ export function resolveElementMeta(
       label: `Mục ${Number(craftImg[1]) + 1} · Ảnh`,
     };
   }
+  const lineaImg = key.match(/^items\[(\d+)\]\.img$/);
+  if (lineaImg && blockType === 'linea_portfolio') {
+    return {
+      kind: 'image',
+      fieldType: 'image',
+      label: `Ảnh ${Number(lineaImg[1]) + 1}`,
+    };
+  }
   const craftText = key.match(/^items\[(\d+)\]\.(title|description)$/);
   if (craftText && blockType === 'mint_vault_craft') {
     const field = craftText[2];
@@ -727,6 +788,13 @@ export function resolveElementMeta(
       kind: 'mintVaultCraftItems',
       fieldType: undefined,
       label: 'Thêm / quản lý mục',
+    };
+  }
+  if (key === 'items' && blockType === 'linea_portfolio') {
+    return {
+      kind: 'lineaPortfolioItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý ảnh',
     };
   }
   const vLabel = key.match(/^variants\[(\d+)\]\.label$/);
@@ -870,6 +938,32 @@ export function resolveElementMeta(
   if (key === 'cardSurface' && blockType === 'real_estate_villa') {
     // Style-only như `contentSurface` của real_estate_highlights → no fieldType.
     return { kind: 'fill', fieldType: undefined, label: 'Nền thẻ' };
+  }
+  const reMattisField = key.match(
+    /^slides\[(\d+)\]\.(url|bgWord|title|category1|category2|year)$/
+  );
+  if (reMattisField && blockType === 'scroll_mattis') {
+    const field = reMattisField[2];
+    const labels: Record<string, string> = {
+      url: 'media',
+      bgWord: 'chữ chạy',
+      title: 'title',
+      category1: 'category 1',
+      category2: 'category 2',
+      year: 'năm',
+    };
+    return {
+      kind: field === 'url' ? 'image' : 'text',
+      fieldType: field === 'url' ? 'image' : 'text',
+      label: `Slide ${Number(reMattisField[1]) + 1} · ${labels[field]}`,
+    };
+  }
+  if (key === 'slides' && blockType === 'scroll_mattis') {
+    return {
+      kind: 'scrollMattisSlides',
+      fieldType: undefined,
+      label: 'Thêm / quản lý slide',
+    };
   }
   const reUtilityField = key.match(/^items\[(\d+)\]\.(label|iconUrl)$/);
   if (reUtilityField && blockType === 'real_estate_utilities') {
@@ -1055,6 +1149,24 @@ export function resolveElementMeta(
       kind: 'mintV2ServicesItems',
       fieldType: undefined,
       label: 'Thêm / quản lý mục',
+    };
+  }
+  if (key === 'items' && blockType === 'cool_hunter_gallery') {
+    return {
+      kind: 'coolHunterGalleryItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý ảnh',
+    };
+  }
+  const reGalleryField = key.match(/^items\[(\d+)\]\.(imageUrl|text)$/);
+  if (reGalleryField && blockType === 'cool_hunter_gallery') {
+    const field = reGalleryField[2];
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      fieldType: field === 'imageUrl' ? 'image' : 'textarea',
+      label: `Ảnh ${Number(reGalleryField[1]) + 1} · ${
+        field === 'imageUrl' ? 'Ảnh' : 'Caption'
+      }`,
     };
   }
   if (key === 'frameUrls' && blockType === 'delvaux_hero') {

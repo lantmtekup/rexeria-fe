@@ -43,6 +43,7 @@ import {
   setPnjParagraphAt,
 } from './blocks/PnjDetails';
 import { DELVAUX_HERO_FRAMES } from './blocks/_registry/defs/delvauxHeroFrames';
+import { LINEA_PORTFOLIO_DEFAULT_IMG } from './blocks/_registry/defs/lineaPortfolio';
 import {
   isPnjHeroFramesConfig,
   MINT_FRAMES_EXAMPLE,
@@ -68,6 +69,11 @@ import {
   resolvePnjVariants,
   setPnjVariantHighlightItemAt,
 } from './blocks/pnjVariantContent';
+import { resolveScrollMattisSlides } from './blocks/_registry/defs/scrollMattis';
+import {
+  COOL_HUNTER_GALLERY_DEFAULT_ITEMS,
+  resolveCoolHunterGalleryItems,
+} from './blocks/_registry/defs/coolHunterGallery';
 import { buildAiPrompt } from './buildAiPrompt';
 import { ImagePicker } from './ImagePicker';
 import { getContentAt, setContentAt } from './contentPath';
@@ -89,6 +95,10 @@ import {
   type InteractiveAdWidgetContent,
   type Lang,
   type MintDiscoverContent,
+  type ScrollMattisContent,
+  type ScrollMattisSlideItem,
+  type CoolHunterGalleryContent,
+  type CoolHunterGalleryItem,
   type MintVariantsContent,
   type FramerDarlingTimelineContent,
   type FramerPerformPricingContent,
@@ -119,6 +129,8 @@ import {
   type PnjVariantItem,
   type PnjStickyMenuContent,
   type PnjStickyMenuItem,
+  type LineaPortfolioContent,
+  type LineaPortfolioItem,
 } from './types';
 
 export { BACKGROUND_LAYER_KEY };
@@ -402,6 +414,12 @@ export function ElementToolbar({
             onContentChange={onContentChange}
           />
         )}
+        {kind === 'scrollMattisSlides' && (
+          <ScrollMattisSlidesControls
+            content={content as ScrollMattisContent}
+            onContentChange={onContentChange}
+          />
+        )}
         {kind === 'interactiveAd' && (
           <InteractiveAdControls
             content={content as InteractiveAdWidgetContent}
@@ -593,6 +611,12 @@ export function ElementToolbar({
             onContentChange={onContentChange}
           />
         )}
+        {kind === 'coolHunterGalleryItems' && (
+          <CoolHunterGalleryItemsControls
+            content={content as CoolHunterGalleryContent}
+            onContentChange={onContentChange}
+          />
+        )}
         {kind === 'mintV2ProcessSteps' && (
           <MintV2ProcessStepsControls
             content={content as MintV2ProcessContent}
@@ -627,6 +651,12 @@ export function ElementToolbar({
           <MintVaultImagesControls
             label={label}
             content={content as { images?: string[] }}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'lineaPortfolioItems' && (
+          <LineaPortfolioItemsControls
+            content={content as LineaPortfolioContent}
             onContentChange={onContentChange}
           />
         )}
@@ -2096,6 +2126,119 @@ function MintTabsControls({
   );
 }
 
+// ─────────────────────────────────────────── SCROLL MATTIS SLIDES
+
+const MATTIS_SLIDE_BLANK: ScrollMattisSlideItem = {
+  url: 'https://d10zufojjcedud.cloudfront.net/uploads/4d265660-8757-4da1-875d-29b776737f57/scroll_mattis_m1.jpg',
+  bgWord: 'NEW SLIDE',
+  title: 'New slide',
+  category1: 'BRANDING',
+  category2: 'IDENTITY',
+  year: '2026',
+};
+
+function ScrollMattisSlidesControls({
+  content,
+  onContentChange,
+}: {
+  content: ScrollMattisContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const slides = resolveScrollMattisSlides(content);
+
+  const write = (
+    updater: (list: ScrollMattisSlideItem[]) => ScrollMattisSlideItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as ScrollMattisContent;
+      const current = resolveScrollMattisSlides(c);
+      return { ...c, slides: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<ScrollMattisSlideItem>) =>
+    write(list => list.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+  const remove = (i: number) =>
+    write(list =>
+      list.length <= 1 ? list : list.filter((_, idx) => idx !== i)
+    );
+  const add = () => write(list => [...list, { ...MATTIS_SLIDE_BLANK }]);
+
+  return (
+    <PopoverTrigger
+      label='Slides'
+      preview={`${slides.length} slide`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {slides.map((s, i) => (
+          <div
+            key={`mattis-slide-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <span className='text-3xs shrink-0 font-semibold tracking-widest text-neutral-500 uppercase'>
+                Slide {i + 1}
+              </span>
+              <Input
+                value={s.title}
+                onChange={e => update(i, { title: e.target.value })}
+                placeholder='Title'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                disabled={slides.length <= 1}
+                aria-label='Xoá slide'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={s.url}
+              onChange={e => update(i, { url: e.target.value })}
+              placeholder='URL ảnh / video'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker value={s.url} onChange={url => update(i, { url })} />
+            <Input
+              value={s.bgWord}
+              onChange={e => update(i, { bgWord: e.target.value })}
+              placeholder='Chữ chạy (marquee)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <div className='flex items-center gap-1.5'>
+              <Input
+                value={s.category1}
+                onChange={e => update(i, { category1: e.target.value })}
+                placeholder='Category 1'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+              <Input
+                value={s.category2}
+                onChange={e => update(i, { category2: e.target.value })}
+                placeholder='Category 2'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+              <Input
+                value={s.year}
+                onChange={e => update(i, { year: e.target.value })}
+                placeholder='Year'
+                className='h-8 w-20 shrink-0 border-neutral-200 bg-white text-xs'
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm slide' />
+    </PopoverTrigger>
+  );
+}
+
 // ─────────────────────────────────────────── PNJ DETAILS PARAGRAPHS
 
 function PnjParagraphsControls({
@@ -3137,6 +3280,91 @@ function MintVaultImagesControls({
   );
 }
 
+function LineaPortfolioItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: LineaPortfolioContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = Array.isArray(content.items) ? content.items : [];
+
+  const write = (
+    updater: (list: LineaPortfolioItem[]) => LineaPortfolioItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as LineaPortfolioContent;
+      const prevItems = Array.isArray(c.items) ? c.items : [];
+      return {
+        ...c,
+        items: updater([...prevItems]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, value: string) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, img: value } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 3) {
+      toast.error('Cần ít nhất 3 ảnh (1 mỗi cột ticker)');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [...list, { img: LINEA_PORTFOLIO_DEFAULT_IMG }]);
+
+  return (
+    <PopoverTrigger
+      label='Lưới ảnh'
+      preview={`${items.length} ảnh`}
+      icon={<ImageIcon className='size-3.5' />}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className='flex items-center gap-2 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={item.img}
+              alt=''
+              className='size-9 shrink-0 rounded object-cover ring-1 ring-neutral-200'
+            />
+            <Input
+              value={item.img}
+              onChange={e => update(i, e.target.value)}
+              placeholder='URL ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <button
+              type='button'
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                remove(i);
+              }}
+              aria-label={`Xoá ảnh ${i + 1}`}
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+            >
+              <Trash2 className='size-3.5' />
+            </button>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm ảnh' />
+    </PopoverTrigger>
+  );
+}
+
 // ─────────────────────────────────────────── MINT VAULT COLLECTION COINS
 let mintVaultCoinSeq = 0;
 
@@ -3356,6 +3584,107 @@ function MintV2ServicesItemsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm mục' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── COOL HUNTER GALLERY ITEMS
+
+function CoolHunterGalleryItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: CoolHunterGalleryContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = resolveCoolHunterGalleryItems(content);
+
+  const write = (
+    updater: (list: CoolHunterGalleryItem[]) => CoolHunterGalleryItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as CoolHunterGalleryContent;
+      const current = resolveCoolHunterGalleryItems(c);
+      return { ...c, items: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<CoolHunterGalleryItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 ảnh');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        imageUrl: COOL_HUNTER_GALLERY_DEFAULT_ITEMS[0]?.imageUrl ?? '',
+        imageAlt: '',
+        text: 'Caption mới.',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách ảnh'
+      preview={`${items.length} ảnh`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={`ch-gallery-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Ảnh {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={items.length <= 1}
+                aria-label={`Xoá ảnh ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <ImagePicker
+              value={item.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+            <Input
+              value={item.imageAlt ?? ''}
+              onChange={e => update(i, { imageAlt: e.target.value })}
+              placeholder='Alt ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Textarea
+              value={item.text ?? ''}
+              onChange={e => update(i, { text: e.target.value })}
+              placeholder='Caption'
+              rows={3}
+              className='min-h-0 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm ảnh' />
     </PopoverTrigger>
   );
 }

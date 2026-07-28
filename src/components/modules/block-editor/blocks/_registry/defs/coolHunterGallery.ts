@@ -1,12 +1,11 @@
 /**
- * BlockDef cho `cool_hunter_gallery` — gallery Cool Hunter: 3 ảnh+caption
+ * BlockDef cho `cool_hunter_gallery` — gallery Cool Hunter: ảnh+caption
  * scrub ngang (stack → hàng → cuộn). Port từ apps/cool-hunter
  * GallerySection.tsx. Path A registry.
  *
- * Số slot mặc định 3 như nguồn — không có list manager; expand theo
- * `content.items` trong LayersPanel (pattern realEstateHighlights).
+ * `items[]` động — thêm/xoá qua Layers「Thêm / quản lý ảnh」.
  */
-import { Image as ImageIcon, Pilcrow } from 'lucide-react';
+import { Image as ImageIcon, ListChecks, Pilcrow } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { LayerElement } from '../../../LayersPanel';
@@ -16,7 +15,7 @@ import type {
 } from '../../../types';
 import type { BlockDef } from '../types';
 
-const VI_ITEMS: CoolHunterGalleryItem[] = [
+export const COOL_HUNTER_GALLERY_DEFAULT_ITEMS: CoolHunterGalleryItem[] = [
   {
     imageUrl: '/cool-hunter/gallery-1.webp',
     imageAlt:
@@ -37,11 +36,23 @@ const VI_ITEMS: CoolHunterGalleryItem[] = [
 ];
 
 const VI: CoolHunterGalleryContent = {
-  items: VI_ITEMS,
+  items: COOL_HUNTER_GALLERY_DEFAULT_ITEMS,
 };
 
 const EN: CoolHunterGalleryContent = {
   ...VI,
+  items: [...COOL_HUNTER_GALLERY_DEFAULT_ITEMS],
+};
+
+/** Resolve items[] — fallback default khi thiếu / rỗng. */
+export const resolveCoolHunterGalleryItems = (
+  content: CoolHunterGalleryContent | null | undefined
+): CoolHunterGalleryItem[] => {
+  const raw = content?.items;
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return COOL_HUNTER_GALLERY_DEFAULT_ITEMS.map(item => ({ ...item }));
+  }
+  return raw.filter(it => it && typeof it === 'object');
 };
 
 /**
@@ -51,7 +62,7 @@ const EN: CoolHunterGalleryContent = {
 export const coolHunterGalleryItemElements = (
   items: CoolHunterGalleryItem[]
 ): LayerElement[] => {
-  const list = items.length > 0 ? items : VI_ITEMS;
+  const list = items.length > 0 ? items : COOL_HUNTER_GALLERY_DEFAULT_ITEMS;
   return list.flatMap((item, i) => {
     const groupId = `item${i}`;
     const groupLabel = (item.text ?? '').trim().slice(0, 40) || `Ảnh ${i + 1}`;
@@ -85,13 +96,20 @@ export const coolHunterGalleryDef: BlockDef<CoolHunterGalleryContent> = {
     gradient: 'from-neutral-600 to-neutral-900',
     defaultName: 'Cool Hunter Gallery',
     aiLabelVi:
-      'gallery Cool Hunter: 3 ảnh+caption scrub ngang (stack → hàng → cuộn, text fade theo nhịp)',
+      'gallery Cool Hunter: N ảnh+caption scrub ngang (stack → hàng → cuộn, text fade theo nhịp)',
     aiLabelEn:
-      'Cool Hunter gallery: 3 image+caption horizontal scrub (stack → row → scroll, text fades in beat)',
+      'Cool Hunter gallery: N image+caption horizontal scrub (stack → row → scroll, text fades in beat)',
   },
   component: dynamic(() =>
     import('../../CoolHunterGallery').then(m => m.CoolHunterGallery)
   ),
   defaultContent: { vi: VI, en: EN },
-  elements: [...coolHunterGalleryItemElements(VI_ITEMS)],
+  elements: [
+    ...coolHunterGalleryItemElements(COOL_HUNTER_GALLERY_DEFAULT_ITEMS),
+    {
+      key: 'items',
+      label: 'Thêm / quản lý ảnh',
+      icon: ListChecks,
+    },
+  ],
 };

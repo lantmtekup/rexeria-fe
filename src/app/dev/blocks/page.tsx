@@ -18,6 +18,7 @@
  * render qua RenderBlock trong LandingMotionRoot (scroller = vùng cuộn).
  * Sticky/pin/scrub neo đúng vào vùng cuộn (như PreviewMode / /p). Motion config
  * của block thật được áp qua MotionProvider giống PreviewMode.
+ * Placeholder `min-h-[100dvh]` trên/dưới block tạo room để cuộn vào/thoát block.
  *
  * URL: /dev/blocks?type=framer_arpeggio_hero_v2  hoặc  /dev/blocks?id=<uuid>
  *      hoặc /dev/blocks?inline=<localStorage key>
@@ -39,6 +40,7 @@ import {
   MotionBlockRoot,
 } from '@/components/modules/block-editor/motion/runtime';
 import type { BlockMotion } from '@/components/modules/block-editor/motion/types';
+import { ScrollRoomPlaceholder } from '@/components/modules/block-editor/ScrollRoomPlaceholder';
 import {
   BLOCK_TYPE_META,
   readVariant,
@@ -375,22 +377,26 @@ export default function DevBlocksPage() {
                 Đang tải block…
               </div>
             ) : block && resolved ? (
-              <MotionProvider
-                key={`${mode}:${block.id ?? type}:${device}`}
-                mode='preview'
-                motion={resolved.motion}
-                scrollerEl={scrollerRef.current}
-              >
-                <MotionBlockRoot className='h-full'>
-                  <RenderBlock
-                    block={block}
-                    content={resolved.content}
-                    styles={resolved.styles}
-                    background={resolved.background}
-                    order={resolved.order}
-                  />
-                </MotionBlockRoot>
-              </MotionProvider>
+              <>
+                <ScrollRoomPlaceholder label='Scroll vào block' />
+                <MotionProvider
+                  key={`${mode}:${block.id ?? type}:${device}`}
+                  mode='preview'
+                  motion={resolved.motion}
+                  scrollerEl={scrollerRef.current}
+                >
+                  <MotionBlockRoot>
+                    <RenderBlock
+                      block={block}
+                      content={resolved.content}
+                      styles={resolved.styles}
+                      background={resolved.background}
+                      order={resolved.order}
+                    />
+                  </MotionBlockRoot>
+                </MotionProvider>
+                <ScrollRoomPlaceholder label='Scroll thoát block' />
+              </>
             ) : null}
           </DevicePreviewFrame>
         </LandingMotionRoot>

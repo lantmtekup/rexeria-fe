@@ -55,6 +55,7 @@ function chipIcon(kind: ElementKind) {
     kind === 'features' ||
     kind === 'reasons' ||
     kind === 'slides' ||
+    kind === 'scrollMattisSlides' ||
     kind === 'interactiveAd' ||
     kind === 'mintVariants' ||
     kind === 'mintTabs' ||
@@ -64,6 +65,7 @@ function chipIcon(kind: ElementKind) {
     kind === 'pnjVariantHighlights' ||
     kind === 'pnjStickyMenuItems' ||
     kind === 'mintV2ServicesItems' ||
+    kind === 'coolHunterGalleryItems' ||
     kind === 'mintV2ProcessSteps' ||
     kind === 'framerDarlingTimelineItems' ||
     kind === 'framerPerformPricingTiers' ||

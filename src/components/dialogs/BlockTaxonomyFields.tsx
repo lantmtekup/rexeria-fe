@@ -42,6 +42,25 @@ export const FUNNEL_OPTS = [
 export const GOAL_OPTS = ['lead_gen', 'sales', 'awareness', 'launch', 'event'];
 export const TONE_OPTS = ['warm', 'minimal', 'bold', 'corporate', 'playful'];
 
+/** Giữ phần tử hợp lệ theo enum BE (`oneof`) — tránh PATCH fail khi DB còn giá trị cũ/AI. */
+export function sanitizeTaxonomyArrays(
+  src: Pick<BlockTaxonomyValue, 'funnel_stage' | 'goal_tags' | 'tone'>
+): Pick<BlockTaxonomyValue, 'funnel_stage' | 'goal_tags' | 'tone'> {
+  return {
+    funnel_stage: src.funnel_stage.filter(v =>
+      (FUNNEL_OPTS as readonly string[]).includes(v)
+    ),
+    goal_tags: src.goal_tags.filter(v =>
+      (GOAL_OPTS as readonly string[]).includes(v)
+    ),
+    tone: src.tone.filter(v => (TONE_OPTS as readonly string[]).includes(v)),
+  };
+}
+
+function orphanValues(selected: string[], allowed: readonly string[]) {
+  return selected.filter(v => !allowed.includes(v));
+}
+
 export interface BlockTaxonomyValue {
   function: string;
   page_role: string;
@@ -87,15 +106,30 @@ export function taxonomyFrom(
 
 /** Tách field gửi lên API (select rỗng → undefined; mảng/bool gửi thẳng). */
 export function taxonomyToPayload(v: BlockTaxonomyValue) {
+  const arrays = sanitizeTaxonomyArrays(v);
   return {
-    function: v.function || undefined,
-    page_role: v.page_role || undefined,
-    proof_type: v.proof_type || undefined,
-    needs_media: v.needs_media || undefined,
+    function:
+      v.function && (FUNCTION_OPTS as readonly string[]).includes(v.function)
+        ? v.function
+        : undefined,
+    page_role:
+      v.page_role && (PAGE_ROLE_OPTS as readonly string[]).includes(v.page_role)
+        ? v.page_role
+        : undefined,
+    proof_type:
+      v.proof_type &&
+      (PROOF_TYPE_OPTS as readonly string[]).includes(v.proof_type)
+        ? v.proof_type
+        : undefined,
+    needs_media:
+      v.needs_media &&
+      (NEEDS_MEDIA_OPTS as readonly string[]).includes(v.needs_media)
+        ? v.needs_media
+        : undefined,
     has_cta: v.has_cta,
-    funnel_stage: v.funnel_stage,
-    goal_tags: v.goal_tags,
-    tone: v.tone,
+    funnel_stage: arrays.funnel_stage,
+    goal_tags: arrays.goal_tags,
+    tone: arrays.tone,
     industry_fit: v.industry_fit,
   };
 }
@@ -116,6 +150,10 @@ export function BlockTaxonomyFields({
         ? value[key].filter(x => x !== v)
         : [...value[key], v],
     } as Partial<BlockTaxonomyValue>);
+  const removeOrphan = (
+    key: 'funnel_stage' | 'goal_tags' | 'tone',
+    v: string
+  ) => set({ [key]: value[key].filter(x => x !== v) });
   const addIndustry = () => {
     const t = industryInput.trim().toLowerCase();
     setIndustryInput('');
@@ -172,18 +210,26 @@ export function BlockTaxonomyFields({
         options={FUNNEL_OPTS}
         selected={value.funnel_stage}
         onToggle={v => toggleIn('funnel_stage', v)}
+        orphans={orphanValues(value.funnel_stage, FUNNEL_OPTS)}
+        onRemoveOrphan={v => removeOrphan('funnel_stage', v)}
       />
       <TagToggleGroup
         label='Mục tiêu (goal_tags)'
         options={GOAL_OPTS}
         selected={value.goal_tags}
         onToggle={v => toggleIn('goal_tags', v)}
+        orphans={orphanValues(value.goal_tags, GOAL_OPTS)}
+        onRemoveOrphan={v => removeOrphan('goal_tags', v)}
+        orphanHint='VD: conversion thuộc funnel_stage, không phải goal_tags — chọn lead_gen hoặc sales.'
       />
       <TagToggleGroup
         label='Tông giọng (tone)'
         options={TONE_OPTS}
         selected={value.tone}
         onToggle={v => toggleIn('tone', v)}
+        orphans={orphanValues(value.tone, TONE_OPTS)}
+        onRemoveOrphan={v => removeOrphan('tone', v)}
+        orphanHint='Chỉ dùng enum tiếng Anh: warm, minimal, bold, corporate, playful.'
       />
 
       <div className='flex flex-col gap-1'>
@@ -280,15 +326,49 @@ function TagToggleGroup({
   options,
   selected,
   onToggle,
+  orphans = [],
+  onRemoveOrphan,
+  orphanHint,
 }: {
   label: string;
   options: string[];
   selected: string[];
   onToggle: (v: string) => void;
+  orphans?: string[];
+  onRemoveOrphan?: (v: string) => void;
+  orphanHint?: string;
 }) {
   return (
     <div className='flex flex-col gap-1'>
       <Label>{label}</Label>
+      {orphans.length > 0 && (
+        <div className='flex flex-col gap-1'>
+          <p className='text-2xs text-amber-700'>
+            Giá trị không hợp lệ (BE sẽ từ chối) — bỏ hoặc chọn lại:
+            {orphanHint ? ` ${orphanHint}` : ''}
+          </p>
+          <div className='flex flex-wrap gap-1.5'>
+            {orphans.map(o => (
+              <span
+                key={o}
+                className='inline-flex items-center gap-1 rounded-full border border-amber-400 bg-amber-50 px-2.5 py-1 text-xs text-amber-900'
+              >
+                {o}
+                {onRemoveOrphan && (
+                  <button
+                    type='button'
+                    onClick={() => onRemoveOrphan(o)}
+                    className='text-amber-700 hover:text-amber-950'
+                    aria-label={`Bỏ ${o}`}
+                  >
+                    <X className='size-3' />
+                  </button>
+                )}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       <div className='flex flex-wrap gap-1.5'>
         {options.map(o => {
           const on = selected.includes(o);

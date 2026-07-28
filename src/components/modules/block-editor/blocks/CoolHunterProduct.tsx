@@ -405,6 +405,19 @@ export function CoolHunterProduct({
   };
 
   if (isCanvas) {
+    // Canvas: luôn hiện đủ field — chặn style/position production (opacity:0,
+    // visibility:hidden, absolute) ghi đè qua styleOf.
+    const canvasShow: React.CSSProperties = {
+      opacity: 1,
+      visibility: 'visible',
+      position: 'relative',
+      left: 'auto',
+      top: 'auto',
+      right: 'auto',
+      bottom: 'auto',
+      transform: 'none',
+    };
+
     return (
       <section
         ref={rootRef}
@@ -415,74 +428,118 @@ export function CoolHunterProduct({
           blockBackgroundStyle(background)
         )}
       >
-        <div className='flex flex-col gap-6 px-[6cqi] py-[6cqi]'>
-          <div
-            className='relative w-full overflow-hidden'
-            style={{ aspectRatio: '16 / 9', backgroundColor: '#f1f1f2' }}
-          >
-            <img
-              src={bgUrl}
-              alt=''
-              aria-hidden
+        <div className='flex flex-col gap-6 px-6 py-6'>
+          {/*
+            Mask nền = PNG trắng + lỗ alpha. Production dùng xám #f1f1f2 (gần
+            trắng → khó thấy trên canvas). Canvas dùng xám đậm hơn để cắt hình
+            bàn đọc được; PreviewMode + /p giữ #f1f1f2.
+          */}
+          <div>
+            <p className='mb-2 text-[11px] font-semibold tracking-[0.14em] text-neutral-500 uppercase'>
+              Mask nền
+            </p>
+            <div
               data-element-key='bgUrl'
               className={selectableClass(
                 activeKey === 'bgUrl',
-                'h-full w-full object-cover'
+                'relative w-full overflow-hidden ring-1 ring-neutral-200'
               )}
-              style={styleOf('bgUrl')}
-            />
+              style={{ aspectRatio: '1440 / 840' }}
+            >
+              <div
+                className='absolute inset-0'
+                style={{ backgroundColor: '#9ca3af' }}
+                aria-hidden
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={bgUrl}
+                alt='Mask nền (PNG có lỗ trong suốt)'
+                className='absolute inset-0 h-full w-full object-cover'
+                style={composeStyle(styleOf('bgUrl'), canvasShow)}
+                draggable={false}
+              />
+            </div>
           </div>
 
-          <h2
-            data-element-key='title'
-            className={selectableClass(activeKey === 'title')}
-            style={composeStyle(
-              {
-                margin: 0,
-                fontFamily: DISPLAY_FONT,
-                fontSize: 'clamp(1.5rem, 5cqi, 2.5rem)',
-                fontWeight: 500,
-                color: '#111111',
-              },
-              styleOf('title')
-            )}
-          >
-            {title}
-          </h2>
-
-          <div
-            className='relative w-full overflow-hidden'
-            style={{ aspectRatio: '4 / 3' }}
-          >
-            <img
-              src={productUrl}
-              alt={productAlt}
-              data-element-key='productUrl'
-              className={selectableClass(
-                activeKey === 'productUrl',
-                'h-full w-full object-contain'
-              )}
-              style={styleOf('productUrl')}
-            />
-          </div>
-
-          <div style={{ backgroundColor: '#ffffff', padding: '4cqi' }}>
-            <p
-              data-element-key='body'
-              className={selectableClass(activeKey === 'body')}
+          <div>
+            <p className='mb-2 text-[11px] font-semibold tracking-[0.14em] text-neutral-500 uppercase'>
+              Tiêu đề
+            </p>
+            <h2
+              data-element-key='title'
+              className={selectableClass(activeKey === 'title', 'block')}
               style={composeStyle(
                 {
                   margin: 0,
                   fontFamily: DISPLAY_FONT,
-                  fontSize: 'clamp(0.9375rem, 2.8cqi, 1.125rem)',
-                  lineHeight: 1.625,
-                  color: '#171717',
+                  fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
+                  fontWeight: 500,
+                  color: '#111111',
+                  lineHeight: 1.2,
                 },
-                styleOf('body')
+                styleOf('title'),
+                canvasShow,
+                { color: '#111111' }
               )}
             >
-              {body}
+              {title || 'Interior Design'}
+            </h2>
+          </div>
+
+          <div>
+            <p className='mb-2 text-[11px] font-semibold tracking-[0.14em] text-neutral-500 uppercase'>
+              Ảnh sản phẩm
             </p>
+            <div
+              className='relative w-full overflow-hidden ring-1 ring-neutral-200'
+              style={{ aspectRatio: '4 / 3', backgroundColor: '#f5f5f5' }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={productUrl}
+                alt={productAlt}
+                data-element-key='productUrl'
+                className={selectableClass(
+                  activeKey === 'productUrl',
+                  'h-full w-full object-contain'
+                )}
+                style={composeStyle(styleOf('productUrl'), canvasShow)}
+                draggable={false}
+              />
+            </div>
+          </div>
+
+          <div>
+            <p className='mb-2 text-[11px] font-semibold tracking-[0.14em] text-neutral-500 uppercase'>
+              Đoạn văn
+            </p>
+            <div
+              style={{
+                backgroundColor: '#fafafa',
+                padding: '1.25rem',
+                borderRadius: 8,
+              }}
+            >
+              <p
+                data-element-key='body'
+                className={selectableClass(activeKey === 'body')}
+                style={composeStyle(
+                  {
+                    margin: 0,
+                    fontFamily: DISPLAY_FONT,
+                    fontSize: 'clamp(0.9375rem, 2.8vw, 1.125rem)',
+                    lineHeight: 1.625,
+                    color: '#171717',
+                  },
+                  styleOf('body'),
+                  canvasShow,
+                  { color: '#171717' }
+                )}
+              >
+                {body}
+              </p>
+            </div>
           </div>
         </div>
       </section>

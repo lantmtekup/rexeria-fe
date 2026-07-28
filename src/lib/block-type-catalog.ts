@@ -87,6 +87,8 @@ export interface LibraryTypeEntry {
 export interface LibraryTypeIndex {
   counts: Record<string, number>;
   duplicateCodes: Set<string>;
+  /** Tổng số row thuộc mapping code có ≥2 block (đếm record, không đếm code). */
+  duplicateRecordCount: number;
   byCategory: Map<BlockCategory, LibraryTypeEntry[]>;
   orphanEntries: LibraryTypeEntry[];
   /** Số block theo category (để filter Loại). */
@@ -108,6 +110,12 @@ export function buildLibraryTypeIndex(
       .filter(([, n]) => n > 1)
       .map(([code]) => code)
   );
+
+  let duplicateRecordCount = 0;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  for (const [code, count] of Object.entries(counts)) {
+    if (count > 1) duplicateRecordCount += count;
+  }
 
   const byCategory = new Map<BlockCategory, LibraryTypeEntry[]>();
   const orphanEntries: LibraryTypeEntry[] = [];
@@ -146,6 +154,7 @@ export function buildLibraryTypeIndex(
   return {
     counts,
     duplicateCodes,
+    duplicateRecordCount,
     byCategory,
     orphanEntries,
     categoryCounts,

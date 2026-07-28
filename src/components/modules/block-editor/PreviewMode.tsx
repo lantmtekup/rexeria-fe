@@ -25,6 +25,7 @@ import { LandingMotionRoot } from './motion/LandingMotion';
 import { RenderBlock } from './blocks/renderBlock';
 import { MotionBlockRoot, MotionProvider } from './motion/runtime';
 import type { BlockMotion } from './motion/types';
+import { ScrollRoomPlaceholder } from './ScrollRoomPlaceholder';
 import {
   TemplateTransitions,
   asTransition,
@@ -174,42 +175,55 @@ export function PreviewMode({
                       : 'Chưa có block nào hiển thị.'}
                   </div>
                 ) : (
-                  <TemplateTransitions
-                    transition={asTransition(transition)}
-                    className='gap-0!'
-                    items={visible.map(block => {
-                      const langContent =
-                        lang === 'vi' ? block.contentVi : block.contentEn;
-                      const content = resolveLinksDeep(
-                        readVariant(langContent, device) ?? langContent.desktop,
-                        linkCtx
-                      );
-                      const styles = readVariant(block.elementStyles, device);
-                      const background = readVariant(block.background, device);
-                      const order = readVariant(block.elementOrder, device);
-                      const motion = readVariant(block.motion, device) as
-                        | BlockMotion
-                        | undefined;
-                      return (
-                        <MotionProvider
-                          key={`${block.id}:${device}`}
-                          mode='preview'
-                          motion={motion}
-                          scrollerEl={scrollerRef.current}
-                        >
-                          <MotionBlockRoot>
-                            <RenderBlock
-                              block={block}
-                              content={content}
-                              styles={styles}
-                              background={background}
-                              order={order}
-                            />
-                          </MotionBlockRoot>
-                        </MotionProvider>
-                      );
-                    })}
-                  />
+                  <>
+                    {/* 1 block: thêm room trên/dưới để sticky/scrub chạy được. */}
+                    {visible.length === 1 ? (
+                      <ScrollRoomPlaceholder label='Scroll vào block' />
+                    ) : null}
+                    <TemplateTransitions
+                      transition={asTransition(transition)}
+                      className='gap-0!'
+                      items={visible.map(block => {
+                        const langContent =
+                          lang === 'vi' ? block.contentVi : block.contentEn;
+                        const content = resolveLinksDeep(
+                          readVariant(langContent, device) ??
+                            langContent.desktop,
+                          linkCtx
+                        );
+                        const styles = readVariant(block.elementStyles, device);
+                        const background = readVariant(
+                          block.background,
+                          device
+                        );
+                        const order = readVariant(block.elementOrder, device);
+                        const motion = readVariant(block.motion, device) as
+                          | BlockMotion
+                          | undefined;
+                        return (
+                          <MotionProvider
+                            key={`${block.id}:${device}`}
+                            mode='preview'
+                            motion={motion}
+                            scrollerEl={scrollerRef.current}
+                          >
+                            <MotionBlockRoot>
+                              <RenderBlock
+                                block={block}
+                                content={content}
+                                styles={styles}
+                                background={background}
+                                order={order}
+                              />
+                            </MotionBlockRoot>
+                          </MotionProvider>
+                        );
+                      })}
+                    />
+                    {visible.length === 1 ? (
+                      <ScrollRoomPlaceholder label='Scroll thoát block' />
+                    ) : null}
+                  </>
                 )}
               </div>
             </LinkNav>

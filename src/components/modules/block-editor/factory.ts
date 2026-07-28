@@ -25,6 +25,7 @@ import { coolHunterGalleryDef } from './blocks/_registry/defs/coolHunterGallery'
 import { coolHunterProductDef } from './blocks/_registry/defs/coolHunterProduct';
 import { coolHunterQuoteDef } from './blocks/_registry/defs/coolHunterQuote';
 import { coolHunterFooterDef } from './blocks/_registry/defs/coolHunterFooter';
+import { lineaPortfolioDef } from './blocks/_registry/defs/lineaPortfolio';
 import { pnjHeroDef } from './blocks/_registry/defs/pnjHero';
 import { pnjDetailsDef } from './blocks/_registry/defs/pnjDetails';
 import { mintDiscoverDef } from './blocks/_registry/defs/mintDiscover';
@@ -136,7 +137,6 @@ import type {
   MintV2ProcessContent,
   MintV2CtaContent,
   MintV2WorksContent,
-  LineaPortfolioContent,
   MintVaultHeroContent,
   MintVaultCraftContent,
   MintVaultRevealContent,
@@ -605,28 +605,6 @@ const MINTV2_WORKS_VI: MintV2WorksContent = {
 };
 
 // ── Import từ 360-admin-cms ──────────────────────────────────────────────
-const LINEA_IMG = (id: string) =>
-  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=600&q=70`;
-
-const LINEA_PORTFOLIO_VI: LineaPortfolioContent = {
-  eyebrow: 'Works',
-  headingPre: 'Collaboration that',
-  headingAccent: 'moved',
-  headingPost: 'the needle.',
-  bgColor: '#ffffff',
-  textColor: '#121212',
-  items: [
-    { img: LINEA_IMG('1517245386807-bb43f82c33c4') },
-    { img: LINEA_IMG('1487014679447-9f8336841d58') },
-    { img: LINEA_IMG('1486312338219-ce68d2c6f44d') },
-    { img: LINEA_IMG('1498050108023-c5249f4df085') },
-    { img: LINEA_IMG('1467232004584-a241de8bcf5d') },
-    { img: LINEA_IMG('1531403009284-440f080d1e12') },
-    { img: LINEA_IMG('1460925895917-afdab827c52f') },
-    { img: LINEA_IMG('1551434678-e076c223a692') },
-    { img: LINEA_IMG('1556761175-5973dc0f32e7') },
-  ],
-};
 
 // ── Mint2026 "The Vault" defaults ────────────────────────────────────────
 const VAULT_U = (id: string) =>
@@ -2207,7 +2185,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   mintv2_process: MINTV2_PROCESS_VI,
   mintv2_cta: MINTV2_CTA_VI,
   mintv2_works: MINTV2_WORKS_VI,
-  linea_portfolio: LINEA_PORTFOLIO_VI,
+  linea_portfolio: lineaPortfolioDef.defaultContent.vi,
   mint_vault_hero: MINT_VAULT_HERO_VI,
   mint_vault_craft: MINT_VAULT_CRAFT_VI,
   mint_vault_reveal: MINT_VAULT_REVEAL_VI,
@@ -2399,7 +2377,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   mintv2_process: MINTV2_PROCESS_VI,
   mintv2_cta: MINTV2_CTA_VI,
   mintv2_works: MINTV2_WORKS_VI,
-  linea_portfolio: LINEA_PORTFOLIO_VI,
+  linea_portfolio: lineaPortfolioDef.defaultContent.vi,
   mint_vault_hero: MINT_VAULT_HERO_VI,
   mint_vault_craft: MINT_VAULT_CRAFT_VI,
   mint_vault_reveal: MINT_VAULT_REVEAL_VI,
