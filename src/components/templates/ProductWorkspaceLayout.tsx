@@ -20,12 +20,7 @@ export interface ProductWorkspaceLayoutProps {
   scope: WorkspaceScope;
   /** Current sub-section — `information | media | marketing | template | campaign | landing` */
   section:
-    | 'information'
-    | 'media'
-    | 'marketing'
-    | 'template'
-    | 'campaign'
-    | 'landing';
+    'information' | 'media' | 'marketing' | 'template' | 'campaign' | 'landing';
   /** Extra right-side actions */
   actions?: React.ReactNode;
   /** Body content */

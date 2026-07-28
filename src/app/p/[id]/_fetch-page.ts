@@ -162,8 +162,7 @@ export function seoMetadata(
     },
     twitter: {
       card: (image ? 'summary_large_image' : 'summary') as
-        | 'summary_large_image'
-        | 'summary',
+        'summary_large_image' | 'summary',
       title,
       description,
       ...(image ? { images: [image] } : {}),

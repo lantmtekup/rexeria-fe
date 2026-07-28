@@ -35,13 +35,7 @@ import {
 /* ---------- types ---------- */
 
 type Accent =
-  | 'rose'
-  | 'violet'
-  | 'fuchsia'
-  | 'blue'
-  | 'cyan'
-  | 'emerald'
-  | 'orange';
+  'rose' | 'violet' | 'fuchsia' | 'blue' | 'cyan' | 'emerald' | 'orange';
 
 const ACCENT: Record<
   Accent,

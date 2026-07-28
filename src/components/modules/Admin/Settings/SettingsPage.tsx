@@ -66,8 +66,7 @@ export default function SettingsPage() {
         credentials: 'include',
       });
       const json = (await res.json()) as
-        | ApiSuccessResponse<SiteSettingsPublicData>
-        | ApiErrorResponse;
+        ApiSuccessResponse<SiteSettingsPublicData> | ApiErrorResponse;
 
       if (!res.ok || json.success !== true) {
         throw new Error(json.success === false ? json.code : 'LOAD_FAILED');
@@ -111,8 +110,7 @@ export default function SettingsPage() {
       });
 
       const json = (await res.json()) as
-        | ApiSuccessResponse<null>
-        | ApiErrorResponse;
+        ApiSuccessResponse<null> | ApiErrorResponse;
 
       if (!res.ok || json.success !== true) {
         throw new Error(json.success === false ? json.code : 'SAVE_FAILED');

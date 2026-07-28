@@ -415,25 +415,15 @@ export function migrateBlockV1toV2(b: Record<string, unknown>): Block {
     value === undefined ? undefined : { desktop: value };
 
   const contentVi = b.contentVi as
-    | BlockContent
-    | DeviceVariants<BlockContent>
-    | undefined;
+    BlockContent | DeviceVariants<BlockContent> | undefined;
   const contentEn = b.contentEn as
-    | BlockContent
-    | DeviceVariants<BlockContent>
-    | undefined;
+    BlockContent | DeviceVariants<BlockContent> | undefined;
   const elementStyles = b.elementStyles as
-    | ElementStylesMap
-    | DeviceVariants<ElementStylesMap>
-    | undefined;
+    ElementStylesMap | DeviceVariants<ElementStylesMap> | undefined;
   const background = b.background as
-    | BlockBackground
-    | DeviceVariants<BlockBackground>
-    | undefined;
+    BlockBackground | DeviceVariants<BlockBackground> | undefined;
   const elementOrder = b.elementOrder as
-    | string[]
-    | DeviceVariants<string[]>
-    | undefined;
+    string[] | DeviceVariants<string[]> | undefined;
 
   return {
     id: String(b.id ?? ''),
