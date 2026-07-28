@@ -52,6 +52,13 @@ import { resolvePnjVariants } from './blocks/pnjVariantContent';
 import { realEstateHeroStatElements } from './blocks/_registry/defs/realEstateHero';
 import { realEstateHighlightItemElements } from './blocks/_registry/defs/realEstateHighlights';
 import {
+  alturaOlympusContentElements,
+  alturaOlympusFeatureElements,
+  alturaOlympusImageElements,
+  resolveAlturaOlympusFeatures,
+  resolveAlturaOlympusImages,
+} from './blocks/_registry/defs/alturaOlympus';
+import {
   coolHunterGalleryItemElements,
   resolveCoolHunterGalleryItems,
 } from './blocks/_registry/defs/coolHunterGallery';
@@ -119,6 +126,9 @@ import {
   type RealEstateHeroStat,
   type RealEstateOverviewStat,
   type RealEstateHighlightItem,
+  type AlturaOlympusContent,
+  type MintVariantItem,
+  type MintVariantsContent,
   type CoolHunterGalleryContent,
   type LineaPortfolioItem,
   type CoolHunterSectionProgressItem,
@@ -391,57 +401,75 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
   ],
   mint_variants: [
     BACKGROUND_LAYER,
-    { key: 'titleLine1', label: 'Tiêu đề dòng 1', icon: Type },
-    { key: 'titleLine2', label: 'Tiêu đề dòng 2', icon: Type },
-    { key: 'variants', label: 'Biến thể (swatch)', icon: Grid3x3 },
+    {
+      key: 'titleLine1',
+      label: 'Tiêu đề dòng 1',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'titleLine2',
+      label: 'Tiêu đề dòng 2',
+      icon: Type,
+      fieldType: 'text',
+    },
+    { key: 'variants', label: 'Thêm / quản lý biến thể', icon: Grid3x3 },
     {
       key: 'discover.title',
       label: 'Tiêu đề',
       icon: Type,
       groupId: 'discover',
       groupLabel: 'Drawer chi tiết',
+      fieldType: 'text',
     },
     {
       key: 'discover.badge',
       label: 'Nhãn (mintage)',
       icon: Type,
       groupId: 'discover',
+      fieldType: 'text',
     },
     {
       key: 'discover.subtitle',
       label: 'Phụ đề',
       icon: Type,
       groupId: 'discover',
+      fieldType: 'text',
     },
     {
       key: 'discover.dimensions',
       label: 'Kích thước',
       icon: Pilcrow,
       groupId: 'discover',
+      fieldType: 'textarea',
     },
     {
       key: 'discover.faceValue',
       label: 'Face value',
       icon: Type,
       groupId: 'discover',
+      fieldType: 'text',
     },
     {
       key: 'discover.detailsText',
       label: 'Chi tiết',
       icon: Pilcrow,
       groupId: 'discover',
+      fieldType: 'textarea',
     },
     {
       key: 'discover.packagingText',
       label: 'Đóng gói',
       icon: Pilcrow,
       groupId: 'discover',
+      fieldType: 'textarea',
     },
     {
       key: 'discover.shippingText',
       label: 'Vận chuyển',
       icon: Pilcrow,
       groupId: 'discover',
+      fieldType: 'textarea',
     },
   ],
   mint_hero: [
@@ -855,6 +883,140 @@ export function elementsForType(
       {
         key: 'items',
         label: 'Thêm / quản lý ảnh',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'mint_variants') {
+    const c = (content ?? {}) as unknown as MintVariantsContent;
+    const variants = Array.isArray(c.variants) ? c.variants : [];
+    const variantSlots: LayerElement[] = variants.flatMap(
+      (v: MintVariantItem, i: number) => {
+        const groupId = `variant${i}`;
+        const groupLabel =
+          (v.label ?? '').trim().slice(0, 40) || `Biến thể ${i + 1}`;
+        return [
+          {
+            key: `variants[${i}].label`,
+            label: 'Nhãn',
+            groupId,
+            groupLabel,
+            icon: Type,
+            fieldType: 'text' as const,
+          },
+          {
+            key: `variants[${i}].swatch`,
+            label: 'Swatch',
+            groupId,
+            icon: ImageIcon,
+            fieldType: 'image' as const,
+          },
+          {
+            key: `variants[${i}].image`,
+            label: 'Ảnh chính',
+            groupId,
+            icon: ImageIcon,
+            fieldType: 'image' as const,
+          },
+        ];
+      }
+    );
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'titleLine1',
+        label: 'Tiêu đề dòng 1',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'titleLine2',
+        label: 'Tiêu đề dòng 2',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      ...variantSlots,
+      {
+        key: 'variants',
+        label: 'Thêm / quản lý biến thể',
+        icon: ListChecks,
+      },
+      {
+        key: 'discover.title',
+        label: 'Tiêu đề',
+        icon: Type,
+        groupId: 'discover',
+        groupLabel: 'Drawer chi tiết',
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'discover.badge',
+        label: 'Nhãn (mintage)',
+        icon: Type,
+        groupId: 'discover',
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'discover.subtitle',
+        label: 'Phụ đề',
+        icon: Type,
+        groupId: 'discover',
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'discover.dimensions',
+        label: 'Kích thước',
+        icon: Pilcrow,
+        groupId: 'discover',
+        fieldType: 'textarea' as const,
+      },
+      {
+        key: 'discover.faceValue',
+        label: 'Face value',
+        icon: Type,
+        groupId: 'discover',
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'discover.detailsText',
+        label: 'Chi tiết',
+        icon: Pilcrow,
+        groupId: 'discover',
+        fieldType: 'textarea' as const,
+      },
+      {
+        key: 'discover.packagingText',
+        label: 'Đóng gói',
+        icon: Pilcrow,
+        groupId: 'discover',
+        fieldType: 'textarea' as const,
+      },
+      {
+        key: 'discover.shippingText',
+        label: 'Vận chuyển',
+        icon: Pilcrow,
+        groupId: 'discover',
+        fieldType: 'textarea' as const,
+      },
+    ];
+  }
+  if (type === 'altura_olympus') {
+    const c = (content ?? {}) as unknown as AlturaOlympusContent;
+    const images = resolveAlturaOlympusImages(c);
+    const features = resolveAlturaOlympusFeatures(c);
+    return [
+      BACKGROUND_LAYER,
+      ...alturaOlympusContentElements,
+      ...alturaOlympusImageElements(images),
+      {
+        key: 'images',
+        label: 'Thêm / quản lý ảnh',
+        icon: ListChecks,
+      },
+      ...alturaOlympusFeatureElements(features),
+      {
+        key: 'features',
+        label: 'Thêm / quản lý features',
         icon: ListChecks,
       },
     ];
