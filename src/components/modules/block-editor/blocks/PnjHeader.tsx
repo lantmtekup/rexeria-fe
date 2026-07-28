@@ -179,31 +179,35 @@ export function PnjHeader({
     />
   );
 
-  const logo = logoHref ? (
-    <a
-      href={logoHref}
-      data-element-key='logoHref'
-      data-cta-id='header-logo'
-      target={external ? '_blank' : undefined}
-      rel={external ? 'noopener noreferrer' : undefined}
-      aria-label={logoAlt}
-      className={selectableClass(
-        activeKey === 'logoHref',
-        'pnj-header-brand pointer-events-auto'
-      )}
-      style={styleOf('logoHref')}
-    >
-      {logoImg}
-    </a>
-  ) : (
-    <span
-      data-cta-id='header-logo'
-      aria-label={logoAlt}
-      className='pnj-header-brand pointer-events-auto'
-    >
-      {logoImg}
-    </span>
-  );
+  // Canvas: luôn render <a> để chọn/sửa logoHref; chặn navigate.
+  // Preview + /p: none → <span>; có href → <a> (page/block đã resolveLinksDeep).
+  const logo =
+    isCanvas || logoHref ? (
+      <a
+        href={isCanvas ? undefined : logoHref || '#'}
+        onClick={isCanvas ? e => e.preventDefault() : undefined}
+        data-element-key='logoHref'
+        data-cta-id='header-logo'
+        target={!isCanvas && external ? '_blank' : undefined}
+        rel={!isCanvas && external ? 'noopener noreferrer' : undefined}
+        aria-label={logoAlt}
+        className={selectableClass(
+          activeKey === 'logoHref',
+          'pnj-header-brand pointer-events-auto'
+        )}
+        style={styleOf('logoHref')}
+      >
+        {logoImg}
+      </a>
+    ) : (
+      <span
+        data-cta-id='header-logo'
+        aria-label={logoAlt}
+        className='pnj-header-brand pointer-events-auto'
+      >
+        {logoImg}
+      </span>
+    );
 
   const bar = (
     <aside

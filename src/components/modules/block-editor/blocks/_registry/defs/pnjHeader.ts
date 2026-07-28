@@ -52,7 +52,7 @@ export const pnjHeaderDef: BlockDef<PnjHeaderContent> = {
       key: 'logoHref',
       label: 'Link logo',
       icon: Link2,
-      fieldType: 'text',
+      fieldType: 'link',
     },
   ],
 };
