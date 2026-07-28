@@ -145,11 +145,17 @@ const PROJECTS: AesthaExploreProject[] = [
 // — không seed nữa; field chỉ còn optional để blueprint cũ không vỡ.
 const VI: AesthaExploreContent = {
   heading: 'EXPLORE',
+  headingHoverLabel: 'VIEW PROJECTS',
+  // Seed rỗng như aestha_nav: đích tuỳ trang, user tự set qua LinkControls.
+  headingHref: '',
   projects: PROJECTS,
 };
 
 const EN: AesthaExploreContent = {
   heading: 'EXPLORE',
+  headingHoverLabel: 'VIEW PROJECTS',
+  // Seed rỗng như aestha_nav: đích tuỳ trang, user tự set qua LinkControls.
+  headingHref: '',
   projects: PROJECTS,
 };
 
@@ -262,6 +268,27 @@ export const aesthaExploreDef: BlockDef<AesthaExploreContent> = {
   // Phần tĩnh. `projects` được LayersPanel expand động qua helper trên —
   // xem branch `aestha_explore` ở đó.
   elements: [
-    { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+    {
+      key: 'heading',
+      label: 'Tiêu đề',
+      groupId: 'heading',
+      groupLabel: 'Tiêu đề',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'headingHoverLabel',
+      label: 'Nhãn khi hover',
+      groupId: 'heading',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'headingHref',
+      label: 'Link',
+      groupId: 'heading',
+      icon: Link2,
+      fieldType: 'link',
+    },
   ],
 };

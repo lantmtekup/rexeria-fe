@@ -1093,6 +1093,57 @@ export const MOTION_EFFECTS: Record<string, MotionEffect> = {
       example: `<article className='card overflow-hidden'><img data-motion='hover-zoom' data-motion-trigger-target='closest:.card' alt='' /></article>`,
     },
   },
+  // ── Roll-swap (đổi nhãn khi hover): gắn CÙNG effect này lên CẢ HAI layer
+  // trong một container mask. Cả hai cùng trượt xuống đúng 100% chiều cao —
+  // layer đang hiện (rest trong mask) đi xuống khuất đáy, layer mới (rest lùi
+  // lên trên bằng CSS `translate: 0 -100%`) đi xuống lấp chỗ trống.
+  //
+  // ⚠️ Offset nghỉ của layer mới phải đặt bằng **CSS property `translate`**,
+  // KHÔNG phải `transform: translateY(-100%)`: runtime hover chạy
+  // `immediateRender: false` nên GSAP parse `transform` có sẵn thành `y` px rồi
+  // cộng thêm `yPercent` → layer dừng lệch đúng 1 dòng. `translate` là property
+  // riêng, GSAP không đọc, browser tự compose với `transform` GSAP ghi.
+  //
+  // ⚠️ Hai layer phải chồng cùng ô `grid` (`col-start-1 row-start-1`), KHÔNG
+  // `absolute`: có vậy container mới rộng theo nhãn DÀI HƠN. Dùng `absolute`
+  // thì nhãn dài hơn wrap 2 dòng và mask cắt mất nửa chữ.
+  'hover-roll-down': {
+    id: 'hover-roll-down',
+    label: 'Hover Roll Down',
+    appliesTo: ['text', 'any'],
+    from: { yPercent: 0 },
+    to: { yPercent: 100 },
+    defaults: { duration: 1, ease: 'power3.inOut', trigger: 'hover' },
+    meta: {
+      summary:
+        'Layer trượt xuống đúng 100% chiều cao khi hover — dùng cho cả 2 layer của roll-swap đổi nhãn.',
+      whenToUse: [
+        'Hover đổi nhãn kiểu roll: text cũ trượt xuống, text mới rơi từ trên xuống thay chỗ',
+        'Wordmark / nav item / CTA có nhãn phụ khi hover',
+      ],
+      whenNotToUse: [
+        'Chỉ cần feedback hover không đổi text → hover-scale / hover-lift',
+        'Reveal chữ khi scroll vào view → line-reveal / word-reveal',
+        'Rơi xuống một lần khi vào view → fade-down',
+      ],
+      vs: [
+        { id: 'hover-lift', diff: 'chỉ nhấc element, không thay text' },
+        { id: 'fade-down', diff: 'entrance in-view có opacity, không hover' },
+        { id: 'line-reveal', diff: 'entrance in-view split dòng, không hover' },
+      ],
+      tags: ['hover', 'roll', 'swap', 'text', 'mask', 'interaction'],
+      category: 'hover',
+      prerequisites: [
+        'Container mask: display grid + overflow hidden, cao đúng 1 dòng',
+        'Cả 2 layer chồng cùng ô: className "col-start-1 row-start-1" (KHÔNG absolute — cần container rộng theo nhãn dài hơn, nếu không nhãn dài wrap 2 dòng)',
+        'Layer đang hiện: không offset. Layer mới: style={{ translate: "0 -100%" }}',
+        'Rest offset PHẢI dùng CSS property `translate`, KHÔNG dùng `transform: translateY(-100%)` — GSAP parse transform có sẵn rồi cộng dồn yPercent → lệch 1 dòng',
+        'Cả hai layer trỏ listener về container: data-motion-trigger-target="closest:<sel>"',
+      ],
+      relevantAttrs: ['duration', 'ease', 'trigger', 'trigger-target'],
+      example: `<a className='wm relative grid overflow-hidden'><span className='col-start-1 row-start-1' data-motion='hover-roll-down' data-motion-trigger-target='closest:.wm'>STUDIO</span><span className='col-start-1 row-start-1' style={{ translate: '0 -100%' }} data-motion='hover-roll-down' data-motion-trigger-target='closest:.wm'>VIEW WORK</span></a>`,
+    },
+  },
 };
 
 export function getMotionEffect(id: string): MotionEffect | undefined {

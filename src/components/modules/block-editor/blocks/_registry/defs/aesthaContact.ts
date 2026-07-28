@@ -31,6 +31,9 @@ const SOCIALS: AesthaContactSocial[] = [
 // — không seed nữa; field chỉ còn optional để blueprint cũ không vỡ.
 const VI: AesthaContactContent = {
   heading: 'CONTACT',
+  headingHoverLabel: 'SAY HELLO',
+  // Seed rỗng như aestha_nav: đích tuỳ trang, user tự set qua LinkControls.
+  headingHref: '',
   address: ADDRESS,
   email: EMAIL,
   phone: PHONE,
@@ -41,6 +44,9 @@ const VI: AesthaContactContent = {
 
 const EN: AesthaContactContent = {
   heading: 'CONTACT',
+  headingHoverLabel: 'SAY HELLO',
+  // Seed rỗng như aestha_nav: đích tuỳ trang, user tự set qua LinkControls.
+  headingHref: '',
   address: ADDRESS,
   email: EMAIL,
   phone: PHONE,
@@ -102,7 +108,28 @@ export const aesthaContactDef: BlockDef<AesthaContactContent> = {
   // Phần tĩnh. `socials` được LayersPanel expand động qua helper trên —
   // xem branch `aestha_contact` ở đó.
   elements: [
-    { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+    {
+      key: 'heading',
+      label: 'Tiêu đề',
+      groupId: 'heading',
+      groupLabel: 'Tiêu đề',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'headingHoverLabel',
+      label: 'Nhãn khi hover',
+      groupId: 'heading',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'headingHref',
+      label: 'Link',
+      groupId: 'heading',
+      icon: Link2,
+      fieldType: 'link',
+    },
     { key: 'address', label: 'Địa chỉ', icon: MapPin, fieldType: 'textarea' },
     { key: 'email', label: 'Email', icon: AtSign, fieldType: 'text' },
     { key: 'phone', label: 'Điện thoại', icon: Phone, fieldType: 'text' },

@@ -45,6 +45,8 @@ import {
   selectableClass,
 } from './applyStyle';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useMotionAttributes } from '../motion/useMotionAttributes';
+import { AesthaRollLink } from './AesthaRollLink';
 import { useContainerMobile } from './useContainerMobile';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 
@@ -510,16 +512,36 @@ export function AesthaExplore({
     }
   }, [isCanvas, hasRoot, reduce, isNarrow]);
 
+  /**
+   * Hover roll-swap của heading (`AesthaRollLink`). Deps gồm `isNarrow` (wide /
+   * narrow render 2 cây DOM khác nhau) và 2 nhãn (đổi text trên canvas →
+   * rebuild timeline).
+   */
+  useMotionAttributes(rootRef, [
+    isNarrow,
+    isCanvas,
+    effectiveView,
+    content.heading,
+    content.headingHoverLabel,
+  ]);
+
+  /* `.aestha-explore-heading` (marker entrance của useBlockMotion) ở trên `<h1>`,
+     còn `data-motion` nằm trên 2 span con → 1 element = 1 driver, không chồng. */
   const heading = (extraClass: string) => (
     <h1
-      data-element-key='heading'
       style={composeStyle(HEADING_STYLE, styleOf('heading'))}
-      className={selectableClass(
-        activeKey === 'heading',
-        cn('aestha-explore-heading', extraClass)
-      )}
+      className={cn('aestha-explore-heading', extraClass)}
     >
-      {content.heading}
+      <AesthaRollLink
+        label={content.heading}
+        hoverLabel={content.headingHoverLabel}
+        href={content.headingHref}
+        labelKey='heading'
+        hoverLabelKey='headingHoverLabel'
+        activeKey={activeKey}
+        isCanvas={isCanvas}
+        styleOf={styleOf}
+      />
     </h1>
   );
 

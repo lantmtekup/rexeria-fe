@@ -5,7 +5,7 @@
  * Wide (≥1200px): cột trái wordmark + bio + team + footer · ảnh phải 448px,
  * cursor-dot. Narrow (<1200px): xếp dọc. Path A registry.
  */
-import { Briefcase, ImageIcon, Pilcrow, Type, User } from 'lucide-react';
+import { Briefcase, ImageIcon, Link2, Pilcrow, Type, User } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { LayerElement } from '../../../LayersPanel';
@@ -33,6 +33,9 @@ const HERO_IMG =
 // — không seed nữa; field chỉ còn optional để blueprint cũ không vỡ.
 const VI: AesthaStudioContent = {
   wordmark: 'STUDIO',
+  wordmarkHoverLabel: 'ABOUT US',
+  // Seed rỗng như `aestha_nav`: đích tuỳ trang, user tự set qua LinkControls.
+  wordmarkHref: '',
   bio: BIO,
   team: TEAM,
   imageUrl: HERO_IMG,
@@ -41,6 +44,8 @@ const VI: AesthaStudioContent = {
 
 const EN: AesthaStudioContent = {
   wordmark: 'STUDIO',
+  wordmarkHoverLabel: 'ABOUT US',
+  wordmarkHref: '',
   bio: BIO,
   team: TEAM,
   imageUrl: HERO_IMG,
@@ -100,7 +105,28 @@ export const aesthaStudioDef: BlockDef<AesthaStudioContent> = {
   // Phần tĩnh. `team` được LayersPanel expand động qua helper trên —
   // xem branch `aestha_studio` ở đó.
   elements: [
-    { key: 'wordmark', label: 'Wordmark', icon: Type, fieldType: 'text' },
+    {
+      key: 'wordmark',
+      label: 'Wordmark',
+      groupId: 'wordmark',
+      groupLabel: 'Wordmark',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'wordmarkHoverLabel',
+      label: 'Nhãn khi hover',
+      groupId: 'wordmark',
+      icon: Type,
+      fieldType: 'text',
+    },
+    {
+      key: 'wordmarkHref',
+      label: 'Link',
+      groupId: 'wordmark',
+      icon: Link2,
+      fieldType: 'link',
+    },
     { key: 'bio', label: 'Bio', icon: Pilcrow, fieldType: 'textarea' },
     { key: 'imageUrl', label: 'Ảnh', icon: ImageIcon, fieldType: 'image' },
     { key: 'imageAlt', label: 'Alt ảnh', icon: Type, fieldType: 'text' },

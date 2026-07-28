@@ -11,6 +11,10 @@
  * ảnh → footer.
  *
  * Motion contract: entrance qua `useBlockMotion` (GSAP) — KHÔNG framer-motion.
+ * Hover roll-swap của wordmark đi qua Motion Attribute System (`data-motion`
+ * hover-roll-down + `useMotionAttributes`) — 2 driver KHÔNG chồng nhau vì
+ * `useBlockMotion` chỉ chạm container `.aestha-studio-content` / `-image`.
+ * Canvas edit dàn phẳng 2 nhãn thành 2 dòng; preview / `/p` giữ mask 1 dòng.
  * `min-[1200px]:` viewport media → `useContainerMobile(rootRef, 1200)` (đo
  * container, đúng trong device frame lẫn `/p`). Tokens tuyền inline + styleOf.
  * Ảnh giữ CDN framerusercontent.com theo asset rule của skill.
@@ -37,6 +41,8 @@ import {
   selectableClass,
 } from './applyStyle';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useMotionAttributes } from '../motion/useMotionAttributes';
+import { AesthaRollLink } from './AesthaRollLink';
 import { NAV_CLEARANCE } from './aesthaTokens';
 import { useContainerMobile } from './useContainerMobile';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
@@ -241,15 +247,34 @@ export function AesthaStudio({
     }
   }, [isCanvas, hasRoot, reduce, isNarrow]);
 
+  /**
+   * Hover roll-swap của wordmark. Deps gồm `isNarrow` (wide/narrow render 2 cây
+   * DOM khác nhau) và 2 nhãn (đổi text trên canvas → rebuild timeline).
+   */
+  useMotionAttributes(rootRef, [
+    isNarrow,
+    isCanvas,
+    content.wordmark,
+    content.wordmarkHoverLabel,
+  ]);
+
   /* ── Editable renderers (dùng chung 2 branch) ── */
 
   const wordmark = (extraClass: string) => (
     <h1
-      data-element-key='wordmark'
       style={composeStyle(WORDMARK_STYLE, styleOf('wordmark'))}
-      className={selectableClass(activeKey === 'wordmark', extraClass)}
+      className={extraClass}
     >
-      {content.wordmark}
+      <AesthaRollLink
+        label={content.wordmark}
+        hoverLabel={content.wordmarkHoverLabel}
+        href={content.wordmarkHref}
+        labelKey='wordmark'
+        hoverLabelKey='wordmarkHoverLabel'
+        activeKey={activeKey}
+        isCanvas={isCanvas}
+        styleOf={styleOf}
+      />
     </h1>
   );
 
@@ -356,10 +381,16 @@ export function AesthaStudio({
             <div className='aestha-studio-content relative flex-1'>
               {wordmark('absolute top-0 left-0')}
 
-              {bio('absolute top-[77px] left-0', {
-                width: 'min(562px, 46cqi)',
-                textAlign: 'start',
-              })}
+              {/* Canvas dàn phẳng wordmark thành 2 dòng → đẩy bio xuống, nếu
+                  không nhãn hover đè lên bio (wordmark ở đây là `absolute`
+                  nên không tự đẩy nội dung dưới). */}
+              {bio(
+                cn('absolute left-0', isCanvas ? 'top-[130px]' : 'top-[77px]'),
+                {
+                  width: 'min(562px, 46cqi)',
+                  textAlign: 'start',
+                }
+              )}
 
               {teamList('absolute right-0 bottom-[57px]', {
                 gap: 16,

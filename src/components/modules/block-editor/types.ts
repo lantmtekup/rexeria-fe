@@ -1950,6 +1950,16 @@ export interface AesthaExploreFooterLink {
  */
 export interface AesthaExploreContent {
   heading: string;
+  /**
+   * Nhãn trượt từ trên xuống khi hover heading (roll-swap). Rỗng = tái dùng
+   * `heading`.
+   */
+  headingHoverLabel?: string;
+  /**
+   * Link của heading — id section trong trang, URL ngoài, hoặc path nội bộ.
+   * Phân loại 3 case bằng `classifyAesthaLink` (`blocks/aesthaLink.ts`).
+   */
+  headingHref?: string;
   projects: AesthaExploreProject[];
   /** @deprecated Nav tách sang block `aestha_nav` — không còn render. */
   footerLinks?: AesthaExploreFooterLink[];
@@ -1982,6 +1992,8 @@ export interface AesthaStudioFooterLink {
  */
 export interface AesthaStudioContent {
   wordmark: string;
+  wordmarkHoverLabel?: string;
+  wordmarkHref?: string;
   bio: string;
   team: AesthaStudioMember[];
   imageUrl: string;
@@ -2017,6 +2029,16 @@ export interface AesthaContactFooterLink {
  */
 export interface AesthaContactContent {
   heading: string;
+  /**
+   * Nhãn trượt từ trên xuống khi hover heading (roll-swap). Rỗng = tái dùng
+   * `heading`.
+   */
+  headingHoverLabel?: string;
+  /**
+   * Link của heading — id section trong trang, URL ngoài, hoặc path nội bộ.
+   * Phân loại 3 case bằng `classifyAesthaLink` (`blocks/aesthaLink.ts`).
+   */
+  headingHref?: string;
   /** Địa chỉ nhiều dòng — ngăn cách bằng `\n`, render `white-space: pre-line`. */
   address: string;
   /** Nhãn email hiển thị; href suy ra `mailto:${email}`. */

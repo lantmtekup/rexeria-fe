@@ -36,6 +36,8 @@ import {
   selectableClass,
 } from './applyStyle';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useMotionAttributes } from '../motion/useMotionAttributes';
+import { AesthaRollLink } from './AesthaRollLink';
 import { useAesthaLink } from './aesthaLink';
 import { NAV_CLEARANCE } from './aesthaTokens';
 import { useContainerMobile } from './useContainerMobile';
@@ -240,15 +242,35 @@ export function AesthaContact({
     }
   }, [isCanvas, hasRoot, reduce, isNarrow]);
 
+  /**
+   * Hover roll-swap của heading (`AesthaRollLink`). Deps gồm `isNarrow` (wide /
+   * narrow render 2 cây DOM khác nhau) và 2 nhãn (đổi text trên canvas →
+   * rebuild timeline).
+   */
+  useMotionAttributes(rootRef, [
+    isNarrow,
+    isCanvas,
+    content.heading,
+    content.headingHoverLabel,
+  ]);
+
   /* ── Editable renderers (dùng chung 2 branch) ── */
 
   const heading = (extraClass: string) => (
     <h1
-      data-element-key='heading'
       style={composeStyle(HEADING_STYLE, styleOf('heading'))}
-      className={selectableClass(activeKey === 'heading', extraClass)}
+      className={extraClass}
     >
-      {content.heading}
+      <AesthaRollLink
+        label={content.heading}
+        hoverLabel={content.headingHoverLabel}
+        href={content.headingHref}
+        labelKey='heading'
+        hoverLabelKey='headingHoverLabel'
+        activeKey={activeKey}
+        isCanvas={isCanvas}
+        styleOf={styleOf}
+      />
     </h1>
   );
 
