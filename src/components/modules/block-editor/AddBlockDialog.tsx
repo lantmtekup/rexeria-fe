@@ -1,187 +1,186 @@
 'use client';
 
 import * as React from 'react';
-import { Bookmark, Loader2, Pencil, Trash2 } from 'lucide-react';
+import {
+  Bookmark,
+  Check,
+  Loader2,
+  Pencil,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/atoms/button';
+import { Chip } from '@/components/atoms/chip';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/atoms/dialog';
 import { Input } from '@/components/atoms/input';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
-import { isBlockUsable } from '@/lib/block-status';
+import {
+  BLOCK_STATUS_META,
+  BLOCK_STATUS_ORDER,
+  effectiveBlockStatus,
+} from '@/lib/block-status';
 
 import { BlockMiniPreview } from './BlockMiniPreview';
-import { REGISTERED_TYPES } from './blocks/_registry/registry';
 import { createBlock } from './factory';
-import { instantiateSavedBlock, type SavedBlock } from './savedBlocks';
+import { instantiateSavedBlock } from './savedBlocks';
 import { BLOCK_TYPE_META, type Block, type BlockType } from './types';
 import { RxApiError } from '@/services/rexer/client';
-import type { Block as ServerBlock } from '@/services/rexer/types';
+import type { Block as ServerBlock, BlockStatus } from '@/services/rexer/types';
 
-/** Wave 3 migration 2026-05-31: Saved blocks tab loads from `/v1/blocks`
- *  (same source as /admin/blocks list page) instead of localStorage. Each
- *  ServerBlock.settings should be an FE editor Block (saved via the Save
- *  Block icon in BlockEditor); we adapt to the SavedBlock shape the
- *  SavedCard component expects. Returns null for rows whose settings
- *  isn't a valid editor Block. */
-function serverToSavedBlock(b: ServerBlock): SavedBlock | null {
+const SEARCH_DEBOUNCE_MS = 300;
+const DEFAULT_STATUS_FILTER: BlockStatus | 'all' = 'published';
+
+/** Row thư viện từ GET /v1/blocks — cùng nguồn /admin/blocks. */
+type LibraryEntry = {
+  id: string;
+  name: string;
+  typeCode: string;
+  tags: string[];
+  status: BlockStatus;
+  createdAt: string;
+  updatedAt?: string;
+  /** Settings hợp lệ (editor Block); null với brief/placeholder rỗng. */
+  block: Block | null;
+};
+
+/** Wave 3: picker đọc `/v1/blocks` (BlocksPage) — KHÔNG cộng BLOCK_TYPE_META catalog.
+ *  totalCount = số row thư viện sau status filter, không gộp ~189 type code FE. */
+function serverToLibraryEntry(b: ServerBlock): LibraryEntry {
   const s = b.settings as Record<string, unknown> | null | undefined;
-  // Legacy/framer registry blocks (`__legacy`) không còn được chèn vào canvas:
-  // BE đã bật validate block_type theo catalog (block ngoài catalog → 400 khi
-  // commit version). `legacy_embed` không thuộc catalog nên bỏ qua các entry
-  // legacy ở đây — chúng vẫn xem được ở /admin/blocks (catalog browse-only).
-  if (!s || typeof s !== 'object' || !('blockType' in s)) return null;
+  let block: Block | null = null;
+  if (s && typeof s === 'object' && 'blockType' in s) {
+    block = s as unknown as Block;
+  }
   return {
     id: b.id,
     name: b.name,
-    block: s as unknown as Block,
+    typeCode: b.type_code,
+    tags: b.tags ?? [],
+    status: effectiveBlockStatus(b),
     createdAt: b.created_at,
     updatedAt: b.updated_at,
-    tags: b.tags ?? [],
+    block,
   };
+}
+
+function normalizeQuery(q: string): string {
+  return q.trim().toLowerCase();
+}
+
+function matchesQuery(text: string, q: string): boolean {
+  return text.toLowerCase().includes(q);
+}
+
+function matchesLibraryEntry(entry: LibraryEntry, q: string): boolean {
+  if (!q) return true;
+  if (matchesQuery(entry.name, q)) return true;
+  if (matchesQuery(entry.typeCode, q)) return true;
+  if (entry.tags.some(t => matchesQuery(t, q))) return true;
+  const meta = BLOCK_TYPE_META[entry.typeCode as BlockType];
+  if (meta) {
+    if (matchesQuery(meta.label, q)) return true;
+    if (matchesQuery(meta.adminLabel, q)) return true;
+    if (meta.tags.some(t => matchesQuery(t, q))) return true;
+  }
+  return false;
+}
+
+function formatTagLabel(tag: string): string {
+  return tag.replace(/-/g, ' ');
+}
+
+function getEntryTags(entry: LibraryEntry): string[] {
+  const typeTags = BLOCK_TYPE_META[entry.typeCode as BlockType]?.tags ?? [];
+  return Array.from(new Set([...entry.tags, ...typeTags]));
+}
+
+function collectAvailableTags(entries: LibraryEntry[]): string[] {
+  const counts = new Map<string, number>();
+  for (const e of entries) {
+    for (const tag of getEntryTags(e)) {
+      counts.set(tag, (counts.get(tag) ?? 0) + 1);
+    }
+  }
+  return Array.from(counts.keys()).sort(
+    (a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0) || a.localeCompare(b)
+  );
+}
+
+function matchesEntryTagFilter(
+  entry: LibraryEntry,
+  tagFilter: string | 'all'
+): boolean {
+  if (tagFilter === 'all') return true;
+  return getEntryTags(entry).includes(tagFilter);
+}
+
+function filterLibraryEntries(
+  entries: LibraryEntry[],
+  q: string,
+  tagFilter: string | 'all',
+  statusFilter: BlockStatus | 'all'
+): LibraryEntry[] {
+  return entries.filter(entry => {
+    if (statusFilter !== 'all' && entry.status !== statusFilter) return false;
+    if (!matchesLibraryEntry(entry, q)) return false;
+    if (!matchesEntryTagFilter(entry, tagFilter)) return false;
+    return true;
+  });
+}
+
+function getPreviewBlock(entry: LibraryEntry): Block {
+  if (entry.block) return entry.block;
+  const type = entry.typeCode as BlockType;
+  if (BLOCK_TYPE_META[type]) {
+    const block = createBlock(type);
+    block.name = entry.name;
+    return block;
+  }
+  return {
+    id: `preview_${entry.id}`,
+    blockType: type,
+    name: entry.name,
+    contentVi: { desktop: {} as Block['contentVi']['desktop'] },
+    contentEn: { desktop: {} as Block['contentEn']['desktop'] },
+    isVisible: true,
+  };
+}
+
+function instantiateLibraryEntry(entry: LibraryEntry): Block {
+  if (entry.block) {
+    return instantiateSavedBlock({
+      id: entry.id,
+      name: entry.name,
+      block: entry.block,
+      createdAt: entry.createdAt,
+      updatedAt: entry.updatedAt,
+      tags: entry.tags,
+    });
+  }
+  const block = createBlock(entry.typeCode as BlockType);
+  block.name = entry.name;
+  block.id = `b_${Math.random().toString(36).slice(2, 10)}`;
+  return block;
 }
 
 interface AddBlockDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Pick a built-in block type. */
-  onPick: (type: BlockType) => void;
-  /** Pick a saved block — caller inserts the fully-formed Block into canvas. */
-  onPickSaved?: (block: Block) => void;
+  /** Chèn nhiều block theo type_code (fallback khi không có onPickSaved). */
+  onPick: (types: BlockType[]) => void;
+  /** Chèn nhiều block đã instantiate từ thư viện. */
+  onPickSaved?: (blocks: Block[]) => void;
 }
-
-const ORDERED_TYPES: BlockType[] = [
-  // ── Heroes ──────────────────────────────────────────────
-  'hero_split',
-  'hero_overlay',
-  'framer_yume_hero',
-  'framer_yuya_hero',
-  'framer_arpeggio_hero_v2',
-  'framer_perform_hero',
-  'framer_bungee_hero_v2',
-  'framer_purevisuals_hero',
-  'real_estate_hero',
-  // ── Content / Editorial ─────────────────────────────────
-  'framer_intro_redefined',
-  'framer_studio_manifesto',
-  'framer_ignitex_step',
-  'framer_realestate02_menu',
-  'framer_realestate02_story',
-  'framer_realestate02_quote',
-  'framer_realestate02_product',
-  'framer_realestate02_overview',
-  'framer_realestate02_location',
-  'framer_realestate02_commute',
-  'framer_realestate02_map',
-  'framer_realestate02_gallery',
-  'framer_explore_cta',
-  'framer_flat_white_process',
-  'framer_aestha_editorial',
-  'masterise_home_inside',
-  'real_estate_info',
-  'real_estate_overview',
-  'real_estate_highlights',
-  'real_estate_villa',
-  'real_estate_utilities',
-  'aestha_explore',
-  'aestha_studio',
-  'aestha_contact',
-  // ── Features / Services ──────────────────────────────────
-  'feature_section',
-  'framer_clarity_services',
-  'framer_perform_about',
-  'framer_perform_pricing',
-  'housent_our_excellence',
-  'framer_estancia_about_us',
-  'rolex_collection_project',
-  // ── Projects / Gallery ───────────────────────────────────
-  'framer_firma_template_strategy_digital',
-  'framer_projects_grid',
-  'framer_vs_collins_projects',
-  'framer_image_stagger',
-  // ── Team / People ────────────────────────────────────────
-  'framer_team_directory',
-  // ── Timeline / FAQ ───────────────────────────────────────
-  'framer_darling_timeline',
-  'framer_nftpull_timeline',
-  'framer_faq_minimal',
-  // ── Stats / Signature ────────────────────────────────────
-  'framer_stats_grid',
-  'framer_signature_feature',
-  // ── Footer / CTA ─────────────────────────────────────────
-  'cta_section',
-  'mint_hero',
-  'mint_details',
-  'mint_variants',
-  'mint_discover',
-  'mint_sku',
-  'pnj_hero',
-  'pnj_details',
-  'pnj_variant',
-  'pnj_header',
-  'pnj_sticky_menu',
-  'pnj_cta',
-  'mintv2_emblem',
-  'mintv2_manifesto',
-  'mintv2_works',
-  'linea_portfolio',
-  'mint_vault_hero',
-  'mint_vault_craft',
-  'mint_vault_reveal',
-  'mint_vault_collection',
-  'mint_vault_invitation',
-  'mintv2_services',
-  'mintv2_process',
-  'mintv2_cta',
-  // ── Interactive / Other ──────────────────────────────────
-  'text_displace_hero',
-  'image_trail',
-  'sticky_scroll_cards',
-  'gallery_3d_depth',
-  'parallax_hero',
-  'lightbox_flip',
-  'flip_gallery',
-  'wheel_gallery',
-  'hover_reveal_list',
-  'hover_equalizer_heading',
-  'brutalist_text',
-  'image_explosion',
-  'marquee_band',
-  'story_slides',
-  'accordion_media',
-  'spotlight',
-  'process_steps',
-  'dot_matrix',
-  'interactive_grid',
-  'pixel_reveal',
-  'letter_slider',
-  'seamless_scroll_gallery',
-  'product_spec_sheet',
-  'image_carousel',
-  'carousel_3d',
-  'stories',
-  'flipbook',
-  'panorama',
-  'split_screen',
-  'quiz',
-  'poll',
-  'booking_form',
-  'readymag_case_section',
-  // ── Delvaux clone ──
-  'delvaux_header',
-  'delvaux_subnav',
-  'delvaux_hero',
-  'delvaux_details',
-  'delvaux_product',
-  'delvaux_variant',
-  'q80_experience',
-  'q80_menu',
-];
 
 export function AddBlockDialog({
   open,
@@ -189,179 +188,286 @@ export function AddBlockDialog({
   onPick,
   onPickSaved,
 }: AddBlockDialogProps) {
-  // BE-backed saved blocks — same source as /admin/blocks list page.
-  // Null = loading; array = loaded (may be empty).
-  const [saved, setSaved] = React.useState<SavedBlock[] | null>(null);
+  const [library, setLibrary] = React.useState<LibraryEntry[] | null>(null);
+  const [searchInput, setSearchInput] = React.useState('');
+  const [search, setSearch] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState<BlockStatus | 'all'>(
+    DEFAULT_STATUS_FILTER
+  );
+  const [tagFilter, setTagFilter] = React.useState<string | 'all'>('all');
+  const [selection, setSelection] = React.useState<Set<string>>(new Set());
 
-  const reloadSaved = React.useCallback(
+  const reloadLibrary = React.useCallback(
     async (opts?: { keepStale?: boolean }) => {
-      if (!opts?.keepStale) setSaved(null);
-      // Chỉ BE saved blocks (`/v1/blocks`) — KHÔNG merge legacy/framer registry
-      // nữa: legacy block chèn vào canvas sẽ thành `legacy_embed` (ngoài catalog)
-      // → BE reject khi commit version. Legacy vẫn browse được ở /admin/blocks.
-      let beItems: ServerBlock[] = [];
+      if (!opts?.keepStale) setLibrary(null);
       try {
         const r = await rexerApi.blocks.list({ limit: 200 });
-        beItems = r.items ?? [];
+        setLibrary((r.items ?? []).map(serverToLibraryEntry));
       } catch {
-        beItems = [];
+        setLibrary([]);
       }
-      const items = beItems
-        // Chỉ block đã publish mới cho dựng trang (legacy status rỗng → usable).
-        .filter(isBlockUsable)
-        .map(serverToSavedBlock)
-        .filter((b): b is SavedBlock => b !== null);
-      setSaved(items);
     },
     []
   );
 
-  // Reload saved blocks each time dialog opens (matches /admin/blocks freshness).
   React.useEffect(() => {
     if (!open) return;
-    void reloadSaved({ keepStale: true });
-  }, [open, reloadSaved]);
+    void reloadLibrary({ keepStale: true });
+  }, [open, reloadLibrary]);
 
-  // Block cơ bản = mọi type FE biết render (registry BLOCK_TYPE_META, thứ tự
-  // ORDERED_TYPES). Không còn phụ thuộc catalog BE — type sống trong code.
-  // Block đã migrate sang BlockDef tự xuất hiện (không cần thêm vào ORDERED_TYPES).
-  const visibleTypes = React.useMemo(() => {
-    const extra = REGISTERED_TYPES.filter(t => !ORDERED_TYPES.includes(t));
-    return [...ORDERED_TYPES, ...extra];
-  }, []);
+  React.useEffect(() => {
+    if (open) return;
+    setSearchInput('');
+    setSearch('');
+    setStatusFilter(DEFAULT_STATUS_FILTER);
+    setTagFilter('all');
+    setSelection(new Set());
+  }, [open]);
 
-  // Default-instance preview block per type — built once so the live
-  // BlockMiniPreview cards don't recreate on every dialog re-render.
-  const previewByType = React.useMemo(() => {
-    const m = {} as Record<BlockType, Block>;
-    for (const t of visibleTypes) m[t] = createBlock(t);
-    return m;
-  }, [visibleTypes]);
+  React.useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
-  const handlePickSaved = (entry: SavedBlock) => {
-    if (!onPickSaved) {
-      // Fallback: fall through to the builtin type so user still gets a block.
-      onPick(entry.block.blockType);
+  const q = normalizeQuery(search);
+
+  const statusScoped = React.useMemo(() => {
+    if (!library) return [];
+    if (statusFilter === 'all') return library;
+    return library.filter(e => e.status === statusFilter);
+  }, [library, statusFilter]);
+
+  const filteredEntries = React.useMemo(
+    () => filterLibraryEntries(statusScoped, q, tagFilter, 'all'),
+    [statusScoped, q, tagFilter]
+  );
+
+  // totalCount = row thư viện BE (theo status), không cộng catalog FE.
+  const totalCount = statusScoped.length;
+  const filteredCount = filteredEntries.length;
+
+  const availableTags = React.useMemo(
+    () => collectAvailableTags(statusScoped),
+    [statusScoped]
+  );
+
+  const hasActiveFilters =
+    q !== '' || tagFilter !== 'all' || statusFilter !== DEFAULT_STATUS_FILTER;
+
+  const handleClearFilters = () => {
+    setSearchInput('');
+    setSearch('');
+    setStatusFilter(DEFAULT_STATUS_FILTER);
+    setTagFilter('all');
+  };
+
+  const handleToggleEntry = (id: string) => {
+    setSelection(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleConfirm = () => {
+    if (selection.size === 0 || !library) return;
+
+    const picked = library.filter(e => selection.has(e.id));
+    const blocks = picked.map(instantiateLibraryEntry);
+
+    if (onPickSaved) {
+      onPickSaved(blocks);
     } else {
-      onPickSaved(instantiateSavedBlock(entry));
+      onPick(blocks.map(b => b.blockType));
     }
-    // Tăng usage_count cho BE saved block (id uuid; legacy `legacy:` thì bỏ).
-    // Fire-and-forget — không chặn việc chèn block, lỗi thì nuốt.
-    if (!entry.id.startsWith('legacy:')) {
-      void rexerApi.blocks.use(entry.id).catch(() => {});
+
+    for (const entry of picked) {
+      if (!entry.id.startsWith('legacy:')) {
+        void rexerApi.blocks.use(entry.id).catch(() => {});
+      }
     }
+
     onOpenChange(false);
   };
 
-  // Type luôn sẵn từ registry (đồng bộ) — chỉ còn thư viện saved là async.
-  const loadingTypes = false;
+  const libraryLoading = library === null;
+  const libraryEmpty = library !== null && library.length === 0;
+  const noResults = !libraryLoading && filteredCount === 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='flex max-h-[85vh] flex-col sm:max-w-3xl'>
+      <DialogContent className='flex max-h-[90vh] w-[calc(100%-2rem)] flex-col sm:max-w-6xl'>
         <DialogHeader>
           <DialogTitle>Thêm block mới</DialogTitle>
           <p className='text-sm text-neutral-500'>
-            Chọn block để thêm vào trang — preview hiển thị nội dung thật.
+            Chọn block từ thư viện — cùng nguồn với trang Blocks.
           </p>
         </DialogHeader>
 
-        {/* Single scrollable list — KHÔNG tab. Thư viện block (nội dung thật,
-            cùng nguồn /admin/blocks) trước, rồi block cơ bản. Preview lazy
-            + Suspense per-card (LazyBlockPreview) — không bubble lên route. */}
-        <div className='-mr-1 flex-1 space-y-6 overflow-y-auto pr-1'>
-          {loadingTypes && saved === null ? (
-            <div className='flex items-center justify-center py-12 text-sm text-neutral-500'>
-              <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải block…
+        <div className='shrink-0 space-y-2.5 border-b border-neutral-100 pb-3'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <div className='relative min-w-48 flex-1 basis-56'>
+              <Search className='text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2' />
+              <Input
+                placeholder='Tìm theo tên / block type / tag…'
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                className='h-9 pl-8'
+                aria-label='Tìm kiếm blocks'
+              />
             </div>
-          ) : (
-            <>
-              {/* Thư viện — block đã thiết kế (cùng nguồn /admin/blocks) */}
-              {saved === null ? (
-                <div className='flex items-center justify-center py-8 text-sm text-neutral-500'>
-                  <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải thư
-                  viện…
-                </div>
-              ) : saved.length > 0 ? (
-                <section>
-                  <h3 className='text-2xs mb-2 font-semibold tracking-wider text-neutral-500 uppercase'>
-                    Thư viện · {saved.length} block
-                  </h3>
-                  <SavedTab
-                    entries={saved}
-                    onPick={handlePickSaved}
-                    onChanged={reloadSaved}
-                  />
-                </section>
-              ) : null}
 
-              {/* Block cơ bản — starter skeleton theo loại */}
-              {!loadingTypes && visibleTypes.length > 0 ? (
-                <section>
-                  <h3 className='text-2xs mb-2 font-semibold tracking-wider text-neutral-500 uppercase'>
-                    Block cơ bản · {visibleTypes.length}
-                  </h3>
-                  <div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
-                    {visibleTypes.map(type => {
-                      const meta = BLOCK_TYPE_META[type];
-                      const pick = () => {
-                        onPick(type);
-                        onOpenChange(false);
-                      };
-                      return (
-                        <div
-                          key={type}
-                          role='button'
-                          tabIndex={0}
-                          onClick={pick}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              pick();
-                            }
-                          }}
-                          className={cn(
-                            'group flex cursor-pointer flex-col gap-2 overflow-hidden rounded-lg border border-neutral-200 bg-white p-2 text-left transition-colors hover:border-neutral-900'
-                          )}
-                        >
-                          <div className='pointer-events-none overflow-hidden rounded-md border border-neutral-100 bg-neutral-50'>
-                            <LazyBlockPreview
-                              block={previewByType[type]}
-                              aspect='16 / 10'
-                            />
-                          </div>
-                          <span className='px-1 text-xs font-medium text-neutral-700 group-hover:text-neutral-900'>
-                            {meta.label}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-              ) : null}
+            <select
+              value={statusFilter}
+              onChange={e =>
+                setStatusFilter(e.target.value as BlockStatus | 'all')
+              }
+              className='border-input text-content-muted hover:bg-muted bg-background h-9 w-36 shrink-0 rounded-md border px-2.5 text-xs font-medium outline-none'
+              aria-label='Lọc theo trạng thái'
+            >
+              <option value='all'>Mọi trạng thái</option>
+              {BLOCK_STATUS_ORDER.map(s => (
+                <option key={s} value={s}>
+                  {BLOCK_STATUS_META[s].label}
+                </option>
+              ))}
+            </select>
 
-              {/* Cả hai rỗng */}
-              {!loadingTypes &&
-              visibleTypes.length === 0 &&
-              saved !== null &&
-              saved.length === 0 ? (
-                <div className='rounded-lg border border-dashed border-neutral-200 px-4 py-12 text-center text-sm text-neutral-500'>
-                  Chưa có block nào.
-                </div>
-              ) : null}
-            </>
+            {hasActiveFilters && (
+              <button
+                type='button'
+                onClick={handleClearFilters}
+                className='text-content-muted hover:text-foreground inline-flex h-9 shrink-0 items-center gap-1 px-1.5 text-xs'
+                aria-label='Xoá bộ lọc'
+              >
+                <X className='size-3.5' />
+                Clear
+              </button>
+            )}
+
+            <div className='text-content-muted ml-auto inline-flex h-9 shrink-0 items-center text-xs tabular-nums'>
+              {filteredCount} / {totalCount}
+            </div>
+          </div>
+
+          {availableTags.length > 0 && (
+            <div className='flex gap-1.5 overflow-x-auto pb-0.5'>
+              <Chip
+                size='sm'
+                selected={tagFilter === 'all'}
+                onClick={() => setTagFilter('all')}
+                className='shrink-0 whitespace-nowrap'
+              >
+                Tất cả tag
+              </Chip>
+              {availableTags.map(tag => (
+                <Chip
+                  key={tag}
+                  size='sm'
+                  selected={tagFilter === tag}
+                  onClick={() => setTagFilter(tag)}
+                  className='shrink-0 whitespace-nowrap'
+                  title={tag}
+                >
+                  {formatTagLabel(tag)}
+                </Chip>
+              ))}
+            </div>
           )}
         </div>
+
+        <div className='-mr-1 min-h-0 flex-1 space-y-6 overflow-y-auto pr-1'>
+          {libraryLoading ? (
+            <div className='flex items-center justify-center py-12 text-sm text-neutral-500'>
+              <Loader2 className='mr-2 size-4 animate-spin' /> Đang tải thư
+              viện…
+            </div>
+          ) : noResults ? (
+            <div className='flex flex-col items-center gap-3 rounded-lg border border-dashed border-neutral-200 px-4 py-12 text-center'>
+              {libraryEmpty && !hasActiveFilters ? (
+                <>
+                  <Bookmark className='size-8 text-neutral-300' />
+                  <p className='text-sm font-medium text-neutral-700'>
+                    Thư viện trống
+                  </p>
+                  <p className='max-w-sm text-xs text-neutral-500'>
+                    Tạo block trên trang Blocks hoặc lưu block hiện tại từ
+                    editor.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className='text-sm text-neutral-500'>
+                    Không có block khớp bộ lọc.
+                  </p>
+                  {hasActiveFilters && (
+                    <Button
+                      type='button'
+                      variant='neutral'
+                      size='sm'
+                      onClick={handleClearFilters}
+                    >
+                      Xoá bộ lọc
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            <section>
+              <h3 className='text-2xs mb-2 font-semibold tracking-wider text-neutral-500 uppercase'>
+                Thư viện · {filteredCount}
+              </h3>
+              <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4'>
+                {filteredEntries.map(entry => (
+                  <LibraryCard
+                    key={entry.id}
+                    entry={entry}
+                    previewBlock={getPreviewBlock(entry)}
+                    selected={selection.has(entry.id)}
+                    onToggle={() => handleToggleEntry(entry.id)}
+                    onChanged={reloadLibrary}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+
+        <DialogFooter className='shrink-0 border-t border-neutral-100 pt-3'>
+          <Button
+            type='button'
+            variant='neutral'
+            size='sm'
+            onClick={() => onOpenChange(false)}
+          >
+            Huỷ
+          </Button>
+          <Button
+            type='button'
+            variant='default'
+            size='sm'
+            disabled={selection.size === 0}
+            onClick={handleConfirm}
+          >
+            Thêm{selection.size > 0 ? ` (${selection.size})` : ''}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-/**
- * Lazy mount + per-card Suspense — mỗi preview load chunk next/dynamic riêng.
- * Suspense bọc từng card (không bọc cả grid) để một card suspend không làm
- * cả modal nhảy về fallback liên tục.
- */
+function SelectionBadge({ selected }: { selected: boolean }) {
+  if (!selected) return null;
+  return (
+    <span className='bg-primary text-primary-foreground absolute top-2 right-2 flex size-5 items-center justify-center rounded-full shadow-sm'>
+      <Check className='size-3' aria-hidden />
+    </span>
+  );
+}
+
 function LazyBlockPreview({
   block,
   aspect = '16 / 10',
@@ -400,49 +506,21 @@ function LazyBlockPreview({
   );
 }
 
-function SavedTab({
-  entries,
-  onPick,
-  onChanged,
-}: {
-  entries: SavedBlock[];
-  onPick: (entry: SavedBlock) => void;
-  onChanged: () => void;
-}) {
-  if (entries.length === 0) {
-    return (
-      <div className='flex flex-col items-center gap-2 rounded-lg border border-dashed border-neutral-200 px-4 py-12 text-center'>
-        <Bookmark className='size-8 text-neutral-300' />
-        <p className='text-sm font-medium text-neutral-700'>Thư viện trống</p>
-        <p className='max-w-sm text-xs text-neutral-500'>
-          Bấm icon dấu trang trên header của editor để lưu block hiện tại vào
-          thư viện — sau đó tái sử dụng ở mọi canvas.
-        </p>
-      </div>
-    );
-  }
-  return (
-    <div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
-      {entries.map(e => (
-        <SavedCard key={e.id} entry={e} onPick={onPick} onChanged={onChanged} />
-      ))}
-    </div>
-  );
-}
-
-function SavedCard({
+function LibraryCard({
   entry,
-  onPick,
+  previewBlock,
+  selected,
+  onToggle,
   onChanged,
 }: {
-  entry: SavedBlock;
-  onPick: (e: SavedBlock) => void;
+  entry: LibraryEntry;
+  previewBlock: Block;
+  selected: boolean;
+  onToggle: () => void;
   onChanged: () => void;
 }) {
   const [renaming, setRenaming] = React.useState(false);
   const [nextName, setNextName] = React.useState(entry.name);
-  // Legacy/framer catalog blocks are system-managed (id `legacy:*`) — no BE
-  // rename/delete (mirrors /admin/blocks).
   const isLegacy = entry.id.startsWith('legacy:');
 
   React.useEffect(() => {
@@ -468,7 +546,8 @@ function SavedCard({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!window.confirm(`Xoá "${entry.name}" khỏi thư viện?`)) return;
     try {
       await rexerApi.blocks.archive(entry.id);
@@ -481,24 +560,33 @@ function SavedCard({
     }
   };
 
+  const handlePreviewKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onToggle();
+    }
+  };
+
   return (
-    <div className='group flex flex-col gap-2 overflow-hidden rounded-lg border border-neutral-200 bg-white p-2 transition-colors hover:border-neutral-900'>
+    <div
+      className={cn(
+        'group relative flex flex-col gap-2 rounded-lg border bg-white p-2 transition-colors',
+        selected
+          ? 'border-primary ring-primary/20 ring-2'
+          : 'border-neutral-200 hover:border-neutral-900'
+      )}
+    >
       <div
         role='button'
         tabIndex={0}
-        onClick={() => onPick(entry)}
-        onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onPick(entry);
-          }
-        }}
-        className='cursor-pointer overflow-hidden rounded-md border border-neutral-100 bg-neutral-50'
+        aria-pressed={selected}
+        onClick={onToggle}
+        onKeyDown={handlePreviewKeyDown}
+        className='relative cursor-pointer overflow-hidden rounded-md border border-neutral-100 bg-neutral-50'
       >
-        {/* Real live preview — same renderer as /admin/blocks grid. Inner
-            interactive elements are inert so the card stays one click target. */}
+        <SelectionBadge selected={selected} />
         <div className='pointer-events-none'>
-          <LazyBlockPreview block={entry.block} aspect='16 / 10' />
+          <LazyBlockPreview block={previewBlock} aspect='16 / 10' />
         </div>
       </div>
       <div className='flex items-center gap-1 px-1'>
@@ -508,6 +596,7 @@ function SavedCard({
             value={nextName}
             onChange={e => setNextName(e.target.value)}
             onBlur={submitRename}
+            onClick={e => e.stopPropagation()}
             onKeyDown={e => {
               if (e.key === 'Enter') submitRename();
               else if (e.key === 'Escape') setRenaming(false);
@@ -517,8 +606,11 @@ function SavedCard({
         ) : (
           <button
             type='button'
-            onClick={() => onPick(entry)}
-            className='min-w-0 flex-1 truncate text-left text-xs font-medium text-neutral-700 hover:text-neutral-900'
+            onClick={e => {
+              e.stopPropagation();
+              onToggle();
+            }}
+            className='line-clamp-2 min-w-0 flex-1 text-left text-xs leading-snug font-medium break-words text-neutral-700 hover:text-neutral-900'
             title={entry.name}
           >
             {entry.name}
@@ -528,7 +620,10 @@ function SavedCard({
           <>
             <button
               type='button'
-              onClick={() => setRenaming(v => !v)}
+              onClick={e => {
+                e.stopPropagation();
+                setRenaming(v => !v);
+              }}
               className='shrink-0 rounded p-1 text-neutral-400 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-neutral-100 hover:text-neutral-700'
               aria-label='Đổi tên'
             >

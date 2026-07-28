@@ -65,6 +65,8 @@ function chipIcon(kind: ElementKind) {
     kind === 'pnjStickyMenuItems' ||
     kind === 'mintV2ServicesItems' ||
     kind === 'mintV2ProcessSteps' ||
+    kind === 'framerDarlingTimelineItems' ||
+    kind === 'framerPerformPricingTiers' ||
     kind === 'pnjFrames' ||
     kind === 'pnjScrim' ||
     kind === 'delvauxFrames' ||

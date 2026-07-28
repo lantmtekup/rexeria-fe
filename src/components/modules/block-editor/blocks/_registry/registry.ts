@@ -25,6 +25,8 @@ import { aesthaStudioDef } from './defs/aesthaStudio';
 import { aesthaContactDef } from './defs/aesthaContact';
 import { aesthaProjectDef } from './defs/aesthaProject';
 import { framerEstanciaAboutUsDef } from './defs/framerEstanciaAboutUs';
+import { framerDarlingTimelineDef } from './defs/framerDarlingTimeline';
+import { framerPerformPricingDef } from './defs/framerPerformPricing';
 import { framerNftpullTimelineDef } from './defs/framerNftpullTimeline';
 import { framerIgnitexStepDef } from './defs/framerIgnitexStep';
 import { framerRealEstate02StoryDef } from './defs/framerRealEstate02Story';
@@ -155,6 +157,8 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   framer_yume_hero: framerYumeHeroDef as BlockDef,
   framer_bungee_hero_v2: framerBungeeHeroV2Def as BlockDef,
   framer_flat_white_process: framerFlatWhiteProcessDef as BlockDef,
+  framer_darling_timeline: framerDarlingTimelineDef as BlockDef,
+  framer_perform_pricing: framerPerformPricingDef as BlockDef,
   framer_nftpull_timeline: framerNftpullTimelineDef as BlockDef,
   framer_ignitex_step: framerIgnitexStepDef as BlockDef,
   framer_realestate02_story: framerRealEstate02StoryDef as BlockDef,

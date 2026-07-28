@@ -43,6 +43,7 @@ import { BLOCK_TYPE_META } from '@/components/modules/block-editor/types';
 import type { BlockType } from '@/components/modules/block-editor/types';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
+import { resolveTypeMeta } from '@/lib/block-type-catalog';
 
 // Derive từ registry BLOCK_TYPE_META (nguồn duy nhất).
 const BLOCK_TYPE_LABEL: Record<BlockType, string> = Object.fromEntries(
@@ -380,6 +381,14 @@ export function BlockDetailView({
                   <code className='text-2xs bg-muted text-content-muted rounded px-1.5 py-0.5 font-mono'>
                     {type}
                   </code>
+                }
+              />
+              <DefRow
+                label='Loại'
+                value={
+                  resolveTypeMeta(type)?.categoryLabel ?? (
+                    <span className='text-muted-foreground'>—</span>
+                  )
                 }
               />
               <DefRow label='Saved' value={fmtDate(block.createdAt)} />

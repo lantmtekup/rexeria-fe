@@ -83,6 +83,8 @@ import { rolexCollectionNavDef } from './blocks/_registry/defs/rolexCollectionNa
 import { rolexContactDef } from './blocks/_registry/defs/rolexContact';
 import { rolexCollectionWorkDef } from './blocks/_registry/defs/rolexCollectionWork';
 import { rolexCollectionProjectDef } from './blocks/_registry/defs/rolexCollectionProject';
+import { framerDarlingTimelineDef } from './blocks/_registry/defs/framerDarlingTimeline';
+import { framerPerformPricingDef } from './blocks/_registry/defs/framerPerformPricing';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { springsContactFooterDef } from './blocks/_registry/defs/springsContactFooter';
 import { springsDesignDef } from './blocks/_registry/defs/springsDesign';
@@ -189,12 +191,10 @@ import type {
   SplitScreenContent,
   StoriesContent,
   FramerFaqMinimalContent,
-  FramerDarlingTimelineContent,
   FramerSignatureFeatureContent,
   FramerVsCollinsProjectsContent,
   FramerClarityServicesContent,
   FramerPerformAboutContent,
-  FramerPerformPricingContent,
 } from './types';
 import { framerFirmaTemplateStrategyDigitalDef } from './blocks/_registry/defs/framerFirmaTemplateStrategyDigital';
 
@@ -1948,67 +1948,6 @@ const FRAMER_FAQ_MINIMAL_EN: FramerFaqMinimalContent = {
   ],
 };
 
-// ── Framer-native: Darling Timeline ────────────────────────────────────
-const FRAMER_DARLING_TIMELINE_VI: FramerDarlingTimelineContent = {
-  heading: 'Hành Trình',
-  intro:
-    'Chúng tôi tin rằng mỗi dự án là một câu chuyện cần được kể bằng sự chăm chút và tận tâm.',
-  items: [
-    {
-      time: '9:00 SA',
-      title: 'Khởi đầu',
-      description:
-        'Cuộc họp khởi động để hiểu rõ mục tiêu và kỳ vọng của khách hàng.',
-      imageUrl:
-        'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80',
-    },
-    {
-      time: '11:00 SA',
-      title: 'Lên kế hoạch',
-      description: 'Xây dựng lộ trình chi tiết cho từng giai đoạn dự án.',
-      imageUrl:
-        'https://images.unsplash.com/photo-1530023367847-a683933f4172?w=1200&q=80',
-    },
-    {
-      time: '2:00 CH',
-      title: 'Thực hiện',
-      description:
-        'Đội ngũ sáng tạo bắt tay vào công việc với toàn bộ nhiệt huyết.',
-      imageUrl:
-        'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80',
-    },
-  ],
-};
-const FRAMER_DARLING_TIMELINE_EN: FramerDarlingTimelineContent = {
-  heading: 'The Day',
-  intro:
-    "Here\'s what to expect. Everything takes place here, and we\'ll guide you throughout the day.",
-  items: [
-    {
-      time: '9:00 AM',
-      title: 'Kickoff',
-      description:
-        'A kickoff meeting to understand the goals and expectations.',
-      imageUrl:
-        'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80',
-    },
-    {
-      time: '11:00 AM',
-      title: 'Planning',
-      description: 'Building a detailed roadmap for each project phase.',
-      imageUrl:
-        'https://images.unsplash.com/photo-1530023367847-a683933f4172?w=1200&q=80',
-    },
-    {
-      time: '2:00 PM',
-      title: 'Execution',
-      description: 'The creative team gets to work with full dedication.',
-      imageUrl:
-        'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80',
-    },
-  ],
-};
-
 // ── Framer-native: Signature Feature ───────────────────────────────────
 const FRAMER_SIGNATURE_FEATURE_VI: FramerSignatureFeatureContent = {
   eyebrow: 'TRẢI NGHIỆM ĐẶC QUYỀN',
@@ -2229,84 +2168,6 @@ const FRAMER_PERFORM_ABOUT_EN: FramerPerformAboutContent = {
 const HOUSENT_OUR_EXCELLENCE_VI = housentOurExcellenceDef.defaultContent.vi;
 const HOUSENT_OUR_EXCELLENCE_EN = housentOurExcellenceDef.defaultContent.en;
 
-// ── Framer-native: Perform Pricing ─────────────────────────────────────
-const FRAMER_PERFORM_PRICING_VI: FramerPerformPricingContent = {
-  eyebrow: 'Pricing',
-  heading: 'Chọn gói của bạn',
-  subheading:
-    'Chọn gói phù hợp với mục tiêu tập luyện. Hủy hoặc nâng cấp bất cứ lúc nào.',
-  tiers: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=1024&q=80',
-      price: '$59/tháng',
-      title: 'Cơ bản',
-      features:
-        'Tư vấn ban đầu miễn phí\nCập nhật kế hoạch tập 2 tuần/lần\nKiểm tra hàng tuần',
-      ctaLabel: 'Liên hệ',
-      ctaHref: '#contact',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1486218119243-13883505764c?w=1024&q=80',
-      price: '$99/tháng',
-      title: 'Tiêu chuẩn',
-      features:
-        'Tất cả của gói trước\nXây dựng chiến lược đua cụ thể\nƯu đãi từ đối tác',
-      ctaLabel: 'Liên hệ',
-      ctaHref: '#contact',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1024&q=80',
-      price: '$169/tháng',
-      title: 'Cao cấp',
-      features:
-        'Tất cả của gói trước\nCập nhật kế hoạch không giới hạn\nHỗ trợ tư duy hiệu suất tối ưu',
-      ctaLabel: 'Liên hệ',
-      ctaHref: '#contact',
-    },
-  ],
-};
-const FRAMER_PERFORM_PRICING_EN: FramerPerformPricingContent = {
-  eyebrow: 'Pricing',
-  heading: 'Choose your plan',
-  subheading:
-    'Pick the plan that fits your training goals. Cancel or upgrade any time.',
-  tiers: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=1024&q=80',
-      price: '$59/month',
-      title: 'Basic',
-      features:
-        'Free initial consultation\n1x per 2 weeks training plan update\nWeekly checking',
-      ctaLabel: 'Get in touch',
-      ctaHref: '#contact',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1486218119243-13883505764c?w=1024&q=80',
-      price: '$99/month',
-      title: 'Standard',
-      features:
-        'All of the previous\nDevelopment of a specific race strategy\nBenefits from my partners',
-      ctaLabel: 'Get in touch',
-      ctaHref: '#contact',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1024&q=80',
-      price: '$169/month',
-      title: 'Premium',
-      features:
-        'All of the previous\nUnlimited plan updates and modifications\nWorking together on mindset for optimal performance',
-      ctaLabel: 'Get in touch',
-      ctaHref: '#contact',
-    },
-  ],
-};
-
 // Derive từ registry BLOCK_TYPE_META (nguồn duy nhất) — thêm block type mới
 // chỉ cần thêm 1 entry ở types.ts, map này tự đầy đủ.
 const NAME_BY_TYPE: Record<BlockType, string> = Object.fromEntries(
@@ -2411,7 +2272,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_image_stagger: FRAMER_IMAGE_STAGGER_VI,
   framer_clarity_services: FRAMER_CLARITY_SERVICES_VI,
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_VI,
-  framer_darling_timeline: FRAMER_DARLING_TIMELINE_VI,
+  framer_darling_timeline: framerDarlingTimelineDef.defaultContent.vi,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.vi,
   delvaux_header: delvauxHeaderDef.defaultContent.vi,
   delvaux_subnav: delvauxSubnavDef.defaultContent.vi,
@@ -2494,7 +2355,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   aestha_project: aesthaProjectDef.defaultContent.vi,
   masterise_home_inside: masteriseHomeInsideDef.defaultContent.vi,
   framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
-  framer_perform_pricing: FRAMER_PERFORM_PRICING_VI,
+  framer_perform_pricing: framerPerformPricingDef.defaultContent.vi,
   framer_firma_template_strategy_digital:
     framerFirmaTemplateStrategyDigitalDef.defaultContent.vi,
   readymag_case_section: readymagCaseSectionDef.defaultContent.vi,
@@ -2603,7 +2464,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_image_stagger: FRAMER_IMAGE_STAGGER_EN,
   framer_clarity_services: FRAMER_CLARITY_SERVICES_EN,
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_EN,
-  framer_darling_timeline: FRAMER_DARLING_TIMELINE_EN,
+  framer_darling_timeline: framerDarlingTimelineDef.defaultContent.en,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.en,
   delvaux_header: delvauxHeaderDef.defaultContent.en,
   delvaux_subnav: delvauxSubnavDef.defaultContent.en,
@@ -2686,7 +2547,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   aestha_project: aesthaProjectDef.defaultContent.en,
   masterise_home_inside: masteriseHomeInsideDef.defaultContent.en,
   framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
-  framer_perform_pricing: FRAMER_PERFORM_PRICING_EN,
+  framer_perform_pricing: framerPerformPricingDef.defaultContent.en,
   framer_firma_template_strategy_digital:
     framerFirmaTemplateStrategyDigitalDef.defaultContent.en,
   readymag_case_section: readymagCaseSectionDef.defaultContent.en,

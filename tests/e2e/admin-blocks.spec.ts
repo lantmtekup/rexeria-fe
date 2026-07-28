@@ -85,7 +85,7 @@ test.describe('Admin Blocks page', () => {
     await expect(cards.first()).toBeVisible();
 
     // Search filter
-    const searchBox = page.getByPlaceholder('Tìm theo tên / block type / tag…');
+    const searchBox = page.getByPlaceholder('Tìm tên, loại, tag…');
     await searchBox.fill('Carousel');
     await expect(page.locator('text=Carousel campaign')).toBeVisible();
     await expect(page.locator('text=Hero Tết 2026')).toHaveCount(0);
@@ -379,5 +379,124 @@ test.describe('Admin Blocks page', () => {
       });
     });
     expect(hasScaled).toBe(true);
+  });
+});
+
+/** Mock BE blocks — kiểm tra filter type theo category + badge mapping trùng. */
+function makeServerBlock(id: string, name: string, typeCode: string) {
+  const now = new Date().toISOString();
+  return {
+    id,
+    type_code: typeCode,
+    name,
+    settings: {
+      id: `b_${id}`,
+      blockType: typeCode,
+      name,
+      isVisible: true,
+      contentVi: { desktop: MINIMAL_HERO_SPLIT_CONTENT },
+      extraElements: [],
+    },
+    tags: [] as string[],
+    scope: 'brand_private',
+    usage_count: 0,
+    created_by: 'test',
+    updated_by: 'test',
+    created_at: now,
+    updated_at: now,
+    status: 'published',
+  };
+}
+
+async function mockBlocksApi(
+  page: import('playwright/test').Page,
+  items: ReturnType<typeof makeServerBlock>[]
+) {
+  await page.route('**/api/rexer/blocks**', async route => {
+    if (route.request().method() !== 'GET') {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ items }),
+    });
+  });
+  await page.route('**/api/rexer/templates**', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ items: [] }),
+    });
+  });
+}
+
+test.describe('Admin Blocks — type catalog UI', () => {
+  test('category column, duplicate badge, and library-only type filter', async ({
+    page,
+  }) => {
+    const items = [
+      makeServerBlock('blk_a', 'Hero Alpha', 'hero_split'),
+      makeServerBlock('blk_b', 'Hero Beta', 'hero_split'),
+      makeServerBlock('blk_c', 'PNJ Sticky', 'pnj_sticky_menu'),
+    ];
+    await mockBlocksApi(page, items);
+    await page.goto('/admin/blocks');
+
+    await expect(
+      page.getByRole('columnheader', { name: 'Loại' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('columnheader', { name: 'Mapping code' })
+    ).toBeVisible();
+
+    // Duplicate stat chip + row badge
+    await expect(
+      page.getByRole('button', { name: /Mapping trùng\s+1/ })
+    ).toBeVisible();
+    await expect(
+      page.locator('code:has-text("hero_split")').first()
+    ).toBeVisible();
+    await expect(
+      page.getByText('2 block dùng chung code').first()
+    ).toBeVisible();
+
+    // Category chips (hero + navigation)
+    await expect(page.getByText('Hero', { exact: true }).first()).toBeVisible();
+    await expect(
+      page.getByText('Navigation', { exact: true }).first()
+    ).toBeVisible();
+
+    // Type filter popover — category (Hero, Navigation…), không liệt kê mapping code
+    await page.getByRole('button', { name: 'Lọc theo loại' }).click();
+    await expect(
+      page.getByRole('option', { name: /Hero\s+\(2\)/ })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('option', { name: /Navigation\s+\(1\)/ })
+    ).toBeVisible();
+    await expect(page.getByText('hero_split')).toHaveCount(0);
+    await expect(page.getByText('framer_yume_hero')).toHaveCount(0);
+
+    // Chọn Hero → chỉ block thuộc category hero
+    await page.getByRole('option', { name: /Hero\s+\(2\)/ }).click();
+    await expect(page.getByText('Hero Alpha')).toBeVisible();
+    await expect(page.getByText('Hero Beta')).toBeVisible();
+    await expect(page.getByText('PNJ Sticky')).toHaveCount(0);
+
+    // Filter chỉ block mapping trùng — gom nhóm cùng mapping code
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: /Mapping trùng\s+1/ }).click();
+    await expect(page.getByText('Hero Alpha')).toBeVisible();
+    await expect(page.getByText('Hero Beta')).toBeVisible();
+    await expect(page.getByText('PNJ Sticky')).toHaveCount(0);
+    await expect(
+      page
+        .getByRole('row')
+        .filter({ hasText: 'hero_split' })
+        .filter({ hasText: '2 block dùng chung code' })
+        .first()
+    ).toBeVisible();
   });
 });

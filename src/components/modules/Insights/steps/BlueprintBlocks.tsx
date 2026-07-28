@@ -643,13 +643,15 @@ export function BlocksSection({
     );
 
   // Thêm block từ AddBlockDialog của editor → map BlockType → recommended block.
-  const addFromType = (type: BlockType) => {
-    if (!addStageKey) return;
-    appendBlock(addStageKey, {
-      block_type_code: type,
-      block_name: BLOCK_TYPE_META[type]?.label ?? type,
-      reason: '',
-    });
+  const addFromTypes = (types: BlockType[]) => {
+    if (!addStageKey || types.length === 0) return;
+    for (const type of types) {
+      appendBlock(addStageKey, {
+        block_type_code: type,
+        block_name: BLOCK_TYPE_META[type]?.label ?? type,
+        reason: '',
+      });
+    }
     setAddStageKey(null);
   };
 
@@ -687,8 +689,8 @@ export function BlocksSection({
         onOpenChange={o => {
           if (!o) setAddStageKey(null);
         }}
-        onPick={addFromType}
-        onPickSaved={b => addFromType(b.blockType)}
+        onPick={addFromTypes}
+        onPickSaved={blocks => addFromTypes(blocks.map(b => b.blockType))}
       />
     </SectionCard>
   );
