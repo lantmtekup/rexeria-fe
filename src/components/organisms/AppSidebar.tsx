@@ -45,7 +45,10 @@ function AppSidebar({
   className,
 }: AppSidebarProps) {
   const t = useTranslations('app.sidebar');
-  const { isInternal } = useAuthRole();
+  // `/admin` tự nó chỉ cho role === 'admin' vào (xem middleware.ts — role-gate
+  // /admin, chặn cả staff) — dùng isAdmin ở đây thay vì isInternal để sidebar
+  // khớp với quyền THẬT, không hiện link chết cho staff (bấm vào bị đá về /home).
+  const { isAdmin } = useAuthRole();
 
   // Esc to close mobile drawer.
   React.useEffect(() => {
@@ -153,8 +156,8 @@ function AppSidebar({
             />
           </nav>
 
-          {/* Admin (internal only) */}
-          {isInternal && (
+          {/* Admin (platform admin only — matches middleware role-gate) */}
+          {isAdmin && (
             <>
               <SidebarSectionLabel>{t('sectionAdmin')}</SidebarSectionLabel>
               <nav className='flex flex-col'>

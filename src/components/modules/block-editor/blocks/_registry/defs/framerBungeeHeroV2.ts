@@ -19,7 +19,7 @@ import {
   Type,
 } from 'lucide-react';
 
-import { FramerBungeeHeroV2 } from '../../FramerBungeeHeroV2';
+import dynamic from 'next/dynamic';
 import type { FramerBungeeHeroV2Content } from '../../../types';
 import type { BlockDef } from '../types';
 
@@ -31,8 +31,8 @@ const RECON_CARDS = [
       'https://framerusercontent.com/images/LOSSn1XuJFxdkQeIdkzwe48fY.png',
   },
   {
-    imageUrl:
-      'https://framerusercontent.com/images/HfoXDGQsWsPpJU5TGy2N63TFYnc.png',
+    videoUrl:
+      'https://framerusercontent.com/assets/o6ocbBu8Ta7VUr372p01yKOGtY.mp4',
   },
   {
     imageUrl:
@@ -43,8 +43,8 @@ const RECON_CARDS = [
       'https://framerusercontent.com/images/GGQuG2gM9TePsmC84XEwEaDl3g.png',
   },
   {
-    imageUrl:
-      'https://framerusercontent.com/images/HfoXDGQsWsPpJU5TGy2N63TFYnc.png',
+    videoUrl:
+      'https://framerusercontent.com/assets/y2VIDcwXz3puEBTpkCi51q9buBs.mp4',
   },
   {
     imageUrl:
@@ -52,7 +52,7 @@ const RECON_CARDS = [
   },
   {
     imageUrl:
-      'https://framerusercontent.com/images/GGQuG2gM9TePsmC84XEwEaDl3g.png',
+      'https://framerusercontent.com/images/HfoXDGQsWsPpJU5TGy2N63TFYnc.png',
   },
   {
     imageUrl:
@@ -94,7 +94,10 @@ export const framerBungeeHeroV2Def: BlockDef<FramerBungeeHeroV2Content> = {
     aiLabelEn:
       'Bungee studio hero v2 (recon spec): wordmark + image marquee + GSAP R1–R6',
   },
-  component: FramerBungeeHeroV2,
+  // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
+  component: dynamic(() =>
+    import('../../FramerBungeeHeroV2').then(m => m.FramerBungeeHeroV2)
+  ),
   defaultContent: { vi: VI, en: EN },
   elements: [
     {

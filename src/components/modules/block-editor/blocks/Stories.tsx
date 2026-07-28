@@ -58,7 +58,9 @@ export function Stories({
   const sTitle = styleOf('title');
   const sSlides = styleOf('slides');
 
-  const slides = content.slides ?? [];
+  // useMemo giữ identity ổn định — slides là dep của effect RAF autoplay,
+  // mảng mới mỗi render sẽ teardown/restart timer story liên tục.
+  const slides = React.useMemo(() => content.slides ?? [], [content.slides]);
   const defaultDur = content.defaultDurationMs ?? 4500;
   const [index, setIndex] = React.useState(0);
   const [paused, setPaused] = React.useState(false);

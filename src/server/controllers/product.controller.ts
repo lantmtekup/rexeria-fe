@@ -13,10 +13,16 @@ import {
 } from '@/server/validation/product';
 import { ErrorCode, HttpStatus } from '@/settings/enums';
 
-const requireAuth = async (req: NextRequest): Promise<string> => {
+// Mongo product mirror là data platform-level (không scope tenant) → chỉ
+// admin được đụng. `role` trong cookie gate đã được verify với BE tại
+// /api/auth/session-set, không còn là input client.
+const requireAdmin = async (req: NextRequest): Promise<string> => {
   const payload = await verifyJwtFromRequest(req);
   if (!payload?.sub) {
     throw HttpException.unauthorized(ErrorCode.UNAUTHORIZED);
+  }
+  if (payload.role !== 'admin') {
+    throw HttpException.forbidden();
   }
   return String(payload.sub);
 };
@@ -54,7 +60,7 @@ const toDTO = (doc: {
 export const productController = {
   async list(req: NextRequest) {
     try {
-      await requireAuth(req);
+      await requireAdmin(req);
       const url = new URL(req.url);
       const parsed = productListQuerySchema.safeParse(
         Object.fromEntries(url.searchParams)
@@ -77,7 +83,7 @@ export const productController = {
 
   async get(req: NextRequest, id: string) {
     try {
-      await requireAuth(req);
+      await requireAdmin(req);
       const doc = await productService.getById(id);
       return sendSuccess(toDTO(doc));
     } catch (err) {
@@ -87,7 +93,7 @@ export const productController = {
 
   async create(req: NextRequest) {
     try {
-      const userId = await requireAuth(req);
+      const userId = await requireAdmin(req);
       const raw = await req.json();
       const parsed = productCreateSchema.safeParse(raw);
       if (!parsed.success) return sendZodError(parsed.error);
@@ -103,7 +109,7 @@ export const productController = {
 
   async update(req: NextRequest, id: string) {
     try {
-      await requireAuth(req);
+      await requireAdmin(req);
       const raw = await req.json();
       const parsed = productUpdateSchema.safeParse(raw);
       if (!parsed.success) return sendZodError(parsed.error);
@@ -117,7 +123,7 @@ export const productController = {
 
   async remove(req: NextRequest, id: string) {
     try {
-      await requireAuth(req);
+      await requireAdmin(req);
       await productService.remove(id);
       return sendSuccess(null, 'Product deleted');
     } catch (err) {

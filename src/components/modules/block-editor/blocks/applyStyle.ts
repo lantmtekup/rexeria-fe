@@ -31,6 +31,14 @@ export function elementStyleOf(
   if (s.textDecoration) out.textDecoration = s.textDecoration;
   if (s.textAlign) out.textAlign = s.textAlign;
   if (s.fontFamily) out.fontFamily = resolveFontValue(s.fontFamily);
+  if (s.backgroundColor)
+    out.backgroundColor = resolveColorValue(s.backgroundColor);
+  if (typeof s.opacity === 'number') out.opacity = s.opacity;
+  if (typeof s.borderRadius === 'number')
+    out.borderRadius = `${s.borderRadius}px`;
+  if (s.boxShadow) out.boxShadow = s.boxShadow;
+  if (typeof s.blur === 'number' && s.blur > 0)
+    out.filter = `blur(${s.blur}px)`;
   if (Object.keys(out).length === 0) return undefined;
   return out;
 }
@@ -65,8 +73,13 @@ export function blockBackgroundStyle(
 
 export function selectableClass(active: boolean, base?: string): string {
   return cn(
-    'cursor-pointer outline-offset-2 transition-[outline] duration-100 hover:outline hover:outline-1 hover:outline-dashed hover:outline-sky-400',
-    active && 'outline outline-2 outline-sky-500 hover:outline-sky-500',
+    // Hover feedback while editing is handled by BlockPreview.tsx's own
+    // pointer-tracked `data-canvas-hovered` attribute (scoped to the editor
+    // canvas only) — no native `:hover` here, since these same block
+    // components also render on the public `/p/:slug` page, where a raw
+    // `hover:outline` would incorrectly show the editor's selection outline.
+    'outline-offset-2 transition-[outline] duration-100',
+    active && 'outline outline-2 outline-sky-500',
     base
   );
 }

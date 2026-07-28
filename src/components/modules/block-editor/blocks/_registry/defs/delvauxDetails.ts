@@ -11,7 +11,7 @@
  */
 import { Pilcrow, Type } from 'lucide-react';
 
-import { DelvauxDetails } from '../../DelvauxDetails';
+import dynamic from 'next/dynamic';
 import type { DelvauxDetailsContent } from '../../../types';
 import type { BlockDef } from '../types';
 
@@ -39,11 +39,33 @@ export const delvauxDetailsDef: BlockDef<DelvauxDetailsContent> = {
     aiLabelEn:
       'centered editorial product-story block: masked title reveal + 2 paragraphs, luxury tone',
   },
-  component: DelvauxDetails,
+  // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
+  component: dynamic(() =>
+    import('../../DelvauxDetails').then(m => m.DelvauxDetails)
+  ),
   defaultContent: { vi: VI, en: EN },
   elements: [
-    { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
-    { key: 'body1', label: 'Đoạn 1', icon: Pilcrow, fieldType: 'textarea' },
-    { key: 'body2', label: 'Đoạn 2', icon: Pilcrow, fieldType: 'textarea' },
+    {
+      key: 'title',
+      label: 'Tiêu đề',
+      icon: Type,
+      fieldType: 'text',
+      groupId: 'copy',
+      groupLabel: 'Nội dung',
+    },
+    {
+      key: 'body1',
+      label: 'Đoạn 1',
+      icon: Pilcrow,
+      fieldType: 'textarea',
+      groupId: 'copy',
+    },
+    {
+      key: 'body2',
+      label: 'Đoạn 2',
+      icon: Pilcrow,
+      fieldType: 'textarea',
+      groupId: 'copy',
+    },
   ],
 };

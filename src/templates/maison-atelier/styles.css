@@ -7,8 +7,8 @@
   --line: rgba(43, 35, 32, 0.16);
   --card: rgba(166, 124, 61, 0.06);
   --bordeaux: #5a2a2e;
-  --serif: 'Playfair Display', Georgia, serif;
-  --sans: 'Source Serif 4', Georgia, serif;
+  --serif: var(--font-mz-serif, 'Playfair Display'), Georgia, serif;
+  --sans: var(--font-mz-sans, 'Source Serif 4'), Georgia, serif;
   font-weight: 300;
 
   .lede {

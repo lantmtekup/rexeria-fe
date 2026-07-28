@@ -17,7 +17,9 @@ const log = (...a) =>
   console.log(`[${new Date().toISOString().slice(11, 19)}]`, ...a);
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 const page = await ctx.newPage();
 
 // Network log — only meaningful entries.
@@ -50,9 +52,7 @@ try {
 
   log('3) click Continue and measure');
   const t0 = Date.now();
-  const continueBtn = page
-    .locator('button:has-text("Continue")')
-    .first();
+  const continueBtn = page.locator('button:has-text("Continue")').first();
   await continueBtn.click();
 
   // Wait until URL changes (router.push completes) — this is the

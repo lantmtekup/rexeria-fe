@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useSwipe } from './shared/SwipeHandler';
+import { useDeviceView } from './shared/useDeviceView';
 import AdWrapper from './shared/AdWrapper';
 
 function DragIcon() {
@@ -112,6 +113,8 @@ export default function PannableAd({
   const maxOffsetRef = useRef(0);
 
   const imgRef = useRef(null);
+  const { device } = useDeviceView();
+  const isDesktop = device === 'desktop';
 
   const clampOffset = useCallback(val => {
     const max = maxOffsetRef.current;
@@ -198,7 +201,11 @@ export default function PannableAd({
       <div className='pannable-ad' ref={ref}>
         {headline && <div className='pannable-ad-title'>{headline}</div>}
         <div
-          className='pannable-ad-track'
+          className={
+            isDesktop
+              ? 'pannable-ad-track pannable-ad-track--desktop'
+              : 'pannable-ad-track'
+          }
           style={{ transform: `translateX(${offset}px)` }}
         >
           {}
@@ -206,12 +213,26 @@ export default function PannableAd({
             ref={imgRef}
             src={imageUrl}
             alt='Panorama'
-            className='pannable-ad-img'
-            style={{
-              height: '100%',
-              width: 'auto',
-              maxWidth: 'none',
-            }}
+            className={
+              isDesktop
+                ? 'pannable-ad-img pannable-ad-img--desktop'
+                : 'pannable-ad-img'
+            }
+            style={
+              isDesktop
+                ? {
+                    height: '100%',
+                    width: '100%',
+                    maxWidth: 'none',
+                    objectFit: 'cover',
+                    marginTop: '15px',
+                  }
+                : {
+                    height: '100%',
+                    width: 'auto',
+                    maxWidth: 'none',
+                  }
+            }
             onLoad={handleImageLoad}
             draggable={false}
           />
@@ -228,7 +249,10 @@ export default function PannableAd({
                   <div
                     key={h.id}
                     className='pan-item'
-                    style={{ left: `${h.x}%`, top: `${h.y}%` }}
+                    style={{
+                      left: `${isDesktop && h.xDesktop !== undefined ? h.xDesktop : h.x}%`,
+                      top: `${isDesktop && h.yDesktop !== undefined ? h.yDesktop : h.y}%`,
+                    }}
                     onClick={e => {
                       e.stopPropagation();
                       setActiveHotspot(isOpen ? null : h.id);

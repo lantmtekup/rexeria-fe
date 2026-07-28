@@ -41,7 +41,10 @@ const PRESETS: Record<Preset, Variants> = {
   },
   fade: {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.9, ease: EASE_OUT_CUBIC } },
+    visible: {
+      opacity: 1,
+      transition: { duration: 0.9, ease: EASE_OUT_CUBIC },
+    },
   },
   'scale-in': {
     hidden: { opacity: 0, scale: 1.05 },
@@ -101,8 +104,8 @@ export function MotionSection({
   return (
     <motion.section
       variants={v}
-      initial="hidden"
-      whileInView="visible"
+      initial='hidden'
+      whileInView='visible'
       viewport={{ once, margin: '-10% 0px' }}
       className={className}
       style={style}

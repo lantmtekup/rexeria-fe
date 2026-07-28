@@ -24,6 +24,7 @@ import { BlockEditor } from '@/components/modules/CanvasTemplate/BlockEditor';
 import { CodeTemplatePageEditor } from '@/components/modules/Template/CodeTemplatePageEditor';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
+import { resolveTemplateFromVersionId } from '@/services/rexer/resolveTemplateFromVersion';
 import type { Page, Template } from '@/services/rexer/types';
 import { getCodeTemplate } from '@/templates/registry';
 
@@ -65,8 +66,17 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
   >(undefined);
   const [error, setError] = React.useState<string | null>(null);
 
+  /** Tránh resolve lại khi HMR/StrictMode remount cùng rawId đã có templateId. */
+  const resolvedForRawIdRef = React.useRef<string | null>(null);
+
   React.useEffect(() => {
     let cancelled = false;
+
+    // Đã resolve xong cho rawId này → không fan-out /versions lại.
+    if (resolvedForRawIdRef.current === rawId && templateId) {
+      return;
+    }
+
     setError(null);
     setPageSlug(undefined);
     setPageId(undefined);
@@ -105,6 +115,7 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
               // Template found → editor takes templateId directly, skip
               // the version resolve below. No specific page slug in this
               // shape (template can be used by multiple pages).
+              resolvedForRawIdRef.current = rawId;
               setTemplateId(tplRes.template.id);
               return;
             } catch (tplErr) {
@@ -135,45 +146,12 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
           throw new Error('Page không có template_version_id');
         }
 
-        // Resolve version_id → template_id.
-        //
-        // Cách cũ match `template.current_version_id === versionId` chỉ
-        // work khi page pin HEAD. Sau §13 (Option C publish repoint), BE
-        // không auto-bump template.current_version_id → page.template
-        // _version_id thường diverge khỏi template.current_version_id →
-        // find() undefined → throw "chưa khớp template nào".
-        //
-        // BE chưa có `GET /template-versions/:vId` flat endpoint (probed
-        // 2026-05-31, 404), cũng không trả `template_id` ở page response.
-        // Fix: fan-out templates.versions() parallel, find template chứa
-        // versionId trong versions[]. <100 templates → 100 fetches max,
-        // acceptable cho route bootstrap.
-        const templates = await rexerApi.templates.list({ limit: 500 });
-        const items = templates.items ?? [];
-        const matches = await Promise.all(
-          items.map(async t => {
-            // Fast-path: HEAD match (still common case)
-            if (t.current_version_id === versionId) return t;
-            try {
-              const vl = await rexerApi.templates.versions(t.id);
-              const has = (vl.items ?? []).some(v => v.id === versionId);
-              return has ? t : null;
-            } catch {
-              return null;
-            }
-          })
-        );
-        const tpl = matches.find(Boolean) ?? null;
+        // version_id → template: cache + early-exit (không Promise.all mọi /versions).
+        const tpl = await resolveTemplateFromVersionId(versionId);
         if (cancelled) return;
-        if (!tpl) {
-          throw new Error(
-            `template_version_id "${versionId}" không thuộc template nào (đã probe ${items.length} templates)`
-          );
-        }
-        if (!cancelled) {
-          setTemplateId(tpl.id);
-          setResolvedTemplate(tpl);
-        }
+        resolvedForRawIdRef.current = rawId;
+        setTemplateId(tpl.id);
+        setResolvedTemplate(tpl);
       } catch (err) {
         if (!cancelled) setError(rxMessage(err));
       }
@@ -181,6 +159,8 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
     return () => {
       cancelled = true;
     };
+    // templateId chỉ dùng để skip — không đưa vào deps (tránh loop).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawId]);
 
   if (error) {
@@ -220,7 +200,7 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
   }
 
   return (
-    <div className='flex h-full flex-1 flex-col'>
+    <div className='flex h-full min-h-0 flex-1 flex-col overflow-hidden'>
       <BlockEditor
         templateId={templateId}
         autoApplyProductId={autoApplyProductId}
@@ -230,6 +210,7 @@ export default function AdminCanvasTemplateEditorPage({ params }: PageProps) {
         pageStatus={pageStatus}
         pinnedVersionId={pinnedVersionId}
         onPageSlugChange={setPageSlug}
+        onPinnedVersionChange={setPinnedVersionId}
       />
     </div>
   );

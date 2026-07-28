@@ -7,7 +7,7 @@
  */
 import { Image as ImageIcon, Pilcrow, Type } from 'lucide-react';
 
-import { FramerYumeHero } from '../../FramerYumeHero';
+import dynamic from 'next/dynamic';
 import type { FramerYumeHeroContent } from '../../../types';
 import type { BlockDef } from '../types';
 
@@ -32,7 +32,10 @@ export const framerYumeHeroDef: BlockDef<FramerYumeHeroContent> = {
     aiLabelVi: 'block hero tối giản (tên lớn + avatar)',
     aiLabelEn: 'minimal hero block (big name + avatar)',
   },
-  component: FramerYumeHero,
+  // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
+  component: dynamic(() =>
+    import('../../FramerYumeHero').then(m => m.FramerYumeHero)
+  ),
   defaultContent: { vi: VI, en: { ...VI } },
   elements: [
     { key: 'firstName', label: 'Tên (dòng 1)', icon: Type, fieldType: 'text' },

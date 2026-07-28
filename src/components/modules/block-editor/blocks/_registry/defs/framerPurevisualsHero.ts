@@ -15,7 +15,7 @@
  */
 import { Image as ImageIcon, Pilcrow, Type } from 'lucide-react';
 
-import { FramerPurevisualsHero } from '../../FramerPurevisualsHero';
+import dynamic from 'next/dynamic';
 import type { FramerPurevisualsHeroContent } from '../../../types';
 import type { BlockDef } from '../types';
 
@@ -63,7 +63,10 @@ export const framerPurevisualsHeroDef: BlockDef<FramerPurevisualsHeroContent> =
       aiLabelEn:
         'PureVisuals hero (recon spec): two 50/50 flash panels that converge on load and split on scroll to reveal heading',
     },
-    component: FramerPurevisualsHero,
+    // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
+    component: dynamic(() =>
+      import('../../FramerPurevisualsHero').then(m => m.FramerPurevisualsHero)
+    ),
     defaultContent: { vi: VI, en: EN },
     elements: [
       {

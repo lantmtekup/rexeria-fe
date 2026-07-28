@@ -75,6 +75,10 @@ export function PixelReveal({
 
     const drawAt = (pixel: number) => {
       if (!img.complete || !img.naturalWidth) return;
+      // Khung chưa có layout (tab ẩn / mini-preview) → canvas 0×0. Line dưới
+      // dùng chính canvas làm source nên drawImage sẽ ném lỗi. ResizeObserver
+      // vẽ lại khi khung có kích thước thật.
+      if (w <= 0 || h <= 0) return;
       ctx.imageSmoothingEnabled = false;
       const sw = Math.max(1, Math.round(w / pixel));
       const sh = Math.max(1, Math.round(h / pixel));

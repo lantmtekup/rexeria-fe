@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -9,18 +10,16 @@ import {
   Eye,
   Globe2,
   ImagePlus,
-  Monitor,
   Package,
   Play,
   Redo2,
   Save,
-  Smartphone,
-  Tablet,
   Undo2,
 } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 
+// import { DeviceSwitcher } from './DeviceSwitcher';
 import type { Device, Lang } from './types';
 
 export type HeaderTab = Lang | 'ai';
@@ -58,6 +57,11 @@ interface BlockEditorHeaderProps {
   savingBlockDirect?: boolean;
   /** Control transition (cấp template) — render cạnh trạng thái lưu. */
   transitionControl?: React.ReactNode;
+  /** Template version đã commit (vd "1.0.0"). Null = chưa có version. */
+  committedVersion?: string | null;
+  /** Commit draft → immutable version (template mode). */
+  onSaveVersion?: () => void;
+  savingVersion?: boolean;
   onPlayMotionPreview: () => void;
   onOpenMotionEditor: () => void;
   canUndo: boolean;
@@ -68,26 +72,23 @@ interface BlockEditorHeaderProps {
   /** Nếu set → nút back gọi hàm này (vd router.back về màn trước) thay vì đi
    *  `backHref`. Ưu tiên hơn backHref. */
   onBack?: () => void;
+  /** Slot cho action riêng của route (vd "Tạo link demo" ở admin template
+   *  edit). Render trong cụm tool bên phải, cạnh nút Xem trước — để route
+   *  không phải dựng thanh bar riêng ăn mất chiều cao canvas. Style do route
+   *  tự lo (giữ h-7 để khớp hàng tool). */
+  headerActions?: React.ReactNode;
 }
-
-const DEVICE_BUTTONS: {
-  value: Device;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}[] = [
-  { value: 'desktop', icon: Monitor, label: 'Desktop' },
-  { value: 'tablet', icon: Tablet, label: 'Tablet' },
-  { value: 'mobile', icon: Smartphone, label: 'Mobile' },
-];
 
 export function BlockEditorHeader({
   blockName,
   lang,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   device,
   saving,
   dirty,
   duplicating,
   onLangChange,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onDeviceChange,
   onAi,
   onApplyProduct,
@@ -102,6 +103,9 @@ export function BlockEditorHeader({
   onSaveBlockDirect,
   savingBlockDirect,
   transitionControl,
+  committedVersion,
+  onSaveVersion,
+  savingVersion,
   onPlayMotionPreview,
   onOpenMotionEditor,
   canUndo,
@@ -110,6 +114,7 @@ export function BlockEditorHeader({
   isMotionPreviewing,
   backHref = '/canvas-templates',
   onBack,
+  headerActions,
 }: BlockEditorHeaderProps) {
   const status: SaveStatus = saving ? 'saving' : dirty ? 'dirty' : 'saved';
 
@@ -117,8 +122,8 @@ export function BlockEditorHeader({
     'flex size-8 shrink-0 items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900';
 
   return (
-    <header className='flex h-12 shrink-0 items-center gap-2.5 border-b border-neutral-200/80 bg-white px-3'>
-      {/* ── LEFT · back + crumb + save dot ─────────────────────────── */}
+    <header className='flex h-11 shrink-0 items-center gap-1.5 border-b border-neutral-200/80 bg-white px-2.5'>
+      {/* ── LEFT · nav + meta ─────────────────────────────────────── */}
       {onBack ? (
         <button
           type='button'
@@ -140,104 +145,90 @@ export function BlockEditorHeader({
         </Link>
       )}
 
-      <div className='flex min-w-0 items-baseline gap-2'>
-        <h1 className='truncate text-sm font-semibold tracking-tight text-neutral-900'>
+      <div className='flex min-w-0 items-center gap-1.5'>
+        <h1 className='max-w-[8rem] truncate text-sm font-semibold tracking-tight text-neutral-900 sm:max-w-[10rem]'>
           {blockName}
         </h1>
+        <SaveDot status={status} />
+        {committedVersion !== undefined && (
+          <VersionBadge version={committedVersion} />
+        )}
       </div>
-      <SaveDot status={status} />
 
-      {/* Transition control — đặt cạnh trạng thái lưu (thay vì nổi góc dưới). */}
-      {transitionControl && (
-        <div className='ml-1 shrink-0'>{transitionControl}</div>
-      )}
+      {transitionControl && <div className='shrink-0'>{transitionControl}</div>}
 
-      {/* push the rest right */}
-      <div className='flex-1' />
-
-      {/* ── CENTER · history + device + lang ───────────────────────── */}
-      <div className='flex items-center'>
+      {/* ── RIGHT · tools (không flex-1 — tránh khoảng trống giữa) ── */}
+      <div className='ml-auto flex items-center gap-0.5'>
         <IconBtn onClick={onUndo} disabled={!canUndo} label='Hoàn tác (⌘Z)'>
-          <Undo2 className='size-4' />
+          <Undo2 className='size-3.5' />
         </IconBtn>
         <IconBtn onClick={onRedo} disabled={!canRedo} label='Làm lại (⌘⇧Z)'>
-          <Redo2 className='size-4' />
+          <Redo2 className='size-3.5' />
         </IconBtn>
-      </div>
 
-      <Divider />
+        <Divider />
 
-      <SegmentedGroup ariaLabel='Thiết bị xem trước'>
-        {DEVICE_BUTTONS.map(({ value, icon: Icon, label }) => (
+        {/* <DeviceSwitcher
+          device={device}
+          onChange={onDeviceChange}
+          variant='editor'
+        /> */}
+
+        <Divider />
+
+        <SegmentedGroup ariaLabel='Chế độ chỉnh sửa'>
           <SegmentedButton
-            key={value}
-            active={device === value}
-            onClick={() => onDeviceChange(value)}
-            aria-label={label}
-            title={label}
-            className='size-7'
+            active={lang === 'vi'}
+            onClick={() => onLangChange('vi')}
+            className='text-3xs h-6 px-1.5 font-mono font-semibold tracking-[0.12em]'
           >
-            <Icon className='size-3.5' />
+            VI
           </SegmentedButton>
-        ))}
-      </SegmentedGroup>
+          <SegmentedButton
+            active={lang === 'en'}
+            onClick={() => onLangChange('en')}
+            className='text-3xs h-6 px-1.5 font-mono font-semibold tracking-[0.12em]'
+          >
+            EN
+          </SegmentedButton>
+          <SegmentedButton
+            onClick={onAi}
+            aria-label='AI'
+            className='text-3xs h-6 px-1.5 font-mono font-semibold tracking-[0.12em]'
+          >
+            AI
+          </SegmentedButton>
+        </SegmentedGroup>
 
-      <SegmentedGroup ariaLabel='Chế độ chỉnh sửa'>
-        <SegmentedButton
-          active={lang === 'vi'}
-          onClick={() => onLangChange('vi')}
-          className='text-3xs h-7 px-2 font-mono font-semibold tracking-[0.14em]'
+        <Divider />
+
+        <IconBtn
+          onClick={onOpenMotionEditor}
+          label='Mở trình chỉnh motion'
+          data-testid='header-motion-editor'
         >
-          VI
-        </SegmentedButton>
-        <SegmentedButton
-          active={lang === 'en'}
-          onClick={() => onLangChange('en')}
-          className='text-3xs h-7 px-2 font-mono font-semibold tracking-[0.14em]'
+          <Clapperboard className='size-3.5' />
+        </IconBtn>
+        <IconBtn
+          onClick={onPlayMotionPreview}
+          label='Phát thử motion (Space)'
+          data-testid='header-motion-preview'
+          className={cn(isMotionPreviewing && 'bg-indigo-100 text-indigo-700')}
         >
-          EN
-        </SegmentedButton>
-        <SegmentedButton
-          onClick={onAi}
-          aria-label='AI'
-          className='text-3xs h-7 px-2 font-mono font-semibold tracking-[0.14em]'
-        >
-          AI
-        </SegmentedButton>
-      </SegmentedGroup>
+          <Play className='size-3.5' />
+        </IconBtn>
 
-      <Divider />
+        <Divider />
 
-      {/* ── MOTION · timeline editor + play preview ─────────────────── */}
-      <IconBtn
-        onClick={onOpenMotionEditor}
-        label='Mở trình chỉnh motion'
-        data-testid='header-motion-editor'
-      >
-        <Clapperboard className='size-4' />
-      </IconBtn>
-      <IconBtn
-        onClick={onPlayMotionPreview}
-        label='Phát thử motion (Space)'
-        data-testid='header-motion-preview'
-        className={cn(isMotionPreviewing && 'bg-indigo-100 text-indigo-700')}
-      >
-        <Play className='size-4' />
-      </IconBtn>
-
-      <Divider />
-
-      {/* ── RIGHT · quick actions + publish CTA ────────────────────── */}
-      <div className='flex items-center'>
         <IconBtn
           onClick={onImportFromImage}
           label='Tạo block từ ảnh / Figma'
           data-testid='header-import-block'
         >
-          <ImagePlus className='size-4' />
+          <ImagePlus className='size-3.5' />
         </IconBtn>
         <IconBtn onClick={onApplyProduct} label='Áp dụng sản phẩm vào canvas'>
-          <Package className='size-4' />
+          <Package className='size-3.5' />
         </IconBtn>
         {onDuplicate && (
           <IconBtn
@@ -245,53 +236,80 @@ export function BlockEditorHeader({
             disabled={duplicating}
             label={duplicating ? 'Đang nhân bản…' : 'Lưu thành của tôi'}
           >
-            <Copy className='size-4' />
+            <Copy className='size-3.5' />
           </IconBtn>
         )}
         {onSaveBlock ? (
           <IconBtn onClick={onSaveBlock} label={saveBlockLabel}>
-            <Bookmark className='size-4' />
+            <Bookmark className='size-3.5' />
           </IconBtn>
         ) : null}
+
+        <Divider />
+
         <IconBtn onClick={onPreview} label='Xem trước'>
-          <Eye className='size-4' />
+          <Eye className='size-3.5' />
         </IconBtn>
+
+        {headerActions}
+
+        {onPublish ? (
+          <button
+            type='button'
+            onClick={onPublish}
+            className={cn(
+              'text-2xs ml-0.5 flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2.5 font-semibold tracking-tight transition-colors',
+              'shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_0_rgba(0,0,0,0.04)]',
+              isPublished
+                ? 'bg-emerald-600 text-white hover:bg-emerald-500'
+                : 'bg-neutral-900 text-white hover:bg-neutral-700'
+            )}
+          >
+            <Globe2 className='size-3.5' />
+            <span className='hidden sm:inline'>
+              {isPublished ? 'Đã xuất bản' : 'Xuất bản'}
+            </span>
+          </button>
+        ) : null}
+
+        {onSaveBlockDirect ? (
+          <button
+            type='button'
+            onClick={onSaveBlockDirect}
+            disabled={savingBlockDirect}
+            title='Ghi đè block hiện tại trong thư viện'
+            className={cn(
+              'text-2xs ml-0.5 flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2.5 font-semibold tracking-tight transition-colors',
+              'bg-neutral-900 text-white hover:bg-neutral-700',
+              'disabled:cursor-wait disabled:opacity-60'
+            )}
+          >
+            <Save className='size-3.5' />
+            {savingBlockDirect ? 'Đang lưu…' : 'Lưu block'}
+          </button>
+        ) : null}
+
+        {onSaveVersion ? (
+          <button
+            type='button'
+            onClick={onSaveVersion}
+            disabled={savingVersion}
+            title={
+              committedVersion
+                ? 'Tạo immutable version mới'
+                : 'Commit version đầu tiên (v1.0.0)'
+            }
+            className={cn(
+              'text-2xs ml-0.5 flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-2.5 font-semibold tracking-tight transition-colors',
+              'bg-neutral-900 text-white hover:bg-neutral-700',
+              'disabled:cursor-wait disabled:opacity-60'
+            )}
+          >
+            <Save className='size-3.5' />
+            {savingVersion ? 'Đang commit…' : 'Save Version'}
+          </button>
+        ) : null}
       </div>
-
-      {onPublish ? (
-        <button
-          type='button'
-          onClick={onPublish}
-          className={cn(
-            'text-2xs ml-1 flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-3 font-semibold tracking-tight transition-colors',
-            'shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_0_rgba(0,0,0,0.04)]',
-            isPublished
-              ? 'bg-emerald-600 text-white hover:bg-emerald-500'
-              : 'bg-neutral-900 text-white hover:bg-neutral-700'
-          )}
-        >
-          <Globe2 className='size-3.5' />
-          {isPublished ? 'Đã xuất bản' : 'Xuất bản'}
-        </button>
-      ) : null}
-
-      {onSaveBlockDirect ? (
-        <button
-          type='button'
-          onClick={onSaveBlockDirect}
-          disabled={savingBlockDirect}
-          title='Ghi đè block hiện tại trong thư viện'
-          className={cn(
-            'text-2xs ml-1 flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-md px-3 font-semibold tracking-tight transition-colors',
-            'shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_1px_0_rgba(0,0,0,0.04)]',
-            'bg-neutral-900 text-white hover:bg-neutral-700',
-            'disabled:cursor-wait disabled:opacity-60'
-          )}
-        >
-          <Save className='size-3.5' />
-          {savingBlockDirect ? 'Đang lưu…' : 'Lưu block'}
-        </button>
-      ) : null}
     </header>
   );
 }
@@ -322,18 +340,40 @@ function SaveDot({ status }: { status: SaveStatus }) {
   const { dot, label, tone } = map[status];
   return (
     <span
-      className='inline-flex shrink-0 items-center gap-1.5'
+      className='inline-flex shrink-0 items-center gap-1'
       aria-live='polite'
+      title={label}
     >
       <span className={cn('size-1.5 rounded-full', dot)} aria-hidden />
       <span
         className={cn(
-          'text-3xs font-mono tracking-[0.04em] tabular-nums',
+          'text-3xs hidden font-mono tracking-[0.04em] tabular-nums sm:inline',
           tone
         )}
       >
         {label}
       </span>
+    </span>
+  );
+}
+
+function VersionBadge({ version }: { version: string | null }) {
+  if (version) {
+    return (
+      <code
+        className='text-3xs text-content-muted hidden rounded bg-neutral-100 px-1.5 py-0.5 font-mono ring-1 ring-neutral-200/80 sm:inline'
+        title='Version đã commit'
+      >
+        v{version}
+      </code>
+    );
+  }
+  return (
+    <span
+      className='text-3xs hidden rounded bg-amber-50 px-1.5 py-0.5 font-mono text-amber-800 ring-1 ring-amber-200/80 sm:inline'
+      title='Chưa có version immutable — chỉ có draft autosave'
+    >
+      Draft
     </span>
   );
 }
@@ -350,7 +390,7 @@ function IconBtn({
       title={label}
       aria-label={label}
       className={cn(
-        'flex size-8 cursor-pointer items-center justify-center rounded-md text-neutral-500 transition-colors',
+        'flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-500 transition-colors',
         'enabled:hover:bg-neutral-100 enabled:hover:text-neutral-900',
         'disabled:cursor-not-allowed disabled:opacity-30',
         className
@@ -363,7 +403,7 @@ function IconBtn({
 }
 
 function Divider() {
-  return <div className='mx-1 h-5 w-px shrink-0 bg-neutral-200' />;
+  return <div className='mx-0.5 h-4 w-px shrink-0 bg-neutral-200' />;
 }
 
 function SegmentedGroup({
@@ -377,7 +417,7 @@ function SegmentedGroup({
     <div
       role='group'
       aria-label={ariaLabel}
-      className='ml-1 flex items-center gap-0.5 rounded-md bg-neutral-100 p-0.5'
+      className='flex items-center gap-0.5 rounded-md bg-neutral-100 p-0.5'
     >
       {children}
     </div>

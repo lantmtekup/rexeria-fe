@@ -23,13 +23,20 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
+  Blend,
+  CheckCircle,
+  ChevronRight,
+  Film,
   FormInput,
   Grid3x3,
   GripVertical,
   Image as ImageIcon,
+  Layers as LayersIcon,
+  Link2,
   ListChecks,
   MousePointerClick,
   Paintbrush,
+  Palette,
   Pilcrow,
   SquareDashed,
   Type,
@@ -39,6 +46,59 @@ import { cn } from '@/lib/cn';
 
 import { AddExtraElementButton } from './AddExtraElementButton';
 import { ExtraElementsList } from './ExtraElementsList';
+import { resolvePnjParagraphs } from './blocks/PnjDetails';
+import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
+import { resolvePnjVariants } from './blocks/pnjVariantContent';
+import { realEstateHeroStatElements } from './blocks/_registry/defs/realEstateHero';
+import { realEstateHighlightItemElements } from './blocks/_registry/defs/realEstateHighlights';
+import {
+  coolHunterGalleryItemElements,
+  resolveCoolHunterGalleryItems,
+} from './blocks/_registry/defs/coolHunterGallery';
+import {
+  lineaPortfolioHeadingElements,
+  lineaPortfolioItemElements,
+} from './blocks/_registry/defs/lineaPortfolio';
+import { coolHunterSectionProgressItemElements } from './blocks/_registry/defs/coolHunterSectionProgress';
+import { realEstateOverviewStatElements } from './blocks/_registry/defs/realEstateOverview';
+import { realEstateUtilityItemElements } from './blocks/_registry/defs/realEstateUtilities';
+import { realEstateVillaSlideElements } from './blocks/_registry/defs/realEstateVilla';
+import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
+import { delvauxProductHotspotElements } from './blocks/_registry/defs/delvauxProduct';
+import {
+  delvauxFaqElements,
+  delvauxVariantItemElements,
+} from './blocks/_registry/defs/delvauxVariant';
+import { mintDiscoverTabElements } from './blocks/_registry/defs/mintDiscover';
+import {
+  resolveScrollMattisSlides,
+  scrollMattisSlideElements,
+  SCROLL_MATTIS_LEGACY_ELEMENTS,
+} from './blocks/_registry/defs/scrollMattis';
+import { framerDarlingTimelineItemElements } from './blocks/_registry/defs/framerDarlingTimeline';
+import { framerPerformPricingTierElements } from './blocks/_registry/defs/framerPerformPricing';
+import { mintV2ProcessStepElements } from './blocks/_registry/defs/mintV2Process';
+import { mintV2ServicesItemElements } from './blocks/_registry/defs/mintV2Services';
+import { mintV2WorksCardElements } from './blocks/_registry/defs/mintV2Works';
+import { mintVaultCoinElements } from './blocks/mintVaultCollectionElements';
+import { mintVaultCraftItemElements } from './blocks/mintVaultCraftElements';
+import { mintVaultInvitationImageElements } from './blocks/mintVaultInvitationElements';
+import { mintVaultRevealImageElements } from './blocks/mintVaultRevealElements';
+import { pnjStickyMenuItemElements } from './blocks/_registry/defs/pnjStickyMenu';
+import { aesthaNavLinkElements } from './blocks/_registry/defs/framerAesthaEditorial';
+import {
+  aesthaExploreFooterLinkElements,
+  aesthaExploreProjectElements,
+} from './blocks/_registry/defs/aesthaExplore';
+import {
+  aesthaStudioFooterLinkElements,
+  aesthaStudioTeamElements,
+} from './blocks/_registry/defs/aesthaStudio';
+import {
+  aesthaContactFooterLinkElements,
+  aesthaContactSocialElements,
+} from './blocks/_registry/defs/aesthaContact';
+import { delvauxSubnavLinkElements } from './blocks/_registry/defs/delvauxSubnav';
 import { getBlockDef } from './blocks/_registry/registry';
 import {
   editingVariantOf,
@@ -48,6 +108,31 @@ import {
   type BlockType,
   type Device,
   type ExtraElementKind,
+  type DelvauxProductHotspot,
+  type DelvauxSubnavLink,
+  type DelvauxVariantFaq,
+  type DelvauxVariantOption,
+  type AesthaExploreProject,
+  type PnjHeroContent,
+  type PnjVariantContent,
+  type PnjStickyMenuItem,
+  type RealEstateHeroStat,
+  type RealEstateOverviewStat,
+  type RealEstateHighlightItem,
+  type CoolHunterGalleryContent,
+  type LineaPortfolioItem,
+  type CoolHunterSectionProgressItem,
+  type RealEstateVillaSlide,
+  type RealEstateUtilityItem,
+  type MintDiscoverTab,
+  type ScrollMattisContent,
+  type FramerDarlingTimelineContent,
+  type FramerPerformPricingContent,
+  type MintV2ProcessStep,
+  type MintV2ServiceItem,
+  type MintV2WorkCard,
+  type MintVaultCoin,
+  type MintVaultCraftItem,
 } from './types';
 
 export interface LayerElement {
@@ -59,7 +144,57 @@ export interface LayerElement {
    * editor biết hiện control gì (ô text / textarea / image picker) mà KHÔNG
    * phải đoán theo tên key. Bỏ trống → fallback heuristic cũ.
    */
-  fieldType?: 'text' | 'textarea' | 'image';
+  /** `'link'` swaps the plain text input for the link picker (internal page /
+   *  scroll to block / external URL). Free text still round-trips, so a field
+   *  left as `'text'` keeps working. */
+  fieldType?: 'text' | 'textarea' | 'image' | 'link';
+  /**
+   * Cùng `groupId` → gom thành 1 folder collapsible trong panel Lớp.
+   * Opt-in: block không khai vẫn list phẳng.
+   */
+  groupId?: string;
+  /** Nhãn group (vd. "Slide 1") — chỉ cần trên phần tử đầu của group. */
+  groupLabel?: string;
+}
+
+/** View-model node for the layers tree (1-level groups). */
+export type LayerTreeNode =
+  | { kind: 'leaf'; element: LayerElement }
+  | {
+      kind: 'group';
+      groupId: string;
+      label: string;
+      children: LayerElement[];
+    };
+
+/**
+ * Build a 1-level tree from ordered elements. Contiguous runs that share
+ * `groupId` become a group; everything else stays a top-level leaf.
+ */
+export function buildLayerTree(ordered: LayerElement[]): LayerTreeNode[] {
+  const nodes: LayerTreeNode[] = [];
+  let i = 0;
+  while (i < ordered.length) {
+    const el = ordered[i];
+    if (!el.groupId) {
+      nodes.push({ kind: 'leaf', element: el });
+      i += 1;
+      continue;
+    }
+    const groupId = el.groupId;
+    const children: LayerElement[] = [];
+    while (i < ordered.length && ordered[i].groupId === groupId) {
+      children.push(ordered[i]);
+      i += 1;
+    }
+    nodes.push({
+      kind: 'group',
+      groupId,
+      label: children[0]?.groupLabel ?? groupId,
+      children,
+    });
+  }
+  return nodes;
 }
 
 interface LayersPanelProps {
@@ -177,20 +312,15 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'centerImageUrl', label: 'Ảnh giữa', icon: ImageIcon },
     { key: 'services', label: 'Dịch vụ', icon: Grid3x3 },
   ],
-  framer_aestha_editorial: [
-    BACKGROUND_LAYER,
-    { key: 'brand', label: 'Brand', icon: Type },
-    { key: 'tagline', label: 'Tagline', icon: Pilcrow },
-    { key: 'description', label: 'Mô tả', icon: Pilcrow },
-    { key: 'image1Url', label: 'Ảnh 1', icon: ImageIcon },
-    { key: 'image2Url', label: 'Ảnh 2', icon: ImageIcon },
-    { key: 'image3Url', label: 'Ảnh 3', icon: ImageIcon },
-    { key: 'ctaText', label: 'Nút CTA', icon: MousePointerClick },
-    { key: 'navLinks', label: 'Nav', icon: Grid3x3 },
-  ],
   framer_perform_about: [
     BACKGROUND_LAYER,
     { key: 'testimonials', label: 'Testimonials', icon: Grid3x3 },
+  ],
+  housent_our_excellence: [
+    BACKGROUND_LAYER,
+    { key: 'badge', label: 'Badge', icon: Type },
+    { key: 'heading', label: 'Tiêu đề', icon: Type },
+    { key: 'body', label: 'Mô tả', icon: Pilcrow },
   ],
   framer_perform_pricing: [
     BACKGROUND_LAYER,
@@ -264,6 +394,55 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'titleLine1', label: 'Tiêu đề dòng 1', icon: Type },
     { key: 'titleLine2', label: 'Tiêu đề dòng 2', icon: Type },
     { key: 'variants', label: 'Biến thể (swatch)', icon: Grid3x3 },
+    {
+      key: 'discover.title',
+      label: 'Tiêu đề',
+      icon: Type,
+      groupId: 'discover',
+      groupLabel: 'Drawer chi tiết',
+    },
+    {
+      key: 'discover.badge',
+      label: 'Nhãn (mintage)',
+      icon: Type,
+      groupId: 'discover',
+    },
+    {
+      key: 'discover.subtitle',
+      label: 'Phụ đề',
+      icon: Type,
+      groupId: 'discover',
+    },
+    {
+      key: 'discover.dimensions',
+      label: 'Kích thước',
+      icon: Pilcrow,
+      groupId: 'discover',
+    },
+    {
+      key: 'discover.faceValue',
+      label: 'Face value',
+      icon: Type,
+      groupId: 'discover',
+    },
+    {
+      key: 'discover.detailsText',
+      label: 'Chi tiết',
+      icon: Pilcrow,
+      groupId: 'discover',
+    },
+    {
+      key: 'discover.packagingText',
+      label: 'Đóng gói',
+      icon: Pilcrow,
+      groupId: 'discover',
+    },
+    {
+      key: 'discover.shippingText',
+      label: 'Vận chuyển',
+      icon: Pilcrow,
+      groupId: 'discover',
+    },
   ],
   mint_hero: [
     BACKGROUND_LAYER,
@@ -280,9 +459,9 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
   ],
   mintv2_services: [
     BACKGROUND_LAYER,
-    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
-    { key: 'title', label: 'Tiêu đề lớn', icon: Type },
-    { key: 'items', label: 'Danh sách mục', icon: ListChecks },
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+    { key: 'title', label: 'Tiêu đề lớn', icon: Type, fieldType: 'text' },
+    // items expand via elementsForType(mintv2_services) + mintV2ServicesItemElements
   ],
   mintv2_manifesto: [
     BACKGROUND_LAYER,
@@ -290,9 +469,9 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
   ],
   mintv2_process: [
     BACKGROUND_LAYER,
-    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
-    { key: 'title', label: 'Tiêu đề lớn', icon: Type },
-    { key: 'steps', label: 'Các bước', icon: ListChecks },
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+    { key: 'title', label: 'Tiêu đề lớn', icon: Type, fieldType: 'text' },
+    // line/dot + steps expand via elementsForType(mintv2_process)
   ],
   mintv2_cta: [
     BACKGROUND_LAYER,
@@ -306,7 +485,7 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
     { key: 'title', label: 'Tiêu đề lớn', icon: Type },
-    { key: 'cards', label: 'Các card', icon: ListChecks },
+    // cards expand via elementsForType(mintv2_works) + mintV2WorksCardElements
   ],
   linea_portfolio: [
     BACKGROUND_LAYER,
@@ -330,12 +509,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'title', label: 'Tiêu đề', icon: Type },
     { key: 'items', label: 'Mục accordion', icon: ListChecks },
   ],
-  mint_vault_reveal: [
-    BACKGROUND_LAYER,
-    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
-    { key: 'title', label: 'Tiêu đề', icon: Type },
-    { key: 'images', label: 'Ảnh gallery', icon: Grid3x3 },
-  ],
   mint_vault_collection: [
     BACKGROUND_LAYER,
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
@@ -344,10 +517,38 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
   ],
   mint_vault_invitation: [
     BACKGROUND_LAYER,
-    { key: 'eyebrow', label: 'Eyebrow', icon: Type },
-    { key: 'title', label: 'Tiêu đề', icon: Type },
-    { key: 'note', label: 'Ghi chú', icon: Pilcrow },
-    { key: 'backgroundImageUrl', label: 'Ảnh nền', icon: ImageIcon },
+    { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+    { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+    { key: 'note', label: 'Ghi chú', icon: Pilcrow, fieldType: 'textarea' },
+    // Cụm form — groupId liền kề mới gom thành 1 folder (buildLayerTree).
+    {
+      key: 'emailPlaceholder',
+      label: 'Placeholder',
+      groupId: 'form',
+      groupLabel: 'Form lead',
+      icon: FormInput,
+      fieldType: 'text',
+    },
+    {
+      key: 'submitText',
+      label: 'Nút gửi',
+      groupId: 'form',
+      icon: MousePointerClick,
+      fieldType: 'text',
+    },
+    {
+      key: 'successMessage',
+      label: 'Lời cảm ơn',
+      groupId: 'form',
+      icon: CheckCircle,
+      fieldType: 'textarea',
+    },
+    {
+      key: 'backgroundImageUrl',
+      label: 'Ảnh nền',
+      icon: ImageIcon,
+      fieldType: 'image',
+    },
     { key: 'images', label: 'Ảnh explosion', icon: Grid3x3 },
   ],
   mint_discover: [
@@ -459,6 +660,10 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'heading', label: 'Tiêu đề', icon: Type },
   ],
+  brutalist_text: [
+    BACKGROUND_LAYER,
+    { key: 'heading', label: 'Tiêu đề', icon: Type },
+  ],
   image_explosion: [
     BACKGROUND_LAYER,
     { key: 'eyebrow', label: 'Eyebrow', icon: Type },
@@ -501,9 +706,824 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
 /**
  * Element con của 1 block — registry-first (BlockDef.elements + layer nền),
  * fallback map ELEMENTS_BY_TYPE cho block CHƯA migrate sang registry.
+ * `pnj_details`: expand `paragraphs[i]` từ content.
+ * `pnj_hero`: expand `titleLines[i]` từ content.
+ * `pnj_variant`: expand từng góc với groupId (pattern ScrollMattis).
  */
-export function elementsForType(type: BlockType): LayerElement[] {
+export function elementsForType(
+  type: BlockType,
+  content?: Record<string, unknown> | null
+): LayerElement[] {
   const def = getBlockDef(type);
+  if (type === 'pnj_details') {
+    // Same normalize as canvas/toolbar — tránh layers lệch khi còn legacy paragraph1/2.
+    const list = resolvePnjParagraphs(
+      (content ?? {}) as unknown as Parameters<typeof resolvePnjParagraphs>[0]
+    );
+    const slots = list.map((_, i) => ({
+      key: `paragraphs[${i}]`,
+      label: `Đoạn ${i + 1}`,
+      icon: Pilcrow,
+      fieldType: 'textarea' as const,
+    }));
+    return [
+      BACKGROUND_LAYER,
+      { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      ...slots,
+      {
+        key: 'paragraphs',
+        label: 'Thêm / quản lý đoạn',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'pnj_hero') {
+    const lines = resolvePnjHeroTitleLines(
+      (content ?? {}) as unknown as PnjHeroContent
+    );
+    const titleSlots = lines.map((_, i) => ({
+      key: `titleLines[${i}]`,
+      label: `Tiêu đề dòng ${i + 1}`,
+      icon: Type,
+      fieldType: 'text' as const,
+    }));
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'subtitle',
+        label: 'Subtitle / brand',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      ...titleSlots,
+      {
+        key: 'titleLines',
+        label: 'Thêm / quản lý tiêu đề',
+        icon: ListChecks,
+      },
+      {
+        key: 'storefrontUrl',
+        label: 'Ảnh storefront',
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+      {
+        key: 'hotspots',
+        label: 'Hotspot / chi tiết',
+        icon: ListChecks,
+      },
+      {
+        key: 'frames',
+        label: 'Frame sequence / JSON',
+        icon: Film,
+      },
+      {
+        key: 'scrim',
+        label: 'Lớp mờ / scrim',
+        icon: Blend,
+      },
+    ];
+  }
+  if (type === 'cool_hunter_section_progress') {
+    const raw = content?.sections;
+    const sections = Array.isArray(raw)
+      ? (raw as CoolHunterSectionProgressItem[]).filter(
+          s => s && typeof s === 'object'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...coolHunterSectionProgressItemElements(sections),
+      {
+        key: 'sections',
+        label: 'Thêm / quản lý section',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'cool_hunter_hero') {
+    // Cùng normalize với canvas/toolbar → layers không lệch số dòng tiêu đề.
+    const lines = resolvePnjHeroTitleLines(
+      (content ?? {}) as unknown as PnjHeroContent
+    );
+    const titleSlots = lines.map((_, i) => ({
+      key: `titleLines[${i}]`,
+      label: `Tiêu đề dòng ${i + 1}`,
+      icon: Type,
+      fieldType: 'text' as const,
+    }));
+    return [
+      BACKGROUND_LAYER,
+      { key: 'logoUrl', label: 'Logo', icon: ImageIcon, fieldType: 'image' },
+      ...titleSlots,
+      {
+        key: 'titleLines',
+        label: 'Thêm / quản lý tiêu đề',
+        icon: ListChecks,
+      },
+      {
+        key: 'imageUrl',
+        label: 'Ảnh hero',
+        icon: ImageIcon,
+        fieldType: 'image',
+      },
+    ];
+  }
+  if (type === 'linea_portfolio') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as LineaPortfolioItem[]).filter(it => it && typeof it === 'object')
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...lineaPortfolioHeadingElements,
+      ...lineaPortfolioItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý ảnh',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'cool_hunter_gallery') {
+    const items = resolveCoolHunterGalleryItems(
+      (content ?? {}) as CoolHunterGalleryContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...coolHunterGalleryItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý ảnh',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'pnj_variant') {
+    const variants = resolvePnjVariants(
+      (content ?? {}) as unknown as PnjVariantContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...pnjVariantItemElements(variants),
+      {
+        key: 'variants',
+        label: 'Thêm / quản lý góc',
+        icon: ListChecks,
+      },
+      { key: 'ctaText', label: 'CTA', icon: Type, fieldType: 'text' },
+    ];
+  }
+  if (type === 'delvaux_product') {
+    const raw = content?.hotspots;
+    const hotspots = Array.isArray(raw)
+      ? (raw as DelvauxProductHotspot[]).filter(
+          h => h && typeof h === 'object' && typeof h.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'imageUrl',
+        label: 'Ảnh sản phẩm',
+        icon: ImageIcon,
+        fieldType: 'image',
+        groupId: 'product',
+        groupLabel: 'Sản phẩm',
+      },
+      {
+        key: 'glowColor',
+        label: 'Màu quầng sáng',
+        icon: Palette,
+        fieldType: 'text',
+        groupId: 'product',
+      },
+      ...delvauxProductHotspotElements(hotspots),
+      {
+        key: 'hotspots',
+        label: 'Thêm / quản lý hotspot',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'delvaux_variant') {
+    const rawVariants = content?.variants;
+    const variants = Array.isArray(rawVariants)
+      ? (rawVariants as DelvauxVariantOption[]).filter(
+          v => v && typeof v === 'object' && typeof v.label === 'string'
+        )
+      : [];
+    const rawFaqs = content?.faqs;
+    const faqs = Array.isArray(rawFaqs)
+      ? (rawFaqs as DelvauxVariantFaq[]).filter(
+          f => f && typeof f === 'object' && typeof f.question === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'title',
+        label: 'Tiêu đề (ghost)',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'stage1',
+        groupLabel: 'Stage 1',
+      },
+      {
+        key: 'moreInfoLabel',
+        label: 'Nhãn nút thông tin',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'stage1',
+      },
+      ...delvauxVariantItemElements(variants),
+      {
+        key: 'variants',
+        label: 'Thêm / quản lý màu',
+        icon: ListChecks,
+      },
+      ...delvauxFaqElements(faqs),
+      {
+        key: 'faqs',
+        label: 'Thêm / quản lý FAQ',
+        icon: ListChecks,
+      },
+      {
+        key: 'skuName',
+        label: 'Tên SKU (stage 2)',
+        icon: Type,
+        fieldType: 'textarea',
+        groupId: 'sku',
+        groupLabel: 'Stage 2 · SKU',
+      },
+      {
+        key: 'skuMediaUrl',
+        label: 'Media SKU (URL)',
+        icon: ImageIcon,
+        fieldType: 'text',
+        groupId: 'sku',
+      },
+      {
+        key: 'skuPersonUrl',
+        label: 'Ảnh model',
+        icon: ImageIcon,
+        fieldType: 'image',
+        groupId: 'sku',
+      },
+    ];
+  }
+  if (type === 'real_estate_hero') {
+    const raw = content?.stats;
+    const stats = Array.isArray(raw)
+      ? (raw as RealEstateHeroStat[]).filter(
+          s => s && typeof s === 'object' && typeof s.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'imageUrl',
+        label: 'Ảnh banner',
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+      ...realEstateHeroStatElements(stats),
+      {
+        key: 'stats',
+        label: 'Thêm / quản lý thông số',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'real_estate_overview') {
+    const raw = content?.stats;
+    const stats = Array.isArray(raw)
+      ? (raw as RealEstateOverviewStat[]).filter(
+          s => s && typeof s === 'object' && typeof s.text === 'string'
+        )
+      : [];
+    // Không có mục list manager: số hạng mục cố định 6 (mỗi icon gắn ngữ nghĩa
+    // riêng với chữ của nó) — xem docblock `defs/realEstateOverview.ts`.
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      ...realEstateOverviewStatElements(stats),
+    ];
+  }
+  if (type === 'real_estate_highlights') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as RealEstateHighlightItem[]).filter(
+          it => it && typeof it === 'object' && typeof it.text === 'string'
+        )
+      : [];
+    // Không có mục list manager: số card cố định 4 như nguồn — xem docblock
+    // `defs/realEstateHighlights.ts`.
+    return [
+      // BACKGROUND_LAYER = nền NGOÀI (của cả block); `contentSurface` = dải nền
+      // 372 phía trong. Hai lớp tách bạch, sửa độc lập.
+      BACKGROUND_LAYER,
+      { key: 'contentSurface', label: 'Nền cột nội dung', icon: Palette },
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'description',
+        label: 'Mô tả',
+        icon: Pilcrow,
+        fieldType: 'textarea' as const,
+      },
+      ...realEstateHighlightItemElements(items),
+    ];
+  }
+  if (type === 'real_estate_villa') {
+    const raw = content?.slides;
+    const slides = Array.isArray(raw)
+      ? (raw as RealEstateVillaSlide[]).filter(
+          s => s && typeof s === 'object' && typeof s.title === 'string'
+        )
+      : [];
+    // Không có mục list manager: số slide cố định 4 như nguồn — xem docblock
+    // `defs/realEstateVilla.ts`.
+    return [
+      // BACKGROUND_LAYER = nền NGOÀI (của cả block); `cardSurface` = nền thẻ
+      // phía trong. Hai lớp tách bạch, sửa độc lập.
+      BACKGROUND_LAYER,
+      {
+        key: 'eyebrow',
+        label: 'Nhãn nhỏ',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      { key: 'cardSurface', label: 'Nền thẻ', icon: Palette },
+      ...realEstateVillaSlideElements(slides),
+    ];
+  }
+  if (type === 'real_estate_utilities') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as RealEstateUtilityItem[]).filter(
+          it => it && typeof it === 'object' && typeof it.label === 'string'
+        )
+      : [];
+    // Không có mục list manager: số ô cố định 6 như nguồn — xem docblock
+    // `defs/realEstateUtilities.ts`.
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      // Style-only, MỘT key cho cả 6 ô — phải khớp `elements[]` trong
+      // `defs/realEstateUtilities.ts`, nếu không panel Lớp và toolbar lệch nhau.
+      { key: 'cardSurface', label: 'Viền & nền ô', icon: Palette },
+      ...realEstateUtilityItemElements(items),
+    ];
+  }
+  if (type === 'mint_discover') {
+    const raw = content?.tabs;
+    const tabs = Array.isArray(raw)
+      ? (raw as MintDiscoverTab[]).filter(
+          t => t && typeof t === 'object' && typeof t.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'variant', label: 'Theme variant', icon: LayersIcon },
+      {
+        key: 'mainImage',
+        label: 'Ảnh coin',
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+      {
+        key: 'mainAlt',
+        label: 'Alt ảnh',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: 'cardSurface',
+        label: 'Thẻ info (nền)',
+        icon: LayersIcon,
+      },
+      ...mintDiscoverTabElements(tabs),
+      {
+        key: 'tabs',
+        label: 'Hotspot / chi tiết',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'mintv2_services') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as MintV2ServiceItem[]).filter(
+          item =>
+            item && typeof item === 'object' && typeof item.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'title', label: 'Tiêu đề lớn', icon: Type, fieldType: 'text' },
+      ...mintV2ServicesItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'mintv2_process') {
+    const raw = content?.steps;
+    const steps = Array.isArray(raw)
+      ? (raw as MintV2ProcessStep[]).filter(
+          s => s && typeof s === 'object' && typeof s.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'title', label: 'Tiêu đề lớn', icon: Type, fieldType: 'text' },
+      { key: 'line', label: 'Đường timeline', icon: Palette },
+      { key: 'dot', label: 'Chấm bước', icon: Palette },
+      ...mintV2ProcessStepElements(steps),
+      {
+        key: 'steps',
+        label: 'Thêm / quản lý bước',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'framer_darling_timeline') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as FramerDarlingTimelineContent['items']).filter(
+          it => it && typeof it === 'object' && typeof it.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      { key: 'intro', label: 'Mô tả', icon: Pilcrow, fieldType: 'textarea' },
+      ...framerDarlingTimelineItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý mốc',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'framer_perform_pricing') {
+    const raw = content?.tiers;
+    const tiers = Array.isArray(raw)
+      ? (raw as FramerPerformPricingContent['tiers']).filter(
+          t => t && typeof t === 'object' && typeof t.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      {
+        key: 'subheading',
+        label: 'Mô tả',
+        icon: Pilcrow,
+        fieldType: 'textarea',
+      },
+      ...framerPerformPricingTierElements(tiers),
+      {
+        key: 'tiers',
+        label: 'Thêm / quản lý gói',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'mintv2_works') {
+    const raw = content?.cards;
+    const cards = Array.isArray(raw)
+      ? (raw as MintV2WorkCard[]).filter(
+          c => c && typeof c === 'object' && typeof c.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'title', label: 'Tiêu đề lớn', icon: Type, fieldType: 'text' },
+      ...mintV2WorksCardElements(cards),
+      {
+        key: 'cards',
+        label: 'Thêm / quản lý card',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'mint_vault_craft') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as MintVaultCraftItem[]).filter(
+          it => it && typeof it === 'object' && typeof it.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      ...mintVaultCraftItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'mint_vault_reveal') {
+    const raw = content?.images;
+    const images = Array.isArray(raw)
+      ? (raw as unknown[]).filter(
+          (src): src is string => typeof src === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      ...mintVaultRevealImageElements(images),
+      {
+        key: 'images',
+        label: 'Thêm / quản lý ảnh',
+        icon: Grid3x3,
+      },
+    ];
+  }
+  if (type === 'mint_vault_invitation') {
+    const raw = content?.images;
+    const images = Array.isArray(raw)
+      ? (raw as unknown[]).filter(
+          (src): src is string => typeof src === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      { key: 'note', label: 'Ghi chú', icon: Pilcrow, fieldType: 'textarea' },
+      // Cụm form — groupId liền kề mới gom thành 1 folder (buildLayerTree).
+      {
+        key: 'emailPlaceholder',
+        label: 'Placeholder',
+        groupId: 'form',
+        groupLabel: 'Form lead',
+        icon: FormInput,
+        fieldType: 'text',
+      },
+      {
+        key: 'submitText',
+        label: 'Nút gửi',
+        groupId: 'form',
+        icon: MousePointerClick,
+        fieldType: 'text',
+      },
+      {
+        key: 'successMessage',
+        label: 'Lời cảm ơn',
+        groupId: 'form',
+        icon: CheckCircle,
+        fieldType: 'textarea',
+      },
+      {
+        key: 'backgroundImageUrl',
+        label: 'Ảnh nền',
+        icon: ImageIcon,
+        fieldType: 'image',
+      },
+      ...mintVaultInvitationImageElements(images),
+      {
+        key: 'images',
+        label: 'Thêm / quản lý ảnh',
+        icon: Grid3x3,
+      },
+    ];
+  }
+  if (type === 'mint_vault_collection') {
+    const raw = content?.coins;
+    const coins = Array.isArray(raw)
+      ? (raw as MintVaultCoin[]).filter(
+          c => c && typeof c === 'object' && typeof c.name === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'eyebrow', label: 'Eyebrow', icon: Type, fieldType: 'text' },
+      { key: 'subLabel', label: 'Nhãn phụ', icon: Type, fieldType: 'text' },
+      ...mintVaultCoinElements(coins),
+      {
+        key: 'coins',
+        label: 'Thêm / quản lý coin',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'aestha_explore') {
+    const rawProjects = content?.projects;
+    const projects = Array.isArray(rawProjects)
+      ? (rawProjects as Array<{ label?: string }>).filter(
+          p => p && typeof p === 'object'
+        )
+      : [];
+    const rawFooter = content?.footerLinks;
+    const footerLinks = Array.isArray(rawFooter)
+      ? (rawFooter as Array<{ label?: string }>).filter(
+          l => l && typeof l === 'object'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []),
+      ...aesthaExploreProjectElements(projects as AesthaExploreProject[]),
+      { key: 'projects', label: 'Thêm / quản lý dự án', icon: ListChecks },
+      ...aesthaExploreFooterLinkElements(
+        footerLinks as Array<{ label: string; href: string }>
+      ),
+      { key: 'footerLinks', label: 'Thêm / quản lý footer', icon: ListChecks },
+    ];
+  }
+  if (type === 'aestha_studio') {
+    const rawTeam = content?.team;
+    const team = Array.isArray(rawTeam)
+      ? (rawTeam as Array<{ name?: string }>).filter(
+          m => m && typeof m === 'object'
+        )
+      : [];
+    const rawFooter = content?.footerLinks;
+    const footerLinks = Array.isArray(rawFooter)
+      ? (rawFooter as Array<{ label?: string }>).filter(
+          l => l && typeof l === 'object'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []),
+      ...aesthaStudioTeamElements(
+        team as Array<{ name: string; role: string }>
+      ),
+      { key: 'team', label: 'Thêm / quản lý team', icon: ListChecks },
+      ...aesthaStudioFooterLinkElements(
+        footerLinks as Array<{ label: string; href: string }>
+      ),
+      { key: 'footerLinks', label: 'Thêm / quản lý footer', icon: ListChecks },
+    ];
+  }
+  if (type === 'aestha_contact') {
+    const rawSocials = content?.socials;
+    const socials = Array.isArray(rawSocials)
+      ? (rawSocials as Array<{ label?: string }>).filter(
+          s => s && typeof s === 'object'
+        )
+      : [];
+    const rawFooter = content?.footerLinks;
+    const footerLinks = Array.isArray(rawFooter)
+      ? (rawFooter as Array<{ label?: string }>).filter(
+          l => l && typeof l === 'object'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []),
+      ...aesthaContactSocialElements(
+        socials as Array<{ label: string; href: string }>
+      ),
+      { key: 'socials', label: 'Thêm / quản lý social', icon: ListChecks },
+      ...aesthaContactFooterLinkElements(
+        footerLinks as Array<{ label: string; href: string }>
+      ),
+      { key: 'footerLinks', label: 'Thêm / quản lý footer', icon: ListChecks },
+    ];
+  }
+  if (type === 'framer_aestha_editorial') {
+    const raw = content?.navLinks;
+    const links = Array.isArray(raw)
+      ? (raw as Array<{ label: string; href: string }>).filter(
+          l => l && typeof l === 'object' && typeof l.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []),
+      ...aesthaNavLinkElements(links),
+      { key: 'navLinks', label: 'Thêm / quản lý nav', icon: ListChecks },
+    ];
+  }
+  if (type === 'pnj_sticky_menu') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as PnjStickyMenuItem[]).filter(
+          item =>
+            item && typeof item === 'object' && typeof item.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...pnjStickyMenuItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
+      { key: 'ctaText', label: 'Nút CTA', icon: Type, fieldType: 'text' },
+      {
+        key: 'ctaLink',
+        label: 'Link CTA',
+        icon: Link2,
+        fieldType: 'text',
+      },
+    ];
+  }
+  if (type === 'delvaux_subnav') {
+    const raw = content?.links;
+    const links = Array.isArray(raw)
+      ? (raw as DelvauxSubnavLink[]).filter(
+          l => l && typeof l === 'object' && typeof l.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...delvauxSubnavLinkElements(links),
+      {
+        key: 'links',
+        label: 'Thêm / quản lý link',
+        icon: ListChecks,
+      },
+      {
+        key: 'bookLabel',
+        label: 'Nút đặt lịch',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'book',
+        groupLabel: 'Book',
+      },
+      {
+        key: 'bookUrl',
+        label: 'URL đặt lịch',
+        icon: Link2,
+        fieldType: 'text',
+        groupId: 'book',
+      },
+      {
+        key: 'buyLabel',
+        label: 'Nút mua ngay',
+        icon: MousePointerClick,
+        fieldType: 'text',
+        groupId: 'buy',
+        groupLabel: 'Buy',
+      },
+      {
+        key: 'buyUrl',
+        label: 'URL mua ngay',
+        icon: Link2,
+        fieldType: 'text',
+        groupId: 'buy',
+      },
+    ];
+  }
+  if (type === 'scroll_mattis') {
+    const c = (content ?? {}) as unknown as ScrollMattisContent;
+    const hasArray = Array.isArray(c.slides) && c.slides.length > 0;
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'portfolioLabel',
+        label: 'Nhãn góc',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      ...(hasArray
+        ? scrollMattisSlideElements(resolveScrollMattisSlides(c))
+        : SCROLL_MATTIS_LEGACY_ELEMENTS),
+      {
+        key: 'slides',
+        label: 'Thêm / quản lý slide',
+        icon: ListChecks,
+      },
+    ];
+  }
   if (def) return [BACKGROUND_LAYER, ...def.elements];
   return ELEMENTS_BY_TYPE[type] ?? [];
 }
@@ -521,10 +1541,16 @@ export function LayersPanel({
 }: LayersPanelProps) {
   const extras = block.extraElements ?? [];
   const showExtraSection = !!onAddExtraElement;
-  const baseElements = React.useMemo(
-    () => elementsForType(block.blockType),
-    [block.blockType]
-  );
+  const baseElements = React.useMemo(() => {
+    const content = (readVariant(block.contentVi, device) ??
+      block.contentVi?.desktop) as Record<string, unknown> | undefined;
+    return elementsForType(block.blockType, content);
+  }, [block.blockType, block.contentVi, device]);
+  const elementByKey = React.useMemo(() => {
+    const map = new Map<string, LayerElement>();
+    for (const e of baseElements) map.set(e.key, e);
+    return map;
+  }, [baseElements]);
 
   // Stored order for the active variant (or fall back to the natural order).
   // Background layer is never reorderable so we keep it pinned at top.
@@ -536,23 +1562,84 @@ export function LayersPanel({
   );
   // Merge: any keys in storedOrder first (filtered to existing), then any
   // baseElement keys not yet in stored order (handles new fields gracefully).
+  // Always pin background at index 0.
   const order = React.useMemo<string[]>(() => {
-    if (!storedOrder?.length) return naturalOrder;
+    const withoutBg = (keys: string[]) =>
+      keys.filter(k => k !== BACKGROUND_LAYER_KEY);
+    if (!storedOrder?.length) {
+      return naturalOrder[0] === BACKGROUND_LAYER_KEY
+        ? naturalOrder
+        : [BACKGROUND_LAYER_KEY, ...withoutBg(naturalOrder)];
+    }
     const set = new Set(storedOrder);
     const merged = [
       ...storedOrder.filter(k => baseElements.some(e => e.key === k)),
       ...naturalOrder.filter(k => !set.has(k)),
     ];
-    return merged;
+    return [BACKGROUND_LAYER_KEY, ...withoutBg(merged)];
   }, [storedOrder, naturalOrder, baseElements]);
 
   const orderedElements = React.useMemo(
     () =>
       order
-        .map(key => baseElements.find(e => e.key === key))
+        .map(key => elementByKey.get(key))
         .filter((e): e is LayerElement => Boolean(e)),
-    [order, baseElements]
+    [order, elementByKey]
   );
+
+  const tree = React.useMemo(
+    () => buildLayerTree(orderedElements),
+    [orderedElements]
+  );
+
+  // Collapse state — default open; persist per block in sessionStorage.
+  const collapseStorageKey = `layers-collapsed:${block.id}`;
+  const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
+  const skipCollapseSaveRef = React.useRef(true);
+
+  React.useEffect(() => {
+    skipCollapseSaveRef.current = true;
+    try {
+      const raw = sessionStorage.getItem(collapseStorageKey);
+      setCollapsed(raw ? (JSON.parse(raw) as Record<string, boolean>) : {});
+    } catch {
+      setCollapsed({});
+    }
+  }, [collapseStorageKey]);
+
+  React.useEffect(() => {
+    if (skipCollapseSaveRef.current) {
+      skipCollapseSaveRef.current = false;
+      return;
+    }
+    try {
+      sessionStorage.setItem(collapseStorageKey, JSON.stringify(collapsed));
+    } catch {
+      /* ignore quota */
+    }
+  }, [collapseStorageKey, collapsed]);
+
+  // Auto-expand group that contains the selected key.
+  React.useEffect(() => {
+    if (!selectedKey) return;
+    const el = elementByKey.get(selectedKey);
+    if (!el?.groupId) return;
+    setCollapsed(prev => {
+      if (!prev[el.groupId!]) return prev;
+      const next = { ...prev };
+      delete next[el.groupId!];
+      return next;
+    });
+  }, [selectedKey, elementByKey]);
+
+  const toggleGroup = (groupId: string) => {
+    setCollapsed(prev => {
+      const next = { ...prev };
+      if (next[groupId]) delete next[groupId];
+      else next[groupId] = true;
+      return next;
+    });
+  };
 
   // Mouse + touch sensors split — TouchSensor needs a small delay to
   // distinguish drag from scroll on mobile. MouseSensor uses distance so
@@ -585,20 +1672,46 @@ export function LayersPanel({
     setDragState(s => ({ ...s, overKey: (event.over?.id as string) ?? null }));
   };
 
+  const sameReorderScope = (a: string, b: string) => {
+    if (a === BACKGROUND_LAYER_KEY || b === BACKGROUND_LAYER_KEY) return false;
+    const ga = elementByKey.get(a)?.groupId ?? null;
+    const gb = elementByKey.get(b)?.groupId ?? null;
+    return ga === gb;
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     let didReorder = false;
     if (over && active.id !== over.id) {
-      const oldIndex = order.indexOf(active.id as string);
-      const newIndex = order.indexOf(over.id as string);
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const next = arrayMove(order, oldIndex, newIndex);
-        onReorder?.(next);
-        didReorder = true;
+      const activeId = active.id as string;
+      const overId = over.id as string;
+      if (sameReorderScope(activeId, overId)) {
+        const scopeId = elementByKey.get(activeId)?.groupId ?? null;
+        // Reorder only within the scope slice so groups stay contiguous.
+        const scopeKeys = order.filter(k => {
+          if (k === BACKGROUND_LAYER_KEY) return false;
+          const g = elementByKey.get(k)?.groupId ?? null;
+          return g === scopeId;
+        });
+        const oldInScope = scopeKeys.indexOf(activeId);
+        const newInScope = scopeKeys.indexOf(overId);
+        if (oldInScope !== -1 && newInScope !== -1) {
+          const nextScope = arrayMove(scopeKeys, oldInScope, newInScope);
+          let si = 0;
+          const next = order.map(k => {
+            if (k === BACKGROUND_LAYER_KEY) return k;
+            const g = elementByKey.get(k)?.groupId ?? null;
+            if (g !== scopeId) return k;
+            const replaced = nextScope[si];
+            si += 1;
+            return replaced;
+          });
+          onReorder?.(next);
+          didReorder = true;
+        }
       }
     }
     setDragState({ activeKey: null, overKey: null, didReorder });
-    // Clear `didReorder` flash after a short delay.
     if (didReorder) {
       window.setTimeout(
         () => setDragState(s => ({ ...s, didReorder: false })),
@@ -612,7 +1725,7 @@ export function LayersPanel({
   };
 
   const labelOf = (key: string | null) =>
-    key ? (baseElements.find(e => e.key === key)?.label ?? key) : null;
+    key ? (elementByKey.get(key)?.label ?? key) : null;
 
   // Suppress unused warning for `variant` — kept for potential future variant-aware UI.
   void variant;
@@ -625,29 +1738,65 @@ export function LayersPanel({
     );
   }
 
-  // Drive a visible status banner so users can confirm the drag system is alive.
+  // Sortable ids: everything except pinned background.
+  const sortableIds = orderedElements
+    .filter(e => e.key !== BACKGROUND_LAYER_KEY)
+    .map(e => e.key);
+
+  // Drive a visible status banner — chỉ hiện khi đang kéo hoặc vừa reorder.
   const isDragging = dragState.activeKey !== null;
+  const showStatusBanner = isDragging || dragState.didReorder;
   const statusTone = isDragging
     ? 'bg-sky-50 text-sky-700 ring-sky-200'
-    : dragState.didReorder
-      ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-      : 'bg-neutral-50 text-neutral-600 ring-neutral-200';
+    : 'bg-emerald-50 text-emerald-700 ring-emerald-200';
   const statusLabel = isDragging
     ? `Đang kéo: ${labelOf(dragState.activeKey)}` +
       (dragState.overKey && dragState.overKey !== dragState.activeKey
-        ? ` → thả vào ${labelOf(dragState.overKey)}`
+        ? ` → ${labelOf(dragState.overKey)}`
         : '')
-    : dragState.didReorder
-      ? '✓ Đã đổi thứ tự'
-      : 'Sẵn sàng — kéo lớp để sắp xếp';
+    : 'Đã đổi thứ tự';
+
+  const renderLeaf = (element: LayerElement, nested: boolean) => {
+    const isOver = dragState.overKey === element.key;
+    const overFromAbove =
+      isOver &&
+      dragState.activeKey !== null &&
+      order.indexOf(dragState.activeKey) > order.indexOf(element.key);
+    const pinned = element.key === BACKGROUND_LAYER_KEY;
+    return (
+      <LayerRow
+        key={element.key}
+        element={element}
+        active={selectedKey === element.key}
+        nested={nested}
+        pinned={pinned}
+        isAnyDragging={dragState.activeKey !== null}
+        dropIndicator={isOver ? (overFromAbove ? 'above' : 'below') : null}
+        hasStyle={
+          element.key === BACKGROUND_LAYER_KEY
+            ? !!block.background?.desktop
+            : !!block.elementStyles?.desktop?.[element.key]
+        }
+        color={
+          element.key === BACKGROUND_LAYER_KEY
+            ? block.background?.desktop?.color
+            : block.elementStyles?.desktop?.[element.key]?.color
+        }
+        mobileOverride={hasMobileOverride(block, element.key)}
+        onSelect={() =>
+          onSelectKey(selectedKey === element.key ? null : element.key)
+        }
+      />
+    );
+  };
 
   return (
     <div
-      className='flex flex-col gap-2 p-3'
+      className='flex flex-col gap-1.5 p-2'
       data-drag-state={isDragging ? 'dragging' : 'idle'}
     >
       {showExtraSection ? (
-        <section className='flex flex-col gap-1.5 rounded-md bg-white p-2 ring-1 ring-neutral-200'>
+        <section className='flex flex-col gap-1 rounded-md bg-white p-1.5 ring-1 ring-neutral-200/80'>
           <AddExtraElementButton onPick={kind => onAddExtraElement?.(kind)} />
           {extras.length > 0 ? (
             <ExtraElementsList
@@ -660,27 +1809,24 @@ export function LayersPanel({
         </section>
       ) : null}
 
-      {/* Status banner — visible drag state for debugging / UX confirmation. */}
-      <div
-        className={cn(
-          'text-2xs flex items-center gap-2 rounded-md px-2.5 py-1.5 font-medium ring-1 transition-colors',
-          statusTone
-        )}
-        role='status'
-        aria-live='polite'
-      >
-        <span
+      {showStatusBanner && (
+        <div
           className={cn(
-            'size-1.5 shrink-0 rounded-full',
-            isDragging
-              ? 'animate-pulse bg-sky-500'
-              : dragState.didReorder
-                ? 'bg-emerald-500'
-                : 'bg-neutral-400'
+            'text-2xs flex items-center gap-2 rounded-md px-2 py-1 font-medium ring-1 transition-colors',
+            statusTone
           )}
-        />
-        <span className='flex-1 truncate'>{statusLabel}</span>
-      </div>
+          role='status'
+          aria-live='polite'
+        >
+          <span
+            className={cn(
+              'size-1.5 shrink-0 rounded-full',
+              isDragging ? 'animate-pulse bg-sky-500' : 'bg-emerald-500'
+            )}
+          />
+          <span className='flex-1 truncate'>{statusLabel}</span>
+        </div>
+      )}
 
       <DndContext
         sensors={sensors}
@@ -691,42 +1837,30 @@ export function LayersPanel({
         onDragCancel={handleDragCancel}
       >
         <SortableContext
-          items={orderedElements.map(e => e.key)}
+          items={sortableIds}
           strategy={verticalListSortingStrategy}
         >
-          <div className='flex flex-col gap-1.5'>
-            {orderedElements.map(element => {
-              const isOver = dragState.overKey === element.key;
-              const overFromAbove =
-                isOver &&
-                dragState.activeKey !== null &&
-                order.indexOf(dragState.activeKey) > order.indexOf(element.key);
+          <div className='flex flex-col gap-1'>
+            {tree.map(node => {
+              if (node.kind === 'leaf') {
+                return renderLeaf(node.element, false);
+              }
+              const isCollapsed = !!collapsed[node.groupId];
+              const childSelected = node.children.some(
+                c => c.key === selectedKey
+              );
               return (
-                <LayerRow
-                  key={element.key}
-                  element={element}
-                  active={selectedKey === element.key}
-                  isAnyDragging={dragState.activeKey !== null}
-                  dropIndicator={
-                    isOver ? (overFromAbove ? 'above' : 'below') : null
-                  }
-                  hasStyle={
-                    element.key === BACKGROUND_LAYER_KEY
-                      ? !!block.background?.desktop
-                      : !!block.elementStyles?.desktop?.[element.key]
-                  }
-                  color={
-                    element.key === BACKGROUND_LAYER_KEY
-                      ? block.background?.desktop?.color
-                      : block.elementStyles?.desktop?.[element.key]?.color
-                  }
-                  mobileOverride={hasMobileOverride(block, element.key)}
-                  onSelect={() =>
-                    onSelectKey(
-                      selectedKey === element.key ? null : element.key
-                    )
-                  }
-                />
+                <div key={node.groupId} className='flex flex-col gap-1'>
+                  <GroupHeader
+                    label={node.label}
+                    count={node.children.length}
+                    collapsed={isCollapsed}
+                    highlight={childSelected}
+                    onToggle={() => toggleGroup(node.groupId)}
+                  />
+                  {!isCollapsed &&
+                    node.children.map(child => renderLeaf(child, true))}
+                </div>
               );
             })}
           </div>
@@ -741,19 +1875,52 @@ export function LayersPanel({
         >
           {dragState.activeKey
             ? (() => {
-                const el = baseElements.find(
-                  e => e.key === dragState.activeKey
-                );
+                const el = elementByKey.get(dragState.activeKey);
                 if (!el) return null;
                 return <DragGhost element={el} />;
               })()
             : null}
         </DragOverlay>
       </DndContext>
-      <p className='text-3xs mt-1 text-neutral-400'>
-        Click 1 lớp để mở popup chỉnh sửa. Kéo (≥4px) để sắp xếp lại.
-      </p>
     </div>
+  );
+}
+
+function GroupHeader({
+  label,
+  count,
+  collapsed,
+  highlight,
+  onToggle,
+}: {
+  label: string;
+  count: number;
+  collapsed: boolean;
+  highlight: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type='button'
+      onClick={onToggle}
+      aria-expanded={!collapsed}
+      className={cn(
+        'flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors',
+        highlight
+          ? 'bg-sky-50 text-sky-900'
+          : 'bg-neutral-100/80 text-neutral-700 hover:bg-neutral-100'
+      )}
+    >
+      <ChevronRight
+        className={cn(
+          'size-3.5 shrink-0 text-neutral-500 transition-transform',
+          !collapsed && 'rotate-90'
+        )}
+      />
+      <LayersIcon className='size-3.5 shrink-0 text-neutral-500' />
+      <span className='flex-1 truncate text-xs font-semibold'>{label}</span>
+      <span className='text-3xs text-neutral-400 tabular-nums'>{count}</span>
+    </button>
   );
 }
 
@@ -764,6 +1931,8 @@ function LayerRow({
   mobileOverride,
   isAnyDragging,
   dropIndicator,
+  nested,
+  pinned,
   onSelect,
 }: {
   element: LayerElement;
@@ -775,6 +1944,9 @@ function LayerRow({
   isAnyDragging: boolean;
   /** Where the drop indicator line should render relative to this row. */
   dropIndicator: 'above' | 'below' | null;
+  nested?: boolean;
+  /** Background — not draggable. */
+  pinned?: boolean;
   onSelect: () => void;
 }) {
   const {
@@ -785,7 +1957,7 @@ function LayerRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: element.key });
+  } = useSortable({ id: element.key, disabled: pinned });
 
   const sortableStyle: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -802,7 +1974,8 @@ function LayerRow({
       data-layer-key={element.key}
       data-dragging={isDragging ? 'true' : undefined}
       className={cn(
-        'group relative flex items-center gap-2 rounded-md border bg-white px-2 py-2 transition-all select-none',
+        'group relative flex items-center gap-1.5 rounded-md border bg-white px-1.5 py-1.5 transition-all select-none',
+        nested && 'ml-4',
         active
           ? 'border-sky-500 ring-1 ring-sky-500'
           : 'border-neutral-200 hover:border-sky-400 hover:bg-sky-50/50',
@@ -813,7 +1986,7 @@ function LayerRow({
       )}
     >
       {/* ── Drop indicator line (Figma/Canva style) ────────────────────── */}
-      {dropIndicator && (
+      {dropIndicator && !pinned && (
         <span
           aria-hidden
           className={cn(
@@ -830,22 +2003,31 @@ function LayerRow({
       )}
 
       {/* ── Dedicated drag handle (clearer affordance, like Notion/Figma) */}
-      <button
-        ref={setActivatorNodeRef}
-        type='button'
-        {...attributes}
-        {...listeners}
-        aria-label={`Kéo để sắp xếp ${element.label}`}
-        title='Kéo để sắp xếp'
-        data-testid={`layer-drag-handle-${element.key}`}
-        className={cn(
-          'flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded transition-colors select-none active:cursor-grabbing',
-          'text-neutral-300 hover:bg-sky-100 hover:text-sky-700',
-          isDragging && 'cursor-grabbing bg-sky-100 text-sky-700'
-        )}
-      >
-        <GripVertical className='size-4' />
-      </button>
+      {pinned ? (
+        <span
+          className='flex size-7 shrink-0 items-center justify-center text-neutral-200'
+          aria-hidden
+        >
+          <GripVertical className='size-4' />
+        </span>
+      ) : (
+        <button
+          ref={setActivatorNodeRef}
+          type='button'
+          {...attributes}
+          {...listeners}
+          aria-label={`Kéo để sắp xếp ${element.label}`}
+          title='Kéo để sắp xếp'
+          data-testid={`layer-drag-handle-${element.key}`}
+          className={cn(
+            'flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded transition-colors select-none active:cursor-grabbing',
+            'text-neutral-300 hover:bg-sky-100 hover:text-sky-700',
+            isDragging && 'cursor-grabbing bg-sky-100 text-sky-700'
+          )}
+        >
+          <GripVertical className='size-4' />
+        </button>
+      )}
 
       {/* ── Click target for selection (separate from drag) ──────────── */}
       <button

@@ -6,8 +6,8 @@
   --accent2: #9fc2d4;
   --line: rgba(26, 26, 26, 0.12);
   --card: rgba(26, 26, 26, 0.025);
-  --serif: 'Marcellus', Georgia, serif;
-  --sans: 'Manrope', system-ui, sans-serif;
+  --serif: var(--font-mz-serif, 'Marcellus'), Georgia, serif;
+  --sans: var(--font-mz-sans, 'Manrope'), system-ui, sans-serif;
 
   .lede {
     font-style: normal;

@@ -10,9 +10,11 @@ import { fetchMeThunk } from '@/store/slices/authSlice';
 import { roleHomePath } from '@/lib/auth/roleTarget';
 
 /**
- * Client-side gate for `/admin/*` routes. Middleware only verifies the JWT
- * cookie exists; this guard checks the actual user's role and bounces
- * non-admins to `/home`.
+ * Client-side gate for `/admin/*` routes. `middleware.ts` already role-gates
+ * `/admin` server-side (`session.role !== 'admin'` → bounce, staff included)
+ * using the JWT's `role` claim — this guard mirrors that SAME `isAdmin`-only
+ * check client-side (e.g. client-side nav without a full reload skips
+ * middleware) so staff never see a flash of admin content before a redirect.
  *
  * Loads `auth/me` if the Redux store is empty (e.g., hard refresh on
  * `/admin/...`).
@@ -21,7 +23,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const t = useTranslations('admin');
-  const { isAdmin, isStaff } = useAuthRole();
+  const { isAdmin } = useAuthRole();
   const status = useAppSelector(s => s.auth.status);
   const user = useAppSelector(s => s.auth.user);
   const [hydrated, setHydrated] = React.useState(false);
@@ -40,14 +42,14 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
       router.replace('/sign-in');
       return;
     }
-    if (!isAdmin && !isStaff) {
-      // Bounce non-admin/non-staff về home theo role: brand user → /portal,
-      // còn lại → /home (khớp roleHomePath dùng ở sign-in + middleware).
+    if (!isAdmin) {
+      // Bounce non-admin về home theo role: brand user → /portal, còn lại
+      // (kể cả staff) → /home (khớp roleHomePath dùng ở sign-in + middleware).
       router.replace(
         roleHomePath(user.role, user.brand_id ? 'brand' : 'platform')
       );
     }
-  }, [hydrated, user, isAdmin, isStaff, router]);
+  }, [hydrated, user, isAdmin, router]);
 
   if (!hydrated || !user) {
     return (
@@ -57,7 +59,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAdmin && !isStaff) {
+  if (!isAdmin) {
     return (
       <div className='flex min-h-[40vh] items-center justify-center p-6 text-center'>
         <p className='text-content-muted text-sm'>{t('forbidden')}</p>

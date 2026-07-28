@@ -413,11 +413,16 @@ const ArpeggioHeroCopy = ({
           'text-2xl @2xl:text-4xl @3xl:text-[60px] @4xl:text-[60px]'
         )}
       >
-        <div
-          dangerouslySetInnerHTML={{
-            __html: content.headline.replace('\n', '<br />'),
-          }}
-        />
+        {/* headline là input của brand user — render text thuần (không
+            innerHTML) để chặn stored XSS trên trang published. */}
+        <div>
+          {content.headline.split('\n').map((line, i, arr) => (
+            <React.Fragment key={i}>
+              {line}
+              {i < arr.length - 1 ? <br /> : null}
+            </React.Fragment>
+          ))}
+        </div>
       </h1>
 
       {content.topRightLabel ? (
@@ -561,17 +566,15 @@ const ArpeggioWordmark = ({
       ref={handleContainerRef}
       data-arpeggio-wordmark
       data-variant={variant}
-      data-element-key={isHero ? 'wordmark' : undefined}
       className={cn(
         isHero && 'w-full min-w-0 overflow-visible pb-5 @2xl:pb-8 @4xl:pb-10',
         !isHero && 'flex items-end gap-1.5',
-        isHero && selectableClass(activeKey === 'wordmark'),
         className
       )}
     >
       <h2
         ref={handleTextRef}
-        data-element-key={!isHero ? 'wordmark' : undefined}
+        data-element-key='wordmark'
         style={composeStyle(
           isHero
             ? { ...HERO_WORDMARK_STYLE, fontSize: `${fittedFontSize}px` }
@@ -579,7 +582,7 @@ const ArpeggioWordmark = ({
           styleOf('wordmark')
         )}
         className={cn(
-          !isHero && selectableClass(activeKey === 'wordmark'),
+          selectableClass(activeKey === 'wordmark'),
           isHero &&
             'block w-full max-w-full origin-[50%_100%] overflow-visible leading-[1.05] will-change-transform after:block after:h-0 after:w-full after:overflow-hidden after:content-[""]'
         )}

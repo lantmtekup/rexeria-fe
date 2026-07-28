@@ -1,4 +1,3 @@
-import { MOCK_BLOCKS } from './mock';
 import type {
   Block,
   BlockBackground,
@@ -22,15 +21,132 @@ export interface PublishMeta {
   publishedAt?: string;
 }
 
+// ─── Multi-page ─────────────────────────────────────────────────────────────
+//
+// ⚠️ NAMING: `EditorPage` here is a page *inside one template's canvas* — the
+// thing the user switches between with the page tabs. It is NOT the BE `Page`
+// entity (`src/services/rexer/types.ts`), which is the published landing that
+// owns a slug, revisions and releases. One BE `Page` renders a whole template,
+// i.e. ALL of its `EditorPage`s. Never write bare `Page` for this concept.
+//
+// Layout of the wire blueprint:
+//
+//   { blocks: [...],           ← derived MIRROR of the home page, never authored
+//     pages:  [ {id, name, slug, isHome, blocks, seo?}, ... ],
+//     active_page_id, ... }
+//
+// **When `pages` is a non-empty array it is the source of truth and root
+// `blocks` is ignored on read.** Root `blocks` exists only so the readers that
+// predate multi-page (public `/p/[id]`, the share-token route, portal previews,
+// analytics overlays, admin template preview, AI apply-product) keep rendering
+// the home page with zero migration.
+
+/** Stable id for the implicit page synthesized from a pre-multi-page blueprint.
+ *  Must stay stable across reloads — sessionStorage keys are scoped by page id. */
+export const DEFAULT_PAGE_ID = 'p_home' as const;
+
+export interface PageSeo {
+  title?: string;
+  description?: string;
+  ogImageUrl?: string;
+}
+
+/**
+ * Wire shape of one entry in blueprint `pages[]`. Inner fields are camelCase
+ * (mirrors the `publish` precedent); only top-level meta is snake_case.
+ * `is_home` is accepted on read defensively.
+ */
+export interface CanvasPageWire {
+  id: string;
+  name: string;
+  slug: string;
+  isHome?: boolean;
+  is_home?: boolean;
+  blocks?: unknown[];
+  seo?: PageSeo;
+}
+
+/** In-memory page. `blocks` is ALWAYS present — `parseCanvas` normalizes. */
+export interface EditorPage {
+  id: string;
+  name: string;
+  /** '' for the home page. Otherwise kebab-case and unique among siblings.
+   *  May contain '/' so nested sub-paths need no migration later. */
+  slug: string;
+  isHome: boolean;
+  blocks: Block[];
+  seo?: PageSeo;
+}
+
 /** In-memory canvas shape (camelCase). Wire format is snake_case — see (de)serialize. */
 export interface BlockEditorCanvas {
   schemaVersion: typeof SCHEMA_VERSION;
+  /** Home page's blocks. Meaning is unchanged for every pre-multi-page reader. */
   blocks: Block[];
+  /** Always ≥ 1 entry, exactly one with `isHome === true`. */
+  pages: EditorPage[];
+  /** Always a valid id present in `pages`. */
+  activePageId: string;
   activeBlockId?: string;
   publish?: PublishMeta;
   /** Transition cấp template (preset áp cho cả collection block). Mặc định
    *  'none'. Lưu opaque trong canvas_blueprint JSON — render layer validate. */
   transition?: string;
+}
+
+/** Kebab-case a Vietnamese page name into a URL segment. */
+export function slugifyPageName(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48);
+}
+
+/**
+ * The ONE place page invariants are enforced, so the editor never sees an
+ * invalid model:
+ *   - at least 1 page
+ *   - exactly 1 `isHome` (first claimant wins; none → `pages[0]`)
+ *   - home slug is '' ; non-home slug is non-empty and unique
+ *   - `blocks` is always an array
+ */
+export function normalizePages(raw: EditorPage[]): EditorPage[] {
+  if (raw.length === 0) {
+    return [
+      {
+        id: DEFAULT_PAGE_ID,
+        name: 'Trang chủ',
+        slug: '',
+        isHome: true,
+        blocks: [],
+      },
+    ];
+  }
+  const seen = new Set<string>();
+  let homeTaken = false;
+  const out = raw.map((p, i) => {
+    const isHome = !!p.isHome && !homeTaken;
+    if (isHome) homeTaken = true;
+    let slug = isHome
+      ? ''
+      : p.slug || slugifyPageName(p.name) || `trang-${i + 1}`;
+    while (slug && seen.has(slug)) slug = `${slug}-2`;
+    if (slug) seen.add(slug);
+    return { ...p, isHome, slug, blocks: p.blocks ?? [] };
+  });
+  if (!homeTaken) out[0] = { ...out[0], isHome: true, slug: '' };
+  return out;
+}
+
+/** The home page. Never returns undefined — `normalizePages` guarantees one. */
+export function homePageOf(pages: EditorPage[]): EditorPage {
+  return pages.find(p => p.isHome) ?? pages[0];
 }
 
 // ─── Save (serialize → wire) ────────────────────────────────────────────────
@@ -70,6 +186,55 @@ export function serializeCanvas(
   return out;
 }
 
+export interface SerializeCanvasPagesInput {
+  pages: EditorPage[];
+  activePageId?: string;
+  activeBlockId?: string;
+  publish?: PublishMeta;
+  transition?: string;
+  /**
+   * Emit the root `blocks` mirror of the home page. Default true — required
+   * until every reader understands `pages`. Flip to false in ONE place once
+   * `/p/[id]`, portal previews and analytics overlays are page-aware.
+   */
+  homeMirror?: boolean;
+}
+
+/**
+ * Multi-page wire payload. For a single-page template the output is
+ * `serializeCanvas(...)` plus `pages` (1 entry) and `active_page_id`, so the BE
+ * `canvas_blueprint_validator` — which only walks root `blocks[]` — is
+ * unaffected.
+ *
+ * ⚠️ BE only validates root `blocks[]`, so an invalid `blockType` on a non-home
+ * page will pass autosave and `createVersion` and only fail at render time.
+ * Callers committing a version should pre-flight every page's block types.
+ */
+export function serializeCanvasPages(
+  input: SerializeCanvasPagesInput
+): Record<string, unknown> {
+  const pages = normalizePages(input.pages);
+  const home = homePageOf(pages);
+
+  const out = serializeCanvas(
+    input.homeMirror === false ? [] : home.blocks,
+    input.activeBlockId,
+    input.publish,
+    input.transition
+  );
+
+  out.pages = pages.map(p => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    isHome: p.isHome,
+    blocks: p.blocks,
+    ...(p.seo ? { seo: p.seo } : {}),
+  }));
+  if (input.activePageId) out.active_page_id = input.activePageId;
+  return out;
+}
+
 export function newShareToken(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID().replace(/-/g, '').slice(0, 24);
@@ -78,6 +243,33 @@ export function newShareToken(): string {
 }
 
 // ─── Load (wire → parse) ────────────────────────────────────────────────────
+
+/**
+ * Coerce a BE `canvas_blueprint` into something `parseCanvas` accepts.
+ *
+ * BE stores older blueprints with `schema_version: "1.0"` (or none at all),
+ * while `parseCanvas` only recognises `"2.0"` / legacy `schema:'block_editor'`.
+ * This normalises that one field.
+ *
+ * **Everything else passes through untouched.** Four copies of this helper used
+ * to rebuild the object as `{ schema_version, blocks }`, which silently dropped
+ * every other top-level key — `transition`, `publish` and `active_block_id`
+ * were destroyed on every editor reload, and any key added later (e.g. `pages`)
+ * would be destroyed the same way: read → strip → autosave writes the stripped
+ * version back → data gone for good. Keep this a passthrough.
+ */
+export function adaptCanvasBlueprint(
+  raw: Record<string, unknown> | undefined | null
+): Record<string, unknown> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  return {
+    ...raw,
+    schema_version: SCHEMA_VERSION,
+    blocks: Array.isArray((raw as { blocks?: unknown }).blocks)
+      ? (raw as { blocks: unknown[] }).blocks
+      : [],
+  };
+}
 
 /**
  * Parse `canvas_data` from REXER into the in-memory `BlockEditorCanvas`.
@@ -137,9 +329,73 @@ export function parseCanvas(
       ? (data as { transition: string }).transition
       : undefined;
 
+  const rawPages = (data as { pages?: unknown }).pages;
+  const activePageIdRaw =
+    (data as { active_page_id?: string }).active_page_id ??
+    (data as { activePageId?: string }).activePageId;
+
+  let pages: EditorPage[];
+  if (Array.isArray(rawPages) && rawPages.length > 0) {
+    pages = normalizePages(
+      (rawPages as CanvasPageWire[]).map((p, i) => {
+        const isHome = p.isHome ?? p.is_home ?? false;
+        return {
+          id: String(p.id ?? `p_${i}`),
+          name: String(p.name ?? `Trang ${i + 1}`),
+          slug: String(p.slug ?? ''),
+          isHome,
+          // A home entry with NO `blocks` key means the blueprint used the
+          // "home lives at root" layout instead of the mirror. Read root
+          // `blocks` rather than losing content — this is what keeps the
+          // mirror decision reversible.
+          blocks: Array.isArray(p.blocks)
+            ? p.blocks.map(b =>
+                migrateBlockV1toV2(b as Record<string, unknown>)
+              )
+            : isHome
+              ? blocks
+              : [],
+          ...(p.seo ? { seo: p.seo } : {}),
+        };
+      })
+    );
+    if (process.env.NODE_ENV !== 'production') {
+      const home = homePageOf(pages);
+      if (blocks.length && home.blocks.length !== blocks.length) {
+        // Divergence tripwire: two writers touch this document (template
+        // draft + page revision). `pages` wins, but a mismatch means one of
+        // them wrote a stale mirror.
+        // eslint-disable-next-line no-console
+        console.warn(
+          '[parseCanvas] root `blocks` mirror diverges from pages[home] — pages wins.',
+          { root: blocks.length, home: home.blocks.length }
+        );
+      }
+    }
+  } else {
+    // Legacy blueprint → one implicit home page. Zero migration.
+    pages = [
+      {
+        id: DEFAULT_PAGE_ID,
+        name: 'Trang chủ',
+        slug: '',
+        isHome: true,
+        blocks,
+      },
+    ];
+  }
+
+  const home = homePageOf(pages);
+  const activePageId = pages.some(p => p.id === activePageIdRaw)
+    ? (activePageIdRaw as string)
+    : home.id;
+
   return {
     schemaVersion: SCHEMA_VERSION,
-    blocks,
+    // Legacy readers keep getting a flat blocks array = the home page.
+    blocks: home.blocks,
+    pages,
+    activePageId,
     activeBlockId,
     ...(publish ? { publish } : {}),
     ...(transition ? { transition } : {}),
@@ -241,7 +497,5 @@ function isVariants<T>(v: unknown): v is DeviceVariants<T> {
   );
 }
 
-export function seedBlocks(): Block[] {
-  // Deep clone so edits don't mutate the shared mock.
-  return JSON.parse(JSON.stringify(MOCK_BLOCKS)) as Block[];
-}
+// `seedBlocks()` lives in `./mock` — keeping it here dragged the mock's image
+// asset imports into every consumer of this otherwise pure data module.

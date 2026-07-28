@@ -12,26 +12,25 @@
  *    POPUP chi tiết (accordion) trượt từ phải như `.content-discover`.
  *
  * STAGE 2 (progress > 0.5, class `delvaux-variant-done`) — "product-sku" gốc:
- *  - Media full-bleed (calc(100%-120px) × 660px) mở rộng bằng clip-path từ ô
- *    chữ nhật nhỏ giữa màn; tên sản phẩm serif TRẮNG khổng lồ (gốc 180px)
- *    reveal theo KÝ TỰ (clip-path inset bottom-up, 1.5s cubic-bezier);
- *    ảnh model hiện sau cùng (delay 1.3s, trượt xuống 80px).
- *  - Đồng thời dispatch `delvaux:variant-done` → sub-nav morph (links ẩn,
- *    nút Book hiện) đúng timeline gốc.
+ *  - Media full-bleed + tên SKU reveal ký tự + ảnh model.
  *
- * Section gắn id='information'. Pin bằng CSS sticky (an toàn iOS).
+ * Canvas (`isCanvas`): flat edit — stage1 + SKU + FAQs hiện hết, không pin/scrub/portal.
+ * Preview /p: sticky 250vh + portal qua `resolveDrawerPortalHost`.
  */
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 import gsap from 'gsap';
 
 import { useBlockMotion } from '../motion/LandingMotion';
+import { isDeviceFrameHost, resolveDrawerPortalHost } from '../previewPortal';
 import {
   DELVAUX_BG,
   DELVAUX_FONT_BODY,
   DELVAUX_FONT_CSS,
   DELVAUX_FONT_HEADING,
 } from './delvauxTheme';
+import { useDrawerScrollLock } from './PnjHeroHotspots';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   DelvauxVariantContent,
@@ -120,6 +119,8 @@ export function DelvauxVariant({
   const rootRef = React.useRef<HTMLElement>(null);
   const popupRef = React.useRef<HTMLDivElement>(null);
   const cursorRef = React.useRef<HTMLDivElement>(null);
+  const isCanvas = useIsCanvasEdit(rootRef);
+
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -130,22 +131,37 @@ export function DelvauxVariant({
   const [active, setActive] = React.useState(0);
   const [open, setOpen] = React.useState(false);
   const [openFaq, setOpenFaq] = React.useState<number | null>(0);
+  const [mounted, setMounted] = React.useState(false);
+  const [portalHost, setPortalHost] = React.useState<HTMLElement | null>(null);
 
   const variants = content.variants ?? [];
   const faqs = content.faqs ?? [];
   const activeVariant = variants[active] ?? variants[0];
   const hasSku = Boolean(content.skuName || content.skuMediaUrl);
+  const skuLines = (content.skuName || '').split('\n');
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  React.useLayoutEffect(() => {
+    if (!mounted || isCanvas) return;
+    setPortalHost(resolveDrawerPortalHost(rootRef.current));
+  }, [mounted, open, isCanvas]);
+
+  useDrawerScrollLock(open && !isCanvas ? 'delvaux-variant' : null, false);
 
   useBlockMotion(
     rootRef,
     ({ scroller, requestRefresh }) => {
       const root = rootRef.current;
       if (!root) return;
+      if (isCanvas) return;
+
       const reduce = window.matchMedia(
         '(prefers-reduced-motion: reduce)'
       ).matches;
 
-      // Chuyển stage theo tiến trình pin (gốc: onUpdate p>0.5 → .done).
       if (hasSku) {
         gsap.timeline({
           scrollTrigger: {
@@ -170,7 +186,6 @@ export function DelvauxVariant({
 
       if (reduce) return;
 
-      // js-parallax gốc: ảnh y → -20, ghost title y → +60, scrub 1, power4.
       const media = root.querySelector<HTMLElement>('.delvaux-variant-media');
       if (media) {
         gsap.to(media, {
@@ -202,17 +217,16 @@ export function DelvauxVariant({
         });
       }
 
-      // R4: ảnh load xong → refresh trigger math.
       const img = root.querySelector<HTMLImageElement>('.delvaux-variant-img');
       if (img && !img.complete) {
         img.addEventListener('load', requestRefresh, { once: true });
       }
     },
-    [variants.length, hasSku]
+    [variants.length, hasSku, isCanvas]
   );
 
-  // Custom cursor "More information" bám chuột trên ảnh (customCursor gốc).
-  const onImgMove = (e: React.MouseEvent) => {
+  const handleImgMove = (e: React.MouseEvent) => {
+    if (isCanvas) return;
     const badge = cursorRef.current;
     const host = rootRef.current;
     if (!badge || !host) return;
@@ -225,13 +239,13 @@ export function DelvauxVariant({
       ease: 'power2.out',
     });
   };
-  const onImgLeave = () => {
+  const handleImgLeave = () => {
     const badge = cursorRef.current;
     if (badge) gsap.to(badge, { opacity: 0, duration: 0.3 });
   };
 
-  // Popup slide-in + ESC + báo sub-nav ẩn.
   React.useEffect(() => {
+    if (isCanvas) return;
     window.dispatchEvent(
       new CustomEvent('delvaux:overlay', { detail: { open } })
     );
@@ -256,24 +270,472 @@ export function DelvauxVariant({
         new CustomEvent('delvaux:overlay', { detail: { open: false } })
       );
     };
-  }, [open]);
+  }, [open, isCanvas]);
 
-  // Tên sku → từng ký tự (reveal clip-path như .char của Splitting gốc).
-  const skuLines = (content.skuName || '').split('\n');
+  const sectionStyle = composeStyle(
+    { background: DELVAUX_BG },
+    blockBackgroundStyle(background)
+  );
+
+  // ── Editor canvas: flat editable — stage1 + SKU + FAQs ──
+  if (isCanvas) {
+    return (
+      <section
+        ref={rootRef}
+        id='information'
+        data-canvas-edit='true'
+        style={composeStyle(sectionStyle, { height: 'auto', minHeight: 480 })}
+        className='delvaux-variant @container relative w-full overflow-hidden'
+      >
+        <style>{DELVAUX_FONT_CSS}</style>
+        <div className='mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-10'>
+          <h2
+            data-element-key='title'
+            style={composeStyle(
+              {
+                margin: 0,
+                fontFamily: DELVAUX_FONT_HEADING,
+                fontWeight: 400,
+                fontSize: 'clamp(36px, 6cqi, 72px)',
+                lineHeight: 1.08,
+                color: 'rgba(142,142,141,0.55)',
+                textAlign: 'center',
+                whiteSpace: 'pre-line',
+              },
+              styleOf('title')
+            )}
+            className={selectableClass(
+              activeKey === 'title',
+              'delvaux-variant-title'
+            )}
+          >
+            {content.title}
+          </h2>
+
+          <div
+            data-element-key='variants'
+            style={styleOf('variants')}
+            className={selectableClass(
+              activeKey === 'variants',
+              'grid grid-cols-1 gap-6 @md:grid-cols-3'
+            )}
+          >
+            {variants.map((variant, i) => {
+              const imgKey = `variants[${i}].imageUrl`;
+              const labelKey = `variants[${i}].label`;
+              const refKey = `variants[${i}].ref`;
+              const colorKey = `variants[${i}].color`;
+              return (
+                <div
+                  key={`canvas-var-${i}`}
+                  className='flex flex-col items-center gap-2'
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    data-element-key={imgKey}
+                    src={variant.imageUrl}
+                    alt={variant.label}
+                    className={selectableClass(
+                      activeKey === imgKey,
+                      'aspect-[474/486] w-full object-cover'
+                    )}
+                    style={styleOf(imgKey)}
+                  />
+                  <p
+                    data-element-key={labelKey}
+                    style={composeStyle(
+                      {
+                        margin: 0,
+                        fontFamily: DELVAUX_FONT_BODY,
+                        fontSize: 13,
+                        color: '#111',
+                      },
+                      styleOf(labelKey)
+                    )}
+                    className={selectableClass(activeKey === labelKey, '')}
+                  >
+                    {variant.label}
+                  </p>
+                  <p
+                    data-element-key={refKey}
+                    style={composeStyle(
+                      {
+                        margin: 0,
+                        fontFamily: DELVAUX_FONT_BODY,
+                        fontSize: 11,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        color: 'rgba(17,17,17,0.55)',
+                      },
+                      styleOf(refKey)
+                    )}
+                    className={selectableClass(activeKey === refKey, '')}
+                  >
+                    REF. {variant.ref}
+                  </p>
+                  <span
+                    data-element-key={colorKey}
+                    aria-label={variant.label}
+                    className={selectableClass(
+                      activeKey === colorKey,
+                      'block size-3.5 rounded-full'
+                    )}
+                    style={composeStyle(
+                      {
+                        background: variant.color,
+                        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.15)',
+                      },
+                      styleOf(colorKey)
+                    )}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          <p
+            data-element-key='moreInfoLabel'
+            style={composeStyle(
+              {
+                margin: 0,
+                textAlign: 'center',
+                fontFamily: DELVAUX_FONT_BODY,
+                fontSize: 12,
+                lineHeight: '24px',
+                color: '#111111',
+                borderBottom: '1px solid #111111',
+                paddingBottom: 2,
+                alignSelf: 'center',
+              },
+              styleOf('moreInfoLabel')
+            )}
+            className={selectableClass(activeKey === 'moreInfoLabel', '')}
+          >
+            {content.moreInfoLabel}
+          </p>
+
+          {hasSku ? (
+            <div className='flex w-full flex-col gap-4 border-t border-black/10 pt-8'>
+              <h3
+                data-element-key='skuName'
+                style={composeStyle(
+                  {
+                    margin: 0,
+                    fontFamily: DELVAUX_FONT_HEADING,
+                    fontWeight: 400,
+                    fontSize: 'clamp(28px, 5cqi, 48px)',
+                    lineHeight: 1.05,
+                    color: '#111',
+                    whiteSpace: 'pre-line',
+                    textAlign: 'center',
+                  },
+                  styleOf('skuName')
+                )}
+                className={selectableClass(activeKey === 'skuName', '')}
+              >
+                {content.skuName}
+              </h3>
+              {content.skuMediaUrl ? (
+                content.skuMediaType === 'video' ? (
+                  <video
+                    data-element-key='skuMediaUrl'
+                    muted
+                    playsInline
+                    src={content.skuMediaUrl}
+                    className={selectableClass(
+                      activeKey === 'skuMediaUrl',
+                      'mx-auto max-h-64 w-full max-w-xl object-cover'
+                    )}
+                    style={styleOf('skuMediaUrl')}
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    data-element-key='skuMediaUrl'
+                    src={content.skuMediaUrl}
+                    alt={content.skuName}
+                    className={selectableClass(
+                      activeKey === 'skuMediaUrl',
+                      'mx-auto max-h-64 w-full max-w-xl object-cover'
+                    )}
+                    style={styleOf('skuMediaUrl')}
+                  />
+                )
+              ) : null}
+              {content.skuPersonUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  data-element-key='skuPersonUrl'
+                  src={content.skuPersonUrl}
+                  alt=''
+                  className={selectableClass(
+                    activeKey === 'skuPersonUrl',
+                    'mx-auto h-48 w-auto object-contain'
+                  )}
+                  style={styleOf('skuPersonUrl')}
+                />
+              ) : null}
+            </div>
+          ) : null}
+
+          <div
+            data-element-key='faqs'
+            style={composeStyle(
+              { borderTop: '1px solid rgba(0,0,0,0.12)', paddingTop: 16 },
+              styleOf('faqs')
+            )}
+            className={selectableClass(activeKey === 'faqs', 'w-full')}
+          >
+            {faqs.map((faq, i) => {
+              const qKey = `faqs[${i}].question`;
+              const aKey = `faqs[${i}].answer`;
+              return (
+                <div
+                  key={`canvas-faq-${i}`}
+                  className='border-b border-black/10 py-3'
+                >
+                  <p
+                    data-element-key={qKey}
+                    style={composeStyle(
+                      {
+                        margin: 0,
+                        fontFamily: DELVAUX_FONT_BODY,
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: '#111',
+                      },
+                      styleOf(qKey)
+                    )}
+                    className={selectableClass(activeKey === qKey, '')}
+                  >
+                    {faq.question}
+                  </p>
+                  <p
+                    data-element-key={aKey}
+                    style={composeStyle(
+                      {
+                        margin: '8px 0 0',
+                        fontFamily: DELVAUX_FONT_BODY,
+                        fontSize: 13,
+                        lineHeight: 1.6,
+                        color: '#555',
+                        whiteSpace: 'pre-line',
+                      },
+                      styleOf(aKey)
+                    )}
+                    className={selectableClass(activeKey === aKey, '')}
+                  >
+                    {faq.answer}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // ── Preview / production: sticky pin + portal popup ──
+  const inFrame = isDeviceFrameHost(portalHost);
+  const posClass = inFrame ? 'absolute' : 'fixed';
+  const popup =
+    open && mounted && portalHost
+      ? createPortal(
+          <div
+            ref={popupRef}
+            className={`${posClass} inset-0 z-[1999] flex justify-end`}
+            role='dialog'
+            aria-modal='true'
+            data-lenis-prevent
+          >
+            <button
+              type='button'
+              aria-label='Đóng'
+              onClick={() => setOpen(false)}
+              className='absolute inset-0 h-full w-full'
+              style={{ background: 'rgba(0,0,0,0.4)', cursor: 'pointer' }}
+            />
+            <div
+              className='delvaux-variant-panel relative flex h-full flex-col overflow-y-auto'
+              data-lenis-prevent
+              style={{
+                width: 'min(520px, 100%)',
+                maxWidth: '100%',
+                background: '#ffffff',
+                padding:
+                  'clamp(56px, 8cqi, 88px) clamp(24px, 4cqi, 48px) clamp(24px, 4cqi, 40px)',
+              }}
+            >
+              <button
+                type='button'
+                aria-label='Đóng'
+                onClick={() => setOpen(false)}
+                className='absolute flex items-center justify-center rounded-full'
+                style={{
+                  top: '20px',
+                  right: '20px',
+                  width: '40px',
+                  height: '40px',
+                  border: '1px solid #e8e8e8',
+                  background: '#ffffff',
+                  cursor: 'pointer',
+                }}
+              >
+                <svg width='12' height='13' viewBox='0 0 12 13' fill='none'>
+                  <line
+                    x1='0.48'
+                    y1='11.48'
+                    x2='11.09'
+                    y2='0.88'
+                    stroke='black'
+                    strokeWidth='0.75'
+                  />
+                  <line
+                    x1='1.02'
+                    y1='0.98'
+                    x2='11.62'
+                    y2='11.59'
+                    stroke='black'
+                    strokeWidth='0.75'
+                  />
+                </svg>
+              </button>
+
+              <h3
+                style={{
+                  margin: 0,
+                  fontFamily: DELVAUX_FONT_HEADING,
+                  fontWeight: 400,
+                  fontSize: 'clamp(26px, 3cqi, 34px)',
+                  lineHeight: 1.2,
+                  color: '#000000',
+                  whiteSpace: 'pre-line',
+                }}
+              >
+                {content.title}
+              </h3>
+              {activeVariant ? (
+                <p
+                  style={{
+                    marginTop: '8px',
+                    marginBottom: 0,
+                    fontFamily: DELVAUX_FONT_BODY,
+                    fontSize: '11px',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: 'rgba(17,17,17,0.55)',
+                  }}
+                >
+                  REF. {activeVariant.ref}
+                </p>
+              ) : null}
+
+              <div className='mt-5 flex items-center gap-3'>
+                {variants.map((variant, i) => (
+                  <button
+                    key={`popup-dot-${i}`}
+                    type='button'
+                    aria-label={variant.label}
+                    aria-pressed={i === active}
+                    onClick={() => setActive(i)}
+                    className='inline-flex min-h-11 min-w-11 items-center justify-center'
+                  >
+                    <span
+                      aria-hidden='true'
+                      className='block rounded-full transition-all duration-300'
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        background: variant.color,
+                        boxShadow:
+                          i === active
+                            ? '0 0 0 1px #ffffff, 0 0 0 2px #764733'
+                            : 'inset 0 0 0 1px rgba(0,0,0,0.15)',
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              <div
+                data-element-key='faqs'
+                style={composeStyle({ marginTop: '28px' }, styleOf('faqs'))}
+                className={selectableClass(activeKey === 'faqs', 'w-full')}
+              >
+                {faqs.map((faq, i) => {
+                  const isOpen = openFaq === i;
+                  const qKey = `faqs[${i}].question`;
+                  const aKey = `faqs[${i}].answer`;
+                  return (
+                    <div
+                      key={`faq-${i}`}
+                      style={{ borderTop: '1px solid rgba(0,0,0,0.12)' }}
+                    >
+                      <button
+                        type='button'
+                        aria-expanded={isOpen}
+                        onClick={() => setOpenFaq(isOpen ? null : i)}
+                        className='flex min-h-11 w-full items-center justify-between gap-4 text-left'
+                        style={{
+                          padding: '16px 0',
+                          fontFamily: DELVAUX_FONT_BODY,
+                          fontSize: '14px',
+                          lineHeight: 1.35,
+                          color: '#111111',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <span data-element-key={qKey}>{faq.question}</span>
+                        <span
+                          aria-hidden='true'
+                          className='shrink-0 transition-transform duration-300'
+                          style={{
+                            transform: isOpen
+                              ? 'rotate(45deg)'
+                              : 'rotate(0deg)',
+                            fontSize: '18px',
+                            lineHeight: 1,
+                          }}
+                        >
+                          +
+                        </span>
+                      </button>
+                      {isOpen ? (
+                        <p
+                          data-element-key={aKey}
+                          style={{
+                            margin: 0,
+                            paddingBottom: '16px',
+                            fontFamily: DELVAUX_FONT_BODY,
+                            fontSize: '13px',
+                            lineHeight: 1.6,
+                            color: '#555555',
+                            whiteSpace: 'pre-line',
+                          }}
+                        >
+                          {faq.answer}
+                        </p>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>,
+          portalHost
+        )
+      : null;
 
   return (
     <section
       ref={rootRef}
       id='information'
-      style={composeStyle(
-        { background: DELVAUX_BG },
-        blockBackgroundStyle(background)
-      )}
+      style={sectionStyle}
       className='delvaux-variant @container relative w-full'
     >
       <style>{DELVAUX_FONT_CSS}</style>
       <style>{VARIANT_CSS}</style>
-      {/* pin 150% gốc → 250vh với lớp sticky (chỉ khi có stage sku) */}
       <div style={{ height: hasSku ? '250vh' : 'auto' }}>
         <div
           className={
@@ -282,7 +744,6 @@ export function DelvauxVariant({
               : 'relative flex w-full items-center justify-center overflow-hidden'
           }
         >
-          {/* ── STAGE 1: chọn biến thể ── */}
           <div
             className='delvaux-variant-stage relative mx-auto flex flex-col items-center'
             style={{
@@ -291,7 +752,6 @@ export function DelvauxVariant({
               paddingBottom: hasSku ? 0 : 'clamp(80px, 13cqi, 160px)',
             }}
           >
-            {/* GHOST TITLE — serif mờ, sau ảnh, nhô trên đỉnh ảnh */}
             <div
               className='delvaux-variant-ghost pointer-events-none absolute left-1/2 z-0 -translate-x-1/2'
               style={{
@@ -323,13 +783,12 @@ export function DelvauxVariant({
               </h2>
             </div>
 
-            {/* Ảnh sản phẩm — crossfade biến thể; hover: custom cursor */}
             <button
               type='button'
               aria-label={content.moreInfoLabel || 'More information'}
               onClick={() => setOpen(true)}
-              onMouseMove={onImgMove}
-              onMouseLeave={onImgLeave}
+              onMouseMove={handleImgMove}
+              onMouseLeave={handleImgLeave}
               className='delvaux-variant-media relative z-[2] block w-full'
               style={{
                 aspectRatio: '474 / 486',
@@ -341,6 +800,7 @@ export function DelvauxVariant({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   key={`variant-img-${i}`}
+                  data-element-key={`variants[${i}].imageUrl`}
                   className={
                     i === 0
                       ? 'delvaux-variant-img absolute inset-0'
@@ -360,7 +820,6 @@ export function DelvauxVariant({
               ))}
             </button>
 
-            {/* Dot màu (content-pagination gốc) */}
             <div
               data-element-key='variants'
               style={composeStyle(
@@ -374,6 +833,7 @@ export function DelvauxVariant({
             >
               {variants.map((variant, i) => {
                 const isActive = i === active;
+                const colorKey = `variants[${i}].color`;
                 return (
                   <button
                     key={`${variant.ref}-${i}`}
@@ -384,6 +844,7 @@ export function DelvauxVariant({
                     className='inline-flex min-h-11 min-w-11 items-center justify-center'
                   >
                     <span
+                      data-element-key={colorKey}
                       aria-hidden='true'
                       className='block rounded-full transition-all duration-300'
                       style={{
@@ -426,19 +887,19 @@ export function DelvauxVariant({
             </button>
           </div>
 
-          {/* ── STAGE 2: product-sku (gốc .product-sku) ── */}
           {hasSku ? (
             <div className='delvaux-variant-sku absolute inset-0 flex items-center justify-center'>
               <div
                 className='relative'
                 style={{
-                  // gốc: width calc(100vw - 120px), height 660px
                   width: 'calc(100% - clamp(48px, 8.3cqi, 120px))',
                   height: 'min(660px, 81svh)',
                 }}
               >
-                {/* media full-bleed mở rộng bằng clip-path */}
-                <div className='delvaux-variant-sku-media absolute inset-0'>
+                <div
+                  data-element-key='skuMediaUrl'
+                  className='delvaux-variant-sku-media absolute inset-0'
+                >
                   {content.skuMediaType === 'video' ? (
                     <video
                       autoPlay
@@ -460,7 +921,6 @@ export function DelvauxVariant({
                   )}
                 </div>
 
-                {/* tên sản phẩm — serif trắng khổng lồ, reveal theo ký tự */}
                 <h2
                   data-element-key='skuName'
                   className={selectableClass(
@@ -474,7 +934,6 @@ export function DelvauxVariant({
                       maxWidth: '92%',
                       fontFamily: DELVAUX_FONT_HEADING,
                       fontWeight: 400,
-                      // gốc: 180px / line-height 150px
                       fontSize: 'clamp(56px, 12.5cqi, 180px)',
                       lineHeight: 0.84,
                       color: '#ffffff',
@@ -497,10 +956,10 @@ export function DelvauxVariant({
                   ))}
                 </h2>
 
-                {/* ảnh model hiện sau cùng (gốc person3.png, delay 1.3s) */}
                 {content.skuPersonUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
+                    data-element-key='skuPersonUrl'
                     src={content.skuPersonUrl}
                     alt=''
                     aria-hidden='true'
@@ -512,7 +971,6 @@ export function DelvauxVariant({
             </div>
           ) : null}
 
-          {/* custom cursor "More information" (gốc .cursor) */}
           <div
             ref={cursorRef}
             aria-hidden='true'
@@ -538,187 +996,7 @@ export function DelvauxVariant({
         </div>
       </div>
 
-      {/* POPUP chi tiết (content-discover gốc) */}
-      {open && typeof document !== 'undefined'
-        ? createPortal(
-            <div
-              ref={popupRef}
-              className='fixed inset-0 z-[1999] flex justify-end'
-              role='dialog'
-              aria-modal='true'
-            >
-              <button
-                type='button'
-                aria-label='Đóng'
-                onClick={() => setOpen(false)}
-                className='absolute inset-0 h-full w-full'
-                style={{ background: 'rgba(0,0,0,0.4)', cursor: 'pointer' }}
-              />
-              <div
-                className='delvaux-variant-panel relative flex h-full flex-col overflow-y-auto'
-                style={{
-                  width: 'min(520px, 94vw)',
-                  background: '#ffffff',
-                  padding:
-                    'clamp(56px, 8vh, 88px) clamp(24px, 4vw, 48px) clamp(24px, 4vh, 40px)',
-                }}
-              >
-                <button
-                  type='button'
-                  aria-label='Đóng'
-                  onClick={() => setOpen(false)}
-                  className='absolute flex items-center justify-center rounded-full'
-                  style={{
-                    top: '20px',
-                    right: '20px',
-                    width: '40px',
-                    height: '40px',
-                    border: '1px solid #e8e8e8',
-                    background: '#ffffff',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <svg width='12' height='13' viewBox='0 0 12 13' fill='none'>
-                    <line
-                      x1='0.48'
-                      y1='11.48'
-                      x2='11.09'
-                      y2='0.88'
-                      stroke='black'
-                      strokeWidth='0.75'
-                    />
-                    <line
-                      x1='1.02'
-                      y1='0.98'
-                      x2='11.62'
-                      y2='11.59'
-                      stroke='black'
-                      strokeWidth='0.75'
-                    />
-                  </svg>
-                </button>
-
-                <h3
-                  style={{
-                    margin: 0,
-                    fontFamily: DELVAUX_FONT_HEADING,
-                    fontWeight: 400,
-                    fontSize: 'clamp(26px, 3vw, 34px)',
-                    lineHeight: 1.2,
-                    color: '#000000',
-                    whiteSpace: 'pre-line',
-                  }}
-                >
-                  {content.title}
-                </h3>
-                {activeVariant ? (
-                  <p
-                    style={{
-                      marginTop: '8px',
-                      marginBottom: 0,
-                      fontFamily: DELVAUX_FONT_BODY,
-                      fontSize: '11px',
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: 'rgba(17,17,17,0.55)',
-                    }}
-                  >
-                    REF. {activeVariant.ref}
-                  </p>
-                ) : null}
-
-                <div className='mt-5 flex items-center gap-3'>
-                  {variants.map((variant, i) => (
-                    <button
-                      key={`popup-dot-${i}`}
-                      type='button'
-                      aria-label={variant.label}
-                      aria-pressed={i === active}
-                      onClick={() => setActive(i)}
-                      className='inline-flex min-h-11 min-w-11 items-center justify-center'
-                    >
-                      <span
-                        aria-hidden='true'
-                        className='block rounded-full transition-all duration-300'
-                        style={{
-                          width: '16px',
-                          height: '16px',
-                          background: variant.color,
-                          boxShadow:
-                            i === active
-                              ? '0 0 0 1px #ffffff, 0 0 0 2px #764733'
-                              : 'inset 0 0 0 1px rgba(0,0,0,0.15)',
-                        }}
-                      />
-                    </button>
-                  ))}
-                </div>
-
-                <div
-                  data-element-key='faqs'
-                  style={composeStyle({ marginTop: '28px' }, styleOf('faqs'))}
-                  className={selectableClass(activeKey === 'faqs', 'w-full')}
-                >
-                  {faqs.map((faq, i) => {
-                    const isOpen = openFaq === i;
-                    return (
-                      <div
-                        key={`faq-${i}`}
-                        style={{ borderTop: '1px solid rgba(0,0,0,0.12)' }}
-                      >
-                        <button
-                          type='button'
-                          aria-expanded={isOpen}
-                          onClick={() => setOpenFaq(isOpen ? null : i)}
-                          className='flex min-h-11 w-full items-center justify-between gap-4 text-left'
-                          style={{
-                            padding: '16px 0',
-                            fontFamily: DELVAUX_FONT_BODY,
-                            fontSize: '14px',
-                            lineHeight: 1.35,
-                            color: '#111111',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <span>{faq.question}</span>
-                          <span
-                            aria-hidden='true'
-                            className='shrink-0 transition-transform duration-300'
-                            style={{
-                              transform: isOpen
-                                ? 'rotate(45deg)'
-                                : 'rotate(0deg)',
-                              fontSize: '18px',
-                              lineHeight: 1,
-                            }}
-                          >
-                            +
-                          </span>
-                        </button>
-                        {isOpen ? (
-                          <p
-                            style={{
-                              margin: 0,
-                              paddingBottom: '16px',
-                              fontFamily: DELVAUX_FONT_BODY,
-                              fontSize: '13px',
-                              lineHeight: 1.6,
-                              color: '#555555',
-                              whiteSpace: 'pre-line',
-                            }}
-                          >
-                            {faq.answer}
-                          </p>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>,
-            document.body
-          )
-        : null}
+      {popup}
     </section>
   );
 }

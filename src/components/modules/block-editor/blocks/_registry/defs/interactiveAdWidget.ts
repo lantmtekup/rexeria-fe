@@ -9,7 +9,7 @@
  */
 import { Grid3x3 } from 'lucide-react';
 
-import { InteractiveAdWidget } from '../../InteractiveAdWidget';
+import dynamic from 'next/dynamic';
 import type { InteractiveAdWidgetContent } from '../../../types';
 import type { BlockDef } from '../types';
 
@@ -50,7 +50,10 @@ export const interactiveAdWidgetDef: BlockDef<InteractiveAdWidgetContent> = {
     aiLabelVi: 'widget quảng cáo nhiều slide có hotspot và nút CTA',
     aiLabelEn: 'multi-slide ad widget with hotspots and CTA buttons',
   },
-  component: InteractiveAdWidget,
+  // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
+  component: dynamic(() =>
+    import('../../InteractiveAdWidget').then(m => m.InteractiveAdWidget)
+  ),
   defaultContent: { vi: DEFAULT_CONTENT, en: { ...DEFAULT_CONTENT } },
   elements: [{ key: 'slides', label: 'Slides quảng cáo', icon: Grid3x3 }],
 };

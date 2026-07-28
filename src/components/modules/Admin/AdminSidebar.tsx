@@ -128,10 +128,25 @@ export function AdminSidebar() {
   const localeEnum = locale === 'en' ? Locale.EN : Locale.VI;
   const [collapsed, setCollapsed] = React.useState(false);
 
+  const isBlockEditorRoute = React.useMemo(
+    () =>
+      /^\/admin\/blocks\/[^/]+\/edit\/?$/.test(pathname ?? '') ||
+      /^\/admin\/templates\/[^/]+\/edit\/?$/.test(pathname ?? '') ||
+      /^\/admin\/landing-pages\/[^/]+\/?$/.test(pathname ?? ''),
+    [pathname]
+  );
+
   // Khôi phục trạng thái thu gọn từ localStorage (chỉ chạy client).
   React.useEffect(() => {
     setCollapsed(localStorage.getItem('admin-sidebar-collapsed') === '1');
   }, []);
+
+  // Block editor full-screen — thu gọn sidebar để tối đa không gian canvas.
+  React.useEffect(() => {
+    if (!isBlockEditorRoute) return;
+    setCollapsed(true);
+    localStorage.setItem('admin-sidebar-collapsed', '1');
+  }, [isBlockEditorRoute]);
 
   const toggleCollapsed = () => {
     setCollapsed(prev => {

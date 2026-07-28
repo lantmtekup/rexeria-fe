@@ -264,8 +264,12 @@ export function MarketingEditor({
       .list({ limit: 50 })
       .then(r => {
         setProducts(r.items ?? []);
-        if (r.items?.[0] && productIds.length === 0)
-          setProductIds([r.items[0].id]);
+        const first = r.items?.[0];
+        // Functional update — đọc productIds hiện hành thay vì closure stale,
+        // và không cần thêm dep gây refetch khi user đổi lựa chọn.
+        if (first) {
+          setProductIds(prev => (prev.length === 0 ? [first.id] : prev));
+        }
       })
       .catch(() => setProducts([]));
   }, [mode]);

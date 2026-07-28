@@ -27,6 +27,11 @@ export const siteSettingsController = {
       if (!payload?.sub) {
         throw HttpException.unauthorized(ErrorCode.UNAUTHORIZED);
       }
+      // Site settings là branding/SEO global — chỉ admin. `role` đã được
+      // verify với BE tại /api/auth/session-set.
+      if (payload.role !== 'admin') {
+        throw HttpException.forbidden();
+      }
 
       const raw = await req.json();
       const parsed = siteSettingsPutSchema.safeParse(raw);

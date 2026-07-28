@@ -5,11 +5,12 @@ const CDN = 'https://d10zufojjcedud.cloudfront.net/icggallery/webgl';
 const MEDIA = 'https://d10zufojjcedud.cloudfront.net/icggallery/media';
 
 export const DRACO = `${CDN}/draco/gltf/`;
-// v4 = v1 + Home Theatre path (ht_empty / ht_empty_action) theo video render
-// "Timeline 1.mp4": cuối phòng nhìn màn chiếu → đẩy tới trượt phải → xoay
-// ngược → kết thúc giữa ghế trái nhìn quầy bar.
-// New key thay vì overwrite để khỏi chờ CloudFront invalidation.
-export const CAMERA_PATHS = `${CDN}/models/camera_paths_v10.glb`;
+// v10 (CDN) + ht_empty bake lại từ camera thật "Corona_Camera001" trong
+// Living Room_Bake.fbx (Downloads/260712), thay cho path Home Theatre cũ —
+// gf/ff/uf/pu giữ nguyên từ v10, chỉ ht đổi. Xem
+// scripts/make-ht-path-living-room.mjs. TẠM host local do chưa có quyền
+// upload lên CloudFront; đổi lại CDN URL khi có bản build lên đó.
+export const CAMERA_PATHS = '/webgl/models/camera_paths_living_room.glb';
 // Isometric "dollhouse" model for the landing (one group per floor: gf_iso, ff_iso, uf_iso).
 export const SLIDER = '/webgl/models/slider.glb';
 
@@ -184,16 +185,104 @@ export const FLOORS = {
   },
   'home-theatre': {
     label: 'Home Theatre',
-    model: `${CDN}/models/ht_pov.glb`,
+    // TẠM: thay bằng model "Living Room" (nguồn: Downloads/260712/Lingving
+    // Room.glb, nén Draco + WebP 226MB → 4.7MB, dịch chuyển gốc toạ độ để
+    // trùng vùng camera path cũ x~57-60/z~-53..-57/y~7.2). Model gốc không
+    // phải phòng home-theatre thật nên bố cục/hotspot không khớp 100% —
+    // chỉ dùng tạm cho tới khi có file ht_pov.glb export lại đúng texture.
+    model: '/webgl/models/ht_living_room.glb',
     // slider.glb chưa có group ht_iso → iso: null khiến landing/dollhouse
     // fallback sang clay-clone của chính model POV (xem Experience.jsx).
     iso: null,
     empty: 'ht_empty',
     clip: 'ht_empty_action',
-    // TẠM: ht_pov.glb export từ Corona material → mất texture, phòng toàn màu
-    // đen. Phủ clay để duyệt camera path; bỏ flag này khi có file export mới.
-    clayPov: true,
-    zones: [],
+    // Toạ độ lấy bằng Author Mode (?author) — click trực tiếp lên model thật
+    // qua Playwright, không phải ước lượng tay.
+    zones: [
+      {
+        id: 'ht-coffee-table',
+        title: 'Bàn trà gỗ tròn',
+        eyebrow: 'Nội thất · Bàn trà',
+        type: 'hotspot',
+        body: [
+          'Mặt bàn gỗ óc chó nguyên khối kết hợp đá cẩm thạch trắng, tạo điểm nhấn ấm áp giữa không gian phòng khách.',
+          'Đường cong mềm mại của mặt bàn hài hoà với hình khối tròn của bộ ghế bành xung quanh.',
+        ],
+        captions: ['Gỗ óc chó nguyên khối', 'Mặt phụ đá cẩm thạch'],
+        points: [
+          [57.469, 5.5, -49.985],
+          [58.197, 5.5, -50.474],
+          [58.806, 5.5, -50.846],
+        ],
+      },
+      {
+        id: 'ht-accent-chair',
+        title: 'Ghế bành bọc da',
+        eyebrow: 'Nội thất · Ghế bành',
+        type: 'hotspot',
+        body: [
+          'Cặp ghế bành dáng tròn bọc da cao cấp, phần lưng ôm sát tạo cảm giác êm ái khi ngồi thư giãn.',
+          'Tông màu kem trung tính dễ phối cùng sofa và thảm dệt, giữ tổng thể không gian nhẹ nhàng, tinh tế.',
+        ],
+        captions: ['Khung gỗ bọc đệm da', 'Thiết kế bo tròn hiện đại'],
+        points: [
+          [63.67, 6.026, -54.196],
+          [63.733, 6.018, -54.268],
+          [63.757, 6.005, -54.286],
+        ],
+      },
+      {
+        id: 'ht-staircase',
+        title: 'Cầu thang nổi kính cường lực',
+        eyebrow: 'Kiến trúc · Cầu thang',
+        type: 'hotspot',
+        body: [
+          'Bậc thang gỗ tối giản "nổi" trên vách kính cường lực trong suốt, tạo cảm giác nhẹ bẫng cho không gian.',
+          'Hệ đèn thả dạng bong bóng ánh sáng ấm dọc theo tường, dẫn lối lên tầng trong khi vẫn giữ trọn tầm nhìn xuyên suốt.',
+        ],
+        captions: [
+          'Bậc gỗ + lan can kính cường lực',
+          'Đèn thả dạng chuỗi bong bóng',
+        ],
+        points: [
+          [63.607, 6.538, -57.43],
+          [63.629, 6.538, -57.43],
+          [63.612, 6.518, -57.43],
+        ],
+      },
+      {
+        id: 'ht-floor-lamp',
+        title: 'Đèn sàn dáng nấm',
+        eyebrow: 'Nội thất · Đèn trang trí',
+        type: 'hotspot',
+        body: [
+          'Đèn sàn chao nấm màu cam trầm, điểm nhấn màu sắc hiếm hoi giữa tông gỗ - kem chủ đạo của căn phòng.',
+          'Ánh sáng vàng ấm toả đều, phù hợp cho những buổi tối thư giãn cạnh cửa kính nhìn ra ngoài.',
+        ],
+        captions: ['Chao đèn nấm màu cam đất', 'Ánh sáng vàng ấm dịu'],
+        points: [
+          [64.887, 6.182, -53.286],
+          [64.893, 6.183, -53.281],
+          [64.887, 6.173, -53.286],
+        ],
+      },
+      {
+        id: 'ht-sofa',
+        title: 'Sofa da góc chữ L',
+        eyebrow: 'Nội thất · Sofa',
+        type: 'hotspot',
+        body: [
+          'Sofa góc bọc da/vải bố cỡ lớn, đủ chỗ cho cả gia đình quây quần xem phim hoặc trò chuyện.',
+          'Gối tựa phối màu tương phản nhẹ tạo điểm nhấn, trong khi form dáng vuông vức giữ nét hiện đại, tối giản.',
+        ],
+        captions: ['Sofa góc chữ L', 'Gối tựa phối màu tương phản'],
+        points: [
+          [61.819, 6.133, -51.948],
+          [61.823, 6.132, -51.951],
+          [61.822, 6.128, -51.944],
+        ],
+      },
+    ],
     hotspots: [],
   },
 };

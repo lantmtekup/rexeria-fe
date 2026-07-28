@@ -52,9 +52,12 @@ const TRIGGERS: { value: MotionTrigger; label: string }[] = [
 
 function useAnimatableElements(block: Block): LayerElement[] {
   return React.useMemo(() => {
-    const base = elementsForType(block.blockType);
+    const content = block.contentVi?.desktop as
+      | Record<string, unknown>
+      | undefined;
+    const base = elementsForType(block.blockType, content);
     return base.filter(el => !el.key.startsWith('__'));
-  }, [block.blockType]);
+  }, [block.blockType, block.contentVi]);
 }
 
 export function MotionLayersPanel({

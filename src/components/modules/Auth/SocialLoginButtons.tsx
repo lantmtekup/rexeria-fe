@@ -101,13 +101,11 @@ export function SocialLoginButtons() {
       const role = me?.role ?? me?.principal_type ?? '';
       const scope = me?.brand_id ? 'brand' : 'platform';
 
-      // Mirror local signed cookie for middleware (same pattern as loginThunk),
-      // carrying role + scope so a later revisit of `/` lands on the right home.
+      // Mirror local signed cookie for middleware (same pattern as loginThunk).
+      // Role/scope do route tự verify với BE /v1/auth/me — không gửi từ client.
       await fetch('/api/auth/session-set', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role, scope }),
       });
 
       let target: string;

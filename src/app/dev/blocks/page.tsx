@@ -9,20 +9,28 @@
  *  - `?id=<blockId>`     → fetch block thật từ BE rồi render đúng SETTINGS đã lưu
  *    (mỗi block 1 thiết kế riêng — quan trọng cho các type dùng chung như
  *    hero_split). Đây là cái nút Preview ở danh sách block mở ra.
+ *  - `?inline=<key>`     → đọc 1 `Block` JSON đã stash vào `localStorage[key]`
+ *    (không fetch BE). Dùng cho block SỐNG TRONG TEMPLATE (bản copy inline
+ *    trong canvas_blueprint, không có id ở thư viện Blocks) — ví dụ nút "xem
+ *    block" ở danh sách block-của-template trong Admin Templates.
  *
  * Layout: top bar fixed (gọn) + vùng cuộn full viewport làm SCROLLER → block
  * render qua RenderBlock trong LandingMotionRoot (scroller = vùng cuộn).
  * Sticky/pin/scrub neo đúng vào vùng cuộn (như PreviewMode / /p). Motion config
  * của block thật được áp qua MotionProvider giống PreviewMode.
+ * Placeholder `min-h-[100dvh]` trên/dưới block tạo room để cuộn vào/thoát block.
  *
  * URL: /dev/blocks?type=framer_arpeggio_hero_v2  hoặc  /dev/blocks?id=<uuid>
+ *      hoặc /dev/blocks?inline=<localStorage key>
  */
 import * as React from 'react';
-import { LayoutGrid, Loader2, Monitor, Smartphone, Tablet } from 'lucide-react';
+import { LayoutGrid, Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { BlockMiniPreview } from '@/components/modules/block-editor/BlockMiniPreview';
+import { DevicePreviewFrame } from '@/components/modules/block-editor/DevicePreviewFrame';
+import { DeviceSwitcher } from '@/components/modules/block-editor/DeviceSwitcher';
 import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
 import { createBlock } from '@/components/modules/block-editor/factory';
 import { migrateBlockV1toV2 } from '@/components/modules/block-editor/serialize';
@@ -32,22 +40,18 @@ import {
   MotionBlockRoot,
 } from '@/components/modules/block-editor/motion/runtime';
 import type { BlockMotion } from '@/components/modules/block-editor/motion/types';
+import { ScrollRoomPlaceholder } from '@/components/modules/block-editor/ScrollRoomPlaceholder';
 import {
   BLOCK_TYPE_META,
   readVariant,
   type Block,
   type BlockType,
+  type Device,
 } from '@/components/modules/block-editor/types';
 
 const TYPES = (Object.keys(BLOCK_TYPE_META) as BlockType[]).sort((a, b) =>
   (BLOCK_TYPE_META[a]?.label ?? a).localeCompare(BLOCK_TYPE_META[b]?.label ?? b)
 );
-const DEVICES = [
-  { id: 'desktop', icon: Monitor, w: null as number | null },
-  { id: 'tablet', icon: Tablet, w: 834 },
-  { id: 'mobile', icon: Smartphone, w: 390 },
-] as const;
-type DeviceId = (typeof DEVICES)[number]['id'];
 
 /** Parse `Block.settings` (BE) → editor Block. FE ghi nguyên editor Block vào
  *  settings lúc tạo nên round-trip được. Null nếu shape không hợp lệ. */
@@ -62,13 +66,16 @@ function parseEditorBlock(
 }
 
 export default function DevBlocksPage() {
-  const [device, setDevice] = React.useState<DeviceId>('desktop');
+  const [routeReady, setRouteReady] = React.useState(false);
+  const [device, setDevice] = React.useState<Device>('desktop');
   const scrollerRef = React.useRef<HTMLDivElement>(null);
 
-  // Chế độ render: 'type' (default content theo type) hoặc 'id' (block thật).
-  const [mode, setMode] = React.useState<'type' | 'id'>('type');
+  // Chế độ render: 'type' (default content theo type), 'id' (block thật từ
+  // BE) hoặc 'inline' (Block JSON stash sẵn ở localStorage — block-của-template).
+  const [mode, setMode] = React.useState<'type' | 'id' | 'inline'>('type');
   const [type, setType] = React.useState<BlockType>('framer_arpeggio_hero_v2');
   const [blockId, setBlockId] = React.useState<string | null>(null);
+  const [inlineKey, setInlineKey] = React.useState<string | null>(null);
   const [fetched, setFetched] = React.useState<Block | null>(null);
   const [loadErr, setLoadErr] = React.useState<string | null>(null);
 
@@ -78,21 +85,32 @@ export default function DevBlocksPage() {
   const [usedCodes, setUsedCodes] = React.useState<Set<string> | null>(null);
   const [galleryErr, setGalleryErr] = React.useState<string | null>(null);
 
-  // Đọc query 1 lần khi mount → quyết định chế độ.
-  React.useEffect(() => {
+  // Đọc query sớm (layout effect) — TRƯỚC mọi effect khác, và KHÔNG ghi đè `?id=`
+  // bằng `?type=` (effect sync type cũ gây race → mọi preview rơi về arpeggio).
+  React.useLayoutEffect(() => {
     const sp = new URLSearchParams(window.location.search);
     if (sp.get('view') === 'unmapped') {
       setView('gallery');
+      setRouteReady(true);
+      return;
+    }
+    const inline = sp.get('inline');
+    if (inline) {
+      setMode('inline');
+      setInlineKey(inline);
+      setRouteReady(true);
       return;
     }
     const id = sp.get('id');
     if (id) {
       setMode('id');
       setBlockId(id);
+      setRouteReady(true);
       return;
     }
     const q = sp.get('type');
     if (q && (TYPES as string[]).includes(q)) setType(q as BlockType);
+    setRouteReady(true);
   }, []);
 
   // Gallery: fetch type_code đã dùng (mọi scope, phân trang) — 1 lần khi mở.
@@ -126,6 +144,33 @@ export default function DevBlocksPage() {
     [usedCodes]
   );
 
+  // inline-mode: đọc Block JSON stash sẵn ở localStorage (không fetch BE) —
+  // dùng cho block-của-template (bản copy, không có id thư viện). Dọn key
+  // sau khi đọc — chỉ dùng 1 lần cho 1 tab.
+  React.useEffect(() => {
+    if (mode !== 'inline' || !inlineKey) return;
+    setLoadErr(null);
+    setFetched(null);
+    try {
+      const raw = window.localStorage.getItem(inlineKey);
+      if (!raw) {
+        setLoadErr('Không tìm thấy dữ liệu block (đã đọc hoặc hết hạn).');
+        return;
+      }
+      const editor = parseEditorBlock(JSON.parse(raw));
+      if (!editor) {
+        setLoadErr('Dữ liệu block không hợp lệ để preview.');
+        return;
+      }
+      setFetched(editor);
+      setType(editor.blockType);
+    } catch {
+      setLoadErr('Lỗi đọc dữ liệu block.');
+    } finally {
+      window.localStorage.removeItem(inlineKey);
+    }
+  }, [mode, inlineKey]);
+
   // id-mode: fetch block thật, parse settings → editor Block.
   React.useEffect(() => {
     if (mode !== 'id' || !blockId) return;
@@ -155,32 +200,28 @@ export default function DevBlocksPage() {
     };
   }, [mode, blockId]);
 
-  // type-mode: giữ URL ?type=… sync khi đổi dropdown.
-  React.useEffect(() => {
-    if (mode !== 'type') return;
-    const u = new URL(window.location.href);
-    u.searchParams.set('type', type);
-    u.searchParams.delete('id');
-    window.history.replaceState(null, '', u.toString());
-  }, [type, mode]);
-
   // Đổi dropdown / click card gallery → về single + type-mode (default content).
   const onPickType = (t: BlockType) => {
     setView('single');
     setMode('type');
     setBlockId(null);
+    setInlineKey(null);
     setFetched(null);
     setLoadErr(null);
     setType(t);
+    const u = new URL(window.location.href);
+    u.searchParams.set('type', t);
+    u.searchParams.delete('id');
+    u.searchParams.delete('inline');
+    window.history.replaceState(null, '', u.toString());
   };
 
-  // Block để render: id-mode dùng block fetch về; type-mode dùng default.
+  // Block để render: id/inline-mode dùng block fetch/stash về; type-mode dùng default.
   const block = React.useMemo<Block | null>(
-    () => (mode === 'id' ? fetched : createBlock(type)),
+    () => (mode === 'id' || mode === 'inline' ? fetched : createBlock(type)),
     [mode, fetched, type]
   );
 
-  const width = DEVICES.find(d => d.id === device)!.w;
   const dev = device; // 'desktop' | 'tablet' | 'mobile' khớp Device
 
   // Resolve content/styles/bg/order/motion theo device (giống PreviewMode).
@@ -219,7 +260,15 @@ export default function DevBlocksPage() {
         </select>
 
         <code className='hidden max-w-[160px] truncate text-[8px] text-white/35 md:block'>
-          {mode === 'id' ? (fetched ? `id · ${fetched.name}` : 'id · …') : type}
+          {mode === 'id'
+            ? fetched
+              ? `id · ${fetched.name}`
+              : 'id · …'
+            : mode === 'inline'
+              ? fetched
+                ? `inline · ${fetched.name}`
+                : 'inline · …'
+              : type}
         </code>
 
         {/* Toggle gallery "Chưa mapping" */}
@@ -239,26 +288,11 @@ export default function DevBlocksPage() {
           Chưa mapping
         </button>
 
-        <div className='flex shrink-0 items-center gap-0.5 rounded border border-white/10 bg-white/5 p-px'>
-          {DEVICES.map(({ id, icon: Icon, w }) => (
-            <button
-              key={id}
-              type='button'
-              onClick={() => setDevice(id)}
-              title={`${id}${w ? ` · ${w}px` : ' · full'}`}
-              aria-label={`${id} preview`}
-              aria-pressed={device === id}
-              className={cn(
-                'flex size-5 items-center justify-center rounded-sm transition-colors',
-                device === id
-                  ? 'bg-amber-400 text-neutral-900'
-                  : 'text-white/60 hover:bg-white/10'
-              )}
-            >
-              <Icon className='size-3' />
-            </button>
-          ))}
-        </div>
+        <DeviceSwitcher
+          device={device}
+          onChange={setDevice}
+          variant='preview'
+        />
       </header>
 
       {/* ── Gallery: design CHƯA mapping ─────────────────────────────── */}
@@ -295,7 +329,7 @@ export default function DevBlocksPage() {
                         type='button'
                         onClick={() => onPickType(t)}
                         title={t}
-                        className='group flex flex-col gap-1.5 overflow-hidden rounded-lg border border-white/10 bg-white/[0.03] p-2 text-left transition-colors hover:border-amber-400/60 hover:bg-white/[0.06]'
+                        className='group flex flex-col gap-1.5 overflow-hidden rounded-lg border border-white/10 bg-white/3 p-2 text-left transition-colors hover:border-amber-400/60 hover:bg-white/6'
                       >
                         <div className='overflow-hidden rounded-md border border-white/10 bg-white'>
                           <BlockMiniPreview
@@ -319,48 +353,52 @@ export default function DevBlocksPage() {
         </div>
       ) : null}
 
-      {/* ── Vùng cuộn full viewport = scroller cho block ─────────────── */}
+      {/* ── Device frame = scroller (căn giữa) ───────────────────────── */}
       <div
-        ref={scrollerRef}
         hidden={view === 'gallery'}
-        className='relative h-screen overflow-auto bg-neutral-200'
+        className='relative h-screen overflow-hidden bg-neutral-200 pt-7'
       >
         <LandingMotionRoot scrollerRef={scrollerRef} enableSmooth={false}>
-          <div
-            className='@container mx-auto bg-white'
-            style={
-              width
-                ? { maxWidth: width, boxShadow: '0 0 0 1px rgba(0,0,0,0.08)' }
-                : undefined
-            }
+          <DevicePreviewFrame
+            device={device}
+            chromeOffset='1.75rem'
+            scrollerRef={scrollerRef}
           >
-            {mode === 'id' && loadErr ? (
-              <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-500'>
+            {!routeReady ? (
+              <div className='flex min-h-screen items-center justify-center px-6 text-center text-sm text-neutral-400'>
+                Đang chuẩn bị preview…
+              </div>
+            ) : (mode === 'id' || mode === 'inline') && loadErr ? (
+              <div className='flex min-h-screen items-center justify-center px-6 text-center text-sm text-neutral-500'>
                 {loadErr}
               </div>
-            ) : mode === 'id' && !block ? (
-              <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-400'>
+            ) : (mode === 'id' || mode === 'inline') && !block ? (
+              <div className='flex min-h-screen items-center justify-center px-6 text-center text-sm text-neutral-400'>
                 Đang tải block…
               </div>
             ) : block && resolved ? (
-              <MotionProvider
-                key={`${mode}:${block.id ?? type}:${device}`}
-                mode='preview'
-                motion={resolved.motion}
-                scrollerEl={scrollerRef.current}
-              >
-                <MotionBlockRoot>
-                  <RenderBlock
-                    block={block}
-                    content={resolved.content}
-                    styles={resolved.styles}
-                    background={resolved.background}
-                    order={resolved.order}
-                  />
-                </MotionBlockRoot>
-              </MotionProvider>
+              <>
+                <ScrollRoomPlaceholder label='Scroll vào block' />
+                <MotionProvider
+                  key={`${mode}:${block.id ?? type}:${device}`}
+                  mode='preview'
+                  motion={resolved.motion}
+                  scrollerEl={scrollerRef.current}
+                >
+                  <MotionBlockRoot>
+                    <RenderBlock
+                      block={block}
+                      content={resolved.content}
+                      styles={resolved.styles}
+                      background={resolved.background}
+                      order={resolved.order}
+                    />
+                  </MotionBlockRoot>
+                </MotionProvider>
+                <ScrollRoomPlaceholder label='Scroll thoát block' />
+              </>
             ) : null}
-          </div>
+          </DevicePreviewFrame>
         </LandingMotionRoot>
       </div>
     </div>

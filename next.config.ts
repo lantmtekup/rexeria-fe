@@ -105,10 +105,14 @@ const nextConfig: NextConfig = {
   },
 
   async rewrites() {
-    const be =
-      process.env.NEXT_PUBLIC_REXER_API ??
-      process.env.REXER_API ??
-      'https://rexerai.tekupsoftware.com';
+    // Fail loud khi thiếu env — không fallback prod URL để env sai không
+    // âm thầm đọc/ghi prod (audit FE 2026-07-04 P4).
+    const be = process.env.NEXT_PUBLIC_REXER_API ?? process.env.REXER_API;
+    if (!be) {
+      throw new Error(
+        'NEXT_PUBLIC_REXER_API (hoặc REXER_API) chưa cấu hình — rewrite /api/rexer cần BE URL'
+      );
+    }
     return [
       {
         source: '/api/rexer/:path*',

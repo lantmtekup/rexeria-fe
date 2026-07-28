@@ -22,8 +22,6 @@ import {
   Archive,
   ArrowDownUp,
   BarChart3,
-  ChevronLeft,
-  ChevronRight,
   ExternalLink,
   Eye,
   Flame,
@@ -47,12 +45,12 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
 import { Chip } from '@/components/atoms/chip';
-import { PillChip } from '@/components/atoms/pill-chip';
 import { DomainSettingsDialog } from '@/components/modules/Admin/DomainSettingsDialog';
 import {
   CreateLandingDialog,
   EditLandingDialog,
 } from '@/components/modules/Admin/LandingFormDialog';
+import { BlocksUsedCell } from '@/components/modules/Admin/BlocksUsedCell';
 import { Input } from '@/components/atoms/input';
 import {
   Table,
@@ -62,6 +60,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/atoms/table';
+import { TablePagination } from '@/components/molecules/TablePagination';
+import {
+  adaptCanvasBlueprint,
+  parseCanvas,
+} from '@/components/modules/block-editor/serialize';
+import type { Block } from '@/components/modules/block-editor/types';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type { Brand, Page, PageType } from '@/services/rexer/types';
@@ -107,7 +111,9 @@ const TYPE_CHIP: Record<string, string> = {
   email: 'bg-blue-50 text-blue-700 border-blue-200',
 };
 
-const LIMIT = 20;
+/** Shared size + radius + border weight cho hàng filter (khớp Blocks). */
+const FILTER_CONTROL_CLASS =
+  'border-input text-content-muted hover:bg-muted bg-background h-9 w-40 shrink-0 rounded-md border px-2.5 text-xs font-medium outline-none';
 
 type PageAction =
   | 'publish'
@@ -116,6 +122,12 @@ type PageAction =
   | 'restore'
   | 'domain'
   | 'edit';
+
+function pageThumbnailUrl(page: Page): string | undefined {
+  if (page.thumbnail_url) return page.thumbnail_url;
+  const meta = page.type_metadata as { featured_image?: string } | undefined;
+  return meta?.featured_image || undefined;
+}
 
 export function AdminCanvasTemplatesPage() {
   const [items, setItems] = React.useState<Page[]>([]);
@@ -131,6 +143,7 @@ export function AdminCanvasTemplatesPage() {
   const [brandFilter, setBrandFilter] = React.useState<string>('');
   const [sort, setSort] = React.useState<Sort>('-updated_at');
   const [page, setPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(20);
   const [view, setView] = React.useState<View>('table');
   const [domainPage, setDomainPage] = React.useState<Page | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -147,10 +160,10 @@ export function AdminCanvasTemplatesPage() {
     return () => clearTimeout(t);
   }, [search]);
 
-  // Reset page on filter change.
+  // Reset page on filter / pageSize change.
   React.useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, typeFilter, statusFilter, brandFilter, sort]);
+  }, [debouncedSearch, typeFilter, statusFilter, brandFilter, sort, pageSize]);
 
   // Load brand list once for the filter picker + display name lookup.
   React.useEffect(() => {
@@ -166,13 +179,87 @@ export function AdminCanvasTemplatesPage() {
     return m;
   }, [brands]);
 
+  // Blocks-used-per-page — lazy fetch cho các dòng đang hiển thị. `Page`
+  // không mang canvas trực tiếp (không như Template list vốn đôi khi có
+  // draft_canvas_blueprint) nên luôn cần fetch riêng:
+  //   1. `/public/pages/{slug}` — PRIMARY, cùng nguồn `/p/{slug}` render
+  //      (đã verify hoạt động đúng ở PageOverlayView/BlockAnalyticsGrid).
+  //   2. Fallback: revision MỚI NHẤT của page (`pages.revisions`, BE sort
+  //      changed_at DESC → items[0]) — cho page chưa publish.
+  //   KHÔNG dùng chuỗi fallback "tìm template sở hữu template_version_id"
+  //   (PageOverlayView) ở đây — quá tốn (fan-out toàn bộ template + version
+  //   list) cho MỘT dòng bảng, chưa nói tới N dòng đang hiển thị cùng lúc.
+  // `items` chỉ đổi reference khi `load()` thật sự set data mới (server-side
+  // paginate) nên không cần memo hoá như bên AdminTemplatesPage.
+  const [blocksByPage, setBlocksByPage] = React.useState<
+    Record<string, Block[] | 'loading' | 'error'>
+  >({});
+  const blocksFetchStartedRef = React.useRef<Set<string>>(new Set());
+  // Reset về true ở ĐẦU effect (không chỉ khai `useRef(true)`) — React dev
+  // Strict Mode mount→cleanup-giả-lập→mount lại effect ngay khi component
+  // mount; nếu không reset ở mount thứ 2, cleanup của lần mount "giả" khoá
+  // `alive=false` VĨNH VIỄN trước khi bất kỳ fetch async nào trả về, khiến
+  // mọi kết quả bị chặn âm thầm → cột Blocks kẹt loading mãi mãi.
+  const blocksAliveRef = React.useRef(true);
+  React.useEffect(() => {
+    blocksAliveRef.current = true;
+    return () => {
+      blocksAliveRef.current = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    for (const p of items) {
+      if (blocksFetchStartedRef.current.has(p.id)) continue;
+      blocksFetchStartedRef.current.add(p.id);
+
+      if (p.external_url) {
+        setBlocksByPage(prev => ({ ...prev, [p.id]: [] }));
+        continue;
+      }
+
+      setBlocksByPage(prev => ({ ...prev, [p.id]: 'loading' }));
+      (async () => {
+        try {
+          if (p.slug) {
+            try {
+              const pub = await rexerApi.publicPages.get(p.slug);
+              const canvas = parseCanvas(
+                adaptCanvasBlueprint(pub.canvas_blueprint)
+              );
+              const blocks = canvas?.pages.flatMap(pg => pg.blocks) ?? [];
+              if (blocks.length > 0) {
+                if (blocksAliveRef.current)
+                  setBlocksByPage(prev => ({ ...prev, [p.id]: blocks }));
+                return;
+              }
+            } catch {
+              /* chưa publish — fallback revision */
+            }
+          }
+          const revs = await rexerApi.pages.revisions(p.id, { limit: 1 });
+          const latest = (revs.items ?? [])[0];
+          const canvas = latest?.config_json
+            ? parseCanvas(adaptCanvasBlueprint(latest.config_json))
+            : null;
+          const blocks = canvas?.pages.flatMap(pg => pg.blocks) ?? [];
+          if (blocksAliveRef.current)
+            setBlocksByPage(prev => ({ ...prev, [p.id]: blocks }));
+        } catch {
+          if (blocksAliveRef.current)
+            setBlocksByPage(prev => ({ ...prev, [p.id]: 'error' }));
+        }
+      })();
+    }
+  }, [items]);
+
   const load = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const r = await rexerApi.pages.listAll({
         page,
-        limit: LIMIT,
+        limit: pageSize,
         sort,
         ...(typeFilter !== 'all' ? { type: typeFilter } : {}),
         ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
@@ -190,7 +277,15 @@ export function AdminCanvasTemplatesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, sort, typeFilter, statusFilter, brandFilter, debouncedSearch]);
+  }, [
+    page,
+    pageSize,
+    sort,
+    typeFilter,
+    statusFilter,
+    brandFilter,
+    debouncedSearch,
+  ]);
 
   React.useEffect(() => {
     load();
@@ -373,57 +468,93 @@ export function AdminCanvasTemplatesPage() {
     !!brandFilter ||
     !!search.trim();
 
-  const totalPages = Math.max(1, Math.ceil(total / LIMIT));
-
   return (
-    <div className='flex flex-col gap-4 p-6'>
-      {/* Header */}
-      <div className='flex flex-wrap items-end justify-between gap-3'>
-        <div>
-          <div className='text-3xs text-content-muted flex items-center gap-2 font-semibold tracking-[0.18em] uppercase'>
-            <LayoutTemplate className='size-3' /> Landing pages
+    <div className='flex h-full min-h-0 flex-col overflow-hidden'>
+      {/* Header + filters — shrink-0; list body tự scroll. */}
+      <div className='border-border bg-background shrink-0 border-b px-4 py-3'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div>
+            <h1 className='text-xl font-semibold'>Landing pages</h1>
+            <p className='text-content-muted mt-0.5 text-xs'>
+              Page instances xuyên brand · {total} pages
+            </p>
           </div>
-          <h1 className='mt-1 text-2xl font-semibold tracking-tight'>
-            Tất cả landing pages
-          </h1>
-          <p className='text-content-muted mt-1 text-sm'>
-            Page instances xuyên brand · {total} pages · click brand để xem
-            detail
-          </p>
+          <div className='flex items-center gap-2'>
+            <Button
+              variant='neutral'
+              size='sm'
+              onClick={load}
+              disabled={loading}
+            >
+              <RefreshCwIcon
+                className={cn('size-4', loading && 'animate-spin')}
+              />
+              Refresh
+            </Button>
+            <Button size='sm' onClick={() => setCreateOpen(true)}>
+              <Plus className='size-4' />
+              Tạo landing
+            </Button>
+          </div>
         </div>
-        <div className='flex items-center gap-2'>
-          <Button variant='neutral' onClick={load} disabled={loading}>
-            <RefreshCwIcon
-              className={cn('size-4', loading && 'animate-spin')}
-            />
-            Refresh
-          </Button>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className='size-4' />
-            Tạo landing
-          </Button>
-        </div>
-      </div>
 
-      {/* Toolbar — search + sort + view, filters below a hairline */}
-      <div className='border-border bg-background flex flex-col gap-3 rounded-2xl border p-3 shadow-sm'>
-        <div className='flex flex-wrap items-center gap-2'>
-          <div className='relative max-w-sm flex-1'>
-            <Search className='text-muted-foreground absolute top-1/2 left-3 size-3.5 -translate-y-1/2' />
+        {/* Search + sort + filters — cùng h-9 / border-input như Blocks. */}
+        <div className='mt-2 flex flex-wrap items-center gap-2'>
+          <div className='relative min-w-48 flex-1 basis-56'>
+            <Search className='text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2' />
             <Input
               placeholder='Tìm theo tên / slug…'
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className='pl-9'
+              className='border-input h-9 rounded-md pl-8 shadow-none md:text-xs'
+              aria-label='Tìm kiếm landing pages'
             />
           </div>
+
+          <select
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value as TypeFilter)}
+            className={FILTER_CONTROL_CLASS}
+            aria-label='Lọc theo type'
+          >
+            <option value='all'>Tất cả type</option>
+            <option value='landing'>Landing</option>
+            <option value='ad'>Ad</option>
+            <option value='curate'>Curate</option>
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value as StatusFilter)}
+            className={FILTER_CONTROL_CLASS}
+            aria-label='Lọc theo trạng thái'
+          >
+            <option value='all'>Tất cả trạng thái</option>
+            <option value='draft'>Draft</option>
+            <option value='published'>Published</option>
+            <option value='archived'>Archived</option>
+          </select>
+
+          <select
+            value={brandFilter}
+            onChange={e => setBrandFilter(e.target.value)}
+            className={FILTER_CONTROL_CLASS}
+            aria-label='Lọc theo brand'
+          >
+            <option value=''>Tất cả brand</option>
+            {brands.map(b => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
 
           <div className='relative inline-flex items-center'>
             <ArrowDownUp className='text-muted-foreground pointer-events-none absolute left-2.5 size-3.5' />
             <select
               value={sort}
               onChange={e => setSort(e.target.value as Sort)}
-              className='border-border text-content-muted hover:bg-muted bg-background focus:border-ring h-9 appearance-none rounded-lg border py-1.5 pr-3 pl-7 text-xs font-medium outline-none'
+              className={cn(FILTER_CONTROL_CLASS, 'appearance-none pr-3 pl-8')}
               aria-label='Sort'
             >
               {SORT_OPTIONS.map(o => (
@@ -434,7 +565,23 @@ export function AdminCanvasTemplatesPage() {
             </select>
           </div>
 
-          <div className='border-border bg-background ml-auto inline-flex items-center gap-0.5 rounded-lg border p-0.5'>
+          {hasActiveFilters && (
+            <button
+              type='button'
+              onClick={clearFilters}
+              className='text-content-muted hover:text-foreground inline-flex h-9 shrink-0 items-center gap-1 px-1.5 text-xs'
+              aria-label='Xoá bộ lọc'
+            >
+              <XIcon className='size-3.5' />
+              Clear
+            </button>
+          )}
+
+          <div className='text-content-muted ml-auto inline-flex h-9 shrink-0 items-center text-xs tabular-nums'>
+            {items.length} / {total}
+          </div>
+
+          <div className='border-input bg-background flex h-9 shrink-0 items-center gap-0.5 rounded-md border p-0.5'>
             <ViewBtn
               active={view === 'grid'}
               onClick={() => setView('grid')}
@@ -449,148 +596,72 @@ export function AdminCanvasTemplatesPage() {
             />
           </div>
         </div>
-
-        <div className='border-border flex flex-wrap items-center gap-2 border-t pt-3'>
-          <FilterGroup label='Type'>
-            <PillChip
-              label='Tất cả'
-              selected={typeFilter === 'all'}
-              onClick={() => setTypeFilter('all')}
-            />
-            <PillChip
-              label='Landing'
-              selected={typeFilter === 'landing'}
-              onClick={() => setTypeFilter('landing')}
-            />
-            <PillChip
-              label='Ad'
-              selected={typeFilter === 'ad'}
-              onClick={() => setTypeFilter('ad')}
-            />
-            <PillChip
-              label='Curate'
-              selected={typeFilter === 'curate'}
-              onClick={() => setTypeFilter('curate')}
-            />
-          </FilterGroup>
-
-          <span className='bg-border hidden h-4 w-px sm:block' />
-
-          <FilterGroup label='Status'>
-            <PillChip
-              label='Tất cả'
-              selected={statusFilter === 'all'}
-              onClick={() => setStatusFilter('all')}
-            />
-            <PillChip
-              label='Draft'
-              selected={statusFilter === 'draft'}
-              onClick={() => setStatusFilter('draft')}
-            />
-            <PillChip
-              label='Published'
-              selected={statusFilter === 'published'}
-              onClick={() => setStatusFilter('published')}
-            />
-            <PillChip
-              label='Archived'
-              selected={statusFilter === 'archived'}
-              onClick={() => setStatusFilter('archived')}
-            />
-          </FilterGroup>
-
-          <span className='bg-border hidden h-4 w-px sm:block' />
-
-          <FilterGroup label='Brand'>
-            <select
-              value={brandFilter}
-              onChange={e => setBrandFilter(e.target.value)}
-              className='border-border text-content-muted hover:bg-muted bg-background h-8 rounded-lg border px-2.5 text-xs font-medium outline-none'
-            >
-              <option value=''>Tất cả brand</option>
-              {brands.map(b => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
-          </FilterGroup>
-
-          {hasActiveFilters && (
-            <button
-              type='button'
-              onClick={clearFilters}
-              className='text-content-muted hover:text-foreground ml-1 inline-flex items-center gap-1 text-xs'
-            >
-              <XIcon className='size-3' />
-              Clear
-            </button>
-          )}
-
-          <div className='text-content-muted ml-auto text-xs'>
-            {items.length} / {total}
-          </div>
-        </div>
       </div>
 
-      {error && (
-        <div className='border-destructive/20 bg-danger-bg text-destructive rounded-lg border px-3 py-2 text-xs'>
-          {error}
-        </div>
-      )}
+      <div className='bg-muted/40 min-h-0 flex-1 overflow-y-auto px-4 py-3 pb-6'>
+        {error && (
+          <div className='border-destructive/20 bg-danger-bg text-destructive mb-3 rounded-lg border px-3 py-2 text-xs'>
+            {error}
+          </div>
+        )}
 
-      {/* List body */}
-      {loading && items.length === 0 ? (
-        <div className='text-content-muted flex items-center justify-center py-20 text-sm'>
-          <RefreshCwIcon className='mr-2 size-4 animate-spin' /> Đang tải pages…
-        </div>
-      ) : items.length === 0 ? (
-        <div className='border-border bg-card rounded-2xl border border-dashed p-12 text-center'>
-          <LayoutTemplate className='text-muted-foreground mx-auto size-8' />
-          <p className='text-content-muted mt-3 text-sm font-semibold'>
-            {hasActiveFilters
-              ? 'Không có page nào khớp filter'
-              : 'Chưa có page nào'}
-          </p>
-          <p className='text-content-muted mt-1 text-xs'>
-            {hasActiveFilters
-              ? 'Thử đổi từ khoá hoặc clear filter.'
-              : 'Bấm "Tạo landing" để dựng từ template hoặc trỏ link domain.'}
-          </p>
-          {!hasActiveFilters && (
-            <Button className='mt-4' onClick={() => setCreateOpen(true)}>
-              <Plus className='size-4' />
-              Tạo landing
-            </Button>
-          )}
-        </div>
-      ) : view === 'grid' ? (
-        <GridView
-          items={items}
-          brandById={brandById}
-          onAction={runPageAction}
-        />
-      ) : (
-        <TableView
-          items={items}
-          brandById={brandById}
-          onAction={runPageAction}
-          selected={selected}
-          onToggleSelected={toggleSelected}
-          onToggleSelectAll={toggleSelectAll}
-        />
-      )}
+        {/* List body */}
+        {loading && items.length === 0 ? (
+          <div className='text-content-muted flex items-center justify-center py-20 text-sm'>
+            <RefreshCwIcon className='mr-2 size-4 animate-spin' /> Đang tải
+            pages…
+          </div>
+        ) : items.length === 0 ? (
+          <div className='border-border bg-card rounded-lg border border-dashed p-12 text-center'>
+            <LayoutTemplate className='text-muted-foreground mx-auto size-8' />
+            <p className='text-content-muted mt-3 text-sm font-semibold'>
+              {hasActiveFilters
+                ? 'Không có page nào khớp filter'
+                : 'Chưa có page nào'}
+            </p>
+            <p className='text-content-muted mt-1 text-xs'>
+              {hasActiveFilters
+                ? 'Thử đổi từ khoá hoặc clear filter.'
+                : 'Bấm "Tạo landing" để dựng từ template hoặc trỏ link domain.'}
+            </p>
+            {!hasActiveFilters && (
+              <Button className='mt-4' onClick={() => setCreateOpen(true)}>
+                <Plus className='size-4' />
+                Tạo landing
+              </Button>
+            )}
+          </div>
+        ) : view === 'grid' ? (
+          <GridView
+            items={items}
+            brandById={brandById}
+            onAction={runPageAction}
+          />
+        ) : (
+          <TableView
+            items={items}
+            brandById={brandById}
+            blocksByPage={blocksByPage}
+            onAction={runPageAction}
+            selected={selected}
+            onToggleSelected={toggleSelected}
+            onToggleSelectAll={toggleSelectAll}
+          />
+        )}
 
-      {/* Pagination */}
-      {items.length > 0 && totalPages > 1 && (
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          total={total}
-          limit={LIMIT}
-          onChange={setPage}
-        />
-      )}
+        {!loading && items.length > 0 && (
+          <TablePagination
+            total={total}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={s => {
+              setPageSize(s);
+              setPage(1);
+            }}
+          />
+        )}
+      </div>
 
       {/* Bulk action bar — sticky bottom khi có selection ở table view. */}
       {selected.size > 0 && view === 'table' && (
@@ -1012,7 +1083,14 @@ function ViewBtn({
   label: string;
 }) {
   return (
-    <Chip selected={active} size='sm' onClick={onClick} title={label}>
+    <Chip
+      selected={active}
+      size='md'
+      onClick={onClick}
+      title={label}
+      className='size-8 rounded-md border-transparent px-0 shadow-none'
+      aria-label={label}
+    >
       {icon}
     </Chip>
   );
@@ -1023,6 +1101,7 @@ function ViewBtn({
 function TableView({
   items,
   brandById,
+  blocksByPage,
   onAction,
   selected,
   onToggleSelected,
@@ -1030,6 +1109,7 @@ function TableView({
 }: {
   items: Page[];
   brandById: Map<string, Brand>;
+  blocksByPage: Record<string, Block[] | 'loading' | 'error'>;
   onAction: (action: PageAction, page: Page) => void;
   selected: Set<string>;
   onToggleSelected: (id: string) => void;
@@ -1039,7 +1119,7 @@ function TableView({
   const allOn = ids.length > 0 && ids.every(id => selected.has(id));
   const someOn = ids.some(id => selected.has(id));
   return (
-    <div className='border-border bg-card rounded-2xl border'>
+    <div className='border-border bg-card overflow-hidden rounded-lg border'>
       <Table>
         <TableHeader>
           <TableRow>
@@ -1055,11 +1135,12 @@ function TableView({
                 aria-label='Chọn tất cả'
               />
             </TableHead>
-            <TableHead>Tên page</TableHead>
+            <TableHead className='w-64 min-w-64'>Page</TableHead>
             <TableHead className='w-24'>Type</TableHead>
             <TableHead className='w-28'>Status</TableHead>
             <TableHead className='w-44'>Brand</TableHead>
             <TableHead className='w-32'>Cập nhật</TableHead>
+            <TableHead className='w-32'>Blocks</TableHead>
             <TableHead className='w-44' />
           </TableRow>
         </TableHeader>
@@ -1070,6 +1151,9 @@ function TableView({
               TYPE_CHIP[p.type] ?? 'bg-muted text-content-muted';
             const brand = brandById.get(p.brand_id);
             const isSelected = selected.has(p.id);
+            const thumb = pageThumbnailUrl(p);
+            const gradient =
+              TYPE_GRADIENT[p.type] ?? 'from-zinc-400 via-zinc-500 to-zinc-600';
             return (
               <TableRow key={p.id} className={cn(isSelected && 'bg-muted')}>
                 <TableCell>
@@ -1082,27 +1166,46 @@ function TableView({
                   />
                 </TableCell>
                 <TableCell>
-                  <div className='flex items-center gap-2 font-medium'>
-                    {p.name}
-                    {p.external_url && (
-                      <span className='text-3xs inline-flex items-center gap-1 rounded-full bg-indigo-50 px-1.5 py-0.5 font-bold tracking-wider text-indigo-700 uppercase'>
-                        <Link2 className='size-2.5' />
-                        External
-                      </span>
-                    )}
-                  </div>
-                  <div className='text-3xs text-muted-foreground flex items-center gap-2 font-mono'>
-                    {p.external_url ? (
-                      <code className='truncate'>
-                        {p.external_url.replace(/^https?:\/\//, '')}
-                      </code>
+                  <div className='flex w-56 flex-col gap-1.5'>
+                    {thumb ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={thumb}
+                        alt={p.name}
+                        className='border-border h-13.5 w-28 rounded-md border object-cover'
+                      />
                     ) : (
-                      <>
-                        {p.slug ? <code>{p.slug}</code> : <span>-</span>}
-                        <span>·</span>
-                        <code>{p.id.slice(0, 12)}…</code>
-                      </>
+                      <div
+                        className={cn(
+                          'flex h-13.5 w-28 items-center justify-center rounded-md bg-linear-to-br',
+                          gradient
+                        )}
+                      >
+                        <LayoutTemplate className='size-5 text-white/50' />
+                      </div>
                     )}
+                    <div className='min-w-0'>
+                      <div className='text-sm leading-snug font-medium wrap-break-word whitespace-normal'>
+                        {p.name}
+                        {p.external_url && (
+                          <span className='text-3xs ml-1 inline-flex items-center gap-0.5 rounded-full bg-indigo-50 px-1.5 py-0.5 align-middle font-bold tracking-wider text-indigo-700 uppercase'>
+                            <Link2 className='size-2.5' />
+                            External
+                          </span>
+                        )}
+                      </div>
+                      <div className='text-3xs text-muted-foreground mt-0.5 font-mono wrap-break-word whitespace-normal'>
+                        {p.external_url ? (
+                          <code>
+                            {p.external_url.replace(/^https?:\/\//, '')}
+                          </code>
+                        ) : p.slug ? (
+                          <code>/p/{p.slug}</code>
+                        ) : (
+                          <span>(chưa có slug)</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -1146,6 +1249,9 @@ function TableView({
                     : '-'}
                 </TableCell>
                 <TableCell>
+                  <BlocksUsedCell state={blocksByPage[p.id]} />
+                </TableCell>
+                <TableCell>
                   <div className='flex items-center justify-end gap-1.5'>
                     <OpenLandingButton page={p} variant='ghost' />
                     <PageActionMenu page={p} onAction={onAction} />
@@ -1156,108 +1262,6 @@ function TableView({
           })}
         </TableBody>
       </Table>
-    </div>
-  );
-}
-
-/* ─── Pagination ────────────────────────────────────────────────────── */
-
-function Pagination({
-  page,
-  totalPages,
-  total,
-  limit,
-  onChange,
-}: {
-  page: number;
-  totalPages: number;
-  total: number;
-  limit: number;
-  onChange: (next: number) => void;
-}) {
-  const from = (page - 1) * limit + 1;
-  const to = Math.min(page * limit, total);
-
-  const pages: (number | 'gap')[] = [];
-  const add = (n: number) => {
-    if (!pages.includes(n) && n >= 1 && n <= totalPages) pages.push(n);
-  };
-  add(1);
-  if (page - 1 > 2) pages.push('gap');
-  add(page - 1);
-  add(page);
-  add(page + 1);
-  if (page + 1 < totalPages - 1) pages.push('gap');
-  add(totalPages);
-
-  return (
-    <div className='border-border bg-background flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 shadow-sm'>
-      <span className='text-2xs text-content-muted'>
-        {from}-{to} trong {total}
-      </span>
-      <div className='flex items-center gap-1'>
-        <button
-          type='button'
-          onClick={() => onChange(Math.max(1, page - 1))}
-          disabled={page <= 1}
-          className='border-border text-content-muted hover:bg-muted inline-flex size-7 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-40'
-          aria-label='Trang trước'
-        >
-          <ChevronLeft className='size-3.5' />
-        </button>
-        {pages.map((p, i) =>
-          p === 'gap' ? (
-            <span
-              key={`gap-${i}`}
-              className='text-2xs text-muted-foreground px-1'
-            >
-              …
-            </span>
-          ) : (
-            <button
-              key={p}
-              type='button'
-              onClick={() => onChange(p)}
-              className={cn(
-                'text-2xs inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 font-mono font-semibold tabular-nums transition-colors',
-                p === page
-                  ? 'bg-foreground text-background shadow-sm'
-                  : 'border-border text-content-muted hover:bg-muted bg-background border'
-              )}
-            >
-              {p}
-            </button>
-          )
-        )}
-        <button
-          type='button'
-          onClick={() => onChange(Math.min(totalPages, page + 1))}
-          disabled={page >= totalPages}
-          className='border-border text-content-muted hover:bg-muted inline-flex size-7 items-center justify-center rounded-md border disabled:cursor-not-allowed disabled:opacity-40'
-          aria-label='Trang sau'
-        >
-          <ChevronRight className='size-3.5' />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Bits ──────────────────────────────────────────────────────────── */
-
-function FilterGroup({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className='inline-flex items-center gap-1.5'>
-      <span className='text-3xs text-muted-foreground font-semibold tracking-[0.18em] uppercase'>
-        {label}
-      </span>
-      <div className='inline-flex items-center gap-1'>{children}</div>
     </div>
   );
 }

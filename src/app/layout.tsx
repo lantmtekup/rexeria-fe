@@ -20,7 +20,7 @@ import '../styles/globals.css';
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin', 'latin-ext', 'vietnamese'],
-  weight: ['400', '500', '600', '700', '900'],
+  weight: ['300', '400', '500', '600', '700', '900'],
   display: 'swap',
 });
 
@@ -133,10 +133,13 @@ export default async function RootLayout({
         />
         <link rel='stylesheet' href={GOOGLE_FONTS_HREF} />
       </head>
-      <body className={`${inter.variable} bg-background antialiased`}>
+      <body
+        className={`${inter.variable} bg-background antialiased`}
+        suppressHydrationWarning
+      >
         <Providers locale={locale} messages={messages} timezone={timezone}>
           {children}
-          <Toaster position='top-right' />
+          <Toaster position='bottom-right' />
         </Providers>
       </body>
     </html>

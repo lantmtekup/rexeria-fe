@@ -19,6 +19,8 @@ const protectedRoutes = [
   // cookie, nhưng vẫn gate ở middleware để user logout không thấy khung
   // portal (defense-in-depth).
   '/portal',
+  // Doc/demo nội bộ — không cố ý public (audit FE 2026-07-04 Q7).
+  '/overview',
 ];
 
 const authRoutes = ['/dang-nhap', '/quen-mat-khau', '/sign-in'];
@@ -149,6 +151,22 @@ export async function middleware(request: NextRequest) {
     const signInUrl = new URL('/dang-nhap', request.url);
     signInUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(signInUrl);
+  }
+
+  // Role-gate /admin: chỉ platform admin. `role` claim đã được verify với BE
+  // tại /api/auth/session-set nên tin được ở đây (defense-in-depth — data
+  // vẫn 401 từ BE nếu lọt).
+  if (
+    isAuth &&
+    pathnameWithoutLocale.startsWith('/admin') &&
+    session.role !== 'admin'
+  ) {
+    return NextResponse.redirect(
+      new URL(
+        roleHomePath(session.role, session.scope || undefined),
+        request.url
+      )
+    );
   }
 
   return NextResponse.next();

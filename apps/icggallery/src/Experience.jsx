@@ -80,6 +80,7 @@ export default function Experience({
   onHotspot,
   dollhouse,
   pathDraft,
+  light,
 }) {
   const cfg = FLOORS[floor];
   const camera = useThree(s => s.camera);
@@ -166,11 +167,23 @@ export default function Experience({
     };
   }, [sliderGltf, povGltf, cfg, clay]);
 
-  // Slightly lifted exposure for the landing → light & airy like the reference.
+  // Exposure: POV uses the designer-tunable value; landing stays light & airy.
   const gl = useThree(s => s.gl);
   useEffect(() => {
-    gl.toneMappingExposure = entered ? 0.95 : 1.05;
-  }, [gl, entered]);
+    gl.toneMappingExposure = entered ? (light?.exposure ?? 0.95) : 1.05;
+  }, [gl, entered, light?.exposure]);
+
+  // POV key light position from azimuth/elevation around the room centre.
+  const keyPos = useMemo(() => {
+    const az = THREE.MathUtils.degToRad(light?.keyAzimuth ?? 45);
+    const el = THREE.MathUtils.degToRad(light?.keyElevation ?? 50);
+    const r = (iso.radius || 6) * 2.2;
+    return [
+      iso.center.x + r * Math.cos(el) * Math.cos(az),
+      iso.center.y + r * Math.sin(el),
+      iso.center.z + r * Math.cos(el) * Math.sin(az),
+    ];
+  }, [light?.keyAzimuth, light?.keyElevation, iso]);
 
   // Each floor's camera path is an AnimationClip that moves an empty
   // (position + quaternion). We scrub it by scroll and copy the empty's
@@ -356,9 +369,23 @@ export default function Experience({
   return (
     <>
       {/* Baked color maps carry lighting → minimal direct light + indoor IBL
-          for soft fill + reflections (closer to the reference look). */}
-      <ambientLight intensity={entered ? 0.25 : 0.2} />
-      <Environment preset='apartment' environmentIntensity={0.55} />
+          for soft fill + reflections. Designer-tunable via ?light editor. */}
+      <ambientLight
+        intensity={entered ? (light?.ambient ?? 0.25) : 0.2}
+        color={light?.ambientColor ?? '#ffffff'}
+      />
+      <Environment
+        preset={light?.envPreset ?? 'apartment'}
+        environmentIntensity={light?.envIntensity ?? 0.55}
+      />
+      {/* Optional POV key light (off by default) — shaping + soft direction. */}
+      {entered && !dollhouse && light?.keyOn && (
+        <directionalLight
+          position={keyPos}
+          intensity={light.keyIntensity ?? 1.2}
+          color={light.keyColor ?? '#fff5e6'}
+        />
+      )}
       {(!entered || dollhouse) && (
         <>
           <hemisphereLight

@@ -32,7 +32,25 @@ interface DragState {
   startClientY: number;
   baseX: number;
   baseY: number;
+  /** Same guard as BlockPreview's fixed-element drag: keep the object partly
+   *  inside the frame so it can't be parked somewhere invisible. Null when it
+   *  already starts outside (don't yank an intentional overflow back in). */
+  bounds: { minX: number; maxX: number; minY: number; maxY: number } | null;
   active: boolean;
+}
+
+/** Unscaled px of an element that must stay inside the block frame. */
+const MIN_VISIBLE = 32;
+
+const clampTo = (v: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, v));
+
+function clampDrag(x: number, y: number, b: DragState['bounds']) {
+  if (!b) return { x, y };
+  return {
+    x: clampTo(x, b.minX, b.maxX),
+    y: clampTo(y, b.minY, b.maxY),
+  };
 }
 
 /**
@@ -55,6 +73,30 @@ export function ExtraElementOverlay({
 }: Props) {
   const dragRef = React.useRef<DragState | null>(null);
   const justDraggedRef = React.useRef(false);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+
+  /** Frame bounds in the element's own (unscaled) coordinate space. */
+  const computeBounds = (el: ExtraElement): DragState['bounds'] => {
+    const root = rootRef.current;
+    if (!root) return null;
+    const safe = scale || 1;
+    const rect = root.getBoundingClientRect();
+    const frameW = rect.width / safe;
+    const frameH = rect.height / safe;
+    if (frameW <= 0 || frameH <= 0) return null;
+    const bounds = {
+      minX: MIN_VISIBLE - el.size.width,
+      maxX: frameW - MIN_VISIBLE,
+      minY: MIN_VISIBLE - el.size.height,
+      maxY: frameH - MIN_VISIBLE,
+    };
+    const inside =
+      el.position.x >= bounds.minX &&
+      el.position.x <= bounds.maxX &&
+      el.position.y >= bounds.minY &&
+      el.position.y <= bounds.maxY;
+    return inside ? bounds : null;
+  };
 
   const handlePointerDown = (
     e: React.PointerEvent<HTMLDivElement>,
@@ -70,6 +112,7 @@ export function ExtraElementOverlay({
       startClientY: e.clientY,
       baseX: el.position.x,
       baseY: el.position.y,
+      bounds: computeBounds(el),
       active: false,
     };
     target.setPointerCapture(e.pointerId);
@@ -84,8 +127,11 @@ export function ExtraElementOverlay({
     if (!d.active && Math.hypot(dxRaw, dyRaw) < 4) return;
     d.active = true;
     const safe = scale || 1;
-    const x = d.baseX + dxRaw / safe;
-    const y = d.baseY + dyRaw / safe;
+    const { x, y } = clampDrag(
+      d.baseX + dxRaw / safe,
+      d.baseY + dyRaw / safe,
+      d.bounds
+    );
     d.el.style.left = `${x}px`;
     d.el.style.top = `${y}px`;
     d.el.style.cursor = 'grabbing';
@@ -99,9 +145,12 @@ export function ExtraElementOverlay({
     d.el.style.cursor = '';
     if (!d.active) return;
     const safe = scale || 1;
-    const x = Math.round(d.baseX + (e.clientX - d.startClientX) / safe);
-    const y = Math.round(d.baseY + (e.clientY - d.startClientY) / safe);
-    onCommitPosition(d.id, { x, y });
+    const pos = clampDrag(
+      d.baseX + (e.clientX - d.startClientX) / safe,
+      d.baseY + (e.clientY - d.startClientY) / safe,
+      d.bounds
+    );
+    onCommitPosition(d.id, { x: Math.round(pos.x), y: Math.round(pos.y) });
     justDraggedRef.current = true;
   };
 
@@ -143,7 +192,7 @@ export function ExtraElementOverlay({
   if (elements.length === 0) return null;
 
   return (
-    <div className='pointer-events-none absolute inset-0'>
+    <div ref={rootRef} className='pointer-events-none absolute inset-0'>
       {elements.map(el => {
         const selected = el.id === selectedId;
         return (

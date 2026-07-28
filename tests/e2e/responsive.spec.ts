@@ -140,14 +140,14 @@ test.describe('Block responsive output (per device frame)', () => {
     ).toBeGreaterThanOrEqual(30);
   });
 
-  test('desktop frame · width 1280 + desktop text scale (text-5xl/6xl fires)', async ({
+  test('desktop frame · width 1440 + desktop text scale (text-5xl/6xl fires)', async ({
     page,
   }) => {
     await openEditor(page);
     await selectDevice(page, 'Desktop');
 
     const info = await frameInfo(page);
-    expect(info?.styleWidth).toBe(1280);
+    expect(info?.styleWidth).toBe(1440);
 
     const title = await elementMetricsInFrame(page, 'title');
     if (!title.found) test.skip(true, 'no title element');

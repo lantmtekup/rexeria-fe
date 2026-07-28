@@ -1,0 +1,208 @@
+/* ================================================================
+   Device Toggle (mobile / desktop) & Desktop Frame
+   Phạm vi: scoped dưới .ad-showcase-root.
+   Class prefix `dv-` để không xung đột với ads/preview/showcase.
+   ================================================================ */
+
+/* ── Segmented toggle ───────────────────────────────────────── */
+.ad-showcase-root .dv-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 110;
+}
+
+.ad-showcase-root .dv-toggle-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  gap: 0;
+  padding: 2px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 10px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.ad-showcase-root .dv-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(50% - 2px);
+  height: calc(100% - 4px);
+  border-radius: 8px;
+  background: #1a1a1a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ad-showcase-root .dv-toggle-btn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #9a9a9a;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    transform 0.12s ease;
+}
+
+.ad-showcase-root .dv-toggle-btn:hover:not(.is-active) {
+  color: #4a4a4a;
+}
+
+.ad-showcase-root .dv-toggle-btn:active {
+  transform: scale(0.97);
+}
+
+.ad-showcase-root .dv-toggle-btn.is-active {
+  color: #ffffff;
+}
+
+.ad-showcase-root .dv-toggle-btn:focus-visible {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 3px;
+}
+
+.ad-showcase-root .dv-toggle-btn svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* ── Desktop frame ─────────────────────────────────────────── */
+.ad-showcase-root .dv-desktop {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: radial-gradient(circle at 50% 0%, #12233f, #06080d 70%);
+  overflow: auto;
+}
+
+.ad-showcase-root .dv-desktop-window {
+  position: relative;
+  width: 100%;
+  height: min(86vh, 840px);
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  /* .isp-ad-fixed (position: fixed, không bị window's overflow:hidden clip)
+     đọc biến này để bo góc khớp khung browser thay vì mặc định 47px của
+     màn hình iPhone (preview.css .pv-screen) — tránh hở viền trắng ở 2 góc dưới. */
+  --isp-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 30px 90px -24px rgba(0, 0, 0, 0.55),
+    0 6px 18px -4px rgba(0, 0, 0, 0.25);
+}
+
+.ad-showcase-root .dv-desktop-chrome {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #ececec;
+  border-bottom: 1px solid #d4d4d4;
+  flex-shrink: 0;
+}
+
+.ad-showcase-root .dv-desktop-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.ad-showcase-root .dv-desktop-dot--red {
+  background: #ff5f57;
+}
+.ad-showcase-root .dv-desktop-dot--yellow {
+  background: #febc2e;
+}
+.ad-showcase-root .dv-desktop-dot--green {
+  background: #28c840;
+}
+
+.ad-showcase-root .dv-desktop-urlbar {
+  flex: 1;
+  margin-left: 12px;
+  padding: 6px 12px;
+  background: #ffffff;
+  border-radius: 6px;
+  font:
+    500 12px/1 'Outfit',
+    system-ui,
+    sans-serif;
+  color: #6b7280;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ad-showcase-root .dv-desktop-content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #0b0b09;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+/* Không ép width/height 100% lên ad — ad tự quyết định (mobile-first). */
+.ad-showcase-root .dv-desktop-content > * {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Mobile mode phủ bằng DeviceFrame ────────────────────────
+   .pv-page vốn đã fixed inset; khi đặt trong fixed parent .ad-showcase-root
+   thì pv-page trở thành layer phụ — set lại position cho gọn layout. */
+.ad-showcase-root .pv-page {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 500px) {
+  .ad-showcase-root .dv-toggle-track {
+    padding: 2px;
+  }
+
+  .ad-showcase-root .dv-toggle-btn {
+    width: 30px;
+    height: 26px;
+  }
+
+  .ad-showcase-root .dv-toggle-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .ad-showcase-root .dv-desktop {
+    padding: 8px;
+  }
+
+  .ad-showcase-root .dv-desktop-chrome {
+    padding: 8px 10px;
+  }
+}

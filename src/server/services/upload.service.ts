@@ -57,8 +57,11 @@ const isExtAllowed = (fileName: string, pattern: string): boolean => {
   return regex.test(fileName);
 };
 
-const resolveContentType = (file: File, fileName: string): string => {
-  if (file.type) return file.type;
+// Content-Type suy DUY NHẤT từ đuôi file đã qua allow-list — không tin
+// `file.type` (attacker kiểm soát được → stored HTML/XSS trên asset domain).
+// Đuôi ngoài map (mở rộng qua UPLOAD_FILE_EXT) → octet-stream (browser tải
+// về thay vì render).
+const resolveContentType = (fileName: string): string => {
   const ext = path.extname(fileName).toLowerCase();
   return MIME_BY_EXT[ext] ?? 'application/octet-stream';
 };
@@ -69,12 +72,6 @@ const isS3Configured = (): boolean =>
   Boolean(process.env.S3_ACCESS_KEY_SECRET?.trim()) &&
   Boolean(process.env.S3_REGION?.trim()) &&
   Boolean(process.env.S3_BUCKET_NAME?.trim());
-
-const checkUploadSecret = (request: Request): boolean => {
-  const secret = process.env.UPLOAD_API_SECRET?.trim();
-  if (!secret) return true;
-  return request.headers.get('x-upload-secret') === secret;
-};
 
 const isAclEnabled = (): boolean =>
   process.env.S3_USE_ACL?.trim().toLowerCase() !== 'false';
@@ -160,11 +157,9 @@ const collectFiles = (formData: FormData): File[] => {
 };
 
 export const uploadService = {
+  // Authorization xảy ra ở upload.controller (session cookie hoặc
+  // x-upload-secret) — service chỉ xử lý multipart + S3.
   async processMultipartUpload(request: Request): Promise<UploadApiData> {
-    if (!checkUploadSecret(request)) {
-      throw HttpException.unauthorized(ErrorCode.UPLOAD_UNAUTHORIZED);
-    }
-
     if (!isS3Configured()) {
       throw HttpException.fail(
         HttpStatus.SERVICE_UNAVAILABLE,
@@ -232,7 +227,7 @@ export const uploadService = {
             Bucket: bucket,
             Key: key,
             Body: body,
-            ContentType: resolveContentType(file, file.name),
+            ContentType: resolveContentType(file.name),
           },
           useAcl
         );

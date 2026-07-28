@@ -28,7 +28,12 @@ import { use } from 'react';
 import Link from 'next/link';
 import { AlertCircle, ArrowLeft, Code2, Eye, Loader2 } from 'lucide-react';
 
+import { Link2 } from 'lucide-react';
+
 import { BlockEditor } from '@/components/modules/CanvasTemplate/BlockEditor';
+import { PublishTemplateDemoDialog } from '@/components/modules/Template/PublishTemplateDemoDialog';
+import { TemplatePreviewAction } from '@/components/modules/Template/TemplatePreviewAction';
+import { getDemoPageMapping } from '@/lib/templateDemoPage';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Template } from '@/services/rexer/types';
@@ -52,6 +57,7 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
 
   const [template, setTemplate] = React.useState<Template | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [demoDialogOpen, setDemoDialogOpen] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -193,13 +199,13 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
         </div>
 
         <div className='flex justify-end gap-2'>
-          <Link
-            href={`/admin/templates/${templateId}/preview`}
+          <TemplatePreviewAction
+            template={template!}
             className='bg-foreground text-background hover:bg-foreground/85 inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-medium'
           >
             <Eye className='size-3.5' />
             Xem preview
-          </Link>
+          </TemplatePreviewAction>
         </div>
       </div>
     );
@@ -208,9 +214,44 @@ export default function AdminTemplateEditPage({ params }: PageProps) {
   // Block template — WYSIWYG editor (existing flow).
   // h-[100dvh]: bó chiều cao = viewport để canvas scroll NỘI BỘ (block cao như
   // hero 300vh không đẩy cả trang scroll). Trước dùng h-full → không bị bó.
+  const demoMapping = getDemoPageMapping(templateId);
+
+  // Action "link demo" sống trong header của editor (slot `headerActions`) —
+  // không dựng bar riêng phía trên, tránh ăn mất chiều cao canvas.
+  const demoBtnClass =
+    'text-2xs ml-0.5 flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-neutral-200 px-2 font-medium tracking-tight text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900';
+
+  const demoAction = demoMapping ? (
+    <Link
+      href={`/admin/landing-pages/${demoMapping.pageId}`}
+      title='Mở landing page demo của template này'
+      className={demoBtnClass}
+    >
+      <Link2 className='size-3.5' />
+      Xem link demo
+    </Link>
+  ) : (
+    <button
+      type='button'
+      onClick={() => setDemoDialogOpen(true)}
+      title='Xuất bản template này thành landing page demo công khai'
+      className={demoBtnClass}
+    >
+      <Link2 className='size-3.5' />
+      Tạo link demo
+    </button>
+  );
+
   return (
-    <div className='flex h-[100dvh] flex-col overflow-hidden'>
-      <BlockEditor templateId={templateId} />
+    <div className='flex h-screen flex-col overflow-hidden'>
+      <div className='min-h-0 flex-1'>
+        <BlockEditor templateId={templateId} headerActions={demoAction} />
+      </div>
+      <PublishTemplateDemoDialog
+        open={demoDialogOpen}
+        onOpenChange={setDemoDialogOpen}
+        template={template}
+      />
     </div>
   );
 }

@@ -17,6 +17,7 @@ import { Label } from '@/components/atoms/label';
 
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
+import { ALL_BLOCK_SURFACES } from '@/services/rexer/types';
 
 import { getSavedBlock } from './savedBlocks';
 import type { Block } from './types';
@@ -101,6 +102,7 @@ export function SaveBlockDialog({
         name: trimmed,
         settings: block as unknown as Record<string, unknown>,
         tags: [],
+        supported_surfaces: ALL_BLOCK_SURFACES,
       });
       toast.success(`Đã lưu "${trimmed}" vào thư viện`);
       onSaved?.(created.id);
@@ -128,6 +130,9 @@ export function SaveBlockDialog({
         // với settings.blockType, tránh lệch metadata.
         type_code: block.blockType,
         settings: block as unknown as Record<string, unknown>,
+        // Luôn gửi kèm — nếu entry cũ bị BE lưu supported_surfaces=[] (bug trước
+        // khi field này tồn tại ở FE), lần cập nhật này tự sửa luôn.
+        supported_surfaces: ALL_BLOCK_SURFACES,
       });
       toast.success(`Đã cập nhật "${trimmed}"`);
       onSaved?.(updated.id);

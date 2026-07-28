@@ -38,7 +38,9 @@ if (!COOKIE && process.env.SEED_EMAIL && process.env.SEED_PASSWORD) {
   });
   if (!loginRes.ok) {
     const text = await loginRes.text();
-    throw new Error(`Login failed: HTTP ${loginRes.status} — ${text.slice(0, 200)}`);
+    throw new Error(
+      `Login failed: HTTP ${loginRes.status} — ${text.slice(0, 200)}`
+    );
   }
   // Extract _access_token from Set-Cookie header. Cloudflare tunnel may
   // proxy multiple Set-Cookie values; grab the first matching cookie name.
@@ -418,7 +420,11 @@ for (const tpl of TEMPLATES) {
   try {
     const res = await rx('/products', { method: 'POST', body });
     const id = res.product?.id ?? '?';
-    summary.created.push({ name: tpl.name, id, category: tpl.template_category });
+    summary.created.push({
+      name: tpl.name,
+      id,
+      category: tpl.template_category,
+    });
     console.log(`✅   ${tpl.template_category.padEnd(11)} · ${tpl.name}`);
     console.log(`     id=${id}`);
   } catch (err) {

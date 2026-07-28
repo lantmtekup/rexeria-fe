@@ -20,15 +20,17 @@
  */
 
 import * as React from 'react';
-import * as Popover from '@radix-ui/react-popover';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
+  AlertTriangle,
   Bookmark,
   Check,
   ChevronDown,
   Copy,
+  ExternalLink,
   Eye,
   FlaskConical,
+  Layers,
   LayoutGrid,
   Loader2,
   MoreVertical,
@@ -39,7 +41,6 @@ import {
   RefreshCw,
   Search,
   Table as TableIcon,
-  Tag,
   Trash2,
   X,
 } from 'lucide-react';
@@ -47,8 +48,29 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/atoms/button';
 import { Chip } from '@/components/atoms/chip';
-import { Input } from '@/components/atoms/input';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from '@/components/atoms/command';
 import { EmptyState } from '@/components/molecules/EmptyState';
+import { Input } from '@/components/atoms/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/atoms/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/atoms/select';
 import {
   Table,
   TableBody,
@@ -67,7 +89,12 @@ import type {
 } from '@/components/modules/block-editor/types';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { Block as ServerBlock, BlockStatus } from '@/services/rexer/types';
+import { resolveTemplateBlocks } from '@/services/rexer/resolveTemplateBlocks';
+import type {
+  Block as ServerBlock,
+  BlockStatus,
+  Template,
+} from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
 import {
   BLOCK_STATUS_META,
@@ -75,21 +102,53 @@ import {
   BlockStatusBadge,
   effectiveBlockStatus,
 } from '@/lib/block-status';
+import {
+  BLOCK_CATEGORY_LABEL,
+  BLOCK_CATEGORY_ORDER,
+  blockMatchesCategoryFilter,
+  buildLibraryTypeIndex,
+  groupAdjacentByMappingCode,
+  parseLibraryCategoryFilter,
+  resolveTypeMeta,
+  sortBlocksByMappingCode,
+  type LibraryCategoryFilter,
+  type LibraryTypeIndex,
+} from '@/lib/block-type-catalog';
 
 import { AddBuiltinBlockDialog } from './AddBuiltinBlockDialog';
 import { EditBlockDialog } from './EditBlockDialog';
 
 type View = 'grid' | 'table';
+type Sort = '-updated_at' | 'updated_at';
+
+const SORT_OPTIONS: { id: Sort; label: string }[] = [
+  { id: '-updated_at', label: 'Mới nhất' },
+  { id: 'updated_at', label: 'Cũ nhất' },
+];
+
+const DEFAULT_SORT: Sort = '-updated_at';
+
+const SORT_IDS = new Set<string>(SORT_OPTIONS.map(o => o.id));
 
 // Derive từ registry BLOCK_TYPE_META (nguồn duy nhất). Thêm block type mới
 // chỉ cần 1 entry ở types.ts — 2 map này tự đầy đủ.
-const BLOCK_TYPE_LABEL: Record<BlockType, string> = Object.fromEntries(
-  Object.values(BLOCK_TYPE_META).map(m => [m.type, m.adminLabel])
-) as Record<BlockType, string>;
+// const BLOCK_TYPE_LABEL: Record<BlockType, string> = Object.fromEntries(
+//   Object.values(BLOCK_TYPE_META).map(m => [m.type, m.adminLabel])
+// ) as Record<BlockType, string>;
 
 const BLOCK_TYPE_GRADIENT: Record<BlockType, string> = Object.fromEntries(
   Object.values(BLOCK_TYPE_META).map(m => [m.type, m.gradient])
 ) as Record<BlockType, string>;
+
+/** Sort theo updated_at (fallback created_at) — khớp cột thời gian trên list. */
+function sortBlocksByRecency(blocks: ServerBlock[], sort: Sort): ServerBlock[] {
+  const dir = sort === 'updated_at' ? 1 : -1;
+  return [...blocks].sort((a, b) => {
+    const aAt = a.updated_at || a.created_at || '';
+    const bAt = b.updated_at || b.created_at || '';
+    return aAt.localeCompare(bAt) * dir;
+  });
+}
 
 function fmtDate(iso?: string): string {
   if (!iso) return '-';
@@ -120,6 +179,145 @@ function rxMessage(err: unknown): string {
   return 'Unexpected error';
 }
 
+const SEARCH_DEBOUNCE_MS = 300;
+
+interface TemplateRef {
+  id: string;
+  name: string;
+  code: string;
+}
+
+// Fan-out bounded — 24 template hiện tại thì vô hại, nhưng danh sách sẽ lớn
+// dần nên chặn concurrency thay vì Promise.all không giới hạn (giống pattern
+// `PROBE_CONCURRENCY` ở resolveTemplateFromVersion.ts).
+const TEMPLATE_SCAN_CONCURRENCY = 4;
+
+async function buildBlockTypeTemplateIndex(
+  templates: Template[]
+): Promise<Record<string, TemplateRef[]>> {
+  const index: Record<string, TemplateRef[]> = {};
+  for (let i = 0; i < templates.length; i += TEMPLATE_SCAN_CONCURRENCY) {
+    const batch = templates.slice(i, i + TEMPLATE_SCAN_CONCURRENCY);
+    await Promise.all(
+      batch.map(async t => {
+        const blocks = await resolveTemplateBlocks(t).catch(() => []);
+        const seenTypes = new Set<string>();
+        for (const b of blocks) {
+          if (seenTypes.has(b.blockType)) continue;
+          seenTypes.add(b.blockType);
+          (index[b.blockType] ??= []).push({
+            id: t.id,
+            name: t.name,
+            code: t.code,
+          });
+        }
+      })
+    );
+  }
+  return index;
+}
+
+/** Cùng spec với shadcn SelectTrigger (h-9 text-sm). */
+const FILTER_CONTROL_H = 'h-9 text-sm shadow-xs';
+const FILTER_SELECT_TRIGGER = cn(FILTER_CONTROL_H, 'w-40 shrink-0 font-normal');
+
+type BlocksUrlFilters = {
+  q: string;
+  category: LibraryCategoryFilter;
+  status: BlockStatus | 'all';
+  tags: string[];
+  duplicatesOnly: boolean;
+  page: number;
+  view: View;
+  sort: Sort;
+};
+
+function parseBlocksUrlFilters(
+  sp: URLSearchParams | { get: (key: string) => string | null }
+): BlocksUrlFilters {
+  const q = sp.get('q')?.trim() ?? '';
+  const catRaw = sp.get('cat') ?? sp.get('type');
+  const statusRaw = sp.get('status');
+  const tagsRaw = sp.get('tags');
+  const dupRaw = sp.get('dup');
+  const pageRaw = Number(sp.get('page') ?? '1');
+  const viewRaw = sp.get('view');
+  const sortRaw = sp.get('sort');
+
+  return {
+    q,
+    category: parseLibraryCategoryFilter(catRaw),
+    status:
+      dupRaw === '1'
+        ? 'all'
+        : statusRaw && (BLOCK_STATUS_ORDER as string[]).includes(statusRaw)
+          ? (statusRaw as BlockStatus)
+          : 'published',
+    tags: tagsRaw
+      ? tagsRaw
+          .split(',')
+          .map(t => t.trim())
+          .filter(Boolean)
+      : [],
+    duplicatesOnly: dupRaw === '1',
+    page: Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1,
+    view: viewRaw === 'grid' || viewRaw === 'table' ? viewRaw : 'table',
+    sort: sortRaw && SORT_IDS.has(sortRaw) ? (sortRaw as Sort) : DEFAULT_SORT,
+  };
+}
+
+/** Khóa ổn định để so sánh filter — chỉ reset trang khi khóa thật sự đổi. */
+function serializeBlocksListFilters(filters: {
+  search: string;
+  category: LibraryCategoryFilter;
+  status: BlockStatus | 'all';
+  tags: string[];
+  duplicatesOnly: boolean;
+  sort: Sort;
+}): string {
+  return JSON.stringify({
+    q: filters.search.trim(),
+    cat: filters.category,
+    status: filters.status,
+    tags: [...filters.tags].sort(),
+    dup: filters.duplicatesOnly,
+    sort: filters.sort,
+  });
+}
+
+/** Sync filter → URL không qua Next router (tránh loading.tsx / mất focus ô search). */
+function replaceBlocksUrlFilters(
+  pathname: string,
+  filters: {
+    q: string;
+    category: LibraryCategoryFilter;
+    status: BlockStatus | 'all';
+    tags: string[];
+    duplicatesOnly: boolean;
+    page: number;
+    view: View;
+    sort: Sort;
+  }
+) {
+  if (typeof window === 'undefined') return;
+  const sp = new URLSearchParams();
+  const q = filters.q.trim();
+  if (q) sp.set('q', q);
+  if (filters.category !== 'all') sp.set('cat', filters.category);
+  if (filters.status !== 'all') sp.set('status', filters.status);
+  if (filters.tags.length > 0) sp.set('tags', filters.tags.join(','));
+  if (filters.duplicatesOnly) sp.set('dup', '1');
+  if (filters.page > 1) sp.set('page', String(filters.page));
+  if (filters.view !== 'table') sp.set('view', filters.view);
+  if (filters.sort !== DEFAULT_SORT) sp.set('sort', filters.sort);
+
+  const qs = sp.toString();
+  const next = qs ? `${pathname}?${qs}` : pathname;
+  const current = `${window.location.pathname}${window.location.search}`;
+  if (next === current) return;
+  window.history.replaceState(null, '', next);
+}
+
 /**
  * Try parsing `Block.settings` back to an editor Block. FE writes editor
  * Block as-is into settings on create, so the round-trip works for blocks
@@ -139,22 +337,36 @@ function parseEditorBlock(
 export function BlocksPage() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   // Brand portal mounts this component at /portal/blocks. In that context the
   // side-drawer is replaced by a dedicated detail route (/portal/blocks/[id])
   // so the URL clearly reads as portal — admin/staff still get the drawer.
   const isPortal = pathname?.startsWith('/portal') ?? false;
   const detailBase = isPortal ? '/portal/blocks' : '/admin/blocks';
 
+  const [initialFilters] = React.useState(() =>
+    parseBlocksUrlFilters(searchParams)
+  );
+
   const [items, setItems] = React.useState<ServerBlock[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [view, setView] = React.useState<View>('table');
-  const [search, setSearch] = React.useState('');
-  const [typeFilter, setTypeFilter] = React.useState<BlockType | 'all'>('all');
+  const [view, setView] = React.useState<View>(initialFilters.view);
+  // searchInput: gõ ngay; search: debounce → filter + URL (tránh re-render nặng mỗi ký tự).
+  const [searchInput, setSearchInput] = React.useState(initialFilters.q);
+  const [search, setSearch] = React.useState(initialFilters.q);
+  const [categoryFilter, setCategoryFilter] =
+    React.useState<LibraryCategoryFilter>(initialFilters.category);
   const [statusFilter, setStatusFilter] = React.useState<BlockStatus | 'all'>(
-    'all'
+    initialFilters.status
   );
-  const [tagFilter, setTagFilter] = React.useState<string[]>([]);
+  const [tagFilter, setTagFilter] = React.useState<string[]>(
+    initialFilters.tags
+  );
+  const [duplicatesOnly, setDuplicatesOnly] = React.useState(
+    initialFilters.duplicatesOnly
+  );
+  const [sort, setSort] = React.useState<Sort>(initialFilters.sort);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   // Bulk select (xoá nhiều) — giữ id, chung cho cả grid + table.
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
@@ -162,8 +374,9 @@ export function BlocksPage() {
   const [catalogOpen, setCatalogOpen] = React.useState(false);
   // Block đang sửa thông tin (name/description/tags) qua EditBlockDialog.
   const [editTarget, setEditTarget] = React.useState<ServerBlock | null>(null);
-  const [page, setPage] = React.useState(1);
+  const [page, setPage] = React.useState(initialFilters.page);
   const [pageSize, setPageSize] = React.useState(20);
+  const prevListFiltersKeyRef = React.useRef<string | null>(null);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -183,27 +396,77 @@ export function BlocksPage() {
     load();
   }, [load]);
 
-  // Options filter type: từ registry FE BLOCK_TYPE_META (nguồn duy nhất) + gộp
-  // thêm type_code có trong data mà registry chưa phủ (đừng để block nào không lọc được).
-  const typeOptions = React.useMemo(() => {
-    const map = new Map<string, string>();
-    for (const [code, label] of Object.entries(BLOCK_TYPE_LABEL)) {
-      map.set(code, label);
-    }
-    for (const it of items) {
-      if (!map.has(it.type_code)) map.set(it.type_code, it.type_code);
-    }
-    return Array.from(map, ([code, label]) => ({ code, label })).sort((a, b) =>
-      a.label.localeCompare(b.label)
-    );
-  }, [items]);
+  // Reverse index "block type này nằm trong template nào" — quét TOÀN BỘ
+  // template 1 lần (không phải per-row) rồi build Map<type_code, Template[]>,
+  // vì canvas block là bản copy inline (không FK tới thư viện Blocks) nên
+  // không thể lấy trực tiếp — phải match theo `blockType === type_code`.
+  // LƯU Ý: đây là khớp theo LOẠI block, khác với `usage_count` hiển thị ở
+  // cột "Extras / Usage" (counter tăng thủ công lúc "Add block" từ thư viện,
+  // không có provenance) — 2 con số này KHÔNG nhất thiết trùng nhau.
+  const [templatesByType, setTemplatesByType] = React.useState<
+    Record<string, TemplateRef[]> | 'loading' | 'error'
+  >('loading');
+  const templatesIndexAliveRef = React.useRef(true);
+  const templatesIndexStartedRef = React.useRef(false);
+  React.useEffect(() => {
+    templatesIndexAliveRef.current = true;
+    return () => {
+      templatesIndexAliveRef.current = false;
+    };
+  }, []);
+  React.useEffect(() => {
+    if (templatesIndexStartedRef.current) return;
+    templatesIndexStartedRef.current = true;
+    (async () => {
+      try {
+        const tplList = await rexerApi.templates.list();
+        const idx = await buildBlockTypeTemplateIndex(tplList.items ?? []);
+        if (templatesIndexAliveRef.current) setTemplatesByType(idx);
+      } catch {
+        if (templatesIndexAliveRef.current) setTemplatesByType('error');
+      }
+    })();
+  }, []);
 
-  // Số block đã có theo type_code → chip "đã có N" trong dialog thêm block.
-  const typeCounts = React.useMemo(() => {
-    const m: Record<string, number> = {};
-    for (const it of items) m[it.type_code] = (m[it.type_code] ?? 0) + 1;
-    return m;
-  }, [items]);
+  // Debounce ô search → apply filter (không chặn typing).
+  // Bỏ qua khi searchInput === search để tránh setState thừa kích hoạt reset trang.
+  React.useEffect(() => {
+    if (searchInput === search) return;
+    const t = setTimeout(() => setSearch(searchInput), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [searchInput, search]);
+
+  // Sync filter đã apply lên URL (replaceState — không soft-nav).
+  React.useEffect(() => {
+    if (!pathname) return;
+    replaceBlocksUrlFilters(pathname, {
+      q: search,
+      category: categoryFilter,
+      status: statusFilter,
+      tags: tagFilter,
+      duplicatesOnly,
+      page,
+      view,
+      sort,
+    });
+  }, [
+    pathname,
+    search,
+    categoryFilter,
+    statusFilter,
+    tagFilter,
+    duplicatesOnly,
+    page,
+    view,
+    sort,
+  ]);
+
+  const libraryTypeIndex = React.useMemo(
+    () => buildLibraryTypeIndex(items),
+    [items]
+  );
+
+  const typeCounts = libraryTypeIndex.counts;
 
   // type_code đã được map vào ít nhất 1 block → EditBlockDialog ẩn khỏi combobox
   // Mapping code (dev chỉ thấy block mới code chưa assign).
@@ -235,7 +498,9 @@ export function BlocksPage() {
   const filtered = React.useMemo(() => {
     const q = search.trim().toLowerCase();
     return items.filter(e => {
-      if (typeFilter !== 'all' && e.type_code !== typeFilter) return false;
+      if (!blockMatchesCategoryFilter(e.type_code, categoryFilter))
+        return false;
+      if (duplicatesOnly && (typeCounts[e.type_code] ?? 0) <= 1) return false;
       if (statusFilter !== 'all' && effectiveBlockStatus(e) !== statusFilter)
         return false;
       // Multi-tag: block phải chứa TẤT CẢ tag đã chọn (AND — lọc thu hẹp).
@@ -251,18 +516,76 @@ export function BlocksPage() {
         (e.tags ?? []).some(t => t.includes(q))
       );
     });
-  }, [items, search, typeFilter, statusFilter, tagFilter]);
+  }, [
+    items,
+    search,
+    categoryFilter,
+    duplicatesOnly,
+    typeCounts,
+    statusFilter,
+    tagFilter,
+  ]);
 
-  // Reset trang + bỏ chọn khi đổi filter; slice client-side cho cả grid + table.
+  // Khi lọc Mapping trùng: ưu tiên group theo type_code. Còn lại sort theo thời gian.
+  const displayFiltered = React.useMemo(() => {
+    if (duplicatesOnly) return sortBlocksByMappingCode(filtered);
+    return sortBlocksByRecency(filtered, sort);
+  }, [filtered, duplicatesOnly, sort]);
+
+  const listFiltersKey = serializeBlocksListFilters({
+    search,
+    category: categoryFilter,
+    status: statusFilter,
+    tags: tagFilter,
+    duplicatesOnly,
+    sort,
+  });
+
+  // Reset trang + bỏ chọn khi filter thật sự đổi (không reset khi chỉ đổi page).
   React.useEffect(() => {
+    if (prevListFiltersKeyRef.current === null) {
+      prevListFiltersKeyRef.current = listFiltersKey;
+      return;
+    }
+    if (prevListFiltersKeyRef.current === listFiltersKey) return;
+    prevListFiltersKeyRef.current = listFiltersKey;
     setPage(1);
     setSelected(new Set());
-  }, [search, typeFilter, statusFilter, tagFilter]);
+  }, [listFiltersKey]);
 
   const paged = React.useMemo(
-    () => filtered.slice((page - 1) * pageSize, page * pageSize),
-    [filtered, page, pageSize]
+    () => displayFiltered.slice((page - 1) * pageSize, page * pageSize),
+    [displayFiltered, page, pageSize]
   );
+
+  const prevPageLastTypeCode = React.useMemo(() => {
+    if (!duplicatesOnly || page <= 1) return null;
+    const idx = (page - 1) * pageSize - 1;
+    return displayFiltered[idx]?.type_code ?? null;
+  }, [duplicatesOnly, page, pageSize, displayFiltered]);
+
+  const totalPages = Math.max(1, Math.ceil(displayFiltered.length / pageSize));
+
+  // Khi lọc thu hẹp, kẹp page về trang hợp lệ (không nhảy về 1 nếu vẫn còn trang).
+  React.useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const handlePageChange = React.useCallback(
+    (nextPage: number) => {
+      setPage(Math.min(Math.max(1, nextPage), totalPages));
+    },
+    [totalPages]
+  );
+
+  const handleClearFilters = () => {
+    setSearchInput('');
+    setSearch('');
+    setCategoryFilter('all');
+    setStatusFilter('all');
+    setTagFilter([]);
+    setDuplicatesOnly(false);
+  };
 
   const handleDuplicate = async (id: string) => {
     const tid = toast.loading('Đang clone…');
@@ -421,11 +744,17 @@ export function BlocksPage() {
   };
 
   return (
-    <div className='flex h-[calc(100vh-3.5rem)]'>
-      {/* Main column */}
-      <div className='flex flex-1 flex-col overflow-hidden'>
+    <div
+      className={cn(
+        'flex min-h-0',
+        // Admin shell đã h-screen → fill main. Portal còn top bar 57px.
+        isPortal ? 'h-[calc(100vh-57px)]' : 'h-full'
+      )}
+    >
+      {/* Main column — min-h-0 để body scroll được, không bị cắt đáy. */}
+      <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
         {/* Header */}
-        <div className='border-border bg-background border-b px-4 py-3'>
+        <div className='border-border bg-background shrink-0 border-b px-4 py-3'>
           <div className='flex items-start justify-between gap-3'>
             <div>
               <h1 className='text-xl font-semibold'>Blocks</h1>
@@ -465,8 +794,11 @@ export function BlocksPage() {
               <StatTile
                 label='Tất cả'
                 value={items.length}
-                active={statusFilter === 'all'}
-                onClick={() => setStatusFilter('all')}
+                active={statusFilter === 'all' && !duplicatesOnly}
+                onClick={() => {
+                  setStatusFilter('all');
+                  setDuplicatesOnly(false);
+                }}
               />
               {BLOCK_STATUS_ORDER.map(s => (
                 <StatTile
@@ -474,54 +806,51 @@ export function BlocksPage() {
                   label={BLOCK_STATUS_META[s].label}
                   value={statusCounts[s]}
                   dot={BLOCK_STATUS_META[s].dot}
-                  active={statusFilter === s}
-                  onClick={() =>
-                    setStatusFilter(statusFilter === s ? 'all' : s)
-                  }
+                  active={statusFilter === s && !duplicatesOnly}
+                  onClick={() => {
+                    setDuplicatesOnly(false);
+                    setStatusFilter(prev => (prev === s ? 'all' : s));
+                  }}
                 />
               ))}
+              {libraryTypeIndex.duplicateRecordCount > 0 && (
+                <StatTile
+                  label='Mapping trùng'
+                  value={libraryTypeIndex.duplicateRecordCount}
+                  dot='bg-amber-500'
+                  active={duplicatesOnly}
+                  onClick={() => {
+                    setStatusFilter('all');
+                    setDuplicatesOnly(prev => !prev);
+                  }}
+                  title='Số block thuộc mapping code có ≥2 bản trong thư viện. Bấm để lọc.'
+                />
+              )}
             </div>
           )}
 
-          {/* Search + filter + view — gộp 1 hàng ngang cho gọn. */}
+          {/* Search + filter + view — gộp 1 hàng ngang, cùng h-9. */}
           <div className='mt-2 flex flex-wrap items-center gap-2'>
-            <div className='relative min-w-[180px] flex-1'>
-              <Search className='text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2' />
+            <div className='relative min-w-48 flex-1 basis-56'>
+              <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2' />
               <Input
-                placeholder='Tìm theo tên / block type / tag…'
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className='pl-8'
+                type='search'
+                placeholder='Tìm tên, loại, tag…'
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                className={cn(
+                  FILTER_CONTROL_H,
+                  'w-full pl-8 font-normal md:text-sm'
+                )}
+                aria-label='Tìm kiếm blocks'
               />
             </div>
 
-            <select
-              value={typeFilter}
-              onChange={e => setTypeFilter(e.target.value as BlockType | 'all')}
-              className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1.5 text-xs font-medium outline-none'
-            >
-              <option value='all'>Tất cả type</option>
-              {typeOptions.map(o => (
-                <option key={o.code} value={o.code}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={statusFilter}
-              onChange={e =>
-                setStatusFilter(e.target.value as BlockStatus | 'all')
-              }
-              className='border-border text-content-muted hover:bg-muted bg-background rounded-lg border px-2.5 py-1.5 text-xs font-medium outline-none'
-            >
-              <option value='all'>Tất cả trạng thái</option>
-              {BLOCK_STATUS_ORDER.map(s => (
-                <option key={s} value={s}>
-                  {BLOCK_STATUS_META[s].label}
-                </option>
-              ))}
-            </select>
+            <CategoryFilterPopover
+              value={categoryFilter}
+              onChange={setCategoryFilter}
+              index={libraryTypeIndex}
+            />
 
             {allTags.length > 0 && (
               <TagMultiSelect
@@ -531,28 +860,52 @@ export function BlocksPage() {
               />
             )}
 
-            {(typeFilter !== 'all' ||
+            <Select
+              value={sort}
+              onValueChange={v => setSort(v as Sort)}
+              disabled={duplicatesOnly}
+            >
+              <SelectTrigger
+                className={cn(FILTER_SELECT_TRIGGER, 'w-36')}
+                aria-label='Sắp xếp'
+                title={
+                  duplicatesOnly
+                    ? 'Đang gom theo mapping code — tắt lọc Mapping trùng để sort theo thời gian'
+                    : undefined
+                }
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align='start'>
+                {SORT_OPTIONS.map(o => (
+                  <SelectItem key={o.id} value={o.id}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {(searchInput.trim() !== '' ||
+              categoryFilter !== 'all' ||
               statusFilter !== 'all' ||
-              tagFilter.length > 0) && (
+              tagFilter.length > 0 ||
+              duplicatesOnly) && (
               <button
                 type='button'
-                onClick={() => {
-                  setTypeFilter('all');
-                  setStatusFilter('all');
-                  setTagFilter([]);
-                }}
-                className='text-3xs text-content-muted hover:text-foreground inline-flex items-center gap-1'
+                onClick={handleClearFilters}
+                className='text-content-muted hover:text-foreground inline-flex h-9 shrink-0 items-center gap-1 px-1.5 text-xs'
+                aria-label='Xoá bộ lọc'
               >
-                <X className='size-3' />
+                <X className='size-3.5' />
                 Clear
               </button>
             )}
 
-            <div className='text-3xs text-content-muted ml-auto'>
+            <div className='text-content-muted ml-auto inline-flex h-9 shrink-0 items-center text-xs tabular-nums'>
               {filtered.length} / {items.length}
             </div>
 
-            <div className='border-border bg-background flex items-center gap-1 rounded-lg border p-0.5'>
+            <div className='border-input bg-background flex h-9 shrink-0 items-center gap-0.5 rounded-md border p-0.5'>
               <ViewBtn
                 active={view === 'grid'}
                 onClick={() => setView('grid')}
@@ -570,7 +923,7 @@ export function BlocksPage() {
         </div>
 
         {/* Body */}
-        <div className='bg-muted/40 flex-1 overflow-y-auto px-4 py-3'>
+        <div className='bg-muted/40 min-h-0 flex-1 overflow-y-auto px-4 py-3 pb-6'>
           {error && (
             <div className='border-destructive/20 bg-danger-bg text-destructive mb-3 rounded-lg border px-3 py-2 text-xs'>
               Load blocks thất bại: <code className='font-mono'>{error}</code>
@@ -597,6 +950,9 @@ export function BlocksPage() {
           ) : view === 'grid' ? (
             <GridView
               items={paged}
+              typeCounts={typeCounts}
+              groupByMapping={duplicatesOnly}
+              prevPageLastTypeCode={prevPageLastTypeCode}
               selectedId={selectedId}
               selected={selected}
               onToggleSelect={toggleSelect}
@@ -611,6 +967,10 @@ export function BlocksPage() {
           ) : (
             <TableView
               items={paged}
+              typeCounts={typeCounts}
+              templatesByType={templatesByType}
+              groupByMapping={duplicatesOnly}
+              prevPageLastTypeCode={prevPageLastTypeCode}
               selectedId={selectedId}
               selected={selected}
               onToggleSelect={toggleSelect}
@@ -630,10 +990,10 @@ export function BlocksPage() {
 
           {!loading && filtered.length > 0 && (
             <TablePagination
-              total={filtered.length}
+              total={displayFiltered.length}
               page={page}
               pageSize={pageSize}
-              onPageChange={setPage}
+              onPageChange={handlePageChange}
               onPageSizeChange={s => {
                 setPageSize(s);
                 setPage(1);
@@ -708,6 +1068,9 @@ export function BlocksPage() {
 
 function GridView({
   items,
+  typeCounts,
+  groupByMapping = false,
+  prevPageLastTypeCode = null,
   selectedId,
   selected,
   onToggleSelect,
@@ -720,6 +1083,9 @@ function GridView({
   onPreview,
 }: {
   items: ServerBlock[];
+  typeCounts: Record<string, number>;
+  groupByMapping?: boolean;
+  prevPageLastTypeCode?: string | null;
   selectedId: string | null;
   selected: Set<string>;
   onToggleSelect: (id: string) => void;
@@ -731,30 +1097,75 @@ function GridView({
   openingCanvas: string | null;
   onPreview: (item: ServerBlock) => void;
 }) {
+  if (!groupByMapping) {
+    return (
+      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+        {items.map(it => (
+          <BlockCard
+            key={it.id}
+            item={it}
+            typeCount={typeCounts[it.type_code] ?? 0}
+            active={it.id === selectedId}
+            checked={selected.has(it.id)}
+            onToggleSelect={() => onToggleSelect(it.id)}
+            onClick={() => onSelect(it.id)}
+            onDuplicate={() => onDuplicate(it.id)}
+            onDelete={() => onDelete(it)}
+            onEdit={() => onEdit(it)}
+            onOpenCanvas={() => onOpenCanvas(it)}
+            opening={openingCanvas === it.id}
+            onPreview={() => onPreview(it)}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  const groups = groupAdjacentByMappingCode(items);
+
   return (
-    <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-      {items.map(it => (
-        <BlockCard
-          key={it.id}
-          item={it}
-          active={it.id === selectedId}
-          checked={selected.has(it.id)}
-          onToggleSelect={() => onToggleSelect(it.id)}
-          onClick={() => onSelect(it.id)}
-          onDuplicate={() => onDuplicate(it.id)}
-          onDelete={() => onDelete(it)}
-          onEdit={() => onEdit(it)}
-          onOpenCanvas={() => onOpenCanvas(it)}
-          opening={openingCanvas === it.id}
-          onPreview={() => onPreview(it)}
-        />
-      ))}
+    <div className='flex flex-col gap-6'>
+      {groups.map((group, groupIdx) => {
+        const continued =
+          groupIdx === 0 && prevPageLastTypeCode === group.typeCode;
+        const libraryCount = typeCounts[group.typeCode] ?? group.items.length;
+        return (
+          <section key={`${group.typeCode}-${group.items[0]?.id}`}>
+            <DuplicateMappingGroupHeader
+              typeCode={group.typeCode}
+              count={libraryCount}
+              continued={continued}
+              variant='grid'
+            />
+            <div className='mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+              {group.items.map(it => (
+                <BlockCard
+                  key={it.id}
+                  item={it}
+                  typeCount={typeCounts[it.type_code] ?? 0}
+                  active={it.id === selectedId}
+                  checked={selected.has(it.id)}
+                  onToggleSelect={() => onToggleSelect(it.id)}
+                  onClick={() => onSelect(it.id)}
+                  onDuplicate={() => onDuplicate(it.id)}
+                  onDelete={() => onDelete(it)}
+                  onEdit={() => onEdit(it)}
+                  onOpenCanvas={() => onOpenCanvas(it)}
+                  opening={openingCanvas === it.id}
+                  onPreview={() => onPreview(it)}
+                />
+              ))}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }
 
 function BlockCard({
   item,
+  typeCount,
   active,
   checked,
   onToggleSelect,
@@ -767,6 +1178,7 @@ function BlockCard({
   onPreview,
 }: {
   item: ServerBlock;
+  typeCount: number;
   active: boolean;
   checked: boolean;
   onToggleSelect: () => void;
@@ -779,11 +1191,15 @@ function BlockCard({
   onPreview: () => void;
 }) {
   const type = item.type_code as BlockType;
-  const gradient = BLOCK_TYPE_GRADIENT[type] ?? 'from-zinc-400 to-zinc-600';
-  const label = BLOCK_TYPE_LABEL[type] ?? item.type_code;
+  const typeMeta = resolveTypeMeta(item.type_code);
+  const gradient =
+    typeMeta?.gradient ??
+    BLOCK_TYPE_GRADIENT[type] ??
+    'from-zinc-400 to-zinc-600';
+  // const label = BLOCK_TYPE_LABEL[type] ?? item.type_code;
   const editorBlock = parseEditorBlock(item.settings);
   const extraCount = editorBlock?.extraElements?.length ?? 0;
-  const hasMobile = !!editorBlock?.contentVi?.mobile;
+  // const hasMobile = !!editorBlock?.contentVi?.mobile;
   // Chỉ block Nháp (draft) mới chọn được để xoá.
   const draft = effectiveBlockStatus(item) === 'draft';
   return (
@@ -855,9 +1271,7 @@ function BlockCard({
         }}
         className='flex flex-1 cursor-pointer flex-col text-left'
       >
-        <div className='relative'>
-          {/* Ưu tiên thumbnail custom (BE thumbnail_url) → preview render từ
-              settings → gradient placeholder. Khớp precedence với TableView. */}
+        <div className='relative border-b'>
           {item.thumbnail_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -877,7 +1291,7 @@ function BlockCard({
               <Bookmark className='size-10 opacity-80' />
             </div>
           )}
-          <span
+          {/* <span
             className={cn(
               'text-3xs absolute bottom-2 left-2 rounded bg-gradient-to-br px-1.5 py-0.5 font-mono font-bold tracking-widest text-white/95 uppercase shadow-sm',
               gradient
@@ -889,7 +1303,7 @@ function BlockCard({
             <span className='text-3xs absolute right-2 bottom-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-white backdrop-blur'>
               📱
             </span>
-          )}
+          )} */}
           {extraCount > 0 && (
             <span className='text-3xs absolute top-2 left-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-white backdrop-blur'>
               +{extraCount} extras
@@ -903,8 +1317,8 @@ function BlockCard({
             </div>
             <BlockStatusBadge status={item.status} className='shrink-0' />
           </div>
-          <div className='text-3xs text-content-muted font-mono'>
-            {item.type_code}
+          <div className='flex flex-wrap items-center gap-1.5'>
+            <MappingCodeCell typeCode={item.type_code} count={typeCount} />
           </div>
           {item.tags && item.tags.length > 0 && (
             <div className='flex flex-wrap gap-1'>
@@ -935,8 +1349,227 @@ function BlockCard({
   );
 }
 
-/** Ô thống kê 1 trạng thái — số to, dot màu + nhãn, bấm để lọc. */
-/** Lọc tag nhiều cùng lúc — popover checkbox + search, scale khi nhiều tag. */
+/** Chip category từ BLOCK_TYPE_META — cột Loại trên bảng + grid card. */
+function CategoryChip({ typeCode }: { typeCode: string }) {
+  const meta = resolveTypeMeta(typeCode);
+  if (!meta?.categoryLabel) {
+    return (
+      <span
+        className='text-3xs text-muted-foreground'
+        title='Mapping code chưa có trong catalog FE'
+      >
+        —
+      </span>
+    );
+  }
+  return (
+    <span
+      className='text-3xs bg-muted text-content-muted inline-flex w-fit rounded-full px-2 py-0.5 font-medium'
+      title={meta.category ?? undefined}
+    >
+      {meta.categoryLabel}
+    </span>
+  );
+}
+
+/** Mapping code + loại (category) + cảnh báo trùng code. */
+function MappingCodeCell({
+  typeCode,
+  count,
+}: {
+  typeCode: string;
+  count: number;
+}) {
+  const isDuplicate = count > 1;
+  return (
+    <div className='flex min-w-0 flex-col gap-0.5'>
+      <CategoryChip typeCode={typeCode} />
+      <code className='text-2xs text-foreground truncate font-mono'>
+        {typeCode}
+      </code>
+      {isDuplicate && (
+        <span
+          className='text-3xs inline-flex items-center gap-1 text-amber-800'
+          title={`${count} saved block trong thư viện đang gán cùng mapping code "${typeCode}". Mỗi code nên chỉ có 1 block canonical — dùng chip "Mapping trùng" ở trên để rà soát.`}
+          aria-label={`${count} block dùng chung mapping code ${typeCode}`}
+        >
+          <AlertTriangle className='size-2.5 shrink-0' aria-hidden />
+          {count} block dùng chung code
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** Header nhóm khi lọc Mapping trùng — gom block cùng type_code. */
+function DuplicateMappingGroupHeader({
+  typeCode,
+  count,
+  continued = false,
+  variant = 'table',
+}: {
+  typeCode: string;
+  count: number;
+  continued?: boolean;
+  variant?: 'table' | 'grid';
+}) {
+  const meta = resolveTypeMeta(typeCode);
+  const label = meta?.adminLabel ?? typeCode;
+
+  if (variant === 'grid') {
+    return (
+      <div className='flex flex-wrap items-center gap-2 rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2'>
+        <AlertTriangle
+          className='size-3.5 shrink-0 text-amber-600'
+          aria-hidden
+        />
+        <code className='text-foreground font-mono text-xs font-semibold'>
+          {typeCode}
+        </code>
+        <span className='text-muted-foreground text-xs'>{label}</span>
+        {meta?.categoryLabel && <CategoryChip typeCode={typeCode} />}
+        <span className='text-muted-foreground text-xs tabular-nums'>
+          · {count} block dùng chung code
+          {continued ? ' (tiếp)' : ''}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <TableRow className='border-amber-200/60 bg-amber-50/70 hover:bg-amber-50/70'>
+      <TableCell colSpan={9} className='py-2'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <AlertTriangle
+            className='size-3.5 shrink-0 text-amber-600'
+            aria-hidden
+          />
+          <code className='text-foreground font-mono text-xs font-semibold'>
+            {typeCode}
+          </code>
+          <span className='text-muted-foreground text-xs'>{label}</span>
+          {meta?.categoryLabel && <CategoryChip typeCode={typeCode} />}
+          <span className='text-muted-foreground text-xs tabular-nums'>
+            · {count} block dùng chung code
+            {continued ? ' (tiếp)' : ''}
+          </span>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+/** Filter loại (category) — Hero, Intro, CTA… chỉ option có block trong thư viện. */
+function CategoryFilterPopover({
+  value,
+  onChange,
+  index,
+}: {
+  value: LibraryCategoryFilter;
+  onChange: (next: LibraryCategoryFilter) => void;
+  index: LibraryTypeIndex;
+}) {
+  const [open, setOpen] = React.useState(false);
+
+  const triggerLabel =
+    value === 'all'
+      ? 'Tất cả loại'
+      : value === 'orphan'
+        ? `Không có trong catalog (${index.orphanCount})`
+        : `${BLOCK_CATEGORY_LABEL[value]} (${index.categoryCounts[value] ?? 0})`;
+
+  const select = (next: LibraryCategoryFilter) => {
+    onChange(next);
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant='neutral'
+          role='combobox'
+          aria-expanded={open}
+          aria-label='Lọc theo loại'
+          className={cn(
+            FILTER_SELECT_TRIGGER,
+            'justify-between font-normal',
+            value !== 'all' &&
+              'border-primary bg-primary/5 text-foreground hover:bg-primary/5'
+          )}
+        >
+          <span className='truncate'>{triggerLabel}</span>
+          <ChevronDown className='size-4 shrink-0 opacity-50' />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className='w-56 p-0' align='start'>
+        <Command>
+          <CommandInput placeholder='Tìm loại…' />
+          <CommandList>
+            <CommandEmpty>Không khớp loại</CommandEmpty>
+            <CommandGroup>
+              <CommandItem value='tat-ca-loai' onSelect={() => select('all')}>
+                <Check
+                  className={cn(
+                    'size-4 shrink-0',
+                    value === 'all' ? 'opacity-100' : 'opacity-0'
+                  )}
+                />
+                Tất cả loại
+              </CommandItem>
+              {BLOCK_CATEGORY_ORDER.map(cat => {
+                const count = index.categoryCounts[cat] ?? 0;
+                if (count === 0) return null;
+                const label = BLOCK_CATEGORY_LABEL[cat];
+                return (
+                  <CommandItem
+                    key={cat}
+                    value={label}
+                    onSelect={() => select(cat)}
+                  >
+                    <Check
+                      className={cn(
+                        'size-4 shrink-0',
+                        value === cat ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                    <span className='truncate text-sm font-medium'>
+                      {label}
+                    </span>
+                    <span className='text-muted-foreground ml-auto tabular-nums'>
+                      ({count})
+                    </span>
+                  </CommandItem>
+                );
+              })}
+              {index.orphanCount > 0 && (
+                <CommandItem
+                  value='khong-co-trong-catalog'
+                  onSelect={() => select('orphan')}
+                >
+                  <Check
+                    className={cn(
+                      'size-4 shrink-0',
+                      value === 'orphan' ? 'opacity-100' : 'opacity-0'
+                    )}
+                  />
+                  <span className='truncate text-sm font-medium'>
+                    Không có trong catalog
+                  </span>
+                  <span className='text-muted-foreground ml-auto tabular-nums'>
+                    ({index.orphanCount})
+                  </span>
+                </CommandItem>
+              )}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/** Lọc tag nhiều — shadcn Popover + Command. */
 function TagMultiSelect({
   allTags,
   value,
@@ -946,86 +1579,67 @@ function TagMultiSelect({
   value: string[];
   onChange: (next: string[]) => void;
 }) {
-  const [q, setQ] = React.useState('');
-  const shown = q
-    ? allTags.filter(t => t.toLowerCase().includes(q.toLowerCase()))
-    : allTags;
+  const [open, setOpen] = React.useState(false);
   const toggle = (t: string) =>
     onChange(value.includes(t) ? value.filter(x => x !== t) : [...value, t]);
   const label = value.length === 0 ? 'Tất cả tag' : `${value.length} tag`;
 
   return (
-    <Popover.Root>
-      <Popover.Trigger asChild>
-        <button
-          type='button'
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant='neutral'
+          aria-label='Lọc theo tag'
           className={cn(
-            'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors outline-none',
-            value.length > 0
-              ? 'border-primary bg-primary/5 text-foreground'
-              : 'border-border text-content-muted hover:bg-muted bg-background'
+            FILTER_SELECT_TRIGGER,
+            'justify-between font-normal',
+            value.length > 0 &&
+              'border-primary bg-primary/5 text-foreground hover:bg-primary/5'
           )}
         >
-          <Tag className='size-3' />
-          {label}
-          <ChevronDown className='size-3 opacity-60' />
-        </button>
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content
-          align='start'
-          sideOffset={4}
-          className='border-border bg-background z-50 w-56 rounded-lg border p-1.5 shadow-lg'
-        >
-          <input
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            placeholder='Tìm tag…'
-            className='border-border bg-background focus:ring-ring/40 mb-1 h-7 w-full rounded-md border px-2 text-xs outline-none focus:ring-2'
-          />
-          <div className='max-h-56 overflow-y-auto'>
-            {shown.length === 0 ? (
-              <p className='text-3xs text-content-muted px-2 py-2'>
-                Không có tag
-              </p>
-            ) : (
-              shown.map(t => {
+          <span className='min-w-0 truncate'>{label}</span>
+          <ChevronDown className='size-4 shrink-0 opacity-50' />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className='w-56 p-0' align='start'>
+        <Command>
+          <CommandInput placeholder='Tìm tag…' />
+          <CommandList>
+            <CommandEmpty>Không có tag</CommandEmpty>
+            <CommandGroup>
+              {allTags.map(t => {
                 const on = value.includes(t);
                 return (
-                  <button
-                    key={t}
-                    type='button'
-                    onClick={() => toggle(t)}
-                    className='hover:bg-muted flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs'
-                  >
-                    <span
+                  <CommandItem key={t} value={t} onSelect={() => toggle(t)}>
+                    <Check
                       className={cn(
-                        'flex size-3.5 shrink-0 items-center justify-center rounded border',
-                        on
-                          ? 'bg-foreground border-foreground text-background'
-                          : 'border-border'
+                        'size-4 shrink-0',
+                        on ? 'opacity-100' : 'opacity-0'
                       )}
-                    >
-                      {on && <Check className='size-2.5' />}
-                    </span>
+                    />
                     <span className='truncate'>{t}</span>
-                  </button>
+                  </CommandItem>
                 );
-              })
+              })}
+            </CommandGroup>
+            {value.length > 0 && (
+              <>
+                <CommandSeparator />
+                <CommandGroup>
+                  <CommandItem
+                    value='bo-chon-tag'
+                    onSelect={() => onChange([])}
+                    className='text-muted-foreground justify-center text-xs'
+                  >
+                    Bỏ chọn tất cả
+                  </CommandItem>
+                </CommandGroup>
+              </>
             )}
-          </div>
-          {value.length > 0 && (
-            <button
-              type='button'
-              onClick={() => onChange([])}
-              className='text-3xs text-content-muted hover:text-foreground mt-1 w-full px-2 py-1 text-left'
-            >
-              Bỏ chọn tất cả
-            </button>
-          )}
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -1035,17 +1649,20 @@ function StatTile({
   dot,
   active,
   onClick,
+  title,
 }: {
   label: string;
   value: number;
   dot?: string;
   active: boolean;
   onClick: () => void;
+  title?: string;
 }) {
   return (
     <button
       type='button'
       onClick={onClick}
+      title={title}
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
         active
@@ -1185,6 +1802,10 @@ function CardKebabMenu({
 
 function TableView({
   items,
+  typeCounts,
+  templatesByType,
+  groupByMapping = false,
+  prevPageLastTypeCode = null,
   selectedId,
   selected,
   onToggleSelect,
@@ -1201,6 +1822,10 @@ function TableView({
   onPreview,
 }: {
   items: ServerBlock[];
+  typeCounts: Record<string, number>;
+  templatesByType: Record<string, TemplateRef[]> | 'loading' | 'error';
+  groupByMapping?: boolean;
+  prevPageLastTypeCode?: string | null;
   selectedId: string | null;
   selected: Set<string>;
   onToggleSelect: (id: string) => void;
@@ -1216,6 +1841,167 @@ function TableView({
   openingCanvas: string | null;
   onPreview: (item: ServerBlock) => void;
 }) {
+  const groups = groupByMapping ? groupAdjacentByMappingCode(items) : null;
+
+  const renderRow = (it: ServerBlock) => {
+    const editorBlock = parseEditorBlock(it.settings);
+    const draft = effectiveBlockStatus(it) === 'draft';
+    const extrasCount = editorBlock?.extraElements?.length ?? 0;
+    const usageCount = it.usage_count ?? 0;
+    return (
+      <TableRow
+        key={it.id}
+        data-state={
+          it.id === selectedId || selected.has(it.id) ? 'selected' : undefined
+        }
+        className='cursor-pointer'
+        onClick={() => onSelect(it.id)}
+      >
+        <TableCell onClick={e => e.stopPropagation()}>
+          <input
+            type='checkbox'
+            className='border-border size-3.5 cursor-pointer rounded disabled:cursor-not-allowed disabled:opacity-40'
+            checked={selected.has(it.id)}
+            disabled={!draft}
+            onChange={() => onToggleSelect(it.id)}
+            aria-label={`Chọn ${it.name}`}
+            title={
+              draft ? `Chọn ${it.name}` : 'Chỉ chọn/xoá được block Nháp (draft)'
+            }
+          />
+        </TableCell>
+        <TableCell>
+          <div className='flex w-28 flex-col gap-1.5'>
+            {it.thumbnail_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={it.thumbnail_url}
+                alt={it.name}
+                className='border-border h-13.5 w-full rounded-md border object-cover'
+              />
+            ) : editorBlock ? (
+              <div className='border-border bg-card w-full overflow-hidden rounded-md border'>
+                <BlockMiniPreview block={editorBlock} aspect='16 / 9' />
+              </div>
+            ) : (
+              <div className='bg-muted text-content-muted text-3xs flex h-13.5 w-full items-center justify-center rounded-md'>
+                no preview
+              </div>
+            )}
+            <div className='min-w-0'>
+              <div className='text-sm leading-snug font-medium wrap-break-word whitespace-normal'>
+                {it.name}
+              </div>
+              {it.review_note && (
+                <div
+                  className='text-3xs text-muted-foreground mt-0.5 wrap-break-word whitespace-normal'
+                  title={it.review_note}
+                >
+                  {it.review_note}
+                </div>
+              )}
+            </div>
+          </div>
+        </TableCell>
+        <TableCell>
+          <BlockStatusBadge status={it.status} />
+        </TableCell>
+        <TableCell>
+          <MappingCodeCell
+            typeCode={it.type_code}
+            count={typeCounts[it.type_code] ?? 0}
+          />
+        </TableCell>
+        <TableCell>
+          {it.tags && it.tags.length > 0 ? (
+            <div className='flex flex-wrap gap-1'>
+              {it.tags.slice(0, 2).map(t => (
+                <span
+                  key={t}
+                  className='text-3xs bg-muted text-content-muted rounded-full px-1.5 py-0.5'
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className='text-muted-foreground'>-</span>
+          )}
+        </TableCell>
+        <TableCell>
+          <div className='text-content-muted text-2xs flex flex-col gap-0.5 font-mono tabular-nums'>
+            <span title='Extras'>{extrasCount} extras</span>
+            <span title='Usage'>{usageCount} uses</span>
+          </div>
+        </TableCell>
+        <TableCell onClick={e => e.stopPropagation()}>
+          <TemplatesUsingBlockCell
+            state={
+              templatesByType === 'loading' || templatesByType === 'error'
+                ? templatesByType
+                : (templatesByType[it.type_code] ?? [])
+            }
+          />
+        </TableCell>
+        <TableCell className='text-content-muted text-xs'>
+          {fmtRelative(it.updated_at ?? it.created_at)}
+        </TableCell>
+        <TableCell>
+          <div
+            className='flex items-center gap-1'
+            onClick={e => e.stopPropagation()}
+          >
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => onPreview(it)}
+              title='Preview (layout + animation)'
+            >
+              <Play className='size-3.5' />
+            </Button>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => onEdit(it)}
+              title='Sửa thông tin (tên, mô tả, tag)'
+            >
+              <Pencil className='size-3.5' />
+            </Button>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => onOpenCanvas(it)}
+              disabled={openingCanvas === it.id}
+              title='Sửa nội dung trên canvas editor'
+            >
+              {openingCanvas === it.id ? (
+                <Loader2 className='size-3.5 animate-spin' />
+              ) : (
+                <PencilRuler className='size-3.5' />
+              )}
+            </Button>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => onDuplicate(it.id)}
+              title='Duplicate'
+            >
+              <Copy className='size-3.5' />
+            </Button>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => onDelete(it)}
+              title='Xoá'
+            >
+              <Trash2 className='text-destructive size-3.5' />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  };
+
   return (
     <div className='border-border bg-card overflow-hidden rounded-lg border'>
       <Table>
@@ -1239,175 +2025,106 @@ function TableView({
                 }
               />
             </TableHead>
-            <TableHead className='w-28'>Thumbnail</TableHead>
-            <TableHead>Tên</TableHead>
+            <TableHead className='w-36'>Block</TableHead>
             <TableHead className='w-32'>Trạng thái</TableHead>
-            <TableHead className='w-36'>Mapping code</TableHead>
+            <TableHead
+              className='w-44'
+              title='Loại (category) và khóa nối block ↔ code FE (type_code). Cảnh báo cam = nhiều block dùng chung 1 code.'
+            >
+              Loại · Mapping
+            </TableHead>
             <TableHead className='w-32'>Tags</TableHead>
-            <TableHead className='w-24'>Extras</TableHead>
-            <TableHead className='w-20'>Usage</TableHead>
+            <TableHead className='w-28'>Extras / Usage</TableHead>
+            <TableHead className='w-32'>Templates</TableHead>
             <TableHead className='w-32'>Cập nhật</TableHead>
             <TableHead className='w-40' />
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map(it => {
-            const editorBlock = parseEditorBlock(it.settings);
-            const draft = effectiveBlockStatus(it) === 'draft';
-            return (
-              <TableRow
-                key={it.id}
-                data-state={
-                  it.id === selectedId || selected.has(it.id)
-                    ? 'selected'
-                    : undefined
-                }
-                className='cursor-pointer'
-                onClick={() => onSelect(it.id)}
-              >
-                <TableCell onClick={e => e.stopPropagation()}>
-                  <input
-                    type='checkbox'
-                    className='border-border size-3.5 cursor-pointer rounded disabled:cursor-not-allowed disabled:opacity-40'
-                    checked={selected.has(it.id)}
-                    disabled={!draft}
-                    onChange={() => onToggleSelect(it.id)}
-                    aria-label={`Chọn ${it.name}`}
-                    title={
-                      draft
-                        ? `Chọn ${it.name}`
-                        : 'Chỉ chọn/xoá được block Nháp (draft)'
-                    }
-                  />
-                </TableCell>
-                <TableCell>
-                  {it.thumbnail_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={it.thumbnail_url}
-                      alt={it.name}
-                      className='border-border h-[54px] w-24 rounded-md border object-cover'
-                    />
-                  ) : editorBlock ? (
-                    <div className='border-border bg-card w-24 overflow-hidden rounded-md border'>
-                      <BlockMiniPreview block={editorBlock} aspect='16 / 9' />
-                    </div>
-                  ) : (
-                    <div className='bg-muted text-content-muted text-3xs flex h-[54px] w-24 items-center justify-center rounded-md'>
-                      no preview
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className='font-medium'>{it.name}</div>
-                  {it.review_note && (
-                    <div
-                      className='text-3xs text-muted-foreground mt-0.5 max-w-[16rem] truncate'
-                      title={it.review_note}
-                    >
-                      📝 {it.review_note}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <BlockStatusBadge status={it.status} />
-                </TableCell>
-                <TableCell>
-                  <div className='text-foreground text-sm'>
-                    {BLOCK_TYPE_LABEL[it.type_code as BlockType] ??
-                      it.type_code}
-                  </div>
-                  <code className='text-3xs text-muted-foreground font-mono'>
-                    {it.type_code}
-                  </code>
-                </TableCell>
-                <TableCell>
-                  {it.tags && it.tags.length > 0 ? (
-                    <div className='flex flex-wrap gap-1'>
-                      {it.tags.slice(0, 2).map(t => (
-                        <span
-                          key={t}
-                          className='text-3xs bg-muted text-content-muted rounded-full px-1.5 py-0.5'
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className='text-muted-foreground'>-</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <span className='text-2xs text-content-muted font-mono'>
-                    {editorBlock?.extraElements?.length ?? 0}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className='text-2xs text-content-muted font-mono'>
-                    {it.usage_count ?? 0}
-                  </span>
-                </TableCell>
-                <TableCell className='text-content-muted text-xs'>
-                  {fmtRelative(it.updated_at ?? it.created_at)}
-                </TableCell>
-                <TableCell>
-                  <div
-                    className='flex items-center gap-1'
-                    onClick={e => e.stopPropagation()}
+          {groups
+            ? groups.map((group, groupIdx) => {
+                const continued =
+                  groupIdx === 0 && prevPageLastTypeCode === group.typeCode;
+                const libraryCount =
+                  typeCounts[group.typeCode] ?? group.items.length;
+                return (
+                  <React.Fragment
+                    key={`${group.typeCode}-${group.items[0]?.id}`}
                   >
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => onPreview(it)}
-                      title='Preview (layout + animation)'
-                    >
-                      <Play className='size-3.5' />
-                    </Button>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => onEdit(it)}
-                      title='Sửa thông tin (tên, mô tả, tag)'
-                    >
-                      <Pencil className='size-3.5' />
-                    </Button>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => onOpenCanvas(it)}
-                      disabled={openingCanvas === it.id}
-                      title='Sửa nội dung trên canvas editor'
-                    >
-                      {openingCanvas === it.id ? (
-                        <Loader2 className='size-3.5 animate-spin' />
-                      ) : (
-                        <PencilRuler className='size-3.5' />
-                      )}
-                    </Button>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => onDuplicate(it.id)}
-                      title='Duplicate'
-                    >
-                      <Copy className='size-3.5' />
-                    </Button>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => onDelete(it)}
-                      title='Xoá'
-                    >
-                      <Trash2 className='text-destructive size-3.5' />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            );
-          })}
+                    <DuplicateMappingGroupHeader
+                      typeCode={group.typeCode}
+                      count={libraryCount}
+                      continued={continued}
+                      variant='table'
+                    />
+                    {group.items.map(renderRow)}
+                  </React.Fragment>
+                );
+              })
+            : items.map(renderRow)}
         </TableBody>
       </Table>
     </div>
+  );
+}
+
+/** Popover "N template" ở mỗi dòng block — danh sách template có dùng loại
+ *  block này (khớp theo `blockType`), click 1 template → mở trang chi tiết
+ *  template ở tab mới. */
+function TemplatesUsingBlockCell({
+  state,
+}: {
+  state: TemplateRef[] | 'loading' | 'error';
+}) {
+  if (state === 'loading') {
+    return (
+      <span className='text-content-muted inline-flex items-center gap-1 text-xs'>
+        <Loader2 className='size-3 animate-spin' /> …
+      </span>
+    );
+  }
+  if (state === 'error') {
+    return <span className='text-content-muted text-xs'>-</span>;
+  }
+  if (state.length === 0) {
+    return <span className='text-content-muted text-xs'>0 template</span>;
+  }
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant='neutral'
+          size='xs'
+          className='h-8 gap-1 px-2 font-normal'
+        >
+          <Layers className='size-3' />
+          {state.length} template{state.length > 1 ? 's' : ''}
+          <ChevronDown className='size-3 opacity-60' />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align='start' className='w-64 p-1.5'>
+        <div className='max-h-72 overflow-y-auto'>
+          {state.map(t => (
+            <button
+              key={t.id}
+              type='button'
+              onClick={() =>
+                window.open(`/admin/templates/${t.id}`, '_blank', 'noopener')
+              }
+              className='hover:bg-muted flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-xs'
+            >
+              <span className='min-w-0'>
+                <span className='block truncate font-medium'>{t.name}</span>
+                <span className='text-muted-foreground text-3xs block truncate font-mono'>
+                  {t.code}
+                </span>
+              </span>
+              <ExternalLink className='text-muted-foreground size-3 shrink-0' />
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -1423,7 +2140,14 @@ function ViewBtn({
   label: string;
 }) {
   return (
-    <Chip selected={active} size='sm' onClick={onClick} title={label}>
+    <Chip
+      selected={active}
+      size='md'
+      onClick={onClick}
+      title={label}
+      className='size-8 rounded-md border-transparent px-0 shadow-none'
+      aria-label={label}
+    >
       {icon}
     </Chip>
   );

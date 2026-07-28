@@ -20,16 +20,29 @@ import { tracker } from './tracker';
 
 const pageViewFiredFor = new Set<string>();
 
-export function useInitTracker(pageId: string | null | undefined): void {
+/**
+ * @param subPage Slug of the sub-page being viewed, '' for the landing's home
+ *   page. A multi-page template is ONE BE `Page` row, so every sub-page shares
+ *   `pageId`; without this the dedupe key would suppress every view after the
+ *   first and all sub-page traffic would collapse onto the landing root.
+ *   BE has no sub-page column yet, so it rides along in `target` + `meta`.
+ */
+export function useInitTracker(
+  pageId: string | null | undefined,
+  subPage?: string
+): void {
   React.useEffect(() => {
     if (!pageId) return;
     tracker.init(pageId);
-    const key = `${pageId}:${tracker.session}`;
+    const key = `${pageId}:${subPage ?? ''}:${tracker.session}`;
     if (!pageViewFiredFor.has(key)) {
       pageViewFiredFor.add(key);
-      tracker.emit({ event_type: 'page_view' });
+      tracker.emit({
+        event_type: 'page_view',
+        ...(subPage ? { target: subPage, meta: { sub_page: subPage } } : {}),
+      });
     }
-  }, [pageId]);
+  }, [pageId, subPage]);
 }
 
 /* ---------------- click + scroll + intersection ---------------- */

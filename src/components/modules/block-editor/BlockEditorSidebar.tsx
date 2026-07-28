@@ -5,23 +5,44 @@ import { PanelRightClose } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 
+import { InspectorPanel } from './inspector/InspectorPanel';
 import { LayersPanel } from './LayersPanel';
 import { MotionLayersPanel } from './motion/MotionLayersPanel';
 import type { BlockMotion } from './motion/types';
-import type { Block, Device, ExtraElementKind } from './types';
+import type {
+  Block,
+  BlockBackground,
+  BlockContent,
+  Device,
+  ElementStyle,
+  ExtraElementKind,
+  Lang,
+} from './types';
 
-type SidebarTab = 'layers' | 'motion';
+export type SidebarTab = 'layers' | 'design' | 'motion';
 
 interface BlockEditorSidebarProps {
   block: Block;
   device: Device;
+  /** Language variant being edited — the inspector reads content from it. */
+  lang: Lang;
   selectedElementKey: string | null;
   onSelectElement: (key: string | null) => void;
   onReorderElements?: (nextOrder: string[]) => void;
   onCollapse?: () => void;
-  /** Sidebar tab — 'layers' (default) or 'motion'. */
+  /** Sidebar tab — 'layers' (default), 'design' or 'motion'. */
   activeTab?: SidebarTab;
   onChangeTab?: (tab: SidebarTab) => void;
+  // ── Inspector ("Thiết kế") ─────────────────────────────────────────────
+  onContentChange?: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+  onUpdateElementStyle?: (patch: ElementStyle) => void;
+  onUpdateBackground?: (next: BlockBackground | undefined) => void;
+  onSyncVariant?: (
+    from: 'desktop' | 'mobile',
+    to: 'desktop' | 'mobile'
+  ) => void;
   /** Stored motion for the current device variant. */
   motion?: BlockMotion;
   onChangeMotion?: (next: BlockMotion | null) => void;
@@ -40,12 +61,17 @@ interface BlockEditorSidebarProps {
 export function BlockEditorSidebar({
   block,
   device,
+  lang,
   selectedElementKey,
   onSelectElement,
   onReorderElements,
   onCollapse,
   activeTab = 'layers',
   onChangeTab,
+  onContentChange,
+  onUpdateElementStyle,
+  onUpdateBackground,
+  onSyncVariant,
   motion,
   onChangeMotion,
   onOpenMotionEditor,
@@ -57,23 +83,32 @@ export function BlockEditorSidebar({
   onSelectExtraElement,
   onRemoveExtraElement,
 }: BlockEditorSidebarProps) {
-  const isMotion = activeTab === 'motion';
   return (
     <aside
-      className='flex w-[280px] shrink-0 flex-col border-l border-neutral-200 bg-neutral-50'
+      // 300px (was 252) so an inspector row fits `label + control` without
+      // wrapping — the layers tree never needed the extra width, the property
+      // rows do.
+      className='flex w-75 shrink-0 flex-col border-l border-neutral-200 bg-neutral-50'
       data-testid='block-editor-sidebar'
     >
       {/* Tab strip */}
-      <div className='flex items-stretch border-b border-neutral-200 bg-white'>
+      <div className='flex h-9 items-stretch border-b border-neutral-200 bg-white'>
         <TabBtn
-          active={!isMotion}
+          active={activeTab === 'layers'}
           onClick={() => onChangeTab?.('layers')}
           testId='sidebar-tab-layers'
         >
           Lớp
         </TabBtn>
         <TabBtn
-          active={isMotion}
+          active={activeTab === 'design'}
+          onClick={() => onChangeTab?.('design')}
+          testId='sidebar-tab-design'
+        >
+          Thiết kế
+        </TabBtn>
+        <TabBtn
+          active={activeTab === 'motion'}
           onClick={() => onChangeTab?.('motion')}
           testId='sidebar-tab-motion'
         >
@@ -84,15 +119,15 @@ export function BlockEditorSidebar({
             type='button'
             aria-label='Ẩn bảng lớp'
             onClick={onCollapse}
-            className='ml-auto flex size-9 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+            className='ml-auto flex size-8 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
           >
-            <PanelRightClose className='size-4' />
+            <PanelRightClose className='size-3.5' />
           </button>
         )}
       </div>
 
       <div className='flex-1 overflow-y-auto'>
-        {isMotion ? (
+        {activeTab === 'motion' && (
           <MotionLayersPanel
             block={block}
             device={device}
@@ -103,7 +138,24 @@ export function BlockEditorSidebar({
             onPlayElementPreview={onPlayElementPreview}
             isPreviewing={isMotionPreviewing ?? false}
           />
-        ) : (
+        )}
+
+        {activeTab === 'design' && (
+          <div className='bg-background flex min-h-full flex-col'>
+            <InspectorPanel
+              block={block}
+              lang={lang}
+              device={device}
+              selectedKey={selectedElementKey}
+              onContentChange={onContentChange ?? (() => {})}
+              onUpdateStyle={onUpdateElementStyle ?? (() => {})}
+              onUpdateBackground={onUpdateBackground ?? (() => {})}
+              onSyncVariant={onSyncVariant}
+            />
+          </div>
+        )}
+
+        {activeTab === 'layers' && (
           <LayersPanel
             block={block}
             device={device}
@@ -139,7 +191,7 @@ function TabBtn({
       data-testid={testId}
       data-active={active ? 'true' : 'false'}
       className={cn(
-        'relative flex h-9 cursor-pointer items-center px-4 text-xs font-semibold tracking-widest uppercase transition-colors',
+        'relative flex h-full cursor-pointer items-center px-3 text-xs font-semibold tracking-wide uppercase transition-colors',
         active ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-700'
       )}
     >

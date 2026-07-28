@@ -1,16 +1,16 @@
 /**
  * BlockDef cho `delvaux_hero` — hero section `.hero` của delvaux-clone: ảnh
  * đóng khung 80px scale 0.9→1 khi vào trang → scale 1→2 + fade theo scroll →
- * lộ lớp "intro" tua theo scroll (frame-sequence canvas / video / ảnh
- * full-bleed). Component: `blocks/DelvauxHero.tsx`. Path A.
+ * lộ lớp "intro" tua theo scroll (frame-sequence). Component: `blocks/DelvauxHero.tsx`.
+ * Path A.
  *
- * Bản gốc KHÔNG có chữ trên hero → heading/subheading mặc định rỗng (tuỳ
- * chọn). Default dùng asset thật trong `public/delvaux/` (thuộc sở hữu dự
- * án): ảnh hero + frame-sequence 142 frame.
+ * Layers chỉ expose: posterUrl + frameUrls + heading/subheading.
+ * `videoUrl` / `frameUrlPattern` / `overlayOpacity` giữ trong content (legacy /
+ * default) nhưng không hiện trong panel — bản gốc không dùng.
  */
-import { Film, Image as ImageIcon, Layers, Pilcrow, Type } from 'lucide-react';
+import { Film, Image as ImageIcon, Pilcrow, Type } from 'lucide-react';
 
-import { DelvauxHero } from '../../DelvauxHero';
+import dynamic from 'next/dynamic';
 import { DELVAUX_HERO_FRAMES } from './delvauxHeroFrames';
 import type { DelvauxHeroContent } from '../../../types';
 import type { BlockDef } from '../types';
@@ -39,42 +39,44 @@ export const delvauxHeroDef: BlockDef<DelvauxHeroContent> = {
     gradient: 'from-neutral-900 to-neutral-700',
     defaultName: 'Hero - Scroll Video',
     aiLabelVi:
-      'hero cinematic: ảnh đóng khung phóng to + mờ dần theo scroll, lộ frame-sequence/video tua theo scroll',
+      'hero cinematic: ảnh đóng khung phóng to + mờ dần theo scroll, lộ frame-sequence tua theo scroll',
     aiLabelEn:
-      'cinematic hero: framed image scales and fades on scroll, revealing a scroll-scrubbed frame-sequence/video',
+      'cinematic hero: framed image scales and fades on scroll, revealing a scroll-scrubbed frame-sequence',
   },
-  component: DelvauxHero,
+  // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
+  component: dynamic(() =>
+    import('../../DelvauxHero').then(m => m.DelvauxHero)
+  ),
   defaultContent: { vi: VI, en: EN },
   elements: [
     {
       key: 'posterUrl',
-      label: 'Ảnh chính',
+      label: 'Ảnh đóng khung',
       icon: ImageIcon,
       fieldType: 'image',
+      groupId: 'media',
+      groupLabel: 'Media',
+    },
+    {
+      key: 'frameUrls',
+      label: 'Chuỗi frame intro',
+      icon: Film,
+      groupId: 'media',
     },
     {
       key: 'heading',
       label: 'Tiêu đề (tuỳ chọn)',
       icon: Type,
       fieldType: 'text',
+      groupId: 'copy',
+      groupLabel: 'Chữ (tuỳ chọn)',
     },
     {
       key: 'subheading',
       label: 'Phụ đề (tuỳ chọn)',
       icon: Pilcrow,
       fieldType: 'textarea',
-    },
-    {
-      key: 'videoUrl',
-      label: 'Video (URL mp4)',
-      icon: Film,
-      fieldType: 'text',
-    },
-    {
-      key: 'frameUrlPattern',
-      label: 'Frame-sequence (URL chứa {i})',
-      icon: Layers,
-      fieldType: 'text',
+      groupId: 'copy',
     },
   ],
 };

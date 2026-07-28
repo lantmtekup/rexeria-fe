@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, MoreHorizontal } from 'lucide-react';
 
 /**
@@ -12,34 +12,14 @@ import { X, MoreHorizontal } from 'lucide-react';
  */
 export default function InterscrollerPreview({ children }) {
   const [showHint, setShowHint] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false);
   const scrollRef = useRef(null);
-  const prevExpandedRef = useRef(false);
-
-  const toggleExpand = () => {
-    setIsExpanded(prev => !prev);
-    setShowHint(false);
-  };
-
-  // Khi user COLLAPSE (expanded → collapsed): scrollTop set instant tới vị trí ad.
-  // Dùng useLayoutEffect (không useEffect) để ghi scrollTop TRƯỚC khi browser paint
-  // → không flash "article che ad" rồi mới snap. Bỏ qua initial mount
-  // (prev=false, isExpanded=false) để trang load đầu hiện article như interscroller chuẩn.
-  useLayoutEffect(() => {
-    if (prevExpandedRef.current && !isExpanded && scrollRef.current) {
-      const ad = scrollRef.current.querySelector('.isp-ad-container');
-      if (ad) {
-        scrollRef.current.scrollTop = ad.offsetTop;
-      }
-    }
-    prevExpandedRef.current = isExpanded;
-  }, [isExpanded]);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const onScroll = () => {
-      if (el.scrollTop > 30) setShowHint(false);
+      // Hiện lại hint khi scroll về đầu bài; ẩn khi đã cuộn xuống.
+      setShowHint(el.scrollTop <= 30);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
@@ -47,20 +27,6 @@ export default function InterscrollerPreview({ children }) {
 
   // Constrain the fixed ad to phone bounds + forward scroll events
   useEffect(() => {
-    // Khi expanded: ad fill phone bằng flex:1 (CSS lo), không cần position:fixed.
-    // Dọn inline styles cũ để CSS .isp--expanded không bị ghi đè.
-    if (isExpanded) {
-      const ad = document.querySelector('.isp-ad-fixed');
-      if (ad) {
-        ad.style.top = '';
-        ad.style.left = '';
-        ad.style.width = '';
-        ad.style.height = '';
-        ad.style.borderRadius = '';
-      }
-      return;
-    }
-
     const scroll = scrollRef.current;
     const isp = scroll?.closest('.isp');
     const ad = document.querySelector('.isp-ad-fixed');
@@ -113,7 +79,7 @@ export default function InterscrollerPreview({ children }) {
       ad.removeEventListener('touchstart', onTouchStart);
       ad.removeEventListener('touchmove', onTouchMove);
     };
-  }, [isExpanded]);
+  }, []);
 
   const Row = () => (
     <div className='isp-row'>
@@ -127,7 +93,7 @@ export default function InterscrollerPreview({ children }) {
   );
 
   return (
-    <div className={`isp ${isExpanded ? 'isp--expanded' : ''}`}>
+    <div className='isp'>
       {/* Browser bar */}
       <div className='isp-bar'>
         <X size={18} strokeWidth={2.4} className='isp-bar-x' />
@@ -138,84 +104,60 @@ export default function InterscrollerPreview({ children }) {
         <MoreHorizontal size={18} strokeWidth={2} className='isp-bar-menu' />
       </div>
 
-      {isExpanded ? (
-        // EXPANDED: ad fill phone, không scroll, không article, không browser bar (CSS)
-        <div className='isp-ad-container isp-ad-container--expanded'>
-          <div className='isp-ad-content'>{children}</div>
+      <div className='isp-scroll' ref={scrollRef}>
+        {/* ── TOP ARTICLE: z-index 10, solid bg, slides over ad ── */}
+        <div className='isp-section-top'>
+          <div className='isp-hero' />
+          <div className='isp-lines-block'>
+            <div className='isp-ln' style={{ width: '85%' }} />
+            <div className='isp-ln' style={{ width: '65%' }} />
+            <div className='isp-ln' style={{ width: '92%' }} />
+          </div>
+          <Row />
+          <Row />
+          <Row />
+          <Row />
+          <div className='isp-lines-block'>
+            <div className='isp-ln' style={{ width: '100%' }} />
+            <div className='isp-ln' style={{ width: '78%' }} />
+          </div>
+          <Row />
+          <Row />
+          {/* Ad label at bottom edge of top section */}
+          <div className='isp-ad-label'>ADVERTISEMENT</div>
         </div>
-      ) : (
-        // COLLAPSED: scroll + article + ad (interscroller như cũ)
-        <div className='isp-scroll' ref={scrollRef}>
-          {/* ── TOP ARTICLE: z-index 10, solid bg, slides over ad ── */}
-          <div className='isp-section-top'>
-            <div className='isp-hero' />
-            <div className='isp-lines-block'>
-              <div className='isp-ln' style={{ width: '85%' }} />
-              <div className='isp-ln' style={{ width: '65%' }} />
-              <div className='isp-ln' style={{ width: '92%' }} />
-            </div>
-            <Row />
-            <Row />
-            <Row />
-            <Row />
-            <div className='isp-lines-block'>
-              <div className='isp-ln' style={{ width: '100%' }} />
-              <div className='isp-ln' style={{ width: '78%' }} />
-            </div>
-            <Row />
-            <Row />
-            {/* Ad label at bottom edge of top section */}
-            <div className='isp-ad-label'>ADVERTISEMENT</div>
-          </div>
 
-          {/* ── AD CONTAINER: clip-path clips the fixed child ── */}
-          <div className='isp-ad-container'>
-            <div className='isp-ad-fixed'>
-              <div className='isp-ad-content'>{children}</div>
-            </div>
-          </div>
-
-          {/* ── BOTTOM ARTICLE: z-index 10, solid bg, slides over ad ── */}
-          <div className='isp-section-bottom'>
-            <div className='isp-scroll-continue'>
-              SCROLL TO CONTINUE WITH CONTENT
-            </div>
-            <Row />
-            <Row />
-            <Row />
-            <Row />
-            <Row />
-            <Row />
-            <div className='isp-lines-block'>
-              <div className='isp-ln' style={{ width: '100%' }} />
-              <div className='isp-ln' style={{ width: '72%' }} />
-              <div className='isp-ln' style={{ width: '88%' }} />
-              <div className='isp-ln' style={{ width: '55%' }} />
-            </div>
-            <Row />
-            <Row />
-            <Row />
+        {/* ── AD CONTAINER: clip-path clips the fixed child ── */}
+        <div className='isp-ad-container'>
+          <div className='isp-ad-fixed'>
+            <div className='isp-ad-content'>{children}</div>
           </div>
         </div>
-      )}
 
-      {/* Expand / Collapse tab — button thật có action */}
-      <button
-        type='button'
-        className='isp-expand'
-        onClick={toggleExpand}
-        aria-expanded={isExpanded}
-        aria-label={isExpanded ? 'Collapse ad' : 'Expand ad'}
-      >
-        <span className='isp-expand-icon' aria-hidden='true'>
-          {isExpanded ? '‹' : '›'}
-        </span>
-        <span className='isp-expand-label'>
-          {isExpanded ? 'COLLAPSE' : 'EXPAND'}
-        </span>
-      </button>
+        {/* ── BOTTOM ARTICLE: z-index 10, solid bg, slides over ad ── */}
+        <div className='isp-section-bottom'>
+          <div className='isp-scroll-continue'>
+            SCROLL TO CONTINUE WITH CONTENT
+          </div>
+          <Row />
+          <Row />
+          <Row />
+          <Row />
+          <Row />
+          <Row />
+          <div className='isp-lines-block'>
+            <div className='isp-ln' style={{ width: '100%' }} />
+            <div className='isp-ln' style={{ width: '72%' }} />
+            <div className='isp-ln' style={{ width: '88%' }} />
+            <div className='isp-ln' style={{ width: '55%' }} />
+          </div>
+          <Row />
+          <Row />
+          <Row />
+        </div>
+      </div>
 
-      {!isExpanded && showHint && (
+      {showHint && (
         <div className='isp-hint'>Scroll down to reveal creative.</div>
       )}
     </div>

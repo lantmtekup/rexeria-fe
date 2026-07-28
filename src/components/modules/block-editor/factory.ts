@@ -1,3 +1,4 @@
+import { genId } from './ids';
 import { BLOCK_TYPE_META } from './types';
 import { getBlockDef } from './blocks/_registry/registry';
 import { delvauxDetailsDef } from './blocks/_registry/defs/delvauxDetails';
@@ -6,12 +7,119 @@ import { delvauxHeroDef } from './blocks/_registry/defs/delvauxHero';
 import { delvauxProductDef } from './blocks/_registry/defs/delvauxProduct';
 import { delvauxSubnavDef } from './blocks/_registry/defs/delvauxSubnav';
 import { delvauxVariantDef } from './blocks/_registry/defs/delvauxVariant';
+import { framerAesthaEditorialDef } from './blocks/_registry/defs/framerAesthaEditorial';
+import { aesthaExploreDef } from './blocks/_registry/defs/aesthaExplore';
+import { aesthaStudioDef } from './blocks/_registry/defs/aesthaStudio';
+import { aesthaContactDef } from './blocks/_registry/defs/aesthaContact';
+import { aesthaProjectDef } from './blocks/_registry/defs/aesthaProject';
 import { q80ExperienceDef } from './blocks/_registry/defs/q80Experience';
 import { q80MenuDef } from './blocks/_registry/defs/q80Menu';
+import { housentHeroDef } from './blocks/_registry/defs/housentHero';
+import { alturaOlympusDef } from './blocks/_registry/defs/alturaOlympus';
+import { heroScrollDef } from './blocks/_registry/defs/heroScroll';
+import { scrollMattisDef } from './blocks/_registry/defs/scrollMattis';
+import { coolHunterHeroDef } from './blocks/_registry/defs/coolHunterHero';
+import { coolHunterSectionProgressDef } from './blocks/_registry/defs/coolHunterSectionProgress';
+import { coolHunterStoryDef } from './blocks/_registry/defs/coolHunterStory';
+import { coolHunterGalleryDef } from './blocks/_registry/defs/coolHunterGallery';
+import { coolHunterProductDef } from './blocks/_registry/defs/coolHunterProduct';
+import { coolHunterQuoteDef } from './blocks/_registry/defs/coolHunterQuote';
+import { coolHunterFooterDef } from './blocks/_registry/defs/coolHunterFooter';
+import { lineaPortfolioDef } from './blocks/_registry/defs/lineaPortfolio';
+import { pnjHeroDef } from './blocks/_registry/defs/pnjHero';
+import { pnjDetailsDef } from './blocks/_registry/defs/pnjDetails';
+import { mintDiscoverDef } from './blocks/_registry/defs/mintDiscover';
+import { pnjVariantDef } from './blocks/_registry/defs/pnjVariant';
+import { pnjHeaderDef } from './blocks/_registry/defs/pnjHeader';
+import { pnjStickyMenuDef } from './blocks/_registry/defs/pnjStickyMenu';
+import { pnjCtaDef } from './blocks/_registry/defs/pnjCta';
+import { housentStatsDef } from './blocks/_registry/defs/housentStats';
+import { housentListingsDef } from './blocks/_registry/defs/housentListings';
+import { housentCtaDef } from './blocks/_registry/defs/housentCta';
+import { housentFooterDef } from './blocks/_registry/defs/housentFooter';
+import { housentAboutDef } from './blocks/_registry/defs/housentAbout';
+import { housentExcellenceDef } from './blocks/_registry/defs/housentExcellence';
+import { housentOurExcellenceDef } from './blocks/_registry/defs/housentOurExcellence';
+import { housentSolutionsDef } from './blocks/_registry/defs/housentSolutions';
+import { housentValuesDef } from './blocks/_registry/defs/housentValues';
+import { housentFaqDef } from './blocks/_registry/defs/housentFaq';
+import { housentTestimonialDef } from './blocks/_registry/defs/housentTestimonial';
+import { housentBlogsDef } from './blocks/_registry/defs/housentBlogs';
+import { lumeaHeroDef } from './blocks/_registry/defs/lumeaHero';
+import { lumeaStatementDef } from './blocks/_registry/defs/lumeaStatement';
+import { lumeaImmersiveDef } from './blocks/_registry/defs/lumeaImmersive';
+import { lumeaHandcraftedDef } from './blocks/_registry/defs/lumeaHandcrafted';
+import { lumeaAmenitiesDef } from './blocks/_registry/defs/lumeaAmenities';
+import { lumeaTestimonialDef } from './blocks/_registry/defs/lumeaTestimonial';
+import { lumeaGalleryDef } from './blocks/_registry/defs/lumeaGallery';
+import { lumeaFooterDef } from './blocks/_registry/defs/lumeaFooter';
+import { nordhavenHeroDef } from './blocks/_registry/defs/nordhavenHero';
+import { nordhavenAboutDef } from './blocks/_registry/defs/nordhavenAbout';
+import { nordhavenServicesDef } from './blocks/_registry/defs/nordhavenServices';
+import { nordhavenPropertiesDef } from './blocks/_registry/defs/nordhavenProperties';
+import { nordhavenTestimonialsDef } from './blocks/_registry/defs/nordhavenTestimonials';
+import { nordhavenFaqDef } from './blocks/_registry/defs/nordhavenFaq';
+import { nordhavenGalleryDef } from './blocks/_registry/defs/nordhavenGallery';
+import { nordhavenFooterDef } from './blocks/_registry/defs/nordhavenFooter';
+import { firmaHeroDef } from './blocks/_registry/defs/firmaHero';
+import { firmaStatementDef } from './blocks/_registry/defs/firmaStatement';
+import { firmaWorkDef } from './blocks/_registry/defs/firmaWork';
+import { firmaTestimonialDef } from './blocks/_registry/defs/firmaTestimonial';
+import { firmaServicesDef } from './blocks/_registry/defs/firmaServices';
+import { firmaFooterDef } from './blocks/_registry/defs/firmaFooter';
+import { ignitexHeroDef } from './blocks/_registry/defs/ignitexHero';
+import { ignitexServicesDef } from './blocks/_registry/defs/ignitexServices';
+import { ignitexProjectsDef } from './blocks/_registry/defs/ignitexProjects';
+import { ignitexAboutDef } from './blocks/_registry/defs/ignitexAbout';
+import { ignitexCtaDef } from './blocks/_registry/defs/ignitexCta';
+import { ignitexFooterDef } from './blocks/_registry/defs/ignitexFooter';
+import { readymagMarqueeDef } from './blocks/_registry/defs/readymagMarquee';
+import { readymagProjectsDef } from './blocks/_registry/defs/readymagProjects';
+import { readymagFooterDef } from './blocks/_registry/defs/readymagFooter';
+import { protectionScrollytellingDef } from './blocks/_registry/defs/protectionScrollytelling';
+import { framerFlatWhiteProcessDef } from './blocks/_registry/defs/framerFlatWhiteProcess';
+import { framerEstanciaAboutUsDef } from './blocks/_registry/defs/framerEstanciaAboutUs';
+import { rolexCollectionHeroDef } from './blocks/_registry/defs/rolexCollectionHero';
+import { rolexCollectionNavDef } from './blocks/_registry/defs/rolexCollectionNav';
+import { rolexContactDef } from './blocks/_registry/defs/rolexContact';
+import { rolexCollectionWorkDef } from './blocks/_registry/defs/rolexCollectionWork';
+import { rolexCollectionProjectDef } from './blocks/_registry/defs/rolexCollectionProject';
+import { framerDarlingTimelineDef } from './blocks/_registry/defs/framerDarlingTimeline';
+import { framerPerformPricingDef } from './blocks/_registry/defs/framerPerformPricing';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
+import { springsContactFooterDef } from './blocks/_registry/defs/springsContactFooter';
+import { springsDesignDef } from './blocks/_registry/defs/springsDesign';
+import { springsHeaderDef } from './blocks/_registry/defs/springsHeader';
+import { springsGalleryDef } from './blocks/_registry/defs/springsGallery';
+import { springsHeroDef } from './blocks/_registry/defs/springsHero';
+import { springsInteriorsDef } from './blocks/_registry/defs/springsInteriors';
+import { springsIntroDef } from './blocks/_registry/defs/springsIntro';
+import { springsMapDef } from './blocks/_registry/defs/springsMap';
+import { realEstateHeroDef } from './blocks/_registry/defs/realEstateHero';
+import { realEstateInfoDef } from './blocks/_registry/defs/realEstateInfo';
+import { realEstateLocationDef } from './blocks/_registry/defs/realEstateLocation';
+import { realEstateHighlightsDef } from './blocks/_registry/defs/realEstateHighlights';
+import { realEstateOverviewDef } from './blocks/_registry/defs/realEstateOverview';
+import { realEstateUtilitiesDef } from './blocks/_registry/defs/realEstateUtilities';
+import { realEstateVillaDef } from './blocks/_registry/defs/realEstateVilla';
+import { springsNaturePlaceDef } from './blocks/_registry/defs/springsNaturePlace';
+import { springsResidencesDef } from './blocks/_registry/defs/springsResidences';
+import { springsWellnessDef } from './blocks/_registry/defs/springsWellness';
+import { sustainitOurExpertiseDef } from './blocks/_registry/defs/sustainitOurExpertise';
 import { MEDIA, pickMedia } from './blocks/sample-media';
-import { ARPEGGIO_HERO_V2_BG } from '@/assets/images/arpeggio_hero_v2';
+import { masteriseHomeInsideDef } from './blocks/_registry/defs/masteriseHomeInside';
 import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
+import { readymagCaseSectionDef } from './blocks/_registry/defs/readymagCaseSection';
+import { framerIgnitexStepDef } from './blocks/_registry/defs/framerIgnitexStep';
+import { framerRealEstate02StoryDef } from './blocks/_registry/defs/framerRealEstate02Story';
+import { framerRealEstate02QuoteDef } from './blocks/_registry/defs/framerRealEstate02Quote';
+import { framerRealEstate02ProductDef } from './blocks/_registry/defs/framerRealEstate02Product';
+import { framerRealEstate02OverviewDef } from './blocks/_registry/defs/framerRealEstate02Overview';
+import { framerRealEstate02LocationDef } from './blocks/_registry/defs/framerRealEstate02Location';
+import { framerRealEstate02CommuteDef } from './blocks/_registry/defs/framerRealEstate02Commute';
+import { framerRealEstate02MapDef } from './blocks/_registry/defs/framerRealEstate02Map';
+import { framerRealEstate02GalleryDef } from './blocks/_registry/defs/framerRealEstate02Gallery';
+import { framerRealEstate02MenuDef } from './blocks/_registry/defs/framerRealEstate02Menu';
 import type {
   Block,
   BlockContent,
@@ -23,14 +131,12 @@ import type {
   MintSkuContent,
   MintHeroContent,
   MintVariantsContent,
-  MintDiscoverContent,
   MintV2EmblemContent,
   MintV2ServicesContent,
   MintV2ManifestoContent,
   MintV2ProcessContent,
   MintV2CtaContent,
   MintV2WorksContent,
-  LineaPortfolioContent,
   MintVaultHeroContent,
   MintVaultCraftContent,
   MintVaultRevealContent,
@@ -55,6 +161,7 @@ import type {
   HeroSplitContent,
   ImageCarouselContent,
   InteractiveAdWidgetContent,
+  BrightedgeHeroContent,
   PanoramaContent,
   TextDisplaceHeroContent,
   ImageTrailContent,
@@ -66,6 +173,7 @@ import type {
   WheelGalleryContent,
   HoverRevealListContent,
   HoverEqualizerHeadingContent,
+  BrutalistTextContent,
   ImageExplosionContent,
   StorySlidesContent,
   AccordionMediaContent,
@@ -83,14 +191,12 @@ import type {
   SplitScreenContent,
   StoriesContent,
   FramerFaqMinimalContent,
-  FramerDarlingTimelineContent,
   FramerSignatureFeatureContent,
   FramerVsCollinsProjectsContent,
   FramerClarityServicesContent,
-  FramerAesthaEditorialContent,
   FramerPerformAboutContent,
-  FramerPerformPricingContent,
 } from './types';
+import { framerFirmaTemplateStrategyDigitalDef } from './blocks/_registry/defs/framerFirmaTemplateStrategyDigital';
 
 const HOUSE_IMG =
   'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80';
@@ -287,38 +393,30 @@ const MINT_VARIANTS_VI: MintVariantsContent = {
       image: MINT_IMG.coinPackaging,
     },
   ],
+  discover: {
+    title: 'The Jack Pine by Tom Thomson — 1 Kilo Pure Gold Coin',
+    badge: 'Mintage 75',
+    subtitle: '99.99% Pure Gold · Proof',
+    dimensions: 'Weight: 1006.1 g / Diameter: 101.6 mm / Edge: Serrated',
+    faceValue: 'CAD $2,500',
+    detailsText: [
+      'REF. 252469',
+      'Composition: 99.99% pure gold',
+      'Weight: 1006.1 g',
+      'Diameter: 101.6 mm · Edge: serrated',
+      'Finish: proof',
+      'Face value: CAD $2,500',
+      'Worldwide mintage: 75',
+      'Obverse effigy: Steven Rosati',
+      'Reverse: Tom Thomson’s “The Jack Pine” (1916–17)',
+    ].join('\n'),
+    packagingText:
+      'Encapsulated and presented in a Royal Canadian Mint-branded wooden case with black beauty box. Includes a serialised certificate of authenticity.',
+    shippingText:
+      'Shipped fully insured. International availability subject to Royal Canadian Mint regional policies.',
+  },
 };
-const MINT_DISCOVER_VI: MintDiscoverContent = {
-  variant: '1',
-  mainImage: MINT_IMG.coinReverse,
-  mainAlt: 'Jack Pine Gold Coin — reverse',
-  tabs: [
-    {
-      key: 'tab1',
-      label: 'The Lone Pine',
-      desc: "Tom Thomson's windswept jack pine, rising from rocky ground above a northern lake. The kilo-sized canvas lifts every needle, branch and crag into 99.99% pure gold relief.",
-      img: MINT_IMG.coinReverse,
-      dotX: 50,
-      dotY: 30,
-    },
-    {
-      key: 'tab2',
-      label: 'Sky and Water',
-      desc: "A monochromatic field of polished and frosted gold replaces the painting's sunset palette, deepening the impact of Thomson's dynamic composition.",
-      img: MINT_IMG.coinReverse,
-      dotX: 62,
-      dotY: 62,
-    },
-    {
-      key: 'tab3',
-      label: 'Serrated Edge',
-      desc: '101.6 mm in diameter with a serrated edge — a tactile signature of Royal Canadian Mint craftsmanship at this scale.',
-      img: MINT_IMG.coinReverse,
-      dotX: 38,
-      dotY: 62,
-    },
-  ],
-};
+// mint_discover defaults → mintDiscoverDef (registry)
 
 // ── Mintcoin-v2 defaults (nội dung gốc English, dùng chung VI/EN) ─────────
 const MINTV2_FRAME48 =
@@ -453,7 +551,7 @@ const MINTV2_WORKS_VI: MintV2WorksContent = {
         mintv2Frame(36),
         MINT_IMG.painting,
       ],
-      bgClass: 'bg-[#efe9dc]',
+      bgColor: '#efe9dc',
     },
     {
       key: 'w2',
@@ -469,7 +567,7 @@ const MINTV2_WORKS_VI: MintV2WorksContent = {
         mintv2Frame(72),
         MINT_IMG.painting,
       ],
-      bgClass: 'bg-[#efe9dc]',
+      bgColor: '#efe9dc',
     },
     {
       key: 'w3',
@@ -485,7 +583,7 @@ const MINTV2_WORKS_VI: MintV2WorksContent = {
         mintv2Frame(84),
         MINT_IMG.coinPackaging,
       ],
-      bgClass: 'bg-[#efe9dc]',
+      bgColor: '#efe9dc',
     },
     {
       key: 'w4',
@@ -501,34 +599,12 @@ const MINTV2_WORKS_VI: MintV2WorksContent = {
         mintv2Frame(96),
         MINT_IMG.heroStorefront,
       ],
-      bgClass: 'bg-[#efe9dc]',
+      bgColor: '#efe9dc',
     },
   ],
 };
 
 // ── Import từ 360-admin-cms ──────────────────────────────────────────────
-const LINEA_IMG = (id: string) =>
-  `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=600&q=70`;
-
-const LINEA_PORTFOLIO_VI: LineaPortfolioContent = {
-  eyebrow: 'Works',
-  headingPre: 'Collaboration that',
-  headingAccent: 'moved',
-  headingPost: 'the needle.',
-  bgColor: '#ffffff',
-  textColor: '#121212',
-  items: [
-    { img: LINEA_IMG('1517245386807-bb43f82c33c4') },
-    { img: LINEA_IMG('1487014679447-9f8336841d58') },
-    { img: LINEA_IMG('1486312338219-ce68d2c6f44d') },
-    { img: LINEA_IMG('1498050108023-c5249f4df085') },
-    { img: LINEA_IMG('1467232004584-a241de8bcf5d') },
-    { img: LINEA_IMG('1531403009284-440f080d1e12') },
-    { img: LINEA_IMG('1460925895917-afdab827c52f') },
-    { img: LINEA_IMG('1551434678-e076c223a692') },
-    { img: LINEA_IMG('1556761175-5973dc0f32e7') },
-  ],
-};
 
 // ── Mint2026 "The Vault" defaults ────────────────────────────────────────
 const VAULT_U = (id: string) =>
@@ -671,6 +747,10 @@ const MINT_VAULT_INVITATION_VI: MintVaultInvitationContent = {
     MINT_IMG.coinPackaging,
     VAULT_U('1610375461246-83df859d849d'),
   ],
+  emailPlaceholder: 'Your email',
+  submitText: 'Reserve yours',
+  successMessage:
+    'Thank you! We will reach out when the collection goes on sale.',
 };
 
 const CTA_VI: CtaSectionContent = {
@@ -733,6 +813,25 @@ const CAROUSEL_EN: ImageCarouselContent = {
   autoplayMs: 4500,
   showPagination: true,
   showNavArrows: true,
+};
+
+// ── BrightEdge hero (clone layout/animation — copy/ảnh placeholder) ─────
+const BRIGHTEDGE_HERO: BrightedgeHeroContent = {
+  eyebrow: 'Chúng tôi là studio thiết kế số',
+  heading: 'Sáng tạo',
+  subtitle:
+    'Từ ý tưởng đến hiện thực — thiết kế đẹp có sức mạnh thu hút mọi ánh nhìn.',
+  ctaLabel: 'Gặp đội ngũ',
+  ctaHref: '#team',
+  avatars: [
+    { id: 'a1', imageUrl: '' },
+    { id: 'a2', imageUrl: '' },
+    { id: 'a3', imageUrl: '' },
+    { id: 'a4', imageUrl: '' },
+  ],
+  badgeText: 'SÁNG TẠO • Ý TƯỞNG • GIẢI PHÁP • ',
+  badgeSubtext: 'Kiến tạo giá trị khác biệt',
+  imageUrl: '',
 };
 
 // ── Interactive ad widget ───────────────────────────────────────────────
@@ -1195,6 +1294,17 @@ const HOVER_EQ_HEADING_EN: HoverEqualizerHeadingContent = {
   heading: 'EXPERIENCE',
 };
 
+const BRUTALIST_TEXT_VI: BrutalistTextContent = {
+  heading: 'BRUTALISM',
+  echoCount: 3,
+  layerStep: 0.09,
+  textColor: '#FFFFFF',
+  bgColor: '#000000',
+};
+const BRUTALIST_TEXT_EN: BrutalistTextContent = {
+  ...BRUTALIST_TEXT_VI,
+};
+
 const IMAGE_EXPLOSION_VI: ImageExplosionContent = {
   eyebrow: 'CUỘN TỚI ĐÂY',
   title: 'Bùng nổ trải nghiệm',
@@ -1439,8 +1549,12 @@ const FRAMER_YUYA_HERO_VI: FramerYumeHeroContent = { ...FRAMER_YUME_HERO_VI };
 const FRAMER_YUYA_HERO_EN: FramerYumeHeroContent = { ...FRAMER_YUME_HERO_VI };
 
 // ── Framer-native: Hero - Arpeggio v2 ───────────────────────────────────
+// Default trỏ URL S3 (uploaded 2026-07-10) thay vì asset local —
+// src/assets/images/arpeggio_hero_v2/hero.avif vẫn giữ làm fallback cuối
+// cùng trong FramerArpeggioHeroV2.tsx (`backgroundUrl || ARPEGGIO_HERO_V2_BG`).
 const FRAMER_ARPEGGIO_HERO_V2_VI: FramerArpeggioHeroV2Content = {
-  backgroundUrl: ARPEGGIO_HERO_V2_BG,
+  backgroundUrl:
+    'https://d10zufojjcedud.cloudfront.net/uploads/2d028b4d-641a-4696-920b-4f5dcf86bf39/arpeggio_hero_v2_bg.avif',
   headline: 'One subscription,\nunlimited design iterations.',
   subtitle: 'Freedom beyond the traditional project scope',
   topRightLabel: 'The Creative Agency—',
@@ -1491,23 +1605,35 @@ const FRAMER_BUNGEE_HERO_V2_VI: FramerBungeeHeroV2Content = {
   cardImages: [
     {
       imageUrl:
-        'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=70',
+        'https://framerusercontent.com/images/LOSSn1XuJFxdkQeIdkzwe48fY.png',
+    },
+    {
+      videoUrl:
+        'https://framerusercontent.com/assets/o6ocbBu8Ta7VUr372p01yKOGtY.mp4',
     },
     {
       imageUrl:
-        'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=70',
+        'https://framerusercontent.com/images/ui0xiw6ho8t85E3453z1YpP1M.png',
     },
     {
       imageUrl:
-        'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=70',
+        'https://framerusercontent.com/images/GGQuG2gM9TePsmC84XEwEaDl3g.png',
+    },
+    {
+      videoUrl:
+        'https://framerusercontent.com/assets/y2VIDcwXz3puEBTpkCi51q9buBs.mp4',
     },
     {
       imageUrl:
-        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=70',
+        'https://framerusercontent.com/images/Fih75Xv1jAnsMiQgavGmyB6AgI.png',
     },
     {
       imageUrl:
-        'https://images.unsplash.com/photo-1487014679447-9f8336841d58?auto=format&fit=crop&w=800&q=70',
+        'https://framerusercontent.com/images/HfoXDGQsWsPpJU5TGy2N63TFYnc.png',
+    },
+    {
+      imageUrl:
+        'https://framerusercontent.com/images/mGQ8JCIsW2AAEHxOugX4Lrge2s.png',
     },
   ],
   accentColor: 'rgb(30, 30, 30)',
@@ -1800,67 +1926,6 @@ const FRAMER_FAQ_MINIMAL_EN: FramerFaqMinimalContent = {
   ],
 };
 
-// ── Framer-native: Darling Timeline ────────────────────────────────────
-const FRAMER_DARLING_TIMELINE_VI: FramerDarlingTimelineContent = {
-  heading: 'Hành Trình',
-  intro:
-    'Chúng tôi tin rằng mỗi dự án là một câu chuyện cần được kể bằng sự chăm chút và tận tâm.',
-  items: [
-    {
-      time: '9:00 SA',
-      title: 'Khởi đầu',
-      description:
-        'Cuộc họp khởi động để hiểu rõ mục tiêu và kỳ vọng của khách hàng.',
-      imageUrl:
-        'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80',
-    },
-    {
-      time: '11:00 SA',
-      title: 'Lên kế hoạch',
-      description: 'Xây dựng lộ trình chi tiết cho từng giai đoạn dự án.',
-      imageUrl:
-        'https://images.unsplash.com/photo-1530023367847-a683933f4172?w=1200&q=80',
-    },
-    {
-      time: '2:00 CH',
-      title: 'Thực hiện',
-      description:
-        'Đội ngũ sáng tạo bắt tay vào công việc với toàn bộ nhiệt huyết.',
-      imageUrl:
-        'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80',
-    },
-  ],
-};
-const FRAMER_DARLING_TIMELINE_EN: FramerDarlingTimelineContent = {
-  heading: 'The Day',
-  intro:
-    "Here\'s what to expect. Everything takes place here, and we\'ll guide you throughout the day.",
-  items: [
-    {
-      time: '9:00 AM',
-      title: 'Kickoff',
-      description:
-        'A kickoff meeting to understand the goals and expectations.',
-      imageUrl:
-        'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80',
-    },
-    {
-      time: '11:00 AM',
-      title: 'Planning',
-      description: 'Building a detailed roadmap for each project phase.',
-      imageUrl:
-        'https://images.unsplash.com/photo-1530023367847-a683933f4172?w=1200&q=80',
-    },
-    {
-      time: '2:00 PM',
-      title: 'Execution',
-      description: 'The creative team gets to work with full dedication.',
-      imageUrl:
-        'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80',
-    },
-  ],
-};
-
 // ── Framer-native: Signature Feature ───────────────────────────────────
 const FRAMER_SIGNATURE_FEATURE_VI: FramerSignatureFeatureContent = {
   eyebrow: 'TRẢI NGHIỆM ĐẶC QUYỀN',
@@ -2029,48 +2094,6 @@ const FRAMER_CLARITY_SERVICES_EN: FramerClarityServicesContent = {
   ],
 };
 
-// ── Framer-native: Aestha Editorial ────────────────────────────────────
-const FRAMER_AESTHA_EDITORIAL_VI: FramerAesthaEditorialContent = {
-  brand: 'RAMSA',
-  tagline: 'Nơi thanh lịch cổ điển gặp gỡ tinh tế hiện đại.',
-  scrollLabel: 'scroll',
-  description:
-    'Tọa lạc giữa lòng đô thị, dự án là hiện thân cho phong cách sống đẳng cấp — nơi mỗi chi tiết đều được tinh chỉnh cho nhịp sống hiện đại.',
-  image1Url:
-    'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80',
-  image2Url:
-    'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1200&q=80',
-  image3Url:
-    'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80',
-  ctaText: 'KHÁM PHÁ THÊM',
-  ctaHref: '/projects',
-  navLinks: [
-    { label: 'Dự án', href: '/projects' },
-    { label: 'Studio', href: '/studio' },
-    { label: 'Liên hệ', href: '/contact' },
-  ],
-};
-const FRAMER_AESTHA_EDITORIAL_EN: FramerAesthaEditorialContent = {
-  brand: 'RAMSA',
-  tagline: 'Where classic elegance meets modern refinement.',
-  scrollLabel: 'scroll',
-  description:
-    'Nestled in the heart of the city, the project embodies refined urban living — every detail tuned to the demands of modern luxury.',
-  image1Url:
-    'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&q=80',
-  image2Url:
-    'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1200&q=80',
-  image3Url:
-    'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80',
-  ctaText: 'EXPLORE MORE',
-  ctaHref: '/projects',
-  navLinks: [
-    { label: 'Projects', href: '/projects' },
-    { label: 'Studio', href: '/studio' },
-    { label: 'Contact', href: '/contact' },
-  ],
-};
-
 // ── Framer-native: Perform About ───────────────────────────────────────
 const FRAMER_PERFORM_ABOUT_VI: FramerPerformAboutContent = {
   testimonials: [
@@ -2119,83 +2142,9 @@ const FRAMER_PERFORM_ABOUT_EN: FramerPerformAboutContent = {
   ],
 };
 
-// ── Framer-native: Perform Pricing ─────────────────────────────────────
-const FRAMER_PERFORM_PRICING_VI: FramerPerformPricingContent = {
-  eyebrow: 'Pricing',
-  heading: 'Chọn gói của bạn',
-  subheading:
-    'Chọn gói phù hợp với mục tiêu tập luyện. Hủy hoặc nâng cấp bất cứ lúc nào.',
-  tiers: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=1024&q=80',
-      price: '$59/tháng',
-      title: 'Cơ bản',
-      features:
-        'Tư vấn ban đầu miễn phí\nCập nhật kế hoạch tập 2 tuần/lần\nKiểm tra hàng tuần',
-      ctaLabel: 'Liên hệ',
-      ctaHref: '#contact',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1486218119243-13883505764c?w=1024&q=80',
-      price: '$99/tháng',
-      title: 'Tiêu chuẩn',
-      features:
-        'Tất cả của gói trước\nXây dựng chiến lược đua cụ thể\nƯu đãi từ đối tác',
-      ctaLabel: 'Liên hệ',
-      ctaHref: '#contact',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1024&q=80',
-      price: '$169/tháng',
-      title: 'Cao cấp',
-      features:
-        'Tất cả của gói trước\nCập nhật kế hoạch không giới hạn\nHỗ trợ tư duy hiệu suất tối ưu',
-      ctaLabel: 'Liên hệ',
-      ctaHref: '#contact',
-    },
-  ],
-};
-const FRAMER_PERFORM_PRICING_EN: FramerPerformPricingContent = {
-  eyebrow: 'Pricing',
-  heading: 'Choose your plan',
-  subheading:
-    'Pick the plan that fits your training goals. Cancel or upgrade any time.',
-  tiers: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=1024&q=80',
-      price: '$59/month',
-      title: 'Basic',
-      features:
-        'Free initial consultation\n1x per 2 weeks training plan update\nWeekly checking',
-      ctaLabel: 'Get in touch',
-      ctaHref: '#contact',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1486218119243-13883505764c?w=1024&q=80',
-      price: '$99/month',
-      title: 'Standard',
-      features:
-        'All of the previous\nDevelopment of a specific race strategy\nBenefits from my partners',
-      ctaLabel: 'Get in touch',
-      ctaHref: '#contact',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=1024&q=80',
-      price: '$169/month',
-      title: 'Premium',
-      features:
-        'All of the previous\nUnlimited plan updates and modifications\nWorking together on mindset for optimal performance',
-      ctaLabel: 'Get in touch',
-      ctaHref: '#contact',
-    },
-  ],
-};
+// ── Framer-native: Housent Our Excellence ────────────────────────────
+const HOUSENT_OUR_EXCELLENCE_VI = housentOurExcellenceDef.defaultContent.vi;
+const HOUSENT_OUR_EXCELLENCE_EN = housentOurExcellenceDef.defaultContent.en;
 
 // Derive từ registry BLOCK_TYPE_META (nguồn duy nhất) — thêm block type mới
 // chỉ cần thêm 1 entry ở types.ts, map này tự đầy đủ.
@@ -2205,6 +2154,9 @@ const NAME_BY_TYPE: Record<BlockType, string> = Object.fromEntries(
 
 const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_VI,
+  altura_olympus: alturaOlympusDef.defaultContent.vi,
+  hero_scroll: heroScrollDef.defaultContent.vi,
+  scroll_mattis: scrollMattisDef.defaultContent.vi,
   hero_overlay: HERO_OVERLAY_VI,
   feature_section: FEATURE_VI,
   booking_form: BOOKING_VI,
@@ -2213,20 +2165,34 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   mint_sku: MINT_SKU_VI,
   mint_hero: MINT_HERO_VI,
   mint_variants: MINT_VARIANTS_VI,
-  mint_discover: MINT_DISCOVER_VI,
+  mint_discover: mintDiscoverDef.defaultContent.vi,
+  cool_hunter_hero: coolHunterHeroDef.defaultContent.vi,
+  cool_hunter_section_progress: coolHunterSectionProgressDef.defaultContent.vi,
+  cool_hunter_story: coolHunterStoryDef.defaultContent.vi,
+  cool_hunter_gallery: coolHunterGalleryDef.defaultContent.vi,
+  cool_hunter_product: coolHunterProductDef.defaultContent.vi,
+  cool_hunter_quote: coolHunterQuoteDef.defaultContent.vi,
+  cool_hunter_footer: coolHunterFooterDef.defaultContent.vi,
+  pnj_hero: pnjHeroDef.defaultContent.vi,
+  pnj_details: pnjDetailsDef.defaultContent.vi,
+  pnj_variant: pnjVariantDef.defaultContent.vi,
+  pnj_header: pnjHeaderDef.defaultContent.vi,
+  pnj_sticky_menu: pnjStickyMenuDef.defaultContent.vi,
+  pnj_cta: pnjCtaDef.defaultContent.vi,
   mintv2_emblem: MINTV2_EMBLEM_VI,
   mintv2_services: MINTV2_SERVICES_VI,
   mintv2_manifesto: MINTV2_MANIFESTO_VI,
   mintv2_process: MINTV2_PROCESS_VI,
   mintv2_cta: MINTV2_CTA_VI,
   mintv2_works: MINTV2_WORKS_VI,
-  linea_portfolio: LINEA_PORTFOLIO_VI,
+  linea_portfolio: lineaPortfolioDef.defaultContent.vi,
   mint_vault_hero: MINT_VAULT_HERO_VI,
   mint_vault_craft: MINT_VAULT_CRAFT_VI,
   mint_vault_reveal: MINT_VAULT_REVEAL_VI,
   mint_vault_collection: MINT_VAULT_COLLECTION_VI,
   mint_vault_invitation: MINT_VAULT_INVITATION_VI,
   interactive_ad_widget: INTERACTIVE_AD_WIDGET,
+  brightedge_hero: BRIGHTEDGE_HERO,
   image_carousel: CAROUSEL_VI,
   stories: STORIES_VI,
   split_screen: SPLIT_VI,
@@ -2245,6 +2211,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   wheel_gallery: WHEEL_GALLERY_VI,
   hover_reveal_list: HOVER_REVEAL_LIST_VI,
   hover_equalizer_heading: HOVER_EQ_HEADING_VI,
+  brutalist_text: BRUTALIST_TEXT_VI,
   image_explosion: IMAGE_EXPLOSION_VI,
   story_slides: STORY_SLIDES_VI,
   accordion_media: ACCORDION_MEDIA_VI,
@@ -2265,14 +2232,25 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_VI,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_VI,
   framer_explore_cta: FRAMER_EXPLORE_CTA_VI,
+  framer_flat_white_process: framerFlatWhiteProcessDef.defaultContent.vi,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_VI,
+  framer_ignitex_step: framerIgnitexStepDef.defaultContent.vi,
+  framer_realestate02_story: framerRealEstate02StoryDef.defaultContent.vi,
+  framer_realestate02_quote: framerRealEstate02QuoteDef.defaultContent.vi,
+  framer_realestate02_product: framerRealEstate02ProductDef.defaultContent.vi,
+  framer_realestate02_overview: framerRealEstate02OverviewDef.defaultContent.vi,
+  framer_realestate02_location: framerRealEstate02LocationDef.defaultContent.vi,
+  framer_realestate02_commute: framerRealEstate02CommuteDef.defaultContent.vi,
+  framer_realestate02_map: framerRealEstate02MapDef.defaultContent.vi,
+  framer_realestate02_gallery: framerRealEstate02GalleryDef.defaultContent.vi,
+  framer_realestate02_menu: framerRealEstate02MenuDef.defaultContent.vi,
   framer_stats_grid: FRAMER_STATS_GRID_VI,
   framer_projects_grid: FRAMER_PROJECTS_GRID_VI,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_VI,
   framer_image_stagger: FRAMER_IMAGE_STAGGER_VI,
   framer_clarity_services: FRAMER_CLARITY_SERVICES_VI,
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_VI,
-  framer_darling_timeline: FRAMER_DARLING_TIMELINE_VI,
+  framer_darling_timeline: framerDarlingTimelineDef.defaultContent.vi,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.vi,
   delvaux_header: delvauxHeaderDef.defaultContent.vi,
   delvaux_subnav: delvauxSubnavDef.defaultContent.vi,
@@ -2282,14 +2260,95 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   delvaux_variant: delvauxVariantDef.defaultContent.vi,
   q80_experience: q80ExperienceDef.defaultContent.vi,
   q80_menu: q80MenuDef.defaultContent.vi,
+  housent_hero: housentHeroDef.defaultContent.vi,
+  housent_stats: housentStatsDef.defaultContent.vi,
+  housent_listings: housentListingsDef.defaultContent.vi,
+  housent_cta: housentCtaDef.defaultContent.vi,
+  housent_footer: housentFooterDef.defaultContent.vi,
+  housent_about: housentAboutDef.defaultContent.vi,
+  housent_excellence: housentExcellenceDef.defaultContent.vi,
+  housent_solutions: housentSolutionsDef.defaultContent.vi,
+  housent_values: housentValuesDef.defaultContent.vi,
+  housent_faq: housentFaqDef.defaultContent.vi,
+  housent_testimonial: housentTestimonialDef.defaultContent.vi,
+  housent_blogs: housentBlogsDef.defaultContent.vi,
+  lumea_hero: lumeaHeroDef.defaultContent.vi,
+  lumea_statement: lumeaStatementDef.defaultContent.vi,
+  lumea_immersive: lumeaImmersiveDef.defaultContent.vi,
+  lumea_handcrafted: lumeaHandcraftedDef.defaultContent.vi,
+  lumea_amenities: lumeaAmenitiesDef.defaultContent.vi,
+  lumea_testimonial: lumeaTestimonialDef.defaultContent.vi,
+  lumea_gallery: lumeaGalleryDef.defaultContent.vi,
+  lumea_footer: lumeaFooterDef.defaultContent.vi,
+  nordhaven_hero: nordhavenHeroDef.defaultContent.vi,
+  nordhaven_about: nordhavenAboutDef.defaultContent.vi,
+  nordhaven_services: nordhavenServicesDef.defaultContent.vi,
+  nordhaven_properties: nordhavenPropertiesDef.defaultContent.vi,
+  nordhaven_testimonials: nordhavenTestimonialsDef.defaultContent.vi,
+  nordhaven_faq: nordhavenFaqDef.defaultContent.vi,
+  nordhaven_gallery: nordhavenGalleryDef.defaultContent.vi,
+  nordhaven_footer: nordhavenFooterDef.defaultContent.vi,
+  firma_hero: firmaHeroDef.defaultContent.vi,
+  firma_statement: firmaStatementDef.defaultContent.vi,
+  firma_work: firmaWorkDef.defaultContent.vi,
+  firma_testimonial: firmaTestimonialDef.defaultContent.vi,
+  firma_services: firmaServicesDef.defaultContent.vi,
+  firma_footer: firmaFooterDef.defaultContent.vi,
+  ignitex_hero: ignitexHeroDef.defaultContent.vi,
+  ignitex_services: ignitexServicesDef.defaultContent.vi,
+  ignitex_projects: ignitexProjectsDef.defaultContent.vi,
+  ignitex_about: ignitexAboutDef.defaultContent.vi,
+  ignitex_cta: ignitexCtaDef.defaultContent.vi,
+  ignitex_footer: ignitexFooterDef.defaultContent.vi,
+  readymag_marquee: readymagMarqueeDef.defaultContent.vi,
+  readymag_projects: readymagProjectsDef.defaultContent.vi,
+  readymag_footer: readymagFooterDef.defaultContent.vi,
+  protection_scrollytelling: protectionScrollytellingDef.defaultContent.vi,
+  springs_header: springsHeaderDef.defaultContent.vi,
+  springs_gallery: springsGalleryDef.defaultContent.vi,
+  springs_hero: springsHeroDef.defaultContent.vi,
+  springs_intro: springsIntroDef.defaultContent.vi,
+  springs_wellness: springsWellnessDef.defaultContent.vi,
+  springs_nature_place: springsNaturePlaceDef.defaultContent.vi,
+  springs_map: springsMapDef.defaultContent.vi,
+  real_estate_location: realEstateLocationDef.defaultContent.vi,
+  real_estate_hero: realEstateHeroDef.defaultContent.vi,
+  real_estate_info: realEstateInfoDef.defaultContent.vi,
+  real_estate_overview: realEstateOverviewDef.defaultContent.vi,
+  real_estate_highlights: realEstateHighlightsDef.defaultContent.vi,
+  real_estate_villa: realEstateVillaDef.defaultContent.vi,
+  real_estate_utilities: realEstateUtilitiesDef.defaultContent.vi,
+  springs_design: springsDesignDef.defaultContent.vi,
+  springs_residences: springsResidencesDef.defaultContent.vi,
+  springs_interiors: springsInteriorsDef.defaultContent.vi,
+  springs_contact_footer: springsContactFooterDef.defaultContent.vi,
+  sustainit_our_expertise: sustainitOurExpertiseDef.defaultContent.vi,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_VI,
+  housent_our_excellence: HOUSENT_OUR_EXCELLENCE_VI,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_VI,
-  framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_VI,
+  framer_aestha_editorial: framerAesthaEditorialDef.defaultContent.vi,
+  aestha_explore: aesthaExploreDef.defaultContent.vi,
+  aestha_studio: aesthaStudioDef.defaultContent.vi,
+  aestha_contact: aesthaContactDef.defaultContent.vi,
+  aestha_project: aesthaProjectDef.defaultContent.vi,
+  masterise_home_inside: masteriseHomeInsideDef.defaultContent.vi,
   framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
-  framer_perform_pricing: FRAMER_PERFORM_PRICING_VI,
+  framer_perform_pricing: framerPerformPricingDef.defaultContent.vi,
+  framer_firma_template_strategy_digital:
+    framerFirmaTemplateStrategyDigitalDef.defaultContent.vi,
+  readymag_case_section: readymagCaseSectionDef.defaultContent.vi,
+  framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.vi,
+  rolex_collection_hero: rolexCollectionHeroDef.defaultContent.vi,
+  rolex_collection_nav: rolexCollectionNavDef.defaultContent.vi,
+  rolex_collection_contact: rolexContactDef.defaultContent.vi,
+  rolex_collection_work: rolexCollectionWorkDef.defaultContent.vi,
+  rolex_collection_project: rolexCollectionProjectDef.defaultContent.vi,
 };
 const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
+  altura_olympus: alturaOlympusDef.defaultContent.en,
+  hero_scroll: heroScrollDef.defaultContent.en,
+  scroll_mattis: scrollMattisDef.defaultContent.en,
   hero_overlay: HERO_OVERLAY_EN,
   feature_section: FEATURE_EN,
   booking_form: BOOKING_EN,
@@ -2298,20 +2357,34 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   mint_sku: MINT_SKU_VI,
   mint_hero: MINT_HERO_VI,
   mint_variants: MINT_VARIANTS_VI,
-  mint_discover: MINT_DISCOVER_VI,
+  mint_discover: mintDiscoverDef.defaultContent.en,
+  cool_hunter_hero: coolHunterHeroDef.defaultContent.en,
+  cool_hunter_section_progress: coolHunterSectionProgressDef.defaultContent.en,
+  cool_hunter_story: coolHunterStoryDef.defaultContent.en,
+  cool_hunter_gallery: coolHunterGalleryDef.defaultContent.en,
+  cool_hunter_product: coolHunterProductDef.defaultContent.en,
+  cool_hunter_quote: coolHunterQuoteDef.defaultContent.en,
+  cool_hunter_footer: coolHunterFooterDef.defaultContent.en,
+  pnj_hero: pnjHeroDef.defaultContent.en,
+  pnj_details: pnjDetailsDef.defaultContent.en,
+  pnj_variant: pnjVariantDef.defaultContent.en,
+  pnj_header: pnjHeaderDef.defaultContent.en,
+  pnj_sticky_menu: pnjStickyMenuDef.defaultContent.en,
+  pnj_cta: pnjCtaDef.defaultContent.en,
   mintv2_emblem: MINTV2_EMBLEM_VI,
   mintv2_services: MINTV2_SERVICES_VI,
   mintv2_manifesto: MINTV2_MANIFESTO_VI,
   mintv2_process: MINTV2_PROCESS_VI,
   mintv2_cta: MINTV2_CTA_VI,
   mintv2_works: MINTV2_WORKS_VI,
-  linea_portfolio: LINEA_PORTFOLIO_VI,
+  linea_portfolio: lineaPortfolioDef.defaultContent.vi,
   mint_vault_hero: MINT_VAULT_HERO_VI,
   mint_vault_craft: MINT_VAULT_CRAFT_VI,
   mint_vault_reveal: MINT_VAULT_REVEAL_VI,
   mint_vault_collection: MINT_VAULT_COLLECTION_VI,
   mint_vault_invitation: MINT_VAULT_INVITATION_VI,
   interactive_ad_widget: INTERACTIVE_AD_WIDGET,
+  brightedge_hero: BRIGHTEDGE_HERO,
   image_carousel: CAROUSEL_EN,
   stories: STORIES_EN,
   split_screen: SPLIT_EN,
@@ -2330,6 +2403,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   wheel_gallery: WHEEL_GALLERY_EN,
   hover_reveal_list: HOVER_REVEAL_LIST_EN,
   hover_equalizer_heading: HOVER_EQ_HEADING_EN,
+  brutalist_text: BRUTALIST_TEXT_EN,
   image_explosion: IMAGE_EXPLOSION_EN,
   story_slides: STORY_SLIDES_EN,
   accordion_media: ACCORDION_MEDIA_EN,
@@ -2350,14 +2424,25 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   framer_purevisuals_hero: FRAMER_PUREVISUALS_HERO_EN,
   framer_intro_redefined: FRAMER_INTRO_REDEFINED_EN,
   framer_explore_cta: FRAMER_EXPLORE_CTA_EN,
+  framer_flat_white_process: framerFlatWhiteProcessDef.defaultContent.en,
   framer_studio_manifesto: FRAMER_STUDIO_MANIFESTO_EN,
+  framer_ignitex_step: framerIgnitexStepDef.defaultContent.en,
+  framer_realestate02_story: framerRealEstate02StoryDef.defaultContent.en,
+  framer_realestate02_quote: framerRealEstate02QuoteDef.defaultContent.en,
+  framer_realestate02_product: framerRealEstate02ProductDef.defaultContent.en,
+  framer_realestate02_overview: framerRealEstate02OverviewDef.defaultContent.en,
+  framer_realestate02_location: framerRealEstate02LocationDef.defaultContent.en,
+  framer_realestate02_commute: framerRealEstate02CommuteDef.defaultContent.en,
+  framer_realestate02_map: framerRealEstate02MapDef.defaultContent.en,
+  framer_realestate02_gallery: framerRealEstate02GalleryDef.defaultContent.en,
+  framer_realestate02_menu: framerRealEstate02MenuDef.defaultContent.en,
   framer_stats_grid: FRAMER_STATS_GRID_EN,
   framer_projects_grid: FRAMER_PROJECTS_GRID_EN,
   framer_team_directory: FRAMER_TEAM_DIRECTORY_EN,
   framer_image_stagger: FRAMER_IMAGE_STAGGER_EN,
   framer_clarity_services: FRAMER_CLARITY_SERVICES_EN,
   framer_faq_minimal: FRAMER_FAQ_MINIMAL_EN,
-  framer_darling_timeline: FRAMER_DARLING_TIMELINE_EN,
+  framer_darling_timeline: framerDarlingTimelineDef.defaultContent.en,
   framer_nftpull_timeline: framerNftpullTimelineDef.defaultContent.en,
   delvaux_header: delvauxHeaderDef.defaultContent.en,
   delvaux_subnav: delvauxSubnavDef.defaultContent.en,
@@ -2367,16 +2452,90 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   delvaux_variant: delvauxVariantDef.defaultContent.en,
   q80_experience: q80ExperienceDef.defaultContent.en,
   q80_menu: q80MenuDef.defaultContent.en,
+  housent_hero: housentHeroDef.defaultContent.en,
+  housent_stats: housentStatsDef.defaultContent.en,
+  housent_listings: housentListingsDef.defaultContent.en,
+  housent_cta: housentCtaDef.defaultContent.en,
+  housent_footer: housentFooterDef.defaultContent.en,
+  housent_about: housentAboutDef.defaultContent.en,
+  housent_excellence: housentExcellenceDef.defaultContent.en,
+  housent_solutions: housentSolutionsDef.defaultContent.en,
+  housent_values: housentValuesDef.defaultContent.en,
+  housent_faq: housentFaqDef.defaultContent.en,
+  housent_testimonial: housentTestimonialDef.defaultContent.en,
+  housent_blogs: housentBlogsDef.defaultContent.en,
+  lumea_hero: lumeaHeroDef.defaultContent.en,
+  lumea_statement: lumeaStatementDef.defaultContent.en,
+  lumea_immersive: lumeaImmersiveDef.defaultContent.en,
+  lumea_handcrafted: lumeaHandcraftedDef.defaultContent.en,
+  lumea_amenities: lumeaAmenitiesDef.defaultContent.en,
+  lumea_testimonial: lumeaTestimonialDef.defaultContent.en,
+  lumea_gallery: lumeaGalleryDef.defaultContent.en,
+  lumea_footer: lumeaFooterDef.defaultContent.en,
+  nordhaven_hero: nordhavenHeroDef.defaultContent.en,
+  nordhaven_about: nordhavenAboutDef.defaultContent.en,
+  nordhaven_services: nordhavenServicesDef.defaultContent.en,
+  nordhaven_properties: nordhavenPropertiesDef.defaultContent.en,
+  nordhaven_testimonials: nordhavenTestimonialsDef.defaultContent.en,
+  nordhaven_faq: nordhavenFaqDef.defaultContent.en,
+  nordhaven_gallery: nordhavenGalleryDef.defaultContent.en,
+  nordhaven_footer: nordhavenFooterDef.defaultContent.en,
+  firma_hero: firmaHeroDef.defaultContent.en,
+  firma_statement: firmaStatementDef.defaultContent.en,
+  firma_work: firmaWorkDef.defaultContent.en,
+  firma_testimonial: firmaTestimonialDef.defaultContent.en,
+  firma_services: firmaServicesDef.defaultContent.en,
+  firma_footer: firmaFooterDef.defaultContent.en,
+  ignitex_hero: ignitexHeroDef.defaultContent.en,
+  ignitex_services: ignitexServicesDef.defaultContent.en,
+  ignitex_projects: ignitexProjectsDef.defaultContent.en,
+  ignitex_about: ignitexAboutDef.defaultContent.en,
+  ignitex_cta: ignitexCtaDef.defaultContent.en,
+  ignitex_footer: ignitexFooterDef.defaultContent.en,
+  readymag_marquee: readymagMarqueeDef.defaultContent.en,
+  readymag_projects: readymagProjectsDef.defaultContent.en,
+  readymag_footer: readymagFooterDef.defaultContent.en,
+  protection_scrollytelling: protectionScrollytellingDef.defaultContent.en,
+  springs_header: springsHeaderDef.defaultContent.en,
+  springs_gallery: springsGalleryDef.defaultContent.en,
+  springs_hero: springsHeroDef.defaultContent.en,
+  springs_intro: springsIntroDef.defaultContent.en,
+  springs_wellness: springsWellnessDef.defaultContent.en,
+  springs_nature_place: springsNaturePlaceDef.defaultContent.en,
+  springs_map: springsMapDef.defaultContent.en,
+  real_estate_location: realEstateLocationDef.defaultContent.en,
+  real_estate_hero: realEstateHeroDef.defaultContent.en,
+  real_estate_info: realEstateInfoDef.defaultContent.en,
+  real_estate_overview: realEstateOverviewDef.defaultContent.en,
+  real_estate_highlights: realEstateHighlightsDef.defaultContent.en,
+  real_estate_villa: realEstateVillaDef.defaultContent.en,
+  real_estate_utilities: realEstateUtilitiesDef.defaultContent.en,
+  springs_design: springsDesignDef.defaultContent.en,
+  springs_residences: springsResidencesDef.defaultContent.en,
+  springs_interiors: springsInteriorsDef.defaultContent.en,
+  springs_contact_footer: springsContactFooterDef.defaultContent.en,
+  sustainit_our_expertise: sustainitOurExpertiseDef.defaultContent.en,
   framer_signature_feature: FRAMER_SIGNATURE_FEATURE_EN,
+  housent_our_excellence: HOUSENT_OUR_EXCELLENCE_EN,
   framer_vs_collins_projects: FRAMER_VS_COLLINS_PROJECTS_EN,
-  framer_aestha_editorial: FRAMER_AESTHA_EDITORIAL_EN,
+  framer_aestha_editorial: framerAesthaEditorialDef.defaultContent.en,
+  aestha_explore: aesthaExploreDef.defaultContent.en,
+  aestha_studio: aesthaStudioDef.defaultContent.en,
+  aestha_contact: aesthaContactDef.defaultContent.en,
+  aestha_project: aesthaProjectDef.defaultContent.en,
+  masterise_home_inside: masteriseHomeInsideDef.defaultContent.en,
   framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
-  framer_perform_pricing: FRAMER_PERFORM_PRICING_EN,
+  framer_perform_pricing: framerPerformPricingDef.defaultContent.en,
+  framer_firma_template_strategy_digital:
+    framerFirmaTemplateStrategyDigitalDef.defaultContent.en,
+  readymag_case_section: readymagCaseSectionDef.defaultContent.en,
+  framer_estancia_about_us: framerEstanciaAboutUsDef.defaultContent.en,
+  rolex_collection_hero: rolexCollectionHeroDef.defaultContent.en,
+  rolex_collection_nav: rolexCollectionNavDef.defaultContent.en,
+  rolex_collection_contact: rolexContactDef.defaultContent.en,
+  rolex_collection_work: rolexCollectionWorkDef.defaultContent.en,
+  rolex_collection_project: rolexCollectionProjectDef.defaultContent.en,
 };
-
-function genId() {
-  return `b_${Math.random().toString(36).slice(2, 10)}`;
-}
 
 export function createBlock(type: BlockType): Block {
   // New blocks start with `mobile` undefined so the renderer falls back to

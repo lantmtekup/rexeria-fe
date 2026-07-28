@@ -1,6 +1,8 @@
 import { chromium } from 'playwright';
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+  viewport: { width: 1440, height: 900 },
+});
 const page = await ctx.newPage();
 const errs = [];
 const resps = [];
@@ -11,14 +13,19 @@ page.on('console', m => {
 page.on('response', async r => {
   if (!r.ok() && r.url().includes('/api/rexer/')) {
     const body = await r.text().catch(() => '');
-    resps.push(`${r.status()} ${r.url().replace('http://localhost:3003','')} :: ${body.slice(0,200)}`);
+    resps.push(
+      `${r.status()} ${r.url().replace('http://localhost:3003', '')} :: ${body.slice(0, 200)}`
+    );
   }
 });
 await page.goto('http://localhost:3003/sign-in', { waitUntil: 'load' });
 await page.waitForSelector('input[type=email]');
 await page.locator('form button[type=submit]').first().click();
 await page.waitForURL(/\/home/, { timeout: 20000 }).catch(() => {});
-await page.goto('http://localhost:3003/ai-agents/eee60c59-efbe-46ae-a805-7c35bde02732/template', { waitUntil: 'load' });
+await page.goto(
+  'http://localhost:3003/ai-agents/eee60c59-efbe-46ae-a805-7c35bde02732/template',
+  { waitUntil: 'load' }
+);
 await page.waitForTimeout(5000);
 console.log('--- errors ---');
 errs.forEach(e => console.log(e));

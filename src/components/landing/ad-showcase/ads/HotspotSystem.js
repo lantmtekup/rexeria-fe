@@ -2,10 +2,13 @@
 
 import { cn } from '@/lib/cn';
 import { useState, useRef, useEffect } from 'react';
+import { useDeviceView } from './shared/useDeviceView';
 
 export default function HotspotSystem({ hotspots = [] }) {
   const [openIds, setOpenIds] = useState(new Set());
   const pointRefs = useRef({});
+  const { device } = useDeviceView();
+  const isDesktop = device === 'desktop';
 
   useEffect(() => {
     if (openIds.size === 0) return;
@@ -69,8 +72,14 @@ export default function HotspotSystem({ hotspots = [] }) {
             )}
             style={
               isRight
-                ? { right: `${100 - h.x}%`, top: `${h.y}%` }
-                : { left: `${h.x}%`, top: `${h.y}%` }
+                ? {
+                    right: `${100 - (isDesktop && h.xDesktop !== undefined ? h.xDesktop : h.x)}%`,
+                    top: `${isDesktop && h.yDesktop !== undefined ? h.yDesktop : h.y}%`,
+                  }
+                : {
+                    left: `${isDesktop && h.xDesktop !== undefined ? h.xDesktop : h.x}%`,
+                    top: `${isDesktop && h.yDesktop !== undefined ? h.yDesktop : h.y}%`,
+                  }
             }
             onClick={toggle}
             role='button'

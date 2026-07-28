@@ -2595,16 +2595,19 @@ export interface PageRevision {
   page_id: string;
   revision_no: number;
   config_json: Record<string, unknown>;
+  /** Page-owned canvas blocks for this revision (omitted when unset). */
+  canvas_blueprint?: Record<string, unknown>;
   changed_by: string;
   changed_at: string;
 }
 export interface PageRevisionListResponse {
   items: PageRevision[];
-  page_id: string;
-  latest_revision_no: number;
+  total: number;
 }
 export interface SavePageConfigRequest {
   config_json: Record<string, unknown>;
+  /** Page-owned canvas blocks to persist on this revision. */
+  canvas_blueprint?: Record<string, unknown>;
   /** Optimistic concurrency — pass the latest revision_no FE has seen. */
   base_revision_no?: number;
 }
@@ -2698,6 +2701,12 @@ export interface BlockReviewFields {
   review_note?: string;
 }
 
+/** Surfaces gia canvas_blueprint_validator (BE) chấp nhận cho 1 block. */
+export type BlockSurface = 'landing' | 'ad' | 'curate';
+/** Default khi tạo block mới qua UI (không có picker riêng) — hợp lệ trên mọi
+ *  surface, khớp default mà migration seed builtin block catalog dùng. */
+export const ALL_BLOCK_SURFACES: BlockSurface[] = ['landing', 'ad', 'curate'];
+
 export interface Block extends BlockAITaxonomy, BlockReviewFields {
   id: string;
   type_code: string;
@@ -2710,6 +2719,10 @@ export interface Block extends BlockAITaxonomy, BlockReviewFields {
   thumbnail_url?: string;
   tags: string[];
   scope: BlockScope;
+  /** Surface nào được phép đặt block này lên (BE mặc định `[]` nếu không gửi —
+   *  luôn truyền khi tạo/cập nhật, nếu không "Save version" sẽ báo lỗi
+   *  "does not support surface ..." khi publish. */
+  supported_surfaces?: BlockSurface[];
   usage_count: number;
   last_used_at?: string;
   source_block_id?: string;
@@ -2740,6 +2753,9 @@ export interface CreateBlockRequest extends BlockAITaxonomy, BlockReviewFields {
   description?: string;
   /** Media asset id cho thumbnail tuỳ chỉnh (BE create nhận — block.go). */
   thumbnail_asset_id?: string;
+  /** BE mặc định `[]` nếu omit → block sẽ không surface được ở page nào cả
+   *  (lỗi "does not support surface ..." khi publish). Luôn gửi field này. */
+  supported_surfaces?: BlockSurface[];
 }
 export interface UpdateBlockRequest extends BlockAITaxonomy, BlockReviewFields {
   name?: string;
@@ -2749,6 +2765,7 @@ export interface UpdateBlockRequest extends BlockAITaxonomy, BlockReviewFields {
   thumbnail_asset_id?: string;
   /** Đổi loại block đã lưu — BE hỗ trợ PATCH /blocks/:id (impl 2026-06-18). */
   type_code?: string;
+  supported_surfaces?: BlockSurface[];
 }
 
 /**

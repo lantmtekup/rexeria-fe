@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Spinner } from '@/components/atoms/spinner';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
+import { ALL_BLOCK_SURFACES } from '@/services/rexer/types';
 import type {
   CanvasTemplate,
   TemplateVersion as TemplateVersionType,
@@ -15,9 +16,19 @@ import type {
 
 import { AddBlockDialog } from '@/components/modules/block-editor/AddBlockDialog';
 import { BlockEditorHeader } from '@/components/modules/block-editor/BlockEditorHeader';
-import { BlockEditorSidebar } from '@/components/modules/block-editor/BlockEditorSidebar';
+import { BlockSceneRail } from '@/components/modules/block-editor/BlockSceneRail';
+import {
+  BlockEditorSidebar,
+  type SidebarTab,
+} from '@/components/modules/block-editor/BlockEditorSidebar';
 import { BlockPreview } from '@/components/modules/block-editor/BlockPreview';
-import { BlockTabBar } from '@/components/modules/block-editor/BlockTabBar';
+import { isInspectorKind } from '@/components/modules/block-editor/inspector/kinds';
+import { resolveElementMeta } from '@/components/modules/block-editor/resolveElementKind';
+import { CanvasZoomBar } from '@/components/modules/block-editor/CanvasZoomBar';
+import {
+  getContentAt,
+  setContentAt,
+} from '@/components/modules/block-editor/contentPath';
 import { DuplicateTemplateDialog } from '@/components/modules/block-editor/DuplicateTemplateDialog';
 import { SaveBlockDialog } from '@/components/modules/block-editor/SaveBlockDialog';
 import { ElementToolbar } from '@/components/modules/block-editor/ElementToolbar';
@@ -29,13 +40,41 @@ import { PublishDialog } from '@/components/modules/block-editor/PublishDialog';
 import { ReviewChangesDialog } from '@/components/modules/block-editor/ReviewChangesDialog';
 import { MotionTimelineModal } from '@/components/modules/block-editor/motion/timeline/MotionTimelineModal';
 import type { BlockMotion } from '@/components/modules/block-editor/motion/types';
-import { createBlock } from '@/components/modules/block-editor/factory';
 import {
+  PNJ_PARAGRAPH_KEY_RE,
+  resolvePnjParagraphs,
+  setPnjParagraphAt,
+} from '@/components/modules/block-editor/blocks/PnjDetails';
+import {
+  PNJ_HERO_TITLE_LINE_KEY_RE,
+  resolvePnjHeroTitleLines,
+  setPnjHeroTitleLineAt,
+} from '@/components/modules/block-editor/blocks/pnjHeroTitleLines';
+import {
+  PNJ_VARIANT_HIGHLIGHTS_KEY_RE,
+  PNJ_VARIANT_HIGHLIGHT_ITEM_KEY_RE,
+  resolvePnjVariantHighlights,
+  resolvePnjVariants,
+  setPnjVariantHighlightItemAt,
+  setPnjVariantHighlightsAt,
+} from '@/components/modules/block-editor/blocks/pnjVariantContent';
+import { createBlock } from '@/components/modules/block-editor/factory';
+import { genId } from '@/components/modules/block-editor/ids';
+import { SitePagesProvider } from '@/components/modules/block-editor/links/SitePagesContext';
+import { PageSettingsDialog } from '@/components/modules/block-editor/PageSettingsDialog';
+import { PageTabsBar } from '@/components/modules/block-editor/PageTabsBar';
+import { seedBlocks } from '@/components/modules/block-editor/mock';
+import {
+  DEFAULT_PAGE_ID,
+  adaptCanvasBlueprint,
   parseCanvas,
-  seedBlocks,
   serializeCanvas,
+  serializeCanvasPages,
+  type EditorPage,
 } from '@/components/modules/block-editor/serialize';
 import {
+  BLOCK_TYPE_META,
+  type Block,
   type BlockBackground,
   type BlockContent,
   type BlockMotionStored,
@@ -43,6 +82,9 @@ import {
   type ElementStyle,
   type ElementStylesMap,
   type ExtraElementKind,
+  type PnjDetailsContent,
+  type PnjHeroContent,
+  type PnjVariantContent,
 } from '@/components/modules/block-editor/types';
 import {
   bringToFront,
@@ -100,6 +142,11 @@ interface BlockEditorProps {
   /** Callback khi PublishDialog đặt slug mới — để route page reload state.
    *  Optional (no-op nếu không cần refresh). */
   onPageSlugChange?: (slug: string) => void;
+  /** Callback sau republish — cập nhật pinnedVersionId ở route cha. */
+  onPinnedVersionChange?: (versionId: string) => void;
+  /** Action riêng của route, render trong header editor (cạnh nút Xem
+   *  trước) — route không cần dựng thanh bar riêng phía trên editor. */
+  headerActions?: React.ReactNode;
 }
 
 // BE `/canvas-templates/{id}/canvas` endpoint is currently slow (~10s even
@@ -157,6 +204,71 @@ function bumpVersion(v: string): string {
   return v + '-r2';
 }
 
+/** Selection is per page, so the key is scoped by page id too. */
+function activeBlockStorageKey(templateId: string, pageId: string): string {
+  return `rexer-editor:active-block:${templateId}:${pageId}`;
+}
+
+function activePageStorageKey(templateId: string): string {
+  return `rexer-editor:active-page:${templateId}`;
+}
+
+function readStoredActiveBlockId(
+  templateId: string,
+  pageId: string
+): string | null {
+  try {
+    const scoped = sessionStorage.getItem(
+      activeBlockStorageKey(templateId, pageId)
+    );
+    if (scoped) return scoped;
+    // Sessions opened before multi-page wrote an unscoped key. Honour it for
+    // the home page so an in-flight session doesn't lose its selection.
+    return pageId === DEFAULT_PAGE_ID
+      ? sessionStorage.getItem(`rexer-editor:active-block:${templateId}`)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredActiveBlockId(
+  templateId: string,
+  pageId: string,
+  blockId: string
+): void {
+  try {
+    sessionStorage.setItem(activeBlockStorageKey(templateId, pageId), blockId);
+  } catch {
+    /* ignore quota */
+  }
+}
+
+function readStoredActivePageId(templateId: string): string | null {
+  try {
+    return sessionStorage.getItem(activePageStorageKey(templateId));
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredActivePageId(templateId: string, pageId: string): void {
+  try {
+    sessionStorage.setItem(activePageStorageKey(templateId), pageId);
+  } catch {
+    /* ignore quota */
+  }
+}
+
+/** Chọn active block hợp lệ — tránh fallback ngầm về blocks[0]. */
+function resolveActiveBlockId(
+  blocks: Block[],
+  preferred?: string | null
+): string | null {
+  if (preferred && blocks.some(b => b.id === preferred)) return preferred;
+  return blocks[0]?.id ?? null;
+}
+
 function rxErrorMessage(err: unknown): string {
   if (err instanceof RxApiError) return err.message || err.code;
   if (err instanceof Error) return err.message;
@@ -173,6 +285,8 @@ export function BlockEditor({
   pageStatus,
   pinnedVersionId,
   onPageSlugChange,
+  onPinnedVersionChange,
+  headerActions,
 }: BlockEditorProps) {
   const router = useRouter();
   // Block-direct: sửa thẳng 1 saved block, không qua canvas-template.
@@ -195,6 +309,9 @@ export function BlockEditor({
     onElementSelect: selection.selectKey,
   });
   const publishState = usePublishState();
+  const [fitRequestKey, setFitRequestKey] = React.useState(0);
+  /** Tránh fetch + reset canvas khi effect load chạy lại cùng template/block. */
+  const loadedCanvasKeyRef = React.useRef<string | null>(null);
 
   // Autosave — payload built from latest canvas + publish state at save time.
   const autosave = useAutosave({
@@ -203,12 +320,13 @@ export function BlockEditor({
     // Block mode lưu qua nút 🔖 (blocks.update), KHÔNG autosave-template.
     enabled: !blockMode && !!template,
     buildPayload: () =>
-      serializeCanvas(
-        canvas.blocks,
-        canvas.activeId ?? undefined,
-        publishState.publish,
-        transition
-      ),
+      serializeCanvasPages({
+        pages: canvas.pages,
+        activePageId: canvas.activePageId,
+        activeBlockId: canvas.activeId ?? undefined,
+        publish: publishState.publish,
+        transition,
+      }),
     onVersionUpdate: nextVersion => {
       setTemplate(prev =>
         prev ? ({ ...prev, version: nextVersion } as CanvasTemplate) : prev
@@ -229,13 +347,21 @@ export function BlockEditor({
     getCanvasEtag: () => template?.canvas_etag,
     getActiveId: () => canvas.activeId,
     getPublish: () => publishState.publish,
-    applyBlocks: (next, nextActiveId) => canvas.reset(next, nextActiveId),
+    // Page-scoped: `canvas.reset` would collapse the template to a single
+    // page and discard every other one.
+    applyBlocks: (next, nextActiveId) =>
+      canvas.replacePageBlocks(canvas.activePageId, next, nextActiveId),
+    isHomePage: () => canvas.activePage.isHome,
     markDirty: autosave.markDirty,
   });
 
   // ── Local UI state (not hook-worthy on its own) ────────────────────────
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
+  /** Page whose settings dialog is open (`EditorPage.id`), if any. */
+  const [pageSettingsId, setPageSettingsId] = React.useState<string | null>(
+    null
+  );
   const [previewing, setPreviewing] = React.useState(false);
   const [addOpen, setAddOpen] = React.useState(false);
   const [publishOpen, setPublishOpen] = React.useState(false);
@@ -253,9 +379,7 @@ export function BlockEditor({
   // Transition cấp template (preset áp cho cả collection block). Lưu vào
   // canvas_blueprint qua serializeCanvas → public/preview render áp.
   const [transition, setTransition] = React.useState<string>('none');
-  const [sidebarTab, setSidebarTab] = React.useState<'layers' | 'motion'>(
-    'layers'
-  );
+  const [sidebarTab, setSidebarTab] = React.useState<SidebarTab>('layers');
   const [motionEditorOpen, setMotionEditorOpen] = React.useState(false);
 
   // ── Load ────────────────────────────────────────────────────────────────
@@ -272,7 +396,14 @@ export function BlockEditor({
   // preview được.
   React.useEffect(() => {
     let cancelled = false;
+    const canvasKey = blockMode
+      ? `block:${savedBlockDirectId}`
+      : `tpl:${templateId}`;
+    const skipReload = loadedCanvasKeyRef.current === canvasKey;
+
     (async () => {
+      if (skipReload) return;
+
       setLoading(true);
       setLoadError(null);
       try {
@@ -319,9 +450,13 @@ export function BlockEditor({
             updated_at: blk.updated_at,
             canvas_data: wire,
           } as CanvasTemplate);
-          canvas.reset(blocks, blocks[0]?.id ?? null);
+          canvas.reset(
+            blocks,
+            resolveActiveBlockId(blocks, parsed?.activeBlockId)
+          );
           setTransition(parsed?.transition ?? 'none');
           publishState.setPublish(undefined);
+          loadedCanvasKeyRef.current = canvasKey;
           setLoading(false);
           return;
         }
@@ -482,6 +617,10 @@ export function BlockEditor({
         //      empty array, user tự add blocks
         //   4. Otherwise → legacy template with missing canvas (mig artifact)
         //      → seed mock để có gì render
+        //
+        // Multi-page: the precedence above is about the HOME page only. Other
+        // pages are taken verbatim from the blueprint — an empty sub-page is a
+        // page the user hasn't filled in yet, never a reason to seed mocks.
         const hasServerCanvas = canvasData !== undefined;
         const isFreshTemplate =
           currentVerId === null && !tpl.draft_canvas_blueprint;
@@ -503,8 +642,40 @@ export function BlockEditor({
           '· isFreshTemplate?',
           isFreshTemplate
         );
-        canvas.reset(initial, parsed?.activeBlockId ?? initial[0]?.id ?? null);
+        // Pages: parsed always yields ≥1 page (legacy blueprints become one
+        // implicit home page). Swap the home page's blocks for the
+        // precedence-resolved `initial` computed above.
+        const parsedPages = parsed?.pages ?? [];
+        const pages: EditorPage[] = parsedPages.length
+          ? parsedPages.map(p => (p.isHome ? { ...p, blocks: initial } : p))
+          : [
+              {
+                id: DEFAULT_PAGE_ID,
+                name: 'Trang chủ',
+                slug: '',
+                isHome: true,
+                blocks: initial,
+              },
+            ];
+        const storedPageId = templateId
+          ? readStoredActivePageId(templateId)
+          : null;
+        const activePageId =
+          [parsed?.activePageId, storedPageId].find(
+            id => id && pages.some(p => p.id === id)
+          ) ?? (pages.find(p => p.isHome) ?? pages[0]).id;
+        const activePageBlocks =
+          pages.find(p => p.id === activePageId)?.blocks ?? [];
+        const storedActive = templateId
+          ? readStoredActiveBlockId(templateId, activePageId)
+          : null;
+        const resolvedActive = resolveActiveBlockId(
+          activePageBlocks,
+          parsed?.activeBlockId ?? storedActive
+        );
+        canvas.resetPages(pages, activePageId, resolvedActive);
         setTransition(parsed?.transition ?? 'none');
+        loadedCanvasKeyRef.current = canvasKey;
         // Publish state source-of-truth precedence:
         //   1. BE Page.status === 'published' (canonical, set qua
         //      pages.publish — survives Save Version commit clearing draft)
@@ -537,7 +708,7 @@ export function BlockEditor({
         if (cancelled) return;
         setLoadError(rxErrorMessage(err));
         const seeded = seedBlocks();
-        canvas.reset(seeded, seeded[0]?.id ?? null);
+        canvas.reset(seeded, resolveActiveBlockId(seeded));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -575,10 +746,18 @@ export function BlockEditor({
   const editVariant = deviceState.editVariant;
   const langKey = deviceState.lang === 'vi' ? 'contentVi' : 'contentEn';
 
-  const updateActiveContent = (next: BlockContent) => {
+  const updateActiveContent = (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => {
     if (tabletReadOnly()) return;
     canvas.mutateActive(b => {
-      b[langKey] = { ...b[langKey], [editVariant]: next };
+      const variants = b[langKey];
+      const prev =
+        (editVariant === 'mobile' ? variants.mobile : undefined) ??
+        variants.desktop;
+      const resolved =
+        typeof next === 'function' ? next(prev as BlockContent) : next;
+      b[langKey] = { ...variants, [editVariant]: resolved };
     });
     autosave.markDirty();
   };
@@ -773,13 +952,6 @@ export function BlockEditor({
     autosave.markDirty();
   };
 
-  const handleReorderBlocks = (
-    next: Parameters<typeof canvas.replaceBlocks>[0]
-  ) => {
-    canvas.replaceBlocks(next);
-    autosave.markDirty();
-  };
-
   // ── Variant sync (Desktop ↔ Mobile copy) ───────────────────────────────
   const syncVariant = (
     from: 'desktop' | 'mobile',
@@ -834,7 +1006,34 @@ export function BlockEditor({
     const current =
       (editVariant === 'mobile' ? langContent.mobile : undefined) ??
       langContent.desktop;
-    if ((current as Record<string, unknown>)[key] === value) {
+    const currentRecord = current as Record<string, unknown>;
+    const paraMatch = key.match(PNJ_PARAGRAPH_KEY_RE);
+    const titleLineMatch = key.match(PNJ_HERO_TITLE_LINE_KEY_RE);
+    const variantHighlightsMatch = key.match(PNJ_VARIANT_HIGHLIGHTS_KEY_RE);
+    const variantHighlightItemMatch = key.match(
+      PNJ_VARIANT_HIGHLIGHT_ITEM_KEY_RE
+    );
+    const currentValue = paraMatch
+      ? (resolvePnjParagraphs(
+          current as PnjDetailsContent & {
+            paragraph1?: string;
+            paragraph2?: string;
+          }
+        )[Number(paraMatch[1])] ?? '')
+      : titleLineMatch
+        ? (resolvePnjHeroTitleLines(current as PnjHeroContent)[
+            Number(titleLineMatch[1])
+          ] ?? '')
+        : variantHighlightsMatch
+          ? resolvePnjVariantHighlights(getContentAt(currentRecord, key)).join(
+              '\n'
+            )
+          : variantHighlightItemMatch
+            ? (resolvePnjVariants(current as PnjVariantContent)[
+                Number(variantHighlightItemMatch[1])
+              ]?.highlights[Number(variantHighlightItemMatch[2])] ?? '')
+            : getContentAt(currentRecord, key);
+    if (currentValue === value) {
       selection.endInlineEdit();
       return;
     }
@@ -843,10 +1042,43 @@ export function BlockEditor({
       const baseContent =
         (editVariant === 'mobile' ? variants.mobile : undefined) ??
         variants.desktop;
-      const nextContent: BlockContent = {
-        ...(baseContent as Record<string, unknown>),
-        [key]: value,
-      } as BlockContent;
+      // paragraphs[i] / titleLines[i]: preserve full list (setContentAt collapses).
+      let nextContent: BlockContent;
+      if (paraMatch) {
+        nextContent = setPnjParagraphAt(
+          baseContent as PnjDetailsContent & {
+            paragraph1?: string;
+            paragraph2?: string;
+          },
+          Number(paraMatch[1]),
+          value
+        ) as BlockContent;
+      } else if (titleLineMatch) {
+        nextContent = setPnjHeroTitleLineAt(
+          baseContent as PnjHeroContent,
+          Number(titleLineMatch[1]),
+          value
+        ) as BlockContent;
+      } else if (variantHighlightItemMatch) {
+        nextContent = setPnjVariantHighlightItemAt(
+          baseContent as PnjVariantContent,
+          Number(variantHighlightItemMatch[1]),
+          Number(variantHighlightItemMatch[2]),
+          value
+        ) as BlockContent;
+      } else if (variantHighlightsMatch) {
+        nextContent = setPnjVariantHighlightsAt(
+          baseContent as PnjVariantContent,
+          Number(variantHighlightsMatch[1]),
+          value
+        ) as BlockContent;
+      } else {
+        nextContent = setContentAt(
+          baseContent as Record<string, unknown>,
+          key,
+          value
+        ) as BlockContent;
+      }
       b[langKey] = { ...variants, [editVariant]: nextContent };
     });
     autosave.markDirty();
@@ -893,6 +1125,9 @@ export function BlockEditor({
         type_code: normalized.blockType,
         name: normalized.name,
         settings: normalized as unknown as Record<string, unknown>,
+        // Luôn gửi kèm — nếu entry cũ bị BE lưu supported_surfaces=[] (bug
+        // trước khi field này tồn tại ở FE), lần lưu này tự sửa luôn.
+        supported_surfaces: ALL_BLOCK_SURFACES,
       });
       autosave.reset();
       toast.success('Đã lưu block');
@@ -917,13 +1152,37 @@ export function BlockEditor({
     }
     setSavingVersion(true);
     try {
-      await autosave.flush({ silent: true });
+      // BE createVersion BỎ QUA canvas_blueprint trong body — luôn snapshot từ
+      // templates.draft_canvas_blueprint (be-spec-interactive-ad §0.1). Phải
+      // force-sync draft từ canvas.blocks hiện tại trước khi POST /versions,
+      // kể cả khi autosave chưa dirty (flush thường skip nếu dirty=false).
+      await autosave.flush({ silent: true, force: true });
 
-      const payload = serializeCanvas(
-        canvas.blocks,
-        canvas.activeId ?? undefined,
-        publishState.publish
+      const payload = serializeCanvasPages({
+        pages: canvas.pages,
+        activePageId: canvas.activePageId,
+        activeBlockId: canvas.activeId ?? undefined,
+        publish: publishState.publish,
+        transition,
+      });
+
+      // BE's canvas_blueprint_validator only walks root `blocks[]` (= the home
+      // page), so an unknown block type on a sub-page sails through both
+      // autosave and createVersion and only surfaces as a "chưa có renderer"
+      // placeholder on the published page. Pre-flight what FE can actually
+      // check — that every type is renderable — and name the page.
+      const unknown = canvas.pages.flatMap(p =>
+        p.blocks
+          .filter(b => !BLOCK_TYPE_META[b.blockType])
+          .map(b => `${p.name} → ${b.name} (${b.blockType})`)
       );
+      if (unknown.length) {
+        toast.error(
+          `Không commit được: ${unknown.length} block không có renderer — ${unknown.join(', ')}`,
+          { duration: 10000 }
+        );
+        return null;
+      }
 
       // Resolve next version string từ HEAD của template (max version_no).
       const versList = await rexerApi.templates.versions(template.id);
@@ -964,6 +1223,34 @@ export function BlockEditor({
           : {}),
       });
       setCurrentVersion(next);
+
+      // Mirror the just-committed canvas into page_revisions. BE Publish()
+      // always prefers the page's own `latest` page_revision over the
+      // repointed template version, whenever that revision already has
+      // blocks — which it always does, since it's seeded from the
+      // template at page-create time and no FE flow ever called
+      // `pages.saveConfig` to replace it. Without this mirror, Publish
+      // keeps re-publishing that page-create-time snapshot forever, no
+      // matter how many "Save Version" commits happen afterward. If this
+      // fails, publish falls back to that same stale snapshot — surface it
+      // loudly rather than letting it fail silently.
+      if (pageId) {
+        try {
+          const revs = await rexerApi.pages.revisions(pageId, { limit: 1 });
+          const latestRev = revs.items?.[0];
+          await rexerApi.pages.saveConfig(pageId, {
+            config_json: latestRev?.config_json ?? {},
+            canvas_blueprint: payload,
+            base_revision_no: latestRev?.revision_no ?? 0,
+          });
+        } catch (err) {
+          toast.error(
+            `Đồng bộ page revision thất bại — publish có thể vẫn hiển thị bản cũ: ${rxErrorMessage(err)}`,
+            { duration: 8000 }
+          );
+        }
+      }
+
       toast.success(`Đã commit version "${next.version}"`);
       return next;
     } catch (err) {
@@ -1008,9 +1295,11 @@ export function BlockEditor({
             );
             return;
           }
-          await rexerApi.pages.publish(pageId, {
-            template_version_id: committed.id,
-          });
+          await rexerApi.pages.publish(
+            pageId,
+            { template_version_id: committed.id },
+            { slug: pageSlug }
+          );
         } else {
           await rexerApi.pages.unpublish(pageId);
         }
@@ -1039,6 +1328,53 @@ export function BlockEditor({
     }
   };
 
+  const handleRepublish = async () => {
+    if (!template || !pageId || !publishState.publish?.published) return;
+
+    // Luôn commit canvas hiện tại → version mới trước khi republish (giống
+    // publish lần đầu). Nếu chỉ repoint HEAD cũ mà editor còn draft chưa
+    // commit → public vẫn render snapshot cũ.
+    const committed = await handleSaveVersion();
+    if (!committed) {
+      toast.error(
+        'Chưa xuất bản lại được: commit version mới thất bại (xem lỗi phía trên).',
+        { duration: 8000 }
+      );
+      return;
+    }
+
+    try {
+      await rexerApi.pages.publish(
+        pageId,
+        { template_version_id: committed.id },
+        { slug: pageSlug }
+      );
+      publishState.setPublish({
+        ...publishState.publish,
+        publishedAt: new Date().toISOString(),
+      });
+      onPinnedVersionChange?.(committed.id);
+      toast.success('Đã xuất bản lại — trang public hiển thị bản mới nhất');
+    } catch (err) {
+      if (
+        err instanceof RxApiError &&
+        err.code === 'ERR_PAGE_PUBLISH_NOT_READY'
+      ) {
+        const reasons =
+          (err.details as { reasons?: string[] } | undefined)?.reasons ?? [];
+        toast.error('Page chưa sẵn sàng publish', {
+          description:
+            reasons.length > 0 ? reasons.slice(0, 5).join(' · ') : err.message,
+          duration: 8000,
+        });
+      } else {
+        toast.error(
+          `Xuất bản lại thất bại: ${rxErrorMessage(err)} — refresh để verify`
+        );
+      }
+    }
+  };
+
   const handleRotateShareToken = async () => {
     publishState.rotateShareToken();
     await new Promise(r => setTimeout(r, 50));
@@ -1047,22 +1383,36 @@ export function BlockEditor({
   };
 
   // ── Block CRUD ──────────────────────────────────────────────────────────
-  const handleAddBlock = (type: BlockType) => {
-    const created = createBlock(type);
+  const handleAddBlocks = (types: BlockType[]) => {
+    if (types.length === 0) return;
+    const created = types.map(t => createBlock(t));
     canvas.mutate(draft => {
-      draft.push(created);
+      draft.push(...created);
     });
-    canvas.setActiveId(created.id);
+    const last = created[created.length - 1];
+    canvas.setActiveId(last.id);
+    if (templateId && !blockMode) {
+      writeStoredActiveBlockId(templateId, canvas.activePageId, last.id);
+    }
     autosave.markDirty();
   };
 
-  const handleAddSavedBlock = (
-    block: import('@/components/modules/block-editor/types').Block
+  const handleAddSavedBlocks = (
+    blocks: import('@/components/modules/block-editor/types').Block[]
   ) => {
+    if (blocks.length === 0) return;
+    // Saved blocks carry their library id. Inserting the same one twice — on
+    // two pages, or twice on one page — would duplicate block ids, which makes
+    // `mutateBlock` edit the wrong block and conflates the two in analytics.
+    const inserted = blocks.map(b => ({ ...b, id: genId() }));
     canvas.mutate(draft => {
-      draft.push(block);
+      draft.push(...inserted);
     });
-    canvas.setActiveId(block.id);
+    const last = inserted[inserted.length - 1];
+    canvas.setActiveId(last.id);
+    if (templateId && !blockMode) {
+      writeStoredActiveBlockId(templateId, canvas.activePageId, last.id);
+    }
     autosave.markDirty();
   };
 
@@ -1077,8 +1427,122 @@ export function BlockEditor({
       if (nextActive === id) nextActive = draft[0]?.id ?? null;
     });
     if (nextActive !== canvas.activeId) canvas.setActiveId(nextActive);
+    if (nextActive && templateId && !blockMode) {
+      writeStoredActiveBlockId(templateId, canvas.activePageId, nextActive);
+    }
     autosave.markDirty();
   };
+
+  const handleSelectBlock = React.useCallback(
+    (id: string) => {
+      if (!canvas.blocks.some(b => b.id === id)) return;
+      if (canvas.activeId === id) return;
+      canvas.setActiveId(id);
+      selection.selectKey(null);
+      setSelectedExtraElementId(null);
+      if (templateId && !blockMode) {
+        writeStoredActiveBlockId(templateId, canvas.activePageId, id);
+        autosave.markDirty();
+      }
+    },
+    [canvas, templateId, blockMode, selection, autosave]
+  );
+
+  const handleReorderBlocks = (nextOrder: Block[]) => {
+    canvas.replaceBlocks(nextOrder);
+    autosave.markDirty();
+  };
+
+  // ── Page CRUD ───────────────────────────────────────────────────────────
+  const handleSelectPage = React.useCallback(
+    (id: string) => {
+      if (id === canvas.activePageId) return;
+      canvas.setActivePage(id);
+      // Selection state belongs to the outgoing page — clear it so the
+      // toolbar doesn't point at an element that isn't on screen any more.
+      selection.selectKey(null);
+      setSelectedExtraElementId(null);
+      if (templateId && !blockMode) {
+        writeStoredActivePageId(templateId, id);
+        autosave.markDirty();
+      }
+    },
+    [canvas, templateId, blockMode, selection, autosave]
+  );
+
+  const handleAddPage = React.useCallback(() => {
+    canvas.addPage();
+    selection.selectKey(null);
+    setSelectedExtraElementId(null);
+    autosave.markDirty();
+  }, [canvas, selection, autosave]);
+
+  const handleRemovePage = React.useCallback(
+    (id: string) => {
+      const target = canvas.pages.find(p => p.id === id);
+      if (!target) return;
+      if (canvas.pages.length <= 1) {
+        toast.error('Template phải còn ít nhất một trang.');
+        return;
+      }
+      const note = target.blocks.length
+        ? ` Trang này đang có ${target.blocks.length} block.`
+        : '';
+      if (!window.confirm(`Xoá trang "${target.name}"?${note}`)) return;
+      canvas.removePage(id);
+      selection.selectKey(null);
+      setSelectedExtraElementId(null);
+      autosave.markDirty();
+    },
+    [canvas, selection, autosave]
+  );
+
+  const handleDuplicatePage = React.useCallback(
+    (id: string) => {
+      canvas.duplicatePage(id);
+      selection.selectKey(null);
+      setSelectedExtraElementId(null);
+      autosave.markDirty();
+    },
+    [canvas, selection, autosave]
+  );
+
+  const handleSetHomePage = React.useCallback(
+    (id: string) => {
+      canvas.setHomePage(id);
+      autosave.markDirty();
+    },
+    [canvas, autosave]
+  );
+
+  const handleRenamePage = React.useCallback(
+    (id: string, patch: Partial<Pick<EditorPage, 'name' | 'slug' | 'seo'>>) => {
+      canvas.renamePage(id, patch);
+      autosave.markDirty();
+    },
+    [canvas, autosave]
+  );
+
+  const handleReorderPages = React.useCallback(
+    (next: EditorPage[]) => {
+      canvas.reorderPages(next);
+      autosave.markDirty();
+    },
+    [canvas, autosave]
+  );
+
+  const handlePreview = React.useCallback(() => {
+    if (templateId && !blockMode && canvas.activeId) {
+      writeStoredActiveBlockId(
+        templateId,
+        canvas.activePageId,
+        canvas.activeId
+      );
+      writeStoredActivePageId(templateId, canvas.activePageId);
+      autosave.markDirty();
+    }
+    setPreviewing(true);
+  }, [templateId, blockMode, canvas.activeId, canvas.activePageId, autosave]);
 
   // ── Duplicate ───────────────────────────────────────────────────────────
   const handleDuplicateConfirm = async (name: string) => {
@@ -1092,11 +1556,13 @@ export function BlockEditor({
         engine: template.engine,
         engine_version: template.engine_version,
         is_template: false,
-        canvas_data: serializeCanvas(
-          structuredClone(canvas.blocks),
-          canvas.activeId ?? undefined,
-          undefined
-        ) as unknown as Record<string, unknown>,
+        // Every page, not just the active one — serializing `canvas.blocks`
+        // here would turn a 3-page template into a 1-page copy.
+        canvas_data: serializeCanvasPages({
+          pages: structuredClone(canvas.pages),
+          activePageId: canvas.activePageId,
+          activeBlockId: canvas.activeId ?? undefined,
+        }) as unknown as Record<string, unknown>,
       });
       toast.success(`Đã lưu thành "${created.name}"`);
       setDuplicateOpen(false);
@@ -1135,6 +1601,42 @@ export function BlockEditor({
     return () => window.removeEventListener('keydown', onKey);
   }, [canvas, autosave, motionPreview]);
 
+  // ── Inspector routing ───────────────────────────────────────────────────
+  // Which surface edits the current selection: the vertical sidebar inspector
+  // (text/color/image/link/background) or the legacy horizontal toolbar above
+  // the canvas (the list-manager kinds, still to be migrated).
+  const selectedElementKind =
+    canvas.activeBlock && selection.selectedKey
+      ? resolveElementMeta(canvas.activeBlock.blockType, selection.selectedKey)
+          .kind
+      : null;
+  const usesInspector =
+    !!selectedElementKind && isInspectorKind(selectedElementKind);
+
+  // Latched once the user picks a tab by hand, so switching elements doesn't
+  // yank them out of Motion. Cleared when the selection is dropped entirely.
+  const userPickedTabRef = React.useRef(false);
+  const handleChangeSidebarTab = React.useCallback((tab: SidebarTab) => {
+    userPickedTabRef.current = true;
+    setSidebarTab(tab);
+  }, []);
+
+  React.useEffect(() => {
+    // Deselecting only clears the latch — the tab stays put. Flipping back to
+    // "Lớp" on every click into empty canvas made the panel feel like it was
+    // jumping around; the inspector shows a friendly empty state instead.
+    if (!selection.selectedKey) {
+      userPickedTabRef.current = false;
+      return;
+    }
+    if (userPickedTabRef.current) return;
+    if (!usesInspector) return;
+    setSidebarTab('design');
+    // The sidebar only mounts when expanded — without this, selecting an
+    // element with the panel collapsed silently has nowhere to show controls.
+    setLayersCollapsed(false);
+  }, [selection.selectedKey, usesInspector]);
+
   // ── Render ─────────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -1154,361 +1656,407 @@ export function BlockEditor({
     | BlockMotion
     | undefined;
 
+  // Eye → overlay PreviewMode (layout/render khớp /dev/blocks, không mở tab).
+  // Live canvas — xem đúng bản đang edit (kể cả chưa lưu).
+
   return (
-    <div className='relative flex h-full min-h-0 flex-1 flex-col bg-neutral-100'>
-      <BlockEditorHeader
-        blockName={activeBlock?.name ?? '—'}
-        lang={deviceState.lang}
-        device={deviceState.device}
-        saving={saving}
-        dirty={dirty}
-        duplicating={duplicating}
-        onLangChange={deviceState.setLang}
-        onDeviceChange={deviceState.setDevice}
-        onAi={() =>
-          toast.info('Click 1 element trên canvas để mở popup AI riêng')
-        }
-        onApplyProduct={() => setProductPickerOpen(true)}
-        onImportFromImage={() => setImportOpen(true)}
-        onDuplicate={blockMode ? undefined : () => setDuplicateOpen(true)}
-        onSaveBlock={
-          !blockMode && activeBlock ? () => setSaveBlockOpen(true) : undefined
-        }
-        onSaveBlockDirect={blockMode ? handleSaveBlockDirect : undefined}
-        savingBlockDirect={savingBlock}
-        transitionControl={
-          blockMode ? undefined : (
-            <TransitionSelect
-              value={transition}
-              placement='down'
-              onChange={v => {
-                setTransition(v);
-                autosave.markDirty();
-              }}
-            />
-          )
-        }
-        onPreview={() => setPreviewing(true)}
-        onUndo={() => {
-          canvas.undo();
-          autosave.markDirty();
-        }}
-        onRedo={() => {
-          canvas.redo();
-          autosave.markDirty();
-        }}
-        onPublish={pageId ? () => setPublishOpen(true) : undefined}
-        onPlayMotionPreview={motionPreview.playBlock}
-        onOpenMotionEditor={() => setMotionEditorOpen(true)}
-        canUndo={canvas.canUndo}
-        canRedo={canvas.canRedo}
-        isPublished={!!publishState.publish?.published}
-        isMotionPreviewing={motionPreview.previewing}
-        // Back = quay lại màn làm việc trước đó (vd campaign editor) thay vì
-        // đẩy về /canvas-templates mặc định.
-        onBack={() => router.back()}
-      />
+    <SitePagesProvider
+      pages={canvas.pages}
+      activePageId={canvas.activePageId}
+      blocks={canvas.blocks}
+    >
+      <div className='relative flex h-full min-h-0 flex-1 flex-col bg-neutral-100'>
+        <BlockEditorHeader
+          blockName={activeBlock?.name ?? '—'}
+          lang={deviceState.lang}
+          device={deviceState.device}
+          saving={saving}
+          dirty={dirty}
+          duplicating={duplicating}
+          onLangChange={deviceState.setLang}
+          onDeviceChange={deviceState.setDevice}
+          onAi={() =>
+            toast.info('Click 1 element trên canvas để mở popup AI riêng')
+          }
+          onApplyProduct={() => setProductPickerOpen(true)}
+          onImportFromImage={() => setImportOpen(true)}
+          onDuplicate={blockMode ? undefined : () => setDuplicateOpen(true)}
+          onSaveBlock={
+            !blockMode && activeBlock ? () => setSaveBlockOpen(true) : undefined
+          }
+          onSaveBlockDirect={blockMode ? handleSaveBlockDirect : undefined}
+          savingBlockDirect={savingBlock}
+          transitionControl={
+            blockMode ? undefined : (
+              <TransitionSelect
+                value={transition}
+                placement='down'
+                variant='compact'
+                onChange={v => {
+                  setTransition(v);
+                  autosave.markDirty();
+                }}
+              />
+            )
+          }
+          committedVersion={
+            template && !blockMode
+              ? (currentVersion?.version ?? null)
+              : undefined
+          }
+          onSaveVersion={template && !blockMode ? handleSaveVersion : undefined}
+          savingVersion={savingVersion}
+          onPreview={handlePreview}
+          onUndo={() => {
+            canvas.undo();
+            autosave.markDirty();
+          }}
+          onRedo={() => {
+            canvas.redo();
+            autosave.markDirty();
+          }}
+          onPublish={pageId ? () => setPublishOpen(true) : undefined}
+          onPlayMotionPreview={motionPreview.playBlock}
+          onOpenMotionEditor={() => setMotionEditorOpen(true)}
+          canUndo={canvas.canUndo}
+          canRedo={canvas.canRedo}
+          isPublished={!!publishState.publish?.published}
+          isMotionPreviewing={motionPreview.previewing}
+          headerActions={headerActions}
+          // Back = quay lại màn làm việc trước đó (vd campaign editor) thay vì
+          // đẩy về /canvas-templates mặc định.
+          onBack={() => router.back()}
+        />
 
-      {loadError && (
-        <div className='border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-800'>
-          Không tải được canvas từ REXER ({loadError}). Đang dùng dữ liệu mẫu —
-          lưu sẽ không hoạt động.
-        </div>
-      )}
-
-      {/* Draft / version bar — show committed version + Save Version action.
-          Autosave handles the draft buffer silently; this bar is the explicit
-          commit point to an immutable TemplateVersion. Template mới (chưa
-          có version nào) vẫn hiện bar — Save Version sẽ tạo v1.0.0 đầu
-          tiên. */}
-      {/* Block-direct: nút "Lưu block" đã chuyển lên header (slot CTA) thay
-          cho hàng banner riêng — bỏ 1 hàng + hết trùng status/nút. Trạng thái
-          chưa-lưu nay chỉ hiện ở SaveDot trên header. */}
-
-      {template && !blockMode && (
-        <div className='border-border bg-muted/80 flex items-center justify-between gap-2 border-b px-4 py-1.5 text-xs'>
-          <div className='text-content-muted flex items-center gap-2'>
-            <span className='text-3xs text-muted-foreground font-mono tracking-wider uppercase'>
-              {currentVersion ? 'committed' : 'chưa có version'}
-            </span>
-            {currentVersion ? (
-              <code className='text-2xs text-content-muted rounded bg-white px-1.5 py-0.5 font-mono ring-1 ring-zinc-200'>
-                v{currentVersion.version}
-              </code>
-            ) : (
-              <code className='text-2xs rounded bg-amber-50 px-1.5 py-0.5 font-mono text-amber-800 ring-1 ring-amber-200'>
-                draft only
-              </code>
-            )}
-            <span className='text-muted-foreground'>·</span>
-            <span className='text-2xs'>
-              autosave ghi{' '}
-              <code className='font-mono'>draft_canvas_blueprint</code> · click{' '}
-              <strong>Save Version</strong> để commit immutable
-            </span>
+        {loadError && (
+          <div className='border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-800'>
+            Không tải được canvas từ REXER ({loadError}). Đang dùng dữ liệu mẫu
+            — lưu sẽ không hoạt động.
           </div>
-          <button
-            type='button'
-            onClick={handleSaveVersion}
-            disabled={savingVersion}
-            className='text-2xs inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-2.5 py-1 font-medium text-white shadow-sm transition-colors hover:bg-zinc-700 disabled:cursor-wait disabled:opacity-60'
-            title={
-              currentVersion
-                ? `Tạo immutable version mới (next: v${bumpVersion(currentVersion.version)})`
-                : 'Commit version đầu tiên (v1.0.0)'
-            }
-          >
-            {savingVersion ? 'Đang commit…' : 'Save Version'}
-          </button>
-        </div>
-      )}
+        )}
 
-      <div className='relative flex min-h-0 flex-1 overflow-hidden'>
-        <div className='flex min-h-0 min-w-0 flex-1 flex-col'>
-          {activeBlock && selectedExtraElementId ? (
-            (() => {
-              const el = activeBlock.extraElements?.find(
-                e => e.id === selectedExtraElementId
-              );
-              if (!el) return null;
-              return (
-                <ExtraElementToolbar
-                  element={el}
-                  onChange={patch =>
-                    handlePatchExtraElement(selectedExtraElementId, patch)
-                  }
-                  onDelete={() =>
-                    handleRemoveExtraElement(selectedExtraElementId)
-                  }
-                  onClose={() => setSelectedExtraElementId(null)}
-                  onBringToFront={() =>
-                    handleBringExtraToFront(selectedExtraElementId)
-                  }
-                  onSendToBack={() =>
-                    handleSendExtraToBack(selectedExtraElementId)
-                  }
-                />
-              );
-            })()
-          ) : activeBlock ? (
-            <ElementToolbar
-              block={activeBlock}
+        {/* Block-direct: nút "Lưu block" đã chuyển lên header (slot CTA). */}
+
+        {/* Rendered even for a single page so the feature is discoverable.
+          Block-direct mode has exactly one block and no template. */}
+        {!blockMode && (
+          <PageTabsBar
+            pages={canvas.pages}
+            activePageId={canvas.activePageId}
+            onSelect={handleSelectPage}
+            onAdd={handleAddPage}
+            onReorder={handleReorderPages}
+            onDuplicate={handleDuplicatePage}
+            onRemove={handleRemovePage}
+            onSetHome={handleSetHomePage}
+            onOpenSettings={setPageSettingsId}
+          />
+        )}
+
+        <div className='relative flex min-h-0 flex-1 overflow-hidden'>
+          <div className='relative flex min-h-0 min-w-0 flex-1 flex-col'>
+            {/* Overlay toolbar — absolute so show/hide never pushes the canvas. */}
+            {activeBlock && selectedExtraElementId ? (
+              (() => {
+                const el = activeBlock.extraElements?.find(
+                  e => e.id === selectedExtraElementId
+                );
+                if (!el) return null;
+                return (
+                  <div className='pointer-events-none absolute inset-x-0 top-0 z-40'>
+                    <div className='pointer-events-auto'>
+                      <ExtraElementToolbar
+                        element={el}
+                        onChange={patch =>
+                          handlePatchExtraElement(selectedExtraElementId, patch)
+                        }
+                        onDelete={() =>
+                          handleRemoveExtraElement(selectedExtraElementId)
+                        }
+                        onClose={() => setSelectedExtraElementId(null)}
+                        onBringToFront={() =>
+                          handleBringExtraToFront(selectedExtraElementId)
+                        }
+                        onSendToBack={() =>
+                          handleSendExtraToBack(selectedExtraElementId)
+                        }
+                      />
+                    </div>
+                  </div>
+                );
+              })()
+            ) : activeBlock && !usesInspector ? (
+              // Kinds the inspector doesn't own yet keep the legacy top bar.
+              // Inspector kinds get the floating SelectionToolbar (rendered
+              // inside BlockPreview) plus the "Thiết kế" sidebar tab instead.
+              <div className='pointer-events-none absolute inset-x-0 top-0 z-40'>
+                <div className='pointer-events-auto'>
+                  <ElementToolbar
+                    block={activeBlock}
+                    lang={deviceState.lang}
+                    device={deviceState.device}
+                    selectedKey={selection.selectedKey}
+                    onClose={() => selection.selectKey(null)}
+                    onContentChange={updateActiveContent}
+                    onUpdateStyle={patch => {
+                      if (!selection.selectedKey) return;
+                      handleUpdateElementStyle(selection.selectedKey, patch);
+                    }}
+                    onResetStyle={() => {
+                      if (!selection.selectedKey) return;
+                      handleResetElementStyle(selection.selectedKey);
+                    }}
+                    onUpdateBackground={handleUpdateBackground}
+                    onSyncVariant={syncVariant}
+                  />
+                </div>
+              </div>
+            ) : null}
+            {activeBlock ? (
+              <BlockPreview
+                block={activeBlock}
+                lang={deviceState.lang}
+                device={deviceState.device}
+                zoom={deviceState.zoom}
+                selectedElementKey={selection.selectedKey}
+                editingKey={selection.editingKey}
+                onSelectElement={selection.selectKey}
+                onStartInlineEdit={handleStartInlineEdit}
+                onCommitInlineEdit={handleCommitInlineEdit}
+                onCancelInlineEdit={selection.endInlineEdit}
+                onCommitElementPosition={handleCommitElementPosition}
+                onContentChange={updateActiveContent}
+                onResetElementStyle={() => {
+                  if (!selection.selectedKey) return;
+                  handleResetElementStyle(selection.selectedKey);
+                }}
+                onUpdateBackground={handleUpdateBackground}
+                motionMode={motionPreview.previewing ? 'preview' : 'edit'}
+                motionPreviewNonce={motionPreview.nonce}
+                motionPreviewElement={motionPreview.previewElement}
+                onAutoFitZoom={deviceState.applyAutoFitZoom}
+                onZoomChange={deviceState.setZoom}
+                fitRequestKey={fitRequestKey}
+                selectedExtraElementId={selectedExtraElementId}
+                onSelectExtraElement={setSelectedExtraElementId}
+                onCommitExtraElementPosition={handleCommitExtraElementPosition}
+              />
+            ) : (
+              <EmptyState onAdd={() => setAddOpen(true)} />
+            )}
+            <CanvasZoomBar
+              zoom={deviceState.zoom}
+              onChange={deviceState.setZoom}
+              onFitToFrame={() => setFitRequestKey(k => k + 1)}
+            />
+          </div>
+
+          {!blockMode && (
+            <BlockSceneRail
+              blocks={canvas.blocks}
+              activeId={canvas.activeId}
               lang={deviceState.lang}
+              onSelect={handleSelectBlock}
+              onAdd={() => setAddOpen(true)}
+              onRemove={handleRemoveBlock}
+              onReorder={handleReorderBlocks}
+            />
+          )}
+
+          {activeBlock && !layersCollapsed && (
+            <BlockEditorSidebar
+              block={activeBlock}
               device={deviceState.device}
-              selectedKey={selection.selectedKey}
-              onClose={() => selection.selectKey(null)}
+              lang={deviceState.lang}
+              selectedElementKey={selection.selectedKey}
+              onSelectElement={selection.selectKey}
+              onReorderElements={handleReorderElements}
+              onCollapse={() => setLayersCollapsed(true)}
+              activeTab={sidebarTab}
+              onChangeTab={handleChangeSidebarTab}
               onContentChange={updateActiveContent}
-              onUpdateStyle={patch => {
+              onUpdateElementStyle={patch => {
                 if (!selection.selectedKey) return;
                 handleUpdateElementStyle(selection.selectedKey, patch);
               }}
-              onResetStyle={() => {
-                if (!selection.selectedKey) return;
-                handleResetElementStyle(selection.selectedKey);
-              }}
               onUpdateBackground={handleUpdateBackground}
               onSyncVariant={syncVariant}
-            />
-          ) : null}
-          {activeBlock ? (
-            <BlockPreview
-              block={activeBlock}
-              lang={deviceState.lang}
-              device={deviceState.device}
-              zoom={deviceState.zoom}
-              selectedElementKey={selection.selectedKey}
-              editingKey={selection.editingKey}
-              onSelectElement={selection.selectKey}
-              onStartInlineEdit={handleStartInlineEdit}
-              onCommitInlineEdit={handleCommitInlineEdit}
-              onCancelInlineEdit={selection.endInlineEdit}
-              onCommitElementPosition={handleCommitElementPosition}
-              motionMode={motionPreview.previewing ? 'preview' : 'edit'}
-              motionPreviewNonce={motionPreview.nonce}
-              motionPreviewElement={motionPreview.previewElement}
-              onAutoFitZoom={deviceState.applyAutoFitZoom}
+              motion={motionForActiveVariant}
+              onChangeMotion={handleChangeBlockMotion}
+              onOpenMotionEditor={() => setMotionEditorOpen(true)}
+              onPlayMotionPreview={motionPreview.playBlock}
+              onPlayElementPreview={motionPreview.playElement}
+              isMotionPreviewing={motionPreview.previewing}
               selectedExtraElementId={selectedExtraElementId}
+              onAddExtraElement={handleAddExtraElement}
               onSelectExtraElement={setSelectedExtraElementId}
-              onCommitExtraElementPosition={handleCommitExtraElementPosition}
+              onRemoveExtraElement={handleRemoveExtraElement}
             />
-          ) : (
-            <EmptyState onAdd={() => setAddOpen(true)} />
           )}
-          <BlockTabBar
-            blocks={canvas.blocks}
-            activeId={activeBlock?.id ?? null}
-            lang={deviceState.lang}
-            zoom={deviceState.zoom}
-            onSelect={canvas.setActiveId}
-            onAdd={() => setAddOpen(true)}
-            onRemove={handleRemoveBlock}
-            onReorder={handleReorderBlocks}
-            onZoomChange={deviceState.setZoom}
-            hideTabs={blockMode}
-          />
+
+          {activeBlock && layersCollapsed && (
+            <button
+              type='button'
+              aria-label='Hiện bảng lớp'
+              onClick={() => setLayersCollapsed(false)}
+              className='absolute top-3 right-3 z-30 flex size-9 cursor-pointer items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 shadow-sm hover:bg-neutral-50'
+            >
+              <PanelRightOpen className='size-4' />
+            </button>
+          )}
         </div>
 
-        {activeBlock && !layersCollapsed && (
-          <BlockEditorSidebar
-            block={activeBlock}
-            device={deviceState.device}
-            selectedElementKey={selection.selectedKey}
-            onSelectElement={selection.selectKey}
-            onReorderElements={handleReorderElements}
-            onCollapse={() => setLayersCollapsed(true)}
-            activeTab={sidebarTab}
-            onChangeTab={setSidebarTab}
-            motion={motionForActiveVariant}
-            onChangeMotion={handleChangeBlockMotion}
-            onOpenMotionEditor={() => setMotionEditorOpen(true)}
-            onPlayMotionPreview={motionPreview.playBlock}
-            onPlayElementPreview={motionPreview.playElement}
-            isMotionPreviewing={motionPreview.previewing}
-            selectedExtraElementId={selectedExtraElementId}
-            onAddExtraElement={handleAddExtraElement}
-            onSelectExtraElement={setSelectedExtraElementId}
-            onRemoveExtraElement={handleRemoveExtraElement}
+        <AddBlockDialog
+          open={addOpen}
+          onOpenChange={setAddOpen}
+          onPick={handleAddBlocks}
+          onPickSaved={handleAddSavedBlocks}
+        />
+
+        {previewing && (
+          <PreviewMode
+            blocks={canvas.blocks}
+            pages={blockMode ? undefined : canvas.pages}
+            initialPageId={canvas.activePageId}
+            lang={deviceState.lang}
+            transition={transition}
+            initialDevice={deviceState.device}
+            onClose={() => setPreviewing(false)}
           />
         )}
 
-        {activeBlock && layersCollapsed && (
-          <button
-            type='button'
-            aria-label='Hiện bảng lớp'
-            onClick={() => setLayersCollapsed(false)}
-            className='absolute top-3 right-3 z-30 flex size-9 cursor-pointer items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-700 shadow-sm hover:bg-neutral-50'
-          >
-            <PanelRightOpen className='size-4' />
-          </button>
-        )}
-      </div>
-
-      <AddBlockDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        onPick={handleAddBlock}
-        onPickSaved={handleAddSavedBlock}
-      />
-
-      {previewing && (
-        <PreviewMode
-          blocks={canvas.blocks}
-          lang={deviceState.lang}
-          transition={transition}
-          onClose={() => setPreviewing(false)}
-        />
-      )}
-
-      {/* Transition cấp template đã chuyển lên header (cạnh trạng thái lưu)
+        {/* Transition cấp template đã chuyển lên header (cạnh trạng thái lưu)
           qua prop transitionControl — bỏ control nổi góc dưới. */}
 
-      {activeBlock && (
-        <MotionTimelineModal
-          open={motionEditorOpen}
-          block={activeBlock}
-          device={deviceState.device}
-          lang={deviceState.lang}
-          motion={motionForActiveVariant}
-          onChange={handleChangeBlockMotion}
-          onClose={() => setMotionEditorOpen(false)}
+        {activeBlock && (
+          <MotionTimelineModal
+            open={motionEditorOpen}
+            block={activeBlock}
+            device={deviceState.device}
+            lang={deviceState.lang}
+            motion={motionForActiveVariant}
+            onChange={handleChangeBlockMotion}
+            onClose={() => setMotionEditorOpen(false)}
+          />
+        )}
+
+        <PublishDialog
+          open={publishOpen}
+          onOpenChange={setPublishOpen}
+          templateId={templateId ?? ''}
+          pageSlug={pageSlug}
+          pageId={pageId}
+          pageName={pageName}
+          pinnedVersionId={pinnedVersionId}
+          headVersionId={currentVersion?.id}
+          headVersionLabel={
+            currentVersion ? `v${currentVersion.version}` : undefined
+          }
+          onPageSlugChange={onPageSlugChange}
+          publish={publishState.publish}
+          onTogglePublish={handlePublishToggle}
+          onRepublish={pageId ? handleRepublish : undefined}
+          onRotateToken={handleRotateShareToken}
         />
-      )}
 
-      <PublishDialog
-        open={publishOpen}
-        onOpenChange={setPublishOpen}
-        templateId={templateId ?? ''}
-        pageSlug={pageSlug}
-        pageId={pageId}
-        pageName={pageName}
-        pinnedVersionId={pinnedVersionId}
-        headVersionId={currentVersion?.id}
-        headVersionLabel={
-          currentVersion ? `v${currentVersion.version}` : undefined
-        }
-        onPageSlugChange={onPageSlugChange}
-        publish={publishState.publish}
-        onTogglePublish={handlePublishToggle}
-        onRotateToken={handleRotateShareToken}
-      />
+        <ProductPickerDialog
+          open={productPickerOpen}
+          onOpenChange={setProductPickerOpen}
+          onPick={ai.applyProduct}
+        />
 
-      <ProductPickerDialog
-        open={productPickerOpen}
-        onOpenChange={setProductPickerOpen}
-        onPick={ai.applyProduct}
-      />
-
-      <ImportBlockDialog
-        open={importOpen}
-        onOpenChange={setImportOpen}
-        onInsert={block => {
-          canvas.mutate(draft => {
-            draft.push(block);
-          });
-          canvas.setActiveId(block.id);
-          autosave.markDirty();
-          toast.success(`Đã thêm block "${block.name}" từ AI`);
-        }}
-      />
-
-      <DuplicateTemplateDialog
-        open={duplicateOpen}
-        defaultName={
-          template ? `${template.name} (bản của tôi)` : 'Template của tôi'
-        }
-        saving={duplicating}
-        onOpenChange={setDuplicateOpen}
-        onConfirm={handleDuplicateConfirm}
-      />
-
-      {/* Block mode đã có nút "Lưu block" (ghi đè trực tiếp) → bỏ luôn icon +
-          popup "Cập nhật block trong thư viện" cho khỏi trùng. */}
-      {!blockMode && (
-        <SaveBlockDialog
-          open={saveBlockOpen}
-          block={activeBlock ?? null}
-          onOpenChange={setSaveBlockOpen}
-          editingSavedBlockId={editingSavedBlockId}
-          onOverwriteSuccess={async () => {
-            // The /admin/blocks "Edit" flow creates a throwaway canvas just to
-            // host the block during editing. After we've written the changes
-            // back to the saved-blocks library, the canvas template is garbage
-            // — clean it up so it doesn't clutter the /canvas-templates list.
-            // Guard: only auto-delete if the canvas name matches the marker the
-            // Edit flow stamps on creation (`[Editing] ...`). Prevents a
-            // hand-crafted `?saved_block_id=...` URL from nuking a real canvas.
-            const isScratch = template?.name?.startsWith('[Editing] ') ?? false;
-            if (isScratch) {
-              try {
-                await rexerApi.canvasTemplates.remove(templateId as string);
-              } catch (err) {
-                // eslint-disable-next-line no-console
-                console.warn(
-                  '[BlockEditor] could not auto-delete scratch canvas',
-                  err
-                );
-              }
+        <ImportBlockDialog
+          open={importOpen}
+          onOpenChange={setImportOpen}
+          onInsert={block => {
+            // Fresh id — see handleAddSavedBlock.
+            const inserted = { ...block, id: genId() };
+            canvas.mutate(draft => {
+              draft.push(inserted);
+            });
+            canvas.setActiveId(inserted.id);
+            if (templateId && !blockMode) {
+              writeStoredActiveBlockId(
+                templateId,
+                canvas.activePageId,
+                inserted.id
+              );
             }
-            // Brand portal mounts the editor under /portal/blocks/.../edit.
-            // Send them back to the portal library — otherwise admin default.
-            const inPortal =
-              typeof window !== 'undefined' &&
-              window.location.pathname.startsWith('/portal/blocks');
-            router.push(inPortal ? '/portal/blocks' : '/admin/blocks');
+            autosave.markDirty();
+            toast.success(`Đã thêm block "${block.name}" từ AI`);
           }}
         />
-      )}
 
-      <ReviewChangesDialog
-        open={ai.reviewState !== null}
-        diff={ai.reviewState?.diff ?? null}
-        productName={ai.reviewState?.productName ?? ''}
-        onOpenChange={open => {
-          if (!open) ai.cancelReview();
-        }}
-        onApply={ai.acceptReviewed}
-      />
-    </div>
+        <PageSettingsDialog
+          page={canvas.pages.find(p => p.id === pageSettingsId) ?? null}
+          siblings={canvas.pages}
+          rootSlug={pageSlug}
+          onOpenChange={open => {
+            if (!open) setPageSettingsId(null);
+          }}
+          onSave={handleRenamePage}
+        />
+
+        <DuplicateTemplateDialog
+          open={duplicateOpen}
+          defaultName={
+            template ? `${template.name} (bản của tôi)` : 'Template của tôi'
+          }
+          saving={duplicating}
+          onOpenChange={setDuplicateOpen}
+          onConfirm={handleDuplicateConfirm}
+        />
+
+        {/* Block mode đã có nút "Lưu block" (ghi đè trực tiếp) → bỏ luôn icon +
+          popup "Cập nhật block trong thư viện" cho khỏi trùng. */}
+        {!blockMode && (
+          <SaveBlockDialog
+            open={saveBlockOpen}
+            block={activeBlock ?? null}
+            onOpenChange={setSaveBlockOpen}
+            editingSavedBlockId={editingSavedBlockId}
+            onOverwriteSuccess={async () => {
+              // The /admin/blocks "Edit" flow creates a throwaway canvas just to
+              // host the block during editing. After we've written the changes
+              // back to the saved-blocks library, the canvas template is garbage
+              // — clean it up so it doesn't clutter the /canvas-templates list.
+              // Guard: only auto-delete if the canvas name matches the marker the
+              // Edit flow stamps on creation (`[Editing] ...`). Prevents a
+              // hand-crafted `?saved_block_id=...` URL from nuking a real canvas.
+              const isScratch =
+                template?.name?.startsWith('[Editing] ') ?? false;
+              if (isScratch) {
+                try {
+                  await rexerApi.canvasTemplates.remove(templateId as string);
+                } catch (err) {
+                  // eslint-disable-next-line no-console
+                  console.warn(
+                    '[BlockEditor] could not auto-delete scratch canvas',
+                    err
+                  );
+                }
+              }
+              // Brand portal mounts the editor under /portal/blocks/.../edit.
+              // Send them back to the portal library — otherwise admin default.
+              const inPortal =
+                typeof window !== 'undefined' &&
+                window.location.pathname.startsWith('/portal/blocks');
+              router.push(inPortal ? '/portal/blocks' : '/admin/blocks');
+            }}
+          />
+        )}
+
+        <ReviewChangesDialog
+          open={ai.reviewState !== null}
+          diff={ai.reviewState?.diff ?? null}
+          productName={ai.reviewState?.productName ?? ''}
+          onOpenChange={open => {
+            if (!open) ai.cancelReview();
+          }}
+          onApply={ai.acceptReviewed}
+        />
+      </div>
+    </SitePagesProvider>
   );
 }
 

@@ -1,0 +1,96 @@
+import * as React from 'react';
+
+import { cn } from '@/lib/cn';
+
+import type {
+  BlockBackground,
+  ElementPositionsMap,
+  ElementStylesMap,
+  LumeaGalleryContent,
+} from '../types';
+import {
+  blockBackgroundStyle,
+  composeStyle,
+  elementStyleOf,
+  orderStyle,
+  positionStyle,
+  selectableClass,
+} from './applyStyle';
+
+interface LumeaGalleryProps {
+  content: LumeaGalleryContent;
+  styles?: ElementStylesMap;
+  background?: BlockBackground;
+  order?: string[];
+  positions?: ElementPositionsMap;
+  activeKey?: string | null;
+  className?: string;
+}
+
+/** Lumea `.elevated-section` (Gallery) — heading + lưới ảnh nội thất.
+ *  Responsive: mobile 1 cột, tablet 2, desktop 3. */
+export function LumeaGallery({
+  content,
+  styles,
+  background,
+  order,
+  positions,
+  activeKey,
+  className,
+}: LumeaGalleryProps) {
+  const styleOf = (k: string) =>
+    composeStyle(
+      elementStyleOf(styles, k),
+      orderStyle(order, k),
+      positionStyle(positions, k)
+    );
+  const images = content.images ?? [];
+  return (
+    <div
+      style={blockBackgroundStyle(background)}
+      className={cn(
+        '@container w-full bg-[#efe9e1] px-6 py-16 @2xl:px-12 @2xl:py-24',
+        className
+      )}
+    >
+      <div className='mx-auto max-w-6xl'>
+        <h2
+          data-element-key='title'
+          style={styleOf('title')}
+          className={selectableClass(
+            activeKey === 'title',
+            'mb-10 font-serif text-3xl font-medium text-[#2b241d] @2xl:mb-14 @2xl:text-5xl'
+          )}
+        >
+          {content.title}
+        </h2>
+        <div
+          data-element-key='images'
+          style={styleOf('images')}
+          className={selectableClass(
+            activeKey === 'images',
+            'grid grid-cols-1 gap-4 @xl:grid-cols-2 @3xl:grid-cols-3'
+          )}
+        >
+          {images.map((src, i) => (
+            <div
+              key={i}
+              className='relative aspect-[4/5] overflow-hidden rounded-2xl'
+            >
+              {src ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={src}
+                  alt=''
+                  className='absolute inset-0 h-full w-full object-cover transition-transform duration-700 hover:scale-105'
+                />
+              ) : (
+                <div className='absolute inset-0 bg-[#ddd3c7]' />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

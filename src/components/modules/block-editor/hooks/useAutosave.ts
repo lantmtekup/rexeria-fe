@@ -42,7 +42,10 @@ export interface UseAutosaveApi {
   /** Mark the canvas dirty; debounced save kicks off after AUTOSAVE_DELAY_MS. */
   markDirty: () => void;
   /** Force an immediate save (cancels any pending debounce). */
-  flush: (opts?: { silent?: boolean }) => Promise<void>;
+  flush: (opts?: {
+    silent?: boolean;
+    /** Ghi đè draft dù dirty=false — bắt buộc trước createVersion vì BE đọc draft, không body. */ force?: boolean;
+  }) => Promise<void>;
   /** Resets state to idle (e.g. after the parent reloads the canvas). */
   reset: () => void;
 }
@@ -113,8 +116,13 @@ export function useAutosave({
   }, []);
 
   const doSave = React.useCallback(
-    async (opts: { silent?: boolean } = {}): Promise<void> => {
-      if (!dirtyRef.current || !enabledRef.current) {
+    async (opts: { silent?: boolean; force?: boolean } = {}): Promise<void> => {
+      if (!enabledRef.current) {
+        // eslint-disable-next-line no-console
+        console.log('[rexer-autosave] doSave skipped — enabled: false');
+        return;
+      }
+      if (!opts.force && !dirtyRef.current) {
         // eslint-disable-next-line no-console
         console.log(
           '[rexer-autosave] doSave skipped — dirty:',
@@ -138,6 +146,8 @@ export function useAutosave({
         Array.isArray((payload as { blocks?: unknown[] }).blocks)
           ? (payload as { blocks: unknown[] }).blocks.length
           : '?',
+        'pages:',
+        (payload as { pages?: unknown[] }).pages?.length ?? '—',
         'payload:',
         payload
       );
@@ -159,7 +169,12 @@ export function useAutosave({
           )
             ? (beTpl.draft_canvas_blueprint as { blocks: unknown[] }).blocks
                 .length
-            : 0
+            : 0,
+          // If this ever reads '—' while the editor shows several pages, BE is
+          // dropping the key and multi-page edits are being silently lost.
+          'pages:',
+          (beTpl.draft_canvas_blueprint as { pages?: unknown[] } | undefined)
+            ?.pages?.length ?? '—'
         );
         if (token.cancelled) return; // a newer save superseded us
         dirtyRef.current = false;
@@ -243,7 +258,7 @@ export function useAutosave({
   }, [doSave, templateId]);
 
   const flush = React.useCallback(
-    async (opts?: { silent?: boolean }) => {
+    async (opts?: { silent?: boolean; force?: boolean }) => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
         debounceRef.current = null;

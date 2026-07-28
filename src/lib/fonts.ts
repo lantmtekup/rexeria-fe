@@ -48,6 +48,14 @@ export const FONTS: FontDef[] = [
     note: 'Default — UI / body',
   },
   {
+    id: 'geist',
+    label: 'Geist',
+    family: `'Geist', ${SYSTEM_FALLBACK_SANS}`,
+    category: 'sans',
+    weights: [300, 400, 500, 600, 700, 800, 900],
+    note: 'Framer template default — modern sans',
+  },
+  {
     id: 'be-vietnam-pro',
     label: 'Be Vietnam Pro',
     family: `'Be Vietnam Pro', ${SYSTEM_FALLBACK_SANS}`,
@@ -116,6 +124,14 @@ export const FONTS: FontDef[] = [
     weights: [400, 500, 600, 700],
   },
   {
+    id: 'playfair',
+    label: 'Playfair',
+    family: `'Playfair', ${SYSTEM_FALLBACK_SERIF}`,
+    category: 'serif',
+    weights: [400, 500, 600, 700, 800, 900],
+    note: 'Framer template default — editorial serif',
+  },
+  {
     id: 'playfair-display',
     label: 'Playfair Display',
     family: `'Playfair Display', ${SYSTEM_FALLBACK_SERIF}`,
@@ -147,6 +163,14 @@ export const FONTS: FontDef[] = [
     family: `'JetBrains Mono', ${SYSTEM_FALLBACK_MONO}`,
     category: 'mono',
     weights: [400, 500, 700],
+  },
+  {
+    id: 'geist-mono',
+    label: 'Geist Mono',
+    family: `'Geist Mono', ${SYSTEM_FALLBACK_MONO}`,
+    category: 'mono',
+    weights: [400, 500, 700],
+    note: 'Monospace editorial (sustainit)',
   },
 ];
 

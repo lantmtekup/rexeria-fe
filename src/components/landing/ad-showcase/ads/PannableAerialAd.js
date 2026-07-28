@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useSwipe } from './shared/SwipeHandler';
+import { useDeviceView } from './shared/useDeviceView';
 
 const DEFAULT_IMAGE =
   'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/interscroller-scroll/background.webp';
@@ -12,6 +13,8 @@ const DEFAULT_HOTSPOTS = [
     label: 'POOL & FITNESS',
     x: 47,
     y: 51,
+    xDesktop: 47,
+    yDesktop: 51,
     title: 'Pool & Fitness',
     desc: "A relaxing indoor swimming pool and state-of-the-art fitness overlook Resort's magnificent grounds.",
     image:
@@ -22,6 +25,8 @@ const DEFAULT_HOTSPOTS = [
     label: 'GRAND VILLAS',
     x: 42,
     y: 62,
+    xDesktop: 70.5,
+    yDesktop: 50,
     title: 'Grand Villas',
     desc: 'Spacious private villas framed by lush tropical gardens, offering refined resort living.',
     image:
@@ -32,6 +37,8 @@ const DEFAULT_HOTSPOTS = [
     label: 'GARDEN PLACE',
     x: 50,
     y: 74,
+    xDesktop: 52,
+    yDesktop: 70,
     title: 'Garden Place',
     desc: 'Landscaped gardens and serene walkways weaving through the heart of the resort.',
     image:
@@ -106,6 +113,9 @@ export default function PannableAerialAd({
   cta,
   ctaFont = "'Outfit', system-ui, sans-serif",
 }) {
+  const { device } = useDeviceView();
+  const isDesktop = device === 'desktop';
+
   const offsetRef = useRef(0);
   const detailRef = useRef(null);
   const maxOffsetRef = useRef(0);
@@ -230,7 +240,10 @@ export default function PannableAerialAd({
               key={h.id}
               type='button'
               className='aerial-pin'
-              style={{ left: `${h.x}%`, top: `${h.y}%` }}
+              style={{
+                left: `${isDesktop && h.xDesktop !== undefined ? h.xDesktop : h.x}%`,
+                top: `${isDesktop && h.yDesktop !== undefined ? h.yDesktop : h.y}%`,
+              }}
               onClick={() => openDetail(h)}
               aria-label={h.label}
             >
@@ -265,6 +278,16 @@ export default function PannableAerialAd({
           </div>
 
           <div className='aerial-detail-body'>
+            <div className='aerial-detail-close-desktop'>
+              <button
+                type='button'
+                className='aerial-detail-close'
+                onClick={closeDetail}
+                aria-label='Close'
+              >
+                <CloseIcon />
+              </button>
+            </div>
             {detail.image && (
               <img
                 src={detail.image}
@@ -272,8 +295,10 @@ export default function PannableAerialAd({
                 className='aerial-detail-img'
               />
             )}
-            <h3 className='aerial-detail-title'>{detail.title}</h3>
-            <p className='aerial-detail-desc'>{detail.desc}</p>
+            <div className='aerial-detail-content'>
+              <h3 className='aerial-detail-title'>{detail.title}</h3>
+              <p className='aerial-detail-desc'>{detail.desc}</p>
+            </div>
           </div>
 
           <div className='aerial-detail-cta-wrap'>

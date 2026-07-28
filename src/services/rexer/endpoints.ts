@@ -4,6 +4,21 @@
  */
 import { rx } from './client';
 import { currentInsightLang } from './insightLang';
+
+/**
+ * Best-effort purge cache SSR trang public sau publish/unpublish/activate —
+ * `/p/[slug]` cache 60s + tag 'public-page' (xem /api/revalidate-page).
+ * Không await chặn flow editor; fail thì cache tự hết hạn sau 60s.
+ */
+const revalidatePublicPages = (slug?: string): void => {
+  if (typeof window === 'undefined') return;
+  void fetch('/api/revalidate-page', {
+    method: 'POST',
+    credentials: 'include',
+    headers: slug ? { 'Content-Type': 'application/json' } : undefined,
+    body: slug ? JSON.stringify({ slug }) : undefined,
+  }).catch(() => undefined);
+};
 import {
   isAiTemplateMockEnabled,
   mockGenerateAiTemplate,
@@ -203,6 +218,7 @@ import type {
   PageType,
   CreatePageRequest,
   UpdatePageRequest,
+  PageRevision,
   PageRevisionListResponse,
   SavePageConfigRequest,
   PageRelease,
@@ -1724,12 +1740,17 @@ export const rexerApi = {
     purge: (id: string) =>
       rx<{ message?: string }>(`/pages/${id}?force=true`, { method: 'DELETE' }),
 
-    /** Autosave config — debounced from form editor. */
-    saveConfig: (id: string, body: SavePageConfigRequest) =>
-      rx<{ revision_no: number; saved_at: string }>(`/pages/${id}/config`, {
+    /** Autosave config — debounced from form editor. BE responds
+     *  `{ revision: PageRevision }` (POST /pages/:id/config), not a flat
+     *  `{revision_no, saved_at}` — this wrapper unwraps it so callers get
+     *  the revision directly. */
+    saveConfig: async (id: string, body: SavePageConfigRequest) => {
+      const res = await rx<{ revision: PageRevision }>(`/pages/${id}/config`, {
         method: 'POST',
         body,
-      }),
+      });
+      return res.revision;
+    },
 
     revisions: (id: string, query?: { page?: number; limit?: number }) =>
       rx<PageRevisionListResponse>(`/pages/${id}/revisions`, { query }),
@@ -1744,24 +1765,39 @@ export const rexerApi = {
       rx<PublishPageValidateResponse>(`/pages/${id}/publish/validate`, {
         method: 'POST',
       }),
-    publish: (id: string, body?: PublishPageRequest) =>
-      rx<PublishPageResponse>(`/pages/${id}/publish`, {
+    publish: async (
+      id: string,
+      body?: PublishPageRequest,
+      opts?: { slug?: string }
+    ) => {
+      const res = await rx<PublishPageResponse>(`/pages/${id}/publish`, {
         method: 'POST',
         body: body ?? {},
-      }),
-    unpublish: (id: string) =>
-      rx<{ message?: string }>(`/pages/${id}/unpublish`, { method: 'POST' }),
+      });
+      revalidatePublicPages(opts?.slug);
+      return res;
+    },
+    unpublish: async (id: string) => {
+      const res = await rx<{ message?: string }>(`/pages/${id}/unpublish`, {
+        method: 'POST',
+      });
+      revalidatePublicPages();
+      return res;
+    },
 
     releases: {
       list: (pageId: string) =>
         rx<PageReleaseListResponse>(`/pages/${pageId}/releases`),
       get: (pageId: string, releaseId: string) =>
         rx<PageRelease>(`/pages/${pageId}/releases/${releaseId}`),
-      activate: (pageId: string, releaseId: string) =>
-        rx<{ message?: string }>(
+      activate: async (pageId: string, releaseId: string) => {
+        const res = await rx<{ message?: string }>(
           `/pages/${pageId}/releases/${releaseId}/activate`,
           { method: 'POST' }
-        ),
+        );
+        revalidatePublicPages();
+        return res;
+      },
     },
 
     /** Ad-type only — download rendered PNG/MP4. */

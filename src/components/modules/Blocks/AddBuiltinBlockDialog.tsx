@@ -26,6 +26,7 @@ import type { Block, BlockType } from '@/components/modules/block-editor/types';
 import { BLOCK_TYPE_META } from '@/components/modules/block-editor/types';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
+import { ALL_BLOCK_SURFACES } from '@/services/rexer/types';
 
 // type_code mặc định cho block brief. FK blocks.type_code đã bỏ ở BE (migration
 // 000036) nên type_code là string tự do — dev set loại thật sau qua EditBlockDialog.
@@ -126,6 +127,7 @@ export function AddBuiltinBlockDialog({ open, onClose, onAdded }: Props) {
         tags: formTags,
         settings: block as unknown as Record<string, unknown>,
         scope: 'brand_private',
+        supported_surfaces: ALL_BLOCK_SURFACES,
         ...(thumbAssetId ? { thumbnail_asset_id: thumbAssetId } : {}),
         // Taxonomy AI per-block (BE persist từ 2026-06-19).
         ...taxonomyToPayload(formTax),

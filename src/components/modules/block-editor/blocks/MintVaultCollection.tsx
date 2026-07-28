@@ -4,15 +4,20 @@
  * Data-block "Vault · Collection" (tách từ apps/mint2026 — Hồi II, cuộn ngang).
  *
  * Sticky tall section: track coin cuộn ngang theo scroll; card scale/opacity/tilt
- * theo khoảng cách tâm viewport; spotlight bám card giữa; panel info + counter;
- * click → modal chi tiết. RAF đọc getBoundingClientRect (scroller-agnostic: chạy
- * đúng cả /p lẫn editor surface). Block phức tạp → useLandingMotion + cleanup.
- * Mobile (theo container) → fallback danh sách dọc (không pin).
+ * theo khoảng cách tâm viewport; gloss sweep + spotlight bám card giữa; panel info
+ * + counter; click → modal chi tiết. RAF đọc getBoundingClientRect (scroller-agnostic:
+ * chạy đúng cả /p lẫn PreviewMode). Block phức tạp → useLandingMotion + cleanup.
+ *
+ * 3 mặt render:
+ *  - Editor canvas (isCanvas)  → lưới phẳng, hiện & sửa được MỌI coin (không pin/scroll).
+ *  - PreviewMode Play + /p      → layout production (pin + cuộn ngang + tilt + gloss).
+ *  - Container mobile           → fallback danh sách dọc (không pin).
  */
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 
 import { useLandingMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -39,6 +44,48 @@ interface Props {
   activeKey?: string | null;
 }
 
+// ── Inline design tokens (đè được từ toolbar qua styleOf) ─────────────────
+const EYEBROW_BASE: React.CSSProperties = {
+  color: '#c9a96e',
+  fontSize: '11px',
+  fontWeight: 600,
+  letterSpacing: '0.3em',
+  textTransform: 'uppercase',
+};
+const SUBLABEL_BASE: React.CSSProperties = {
+  color: 'rgba(255,255,255,0.4)',
+  fontSize: '12px',
+};
+const COIN_NAME_BASE: React.CSSProperties = {
+  fontFamily: 'var(--font-display, Georgia), serif',
+  fontWeight: 300,
+  lineHeight: 1.15,
+};
+const COIN_PRICE_BASE: React.CSSProperties = {
+  color: '#c9a96e',
+  fontWeight: 600,
+};
+const PILL_BASE: React.CSSProperties = {
+  color: '#c9a96e',
+  fontSize: '10px',
+  letterSpacing: '0.18em',
+  textTransform: 'uppercase',
+};
+
+/** Gloss sweep + floaty (fidelity apps/mint2026). Prefix `mint-vault-` tránh đụng DOM chung. */
+const VAULT_COLLECTION_CSS = `
+.mint-vault-gloss{position:absolute;inset:0;border-radius:9999px;pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,0.45) 50%,transparent 65%);
+  mix-blend-mode:screen;opacity:0;transform:translateX(-120%)}
+.mint-vault-inner.mint-vault-live .mint-vault-gloss{opacity:1;animation:mvGloss 2.6s ease-in-out infinite}
+@keyframes mvGloss{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
+img.mint-vault-live{animation:mvFloaty 4s ease-in-out infinite}
+@keyframes mvFloaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@media(prefers-reduced-motion:reduce){
+  .mint-vault-inner.mint-vault-live .mint-vault-gloss,img.mint-vault-live{animation:none}
+}
+`;
+
 function CoinModal({
   coin,
   onClose,
@@ -59,18 +106,18 @@ function CoinModal({
       aria-modal='true'
       aria-label={coin.name}
       onClick={onClose}
-      className='fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-5 backdrop-blur-sm'
+      className='@container fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-5 backdrop-blur-sm'
     >
       <div
         onClick={e => e.stopPropagation()}
-        className='relative grid w-full max-w-2xl grid-cols-1 overflow-hidden rounded-2xl bg-[#0f0d0a] text-white shadow-2xl md:grid-cols-2'
+        className='relative grid w-full max-w-2xl grid-cols-1 overflow-hidden rounded-2xl bg-[#0f0d0a] text-white shadow-2xl @3xl:grid-cols-2'
       >
         <div className='flex aspect-square items-center justify-center bg-black/30 p-6'>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={coin.image}
             alt={coin.name}
-            className='max-h-full max-w-full object-contain'
+            className='mint-vault-live max-h-full max-w-full object-contain'
           />
         </div>
         <div className='flex flex-col justify-center p-8'>
@@ -78,8 +125,10 @@ function CoinModal({
             {coin.metal}
             {coin.weight ? ` · ${coin.weight}` : ''}
           </span>
-          <h3 className='font-serif text-2xl leading-tight'>{coin.name}</h3>
-          <p className='mt-2 text-lg font-semibold text-[#c9a96e]'>
+          <h3 style={COIN_NAME_BASE} className='text-2xl leading-tight'>
+            {coin.name}
+          </h3>
+          <p style={COIN_PRICE_BASE} className='mt-2 text-lg'>
             {coin.price}
           </p>
           {coin.url && coin.url !== '#' && (
@@ -122,9 +171,13 @@ export function MintVaultCollection({
   const pointer = React.useRef({ x: 0, y: 0 });
   const isMobile = useContainerMobile(rootRef);
   const { scroller, requestRefresh } = useLandingMotion();
-  const coins = content.coins ?? [];
+  const coins = Array.isArray(content.coins) ? content.coins : [];
   const [active, setActive] = React.useState(0);
   const [selected, setSelected] = React.useState<MintVaultCoin | null>(null);
+
+  // Canvas editor (author) vs PreviewMode/​/p (production).
+  const isCanvas = useIsCanvasEdit(rootRef);
+
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -133,7 +186,8 @@ export function MintVaultCollection({
     );
 
   React.useEffect(() => {
-    if (isMobile) return; // mobile: danh sách dọc, không pin/cuộn ngang
+    // Không pin/cuộn khi đang author (canvas) hoặc mobile (danh sách dọc).
+    if (isCanvas || isMobile) return;
     const root = rootRef.current;
     const track = trackRef.current;
     if (!root || !track) return;
@@ -175,6 +229,8 @@ export function MintVaultCollection({
           const baseTilt = reduce ? 0 : ((c - vw / 2) / vw) * 16;
           const mt = d < 0.25 && !reduce ? pointer.current : { x: 0, y: 0 };
           inner.style.transform = `scale(${scale}) rotateY(${baseTilt + mt.x * 10}deg) rotateX(${-mt.y * 8}deg)`;
+          // Card giữa → gloss sweep (fidelity apps).
+          inner.classList.toggle('mint-vault-live', d < 0.18 && !reduce);
         }
       });
       setActive(best);
@@ -191,11 +247,135 @@ export function MintVaultCollection({
       cancelAnimationFrame(raf);
       window.removeEventListener('pointermove', onMove);
     };
-  }, [isMobile, scroller, requestRefresh, coins.length]);
+  }, [isCanvas, isMobile, scroller, requestRefresh, coins.length]);
 
   const activeCoin = coins[active];
 
-  // ── Mobile fallback: danh sách dọc ──────────────────────────────────────
+  // Eyebrow + subLabel — dùng chung 3 mặt render.
+  const eyebrowNode = (
+    <p
+      data-element-key='eyebrow'
+      style={composeStyle(EYEBROW_BASE, styleOf('eyebrow'))}
+      className={selectableClass(activeKey === 'eyebrow')}
+    >
+      {content.eyebrow}
+    </p>
+  );
+  const subLabelNode = content.subLabel ? (
+    <p
+      data-element-key='subLabel'
+      style={composeStyle(SUBLABEL_BASE, styleOf('subLabel'))}
+      className={selectableClass(activeKey === 'subLabel', 'mt-1')}
+    >
+      {content.subLabel}
+    </p>
+  ) : null;
+
+  // ── Editor canvas: lưới phẳng, sửa được mọi coin ─────────────────────────
+  if (isCanvas) {
+    return (
+      <section
+        ref={rootRef}
+        data-canvas-edit='true'
+        style={composeStyle(
+          { minHeight: 'auto' },
+          blockBackgroundStyle(background)
+        )}
+        className='@container w-full bg-[#08070a] px-6 py-16 text-white'
+      >
+        {eyebrowNode}
+        {subLabelNode}
+        <div
+          data-element-key='coins'
+          className='mt-10 grid grid-cols-2 gap-8 @2xl:grid-cols-3 @4xl:grid-cols-4'
+        >
+          {coins.map((coin, i) => (
+            <div
+              key={coin.key}
+              className='flex flex-col items-center text-center'
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={coin.image}
+                alt={coin.name}
+                data-element-key={`coins[${i}].image`}
+                style={composeStyle(
+                  { height: '180px', width: 'auto', objectFit: 'contain' },
+                  styleOf(`coins[${i}].image`)
+                )}
+                className={selectableClass(
+                  activeKey === `coins[${i}].image`,
+                  'drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]'
+                )}
+                loading='lazy'
+              />
+              {/* Metal & weight — 2 node keyed riêng (1 layer ↔ 1 DOM node),
+                  không gộp text để selection/inline-edit bám đúng field. */}
+              <span className='mt-3 inline-flex items-center gap-1.5'>
+                <span
+                  data-element-key={`coins[${i}].metal`}
+                  style={composeStyle(
+                    PILL_BASE,
+                    { minWidth: '1ch', display: 'inline-block' },
+                    styleOf(`coins[${i}].metal`)
+                  )}
+                  className={selectableClass(activeKey === `coins[${i}].metal`)}
+                >
+                  {coin.metal}
+                </span>
+                <span aria-hidden='true' style={PILL_BASE}>
+                  ·
+                </span>
+                <span
+                  data-element-key={`coins[${i}].weight`}
+                  style={composeStyle(
+                    PILL_BASE,
+                    { minWidth: '2ch', display: 'inline-block' },
+                    styleOf(`coins[${i}].weight`)
+                  )}
+                  className={selectableClass(
+                    activeKey === `coins[${i}].weight`
+                  )}
+                >
+                  {coin.weight}
+                </span>
+              </span>
+              <h3
+                data-element-key={`coins[${i}].name`}
+                style={composeStyle(
+                  COIN_NAME_BASE,
+                  { fontSize: '1.05rem' },
+                  styleOf(`coins[${i}].name`)
+                )}
+                className={selectableClass(
+                  activeKey === `coins[${i}].name`,
+                  'mt-2 max-w-[16rem]'
+                )}
+              >
+                {coin.name}
+              </h3>
+              <p
+                data-element-key={`coins[${i}].price`}
+                style={composeStyle(
+                  COIN_PRICE_BASE,
+                  { fontSize: '1rem' },
+                  styleOf(`coins[${i}].price`)
+                )}
+                className={selectableClass(
+                  activeKey === `coins[${i}].price`,
+                  'mt-1'
+                )}
+              >
+                {coin.price}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  // ── Container mobile: danh sách dọc (không pin) ─────────────────────────
   if (isMobile) {
     return (
       <section
@@ -203,16 +383,8 @@ export function MintVaultCollection({
         style={blockBackgroundStyle(background)}
         className='@container w-full bg-[#08070a] px-6 py-20 text-white'
       >
-        <p
-          data-element-key='eyebrow'
-          style={styleOf('eyebrow')}
-          className={selectableClass(
-            activeKey === 'eyebrow',
-            'text-[11px] tracking-[0.3em] text-[#c9a96e] uppercase'
-          )}
-        >
-          {content.eyebrow}
-        </p>
+        {eyebrowNode}
+        {subLabelNode}
         <div data-element-key='coins' className='mt-8 flex flex-col gap-10'>
           {coins.map(coin => (
             <button
@@ -228,10 +400,10 @@ export function MintVaultCollection({
                 className='h-56 w-auto object-contain'
                 loading='lazy'
               />
-              <h3 className='mt-4 max-w-xs font-serif text-lg leading-tight'>
+              <h3 style={COIN_NAME_BASE} className='mt-4 max-w-xs text-lg'>
                 {coin.name}
               </h3>
-              <p className='mt-1 text-base font-semibold text-[#c9a96e]'>
+              <p style={COIN_PRICE_BASE} className='mt-1 text-base'>
                 {coin.price}
               </p>
             </button>
@@ -242,6 +414,7 @@ export function MintVaultCollection({
     );
   }
 
+  // ── Production (PreviewMode Play + /p): pin + cuộn ngang ─────────────────
   return (
     <section
       ref={rootRef}
@@ -251,7 +424,14 @@ export function MintVaultCollection({
       }}
       className='@container relative w-full bg-[#08070a] text-white'
     >
+      <style>{VAULT_COLLECTION_CSS}</style>
       <div className='sticky top-0 h-screen overflow-hidden'>
+        {/* Nhãn hồi — gập vào panel để giữ full-screen liền mạch. */}
+        <div className='absolute top-20 left-6 z-30 @2xl:left-10'>
+          {eyebrowNode}
+          {subLabelNode}
+        </div>
+
         <div
           ref={spotRef}
           className='pointer-events-none absolute inset-0'
@@ -278,7 +458,7 @@ export function MintVaultCollection({
               className='relative shrink-0'
               style={{ width: '17vw', perspective: '1000px' }}
             >
-              <div className='relative flex h-[40vh] items-center justify-center will-change-transform'>
+              <div className='mint-vault-inner relative flex h-[40vh] items-center justify-center will-change-transform'>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={coin.image}
@@ -286,6 +466,7 @@ export function MintVaultCollection({
                   className='max-h-full max-w-full object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.6)]'
                   loading='lazy'
                 />
+                <span className='mint-vault-gloss' />
               </div>
             </button>
           ))}
@@ -293,14 +474,20 @@ export function MintVaultCollection({
 
         {activeCoin && (
           <div className='pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-center bg-gradient-to-t from-[#08070a] via-[#08070a]/85 to-transparent px-6 pt-20 pb-12 text-center'>
-            <span className='mb-2 rounded-full border border-[#c9a96e]/40 px-3 py-1 text-[10px] tracking-[0.18em] text-[#c9a96e] uppercase'>
+            <span
+              style={PILL_BASE}
+              className='mb-2 rounded-full border border-[#c9a96e]/40 px-3 py-1'
+            >
               {activeCoin.metal}
               {activeCoin.weight ? ` · ${activeCoin.weight}` : ''}
             </span>
-            <h2 className='max-w-2xl font-serif text-2xl leading-tight font-light @2xl:text-3xl'>
+            <h2
+              style={COIN_NAME_BASE}
+              className='max-w-2xl text-2xl leading-tight @2xl:text-3xl'
+            >
               {activeCoin.name}
             </h2>
-            <p className='mt-1 text-lg font-semibold text-[#c9a96e]'>
+            <p style={COIN_PRICE_BASE} className='mt-1 text-lg'>
               {activeCoin.price}
             </p>
             <button

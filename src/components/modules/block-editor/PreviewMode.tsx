@@ -1,21 +1,39 @@
 'use client';
 
+/**
+ * Full-viewport preview overlay — cùng layout/render path với `/dev/blocks`:
+ * device frame = vùng cuộn (width cố định 390/834/1440), LandingMotionRoot +
+ * MotionProvider(mode=preview) + RenderBlock. Sticky/pin/scrub neo vào frame.
+ *
+ * Khác `/dev/blocks`: nhận blocks live từ editor (chưa cần save), overlay
+ * trong app (không mở tab mới).
+ */
+
 import * as React from 'react';
-import gsap from 'gsap';
-import { useGSAP } from '@gsap/react';
-import { Monitor, Smartphone, Tablet, X } from 'lucide-react';
+import { ChevronLeft, X } from 'lucide-react';
 
-import { cn } from '@/lib/cn';
+import { brandKitToCssVars, DEFAULT_PREVIEW_KIT } from '@/lib/brand-kit';
 
+import { LinkNav } from './links/LinkNav';
+import { resolveLinksDeep } from './links/resolveLinks';
+import type { EditorPage } from './serialize';
+
+import { DevicePreviewFrame } from './DevicePreviewFrame';
+import { DeviceSwitcher } from './DeviceSwitcher';
+import { DEVICE_FRAME_WIDTH } from './deviceFrame';
 import { LandingMotionRoot } from './motion/LandingMotion';
 import { RenderBlock } from './blocks/renderBlock';
 import { MotionBlockRoot, MotionProvider } from './motion/runtime';
 import type { BlockMotion } from './motion/types';
+import { ScrollRoomPlaceholder } from './ScrollRoomPlaceholder';
 import {
   TemplateTransitions,
   asTransition,
 } from './transitions/TemplateTransitions';
 import { readVariant, type Block, type Device, type Lang } from './types';
+
+/** PreviewMode chrome bar = h-7 */
+const PREVIEW_CHROME = '1.75rem';
 
 interface PreviewModeProps {
   blocks: Block[];
@@ -23,184 +41,193 @@ interface PreviewModeProps {
   onClose: () => void;
   /** Preset transition cấp template (none/fade/roll-up/swipe/tabs/parallax). */
   transition?: string;
+  /** Device đang chọn trên canvas editor — giữ khi mở preview. */
+  initialDevice?: Device;
+  /** Every page of the template, so CTAs can be clicked through. Optional:
+   *  callers that only have a flat block list (`/dev/blocks`) keep working and
+   *  simply get no page navigation. */
+  pages?: EditorPage[];
+  initialPageId?: string;
 }
-
-const DEVICE_WIDTH: Record<Device, number> = {
-  desktop: 1280,
-  tablet: 834,
-  mobile: 390,
-};
-
-const DEVICE_BUTTONS: {
-  value: Device;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-}[] = [
-  { value: 'desktop', icon: Monitor, label: 'Desktop' },
-  { value: 'tablet', icon: Tablet, label: 'Tablet' },
-  { value: 'mobile', icon: Smartphone, label: 'Mobile' },
-];
-
-const TRANSITION_MS = 240;
 
 export function PreviewMode({
   blocks,
   lang,
   onClose,
   transition,
+  initialDevice = 'desktop',
+  pages,
+  initialPageId,
 }: PreviewModeProps) {
-  const [device, setDevice] = React.useState<Device>('desktop');
-  const [closing, setClosing] = React.useState(false);
-  const overlayRef = React.useRef<HTMLDivElement>(null);
-  const sheetRef = React.useRef<HTMLDivElement>(null);
+  const [device, setDevice] = React.useState<Device>(initialDevice);
+  const [activePageId, setActivePageId] = React.useState<string | null>(
+    initialPageId ?? null
+  );
   const scrollerRef = React.useRef<HTMLDivElement>(null);
 
-  const handleClose = React.useCallback(() => {
-    setClosing(true);
-  }, []);
+  React.useEffect(() => {
+    setDevice(initialDevice);
+  }, [initialDevice]);
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClose();
+      if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleClose]);
+  }, [onClose]);
 
-  // Enter animation — overlay fade + sheet rise. Runs once on mount.
-  useGSAP(() => {
-    if (!overlayRef.current || !sheetRef.current) return;
-    gsap.set(overlayRef.current, { autoAlpha: 0 });
-    gsap.set(sheetRef.current, { y: 24, autoAlpha: 0 });
-    const tl = gsap.timeline();
-    tl.to(overlayRef.current, {
-      autoAlpha: 1,
-      duration: TRANSITION_MS / 1000,
-      ease: 'power2.out',
-    }).to(
-      sheetRef.current,
-      {
-        y: 0,
-        autoAlpha: 1,
-        duration: TRANSITION_MS / 1000,
-        ease: 'power3.out',
-      },
-      '-=0.12'
-    );
-  }, []);
+  const multiPage = !!pages && pages.length > 0;
+  const activePage = multiPage
+    ? (pages.find(p => p.id === activePageId) ??
+      pages.find(p => p.isHome) ??
+      pages[0])
+    : null;
+  const homeId = multiPage ? (pages.find(p => p.isHome) ?? pages[0]).id : null;
+  const pageBlocks = activePage ? activePage.blocks : blocks;
 
-  // Exit animation — invert enter; call parent's onClose after the sheet
-  // settles so the unmount happens *after* the user sees the transition.
-  useGSAP(
-    () => {
-      if (!closing) return;
-      if (!overlayRef.current || !sheetRef.current) return;
-      const tl = gsap.timeline({ onComplete: onClose });
-      tl.to(sheetRef.current, {
-        y: 16,
-        autoAlpha: 0,
-        duration: TRANSITION_MS / 1000,
-        ease: 'power2.in',
-      }).to(
-        overlayRef.current,
-        {
-          autoAlpha: 0,
-          duration: TRANSITION_MS / 1000,
-          ease: 'power2.in',
-        },
-        '-=0.08'
-      );
-    },
-    { dependencies: [closing] }
+  const linkCtx = React.useMemo(
+    () => ({
+      pages: (pages ?? []).map(p => ({
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        isHome: p.isHome,
+        blocks: p.blocks,
+      })),
+      // Preview has no public URL; `resolveLinksDeep` in `preview` mode never
+      // builds a path, so the root slug is only a placeholder.
+      rootSlug: '',
+      mode: 'preview' as const,
+    }),
+    [pages]
   );
 
-  const visible = blocks.filter(b => b.isVisible);
+  const handleNavigatePage = React.useCallback((id: string) => {
+    setActivePageId(id);
+    scrollerRef.current?.scrollTo({ top: 0 });
+  }, []);
+
+  const visible = pageBlocks.filter(b => b.isVisible);
 
   return (
     <div
-      ref={overlayRef}
-      className='fixed inset-0 z-50 flex flex-col bg-neutral-950/95 backdrop-blur'
+      className='fixed inset-0 z-50 bg-neutral-900'
+      data-landing-preview='true'
     >
-      <div ref={sheetRef} className='flex h-full flex-col'>
-        <header className='flex items-center justify-between gap-4 border-b border-white/10 px-4 py-3 text-white'>
-          <span className='text-xs font-medium tracking-widest text-white/70 uppercase'>
-            Xem trước · {visible.length}/{blocks.length} block
-          </span>
-          <div className='flex items-center gap-3'>
-            <div className='flex items-center gap-0.5 rounded-md border border-white/15 bg-white/5 p-0.5'>
-              {DEVICE_BUTTONS.map(({ value, icon: Icon, label }) => (
-                <button
-                  key={value}
-                  type='button'
-                  aria-label={label}
-                  onClick={() => setDevice(value)}
-                  className={cn(
-                    'flex size-7 cursor-pointer items-center justify-center rounded-sm text-white/60 transition-colors hover:text-white',
-                    device === value && 'bg-white text-neutral-900 shadow-sm'
-                  )}
-                >
-                  <Icon className='size-3.5' />
-                </button>
-              ))}
-            </div>
-            <button
-              type='button'
-              onClick={handleClose}
-              aria-label='Đóng xem trước'
-              className='flex size-8 cursor-pointer items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white'
-            >
-              <X className='size-4' />
-            </button>
-          </div>
-        </header>
+      {/* Top bar fixed, gọn — mirror /dev/blocks */}
+      <header className='fixed inset-x-0 top-0 z-60 flex h-7 items-center gap-2 border-b border-white/10 bg-[#0d0d10]/90 px-2 backdrop-blur-sm'>
+        <span className='shrink-0 text-[8px] font-bold tracking-[0.16em] text-amber-400/90 uppercase'>
+          Preview
+        </span>
+        {activePage && activePage.id !== homeId && (
+          <button
+            type='button'
+            onClick={() => homeId && handleNavigatePage(homeId)}
+            className='flex shrink-0 items-center gap-0.5 rounded-sm px-1 text-[9px] text-white/60 transition-colors hover:bg-white/10 hover:text-white'
+          >
+            <ChevronLeft className='size-3' />
+            Trang chủ
+          </button>
+        )}
+        <span className='min-w-0 flex-1 truncate text-[9px] text-white/40'>
+          {activePage ? `${activePage.name} · ` : ''}
+          {visible.length}/{pageBlocks.length} block ·{' '}
+          {DEVICE_FRAME_WIDTH[device]}px
+        </span>
+        <DeviceSwitcher
+          device={device}
+          onChange={setDevice}
+          variant='preview'
+        />
+        <button
+          type='button'
+          onClick={onClose}
+          aria-label='Đóng xem trước'
+          className='flex size-5 shrink-0 items-center justify-center rounded-sm text-white/60 transition-colors hover:bg-white/10 hover:text-white'
+        >
+          <X className='size-3.5' />
+        </button>
+      </header>
 
+      {/* Outer: no scroll — device frame scrolls internally (centered). */}
+      <div className='relative h-screen overflow-hidden bg-neutral-200 pt-7'>
         <LandingMotionRoot scrollerRef={scrollerRef} enableSmooth={false}>
-          <div ref={scrollerRef} className='flex-1 overflow-auto p-8'>
-            <div
-              className='@container mx-auto transition-[max-width] duration-200'
-              style={{ maxWidth: DEVICE_WIDTH[device] }}
+          <DevicePreviewFrame
+            device={device}
+            chromeOffset={PREVIEW_CHROME}
+            scrollerRef={scrollerRef}
+          >
+            {/* Mirror BlockPreview: resolve `token:*` colors/fonts in Play. */}
+            <LinkNav
+              mode='preview'
+              onNavigatePage={handleNavigatePage}
+              // Remount the whole list on page change so every MotionProvider
+              // and gsap.context is rebuilt cleanly instead of being reused
+              // across two different block sets.
+              key={activePage?.id ?? 'single'}
             >
-              {visible.length === 0 ? (
-                <div className='rounded-lg border border-white/10 bg-white/5 p-12 text-center text-sm text-white/60'>
-                  Chưa có block nào hiển thị.
-                </div>
-              ) : (
-                <TemplateTransitions
-                  transition={asTransition(transition)}
-                  items={visible.map(block => {
-                    const langContent =
-                      lang === 'vi' ? block.contentVi : block.contentEn;
-                    const content =
-                      readVariant(langContent, device) ?? langContent.desktop;
-                    const styles = readVariant(block.elementStyles, device);
-                    const background = readVariant(block.background, device);
-                    const order = readVariant(block.elementOrder, device);
-                    const motion = readVariant(block.motion, device) as
-                      | BlockMotion
-                      | undefined;
-                    return (
-                      <MotionProvider
-                        key={block.id}
-                        mode='preview'
-                        motion={motion}
-                        scrollerEl={scrollerRef.current}
-                      >
-                        <MotionBlockRoot className='overflow-hidden rounded-md bg-white shadow-2xl ring-1 ring-black/10'>
-                          <RenderBlock
-                            block={block}
-                            content={content}
-                            styles={styles}
-                            background={background}
-                            order={order}
-                          />
-                        </MotionBlockRoot>
-                      </MotionProvider>
-                    );
-                  })}
-                />
-              )}
-            </div>
-          </div>
+              <div style={brandKitToCssVars(DEFAULT_PREVIEW_KIT)}>
+                {visible.length === 0 ? (
+                  <div className='flex min-h-[60vh] items-center justify-center px-6 text-center text-sm text-neutral-500'>
+                    {activePage
+                      ? `Trang "${activePage.name}" chưa có block nào hiển thị.`
+                      : 'Chưa có block nào hiển thị.'}
+                  </div>
+                ) : (
+                  <>
+                    {/* 1 block: thêm room trên/dưới để sticky/scrub chạy được. */}
+                    {visible.length === 1 ? (
+                      <ScrollRoomPlaceholder label='Scroll vào block' />
+                    ) : null}
+                    <TemplateTransitions
+                      transition={asTransition(transition)}
+                      className='gap-0!'
+                      items={visible.map(block => {
+                        const langContent =
+                          lang === 'vi' ? block.contentVi : block.contentEn;
+                        const content = resolveLinksDeep(
+                          readVariant(langContent, device) ??
+                            langContent.desktop,
+                          linkCtx
+                        );
+                        const styles = readVariant(block.elementStyles, device);
+                        const background = readVariant(
+                          block.background,
+                          device
+                        );
+                        const order = readVariant(block.elementOrder, device);
+                        const motion = readVariant(block.motion, device) as
+                          | BlockMotion
+                          | undefined;
+                        return (
+                          <MotionProvider
+                            key={`${block.id}:${device}`}
+                            mode='preview'
+                            motion={motion}
+                            scrollerEl={scrollerRef.current}
+                          >
+                            <MotionBlockRoot>
+                              <RenderBlock
+                                block={block}
+                                content={content}
+                                styles={styles}
+                                background={background}
+                                order={order}
+                              />
+                            </MotionBlockRoot>
+                          </MotionProvider>
+                        );
+                      })}
+                    />
+                    {visible.length === 1 ? (
+                      <ScrollRoomPlaceholder label='Scroll thoát block' />
+                    ) : null}
+                  </>
+                )}
+              </div>
+            </LinkNav>
+          </DevicePreviewFrame>
         </LandingMotionRoot>
       </div>
     </div>

@@ -6,7 +6,7 @@
  */
 import { Image as ImageIcon, Type } from 'lucide-react';
 
-import { DelvauxHeader } from '../../DelvauxHeader';
+import dynamic from 'next/dynamic';
 import type { DelvauxHeaderContent } from '../../../types';
 import type { BlockDef } from '../types';
 
@@ -30,7 +30,10 @@ export const delvauxHeaderDef: BlockDef<DelvauxHeaderContent> = {
     aiLabelVi: 'thanh header tối giản chỉ có logo căn giữa',
     aiLabelEn: 'minimal centered logo header bar',
   },
-  component: DelvauxHeader,
+  // dynamic để webpack tách chunk per-block (audit FE 2026-07-04 P1).
+  component: dynamic(() =>
+    import('../../DelvauxHeader').then(m => m.DelvauxHeader)
+  ),
   defaultContent: { vi: VI, en: EN },
   elements: [
     {
@@ -38,7 +41,15 @@ export const delvauxHeaderDef: BlockDef<DelvauxHeaderContent> = {
       label: 'Logo (ảnh)',
       icon: ImageIcon,
       fieldType: 'image',
+      groupId: 'brand',
+      groupLabel: 'Thương hiệu',
     },
-    { key: 'logoText', label: 'Logo (chữ)', icon: Type, fieldType: 'text' },
+    {
+      key: 'logoText',
+      label: 'Logo (chữ)',
+      icon: Type,
+      fieldType: 'text',
+      groupId: 'brand',
+    },
   ],
 };

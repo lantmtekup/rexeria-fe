@@ -23,7 +23,10 @@ import Link from 'next/link';
 import { AlertCircle, ArrowLeft, Loader2, Pencil } from 'lucide-react';
 
 import { PreviewMode } from '@/components/modules/block-editor/PreviewMode';
-import { parseCanvas } from '@/components/modules/block-editor/serialize';
+import {
+  adaptCanvasBlueprint,
+  parseCanvas,
+} from '@/components/modules/block-editor/serialize';
 import type { Block } from '@/components/modules/block-editor/types';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
@@ -34,16 +37,6 @@ import type {
   TemplateVersion,
 } from '@/services/rexer/types';
 import { getCodeTemplate } from '@/templates/registry';
-
-function adaptCanvasBlueprint(
-  raw: Record<string, unknown> | undefined
-): Record<string, unknown> | undefined {
-  if (!raw || typeof raw !== 'object') return undefined;
-  const blocks = Array.isArray((raw as { blocks?: unknown }).blocks)
-    ? ((raw as { blocks: unknown[] }).blocks as unknown[])
-    : [];
-  return { schema_version: '2.0', blocks };
-}
 
 interface Props {
   templateId: string;

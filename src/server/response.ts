@@ -1,6 +1,6 @@
 /**
  * BFF JSON contract for `src/app/api/**` Route Handlers.
- * External REST calls use `fetchInstance` + `NEXT_PUBLIC_API_URL`.
+ * Rexer BE calls đi qua rewrite `/api/rexer/*` (src/services/rexer/client.ts).
  */
 import 'server-only';
 import { NextResponse } from 'next/server';

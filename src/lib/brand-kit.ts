@@ -11,8 +11,8 @@
  *   element font  "token:heading"  → var(--bk-font-heading)
  *
  * Legacy free-form values (a raw `#hex` color or a font id) still resolve so
- * pages authored before the controlled switch keep rendering — but the editor
- * only ever writes `token:` values going forward.
+ * pages authored before the controlled switch keep rendering. The editor color
+ * picker can write either `token:<role>` or a raw CSS color.
  */
 
 import type * as React from 'react';
