@@ -260,7 +260,7 @@ export function FramerAesthaEditorial({
           {
             opacity: 1,
             y: 0,
-            delay: 0.35,
+            delay: 0.15,
             duration: 0.6,
             stagger: 0.1,
             // cubic-bezier(0.5, 0, 0.88, 0.77) ≈ 'power2.in' (xấp xỉ, xem trên).
@@ -316,6 +316,7 @@ export function FramerAesthaEditorial({
   const leftColumn = (
     <>
       <h1
+        data-entrance
         data-element-key='brand'
         style={composeStyle(BRAND_STYLE, styleOf('brand'))}
         className={selectableClass(activeKey === 'brand', 'aestha__brand')}
@@ -329,6 +330,7 @@ export function FramerAesthaEditorial({
       <div className='aestha__gap aestha__gap--top' aria-hidden />
 
       <p
+        data-entrance
         data-element-key='tagline'
         style={composeStyle(TAGLINE_STYLE, styleOf('tagline'))}
         className={selectableClass(activeKey === 'tagline', 'aestha__text')}
@@ -341,6 +343,7 @@ export function FramerAesthaEditorial({
       <div className='aestha__gap aestha__gap--mid' aria-hidden />
 
       <p
+        data-entrance
         data-element-key='description'
         style={composeStyle(DESCRIPTION_STYLE, styleOf('description'))}
         className={selectableClass(activeKey === 'description', 'aestha__text')}

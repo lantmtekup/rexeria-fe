@@ -283,6 +283,7 @@ export function AesthaProject({
 
   const titleEl = (
     <h1
+      data-entrance
       data-element-key={K('title')}
       style={composeStyle(TITLE_STYLE, styleOf(K('title')))}
       className={selectableClass(activeKey === K('title'), 'ap-title')}
@@ -303,7 +304,7 @@ export function AesthaProject({
       >
         {content.conceptLabel}
       </p>
-      <div className='ap-body'>
+      <div data-entrance className='ap-body'>
         {body.map((p, i) => {
           const ek = K(`body[${i}]`);
           return (

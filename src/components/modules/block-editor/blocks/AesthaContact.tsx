@@ -216,6 +216,11 @@ export function AesthaContact({
    * 0.44,0,0.56,1; image/right wrapper fade-up delay 0.25s bezier
    * 0.5,0,0.88,0.77). Bezier gốc xấp xỉ bằng power ease (tiền lệ AesthaStudio).
    * Không ScrollTrigger — block 1 viewport (wide) / stack ngắn (narrow).
+   *
+   * Delay rút ngắn so với recon (0.25/0.4 → 0.05/0.15): 2 container mang
+   * `data-entrance` nên đã ẩn từ frame đầu (xem `public-entrance.css`), delay
+   * gốc để trang mới đứng trắng gần nửa giây sau khi View Transition cross-fade
+   * xong. Thứ tự ảnh-trước-nội-dung + duration/ease giữ nguyên.
    */
   useBlockMotion(rootRef, () => {
     const root = rootRef.current;
@@ -230,14 +235,14 @@ export function AesthaContact({
       gsap.fromTo(
         mediaEl,
         { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.5, delay: 0.25, ease: 'power2.in' }
+        { opacity: 1, y: 0, duration: 0.5, delay: 0.05, ease: 'power2.in' }
       );
     }
     if (contentEl) {
       gsap.fromTo(
         contentEl,
         { opacity: 0, y: 8 },
-        { opacity: 1, y: 0, duration: 0.6, delay: 0.4, ease: 'power1.inOut' }
+        { opacity: 1, y: 0, duration: 0.6, delay: 0.15, ease: 'power1.inOut' }
       );
     }
   }, [isCanvas, hasRoot, reduce, isNarrow]);
@@ -325,8 +330,19 @@ export function AesthaContact({
     </div>
   );
 
-  const imageBox = (wrapClass: string, wrapStyle?: React.CSSProperties) => (
+  /**
+   * `entrance` phải khai TƯỜNG MINH, không gắn cứng trong helper: nhánh narrow
+   * thì chính khung ảnh này LÀ `.aestha-contact-media` (element GSAP animate),
+   * còn nhánh wide `.aestha-contact-media` là div cha bọc ảnh + hàng liên hệ →
+   * gắn cứng sẽ khiến khung ảnh của nhánh wide ẩn mà không ai animate nó.
+   */
+  const imageBox = (
+    wrapClass: string,
+    wrapStyle?: React.CSSProperties,
+    entrance?: boolean
+  ) => (
     <div
+      data-entrance={entrance ? '' : undefined}
       className={cn('relative overflow-hidden', wrapClass)}
       style={wrapStyle}
     >
@@ -371,15 +387,20 @@ export function AesthaContact({
           className='flex h-full w-full flex-col gap-6 p-4'
           style={{ paddingBottom: `calc(16px + ${NAV_CLEARANCE})` }}
         >
-          <div className='aestha-contact-content flex flex-col gap-6'>
+          <div
+            data-entrance
+            className='aestha-contact-content flex flex-col gap-6'
+          >
             {heading('')}
             {address('')}
             {contactInfo('items-start')}
           </div>
 
-          {imageBox('aestha-contact-media w-full', {
-            aspectRatio: '343 / 331',
-          })}
+          {imageBox(
+            'aestha-contact-media w-full',
+            { aspectRatio: '343 / 331' },
+            true
+          )}
         </section>
       ) : (
         /* ── Wide: 2 cột full-viewport ── */
@@ -398,13 +419,19 @@ export function AesthaContact({
               style={{ paddingBottom: NAV_CLEARANCE }}
             >
               {/* Cột trái (448px): CONTACT (trên) + địa chỉ (dưới) */}
-              <div className='aestha-contact-content flex w-md shrink-0 flex-col justify-between'>
+              <div
+                data-entrance
+                className='aestha-contact-content flex w-md shrink-0 flex-col justify-between'
+              >
                 {heading('')}
                 {address('')}
               </div>
 
               {/* Cột phải (fill): ảnh (trên) + hàng email/phone · social (dưới) */}
-              <div className='aestha-contact-media flex min-w-0 flex-1 flex-col justify-between'>
+              <div
+                data-entrance
+                className='aestha-contact-media flex min-w-0 flex-1 flex-col justify-between'
+              >
                 {imageBox('h-[52dvh] w-full shrink-0')}
                 {contactInfo('items-end')}
               </div>

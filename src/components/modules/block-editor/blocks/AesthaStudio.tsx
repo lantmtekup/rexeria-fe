@@ -223,6 +223,11 @@ export function AesthaStudio({
    * 0.2s). Không ScrollTrigger — block 1 viewport (wide) / stack ngắn (narrow).
    * Bezier gốc của Framer không map thẳng sang GSAP → xấp xỉ bằng power ease
    * (đúng tiền lệ AesthaExplore).
+   *
+   * Delay rút ngắn so với recon (0.2/0.4 → 0.05/0.15): 2 container mang
+   * `data-entrance` nên đã ẩn từ frame đầu (xem `public-entrance.css`), delay
+   * gốc để trang mới đứng trắng gần nửa giây sau khi View Transition cross-fade
+   * xong. Thứ tự ảnh-trước-nội-dung + duration/ease giữ nguyên.
    */
   useBlockMotion(rootRef, () => {
     const root = rootRef.current;
@@ -235,14 +240,14 @@ export function AesthaStudio({
       gsap.fromTo(
         imageEl,
         { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.5, delay: 0.2, ease: 'power2.out' }
+        { opacity: 1, y: 0, duration: 0.5, delay: 0.05, ease: 'power2.out' }
       );
     }
     if (contentEl) {
       gsap.fromTo(
         contentEl,
         { opacity: 0, y: 12 },
-        { opacity: 1, y: 0, duration: 0.5, delay: 0.4, ease: 'power1.inOut' }
+        { opacity: 1, y: 0, duration: 0.5, delay: 0.15, ease: 'power1.inOut' }
       );
     }
   }, [isCanvas, hasRoot, reduce, isNarrow]);
@@ -316,6 +321,7 @@ export function AesthaStudio({
 
   const imageBox = (wrapClass: string, wrapStyle: React.CSSProperties) => (
     <div
+      data-entrance
       className={cn('aestha-studio-image relative overflow-hidden', wrapClass)}
       style={wrapStyle}
     >
@@ -360,7 +366,7 @@ export function AesthaStudio({
           className='flex h-full w-full flex-col px-4 pt-4'
           style={{ paddingBottom: `calc(20px + ${NAV_CLEARANCE})` }}
         >
-          <div className='aestha-studio-content'>
+          <div data-entrance className='aestha-studio-content'>
             {wordmark('mb-2')}
             {bio('mb-4')}
             {teamList('mb-5 gap-x-4 gap-y-3')}
@@ -378,7 +384,10 @@ export function AesthaStudio({
 
           <div className='flex h-full w-full items-stretch gap-8 p-8'>
             {/* Cột trái: wordmark · bio · team · footer */}
-            <div className='aestha-studio-content relative flex-1'>
+            <div
+              data-entrance
+              className='aestha-studio-content relative flex-1'
+            >
               {wordmark('absolute top-0 left-0')}
 
               {/* Canvas dàn phẳng wordmark thành 2 dòng → đẩy bio xuống, nếu

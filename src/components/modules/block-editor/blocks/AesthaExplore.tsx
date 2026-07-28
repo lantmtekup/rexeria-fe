@@ -469,6 +469,11 @@ export function AesthaExplore({
   /**
    * Entrance on-load (recon: heading fade-up 500ms, menu stagger, ảnh fade).
    * Không có ScrollTrigger — block 1 viewport, không scrub.
+   *
+   * `effectiveView` PHẢI nằm trong deps: 3 element dưới mang `data-entrance` →
+   * ẩn sẵn bằng CSS (xem `public-entrance.css`). Vào view chi tiết rồi quay lại
+   * là cả cây explore mount mới, mất sạch inline style GSAP đã ghi; không
+   * rebuild thì chúng nằm im ở `opacity: 0` cho tới lúc failsafe gỡ gate.
    */
   useBlockMotion(rootRef, () => {
     const root = rootRef.current;
@@ -497,7 +502,7 @@ export function AesthaExplore({
           opacity: 1,
           y: 0,
           duration: 0.5,
-          delay: 0.15,
+          delay: 0.08,
           stagger: 0.05,
           ease: 'power2.out',
         }
@@ -510,7 +515,7 @@ export function AesthaExplore({
         { opacity: 1, duration: 0.8, ease: 'power2.out' }
       );
     }
-  }, [isCanvas, hasRoot, reduce, isNarrow]);
+  }, [isCanvas, hasRoot, reduce, isNarrow, effectiveView]);
 
   /**
    * Hover roll-swap của heading (`AesthaRollLink`). Deps gồm `isNarrow` (wide /
@@ -529,6 +534,7 @@ export function AesthaExplore({
      còn `data-motion` nằm trên 2 span con → 1 element = 1 driver, không chồng. */
   const heading = (extraClass: string) => (
     <h1
+      data-entrance
       style={composeStyle(HEADING_STYLE, styleOf('heading'))}
       className={cn('aestha-explore-heading', extraClass)}
     >
@@ -549,6 +555,7 @@ export function AesthaExplore({
      nhánh không thể lệch style/marker GSAP `aestha-explore-featured`. */
   const featuredShared = {
     'aria-label': `View ${projects[wideIndex]?.label} project`,
+    'data-entrance': '',
     className:
       'aestha-explore-featured relative shrink-0 cursor-pointer overflow-hidden border-none bg-transparent p-0',
     style: { width: 'calc((100cqw - 96px) * 0.4737)' },
@@ -786,6 +793,7 @@ export function AesthaExplore({
                       <button
                         key={i}
                         type='button'
+                        data-entrance
                         data-element-key={`projects[${i}].label`}
                         onClick={() => {
                           if (isCanvas) return;
