@@ -27,8 +27,10 @@ import {
   Check,
   ChevronDown,
   Copy,
+  ExternalLink,
   Eye,
   FlaskConical,
+  Layers,
   LayoutGrid,
   Loader2,
   MoreVertical,
@@ -67,7 +69,12 @@ import type {
 } from '@/components/modules/block-editor/types';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { Block as ServerBlock, BlockStatus } from '@/services/rexer/types';
+import { resolveTemplateBlocks } from '@/services/rexer/resolveTemplateBlocks';
+import type {
+  Block as ServerBlock,
+  BlockStatus,
+  Template,
+} from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
 import {
   BLOCK_STATUS_META,
@@ -121,6 +128,42 @@ function rxMessage(err: unknown): string {
 }
 
 const SEARCH_DEBOUNCE_MS = 300;
+
+interface TemplateRef {
+  id: string;
+  name: string;
+  code: string;
+}
+
+// Fan-out bounded — 24 template hiện tại thì vô hại, nhưng danh sách sẽ lớn
+// dần nên chặn concurrency thay vì Promise.all không giới hạn (giống pattern
+// `PROBE_CONCURRENCY` ở resolveTemplateFromVersion.ts).
+const TEMPLATE_SCAN_CONCURRENCY = 4;
+
+async function buildBlockTypeTemplateIndex(
+  templates: Template[]
+): Promise<Record<string, TemplateRef[]>> {
+  const index: Record<string, TemplateRef[]> = {};
+  for (let i = 0; i < templates.length; i += TEMPLATE_SCAN_CONCURRENCY) {
+    const batch = templates.slice(i, i + TEMPLATE_SCAN_CONCURRENCY);
+    await Promise.all(
+      batch.map(async t => {
+        const blocks = await resolveTemplateBlocks(t).catch(() => []);
+        const seenTypes = new Set<string>();
+        for (const b of blocks) {
+          if (seenTypes.has(b.blockType)) continue;
+          seenTypes.add(b.blockType);
+          (index[b.blockType] ??= []).push({
+            id: t.id,
+            name: t.name,
+            code: t.code,
+          });
+        }
+      })
+    );
+  }
+  return index;
+}
 
 /** Shared size + radius + border weight cho hàng filter (khớp Input). */
 const FILTER_CONTROL_CLASS =
@@ -268,6 +311,38 @@ export function BlocksPage() {
   React.useEffect(() => {
     load();
   }, [load]);
+
+  // Reverse index "block type này nằm trong template nào" — quét TOÀN BỘ
+  // template 1 lần (không phải per-row) rồi build Map<type_code, Template[]>,
+  // vì canvas block là bản copy inline (không FK tới thư viện Blocks) nên
+  // không thể lấy trực tiếp — phải match theo `blockType === type_code`.
+  // LƯU Ý: đây là khớp theo LOẠI block, khác với `usage_count` hiển thị ở
+  // cột "Extras / Usage" (counter tăng thủ công lúc "Add block" từ thư viện,
+  // không có provenance) — 2 con số này KHÔNG nhất thiết trùng nhau.
+  const [templatesByType, setTemplatesByType] = React.useState<
+    Record<string, TemplateRef[]> | 'loading' | 'error'
+  >('loading');
+  const templatesIndexAliveRef = React.useRef(true);
+  const templatesIndexStartedRef = React.useRef(false);
+  React.useEffect(() => {
+    templatesIndexAliveRef.current = true;
+    return () => {
+      templatesIndexAliveRef.current = false;
+    };
+  }, []);
+  React.useEffect(() => {
+    if (templatesIndexStartedRef.current) return;
+    templatesIndexStartedRef.current = true;
+    (async () => {
+      try {
+        const tplList = await rexerApi.templates.list();
+        const idx = await buildBlockTypeTemplateIndex(tplList.items ?? []);
+        if (templatesIndexAliveRef.current) setTemplatesByType(idx);
+      } catch {
+        if (templatesIndexAliveRef.current) setTemplatesByType('error');
+      }
+    })();
+  }, []);
 
   // Debounce ô search → apply filter (không chặn typing).
   React.useEffect(() => {
@@ -735,6 +810,7 @@ export function BlocksPage() {
           ) : (
             <TableView
               items={paged}
+              templatesByType={templatesByType}
               selectedId={selectedId}
               selected={selected}
               onToggleSelect={toggleSelect}
@@ -1312,6 +1388,7 @@ function CardKebabMenu({
 
 function TableView({
   items,
+  templatesByType,
   selectedId,
   selected,
   onToggleSelect,
@@ -1328,6 +1405,7 @@ function TableView({
   onPreview,
 }: {
   items: ServerBlock[];
+  templatesByType: Record<string, TemplateRef[]> | 'loading' | 'error';
   selectedId: string | null;
   selected: Set<string>;
   onToggleSelect: (id: string) => void;
@@ -1371,6 +1449,7 @@ function TableView({
             <TableHead className='w-36'>Mapping code</TableHead>
             <TableHead className='w-32'>Tags</TableHead>
             <TableHead className='w-28'>Extras / Usage</TableHead>
+            <TableHead className='w-32'>Templates</TableHead>
             <TableHead className='w-32'>Cập nhật</TableHead>
             <TableHead className='w-40' />
           </TableRow>
@@ -1474,6 +1553,16 @@ function TableView({
                     <span title='Usage'>{usageCount} uses</span>
                   </div>
                 </TableCell>
+                <TableCell onClick={e => e.stopPropagation()}>
+                  <TemplatesUsingBlockCell
+                    state={
+                      templatesByType === 'loading' ||
+                      templatesByType === 'error'
+                        ? templatesByType
+                        : (templatesByType[it.type_code] ?? [])
+                    }
+                  />
+                </TableCell>
                 <TableCell className='text-content-muted text-xs'>
                   {fmtRelative(it.updated_at ?? it.created_at)}
                 </TableCell>
@@ -1535,6 +1624,71 @@ function TableView({
         </TableBody>
       </Table>
     </div>
+  );
+}
+
+/** Popover "N template" ở mỗi dòng block — danh sách template có dùng loại
+ *  block này (khớp theo `blockType`), click 1 template → mở trang chi tiết
+ *  template ở tab mới. */
+function TemplatesUsingBlockCell({
+  state,
+}: {
+  state: TemplateRef[] | 'loading' | 'error';
+}) {
+  if (state === 'loading') {
+    return (
+      <span className='text-content-muted inline-flex items-center gap-1 text-xs'>
+        <Loader2 className='size-3 animate-spin' /> …
+      </span>
+    );
+  }
+  if (state === 'error') {
+    return <span className='text-content-muted text-xs'>-</span>;
+  }
+  if (state.length === 0) {
+    return <span className='text-content-muted text-xs'>0 template</span>;
+  }
+  return (
+    <Popover.Root>
+      <Popover.Trigger asChild>
+        <button
+          type='button'
+          className='border-border text-content-muted hover:bg-muted bg-background inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium'
+        >
+          <Layers className='size-3' />
+          {state.length} template{state.length > 1 ? 's' : ''}
+          <ChevronDown className='size-3 opacity-60' />
+        </button>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          align='start'
+          sideOffset={4}
+          className='border-border bg-background z-50 w-64 rounded-lg border p-1.5 shadow-lg'
+        >
+          <div className='max-h-72 overflow-y-auto'>
+            {state.map(t => (
+              <button
+                key={t.id}
+                type='button'
+                onClick={() =>
+                  window.open(`/admin/templates/${t.id}`, '_blank', 'noopener')
+                }
+                className='hover:bg-muted flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-xs'
+              >
+                <span className='min-w-0'>
+                  <span className='block truncate font-medium'>{t.name}</span>
+                  <span className='text-content-muted text-3xs block truncate font-mono'>
+                    {t.code}
+                  </span>
+                </span>
+                <ExternalLink className='text-content-muted size-3 shrink-0' />
+              </button>
+            ))}
+          </div>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }
 

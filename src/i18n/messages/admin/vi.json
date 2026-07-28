@@ -70,7 +70,8 @@
         "name": "Tên",
         "code": "Code",
         "status": "Trạng thái",
-        "created": "Tạo lúc"
+        "created": "Tạo lúc",
+        "blocks": "Blocks"
       }
     },
     "aiUsage": {

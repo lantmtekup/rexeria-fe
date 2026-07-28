@@ -50,6 +50,7 @@ import {
   CreateLandingDialog,
   EditLandingDialog,
 } from '@/components/modules/Admin/LandingFormDialog';
+import { BlocksUsedCell } from '@/components/modules/Admin/BlocksUsedCell';
 import { Input } from '@/components/atoms/input';
 import {
   Table,
@@ -60,6 +61,11 @@ import {
   TableRow,
 } from '@/components/atoms/table';
 import { TablePagination } from '@/components/molecules/TablePagination';
+import {
+  adaptCanvasBlueprint,
+  parseCanvas,
+} from '@/components/modules/block-editor/serialize';
+import type { Block } from '@/components/modules/block-editor/types';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type { Brand, Page, PageType } from '@/services/rexer/types';
@@ -172,6 +178,80 @@ export function AdminCanvasTemplatesPage() {
     for (const b of brands) m.set(b.id, b);
     return m;
   }, [brands]);
+
+  // Blocks-used-per-page — lazy fetch cho các dòng đang hiển thị. `Page`
+  // không mang canvas trực tiếp (không như Template list vốn đôi khi có
+  // draft_canvas_blueprint) nên luôn cần fetch riêng:
+  //   1. `/public/pages/{slug}` — PRIMARY, cùng nguồn `/p/{slug}` render
+  //      (đã verify hoạt động đúng ở PageOverlayView/BlockAnalyticsGrid).
+  //   2. Fallback: revision MỚI NHẤT của page (`pages.revisions`, BE sort
+  //      changed_at DESC → items[0]) — cho page chưa publish.
+  //   KHÔNG dùng chuỗi fallback "tìm template sở hữu template_version_id"
+  //   (PageOverlayView) ở đây — quá tốn (fan-out toàn bộ template + version
+  //   list) cho MỘT dòng bảng, chưa nói tới N dòng đang hiển thị cùng lúc.
+  // `items` chỉ đổi reference khi `load()` thật sự set data mới (server-side
+  // paginate) nên không cần memo hoá như bên AdminTemplatesPage.
+  const [blocksByPage, setBlocksByPage] = React.useState<
+    Record<string, Block[] | 'loading' | 'error'>
+  >({});
+  const blocksFetchStartedRef = React.useRef<Set<string>>(new Set());
+  // Reset về true ở ĐẦU effect (không chỉ khai `useRef(true)`) — React dev
+  // Strict Mode mount→cleanup-giả-lập→mount lại effect ngay khi component
+  // mount; nếu không reset ở mount thứ 2, cleanup của lần mount "giả" khoá
+  // `alive=false` VĨNH VIỄN trước khi bất kỳ fetch async nào trả về, khiến
+  // mọi kết quả bị chặn âm thầm → cột Blocks kẹt loading mãi mãi.
+  const blocksAliveRef = React.useRef(true);
+  React.useEffect(() => {
+    blocksAliveRef.current = true;
+    return () => {
+      blocksAliveRef.current = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    for (const p of items) {
+      if (blocksFetchStartedRef.current.has(p.id)) continue;
+      blocksFetchStartedRef.current.add(p.id);
+
+      if (p.external_url) {
+        setBlocksByPage(prev => ({ ...prev, [p.id]: [] }));
+        continue;
+      }
+
+      setBlocksByPage(prev => ({ ...prev, [p.id]: 'loading' }));
+      (async () => {
+        try {
+          if (p.slug) {
+            try {
+              const pub = await rexerApi.publicPages.get(p.slug);
+              const canvas = parseCanvas(
+                adaptCanvasBlueprint(pub.canvas_blueprint)
+              );
+              const blocks = canvas?.pages.flatMap(pg => pg.blocks) ?? [];
+              if (blocks.length > 0) {
+                if (blocksAliveRef.current)
+                  setBlocksByPage(prev => ({ ...prev, [p.id]: blocks }));
+                return;
+              }
+            } catch {
+              /* chưa publish — fallback revision */
+            }
+          }
+          const revs = await rexerApi.pages.revisions(p.id, { limit: 1 });
+          const latest = (revs.items ?? [])[0];
+          const canvas = latest?.config_json
+            ? parseCanvas(adaptCanvasBlueprint(latest.config_json))
+            : null;
+          const blocks = canvas?.pages.flatMap(pg => pg.blocks) ?? [];
+          if (blocksAliveRef.current)
+            setBlocksByPage(prev => ({ ...prev, [p.id]: blocks }));
+        } catch {
+          if (blocksAliveRef.current)
+            setBlocksByPage(prev => ({ ...prev, [p.id]: 'error' }));
+        }
+      })();
+    }
+  }, [items]);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -561,6 +641,7 @@ export function AdminCanvasTemplatesPage() {
           <TableView
             items={items}
             brandById={brandById}
+            blocksByPage={blocksByPage}
             onAction={runPageAction}
             selected={selected}
             onToggleSelected={toggleSelected}
@@ -1020,6 +1101,7 @@ function ViewBtn({
 function TableView({
   items,
   brandById,
+  blocksByPage,
   onAction,
   selected,
   onToggleSelected,
@@ -1027,6 +1109,7 @@ function TableView({
 }: {
   items: Page[];
   brandById: Map<string, Brand>;
+  blocksByPage: Record<string, Block[] | 'loading' | 'error'>;
   onAction: (action: PageAction, page: Page) => void;
   selected: Set<string>;
   onToggleSelected: (id: string) => void;
@@ -1057,6 +1140,7 @@ function TableView({
             <TableHead className='w-28'>Status</TableHead>
             <TableHead className='w-44'>Brand</TableHead>
             <TableHead className='w-32'>Cập nhật</TableHead>
+            <TableHead className='w-32'>Blocks</TableHead>
             <TableHead className='w-44' />
           </TableRow>
         </TableHeader>
@@ -1163,6 +1247,9 @@ function TableView({
                   {p.updated_at
                     ? new Date(p.updated_at).toLocaleDateString('vi-VN')
                     : '-'}
+                </TableCell>
+                <TableCell>
+                  <BlocksUsedCell state={blocksByPage[p.id]} />
                 </TableCell>
                 <TableCell>
                   <div className='flex items-center justify-end gap-1.5'>
