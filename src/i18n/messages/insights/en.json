@@ -38,6 +38,8 @@
     },
     "setup": {
       "heading": "Choose your inputs",
+      "brand": "Brand",
+      "brandFirst": "Pick a brand first",
       "workspace": "Workspace",
       "product": "Product (optional)",
       "campaign": "Campaign (optional)",

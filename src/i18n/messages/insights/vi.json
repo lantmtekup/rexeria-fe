@@ -38,6 +38,8 @@
     },
     "setup": {
       "heading": "Chọn dữ liệu đầu vào",
+      "brand": "Thương hiệu",
+      "brandFirst": "Chọn thương hiệu trước",
       "workspace": "Không gian làm việc",
       "product": "Sản phẩm (tùy chọn)",
       "campaign": "Chiến dịch (tùy chọn)",
