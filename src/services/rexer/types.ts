@@ -3404,12 +3404,40 @@ export interface UpdateInsightBlueprintBody {
   customer_journey?: InsightBlueprintJourney;
 }
 
+/**
+ * Body của `POST /v1/insights/reports/{id}/handoff` (KB2 — dựng template thật).
+ *
+ * `publish` (BE 2026-07-27) kéo handoff đi hết đường: template → page → publish,
+ * nên response mới có `/p/{slug}` thật. Thiếu/false = dừng ở template như cũ.
+ * Xem `be-ReXeR.ai/docs/be-insight-demo-block-allowlist.md` §2 bước 3.
+ */
+export interface InsightHandoffBody {
+  template?: {
+    name?: string;
+    block_codes?: string[];
+    source_template_id?: string;
+  };
+  /** Tạo page từ template vừa dựng rồi publish luôn. */
+  publish?: boolean;
+  /** Workspace chứa page khi publish. Bỏ trống → BE lấy workspace của report. */
+  workspace_id?: string;
+}
+
 /** Response của `POST /v1/insights/reports/{id}/handoff` (KB2 — dựng template thật). */
 export interface InsightHandoffResponse {
   template_id: string;
   edit_url: string;
-  /** Rỗng tới khi template publish 1 page (chưa có /p). */
+  /**
+   * URL landing công khai (`<public_base_url>/p/<slug>`) khi request có
+   * `publish: true`; rỗng nếu không, vì template trần chưa có page nào.
+   */
   preview_url?: string;
+  /** Chỉ có khi `publish: true`. */
+  page_id?: string;
+  /** Chỉ có khi `publish: true`. Slug BE tự sinh + khử trùng trong workspace. */
+  page_slug?: string;
+  /** Chỉ có khi `publish: true`. */
+  release_id?: string;
 }
 
 /** Body của `POST /v1/insights/blocks/generate-content` (KB4). */

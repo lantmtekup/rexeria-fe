@@ -278,6 +278,11 @@ export function adaptCanvasBlueprint(
  * Accepts wire shapes:
  * - **2.0** (current) — `schema_version: "2.0"` top-level + camelCase block
  *   fields (matching BE validator). `active_block_id` snake_case at top.
+ * - **`schema_version: "1.0"`** — vỏ BE ghi cho `canvas_blueprint` (template
+ *   version, handoff của AI-Insights…). Chỉ khác con số ở vỏ: block bên trong
+ *   vẫn camelCase phẳng, và `migrateBlockV1toV2` bọc được content dạng cũ.
+ *   Trước đây bị trả `null` ở đây, nên mọi call site phải tự ép vỏ về "2.0" —
+ *   chỗ nào quên thì preview ra trắng mà không báo lỗi.
  * - **Legacy 1.x** — `schema: 'block_editor'` + `version: 1|2`, all camelCase,
  *   block content may be flat (we auto-wrap into DeviceVariants).
  */
@@ -292,8 +297,9 @@ export function parseCanvas(
   const legacySchema = (data as { schema?: unknown }).schema;
 
   const is20 = sv === '2.0' || sv === 2 || sv === '2';
+  const is10 = sv === '1.0' || sv === 1 || sv === '1';
   const isLegacy = legacySchema === LEGACY_SCHEMA;
-  if (!is20 && !isLegacy) return null;
+  if (!is20 && !is10 && !isLegacy) return null;
 
   const rawBlocks = (data as { blocks?: unknown }).blocks;
   if (!Array.isArray(rawBlocks)) return null;
