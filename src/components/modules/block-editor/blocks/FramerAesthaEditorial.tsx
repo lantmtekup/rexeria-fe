@@ -41,6 +41,9 @@ import {
   selectableClass,
 } from './applyStyle';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useAesthaLink } from './aesthaLink';
+import { NAV_CLEARANCE } from './aesthaTokens';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface FramerAesthaEditorialProps {
   content: FramerAesthaEditorialContent;
@@ -86,15 +89,6 @@ const TAGLINE_STYLE: React.CSSProperties = {
 const DESCRIPTION_STYLE: React.CSSProperties = {
   ...TAGLINE_STYLE,
   maxWidth: 440, // recon §4 — bio wrap ở 440px
-};
-
-const NAV_LINK_STYLE: React.CSSProperties = {
-  fontFamily: FONT,
-  fontSize: 20,
-  lineHeight: '25px',
-  fontWeight: 400,
-  color: INK,
-  textDecoration: 'none',
 };
 
 const CTA_STYLE: React.CSSProperties = {
@@ -178,18 +172,11 @@ export function FramerAesthaEditorial({
 }: FramerAesthaEditorialProps) {
   const rootRef = React.useRef<HTMLDivElement>(null);
   const { hasRoot } = useLandingMotion();
+  const linkProps = useAesthaLink();
 
-  // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play/`/p`.
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play/`/p`. Hook default `false`
+  // để SSR `/p` render đúng nhánh production ngay (không nháy layout editor).
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   /**
    * Chiều cao panel phải bám **vùng cuộn thật**, KHÔNG phải `100dvh`.
@@ -232,8 +219,6 @@ export function FramerAesthaEditorial({
       positionStyle(positions, key)
     );
 
-  const navLinks = Array.isArray(content.navLinks) ? content.navLinks : [];
-
   /**
    * Entrance on-load (recon §7b — CDP capture).
    * Group A logo: 100ms delay / 500ms / cubic-bezier(0.44, 0, 0.56, 1)
@@ -253,10 +238,6 @@ export function FramerAesthaEditorial({
       const texts = Array.from(
         root.querySelectorAll<HTMLElement>('.aestha__text')
       );
-      const navItems = Array.from(
-        root.querySelectorAll<HTMLElement>('.aestha__nav-item')
-      );
-
       if (brand) {
         gsap.fromTo(
           brand,
@@ -287,20 +268,6 @@ export function FramerAesthaEditorial({
           }
         );
       }
-      if (navItems.length) {
-        gsap.fromTo(
-          navItems,
-          { opacity: 0, y: 10 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.4,
-            stagger: 0.05,
-            ease: 'back.out(1.2)',
-          }
-        );
-      }
-
       /**
        * CTA "Khám phá thêm" — từng chữ fade in + giải blur.
        * Tổng thời gian ~2s, mỗi chữ blur 10px → 0, opacity 0 → 1.
@@ -381,37 +348,9 @@ export function FramerAesthaEditorial({
         {content.description}
       </p>
 
-      {/* Gap DƯỚI — mobile: grow (ghim nav xuống đáy). Desktop: 0 (nav bám sát
-          description qua marginTop của chính nó). */}
+      {/* Gap DƯỚI — mobile: grow (đẩy nhóm nội dung lên giữa, chừa đáy trống
+          cho block `aestha_nav` phủ lên). Desktop: 0. */}
       <div className='aestha__gap aestha__gap--bottom' aria-hidden />
-
-      {navLinks.length > 0 && (
-        <nav
-          data-element-key='navLinks'
-          style={composeStyle(
-            {
-              display: 'flex',
-              gap: 24,
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              marginTop: 'clamp(32px, 5cqi, 60px)',
-            },
-            styleOf('navLinks')
-          )}
-          className={selectableClass(activeKey === 'navLinks')}
-        >
-          {navLinks.map((link, idx) => (
-            <a
-              key={idx}
-              href={link.href}
-              style={NAV_LINK_STYLE}
-              className='aestha__nav-item rounded-sm focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2 focus-visible:outline-none'
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
-      )}
     </>
   );
 
@@ -425,7 +364,7 @@ export function FramerAesthaEditorial({
   const cta = (
     <a
       data-element-key='ctaText'
-      href={content.ctaHref || '#'}
+      {...linkProps(content.ctaHref)}
       aria-label={ctaText}
       style={composeStyle(CTA_STYLE, styleOf('ctaText'))}
       className={selectableClass(
@@ -477,9 +416,11 @@ export function FramerAesthaEditorial({
     >
       <style>{`
         .aestha__shell { display: flex; flex-direction: column; gap: 0; }
+        /* padding-bottom = 40px gốc + chỗ cho block \`aestha_nav\` overlay
+           (nav portal ra ngoài block nên không tự đẩy description lên). */
         .aestha__left {
           display: flex; flex-direction: column;
-          padding: 40px 16px;
+          padding: 40px 16px calc(40px + ${NAV_CLEARANCE});
           min-height: var(--aestha-vh, 100dvh);
         }
         .aestha__right { position: relative; width: 100%; }
@@ -555,7 +496,7 @@ export function FramerAesthaEditorial({
           .aestha__shell { flex-direction: row; gap: 32px; }
           .aestha__left {
             flex: 0 0 36.94%;      /* 532 / 1440 */
-            padding: 32px 0 32px 32px;
+            padding: 32px 0 calc(32px + ${NAV_CLEARANCE}) 32px;
             position: sticky; top: 0;
             height: var(--aestha-vh, 100dvh); min-height: 0;
           }
@@ -588,7 +529,7 @@ export function FramerAesthaEditorial({
             grid-area: auto;
             z-index: auto;
             flex: 0 0 36.94%;
-            padding: 32px 0 32px 32px;
+            padding: 32px 0 calc(32px + ${NAV_CLEARANCE}) 32px;
             height: var(--aestha-vh, 100dvh);
             min-height: 0;
             position: sticky; top: 0;

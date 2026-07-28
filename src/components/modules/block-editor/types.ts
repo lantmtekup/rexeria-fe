@@ -71,6 +71,7 @@ export type BlockType =
   | 'aestha_studio'
   | 'aestha_contact'
   | 'aestha_project'
+  | 'aestha_nav'
   | 'framer_perform_about'
   | 'framer_ignitex_step'
   | 'framer_realestate02_story'
@@ -1910,7 +1911,8 @@ export interface FramerAesthaEditorialContent {
   image3Url: string;
   ctaText: string;
   ctaHref: string;
-  navLinks: Array<{ label: string; href: string }>;
+  /** @deprecated Nav tách sang block `aestha_nav` — không còn render. */
+  navLinks?: Array<{ label: string; href: string }>;
 }
 
 /** Chi tiết dự án trong trang index EXPLORE — content cho AesthaProject. */
@@ -1930,7 +1932,12 @@ export interface AesthaExploreProject {
   detail?: AesthaExploreProjectDetail;
 }
 
-/** Link footer nav (Projects / Studio / Contact). */
+/**
+ * Link footer nav (Projects / Studio / Contact).
+ *
+ * @deprecated Nav đã tách thành block riêng `aestha_nav` — field `footerLinks`
+ * giữ lại chỉ để blueprint đã lưu không vỡ, block KHÔNG còn render.
+ */
 export interface AesthaExploreFooterLink {
   label: string;
   href: string;
@@ -1944,9 +1951,10 @@ export interface AesthaExploreFooterLink {
 export interface AesthaExploreContent {
   heading: string;
   projects: AesthaExploreProject[];
-  footerLinks: AesthaExploreFooterLink[];
-  /** Nhãn footer đang là trang hiện tại (tô nhạt) — khớp theo `label`. */
-  currentFooterLabel: string;
+  /** @deprecated Nav tách sang block `aestha_nav` — không còn render. */
+  footerLinks?: AesthaExploreFooterLink[];
+  /** @deprecated Thay bằng `currentLabel` của block `aestha_nav`. */
+  currentFooterLabel?: string;
 }
 
 /** Một thành viên team trong trang STUDIO — tên + vai trò. */
@@ -1955,7 +1963,11 @@ export interface AesthaStudioMember {
   role: string;
 }
 
-/** Link footer nav (Projects / Studio / Contact) — trang STUDIO. */
+/**
+ * Link footer nav (Projects / Studio / Contact) — trang STUDIO.
+ *
+ * @deprecated Nav đã tách thành block riêng `aestha_nav`.
+ */
 export interface AesthaStudioFooterLink {
   label: string;
   href: string;
@@ -1974,9 +1986,10 @@ export interface AesthaStudioContent {
   team: AesthaStudioMember[];
   imageUrl: string;
   imageAlt: string;
-  footerLinks: AesthaStudioFooterLink[];
-  /** Nhãn footer đang là trang hiện tại (tô nhạt) — khớp theo `label`. */
-  currentFooterLabel: string;
+  /** @deprecated Nav tách sang block `aestha_nav` — không còn render. */
+  footerLinks?: AesthaStudioFooterLink[];
+  /** @deprecated Thay bằng `currentLabel` của block `aestha_nav`. */
+  currentFooterLabel?: string;
 }
 
 /** Một mạng xã hội trong trang CONTACT — nhãn hiển thị + link ngoài. */
@@ -1985,7 +1998,11 @@ export interface AesthaContactSocial {
   href: string;
 }
 
-/** Link footer nav (Projects / Studio / Contact) — trang CONTACT. */
+/**
+ * Link footer nav (Projects / Studio / Contact) — trang CONTACT.
+ *
+ * @deprecated Nav đã tách thành block riêng `aestha_nav`.
+ */
 export interface AesthaContactFooterLink {
   label: string;
   href: string;
@@ -2009,9 +2026,10 @@ export interface AesthaContactContent {
   imageUrl: string;
   imageAlt: string;
   socials: AesthaContactSocial[];
-  footerLinks: AesthaContactFooterLink[];
-  /** Nhãn footer đang là trang hiện tại (tô nhạt) — khớp theo `label`. */
-  currentFooterLabel: string;
+  /** @deprecated Nav tách sang block `aestha_nav` — không còn render. */
+  footerLinks?: AesthaContactFooterLink[];
+  /** @deprecated Thay bằng `currentLabel` của block `aestha_nav`. */
+  currentFooterLabel?: string;
 }
 
 /** Một ảnh trong stack cột phải trang PROJECT — nguồn + alt. */
@@ -2020,7 +2038,11 @@ export interface AesthaProjectImage {
   alt: string;
 }
 
-/** Link nav trang PROJECT (Dự án / Studio / Liên hệ). */
+/**
+ * Link nav trang PROJECT (Dự án / Studio / Liên hệ).
+ *
+ * @deprecated Nav đã tách thành block riêng `aestha_nav`.
+ */
 export interface AesthaProjectNavLink {
   label: string;
   href: string;
@@ -2047,7 +2069,30 @@ export interface AesthaProjectContent {
   nextLabel: string;
   /** Link tới dự án tiếp theo. */
   nextHref: string;
-  navLinks: AesthaProjectNavLink[];
+  /** @deprecated Nav tách sang block `aestha_nav` — không còn render. */
+  navLinks?: AesthaProjectNavLink[];
+}
+
+/** Một mục nav Aestha — nhãn hiển thị + link. */
+export interface AesthaNavItem {
+  label: string;
+  href: string;
+}
+
+/**
+ * Aestha Nav: thanh điều hướng dùng chung của cả họ block Aestha (RAMSA),
+ * ghim cố định góc TRÁI DƯỚI (`fixed` ở `/p`, `absolute` trong device frame,
+ * in-flow trên canvas editor).
+ *
+ * Thay cho nav nội bộ mà `framer_aestha_editorial` / `aestha_explore` /
+ * `aestha_studio` / `aestha_contact` / `aestha_project` từng tự render. Mỗi
+ * trang thả 1 block.
+ *
+ * Không có khái niệm "trang hiện tại": mọi link hiển thị giống nhau (bản cũ
+ * tô mờ mục trùng `currentLabel` nhưng màu #E0DEDE gần như tàng hình).
+ */
+export interface AesthaNavContent {
+  navLinks: AesthaNavItem[];
 }
 
 /**
@@ -3229,6 +3274,7 @@ export type BlockContent =
   | AesthaStudioContent
   | AesthaContactContent
   | AesthaProjectContent
+  | AesthaNavContent
   | FramerEstanciaAboutUsContent
   | FramerPerformAboutContent
   | FramerPerformPricingContent
@@ -5634,6 +5680,24 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'trang chi tiết dự án: cột trái sticky (tiêu đề + mô tả) · cột phải stack ảnh cuộn, cuối trang đổi sang "dự án tiếp theo"',
     aiLabelEn:
       'project detail page: sticky left column (title + concept) · scrolling right image stack, swaps to "next project" at the end',
+  },
+  aestha_nav: {
+    type: 'aestha_nav',
+    category: 'navigation',
+    style: 'luxury',
+    tags: ['clone', 'framer', 'nav'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-27',
+    label: 'Aestha Nav',
+    accent: '#0F0F0F',
+    adminLabel: 'Nav (Aestha)',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Nav',
+    aiLabelVi:
+      'thanh nav Aestha ghim cố định góc trái dưới — dùng chung cho mọi trang RAMSA (Dự án / Studio / Liên hệ)',
+    aiLabelEn:
+      'Aestha nav pinned to the bottom-left corner — shared across all RAMSA pages (Projects / Studio / Contact)',
   },
   masterise_home_inside: {
     type: 'masterise_home_inside',

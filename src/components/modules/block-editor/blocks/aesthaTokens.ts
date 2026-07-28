@@ -21,8 +21,25 @@ export const INK = '#1A1A1A';
 export const INK_DARK = '#0F0F0F';
 export const MUTED_LABEL = '#555';
 export const MENU_IDLE = '#9C9C9C';
-export const FOOTER_CURRENT = '#E0DEDE';
+// `FOOTER_CURRENT` (#E0DEDE) đã bỏ cùng cơ chế tô mờ "trang hiện tại" của
+// `aestha_nav`: trên nền trắng nó gần như tàng hình, đọc ra như link bị mất.
 export const NEXT_IDLE = '#8A8A8A';
+
+/* ── Layout ────────────────────────────────────────────────────── */
+
+/**
+ * Chiều cao block `aestha_nav` chiếm ở đáy khung: 2 × padding
+ * (`clamp(16px, 2.2cqi, 32px)`) + 1 dòng link (`FOOTER_LINK_STYLE`,
+ * lineHeight 1.25 × fontSize `clamp(16px, 1.7cqi, 20px)`).
+ *
+ * Nav là overlay portal nên KHÔNG đẩy layout của section. Mỗi section phải tự
+ * chừa chỗ ở đáy bằng padding, nếu không nội dung sát đáy sẽ bị nav đè lên
+ * (bug đã gặp ở cột trái `FramerAesthaEditorial` — description dồn xuống đáy).
+ *
+ * `cqi` của nav tính theo container portal (device frame) còn của section tính
+ * theo block root — cả hai đều bằng bề rộng khung nên bám nhau.
+ */
+export const NAV_CLEARANCE = 'clamp(56px, 6.4cqi, 92px)';
 
 /* ── Easing ────────────────────────────────────────────────────── */
 
@@ -68,15 +85,8 @@ export const BODY_P_STYLE: React.CSSProperties = {
   margin: '0 0 16px',
 };
 
-export const NAV_LINK_STYLE: React.CSSProperties = {
-  fontFamily: BODY_FONT,
-  fontSize: 20,
-  lineHeight: '25px',
-  fontWeight: 400,
-  color: INK,
-  textDecoration: 'none',
-  transition: `color 250ms ${EASE_CROSSFADE}`,
-};
+// `NAV_LINK_STYLE` đã bỏ: nav tách thành block `aestha_nav`, dùng chung
+// `FOOTER_LINK_STYLE` bên dưới cho mọi link nav.
 
 export const MENU_LINK_STYLE: React.CSSProperties = {
   fontFamily: BODY_FONT,
@@ -87,9 +97,12 @@ export const MENU_LINK_STYLE: React.CSSProperties = {
   transition: `color 250ms ${EASE_CROSSFADE}`,
 };
 
+/** Link nav — nguồn duy nhất cho block `aestha_nav`. */
 export const FOOTER_LINK_STYLE: React.CSSProperties = {
   fontFamily: BODY_FONT,
-  fontSize: 20,
+  // Thống nhất mọi link nav họ Aestha — trước đây mỗi block một giá trị
+  // (20 cố định / clamp 12→20 / clamp 16→20).
+  fontSize: 'clamp(16px, 1.7cqi, 20px)',
   lineHeight: 1.25,
   fontWeight: 400,
   color: INK,

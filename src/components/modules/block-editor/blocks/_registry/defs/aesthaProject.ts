@@ -1,7 +1,7 @@
 /**
  * BlockDef cho `aestha_project` — trang chi tiết dự án (cùng site RAMSA/Aestha
  * với `aestha_explore` / `aestha_studio` / `aestha_contact`). Cột trái sticky
- * (tiêu đề + nhãn "Concept" + đoạn mô tả + nav) · cột phải stack ảnh cuộn dọc;
+ * (tiêu đề + nhãn "Concept" + đoạn mô tả) · cột phải stack ảnh cuộn dọc;
  * cuối stack panel "Concept" crossfade sang "See next project". Narrow (<900px):
  * xếp 1 cột. Port từ `ProjectView` trong `apps/real-estate/src/AesthaDemoPage.tsx`.
  * Path A registry.
@@ -10,11 +10,7 @@ import { ImageIcon, Link2, Pilcrow, Type } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { LayerElement } from '../../../LayersPanel';
-import type {
-  AesthaProjectContent,
-  AesthaProjectImage,
-  AesthaProjectNavLink,
-} from '../../../types';
+import type { AesthaProjectContent, AesthaProjectImage } from '../../../types';
 import type { BlockDef } from '../types';
 
 // Ảnh stack — giữ CDN framerusercontent.com theo asset rule của skill.
@@ -37,17 +33,8 @@ const IMAGES: AesthaProjectImage[] = [
   },
 ];
 
-const NAV_LINKS_VI: AesthaProjectNavLink[] = [
-  { label: 'Dự án', href: '/projects' },
-  { label: 'Studio', href: '/studio' },
-  { label: 'Liên hệ', href: '/contact' },
-];
-
-const NAV_LINKS_EN: AesthaProjectNavLink[] = [
-  { label: 'Projects', href: '/projects' },
-  { label: 'Studio', href: '/studio' },
-  { label: 'Contact', href: '/contact' },
-];
+// Nav (`navLinks`) đã tách sang block `aestha_nav` — không seed nữa; field chỉ
+// còn optional để blueprint cũ không vỡ.
 
 const BODY_VI = [
   'Epictower là tổ hợp căn hộ cao cấp tại trung tâm Cầu Giấy — 45 tầng, 4 block, 500+ căn hộ đa dạng từ 1 phòng ngủ đến penthouse duplex.',
@@ -68,8 +55,7 @@ const VI: AesthaProjectContent = {
   images: IMAGES,
   nextHeading: 'Dự án tiếp theo',
   nextLabel: 'Kiến trúc',
-  nextHref: '/projects/kien-truc',
-  navLinks: NAV_LINKS_VI,
+  nextHref: '',
 };
 
 const EN: AesthaProjectContent = {
@@ -79,8 +65,7 @@ const EN: AesthaProjectContent = {
   images: IMAGES,
   nextHeading: 'See next project',
   nextLabel: 'Architecture',
-  nextHref: '/projects/architecture',
-  navLinks: NAV_LINKS_EN,
+  nextHref: '',
 };
 
 /**
@@ -118,27 +103,8 @@ export const aesthaProjectImageElements = (
     },
   ]);
 
-/** Nav trang project — mảng động, expand `navLinks[i]`. */
-export const aesthaProjectNavLinkElements = (
-  links: AesthaProjectNavLink[]
-): LayerElement[] =>
-  links.flatMap((_, i) => [
-    {
-      key: `navLinks[${i}].label`,
-      label: 'Nhãn',
-      groupId: `nav${i}`,
-      groupLabel: `Nav ${i + 1}`,
-      icon: Type,
-      fieldType: 'text' as const,
-    },
-    {
-      key: `navLinks[${i}].href`,
-      label: 'Link',
-      groupId: `nav${i}`,
-      icon: Link2,
-      fieldType: 'text' as const,
-    },
-  ]);
+// `aesthaProjectNavLinkElements` đã bỏ cùng lúc nav tách thành block riêng
+// `aestha_nav` (xem `defs/aesthaNav.ts`).
 
 export const aesthaProjectDef: BlockDef<AesthaProjectContent> = {
   type: 'aestha_project',
@@ -164,7 +130,7 @@ export const aesthaProjectDef: BlockDef<AesthaProjectContent> = {
     import('../../AesthaProject').then(m => m.AesthaProject)
   ),
   defaultContent: { vi: VI, en: EN },
-  // Phần tĩnh. `body` / `images` / `navLinks` được LayersPanel expand động qua
+  // Phần tĩnh. `body` / `images` được LayersPanel expand động qua
   // các helper trên — xem branch `aestha_project` ở đó.
   elements: [
     { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
@@ -194,7 +160,7 @@ export const aesthaProjectDef: BlockDef<AesthaProjectContent> = {
       label: 'Link',
       groupId: 'next',
       icon: Link2,
-      fieldType: 'text',
+      fieldType: 'link',
     },
   ],
 };

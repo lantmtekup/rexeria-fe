@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
-import type { LayerElement } from '../../../LayersPanel';
 import type { FramerAesthaEditorialContent } from '../../../types';
 import type { BlockDef } from '../types';
 
@@ -29,12 +28,11 @@ const VI: FramerAesthaEditorialContent = {
   image3Url:
     'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80',
   ctaText: 'KHÁM PHÁ THÊM',
-  ctaHref: '/projects',
-  navLinks: [
-    { label: 'Dự án', href: '/projects' },
-    { label: 'Studio', href: '/studio' },
-    { label: 'Liên hệ', href: '/contact' },
-  ],
+  // `href` để RỖNG có chủ đích — KHÔNG điền path demo (`/projects/…`): path đó
+  // 404 trên site public (path thật là `/p/{rootSlug}/{slug}`). Author gán link
+  // qua link-picker của toolbar (`fieldType: 'link'`), hỗ trợ 3 case: cuộn tới
+  // section · mở tab mới (URL ngoài) · chuyển trang trong template.
+  ctaHref: '',
 };
 
 const EN: FramerAesthaEditorialContent = {
@@ -50,39 +48,11 @@ const EN: FramerAesthaEditorialContent = {
   image3Url:
     'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=80',
   ctaText: 'EXPLORE MORE',
-  ctaHref: '/projects',
-  navLinks: [
-    { label: 'Projects', href: '/projects' },
-    { label: 'Studio', href: '/studio' },
-    { label: 'Contact', href: '/contact' },
-  ],
+  ctaHref: '',
 };
 
-/**
- * Nav link là mảng động → không biểu diễn được trong `elements` tĩnh.
- * `LayersPanel.elementsForType` gọi helper này để expand `navLinks[i]`
- * (pattern `delvauxSubnavLinkElements`).
- */
-export const aesthaNavLinkElements = (
-  links: Array<{ label: string; href: string }>
-): LayerElement[] =>
-  links.flatMap((_, i) => [
-    {
-      key: `navLinks[${i}].label`,
-      label: 'Nhãn',
-      groupId: `nav${i}`,
-      groupLabel: `Nav ${i + 1}`,
-      icon: Type,
-      fieldType: 'text' as const,
-    },
-    {
-      key: `navLinks[${i}].href`,
-      label: 'Link',
-      groupId: `nav${i}`,
-      icon: Link2,
-      fieldType: 'text' as const,
-    },
-  ]);
+// `aesthaNavLinkElements` đã chuyển sang `defs/aesthaNav.ts` cùng lúc nav tách
+// thành block riêng `aestha_nav`.
 
 export const framerAesthaEditorialDef: BlockDef<FramerAesthaEditorialContent> =
   {
@@ -109,8 +79,7 @@ export const framerAesthaEditorialDef: BlockDef<FramerAesthaEditorialContent> =
       import('../../FramerAesthaEditorial').then(m => m.FramerAesthaEditorial)
     ),
     defaultContent: { vi: VI, en: EN },
-    // Phần tĩnh. `navLinks` được LayersPanel expand động qua
-    // `aesthaNavLinkElements` — xem branch `framer_aestha_editorial` ở đó.
+    // Không còn mảng động nào → LayersPanel dùng thẳng fallback registry.
     elements: [
       { key: 'brand', label: 'Brand', icon: Type, fieldType: 'text' },
       // `scrollLabel` còn trong content type + default nhưng block KHÔNG render
@@ -138,7 +107,7 @@ export const framerAesthaEditorialDef: BlockDef<FramerAesthaEditorialContent> =
         label: 'Link CTA',
         groupId: 'cta',
         icon: Link2,
-        fieldType: 'text',
+        fieldType: 'link',
       },
     ],
   };

@@ -23,7 +23,6 @@ import { cn } from '@/lib/cn';
 
 import type {
   AesthaStudioContent,
-  AesthaStudioFooterLink,
   AesthaStudioMember,
   BlockBackground,
   ElementPositionsMap,
@@ -38,7 +37,9 @@ import {
   selectableClass,
 } from './applyStyle';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { NAV_CLEARANCE } from './aesthaTokens';
 import { useContainerMobile } from './useContainerMobile';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface AesthaStudioProps {
   content: AesthaStudioContent;
@@ -57,7 +58,6 @@ const FONT =
 
 const INK = '#0F0F0F';
 const MUTED = '#4F4F4F';
-const FOOTER_CURRENT = '#E0DEDE';
 
 const WORDMARK_STYLE: React.CSSProperties = {
   fontFamily: FONT,
@@ -91,14 +91,7 @@ const MEMBER_ROLE_STYLE: React.CSSProperties = {
   color: MUTED,
 };
 
-const FOOTER_LINK_STYLE: React.CSSProperties = {
-  fontFamily: FONT,
-  fontSize: 'clamp(12px, 1.7cqi, 20px)',
-  lineHeight: 1.25,
-  fontWeight: 400,
-  color: INK,
-  textDecoration: 'none',
-};
+/* Nav đã tách thành block riêng `aestha_nav` (overlay góc trái dưới). */
 
 /**
  * Cursor-dot bám con trỏ có độ trễ mượt. Đặt `absolute` TRONG section wide
@@ -169,17 +162,9 @@ export function AesthaStudio({
 
   const isNarrow = useContainerMobile(rootRef, 1200);
 
-  // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play/`/p`.
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play/`/p`. Hook default `false`
+  // để SSR `/p` render đúng nhánh production ngay (không nháy layout editor).
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const [reduce, setReduce] = React.useState(false);
   React.useLayoutEffect(() => {
@@ -225,11 +210,6 @@ export function AesthaStudio({
 
   const team: AesthaStudioMember[] = Array.isArray(content.team)
     ? content.team
-    : [];
-  const footerLinks: AesthaStudioFooterLink[] = Array.isArray(
-    content.footerLinks
-  )
-    ? content.footerLinks
     : [];
 
   /**
@@ -309,36 +289,6 @@ export function AesthaStudio({
     </ul>
   );
 
-  const footerNav = (extraClass: string) => (
-    <nav
-      aria-label='Sections'
-      className={cn('flex items-center gap-6', extraClass)}
-    >
-      {footerLinks.map((link, i) => {
-        const isCurrent = link.label === content.currentFooterLabel;
-        return (
-          <a
-            key={i}
-            href={link.href}
-            aria-current={isCurrent ? 'page' : undefined}
-            data-element-key={`footerLinks[${i}].label`}
-            style={composeStyle(
-              FOOTER_LINK_STYLE,
-              isCurrent ? { color: FOOTER_CURRENT } : undefined,
-              styleOf(`footerLinks[${i}].label`)
-            )}
-            className={selectableClass(
-              activeKey === `footerLinks[${i}].label`,
-              isCurrent ? undefined : 'hover:opacity-70'
-            )}
-          >
-            {link.label}
-          </a>
-        );
-      })}
-    </nav>
-  );
-
   const imageBox = (wrapClass: string, wrapStyle: React.CSSProperties) => (
     <div
       className={cn('aestha-studio-image relative overflow-hidden', wrapClass)}
@@ -379,8 +329,12 @@ export function AesthaStudio({
       )}
     >
       {isNarrow ? (
-        /* ── Narrow: xếp dọc ── */
-        <section className='flex h-full w-full flex-col px-4 pt-4 pb-5'>
+        /* ── Narrow: xếp dọc. `paddingBottom` chừa chỗ cho block `aestha_nav`
+           overlay (nav portal ra ngoài block nên không tự đẩy ảnh lên). ── */
+        <section
+          className='flex h-full w-full flex-col px-4 pt-4'
+          style={{ paddingBottom: `calc(20px + ${NAV_CLEARANCE})` }}
+        >
           <div className='aestha-studio-content'>
             {wordmark('mb-2')}
             {bio('mb-4')}
@@ -388,8 +342,6 @@ export function AesthaStudio({
           </div>
 
           {imageBox('w-full', { aspectRatio: '358 / 372' })}
-
-          {footerNav('mt-auto pt-6')}
         </section>
       ) : (
         /* ── Wide: full-viewport, cột trái nội dung · ảnh phải ── */
@@ -413,8 +365,6 @@ export function AesthaStudio({
                 gap: 16,
                 width: 'min(380px, 32cqi)',
               })}
-
-              {footerNav('absolute bottom-0 left-0')}
             </div>
 
             {/* Cột phải: ảnh portrait cố định ~448px, full-height */}

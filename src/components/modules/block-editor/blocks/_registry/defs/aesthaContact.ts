@@ -10,11 +10,7 @@ import { AtSign, ImageIcon, Link2, MapPin, Phone, Type } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { LayerElement } from '../../../LayersPanel';
-import type {
-  AesthaContactContent,
-  AesthaContactFooterLink,
-  AesthaContactSocial,
-} from '../../../types';
+import type { AesthaContactContent, AesthaContactSocial } from '../../../types';
 import type { BlockDef } from '../types';
 
 // Ảnh hero (tòa nhà NYC) — giữ nguyên CDN URL của bản gốc (asset rule của skill).
@@ -31,18 +27,8 @@ const SOCIALS: AesthaContactSocial[] = [
   { label: 'LinkedIn', href: 'https://www.linkedin.com' },
 ];
 
-const FOOTER_LINKS_VI: AesthaContactFooterLink[] = [
-  { label: 'Dự án', href: '/projects' },
-  { label: 'Studio', href: '/studio' },
-  { label: 'Liên hệ', href: '/contact' },
-];
-
-const FOOTER_LINKS_EN: AesthaContactFooterLink[] = [
-  { label: 'Projects', href: '/projects' },
-  { label: 'Studio', href: '/studio' },
-  { label: 'Contact', href: '/contact' },
-];
-
+// Nav (`footerLinks` / `currentFooterLabel`) đã tách sang block `aestha_nav`
+// — không seed nữa; field chỉ còn optional để blueprint cũ không vỡ.
 const VI: AesthaContactContent = {
   heading: 'CONTACT',
   address: ADDRESS,
@@ -51,8 +37,6 @@ const VI: AesthaContactContent = {
   imageUrl: HERO_IMG,
   imageAlt: 'RAMSA — kiến trúc tháp trên nền Central Park, New York',
   socials: SOCIALS,
-  footerLinks: FOOTER_LINKS_VI,
-  currentFooterLabel: 'Liên hệ',
 };
 
 const EN: AesthaContactContent = {
@@ -63,8 +47,6 @@ const EN: AesthaContactContent = {
   imageUrl: HERO_IMG,
   imageAlt: 'RAMSA — tower architecture over Central Park, New York',
   socials: SOCIALS,
-  footerLinks: FOOTER_LINKS_EN,
-  currentFooterLabel: 'Contact',
 };
 
 /**
@@ -89,29 +71,7 @@ export const aesthaContactSocialElements = (
       label: 'Link',
       groupId: `soc${i}`,
       icon: Link2,
-      fieldType: 'text' as const,
-    },
-  ]);
-
-/** Footer nav — mảng động, expand `footerLinks[i]`. */
-export const aesthaContactFooterLinkElements = (
-  links: AesthaContactFooterLink[]
-): LayerElement[] =>
-  links.flatMap((_, i) => [
-    {
-      key: `footerLinks[${i}].label`,
-      label: 'Nhãn',
-      groupId: `foot${i}`,
-      groupLabel: `Footer ${i + 1}`,
-      icon: Type,
-      fieldType: 'text' as const,
-    },
-    {
-      key: `footerLinks[${i}].href`,
-      label: 'Link',
-      groupId: `foot${i}`,
-      icon: Link2,
-      fieldType: 'text' as const,
+      fieldType: 'link' as const,
     },
   ]);
 
@@ -131,16 +91,16 @@ export const aesthaContactDef: BlockDef<AesthaContactContent> = {
     gradient: 'from-neutral-700 to-neutral-900',
     defaultName: 'Contact',
     aiLabelVi:
-      'trang CONTACT: heading + địa chỉ + email/phone + social + ảnh hero + footer nav',
+      'trang CONTACT: heading + địa chỉ + email/phone + social + ảnh hero',
     aiLabelEn:
-      'CONTACT page: heading + address + email/phone + socials + hero image + footer nav',
+      'CONTACT page: heading + address + email/phone + socials + hero image',
   },
   component: dynamic(() =>
     import('../../AesthaContact').then(m => m.AesthaContact)
   ),
   defaultContent: { vi: VI, en: EN },
-  // Phần tĩnh. `socials` + `footerLinks` được LayersPanel expand động qua các
-  // helper trên — xem branch `aestha_contact` ở đó.
+  // Phần tĩnh. `socials` được LayersPanel expand động qua helper trên —
+  // xem branch `aestha_contact` ở đó.
   elements: [
     { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
     { key: 'address', label: 'Địa chỉ', icon: MapPin, fieldType: 'textarea' },

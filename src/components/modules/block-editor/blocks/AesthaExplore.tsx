@@ -9,6 +9,10 @@
  * Cursor-dot theo con trỏ. KHÔNG cuộn trang.
  * Narrow (<1100px, tablet + mobile): 1 dự án/màn, vuốt trái/phải để duyệt.
  *
+ * Click một dự án (menu wide · ảnh featured · thẻ narrow) LUÔN mở view chi tiết
+ * NỘI BỘ (`view = 'project'` → render `AesthaProject`), không điều hướng theo
+ * `projects[i].href`. Field `href` giữ lại trong CMS nhưng block không đọc.
+ *
  * Motion contract: entrance qua `useBlockMotion` (GSAP), crossfade bằng CSS
  * opacity, vuốt mobile bằng pointer thuần — KHÔNG dùng framer-motion.
  * `min-[1100px]:` viewport media → `useContainerMobile(rootRef, 1100)` (đo
@@ -23,10 +27,8 @@ import { cn } from '@/lib/cn';
 
 import type {
   AesthaExploreContent,
-  AesthaExploreFooterLink,
   AesthaExploreProject,
   AesthaProjectContent,
-  AesthaProjectNavLink,
   BlockBackground,
   ElementPositionsMap,
   ElementStylesMap,
@@ -47,14 +49,12 @@ import { useIsCanvasEdit } from './useIsCanvasEdit';
 import {
   BODY_FONT,
   EASE_CROSSFADE,
-  FOOTER_CURRENT,
-  FOOTER_LINK_STYLE,
   HEADING_STYLE,
   INK_DARK,
   MENU_IDLE,
   MENU_LINK_STYLE,
+  NAV_CLEARANCE,
 } from './aesthaTokens';
-
 // Lazy-load AesthaProject to avoid circular deps
 const AesthaProject = dynamic(() =>
   import('./AesthaProject').then(m => m.AesthaProject)
@@ -173,23 +173,19 @@ function ArrowUpRight() {
  * Build AesthaProjectContent from an explore project + surrounding context.
  * Nội dung chi tiết do chính block `aestha_explore` sở hữu qua `project.detail`
  * (body/images), luôn được seed từ BlockDef → không cần bịa placeholder.
- * `navLinks` map từ `footerLinks`; `next*` suy ra từ dự án kế tiếp.
+ * `next*` suy ra từ dự án kế tiếp.
+ *
+ * Nav KHÔNG còn dựng ở đây: đã tách sang block `aestha_nav` (overlay góc trái
+ * dưới, phủ lên mọi section).
  */
 function buildProjectContent(
   project: AesthaExploreProject,
   projectIndex: number,
-  allProjects: AesthaExploreProject[],
-  footerLinks: AesthaExploreFooterLink[]
+  allProjects: AesthaExploreProject[]
 ): AesthaProjectContent {
   const detail = project.detail;
   const body = Array.isArray(detail?.body) ? detail!.body! : [];
   const images = Array.isArray(detail?.images) ? detail!.images! : [];
-
-  // Build nav links from footer links (key `navLinks[i]` ↔ `footerLinks[i]`).
-  const navLinks: AesthaProjectNavLink[] = footerLinks.map(link => ({
-    label: link.label,
-    href: link.href,
-  }));
 
   // Build next project info
   const nextIndex = allProjects.length
@@ -205,7 +201,6 @@ function buildProjectContent(
     nextHeading: 'Dự án tiếp theo',
     nextLabel: nextProject?.label ?? '',
     nextHref: nextProject?.href || '#',
-    navLinks,
   };
 }
 
@@ -221,8 +216,6 @@ function keyForProject(p: number): (localKey: string) => string {
     if (bodyM) return `projects[${p}].detail.body[${bodyM[1]}]`;
     const imgM = localKey.match(/^images\[(\d+)\]\.src$/);
     if (imgM) return `projects[${p}].detail.images[${imgM[1]}].src`;
-    const navM = localKey.match(/^navLinks\[(\d+)\]\.label$/);
-    if (navM) return `footerLinks[${navM[1]}].label`;
     return localKey;
   };
 }
@@ -319,11 +312,6 @@ export function AesthaExplore({
 
   const projects: AesthaExploreProject[] = Array.isArray(content.projects)
     ? content.projects
-    : [];
-  const footerLinks: AesthaExploreFooterLink[] = Array.isArray(
-    content.footerLinks
-  )
-    ? content.footerLinks
     : [];
 
   // Chỉ số dự án đang được chọn trên canvas (Layers) → hiện ảnh tương ứng để sửa.
@@ -502,35 +490,43 @@ export function AesthaExplore({
     </h1>
   );
 
-  const footerNav = (extraClass: string) => (
-    <nav
-      aria-label='Sections'
-      className={cn('flex items-center gap-6', extraClass)}
+  /* Ảnh featured (wide) — tách khỏi JSX để `<button>` và `<a>` dùng chung, hai
+     nhánh không thể lệch style/marker GSAP `aestha-explore-featured`. */
+  const featuredShared = {
+    'aria-label': `View ${projects[wideIndex]?.label} project`,
+    className:
+      'aestha-explore-featured relative shrink-0 cursor-pointer overflow-hidden border-none bg-transparent p-0',
+    style: { width: 'calc((100cqw - 96px) * 0.4737)' },
+  };
+
+  const featuredImages = projects.map((p, i) => (
+    <div
+      key={i}
+      data-element-key={`projects[${i}].img`}
+      aria-hidden={wideIndex !== i}
+      style={composeStyle(
+        {
+          position: 'absolute',
+          inset: 0,
+          opacity: wideIndex === i ? 1 : 0,
+          pointerEvents: wideIndex === i ? 'auto' : 'none',
+        },
+        CROSSFADE,
+        styleOf(`projects[${i}].img`)
+      )}
+      className={selectableClass(activeKey === `projects[${i}].img`)}
     >
-      {footerLinks.map((link, i) => {
-        const isCurrent = link.label === content.currentFooterLabel;
-        return (
-          <a
-            key={i}
-            href={link.href}
-            aria-current={isCurrent ? 'page' : undefined}
-            data-element-key={`footerLinks[${i}].label`}
-            style={composeStyle(
-              FOOTER_LINK_STYLE,
-              isCurrent ? { color: FOOTER_CURRENT } : undefined,
-              styleOf(`footerLinks[${i}].label`)
-            )}
-            className={selectableClass(
-              activeKey === `footerLinks[${i}].label`,
-              isCurrent ? undefined : 'hover:opacity-70'
-            )}
-          >
-            {link.label}
-          </a>
-        );
-      })}
-    </nav>
-  );
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={p.img || MENU_IMG_FALLBACK}
+        alt={p.alt || 'Project image'}
+        draggable={false}
+        fetchPriority={i === 0 ? 'high' : 'auto'}
+        loading={i === 0 ? 'eager' : 'lazy'}
+        className='h-full w-full object-cover transition-transform duration-500 will-change-transform select-none hover:scale-[1.03]'
+      />
+    </div>
+  ));
 
   return (
     <div
@@ -548,8 +544,7 @@ export function AesthaExplore({
           content={buildProjectContent(
             projects[activeProjectIdx],
             activeProjectIdx,
-            projects,
-            footerLinks
+            projects
           )}
           styles={styles}
           background={background}
@@ -576,8 +571,12 @@ export function AesthaExplore({
           })}
         >
           {isNarrow ? (
-            /* ── Narrow: 1 dự án/màn, vuốt để chuyển ── */
-            <section className='flex h-full w-full flex-col px-6 pt-6 pb-6'>
+            /* ── Narrow: 1 dự án/màn, vuốt để chuyển. `paddingBottom` chừa chỗ
+               cho block `aestha_nav` overlay (nhãn dự án nằm sát đáy). ── */
+            <section
+              className='flex h-full w-full flex-col px-6 pt-6'
+              style={{ paddingBottom: `calc(24px + ${NAV_CLEARANCE})` }}
+            >
               {heading('mb-4 shrink-0')}
 
               <div
@@ -593,6 +592,8 @@ export function AesthaExplore({
                 onClick={() => {
                   // Tap (không kéo) → mở chi tiết dự án ĐANG ở giữa. Đặt onClick ở
                   // container (phần tử giữ pointer capture) để click luôn nổ.
+                  // `projects[i].href` KHÔNG được dùng để điều hướng: click luôn
+                  // mở view chi tiết nội bộ của chính block này.
                   if (isCanvas || dragMoved.current) return;
                   setActiveProjectIdx(columns[centerCol]?.real ?? 0);
                   setView('project');
@@ -676,8 +677,6 @@ export function AesthaExplore({
                   ))}
                 </div>
               </div>
-
-              {footerNav('mt-4 shrink-0')}
             </section>
           ) : (
             /* ── Wide: hover-swap full-viewport ── */
@@ -696,6 +695,8 @@ export function AesthaExplore({
                     aria-label='Projects'
                     className='absolute top-1/2 right-0 flex -translate-y-1/2 flex-col items-end'
                   >
+                    {/* Click LUÔN mở view chi tiết nội bộ — `projects[i].href`
+                        không dùng để điều hướng. */}
                     {projects.map((p, i) => (
                       <button
                         key={i}
@@ -724,52 +725,20 @@ export function AesthaExplore({
                       </button>
                     ))}
                   </nav>
-
-                  {footerNav('absolute bottom-0 left-0')}
                 </div>
 
-                {/* Cột phải: ảnh featured ~47.37% — crossfade theo dự án active */}
+                {/* Cột phải: ảnh featured ~47.37% — crossfade theo dự án active.
+                    Cùng quy tắc với menu: click mở view chi tiết nội bộ. */}
                 <button
                   type='button'
-                  aria-label={`View ${projects[wideIndex]?.label} project`}
-                  className='aestha-explore-featured relative shrink-0 cursor-pointer overflow-hidden border-none bg-transparent p-0'
-                  style={{ width: 'calc((100cqw - 96px) * 0.4737)' }}
+                  {...featuredShared}
                   onClick={() => {
                     if (isCanvas) return;
                     setActiveProjectIdx(wideIndex);
                     setView('project');
                   }}
                 >
-                  {projects.map((p, i) => (
-                    <div
-                      key={i}
-                      data-element-key={`projects[${i}].img`}
-                      aria-hidden={wideIndex !== i}
-                      style={composeStyle(
-                        {
-                          position: 'absolute',
-                          inset: 0,
-                          opacity: wideIndex === i ? 1 : 0,
-                          pointerEvents: wideIndex === i ? 'auto' : 'none',
-                        },
-                        CROSSFADE,
-                        styleOf(`projects[${i}].img`)
-                      )}
-                      className={selectableClass(
-                        activeKey === `projects[${i}].img`
-                      )}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={p.img || MENU_IMG_FALLBACK}
-                        alt={p.alt || 'Project image'}
-                        draggable={false}
-                        fetchPriority={i === 0 ? 'high' : 'auto'}
-                        loading={i === 0 ? 'eager' : 'lazy'}
-                        className='h-full w-full object-cover transition-transform duration-500 will-change-transform select-none hover:scale-[1.03]'
-                      />
-                    </div>
-                  ))}
+                  {featuredImages}
                 </button>
               </div>
             </section>
@@ -787,8 +756,7 @@ export function AesthaExplore({
             content={buildProjectContent(
               projects[activeProjIdx ?? 0],
               activeProjIdx ?? 0,
-              projects,
-              footerLinks
+              projects
             )}
             styles={styles}
             order={order}

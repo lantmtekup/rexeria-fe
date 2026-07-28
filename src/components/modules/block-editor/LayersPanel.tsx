@@ -73,19 +73,10 @@ import { mintVaultCraftItemElements } from './blocks/mintVaultCraftElements';
 import { mintVaultInvitationImageElements } from './blocks/mintVaultInvitationElements';
 import { mintVaultRevealImageElements } from './blocks/mintVaultRevealElements';
 import { pnjStickyMenuItemElements } from './blocks/_registry/defs/pnjStickyMenu';
-import { aesthaNavLinkElements } from './blocks/_registry/defs/framerAesthaEditorial';
-import {
-  aesthaExploreFooterLinkElements,
-  aesthaExploreProjectElements,
-} from './blocks/_registry/defs/aesthaExplore';
-import {
-  aesthaStudioFooterLinkElements,
-  aesthaStudioTeamElements,
-} from './blocks/_registry/defs/aesthaStudio';
-import {
-  aesthaContactFooterLinkElements,
-  aesthaContactSocialElements,
-} from './blocks/_registry/defs/aesthaContact';
+import { aesthaNavLinkElements } from './blocks/_registry/defs/aesthaNav';
+import { aesthaExploreProjectElements } from './blocks/_registry/defs/aesthaExplore';
+import { aesthaStudioTeamElements } from './blocks/_registry/defs/aesthaStudio';
+import { aesthaContactSocialElements } from './blocks/_registry/defs/aesthaContact';
 import { delvauxSubnavLinkElements } from './blocks/_registry/defs/delvauxSubnav';
 import { getBlockDef } from './blocks/_registry/registry';
 import {
@@ -1313,21 +1304,12 @@ export function elementsForType(
           p => p && typeof p === 'object'
         )
       : [];
-    const rawFooter = content?.footerLinks;
-    const footerLinks = Array.isArray(rawFooter)
-      ? (rawFooter as Array<{ label?: string }>).filter(
-          l => l && typeof l === 'object'
-        )
-      : [];
+    // `footerLinks` cố ý KHÔNG expand: nav đã tách sang block `aestha_nav`.
     return [
       BACKGROUND_LAYER,
       ...(def?.elements ?? []),
       ...aesthaExploreProjectElements(projects as AesthaExploreProject[]),
       { key: 'projects', label: 'Thêm / quản lý dự án', icon: ListChecks },
-      ...aesthaExploreFooterLinkElements(
-        footerLinks as Array<{ label: string; href: string }>
-      ),
-      { key: 'footerLinks', label: 'Thêm / quản lý footer', icon: ListChecks },
     ];
   }
   if (type === 'aestha_studio') {
@@ -1337,12 +1319,7 @@ export function elementsForType(
           m => m && typeof m === 'object'
         )
       : [];
-    const rawFooter = content?.footerLinks;
-    const footerLinks = Array.isArray(rawFooter)
-      ? (rawFooter as Array<{ label?: string }>).filter(
-          l => l && typeof l === 'object'
-        )
-      : [];
+    // `footerLinks` cố ý KHÔNG expand: nav đã tách sang block `aestha_nav`.
     return [
       BACKGROUND_LAYER,
       ...(def?.elements ?? []),
@@ -1350,10 +1327,6 @@ export function elementsForType(
         team as Array<{ name: string; role: string }>
       ),
       { key: 'team', label: 'Thêm / quản lý team', icon: ListChecks },
-      ...aesthaStudioFooterLinkElements(
-        footerLinks as Array<{ label: string; href: string }>
-      ),
-      { key: 'footerLinks', label: 'Thêm / quản lý footer', icon: ListChecks },
     ];
   }
   if (type === 'aestha_contact') {
@@ -1363,12 +1336,7 @@ export function elementsForType(
           s => s && typeof s === 'object'
         )
       : [];
-    const rawFooter = content?.footerLinks;
-    const footerLinks = Array.isArray(rawFooter)
-      ? (rawFooter as Array<{ label?: string }>).filter(
-          l => l && typeof l === 'object'
-        )
-      : [];
+    // `footerLinks` cố ý KHÔNG expand: nav đã tách sang block `aestha_nav`.
     return [
       BACKGROUND_LAYER,
       ...(def?.elements ?? []),
@@ -1376,13 +1344,11 @@ export function elementsForType(
         socials as Array<{ label: string; href: string }>
       ),
       { key: 'socials', label: 'Thêm / quản lý social', icon: ListChecks },
-      ...aesthaContactFooterLinkElements(
-        footerLinks as Array<{ label: string; href: string }>
-      ),
-      { key: 'footerLinks', label: 'Thêm / quản lý footer', icon: ListChecks },
     ];
   }
-  if (type === 'framer_aestha_editorial') {
+  // `framer_aestha_editorial` KHÔNG còn branch riêng: nav đã tách sang
+  // `aestha_nav`, block hết mảng động → rơi về fallback registry ở cuối hàm.
+  if (type === 'aestha_nav') {
     const raw = content?.navLinks;
     const links = Array.isArray(raw)
       ? (raw as Array<{ label: string; href: string }>).filter(

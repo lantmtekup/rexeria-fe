@@ -36,7 +36,10 @@ import {
   selectableClass,
 } from './applyStyle';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useAesthaLink } from './aesthaLink';
+import { NAV_CLEARANCE } from './aesthaTokens';
 import { useContainerMobile } from './useContainerMobile';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface AesthaContactProps {
   content: AesthaContactContent;
@@ -55,7 +58,6 @@ const FONT =
 
 const INK = '#0F0F0F';
 const MUTED = '#4F4F4F';
-const FOOTER_CURRENT = '#E0DEDE';
 
 const HEADING_STYLE: React.CSSProperties = {
   fontFamily: FONT,
@@ -85,14 +87,7 @@ const CONTACT_LINK_STYLE: React.CSSProperties = {
   textDecoration: 'none',
 };
 
-const FOOTER_LINK_STYLE: React.CSSProperties = {
-  fontFamily: FONT,
-  fontSize: 'clamp(16px, 1.7cqi, 20px)',
-  lineHeight: 1.25,
-  fontWeight: 400,
-  color: INK,
-  textDecoration: 'none',
-};
+/* Nav đã tách thành block riêng `aestha_nav` (overlay góc trái dưới). */
 
 /**
  * Cursor-dot bám con trỏ có độ trễ mượt. Đặt `absolute` TRONG section wide
@@ -160,20 +155,13 @@ export function AesthaContact({
   const rootRef = React.useRef<HTMLDivElement>(null);
   const wideRef = React.useRef<HTMLElement>(null);
   const { hasRoot } = useLandingMotion();
+  const linkProps = useAesthaLink();
 
   const isNarrow = useContainerMobile(rootRef, 1100);
 
-  // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play/`/p`.
-  const [isCanvas, setIsCanvas] = React.useState(true);
-  React.useLayoutEffect(() => {
-    if (!hasRoot) {
-      setIsCanvas(false);
-      return;
-    }
-    setIsCanvas(
-      !!rootRef.current?.closest('[data-testid="active-block-preview"]')
-    );
-  }, [hasRoot]);
+  // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play/`/p`. Hook default `false`
+  // để SSR `/p` render đúng nhánh production ngay (không nháy layout editor).
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const [reduce, setReduce] = React.useState(false);
   React.useLayoutEffect(() => {
@@ -219,9 +207,6 @@ export function AesthaContact({
 
   const socials: AesthaContactSocial[] = Array.isArray(content.socials)
     ? content.socials
-    : [];
-  const footerLinks = Array.isArray(content.footerLinks)
-    ? content.footerLinks
     : [];
 
   /**
@@ -277,18 +262,19 @@ export function AesthaContact({
     </p>
   );
 
-  /** Link liên hệ — không gạch chân mặc định, hover/focus mới gạch chân. */
-  const contactLink = (
-    key: string,
-    href: string,
-    label: string,
-    external?: boolean
-  ) => (
+  /**
+   * Link liên hệ — không gạch chân mặc định, hover/focus mới gạch chân.
+   *
+   * Hành vi (tab mới / chuyển trang / cuộn tới section) suy ra từ CHÍNH giá trị
+   * href qua `useAesthaLink`, không truyền cờ `external` thủ công nữa:
+   * `mailto:`/`tel:` → cùng tab; social `https://` → tab mới; author đổi social
+   * thành section id thì cuộn.
+   */
+  const contactLink = (key: string, href: string, label: string) => (
     <a
       key={key}
-      href={href}
+      {...linkProps(href)}
       data-element-key={key}
-      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
       style={composeStyle(CONTACT_LINK_STYLE, styleOf(key))}
       className={selectableClass(
         activeKey === key,
@@ -311,7 +297,7 @@ export function AesthaContact({
       </div>
       <div className='flex flex-col items-end gap-1'>
         {socials.map((s, i) =>
-          contactLink(`socials[${i}].label`, s.href, s.label, true)
+          contactLink(`socials[${i}].label`, s.href, s.label)
         )}
       </div>
     </div>
@@ -342,36 +328,6 @@ export function AesthaContact({
     </div>
   );
 
-  const footerNav = (extraClass: string) => (
-    <nav
-      aria-label='Sections'
-      className={cn('flex items-center gap-6', extraClass)}
-    >
-      {footerLinks.map((link, i) => {
-        const isCurrent = link.label === content.currentFooterLabel;
-        return (
-          <a
-            key={i}
-            href={link.href}
-            aria-current={isCurrent ? 'page' : undefined}
-            data-element-key={`footerLinks[${i}].label`}
-            style={composeStyle(
-              FOOTER_LINK_STYLE,
-              isCurrent ? { color: FOOTER_CURRENT } : undefined,
-              styleOf(`footerLinks[${i}].label`)
-            )}
-            className={selectableClass(
-              activeKey === `footerLinks[${i}].label`,
-              isCurrent ? undefined : 'hover:opacity-70'
-            )}
-          >
-            {link.label}
-          </a>
-        );
-      })}
-    </nav>
-  );
-
   return (
     <div
       ref={rootRef}
@@ -387,8 +343,12 @@ export function AesthaContact({
       )}
     >
       {isNarrow ? (
-        /* ── Narrow: xếp dọc (địa chỉ → info → ảnh) ── */
-        <section className='flex h-full w-full flex-col gap-6 p-4'>
+        /* ── Narrow: xếp dọc (địa chỉ → info → ảnh). `paddingBottom` chừa chỗ
+           cho block `aestha_nav` overlay. ── */
+        <section
+          className='flex h-full w-full flex-col gap-6 p-4'
+          style={{ paddingBottom: `calc(16px + ${NAV_CLEARANCE})` }}
+        >
           <div className='aestha-contact-content flex flex-col gap-6'>
             {heading('')}
             {address('')}
@@ -398,8 +358,6 @@ export function AesthaContact({
           {imageBox('aestha-contact-media w-full', {
             aspectRatio: '343 / 331',
           })}
-
-          {footerNav('mt-auto')}
         </section>
       ) : (
         /* ── Wide: 2 cột full-viewport ── */
@@ -410,8 +368,13 @@ export function AesthaContact({
           <CursorDot containerRef={wideRef} disabled={reduce || isCanvas} />
 
           <div className='flex h-full w-full flex-col p-8'>
-            {/* pb ↔ Image wrapper padding-bottom bản gốc — đẩy info + footer lên. */}
-            <div className='flex min-h-0 flex-1 gap-8 pb-16'>
+            {/* pb đẩy địa chỉ + info lên, đồng thời chừa chỗ cho block
+                `aestha_nav` overlay. Dùng token thay vì `pb-16` cố định: 64px
+                + p-8 chỉ dư 4px so với vùng nav — quá sát, đổi font là vỡ. */}
+            <div
+              className='flex min-h-0 flex-1 gap-8'
+              style={{ paddingBottom: NAV_CLEARANCE }}
+            >
               {/* Cột trái (448px): CONTACT (trên) + địa chỉ (dưới) */}
               <div className='aestha-contact-content flex w-md shrink-0 flex-col justify-between'>
                 {heading('')}
@@ -424,8 +387,6 @@ export function AesthaContact({
                 {contactInfo('items-end')}
               </div>
             </div>
-
-            {footerNav('shrink-0 pt-6')}
           </div>
         </section>
       )}
