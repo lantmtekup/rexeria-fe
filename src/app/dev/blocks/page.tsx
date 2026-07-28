@@ -9,6 +9,10 @@
  *  - `?id=<blockId>`     → fetch block thật từ BE rồi render đúng SETTINGS đã lưu
  *    (mỗi block 1 thiết kế riêng — quan trọng cho các type dùng chung như
  *    hero_split). Đây là cái nút Preview ở danh sách block mở ra.
+ *  - `?inline=<key>`     → đọc 1 `Block` JSON đã stash vào `localStorage[key]`
+ *    (không fetch BE). Dùng cho block SỐNG TRONG TEMPLATE (bản copy inline
+ *    trong canvas_blueprint, không có id ở thư viện Blocks) — ví dụ nút "xem
+ *    block" ở danh sách block-của-template trong Admin Templates.
  *
  * Layout: top bar fixed (gọn) + vùng cuộn full viewport làm SCROLLER → block
  * render qua RenderBlock trong LandingMotionRoot (scroller = vùng cuộn).
@@ -16,6 +20,7 @@
  * của block thật được áp qua MotionProvider giống PreviewMode.
  *
  * URL: /dev/blocks?type=framer_arpeggio_hero_v2  hoặc  /dev/blocks?id=<uuid>
+ *      hoặc /dev/blocks?inline=<localStorage key>
  */
 import * as React from 'react';
 import { LayoutGrid, Loader2 } from 'lucide-react';
@@ -63,10 +68,12 @@ export default function DevBlocksPage() {
   const [device, setDevice] = React.useState<Device>('desktop');
   const scrollerRef = React.useRef<HTMLDivElement>(null);
 
-  // Chế độ render: 'type' (default content theo type) hoặc 'id' (block thật).
-  const [mode, setMode] = React.useState<'type' | 'id'>('type');
+  // Chế độ render: 'type' (default content theo type), 'id' (block thật từ
+  // BE) hoặc 'inline' (Block JSON stash sẵn ở localStorage — block-của-template).
+  const [mode, setMode] = React.useState<'type' | 'id' | 'inline'>('type');
   const [type, setType] = React.useState<BlockType>('framer_arpeggio_hero_v2');
   const [blockId, setBlockId] = React.useState<string | null>(null);
+  const [inlineKey, setInlineKey] = React.useState<string | null>(null);
   const [fetched, setFetched] = React.useState<Block | null>(null);
   const [loadErr, setLoadErr] = React.useState<string | null>(null);
 
@@ -82,6 +89,13 @@ export default function DevBlocksPage() {
     const sp = new URLSearchParams(window.location.search);
     if (sp.get('view') === 'unmapped') {
       setView('gallery');
+      setRouteReady(true);
+      return;
+    }
+    const inline = sp.get('inline');
+    if (inline) {
+      setMode('inline');
+      setInlineKey(inline);
       setRouteReady(true);
       return;
     }
@@ -128,6 +142,33 @@ export default function DevBlocksPage() {
     [usedCodes]
   );
 
+  // inline-mode: đọc Block JSON stash sẵn ở localStorage (không fetch BE) —
+  // dùng cho block-của-template (bản copy, không có id thư viện). Dọn key
+  // sau khi đọc — chỉ dùng 1 lần cho 1 tab.
+  React.useEffect(() => {
+    if (mode !== 'inline' || !inlineKey) return;
+    setLoadErr(null);
+    setFetched(null);
+    try {
+      const raw = window.localStorage.getItem(inlineKey);
+      if (!raw) {
+        setLoadErr('Không tìm thấy dữ liệu block (đã đọc hoặc hết hạn).');
+        return;
+      }
+      const editor = parseEditorBlock(JSON.parse(raw));
+      if (!editor) {
+        setLoadErr('Dữ liệu block không hợp lệ để preview.');
+        return;
+      }
+      setFetched(editor);
+      setType(editor.blockType);
+    } catch {
+      setLoadErr('Lỗi đọc dữ liệu block.');
+    } finally {
+      window.localStorage.removeItem(inlineKey);
+    }
+  }, [mode, inlineKey]);
+
   // id-mode: fetch block thật, parse settings → editor Block.
   React.useEffect(() => {
     if (mode !== 'id' || !blockId) return;
@@ -162,18 +203,20 @@ export default function DevBlocksPage() {
     setView('single');
     setMode('type');
     setBlockId(null);
+    setInlineKey(null);
     setFetched(null);
     setLoadErr(null);
     setType(t);
     const u = new URL(window.location.href);
     u.searchParams.set('type', t);
     u.searchParams.delete('id');
+    u.searchParams.delete('inline');
     window.history.replaceState(null, '', u.toString());
   };
 
-  // Block để render: id-mode dùng block fetch về; type-mode dùng default.
+  // Block để render: id/inline-mode dùng block fetch/stash về; type-mode dùng default.
   const block = React.useMemo<Block | null>(
-    () => (mode === 'id' ? fetched : createBlock(type)),
+    () => (mode === 'id' || mode === 'inline' ? fetched : createBlock(type)),
     [mode, fetched, type]
   );
 
@@ -215,7 +258,15 @@ export default function DevBlocksPage() {
         </select>
 
         <code className='hidden max-w-[160px] truncate text-[8px] text-white/35 md:block'>
-          {mode === 'id' ? (fetched ? `id · ${fetched.name}` : 'id · …') : type}
+          {mode === 'id'
+            ? fetched
+              ? `id · ${fetched.name}`
+              : 'id · …'
+            : mode === 'inline'
+              ? fetched
+                ? `inline · ${fetched.name}`
+                : 'inline · …'
+              : type}
         </code>
 
         {/* Toggle gallery "Chưa mapping" */}
@@ -315,11 +366,11 @@ export default function DevBlocksPage() {
               <div className='flex min-h-screen items-center justify-center px-6 text-center text-sm text-neutral-400'>
                 Đang chuẩn bị preview…
               </div>
-            ) : mode === 'id' && loadErr ? (
+            ) : (mode === 'id' || mode === 'inline') && loadErr ? (
               <div className='flex min-h-screen items-center justify-center px-6 text-center text-sm text-neutral-500'>
                 {loadErr}
               </div>
-            ) : mode === 'id' && !block ? (
+            ) : (mode === 'id' || mode === 'inline') && !block ? (
               <div className='flex min-h-screen items-center justify-center px-6 text-center text-sm text-neutral-400'>
                 Đang tải block…
               </div>

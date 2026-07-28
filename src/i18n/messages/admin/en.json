@@ -70,7 +70,8 @@
         "name": "Name",
         "code": "Code",
         "status": "Status",
-        "created": "Created"
+        "created": "Created",
+        "blocks": "Blocks"
       }
     },
     "aiUsage": {

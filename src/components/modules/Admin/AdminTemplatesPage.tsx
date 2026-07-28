@@ -45,6 +45,12 @@ import { CreateTemplateDialog } from '@/components/modules/Template/CreateTempla
 import { TemplatePreviewAction } from '@/components/modules/Template/TemplatePreviewAction';
 import { UseTemplateDialog } from '@/components/modules/Template/UseTemplateDialog';
 import { TemplateEffectsDialog } from '@/components/modules/CanvasTemplate/TemplateEffectsDialog';
+import { BlocksUsedCell } from '@/components/modules/Admin/BlocksUsedCell';
+import type { Block } from '@/components/modules/block-editor/types';
+import {
+  peekCachedTemplateBlocks,
+  resolveTemplateBlocks,
+} from '@/services/rexer/resolveTemplateBlocks';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import { cn } from '@/lib/cn';
@@ -285,7 +291,58 @@ export function AdminTemplatesPage() {
   }, [allItems, debouncedSearch, status, category, sort]);
 
   const total = filtered.length;
-  const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
+  // Memo hoá — nếu không, mỗi render sinh mảng mới → effect fetch block bên
+  // dưới (dep [pageItems]) chạy lại liên tục, cleanup đặt `alive=false` TRƯỚC
+  // khi request thật sự trả về → callback fetch bị chặn bởi `alive` check và
+  // âm thầm bỏ qua kết quả, khiến ô "Blocks" kẹt ở loading mãi mãi.
+  const pageItems = React.useMemo(
+    () => filtered.slice((page - 1) * pageSize, page * pageSize),
+    [filtered, page, pageSize]
+  );
+
+  // Blocks-used-per-template — lazy fetch cho các dòng đang hiển thị, dùng
+  // chung `resolveTemplateBlocks` (module cache theo templateId — remount
+  // không fetch lại) với reverse-index bên BlocksPage.tsx.
+  const [blocksByTemplate, setBlocksByTemplate] = React.useState<
+    Record<string, Block[] | 'loading' | 'error'>
+  >({});
+  const blocksFetchStartedRef = React.useRef<Set<string>>(new Set());
+  // Reset về true ở ĐẦU effect (không chỉ khai `useRef(true)`) — React dev
+  // Strict Mode mount→cleanup-giả-lập→mount lại effect ngay khi component
+  // mount; nếu không reset ở mount thứ 2, cleanup của lần mount "giả" khoá
+  // `alive=false` VĨNH VIỄN trước khi bất kỳ fetch async nào trả về, khiến
+  // mọi kết quả bị chặn âm thầm → cột Blocks kẹt loading mãi mãi.
+  const blocksAliveRef = React.useRef(true);
+  React.useEffect(() => {
+    blocksAliveRef.current = true;
+    return () => {
+      blocksAliveRef.current = false;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    for (const it of pageItems) {
+      if (blocksFetchStartedRef.current.has(it.id)) continue;
+      blocksFetchStartedRef.current.add(it.id);
+
+      const cached = peekCachedTemplateBlocks(it.id);
+      if (cached) {
+        setBlocksByTemplate(prev => ({ ...prev, [it.id]: cached }));
+        continue;
+      }
+
+      setBlocksByTemplate(prev => ({ ...prev, [it.id]: 'loading' }));
+      resolveTemplateBlocks(it)
+        .then(blocks => {
+          if (blocksAliveRef.current)
+            setBlocksByTemplate(prev => ({ ...prev, [it.id]: blocks }));
+        })
+        .catch(() => {
+          if (blocksAliveRef.current)
+            setBlocksByTemplate(prev => ({ ...prev, [it.id]: 'error' }));
+        });
+    }
+  }, [pageItems]);
 
   const clearFilters = () => {
     setSearch('');
@@ -473,7 +530,9 @@ export function AdminTemplatesPage() {
               code: t('templates.col.code'),
               status: t('templates.col.status'),
               created: t('templates.col.created'),
+              blocks: t('templates.col.blocks'),
             }}
+            blocksByTemplate={blocksByTemplate}
             onUse={setUseTarget}
             onEffects={setEffectsTarget}
             onStatusAction={runStatusAction}
@@ -855,6 +914,7 @@ function TemplateActionMenu({
 function TableView({
   items,
   col,
+  blocksByTemplate,
   onUse,
   onEffects,
   onStatusAction,
@@ -863,7 +923,14 @@ function TableView({
   onToggleSelectAll,
 }: {
   items: Template[];
-  col: { name: string; code: string; status: string; created: string };
+  col: {
+    name: string;
+    code: string;
+    status: string;
+    created: string;
+    blocks: string;
+  };
+  blocksByTemplate: Record<string, Block[] | 'loading' | 'error'>;
   onUse: (t: Template) => void;
   onEffects: (t: Template) => void;
   onStatusAction: (t: Template, action: TemplateStatusAction) => void;
@@ -895,6 +962,7 @@ function TableView({
             <TableHead className='w-32'>{col.code}</TableHead>
             <TableHead className='w-28'>{col.status}</TableHead>
             <TableHead className='w-40'>{col.created}</TableHead>
+            <TableHead className='w-32'>{col.blocks}</TableHead>
             <TableHead className='w-44' />
           </TableRow>
         </TableHeader>
@@ -961,6 +1029,9 @@ function TableView({
                   {item.created_at
                     ? new Date(item.created_at).toLocaleDateString('vi-VN')
                     : '-'}
+                </TableCell>
+                <TableCell>
+                  <BlocksUsedCell state={blocksByTemplate[item.id]} />
                 </TableCell>
                 <TableCell>
                   <div className='flex items-center justify-end gap-1.5'>
