@@ -94,6 +94,11 @@
       "generatedHint": "Content matches the block schema — applied when building the template.",
       "handoffDone": "Template built from blueprint",
       "handoffFailed": "Handoff failed",
+      "publish": "Publish landing now",
+      "publishHint": "\"Publish landing now\" builds the template, then creates and publishes a page — takes about 10–20s while AI writes the copy for each block.",
+      "publishDone": "Landing page published",
+      "publishFailed": "Publishing the landing page failed",
+      "viewPage": "View page",
       "preview": "Preview"
     },
     "goals": {

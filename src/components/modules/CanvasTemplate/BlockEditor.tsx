@@ -130,8 +130,9 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
  * BE TemplateVersion.canvas_blueprint shape:
  *   `{ blocks: [...], schema_version: "1.0", legacy_preview?: ... }`
  *
- * Editor's `parseCanvas` accepts only `schema_version: "2.0"` (or legacy
- * `schema: 'block_editor'`). Coerce the wrapper so blocks flow through.
+ * `parseCanvas` giờ đã nhận thẳng `schema_version: "1.0"`, nên hàm này chỉ còn
+ * cần cho payload **không có vỏ** (`{ blocks: [...] }` trần — vài blueprint cũ
+ * ghi thiếu `schema_version`, xem BE `usecase/portal.go` khi field vắng mặt).
  * Block contents themselves stay untouched — BE fabric_to_blueprint
  * converter (handoff §1.4) emits blocks in 2.0-compatible shape.
  */
@@ -381,10 +382,10 @@ export function BlockEditor({
             if (cancelled) return;
             setCurrentVersion(ver);
             loadedVersionId = ver.id;
-            // canvas_blueprint stores `schema_version: "1.0"` from BE;
-            // editor's parseCanvas only accepts "2.0" / `schema:
-            // 'block_editor'`. Coerce; blocks shape already 2.0-aligned
-            // post BE fabric_to_blueprint converter (handoff §1.4).
+            // canvas_blueprint stores `schema_version: "1.0"` from BE —
+            // parseCanvas nhận trực tiếp; adapt ở đây chỉ để bọc trường hợp
+            // blueprint cũ thiếu hẳn vỏ schema_version. Blocks shape already
+            // 2.0-aligned post BE fabric_to_blueprint converter (handoff §1.4).
             if (ver.canvas_blueprint) {
               canvasData = adaptCanvasBlueprint(ver.canvas_blueprint);
               loadSource =

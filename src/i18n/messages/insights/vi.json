@@ -94,6 +94,11 @@
       "generatedHint": "Nội dung khớp schema của block — sẽ được nạp khi dựng template.",
       "handoffDone": "Đã dựng template từ blueprint",
       "handoffFailed": "Dựng template thất bại",
+      "publish": "Xuất bản landing ngay",
+      "publishHint": "\"Xuất bản landing ngay\" dựng template rồi tạo page và publish luôn — mất khoảng 10–20 giây vì AI viết nội dung cho từng block.",
+      "publishDone": "Đã xuất bản landing",
+      "publishFailed": "Xuất bản landing thất bại",
+      "viewPage": "Xem trang",
       "preview": "Xem trước"
     },
     "goals": {

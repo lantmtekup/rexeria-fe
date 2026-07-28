@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   Check,
   Loader2,
+  Rocket,
   RotateCcw,
   Route,
   Target,
@@ -20,6 +21,7 @@ import { Button } from '@/components/atoms/button';
 import type {
   ExperienceGoal,
   InsightBlueprint,
+  InsightHandoffBody,
   InsightRecommendedTemplate,
   InsightReport,
 } from '@/services/rexer/types';
@@ -37,6 +39,8 @@ import { BlocksSection, TemplatesSection } from './BlueprintBlocks';
  * blueprint; mỗi card template có nút "Dùng template này" — pick `library` thì
  * clone template thật (gửi `source_template_id`), còn lại compose theo block_codes;
  * cả hai đều điều hướng sang trang edit template. Nút "Chạy phân tích" reset wizard.
+ * Nút "Xuất bản landing ngay" gửi thêm `publish: true` → BE dựng template rồi
+ * tạo page + publish, trả `/p/{slug}` thật để xem pixel ngay (BE 2026-07-27).
  *
  * Lưu ý contract: blueprint của BE KHÔNG có field `assumptions` (xác nhận theo
  * openapi.yaml #/components/schemas/InsightBlueprint) → không render panel đó.
@@ -174,52 +178,65 @@ export function JourneySection({
 
 /** Key của nút global "tự dựng từ blueprint" (phân biệt với key = tên template). */
 const COMPOSE_KEY = '__compose__';
+/** Key của nút global "dựng + xuất bản luôn" (`publish: true`). */
+const PUBLISH_KEY = '__publish__';
 
 export function BlueprintStep({ report, onRestart }: BlueprintStepProps) {
   const t = useTranslations('insights');
   const router = useRouter();
-  // Key đang handoff: tên template cho 1 card, COMPOSE_KEY cho nút global, null khi rảnh.
-  // Khoá 1 handoff tại một thời điểm để tránh tạo template trùng.
+  // Key đang handoff: tên template cho 1 card, COMPOSE_KEY / PUBLISH_KEY cho hai
+  // nút global, null khi rảnh. Khoá 1 handoff tại một thời điểm để tránh tạo
+  // template (và page) trùng.
   const [pending, setPending] = useState<string | null>(null);
 
   // KB2 / SP1: dựng template thật từ blueprint → điều hướng sang trang edit template.
   // `choice` rỗng → BE compose từ blocks của blueprint (hành vi cũ). Có `choice`:
   // library (có template_id) → clone template thật; còn lại → compose theo block_codes.
-  const handoff = async (choice?: InsightRecommendedTemplate) => {
+  //
+  // `opts.publish` (BE 2026-07-27): đi tiếp tới page + publish, response trả
+  // `preview_url` = /p/{slug} thật. `workspace_id` bỏ trống → BE dùng workspace
+  // của chính report.
+  const handoff = async (
+    choice?: InsightRecommendedTemplate,
+    opts?: { publish?: boolean }
+  ) => {
     if (!report?.id || pending) return;
-    setPending(choice?.name ?? COMPOSE_KEY);
+    const publish = opts?.publish === true;
+    setPending(publish ? PUBLISH_KEY : (choice?.name ?? COMPOSE_KEY));
     try {
-      let body:
-        | {
-            template?: {
-              name?: string;
-              block_codes?: string[];
-              source_template_id?: string;
-            };
-          }
-        | undefined;
+      const body: InsightHandoffBody = {};
       if (choice) {
-        body =
+        body.template =
           choice.source === 'library' && choice.template_id
-            ? {
-                template: {
-                  name: choice.name,
-                  source_template_id: choice.template_id,
-                },
-              }
-            : {
-                template: {
-                  name: choice.name,
-                  block_codes: choice.block_codes,
-                },
-              };
+            ? { name: choice.name, source_template_id: choice.template_id }
+            : { name: choice.name, block_codes: choice.block_codes };
       }
+      if (publish) body.publish = true;
+
       const r = await rexerApi.insights.handoff(report.id, body);
-      toast.success(t('blueprint.handoffDone'));
+      const previewUrl = r.preview_url;
+      // Chỉ báo "đã xuất bản" khi BE thật sự trả URL — publish có thể được yêu
+      // cầu mà page không lên (BE trả template trần), đừng nói dối user.
+      if (publish && previewUrl) {
+        toast.success(t('blueprint.publishDone'), {
+          action: {
+            label: t('blueprint.viewPage'),
+            onClick: () => window.open(previewUrl, '_blank', 'noopener'),
+          },
+        });
+        // Handoff mất ~10–20s nên lời gọi này nằm ngoài user-gesture stack và
+        // thường bị popup blocker chặn. Chặn cũng không sao: nút "Xem trang"
+        // trong toast ở trên mở được bằng tay.
+        window.open(previewUrl, '_blank', 'noopener');
+      } else {
+        toast.success(t('blueprint.handoffDone'));
+      }
       router.push(r.edit_url);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : t('blueprint.handoffFailed')
+        err instanceof Error
+          ? err.message
+          : t(publish ? 'blueprint.publishFailed' : 'blueprint.handoffFailed')
       );
     } finally {
       setPending(null);
@@ -281,29 +298,47 @@ export function BlueprintStep({ report, onRestart }: BlueprintStepProps) {
       )}
 
       {/* Footer hành động */}
-      <div className='border-border flex flex-wrap items-center gap-3 border-t pt-5'>
-        <GradientButton
-          disabled={pending !== null}
-          onClick={() => handoff()}
-          leading={
-            pending === COMPOSE_KEY ? (
+      <div className='border-border space-y-2 border-t pt-5'>
+        <div className='flex flex-wrap items-center gap-3'>
+          <GradientButton
+            disabled={pending !== null}
+            onClick={() => handoff()}
+            leading={
+              pending === COMPOSE_KEY ? (
+                <Loader2 className='size-4 animate-spin' aria-hidden />
+              ) : (
+                <Wand2 className='size-4' aria-hidden />
+              )
+            }
+          >
+            {t('blueprint.handoff')}
+          </GradientButton>
+          <Button
+            type='button'
+            variant='default'
+            onClick={() => handoff(undefined, { publish: true })}
+            disabled={pending !== null}
+          >
+            {pending === PUBLISH_KEY ? (
               <Loader2 className='size-4 animate-spin' aria-hidden />
             ) : (
-              <Wand2 className='size-4' aria-hidden />
-            )
-          }
-        >
-          {t('blueprint.handoff')}
-        </GradientButton>
-        <Button
-          type='button'
-          variant='outline'
-          onClick={onRestart}
-          disabled={pending !== null}
-        >
-          <RotateCcw className='size-4' aria-hidden />
-          {t('setup.run')}
-        </Button>
+              <Rocket className='size-4' aria-hidden />
+            )}
+            {t('blueprint.publish')}
+          </Button>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={onRestart}
+            disabled={pending !== null}
+          >
+            <RotateCcw className='size-4' aria-hidden />
+            {t('setup.run')}
+          </Button>
+        </div>
+        <p className='text-content-muted text-xs'>
+          {t('blueprint.publishHint')}
+        </p>
       </div>
     </div>
   );

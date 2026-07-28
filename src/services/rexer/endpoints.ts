@@ -251,6 +251,7 @@ import type {
   SuggestJourneyResponse,
   ExperienceGoal,
   UpdateInsightBlueprintBody,
+  InsightHandoffBody,
   InsightHandoffResponse,
   GenerateBlockContentBody,
   GenerateBlockContentResponse,
@@ -2062,17 +2063,13 @@ export const rexerApi = {
      * Dựng template thật từ blueprint → `template_id` + `edit_url` — KB2.
      * SP1: `source_template_id` (1 gợi ý `source=library`) → BE clone canvas_blueprint
      * của template thật thay vì compose từ `block_codes`.
+     *
+     * `publish: true` (BE 2026-07-27) đi tiếp: tạo page + publish → response kèm
+     * `page_id`/`page_slug`/`release_id` và `preview_url` là `/p/{slug}` thật.
+     * Handoff vốn đã chậm (~10–20s vì gọi LLM viết copy từng block); có publish
+     * thì còn lâu hơn — đừng đặt timeout dưới 60s.
      */
-    handoff: (
-      id: string,
-      body?: {
-        template?: {
-          name?: string;
-          block_codes?: string[];
-          source_template_id?: string;
-        };
-      }
-    ) =>
+    handoff: (id: string, body?: InsightHandoffBody) =>
       rx<InsightHandoffResponse>(`/insights/reports/${id}/handoff`, {
         method: 'POST',
         body: body ?? {},
