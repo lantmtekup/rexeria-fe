@@ -1,4 +1,4 @@
-// Smoke test against the deployed Vercel build.
+// Smoke test against the deployed Cloudflare Workers build.
 // Production sign-in form is NOT pre-filled — we have to type credentials.
 //
 // Covers:
@@ -9,7 +9,7 @@
 //   5. Full-page mobile + desktop screenshots saved for visual review
 //
 // Usage:
-//   BASE_URL=https://rexerai.vercel.app \
+//   BASE_URL=https://portal.rexerstudio.com \
 //   USER_EMAIL=admin@rexer.ai USER_PASSWORD=Admin1234 \
 //   node scripts/visual-tests/smoke-prod.mjs
 
@@ -20,7 +20,7 @@ import { dirname, join } from 'node:path';
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), 'out', 'prod');
 await mkdir(OUT, { recursive: true });
-const BASE = process.env.BASE_URL ?? 'https://rexerai.vercel.app';
+const BASE = process.env.BASE_URL ?? 'https://portal.rexerstudio.com';
 const EMAIL = process.env.USER_EMAIL ?? 'admin@rexer.ai';
 const PASSWORD = process.env.USER_PASSWORD ?? 'Admin1234';
 const log = (...a) =>

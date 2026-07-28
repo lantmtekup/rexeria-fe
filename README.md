@@ -287,11 +287,25 @@ yarn build
 yarn start
 ```
 
-### Deployment Platforms
-- **Vercel** (recommended for Next.js)
-- **Netlify**
-- **Railway**
-- **Docker** (containerized deployment)
+### Deployment — Cloudflare Workers
+Chạy trên Cloudflare Workers qua OpenNext adapter (`wrangler.jsonc`). Build
+chạy ở máy local nên không tốn build minute.
+
+```bash
+yarn cf:build     # build OpenNext → .open-next/
+yarn cf:preview   # build + chạy thử Worker ở local
+yarn cf:deploy    # build + deploy lên Cloudflare
+```
+
+Yêu cầu **Node >= 22** (wrangler 4.x không chạy trên Node 20).
+
+Secret KHÔNG để trong `wrangler.jsonc` — set riêng, ví dụ:
+
+```bash
+npx wrangler secret put JWT_SECRET
+```
+
+Domain production: `rexerstudio.com` (landing) và `portal.rexerstudio.com` (app).
 
 ## 📚 Learn More
 
