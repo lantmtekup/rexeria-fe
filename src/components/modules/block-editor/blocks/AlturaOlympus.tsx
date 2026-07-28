@@ -45,6 +45,10 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import {
+  resolveAlturaOlympusFeatures,
+  resolveAlturaOlympusImages,
+} from './_registry/defs/alturaOlympus';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 import { useContainerMobile } from './useContainerMobile';
@@ -76,14 +80,6 @@ const FALLBACK_HEADING = 'Take a closer look';
 const FALLBACK_DESCRIPTION =
   'Thoughtfully composed to be seen, felt, and remembered in its own way';
 const FALLBACK_CTA_TEXT = 'Discover';
-const FALLBACK_FEATURES = [
-  { label: 'Superior Precision', icon: 'Crosshair' },
-  { label: 'Water Resistance', icon: 'Droplets' },
-  { label: '5-Year Warranty', icon: 'Shield' },
-  { label: '100K+ Units Sold', icon: 'Package' },
-  { label: 'Grand Seiko Caliber', icon: 'Cog' },
-  { label: 'Frequency 3,5 Hz', icon: 'Activity' },
-];
 
 /** Timeline (units, scrub). */
 const HOLD_START = 0.1;
@@ -96,15 +92,6 @@ const IMAGE_HOLD_SCALE = 1.035;
 const IMAGE_HOLD_Y = 4;
 const LEFT_PANEL_ENTER_SCALE = 0.992;
 const LEFT_CONTENT_ENTER_SCALE = 0.98;
-
-const IMAGE_KEYS = [
-  'image1Url',
-  'image2Url',
-  'image3Url',
-  'image4Url',
-] as const;
-
-const IMAGE_LABELS = ['Cover', 'Ảnh 2', 'Ảnh 3', 'Ảnh 4'] as const;
 
 const RESPONSIVE = {
   pad: 'clamp(24px, 5cqi, 56px)',
@@ -150,10 +137,7 @@ const RIGHT_HALF: React.CSSProperties = {
   overflow: 'hidden',
 };
 
-const resolveImages = (content: AlturaOlympusContent): string[] =>
-  IMAGE_KEYS.map(
-    (key, i) => content[key]?.trim() || ALTURA_OLYMPUS_IMAGES[i] || ''
-  ).filter(Boolean);
+const imageLabel = (i: number) => (i === 0 ? 'Cover' : `Ảnh ${i + 1}`);
 
 export const AlturaOlympus = ({
   content,
@@ -178,20 +162,25 @@ export const AlturaOlympus = ({
       positionStyle(positions, key)
     );
 
-  const images = React.useMemo(() => resolveImages(content), [content]);
+  const images = React.useMemo(
+    () => resolveAlturaOlympusImages(content),
+    [content]
+  );
   const coverImage = images[0] || ALTURA_OLYMPUS_IMAGES[0];
-  const companionImage = images[1] || ALTURA_OLYMPUS_IMAGES[1];
-  const seqImages = images.slice(1);
+  const companionImage = images[1] || images[0] || ALTURA_OLYMPUS_IMAGES[1];
+  const seqImages = images.length > 1 ? images.slice(1) : images.slice(0, 1);
 
-  const trackHeight = isCanvas ? undefined : isMobile ? '380dvh' : '460dvh';
+  const seqN = Math.max(seqImages.length, 1);
+  const trackHeight = isCanvas
+    ? undefined
+    : isMobile
+      ? `${140 + seqN * 80}dvh`
+      : `${180 + seqN * 90}dvh`;
   const eyebrow = content.eyebrow?.trim() || FALLBACK_EYEBROW;
   const heading = content.heading?.trim() || FALLBACK_HEADING;
   const description = content.description?.trim() || FALLBACK_DESCRIPTION;
   const ctaText = content.ctaText?.trim() || FALLBACK_CTA_TEXT;
-  const features =
-    Array.isArray(content.features) && content.features.length > 0
-      ? content.features
-      : FALLBACK_FEATURES;
+  const features = resolveAlturaOlympusFeatures(content);
 
   const loadedRef = React.useRef(0);
   const totalImages = Math.max(images.length, 1);
@@ -430,14 +419,23 @@ export const AlturaOlympus = ({
       >
         {features.map((feat, i) => {
           const Icon = ICONS[feat.icon] ?? Crosshair;
+          const iconKey = `features[${i}].icon`;
+          const labelKey = `features[${i}].label`;
           return (
             <div key={i} className='flex items-center gap-3'>
               <span
-                className='flex shrink-0 items-center justify-center rounded-full border border-neutral-300/90 bg-white/40'
-                style={{
-                  width: RESPONSIVE.iconSize,
-                  height: RESPONSIVE.iconSize,
-                }}
+                data-element-key={iconKey}
+                className={selectableClass(
+                  activeKey === iconKey,
+                  'flex shrink-0 items-center justify-center rounded-full border border-neutral-300/90 bg-white/40'
+                )}
+                style={composeStyle(
+                  {
+                    width: RESPONSIVE.iconSize,
+                    height: RESPONSIVE.iconSize,
+                  },
+                  styleOf(iconKey)
+                )}
                 aria-hidden='true'
               >
                 <Icon
@@ -450,17 +448,17 @@ export const AlturaOlympus = ({
                 />
               </span>
               <span
-                data-element-key={`features[${i}].label`}
+                data-element-key={labelKey}
                 style={composeStyle(
                   {
                     fontSize: RESPONSIVE.featureFont,
                     color: '#4b5563',
                     lineHeight: 1.35,
                   },
-                  styleOf(`features[${i}].label`)
+                  styleOf(labelKey)
                 )}
                 className={selectableClass(
-                  activeKey === `features[${i}].label`,
+                  activeKey === labelKey,
                   'font-normal'
                 )}
               >
@@ -559,11 +557,10 @@ export const AlturaOlympus = ({
             {contentPanel}
           </div>
 
-          {/* 4 ảnh editable — lưới 2×2 */}
-          <div className='grid w-full grid-cols-2 grid-rows-2 gap-2 bg-neutral-950 p-2 @2xl:w-1/2'>
-            {IMAGE_KEYS.map((key, i) => {
-              const src = images[i];
-              if (!src) return null;
+          {/* Ảnh editable — lưới theo số lượng */}
+          <div className='grid w-full grid-cols-2 gap-2 bg-neutral-950 p-2 @2xl:w-1/2'>
+            {images.map((src, i) => {
+              const key = `images[${i}]`;
               return (
                 <div
                   key={key}
@@ -571,19 +568,19 @@ export const AlturaOlympus = ({
                   style={styleOf(key)}
                   className={selectableClass(
                     activeKey === key,
-                    'relative min-h-0 overflow-hidden rounded-lg ring-1 ring-white/10'
+                    'relative aspect-[4/5] min-h-0 overflow-hidden rounded-lg ring-1 ring-white/10'
                   )}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={src}
-                    alt={IMAGE_LABELS[i]}
+                    alt={imageLabel(i)}
                     onLoad={handleImgLoad}
                     className='pointer-events-none h-full w-full object-cover'
                     draggable={false}
                   />
                   <span className='pointer-events-none absolute top-2 left-2 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-white uppercase'>
-                    {IMAGE_LABELS[i]}
+                    {imageLabel(i)}
                   </span>
                 </div>
               );
@@ -635,7 +632,7 @@ export const AlturaOlympus = ({
           {/* z3+ — right panel cố định, ảnh sau đè lên ảnh trước */}
           {seqImages.map((src, i) => (
             <div
-              key={IMAGE_KEYS[i + 1] ?? i}
+              key={`seq-${i}-${src.slice(-24)}`}
               className='altura-olympus__seq-layer altura-olympus__right-half will-change-transform'
               style={{ ...RIGHT_HALF, zIndex: 3 + i }}
               aria-hidden='true'

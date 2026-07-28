@@ -26,6 +26,8 @@ export type ElementKind =
   | 'pnjStickyMenuItems'
   | 'mintV2ServicesItems'
   | 'coolHunterGalleryItems'
+  | 'alturaOlympusFeatures'
+  | 'alturaOlympusImages'
   | 'theGrandServiceItems'
   | 'theGrandDiscoverItems'
   | 'theGrandAboutPartners'
@@ -46,17 +48,13 @@ export type ElementKind =
   | 'delvauxVariants'
   | 'delvauxFaqs'
   | 'delvauxSubnavLinks'
+  // Nav họ Aestha — nay thuộc block riêng `aestha_nav` (trước ở
+  // `framer_aestha_editorial`). Các kind `aestha*FooterLinks` đã bỏ cùng lúc.
   | 'aesthaNavLinks'
   | 'aesthaExploreProjects'
   | 'aesthaExploreProjectImages'
-  | 'aesthaExploreFooterLinks'
   | 'aesthaStudioTeam'
-  | 'aesthaStudioFooterLinks'
   | 'aesthaContactSocials'
-  | 'aesthaContactFooterLinks'
-  | 'aesthaProjectBody'
-  | 'aesthaProjectImages'
-  | 'aesthaProjectNavLinks'
   | 'mintDiscoverVariant'
   | 'mintDiscoverSurface'
   | 'background';
@@ -198,22 +196,19 @@ export function resolveKind(
     // flipping the registry def alone would have no effect here.
     return key.endsWith('.targetId') ? 'link' : 'text';
   }
-  // Aestha nav: phải chặn trước fallback `ELEMENT_KIND[key] ?? isImageKey` —
-  // `navLinks` rơi về 'text' thì toolbar ghi 1 string đè cả mảng.
-  if (key === 'navLinks' && blockType === 'framer_aestha_editorial') {
-    return 'aesthaNavLinks';
+  // Aestha nav (block riêng `aestha_nav`): phải chặn trước fallback
+  // `ELEMENT_KIND[key] ?? isImageKey` — `navLinks` rơi về 'text' thì toolbar
+  // ghi 1 string đè cả mảng.
+  if (blockType === 'aestha_nav') {
+    if (key === 'navLinks') return 'aesthaNavLinks';
+    if (/^navLinks\[\d+\]\.(label|href)$/.test(key)) {
+      return key.endsWith('.href') ? 'link' : 'text';
+    }
   }
-  if (
-    /^navLinks\[\d+\]\.(label|href)$/.test(key) &&
-    blockType === 'framer_aestha_editorial'
-  ) {
-    return key.endsWith('.href') ? 'link' : 'text';
-  }
-  // Aestha Explore: `projects` / `footerLinks` là mảng động (list manager) —
-  // chặn trước fallback để toolbar không ghi 1 string đè cả mảng.
+  // Aestha Explore: `projects` là mảng động (list manager) — chặn trước
+  // fallback để toolbar không ghi 1 string đè cả mảng.
   if (blockType === 'aestha_explore') {
     if (key === 'projects') return 'aesthaExploreProjects';
-    if (key === 'footerLinks') return 'aesthaExploreFooterLinks';
     // List-manager mảng ảnh chi tiết của 1 dự án — chặn TRƯỚC fallback
     // `isImageKey` (khớp 'images') để không bị coi là 1 ô ảnh đơn.
     if (/^projects\[\d+\]\.detail\.images$/.test(key))
@@ -221,38 +216,25 @@ export function resolveKind(
     if (/^projects\[\d+\]\.img$/.test(key)) return 'image';
     if (/^projects\[\d+\]\.href$/.test(key)) return 'link';
     if (/^projects\[\d+\]\.(label|alt)$/.test(key)) return 'text';
-    if (/^footerLinks\[\d+\]\.label$/.test(key)) return 'text';
-    if (/^footerLinks\[\d+\]\.href$/.test(key)) return 'link';
   }
-  // Aestha Studio: `team` / `footerLinks` là mảng động (list manager) — chặn
-  // trước fallback để toolbar không ghi 1 string đè cả mảng.
+  // Aestha Studio: `team` là mảng động (list manager) — chặn trước fallback để
+  // toolbar không ghi 1 string đè cả mảng.
   if (blockType === 'aestha_studio') {
     if (key === 'team') return 'aesthaStudioTeam';
-    if (key === 'footerLinks') return 'aesthaStudioFooterLinks';
     if (/^team\[\d+\]\.(name|role)$/.test(key)) return 'text';
-    if (/^footerLinks\[\d+\]\.label$/.test(key)) return 'text';
-    if (/^footerLinks\[\d+\]\.href$/.test(key)) return 'link';
   }
-  // Aestha Contact: `socials` / `footerLinks` là mảng động (list manager) —
-  // chặn trước fallback để toolbar không ghi 1 string đè cả mảng.
+  // Aestha Contact: `socials` là mảng động (list manager) — chặn trước fallback
+  // để toolbar không ghi 1 string đè cả mảng.
   if (blockType === 'aestha_contact') {
     if (key === 'socials') return 'aesthaContactSocials';
-    if (key === 'footerLinks') return 'aesthaContactFooterLinks';
     if (/^socials\[\d+\]\.label$/.test(key)) return 'text';
     if (/^socials\[\d+\]\.href$/.test(key)) return 'link';
-    if (/^footerLinks\[\d+\]\.label$/.test(key)) return 'text';
-    if (/^footerLinks\[\d+\]\.href$/.test(key)) return 'link';
   }
-  // Aestha Project: `body` / `images` / `navLinks` là mảng động (list manager)
-  // — chặn trước fallback để toolbar không ghi 1 string đè cả mảng.
+  // Aestha Project: `body` / `images` là mảng động.
   if (blockType === 'aestha_project') {
-    if (key === 'body') return 'aesthaProjectBody';
-    if (key === 'images') return 'aesthaProjectImages';
-    if (key === 'navLinks') return 'aesthaProjectNavLinks';
     if (/^body\[\d+\]$/.test(key)) return 'text';
     if (/^images\[\d+\]\.src$/.test(key)) return 'image';
     if (/^images\[\d+\]\.alt$/.test(key)) return 'text';
-    if (/^navLinks\[\d+\]\.(label|href)$/.test(key)) return 'text';
   }
   // Delvaux product hotspots vs Mint/PNJ hero hotspots — cùng key `hotspots`.
   if (key === 'hotspots' && blockType === 'delvaux_product') {
@@ -284,6 +266,13 @@ export function resolveKind(
   if (key === 'images' && blockType && MINT_VAULT_IMAGE_LABEL.has(blockType)) {
     return 'mintVaultImages';
   }
+  // Trước isImageKey('images') — list manager, không phải 1 ô ảnh.
+  if (key === 'images' && blockType === 'altura_olympus') {
+    return 'alturaOlympusImages';
+  }
+  if (blockType === 'altura_olympus' && /^images\[\d+\]$/.test(key)) {
+    return 'image';
+  }
   if (key === 'items' && blockType === 'pnj_sticky_menu') {
     return 'pnjStickyMenuItems';
   }
@@ -292,6 +281,13 @@ export function resolveKind(
   }
   if (key === 'items' && blockType === 'cool_hunter_gallery') {
     return 'coolHunterGalleryItems';
+  }
+  // Trước ELEMENT_KIND.features → 'features' (FeatureSection shape khác).
+  if (key === 'features' && blockType === 'altura_olympus') {
+    return 'alturaOlympusFeatures';
+  }
+  if (blockType === 'altura_olympus') {
+    if (/^features\[\d+\]\.(label|icon)$/.test(key)) return 'text';
   }
   if (key === 'items' && blockType === 'the_grand_service') {
     return 'theGrandServiceItems';
@@ -352,7 +348,10 @@ export function resolveKind(
   if (/^titleLines\[\d+\]$/.test(key)) return 'text';
   // Nested variant fields: variants[0].label / .desc → text; highlights[i] → text.
   if (/^variants\[\d+\]\.image$/.test(key)) return 'image';
-  if (/^variants\[\d+\]\.(label|desc)$/.test(key)) return 'text';
+  if (/^variants\[\d+\]\.swatch$/.test(key) && blockType === 'mint_variants') {
+    return 'image';
+  }
+  if (/^variants\[\d+\]\.(label|desc|ref)$/.test(key)) return 'text';
   if (/^variants\[\d+\]\.highlights\[\d+\]$/.test(key)) return 'text';
   // Vault collection coin fields: coins[0].image → image; name/price/metal/weight → text
   if (/^coins\[\d+\]\.image$/.test(key)) return 'image';
@@ -546,14 +545,35 @@ export function resolveLabel(
     }`;
   }
   const variantLabel = key.match(/^variants\[(\d+)\]\.label$/);
-  if (variantLabel) return `Nhãn góc ${Number(variantLabel[1]) + 1}`;
+  if (variantLabel) {
+    const n = Number(variantLabel[1]) + 1;
+    return blockType === 'mint_variants'
+      ? `Biến thể ${n} · Nhãn`
+      : `Nhãn góc ${n}`;
+  }
+  const variantSwatch = key.match(/^variants\[(\d+)\]\.swatch$/);
+  if (variantSwatch && blockType === 'mint_variants') {
+    return `Biến thể ${Number(variantSwatch[1]) + 1} · Swatch`;
+  }
   const variantDesc = key.match(/^variants\[(\d+)\]\.desc$/);
   if (variantDesc) return `Mô tả góc ${Number(variantDesc[1]) + 1}`;
   const variantImg = key.match(/^variants\[(\d+)\]\.image$/);
-  if (variantImg) return `Ảnh góc ${Number(variantImg[1]) + 1}`;
+  if (variantImg) {
+    const n = Number(variantImg[1]) + 1;
+    return blockType === 'mint_variants'
+      ? `Biến thể ${n} · Ảnh`
+      : `Ảnh góc ${n}`;
+  }
+  const variantRef = key.match(/^variants\[(\d+)\]\.ref$/);
+  if (variantRef && blockType === 'mint_variants') {
+    return `Biến thể ${Number(variantRef[1]) + 1} · REF`;
+  }
   const variantHl = key.match(/^variants\[(\d+)\]\.highlights$/);
   if (variantHl) return `Highlights góc ${Number(variantHl[1]) + 1}`;
   if (key === 'variants' && blockType === 'pnj_variant') return 'Góc nhìn';
+  if (key === 'variants' && blockType === 'mint_variants') {
+    return 'Thêm / quản lý biến thể';
+  }
   if (key === 'hotspots' && blockType === 'delvaux_product') {
     return 'Thêm / quản lý hotspot';
   }
@@ -576,6 +596,9 @@ export function resolveLabel(
   if (galleryImg) return `Ảnh ${Number(galleryImg[1]) + 1}`;
   if (key === 'images' && blockType && MINT_VAULT_IMAGE_LABEL.has(blockType)) {
     return MINT_VAULT_IMAGE_LABEL.get(blockType)!;
+  }
+  if (key === 'images' && blockType === 'altura_olympus') {
+    return 'Thêm / quản lý ảnh';
   }
   const reStat = key.match(/^stats\[(\d+)\]\.(label|value)$/);
   if (reStat && blockType === 'real_estate_hero') {
@@ -706,6 +729,15 @@ export function resolveLabel(
   if (key === 'items' && blockType === 'cool_hunter_gallery') {
     return 'Thêm / quản lý ảnh';
   }
+  if (key === 'features' && blockType === 'altura_olympus') {
+    return 'Thêm / quản lý features';
+  }
+  const reAlturaFeat = key.match(/^features\[(\d+)\]\.(label|icon)$/);
+  if (reAlturaFeat && blockType === 'altura_olympus') {
+    return `Feature ${Number(reAlturaFeat[1]) + 1} · ${
+      reAlturaFeat[2] === 'label' ? 'Nhãn' : 'Icon'
+    }`;
+  }
   const reGallery = key.match(/^items\[(\d+)\]\.(imageUrl|text)$/);
   if (reGallery && blockType === 'cool_hunter_gallery') {
     return `Ảnh ${Number(reGallery[1]) + 1} · ${
@@ -818,6 +850,13 @@ export function resolveElementMeta(
       kind: 'mintVaultImages',
       fieldType: undefined,
       label: MINT_VAULT_IMAGE_LABEL.get(blockType)!,
+    };
+  }
+  if (key === 'images' && blockType === 'altura_olympus') {
+    return {
+      kind: 'alturaOlympusImages',
+      fieldType: undefined,
+      label: 'Thêm / quản lý ảnh',
     };
   }
   const vImg = key.match(/^variants\[(\d+)\]\.image$/);
@@ -1339,6 +1378,24 @@ export function resolveElementMeta(
       label: 'Thêm / quản lý ảnh',
     };
   }
+  if (key === 'features' && blockType === 'altura_olympus') {
+    return {
+      kind: 'alturaOlympusFeatures',
+      fieldType: undefined,
+      label: 'Thêm / quản lý features',
+    };
+  }
+  const reAlturaFeatField = key.match(/^features\[(\d+)\]\.(label|icon)$/);
+  if (reAlturaFeatField && blockType === 'altura_olympus') {
+    const field = reAlturaFeatField[2];
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Feature ${Number(reAlturaFeatField[1]) + 1} · ${
+        field === 'label' ? 'Nhãn' : 'Icon'
+      }`,
+    };
+  }
   const reGalleryField = key.match(/^items\[(\d+)\]\.(imageUrl|text)$/);
   if (reGalleryField && blockType === 'cool_hunter_gallery') {
     const field = reGalleryField[2];
@@ -1422,7 +1479,7 @@ export function resolveElementMeta(
       label: 'Thêm / quản lý link',
     };
   }
-  if (key === 'navLinks' && blockType === 'framer_aestha_editorial') {
+  if (key === 'navLinks' && blockType === 'aestha_nav') {
     return {
       kind: 'aesthaNavLinks',
       fieldType: undefined,
@@ -1430,12 +1487,16 @@ export function resolveElementMeta(
     };
   }
   const aesthaNavLink = key.match(/^navLinks\[(\d+)\]\.(label|href)$/);
-  if (aesthaNavLink && blockType === 'framer_aestha_editorial') {
+  if (aesthaNavLink && blockType === 'aestha_nav') {
+    // `.href` phải ra link-picker (trang trong template / cuộn tới block / URL
+    // ngoài). Nhánh hardcode này return TRƯỚC `defFieldType`, nên đổi mỗi
+    // registry def sẽ không có tác dụng — xem ghi chú ở `delvaux_subnav`.
+    const isHref = aesthaNavLink[2] === 'href';
     return {
-      kind: 'text',
-      fieldType: 'text',
+      kind: isHref ? 'link' : 'text',
+      fieldType: isHref ? 'link' : 'text',
       label: `Nav ${Number(aesthaNavLink[1]) + 1} · ${
-        aesthaNavLink[2] === 'label' ? 'Nhãn' : 'Link'
+        isHref ? 'Link' : 'Nhãn'
       }`,
     };
   }
@@ -1444,13 +1505,6 @@ export function resolveElementMeta(
       kind: 'aesthaExploreProjects',
       fieldType: undefined,
       label: 'Thêm / quản lý dự án',
-    };
-  }
-  if (key === 'footerLinks' && blockType === 'aestha_explore') {
-    return {
-      kind: 'aesthaExploreFooterLinks',
-      fieldType: undefined,
-      label: 'Thêm / quản lý footer',
     };
   }
   const exploreProjImages = key.match(/^projects\[(\d+)\]\.detail\.images$/);
@@ -1470,20 +1524,11 @@ export function resolveElementMeta(
       img: 'Ảnh',
       alt: 'Alt',
     };
+    const kind = field === 'img' ? 'image' : field === 'href' ? 'link' : 'text';
     return {
-      kind: field === 'img' ? 'image' : 'text',
-      fieldType: field === 'img' ? 'image' : 'text',
+      kind,
+      fieldType: kind === 'image' ? 'image' : kind === 'link' ? 'link' : 'text',
       label: `Dự án ${Number(exploreProject[1]) + 1} · ${labels[field] ?? field}`,
-    };
-  }
-  const exploreFooter = key.match(/^footerLinks\[(\d+)\]\.(label|href)$/);
-  if (exploreFooter && blockType === 'aestha_explore') {
-    return {
-      kind: 'text',
-      fieldType: 'text',
-      label: `Footer ${Number(exploreFooter[1]) + 1} · ${
-        exploreFooter[2] === 'label' ? 'Nhãn' : 'Link'
-      }`,
     };
   }
   if (key === 'team' && blockType === 'aestha_studio') {
@@ -1491,13 +1536,6 @@ export function resolveElementMeta(
       kind: 'aesthaStudioTeam',
       fieldType: undefined,
       label: 'Thêm / quản lý team',
-    };
-  }
-  if (key === 'footerLinks' && blockType === 'aestha_studio') {
-    return {
-      kind: 'aesthaStudioFooterLinks',
-      fieldType: undefined,
-      label: 'Thêm / quản lý footer',
     };
   }
   const studioMember = key.match(/^team\[(\d+)\]\.(name|role)$/);
@@ -1510,16 +1548,6 @@ export function resolveElementMeta(
       }`,
     };
   }
-  const studioFooter = key.match(/^footerLinks\[(\d+)\]\.(label|href)$/);
-  if (studioFooter && blockType === 'aestha_studio') {
-    return {
-      kind: 'text',
-      fieldType: 'text',
-      label: `Footer ${Number(studioFooter[1]) + 1} · ${
-        studioFooter[2] === 'label' ? 'Nhãn' : 'Link'
-      }`,
-    };
-  }
   if (key === 'socials' && blockType === 'aestha_contact') {
     return {
       kind: 'aesthaContactSocials',
@@ -1527,30 +1555,14 @@ export function resolveElementMeta(
       label: 'Thêm / quản lý social',
     };
   }
-  if (key === 'footerLinks' && blockType === 'aestha_contact') {
-    return {
-      kind: 'aesthaContactFooterLinks',
-      fieldType: undefined,
-      label: 'Thêm / quản lý footer',
-    };
-  }
   const contactSocial = key.match(/^socials\[(\d+)\]\.(label|href)$/);
   if (contactSocial && blockType === 'aestha_contact') {
+    const isHref = contactSocial[2] === 'href';
     return {
-      kind: 'text',
-      fieldType: 'text',
+      kind: isHref ? 'link' : 'text',
+      fieldType: isHref ? 'link' : 'text',
       label: `Mạng xã hội ${Number(contactSocial[1]) + 1} · ${
-        contactSocial[2] === 'label' ? 'Nhãn' : 'Link'
-      }`,
-    };
-  }
-  const contactFooter = key.match(/^footerLinks\[(\d+)\]\.(label|href)$/);
-  if (contactFooter && blockType === 'aestha_contact') {
-    return {
-      kind: 'text',
-      fieldType: 'text',
-      label: `Footer ${Number(contactFooter[1]) + 1} · ${
-        contactFooter[2] === 'label' ? 'Nhãn' : 'Link'
+        isHref ? 'Link' : 'Nhãn'
       }`,
     };
   }
@@ -1627,6 +1639,24 @@ export function resolveElementMeta(
       return { kind: 'text', fieldType: meta.fieldType, label: meta.label };
     }
   }
+  const mintVarField = key.match(
+    /^variants\[(\d+)\]\.(label|swatch|image|ref)$/
+  );
+  if (mintVarField && blockType === 'mint_variants') {
+    const field = mintVarField[2];
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      swatch: 'Swatch',
+      image: 'Ảnh',
+      ref: 'REF',
+    };
+    const isImg = field === 'swatch' || field === 'image';
+    return {
+      kind: isImg ? 'image' : 'text',
+      fieldType: isImg ? 'image' : 'text',
+      label: `Biến thể ${Number(mintVarField[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
   const fieldType = defFieldType(blockType, key);
   const kind = resolveKind(key, fieldType, blockType);
   const label = resolveLabel(key, kind, blockType);
@@ -1665,6 +1695,7 @@ export function resolveLinkAnchorKey(
     if (navLink) return `items[${navLink[1]}].label`;
     if (key === 'ctaLink') return 'ctaText';
   }
+  if (blockType === 'pnj_header' && key === 'logoHref') return 'logoUrl';
   return key;
 }
 

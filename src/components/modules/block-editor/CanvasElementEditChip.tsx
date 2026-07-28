@@ -8,13 +8,19 @@ import { cn } from '@/lib/cn';
 
 import { ImagePicker } from './ImagePicker';
 import { getContentAt, setContentAt } from './contentPath';
+import { resolveAlturaOlympusImages } from './blocks/_registry/defs/alturaOlympus';
 import { LinkControls } from './links/LinkControls';
 import {
   canvasEditActionLabel,
   type ElementKind,
   type ResolvedElementMeta,
 } from './resolveElementKind';
-import type { BlockContent, ImageTransform } from './types';
+import type {
+  AlturaOlympusContent,
+  BlockContent,
+  BlockType,
+  ImageTransform,
+} from './types';
 
 export interface CanvasElementEditChipProps {
   elementKey: string;
@@ -24,6 +30,7 @@ export interface CanvasElementEditChipProps {
   /** Surface container — chip positions relative to this. */
   surfaceEl: HTMLElement;
   content: BlockContent;
+  blockType?: BlockType;
   /** Controlled image popover — parent opens this on element click. */
   imageOpen: boolean;
   onImageOpenChange: (open: boolean) => void;
@@ -66,6 +73,8 @@ function chipIcon(kind: ElementKind) {
     kind === 'pnjStickyMenuItems' ||
     kind === 'mintV2ServicesItems' ||
     kind === 'coolHunterGalleryItems' ||
+    kind === 'alturaOlympusFeatures' ||
+    kind === 'alturaOlympusImages' ||
     kind === 'mintV2ProcessSteps' ||
     kind === 'framerDarlingTimelineItems' ||
     kind === 'framerPerformPricingTiers' ||
@@ -112,6 +121,7 @@ export function CanvasElementEditChip({
   rect,
   surfaceEl,
   content,
+  blockType,
   imageOpen,
   onImageOpenChange,
   linkOpen,
@@ -152,13 +162,36 @@ export function CanvasElementEditChip({
   };
 
   const c = content as Record<string, unknown>;
-  const imageUrl = (getContentAt(c, elementKey) as string) ?? '';
+  const alturaImgMatch =
+    blockType === 'altura_olympus'
+      ? elementKey.match(/^images\[(\d+)\]$/)
+      : null;
+  const alturaImgIndex = alturaImgMatch ? Number(alturaImgMatch[1]) : -1;
+  const alturaImages =
+    alturaImgIndex >= 0
+      ? resolveAlturaOlympusImages(content as AlturaOlympusContent)
+      : null;
+
+  const imageUrl =
+    alturaImages && alturaImgIndex >= 0
+      ? (alturaImages[alturaImgIndex] ?? '')
+      : ((getContentAt(c, elementKey) as string) ?? '');
   const transformKey = isImageAction ? imageTransformKey(elementKey) : null;
   const transform = transformKey
     ? (c[transformKey] as ImageTransform | undefined)
     : undefined;
 
   const setImageUrl = (next: string) => {
+    if (alturaImages && alturaImgIndex >= 0) {
+      const list = [...alturaImages];
+      while (list.length <= alturaImgIndex) list.push('');
+      list[alturaImgIndex] = next;
+      onContentChange(prev => {
+        const cur = prev as AlturaOlympusContent;
+        return { ...cur, images: list } as BlockContent;
+      });
+      return;
+    }
     onContentChange(setContentAt(c, elementKey, next) as BlockContent);
   };
 

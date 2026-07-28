@@ -12,6 +12,7 @@ import { aesthaExploreDef } from './blocks/_registry/defs/aesthaExplore';
 import { aesthaStudioDef } from './blocks/_registry/defs/aesthaStudio';
 import { aesthaContactDef } from './blocks/_registry/defs/aesthaContact';
 import { aesthaProjectDef } from './blocks/_registry/defs/aesthaProject';
+import { aesthaNavDef } from './blocks/_registry/defs/aesthaNav';
 import { q80ExperienceDef } from './blocks/_registry/defs/q80Experience';
 import { q80MenuDef } from './blocks/_registry/defs/q80Menu';
 import { housentHeroDef } from './blocks/_registry/defs/housentHero';
@@ -2343,6 +2344,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   aestha_studio: aesthaStudioDef.defaultContent.vi,
   aestha_contact: aesthaContactDef.defaultContent.vi,
   aestha_project: aesthaProjectDef.defaultContent.vi,
+  aestha_nav: aesthaNavDef.defaultContent.vi,
   masterise_home_inside: masteriseHomeInsideDef.defaultContent.vi,
   framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
   framer_perform_pricing: framerPerformPricingDef.defaultContent.vi,
@@ -2541,6 +2543,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   aestha_studio: aesthaStudioDef.defaultContent.en,
   aestha_contact: aesthaContactDef.defaultContent.en,
   aestha_project: aesthaProjectDef.defaultContent.en,
+  aestha_nav: aesthaNavDef.defaultContent.en,
   masterise_home_inside: masteriseHomeInsideDef.defaultContent.en,
   framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
   framer_perform_pricing: framerPerformPricingDef.defaultContent.en,

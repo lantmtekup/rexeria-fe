@@ -9,8 +9,15 @@
  * Cursor-dot theo con trỏ. KHÔNG cuộn trang.
  * Narrow (<1100px, tablet + mobile): 1 dự án/màn, vuốt trái/phải để duyệt.
  *
- * Motion contract: entrance qua `useBlockMotion` (GSAP), crossfade bằng CSS
- * opacity, vuốt mobile bằng pointer thuần — KHÔNG dùng framer-motion.
+ * Click một dự án (menu wide · ảnh featured · thẻ narrow) LUÔN mở view chi tiết
+ * NỘI BỘ (`view = 'project'` → render `AesthaProject`), không điều hướng theo
+ * `projects[i].href`. Field `href` giữ lại trong CMS nhưng block không đọc.
+ *
+ * Motion contract: entrance qua `useBlockMotion` (GSAP); swap ảnh featured bằng
+ * CSS transition thuần (crossfade opacity 250ms + cả khối ảnh mới fade-up 54px
+ * kèm scale 0.95→1 trong 1s —
+ * state-driven nên KHÔNG dùng `data-motion`/`useBlockMotion`, xem `featuredImages`);
+ * vuốt mobile bằng pointer thuần — KHÔNG dùng framer-motion.
  * `min-[1100px]:` viewport media → `useContainerMobile(rootRef, 1100)` (đo
  * container, đúng trong device frame lẫn `/p`). Tokens tuyền inline + styleOf.
  */
@@ -23,10 +30,8 @@ import { cn } from '@/lib/cn';
 
 import type {
   AesthaExploreContent,
-  AesthaExploreFooterLink,
   AesthaExploreProject,
   AesthaProjectContent,
-  AesthaProjectNavLink,
   BlockBackground,
   ElementPositionsMap,
   ElementStylesMap,
@@ -40,6 +45,8 @@ import {
   selectableClass,
 } from './applyStyle';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useMotionAttributes } from '../motion/useMotionAttributes';
+import { AesthaRollLink } from './AesthaRollLink';
 import { useContainerMobile } from './useContainerMobile';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 
@@ -47,14 +54,12 @@ import { useIsCanvasEdit } from './useIsCanvasEdit';
 import {
   BODY_FONT,
   EASE_CROSSFADE,
-  FOOTER_CURRENT,
-  FOOTER_LINK_STYLE,
   HEADING_STYLE,
   INK_DARK,
   MENU_IDLE,
   MENU_LINK_STYLE,
+  NAV_CLEARANCE,
 } from './aesthaTokens';
-
 // Lazy-load AesthaProject to avoid circular deps
 const AesthaProject = dynamic(() =>
   import('./AesthaProject').then(m => m.AesthaProject)
@@ -78,6 +83,36 @@ interface AesthaExploreProps {
 const CROSSFADE: React.CSSProperties = {
   transition: `opacity 250ms 150ms ${EASE_CROSSFADE}`,
 };
+
+/**
+ * Ảnh featured (wide) vào: ngoài crossfade opacity ở trên, CẢ KHỐI ảnh mới còn
+ * trượt lên `RISE_PX` + zoom `RISE_SCALE → 1` trong `RISE_MS`. Rise dài hơn
+ * crossfade nên khối ảnh còn
+ * "trôi" một nhịp sau khi đã hiện rõ; delay khớp `CROSSFADE` để hai thứ khởi
+ * động cùng lúc. Khối trượt trong khung `overflow-hidden` → lúc đang lên có hở
+ * một dải nền ở mép trên (thu dần về 0) — đúng chất fade-up, không né.
+ */
+const RISE_MS = 1000;
+const RISE_PX = 54;
+/**
+ * Kèm zoom nhẹ `RISE_SCALE → 1` cùng nhịp với translate (chung một property
+ * `transform` nên tự khớp duration/ease). `transform-origin` mặc định = center →
+ * lúc chưa vào, khối co đều mọi phía, hở thêm một dải mảnh ở trái/phải nữa chứ
+ * không chỉ mép trên.
+ */
+const RISE_SCALE = 0.95;
+/**
+ * KHÔNG dùng `EASE_STANDARD`: expo-out đi hết quãng đường trong ~350ms đầu, phần
+ * còn lại của giây đứng yên → mất cảm giác "1 giây". easeOutCubic vẫn giảm tốc
+ * mượt nhưng trải chuyển động ra gần trọn `RISE_MS`.
+ */
+const RISE_EASE = 'cubic-bezier(0.33, 1, 0.68, 1)';
+/**
+ * Lớp rời đi KHÔNG trượt xuống — chỉ reset vị trí (0ms, không transition) sau khi
+ * crossfade kết thúc (150 + 250ms) lúc nó đã vô hình, để lần hiện sau lại rise đủ
+ * `RISE_PX`. Dư một nhịp so với 400ms để không đua frame với chính crossfade.
+ */
+const RISE_RESET_MS = 500;
 
 /**
  * Narrow (tablet + mobile): slider trượt ngang. Cả track dịch `translateX` để
@@ -173,23 +208,19 @@ function ArrowUpRight() {
  * Build AesthaProjectContent from an explore project + surrounding context.
  * Nội dung chi tiết do chính block `aestha_explore` sở hữu qua `project.detail`
  * (body/images), luôn được seed từ BlockDef → không cần bịa placeholder.
- * `navLinks` map từ `footerLinks`; `next*` suy ra từ dự án kế tiếp.
+ * `next*` suy ra từ dự án kế tiếp.
+ *
+ * Nav KHÔNG còn dựng ở đây: đã tách sang block `aestha_nav` (overlay góc trái
+ * dưới, phủ lên mọi section).
  */
 function buildProjectContent(
   project: AesthaExploreProject,
   projectIndex: number,
-  allProjects: AesthaExploreProject[],
-  footerLinks: AesthaExploreFooterLink[]
+  allProjects: AesthaExploreProject[]
 ): AesthaProjectContent {
   const detail = project.detail;
   const body = Array.isArray(detail?.body) ? detail!.body! : [];
   const images = Array.isArray(detail?.images) ? detail!.images! : [];
-
-  // Build nav links from footer links (key `navLinks[i]` ↔ `footerLinks[i]`).
-  const navLinks: AesthaProjectNavLink[] = footerLinks.map(link => ({
-    label: link.label,
-    href: link.href,
-  }));
 
   // Build next project info
   const nextIndex = allProjects.length
@@ -205,7 +236,6 @@ function buildProjectContent(
     nextHeading: 'Dự án tiếp theo',
     nextLabel: nextProject?.label ?? '',
     nextHref: nextProject?.href || '#',
-    navLinks,
   };
 }
 
@@ -221,8 +251,6 @@ function keyForProject(p: number): (localKey: string) => string {
     if (bodyM) return `projects[${p}].detail.body[${bodyM[1]}]`;
     const imgM = localKey.match(/^images\[(\d+)\]\.src$/);
     if (imgM) return `projects[${p}].detail.images[${imgM[1]}].src`;
-    const navM = localKey.match(/^navLinks\[(\d+)\]\.label$/);
-    if (navM) return `footerLinks[${navM[1]}].label`;
     return localKey;
   };
 }
@@ -319,11 +347,6 @@ export function AesthaExplore({
 
   const projects: AesthaExploreProject[] = Array.isArray(content.projects)
     ? content.projects
-    : [];
-  const footerLinks: AesthaExploreFooterLink[] = Array.isArray(
-    content.footerLinks
-  )
-    ? content.footerLinks
     : [];
 
   // Chỉ số dự án đang được chọn trên canvas (Layers) → hiện ảnh tương ứng để sửa.
@@ -446,6 +469,11 @@ export function AesthaExplore({
   /**
    * Entrance on-load (recon: heading fade-up 500ms, menu stagger, ảnh fade).
    * Không có ScrollTrigger — block 1 viewport, không scrub.
+   *
+   * `effectiveView` PHẢI nằm trong deps: 3 element dưới mang `data-entrance` →
+   * ẩn sẵn bằng CSS (xem `public-entrance.css`). Vào view chi tiết rồi quay lại
+   * là cả cây explore mount mới, mất sạch inline style GSAP đã ghi; không
+   * rebuild thì chúng nằm im ở `opacity: 0` cho tới lúc failsafe gỡ gate.
    */
   useBlockMotion(rootRef, () => {
     const root = rootRef.current;
@@ -474,7 +502,7 @@ export function AesthaExplore({
           opacity: 1,
           y: 0,
           duration: 0.5,
-          delay: 0.15,
+          delay: 0.08,
           stagger: 0.05,
           ease: 'power2.out',
         }
@@ -487,50 +515,110 @@ export function AesthaExplore({
         { opacity: 1, duration: 0.8, ease: 'power2.out' }
       );
     }
-  }, [isCanvas, hasRoot, reduce, isNarrow]);
+  }, [isCanvas, hasRoot, reduce, isNarrow, effectiveView]);
 
+  /**
+   * Hover roll-swap của heading (`AesthaRollLink`). Deps gồm `isNarrow` (wide /
+   * narrow render 2 cây DOM khác nhau) và 2 nhãn (đổi text trên canvas →
+   * rebuild timeline).
+   */
+  useMotionAttributes(rootRef, [
+    isNarrow,
+    isCanvas,
+    effectiveView,
+    content.heading,
+    content.headingHoverLabel,
+  ]);
+
+  /* `.aestha-explore-heading` (marker entrance của useBlockMotion) ở trên `<h1>`,
+     còn `data-motion` nằm trên 2 span con → 1 element = 1 driver, không chồng. */
   const heading = (extraClass: string) => (
     <h1
-      data-element-key='heading'
+      data-entrance
       style={composeStyle(HEADING_STYLE, styleOf('heading'))}
-      className={selectableClass(
-        activeKey === 'heading',
-        cn('aestha-explore-heading', extraClass)
-      )}
+      className={cn('aestha-explore-heading', extraClass)}
     >
-      {content.heading}
+      <AesthaRollLink
+        label={content.heading}
+        hoverLabel={content.headingHoverLabel}
+        href={content.headingHref}
+        labelKey='heading'
+        hoverLabelKey='headingHoverLabel'
+        activeKey={activeKey}
+        isCanvas={isCanvas}
+        styleOf={styleOf}
+      />
     </h1>
   );
 
-  const footerNav = (extraClass: string) => (
-    <nav
-      aria-label='Sections'
-      className={cn('flex items-center gap-6', extraClass)}
-    >
-      {footerLinks.map((link, i) => {
-        const isCurrent = link.label === content.currentFooterLabel;
-        return (
-          <a
-            key={i}
-            href={link.href}
-            aria-current={isCurrent ? 'page' : undefined}
-            data-element-key={`footerLinks[${i}].label`}
-            style={composeStyle(
-              FOOTER_LINK_STYLE,
-              isCurrent ? { color: FOOTER_CURRENT } : undefined,
-              styleOf(`footerLinks[${i}].label`)
-            )}
-            className={selectableClass(
-              activeKey === `footerLinks[${i}].label`,
-              isCurrent ? undefined : 'hover:opacity-70'
-            )}
-          >
-            {link.label}
-          </a>
-        );
-      })}
-    </nav>
-  );
+  /* Ảnh featured (wide) — tách khỏi JSX để `<button>` và `<a>` dùng chung, hai
+     nhánh không thể lệch style/marker GSAP `aestha-explore-featured`. */
+  const featuredShared = {
+    'aria-label': `View ${projects[wideIndex]?.label} project`,
+    'data-entrance': '',
+    className:
+      'aestha-explore-featured relative shrink-0 cursor-pointer overflow-hidden border-none bg-transparent p-0',
+    style: { width: 'calc((100cqw - 96px) * 0.4737)' },
+  };
+
+  const featuredImages = projects.map((p, i) => {
+    const active = wideIndex === i;
+    return (
+      <div
+        key={i}
+        data-element-key={`projects[${i}].img`}
+        aria-hidden={!active}
+        style={composeStyle(
+          {
+            position: 'absolute',
+            inset: 0,
+            // Clip khối ảnh đang trượt — nút cha đã overflow-hidden nhưng lớp có
+            // thể được gán borderRadius qua styleOf, cần bo đúng ở đây.
+            overflow: 'hidden',
+            opacity: active ? 1 : 0,
+            pointerEvents: active ? 'auto' : 'none',
+          },
+          CROSSFADE,
+          styleOf(`projects[${i}].img`)
+        )}
+        className={selectableClass(activeKey === `projects[${i}].img`)}
+      >
+        {/* Cả khối ảnh trượt lên như một block (`inset: 0` = full khung, KHÔNG
+            phóng to để né hở mép — chủ ý cho thấy khối ảnh đi lên chứ không phải
+            ảnh chạy sau một khung đứng yên). Tách riêng khỏi lớp opacity vì
+            `styleOf` ở trên có thể mang `transform: translate(...)` do author kéo
+            element trên canvas (positionStyle) và sẽ đè mất translateY; còn
+            `<img>` đã giữ transform cho hover-zoom. */}
+        <div
+          style={
+            reduce
+              ? { position: 'absolute', inset: 0 }
+              : {
+                  position: 'absolute',
+                  inset: 0,
+                  transform: active
+                    ? 'translateY(0) scale(1)'
+                    : `translateY(${RISE_PX}px) scale(${RISE_SCALE})`,
+                  transition: active
+                    ? `transform ${RISE_MS}ms 150ms ${RISE_EASE}`
+                    : `transform 0ms ${RISE_RESET_MS}ms`,
+                  willChange: 'transform',
+                }
+          }
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={p.img || MENU_IMG_FALLBACK}
+            alt={p.alt || 'Project image'}
+            draggable={false}
+            fetchPriority={i === 0 ? 'high' : 'auto'}
+            loading={i === 0 ? 'eager' : 'lazy'}
+            className='h-full w-full object-cover transition-transform duration-500 will-change-transform select-none hover:scale-[1.03]'
+          />
+        </div>
+      </div>
+    );
+  });
 
   return (
     <div
@@ -548,8 +636,7 @@ export function AesthaExplore({
           content={buildProjectContent(
             projects[activeProjectIdx],
             activeProjectIdx,
-            projects,
-            footerLinks
+            projects
           )}
           styles={styles}
           background={background}
@@ -576,8 +663,12 @@ export function AesthaExplore({
           })}
         >
           {isNarrow ? (
-            /* ── Narrow: 1 dự án/màn, vuốt để chuyển ── */
-            <section className='flex h-full w-full flex-col px-6 pt-6 pb-6'>
+            /* ── Narrow: 1 dự án/màn, vuốt để chuyển. `paddingBottom` chừa chỗ
+               cho block `aestha_nav` overlay (nhãn dự án nằm sát đáy). ── */
+            <section
+              className='flex h-full w-full flex-col px-6 pt-6'
+              style={{ paddingBottom: `calc(24px + ${NAV_CLEARANCE})` }}
+            >
               {heading('mb-4 shrink-0')}
 
               <div
@@ -593,6 +684,8 @@ export function AesthaExplore({
                 onClick={() => {
                   // Tap (không kéo) → mở chi tiết dự án ĐANG ở giữa. Đặt onClick ở
                   // container (phần tử giữ pointer capture) để click luôn nổ.
+                  // `projects[i].href` KHÔNG được dùng để điều hướng: click luôn
+                  // mở view chi tiết nội bộ của chính block này.
                   if (isCanvas || dragMoved.current) return;
                   setActiveProjectIdx(columns[centerCol]?.real ?? 0);
                   setView('project');
@@ -676,8 +769,6 @@ export function AesthaExplore({
                   ))}
                 </div>
               </div>
-
-              {footerNav('mt-4 shrink-0')}
             </section>
           ) : (
             /* ── Wide: hover-swap full-viewport ── */
@@ -696,10 +787,13 @@ export function AesthaExplore({
                     aria-label='Projects'
                     className='absolute top-1/2 right-0 flex -translate-y-1/2 flex-col items-end'
                   >
+                    {/* Click LUÔN mở view chi tiết nội bộ — `projects[i].href`
+                        không dùng để điều hướng. */}
                     {projects.map((p, i) => (
                       <button
                         key={i}
                         type='button'
+                        data-entrance
                         data-element-key={`projects[${i}].label`}
                         onClick={() => {
                           if (isCanvas) return;
@@ -724,52 +818,20 @@ export function AesthaExplore({
                       </button>
                     ))}
                   </nav>
-
-                  {footerNav('absolute bottom-0 left-0')}
                 </div>
 
-                {/* Cột phải: ảnh featured ~47.37% — crossfade theo dự án active */}
+                {/* Cột phải: ảnh featured ~47.37% — crossfade theo dự án active.
+                    Cùng quy tắc với menu: click mở view chi tiết nội bộ. */}
                 <button
                   type='button'
-                  aria-label={`View ${projects[wideIndex]?.label} project`}
-                  className='aestha-explore-featured relative shrink-0 cursor-pointer overflow-hidden border-none bg-transparent p-0'
-                  style={{ width: 'calc((100cqw - 96px) * 0.4737)' }}
+                  {...featuredShared}
                   onClick={() => {
                     if (isCanvas) return;
                     setActiveProjectIdx(wideIndex);
                     setView('project');
                   }}
                 >
-                  {projects.map((p, i) => (
-                    <div
-                      key={i}
-                      data-element-key={`projects[${i}].img`}
-                      aria-hidden={wideIndex !== i}
-                      style={composeStyle(
-                        {
-                          position: 'absolute',
-                          inset: 0,
-                          opacity: wideIndex === i ? 1 : 0,
-                          pointerEvents: wideIndex === i ? 'auto' : 'none',
-                        },
-                        CROSSFADE,
-                        styleOf(`projects[${i}].img`)
-                      )}
-                      className={selectableClass(
-                        activeKey === `projects[${i}].img`
-                      )}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={p.img || MENU_IMG_FALLBACK}
-                        alt={p.alt || 'Project image'}
-                        draggable={false}
-                        fetchPriority={i === 0 ? 'high' : 'auto'}
-                        loading={i === 0 ? 'eager' : 'lazy'}
-                        className='h-full w-full object-cover transition-transform duration-500 will-change-transform select-none hover:scale-[1.03]'
-                      />
-                    </div>
-                  ))}
+                  {featuredImages}
                 </button>
               </div>
             </section>
@@ -787,8 +849,7 @@ export function AesthaExplore({
             content={buildProjectContent(
               projects[activeProjIdx ?? 0],
               activeProjIdx ?? 0,
-              projects,
-              footerLinks
+              projects
             )}
             styles={styles}
             order={order}

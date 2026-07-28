@@ -1403,6 +1403,7 @@ export function BlockPreview({
             rect={chipRect}
             surfaceEl={surfaceRef.current}
             content={content}
+            blockType={block.blockType}
             imageOpen={imageEditKey === chipDisplayKey}
             onImageOpenChange={open => {
               if (open) {

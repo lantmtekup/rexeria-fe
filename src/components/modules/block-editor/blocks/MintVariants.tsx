@@ -5,9 +5,10 @@
  * Port từ template ProductVariantSection nhưng:
  *  - responsive theo @container (khung block) thay vì viewport md:/lg:
  *  - isMobile đo qua useContainerMobile (ResizeObserver) thay window.matchMedia
- *  - title 2 dòng có data-element-key → inline-edit
+ *  - title / coin / swatch có data-element-key → chọn + sửa trên canvas
  *  - Discover drawer = MintDiscoverPanel (host-native): portal ra device frame
  *    /body nên không bị clip bởi @container; scroll-lock frame-aware.
+ *  - Editor canvas: drawer content flat phía dưới (không mở drawer khi click coin)
  */
 import * as React from 'react';
 import gsap from 'gsap';
@@ -40,6 +41,15 @@ interface Props {
   activeKey?: string | null;
 }
 
+const TITLE_BASE: React.CSSProperties = {
+  fontSize: 'clamp(48px, 12cqi, 160px)',
+  lineHeight: 1.05,
+  fontWeight: 300,
+  letterSpacing: '-0.02em',
+  color: 'rgba(212, 212, 212, 0.8)',
+  textAlign: 'center',
+};
+
 export function MintVariants({
   content,
   styles,
@@ -52,7 +62,11 @@ export function MintVariants({
   const variants = content.variants ?? [];
   const [active, setActive] = React.useState(variants[0]?.key ?? '');
   const [discoverOpen, setDiscoverOpen] = React.useState(false);
-  const activeVariant = variants.find(v => v.key === active) ?? variants[0];
+  const activeIdx = Math.max(
+    0,
+    variants.findIndex(v => v.key === active)
+  );
+  const activeVariant = variants[activeIdx] ?? variants[0];
   const isMobile = useContainerMobile(rootRef);
 
   // Trên editor canvas (active-block-preview) KHÔNG mở drawer khi click coin —
@@ -66,75 +80,102 @@ export function MintVariants({
       positionStyle(positions, key)
     );
 
-  useBlockMotion(rootRef, ({ scroller, isMobile }) => {
-    if (isMobile) return; // desktop-only (đo theo container)
-    const root = rootRef.current;
-    if (!root) return;
-    gsap.utils.toArray<HTMLElement>('.js-parallax', root).forEach(el => {
-      gsap.to(el, {
-        y: el.getAttribute('data-y') || '-100',
-        ease: 'power4',
-        scrollTrigger: {
-          trigger: el,
-          scroller,
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: 1,
-          invalidateOnRefresh: true,
-        },
-      });
-    });
-    // Zoom ảnh coin theo scroll (scrub): nhỏ → lớn dần khi section đi qua.
-    const coin = root.querySelector<HTMLElement>('.mint-variants__coin');
-    if (coin) {
-      gsap.fromTo(
-        coin,
-        { scale: 0.88 },
-        {
-          scale: 1.12,
-          ease: 'none',
-          transformOrigin: 'center center',
+  useBlockMotion(
+    rootRef,
+    ({ scroller, isMobile: mobile }) => {
+      if (isCanvas) return;
+      if (mobile) return; // desktop-only (đo theo container)
+      const root = rootRef.current;
+      if (!root) return;
+      gsap.utils.toArray<HTMLElement>('.js-parallax', root).forEach(el => {
+        gsap.to(el, {
+          y: el.getAttribute('data-y') || '-100',
+          ease: 'power4',
           scrollTrigger: {
-            trigger: root,
+            trigger: el,
             scroller,
             start: 'top bottom',
             end: 'bottom top',
             scrub: 1,
             invalidateOnRefresh: true,
           },
-        }
-      );
+        });
+      });
+      // Zoom ảnh coin theo scroll (scrub): nhỏ → lớn dần khi section đi qua.
+      const coin = root.querySelector<HTMLElement>('.mint-variants__coin');
+      if (coin) {
+        gsap.fromTo(
+          coin,
+          { scale: 0.88 },
+          {
+            scale: 1.12,
+            ease: 'none',
+            transformOrigin: 'center center',
+            scrollTrigger: {
+              trigger: root,
+              scroller,
+              start: 'top bottom',
+              end: 'bottom top',
+              scrub: 1,
+              invalidateOnRefresh: true,
+            },
+          }
+        );
+      }
+    },
+    [isCanvas]
+  );
+
+  // Sync active khi variants list đổi (xoá/đổi key).
+  React.useEffect(() => {
+    if (!variants.some(v => v.key === active) && variants[0]) {
+      setActive(variants[0].key);
     }
-  });
+  }, [variants, active]);
 
   // Merge theo từng field: content cũ có thể thiếu (hoặc mới sửa 1 field) →
   // field chưa set vẫn hiện default, KHÔNG bị mất khi sửa field khác.
   const info = { ...DISCOVER_FALLBACK, ...content.discover };
+  const coinImageKey = `variants[${activeIdx}].image`;
 
   return (
     <>
       <section
         ref={rootRef}
+        data-canvas-edit={isCanvas ? 'true' : undefined}
         style={blockBackgroundStyle(background)}
         className='@container relative h-[80vh] w-full overflow-hidden bg-neutral-50 @2xl:h-screen'
       >
         <div className='relative h-full w-full'>
-          {/* BACK — editorial title (2 dòng, inline-edit) */}
+          {/* BACK — editorial title (2 dòng, inline-edit).
+              Wrapper pointer-events-none (design); spans editable bật lại. */}
           <div className='pointer-events-none absolute inset-0 z-0 flex items-center justify-center px-6 text-center'>
             <div className='content-bottom js-parallax gpu-layer' data-y='60'>
-              <h2 className='text-[12cqi] leading-[1.05] font-light tracking-tight text-neutral-300/80 @2xl:text-[10cqi]'>
+              <h2 style={TITLE_BASE}>
                 <span
                   data-element-key='titleLine1'
-                  style={styleOf('titleLine1')}
-                  className={selectableClass(activeKey === 'titleLine1', '')}
+                  style={composeStyle(
+                    { display: 'inline-block' },
+                    styleOf('titleLine1')
+                  )}
+                  className={selectableClass(
+                    activeKey === 'titleLine1',
+                    'pointer-events-auto'
+                  )}
                 >
                   {content.titleLine1}
                 </span>
                 <br />
                 <span
                   data-element-key='titleLine2'
-                  style={styleOf('titleLine2')}
-                  className={selectableClass(activeKey === 'titleLine2', '')}
+                  style={composeStyle(
+                    { display: 'inline-block' },
+                    styleOf('titleLine2')
+                  )}
+                  className={selectableClass(
+                    activeKey === 'titleLine2',
+                    'pointer-events-auto'
+                  )}
                 >
                   {content.titleLine2}
                 </span>
@@ -142,7 +183,7 @@ export function MintVariants({
             </div>
           </div>
 
-          {/* FRONT — coin (mở discover) */}
+          {/* FRONT — coin (mở discover trên Preview/`/p`; trên canvas = chọn ảnh) */}
           <div className='absolute inset-x-0 top-[20%] z-10 flex justify-center'>
             <button
               type='button'
@@ -161,41 +202,78 @@ export function MintVariants({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     key={activeVariant.key}
+                    data-element-key={coinImageKey}
                     src={activeVariant.image}
                     alt={`Coin — ${activeVariant.label}`}
-                    className='pointer-events-none h-[45vh] w-auto object-contain transition-opacity duration-300 @2xl:h-[55vh]'
+                    style={composeStyle(
+                      {
+                        height: 'clamp(200px, 45vh, 520px)',
+                        width: 'auto',
+                        objectFit: 'contain',
+                        display: 'block',
+                      },
+                      styleOf(coinImageKey)
+                    )}
+                    className={selectableClass(
+                      activeKey === coinImageKey,
+                      'pointer-events-auto transition-opacity duration-300'
+                    )}
                   />
                 </div>
               )}
-              <span className='pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover/info:opacity-100'>
-                <span className='flex items-center gap-2 rounded-full bg-black px-5 py-3 text-[11px] tracking-[0.2em] whitespace-nowrap text-white uppercase shadow-xl'>
-                  + Click for more information
+              {!isCanvas && (
+                <span className='pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover/info:opacity-100'>
+                  <span className='flex items-center gap-2 rounded-full bg-black px-5 py-3 text-[11px] tracking-[0.2em] whitespace-nowrap text-white uppercase shadow-xl'>
+                    + Click for more information
+                  </span>
                 </span>
-              </span>
+              )}
             </button>
           </div>
 
-          {/* TOP — swatch picker */}
+          {/* TOP — swatch picker (mỗi nút = variants[i].swatch editable) */}
           <ul className='content-pagination absolute top-[78%] left-1/2 z-20 flex -translate-x-1/2 gap-3'>
-            {variants.map(v => (
-              <li
-                key={v.key}
-                onClick={() => setActive(v.key)}
-                role='button'
-                aria-label={`Select ${v.label}`}
-                aria-pressed={active === v.key}
-                className={`h-9 w-9 cursor-pointer rounded-full border transition-all ${
-                  active === v.key
-                    ? 'scale-110 border-black ring-2 ring-black ring-offset-2'
-                    : 'border-black/30 hover:scale-105'
-                }`}
-                style={{
-                  backgroundImage: `url(${v.swatch})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              />
-            ))}
+            {variants.map((v, i) => {
+              const swatchKey = `variants[${i}].swatch`;
+              const selected = active === v.key;
+              return (
+                <li key={v.key}>
+                  <button
+                    type='button'
+                    data-element-key={swatchKey}
+                    onClick={() => setActive(v.key)}
+                    aria-label={`Select ${v.label}`}
+                    aria-pressed={selected}
+                    style={composeStyle(
+                      {
+                        width: 36,
+                        height: 36,
+                        borderRadius: 9999,
+                        border: selected
+                          ? '1px solid #000'
+                          : '1px solid rgba(0,0,0,0.3)',
+                        backgroundImage: v.swatch
+                          ? `url(${v.swatch})`
+                          : undefined,
+                        backgroundColor: v.swatch ? undefined : '#e5e5e5',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        transform: selected ? 'scale(1.1)' : undefined,
+                        boxShadow: selected
+                          ? '0 0 0 2px #fff, 0 0 0 4px #000'
+                          : undefined,
+                        cursor: 'pointer',
+                      },
+                      styleOf(swatchKey)
+                    )}
+                    className={selectableClass(
+                      activeKey === swatchKey,
+                      'transition-transform hover:scale-105'
+                    )}
+                  />
+                </li>
+              );
+            })}
           </ul>
         </div>
 
@@ -263,22 +341,47 @@ function DrawerCanvasPreview({
   };
 
   return (
-    <div className='@container w-full border-t border-dashed border-neutral-300 bg-white px-6 py-6'>
+    <div
+      data-canvas-edit='true'
+      className='@container w-full border-t border-dashed border-neutral-300 bg-white px-6 py-6'
+    >
       <p className='mb-4 text-[10px] font-semibold tracking-[0.16em] text-neutral-400 uppercase'>
         Drawer chi tiết · preview (chỉ hiện trong editor)
       </p>
 
       <div className='mx-auto max-w-[560px]'>
-        {/* 3 item ↔ 3 ảnh (1:1) — click ảnh/nhãn để đổi (image/text control). */}
+        {/* Mỗi biến thể: swatch + ảnh chính + nhãn */}
         <div className='mb-6 grid grid-cols-3 gap-3'>
           {variants.map((v, i) => {
             const imgKey = `variants[${i}].image`;
             const labelKey = `variants[${i}].label`;
+            const swatchKey = `variants[${i}].swatch`;
             return (
               <div
                 key={v.key}
                 className='flex flex-col items-center gap-2 rounded-lg border border-neutral-200 p-2'
               >
+                <div
+                  data-element-key={swatchKey}
+                  style={composeStyle(
+                    {
+                      width: 28,
+                      height: 28,
+                      borderRadius: 9999,
+                      border: '1px solid rgba(0,0,0,0.2)',
+                      backgroundImage: v.swatch
+                        ? `url(${v.swatch})`
+                        : undefined,
+                      backgroundColor: v.swatch ? undefined : '#e5e5e5',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    },
+                    styleOf(swatchKey)
+                  )}
+                  className={selectableClass(activeKey === swatchKey, '')}
+                  aria-label={`Swatch ${v.label}`}
+                  role='img'
+                />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   data-element-key={imgKey}

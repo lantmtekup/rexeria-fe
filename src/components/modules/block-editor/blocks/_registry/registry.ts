@@ -24,6 +24,7 @@ import { aesthaExploreDef } from './defs/aesthaExplore';
 import { aesthaStudioDef } from './defs/aesthaStudio';
 import { aesthaContactDef } from './defs/aesthaContact';
 import { aesthaProjectDef } from './defs/aesthaProject';
+import { aesthaNavDef } from './defs/aesthaNav';
 import { framerEstanciaAboutUsDef } from './defs/framerEstanciaAboutUs';
 import { framerDarlingTimelineDef } from './defs/framerDarlingTimeline';
 import { framerPerformPricingDef } from './defs/framerPerformPricing';
@@ -261,6 +262,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   aestha_studio: aesthaStudioDef as BlockDef,
   aestha_contact: aesthaContactDef as BlockDef,
   aestha_project: aesthaProjectDef as BlockDef,
+  aestha_nav: aesthaNavDef as BlockDef,
   real_estate_highlights: realEstateHighlightsDef as BlockDef,
   real_estate_villa: realEstateVillaDef as BlockDef,
   real_estate_utilities: realEstateUtilitiesDef as BlockDef,

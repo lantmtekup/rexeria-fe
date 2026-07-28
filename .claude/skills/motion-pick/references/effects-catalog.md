@@ -7,7 +7,7 @@ Allowlist of valid `data-motion` ids. Pick only from this file. Case pin /
 frame-scrub / Flip / mouse-parallax / carousel → T3 `useBlockMotion`
 (see `docs/landing-motion-foundation.md` §3b).
 
-Total effects: **27**
+Total effects: **28**
 
 ## Index by category
 
@@ -15,13 +15,13 @@ Total effects: **27**
 - **text**: `char-blur-up-reveal`, `char-reveal`, `echo-reveal`, `line-reveal`, `word-blur-up-reveal`, `word-reveal`
 - **scroll**: `line-draw`, `parallax`
 - **image**: `clip-reveal`, `media-zoom`
-- **hover**: `hover-lift`, `hover-scale`, `hover-tilt`, `hover-zoom`
+- **hover**: `hover-lift`, `hover-roll-down`, `hover-scale`, `hover-tilt`, `hover-zoom`
 - **loop**: `marquee-loop`
 - **special**: `counter`
 
 ## Allowlist (all ids)
 
-`blur-in`, `char-blur-up-reveal`, `char-reveal`, `clip-reveal`, `counter`, `echo-reveal`, `fade-down`, `fade-in`, `fade-up`, `flip-in`, `hover-lift`, `hover-scale`, `hover-tilt`, `hover-zoom`, `line-draw`, `line-reveal`, `marquee-loop`, `media-zoom`, `parallax`, `rotate-in`, `scale-in`, `scale-pop`, `slide-left`, `slide-right`, `word-blur-up-reveal`, `word-reveal`, `zoom-in`
+`blur-in`, `char-blur-up-reveal`, `char-reveal`, `clip-reveal`, `counter`, `echo-reveal`, `fade-down`, `fade-in`, `fade-up`, `flip-in`, `hover-lift`, `hover-roll-down`, `hover-scale`, `hover-tilt`, `hover-zoom`, `line-draw`, `line-reveal`, `marquee-loop`, `media-zoom`, `parallax`, `rotate-in`, `scale-in`, `scale-pop`, `slide-left`, `slide-right`, `word-blur-up-reveal`, `word-reveal`, `zoom-in`
 
 ---
 
@@ -178,6 +178,20 @@ Total effects: **27**
 - relevantAttrs: duration, ease, distance, trigger, trigger-target
 - defaults: trigger=hover, duration=0.35, ease=power2.out
 - example: `<article data-motion='hover-lift'>Card</article>`
+
+## `hover-roll-down`
+
+- category: hover
+- appliesTo: text, any
+- tags: hover, roll, swap, text, mask, interaction
+- summary: Layer trượt xuống đúng 100% chiều cao khi hover — dùng cho cả 2 layer của roll-swap đổi nhãn.
+- whenToUse: Hover đổi nhãn kiểu roll: text cũ trượt xuống, text mới rơi từ trên xuống thay chỗ; Wordmark / nav item / CTA có nhãn phụ khi hover
+- whenNotToUse: Chỉ cần feedback hover không đổi text → hover-scale / hover-lift; Reveal chữ khi scroll vào view → line-reveal / word-reveal; Rơi xuống một lần khi vào view → fade-down
+- vs: hover-lift — chỉ nhấc element, không thay text; fade-down — entrance in-view có opacity, không hover; line-reveal — entrance in-view split dòng, không hover
+- prerequisites: Container mask: display grid + overflow hidden, cao đúng 1 dòng; Cả 2 layer chồng cùng ô: className "col-start-1 row-start-1" (KHÔNG absolute — cần container rộng theo nhãn dài hơn, nếu không nhãn dài wrap 2 dòng); Layer đang hiện: không offset. Layer mới: style={{ translate: "0 -100%" }}; Rest offset PHẢI dùng CSS property `translate`, KHÔNG dùng `transform: translateY(-100%)` — GSAP parse transform có sẵn rồi cộng dồn yPercent → lệch 1 dòng; Cả hai layer trỏ listener về container: data-motion-trigger-target="closest:<sel>"
+- relevantAttrs: duration, ease, trigger, trigger-target
+- defaults: trigger=hover, duration=1, ease=power3.inOut
+- example: `<a className='wm relative grid overflow-hidden'><span className='col-start-1 row-start-1' data-motion='hover-roll-down' data-motion-trigger-target='closest:.wm'>STUDIO</span><span className='col-start-1 row-start-1' style={{ translate: '0 -100%' }} data-motion='hover-roll-down' data-motion-trigger-target='closest:.wm'>VIEW WORK</span></a>`
 
 ## `hover-scale`
 

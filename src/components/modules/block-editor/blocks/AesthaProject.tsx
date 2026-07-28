@@ -30,7 +30,6 @@ import { cn } from '@/lib/cn';
 import type {
   AesthaProjectContent,
   AesthaProjectImage,
-  AesthaProjectNavLink,
   BlockBackground,
   ElementPositionsMap,
   ElementStylesMap,
@@ -44,6 +43,7 @@ import {
   selectableClass,
 } from './applyStyle';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
+import { useAesthaLink } from './aesthaLink';
 import { useContainerMobile } from './useContainerMobile';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 
@@ -119,16 +119,6 @@ const NEXT_LINK_STYLE: React.CSSProperties = {
   display: 'inline-block',
 };
 
-const NAV_LINK_STYLE: React.CSSProperties = {
-  fontFamily: BODY_FONT,
-  fontSize: 20,
-  lineHeight: '25px',
-  fontWeight: 400,
-  color: INK,
-  textDecoration: 'none',
-  transition: `color 250ms ${EASE}`,
-};
-
 export function AesthaProject({
   content,
   styles,
@@ -146,6 +136,7 @@ export function AesthaProject({
   const headerRef = React.useRef<HTMLDivElement>(null);
   const footerRef = React.useRef<HTMLDivElement>(null);
   const { hasRoot } = useLandingMotion();
+  const linkProps = useAesthaLink();
 
   const isNarrow = useContainerMobile(rootRef, 900);
 
@@ -193,8 +184,12 @@ export function AesthaProject({
     return () => window.removeEventListener('resize', measure);
   }, [isCanvas, isNarrow]);
 
-  // Narrow: đo chiều cao header (title) + footer (nav) sticky để mảng concept căn
-  // giữa đúng khoảng trống còn lại của màn đầu (var(--ap-vh) - header - footer).
+  // Narrow: đo chiều cao header (title) + footer (nút back) sticky để mảng
+  // concept căn giữa đúng khoảng trống còn lại của màn đầu
+  // (var(--ap-vh) - header - footer).
+  //
+  // Footer chỉ tồn tại khi block được nhúng trong Explore (`onBack`) — block
+  // độc lập không render nó, nên `ft` có thể null và chỉ đo header.
   const [barH, setBarH] = React.useState(0);
   React.useLayoutEffect(() => {
     if (!isNarrow || isCanvas) {
@@ -203,14 +198,14 @@ export function AesthaProject({
     }
     const hd = headerRef.current;
     const ft = footerRef.current;
-    if (!hd || !ft) return;
-    const measure = () => setBarH(hd.offsetHeight + ft.offsetHeight);
+    if (!hd) return;
+    const measure = () => setBarH(hd.offsetHeight + (ft?.offsetHeight ?? 0));
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(hd);
-    ro.observe(ft);
+    if (ft) ro.observe(ft);
     return () => ro.disconnect();
-  }, [isNarrow, isCanvas, content]);
+  }, [isNarrow, isCanvas, content, onBack]);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -222,9 +217,6 @@ export function AesthaProject({
   const body: string[] = Array.isArray(content.body) ? content.body : [];
   const images: AesthaProjectImage[] = Array.isArray(content.images)
     ? content.images
-    : [];
-  const navLinks: AesthaProjectNavLink[] = Array.isArray(content.navLinks)
-    ? content.navLinks
     : [];
 
   /**
@@ -291,6 +283,7 @@ export function AesthaProject({
 
   const titleEl = (
     <h1
+      data-entrance
       data-element-key={K('title')}
       style={composeStyle(TITLE_STYLE, styleOf(K('title')))}
       className={selectableClass(activeKey === K('title'), 'ap-title')}
@@ -311,7 +304,7 @@ export function AesthaProject({
       >
         {content.conceptLabel}
       </p>
-      <div className='ap-body'>
+      <div data-entrance className='ap-body'>
         {body.map((p, i) => {
           const ek = K(`body[${i}]`);
           return (
@@ -356,7 +349,7 @@ export function AesthaProject({
         </button>
       ) : (
         <a
-          href={content.nextHref || '#'}
+          {...linkProps(content.nextHref)}
           data-element-key={K('nextLabel')}
           style={composeStyle(NEXT_LINK_STYLE, styleOf(K('nextLabel')))}
           className={selectableClass(
@@ -370,50 +363,39 @@ export function AesthaProject({
     </>
   );
 
-  const navEl = (
-    <nav aria-label='Sections' className='flex items-center gap-6'>
-      {onBack && (
-        <button
-          type='button'
-          onClick={onBack}
-          style={{
-            fontFamily: BODY_FONT,
-            fontSize: 12,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: INK,
-            textDecoration: 'none',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-            transition: 'opacity 0.2s ease',
-          }}
-          className='hover:opacity-70'
-          aria-label='Quay lại Explore'
-        >
-          ← Explore
-        </button>
-      )}
-      {navLinks.map((link, i) => {
-        const ek = K(`navLinks[${i}].label`);
-        return (
-          <a
-            key={i}
-            href={link.href}
-            data-element-key={ek}
-            style={composeStyle(NAV_LINK_STYLE, styleOf(ek))}
-            className={selectableClass(
-              activeKey === ek,
-              'ap-nav-link hover:opacity-70'
-            )}
-          >
-            {link.label}
-          </a>
-        );
-      })}
+  /**
+   * Chỉ còn nút quay lại — link nav đã tách sang block `aestha_nav` (overlay
+   * góc trái dưới). `← Explore` KHÔNG phải link nav: nó là control nội bộ đổi
+   * view của `AesthaExplore`, chỉ tồn tại khi block được nhúng (`onBack`).
+   *
+   * `null` khi dùng như block `aestha_project` độc lập → các nhánh layout bỏ
+   * luôn thanh footer thay vì render một dải trống.
+   */
+  const backEl = onBack ? (
+    <nav aria-label='Quay lại' className='flex items-center gap-6'>
+      <button
+        type='button'
+        onClick={onBack}
+        style={{
+          fontFamily: BODY_FONT,
+          fontSize: 12,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: INK,
+          textDecoration: 'none',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          padding: 0,
+          transition: 'opacity 0.2s ease',
+        }}
+        className='hover:opacity-70'
+        aria-label='Quay lại Explore'
+      >
+        ← Explore
+      </button>
     </nav>
-  );
+  ) : null;
 
   const imagesStack = (withSentinel: boolean) => (
     <section className='ap-right'>
@@ -589,14 +571,14 @@ export function AesthaProject({
                 {nextInner}
               </div>
             </div>
-            {navEl}
+            {backEl}
           </aside>
           {imagesStack(false)}
         </div>
       ) : isNarrow ? (
-        /* ── Narrow (<900px): title = header fixed top · nav = footer fixed
-            bottom (sticky). Giữa cuộn: (1) concept căn giữa màn đầu · (2) danh
-            sách ảnh · (3) See next project ── */
+        /* ── Narrow (<900px): title = header fixed top · thanh back = footer
+            sticky bottom (chỉ khi nhúng trong Explore). Giữa cuộn: (1) concept
+            căn giữa màn đầu · (2) danh sách ảnh · (3) See next project ── */
         <div className='ap-narrow'>
           <div ref={headerRef} className='ap-narrow-header'>
             {titleEl}
@@ -611,9 +593,14 @@ export function AesthaProject({
           <section className='ap-narrow-next'>
             <div className='ap-panel-next'>{nextInner}</div>
           </section>
-          <div ref={footerRef} className='ap-narrow-footer'>
-            {navEl}
-          </div>
+          {/* Không có `onBack` (block độc lập) → bỏ luôn thanh footer thay vì
+              render một dải trắng sticky rỗng. `barH` đo qua `footerRef` nên
+              cũng tự về 0. */}
+          {backEl && (
+            <div ref={footerRef} className='ap-narrow-footer'>
+              {backEl}
+            </div>
+          )}
         </div>
       ) : (
         /* ── Preview / Play / `/p` (wide ≥900px): sticky + crossfade thật ── */
@@ -653,7 +640,7 @@ export function AesthaProject({
                 {nextInner}
               </div>
             </div>
-            {navEl}
+            {backEl}
           </aside>
           {imagesStack(true)}
         </div>

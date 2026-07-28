@@ -1,0 +1,33 @@
+/*
+ * Pre-paint seed cho entrance animation của block trên `/p`.
+ *
+ * Vấn đề: nav giữa các trang landing là HARD navigation (`LinkNav` →
+ * `window.location.assign`, cố ý — giữ Lenis + gsap.context + bật native
+ * cross-document View Transition). HTML SSR của trang mới không mang trạng
+ * thái ẩn nào, nên browser paint nội dung ở REST STATE (opacity 1). Mãi sau
+ * khi React hydrate xong, `useBlockMotion` (passive `useEffect`) mới chạy
+ * `gsap.fromTo(..., {opacity: 0}, ...)` → nội dung đang hiện SNAP về vô hình.
+ * Đó là cú "giật một cái" ngay trước khi animation chạy.
+ *
+ * Gap "browser paint" → "React hydrate" luôn tồn tại (100–500ms), nên trạng
+ * thái ẩn BẮT BUỘC phải nằm trong CSS/HTML server gửi xuống. Block đánh dấu
+ * element mình fade-up bằng `data-entrance`; rule dưới ẩn sẵn từ frame đầu.
+ *
+ * Ba lớp bảo vệ để không có gì kẹt vô hình vĩnh viễn:
+ *  1. `html.rx-motion` — class do inline script trong `layout.tsx` đặt. JS tắt
+ *     hoặc script chưa chạy ⇒ không có class ⇒ không ẩn gì.
+ *  2. `prefers-reduced-motion: no-preference` — khớp đúng nhánh `if (reduce)
+ *     return` trong builder của block (reduce ⇒ block không animate ⇒ không
+ *     được phép ẩn).
+ *  3. Cùng script đặt timeout 4s gỡ class — cứu case JS bật nhưng hydration
+ *     crash.
+ *
+ * KHÔNG dùng CSS `animation` làm failsafe: declaration ở animation origin
+ * override CẢ inline style, sẽ đè mất opacity GSAP đang điều khiển. Gỡ class
+ * thì inline style của GSAP vẫn thắng như thường.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  html.rx-motion [data-entrance] {
+    opacity: 0;
+  }
+}
