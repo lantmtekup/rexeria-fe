@@ -1,3 +1,5 @@
+import { getBlockDef } from '../blocks/_registry/registry';
+import { migrateBlockV1toV2 } from '../serialize';
 import type { Block } from '../types';
 
 /**
@@ -15,6 +17,40 @@ export interface SitePage {
 }
 
 /**
+ * Chuẩn hoá 1 block thô trong blueprint về `Block` đúng shape.
+ *
+ * Trước đây hàm này chỉ `as Block[]` — cast nói dối. Blueprint
+ * `schema_version: "1.0"` do AI-Insights publish ra chỉ liệt kê
+ * `{id, blockType, block_type, isVisible}`, KHÔNG có `contentVi`, nên
+ * `block.contentVi.desktop` ở `_block-render` nổ TypeError và cả trang public
+ * trả 500 (không phải hỏng 1 section — hỏng cả trang).
+ *
+ * `migrateBlockV1toV2` lo phần shape (bọc DeviceVariants, luôn có `contentVi`).
+ * Block nào không kèm content thì lấy default content của chính block type đó
+ * từ registry — blueprint AI-Insights vốn là danh sách block "chọn sẵn, nội
+ * dung điền sau", render bằng default mới ra trang có nghĩa thay vì section
+ * trắng. Block type lạ (không có trong registry) giữ content rỗng.
+ */
+function toBlock(raw: unknown): Block {
+  const block = migrateBlockV1toV2((raw ?? {}) as Record<string, unknown>);
+  if (Object.keys(block.contentVi.desktop ?? {}).length > 0) return block;
+
+  const def = getBlockDef(block.blockType);
+  if (!def) return block;
+  return {
+    ...block,
+    contentVi: {
+      ...block.contentVi,
+      desktop: structuredClone(def.defaultContent.vi),
+    },
+    contentEn: {
+      ...block.contentEn,
+      desktop: structuredClone(def.defaultContent.en),
+    },
+  };
+}
+
+/**
  * Read `pages` out of a raw `canvas_blueprint`, defensively.
  *
  * Blueprints written before multi-page have no `pages` key — those become a
@@ -27,7 +63,7 @@ export function readSitePages(
   const rootBlocks = Array.isArray(
     (blueprint as { blocks?: unknown } | undefined)?.blocks
   )
-    ? ((blueprint as { blocks: Block[] }).blocks satisfies Block[])
+    ? (blueprint as { blocks: unknown[] }).blocks.map(toBlock)
     : [];
 
   const raw = (blueprint as { pages?: unknown } | undefined)?.pages;
@@ -54,7 +90,7 @@ export function readSitePages(
       // A home entry with no `blocks` key means the blueprint stored home at
       // the root instead of mirroring it.
       blocks: Array.isArray(rec.blocks)
-        ? (rec.blocks as Block[])
+        ? (rec.blocks as unknown[]).map(toBlock)
         : isHome
           ? rootBlocks
           : [],
