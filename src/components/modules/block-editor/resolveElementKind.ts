@@ -1447,6 +1447,7 @@ export function resolveLinkAnchorKey(
     if (navLink) return `items[${navLink[1]}].label`;
     if (key === 'ctaLink') return 'ctaText';
   }
+  if (blockType === 'pnj_header' && key === 'logoHref') return 'logoUrl';
   return key;
 }
 
