@@ -22,6 +22,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { COOL_HUNTER_GALLERY_DEFAULT_ITEMS } from './_registry/defs/coolHunterGallery';
 import { useContainerMobile } from './useContainerMobile';
 
 interface CoolHunterGalleryProps {
@@ -46,25 +47,7 @@ interface CoolHunterGalleryProps {
 
 const DISPLAY_FONT = "'Fraunces', 'Playfair Display', 'Times New Roman', serif";
 
-const DEFAULT_ITEMS: CoolHunterGalleryItem[] = [
-  {
-    imageUrl: '/cool-hunter/gallery-1.webp',
-    imageAlt:
-      'An arched hallway with steel-framed glass walls and a lantern pendant',
-    text: 'The approach allowed maximum square footage without an imposing footprint, while creating multiple exposures to flood the interiors with natural light. Set on a peninsula jutting into the lake, the orientation provides water views on three sides; the entire plan was optimised to frame them. "I thought of the house as a camera and tried to frame and crop as many views of the lake as possible to make the setting as picturesque as it could be."',
-  },
-  {
-    imageUrl: '/cool-hunter/gallery-2.webp',
-    imageAlt: 'A breakfast nook with leaded windows and built-in benches',
-    text: 'The approach allowed maximum square footage without an imposing footprint, while creating multiple exposures to flood the interiors with natural light. Set on a peninsula jutting into the lake, the orientation provides water views on three sides; the entire plan was optimised to frame them.',
-  },
-  {
-    imageUrl: '/cool-hunter/gallery-3.webp',
-    imageAlt:
-      'A kitchen with oak cabinetry, marble counters and leaded windows',
-    text: "Betsy Brown's interiors are almost monastic in their restraint, ruthlessly edited until every object asked to stay. She started with a Kaare Klint dining table, Danish modern pieces enjoyed by cognoscenti, leather because it wears, and everything else earned its place.",
-  },
-];
+const DEFAULT_ITEMS = COOL_HUNTER_GALLERY_DEFAULT_ITEMS;
 
 /** Layout numbers as % of stage width (apps used vw). */
 const LAYOUT = {
@@ -85,9 +68,12 @@ const STAGE_STYLE: React.CSSProperties = {
 const resolveItems = (
   raw: CoolHunterGalleryItem[] | undefined
 ): CoolHunterGalleryItem[] => {
-  if (!Array.isArray(raw) || raw.length === 0) return DEFAULT_ITEMS;
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return DEFAULT_ITEMS.map(item => ({ ...item }));
+  }
   return raw.map((item, i) => {
-    const fallback = DEFAULT_ITEMS[i] ?? DEFAULT_ITEMS[0];
+    const fallback =
+      DEFAULT_ITEMS[i % DEFAULT_ITEMS.length] ?? DEFAULT_ITEMS[0];
     return {
       imageUrl: item.imageUrl?.trim() || fallback.imageUrl,
       imageAlt: item.imageAlt?.trim() || fallback.imageAlt || '',
@@ -159,11 +145,13 @@ export function CoolHunterGallery({
       const trackStart = firstLeft;
       const lastIndex = items.length - 1;
       const trackEnd = isMobile
-        ? firstLeft - textSlot(lastIndex)
-        : Math.max(
-            -(slot(lastIndex - 1) + L.img),
-            LAYOUT.desktop.minTextLeft - textSlot(lastIndex)
-          );
+        ? firstLeft - textSlot(Math.max(lastIndex, 0))
+        : lastIndex <= 0
+          ? firstLeft
+          : Math.max(
+              -(slot(lastIndex - 1) + L.img),
+              LAYOUT.desktop.minTextLeft - textSlot(lastIndex)
+            );
       const C_DUR = 2;
       const textBeat = (i: number) =>
         gsap.utils.clamp(
@@ -325,7 +313,9 @@ export function CoolHunterGallery({
       className={cn('@container relative w-full', className)}
       style={composeStyle(
         {
-          height: isMobile ? '620dvh' : '380dvh',
+          height: isMobile
+            ? `${Math.max(300, items.length * 200 + 20)}dvh`
+            : `${Math.max(240, items.length * 110 + 50)}dvh`,
           backgroundColor: '#ffffff',
         },
         blockBackgroundStyle(background)

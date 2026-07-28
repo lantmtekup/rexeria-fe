@@ -74,7 +74,7 @@ export const coolHunterFooterDef: BlockDef<CoolHunterFooterContent> = {
       key: 'ctaHref',
       label: 'Link nút',
       icon: Link2,
-      fieldType: 'text',
+      fieldType: 'link',
       groupId: 'cta',
     },
   ],

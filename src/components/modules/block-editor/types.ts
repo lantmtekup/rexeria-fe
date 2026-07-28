@@ -334,9 +334,24 @@ export interface HeroScrollContent {
   image4Url?: string;
 }
 
+/** Một slide Scroll Mattis (media + marquee + meta). */
+export interface ScrollMattisSlideItem {
+  url: string;
+  bgWord: string;
+  title: string;
+  category1: string;
+  category2: string;
+  year: string;
+}
+
 export interface ScrollMattisContent {
   portfolioLabel: string;
-  /** 3 slide media (ảnh / video / ảnh). Fallback assets nếu thiếu. */
+  /**
+   * Preferred: số slide động (thêm/xoá trong Layers / toolbar).
+   * Khi có `slides[]` thì bỏ qua flat slide1/2/3 bên dưới.
+   */
+  slides?: ScrollMattisSlideItem[];
+  /** Legacy flat 3-slide — fallback khi chưa migrate sang slides[]. */
   slide1Url?: string;
   slide2Url?: string;
   slide3Url?: string;
@@ -3911,9 +3926,9 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     gradient: 'from-neutral-700 to-neutral-900',
     defaultName: 'Scroll - Mattis',
     aiLabelVi:
-      'scroll reveal 3 slide (ảnh, video, ảnh): slide active thu nhỏ + mờ, slide kế zoom in thay thế theo cuộn',
+      'scroll reveal N slide (ảnh/video): slide active thu nhỏ + mờ, slide kế zoom in thay thế theo cuộn',
     aiLabelEn:
-      'scroll reveal with 3 slides (image, video, image): active slide shrinks and fades while the next zooms in',
+      'scroll reveal with N slides (image/video): active slide shrinks and fades while the next zooms in',
   },
   hero_overlay: {
     type: 'hero_overlay',
@@ -4145,9 +4160,9 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     gradient: 'from-neutral-600 to-neutral-900',
     defaultName: 'Cool Hunter Gallery',
     aiLabelVi:
-      'gallery Cool Hunter: 3 ảnh+caption scrub ngang (stack → hàng → cuộn, text fade theo nhịp)',
+      'gallery Cool Hunter: N ảnh+caption scrub ngang (stack → hàng → cuộn, text fade theo nhịp)',
     aiLabelEn:
-      'Cool Hunter gallery: 3 image+caption horizontal scrub (stack → row → scroll, text fades in beat)',
+      'Cool Hunter gallery: N image+caption horizontal scrub (stack → row → scroll, text fades in beat)',
   },
   cool_hunter_product: {
     type: 'cool_hunter_product',

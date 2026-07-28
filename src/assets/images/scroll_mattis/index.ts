@@ -20,7 +20,7 @@ export interface ScrollMattisSlide {
   bgWord: string;
 }
 
-/** 3 slide theo index (01 → 02 → 03); slide giữa là video. */
+/** 3 slide demo mặc định. `kind` chỉ phản ánh URL mặc định — runtime detect lại theo URL thật. */
 export const SCROLL_MATTIS_ITEMS: ScrollMattisSlide[] = [
   {
     index: 1,

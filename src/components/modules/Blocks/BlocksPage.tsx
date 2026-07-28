@@ -65,6 +65,13 @@ import {
   PopoverTrigger,
 } from '@/components/atoms/popover';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/atoms/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -112,16 +119,36 @@ import { AddBuiltinBlockDialog } from './AddBuiltinBlockDialog';
 import { EditBlockDialog } from './EditBlockDialog';
 
 type View = 'grid' | 'table';
+type Sort = '-updated_at' | 'updated_at';
+
+const SORT_OPTIONS: { id: Sort; label: string }[] = [
+  { id: '-updated_at', label: 'Mới nhất' },
+  { id: 'updated_at', label: 'Cũ nhất' },
+];
+
+const DEFAULT_SORT: Sort = '-updated_at';
+
+const SORT_IDS = new Set<string>(SORT_OPTIONS.map(o => o.id));
 
 // Derive từ registry BLOCK_TYPE_META (nguồn duy nhất). Thêm block type mới
 // chỉ cần 1 entry ở types.ts — 2 map này tự đầy đủ.
-const BLOCK_TYPE_LABEL: Record<BlockType, string> = Object.fromEntries(
-  Object.values(BLOCK_TYPE_META).map(m => [m.type, m.adminLabel])
-) as Record<BlockType, string>;
+// const BLOCK_TYPE_LABEL: Record<BlockType, string> = Object.fromEntries(
+//   Object.values(BLOCK_TYPE_META).map(m => [m.type, m.adminLabel])
+// ) as Record<BlockType, string>;
 
 const BLOCK_TYPE_GRADIENT: Record<BlockType, string> = Object.fromEntries(
   Object.values(BLOCK_TYPE_META).map(m => [m.type, m.gradient])
 ) as Record<BlockType, string>;
+
+/** Sort theo updated_at (fallback created_at) — khớp cột thời gian trên list. */
+function sortBlocksByRecency(blocks: ServerBlock[], sort: Sort): ServerBlock[] {
+  const dir = sort === 'updated_at' ? 1 : -1;
+  return [...blocks].sort((a, b) => {
+    const aAt = a.updated_at || a.created_at || '';
+    const bAt = b.updated_at || b.created_at || '';
+    return aAt.localeCompare(bAt) * dir;
+  });
+}
 
 function fmtDate(iso?: string): string {
   if (!iso) return '-';
@@ -202,6 +229,7 @@ type BlocksUrlFilters = {
   duplicatesOnly: boolean;
   page: number;
   view: View;
+  sort: Sort;
 };
 
 function parseBlocksUrlFilters(
@@ -214,6 +242,7 @@ function parseBlocksUrlFilters(
   const dupRaw = sp.get('dup');
   const pageRaw = Number(sp.get('page') ?? '1');
   const viewRaw = sp.get('view');
+  const sortRaw = sp.get('sort');
 
   return {
     q,
@@ -223,7 +252,7 @@ function parseBlocksUrlFilters(
         ? 'all'
         : statusRaw && (BLOCK_STATUS_ORDER as string[]).includes(statusRaw)
           ? (statusRaw as BlockStatus)
-          : 'all',
+          : 'published',
     tags: tagsRaw
       ? tagsRaw
           .split(',')
@@ -233,6 +262,7 @@ function parseBlocksUrlFilters(
     duplicatesOnly: dupRaw === '1',
     page: Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1,
     view: viewRaw === 'grid' || viewRaw === 'table' ? viewRaw : 'table',
+    sort: sortRaw && SORT_IDS.has(sortRaw) ? (sortRaw as Sort) : DEFAULT_SORT,
   };
 }
 
@@ -243,6 +273,7 @@ function serializeBlocksListFilters(filters: {
   status: BlockStatus | 'all';
   tags: string[];
   duplicatesOnly: boolean;
+  sort: Sort;
 }): string {
   return JSON.stringify({
     q: filters.search.trim(),
@@ -250,6 +281,7 @@ function serializeBlocksListFilters(filters: {
     status: filters.status,
     tags: [...filters.tags].sort(),
     dup: filters.duplicatesOnly,
+    sort: filters.sort,
   });
 }
 
@@ -264,6 +296,7 @@ function replaceBlocksUrlFilters(
     duplicatesOnly: boolean;
     page: number;
     view: View;
+    sort: Sort;
   }
 ) {
   if (typeof window === 'undefined') return;
@@ -276,6 +309,7 @@ function replaceBlocksUrlFilters(
   if (filters.duplicatesOnly) sp.set('dup', '1');
   if (filters.page > 1) sp.set('page', String(filters.page));
   if (filters.view !== 'table') sp.set('view', filters.view);
+  if (filters.sort !== DEFAULT_SORT) sp.set('sort', filters.sort);
 
   const qs = sp.toString();
   const next = qs ? `${pathname}?${qs}` : pathname;
@@ -332,6 +366,7 @@ export function BlocksPage() {
   const [duplicatesOnly, setDuplicatesOnly] = React.useState(
     initialFilters.duplicatesOnly
   );
+  const [sort, setSort] = React.useState<Sort>(initialFilters.sort);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   // Bulk select (xoá nhiều) — giữ id, chung cho cả grid + table.
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
@@ -412,6 +447,7 @@ export function BlocksPage() {
       duplicatesOnly,
       page,
       view,
+      sort,
     });
   }, [
     pathname,
@@ -422,6 +458,7 @@ export function BlocksPage() {
     duplicatesOnly,
     page,
     view,
+    sort,
   ]);
 
   const libraryTypeIndex = React.useMemo(
@@ -489,11 +526,11 @@ export function BlocksPage() {
     tagFilter,
   ]);
 
-  // Khi lọc Mapping trùng: sort + group theo type_code để các block trùng nằm cạnh nhau.
-  const displayFiltered = React.useMemo(
-    () => (duplicatesOnly ? sortBlocksByMappingCode(filtered) : filtered),
-    [filtered, duplicatesOnly]
-  );
+  // Khi lọc Mapping trùng: ưu tiên group theo type_code. Còn lại sort theo thời gian.
+  const displayFiltered = React.useMemo(() => {
+    if (duplicatesOnly) return sortBlocksByMappingCode(filtered);
+    return sortBlocksByRecency(filtered, sort);
+  }, [filtered, duplicatesOnly, sort]);
 
   const listFiltersKey = serializeBlocksListFilters({
     search,
@@ -501,6 +538,7 @@ export function BlocksPage() {
     status: statusFilter,
     tags: tagFilter,
     duplicatesOnly,
+    sort,
   });
 
   // Reset trang + bỏ chọn khi filter thật sự đổi (không reset khi chỉ đổi page).
@@ -775,17 +813,17 @@ export function BlocksPage() {
                   }}
                 />
               ))}
-              {libraryTypeIndex.duplicateCodes.size > 0 && (
+              {libraryTypeIndex.duplicateRecordCount > 0 && (
                 <StatTile
                   label='Mapping trùng'
-                  value={libraryTypeIndex.duplicateCodes.size}
+                  value={libraryTypeIndex.duplicateRecordCount}
                   dot='bg-amber-500'
                   active={duplicatesOnly}
                   onClick={() => {
                     setStatusFilter('all');
                     setDuplicatesOnly(prev => !prev);
                   }}
-                  title='Số mapping code có ≥2 block trong thư viện. Bấm để lọc.'
+                  title='Số block thuộc mapping code có ≥2 bản trong thư viện. Bấm để lọc.'
                 />
               )}
             </div>
@@ -821,6 +859,31 @@ export function BlocksPage() {
                 onChange={setTagFilter}
               />
             )}
+
+            <Select
+              value={sort}
+              onValueChange={v => setSort(v as Sort)}
+              disabled={duplicatesOnly}
+            >
+              <SelectTrigger
+                className={cn(FILTER_SELECT_TRIGGER, 'w-36')}
+                aria-label='Sắp xếp'
+                title={
+                  duplicatesOnly
+                    ? 'Đang gom theo mapping code — tắt lọc Mapping trùng để sort theo thời gian'
+                    : undefined
+                }
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align='start'>
+                {SORT_OPTIONS.map(o => (
+                  <SelectItem key={o.id} value={o.id}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {(searchInput.trim() !== '' ||
               categoryFilter !== 'all' ||
@@ -1133,10 +1196,10 @@ function BlockCard({
     typeMeta?.gradient ??
     BLOCK_TYPE_GRADIENT[type] ??
     'from-zinc-400 to-zinc-600';
-  const label = BLOCK_TYPE_LABEL[type] ?? item.type_code;
+  // const label = BLOCK_TYPE_LABEL[type] ?? item.type_code;
   const editorBlock = parseEditorBlock(item.settings);
   const extraCount = editorBlock?.extraElements?.length ?? 0;
-  const hasMobile = !!editorBlock?.contentVi?.mobile;
+  // const hasMobile = !!editorBlock?.contentVi?.mobile;
   // Chỉ block Nháp (draft) mới chọn được để xoá.
   const draft = effectiveBlockStatus(item) === 'draft';
   return (
@@ -1208,9 +1271,7 @@ function BlockCard({
         }}
         className='flex flex-1 cursor-pointer flex-col text-left'
       >
-        <div className='relative'>
-          {/* Ưu tiên thumbnail custom (BE thumbnail_url) → preview render từ
-              settings → gradient placeholder. Khớp precedence với TableView. */}
+        <div className='relative border-b'>
           {item.thumbnail_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -1230,7 +1291,7 @@ function BlockCard({
               <Bookmark className='size-10 opacity-80' />
             </div>
           )}
-          <span
+          {/* <span
             className={cn(
               'text-3xs absolute bottom-2 left-2 rounded bg-gradient-to-br px-1.5 py-0.5 font-mono font-bold tracking-widest text-white/95 uppercase shadow-sm',
               gradient
@@ -1242,7 +1303,7 @@ function BlockCard({
             <span className='text-3xs absolute right-2 bottom-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-white backdrop-blur'>
               📱
             </span>
-          )}
+          )} */}
           {extraCount > 0 && (
             <span className='text-3xs absolute top-2 left-2 rounded bg-black/40 px-1.5 py-0.5 font-mono text-white backdrop-blur'>
               +{extraCount} extras
@@ -1257,7 +1318,6 @@ function BlockCard({
             <BlockStatusBadge status={item.status} className='shrink-0' />
           </div>
           <div className='flex flex-wrap items-center gap-1.5'>
-            <CategoryChip typeCode={item.type_code} />
             <MappingCodeCell typeCode={item.type_code} count={typeCount} />
           </div>
           {item.tags && item.tags.length > 0 && (
@@ -1304,7 +1364,7 @@ function CategoryChip({ typeCode }: { typeCode: string }) {
   }
   return (
     <span
-      className='text-3xs bg-muted text-content-muted inline-flex rounded-full px-2 py-0.5 font-medium'
+      className='text-3xs bg-muted text-content-muted inline-flex w-fit rounded-full px-2 py-0.5 font-medium'
       title={meta.category ?? undefined}
     >
       {meta.categoryLabel}
@@ -1312,7 +1372,7 @@ function CategoryChip({ typeCode }: { typeCode: string }) {
   );
 }
 
-/** Mapping code + cảnh báo khi nhiều block trong thư viện dùng chung code. */
+/** Mapping code + loại (category) + cảnh báo trùng code. */
 function MappingCodeCell({
   typeCode,
   count,
@@ -1323,6 +1383,7 @@ function MappingCodeCell({
   const isDuplicate = count > 1;
   return (
     <div className='flex min-w-0 flex-col gap-0.5'>
+      <CategoryChip typeCode={typeCode} />
       <code className='text-2xs text-foreground truncate font-mono'>
         {typeCode}
       </code>
@@ -1377,7 +1438,7 @@ function DuplicateMappingGroupHeader({
 
   return (
     <TableRow className='border-amber-200/60 bg-amber-50/70 hover:bg-amber-50/70'>
-      <TableCell colSpan={10} className='py-2'>
+      <TableCell colSpan={9} className='py-2'>
         <div className='flex flex-wrap items-center gap-2'>
           <AlertTriangle
             className='size-3.5 shrink-0 text-amber-600'
@@ -1836,7 +1897,7 @@ function TableView({
                   className='text-3xs text-muted-foreground mt-0.5 wrap-break-word whitespace-normal'
                   title={it.review_note}
                 >
-                  📝 {it.review_note}
+                  {it.review_note}
                 </div>
               )}
             </div>
@@ -1844,9 +1905,6 @@ function TableView({
         </TableCell>
         <TableCell>
           <BlockStatusBadge status={it.status} />
-        </TableCell>
-        <TableCell>
-          <CategoryChip typeCode={it.type_code} />
         </TableCell>
         <TableCell>
           <MappingCodeCell
@@ -1969,12 +2027,11 @@ function TableView({
             </TableHead>
             <TableHead className='w-36'>Block</TableHead>
             <TableHead className='w-32'>Trạng thái</TableHead>
-            <TableHead className='w-28'>Loại</TableHead>
             <TableHead
               className='w-44'
-              title='Khóa nối block ↔ code FE (type_code). Cảnh báo cam = nhiều block trong thư viện đang dùng chung 1 code.'
+              title='Loại (category) và khóa nối block ↔ code FE (type_code). Cảnh báo cam = nhiều block dùng chung 1 code.'
             >
-              Mapping code
+              Loại · Mapping
             </TableHead>
             <TableHead className='w-32'>Tags</TableHead>
             <TableHead className='w-28'>Extras / Usage</TableHead>

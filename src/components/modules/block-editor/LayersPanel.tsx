@@ -51,7 +51,14 @@ import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
 import { resolvePnjVariants } from './blocks/pnjVariantContent';
 import { realEstateHeroStatElements } from './blocks/_registry/defs/realEstateHero';
 import { realEstateHighlightItemElements } from './blocks/_registry/defs/realEstateHighlights';
-import { coolHunterGalleryItemElements } from './blocks/_registry/defs/coolHunterGallery';
+import {
+  coolHunterGalleryItemElements,
+  resolveCoolHunterGalleryItems,
+} from './blocks/_registry/defs/coolHunterGallery';
+import {
+  lineaPortfolioHeadingElements,
+  lineaPortfolioItemElements,
+} from './blocks/_registry/defs/lineaPortfolio';
 import { coolHunterSectionProgressItemElements } from './blocks/_registry/defs/coolHunterSectionProgress';
 import { realEstateOverviewStatElements } from './blocks/_registry/defs/realEstateOverview';
 import { realEstateUtilityItemElements } from './blocks/_registry/defs/realEstateUtilities';
@@ -63,6 +70,11 @@ import {
   delvauxVariantItemElements,
 } from './blocks/_registry/defs/delvauxVariant';
 import { mintDiscoverTabElements } from './blocks/_registry/defs/mintDiscover';
+import {
+  resolveScrollMattisSlides,
+  scrollMattisSlideElements,
+  SCROLL_MATTIS_LEGACY_ELEMENTS,
+} from './blocks/_registry/defs/scrollMattis';
 import { framerDarlingTimelineItemElements } from './blocks/_registry/defs/framerDarlingTimeline';
 import { framerPerformPricingTierElements } from './blocks/_registry/defs/framerPerformPricing';
 import { mintV2ProcessStepElements } from './blocks/_registry/defs/mintV2Process';
@@ -107,11 +119,13 @@ import {
   type RealEstateHeroStat,
   type RealEstateOverviewStat,
   type RealEstateHighlightItem,
-  type CoolHunterGalleryItem,
+  type CoolHunterGalleryContent,
+  type LineaPortfolioItem,
   type CoolHunterSectionProgressItem,
   type RealEstateVillaSlide,
   type RealEstateUtilityItem,
   type MintDiscoverTab,
+  type ScrollMattisContent,
   type FramerDarlingTimelineContent,
   type FramerPerformPricingContent,
   type MintV2ProcessStep,
@@ -815,14 +829,35 @@ export function elementsForType(
       },
     ];
   }
-  if (type === 'cool_hunter_gallery') {
+  if (type === 'linea_portfolio') {
     const raw = content?.items;
     const items = Array.isArray(raw)
-      ? (raw as CoolHunterGalleryItem[]).filter(
-          it => it && typeof it === 'object'
-        )
+      ? (raw as LineaPortfolioItem[]).filter(it => it && typeof it === 'object')
       : [];
-    return [BACKGROUND_LAYER, ...coolHunterGalleryItemElements(items)];
+    return [
+      BACKGROUND_LAYER,
+      ...lineaPortfolioHeadingElements,
+      ...lineaPortfolioItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý ảnh',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'cool_hunter_gallery') {
+    const items = resolveCoolHunterGalleryItems(
+      (content ?? {}) as CoolHunterGalleryContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...coolHunterGalleryItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý ảnh',
+        icon: ListChecks,
+      },
+    ];
   }
   if (type === 'pnj_variant') {
     const variants = resolvePnjVariants(
@@ -1465,6 +1500,27 @@ export function elementsForType(
         icon: Link2,
         fieldType: 'text',
         groupId: 'buy',
+      },
+    ];
+  }
+  if (type === 'scroll_mattis') {
+    const c = (content ?? {}) as unknown as ScrollMattisContent;
+    const hasArray = Array.isArray(c.slides) && c.slides.length > 0;
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'portfolioLabel',
+        label: 'Nhãn góc',
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      ...(hasArray
+        ? scrollMattisSlideElements(resolveScrollMattisSlides(c))
+        : SCROLL_MATTIS_LEGACY_ELEMENTS),
+      {
+        key: 'slides',
+        label: 'Thêm / quản lý slide',
+        icon: ListChecks,
       },
     ];
   }

@@ -48,6 +48,23 @@ const DEFAULT_TITLE =
   'Sign Up For Notifications To See More\nOf Our Interesting Stories.';
 const DEFAULT_CTA = 'Sign Up';
 
+const CANVAS_BG_STYLE = `
+  [data-testid="active-block-preview"] .ch-footer-section {
+    min-height: clamp(320px, 55cqi, 520px);
+  }
+  [data-testid="active-block-preview"] .ch-footer-frame {
+    opacity: 1 !important;
+  }
+  [data-testid="active-block-preview"] .ch-footer-veil {
+    height: 0 !important;
+    min-height: 0 !important;
+  }
+  [data-testid="active-block-preview"] .ch-footer-content {
+    min-height: clamp(320px, 55cqi, 520px);
+    justify-content: center;
+  }
+`;
+
 export function CoolHunterFooter({
   content,
   styles,
@@ -160,36 +177,52 @@ export function CoolHunterFooter({
   };
 
   const renderCta = () => {
-    const classNameCta = selectableClass(
-      activeKey === 'ctaText',
-      'transition-colors duration-500 hover:bg-neutral-900 hover:text-white'
+    const linkClassName = selectableClass(
+      activeKey === 'ctaHref',
+      'inline-block transition-colors duration-500 hover:bg-neutral-900 hover:text-white'
     );
-    const style = composeStyle(ctaStyle, styleOf('ctaText'));
+    const textClassName = selectableClass(
+      activeKey === 'ctaText',
+      'inline-block'
+    );
+    const linkStyle = composeStyle(ctaStyle, styleOf('ctaHref'));
+    const textStyle = styleOf('ctaText');
 
-    if (ctaHref && !isCanvas) {
+    if (!isCanvas && !ctaHref) {
       return (
-        <a
-          href={ctaHref}
+        <button
+          type='button'
           data-element-key='ctaText'
-          className={classNameCta}
-          style={style}
+          className={selectableClass(
+            activeKey === 'ctaText',
+            'transition-colors duration-500 hover:bg-neutral-900 hover:text-white'
+          )}
+          style={composeStyle(ctaStyle, textStyle)}
+          tabIndex={0}
+          aria-label={ctaText}
         >
           {ctaText}
-        </a>
+        </button>
       );
     }
 
     return (
-      <button
-        type='button'
-        data-element-key='ctaText'
-        className={classNameCta}
-        style={style}
-        tabIndex={0}
+      <a
+        data-element-key='ctaHref'
+        href={isCanvas ? undefined : ctaHref || '#'}
+        onClick={isCanvas ? e => e.preventDefault() : undefined}
+        className={linkClassName}
+        style={linkStyle}
         aria-label={ctaText}
       >
-        {ctaText}
-      </button>
+        <span
+          data-element-key='ctaText'
+          className={textClassName}
+          style={textStyle}
+        >
+          {ctaText}
+        </span>
+      </a>
     );
   };
 
@@ -197,7 +230,10 @@ export function CoolHunterFooter({
     <section
       ref={rootRef}
       data-canvas-edit={isCanvas ? 'true' : undefined}
-      className={cn('@container relative w-full overflow-hidden', className)}
+      className={cn(
+        'ch-footer-section @container relative w-full overflow-hidden',
+        className
+      )}
       style={composeStyle(
         { backgroundColor: '#ffffff' },
         blockBackgroundStyle(background)
@@ -205,8 +241,8 @@ export function CoolHunterFooter({
     >
       <div
         ref={frameRef}
-        className='absolute inset-0'
-        style={isCanvas ? undefined : { opacity: 0 }}
+        className='ch-footer-frame absolute inset-0'
+        style={{ opacity: 0 }}
       >
         <img
           src={bgUrl}
@@ -223,15 +259,15 @@ export function CoolHunterFooter({
 
       <div
         ref={veilRef}
-        className='absolute inset-x-0 top-0 z-10'
+        className='ch-footer-veil absolute inset-x-0 top-0 z-10'
         style={{
-          height: isCanvas ? '0%' : '100%',
+          height: '100%',
           backgroundColor: '#ffffff',
         }}
       />
 
       <div
-        className='relative z-20 flex flex-col items-center'
+        className='ch-footer-content relative z-20 flex flex-col items-center'
         style={{
           gap: isMobile ? 20 : 24,
           paddingInline: 24,
@@ -262,6 +298,9 @@ export function CoolHunterFooter({
 
         {renderCta()}
       </div>
+
+      {/* Chỉ canvas editor — không đụng GSAP scrub preview / /p */}
+      <style>{CANVAS_BG_STYLE}</style>
     </section>
   );
 }

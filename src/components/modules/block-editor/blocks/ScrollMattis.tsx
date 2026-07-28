@@ -1,20 +1,13 @@
 'use client';
 
 /**
- * Scroll - Mattis — "Box Mode" scroll reveal 3 slide (ảnh, video, ảnh).
- * Khung letterbox giữa CỐ ĐỊNH (1 khung duy nhất). Cuộn → nền full-bleed (media)
- * trượt/wipe lên, media bên trong khung trượt ĐỒNG BỘ (bị khung clip). Chữ lớn
- * (bgWord) CỐ ĐỊNH trên viewport — chạy marquee ngang vô tận (CSS) và crossfade
- * theo slide cùng nhãn (số/title/categories/year).
+ * Scroll - Mattis — "Box Mode" scroll reveal (ảnh / video, số slide động).
+ * Khung letterbox giữa CỐ ĐỊNH. Cuộn → nền full-bleed trượt/wipe, media trong
+ * khung clip đồng bộ. Chữ lớn (bgWord) marquee + crossfade theo slide.
  *
- * Motion theo contract R1-R6 (docs/landing-motion-foundation.md):
- * - dùng `useBlockMotion` (scroller từ hook, invalidateOnRefresh, auto cleanup);
- * - `requestRefresh()` sau khi media load (đo lại scrub);
- * - bail reduced-motion + mini-preview (không root) → render tĩnh slide 1;
- * - editor canvas (`data-testid=active-block-preview`) → lưới 3 slide editable
- *   (media + chữ chạy + meta; không scrub — BlockPreview `transform:scale` gãy sticky);
- * - PreviewMode / Play / `/p` → full scrub;
- * - KHÔNG `gsap.registerPlugin` (LandingMotionRoot đã đăng ký ScrollTrigger).
+ * Motion R1-R6: useBlockMotion + requestRefresh; canvas → lưới card editable
+ * (không scrub); PreviewMode / `/p` → full scrub.
+ * Content: `slides[]` preferred; flat slide1/2/3 = legacy fallback.
  */
 
 import * as React from 'react';
@@ -22,6 +15,7 @@ import gsap from 'gsap';
 
 import { cn } from '@/lib/cn';
 import {
+  SCROLL_MATTIS_BG_M1,
   SCROLL_MATTIS_ITEMS,
   type ScrollMattisSlide,
 } from '@/assets/images/scroll_mattis';
@@ -31,6 +25,7 @@ import type {
   ElementPositionsMap,
   ElementStylesMap,
   ScrollMattisContent,
+  ScrollMattisSlideItem,
 } from '../types';
 import {
   blockBackgroundStyle,
@@ -40,6 +35,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { resolveScrollMattisSlides } from './_registry/defs/scrollMattis';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 import { useContainerMobile } from './useContainerMobile';
@@ -110,7 +106,8 @@ const RESPONSIVE = {
   headerFont: 'clamp(9px, 1.2cqi, 14px)',
 } as const;
 
-const SLIDE_KEYS = [
+/** Legacy flat keys — chỉ khi content chưa có slides[]. */
+const LEGACY_SLIDE_KEYS = [
   {
     url: 'slide1Url',
     bgWord: 'slide1BgWord',
@@ -137,36 +134,71 @@ const SLIDE_KEYS = [
   },
 ] as const;
 
-type SlideFieldKey =
-  (typeof SLIDE_KEYS)[number][keyof (typeof SLIDE_KEYS)[number]];
+type SlideKeys = {
+  url: string;
+  bgWord: string;
+  title: string;
+  cat1: string;
+  cat2: string;
+  year: string;
+};
 
-const isVideoUrl = (src: string) =>
-  /\.(mp4|webm|ogg|mov)(\?|$)/i.test(src) ||
-  src.includes('framerusercontent.com/assets/');
-
-const pick = (content: ScrollMattisContent, key: SlideFieldKey) =>
-  content[key]?.trim() || '';
-
-const resolveSlides = (content: ScrollMattisContent): ScrollMattisSlide[] =>
-  SCROLL_MATTIS_ITEMS.map((base, i) => {
-    const keys = SLIDE_KEYS[i];
-    if (!keys) return base;
-    const src = pick(content, keys.url) || base.src;
-    const kind: ScrollMattisSlide['kind'] = isVideoUrl(src) ? 'video' : 'image';
+const slideKeysAt = (i: number, useArray: boolean): SlideKeys => {
+  if (useArray) {
     return {
-      ...base,
-      src,
-      kind,
-      poster: kind === 'video' ? base.poster : undefined,
-      bgWord: pick(content, keys.bgWord) || base.bgWord,
-      title: pick(content, keys.title) || base.title,
-      categories: [
-        pick(content, keys.cat1) || base.categories[0],
-        pick(content, keys.cat2) || base.categories[1],
-      ],
-      year: pick(content, keys.year) || base.year,
+      url: `slides[${i}].url`,
+      bgWord: `slides[${i}].bgWord`,
+      title: `slides[${i}].title`,
+      cat1: `slides[${i}].category1`,
+      cat2: `slides[${i}].category2`,
+      year: `slides[${i}].year`,
     };
-  });
+  }
+  return LEGACY_SLIDE_KEYS[i] ?? LEGACY_SLIDE_KEYS[0];
+};
+
+const isVideoUrl = (src: string): boolean => {
+  const s = src.trim();
+  if (!s) return false;
+  // Strip query/hash — CDN hay dán `….mp4?token=…`
+  const path = s.split(/[?#]/)[0] ?? s;
+  if (/\.(mp4|webm|ogg|ogv|mov|m4v|m3u8)$/i.test(path)) return true;
+  // Ảnh rõ ràng → không phải video (kể cả host framer)
+  if (/\.(png|jpe?g|webp|gif|svg|avif|bmp)$/i.test(path)) return false;
+  // Framer: /assets/ thường là video; /images/ là ảnh
+  if (/framerusercontent\.com\/images\//i.test(s)) return false;
+  if (/framerusercontent\.com\/assets\//i.test(s)) return true;
+  return false;
+};
+
+/** Meta chữ fallback theo slot — KHÔNG lấy src/kind (tránh hardcode slide 2 = mp4). */
+const metaFallback = (i: number) =>
+  SCROLL_MATTIS_ITEMS[i % SCROLL_MATTIS_ITEMS.length];
+
+const toRuntimeSlide = (
+  item: ScrollMattisSlideItem,
+  i: number
+): ScrollMattisSlide => {
+  const meta = metaFallback(i);
+  const src = item.url.trim();
+  // Không URL → ảnh mặc định (không bao giờ ép slide N thành video theo index).
+  const resolvedSrc = src || SCROLL_MATTIS_BG_M1;
+  const kind: ScrollMattisSlide['kind'] = isVideoUrl(resolvedSrc)
+    ? 'video'
+    : 'image';
+  return {
+    index: i + 1,
+    src: resolvedSrc,
+    kind,
+    bgWord: item.bgWord.trim() || meta.bgWord,
+    title: item.title.trim() || meta.title,
+    categories: [
+      item.category1.trim() || meta.categories[0],
+      item.category2.trim() || meta.categories[1],
+    ],
+    year: item.year.trim() || meta.year,
+  };
+};
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
@@ -186,7 +218,15 @@ export function ScrollMattis({
   // Chỉ BlockPreview editor — KHÔNG PreviewMode/Play (cũng có scroller).
   const isCanvas = useIsCanvasEdit(rootRef);
 
-  const slides = React.useMemo(() => resolveSlides(content), [content]);
+  const useArray = Array.isArray(content.slides) && content.slides.length > 0;
+  const items = React.useMemo(
+    () => resolveScrollMattisSlides(content),
+    [content]
+  );
+  const slides = React.useMemo(
+    () => items.map((item, i) => toRuntimeSlide(item, i)),
+    [items]
+  );
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -199,7 +239,12 @@ export function ScrollMattis({
     styleOf('portfolioLabel')
   );
 
-  const trackHeight = isCanvas ? undefined : isMobile ? '300dvh' : '380dvh';
+  // Chiều track tỉ lệ số slide (≈120dvh / transition desktop).
+  const trackHeight = isCanvas
+    ? undefined
+    : isMobile
+      ? `${Math.max(200, Math.max(slides.length, 1) * 100)}dvh`
+      : `${Math.max(200, Math.max(slides.length - 1, 1) * 120 + 140)}dvh`;
 
   const loadedRef = React.useRef(0);
   const handleMediaLoad = () => {
@@ -292,9 +337,12 @@ export function ScrollMattis({
     [isMobile, hasRoot, isCanvas, slides]
   );
 
+  if (slides.length === 0) return null;
+
   return (
     <section
       ref={rootRef}
+      data-canvas-edit={isCanvas ? 'true' : undefined}
       style={{
         ...(trackHeight ? { height: trackHeight } : undefined),
         ...blockBackgroundStyle(background),
@@ -328,16 +376,14 @@ export function ScrollMattis({
               </span>
             </div>
 
-            <div className='grid grid-cols-1 gap-3 px-3 @2xl:grid-cols-3'>
+            <div className='grid grid-cols-1 gap-3 px-3 @2xl:grid-cols-2 @4xl:grid-cols-3'>
               {slides.map((slide, i) => {
-                const keys = SLIDE_KEYS[i];
-                if (!keys) return null;
+                const keys = slideKeysAt(i, useArray);
                 return (
                   <div
-                    key={keys.url}
+                    key={`${keys.url}-${i}`}
                     className='flex min-w-0 flex-col gap-2 rounded-xl bg-white/5 p-2 ring-1 ring-white/10'
                   >
-                    {/* Media */}
                     <div
                       data-element-key={keys.url}
                       style={styleOf(keys.url)}
@@ -369,10 +415,10 @@ export function ScrollMattis({
                       )}
                       <span className='pointer-events-none absolute top-2 left-2 rounded bg-black/55 px-1.5 py-0.5 text-[10px] font-semibold tracking-wider text-white uppercase'>
                         {pad2(slide.index)}
+                        {slide.kind === 'video' ? ' · video' : ''}
                       </span>
                     </div>
 
-                    {/* Chữ chạy (bgWord) */}
                     <div
                       data-element-key={keys.bgWord}
                       style={styleOf(keys.bgWord)}
@@ -385,7 +431,6 @@ export function ScrollMattis({
                       {slide.bgWord}
                     </div>
 
-                    {/* Meta: title / categories / year */}
                     <div className='flex items-start justify-between gap-1 px-1 text-[10px] font-medium tracking-wider text-white/75 uppercase'>
                       <span
                         data-element-key={keys.title}
@@ -467,7 +512,6 @@ export function ScrollMattis({
               </div>
             ))}
 
-            {/* Big word marquee — dùng bgWord từ content */}
             <div className='pointer-events-none absolute inset-0 z-20 overflow-hidden'>
               {slides.map((slide, i) => {
                 const unit = `${slide.bgWord} `;

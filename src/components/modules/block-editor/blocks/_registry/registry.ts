@@ -67,6 +67,7 @@ import { nordhavenFooterDef } from './defs/nordhavenFooter';
 import { lumeaAmenitiesDef } from './defs/lumeaAmenities';
 import { lumeaFooterDef } from './defs/lumeaFooter';
 import { lumeaGalleryDef } from './defs/lumeaGallery';
+import { lineaPortfolioDef } from './defs/lineaPortfolio';
 import { lumeaHandcraftedDef } from './defs/lumeaHandcrafted';
 import { lumeaHeroDef } from './defs/lumeaHero';
 import { lumeaImmersiveDef } from './defs/lumeaImmersive';
@@ -203,6 +204,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   lumea_amenities: lumeaAmenitiesDef as BlockDef,
   lumea_testimonial: lumeaTestimonialDef as BlockDef,
   lumea_gallery: lumeaGalleryDef as BlockDef,
+  linea_portfolio: lineaPortfolioDef as BlockDef,
   lumea_footer: lumeaFooterDef as BlockDef,
   nordhaven_hero: nordhavenHeroDef as BlockDef,
   nordhaven_about: nordhavenAboutDef as BlockDef,
