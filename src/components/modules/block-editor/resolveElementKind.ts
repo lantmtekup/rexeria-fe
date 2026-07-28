@@ -28,6 +28,11 @@ export type ElementKind =
   | 'coolHunterGalleryItems'
   | 'alturaOlympusFeatures'
   | 'alturaOlympusImages'
+  | 'theGrandServiceItems'
+  | 'theGrandDiscoverItems'
+  | 'theGrandAboutPartners'
+  | 'theGrandFooterPolicies'
+  | 'theGrandFooterSocials'
   | 'mintV2ProcessSteps'
   | 'framerDarlingTimelineItems'
   | 'framerPerformPricingTiers'
@@ -284,6 +289,23 @@ export function resolveKind(
   if (blockType === 'altura_olympus') {
     if (/^features\[\d+\]\.(label|icon)$/.test(key)) return 'text';
   }
+  if (key === 'items' && blockType === 'the_grand_service') {
+    return 'theGrandServiceItems';
+  }
+  if (key === 'items' && blockType === 'the_grand_discover') {
+    return 'theGrandDiscoverItems';
+  }
+  if (key === 'partners' && blockType === 'the_grand_about') {
+    return 'theGrandAboutPartners';
+  }
+  // The Grand · Footer: `policies` / `socials` là 2 mảng động (list manager) —
+  // chặn trước fallback để toolbar không ghi 1 string đè cả mảng.
+  if (blockType === 'the_grand_footer') {
+    if (key === 'policies') return 'theGrandFooterPolicies';
+    if (key === 'socials') return 'theGrandFooterSocials';
+    if (/^policies\[\d+\]\.(label|href)$/.test(key)) return 'text';
+    if (/^socials\[\d+\]\.(href|label)$/.test(key)) return 'text';
+  }
   if (key === 'steps' && blockType === 'mintv2_process') {
     return 'mintV2ProcessSteps';
   }
@@ -359,6 +381,30 @@ export function resolveKind(
   }
   // Real Estate điểm nổi trội: mỗi card là ảnh + số thứ tự + một dòng chữ.
   // Phải chặn TRƯỚC các fallback `items[i].*` chung ngay bên dưới.
+  // The Grand · Location: mỗi địa điểm = nhãn / ảnh / mô tả / stat.
+  if (blockType === 'the_grand_location') {
+    if (/^items\[\d+\]\.imageUrl$/.test(key)) return 'image';
+    if (/^items\[\d+\]\.(label|description|statValue|statUnit)$/.test(key)) {
+      return 'text';
+    }
+  }
+  // The Grand · Service: mỗi dịch vụ = nhãn / ảnh / mô tả.
+  if (blockType === 'the_grand_service') {
+    if (/^items\[\d+\]\.imageUrl$/.test(key)) return 'image';
+    if (/^items\[\d+\]\.(label|description)$/.test(key)) return 'text';
+  }
+  // The Grand · Discover: mỗi khu vực = nhãn / ảnh; thêm ảnh nền mờ decorative.
+  if (blockType === 'the_grand_discover') {
+    if (key === 'backdropImage') return 'image';
+    if (/^items\[\d+\]\.imageUrl$/.test(key)) return 'image';
+    if (/^items\[\d+\]\.label$/.test(key)) return 'text';
+  }
+  // The Grand · About: kẻ ngang chỉ có màu; mỗi đối tác = logo / vai trò.
+  if (blockType === 'the_grand_about') {
+    if (key === 'rule') return 'fill';
+    if (/^partners\[\d+\]\.logo$/.test(key)) return 'image';
+    if (/^partners\[\d+\]\.role$/.test(key)) return 'text';
+  }
   if (blockType === 'real_estate_highlights') {
     if (/^items\[\d+\]\.imageUrl$/.test(key)) return 'image';
     if (/^items\[\d+\]\.(number|text)$/.test(key)) return 'text';
@@ -615,6 +661,52 @@ export function resolveLabel(
       reUtility[2] === 'label' ? 'Nội dung' : 'Icon'
     }`;
   }
+  const grandLoc = key.match(
+    /^items\[(\d+)\]\.(label|imageUrl|description|statValue|statUnit)$/
+  );
+  if (grandLoc && blockType === 'the_grand_location') {
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      imageUrl: 'Ảnh',
+      description: 'Mô tả',
+      statValue: 'Số liệu',
+      statUnit: 'Đơn vị',
+    };
+    return `Địa điểm ${Number(grandLoc[1]) + 1} · ${labels[grandLoc[2]] ?? grandLoc[2]}`;
+  }
+  const grandSvc = key.match(/^items\[(\d+)\]\.(label|imageUrl|description)$/);
+  if (grandSvc && blockType === 'the_grand_service') {
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      imageUrl: 'Ảnh',
+      description: 'Mô tả',
+    };
+    return `Dịch vụ ${Number(grandSvc[1]) + 1} · ${labels[grandSvc[2]] ?? grandSvc[2]}`;
+  }
+  const grandDisc = key.match(/^items\[(\d+)\]\.(label|imageUrl)$/);
+  if (grandDisc && blockType === 'the_grand_discover') {
+    const labels: Record<string, string> = { label: 'Nhãn', imageUrl: 'Ảnh' };
+    return `Khu vực ${Number(grandDisc[1]) + 1} · ${labels[grandDisc[2]] ?? grandDisc[2]}`;
+  }
+  const grandPartner = key.match(/^partners\[(\d+)\]\.(logo|role)$/);
+  if (grandPartner && blockType === 'the_grand_about') {
+    const labels: Record<string, string> = { logo: 'Logo', role: 'Vai trò' };
+    return `Đối tác ${Number(grandPartner[1]) + 1} · ${labels[grandPartner[2]] ?? grandPartner[2]}`;
+  }
+  if (blockType === 'the_grand_footer') {
+    const grandPolicy = key.match(/^policies\[(\d+)\]\.(label|href)$/);
+    if (grandPolicy) {
+      return `Chính sách ${Number(grandPolicy[1]) + 1} · ${
+        grandPolicy[2] === 'label' ? 'Nhãn' : 'Link'
+      }`;
+    }
+    const grandSocial = key.match(/^socials\[(\d+)\]\.(href|label)$/);
+    if (grandSocial) {
+      return `Social ${Number(grandSocial[1]) + 1} · ${
+        grandSocial[2] === 'href' ? 'Link' : 'Nhãn trợ năng'
+      }`;
+    }
+  }
   const navLabel = key.match(/^items\[(\d+)\]\.label$/);
   if (navLabel && blockType === 'mintv2_services') {
     return `Mục ${Number(navLabel[1]) + 1} · Nhãn`;
@@ -796,6 +888,95 @@ export function resolveElementMeta(
       fieldType: 'text',
       label: `Coin ${Number(coinText[1]) + 1} · ${labels[coinText[2]] ?? coinText[2]}`,
     };
+  }
+  const grandLocMeta = key.match(
+    /^items\[(\d+)\]\.(label|imageUrl|description|statValue|statUnit)$/
+  );
+  if (grandLocMeta && blockType === 'the_grand_location') {
+    const field = grandLocMeta[2];
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      imageUrl: 'Ảnh',
+      description: 'Mô tả',
+      statValue: 'Số liệu',
+      statUnit: 'Đơn vị',
+    };
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      fieldType:
+        field === 'imageUrl'
+          ? 'image'
+          : field === 'description'
+            ? 'textarea'
+            : 'text',
+      label: `Địa điểm ${Number(grandLocMeta[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  const grandSvcMeta = key.match(
+    /^items\[(\d+)\]\.(label|imageUrl|description)$/
+  );
+  if (grandSvcMeta && blockType === 'the_grand_service') {
+    const field = grandSvcMeta[2];
+    const labels: Record<string, string> = {
+      label: 'Nhãn',
+      imageUrl: 'Ảnh',
+      description: 'Mô tả',
+    };
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      fieldType:
+        field === 'imageUrl'
+          ? 'image'
+          : field === 'description'
+            ? 'textarea'
+            : 'text',
+      label: `Dịch vụ ${Number(grandSvcMeta[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  if (blockType === 'the_grand_discover' && key === 'backdropImage') {
+    return { kind: 'image', fieldType: 'image', label: 'Ảnh nền mờ' };
+  }
+  const grandDiscMeta = key.match(/^items\[(\d+)\]\.(label|imageUrl)$/);
+  if (grandDiscMeta && blockType === 'the_grand_discover') {
+    const field = grandDiscMeta[2];
+    const labels: Record<string, string> = { label: 'Nhãn', imageUrl: 'Ảnh' };
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      fieldType: field === 'imageUrl' ? 'image' : 'text',
+      label: `Khu vực ${Number(grandDiscMeta[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  const grandPartnerMeta = key.match(/^partners\[(\d+)\]\.(logo|role)$/);
+  if (grandPartnerMeta && blockType === 'the_grand_about') {
+    const field = grandPartnerMeta[2];
+    const labels: Record<string, string> = { logo: 'Logo', role: 'Vai trò' };
+    return {
+      kind: field === 'logo' ? 'image' : 'text',
+      fieldType: field === 'logo' ? 'image' : 'text',
+      label: `Đối tác ${Number(grandPartnerMeta[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  if (blockType === 'the_grand_footer') {
+    const policyMeta = key.match(/^policies\[(\d+)\]\.(label|href)$/);
+    if (policyMeta) {
+      return {
+        kind: 'text',
+        fieldType: 'text',
+        label: `Chính sách ${Number(policyMeta[1]) + 1} · ${
+          policyMeta[2] === 'label' ? 'Nhãn' : 'Link'
+        }`,
+      };
+    }
+    const socialMeta = key.match(/^socials\[(\d+)\]\.(href|label)$/);
+    if (socialMeta) {
+      return {
+        kind: 'text',
+        fieldType: 'text',
+        label: `Social ${Number(socialMeta[1]) + 1} · ${
+          socialMeta[2] === 'href' ? 'Link' : 'Nhãn trợ năng'
+        }`,
+      };
+    }
   }
   const craftImg = key.match(/^items\[(\d+)\]\.imageUrl$/);
   if (craftImg && blockType === 'mint_vault_craft') {
@@ -1225,6 +1406,43 @@ export function resolveElementMeta(
         field === 'imageUrl' ? 'Ảnh' : 'Caption'
       }`,
     };
+  }
+  if (key === 'items' && blockType === 'the_grand_service') {
+    return {
+      kind: 'theGrandServiceItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý dịch vụ',
+    };
+  }
+  if (key === 'items' && blockType === 'the_grand_discover') {
+    return {
+      kind: 'theGrandDiscoverItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý khu vực',
+    };
+  }
+  if (key === 'partners' && blockType === 'the_grand_about') {
+    return {
+      kind: 'theGrandAboutPartners',
+      fieldType: undefined,
+      label: 'Thêm / quản lý đối tác',
+    };
+  }
+  if (blockType === 'the_grand_footer') {
+    if (key === 'policies') {
+      return {
+        kind: 'theGrandFooterPolicies',
+        fieldType: undefined,
+        label: 'Thêm / quản lý chính sách',
+      };
+    }
+    if (key === 'socials') {
+      return {
+        kind: 'theGrandFooterSocials',
+        fieldType: undefined,
+        label: 'Thêm / quản lý social',
+      };
+    }
   }
   if (key === 'frameUrls' && blockType === 'delvaux_hero') {
     return {

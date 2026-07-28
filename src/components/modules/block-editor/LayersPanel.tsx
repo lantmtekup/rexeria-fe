@@ -34,6 +34,7 @@ import {
   Layers as LayersIcon,
   Link2,
   ListChecks,
+  Minus,
   MousePointerClick,
   Paintbrush,
   Palette,
@@ -71,6 +72,19 @@ import { realEstateOverviewStatElements } from './blocks/_registry/defs/realEsta
 import { realEstateUtilityItemElements } from './blocks/_registry/defs/realEstateUtilities';
 import { realEstateVillaSlideElements } from './blocks/_registry/defs/realEstateVilla';
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
+import { theGrandLocationItemElements } from './blocks/_registry/defs/theGrandLocation';
+import { resolveTheGrandLocationItems } from './blocks/theGrandLocationContent';
+import { theGrandServiceItemElements } from './blocks/_registry/defs/theGrandService';
+import { resolveTheGrandServiceItems } from './blocks/theGrandServiceContent';
+import { theGrandDiscoverItemElements } from './blocks/_registry/defs/theGrandDiscover';
+import { resolveTheGrandDiscoverItems } from './blocks/theGrandDiscoverContent';
+import { theGrandAboutPartnerElements } from './blocks/_registry/defs/theGrandAbout';
+import { resolveTheGrandAboutPartners } from './blocks/theGrandAboutContent';
+import { theGrandFooterElements } from './blocks/_registry/defs/theGrandFooter';
+import {
+  resolveTheGrandFooterPolicies,
+  resolveTheGrandFooterSocials,
+} from './blocks/theGrandFooterContent';
 import { delvauxProductHotspotElements } from './blocks/_registry/defs/delvauxProduct';
 import {
   delvauxFaqElements,
@@ -113,6 +127,11 @@ import {
   type AesthaExploreProject,
   type PnjHeroContent,
   type PnjVariantContent,
+  type TheGrandLocationContent,
+  type TheGrandServiceContent,
+  type TheGrandDiscoverContent,
+  type TheGrandAboutContent,
+  type TheGrandFooterContent,
   type PnjStickyMenuItem,
   type RealEstateHeroStat,
   type RealEstateOverviewStat,
@@ -1025,6 +1044,86 @@ export function elementsForType(
         icon: ListChecks,
       },
       { key: 'ctaText', label: 'CTA', icon: Type, fieldType: 'text' },
+    ];
+  }
+  if (type === 'the_grand_location') {
+    const items = resolveTheGrandLocationItems(
+      (content ?? {}) as unknown as TheGrandLocationContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      ...theGrandLocationItemElements(items),
+    ];
+  }
+  if (type === 'the_grand_service') {
+    const items = resolveTheGrandServiceItems(
+      (content ?? {}) as unknown as TheGrandServiceContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      ...theGrandServiceItemElements(items),
+      { key: 'items', label: 'Thêm / quản lý dịch vụ', icon: ListChecks },
+    ];
+  }
+  if (type === 'the_grand_discover') {
+    const items = resolveTheGrandDiscoverItems(
+      (content ?? {}) as unknown as TheGrandDiscoverContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      {
+        key: 'description',
+        label: 'Mô tả',
+        icon: Pilcrow,
+        fieldType: 'textarea',
+      },
+      {
+        key: 'backdropImage',
+        label: 'Ảnh nền mờ',
+        icon: ImageIcon,
+        fieldType: 'image',
+      },
+      ...theGrandDiscoverItemElements(items),
+      { key: 'items', label: 'Thêm / quản lý khu vực', icon: ListChecks },
+    ];
+  }
+  if (type === 'the_grand_about') {
+    const partners = resolveTheGrandAboutPartners(
+      (content ?? {}) as unknown as TheGrandAboutContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'logoUrl',
+        label: 'Logo thương hiệu',
+        icon: ImageIcon,
+        fieldType: 'image',
+      },
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      {
+        key: 'description',
+        label: 'Mô tả',
+        icon: Pilcrow,
+        fieldType: 'textarea',
+      },
+      { key: 'imageUrl', label: 'Ảnh', icon: ImageIcon, fieldType: 'image' },
+      { key: 'rule', label: 'Kẻ ngang', icon: Minus },
+      ...theGrandAboutPartnerElements(partners),
+      { key: 'partners', label: 'Thêm / quản lý đối tác', icon: ListChecks },
+    ];
+  }
+  if (type === 'the_grand_footer') {
+    const footer = (content ?? {}) as unknown as TheGrandFooterContent;
+    return [
+      BACKGROUND_LAYER,
+      // Cùng builder với BlockDef.elements → Lớp và def không thể lệch nhau.
+      ...theGrandFooterElements(
+        resolveTheGrandFooterPolicies(footer),
+        resolveTheGrandFooterSocials(footer)
+      ),
     ];
   }
   if (type === 'delvaux_product') {

@@ -38,6 +38,10 @@ import { IMG as MINT_IMG } from '@/templates/mint-coint/lib/image-cdn';
 
 import { FEATURE_ICON_OPTIONS } from './blocks/FeatureSection';
 import {
+  SOCIAL_ICON_MAP,
+  SOCIAL_PLATFORM_OPTIONS,
+} from './blocks/theGrandFooterSocialIcons';
+import {
   PNJ_PARAGRAPH_KEY_RE,
   resolvePnjParagraphs,
   setPnjParagraphAt,
@@ -115,6 +119,16 @@ import {
   type MintV2ProcessStep,
   type MintV2ServiceItem,
   type MintV2ServicesContent,
+  type TheGrandServiceContent,
+  type TheGrandServiceItem,
+  type TheGrandDiscoverContent,
+  type TheGrandDiscoverItem,
+  type TheGrandAboutContent,
+  type TheGrandAboutPartner,
+  type TheGrandFooterContent,
+  type TheGrandFooterPolicy,
+  type TheGrandFooterSocial,
+  type TheGrandFooterSocialPlatform,
   type MintVaultCraftContent,
   type MintVaultCraftItem,
   type MintVaultCollectionContent,
@@ -619,6 +633,36 @@ export function ElementToolbar({
         {kind === 'alturaOlympusImages' && (
           <AlturaOlympusImagesControls
             content={content as AlturaOlympusContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'theGrandServiceItems' && (
+          <TheGrandServiceItemsControls
+            content={content as TheGrandServiceContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'theGrandDiscoverItems' && (
+          <TheGrandDiscoverItemsControls
+            content={content as TheGrandDiscoverContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'theGrandAboutPartners' && (
+          <TheGrandAboutPartnersControls
+            content={content as TheGrandAboutContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'theGrandFooterPolicies' && (
+          <TheGrandFooterPoliciesControls
+            content={content as TheGrandFooterContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'theGrandFooterSocials' && (
+          <TheGrandFooterSocialsControls
+            content={content as TheGrandFooterContent}
             onContentChange={onContentChange}
           />
         )}
@@ -3942,6 +3986,486 @@ function AlturaOlympusFeaturesControls({
         })}
       </div>
       <AddRow onAdd={add} label='Thêm feature' />
+    </PopoverTrigger>
+  );
+}
+
+function TheGrandServiceItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: TheGrandServiceContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = Array.isArray(content.items) ? content.items : [];
+
+  const write = (
+    updater: (list: TheGrandServiceItem[]) => TheGrandServiceItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as TheGrandServiceContent;
+      const prevItems = Array.isArray(c.items) ? c.items : [];
+      return {
+        ...c,
+        items: updater([...prevItems]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<TheGrandServiceItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 dịch vụ');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        label: 'Dịch vụ mới',
+        imageUrl: '/the-grand/dining.png',
+        imageAlt: '',
+        description: 'Mô tả dịch vụ.',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách dịch vụ'
+      preview={`${items.length} dịch vụ`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={item.label ?? ''}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá dịch vụ ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={item.description ?? ''}
+              onChange={e => update(i, { description: e.target.value })}
+              placeholder='Mô tả'
+              rows={3}
+              className='border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={item.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm dịch vụ' />
+    </PopoverTrigger>
+  );
+}
+
+function TheGrandDiscoverItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: TheGrandDiscoverContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = Array.isArray(content.items) ? content.items : [];
+
+  const write = (
+    updater: (list: TheGrandDiscoverItem[]) => TheGrandDiscoverItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as TheGrandDiscoverContent;
+      const prevItems = Array.isArray(c.items) ? c.items : [];
+      return {
+        ...c,
+        items: updater([...prevItems]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<TheGrandDiscoverItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    // Stack scrub cần ≥ 2 ảnh để có segment chuyển; dưới đó section vô nghĩa.
+    if (items.length <= 2) {
+      toast.error('Cần ít nhất 2 khu vực');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        label: 'Khu vực mới',
+        imageUrl: '/the-grand/discover-1.png',
+        imageAlt: '',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách khu vực'
+      preview={`${items.length} khu vực`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={item.label ?? ''}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá khu vực ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={item.imageAlt ?? ''}
+              onChange={e => update(i, { imageAlt: e.target.value })}
+              placeholder='Mô tả ảnh (alt)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={item.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm khu vực' />
+    </PopoverTrigger>
+  );
+}
+
+function TheGrandAboutPartnersControls({
+  content,
+  onContentChange,
+}: {
+  content: TheGrandAboutContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const partners = Array.isArray(content.partners) ? content.partners : [];
+
+  const write = (
+    updater: (list: TheGrandAboutPartner[]) => TheGrandAboutPartner[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as TheGrandAboutContent;
+      const prevPartners = Array.isArray(c.partners) ? c.partners : [];
+      return {
+        ...c,
+        partners: updater([...prevPartners]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<TheGrandAboutPartner>) =>
+    write(list =>
+      list.map((partner, idx) =>
+        idx === i ? { ...partner, ...patch } : partner
+      )
+    );
+
+  const remove = (i: number) => {
+    if (partners.length <= 1) {
+      toast.error('Cần ít nhất 1 đối tác');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        name: 'Đối tác mới',
+        logo: '/the-grand/partner-hba.svg',
+        role: 'Vai trò',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách đối tác'
+      preview={`${partners.length} đối tác`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {partners.map((partner, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={partner.name ?? ''}
+                onChange={e => update(i, { name: e.target.value })}
+                placeholder='Tên đơn vị'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá đối tác ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={partner.role ?? ''}
+              onChange={e => update(i, { role: e.target.value })}
+              placeholder='Vai trò'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={partner.logo ?? ''}
+              onChange={url => update(i, { logo: url })}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm đối tác' />
+    </PopoverTrigger>
+  );
+}
+
+function TheGrandFooterPoliciesControls({
+  content,
+  onContentChange,
+}: {
+  content: TheGrandFooterContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const policies = Array.isArray(content.policies) ? content.policies : [];
+
+  // Functional updater: block có 2 mảng động, dạng object dễ ghi đè mảng kia
+  // bằng closure cũ.
+  const write = (
+    updater: (list: TheGrandFooterPolicy[]) => TheGrandFooterPolicy[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as TheGrandFooterContent;
+      const prevList = Array.isArray(c.policies) ? c.policies : [];
+      return { ...c, policies: updater([...prevList]) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<TheGrandFooterPolicy>) =>
+    write(list =>
+      list.map((policy, idx) => (idx === i ? { ...policy, ...patch } : policy))
+    );
+
+  const remove = (i: number) => {
+    if (policies.length <= 1) {
+      toast.error('Cần ít nhất 1 chính sách');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [...list, { label: 'Chính sách mới', href: '#' }]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách chính sách'
+      preview={`${policies.length} chính sách`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {policies.map((policy, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={policy.label ?? ''}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá chính sách ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={policy.href ?? ''}
+              onChange={e => update(i, { href: e.target.value })}
+              placeholder='Link (vd /chinh-sach-bao-mat)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm chính sách' />
+    </PopoverTrigger>
+  );
+}
+
+function TheGrandFooterSocialsControls({
+  content,
+  onContentChange,
+}: {
+  content: TheGrandFooterContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const socials = Array.isArray(content.socials) ? content.socials : [];
+
+  const write = (
+    updater: (list: TheGrandFooterSocial[]) => TheGrandFooterSocial[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as TheGrandFooterContent;
+      const prevList = Array.isArray(c.socials) ? c.socials : [];
+      return { ...c, socials: updater([...prevList]) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<TheGrandFooterSocial>) =>
+    write(list =>
+      list.map((social, idx) => (idx === i ? { ...social, ...patch } : social))
+    );
+
+  const remove = (i: number) => {
+    if (socials.length <= 1) {
+      toast.error('Cần ít nhất 1 social');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [...list, { platform: 'facebook', href: '#' }]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách social'
+      preview={`${socials.length} social`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {socials.map((social, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              {/* Platform chọn glyph SVG — options từ SOCIAL_ICON_MAP. */}
+              <select
+                value={social.platform}
+                onChange={e =>
+                  update(i, {
+                    platform: e.target.value as TheGrandFooterSocialPlatform,
+                  })
+                }
+                className='h-8 flex-1 rounded border border-neutral-200 bg-white px-2 text-xs text-neutral-700'
+              >
+                {SOCIAL_PLATFORM_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>
+                    {SOCIAL_ICON_MAP[opt].label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá social ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={social.href ?? ''}
+              onChange={e => update(i, { href: e.target.value })}
+              placeholder='Link (vd https://facebook.com/…)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={social.label ?? ''}
+              onChange={e => update(i, { label: e.target.value })}
+              placeholder='Nhãn trợ năng (rỗng → tên nền tảng)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm social' />
     </PopoverTrigger>
   );
 }
