@@ -36,7 +36,10 @@ FROM unnest(ARRAY[
   'mint_vault_invitation',
   'the_grand_intro',
   'the_grand_location',
-  'the_grand_service'
+  'the_grand_discover',
+  'the_grand_service',
+  'the_grand_about',
+  'the_grand_footer'
 ]::text[]) AS code
 WHERE NOT EXISTS (SELECT 1 FROM public.blocks b WHERE b.type_code = code AND b.archived_at IS NULL);
 

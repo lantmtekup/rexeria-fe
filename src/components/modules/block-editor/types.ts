@@ -103,7 +103,10 @@ export type BlockType =
   // ── The Grand (Masterise) — port từ apps/the-grand ──
   | 'the_grand_intro'
   | 'the_grand_location'
+  | 'the_grand_discover'
   | 'the_grand_service'
+  | 'the_grand_about'
+  | 'the_grand_footer'
   // ── Mintcoin-v2 sections ──
   | 'mintv2_emblem'
   | 'mintv2_services'
@@ -716,6 +719,27 @@ export interface TheGrandLocationContent {
   items: TheGrandLocationItem[];
 }
 
+/** 1 khu vực của section The Grand · Discover (1 lớp ảnh trong stack). */
+export interface TheGrandDiscoverItem {
+  /** Tên khu vực — hiện ở nav (phải) + caption (trái). Lưu thường, in hoa bằng CSS. */
+  label: string;
+  imageUrl: string;
+  imageAlt?: string;
+}
+
+/**
+ * The Grand · Discover — section "Khám Phá Thư Viện": stack ảnh ghim 1 màn, scrub
+ * theo cuộn để ảnh active lùi ra sau-trái (ghost) nhường chỗ ảnh kế trượt vào
+ * giữa; nav phải + caption trái bám theo. Port từ apps/the-grand Discover.
+ */
+export interface TheGrandDiscoverContent {
+  heading: string;
+  description: string;
+  /** Ảnh nền mờ decorative phía sau (optional — để rỗng là tắt). */
+  backdropImage?: string;
+  items: TheGrandDiscoverItem[];
+}
+
 /** 1 dịch vụ của section The Grand · Service (card ảnh trái + info phải). */
 export interface TheGrandServiceItem {
   /** Tiêu đề dịch vụ, vd 'Dịch vụ ăn uống'. */
@@ -732,6 +756,94 @@ export interface TheGrandServiceItem {
 export interface TheGrandServiceContent {
   heading: string;
   items: TheGrandServiceItem[];
+}
+
+/** 1 đối tác trong hàng logo cuối section The Grand · About. */
+export interface TheGrandAboutPartner {
+  /** Tên đơn vị — dùng làm alt của logo. */
+  name: string;
+  /** Đường dẫn logo (SVG/PNG). */
+  logo: string;
+  /** Vai trò, vd 'Công ty kiến trúc'. */
+  role: string;
+}
+
+/**
+ * The Grand · About — section "Giới Thiệu" nền nâu tối: trái ảnh skyline, phải
+ * cột nội dung (logo → tiêu đề → mô tả → kẻ ngang → hàng đối tác). Port từ
+ * apps/the-grand About.
+ */
+export interface TheGrandAboutContent {
+  /** Logo thương hiệu đứng đầu cột nội dung. */
+  logoUrl: string;
+  logoAlt: string;
+  heading: string;
+  description: string;
+  imageUrl: string;
+  imageAlt: string;
+  partners: TheGrandAboutPartner[];
+}
+
+/** 1 link chính sách ở cột 3 của The Grand · Footer. */
+export interface TheGrandFooterPolicy {
+  label: string;
+  href: string;
+}
+
+/**
+ * Nền tảng social có sẵn icon SVG trong block — `platform` chọn glyph nào,
+ * xem `blocks/theGrandFooterSocialIcons.tsx`.
+ */
+export type TheGrandFooterSocialPlatform =
+  | 'facebook'
+  | 'instagram'
+  | 'linkedin'
+  | 'tripadvisor'
+  | 'youtube'
+  | 'tiktok';
+
+/** 1 icon social ở cột 4 của The Grand · Footer. */
+export interface TheGrandFooterSocial {
+  platform: TheGrandFooterSocialPlatform;
+  href: string;
+  /** aria-label; rỗng → fallback theo tên platform. */
+  label?: string;
+}
+
+/**
+ * The Grand · Footer — chân trang nền kem: hàng logo (The Grand · Masterise
+ * ngăn nhau bởi kẻ dọc), 4 cột (địa chỉ / liên hệ / chính sách / social + đăng
+ * ký bản tin), thanh copyright tối căn giữa. Port từ apps/the-grand Footer.
+ *
+ * `policies` và `socials` là mảng ĐỘNG — thêm/xoá qua ElementToolbar.
+ * Href `mailto:` / `tel:` suy ra từ `email` / `hotline`, không phải field riêng.
+ */
+export interface TheGrandFooterContent {
+  logoPrimaryUrl: string;
+  logoPrimaryAlt: string;
+  logoSecondaryUrl: string;
+  logoSecondaryAlt: string;
+
+  projectAddressLabel: string;
+  projectAddress: string;
+  showroomAddressLabel: string;
+  showroomAddress: string;
+
+  emailLabel: string;
+  email: string;
+  hotlineLabel: string;
+  hotline: string;
+
+  policies: TheGrandFooterPolicy[];
+
+  socialLabel: string;
+  socials: TheGrandFooterSocial[];
+
+  newsletterLabel: string;
+  newsletterPlaceholder: string;
+  newsletterSubmitText: string;
+
+  copyright: string;
 }
 
 /** Một góc nhìn sản phẩm trong PNJ · Variant. */
@@ -3239,7 +3351,10 @@ export type BlockContent =
   | PnjCtaContent
   | TheGrandIntroContent
   | TheGrandLocationContent
+  | TheGrandDiscoverContent
   | TheGrandServiceContent
+  | TheGrandAboutContent
+  | TheGrandFooterContent
   | MintV2EmblemContent
   | MintV2ServicesContent
   | MintV2ManifestoContent
@@ -4403,6 +4518,24 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     aiLabelEn:
       'The Grand location section: dark brown backdrop, pinned left aside (title + clickable place list), right sticky column scrubbing through cards (60% image / 40% info) on scroll',
   },
+  the_grand_discover: {
+    type: 'the_grand_discover',
+    category: 'gallery',
+    style: 'luxury',
+    tags: ['the-grand', 'discover', 'gallery', 'sticky', 'scrub', 'masterise'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-27',
+    label: 'The Grand · Discover',
+    accent: '#e8d9b5',
+    adminLabel: 'The Grand Discover',
+    gradient: 'from-stone-800 to-stone-950',
+    defaultName: 'The Grand Discover',
+    aiLabelVi:
+      'section thư viện ảnh The Grand: nền nâu gradient ghim 1 màn, stack ảnh scrub theo cuộn (ảnh active lùi ra sau-trái thành ghost, ảnh kế trượt vào giữa), nav khu vực bấm được góc dưới phải + caption góc dưới trái',
+    aiLabelEn:
+      'The Grand gallery section: brown gradient pinned to one screen, image stack scrubbing on scroll (active image recedes back-left as a ghost while the next slides in), clickable area nav bottom-right + caption bottom-left',
+  },
   the_grand_service: {
     type: 'the_grand_service',
     category: 'services',
@@ -4420,6 +4553,42 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'section dịch vụ The Grand: dải cream tiêu đề dọc bên trái đứng yên, track card (ảnh trái + info phải) trượt ngang đè lên khi cuộn',
     aiLabelEn:
       'The Grand service section: cream vertical title strip pinned left, horizontal card track (image left + info right) scrubbing across it on scroll',
+  },
+  the_grand_about: {
+    type: 'the_grand_about',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['the-grand', 'about', 'editorial', 'partners', 'masterise'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-27',
+    label: 'The Grand · About',
+    accent: '#4a3122',
+    adminLabel: 'The Grand About',
+    gradient: 'from-amber-950 to-stone-900',
+    defaultName: 'The Grand About',
+    aiLabelVi:
+      'section giới thiệu The Grand: nền nâu gradient, trái ảnh skyline clip-reveal, phải cột nội dung (logo thương hiệu, tiêu đề serif, mô tả, kẻ ngang, hàng logo đối tác)',
+    aiLabelEn:
+      'The Grand about section: brown gradient backdrop, left skyline image with clip reveal, right content column (brand logo, serif title, copy, divider rule, partner logo row)',
+  },
+  the_grand_footer: {
+    type: 'the_grand_footer',
+    category: 'footer',
+    style: 'luxury',
+    tags: ['the-grand', 'footer', 'contact', 'newsletter', 'masterise'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-27',
+    label: 'The Grand · Footer',
+    accent: '#f2ecdf',
+    adminLabel: 'The Grand Footer',
+    gradient: 'from-amber-50 to-stone-200',
+    defaultName: 'The Grand Footer',
+    aiLabelVi:
+      'chân trang The Grand: nền kem, hàng logo The Grand · Masterise ngăn bởi kẻ dọc, 4 cột (địa chỉ / email + hotline / chính sách / social + đăng ký bản tin), thanh copyright nâu đậm căn giữa',
+    aiLabelEn:
+      'The Grand footer: cream backdrop, The Grand · Masterise logo row split by a vertical rule, four columns (addresses / email + hotline / policies / socials + newsletter), dark centred copyright bar',
   },
   mintv2_emblem: {
     type: 'mintv2_emblem',

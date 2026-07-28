@@ -21,6 +21,7 @@
 
 import * as React from 'react';
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { cn } from '@/lib/cn';
 
@@ -95,6 +96,8 @@ export function TheGrandLocation({
   const trackRef = React.useRef<HTMLDivElement>(null);
   const tweenRef = React.useRef<gsap.core.Tween | null>(null);
   const activeIndexRef = React.useRef(-1);
+  // Reveal timeline mỗi card (desktop) — play khi active, reverse khi rời.
+  const revealsRef = React.useRef<gsap.core.Timeline[]>([]);
 
   const { hasRoot, scroller, requestRefresh } = useLandingMotion();
   const isCanvas = useIsCanvasEdit(sectionRef);
@@ -113,8 +116,9 @@ export function TheGrandLocation({
       positionStyle(positions, key)
     );
 
-  // Sync active nav qua DOM (không setState mỗi frame cuộn).
-  const syncNavDom = React.useCallback((root: HTMLElement, idx: number) => {
+  // Sync active nav qua DOM (không setState mỗi frame cuộn) + play/reverse reveal
+  // của card tương ứng (desktop). Reveal reverse khi card rời → đối xứng scrub.
+  const syncActive = React.useCallback((root: HTMLElement, idx: number) => {
     if (idx === activeIndexRef.current) return;
     activeIndexRef.current = idx;
     root
@@ -124,6 +128,11 @@ export function TheGrandLocation({
         btn.dataset.active = on ? 'true' : 'false';
         btn.setAttribute('aria-current', on ? 'true' : 'false');
       });
+    revealsRef.current.forEach((tl, i) => {
+      if (!tl) return;
+      if (i === idx) tl.play();
+      else tl.reverse();
+    });
   }, []);
 
   React.useEffect(() => {
@@ -143,31 +152,80 @@ export function TheGrandLocation({
     }
     if (motionOff) setMotionOff(false);
 
-    // Flat (container mobile): cuộn dọc tự nhiên, không scrub.
-    if (flat) {
-      gsap.set(track, { clearProps: 'transform' });
-      return;
-    }
-
     const cards = gsap.utils.toArray<HTMLElement>(
       '.the-grand-location-card',
       track
     );
+
+    // Reveal ảnh (Ken Burns 1.08→1) + text (fade-up stagger) của 1 card.
+    const buildReveal = (card: HTMLElement, paused: boolean) => {
+      const media = card.querySelector<HTMLElement>(
+        '.the-grand-location-card-media'
+      );
+      const texts = card.querySelectorAll<HTMLElement>('.tgl-reveal');
+      const tl = gsap.timeline({ paused });
+      if (media) {
+        tl.fromTo(
+          media,
+          { scale: 1.2 },
+          { scale: 1, duration: 1, ease: 'power2.out' },
+          0
+        );
+      }
+      if (texts.length) {
+        tl.fromTo(
+          texts,
+          { y: 24, autoAlpha: 0 },
+          {
+            y: 0,
+            autoAlpha: 1,
+            duration: 0.6,
+            ease: 'power3.out',
+            stagger: 0.08,
+          },
+          0.1
+        );
+      }
+      return tl;
+    };
+
+    // Flat (container mobile): cuộn dọc tự nhiên → reveal in-view mỗi card.
+    if (flat) {
+      gsap.set(track, { clearProps: 'transform' });
+      const ctx = gsap.context(() => {
+        cards.forEach(card => {
+          const tl = buildReveal(card, true);
+          ScrollTrigger.create({
+            trigger: card,
+            scroller,
+            start: 'top 80%',
+            invalidateOnRefresh: true,
+            onEnter: () => tl.play(),
+            onLeaveBack: () => tl.reverse(),
+          });
+        });
+      }, section);
+      requestRefresh();
+      return () => ctx.revert();
+    }
+
     const move = () => track.scrollHeight - viewport.clientHeight;
 
-    activeIndexRef.current = -1;
-    syncNavDom(section, 0);
-
-    const setActiveFromProgress = (progress: number) => {
+    const idxFromProgress = (progress: number) => {
       const center = progress * move() + viewport.clientHeight / 2;
       let idx = 0;
       for (let i = 0; i < cards.length; i++) {
         if (center >= cards[i].offsetTop) idx = i;
       }
-      syncNavDom(section, idx);
+      return idx;
     };
 
     const ctx = gsap.context(() => {
+      // fromTo (immediateRender) đặt sẵn trạng thái ẩn cho mọi card ngay khi build.
+      revealsRef.current = cards.map(card => buildReveal(card, true));
+      activeIndexRef.current = -1;
+      syncActive(section, 0); // reveal card đầu
+
       tweenRef.current = gsap.to(track, {
         y: () => -move(),
         ease: 'none',
@@ -178,7 +236,7 @@ export function TheGrandLocation({
           end: 'bottom bottom',
           scrub: true,
           invalidateOnRefresh: true,
-          onUpdate: self => setActiveFromProgress(self.progress),
+          onUpdate: self => syncActive(section, idxFromProgress(self.progress)),
         },
       });
     }, section);
@@ -187,6 +245,7 @@ export function TheGrandLocation({
 
     return () => {
       tweenRef.current = null;
+      revealsRef.current = [];
       ctx.revert();
     };
   }, [
@@ -197,7 +256,7 @@ export function TheGrandLocation({
     motionOff,
     scroller,
     requestRefresh,
-    syncNavDom,
+    syncActive,
   ]);
 
   const goTo = (i: number) => {
@@ -205,7 +264,7 @@ export function TheGrandLocation({
     const viewport = viewportRef.current;
     const track = trackRef.current;
     if (!section || !viewport || !track) return;
-    if (section) syncNavDom(section, i);
+    syncActive(section, i);
 
     const card = track.children[i] as HTMLElement | undefined;
     if (!card) return;
@@ -298,7 +357,7 @@ export function TheGrandLocation({
                 data-element-key={labelKey}
                 className={selectableClass(
                   activeKey === labelKey,
-                  'pointer-events-auto'
+                  'tgl-reveal pointer-events-auto'
                 )}
                 style={composeStyle(
                   {
@@ -328,7 +387,7 @@ export function TheGrandLocation({
                   data-element-key={descKey}
                   className={selectableClass(
                     activeKey === descKey,
-                    'pointer-events-auto'
+                    'tgl-reveal pointer-events-auto'
                   )}
                   style={composeStyle(
                     {
@@ -350,6 +409,7 @@ export function TheGrandLocation({
 
                 {(item.statValue || item.statUnit) && (
                   <div
+                    className='tgl-reveal'
                     style={{
                       minWidth: 0,
                       display: 'flex',
