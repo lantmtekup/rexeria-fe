@@ -317,7 +317,12 @@ export interface AlturaOlympusContent {
   features: AlturaOlympusFeature[];
   ctaText: string;
   ctaLink: string;
-  /** 4 ảnh scrub (m1 cover → m2 companion/seq → m3 → m4). Fallback assets nếu thiếu. */
+  /**
+   * Preferred: ảnh scrub động (cover → companion → seq…).
+   * Khi có `images[]` thì bỏ qua flat image1..4Url bên dưới.
+   */
+  images?: string[];
+  /** Legacy flat 4 ảnh — fallback khi chưa migrate sang images[]. */
   image1Url?: string;
   image2Url?: string;
   image3Url?: string;

@@ -71,6 +71,13 @@ import {
 } from './blocks/pnjVariantContent';
 import { resolveScrollMattisSlides } from './blocks/_registry/defs/scrollMattis';
 import {
+  ALTURA_OLYMPUS_DEFAULT_FEATURES,
+  ALTURA_OLYMPUS_DEFAULT_IMAGES,
+  ALTURA_OLYMPUS_ICON_OPTIONS,
+  resolveAlturaOlympusFeatures,
+  resolveAlturaOlympusImages,
+} from './blocks/_registry/defs/alturaOlympus';
+import {
   COOL_HUNTER_GALLERY_DEFAULT_ITEMS,
   resolveCoolHunterGalleryItems,
 } from './blocks/_registry/defs/coolHunterGallery';
@@ -97,6 +104,8 @@ import {
   type MintDiscoverContent,
   type ScrollMattisContent,
   type ScrollMattisSlideItem,
+  type AlturaOlympusContent,
+  type AlturaOlympusFeature,
   type CoolHunterGalleryContent,
   type CoolHunterGalleryItem,
   type MintVariantsContent,
@@ -368,6 +377,7 @@ export function ElementToolbar({
         {kind === 'text' && (
           <TextControls
             fieldKey={selectedKey}
+            blockType={block.blockType}
             multiline={fieldType ? fieldType === 'textarea' : undefined}
             content={content}
             style={style}
@@ -386,6 +396,7 @@ export function ElementToolbar({
         {kind === 'image' && (
           <ImageControls
             fieldKey={selectedKey}
+            blockType={block.blockType}
             content={content}
             onContentChange={onContentChange}
           />
@@ -617,6 +628,18 @@ export function ElementToolbar({
             onContentChange={onContentChange}
           />
         )}
+        {kind === 'alturaOlympusFeatures' && (
+          <AlturaOlympusFeaturesControls
+            content={content as AlturaOlympusContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'alturaOlympusImages' && (
+          <AlturaOlympusImagesControls
+            content={content as AlturaOlympusContent}
+            onContentChange={onContentChange}
+          />
+        )}
         {kind === 'mintV2ProcessSteps' && (
           <MintV2ProcessStepsControls
             content={content as MintV2ProcessContent}
@@ -698,6 +721,7 @@ export function ElementToolbar({
 
 function TextControls({
   fieldKey,
+  blockType,
   multiline,
   content,
   style,
@@ -706,6 +730,7 @@ function TextControls({
   onResetStyle,
 }: {
   fieldKey: string;
+  blockType?: Block['blockType'];
   /** Registry-driven: true = textarea, false = 1 dòng. undefined = đoán theo key. */
   multiline?: boolean;
   content: BlockContent;
@@ -722,6 +747,10 @@ function TextControls({
   const titleLineMatch = fieldKey.match(PNJ_HERO_TITLE_LINE_KEY_RE);
   const titleLineIndex = titleLineMatch ? Number(titleLineMatch[1]) : -1;
   const highlightItemMatch = fieldKey.match(PNJ_VARIANT_HIGHLIGHT_ITEM_KEY_RE);
+  const alturaIconMatch =
+    blockType === 'altura_olympus'
+      ? fieldKey.match(/^features\[(\d+)\]\.icon$/)
+      : null;
   const rawAt = getContentAt(c, fieldKey);
   const value = paraMatch
     ? (resolvePnjParagraphs(
@@ -797,6 +826,33 @@ function TextControls({
         ) as BlockContent
     );
   };
+
+  // Lucide icon picker for Altura Olympus feature icons.
+  if (alturaIconMatch) {
+    const iconValue = ALTURA_OLYMPUS_ICON_OPTIONS.includes(
+      value as (typeof ALTURA_OLYMPUS_ICON_OPTIONS)[number]
+    )
+      ? value
+      : value || 'Crosshair';
+    return (
+      <select
+        value={iconValue}
+        onChange={e => setField(e.target.value)}
+        aria-label='Icon Lucide'
+        className='h-7 min-w-[10rem] rounded-md border border-neutral-200 bg-white px-2 text-xs text-neutral-700'
+      >
+        {!ALTURA_OLYMPUS_ICON_OPTIONS.includes(
+          iconValue as (typeof ALTURA_OLYMPUS_ICON_OPTIONS)[number]
+        ) &&
+          iconValue && <option value={iconValue}>{iconValue}</option>}
+        {ALTURA_OLYMPUS_ICON_OPTIONS.map(opt => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+    );
+  }
 
   return (
     <>
@@ -953,12 +1009,16 @@ function TextControls({
 
 function ImageControls({
   fieldKey,
+  blockType,
   content,
   onContentChange,
 }: {
   fieldKey: string;
+  blockType?: Block['blockType'];
   content: BlockContent;
-  onContentChange: (next: BlockContent) => void;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
 }) {
   const transformKey =
     fieldKey === 'imageUrl'
@@ -968,12 +1028,33 @@ function ImageControls({
         : null;
 
   const c = content as Record<string, unknown>;
-  const url = (getContentAt(c, fieldKey) as string) ?? '';
+  const alturaImgMatch =
+    blockType === 'altura_olympus' ? fieldKey.match(/^images\[(\d+)\]$/) : null;
+  const alturaImgIndex = alturaImgMatch ? Number(alturaImgMatch[1]) : -1;
+  const alturaImages =
+    alturaImgIndex >= 0
+      ? resolveAlturaOlympusImages(content as AlturaOlympusContent)
+      : null;
+
+  const url =
+    alturaImages && alturaImgIndex >= 0
+      ? (alturaImages[alturaImgIndex] ?? '')
+      : ((getContentAt(c, fieldKey) as string) ?? '');
   const transform = transformKey
     ? (c[transformKey] as ImageTransform | undefined)
     : undefined;
 
   const setUrl = (next: string) => {
+    if (alturaImages && alturaImgIndex >= 0) {
+      const list = [...alturaImages];
+      while (list.length <= alturaImgIndex) list.push('');
+      list[alturaImgIndex] = next;
+      onContentChange(prev => {
+        const cur = prev as AlturaOlympusContent;
+        return { ...cur, images: list } as BlockContent;
+      });
+      return;
+    }
     onContentChange(setContentAt(c, fieldKey, next) as BlockContent);
   };
   const setTransform = (next: ImageTransform) => {
@@ -1854,11 +1935,16 @@ function MintVariantsControls({
       ...content,
       variants: variants.map((v, idx) => (idx === i ? { ...v, ...patch } : v)),
     } as BlockContent);
-  const remove = (i: number) =>
+  const remove = (i: number) => {
+    if (variants.length <= 1) {
+      toast.error('Cần ít nhất 1 biến thể');
+      return;
+    }
     onContentChange({
       ...content,
       variants: variants.filter((_, idx) => idx !== i),
     } as BlockContent);
+  };
   const add = () =>
     onContentChange({
       ...content,
@@ -1868,8 +1954,8 @@ function MintVariantsControls({
           key: `v_${Date.now().toString(36)}`,
           label: 'Biến thể mới',
           ref: '',
-          swatch: '',
-          image: '',
+          swatch: variants[0]?.swatch ?? '',
+          image: variants[0]?.image ?? '',
         },
       ],
     } as BlockContent);
@@ -1896,23 +1982,26 @@ function MintVariantsControls({
               <button
                 type='button'
                 onClick={() => remove(i)}
+                disabled={variants.length <= 1}
                 aria-label='Xoá'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
               >
                 <Trash2 className='size-3.5' />
               </button>
             </div>
-            <Input
-              value={v.swatch}
-              onChange={e => update(i, { swatch: e.target.value })}
-              placeholder='URL ảnh swatch (nút tròn)'
-              className='h-8 border-neutral-200 bg-white text-xs'
+            <p className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+              Swatch
+            </p>
+            <ImagePicker
+              value={v.swatch ?? ''}
+              onChange={url => update(i, { swatch: url })}
             />
-            <Input
-              value={v.image}
-              onChange={e => update(i, { image: e.target.value })}
-              placeholder='URL ảnh hiển thị chính'
-              className='h-8 border-neutral-200 bg-white text-xs'
+            <p className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+              Ảnh chính
+            </p>
+            <ImagePicker
+              value={v.image ?? ''}
+              onChange={url => update(i, { image: url })}
             />
           </div>
         ))}
@@ -3685,6 +3774,192 @@ function CoolHunterGalleryItemsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm ảnh' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── ALTURA OLYMPUS FEATURES
+
+function AlturaOlympusImagesControls({
+  content,
+  onContentChange,
+}: {
+  content: AlturaOlympusContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const images = resolveAlturaOlympusImages(content);
+
+  const write = (updater: (list: string[]) => string[]) => {
+    onContentChange(prev => {
+      const c = prev as AlturaOlympusContent;
+      const current = resolveAlturaOlympusImages(c);
+      return { ...c, images: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, url: string) =>
+    write(list => list.map((item, idx) => (idx === i ? url : item)));
+
+  const remove = (i: number) => {
+    if (images.length <= 2) {
+      toast.error('Cần ít nhất 2 ảnh (cover + companion)');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      ALTURA_OLYMPUS_DEFAULT_IMAGES[
+        list.length % ALTURA_OLYMPUS_DEFAULT_IMAGES.length
+      ] ?? ALTURA_OLYMPUS_DEFAULT_IMAGES[0],
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách ảnh'
+      preview={`${images.length} ảnh`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {images.map((url, i) => (
+          <div
+            key={`altura-img-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                {i === 0 ? 'Ảnh 1 · Cover' : `Ảnh ${i + 1}`}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={images.length <= 2}
+                aria-label={`Xoá ảnh ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <ImagePicker value={url} onChange={next => update(i, next)} />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm ảnh' />
+    </PopoverTrigger>
+  );
+}
+
+function AlturaOlympusFeaturesControls({
+  content,
+  onContentChange,
+}: {
+  content: AlturaOlympusContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const features = resolveAlturaOlympusFeatures(content);
+
+  const write = (
+    updater: (list: AlturaOlympusFeature[]) => AlturaOlympusFeature[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as AlturaOlympusContent;
+      const current = resolveAlturaOlympusFeatures(c);
+      return { ...c, features: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<AlturaOlympusFeature>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (features.length <= 1) {
+      toast.error('Cần ít nhất 1 feature');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        label: 'Feature mới',
+        icon: ALTURA_OLYMPUS_DEFAULT_FEATURES[0]?.icon ?? 'Crosshair',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách features'
+      preview={`${features.length} mục`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {features.map((feat, i) => {
+          const iconValue = ALTURA_OLYMPUS_ICON_OPTIONS.includes(
+            feat.icon as (typeof ALTURA_OLYMPUS_ICON_OPTIONS)[number]
+          )
+            ? feat.icon
+            : feat.icon || 'Crosshair';
+          return (
+            <div
+              key={`altura-feat-${i}`}
+              className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            >
+              <div className='flex items-center gap-2'>
+                <select
+                  value={iconValue}
+                  onChange={e => update(i, { icon: e.target.value })}
+                  aria-label={`Icon feature ${i + 1}`}
+                  className='h-7 flex-1 rounded border border-neutral-200 bg-white px-2 text-xs text-neutral-700'
+                >
+                  {!ALTURA_OLYMPUS_ICON_OPTIONS.includes(
+                    iconValue as (typeof ALTURA_OLYMPUS_ICON_OPTIONS)[number]
+                  ) &&
+                    iconValue && <option value={iconValue}>{iconValue}</option>}
+                  {ALTURA_OLYMPUS_ICON_OPTIONS.map(opt => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type='button'
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    remove(i);
+                  }}
+                  disabled={features.length <= 1}
+                  aria-label={`Xoá feature ${i + 1}`}
+                  className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+                >
+                  <Trash2 className='size-3.5' />
+                </button>
+              </div>
+              <Input
+                value={feat.label ?? ''}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn feature'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+            </div>
+          );
+        })}
+      </div>
+      <AddRow onAdd={add} label='Thêm feature' />
     </PopoverTrigger>
   );
 }
