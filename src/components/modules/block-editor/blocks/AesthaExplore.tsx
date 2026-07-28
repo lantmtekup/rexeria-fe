@@ -13,8 +13,11 @@
  * NỘI BỘ (`view = 'project'` → render `AesthaProject`), không điều hướng theo
  * `projects[i].href`. Field `href` giữ lại trong CMS nhưng block không đọc.
  *
- * Motion contract: entrance qua `useBlockMotion` (GSAP), crossfade bằng CSS
- * opacity, vuốt mobile bằng pointer thuần — KHÔNG dùng framer-motion.
+ * Motion contract: entrance qua `useBlockMotion` (GSAP); swap ảnh featured bằng
+ * CSS transition thuần (crossfade opacity 250ms + cả khối ảnh mới fade-up 54px
+ * kèm scale 0.95→1 trong 1s —
+ * state-driven nên KHÔNG dùng `data-motion`/`useBlockMotion`, xem `featuredImages`);
+ * vuốt mobile bằng pointer thuần — KHÔNG dùng framer-motion.
  * `min-[1100px]:` viewport media → `useContainerMobile(rootRef, 1100)` (đo
  * container, đúng trong device frame lẫn `/p`). Tokens tuyền inline + styleOf.
  */
@@ -78,6 +81,36 @@ interface AesthaExploreProps {
 const CROSSFADE: React.CSSProperties = {
   transition: `opacity 250ms 150ms ${EASE_CROSSFADE}`,
 };
+
+/**
+ * Ảnh featured (wide) vào: ngoài crossfade opacity ở trên, CẢ KHỐI ảnh mới còn
+ * trượt lên `RISE_PX` + zoom `RISE_SCALE → 1` trong `RISE_MS`. Rise dài hơn
+ * crossfade nên khối ảnh còn
+ * "trôi" một nhịp sau khi đã hiện rõ; delay khớp `CROSSFADE` để hai thứ khởi
+ * động cùng lúc. Khối trượt trong khung `overflow-hidden` → lúc đang lên có hở
+ * một dải nền ở mép trên (thu dần về 0) — đúng chất fade-up, không né.
+ */
+const RISE_MS = 1000;
+const RISE_PX = 54;
+/**
+ * Kèm zoom nhẹ `RISE_SCALE → 1` cùng nhịp với translate (chung một property
+ * `transform` nên tự khớp duration/ease). `transform-origin` mặc định = center →
+ * lúc chưa vào, khối co đều mọi phía, hở thêm một dải mảnh ở trái/phải nữa chứ
+ * không chỉ mép trên.
+ */
+const RISE_SCALE = 0.95;
+/**
+ * KHÔNG dùng `EASE_STANDARD`: expo-out đi hết quãng đường trong ~350ms đầu, phần
+ * còn lại của giây đứng yên → mất cảm giác "1 giây". easeOutCubic vẫn giảm tốc
+ * mượt nhưng trải chuyển động ra gần trọn `RISE_MS`.
+ */
+const RISE_EASE = 'cubic-bezier(0.33, 1, 0.68, 1)';
+/**
+ * Lớp rời đi KHÔNG trượt xuống — chỉ reset vị trí (0ms, không transition) sau khi
+ * crossfade kết thúc (150 + 250ms) lúc nó đã vô hình, để lần hiện sau lại rise đủ
+ * `RISE_PX`. Dư một nhịp so với 400ms để không đua frame với chính crossfade.
+ */
+const RISE_RESET_MS = 500;
 
 /**
  * Narrow (tablet + mobile): slider trượt ngang. Cả track dịch `translateX` để
@@ -499,34 +532,64 @@ export function AesthaExplore({
     style: { width: 'calc((100cqw - 96px) * 0.4737)' },
   };
 
-  const featuredImages = projects.map((p, i) => (
-    <div
-      key={i}
-      data-element-key={`projects[${i}].img`}
-      aria-hidden={wideIndex !== i}
-      style={composeStyle(
-        {
-          position: 'absolute',
-          inset: 0,
-          opacity: wideIndex === i ? 1 : 0,
-          pointerEvents: wideIndex === i ? 'auto' : 'none',
-        },
-        CROSSFADE,
-        styleOf(`projects[${i}].img`)
-      )}
-      className={selectableClass(activeKey === `projects[${i}].img`)}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={p.img || MENU_IMG_FALLBACK}
-        alt={p.alt || 'Project image'}
-        draggable={false}
-        fetchPriority={i === 0 ? 'high' : 'auto'}
-        loading={i === 0 ? 'eager' : 'lazy'}
-        className='h-full w-full object-cover transition-transform duration-500 will-change-transform select-none hover:scale-[1.03]'
-      />
-    </div>
-  ));
+  const featuredImages = projects.map((p, i) => {
+    const active = wideIndex === i;
+    return (
+      <div
+        key={i}
+        data-element-key={`projects[${i}].img`}
+        aria-hidden={!active}
+        style={composeStyle(
+          {
+            position: 'absolute',
+            inset: 0,
+            // Clip khối ảnh đang trượt — nút cha đã overflow-hidden nhưng lớp có
+            // thể được gán borderRadius qua styleOf, cần bo đúng ở đây.
+            overflow: 'hidden',
+            opacity: active ? 1 : 0,
+            pointerEvents: active ? 'auto' : 'none',
+          },
+          CROSSFADE,
+          styleOf(`projects[${i}].img`)
+        )}
+        className={selectableClass(activeKey === `projects[${i}].img`)}
+      >
+        {/* Cả khối ảnh trượt lên như một block (`inset: 0` = full khung, KHÔNG
+            phóng to để né hở mép — chủ ý cho thấy khối ảnh đi lên chứ không phải
+            ảnh chạy sau một khung đứng yên). Tách riêng khỏi lớp opacity vì
+            `styleOf` ở trên có thể mang `transform: translate(...)` do author kéo
+            element trên canvas (positionStyle) và sẽ đè mất translateY; còn
+            `<img>` đã giữ transform cho hover-zoom. */}
+        <div
+          style={
+            reduce
+              ? { position: 'absolute', inset: 0 }
+              : {
+                  position: 'absolute',
+                  inset: 0,
+                  transform: active
+                    ? 'translateY(0) scale(1)'
+                    : `translateY(${RISE_PX}px) scale(${RISE_SCALE})`,
+                  transition: active
+                    ? `transform ${RISE_MS}ms 150ms ${RISE_EASE}`
+                    : `transform 0ms ${RISE_RESET_MS}ms`,
+                  willChange: 'transform',
+                }
+          }
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={p.img || MENU_IMG_FALLBACK}
+            alt={p.alt || 'Project image'}
+            draggable={false}
+            fetchPriority={i === 0 ? 'high' : 'auto'}
+            loading={i === 0 ? 'eager' : 'lazy'}
+            className='h-full w-full object-cover transition-transform duration-500 will-change-transform select-none hover:scale-[1.03]'
+          />
+        </div>
+      </div>
+    );
+  });
 
   return (
     <div
