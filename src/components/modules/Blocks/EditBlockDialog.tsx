@@ -320,7 +320,7 @@ export function EditBlockDialog({
         ...taxonomyToPayload(tax),
         // Lifecycle duyệt (BE 000035 — chờ deploy).
         status,
-        review_note: reviewNote.trim() || undefined,
+        review_note: reviewNote.trim(),
       });
       toast.success(`Đã cập nhật "${updated.name}"`);
       onSaved(updated);

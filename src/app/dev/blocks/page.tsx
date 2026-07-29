@@ -24,17 +24,20 @@
  *      hoặc /dev/blocks?inline=<localStorage key>
  */
 import * as React from 'react';
-import { LayoutGrid, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
-import { cn } from '@/lib/cn';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { BlockMiniPreview } from '@/components/modules/block-editor/BlockMiniPreview';
+import { BlockReviewNoteDialog } from '@/components/modules/Blocks/BlockReviewNoteDialog';
+import { DevPreviewToolbar } from '@/components/modules/block-editor/DevPreviewToolbar';
 import { DevicePreviewFrame } from '@/components/modules/block-editor/DevicePreviewFrame';
-import { DeviceSwitcher } from '@/components/modules/block-editor/DeviceSwitcher';
 import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
 import { createBlock } from '@/components/modules/block-editor/factory';
 import { migrateBlockV1toV2 } from '@/components/modules/block-editor/serialize';
-import { LandingMotionRoot } from '@/components/modules/block-editor/motion/LandingMotion';
+import {
+  LandingMotionRoot,
+  useLandingMotion,
+} from '@/components/modules/block-editor/motion/LandingMotion';
 import {
   MotionProvider,
   MotionBlockRoot,
@@ -48,6 +51,7 @@ import {
   type BlockType,
   type Device,
 } from '@/components/modules/block-editor/types';
+import type { Block as ApiBlock } from '@/services/rexer/types';
 
 const TYPES = (Object.keys(BLOCK_TYPE_META) as BlockType[]).sort((a, b) =>
   (BLOCK_TYPE_META[a]?.label ?? a).localeCompare(BLOCK_TYPE_META[b]?.label ?? b)
@@ -65,9 +69,28 @@ function parseEditorBlock(
   return migrateBlockV1toV2(settings);
 }
 
+/** Reset scroll + refresh ScrollTrigger khi toggle scroll room (DOM height đổi). */
+function DevPreviewScrollSync({
+  showScrollRoom,
+  scrollerRef,
+}: {
+  showScrollRoom: boolean;
+  scrollerRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const { requestRefresh } = useLandingMotion();
+
+  React.useLayoutEffect(() => {
+    scrollerRef.current?.scrollTo({ top: 0 });
+    requestRefresh();
+  }, [showScrollRoom, requestRefresh, scrollerRef]);
+
+  return null;
+}
+
 export default function DevBlocksPage() {
   const [routeReady, setRouteReady] = React.useState(false);
   const [device, setDevice] = React.useState<Device>('desktop');
+  const [showScrollRoom, setShowScrollRoom] = React.useState(true);
   const scrollerRef = React.useRef<HTMLDivElement>(null);
 
   // Chế độ render: 'type' (default content theo type), 'id' (block thật từ
@@ -77,6 +100,8 @@ export default function DevBlocksPage() {
   const [blockId, setBlockId] = React.useState<string | null>(null);
   const [inlineKey, setInlineKey] = React.useState<string | null>(null);
   const [fetched, setFetched] = React.useState<Block | null>(null);
+  const [apiBlock, setApiBlock] = React.useState<ApiBlock | null>(null);
+  const [feedbackOpen, setFeedbackOpen] = React.useState(false);
   const [loadErr, setLoadErr] = React.useState<string | null>(null);
 
   // View 'gallery' = lưới design CHƯA mapping (0 instance trong DB) để duyệt +
@@ -177,10 +202,12 @@ export default function DevBlocksPage() {
     let alive = true;
     setLoadErr(null);
     setFetched(null);
+    setApiBlock(null);
     rexerApi.blocks
       .get(blockId)
       .then(b => {
         if (!alive) return;
+        setApiBlock(b);
         const editor = parseEditorBlock(b.settings);
         if (!editor) {
           setLoadErr(
@@ -207,6 +234,7 @@ export default function DevBlocksPage() {
     setBlockId(null);
     setInlineKey(null);
     setFetched(null);
+    setApiBlock(null);
     setLoadErr(null);
     setType(t);
     const u = new URL(window.location.href);
@@ -240,64 +268,29 @@ export default function DevBlocksPage() {
 
   return (
     <div className='relative h-screen bg-neutral-900'>
-      {/* ── Top bar fixed, gọn — không chiếm chiều cao layout ───────── */}
-      <header className='fixed inset-x-0 top-0 z-50 flex h-7 items-center gap-2 border-b border-white/10 bg-[#0d0d10]/90 px-2 backdrop-blur-sm'>
-        <span className='shrink-0 text-[8px] font-bold tracking-[0.16em] text-amber-400/90 uppercase'>
-          Dev
-        </span>
-
-        <select
-          value={type}
-          onChange={e => onPickType(e.target.value as BlockType)}
-          aria-label='Block type'
-          className='h-[18px] max-w-[200px] min-w-0 flex-1 truncate rounded border border-white/15 bg-white/5 px-1 py-0 text-[9px]! leading-none text-white outline-none focus:border-amber-400 sm:max-w-[240px] sm:min-w-[160px] sm:flex-none'
-        >
-          {TYPES.map(t => (
-            <option key={t} value={t} className='bg-[#0d0d10] text-[9px]'>
-              {BLOCK_TYPE_META[t]?.label ?? t}
-            </option>
-          ))}
-        </select>
-
-        <code className='hidden max-w-[160px] truncate text-[8px] text-white/35 md:block'>
-          {mode === 'id'
-            ? fetched
-              ? `id · ${fetched.name}`
-              : 'id · …'
-            : mode === 'inline'
-              ? fetched
-                ? `inline · ${fetched.name}`
-                : 'inline · …'
-              : type}
-        </code>
-
-        {/* Toggle gallery "Chưa mapping" */}
-        <button
-          type='button'
-          onClick={() => setView(v => (v === 'gallery' ? 'single' : 'gallery'))}
-          aria-pressed={view === 'gallery'}
-          title='Design chưa mapping'
-          className={cn(
-            'ml-auto flex h-[18px] shrink-0 items-center gap-1 rounded border px-1.5 text-[9px] leading-none transition-colors',
-            view === 'gallery'
-              ? 'border-amber-400 bg-amber-400 text-neutral-900'
-              : 'border-white/15 bg-white/5 text-white/70 hover:bg-white/10'
-          )}
-        >
-          <LayoutGrid className='size-2.5' />
-          Chưa mapping
-        </button>
-
-        <DeviceSwitcher
+      {view !== 'gallery' ? (
+        <DevPreviewToolbar
           device={device}
-          onChange={setDevice}
-          variant='preview'
+          onDeviceChange={setDevice}
+          showScrollRoom={showScrollRoom}
+          onToggleScrollRoom={() => setShowScrollRoom(v => !v)}
+          onFeedback={
+            mode === 'id' && apiBlock ? () => setFeedbackOpen(true) : undefined
+          }
+          hasFeedbackNote={!!apiBlock?.review_note?.trim()}
         />
-      </header>
+      ) : null}
 
-      {/* ── Gallery: design CHƯA mapping ─────────────────────────────── */}
+      <BlockReviewNoteDialog
+        open={feedbackOpen}
+        onOpenChange={setFeedbackOpen}
+        block={apiBlock}
+        onSaved={setApiBlock}
+      />
+
+      {/* ── Gallery: design CHƯA mapping (?view=unmapped) ──────────────── */}
       {view === 'gallery' ? (
-        <div className='h-screen overflow-auto bg-neutral-950 px-4 pt-10 pb-16'>
+        <div className='h-screen overflow-auto bg-neutral-950 px-4 py-6 pb-16'>
           <div className='mx-auto max-w-6xl'>
             {galleryErr ? (
               <p className='py-12 text-center text-sm text-red-400'>
@@ -356,12 +349,12 @@ export default function DevBlocksPage() {
       {/* ── Device frame = scroller (căn giữa) ───────────────────────── */}
       <div
         hidden={view === 'gallery'}
-        className='relative h-screen overflow-hidden bg-neutral-200 pt-7'
+        className='relative h-screen overflow-hidden bg-neutral-200'
       >
         <LandingMotionRoot scrollerRef={scrollerRef} enableSmooth={false}>
           <DevicePreviewFrame
             device={device}
-            chromeOffset='1.75rem'
+            chromeOffset='0px'
             scrollerRef={scrollerRef}
           >
             {!routeReady ? (
@@ -378,9 +371,18 @@ export default function DevBlocksPage() {
               </div>
             ) : block && resolved ? (
               <>
-                <ScrollRoomPlaceholder label='Scroll vào block' />
+                <DevPreviewScrollSync
+                  showScrollRoom={showScrollRoom}
+                  scrollerRef={scrollerRef}
+                />
+                {showScrollRoom ? (
+                  <ScrollRoomPlaceholder
+                    label='Scroll vào block'
+                    scrollHint='down'
+                  />
+                ) : null}
                 <MotionProvider
-                  key={`${mode}:${block.id ?? type}:${device}`}
+                  key={`${mode}:${block.id ?? type}:${device}:scroll-${showScrollRoom ? 1 : 0}`}
                   mode='preview'
                   motion={resolved.motion}
                   scrollerEl={scrollerRef.current}
@@ -395,7 +397,9 @@ export default function DevBlocksPage() {
                     />
                   </MotionBlockRoot>
                 </MotionProvider>
-                <ScrollRoomPlaceholder label='Scroll thoát block' />
+                {showScrollRoom ? (
+                  <ScrollRoomPlaceholder label='Scroll thoát block' />
+                ) : null}
               </>
             ) : null}
           </DevicePreviewFrame>

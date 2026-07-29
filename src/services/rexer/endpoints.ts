@@ -237,6 +237,7 @@ import type {
   LeadsListResponse,
   LeadStatus,
   Block,
+  BlockStatus,
   BlockActivityResponse,
   BlockListResponse,
   BlockResponse,
@@ -1936,10 +1937,12 @@ export const rexerApi = {
       workspace_id?: string;
       surface?: PageType;
       tag?: string;
+      status?: BlockStatus;
       q?: string;
       page?: number;
       limit?: number;
-      sort?: string;
+      sort_by?: 'created_at' | 'updated_at' | 'name' | 'usage_count';
+      sort_order?: 'asc' | 'desc';
     }) => rx<BlockListResponse>('/blocks', { query }),
     get: async (id: string): Promise<Block> => {
       const r = await rx<BlockResponse>(`/blocks/${id}`);
