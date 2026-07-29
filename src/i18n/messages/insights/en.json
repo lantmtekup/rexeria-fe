@@ -219,7 +219,13 @@
       "briefPlaceholder": "e.g. Happy City Ca Mau — the first model township in Ca Mau...\n\nWorth mentioning: brand and positioning, product/service, target audience and their pain points, campaign objective, competitors and market, current challenges.\n\nWrite naturally, no particular order needed.",
       "tooShort": "Needs at least {n} more characters",
       "autoNote": "The AI will pick the experience goal and customer journey",
-      "run": "Generate blueprint"
+      "run": "Generate blueprint",
+      "image": "Image links",
+      "imageHint": "optional — you can paste several at once",
+      "imagePlaceholder": "https://... (Enter to add)",
+      "imageAdd": "Add",
+      "imageRemove": "Remove this image",
+      "imageRejected": "Skipped {n} entries that are not http(s) links"
     }
   }
 }

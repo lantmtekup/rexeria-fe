@@ -8,6 +8,7 @@ import { Input } from '@/components/atoms/input';
 import { Textarea } from '@/components/atoms/textarea';
 import type { CreateInsightReportBody } from '@/services/rexer/types';
 import { GradientButton } from '../steps/ui';
+import { ImageUrlInput } from './ImageUrlInput';
 import { FieldRow, ScopeFields } from './ScopeFields';
 import { useWorkspaceScope } from './useWorkspaceScope';
 
@@ -38,6 +39,7 @@ export function QuickIntake({
   const scope = useWorkspaceScope(brandLocked);
   const [title, setTitle] = useState('');
   const [briefText, setBriefText] = useState('');
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   const text = briefText.trim();
   const canRun = !!scope.workspaceId && text.length >= MIN_BRIEF_LEN;
@@ -46,7 +48,19 @@ export function QuickIntake({
     onRun({
       workspace_id: scope.workspaceId,
       title: title.trim() || deriveTitle(text),
-      inputs: { brief_text: text, source: 'quick_intake' },
+      inputs: {
+        brief_text: withImageDirective(text, imageUrls),
+        source: 'quick_intake',
+        // Đặt cả hai key: `image_urls` cho engine đọc thẳng, và `brief.assets`
+        // để khớp shape `InsightBrief` mà wizard đầy đủ vẫn dùng — report tạo
+        // ở đây mở lại bằng "chỉnh sửa & chạy lại" thì không mất ảnh.
+        ...(imageUrls.length
+          ? {
+              image_urls: imageUrls,
+              brief: { assets: { items: imageUrls } },
+            }
+          : {}),
+      },
     });
   };
 
@@ -76,6 +90,10 @@ export function QuickIntake({
           placeholder={t('quick.briefPlaceholder')}
           className='min-h-64'
         />
+      </FieldRow>
+
+      <FieldRow label={t('quick.image')} hint={t('quick.imageHint')}>
+        <ImageUrlInput urls={imageUrls} onChange={setImageUrls} />
       </FieldRow>
 
       <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -109,6 +127,31 @@ export function QuickIntake({
  * AI kém.
  */
 const MIN_BRIEF_LEN = 80;
+
+/**
+ * Nối danh sách ảnh vào cuối brief dưới dạng chỉ dẫn rõ ràng.
+ *
+ * Vì sao phải nhét vào text thay vì tin vào key `image_urls`: system prompt mà
+ * engine dùng để sinh nội dung block (`internal/insight/interactive.go`) chỉ
+ * dặn model "dùng brand tone, objective, audience, pain points, market context
+ * FROM THE BRIEF" — nó KHÔNG hề nhắc tới ảnh. Link nằm trong context JSON thì
+ * model có thấy, nhưng không có lệnh nào bảo dùng cho trường ảnh, nên tuỳ hứng
+ * model. Đặt ngay trong brief — đúng thứ prompt được lệnh phải đọc — là đòn bẩy
+ * mạnh nhất mà FE tự làm được.
+ *
+ * Cách chắc chắn hơn là thêm một câu vào system prompt phía BE; khi nào làm
+ * được thì phần nối này vẫn vô hại.
+ */
+function withImageDirective(text: string, urls: string[]): string {
+  if (!urls.length) return text;
+  return [
+    text,
+    '',
+    'Ảnh có sẵn của thương hiệu — hãy dùng đúng các URL này cho mọi trường ảnh',
+    '(imageUrl, backgroundUrl, photos…), không tự bịa URL khác và không để trống:',
+    ...urls.map(u => `- ${u}`),
+  ].join('\n');
+}
 
 /** Không đặt tên thì lấy câu đầu làm tên report (BE giới hạn 200 ký tự). */
 function deriveTitle(text: string): string {
