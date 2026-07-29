@@ -229,10 +229,7 @@
         text-decoration: none;
         line-height: 1.4;
         border-left: 3px solid transparent;
-        transition:
-          background 0.15s,
-          color 0.15s,
-          border-color 0.15s;
+        font-weight: 600;
         white-space: normal;
         overflow-wrap: anywhere;
         word-break: break-word;
@@ -245,7 +242,6 @@
       .toc a.active {
         background: #eef2ff;
         color: var(--electric);
-        font-weight: 600;
         border-left-color: var(--electric);
       }
 
@@ -297,8 +293,7 @@
           max-width: 100%;
           margin: 0;
           padding: 0 0 8px;
-          background: rgba(255, 255, 255, 0.97);
-          backdrop-filter: blur(10px);
+          background: #fff;
           border-top: 1px solid var(--hair);
           border-bottom: 1px solid var(--hair);
           box-shadow: 0 4px 12px rgba(14, 17, 23, 0.06);
@@ -313,7 +308,6 @@
           overflow-x: auto;
           -webkit-overflow-scrolling: touch;
           overscroll-behavior-x: contain;
-          scroll-snap-type: x proximity;
           scrollbar-width: none;
           padding: 0 12px 2px;
           padding-top: 6px;
@@ -332,7 +326,6 @@
         }
         .toc li {
           flex: 0 0 auto;
-          scroll-snap-align: center;
         }
         .toc a {
           padding: 6px 11px;
@@ -1097,6 +1090,658 @@
         border-color: var(--hair);
       }
 
+      /* Timeline delivery */
+      .timeline {
+        margin: 16px 0 8px;
+      }
+      .tl-phase {
+        margin: 20px 0 10px;
+      }
+      .tl-phase-head {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--electric);
+      }
+      .tl-phase-head h3 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+      .tl-phase-head .tl-range {
+        font-size: 0.88rem;
+        color: var(--mut);
+        font-weight: 500;
+      }
+      .tl-list {
+        list-style: none;
+        margin: 0;
+        padding: 0 0 0 20px;
+        border-left: 2px solid var(--hair);
+      }
+      .tl-item {
+        position: relative;
+        margin: 0 0 14px;
+        padding: 12px 14px;
+        background: var(--paper);
+        border: 1px solid var(--hair);
+        border-radius: var(--r);
+      }
+      .tl-item::before {
+        content: '';
+        position: absolute;
+        left: -27px;
+        top: 18px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--grad-primary);
+        border: 2px solid var(--paper);
+        box-shadow: 0 0 0 2px var(--electric);
+      }
+      .tl-item-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+      }
+      .tl-item-head h4 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        flex: 1;
+        min-width: 160px;
+      }
+      .tl-date {
+        flex-shrink: 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--electric);
+        background: #eef2ff;
+        border: 1px solid #d6deff;
+        border-radius: var(--r-sm);
+        padding: 4px 8px;
+        white-space: nowrap;
+      }
+      .tl-date-tbd {
+        color: var(--faint);
+        background: var(--canvas);
+        border-color: var(--hair);
+        font-weight: 500;
+      }
+      .tl-owner {
+        flex-shrink: 0;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+      .tl-owner--khai {
+        color: #1d4ed8;
+        background: #eff6ff;
+        border-color: #bfdbfe;
+      }
+      .tl-owner--nguyen {
+        color: #047857;
+        background: #ecfdf5;
+        border-color: #a7f3d0;
+      }
+      .tl-owner--trung {
+        color: #c2410c;
+        background: #fff7ed;
+        border-color: #fed7aa;
+      }
+      .tl-owner--tbd {
+        color: var(--faint);
+        background: var(--canvas);
+        border-color: var(--hair);
+      }
+      .tl-item-head-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .tl-out {
+        margin: 0;
+        font-size: 0.92rem;
+        color: var(--slate-400);
+        line-height: 1.55;
+      }
+      .tl-out strong {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .tl-table .tl-date-cell {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--electric);
+        white-space: nowrap;
+      }
+      .tl-table td:nth-child(3) {
+        font-size: 0.92rem;
+        line-height: 1.5;
+      }
+      .tl-table .tl-date-tbd {
+        color: var(--faint);
+        font-weight: 500;
+      }
+      .tl-table .tl-owner-cell {
+        font-size: 0.88rem;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .tl-table .tl-owner-cell--khai {
+        color: #1d4ed8;
+      }
+      .tl-table .tl-owner-cell--nguyen {
+        color: #047857;
+      }
+      .tl-table .tl-owner-cell--trung {
+        color: #c2410c;
+      }
+      .tl-table .tl-owner-cell--tbd {
+        color: var(--faint);
+      }
+
+      /* Timeline — calendar view */
+      .tl-cal {
+        --tl-shell: #64748b;
+        --tl-brand: #2563eb;
+        --tl-campaigns: #0891b2;
+        --tl-product: #4f46e5;
+        --tl-experiences: #9333ea;
+        --tl-media: #c026d3;
+        --tl-automation: #db2777;
+        --tl-journey: #059669;
+        --tl-command: #ea580c;
+        --tl-settings: #0d9488;
+        --tl-exchange: #dc2626;
+        --tl-deploy: #0284c7;
+        --tl-intel: #ca8a04;
+        --tl-khai: #2563eb;
+        --tl-nguyen: #059669;
+        --tl-trung: #ea580c;
+        margin: 20px 0 28px;
+        padding: 24px;
+        background: var(--paper);
+        border: 1px solid var(--hair);
+        border-radius: var(--r-lg);
+        box-shadow: var(--sh-soft);
+      }
+      .tl-cal > h3 {
+        margin: 0 0 6px;
+      }
+      .tl-cal-lead {
+        margin: 0 0 18px;
+        font-size: 0.95rem;
+        color: var(--mut);
+        max-width: 72ch;
+      }
+      .tl-cal-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .tl-cal-legend-title {
+        width: 100%;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin: 0 0 2px;
+      }
+      .tl-cal-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.84rem;
+        font-weight: 700;
+        color: var(--ink);
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--hair);
+        background: var(--canvas);
+      }
+      .tl-cal-legend-item i {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        flex-shrink: 0;
+        box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12);
+      }
+      .tl-cal-legend-item.tl-cal-tbd i {
+        background: repeating-linear-gradient(
+          -45deg,
+          #cbd5e1,
+          #cbd5e1 3px,
+          #f1f5f9 3px,
+          #f1f5f9 6px
+        );
+        border: 1px dashed #64748b;
+        box-shadow: none;
+      }
+      .tl-cal-legend-item--khai i {
+        background: var(--tl-khai);
+      }
+      .tl-cal-legend-item--nguyen i {
+        background: var(--tl-nguyen);
+      }
+      .tl-cal-legend-item--trung i {
+        background: var(--tl-trung);
+      }
+      .tl-cal-person-block {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 2px solid var(--hair);
+      }
+      .tl-cal-person-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .tl-cal-person-head h4 {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: var(--ink);
+      }
+      .tl-cal-person-meta {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.76rem;
+        font-weight: 700;
+        color: var(--mut);
+      }
+      .tl-cal-gantt-row[data-person='khai'] {
+        --mod-color: var(--tl-khai);
+      }
+      .tl-cal-gantt-row[data-person='nguyen'] {
+        --mod-color: var(--tl-nguyen);
+      }
+      .tl-cal-gantt-row[data-person='trung'] {
+        --mod-color: var(--tl-trung);
+      }
+      .tl-cal-gantt-bar--khai {
+        background: var(--tl-khai);
+      }
+      .tl-cal-gantt-bar--nguyen {
+        background: var(--tl-nguyen);
+      }
+      .tl-cal-gantt-bar--trung {
+        background: var(--tl-trung);
+      }
+      .tl-cal-day[data-person='khai'] {
+        background: var(--tl-khai);
+        border-color: #1d4ed8;
+        color: #fff;
+      }
+      .tl-cal-day[data-person='nguyen'] {
+        background: var(--tl-nguyen);
+        border-color: #047857;
+        color: #fff;
+      }
+      .tl-cal-day[data-person='trung'] {
+        background: var(--tl-trung);
+        border-color: #c2410c;
+        color: #fff;
+      }
+      .tl-cal-day.is-multi {
+        box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+      }
+      .tl-cal-legend-block {
+        margin-bottom: 16px;
+        padding-bottom: 14px;
+        border-bottom: 2px solid var(--hair);
+      }
+      .tl-cal-months {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+      .tl-cal-month {
+        border: 2px solid var(--hair);
+        border-radius: var(--r);
+        overflow: visible;
+        background: #fafbfd;
+      }
+      .tl-cal-month-head {
+        padding: 12px 14px;
+        font-family: var(--disp);
+        font-size: 1rem;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        border-bottom: none;
+      }
+      .tl-cal-weekdays,
+      .tl-cal-days {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 3px;
+        padding: 8px 8px 0;
+      }
+      .tl-cal-weekdays span {
+        text-align: center;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--slate-500);
+        padding: 5px 0;
+      }
+      .tl-cal-weekdays span:last-child,
+      .tl-cal-weekdays span:nth-child(6) {
+        color: #b45309;
+      }
+      .tl-cal-days {
+        padding-bottom: 10px;
+      }
+      .tl-cal-day {
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--slate-500);
+        border-radius: 6px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+      }
+      .tl-cal-day.is-empty {
+        visibility: hidden;
+        border: none;
+      }
+      .tl-cal-day.is-weekend:not([data-mod]) {
+        background: #f8fafc;
+        color: var(--faint);
+      }
+      .tl-cal-day.is-today {
+        box-shadow:
+          0 0 0 2px #fff,
+          0 0 0 4px #fbbf24,
+          0 2px 8px rgba(251, 191, 36, 0.45);
+        position: relative;
+      }
+      .tl-cal-day.is-today::before {
+        content: '●';
+        position: absolute;
+        top: 1px;
+        right: 3px;
+        font-size: 0.45rem;
+        color: #fde68a;
+        line-height: 1;
+      }
+      .tl-cal-day[data-mod='shell'] {
+        background: var(--tl-shell);
+        border-color: #475569;
+        color: #fff;
+      }
+      .tl-cal-day[data-mod='brand'] {
+        background: var(--tl-brand);
+        border-color: #1d4ed8;
+        color: #fff;
+      }
+      .tl-cal-day[data-mod='campaigns'] {
+        background: var(--tl-campaigns);
+        border-color: #0e7490;
+        color: #fff;
+      }
+      .tl-cal-day[data-mod='product'] {
+        background: var(--tl-product);
+        border-color: #4338ca;
+        color: #fff;
+      }
+      .tl-cal-day[data-mod='experiences'] {
+        background: var(--tl-experiences);
+        border-color: #7e22ce;
+        color: #fff;
+      }
+      .tl-cal-day[data-mod='media'] {
+        background: var(--tl-media);
+        border-color: #a21caf;
+        color: #fff;
+      }
+      .tl-cal-day[data-mod='automation'] {
+        background: var(--tl-automation);
+        border-color: #be185d;
+        color: #fff;
+      }
+      .tl-cal-day[data-mod='journey'] {
+        background: var(--tl-journey);
+        border-color: #047857;
+        color: #fff;
+      }
+      .tl-cal-day[data-mod='command'] {
+        background: var(--tl-command);
+        border-color: #c2410c;
+        color: #fff;
+      }
+      .tl-cal-day[data-mod='settings'] {
+        background: var(--tl-settings);
+        border-color: #0f766e;
+        color: #fff;
+      }
+      .tl-cal-day[data-mod='exchange'] {
+        background: var(--tl-exchange);
+        border-color: #b91c1c;
+        color: #fff;
+      }
+      .tl-cal-day[data-mod='deploy'] {
+        background: var(--tl-deploy);
+        border-color: #0369a1;
+        color: #fff;
+      }
+      .tl-cal-day[data-mod='intel'] {
+        background: var(--tl-intel);
+        border-color: #a16207;
+        color: #fff;
+      }
+      .tl-cal-gantt {
+        border-top: 2px solid var(--hair);
+        padding: 12px 10px 14px;
+        background: #fff;
+      }
+      .tl-cal-gantt-title {
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin: 0 0 10px 2px;
+      }
+      .tl-cal-gantt-row {
+        display: grid;
+        grid-template-columns: minmax(128px, 38%) minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .tl-cal-gantt-row:last-child {
+        margin-bottom: 0;
+      }
+      .tl-cal-gantt-label {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 2px 0;
+      }
+      .tl-cal-gantt-label::before {
+        content: '';
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+        flex-shrink: 0;
+        margin-top: 3px;
+        background: var(--mod-color, var(--hair));
+        box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+      }
+      .tl-cal-gantt-label-body {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+      .tl-cal-gantt-name {
+        font-size: 0.76rem;
+        font-weight: 800;
+        line-height: 1.25;
+        color: var(--ink);
+      }
+      .tl-cal-gantt-name a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .tl-cal-gantt-name a:hover {
+        color: var(--electric);
+        text-decoration: underline;
+      }
+      .tl-cal-gantt-range {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.74rem;
+        font-weight: 700;
+        line-height: 1.2;
+        color: var(--mod-color, var(--slate-500));
+        white-space: nowrap;
+      }
+      .tl-cal-gantt-row[data-mod='shell'] {
+        --mod-color: var(--tl-shell);
+      }
+      .tl-cal-gantt-row[data-mod='brand'] {
+        --mod-color: var(--tl-brand);
+      }
+      .tl-cal-gantt-row[data-mod='campaigns'] {
+        --mod-color: var(--tl-campaigns);
+      }
+      .tl-cal-gantt-row[data-mod='product'] {
+        --mod-color: var(--tl-product);
+      }
+      .tl-cal-gantt-row[data-mod='experiences'] {
+        --mod-color: var(--tl-experiences);
+      }
+      .tl-cal-gantt-row[data-mod='media'] {
+        --mod-color: var(--tl-media);
+      }
+      .tl-cal-gantt-row[data-mod='automation'] {
+        --mod-color: var(--tl-automation);
+      }
+      .tl-cal-gantt-row[data-mod='journey'] {
+        --mod-color: var(--tl-journey);
+      }
+      .tl-cal-gantt-row[data-mod='command'] {
+        --mod-color: var(--tl-command);
+      }
+      .tl-cal-gantt-row[data-mod='settings'] {
+        --mod-color: var(--tl-settings);
+      }
+      .tl-cal-gantt-row[data-mod='exchange'] {
+        --mod-color: var(--tl-exchange);
+      }
+      .tl-cal-gantt-row[data-mod='deploy'] {
+        --mod-color: var(--tl-deploy);
+      }
+      .tl-cal-gantt-row[data-mod='intel'] {
+        --mod-color: var(--tl-intel);
+      }
+      .tl-cal-gantt-track {
+        display: grid;
+        grid-template-columns: repeat(var(--days, 31), minmax(0, 1fr));
+        gap: 2px;
+        min-height: 24px;
+        position: relative;
+        padding: 4px;
+        border-radius: 8px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        overflow: visible;
+      }
+      .tl-cal-gantt-bar {
+        grid-row: 1;
+        grid-column: var(--from) / calc(var(--to) + 1);
+        border-radius: 5px;
+        min-height: 16px;
+        align-self: center;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.22),
+          0 1px 3px rgba(15, 23, 42, 0.18);
+        transition:
+          filter 0.15s ease,
+          transform 0.15s ease;
+      }
+      .tl-cal-gantt-bar--shell {
+        background: var(--tl-shell);
+      }
+      .tl-cal-gantt-bar--brand {
+        background: var(--tl-brand);
+      }
+      .tl-cal-gantt-bar--campaigns {
+        background: var(--tl-campaigns);
+      }
+      .tl-cal-gantt-bar--product {
+        background: var(--tl-product);
+      }
+      .tl-cal-gantt-bar--experiences {
+        background: var(--tl-experiences);
+      }
+      .tl-cal-gantt-bar--media {
+        background: var(--tl-media);
+      }
+      .tl-cal-gantt-bar--automation {
+        background: var(--tl-automation);
+      }
+      .tl-cal-gantt-bar--journey {
+        background: var(--tl-journey);
+      }
+      .tl-cal-gantt-bar--command {
+        background: var(--tl-command);
+      }
+      .tl-cal-gantt-bar--settings {
+        background: var(--tl-settings);
+      }
+      .tl-cal-gantt-bar--exchange {
+        background: var(--tl-exchange);
+      }
+      .tl-cal-gantt-bar--deploy {
+        background: var(--tl-deploy);
+      }
+      .tl-cal-gantt-bar--intel {
+        background: var(--tl-intel);
+      }
+      .tl-cal-gantt-bar:hover {
+        filter: brightness(1.08);
+        transform: translateY(-1px);
+        z-index: 1;
+      }
+      .tl-cal-tbd-block {
+        margin-top: 16px;
+        padding: 14px 16px;
+        border-radius: var(--r);
+        border: 2px dashed #f59e0b;
+        background: #fffbeb;
+        font-size: 0.9rem;
+        color: #92400e;
+      }
+      .tl-cal-tbd-block strong {
+        color: #78350f;
+      }
+
       .footer {
         margin-top: 32px;
         padding-top: 20px;
@@ -1303,7 +1948,10 @@
           <li>
             <a href="#s6" data-short="6. Phase">6. Thứ tự làm 12 module</a>
           </li>
-          <li><a href="#s7" data-short="7. Ghi chú">7. Ghi chú</a></li>
+          <li>
+            <a href="#s7" data-short="7. Timeline">7. Timeline delivery</a>
+          </li>
+          <li><a href="#s8" data-short="8. Ghi chú">8. Ghi chú</a></li>
         </ol>
       </nav>
 
@@ -2837,8 +3485,9 @@
               <a class="ilink" href="#p0">Phụ thuộc P0</a>. Module:
               <strong
                 ><a class="ilink" href="#mod-brand">2</a> ·
-                <a class="ilink" href="#mod-campaigns">3</a> ·
-                <a class="ilink" href="#mod-product">8</a></strong
+                <a class="ilink" href="#mod-exchange">11</a> ·
+                <a class="ilink" href="#mod-product">8</a> ·
+                <a class="ilink" href="#mod-campaigns">3</a></strong
               >
             </p>
             <div class="phase-io">
@@ -2859,14 +3508,16 @@
                   <a class="ilink" href="#mod-brand">Module 2</a>: Brand kit tại
                   <a class="ilink" href="#mod-brand"
                     ><code>/portal/brand</code></a
-                  >. <a class="ilink" href="#mod-campaigns">Module 3</a>:
+                  >. <a class="ilink" href="#mod-exchange">Module 11</a>:
+                  Exchange catalog + cài vào workspace.
+                  <a class="ilink" href="#mod-campaigns">Module 3</a>:
                   <a class="ilink" href="#mod-campaigns"
                     ><code>/portal/campaigns</code></a
                   >
                   + hạng mục + máy trạng thái.
                   <a class="ilink" href="#mod-product">Module 8</a>: sản phẩm đủ
-                  readiness 5 ô + claim+proof. Tạo được Brand → Chiến dịch →
-                  hạng mục gắn sản phẩm.
+                  readiness 5 ô + claim+proof. Tạo được Brand → Exchange →
+                  Product → Chiến dịch → hạng mục gắn sản phẩm.
                 </p>
               </div>
             </div>
@@ -2992,34 +3643,30 @@
             <p class="when">
               <a class="ilink" href="#p1">Phụ thuộc P1</a>. Module:
               <strong
-                ><a class="ilink" href="#mod-experiences">5</a> ·
-                <a class="ilink" href="#mod-media">7</a> ·
-                <a class="ilink" href="#mod-automation">6</a></strong
+                ><a class="ilink" href="#mod-media">7</a> ·
+                <a class="ilink" href="#mod-experiences">5</a></strong
               >
-              (6 chỉ mở đầu Proven)
             </p>
             <div class="phase-io">
               <div>
                 <span class="io-label">Input</span>
                 <p>
-                  <a class="ilink" href="#p1">Output P1</a>: Brand kit, chiến
-                  dịch + hạng mục, sản phẩm readiness. Các route cũ LP / Blocks
-                  / Templates / Curate / Micro Sites / Media / AI Automation.
+                  <a class="ilink" href="#p1">Output P1</a>: Brand kit, Exchange
+                  catalog, sản phẩm readiness, chiến dịch + hạng mục. Các route
+                  cũ LP / Blocks / Templates / Curate / Micro Sites / Media.
                 </p>
               </div>
               <div>
                 <span class="io-label">Output</span>
                 <p>
+                  <a class="ilink" href="#mod-media">Module 7</a>: Media có bản
+                  quyền + Duyệt + chặn deploy.
                   <a class="ilink" href="#mod-experiences">Module 5</a>:
                   <a class="ilink" href="#mod-experiences"
                     ><code>/portal/experiences</code></a
                   >
-                  (Mẫu / Bản copy) + editor phễu.
-                  <a class="ilink" href="#mod-media">Module 7</a>: Media có bản
-                  quyền + Duyệt + chặn deploy.
-                  <a class="ilink" href="#mod-automation">Module 6</a> (mở đầu):
-                  badge Proven + lối vào Automation. Từ chiến dịch fork được
-                  trang, chỉnh, gắn media/sản phẩm, preview.
+                  (Mẫu / Bản copy) + editor phễu. Từ chiến dịch fork được trang,
+                  chỉnh, gắn media/sản phẩm, preview.
                 </p>
               </div>
             </div>
@@ -3332,23 +3979,20 @@
           </div>
 
           <div class="phase" id="p5">
-            <h3>P5 — Khép vòng · Cài đặt · Exchange</h3>
+            <h3>P5 — nhóm "Khép vòng · Tự động hóa · Cài đặt"</h3>
             <p class="when">
               <a class="ilink" href="#p4">Phụ thuộc P4</a>. Module:
               <strong
-                ><a class="ilink" href="#mod-settings">12</a> ·
-                <a class="ilink" href="#mod-automation">6</a> (đủ) ·
-                <a class="ilink" href="#mod-exchange">11</a></strong
-              >. Exchange có thể trì hoãn.
+                ><a class="ilink" href="#mod-automation">6</a> ·
+                <a class="ilink" href="#mod-settings">12</a></strong
+              >.
             </p>
             <div class="phase-io">
               <div>
                 <span class="io-label">Input</span>
                 <p>
                   <a class="ilink" href="#p4">Output P4</a>: có Live + số trên
-                  AI + trang chủ vận hành.
-                  <a class="ilink" href="#mod-automation">Module 6</a> đã có
-                  Proven (P2). Profile / domains hiện tại.
+                  AI + trang chủ vận hành. Profile / domains hiện tại.
                 </p>
               </div>
               <div>
@@ -3361,8 +4005,6 @@
                   + privacy / fit / roles.
                   <a class="ilink" href="#mod-automation">Module 6</a> đủ:
                   Automate product class + Promote mẫu/blueprint.
-                  <a class="ilink" href="#mod-exchange">Module 11</a>: Exchange
-                  (hoặc trì hoãn — không chặn MVP).
                 </p>
               </div>
             </div>
@@ -3552,15 +4194,1072 @@
 
           <div class="callout">
             <strong>Xong toàn Portal V2 khi:</strong> đủ 12 module theo bảng
-            trên (Exchange có thể trì hoãn); marketer chạy quy trình 1→9 trên
-            Portal theme Studio, không nhảy <code>(app)</code> cho việc hàng
-            ngày.
+            trên; marketer chạy quy trình 1→9 trên Portal theme Studio, không
+            nhảy <code>(app)</code> cho việc hàng ngày.
           </div>
         </section>
 
         <!-- 7 -->
         <section class="block" id="s7">
-          <h2><span class="sec-num">7</span> Ghi chú</h2>
+          <h2><span class="sec-num">7</span> Timeline delivery</h2>
+
+          <div class="tl-cal" id="tl-calendar">
+            <h3>Lịch delivery</h3>
+            
+
+            <div class="tl-cal-legend-block">
+              <p class="tl-cal-legend-title">Phân công</p>
+              <div class="tl-cal-legend">
+                <span class="tl-cal-legend-item tl-cal-legend-item--trung"
+                  ><i aria-hidden="true"></i>Trung · Shell, Exchange, Exp,
+                  Camp., Command, Auto, Settings</span
+                >
+                <span class="tl-cal-legend-item tl-cal-legend-item--khai"
+                  ><i aria-hidden="true"></i>Khải · Brand, Media</span
+                >
+                <span class="tl-cal-legend-item tl-cal-legend-item--nguyen"
+                  ><i aria-hidden="true"></i>Nguyên · Product, Journey</span
+                >
+                <span class="tl-cal-legend-item tl-cal-tbd"
+                  ><i aria-hidden="true"></i>Chưa xếp · Deploy, AI</span
+                >
+              </div>
+            </div>
+
+            <div class="tl-cal-months">
+              <!-- Tháng 7/2026 — T4 đầu tháng -->
+              <article class="tl-cal-month">
+                <div class="tl-cal-month-head">Tháng 7 · 2026</div>
+                <div class="tl-cal-weekdays">
+                  <span>T2</span><span>T3</span><span>T4</span><span>T5</span
+                  ><span>T6</span><span>T7</span><span>CN</span>
+                </div>
+                <div class="tl-cal-days">
+                  <span class="tl-cal-day is-empty"></span>
+                  <span class="tl-cal-day is-empty"></span>
+                  <span class="tl-cal-day">1</span>
+                  <span class="tl-cal-day">2</span>
+                  <span class="tl-cal-day">3</span>
+                  <span class="tl-cal-day is-weekend">4</span>
+                  <span class="tl-cal-day is-weekend">5</span>
+                  <span class="tl-cal-day">6</span>
+                  <span class="tl-cal-day">7</span>
+                  <span class="tl-cal-day">8</span>
+                  <span class="tl-cal-day">9</span>
+                  <span class="tl-cal-day">10</span>
+                  <span class="tl-cal-day is-weekend">11</span>
+                  <span class="tl-cal-day is-weekend">12</span>
+                  <span class="tl-cal-day">13</span>
+                  <span class="tl-cal-day">14</span>
+                  <span class="tl-cal-day">15</span>
+                  <span class="tl-cal-day">16</span>
+                  <span class="tl-cal-day">17</span>
+                  <span class="tl-cal-day is-weekend">18</span>
+                  <span class="tl-cal-day is-weekend">19</span>
+                  <span class="tl-cal-day">20</span>
+                  <span class="tl-cal-day">21</span>
+                  <span class="tl-cal-day">22</span>
+                  <span class="tl-cal-day">23</span>
+                  <span class="tl-cal-day">24</span>
+                  <span class="tl-cal-day is-weekend">25</span>
+                  <span class="tl-cal-day is-weekend">26</span>
+                  <span class="tl-cal-day">27</span>
+                  <span class="tl-cal-day">28</span>
+                  <span class="tl-cal-day is-today">29</span>
+                  <span
+                    class="tl-cal-day"
+                    data-person="trung"
+                    data-mod="shell"
+                    title="Trung · Shell"
+                    >30</span
+                  >
+                  <span
+                    class="tl-cal-day"
+                    data-person="trung"
+                    data-mod="shell"
+                    title="Trung · Shell"
+                    >31</span
+                  >
+                </div>
+                <div class="tl-cal-gantt">
+                  <p class="tl-cal-gantt-title">Theo người · Tháng 7</p>
+                  <div class="tl-cal-person-block">
+                    <div class="tl-cal-person-head">
+                      <h4>Trung</h4>
+                      <span class="tl-cal-person-meta"
+                        >Shell 2d · xong 31/07</span
+                      >
+                    </div>
+                    <div class="tl-cal-gantt-row" data-person="trung">
+                      <span class="tl-cal-gantt-label">
+                        <span class="tl-cal-gantt-label-body">
+                          <span class="tl-cal-gantt-name">Shell</span>
+                          <span class="tl-cal-gantt-range">30–31/07</span>
+                        </span>
+                      </span>
+                      <div class="tl-cal-gantt-track" style="--days: 31">
+                        <span
+                          class="tl-cal-gantt-bar tl-cal-gantt-bar--trung"
+                          style="--from: 30; --to: 31"
+                          title="Shell · 2 ngày · 30–31/07"
+                          aria-label="Shell · 2 ngày · 30–31/07"
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Tháng 8/2026 — T7 đầu tháng -->
+              <article class="tl-cal-month">
+                <div class="tl-cal-month-head">Tháng 8 · 2026</div>
+                <div class="tl-cal-weekdays">
+                  <span>T2</span><span>T3</span><span>T4</span><span>T5</span
+                  ><span>T6</span><span>T7</span><span>CN</span>
+                </div>
+                <div class="tl-cal-days">
+                  <span class="tl-cal-day is-empty"></span>
+                  <span class="tl-cal-day is-empty"></span>
+                  <span class="tl-cal-day is-empty"></span>
+                  <span class="tl-cal-day is-empty"></span>
+                  <span class="tl-cal-day is-empty"></span>
+                  <span class="tl-cal-day is-weekend">1</span>
+                  <span class="tl-cal-day is-weekend">2</span>
+                  <span
+                    class="tl-cal-day is-multi"
+                    data-person="trung"
+                    data-mod="exchange"
+                    title="Khải · Brand · Nguyên · Product · Trung · Exchange"
+                    >3</span
+                  >
+                  <span
+                    class="tl-cal-day is-multi"
+                    data-person="trung"
+                    data-mod="exchange"
+                    title="Khải · Brand · Nguyên · Product · Trung · Exchange"
+                    >4</span
+                  >
+                  <span
+                    class="tl-cal-day is-multi"
+                    data-person="trung"
+                    data-mod="experiences"
+                    title="Khải · Media · Trung · Exp"
+                    >5</span
+                  >
+                  <span
+                    class="tl-cal-day is-multi"
+                    data-person="trung"
+                    data-mod="experiences"
+                    title="Khải · Media · Trung · Exp"
+                    >6</span
+                  >
+                  <span
+                    class="tl-cal-day is-multi"
+                    data-person="nguyen"
+                    data-mod="journey"
+                    title="Khải · Media · Nguyên · Journey · Trung · Campaigns"
+                    >7</span
+                  >
+                  <span class="tl-cal-day is-weekend">8</span>
+                  <span class="tl-cal-day is-weekend">9</span>
+                  <span
+                    class="tl-cal-day is-multi"
+                    data-person="trung"
+                    data-mod="campaigns"
+                    title="Nguyên · Journey · Trung · Campaigns"
+                    >10</span
+                  >
+                  <span
+                    class="tl-cal-day is-multi"
+                    data-person="nguyen"
+                    data-mod="journey"
+                    title="Nguyên · Journey · Trung · Command"
+                    >11</span
+                  >
+                  <span
+                    class="tl-cal-day"
+                    data-person="trung"
+                    data-mod="command"
+                    >12</span
+                  >
+                  <span
+                    class="tl-cal-day"
+                    data-person="trung"
+                    data-mod="command"
+                    >13</span
+                  >
+                  <span
+                    class="tl-cal-day"
+                    data-person="trung"
+                    data-mod="automation"
+                    >14</span
+                  >
+                  <span class="tl-cal-day is-weekend">15</span>
+                  <span class="tl-cal-day is-weekend">16</span>
+                  <span
+                    class="tl-cal-day"
+                    data-person="trung"
+                    data-mod="settings"
+                    >17</span
+                  >
+                  <span class="tl-cal-day">18</span>
+                  <span class="tl-cal-day">19</span>
+                  <span class="tl-cal-day">20</span>
+                  <span class="tl-cal-day is-weekend">21</span>
+                  <span class="tl-cal-day is-weekend">22</span>
+                  <span class="tl-cal-day">23</span>
+                  <span class="tl-cal-day">24</span>
+                  <span class="tl-cal-day">25</span>
+                  <span class="tl-cal-day">26</span>
+                  <span class="tl-cal-day">27</span>
+                  <span class="tl-cal-day">28</span>
+                  <span class="tl-cal-day is-weekend">29</span>
+                  <span class="tl-cal-day is-weekend">30</span>
+                  <span class="tl-cal-day">31</span>
+                </div>
+                <div class="tl-cal-gantt">
+                  <div class="tl-cal-person-block">
+                    <div class="tl-cal-person-head">
+                      <h4>Trung</h4>
+                      <span class="tl-cal-person-meta"
+                        >Exchange 2d · Exp 2d · Camp. 2d · Command 2d · Auto 2d ·
+                        Settings 1d · xong 17/08</span
+                      >
+                    </div>
+                    <div class="tl-cal-gantt-row" data-person="trung">
+                      <span class="tl-cal-gantt-label">
+                        <span class="tl-cal-gantt-label-body">
+                          <span class="tl-cal-gantt-name"
+                            >Exchange → Exp → Camp. → Command → Auto →
+                            Settings</span
+                          >
+                          <span class="tl-cal-gantt-range">03–17/08</span>
+                        </span>
+                      </span>
+                      <div class="tl-cal-gantt-track" style="--days: 31">
+                        <span
+                          class="tl-cal-gantt-bar tl-cal-gantt-bar--trung"
+                          style="--from: 3; --to: 4"
+                          title="Exchange · 2 ngày · 03–04/08"
+                        ></span>
+                        <span
+                          class="tl-cal-gantt-bar tl-cal-gantt-bar--trung"
+                          style="--from: 5; --to: 6"
+                          title="Exp · 2 ngày · 05–06/08"
+                        ></span>
+                        <span
+                          class="tl-cal-gantt-bar tl-cal-gantt-bar--trung"
+                          style="--from: 7; --to: 7"
+                          title="Campaigns · 2 ngày · 07 · 10/08"
+                        ></span>
+                        <span
+                          class="tl-cal-gantt-bar tl-cal-gantt-bar--trung"
+                          style="--from: 10; --to: 10"
+                          title="Campaigns · 2 ngày · 07 · 10/08"
+                        ></span>
+                        <span
+                          class="tl-cal-gantt-bar tl-cal-gantt-bar--trung"
+                          style="--from: 11; --to: 12"
+                          title="Command · 2 ngày · 11–12/08"
+                        ></span>
+                        <span
+                          class="tl-cal-gantt-bar tl-cal-gantt-bar--trung"
+                          style="--from: 13; --to: 14"
+                          title="Automation · 2 ngày · 13–14/08"
+                        ></span>
+                        <span
+                          class="tl-cal-gantt-bar tl-cal-gantt-bar--trung"
+                          style="--from: 17; --to: 17"
+                          title="Settings · 1 ngày · 17/08"
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tl-cal-person-block">
+                    <div class="tl-cal-person-head">
+                      <h4>Khải</h4>
+                      <span class="tl-cal-person-meta"
+                        >Brand 2d · Media 2d · xong 06/08</span
+                      >
+                    </div>
+                    <div class="tl-cal-gantt-row" data-person="khai">
+                      <span class="tl-cal-gantt-label">
+                        <span class="tl-cal-gantt-label-body">
+                          <span class="tl-cal-gantt-name">Brand → Media</span>
+                          <span class="tl-cal-gantt-range">03–06/08</span>
+                        </span>
+                      </span>
+                      <div class="tl-cal-gantt-track" style="--days: 31">
+                        <span
+                          class="tl-cal-gantt-bar tl-cal-gantt-bar--khai"
+                          style="--from: 3; --to: 4"
+                          title="Brand · 2 ngày · 03–04/08"
+                        ></span>
+                        <span
+                          class="tl-cal-gantt-bar tl-cal-gantt-bar--khai"
+                          style="--from: 5; --to: 6"
+                          title="Media · 2 ngày · 05–06/08"
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tl-cal-person-block">
+                    <div class="tl-cal-person-head">
+                      <h4>Nguyên</h4>
+                      <span class="tl-cal-person-meta"
+                        >Product 2d · Journey 2d · xong 10/08</span
+                      >
+                    </div>
+                    <div class="tl-cal-gantt-row" data-person="nguyen">
+                      <span class="tl-cal-gantt-label">
+                        <span class="tl-cal-gantt-label-body">
+                          <span class="tl-cal-gantt-name"
+                            >Product → Journey</span
+                          >
+                          <span class="tl-cal-gantt-range">03–04 · 07 · 10/08</span>
+                        </span>
+                      </span>
+                      <div class="tl-cal-gantt-track" style="--days: 31">
+                        <span
+                          class="tl-cal-gantt-bar tl-cal-gantt-bar--nguyen"
+                          style="--from: 3; --to: 4"
+                          title="Product · 2 ngày · 03–04/08"
+                        ></span>
+                        <span
+                          class="tl-cal-gantt-bar tl-cal-gantt-bar--nguyen"
+                          style="--from: 7; --to: 7"
+                          title="Journey · 2 ngày · 07 · 10/08"
+                        ></span>
+                        <span
+                          class="tl-cal-gantt-bar tl-cal-gantt-bar--nguyen"
+                          style="--from: 10; --to: 10"
+                          title="Journey · 2 ngày · 07 · 10/08"
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
+                  <br />
+
+                  <p class="tl-cal-gantt-title">Theo module · Tháng 8</p>
+                  <div
+                    class="tl-cal-gantt-row"
+                    data-mod="brand"
+                    data-person="khai"
+                  >
+                    <span class="tl-cal-gantt-label">
+                      <span class="tl-cal-gantt-label-body">
+                        <span class="tl-cal-gantt-name"
+                          ><a class="ilink" href="#mod-brand">M2 Brand</a> ·
+                          Khải</span
+                        >
+                        <span class="tl-cal-gantt-range">03–04/08</span>
+                      </span>
+                    </span>
+                    <div class="tl-cal-gantt-track" style="--days: 31">
+                      <span
+                        class="tl-cal-gantt-bar tl-cal-gantt-bar--brand"
+                        style="--from: 3; --to: 4"
+                        title="2 ngày · 03–04/08 · Khải"
+                        aria-label="2 ngày · 03–04/08 · Khải"
+                      ></span>
+                    </div>
+                  </div>
+                  <div
+                    class="tl-cal-gantt-row"
+                    data-mod="exchange"
+                    data-person="trung"
+                  >
+                    <span class="tl-cal-gantt-label">
+                      <span class="tl-cal-gantt-label-body">
+                        <span class="tl-cal-gantt-name"
+                          ><a class="ilink" href="#mod-exchange"
+                            >M11 Exchange</a
+                          >
+                          · Trung</span
+                        >
+                        <span class="tl-cal-gantt-range">03–04/08</span>
+                      </span>
+                    </span>
+                    <div class="tl-cal-gantt-track" style="--days: 31">
+                      <span
+                        class="tl-cal-gantt-bar tl-cal-gantt-bar--exchange"
+                        style="--from: 3; --to: 4"
+                        title="2 ngày · 03–04/08 · Trung"
+                        aria-label="2 ngày · 03–04/08 · Trung"
+                      ></span>
+                    </div>
+                  </div>
+                  <div
+                    class="tl-cal-gantt-row"
+                    data-mod="product"
+                    data-person="nguyen"
+                  >
+                    <span class="tl-cal-gantt-label">
+                      <span class="tl-cal-gantt-label-body">
+                        <span class="tl-cal-gantt-name"
+                          ><a class="ilink" href="#mod-product">M8 Product</a> ·
+                          Nguyên</span
+                        >
+                        <span class="tl-cal-gantt-range">03–04/08</span>
+                      </span>
+                    </span>
+                    <div class="tl-cal-gantt-track" style="--days: 31">
+                      <span
+                        class="tl-cal-gantt-bar tl-cal-gantt-bar--product"
+                        style="--from: 3; --to: 4"
+                        title="2 ngày · 03–04/08 · Nguyên"
+                        aria-label="2 ngày · 03–04/08 · Nguyên"
+                      ></span>
+                    </div>
+                  </div>
+                  <div
+                    class="tl-cal-gantt-row"
+                    data-mod="media"
+                    data-person="khai"
+                  >
+                    <span class="tl-cal-gantt-label">
+                      <span class="tl-cal-gantt-label-body">
+                        <span class="tl-cal-gantt-name"
+                          ><a class="ilink" href="#mod-media">M7 Media</a> ·
+                          Khải</span
+                        >
+                        <span class="tl-cal-gantt-range">05–06/08</span>
+                      </span>
+                    </span>
+                    <div class="tl-cal-gantt-track" style="--days: 31">
+                      <span
+                        class="tl-cal-gantt-bar tl-cal-gantt-bar--media"
+                        style="--from: 5; --to: 6"
+                        title="2 ngày · 05–06/08 · Khải"
+                        aria-label="2 ngày · 05–06/08 · Khải"
+                      ></span>
+                    </div>
+                  </div>
+                  <div
+                    class="tl-cal-gantt-row"
+                    data-mod="experiences"
+                    data-person="trung"
+                  >
+                    <span class="tl-cal-gantt-label">
+                      <span class="tl-cal-gantt-label-body">
+                        <span class="tl-cal-gantt-name"
+                          ><a class="ilink" href="#mod-experiences">M5 Exp.</a>
+                          · Trung</span
+                        >
+                        <span class="tl-cal-gantt-range">05–06/08</span>
+                      </span>
+                    </span>
+                    <div class="tl-cal-gantt-track" style="--days: 31">
+                      <span
+                        class="tl-cal-gantt-bar tl-cal-gantt-bar--experiences"
+                        style="--from: 5; --to: 6"
+                        title="2 ngày · 05–06/08 · Trung"
+                        aria-label="2 ngày · 05–06/08 · Trung"
+                      ></span>
+                    </div>
+                  </div>
+                  <div
+                    class="tl-cal-gantt-row"
+                    data-mod="journey"
+                    data-person="nguyen"
+                  >
+                    <span class="tl-cal-gantt-label">
+                      <span class="tl-cal-gantt-label-body">
+                        <span class="tl-cal-gantt-name"
+                          ><a class="ilink" href="#mod-journey">M4 Journey</a> ·
+                          Nguyên</span
+                        >
+                        <span class="tl-cal-gantt-range">07 · 10/08</span>
+                      </span>
+                    </span>
+                    <div class="tl-cal-gantt-track" style="--days: 31">
+                      <span
+                        class="tl-cal-gantt-bar tl-cal-gantt-bar--journey"
+                        style="--from: 7; --to: 7"
+                        title="2 ngày · 07 · 10/08 · Nguyên"
+                        aria-label="2 ngày · 07 · 10/08 · Nguyên"
+                      ></span>
+                      <span
+                        class="tl-cal-gantt-bar tl-cal-gantt-bar--journey"
+                        style="--from: 10; --to: 10"
+                        title="2 ngày · 07 · 10/08 · Nguyên"
+                        aria-label="2 ngày · 07 · 10/08 · Nguyên"
+                      ></span>
+                    </div>
+                  </div>
+                  <div
+                    class="tl-cal-gantt-row"
+                    data-mod="campaigns"
+                    data-person="trung"
+                  >
+                    <span class="tl-cal-gantt-label">
+                      <span class="tl-cal-gantt-label-body">
+                        <span class="tl-cal-gantt-name"
+                          ><a class="ilink" href="#mod-campaigns">M3 Camp.</a> ·
+                          Trung</span
+                        >
+                        <span class="tl-cal-gantt-range">07 · 10/08</span>
+                      </span>
+                    </span>
+                    <div class="tl-cal-gantt-track" style="--days: 31">
+                      <span
+                        class="tl-cal-gantt-bar tl-cal-gantt-bar--campaigns"
+                        style="--from: 7; --to: 7"
+                        title="2 ngày · 07 · 10/08 · Trung"
+                        aria-label="2 ngày · 07 · 10/08 · Trung"
+                      ></span>
+                      <span
+                        class="tl-cal-gantt-bar tl-cal-gantt-bar--campaigns"
+                        style="--from: 10; --to: 10"
+                        title="2 ngày · 07 · 10/08 · Trung"
+                        aria-label="2 ngày · 07 · 10/08 · Trung"
+                      ></span>
+                    </div>
+                  </div>
+                  <div
+                    class="tl-cal-gantt-row"
+                    data-mod="command"
+                    data-person="trung"
+                  >
+                    <span class="tl-cal-gantt-label">
+                      <span class="tl-cal-gantt-label-body">
+                        <span class="tl-cal-gantt-name"
+                          ><a class="ilink" href="#mod-command">M1 Command</a> ·
+                          Trung</span
+                        >
+                        <span class="tl-cal-gantt-range">11–12/08</span>
+                      </span>
+                    </span>
+                    <div class="tl-cal-gantt-track" style="--days: 31">
+                      <span
+                        class="tl-cal-gantt-bar tl-cal-gantt-bar--command"
+                        style="--from: 11; --to: 12"
+                        title="2 ngày · 11–12/08 · Trung"
+                        aria-label="2 ngày · 11–12/08 · Trung"
+                      ></span>
+                    </div>
+                  </div>
+                  <div
+                    class="tl-cal-gantt-row"
+                    data-mod="automation"
+                    data-person="trung"
+                  >
+                    <span class="tl-cal-gantt-label">
+                      <span class="tl-cal-gantt-label-body">
+                        <span class="tl-cal-gantt-name"
+                          ><a class="ilink" href="#mod-automation">M6 Auto.</a>
+                          · Trung</span
+                        >
+                        <span class="tl-cal-gantt-range">13–14/08</span>
+                      </span>
+                    </span>
+                    <div class="tl-cal-gantt-track" style="--days: 31">
+                      <span
+                        class="tl-cal-gantt-bar tl-cal-gantt-bar--automation"
+                        style="--from: 13; --to: 14"
+                        title="2 ngày · 13–14/08 · Trung"
+                        aria-label="2 ngày · 13–14/08 · Trung"
+                      ></span>
+                    </div>
+                  </div>
+                  <div
+                    class="tl-cal-gantt-row"
+                    data-mod="settings"
+                    data-person="trung"
+                  >
+                    <span class="tl-cal-gantt-label">
+                      <span class="tl-cal-gantt-label-body">
+                        <span class="tl-cal-gantt-name"
+                          ><a class="ilink" href="#mod-settings"
+                            >M12 Settings</a
+                          >
+                          · Trung</span
+                        >
+                        <span class="tl-cal-gantt-range">17/08</span>
+                      </span>
+                    </span>
+                    <div class="tl-cal-gantt-track" style="--days: 31">
+                      <span
+                        class="tl-cal-gantt-bar tl-cal-gantt-bar--settings"
+                        style="--from: 17; --to: 17"
+                        title="1 ngày · 17/08 · Trung"
+                        aria-label="1 ngày · 17/08 · Trung"
+                      ></span>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <div class="tl-cal-tbd-block">
+              <strong>Chưa xếp trên lịch (chưa gán người / ngày):</strong>
+              <a class="ilink" href="#mod-deploy">M9 Deploy</a> ·
+              <a class="ilink" href="#mod-intel">M10 AI</a>
+            </div>
+          </div>
+
+          <h3 style="margin-top: 8px">Timeline theo phase</h3>
+
+          <div class="timeline">
+            <div class="tl-phase" id="tl-p0">
+              <div class="tl-phase-head">
+                <h3>
+                  <a class="ilink" href="#p0">P0</a> — Nền theme Studio + khung
+                  menu
+                </h3>
+                <span class="tl-range">30/07 – 31/07</span>
+              </div>
+              <ol class="tl-list">
+                <li class="tl-item">
+                  <div class="tl-item-head">
+                    <h4>P0 · Shell &amp; theme</h4>
+                    <div class="tl-item-head-meta">
+                      <span class="tl-owner tl-owner--trung">Trung</span>
+                      <time class="tl-date" datetime="2026-07-31"
+                        >30/07 – 31/07</time
+                      >
+                    </div>
+                  </div>
+                  <p class="tl-out">
+                    <strong>Kết quả:</strong> Portal dùng theme Studio (màu,
+                    font, radius, bóng);<br />
+                    sidebar nhóm Lập kế hoạch · Tạo nội dung · Xuất bản · Học
+                    hỏi; trang hiển thị placeholder.
+                  </p>
+                </li>
+              </ol>
+            </div>
+
+            <div class="tl-phase" id="tl-p1">
+              <div class="tl-phase-head">
+                <h3>
+                  <a class="ilink" href="#p1">P1</a> — nhóm "Lập kế hoạch"
+                </h3>
+                <span class="tl-range">03/08 – 10/08</span>
+              </div>
+              <ol class="tl-list">
+                <li class="tl-item">
+                  <div class="tl-item-head">
+                    <h4>
+                      <a class="ilink" href="#mod-brand">Module 2</a> · Thương
+                      hiệu (Brand)
+                    </h4>
+                    <div class="tl-item-head-meta">
+                      <span class="tl-owner tl-owner--khai">Khải</span>
+                      <time class="tl-date" datetime="2026-08-04"
+                        >03/08 – 04/08</time
+                      >
+                    </div>
+                  </div>
+                  <p class="tl-out">
+                    <strong>Kết quả:</strong> Route
+                    <code>/portal/brand</code> live — form định vị (3 câu),
+                    tone, personas; visual (logo, bảng màu, typography). Brand
+                    kit tách khỏi Profile; dữ liệu lưu workspace, dùng làm input
+                    cho Campaign &amp; Experiences.
+                  </p>
+                </li>
+                <li class="tl-item">
+                  <div class="tl-item-head">
+                    <h4>
+                      <a class="ilink" href="#mod-exchange">Module 11</a> ·
+                      Exchange
+                    </h4>
+                    <div class="tl-item-head-meta">
+                      <span class="tl-owner tl-owner--trung">Trung</span>
+                      <time class="tl-date" datetime="2026-08-04"
+                        >03/08 – 04/08</time
+                      >
+                    </div>
+                  </div>
+                  <p class="tl-out">
+                    <strong>Kết quả:</strong> Catalog + licence + cài → tạo bản
+                    trong workspace; menu ẩn hoặc vào từ header.
+                  </p>
+                </li>
+                <li class="tl-item">
+                  <div class="tl-item-head">
+                    <h4>
+                      <a class="ilink" href="#mod-product">Module 8</a> · Sản
+                      phẩm (Product)
+                    </h4>
+                    <div class="tl-item-head-meta">
+                      <span class="tl-owner tl-owner--nguyen">Nguyên</span>
+                      <time class="tl-date" datetime="2026-08-04"
+                        >03/08 – 04/08</time
+                      >
+                    </div>
+                  </div>
+                  <p class="tl-out">
+                    <strong>Kết quả:</strong> Catalogue tại
+                    <code>/portal/products</code> với readiness 5 ô (ATT / EXP /
+                    EDU / TRU / CON); claim + proof bắt buộc; editor đọc giá /
+                    variant / claims; nhập Shopify / CSV / tay. Hạng mục chiến
+                    dịch gắn được sản phẩm có điểm sẵn sàng.
+                  </p>
+                </li>
+                <li class="tl-item">
+                  <div class="tl-item-head">
+                    <h4>
+                      <a class="ilink" href="#mod-campaigns">Module 3</a> ·
+                      Chiến dịch (Campaigns)
+                    </h4>
+                    <div class="tl-item-head-meta">
+                      <span class="tl-owner tl-owner--trung">Trung</span>
+                      <time class="tl-date" datetime="2026-08-10"
+                        >07 · 10/08</time
+                      >
+                    </div>
+                  </div>
+                  <p class="tl-out">
+                    <strong>Kết quả:</strong> Route
+                    <code>/portal/campaigns</code> (redirect
+                    <code>/marketing</code>); brief + hạng mục gắn SKU/topic;
+                    máy trạng thái hạng mục Not started → In build → In review →
+                    Ready → Live; tạo được chiến dịch → hạng mục từ Brand kit.
+                  </p>
+                </li>
+              </ol>
+            </div>
+
+            <div class="tl-phase" id="tl-p2">
+              <div class="tl-phase-head">
+                <h3>
+                  <a class="ilink" href="#p2">P2</a> — nhóm "Tạo nội dung"
+                </h3>
+                <span class="tl-range">05/08 – 06/08</span>
+              </div>
+              <ol class="tl-list">
+                <li class="tl-item">
+                  <div class="tl-item-head">
+                    <h4>
+                      <a class="ilink" href="#mod-media">Module 7</a> · Media
+                    </h4>
+                    <div class="tl-item-head-meta">
+                      <span class="tl-owner tl-owner--khai">Khải</span>
+                      <time class="tl-date" datetime="2026-08-06"
+                        >05/08 – 06/08</time
+                      >
+                    </div>
+                  </div>
+                  <p class="tl-out">
+                    <strong>Kết quả:</strong> Kho <code>/portal/media</code> có
+                    trường bản quyền + trạng thái Duyệt; asset hết hạn / lưu trữ
+                    chặn Deploy; xóa asset ⇒ tham chiếu editor về trống. Media
+                    duyệt gắn được vào trải nghiệm.
+                  </p>
+                </li>
+                <li class="tl-item">
+                  <div class="tl-item-head">
+                    <h4>
+                      <a class="ilink" href="#mod-experiences">Module 5</a> ·
+                      Trải nghiệm (Experiences)
+                    </h4>
+                    <div class="tl-item-head-meta">
+                      <span class="tl-owner tl-owner--trung">Trung</span>
+                      <time class="tl-date" datetime="2026-08-06"
+                        >05/08 – 06/08</time
+                      >
+                    </div>
+                  </div>
+                  <p class="tl-out">
+                    <strong>Kết quả:</strong> Gộp LP · Blocks · Templates ·
+                    Curate · Micro Sites vào
+                    <code>/portal/experiences</code> (tab Mẫu / Bản copy); fork
+                    từ mẫu → copy thuộc 1 chiến dịch × subject; editor 5 vai trò
+                    phễu + preview shopper; redirect route cũ.
+                  </p>
+                </li>
+              </ol>
+            </div>
+
+            <div class="tl-phase" id="tl-p3">
+              <div class="tl-phase-head">
+                <h3><a class="ilink" href="#p3">P3</a> — nhóm "Hành trình"</h3>
+                <span class="tl-range">07 · 10/08</span>
+              </div>
+              <ol class="tl-list">
+                <li class="tl-item">
+                  <div class="tl-item-head">
+                    <h4>
+                      <a class="ilink" href="#mod-journey">Module 4</a> · Hành
+                      trình (Journey Builder)
+                    </h4>
+                    <div class="tl-item-head-meta">
+                      <span class="tl-owner tl-owner--nguyen">Nguyên</span>
+                      <time class="tl-date" datetime="2026-08-10"
+                        >07 · 10/08</time
+                      >
+                  </div>
+                  <p class="tl-out">
+                    <strong>Kết quả:</strong> Thư viện blueprint → fork journey
+                    copy; canvas 5 node (Vào · Trải nghiệm · Quyết định · Hành
+                    động · Kết quả) đã validate; danh sách việc thiếu; mô phỏng
+                    persona + duyệt hành trình (người quyết định).
+                  </p>
+                </li>
+              </ol>
+            </div>
+
+            <div class="tl-phase" id="tl-p4">
+              <div class="tl-phase-head">
+                <h3>
+                  <a class="ilink" href="#p4">P4</a> — nhóm "Xuất bản · AI ·
+                  Trang chủ"
+                </h3>
+                <span class="tl-range"
+                  >M9 · M10 — chưa xếp · M1: 11/08 – 12/08</span
+                >
+              </div>
+              <ol class="tl-list">
+                <li class="tl-item">
+                  <div class="tl-item-head">
+                    <h4>
+                      <a class="ilink" href="#mod-deploy">Module 9</a> · Deploy
+                    </h4>
+                    <div class="tl-item-head-meta">
+                      <span class="tl-owner tl-owner--tbd">Chưa xếp</span>
+                      <span class="tl-date tl-date-tbd">—</span>
+                    </div>
+                  </div>
+                  <p class="tl-out">
+                    <strong>Kết quả:</strong> Trung tâm
+                    <code>/portal/deploy</code> — checklist kênh, kiểm tra (≥1
+                    kênh, có trải nghiệm, media còn quyền); Deploy API → Live +
+                    URL công khai; gom Publish dialog + domains; checklist cửa
+                    vào UTM / QR / link creator.
+                  </p>
+                </li>
+                <li class="tl-item">
+                  <div class="tl-item-head">
+                    <h4>
+                      <a class="ilink" href="#mod-intel">Module 10</a> · AI
+                    </h4>
+                    <div class="tl-item-head-meta">
+                      <span class="tl-owner tl-owner--tbd">Chưa xếp</span>
+                      <span class="tl-date tl-date-tbd">—</span>
+                    </div>
+                  </div>
+                  <p class="tl-out">
+                    <strong>Kết quả:</strong> Gộp Insights + analytics LP/Ad tại
+                    <code>/portal/ai</code> (Fact: chiến dịch × subject × trải
+                    nghiệm); phễu, điểm block, segment; Ask ReXeR có căn cứ; mô
+                    phỏng Journey bằng số thật đúng chiến dịch.
+                  </p>
+                </li>
+                <li class="tl-item">
+                  <div class="tl-item-head">
+                    <h4>
+                      <a class="ilink" href="#mod-command">Module 1</a> · Trung
+                      tâm điều khiển
+                    </h4>
+                    <div class="tl-item-head-meta">
+                      <span class="tl-owner tl-owner--trung">Trung</span>
+                      <time class="tl-date" datetime="2026-08-12"
+                        >11/08 – 12/08</time
+                      >
+                    </div>
+                  </div>
+                  <p class="tl-out">
+                    <strong>Kết quả:</strong> Trang chủ <code>/portal</code> —
+                    feed đang live / cần review / bị chặn deploy; lối tắt Chiến
+                    dịch · Deploy · Media; số liệu từ trạng thái chiến dịch /
+                    hạng mục thật (không mock tĩnh).
+                  </p>
+                </li>
+              </ol>
+            </div>
+
+            <div class="tl-phase" id="tl-p5">
+              <div class="tl-phase-head">
+                <h3>
+                  <a class="ilink" href="#p5">P5</a> — nhóm "Khép vòng · Tự động
+                  hóa · Cài đặt"
+                </h3>
+                <span class="tl-range">13/08 – 17/08</span>
+              </div>
+              <ol class="tl-list">
+                <li class="tl-item">
+                  <div class="tl-item-head">
+                    <h4>
+                      <a class="ilink" href="#mod-automation">Module 6</a> · Tự
+                      động hóa (Automation)
+                    </h4>
+                    <div class="tl-item-head-meta">
+                      <span class="tl-owner tl-owner--trung">Trung</span>
+                      <time class="tl-date" datetime="2026-08-14"
+                        >13/08 – 14/08</time
+                      >
+                    </div>
+                  </div>
+                  <p class="tl-out">
+                    <strong>Kết quả:</strong> Badge Proven + lối vào
+                    <code>/portal/automation</code>; Master → chỉnh → Automate
+                    sang nhóm sản phẩm cùng lớp; Promote copy thắng → mẫu thư
+                    viện, hành trình thắng → blueprint. Từ chiến dịch: fork
+                    trang → chỉnh → gắn media/sản phẩm → preview end-to-end.
+                  </p>
+                </li>
+                <li class="tl-item">
+                  <div class="tl-item-head">
+                    <h4>
+                      <a class="ilink" href="#mod-settings">Module 12</a> · Cài
+                      đặt &amp; Quản trị
+                    </h4>
+                    <div class="tl-item-head-meta">
+                      <span class="tl-owner tl-owner--trung">Trung</span>
+                      <time class="tl-date" datetime="2026-08-17">17/08</time>
+                    </div>
+                  </div>
+                  <p class="tl-out">
+                    <strong>Kết quả:</strong> Route
+                    <code>/portal/settings</code> (thay Profile); trần privacy
+                    tín hiệu; trọng số gợi ý mẫu; vai trò Editor / Manager /
+                    Owner; domains trong Settings hoặc Deploy.
+                  </p>
+                </li>
+              </ol>
+            </div>
+          </div>
+
+          <h3 style="margin-top: 24px">Bảng tóm tắt</h3>
+          <div class="table-wrap tl-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Owner</th>
+                  <th>Phase</th>
+                  <th>Module</th>
+                  <th>Kết quả đầu ra</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="tl-date-cell">30/07 – 31/07</td>
+                  <td class="tl-owner-cell tl-owner-cell--trung">Trung</td>
+                  <td><a class="ilink" href="#p0">P0</a></td>
+                  <td>Shell &amp; theme</td>
+                  <td>Theme Studio + sidebar nhóm menu + placeholder routes</td>
+                </tr>
+                <tr>
+                  <td class="tl-date-cell">03/08 – 04/08</td>
+                  <td class="tl-owner-cell tl-owner-cell--khai">Khải</td>
+                  <td><a class="ilink" href="#p1">P1</a></td>
+                  <td>
+                    <a class="ilink" href="#mod-brand">M2 Brand</a>
+                  </td>
+                  <td>
+                    <code>/portal/brand</code> — brand kit đầy đủ, tách Profile
+                  </td>
+                </tr>
+                <tr>
+                  <td class="tl-date-cell">03/08 – 04/08</td>
+                  <td class="tl-owner-cell tl-owner-cell--trung">Trung</td>
+                  <td><a class="ilink" href="#p1">P1</a></td>
+                  <td>
+                    <a class="ilink" href="#mod-exchange">M11 Exchange</a>
+                  </td>
+                  <td>Catalog + licence + cài vào workspace</td>
+                </tr>
+                <tr>
+                  <td class="tl-date-cell">03/08 – 04/08</td>
+                  <td class="tl-owner-cell tl-owner-cell--nguyen">Nguyên</td>
+                  <td><a class="ilink" href="#p1">P1</a></td>
+                  <td>
+                    <a class="ilink" href="#mod-product">M8 Product</a>
+                  </td>
+                  <td>Readiness 5 ô + claim/proof + import catalogue</td>
+                </tr>
+                <tr>
+                  <td class="tl-date-cell">05/08 – 06/08</td>
+                  <td class="tl-owner-cell tl-owner-cell--khai">Khải</td>
+                  <td><a class="ilink" href="#p2">P2</a></td>
+                  <td><a class="ilink" href="#mod-media">M7 Media</a></td>
+                  <td>Bản quyền + Duyệt + chặn deploy khi hết hạn</td>
+                </tr>
+                <tr>
+                  <td class="tl-date-cell">05/08 – 06/08</td>
+                  <td class="tl-owner-cell tl-owner-cell--trung">Trung</td>
+                  <td><a class="ilink" href="#p2">P2</a></td>
+                  <td>
+                    <a class="ilink" href="#mod-experiences">M5 Experiences</a>
+                  </td>
+                  <td>Gộp LP/Blocks/Templates — fork mẫu, editor phễu</td>
+                </tr>
+                <tr>
+                  <td class="tl-date-cell">07 · 10/08</td>
+                  <td class="tl-owner-cell tl-owner-cell--nguyen">Nguyên</td>
+                  <td><a class="ilink" href="#p3">P3</a></td>
+                  <td>
+                    <a class="ilink" href="#mod-journey">M4 Journey</a>
+                  </td>
+                  <td>Blueprint, canvas 5 node, mô phỏng persona</td>
+                </tr>
+                <tr>
+                  <td class="tl-date-cell">07 · 10/08</td>
+                  <td class="tl-owner-cell tl-owner-cell--trung">Trung</td>
+                  <td><a class="ilink" href="#p1">P1</a></td>
+                  <td>
+                    <a class="ilink" href="#mod-campaigns">M3 Campaigns</a>
+                  </td>
+                  <td>
+                    <code>/portal/campaigns</code> — brief, hạng mục, máy trạng
+                    thái
+                  </td>
+                </tr>
+                <tr>
+                  <td class="tl-date-cell tl-date-tbd">—</td>
+                  <td class="tl-owner-cell tl-owner-cell--tbd">Chưa xếp</td>
+                  <td><a class="ilink" href="#p4">P4</a></td>
+                  <td><a class="ilink" href="#mod-deploy">M9 Deploy</a></td>
+                  <td>Deploy API → Live + URL công khai</td>
+                </tr>
+                <tr>
+                  <td class="tl-date-cell tl-date-tbd">—</td>
+                  <td class="tl-owner-cell tl-owner-cell--tbd">Chưa xếp</td>
+                  <td><a class="ilink" href="#p4">P4</a></td>
+                  <td><a class="ilink" href="#mod-intel">M10 AI</a></td>
+                  <td>Fact analytics + Ask ReXeR có căn cứ</td>
+                </tr>
+                <tr>
+                  <td class="tl-date-cell">11/08 – 12/08</td>
+                  <td class="tl-owner-cell tl-owner-cell--trung">Trung</td>
+                  <td><a class="ilink" href="#p4">P4</a></td>
+                  <td>
+                    <a class="ilink" href="#mod-command">M1 Command</a>
+                  </td>
+                  <td>Feed live / review / blocked + lối tắt</td>
+                </tr>
+                <tr>
+                  <td class="tl-date-cell">13/08 – 14/08</td>
+                  <td class="tl-owner-cell tl-owner-cell--trung">Trung</td>
+                  <td><a class="ilink" href="#p5">P5</a></td>
+                  <td>
+                    <a class="ilink" href="#mod-automation">M6 Automation</a>
+                  </td>
+                  <td>
+                    Proven + Automate + Promote mẫu/blueprint · luồng đủ trên
+                    <code>/portal/automation</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="tl-date-cell">17/08</td>
+                  <td class="tl-owner-cell tl-owner-cell--trung">Trung</td>
+                  <td><a class="ilink" href="#p5">P5</a></td>
+                  <td>
+                    <a class="ilink" href="#mod-settings">M12 Settings</a>
+                  </td>
+                  <td>Privacy, roles, domains</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 8 -->
+        <section class="block" id="s8">
+          <h2><span class="sec-num">8</span> Ghi chú</h2>
 
           <ul>
             <li>
@@ -3581,7 +5280,7 @@
         <footer class="footer">
           ReXer Studio · Portal V2 Roadmap · rexerstudio.com · Nguồn: plan-v2
           prototype + quy trình Hành trình &amp; Trải nghiệm + Studio branding ·
-          27 Jul 2026
+          29 Jul 2026
         </footer>
       </main>
     </div>
@@ -3590,56 +5289,46 @@
         const links = [...document.querySelectorAll('.toc a[href^="#"]')];
         if (!links.length) return;
 
-        const byId = new Map(
-          links
-            .map(a => {
-              const id = a.getAttribute('href').slice(1);
-              const el = document.getElementById(id);
-              return el ? [id, { a, el }] : null;
-            })
-            .filter(Boolean)
-        );
+        const sections = links
+          .map(a => {
+            const id = a.getAttribute('href').slice(1);
+            const el = document.getElementById(id);
+            return el ? { id, el } : null;
+          })
+          .filter(Boolean);
+
+        let lastActive = '';
+
+        const anchor = () =>
+          window.matchMedia('(max-width: 900px)').matches ? 120 : 88;
 
         const setActive = id => {
+          if (!id || id === lastActive) return;
+          lastActive = id;
           links.forEach(a => {
             const on = a.getAttribute('href') === `#${id}`;
+            if (a.classList.contains('active') === on) return;
             a.classList.toggle('active', on);
             if (on) a.setAttribute('aria-current', 'true');
             else a.removeAttribute('aria-current');
           });
         };
 
-        const offset = () =>
-          window.matchMedia('(max-width: 900px)').matches ? 140 : 96;
+        const resolve = () => {
+          const maxScroll =
+            document.documentElement.scrollHeight - window.innerHeight - 4;
 
-        let lastActive = '';
-        const update = () => {
-          let current = [...byId.keys()][0];
-          const off = offset();
-          for (const [id, { el }] of byId) {
-            if (el.getBoundingClientRect().top - off <= 0) current = id;
+          if (window.scrollY >= maxScroll) {
+            setActive(sections.at(-1)?.id);
+            return;
           }
-          if (
-            window.innerHeight + window.scrollY >=
-            document.documentElement.scrollHeight - 48
-          ) {
-            current = [...byId.keys()].at(-1);
+
+          const y = window.scrollY + anchor();
+          let current = sections[0]?.id;
+          for (const { id, el } of sections) {
+            if (el.offsetTop <= y + 1) current = id;
           }
           setActive(current);
-          if (
-            current !== lastActive &&
-            window.matchMedia('(max-width: 900px)').matches
-          ) {
-            lastActive = current;
-            const active = document.querySelector('.toc a.active');
-            active?.scrollIntoView({
-              inline: 'center',
-              block: 'nearest',
-              behavior: 'smooth',
-            });
-          } else {
-            lastActive = current;
-          }
         };
 
         let ticking = false;
@@ -3649,14 +5338,14 @@
             if (ticking) return;
             ticking = true;
             requestAnimationFrame(() => {
-              update();
+              resolve();
               ticking = false;
             });
           },
           { passive: true }
         );
-        window.addEventListener('resize', update, { passive: true });
-        update();
+        window.addEventListener('resize', resolve, { passive: true });
+        resolve();
       })();
     </script>
   </body>
