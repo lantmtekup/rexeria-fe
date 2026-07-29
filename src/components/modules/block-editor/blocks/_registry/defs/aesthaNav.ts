@@ -21,12 +21,14 @@ import type { BlockDef } from '../types';
 // link-picker của toolbar (`fieldType: 'link'`), hỗ trợ 3 case: cuộn tới section ·
 // mở tab mới (URL ngoài) · chuyển trang trong template.
 const LINKS_VI: AesthaNavItem[] = [
+  { label: 'Trang chủ', href: '' },
   { label: 'Dự án', href: '' },
   { label: 'Studio', href: '' },
   { label: 'Liên hệ', href: '' },
 ];
 
 const LINKS_EN: AesthaNavItem[] = [
+  { label: 'Home', href: '' },
   { label: 'Projects', href: '' },
   { label: 'Studio', href: '' },
   { label: 'Contact', href: '' },
