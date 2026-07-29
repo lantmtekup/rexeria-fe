@@ -1187,7 +1187,9 @@
         text-decoration: none;
         color: inherit;
         min-width: 0;
-        transition: border-color 0.15s, box-shadow 0.15s;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
       }
       a.sys-node:hover {
         border-color: var(--electric);
@@ -1375,7 +1377,9 @@
               <div class="sys-flow-row">
                 <a class="sys-node" href="#mod-campaigns">
                   <span class="sys-node-title">Chiến dịch + Subject</span>
-                  <span class="sys-node-sub">Brief · hạng mục · trạng thái</span>
+                  <span class="sys-node-sub"
+                    >Brief · hạng mục · trạng thái</span
+                  >
                 </a>
               </div>
               <div class="sys-flow-down" aria-hidden="true">↓</div>
@@ -1413,9 +1417,7 @@
                 </a>
                 <a class="sys-node" href="#mod-automation">
                   <span class="sys-node-title">Tự động hóa / Promote</span>
-                  <span class="sys-node-sub"
-                    >Proven → nhân bản · mẫu mới</span
-                  >
+                  <span class="sys-node-sub">Proven → nhân bản · mẫu mới</span>
                 </a>
               </div>
             </div>
@@ -1423,87 +1425,91 @@
             <p class="sys-caption" style="margin-top: 4px">
               B · 12 module theo nhóm menu Portal V2
             </p>
-            <div class="diagram-scroll" aria-label="Sơ đồ 12 module — vuốt ngang">
-            <div class="sys-map">
-              <div class="sys-group">
-                <div class="sys-group-label">Trang chủ</div>
-                <div class="sys-group-nodes">
-                  <a class="sys-chip" href="#mod-command"
-                    ><span class="sys-chip-name">1 · Trung tâm điều khiển</span
-                    ><span class="st st-partial">Một phần</span></a
-                  >
+            <div
+              class="diagram-scroll"
+              aria-label="Sơ đồ 12 module — vuốt ngang"
+            >
+              <div class="sys-map">
+                <div class="sys-group">
+                  <div class="sys-group-label">Trang chủ</div>
+                  <div class="sys-group-nodes">
+                    <a class="sys-chip" href="#mod-command"
+                      ><span class="sys-chip-name"
+                        >1 · Trung tâm điều khiển</span
+                      ><span class="st st-partial">Một phần</span></a
+                    >
+                  </div>
+                </div>
+                <div class="sys-group">
+                  <div class="sys-group-label">Lập kế hoạch</div>
+                  <div class="sys-group-nodes">
+                    <a class="sys-chip" href="#mod-brand"
+                      ><span class="sys-chip-name">2 · Thương hiệu</span
+                      ><span class="st st-missing">Chưa có</span></a
+                    >
+                    <a class="sys-chip" href="#mod-campaigns"
+                      ><span class="sys-chip-name">3 · Chiến dịch</span
+                      ><span class="st st-partial">Một phần</span></a
+                    >
+                    <a class="sys-chip" href="#mod-journey"
+                      ><span class="sys-chip-name">4 · Hành trình</span
+                      ><span class="st st-missing">Chưa có</span></a
+                    >
+                  </div>
+                </div>
+                <div class="sys-group">
+                  <div class="sys-group-label">Tạo nội dung</div>
+                  <div class="sys-group-nodes">
+                    <a class="sys-chip" href="#mod-experiences"
+                      ><span class="sys-chip-name">5 · Trải nghiệm</span
+                      ><span class="st st-rebuild">Làm lại</span></a
+                    >
+                    <a class="sys-chip" href="#mod-automation"
+                      ><span class="sys-chip-name">6 · Tự động hóa</span
+                      ><span class="st st-partial">Một phần</span></a
+                    >
+                    <a class="sys-chip" href="#mod-media"
+                      ><span class="sys-chip-name">7 · Media</span
+                      ><span class="st st-partial">Một phần</span></a
+                    >
+                    <a class="sys-chip" href="#mod-product"
+                      ><span class="sys-chip-name">8 · Sản phẩm</span
+                      ><span class="st st-partial">Một phần</span></a
+                    >
+                  </div>
+                </div>
+                <div class="sys-group">
+                  <div class="sys-group-label">Xuất bản</div>
+                  <div class="sys-group-nodes">
+                    <a class="sys-chip" href="#mod-deploy"
+                      ><span class="sys-chip-name">9 · Deploy</span
+                      ><span class="st st-missing">Chưa có</span></a
+                    >
+                  </div>
+                </div>
+                <div class="sys-group">
+                  <div class="sys-group-label">Học hỏi</div>
+                  <div class="sys-group-nodes">
+                    <a class="sys-chip" href="#mod-intel"
+                      ><span class="sys-chip-name">10 · AI</span
+                      ><span class="st st-partial">Một phần</span></a
+                    >
+                  </div>
+                </div>
+                <div class="sys-group">
+                  <div class="sys-group-label">Khác</div>
+                  <div class="sys-group-nodes">
+                    <a class="sys-chip" href="#mod-exchange"
+                      ><span class="sys-chip-name">11 · Exchange</span
+                      ><span class="st st-later">Để sau</span></a
+                    >
+                    <a class="sys-chip" href="#mod-settings"
+                      ><span class="sys-chip-name">12 · Cài đặt</span
+                      ><span class="st st-partial">Một phần</span></a
+                    >
+                  </div>
                 </div>
               </div>
-              <div class="sys-group">
-                <div class="sys-group-label">Lập kế hoạch</div>
-                <div class="sys-group-nodes">
-                  <a class="sys-chip" href="#mod-brand"
-                    ><span class="sys-chip-name">2 · Thương hiệu</span
-                    ><span class="st st-missing">Chưa có</span></a
-                  >
-                  <a class="sys-chip" href="#mod-campaigns"
-                    ><span class="sys-chip-name">3 · Chiến dịch</span
-                    ><span class="st st-partial">Một phần</span></a
-                  >
-                  <a class="sys-chip" href="#mod-journey"
-                    ><span class="sys-chip-name">4 · Hành trình</span
-                    ><span class="st st-missing">Chưa có</span></a
-                  >
-                </div>
-              </div>
-              <div class="sys-group">
-                <div class="sys-group-label">Tạo nội dung</div>
-                <div class="sys-group-nodes">
-                  <a class="sys-chip" href="#mod-experiences"
-                    ><span class="sys-chip-name">5 · Trải nghiệm</span
-                    ><span class="st st-rebuild">Làm lại</span></a
-                  >
-                  <a class="sys-chip" href="#mod-automation"
-                    ><span class="sys-chip-name">6 · Tự động hóa</span
-                    ><span class="st st-partial">Một phần</span></a
-                  >
-                  <a class="sys-chip" href="#mod-media"
-                    ><span class="sys-chip-name">7 · Media</span
-                    ><span class="st st-partial">Một phần</span></a
-                  >
-                  <a class="sys-chip" href="#mod-product"
-                    ><span class="sys-chip-name">8 · Sản phẩm</span
-                    ><span class="st st-partial">Một phần</span></a
-                  >
-                </div>
-              </div>
-              <div class="sys-group">
-                <div class="sys-group-label">Xuất bản</div>
-                <div class="sys-group-nodes">
-                  <a class="sys-chip" href="#mod-deploy"
-                    ><span class="sys-chip-name">9 · Deploy</span
-                    ><span class="st st-missing">Chưa có</span></a
-                  >
-                </div>
-              </div>
-              <div class="sys-group">
-                <div class="sys-group-label">Học hỏi</div>
-                <div class="sys-group-nodes">
-                  <a class="sys-chip" href="#mod-intel"
-                    ><span class="sys-chip-name">10 · AI</span
-                    ><span class="st st-partial">Một phần</span></a
-                  >
-                </div>
-              </div>
-              <div class="sys-group">
-                <div class="sys-group-label">Khác</div>
-                <div class="sys-group-nodes">
-                  <a class="sys-chip" href="#mod-exchange"
-                    ><span class="sys-chip-name">11 · Exchange</span
-                    ><span class="st st-later">Để sau</span></a
-                  >
-                  <a class="sys-chip" href="#mod-settings"
-                    ><span class="sys-chip-name">12 · Cài đặt</span
-                    ><span class="st st-partial">Một phần</span></a
-                  >
-                </div>
-              </div>
-            </div>
             </div>
             <p class="sys-note">
               <code>/portal</code> = path App Router trong source.
@@ -2588,89 +2594,89 @@
           </p>
 
           <div class="diagram-scroll" aria-label="Quy trình — vuốt ngang">
-          <div class="flow" aria-label="9 giai đoạn quy trình">
-            <div class="flow-row">
-              <div class="step">
-                <span class="step-n">1</span>
-                <span class="step-body">
-                  <span class="step-title">Chuẩn bị nền tảng</span>
-                  <span class="step-sub">Thương hiệu · Sản phẩm · Media</span>
-                </span>
+            <div class="flow" aria-label="9 giai đoạn quy trình">
+              <div class="flow-row">
+                <div class="step">
+                  <span class="step-n">1</span>
+                  <span class="step-body">
+                    <span class="step-title">Chuẩn bị nền tảng</span>
+                    <span class="step-sub">Thương hiệu · Sản phẩm · Media</span>
+                  </span>
+                </div>
+                <span class="flow-arrow" aria-hidden="true">→</span>
+                <div class="step">
+                  <span class="step-n">2</span>
+                  <span class="step-body">
+                    <span class="step-title">Chiến dịch &amp; Subject</span>
+                    <span class="step-sub"
+                      >Brief · hạng mục sản phẩm / chủ đề</span
+                    >
+                  </span>
+                </div>
+                <span class="flow-arrow" aria-hidden="true">→</span>
+                <div class="step">
+                  <span class="step-n">3</span>
+                  <span class="step-body">
+                    <span class="step-title">Thiết kế Hành trình</span>
+                    <span class="step-sub"
+                      >Khuyến nghị khi nhiều trang / nhánh</span
+                    >
+                  </span>
+                </div>
               </div>
-              <span class="flow-arrow" aria-hidden="true">→</span>
-              <div class="step">
-                <span class="step-n">2</span>
-                <span class="step-body">
-                  <span class="step-title">Chiến dịch &amp; Subject</span>
-                  <span class="step-sub"
-                    >Brief · hạng mục sản phẩm / chủ đề</span
-                  >
-                </span>
+              <div class="flow-down" aria-hidden="true">↓</div>
+              <div class="flow-row">
+                <div class="step">
+                  <span class="step-n">4</span>
+                  <span class="step-body">
+                    <span class="step-title">Chọn mẫu trang</span>
+                    <span class="step-sub">Xem → Dùng → tạo bản copy</span>
+                  </span>
+                </div>
+                <span class="flow-arrow" aria-hidden="true">→</span>
+                <div class="step">
+                  <span class="step-n">5</span>
+                  <span class="step-body">
+                    <span class="step-title">Dựng nội dung</span>
+                    <span class="step-sub">Editor · media · tín hiệu đo</span>
+                  </span>
+                </div>
+                <span class="flow-arrow" aria-hidden="true">→</span>
+                <div class="step">
+                  <span class="step-n">6</span>
+                  <span class="step-body">
+                    <span class="step-title">Duyệt &amp; Ready</span>
+                    <span class="step-sub">Người duyệt trang / hành trình</span>
+                  </span>
+                </div>
               </div>
-              <span class="flow-arrow" aria-hidden="true">→</span>
-              <div class="step">
-                <span class="step-n">3</span>
-                <span class="step-body">
-                  <span class="step-title">Thiết kế Hành trình</span>
-                  <span class="step-sub"
-                    >Khuyến nghị khi nhiều trang / nhánh</span
-                  >
-                </span>
+              <div class="flow-down" aria-hidden="true">↓</div>
+              <div class="flow-row">
+                <div class="step">
+                  <span class="step-n">7</span>
+                  <span class="step-body">
+                    <span class="step-title">Deploy · Live</span>
+                    <span class="step-sub">Kênh · kiểm tra · xuất bản</span>
+                  </span>
+                </div>
+                <span class="flow-arrow" aria-hidden="true">→</span>
+                <div class="step">
+                  <span class="step-n">8</span>
+                  <span class="step-body">
+                    <span class="step-title">Vận hành &amp; đo</span>
+                    <span class="step-sub">AI · số thật · tối ưu</span>
+                  </span>
+                </div>
+                <span class="flow-arrow" aria-hidden="true">→</span>
+                <div class="step">
+                  <span class="step-n">9</span>
+                  <span class="step-body">
+                    <span class="step-title">Tái sử dụng</span>
+                    <span class="step-sub">Proven · nhân bản · promote</span>
+                  </span>
+                </div>
               </div>
             </div>
-            <div class="flow-down" aria-hidden="true">↓</div>
-            <div class="flow-row">
-              <div class="step">
-                <span class="step-n">4</span>
-                <span class="step-body">
-                  <span class="step-title">Chọn mẫu trang</span>
-                  <span class="step-sub">Xem → Dùng → tạo bản copy</span>
-                </span>
-              </div>
-              <span class="flow-arrow" aria-hidden="true">→</span>
-              <div class="step">
-                <span class="step-n">5</span>
-                <span class="step-body">
-                  <span class="step-title">Dựng nội dung</span>
-                  <span class="step-sub">Editor · media · tín hiệu đo</span>
-                </span>
-              </div>
-              <span class="flow-arrow" aria-hidden="true">→</span>
-              <div class="step">
-                <span class="step-n">6</span>
-                <span class="step-body">
-                  <span class="step-title">Duyệt &amp; Ready</span>
-                  <span class="step-sub">Người duyệt trang / hành trình</span>
-                </span>
-              </div>
-            </div>
-            <div class="flow-down" aria-hidden="true">↓</div>
-            <div class="flow-row">
-              <div class="step">
-                <span class="step-n">7</span>
-                <span class="step-body">
-                  <span class="step-title">Deploy · Live</span>
-                  <span class="step-sub">Kênh · kiểm tra · xuất bản</span>
-                </span>
-              </div>
-              <span class="flow-arrow" aria-hidden="true">→</span>
-              <div class="step">
-                <span class="step-n">8</span>
-                <span class="step-body">
-                  <span class="step-title">Vận hành &amp; đo</span>
-                  <span class="step-sub">AI · số thật · tối ưu</span>
-                </span>
-              </div>
-              <span class="flow-arrow" aria-hidden="true">→</span>
-              <div class="step">
-                <span class="step-n">9</span>
-                <span class="step-body">
-                  <span class="step-title">Tái sử dụng</span>
-                  <span class="step-sub">Proven · nhân bản · promote</span>
-                </span>
-              </div>
-            </div>
-          </div>
           </div>
 
           <div class="table-wrap">

@@ -178,7 +178,10 @@ export function PreviewMode({
                   <>
                     {/* 1 block: thêm room trên/dưới để sticky/scrub chạy được. */}
                     {visible.length === 1 ? (
-                      <ScrollRoomPlaceholder label='Scroll vào block' />
+                      <ScrollRoomPlaceholder
+                        label='Scroll vào block'
+                        scrollHint='down'
+                      />
                     ) : null}
                     <TemplateTransitions
                       transition={asTransition(transition)}
