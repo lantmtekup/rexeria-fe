@@ -97,7 +97,9 @@ import {
   SCROLL_MATTIS_LEGACY_ELEMENTS,
 } from './blocks/_registry/defs/scrollMattis';
 import { framerDarlingTimelineItemElements } from './blocks/_registry/defs/framerDarlingTimeline';
+import { framerPerformAboutTestimonialElements } from './blocks/_registry/defs/framerPerformAbout';
 import { framerPerformPricingTierElements } from './blocks/_registry/defs/framerPerformPricing';
+import { ignitexProjectItemElements } from './blocks/_registry/defs/ignitexProjects';
 import { mintV2ProcessStepElements } from './blocks/_registry/defs/mintV2Process';
 import { mintV2ServicesItemElements } from './blocks/_registry/defs/mintV2Services';
 import { mintV2WorksCardElements } from './blocks/_registry/defs/mintV2Works';
@@ -148,6 +150,7 @@ import {
   type ScrollMattisContent,
   type FramerDarlingTimelineContent,
   type FramerPerformPricingContent,
+  type IgnitexProjectsContent,
   type MintV2ProcessStep,
   type MintV2ServiceItem,
   type MintV2WorkCard,
@@ -1748,6 +1751,55 @@ export function elementsForType(
         key: 'slides',
         label: 'Thêm / quản lý slide',
         icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'framer_perform_about') {
+    // Dynamic testimonials — gen elements từ actual content, không từ static def.
+    const raw = content?.testimonials;
+    const list = Array.isArray(raw) ? raw : [];
+    return [
+      BACKGROUND_LAYER,
+      ...framerPerformAboutTestimonialElements(
+        list as Array<{
+          imageUrl: string;
+          textHighlight: string;
+          textRest: string;
+        }>
+      ),
+      {
+        key: 'testimonials',
+        label: 'Thêm / quản lý card',
+        icon: Grid3x3,
+      },
+    ];
+  }
+  if (type === 'ignitex_projects') {
+    // Dynamic project items — gen elements từ actual content.
+    const raw = content?.items;
+    const list = Array.isArray(raw) ? raw : [];
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'title',
+        label: 'Tiêu đề',
+        groupId: 'header',
+        groupLabel: 'Header',
+        icon: Type,
+        fieldType: 'text',
+      },
+      {
+        key: 'count',
+        label: 'Số lượng',
+        groupId: 'header',
+        icon: Type,
+        fieldType: 'text',
+      },
+      ...ignitexProjectItemElements(list as IgnitexProjectsContent['items']),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý project',
+        icon: Grid3x3,
       },
     ];
   }

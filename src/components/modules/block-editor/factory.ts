@@ -92,6 +92,7 @@ import { rolexContactDef } from './blocks/_registry/defs/rolexContact';
 import { rolexCollectionWorkDef } from './blocks/_registry/defs/rolexCollectionWork';
 import { rolexCollectionProjectDef } from './blocks/_registry/defs/rolexCollectionProject';
 import { framerDarlingTimelineDef } from './blocks/_registry/defs/framerDarlingTimeline';
+import { framerPerformAboutDef } from './blocks/_registry/defs/framerPerformAbout';
 import { framerPerformPricingDef } from './blocks/_registry/defs/framerPerformPricing';
 import { framerNftpullTimelineDef } from './blocks/_registry/defs/framerNftpullTimeline';
 import { springsContactFooterDef } from './blocks/_registry/defs/springsContactFooter';
@@ -201,7 +202,6 @@ import type {
   FramerSignatureFeatureContent,
   FramerVsCollinsProjectsContent,
   FramerClarityServicesContent,
-  FramerPerformAboutContent,
 } from './types';
 import { framerFirmaTemplateStrategyDigitalDef } from './blocks/_registry/defs/framerFirmaTemplateStrategyDigital';
 
@@ -2101,54 +2101,6 @@ const FRAMER_CLARITY_SERVICES_EN: FramerClarityServicesContent = {
   ],
 };
 
-// ── Framer-native: Perform About ───────────────────────────────────────
-const FRAMER_PERFORM_ABOUT_VI: FramerPerformAboutContent = {
-  testimonials: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1024&q=80',
-      textHighlight:
-        'Hành trình triathlon của tôi bắt đầu từ những khó khăn về kỹ thuật và sức bền.',
-      textRest:
-        'Giờ đây, tôi hướng dẫn người khác đạt được tiềm năng tối đa của họ.',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=1024&q=80',
-      textHighlight: 'Phương pháp huấn luyện kết hợp thể chất và tinh thần,',
-      textRest:
-        'giúp vận động viên xây dựng sức mạnh và tự tin để vượt qua giới hạn.',
-    },
-    {
-      imageUrl:
-        'https://framerusercontent.com/images/o1iEuFuB1ARuwoXcEgQQTV0CYbw.png',
-      textHighlight:
-        'Cùng nhau, chúng ta sẽ phá vỡ mọi rào cản và khơi dậy tiềm năng của bạn,',
-      textRest:
-        'biến mỗi cột mốc thành một thắng lợi thông qua sự huấn luyện được cá nhân hóa.',
-    },
-  ],
-};
-const FRAMER_PERFORM_ABOUT_EN: FramerPerformAboutContent = {
-  testimonials: [
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1024&q=80',
-      textHighlight:
-        'I started my triathlon journey struggling with balance and technique.',
-      textRest: 'Now, I guide others to achieve their full potential.',
-    },
-    {
-      imageUrl:
-        'https://images.unsplash.com/photo-1530549387789-4c1017266635?w=1024&q=80',
-      textHighlight:
-        'My coaching blends physical training and mental strategies,',
-      textRest:
-        'helping athletes build strength and confidence to overcome their limits.',
-    },
-  ],
-};
-
 // ── Framer-native: Housent Our Excellence ────────────────────────────
 const HOUSENT_OUR_EXCELLENCE_VI = housentOurExcellenceDef.defaultContent.vi;
 const HOUSENT_OUR_EXCELLENCE_EN = housentOurExcellenceDef.defaultContent.en;
@@ -2346,7 +2298,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   aestha_project: aesthaProjectDef.defaultContent.vi,
   aestha_nav: aesthaNavDef.defaultContent.vi,
   masterise_home_inside: masteriseHomeInsideDef.defaultContent.vi,
-  framer_perform_about: FRAMER_PERFORM_ABOUT_VI,
+  framer_perform_about: framerPerformAboutDef.defaultContent.vi,
   framer_perform_pricing: framerPerformPricingDef.defaultContent.vi,
   framer_firma_template_strategy_digital:
     framerFirmaTemplateStrategyDigitalDef.defaultContent.vi,
@@ -2545,7 +2497,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   aestha_project: aesthaProjectDef.defaultContent.en,
   aestha_nav: aesthaNavDef.defaultContent.en,
   masterise_home_inside: masteriseHomeInsideDef.defaultContent.en,
-  framer_perform_about: FRAMER_PERFORM_ABOUT_EN,
+  framer_perform_about: framerPerformAboutDef.defaultContent.en,
   framer_perform_pricing: framerPerformPricingDef.defaultContent.en,
   framer_firma_template_strategy_digital:
     framerFirmaTemplateStrategyDigitalDef.defaultContent.en,

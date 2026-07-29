@@ -20,6 +20,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface FramerPerformAboutProps {
   content: FramerPerformAboutContent;
@@ -85,6 +86,7 @@ export function FramerPerformAbout({
   className,
 }: FramerPerformAboutProps) {
   const rootRef = React.useRef<HTMLDivElement>(null);
+  const isCanvas = useIsCanvasEdit(rootRef);
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -108,7 +110,7 @@ export function FramerPerformAbout({
       '(prefers-reduced-motion: reduce)'
     ).matches;
     const apply = () => {
-      if (reduceMotion) {
+      if (reduceMotion || isCanvas) {
         rail.style.height = 'auto';
         return;
       }
@@ -133,89 +135,97 @@ export function FramerPerformAbout({
       ro.disconnect();
       window.removeEventListener('resize', apply);
     };
-  }, [testimonials.length]);
+  }, [testimonials.length, isCanvas]);
 
-  useBlockMotion(rootRef, ({ scroller }) => {
-    const root = rootRef.current;
-    if (!root) return;
+  useBlockMotion(
+    rootRef,
+    ({ scroller }) => {
+      const root = rootRef.current;
+      if (!root) return;
 
-    const reduceMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-    if (reduceMotion) return; // CSS @media reduced-motion lo layout dọc
+      const reduceMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+      ).matches;
+      if (reduceMotion || isCanvas) return; // CSS @media reduced-motion lo layout dọc & canvas dàn phẳng
 
-    const textEls = gsap.utils.toArray<HTMLElement>('.fpa-text', root);
-    const imageEls = gsap.utils.toArray<HTMLElement>('.fpa-image', root);
-    const n = textEls.length;
-    if (n < 2 || n !== imageEls.length) return;
+      const textEls = gsap.utils.toArray<HTMLElement>('.fpa-text', root);
+      const imageEls = gsap.utils.toArray<HTMLElement>('.fpa-image', root);
+      const n = textEls.length;
+      if (n < 2 || n !== imageEls.length) return;
 
-    const imageCol = root.querySelector<HTMLElement>('.fpa-image-col');
-    if (!imageCol) return;
-    const imageHeight = imageCol.offsetHeight;
-    if (imageHeight <= 0) return;
-    const SLOT = imageHeight;
+      const imageCol = root.querySelector<HTMLElement>('.fpa-image-col');
+      if (!imageCol) return;
+      const imageHeight = imageCol.offsetHeight;
+      if (imageHeight <= 0) return;
+      const SLOT = imageHeight;
 
-    const INITIAL_TOP_PERCENT = 38;
-    textEls.forEach((el, i) => {
-      const yPx = i * SLOT;
-      gsap.set(el, {
-        autoAlpha: 1,
-        y: yPx,
+      const INITIAL_TOP_PERCENT = 38;
+      textEls.forEach((el, i) => {
+        const yPx = i * SLOT;
+        gsap.set(el, {
+          autoAlpha: 1,
+          y: yPx,
+        });
       });
-    });
-    const textCol = root.querySelector<HTMLElement>('.fpa-text-col');
-    if (textCol) {
-      textCol.style.setProperty(
-        '--fpa-text-top-pct',
-        `${INITIAL_TOP_PERCENT}%`
-      );
-    }
-
-    imageEls.forEach((img, i) => {
-      if (i === 0) {
-        gsap.set(img, { autoAlpha: 1, scale: 1, zIndex: 3 });
-      } else {
-        gsap.set(img, { autoAlpha: 0, scale: 1.08, zIndex: 2 - i });
+      const textCol = root.querySelector<HTMLElement>('.fpa-text-col');
+      if (textCol) {
+        textCol.style.setProperty(
+          '--fpa-text-top-pct',
+          `${INITIAL_TOP_PERCENT}%`
+        );
       }
-    });
 
-    const tl = gsap.timeline({
-      defaults: { ease: 'none' },
-      scrollTrigger: {
-        trigger: root,
-        scroller,
-        start: 'top top',
-        end: 'bottom bottom',
-        scrub: 0.6,
-        invalidateOnRefresh: true,
-      },
-    });
+      imageEls.forEach((img, i) => {
+        if (i === 0) {
+          gsap.set(img, { autoAlpha: 1, scale: 1, zIndex: 3 });
+        } else {
+          gsap.set(img, { autoAlpha: 0, scale: 1.08, zIndex: 2 - i });
+        }
+      });
 
-    const totalYShift = -(n - 1) * SLOT;
-    tl.to(textEls, { y: `+=${totalYShift}`, duration: n - 1, ease: 'none' }, 0);
-
-    const swapDur = Math.min(0.4, (n - 1) / (n - 1) / 2);
-    for (let i = 1; i < n; i++) {
-      const swapAt = i - swapDur;
-      tl.to(
-        imageEls[i - 1],
-        {
-          autoAlpha: 0,
-          scale: 0.92,
-          duration: swapDur,
-          zIndex: 0,
-          ease: 'power2.in',
+      const tl = gsap.timeline({
+        defaults: { ease: 'none' },
+        scrollTrigger: {
+          trigger: root,
+          scroller,
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 0.6,
+          invalidateOnRefresh: true,
         },
-        swapAt
+      });
+
+      const totalYShift = -(n - 1) * SLOT;
+      tl.to(
+        textEls,
+        { y: `+=${totalYShift}`, duration: n - 1, ease: 'none' },
+        0
       );
-      tl.fromTo(
-        imageEls[i],
-        { autoAlpha: 0, scale: 1.08, zIndex: 3 },
-        { autoAlpha: 1, scale: 1, duration: swapDur, ease: 'power2.out' },
-        swapAt
-      );
-    }
-  });
+
+      const swapDur = Math.min(0.4, (n - 1) / (n - 1) / 2);
+      for (let i = 1; i < n; i++) {
+        const swapAt = i - swapDur;
+        tl.to(
+          imageEls[i - 1],
+          {
+            autoAlpha: 0,
+            scale: 0.92,
+            duration: swapDur,
+            zIndex: 0,
+            ease: 'power2.in',
+          },
+          swapAt
+        );
+        tl.fromTo(
+          imageEls[i],
+          { autoAlpha: 0, scale: 1.08, zIndex: 3 },
+          { autoAlpha: 1, scale: 1, duration: swapDur, ease: 'power2.out' },
+          swapAt
+        );
+      }
+    },
+    [isCanvas]
+  );
 
   return (
     <div
@@ -225,7 +235,11 @@ export function FramerPerformAbout({
         ...blockBackgroundStyle(background),
         height: '100dvh',
       }}
-      className={cn('fpa-rail @container relative w-full bg-black', className)}
+      className={cn(
+        'fpa-rail @container relative w-full bg-black',
+        isCanvas && 'fpa-canvas',
+        className
+      )}
     >
       <div
         className='fpa-stage mx-auto w-[90%] @3xl:w-[80%] @4xl:w-[70%]'
@@ -279,7 +293,12 @@ export function FramerPerformAbout({
               {item.textRest && (
                 <>
                   {' '}
-                  <span style={TEXT_REST_STYLE}>{item.textRest}</span>
+                  <span
+                    data-element-key={`testimonials[${idx}].textRest`}
+                    style={TEXT_REST_STYLE}
+                  >
+                    {item.textRest}
+                  </span>
                 </>
               )}
             </p>
@@ -328,11 +347,7 @@ export function FramerPerformAbout({
 
       <div className='fpa-pairs'>
         {testimonials.map((item, idx) => (
-          <div
-            key={idx}
-            className='fpa-pair'
-            data-element-key={`testimonials[${idx}]`}
-          >
+          <div key={idx} className='fpa-pair'>
             <div
               data-element-key={`testimonials[${idx}].imageUrl`}
               style={composeStyle(
@@ -372,13 +387,25 @@ export function FramerPerformAbout({
               )}
             >
               <span style={TEXT_HIGHLIGHT_STYLE}>{item.textHighlight}</span>
-              {item.textRest && (
-                <>
-                  {' '}
-                  <span style={TEXT_REST_STYLE}>{item.textRest}</span>
-                </>
-              )}
             </p>
+            {item.textRest && (
+              <p
+                data-element-key={`testimonials[${idx}].textRest`}
+                style={composeStyle(
+                  {
+                    maxWidth: 640,
+                    paddingRight: 'clamp(16px, 2cqi, 40px)',
+                    margin: 0,
+                  },
+                  styleOf(`testimonials[${idx}].textRest`)
+                )}
+                className={cn(
+                  selectableClass(activeKey === `testimonials[${idx}].textRest`)
+                )}
+              >
+                <span style={TEXT_REST_STYLE}>{item.textRest}</span>
+              </p>
+            )}
           </div>
         ))}
       </div>
@@ -412,7 +439,7 @@ export function FramerPerformAbout({
           }
           .fpa-pair > p {
             margin: 0 !important;
-            max-width: 640 !important;
+            max-width: 640px !important;
           }
         }
         /* Reduced-motion: bỏ pinned deck — rail về auto height, stage về
@@ -438,8 +465,34 @@ export function FramerPerformAbout({
           }
           .fpa-pair > p {
             margin: 0 !important;
-            max-width: 640 !important;
+            max-width: 640px !important;
           }
+        }
+        /* Canvas: dàn phẳng các card dọc, không animation. */
+        .fpa-rail.fpa-canvas {
+          height: auto !important;
+        }
+        .fpa-rail.fpa-canvas .fpa-stage {
+          display: none !important;
+        }
+        .fpa-rail.fpa-canvas .fpa-pairs {
+          display: grid !important;
+          grid-template-columns: repeat(2, 1fr) !important;
+          gap: clamp(24px, 4cqi, 40px) !important;
+          padding: clamp(32px, 5cqi, 60px) clamp(16px, 3cqi, 40px) !important;
+        }
+        .fpa-rail.fpa-canvas .fpa-pair {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: clamp(8px, 1.5cqi, 16px) !important;
+        }
+        .fpa-rail.fpa-canvas .fpa-pair > div {
+          aspect-ratio: 4 / 3 !important;
+          border-radius: 12px !important;
+        }
+        .fpa-rail.fpa-canvas .fpa-pair > p {
+          margin: 0 !important;
+          font-size: clamp(13px, 1.6cqi, 18px) !important;
         }
       `}</style>
     </div>

@@ -1,6 +1,7 @@
 /** BlockDef `ignitex_projects`. */
-import { Image as ImageIcon, Type } from 'lucide-react';
+import { Grid3x3, Image as ImageIcon, Type } from 'lucide-react';
 
+import type { LayerElement } from '../../../LayersPanel';
 import { IgnitexProjects } from '../../IgnitexProjects';
 import type { IgnitexProjectsContent } from '../../../types';
 import type { BlockDef } from '../types';
@@ -38,34 +39,37 @@ const VI: IgnitexProjectsContent = {
 
 const EN: IgnitexProjectsContent = { ...VI };
 
-const projectElements = (
-  index: number,
-  groupId: string,
-  groupLabel: string
-) => [
-  {
-    key: `items[${index}].imageUrl`,
-    label: 'Ảnh',
-    groupId,
-    groupLabel,
-    icon: ImageIcon,
-    fieldType: 'image' as const,
-  },
-  {
-    key: `items[${index}].name`,
-    label: 'Tên',
-    groupId,
-    icon: Type,
-    fieldType: 'text' as const,
-  },
-  {
-    key: `items[${index}].tag`,
-    label: 'Tag',
-    groupId,
-    icon: Type,
-    fieldType: 'text' as const,
-  },
-];
+export const ignitexProjectItemElements = (
+  items: IgnitexProjectsContent['items']
+): LayerElement[] =>
+  items.flatMap((_, i) => {
+    const groupId = `project${i}`;
+    const groupLabel = `Project ${i + 1}`;
+    return [
+      {
+        key: `items[${i}].imageUrl`,
+        label: 'Ảnh',
+        groupId,
+        groupLabel,
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+      {
+        key: `items[${i}].name`,
+        label: 'Tên',
+        groupId,
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: `items[${i}].tag`,
+        label: 'Tag',
+        groupId,
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+    ];
+  });
 
 export const ignitexProjectsDef: BlockDef<IgnitexProjectsContent> = {
   type: 'ignitex_projects',
@@ -97,9 +101,11 @@ export const ignitexProjectsDef: BlockDef<IgnitexProjectsContent> = {
       icon: Type,
       fieldType: 'text',
     },
-    ...projectElements(0, 'project1', 'Project 1'),
-    ...projectElements(1, 'project2', 'Project 2'),
-    ...projectElements(2, 'project3', 'Project 3'),
-    ...projectElements(3, 'project4', 'Project 4'),
+    ...ignitexProjectItemElements(VI.items),
+    {
+      key: 'items',
+      label: 'Thêm / quản lý project',
+      icon: Grid3x3,
+    },
   ],
 };

@@ -170,9 +170,6 @@ const BLOCK_RENDERERS: Record<string, BlockRenderer> = {
   framer_clarity_services: lazyBlock(() =>
     import('./FramerClarityServices').then(m => m.FramerClarityServices)
   ),
-  framer_perform_hero: lazyBlock(() =>
-    import('./FramerPerformHero').then(m => m.FramerPerformHero)
-  ),
   framer_intro_redefined: lazyBlock(() =>
     import('./FramerIntroRedefined').then(m => m.FramerIntroRedefined)
   ),
@@ -207,9 +204,7 @@ const BLOCK_RENDERERS: Record<string, BlockRenderer> = {
     import('./FramerVsCollinsProjects').then(m => m.FramerVsCollinsProjects)
   ),
   // framer_aestha_editorial: đã lên registry (Path A) — component lấy từ BlockDef.
-  framer_perform_about: lazyBlock(() =>
-    import('./FramerPerformAbout').then(m => m.FramerPerformAbout)
-  ),
+  // framer_perform_about: đã lên registry (Path A) — component lấy từ BlockDef.
   framer_perform_pricing: lazyBlock(() =>
     import('./FramerPerformPricing').then(m => m.FramerPerformPricing)
   ),

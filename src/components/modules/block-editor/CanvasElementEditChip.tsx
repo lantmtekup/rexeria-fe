@@ -78,6 +78,8 @@ function chipIcon(kind: ElementKind) {
     kind === 'mintV2ProcessSteps' ||
     kind === 'framerDarlingTimelineItems' ||
     kind === 'framerPerformPricingTiers' ||
+    kind === 'framerPerformTestimonials' ||
+    kind === 'ignitexProjectsItems' ||
     kind === 'pnjFrames' ||
     kind === 'pnjScrim' ||
     kind === 'delvauxFrames' ||

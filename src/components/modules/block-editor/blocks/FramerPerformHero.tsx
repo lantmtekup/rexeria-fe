@@ -20,6 +20,7 @@ import { motion, useInView } from 'framer-motion';
 import gsap from 'gsap';
 
 import { useBlockMotion } from '../motion/LandingMotion';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -107,17 +108,20 @@ function RevealOnView({
   children,
   className,
   style,
+  'data-element-key': dataElementKey,
 }: {
   isInView: boolean;
   delay: number;
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  'data-element-key'?: string;
 }) {
   return (
     <motion.div
       className={className}
       style={style}
+      data-element-key={dataElementKey}
       initial={{ opacity: 0, y: 24 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
       transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay }}
@@ -136,6 +140,7 @@ export function FramerPerformHero({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
+  const isCanvas = useIsCanvasEdit(rootRef);
   const isRootInView = useInView(rootRef, {
     once: true,
     margin: '0px 0px -15% 0px',
@@ -166,7 +171,7 @@ export function FramerPerformHero({
     rootRef,
     ({ scroller }) => {
       const root = rootRef.current;
-      if (!root) return;
+      if (!root || isCanvas) return;
 
       // Background image — fade-in + zoom out from 105% to 100%.
       const bg = root.querySelector<HTMLElement>('.perform-bg');
@@ -192,7 +197,7 @@ export function FramerPerformHero({
 
       // Eyebrow / subtitle / CTA / review — handled bằng RevealOnView (framer-motion),
     },
-    [titleLines.length]
+    [titleLines.length, isCanvas]
   );
 
   return (
@@ -307,13 +312,19 @@ export function FramerPerformHero({
                   style={composeStyle({}, styleOf('title'))}
                   className={selectableClass(activeKey === 'title')}
                 >
-                  <span className='whitespace-pre-line'>
-                    <StaggeredTitleLine
-                      text={content?.title}
-                      style={TITLE_STYLE}
-                      startInView={isRootInView}
-                    />
-                  </span>
+                  {isCanvas ? (
+                    <h1 style={TITLE_STYLE}>
+                      {content.title || 'Level Up Your\nPerformance'}
+                    </h1>
+                  ) : (
+                    <span className='whitespace-pre-line'>
+                      <StaggeredTitleLine
+                        text={content?.title}
+                        style={TITLE_STYLE}
+                        startInView={isRootInView}
+                      />
+                    </span>
+                  )}
                 </div>
 
                 {/* Subtitle */}
@@ -345,7 +356,6 @@ export function FramerPerformHero({
                 delay={REVEAL_BASE_DELAY + 4 * REVEAL_STAGGER}
               >
                 <a
-                  data-element-key='ctaLabel'
                   href={content.ctaHref || '#start'}
                   aria-label={content.ctaLabel || 'Start now'}
                   style={composeStyle(
@@ -368,7 +378,12 @@ export function FramerPerformHero({
                   )}
                   className={selectableClass(activeKey === 'ctaLabel', 'group')}
                 >
-                  <span>{content.ctaLabel || 'Start now'}</span>
+                  <span
+                    data-element-key='ctaLabel'
+                    className={selectableClass(activeKey === 'ctaLabel')}
+                  >
+                    {content.ctaLabel || 'Start now'}
+                  </span>
                   <span
                     aria-hidden='true'
                     className='inline-flex items-center justify-center transition-transform duration-300 group-hover:rotate-45'
@@ -392,7 +407,6 @@ export function FramerPerformHero({
             <RevealOnView
               isInView={isRootInView}
               delay={REVEAL_BASE_DELAY + 6 * REVEAL_STAGGER}
-              data-element-key='reviewCount'
               style={composeStyle(
                 {
                   display: 'flex',
@@ -406,8 +420,10 @@ export function FramerPerformHero({
               className={selectableClass(activeKey === 'reviewCount')}
             >
               <div
+                data-element-key='reviewStars'
+                className={selectableClass(activeKey === 'reviewStars')}
                 aria-label={`${reviewStars} out of 5 stars`}
-                style={{ display: 'inline-flex', gap: 2 }}
+                style={{ display: 'inline-flex', gap: 2, alignItems: 'center' }}
               >
                 {Array.from({ length: 5 }).map((_, i) => (
                   <span
@@ -424,6 +440,8 @@ export function FramerPerformHero({
                 ))}
               </div>
               <span
+                data-element-key='reviewCount'
+                className={selectableClass(activeKey === 'reviewCount')}
                 style={{
                   fontSize: 'clamp(12px, 1.2cqi, 16px)',
                   fontWeight: 500,
