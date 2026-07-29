@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   ArrowRight,
@@ -18,7 +18,6 @@ import {
 import { toast } from 'sonner';
 
 import { rexerApi } from '@/services/rexer/endpoints';
-import { useRexer } from '@/services/rexer/use-rexer';
 import type {
   CreateInsightReportBody,
   ExperienceGoal,
@@ -29,7 +28,6 @@ import type {
 } from '@/services/rexer/types';
 import { Input } from '@/components/atoms/input';
 import { Textarea } from '@/components/atoms/textarea';
-import { Label } from '@/components/atoms/label';
 import { cn } from '@/lib/cn';
 import { GradientButton } from '../steps/ui';
 import {
@@ -47,6 +45,8 @@ import {
 } from './logic';
 import { EMPTY_BRIEF, HAPPY_CITY_BRIEF } from './seed';
 import { AssetPickerDialog } from './AssetPickerDialog';
+import { FieldRow, ScopeFields } from './ScopeFields';
+import { useWorkspaceScope } from './useWorkspaceScope';
 
 /**
  * Wizard v2 — intake nhiều bước (form có cấu trúc, KHÔNG chatbot). Thay cho
@@ -68,10 +68,6 @@ export interface IntakeWizardProps {
   /** Mở để "chỉnh sửa & chạy lại" từ 1 report cũ → prefill brief/goal/journey. */
   fromReportId?: string;
 }
-
-/** Select native, style khớp `Input` của design system (brand + workspace). */
-const SELECT_CLASS =
-  'border-border text-content-main focus:border-primary focus:ring-primary/20 bg-background w-full appearance-none rounded-xl border px-3 py-2.5 text-sm outline-none focus:ring-2 disabled:opacity-60';
 
 /** Chip chọn được; `accent` để bước AI tô tím, mặc định primary. */
 function Chip({
@@ -166,60 +162,10 @@ export function IntakeWizard({
     undefined
   );
 
-  // Workspace bắt buộc cho create (BE yêu cầu). Hai nguồn khác nhau:
-  //
-  // - Portal (`brandLocked`): workspace lấy từ membership của user, auto-pick mặc định.
-  // - Admin (`!brandLocked`): admin KHÔNG là member của brand nào nên `/me/workspaces`
-  //   trả rỗng → select đứng ở "-" và không bao giờ qua được bước brand. Đúng cách:
-  //   list toàn bộ brand rồi lấy workspace của brand đã chọn (`/brands/:id/workspaces`,
-  //   cùng đường LandingPagePicker dùng). Không auto-pick: admin phải chọn tường minh.
-  const [brandId, setBrandId] = useState('');
-  const [workspaceId, setWorkspaceId] = useState('');
-
-  const memberships = useRexer(
-    () =>
-      brandLocked ? rexerApi.workspaces.myMemberships() : Promise.resolve(null),
-    [brandLocked]
-  );
-  const brands = useRexer(
-    () =>
-      brandLocked
-        ? Promise.resolve(null)
-        : rexerApi.brands.list({ limit: 200 }),
-    [brandLocked]
-  );
-  const brandWorkspaces = useRexer(
-    () =>
-      !brandLocked && brandId
-        ? rexerApi.brands.workspaces.list(brandId)
-        : Promise.resolve(null),
-    [brandLocked, brandId]
-  );
-
-  const brandItems = brands.data?.items ?? [];
-  const workspaceLoading = brandLocked
-    ? memberships.loading
-    : brandWorkspaces.loading;
-  const workspaceItems = useMemo(
-    () =>
-      brandLocked
-        ? (memberships.data ?? []).map(m => m.workspace)
-        : (brandWorkspaces.data?.items ?? []),
-    [brandLocked, memberships.data, brandWorkspaces.data]
-  );
-
-  useEffect(() => {
-    if (!brandLocked || workspaceId || workspaceItems.length === 0) return;
-    const preferred =
-      workspaceItems.find(w => w.is_default) ?? workspaceItems[0];
-    if (preferred) setWorkspaceId(preferred.id);
-  }, [brandLocked, workspaceId, workspaceItems]);
-
-  // Đổi brand → workspace cũ thuộc brand khác, bỏ chọn để không submit nhầm scope.
-  useEffect(() => {
-    if (brandLocked) return;
-    setWorkspaceId('');
-  }, [brandLocked, brandId]);
+  // Workspace bắt buộc cho create (BE yêu cầu) — nguồn khác nhau giữa portal và
+  // admin, xem `useWorkspaceScope`. Dùng chung với màn nhập nhanh.
+  const scope = useWorkspaceScope(brandLocked);
+  const { workspaceId } = scope;
 
   // "Chỉnh sửa & chạy lại": nạp brief/goal/journey từ report cũ (input_snapshot).
   useEffect(() => {
@@ -413,12 +359,7 @@ export function IntakeWizard({
 
   // Helpers cập nhật brief theo section (chỉ các section dạng object).
   type ObjSection =
-    | 'brand'
-    | 'product'
-    | 'objective'
-    | 'audience'
-    | 'market'
-    | 'assets';
+    'brand' | 'product' | 'objective' | 'audience' | 'market' | 'assets';
   function patch<K extends ObjSection>(
     section: K,
     val: Partial<NonNullable<InsightBrief[K]>>
@@ -825,42 +766,7 @@ export function IntakeWizard({
       case 'brand':
         return (
           <div className='space-y-4'>
-            {!brandLocked && (
-              <>
-                <FieldRow label={t('setup.brand')}>
-                  <select
-                    value={brandId}
-                    onChange={e => setBrandId(e.target.value)}
-                    disabled={brands.loading}
-                    className={SELECT_CLASS}
-                  >
-                    <option value=''>-</option>
-                    {brandItems.map(b => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
-                </FieldRow>
-                <FieldRow label={t('setup.workspace')}>
-                  <select
-                    value={workspaceId}
-                    onChange={e => setWorkspaceId(e.target.value)}
-                    disabled={!brandId || workspaceLoading}
-                    className={SELECT_CLASS}
-                  >
-                    <option value=''>
-                      {brandId ? '-' : t('setup.brandFirst')}
-                    </option>
-                    {workspaceItems.map(w => (
-                      <option key={w.id} value={w.id}>
-                        {w.name}
-                      </option>
-                    ))}
-                  </select>
-                </FieldRow>
-              </>
-            )}
+            <ScopeFields brandLocked={brandLocked} scope={scope} />
             <FieldRow label={t('intake.fields.brandName')}>
               <Input
                 value={brief.brand?.name ?? ''}
@@ -1526,30 +1432,6 @@ export function IntakeWizard({
 }
 
 /** Hàng field: label + control. */
-function FieldRow({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className='space-y-1.5'>
-      <Label>
-        {label}
-        {hint && (
-          <span className='text-content-muted ml-1 text-xs font-normal'>
-            · {hint}
-          </span>
-        )}
-      </Label>
-      {children}
-    </div>
-  );
-}
-
 function ChipRow({ children }: { children: React.ReactNode }) {
   return <div className='flex flex-wrap gap-2'>{children}</div>;
 }
