@@ -204,6 +204,22 @@
         "journeyCount": "{n} stages",
         "challenges": "Challenges"
       }
+    },
+    "mode": {
+      "guided": "Step by step",
+      "quick": "Quick input"
+    },
+    "quick": {
+      "heading": "Write it once, let the AI do the rest",
+      "subheading": "Type everything you know about the brand and the campaign. The AI extracts the structure and picks the experience goal and customer journey for you.",
+      "title": "Report name",
+      "titleHint": "optional",
+      "titlePlaceholder": "Leave empty to use the first line of the brief",
+      "brief": "Brief",
+      "briefPlaceholder": "e.g. Happy City Ca Mau — the first model township in Ca Mau...\n\nWorth mentioning: brand and positioning, product/service, target audience and their pain points, campaign objective, competitors and market, current challenges.\n\nWrite naturally, no particular order needed.",
+      "tooShort": "Needs at least {n} more characters",
+      "autoNote": "The AI will pick the experience goal and customer journey",
+      "run": "Generate blueprint"
     }
   }
 }
