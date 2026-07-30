@@ -145,6 +145,11 @@ import {
   type DelvauxVariantContent,
   type DelvauxVariantFaq,
   type DelvauxVariantOption,
+  type CiteFlowFaqContent,
+  type CiteFlowFaqItem,
+  type CiteFlowAmenityContent,
+  type CiteFlowHeaderContent,
+  type CiteFlowHeaderSocialLink,
   type PnjDetailsContent,
   type PnjHeroContent,
   type PnjHeroHotspot,
@@ -530,6 +535,24 @@ export function ElementToolbar({
         {kind === 'delvauxFaqs' && (
           <DelvauxFaqsControls
             content={content as DelvauxVariantContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'citeFlowFaqs' && (
+          <CiteFlowFaqsControls
+            content={content as CiteFlowFaqContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'citeFlowAmenityList' && (
+          <CiteFlowAmenityListControls
+            content={content as CiteFlowAmenityContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'citeFlowHeaderSocialLinks' && (
+          <CiteFlowHeaderSocialLinksControls
+            content={content as CiteFlowHeaderContent}
             onContentChange={onContentChange}
           />
         )}
@@ -5650,6 +5673,215 @@ function DelvauxFaqsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm FAQ' />
+    </PopoverTrigger>
+  );
+}
+
+function CiteFlowFaqsControls({
+  content,
+  onContentChange,
+}: {
+  content: CiteFlowFaqContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const items = content.items ?? [];
+
+  const update = (i: number, patch: Partial<CiteFlowFaqItem>) =>
+    onContentChange({
+      ...content,
+      items: items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      items: items.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      items: [
+        ...items,
+        {
+          question: 'Câu hỏi mới',
+          answer: '',
+        },
+      ],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger label='FAQ' preview={`${items.length} mục`} width={460}>
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có FAQ — thêm câu hỏi / trả lời.
+          </p>
+        ) : null}
+        {items.map((it, i) => (
+          <div
+            key={`cfl-faq-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={it.question}
+                onChange={e => update(i, { question: e.target.value })}
+                placeholder='Câu hỏi'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá FAQ'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={it.answer}
+              onChange={e => update(i, { answer: e.target.value })}
+              placeholder='Trả lời'
+              className='min-h-16 resize-none border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm FAQ' />
+    </PopoverTrigger>
+  );
+}
+
+function CiteFlowAmenityListControls({
+  content,
+  onContentChange,
+}: {
+  content: CiteFlowAmenityContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const items = content.listItems ?? [];
+
+  const update = (i: number, value: string) =>
+    onContentChange({
+      ...content,
+      listItems: items.map((it, idx) => (idx === i ? value : it)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      listItems: items.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      listItems: [...items, 'Mục mới'],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách'
+      preview={`${items.length} mục`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có mục — thêm dòng mới.
+          </p>
+        ) : null}
+        {items.map((it, i) => (
+          <div key={`cfl-amenity-${i}`} className='flex items-center gap-2'>
+            <Input
+              value={it}
+              onChange={e => update(i, e.target.value)}
+              placeholder='Nội dung'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <button
+              type='button'
+              onClick={() => remove(i)}
+              aria-label='Xoá mục'
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+            >
+              <Trash2 className='size-3.5' />
+            </button>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm mục' />
+    </PopoverTrigger>
+  );
+}
+
+function CiteFlowHeaderSocialLinksControls({
+  content,
+  onContentChange,
+}: {
+  content: CiteFlowHeaderContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const links = content.socialLinks ?? [];
+
+  const update = (i: number, patch: Partial<CiteFlowHeaderSocialLink>) =>
+    onContentChange({
+      ...content,
+      socialLinks: links.map((l, idx) => (idx === i ? { ...l, ...patch } : l)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      socialLinks: links.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      socialLinks: [...links, { label: 'Social mới', href: '#' }],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger label='Social' preview={`${links.length} mục`} width={420}>
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {links.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có social — thêm link mới.
+          </p>
+        ) : null}
+        {links.map((l, i) => (
+          <div
+            key={`cfl-social-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={l.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá social'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={l.href}
+              onChange={e => update(i, { href: e.target.value })}
+              placeholder='Link'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm social' />
     </PopoverTrigger>
   );
 }

@@ -18,6 +18,16 @@ import { q80MenuDef } from './blocks/_registry/defs/q80Menu';
 import { housentHeroDef } from './blocks/_registry/defs/housentHero';
 import { alturaOlympusDef } from './blocks/_registry/defs/alturaOlympus';
 import { heroScrollDef } from './blocks/_registry/defs/heroScroll';
+import { citeFlowHeroDef } from './blocks/_registry/defs/citeFlowHero';
+import { citeFlowIntroDef } from './blocks/_registry/defs/citeFlowIntro';
+import { citeFlowStatsDef } from './blocks/_registry/defs/citeFlowStats';
+import { citeFlowFaqDef } from './blocks/_registry/defs/citeFlowFaq';
+import { citeFlowAmenityDef } from './blocks/_registry/defs/citeFlowAmenity';
+import { citeFlowGalleryDef } from './blocks/_registry/defs/citeFlowGallery';
+import { citeFlowHeaderDef } from './blocks/_registry/defs/citeFlowHeader';
+import { citeFlowFooterDef } from './blocks/_registry/defs/citeFlowFooter';
+import { citeFlowContactFormDef } from './blocks/_registry/defs/citeFlowContactForm';
+import { citeFlowSignatureDef } from './blocks/_registry/defs/citeFlowSignature';
 import { scrollMattisDef } from './blocks/_registry/defs/scrollMattis';
 import { coolHunterHeroDef } from './blocks/_registry/defs/coolHunterHero';
 import { coolHunterSectionProgressDef } from './blocks/_registry/defs/coolHunterSectionProgress';
@@ -2163,6 +2173,16 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_VI,
   altura_olympus: alturaOlympusDef.defaultContent.vi,
   hero_scroll: heroScrollDef.defaultContent.vi,
+  cite_flow_hero: citeFlowHeroDef.defaultContent.vi,
+  cite_flow_intro: citeFlowIntroDef.defaultContent.vi,
+  cite_flow_stats: citeFlowStatsDef.defaultContent.vi,
+  cite_flow_faq: citeFlowFaqDef.defaultContent.vi,
+  cite_flow_amenity: citeFlowAmenityDef.defaultContent.vi,
+  cite_flow_gallery: citeFlowGalleryDef.defaultContent.vi,
+  cite_flow_header: citeFlowHeaderDef.defaultContent.vi,
+  cite_flow_footer: citeFlowFooterDef.defaultContent.vi,
+  cite_flow_contact_form: citeFlowContactFormDef.defaultContent.vi,
+  cite_flow_signature: citeFlowSignatureDef.defaultContent.vi,
   scroll_mattis: scrollMattisDef.defaultContent.vi,
   hero_overlay: HERO_OVERLAY_VI,
   feature_section: FEATURE_VI,
@@ -2362,6 +2382,16 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
   altura_olympus: alturaOlympusDef.defaultContent.en,
   hero_scroll: heroScrollDef.defaultContent.en,
+  cite_flow_hero: citeFlowHeroDef.defaultContent.en,
+  cite_flow_intro: citeFlowIntroDef.defaultContent.en,
+  cite_flow_stats: citeFlowStatsDef.defaultContent.en,
+  cite_flow_faq: citeFlowFaqDef.defaultContent.en,
+  cite_flow_amenity: citeFlowAmenityDef.defaultContent.en,
+  cite_flow_gallery: citeFlowGalleryDef.defaultContent.en,
+  cite_flow_header: citeFlowHeaderDef.defaultContent.en,
+  cite_flow_footer: citeFlowFooterDef.defaultContent.en,
+  cite_flow_contact_form: citeFlowContactFormDef.defaultContent.en,
+  cite_flow_signature: citeFlowSignatureDef.defaultContent.en,
   scroll_mattis: scrollMattisDef.defaultContent.en,
   hero_overlay: HERO_OVERLAY_EN,
   feature_section: FEATURE_EN,

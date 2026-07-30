@@ -47,6 +47,9 @@ export type ElementKind =
   | 'delvauxHotspots'
   | 'delvauxVariants'
   | 'delvauxFaqs'
+  | 'citeFlowFaqs'
+  | 'citeFlowAmenityList'
+  | 'citeFlowHeaderSocialLinks'
   | 'delvauxSubnavLinks'
   // Nav họ Aestha — nay thuộc block riêng `aestha_nav` (trước ở
   // `framer_aestha_editorial`). Các kind `aestha*FooterLinks` đã bỏ cùng lúc.
@@ -184,6 +187,27 @@ export function resolveKind(
   if (key === 'faqs' && blockType === 'delvaux_variant') {
     return 'delvauxFaqs';
   }
+  if (key === 'items' && blockType === 'cite_flow_faq') {
+    return 'citeFlowFaqs';
+  }
+  if (key === 'listItems' && blockType === 'cite_flow_amenity') {
+    return 'citeFlowAmenityList';
+  }
+  if (key === 'socialLinks' && blockType === 'cite_flow_header') {
+    return 'citeFlowHeaderSocialLinks';
+  }
+  if (
+    /^socialLinks\[\d+\]\.label$/.test(key) &&
+    blockType === 'cite_flow_header'
+  ) {
+    return 'text';
+  }
+  if (
+    /^socialLinks\[\d+\]\.href$/.test(key) &&
+    blockType === 'cite_flow_header'
+  ) {
+    return 'link';
+  }
   if (key === 'links' && blockType === 'delvaux_subnav') {
     return 'delvauxSubnavLinks';
   }
@@ -255,6 +279,18 @@ export function resolveKind(
   if (
     /^faqs\[\d+\]\.(question|answer)$/.test(key) &&
     blockType === 'delvaux_variant'
+  ) {
+    return 'text';
+  }
+  if (
+    /^items\[\d+\]\.(question|answer)$/.test(key) &&
+    blockType === 'cite_flow_faq'
+  ) {
+    return 'text';
+  }
+  if (
+    /^listItems\[\d+\]$/.test(key) &&
+    blockType === 'cite_flow_amenity'
   ) {
     return 'text';
   }
@@ -542,6 +578,26 @@ export function resolveLabel(
     const field = delvauxFaqLabel[2];
     return `FAQ ${Number(delvauxFaqLabel[1]) + 1} · ${
       field === 'question' ? 'Câu hỏi' : 'Trả lời'
+    }`;
+  }
+  const citeFlowFaqLabel = key.match(/^items\[(\d+)\]\.(question|answer)$/);
+  if (citeFlowFaqLabel && blockType === 'cite_flow_faq') {
+    const field = citeFlowFaqLabel[2];
+    return `FAQ ${Number(citeFlowFaqLabel[1]) + 1} · ${
+      field === 'question' ? 'Câu hỏi' : 'Trả lời'
+    }`;
+  }
+  const citeFlowAmenityItemLabel = key.match(/^listItems\[(\d+)\]$/);
+  if (citeFlowAmenityItemLabel && blockType === 'cite_flow_amenity') {
+    return `Mục ${Number(citeFlowAmenityItemLabel[1]) + 1}`;
+  }
+  const citeFlowHeaderSocialLabel = key.match(
+    /^socialLinks\[(\d+)\]\.(label|href)$/
+  );
+  if (citeFlowHeaderSocialLabel && blockType === 'cite_flow_header') {
+    const field = citeFlowHeaderSocialLabel[2];
+    return `Social ${Number(citeFlowHeaderSocialLabel[1]) + 1} · ${
+      field === 'label' ? 'Nhãn' : 'Link'
     }`;
   }
   const variantLabel = key.match(/^variants\[(\d+)\]\.label$/);
