@@ -116,12 +116,7 @@ const FILTER_CONTROL_CLASS =
   'border-input text-content-muted hover:bg-muted bg-background h-9 w-40 shrink-0 rounded-md border px-2.5 text-xs font-medium outline-none';
 
 type PageAction =
-  | 'publish'
-  | 'unpublish'
-  | 'archive'
-  | 'restore'
-  | 'domain'
-  | 'edit';
+  'publish' | 'unpublish' | 'archive' | 'restore' | 'domain' | 'edit';
 
 function pageThumbnailUrl(page: Page): string | undefined {
   if (page.thumbnail_url) return page.thumbnail_url;
