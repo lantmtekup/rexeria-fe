@@ -24,7 +24,6 @@ type ListingCardProps = {
   onOpen: (listing: ExchangeListingView) => void;
   onAction: (listing: ExchangeListingView) => void;
   onPreview: (listing: ExchangeListingView) => void;
-  previewLoading?: boolean;
 };
 
 const cardShell = cn(
@@ -41,7 +40,6 @@ export const ListingCard = ({
   onOpen,
   onAction,
   onPreview,
-  previewLoading = false,
 }: ListingCardProps) => {
   const t = useTranslations('portalV2.exchange');
   const action = resolveActionState(listing, session);
@@ -76,7 +74,6 @@ export const ListingCard = ({
       <ListingCover
         listing={listing}
         showPreview
-        previewLoading={previewLoading}
         onPreview={() => onPreview(listing)}
       />
 

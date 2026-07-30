@@ -10,7 +10,7 @@ const FeaturedCardSkeleton = () => {
       )}
       aria-hidden
     >
-      <div className='relative flex aspect-[16/10] w-full flex-col overflow-hidden border-b border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
+      <div className='relative flex aspect-[16/10] max-h-[clamp(140px,28vw,200px)] w-full flex-col overflow-hidden border-b border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
         <div className='h-[38%] animate-pulse bg-[var(--pv2-electric-soft)]' />
         <div className='flex flex-1 flex-col gap-2 px-4 py-3'>
           <div className='h-2 w-3/5 animate-pulse rounded-sm bg-[var(--pv2-slate-300)]' />
@@ -42,7 +42,7 @@ export const ExchangePageSkeleton = () => {
         </div>
       </div>
 
-      <div className='mx-auto w-full max-w-[1440px] px-5 py-6 md:px-8'>
+      <div className='mx-auto w-full px-5 py-6 md:px-8'>
         <section className='mb-[22px]'>
           <div className='grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-3.5'>
             {Array.from({ length: 3 }).map((_, i) => (

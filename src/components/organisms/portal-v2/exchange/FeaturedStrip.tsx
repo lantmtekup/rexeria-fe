@@ -11,7 +11,6 @@ type FeaturedStripProps = {
   items: ExchangeListingView[];
   onOpen: (listing: ExchangeListingView) => void;
   onPreview?: (listing: ExchangeListingView) => void;
-  previewBootingId?: string | null;
 };
 
 const featuredCard = cn(
@@ -26,7 +25,6 @@ export const FeaturedStrip = ({
   items,
   onOpen,
   onPreview,
-  previewBootingId = null,
 }: FeaturedStripProps) => {
   const t = useTranslations('portalV2.exchange');
 
@@ -60,7 +58,6 @@ export const FeaturedStrip = ({
             <ListingCover
               listing={listing}
               showPreview={Boolean(onPreview)}
-              previewLoading={previewBootingId === listing.id}
               onPreview={onPreview ? () => onPreview(listing) : undefined}
             />
 

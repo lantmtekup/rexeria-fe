@@ -26,31 +26,23 @@ type ExchangeDeviceStageProps = {
 const DESKTOP_CHROME = 38;
 const MOBILE_BEZEL = 11;
 
-/** Fallback before first measure (iPhone-ish / 16:10 content). */
-const FALLBACK_CONTENT_H = {
+/**
+ * Fixed logical content heights (device viewport, not browser window).
+ * Keeps phone / laptop aspect ratios honest; shell then scale-to-fits the stage.
+ * Page iframes: iframe height === this value → `100vh` inside `/p` fills the frame.
+ */
+const DEVICE_CONTENT_H = {
   mobile: 844,
   desktop: 900 - DESKTOP_CHROME,
   tablet: 900 - DESKTOP_CHROME,
 } as const;
 
-/**
- * Logical content height must match CSS `100vh` in this document so hero
- * blocks fill the frame. Page iframes inherit the same: iframe height ===
- * that value → `100vh` inside `/p` fills too.
- *
- * Width stays fixed (390 / 1440) for container queries; height tracks the
- * window, then the whole shell scale-to-fits the stage.
- */
-const logicalContentHeight = (device: Device): number => {
-  if (typeof window === 'undefined') {
-    return device === 'mobile'
-      ? FALLBACK_CONTENT_H.mobile
-      : device === 'tablet'
-        ? FALLBACK_CONTENT_H.tablet
-        : FALLBACK_CONTENT_H.desktop;
-  }
-  return Math.max(320, Math.round(window.innerHeight));
-};
+const logicalContentHeight = (device: Device): number =>
+  device === 'mobile'
+    ? DEVICE_CONTENT_H.mobile
+    : device === 'tablet'
+      ? DEVICE_CONTENT_H.tablet
+      : DEVICE_CONTENT_H.desktop;
 
 const shellWidth = (device: Device): number => {
   const w =
@@ -82,8 +74,8 @@ export const ExchangeDeviceStage = ({
 }: ExchangeDeviceStageProps) => {
   const stageRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
-  const [contentH, setContentH] = useState(() => logicalContentHeight(device));
   const isMobile = device === 'mobile';
+  const contentH = logicalContentHeight(device);
   const shellW = shellWidth(device);
   const shellH = contentH + chromeHeight(device);
   const vpW = viewportWidth(device);
@@ -93,9 +85,6 @@ export const ExchangeDeviceStage = ({
     if (!el) return;
 
     const measure = () => {
-      const nextH = logicalContentHeight(device);
-      setContentH(nextH);
-
       const styles = window.getComputedStyle(el);
       const padX =
         parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
@@ -103,8 +92,7 @@ export const ExchangeDeviceStage = ({
         parseFloat(styles.paddingTop) + parseFloat(styles.paddingBottom);
       const availW = Math.max(0, el.clientWidth - padX);
       const availH = Math.max(0, el.clientHeight - padY);
-      const nextShellH = nextH + chromeHeight(device);
-      const next = Math.min(1, availW / shellW, availH / nextShellH);
+      const next = Math.min(1, availW / shellW, availH / shellH);
       setScale(Number.isFinite(next) && next > 0 ? next : 1);
     };
 
@@ -116,7 +104,7 @@ export const ExchangeDeviceStage = ({
       ro.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, [device, shellW]);
+  }, [device, shellW, shellH]);
 
   return (
     <div

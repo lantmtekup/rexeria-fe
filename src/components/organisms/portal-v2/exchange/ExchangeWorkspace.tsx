@@ -11,7 +11,8 @@ import { BuyConfirmModal } from '@/components/organisms/portal-v2/exchange/BuyCo
 import { ExchangeDetailModal } from '@/components/organisms/portal-v2/exchange/ExchangeDetailModal';
 import { ExchangePreviewShell } from '@/components/organisms/portal-v2/exchange/ExchangePreviewShell';
 import { FeaturedStrip } from '@/components/organisms/portal-v2/exchange/FeaturedStrip';
-import { FilterChips } from '@/components/organisms/portal-v2/exchange/FilterChips';
+import { FilterChips } from '@/components/molecules/portal-v2/FilterChips';
+import type { PreviewItem } from '@/lib/portal-v2/preview/types';
 import { ListingCard } from '@/components/organisms/portal-v2/exchange/ListingCard';
 import {
   EXCHANGE_CAN_BUY,
@@ -25,18 +26,6 @@ import {
   filterListings,
   resolveActionState,
 } from '@/lib/portal-v2/exchange/helpers';
-import {
-  isExchangeBlockPreviewCached,
-  prefetchExchangeBlockPreview,
-} from '@/lib/portal-v2/exchange/blockPreview';
-import {
-  isExchangePagePreviewCached,
-  prefetchExchangePagePreview,
-} from '@/lib/portal-v2/exchange/pagePreview';
-import {
-  getCachedExchangePageLayers,
-  prefetchExchangePageLayers,
-} from '@/lib/portal-v2/exchange/pageLayers';
 import type {
   ExchangeFilters,
   ExchangeListingView,
@@ -80,12 +69,10 @@ export const ExchangeWorkspace = ({
     useState<ExchangeListingView | null>(null);
   const [modalMode, setModalMode] = useState<ModalMode>(null);
   const [previewReturnToDetail, setPreviewReturnToDetail] = useState(false);
-  const [previewBootingId, setPreviewBootingId] = useState<string | null>(null);
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [installing, setInstalling] = useState(false);
   const skipFirstSearch = useRef(true);
   const modalModeRef = useRef(modalMode);
-  const previewBootingRef = useRef(false);
 
   modalModeRef.current = modalMode;
 
@@ -204,75 +191,17 @@ export const ExchangeWorkspace = ({
     setPreviewReturnToDetail(false);
   }, []);
 
-  const ensurePreviewReady = useCallback(
-    async (listing: ExchangeListingView): Promise<boolean> => {
-      const needsBlock =
-        listing.source === 'block' &&
-        listing.blockId &&
-        !isExchangeBlockPreviewCached(listing.blockId);
-      const needsPageIframe =
-        listing.source === 'page' &&
-        listing.slug &&
-        !isExchangePagePreviewCached(listing.slug);
-      const needsPageLayers =
-        listing.source === 'page' &&
-        listing.slug &&
-        !getCachedExchangePageLayers(listing.slug);
-
+  const canOpenPreview = useCallback(
+    (listing: ExchangeListingView): boolean => {
       if (listing.source === 'page' && !listing.slug) {
         toast.error(t('previewMissingSlug'));
         return false;
       }
-
       if (listing.source === 'block' && !listing.blockId) {
         toast.error(t('previewMissingBlockId'));
         return false;
       }
-
-      if (!needsBlock && !needsPageIframe && !needsPageLayers) return true;
-
-      previewBootingRef.current = true;
-      setPreviewBootingId(listing.id);
-      try {
-        if (needsBlock && listing.blockId) {
-          const block = await prefetchExchangeBlockPreview(listing.blockId);
-          if (!block) {
-            toast.error(t('previewBlockInvalid'));
-            return false;
-          }
-        }
-
-        if (listing.source === 'page' && listing.slug) {
-          const tasks: Promise<unknown>[] = [];
-          if (needsPageIframe) {
-            tasks.push(
-              prefetchExchangePagePreview(listing.slug).then(ok => {
-                if (!ok) throw new Error(t('previewPageLoadError'));
-              })
-            );
-          }
-          if (needsPageLayers) {
-            tasks.push(prefetchExchangePageLayers(listing.slug));
-          }
-          await Promise.all(tasks);
-        }
-
-        return true;
-      } catch (err) {
-        const msg =
-          err instanceof RxApiError
-            ? err.message
-            : err instanceof Error
-              ? err.message
-              : listing.source === 'block'
-                ? t('previewBlockLoadError')
-                : t('previewPageLoadError');
-        toast.error(msg);
-        return false;
-      } finally {
-        previewBootingRef.current = false;
-        setPreviewBootingId(null);
-      }
+      return true;
     },
     [t]
   );
@@ -285,15 +214,10 @@ export const ExchangeWorkspace = ({
 
   const handlePreview = useCallback(
     (listing: ExchangeListingView) => {
-      if (previewBootingRef.current) return;
-
-      void (async () => {
-        const ready = await ensurePreviewReady(listing);
-        if (!ready) return;
-        openPreview(listing);
-      })();
+      if (!canOpenPreview(listing)) return;
+      openPreview(listing);
     },
-    [ensurePreviewReady, openPreview]
+    [canOpenPreview, openPreview]
   );
 
   const handleClosePreview = useCallback(() => {
@@ -307,15 +231,10 @@ export const ExchangeWorkspace = ({
 
   const handlePreviewNavigate = useCallback(
     (listing: ExchangeListingView) => {
-      if (previewBootingRef.current) return;
-
-      void (async () => {
-        const ready = await ensurePreviewReady(listing);
-        if (!ready) return;
-        setActiveListing(listing);
-      })();
+      if (!canOpenPreview(listing)) return;
+      setActiveListing(listing);
     },
-    [ensurePreviewReady]
+    [canOpenPreview]
   );
 
   const previewNeighbors = useMemo(() => {
@@ -323,6 +242,25 @@ export const ExchangeWorkspace = ({
     if (filtered.some(item => item.id === activeListing.id)) return filtered;
     return [activeListing, ...filtered];
   }, [activeListing, filtered]);
+
+  /**
+   * The preview shell speaks `PreviewItem`, not `ExchangeListingView` — it only
+   * ever needed six fields, and Experiences drives the same shell. Everything
+   * lines up structurally except the two the catalog has to name itself.
+   */
+  const toPreviewItem = useCallback(
+    (listing: ExchangeListingView): PreviewItem => ({
+      ...listing,
+      kindLabel: listing.meta.kind === 'block' ? t('kindBlock') : t('kindPage'),
+      evidence: listing.proven ? (listing.meta.evidence ?? null) : null,
+    }),
+    [t]
+  );
+
+  const previewNeighborItems = useMemo(
+    () => previewNeighbors.map(toPreviewItem),
+    [previewNeighbors, toPreviewItem]
+  );
 
   const handleSell = useCallback(() => {
     toast.message(t('sellSoon'));
@@ -479,7 +417,7 @@ export const ExchangeWorkspace = ({
         </div>
       </div>
 
-      <div className='mx-auto w-full max-w-[1440px] px-5 py-6 md:px-8'>
+      <div className='mx-auto w-full px-5 py-6 md:px-8'>
         {loadError ? (
           <div
             className={cn(
@@ -511,7 +449,6 @@ export const ExchangeWorkspace = ({
               items={featured}
               onOpen={handleOpen}
               onPreview={handlePreview}
-              previewBootingId={previewBootingId}
             />
 
             <div className='sticky top-0 z-10 -mx-5 mb-3.5 bg-[var(--pv2-canvas)] px-5 md:-mx-8 md:px-8'>
@@ -594,7 +531,6 @@ export const ExchangeWorkspace = ({
                     onOpen={handleOpen}
                     onAction={handleAction}
                     onPreview={handlePreview}
-                    previewLoading={previewBootingId === listing.id}
                   />
                 ))}
               </div>
@@ -630,7 +566,6 @@ export const ExchangeWorkspace = ({
           onClose={handleCloseModal}
           onAction={handleAction}
           onPreview={handlePreview}
-          previewLoading={previewBootingId === activeListing.id}
         />
       ) : null}
 
@@ -644,10 +579,17 @@ export const ExchangeWorkspace = ({
 
       <ExchangePreviewShell
         open={modalMode === 'preview' && activeListing !== null}
-        listing={modalMode === 'preview' ? activeListing : null}
-        neighbors={previewNeighbors}
+        listing={
+          modalMode === 'preview' && activeListing
+            ? toPreviewItem(activeListing)
+            : null
+        }
+        neighbors={previewNeighborItems}
         onClose={handleClosePreview}
-        onNavigate={handlePreviewNavigate}
+        onNavigate={item => {
+          const listing = previewNeighbors.find(l => l.id === item.id);
+          if (listing) handlePreviewNavigate(listing);
+        }}
       />
     </div>
   );
