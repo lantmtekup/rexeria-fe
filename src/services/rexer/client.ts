@@ -1,11 +1,7 @@
 /**
- * Minimal fetch client for the REXER backend.
- *
- * Browser: calls go through the Next.js rewrite `/api/rexer/*` →
- * `{NEXT_PUBLIC_REXER_API}/v1/*` (same-origin, cookies auto-sent).
- *
- * Server (RSC / route handlers): Node `fetch` cannot use relative `/api/rexer`,
- * so we call the BE absolute URL and forward the incoming Cookie header.
+ * Minimal fetch client for the REXER backend. Calls are routed through the
+ * Next.js rewrite `/api/rexer/*` → upstream `{NEXT_PUBLIC_REXER_API}/v1/*`
+ * so the browser never hits cross-origin issues.
  *
  * Use `rx<ResponseType>(path, opts)` for any request.
  */
@@ -61,7 +57,7 @@ function logTiming(
   );
 }
 
-function buildProxyUrl(path: string, query?: RxFetchOptions['query']): string {
+function buildUrl(path: string, query?: RxFetchOptions['query']): string {
   const url = path.startsWith('http')
     ? path
     : `${BASE}${path.startsWith('/') ? '' : '/'}${path}`;
@@ -75,70 +71,27 @@ function buildProxyUrl(path: string, query?: RxFetchOptions['query']): string {
   return qs ? `${url}?${qs}` : url;
 }
 
-/** Absolute BE URL for server-side calls (`/api/rexer/foo` → `{BE}/v1/foo`). */
-function toUpstreamUrl(proxyUrl: string): string {
-  if (proxyUrl.startsWith('http')) return proxyUrl;
-  const be = (
-    process.env.NEXT_PUBLIC_REXER_API ??
-    process.env.REXER_API ??
-    ''
-  ).replace(/\/+$/, '');
-  if (!be) {
-    throw new Error(
-      'NEXT_PUBLIC_REXER_API (hoặc REXER_API) chưa cấu hình — server-side rx() cần BE URL'
-    );
-  }
-  const suffix = proxyUrl.replace(/^\/api\/rexer/, '') || '/';
-  return `${be}/v1${suffix.startsWith('/') ? suffix : `/${suffix}`}`;
-}
-
-async function serverCookieHeader(): Promise<string> {
-  try {
-    const { cookies } = await import('next/headers');
-    const jar = await cookies();
-    return jar
-      .getAll()
-      .map(c => `${c.name}=${c.value}`)
-      .join('; ');
-  } catch {
-    return '';
-  }
-}
-
 export async function rx<T>(
   path: string,
   opts: RxFetchOptions = {}
 ): Promise<T> {
   const { body, raw, query, headers, ...rest } = opts;
-  const isServer = typeof window === 'undefined';
-  const proxyUrl = buildProxyUrl(path, query);
-  const url = isServer ? toUpstreamUrl(proxyUrl) : proxyUrl;
-
-  const mergedHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(headers as Record<string, string> | undefined),
-  };
-
-  if (isServer) {
-    const cookie = await serverCookieHeader();
-    if (cookie) mergedHeaders.cookie = cookie;
-  }
-
   const init: RequestInit = {
     credentials: 'include',
-    cache: 'no-store',
     ...rest,
-    headers: mergedHeaders,
+    headers: {
+      'Content-Type': 'application/json',
+      ...headers,
+    },
   };
   if (body !== undefined) {
     init.body = typeof body === 'string' ? body : JSON.stringify(body);
   }
-
   const method = (rest.method ?? 'GET').toUpperCase();
   const t0 = now();
   let res: Response;
   try {
-    res = await fetch(url, init);
+    res = await fetch(buildUrl(path, query), init);
   } catch (err) {
     logTiming(method, path, 'ERR', now() - t0);
     throw err;
