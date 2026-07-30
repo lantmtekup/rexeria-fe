@@ -19,8 +19,6 @@ const protectedRoutes = [
   // cookie, nhưng vẫn gate ở middleware để user logout không thấy khung
   // portal (defense-in-depth).
   '/portal',
-  // Portal V2 shell — tách hoàn toàn khỏi /portal cũ.
-  '/portal-v2',
   // Doc/demo nội bộ — không cố ý public (audit FE 2026-07-04 Q7).
   '/overview',
 ];
@@ -145,7 +143,6 @@ export async function middleware(request: NextRequest) {
       '/support',
       '/admin',
       '/portal',
-      '/portal-v2',
     ];
     if (appRoots.some(p => pathnameWithoutLocale.startsWith(p))) {
       return NextResponse.redirect(new URL('/sign-in', request.url));
@@ -172,11 +169,7 @@ export async function middleware(request: NextRequest) {
     );
   }
 
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-pathname', pathnameWithoutLocale);
-  return NextResponse.next({
-    request: { headers: requestHeaders },
-  });
+  return NextResponse.next();
 }
 
 export const config = {
