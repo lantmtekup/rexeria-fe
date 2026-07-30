@@ -10,7 +10,7 @@ import type {
 import { cn } from '@/lib/cn';
 
 type BrandCardProps = {
-  title: string;
+  title: ReactNode;
   hint?: ReactNode;
   children: ReactNode;
   className?: string;
