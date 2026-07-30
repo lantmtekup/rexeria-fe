@@ -1,9 +1,12 @@
 import { constants } from '@/settings/constants';
 import { getRequestConfig } from 'next-intl/server';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 export default getRequestConfig(async () => {
-  const locale = (await cookies()).get(constants.LANGUAGE)?.value || 'vi';
+  const cookieLocale = (await cookies()).get(constants.LANGUAGE)?.value;
+  const pathname = (await headers()).get('x-pathname') ?? '';
+  const fallback = pathname.startsWith('/portal-v2') ? 'en' : 'vi';
+  const locale = cookieLocale || fallback;
 
   try {
     const messages = await Promise.all([
@@ -22,6 +25,7 @@ export default getRequestConfig(async () => {
       import(`./messages/ai_templates/${locale}.json`),
       import(`./messages/insights/${locale}.json`),
       import(`./messages/portal/${locale}.json`),
+      import(`./messages/portal-v2/${locale}.json`),
     ]);
 
     return {
