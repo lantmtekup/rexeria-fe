@@ -73,8 +73,7 @@ const ImageUpload = forwardRef<ImageUploadHandle, ImageUploadProps>(
               body: formData,
             });
             const result = (await res.json()) as
-              | ApiSuccessResponse<UploadApiData>
-              | ApiErrorResponse;
+              ApiSuccessResponse<UploadApiData> | ApiErrorResponse;
 
             if (!res.ok || result.success !== true) {
               const code =

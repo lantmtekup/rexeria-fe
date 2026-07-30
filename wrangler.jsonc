@@ -4,6 +4,10 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "rexerai",
+  // Token OAuth hiện tại thấy 2 account; thiếu dòng này thì mọi lệnh wrangler
+  // non-interactive (deploy/secret trong script, CI) chết với "More than one
+  // account available". Đây là account chứa Worker rexerai + zone rexerstudio.com.
+  "account_id": "4317863407689551158dde2b1d21e398",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-05-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],

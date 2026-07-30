@@ -18,12 +18,7 @@
 export type MotionTrigger = 'in-view' | 'load' | 'scroll-progress';
 
 export type MotionProperty =
-  | 'opacity'
-  | 'x'
-  | 'y'
-  | 'scale'
-  | 'rotate'
-  | 'blur';
+  'opacity' | 'x' | 'y' | 'scale' | 'rotate' | 'blur';
 
 /**
  * Easing curve names. String form maps 1:1 to GSAP eases. Object form lets

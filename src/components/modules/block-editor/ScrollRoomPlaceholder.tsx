@@ -1,10 +1,14 @@
 'use client';
 
+import { ChevronDown, ChevronUp } from 'lucide-react';
+
 import { cn } from '@/lib/cn';
 
 interface ScrollRoomPlaceholderProps {
   /** Label hiển thị giữa section. */
   label: string;
+  /** Icon nhảy gợi ý hướng cuộn. */
+  scrollHint?: 'down' | 'up';
   className?: string;
 }
 
@@ -15,8 +19,11 @@ interface ScrollRoomPlaceholderProps {
  */
 export function ScrollRoomPlaceholder({
   label,
+  scrollHint,
   className,
 }: ScrollRoomPlaceholderProps) {
+  const HintIcon = scrollHint === 'up' ? ChevronUp : ChevronDown;
+
   return (
     <section
       aria-hidden
@@ -28,9 +35,17 @@ export function ScrollRoomPlaceholder({
         className
       )}
     >
-      <p className='text-[11px] font-medium tracking-[0.14em] uppercase'>
-        {label}
-      </p>
+      <div className='flex flex-col items-center gap-2'>
+        {scrollHint ? (
+          <HintIcon
+            className='size-5 animate-bounce text-neutral-400/90'
+            aria-hidden
+          />
+        ) : null}
+        <p className='text-[11px] font-medium tracking-[0.14em] uppercase'>
+          {label}
+        </p>
+      </div>
     </section>
   );
 }

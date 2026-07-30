@@ -190,11 +190,11 @@ export function RolexCollectionWork({
       const titles = gsap.utils.toArray<HTMLElement>('[data-rcw-title]', stage);
       if (!bg || !swings.length) return;
 
-      const containers = swings.map(
-        swing => swing.querySelector<HTMLElement>('[data-rcw-container]')!
+      const containers = swings.map(swing =>
+        swing.querySelector<HTMLElement>('[data-rcw-container]')!
       );
-      const images = swings.map(
-        swing => swing.querySelector<HTMLElement>('[data-rcw-image]')!
+      const images = swings.map(swing =>
+        swing.querySelector<HTMLElement>('[data-rcw-image]')!
       );
 
       stage.querySelectorAll('img').forEach(img => {

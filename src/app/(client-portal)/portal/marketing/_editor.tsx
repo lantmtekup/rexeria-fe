@@ -62,11 +62,7 @@ import {
 } from './_steps';
 
 type SectionKey =
-  | MarketingSection
-  | 'product'
-  | 'campaign'
-  | 'landing'
-  | 'insights';
+  MarketingSection | 'product' | 'campaign' | 'landing' | 'insights';
 
 // Continue đi tuần tự theo rail: brief → sản phẩm → AI-Insights → landing →
 // Lưu. AI-Insights là cầu nối brief→landing nên nằm ngay trước Landing (đọc

@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 
-const base = 'https://rexerai.vercel.app';
+const base = 'https://portal.rexerstudio.com';
 const url = `${base}/canvas-templates/e3e3e3e3-0000-0000-0000-000000000002`;
 
 const browser = await chromium.launch();

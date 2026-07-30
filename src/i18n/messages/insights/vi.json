@@ -204,6 +204,28 @@
         "journeyCount": "{n} giai đoạn",
         "challenges": "Thách thức"
       }
+    },
+    "mode": {
+      "guided": "Từng bước",
+      "quick": "Nhập nhanh"
+    },
+    "quick": {
+      "heading": "Nhập một lần, AI lo phần còn lại",
+      "subheading": "Gõ tất cả những gì bạn biết về thương hiệu và chiến dịch. AI sẽ tự bóc tách, tự chọn experience goal và customer journey.",
+      "title": "Tên báo cáo",
+      "titleHint": "tuỳ chọn",
+      "titlePlaceholder": "Để trống thì lấy dòng đầu của brief",
+      "brief": "Brief",
+      "briefPlaceholder": "Ví dụ: Happy City Cà Mau — khu đô thị kiểu mẫu đầu tiên tại Cà Mau...\n\nNên nhắc tới: thương hiệu và định vị, sản phẩm/dịch vụ, khách hàng mục tiêu và nỗi đau của họ, mục tiêu chiến dịch, đối thủ và thị trường, thách thức đang gặp.\n\nViết tự nhiên, không cần theo thứ tự.",
+      "tooShort": "Cần thêm ít nhất {n} ký tự nữa",
+      "autoNote": "AI sẽ tự chọn experience goal và customer journey",
+      "run": "Tạo blueprint",
+      "image": "Link hình ảnh",
+      "imageHint": "tuỳ chọn — dán được nhiều link một lúc",
+      "imagePlaceholder": "https://... (Enter để thêm)",
+      "imageAdd": "Thêm",
+      "imageRemove": "Bỏ ảnh này",
+      "imageRejected": "Bỏ qua {n} mục không phải link http(s)"
     }
   }
 }

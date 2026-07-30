@@ -66,7 +66,7 @@ import { PageTabsBar } from '@/components/modules/block-editor/PageTabsBar';
 import { seedBlocks } from '@/components/modules/block-editor/mock';
 import {
   DEFAULT_PAGE_ID,
-  // adaptCanvasBlueprint,
+  adaptCanvasBlueprint,
   parseCanvas,
   serializeCanvas,
   serializeCanvasPages,
@@ -171,26 +171,6 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
       }
     );
   });
-}
-
-/**
- * BE TemplateVersion.canvas_blueprint shape:
- *   `{ blocks: [...], schema_version: "1.0", legacy_preview?: ... }`
- *
- * `parseCanvas` giờ đã nhận thẳng `schema_version: "1.0"`, nên hàm này chỉ còn
- * cần cho payload **không có vỏ** (`{ blocks: [...] }` trần — vài blueprint cũ
- * ghi thiếu `schema_version`, xem BE `usecase/portal.go` khi field vắng mặt).
- * Block contents themselves stay untouched — BE fabric_to_blueprint
- * converter (handoff §1.4) emits blocks in 2.0-compatible shape.
- */
-function adaptCanvasBlueprint(
-  raw: Record<string, unknown> | undefined
-): Record<string, unknown> | undefined {
-  if (!raw || typeof raw !== 'object') return undefined;
-  const blocks = Array.isArray((raw as { blocks?: unknown }).blocks)
-    ? ((raw as { blocks: unknown[] }).blocks as unknown[])
-    : [];
-  return { schema_version: '2.0', blocks };
 }
 
 /** Bump the patch segment of a semver-ish "x.y.z" string. Falls back to
@@ -545,6 +525,12 @@ export function BlockEditor({
             (canvasData as { blocks?: unknown[] } | undefined)?.blocks
           )
             ? (canvasData as { blocks: unknown[] }).blocks.length
+            : 0,
+          '· pages:',
+          Array.isArray(
+            (canvasData as { pages?: unknown[] } | undefined)?.pages
+          )
+            ? (canvasData as { pages: unknown[] }).pages.length
             : 0
         );
         if (
@@ -1653,8 +1639,7 @@ export function BlockEditor({
     autosave.state.kind === 'error';
   const activeBlock = canvas.activeBlock;
   const motionForActiveVariant = activeBlock?.motion?.[editVariant] as
-    | BlockMotion
-    | undefined;
+    BlockMotion | undefined;
 
   // Eye → overlay PreviewMode (layout/render khớp /dev/blocks, không mở tab).
   // Live canvas — xem đúng bản đang edit (kể cả chưa lưu).

@@ -1,10 +1,9 @@
 'use client';
 
 /**
- * Admin "Landing page template" list. The BE `/v1/templates` endpoint
- * returns the full collection without paging, so search/filter/sort and
- * pagination are computed FE-side. Standard list affordances mirror
- * `AdminCanvasTemplatesPage` so the two screens read as a pair.
+ * Admin "Landing page template" list. Search, filter, sort and pagination
+ * are server-side via `GET /v1/templates` query params (mirrors
+ * `AdminCanvasTemplatesPage`).
  */
 
 import * as React from 'react';
@@ -13,7 +12,6 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
   Archive,
-  ArrowDownUp,
   CheckCircle2,
   Eye,
   LayoutGrid,
@@ -32,6 +30,13 @@ import { toast } from 'sonner';
 import { Button } from '@/components/atoms/button';
 import { Chip } from '@/components/atoms/chip';
 import { Input } from '@/components/atoms/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/atoms/select';
 import {
   Table,
   TableBody,
@@ -67,15 +72,62 @@ const SORT_OPTIONS: { id: Sort; label: string }[] = [
   { id: 'name', label: 'Tên A→Z' },
 ];
 
-/** Shared size + radius + border weight cho hàng filter (khớp Blocks / Landing). */
-const FILTER_CONTROL_CLASS =
-  'border-input text-content-muted hover:bg-muted bg-background h-9 w-40 shrink-0 rounded-md border px-2.5 text-xs font-medium outline-none';
+/** Cùng spec với shadcn SelectTrigger (h-9 text-sm) — khớp BlocksPage. */
+const FILTER_CONTROL_H = 'h-9 text-sm shadow-xs';
+const FILTER_SELECT_TRIGGER = cn(FILTER_CONTROL_H, 'w-40 shrink-0 font-normal');
+
+const STATUS_OPTIONS: { id: Status; label: string }[] = [
+  { id: 'all', label: 'Tất cả trạng thái' },
+  { id: 'active', label: 'Active' },
+  { id: 'draft', label: 'Draft' },
+  { id: 'archived', label: 'Archived' },
+];
 
 const STATUS_CHIP: Record<string, string> = {
   active: 'bg-emerald-100 text-emerald-700',
   draft: 'bg-amber-100 text-amber-700',
   archived: 'bg-muted text-content-muted',
 };
+
+function parseTemplateSort(sort: Sort): {
+  sort: 'created_at' | 'updated_at' | 'name';
+  order: 'asc' | 'desc';
+} {
+  switch (sort) {
+    case '-created_at':
+      return { sort: 'created_at', order: 'desc' };
+    case 'created_at':
+      return { sort: 'created_at', order: 'asc' };
+    case 'name':
+      return { sort: 'name', order: 'asc' };
+    default:
+      return { sort: 'updated_at', order: 'desc' };
+  }
+}
+
+function buildTemplatesListQuery(input: {
+  page: number;
+  pageSize: number;
+  debouncedSearch: string;
+  status: Status;
+  category: string | null;
+  sort: Sort;
+}) {
+  const { sort, order } = parseTemplateSort(input.sort);
+  return {
+    page: input.page,
+    limit: input.pageSize,
+    sort,
+    order,
+    ...(input.debouncedSearch.trim()
+      ? { q: input.debouncedSearch.trim() }
+      : {}),
+    ...(input.category ? { category: input.category } : {}),
+    ...(input.status === 'all'
+      ? { include_archived: true }
+      : { status: input.status }),
+  } as const;
+}
 
 /**
  * BE sometimes returns `author` as a User object (`{display_name, email, ...}`)
@@ -92,7 +144,9 @@ export function AdminTemplatesPage() {
   const t = useTranslations('admin');
   const tErrors = useTranslations('errors');
 
-  const [allItems, setAllItems] = React.useState<Template[]>([]);
+  const [items, setItems] = React.useState<Template[]>([]);
+  const [total, setTotal] = React.useState(0);
+  const [categories, setCategories] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState('');
@@ -123,21 +177,46 @@ export function AdminTemplatesPage() {
     setPage(1);
   }, [debouncedSearch, status, category, sort, pageSize]);
 
+  // Category picker — BE chưa có endpoint distinct; seed 1 lần từ catalog.
+  React.useEffect(() => {
+    rexerApi.templates
+      .list({ limit: 200, include_archived: true })
+      .then(r => {
+        const s = new Set<string>();
+        for (const it of r.items ?? []) {
+          if (it.category) s.add(it.category);
+        }
+        setCategories(Array.from(s).sort());
+      })
+      .catch(() => setCategories([]));
+  }, []);
+
   const load = React.useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const r = await rexerApi.templates.list();
-      setAllItems(r.items ?? []);
+      const r = await rexerApi.templates.list(
+        buildTemplatesListQuery({
+          page,
+          pageSize,
+          debouncedSearch,
+          status,
+          category,
+          sort,
+        })
+      );
+      setItems(r.items ?? []);
+      setTotal(r.total ?? r.items?.length ?? 0);
     } catch (err) {
       const code =
         err instanceof RxApiError ? err.code || err.message : 'LOAD_FAILED';
       setError(code);
-      setAllItems([]);
+      setItems([]);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, pageSize, debouncedSearch, status, category, sort]);
 
   React.useEffect(() => {
     load();
@@ -169,20 +248,15 @@ export function AdminTemplatesPage() {
           return;
       }
       const tid = toast.loading(`${label}…`);
-      // Optimistic
-      setAllItems(prev =>
-        prev.map(t => (t.id === tpl.id ? { ...t, status: nextStatus } : t))
-      );
       try {
         await rexerApi.templates.update(tpl.id, { status: nextStatus });
         toast.success(`${label} thành công`, { id: tid });
+        await load();
       } catch (err) {
         toast.error(
           `${label} thất bại: ${err instanceof RxApiError ? err.code || err.message : 'ERROR'}`,
           { id: tid }
         );
-        // Revert
-        await load();
       }
     },
     [load]
@@ -250,56 +324,6 @@ export function AdminTemplatesPage() {
     await load();
   }, [selected, load]);
 
-  // Distinct categories across the dataset for the filter strip
-  const categories = React.useMemo(() => {
-    const s = new Set<string>();
-    for (const it of allItems) {
-      if (it.category) s.add(it.category);
-    }
-    return Array.from(s).sort();
-  }, [allItems]);
-
-  // FE-side filter + sort + paginate. BE doesn't accept query params for
-  // /v1/templates yet — see be-todo.md for the planned upgrade.
-  const filtered = React.useMemo(() => {
-    const q = debouncedSearch.trim().toLowerCase();
-    let arr = allItems.filter(it => {
-      if (status !== 'all' && (it.status ?? '').toLowerCase() !== status)
-        return false;
-      if (category && it.category !== category) return false;
-      if (!q) return true;
-      return (
-        it.name.toLowerCase().includes(q) ||
-        (it.description ?? '').toLowerCase().includes(q) ||
-        (it.code ?? '').toLowerCase().includes(q) ||
-        (it.tags ?? []).some(tg => tg.toLowerCase().includes(q))
-      );
-    });
-    arr = arr.slice().sort((a, b) => {
-      switch (sort) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'created_at':
-          return (a.created_at || '').localeCompare(b.created_at || '');
-        case '-created_at':
-          return (b.created_at || '').localeCompare(a.created_at || '');
-        default:
-          return (b.updated_at || '').localeCompare(a.updated_at || '');
-      }
-    });
-    return arr;
-  }, [allItems, debouncedSearch, status, category, sort]);
-
-  const total = filtered.length;
-  // Memo hoá — nếu không, mỗi render sinh mảng mới → effect fetch block bên
-  // dưới (dep [pageItems]) chạy lại liên tục, cleanup đặt `alive=false` TRƯỚC
-  // khi request thật sự trả về → callback fetch bị chặn bởi `alive` check và
-  // âm thầm bỏ qua kết quả, khiến ô "Blocks" kẹt ở loading mãi mãi.
-  const pageItems = React.useMemo(
-    () => filtered.slice((page - 1) * pageSize, page * pageSize),
-    [filtered, page, pageSize]
-  );
-
   // Blocks-used-per-template — lazy fetch cho các dòng đang hiển thị, dùng
   // chung `resolveTemplateBlocks` (module cache theo templateId — remount
   // không fetch lại) với reverse-index bên BlocksPage.tsx.
@@ -321,7 +345,7 @@ export function AdminTemplatesPage() {
   }, []);
 
   React.useEffect(() => {
-    for (const it of pageItems) {
+    for (const it of items) {
       if (blocksFetchStartedRef.current.has(it.id)) continue;
       blocksFetchStartedRef.current.add(it.id);
 
@@ -342,7 +366,7 @@ export function AdminTemplatesPage() {
             setBlocksByTemplate(prev => ({ ...prev, [it.id]: 'error' }));
         });
     }
-  }, [pageItems]);
+  }, [items]);
 
   const clearFilters = () => {
     setSearch('');
@@ -370,7 +394,7 @@ export function AdminTemplatesPage() {
           <div>
             <h1 className='text-xl font-semibold'>{t('templates.title')}</h1>
             <p className='text-content-muted mt-0.5 text-xs'>
-              {t('templates.subtitle', { total: allItems.length })}
+              {t('templates.subtitle', { total })}
             </p>
           </div>
           <div className='flex items-center gap-2'>
@@ -398,59 +422,73 @@ export function AdminTemplatesPage() {
 
         <div className='mt-2 flex flex-wrap items-center gap-2'>
           <div className='relative min-w-48 flex-1 basis-56'>
-            <Search className='text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2' />
+            <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2' />
             <Input
-              placeholder='Tìm theo tên / code / mô tả / tag…'
+              type='search'
+              placeholder='Tìm theo tên / code / mô tả…'
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className='border-input h-9 rounded-md pl-8 shadow-none md:text-xs'
+              className={cn(
+                FILTER_CONTROL_H,
+                'w-full pl-8 font-normal md:text-sm'
+              )}
               aria-label='Tìm kiếm templates'
             />
           </div>
 
-          <select
-            value={status}
-            onChange={e => setStatus(e.target.value as Status)}
-            className={FILTER_CONTROL_CLASS}
-            aria-label='Lọc theo trạng thái'
-          >
-            <option value='all'>Tất cả trạng thái</option>
-            <option value='active'>Active</option>
-            <option value='draft'>Draft</option>
-            <option value='archived'>Archived</option>
-          </select>
+          <Select value={status} onValueChange={v => setStatus(v as Status)}>
+            <SelectTrigger
+              className={FILTER_SELECT_TRIGGER}
+              aria-label='Lọc theo trạng thái'
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align='start'>
+              {STATUS_OPTIONS.map(o => (
+                <SelectItem key={o.id} value={o.id}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {categories.length > 0 && (
-            <select
-              value={category ?? ''}
-              onChange={e => setCategory(e.target.value || null)}
-              className={FILTER_CONTROL_CLASS}
-              aria-label='Lọc theo category'
+            <Select
+              value={category ?? 'all'}
+              onValueChange={v => setCategory(v === 'all' ? null : v)}
             >
-              <option value=''>Tất cả category</option>
-              {categories.map(c => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                className={FILTER_SELECT_TRIGGER}
+                aria-label='Lọc theo category'
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align='start'>
+                <SelectItem value='all'>Tất cả category</SelectItem>
+                {categories.map(c => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
 
-          <div className='relative inline-flex items-center'>
-            <ArrowDownUp className='text-muted-foreground pointer-events-none absolute left-2.5 size-3.5' />
-            <select
-              value={sort}
-              onChange={e => setSort(e.target.value as Sort)}
-              className={cn(FILTER_CONTROL_CLASS, 'appearance-none pr-3 pl-8')}
-              aria-label='Sort'
+          <Select value={sort} onValueChange={v => setSort(v as Sort)}>
+            <SelectTrigger
+              className={cn(FILTER_SELECT_TRIGGER, 'w-36')}
+              aria-label='Sắp xếp'
             >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align='start'>
               {SORT_OPTIONS.map(o => (
-                <option key={o.id} value={o.id}>
+                <SelectItem key={o.id} value={o.id}>
                   {o.label}
-                </option>
+                </SelectItem>
               ))}
-            </select>
-          </div>
+            </SelectContent>
+          </Select>
 
           {hasActiveFilters && (
             <button
@@ -465,7 +503,7 @@ export function AdminTemplatesPage() {
           )}
 
           <div className='text-content-muted ml-auto inline-flex h-9 shrink-0 items-center text-xs tabular-nums'>
-            {pageItems.length} / {total}
+            {items.length} / {total}
           </div>
 
           <div className='border-input bg-background flex h-9 shrink-0 items-center gap-0.5 rounded-md border p-0.5'>
@@ -496,12 +534,12 @@ export function AdminTemplatesPage() {
         )}
 
         {/* Body */}
-        {loading && allItems.length === 0 ? (
+        {loading && items.length === 0 ? (
           <div className='text-content-muted flex items-center justify-center py-16 text-sm'>
             <RefreshCwIcon className='mr-2 size-4 animate-spin' /> Đang tải
             template…
           </div>
-        ) : pageItems.length === 0 ? (
+        ) : items.length === 0 ? (
           <div className='border-border bg-card rounded-lg border border-dashed p-12 text-center'>
             <LayoutTemplate className='text-muted-foreground mx-auto size-8' />
             <p className='text-content-muted mt-3 text-sm font-semibold'>
@@ -517,14 +555,14 @@ export function AdminTemplatesPage() {
           </div>
         ) : view === 'grid' ? (
           <GridView
-            items={pageItems}
+            items={items}
             onUse={setUseTarget}
             onEffects={setEffectsTarget}
             onStatusAction={runStatusAction}
           />
         ) : (
           <TableView
-            items={pageItems}
+            items={items}
             col={{
               name: t('templates.col.name'),
               code: t('templates.col.code'),
@@ -542,7 +580,7 @@ export function AdminTemplatesPage() {
           />
         )}
 
-        {!loading && pageItems.length > 0 && (
+        {!loading && items.length > 0 && (
           <TablePagination
             total={total}
             page={page}

@@ -15,6 +15,7 @@ import assert from 'node:assert/strict';
 
 import {
   DEFAULT_PAGE_ID,
+  adaptCanvasBlueprint,
   normalizePages,
   parseCanvas,
   serializeCanvas,
@@ -109,6 +110,64 @@ check('empty `pages: []` falls back to root blocks', () => {
 check('non-canvas payload still returns null', () => {
   assert.equal(parseCanvas({ foo: 'bar' }), null);
   assert.equal(parseCanvas(undefined), null);
+});
+
+// ── adaptCanvasBlueprint (BlockEditor load path) ───────────────────────────
+
+check(
+  'adaptCanvasBlueprint preserves pages, publish, transition on load',
+  () => {
+    const wire = serializeCanvasPages({
+      pages: [
+        page({
+          id: 'p_home',
+          name: 'Trang chủ',
+          isHome: true,
+          blocks: [block('h1')],
+        }),
+        page({
+          id: 'p_list',
+          name: 'Danh sách',
+          slug: 'san-pham',
+          blocks: [block('l1')],
+        }),
+      ],
+      activePageId: 'p_list',
+      transition: 'fade',
+      publish: {
+        published: true,
+        shareToken: 'abc123',
+        publishedAt: '2026-01-01T00:00:00.000Z',
+      },
+    });
+    // BE may store schema_version as "1.0" — adapt normalises the wrapper only.
+    wire.schema_version = '1.0';
+
+    const adapted = adaptCanvasBlueprint(wire);
+    assert.ok(adapted);
+    assert.equal((adapted.pages as unknown[]).length, 2);
+    assert.equal(adapted.active_page_id, 'p_list');
+    assert.equal(adapted.transition, 'fade');
+    assert.equal(
+      (adapted.publish as { shareToken?: string }).shareToken,
+      'abc123'
+    );
+
+    const parsed = parseCanvas(adapted);
+    assert.ok(parsed);
+    assert.equal(parsed.pages.length, 2);
+    assert.equal(parsed.activePageId, 'p_list');
+    assert.equal(parsed.transition, 'fade');
+    assert.equal(parsed.publish?.shareToken, 'abc123');
+  }
+);
+
+check('adaptCanvasBlueprint legacy blocks-only blueprint still parses', () => {
+  const wire = { blocks: [block('b1')], schema_version: '1.0' };
+  const parsed = parseCanvas(adaptCanvasBlueprint(wire));
+  assert.ok(parsed);
+  assert.equal(parsed.pages.length, 1);
+  assert.equal(parsed.pages[0].blocks.length, 1);
 });
 
 // ── Round-trip: multi-page ─────────────────────────────────────────────────
