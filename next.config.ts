@@ -113,11 +113,27 @@ const nextConfig: NextConfig = {
         'NEXT_PUBLIC_REXER_API (hoặc REXER_API) chưa cấu hình — rewrite /api/rexer cần BE URL'
       );
     }
+    // BE v2 (Portal V2) — chạy song song, KHÔNG thay thế `be` ở trên.
+    // Optional (khác v1): thiếu env thì chỉ không đăng ký rewrite, app vẫn
+    // boot; `rxV2()` mới throw khi thực sự được gọi. Fail-loud ở đây sẽ phá
+    // mọi deployment/env hiện có ngay khi merge.
+    // basePath vẫn `/v1` — BE không có route prefix `/v2`, "v2" là host khác.
+    const beV2 =
+      process.env.NEXT_PUBLIC_REXER_API_V2 ?? process.env.REXER_API_V2;
+
     return [
       {
         source: '/api/rexer/:path*',
         destination: `${be}/v1/:path*`,
       },
+      ...(beV2
+        ? [
+            {
+              source: '/api/rexer-v2/:path*',
+              destination: `${beV2}/v1/:path*`,
+            },
+          ]
+        : []),
       // `/p/:slug` rewrite REMOVED 2026-05-31 — FE app route
       // `src/app/p/[slug]/page.tsx` ngắt sliện rewrite (Next.js
       // routes precede rewrites). FE route discriminator:

@@ -2,7 +2,14 @@
 
 import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
 import { LandingMotionRoot } from '@/components/modules/block-editor/motion/LandingMotion';
@@ -29,6 +36,21 @@ type ExchangeBlockPreviewProps = {
   blockId: string;
   device: Device;
 };
+
+const PreviewLoadingState = ({ message }: { message: string }) => (
+  <div
+    className={cn(
+      'flex min-h-full items-center justify-center gap-2 px-6',
+      'text-center text-[13px] text-(--pv2-mut)'
+    )}
+  >
+    <Loader2
+      className='size-4 shrink-0 animate-spin text-(--pv2-electric)'
+      aria-hidden
+    />
+    {message}
+  </div>
+);
 
 export const ExchangeBlockPreview = ({
   blockId,
@@ -118,39 +140,39 @@ export const ExchangeBlockPreview = ({
         scrollable
         scrollerRef={scrollerRef}
       >
-        {statusMessage ? (
+        {showLoading ? (
+          <PreviewLoadingState message={statusMessage!} />
+        ) : statusMessage ? (
           <div
             className={cn(
               'flex min-h-full items-center justify-center gap-2 px-6',
-              'text-center text-[13px] text-[var(--pv2-mut)]'
+              'text-center text-[13px] text-(--pv2-mut)'
             )}
           >
-            {showLoading ? (
-              <Loader2
-                className='size-4 shrink-0 animate-spin text-[var(--pv2-electric)]'
-                aria-hidden
-              />
-            ) : null}
             {statusMessage}
           </div>
         ) : block && resolved ? (
-          <MotionProvider
-            mode='preview'
-            motion={resolved.motion}
-            scrollerEl={scrollerEl}
+          <Suspense
+            fallback={<PreviewLoadingState message={t('previewLoading')} />}
           >
-            <MotionBlockRoot>
-              <RenderBlock
-                block={block}
-                content={resolved.content}
-                styles={resolved.styles}
-                background={resolved.background}
-                order={resolved.order}
-              />
-            </MotionBlockRoot>
-          </MotionProvider>
+            <MotionProvider
+              mode='preview'
+              motion={resolved.motion}
+              scrollerEl={scrollerEl}
+            >
+              <MotionBlockRoot>
+                <RenderBlock
+                  block={block}
+                  content={resolved.content}
+                  styles={resolved.styles}
+                  background={resolved.background}
+                  order={resolved.order}
+                />
+              </MotionBlockRoot>
+            </MotionProvider>
+          </Suspense>
         ) : (
-          <div className='flex min-h-full items-center justify-center px-6 text-center text-[13px] text-[var(--pv2-mut)]'>
+          <div className='flex min-h-full items-center justify-center px-6 text-center text-[13px] text-(--pv2-mut)'>
             {t('previewBlockLoadError')}
           </div>
         )}

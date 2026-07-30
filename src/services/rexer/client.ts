@@ -1,17 +1,54 @@
 /**
  * Minimal fetch client for the REXER backend.
  *
- * Browser: calls go through the Next.js rewrite `/api/rexer/*` →
- * `{NEXT_PUBLIC_REXER_API}/v1/*` (same-origin, cookies auto-sent).
+ * Browser: calls go through the Next.js rewrite `/api/rexer*` →
+ * `{BE}/v1/*` (same-origin, cookies auto-sent).
  *
  * Server (RSC / route handlers): Node `fetch` cannot use relative `/api/rexer`,
  * so we call the BE absolute URL and forward the incoming Cookie header.
  *
- * Use `rx<ResponseType>(path, opts)` for any request.
+ * Two backends run in parallel, differing by HOST only:
+ *   - `rx()`   → v1 deployment (`NEXT_PUBLIC_REXER_API`)   — the default
+ *   - `rxV2()` → v2 deployment (`NEXT_PUBLIC_REXER_API_V2`) — Portal V2, opt-in
+ *
+ * Both speak `/v1/...`: the BE has no `/v2` route prefix (single
+ * `e.Group("/v1", …)`), "v2" is a separate deployment/phase whose spec is a
+ * strict superset. Version pinning there is by `Rexer-API-Version` header.
+ *
+ * Use `rx<ResponseType>(path, opts)` / `rxV2<ResponseType>(path, opts)`.
  */
 import type { RxErrorBody } from './types';
 
-const BASE = '/api/rexer';
+/** One backend deployment: proxy prefix + how to find its base URL. */
+type RxService = {
+  /** Short tag for the dev timing log. */
+  label: string;
+  /** Same-origin prefix the Next.js rewrite forwards upstream. */
+  proxyBase: string;
+  /**
+   * Base URL for server-side calls. Must reference `process.env.NEXT_PUBLIC_*`
+   * statically — Next.js inlines those at build time and would not replace a
+   * dynamic `process.env[name]` lookup.
+   */
+  readBase: () => string | undefined;
+  /** Env var names, for the error message when none is set. */
+  envLabel: string;
+};
+
+const V1: RxService = {
+  label: 'v1',
+  proxyBase: '/api/rexer',
+  readBase: () => process.env.NEXT_PUBLIC_REXER_API ?? process.env.REXER_API,
+  envLabel: 'NEXT_PUBLIC_REXER_API (hoặc REXER_API)',
+};
+
+const V2: RxService = {
+  label: 'v2',
+  proxyBase: '/api/rexer-v2',
+  readBase: () =>
+    process.env.NEXT_PUBLIC_REXER_API_V2 ?? process.env.REXER_API_V2,
+  envLabel: 'NEXT_PUBLIC_REXER_API_V2 (hoặc REXER_API_V2)',
+};
 
 export class RxApiError extends Error {
   code: string;
@@ -44,6 +81,7 @@ const now = (): number =>
  *   ✓ fast (<600ms) · ⚠️ slow (>600ms) · 🐢 very slow (>1500ms)
  */
 function logTiming(
+  svc: RxService,
   method: string,
   path: string,
   status: number | 'ERR',
@@ -55,16 +93,20 @@ function logTiming(
   const color = ms > 1500 ? '#dc2626' : ms > 600 ? '#d97706' : '#16a34a';
   // eslint-disable-next-line no-console
   console.log(
-    `%c[rx ${tag}] ${method} ${path} → ${status} %c${Math.round(ms)}ms`,
+    `%c[rx:${svc.label} ${tag}] ${method} ${path} → ${status} %c${Math.round(ms)}ms`,
     `color:${color};font-weight:600`,
     `color:${color};font-weight:700`
   );
 }
 
-function buildProxyUrl(path: string, query?: RxFetchOptions['query']): string {
+function buildProxyUrl(
+  svc: RxService,
+  path: string,
+  query?: RxFetchOptions['query']
+): string {
   const url = path.startsWith('http')
     ? path
-    : `${BASE}${path.startsWith('/') ? '' : '/'}${path}`;
+    : `${svc.proxyBase}${path.startsWith('/') ? '' : '/'}${path}`;
   if (!query) return url;
   const usp = new URLSearchParams();
   for (const [k, v] of Object.entries(query)) {
@@ -75,20 +117,19 @@ function buildProxyUrl(path: string, query?: RxFetchOptions['query']): string {
   return qs ? `${url}?${qs}` : url;
 }
 
-/** Absolute BE URL for server-side calls (`/api/rexer/foo` → `{BE}/v1/foo`). */
-function toUpstreamUrl(proxyUrl: string): string {
+/**
+ * Absolute BE URL for server-side calls (`/api/rexer/foo` → `{BE}/v1/foo`).
+ * `/v1` is the BE's basePath and is the same on both deployments.
+ */
+function toUpstreamUrl(svc: RxService, proxyUrl: string): string {
   if (proxyUrl.startsWith('http')) return proxyUrl;
-  const be = (
-    process.env.NEXT_PUBLIC_REXER_API ??
-    process.env.REXER_API ??
-    ''
-  ).replace(/\/+$/, '');
+  const be = (svc.readBase() ?? '').replace(/\/+$/, '');
   if (!be) {
     throw new Error(
-      'NEXT_PUBLIC_REXER_API (hoặc REXER_API) chưa cấu hình — server-side rx() cần BE URL'
+      `${svc.envLabel} chưa cấu hình — server-side rx${svc.label === 'v1' ? '' : 'V2'}() cần BE URL`
     );
   }
-  const suffix = proxyUrl.replace(/^\/api\/rexer/, '') || '/';
+  const suffix = proxyUrl.slice(svc.proxyBase.length) || '/';
   return `${be}/v1${suffix.startsWith('/') ? suffix : `/${suffix}`}`;
 }
 
@@ -105,14 +146,15 @@ async function serverCookieHeader(): Promise<string> {
   }
 }
 
-export async function rx<T>(
+async function rxCore<T>(
+  svc: RxService,
   path: string,
   opts: RxFetchOptions = {}
 ): Promise<T> {
   const { body, raw, query, headers, ...rest } = opts;
   const isServer = typeof window === 'undefined';
-  const proxyUrl = buildProxyUrl(path, query);
-  const url = isServer ? toUpstreamUrl(proxyUrl) : proxyUrl;
+  const proxyUrl = buildProxyUrl(svc, path, query);
+  const url = isServer ? toUpstreamUrl(svc, proxyUrl) : proxyUrl;
 
   const mergedHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -140,10 +182,10 @@ export async function rx<T>(
   try {
     res = await fetch(url, init);
   } catch (err) {
-    logTiming(method, path, 'ERR', now() - t0);
+    logTiming(svc, method, path, 'ERR', now() - t0);
     throw err;
   }
-  logTiming(method, path, res.status, now() - t0);
+  logTiming(svc, method, path, res.status, now() - t0);
   if (raw) return res as unknown as T;
 
   const text = await res.text();
@@ -157,4 +199,19 @@ export async function rx<T>(
     throw new RxApiError(eb, res.status);
   }
   return parsed as T;
+}
+
+/** Call the v1 BE deployment — the default for everything outside Portal V2. */
+export function rx<T>(path: string, opts: RxFetchOptions = {}): Promise<T> {
+  return rxCore<T>(V1, path, opts);
+}
+
+/**
+ * Call the v2 BE deployment (Portal V2). Same `/v1/...` paths as `rx()` —
+ * only the host differs. Requires `NEXT_PUBLIC_REXER_API_V2`; throws on the
+ * first call if unset (the rewrite is not registered either, so browser calls
+ * would otherwise 404 against the Next.js app).
+ */
+export function rxV2<T>(path: string, opts: RxFetchOptions = {}): Promise<T> {
+  return rxCore<T>(V2, path, opts);
 }
