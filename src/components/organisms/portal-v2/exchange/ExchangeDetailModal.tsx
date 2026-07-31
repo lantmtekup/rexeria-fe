@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Eye, Loader2, Lock, Package, Plus } from 'lucide-react';
+import { Check, Eye, Lock, Package, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
@@ -24,7 +24,6 @@ type ExchangeDetailModalProps = {
   onClose: () => void;
   onAction: (listing: ExchangeListingView) => void;
   onPreview: (listing: ExchangeListingView) => void;
-  previewLoading?: boolean;
 };
 
 export const ExchangeDetailModal = ({
@@ -33,7 +32,6 @@ export const ExchangeDetailModal = ({
   onClose,
   onAction,
   onPreview,
-  previewLoading = false,
 }: ExchangeDetailModalProps) => {
   const t = useTranslations('portalV2.exchange');
 
@@ -58,18 +56,9 @@ export const ExchangeDetailModal = ({
         variant='ghost'
         size='sm'
         className='whitespace-nowrap'
-        disabled={previewLoading}
         onClick={() => onPreview(listing)}
       >
-        {previewLoading ? (
-          <Loader2
-            className='size-3.5 shrink-0 animate-spin'
-            strokeWidth={2}
-            aria-hidden
-          />
-        ) : (
-          <Eye className='size-3.5 shrink-0' strokeWidth={2} aria-hidden />
-        )}
+        <Eye className='size-3.5 shrink-0' strokeWidth={2} aria-hidden />
         {t('previewLabel')}
       </Button>
       {action === 'added' ? (
