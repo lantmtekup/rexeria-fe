@@ -5,6 +5,16 @@ export type BlockType =
   | 'hero_split'
   | 'altura_olympus'
   | 'hero_scroll'
+  | 'cite_flow_hero'
+  | 'cite_flow_intro'
+  | 'cite_flow_stats'
+  | 'cite_flow_faq'
+  | 'cite_flow_amenity'
+  | 'cite_flow_footer'
+  | 'cite_flow_contact_form'
+  | 'cite_flow_gallery'
+  | 'cite_flow_header'
+  | 'cite_flow_signature'
   | 'scroll_mattis'
   | 'hero_overlay'
   | 'feature_section'
@@ -347,6 +357,131 @@ export interface HeroScrollContent {
   image4Url?: string;
 }
 
+export interface CiteFlowHeroContent {
+  backgroundImageUrl: string;
+  backgroundImageAlt: string;
+  /** Nhiều dòng nối bằng '\n', render bằng whitespace-pre-line. */
+  heading: string;
+}
+
+export interface CiteFlowIntroContent {
+  eyebrow: string;
+  heading: string;
+  posterUrl: string;
+  videoUrl: string;
+  playIconUrl: string;
+}
+
+export interface CiteFlowStatsContent {
+  backgroundImageDesktopUrl: string;
+  backgroundImageMobileUrl: string;
+  backgroundImageAlt: string;
+  /** Số dạng chuỗi (vd '8.2') — số thập phân tự suy ra khi render + counter. */
+  stat1Value: string;
+  stat1Suffix: string;
+  stat1Label: string;
+  stat2Value: string;
+  stat2Suffix: string;
+  stat2Label: string;
+  stat3Value: string;
+  stat3Suffix: string;
+  stat3Label: string;
+  stat4Value: string;
+  stat4Suffix: string;
+  stat4Label: string;
+}
+
+export interface CiteFlowFaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface CiteFlowFaqContent {
+  heading: string;
+  ctaText: string;
+  ctaLink: string;
+  items: CiteFlowFaqItem[];
+}
+
+export interface CiteFlowAmenityContent {
+  heading: string;
+  videoUrl: string;
+  listItems: string[];
+}
+
+export interface CiteFlowGalleryContent {
+  image1Url: string;
+  image1Alt: string;
+  image2Url: string;
+  image2Alt: string;
+}
+
+export interface CiteFlowHeaderSocialLink {
+  label: string;
+  href: string;
+}
+
+export interface CiteFlowHeaderContent {
+  /** 'dark' | 'light' — field text thường, không có fieldType select. */
+  variant: string;
+  logoUrl: string;
+  logoAlt: string;
+  logoHref: string;
+  contactLabel: string;
+  contactHref: string;
+  emailHeading: string;
+  emailLabel: string;
+  emailHref: string;
+  socialHeading: string;
+  socialLinks: CiteFlowHeaderSocialLink[];
+}
+
+export interface CiteFlowFooterContent {
+  heading: string;
+  /** Hiển thị dạng text + dùng làm `mailto:` href. */
+  email: string;
+  menuLabel: string;
+  menuLink1Label: string;
+  menuLink1Href: string;
+  menuLink2Label: string;
+  menuLink2Href: string;
+  socialLabel: string;
+  socialLink1Label: string;
+  socialLink1Href: string;
+  socialLink2Label: string;
+  socialLink2Href: string;
+  socialLink3Label: string;
+  socialLink3Href: string;
+  logoUrl: string;
+  logoAlt: string;
+}
+
+export interface CiteFlowContactFormContent {
+  heading: string;
+  introText: string;
+  /** Dùng cho cả text hiển thị + `mailto:` href. */
+  contactEmailValue: string;
+  /** Dùng cho cả text hiển thị + `tel:` href (href strip ký tự không phải số/+). */
+  contactPhoneValue: string;
+  contactAddressValue: string;
+  nameLabel: string;
+  namePlaceholder: string;
+  emailLabel: string;
+  emailPlaceholder: string;
+  messageLabel: string;
+  messagePlaceholder: string;
+  submitText: string;
+  submittedText: string;
+}
+
+export interface CiteFlowSignatureContent {
+  titleTop: string;
+  titleBottom: string;
+  serviceTitle: string;
+  imageUrl: string;
+  imageAlt: string;
+}
+
 /** Một slide Scroll Mattis (media + marquee + meta). */
 export interface ScrollMattisSlideItem {
   url: string;
@@ -651,7 +786,12 @@ export interface CoolHunterFooterContent {
 
 /** Named scrim presets for PnjHero storefront wash. */
 export type PnjHeroScrimPresetId =
-  'pnj' | 'none' | 'softLight' | 'softDark' | 'mint' | 'navyFade';
+  | 'pnj'
+  | 'none'
+  | 'softLight'
+  | 'softDark'
+  | 'mint'
+  | 'navyFade';
 
 /** One absolute overlay layer on the storefront image. */
 export interface PnjHeroScrimLayer {
@@ -796,7 +936,12 @@ export interface TheGrandFooterPolicy {
  * xem `blocks/theGrandFooterSocialIcons.tsx`.
  */
 export type TheGrandFooterSocialPlatform =
-  'facebook' | 'instagram' | 'linkedin' | 'tripadvisor' | 'youtube' | 'tiktok';
+  | 'facebook'
+  | 'instagram'
+  | 'linkedin'
+  | 'tripadvisor'
+  | 'youtube'
+  | 'tiktok';
 
 /** 1 icon social ở cột 4 của The Grand · Footer. */
 export interface TheGrandFooterSocial {
@@ -3345,6 +3490,16 @@ export type BlockContent =
   | HeroSplitContent
   | AlturaOlympusContent
   | HeroScrollContent
+  | CiteFlowHeroContent
+  | CiteFlowIntroContent
+  | CiteFlowStatsContent
+  | CiteFlowFaqContent
+  | CiteFlowAmenityContent
+  | CiteFlowGalleryContent
+  | CiteFlowHeaderContent
+  | CiteFlowFooterContent
+  | CiteFlowContactFormContent
+  | CiteFlowSignatureContent
   | ScrollMattisContent
   | BrightedgeHeroContent
   | LumeaHeroContent
@@ -3645,7 +3800,10 @@ export interface ExtraElementStyle {
  * animation > plain.
  */
 export type TextAnimationMode =
-  'none' | 'fade-up' | 'typewriter' | 'split-slide-up';
+  | 'none'
+  | 'fade-up'
+  | 'typewriter'
+  | 'split-slide-up';
 
 export interface TextCounterConfig {
   /** Starting value of the count-up. Defaults to 0. */
@@ -4128,6 +4286,182 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     defaultName: 'Hero Scroll',
     aiLabelVi: 'block hero scroll (placeholder)',
     aiLabelEn: 'scroll-linked hero block (placeholder)',
+  },
+  cite_flow_hero: {
+    type: 'cite_flow_hero',
+    category: 'hero',
+    style: 'luxury',
+    tags: ['hero', 'image', 'parallax'],
+    status: 'draft',
+    responsive: true,
+    updatedAt: '2026-07-30',
+    label: 'Cite Flow Hero',
+    accent: '#3f6b4f',
+    adminLabel: 'Cite Flow Hero',
+    gradient: 'from-emerald-800 to-neutral-900',
+    defaultName: 'Cite Flow Hero',
+    aiLabelVi:
+      'hero full-viewport: ảnh nền Ken-Burns + heading fade + scroll parallax',
+    aiLabelEn:
+      'full-viewport hero: Ken-Burns background + heading fade + scroll parallax',
+  },
+  cite_flow_intro: {
+    type: 'cite_flow_intro',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['scroll', 'video', 'reveal'],
+    status: 'draft',
+    responsive: true,
+    updatedAt: '2026-07-30',
+    label: 'Cite Flow Intro',
+    accent: '#3f6b4f',
+    adminLabel: 'Cite Flow Intro',
+    gradient: 'from-emerald-800 to-neutral-900',
+    defaultName: 'Cite Flow Intro',
+    aiLabelVi:
+      'intro section: eyebrow + heading reveal theo từ, ảnh scale theo scroll, nút play crossfade sang video',
+    aiLabelEn:
+      'intro section: word-by-word eyebrow + heading reveal, scroll-scrubbed media scale, play button crossfades to video',
+  },
+  cite_flow_stats: {
+    type: 'cite_flow_stats',
+    category: 'progress',
+    style: 'luxury',
+    tags: ['stats', 'counter', 'scroll'],
+    status: 'draft',
+    responsive: true,
+    updatedAt: '2026-07-30',
+    label: 'Cite Flow Stats',
+    accent: '#3f6b4f',
+    adminLabel: 'Cite Flow Stats',
+    gradient: 'from-emerald-800 to-neutral-900',
+    defaultName: 'Cite Flow Stats',
+    aiLabelVi:
+      'dải chỉ số "by the numbers": ảnh nền sticky scale-in + 4 số liệu (đếm lên khi compact, mask-wipe so le khi desktop)',
+    aiLabelEn:
+      '"by the numbers" stat band: sticky scale-in background + 4 stats (count-up on compact, staggered mask-wipe on desktop)',
+  },
+  cite_flow_faq: {
+    type: 'cite_flow_faq',
+    category: 'faq',
+    style: 'luxury',
+    tags: ['faq', 'accordion'],
+    status: 'draft',
+    responsive: true,
+    updatedAt: '2026-07-30',
+    label: 'Cite Flow FAQ',
+    accent: '#3f6b4f',
+    adminLabel: 'Cite Flow FAQ',
+    gradient: 'from-emerald-800 to-neutral-900',
+    defaultName: 'Cite Flow FAQ',
+    aiLabelVi:
+      'FAQ accordion: heading + CTA bên trái, danh sách câu hỏi/trả lời mở-đóng bên phải',
+    aiLabelEn:
+      'FAQ accordion: heading + CTA on the left, click-to-expand question/answer list on the right',
+  },
+  cite_flow_amenity: {
+    type: 'cite_flow_amenity',
+    category: 'amenity',
+    style: 'luxury',
+    tags: ['amenity', 'video', 'sticky'],
+    status: 'draft',
+    responsive: true,
+    updatedAt: '2026-07-30',
+    label: 'Cite Flow Amenity',
+    accent: '#3f6b4f',
+    adminLabel: 'Cite Flow Amenity',
+    gradient: 'from-emerald-800 to-neutral-900',
+    defaultName: 'Cite Flow Amenity',
+    aiLabelVi: 'heading + video dính (sticky) bị cuộn đè lên + list bullet',
+    aiLabelEn: 'heading + sticky video scrolling over it + bullet list',
+  },
+  cite_flow_gallery: {
+    type: 'cite_flow_gallery',
+    category: 'gallery',
+    style: 'luxury',
+    tags: ['gallery', 'image'],
+    status: 'draft',
+    responsive: true,
+    updatedAt: '2026-07-30',
+    label: 'Cite Flow Gallery',
+    accent: '#3f6b4f',
+    adminLabel: 'Cite Flow Gallery',
+    gradient: 'from-emerald-800 to-neutral-900',
+    defaultName: 'Cite Flow Gallery',
+    aiLabelVi: '2 ảnh cạnh nhau, bo góc',
+    aiLabelEn: 'two rounded images side by side',
+  },
+  cite_flow_header: {
+    type: 'cite_flow_header',
+    category: 'header',
+    style: 'luxury',
+    tags: ['header', 'navigation', 'sticky'],
+    status: 'draft',
+    responsive: true,
+    updatedAt: '2026-07-30',
+    label: 'Cite Flow Header',
+    accent: '#3f6b4f',
+    adminLabel: 'Cite Flow Header',
+    gradient: 'from-emerald-800 to-neutral-900',
+    defaultName: 'Cite Flow Header',
+    aiLabelVi:
+      'header dính (fixed) trên cùng: logo + nav Contact, hamburger mobile mở panel Contact/email/social, ẩn/hiện theo hướng cuộn',
+    aiLabelEn:
+      'fixed top header: logo + Contact nav, mobile hamburger opens Contact/email/social panel, hides/shows on scroll direction',
+  },
+  cite_flow_footer: {
+    type: 'cite_flow_footer',
+    category: 'footer',
+    style: 'luxury',
+    tags: ['footer', 'sticky', 'links'],
+    status: 'draft',
+    responsive: true,
+    updatedAt: '2026-07-30',
+    label: 'Cite Flow Footer',
+    accent: '#3f6b4f',
+    adminLabel: 'Cite Flow Footer',
+    gradient: 'from-emerald-800 to-neutral-900',
+    defaultName: 'Cite Flow Footer',
+    aiLabelVi:
+      'footer "curtain reveal": khối cao dính (sticky) hiện dần khi cuộn tới cuối trang — heading liên hệ, cột Menu + Social, logo',
+    aiLabelEn:
+      '"curtain reveal" footer: a tall sticky block that reveals on scroll — contact heading, Menu + Social columns, logo',
+  },
+  cite_flow_contact_form: {
+    type: 'cite_flow_contact_form',
+    category: 'form',
+    style: 'luxury',
+    tags: ['form', 'contact'],
+    status: 'draft',
+    responsive: true,
+    updatedAt: '2026-07-30',
+    label: 'Cite Flow Contact Form',
+    accent: '#3f6b4f',
+    adminLabel: 'Cite Flow Contact Form',
+    gradient: 'from-emerald-800 to-neutral-900',
+    defaultName: 'Cite Flow Contact Form',
+    aiLabelVi:
+      'form liên hệ 2 cột: heading + thông tin liên hệ bên trái, form Name/Email/Message + nút gửi (đổi nhãn sau khi bấm) bên phải',
+    aiLabelEn:
+      'two-column contact section: heading + contact info on the left, Name/Email/Message form with a submit button that swaps label after sending on the right',
+  },
+  cite_flow_signature: {
+    type: 'cite_flow_signature',
+    category: 'hero',
+    style: 'luxury',
+    tags: ['scroll', 'pin', 'reveal'],
+    status: 'draft',
+    responsive: true,
+    updatedAt: '2026-07-30',
+    label: 'Cite Flow Signature',
+    accent: '#3f6b4f',
+    adminLabel: 'Cite Flow Signature',
+    gradient: 'from-emerald-800 to-neutral-900',
+    defaultName: 'Cite Flow Signature',
+    aiLabelVi:
+      'section full-viewport: 4 tấm màn trắng mở dần khi cuộn để lộ ảnh nền, 2 dòng title trượt vào giữa rồi tách ra, cuối cùng lộ title dịch vụ',
+    aiLabelEn:
+      'full-viewport section: 4 white panels scrub open on scroll to reveal a background image, two title lines slide together then apart, ending with a service title reveal',
   },
   altura_olympus: {
     type: 'altura_olympus',

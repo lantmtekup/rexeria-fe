@@ -155,6 +155,22 @@ export const FONTS: FontDef[] = [
     category: 'display',
     weights: [400, 500, 600, 700],
   },
+  {
+    id: 'aboreto',
+    label: 'Aboreto',
+    family: `'Aboreto', ${SYSTEM_FALLBACK_SANS}`,
+    category: 'display',
+    weights: [400],
+    note: 'Cite Flow — amenity heading display',
+  },
+  {
+    id: 'abril-fatface',
+    label: 'Abril Fatface',
+    family: `'Abril Fatface', Georgia, ${SYSTEM_FALLBACK_SERIF}`,
+    category: 'display',
+    weights: [400],
+    note: 'Cite Flow — hero/stat display serif',
+  },
 
   // ── Mono ─────────────────────────────────────────────────────────────
   {

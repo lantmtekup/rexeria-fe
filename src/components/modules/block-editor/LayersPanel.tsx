@@ -90,6 +90,9 @@ import {
   delvauxFaqElements,
   delvauxVariantItemElements,
 } from './blocks/_registry/defs/delvauxVariant';
+import { citeFlowFaqElements } from './blocks/_registry/defs/citeFlowFaq';
+import { citeFlowAmenityListElements } from './blocks/_registry/defs/citeFlowAmenity';
+import { citeFlowHeaderSocialLinkElements } from './blocks/_registry/defs/citeFlowHeader';
 import { mintDiscoverTabElements } from './blocks/_registry/defs/mintDiscover';
 import {
   resolveScrollMattisSlides,
@@ -156,6 +159,8 @@ import {
   type MintV2WorkCard,
   type MintVaultCoin,
   type MintVaultCraftItem,
+  type CiteFlowFaqItem,
+  type CiteFlowHeaderSocialLink,
 } from './types';
 
 export interface LayerElement {
@@ -1224,6 +1229,125 @@ export function elementsForType(
         icon: ImageIcon,
         fieldType: 'image',
         groupId: 'sku',
+      },
+    ];
+  }
+  if (type === 'cite_flow_faq') {
+    const rawItems = content?.items;
+    const items = Array.isArray(rawItems)
+      ? (rawItems as CiteFlowFaqItem[]).filter(
+          it => it && typeof it === 'object' && typeof it.question === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      {
+        key: 'ctaText',
+        label: 'CTA — Nhãn',
+        icon: Type,
+        fieldType: 'text',
+      },
+      {
+        key: 'ctaLink',
+        label: 'CTA — Link',
+        icon: Type,
+        fieldType: 'link',
+      },
+      ...citeFlowFaqElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý FAQ',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'cite_flow_amenity') {
+    const rawListItems = content?.listItems;
+    const listItems = Array.isArray(rawListItems)
+      ? (rawListItems as string[]).filter(it => typeof it === 'string')
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      { key: 'videoUrl', label: 'Video', icon: ImageIcon, fieldType: 'image' },
+      ...citeFlowAmenityListElements(listItems),
+      {
+        key: 'listItems',
+        label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'cite_flow_header') {
+    const rawSocialLinks = content?.socialLinks;
+    const socialLinks = Array.isArray(rawSocialLinks)
+      ? (rawSocialLinks as CiteFlowHeaderSocialLink[]).filter(
+          l => l && typeof l === 'object' && typeof l.label === 'string'
+        )
+      : [];
+    return [
+      { key: 'variant', label: 'Biến thể (dark/light)', icon: Type, fieldType: 'text' },
+      {
+        key: 'logoUrl',
+        label: 'Logo',
+        icon: ImageIcon,
+        fieldType: 'image',
+        groupId: 'logo',
+        groupLabel: 'Logo',
+      },
+      { key: 'logoAlt', label: 'Alt', icon: Type, fieldType: 'text', groupId: 'logo' },
+      { key: 'logoHref', label: 'Link', icon: Type, fieldType: 'link', groupId: 'logo' },
+      {
+        key: 'contactLabel',
+        label: 'Nhãn',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'contact',
+        groupLabel: 'Nav — Contact',
+      },
+      {
+        key: 'contactHref',
+        label: 'Link',
+        icon: Type,
+        fieldType: 'link',
+        groupId: 'contact',
+      },
+      {
+        key: 'emailHeading',
+        label: 'Tiêu đề mục',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'email',
+        groupLabel: 'Email',
+      },
+      {
+        key: 'emailLabel',
+        label: 'Nhãn',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'email',
+      },
+      {
+        key: 'emailHref',
+        label: 'mailto:',
+        icon: Type,
+        fieldType: 'link',
+        groupId: 'email',
+      },
+      {
+        key: 'socialHeading',
+        label: 'Tiêu đề mục',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'socialHeading',
+        groupLabel: 'Social Media — tiêu đề',
+      },
+      ...citeFlowHeaderSocialLinkElements(socialLinks),
+      {
+        key: 'socialLinks',
+        label: 'Thêm / quản lý social',
+        icon: ListChecks,
       },
     ];
   }

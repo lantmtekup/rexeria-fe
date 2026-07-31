@@ -191,6 +191,7 @@ const OVERLAY_TOP_BLOCK_TYPES = new Set<Block['blockType']>([
   'pnj_header',
   'delvaux_header',
   'springs_header',
+  'cite_flow_header',
 ]);
 
 /**

@@ -17,11 +17,16 @@
 import * as React from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { CustomEase } from 'gsap/CustomEase';
 import Lenis from 'lenis';
 
 import { useContainerMobile } from '../blocks/useContainerMobile';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, CustomEase);
+// Thanh địa chỉ mobile ẩn/hiện đổi viewport height → ScrollTrigger đo lại
+// quãng scrub sai. Bỏ qua resize do browser chrome gây ra (port từ
+// apps/cite-flow/app/lib/motion.ts).
+ScrollTrigger.config({ ignoreMobileResize: true });
 
 interface LandingMotionValue {
   /** Scroller cho ScrollTrigger: phần tử (editor canvas) hoặc null = window (/p). */

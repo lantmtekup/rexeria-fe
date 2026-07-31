@@ -86,6 +86,16 @@ import { housentFooterDef } from './defs/housentFooter';
 import { housentHeroDef } from './defs/housentHero';
 import { alturaOlympusDef } from './defs/alturaOlympus';
 import { heroScrollDef } from './defs/heroScroll';
+import { citeFlowHeroDef } from './defs/citeFlowHero';
+import { citeFlowIntroDef } from './defs/citeFlowIntro';
+import { citeFlowStatsDef } from './defs/citeFlowStats';
+import { citeFlowFaqDef } from './defs/citeFlowFaq';
+import { citeFlowAmenityDef } from './defs/citeFlowAmenity';
+import { citeFlowGalleryDef } from './defs/citeFlowGallery';
+import { citeFlowHeaderDef } from './defs/citeFlowHeader';
+import { citeFlowFooterDef } from './defs/citeFlowFooter';
+import { citeFlowContactFormDef } from './defs/citeFlowContactForm';
+import { citeFlowSignatureDef } from './defs/citeFlowSignature';
 import { scrollMattisDef } from './defs/scrollMattis';
 import { housentListingsDef } from './defs/housentListings';
 import { housentSolutionsDef } from './defs/housentSolutions';
@@ -201,6 +211,16 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   housent_hero: housentHeroDef as BlockDef,
   altura_olympus: alturaOlympusDef as BlockDef,
   hero_scroll: heroScrollDef as BlockDef,
+  cite_flow_hero: citeFlowHeroDef as BlockDef,
+  cite_flow_intro: citeFlowIntroDef as BlockDef,
+  cite_flow_stats: citeFlowStatsDef as BlockDef,
+  cite_flow_faq: citeFlowFaqDef as BlockDef,
+  cite_flow_amenity: citeFlowAmenityDef as BlockDef,
+  cite_flow_gallery: citeFlowGalleryDef as BlockDef,
+  cite_flow_header: citeFlowHeaderDef as BlockDef,
+  cite_flow_footer: citeFlowFooterDef as BlockDef,
+  cite_flow_contact_form: citeFlowContactFormDef as BlockDef,
+  cite_flow_signature: citeFlowSignatureDef as BlockDef,
   scroll_mattis: scrollMattisDef as BlockDef,
   housent_stats: housentStatsDef as BlockDef,
   housent_listings: housentListingsDef as BlockDef,
