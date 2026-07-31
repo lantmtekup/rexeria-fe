@@ -31,9 +31,14 @@ import {
   type SidebarTab,
 } from '@/components/modules/block-editor-v2/BlockEditorSidebar';
 import { BlockPreview } from '@/components/modules/block-editor-v2/BlockPreview';
+import { PageCanvas } from '@/components/modules/block-editor-v2/PageCanvas';
+import type { PageCanvasBlockActions } from '@/components/modules/block-editor-v2/PageCanvasBlockFrame';
 import { isInspectorKind } from '@/components/modules/block-editor-v2/inspector/kinds';
 import { resolveElementMeta } from '@/components/modules/block-editor-v2/resolveElementKind';
-import { CanvasZoomBar } from '@/components/modules/block-editor-v2/CanvasZoomBar';
+import {
+  CanvasZoomBar,
+  type CanvasMode,
+} from '@/components/modules/block-editor-v2/CanvasZoomBar';
 import {
   getContentAt,
   setContentAt,
@@ -207,68 +212,14 @@ function bumpVersion(v: string): string {
   return v + '-r2';
 }
 
-/** Selection is per page, so the key is scoped by page id too. */
-function activeBlockStorageKey(templateId: string, pageId: string): string {
-  return `rexer-editor:active-block:${templateId}:${pageId}`;
-}
-
-function activePageStorageKey(templateId: string): string {
-  return `rexer-editor:active-page:${templateId}`;
-}
-
-function readStoredActiveBlockId(
-  templateId: string,
-  pageId: string
-): string | null {
-  try {
-    const scoped = sessionStorage.getItem(
-      activeBlockStorageKey(templateId, pageId)
-    );
-    if (scoped) return scoped;
-    // Sessions opened before multi-page wrote an unscoped key. Honour it for
-    // the home page so an in-flight session doesn't lose its selection.
-    return pageId === DEFAULT_PAGE_ID
-      ? sessionStorage.getItem(`rexer-editor:active-block:${templateId}`)
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeStoredActiveBlockId(
-  templateId: string,
-  pageId: string,
-  blockId: string
-): void {
-  try {
-    sessionStorage.setItem(activeBlockStorageKey(templateId, pageId), blockId);
-  } catch {
-    /* ignore quota */
-  }
-}
-
-function readStoredActivePageId(templateId: string): string | null {
-  try {
-    return sessionStorage.getItem(activePageStorageKey(templateId));
-  } catch {
-    return null;
-  }
-}
-
-function writeStoredActivePageId(templateId: string, pageId: string): void {
-  try {
-    sessionStorage.setItem(activePageStorageKey(templateId), pageId);
-  } catch {
-    /* ignore quota */
-  }
-}
-
-/** Chọn active block hợp lệ — tránh fallback ngầm về blocks[0]. */
-function resolveActiveBlockId(
-  blocks: Block[],
-  preferred?: string | null
-): string | null {
-  if (preferred && blocks.some(b => b.id === preferred)) return preferred;
+/**
+ * Which block/page/canvas-mode the author last looked at is NOT persisted —
+ * not in sessionStorage and not in the saved blueprint. The editor always
+ * opens on page mode, the home page, and the first block. Remembering it made
+ * every click a document change (autosave fires, version diff noise) for a
+ * preference nobody asked to keep.
+ */
+function firstBlockId(blocks: Block[]): string | null {
   return blocks[0]?.id ?? null;
 }
 
@@ -314,6 +265,12 @@ export function BlockEditorV2({
   });
   const publishState = usePublishState();
   const [fitRequestKey, setFitRequestKey] = React.useState(0);
+  /**
+   * Full page vs single-block artboard. Block-direct mode has exactly one
+   * block and no page to stitch, so it is pinned to the artboard.
+   */
+  const [canvasMode, setCanvasMode] = React.useState<CanvasMode>('page');
+  const effectiveCanvasMode: CanvasMode = blockMode ? 'block' : canvasMode;
   /** Tránh fetch + reset canvas khi effect load chạy lại cùng template/block. */
   const loadedCanvasKeyRef = React.useRef<string | null>(null);
 
@@ -323,11 +280,11 @@ export function BlockEditorV2({
     version: template?.version,
     // Block mode lưu qua nút 🔖 (blocks.update), KHÔNG autosave-template.
     enabled: !blockMode && !!template,
+    // `active_page_id` / `active_block_id` are deliberately absent: which
+    // block the author had selected is not part of the document.
     buildPayload: () =>
       serializeCanvasPages({
         pages: canvas.pages,
-        activePageId: canvas.activePageId,
-        activeBlockId: canvas.activeId ?? undefined,
         publish: publishState.publish,
         transition,
       }),
@@ -459,10 +416,7 @@ export function BlockEditorV2({
             updated_at: blk.updated_at,
             canvas_data: wire,
           } as CanvasTemplate);
-          canvas.reset(
-            blocks,
-            resolveActiveBlockId(blocks, parsed?.activeBlockId)
-          );
+          canvas.reset(blocks, firstBlockId(blocks));
           setTransition(parsed?.transition ?? 'none');
           publishState.setPublish(undefined);
           loadedCanvasKeyRef.current = canvasKey;
@@ -672,23 +626,13 @@ export function BlockEditorV2({
                 blocks: initial,
               },
             ];
-        const storedPageId = templateId
-          ? readStoredActivePageId(templateId)
-          : null;
-        const activePageId =
-          [parsed?.activePageId, storedPageId].find(
-            id => id && pages.some(p => p.id === id)
-          ) ?? (pages.find(p => p.isHome) ?? pages[0]).id;
-        const activePageBlocks =
-          pages.find(p => p.id === activePageId)?.blocks ?? [];
-        const storedActive = templateId
-          ? readStoredActiveBlockId(templateId, activePageId)
-          : null;
-        const resolvedActive = resolveActiveBlockId(
-          activePageBlocks,
-          parsed?.activeBlockId ?? storedActive
+        // Always open on the home page's first block — see `firstBlockId`.
+        const homePage = pages.find(p => p.isHome) ?? pages[0];
+        canvas.resetPages(
+          pages,
+          homePage.id,
+          firstBlockId(homePage.blocks ?? [])
         );
-        canvas.resetPages(pages, activePageId, resolvedActive);
         setTransition(parsed?.transition ?? 'none');
         loadedCanvasKeyRef.current = canvasKey;
         // Publish state source-of-truth precedence:
@@ -723,7 +667,7 @@ export function BlockEditorV2({
         if (cancelled) return;
         setLoadError(rxErrorMessage(err));
         const seeded = seedBlocks();
-        canvas.reset(seeded, resolveActiveBlockId(seeded));
+        canvas.reset(seeded, firstBlockId(seeded));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -761,11 +705,18 @@ export function BlockEditorV2({
   const editVariant = deviceState.editVariant;
   const langKey = deviceState.lang === 'vi' ? 'contentVi' : 'contentEn';
 
-  const updateActiveContent = (
+  /**
+   * Content writes are addressed by block id, never by "the active block".
+   * On the full-page canvas a commit can land after the user has already
+   * clicked into another block — an inline edit commits on blur, a drag on
+   * pointerup — and `mutateActive` would then write to the wrong block.
+   */
+  const updateBlockContent = (
+    blockId: string,
     next: BlockContent | ((prev: BlockContent) => BlockContent)
   ) => {
     if (tabletReadOnly()) return;
-    canvas.mutateActive(b => {
+    canvas.mutateBlock(blockId, b => {
       const variants = b[langKey];
       const prev =
         (editVariant === 'mobile' ? variants.mobile : undefined) ??
@@ -775,6 +726,14 @@ export function BlockEditorV2({
       b[langKey] = { ...variants, [editVariant]: resolved };
     });
     autosave.markDirty();
+  };
+
+  /** Same write, aimed at the current selection (sidebar + legacy toolbar). */
+  const updateActiveContent = (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => {
+    if (!canvas.activeId) return;
+    updateBlockContent(canvas.activeId, next);
   };
 
   const handleUpdateElementStyle = (key: string, patch: ElementStyle) => {
@@ -792,9 +751,9 @@ export function BlockEditorV2({
     autosave.markDirty();
   };
 
-  const handleResetElementStyle = (key: string) => {
+  const handleResetElementStyleFor = (blockId: string, key: string) => {
     if (deviceState.device === 'tablet') return;
-    canvas.mutateActive(b => {
+    canvas.mutateBlock(blockId, b => {
       const variants = b.elementStyles;
       const currentMap = variants?.[editVariant];
       if (!currentMap?.[key]) return;
@@ -808,9 +767,17 @@ export function BlockEditorV2({
     autosave.markDirty();
   };
 
-  const handleUpdateBackground = (next: BlockBackground | undefined) => {
+  const handleResetElementStyle = (key: string) => {
+    if (!canvas.activeId) return;
+    handleResetElementStyleFor(canvas.activeId, key);
+  };
+
+  const handleUpdateBackgroundFor = (
+    blockId: string,
+    next: BlockBackground | undefined
+  ) => {
     if (tabletReadOnly()) return;
-    canvas.mutateActive(b => {
+    canvas.mutateBlock(blockId, b => {
       const variants = b.background;
       if (!next) {
         if (!variants) return;
@@ -835,6 +802,11 @@ export function BlockEditorV2({
       };
     });
     autosave.markDirty();
+  };
+
+  const handleUpdateBackground = (next: BlockBackground | undefined) => {
+    if (!canvas.activeId) return;
+    handleUpdateBackgroundFor(canvas.activeId, next);
   };
 
   const handleChangeBlockMotion = React.useCallback(
@@ -862,11 +834,12 @@ export function BlockEditorV2({
   );
 
   const handleCommitElementPosition = (
+    blockId: string,
     key: string,
     pos: { x: number; y: number }
   ) => {
     if (tabletReadOnly()) return;
-    canvas.mutateActive(b => {
+    canvas.mutateBlock(blockId, b => {
       const variants = b.elementPositions ?? { desktop: {} };
       const currentMap = variants[editVariant] ?? {};
       // Drop the entry when the offset is back to zero — keeps wire payloads
@@ -923,11 +896,12 @@ export function BlockEditorV2({
   };
 
   const handleCommitExtraElementPosition = (
+    blockId: string,
     id: string,
     pos: { x: number; y: number }
   ) => {
     if (tabletReadOnly()) return;
-    canvas.mutateActive(b => {
+    canvas.mutateBlock(blockId, b => {
       b.extraElements = (b.extraElements ?? []).map(e =>
         e.id === id ? { ...e, position: pos } : e
       );
@@ -995,24 +969,45 @@ export function BlockEditorV2({
   };
 
   // ── Selection / inline edit ────────────────────────────────────────────
-  // Drop selection when block changes; drop inline edit when device/lang
-  // changes (content shape differs across variants).
-  React.useEffect(() => {
-    selection.selectKey(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvas.activeId]);
+  // Drop inline edit when device/lang changes (content shape differs across
+  // variants). Selection is NOT cleared on `canvas.activeId` change: on the
+  // full-page canvas, clicking an element in another block sets the active
+  // block and the key in the same commit, and an effect here would wipe the
+  // key it just received. The paths that really do invalidate the selection
+  // (block/page switch from the panels, block removal) clear it themselves.
   React.useEffect(() => {
     selection.endInlineEdit();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceState.device, deviceState.lang]);
 
-  const handleStartInlineEdit = (key: string) => {
+  /**
+   * Canvas element click — makes the owning block active first, so every
+   * active-scoped surface (sidebar, layers, motion panel, legacy toolbar)
+   * follows the selection without knowing the page canvas exists.
+   */
+  const handleSelectCanvasElement = React.useCallback(
+    (blockId: string | null, key: string | null) => {
+      if (blockId && blockId !== canvas.activeId) {
+        canvas.setActiveId(blockId);
+        setSelectedExtraElementId(null);
+      }
+      selection.selectKey(key);
+    },
+    [canvas, selection]
+  );
+
+  const handleStartInlineEdit = (blockId: string, key: string) => {
     if (tabletReadOnly()) return;
+    if (blockId !== canvas.activeId) handleSelectCanvasElement(blockId, key);
     selection.startInlineEdit(key);
   };
 
-  const handleCommitInlineEdit = (key: string, value: string) => {
-    const block = canvas.blocks.find(b => b.id === canvas.activeId);
+  const handleCommitInlineEdit = (
+    blockId: string,
+    key: string,
+    value: string
+  ) => {
+    const block = canvas.blocks.find(b => b.id === blockId);
     if (!block) {
       selection.endInlineEdit();
       return;
@@ -1052,7 +1047,7 @@ export function BlockEditorV2({
       selection.endInlineEdit();
       return;
     }
-    canvas.mutateActive(b => {
+    canvas.mutateBlock(blockId, b => {
       const variants = b[langKey];
       const baseContent =
         (editVariant === 'mobile' ? variants.mobile : undefined) ??
@@ -1175,8 +1170,6 @@ export function BlockEditorV2({
 
       const payload = serializeCanvasPages({
         pages: canvas.pages,
-        activePageId: canvas.activePageId,
-        activeBlockId: canvas.activeId ?? undefined,
         publish: publishState.publish,
         transition,
       });
@@ -1398,18 +1391,31 @@ export function BlockEditorV2({
   };
 
   // ── Block CRUD ──────────────────────────────────────────────────────────
-  const handleAddBlocks = (types: BlockType[]) => {
-    if (types.length === 0) return;
-    const created = types.map(t => createBlock(t));
+  /**
+   * Block the "add" dialog should insert AFTER. Set by the page canvas frame
+   * bar; null means append, which is what the rail's + button wants.
+   */
+  const [insertAfterId, setInsertAfterId] = React.useState<string | null>(null);
+
+  /** Append, or splice in after `insertAfterId` when the dialog was opened
+   *  from a block's own frame on the page canvas. */
+  const insertBlocks = (created: Block[]) => {
     canvas.mutate(draft => {
-      draft.push(...created);
+      const at = insertAfterId
+        ? draft.findIndex(b => b.id === insertAfterId)
+        : -1;
+      if (at >= 0) draft.splice(at + 1, 0, ...created);
+      else draft.push(...created);
     });
     const last = created[created.length - 1];
     canvas.setActiveId(last.id);
-    if (templateId && !blockMode) {
-      writeStoredActiveBlockId(templateId, canvas.activePageId, last.id);
-    }
+    setInsertAfterId(null);
     autosave.markDirty();
+  };
+
+  const handleAddBlocks = (types: BlockType[]) => {
+    if (types.length === 0) return;
+    insertBlocks(types.map(t => createBlock(t)));
   };
 
   const handleAddSavedBlocks = (
@@ -1419,15 +1425,53 @@ export function BlockEditorV2({
     // Saved blocks carry their library id. Inserting the same one twice — on
     // two pages, or twice on one page — would duplicate block ids, which makes
     // `mutateBlock` edit the wrong block and conflates the two in analytics.
-    const inserted = blocks.map(b => ({ ...b, id: genId() }));
-    canvas.mutate(draft => {
-      draft.push(...inserted);
-    });
-    const last = inserted[inserted.length - 1];
-    canvas.setActiveId(last.id);
-    if (templateId && !blockMode) {
-      writeStoredActiveBlockId(templateId, canvas.activePageId, last.id);
+    insertBlocks(blocks.map(b => ({ ...b, id: genId() })));
+  };
+
+  const handleDuplicateBlock = (id: string) => {
+    const source = canvas.blocks.find(b => b.id === id);
+    if (!source) return;
+    const copy: Block = {
+      ...structuredClone(source),
+      id: genId(),
+      name: `${source.name} (copy)`,
+    };
+    // Extra elements carry their own ids; a duplicate would make
+    // `patchExtraElement` hit both blocks at once.
+    if (copy.extraElements?.length) {
+      copy.extraElements = copy.extraElements.map(el => ({
+        ...el,
+        id: genId(),
+      }));
     }
+    canvas.mutate(draft => {
+      const at = draft.findIndex(b => b.id === id);
+      if (at >= 0) draft.splice(at + 1, 0, copy);
+      else draft.push(copy);
+    });
+    canvas.setActiveId(copy.id);
+    selection.selectKey(null);
+    setSelectedExtraElementId(null);
+    autosave.markDirty();
+  };
+
+  const handleToggleBlockVisible = (id: string) => {
+    canvas.mutateBlock(id, b => {
+      b.isVisible = b.isVisible === false;
+    });
+    autosave.markDirty();
+  };
+
+  /** Move one step up (-1) or down (+1). Clamped at both ends. */
+  const handleMoveBlock = (id: string, direction: -1 | 1) => {
+    const from = canvas.blocks.findIndex(b => b.id === id);
+    if (from < 0) return;
+    const to = from + direction;
+    if (to < 0 || to >= canvas.blocks.length) return;
+    const next = [...canvas.blocks];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    canvas.replaceBlocks(next);
     autosave.markDirty();
   };
 
@@ -1442,9 +1486,9 @@ export function BlockEditorV2({
       if (nextActive === id) nextActive = draft[0]?.id ?? null;
     });
     if (nextActive !== canvas.activeId) canvas.setActiveId(nextActive);
-    if (nextActive && templateId && !blockMode) {
-      writeStoredActiveBlockId(templateId, canvas.activePageId, nextActive);
-    }
+    // The selection pointed into the block that no longer exists.
+    selection.selectKey(null);
+    setSelectedExtraElementId(null);
     autosave.markDirty();
   };
 
@@ -1455,17 +1499,32 @@ export function BlockEditorV2({
       canvas.setActiveId(id);
       selection.selectKey(null);
       setSelectedExtraElementId(null);
-      if (templateId && !blockMode) {
-        writeStoredActiveBlockId(templateId, canvas.activePageId, id);
-        autosave.markDirty();
-      }
     },
-    [canvas, templateId, blockMode, selection, autosave]
+    [canvas, selection]
   );
 
   const handleReorderBlocks = (nextOrder: Block[]) => {
     canvas.replaceBlocks(nextOrder);
     autosave.markDirty();
+  };
+
+  /** Clicking an extra element also decides which block is active — on the
+   *  page canvas it may belong to a block that isn't selected yet. */
+  const handleSelectExtraElement = (blockId: string, id: string | null) => {
+    if (id && blockId !== canvas.activeId) handleSelectBlock(blockId);
+    setSelectedExtraElementId(id);
+  };
+
+  /** Block-level verbs surfaced on each frame of the page canvas. */
+  const pageBlockActions: PageCanvasBlockActions = {
+    onAddAfter: id => {
+      setInsertAfterId(id);
+      setAddOpen(true);
+    },
+    onDuplicate: handleDuplicateBlock,
+    onToggleVisible: handleToggleBlockVisible,
+    onMove: handleMoveBlock,
+    onRemove: handleRemoveBlock,
   };
 
   // ── Page CRUD ───────────────────────────────────────────────────────────
@@ -1477,12 +1536,8 @@ export function BlockEditorV2({
       // toolbar doesn't point at an element that isn't on screen any more.
       selection.selectKey(null);
       setSelectedExtraElementId(null);
-      if (templateId && !blockMode) {
-        writeStoredActivePageId(templateId, id);
-        autosave.markDirty();
-      }
     },
-    [canvas, templateId, blockMode, selection, autosave]
+    [canvas, selection]
   );
 
   const handleAddPage = React.useCallback(() => {
@@ -1585,17 +1640,8 @@ export function BlockEditorV2({
     deviceState.device === 'tablet' ? 'desktop' : deviceState.device;
 
   const handlePreview = React.useCallback(() => {
-    if (templateId && !blockMode && canvas.activeId) {
-      writeStoredActiveBlockId(
-        templateId,
-        canvas.activePageId,
-        canvas.activeId
-      );
-      writeStoredActivePageId(templateId, canvas.activePageId);
-      autosave.markDirty();
-    }
     setPreviewing(true);
-  }, [templateId, blockMode, canvas.activeId, canvas.activePageId, autosave]);
+  }, []);
 
   // ── Duplicate ───────────────────────────────────────────────────────────
   const handleDuplicateConfirm = async (name: string) => {
@@ -1613,8 +1659,6 @@ export function BlockEditorV2({
         // here would turn a 3-page template into a 1-page copy.
         canvas_data: serializeCanvasPages({
           pages: structuredClone(canvas.pages),
-          activePageId: canvas.activePageId,
-          activeBlockId: canvas.activeId ?? undefined,
         }) as unknown as Record<string, unknown>,
       });
       toast.success(`Đã lưu thành "${created.name}"`);
@@ -1973,25 +2017,26 @@ export function BlockEditorV2({
                 </div>
               </div>
             ) : null}
-            {activeBlock ? (
-              <BlockPreview
-                block={activeBlock}
+            {canvas.blocks.length === 0 ? (
+              <EmptyState onAdd={() => setAddOpen(true)} />
+            ) : effectiveCanvasMode === 'page' ? (
+              <PageCanvas
+                blocks={canvas.blocks}
+                activeBlockId={canvas.activeId}
                 lang={deviceState.lang}
                 device={deviceState.device}
                 zoom={deviceState.zoom}
                 selectedElementKey={selection.selectedKey}
                 editingKey={selection.editingKey}
-                onSelectElement={selection.selectKey}
+                onSelectElement={handleSelectCanvasElement}
                 onStartInlineEdit={handleStartInlineEdit}
                 onCommitInlineEdit={handleCommitInlineEdit}
                 onCancelInlineEdit={selection.endInlineEdit}
                 onCommitElementPosition={handleCommitElementPosition}
-                onContentChange={updateActiveContent}
-                onResetElementStyle={() => {
-                  if (!selection.selectedKey) return;
-                  handleResetElementStyle(selection.selectedKey);
-                }}
-                onUpdateBackground={handleUpdateBackground}
+                onContentChange={updateBlockContent}
+                onResetElementStyle={handleResetElementStyleFor}
+                onUpdateBackground={handleUpdateBackgroundFor}
+                blockActions={pageBlockActions}
                 motionMode={motionPreview.previewing ? 'preview' : 'edit'}
                 motionPreviewNonce={motionPreview.nonce}
                 motionPreviewElement={motionPreview.previewElement}
@@ -1999,7 +2044,33 @@ export function BlockEditorV2({
                 onZoomChange={deviceState.setZoom}
                 fitRequestKey={fitRequestKey}
                 selectedExtraElementId={selectedExtraElementId}
-                onSelectExtraElement={setSelectedExtraElementId}
+                onSelectExtraElement={handleSelectExtraElement}
+                onCommitExtraElementPosition={handleCommitExtraElementPosition}
+              />
+            ) : activeBlock ? (
+              <BlockPreview
+                block={activeBlock}
+                lang={deviceState.lang}
+                device={deviceState.device}
+                zoom={deviceState.zoom}
+                selectedElementKey={selection.selectedKey}
+                editingKey={selection.editingKey}
+                onSelectElement={handleSelectCanvasElement}
+                onStartInlineEdit={handleStartInlineEdit}
+                onCommitInlineEdit={handleCommitInlineEdit}
+                onCancelInlineEdit={selection.endInlineEdit}
+                onCommitElementPosition={handleCommitElementPosition}
+                onContentChange={updateBlockContent}
+                onResetElementStyle={handleResetElementStyleFor}
+                onUpdateBackground={handleUpdateBackgroundFor}
+                motionMode={motionPreview.previewing ? 'preview' : 'edit'}
+                motionPreviewNonce={motionPreview.nonce}
+                motionPreviewElement={motionPreview.previewElement}
+                onAutoFitZoom={deviceState.applyAutoFitZoom}
+                onZoomChange={deviceState.setZoom}
+                fitRequestKey={fitRequestKey}
+                selectedExtraElementId={selectedExtraElementId}
+                onSelectExtraElement={handleSelectExtraElement}
                 onCommitExtraElementPosition={handleCommitExtraElementPosition}
               />
             ) : (
@@ -2011,6 +2082,8 @@ export function BlockEditorV2({
               onFitToFrame={() => setFitRequestKey(k => k + 1)}
               device={deviceState.device}
               onDeviceChange={deviceState.setDevice}
+              mode={blockMode ? undefined : canvasMode}
+              onModeChange={blockMode ? undefined : setCanvasMode}
             />
           </div>
 
@@ -2053,7 +2126,11 @@ export function BlockEditorV2({
 
         <AddBlockDialog
           open={addOpen}
-          onOpenChange={setAddOpen}
+          onOpenChange={open => {
+            setAddOpen(open);
+            // Dismissed without picking — the next + must append, not splice.
+            if (!open) setInsertAfterId(null);
+          }}
           onPick={handleAddBlocks}
           onPickSaved={handleAddSavedBlocks}
         />
@@ -2126,13 +2203,6 @@ export function BlockEditorV2({
               draft.push(inserted);
             });
             canvas.setActiveId(inserted.id);
-            if (templateId && !blockMode) {
-              writeStoredActiveBlockId(
-                templateId,
-                canvas.activePageId,
-                inserted.id
-              );
-            }
             autosave.markDirty();
             toast.success(`Đã thêm block "${block.name}" từ AI`);
           }}

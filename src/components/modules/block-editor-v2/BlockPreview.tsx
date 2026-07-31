@@ -8,13 +8,14 @@ import { cn } from '@/lib/cn';
 
 import { FLOATING, R_FLOATING } from './chrome';
 
-import { CanvasElementEditChip } from './CanvasElementEditChip';
+import { CanvasElementChrome } from './CanvasElementChrome';
+import { CANVAS_SURFACE_CHROME_CLASS } from './canvasSurfaceClass';
+import { CANVAS_ZOOM_MIN, clampCanvasZoom } from './canvasZoom';
 import { LinkNav } from '@/components/modules/block-editor/links/LinkNav';
 import { DEVICE_FRAME_WIDTH } from '@/components/modules/block-editor/deviceFrame';
 import { ExtraElementOverlay } from './ExtraElementOverlay';
 import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
-import { isInspectorKind } from './inspector/kinds';
-import { SelectionToolbar } from './inspector/SelectionToolbar';
+import { useCanvasElementLayer } from './hooks/useCanvasElementLayer';
 import { LandingMotionRoot } from '@/components/modules/block-editor/motion/LandingMotion';
 import {
   MotionBlockRoot,
@@ -24,12 +25,6 @@ import type {
   BlockMotion,
   EditorMode,
 } from '@/components/modules/block-editor/motion/types';
-import {
-  isInlineTextKey,
-  resolveElementMeta,
-  resolveLinkAnchorKey,
-  resolveSiblingLinkKey,
-} from './resolveElementKind';
 import {
   readVariant,
   type Block,
@@ -47,35 +42,49 @@ interface BlockPreviewProps {
   selectedElementKey: string | null;
   /** Key currently being edited inline (double-click). Null when not editing. */
   editingKey: string | null;
-  onSelectElement: (key: string | null, rect: DOMRect | null) => void;
+  /**
+   * Element callbacks all carry the owning block id — the artboard only ever
+   * has one, but `PageCanvas` shares these handlers and a commit can land
+   * after the active block has already changed.
+   */
+  onSelectElement: (
+    blockId: string | null,
+    key: string | null,
+    rect: DOMRect | null
+  ) => void;
   /** Triggered by double-click on a text element. */
-  onStartInlineEdit: (key: string) => void;
+  onStartInlineEdit: (blockId: string, key: string) => void;
   /** Called on blur / Enter / Esc with the final string value. */
-  onCommitInlineEdit: (key: string, value: string) => void;
+  onCommitInlineEdit: (blockId: string, key: string, value: string) => void;
   onCancelInlineEdit: () => void;
   /**
    * Persist a new x/y offset for an element after a canvas drag completes.
    * Coordinates are in unscaled CSS pixels (delta already divided by zoom).
    */
   onCommitElementPosition?: (
+    blockId: string,
     key: string,
     pos: { x: number; y: number }
   ) => void;
   /**
-   * Patch active block content — used by the canvas hover chip (image upload)
+   * Patch block content — used by the canvas hover chip (image upload)
    * and the floating selection toolbar (AI / delete), which needs the
    * functional form to read the previous value.
    */
   onContentChange?: (
+    blockId: string,
     next: BlockContent | ((prev: BlockContent) => BlockContent)
   ) => void;
   /**
    * Clear every style override on the selected element. Powers the floating
    * selection toolbar's reset action.
    */
-  onResetElementStyle?: () => void;
+  onResetElementStyle?: (blockId: string, key: string) => void;
   /** Replace the block-level background (selection toolbar delete on `__background__`). */
-  onUpdateBackground?: (next: BlockBackground | undefined) => void;
+  onUpdateBackground?: (
+    blockId: string,
+    next: BlockBackground | undefined
+  ) => void;
   /** Editor lifecycle for motion subsystem. Default 'edit' (no-op). */
   motionMode?: EditorMode;
   /**
@@ -92,7 +101,7 @@ interface BlockPreviewProps {
   motionPreviewElement?: string | null;
   /**
    * Fired on mount + whenever `device` changes with the zoom % needed to fit
-   * the device frame fully in the visible canvas surface (clamped 20–100%).
+   * the device frame fully in the visible canvas surface (capped at 100%).
    * BlockEditor uses this to auto-fit so users don't have to scroll on first
    * load when the desktop frame (1440px) is wider than the viewport.
    */
@@ -106,17 +115,13 @@ interface BlockPreviewProps {
   fitRequestKey?: number;
   // ── ExtraElements (free-drag user-added objects) ────────────────────────
   selectedExtraElementId?: string | null;
-  onSelectExtraElement?: (id: string | null) => void;
+  onSelectExtraElement?: (blockId: string, id: string | null) => void;
   onCommitExtraElementPosition?: (
+    blockId: string,
     id: string,
     pos: { x: number; y: number }
   ) => void;
 }
-
-const ZOOM_MIN = 25;
-const ZOOM_MAX = 200;
-
-const clampZoom = (n: number) => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, n));
 
 /**
  * Canvas surface padding — must mirror the `p-8 pb-20` classes on the surface
@@ -127,30 +132,8 @@ const SURFACE_PAD_X = 64;
 const SURFACE_PAD_TOP = 32;
 const SURFACE_PAD_BOTTOM = 80;
 
-/**
- * Free-drag guard: an element must keep at least this many (unscaled) px
- * inside the device frame. Without it a drag can park content far outside the
- * frame where it is invisible on canvas AND on `/p` — unrecoverable except by
- * undo, which users rarely reach for after a few more edits.
- */
-const DRAG_MIN_VISIBLE = 32;
-
 const clampTo = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
-
-/** Apply free-drag bounds when they exist; pass the raw value through when the
- *  element was already outside the frame (bounds === null). */
-function clampDrag(
-  x: number,
-  y: number,
-  bounds: { minX: number; maxX: number; minY: number; maxY: number } | null
-) {
-  if (!bounds) return { x, y };
-  return {
-    x: clampTo(x, bounds.minX, bounds.maxX),
-    y: clampTo(y, bounds.minY, bounds.maxY),
-  };
-}
 
 /**
  * Block types that pin content with native `position: sticky` + viewport
@@ -200,48 +183,6 @@ const OVERLAY_TOP_BLOCK_TYPES = new Set<Block['blockType']>([
   'delvaux_header',
   'springs_header',
 ]);
-
-/**
- * Resolve a canvas element by key. When a block duplicates the same
- * `data-element-key` across responsive variants (one hidden via CSS), prefer
- * the node that currently has a layout box so hover/chip/inline-edit bind to
- * the visible instance — not the first match in DOM order.
- */
-function findElementByKey(
-  surface: HTMLElement,
-  key: string
-): HTMLElement | null {
-  const nodes = surface.querySelectorAll<HTMLElement>(
-    `[data-element-key="${CSS.escape(key)}"]`
-  );
-  if (nodes.length === 0) return null;
-  if (nodes.length === 1) return nodes[0];
-  for (const node of nodes) {
-    const rect = node.getBoundingClientRect();
-    if (rect.width > 0 && rect.height > 0) return node;
-  }
-  return nodes[0];
-}
-
-/** Keep hover alive while the pointer travels from element → edit chip. */
-function isPointerInChipCorridor(
-  clientX: number,
-  clientY: number,
-  elementRect: DOMRect,
-  wideChip: boolean
-): boolean {
-  const chipWidth = wideChip ? 148 : 104;
-  const chipHeight = 28;
-  const bridge = 32;
-  const anchorX = elementRect.right;
-  const anchorY = elementRect.top;
-  return (
-    clientX >= anchorX - chipWidth - bridge &&
-    clientX <= anchorX + bridge &&
-    clientY >= anchorY - chipHeight - 8 - bridge &&
-    clientY <= anchorY + bridge
-  );
-}
 
 export function BlockPreview({
   block,
@@ -446,7 +387,7 @@ export function BlockPreview({
         if (!onZoomChangeRef.current) return;
         e.preventDefault();
         const { dy } = normalizeDelta(e);
-        const next = clampZoom(zoomRef.current * Math.exp(-dy * 0.008));
+        const next = clampCanvasZoom(zoomRef.current * Math.exp(-dy * 0.008));
         const rounded = Math.round(next);
         if (rounded === Math.round(zoomRef.current)) return;
         onZoomChangeRef.current(rounded);
@@ -536,207 +477,40 @@ export function BlockPreview({
     };
   }, []);
 
-  // ── Free-form drag (Figma-style) ─────────────────────────────────────
-  // Pointer is captured to the surface so the drag survives the cursor
-  // wandering across other elements. Coordinates are stored in unscaled
-  // CSS pixels — we divide by `scale` so a 100px drag at 50% zoom moves
-  // the element 200px in its own coord space, matching how the user
-  // perceives it on a zoomed canvas.
-  const dragRef = React.useRef<{
-    el: HTMLElement;
-    key: string;
-    startClientX: number;
-    startClientY: number;
-    baseX: number;
-    baseY: number;
-    /** Allowed x/y range so the element keeps `DRAG_MIN_VISIBLE` px inside the
-     *  device frame. Null when the element already sits outside — clamping it
-     *  then would yank it back on the first pixel of drag. */
-    bounds: { minX: number; maxX: number; minY: number; maxY: number } | null;
-    /** Set to true once the pointer has moved past the drag threshold. */
-    active: boolean;
-  } | null>(null);
-  // Set true on pointerup of a real drag; consumed by the next click event
-  // so a drag doesn't also trigger element selection toggling.
-  const justDraggedRef = React.useRef(false);
-  // Key text được tương tác gần nhất. Double-click vào title nằm trong flow có
-  // thể để click thứ 2 rơi xuống nền (toolbar chọn đẩy element vài px) → selection
-  // bị ghi đè bằng `__background__`. Ref này giữ key text từ click thứ NHẤT để
-  // handleDoubleClick fallback chính xác (ổn định cho mọi block).
-  const lastTextKeyRef = React.useRef<string | null>(null);
-
-  // ── Hover edit chip ──────────────────────────────────────────────────
-  const [hoveredKey, setHoveredKey] = React.useState<string | null>(null);
-  const [hoveredRect, setHoveredRect] = React.useState<DOMRect | null>(null);
-  /** Image field currently showing the upload popover (opened by click). */
-  const [imageEditKey, setImageEditKey] = React.useState<string | null>(null);
-  /** Link field currently showing the link picker popover (opened by click). */
-  const [linkEditKey, setLinkEditKey] = React.useState<string | null>(null);
-  const chipPointerInsideRef = React.useRef(false);
-  const hoverClearTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
-  const imagePopoverOpen = imageEditKey !== null;
-  const linkPopoverOpen = linkEditKey !== null;
-  const canvasPopoverOpen = imagePopoverOpen || linkPopoverOpen;
-  const canvasPopoverOpenRef = React.useRef(canvasPopoverOpen);
-  canvasPopoverOpenRef.current = canvasPopoverOpen;
-
-  const canShowHoverChrome =
-    device !== 'tablet' &&
-    !editingKey &&
-    motionMode !== 'preview' &&
-    !spaceHeld &&
-    !isPanning;
-
-  const cancelHoverClear = React.useCallback(() => {
-    if (hoverClearTimerRef.current == null) return;
-    clearTimeout(hoverClearTimerRef.current);
-    hoverClearTimerRef.current = null;
-  }, []);
-
-  // Delay clear so the pointer can cross the gap between element → chip
-  // without the chip unmounting mid-travel.
-  const clearHover = React.useCallback(() => {
-    if (chipPointerInsideRef.current || canvasPopoverOpenRef.current) return;
-    cancelHoverClear();
-    hoverClearTimerRef.current = setTimeout(() => {
-      hoverClearTimerRef.current = null;
-      if (chipPointerInsideRef.current || canvasPopoverOpenRef.current) return;
-      setHoveredKey(null);
-      setHoveredRect(null);
-    }, 160);
-  }, [cancelHoverClear]);
-
-  const forceClearHover = React.useCallback(() => {
-    cancelHoverClear();
-    chipPointerInsideRef.current = false;
-    setHoveredKey(null);
-    setHoveredRect(null);
-  }, [cancelHoverClear]);
-
-  const setHoverFromElement = React.useCallback(
-    (el: HTMLElement, key: string) => {
-      cancelHoverClear();
-      setHoveredKey(key);
-      setHoveredRect(el.getBoundingClientRect());
-    },
-    [cancelHoverClear]
-  );
-
-  React.useEffect(() => () => cancelHoverClear(), [cancelHoverClear]);
-
-  /**
-   * Activate exactly one element — never falls back to another key.
-   * Text → inline edit now; image → upload popover now; link → link picker now.
-   */
-  const activateElement = React.useCallback(
-    (key: string, rect: DOMRect) => {
-      if (device === 'tablet' || motionMode === 'preview') return;
-
-      const meta = resolveElementMeta(block.blockType, key);
-      onSelectElement(key, rect);
-      setHoveredKey(key);
-      setHoveredRect(rect);
-
-      if (meta.kind === 'text') {
-        setImageEditKey(null);
-        setLinkEditKey(null);
-        if (isInlineTextKey(block.blockType, key)) {
-          lastTextKeyRef.current = key;
-          onStartInlineEdit(key);
-        }
-        return;
-      }
-
-      if (meta.kind === 'image') {
-        setLinkEditKey(null);
-        setImageEditKey(key);
-        return;
-      }
-
-      if (meta.kind === 'link') {
-        setImageEditKey(null);
-        setLinkEditKey(key);
-        return;
-      }
-
-      // background / complex arrays → select so ElementToolbar shows controls
-      setImageEditKey(null);
-      setLinkEditKey(null);
-    },
-    [block.blockType, device, motionMode, onSelectElement, onStartInlineEdit]
-  );
-
-  const openLinkEditor = React.useCallback(
-    (key: string, rect: DOMRect) => {
-      if (device === 'tablet' || motionMode === 'preview') return;
-      setImageEditKey(null);
-      setLinkEditKey(key);
-      onSelectElement(key, rect);
-      const anchorKey = resolveLinkAnchorKey(block.blockType, key);
-      if (anchorKey !== key) {
-        setHoveredKey(anchorKey);
-        setHoveredRect(rect);
-      }
-    },
-    [block.blockType, device, motionMode, onSelectElement]
-  );
-
-  // Remeasure chip anchor when zoom/pan/content shifts under a sticky hover.
-  React.useEffect(() => {
-    const chipKey =
-      imageEditKey ??
-      hoveredKey ??
-      (linkEditKey ? resolveLinkAnchorKey(block.blockType, linkEditKey) : null);
-    if (!chipKey || !surfaceRef.current) return;
-    const anchorKey = resolveLinkAnchorKey(block.blockType, chipKey);
-    const el =
-      findElementByKey(surfaceRef.current, anchorKey) ??
-      findElementByKey(surfaceRef.current, chipKey);
-    if (!el) {
-      if (!canvasPopoverOpenRef.current) {
-        setHoveredKey(null);
-        setHoveredRect(null);
-      }
-      return;
-    }
-    setHoveredRect(el.getBoundingClientRect());
-  }, [
-    hoveredKey,
-    imageEditKey,
-    linkEditKey,
-    zoom,
-    pan,
-    block,
+  // ── Element interactions (shared with PageCanvas) ────────────────────
+  const layer = useCanvasElementLayer({
+    surfaceRef,
     lang,
     device,
-    block.blockType,
-  ]);
-
-  // Soft hover ring via DOM attr (avoids Tailwind breakage on keys like features[0].label).
-  React.useEffect(() => {
-    if (!surfaceRef.current) return;
-    const prev = surfaceRef.current.querySelectorAll<HTMLElement>(
-      '[data-canvas-hovered="true"]'
-    );
-    prev.forEach(n => n.removeAttribute('data-canvas-hovered'));
-    if (!hoveredKey || !canShowHoverChrome) return;
-    if (hoveredKey === selectedElementKey) return;
-    const el = findElementByKey(surfaceRef.current, hoveredKey);
-    el?.setAttribute('data-canvas-hovered', 'true');
-  }, [hoveredKey, canShowHoverChrome, selectedElementKey, block, lang, device]);
-
-  // Drop hover when entering inline edit / tablet / motion preview.
-  // Keep chip alive while an image/link popover is open so edit isn't interrupted.
-  React.useEffect(() => {
-    if (canShowHoverChrome || canvasPopoverOpen) return;
-    chipPointerInsideRef.current = false;
-    setHoveredKey(null);
-    setHoveredRect(null);
-    setImageEditKey(null);
-    setLinkEditKey(null);
-  }, [canShowHoverChrome, canvasPopoverOpen]);
+    motionMode: effectiveMode,
+    zoom,
+    panX: pan.x,
+    panY: pan.y,
+    dataToken: block,
+    selectedBlockId: selectedElementKey ? block.id : null,
+    selectedElementKey,
+    editingKey,
+    interactionsSuspended: spaceHeld || isPanning,
+    selectionToolbarSuppressed: !!selectedExtraElementId,
+    resolveTarget: el => {
+      const key = el.getAttribute('data-element-key');
+      const root = innerRef.current;
+      if (!key || !root) return null;
+      return { block, key, el, root };
+    },
+    blockById: id => (id === block.id ? block : null),
+    blockRoot: id => (id === block.id ? innerRef.current : null),
+    contentOf: () => content,
+    positionsOf: () => positions,
+    onSelectElement,
+    onStartInlineEdit,
+    onCommitInlineEdit,
+    onCancelInlineEdit,
+    onCommitElementPosition,
+    onContentChange,
+    onResetElementStyle,
+    onUpdateBackground,
+  });
 
   /** True when pointer is on the device frame (any data-element-key). */
   const isOnDeviceFrame = (target: HTMLElement) => {
@@ -767,64 +541,8 @@ export function BlockPreview({
       return;
     }
 
-    if (device === 'tablet') return; // tablet variant is read-only
-    if (e.button !== 0) return; // primary button only
-    const target = e.target as HTMLElement;
-    const el = target.closest<HTMLElement>('[data-element-key]');
-    if (!el || !surfaceRef.current?.contains(el)) return;
-    const key = el.getAttribute('data-element-key');
-    if (!key || key.startsWith('__')) return; // skip the block background
-    // First click selects; a second pointerdown on the SAME selected element
-    // initiates the drag. Without this, dragging from a row that wasn't
-    // selected yet would feel like an accidental move.
-    if (key !== selectedElementKey) return;
-    const base = positions?.[key] ?? { x: 0, y: 0 };
-    dragRef.current = {
-      el,
-      key,
-      startClientX: e.clientX,
-      startClientY: e.clientY,
-      baseX: base.x,
-      baseY: base.y,
-      bounds: computeDragBounds(el, base),
-      active: false,
-    };
-    surfaceRef.current?.setPointerCapture(e.pointerId);
+    layer.onPointerDown(e);
   };
-
-  /**
-   * Translate "stay inside the frame" into the offset space the drag writes.
-   * `L`/`T` (element position relative to the frame) already include `base`,
-   * so the allowed offset is the base shifted by the slack on each side.
-   * Returns null when the element is currently outside the frame — an existing
-   * design may intentionally park something there, and clamping would move it.
-   */
-  function computeDragBounds(el: HTMLElement, base: { x: number; y: number }) {
-    const frame = innerRef.current;
-    if (!frame) return null;
-    const fr = frame.getBoundingClientRect();
-    const er = el.getBoundingClientRect();
-    const s = scale || 1;
-    if (er.width === 0 && er.height === 0) return null;
-    const L = (er.left - fr.left) / s;
-    const T = (er.top - fr.top) / s;
-    const W = er.width / s;
-    const H = er.height / s;
-    const frameW = baseWidth;
-    const frameH = innerHeight > 0 ? innerHeight : fr.height / s;
-    const bounds = {
-      minX: base.x + (DRAG_MIN_VISIBLE - W - L),
-      maxX: base.x + (frameW - DRAG_MIN_VISIBLE - L),
-      minY: base.y + (DRAG_MIN_VISIBLE - H - T),
-      maxY: base.y + (frameH - DRAG_MIN_VISIBLE - T),
-    };
-    const inside =
-      base.x >= bounds.minX &&
-      base.x <= bounds.maxX &&
-      base.y >= bounds.minY &&
-      base.y <= bounds.maxY;
-    return inside ? bounds : null;
-  }
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const p = panRef.current;
@@ -836,74 +554,7 @@ export function BlockPreview({
       setPan(clampPan({ x: p.baseX + dx, y: p.baseY + dy }));
       return;
     }
-
-    const d = dragRef.current;
-    if (d) {
-      const dxRaw = e.clientX - d.startClientX;
-      const dyRaw = e.clientY - d.startClientY;
-      if (!d.active && Math.hypot(dxRaw, dyRaw) < 4) return;
-      d.active = true;
-      const safeScale = scale || 1;
-      const { x, y } = clampDrag(
-        d.baseX + dxRaw / safeScale,
-        d.baseY + dyRaw / safeScale,
-        d.bounds
-      );
-      // Direct DOM write — no React state during move. React's next render
-      // (after pointerup → onCommitElementPosition) will land the same value
-      // via positionStyle so there's no visual jump.
-      d.el.style.transform = `translate(${x}px, ${y}px)`;
-      d.el.style.cursor = 'grabbing';
-      clearHover();
-      return;
-    }
-
-    // Hover → edit chip (skip while chip/popover holds pointer).
-    if (!canShowHoverChrome) {
-      clearHover();
-      return;
-    }
-    if (chipPointerInsideRef.current || canvasPopoverOpenRef.current) return;
-
-    const clientX = e.clientX;
-    const clientY = e.clientY;
-
-    // Corridor from element top-right to chip — prevents clear/switch while
-    // crossing the gap (sticky nav items sit close; without this the chip
-    // jumps away or unmounts before the pointer reaches it).
-    if (hoveredKey && hoveredRect) {
-      const wideChip = !!resolveSiblingLinkKey(block.blockType, hoveredKey);
-      if (isPointerInChipCorridor(clientX, clientY, hoveredRect, wideChip)) {
-        cancelHoverClear();
-        return;
-      }
-    }
-
-    const target = e.target as HTMLElement;
-    if (target.closest('[data-canvas-edit-chip-root]')) return;
-    const el = target.closest<HTMLElement>('[data-element-key]');
-    if (el && surfaceRef.current?.contains(el)) {
-      const key = el.getAttribute('data-element-key');
-      if (key) {
-        if (key !== hoveredKey) {
-          if (hoveredKey && hoveredRect) {
-            const wideChip = !!resolveSiblingLinkKey(
-              block.blockType,
-              hoveredKey
-            );
-            if (
-              isPointerInChipCorridor(clientX, clientY, hoveredRect, wideChip)
-            ) {
-              cancelHoverClear();
-              return;
-            }
-          }
-          setHoverFromElement(el, key);
-        }
-        return;
-      }
-    }
-    clearHover();
+    layer.onPointerMove(e);
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -912,104 +563,10 @@ export function BlockPreview({
       panRef.current = null;
       setIsPanning(false);
       surfaceRef.current?.releasePointerCapture?.(e.pointerId);
-      if (p.active) justDraggedRef.current = true;
+      if (p.active) layer.markDragged();
       return;
     }
-
-    const d = dragRef.current;
-    if (!d) return;
-    dragRef.current = null;
-    surfaceRef.current?.releasePointerCapture?.(e.pointerId);
-    d.el.style.cursor = '';
-    if (!d.active) return; // no real drag — let the click handler select
-    const safeScale = scale || 1;
-    const pos = clampDrag(
-      d.baseX + (e.clientX - d.startClientX) / safeScale,
-      d.baseY + (e.clientY - d.startClientY) / safeScale,
-      d.bounds
-    );
-    const x = Math.round(pos.x);
-    const y = Math.round(pos.y);
-    onCommitElementPosition?.(d.key, { x, y });
-    justDraggedRef.current = true;
-  };
-
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // If the gesture that just ended was a real drag, swallow the synthetic
-    // click so selection doesn't toggle off the moved element.
-    if (justDraggedRef.current) {
-      justDraggedRef.current = false;
-      return;
-    }
-    // Clicks inside an actively-editing element should NOT change selection
-    // (user is positioning caret / selecting text within the editable region).
-    if (editingKey) {
-      const target = e.target as HTMLElement;
-      if (target.closest('[data-inline-editing="true"]')) return;
-    }
-    // Chip handles its own click via onActivate — don't double-fire.
-    if ((e.target as HTMLElement).closest('[data-canvas-edit-chip-root]')) {
-      return;
-    }
-    // Clicks inside the image popover portal must not activate another element.
-    if (
-      (e.target as HTMLElement).closest('[data-radix-popper-content-wrapper]')
-    ) {
-      return;
-    }
-
-    const target = e.target as HTMLElement;
-    const el = target.closest<HTMLElement>('[data-element-key]');
-    const key =
-      el && surfaceRef.current?.contains(el)
-        ? el.getAttribute('data-element-key')
-        : null;
-
-    // While image/link popover is open: click elsewhere only dismisses — does NOT
-    // activate whatever sits under the pointer (other items need their own
-    // hover + click).
-    if (imageEditKey) {
-      if (key === imageEditKey) return;
-      setImageEditKey(null);
-      forceClearHover();
-      onSelectElement(null, null);
-      return;
-    }
-    if (linkEditKey) {
-      const anchorKey = resolveLinkAnchorKey(block.blockType, linkEditKey);
-      if (key === linkEditKey || key === anchorKey) return;
-      setLinkEditKey(null);
-      forceClearHover();
-      onSelectElement(null, null);
-      return;
-    }
-
-    if (key && el) {
-      // Exact element under the pointer only — never fall back to another item.
-      activateElement(key, el.getBoundingClientRect());
-      return;
-    }
-
-    // Click outside any element → clear selection; do not touch others.
-    setImageEditKey(null);
-    setLinkEditKey(null);
-    forceClearHover();
-    onSelectElement(null, null);
-  };
-
-  const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('[data-canvas-edit-chip-root]')) {
-      return;
-    }
-    const target = e.target as HTMLElement;
-    const el = target.closest<HTMLElement>('[data-element-key]');
-    const key =
-      el && surfaceRef.current?.contains(el)
-        ? el.getAttribute('data-element-key')
-        : null;
-    // Exact key only — no lastTextKey / selectedKey fallback onto other items.
-    if (!key || !isInlineTextKey(block.blockType, key)) return;
-    activateElement(key, el!.getBoundingClientRect());
+    layer.onPointerUp(e);
   };
 
   // Track the inner content's natural (unscaled) height so the outer wrapper
@@ -1065,7 +622,7 @@ export function BlockPreview({
         ? (innerHeightAvail / contentH) * 100
         : fitW;
     const fitPct = Math.floor(Math.min(fitW, fitH));
-    return Math.min(100, Math.max(20, fitPct));
+    return Math.min(100, Math.max(CANVAS_ZOOM_MIN, fitPct));
   }, [baseWidth, hasStickyStage, innerHeight]);
 
   /** Sticky blocks are pushed to 100% ONCE per (block, device). The effect
@@ -1125,145 +682,25 @@ export function BlockPreview({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [resetView]);
 
-  // Drive contenteditable via DOM when entering edit mode. Pure DOM manipulation
-  // keeps each block component dumb (no editing concerns).
-  React.useEffect(() => {
-    if (!editingKey || !surfaceRef.current) return;
-    const el = findElementByKey(surfaceRef.current, editingKey);
-    if (!el) return;
-
-    el.setAttribute('contenteditable', 'plaintext-only');
-    el.setAttribute('data-inline-editing', 'true');
-    el.spellcheck = false;
-    el.focus();
-
-    // Select all text so user can immediately overwrite by typing.
-    const sel = window.getSelection();
-    if (sel) {
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      sel.removeAllRanges();
-      sel.addRange(range);
-    }
-
-    const commit = () => {
-      const next = (el.textContent ?? '').trim();
-      onCommitInlineEdit(editingKey, next);
-    };
-    const cancel = () => onCancelInlineEdit();
-
-    const onBlur = () => commit();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        cancel();
-      } else if (e.key === 'Enter' && !e.shiftKey) {
-        // Commit on Enter; Shift+Enter inserts a soft newline (browser default).
-        e.preventDefault();
-        commit();
-      }
-    };
-
-    el.addEventListener('blur', onBlur);
-    el.addEventListener('keydown', onKey);
-
-    return () => {
-      el.removeAttribute('contenteditable');
-      el.removeAttribute('data-inline-editing');
-      el.removeEventListener('blur', onBlur);
-      el.removeEventListener('keydown', onKey);
-    };
-  }, [editingKey, onCommitInlineEdit, onCancelInlineEdit]);
-
-  // Chip anchors to the hovered element, or the image/link being edited if popover is open.
-  const chipDisplayKey =
-    imageEditKey ??
-    hoveredKey ??
-    (linkEditKey ? resolveLinkAnchorKey(block.blockType, linkEditKey) : null);
-  const chipRect = React.useMemo(() => {
-    if (!chipDisplayKey || !surfaceRef.current) return hoveredRect;
-    const anchorKey = resolveLinkAnchorKey(block.blockType, chipDisplayKey);
-    if (chipDisplayKey === hoveredKey && hoveredRect) return hoveredRect;
-    const el =
-      findElementByKey(surfaceRef.current, anchorKey) ??
-      findElementByKey(surfaceRef.current, chipDisplayKey);
-    return el?.getBoundingClientRect() ?? hoveredRect;
-  }, [
-    chipDisplayKey,
-    hoveredKey,
-    hoveredRect,
-    zoom,
-    pan,
-    block,
-    lang,
-    device,
-    block.blockType,
-  ]);
-
-  const chipMeta =
-    chipDisplayKey && (canShowHoverChrome || canvasPopoverOpen)
-      ? resolveElementMeta(block.blockType, chipDisplayKey)
-      : null;
-  const chipAnchorKey = chipDisplayKey
-    ? resolveLinkAnchorKey(block.blockType, chipDisplayKey)
-    : null;
-  const siblingLinkKey =
-    chipAnchorKey && chipMeta?.kind === 'text'
-      ? resolveSiblingLinkKey(block.blockType, chipAnchorKey)
-      : null;
-  const linkFieldKey =
-    linkEditKey ??
-    (chipMeta?.kind === 'link' ? chipDisplayKey : siblingLinkKey) ??
-    chipDisplayKey ??
-    '';
-
   const isOffOrigin = pan.x !== 0 || pan.y !== 0;
-
-  // ── Selection toolbar ─────────────────────────────────────────────────────
-  // Docked to a fixed corner of the canvas, NOT anchored to the element rect.
-  // An element-anchored bar has to re-measure on zoom, pan, surface scroll and
-  // every content keystroke — which reads as the bar jumping around — and for
-  // `__background__` the rect is the whole block, parking it off-screen.
-  // Style/content controls live in the sidebar inspector; only kinds it handles
-  // get this bar, the rest still use the legacy toolbar above the canvas.
-  const selectedMeta =
-    selectedElementKey && device !== 'tablet'
-      ? resolveElementMeta(block.blockType, selectedElementKey)
-      : null;
-
-  const showSelectionToolbar =
-    !!selectedElementKey &&
-    !!selectedMeta &&
-    isInspectorKind(selectedMeta.kind) &&
-    !editingKey &&
-    !selectedExtraElementId &&
-    !imageEditKey &&
-    !linkEditKey &&
-    !!onContentChange &&
-    !!onResetElementStyle &&
-    !!onUpdateBackground;
 
   return (
     <div
       ref={surfaceRef}
-      onClick={handleClick}
-      onDoubleClick={handleDoubleClick}
+      onClick={layer.onClick}
+      onDoubleClick={layer.onDoubleClick}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      onPointerLeave={() => {
-        if (chipPointerInsideRef.current || canvasPopoverOpen) return;
-        clearHover();
-      }}
+      onPointerLeave={layer.onPointerLeave}
       data-selected-key={selectedElementKey ?? ''}
       className={cn(
         'relative flex flex-1 touch-none overflow-hidden p-8 pb-20',
         OVERLAY_TOP_BLOCK_TYPES.has(block.blockType)
           ? 'items-start justify-center pt-4'
           : 'items-center justify-center',
-        '[&_[data-inline-editing=true]]:cursor-text [&_[data-inline-editing=true]]:rounded-sm [&_[data-inline-editing=true]]:bg-sky-50/80 [&_[data-inline-editing=true]]:outline [&_[data-inline-editing=true]]:outline-2 [&_[data-inline-editing=true]]:outline-offset-2 [&_[data-inline-editing=true]]:outline-sky-500',
-        '[&_[data-canvas-hovered=true]]:cursor-pointer [&_[data-canvas-hovered=true]]:outline [&_[data-canvas-hovered=true]]:outline-1 [&_[data-canvas-hovered=true]]:outline-offset-2 [&_[data-canvas-hovered=true]]:outline-sky-400/70',
+        CANVAS_SURFACE_CHROME_CLASS,
         // Selected element gets a grab cursor so users know it's draggable.
         // Bracket-targeting via `data-element-key` matches the selected key.
         selectedElementKey &&
@@ -1373,9 +810,9 @@ export function BlockPreview({
                 selectedId={selectedExtraElementId}
                 scale={scale}
                 readOnly={device === 'tablet'}
-                onSelect={id => onSelectExtraElement?.(id)}
+                onSelect={id => onSelectExtraElement?.(block.id, id)}
                 onCommitPosition={(id, pos) =>
-                  onCommitExtraElementPosition?.(id, pos)
+                  onCommitExtraElementPosition?.(block.id, id, pos)
                 }
               />
             </div>
@@ -1406,87 +843,7 @@ export function BlockPreview({
         Về giữa
       </button>
 
-      {(chipDisplayKey &&
-        chipRect &&
-        chipMeta &&
-        surfaceRef.current &&
-        (canShowHoverChrome || canvasPopoverOpen) && (
-          <CanvasElementEditChip
-            elementKey={chipDisplayKey}
-            meta={chipMeta}
-            rect={chipRect}
-            surfaceEl={surfaceRef.current}
-            content={content}
-            blockType={block.blockType}
-            imageOpen={imageEditKey === chipDisplayKey}
-            onImageOpenChange={open => {
-              if (open) {
-                setImageEditKey(chipDisplayKey);
-                onSelectElement(chipDisplayKey, chipRect);
-              } else {
-                setImageEditKey(null);
-                if (!chipPointerInsideRef.current) {
-                  forceClearHover();
-                }
-              }
-            }}
-            linkOpen={linkPopoverOpen}
-            onLinkOpenChange={open => {
-              if (!open) {
-                setLinkEditKey(null);
-                if (!chipPointerInsideRef.current) {
-                  forceClearHover();
-                }
-              }
-            }}
-            linkFieldKey={linkFieldKey}
-            siblingLinkKey={siblingLinkKey}
-            onOpenLink={key => openLinkEditor(key, chipRect)}
-            onActivate={key => {
-              const anchorKey = resolveLinkAnchorKey(block.blockType, key);
-              const el = surfaceRef.current
-                ? (findElementByKey(surfaceRef.current, anchorKey) ??
-                  findElementByKey(surfaceRef.current, key))
-                : null;
-              const rect = el?.getBoundingClientRect() ?? chipRect;
-              activateElement(key, rect);
-            }}
-            onContentChange={next => onContentChange?.(next)}
-            onChipPointerEnter={() => {
-              cancelHoverClear();
-              chipPointerInsideRef.current = true;
-            }}
-            onChipPointerLeave={() => {
-              chipPointerInsideRef.current = false;
-              if (!canvasPopoverOpen) {
-                clearHover();
-              }
-            }}
-          />
-        )) ||
-        null}
-
-      {showSelectionToolbar && (
-        <div
-          data-canvas-edit-chip-root='true'
-          className='absolute top-3 left-3 z-30'
-          // A bare pointerdown out here reads as "empty canvas" and starts a pan.
-          onPointerDown={e => e.stopPropagation()}
-        >
-          <SelectionToolbar
-            block={block}
-            lang={lang}
-            content={content}
-            selectedKey={selectedElementKey!}
-            kind={selectedMeta!.kind}
-            label={selectedMeta!.label}
-            onContentChange={onContentChange!}
-            onUpdateBackground={onUpdateBackground!}
-            onResetStyle={onResetElementStyle!}
-            onClose={() => onSelectElement(null, null)}
-          />
-        </div>
-      )}
+      <CanvasElementChrome layer={layer} />
     </div>
   );
 }

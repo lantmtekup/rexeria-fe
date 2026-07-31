@@ -140,9 +140,14 @@ export function CanvasElementEditChip({
   onChipPointerLeave,
   onContentChange,
 }: CanvasElementEditChipProps) {
+  // The chip is absolutely positioned inside the surface, so its coordinates
+  // are CONTENT coordinates. The scroll offset has to be added back: on the
+  // full-page canvas the surface really scrolls, and without this the chip
+  // drifts by exactly `scrollTop` as soon as the author scrolls. On the
+  // artboard (`overflow: hidden`) both offsets are always 0.
   const surfaceRect = surfaceEl.getBoundingClientRect();
-  const top = rect.top - surfaceRect.top - 8;
-  const left = rect.right - surfaceRect.left - 8;
+  const top = rect.top - surfaceRect.top + surfaceEl.scrollTop - 8;
+  const left = rect.right - surfaceRect.left + surfaceEl.scrollLeft - 8;
 
   const Icon = chipIcon(meta.kind);
   const actionLabel = canvasEditActionLabel(meta.kind);

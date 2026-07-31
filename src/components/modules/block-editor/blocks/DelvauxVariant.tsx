@@ -217,7 +217,9 @@ export function DelvauxVariant({
         });
       }
 
-      const img = root.querySelector<HTMLImageElement>('.delvaux-variant-img');
+      const img = root.querySelector<HTMLImageElement>(
+        'img.delvaux-variant-img'
+      );
       if (img && !img.complete) {
         img.addEventListener('load', requestRefresh, { once: true });
       }
@@ -330,17 +332,28 @@ export function DelvauxVariant({
                   key={`canvas-var-${i}`}
                   className='flex flex-col items-center gap-2'
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    data-element-key={imgKey}
-                    src={variant.imageUrl}
-                    alt={variant.label}
-                    className={selectableClass(
-                      activeKey === imgKey,
-                      'aspect-[474/486] w-full object-cover'
-                    )}
-                    style={styleOf(imgKey)}
-                  />
+                  {variant.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      data-element-key={imgKey}
+                      src={variant.imageUrl}
+                      alt={variant.label}
+                      className={selectableClass(
+                        activeKey === imgKey,
+                        'aspect-[474/486] w-full object-cover'
+                      )}
+                      style={styleOf(imgKey)}
+                    />
+                  ) : (
+                    <div
+                      data-element-key={imgKey}
+                      className={selectableClass(
+                        activeKey === imgKey,
+                        'aspect-[474/486] w-full bg-black/5'
+                      )}
+                      style={styleOf(imgKey)}
+                    />
+                  )}
                   <p
                     data-element-key={labelKey}
                     style={composeStyle(
@@ -435,33 +448,40 @@ export function DelvauxVariant({
               >
                 {content.skuName}
               </h3>
-              {content.skuMediaUrl ? (
-                content.skuMediaType === 'video' ? (
-                  <video
-                    data-element-key='skuMediaUrl'
-                    muted
-                    playsInline
-                    src={content.skuMediaUrl}
-                    className={selectableClass(
-                      activeKey === 'skuMediaUrl',
-                      'mx-auto max-h-64 w-full max-w-xl object-cover'
-                    )}
-                    style={styleOf('skuMediaUrl')}
-                  />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    data-element-key='skuMediaUrl'
-                    src={content.skuMediaUrl}
-                    alt={content.skuName}
-                    className={selectableClass(
-                      activeKey === 'skuMediaUrl',
-                      'mx-auto max-h-64 w-full max-w-xl object-cover'
-                    )}
-                    style={styleOf('skuMediaUrl')}
-                  />
-                )
-              ) : null}
+              {!content.skuMediaUrl ? (
+                <div
+                  data-element-key='skuMediaUrl'
+                  className={selectableClass(
+                    activeKey === 'skuMediaUrl',
+                    'mx-auto aspect-[4/3] w-full max-w-xl bg-black/5'
+                  )}
+                  style={styleOf('skuMediaUrl')}
+                />
+              ) : content.skuMediaType === 'video' ? (
+                <video
+                  data-element-key='skuMediaUrl'
+                  muted
+                  playsInline
+                  src={content.skuMediaUrl}
+                  className={selectableClass(
+                    activeKey === 'skuMediaUrl',
+                    'mx-auto max-h-64 w-full max-w-xl object-cover'
+                  )}
+                  style={styleOf('skuMediaUrl')}
+                />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  data-element-key='skuMediaUrl'
+                  src={content.skuMediaUrl}
+                  alt={content.skuName}
+                  className={selectableClass(
+                    activeKey === 'skuMediaUrl',
+                    'mx-auto max-h-64 w-full max-w-xl object-cover'
+                  )}
+                  style={styleOf('skuMediaUrl')}
+                />
+              )}
               {content.skuPersonUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -796,28 +816,46 @@ export function DelvauxVariant({
                 cursor: 'none',
               }}
             >
-              {variants.map((variant, i) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={`variant-img-${i}`}
-                  data-element-key={`variants[${i}].imageUrl`}
-                  className={
-                    i === 0
-                      ? 'delvaux-variant-img absolute inset-0'
-                      : 'absolute inset-0'
-                  }
-                  src={variant.imageUrl}
-                  alt={variant.label}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    opacity: i === active ? 1 : 0,
-                    visibility: i === active ? 'visible' : 'hidden',
-                    transition: 'all 0.3s ease',
-                  }}
-                />
-              ))}
+              {variants.map((variant, i) => {
+                const imgClass =
+                  i === 0
+                    ? 'delvaux-variant-img absolute inset-0'
+                    : 'absolute inset-0';
+                const imgStyle = {
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover' as const,
+                  opacity: i === active ? 1 : 0,
+                  visibility: (i === active ? 'visible' : 'hidden') as
+                    | 'visible'
+                    | 'hidden',
+                  transition: 'all 0.3s ease',
+                };
+                if (!variant.imageUrl) {
+                  return (
+                    <div
+                      key={`variant-img-${i}`}
+                      data-element-key={`variants[${i}].imageUrl`}
+                      className={imgClass}
+                      style={{
+                        ...imgStyle,
+                        background: 'rgba(0,0,0,0.05)',
+                      }}
+                    />
+                  );
+                }
+                return (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={`variant-img-${i}`}
+                    data-element-key={`variants[${i}].imageUrl`}
+                    className={imgClass}
+                    src={variant.imageUrl}
+                    alt={variant.label}
+                    style={imgStyle}
+                  />
+                );
+              })}
             </button>
 
             <div
@@ -900,7 +938,9 @@ export function DelvauxVariant({
                   data-element-key='skuMediaUrl'
                   className='delvaux-variant-sku-media absolute inset-0'
                 >
-                  {content.skuMediaType === 'video' ? (
+                  {!content.skuMediaUrl ? (
+                    <div className='h-full w-full bg-black/5' />
+                  ) : content.skuMediaType === 'video' ? (
                     <video
                       autoPlay
                       loop
