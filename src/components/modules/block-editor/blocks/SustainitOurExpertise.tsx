@@ -21,6 +21,8 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { resolveSustainitOurExpertiseItems } from './_registry/defs/sustainitOurExpertise';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface SustainitOurExpertiseProps {
   content: SustainitOurExpertiseContent;
@@ -45,6 +47,7 @@ function safeUrl(url: string | undefined): string | undefined {
 interface ExpertiseCellProps {
   item: SustainitExpertiseItem;
   index: number;
+  isCanvas: boolean;
   styles?: ElementStylesMap;
   order?: string[];
   positions?: ElementPositionsMap;
@@ -54,6 +57,7 @@ interface ExpertiseCellProps {
 function ExpertiseCell({
   item,
   index,
+  isCanvas,
   styles,
   order,
   positions,
@@ -67,21 +71,31 @@ function ExpertiseCell({
     );
 
   const imgKey = `items[${index}].imageUrl`;
+  const backImgKey = `items[${index}].backImageUrl`;
   const titleKey = `items[${index}].title`;
+  const subtitleKey = `items[${index}].subtitle`;
   const bulletsKey = `items[${index}].bullets`;
 
   const imgUrl = safeUrl(item.imageUrl);
+  const backImgUrl = safeUrl(item.backImageUrl || item.imageUrl);
   const bullets = Array.isArray(item.bullets) ? item.bullets : [];
   const cellBg = imgUrl ? `url("${imgUrl}")` : undefined;
+  const cellBackBg = backImgUrl ? `url("${backImgUrl}")` : cellBg;
 
   return (
     <article
       className={cn('soe-cell group', 'relative aspect-square overflow-hidden')}
-      style={{ ['--soe-cell-img' as string]: cellBg ?? 'none' }}
+      style={{
+        ['--soe-cell-img' as string]: cellBg ?? 'none',
+        ['--soe-cell-back-img' as string]: cellBackBg ?? 'none',
+      }}
     >
       <div
         data-element-key={imgKey}
-        className='soe-cell-img absolute'
+        className={cn(
+          'soe-cell-img absolute',
+          selectableClass(activeKey === imgKey)
+        )}
         style={composeStyle(
           {
             backgroundImage: cellBg,
@@ -95,8 +109,22 @@ function ExpertiseCell({
         <span className='sr-only'>{item.title}</span>
       </div>
 
-      {cellBg ? (
-        <div className='soe-cell-overlay absolute' aria-hidden='true' />
+      {cellBackBg ? (
+        <div
+          data-element-key={backImgKey}
+          className={cn(
+            'soe-cell-overlay absolute',
+            selectableClass(activeKey === backImgKey),
+            isCanvas && 'soe-cell-overlay--canvas-edit'
+          )}
+          style={composeStyle(
+            {
+              backgroundImage: cellBackBg,
+            },
+            styleOf(backImgKey)
+          )}
+          aria-hidden={!isCanvas}
+        />
       ) : null}
 
       <div
@@ -124,7 +152,14 @@ function ExpertiseCell({
             )}
           >
             {item.title || 'Expertise title'}{' '}
-            <span className='font-normal text-gray-500'>
+            <span
+              data-element-key={subtitleKey}
+              className={cn(
+                'font-normal text-gray-500',
+                selectableClass(activeKey === subtitleKey)
+              )}
+              style={styleOf(subtitleKey)}
+            >
               ({item.subtitle || 'Subtitle'})
             </span>
           </h3>
@@ -202,6 +237,7 @@ export function SustainitOurExpertise({
   className,
 }: SustainitOurExpertiseProps) {
   const rootRef = React.useRef<HTMLElement>(null);
+  const isCanvas = useIsCanvasEdit(rootRef);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -212,7 +248,10 @@ export function SustainitOurExpertise({
 
   const bgColor = content.bgColor || BG_DEFAULT;
   const accent = content.accentColor || ACCENT_DEFAULT;
-  const items = Array.isArray(content.items) ? content.items : [];
+  const items = React.useMemo(
+    () => resolveSustainitOurExpertiseItems(content),
+    [content]
+  );
 
   const indexKey = 'indexLabel';
   const headingKey = 'heading';
@@ -442,11 +481,12 @@ export function SustainitOurExpertise({
               />
             </>
           )}
-          {items.slice(0, 4).map((item, idx) => (
+          {items.map((item, idx) => (
             <ExpertiseCell
-              key={idx}
+              key={`soe-item-${idx}`}
               item={item}
               index={idx}
+              isCanvas={isCanvas}
               styles={styles}
               order={order}
               positions={positions}
@@ -569,13 +609,19 @@ export function SustainitOurExpertise({
                 }
                 .soe-cell-overlay {
                     z-index: 1;
-                    background-image: var(--soe-cell-img);
+                    background-size: contain;
+                    background-position: center;
+                    background-repeat: no-repeat;
                     filter: blur(14px);
                     opacity: 0;
                     transition: opacity 1s cubic-bezier(0.22, 1, 0.36, 1);
                 }
+                .soe-cell-overlay--canvas-edit {
+                    opacity: 0.35;
+                    pointer-events: auto;
+                }
                 /* Chỉ khi hover card chữ: crossfade sang ảnh blur + card nổi */
-                .soe-cell:has(.soe-cell-card:hover) .soe-cell-overlay {
+                .soe-cell:has(.soe-cell-card:hover) .soe-cell-overlay:not(.soe-cell-overlay--canvas-edit) {
                     opacity: 1;
                 }
                 .soe-cell:has(.soe-cell-card:hover) .soe-cell-img {

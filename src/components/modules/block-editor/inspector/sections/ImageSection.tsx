@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { getContentAt, setContentAt } from '../../contentPath';
 import { ImagePicker } from '../../ImagePicker';
+import { isVideoUrl, mediaAcceptFor } from '../../mediaUrl';
 import type { BlockContent, ImageTransform } from '../../types';
 import { InspectorSection } from '../primitives/InspectorSection';
 
@@ -35,9 +36,10 @@ export function ImageSection({
     : undefined;
 
   return (
-    <InspectorSection id='image' title='Ảnh'>
+    <InspectorSection id='image' title={isVideoUrl(url) ? 'Media' : 'Ảnh'}>
       <ImagePicker
         value={url}
+        accept={mediaAcceptFor(fieldKey)}
         onChange={next =>
           onContentChange(setContentAt(c, fieldKey, next) as BlockContent)
         }

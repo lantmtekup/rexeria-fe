@@ -9,11 +9,12 @@
  * `public/real-estate/` — KHÔNG trỏ về CDN Framer gốc: PORTING.md ghi rõ một
  * lần republish là nguồn đổi thầm lặng.
  *
- * KHÔNG có mục list manager kiểu `realEstateHero` (`{ key: 'stats' }` → tái
- * dùng `StatsControls`): control đó generic trên `{value,label}[]`, không khớp
- * `{iconUrl,text}`. Số hạng mục cố định 6 như nguồn.
+ * Số hạng mục KHÔNG cố định: `{ key: 'stats' }` mở list manager riêng
+ * (`RealEstateOverviewStatsControls`) để thêm/xoá/sửa. KHÔNG tái dùng
+ * `StatsControls` của `realEstateHero` — control đó generic trên
+ * `{value,label}[]`, không khớp shape `{iconUrl,text}` ở đây.
  */
-import { Image as ImageIcon, Pilcrow, Type } from 'lucide-react';
+import { Image as ImageIcon, ListChecks, Pilcrow, Type } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 import type { LayerElement } from '../../../LayersPanel';
@@ -52,6 +53,26 @@ const VI: RealEstateOverviewContent = {
 const EN: RealEstateOverviewContent = {
   title: 'Project\noverview',
   stats: EN_STATS,
+};
+
+/** Hạng mục mặc định — dùng làm fallback và làm mẫu khi bấm "Thêm hạng mục". */
+export const REAL_ESTATE_OVERVIEW_DEFAULT_STATS = VI_STATS;
+
+/**
+ * Resolve `stats[]` — fallback default khi thiếu / rỗng / lẫn phần tử rác.
+ * Dùng chung giữa `LayersPanel.elementsForType` và list manager trong
+ * `ElementToolbar`, để panel Lớp và toolbar luôn thấy cùng một mảng.
+ */
+export const resolveRealEstateOverviewStats = (
+  content: RealEstateOverviewContent | null | undefined
+): RealEstateOverviewStat[] => {
+  const raw = content?.stats;
+  if (!Array.isArray(raw)) return VI_STATS.map(stat => ({ ...stat }));
+  const list = raw.filter(
+    (stat): stat is RealEstateOverviewStat =>
+      !!stat && typeof stat === 'object' && typeof stat.text === 'string'
+  );
+  return list.length > 0 ? list : VI_STATS.map(stat => ({ ...stat }));
 };
 
 /**
@@ -110,5 +131,8 @@ export const realEstateOverviewDef: BlockDef<RealEstateOverviewContent> = {
   elements: [
     { key: 'title', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
     ...realEstateOverviewStatElements(VI_STATS),
+    // KHÔNG đặt fieldType: để trống thì resolveKind trả kind
+    // 'realEstateOverviewStats' → list manager thêm/xoá hạng mục.
+    { key: 'stats', label: 'Thêm / quản lý hạng mục', icon: ListChecks },
   ],
 };

@@ -6,25 +6,7 @@ INSERT INTO public.blocks (type_code, name, scope, supported_surfaces, tags)
 SELECT code, 'Builtin · ' || code, 'system',
        ARRAY['landing','ad','curate']::text[], ARRAY['builtin_catalog']::text[]
 FROM unnest(ARRAY[
-  'mint_details',
-  'mint_sku',
-  'mint_hero',
-  'mint_variants',
-  'mint_discover',
-  'mintv2_emblem',
-  'mintv2_services',
-  'mintv2_manifesto',
-  'mintv2_process',
-  'mintv2_cta',
-  'mintv2_works',
-  'framer_avexa_bento',
-  'framer_perform_hero',
-  'framer_perform_pricing',
-  'framer_darling_timeline',
-  'framer_bungee_hero',
-  'framer_aestha_editorial',
-  'linea_portfolio',
-  'mint_vault_hero',
+  t_hero',
   'mint_vault_craft',
   'mint_vault_reveal',
   'framer_aestha_editorial',
@@ -81,7 +63,25 @@ UPDATE public.blocks SET settings = $rexerblk${"id":"b_a4a24y20","blockType":"fr
   WHERE type_code = 'framer_perform_pricing' AND scope='system' AND archived_at IS NULL;
 UPDATE public.blocks SET settings = $rexerblk${"id":"b_ez95hmss","blockType":"framer_darling_timeline","name":"Timeline","contentVi":{"desktop":{"heading":"Hành Trình","intro":"Chúng tôi tin rằng mỗi dự án là một câu chuyện cần được kể bằng sự chăm chút và tận tâm.","items":[{"time":"9:00 SA","title":"Khởi đầu","description":"Cuộc họp khởi động để hiểu rõ mục tiêu và kỳ vọng của khách hàng.","imageUrl":"https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80"},{"time":"11:00 SA","title":"Lên kế hoạch","description":"Xây dựng lộ trình chi tiết cho từng giai đoạn dự án.","imageUrl":"https://images.unsplash.com/photo-1530023367847-a683933f4172?w=1200&q=80"},{"time":"2:00 CH","title":"Thực hiện","description":"Đội ngũ sáng tạo bắt tay vào công việc với toàn bộ nhiệt huyết.","imageUrl":"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80"}]}},"contentEn":{"desktop":{"heading":"The Day","intro":"Here's what to expect. Everything takes place here, and we'll guide you throughout the day.","items":[{"time":"9:00 AM","title":"Kickoff","description":"A kickoff meeting to understand the goals and expectations.","imageUrl":"https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80"},{"time":"11:00 AM","title":"Planning","description":"Building a detailed roadmap for each project phase.","imageUrl":"https://images.unsplash.com/photo-1530023367847-a683933f4172?w=1200&q=80"},{"time":"2:00 PM","title":"Execution","description":"The creative team gets to work with full dedication.","imageUrl":"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80"}]}},"isVisible":true}$rexerblk$::jsonb
   WHERE type_code = 'framer_darling_timeline' AND scope='system' AND archived_at IS NULL;
-UPDATE public.blocks SET settings = $rexerblk${"id":"b_424vg5yj","blockType":"framer_bungee_hero","name":"Hero - Bungee","contentVi":{"desktop":{"wordmarkUrl":"","subtitle":"Studio sáng tạo đặt tại Hà Nội.","timerLabel":"HN","link1Label":"BE","link1Url":"https://www.behance.net/","link2Label":"DR","link2Url":"https://dribbble.com/","link3Label":"X","link3Url":"https://x.com/","marqueeSpeed":40,"cardImages":[{"imageUrl":"https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1487014679447-9f8336841d58?auto=format&fit=crop&w=800&q=70"}]}},"contentEn":{"desktop":{"wordmarkUrl":"","subtitle":"Creative studio based in Hanoi.","timerLabel":"HN","link1Label":"BE","link1Url":"https://www.behance.net/","link2Label":"DR","link2Url":"https://dribbble.com/","link3Label":"X","link3Url":"https://x.com/","marqueeSpeed":40,"cardImages":[{"imageUrl":"https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1487014679447-9f8336841d58?auto=format&fit=crop&w=800&q=70"}]}},"isVisible":true}$rexerblk$::jsonb
+UPDATE public'mint_details',
+  'mint_sku',
+  'mint_hero',
+  'mint_variants',
+  'mint_discover',
+  'mintv2_emblem',
+  'mintv2_services',
+  'mintv2_manifesto',
+  'mintv2_process',
+  'mintv2_cta',
+  'mintv2_works',
+  'framer_avexa_bento',
+  'framer_perform_hero',
+  'framer_perform_pricing',
+  'framer_darling_timeline',
+  'framer_bungee_hero',
+  'framer_aestha_editorial',
+  'linea_portfolio',
+  'mint_vaul.blocks SET settings = $rexerblk${"id":"b_424vg5yj","blockType":"framer_bungee_hero","name":"Hero - Bungee","contentVi":{"desktop":{"wordmarkUrl":"","subtitle":"Studio sáng tạo đặt tại Hà Nội.","timerLabel":"HN","link1Label":"BE","link1Url":"https://www.behance.net/","link2Label":"DR","link2Url":"https://dribbble.com/","link3Label":"X","link3Url":"https://x.com/","marqueeSpeed":40,"cardImages":[{"imageUrl":"https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1487014679447-9f8336841d58?auto=format&fit=crop&w=800&q=70"}]}},"contentEn":{"desktop":{"wordmarkUrl":"","subtitle":"Creative studio based in Hanoi.","timerLabel":"HN","link1Label":"BE","link1Url":"https://www.behance.net/","link2Label":"DR","link2Url":"https://dribbble.com/","link3Label":"X","link3Url":"https://x.com/","marqueeSpeed":40,"cardImages":[{"imageUrl":"https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=70"},{"imageUrl":"https://images.unsplash.com/photo-1487014679447-9f8336841d58?auto=format&fit=crop&w=800&q=70"}]}},"isVisible":true}$rexerblk$::jsonb
   WHERE type_code = 'framer_bungee_hero' AND scope='system' AND archived_at IS NULL;
 UPDATE public.blocks SET settings = $rexerblk${"id":"b_9xje9ggg","blockType":"linea_portfolio","name":"Portfolio","contentVi":{"desktop":{"eyebrow":"Works","headingPre":"Collaboration that","headingAccent":"moved","headingPost":"the needle.","bgColor":"#ffffff","textColor":"#121212","items":[{"img":"https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1487014679447-9f8336841d58?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=600&q=70"}]}},"contentEn":{"desktop":{"eyebrow":"Works","headingPre":"Collaboration that","headingAccent":"moved","headingPost":"the needle.","bgColor":"#ffffff","textColor":"#121212","items":[{"img":"https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1487014679447-9f8336841d58?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=600&q=70"},{"img":"https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=600&q=70"}]}},"isVisible":true}$rexerblk$::jsonb
   WHERE type_code = 'linea_portfolio' AND scope='system' AND archived_at IS NULL;

@@ -32,6 +32,7 @@ interface FramerYumeHeroProps {
  * Hero - Yume (framer-native). Port từ `src/blocks/framer-yume-hero` sang
  * renderer native: mỗi element (firstName/lastName/avatarUrl/email/bio) là 1
  * layer chọn + sửa inline được (`data-element-key` + `selectableClass`).
+ * Email render `<a href="mailto:…">` — href suy từ field `email`.
  *
  * Khác bản legacy: dùng container-query (`cqi` + flex-wrap) thay vì viewport
  * media-query (rule canvas cấm `md:`/`lg:`…); reveal đổi sang mount-animation
@@ -53,6 +54,8 @@ const EMAIL_STYLE: React.CSSProperties = {
   fontWeight: 500,
   letterSpacing: '-0.02em',
   margin: 0,
+  color: 'inherit',
+  textDecoration: 'none',
 };
 
 const BIO_STYLE: React.CSSProperties = {
@@ -140,15 +143,22 @@ export function FramerYumeHero({
 
           {/* Bio Section: email + bio animate cùng nhau như Framer gốc */}
           <div className='animate-soft-rise-hero flex w-full flex-col gap-8.5 [animation-delay:320ms] @3xl:flex-row @3xl:flex-wrap @3xl:items-start @3xl:justify-between @3xl:gap-0'>
-            <span
-              data-element-key='email'
-              style={composeStyle(EMAIL_STYLE, styleOf('email'))}
-              className={selectableClass(
-                activeKey === 'email',
-                'inline-flex items-center gap-3'
-              )}
-            >
-              {content.email}
+            <span className='inline-flex items-center gap-3'>
+              <a
+                data-element-key='email'
+                href={
+                  content.email?.trim()
+                    ? `mailto:${content.email.trim()}`
+                    : undefined
+                }
+                style={composeStyle(EMAIL_STYLE, styleOf('email'))}
+                className={selectableClass(
+                  activeKey === 'email',
+                  'outline-none hover:opacity-80'
+                )}
+              >
+                {content.email}
+              </a>
               <button
                 type='button'
                 onClick={() =>

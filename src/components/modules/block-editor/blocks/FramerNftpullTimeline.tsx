@@ -128,7 +128,7 @@ export interface TimelineSectionProps {
   >;
   number: React.ReactNode;
   side?: TimelineSide;
-  /** Tiền tố key của row (vd `items.0`) — element con scoped để selectable/style riêng từng item. */
+  /** Tiền tố key của row (vd `items[0]`) — element con scoped để selectable/style riêng từng item. */
   keyPrefix: string;
   styles?: ElementStylesMap;
   order?: string[];
@@ -151,8 +151,10 @@ export function TimelineSection({
   className,
 }: TimelineSectionProps) {
   const isRight = side === 'right';
-  // Element con scoped theo row: `items.${idx}.<field>` để mỗi item
+  // Element con scoped theo row: `items[${idx}].<field>` để mỗi item
   // selectable/style/drag riêng (khớp data-element-key BlockPreview đọc thô).
+  // Bracket notation là convention repo — `setContentAt` chỉ coi segment
+  // `[n]` là index mảng; dạng chấm `items.0.title` sẽ biến mảng thành object.
   const fullKey = (key: string) => `${keyPrefix}.${key}`;
   const styleOf = (key: string) =>
     composeStyle(
@@ -528,7 +530,7 @@ export function FramerNftpullTimeline({
                 }}
                 number={item.number}
                 side={idx % 2 === 0 ? 'left' : 'right'}
-                keyPrefix={`items.${idx}`}
+                keyPrefix={`items[${idx}]`}
                 styles={styles}
                 order={order}
                 positions={positions}

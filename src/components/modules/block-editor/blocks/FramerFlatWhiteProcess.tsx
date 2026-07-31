@@ -147,15 +147,29 @@ const STEP_CARD_STYLE: React.CSSProperties = {
   zIndex: 1,
 };
 
-const STEP_POSITIONS: Array<{
-  top: string;
-  left?: string;
-  right?: string;
-}> = [
-  { top: '12%', right: '5%' },
-  { top: '42%', left: '10%' },
-  { top: '70%', right: '15%' },
-];
+/**
+ * Vị trí step được tính theo số step thật (list thêm/xoá được trong editor),
+ * không tra bảng cứng 3 phần tử nữa.
+ *
+ * - `top`: rải đều trong dải 12%–70% của khung serpentine (n = 3 cho lại đúng
+ *   12/42/70 như recon).
+ * - side + offset: xen kẽ phải/trái, lệch dần 5/10/15% lặp lại — khớp nhịp uốn
+ *   của `DIVIDER_PATH`.
+ *
+ * SVG divider là hình học cố định 3 khúc: 2–5 step nhìn vẫn bám đường cong,
+ * nhiều hơn thì card bắt đầu chen nhau (mobile đã đổi sang column nên không
+ * ảnh hưởng).
+ */
+const STEP_TOP_START = 12;
+const STEP_TOP_END = 70;
+const STEP_SIDE_OFFSETS = ['5%', '10%', '15%'] as const;
+
+const stepPositionFor = (idx: number, total: number): React.CSSProperties => {
+  const span = total > 1 ? (STEP_TOP_END - STEP_TOP_START) / (total - 1) : 0;
+  const top = `${STEP_TOP_START + idx * span}%`;
+  const offset = STEP_SIDE_OFFSETS[idx % STEP_SIDE_OFFSETS.length];
+  return idx % 2 === 0 ? { top, right: offset } : { top, left: offset };
+};
 
 const STEP_TITLE_STYLE: React.CSSProperties = {
   fontFamily:
@@ -277,12 +291,11 @@ export function FramerFlatWhiteProcess({
             width: 100% !important;
           }
         }
-        /* Tablet (672px–1024px): điều chỉnh vị trí và width step */
+        /* Tablet (672px–1024px): chỉ nới width — top/left/right do
+           stepPositionFor() tính inline theo số step thật, hardcode
+           .fwp-step-0..2 ở đây sẽ đè sai khi list có ≠ 3 bước. */
         @container (min-width: 672px) and (max-width: 1024px) {
           .fwp-step { width: clamp(340px, 55cqi, 480px) !important; }
-          .fwp-step-0 { top: 10% !important; right: 5% !important; left: auto !important; }
-          .fwp-step-1 { top: 40% !important; left: 10% !important; right: auto !important; }
-          .fwp-step-2 { top: 70% !important; right: 15% !important; left: auto !important; }
         }
       `}</style>
 
@@ -368,46 +381,32 @@ export function FramerFlatWhiteProcess({
             </div>
 
             {steps.map((step, idx) => {
-              const stepKey = `step-${idx}`;
-              // Defensive guard: STEP_POSITIONS chỉ có 3 entry khớp với 3 step
-              // mặc định. Nếu content có > 3 step, các step dư xếp tuyến tính
-              // dưới step cuối (top = lastTop + N*20%) thay vì đè lên
-              // STEP_POSITIONS[0]. Nếu sau này có UI thêm step, hãy mở rộng
-              // STEP_POSITIONS tương ứng.
-              const basePos =
-                STEP_POSITIONS[Math.min(idx, STEP_POSITIONS.length - 1)] ??
-                STEP_POSITIONS[0];
-              const extraOffset =
-                Math.max(0, idx - (STEP_POSITIONS.length - 1)) * 20;
-              const stepPositionStyle: React.CSSProperties = {
-                top: `calc(${basePos.top} + ${extraOffset}%)`,
-                ...(basePos.left !== undefined ? { left: basePos.left } : {}),
-                ...(basePos.right !== undefined
-                  ? { right: basePos.right }
-                  : {}),
-              };
+              // Key là content path (`steps[i].<field>`) để ElementToolbar ghi
+              // đúng vào mảng; `steps[i].card` chỉ dùng cho style/drag.
+              const stepKey = `steps[${idx}]`;
+              const stepPositionStyle = stepPositionFor(idx, steps.length);
               const parallaxDistance =
-                STEP_PARALLAX_DISTANCE[
-                  Math.min(idx, STEP_PARALLAX_DISTANCE.length - 1)
-                ] ?? STEP_PARALLAX_DISTANCE[0];
+                STEP_PARALLAX_DISTANCE[idx % STEP_PARALLAX_DISTANCE.length];
 
               return (
                 <div
-                  key={`${step.number}-${idx}`}
+                  key={idx}
                   data-fwp-step
-                  data-element-key={stepKey}
-                  data-fwp-align={basePos.left !== undefined ? 'left' : 'right'}
+                  data-element-key={`${stepKey}.card`}
+                  data-fwp-align={
+                    stepPositionStyle.left !== undefined ? 'left' : 'right'
+                  }
                   data-motion='parallax'
                   data-motion-distance={String(parallaxDistance)}
                   data-motion-scrub='0.6'
                   data-motion-trigger-target='root'
                   data-motion-start='top bottom'
                   data-motion-end='bottom top'
-                  className={`fwp-step fwp-step-${idx} ${selectableClass(activeKey === stepKey)}`.trim()}
+                  className={`fwp-step fwp-step-${idx} ${selectableClass(activeKey === `${stepKey}.card`)}`.trim()}
                   style={composeStyle(
                     STEP_CARD_STYLE,
                     stepPositionStyle,
-                    styleOf(stepKey)
+                    styleOf(`${stepKey}.card`)
                   )}
                 >
                   <div
@@ -423,15 +422,15 @@ export function FramerFlatWhiteProcess({
                     }}
                   >
                     <div
-                      data-element-key={`${stepKey}-pill`}
+                      data-element-key={`${stepKey}.number`}
                       className={selectableClass(
-                        activeKey === `${stepKey}-pill`,
+                        activeKey === `${stepKey}.number`,
                         'fwp-step-pill'
                       )}
                       style={composeStyle(
                         PILL_BASE_STYLE,
                         { color: textColor },
-                        styleOf(`${stepKey}-pill`)
+                        styleOf(`${stepKey}.number`)
                       )}
                     >
                       <span style={{ opacity: 0.7 }}>/</span>
@@ -439,28 +438,28 @@ export function FramerFlatWhiteProcess({
                     </div>
 
                     <h3
-                      data-element-key={`${stepKey}-title`}
+                      data-element-key={`${stepKey}.title`}
                       className={selectableClass(
-                        activeKey === `${stepKey}-title`,
+                        activeKey === `${stepKey}.title`,
                         'fwp-step-title'
                       )}
                       style={composeStyle(
                         STEP_TITLE_STYLE,
-                        styleOf(`${stepKey}-title`)
+                        styleOf(`${stepKey}.title`)
                       )}
                     >
                       {step.title}
                     </h3>
                     <p
-                      data-element-key={`${stepKey}-body`}
+                      data-element-key={`${stepKey}.body`}
                       className={selectableClass(
-                        activeKey === `${stepKey}-body`,
+                        activeKey === `${stepKey}.body`,
                         'fwp-step-body'
                       )}
                       style={composeStyle(
                         STEP_BODY_STYLE,
                         { color: bodyTextColor },
-                        styleOf(`${stepKey}-body`)
+                        styleOf(`${stepKey}.body`)
                       )}
                     >
                       {step.body}

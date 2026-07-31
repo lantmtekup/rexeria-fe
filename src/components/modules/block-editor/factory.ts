@@ -33,6 +33,7 @@ import { coolHunterHeroDef } from './blocks/_registry/defs/coolHunterHero';
 import { coolHunterSectionProgressDef } from './blocks/_registry/defs/coolHunterSectionProgress';
 import { coolHunterStoryDef } from './blocks/_registry/defs/coolHunterStory';
 import { coolHunterGalleryDef } from './blocks/_registry/defs/coolHunterGallery';
+import { scrollImgScaleDef } from './blocks/_registry/defs/scrollImgScale';
 import { coolHunterProductDef } from './blocks/_registry/defs/coolHunterProduct';
 import { coolHunterQuoteDef } from './blocks/_registry/defs/coolHunterQuote';
 import { coolHunterFooterDef } from './blocks/_registry/defs/coolHunterFooter';
@@ -2149,6 +2150,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   cool_hunter_section_progress: coolHunterSectionProgressDef.defaultContent.vi,
   cool_hunter_story: coolHunterStoryDef.defaultContent.vi,
   cool_hunter_gallery: coolHunterGalleryDef.defaultContent.vi,
+  scroll_img_scale: scrollImgScaleDef.defaultContent.vi,
   cool_hunter_product: coolHunterProductDef.defaultContent.vi,
   cool_hunter_quote: coolHunterQuoteDef.defaultContent.vi,
   cool_hunter_footer: coolHunterFooterDef.defaultContent.vi,
@@ -2358,6 +2360,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   cool_hunter_section_progress: coolHunterSectionProgressDef.defaultContent.en,
   cool_hunter_story: coolHunterStoryDef.defaultContent.en,
   cool_hunter_gallery: coolHunterGalleryDef.defaultContent.en,
+  scroll_img_scale: scrollImgScaleDef.defaultContent.en,
   cool_hunter_product: coolHunterProductDef.defaultContent.en,
   cool_hunter_quote: coolHunterQuoteDef.defaultContent.en,
   cool_hunter_footer: coolHunterFooterDef.defaultContent.en,

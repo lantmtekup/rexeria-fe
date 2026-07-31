@@ -12,12 +12,31 @@ import type {
 } from '../../../types';
 import type { BlockDef } from '../types';
 
-const DEFAULT_SECTIONS: CoolHunterSectionProgressItem[] = [
-  { sectionId: 'welcome', label: '01 - Welcome' },
-  { sectionId: 'lake-wehapa', label: '02 - Lake Wehapa' },
-  { sectionId: 'architecture', label: '03 - Architecture' },
-  { sectionId: 'interior-design', label: '04 - Interior Design' },
-];
+export const COOL_HUNTER_SECTION_PROGRESS_DEFAULT_SECTIONS: CoolHunterSectionProgressItem[] =
+  [
+    { sectionId: 'welcome', label: '01 - Welcome' },
+    { sectionId: 'lake-wehapa', label: '02 - Lake Wehapa' },
+    { sectionId: 'architecture', label: '03 - Architecture' },
+    { sectionId: 'interior-design', label: '04 - Interior Design' },
+  ];
+
+const DEFAULT_SECTIONS = COOL_HUNTER_SECTION_PROGRESS_DEFAULT_SECTIONS;
+
+export const resolveCoolHunterSectionProgressSections = (
+  content: CoolHunterSectionProgressContent | undefined
+): CoolHunterSectionProgressItem[] => {
+  const raw = content?.sections;
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return DEFAULT_SECTIONS.map(item => ({ ...item }));
+  }
+  return raw.map((item, i) => {
+    const fallback = DEFAULT_SECTIONS[i] ?? DEFAULT_SECTIONS[0];
+    return {
+      sectionId: item.sectionId?.trim() || fallback.sectionId,
+      label: item.label?.trim() || fallback.label,
+    };
+  });
+};
 
 const VI: CoolHunterSectionProgressContent = {
   sections: DEFAULT_SECTIONS,

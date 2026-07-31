@@ -59,13 +59,16 @@ export const realEstateLocationDef: BlockDef<RealEstateLocationContent> = {
       icon: Pilcrow,
       fieldType: 'textarea',
     },
-    // fieldType 'text' vì LayerElement chỉ có text | textarea | image — chưa có
-    // video picker. Cùng quy ước `delvaux_hero.videoUrl`.
+    // fieldType 'image' = field MEDIA, không phải chữ. Trước đây khai 'text' →
+    // click vào bản đồ trên canvas bật contenteditable lên node bọc <video>,
+    // commit `textContent` rỗng và XOÁ mất URL. 'image' cho chip "Đổi ảnh" +
+    // inspector media; picker nhận cả mp4 lẫn ảnh (`mediaAcceptFor`), và
+    // component render <video> hay <img> theo đuôi file.
     {
       key: 'videoUrl',
-      label: 'Video bản đồ (URL mp4)',
+      label: 'Bản đồ (ảnh hoặc video mp4)',
       icon: Film,
-      fieldType: 'text',
+      fieldType: 'image',
     },
   ],
 };

@@ -64,16 +64,45 @@ import {
   resolveCoolHunterGalleryItems,
 } from './blocks/_registry/defs/coolHunterGallery';
 import {
+  framerBungeeHeroV2CardElements,
+  resolveFramerBungeeHeroV2CardImages,
+} from './blocks/_registry/defs/framerBungeeHeroV2';
+import {
+  hasReadymagCasesArray,
+  readymagCaseElements,
+  READMAG_CASE_SECTION_LEGACY_ELEMENTS,
+  resolveReadymagCases,
+} from './blocks/_registry/defs/readymagCaseSection';
+import {
+  resolveSustainitOurExpertiseItems,
+  sustainitOurExpertiseItemElements,
+} from './blocks/_registry/defs/sustainitOurExpertise';
+import {
+  resolveScrollImgScaleItems,
+  scrollImgScaleItemElements,
+} from './blocks/_registry/defs/scrollImgScale';
+import {
+  housentOurExcellenceItemElements,
+  resolveHousentOurExcellenceItems,
+} from './blocks/_registry/defs/housentOurExcellence';
+import {
   lineaPortfolioHeadingElements,
   lineaPortfolioItemElements,
 } from './blocks/_registry/defs/lineaPortfolio';
 import { coolHunterSectionProgressItemElements } from './blocks/_registry/defs/coolHunterSectionProgress';
-import { realEstateOverviewStatElements } from './blocks/_registry/defs/realEstateOverview';
+import {
+  realEstateOverviewStatElements,
+  resolveRealEstateOverviewStats,
+} from './blocks/_registry/defs/realEstateOverview';
 import { realEstateUtilityItemElements } from './blocks/_registry/defs/realEstateUtilities';
 import { realEstateVillaSlideElements } from './blocks/_registry/defs/realEstateVilla';
 import { pnjVariantItemElements } from './blocks/_registry/defs/pnjVariant';
 import { theGrandLocationItemElements } from './blocks/_registry/defs/theGrandLocation';
 import { resolveTheGrandLocationItems } from './blocks/theGrandLocationContent';
+import {
+  framerClarityServiceItemElements,
+  resolveFramerClarityServices,
+} from './blocks/framerClarityServicesContent';
 import { theGrandServiceItemElements } from './blocks/_registry/defs/theGrandService';
 import { resolveTheGrandServiceItems } from './blocks/theGrandServiceContent';
 import { theGrandDiscoverItemElements } from './blocks/_registry/defs/theGrandDiscover';
@@ -99,8 +128,20 @@ import {
   scrollMattisSlideElements,
   SCROLL_MATTIS_LEGACY_ELEMENTS,
 } from './blocks/_registry/defs/scrollMattis';
+import {
+  masteriseHomeInsideSlideElements,
+  resolveMasteriseHomeInsideSlides,
+} from './blocks/_registry/defs/masteriseHomeInside';
+import {
+  framerIgnitexStepCardElements,
+  hasFramerIgnitexStepCardsArray,
+  resolveFramerIgnitexStepCards,
+  FRAMER_IGNITEX_STEP_LEGACY_ELEMENTS,
+} from './blocks/_registry/defs/framerIgnitexStep';
 import { framerDarlingTimelineItemElements } from './blocks/_registry/defs/framerDarlingTimeline';
 import { framerPerformAboutTestimonialElements } from './blocks/_registry/defs/framerPerformAbout';
+import { framerNftpullTimelineItemElements } from './blocks/_registry/defs/framerNftpullTimeline';
+import { framerFlatWhiteProcessStepElements } from './blocks/_registry/defs/framerFlatWhiteProcess';
 import { framerPerformPricingTierElements } from './blocks/_registry/defs/framerPerformPricing';
 import { ignitexProjectItemElements } from './blocks/_registry/defs/ignitexProjects';
 import { mintV2ProcessStepElements } from './blocks/_registry/defs/mintV2Process';
@@ -110,6 +151,11 @@ import { mintVaultCoinElements } from './blocks/mintVaultCollectionElements';
 import { mintVaultCraftItemElements } from './blocks/mintVaultCraftElements';
 import { mintVaultInvitationImageElements } from './blocks/mintVaultInvitationElements';
 import { mintVaultRevealImageElements } from './blocks/mintVaultRevealElements';
+import {
+  framerPurevisualsPanelImageElements,
+  isFramerPurevisualsPanelKey,
+  resolveFramerPurevisualsPanelImages,
+} from './blocks/_registry/defs/framerPurevisualsHero';
 import { pnjStickyMenuItemElements } from './blocks/_registry/defs/pnjStickyMenu';
 import { aesthaNavLinkElements } from './blocks/_registry/defs/aesthaNav';
 import { aesthaExploreProjectElements } from './blocks/_registry/defs/aesthaExplore';
@@ -139,19 +185,30 @@ import {
   type TheGrandFooterContent,
   type PnjStickyMenuItem,
   type RealEstateHeroStat,
-  type RealEstateOverviewStat,
+  type RealEstateOverviewContent,
   type RealEstateHighlightItem,
   type AlturaOlympusContent,
   type MintVariantItem,
   type MintVariantsContent,
   type CoolHunterGalleryContent,
+  type FramerBungeeHeroV2Content,
+  type FramerPurevisualsHeroContent,
+  type ReadymagCaseSectionContent,
+  type SustainitOurExpertiseContent,
+  type HousentOurExcellenceContent,
+  type ScrollImgScaleContent,
+  type FramerClarityServicesContent,
   type LineaPortfolioItem,
   type CoolHunterSectionProgressItem,
   type RealEstateVillaSlide,
   type RealEstateUtilityItem,
   type MintDiscoverTab,
   type ScrollMattisContent,
+  type FramerIgnitexStepContent,
+  type MasteriseHomeInsideContent,
   type FramerDarlingTimelineContent,
+  type FramerNftpullTimelineContent,
+  type FramerFlatWhiteProcessContent,
   type FramerPerformPricingContent,
   type IgnitexProjectsContent,
   type MintV2ProcessStep,
@@ -338,7 +395,8 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
   framer_clarity_services: [
     BACKGROUND_LAYER,
     { key: 'centerImageUrl', label: 'Ảnh giữa', icon: ImageIcon },
-    { key: 'services', label: 'Dịch vụ', icon: Grid3x3 },
+    // services[] expand qua elementsForType(framer_clarity_services)
+    { key: 'services', label: 'Thêm / quản lý dịch vụ', icon: ListChecks },
   ],
   framer_perform_about: [
     BACKGROUND_LAYER,
@@ -349,6 +407,7 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     { key: 'badge', label: 'Badge', icon: Type },
     { key: 'heading', label: 'Tiêu đề', icon: Type },
     { key: 'body', label: 'Mô tả', icon: Pilcrow },
+    // items expand via elementsForType(housent_our_excellence)
   ],
   framer_perform_pricing: [
     BACKGROUND_LAYER,
@@ -891,6 +950,40 @@ export function elementsForType(
       },
     ];
   }
+  if (type === 'housent_our_excellence') {
+    const items = resolveHousentOurExcellenceItems(
+      (content ?? {}) as unknown as HousentOurExcellenceContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      { key: 'badge', label: 'Badge', icon: Type, fieldType: 'text' },
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      { key: 'body', label: 'Mô tả', icon: Pilcrow, fieldType: 'textarea' },
+      ...housentOurExcellenceItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'sustainit_our_expertise') {
+    const items = resolveSustainitOurExpertiseItems(
+      (content ?? {}) as unknown as SustainitOurExpertiseContent
+    );
+    const defElements =
+      getBlockDef(type)?.elements.filter(el => el.key !== 'items') ?? [];
+    return [
+      BACKGROUND_LAYER,
+      ...defElements.filter(el => !el.key.startsWith('items[')),
+      ...sustainitOurExpertiseItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
+    ];
+  }
   if (type === 'cool_hunter_gallery') {
     const items = resolveCoolHunterGalleryItems(
       (content ?? {}) as CoolHunterGalleryContent
@@ -901,6 +994,59 @@ export function elementsForType(
       {
         key: 'items',
         label: 'Thêm / quản lý ảnh',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'framer_bungee_hero_v2') {
+    const cards = resolveFramerBungeeHeroV2CardImages(
+      (content ?? {}) as unknown as FramerBungeeHeroV2Content
+    );
+    const defElements = getBlockDef(type)?.elements ?? [];
+    const staticElements = defElements.filter(
+      el => !el.key.startsWith('cardImages[') && el.key !== 'cardImages'
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...staticElements,
+      ...framerBungeeHeroV2CardElements(cards),
+      {
+        key: 'cardImages',
+        label: 'Thêm / quản lý ảnh',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'framer_clarity_services') {
+    const items = resolveFramerClarityServices(
+      (content ?? {}) as unknown as FramerClarityServicesContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'centerImageUrl',
+        label: 'Ảnh giữa',
+        icon: ImageIcon,
+        fieldType: 'image',
+      },
+      ...framerClarityServiceItemElements(items),
+      {
+        key: 'services',
+        label: 'Thêm / quản lý dịch vụ',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'scroll_img_scale') {
+    const items = resolveScrollImgScaleItems(
+      (content ?? {}) as ScrollImgScaleContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...scrollImgScaleItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý mục',
         icon: ListChecks,
       },
     ];
@@ -1287,7 +1433,12 @@ export function elementsForType(
         )
       : [];
     return [
-      { key: 'variant', label: 'Biến thể (dark/light)', icon: Type, fieldType: 'text' },
+      {
+        key: 'variant',
+        label: 'Biến thể (dark/light)',
+        icon: Type,
+        fieldType: 'text',
+      },
       {
         key: 'logoUrl',
         label: 'Logo',
@@ -1296,8 +1447,20 @@ export function elementsForType(
         groupId: 'logo',
         groupLabel: 'Logo',
       },
-      { key: 'logoAlt', label: 'Alt', icon: Type, fieldType: 'text', groupId: 'logo' },
-      { key: 'logoHref', label: 'Link', icon: Type, fieldType: 'link', groupId: 'logo' },
+      {
+        key: 'logoAlt',
+        label: 'Alt',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'logo',
+      },
+      {
+        key: 'logoHref',
+        label: 'Link',
+        icon: Type,
+        fieldType: 'link',
+        groupId: 'logo',
+      },
       {
         key: 'contactLabel',
         label: 'Nhãn',
@@ -1375,14 +1538,9 @@ export function elementsForType(
     ];
   }
   if (type === 'real_estate_overview') {
-    const raw = content?.stats;
-    const stats = Array.isArray(raw)
-      ? (raw as RealEstateOverviewStat[]).filter(
-          s => s && typeof s === 'object' && typeof s.text === 'string'
-        )
-      : [];
-    // Không có mục list manager: số hạng mục cố định 6 (mỗi icon gắn ngữ nghĩa
-    // riêng với chữ của nó) — xem docblock `defs/realEstateOverview.ts`.
+    const stats = resolveRealEstateOverviewStats(
+      (content ?? {}) as unknown as RealEstateOverviewContent
+    );
     return [
       BACKGROUND_LAYER,
       {
@@ -1392,6 +1550,11 @@ export function elementsForType(
         fieldType: 'text' as const,
       },
       ...realEstateOverviewStatElements(stats),
+      {
+        key: 'stats',
+        label: 'Thêm / quản lý hạng mục',
+        icon: ListChecks,
+      },
     ];
   }
   if (type === 'real_estate_highlights') {
@@ -1570,6 +1733,49 @@ export function elementsForType(
       },
     ];
   }
+  if (type === 'framer_nftpull_timeline') {
+    const raw = content?.items;
+    const items = Array.isArray(raw)
+      ? (raw as FramerNftpullTimelineContent['items']).filter(
+          it => it && typeof it === 'object' && typeof it.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'heading', label: 'Tiêu đề', icon: Type, fieldType: 'text' },
+      { key: 'intro', label: 'Mô tả', icon: Pilcrow, fieldType: 'textarea' },
+      ...framerNftpullTimelineItemElements(items),
+      {
+        key: 'items',
+        label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'framer_flat_white_process') {
+    const raw = content?.steps;
+    const steps = Array.isArray(raw)
+      ? (raw as FramerFlatWhiteProcessContent['steps']).filter(
+          s => s && typeof s === 'object' && typeof s.title === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      { key: 'label', label: 'Pill label', icon: Type, fieldType: 'text' },
+      {
+        key: 'headline',
+        label: 'Headline',
+        icon: Pilcrow,
+        fieldType: 'textarea',
+      },
+      ...framerFlatWhiteProcessStepElements(steps),
+      {
+        key: 'steps',
+        label: 'Thêm / quản lý bước',
+        icon: ListChecks,
+      },
+    ];
+  }
   if (type === 'framer_perform_pricing') {
     const raw = content?.tiers;
     const tiers = Array.isArray(raw)
@@ -1629,6 +1835,36 @@ export function elementsForType(
       {
         key: 'items',
         label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'framer_purevisuals_hero') {
+    const c = (content ?? {}) as unknown as FramerPurevisualsHeroContent;
+    // Text lấy từ def (khỏi lệch label); 2 panel expand thành folder ảnh + row
+    // "Thêm / quản lý" mở list manager trong ElementToolbar.
+    const textElements = (def?.elements ?? []).filter(
+      e => !isFramerPurevisualsPanelKey(e.key)
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...textElements,
+      ...framerPurevisualsPanelImageElements(
+        'leftImageUrl',
+        resolveFramerPurevisualsPanelImages(c, 'leftImageUrl')
+      ),
+      {
+        key: 'leftImageUrl',
+        label: 'Thêm / quản lý ảnh trái',
+        icon: ListChecks,
+      },
+      ...framerPurevisualsPanelImageElements(
+        'rightImageUrl',
+        resolveFramerPurevisualsPanelImages(c, 'rightImageUrl')
+      ),
+      {
+        key: 'rightImageUrl',
+        label: 'Thêm / quản lý ảnh phải',
         icon: ListChecks,
       },
     ];
@@ -1857,6 +2093,41 @@ export function elementsForType(
       },
     ];
   }
+  if (type === 'masterise_home_inside') {
+    // Slides động (thêm/xoá được) → dựng layer theo content thật, không theo
+    // `def.elements` tĩnh. Mục cuối = list manager.
+    const c = (content ?? {}) as unknown as MasteriseHomeInsideContent;
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'headingLine1',
+        label: 'Heading — Dòng 1',
+        icon: Type,
+        fieldType: 'text' as const,
+        groupId: 'heading',
+        groupLabel: 'Tiêu đề',
+      },
+      {
+        key: 'headingLine2',
+        label: 'Heading — Dòng 2',
+        icon: Type,
+        fieldType: 'text' as const,
+        groupId: 'heading',
+      },
+      {
+        key: 'body',
+        label: 'Mô tả',
+        icon: Pilcrow,
+        fieldType: 'textarea' as const,
+      },
+      ...masteriseHomeInsideSlideElements(resolveMasteriseHomeInsideSlides(c)),
+      {
+        key: 'slides',
+        label: 'Thêm / quản lý slide',
+        icon: ListChecks,
+      },
+    ];
+  }
   if (type === 'scroll_mattis') {
     const c = (content ?? {}) as unknown as ScrollMattisContent;
     const hasArray = Array.isArray(c.slides) && c.slides.length > 0;
@@ -1924,6 +2195,54 @@ export function elementsForType(
         key: 'items',
         label: 'Thêm / quản lý project',
         icon: Grid3x3,
+      },
+    ];
+  }
+  if (type === 'readymag_case_section') {
+    const c = (content ?? {}) as unknown as ReadymagCaseSectionContent;
+    return [
+      BACKGROUND_LAYER,
+      ...(hasReadymagCasesArray(c)
+        ? readymagCaseElements(resolveReadymagCases(c))
+        : READMAG_CASE_SECTION_LEGACY_ELEMENTS),
+      {
+        key: 'cases',
+        label: 'Thêm / quản lý case',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'framer_ignitex_step') {
+    const c = (content ?? {}) as unknown as FramerIgnitexStepContent;
+    return [
+      BACKGROUND_LAYER,
+      { key: 'preTitle', label: 'Pre-title', icon: Type, fieldType: 'text' },
+      { key: 'leftTop', label: 'Left - dòng 1', icon: Type, fieldType: 'text' },
+      {
+        key: 'leftBottom',
+        label: 'Left - dòng 2',
+        icon: Type,
+        fieldType: 'text',
+      },
+      {
+        key: 'rightTop',
+        label: 'Right - dòng 1',
+        icon: Type,
+        fieldType: 'text',
+      },
+      {
+        key: 'rightBottom',
+        label: 'Right - dòng 2',
+        icon: Type,
+        fieldType: 'text',
+      },
+      ...(hasFramerIgnitexStepCardsArray(c)
+        ? framerIgnitexStepCardElements(resolveFramerIgnitexStepCards(c))
+        : FRAMER_IGNITEX_STEP_LEGACY_ELEMENTS),
+      {
+        key: 'cards',
+        label: 'Thêm / quản lý card',
+        icon: ListChecks,
       },
     ];
   }

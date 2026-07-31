@@ -2,21 +2,15 @@
 
 import * as React from 'react';
 import gsap from 'gsap';
-import {
-  ShieldCheck,
-  BarChart3,
-  Sun,
-  MapPin,
-  KeyRound,
-  Briefcase,
-  Leaf,
-  TrendingUp,
-  type LucideIcon,
-} from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 
 import { useBlockMotion } from '../motion/LandingMotion';
+import {
+  HOUSENT_EXCELLENCE_ICONS,
+  resolveHousentOurExcellenceItems,
+} from './_registry/defs/housentOurExcellence';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
@@ -47,63 +41,16 @@ interface HousentOurExcellenceProps {
 /**
  * Housent Our Excellence — radial layout port từ housent.webflow.io.
  *
- * Content phẳng + groupId (ScrollMattis / Readymag Cases):
- *   item1Label / item1Icon … item8Label / item8Icon.
+ * `items[]` động (thêm/xoá qua Layers). Element key theo index:
+ *   items[0].label / items[0].icon …
+ * Legacy flat `item1Label…item8Icon` vẫn resolve qua def.
  * Editor canvas → lưới editable (không sticky/scrub ẩn satellites).
  */
 
-const ICONS: Record<string, LucideIcon> = {
-  ShieldCheck,
-  BarChart3,
-  Sun,
-  MapPin,
-  KeyRound,
-  Briefcase,
-  Leaf,
-  TrendingUp,
-};
-
-const DEFAULT_ITEMS: HousentOurExcellenceItem[] = [
-  { label: 'Verified Legality', icon: 'ShieldCheck' },
-  { label: 'Market Stability', icon: 'BarChart3' },
-  { label: 'Future Appreciation', icon: 'Sun' },
-  { label: 'Strategic Location', icon: 'MapPin' },
-  { label: 'Seamless Closing', icon: 'KeyRound' },
-  { label: 'Portfolio Diversification', icon: 'Briefcase' },
-  { label: 'Sustainable Growth', icon: 'Leaf' },
-  { label: 'High Yield Potential', icon: 'TrendingUp' },
-];
-
-const ITEM_KEYS = [
-  { label: 'item1Label', icon: 'item1Icon' },
-  { label: 'item2Label', icon: 'item2Icon' },
-  { label: 'item3Label', icon: 'item3Icon' },
-  { label: 'item4Label', icon: 'item4Icon' },
-  { label: 'item5Label', icon: 'item5Icon' },
-  { label: 'item6Label', icon: 'item6Icon' },
-  { label: 'item7Label', icon: 'item7Icon' },
-  { label: 'item8Label', icon: 'item8Icon' },
-] as const;
-
-type ItemFieldKey =
-  (typeof ITEM_KEYS)[number][keyof (typeof ITEM_KEYS)[number]];
-
-const pick = (content: HousentOurExcellenceContent, key: ItemFieldKey) =>
-  content[key]?.trim() || '';
-
-const resolveItems = (
-  content: HousentOurExcellenceContent
-): HousentOurExcellenceItem[] => {
-  const legacy = Array.isArray(content.items) ? content.items : [];
-  const resolved = ITEM_KEYS.map((keys, i) => {
-    const prev = legacy[i] ?? DEFAULT_ITEMS[i];
-    return {
-      label: pick(content, keys.label) || prev?.label || '',
-      icon: pick(content, keys.icon) || prev?.icon || 'ShieldCheck',
-    };
-  }).filter(it => it.label || it.icon);
-  return resolved.length > 0 ? resolved : DEFAULT_ITEMS;
-};
+const itemKeysAt = (i: number) => ({
+  label: `items[${i}].label`,
+  icon: `items[${i}].icon`,
+});
 
 const SECTION_BASE_STYLE: React.CSSProperties = {
   fontFamily: "'Google Sans Flex', 'Inter', system-ui, sans-serif",
@@ -251,7 +198,10 @@ export function HousentOurExcellence({
       positionStyle(positions, key)
     );
 
-  const items = React.useMemo(() => resolveItems(content), [content]);
+  const items = React.useMemo(
+    () => resolveHousentOurExcellenceItems(content),
+    [content]
+  );
 
   useBlockMotion(
     rootRef,
@@ -381,9 +331,8 @@ export function HousentOurExcellence({
   );
 
   const renderItemRow = (item: HousentOurExcellenceItem, i: number) => {
-    const keys = ITEM_KEYS[i];
-    if (!keys) return null;
-    const Icon = ICONS[item.icon] ?? ShieldCheck;
+    const keys = itemKeysAt(i);
+    const Icon = HOUSENT_EXCELLENCE_ICONS[item.icon] ?? ShieldCheck;
     return (
       <div key={`stk-${i}`} className='hoe-satellite flex items-center gap-4'>
         <span
@@ -587,9 +536,8 @@ export function HousentOurExcellence({
 
           <div className='absolute inset-0'>
             {items.map((item, i) => {
-              const keys = ITEM_KEYS[i];
-              if (!keys) return null;
-              const Icon = ICONS[item.icon] ?? ShieldCheck;
+              const keys = itemKeysAt(i);
+              const Icon = HOUSENT_EXCELLENCE_ICONS[item.icon] ?? ShieldCheck;
               const wrapperStyle = satellitePosition(
                 i,
                 Math.max(items.length, 1)

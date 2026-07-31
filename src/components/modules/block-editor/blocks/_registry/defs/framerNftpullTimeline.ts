@@ -12,11 +12,14 @@
  * fade-up, spine fill scrub, card stagger, badge pop) đi qua
  * `useBlockMotion` theo GSAP R1–R6.
  */
-import { Pilcrow, Type } from 'lucide-react';
+import { Hash, ListChecks, Pilcrow, Type } from 'lucide-react';
 
 import dynamic from 'next/dynamic';
 import type { FramerNftpullTimelineContent } from '../../../types';
+import type { LayerElement } from '../../../LayersPanel';
 import type { BlockDef } from '../types';
+
+type NftpullTimelineItem = FramerNftpullTimelineContent['items'][number];
 
 const VI: FramerNftpullTimelineContent = {
   heading: 'Vì sao chọn NFTpull',
@@ -82,6 +85,41 @@ const EN: FramerNftpullTimelineContent = {
   ],
 };
 
+/** Layers folders — 1 group / timeline item. */
+export const framerNftpullTimelineItemElements = (
+  items: NftpullTimelineItem[]
+): LayerElement[] => {
+  const list = items.length > 0 ? items : VI.items;
+  return list.flatMap((item, i) => {
+    const groupId = `nftpullItem${i}`;
+    const groupLabel = item.title?.trim() || `Mục ${i + 1}`;
+    return [
+      {
+        key: `items[${i}].number`,
+        label: 'Số thứ tự',
+        groupId,
+        groupLabel,
+        icon: Hash,
+        fieldType: 'text' as const,
+      },
+      {
+        key: `items[${i}].title`,
+        label: 'Tiêu đề',
+        groupId,
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: `items[${i}].description`,
+        label: 'Mô tả',
+        groupId,
+        icon: Pilcrow,
+        fieldType: 'textarea' as const,
+      },
+    ];
+  });
+};
+
 export const framerNftpullTimelineDef: BlockDef<FramerNftpullTimelineContent> =
   {
     type: 'framer_nftpull_timeline',
@@ -105,9 +143,13 @@ export const framerNftpullTimelineDef: BlockDef<FramerNftpullTimelineContent> =
     elements: [
       { key: 'heading', label: 'Heading', icon: Type, fieldType: 'text' },
       { key: 'intro', label: 'Intro', icon: Pilcrow, fieldType: 'textarea' },
-      // Mảng items được edit trong array control (LayerElement.kind='array') —
-      // key 'items' đánh dấu group; các field lẻ (number/title/description)
-      // chỉ selectable qua data-element-key trong component.
-      { key: 'items', label: 'Items', icon: Pilcrow, fieldType: 'textarea' },
+      ...framerNftpullTimelineItemElements(VI.items),
+      // Không đặt fieldType: resolveKind short-circuit 'text'/'textarea' trước
+      // khi tới nhánh `framerNftpullTimelineItems` (control thêm/xoá mục).
+      {
+        key: 'items',
+        label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
     ],
   };

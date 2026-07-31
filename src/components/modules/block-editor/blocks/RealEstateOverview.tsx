@@ -8,6 +8,7 @@ import { cn } from '@/lib/cn';
 import { useBlockMotion } from '../motion/LandingMotion';
 import type { RealEstateOverviewContent } from '../types';
 import type { BlockRenderProps } from './_registry/types';
+import { resolveRealEstateOverviewStats } from './_registry/defs/realEstateOverview';
 import {
   blockBackgroundStyle,
   composeStyle,
@@ -36,6 +37,13 @@ export function RealEstateOverview({
 }: BlockRenderProps<RealEstateOverviewContent>) {
   const rootRef = React.useRef<HTMLDivElement>(null);
 
+  // Cùng resolver với panel Lớp + list manager → canvas không lệch với danh
+  // sách hạng mục người dùng thấy khi thêm/xoá.
+  const stats = React.useMemo(
+    () => resolveRealEstateOverviewStats(content),
+    [content]
+  );
+
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -43,64 +51,70 @@ export function RealEstateOverview({
       positionStyle(positions, key)
     );
 
-  useBlockMotion(rootRef, ({ scroller, requestRefresh }) => {
-    const root = rootRef.current;
-    if (!root) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  useBlockMotion(
+    rootRef,
+    ({ scroller, requestRefresh }) => {
+      const root = rootRef.current;
+      if (!root) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    const title = root.querySelector('[data-appear="title"]');
-    const cards = root.querySelectorAll<HTMLElement>('[data-appear="card"]');
+      const title = root.querySelector('[data-appear="title"]');
+      const cards = root.querySelectorAll<HTMLElement>('[data-appear="card"]');
 
-    // fromTo + immediateRender → tự ẩn trước khi trigger bắn, và giữ đúng
-    // trạng thái đầu để `reverse` chạy ngược được khi cuộn lên.
-    gsap.fromTo(
-      title,
-      { opacity: 0, y: 24 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.7,
-        ease: 'power2.out',
-        scrollTrigger: {
-          trigger: root,
-          scroller,
-          start: 'top 90%',
-          toggleActions: 'play none none reverse',
-          invalidateOnRefresh: true,
-        },
-      }
-    );
+      // fromTo + immediateRender → tự ẩn trước khi trigger bắn, và giữ đúng
+      // trạng thái đầu để `reverse` chạy ngược được khi cuộn lên.
+      gsap.fromTo(
+        title,
+        { opacity: 0, y: 24 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.7,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: root,
+            scroller,
+            start: 'top 90%',
+            toggleActions: 'play none none reverse',
+            invalidateOnRefresh: true,
+          },
+        }
+      );
 
-    // Mỗi card có ScrollTrigger riêng → xuất hiện lần lượt khi cuộn tới,
-    // không bung cả lưới một lượt. Grid 2 cột nên lệch nhẹ theo cột.
-    cards.forEach((card, i) => {
-      // Lệch cột phải bằng POSITION PARAMETER trong timeline, không dùng
-      // `delay`: tween của ScrollTrigger bị tạo ở trạng thái paused nên delay
-      // đã trôi hết trước khi cuộn tới → 2 card cùng hàng bung đồng thời.
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: card,
-          scroller,
-          start: 'top 90%',
-          toggleActions: 'play none none reverse',
-          invalidateOnRefresh: true,
-        },
+      // Mỗi card có ScrollTrigger riêng → xuất hiện lần lượt khi cuộn tới,
+      // không bung cả lưới một lượt. Grid 2 cột nên lệch nhẹ theo cột.
+      cards.forEach((card, i) => {
+        // Lệch cột phải bằng POSITION PARAMETER trong timeline, không dùng
+        // `delay`: tween của ScrollTrigger bị tạo ở trạng thái paused nên delay
+        // đã trôi hết trước khi cuộn tới → 2 card cùng hàng bung đồng thời.
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: card,
+            scroller,
+            start: 'top 90%',
+            toggleActions: 'play none none reverse',
+            invalidateOnRefresh: true,
+          },
+        });
+
+        tl.fromTo(
+          card,
+          { opacity: 0, y: 24 },
+          { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' },
+          (i % 2) * 0.12
+        );
       });
 
-      tl.fromTo(
-        card,
-        { opacity: 0, y: 24 },
-        { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' },
-        (i % 2) * 0.12
-      );
-    });
-
-    root.querySelectorAll('img').forEach(img => {
-      if (!img.complete) {
-        img.addEventListener('load', requestRefresh, { once: true });
-      }
-    });
-  });
+      root.querySelectorAll('img').forEach(img => {
+        if (!img.complete) {
+          img.addEventListener('load', requestRefresh, { once: true });
+        }
+      });
+      // Dựng lại khi số hạng mục đổi (thêm/xoá trong list manager): card mới nằm
+      // ngoài NodeList đã query nên không có ScrollTrigger, sẽ đứng im.
+    },
+    [stats.length]
+  );
 
   return (
     <div
@@ -145,7 +159,7 @@ export function RealEstateOverview({
               marginTop: '10.75cqi',
             }}
           >
-            {(content.stats ?? []).map((stat, i) => {
+            {stats.map((stat, i) => {
               const iconKey = `stats[${i}].iconUrl`;
               const textKey = `stats[${i}].text`;
               return (
