@@ -263,6 +263,9 @@ export function resolveKind(
     // `isImageKey` (khớp 'images') để không bị coi là 1 ô ảnh đơn.
     if (/^projects\[\d+\]\.detail\.images$/.test(key))
       return 'aesthaExploreProjectImages';
+    if (/^projects\[\d+\]\.detail\.images\[\d+\]\.src$/.test(key))
+      return 'image';
+    if (/^projects\[\d+\]\.detail\.body\[\d+\]$/.test(key)) return 'text';
     if (/^projects\[\d+\]\.img$/.test(key)) return 'image';
     if (/^projects\[\d+\]\.href$/.test(key)) return 'link';
     if (/^projects\[\d+\]\.(label|alt)$/.test(key)) return 'text';
@@ -406,8 +409,32 @@ export function resolveKind(
   if (key === 'items' && blockType === 'ignitex_projects') {
     return 'ignitexProjectsItems';
   }
+  if (
+    /^items\[\d+\]\.imageUrl$/.test(key) &&
+    blockType === 'ignitex_projects'
+  ) {
+    return 'image';
+  }
+  if (
+    /^items\[\d+\]\.(name|tag)$/.test(key) &&
+    blockType === 'ignitex_projects'
+  ) {
+    return 'text';
+  }
   if (key === 'testimonials' && blockType === 'framer_perform_about') {
     return 'framerPerformTestimonials';
+  }
+  if (
+    /^testimonials\[\d+\]\.imageUrl$/.test(key) &&
+    blockType === 'framer_perform_about'
+  ) {
+    return 'image';
+  }
+  if (
+    /^testimonials\[\d+\]\.(textHighlight|textRest)$/.test(key) &&
+    blockType === 'framer_perform_about'
+  ) {
+    return 'text';
   }
   if (key === 'items' && blockType === 'framer_nftpull_timeline') {
     return 'framerNftpullTimelineItems';
@@ -1092,6 +1119,34 @@ export function resolveLabel(
   if (key === 'tiers' && blockType === 'framer_perform_pricing') {
     return 'Thêm / quản lý gói';
   }
+  const testimonialField = key.match(
+    /^testimonials\[(\d+)\]\.(imageUrl|textHighlight|textRest)$/
+  );
+  if (testimonialField && blockType === 'framer_perform_about') {
+    const labels: Record<string, string> = {
+      imageUrl: 'Ảnh',
+      textHighlight: 'Highlight',
+      textRest: 'Nội dung',
+    };
+    return `Card ${Number(testimonialField[1]) + 1} · ${labels[testimonialField[2]] ?? testimonialField[2]}`;
+  }
+  if (key === 'testimonials' && blockType === 'framer_perform_about') {
+    return 'Thêm / quản lý card';
+  }
+  const ignitexProjectLabel = key.match(
+    /^items\[(\d+)\]\.(imageUrl|name|tag)$/
+  );
+  if (ignitexProjectLabel && blockType === 'ignitex_projects') {
+    const labels: Record<string, string> = {
+      imageUrl: 'Ảnh',
+      name: 'Tên',
+      tag: 'Tag',
+    };
+    return `Project ${Number(ignitexProjectLabel[1]) + 1} · ${labels[ignitexProjectLabel[2]] ?? ignitexProjectLabel[2]}`;
+  }
+  if (key === 'items' && blockType === 'ignitex_projects') {
+    return 'Thêm / quản lý project';
+  }
   const tabLabel = key.match(/^tabs\[(\d+)\]\.label$/);
   if (tabLabel) return `Hotspot ${Number(tabLabel[1]) + 1} · tiêu đề`;
   const tabDesc = key.match(/^tabs\[(\d+)\]\.desc$/);
@@ -1762,11 +1817,43 @@ export function resolveElementMeta(
       label: 'Thêm / quản lý project',
     };
   }
+  const ignitexProjectField = key.match(
+    /^items\[(\d+)\]\.(imageUrl|name|tag)$/
+  );
+  if (ignitexProjectField && blockType === 'ignitex_projects') {
+    const field = ignitexProjectField[2];
+    const labels: Record<string, string> = {
+      imageUrl: 'Ảnh',
+      name: 'Tên',
+      tag: 'Tag',
+    };
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      fieldType: field === 'imageUrl' ? 'image' : 'text',
+      label: `Project ${Number(ignitexProjectField[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
   if (key === 'testimonials' && blockType === 'framer_perform_about') {
     return {
       kind: 'framerPerformTestimonials',
       fieldType: undefined,
       label: 'Thêm / quản lý card',
+    };
+  }
+  const testimonialField = key.match(
+    /^testimonials\[(\d+)\]\.(imageUrl|textHighlight|textRest)$/
+  );
+  if (testimonialField && blockType === 'framer_perform_about') {
+    const field = testimonialField[2];
+    const labels: Record<string, string> = {
+      imageUrl: 'Ảnh',
+      textHighlight: 'Highlight',
+      textRest: 'Nội dung',
+    };
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      fieldType: field === 'imageUrl' ? 'image' : 'text',
+      label: `Card ${Number(testimonialField[1]) + 1} · ${labels[field] ?? field}`,
     };
   }
   if (key === 'tiers' && blockType === 'framer_perform_pricing') {
@@ -2145,6 +2232,16 @@ export function resolveElementMeta(
       label: `Dự án ${Number(exploreProject[1]) + 1} · ${labels[field] ?? field}`,
     };
   }
+  const exploreDetailImage = key.match(
+    /^projects\[(\d+)\]\.detail\.images\[(\d+)\]\.src$/
+  );
+  if (exploreDetailImage && blockType === 'aestha_explore') {
+    return {
+      kind: 'image',
+      fieldType: 'image',
+      label: `Dự án ${Number(exploreDetailImage[1]) + 1} · Ảnh chi tiết ${Number(exploreDetailImage[2]) + 1}`,
+    };
+  }
   if (key === 'team' && blockType === 'aestha_studio') {
     return {
       kind: 'aesthaStudioTeam',
@@ -2296,6 +2393,10 @@ export function resolveSiblingLinkKey(
     if (navLabel) return `items[${navLabel[1]}].link`;
     if (key === 'ctaText') return 'ctaLink';
   }
+  if (blockType === 'aestha_nav') {
+    const navLabel = key.match(/^navLinks\[(\d+)\]\.label$/);
+    if (navLabel) return `navLinks[${navLabel[1]}].href`;
+  }
   return null;
 }
 
@@ -2308,6 +2409,10 @@ export function resolveLinkAnchorKey(
     const navLink = key.match(/^items\[(\d+)\]\.link$/);
     if (navLink) return `items[${navLink[1]}].label`;
     if (key === 'ctaLink') return 'ctaText';
+  }
+  if (blockType === 'aestha_nav') {
+    const navHref = key.match(/^navLinks\[(\d+)\]\.href$/);
+    if (navHref) return `navLinks[${navHref[1]}].label`;
   }
   if (blockType === 'pnj_header' && key === 'logoHref') return 'logoUrl';
   return key;

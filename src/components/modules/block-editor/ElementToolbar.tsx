@@ -3360,11 +3360,9 @@ function IgnitexProjectsItemsControls({
                 <Trash2 className='size-3.5' />
               </button>
             </div>
-            <Input
+            <ImagePicker
               value={item.imageUrl ?? ''}
-              onChange={e => update(i, { imageUrl: e.target.value })}
-              placeholder='URL ảnh'
-              className='h-8 border-neutral-200 bg-white font-mono text-xs'
+              onChange={url => update(i, { imageUrl: url })}
             />
           </div>
         ))}
@@ -3471,11 +3469,9 @@ function FramerPerformTestimonialsControls({
               placeholder='Nội dung'
               className='h-8 border-neutral-200 bg-white text-xs'
             />
-            <Input
+            <ImagePicker
               value={item.imageUrl ?? ''}
-              onChange={e => update(i, { imageUrl: e.target.value })}
-              placeholder='URL ảnh'
-              className='h-8 border-neutral-200 bg-white font-mono text-xs'
+              onChange={url => update(i, { imageUrl: url })}
             />
           </div>
         ))}
@@ -6983,11 +6979,9 @@ function AesthaExploreProjectsControls({
                   <Trash2 className='size-3.5' />
                 </button>
               </div>
-              <Input
+              <ImagePicker
                 value={p.img}
-                onChange={e => update(i, { img: e.target.value })}
-                placeholder='URL ảnh featured'
-                className='h-8 border-neutral-200 bg-white text-xs'
+                onChange={url => update(i, { img: url })}
               />
               <Input
                 value={p.href}
@@ -7020,22 +7014,25 @@ function AesthaExploreProjectsControls({
                 {detailImages.map((img, k) => (
                   <div
                     key={`explore-proj-${i}-img-${k}`}
-                    className='flex items-center gap-1.5 rounded border border-neutral-200 bg-white p-1.5'
+                    className='flex flex-col gap-1.5 rounded border border-neutral-200 bg-white p-1.5'
                   >
-                    <Input
+                    <div className='flex items-center justify-between gap-1.5'>
+                      <span className='text-2xs font-medium text-neutral-500'>
+                        Ảnh {k + 1}
+                      </span>
+                      <button
+                        type='button'
+                        onClick={() => removeImage(i, k)}
+                        aria-label={`Xoá ảnh ${k + 1}`}
+                        className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-rose-500 hover:bg-rose-50'
+                      >
+                        <Trash2 className='size-3' />
+                      </button>
+                    </div>
+                    <ImagePicker
                       value={img.src}
-                      onChange={e => updateImage(i, k, { src: e.target.value })}
-                      placeholder={`URL ảnh ${k + 1}`}
-                      className='text-2xs h-7 border-neutral-200 bg-white'
+                      onChange={url => updateImage(i, k, { src: url })}
                     />
-                    <button
-                      type='button'
-                      onClick={() => removeImage(i, k)}
-                      aria-label={`Xoá ảnh ${k + 1}`}
-                      className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-rose-500 hover:bg-rose-50'
-                    >
-                      <Trash2 className='size-3' />
-                    </button>
                   </div>
                 ))}
               </div>
@@ -7123,22 +7120,25 @@ function AesthaExploreProjectImagesControls({
         {images.map((img, k) => (
           <div
             key={`proj-${projectIndex}-img-${k}`}
-            className='flex items-center gap-1.5 rounded border border-neutral-200 bg-white p-1.5'
+            className='flex flex-col gap-1.5 rounded border border-neutral-200 bg-white p-1.5'
           >
-            <Input
+            <div className='flex items-center justify-between gap-1.5'>
+              <span className='text-2xs font-medium text-neutral-500'>
+                Ảnh {k + 1}
+              </span>
+              <button
+                type='button'
+                onClick={() => removeImage(k)}
+                aria-label={`Xoá ảnh ${k + 1}`}
+                className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3' />
+              </button>
+            </div>
+            <ImagePicker
               value={img.src}
-              onChange={e => updateImage(k, { src: e.target.value })}
-              placeholder={`URL ảnh ${k + 1}`}
-              className='text-2xs h-7 border-neutral-200 bg-white'
+              onChange={url => updateImage(k, { src: url })}
             />
-            <button
-              type='button'
-              onClick={() => removeImage(k)}
-              aria-label={`Xoá ảnh ${k + 1}`}
-              className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-rose-500 hover:bg-rose-50'
-            >
-              <Trash2 className='size-3' />
-            </button>
           </div>
         ))}
       </div>
