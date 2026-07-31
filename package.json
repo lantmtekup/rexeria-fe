@@ -4,7 +4,7 @@
   "private": true,
   "author": "trunglt@tekup.vn",
   "scripts": {
-    "dev": "next dev --turbopack --port 1012",
+    "dev": "next dev --turbopack --port 1010",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
