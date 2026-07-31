@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, Loader2 } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import type { ExchangeListingView } from '@/lib/portal-v2/exchange/types';
@@ -11,7 +11,6 @@ type ListingCoverProps = {
   /** Fixed height override (modal). Cards use aspect-[16/10] by default. */
   height?: number;
   showPreview?: boolean;
-  previewLoading?: boolean;
   onPreview?: () => void;
   className?: string;
 };
@@ -32,28 +31,22 @@ const GeneratedThumb = ({ listing }: { listing: ExchangeListingView }) => {
 
         {isPage ? (
           <div className='grid h-[calc(100%-1.25rem)] grid-cols-[1.15fr_0.85fr] gap-2.5 p-3'>
-            <div className='flex min-w-0 flex-col'>
-              <span className='mt-1 h-1.5 w-8 rounded-full bg-(--pv2-electric)/35' />
-              <span className='mt-2.5 h-2.5 w-full rounded-sm bg-(--pv2-ink)/85' />
-              <span className='mt-1 h-2.5 w-4/5 rounded-sm bg-(--pv2-ink)/85' />
-              <span className='mt-2 h-1.5 w-11/12 rounded-full bg-(--pv2-slate-300)' />
+            <div className='flex min-w-0 flex-col justify-center'>
+              <span className='h-1.5 w-8 rounded-full bg-(--pv2-electric)/35' />
+              <span className='mt-1 h-2.5 w-4/5 rounded-sm bg-(--pv2-ink)/25' />
               <span className='mt-1 h-1.5 w-3/5 rounded-full bg-(--pv2-hair)' />
-              <span className='mt-auto h-4 w-14 rounded-[5px] bg-(--pv2-electric)' />
+              <span className='mt-2.5 h-4 w-14 rounded-[5px] bg-(--pv2-electric)' />
             </div>
-            <div className='relative overflow-hidden rounded-[7px] bg-(--pv2-electric-soft)'>
-              <div className='absolute inset-x-[18%] top-[14%] aspect-square rotate-6 rounded-[9px] bg-(--pv2-electric)/25' />
-              <div className='absolute right-[12%] bottom-[12%] left-[28%] h-[42%] -rotate-3 rounded-[7px] bg-(--pv2-violet)/30' />
-            </div>
+            <div className='relative overflow-hidden rounded-[7px] bg-(--pv2-electric-soft)'></div>
           </div>
         ) : (
           <div className='flex h-[calc(100%-1.25rem)] items-center p-3'>
             <div className='grid w-full grid-cols-[0.82fr_1.18fr] gap-2.5 rounded-md bg-(--pv2-electric-soft) p-2.5'>
               <div className='aspect-square rounded-[6px] bg-(--pv2-electric)/25' />
-              <div className='flex min-w-0 flex-col py-1'>
-                <span className='h-2 w-5/6 rounded-sm bg-(--pv2-ink)/85' />
-                <span className='mt-1 h-2 w-3/5 rounded-sm bg-(--pv2-ink)/85' />
+              <div className='flex min-w-0 flex-col justify-center py-1'>
+                <span className='h-2 w-5/6 rounded-sm bg-(--pv2-ink)/25' />
                 <span className='mt-2 h-1.5 w-full rounded-full bg-(--pv2-slate-300)' />
-                <span className='mt-auto h-4 w-12 rounded-[5px] bg-(--pv2-electric)' />
+                <span className='mt-2.5 h-4 w-12 rounded-[5px] bg-(--pv2-electric)' />
               </div>
             </div>
           </div>
@@ -67,7 +60,6 @@ export const ListingCover = ({
   listing,
   height,
   showPreview = false,
-  previewLoading = false,
   onPreview,
   className,
 }: ListingCoverProps) => {
@@ -106,8 +98,6 @@ export const ListingCover = ({
           type='button'
           data-exchange-preview='true'
           aria-label={t('preview', { name: listing.name })}
-          aria-busy={previewLoading}
-          disabled={previewLoading}
           tabIndex={0}
           onPointerDown={e => {
             e.stopPropagation();
@@ -115,12 +105,10 @@ export const ListingCover = ({
           onClick={e => {
             e.stopPropagation();
             e.preventDefault();
-            if (previewLoading) return;
             onPreview();
           }}
           onKeyDown={e => {
             e.stopPropagation();
-            if (previewLoading) return;
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               onPreview();
@@ -131,24 +119,12 @@ export const ListingCover = ({
             'rounded-[10px] border-0 bg-[rgba(255,255,255,0.94)] px-[15px] py-[9px] whitespace-nowrap',
             'text-[12.5px] font-semibold text-[var(--pv2-ink)] shadow-[var(--pv2-sh-soft)]',
             'backdrop-blur-[4px] transition-opacity duration-150',
-            previewLoading
-              ? 'cursor-wait opacity-100'
-              : cn(
-                  'opacity-0 group-hover:opacity-100',
-                  'hover:bg-[var(--pv2-paper)]',
-                  'focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
-                )
+            'opacity-0 group-hover:opacity-100',
+            'hover:bg-[var(--pv2-paper)]',
+            'focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
           )}
         >
-          {previewLoading ? (
-            <Loader2
-              className='size-3.5 shrink-0 animate-spin text-[var(--pv2-electric)]'
-              strokeWidth={2}
-              aria-hidden
-            />
-          ) : (
-            <Eye className='size-3.5 shrink-0' strokeWidth={2} aria-hidden />
-          )}
+          <Eye className='size-3.5 shrink-0' strokeWidth={2} aria-hidden />
           {t('previewLabel')}
         </button>
       ) : null}

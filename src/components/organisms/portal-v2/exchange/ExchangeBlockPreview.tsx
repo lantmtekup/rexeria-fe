@@ -1,182 +1,79 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import {
-  Suspense,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
-import { LandingMotionRoot } from '@/components/modules/block-editor/motion/LandingMotion';
-import {
-  MotionBlockRoot,
-  MotionProvider,
-} from '@/components/modules/block-editor/motion/runtime';
-import type { BlockMotion } from '@/components/modules/block-editor/motion/types';
-import {
-  readVariant,
-  type Block,
-  type Device,
-} from '@/components/modules/block-editor/types';
+import type { Device } from '@/components/modules/block-editor/types';
 import { ExchangeDeviceStage } from '@/components/organisms/portal-v2/exchange/ExchangeDeviceStage';
+import { PreviewStageLoading } from '@/components/organisms/portal-v2/exchange/PreviewStageLoading';
 import {
-  getCachedExchangeBlockPreview,
-  isExchangeBlockPreviewCached,
-  prefetchExchangeBlockPreview,
+  exchangeBlockEmbedSrc,
+  markExchangeBlockPreviewCached,
 } from '@/lib/portal-v2/exchange/blockPreview';
-import { cn } from '@/lib/cn';
-import { RxApiError } from '@/services/rexer/client';
 
 type ExchangeBlockPreviewProps = {
   blockId: string;
   device: Device;
 };
 
-const PreviewLoadingState = ({ message }: { message: string }) => (
-  <div
-    className={cn(
-      'flex min-h-full items-center justify-center gap-2 px-6',
-      'text-center text-[13px] text-(--pv2-mut)'
-    )}
-  >
-    <Loader2
-      className='size-4 shrink-0 animate-spin text-(--pv2-electric)'
-      aria-hidden
-    />
-    {message}
-  </div>
-);
+const PREVIEW_READY_TYPE = 'rexer-preview-ready';
 
+/**
+ * Shopper-view block preview via iframe sized to the device frame.
+ * Inside the iframe, `100vh`/`100dvh` match the frame — not the host window.
+ *
+ * Host overlay stays until the embed posts `rexer-preview-ready` (API + paint),
+ * not merely iframe onLoad — otherwise the embed's own fetch spinner flashes.
+ */
 export const ExchangeBlockPreview = ({
   blockId,
   device,
 }: ExchangeBlockPreviewProps) => {
-  const t = useTranslations('portalV2.exchange');
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const [scrollerEl, setScrollerEl] = useState<HTMLElement | null>(null);
-  /** Prefer blockId match — never flip back to loading once resolved for this id. */
-  const [loadedBlockId, setLoadedBlockId] = useState<string | null>(() =>
-    isExchangeBlockPreviewCached(blockId) ? blockId : null
-  );
-  const [error, setError] = useState<string | null>(null);
-
-  const block: Block | null =
-    loadedBlockId === blockId
-      ? (getCachedExchangeBlockPreview(blockId) ?? null)
-      : null;
-  const loading = loadedBlockId !== blockId && !error;
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (isExchangeBlockPreviewCached(blockId)) {
-      setLoadedBlockId(blockId);
-      setError(null);
-      return;
-    }
-
-    void prefetchExchangeBlockPreview(blockId)
-      .then(editor => {
-        if (cancelled) return;
-        if (!editor) {
-          setError(t('previewBlockInvalid'));
-          return;
-        }
-        setLoadedBlockId(blockId);
-        setError(null);
-      })
-      .catch(err => {
-        if (cancelled) return;
-        setError(
-          err instanceof RxApiError
-            ? err.message
-            : err instanceof Error
-              ? err.message
-              : t('previewBlockLoadError')
-        );
-      });
-
-    return () => {
-      cancelled = true;
-    };
-    // `t` omitted — identity can churn and re-trigger fetch → flicker
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blockId]);
+  const t = useTranslations('portalV2.preview');
+  const tExchange = useTranslations('portalV2.exchange');
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const sessionKey = `${blockId}:${device}`;
+  const [iframeReady, setIframeReady] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(true);
+  const src = exchangeBlockEmbedSrc(blockId, device);
 
   useLayoutEffect(() => {
-    setScrollerEl(scrollerRef.current);
-  }, [block, device]);
+    setIframeReady(false);
+    setShowOverlay(true);
+  }, [sessionKey]);
 
-  const resolved = useMemo(() => {
-    if (!block) return null;
-    const content =
-      readVariant(block.contentVi, device) ?? block.contentVi.desktop;
-    return {
-      content,
-      styles: readVariant(block.elementStyles, device),
-      background: readVariant(block.background, device),
-      order: readVariant(block.elementOrder, device),
-      motion: readVariant(block.motion, device) as BlockMotion | undefined,
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+      if (data.type !== PREVIEW_READY_TYPE) return;
+      if (data.blockId !== blockId) return;
+      markExchangeBlockPreviewCached(blockId);
+      setIframeReady(true);
     };
-  }, [block, device]);
 
-  const showLoading = loading && !block;
-  const statusMessage = showLoading
-    ? t('previewLoading')
-    : error && !block
-      ? error
-      : null;
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [blockId]);
 
   return (
-    <LandingMotionRoot scrollerRef={scrollerRef} enableSmooth={false}>
-      <ExchangeDeviceStage
-        device={device}
-        urlLabel='/block'
-        scrollable
-        scrollerRef={scrollerRef}
-      >
-        {showLoading ? (
-          <PreviewLoadingState message={statusMessage!} />
-        ) : statusMessage ? (
-          <div
-            className={cn(
-              'flex min-h-full items-center justify-center gap-2 px-6',
-              'text-center text-[13px] text-(--pv2-mut)'
-            )}
-          >
-            {statusMessage}
-          </div>
-        ) : block && resolved ? (
-          <Suspense
-            fallback={<PreviewLoadingState message={t('previewLoading')} />}
-          >
-            <MotionProvider
-              mode='preview'
-              motion={resolved.motion}
-              scrollerEl={scrollerEl}
-            >
-              <MotionBlockRoot>
-                <RenderBlock
-                  block={block}
-                  content={resolved.content}
-                  styles={resolved.styles}
-                  background={resolved.background}
-                  order={resolved.order}
-                />
-              </MotionBlockRoot>
-            </MotionProvider>
-          </Suspense>
-        ) : (
-          <div className='flex min-h-full items-center justify-center px-6 text-center text-[13px] text-(--pv2-mut)'>
-            {t('previewBlockLoadError')}
-          </div>
-        )}
-      </ExchangeDeviceStage>
-    </LandingMotionRoot>
+    <ExchangeDeviceStage device={device} urlLabel='/block'>
+      {showOverlay ? (
+        <PreviewStageLoading
+          className='absolute inset-0'
+          label={t('previewLoading')}
+          complete={iframeReady}
+          onFinished={() => setShowOverlay(false)}
+        />
+      ) : null}
+      <iframe
+        key={sessionKey}
+        ref={iframeRef}
+        title={tExchange('kindBlock')}
+        src={src}
+        sandbox='allow-scripts allow-same-origin allow-forms allow-popups'
+        className='absolute inset-0 block size-full border-0 bg-white'
+      />
+    </ExchangeDeviceStage>
   );
 };

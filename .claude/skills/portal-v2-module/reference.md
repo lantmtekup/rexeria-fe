@@ -68,10 +68,33 @@ Use via Tailwind arbitrary values: `bg-[var(--pv2-paper)]`, `text-[var(--pv2-mut
 | `--pv2-disp` | Space Grotesk — headings |
 | `--pv2-ui` | Manrope — body |
 | `--pv2-r`, `--pv2-r-sm`, `--pv2-r-lg` | Border radius |
+| `--pv2-sh-soft` | Elevation for floating surfaces — the default |
+| `--pv2-sh-sm` | Elevation, subtle. Rarely the right answer |
+| `--pv2-sh-deep` | Elevation, heavy. Currently unused |
 | `--pv2-rail`, `--pv2-rail-full`, `--pv2-top` | Shell geometry |
 | `--pv2-z-rail`, `--pv2-z-top` | Stacking |
 
 Fonts loaded in [`layout.tsx`](../../../src/app/(portal-v2)/layout.tsx): `--font-space-grotesk`, `--font-manrope`.
+
+---
+
+## Elevation: two levels, no third
+
+The shadow tokens went undocumented for long enough that four disconnected
+shadow scales grew inside `block-editor-v2` alone. The rule:
+
+- **Level 0 — anything in the layout flow** (rails, panels, headers, rows,
+  cards, tiles, buttons, segmented controls): **no shadow**. Separate with a 1px
+  `--pv2-hair` hairline or a background step (`--pv2-canvas` against
+  `--pv2-paper`). Selection is **one** ring in `--pv2-electric` — never a border
+  and a ring and a shadow on the same element.
+- **Level 1 — anything floating above the page** (popovers, menus, drag ghosts,
+  floating toolbars, dialogs): exactly `shadow-[var(--pv2-sh-soft)]` and **no
+  border** — the shadow already describes the edge. Keep a `ring-1` only where
+  the surface sits on arbitrary content and needs a defined edge against it.
+
+The editor's copy of this rule, with the radius scale, lives in
+[`block-editor-v2/chrome.ts`](../../../src/components/modules/block-editor-v2/chrome.ts).
 
 ---
 

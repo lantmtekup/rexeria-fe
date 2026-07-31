@@ -9,7 +9,7 @@ export const ListingCardSkeleton = () => {
       )}
       aria-hidden
     >
-      <div className='relative flex aspect-[16/10] w-full flex-col overflow-hidden border-b border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
+      <div className='relative flex aspect-[16/10] max-h-[clamp(140px,28vw,200px)] w-full flex-col overflow-hidden border-b border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
         <div className='h-[38%] animate-pulse bg-[var(--pv2-electric-soft)]' />
         <div className='flex flex-1 flex-col gap-2 px-4 py-3'>
           <div className='h-2 w-3/5 animate-pulse rounded-sm bg-[var(--pv2-slate-300)]' />
