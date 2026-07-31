@@ -114,7 +114,9 @@ import {
   type CoolHunterGalleryItem,
   type MintVariantsContent,
   type FramerDarlingTimelineContent,
+  type FramerPerformAboutContent,
   type FramerPerformPricingContent,
+  type IgnitexProjectsContent,
   type MintV2ProcessContent,
   type MintV2ProcessStep,
   type MintV2ServiceItem,
@@ -675,6 +677,18 @@ export function ElementToolbar({
         {kind === 'framerDarlingTimelineItems' && (
           <FramerDarlingTimelineItemsControls
             content={content as FramerDarlingTimelineContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'framerPerformTestimonials' && (
+          <FramerPerformTestimonialsControls
+            content={content as FramerPerformAboutContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'ignitexProjectsItems' && (
+          <IgnitexProjectsItemsControls
+            content={content as IgnitexProjectsContent}
             onContentChange={onContentChange}
           />
         )}
@@ -2838,6 +2852,226 @@ function PnjStickyMenuItemsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm mục menu' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────── IGNITEX PROJECTS ITEMS
+
+const IGNITEX_PROJECTS_DEFAULT_IMG =
+  'https://framerusercontent.com/images/UY6B0qS4hdcjlEgPYtxTooD5yA.jpg';
+
+function IgnitexProjectsItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: IgnitexProjectsContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = Array.isArray(content.items) ? content.items : [];
+
+  const write = (
+    updater: (
+      list: IgnitexProjectsContent['items']
+    ) => IgnitexProjectsContent['items']
+  ) => {
+    onContentChange(prev => {
+      const c = prev as IgnitexProjectsContent;
+      const prevList = Array.isArray(c.items) ? c.items : [];
+      return {
+        ...c,
+        items: updater([...prevList]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (
+    i: number,
+    patch: Partial<IgnitexProjectsContent['items'][number]>
+  ) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 project');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        imageUrl: IGNITEX_PROJECTS_DEFAULT_IMG,
+        name: 'Project mới',
+        tag: 'Tag',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách project'
+      preview={`${items.length} project`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={item.name ?? ''}
+                onChange={e => update(i, { name: e.target.value })}
+                placeholder='Tên project'
+                className='h-8 flex-1 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <Input
+                value={item.tag ?? ''}
+                onChange={e => update(i, { tag: e.target.value })}
+                placeholder='Tag'
+                className='h-8 w-28 shrink-0 border-neutral-200 bg-white text-xs'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá project ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={item.imageUrl ?? ''}
+              onChange={e => update(i, { imageUrl: e.target.value })}
+              placeholder='URL ảnh'
+              className='h-8 border-neutral-200 bg-white font-mono text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm project' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────── FRAMER PERFORM TESTIMONIALS
+
+const PERFORM_ABOUT_DEFAULT_IMG =
+  'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1024&q=80';
+
+function FramerPerformTestimonialsControls({
+  content,
+  onContentChange,
+}: {
+  content: FramerPerformAboutContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const testimonials = Array.isArray(content.testimonials)
+    ? content.testimonials
+    : [];
+
+  const write = (
+    updater: (
+      list: FramerPerformAboutContent['testimonials']
+    ) => FramerPerformAboutContent['testimonials']
+  ) => {
+    onContentChange(prev => {
+      const c = prev as FramerPerformAboutContent;
+      const prevList = Array.isArray(c.testimonials) ? c.testimonials : [];
+      return {
+        ...c,
+        testimonials: updater([...prevList]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (
+    i: number,
+    patch: Partial<FramerPerformAboutContent['testimonials'][number]>
+  ) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (testimonials.length <= 1) {
+      toast.error('Cần ít nhất 1 card');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        imageUrl: PERFORM_ABOUT_DEFAULT_IMG,
+        textHighlight: 'Highlight mới…',
+        textRest: 'Nội dung mới…',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách card'
+      preview={`${testimonials.length} card`}
+      width={480}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {testimonials.map((item, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={item.textHighlight ?? ''}
+                onChange={e => update(i, { textHighlight: e.target.value })}
+                placeholder='Highlight'
+                className='h-8 flex-1 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá card ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={item.textRest ?? ''}
+              onChange={e => update(i, { textRest: e.target.value })}
+              placeholder='Nội dung'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={item.imageUrl ?? ''}
+              onChange={e => update(i, { imageUrl: e.target.value })}
+              placeholder='URL ảnh'
+              className='h-8 border-neutral-200 bg-white font-mono text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm card' />
     </PopoverTrigger>
   );
 }

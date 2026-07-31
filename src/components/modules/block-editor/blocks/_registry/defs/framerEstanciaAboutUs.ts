@@ -92,7 +92,7 @@ export const framerEstanciaAboutUsDef: BlockDef<FramerEstanciaAboutUsContent> =
         key: 'ctaHref',
         label: 'CTA — Link',
         icon: LinkIcon,
-        fieldType: 'text',
+        fieldType: 'link',
       },
       {
         key: 'card1ImageUrl',

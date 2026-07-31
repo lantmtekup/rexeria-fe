@@ -36,6 +36,8 @@ export type ElementKind =
   | 'mintV2ProcessSteps'
   | 'framerDarlingTimelineItems'
   | 'framerPerformPricingTiers'
+  | 'framerPerformTestimonials'
+  | 'ignitexProjectsItems'
   | 'mintVaultCraftItems'
   | 'mintVaultCoins'
   | 'mintVaultImages'
@@ -311,6 +313,12 @@ export function resolveKind(
   }
   if (key === 'items' && blockType === 'framer_darling_timeline') {
     return 'framerDarlingTimelineItems';
+  }
+  if (key === 'items' && blockType === 'ignitex_projects') {
+    return 'ignitexProjectsItems';
+  }
+  if (key === 'testimonials' && blockType === 'framer_perform_about') {
+    return 'framerPerformTestimonials';
   }
   if (key === 'tiers' && blockType === 'framer_perform_pricing') {
     return 'framerPerformPricingTiers';
@@ -1294,6 +1302,20 @@ export function resolveElementMeta(
               ? 'textarea'
               : 'text',
       label: `Gói ${Number(tierField[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  if (key === 'items' && blockType === 'ignitex_projects') {
+    return {
+      kind: 'ignitexProjectsItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý project',
+    };
+  }
+  if (key === 'testimonials' && blockType === 'framer_perform_about') {
+    return {
+      kind: 'framerPerformTestimonials',
+      fieldType: undefined,
+      label: 'Thêm / quản lý card',
     };
   }
   if (key === 'tiers' && blockType === 'framer_perform_pricing') {
