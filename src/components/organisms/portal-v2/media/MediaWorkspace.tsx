@@ -112,7 +112,7 @@ export const MediaWorkspace = ({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<MediaAsset | null>(null);
-  const skipFirstSearch = useRef(true);
+  const lastFetchedQ = useRef(debouncedQ);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -122,10 +122,8 @@ export const MediaWorkspace = ({
   }, [filters.q]);
 
   useEffect(() => {
-    if (skipFirstSearch.current) {
-      skipFirstSearch.current = false;
-      return;
-    }
+    if (lastFetchedQ.current === debouncedQ) return;
+    lastFetchedQ.current = debouncedQ;
 
     let cancelled = false;
     setSearching(true);
