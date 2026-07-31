@@ -146,6 +146,7 @@ import { coolHunterHeroDef } from './defs/coolHunterHero';
 import { coolHunterSectionProgressDef } from './defs/coolHunterSectionProgress';
 import { coolHunterStoryDef } from './defs/coolHunterStory';
 import { coolHunterGalleryDef } from './defs/coolHunterGallery';
+import { scrollImgScaleDef } from './defs/scrollImgScale';
 import { coolHunterProductDef } from './defs/coolHunterProduct';
 import { coolHunterQuoteDef } from './defs/coolHunterQuote';
 import { coolHunterFooterDef } from './defs/coolHunterFooter';
@@ -161,6 +162,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   cool_hunter_section_progress: coolHunterSectionProgressDef as BlockDef,
   cool_hunter_story: coolHunterStoryDef as BlockDef,
   cool_hunter_gallery: coolHunterGalleryDef as BlockDef,
+  scroll_img_scale: scrollImgScaleDef as BlockDef,
   cool_hunter_product: coolHunterProductDef as BlockDef,
   cool_hunter_quote: coolHunterQuoteDef as BlockDef,
   cool_hunter_footer: coolHunterFooterDef as BlockDef,

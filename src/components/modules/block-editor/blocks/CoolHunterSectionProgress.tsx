@@ -28,7 +28,9 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { COOL_HUNTER_SECTION_PROGRESS_DEFAULT_SECTIONS } from './_registry/defs/coolHunterSectionProgress';
 import { useContainerMobile } from './useContainerMobile';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 type ProgressState = {
   index: number;
@@ -43,12 +45,7 @@ type LenisLike = {
 const getLenis = (): LenisLike | undefined =>
   (window as unknown as { __lenis?: LenisLike }).__lenis;
 
-const DEFAULT_SECTIONS: CoolHunterSectionProgressItem[] = [
-  { sectionId: 'welcome', label: '01 - Welcome' },
-  { sectionId: 'lake-wehapa', label: '02 - Lake Wehapa' },
-  { sectionId: 'architecture', label: '03 - Architecture' },
-  { sectionId: 'interior-design', label: '04 - Interior Design' },
-];
+const DEFAULT_SECTIONS = COOL_HUNTER_SECTION_PROGRESS_DEFAULT_SECTIONS;
 
 const findSection = (
   id: string,
@@ -169,8 +166,8 @@ export function CoolHunterSectionProgress({
   const rootRef = React.useRef<HTMLElement>(null);
   const { scroller, hasRoot } = useLandingMotion();
   const isCompact = useContainerMobile(rootRef, 768);
+  const isCanvas = useIsCanvasEdit(rootRef);
   const [mounted, setMounted] = React.useState(false);
-  const [isCanvas, setIsCanvas] = React.useState(false);
   const [portalHost, setPortalHost] = React.useState<HTMLElement | null>(null);
   const [progress, setProgress] = React.useState<ProgressState | null>(null);
 
@@ -191,13 +188,12 @@ export function CoolHunterSectionProgress({
   React.useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    setIsCanvas(!!root.closest('[data-testid="active-block-preview"]'));
     setPortalHost(resolveDrawerPortalHost(root));
   }, [mounted, hasRoot]);
 
   const useFixed = mounted && hasRoot && !isCanvas;
   const inFrame = isDeviceFrameHost(portalHost);
-  const showRail = !isCompact;
+  const showRail = isCanvas || !isCompact;
 
   const syncProgress = React.useCallback(() => {
     if (!showRail) {
@@ -208,7 +204,7 @@ export function CoolHunterSectionProgress({
   }, [sections, scroller, showRail]);
 
   React.useEffect(() => {
-    if (!mounted || !showRail) {
+    if (!mounted || !showRail || isCanvas) {
       setProgress(null);
       return;
     }
@@ -264,7 +260,7 @@ export function CoolHunterSectionProgress({
       lenis?.off('scroll', onScroll);
       mutationObserver.disconnect();
     };
-  }, [mounted, syncProgress, scroller, showRail]);
+  }, [mounted, syncProgress, scroller, showRail, isCanvas]);
 
   const activeIndex = progress?.index ?? 0;
   const label =
@@ -285,6 +281,87 @@ export function CoolHunterSectionProgress({
     writingMode: 'vertical-rl',
     whiteSpace: 'nowrap',
   };
+
+  const sectionIdBase: React.CSSProperties = {
+    fontFamily:
+      'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+    fontSize: 10,
+    fontWeight: 400,
+    letterSpacing: '0.05em',
+    color: '#737373',
+    writingMode: 'vertical-rl',
+    whiteSpace: 'nowrap',
+  };
+
+  // ── Editor canvas: hiện mọi section để chọn / sửa ──
+  if (isCanvas) {
+    return (
+      <section
+        ref={rootRef}
+        data-canvas-edit='true'
+        style={composeStyle(
+          { minHeight: 280 },
+          blockBackgroundStyle(background)
+        )}
+        className={cn(
+          'cool-hunter-section-progress @container relative w-full',
+          className
+        )}
+      >
+        <div className='flex flex-col gap-6 px-[6cqi] py-[6cqi]'>
+          <p
+            className='m-0 text-xs tracking-wide text-neutral-500 uppercase'
+            style={{ fontFamily: labelBase.fontFamily }}
+          >
+            Section progress rail (preview)
+          </p>
+          <div className='flex items-stretch justify-end gap-6'>
+            <div className='flex flex-col items-end gap-4'>
+              {sections.map((item, i) => {
+                const labelKey = `sections[${i}].label`;
+                const idKey = `sections[${i}].sectionId`;
+                return (
+                  <div key={labelKey} className='flex items-center gap-3'>
+                    <span
+                      data-element-key={idKey}
+                      className={selectableClass(activeKey === idKey)}
+                      style={composeStyle(sectionIdBase, styleOf(idKey))}
+                      title={item.sectionId}
+                    >
+                      {item.sectionId}
+                    </span>
+                    <span
+                      data-element-key={labelKey}
+                      className={selectableClass(activeKey === labelKey)}
+                      style={composeStyle(labelBase, styleOf(labelKey))}
+                    >
+                      {item.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <span
+              aria-hidden
+              className='relative w-px shrink-0'
+              style={{
+                minHeight: 160,
+                backgroundColor: '#e5e5e5',
+              }}
+            >
+              <span
+                className='absolute inset-x-0 top-0'
+                style={{
+                  height: '35%',
+                  backgroundColor: '#171717',
+                }}
+              />
+            </span>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const rail = (
     <div

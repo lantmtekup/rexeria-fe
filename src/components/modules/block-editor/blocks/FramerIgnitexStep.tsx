@@ -20,6 +20,10 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import {
+  hasFramerIgnitexStepCardsArray,
+  resolveFramerIgnitexStepCards,
+} from './_registry/defs/framerIgnitexStep';
 
 interface Props {
   content: FramerIgnitexStepContent;
@@ -30,67 +34,25 @@ interface Props {
   activeKey?: string | null;
 }
 
-const DEFAULT_CARDS: FramerIgnitexStepCard[] = [
-  {
-    title: 'Discover & Define',
-    body: 'We dive deep into your goals, audience, and brand to uncover insights and define a clear direction.',
-    mainImageUrl:
-      'https://framerusercontent.com/images/9pSg9VbHyOzgvjgKg8ZxafAC9Y.svg',
-  },
-  {
-    title: 'Design & Build',
-    body: 'With strategy in place, we craft stunning visuals and high-performing digital solutions tailored to your needs.',
-    mainImageUrl:
-      'https://framerusercontent.com/images/FKdtn2NzI19PvdqikGNTBvGO8M.svg',
-  },
-  {
-    title: 'Launch & Grow',
-    body: 'We bring your vision to life, optimize for performance, and support your ongoing success post-launch.',
-    mainImageUrl:
-      'https://framerusercontent.com/images/qijKgqD5sm0TZqlD52en6tHZeQ.svg',
-  },
-];
-
-const CARD_KEYS = [
-  {
-    title: 'card1Title',
-    body: 'card1Body',
-    imageUrl: 'card1MainImageUrl',
-  },
-  {
-    title: 'card2Title',
-    body: 'card2Body',
-    imageUrl: 'card2MainImageUrl',
-  },
-  {
-    title: 'card3Title',
-    body: 'card3Body',
-    imageUrl: 'card3MainImageUrl',
-  },
-] as const;
-
-type CardFieldKey =
-  (typeof CARD_KEYS)[number][keyof (typeof CARD_KEYS)[number]];
-
-const pick = (content: FramerIgnitexStepContent, key: CardFieldKey) =>
-  content[key]?.trim() || '';
-
-const resolveCards = (
-  content: FramerIgnitexStepContent
-): FramerIgnitexStepCard[] => {
-  const legacy = Array.isArray(content.cards) ? content.cards : [];
-  const resolved = CARD_KEYS.map((keys, i) => {
-    const prev = legacy[i] ?? DEFAULT_CARDS[i];
-    return {
-      title: pick(content, keys.title) || prev?.title || '',
-      body: pick(content, keys.body) || prev?.body || '',
-      mainImageUrl:
-        pick(content, keys.imageUrl) || prev?.mainImageUrl || undefined,
-      subImageUrl: prev?.subImageUrl,
-    };
-  }).filter(c => c.title || c.body || c.mainImageUrl);
-  return resolved.length > 0 ? resolved : DEFAULT_CARDS;
-};
+/**
+ * Element key cho từng field của card.
+ * - content đã có `cards[]` → key mảng (`cards[i].title`) → thêm/xoá được.
+ * - content legacy (flat card1/2/3) → giữ key phẳng để edit không ghi đè
+ *   nửa vời vào `cards[]` (setContentAt sẽ tạo mảng thiếu field).
+ *   Toolbar「Thêm / quản lý card」ghi trọn `cards[]` → migrate 1 lần.
+ */
+const cardKeysOf = (index: number, useArray: boolean) =>
+  useArray
+    ? {
+        title: `cards[${index}].title`,
+        body: `cards[${index}].body`,
+        imageUrl: `cards[${index}].mainImageUrl`,
+      }
+    : {
+        title: `card${index + 1}Title`,
+        body: `card${index + 1}Body`,
+        imageUrl: `card${index + 1}MainImageUrl`,
+      };
 
 const FONT_STACK =
   '"Geist", "Geist Placeholder", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
@@ -338,7 +300,12 @@ export function FramerIgnitexStep({
     };
   }, [leftBottom]);
 
-  const cards = React.useMemo(() => resolveCards(content), [content]);
+  const cards = React.useMemo(
+    () => resolveFramerIgnitexStepCards(content),
+    [content]
+  );
+  /** Legacy content chưa có `cards[]` → element key vẫn là flat card1/2/3. */
+  const useArrayKeys = hasFramerIgnitexStepCardsArray(content);
 
   useBlockMotion(
     rootRef,
@@ -389,8 +356,7 @@ export function FramerIgnitexStep({
   );
 
   const renderCard = (card: FramerIgnitexStepCard, idx: number) => {
-    const keys = CARD_KEYS[idx];
-    if (!keys) return null;
+    const keys = cardKeysOf(idx, useArrayKeys);
     return (
       <div
         key={`card-${idx}`}

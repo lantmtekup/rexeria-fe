@@ -12,20 +12,26 @@
  * Marquee ảnh là ambient CSS @keyframes (R5 safe).
  */
 import {
-  Grid3x3,
   Image as ImageIcon,
+  ListChecks,
   MousePointerClick,
   Pilcrow,
   Type,
 } from 'lucide-react';
 
 import dynamic from 'next/dynamic';
+import type { LayerElement } from '../../../LayersPanel';
 import type { FramerBungeeHeroV2Content } from '../../../types';
 import type { BlockDef } from '../types';
 
+export type FramerBungeeHeroV2Card = {
+  imageUrl?: string;
+  videoUrl?: string;
+};
+
 // Recon assets: ảnh trong dải marquee lấy từ framerusercontent.com CDN
 // (cùng pattern với V1). Editor vẫn swap được — đây chỉ là default content.
-const RECON_CARDS = [
+export const FRAMER_BUNGEE_HERO_V2_DEFAULT_CARDS: FramerBungeeHeroV2Card[] = [
   {
     imageUrl:
       'https://framerusercontent.com/images/LOSSn1XuJFxdkQeIdkzwe48fY.png',
@@ -71,13 +77,54 @@ const VI: FramerBungeeHeroV2Content = {
   link3Label: 'X',
   link3Url: 'https://x.com/',
   marqueeSpeed: 30,
-  cardImages: RECON_CARDS,
+  cardImages: FRAMER_BUNGEE_HERO_V2_DEFAULT_CARDS,
   accentColor: 'rgb(30, 30, 30)',
 };
 
 const EN: FramerBungeeHeroV2Content = {
   ...VI,
   subtitle: 'Creative studio based in Gotham.',
+};
+
+/** Resolve cardImages[] — fallback default khi thiếu / rỗng. */
+export const resolveFramerBungeeHeroV2CardImages = (
+  content: FramerBungeeHeroV2Content | null | undefined
+): FramerBungeeHeroV2Card[] => {
+  const raw = content?.cardImages;
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return FRAMER_BUNGEE_HERO_V2_DEFAULT_CARDS.map(card => ({ ...card }));
+  }
+  return raw.filter(card => card && typeof card === 'object');
+};
+
+/** Layers folders — 1 group / thẻ marquee. */
+export const framerBungeeHeroV2CardElements = (
+  cards: FramerBungeeHeroV2Card[]
+): LayerElement[] => {
+  const list = cards.length > 0 ? cards : FRAMER_BUNGEE_HERO_V2_DEFAULT_CARDS;
+  return list.flatMap((card, i) => {
+    const groupId = `card${i}`;
+    const groupLabel = card.videoUrl?.trim()
+      ? `Video ${i + 1}`
+      : `Ảnh ${i + 1}`;
+    return [
+      {
+        key: `cardImages[${i}].imageUrl`,
+        label: 'Ảnh',
+        groupId,
+        groupLabel,
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+      {
+        key: `cardImages[${i}].videoUrl`,
+        label: 'Video',
+        groupId,
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+    ];
+  });
 };
 
 export const framerBungeeHeroV2Def: BlockDef<FramerBungeeHeroV2Content> = {
@@ -131,6 +178,11 @@ export const framerBungeeHeroV2Def: BlockDef<FramerBungeeHeroV2Content> = {
       icon: MousePointerClick,
       fieldType: 'text',
     },
-    { key: 'cardImages', label: 'Dải ảnh', icon: Grid3x3, fieldType: 'image' },
+    ...framerBungeeHeroV2CardElements(FRAMER_BUNGEE_HERO_V2_DEFAULT_CARDS),
+    {
+      key: 'cardImages',
+      label: 'Thêm / quản lý ảnh',
+      icon: ListChecks,
+    },
   ],
 };

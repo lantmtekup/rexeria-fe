@@ -18,6 +18,7 @@ import { cn } from '@/lib/cn';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 
+import { isVideoUrl } from './mediaUrl';
 import { DEFAULT_IMAGE_TRANSFORM, type ImageTransform } from './types';
 
 interface ImagePickerProps {
@@ -26,6 +27,11 @@ interface ImagePickerProps {
   transform?: ImageTransform;
   onTransformChange?: (next: ImageTransform) => void;
   className?: string;
+  /**
+   * File types the upload button offers. Mặc định chỉ ảnh; field media (ví dụ
+   * `real_estate_location.videoUrl`) truyền thêm video vào.
+   */
+  accept?: string;
 }
 
 const ROTATION_STEP = 90;
@@ -50,6 +56,7 @@ export function ImagePicker({
   transform,
   onTransformChange,
   className,
+  accept = 'image/*',
 }: ImagePickerProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
@@ -76,7 +83,11 @@ export function ImagePicker({
         mime_type: file.type || 'application/octet-stream',
         file_size: file.size,
         owner_scope: 'library',
-        media_type: file.type.startsWith('image/') ? 'image' : 'file',
+        media_type: file.type.startsWith('image/')
+          ? 'image'
+          : file.type.startsWith('video/')
+            ? 'video'
+            : 'file',
       });
 
       let publicUrl: string | null = null;
@@ -103,9 +114,9 @@ export function ImagePicker({
 
       await rexerApi.media.completeUpload({ upload_id: init.upload_id });
 
-      if (!publicUrl) throw new Error('Không nhận được URL ảnh');
+      if (!publicUrl) throw new Error('Không nhận được URL file');
       onChange(publicUrl);
-      toast.success('Đã tải ảnh lên');
+      toast.success('Đã tải lên');
     } catch (err) {
       const msg =
         err instanceof RxApiError
@@ -113,7 +124,7 @@ export function ImagePicker({
           : err instanceof Error
             ? err.message
             : 'Lỗi';
-      toast.error(`Tải ảnh thất bại: ${msg}`);
+      toast.error(`Tải lên thất bại: ${msg}`);
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -123,7 +134,20 @@ export function ImagePicker({
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       <div className='relative h-28 w-full overflow-hidden rounded-md border border-neutral-200 bg-neutral-100'>
-        {value ? (
+        {value && isVideoUrl(value) ? (
+          <video
+            key={value}
+            src={value}
+            muted
+            loop
+            autoPlay
+            playsInline
+            className='h-full w-full origin-center object-cover transition-transform duration-150'
+            style={{
+              transform: `rotate(${t.rotation}deg) scale(${t.scale})`,
+            }}
+          />
+        ) : value ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={value}
@@ -164,7 +188,7 @@ export function ImagePicker({
         <input
           ref={inputRef}
           type='file'
-          accept='image/*'
+          accept={accept}
           className='hidden'
           onChange={e => {
             const f = e.target.files?.[0];

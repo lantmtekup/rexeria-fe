@@ -20,10 +20,14 @@
  * (masterisehomes.com wp-content/uploads) — production nên re-host qua
  * CMS.
  */
-import { Image as ImageIcon, Pilcrow, Type } from 'lucide-react';
+import { Image as ImageIcon, ListChecks, Pilcrow, Type } from 'lucide-react';
 
 import { MasteriseHomeInside } from '../../MasteriseHomeInside';
-import type { MasteriseHomeInsideContent } from '../../../types';
+import type { LayerElement } from '../../../LayersPanel';
+import type {
+  MasteriseHomeInsideContent,
+  MasteriseHomeInsideSlide,
+} from '../../../types';
 import type { BlockDef } from '../types';
 
 const IMG_1 =
@@ -71,6 +75,54 @@ const EN: MasteriseHomeInsideContent = {
   ],
 };
 
+/**
+ * Slides đã lọc — content từ BE có thể thiếu/lệch shape (slide null, thiếu
+ * imageUrl). Dùng chung cho component, LayersPanel và ElementToolbar để 3 nơi
+ * cùng index → key `slides[i].*` luôn trỏ đúng phần tử.
+ */
+export const resolveMasteriseHomeInsideSlides = (
+  content: MasteriseHomeInsideContent
+): MasteriseHomeInsideSlide[] => {
+  const raw = content?.slides;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    s => s && typeof s === 'object' && typeof s.imageUrl === 'string'
+  );
+};
+
+/** 1 folder Lớp / slide (ảnh + alt + caption). */
+export const masteriseHomeInsideSlideElements = (
+  slides: MasteriseHomeInsideSlide[]
+): LayerElement[] =>
+  slides.flatMap((s, i) => {
+    const groupId = `slide${i}`;
+    const groupLabel = s.alt?.trim() || `Slide ${i + 1}`;
+    return [
+      {
+        key: `slides[${i}].imageUrl`,
+        label: 'Ảnh',
+        groupId,
+        groupLabel,
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+      {
+        key: `slides[${i}].alt`,
+        label: 'Alt (mô tả ảnh)',
+        groupId,
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+      {
+        key: `slides[${i}].caption`,
+        label: 'Caption overlay',
+        groupId,
+        icon: Type,
+        fieldType: 'text' as const,
+      },
+    ];
+  });
+
 export const masteriseHomeInsideDef: BlockDef<MasteriseHomeInsideContent> = {
   type: 'masterise_home_inside',
   meta: {
@@ -106,12 +158,14 @@ export const masteriseHomeInsideDef: BlockDef<MasteriseHomeInsideContent> = {
       icon: Pilcrow,
       fieldType: 'textarea',
     },
-    // Mảng slides — edit trong array control (LayerElement.kind='array')
+    ...masteriseHomeInsideSlideElements(VI.slides),
+    // List manager: thêm / xoá slide (kind `masteriseSlides`).
+    // KHÔNG đặt fieldType — nếu không resolveKind sẽ trả 'text' và ghi string
+    // đè cả mảng slides.
     {
       key: 'slides',
-      label: 'Slide ảnh',
-      icon: ImageIcon,
-      fieldType: 'textarea',
+      label: 'Thêm / quản lý slide',
+      icon: ListChecks,
     },
   ],
 };

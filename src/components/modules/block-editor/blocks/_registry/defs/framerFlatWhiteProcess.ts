@@ -11,11 +11,14 @@
  *
  * Component: `blocks/FramerFlatWhiteProcess.tsx`.
  */
-import { Pilcrow, Type } from 'lucide-react';
+import { Frame, Hash, ListChecks, Pilcrow, Type } from 'lucide-react';
 
 import { FramerFlatWhiteProcess } from '../../FramerFlatWhiteProcess';
 import type { LayerElement } from '../../../LayersPanel';
-import type { FramerFlatWhiteProcessContent } from '../../../types';
+import type {
+  FramerFlatWhiteProcessContent,
+  FramerFlatWhiteProcessStep,
+} from '../../../types';
 import type { BlockDef } from '../types';
 
 const VI: FramerFlatWhiteProcessContent = {
@@ -48,6 +51,54 @@ const EN: FramerFlatWhiteProcessContent = {
   ...VI,
 };
 
+/**
+ * Layers folders — 1 group / step.
+ *
+ * Key phải là **content path** (`steps[i].<field>`): `setContentAt` chỉ hiểu
+ * segment `[n]` là index mảng. Bản đầu dùng `step-N-title` — không parse ra
+ * path nên ElementToolbar ghi vào key rác `content['step-0-title']` và block
+ * không bao giờ đọc lại. `steps[i].card` là key style-only cho khung thẻ
+ * (nền / drag position), không có field tương ứng trong CMS.
+ */
+export const framerFlatWhiteProcessStepElements = (
+  steps: FramerFlatWhiteProcessStep[]
+): LayerElement[] => {
+  const list = steps.length > 0 ? steps : VI.steps;
+  return list.flatMap((_, i): LayerElement[] => {
+    const groupId = `flatWhiteStep${i}`;
+    return [
+      {
+        key: `steps[${i}].card`,
+        label: 'Khung',
+        groupId,
+        groupLabel: `Step ${i + 1}`,
+        icon: Frame,
+      },
+      {
+        key: `steps[${i}].number`,
+        label: 'Số thứ tự',
+        groupId,
+        icon: Hash,
+        fieldType: 'text',
+      },
+      {
+        key: `steps[${i}].title`,
+        label: 'Tiêu đề',
+        groupId,
+        icon: Type,
+        fieldType: 'textarea',
+      },
+      {
+        key: `steps[${i}].body`,
+        label: 'Mô tả',
+        groupId,
+        icon: Pilcrow,
+        fieldType: 'textarea',
+      },
+    ];
+  });
+};
+
 export const framerFlatWhiteProcessDef: BlockDef<FramerFlatWhiteProcessContent> =
   {
     type: 'framer_flat_white_process',
@@ -65,10 +116,9 @@ export const framerFlatWhiteProcessDef: BlockDef<FramerFlatWhiteProcessContent> 
     },
     component: FramerFlatWhiteProcess,
     defaultContent: { vi: VI, en: EN },
-    // Layer nền tự động (BACKGROUND_LAYER) thêm vào đầu; khai báo element con.
-    // step-0..step-2 (card root) + step-N-pill/title/body để user chỉnh
-    // text/color/font trong editor. step-N-title/body dùng fieldType
-    // 'textarea' cho phép nhập đoạn dài.
+    // Layer nền tự động (BACKGROUND_LAYER) thêm vào đầu; step folders expand
+    // theo content thật qua `elementsForType(framer_flat_white_process)` —
+    // danh sách ở đây chỉ là seed cho 3 step mặc định.
     elements: [
       { key: 'label', label: 'Pill label', icon: Type, fieldType: 'text' },
       {
@@ -77,35 +127,13 @@ export const framerFlatWhiteProcessDef: BlockDef<FramerFlatWhiteProcessContent> 
         icon: Pilcrow,
         fieldType: 'textarea',
       },
-      ...(VI.steps.flatMap((_, idx): LayerElement[] => [
-        {
-          key: `step-${idx}`,
-          label: 'khung',
-          groupId: `step-${idx}`,
-          groupLabel: `Step ${idx + 1}`,
-          icon: Type,
-        },
-        {
-          key: `step-${idx}-pill`,
-          label: 'pill',
-          groupId: `step-${idx}`,
-          icon: Type,
-          fieldType: 'text',
-        },
-        {
-          key: `step-${idx}-title`,
-          label: 'title',
-          groupId: `step-${idx}`,
-          icon: Pilcrow,
-          fieldType: 'textarea',
-        },
-        {
-          key: `step-${idx}-body`,
-          label: 'body',
-          groupId: `step-${idx}`,
-          icon: Pilcrow,
-          fieldType: 'textarea',
-        },
-      ]) as LayerElement[]),
+      ...framerFlatWhiteProcessStepElements(VI.steps),
+      // Không đặt fieldType: resolveKind short-circuit 'text'/'textarea' trước
+      // khi tới nhánh `framerFlatWhiteProcessSteps` (control thêm/xoá bước).
+      {
+        key: 'steps',
+        label: 'Thêm / quản lý bước',
+        icon: ListChecks,
+      },
     ],
   };

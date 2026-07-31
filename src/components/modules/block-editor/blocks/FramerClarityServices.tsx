@@ -17,6 +17,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { resolveFramerClarityServices } from './framerClarityServicesContent';
 
 interface FramerClarityServicesProps {
   content: FramerClarityServicesContent;
@@ -30,23 +31,18 @@ interface FramerClarityServicesProps {
 
 /**
  * Clarity Services, framer-native. Port từ `src/blocks/framer-clarity-services`:
- * 3-col grid — 2 service card trái, ảnh portrait chính giữa (span 2 row), 2 card phải.
+ * 3-col grid — card dịch vụ cột trái/phải, ảnh portrait chính giữa (span hết hàng).
  * Icon trong circle trắng; BG mặc định #f8faf2; card BG #f3f6e6.
  * Responsive container-query: tablet → 2-col, mobile → 1-col.
+ *
+ * `services[]` ĐỘNG — thêm/xoá qua Lớp「Thêm / quản lý dịch vụ」. Item chẵn nằm
+ * cột 1, item lẻ nằm cột 3, số hàng = ceil(n/2) và ảnh giữa span hết số hàng đó
+ * (truyền qua CSS var `--clarity-rows` vì container query không đặt được inline).
  */
-
-/* Slot classes → [gridColumn, gridRow] */
-const SLOT_POSITIONS: [string, string][] = [
-  ['1', '1'], // left-top
-  ['3', '1'], // right-top
-  ['1', '2'], // left-bottom
-  ['3', '2'], // right-bottom
-];
 
 interface FramerClarityServiceCardProps {
   item: FramerClarityServiceItem;
   index: number;
-  slot: [string, string];
   cardBg: string;
   styles?: ElementStylesMap;
   order?: string[];
@@ -57,7 +53,6 @@ interface FramerClarityServiceCardProps {
 function FramerClarityServiceCard({
   item,
   index,
-  slot,
   cardBg,
   styles,
   order,
@@ -71,7 +66,6 @@ function FramerClarityServiceCard({
       positionStyle(positions, key)
     );
 
-  const [col, row] = slot;
   const titleKey = `services[${index}].title`;
   const descKey = `services[${index}].description`;
   const iconKey = `services[${index}].iconUrl`;
@@ -79,26 +73,25 @@ function FramerClarityServiceCard({
   const cardRadius = 'clamp(20px,2cqi,36px)';
   const cardPad = 'clamp(24px,3cqi,44px)';
 
-  const colStartMd =
-    col === '1'
-      ? '@md:col-start-1'
-      : col === '2'
-        ? '@md:col-start-2'
-        : '@md:col-start-3';
-  const rowStartMd = row === '1' ? '@md:row-start-1' : '@md:row-start-2';
-
   return (
     <div
-      style={{
-        height: '100%',
-        borderRadius: cardRadius,
-        padding: cardPad,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        background: cardBg,
-      }}
-      className={cn('col-start-1 row-start-auto', colStartMd, rowStartMd)}
+      style={
+        {
+          height: '100%',
+          borderRadius: cardRadius,
+          padding: cardPad,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          background: cardBg,
+          '--clarity-col': index % 2 === 0 ? 1 : 3,
+          '--clarity-row': Math.floor(index / 2) + 1,
+        } as React.CSSProperties
+      }
+      className={cn(
+        'col-start-1 row-start-auto',
+        '@md:col-start-(--clarity-col) @md:row-start-(--clarity-row)'
+      )}
     >
       {/* Icon circle */}
       <div
@@ -209,7 +202,9 @@ export function FramerClarityServices({
 
   const bgColor = content.bgColor || '#f8faf2';
   const cardBg = content.cardBg || '#f3f6e6';
-  const services = Array.isArray(content.services) ? content.services : [];
+  const services = resolveFramerClarityServices(content);
+  // 2 card / hàng → số hàng grid ở @md+; ảnh giữa span hết số hàng này.
+  const rows = Math.max(1, Math.ceil(services.length / 2));
 
   const radius = 'clamp(20px,2cqi,36px)';
 
@@ -239,17 +234,19 @@ export function FramerClarityServices({
           }}
         >
           <div
-            className='grid grid-cols-1 @md:grid-cols-[1fr_minmax(280px,1.05fr)_1fr] @md:grid-rows-2'
-            style={{
-              gap: 'clamp(16px,2cqi,28px)',
-            }}
+            className='grid grid-cols-1 @md:grid-cols-[1fr_minmax(280px,1.05fr)_1fr] @md:grid-rows-[repeat(var(--clarity-rows),minmax(0,1fr))]'
+            style={
+              {
+                gap: 'clamp(16px,2cqi,28px)',
+                '--clarity-rows': rows,
+              } as React.CSSProperties
+            }
           >
             {services.slice(0, 2).map((item, idx) => (
               <FramerClarityServiceCard
                 key={idx}
                 item={item}
                 index={idx}
-                slot={SLOT_POSITIONS[idx % 4]}
                 cardBg={cardBg}
                 styles={styles}
                 order={order}
@@ -282,18 +279,17 @@ export function FramerClarityServices({
                 styleOf('centerImageUrl')
               )}
               className={cn(
-                'col-start-1 row-start-3 @md:col-start-2 @md:row-span-2 @md:row-start-1',
+                'col-start-1 row-start-3 @md:col-start-2 @md:row-span-(--clarity-rows) @md:row-start-1',
                 selectableClass(activeKey === 'centerImageUrl')
               )}
             />
 
-            {/* Second pair of cards */}
-            {services.slice(2, 4).map((item, idx) => (
+            {/* Card còn lại — auto-flow dưới ảnh trên mobile, cột 1/3 ở @md+ */}
+            {services.slice(2).map((item, idx) => (
               <FramerClarityServiceCard
                 key={idx + 2}
                 item={item}
                 index={idx + 2}
-                slot={SLOT_POSITIONS[(idx + 2) % 4]}
                 cardBg={cardBg}
                 styles={styles}
                 order={order}

@@ -3,6 +3,11 @@
  * Registry-first (`BlockDef.elements.fieldType`), then key heuristics.
  */
 import { getBlockDef } from './blocks/_registry/registry';
+import {
+  FRAMER_PUREVISUALS_PANEL_LABEL,
+  isFramerPurevisualsPanelKey,
+  parseFramerPurevisualsPanelImageKey,
+} from './blocks/_registry/defs/framerPurevisualsHero';
 import { isLinkKey } from './links/linkToken';
 import type { LayerElement } from './LayersPanel';
 import type { BlockType } from './types';
@@ -16,6 +21,8 @@ export type ElementKind =
   | 'reasons'
   | 'slides'
   | 'scrollMattisSlides'
+  | 'readymagCaseSectionItems'
+  | 'masteriseSlides'
   | 'interactiveAd'
   | 'mintVariants'
   | 'mintTabs'
@@ -26,6 +33,13 @@ export type ElementKind =
   | 'pnjStickyMenuItems'
   | 'mintV2ServicesItems'
   | 'coolHunterGalleryItems'
+  | 'framerBungeeHeroV2CardImages'
+  | 'coolHunterSectionProgressItems'
+  | 'housentOurExcellenceItems'
+  | 'sustainitOurExpertiseItems'
+  | 'scrollImgScaleItems'
+  | 'framerIgnitexStepCards'
+  | 'framerClarityServicesItems'
   | 'alturaOlympusFeatures'
   | 'alturaOlympusImages'
   | 'theGrandServiceItems'
@@ -35,13 +49,17 @@ export type ElementKind =
   | 'theGrandFooterSocials'
   | 'mintV2ProcessSteps'
   | 'framerDarlingTimelineItems'
+  | 'framerNftpullTimelineItems'
+  | 'framerFlatWhiteProcessSteps'
   | 'framerPerformPricingTiers'
   | 'framerPerformTestimonials'
   | 'ignitexProjectsItems'
   | 'mintVaultCraftItems'
   | 'mintVaultCoins'
   | 'mintVaultImages'
+  | 'framerPurevisualsPanelImages'
   | 'lineaPortfolioItems'
+  | 'realEstateOverviewStats'
   | 'fill'
   | 'pnjFrames'
   | 'pnjScrim'
@@ -171,6 +189,12 @@ export function resolveKind(
   if (key === 'slides' && blockType === 'scroll_mattis') {
     return 'scrollMattisSlides';
   }
+  if (key === 'cases' && blockType === 'readymag_case_section') {
+    return 'readymagCaseSectionItems';
+  }
+  if (key === 'slides' && blockType === 'masterise_home_inside') {
+    return 'masteriseSlides';
+  }
   // PNJ variant chapters vs Mint swatch variants — cùng key `variants`.
   if (key === 'variants' && blockType === 'pnj_variant') {
     return 'pnjVariants';
@@ -290,10 +314,7 @@ export function resolveKind(
   ) {
     return 'text';
   }
-  if (
-    /^listItems\[\d+\]$/.test(key) &&
-    blockType === 'cite_flow_amenity'
-  ) {
+  if (/^listItems\[\d+\]$/.test(key) && blockType === 'cite_flow_amenity') {
     return 'text';
   }
   // Vault collection: `coins` là mảng (list manager), KHÔNG phải text.
@@ -311,6 +332,13 @@ export function resolveKind(
   if (blockType === 'altura_olympus' && /^images\[\d+\]$/.test(key)) {
     return 'image';
   }
+  // PureVisuals: `leftImageUrl` / `rightImageUrl` là mảng ảnh carousel của 2
+  // panel — chặn trước `isImageKey` (khớp /url$/i) để toolbar mở list manager
+  // thay vì ghi 1 URL đè cả mảng. Slot `leftImageUrl[0]` mới là 1 ô ảnh.
+  if (blockType === 'framer_purevisuals_hero') {
+    if (isFramerPurevisualsPanelKey(key)) return 'framerPurevisualsPanelImages';
+    if (parseFramerPurevisualsPanelImageKey(key)) return 'image';
+  }
   if (key === 'items' && blockType === 'pnj_sticky_menu') {
     return 'pnjStickyMenuItems';
   }
@@ -319,6 +347,31 @@ export function resolveKind(
   }
   if (key === 'items' && blockType === 'cool_hunter_gallery') {
     return 'coolHunterGalleryItems';
+  }
+  if (key === 'cardImages' && blockType === 'framer_bungee_hero_v2') {
+    return 'framerBungeeHeroV2CardImages';
+  }
+  if (key === 'sections' && blockType === 'cool_hunter_section_progress') {
+    return 'coolHunterSectionProgressItems';
+  }
+  if (key === 'items' && blockType === 'scroll_img_scale') {
+    return 'scrollImgScaleItems';
+  }
+  if (key === 'cards' && blockType === 'framer_ignitex_step') {
+    return 'framerIgnitexStepCards';
+  }
+  if (key === 'items' && blockType === 'housent_our_excellence') {
+    return 'housentOurExcellenceItems';
+  }
+  if (key === 'items' && blockType === 'sustainit_our_expertise') {
+    return 'sustainitOurExpertiseItems';
+  }
+  // Clarity Services: `services` là mảng động (list manager) — chặn trước
+  // fallback để toolbar không ghi 1 string đè cả mảng.
+  if (blockType === 'framer_clarity_services') {
+    if (key === 'services') return 'framerClarityServicesItems';
+    if (/^services\[\d+\]\.iconUrl$/.test(key)) return 'image';
+    if (/^services\[\d+\]\.(title|description)$/.test(key)) return 'text';
   }
   // Trước ELEMENT_KIND.features → 'features' (FeatureSection shape khác).
   if (key === 'features' && blockType === 'altura_olympus') {
@@ -356,6 +409,12 @@ export function resolveKind(
   if (key === 'testimonials' && blockType === 'framer_perform_about') {
     return 'framerPerformTestimonials';
   }
+  if (key === 'items' && blockType === 'framer_nftpull_timeline') {
+    return 'framerNftpullTimelineItems';
+  }
+  if (key === 'steps' && blockType === 'framer_flat_white_process') {
+    return 'framerFlatWhiteProcessSteps';
+  }
   if (key === 'tiers' && blockType === 'framer_perform_pricing') {
     return 'framerPerformPricingTiers';
   }
@@ -376,6 +435,12 @@ export function resolveKind(
     return 'image';
   }
   if (/^items\[\d+\]\.img$/.test(key) && blockType === 'linea_portfolio') {
+    return 'image';
+  }
+  if (
+    /^cardImages\[\d+\]\.(imageUrl|videoUrl)$/.test(key) &&
+    blockType === 'framer_bungee_hero_v2'
+  ) {
     return 'image';
   }
   if (
@@ -418,8 +483,11 @@ export function resolveKind(
   ) {
     return 'text';
   }
-  // Real Estate tổng quan: mỗi hạng mục là icon (ảnh) + một dòng chữ.
+  // Real Estate tổng quan: mỗi hạng mục là icon (ảnh) + một dòng chữ; `stats`
+  // (cả mảng) là list manager riêng — chặn TRƯỚC fallback `ELEMENT_KIND.stats`
+  // ('stats' → StatsControls generic trên {value,label}[], sai shape ở đây).
   if (blockType === 'real_estate_overview') {
+    if (key === 'stats') return 'realEstateOverviewStats';
     if (/^stats\[\d+\]\.text$/.test(key)) return 'text';
     if (/^stats\[\d+\]\.iconUrl$/.test(key)) return 'image';
   }
@@ -460,6 +528,29 @@ export function resolveKind(
     if (/^items\[\d+\]\.imageUrl$/.test(key)) return 'image';
     if (/^items\[\d+\]\.text$/.test(key)) return 'text';
   }
+  // Cool Hunter Section Progress: nhãn + data-section id.
+  if (blockType === 'cool_hunter_section_progress') {
+    if (/^sections\[\d+\]\.label$/.test(key)) return 'text';
+    if (/^sections\[\d+\]\.sectionId$/.test(key)) return 'text';
+  }
+  // Scroll Img Scale: title + ảnh.
+  if (blockType === 'scroll_img_scale') {
+    if (/^items\[\d+\]\.imageUrl$/.test(key)) return 'image';
+    if (/^items\[\d+\]\.title$/.test(key)) return 'text';
+  }
+  // IgniteX Step: mỗi card là title + body + ảnh minh hoạ.
+  if (blockType === 'framer_ignitex_step') {
+    if (/^cards\[\d+\]\.mainImageUrl$/.test(key)) return 'image';
+    if (/^cards\[\d+\]\.(title|body)$/.test(key)) return 'text';
+  }
+  // Housent Excellence: mỗi satellite là nhãn + tên icon lucide.
+  if (blockType === 'housent_our_excellence') {
+    if (/^items\[\d+\]\.(label|icon)$/.test(key)) return 'text';
+  }
+  if (blockType === 'sustainit_our_expertise') {
+    if (/^items\[\d+\]\.(imageUrl|backImageUrl)$/.test(key)) return 'image';
+    if (/^items\[\d+\]\.(title|subtitle|bullets)$/.test(key)) return 'text';
+  }
   // Real Estate biệt thự: mỗi slide là ảnh + tên loại hình + mô tả.
   if (blockType === 'real_estate_villa') {
     if (/^slides\[\d+\]\.imageUrl$/.test(key)) return 'image';
@@ -467,12 +558,22 @@ export function resolveKind(
     // Nền thẻ — chỉ có màu, không có nội dung.
     if (key === 'cardSurface') return 'fill';
   }
+  // Masterise "Hệ tiện ích trong nhà": ảnh + alt + caption theo slide.
+  if (blockType === 'masterise_home_inside') {
+    if (/^slides\[\d+\]\.imageUrl$/.test(key)) return 'image';
+    if (/^slides\[\d+\]\.(alt|caption)$/.test(key)) return 'text';
+  }
   // Scroll Mattis: media + marquee + meta theo slide.
   if (blockType === 'scroll_mattis') {
     if (/^slides\[\d+\]\.url$/.test(key)) return 'image';
     if (/^slides\[\d+\]\.(bgWord|title|category1|category2|year)$/.test(key)) {
       return 'text';
     }
+  }
+  if (blockType === 'readymag_case_section') {
+    if (/^cases\[\d+\]\.imageUrl$/.test(key)) return 'image';
+    if (/^cases\[\d+\]\.linkHref$/.test(key)) return 'link';
+    if (/^cases\[\d+\]\.(name|body|linkText)$/.test(key)) return 'text';
   }
   // Real Estate nội khu: mỗi ô là icon (ảnh) + label 2 dòng. `label` cũng trúng
   // fallback chung ngay bên dưới nên kind vẫn đúng, nhưng `iconUrl` thì không —
@@ -506,6 +607,18 @@ export function resolveKind(
     blockType === 'framer_darling_timeline'
   ) {
     return 'image';
+  }
+  if (
+    /^items\[\d+\]\.(number|title|description)$/.test(key) &&
+    blockType === 'framer_nftpull_timeline'
+  ) {
+    return 'text';
+  }
+  if (blockType === 'framer_flat_white_process') {
+    // `steps[i].card` là khung thẻ (style-only) — phải chặn trước fallback
+    // 'text', nếu không toolbar ghi 1 string vào `steps[i].card`.
+    if (/^steps\[\d+\]\.card$/.test(key)) return 'fill';
+    if (/^steps\[\d+\]\.(number|title|body)$/.test(key)) return 'text';
   }
   if (
     /^tiers\[\d+\]\.(price|title|features|ctaLabel)$/.test(key) &&
@@ -676,6 +789,11 @@ export function resolveLabel(
       reOverview[2] === 'text' ? 'Nội dung' : 'Icon'
     }`;
   }
+  // Trước ELEMENT_LABEL.stats ('Thống kê') — đây là list manager, không phải
+  // một ô nội dung.
+  if (key === 'stats' && blockType === 'real_estate_overview') {
+    return 'Thêm / quản lý hạng mục';
+  }
   const reHighlight = key.match(/^items\[(\d+)\]\.(number|text|imageUrl)$/);
   if (reHighlight && blockType === 'real_estate_highlights') {
     const labels: Record<string, string> = {
@@ -717,6 +835,34 @@ export function resolveLabel(
   if (key === 'slides' && blockType === 'scroll_mattis') {
     return 'Thêm / quản lý slide';
   }
+  const reReadymagCase = key.match(
+    /^cases\[(\d+)\]\.(imageUrl|name|body|linkText|linkHref)$/
+  );
+  if (reReadymagCase && blockType === 'readymag_case_section') {
+    const labels: Record<string, string> = {
+      imageUrl: 'ảnh',
+      name: 'tên',
+      body: 'mô tả',
+      linkText: 'link text',
+      linkHref: 'link URL',
+    };
+    return `Case ${Number(reReadymagCase[1]) + 1} · ${labels[reReadymagCase[2]]}`;
+  }
+  if (key === 'cases' && blockType === 'readymag_case_section') {
+    return 'Thêm / quản lý case';
+  }
+  const reMasterise = key.match(/^slides\[(\d+)\]\.(imageUrl|alt|caption)$/);
+  if (reMasterise && blockType === 'masterise_home_inside') {
+    const labels: Record<string, string> = {
+      imageUrl: 'Ảnh',
+      alt: 'Alt',
+      caption: 'Caption',
+    };
+    return `Slide ${Number(reMasterise[1]) + 1} · ${labels[reMasterise[2]]}`;
+  }
+  if (key === 'slides' && blockType === 'masterise_home_inside') {
+    return 'Thêm / quản lý slide';
+  }
   // Phải đứng TRƯỚC `navLabel` bên dưới — nếu không `items[i].label` của nội
   // khu sẽ nhận nhãn chung "Nhãn mục N".
   const reUtility = key.match(/^items\[(\d+)\]\.(label|iconUrl)$/);
@@ -737,6 +883,19 @@ export function resolveLabel(
       statUnit: 'Đơn vị',
     };
     return `Địa điểm ${Number(grandLoc[1]) + 1} · ${labels[grandLoc[2]] ?? grandLoc[2]}`;
+  }
+  const clarityFieldLabel = key.match(
+    /^services\[(\d+)\]\.(title|description|iconUrl)$/
+  );
+  if (clarityFieldLabel && blockType === 'framer_clarity_services') {
+    const labels: Record<string, string> = {
+      title: 'Tiêu đề',
+      description: 'Mô tả',
+      iconUrl: 'Icon',
+    };
+    return `Dịch vụ ${Number(clarityFieldLabel[1]) + 1} · ${
+      labels[clarityFieldLabel[2]] ?? clarityFieldLabel[2]
+    }`;
   }
   const grandSvc = key.match(/^items\[(\d+)\]\.(label|imageUrl|description)$/);
   if (grandSvc && blockType === 'the_grand_service') {
@@ -775,6 +934,13 @@ export function resolveLabel(
   if (navLabel && blockType === 'mintv2_services') {
     return `Mục ${Number(navLabel[1]) + 1} · Nhãn`;
   }
+  // Trước fallback `Nhãn mục N` — Housent hiển thị cặp Nhãn / Icon.
+  const housentItem = key.match(/^items\[(\d+)\]\.(label|icon)$/);
+  if (housentItem && blockType === 'housent_our_excellence') {
+    return `Mục ${Number(housentItem[1]) + 1} · ${
+      housentItem[2] === 'label' ? 'Nhãn' : 'Icon'
+    }`;
+  }
   if (navLabel) return `Nhãn mục ${Number(navLabel[1]) + 1}`;
   const navLink = key.match(/^items\[(\d+)\]\.link$/);
   if (navLink) return `Link mục ${Number(navLink[1]) + 1}`;
@@ -793,6 +959,15 @@ export function resolveLabel(
   if (key === 'items' && blockType === 'cool_hunter_gallery') {
     return 'Thêm / quản lý ảnh';
   }
+  if (key === 'cardImages' && blockType === 'framer_bungee_hero_v2') {
+    return 'Thêm / quản lý ảnh';
+  }
+  if (key === 'sections' && blockType === 'cool_hunter_section_progress') {
+    return 'Thêm / quản lý section';
+  }
+  if (key === 'items' && blockType === 'scroll_img_scale') {
+    return 'Thêm / quản lý mục';
+  }
   if (key === 'features' && blockType === 'altura_olympus') {
     return 'Thêm / quản lý features';
   }
@@ -807,6 +982,57 @@ export function resolveLabel(
     return `Ảnh ${Number(reGallery[1]) + 1} · ${
       reGallery[2] === 'imageUrl' ? 'Ảnh' : 'Caption'
     }`;
+  }
+  const reBungeeCard = key.match(/^cardImages\[(\d+)\]\.(imageUrl|videoUrl)$/);
+  if (reBungeeCard && blockType === 'framer_bungee_hero_v2') {
+    return `Thẻ ${Number(reBungeeCard[1]) + 1} · ${
+      reBungeeCard[2] === 'imageUrl' ? 'Ảnh' : 'Video'
+    }`;
+  }
+  const reSectionProgress = key.match(/^sections\[(\d+)\]\.(label|sectionId)$/);
+  if (reSectionProgress && blockType === 'cool_hunter_section_progress') {
+    return `Section ${Number(reSectionProgress[1]) + 1} · ${
+      reSectionProgress[2] === 'label' ? 'Nhãn' : 'data-section id'
+    }`;
+  }
+  const reScrollImg = key.match(/^items\[(\d+)\]\.(imageUrl|title)$/);
+  if (reScrollImg && blockType === 'scroll_img_scale') {
+    return `Mục ${Number(reScrollImg[1]) + 1} · ${
+      reScrollImg[2] === 'imageUrl' ? 'Ảnh' : 'Tiêu đề'
+    }`;
+  }
+  const reIgnitexCard = key.match(
+    /^cards\[(\d+)\]\.(title|body|mainImageUrl)$/
+  );
+  if (reIgnitexCard && blockType === 'framer_ignitex_step') {
+    const labels: Record<string, string> = {
+      title: 'title',
+      body: 'body',
+      mainImageUrl: 'ảnh',
+    };
+    return `Card ${Number(reIgnitexCard[1]) + 1} · ${labels[reIgnitexCard[2]]}`;
+  }
+  if (key === 'cards' && blockType === 'framer_ignitex_step') {
+    return 'Thêm / quản lý card';
+  }
+  if (key === 'items' && blockType === 'housent_our_excellence') {
+    return 'Thêm / quản lý mục';
+  }
+  const reSustainitItem = key.match(
+    /^items\[(\d+)\]\.(imageUrl|backImageUrl|title|subtitle|bullets)$/
+  );
+  if (reSustainitItem && blockType === 'sustainit_our_expertise') {
+    const labels: Record<string, string> = {
+      imageUrl: 'Ảnh trước',
+      backImageUrl: 'Ảnh sau (blur)',
+      title: 'Tiêu đề',
+      subtitle: 'Phụ đề',
+      bullets: 'Bullets',
+    };
+    return `Item ${Number(reSustainitItem[1]) + 1} · ${labels[reSustainitItem[2]]}`;
+  }
+  if (key === 'items' && blockType === 'sustainit_our_expertise') {
+    return 'Thêm / quản lý mục';
   }
   const stepField = key.match(/^steps\[(\d+)\]\.(no|title|body)$/);
   if (stepField && blockType === 'mintv2_process') {
@@ -834,6 +1060,20 @@ export function resolveLabel(
   }
   if (key === 'items' && blockType === 'framer_darling_timeline') {
     return 'Thêm / quản lý mốc';
+  }
+  const nftpullField = key.match(
+    /^items\[(\d+)\]\.(number|title|description)$/
+  );
+  if (nftpullField && blockType === 'framer_nftpull_timeline') {
+    const labels: Record<string, string> = {
+      number: 'Số thứ tự',
+      title: 'Tiêu đề',
+      description: 'Mô tả',
+    };
+    return `Mục ${Number(nftpullField[1]) + 1} · ${labels[nftpullField[2]] ?? nftpullField[2]}`;
+  }
+  if (key === 'items' && blockType === 'framer_nftpull_timeline') {
+    return 'Thêm / quản lý mục';
   }
   const tierField = key.match(
     /^tiers\[(\d+)\]\.(imageUrl|price|title|features|ctaLabel|ctaHref)$/
@@ -923,6 +1163,23 @@ export function resolveElementMeta(
       label: 'Thêm / quản lý ảnh',
     };
   }
+  if (blockType === 'framer_purevisuals_hero') {
+    if (isFramerPurevisualsPanelKey(key)) {
+      return {
+        kind: 'framerPurevisualsPanelImages',
+        fieldType: undefined,
+        label: FRAMER_PUREVISUALS_PANEL_LABEL[key],
+      };
+    }
+    const panelImg = parseFramerPurevisualsPanelImageKey(key);
+    if (panelImg) {
+      return {
+        kind: 'image',
+        fieldType: 'image',
+        label: `${FRAMER_PUREVISUALS_PANEL_LABEL[panelImg.panel]} ${panelImg.index + 1}`,
+      };
+    }
+  }
   const vImg = key.match(/^variants\[(\d+)\]\.image$/);
   if (vImg && blockType === 'pnj_variant') {
     return {
@@ -974,6 +1231,27 @@ export function resolveElementMeta(
             ? 'textarea'
             : 'text',
       label: `Địa điểm ${Number(grandLocMeta[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  const clarityFieldMeta = key.match(
+    /^services\[(\d+)\]\.(title|description|iconUrl)$/
+  );
+  if (clarityFieldMeta && blockType === 'framer_clarity_services') {
+    const field = clarityFieldMeta[2];
+    const labels: Record<string, string> = {
+      title: 'Tiêu đề',
+      description: 'Mô tả',
+      iconUrl: 'Icon',
+    };
+    return {
+      kind: field === 'iconUrl' ? 'image' : 'text',
+      fieldType:
+        field === 'iconUrl'
+          ? 'image'
+          : field === 'description'
+            ? 'textarea'
+            : 'text',
+      label: `Dịch vụ ${Number(clarityFieldMeta[1]) + 1} · ${labels[field] ?? field}`,
     };
   }
   const grandSvcMeta = key.match(
@@ -1175,6 +1453,13 @@ export function resolveElementMeta(
       }`,
     };
   }
+  if (key === 'stats' && blockType === 'real_estate_overview') {
+    return {
+      kind: 'realEstateOverviewStats',
+      fieldType: undefined,
+      label: 'Thêm / quản lý hạng mục',
+    };
+  }
   const reHighlightField = key.match(
     /^items\[(\d+)\]\.(number|text|imageUrl)$/
   );
@@ -1245,6 +1530,62 @@ export function resolveElementMeta(
   if (key === 'slides' && blockType === 'scroll_mattis') {
     return {
       kind: 'scrollMattisSlides',
+      fieldType: undefined,
+      label: 'Thêm / quản lý slide',
+    };
+  }
+  if (key === 'cases' && blockType === 'readymag_case_section') {
+    return {
+      kind: 'readymagCaseSectionItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý case',
+    };
+  }
+  const reReadymagCaseField = key.match(
+    /^cases\[(\d+)\]\.(imageUrl|name|body|linkText|linkHref)$/
+  );
+  if (reReadymagCaseField && blockType === 'readymag_case_section') {
+    const field = reReadymagCaseField[2];
+    const labels: Record<string, string> = {
+      imageUrl: 'ảnh',
+      name: 'tên',
+      body: 'mô tả',
+      linkText: 'link text',
+      linkHref: 'link URL',
+    };
+    return {
+      kind:
+        field === 'imageUrl' ? 'image' : field === 'linkHref' ? 'link' : 'text',
+      fieldType:
+        field === 'imageUrl'
+          ? 'image'
+          : field === 'linkHref'
+            ? 'link'
+            : field === 'body'
+              ? 'textarea'
+              : 'text',
+      label: `Case ${Number(reReadymagCaseField[1]) + 1} · ${labels[field]}`,
+    };
+  }
+  const reMasteriseField = key.match(
+    /^slides\[(\d+)\]\.(imageUrl|alt|caption)$/
+  );
+  if (reMasteriseField && blockType === 'masterise_home_inside') {
+    const field = reMasteriseField[2];
+    const labels: Record<string, string> = {
+      imageUrl: 'Ảnh',
+      alt: 'Alt',
+      caption: 'Caption',
+    };
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      fieldType: field === 'imageUrl' ? 'image' : 'text',
+      label: `Slide ${Number(reMasteriseField[1]) + 1} · ${labels[field]}`,
+    };
+  }
+  if (key === 'slides' && blockType === 'masterise_home_inside') {
+    return {
+      kind: 'masteriseSlides',
       fieldType: undefined,
       label: 'Thêm / quản lý slide',
     };
@@ -1331,6 +1672,60 @@ export function resolveElementMeta(
       fieldType: undefined,
       label: 'Thêm / quản lý mốc',
     };
+  }
+  const nftpullField = key.match(
+    /^items\[(\d+)\]\.(number|title|description)$/
+  );
+  if (nftpullField && blockType === 'framer_nftpull_timeline') {
+    const field = nftpullField[2];
+    const labels: Record<string, string> = {
+      number: 'Số thứ tự',
+      title: 'Tiêu đề',
+      description: 'Mô tả',
+    };
+    return {
+      kind: 'text',
+      fieldType: field === 'description' ? 'textarea' : 'text',
+      label: `Mục ${Number(nftpullField[1]) + 1} · ${labels[field] ?? field}`,
+    };
+  }
+  if (key === 'items' && blockType === 'framer_nftpull_timeline') {
+    return {
+      kind: 'framerNftpullTimelineItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý mục',
+    };
+  }
+  if (blockType === 'framer_flat_white_process') {
+    const stepCard = key.match(/^steps\[(\d+)\]\.card$/);
+    if (stepCard) {
+      return {
+        kind: 'fill',
+        fieldType: undefined,
+        label: `Bước ${Number(stepCard[1]) + 1} · Khung`,
+      };
+    }
+    const stepField = key.match(/^steps\[(\d+)\]\.(number|title|body)$/);
+    if (stepField) {
+      const field = stepField[2];
+      const labels: Record<string, string> = {
+        number: 'Số thứ tự',
+        title: 'Tiêu đề',
+        body: 'Mô tả',
+      };
+      return {
+        kind: 'text',
+        fieldType: field === 'number' ? 'text' : 'textarea',
+        label: `Bước ${Number(stepField[1]) + 1} · ${labels[field] ?? field}`,
+      };
+    }
+    if (key === 'steps') {
+      return {
+        kind: 'framerFlatWhiteProcessSteps',
+        fieldType: undefined,
+        label: 'Thêm / quản lý bước',
+      };
+    }
   }
   const tierField = key.match(
     /^tiers\[(\d+)\]\.(imageUrl|price|title|features|ctaLabel|ctaHref)$/
@@ -1456,6 +1851,101 @@ export function resolveElementMeta(
       label: 'Thêm / quản lý ảnh',
     };
   }
+  if (key === 'cardImages' && blockType === 'framer_bungee_hero_v2') {
+    return {
+      kind: 'framerBungeeHeroV2CardImages',
+      fieldType: undefined,
+      label: 'Thêm / quản lý ảnh',
+    };
+  }
+  const reBungeeCardField = key.match(
+    /^cardImages\[(\d+)\]\.(imageUrl|videoUrl)$/
+  );
+  if (reBungeeCardField && blockType === 'framer_bungee_hero_v2') {
+    const field = reBungeeCardField[2];
+    return {
+      kind: 'image',
+      fieldType: 'image',
+      label: `Thẻ ${Number(reBungeeCardField[1]) + 1} · ${
+        field === 'imageUrl' ? 'Ảnh' : 'Video'
+      }`,
+    };
+  }
+  if (key === 'sections' && blockType === 'cool_hunter_section_progress') {
+    return {
+      kind: 'coolHunterSectionProgressItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý section',
+    };
+  }
+  const reSectionProgressField = key.match(
+    /^sections\[(\d+)\]\.(label|sectionId)$/
+  );
+  if (reSectionProgressField && blockType === 'cool_hunter_section_progress') {
+    const field = reSectionProgressField[2];
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Section ${Number(reSectionProgressField[1]) + 1} · ${
+        field === 'label' ? 'Nhãn' : 'data-section id'
+      }`,
+    };
+  }
+  if (key === 'items' && blockType === 'scroll_img_scale') {
+    return {
+      kind: 'scrollImgScaleItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý mục',
+    };
+  }
+  if (key === 'items' && blockType === 'housent_our_excellence') {
+    return {
+      kind: 'housentOurExcellenceItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý mục',
+    };
+  }
+  const reHousentItemField = key.match(/^items\[(\d+)\]\.(label|icon)$/);
+  if (reHousentItemField && blockType === 'housent_our_excellence') {
+    const field = reHousentItemField[2];
+    return {
+      kind: 'text',
+      fieldType: 'text',
+      label: `Mục ${Number(reHousentItemField[1]) + 1} · ${
+        field === 'label' ? 'Nhãn' : 'Icon'
+      }`,
+    };
+  }
+  if (key === 'items' && blockType === 'sustainit_our_expertise') {
+    return {
+      kind: 'sustainitOurExpertiseItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý mục',
+    };
+  }
+  const reSustainitItemField = key.match(
+    /^items\[(\d+)\]\.(imageUrl|backImageUrl|title|subtitle|bullets)$/
+  );
+  if (reSustainitItemField && blockType === 'sustainit_our_expertise') {
+    const field = reSustainitItemField[2];
+    const labels: Record<string, string> = {
+      imageUrl: 'Ảnh trước',
+      backImageUrl: 'Ảnh sau (blur)',
+      title: 'Tiêu đề',
+      subtitle: 'Phụ đề',
+      bullets: 'Bullets',
+    };
+    return {
+      kind: field === 'imageUrl' || field === 'backImageUrl' ? 'image' : 'text',
+      fieldType:
+        field === 'imageUrl' || field === 'backImageUrl'
+          ? 'image'
+          : field === 'bullets' || field === 'subtitle'
+            ? 'textarea'
+            : 'text',
+      label: `Item ${Number(reSustainitItemField[1]) + 1} · ${labels[field]}`,
+    };
+  }
   if (key === 'features' && blockType === 'altura_olympus') {
     return {
       kind: 'alturaOlympusFeatures',
@@ -1483,6 +1973,52 @@ export function resolveElementMeta(
       label: `Ảnh ${Number(reGalleryField[1]) + 1} · ${
         field === 'imageUrl' ? 'Ảnh' : 'Caption'
       }`,
+    };
+  }
+  const reScrollImgField = key.match(/^items\[(\d+)\]\.(imageUrl|title)$/);
+  if (reScrollImgField && blockType === 'scroll_img_scale') {
+    const field = reScrollImgField[2];
+    return {
+      kind: field === 'imageUrl' ? 'image' : 'text',
+      fieldType: field === 'imageUrl' ? 'image' : 'text',
+      label: `Mục ${Number(reScrollImgField[1]) + 1} · ${
+        field === 'imageUrl' ? 'Ảnh' : 'Tiêu đề'
+      }`,
+    };
+  }
+  const reIgnitexCardField = key.match(
+    /^cards\[(\d+)\]\.(title|body|mainImageUrl)$/
+  );
+  if (reIgnitexCardField && blockType === 'framer_ignitex_step') {
+    const field = reIgnitexCardField[2];
+    const labels: Record<string, string> = {
+      title: 'title',
+      body: 'body',
+      mainImageUrl: 'ảnh',
+    };
+    return {
+      kind: field === 'mainImageUrl' ? 'image' : 'text',
+      fieldType:
+        field === 'mainImageUrl'
+          ? 'image'
+          : field === 'body'
+            ? 'textarea'
+            : 'text',
+      label: `Card ${Number(reIgnitexCardField[1]) + 1} · ${labels[field]}`,
+    };
+  }
+  if (key === 'cards' && blockType === 'framer_ignitex_step') {
+    return {
+      kind: 'framerIgnitexStepCards',
+      fieldType: undefined,
+      label: 'Thêm / quản lý card',
+    };
+  }
+  if (key === 'services' && blockType === 'framer_clarity_services') {
+    return {
+      kind: 'framerClarityServicesItems',
+      fieldType: undefined,
+      label: 'Thêm / quản lý dịch vụ',
     };
   }
   if (key === 'items' && blockType === 'the_grand_service') {
@@ -1783,5 +2319,6 @@ export function canvasEditActionLabel(kind: ElementKind): string {
   if (kind === 'text') return 'Sửa chữ';
   if (kind === 'link') return 'Đặt link';
   if (kind === 'background') return 'Nền';
+  if (kind === 'framerPurevisualsPanelImages') return 'Quản lý ảnh';
   return 'Chỉnh';
 }

@@ -37,6 +37,7 @@ export type BlockType =
   | 'lightbox_flip'
   | 'flip_gallery'
   | 'wheel_gallery'
+  | 'scroll_img_scale'
   | 'hover_reveal_list'
   | 'hover_equalizer_heading'
   | 'brutalist_text'
@@ -743,6 +744,20 @@ export interface CoolHunterGalleryContent {
   items?: CoolHunterGalleryItem[];
   /** Nhãn dọc bên phải (desktop): "02 - Lake Wehapa". */
   label?: string;
+}
+
+/**
+ * Scroll Img Scale — danh sách title + ảnh; ảnh scale theo khoảng cách tới
+ * tâm viewport khi cuộn. Port từ CodeGrid cg-scroll-img-scale (discord 087).
+ */
+export interface ScrollImgScaleItem {
+  title?: string;
+  imageUrl?: string;
+  imageAlt?: string;
+}
+
+export interface ScrollImgScaleContent {
+  items?: ScrollImgScaleItem[];
 }
 
 /**
@@ -1718,7 +1733,8 @@ export interface ProductSpecSheetContent {
 
 /**
  * Hero - Yume (framer-native): 2 dòng tên cực to + avatar tròn top-right +
- * email/bio bottom row. Migrate từ `src/blocks/framer-yume-hero`. `avatar`
+ * email/bio bottom row. `email` hiển thị bằng `<a href="mailto:…">`; href suy
+ * ra từ chuỗi email, không phải field riêng. Migrate từ `src/blocks/framer-yume-hero`. `avatar`
  * chuẩn hoá từ object `{url,alt}` (legacy) → `avatarUrl` string cho khớp
  * cách editor sửa ảnh (giống `backgroundUrl`/`imageUrl`).
  */
@@ -1769,8 +1785,10 @@ export interface FramerClarityServicesContent {
  * vuông (aspect-ratio 1/1) ở desktop; tablet 2-col auto height; mobile 1-col.
  */
 export interface SustainitExpertiseItem {
-  /** Ảnh hero của item (organic/biotech texture). */
+  /** Ảnh hero của item (organic/biotech texture) — hiện khi không hover. */
   imageUrl: string;
+  /** Ảnh blur phía sau khi hover card — fallback `imageUrl` nếu trống. */
+  backImageUrl?: string;
   /** Tiêu đề ALL-CAPS, vd "BIOTECH STRATEGY AND INNOVATION SCOUTING". */
   title: string;
   /** Phụ đề trong ngoặc, vd "An R&D department for your brand". */
@@ -1791,7 +1809,7 @@ export interface SustainitOurExpertiseContent {
   bgColor: string;
   /** Màu pill accent sau heading. */
   accentColor: string;
-  /** 4 item. */
+  /** Danh sách expertise item (động — thêm/xoá trong Layers). */
   items: SustainitExpertiseItem[];
   /** Nhãn CTA cuối, vd "Work with us". */
   ctaLabel: string;
@@ -1826,8 +1844,9 @@ export interface ReadymagCaseItem {
   imageUrl: string;
 }
 
-/** Flat editable fields (ScrollMattis pattern). `cases[]` = legacy fallback. */
+/** `cases[]` preferred (thêm/xoá). Flat case1…5 = legacy fallback. */
 export interface ReadymagCaseSectionContent {
+  cases?: ReadymagCaseItem[];
   case1Name?: string;
   case1Body?: string;
   case1LinkText?: string;
@@ -1853,8 +1872,6 @@ export interface ReadymagCaseSectionContent {
   case5LinkText?: string;
   case5LinkHref?: string;
   case5ImageUrl?: string;
-  /** Legacy nested array — resolveCases fallback. */
-  cases?: ReadymagCaseItem[];
   bgColor: string;
   textColor: string;
   accentColor: string;
@@ -2034,13 +2051,18 @@ export interface FramerIgnitexStepCard {
   subImageUrl?: string;
 }
 
-/** Flat card fields (ScrollMattis pattern). `cards[]` = legacy fallback. */
+/**
+ * `cards[]` = preferred (thêm/xoá trong Layers / toolbar, ScrollMattis pattern).
+ * Flat card1/2/3 = legacy fallback cho content chưa migrate.
+ */
 export interface FramerIgnitexStepContent {
   preTitle: string;
   leftTop: string;
   leftBottom: string;
   rightTop: string;
   rightBottom: string;
+  /** Preferred: số card động. Khi có `cards[]` thì bỏ qua flat card1/2/3. */
+  cards?: FramerIgnitexStepCard[];
   card1Title?: string;
   card1Body?: string;
   card1MainImageUrl?: string;
@@ -2050,8 +2072,6 @@ export interface FramerIgnitexStepContent {
   card3Title?: string;
   card3Body?: string;
   card3MainImageUrl?: string;
-  /** Legacy nested array — resolveCards fallback. */
-  cards?: FramerIgnitexStepCard[];
 }
 
 export interface FramerRealEstate02StoryContent {
@@ -3224,12 +3244,12 @@ export interface FramerFirmaTemplateStrategyDigitalContent {
 
 /**
  * Housent Our Excellence: nền trắng, badge "Foundation of Trust" + heading
- * "Our Excellence" + body trung tâm, 8 satellite items (icon + label) xếp
+ * "Our Excellence" + body trung tâm, N satellite items (icon + label) xếp
  * theo vòng tròn desktop / stack dọc mobile. Cảm hứng GSAP ScrollTrigger từ
  * housent.webflow.io — entrance là circle-items fade-up + badge reveal.
  * Port từ recon-housent-our-excellence.
  *
- * Flat item fields (ScrollMattis pattern). `items[]` = legacy fallback.
+ * `items[]` động (Altura Olympus pattern); flat item1..8 = legacy fallback.
  */
 export interface HousentOurExcellenceItem {
   label: string;
@@ -3240,6 +3260,9 @@ export interface HousentOurExcellenceContent {
   badge: string;
   heading: string;
   body: string;
+  /** Nguồn chính — thêm/xoá qua Layers「Thêm / quản lý mục」. */
+  items?: HousentOurExcellenceItem[];
+  /** @deprecated Legacy flat fields — resolveHousentOurExcellenceItems fallback. */
   item1Label?: string;
   item1Icon?: string;
   item2Label?: string;
@@ -3256,8 +3279,6 @@ export interface HousentOurExcellenceContent {
   item7Icon?: string;
   item8Label?: string;
   item8Icon?: string;
-  /** Legacy nested array — resolveItems fallback. */
-  items?: HousentOurExcellenceItem[];
 }
 
 export interface FramerFaqMinimalContent {
@@ -3558,6 +3579,7 @@ export type BlockContent =
   | CoolHunterSectionProgressContent
   | CoolHunterStoryContent
   | CoolHunterGalleryContent
+  | ScrollImgScaleContent
   | CoolHunterProductContent
   | CoolHunterQuoteContent
   | CoolHunterFooterContent
@@ -5464,6 +5486,24 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     defaultName: 'Wheel Gallery',
     aiLabelVi: 'bánh xe ảnh quay theo cuộn',
     aiLabelEn: 'image wheel rotating on scroll',
+  },
+  scroll_img_scale: {
+    type: 'scroll_img_scale',
+    category: 'gallery',
+    style: 'modern',
+    tags: ['gallery', 'scroll', 'scale', 'animation', 'codegrid'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-07-31',
+    label: 'Scroll Img Scale',
+    accent: '#0f0f0f',
+    adminLabel: 'Scroll Img Scale',
+    gradient: 'from-neutral-700 to-neutral-950',
+    defaultName: 'Scroll Img Scale',
+    aiLabelVi:
+      'danh sách title+ảnh dọc; ảnh phóng to khi gần tâm viewport, thu nhỏ khi xa',
+    aiLabelEn:
+      'vertical title+image list; images scale up near viewport center, down when far',
   },
   hover_reveal_list: {
     type: 'hover_reveal_list',

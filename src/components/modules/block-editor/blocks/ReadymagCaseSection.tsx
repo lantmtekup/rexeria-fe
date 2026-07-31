@@ -21,6 +21,10 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import {
+  resolveReadymagCases,
+  hasReadymagCasesArray,
+} from './_registry/defs/readymagCaseSection';
 
 interface Props {
   content: ReadymagCaseSectionContent;
@@ -99,68 +103,24 @@ const TRAIL_BUFFER_VH = 10;
 const MOBILE_STEP_VH = 90;
 const MOBILE_TRAIL_VH = 30;
 
-const CASE_KEYS = [
-  {
-    name: 'case1Name',
-    body: 'case1Body',
-    linkText: 'case1LinkText',
-    linkHref: 'case1LinkHref',
-    imageUrl: 'case1ImageUrl',
-  },
-  {
-    name: 'case2Name',
-    body: 'case2Body',
-    linkText: 'case2LinkText',
-    linkHref: 'case2LinkHref',
-    imageUrl: 'case2ImageUrl',
-  },
-  {
-    name: 'case3Name',
-    body: 'case3Body',
-    linkText: 'case3LinkText',
-    linkHref: 'case3LinkHref',
-    imageUrl: 'case3ImageUrl',
-  },
-  {
-    name: 'case4Name',
-    body: 'case4Body',
-    linkText: 'case4LinkText',
-    linkHref: 'case4LinkHref',
-    imageUrl: 'case4ImageUrl',
-  },
-  {
-    name: 'case5Name',
-    body: 'case5Body',
-    linkText: 'case5LinkText',
-    linkHref: 'case5LinkHref',
-    imageUrl: 'case5ImageUrl',
-  },
-] as const;
-
-type CaseFieldKey =
-  (typeof CASE_KEYS)[number][keyof (typeof CASE_KEYS)[number]];
-
-const pick = (content: ReadymagCaseSectionContent, key: CaseFieldKey) =>
-  content[key]?.trim() || '';
-
-const LEGACY_KEYS = ['fold', 'lune', 'arca', 'still', 'signal'] as const;
-
-/** Resolve 5 cases từ flat fields; fallback `cases[]` legacy. */
-const resolveCases = (
-  content: ReadymagCaseSectionContent
-): ReadymagCaseItem[] => {
-  const legacy = Array.isArray(content.cases) ? content.cases : [];
-  return CASE_KEYS.map((keys, i) => {
-    const prev = legacy[i];
+const caseFieldKeys = (i: number, useArray: boolean) => {
+  if (useArray) {
     return {
-      key: prev?.key || LEGACY_KEYS[i] || `case${i + 1}`,
-      name: pick(content, keys.name) || prev?.name || '',
-      body: pick(content, keys.body) || prev?.body || '',
-      linkText: pick(content, keys.linkText) || prev?.linkText || '',
-      linkHref: pick(content, keys.linkHref) || prev?.linkHref || '#',
-      imageUrl: pick(content, keys.imageUrl) || prev?.imageUrl || '',
+      name: `cases[${i}].name`,
+      body: `cases[${i}].body`,
+      linkText: `cases[${i}].linkText`,
+      linkHref: `cases[${i}].linkHref`,
+      imageUrl: `cases[${i}].imageUrl`,
     };
-  }).filter(c => c.name || c.body || c.imageUrl);
+  }
+  const n = i + 1;
+  return {
+    name: `case${n}Name`,
+    body: `case${n}Body`,
+    linkText: `case${n}LinkText`,
+    linkHref: `case${n}LinkHref`,
+    imageUrl: `case${n}ImageUrl`,
+  };
 };
 
 export function ReadymagCaseSection({
@@ -182,7 +142,8 @@ export function ReadymagCaseSection({
     [styles, order, positions]
   );
 
-  const cases = React.useMemo(() => resolveCases(content), [content]);
+  const cases = React.useMemo(() => resolveReadymagCases(content), [content]);
+  const useCasesArray = hasReadymagCasesArray(content);
   const caseCount = cases.length;
   const isValid = caseCount > 0;
 
@@ -307,7 +268,7 @@ export function ReadymagCaseSection({
               fontSize: 14,
             }}
           >
-            (Chưa có case — chỉnh Case 1…5 trong LayersPanel)
+            (Chưa có case — thêm case trong LayersPanel)
           </div>
         ) : (
           <div
@@ -320,8 +281,7 @@ export function ReadymagCaseSection({
             }}
           >
             {cases.map((c, i) => {
-              const keys = CASE_KEYS[i];
-              if (!keys) return null;
+              const keys = caseFieldKeys(i, useCasesArray);
               return (
                 <div
                   key={`edit-${c.key}`}
@@ -528,8 +488,7 @@ export function ReadymagCaseSection({
               }}
             >
               {cases.map((c, i) => {
-                const keys = CASE_KEYS[i];
-                if (!keys) return null;
+                const keys = caseFieldKeys(i, useCasesArray);
                 const isActive = i === activeIndex;
                 return (
                   <div
@@ -602,8 +561,7 @@ export function ReadymagCaseSection({
               }}
             >
               {cases.map((c, i) => {
-                const keys = CASE_KEYS[i];
-                if (!keys) return null;
+                const keys = caseFieldKeys(i, useCasesArray);
                 const isActive = i === activeIndex;
                 return (
                   <h2
@@ -662,8 +620,7 @@ export function ReadymagCaseSection({
         }}
       >
         {cases.map((c, i) => {
-          const keys = CASE_KEYS[i];
-          if (!keys) return null;
+          const keys = caseFieldKeys(i, useCasesArray);
           const isActive = i === activeIndex;
           return (
             <div
@@ -711,6 +668,7 @@ export function ReadymagCaseSection({
 
       <MobileReadymagCases
         cases={cases}
+        useCasesArray={useCasesArray}
         activeKey={activeKey}
         styleOf={styleOf}
         bgColor={bgColor}
@@ -727,6 +685,7 @@ export function ReadymagCaseSection({
 
 interface MobileReadymagCasesProps {
   cases: ReadymagCaseItem[];
+  useCasesArray: boolean;
   activeKey?: string | null;
   styleOf: (key: string) => React.CSSProperties | undefined;
   bgColor: string;
@@ -740,6 +699,7 @@ interface MobileReadymagCasesProps {
 
 function MobileReadymagCases({
   cases,
+  useCasesArray,
   activeKey,
   styleOf,
   bgColor,
@@ -866,8 +826,7 @@ function MobileReadymagCases({
         }}
       >
         {cases.map((c, i) => {
-          const keys = CASE_KEYS[i];
-          if (!keys) return null;
+          const keys = caseFieldKeys(i, useCasesArray);
           const isActive = i === activeIndex;
           return (
             <div

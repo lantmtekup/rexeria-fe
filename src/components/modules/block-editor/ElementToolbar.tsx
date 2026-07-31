@@ -75,6 +75,11 @@ import {
 } from './blocks/pnjVariantContent';
 import { resolveScrollMattisSlides } from './blocks/_registry/defs/scrollMattis';
 import {
+  READMAG_CASE_BLANK,
+  resolveReadymagCases,
+} from './blocks/_registry/defs/readymagCaseSection';
+import { resolveMasteriseHomeInsideSlides } from './blocks/_registry/defs/masteriseHomeInside';
+import {
   ALTURA_OLYMPUS_DEFAULT_FEATURES,
   ALTURA_OLYMPUS_DEFAULT_IMAGES,
   ALTURA_OLYMPUS_ICON_OPTIONS,
@@ -85,6 +90,44 @@ import {
   COOL_HUNTER_GALLERY_DEFAULT_ITEMS,
   resolveCoolHunterGalleryItems,
 } from './blocks/_registry/defs/coolHunterGallery';
+import {
+  FRAMER_BUNGEE_HERO_V2_DEFAULT_CARDS,
+  resolveFramerBungeeHeroV2CardImages,
+  type FramerBungeeHeroV2Card,
+} from './blocks/_registry/defs/framerBungeeHeroV2';
+import { resolveCoolHunterSectionProgressSections } from './blocks/_registry/defs/coolHunterSectionProgress';
+import {
+  SCROLL_IMG_SCALE_DEFAULT_ITEMS,
+  resolveScrollImgScaleItems,
+} from './blocks/_registry/defs/scrollImgScale';
+import {
+  FRAMER_IGNITEX_STEP_BLANK_CARD,
+  resolveFramerIgnitexStepCards,
+} from './blocks/_registry/defs/framerIgnitexStep';
+import {
+  HOUSENT_EXCELLENCE_FALLBACK_ICON,
+  HOUSENT_EXCELLENCE_ICON_OPTIONS,
+  resolveHousentOurExcellenceItems,
+} from './blocks/_registry/defs/housentOurExcellence';
+import {
+  SUSTAINIT_OUR_EXPERTISE_BLANK,
+  resolveSustainitOurExpertiseItems,
+} from './blocks/_registry/defs/sustainitOurExpertise';
+import {
+  REAL_ESTATE_OVERVIEW_DEFAULT_STATS,
+  resolveRealEstateOverviewStats,
+} from './blocks/_registry/defs/realEstateOverview';
+import {
+  FRAMER_PUREVISUALS_NEW_IMAGE,
+  FRAMER_PUREVISUALS_PANEL_LABEL,
+  isFramerPurevisualsPanelKey,
+  resolveFramerPurevisualsPanelImages,
+  type FramerPurevisualsPanelKey,
+} from './blocks/_registry/defs/framerPurevisualsHero';
+import {
+  FRAMER_CLARITY_SERVICE_NEW_ITEM,
+  resolveFramerClarityServices,
+} from './blocks/framerClarityServicesContent';
 import { buildAiPrompt } from './buildAiPrompt';
 import { ImagePicker } from './ImagePicker';
 import { getContentAt, setContentAt } from './contentPath';
@@ -108,15 +151,35 @@ import {
   type MintDiscoverContent,
   type ScrollMattisContent,
   type ScrollMattisSlideItem,
+  type ReadymagCaseSectionContent,
+  type ReadymagCaseItem,
+  type MasteriseHomeInsideContent,
+  type MasteriseHomeInsideSlide,
   type AlturaOlympusContent,
   type AlturaOlympusFeature,
   type CoolHunterGalleryContent,
   type CoolHunterGalleryItem,
+  type FramerBungeeHeroV2Content,
+  type CoolHunterSectionProgressContent,
+  type CoolHunterSectionProgressItem,
+  type HousentOurExcellenceContent,
+  type HousentOurExcellenceItem,
+  type SustainitOurExpertiseContent,
+  type SustainitExpertiseItem,
+  type ScrollImgScaleContent,
+  type ScrollImgScaleItem,
+  type FramerIgnitexStepCard,
+  type FramerIgnitexStepContent,
+  type FramerClarityServiceItem,
+  type FramerClarityServicesContent,
   type MintVariantsContent,
   type FramerDarlingTimelineContent,
   type FramerPerformAboutContent,
   type FramerPerformPricingContent,
   type IgnitexProjectsContent,
+  type FramerNftpullTimelineContent,
+  type FramerFlatWhiteProcessContent,
+  type FramerPurevisualsHeroContent,
   type MintV2ProcessContent,
   type MintV2ProcessStep,
   type MintV2ServiceItem,
@@ -161,6 +224,8 @@ import {
   type PnjStickyMenuItem,
   type LineaPortfolioContent,
   type LineaPortfolioItem,
+  type RealEstateOverviewContent,
+  type RealEstateOverviewStat,
 } from './types';
 
 export { BACKGROUND_LAYER_KEY };
@@ -452,6 +517,18 @@ export function ElementToolbar({
             onContentChange={onContentChange}
           />
         )}
+        {kind === 'readymagCaseSectionItems' && (
+          <ReadymagCaseSectionItemsControls
+            content={content as ReadymagCaseSectionContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'masteriseSlides' && (
+          <MasteriseSlidesControls
+            content={content as MasteriseHomeInsideContent}
+            onContentChange={onContentChange}
+          />
+        )}
         {kind === 'interactiveAd' && (
           <InteractiveAdControls
             content={content as InteractiveAdWidgetContent}
@@ -499,14 +576,18 @@ export function ElementToolbar({
                 ? 'Nền cột nội dung'
                 : selectedKey === 'dot'
                   ? 'Màu chấm'
-                  : 'Màu đường'
+                  : /^steps\[\d+\]\.card$/.test(selectedKey)
+                    ? 'Nền thẻ'
+                    : 'Màu đường'
             }
             fallback={
               selectedKey === 'contentSurface'
                 ? '#ffffff'
                 : selectedKey === 'dot'
                   ? '#c79119'
-                  : 'rgba(199, 145, 25, 0.6)'
+                  : /^steps\[\d+\]\.card$/.test(selectedKey)
+                    ? 'transparent'
+                    : 'rgba(199, 145, 25, 0.6)'
             }
           />
         )}
@@ -649,6 +730,48 @@ export function ElementToolbar({
             onContentChange={onContentChange}
           />
         )}
+        {kind === 'framerBungeeHeroV2CardImages' && (
+          <FramerBungeeHeroV2CardImagesControls
+            content={content as FramerBungeeHeroV2Content}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'coolHunterSectionProgressItems' && (
+          <CoolHunterSectionProgressItemsControls
+            content={content as CoolHunterSectionProgressContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'scrollImgScaleItems' && (
+          <ScrollImgScaleItemsControls
+            content={content as ScrollImgScaleContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'framerIgnitexStepCards' && (
+          <FramerIgnitexStepCardsControls
+            content={content as FramerIgnitexStepContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'framerClarityServicesItems' && (
+          <FramerClarityServicesItemsControls
+            content={content as FramerClarityServicesContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'housentOurExcellenceItems' && (
+          <HousentOurExcellenceItemsControls
+            content={content as HousentOurExcellenceContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'sustainitOurExpertiseItems' && (
+          <SustainitOurExpertiseItemsControls
+            content={content as SustainitOurExpertiseContent}
+            onContentChange={onContentChange}
+          />
+        )}
         {kind === 'alturaOlympusFeatures' && (
           <AlturaOlympusFeaturesControls
             content={content as AlturaOlympusContent}
@@ -715,6 +838,18 @@ export function ElementToolbar({
             onContentChange={onContentChange}
           />
         )}
+        {kind === 'framerFlatWhiteProcessSteps' && (
+          <FramerFlatWhiteProcessStepsControls
+            content={content as FramerFlatWhiteProcessContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'framerNftpullTimelineItems' && (
+          <FramerNftpullTimelineItemsControls
+            content={content as FramerNftpullTimelineContent}
+            onContentChange={onContentChange}
+          />
+        )}
         {kind === 'framerPerformPricingTiers' && (
           <FramerPerformPricingTiersControls
             content={content as FramerPerformPricingContent}
@@ -737,6 +872,20 @@ export function ElementToolbar({
           <MintVaultImagesControls
             label={label}
             content={content as { images?: string[] }}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'framerPurevisualsPanelImages' &&
+          isFramerPurevisualsPanelKey(selectedKey) && (
+            <FramerPurevisualsPanelImagesControls
+              panel={selectedKey}
+              content={content as FramerPurevisualsHeroContent}
+              onContentChange={onContentChange}
+            />
+          )}
+        {kind === 'realEstateOverviewStats' && (
+          <RealEstateOverviewStatsControls
+            content={content as RealEstateOverviewContent}
             onContentChange={onContentChange}
           />
         )}
@@ -814,6 +963,10 @@ function TextControls({
     blockType === 'altura_olympus'
       ? fieldKey.match(/^features\[(\d+)\]\.icon$/)
       : null;
+  const sustainitBulletsMatch =
+    blockType === 'sustainit_our_expertise'
+      ? fieldKey.match(/^items\[(\d+)\]\.bullets$/)
+      : null;
   const rawAt = getContentAt(c, fieldKey);
   const value = paraMatch
     ? (resolvePnjParagraphs(
@@ -829,9 +982,15 @@ function TextControls({
         ? (resolvePnjVariants(content as PnjVariantContent)[
             Number(highlightItemMatch[1])
           ]?.highlights[Number(highlightItemMatch[2])] ?? '')
-        : typeof rawAt === 'string'
-          ? rawAt
-          : '';
+        : sustainitBulletsMatch
+          ? (
+              resolveSustainitOurExpertiseItems(
+                content as SustainitOurExpertiseContent
+              )[Number(sustainitBulletsMatch[1])]?.bullets ?? []
+            ).join('\n')
+          : typeof rawAt === 'string'
+            ? rawAt
+            : '';
   const isLong =
     multiline ??
     (fieldKey === 'description' ||
@@ -877,6 +1036,26 @@ function TextControls({
             next
           ) as BlockContent
       );
+      return;
+    }
+    if (sustainitBulletsMatch) {
+      const idx = Number(sustainitBulletsMatch[1]);
+      onContentChange(prev => {
+        const cur = prev as SustainitOurExpertiseContent;
+        const items = resolveSustainitOurExpertiseItems(cur);
+        const nextItems = items.map((item, i) =>
+          i === idx
+            ? {
+                ...item,
+                bullets: next
+                  .split('\n')
+                  .map(line => line.trim())
+                  .filter(Boolean),
+              }
+            : item
+        );
+        return { ...cur, items: nextItems } as BlockContent;
+      });
       return;
     }
     const writeValue: unknown = next;
@@ -2278,6 +2457,116 @@ function MintTabsControls({
   );
 }
 
+// ─────────────────────────────────────────── READYMAG CASE SECTION · CASES
+
+function ReadymagCaseSectionItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: ReadymagCaseSectionContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const cases = resolveReadymagCases(content);
+
+  const write = (updater: (list: ReadymagCaseItem[]) => ReadymagCaseItem[]) => {
+    onContentChange(prev => {
+      const c = prev as ReadymagCaseSectionContent;
+      const current = resolveReadymagCases(c);
+      return { ...c, cases: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<ReadymagCaseItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (cases.length <= 1) {
+      toast.error('Cần ít nhất 1 case');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        ...READMAG_CASE_BLANK,
+        key: `case-${list.length + 1}`,
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách case'
+      preview={`${cases.length} case`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {cases.map((item, i) => (
+          <div
+            key={`readymag-case-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Case {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={cases.length <= 1}
+                aria-label={`Xoá case ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={item.name ?? ''}
+              onChange={e => update(i, { name: e.target.value })}
+              placeholder='Tên case'
+              className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+            />
+            <Textarea
+              value={item.body ?? ''}
+              onChange={e => update(i, { body: e.target.value })}
+              placeholder='Mô tả'
+              rows={3}
+              className='min-h-0 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={item.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+            <Input
+              value={item.linkText ?? ''}
+              onChange={e => update(i, { linkText: e.target.value })}
+              placeholder='Link text'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={item.linkHref ?? ''}
+              onChange={e => update(i, { linkHref: e.target.value })}
+              placeholder='Link URL'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm case' />
+    </PopoverTrigger>
+  );
+}
+
 // ─────────────────────────────────────────── SCROLL MATTIS SLIDES
 
 const MATTIS_SLIDE_BLANK: ScrollMattisSlideItem = {
@@ -2383,6 +2672,103 @@ function ScrollMattisSlidesControls({
                 className='h-8 w-20 shrink-0 border-neutral-200 bg-white text-xs'
               />
             </div>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm slide' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────── MASTERISE HOME INSIDE SLIDES
+
+const MASTERISE_SLIDE_BLANK: Omit<MasteriseHomeInsideSlide, 'id'> = {
+  imageUrl:
+    'https://masterisehomes.com/the-global-city/masteri-park-place/wp-content/uploads/2025/10/WEBSITE-CT5_sanh.jpg',
+  alt: 'Tiện ích nội khu',
+  caption: '',
+};
+
+function MasteriseSlidesControls({
+  content,
+  onContentChange,
+}: {
+  content: MasteriseHomeInsideContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const slides = resolveMasteriseHomeInsideSlides(content);
+
+  const write = (
+    updater: (list: MasteriseHomeInsideSlide[]) => MasteriseHomeInsideSlide[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as MasteriseHomeInsideContent;
+      return {
+        ...c,
+        slides: updater(resolveMasteriseHomeInsideSlides(c)),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<MasteriseHomeInsideSlide>) =>
+    write(list => list.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+  const remove = (i: number) =>
+    write(list => list.filter((_, idx) => idx !== i));
+  const add = () =>
+    write(list => [
+      ...list,
+      { ...MASTERISE_SLIDE_BLANK, id: `ms_${Date.now().toString(36)}` },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Slides'
+      preview={`${slides.length} slide`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {slides.map((s, i) => (
+          <div
+            key={s.id || `masterise-slide-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <span className='text-3xs shrink-0 font-semibold tracking-widest text-neutral-500 uppercase'>
+                Slide {i + 1}
+              </span>
+              <Input
+                value={s.alt ?? ''}
+                onChange={e => update(i, { alt: e.target.value })}
+                placeholder='Alt (mô tả ảnh)'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá slide'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={s.imageUrl}
+              onChange={e => update(i, { imageUrl: e.target.value })}
+              placeholder='URL ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={s.imageUrl}
+              onChange={imageUrl => update(i, { imageUrl })}
+            />
+            <Input
+              value={s.caption ?? ''}
+              onChange={e => update(i, { caption: e.target.value })}
+              placeholder='Caption overlay (để trống = ẩn)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
           </div>
         ))}
       </div>
@@ -3349,6 +3735,259 @@ function FramerDarlingTimelineItemsControls({
   );
 }
 
+// ─────────────────────────────────────────── NFTPULL TIMELINE ITEMS
+
+type NftpullTimelineItems = FramerNftpullTimelineContent['items'];
+
+/**
+ * Badge `number` là text tự do (author có thể gõ "01", "A"…), nhưng mặc định
+ * là 1..n. Chỉ tự đánh số lại khi list đang đúng thứ tự mặc định — tránh
+ * ghi đè số do author tự đặt.
+ */
+const isSequentialNumbering = (list: NftpullTimelineItems) =>
+  list.every((item, i) => (item.number ?? '') === String(i + 1));
+
+const renumberIfSequential = (
+  before: NftpullTimelineItems,
+  after: NftpullTimelineItems
+): NftpullTimelineItems =>
+  isSequentialNumbering(before)
+    ? after.map((item, i) => ({ ...item, number: String(i + 1) }))
+    : after;
+
+function FramerNftpullTimelineItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: FramerNftpullTimelineContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = Array.isArray(content.items) ? content.items : [];
+
+  const write = (
+    updater: (list: NftpullTimelineItems) => NftpullTimelineItems
+  ) => {
+    onContentChange(prev => {
+      const c = prev as FramerNftpullTimelineContent;
+      const prevItems = Array.isArray(c.items) ? c.items : [];
+      return {
+        ...c,
+        items: updater([...prevItems]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<NftpullTimelineItems[number]>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 mục');
+      return;
+    }
+    write(list =>
+      renumberIfSequential(
+        list,
+        list.filter((_, idx) => idx !== i)
+      )
+    );
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        number: String(list.length + 1),
+        title: 'Mục mới',
+        description: 'Mô tả ngắn cho mục này…',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách mục'
+      preview={`${items.length} mục`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={item.number ?? ''}
+                onChange={e => update(i, { number: e.target.value })}
+                placeholder='1'
+                className='h-8 w-14 shrink-0 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <Input
+                value={item.title ?? ''}
+                onChange={e => update(i, { title: e.target.value })}
+                placeholder='Tiêu đề'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá mục ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={item.description ?? ''}
+              onChange={e => update(i, { description: e.target.value })}
+              placeholder='Mô tả'
+              rows={2}
+              className='min-h-0 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm mục' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────── FLAT WHITE "OUR PROCESS" STEPS
+
+type FlatWhiteProcessSteps = FramerFlatWhiteProcessContent['steps'];
+
+/** Site gốc đánh số "001", "002"… — giữ nguyên độ rộng khi renumber. */
+const flatWhitePad = (n: number, sample: string) =>
+  String(n).padStart(Math.max(sample.length, 1), '0');
+
+/** Chỉ tự đánh lại số khi list đang là 1..n theo đúng thứ tự (dạng padded).
+ *  Nếu tác giả đã sửa tay ("01a", "Bước 1"…) thì giữ nguyên. */
+const flatWhiteRenumber = (
+  before: FlatWhiteProcessSteps,
+  after: FlatWhiteProcessSteps
+): FlatWhiteProcessSteps => {
+  const sample = before[0]?.number ?? '001';
+  const sequential = before.every(
+    (s, i) => (s.number ?? '') === flatWhitePad(i + 1, sample)
+  );
+  return sequential
+    ? after.map((s, i) => ({ ...s, number: flatWhitePad(i + 1, sample) }))
+    : after;
+};
+
+function FramerFlatWhiteProcessStepsControls({
+  content,
+  onContentChange,
+}: {
+  content: FramerFlatWhiteProcessContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const steps = Array.isArray(content.steps) ? content.steps : [];
+
+  const write = (
+    updater: (list: FlatWhiteProcessSteps) => FlatWhiteProcessSteps
+  ) => {
+    onContentChange(prev => {
+      const c = prev as FramerFlatWhiteProcessContent;
+      const prevSteps = Array.isArray(c.steps) ? c.steps : [];
+      return {
+        ...c,
+        steps: updater([...prevSteps]),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<FlatWhiteProcessSteps[number]>) =>
+    write(list =>
+      list.map((step, idx) => (idx === i ? { ...step, ...patch } : step))
+    );
+
+  const remove = (i: number) => {
+    if (steps.length <= 1) {
+      toast.error('Cần ít nhất 1 bước');
+      return;
+    }
+    write(list =>
+      flatWhiteRenumber(
+        list,
+        list.filter((_, idx) => idx !== i)
+      )
+    );
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        number: flatWhitePad(list.length + 1, list[0]?.number ?? '001'),
+        title: 'Bước mới',
+        body: 'Mô tả ngắn cho bước này…',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách bước'
+      preview={`${steps.length} bước`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {steps.map((step, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={step.number ?? ''}
+                onChange={e => update(i, { number: e.target.value })}
+                placeholder='001'
+                className='h-8 w-16 shrink-0 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <Input
+                value={step.title ?? ''}
+                onChange={e => update(i, { title: e.target.value })}
+                placeholder='Tiêu đề'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá bước ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={step.body ?? ''}
+              onChange={e => update(i, { body: e.target.value })}
+              placeholder='Mô tả'
+              rows={2}
+              className='min-h-0 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm bước' />
+    </PopoverTrigger>
+  );
+}
+
 // ─────────────────────────────────────────── MINTV2 PROCESS STEPS
 
 function MintV2ProcessStepsControls({
@@ -3644,6 +4283,86 @@ function MintVaultImagesControls({
             >
               <Trash2 className='size-3.5' />
             </button>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm ảnh' />
+    </PopoverTrigger>
+  );
+}
+
+/**
+ * List manager 1 panel PureVisuals (`leftImageUrl` / `rightImageUrl`) — mảng
+ * ảnh carousel: thêm / xoá / đổi từng ảnh (ImagePicker = upload hoặc dán URL).
+ * Panel rỗng là hợp lệ: block fallback về nền đặc.
+ */
+function FramerPurevisualsPanelImagesControls({
+  panel,
+  content,
+  onContentChange,
+}: {
+  panel: FramerPurevisualsPanelKey;
+  content: FramerPurevisualsHeroContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const images = resolveFramerPurevisualsPanelImages(content, panel);
+
+  const write = (updater: (list: string[]) => string[]) => {
+    onContentChange(prev => {
+      const c = prev as FramerPurevisualsHeroContent;
+      const current = resolveFramerPurevisualsPanelImages(c, panel);
+      return { ...c, [panel]: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, value: string) =>
+    write(list => list.map((src, idx) => (idx === i ? value : src)));
+
+  const remove = (i: number) =>
+    write(list => list.filter((_, idx) => idx !== i));
+
+  const add = () =>
+    write(list => [...list, FRAMER_PUREVISUALS_NEW_IMAGE[panel]]);
+
+  return (
+    <PopoverTrigger
+      label={FRAMER_PUREVISUALS_PANEL_LABEL[panel]}
+      preview={`${images.length} ảnh`}
+      icon={<ImageIcon className='size-3.5' />}
+      width={440}
+      primary
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {images.length === 0 && (
+          <p className='px-1 py-2 text-xs text-neutral-500'>
+            Chưa có ảnh — panel hiển thị nền đặc. Bấm Thêm ảnh.
+          </p>
+        )}
+        {images.map((src, i) => (
+          <div
+            key={`${panel}-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Ảnh {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                aria-label={`Xoá ảnh ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <ImagePicker value={src} onChange={url => update(i, url)} />
           </div>
         ))}
       </div>
@@ -3960,6 +4679,202 @@ function MintV2ServicesItemsControls({
   );
 }
 
+// ─────────────────────────────────────────── COOL HUNTER SECTION PROGRESS
+
+function CoolHunterSectionProgressItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: CoolHunterSectionProgressContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const sections = resolveCoolHunterSectionProgressSections(content);
+
+  const write = (
+    updater: (
+      list: CoolHunterSectionProgressItem[]
+    ) => CoolHunterSectionProgressItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as CoolHunterSectionProgressContent;
+      const current = resolveCoolHunterSectionProgressSections(c);
+      return { ...c, sections: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<CoolHunterSectionProgressItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (sections.length <= 1) {
+      toast.error('Cần ít nhất 1 section');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        sectionId: `section-${list.length + 1}`,
+        label: `${String(list.length + 1).padStart(2, '0')} - Section mới`,
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách section'
+      preview={`${sections.length} section`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {sections.map((item, i) => (
+          <div
+            key={`ch-section-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Section {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={sections.length <= 1}
+                aria-label={`Xoá section ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={item.label ?? ''}
+              onChange={e => update(i, { label: e.target.value })}
+              placeholder='Nhãn (vd: 01 - Welcome)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={item.sectionId ?? ''}
+              onChange={e => update(i, { sectionId: e.target.value })}
+              placeholder='data-section id (vd: welcome)'
+              className='h-8 border-neutral-200 bg-white font-mono text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm section' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── FRAMER BUNGEE HERO V2 · CARD IMAGES
+
+function FramerBungeeHeroV2CardImagesControls({
+  content,
+  onContentChange,
+}: {
+  content: FramerBungeeHeroV2Content;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const cards = resolveFramerBungeeHeroV2CardImages(content);
+
+  const write = (
+    updater: (list: FramerBungeeHeroV2Card[]) => FramerBungeeHeroV2Card[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as FramerBungeeHeroV2Content;
+      const current = resolveFramerBungeeHeroV2CardImages(c);
+      return { ...c, cardImages: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<FramerBungeeHeroV2Card>) =>
+    write(list =>
+      list.map((card, idx) => (idx === i ? { ...card, ...patch } : card))
+    );
+
+  const setImage = (i: number, url: string) =>
+    update(i, { imageUrl: url, videoUrl: '' });
+
+  const setVideo = (i: number, url: string) =>
+    update(i, { videoUrl: url, imageUrl: '' });
+
+  const remove = (i: number) => {
+    if (cards.length <= 1) {
+      toast.error('Cần ít nhất 1 thẻ');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        imageUrl:
+          FRAMER_BUNGEE_HERO_V2_DEFAULT_CARDS[0]?.imageUrl ??
+          'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=70',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Dải marquee'
+      preview={`${cards.length} thẻ`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {cards.map((card, i) => (
+          <div
+            key={`bungee-v2-card-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Thẻ {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={cards.length <= 1}
+                aria-label={`Xoá thẻ ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <ImagePicker
+              value={card.imageUrl ?? ''}
+              onChange={url => setImage(i, url)}
+            />
+            <ImagePicker
+              value={card.videoUrl ?? ''}
+              accept='image/*,video/mp4,video/webm,video/quicktime'
+              onChange={url => setVideo(i, url)}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm thẻ' />
+    </PopoverTrigger>
+  );
+}
+
 // ─────────────────────────────────────────── COOL HUNTER GALLERY ITEMS
 
 function CoolHunterGalleryItemsControls({
@@ -4057,6 +4972,650 @@ function CoolHunterGalleryItemsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm ảnh' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── SCROLL IMG SCALE ITEMS
+
+function ScrollImgScaleItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: ScrollImgScaleContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = resolveScrollImgScaleItems(content);
+
+  const write = (
+    updater: (list: ScrollImgScaleItem[]) => ScrollImgScaleItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as ScrollImgScaleContent;
+      const current = resolveScrollImgScaleItems(c);
+      return { ...c, items: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<ScrollImgScaleItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 mục');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        title: 'New Title',
+        imageUrl: SCROLL_IMG_SCALE_DEFAULT_ITEMS[0]?.imageUrl ?? '',
+        imageAlt: '',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách mục'
+      preview={`${items.length} mục`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={`sis-item-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Mục {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={items.length <= 1}
+                aria-label={`Xoá mục ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={item.title ?? ''}
+              onChange={e => update(i, { title: e.target.value })}
+              placeholder='Tiêu đề'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={item.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+            <Input
+              value={item.imageAlt ?? ''}
+              onChange={e => update(i, { imageAlt: e.target.value })}
+              placeholder='Alt ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm mục' />
+    </PopoverTrigger>
+  );
+}
+
+// ───────────────────────────────────────── FRAMER IGNITEX STEP · STEP CARDS
+
+/**
+ * List manager cho `framer_ignitex_step.cards` — title + body + ảnh minh hoạ.
+ * Ghi trọn `cards[]` (resolve gộp cả legacy card1/2/3) và xoá key phẳng cũ,
+ * nên lần thêm/xoá đầu tiên cũng chính là bước migrate content legacy.
+ */
+function FramerIgnitexStepCardsControls({
+  content,
+  onContentChange,
+}: {
+  content: FramerIgnitexStepContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const cards = resolveFramerIgnitexStepCards(content);
+
+  const write = (
+    updater: (list: FramerIgnitexStepCard[]) => FramerIgnitexStepCard[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as FramerIgnitexStepContent;
+      const current = resolveFramerIgnitexStepCards(c);
+      const next = {
+        ...c,
+        cards: updater(current),
+      } as FramerIgnitexStepContent;
+      // Bỏ flat legacy để `resolve` không còn 2 nguồn sự thật.
+      delete next.card1Title;
+      delete next.card1Body;
+      delete next.card1MainImageUrl;
+      delete next.card2Title;
+      delete next.card2Body;
+      delete next.card2MainImageUrl;
+      delete next.card3Title;
+      delete next.card3Body;
+      delete next.card3MainImageUrl;
+      return next as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<FramerIgnitexStepCard>) =>
+    write(list =>
+      list.map((card, idx) => (idx === i ? { ...card, ...patch } : card))
+    );
+
+  const remove = (i: number) => {
+    if (cards.length <= 1) {
+      toast.error('Cần ít nhất 1 card');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [...list, { ...FRAMER_IGNITEX_STEP_BLANK_CARD }]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách card'
+      preview={`${cards.length} card`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {cards.map((card, i) => (
+          <div
+            key={`ignitex-card-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Card {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={cards.length <= 1}
+                aria-label={`Xoá card ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={card.title ?? ''}
+              onChange={e => update(i, { title: e.target.value })}
+              placeholder='Title'
+              className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+            />
+            <Textarea
+              value={card.body ?? ''}
+              onChange={e => update(i, { body: e.target.value })}
+              placeholder='Body'
+              rows={3}
+              className='min-h-0 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={card.mainImageUrl ?? ''}
+              onChange={url => update(i, { mainImageUrl: url })}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm card' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────── FRAMER CLARITY SERVICES · SERVICE ITEMS
+
+/**
+ * List manager cho `framer_clarity_services.services` — icon + tiêu đề + mô tả.
+ * Grid chia 2 card / hàng (ảnh giữa span hết hàng) nên thêm/xoá tự giãn số hàng.
+ */
+function FramerClarityServicesItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: FramerClarityServicesContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = resolveFramerClarityServices(content);
+
+  const write = (
+    updater: (list: FramerClarityServiceItem[]) => FramerClarityServiceItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as FramerClarityServicesContent;
+      const current = resolveFramerClarityServices(c);
+      return { ...c, services: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<FramerClarityServiceItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 dịch vụ');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [...list, { ...FRAMER_CLARITY_SERVICE_NEW_ITEM }]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách dịch vụ'
+      preview={`${items.length} dịch vụ`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={`clarity-service-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Dịch vụ {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={items.length <= 1}
+                aria-label={`Xoá dịch vụ ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={item.title ?? ''}
+              onChange={e => update(i, { title: e.target.value })}
+              placeholder='Tiêu đề'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Textarea
+              value={item.description ?? ''}
+              onChange={e => update(i, { description: e.target.value })}
+              placeholder='Mô tả'
+              rows={2}
+              className='min-h-0 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={item.iconUrl ?? ''}
+              onChange={url => update(i, { iconUrl: url })}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm dịch vụ' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── SUSTAINIT OUR EXPERTISE · ITEMS
+
+function SustainitOurExpertiseItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: SustainitOurExpertiseContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = resolveSustainitOurExpertiseItems(content);
+
+  const write = (
+    updater: (list: SustainitExpertiseItem[]) => SustainitExpertiseItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as SustainitOurExpertiseContent;
+      const current = resolveSustainitOurExpertiseItems(c);
+      return { ...c, items: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<SustainitExpertiseItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 mục');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [...list, { ...SUSTAINIT_OUR_EXPERTISE_BLANK }]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách mục'
+      preview={`${items.length} mục`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={`sustainit-item-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Item {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={items.length <= 1}
+                aria-label={`Xoá mục ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={item.title ?? ''}
+              onChange={e => update(i, { title: e.target.value })}
+              placeholder='Tiêu đề'
+              className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+            />
+            <Textarea
+              value={item.subtitle ?? ''}
+              onChange={e => update(i, { subtitle: e.target.value })}
+              placeholder='Phụ đề'
+              rows={2}
+              className='min-h-0 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={item.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+            <ImagePicker
+              value={item.backImageUrl ?? item.imageUrl ?? ''}
+              onChange={url => update(i, { backImageUrl: url })}
+            />
+            <Textarea
+              value={(item.bullets ?? []).join('\n')}
+              onChange={e =>
+                update(i, {
+                  bullets: e.target.value
+                    .split('\n')
+                    .map(line => line.trim())
+                    .filter(Boolean),
+                })
+              }
+              placeholder='Bullets (mỗi dòng 1 bullet)'
+              rows={4}
+              className='min-h-0 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={item.color ?? ''}
+              onChange={e => update(i, { color: e.target.value })}
+              placeholder='Màu viền card (#a9f54b)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm mục' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────── HOUSENT EXCELLENCE · SATELLITE ITEMS
+
+/**
+ * List manager cho `housent_our_excellence.items` — nhãn + tên icon lucide.
+ * Vòng tròn desktop chia đều 360° theo số mục nên thêm/xoá tự giãn.
+ */
+function HousentOurExcellenceItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: HousentOurExcellenceContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const items = resolveHousentOurExcellenceItems(content);
+
+  const write = (
+    updater: (list: HousentOurExcellenceItem[]) => HousentOurExcellenceItem[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as HousentOurExcellenceContent;
+      const current = resolveHousentOurExcellenceItems(c);
+      return { ...c, items: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<HousentOurExcellenceItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 mục');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        label: 'Mục mới',
+        icon:
+          HOUSENT_EXCELLENCE_ICON_OPTIONS[
+            list.length % HOUSENT_EXCELLENCE_ICON_OPTIONS.length
+          ] ?? HOUSENT_EXCELLENCE_FALLBACK_ICON,
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách mục'
+      preview={`${items.length} mục`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => {
+          const iconValue = item.icon || HOUSENT_EXCELLENCE_FALLBACK_ICON;
+          return (
+            <div
+              key={`housent-item-${i}`}
+              className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            >
+              <div className='flex items-center gap-2'>
+                <Input
+                  value={item.label ?? ''}
+                  onChange={e => update(i, { label: e.target.value })}
+                  placeholder='Nhãn'
+                  className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                />
+                <button
+                  type='button'
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    remove(i);
+                  }}
+                  disabled={items.length <= 1}
+                  aria-label={`Xoá mục ${i + 1}`}
+                  className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+                >
+                  <Trash2 className='size-3.5' />
+                </button>
+              </div>
+              <select
+                value={iconValue}
+                onChange={e => update(i, { icon: e.target.value })}
+                aria-label={`Icon mục ${i + 1}`}
+                className='h-7 rounded border border-neutral-200 bg-white px-2 text-xs text-neutral-700'
+              >
+                {!HOUSENT_EXCELLENCE_ICON_OPTIONS.includes(iconValue) && (
+                  <option value={iconValue}>{iconValue}</option>
+                )}
+                {HOUSENT_EXCELLENCE_ICON_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+          );
+        })}
+      </div>
+      <AddRow onAdd={add} label='Thêm mục' />
+    </PopoverTrigger>
+  );
+}
+
+// ────────────────────────────────────── REAL ESTATE TỔNG QUAN · HẠNG MỤC
+
+/**
+ * List manager cho `real_estate_overview.stats` — shape `{iconUrl,text}` nên
+ * KHÔNG dùng lại `StatsControls` (generic trên `{value,label}[]`).
+ *
+ * Lưới 2 cột: thêm lẻ 1 hạng mục sẽ để trống ô bên phải ở hàng cuối — chấp
+ * nhận được, layout tự co theo `grid-cols-2`.
+ */
+function RealEstateOverviewStatsControls({
+  content,
+  onContentChange,
+}: {
+  content: RealEstateOverviewContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const stats = resolveRealEstateOverviewStats(content);
+
+  const write = (
+    updater: (list: RealEstateOverviewStat[]) => RealEstateOverviewStat[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as RealEstateOverviewContent;
+      // Resolve lại từ `prev` (không đóng gói `stats` ở trên) để không ghi đè
+      // thay đổi vừa xảy ra giữa 2 lần render.
+      const current = resolveRealEstateOverviewStats(c);
+      return { ...c, stats: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<RealEstateOverviewStat>) =>
+    write(list =>
+      list.map((stat, idx) => (idx === i ? { ...stat, ...patch } : stat))
+    );
+
+  const remove = (i: number) => {
+    if (stats.length <= 1) {
+      toast.error('Cần ít nhất 1 hạng mục');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        iconUrl: REAL_ESTATE_OVERVIEW_DEFAULT_STATS[0]?.iconUrl ?? '',
+        text: 'HẠNG MỤC\nMỚI',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách hạng mục'
+      preview={`${stats.length} hạng mục`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {stats.map((stat, i) => (
+          <div
+            key={`reo-stat-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Hạng mục {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={stats.length <= 1}
+                aria-label={`Xoá hạng mục ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <ImagePicker
+              value={stat.iconUrl ?? ''}
+              onChange={url => update(i, { iconUrl: url })}
+            />
+            {/* Chữ có ngắt dòng thủ công `\n` → textarea, không phải 1 dòng. */}
+            <Textarea
+              value={stat.text ?? ''}
+              onChange={e => update(i, { text: e.target.value })}
+              placeholder='Nội dung'
+              rows={2}
+              className='min-h-0 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm hạng mục' />
     </PopoverTrigger>
   );
 }

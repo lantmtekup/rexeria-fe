@@ -192,6 +192,7 @@ const OVERLAY_TOP_BLOCK_TYPES = new Set<Block['blockType']>([
   'delvaux_header',
   'springs_header',
   'cite_flow_header',
+  'cool_hunter_section_progress',
 ]);
 
 /**
@@ -214,6 +215,20 @@ function findElementByKey(
     if (rect.width > 0 && rect.height > 0) return node;
   }
   return nodes[0];
+}
+
+/**
+ * Node kind 'text' nhưng bên trong chỉ có media (video / ảnh / iframe) và
+ * không có chữ nào — ví dụ `real_estate_location.videoUrl` bọc `<video>`.
+ *
+ * Bật contenteditable lên node này là MẤT DỮ LIỆU: commit lấy `el.textContent`
+ * → chuỗi rỗng → ghi đè URL, media biến mất. Field vẫn sửa được qua inspector /
+ * panel Lớp, nên ở đây chỉ chọn chứ không vào inline edit.
+ */
+function isMediaOnlyNode(el: HTMLElement | null): boolean {
+  if (!el) return false;
+  if ((el.textContent ?? '').trim() !== '') return false;
+  return !!el.querySelector('video, img, picture, iframe, canvas, svg');
 }
 
 /** Keep hover alive while the pointer travels from element → edit chip. */
@@ -634,7 +649,10 @@ export function BlockPreview({
       if (meta.kind === 'text') {
         setImageEditKey(null);
         setLinkEditKey(null);
-        if (isInlineTextKey(block.blockType, key)) {
+        const el = surfaceRef.current
+          ? findElementByKey(surfaceRef.current, key)
+          : null;
+        if (isInlineTextKey(block.blockType, key) && !isMediaOnlyNode(el)) {
           lastTextKeyRef.current = key;
           onStartInlineEdit(key);
         }
@@ -1123,6 +1141,12 @@ export function BlockPreview({
     if (!editingKey || !surfaceRef.current) return;
     const el = findElementByKey(surfaceRef.current, editingKey);
     if (!el) return;
+    // Chặn lần cuối trước khi gắn contenteditable, cho mọi lối vào inline edit
+    // (canvas, chip, panel Lớp) — xem `isMediaOnlyNode`.
+    if (isMediaOnlyNode(el)) {
+      onCancelInlineEdit();
+      return;
+    }
 
     el.setAttribute('contenteditable', 'plaintext-only');
     el.setAttribute('data-inline-editing', 'true');

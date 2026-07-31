@@ -78,6 +78,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { resolveMasteriseHomeInsideSlides } from './_registry/defs/masteriseHomeInside';
 import { cn } from '@/lib/cn';
 
 import 'swiper/css';
@@ -229,7 +230,12 @@ export function MasteriseHomeInside({
 
   const headingLine1 = content.headingLine1 || 'Hệ tiện ích';
   const headingLine2 = content.headingLine2 || 'trong nhà';
-  const slides = content.slides ?? [];
+  // Cùng resolver với LayersPanel / ElementToolbar → index của `slides[i].*`
+  // luôn trỏ đúng phần tử, kể cả khi content BE có phần tử lỗi shape.
+  const slides = React.useMemo(
+    () => resolveMasteriseHomeInsideSlides(content),
+    [content]
+  );
   const navPrevClass = 'rx-masterise-prev';
   const navNextClass = 'rx-masterise-next';
 
@@ -424,50 +430,69 @@ export function MasteriseHomeInside({
               }}
               style={{ width: '100%', paddingBottom: 8 }}
             >
-              {slides.map(slide => (
-                <SwiperSlide key={slide.id}>
-                  <div
-                    className='relative h-auto w-full'
-                    style={{
-                      width: '100%',
-                    }}
-                  >
+              {slides.map((slide, i) => {
+                const imageKey = `slides[${i}].imageUrl`;
+                const captionKey = `slides[${i}].caption`;
+                return (
+                  <SwiperSlide key={slide.id || imageKey}>
                     <div
-                      data-masterise-slide-reveal
-                      className='aspect-4/3 w-full object-cover @3xl:aspect-4/3 @4xl:aspect-video'
+                      className='relative h-auto w-full'
+                      style={{
+                        width: '100%',
+                      }}
                     >
-                      <img
-                        src={slide.imageUrl}
-                        alt={slide.alt}
-                        data-masterise-slide-img
-                        style={SLIDE_IMAGE_STYLE}
-                        loading='lazy'
-                        decoding='async'
-                      />
-                    </div>
-                    {slide.caption ? (
                       <div
-                        className='@md:px-10 @md:pb-8'
-                        style={SLIDE_CAPTION_STYLE}
-                        aria-hidden
+                        data-masterise-slide-reveal
+                        className='aspect-4/3 w-full object-cover @3xl:aspect-4/3 @4xl:aspect-video'
                       >
-                        <p
-                          style={{
-                            fontFamily: MASTERI_SANS_FONT_FAMILY,
-                            fontSize: 'clamp(18px, 2.4cqi, 30px)',
-                            fontWeight: 400,
-                            lineHeight: 1.2,
-                            color: TEXT_LIGHT,
-                            margin: 0,
-                          }}
-                        >
-                          {slide.caption}
-                        </p>
+                        <img
+                          src={slide.imageUrl}
+                          alt={slide.alt}
+                          data-masterise-slide-img
+                          data-element-key={imageKey}
+                          style={composeStyle(
+                            SLIDE_IMAGE_STYLE,
+                            styleOf(imageKey)
+                          )}
+                          className={selectableClass(activeKey === imageKey)}
+                          loading='lazy'
+                          decoding='async'
+                        />
                       </div>
-                    ) : null}
-                  </div>
-                </SwiperSlide>
-              ))}
+                      {slide.caption ? (
+                        <div
+                          className='@md:px-10 @md:pb-8'
+                          style={SLIDE_CAPTION_STYLE}
+                        >
+                          <p
+                            data-element-key={captionKey}
+                            style={composeStyle(
+                              {
+                                fontFamily: MASTERI_SANS_FONT_FAMILY,
+                                fontSize: 'clamp(18px, 2.4cqi, 30px)',
+                                fontWeight: 400,
+                                lineHeight: 1.2,
+                                color: TEXT_LIGHT,
+                                margin: 0,
+                                // Wrapper giữ pointerEvents:none để không chặn
+                                // swipe; riêng dòng chữ phải click chọn được
+                                // trên canvas.
+                                pointerEvents: 'auto',
+                              },
+                              styleOf(captionKey)
+                            )}
+                            className={selectableClass(
+                              activeKey === captionKey
+                            )}
+                          >
+                            {slide.caption}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+                  </SwiperSlide>
+                );
+              })}
             </Swiper>
           )}
         </div>

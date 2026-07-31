@@ -20,6 +20,10 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import {
+  resolveFramerBungeeHeroV2CardImages,
+  type FramerBungeeHeroV2Card,
+} from './_registry/defs/framerBungeeHeroV2';
 
 interface Props {
   content: FramerBungeeHeroV2Content;
@@ -97,6 +101,11 @@ const getWordmarkBounds = (containerWidth: number) => {
   return { max: HERO_WORDMARK_MAX_DESKTOP_PX, min: HERO_WORDMARK_MIN_PX };
 };
 
+const cardMediaKey = (i: number, card: FramerBungeeHeroV2Card) =>
+  card.videoUrl?.trim()
+    ? `cardImages[${i}].videoUrl`
+    : `cardImages[${i}].imageUrl`;
+
 export function FramerBungeeHeroV2({
   content,
   styles,
@@ -114,9 +123,9 @@ export function FramerBungeeHeroV2({
     );
 
   const marqueeSpeed = Number(content.marqueeSpeed ?? 30);
-  const cards = Array.isArray(content.cardImages)
-    ? content.cardImages.filter(c => c?.imageUrl || c?.videoUrl)
-    : [];
+  const cards = resolveFramerBungeeHeroV2CardImages(content).filter(
+    c => c?.imageUrl || c?.videoUrl
+  );
   const doubled = [...cards, ...cards];
   const accent = content.accentColor || 'rgb(30, 30, 30)';
   const sectionBg = background?.color
@@ -551,7 +560,6 @@ export function FramerBungeeHeroV2({
 
       {doubled.length > 0 && (
         <div
-          data-element-key='cardImages'
           className='bungee-v2-marquee-wrap bungee-v2-reveal'
           style={styleOf('cardImages')}
         >
@@ -562,22 +570,29 @@ export function FramerBungeeHeroV2({
           >
             <div className='bungee-v2-track'>
               {doubled.map((c, i) => {
+                const origIdx = i % cards.length;
+                const mediaKey = cardMediaKey(origIdx, c);
                 const isA = i % 2 === 0;
                 const safeVideoUrl = c.videoUrl?.replace(/"/g, '%22');
                 const safeImageUrl = c.imageUrl?.replace(/"/g, '%22');
                 return (
                   <div
-                    key={i}
-                    className={`bungee-v2-card ${isA ? 'bungee-v2-card-a' : 'bungee-v2-card-b'}`}
-                    style={
+                    key={`${mediaKey}-${i}`}
+                    data-element-key={mediaKey}
+                    className={selectableClass(
+                      activeKey === mediaKey,
+                      `bungee-v2-card ${isA ? 'bungee-v2-card-a' : 'bungee-v2-card-b'}`
+                    )}
+                    style={composeStyle(
                       safeVideoUrl
                         ? undefined
                         : {
                             backgroundImage: `url("${safeImageUrl}")`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
-                          }
-                    }
+                          },
+                      styleOf(mediaKey)
+                    )}
                     aria-hidden='true'
                   >
                     {safeVideoUrl && (

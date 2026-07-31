@@ -28,6 +28,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { resolveFramerPurevisualsPanelImages } from './_registry/defs/framerPurevisualsHero';
 
 interface Props {
   content: FramerPurevisualsHeroContent;
@@ -422,22 +423,24 @@ export function FramerPurevisualsHero({
   const heading = content.heading || 'PureVisuals';
   const subheading = content.subheading || 'Blending creativity & strategy';
 
+  // Resolver dùng chung với ElementToolbar / LayersPanel (def) — mảng carousel,
+  // content cũ dạng 1 string vẫn chạy.
+  // Memo theo đúng field (không phải cả `content`) — carousel effect phụ thuộc
+  // identity của mảng, đổi mỗi render sẽ reset interval.
   const leftImages = React.useMemo<string[]>(
     () =>
-      Array.isArray(content.leftImageUrl)
-        ? content.leftImageUrl.filter(Boolean)
-        : content.leftImageUrl
-          ? [content.leftImageUrl]
-          : [],
+      resolveFramerPurevisualsPanelImages(
+        { leftImageUrl: content.leftImageUrl },
+        'leftImageUrl'
+      ).filter(Boolean),
     [content.leftImageUrl]
   );
   const rightImages = React.useMemo<string[]>(
     () =>
-      Array.isArray(content.rightImageUrl)
-        ? content.rightImageUrl.filter(Boolean)
-        : content.rightImageUrl
-          ? [content.rightImageUrl]
-          : [],
+      resolveFramerPurevisualsPanelImages(
+        { rightImageUrl: content.rightImageUrl },
+        'rightImageUrl'
+      ).filter(Boolean),
     [content.rightImageUrl]
   );
 

@@ -7,6 +7,7 @@ import { Link2, List, Pencil, Type, Upload } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 import { ImagePicker } from './ImagePicker';
+import { mediaAcceptFor } from './mediaUrl';
 import { getContentAt, setContentAt } from './contentPath';
 import { resolveAlturaOlympusImages } from './blocks/_registry/defs/alturaOlympus';
 import { LinkControls } from './links/LinkControls';
@@ -73,10 +74,16 @@ function chipIcon(kind: ElementKind) {
     kind === 'pnjStickyMenuItems' ||
     kind === 'mintV2ServicesItems' ||
     kind === 'coolHunterGalleryItems' ||
+    kind === 'coolHunterSectionProgressItems' ||
+    kind === 'scrollImgScaleItems' ||
+    kind === 'framerIgnitexStepCards' ||
+    kind === 'framerClarityServicesItems' ||
     kind === 'alturaOlympusFeatures' ||
     kind === 'alturaOlympusImages' ||
+    kind === 'framerPurevisualsPanelImages' ||
     kind === 'mintV2ProcessSteps' ||
     kind === 'framerDarlingTimelineItems' ||
+    kind === 'framerNftpullTimelineItems' ||
     kind === 'framerPerformPricingTiers' ||
     kind === 'framerPerformTestimonials' ||
     kind === 'ignitexProjectsItems' ||
@@ -311,6 +318,7 @@ export function CanvasElementEditChip({
                 </p>
                 <ImagePicker
                   value={imageUrl}
+                  accept={mediaAcceptFor(elementKey)}
                   onChange={setImageUrl}
                   transform={transform}
                   onTransformChange={transformKey ? setTransform : undefined}
