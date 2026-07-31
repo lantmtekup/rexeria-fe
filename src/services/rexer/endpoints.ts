@@ -2113,6 +2113,12 @@ export const rexerApi = {
         method: 'POST',
         body: body ?? {},
       }),
+    // `POST /insights/pages/{id}/variants` cố ý KHÔNG được bọc ở đây. Nó chỉ
+    // clone canvas rồi CHÈN THÊM 1 block AI viết — mọi block cũ giữ nguyên từng
+    // chữ (swagger BE: `inputs` là "hints *for the new block*"). Muốn dựng
+    // landing mới từ một khuôn thì dùng `handoff` với `source_template_id`:
+    // `fillBlockContent` viết lại toàn bộ block theo brief của report.
+
     /** Sinh nội dung mẫu cho 1 block (khớp props_schema của block type) — KB4. */
     generateBlockContent: (body: GenerateBlockContentBody) =>
       rx<GenerateBlockContentResponse>('/insights/blocks/generate-content', {
