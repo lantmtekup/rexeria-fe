@@ -18,7 +18,7 @@ import {
   StatusPill,
 } from '@/components/organisms/portal-v2/media/AssetPills';
 import { AssetThumb } from '@/components/organisms/portal-v2/media/AssetThumb';
-import { homeLabel } from '@/lib/portal-v2/media/mock';
+import { homeLabel } from '@/lib/portal-v2/media/helpers';
 import type { MediaAsset } from '@/lib/portal-v2/media/types';
 import { cn } from '@/lib/cn';
 

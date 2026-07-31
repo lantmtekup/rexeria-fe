@@ -62,6 +62,15 @@ export type MediaAsset = {
   assisted: MediaAssetAssisted | null;
 };
 
+/**
+ * Mục tiêu của confirm-modal xoá — 1 asset hoặc cả selection hiện tại. `count`
+ * lưu riêng thay vì đọc `ids.length` để text trong modal không nhảy số nếu
+ * selection đổi trong lúc modal đang mở.
+ */
+export type MediaDeleteTarget =
+  | { kind: 'single'; asset: MediaAsset }
+  | { kind: 'bulk'; ids: string[]; count: number };
+
 export type MediaViewMode = 'grid' | 'table';
 
 export type MediaFolderId = string;
@@ -74,6 +83,13 @@ export type MediaFilters = {
   folder: MediaFolderId;
   view: MediaViewMode;
   refine: boolean;
+};
+
+/** Một lựa chọn trong hàng facet (kind / status), kèm số lượng asset khớp. */
+export type MediaFacetOption = {
+  id: string;
+  label: string;
+  count?: number;
 };
 
 export type MediaFolderOption = {

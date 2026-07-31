@@ -88,6 +88,11 @@ export const FUNNEL_ROLES: Record<
   CON: { labelKey: 'roleCon', tone: 'success' },
 };
 
+export const MEDIA_SEARCH_DEBOUNCE_MS = 350;
+
+/** Shared bởi nút Upload ở MediaHeader và empty-state ở MediaResults (`htmlFor`). */
+export const MEDIA_UPLOAD_INPUT_ID = 'pv2-media-upload';
+
 export const MEDIA_DEFAULT_FILTERS: MediaFilters = {
   q: '',
   use: 'all',

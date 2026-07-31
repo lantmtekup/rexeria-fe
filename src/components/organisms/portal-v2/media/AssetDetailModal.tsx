@@ -24,7 +24,7 @@ import {
   MEDIA_KINDS,
   MEDIA_STATUS,
 } from '@/lib/portal-v2/media/constants';
-import { homeLabel } from '@/lib/portal-v2/media/mock';
+import { homeLabel } from '@/lib/portal-v2/media/helpers';
 import type {
   FunnelRoleId,
   MediaAsset,
@@ -35,6 +35,7 @@ import { cn } from '@/lib/cn';
 type AssetDetailModalProps = {
   asset: MediaAsset;
   editing: boolean;
+  saving: boolean;
   onChange: (patch: Partial<MediaAsset>) => void;
   onEdit: () => void;
   onCancel: () => void;
@@ -46,6 +47,7 @@ type AssetDetailModalProps = {
 export const AssetDetailModal = ({
   asset,
   editing,
+  saving,
   onChange,
   onEdit,
   onCancel,
@@ -82,15 +84,20 @@ export const AssetDetailModal = ({
       footer={
         editing ? (
           <>
-            <Button variant='ghost' onClick={onCancel}>
+            <Button variant='ghost' disabled={saving} onClick={onCancel}>
               {t('cancel')}
             </Button>
-            <Button variant='danger' size='sm' onClick={onDelete}>
+            <Button
+              variant='danger'
+              size='sm'
+              disabled={saving}
+              onClick={onDelete}
+            >
               <Trash2 className='size-[13px]' strokeWidth={2} aria-hidden />
               {t('delete')}
             </Button>
             <div className='grow' />
-            <Button variant='primary' onClick={onSave}>
+            <Button variant='primary' disabled={saving} onClick={onSave}>
               {t('saveChanges')}
             </Button>
           </>
