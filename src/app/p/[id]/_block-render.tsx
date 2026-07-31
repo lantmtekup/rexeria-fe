@@ -218,12 +218,12 @@ export function PublicBlockRender({
           </main>
         </LinkNav>
       </LandingMotionRoot>
-      {embed ? null : (
+      {/* {embed ? null : (
         <footer className='text-3xs border-t border-neutral-200 bg-white px-6 py-4 text-center tracking-widest text-neutral-400 uppercase'>
           Tạo bằng REXER · {visible.length} block ·{' '}
           {current.isHome ? page.slug : `${page.slug}/${current.slug}`}
         </footer>
-      )}
+      )} */}
     </div>
   );
 }

@@ -151,6 +151,8 @@ const IMAGES = [
 
 const FALLBACK_BG = ['#EEEEEE', '#DDDDDD', '#E5E5E5'];
 
+const SHEET_GAP = 32;
+
 function imageBackground(url: string | undefined, idx: number) {
   return url
     ? {
@@ -440,7 +442,7 @@ export function FramerAesthaEditorial({
            31.5%+64.8%=96.3%) ở mọi bề rộng. Mobile: top:0 phủ kín tới đỉnh
            (ảnh sáng ở trên không lòi ra trên tấm phủ); desktop giữ 32px (recon
            §6 — để brand/nav cột trái ló ra). Bottom 32px chừa nav ló dưới. */
-        .aestha__cta-sheet { inset: 0 3.7% 32px 0; }
+        .aestha__cta-sheet { inset: 0 3.7% ${SHEET_GAP}px 0; }
         .aestha__panel {
           position: sticky; top: 0; z-index: 1;
           overflow: hidden;
@@ -518,7 +520,7 @@ export function FramerAesthaEditorial({
           .aestha__gap--bottom { flex: 0 0 auto; min-height: 0; height: 0; }
 
           /* Desktop: tấm phủ CTA chừa 32px trên (brand cột trái ló ra). */
-          .aestha__cta-sheet { inset: 32px 3.7% 32px 0; }
+          .aestha__cta-sheet { inset: ${SHEET_GAP}px 3.7% ${SHEET_GAP}px 0; }
 
           /* Desktop: overlay shell trở lại flex row (bỏ xếp lớp mobile).
              Selector --overlay có specificity cao hơn nên phải override tường
@@ -668,19 +670,20 @@ export function FramerAesthaEditorial({
             .aestha__img--${i + 1} {
               width: ${img.width};
               left: ${img.left};
-              top: ${
-                // Ảnh 3 nằm trong panel 100vh — ảnh duy nhất chạm đáy viewport.
-                // Cao ảnh = width × aspect (px cố định) nên trên viewport thấp
-                // hơn mốc recon (~900) nó chạm/lòi đáy. Cap top để luôn chừa
-                // 32px dưới đáy (khớp khe recon ở 900); viewport cao thì recon
-                // top thắng nên bố cục không đổi. Ảnh 1/2 bị panel 80/90vh của
-                // chúng clip nên KHÔNG cap (cap sẽ ép top âm).
+              ${
+                // Ảnh 3 nằm trong panel 100vh — ảnh duy nhất chạm đáy viewport,
+                // và là ảnh duy nhất lộ ra ở dải ${SHEET_GAP}px đáy mà tấm phủ
+                // CTA không che. Neo ĐÁY thay vì đặt top: cao ảnh = width ×
+                // aspect nên phụ thuộc bề rộng cột phải, không thể quy ra px cố
+                // định (mọi bề rộng ≠ 876 sẽ lệch → ảnh thò xuống dải đáy).
+                // Ở mốc recon 1440×900: top 52.4% ⇒ đáy cách đáy panel đúng
+                // ${SHEET_GAP}px, nên neo đáy tái lập chính xác bố cục recon.
+                // Ảnh 1/2 bị panel 80/90vh của chúng clip trước dải đáy nên giữ
+                // top theo recon.
                 i === 2
-                  ? `min(${img.top}, calc(100% - ${img.ratio
-                      .split('/')[1]
-                      .trim()}px - 32px))`
-                  : img.top
-              };
+                  ? `top: auto; bottom: ${SHEET_GAP}px;`
+                  : `top: ${img.top};`
+              }
               aspect-ratio: ${img.ratio};
             }`
             ).join('')}

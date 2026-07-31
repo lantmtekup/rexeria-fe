@@ -387,6 +387,7 @@ export function AesthaProject({
           border: 'none',
           cursor: 'pointer',
           padding: 0,
+          paddingBottom: '32px',
           transition: 'opacity 0.2s ease',
         }}
         className='hover:opacity-70'
@@ -640,7 +641,7 @@ export function AesthaProject({
                 {nextInner}
               </div>
             </div>
-            {backEl}
+            <div style={{ position: 'relative', zIndex: 20 }}>{backEl}</div>
           </aside>
           {imagesStack(true)}
         </div>
