@@ -8,21 +8,43 @@ import {
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
 import type { Device } from '@/components/modules/block-editor/types';
 import { ExchangeBlockPreview } from '@/components/organisms/portal-v2/exchange/ExchangeBlockPreview';
 import { ExchangePagePreview } from '@/components/organisms/portal-v2/exchange/ExchangePagePreview';
 import { ExchangePreviewRail } from '@/components/organisms/portal-v2/exchange/ExchangePreviewRail';
-import type { ExchangeListingView } from '@/lib/portal-v2/exchange/types';
+import type { PreviewItem } from '@/lib/portal-v2/preview/types';
 import { cn } from '@/lib/cn';
 
+/**
+ * Full-screen shopper-view preview.
+ *
+ * Typed against `PreviewItem`, not `ExchangeListingView` — Experiences drives
+ * the same shell over published landing pages. Kept in the exchange folder for
+ * now because the sibling stage components have uncommitted work in flight;
+ * the tidy-up is a folder move to `portal-v2/preview/`, no logic change.
+ */
 type ExchangePreviewShellProps = {
   open: boolean;
-  listing: ExchangeListingView | null;
-  neighbors: ExchangeListingView[];
+  listing: PreviewItem | null;
+  neighbors: PreviewItem[];
   onClose: () => void;
-  onNavigate: (listing: ExchangeListingView) => void;
+  onNavigate: (listing: PreviewItem) => void;
+  /**
+   * Stage for `source: 'live'` items. The canvas editor previews unsaved state,
+   * so there is no URL for the shell to iframe — the host renders the stage
+   * (see `ExchangeLiveCanvasPreview`) and the shell keeps the chrome.
+   */
+  renderStage?: (device: Device) => ReactNode;
+  /** Device the shell opens with. Defaults to desktop. */
+  initialDevice?: Device;
 };
 
 export const ExchangePreviewShell = ({
@@ -31,20 +53,22 @@ export const ExchangePreviewShell = ({
   neighbors,
   onClose,
   onNavigate,
+  renderStage,
+  initialDevice = 'desktop',
 }: ExchangePreviewShellProps) => {
-  const t = useTranslations('portalV2.exchange');
-  const [device, setDevice] = useState<Device>('desktop');
+  const t = useTranslations('portalV2.preview');
+  const [device, setDevice] = useState<Device>(initialDevice);
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
   const [scrollToBlockId, setScrollToBlockId] = useState<string | null>(null);
   const [scrollNonce, setScrollNonce] = useState(0);
 
-  /** Always open in desktop — do not persist device across preview sessions. */
+  /** Open in `initialDevice` — do not persist device across preview sessions. */
   useEffect(() => {
-    setDevice('desktop');
+    setDevice(initialDevice);
     setActiveBlockId(null);
     setScrollToBlockId(null);
     setScrollNonce(0);
-  }, [open, listing?.id]);
+  }, [open, listing?.id, initialDevice]);
 
   const handleSelectBlock = useCallback((blockId: string) => {
     setActiveBlockId(blockId);
@@ -56,11 +80,7 @@ export const ExchangePreviewShell = ({
     setActiveBlockId(blockId);
   }, []);
 
-  const kindLabel = listing
-    ? listing.meta.kind === 'block'
-      ? t('kindBlock')
-      : t('kindPage')
-    : '';
+  const kindLabel = listing?.kindLabel ?? '';
 
   const index = useMemo(
     () => (listing ? neighbors.findIndex(item => item.id === listing.id) : -1),
@@ -115,7 +135,9 @@ export const ExchangePreviewShell = ({
       ? t('previewMissingSlug')
       : listing.source === 'block' && !listing.blockId
         ? t('previewMissingBlockId')
-        : null
+        : listing.source === 'live' && !renderStage
+          ? t('previewUnavailable')
+          : null
     : null;
 
   return (
@@ -277,7 +299,8 @@ export const ExchangePreviewShell = ({
         ) : listing.source === 'page' && listing.slug ? (
           <>
             <ExchangePreviewRail
-              listing={listing}
+              slug={listing.slug}
+              evidence={listing.evidence}
               activeBlockId={activeBlockId}
               onSelectBlock={handleSelectBlock}
             />
@@ -300,6 +323,10 @@ export const ExchangePreviewShell = ({
               blockId={listing.blockId}
               device={device}
             />
+          </div>
+        ) : listing.source === 'live' && renderStage ? (
+          <div className='h-full min-h-0 min-w-0 overflow-hidden'>
+            {renderStage(device)}
           </div>
         ) : (
           <div className='flex h-full items-center justify-center px-6 text-center text-[13px] text-[var(--pv2-mut)]'>

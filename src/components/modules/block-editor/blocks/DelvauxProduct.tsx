@@ -471,25 +471,36 @@ export function DelvauxProduct({
                 zIndex: 0,
               }}
             />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              data-element-key='imageUrl'
-              src={content.imageUrl}
-              alt='Product'
-              className={selectableClass(
-                activeKey === 'imageUrl',
-                'delvaux-product-img relative block'
-              )}
-              style={composeStyle(
-                {
-                  height: '100%',
-                  width: 'auto',
-                  objectFit: 'contain',
-                  zIndex: 1,
-                },
-                styleOf('imageUrl')
-              )}
-            />
+            {content.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                data-element-key='imageUrl'
+                src={content.imageUrl}
+                alt='Product'
+                className={selectableClass(
+                  activeKey === 'imageUrl',
+                  'delvaux-product-img relative block'
+                )}
+                style={composeStyle(
+                  {
+                    height: '100%',
+                    width: 'auto',
+                    objectFit: 'contain',
+                    zIndex: 1,
+                  },
+                  styleOf('imageUrl')
+                )}
+              />
+            ) : (
+              <div
+                data-element-key='imageUrl'
+                className={selectableClass(
+                  activeKey === 'imageUrl',
+                  'delvaux-product-img relative block h-full w-full bg-black/5'
+                )}
+                style={composeStyle({ zIndex: 1 }, styleOf('imageUrl'))}
+              />
+            )}
             {hotspots.map((spot, i) => (
               <span
                 key={`spot-edit-${i}`}
@@ -748,32 +759,53 @@ export function DelvauxProduct({
                 zIndex: 0,
               }}
             />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              data-element-key='imageUrl'
-              src={content.imageUrl}
-              alt='Product'
-              decoding='async'
-              className={selectableClass(
-                activeKey === 'imageUrl',
-                'delvaux-product-img relative block'
-              )}
-              style={composeStyle(
-                {
-                  height: '100%',
-                  width: 'auto',
-                  maxWidth: 'none',
-                  objectFit: 'contain',
-                  transition: 'transform 0.7s ease',
-                  transitionDelay: isOpen ? '1s' : '0s',
-                  transform: isOpen
-                    ? `scale(${openScale}) translate(${openTx}px, ${openTy}px)`
-                    : 'scale(1)',
-                  zIndex: 1,
-                },
-                styleOf('imageUrl')
-              )}
-            />
+            {content.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                data-element-key='imageUrl'
+                src={content.imageUrl}
+                alt='Product'
+                decoding='async'
+                className={selectableClass(
+                  activeKey === 'imageUrl',
+                  'delvaux-product-img relative block'
+                )}
+                style={composeStyle(
+                  {
+                    height: '100%',
+                    width: 'auto',
+                    maxWidth: 'none',
+                    objectFit: 'contain',
+                    transition: 'transform 0.7s ease',
+                    transitionDelay: isOpen ? '1s' : '0s',
+                    transform: isOpen
+                      ? `scale(${openScale}) translate(${openTx}px, ${openTy}px)`
+                      : 'scale(1)',
+                    zIndex: 1,
+                  },
+                  styleOf('imageUrl')
+                )}
+              />
+            ) : (
+              <div
+                data-element-key='imageUrl'
+                className={selectableClass(
+                  activeKey === 'imageUrl',
+                  'delvaux-product-img relative block h-full w-full bg-black/5'
+                )}
+                style={composeStyle(
+                  {
+                    transition: 'transform 0.7s ease',
+                    transitionDelay: isOpen ? '1s' : '0s',
+                    transform: isOpen
+                      ? `scale(${openScale}) translate(${openTx}px, ${openTy}px)`
+                      : 'scale(1)',
+                    zIndex: 1,
+                  },
+                  styleOf('imageUrl')
+                )}
+              />
+            )}
 
             {hotspots.map((spot, i) => {
               const opened = openIdx === i;
@@ -1011,7 +1043,19 @@ function HotspotPanelBody({
           aspectRatio: '465 / 348',
         }}
       >
-        {spot.mediaType === 'video' ? (
+        {!spot.mediaUrl ? (
+          /* Hotspot chưa gán media. Vẫn phải là một node mang `mediaKey` để
+             chọn/upload được trên canvas — nhưng KHÔNG phải <img src=''>,
+             thứ khiến trình duyệt tải lại cả trang. */
+          <div
+            data-element-key={mediaKey}
+            className={selectableClass(
+              activeKey === mediaKey,
+              'h-full w-full bg-black/5'
+            )}
+            style={styleOf(mediaKey)}
+          />
+        ) : spot.mediaType === 'video' ? (
           <video
             data-element-key={mediaKey}
             loop
