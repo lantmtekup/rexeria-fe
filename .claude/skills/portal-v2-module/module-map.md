@@ -22,7 +22,7 @@ Bảng tra nhanh: plan → prototype → route code → trạng thái implementa
 | 9 | `mod-deploy` | deploy | `/portal-v2/deploy` | `deploy` → `deployView()` ~L18441 | deploy channels, live state | **Placeholder** |
 | 10 | `mod-intel` | ai | `/portal-v2/ai` | `intel` → `intelView()` ~L16724 | intelligence / funnel metrics | **Placeholder** |
 | 11 | `mod-exchange` | exchange | `/portal-v2/exchange` | `exchange` ~L26009 | exchange listings (later) | **Done** — `ExchangeWorkspace` |
-| 12 | `mod-settings` | settings | `/portal-v2/settings` | `settings` ~L26962 | workspace / gov settings | **Placeholder** |
+| 12 | `mod-settings` | settings | `/portal-v2/settings` | `settings` ~L26962 | `GOV_DEFAULTS`, `PRIVACY`, `ACCOUNT_TYPES`, `CAPS` | **Done** — `SettingsWorkspace` |
 
 **Lưu ý slug:** Plan dùng `mod-journey` / `mod-product` / `mod-intel`; code nav dùng `journeys`, `products`, `ai`. Luôn follow [`src/lib/portal-v2/nav.ts`](../../../src/lib/portal-v2/nav.ts) cho href.
 
@@ -111,8 +111,12 @@ Bảng tra nhanh: plan → prototype → route code → trạng thái implementa
 ### 12. Settings (`mod-settings`)
 
 - **Plan ~L2544:** Workspace gov, users; partial.
-- **Prototype:** `VIEWS.settings` — workspace prefs.
-- **P0:** Form sections mock; link to existing auth/profile if needed.
+- **Prototype:** `VIEWS.settings` — governance boxes (`gvNum`, `setGov`, `govReset`, `govExportRows`).
+- **Code:**
+  - [`SettingsWorkspace.tsx`](../../../src/components/organisms/portal-v2/settings/SettingsWorkspace.tsx) + `{General,Measurement,Privacy,Team,Data}Panel`
+  - [`lib/portal-v2/settings/`](../../../src/lib/portal-v2/settings/) — `SETTINGS_DEFAULTS` = prototype `GOV_DEFAULTS`, `validateSettings` = `setGov`
+  - [`settings-form.tsx`](../../../src/components/molecules/portal-v2/settings-form.tsx) — `GovBox`, `Dial`, `ChoiceField`, `RefusalText`
+- **P0:** 5 tabs, edit/save mock, refusals inline + toast, restore defaults, ground-truth JSON export.
 
 ---
 

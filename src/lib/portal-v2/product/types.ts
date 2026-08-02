@@ -6,6 +6,10 @@
  * `readiness` is NOT a field here: it is derived (see helpers.ts), exactly as in
  * the prototype. Same for a product's media, which is every asset homed to it.
  */
+import type {
+  CampaignItemStatus,
+  CampaignStage,
+} from '@/lib/portal-v2/campaigns/types';
 
 export type ProductStatus = 'active' | 'draft' | 'archived';
 
@@ -89,14 +93,12 @@ export type ProductAsset = {
   home: { scope: string; ref?: string };
 };
 
-export type CampaignStatus = 'planning' | 'building' | 'live' | 'done';
-
-export type CampaignItemStatus =
-  | 'todo'
-  | 'building'
-  | 'review'
-  | 'ready'
-  | 'live';
+/**
+ * The campaign vocabulary belongs to the Campaigns module now that it exists —
+ * re-exported here rather than redeclared so the two can never drift.
+ */
+export type CampaignStatus = CampaignStage;
+export type { CampaignItemStatus };
 
 /** Pre-derived row for the modal's Campaigns tab — the Campaigns module owns the real model. */
 export type ProductCampaignLink = {

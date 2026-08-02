@@ -1,5 +1,5 @@
-import { Placeholder } from '@/components/molecules/portal-v2/Placeholder';
+import { SettingsWorkspace } from '@/components/organisms/portal-v2/settings/SettingsWorkspace';
 
 export default function PortalV2SettingsPage() {
-  return <Placeholder titleKey='settingsTitle' />;
+  return <SettingsWorkspace />;
 }

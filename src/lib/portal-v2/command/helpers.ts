@@ -1,4 +1,5 @@
 import {
+  BLOCKER_STYLE,
   COMMAND_LINKS,
   ITEM_STATUS_STEP,
 } from '@/lib/portal-v2/command/constants';
@@ -7,6 +8,7 @@ import type {
   CommandKpi,
   CommandSnapshot,
   CommandTask,
+  KpiDelta,
   UpcomingLaunch,
 } from '@/lib/portal-v2/command/types';
 
@@ -30,6 +32,14 @@ export const formatRange = (
   return `${formatDate(start!, locale)} - ${formatDate(end!, locale)}`;
 };
 
+/** `Maya Okonjo` becomes `MO`; a single-word owner keeps its first letter. */
+export const initialsOf = (name: string): string => {
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? '';
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
+  return `${first}${last}`.toUpperCase();
+};
+
 export const campProgress = (campaign: CommandCampaign) => {
   const total = campaign.items.length;
   const done = campaign.items.filter(
@@ -39,6 +49,25 @@ export const campProgress = (campaign: CommandCampaign) => {
   return { done, total, pct };
 };
 
+/**
+ * A percentage move reduced to a direction. `higherIsBetter` is separate from
+ * the direction because "blocked work up 40%" is a fall, not a rise.
+ */
+export const deltaOf = (
+  current: number,
+  previous: number,
+  higherIsBetter = true
+): KpiDelta | undefined => {
+  if (!previous) return undefined;
+  const pct = Math.round(((current - previous) / Math.abs(previous)) * 100);
+  const dir = pct > 0 ? 'up' : pct < 0 ? 'down' : 'flat';
+  return {
+    pct: Math.abs(pct),
+    dir,
+    good: dir === 'flat' ? true : (dir === 'up') === higherIsBetter,
+  };
+};
+
 export const deriveTasks = (
   snapshot: CommandSnapshot,
   now = new Date()
@@ -46,11 +75,20 @@ export const deriveTasks = (
   const me = snapshot.user.name;
   const out: CommandTask[] = [];
 
+  /**
+   * A blocked experience is not also "ready to deploy", "waiting on review" or
+   * "unhealthy": it is stuck, and saying two of those in the same queue reads
+   * as a contradiction. Blocked wins, and the other rows for it are dropped.
+   */
+  const blockedNames = new Set(snapshot.blockers.map(b => b.experienceName));
+
   for (const c of snapshot.campaigns) {
     for (const item of c.items) {
       const step = ITEM_STATUS_STEP[item.status];
       const overdue =
         item.due && step < 3 && new Date(`${item.due}T00:00:00`) < now;
+      const ownerInitials =
+        item.owner === 'Unassigned' ? null : initialsOf(item.owner);
 
       if (item.owner === 'Unassigned' && step < 4) {
         out.push({
@@ -63,6 +101,7 @@ export const deriveTasks = (
           cta: 'Assign it',
           campaignId: c.id,
           campaignName: c.name,
+          ownerInitials: null,
           href: COMMAND_LINKS.campaigns,
         });
       } else if (overdue) {
@@ -76,9 +115,13 @@ export const deriveTasks = (
           cta: 'Open it',
           campaignId: c.id,
           campaignName: c.name,
+          ownerInitials,
           href: COMMAND_LINKS.campaigns,
         });
-      } else if (item.status === 'ready') {
+      } else if (
+        item.status === 'ready' &&
+        !blockedNames.has(item.subjectName)
+      ) {
         out.push({
           id: `${c.id}-${item.id}-deploy`,
           kind: 'deploy',
@@ -89,6 +132,7 @@ export const deriveTasks = (
           cta: 'Deploy it',
           campaignId: c.id,
           campaignName: c.name,
+          ownerInitials,
           href: COMMAND_LINKS.deploy,
         });
       } else if (item.owner === me && step > 0 && step < 3 && item.due) {
@@ -102,14 +146,56 @@ export const deriveTasks = (
           cta: 'Continue',
           campaignId: c.id,
           campaignName: c.name,
+          ownerInitials,
           href: COMMAND_LINKS.campaigns,
         });
       }
     }
   }
 
+  /**
+   * Blockers are the plan's headline requirement: the work is finished and only
+   * an operational detail keeps it off the shop, so it reads as urgent.
+   */
+  for (const blocker of snapshot.blockers) {
+    const days = blocker.waitingDays;
+    out.push({
+      id: `blocked-${blocker.id}`,
+      kind: 'blocked',
+      severity:
+        BLOCKER_STYLE[blocker.reason].tone === 'error' ? 'high' : 'medium',
+      mine: blocker.owner === me,
+      what: `"${blocker.experienceName}" cannot go out`,
+      why: `${blocker.campaignName} · ${blocker.detail} · stuck ${days} day${days === 1 ? '' : 's'}`,
+      cta: 'Unblock it',
+      campaignId: '',
+      campaignName: blocker.campaignName,
+      ownerInitials: blocker.owner ? initialsOf(blocker.owner) : null,
+      href: blocker.href,
+    });
+  }
+
+  for (const review of snapshot.reviews) {
+    if (blockedNames.has(review.experienceName)) continue;
+    const days = review.waitingDays;
+    out.push({
+      id: `review-${review.id}`,
+      kind: 'review',
+      severity: 'medium',
+      mine: review.reviewer === me,
+      what: `"${review.experienceName}" is waiting on review`,
+      why: `${review.campaignName} · ${review.requestedBy} asked ${review.reviewer} · waiting ${days} day${days === 1 ? '' : 's'}`,
+      cta: 'Review it',
+      campaignId: '',
+      campaignName: review.campaignName,
+      ownerInitials: initialsOf(review.reviewer),
+      href: review.href,
+    });
+  }
+
   for (const live of snapshot.liveExperiences) {
     if (live.health === 'ok') continue;
+    if (blockedNames.has(live.name)) continue;
     out.push({
       id: `health-${live.id}`,
       kind: 'health',
@@ -120,6 +206,7 @@ export const deriveTasks = (
       cta: 'Open Deploy',
       campaignId: '',
       campaignName: live.campaignName,
+      ownerInitials: null,
       href: COMMAND_LINKS.deploy,
     });
   }
@@ -168,6 +255,9 @@ export const deriveKpis = (
     c => c.status === 'planning'
   ).length;
   const issues = tasks.filter(t => t.severity === 'high').length;
+  const inMarket = snapshot.journeys.filter(j => !j.template).length;
+  const blueprints = snapshot.journeys.length - inMarket;
+  const prev = snapshot.previousTotals;
 
   return [
     {
@@ -194,9 +284,9 @@ export const deriveKpis = (
       id: 'journeys',
       group: 'running',
       labelKey: 'kpiJourneys',
-      value: snapshot.journeyInMarket,
+      value: inMarket,
       subKey: 'kpiJourneysSub',
-      subValues: { blueprints: snapshot.journeyBlueprints },
+      subValues: { blueprints },
       accent: 'violet',
       href: COMMAND_LINKS.journeys,
     },
@@ -217,6 +307,7 @@ export const deriveKpis = (
       value: snapshot.totals.sessions.toLocaleString(),
       subKey: 'kpiSessionsSub',
       accent: 'blue',
+      delta: deltaOf(snapshot.totals.sessions, prev.sessions),
       href: COMMAND_LINKS.intel,
     },
     {
@@ -226,6 +317,7 @@ export const deriveKpis = (
       value: `${snapshot.totals.lift >= 0 ? '+' : ''}${Math.round(snapshot.totals.lift * 100)}%`,
       subKey: 'kpiLiftSub',
       accent: 'mint',
+      delta: deltaOf(snapshot.totals.lift, prev.lift),
       href: COMMAND_LINKS.intel,
     },
     {
@@ -236,6 +328,7 @@ export const deriveKpis = (
       subKey: 'kpiRevenueSub',
       subValues: { leads: snapshot.totals.leads.toLocaleString() },
       accent: 'violet',
+      delta: deltaOf(snapshot.totals.revenue, prev.revenue),
       href: COMMAND_LINKS.intel,
     },
     {

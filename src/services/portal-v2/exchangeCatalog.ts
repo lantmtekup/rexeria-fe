@@ -16,7 +16,7 @@ export type ExchangeCatalogResult = {
   softError: string | null;
 };
 
-const PAGE_LIMIT = 50;
+const PAGE_LIMIT = 500;
 
 /**
  * Dual catalog, one page each (APIs are paginated):

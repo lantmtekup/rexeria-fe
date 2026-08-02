@@ -4,9 +4,9 @@ import { Copy, Pencil, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { StatusPill } from '@/components/molecules/portal-v2/product-form';
+import { ProductCover } from '@/components/organisms/portal-v2/product/ProductCover';
 import { cn } from '@/lib/cn';
 import {
-  productGradient,
   productPriceRange,
   readiness,
   readinessColor,
@@ -87,13 +87,7 @@ export const ProductGrid = ({
               onClick={() => onOpen(p.id)}
               className='block w-full cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
             >
-              <span
-                aria-hidden
-                className='grid h-[132px] w-full place-items-center font-[family-name:var(--pv2-disp)] text-[30px] font-bold text-[var(--pv2-paper)]'
-                style={{ background: productGradient(p, assets) }}
-              >
-                {p.title[0] ?? '?'}
-              </span>
+              <ProductCover />
 
               <span className='block px-3.5 pt-3 pb-[13px]'>
                 <span className='mb-1.5 block'>

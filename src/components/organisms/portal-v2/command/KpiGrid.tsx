@@ -2,24 +2,34 @@
 
 import Link from 'next/link';
 
+import { TrendChip } from '@/components/organisms/portal-v2/command/TrendChip';
 import { KPI_ACCENT } from '@/lib/portal-v2/command/constants';
 import type { CommandKpi, CommandTabId } from '@/lib/portal-v2/command/types';
 import { cn } from '@/lib/cn';
 
 type KpiGridProps = {
   items: CommandKpi[];
+  /** Reads "vs. the previous 14 days" — the window every delta is measured on. */
+  trendLabel: string;
   t: (key: string, values?: Record<string, string | number>) => string;
   onKpiClick?: (tabId: CommandTabId) => void;
 };
 
 type KpiCellProps = {
   item: CommandKpi;
+  trendLabel: string;
   t: KpiGridProps['t'];
   onKpiClick?: KpiGridProps['onKpiClick'];
   prominent?: boolean;
 };
 
-const KpiCell = ({ item, t, onKpiClick, prominent }: KpiCellProps) => {
+const KpiCell = ({
+  item,
+  trendLabel,
+  t,
+  onKpiClick,
+  prominent,
+}: KpiCellProps) => {
   const accent = KPI_ACCENT[item.accent];
   const sub = item.subValues ? t(item.subKey, item.subValues) : t(item.subKey);
 
@@ -33,13 +43,20 @@ const KpiCell = ({ item, t, onKpiClick, prominent }: KpiCellProps) => {
         />
         {t(item.labelKey)}
       </div>
-      <div
-        className={cn(
-          'mt-2 font-[family-name:var(--pv2-disp)] font-bold tracking-[-0.03em] text-[var(--pv2-ink)] tabular-nums',
-          prominent ? 'text-[2rem] leading-none' : 'text-[1.5rem] leading-none'
-        )}
-      >
-        {item.value}
+      <div className='mt-2 flex flex-wrap items-baseline gap-2'>
+        <span
+          className={cn(
+            'font-[family-name:var(--pv2-disp)] font-bold tracking-[-0.03em] text-[var(--pv2-ink)] tabular-nums',
+            prominent
+              ? 'text-[2rem] leading-none'
+              : 'text-[1.5rem] leading-none'
+          )}
+        >
+          {item.value}
+        </span>
+        {item.delta ? (
+          <TrendChip delta={item.delta} label={trendLabel} />
+        ) : null}
       </div>
       <p className='mt-1.5 text-[12.5px] leading-relaxed text-[var(--pv2-faint)]'>
         {sub}
@@ -83,21 +100,35 @@ const KpiCell = ({ item, t, onKpiClick, prominent }: KpiCellProps) => {
 
 type KpiBandProps = {
   title: string;
+  /** Optional right-hand note, used to name the comparison window once. */
+  note?: string;
   items: CommandKpi[];
+  trendLabel: string;
   t: KpiGridProps['t'];
   onKpiClick?: KpiGridProps['onKpiClick'];
   cols: 3 | 4;
 };
 
-const KpiBand = ({ title, items, t, onKpiClick, cols }: KpiBandProps) => {
+const KpiBand = ({
+  title,
+  note,
+  items,
+  trendLabel,
+  t,
+  onKpiClick,
+  cols,
+}: KpiBandProps) => {
   if (!items.length) return null;
 
   return (
     <section className='overflow-hidden rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
-      <div className='border-b border-[var(--pv2-hair)] px-4 py-2.5 sm:px-5'>
+      <div className='flex flex-wrap items-center justify-between gap-2 border-b border-[var(--pv2-hair)] px-4 py-2.5 sm:px-5'>
         <h3 className='text-[12px] font-semibold text-[var(--pv2-mut)]'>
           {title}
         </h3>
+        {note ? (
+          <span className='text-[11.5px] text-[var(--pv2-faint)]'>{note}</span>
+        ) : null}
       </div>
       <div
         className={cn(
@@ -108,14 +139,20 @@ const KpiBand = ({ title, items, t, onKpiClick, cols }: KpiBandProps) => {
         )}
       >
         {items.map(item => (
-          <KpiCell key={item.id} item={item} t={t} onKpiClick={onKpiClick} />
+          <KpiCell
+            key={item.id}
+            item={item}
+            trendLabel={trendLabel}
+            t={t}
+            onKpiClick={onKpiClick}
+          />
         ))}
       </div>
     </section>
   );
 };
 
-export const KpiGrid = ({ items, t, onKpiClick }: KpiGridProps) => {
+export const KpiGrid = ({ items, trendLabel, t, onKpiClick }: KpiGridProps) => {
   const running = items.filter(x => x.group === 'running');
   const producing = items.filter(x => x.group === 'producing');
   const attention = items.find(x => x.group === 'attention');
@@ -130,6 +167,7 @@ export const KpiGrid = ({ items, t, onKpiClick }: KpiGridProps) => {
       <KpiBand
         title={t('kpiGroupRunning')}
         items={running}
+        trendLabel={trendLabel}
         t={t}
         onKpiClick={onKpiClick}
         cols={4}
@@ -138,7 +176,9 @@ export const KpiGrid = ({ items, t, onKpiClick }: KpiGridProps) => {
       <div className='grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)]'>
         <KpiBand
           title={t('kpiGroupProducing')}
+          note={trendLabel}
           items={producing}
+          trendLabel={trendLabel}
           t={t}
           onKpiClick={onKpiClick}
           cols={3}
@@ -160,6 +200,7 @@ export const KpiGrid = ({ items, t, onKpiClick }: KpiGridProps) => {
             </div>
             <KpiCell
               item={attention}
+              trendLabel={trendLabel}
               t={t}
               onKpiClick={onKpiClick}
               prominent={Boolean(hasIssues)}
