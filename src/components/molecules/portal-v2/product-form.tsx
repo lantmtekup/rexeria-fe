@@ -180,15 +180,13 @@ export const KvRow = ({
   </div>
 );
 
-/** `.tsw` / `.pthumb` — the gradient swatch that stands in for a product image. */
+/** Quiet letter mark — same soft field as card covers, no per-product gradient. */
 export const ProductThumb = ({
-  gradient,
   letter,
   size = 38,
   radius = 8,
   className,
 }: {
-  gradient: string;
   letter: string;
   size?: number;
   radius?: number;
@@ -197,14 +195,14 @@ export const ProductThumb = ({
   <span
     aria-hidden
     className={cn(
-      'grid shrink-0 place-items-center font-[family-name:var(--pv2-disp)] font-bold text-[var(--pv2-paper)]',
+      'grid shrink-0 place-items-center bg-(--pv2-electric-soft)',
+      'font-[family-name:var(--pv2-disp)] font-semibold text-(--pv2-electric)/45',
       className
     )}
     style={{
       width: size,
       height: size,
       borderRadius: radius,
-      background: gradient,
       fontSize: Math.round(size * 0.42),
     }}
   >

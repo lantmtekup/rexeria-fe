@@ -74,11 +74,7 @@ export const ProductRelatedPanel = ({
             className={rowClass}
             onClick={() => toast.message(e.name)}
           >
-            <ProductThumb
-              gradient={e.grad}
-              letter={e.name[0] ?? '?'}
-              size={36}
-            />
+            <ProductThumb letter={e.name[0] ?? '?'} size={36} />
             <span className='flex min-w-0 flex-1 flex-col gap-0.5'>
               <span className='flex items-center gap-2 truncate text-[13.5px] font-bold text-[var(--pv2-ink)]'>
                 {e.name}

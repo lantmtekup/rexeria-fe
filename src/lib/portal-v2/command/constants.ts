@@ -1,4 +1,8 @@
-import type { CommandTabId, ItemStatus } from '@/lib/portal-v2/command/types';
+import type {
+  BlockerReason,
+  CommandTabId,
+  ItemStatus,
+} from '@/lib/portal-v2/command/types';
 import { PORTAL_V2_BASE } from '@/lib/portal-v2/nav';
 
 export const COMMAND_TABS: {
@@ -37,7 +41,33 @@ export const COMMAND_LINKS = {
   journeys: `${PORTAL_V2_BASE}/journeys`,
   intel: `${PORTAL_V2_BASE}/ai`,
   media: `${PORTAL_V2_BASE}/media`,
+  brand: `${PORTAL_V2_BASE}/brand`,
 } as const;
+
+/**
+ * The plan asks the Command Center to be the shortcut back into the three
+ * places work actually gets unblocked, so they sit in the header band rather
+ * than behind the rail.
+ */
+export const COMMAND_SHORTCUTS: {
+  id: keyof typeof COMMAND_LINKS;
+  labelKey: string;
+}[] = [
+  { id: 'campaigns', labelKey: 'shortcutCampaigns' },
+  { id: 'deploy', labelKey: 'shortcutDeploy' },
+  { id: 'media', labelKey: 'shortcutMedia' },
+];
+
+/** Reason a built experience cannot ship, and how loudly to say it. */
+export const BLOCKER_STYLE: Record<
+  BlockerReason,
+  { labelKey: string; tone: 'error' | 'warning' }
+> = {
+  'media-expired': { labelKey: 'reasonMediaExpired', tone: 'error' },
+  'missing-channel': { labelKey: 'reasonMissingChannel', tone: 'error' },
+  'brand-approval': { labelKey: 'reasonBrandApproval', tone: 'warning' },
+  'no-owner': { labelKey: 'reasonNoOwner', tone: 'warning' },
+};
 
 export const KPI_ACCENT: Record<
   'violet' | 'mint' | 'amber' | 'blue' | 'rose',
