@@ -1,5 +1,5 @@
-import { Placeholder } from '@/components/molecules/portal-v2/Placeholder';
+import { JourneysWorkspace } from '@/components/organisms/portal-v2/journeys/JourneysWorkspace';
 
 export default function PortalV2JourneysPage() {
-  return <Placeholder titleKey='journeysTitle' />;
+  return <JourneysWorkspace />;
 }

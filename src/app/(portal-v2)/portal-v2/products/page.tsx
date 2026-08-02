@@ -1,5 +1,5 @@
-import { Placeholder } from '@/components/molecules/portal-v2/Placeholder';
+import { ProductWorkspace } from '@/components/organisms/portal-v2/product/ProductWorkspace';
 
 export default function PortalV2ProductsPage() {
-  return <Placeholder titleKey='productsTitle' />;
+  return <ProductWorkspace />;
 }
