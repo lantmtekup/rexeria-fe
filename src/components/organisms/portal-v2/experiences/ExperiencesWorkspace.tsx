@@ -27,6 +27,7 @@ import {
   filterExperiences,
   findById,
 } from '@/lib/portal-v2/experiences/helpers';
+import { writeExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
 import type {
   ExperienceFilters,
   ExperienceState,
@@ -39,6 +40,8 @@ import { cn } from '@/lib/cn';
 type ExperiencesWorkspaceProps = {
   initialItems: ExperienceView[];
   initialError: string | null;
+  /** Experience id from `?preview=` — reopens that preview on a pasted link. */
+  initialPreviewId?: string | null;
 };
 
 type ModalMode = 'detail' | 'preview' | null;
@@ -74,9 +77,20 @@ const REFINE_FACETS: {
 export const ExperiencesWorkspace = ({
   initialItems,
   initialError,
+  initialPreviewId = null,
 }: ExperiencesWorkspaceProps) => {
   const t = useTranslations('portalV2.experiences');
   const router = useRouter();
+
+  /**
+   * Resolved at mount only: a deep link opens the preview on the first paint
+   * instead of flashing the grid, and the URL never has to be rewritten.
+   */
+  const [deepLinkedExperience] = useState<ExperienceView | null>(() => {
+    if (!initialPreviewId) return null;
+    const match = findById(initialItems, initialPreviewId);
+    return match && canPreview(match) ? match : null;
+  });
 
   const [items, setItems] = useState<ExperienceView[]>(initialItems);
   const [loadError, setLoadError] = useState<string | null>(initialError);
@@ -87,13 +101,21 @@ export const ExperiencesWorkspace = ({
   /** Category / Type / Objective / Evidence — collapsed until asked for. */
   const [refineOpen, setRefineOpen] = useState(false);
 
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [modalMode, setModalMode] = useState<ModalMode>(null);
+  const [activeId, setActiveId] = useState<string | null>(
+    deepLinkedExperience?.id ?? null
+  );
+  const [modalMode, setModalMode] = useState<ModalMode>(
+    deepLinkedExperience ? 'preview' : null
+  );
   const [previewReturnToDetail, setPreviewReturnToDetail] = useState(false);
 
   const modalModeRef = useRef(modalMode);
   /** The first debounce tick would re-fetch what the server already sent. */
   const skipFirstSearch = useRef(true);
+  /** `?preview=` pointed at an experience that is gone or has nothing to render. */
+  const deadPreviewLinkRef = useRef(
+    Boolean(initialPreviewId) && deepLinkedExperience === null
+  );
 
   modalModeRef.current = modalMode;
 
@@ -201,7 +223,7 @@ export const ExperiencesWorkspace = ({
    */
   const handlePreview = useCallback(
     (experience: ExperienceView) => {
-      if (!experience.slug) {
+      if (!canPreview(experience)) {
         toast.error(t('previewNoSlug'));
         return;
       }
@@ -225,8 +247,7 @@ export const ExperiencesWorkspace = ({
   const handlePreviewNavigate = useCallback(
     (item: PreviewItem) => {
       const next = findById(items, item.id);
-      if (!next) return;
-      if (!next.slug) {
+      if (!next || !canPreview(next)) {
         toast.error(t('previewNoSlug'));
         return;
       }
@@ -234,6 +255,18 @@ export const ExperiencesWorkspace = ({
     },
     [items, t]
   );
+
+  /** Address bar follows the open preview, so the URL can be copied and pasted back. */
+  useEffect(() => {
+    const previewing = modalMode === 'preview' ? activeId : null;
+    writeExchangePreviewParam(previewing);
+  }, [modalMode, activeId]);
+
+  useEffect(() => {
+    if (!deadPreviewLinkRef.current) return;
+    deadPreviewLinkRef.current = false;
+    toast.error(t('previewUnavailable'));
+  }, [t]);
 
   /* ── edit ────────────────────────────────────────────────────────────── */
 

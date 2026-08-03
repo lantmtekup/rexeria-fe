@@ -1,4 +1,18 @@
-/* Studio tokens — scoped to Portal V2 only. Do not leak into /portal. */
+/*
+ * Studio tokens — scoped to Portal V2 only. Do not leak into /portal.
+ *
+ * `:root:has(...)` is load-bearing, not belt-and-braces. Radix portals
+ * (Popover / DropdownMenu / Tooltip / Dialog content) mount on `<body>`, i.e.
+ * OUTSIDE the `[data-portal-v2]` subtree. With the tokens declared on the
+ * subtree only, every `var(--pv2-*)` inside a portal resolves to nothing:
+ * `bg-[var(--pv2-paper)]` → transparent, `border-[var(--pv2-hair)]` →
+ * currentColor, `shadow-[var(--pv2-sh-soft)]` → none. That is why the canvas
+ * showed through the ElementToolbar popovers. Declaring the variables on the
+ * document root (only on pages that actually mount Portal V2) lets portalled
+ * content inherit them; the paint/typography resets below stay subtree-only so
+ * nothing leaks onto other layouts.
+ */
+:root:has([data-portal-v2]),
 [data-portal-v2] {
   --pv2-electric: #3862ff;
   --pv2-violet: #7d5cff;
@@ -46,7 +60,10 @@
   --pv2-z-top: 40;
   --pv2-z-preview: 180;
   --pv2-z-tip: 9999;
+}
 
+/* Paint + typography stay on the subtree — the root only carries variables. */
+[data-portal-v2] {
   color: var(--pv2-ink);
   background: var(--pv2-canvas);
   font-family: var(--pv2-ui);

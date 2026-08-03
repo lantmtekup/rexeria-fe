@@ -15,6 +15,10 @@ export const formatLift = (lift: number): string => {
   return `${sign}${pct}% vs control`;
 };
 
+/** A preview needs a public slug (landings) or a block id (blocks) to render. */
+export const isPreviewable = (listing: ExchangeListingView): boolean =>
+  listing.source === 'page' ? Boolean(listing.slug) : Boolean(listing.blockId);
+
 export const resolveActionState = (
   listing: ExchangeListingView,
   session: ExchangeSessionState,

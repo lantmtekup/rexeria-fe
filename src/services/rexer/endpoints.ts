@@ -1812,11 +1812,18 @@ export const rexerApi = {
         `/pages/${id}/embed-snippet`
       ),
 
-    /** Set page thumbnail. Replaces `canvasTemplates.setThumbnail`. */
-    setThumbnail: async (id: string, thumbnailUrl: string): Promise<Page> => {
-      const r = await rx<PageResponse>(`/pages/${id}/thumbnail`, {
-        method: 'PUT',
-        body: { thumbnail_url: thumbnailUrl },
+    /**
+     * Set page thumbnail = PATCH `thumbnail_asset_id` (upload media trước, lấy
+     * asset.id). BE page canonical không có route `/pages/:id/thumbnail` —
+     * chỉ canvas templates mới nhận public_url.
+     */
+    setThumbnail: async (
+      id: string,
+      thumbnailAssetId: string
+    ): Promise<Page> => {
+      const r = await rx<PageResponse>(`/pages/${id}`, {
+        method: 'PATCH',
+        body: { thumbnail_asset_id: thumbnailAssetId },
       });
       return r.page;
     },

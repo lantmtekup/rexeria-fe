@@ -34,7 +34,11 @@ import { useLandingMotion } from '../motion/LandingMotion';
  * - `section`  → id trong trang (`hero`, `#hero`) → cuộn mượt trong đúng scroller.
  */
 export type AesthaLinkKind =
-  'none' | 'external' | 'path' | 'scheme' | 'section';
+  | 'none'
+  | 'external'
+  | 'path'
+  | 'scheme'
+  | 'section';
 
 export function classifyAesthaLink(raw?: string): AesthaLinkKind {
   const v = (raw ?? '').trim();

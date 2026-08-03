@@ -27,6 +27,7 @@ import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { Brand, Page, Template, Workspace } from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
+import { uploadImageAsset } from '@/lib/upload/media-asset';
 
 type Mode = 'template' | 'external';
 
@@ -38,31 +39,6 @@ function rxMsg(err: unknown): string {
 
 function isValidUrl(v: string): boolean {
   return /^https?:\/\/.+/i.test(v.trim());
-}
-
-/** Upload ảnh → media asset (3 bước). Trả asset để gán thumbnail_asset_id. */
-async function uploadThumb(file: File) {
-  const init = await rexerApi.media.initUpload({
-    filename: file.name,
-    mime_type: file.type || 'image/png',
-    file_size: file.size,
-    owner_scope: 'library',
-    media_type: 'image',
-  });
-  if (init.presigned_url) {
-    const res = await fetch(init.presigned_url, {
-      method: 'PUT',
-      headers: { 'Content-Type': file.type || 'image/png' },
-      body: file,
-    });
-    if (!res.ok) throw new Error(`Storage upload lỗi ${res.status}`);
-  } else {
-    await rexerApi.media.uploadRaw(init.upload_id, file);
-  }
-  const done = await rexerApi.media.completeUpload({
-    upload_id: init.upload_id,
-  });
-  return done.media_asset;
 }
 
 function ModeTab({
@@ -349,6 +325,13 @@ export function EditLandingDialog({
     setThumbUrl(page.thumbnail_url ?? null);
     setThumbAssetId(null);
     setSaving(false);
+
+    if (!page.thumbnail_url && page.thumbnail_asset_id) {
+      rexerApi.media
+        .get(page.thumbnail_asset_id)
+        .then(asset => setThumbUrl(asset.public_url ?? null))
+        .catch(() => {});
+    }
   }, [open, page]);
 
   const pickThumb = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -358,7 +341,7 @@ export function EditLandingDialog({
     if (!file.type.startsWith('image/'))
       return toast.error('Vui lòng chọn file ảnh');
     setUploading(true);
-    uploadThumb(file)
+    uploadImageAsset(file)
       .then(asset => {
         setThumbAssetId(asset.id);
         setThumbUrl(asset.public_url ?? null);
@@ -375,14 +358,22 @@ export function EditLandingDialog({
 
     setSaving(true);
     try {
+      // Page chỉ lưu `thumbnail_asset_id` (PATCH /pages/:id) — BE không có
+      // endpoint nhận public_url như canvasTemplates.setThumbnail.
       const updated = await rexerApi.pages.update(page.id, {
         name: name.trim(),
         ...(slug.trim() ? { slug: slug.trim() } : {}),
         ...(isExternal ? { external_url: externalUrl.trim() } : {}),
         ...(thumbAssetId ? { thumbnail_asset_id: thumbAssetId } : {}),
       });
+
+      const merged: typeof updated = {
+        ...updated,
+        ...(thumbUrl ? { thumbnail_url: thumbUrl } : {}),
+        ...(thumbAssetId ? { thumbnail_asset_id: thumbAssetId } : {}),
+      };
       toast.success('Đã cập nhật landing');
-      onUpdated(updated);
+      onUpdated(merged);
       onOpenChange(false);
     } catch (err) {
       toast.error(`Lưu thất bại: ${rxMsg(err)}`);
@@ -490,7 +481,12 @@ export function EditLandingDialog({
           >
             Huỷ
           </Button>
-          <Button variant='pill' size='sm' onClick={submit} disabled={saving}>
+          <Button
+            variant='pill'
+            size='sm'
+            onClick={submit}
+            disabled={saving || uploading}
+          >
             {saving ? 'Đang lưu…' : 'Lưu'}
           </Button>
         </DialogFooter>

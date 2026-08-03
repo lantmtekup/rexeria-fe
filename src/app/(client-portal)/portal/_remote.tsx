@@ -183,9 +183,10 @@ export async function updateProductRemote(
  * its `public_url` used as `thumbnail_url`.
  */
 export async function uploadProductImage(file: File): Promise<MediaAsset> {
+  const mime = file.type || 'application/octet-stream';
   const init = await rexerApi.media.initUpload({
     filename: file.name,
-    mime_type: file.type || 'application/octet-stream',
+    mime_type: mime,
     file_size: file.size,
     owner_scope: 'library',
     media_type: file.type.startsWith('image/')
@@ -195,10 +196,16 @@ export async function uploadProductImage(file: File): Promise<MediaAsset> {
         : 'file',
   });
 
-  if (init.presigned_url) {
-    const res = await fetch(init.presigned_url, {
+  const presigned = init.presigned_url;
+  const useDirect =
+    !!presigned &&
+    /^https?:\/\//i.test(presigned) &&
+    !presigned.includes('/media/uploads/');
+
+  if (useDirect) {
+    const res = await fetch(presigned, {
       method: 'PUT',
-      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      headers: { 'Content-Type': mime },
       body: file,
     });
     if (!res.ok) throw new Error(`Storage upload failed: ${res.status}`);

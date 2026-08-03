@@ -70,6 +70,7 @@ import { rexerApi } from '@/services/rexer/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 import type { Brand, Page, PageType } from '@/services/rexer/types';
 import { cn } from '@/lib/cn';
+import { enrichPagesWithThumbnailUrls } from '@/lib/pages/resolve-thumbnails';
 
 type StatusFilter = 'all' | 'draft' | 'published' | 'archived';
 type TypeFilter = 'all' | PageType;
@@ -116,7 +117,12 @@ const FILTER_CONTROL_CLASS =
   'border-input text-content-muted hover:bg-muted bg-background h-9 w-40 shrink-0 rounded-md border px-2.5 text-xs font-medium outline-none';
 
 type PageAction =
-  'publish' | 'unpublish' | 'archive' | 'restore' | 'domain' | 'edit';
+  | 'publish'
+  | 'unpublish'
+  | 'archive'
+  | 'restore'
+  | 'domain'
+  | 'edit';
 
 function pageThumbnailUrl(page: Page): string | undefined {
   if (page.thumbnail_url) return page.thumbnail_url;
@@ -261,7 +267,8 @@ export function AdminCanvasTemplatesPage() {
         ...(brandFilter ? { brand_id: brandFilter } : {}),
         ...(debouncedSearch.trim() ? { q: debouncedSearch.trim() } : {}),
       });
-      setItems(r.items ?? []);
+      const enriched = await enrichPagesWithThumbnailUrls(r.items ?? []);
+      setItems(enriched);
       setTotal(r.total ?? r.items?.length ?? 0);
     } catch (err) {
       setError(
@@ -731,8 +738,12 @@ export function AdminCanvasTemplatesPage() {
         page={editPage}
         onOpenChange={o => !o && setEditPage(null)}
         onUpdated={updated => {
-          setItems(prev => prev.map(p => (p.id === updated.id ? updated : p)));
-          setEditPage(null);
+          void enrichPagesWithThumbnailUrls([updated]).then(([enriched]) => {
+            setItems(prev =>
+              prev.map(p => (p.id === enriched.id ? enriched : p))
+            );
+            setEditPage(null);
+          });
         }}
       />
     </div>
@@ -778,21 +789,28 @@ function PageCard({
     TYPE_CHIP[item.type] ?? 'bg-muted text-content-muted border-border';
   const gradient =
     TYPE_GRADIENT[item.type] ?? 'from-zinc-400 via-zinc-500 to-zinc-600';
+  const thumb = pageThumbnailUrl(item);
   return (
     <div className='group border-border hover:border-border bg-card flex flex-col rounded-2xl border shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
-      {/* Thumbnail area — gradient placeholder per type. BE Page response
-          không trả thumbnail_url; thumbnail_asset_id rỗng cho hầu hết rows.
-          Card root no longer clips (overflow-hidden removed) so the ⋮ action
-          menu can escape; the thumbnail keeps its own rounding + clip. */}
+      {/* Thumbnail — BE list thường thiếu thumbnail_url; resolve từ asset_id khi load. */}
       <div
         className={cn(
-          'relative aspect-[16/10] overflow-hidden rounded-t-2xl bg-gradient-to-br',
-          gradient
+          'relative aspect-[16/10] overflow-hidden rounded-t-2xl',
+          thumb ? 'bg-muted' : cn('bg-gradient-to-br', gradient)
         )}
       >
-        <div className='absolute inset-0 flex items-center justify-center'>
-          <LayoutTemplate className='size-12 text-white/40' />
-        </div>
+        {thumb ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={thumb}
+            alt={item.name}
+            className='absolute inset-0 size-full object-cover'
+          />
+        ) : (
+          <div className='absolute inset-0 flex items-center justify-center'>
+            <LayoutTemplate className='size-12 text-white/40' />
+          </div>
+        )}
         <span
           className={cn(
             'text-3xs absolute top-2 left-2 rounded-full border px-2 py-0.5 font-bold tracking-wider uppercase backdrop-blur',

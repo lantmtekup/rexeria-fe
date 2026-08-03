@@ -45,7 +45,8 @@ const fromProduct = (
   ingredients: p.ingredients ?? [],
   certifications:
     (normalizeCertifications(p.certifications as unknown) as
-      ProductInformationValue['certifications'] | undefined) ?? [],
+      | ProductInformationValue['certifications']
+      | undefined) ?? [],
 });
 
 export default function AiAgentsInformationPage({ params }: PageProps) {

@@ -88,8 +88,8 @@ export function ExtraElementToolbar({
 }: Props) {
   const Icon = KIND_ICON[element.kind];
   return (
-    <div className='mx-3 mt-3 flex h-11 items-center gap-2.5 rounded-xl border border-sky-200/70 bg-sky-50/95 px-3.5 text-xs shadow-[0_8px_30px_rgba(15,15,15,0.05)] backdrop-blur-md'>
-      <span className='inline-flex items-center gap-1.5 font-semibold text-sky-900'>
+    <div className='mx-3 mt-3 flex h-11 items-center gap-2.5 rounded-xl bg-[var(--pv2-paper)] px-3.5 text-xs shadow-[var(--pv2-sh-soft)] ring-1 ring-black/5 backdrop-blur-md'>
+      <span className='inline-flex items-center gap-1.5 font-semibold text-[var(--pv2-electric)]'>
         <Icon className='size-3.5' />
         {KIND_LABEL[element.kind]}
       </span>
@@ -141,7 +141,7 @@ export function ExtraElementToolbar({
       <button
         type='button'
         onClick={onClose}
-        className='ml-auto inline-flex size-7 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700'
+        className='ml-auto inline-flex size-7 items-center justify-center rounded-md text-[var(--pv2-mut)] hover:bg-[var(--pv2-hair)] hover:text-[var(--pv2-ink)]'
         aria-label='Bỏ chọn'
       >
         <X className='size-3.5' />
@@ -178,7 +178,7 @@ function TextEditor({
         value={el.content.text}
         onChange={e => patchContent({ text: e.target.value })}
         placeholder='Nội dung…'
-        className='h-7 w-48 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 placeholder:text-neutral-400 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
+        className='h-7 w-48 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] placeholder:text-[var(--pv2-faint)] focus:ring-2 focus:ring-[var(--pv2-electric)]/25 focus:outline-none'
       />
       <InlineLabel label='Hiệu ứng'>
         <select
@@ -216,7 +216,7 @@ function TextEditor({
               });
             }
           }}
-          className='h-7 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         >
           <option value='none'>Không</option>
           <option value='fade-up'>Fade up</option>
@@ -240,7 +240,7 @@ function TextEditor({
                   },
                 })
               }
-              className='h-7 w-20 rounded-md bg-white px-2 text-xs tabular-nums ring-1 ring-neutral-200 focus:outline-none'
+              className='h-7 w-20 rounded-md bg-[var(--pv2-paper)] px-2 text-xs tabular-nums ring-1 ring-[var(--pv2-hair)] focus:outline-none'
             />
           </InlineLabel>
           <InlineLabel label='Đến'>
@@ -255,7 +255,7 @@ function TextEditor({
                   },
                 })
               }
-              className='h-7 w-24 rounded-md bg-white px-2 text-xs tabular-nums ring-1 ring-neutral-200 focus:outline-none'
+              className='h-7 w-24 rounded-md bg-[var(--pv2-paper)] px-2 text-xs tabular-nums ring-1 ring-[var(--pv2-hair)] focus:outline-none'
             />
           </InlineLabel>
           <InlineLabel label='Hậu tố'>
@@ -267,7 +267,7 @@ function TextEditor({
                 })
               }
               placeholder='+, %, ₫'
-              className='h-7 w-16 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+              className='h-7 w-16 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
             />
           </InlineLabel>
         </>
@@ -287,7 +287,7 @@ function TextEditor({
                   },
                 })
               }
-              className='h-7 w-16 rounded-md bg-white px-2 text-xs tabular-nums ring-1 ring-neutral-200 focus:outline-none'
+              className='h-7 w-16 rounded-md bg-[var(--pv2-paper)] px-2 text-xs tabular-nums ring-1 ring-[var(--pv2-hair)] focus:outline-none'
             />
           </InlineLabel>
           <InlineLabel label='Chiều'>
@@ -301,7 +301,7 @@ function TextEditor({
                   },
                 })
               }
-              className='h-7 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+              className='h-7 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
             >
               <option value='left'>← Trái</option>
               <option value='right'>→ Phải</option>
@@ -332,7 +332,7 @@ function EditTextEditor({
               content: { ...el.content, placeholder: e.target.value },
             })
           }
-          className='h-7 w-44 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
+          className='h-7 w-44 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:ring-2 focus:ring-[var(--pv2-electric)]/25 focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Field'>
@@ -341,7 +341,7 @@ function EditTextEditor({
           onChange={e =>
             onChange({ content: { ...el.content, fieldName: e.target.value } })
           }
-          className='text-2xs h-7 w-32 rounded-md bg-white px-2 font-mono ring-1 ring-neutral-200 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
+          className='text-2xs h-7 w-32 rounded-md bg-[var(--pv2-paper)] px-2 font-mono ring-1 ring-[var(--pv2-hair)] focus:ring-2 focus:ring-[var(--pv2-electric)]/25 focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Loại'>
@@ -356,7 +356,7 @@ function EditTextEditor({
               },
             })
           }
-          className='h-7 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         >
           <option value='text'>text</option>
           <option value='email'>email</option>
@@ -365,7 +365,7 @@ function EditTextEditor({
           <option value='textarea'>textarea</option>
         </select>
       </InlineLabel>
-      <label className='text-2xs inline-flex items-center gap-1 text-neutral-600'>
+      <label className='text-2xs inline-flex items-center gap-1 text-[var(--pv2-mut)]'>
         <input
           type='checkbox'
           checked={el.content.isRequired}
@@ -403,7 +403,7 @@ function PhotoEditor({
           onChange={e =>
             onChange({ content: { ...el.content, alt: e.target.value } })
           }
-          className='h-7 w-40 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-40 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Mặt sau (flip)'>
@@ -431,7 +431,7 @@ function PhotoEditor({
                 },
               })
             }
-            className='h-7 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+            className='h-7 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
           >
             <option value='tap'>Tap để lật</option>
             <option value='hover'>Hover</option>
@@ -451,7 +451,7 @@ function PhotoEditor({
               },
             })
           }
-          className='h-7 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         >
           <option value='cover'>cover</option>
           <option value='contain'>contain</option>
@@ -483,7 +483,7 @@ function VideoEditor({
               },
             })
           }
-          className='h-7 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         >
           <option value='url'>URL</option>
           <option value='media'>Media</option>
@@ -497,7 +497,7 @@ function VideoEditor({
               onChange({ content: { ...el.content, url: e.target.value } })
             }
             placeholder='https://youtube.com/embed/…'
-            className='h-7 w-64 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+            className='h-7 w-64 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
           />
         </InlineLabel>
       ) : (
@@ -508,7 +508,7 @@ function VideoEditor({
           }
         />
       )}
-      <label className='text-2xs inline-flex items-center gap-1 text-neutral-600'>
+      <label className='text-2xs inline-flex items-center gap-1 text-[var(--pv2-mut)]'>
         <input
           type='checkbox'
           checked={el.style?.controls ?? true}
@@ -518,7 +518,7 @@ function VideoEditor({
         />
         Controls
       </label>
-      <label className='text-2xs inline-flex items-center gap-1 text-neutral-600'>
+      <label className='text-2xs inline-flex items-center gap-1 text-[var(--pv2-mut)]'>
         <input
           type='checkbox'
           checked={el.style?.autoplay ?? false}
@@ -549,7 +549,7 @@ function HotspotEditor({
           }
           placeholder='+'
           maxLength={3}
-          className='h-7 w-10 rounded-md bg-white px-1.5 text-center text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-10 rounded-md bg-[var(--pv2-paper)] px-1.5 text-center text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Tiêu đề'>
@@ -559,7 +559,7 @@ function HotspotEditor({
             onChange({ content: { ...el.content, title: e.target.value } })
           }
           placeholder='Title popup'
-          className='h-7 w-44 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-44 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Body'>
@@ -569,7 +569,7 @@ function HotspotEditor({
             onChange({ content: { ...el.content, body: e.target.value } })
           }
           placeholder='Nội dung popup'
-          className='h-7 w-52 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-52 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Ảnh'>
@@ -579,7 +579,7 @@ function HotspotEditor({
             onChange({ content: { ...el.content, imageUrl: e.target.value } })
           }
           placeholder='https://...png'
-          className='h-7 w-40 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-40 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='CTA'>
@@ -589,7 +589,7 @@ function HotspotEditor({
             onChange({ content: { ...el.content, ctaText: e.target.value } })
           }
           placeholder='Nút (vd: Xem chi tiết)'
-          className='h-7 w-32 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-32 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='URL'>
@@ -599,7 +599,7 @@ function HotspotEditor({
             onChange({ content: { ...el.content, ctaUrl: e.target.value } })
           }
           placeholder='https://…'
-          className='h-7 w-40 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-40 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <input
@@ -610,7 +610,7 @@ function HotspotEditor({
             style: { ...el.style, backgroundColor: e.target.value },
           })
         }
-        className='size-7 cursor-pointer rounded-md bg-white p-0.5 ring-1 ring-neutral-200'
+        className='size-7 cursor-pointer rounded-md bg-[var(--pv2-paper)] p-0.5 ring-1 ring-[var(--pv2-hair)]'
         aria-label='Màu pin'
       />
     </>
@@ -647,18 +647,18 @@ function StyleControls({
             onChange({ style: { ...s, fontSize: n } });
           }}
           placeholder='—'
-          className='text-2xs h-7 w-12 rounded-md bg-white px-1.5 text-center font-mono ring-1 ring-neutral-200 focus:outline-none'
+          className='text-2xs h-7 w-12 rounded-md bg-[var(--pv2-paper)] px-1.5 text-center font-mono ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <input
         type='color'
         value={s.color ?? '#000000'}
         onChange={e => onChange({ style: { ...s, color: e.target.value } })}
-        className='size-7 cursor-pointer rounded-md bg-white p-0.5 ring-1 ring-neutral-200'
+        className='size-7 cursor-pointer rounded-md bg-[var(--pv2-paper)] p-0.5 ring-1 ring-[var(--pv2-hair)]'
         aria-label='Màu chữ'
       />
       <label
-        className='text-2xs inline-flex items-center gap-1 text-neutral-600'
+        className='text-2xs inline-flex items-center gap-1 text-[var(--pv2-mut)]'
         title='Glassmorphism — backdrop blur + tint trong'
       >
         <input
@@ -676,7 +676,7 @@ function StyleControls({
             onChange({ style: { ...s, beamColor: e.target.value } })
           }
           disabled={!s.beamColor}
-          className='size-7 cursor-pointer rounded-md bg-white p-0.5 ring-1 ring-neutral-200 disabled:opacity-40'
+          className='size-7 cursor-pointer rounded-md bg-[var(--pv2-paper)] p-0.5 ring-1 ring-[var(--pv2-hair)] disabled:opacity-40'
           aria-label='Màu beam'
         />
         <button
@@ -689,8 +689,8 @@ function StyleControls({
           className={cn(
             'text-2xs h-7 cursor-pointer rounded-md px-2 ring-1',
             s.beamColor
-              ? 'bg-sky-100 text-sky-900 ring-sky-300'
-              : 'bg-white text-neutral-600 ring-neutral-200'
+              ? 'bg-[var(--pv2-electric-soft)] text-[var(--pv2-electric)] ring-[var(--pv2-electric)]'
+              : 'bg-[var(--pv2-paper)] text-[var(--pv2-mut)] ring-[var(--pv2-hair)]'
           )}
         >
           {s.beamColor ? 'On' : 'Off'}
@@ -716,7 +716,7 @@ function CompareEditor({
             onChange({ content: { ...el.content, beforeUrl: e.target.value } })
           }
           placeholder='https://...png'
-          className='h-7 w-40 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-40 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Sau'>
@@ -726,7 +726,7 @@ function CompareEditor({
             onChange({ content: { ...el.content, afterUrl: e.target.value } })
           }
           placeholder='https://...png'
-          className='h-7 w-40 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-40 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Tỉ lệ %'>
@@ -741,7 +741,7 @@ function CompareEditor({
               content: { ...el.content, defaultRatio: v / 100 },
             });
           }}
-          className='h-7 w-16 rounded-md bg-white px-2 text-xs tabular-nums ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-16 rounded-md bg-[var(--pv2-paper)] px-2 text-xs tabular-nums ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
     </>
@@ -764,7 +764,7 @@ function RangeEditor({
           value={el.content.fieldName}
           onChange={e => patch({ fieldName: e.target.value })}
           placeholder='range_value'
-          className='h-7 w-32 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-32 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Label'>
@@ -772,7 +772,7 @@ function RangeEditor({
           value={el.content.label ?? ''}
           onChange={e => patch({ label: e.target.value })}
           placeholder='Giá trị'
-          className='h-7 w-28 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-28 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Min'>
@@ -780,7 +780,7 @@ function RangeEditor({
           type='number'
           value={el.content.min}
           onChange={e => patch({ min: Number(e.target.value) })}
-          className='h-7 w-16 rounded-md bg-white px-2 text-xs tabular-nums ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-16 rounded-md bg-[var(--pv2-paper)] px-2 text-xs tabular-nums ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Max'>
@@ -788,7 +788,7 @@ function RangeEditor({
           type='number'
           value={el.content.max}
           onChange={e => patch({ max: Number(e.target.value) })}
-          className='h-7 w-16 rounded-md bg-white px-2 text-xs tabular-nums ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-16 rounded-md bg-[var(--pv2-paper)] px-2 text-xs tabular-nums ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Step'>
@@ -796,7 +796,7 @@ function RangeEditor({
           type='number'
           value={el.content.step ?? 1}
           onChange={e => patch({ step: Number(e.target.value) })}
-          className='h-7 w-16 rounded-md bg-white px-2 text-xs tabular-nums ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-16 rounded-md bg-[var(--pv2-paper)] px-2 text-xs tabular-nums ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Default'>
@@ -804,7 +804,7 @@ function RangeEditor({
           type='number'
           value={el.content.defaultValue ?? el.content.min}
           onChange={e => patch({ defaultValue: Number(e.target.value) })}
-          className='h-7 w-16 rounded-md bg-white px-2 text-xs tabular-nums ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-16 rounded-md bg-[var(--pv2-paper)] px-2 text-xs tabular-nums ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Unit'>
@@ -812,7 +812,7 @@ function RangeEditor({
           value={el.content.unit ?? ''}
           onChange={e => patch({ unit: e.target.value })}
           placeholder='m²'
-          className='h-7 w-16 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-16 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
     </>
@@ -848,7 +848,7 @@ function CountdownEditor({
             if (Number.isNaN(d.getTime())) return;
             patch({ targetIso: d.toISOString() });
           }}
-          className='h-7 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Label'>
@@ -856,7 +856,7 @@ function CountdownEditor({
           value={el.content.label ?? ''}
           onChange={e => patch({ label: e.target.value })}
           placeholder='Còn lại'
-          className='h-7 w-28 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-28 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Hiển thị'>
@@ -871,7 +871,7 @@ function CountdownEditor({
               ) as CountdownExtraElement['content']['units'],
             })
           }
-          className='h-7 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         >
           <option value='days,hours,minutes,seconds'>Đầy đủ</option>
           <option value='days,hours,minutes'>Ngày · Giờ · Phút</option>
@@ -883,7 +883,7 @@ function CountdownEditor({
         <select
           value={el.content.style ?? 'flat'}
           onChange={e => patch({ style: e.target.value as 'flat' | 'flip' })}
-          className='h-7 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         >
           <option value='flat'>Flat</option>
           <option value='flip'>Flip card</option>
@@ -894,7 +894,7 @@ function CountdownEditor({
           value={el.content.expiredText ?? ''}
           onChange={e => patch({ expiredText: e.target.value })}
           placeholder='Đã kết thúc'
-          className='h-7 w-32 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-32 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
     </>
@@ -917,7 +917,7 @@ function RevealEditor({
           value={el.content.coverUrl}
           onChange={e => patch({ coverUrl: e.target.value })}
           placeholder='https://...png'
-          className='h-7 w-40 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-40 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Reveal'>
@@ -925,7 +925,7 @@ function RevealEditor({
           value={el.content.revealUrl}
           onChange={e => patch({ revealUrl: e.target.value })}
           placeholder='https://...png'
-          className='h-7 w-40 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-40 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Mode'>
@@ -936,7 +936,7 @@ function RevealEditor({
               mode: e.target.value as RevealExtraElement['content']['mode'],
             })
           }
-          className='h-7 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         >
           <option value='scratch'>Scratch (cào)</option>
           <option value='peel'>Peel (lột)</option>
@@ -951,7 +951,7 @@ function RevealEditor({
           max={200}
           value={el.content.brushSize ?? 60}
           onChange={e => patch({ brushSize: Number(e.target.value) })}
-          className='h-7 w-16 rounded-md bg-white px-2 text-xs tabular-nums ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-16 rounded-md bg-[var(--pv2-paper)] px-2 text-xs tabular-nums ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
     </>
@@ -1000,7 +1000,7 @@ function SpinWheelEditor({
             })
           }
           placeholder='Quay'
-          className='h-7 w-24 rounded-md bg-white px-2 text-xs ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-24 rounded-md bg-[var(--pv2-paper)] px-2 text-xs ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='Spin (ms)'>
@@ -1017,7 +1017,7 @@ function SpinWheelEditor({
               },
             })
           }
-          className='h-7 w-20 rounded-md bg-white px-2 text-xs tabular-nums ring-1 ring-neutral-200 focus:outline-none'
+          className='h-7 w-20 rounded-md bg-[var(--pv2-paper)] px-2 text-xs tabular-nums ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       {/* Compact segment editor inline. For 6+ segments we'd want a popover
@@ -1026,7 +1026,7 @@ function SpinWheelEditor({
         {el.content.segments.map((s, i) => (
           <div
             key={s.id}
-            className='flex items-center gap-1 rounded bg-white px-1.5 py-0.5 ring-1 ring-neutral-200'
+            className='flex items-center gap-1 rounded bg-[var(--pv2-paper)] px-1.5 py-0.5 ring-1 ring-[var(--pv2-hair)]'
           >
             <input
               type='color'
@@ -1044,13 +1044,13 @@ function SpinWheelEditor({
             <input
               value={s.prize ?? ''}
               onChange={e => patchSeg(i, { prize: e.target.value })}
-              className='text-3xs h-5 w-20 bg-transparent text-neutral-500 focus:outline-none'
+              className='text-3xs h-5 w-20 bg-transparent text-[var(--pv2-mut)] focus:outline-none'
               placeholder='prize'
             />
             <button
               type='button'
               onClick={() => removeSeg(i)}
-              className='text-neutral-400 hover:text-rose-600'
+              className='text-[var(--pv2-faint)] hover:text-[var(--pv2-error)]'
               aria-label={`Xoá ô ${i + 1}`}
             >
               <X className='size-3' />
@@ -1060,7 +1060,7 @@ function SpinWheelEditor({
         <button
           type='button'
           onClick={addSeg}
-          className='text-2xs h-6 rounded-md bg-neutral-100 px-2 hover:bg-neutral-200'
+          className='text-2xs h-6 rounded-md bg-[var(--pv2-canvas)] px-2 hover:bg-[var(--pv2-hair)]'
         >
           + Ô
         </button>
@@ -1088,7 +1088,7 @@ function SizeEditor({
               size: { ...element.size, width: Number(e.target.value) || 1 },
             })
           }
-          className='text-2xs h-7 w-14 rounded-md bg-white px-1.5 text-center font-mono ring-1 ring-neutral-200 focus:outline-none'
+          className='text-2xs h-7 w-14 rounded-md bg-[var(--pv2-paper)] px-1.5 text-center font-mono ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
       <InlineLabel label='H'>
@@ -1101,7 +1101,7 @@ function SizeEditor({
               size: { ...element.size, height: Number(e.target.value) || 1 },
             })
           }
-          className='text-2xs h-7 w-14 rounded-md bg-white px-1.5 text-center font-mono ring-1 ring-neutral-200 focus:outline-none'
+          className='text-2xs h-7 w-14 rounded-md bg-[var(--pv2-paper)] px-1.5 text-center font-mono ring-1 ring-[var(--pv2-hair)] focus:outline-none'
         />
       </InlineLabel>
     </>
@@ -1116,7 +1116,7 @@ function InlineLabel({
   children: React.ReactNode;
 }) {
   return (
-    <span className='text-3xs inline-flex items-center gap-1 tracking-wide text-neutral-500 uppercase'>
+    <span className='text-3xs inline-flex items-center gap-1 tracking-wide text-[var(--pv2-mut)] uppercase'>
       {label}
       {children}
     </span>
@@ -1124,7 +1124,7 @@ function InlineLabel({
 }
 
 function Sep() {
-  return <span className='h-4 w-px bg-neutral-200' aria-hidden />;
+  return <span className='h-4 w-px bg-[var(--pv2-hair)]' aria-hidden />;
 }
 
 function TrackingPopover({
@@ -1149,14 +1149,14 @@ function TrackingPopover({
           className={cn(
             'text-2xs inline-flex h-7 items-center gap-1 rounded-md px-2 font-medium ring-1 transition-colors',
             enabled
-              ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-              : 'bg-white text-neutral-700 ring-neutral-200 hover:ring-neutral-300'
+              ? 'bg-[color-mix(in_srgb,var(--pv2-success)_12%,transparent)] text-[var(--pv2-success)] ring-emerald-200'
+              : 'bg-[var(--pv2-paper)] text-[var(--pv2-ink)] ring-[var(--pv2-hair)] hover:ring-[var(--pv2-slate-300)]'
           )}
         >
           <BarChart3 className='size-3.5' />
           Tracking
           {enabled ? (
-            <span className='size-1.5 rounded-full bg-emerald-500' />
+            <span className='size-1.5 rounded-full bg-[var(--pv2-success)]' />
           ) : null}
         </button>
       </PopoverPrimitive.Trigger>
@@ -1168,7 +1168,7 @@ function TrackingPopover({
         >
           <div className='flex items-center justify-between border-b px-3 py-2'>
             <span className='text-xs font-semibold'>Tracking event</span>
-            <label className='text-2xs inline-flex cursor-pointer items-center gap-1.5 text-neutral-600'>
+            <label className='text-2xs inline-flex cursor-pointer items-center gap-1.5 text-[var(--pv2-mut)]'>
               <input
                 type='checkbox'
                 checked={enabled}
@@ -1179,32 +1179,35 @@ function TrackingPopover({
           </div>
           <div className='flex flex-col gap-2 p-3'>
             <label className='flex flex-col gap-1'>
-              <span className='text-3xs tracking-wide text-neutral-500 uppercase'>
+              <span className='text-3xs tracking-wide text-[var(--pv2-mut)] uppercase'>
                 Tên sự kiện (event_name)
               </span>
               <input
                 value={tracking?.eventName ?? ''}
                 onChange={e => set({ eventName: e.target.value })}
                 placeholder='vd: cta_click_hero'
-                className='text-2xs h-8 rounded-md bg-white px-2 font-mono ring-1 ring-neutral-200 placeholder:text-neutral-400 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
+                className='text-2xs h-8 rounded-md bg-[var(--pv2-paper)] px-2 font-mono ring-1 ring-[var(--pv2-hair)] placeholder:text-[var(--pv2-faint)] focus:ring-2 focus:ring-[var(--pv2-electric)]/25 focus:outline-none'
               />
             </label>
             <label className='flex flex-col gap-1'>
-              <span className='text-3xs tracking-wide text-neutral-500 uppercase'>
+              <span className='text-3xs tracking-wide text-[var(--pv2-mut)] uppercase'>
                 Danh mục (category)
               </span>
               <input
                 value={tracking?.eventCategory ?? ''}
                 onChange={e => set({ eventCategory: e.target.value })}
                 placeholder='engagement / cta / form_submit'
-                className='text-2xs h-8 rounded-md bg-white px-2 ring-1 ring-neutral-200 focus:ring-2 focus:ring-neutral-900/15 focus:outline-none'
+                className='text-2xs h-8 rounded-md bg-[var(--pv2-paper)] px-2 ring-1 ring-[var(--pv2-hair)] focus:ring-2 focus:ring-[var(--pv2-electric)]/25 focus:outline-none'
               />
             </label>
-            <p className='text-3xs leading-4 text-neutral-500'>
+            <p className='text-3xs leading-4 text-[var(--pv2-mut)]'>
               Khi public view tương tác element này, FE dispatch{' '}
-              <code className='bg-neutral-100 px-1'>rexer:track</code> với{' '}
-              <code className='bg-neutral-100 px-1'>detail.eventName</code>.
-              Analytics provider (GA, Posthog…) subscribe để forward.
+              <code className='bg-[var(--pv2-canvas)] px-1'>rexer:track</code>{' '}
+              với{' '}
+              <code className='bg-[var(--pv2-canvas)] px-1'>
+                detail.eventName
+              </code>
+              . Analytics provider (GA, Posthog…) subscribe để forward.
             </p>
             {tracking ? (
               <button
@@ -1242,8 +1245,8 @@ function ToolbarBtn({
       className={cn(
         'inline-flex size-7 items-center justify-center rounded-md ring-1 transition-colors',
         tone === 'danger'
-          ? 'bg-white text-red-600 ring-neutral-200 hover:bg-red-50 hover:ring-red-300'
-          : 'bg-white text-neutral-700 ring-neutral-200 hover:bg-neutral-50 hover:ring-neutral-300'
+          ? 'bg-[var(--pv2-paper)] text-red-600 ring-[var(--pv2-hair)] hover:bg-red-50 hover:ring-red-300'
+          : 'bg-[var(--pv2-paper)] text-[var(--pv2-ink)] ring-[var(--pv2-hair)] hover:bg-[var(--pv2-canvas)] hover:ring-[var(--pv2-slate-300)]'
       )}
     >
       {children}

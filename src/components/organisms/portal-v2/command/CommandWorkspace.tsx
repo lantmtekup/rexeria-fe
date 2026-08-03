@@ -76,9 +76,9 @@ export const CommandWorkspace = ({ nowIso }: CommandWorkspaceProps) => {
         : h < 18
           ? t('greetingAfternoon')
           : t('greetingEvening');
-    const first = snapshot.user.name.split(' ')[0] ?? snapshot.user.name;
-    return `${part}, ${first}`;
-  }, [now, snapshot.user.name, t]);
+    // const first = snapshot.user.name.split(' ')[0] ?? snapshot.user.name;
+    return `${part}`;
+  }, [now, t]);
 
   const tabItems = useMemo(
     () =>

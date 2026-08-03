@@ -2,13 +2,13 @@
 
 import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { BLOCK_TYPE_META } from '@/components/modules/block-editor/types';
 import {
   getCachedExchangePageLayers,
   prefetchExchangePageLayers,
-  type ExchangePageLayer,
+  type ExchangePageLayerGroup,
 } from '@/lib/portal-v2/exchange/pageLayers';
 import {
   formatPreviewCount,
@@ -24,7 +24,8 @@ type ExchangePreviewRailProps = {
   /** Omit or null to render the "never run" note instead of the panel. */
   evidence?: PreviewEvidence | null;
   activeBlockId?: string | null;
-  onSelectBlock?: (blockId: string) => void;
+  /** `pagePath` is '' for the home page — sub-pages live at `/p/{slug}/{pagePath}`. */
+  onSelectBlock?: (blockId: string, pagePath: string) => void;
 };
 
 export const ExchangePreviewRail = ({
@@ -36,7 +37,7 @@ export const ExchangePreviewRail = ({
   const t = useTranslations('portalV2.preview');
   const slug = slugProp ?? '';
 
-  const [layers, setLayers] = useState<ExchangePageLayer[]>(
+  const [groups, setGroups] = useState<ExchangePageLayerGroup[]>(
     () => (slug ? getCachedExchangePageLayers(slug) : null) ?? []
   );
   const [loading, setLoading] = useState(
@@ -46,7 +47,7 @@ export const ExchangePreviewRail = ({
 
   useEffect(() => {
     if (!slug) {
-      setLayers([]);
+      setGroups([]);
       setLoading(false);
       setLoadError(null);
       return;
@@ -54,7 +55,7 @@ export const ExchangePreviewRail = ({
 
     const cached = getCachedExchangePageLayers(slug);
     if (cached) {
-      setLayers(cached);
+      setGroups(cached);
       setLoading(false);
       setLoadError(null);
       return;
@@ -67,11 +68,11 @@ export const ExchangePreviewRail = ({
     void prefetchExchangePageLayers(slug)
       .then(next => {
         if (cancelled) return;
-        setLayers(next);
+        setGroups(next);
       })
       .catch(err => {
         if (cancelled) return;
-        setLayers([]);
+        setGroups([]);
         setLoadError(
           err instanceof RxApiError
             ? err.message
@@ -90,8 +91,12 @@ export const ExchangePreviewRail = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- t identity churn
   }, [slug]);
 
-  const count = layers.length;
-  const resolvedActiveId = activeBlockId ?? layers[0]?.id ?? null;
+  const count = useMemo(
+    () => groups.reduce((sum, g) => sum + g.layers.length, 0),
+    [groups]
+  );
+  const multiPage = groups.length > 1;
+  const resolvedActiveId = activeBlockId ?? groups[0]?.layers[0]?.id ?? null;
 
   return (
     <aside
@@ -102,7 +107,12 @@ export const ExchangePreviewRail = ({
       aria-label={t('previewStack', { count })}
     >
       <div className='mb-3 text-[10px] font-bold tracking-[0.06em] text-[var(--pv2-faint)] uppercase'>
-        {t('previewStack', { count: loading ? '…' : count })}
+        {multiPage
+          ? t('previewStackPages', {
+              pages: loading ? '…' : groups.length,
+              count: loading ? '…' : count,
+            })
+          : t('previewStack', { count: loading ? '…' : count })}
       </div>
 
       {loading ? (
@@ -118,60 +128,77 @@ export const ExchangePreviewRail = ({
           {loadError}
         </p>
       ) : count ? (
-        <div className='flex flex-col gap-0.5'>
-          {layers.map(layer => {
-            const active = resolvedActiveId === layer.id;
-            const typeLabel =
-              BLOCK_TYPE_META[layer.blockType]?.label ?? layer.blockType;
-            const title =
-              layer.name || t('previewLayerBlock', { n: layer.index });
+        <div className='flex flex-col gap-1'>
+          {groups.map(group => (
+            <section key={group.id} aria-label={group.name}>
+              {multiPage ? (
+                <div className='mt-2.5 mb-1 flex min-w-0 items-baseline gap-1.5 px-2.5 first:mt-0'>
+                  <span className='truncate text-[11.5px] font-bold text-[var(--pv2-mut)]'>
+                    {group.name}
+                  </span>
+                  <span className='shrink-0 text-[10px] text-[var(--pv2-faint)]'>
+                    /{group.pagePath}
+                  </span>
+                </div>
+              ) : null}
 
-            return (
-              <button
-                key={layer.id}
-                type='button'
-                tabIndex={0}
-                aria-current={active ? 'step' : undefined}
-                aria-label={`${title}, ${typeLabel}`}
-                onClick={() => onSelectBlock?.(layer.id)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onSelectBlock?.(layer.id);
-                  }
-                }}
-                className={cn(
-                  'flex w-full items-start gap-3 rounded-[var(--pv2-r-sm)] px-2.5 py-2 text-left',
-                  'transition-colors',
-                  'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2 focus-visible:outline-none',
-                  active
-                    ? 'bg-[var(--pv2-electric-soft)]'
-                    : 'hover:bg-[var(--pv2-canvas)]'
-                )}
-              >
-                <span
-                  className={cn(
-                    'grid size-6 shrink-0 place-items-center rounded-[var(--pv2-r-sm)]',
-                    'font-[family-name:var(--pv2-disp)] text-[10.5px] font-bold',
-                    active
-                      ? 'bg-[var(--pv2-electric)] text-white'
-                      : 'bg-[var(--pv2-canvas)] text-[var(--pv2-mut)]'
-                  )}
-                  aria-hidden
-                >
-                  {layer.index}
-                </span>
-                <span className='min-w-0 pt-0.5'>
-                  <span className='block truncate text-[13px] font-semibold text-[var(--pv2-ink)]'>
-                    {title}
-                  </span>
-                  <span className='mt-0.5 block truncate text-[11px] text-[var(--pv2-faint)]'>
-                    {typeLabel}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
+              <div className='flex flex-col gap-0.5'>
+                {group.layers.map(layer => {
+                  const active = resolvedActiveId === layer.id;
+                  const typeLabel =
+                    BLOCK_TYPE_META[layer.blockType]?.label ?? layer.blockType;
+                  const title =
+                    layer.name || t('previewLayerBlock', { n: layer.index });
+
+                  return (
+                    <button
+                      key={layer.id}
+                      type='button'
+                      tabIndex={0}
+                      aria-current={active ? 'step' : undefined}
+                      aria-label={`${title}, ${typeLabel}`}
+                      onClick={() => onSelectBlock?.(layer.id, group.pagePath)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onSelectBlock?.(layer.id, group.pagePath);
+                        }
+                      }}
+                      className={cn(
+                        'flex w-full items-start gap-3 rounded-[var(--pv2-r-sm)] px-2.5 py-2 text-left',
+                        'transition-colors',
+                        'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2 focus-visible:outline-none',
+                        active
+                          ? 'bg-[var(--pv2-electric-soft)]'
+                          : 'hover:bg-[var(--pv2-canvas)]'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'grid size-6 shrink-0 place-items-center rounded-[var(--pv2-r-sm)]',
+                          'font-[family-name:var(--pv2-disp)] text-[10.5px] font-bold',
+                          active
+                            ? 'bg-[var(--pv2-electric)] text-white'
+                            : 'bg-[var(--pv2-canvas)] text-[var(--pv2-mut)]'
+                        )}
+                        aria-hidden
+                      >
+                        {layer.index}
+                      </span>
+                      <span className='min-w-0 pt-0.5'>
+                        <span className='block truncate text-[13px] font-semibold text-[var(--pv2-ink)]'>
+                          {title}
+                        </span>
+                        <span className='mt-0.5 block truncate text-[11px] text-[var(--pv2-faint)]'>
+                          {typeLabel}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       ) : (
         <p className='px-2.5 py-2 text-[12px] leading-relaxed text-[var(--pv2-faint)]'>
