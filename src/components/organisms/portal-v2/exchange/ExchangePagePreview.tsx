@@ -1,13 +1,12 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import type { Device } from '@/components/modules/block-editor/types';
 import { ExchangeDeviceStage } from '@/components/organisms/portal-v2/exchange/ExchangeDeviceStage';
+import { PreviewStageLoading } from '@/components/organisms/portal-v2/exchange/PreviewStageLoading';
 import { markExchangePagePreviewCached } from '@/lib/portal-v2/exchange/pagePreview';
-import { cn } from '@/lib/cn';
 
 type ExchangePagePreviewProps = {
   slug: string;
@@ -46,26 +45,20 @@ export const ExchangePagePreview = ({
   scrollNonce = 0,
   onActiveBlockChange,
 }: ExchangePagePreviewProps) => {
-  const t = useTranslations('portalV2.exchange');
+  const t = useTranslations('portalV2.preview');
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const programmaticScrollRef = useRef(false);
   const lastReportedRef = useRef<string | null>(null);
   const sessionKey = `${slug}:${device}`;
-  const [loadedSessionKey, setLoadedSessionKey] = useState<string | null>(null);
-  const loading = loadedSessionKey !== sessionKey;
+  const [iframeReady, setIframeReady] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(true);
+  const loading = showOverlay;
   const src = `/p/${encodeURIComponent(slug)}`;
 
   useLayoutEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe || loadedSessionKey === sessionKey) return;
-    try {
-      if (iframe.contentDocument?.readyState === 'complete') {
-        setLoadedSessionKey(sessionKey);
-      }
-    } catch {
-      // Sandbox / opaque — rely on onLoad only.
-    }
-  }, [sessionKey, loadedSessionKey]);
+    setIframeReady(false);
+    setShowOverlay(true);
+  }, [sessionKey]);
 
   // Rail click → scroll iframe to block (does not run on IO-driven active sync).
   useEffect(() => {
@@ -134,19 +127,13 @@ export const ExchangePagePreview = ({
 
   return (
     <ExchangeDeviceStage device={device} urlLabel={`/${slug}`}>
-      {loading ? (
-        <div
-          className={cn(
-            'absolute inset-0 z-10 flex items-center justify-center gap-2',
-            'bg-[var(--pv2-paper)] text-[13px] text-[var(--pv2-mut)]'
-          )}
-        >
-          <Loader2
-            className='size-4 animate-spin text-[var(--pv2-electric)]'
-            aria-hidden
-          />
-          {t('previewLoading')}
-        </div>
+      {showOverlay ? (
+        <PreviewStageLoading
+          className='absolute inset-0'
+          label={t('previewLoading')}
+          complete={iframeReady}
+          onFinished={() => setShowOverlay(false)}
+        />
       ) : null}
       <iframe
         key={sessionKey}
@@ -157,7 +144,7 @@ export const ExchangePagePreview = ({
         className='absolute inset-0 block size-full border-0 bg-white'
         onLoad={() => {
           markExchangePagePreviewCached(slug);
-          setLoadedSessionKey(sessionKey);
+          setIframeReady(true);
         }}
       />
     </ExchangeDeviceStage>

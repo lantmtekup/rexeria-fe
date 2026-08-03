@@ -34,6 +34,10 @@ const portalButtonVariants = cva(
           'w-full rounded-[var(--pv2-r-sm)] border border-dashed border-[var(--pv2-hair)]',
           'text-[var(--pv2-electric)] hover:border-[var(--pv2-electric)] hover:bg-[var(--pv2-electric-soft)]'
         ),
+        toggle: cn(
+          'rounded-full border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-[var(--pv2-mut)]',
+          'hover:border-[var(--pv2-slate-300)] hover:text-[var(--pv2-ink)]'
+        ),
       },
       size: {
         sm: 'h-8 px-3 text-xs [&_svg]:size-3.5',

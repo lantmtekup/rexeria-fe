@@ -5,29 +5,36 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 import { BLOCK_TYPE_META } from '@/components/modules/block-editor/types';
-import { formatLift } from '@/lib/portal-v2/exchange/helpers';
 import {
   getCachedExchangePageLayers,
   prefetchExchangePageLayers,
   type ExchangePageLayer,
 } from '@/lib/portal-v2/exchange/pageLayers';
-import type { ExchangeListingView } from '@/lib/portal-v2/exchange/types';
+import {
+  formatPreviewCount,
+  formatPreviewLift,
+} from '@/lib/portal-v2/preview/format';
+import type { PreviewEvidence } from '@/lib/portal-v2/preview/types';
 import { cn } from '@/lib/cn';
 import { RxApiError } from '@/services/rexer/client';
 
 type ExchangePreviewRailProps = {
-  listing: ExchangeListingView;
+  /** Public slug of the page being previewed. Empty ⇒ nothing to list. */
+  slug?: string;
+  /** Omit or null to render the "never run" note instead of the panel. */
+  evidence?: PreviewEvidence | null;
   activeBlockId?: string | null;
   onSelectBlock?: (blockId: string) => void;
 };
 
 export const ExchangePreviewRail = ({
-  listing,
+  slug: slugProp,
+  evidence,
   activeBlockId = null,
   onSelectBlock,
 }: ExchangePreviewRailProps) => {
-  const t = useTranslations('portalV2.exchange');
-  const slug = listing.slug ?? '';
+  const t = useTranslations('portalV2.preview');
+  const slug = slugProp ?? '';
 
   const [layers, setLayers] = useState<ExchangePageLayer[]>(
     () => (slug ? getCachedExchangePageLayers(slug) : null) ?? []
@@ -81,10 +88,9 @@ export const ExchangePreviewRail = ({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- t identity churn
-  }, [slug, listing.id]);
+  }, [slug]);
 
   const count = layers.length;
-  const evidence = listing.proven ? listing.meta.evidence : undefined;
   const resolvedActiveId = activeBlockId ?? layers[0]?.id ?? null;
 
   return (
@@ -182,13 +188,13 @@ export const ExchangePreviewRail = ({
           <div className='flex items-center px-2.5 py-2 text-[12.5px] text-[var(--pv2-mut)]'>
             <span>{t('previewSessions')}</span>
             <b className='ml-auto font-[family-name:var(--pv2-disp)] font-bold text-[var(--pv2-ink)]'>
-              {evidence.sessions.toLocaleString()}
+              {formatPreviewCount(evidence.sessions)}
             </b>
           </div>
           <div className='flex items-center px-2.5 py-2 text-[12.5px] text-[var(--pv2-mut)]'>
             <span>{t('previewLift')}</span>
             <b className='ml-auto font-[family-name:var(--pv2-disp)] font-bold text-[var(--pv2-ink)]'>
-              {formatLift(evidence.lift)}
+              {formatPreviewLift(evidence.lift)}
             </b>
           </div>
         </div>
