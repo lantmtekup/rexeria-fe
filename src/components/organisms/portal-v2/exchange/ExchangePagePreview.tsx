@@ -53,7 +53,6 @@ export const ExchangePagePreview = ({
   const programmaticScrollRef = useRef(false);
   const lastReportedRef = useRef<string | null>(null);
   const sessionKey = `${slug}:${pagePath}:${device}`;
-  const [iframeReady, setIframeReady] = useState(false);
   const [showOverlay, setShowOverlay] = useState(true);
   const loading = showOverlay;
   /** `pagePath` may contain '/' (nested sub-paths) — encode per segment. */
@@ -67,7 +66,6 @@ export const ExchangePagePreview = ({
     : `/p/${encodeURIComponent(slug)}`;
 
   useLayoutEffect(() => {
-    setIframeReady(false);
     setShowOverlay(true);
   }, [sessionKey]);
 
@@ -145,8 +143,6 @@ export const ExchangePagePreview = ({
         <PreviewStageLoading
           className='absolute inset-0'
           label={t('previewLoading')}
-          complete={iframeReady}
-          onFinished={() => setShowOverlay(false)}
         />
       ) : null}
       <iframe
@@ -158,7 +154,9 @@ export const ExchangePagePreview = ({
         className='absolute inset-0 block size-full border-0 bg-white'
         onLoad={() => {
           if (!pagePath) markExchangePagePreviewCached(slug);
-          setIframeReady(true);
+          // Immediate reveal — skip PreviewStageLoading's 0→100 outro so page
+          // blocks (BelgoScrollFrames, etc.) can show their own preloader.
+          setShowOverlay(false);
         }}
       />
     </ExchangeDeviceStage>

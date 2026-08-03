@@ -14,6 +14,7 @@ Paths are under `src/components/modules/block-editor/` unless noted.
 | 5b | **Canvas styles wired** | `styleOf` helper + `composeStyle(baseInline, styleOf(key))` on every editable node; keys match `data-element-key` ↔ `elements[]`. Helpers: `blocks/applyStyle.ts` |
 | 5c | **Canvas edit fork (if needed)** | `isCanvas` via `closest('[data-testid="active-block-preview"]')` + `hasRoot`; edit layout MAY differ (`data-canvas-edit`); PreviewMode + `/p` keep production. Skip pin/scrub when `isCanvas`. Refs: `HousentOurExcellence`, `ReadymagCaseSection` |
 | 5d | **Layers UX** | BlockDef `elements[]`: `fieldType`; cluster with `groupId`/`groupLabel` when paired fields |
+| 5e | **CTA / link (if any `<a>`)** | Tách text + href keys; `fieldType: 'link'` on href; DOM split; canvas `preventDefault`; `resolveSiblingLinkKey` + `resolveLinkAnchorKey` in v1 **and** v2 |
 | 6 | Motion host API | `useBlockMotion` / `useLandingMotion` + `scroller` — see `docs/landing-motion-foundation.md` |
 | 7 | Mobile via container | `blocks/useContainerMobile.ts` |
 | 8 | BlockDef | `blocks/_registry/defs/<name>.ts` |
@@ -35,7 +36,8 @@ Paths are under `src/components/modules/block-editor/` unless noted.
 |---|---|
 | Paired flat fields | BlockDef `groupId` + `groupLabel` (contiguous) — prefer before custom expand |
 | Dynamic layer expand | `LayersPanel.tsx` → `elementsForType` (see `pnj_variant`, `pnj_hero`, `pnj_details`) |
-| Nested key labels / kinds | `resolveElementKind.ts` |
+| Nested key labels / kinds | `resolveElementKind.ts` (**v1 + v2**) — include `kind: 'link'` for `*.href` / `*.link` in arrays |
+| Sibling CTA ↔ href | `resolveSiblingLinkKey` + `resolveLinkAnchorKey` in **both** `resolveElementKind.ts` files |
 | Custom field UI | `ElementToolbar.tsx` |
 | Content helpers (not registered) | e.g. `blocks/pnjHeroFrames.ts`, `pnjHeroScrim.ts`, `pnjHeroTitleLines.ts` |
 
@@ -101,6 +103,7 @@ Prefer Path A for all new `apps/<brand>` ports.
 | Editor canvas | Block mounts; elements selectable; toolbar edits content **and styles** (color/fontSize); device frame resize reflows via `@container` |
 | Canvas edit fork | If pin/scrub: edit layout shows all fields; PreviewMode Play still production |
 | Layers UX | `fieldType` correct; `groupId` folders when declared |
+| CTA / link | Click button text → chip "Đặt link"; href layer opens LinkControls (4 mode); canvas does not navigate |
 | Canvas styles | Select element → toolbar style controls → inline override visible; no token trapped on Tailwind class only |
 | Sticky/overlay | Stage not blank; header flush top |
 | Drawer | Opens inside device frame without clip; locks scroll; unlocks Lenis on close; works on `/p` via body |
@@ -117,6 +120,9 @@ BlockPreview.tsx
 LayersPanel.tsx
 ElementToolbar.tsx
 resolveElementKind.ts
+block-editor-v2/resolveElementKind.ts
+links/LinkControls.tsx
+links/linkToken.ts
 previewPortal.ts
 blocks/<Name>.tsx
 blocks/applyStyle.ts

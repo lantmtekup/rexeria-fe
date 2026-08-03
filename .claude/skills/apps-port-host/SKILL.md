@@ -1,6 +1,6 @@
 ---
 name: apps-port-host
-description: Port standalone apps/<brand> sections and components into the rexerai native block-editor so they run on the editor canvas and public /p/[id]. Use when the user says port apps/pnj, port apps/mintcoin, wire DiscoverPanel vào host, tách sub-component vs full block, drawer bị clip trên canvas, style không chỉnh được trên canvas, toolbar đổi color/font không thấy, sticky scrub không hiện trong preview, canvas edit layout khác preview, groupId LayersPanel, apps prototype → Pnj*/Mint* block, or bất kỳ apps/<brand> → block-editor wiring. Covers host adaptations (previewPortal, scroll-lock/Lenis, useContainerMobile, sticky/overlay sets), canvas-editable styles (tuyền inline + styleOf + data-element-key), canvas-edit surface vs preview (isCanvas — edit layout có thể khác, preview//p giữ production), LayersPanel groupId/fieldType, CMS types + BlockDef registry, and end-to-end verify. Distinct from framer-clone-host (Framer recon → scaffold); this skill starts from an already-working apps/ prototype.
+description: Port standalone apps/<brand> sections and components into the rexerai native block-editor so they run on the editor canvas and public /p/[id]. Use when the user says port apps/pnj, port apps/mintcoin, wire DiscoverPanel vào host, tách sub-component vs full block, drawer bị clip trên canvas, style không chỉnh được trên canvas, toolbar đổi color/font không thấy, sticky scrub không hiện trong preview, canvas edit layout khác preview, groupId LayersPanel, CTA link picker 4 dạng không mở được, apps prototype → Pnj*/Mint* block, or bất kỳ apps/<brand> → block-editor wiring. Covers host adaptations (previewPortal, scroll-lock/Lenis, useContainerMobile, sticky/overlay sets), canvas-editable styles (tuyền inline + styleOf + data-element-key), CTA/link fields (tách href + text, fieldType link, sibling mapping), canvas-edit surface vs preview (isCanvas — edit layout có thể khác, preview//p giữ production), LayersPanel groupId/fieldType, CMS types + BlockDef registry, and end-to-end verify. Distinct from framer-clone-host (Framer recon → scaffold); this skill starts from an already-working apps/ prototype.
 ---
 
 # Apps → block-editor host port
@@ -132,7 +132,7 @@ Editing content is primarily Layers + ElementToolbar, not only click-on-canvas. 
 
 | Field | Purpose |
 |---|---|
-| `fieldType` | `'text'` \| `'textarea'` \| `'image'` — toolbar control (avoid guessing from key name) |
+| `fieldType` | `'text'` \| `'textarea'` \| `'image'` \| `'link'` — toolbar control (avoid guessing from key name) |
 | `groupId` | Contiguous same id → one collapsible folder in panel Lớp |
 | `groupLabel` | Folder title — set on the **first** child of the group only |
 
@@ -146,6 +146,66 @@ Opt-in: omit `groupId` → flat list. Use groups for paired fields (label+placeh
 
 Refs: `pnjCta.ts`, `housentOurExcellence.ts`, `sustainitOurExpertise.ts`. Arrays still need `LayersPanel.elementsForType` expand (step 7 below).
 
+## Non-negotiable — CTA / link fields (4 dạng link picker)
+
+Apps thường gộp chữ + URL trên một `<a href={…}>{label}</a>`. Host **tách 2 field CMS + 2 hit-target DOM** để canvas mở **LinkControls** (4 mode: Không link · Trang trong template · Cuộn tới block · URL ngoài — `links/LinkControls.tsx`).
+
+### BlockDef
+
+- Field lưu URL/token: `fieldType: 'link'` (vd `ctaHref`, `products[i].href`, `navLinks[i].href`).
+- Field chữ hiển thị: `fieldType: 'text'` (vd `ctaText`, `products[i].cta`).
+- **Không** đặt `data-element-key` của link lên node text — toolbar sẽ không mở link picker.
+
+### DOM (mỗi CTA / nav item)
+
+```tsx
+<a
+  data-element-key='ctaHref'          // hoặc products[i].href — kind === 'link'
+  href={isCanvas ? undefined : href || '#'}
+  onClick={isCanvas ? e => e.preventDefault() : undefined}
+  aria-label={ctaText}
+  className={selectableClass(activeKey === 'ctaHref')}
+  style={composeStyle(BUTTON_BASE, styleOf('ctaHref'))}
+>
+  <span
+    data-element-key='ctaText'        // double-click / inline text edit
+    className={selectableClass(activeKey === 'ctaText')}
+    style={composeStyle(TEXT_BASE, styleOf('ctaText'))}
+  >
+    {ctaText}
+  </span>
+</a>
+```
+
+- **Canvas:** `href={undefined}` + `preventDefault` — tránh navigate khi author click chọn link.
+- **Preview + `/p`:** `href` thật (sau `resolveLinksDeep` nếu token `#page:` / `#block:`).
+
+### Sibling mapping (array CTA / nav)
+
+Khi user click **chữ** CTA, chip canvas vẫn phải offer **"Đặt link"**. Register trong `resolveElementKind.ts` (**v1 + v2**):
+
+```ts
+// resolveSiblingLinkKey — text key → href key
+if (blockType === 'belgo_our_products') {
+  const cta = key.match(/^products\[(\d+)\]\.cta$/);
+  if (cta) return `products[${cta[1]}].href`;
+}
+
+// resolveLinkAnchorKey — href key → visible anchor for chip rect
+if (blockType === 'belgo_our_products') {
+  const href = key.match(/^products\[(\d+)\]\.href$/);
+  if (href) return `products[${href[1]}].cta`;
+}
+```
+
+Same pattern: `belgo_header` (`navLinks[i].label` ↔ `.href`, `bookTableLabel` ↔ `bookTableHref`), `pnj_sticky_menu`, `aestha_nav`, `FramerEstanciaAboutUs` (`ctaText` + `ctaHref`).
+
+### resolveElementKind (nested arrays)
+
+Với key `products[i].href` / `items[i].link`, thêm nhánh trong block-specific section (kind `'link'`, `fieldType: 'link'`) — đừng rely chỉ `isLinkKey()` heuristic nếu key là mảng lồng.
+
+Refs: `CoolHunterFooter.tsx`, `FramerEstanciaAboutUs.tsx`, `FramerPerformPricing.tsx` (`tiers[i].ctaLabel` + `.ctaHref`), `BelgoOurProducts.tsx`, `BelgoHeader.tsx`.
+
 ## Workflow — full block
 
 1. **Read source** in `apps/<brand>/…` — hard-coded props, viewport `matchMedia` / `useIsMobile`, window ScrollTrigger, `md:`/`lg:`/`fixed` drawers, local Lenis.
@@ -158,7 +218,7 @@ Refs: `pnjCta.ts`, `housentOurExcellence.ts`, `sustainitOurExpertise.ts`. Arrays
    - one line in `blocks/_registry/registry.ts`
    - complete `factory.ts` `DEFAULTS_VI` / `DEFAULTS_EN` (`Record<BlockType, …>` must compile)
    - optional: `ORDERED_TYPES` in `AddBlockDialog.tsx` for catalog order (registry still surfaces the type)
-7. **Arrays / nested CMS**: expand in `LayersPanel.elementsForType` (see `pnj_variant` / `pnj_hero` / `pnj_details`); update `resolveElementKind.ts`; add `ElementToolbar` controls when fields are not plain text/image (hotspots, frames, scrim, titleLines manager). Flat paired fields → prefer `groupId` in BlockDef instead of custom expand.
+7. **Arrays / nested CMS**: expand in `LayersPanel.elementsForType` (see `pnj_variant` / `pnj_hero` / `pnj_details`); update `resolveElementKind.ts` (**v1 + v2**); add `ElementToolbar` controls when fields are not plain text/image (hotspots, frames, scrim, titleLines manager). **CTA có URL:** tách `*Text`/`*Label` + `*Href`/`.href`, `fieldType: 'link'`, sibling mapping — see **CTA / link fields**. Flat paired fields → prefer `groupId` in BlockDef instead of custom expand.
 8. **Canvas sets** in `BlockPreview.tsx`:
    - sticky scrub / pin-track → `STICKY_SCROLL_BLOCK_TYPES`
    - fixed header chrome → `OVERLAY_TOP_BLOCK_TYPES`
@@ -195,6 +255,7 @@ Port verify:
 - [ ] Full block: ORDERED_TYPES updated if catalog order matters
 - [ ] Editable keys: data-element-key matches elements[] / LayersPanel expand
 - [ ] elements[]: fieldType set; groupId/groupLabel when paired fields (Layers folders)
+- [ ] CTA/link: href field `fieldType: 'link'`; DOM tách `<a data-element-key=href>` + inner text span; canvas preventDefault; sibling mapping in resolveElementKind v1+v2; click CTA → link picker 4 dạng
 - [ ] Canvas: block renders; click element → highlight + toolbar fieldType correct
 - [ ] Style override: select element → change color/fontSize in toolbar → visible on canvas immediately
 - [ ] No important design tokens left only on Tailwind classes (text-*/text-[…]/font-*)
@@ -221,6 +282,8 @@ After port (or when unsure a convert is complete): run **`apps-port-audit`** on 
 | Layout always desktop in mobile frame | `useIsMobile` / `md:` instead of `useContainerMobile` / `@2xl` |
 | Sticky stage blank in editor | Type missing from `STICKY_SCROLL_BLOCK_TYPES` |
 | Element not selectable | Missing `data-element-key` or not in `elements[]` / expand |
+| CTA click không mở link picker / chỉ sửa được chữ | `data-element-key` gắn nhầm lên text thay vì field href; thiếu `fieldType: 'link'`; thiếu `resolveSiblingLinkKey` / `resolveLinkAnchorKey` |
+| Link picker không có 4 mode | Field chưa `fieldType: 'link'` hoặc `resolveElementKind` trả `kind: 'text'` cho key href |
 | Toolbar style change not visible | Token on Tailwind class instead of inline base / missing `styleOf(key)` / key mismatch |
 | Cannot edit items hidden by scrub/pin | Need `isCanvas` edit fork (flat grid + skip motion); see HousentOurExcellence / ReadymagCaseSection |
 | Preview or `/p` shows edit grid / missing motion | `isCanvas` detection wrong, or production branch accidentally shares canvas layout |

@@ -30,6 +30,13 @@ import { citeFlowContactFormDef } from '@/components/modules/block-editor/blocks
 import { citeFlowSignatureDef } from '@/components/modules/block-editor/blocks/_registry/defs/citeFlowSignature';
 import { scrollMattisDef } from '@/components/modules/block-editor/blocks/_registry/defs/scrollMattis';
 import { coolHunterHeroDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterHero';
+import { belgoBrewingProcessDef } from '@/components/modules/block-editor/blocks/_registry/defs/belgoBrewingProcess';
+import { belgoFooterDef } from '@/components/modules/block-editor/blocks/_registry/defs/belgoFooter';
+import { belgoHeroDef } from '@/components/modules/block-editor/blocks/_registry/defs/belgoHero';
+import { belgoAboutProductDef } from '@/components/modules/block-editor/blocks/_registry/defs/belgoAboutProduct';
+import { belgoScrollFramesDef } from '@/components/modules/block-editor/blocks/_registry/defs/belgoScrollFrames';
+import { belgoOurProductsDef } from '@/components/modules/block-editor/blocks/_registry/defs/belgoOurProducts';
+import { belgoMoreFlavorsDef } from '@/components/modules/block-editor/blocks/_registry/defs/belgoMoreFlavors';
 import { coolHunterSectionProgressDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterSectionProgress';
 import { coolHunterStoryDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterStory';
 import { coolHunterGalleryDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterGallery';
@@ -43,6 +50,7 @@ import { pnjDetailsDef } from '@/components/modules/block-editor/blocks/_registr
 import { mintDiscoverDef } from '@/components/modules/block-editor/blocks/_registry/defs/mintDiscover';
 import { pnjVariantDef } from '@/components/modules/block-editor/blocks/_registry/defs/pnjVariant';
 import { pnjHeaderDef } from '@/components/modules/block-editor/blocks/_registry/defs/pnjHeader';
+import { belgoHeaderDef } from '@/components/modules/block-editor/blocks/_registry/defs/belgoHeader';
 import { pnjStickyMenuDef } from '@/components/modules/block-editor/blocks/_registry/defs/pnjStickyMenu';
 import { pnjCtaDef } from '@/components/modules/block-editor/blocks/_registry/defs/pnjCta';
 import { theGrandIntroDef } from '@/components/modules/block-editor/blocks/_registry/defs/theGrandIntro';
@@ -2198,6 +2206,13 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   mint_variants: MINT_VARIANTS_VI,
   mint_discover: mintDiscoverDef.defaultContent.vi,
   cool_hunter_hero: coolHunterHeroDef.defaultContent.vi,
+  belgo_hero: belgoHeroDef.defaultContent.vi,
+  belgo_about_product: belgoAboutProductDef.defaultContent.vi,
+  belgo_scroll_frames: belgoScrollFramesDef.defaultContent.vi,
+  belgo_brewing_process: belgoBrewingProcessDef.defaultContent.vi,
+  belgo_footer: belgoFooterDef.defaultContent.vi,
+  belgo_our_products: belgoOurProductsDef.defaultContent.vi,
+  belgo_more_flavors: belgoMoreFlavorsDef.defaultContent.vi,
   cool_hunter_section_progress: coolHunterSectionProgressDef.defaultContent.vi,
   cool_hunter_story: coolHunterStoryDef.defaultContent.vi,
   cool_hunter_gallery: coolHunterGalleryDef.defaultContent.vi,
@@ -2209,6 +2224,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   pnj_details: pnjDetailsDef.defaultContent.vi,
   pnj_variant: pnjVariantDef.defaultContent.vi,
   pnj_header: pnjHeaderDef.defaultContent.vi,
+  belgo_header: belgoHeaderDef.defaultContent.vi,
   pnj_sticky_menu: pnjStickyMenuDef.defaultContent.vi,
   pnj_cta: pnjCtaDef.defaultContent.vi,
   the_grand_intro: theGrandIntroDef.defaultContent.vi,
@@ -2408,6 +2424,13 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   mint_variants: MINT_VARIANTS_VI,
   mint_discover: mintDiscoverDef.defaultContent.en,
   cool_hunter_hero: coolHunterHeroDef.defaultContent.en,
+  belgo_hero: belgoHeroDef.defaultContent.en,
+  belgo_about_product: belgoAboutProductDef.defaultContent.en,
+  belgo_scroll_frames: belgoScrollFramesDef.defaultContent.en,
+  belgo_brewing_process: belgoBrewingProcessDef.defaultContent.en,
+  belgo_footer: belgoFooterDef.defaultContent.en,
+  belgo_our_products: belgoOurProductsDef.defaultContent.en,
+  belgo_more_flavors: belgoMoreFlavorsDef.defaultContent.en,
   cool_hunter_section_progress: coolHunterSectionProgressDef.defaultContent.en,
   cool_hunter_story: coolHunterStoryDef.defaultContent.en,
   cool_hunter_gallery: coolHunterGalleryDef.defaultContent.en,
@@ -2419,6 +2442,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   pnj_details: pnjDetailsDef.defaultContent.en,
   pnj_variant: pnjVariantDef.defaultContent.en,
   pnj_header: pnjHeaderDef.defaultContent.en,
+  belgo_header: belgoHeaderDef.defaultContent.en,
   pnj_sticky_menu: pnjStickyMenuDef.defaultContent.en,
   pnj_cta: pnjCtaDef.defaultContent.en,
   the_grand_intro: theGrandIntroDef.defaultContent.en,

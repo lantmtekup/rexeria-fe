@@ -92,6 +92,23 @@ Sub-components (drawers): usually inherit styled content from parent props (`con
 
 Reference: `PnjVariant.tsx` (`ctaText`, `variants[i].label/desc/highlights`).
 
+## 2c. CTA / link fields (link picker 4 dạng)
+
+Standalone apps: `<a href={url}>{label}</a>`. Host stores **two CMS strings** and wires **two canvas hit-targets**.
+
+| Concern | Rule |
+|---|---|
+| BlockDef | URL field → `fieldType: 'link'` (`ctaHref`, `*.href`, `*.link`). Label field → `fieldType: 'text'`. |
+| DOM | `data-element-key` **href key on `<a>`**, text key on inner `<span>`. Button chrome (padding/bg) on `<a>`; typography on span. |
+| Canvas | `href={isCanvas ? undefined : value \|\| '#'}` + `onClick={isCanvas ? e => e.preventDefault() : undefined}` |
+| Chip UX | `resolveSiblingLinkKey`: `ctaText` → `ctaHref`, `products[i].cta` → `.href`, `navLinks[i].label` → `.href` |
+| Chip anchor | `resolveLinkAnchorKey`: reverse mapping so link-only layer highlights the visible button |
+| Both editors | Update `resolveElementKind.ts` in **block-editor** and **block-editor-v2** |
+
+Link tokens (`links/linkToken.ts`): `#page:<id>`, `#block:<id>`, external URL, empty/`#` = none. `LinkControls` exposes all four modes.
+
+Refs: `CoolHunterFooter.tsx`, `FramerEstanciaAboutUs.tsx`, `BelgoOurProducts.tsx`, `BelgoHeader.tsx`.
+
 ## 2b. Canvas edit surface vs Preview / `/p`
 
 **Invariant:** edit UX on the canvas may diverge; **PreviewMode + public `/p` must not**. Authors need every field visible/selectable; visitors need the real sticky/scrub composition.

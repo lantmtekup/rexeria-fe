@@ -9,7 +9,11 @@
  */
 import type { BlockType } from '../../types';
 import { brutalistTextDef } from './defs/brutalistText';
-import { brightedgeHeroDef } from './defs/brightedgeHero';
+import { belgoBrewingProcessDef } from './defs/belgoBrewingProcess';
+import { belgoFooterDef } from './defs/belgoFooter';
+import { belgoOurProductsDef } from './defs/belgoOurProducts';
+import { belgoMoreFlavorsDef } from './defs/belgoMoreFlavors';
+import { belgoHeaderDef } from './defs/belgoHeader';
 import { delvauxDetailsDef } from './defs/delvauxDetails';
 import { delvauxHeaderDef } from './defs/delvauxHeader';
 import { delvauxHeroDef } from './defs/delvauxHero';
@@ -143,6 +147,9 @@ import { mintV2ProcessDef } from './defs/mintV2Process';
 import { mintV2ServicesDef } from './defs/mintV2Services';
 import { mintV2WorksDef } from './defs/mintV2Works';
 import { coolHunterHeroDef } from './defs/coolHunterHero';
+import { belgoHeroDef } from './defs/belgoHero';
+import { belgoAboutProductDef } from './defs/belgoAboutProduct';
+import { belgoScrollFramesDef } from './defs/belgoScrollFrames';
 import { coolHunterSectionProgressDef } from './defs/coolHunterSectionProgress';
 import { coolHunterStoryDef } from './defs/coolHunterStory';
 import { coolHunterGalleryDef } from './defs/coolHunterGallery';
@@ -156,9 +163,17 @@ import { rolexContactDef } from './defs/rolexContact';
 import { rolexCollectionWorkDef } from './defs/rolexCollectionWork';
 import { rolexCollectionProjectDef } from './defs/rolexCollectionProject';
 import type { BlockDef } from './types';
+import { brightedgeHeroDef } from './defs/brightedgeHero';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   cool_hunter_hero: coolHunterHeroDef as BlockDef,
+  belgo_hero: belgoHeroDef as BlockDef,
+  belgo_about_product: belgoAboutProductDef as BlockDef,
+  belgo_scroll_frames: belgoScrollFramesDef as BlockDef,
+  belgo_brewing_process: belgoBrewingProcessDef as BlockDef,
+  belgo_footer: belgoFooterDef as BlockDef,
+  belgo_our_products: belgoOurProductsDef as BlockDef,
+  belgo_more_flavors: belgoMoreFlavorsDef as BlockDef,
   cool_hunter_section_progress: coolHunterSectionProgressDef as BlockDef,
   cool_hunter_story: coolHunterStoryDef as BlockDef,
   cool_hunter_gallery: coolHunterGalleryDef as BlockDef,
@@ -170,6 +185,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   pnj_details: pnjDetailsDef as BlockDef,
   pnj_variant: pnjVariantDef as BlockDef,
   pnj_header: pnjHeaderDef as BlockDef,
+  belgo_header: belgoHeaderDef as BlockDef,
   pnj_sticky_menu: pnjStickyMenuDef as BlockDef,
   pnj_cta: pnjCtaDef as BlockDef,
   the_grand_intro: theGrandIntroDef as BlockDef,

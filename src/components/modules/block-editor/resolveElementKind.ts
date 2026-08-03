@@ -35,6 +35,11 @@ export type ElementKind =
   | 'coolHunterGalleryItems'
   | 'framerBungeeHeroV2CardImages'
   | 'coolHunterSectionProgressItems'
+  | 'belgoSpecItems'
+  | 'belgoFooterLocations'
+  | 'belgoFooterHeadlineWords'
+  | 'belgoFooterSocials'
+  | 'belgoMoreFlavorsItems'
   | 'housentOurExcellenceItems'
   | 'sustainitOurExpertiseItems'
   | 'scrollImgScaleItems'
@@ -255,6 +260,12 @@ export function resolveKind(
       return key.endsWith('.href') ? 'link' : 'text';
     }
   }
+  if (blockType === 'belgo_header') {
+    if (key === 'navLinks') return 'aesthaNavLinks';
+    if (/^navLinks\[\d+\]\.(label|href)$/.test(key)) {
+      return key.endsWith('.href') ? 'link' : 'text';
+    }
+  }
   // Aestha Explore: `projects` là mảng động (list manager) — chặn trước
   // fallback để toolbar không ghi 1 string đè cả mảng.
   if (blockType === 'aestha_explore') {
@@ -357,6 +368,21 @@ export function resolveKind(
   if (key === 'sections' && blockType === 'cool_hunter_section_progress') {
     return 'coolHunterSectionProgressItems';
   }
+  if (key === 'specs' && blockType === 'belgo_about_product') {
+    return 'belgoSpecItems';
+  }
+  if (key === 'locations' && blockType === 'belgo_footer') {
+    return 'belgoFooterLocations';
+  }
+  if (key === 'headlineWords' && blockType === 'belgo_footer') {
+    return 'belgoFooterHeadlineWords';
+  }
+  if (key === 'socials' && blockType === 'belgo_footer') {
+    return 'belgoFooterSocials';
+  }
+  if (key === 'flavors' && blockType === 'belgo_more_flavors') {
+    return 'belgoMoreFlavorsItems';
+  }
   if (key === 'items' && blockType === 'scroll_img_scale') {
     return 'scrollImgScaleItems';
   }
@@ -399,6 +425,12 @@ export function resolveKind(
     if (key === 'socials') return 'theGrandFooterSocials';
     if (/^policies\[\d+\]\.(label|href)$/.test(key)) return 'text';
     if (/^socials\[\d+\]\.(href|label)$/.test(key)) return 'text';
+  }
+  if (blockType === 'belgo_footer') {
+    if (key === 'socials') return 'belgoFooterSocials';
+    if (/^socials\[\d+\]\.iconUrl$/.test(key)) return 'image';
+    if (/^socials\[\d+\]\.href$/.test(key)) return 'link';
+    if (/^socials\[\d+\]\.iconAlt$/.test(key)) return 'text';
   }
   if (key === 'steps' && blockType === 'mintv2_process') {
     return 'mintV2ProcessSteps';
@@ -1965,6 +1997,169 @@ export function resolveElementMeta(
       label: 'Thêm / quản lý section',
     };
   }
+  if (blockType === 'belgo_about_product') {
+    if (key === 'specs') {
+      return {
+        kind: 'belgoSpecItems',
+        fieldType: undefined,
+        label: 'Thêm / quản lý thông số',
+      };
+    }
+    const reSpecField = key.match(/^specs\[(\d+)\]\.(label|value|unit|copy)$/);
+    if (reSpecField) {
+      const field = reSpecField[2];
+      const fieldLabel = {
+        label: 'Nhãn',
+        value: 'Giá trị',
+        unit: 'Đơn vị',
+        copy: 'Mô tả',
+      }[field as 'label' | 'value' | 'unit' | 'copy'];
+      return {
+        kind: 'text',
+        fieldType: field === 'copy' ? 'textarea' : 'text',
+        label: `Thông số ${Number(reSpecField[1]) + 1} · ${fieldLabel}`,
+      };
+    }
+  }
+  if (blockType === 'belgo_footer') {
+    if (key === 'locations') {
+      return {
+        kind: 'belgoFooterLocations',
+        fieldType: undefined,
+        label: 'Thêm / quản lý chi nhánh',
+      };
+    }
+    if (key === 'headlineWords') {
+      return {
+        kind: 'belgoFooterHeadlineWords',
+        fieldType: undefined,
+        label: 'Thêm / quản lý headline',
+      };
+    }
+    if (key === 'socials') {
+      return {
+        kind: 'belgoFooterSocials',
+        fieldType: undefined,
+        label: 'Thêm / xóa icon',
+      };
+    }
+    const reLocField = key.match(/^locations\[(\d+)\]\.(name|address|tel)$/);
+    if (reLocField) {
+      const field = reLocField[2];
+      const fieldLabel = {
+        name: 'Tên',
+        address: 'Địa chỉ',
+        tel: 'Điện thoại',
+      }[field as 'name' | 'address' | 'tel'];
+      return {
+        kind: 'text',
+        fieldType: field === 'address' ? 'textarea' : 'text',
+        label: `Chi nhánh ${Number(reLocField[1]) + 1} · ${fieldLabel}`,
+      };
+    }
+    const reHeadlineField = key.match(/^headlineWords\[(\d+)\]\.text$/);
+    if (reHeadlineField) {
+      return {
+        kind: 'text',
+        fieldType: 'text',
+        label: `Headline · từ ${Number(reHeadlineField[1]) + 1}`,
+      };
+    }
+    const reSocialField = key.match(
+      /^socials\[(\d+)\]\.(href|iconUrl|iconAlt)$/
+    );
+    if (reSocialField) {
+      const field = reSocialField[2];
+      const fieldLabel = {
+        href: 'Link',
+        iconUrl: 'Icon',
+        iconAlt: 'Alt icon',
+      }[field as 'href' | 'iconUrl' | 'iconAlt'];
+      return {
+        kind:
+          field === 'iconUrl' ? 'image' : field === 'href' ? 'link' : 'text',
+        fieldType: field === 'iconUrl' ? 'image' : 'text',
+        label: `Social ${Number(reSocialField[1]) + 1} · ${fieldLabel}`,
+      };
+    }
+  }
+  if (blockType === 'belgo_our_products') {
+    const reProductField = key.match(
+      /^products\[(\d+)\]\.(label|imageUrl|hoverImageUrl|hoverTitle|cta|href)$/
+    );
+    if (reProductField) {
+      const field = reProductField[2];
+      const fieldLabel = {
+        label: 'Nhãn',
+        imageUrl: 'Ảnh sản phẩm',
+        hoverImageUrl: 'Ảnh hover',
+        hoverTitle: 'Tiêu đề hover',
+        cta: 'Nút CTA',
+        href: 'Link CTA',
+      }[
+        field as
+          | 'label'
+          | 'imageUrl'
+          | 'hoverImageUrl'
+          | 'hoverTitle'
+          | 'cta'
+          | 'href'
+      ];
+      const kind =
+        field === 'imageUrl' || field === 'hoverImageUrl' ? 'image' : 'text';
+      const fieldType =
+        field === 'imageUrl' || field === 'hoverImageUrl'
+          ? 'image'
+          : field === 'href'
+            ? 'link'
+            : 'text';
+      const slotLabel =
+        Number(reProductField[1]) === 0 ? 'Card trái' : 'Card phải';
+      return {
+        kind,
+        fieldType,
+        label: `${slotLabel} · ${fieldLabel}`,
+      };
+    }
+  }
+  if (blockType === 'belgo_more_flavors') {
+    if (key === 'flavors') {
+      return {
+        kind: 'belgoMoreFlavorsItems',
+        fieldType: undefined,
+        label: 'Thêm / quản lý hương vị',
+      };
+    }
+    const reFlavorField = key.match(
+      /^flavors\[(\d+)\]\.(name|color|bgImageUrl|bottleImageUrl|glassImageUrl)$/
+    );
+    if (reFlavorField) {
+      const field = reFlavorField[2];
+      const fieldLabel = {
+        name: 'Tên',
+        color: 'Màu tiêu đề',
+        bgImageUrl: 'Nền',
+        bottleImageUrl: 'Chai',
+        glassImageUrl: 'Ly',
+      }[
+        field as
+          | 'name'
+          | 'color'
+          | 'bgImageUrl'
+          | 'bottleImageUrl'
+          | 'glassImageUrl'
+      ];
+      const isImage =
+        field === 'bgImageUrl' ||
+        field === 'bottleImageUrl' ||
+        field === 'glassImageUrl';
+      return {
+        kind: isImage ? 'image' : 'text',
+        fieldType: isImage ? 'image' : 'text',
+        label: `Hương vị ${Number(reFlavorField[1]) + 1} · ${fieldLabel}`,
+      };
+    }
+  }
   const reSectionProgressField = key.match(
     /^sections\[(\d+)\]\.(label|sectionId)$/
   );
@@ -2397,6 +2592,16 @@ export function resolveSiblingLinkKey(
     const navLabel = key.match(/^navLinks\[(\d+)\]\.label$/);
     if (navLabel) return `navLinks[${navLabel[1]}].href`;
   }
+  if (blockType === 'belgo_header') {
+    const navLabel = key.match(/^navLinks\[(\d+)\]\.label$/);
+    if (navLabel) return `navLinks[${navLabel[1]}].href`;
+    if (key === 'bookTableLabel') return 'bookTableHref';
+    if (key === 'orderBeerLabel') return 'orderBeerHref';
+  }
+  if (blockType === 'belgo_our_products') {
+    const cta = key.match(/^products\[(\d+)\]\.cta$/);
+    if (cta) return `products[${cta[1]}].href`;
+  }
   return null;
 }
 
@@ -2413,6 +2618,17 @@ export function resolveLinkAnchorKey(
   if (blockType === 'aestha_nav') {
     const navHref = key.match(/^navLinks\[(\d+)\]\.href$/);
     if (navHref) return `navLinks[${navHref[1]}].label`;
+  }
+  if (blockType === 'belgo_header') {
+    const navHref = key.match(/^navLinks\[(\d+)\]\.href$/);
+    if (navHref) return `navLinks[${navHref[1]}].label`;
+    if (key === 'bookTableHref') return 'bookTableLabel';
+    if (key === 'orderBeerHref') return 'orderBeerLabel';
+    if (key === 'logoHref') return 'logoUrl';
+  }
+  if (blockType === 'belgo_our_products') {
+    const href = key.match(/^products\[(\d+)\]\.href$/);
+    if (href) return `products[${href[1]}].cta`;
   }
   if (blockType === 'pnj_header' && key === 'logoHref') return 'logoUrl';
   return key;

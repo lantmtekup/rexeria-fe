@@ -205,6 +205,12 @@ export function resolveKind(
       return key.endsWith('.href') ? 'link' : 'text';
     }
   }
+  if (blockType === 'belgo_header') {
+    if (key === 'navLinks') return 'aesthaNavLinks';
+    if (/^navLinks\[\d+\]\.(label|href)$/.test(key)) {
+      return key.endsWith('.href') ? 'link' : 'text';
+    }
+  }
   // Aestha Explore: `projects` là mảng động (list manager) — chặn trước
   // fallback để toolbar không ghi 1 string đè cả mảng.
   if (blockType === 'aestha_explore') {
@@ -1486,11 +1492,28 @@ export function resolveElementMeta(
       label: 'Thêm / quản lý nav',
     };
   }
+  if (key === 'navLinks' && blockType === 'belgo_header') {
+    return {
+      kind: 'aesthaNavLinks',
+      fieldType: undefined,
+      label: 'Thêm / quản lý nav',
+    };
+  }
   const aesthaNavLink = key.match(/^navLinks\[(\d+)\]\.(label|href)$/);
   if (aesthaNavLink && blockType === 'aestha_nav') {
     // `.href` phải ra link-picker (trang trong template / cuộn tới block / URL
     // ngoài). Nhánh hardcode này return TRƯỚC `defFieldType`, nên đổi mỗi
     // registry def sẽ không có tác dụng — xem ghi chú ở `delvaux_subnav`.
+    const isHref = aesthaNavLink[2] === 'href';
+    return {
+      kind: isHref ? 'link' : 'text',
+      fieldType: isHref ? 'link' : 'text',
+      label: `Nav ${Number(aesthaNavLink[1]) + 1} · ${
+        isHref ? 'Link' : 'Nhãn'
+      }`,
+    };
+  }
+  if (aesthaNavLink && blockType === 'belgo_header') {
     const isHref = aesthaNavLink[2] === 'href';
     return {
       kind: isHref ? 'link' : 'text',
@@ -1682,6 +1705,20 @@ export function resolveSiblingLinkKey(
     if (navLabel) return `items[${navLabel[1]}].link`;
     if (key === 'ctaText') return 'ctaLink';
   }
+  if (blockType === 'aestha_nav') {
+    const navLabel = key.match(/^navLinks\[(\d+)\]\.label$/);
+    if (navLabel) return `navLinks[${navLabel[1]}].href`;
+  }
+  if (blockType === 'belgo_header') {
+    const navLabel = key.match(/^navLinks\[(\d+)\]\.label$/);
+    if (navLabel) return `navLinks[${navLabel[1]}].href`;
+    if (key === 'bookTableLabel') return 'bookTableHref';
+    if (key === 'orderBeerLabel') return 'orderBeerHref';
+  }
+  if (blockType === 'belgo_our_products') {
+    const cta = key.match(/^products\[(\d+)\]\.cta$/);
+    if (cta) return `products[${cta[1]}].href`;
+  }
   return null;
 }
 
@@ -1694,6 +1731,21 @@ export function resolveLinkAnchorKey(
     const navLink = key.match(/^items\[(\d+)\]\.link$/);
     if (navLink) return `items[${navLink[1]}].label`;
     if (key === 'ctaLink') return 'ctaText';
+  }
+  if (blockType === 'aestha_nav') {
+    const navHref = key.match(/^navLinks\[(\d+)\]\.href$/);
+    if (navHref) return `navLinks[${navHref[1]}].label`;
+  }
+  if (blockType === 'belgo_header') {
+    const navHref = key.match(/^navLinks\[(\d+)\]\.href$/);
+    if (navHref) return `navLinks[${navHref[1]}].label`;
+    if (key === 'bookTableHref') return 'bookTableLabel';
+    if (key === 'orderBeerHref') return 'orderBeerLabel';
+    if (key === 'logoHref') return 'logoUrl';
+  }
+  if (blockType === 'belgo_our_products') {
+    const href = key.match(/^products\[(\d+)\]\.href$/);
+    if (href) return `products[${href[1]}].cta`;
   }
   if (blockType === 'pnj_header' && key === 'logoHref') return 'logoUrl';
   return key;

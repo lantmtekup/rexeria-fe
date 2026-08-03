@@ -158,6 +158,24 @@ import {
 } from './blocks/_registry/defs/framerPurevisualsHero';
 import { pnjStickyMenuItemElements } from './blocks/_registry/defs/pnjStickyMenu';
 import { aesthaNavLinkElements } from './blocks/_registry/defs/aesthaNav';
+import { belgoNavLinkElements } from './blocks/_registry/defs/belgoHeader';
+import {
+  belgoSpecItemElements,
+  resolveBelgoAboutProductSpecs,
+  resolveBelgoAboutProductTitleLines,
+} from './blocks/_registry/defs/belgoAboutProduct';
+import {
+  belgoFooterHeadlineElements,
+  belgoFooterLocationElements,
+  belgoFooterSocialElements,
+  resolveBelgoFooterHeadlineWords,
+  resolveBelgoFooterLocations,
+  resolveBelgoFooterSocials,
+} from './blocks/_registry/defs/belgoFooter';
+import {
+  belgoFlavorItemElements,
+  resolveBelgoMoreFlavors,
+} from './blocks/_registry/defs/belgoMoreFlavors';
 import { aesthaExploreProjectElements } from './blocks/_registry/defs/aesthaExplore';
 import { aesthaStudioTeamElements } from './blocks/_registry/defs/aesthaStudio';
 import { aesthaContactSocialElements } from './blocks/_registry/defs/aesthaContact';
@@ -199,6 +217,9 @@ import {
   type ScrollImgScaleContent,
   type FramerClarityServicesContent,
   type LineaPortfolioItem,
+  type BelgoAboutProductContent,
+  type BelgoFooterContent,
+  type BelgoMoreFlavorsContent,
   type CoolHunterSectionProgressItem,
   type RealEstateVillaSlide,
   type RealEstateUtilityItem,
@@ -931,6 +952,107 @@ export function elementsForType(
         label: 'Ảnh hero',
         icon: ImageIcon,
         fieldType: 'image',
+      },
+    ];
+  }
+  if (type === 'belgo_hero') {
+    const lines = resolvePnjHeroTitleLines(
+      (content ?? {}) as unknown as PnjHeroContent
+    );
+    const titleSlots = lines.map((_, i) => ({
+      key: `titleLines[${i}]`,
+      label: `Tiêu đề dòng ${i + 1}`,
+      icon: Type,
+      fieldType: 'text' as const,
+    }));
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'videoUrl',
+        label: 'Video nền',
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+      ...titleSlots,
+      {
+        key: 'titleLines',
+        label: 'Thêm / quản lý tiêu đề',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'belgo_about_product') {
+    const c = (content ?? {}) as unknown as BelgoAboutProductContent;
+    const titleSlots = resolveBelgoAboutProductTitleLines(c).map((_, i) => ({
+      key: `titleLines[${i}]`,
+      label: `Tiêu đề dòng ${i + 1}`,
+      groupId: 'aboutTitle',
+      ...(i === 0 ? { groupLabel: 'Tiêu đề' } : null),
+      icon: Type,
+      fieldType: 'text' as const,
+    }));
+    const base = (def?.elements ?? []).filter(
+      el =>
+        el.key !== 'titleLines' &&
+        el.key !== 'specs' &&
+        !el.key.startsWith('specs[')
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...base,
+      ...titleSlots,
+      { key: 'titleLines', label: 'Thêm / quản lý tiêu đề', icon: ListChecks },
+      ...belgoSpecItemElements(resolveBelgoAboutProductSpecs(c)),
+      { key: 'specs', label: 'Thêm / quản lý thông số', icon: ListChecks },
+    ];
+  }
+  if (type === 'belgo_footer') {
+    const c = (content ?? {}) as unknown as BelgoFooterContent;
+    const base = (def?.elements ?? []).filter(
+      el =>
+        el.key !== 'headlineWords' &&
+        el.key !== 'locations' &&
+        el.key !== 'socials' &&
+        !el.key.startsWith('headlineWords[') &&
+        !el.key.startsWith('locations[') &&
+        !el.key.startsWith('socials[')
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...base,
+      {
+        key: 'socials',
+        label: 'Thêm / xóa icon',
+        icon: ListChecks,
+      },
+      ...belgoFooterSocialElements(resolveBelgoFooterSocials(c)),
+      {
+        key: 'headlineWords',
+        label: 'Thêm / quản lý headline',
+        icon: ListChecks,
+      },
+      ...belgoFooterHeadlineElements(resolveBelgoFooterHeadlineWords(c)),
+      ...belgoFooterLocationElements(resolveBelgoFooterLocations(c)),
+      {
+        key: 'locations',
+        label: 'Thêm / quản lý chi nhánh',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'belgo_more_flavors') {
+    const c = (content ?? {}) as unknown as BelgoMoreFlavorsContent;
+    const base = (def?.elements ?? []).filter(
+      el => el.key !== 'flavors' && !el.key.startsWith('flavors[')
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...base,
+      ...belgoFlavorItemElements(resolveBelgoMoreFlavors(c)),
+      {
+        key: 'flavors',
+        label: 'Thêm / quản lý hương vị',
+        icon: ListChecks,
       },
     ];
   }
@@ -2018,6 +2140,20 @@ export function elementsForType(
       BACKGROUND_LAYER,
       ...(def?.elements ?? []),
       ...aesthaNavLinkElements(links),
+      { key: 'navLinks', label: 'Thêm / quản lý nav', icon: ListChecks },
+    ];
+  }
+  if (type === 'belgo_header') {
+    const raw = content?.navLinks;
+    const links = Array.isArray(raw)
+      ? (raw as Array<{ label: string; href: string }>).filter(
+          l => l && typeof l === 'object' && typeof l.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []).filter(el => el.key !== 'navLinks'),
+      ...belgoNavLinkElements(links),
       { key: 'navLinks', label: 'Thêm / quản lý nav', icon: ListChecks },
     ];
   }
