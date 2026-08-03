@@ -13,8 +13,13 @@ export const productStock = (p: Product): number =>
   p.variants.reduce((n, v) => n + v.qty, 0);
 
 export const productPriceRange = (p: Product): string => {
+  /* A BE row has no price column, so what it has is the string on file —
+   * currency and all. Prefer it verbatim over a variant table nothing fills. */
+  if (p.priceText) return p.priceText;
   const prices = p.variants.map(v => v.price);
-  if (!prices.length) return '$0';
+  /* An all-zero table means "no price on file", not "$0" — the prototype's
+   * `$0` read as a real number for long enough. */
+  if (!prices.some(Boolean)) return '—';
   const lo = Math.min(...prices);
   const hi = Math.max(...prices);
   return lo === hi ? `$${lo}` : `$${lo} – $${hi}`;
@@ -41,6 +46,12 @@ export const productCover = (
 
 export const productGradient = (p: Product, assets: ProductAsset[]): string =>
   productCover(p, assets)?.grad ?? p.grad;
+
+/** The cover's real photo when one is on file — the gradient stands in otherwise. */
+export const productCoverUrl = (
+  p: Product,
+  assets: ProductAsset[]
+): string | null => productCover(p, assets)?.url ?? null;
 
 /** Inventory summary behind the table's stock cell (:15621-15632). */
 export const stockSummary = (

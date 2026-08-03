@@ -1,0 +1,213 @@
+/**
+ * BE wire product → Portal V2 catalogue product.
+ *
+ * The two models do not overlap: the BE row is attribute-shaped
+ * (`name/sku/sizes/colors/features/certifications`, see `services/rexer/types.ts`)
+ * while this module is Shopify-shaped (`title/handle/variants/value/seo`). Same
+ * split the Exchange module solves with `mapPage.ts` / `mapBlock.ts`.
+ *
+ * NOTHING IS INVENTED HERE. Fields the BE has no counterpart for stay empty or
+ * zero — never a plausible-looking placeholder. `/portal` (v1) synthesised
+ * `price_vnd: 10_000 + idx * 5_000` and the number has been read as real ever
+ * since. An empty value proposition is supposed to score badly in `readiness()`:
+ * that low score is the module telling the truth about what is on file.
+ */
+
+import { slugifyHandle } from '@/lib/portal-v2/product/helpers';
+import type {
+  Product,
+  ProductAsset,
+  ProductClaim,
+  ProductVariant,
+} from '@/lib/portal-v2/product/types';
+import type { Product as BEProduct } from '@/services/rexer/types';
+
+/** Prototype thumb gradients (mock.ts) — a product keeps the same one forever. */
+const COVER_GRADIENTS = [
+  'linear-gradient(135deg,#6C4CF1,#9B7DF8)',
+  'linear-gradient(135deg,#E0629B,#F08FBC)',
+  'linear-gradient(135deg,#3B82D6,#6FA8E5)',
+  'linear-gradient(135deg,#13B57F,#3ED2A0)',
+  'linear-gradient(135deg,#E89A3C,#F2BE7C)',
+  'linear-gradient(135deg,#5334D6,#6C4CF1)',
+  'linear-gradient(135deg,#2A66B0,#3B82D6)',
+  'linear-gradient(135deg,#1E1930,#3D3950)',
+];
+
+/** Deterministic so a reload never reshuffles the catalogue's colours. */
+export const gradientForId = (id: string): string => {
+  let h = 0;
+  for (let i = 0; i < id.length; i += 1) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return COVER_GRADIENTS[Math.abs(h) % COVER_GRADIENTS.length]!;
+};
+
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+/**
+ * The table renders `updated` as a bare string ("2h ago"), so it is resolved
+ * once on the server against a passed-in `now` — computing it in the client
+ * would drift from the server render and trip hydration.
+ */
+export const relativeUpdated = (
+  iso: string | undefined,
+  now: number
+): string => {
+  if (!iso) return '—';
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return '—';
+
+  const diff = Math.max(0, now - then);
+  if (diff < HOUR) return `${Math.max(1, Math.floor(diff / MINUTE))}m ago`;
+  if (diff < DAY) return `${Math.floor(diff / HOUR)}h ago`;
+  if (diff < 30 * DAY) return `${Math.floor(diff / DAY)}d ago`;
+  return new Date(then).toISOString().slice(0, 10);
+};
+
+/** `assetsOfProduct()` is what feeds media — a cover has to exist as an asset. */
+export const productAssetsFromBe = (products: BEProduct[]): ProductAsset[] =>
+  products
+    .filter(p => !!p.thumbnail_url)
+    .map(p => ({
+      id: coverAssetId(p.id),
+      name: `${p.name} cover`,
+      kind: 'IMG' as const,
+      grad: gradientForId(p.id),
+      /* The real photo. `grad` stays behind it as the fallback for a dead URL —
+       * covers point at whatever merchant site the row was sourced from. */
+      url: p.thumbnail_url,
+      home: { scope: 'product', ref: p.id },
+    }));
+
+const coverAssetId = (productId: string) => `a-${productId}-cover`;
+
+/** One variant per size; a product with no sizes still needs a row for its SKU. */
+const variantsFromBe = (p: BEProduct): ProductVariant[] => {
+  const blank = {
+    barcode: '',
+    price: 0,
+    compareAt: 0,
+    cost: 0,
+    qty: 0,
+    policy: 'deny' as const,
+    grams: 0,
+  };
+  const sizes = p.sizes ?? [];
+  if (!sizes.length) return [{ sku: p.sku ?? '', opt1: '', ...blank }];
+
+  return sizes.map((size, i) => ({
+    sku: sizes.length > 1 && p.sku ? `${p.sku}-${i + 1}` : (p.sku ?? ''),
+    opt1: size,
+    ...blank,
+  }));
+};
+
+/**
+ * A certification is the only thing on the BE row that is already a claim with
+ * substantiation attached — `ok` stays derived from the proof, per the contract
+ * on `ProductClaim`.
+ */
+const claimsFromBe = (p: BEProduct): ProductClaim[] =>
+  (p.certifications ?? [])
+    .filter(c => !!c.name)
+    .map(c => {
+      const proof = (c.url || c.description || '').trim();
+      return { t: c.name, proof, ok: !!proof };
+    });
+
+/** Labels the catalogue uses for a list price, accent- and case-folded. */
+const PRICE_LABELS = new Set([
+  'gia',
+  'gia niem yet',
+  'gia ban',
+  'gia le',
+  'don gia',
+  'price',
+  'list price',
+  'retail price',
+  'msrp',
+]);
+
+/** "Giá niêm yết" → "gia niem yet", so one label list covers both locales. */
+const fold = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+    .toLowerCase()
+    .trim();
+
+/** A money-shaped value: a currency mark somewhere near a digit. */
+const MONEY = /[$€£¥₫]|\b(?:VND|USD|CAD|EUR|GBP|JPY|AUD)\b/i;
+
+/**
+ * The BE `Product` row has no price column, so a catalogue price arrives as one
+ * more `features[]` entry — `{ label: 'Giá niêm yết', description: '$1,539.95
+ * CAD' }`. Label match first so a feature that merely mentions money is not
+ * mistaken for the price; the shape test only catches rows whose label this
+ * module has not seen.
+ *
+ * The string is returned exactly as it is on file. Per the module header,
+ * nothing here is invented — and a currency symbol is something to invent.
+ */
+export const priceTextFromBe = (p: BEProduct): string | undefined => {
+  const rows = (p.features ?? []).filter(f => f.description?.trim());
+  const hit =
+    rows.find(f => PRICE_LABELS.has(fold(f.label ?? ''))) ??
+    rows.find(f => MONEY.test(f.description) && /\d/.test(f.description));
+  return hit?.description.trim();
+};
+
+export type MapProductContext = {
+  brandName?: string;
+  typeName?: string;
+  /** Server clock, passed in once so every row shares one reference point. */
+  now: number;
+};
+
+export const mapBeProductToPortal = (
+  p: BEProduct,
+  ctx: MapProductContext
+): Product => ({
+  id: p.id,
+  handle: p.slug || slugifyHandle(p.name),
+  title: p.name,
+  body: p.description ?? '',
+  brand: ctx.brandName ?? '',
+  type: ctx.typeName ?? '',
+  category: ctx.typeName ?? '',
+  tags: p.template_tags ?? [],
+  /* Both unions are `active | draft | archived` — no translation needed. */
+  status: p.status ?? 'draft',
+  /* The BE tracks no provenance; everything it holds was entered through it. */
+  source: 'manual',
+  updated: relativeUpdated(p.updated_at ?? p.created_at, ctx.now),
+  cover: p.thumbnail_url ? coverAssetId(p.id) : null,
+  grad: gradientForId(p.id),
+  priceText: priceTextFromBe(p),
+  /* No BE counterpart: sales channels, benefits, competitors, disclaimers, SEO. */
+  channels: [],
+  options: p.sizes?.length ? [{ name: 'Size', values: p.sizes }] : [],
+  variants: variantsFromBe(p),
+  value: {
+    /* The price feature stays in this list even though `priceText` also lifts
+     * it out: it IS a feature on file, and the Value panel is where the user
+     * edits it back. Dropping it here would lose the row. */
+    features: (p.features ?? [])
+      .map(f =>
+        f.description ? `${f.label}: ${f.description}` : (f.label ?? '')
+      )
+      .filter(Boolean),
+    benefits: [],
+    competitors: [],
+    claims: claimsFromBe(p),
+    disclaimers: [],
+  },
+  seo: { title: '', desc: '' },
+});
+
+/* `p.ingredients` and `p.colors` are deliberately unmapped: this module has no
+ * ingredient list, and its `options` are size-shaped. Both surface once the
+ * Product modal grows the fields — mapping them into a lookalike slot now would
+ * put them where nobody can edit them back. */
