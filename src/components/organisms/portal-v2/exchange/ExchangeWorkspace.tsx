@@ -24,10 +24,14 @@ import {
 import {
   countByKind,
   filterListings,
+  isPreviewable,
   resolveActionState,
 } from '@/lib/portal-v2/exchange/helpers';
+import { writeExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
+import { writeExchangeTabParam } from '@/lib/portal-v2/exchange/tabParam';
 import type {
   ExchangeFilters,
+  ExchangeKind,
   ExchangeListingView,
   ExchangeSessionState,
 } from '@/lib/portal-v2/exchange/types';
@@ -42,6 +46,10 @@ type ExchangeWorkspaceProps = {
   initialCatalog: ExchangeListingView[];
   initialError?: string | null;
   softError?: string | null;
+  /** Listing id from `?preview=` — reopens that preview on a pasted link. */
+  initialPreviewId?: string | null;
+  /** Kind tab from `?tab=` — restored on reload or shared links. */
+  initialKind?: ExchangeKind | null;
 };
 
 const SEARCH_DEBOUNCE_MS = 350;
@@ -50,29 +58,48 @@ export const ExchangeWorkspace = ({
   initialCatalog,
   initialError = null,
   softError: initialSoftError = null,
+  initialPreviewId = null,
+  initialKind = null,
 }: ExchangeWorkspaceProps) => {
   const t = useTranslations('portalV2.exchange');
+
+  /**
+   * Resolved at mount only: a deep link opens the preview on the first paint
+   * instead of flashing the grid, and the URL never has to be rewritten.
+   */
+  const [deepLinkedListing] = useState<ExchangeListingView | null>(() => {
+    if (!initialPreviewId) return null;
+    const match = initialCatalog.find(item => item.id === initialPreviewId);
+    return match && isPreviewable(match) ? match : null;
+  });
 
   const [catalog, setCatalog] = useState(initialCatalog);
   const [loadError, setLoadError] = useState(initialError);
   const [softError, setSoftError] = useState(initialSoftError);
   const [searching, setSearching] = useState(false);
-  const [filters, setFilters] = useState<ExchangeFilters>(
-    EXCHANGE_DEFAULT_FILTERS
-  );
+  const [filters, setFilters] = useState<ExchangeFilters>(() => ({
+    ...EXCHANGE_DEFAULT_FILTERS,
+    kind: initialKind ?? EXCHANGE_DEFAULT_FILTERS.kind,
+  }));
   const [debouncedQ, setDebouncedQ] = useState('');
   const [session, setSession] = useState<ExchangeSessionState>({
     owned: {},
     added: {},
   });
   const [activeListing, setActiveListing] =
-    useState<ExchangeListingView | null>(null);
-  const [modalMode, setModalMode] = useState<ModalMode>(null);
+    useState<ExchangeListingView | null>(deepLinkedListing);
+  const [modalMode, setModalMode] = useState<ModalMode>(
+    deepLinkedListing ? 'preview' : null
+  );
   const [previewReturnToDetail, setPreviewReturnToDetail] = useState(false);
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [installing, setInstalling] = useState(false);
   const skipFirstSearch = useRef(true);
   const modalModeRef = useRef(modalMode);
+  /** `?preview=` pointed at a listing that is gone or has nothing to render. */
+  const deadPreviewLinkRef = useRef(
+    Boolean(initialPreviewId) && deepLinkedListing === null
+  );
 
   modalModeRef.current = modalMode;
 
@@ -193,15 +220,13 @@ export const ExchangeWorkspace = ({
 
   const canOpenPreview = useCallback(
     (listing: ExchangeListingView): boolean => {
-      if (listing.source === 'page' && !listing.slug) {
-        toast.error(t('previewMissingSlug'));
-        return false;
-      }
-      if (listing.source === 'block' && !listing.blockId) {
-        toast.error(t('previewMissingBlockId'));
-        return false;
-      }
-      return true;
+      if (isPreviewable(listing)) return true;
+      toast.error(
+        listing.source === 'page'
+          ? t('previewMissingSlug')
+          : t('previewMissingBlockId')
+      );
+      return false;
     },
     [t]
   );
@@ -236,6 +261,18 @@ export const ExchangeWorkspace = ({
     },
     [canOpenPreview]
   );
+
+  /** Address bar follows the open preview, so the URL can be copied and pasted back. */
+  useEffect(() => {
+    const previewing = modalMode === 'preview' ? activeListing : null;
+    writeExchangePreviewParam(previewing?.id ?? null);
+  }, [modalMode, activeListing]);
+
+  useEffect(() => {
+    if (!deadPreviewLinkRef.current) return;
+    deadPreviewLinkRef.current = false;
+    toast.error(t('previewUnavailable'));
+  }, [t]);
 
   const previewNeighbors = useMemo(() => {
     if (!activeListing) return filtered;
@@ -393,7 +430,9 @@ export const ExchangeWorkspace = ({
   );
 
   const handleKindChange = (id: string) => {
-    setFilters(prev => ({ ...prev, kind: id as ExchangeFilters['kind'] }));
+    const kind = id as ExchangeFilters['kind'];
+    setFilters(prev => ({ ...prev, kind }));
+    writeExchangeTabParam(kind);
   };
 
   return (

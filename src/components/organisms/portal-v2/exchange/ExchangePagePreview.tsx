@@ -10,6 +10,8 @@ import { markExchangePagePreviewCached } from '@/lib/portal-v2/exchange/pagePrev
 
 type ExchangePagePreviewProps = {
   slug: string;
+  /** Canvas sub-page path ('' = home) — renders `/p/{slug}/{pagePath}`. */
+  pagePath?: string;
   name: string;
   device: Device;
   /** Set only from rail click — scrolls iframe to this block. */
@@ -39,6 +41,7 @@ const scrollIframeToBlock = (
 
 export const ExchangePagePreview = ({
   slug,
+  pagePath = '',
   name,
   device,
   scrollToBlockId = null,
@@ -49,11 +52,19 @@ export const ExchangePagePreview = ({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const programmaticScrollRef = useRef(false);
   const lastReportedRef = useRef<string | null>(null);
-  const sessionKey = `${slug}:${device}`;
+  const sessionKey = `${slug}:${pagePath}:${device}`;
   const [iframeReady, setIframeReady] = useState(false);
   const [showOverlay, setShowOverlay] = useState(true);
   const loading = showOverlay;
-  const src = `/p/${encodeURIComponent(slug)}`;
+  /** `pagePath` may contain '/' (nested sub-paths) — encode per segment. */
+  const encodedPagePath = pagePath
+    .split('/')
+    .filter(Boolean)
+    .map(encodeURIComponent)
+    .join('/');
+  const src = encodedPagePath
+    ? `/p/${encodeURIComponent(slug)}/${encodedPagePath}`
+    : `/p/${encodeURIComponent(slug)}`;
 
   useLayoutEffect(() => {
     setIframeReady(false);
@@ -126,7 +137,10 @@ export const ExchangePagePreview = ({
   }, [loading, sessionKey, onActiveBlockChange]);
 
   return (
-    <ExchangeDeviceStage device={device} urlLabel={`/${slug}`}>
+    <ExchangeDeviceStage
+      device={device}
+      urlLabel={pagePath ? `/${slug}/${pagePath}` : `/${slug}`}
+    >
       {showOverlay ? (
         <PreviewStageLoading
           className='absolute inset-0'
@@ -143,7 +157,7 @@ export const ExchangePagePreview = ({
         sandbox='allow-scripts allow-same-origin allow-forms allow-popups'
         className='absolute inset-0 block size-full border-0 bg-white'
         onLoad={() => {
-          markExchangePagePreviewCached(slug);
+          if (!pagePath) markExchangePagePreviewCached(slug);
           setIframeReady(true);
         }}
       />

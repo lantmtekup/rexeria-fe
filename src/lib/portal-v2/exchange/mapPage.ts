@@ -6,6 +6,17 @@ import type {
 } from '@/lib/portal-v2/exchange/types';
 import type { Page } from '@/services/rexer/types';
 
+/**
+ * `thumbnail_url` chỉ có sau khi resolve `thumbnail_asset_id` (xem
+ * `enrichPagesWithThumbnailUrls`); fallback về featured image trong landing
+ * metadata trước khi để card vẽ cover generate. Giống admin landing list.
+ */
+const pageThumbnailUrl = (page: Page): string | undefined => {
+  if (page.thumbnail_url) return page.thumbnail_url;
+  const meta = page.type_metadata as { featured_image?: string } | undefined;
+  return meta?.featured_image || undefined;
+};
+
 export const mapLandingPageToListing = (page: Page): ExchangeListingView => {
   const preset = pageMetaPreset(page.id);
   const meta: ExchangeListingMeta = {
@@ -23,7 +34,7 @@ export const mapLandingPageToListing = (page: Page): ExchangeListingView => {
     name: page.name || 'Untitled',
     author: 'ReXeR',
     description: page.description || '',
-    thumbnailUrl: page.thumbnail_url,
+    thumbnailUrl: pageThumbnailUrl(page),
     category: page.type,
     meta,
     proven: Boolean(meta.evidence),

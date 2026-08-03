@@ -1528,23 +1528,32 @@ export function BlockEditorV2({
   };
 
   // ── Page CRUD ───────────────────────────────────────────────────────────
+  // Page switches run in a transition: swapping the active page re-renders
+  // every block of the incoming page (canvas + thumbnails) in one commit,
+  // and doing that synchronously froze the whole editor for the duration.
+  // In a transition React time-slices the render, so the click stays
+  // responsive and the old page remains visible until the new one is ready.
   const handleSelectPage = React.useCallback(
     (id: string) => {
       if (id === canvas.activePageId) return;
-      canvas.setActivePage(id);
-      // Selection state belongs to the outgoing page — clear it so the
-      // toolbar doesn't point at an element that isn't on screen any more.
-      selection.selectKey(null);
-      setSelectedExtraElementId(null);
+      React.startTransition(() => {
+        canvas.setActivePage(id);
+        // Selection state belongs to the outgoing page — clear it so the
+        // toolbar doesn't point at an element that isn't on screen any more.
+        selection.selectKey(null);
+        setSelectedExtraElementId(null);
+      });
     },
     [canvas, selection]
   );
 
   const handleAddPage = React.useCallback(() => {
-    canvas.addPage();
-    selection.selectKey(null);
-    setSelectedExtraElementId(null);
-    autosave.markDirty();
+    React.startTransition(() => {
+      canvas.addPage();
+      selection.selectKey(null);
+      setSelectedExtraElementId(null);
+      autosave.markDirty();
+    });
   }, [canvas, selection, autosave]);
 
   const handleRemovePage = React.useCallback(
@@ -1559,20 +1568,24 @@ export function BlockEditorV2({
         ? ` Trang này đang có ${target.blocks.length} block.`
         : '';
       if (!window.confirm(`Xoá trang "${target.name}"?${note}`)) return;
-      canvas.removePage(id);
-      selection.selectKey(null);
-      setSelectedExtraElementId(null);
-      autosave.markDirty();
+      React.startTransition(() => {
+        canvas.removePage(id);
+        selection.selectKey(null);
+        setSelectedExtraElementId(null);
+        autosave.markDirty();
+      });
     },
     [canvas, selection, autosave]
   );
 
   const handleDuplicatePage = React.useCallback(
     (id: string) => {
-      canvas.duplicatePage(id);
-      selection.selectKey(null);
-      setSelectedExtraElementId(null);
-      autosave.markDirty();
+      React.startTransition(() => {
+        canvas.duplicatePage(id);
+        selection.selectKey(null);
+        setSelectedExtraElementId(null);
+        autosave.markDirty();
+      });
     },
     [canvas, selection, autosave]
   );
@@ -1908,6 +1921,10 @@ export function BlockEditorV2({
                   onAdd={() => setAddOpen(true)}
                   onRemove={handleRemoveBlock}
                   onReorder={handleReorderBlocks}
+                  pages={canvas.pages}
+                  activePageId={canvas.activePageId}
+                  onSelectPage={handleSelectPage}
+                  onAddPage={handleAddPage}
                 />
               )}
 

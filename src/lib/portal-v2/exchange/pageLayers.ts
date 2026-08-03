@@ -12,17 +12,27 @@ export type ExchangePageLayer = {
   index: number;
 };
 
-const pageLayersCache = new Map<string, ExchangePageLayer[]>();
-const pageLayersInflight = new Map<string, Promise<ExchangePageLayer[]>>();
+/** One canvas page and its visible blocks — the sidebar groups layers by page. */
+export type ExchangePageLayerGroup = {
+  id: string;
+  name: string;
+  /** '' for the home page; sub-pages map to `/p/{slug}/{pagePath}`. */
+  pagePath: string;
+  isHome: boolean;
+  layers: ExchangePageLayer[];
+};
+
+const pageLayersCache = new Map<string, ExchangePageLayerGroup[]>();
+const pageLayersInflight = new Map<string, Promise<ExchangePageLayerGroup[]>>();
 
 /** Visible blocks from the published `/p/{slug}` canvas (same source as live page). */
 export const getCachedExchangePageLayers = (
   slug: string
-): ExchangePageLayer[] | null => pageLayersCache.get(slug) ?? null;
+): ExchangePageLayerGroup[] | null => pageLayersCache.get(slug) ?? null;
 
 export const prefetchExchangePageLayers = (
   slug: string
-): Promise<ExchangePageLayer[]> => {
+): Promise<ExchangePageLayerGroup[]> => {
   const cached = pageLayersCache.get(slug);
   if (cached) return Promise.resolve(cached);
 
@@ -39,18 +49,25 @@ export const prefetchExchangePageLayers = (
       }
 
       const canvas = parseCanvas(adaptCanvasBlueprint(blueprint));
-      const blocks = canvas?.pages.flatMap(p => p.blocks) ?? [];
-      const layers: ExchangePageLayer[] = blocks
-        .filter(b => b.isVisible)
-        .map((b, i) => ({
-          id: b.id,
-          name: b.name?.trim() || b.blockType,
-          blockType: b.blockType,
-          index: i + 1,
-        }));
+      const groups: ExchangePageLayerGroup[] = (canvas?.pages ?? [])
+        .map(p => ({
+          id: p.id,
+          name: p.name,
+          pagePath: p.isHome ? '' : p.slug,
+          isHome: p.isHome,
+          layers: p.blocks
+            .filter(b => b.isVisible)
+            .map((b, i) => ({
+              id: b.id,
+              name: b.name?.trim() || b.blockType,
+              blockType: b.blockType,
+              index: i + 1,
+            })),
+        }))
+        .filter(g => g.layers.length > 0);
 
-      pageLayersCache.set(slug, layers);
-      return layers;
+      pageLayersCache.set(slug, groups);
+      return groups;
     })
     .finally(() => {
       pageLayersInflight.delete(slug);

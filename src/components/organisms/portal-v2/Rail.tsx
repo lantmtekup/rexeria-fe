@@ -72,19 +72,30 @@ export const Rail = ({ collapsed = false }: RailProps) => {
           onFocus={e => handleShowTip(label, e.currentTarget)}
           onBlur={handleHideTip}
           className={cn(
-            'relative grid w-14 place-items-center rounded-[var(--pv2-r)] py-1.5 transition-colors',
+            'group relative grid w-14 place-items-center rounded-[var(--pv2-r)] py-1.5 transition-all duration-200',
             'text-[var(--pv2-mut)] hover:text-[var(--pv2-ink)]',
             active && 'text-[var(--pv2-electric)]'
           )}
         >
+          {active && (
+            <div
+              className='absolute top-1/2 left-0 h-6 w-1 -translate-y-1/2 rounded-r-full bg-[var(--pv2-electric)] shadow-[1px_0_4px_rgba(56,98,255,0.4)]'
+              aria-hidden
+            />
+          )}
           <span
             className={cn(
-              'grid size-11 place-items-center rounded-[var(--pv2-r)] transition-colors',
-              'hover:bg-[var(--pv2-canvas)]',
-              active && 'bg-[var(--pv2-electric-soft)]'
+              'grid size-11 place-items-center rounded-[var(--pv2-r)] transition-all duration-200',
+              'group-hover:bg-[var(--pv2-canvas)] group-active:scale-[0.96]',
+              active &&
+                'bg-[var(--pv2-electric-soft)] ring-1 ring-[var(--pv2-electric)]/10'
             )}
           >
-            <Icon className='size-[22px]' strokeWidth={1.75} aria-hidden />
+            <Icon
+              className='size-[22px]'
+              strokeWidth={active ? 2.25 : 1.75}
+              aria-hidden
+            />
           </span>
         </Link>
       );
@@ -96,15 +107,19 @@ export const Rail = ({ collapsed = false }: RailProps) => {
         href={item.href}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'mx-3 flex items-center gap-3 rounded-[var(--pv2-r)] px-3 py-2.5 transition-colors',
+          'group relative mx-3 flex items-center gap-3 rounded-[var(--pv2-r)] px-3 py-2.5 transition-all duration-200',
           'text-[15px] font-medium text-[var(--pv2-slate-500)]',
           'hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)]',
-          'active:scale-[0.99]',
+          'active:scale-[0.98]',
           active &&
-            'bg-[var(--pv2-electric-soft)] font-semibold text-[var(--pv2-electric)]'
+            'bg-[var(--pv2-electric-soft)] font-semibold text-[var(--pv2-electric)] shadow-[inset_0_1px_2px_rgba(255,255,255,0.6)] ring-1 ring-[var(--pv2-electric)]/10'
         )}
       >
-        <Icon className='size-5 shrink-0' strokeWidth={1.75} aria-hidden />
+        <Icon
+          className='size-[18px] shrink-0 transition-transform duration-200 group-active:scale-[0.94]'
+          strokeWidth={active ? 2.5 : 1.75}
+          aria-hidden
+        />
         <span className='truncate'>{label}</span>
       </Link>
     );
@@ -189,9 +204,9 @@ export const Rail = ({ collapsed = false }: RailProps) => {
                     }
                   }}
                   className={cn(
-                    'mx-3 mb-1 flex h-8 items-center justify-between gap-1 rounded-[var(--pv2-r-sm)] px-3',
-                    'text-[12px] font-semibold tracking-[0.04em] text-[var(--pv2-mut)] uppercase',
-                    'transition-colors hover:text-[var(--pv2-ink)]',
+                    'group mx-3 mb-1.5 flex h-8 items-center justify-between gap-1 rounded-[var(--pv2-r-sm)] px-3',
+                    'text-[11.5px] font-bold tracking-[0.05em] text-[var(--pv2-faint)] uppercase',
+                    'transition-colors duration-200 hover:text-[var(--pv2-ink)]',
                     hasOn && isGroupCollapsed && 'text-[var(--pv2-electric)]'
                   )}
                 >
@@ -200,15 +215,15 @@ export const Rail = ({ collapsed = false }: RailProps) => {
                     aria-hidden
                     strokeWidth={2}
                     className={cn(
-                      'size-3.5 shrink-0 transition-transform duration-200',
-                      isGroupCollapsed && '-rotate-90'
+                      'size-3.5 shrink-0 text-[var(--pv2-hair)] transition-all duration-200 group-hover:text-[var(--pv2-faint)]',
+                      isGroupCollapsed ? '-rotate-90' : 'rotate-0'
                     )}
                   />
                 </button>
               )}
               <div
                 className={cn(
-                  'overflow-hidden transition-all duration-200 motion-reduce:transition-none',
+                  'overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none',
                   isIconOnly
                     ? 'mt-1 flex flex-col items-center gap-0.5'
                     : 'flex flex-col gap-0.5',
@@ -229,9 +244,11 @@ export const Rail = ({ collapsed = false }: RailProps) => {
         aria-hidden={!tip || !isIconOnly}
         className={cn(
           'pointer-events-none fixed z-[var(--pv2-z-tip)] -translate-y-1/2',
-          'rounded-[var(--pv2-r)] bg-[var(--pv2-ink)] px-3 py-2 text-sm font-semibold whitespace-nowrap text-[var(--pv2-paper)]',
-          'shadow-[var(--pv2-sh-soft)] transition-opacity duration-100',
-          tip && isIconOnly ? 'opacity-100' : 'opacity-0'
+          'rounded-[6px] bg-[var(--pv2-ink)] px-3 py-1.5 text-[13px] font-medium whitespace-nowrap text-[var(--pv2-paper)]',
+          'shadow-[var(--pv2-sh-deep)] transition-all duration-200 ease-out',
+          tip && isIconOnly
+            ? 'translate-x-0 opacity-100'
+            : '-translate-x-1.5 opacity-0'
         )}
         style={
           tip

@@ -61,6 +61,8 @@ export const ExchangePreviewShell = ({
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
   const [scrollToBlockId, setScrollToBlockId] = useState<string | null>(null);
   const [scrollNonce, setScrollNonce] = useState(0);
+  /** '' = home; a rail click on a sub-page block navigates the iframe there. */
+  const [activePagePath, setActivePagePath] = useState('');
 
   /** Open in `initialDevice` — do not persist device across preview sessions. */
   useEffect(() => {
@@ -68,12 +70,14 @@ export const ExchangePreviewShell = ({
     setActiveBlockId(null);
     setScrollToBlockId(null);
     setScrollNonce(0);
+    setActivePagePath('');
   }, [open, listing?.id, initialDevice]);
 
-  const handleSelectBlock = useCallback((blockId: string) => {
+  const handleSelectBlock = useCallback((blockId: string, pagePath: string) => {
     setActiveBlockId(blockId);
     setScrollToBlockId(blockId);
     setScrollNonce(n => n + 1);
+    setActivePagePath(pagePath);
   }, []);
 
   const handleActiveFromScroll = useCallback((blockId: string) => {
@@ -308,6 +312,7 @@ export const ExchangePreviewShell = ({
               <ExchangePagePreview
                 key={stageKey}
                 slug={listing.slug}
+                pagePath={activePagePath}
                 name={listing.name}
                 device={device}
                 scrollToBlockId={scrollToBlockId}

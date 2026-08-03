@@ -46,7 +46,7 @@ export const Shell = ({ children }: ShellProps) => {
     >
       <Topbar railCollapsed={railCollapsed} onToggleRail={handleToggleRail} />
       <Rail collapsed={railCollapsed} />
-      <main className='relative min-w-0 overflow-x-hidden overflow-y-auto bg-[var(--pv2-canvas)]'>
+      <main className='relative min-w-0 overflow-x-hidden overflow-y-auto bg-[var(--pv2-canvas)] outline-none'>
         {children}
       </main>
     </div>

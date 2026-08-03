@@ -61,7 +61,7 @@ export const Topbar = ({ railCollapsed, onToggleRail }: TopbarProps) => {
     <header
       className={cn(
         'z-[var(--pv2-z-top)] col-span-2 grid h-[var(--pv2-top)] items-center',
-        'border-b border-[var(--pv2-hair)] bg-[var(--pv2-paper)]',
+        'border-b border-[var(--pv2-hair)] bg-[var(--pv2-paper)] shadow-[var(--pv2-sh-sm)]',
         'transition-[grid-template-columns] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
         'motion-reduce:transition-none',
         railCollapsed
@@ -69,19 +69,19 @@ export const Topbar = ({ railCollapsed, onToggleRail }: TopbarProps) => {
           : 'grid-cols-[var(--pv2-rail-full)_minmax(0,1fr)]'
       )}
     >
-      <div className='flex h-full items-center overflow-hidden border-r border-[var(--pv2-hair)] px-3'>
+      <div className='flex h-full items-center overflow-hidden border-r border-[var(--pv2-hair)] px-5'>
         {!railCollapsed ? (
           <Link
             href={PORTAL_V2_BASE}
             aria-label={t('brandName')}
-            className='shrink-0'
+            className='shrink-0 transition-transform duration-200 active:scale-[0.96]'
           >
-            <Logo size={20} />
+            <Logo size={22} />
           </Link>
         ) : null}
       </div>
 
-      <div className='flex h-full min-w-0 items-center gap-2 pr-5 pl-3'>
+      <div className='flex h-full min-w-0 items-center gap-3 pr-5 pl-4'>
         <button
           type='button'
           aria-label={railCollapsed ? t('expandSidebar') : t('collapseSidebar')}
@@ -97,10 +97,10 @@ export const Topbar = ({ railCollapsed, onToggleRail }: TopbarProps) => {
           }}
           className={cn(
             'grid size-9 shrink-0 place-items-center rounded-[var(--pv2-r)]',
-            'text-[var(--pv2-mut)] transition-colors',
+            'text-[var(--pv2-mut)] transition-all duration-200',
             'hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)]',
             'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2',
-            'active:scale-[0.98]'
+            'active:scale-[0.96]'
           )}
         >
           {railCollapsed ? (
@@ -112,13 +112,15 @@ export const Topbar = ({ railCollapsed, onToggleRail }: TopbarProps) => {
 
         <div
           className={cn(
-            'flex h-9 w-[200px] shrink-0 items-center gap-2 rounded-[var(--pv2-r)]',
+            'flex h-9 w-[240px] shrink-0 items-center gap-2 rounded-[var(--pv2-r)]',
             'border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3',
-            'text-[var(--pv2-faint)]'
+            'text-[var(--pv2-faint)] transition-all duration-200',
+            'hover:border-[var(--pv2-slate-300)] hover:bg-[var(--pv2-paper)]',
+            'focus-within:border-[var(--pv2-electric)] focus-within:bg-[var(--pv2-paper)] focus-within:ring-2 focus-within:ring-[var(--pv2-electric-soft)]'
           )}
         >
           <Search
-            className='size-3.5 shrink-0'
+            className='size-[15px] shrink-0'
             strokeWidth={1.75}
             aria-hidden
           />
@@ -127,23 +129,27 @@ export const Topbar = ({ railCollapsed, onToggleRail }: TopbarProps) => {
             placeholder={t('searchPlaceholder')}
             aria-label={t('searchAria')}
             disabled
-            className='min-w-0 flex-1 border-0 bg-transparent text-[13px] text-[var(--pv2-ink)] outline-none placeholder:text-[var(--pv2-faint)] disabled:cursor-not-allowed'
+            className='min-w-0 flex-1 border-0 bg-transparent text-[13px] font-medium text-[var(--pv2-ink)] outline-none placeholder:text-[var(--pv2-faint)] disabled:cursor-not-allowed'
           />
         </div>
 
-        <div className='ml-auto flex shrink-0 items-center gap-2'>
+        <div className='ml-auto flex shrink-0 items-center gap-2.5'>
           <Link
             href={`${PORTAL_V2_BASE}/exchange`}
             aria-label={t('exchangeAria')}
             className={cn(
               'inline-flex h-[34px] items-center gap-1.5 rounded-full border border-[var(--pv2-hair)]',
               'bg-transparent px-3 text-[13px] font-semibold text-[var(--pv2-ink)] no-underline',
-              'transition-colors hover:border-[var(--pv2-slate-300)] hover:bg-[var(--pv2-paper)]',
+              'transition-all duration-200 hover:border-[var(--pv2-slate-300)] hover:bg-[var(--pv2-canvas)]',
               'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2',
-              'active:scale-[0.98]'
+              'active:scale-[0.96]'
             )}
           >
-            <Store className='size-4' strokeWidth={2} aria-hidden />
+            <Store
+              className='size-4 text-[var(--pv2-mut)]'
+              strokeWidth={1.75}
+              aria-hidden
+            />
             {t('exchange')}
           </Link>
 
@@ -162,15 +168,17 @@ export const Topbar = ({ railCollapsed, onToggleRail }: TopbarProps) => {
             className={cn(
               'inline-flex h-[34px] items-center gap-1.5 rounded-full px-3.5',
               'bg-[var(--pv2-electric)] text-[13px] font-semibold text-[var(--pv2-paper)]',
-              'shadow-[0_6px_16px_rgba(56,98,255,0.28)] transition-colors',
-              'hover:bg-[var(--pv2-electric-hover)]',
+              'shadow-[0_4px_12px_rgba(56,98,255,0.25)] transition-all duration-200',
+              'hover:-translate-y-[0.5px] hover:bg-[var(--pv2-electric-hover)] hover:shadow-[0_6px_16px_rgba(56,98,255,0.35)]',
               'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2',
-              'active:scale-[0.98]'
+              'active:translate-y-0 active:scale-[0.96] active:shadow-none'
             )}
           >
-            <Plus className='size-[15px]' strokeWidth={2.4} aria-hidden />
+            <Plus className='size-[16px]' strokeWidth={2.5} aria-hidden />
             {t('create')}
           </button>
+
+          <div className='mx-1 h-4 w-[1px] bg-[var(--pv2-hair)]' aria-hidden />
 
           <button
             type='button'
@@ -185,18 +193,18 @@ export const Topbar = ({ railCollapsed, onToggleRail }: TopbarProps) => {
             }}
             className={cn(
               'grid size-9 place-items-center rounded-full',
-              'text-[var(--pv2-mut)] transition-colors',
+              'text-[var(--pv2-mut)] transition-all duration-200',
               'hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)]',
               'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2',
-              'active:scale-[0.98]'
+              'active:scale-[0.96]'
             )}
           >
-            <Bell className='size-[18px]' strokeWidth={2} aria-hidden />
+            <Bell className='size-[18px]' strokeWidth={1.75} aria-hidden />
           </button>
 
           <LocaleSwitch locale={locale} />
 
-          <div className='relative'>
+          <div className='relative ml-1'>
             <button
               type='button'
               aria-label={t('accountAria', { name: displayName })}
@@ -212,11 +220,12 @@ export const Topbar = ({ railCollapsed, onToggleRail }: TopbarProps) => {
                 if (e.key === 'Escape') setMenuOpen(false);
               }}
               className={cn(
-                'grid size-10 place-items-center rounded-full text-sm font-bold text-[var(--pv2-paper)]',
-                'bg-[var(--pv2-electric)] transition-colors outline-none',
-                'hover:bg-[var(--pv2-electric-hover)]',
+                'grid size-9 place-items-center rounded-full text-[13px] font-bold text-[var(--pv2-electric)]',
+                'bg-[var(--pv2-electric-soft)] outline-none',
+                'transition-all duration-200 ease-out',
+                'hover:bg-[var(--pv2-electric)] hover:text-[var(--pv2-paper)] hover:shadow-[0_4px_12px_rgba(56,98,255,0.25)]',
                 'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2',
-                'active:scale-[0.98]'
+                'active:scale-[0.94]'
               )}
             >
               {initials}

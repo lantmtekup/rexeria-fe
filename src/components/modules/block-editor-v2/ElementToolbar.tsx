@@ -190,9 +190,12 @@ export function ElementToolbar({
   // Tablet renders desktop layout — slim banner makes the read-only state explicit.
   if (device === 'tablet') {
     return (
-      <div className='mx-3 mt-3 flex h-11 items-center gap-2 rounded-xl border border-amber-200/60 bg-amber-50/95 px-3.5 shadow-[0_8px_30px_rgba(15,15,15,0.05)] backdrop-blur-md'>
-        <div className='size-1.5 rounded-full bg-amber-500' aria-hidden />
-        <span className='text-[11px] text-amber-900'>
+      <div className='mx-3 mt-3 flex h-11 items-center gap-2 rounded-xl border border-[color-mix(in_srgb,var(--pv2-warning)_35%,transparent)] bg-[color-mix(in_srgb,var(--pv2-warning)_12%,var(--pv2-paper))] px-3.5 shadow-[var(--pv2-sh-soft)] backdrop-blur-md'>
+        <div
+          className='size-1.5 rounded-full bg-[var(--pv2-warning)]'
+          aria-hidden
+        />
+        <span className='text-[11px] text-[var(--pv2-warning)]'>
           Tablet đang xem layout{' '}
           <strong className='font-semibold'>Desktop</strong> (chỉ đọc) — chuyển
           Desktop hoặc Mobile để chỉnh sửa.
@@ -372,14 +375,14 @@ export function ElementToolbar({
   };
 
   return (
-    <div className='mx-3 mt-2.5 flex min-h-9 items-center gap-2 rounded-lg border border-neutral-200/70 bg-white/95 px-2.5 py-1.5 shadow-[0_6px_20px_rgba(15,15,15,0.06),0_1px_2px_rgba(15,15,15,0.04)] backdrop-blur-md'>
+    <div className='mx-3 mt-2.5 flex min-h-9 items-center gap-2 rounded-lg border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2.5 py-1.5 shadow-[var(--pv2-sh-soft)] backdrop-blur-md'>
       {/* Element identity */}
       <div className='flex shrink-0 items-center gap-1.5 pl-0.5'>
         <span
-          className='size-1.5 shrink-0 rounded-full bg-sky-500'
+          className='size-1.5 shrink-0 rounded-full bg-[var(--pv2-electric)]'
           aria-hidden
         />
-        <span className='text-[10px] font-semibold tracking-[0.04em] text-neutral-800 uppercase'>
+        <span className='text-[10px] font-semibold tracking-[0.04em] text-[var(--pv2-ink)] uppercase'>
           {label}
         </span>
       </div>
@@ -718,14 +721,14 @@ export function ElementToolbar({
       </div>
 
       {/* Actions */}
-      <div className='flex shrink-0 items-center gap-0.5 border-l border-neutral-200/80 pl-2'>
+      <div className='flex shrink-0 items-center gap-0.5 border-l border-[var(--pv2-hair)] pl-2'>
         <AiButton onAi={handleAi} blockType={block.blockType} />
         <button
           type='button'
           onClick={handleDelete}
           aria-label='Xoá nội dung'
           title='Xoá nội dung'
-          className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-rose-50 hover:text-rose-600'
+          className='flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-faint)] transition-colors hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)] hover:text-[var(--pv2-error)]'
         >
           <Trash2 className='size-3.5' />
         </button>
@@ -734,7 +737,7 @@ export function ElementToolbar({
           onClick={onClose}
           aria-label='Bỏ chọn'
           title='Bỏ chọn'
-          className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-800'
+          className='flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-faint)] transition-colors hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)]'
         >
           <X className='size-3.5' />
         </button>
@@ -865,7 +868,7 @@ function TextControls({
         value={iconValue}
         onChange={e => setField(e.target.value)}
         aria-label='Icon Lucide'
-        className='h-7 min-w-[10rem] rounded-md border border-neutral-200 bg-white px-2 text-xs text-neutral-700'
+        className='h-7 min-w-[10rem] rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 text-xs text-[var(--pv2-ink)]'
       >
         {!ALTURA_OLYMPUS_ICON_OPTIONS.includes(
           iconValue as (typeof ALTURA_OLYMPUS_ICON_OPTIONS)[number]
@@ -894,7 +897,7 @@ function TextControls({
             value={value}
             onChange={e => setField(e.target.value)}
             placeholder='Nội dung…'
-            className='min-h-32 resize-none border-neutral-200 bg-white text-sm leading-6'
+            className='min-h-32 resize-none border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-sm leading-6'
           />
         </PopoverTrigger>
       ) : (
@@ -902,7 +905,7 @@ function TextControls({
           value={value}
           onChange={e => setField(e.target.value)}
           placeholder='Nội dung…'
-          className='h-7 min-w-[16rem] flex-1 rounded-md bg-neutral-50 px-2.5 text-[12px] text-neutral-900 ring-1 ring-neutral-200/70 transition-shadow placeholder:text-neutral-400 hover:ring-neutral-300 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:outline-none'
+          className='h-7 min-w-[16rem] flex-1 rounded-md bg-[var(--pv2-canvas)] px-2.5 text-[12px] text-[var(--pv2-ink)] ring-1 ring-[var(--pv2-hair)] transition-shadow placeholder:text-[var(--pv2-faint)] hover:ring-[var(--pv2-slate-300)] focus:bg-[var(--pv2-paper)] focus:ring-2 focus:ring-[var(--pv2-electric)]/25 focus:outline-none'
         />
       )}
 
@@ -920,13 +923,13 @@ function TextControls({
             onUpdateStyle({ fontSize: n });
           }}
           placeholder='—'
-          className='h-7 w-11 rounded-md bg-neutral-50 px-1.5 font-mono text-[11px] text-neutral-900 tabular-nums ring-1 ring-neutral-200/70 transition-shadow placeholder:text-neutral-400 hover:ring-neutral-300 focus:bg-white focus:ring-2 focus:ring-neutral-900/10 focus:outline-none'
+          className='h-7 w-11 rounded-md bg-[var(--pv2-canvas)] px-1.5 font-mono text-[11px] text-[var(--pv2-ink)] tabular-nums ring-1 ring-[var(--pv2-hair)] transition-shadow placeholder:text-[var(--pv2-faint)] hover:ring-[var(--pv2-slate-300)] focus:bg-[var(--pv2-paper)] focus:ring-2 focus:ring-[var(--pv2-electric)]/25 focus:outline-none'
         />
       </InlineLabel>
 
       <Sep />
 
-      <div className='flex items-center gap-px rounded-md bg-neutral-50/80 p-px ring-1 ring-neutral-200/60'>
+      <div className='flex items-center gap-px rounded-md bg-[var(--pv2-canvas)] p-px ring-1 ring-[var(--pv2-hair)]'>
         <ToolbarBtn
           active={style?.fontWeight === 700}
           onClick={() =>
@@ -979,7 +982,7 @@ function TextControls({
 
       <Sep />
 
-      <div className='flex items-center gap-px rounded-md bg-neutral-50/80 p-px ring-1 ring-neutral-200/60'>
+      <div className='flex items-center gap-px rounded-md bg-[var(--pv2-canvas)] p-px ring-1 ring-[var(--pv2-hair)]'>
         <ToolbarBtn
           active={style?.textAlign === 'left'}
           onClick={() => onUpdateStyle({ textAlign: 'left' })}
@@ -1023,7 +1026,7 @@ function TextControls({
         onClick={onResetStyle}
         title='Khôi phục style mặc định'
         aria-label='Khôi phục style mặc định'
-        className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-800'
+        className='flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-faint)] transition-colors hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)]'
       >
         <RotateCcw className='size-3.5' />
       </button>
@@ -1166,7 +1169,7 @@ function BackgroundControls({
         width={360}
       >
         <ImagePicker value={imageUrl} onChange={setImage} />
-        <p className='text-3xs mt-2 text-neutral-400'>
+        <p className='text-3xs mt-2 text-[var(--pv2-faint)]'>
           Ảnh nền sẽ phủ lên màu nền (cover, canh giữa).
         </p>
       </PopoverTrigger>
@@ -1177,7 +1180,7 @@ function BackgroundControls({
         disabled={!background}
         title='Khôi phục nền mặc định'
         aria-label='Khôi phục nền mặc định'
-        className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent'
+        className='flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-mut)] transition-colors hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent'
       >
         <RotateCcw className='size-3.5' />
       </button>
@@ -1226,25 +1229,25 @@ function StatsControls({
         {content.stats.map((s, i) => (
           <div
             key={i}
-            className='flex items-center gap-2 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex items-center gap-2 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <Input
               value={s.value}
               onChange={e => update(i, { value: e.target.value })}
               placeholder='Giá trị'
-              className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
             />
             <Input
               value={s.label}
               onChange={e => update(i, { label: e.target.value })}
               placeholder='Nhãn'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <button
               type='button'
               onClick={() => remove(i)}
               aria-label='Xoá'
-              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
             >
               <Trash2 className='size-3.5' />
             </button>
@@ -1300,13 +1303,13 @@ function FeaturesControls({
         {content.features.map((f, i) => (
           <div
             key={i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <select
                 value={f.icon}
                 onChange={e => update(i, { icon: e.target.value })}
-                className='h-7 flex-1 rounded border border-neutral-200 bg-white px-2 text-xs text-neutral-700'
+                className='h-7 flex-1 rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 text-xs text-[var(--pv2-ink)]'
               >
                 {FEATURE_ICON_OPTIONS.map(opt => (
                   <option key={opt} value={opt}>
@@ -1318,7 +1321,7 @@ function FeaturesControls({
                 type='button'
                 onClick={() => remove(i)}
                 aria-label='Xoá'
-                className='flex size-7 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -1327,13 +1330,13 @@ function FeaturesControls({
               value={f.label}
               onChange={e => update(i, { label: e.target.value })}
               placeholder='Tên tiện ích'
-              className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
             />
             <Textarea
               value={f.body}
               onChange={e => update(i, { body: e.target.value })}
               placeholder='Mô tả tiện ích'
-              className='min-h-12 resize-none border-neutral-200 bg-white text-xs leading-5'
+              className='min-h-12 resize-none border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs leading-5'
             />
           </div>
         ))}
@@ -1396,12 +1399,12 @@ function SlidesControls({
       width={480}
     >
       {/* Carousel-level controls — apply to the whole block, not per slide. */}
-      <div className='mb-2 flex flex-col gap-2 rounded-md border border-neutral-200 bg-neutral-50/60 p-2'>
-        <p className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+      <div className='mb-2 flex flex-col gap-2 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] p-2'>
+        <p className='text-3xs font-semibold tracking-widest text-[var(--pv2-mut)] uppercase'>
           Cấu hình carousel
         </p>
         <div className='flex items-center gap-2'>
-          <label className='text-2xs inline-flex shrink-0 items-center gap-1 text-neutral-600'>
+          <label className='text-2xs inline-flex shrink-0 items-center gap-1 text-[var(--pv2-mut)]'>
             <input
               type='checkbox'
               checked={(content.autoplayMs ?? 0) > 0}
@@ -1427,13 +1430,13 @@ function SlidesControls({
               })
             }
             disabled={!content.autoplayMs}
-            className='text-2xs h-7 w-20 rounded-md bg-white px-1.5 text-center font-mono ring-1 ring-neutral-200 focus:outline-none disabled:opacity-50'
+            className='text-2xs h-7 w-20 rounded-md bg-[var(--pv2-paper)] px-1.5 text-center font-mono ring-1 ring-[var(--pv2-hair)] focus:outline-none disabled:opacity-50'
             placeholder='ms'
           />
-          <span className='text-3xs text-neutral-400'>ms</span>
+          <span className='text-3xs text-[var(--pv2-faint)]'>ms</span>
         </div>
         <div className='flex items-center gap-3'>
-          <label className='text-2xs inline-flex items-center gap-1 text-neutral-600'>
+          <label className='text-2xs inline-flex items-center gap-1 text-[var(--pv2-mut)]'>
             <input
               type='checkbox'
               checked={content.showPagination ?? true}
@@ -1446,7 +1449,7 @@ function SlidesControls({
             />
             Pagination
           </label>
-          <label className='text-2xs inline-flex items-center gap-1 text-neutral-600'>
+          <label className='text-2xs inline-flex items-center gap-1 text-[var(--pv2-mut)]'>
             <input
               type='checkbox'
               checked={content.showNavArrows ?? true}
@@ -1466,10 +1469,10 @@ function SlidesControls({
         {slides.map((slide, i) => (
           <div
             key={slide.id}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center justify-between'>
-              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+              <span className='text-3xs font-semibold tracking-widest text-[var(--pv2-mut)] uppercase'>
                 Slide {i + 1}
               </span>
               <div className='flex items-center gap-1'>
@@ -1478,7 +1481,7 @@ function SlidesControls({
                   onClick={() => move(i, -1)}
                   disabled={i === 0}
                   aria-label='Lên trên'
-                  className='flex size-6 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40'
+                  className='flex size-6 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-mut)] hover:bg-[var(--pv2-canvas)] disabled:cursor-not-allowed disabled:opacity-40'
                 >
                   ↑
                 </button>
@@ -1487,7 +1490,7 @@ function SlidesControls({
                   onClick={() => move(i, 1)}
                   disabled={i === slides.length - 1}
                   aria-label='Xuống dưới'
-                  className='flex size-6 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40'
+                  className='flex size-6 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-mut)] hover:bg-[var(--pv2-canvas)] disabled:cursor-not-allowed disabled:opacity-40'
                 >
                   ↓
                 </button>
@@ -1495,7 +1498,7 @@ function SlidesControls({
                   type='button'
                   onClick={() => remove(i)}
                   aria-label='Xoá'
-                  className='flex size-7 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                  className='flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
                 >
                   <Trash2 className='size-3.5' />
                 </button>
@@ -1509,19 +1512,19 @@ function SlidesControls({
               value={slide.caption ?? ''}
               onChange={e => update(i, { caption: e.target.value })}
               placeholder='Caption (hiện overlay đáy slide)'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <Input
               value={slide.altText ?? ''}
               onChange={e => update(i, { altText: e.target.value })}
               placeholder='Alt text (SEO / a11y)'
-              className='text-2xs h-8 border-neutral-200 bg-white'
+              className='text-2xs h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'
             />
             <Input
               value={slide.href ?? ''}
               onChange={e => update(i, { href: e.target.value })}
               placeholder='Link (https://… — bỏ trống nếu không click)'
-              className='text-2xs h-8 border-neutral-200 bg-white'
+              className='text-2xs h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'
             />
           </div>
         ))}
@@ -1640,12 +1643,12 @@ function InteractiveAdControls({
       preview={`${slides.length} slide`}
       width={520}
     >
-      <div className='mb-2 flex flex-col gap-2 rounded-md border border-neutral-200 bg-neutral-50/60 p-2'>
-        <p className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+      <div className='mb-2 flex flex-col gap-2 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] p-2'>
+        <p className='text-3xs font-semibold tracking-widest text-[var(--pv2-mut)] uppercase'>
           Cấu hình chung
         </p>
         <div className='flex items-center gap-3'>
-          <label className='text-2xs inline-flex shrink-0 items-center gap-1 text-neutral-600'>
+          <label className='text-2xs inline-flex shrink-0 items-center gap-1 text-[var(--pv2-mut)]'>
             <input
               type='checkbox'
               checked={content.closeable ?? true}
@@ -1655,7 +1658,7 @@ function InteractiveAdControls({
             />
             Cho phép đóng
           </label>
-          <label className='text-2xs inline-flex shrink-0 items-center gap-1 text-neutral-600'>
+          <label className='text-2xs inline-flex shrink-0 items-center gap-1 text-[var(--pv2-mut)]'>
             <input
               type='checkbox'
               checked={(content.autoplayMs ?? 0) > 0}
@@ -1681,7 +1684,7 @@ function InteractiveAdControls({
               })
             }
             disabled={!content.autoplayMs}
-            className='text-2xs h-7 w-20 rounded-md bg-white px-1.5 text-center font-mono ring-1 ring-neutral-200 focus:outline-none disabled:opacity-50'
+            className='text-2xs h-7 w-20 rounded-md bg-[var(--pv2-paper)] px-1.5 text-center font-mono ring-1 ring-[var(--pv2-hair)] focus:outline-none disabled:opacity-50'
             placeholder='ms'
           />
         </div>
@@ -1691,10 +1694,10 @@ function InteractiveAdControls({
         {slides.map((slide, i) => (
           <div
             key={slide.id}
-            className='flex flex-col gap-2 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-2 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center justify-between'>
-              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+              <span className='text-3xs font-semibold tracking-widest text-[var(--pv2-mut)] uppercase'>
                 Slide {i + 1}
               </span>
               <div className='flex items-center gap-1'>
@@ -1703,7 +1706,7 @@ function InteractiveAdControls({
                   onClick={() => moveSlide(i, -1)}
                   disabled={i === 0}
                   aria-label='Lên trên'
-                  className='flex size-6 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40'
+                  className='flex size-6 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-mut)] hover:bg-[var(--pv2-canvas)] disabled:cursor-not-allowed disabled:opacity-40'
                 >
                   ↑
                 </button>
@@ -1712,7 +1715,7 @@ function InteractiveAdControls({
                   onClick={() => moveSlide(i, 1)}
                   disabled={i === slides.length - 1}
                   aria-label='Xuống dưới'
-                  className='flex size-6 cursor-pointer items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-40'
+                  className='flex size-6 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-mut)] hover:bg-[var(--pv2-canvas)] disabled:cursor-not-allowed disabled:opacity-40'
                 >
                   ↓
                 </button>
@@ -1720,7 +1723,7 @@ function InteractiveAdControls({
                   type='button'
                   onClick={() => removeSlide(i)}
                   aria-label='Xoá slide'
-                  className='flex size-7 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                  className='flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
                 >
                   <Trash2 className='size-3.5' />
                 </button>
@@ -1735,7 +1738,7 @@ function InteractiveAdControls({
                     backgroundType: e.target.value as 'image' | 'video',
                   })
                 }
-                className='text-2xs h-8 rounded-md border border-neutral-200 bg-white px-2'
+                className='text-2xs h-8 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2'
               >
                 <option value='image'>Ảnh</option>
                 <option value='video'>Video</option>
@@ -1746,7 +1749,7 @@ function InteractiveAdControls({
                   updateSlide(i, { backgroundUrl: e.target.value })
                 }
                 placeholder='URL ảnh/video nền'
-                className='text-2xs h-8 flex-1 border-neutral-200 bg-white'
+                className='text-2xs h-8 flex-1 border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'
               />
             </div>
             {slide.backgroundType === 'image' && (
@@ -1757,8 +1760,8 @@ function InteractiveAdControls({
             )}
 
             {/* Hotspots */}
-            <div className='flex flex-col gap-1.5 rounded-md bg-neutral-50/60 p-1.5'>
-              <p className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+            <div className='flex flex-col gap-1.5 rounded-md bg-[var(--pv2-canvas)] p-1.5'>
+              <p className='text-3xs font-semibold tracking-widest text-[var(--pv2-mut)] uppercase'>
                 Hotspot ({slide.hotspots.length})
               </p>
               {slide.hotspots.map((h, hIdx) => (
@@ -1771,7 +1774,7 @@ function InteractiveAdControls({
                     onChange={e =>
                       updateHotspot(i, hIdx, { xPct: Number(e.target.value) })
                     }
-                    className='text-2xs h-7 w-12 rounded-md border border-neutral-200 bg-white px-1 text-center font-mono'
+                    className='text-2xs h-7 w-12 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-1 text-center font-mono'
                     title='X %'
                   />
                   <input
@@ -1782,7 +1785,7 @@ function InteractiveAdControls({
                     onChange={e =>
                       updateHotspot(i, hIdx, { yPct: Number(e.target.value) })
                     }
-                    className='text-2xs h-7 w-12 rounded-md border border-neutral-200 bg-white px-1 text-center font-mono'
+                    className='text-2xs h-7 w-12 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-1 text-center font-mono'
                     title='Y %'
                   />
                   <Input
@@ -1791,7 +1794,7 @@ function InteractiveAdControls({
                       updateHotspot(i, hIdx, { label: e.target.value })
                     }
                     placeholder='Nhãn'
-                    className='text-2xs h-7 flex-1 border-neutral-200 bg-white'
+                    className='text-2xs h-7 flex-1 border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'
                   />
                   <select
                     value={h.ctaId ?? ''}
@@ -1800,7 +1803,7 @@ function InteractiveAdControls({
                         ctaId: e.target.value || undefined,
                       })
                     }
-                    className='text-2xs h-7 rounded-md border border-neutral-200 bg-white px-1'
+                    className='text-2xs h-7 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-1'
                   >
                     <option value=''>— CTA —</option>
                     {slide.ctas.map(c => (
@@ -1813,7 +1816,7 @@ function InteractiveAdControls({
                     type='button'
                     onClick={() => removeHotspot(i, hIdx)}
                     aria-label='Xoá hotspot'
-                    className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                    className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
                   >
                     <Trash2 className='size-3' />
                   </button>
@@ -1823,8 +1826,8 @@ function InteractiveAdControls({
             </div>
 
             {/* CTAs */}
-            <div className='flex flex-col gap-1.5 rounded-md bg-neutral-50/60 p-1.5'>
-              <p className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+            <div className='flex flex-col gap-1.5 rounded-md bg-[var(--pv2-canvas)] p-1.5'>
+              <p className='text-3xs font-semibold tracking-widest text-[var(--pv2-mut)] uppercase'>
                 CTA ({slide.ctas.length})
               </p>
               {slide.ctas.map((c, cIdx) => (
@@ -1835,13 +1838,13 @@ function InteractiveAdControls({
                       updateCta(i, cIdx, { label: e.target.value })
                     }
                     placeholder='Nhãn nút'
-                    className='text-2xs h-7 flex-1 border-neutral-200 bg-white'
+                    className='text-2xs h-7 flex-1 border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'
                   />
                   <Input
                     value={c.href}
                     onChange={e => updateCta(i, cIdx, { href: e.target.value })}
                     placeholder='https://…'
-                    className='text-2xs h-7 flex-1 border-neutral-200 bg-white'
+                    className='text-2xs h-7 flex-1 border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'
                   />
                   <select
                     value={c.style}
@@ -1850,7 +1853,7 @@ function InteractiveAdControls({
                         style: e.target.value as 'primary' | 'secondary',
                       })
                     }
-                    className='text-2xs h-7 rounded-md border border-neutral-200 bg-white px-1'
+                    className='text-2xs h-7 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-1'
                   >
                     <option value='primary'>Chính</option>
                     <option value='secondary'>Phụ</option>
@@ -1859,7 +1862,7 @@ function InteractiveAdControls({
                     type='button'
                     onClick={() => removeCta(i, cIdx)}
                     aria-label='Xoá CTA'
-                    className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                    className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
                   >
                     <Trash2 className='size-3' />
                   </button>
@@ -1916,25 +1919,25 @@ function ReasonsControls({
         {content.reasons.map((r, i) => (
           <div
             key={i}
-            className='flex items-center gap-2 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex items-center gap-2 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <Input
               value={r.value}
               onChange={e => update(i, { value: e.target.value })}
               placeholder='Giá trị'
-              className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
             />
             <Input
               value={r.label}
               onChange={e => update(i, { label: e.target.value })}
               placeholder='Nhãn'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <button
               type='button'
               onClick={() => remove(i)}
               aria-label='Xoá'
-              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
             >
               <Trash2 className='size-3.5' />
             </button>
@@ -1996,33 +1999,33 @@ function MintVariantsControls({
         {variants.map((v, i) => (
           <div
             key={v.key || i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={v.label}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Tên biến thể'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
                 onClick={() => remove(i)}
                 disabled={variants.length <= 1}
                 aria-label='Xoá'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)] disabled:cursor-not-allowed disabled:opacity-40'
               >
                 <Trash2 className='size-3.5' />
               </button>
             </div>
-            <p className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+            <p className='text-3xs font-semibold tracking-widest text-[var(--pv2-mut)] uppercase'>
               Swatch
             </p>
             <ImagePicker
               value={v.swatch ?? ''}
               onChange={url => update(i, { swatch: url })}
             />
-            <p className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+            <p className='text-3xs font-semibold tracking-widest text-[var(--pv2-mut)] uppercase'>
               Ảnh chính
             </p>
             <ImagePicker
@@ -2049,7 +2052,7 @@ function MintDiscoverVariantControls({
   const variant = content.variant ?? '1';
   return (
     <div className='flex min-w-0 items-center gap-2'>
-      <span className='text-[10px] font-medium tracking-wide text-neutral-500 uppercase'>
+      <span className='text-[10px] font-medium tracking-wide text-[var(--pv2-mut)] uppercase'>
         Theme
       </span>
       <select
@@ -2060,7 +2063,7 @@ function MintDiscoverVariantControls({
             variant: e.target.value as '1' | '2',
           } as BlockContent)
         }
-        className='h-8 min-w-[14rem] rounded-md border border-neutral-200 bg-white px-2 text-xs text-neutral-900'
+        className='h-8 min-w-[14rem] rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 text-xs text-[var(--pv2-ink)]'
         aria-label='Theme variant'
       >
         <option value='1'>Variant 1 — Reverse (nền sáng)</option>
@@ -2091,7 +2094,7 @@ function MintDiscoverSurfaceControls({
         onClick={onResetStyle}
         title='Khôi phục style mặc định'
         aria-label='Khôi phục style mặc định'
-        className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-800'
+        className='flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-faint)] transition-colors hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)]'
       >
         <RotateCcw className='size-3.5' />
       </button>
@@ -2125,7 +2128,7 @@ function FillColorControls({
         onClick={onResetStyle}
         title='Khôi phục style mặc định'
         aria-label='Khôi phục style mặc định'
-        className='flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-800'
+        className='flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-faint)] transition-colors hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)]'
       >
         <RotateCcw className='size-3.5' />
       </button>
@@ -2179,20 +2182,20 @@ function MintTabsControls({
         {tabs.map((t, i) => (
           <div
             key={t.key || i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={t.label}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Tiêu đề hotspot'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
                 onClick={() => remove(i)}
                 aria-label='Xoá'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -2201,16 +2204,16 @@ function MintTabsControls({
               value={t.desc}
               onChange={e => update(i, { desc: e.target.value })}
               placeholder='Mô tả'
-              className='min-h-16 resize-none border-neutral-200 bg-white text-xs'
+              className='min-h-16 resize-none border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <Input
               value={t.img}
               onChange={e => update(i, { img: e.target.value })}
               placeholder='URL ảnh trong drawer'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <div className='flex items-center gap-2'>
-              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-[var(--pv2-mut)]'>
                 Dot X%
                 <Input
                   type='number'
@@ -2218,10 +2221,10 @@ function MintTabsControls({
                   max={100}
                   value={t.dotX}
                   onChange={e => update(i, { dotX: Number(e.target.value) })}
-                  className='h-8 border-neutral-200 bg-white text-xs'
+                  className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
                 />
               </label>
-              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-[var(--pv2-mut)]'>
                 Dot Y%
                 <Input
                   type='number'
@@ -2229,7 +2232,7 @@ function MintTabsControls({
                   max={100}
                   value={t.dotY}
                   onChange={e => update(i, { dotY: Number(e.target.value) })}
-                  className='h-8 border-neutral-200 bg-white text-xs'
+                  className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
                 />
               </label>
             </div>
@@ -2291,24 +2294,24 @@ function ScrollMattisSlidesControls({
         {slides.map((s, i) => (
           <div
             key={`mattis-slide-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
-              <span className='text-3xs shrink-0 font-semibold tracking-widest text-neutral-500 uppercase'>
+              <span className='text-3xs shrink-0 font-semibold tracking-widest text-[var(--pv2-mut)] uppercase'>
                 Slide {i + 1}
               </span>
               <Input
                 value={s.title}
                 onChange={e => update(i, { title: e.target.value })}
                 placeholder='Title'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
                 onClick={() => remove(i)}
                 disabled={slides.length <= 1}
                 aria-label='Xoá slide'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)] disabled:cursor-not-allowed disabled:opacity-40'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -2317,33 +2320,33 @@ function ScrollMattisSlidesControls({
               value={s.url}
               onChange={e => update(i, { url: e.target.value })}
               placeholder='URL ảnh / video'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <ImagePicker value={s.url} onChange={url => update(i, { url })} />
             <Input
               value={s.bgWord}
               onChange={e => update(i, { bgWord: e.target.value })}
               placeholder='Chữ chạy (marquee)'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <div className='flex items-center gap-1.5'>
               <Input
                 value={s.category1}
                 onChange={e => update(i, { category1: e.target.value })}
                 placeholder='Category 1'
-                className='h-8 border-neutral-200 bg-white text-xs'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
               />
               <Input
                 value={s.category2}
                 onChange={e => update(i, { category2: e.target.value })}
                 placeholder='Category 2'
-                className='h-8 border-neutral-200 bg-white text-xs'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
               />
               <Input
                 value={s.year}
                 onChange={e => update(i, { year: e.target.value })}
                 placeholder='Year'
-                className='h-8 w-20 shrink-0 border-neutral-200 bg-white text-xs'
+                className='h-8 w-20 shrink-0 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
               />
             </div>
           </div>
@@ -2404,10 +2407,10 @@ function PnjParagraphsControls({
         {paragraphs.map((p, i) => (
           <div
             key={`para-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center justify-between gap-2'>
-              <span className='text-2xs font-semibold tracking-wide text-neutral-500 uppercase'>
+              <span className='text-2xs font-semibold tracking-wide text-[var(--pv2-mut)] uppercase'>
                 Đoạn {i + 1}
               </span>
               <button
@@ -2418,7 +2421,7 @@ function PnjParagraphsControls({
                   remove(i);
                 }}
                 aria-label={`Xoá đoạn ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -2427,7 +2430,7 @@ function PnjParagraphsControls({
               value={p}
               onChange={e => update(i, e.target.value)}
               placeholder='Nội dung đoạn văn'
-              className='field-sizing-fixed min-h-20 resize-y overflow-y-auto border-neutral-200 bg-white text-xs'
+              className='field-sizing-fixed min-h-20 resize-y overflow-y-auto border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -2482,10 +2485,10 @@ function PnjTitleLinesControls({
         {titleLines.map((line, i) => (
           <div
             key={`title-line-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center justify-between gap-2'>
-              <span className='text-2xs font-semibold tracking-wide text-neutral-500 uppercase'>
+              <span className='text-2xs font-semibold tracking-wide text-[var(--pv2-mut)] uppercase'>
                 Dòng {i + 1}
               </span>
               <button
@@ -2496,7 +2499,7 @@ function PnjTitleLinesControls({
                   remove(i);
                 }}
                 aria-label={`Xoá dòng ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -2505,7 +2508,7 @@ function PnjTitleLinesControls({
               value={line}
               onChange={e => update(i, e.target.value)}
               placeholder='Nội dung tiêu đề'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -2538,7 +2541,7 @@ function PnjVariantHighlightFields({
             value={item}
             onChange={e => onChange(hi, e.target.value)}
             placeholder={`Highlight ${hi + 1}`}
-            className='h-8 border-neutral-200 bg-white text-xs'
+            className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
           />
           <button
             type='button'
@@ -2548,7 +2551,7 @@ function PnjVariantHighlightFields({
               onRemove(hi);
             }}
             aria-label={`Xoá highlight ${hi + 1}`}
-            className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+            className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
           >
             <Trash2 className='size-3.5' />
           </button>
@@ -2678,14 +2681,14 @@ function PnjVariantsControls({
         {variants.map((v, i) => (
           <div
             key={v.key || i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={v.label}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Nhãn góc nhìn'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
@@ -2695,7 +2698,7 @@ function PnjVariantsControls({
                   remove(i);
                 }}
                 aria-label={`Xoá góc ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -2704,13 +2707,13 @@ function PnjVariantsControls({
               value={v.desc}
               onChange={e => update(i, { desc: e.target.value })}
               placeholder='Mô tả'
-              className='field-sizing-fixed min-h-16 resize-y overflow-y-auto border-neutral-200 bg-white text-xs'
+              className='field-sizing-fixed min-h-16 resize-y overflow-y-auto border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <Input
               value={v.image}
               onChange={e => update(i, { image: e.target.value })}
               placeholder='URL ảnh'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <PnjVariantHighlightFields
               highlights={resolvePnjVariantHighlights(v.highlights)}
@@ -2806,14 +2809,14 @@ function PnjStickyMenuItemsControls({
         {items.map((item, i) => (
           <div
             key={item.key || i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={item.label}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Nhãn (title)'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
@@ -2823,7 +2826,7 @@ function PnjStickyMenuItemsControls({
                   remove(i);
                 }}
                 aria-label={`Xoá mục ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -2832,7 +2835,7 @@ function PnjStickyMenuItemsControls({
               value={item.link}
               onChange={e => update(i, { link: e.target.value })}
               placeholder='Link — section id (vd: contact) hoặc https://…'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -2912,20 +2915,20 @@ function FramerPerformPricingTiersControls({
         {tiers.map((tier, i) => (
           <div
             key={i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={tier.title ?? ''}
                 onChange={e => update(i, { title: e.target.value })}
                 placeholder='Tên gói'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <Input
                 value={tier.price ?? ''}
                 onChange={e => update(i, { price: e.target.value })}
                 placeholder='Giá'
-                className='h-8 w-28 shrink-0 border-neutral-200 bg-white text-xs'
+                className='h-8 w-28 shrink-0 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
               />
               <button
                 type='button'
@@ -2935,7 +2938,7 @@ function FramerPerformPricingTiersControls({
                   remove(i);
                 }}
                 aria-label={`Xoá gói ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -2945,26 +2948,26 @@ function FramerPerformPricingTiersControls({
               onChange={e => update(i, { features: e.target.value })}
               placeholder='Tính năng (mỗi dòng một bullet)'
               rows={3}
-              className='min-h-0 border-neutral-200 bg-white text-xs'
+              className='min-h-0 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <Input
               value={tier.imageUrl ?? ''}
               onChange={e => update(i, { imageUrl: e.target.value })}
               placeholder='URL ảnh'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <div className='flex gap-2'>
               <Input
                 value={tier.ctaLabel ?? ''}
                 onChange={e => update(i, { ctaLabel: e.target.value })}
                 placeholder='CTA chữ'
-                className='h-8 border-neutral-200 bg-white text-xs'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
               />
               <Input
                 value={tier.ctaHref ?? ''}
                 onChange={e => update(i, { ctaHref: e.target.value })}
                 placeholder='CTA link'
-                className='h-8 border-neutral-200 bg-white text-xs'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
               />
             </div>
           </div>
@@ -3043,20 +3046,20 @@ function FramerDarlingTimelineItemsControls({
         {items.map((item, i) => (
           <div
             key={i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={item.time ?? ''}
                 onChange={e => update(i, { time: e.target.value })}
                 placeholder='9:00 SA'
-                className='h-8 w-24 shrink-0 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 w-24 shrink-0 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <Input
                 value={item.title ?? ''}
                 onChange={e => update(i, { title: e.target.value })}
                 placeholder='Tiêu đề'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
@@ -3066,7 +3069,7 @@ function FramerDarlingTimelineItemsControls({
                   remove(i);
                 }}
                 aria-label={`Xoá mốc ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -3076,13 +3079,13 @@ function FramerDarlingTimelineItemsControls({
               onChange={e => update(i, { description: e.target.value })}
               placeholder='Mô tả'
               rows={2}
-              className='min-h-0 border-neutral-200 bg-white text-xs'
+              className='min-h-0 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <Input
               value={item.imageUrl ?? ''}
               onChange={e => update(i, { imageUrl: e.target.value })}
               placeholder='URL ảnh'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -3155,20 +3158,20 @@ function MintV2ProcessStepsControls({
         {steps.map((step, i) => (
           <div
             key={step.key || i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={step.no ?? ''}
                 onChange={e => update(i, { no: e.target.value })}
                 placeholder='01'
-                className='h-8 w-16 shrink-0 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 w-16 shrink-0 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <Input
                 value={step.title ?? ''}
                 onChange={e => update(i, { title: e.target.value })}
                 placeholder='Tiêu đề'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
@@ -3178,7 +3181,7 @@ function MintV2ProcessStepsControls({
                   remove(i);
                 }}
                 aria-label={`Xoá bước ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -3188,7 +3191,7 @@ function MintV2ProcessStepsControls({
               onChange={e => update(i, { body: e.target.value })}
               placeholder='Mô tả'
               rows={2}
-              className='min-h-0 border-neutral-200 bg-white text-xs'
+              className='min-h-0 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -3260,14 +3263,14 @@ function MintVaultCraftItemsControls({
         {items.map((item, i) => (
           <div
             key={i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={item.title ?? ''}
                 onChange={e => update(i, { title: e.target.value })}
                 placeholder='Tiêu đề'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
@@ -3277,7 +3280,7 @@ function MintVaultCraftItemsControls({
                   remove(i);
                 }}
                 aria-label={`Xoá mục ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -3287,13 +3290,13 @@ function MintVaultCraftItemsControls({
               onChange={e => update(i, { description: e.target.value })}
               placeholder='Mô tả'
               rows={2}
-              className='min-h-0 border-neutral-200 bg-white text-xs'
+              className='min-h-0 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <Input
               value={item.imageUrl ?? ''}
               onChange={e => update(i, { imageUrl: e.target.value })}
               placeholder='URL ảnh'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -3361,19 +3364,19 @@ function MintVaultImagesControls({
         {images.map((src, i) => (
           <div
             key={i}
-            className='flex items-center gap-2 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex items-center gap-2 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={src}
               alt=''
-              className='size-9 shrink-0 rounded object-cover ring-1 ring-neutral-200'
+              className='size-9 shrink-0 rounded object-cover ring-1 ring-[var(--pv2-hair)]'
             />
             <Input
               value={src}
               onChange={e => update(i, e.target.value)}
               placeholder='URL ảnh'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <button
               type='button'
@@ -3383,7 +3386,7 @@ function MintVaultImagesControls({
                 remove(i);
               }}
               aria-label={`Xoá ảnh ${i + 1}`}
-              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
             >
               <Trash2 className='size-3.5' />
             </button>
@@ -3446,19 +3449,19 @@ function LineaPortfolioItemsControls({
         {items.map((item, i) => (
           <div
             key={i}
-            className='flex items-center gap-2 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex items-center gap-2 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={item.img}
               alt=''
-              className='size-9 shrink-0 rounded object-cover ring-1 ring-neutral-200'
+              className='size-9 shrink-0 rounded object-cover ring-1 ring-[var(--pv2-hair)]'
             />
             <Input
               value={item.img}
               onChange={e => update(i, e.target.value)}
               placeholder='URL ảnh'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <button
               type='button'
@@ -3468,7 +3471,7 @@ function LineaPortfolioItemsControls({
                 remove(i);
               }}
               aria-label={`Xoá ảnh ${i + 1}`}
-              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
             >
               <Trash2 className='size-3.5' />
             </button>
@@ -3541,14 +3544,14 @@ function MintVaultCoinsControls({
         {coins.map((coin, i) => (
           <div
             key={coin.key ?? i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={coin.name ?? ''}
                 onChange={e => update(i, { name: e.target.value })}
                 placeholder='Tên coin'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
@@ -3558,7 +3561,7 @@ function MintVaultCoinsControls({
                   remove(i);
                 }}
                 aria-label={`Xoá coin ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -3568,32 +3571,32 @@ function MintVaultCoinsControls({
                 value={coin.metal ?? ''}
                 onChange={e => update(i, { metal: e.target.value })}
                 placeholder='Kim loại'
-                className='h-8 border-neutral-200 bg-white text-xs'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
               />
               <Input
                 value={coin.weight ?? ''}
                 onChange={e => update(i, { weight: e.target.value })}
                 placeholder='Trọng lượng'
-                className='h-8 border-neutral-200 bg-white text-xs'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
               />
               <Input
                 value={coin.price ?? ''}
                 onChange={e => update(i, { price: e.target.value })}
                 placeholder='Giá'
-                className='h-8 border-neutral-200 bg-white text-xs'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
               />
             </div>
             <Input
               value={coin.image ?? ''}
               onChange={e => update(i, { image: e.target.value })}
               placeholder='URL ảnh'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <Input
               value={coin.url ?? ''}
               onChange={e => update(i, { url: e.target.value })}
               placeholder='Link mint.ca (tuỳ chọn)'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -3663,14 +3666,14 @@ function MintV2ServicesItemsControls({
         {items.map((item, i) => (
           <div
             key={item.key || i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={item.label ?? ''}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Nhãn'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
@@ -3680,7 +3683,7 @@ function MintV2ServicesItemsControls({
                   remove(i);
                 }}
                 aria-label={`Xoá mục ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -3689,7 +3692,7 @@ function MintV2ServicesItemsControls({
               value={item.caption ?? ''}
               onChange={e => update(i, { caption: e.target.value })}
               placeholder='Caption'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <ImagePicker
               value={item.preview ?? ''}
@@ -3759,10 +3762,10 @@ function CoolHunterGalleryItemsControls({
         {items.map((item, i) => (
           <div
             key={`ch-gallery-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center justify-between gap-2'>
-              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+              <span className='text-3xs font-semibold tracking-widest text-[var(--pv2-mut)] uppercase'>
                 Ảnh {i + 1}
               </span>
               <button
@@ -3774,7 +3777,7 @@ function CoolHunterGalleryItemsControls({
                 }}
                 disabled={items.length <= 1}
                 aria-label={`Xoá ảnh ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)] disabled:cursor-not-allowed disabled:opacity-40'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -3787,14 +3790,14 @@ function CoolHunterGalleryItemsControls({
               value={item.imageAlt ?? ''}
               onChange={e => update(i, { imageAlt: e.target.value })}
               placeholder='Alt ảnh'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <Textarea
               value={item.text ?? ''}
               onChange={e => update(i, { text: e.target.value })}
               placeholder='Caption'
               rows={3}
-              className='min-h-0 border-neutral-200 bg-white text-xs'
+              className='min-h-0 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -3854,10 +3857,10 @@ function AlturaOlympusImagesControls({
         {images.map((url, i) => (
           <div
             key={`altura-img-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center justify-between gap-2'>
-              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+              <span className='text-3xs font-semibold tracking-widest text-[var(--pv2-mut)] uppercase'>
                 {i === 0 ? 'Ảnh 1 · Cover' : `Ảnh ${i + 1}`}
               </span>
               <button
@@ -3869,7 +3872,7 @@ function AlturaOlympusImagesControls({
                 }}
                 disabled={images.length <= 2}
                 aria-label={`Xoá ảnh ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)] disabled:cursor-not-allowed disabled:opacity-40'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -3942,14 +3945,14 @@ function AlturaOlympusFeaturesControls({
           return (
             <div
               key={`altura-feat-${i}`}
-              className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+              className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
             >
               <div className='flex items-center gap-2'>
                 <select
                   value={iconValue}
                   onChange={e => update(i, { icon: e.target.value })}
                   aria-label={`Icon feature ${i + 1}`}
-                  className='h-7 flex-1 rounded border border-neutral-200 bg-white px-2 text-xs text-neutral-700'
+                  className='h-7 flex-1 rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 text-xs text-[var(--pv2-ink)]'
                 >
                   {!ALTURA_OLYMPUS_ICON_OPTIONS.includes(
                     iconValue as (typeof ALTURA_OLYMPUS_ICON_OPTIONS)[number]
@@ -3970,7 +3973,7 @@ function AlturaOlympusFeaturesControls({
                   }}
                   disabled={features.length <= 1}
                   aria-label={`Xoá feature ${i + 1}`}
-                  className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+                  className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)] disabled:cursor-not-allowed disabled:opacity-40'
                 >
                   <Trash2 className='size-3.5' />
                 </button>
@@ -3979,7 +3982,7 @@ function AlturaOlympusFeaturesControls({
                 value={feat.label ?? ''}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Nhãn feature'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
             </div>
           );
@@ -4048,14 +4051,14 @@ function TheGrandServiceItemsControls({
         {items.map((item, i) => (
           <div
             key={i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={item.label ?? ''}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Nhãn'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
@@ -4065,7 +4068,7 @@ function TheGrandServiceItemsControls({
                   remove(i);
                 }}
                 aria-label={`Xoá dịch vụ ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -4075,7 +4078,7 @@ function TheGrandServiceItemsControls({
               onChange={e => update(i, { description: e.target.value })}
               placeholder='Mô tả'
               rows={3}
-              className='border-neutral-200 bg-white text-xs'
+              className='border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <ImagePicker
               value={item.imageUrl ?? ''}
@@ -4147,14 +4150,14 @@ function TheGrandDiscoverItemsControls({
         {items.map((item, i) => (
           <div
             key={i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={item.label ?? ''}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Nhãn'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
@@ -4164,7 +4167,7 @@ function TheGrandDiscoverItemsControls({
                   remove(i);
                 }}
                 aria-label={`Xoá khu vực ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -4173,7 +4176,7 @@ function TheGrandDiscoverItemsControls({
               value={item.imageAlt ?? ''}
               onChange={e => update(i, { imageAlt: e.target.value })}
               placeholder='Mô tả ảnh (alt)'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <ImagePicker
               value={item.imageUrl ?? ''}
@@ -4246,14 +4249,14 @@ function TheGrandAboutPartnersControls({
         {partners.map((partner, i) => (
           <div
             key={i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={partner.name ?? ''}
                 onChange={e => update(i, { name: e.target.value })}
                 placeholder='Tên đơn vị'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
@@ -4263,7 +4266,7 @@ function TheGrandAboutPartnersControls({
                   remove(i);
                 }}
                 aria-label={`Xoá đối tác ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -4272,7 +4275,7 @@ function TheGrandAboutPartnersControls({
               value={partner.role ?? ''}
               onChange={e => update(i, { role: e.target.value })}
               placeholder='Vai trò'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <ImagePicker
               value={partner.logo ?? ''}
@@ -4335,14 +4338,14 @@ function TheGrandFooterPoliciesControls({
         {policies.map((policy, i) => (
           <div
             key={i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={policy.label ?? ''}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Nhãn'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
@@ -4352,7 +4355,7 @@ function TheGrandFooterPoliciesControls({
                   remove(i);
                 }}
                 aria-label={`Xoá chính sách ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -4361,7 +4364,7 @@ function TheGrandFooterPoliciesControls({
               value={policy.href ?? ''}
               onChange={e => update(i, { href: e.target.value })}
               placeholder='Link (vd /chinh-sach-bao-mat)'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -4418,7 +4421,7 @@ function TheGrandFooterSocialsControls({
         {socials.map((social, i) => (
           <div
             key={i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               {/* Platform chọn glyph SVG — options từ SOCIAL_ICON_MAP. */}
@@ -4429,7 +4432,7 @@ function TheGrandFooterSocialsControls({
                     platform: e.target.value as TheGrandFooterSocialPlatform,
                   })
                 }
-                className='h-8 flex-1 rounded border border-neutral-200 bg-white px-2 text-xs text-neutral-700'
+                className='h-8 flex-1 rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 text-xs text-[var(--pv2-ink)]'
               >
                 {SOCIAL_PLATFORM_OPTIONS.map(opt => (
                   <option key={opt} value={opt}>
@@ -4445,7 +4448,7 @@ function TheGrandFooterSocialsControls({
                   remove(i);
                 }}
                 aria-label={`Xoá social ${i + 1}`}
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -4454,13 +4457,13 @@ function TheGrandFooterSocialsControls({
               value={social.href ?? ''}
               onChange={e => update(i, { href: e.target.value })}
               placeholder='Link (vd https://facebook.com/…)'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <Input
               value={social.label ?? ''}
               onChange={e => update(i, { label: e.target.value })}
               placeholder='Nhãn trợ năng (rỗng → tên nền tảng)'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -4517,27 +4520,27 @@ function PnjHotspotsControls({
     >
       <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
         {hotspots.length === 0 ? (
-          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+          <p className='text-2xs rounded-md border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-4 text-center text-[var(--pv2-mut)]'>
             Chưa có hotspot — block chỉ scrub frame, không drawer.
           </p>
         ) : null}
         {hotspots.map((h, i) => (
           <div
             key={h.key || i}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={h.label}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Tiêu đề hotspot'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
                 onClick={() => remove(i)}
                 aria-label='Xoá hotspot'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -4546,16 +4549,16 @@ function PnjHotspotsControls({
               value={h.desc}
               onChange={e => update(i, { desc: e.target.value })}
               placeholder='Mô tả'
-              className='min-h-16 resize-none border-neutral-200 bg-white text-xs'
+              className='min-h-16 resize-none border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <Input
               value={h.img}
               onChange={e => update(i, { img: e.target.value })}
               placeholder='URL ảnh trong drawer'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <div className='flex items-center gap-2'>
-              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-[var(--pv2-mut)]'>
                 Dot X%
                 <Input
                   type='number'
@@ -4563,10 +4566,10 @@ function PnjHotspotsControls({
                   max={100}
                   value={h.dotX}
                   onChange={e => update(i, { dotX: Number(e.target.value) })}
-                  className='h-8 border-neutral-200 bg-white text-xs'
+                  className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
                 />
               </label>
-              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-[var(--pv2-mut)]'>
                 Dot Y%
                 <Input
                   type='number'
@@ -4574,7 +4577,7 @@ function PnjHotspotsControls({
                   max={100}
                   value={h.dotY}
                   onChange={e => update(i, { dotY: Number(e.target.value) })}
-                  className='h-8 border-neutral-200 bg-white text-xs'
+                  className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
                 />
               </label>
             </div>
@@ -4668,7 +4671,7 @@ function PnjFramesJsonControls({
       preview={`${resolved.desktop.total} · ${resolved.mobile.total}${isCustom ? '' : ' (mặc định)'}`}
       width={520}
     >
-      <p className='text-2xs mb-2 text-neutral-500'>
+      <p className='text-2xs mb-2 text-[var(--pv2-mut)]'>
         Object JSON — desktop/mobile: total + prefix (URL tới frame-001.webp =
         prefix + 001 + ext). Để trống / Reset = PNJ mặc định.
       </p>
@@ -4681,11 +4684,11 @@ function PnjFramesJsonControls({
         placeholder={PNJ_FRAMES_HINT}
         spellCheck={false}
         data-lenis-prevent
-        className='field-sizing-fixed h-64 max-h-[50vh] min-h-0 resize-y overflow-y-auto overscroll-contain border-neutral-200 bg-white font-mono text-[11px] leading-relaxed'
+        className='field-sizing-fixed h-64 max-h-[50vh] min-h-0 resize-y overflow-y-auto overscroll-contain border-[var(--pv2-hair)] bg-[var(--pv2-paper)] font-mono text-[11px] leading-relaxed'
         aria-label='Frames JSON'
       />
       {error && (
-        <p className='text-2xs mt-1.5 text-rose-600' role='alert'>
+        <p className='text-2xs mt-1.5 text-[var(--pv2-error)]' role='alert'>
           {error}
         </p>
       )}
@@ -4693,7 +4696,7 @@ function PnjFramesJsonControls({
         <button
           type='button'
           onClick={handleApply}
-          className='flex h-8 w-full cursor-pointer items-center justify-center rounded-md bg-neutral-900 text-xs font-medium text-white transition-colors hover:bg-neutral-800'
+          className='flex h-8 w-full cursor-pointer items-center justify-center rounded-md bg-[var(--pv2-electric)] text-xs font-medium text-[var(--pv2-paper)] transition-colors hover:bg-[var(--pv2-electric-hover)]'
         >
           Áp dụng JSON
         </button>
@@ -4701,14 +4704,14 @@ function PnjFramesJsonControls({
           <button
             type='button'
             onClick={handleLoadMintExample}
-            className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-50 text-xs font-medium text-neutral-700 ring-1 ring-neutral-200/70 transition-colors hover:bg-white'
+            className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-[var(--pv2-canvas)] text-xs font-medium text-[var(--pv2-ink)] ring-1 ring-[var(--pv2-hair)] transition-colors hover:bg-[var(--pv2-paper)]'
           >
             Mẫu Mint CDN
           </button>
           <button
             type='button'
             onClick={handleReset}
-            className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-50 text-xs font-medium text-neutral-700 ring-1 ring-neutral-200/70 transition-colors hover:bg-white'
+            className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-[var(--pv2-canvas)] text-xs font-medium text-[var(--pv2-ink)] ring-1 ring-[var(--pv2-hair)] transition-colors hover:bg-[var(--pv2-paper)]'
           >
             Reset PNJ mặc định
           </button>
@@ -4765,27 +4768,27 @@ function DelvauxHotspotsControls({
     >
       <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
         {hotspots.length === 0 ? (
-          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+          <p className='text-2xs rounded-md border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-4 text-center text-[var(--pv2-mut)]'>
             Chưa có hotspot — thêm điểm trên ảnh sản phẩm.
           </p>
         ) : null}
         {hotspots.map((h, i) => (
           <div
             key={`dvx-hs-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={h.title}
                 onChange={e => update(i, { title: e.target.value })}
                 placeholder='Tiêu đề hotspot'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
                 onClick={() => remove(i)}
                 aria-label='Xoá hotspot'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -4794,10 +4797,10 @@ function DelvauxHotspotsControls({
               value={h.desc}
               onChange={e => update(i, { desc: e.target.value })}
               placeholder='Mô tả'
-              className='min-h-16 resize-none border-neutral-200 bg-white text-xs'
+              className='min-h-16 resize-none border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
             <div className='flex items-center gap-2'>
-              <label className='text-2xs flex items-center gap-1 text-neutral-500'>
+              <label className='text-2xs flex items-center gap-1 text-[var(--pv2-mut)]'>
                 Loại
                 <select
                   value={h.mediaType}
@@ -4806,7 +4809,7 @@ function DelvauxHotspotsControls({
                       mediaType: e.target.value === 'video' ? 'video' : 'image',
                     })
                   }
-                  className='h-8 rounded-md border border-neutral-200 bg-white px-1.5 text-xs text-neutral-800'
+                  className='h-8 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-1.5 text-xs text-[var(--pv2-ink)]'
                   aria-label={`Media type hotspot ${i + 1}`}
                 >
                   <option value='image'>Ảnh</option>
@@ -4824,11 +4827,11 @@ function DelvauxHotspotsControls({
                 value={h.mediaUrl}
                 onChange={e => update(i, { mediaUrl: e.target.value })}
                 placeholder='URL video'
-                className='h-8 border-neutral-200 bg-white text-xs'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
               />
             )}
             <div className='flex items-center gap-2'>
-              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-[var(--pv2-mut)]'>
                 Dot X%
                 <Input
                   type='number'
@@ -4836,10 +4839,10 @@ function DelvauxHotspotsControls({
                   max={100}
                   value={h.x}
                   onChange={e => update(i, { x: Number(e.target.value) })}
-                  className='h-8 border-neutral-200 bg-white text-xs'
+                  className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
                 />
               </label>
-              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-[var(--pv2-mut)]'>
                 Dot Y%
                 <Input
                   type='number'
@@ -4847,7 +4850,7 @@ function DelvauxHotspotsControls({
                   max={100}
                   value={h.y}
                   onChange={e => update(i, { y: Number(e.target.value) })}
-                  className='h-8 border-neutral-200 bg-white text-xs'
+                  className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
                 />
               </label>
             </div>
@@ -4902,27 +4905,27 @@ function DelvauxSubnavLinksControls({
     >
       <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
         {links.length === 0 ? (
-          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+          <p className='text-2xs rounded-md border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-4 text-center text-[var(--pv2-mut)]'>
             Chưa có link — thêm anchor tới section id.
           </p>
         ) : null}
         {links.map((l, i) => (
           <div
             key={`dvx-nav-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={l.label}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Nhãn'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
                 onClick={() => remove(i)}
                 aria-label='Xoá link'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -4931,7 +4934,7 @@ function DelvauxSubnavLinksControls({
               value={l.targetId}
               onChange={e => update(i, { targetId: e.target.value })}
               placeholder='Section id (vd: description)'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -4978,27 +4981,27 @@ function AesthaNavLinksControls({
     >
       <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
         {links.length === 0 ? (
-          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+          <p className='text-2xs rounded-md border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-4 text-center text-[var(--pv2-mut)]'>
             Chưa có link — thêm mục nav ở chân cột trái.
           </p>
         ) : null}
         {links.map((l, i) => (
           <div
             key={`aestha-nav-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={l.label}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Nhãn'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
                 onClick={() => remove(i)}
                 aria-label='Xoá link'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -5007,7 +5010,7 @@ function AesthaNavLinksControls({
               value={l.href}
               onChange={e => update(i, { href: e.target.value })}
               placeholder='Link (vd: /projects)'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -5138,7 +5141,7 @@ function AesthaExploreProjectsControls({
     >
       <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
         {projects.length === 0 ? (
-          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+          <p className='text-2xs rounded-md border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-4 text-center text-[var(--pv2-mut)]'>
             Chưa có dự án — thêm mục vào menu EXPLORE.
           </p>
         ) : null}
@@ -5149,20 +5152,20 @@ function AesthaExploreProjectsControls({
           return (
             <div
               key={`explore-proj-${i}`}
-              className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+              className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
             >
               <div className='flex items-center gap-2'>
                 <Input
                   value={p.label}
                   onChange={e => update(i, { label: e.target.value })}
                   placeholder='Nhãn'
-                  className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                  className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
                 />
                 <button
                   type='button'
                   onClick={() => remove(i)}
                   aria-label='Xoá dự án'
-                  className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                  className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
                 >
                   <Trash2 className='size-3.5' />
                 </button>
@@ -5171,52 +5174,52 @@ function AesthaExploreProjectsControls({
                 value={p.img}
                 onChange={e => update(i, { img: e.target.value })}
                 placeholder='URL ảnh featured'
-                className='h-8 border-neutral-200 bg-white text-xs'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
               />
               <Input
                 value={p.href}
                 onChange={e => update(i, { href: e.target.value })}
                 placeholder='Link (vd: /projects/haus-loma)'
-                className='h-8 border-neutral-200 bg-white text-xs'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
               />
 
               {/* Ảnh chi tiết (detail.images) — thêm/xoá tuỳ ý */}
-              <div className='mt-1 flex flex-col gap-1 rounded border border-dashed border-neutral-200 bg-neutral-50/60 p-1.5'>
+              <div className='mt-1 flex flex-col gap-1 rounded border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] p-1.5'>
                 <div className='flex items-center justify-between px-0.5'>
-                  <span className='text-2xs font-medium tracking-wide text-neutral-500 uppercase'>
+                  <span className='text-2xs font-medium tracking-wide text-[var(--pv2-mut)] uppercase'>
                     Ảnh chi tiết ({detailImages.length})
                   </span>
                   <button
                     type='button'
                     onClick={() => addImage(i)}
                     aria-label='Thêm ảnh chi tiết'
-                    className='text-2xs flex h-6 cursor-pointer items-center gap-1 rounded px-1.5 font-medium text-neutral-600 hover:bg-white hover:text-neutral-900'
+                    className='text-2xs flex h-6 cursor-pointer items-center gap-1 rounded px-1.5 font-medium text-[var(--pv2-mut)] hover:bg-[var(--pv2-paper)] hover:text-[var(--pv2-ink)]'
                   >
                     <Plus className='size-3' />
                     Thêm ảnh
                   </button>
                 </div>
                 {detailImages.length === 0 ? (
-                  <p className='text-2xs rounded border border-dashed border-neutral-200 bg-white px-2 py-2 text-center text-neutral-400'>
+                  <p className='text-2xs rounded border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 py-2 text-center text-[var(--pv2-faint)]'>
                     Chưa có ảnh — bấm Thêm ảnh.
                   </p>
                 ) : null}
                 {detailImages.map((img, k) => (
                   <div
                     key={`explore-proj-${i}-img-${k}`}
-                    className='flex items-center gap-1.5 rounded border border-neutral-200 bg-white p-1.5'
+                    className='flex items-center gap-1.5 rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-1.5'
                   >
                     <Input
                       value={img.src}
                       onChange={e => updateImage(i, k, { src: e.target.value })}
                       placeholder={`URL ảnh ${k + 1}`}
-                      className='text-2xs h-7 border-neutral-200 bg-white'
+                      className='text-2xs h-7 border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'
                     />
                     <button
                       type='button'
                       onClick={() => removeImage(i, k)}
                       aria-label={`Xoá ảnh ${k + 1}`}
-                      className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-rose-500 hover:bg-rose-50'
+                      className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
                     >
                       <Trash2 className='size-3' />
                     </button>
@@ -5285,7 +5288,7 @@ function AesthaExploreProjectImagesControls({
   if (!project) {
     return (
       <PopoverTrigger label='Ảnh chi tiết' preview='—' width={420}>
-        <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+        <p className='text-2xs rounded-md border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-4 text-center text-[var(--pv2-mut)]'>
           Không tìm thấy dự án.
         </p>
       </PopoverTrigger>
@@ -5300,26 +5303,26 @@ function AesthaExploreProjectImagesControls({
     >
       <div className='flex max-h-80 flex-col gap-1.5 overflow-y-auto pr-1'>
         {images.length === 0 ? (
-          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+          <p className='text-2xs rounded-md border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-4 text-center text-[var(--pv2-mut)]'>
             Chưa có ảnh — bấm Thêm ảnh.
           </p>
         ) : null}
         {images.map((img, k) => (
           <div
             key={`proj-${projectIndex}-img-${k}`}
-            className='flex items-center gap-1.5 rounded border border-neutral-200 bg-white p-1.5'
+            className='flex items-center gap-1.5 rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-1.5'
           >
             <Input
               value={img.src}
               onChange={e => updateImage(k, { src: e.target.value })}
               placeholder={`URL ảnh ${k + 1}`}
-              className='text-2xs h-7 border-neutral-200 bg-white'
+              className='text-2xs h-7 border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'
             />
             <button
               type='button'
               onClick={() => removeImage(k)}
               aria-label={`Xoá ảnh ${k + 1}`}
-              className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-rose-500 hover:bg-rose-50'
+              className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
             >
               <Trash2 className='size-3' />
             </button>
@@ -5366,27 +5369,27 @@ function AesthaStudioTeamControls({
     >
       <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
         {team.length === 0 ? (
-          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+          <p className='text-2xs rounded-md border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-4 text-center text-[var(--pv2-mut)]'>
             Chưa có thành viên — thêm mục vào danh sách team.
           </p>
         ) : null}
         {team.map((mbr, i) => (
           <div
             key={`studio-member-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={mbr.name}
                 onChange={e => update(i, { name: e.target.value })}
                 placeholder='Tên'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
                 onClick={() => remove(i)}
                 aria-label='Xoá thành viên'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -5395,7 +5398,7 @@ function AesthaStudioTeamControls({
               value={mbr.role}
               onChange={e => update(i, { role: e.target.value })}
               placeholder='Vai trò (vd: Interior Stylist)'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -5440,27 +5443,27 @@ function AesthaContactSocialsControls({
     >
       <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
         {socials.length === 0 ? (
-          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+          <p className='text-2xs rounded-md border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-4 text-center text-[var(--pv2-mut)]'>
             Chưa có social — thêm mục mạng xã hội.
           </p>
         ) : null}
         {socials.map((s, i) => (
           <div
             key={`contact-social-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={s.label}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Nhãn (vd: Instagram)'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
                 onClick={() => remove(i)}
                 aria-label='Xoá social'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -5469,7 +5472,7 @@ function AesthaContactSocialsControls({
               value={s.href}
               onChange={e => update(i, { href: e.target.value })}
               placeholder='Link (vd: https://instagram.com/…)'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -5524,27 +5527,27 @@ function DelvauxVariantsControls({
     >
       <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
         {variants.length === 0 ? (
-          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+          <p className='text-2xs rounded-md border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-4 text-center text-[var(--pv2-mut)]'>
             Chưa có màu — thêm biến thể swatch.
           </p>
         ) : null}
         {variants.map((v, i) => (
           <div
             key={`dvx-var-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={v.label}
                 onChange={e => update(i, { label: e.target.value })}
                 placeholder='Nhãn màu'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
                 onClick={() => remove(i)}
                 aria-label='Xoá màu'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -5554,13 +5557,13 @@ function DelvauxVariantsControls({
                 value={v.ref}
                 onChange={e => update(i, { ref: e.target.value })}
                 placeholder='REF'
-                className='h-8 flex-1 border-neutral-200 bg-white text-xs'
+                className='h-8 flex-1 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
               />
               <Input
                 value={v.color}
                 onChange={e => update(i, { color: e.target.value })}
                 placeholder='#hex'
-                className='h-8 w-24 border-neutral-200 bg-white text-xs'
+                className='h-8 w-24 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
                 aria-label={`Màu swatch ${i + 1}`}
               />
             </div>
@@ -5568,7 +5571,7 @@ function DelvauxVariantsControls({
               value={v.imageUrl}
               onChange={e => update(i, { imageUrl: e.target.value })}
               placeholder='URL ảnh sản phẩm'
-              className='h-8 border-neutral-200 bg-white text-xs'
+              className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -5615,27 +5618,27 @@ function DelvauxFaqsControls({
     <PopoverTrigger label='FAQ' preview={`${faqs.length} mục`} width={460}>
       <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
         {faqs.length === 0 ? (
-          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+          <p className='text-2xs rounded-md border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-4 text-center text-[var(--pv2-mut)]'>
             Chưa có FAQ — thêm câu hỏi / trả lời.
           </p>
         ) : null}
         {faqs.map((f, i) => (
           <div
             key={`dvx-faq-${i}`}
-            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            className='flex flex-col gap-1.5 rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-2'
           >
             <div className='flex items-center gap-2'>
               <Input
                 value={f.question}
                 onChange={e => update(i, { question: e.target.value })}
                 placeholder='Câu hỏi'
-                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+                className='h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs font-semibold'
               />
               <button
                 type='button'
                 onClick={() => remove(i)}
                 aria-label='Xoá FAQ'
-                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-error)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)]'
               >
                 <Trash2 className='size-3.5' />
               </button>
@@ -5644,7 +5647,7 @@ function DelvauxFaqsControls({
               value={f.answer}
               onChange={e => update(i, { answer: e.target.value })}
               placeholder='Trả lời'
-              className='min-h-16 resize-none border-neutral-200 bg-white text-xs'
+              className='min-h-16 resize-none border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
             />
           </div>
         ))}
@@ -5785,12 +5788,12 @@ function DelvauxFramesControls({
       preview={`${count || 0} frames${modeLabel}`}
       width={520}
     >
-      <p className='text-2xs mb-2 text-neutral-500'>
+      <p className='text-2xs mb-2 text-[var(--pv2-mut)]'>
         Lớp intro tua theo scroll sau khi ảnh khung fade. Dùng pattern URL có
         {' {i} '}hoặc dán JSON mảng URL (CDN uuid).
       </p>
 
-      <p className='text-2xs mb-1 font-medium text-neutral-700'>
+      <p className='text-2xs mb-1 font-medium text-[var(--pv2-ink)]'>
         Pattern nhanh
       </p>
       <Input
@@ -5800,7 +5803,7 @@ function DelvauxFramesControls({
           setError(null);
         }}
         placeholder='https://cdn.example.com/frame-{i}.jpg'
-        className='mb-1.5 h-8 border-neutral-200 bg-white font-mono text-[11px]'
+        className='mb-1.5 h-8 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] font-mono text-[11px]'
         aria-label='Frame URL pattern'
       />
       <div className='mb-2 flex gap-1.5'>
@@ -5812,19 +5815,19 @@ function DelvauxFramesControls({
             setFrameCount(e.target.value);
             setError(null);
           }}
-          className='h-8 w-24 border-neutral-200 bg-white text-xs'
+          className='h-8 w-24 border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs'
           aria-label='Số frame'
         />
         <button
           type='button'
           onClick={handleApplyPattern}
-          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-900 text-xs font-medium text-white transition-colors hover:bg-neutral-800'
+          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-[var(--pv2-electric)] text-xs font-medium text-[var(--pv2-paper)] transition-colors hover:bg-[var(--pv2-electric-hover)]'
         >
           Áp dụng pattern
         </button>
       </div>
 
-      <p className='text-2xs mb-1 font-medium text-neutral-700'>
+      <p className='text-2xs mb-1 font-medium text-[var(--pv2-ink)]'>
         JSON mảng URL
       </p>
       <Textarea
@@ -5835,11 +5838,11 @@ function DelvauxFramesControls({
         }}
         spellCheck={false}
         data-lenis-prevent
-        className='mb-2 field-sizing-fixed h-40 max-h-[40vh] min-h-0 resize-y overflow-y-auto overscroll-contain border-neutral-200 bg-white font-mono text-[11px] leading-relaxed'
+        className='mb-2 field-sizing-fixed h-40 max-h-[40vh] min-h-0 resize-y overflow-y-auto overscroll-contain border-[var(--pv2-hair)] bg-[var(--pv2-paper)] font-mono text-[11px] leading-relaxed'
         aria-label='Frames JSON array'
       />
       {error && (
-        <p className='text-2xs mb-2 text-rose-600' role='alert'>
+        <p className='text-2xs mb-2 text-[var(--pv2-error)]' role='alert'>
           {error}
         </p>
       )}
@@ -5847,14 +5850,14 @@ function DelvauxFramesControls({
         <button
           type='button'
           onClick={handleApplyJson}
-          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-900 text-xs font-medium text-white transition-colors hover:bg-neutral-800'
+          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-[var(--pv2-electric)] text-xs font-medium text-[var(--pv2-paper)] transition-colors hover:bg-[var(--pv2-electric-hover)]'
         >
           Áp dụng JSON
         </button>
         <button
           type='button'
           onClick={handleReset}
-          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-50 text-xs font-medium text-neutral-700 ring-1 ring-neutral-200/70 transition-colors hover:bg-white'
+          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-[var(--pv2-canvas)] text-xs font-medium text-[var(--pv2-ink)] ring-1 ring-[var(--pv2-hair)] transition-colors hover:bg-[var(--pv2-paper)]'
         >
           Reset mặc định
         </button>
@@ -5939,7 +5942,7 @@ function PnjScrimControls({
 
   return (
     <PopoverTrigger label='Lớp mờ' preview={preview} width={480}>
-      <p className='text-2xs mb-2 text-neutral-500'>
+      <p className='text-2xs mb-2 text-[var(--pv2-mut)]'>
         Preset nhanh hoặc JSON layers (background CSS + vị trí tùy chọn).
       </p>
       <div className='mb-2 flex flex-wrap gap-1.5'>
@@ -5953,8 +5956,8 @@ function PnjScrimControls({
               className={cn(
                 'h-7 cursor-pointer rounded-md px-2.5 text-[11px] font-medium transition-colors',
                 active
-                  ? 'bg-neutral-900 text-white'
-                  : 'bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200/70 hover:bg-white'
+                  ? 'bg-[var(--pv2-electric)] text-[var(--pv2-paper)]'
+                  : 'bg-[var(--pv2-canvas)] text-[var(--pv2-ink)] ring-1 ring-[var(--pv2-hair)] hover:bg-[var(--pv2-paper)]'
               )}
             >
               {PNJ_HERO_SCRIM_PRESET_LABELS[id]}
@@ -5970,11 +5973,11 @@ function PnjScrimControls({
         }}
         spellCheck={false}
         data-lenis-prevent
-        className='field-sizing-fixed h-48 max-h-[40vh] min-h-0 resize-y overflow-y-auto overscroll-contain border-neutral-200 bg-white font-mono text-[11px] leading-relaxed'
+        className='field-sizing-fixed h-48 max-h-[40vh] min-h-0 resize-y overflow-y-auto overscroll-contain border-[var(--pv2-hair)] bg-[var(--pv2-paper)] font-mono text-[11px] leading-relaxed'
         aria-label='Scrim layers JSON'
       />
       {error && (
-        <p className='text-2xs mt-1.5 text-rose-600' role='alert'>
+        <p className='text-2xs mt-1.5 text-[var(--pv2-error)]' role='alert'>
           {error}
         </p>
       )}
@@ -5982,14 +5985,14 @@ function PnjScrimControls({
         <button
           type='button'
           onClick={handleApplyJson}
-          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-900 text-xs font-medium text-white transition-colors hover:bg-neutral-800'
+          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-[var(--pv2-electric)] text-xs font-medium text-[var(--pv2-paper)] transition-colors hover:bg-[var(--pv2-electric-hover)]'
         >
           Áp dụng JSON
         </button>
         <button
           type='button'
           onClick={handleReset}
-          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-neutral-50 text-xs font-medium text-neutral-700 ring-1 ring-neutral-200/70 transition-colors hover:bg-white'
+          className='flex h-8 flex-1 cursor-pointer items-center justify-center rounded-md bg-[var(--pv2-canvas)] text-xs font-medium text-[var(--pv2-ink)] ring-1 ring-[var(--pv2-hair)] transition-colors hover:bg-[var(--pv2-paper)]'
         >
           Reset PNJ
         </button>
@@ -6029,9 +6032,9 @@ function AiButton({
           type='button'
           aria-label='AI tạo nội dung'
           title='AI tạo nội dung'
-          className='flex h-7 cursor-pointer items-center gap-1 rounded-md bg-neutral-900 px-2.5 text-[10px] font-semibold tracking-wide text-white transition-colors hover:bg-neutral-800'
+          className='flex h-7 cursor-pointer items-center gap-1 rounded-md bg-[var(--pv2-electric)] px-2.5 text-[10px] font-semibold tracking-wide text-[var(--pv2-paper)] transition-colors hover:bg-[var(--pv2-electric-hover)]'
         >
-          <Sparkles className='size-3.5 text-sky-300' />
+          <Sparkles className='size-3.5 text-[var(--pv2-cyan)]' />
           AI
         </button>
       </Popover.Trigger>
@@ -6039,14 +6042,14 @@ function AiButton({
         <Popover.Content
           align='end'
           sideOffset={8}
-          className='z-50 w-80 rounded-lg border border-neutral-200/80 bg-white p-3 shadow-[0_8px_24px_rgba(0,0,0,0.08),0_2px_4px_rgba(0,0,0,0.04)] outline-none'
+          className='z-50 w-80 rounded-lg border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-3 shadow-[var(--pv2-sh-soft)] outline-none'
         >
           <div className='mb-2 flex items-center gap-2'>
             <Sparkles className='size-3 text-violet-500' />
-            <span className='text-3xs font-semibold tracking-[0.16em] text-neutral-700 uppercase'>
+            <span className='text-3xs font-semibold tracking-[0.16em] text-[var(--pv2-ink)] uppercase'>
               AI tạo nội dung
             </span>
-            <span className='text-3xs ml-auto font-mono tracking-tight text-neutral-400'>
+            <span className='text-3xs ml-auto font-mono tracking-tight text-[var(--pv2-faint)]'>
               {blockType.replace('_', ' ')}
             </span>
           </div>
@@ -6061,17 +6064,17 @@ function AiButton({
               }
             }}
             placeholder='Mô tả gì bạn muốn AI viết… (⌘+Enter để gửi)'
-            className='min-h-20 resize-none border-neutral-200 bg-white text-xs leading-5'
+            className='min-h-20 resize-none border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-xs leading-5'
           />
           <div className='mt-2 flex items-center justify-between'>
-            <span className='text-3xs font-mono tracking-tight text-neutral-400'>
+            <span className='text-3xs font-mono tracking-tight text-[var(--pv2-faint)]'>
               ⌘ Enter
             </span>
             <button
               type='button'
               onClick={() => void submit()}
               disabled={busy}
-              className='text-2xs flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-neutral-900 px-3 font-semibold tracking-tight text-white transition-colors hover:bg-neutral-700 disabled:opacity-50'
+              className='text-2xs flex h-7 cursor-pointer items-center gap-1.5 rounded-md bg-[var(--pv2-electric)] px-3 font-semibold tracking-tight text-[var(--pv2-paper)] transition-colors hover:bg-[var(--pv2-electric-hover)] disabled:opacity-50'
             >
               {busy ? (
                 <>
@@ -6118,27 +6121,31 @@ function PopoverTrigger({
           className={cn(
             'flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2.5 text-[11px] font-medium transition-colors',
             primary
-              ? 'bg-neutral-900 text-white hover:bg-neutral-800'
-              : 'bg-neutral-50 text-neutral-700 ring-1 ring-neutral-200/70 hover:bg-white hover:text-neutral-900 hover:ring-neutral-300'
+              ? 'bg-[var(--pv2-electric)] text-[var(--pv2-paper)] hover:bg-[var(--pv2-electric-hover)]'
+              : 'bg-[var(--pv2-canvas)] text-[var(--pv2-ink)] ring-1 ring-[var(--pv2-hair)] hover:bg-[var(--pv2-paper)] hover:text-[var(--pv2-ink)] hover:ring-[var(--pv2-slate-300)]'
           )}
         >
           {icon ? (
             <span
               className={cn(
                 'shrink-0',
-                primary ? 'text-white/80' : 'text-neutral-500'
+                primary ? 'text-[var(--pv2-paper)]/80' : 'text-[var(--pv2-mut)]'
               )}
             >
               {icon}
             </span>
           ) : null}
-          <span className={cn(primary ? 'text-white' : 'text-neutral-800')}>
+          <span
+            className={cn(
+              primary ? 'text-[var(--pv2-paper)]' : 'text-[var(--pv2-ink)]'
+            )}
+          >
             {label}
           </span>
           <span
             className={cn(
               'max-w-[9rem] truncate text-[11px]',
-              primary ? 'text-white/55' : 'text-neutral-400'
+              primary ? 'text-[var(--pv2-paper)]/55' : 'text-[var(--pv2-faint)]'
             )}
           >
             {preview}
@@ -6146,7 +6153,7 @@ function PopoverTrigger({
           <ChevronDown
             className={cn(
               'size-3.5 shrink-0',
-              primary ? 'text-white/50' : 'text-neutral-400'
+              primary ? 'text-[var(--pv2-paper)]/50' : 'text-[var(--pv2-faint)]'
             )}
           />
         </button>
@@ -6156,7 +6163,7 @@ function PopoverTrigger({
           align='start'
           sideOffset={10}
           style={{ width }}
-          className='z-50 flex flex-col gap-2.5 rounded-xl border border-neutral-200/80 bg-white p-3.5 shadow-[0_12px_40px_rgba(15,15,15,0.1),0_2px_6px_rgba(15,15,15,0.04)] outline-none'
+          className='z-50 flex flex-col gap-2.5 rounded-xl border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-3.5 shadow-[var(--pv2-sh-soft)] outline-none'
         >
           {children}
         </Popover.Content>
@@ -6182,9 +6189,9 @@ function ToolbarBtn({
       aria-label={label}
       aria-pressed={active}
       className={cn(
-        'flex size-7 cursor-pointer items-center justify-center rounded-md text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900',
+        'flex size-7 cursor-pointer items-center justify-center rounded-md text-[var(--pv2-mut)] transition-colors hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)]',
         active &&
-          'bg-neutral-900 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:bg-neutral-900 hover:text-white',
+          'bg-[var(--pv2-electric)] text-[var(--pv2-paper)] hover:bg-[var(--pv2-electric-hover)] hover:text-[var(--pv2-paper)]',
         className
       )}
       {...props}
@@ -6203,7 +6210,7 @@ function AddRow({ onAdd, label }: { onAdd: () => void; label: string }) {
         e.stopPropagation();
         onAdd();
       }}
-      className='flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-neutral-300 py-2 text-xs font-medium text-neutral-500 hover:border-neutral-900 hover:text-neutral-900'
+      className='flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-dashed border-[var(--pv2-hair)] py-2 text-xs font-medium text-[var(--pv2-mut)] hover:border-[var(--pv2-electric)] hover:text-[var(--pv2-electric)]'
     >
       <Plus className='size-3.5' />
       {label}
@@ -6212,7 +6219,7 @@ function AddRow({ onAdd, label }: { onAdd: () => void; label: string }) {
 }
 
 function Sep() {
-  return <div className='mx-0.5 h-5 w-px shrink-0 bg-neutral-200/90' />;
+  return <div className='mx-0.5 h-5 w-px shrink-0 bg-[var(--pv2-hair)]' />;
 }
 
 function InlineLabel({
@@ -6224,7 +6231,7 @@ function InlineLabel({
 }) {
   return (
     <span className='flex items-center gap-2'>
-      <span className='text-[10px] font-medium tracking-[0.06em] text-neutral-400 uppercase'>
+      <span className='text-[10px] font-medium tracking-[0.06em] text-[var(--pv2-faint)] uppercase'>
         {label}
       </span>
       {children}
@@ -6317,7 +6324,7 @@ function ColorSwatch({
       className='flex h-7 items-center gap-1.5 rounded-md px-1.5'
       title={`${label} — token thương hiệu hoặc mã màu`}
     >
-      <span className='text-3xs font-mono tracking-[0.08em] text-neutral-400 uppercase'>
+      <span className='text-3xs font-mono tracking-[0.08em] text-[var(--pv2-faint)] uppercase'>
         {label}
       </span>
       <div className='flex items-center gap-1'>
@@ -6332,14 +6339,17 @@ function ColorSwatch({
               aria-label={`${label}: ${role.label}`}
               className={cn(
                 'size-4 rounded-sm ring-1 ring-black/10 transition',
-                selected && 'ring-2 ring-sky-500 ring-offset-1'
+                selected && 'ring-2 ring-[var(--pv2-electric)] ring-offset-1'
               )}
               style={{ backgroundColor: previewColor(role.key) }}
             />
           );
         })}
       </div>
-      <span className='mx-0.5 h-4 w-px shrink-0 bg-neutral-200' aria-hidden />
+      <span
+        className='mx-0.5 h-4 w-px shrink-0 bg-[var(--pv2-hair)]'
+        aria-hidden
+      />
       <label className='relative size-4 shrink-0 cursor-pointer overflow-hidden rounded-sm ring-1 ring-black/10'>
         <span
           className='pointer-events-none absolute inset-0'
@@ -6375,9 +6385,9 @@ function ColorSwatch({
         aria-label={`${label}: mã màu`}
         aria-invalid={hexError}
         className={cn(
-          'h-6 w-[5.5rem] border-neutral-200 bg-white px-1.5 font-mono text-[10px] tracking-tight',
-          isCustom && 'ring-1 ring-sky-400/60',
-          hexError && 'border-rose-400 text-rose-600'
+          'h-6 w-[5.5rem] border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-1.5 font-mono text-[10px] tracking-tight',
+          isCustom && 'ring-1 ring-[var(--pv2-electric)]/60',
+          hexError && 'border-[var(--pv2-error)] text-[var(--pv2-error)]'
         )}
       />
     </div>

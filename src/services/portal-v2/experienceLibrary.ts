@@ -1,3 +1,4 @@
+import { enrichPagesWithThumbnailUrls } from '@/lib/pages/resolve-thumbnails';
 import { mapPageToExperience } from '@/lib/portal-v2/experiences/mapPage';
 import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
 import { rexerApi } from '@/services/rexer/endpoints';
@@ -44,7 +45,11 @@ export const fetchExperienceLibrary = async (
       ...(q ? { q } : {}),
     });
 
-    return { items: (res.items ?? []).map(mapPageToExperience), error: null };
+    // BE list page trả `thumbnail_asset_id` chứ không resolve `thumbnail_url`
+    // → batch-resolve qua media trước khi map, giống admin landing list.
+    const pages = await enrichPagesWithThumbnailUrls(res.items ?? []);
+
+    return { items: pages.map(mapPageToExperience), error: null };
   } catch (err) {
     return {
       items: [],

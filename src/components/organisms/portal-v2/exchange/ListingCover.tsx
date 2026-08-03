@@ -4,6 +4,7 @@ import { Eye } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import type { ExchangeListingView } from '@/lib/portal-v2/exchange/types';
+import { BlockMiniPreview } from '@/components/modules/block-editor/BlockMiniPreview';
 import { cn } from '@/lib/cn';
 
 type ListingCoverProps = {
@@ -83,6 +84,16 @@ export const ListingCover = ({
           alt=''
           className='absolute inset-0 size-full object-cover'
         />
+      ) : listing.editorBlock ? (
+        // Live mini preview rendered from block settings — same as
+        // /admin/blocks cards. Content is top-left cropped to the cover.
+        <div className='pointer-events-none absolute inset-0' aria-hidden>
+          <BlockMiniPreview
+            block={listing.editorBlock}
+            aspect='auto'
+            className='size-full'
+          />
+        </div>
       ) : (
         <GeneratedThumb listing={listing} />
       )}

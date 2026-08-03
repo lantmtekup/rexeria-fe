@@ -1,3 +1,4 @@
+import { enrichPagesWithThumbnailUrls } from '@/lib/pages/resolve-thumbnails';
 import { mapBlockToListing } from '@/lib/portal-v2/exchange/mapBlock';
 import { mapLandingPageToListing } from '@/lib/portal-v2/exchange/mapPage';
 import type { ExchangeListingView } from '@/lib/portal-v2/exchange/types';
@@ -54,9 +55,12 @@ export const fetchExchangeCatalog = async (
 
   const pagesResult = settled[0];
   if (pagesResult.status === 'fulfilled') {
-    catalog.push(
-      ...(pagesResult.value.items ?? []).map(mapLandingPageToListing)
+    // BE list page chỉ có `thumbnail_asset_id` → resolve public_url trước khi
+    // map, nếu không card sẽ luôn rơi về cover generate.
+    const pages = await enrichPagesWithThumbnailUrls(
+      pagesResult.value.items ?? []
     );
+    catalog.push(...pages.map(mapLandingPageToListing));
   } else {
     const reason = pagesResult.reason;
     errors.push(

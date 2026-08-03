@@ -45,7 +45,12 @@ import { PortalShell } from '../../_shell';
 /* ─── Types ──────────────────────────────────────────────────────────── */
 
 type DomainStatus =
-  'pending' | 'verifying' | 'verified' | 'active' | 'failed' | 'disabled';
+  | 'pending'
+  | 'verifying'
+  | 'verified'
+  | 'active'
+  | 'failed'
+  | 'disabled';
 
 type TargetType = 'landing' | 'curate_cdn' | 'tracking';
 
