@@ -76,6 +76,15 @@ export type Product = {
   /** Asset id of the primary image — how this product is recognised. */
   cover: string | null;
   grad: string;
+  /**
+   * List price exactly as it is on file, currency and all ("$1,539.95 CAD").
+   * The BE row has no price column — a catalogue price arrives as a feature, see
+   * `priceTextFromBe`. Deliberately not a number: reformatting a scraped
+   * "1.250.000 ₫" through the module's `$`-prefixed template would misstate both
+   * the amount and the currency. Absent on prototype rows, which price properly
+   * through `variants[].price`.
+   */
+  priceText?: string;
   channels: string[];
   options: ProductOption[];
   variants: ProductVariant[];
@@ -90,6 +99,12 @@ export type ProductAsset = {
   name: string;
   kind: ProductAssetKind;
   grad: string;
+  /**
+   * Public CDN URL when the asset is a real file. Prototype assets are
+   * gradient-only, so `grad` stays the fallback — also what renders when the
+   * URL is dead.
+   */
+  url?: string;
   home: { scope: string; ref?: string };
 };
 

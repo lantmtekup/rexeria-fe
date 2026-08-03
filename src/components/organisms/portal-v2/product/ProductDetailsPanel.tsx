@@ -23,9 +23,11 @@ import {
   TextTextarea,
 } from '@/components/molecules/portal-v2/brand-form';
 import {
+  Hint,
   KvRow,
   SectionBox,
 } from '@/components/molecules/portal-v2/product-form';
+import { ProductImage } from '@/components/molecules/portal-v2/product-image';
 import { cn } from '@/lib/cn';
 import {
   PRODUCT_CHANNELS,
@@ -155,7 +157,7 @@ export const ProductDetailsPanel = ({
           {editing ? (
             <div className='grid items-start gap-3.5 sm:grid-cols-[132px_minmax(0,1fr)]'>
               <div
-                className='grid h-[132px] place-items-center overflow-hidden rounded-[var(--pv2-r)] px-3 text-center text-[var(--pv2-paper)]'
+                className='relative grid h-[132px] place-items-center overflow-hidden rounded-[var(--pv2-r)] px-3 text-center text-[var(--pv2-paper)]'
                 style={{
                   background: cover
                     ? cover.grad
@@ -164,17 +166,23 @@ export const ProductDetailsPanel = ({
                       : p.grad,
                 }}
               >
-                {cover ? (
-                  <AssetGlyph kind={cover.kind} size={42} />
-                ) : isNew ? (
-                  <span className='text-[11px] leading-snug font-semibold text-[var(--pv2-faint)]'>
-                    {t('addMediaThenPick')}
-                  </span>
-                ) : (
-                  <span className='font-[family-name:var(--pv2-disp)] text-[40px] font-bold'>
-                    {p.title[0] ?? '?'}
-                  </span>
-                )}
+                <ProductImage
+                  src={cover?.url}
+                  alt={p.title}
+                  className='bg-[var(--pv2-canvas)] object-contain'
+                >
+                  {cover ? (
+                    <AssetGlyph kind={cover.kind} size={42} />
+                  ) : isNew ? (
+                    <span className='text-[11px] leading-snug font-semibold text-[var(--pv2-faint)]'>
+                      {t('addMediaThenPick')}
+                    </span>
+                  ) : (
+                    <span className='font-[family-name:var(--pv2-disp)] text-[40px] font-bold'>
+                      {p.title[0] ?? '?'}
+                    </span>
+                  )}
+                </ProductImage>
               </div>
               <div>
                 <Eyebrow>{t('chooseFromMedia')}</Eyebrow>
@@ -201,7 +209,12 @@ export const ProductDetailsPanel = ({
                               )}
                               style={{ background: m.grad }}
                             >
-                              <AssetGlyph kind={m.kind} size={16} />
+                              <ProductImage
+                                src={m.url}
+                                className='rounded-[7px] object-cover'
+                              >
+                                <AssetGlyph kind={m.kind} size={16} />
+                              </ProductImage>
                               {on ? (
                                 <span className='absolute -top-1.5 -right-1.5 grid size-4 place-items-center rounded-full border-2 border-[var(--pv2-paper)] bg-[var(--pv2-ink)] text-[var(--pv2-paper)]'>
                                   <Check
@@ -229,16 +242,22 @@ export const ProductDetailsPanel = ({
           ) : (
             <div className='flex flex-wrap items-center gap-4'>
               <div
-                className='grid h-[132px] w-[132px] shrink-0 place-items-center overflow-hidden rounded-[var(--pv2-r)] text-[var(--pv2-paper)]'
+                className='relative grid h-[132px] w-[132px] shrink-0 place-items-center overflow-hidden rounded-[var(--pv2-r)] text-[var(--pv2-paper)]'
                 style={{ background: cover ? cover.grad : p.grad }}
               >
-                {cover ? (
-                  <AssetGlyph kind={cover.kind} size={42} />
-                ) : (
-                  <span className='font-[family-name:var(--pv2-disp)] text-[40px] font-bold'>
-                    {p.title[0] ?? '?'}
-                  </span>
-                )}
+                <ProductImage
+                  src={cover?.url}
+                  alt={p.title}
+                  className='bg-[var(--pv2-canvas)] object-contain'
+                >
+                  {cover ? (
+                    <AssetGlyph kind={cover.kind} size={42} />
+                  ) : (
+                    <span className='font-[family-name:var(--pv2-disp)] text-[40px] font-bold'>
+                      {p.title[0] ?? '?'}
+                    </span>
+                  )}
+                </ProductImage>
               </div>
               <div className='min-w-0 flex-1 text-[11.5px] leading-relaxed text-[var(--pv2-mut)]'>
                 {t('profileRecognised')}
@@ -310,10 +329,12 @@ export const ProductDetailsPanel = ({
                 type='button'
                 title={m.name}
                 onClick={() => toast.message(m.name)}
-                className='relative grid size-16 cursor-pointer place-items-center rounded-[9px] text-[var(--pv2-paper)] focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
+                className='relative grid size-16 cursor-pointer place-items-center overflow-hidden rounded-[9px] text-[var(--pv2-paper)] focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
                 style={{ background: m.grad }}
               >
-                <AssetGlyph kind={m.kind} size={20} />
+                <ProductImage src={m.url} className='object-cover'>
+                  <AssetGlyph kind={m.kind} size={20} />
+                </ProductImage>
                 <span className='absolute right-1 bottom-[3px] text-[7.5px] font-bold opacity-90'>
                   {kindBadge(m.kind)}
                 </span>
@@ -560,6 +581,13 @@ export const ProductDetailsPanel = ({
                     patchFirstVariant({ price: toNumber(e.target.value) })
                   }
                 />
+                {/* The catalogue price arrives as text on a feature, not as a
+                    number this field can hold — say where the read view's
+                    figure came from rather than let the blank input read as
+                    "no price". */}
+                {p.priceText ? (
+                  <Hint>{t('priceOnFile', { price: p.priceText })}</Hint>
+                ) : null}
               </Field>
               <Field label={t('fieldCompareAt')}>
                 <TextInput
@@ -597,17 +625,24 @@ export const ProductDetailsPanel = ({
               />
               <KvRow
                 label={t('fieldCost')}
-                value={`$${first.cost.toFixed(2)}`}
+                value={first.cost ? `$${first.cost.toFixed(2)}` : '—'}
               />
-              <KvRow
-                label={t('fieldMargin')}
-                value={`${margin}%`}
-                valueColor='var(--pv2-success)'
-              />
-              <KvRow
-                label={t('fieldProfit')}
-                value={`$${(first.price - first.cost).toFixed(2)}`}
-              />
+              {/* Margin and profit are only meaningful once a numeric price is
+                  on file. A BE row has none, and "0% / $0.00" beside a real
+                  catalogue price reads as a finding rather than a blank. */}
+              {first.price ? (
+                <>
+                  <KvRow
+                    label={t('fieldMargin')}
+                    value={`${margin}%`}
+                    valueColor='var(--pv2-success)'
+                  />
+                  <KvRow
+                    label={t('fieldProfit')}
+                    value={`$${(first.price - first.cost).toFixed(2)}`}
+                  />
+                </>
+              ) : null}
             </>
           ) : null}
         </SectionBox>

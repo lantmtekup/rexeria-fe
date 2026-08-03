@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/cn';
 import { PRODUCT_CHANNELS } from '@/lib/portal-v2/product/constants';
 import {
+  productCoverUrl,
   productPriceRange,
   readiness,
   stockSummary,
@@ -108,7 +109,10 @@ export const ProductTable = ({
 
                 <td className={cellClass}>
                   <span className='flex min-w-[230px] items-center gap-3'>
-                    <ProductThumb letter={p.title[0] ?? '?'} />
+                    <ProductThumb
+                      letter={p.title[0] ?? '?'}
+                      src={productCoverUrl(p, assets)}
+                    />
                     <span className='min-w-0'>
                       <span className='block truncate text-[13px] font-semibold text-[var(--pv2-ink)]'>
                         {p.title}

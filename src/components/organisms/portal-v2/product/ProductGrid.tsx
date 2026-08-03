@@ -7,6 +7,7 @@ import { StatusPill } from '@/components/molecules/portal-v2/product-form';
 import { ProductCover } from '@/components/organisms/portal-v2/product/ProductCover';
 import { cn } from '@/lib/cn';
 import {
+  productCoverUrl,
   productPriceRange,
   readiness,
   readinessColor,
@@ -87,7 +88,7 @@ export const ProductGrid = ({
               onClick={() => onOpen(p.id)}
               className='block w-full cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
             >
-              <ProductCover />
+              <ProductCover src={productCoverUrl(p, assets)} alt={p.title} />
 
               <span className='block px-3.5 pt-3 pb-[13px]'>
                 <span className='mb-1.5 block'>

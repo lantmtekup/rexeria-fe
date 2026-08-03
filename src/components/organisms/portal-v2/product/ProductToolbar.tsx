@@ -17,6 +17,12 @@ import type {
 type ProductToolbarProps = {
   filters: ProductFilters;
   onChange: (patch: Partial<ProductFilters>) => void;
+  /**
+   * Facets present in the loaded catalogue. The prototype taxonomies are only a
+   * fallback — offering an option that matches no row is a dead end.
+   */
+  brands?: string[];
+  types?: string[];
 };
 
 const viewButtonClass = (on: boolean) =>
@@ -28,10 +34,18 @@ const viewButtonClass = (on: boolean) =>
       : 'text-[var(--pv2-mut)] hover:text-[var(--pv2-ink)]'
   );
 
-export const ProductToolbar = ({ filters, onChange }: ProductToolbarProps) => {
+export const ProductToolbar = ({
+  filters,
+  onChange,
+  brands,
+  types,
+}: ProductToolbarProps) => {
   const t = useTranslations('portalV2.products');
 
   const setView = (view: ProductViewMode) => onChange({ view });
+
+  const typeOptions = types?.length ? types : [...PRODUCT_TYPES];
+  const brandOptions = brands?.length ? brands : [...PRODUCT_BRANDS];
 
   return (
     <div className='mb-3.5 flex flex-wrap items-center gap-2'>
@@ -60,7 +74,7 @@ export const ProductToolbar = ({ filters, onChange }: ProductToolbarProps) => {
         className='w-auto min-w-[150px] py-2 text-[12.5px]'
       >
         <option value='all'>{t('allTypes')}</option>
-        {PRODUCT_TYPES.map(x => (
+        {typeOptions.map(x => (
           <option key={x} value={x}>
             {x}
           </option>
@@ -74,7 +88,7 @@ export const ProductToolbar = ({ filters, onChange }: ProductToolbarProps) => {
         className='w-auto min-w-[150px] py-2 text-[12.5px]'
       >
         <option value='all'>{t('allBrands')}</option>
-        {PRODUCT_BRANDS.map(x => (
+        {brandOptions.map(x => (
           <option key={x} value={x}>
             {x}
           </option>

@@ -3,6 +3,7 @@
 import { Check } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { ProductImage } from '@/components/molecules/portal-v2/product-image';
 import { cn } from '@/lib/cn';
 import { PRODUCT_STATUS } from '@/lib/portal-v2/product/constants';
 import { readinessColor } from '@/lib/portal-v2/product/helpers';
@@ -180,14 +181,20 @@ export const KvRow = ({
   </div>
 );
 
-/** Quiet letter mark — same soft field as card covers, no per-product gradient. */
+/**
+ * The product's photo when one is on file, otherwise a quiet letter mark — same
+ * soft field as card covers, no per-product gradient. Stays `aria-hidden` even
+ * with an image: every call site puts the title right beside it.
+ */
 export const ProductThumb = ({
   letter,
+  src,
   size = 38,
   radius = 8,
   className,
 }: {
   letter: string;
+  src?: string | null;
   size?: number;
   radius?: number;
   className?: string;
@@ -195,7 +202,7 @@ export const ProductThumb = ({
   <span
     aria-hidden
     className={cn(
-      'grid shrink-0 place-items-center bg-(--pv2-electric-soft)',
+      'relative grid shrink-0 place-items-center overflow-hidden bg-(--pv2-electric-soft)',
       'font-[family-name:var(--pv2-disp)] font-semibold text-(--pv2-electric)/45',
       className
     )}
@@ -206,7 +213,9 @@ export const ProductThumb = ({
       fontSize: Math.round(size * 0.42),
     }}
   >
-    {letter}
+    <ProductImage src={src} className='object-cover'>
+      {letter}
+    </ProductImage>
   </span>
 );
 

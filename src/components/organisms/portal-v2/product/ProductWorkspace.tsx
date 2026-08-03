@@ -15,6 +15,7 @@ import { ProductGrid } from '@/components/organisms/portal-v2/product/ProductGri
 import { ProductModal } from '@/components/organisms/portal-v2/product/ProductModal';
 import { ProductTable } from '@/components/organisms/portal-v2/product/ProductTable';
 import { ProductToolbar } from '@/components/organisms/portal-v2/product/ProductToolbar';
+import { cn } from '@/lib/cn';
 import {
   PRODUCT_DEFAULT_FILTERS,
   PRODUCT_STATUS,
@@ -28,16 +29,14 @@ import {
   visibleProducts,
 } from '@/lib/portal-v2/product/helpers';
 import {
-  MOCK_PRODUCTS,
-  MOCK_PRODUCT_ASSETS,
   MOCK_PRODUCT_CAMPAIGN_LINKS,
   MOCK_PRODUCT_EXPERIENCE_LINKS,
   blankProduct,
   cloneProduct,
-  cloneProducts,
 } from '@/lib/portal-v2/product/mock';
 import type {
   Product,
+  ProductAsset,
   ProductFilters,
   ProductModalMode,
   ProductModalTab,
@@ -50,12 +49,32 @@ type ModalState =
   | { kind: 'delete'; ids: string[] }
   | null;
 
-export const ProductWorkspace = () => {
+type ProductWorkspaceProps = {
+  /** Catalogue as loaded on the server — see `services/portal-v2/productCatalog`. */
+  initialProducts: Product[];
+  initialAssets?: ProductAsset[];
+  initialBrands?: string[];
+  initialTypes?: string[];
+  /** Server-side total; larger than the list means the page was truncated. */
+  initialTotal?: number;
+  /** Hard failure — nothing loaded. */
+  initialError?: string | null;
+  /** The catalogue loaded but a lookup did not. */
+  softError?: string | null;
+};
+
+export const ProductWorkspace = ({
+  initialProducts,
+  initialAssets = [],
+  initialBrands = [],
+  initialTypes = [],
+  initialTotal,
+  initialError = null,
+  softError = null,
+}: ProductWorkspaceProps) => {
   const t = useTranslations('portalV2.products');
 
-  const [products, setProducts] = useState<Product[]>(() =>
-    cloneProducts(MOCK_PRODUCTS)
-  );
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [filters, setFilters] = useState<ProductFilters>(
     PRODUCT_DEFAULT_FILTERS
   );
@@ -64,11 +83,14 @@ export const ProductWorkspace = () => {
   const [draft, setDraft] = useState<Product | null>(null);
   const [modalTab, setModalTab] = useState<ProductModalTab>('details');
 
-  const assets = MOCK_PRODUCT_ASSETS;
+  const assets = initialAssets;
   const list = useMemo(
     () => visibleProducts(products, filters),
     [products, filters]
   );
+  /* Only the first page came back — say so rather than let the count read as
+   * the whole catalogue. */
+  const truncated = (initialTotal ?? products.length) > products.length;
 
   const statusTabs = useMemo(
     () => [
@@ -238,50 +260,90 @@ export const ProductWorkspace = () => {
       </div>
 
       <div className='mx-auto w-full px-5 py-6 md:px-8'>
-        <ProductToolbar filters={filters} onChange={patchFilters} />
-
-        {selected.length ? (
-          <ProductBulkBar
-            count={selected.length}
-            onPublish={() => toast.success(t('toastPublished'))}
-            onAddTags={() => toast.success(t('toastTagsAdded'))}
-            onArchive={() => toast.success(t('toastArchived'))}
-            onDelete={() => setModal({ kind: 'delete', ids: selected })}
-            onClear={() => setSelected([])}
-          />
-        ) : null}
-
-        {!list.length ? (
-          <EmptyState title={t('emptyTitle')}>{t('emptyBody')}</EmptyState>
-        ) : filters.view === 'grid' ? (
-          <ProductGrid
-            products={list}
-            assets={assets}
-            onOpen={openProduct}
-            onEdit={openEdit}
-            onDuplicate={handleDuplicate}
-            onDelete={id => setModal({ kind: 'delete', ids: [id] })}
-          />
+        {initialError ? (
+          <div className='rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-6 py-11 text-center'>
+            <p className='text-[15px] font-semibold text-[var(--pv2-ink)]'>
+              {t('loadError')}
+            </p>
+            <p className='mt-2 text-[13px] text-[var(--pv2-mut)]'>
+              {initialError}
+            </p>
+          </div>
         ) : (
-          <ProductTable
-            products={list}
-            assets={assets}
-            selected={selected}
-            onToggleSelect={id =>
-              setSelected(prev =>
-                prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-              )
-            }
-            onToggleAll={() =>
-              setSelected(prev =>
-                prev.length === list.length ? [] : list.map(p => p.id)
-              )
-            }
-            onOpen={openProduct}
-            onEdit={openEdit}
-            onDuplicate={handleDuplicate}
-            onDelete={id => setModal({ kind: 'delete', ids: [id] })}
-          />
+          <>
+            {softError ? (
+              <div
+                className={cn(
+                  'mb-4 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)]',
+                  'bg-[var(--pv2-paper)] px-4 py-3 text-[12.5px] text-[var(--pv2-mut)]'
+                )}
+              >
+                {t('partialLoad', { reason: softError })}
+              </div>
+            ) : null}
+
+            <ProductToolbar
+              filters={filters}
+              onChange={patchFilters}
+              brands={initialBrands}
+              types={initialTypes}
+            />
+
+            {truncated ? (
+              <p className='mb-3 text-[12px] text-[var(--pv2-faint)]'>
+                {t('showingOf', {
+                  shown: products.length,
+                  total: initialTotal ?? products.length,
+                })}
+              </p>
+            ) : null}
+
+            {selected.length ? (
+              <ProductBulkBar
+                count={selected.length}
+                onPublish={() => toast.success(t('toastPublished'))}
+                onAddTags={() => toast.success(t('toastTagsAdded'))}
+                onArchive={() => toast.success(t('toastArchived'))}
+                onDelete={() => setModal({ kind: 'delete', ids: selected })}
+                onClear={() => setSelected([])}
+              />
+            ) : null}
+
+            {!list.length ? (
+              <EmptyState title={t('emptyTitle')}>{t('emptyBody')}</EmptyState>
+            ) : filters.view === 'grid' ? (
+              <ProductGrid
+                products={list}
+                assets={assets}
+                onOpen={openProduct}
+                onEdit={openEdit}
+                onDuplicate={handleDuplicate}
+                onDelete={id => setModal({ kind: 'delete', ids: [id] })}
+              />
+            ) : (
+              <ProductTable
+                products={list}
+                assets={assets}
+                selected={selected}
+                onToggleSelect={id =>
+                  setSelected(prev =>
+                    prev.includes(id)
+                      ? prev.filter(x => x !== id)
+                      : [...prev, id]
+                  )
+                }
+                onToggleAll={() =>
+                  setSelected(prev =>
+                    prev.length === list.length ? [] : list.map(p => p.id)
+                  )
+                }
+                onOpen={openProduct}
+                onEdit={openEdit}
+                onDuplicate={handleDuplicate}
+                onDelete={id => setModal({ kind: 'delete', ids: [id] })}
+              />
+            )}
+          </>
         )}
       </div>
 
@@ -315,6 +377,7 @@ export const ProductWorkspace = () => {
       {modal?.kind === 'delete' && deleteItems.length ? (
         <DeleteProductModal
           items={deleteItems}
+          assets={assets}
           onClose={closeModal}
           onConfirm={confirmDelete}
         />

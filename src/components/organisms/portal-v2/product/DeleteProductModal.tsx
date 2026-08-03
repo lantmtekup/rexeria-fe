@@ -11,17 +11,20 @@ import {
   TonePill,
   WarnBox,
 } from '@/components/molecules/portal-v2/product-form';
-import { productStock } from '@/lib/portal-v2/product/helpers';
-import type { Product } from '@/lib/portal-v2/product/types';
+import { productCoverUrl, productStock } from '@/lib/portal-v2/product/helpers';
+import type { Product, ProductAsset } from '@/lib/portal-v2/product/types';
 
 type DeleteProductModalProps = {
   items: Product[];
+  /** Only so each row can show its cover — deletion never touches the library. */
+  assets?: ProductAsset[];
   onClose: () => void;
   onConfirm: () => void;
 };
 
 export const DeleteProductModal = ({
   items,
+  assets = [],
   onClose,
   onConfirm,
 }: DeleteProductModalProps) => {
@@ -80,7 +83,11 @@ export const DeleteProductModal = ({
             key={p.id}
             className='flex items-center gap-3 rounded-[var(--pv2-r-sm)] border border-[var(--pv2-hair)] px-3 py-2.5'
           >
-            <ProductThumb letter={p.title[0] ?? '?'} size={30} />
+            <ProductThumb
+              letter={p.title[0] ?? '?'}
+              src={productCoverUrl(p, assets)}
+              size={30}
+            />
             <span className='min-w-0 flex-1'>
               <span className='block truncate text-[12.5px] font-semibold text-[var(--pv2-ink)]'>
                 {p.title}
