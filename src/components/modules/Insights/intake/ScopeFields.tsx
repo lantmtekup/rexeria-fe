@@ -35,8 +35,13 @@ export function FieldRow({
 
 /**
  * Hai select brand + workspace cho admin (`brandLocked=false`). Portal khoá
- * brand theo workspace đang active nên không render gì — workspace đã được
- * `useWorkspaceScope` auto-pick.
+ * brand theo workspace đang active nên bình thường không render gì — workspace
+ * đã được `useWorkspaceScope` auto-pick.
+ *
+ * Ngoại lệ: auto-pick THẤT BẠI (`/me/workspaces` rỗng hoặc lỗi vì phiên hết
+ * hạn). Trước đây màn hình vẫn không render gì, để lại đúng một dòng "Chọn
+ * workspace trước" mà không có chỗ nào chọn — bế tắc câm. Giờ hiện lý do, và
+ * hiện select nếu có gì để chọn.
  */
 export function ScopeFields({
   brandLocked,
@@ -46,7 +51,35 @@ export function ScopeFields({
   scope: ReturnType<typeof useWorkspaceScope>;
 }) {
   const t = useTranslations('insights');
-  if (brandLocked) return null;
+
+  if (brandLocked) {
+    if (scope.workspaceId || scope.workspaceLoading) return null;
+    return (
+      <FieldRow label={t('setup.workspace')}>
+        {scope.workspaceItems.length > 0 ? (
+          <select
+            value={scope.workspaceId}
+            onChange={e => scope.setWorkspaceId(e.target.value)}
+            className={SELECT_CLASS}
+          >
+            <option value=''>-</option>
+            {scope.workspaceItems.map(w => (
+              <option key={w.id} value={w.id}>
+                {w.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <p
+            role='alert'
+            className='border-warning/30 bg-warning/5 text-content-muted rounded-xl border px-3 py-2.5 text-sm'
+          >
+            {scope.workspaceError ? t('setup.wsError') : t('setup.wsEmpty')}
+          </p>
+        )}
+      </FieldRow>
+    );
+  }
 
   return (
     <>

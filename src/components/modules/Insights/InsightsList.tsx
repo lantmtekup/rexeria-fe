@@ -50,6 +50,22 @@ export function InsightsList({ basePath }: { basePath: string }) {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<'all' | InsightStatus>('all');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  // Bỏ chọn khi đổi bộ lọc/tìm kiếm: thẻ đang chọn có thể biến khỏi màn hình,
+  // giữ lại thì người dùng bấm "Xoá đã chọn" mà không thấy mình đang xoá gì.
+  useEffect(() => {
+    setSelected(new Set());
+  }, [q, filter]);
+
+  const toggleSelected = (id: string) =>
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   useEffect(() => {
     let cancelled = false;
@@ -90,6 +106,53 @@ export function InsightsList({ basePath }: { basePath: string }) {
     }
   };
 
+  /**
+   * Xoá nhiều báo cáo cùng lúc.
+   *
+   * BE không có endpoint xoá hàng loạt (`DELETE /insights/reports/{id}` là đơn
+   * lẻ), nên fan-out song song rồi đếm — giống `runBulkArchive` bên
+   * `AdminTemplatesPage`. Đếm riêng thành công/thất bại vì một id hỏng không
+   * được phép nuốt mất kết quả của những id còn lại: chỉ gỡ khỏi danh sách
+   * đúng những cái BE xác nhận đã xoá.
+   */
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selected);
+    if (ids.length === 0 || bulkBusy) return;
+    if (!window.confirm(t('list.bulkConfirm', { n: ids.length }))) return;
+
+    setBulkBusy(true);
+    const tid = toast.loading(t('list.bulkDeleting', { n: ids.length }));
+    const done: string[] = [];
+    await Promise.all(
+      ids.map(async id => {
+        try {
+          await rexerApi.insights.remove(id);
+          done.push(id);
+        } catch {
+          /* giữ lại trong danh sách để người dùng thấy cái nào chưa xoá được */
+        }
+      })
+    );
+
+    const gone = new Set(done);
+    setItems(prev => prev.filter(x => !gone.has(x.id)));
+    setSelected(prev => new Set([...prev].filter(id => !gone.has(id))));
+
+    if (done.length === ids.length) {
+      toast.success(t('list.bulkDone', { n: done.length }), { id: tid });
+    } else {
+      toast.error(
+        t('list.bulkPartial', {
+          ok: done.length,
+          total: ids.length,
+          fail: ids.length - done.length,
+        }),
+        { id: tid }
+      );
+    }
+    setBulkBusy(false);
+  };
+
   const handleDelete = async (r: InsightReport) => {
     if (
       !window.confirm(
@@ -112,6 +175,9 @@ export function InsightsList({ basePath }: { basePath: string }) {
       return false;
     return true;
   });
+
+  const allVisibleSelected =
+    filtered.length > 0 && filtered.every(r => selected.has(r.id));
 
   const FILTERS: Array<'all' | InsightStatus> = [
     'all',
@@ -167,6 +233,46 @@ export function InsightsList({ basePath }: { basePath: string }) {
         </div>
       </div>
 
+      {/* Thanh thao tác hàng loạt — chỉ hiện khi có thẻ được chọn, để lúc
+          bình thường danh sách không bị thêm một hàng nút chẳng dùng tới. */}
+      {selected.size > 0 && (
+        <div className='border-primary/30 bg-primary/5 flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3'>
+          <span className='text-content-main text-sm font-medium'>
+            {t('list.bulkSelected', { n: selected.size })}
+          </span>
+          <button
+            type='button'
+            onClick={() => setSelected(new Set(filtered.map(r => r.id)))}
+            disabled={allVisibleSelected}
+            className='text-content-muted hover:text-content-main text-xs disabled:opacity-40'
+          >
+            {t('list.selectAll', { n: filtered.length })}
+          </button>
+          <button
+            type='button'
+            onClick={() => setSelected(new Set())}
+            className='text-content-muted hover:text-content-main text-xs'
+          >
+            {t('list.clearSelection')}
+          </button>
+          <button
+            type='button'
+            onClick={handleBulkDelete}
+            disabled={bulkBusy}
+            className='ml-auto inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-60'
+          >
+            {bulkBusy ? (
+              <Loader2 className='size-3.5 animate-spin' aria-hidden />
+            ) : (
+              <Trash2 className='size-3.5' aria-hidden />
+            )}
+            {bulkBusy
+              ? t('list.bulkDeleting', { n: selected.size })
+              : t('list.bulkDelete')}
+          </button>
+        </div>
+      )}
+
       {/* List */}
       {loading ? (
         <div className='text-content-muted flex items-center justify-center gap-2 py-12 text-sm'>
@@ -186,6 +292,9 @@ export function InsightsList({ basePath }: { basePath: string }) {
               untitled={t('list.untitled')}
               renameLabel={t('list.rename')}
               deleteLabel={t('list.delete')}
+              selectLabel={t('list.selectOne')}
+              selected={selected.has(r.id)}
+              onToggleSelect={() => toggleSelected(r.id)}
               onRename={() => handleRename(r)}
               onDelete={() => handleDelete(r)}
             />
@@ -204,6 +313,9 @@ function ReportCard({
   untitled,
   renameLabel,
   deleteLabel,
+  selectLabel,
+  selected,
+  onToggleSelect,
   onRename,
   onDelete,
 }: {
@@ -214,6 +326,9 @@ function ReportCard({
   untitled: string;
   renameLabel: string;
   deleteLabel: string;
+  selectLabel: string;
+  selected: boolean;
+  onToggleSelect: () => void;
   onRename: () => void;
   onDelete: () => void;
 }) {
@@ -223,7 +338,14 @@ function ReportCard({
   const goal = r.blueprint?.experience_goal?.primary_goal;
 
   return (
-    <div className='group border-border hover:border-primary/40 bg-card relative flex flex-col gap-3 rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md'>
+    <div
+      className={cn(
+        'group bg-card relative flex flex-col gap-3 rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md',
+        selected
+          ? 'border-primary ring-primary/25 ring-2'
+          : 'border-border hover:border-primary/40'
+      )}
+    >
       {/* Lớp phủ click toàn card → mở chi tiết (button menu nằm trên nhờ z-index) */}
       <Link
         href={href}
@@ -232,8 +354,31 @@ function ReportCard({
       />
 
       <div className='flex items-start justify-between gap-2'>
-        <span className='bg-primary/10 text-primary inline-flex size-9 shrink-0 items-center justify-center rounded-xl'>
-          <Sparkles className='size-4' aria-hidden />
+        {/* Ô chọn thay chỗ icon khi rê chuột hoặc khi đã chọn: lưới thẻ không
+            có cột riêng để đặt checkbox, mà thêm hẳn một ô cố định thì màn hình
+            lúc nào cũng rối dù hầu hết thời gian không ai chọn gì.
+            `z-10` để nổi trên lớp phủ Link, nếu không bấm vào là mở chi tiết. */}
+        <span className='relative z-10 inline-flex size-9 shrink-0 items-center justify-center'>
+          <input
+            type='checkbox'
+            checked={selected}
+            onChange={onToggleSelect}
+            aria-label={selectLabel}
+            className={cn(
+              'accent-primary size-4 cursor-pointer transition-opacity',
+              selected
+                ? 'opacity-100'
+                : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
+            )}
+          />
+          {!selected && (
+            <span
+              aria-hidden
+              className='bg-primary/10 text-primary pointer-events-none absolute inset-0 inline-flex items-center justify-center rounded-xl transition-opacity group-hover:opacity-0'
+            >
+              <Sparkles className='size-4' />
+            </span>
+          )}
         </span>
         <div className='relative z-10 flex items-center gap-1'>
           <span

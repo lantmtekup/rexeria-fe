@@ -19,6 +19,9 @@ import { useRexer } from '@/services/rexer/use-rexer';
  *   brand đã chọn (`/brands/:id/workspaces`). Không auto-pick: admin chọn
  *   tường minh vì họ thao tác chéo nhiều brand.
  */
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function useWorkspaceScope(brandLocked: boolean) {
   const [brandId, setBrandId] = useState('');
   const [workspaceId, setWorkspaceId] = useState('');
@@ -59,6 +62,25 @@ export function useWorkspaceScope(brandLocked: boolean) {
     if (preferred) setWorkspaceId(preferred.id);
   }, [brandLocked, workspaceId, workspaceItems]);
 
+  /**
+   * Cứu cánh khi `/me/workspaces` trả rỗng hoặc lỗi (phiên hết hạn, user chưa
+   * được gán workspace nào): portal luôn đóng dấu `?ws=<uuid>` lên URL mỗi lần
+   * chuyển workspace, và `useActiveWorkspace` của portal cũng tin nguồn này —
+   * nên ở đây tin theo là nhất quán với phần còn lại của portal.
+   *
+   * Chỉ nhận UUID: danh sách demo (`FAKE_WORKSPACES`) mang id kiểu
+   * `ws_coca_main`, lọt xuống BE là 400 "Invalid request".
+   *
+   * Đọc thẳng `window.location` thay vì `useSearchParams` để không áp ràng buộc
+   * Suspense lên cả màn admin lẫn portal đang dùng chung hook này.
+   */
+  useEffect(() => {
+    if (!brandLocked || workspaceId || memberships.loading) return;
+    if (workspaceItems.length > 0) return;
+    const fromUrl = new URLSearchParams(window.location.search).get('ws');
+    if (fromUrl && UUID_RE.test(fromUrl)) setWorkspaceId(fromUrl);
+  }, [brandLocked, workspaceId, workspaceItems, memberships.loading]);
+
   // Đổi brand → workspace cũ thuộc brand khác, bỏ chọn để không submit nhầm scope.
   useEffect(() => {
     if (brandLocked) return;
@@ -76,5 +98,7 @@ export function useWorkspaceScope(brandLocked: boolean) {
     workspaceLoading: brandLocked
       ? memberships.loading
       : brandWorkspaces.loading,
+    /** Lỗi khi nạp workspace — để màn nhập nói rõ vì sao đang bế tắc. */
+    workspaceError: brandLocked ? memberships.error : brandWorkspaces.error,
   };
 }

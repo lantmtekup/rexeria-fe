@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus, X } from 'lucide-react';
 
-import { Input } from '@/components/atoms/input';
+import { Textarea } from '@/components/atoms/textarea';
 import { cn } from '@/lib/cn';
 
 /**
@@ -41,16 +41,26 @@ export function ImageUrlInput({
 
   return (
     <div className='space-y-2'>
-      <div className='flex gap-2'>
-        <Input
+      <div className='flex items-start gap-2'>
+        {/* Textarea chứ không phải input một dòng: người dùng dán cả cụm link
+            từ sheet/chat, mà ô một dòng thì trình duyệt nuốt hết xuống dòng và
+            7 link chồng lên nhau thành một chuỗi không đọc nổi. */}
+        <Textarea
           value={draft}
           onChange={e => setDraft(e.target.value)}
           placeholder={t('quick.imagePlaceholder')}
+          rows={3}
+          className='min-h-20 font-mono text-xs'
           onKeyDown={e => {
-            if (e.key !== 'Enter') return;
+            // Enter xuống dòng như mọi textarea. Cmd/Ctrl+Enter mới là "thêm",
+            // để dán nhiều dòng không bị cắt ngang giữa chừng.
+            if (e.key !== 'Enter' || !(e.metaKey || e.ctrlKey)) return;
             e.preventDefault();
             add(draft);
           }}
+          // Rời ô là gom luôn: quên bấm "Thêm" rồi bấm thẳng "Tạo nội dung" là
+          // mất sạch link vừa dán — lỗi im lặng, không có gì báo.
+          onBlur={() => draft.trim() && add(draft)}
           onPaste={e => {
             const pasted = e.clipboardData.getData('text');
             // Dán cụm nhiều link → nuốt luôn, khỏi bắt user tự tách.
@@ -63,12 +73,14 @@ export function ImageUrlInput({
           type='button'
           onClick={() => add(draft)}
           disabled={!draft.trim()}
-          className='border-border text-content-muted hover:bg-muted inline-flex shrink-0 items-center gap-1 rounded-xl border px-3 text-sm font-semibold transition disabled:opacity-40'
+          className='border-border text-content-muted hover:bg-muted inline-flex shrink-0 items-center gap-1 self-start rounded-xl border px-3 py-2.5 text-sm font-semibold transition disabled:opacity-40'
         >
           <Plus className='size-4' aria-hidden />
           {t('quick.imageAdd')}
         </button>
       </div>
+
+      <p className='text-content-muted text-xs'>{t('quick.imageMultiHint')}</p>
 
       {rejected > 0 && (
         <p className='text-xs text-amber-600'>

@@ -8,6 +8,7 @@ import { useInsightReport } from '@/services/rexer/use-rexer';
 import { useInsightsFlow } from './useInsightsFlow';
 import { IntakeWizard } from './intake/IntakeWizard';
 import { QuickIntake } from './intake/QuickIntake';
+import { TemplateVariantIntake } from './intake/TemplateVariantIntake';
 import { GeneratingStep } from './steps/GeneratingStep';
 import { BlueprintStep } from './steps/BlueprintStep';
 import { WizardProgress } from './steps/WizardProgress';
@@ -27,6 +28,13 @@ import { AiOrb } from './steps/ui';
  * - `guided` (mặc định): wizard 10 bước, user tự chốt goal + journey rồi gửi
  *   kèm `selections` → engine skip 2 bước tương ứng.
  * - `quick`: một ô text, engine tự chạy đủ 5 bước. Xem `QuickIntake`.
+ * - `variant`: chọn 1 landing có sẵn làm khuôn, AI viết lại TOÀN BỘ nội dung
+ *   theo brief → page mới độc lập. Xem `TemplateVariantIntake`.
+ *
+ * `variant` có tạo report, nhưng chạy nó cùng handoff + tạo page trong một hàm
+ * async của riêng nó (poll bằng `pollInsightReport`), nên không đi qua `flow`:
+ * nó tự quản submit và tự hiển thị tiến trình/kết quả, vì thế stepper 3 phase
+ * bị ẩn ở chế độ này (không có phase `generating`/`blueprint` nào để chạy tới).
  *
  * Mặc định là `guided` để người quen luồng cũ không bị hụt; đổi chế độ chỉ
  * cho phép ở `setup` vì sang `generating` là report đã enqueue rồi.
@@ -63,14 +71,18 @@ export function InsightsWizard({
 
   let content;
   if (flow.phase === 'setup') {
-    content =
-      mode === 'quick' ? (
+    if (mode === 'variant') {
+      content = <TemplateVariantIntake brandLocked={brandLocked} />;
+    } else if (mode === 'quick') {
+      content = (
         <QuickIntake
           submitting={flow.submitting}
           onRun={flow.run}
           brandLocked={brandLocked}
         />
-      ) : (
+      );
+    } else {
+      content = (
         <IntakeWizard
           submitting={flow.submitting}
           onRun={flow.run}
@@ -78,6 +90,7 @@ export function InsightsWizard({
           fromReportId={fromReportId}
         />
       );
+    }
   } else if (flow.phase === 'generating') {
     content = <GeneratingStep report={report} />;
   } else {
@@ -101,11 +114,11 @@ export function InsightsWizard({
         )}
       </header>
 
-      <WizardProgress phase={flow.phase} />
+      {mode !== 'variant' && <WizardProgress phase={flow.phase} />}
 
       {/* `key` đổi theo phase để re-trigger hiệu ứng xuất hiện mỗi lần chuyển màn. */}
       <div
-        key={flow.phase}
+        key={`${flow.phase}-${mode}`}
         className='animate-in fade-in slide-in-from-bottom-3 duration-500'
       >
         {content}
@@ -114,12 +127,12 @@ export function InsightsWizard({
   );
 }
 
-type IntakeMode = 'guided' | 'quick';
+type IntakeMode = 'guided' | 'quick' | 'variant';
 
 const MODE_BTN =
   'rounded-pill px-3.5 py-1.5 text-xs font-semibold transition whitespace-nowrap';
 
-/** Segmented 2 lựa chọn cho màn nhập liệu. */
+/** Segmented các lựa chọn cho màn nhập liệu. */
 function ModeSwitch({
   mode,
   onChange,
@@ -130,7 +143,7 @@ function ModeSwitch({
   const t = useTranslations('insights');
   return (
     <div className='border-border bg-muted flex shrink-0 gap-1 rounded-full border p-1'>
-      {(['guided', 'quick'] as const).map(m => (
+      {(['guided', 'quick', 'variant'] as const).map(m => (
         <button
           key={m}
           type='button'
