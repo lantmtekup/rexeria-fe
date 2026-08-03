@@ -149,7 +149,7 @@ export const CommandWorkspace = ({ nowIso }: CommandWorkspaceProps) => {
 
   return (
     <div className='flex min-h-0 flex-col'>
-      <div className='border-b border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
+      <div className='pv2-page-header'>
         <div className='mx-auto flex w-full flex-wrap items-end justify-between gap-x-4 gap-y-3 px-4 py-5 md:px-5'>
           <div className='min-w-0'>
             <h1 className='font-[family-name:var(--pv2-disp)] text-[1.625rem] font-bold tracking-[-0.03em] text-[var(--pv2-ink)] md:text-[1.75rem]'>

@@ -19,6 +19,11 @@
   --pv2-electric-soft: #eef2ff;
   --pv2-electric-hover: #2f54e0;
   --pv2-grad-primary: linear-gradient(135deg, #3862ff 0%, #7d5cff 100%);
+  --pv2-grad-page-header: linear-gradient(
+    180deg,
+    var(--pv2-electric-soft) 0%,
+    var(--pv2-paper) 100%
+  );
 
   --pv2-r-sm: 4px;
   --pv2-r: 12px;
@@ -55,4 +60,10 @@
 [data-portal-v2] *::before,
 [data-portal-v2] *::after {
   box-sizing: border-box;
+}
+
+/* Soft electric wash → paper — page title headers */
+[data-portal-v2] .pv2-page-header {
+  border-bottom: 1px solid var(--pv2-hair);
+  background: var(--pv2-grad-page-header);
 }

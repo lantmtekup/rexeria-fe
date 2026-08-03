@@ -24,7 +24,7 @@ export const MediaHeader = ({
   const t = useTranslations('portalV2.media');
 
   return (
-    <div className='border-b border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
+    <div className='pv2-page-header'>
       <div className='mx-auto flex w-full flex-wrap items-end justify-between gap-4 px-5 pt-6 pb-4 md:px-8'>
         <div className='min-w-0'>
           <h1 className='font-[family-name:var(--pv2-disp)] text-[1.625rem] font-bold tracking-[-0.03em] text-[var(--pv2-ink)] md:text-[1.75rem]'>
