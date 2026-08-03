@@ -28,7 +28,16 @@
       "renameFailed": "Rename failed (BE not ready?)",
       "deleteConfirm": "Delete report \"{name}\"?",
       "deleted": "Report deleted",
-      "deleteFailed": "Delete failed (BE not ready?)"
+      "deleteFailed": "Delete failed (BE not ready?)",
+      "selectOne": "Select this report",
+      "selectAll": "Select all ({n})",
+      "clearSelection": "Clear selection",
+      "bulkSelected": "{n} reports selected",
+      "bulkDelete": "Delete selected",
+      "bulkDeleting": "Deleting {n}…",
+      "bulkConfirm": "Delete {n} reports? This cannot be undone.",
+      "bulkDone": "Deleted {n} reports",
+      "bulkPartial": "Deleted {ok}/{total}, {fail} failed — the failed ones are still listed"
     },
     "status": {
       "queued": "Queued",
@@ -225,10 +234,11 @@
       "run": "Generate blueprint",
       "image": "Image links",
       "imageHint": "optional — you can paste several at once",
-      "imagePlaceholder": "https://... (Enter to add)",
+      "imagePlaceholder": "https://…/photo-1.jpg\nhttps://…/photo-2.jpg\nor paste them all, comma-separated",
       "imageAdd": "Add",
       "imageRemove": "Remove this image",
-      "imageRejected": "Skipped {n} entries that are not http(s) links"
+      "imageRejected": "Skipped {n} entries that are not http(s) links",
+      "imageMultiHint": "Paste several links at once — one per line, or comma-separated. ⌘/Ctrl + Enter to add."
     },
     "variant": {
       "heading": "Create a landing from an existing template",

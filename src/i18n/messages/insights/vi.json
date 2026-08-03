@@ -28,7 +28,16 @@
       "renameFailed": "Đổi tên thất bại (BE chưa hỗ trợ?)",
       "deleteConfirm": "Xoá báo cáo \"{name}\"?",
       "deleted": "Đã xoá báo cáo",
-      "deleteFailed": "Xoá thất bại (BE chưa hỗ trợ?)"
+      "deleteFailed": "Xoá thất bại (BE chưa hỗ trợ?)",
+      "selectOne": "Chọn báo cáo này",
+      "selectAll": "Chọn tất cả ({n})",
+      "clearSelection": "Bỏ chọn",
+      "bulkSelected": "Đã chọn {n} báo cáo",
+      "bulkDelete": "Xoá đã chọn",
+      "bulkDeleting": "Đang xoá {n}…",
+      "bulkConfirm": "Xoá {n} báo cáo? Thao tác này không khôi phục được.",
+      "bulkDone": "Đã xoá {n} báo cáo",
+      "bulkPartial": "Xoá được {ok}/{total}, {fail} cái lỗi — những cái lỗi vẫn còn trong danh sách"
     },
     "status": {
       "queued": "Chờ xử lý",
@@ -225,10 +234,11 @@
       "run": "Tạo blueprint",
       "image": "Link hình ảnh",
       "imageHint": "tuỳ chọn — dán được nhiều link một lúc",
-      "imagePlaceholder": "https://... (Enter để thêm)",
+      "imagePlaceholder": "https://…/anh-1.jpg\nhttps://…/anh-2.jpg\nhoặc dán cả cụm, cách nhau bằng dấu phẩy",
       "imageAdd": "Thêm",
       "imageRemove": "Bỏ ảnh này",
-      "imageRejected": "Bỏ qua {n} mục không phải link http(s)"
+      "imageRejected": "Bỏ qua {n} mục không phải link http(s)",
+      "imageMultiHint": "Dán được nhiều link một lúc — mỗi dòng một link, hoặc cách nhau bằng dấu phẩy. ⌘/Ctrl + Enter để thêm."
     },
     "variant": {
       "heading": "Tạo landing từ template có sẵn",
