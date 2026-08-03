@@ -414,6 +414,10 @@ export function CanvasElementEditChip({
 function resolveElementMetaLabel(linkFieldKey: string): string {
   const navLink = linkFieldKey.match(/^items\[(\d+)\]\.link$/);
   if (navLink) return `Link mục ${Number(navLink[1]) + 1}`;
+  const aesthaNavHref = linkFieldKey.match(/^navLinks\[(\d+)\]\.href$/);
+  if (aesthaNavHref) return `Nav ${Number(aesthaNavHref[1]) + 1} · Link`;
+  if (linkFieldKey === 'bookTableHref') return 'Link đặt bàn';
+  if (linkFieldKey === 'orderBeerHref') return 'Link order beer';
   if (linkFieldKey === 'ctaLink') return 'Link CTA';
   return 'Link';
 }

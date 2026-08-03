@@ -96,6 +96,14 @@ import {
   type FramerBungeeHeroV2Card,
 } from './blocks/_registry/defs/framerBungeeHeroV2';
 import { resolveCoolHunterSectionProgressSections } from './blocks/_registry/defs/coolHunterSectionProgress';
+import { resolveBelgoAboutProductSpecs } from './blocks/_registry/defs/belgoAboutProduct';
+import {
+  resolveBelgoFooterHeadlineWords,
+  resolveBelgoFooterLocations,
+  resolveBelgoFooterSocials,
+} from './blocks/_registry/defs/belgoFooter';
+import { resolveBelgoMoreFlavors } from './blocks/_registry/defs/belgoMoreFlavors';
+import { BELGO_DEFAULT_FLAVORS } from './blocks/belgoMoreFlavorsContent';
 import {
   SCROLL_IMG_SCALE_DEFAULT_ITEMS,
   resolveScrollImgScaleItems,
@@ -161,6 +169,14 @@ import {
   type CoolHunterGalleryItem,
   type FramerBungeeHeroV2Content,
   type CoolHunterSectionProgressContent,
+  type BelgoAboutProductContent,
+  type BelgoFooterContent,
+  type BelgoFooterHeadlineWord,
+  type BelgoFooterLocation,
+  type BelgoFooterSocial,
+  type BelgoFlavorItem,
+  type BelgoMoreFlavorsContent,
+  type BelgoSpecItem,
   type CoolHunterSectionProgressItem,
   type HousentOurExcellenceContent,
   type HousentOurExcellenceItem,
@@ -739,6 +755,36 @@ export function ElementToolbar({
         {kind === 'coolHunterSectionProgressItems' && (
           <CoolHunterSectionProgressItemsControls
             content={content as CoolHunterSectionProgressContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'belgoSpecItems' && (
+          <BelgoSpecItemsControls
+            content={content as BelgoAboutProductContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'belgoFooterLocations' && (
+          <BelgoFooterLocationsControls
+            content={content as BelgoFooterContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'belgoFooterHeadlineWords' && (
+          <BelgoFooterHeadlineWordsControls
+            content={content as BelgoFooterContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'belgoFooterSocials' && (
+          <BelgoFooterSocialsControls
+            content={content as BelgoFooterContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'belgoMoreFlavorsItems' && (
+          <BelgoFlavorItemsControls
+            content={content as BelgoMoreFlavorsContent}
             onContentChange={onContentChange}
           />
         )}
@@ -4768,6 +4814,529 @@ function CoolHunterSectionProgressItemsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm section' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── BELGO ABOUT PRODUCT · SPECS
+
+function BelgoSpecItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: BelgoAboutProductContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const specs = resolveBelgoAboutProductSpecs(content);
+
+  const write = (updater: (list: BelgoSpecItem[]) => BelgoSpecItem[]) => {
+    onContentChange(prev => {
+      const c = prev as BelgoAboutProductContent;
+      return {
+        ...c,
+        specs: updater(resolveBelgoAboutProductSpecs(c)),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<BelgoSpecItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (specs.length <= 1) {
+      toast.error('Cần ít nhất 1 thông số');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      { label: 'NEW', value: '0', unit: '', copy: 'Mô tả thông số.' },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách thông số'
+      preview={`${specs.length} thông số`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {specs.map((item, i) => (
+          <div
+            key={`belgo-spec-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Thông số {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={specs.length <= 1}
+                aria-label={`Xoá thông số ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <div className='flex gap-1.5'>
+              <Input
+                value={item.label ?? ''}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn (ABV)'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+              <Input
+                value={item.value ?? ''}
+                onChange={e => update(i, { value: e.target.value })}
+                placeholder='Giá trị (5.1)'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+              <Input
+                value={item.unit ?? ''}
+                onChange={e => update(i, { unit: e.target.value })}
+                placeholder='Đơn vị (%)'
+                className='h-8 w-20 shrink-0 border-neutral-200 bg-white text-xs'
+              />
+            </div>
+            <Textarea
+              value={item.copy ?? ''}
+              onChange={e => update(i, { copy: e.target.value })}
+              placeholder='Mô tả'
+              rows={2}
+              className='border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm thông số' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── BELGO FOOTER · LOCATIONS / HEADLINE
+
+function BelgoFooterLocationsControls({
+  content,
+  onContentChange,
+}: {
+  content: BelgoFooterContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const locations = resolveBelgoFooterLocations(content);
+
+  const write = (
+    updater: (list: BelgoFooterLocation[]) => BelgoFooterLocation[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as BelgoFooterContent;
+      return {
+        ...c,
+        locations: updater(resolveBelgoFooterLocations(c)),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<BelgoFooterLocation>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (locations.length <= 1) {
+      toast.error('Cần ít nhất 1 chi nhánh');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      { name: 'NEW BRANCH', address: 'A: Address line 1', tel: 'T: +84' },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách chi nhánh'
+      preview={`${locations.length} chi nhánh`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {locations.map((item, i) => (
+          <div
+            key={`belgo-loc-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Chi nhánh {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={locations.length <= 1}
+                aria-label={`Xoá chi nhánh ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={item.name ?? ''}
+              onChange={e => update(i, { name: e.target.value })}
+              placeholder='Tên chi nhánh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Textarea
+              value={item.address ?? ''}
+              onChange={e => update(i, { address: e.target.value })}
+              placeholder='Địa chỉ (mỗi dòng 1 dòng)'
+              rows={2}
+              className='border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={item.tel ?? ''}
+              onChange={e => update(i, { tel: e.target.value })}
+              placeholder='Điện thoại'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm chi nhánh' />
+    </PopoverTrigger>
+  );
+}
+
+function BelgoFooterHeadlineWordsControls({
+  content,
+  onContentChange,
+}: {
+  content: BelgoFooterContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const words = resolveBelgoFooterHeadlineWords(content);
+
+  const write = (
+    updater: (list: BelgoFooterHeadlineWord[]) => BelgoFooterHeadlineWord[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as BelgoFooterContent;
+      return {
+        ...c,
+        headlineWords: updater(resolveBelgoFooterHeadlineWords(c)),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<BelgoFooterHeadlineWord>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (words.length <= 1) {
+      toast.error('Cần ít nhất 1 từ headline');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () => write(list => [...list, { text: 'WORD', accent: false }]);
+
+  return (
+    <PopoverTrigger
+      label='Headline pin'
+      preview={`${words.length} từ`}
+      width={360}
+    >
+      <div className='flex max-h-72 flex-col gap-2 overflow-y-auto pr-1'>
+        {words.map((item, i) => (
+          <div
+            key={`belgo-headline-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Từ {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={words.length <= 1}
+                aria-label={`Xoá từ ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={item.text ?? ''}
+              onChange={e => update(i, { text: e.target.value })}
+              placeholder='Từ headline'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <label className='flex cursor-pointer items-center gap-2 text-xs text-neutral-600'>
+              <input
+                type='checkbox'
+                checked={item.accent ?? false}
+                onChange={e => update(i, { accent: e.target.checked })}
+                className='size-3.5 rounded border-neutral-300'
+              />
+              Accent trắng (#DRINK)
+            </label>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm từ' />
+    </PopoverTrigger>
+  );
+}
+
+function BelgoFooterSocialsControls({
+  content,
+  onContentChange,
+}: {
+  content: BelgoFooterContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const socials = resolveBelgoFooterSocials(content);
+
+  const write = (
+    updater: (list: BelgoFooterSocial[]) => BelgoFooterSocial[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as BelgoFooterContent;
+      return {
+        ...c,
+        socials: updater(resolveBelgoFooterSocials(c)),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<BelgoFooterSocial>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (socials.length <= 1) {
+      toast.error('Cần ít nhất 1 icon');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      { platform: 'facebook', href: '#', iconAlt: 'Social' },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Thêm / xóa icon'
+      preview={`${socials.length} icon · sửa Icon/Link bên dưới`}
+      width={360}
+    >
+      <p className='mb-2 text-[11px] leading-snug text-neutral-500'>
+        Upload icon và nhập link ở từng folder <strong>Icon 1, Icon 2…</strong>{' '}
+        trong Layers. Ở đây chỉ thêm/xóa icon và chọn glyph mặc định (khi chưa
+        upload).
+      </p>
+      <div className='flex max-h-64 flex-col gap-2 overflow-y-auto pr-1'>
+        {socials.map((social, i) => (
+          <div
+            key={`belgo-social-${i}`}
+            className='flex items-center gap-2 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <span className='min-w-0 flex-1 text-xs font-medium text-neutral-700'>
+              Icon {i + 1}
+              {social.iconUrl?.trim() ? ' · đã upload' : ' · glyph mặc định'}
+            </span>
+            <select
+              value={social.platform ?? 'facebook'}
+              onChange={e =>
+                update(i, {
+                  platform: e.target.value as TheGrandFooterSocialPlatform,
+                })
+              }
+              aria-label={`Icon mặc định ${i + 1}`}
+              className='h-8 max-w-[9rem] rounded border border-neutral-200 bg-white px-2 text-xs text-neutral-700'
+            >
+              {SOCIAL_PLATFORM_OPTIONS.map(opt => (
+                <option key={opt} value={opt}>
+                  {SOCIAL_ICON_MAP[opt].label}
+                </option>
+              ))}
+            </select>
+            <button
+              type='button'
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                remove(i);
+              }}
+              disabled={socials.length <= 1}
+              aria-label={`Xoá icon ${i + 1}`}
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+            >
+              <Trash2 className='size-3.5' />
+            </button>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm icon' />
+    </PopoverTrigger>
+  );
+}
+
+function BelgoFlavorItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: BelgoMoreFlavorsContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const flavors = resolveBelgoMoreFlavors(content);
+
+  const write = (updater: (list: BelgoFlavorItem[]) => BelgoFlavorItem[]) => {
+    onContentChange(prev => {
+      const c = prev as BelgoMoreFlavorsContent;
+      return {
+        ...c,
+        flavors: updater(resolveBelgoMoreFlavors(c)),
+      } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<BelgoFlavorItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (flavors.length <= 1) {
+      toast.error('Cần ít nhất 1 hương vị');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        key: `flavor-${list.length + 1}`,
+        name: 'NEW FLAVOR',
+        color: BELGO_DEFAULT_FLAVORS[0]?.color ?? '#F5B301',
+        bgImageUrl: '',
+        bottleImageUrl: '',
+        glassImageUrl: '',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách hương vị'
+      preview={`${flavors.length} hương vị`}
+      width={460}
+    >
+      <div className='flex max-h-96 flex-col gap-2 overflow-y-auto pr-1'>
+        {flavors.map((item, i) => (
+          <div
+            key={`belgo-flavor-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Hương vị {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={flavors.length <= 1}
+                aria-label={`Xoá hương vị ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={item.name ?? ''}
+              onChange={e => update(i, { name: e.target.value })}
+              placeholder='Tên (BLONDE)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={item.color ?? ''}
+              onChange={e => update(i, { color: e.target.value })}
+              placeholder='Màu (#F5B301)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={item.key ?? ''}
+              onChange={e => update(i, { key: e.target.value })}
+              placeholder='Key slug (blonde)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+              Nền
+            </span>
+            <ImagePicker
+              value={item.bgImageUrl ?? ''}
+              onChange={url => update(i, { bgImageUrl: url })}
+            />
+            <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+              Chai
+            </span>
+            <ImagePicker
+              value={item.bottleImageUrl ?? ''}
+              onChange={url => update(i, { bottleImageUrl: url })}
+            />
+            <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+              Ly
+            </span>
+            <ImagePicker
+              value={item.glassImageUrl ?? ''}
+              onChange={url => update(i, { glassImageUrl: url })}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm hương vị' />
     </PopoverTrigger>
   );
 }

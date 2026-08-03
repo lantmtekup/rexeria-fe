@@ -22,7 +22,15 @@ FROM unnest(ARRAY[
   'the_grand_discover',
   'the_grand_service',
   'the_grand_about',
-  'the_grand_footer'
+  'the_grand_footer',
+  'belgo_hero',
+  'belgo_header',
+  'belgo_brewing_process',
+  'belgo_about_product',
+  'belgo_footer',
+  'belgo_our_products',
+  'belgo_more_flavors',
+  'belgo_scroll_frames'
 ]::text[]) AS code
 WHERE NOT EXISTS (SELECT 1 FROM public.blocks b WHERE b.type_code = code AND b.archived_at IS NULL);
 

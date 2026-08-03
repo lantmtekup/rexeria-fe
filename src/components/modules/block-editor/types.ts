@@ -112,6 +112,8 @@ export type BlockType =
   | 'pnj_header'
   | 'pnj_sticky_menu'
   | 'pnj_cta'
+  // ── Belgo (craft beer) — port từ apps/belgo ──
+  | 'belgo_header'
   // ── The Grand (Masterise) — port từ apps/the-grand ──
   | 'the_grand_intro'
   | 'the_grand_location'
@@ -151,6 +153,14 @@ export type BlockType =
   | 'cool_hunter_product'
   | 'cool_hunter_quote'
   | 'cool_hunter_footer'
+  // ── Belgo (craft beer landing, port từ apps/belgo) ──
+  | 'belgo_hero'
+  | 'belgo_about_product'
+  | 'belgo_brewing_process'
+  | 'belgo_footer'
+  | 'belgo_our_products'
+  | 'belgo_more_flavors'
+  | 'belgo_scroll_frames'
   // ── Housent (real-estate template, clone từ housent.webflow.io) ──
   | 'housent_hero'
   | 'housent_stats'
@@ -704,6 +714,159 @@ export interface CoolHunterHeroContent {
   imageAlt?: string;
 }
 
+/** Belgo hero — video nền + tiêu đề Bebas nhiều dòng. Port apps/belgo Hero.tsx. */
+export interface BelgoHeroContent {
+  videoUrl?: string;
+  /** Tiêu đề nhiều dòng — dùng chung plumbing với PnjHero titleLines. */
+  titleLines?: string[];
+}
+
+/** Một dòng thông số bia (ABV / IBU / VOL) của Belgo About Product. */
+export interface BelgoSpecItem {
+  label: string;
+  value: string;
+  /** Đơn vị nhỏ đặt cạnh `value` (vd `%`, `CL`). Bỏ trống = không hiện. */
+  unit?: string;
+  copy: string;
+}
+
+/**
+ * Belgo about product — nền hoạ tiết multiply, crest exclusion, tiêu đề Bebas
+ * nhiều dòng, minh hoạ blend multiply + khối "BEVERAGE SPECS" scaleX-fit với
+ * các dòng thông số reveal. Port apps/belgo AboutProduct.tsx.
+ */
+export interface BelgoAboutProductContent {
+  patternUrl?: string;
+  crestUrl?: string;
+  crestAlt?: string;
+  eyebrow?: string;
+  /** Tiêu đề nhiều dòng — dùng chung plumbing titleLines với PnjHero. */
+  titleLines?: string[];
+  body?: string;
+  illustrationUrl?: string;
+  specsTitle?: string;
+  specs?: BelgoSpecItem[];
+}
+
+/** Belgo brewing process — video nền + text reveal + cup overlay. Port apps/belgo BrewingProcess.tsx. */
+export interface BelgoBrewingProcessContent {
+  videoUrl?: string;
+  eyebrow?: string;
+  title?: string;
+  body?: string;
+  cupImageUrl?: string;
+}
+
+/** Một từ trong headline pin/scrub của Belgo Footer. */
+export interface BelgoFooterHeadlineWord {
+  text: string;
+  /** true = trắng (#fff), false = beige display */
+  accent?: boolean;
+}
+
+/** Một chi nhánh trong Belgo Footer. */
+export interface BelgoFooterLocation {
+  name: string;
+  /** Địa chỉ nhiều dòng — phân tách bằng `\n` */
+  address?: string;
+  tel?: string;
+}
+
+/** Icon social trong Belgo Footer — upload ảnh hoặc fallback SVG theo platform. */
+export interface BelgoFooterSocial {
+  href: string;
+  /** Ảnh icon — upload qua Layers/toolbar; rỗng → SVG theo `platform`. */
+  iconUrl?: string;
+  /** Alt / aria-label (không hiển thị trên UI). */
+  iconAlt?: string;
+  /** Glyph fallback khi chưa có `iconUrl`. */
+  platform?: TheGrandFooterSocialPlatform;
+}
+
+/**
+ * Belgo footer — pin/scrub headline reveal, curtain beige wipe, địa chỉ +
+ * socials. Port apps/belgo Footer.tsx.
+ */
+export interface BelgoFooterContent {
+  logoUrl?: string;
+  logoAlt?: string;
+  headlineWords?: BelgoFooterHeadlineWord[];
+  locations?: BelgoFooterLocation[];
+  followLabel?: string;
+  copyright?: string;
+  socials?: BelgoFooterSocial[];
+  /** @deprecated Dùng `socials[]` — giữ để migrate content cũ. */
+  facebookUrl?: string;
+  /** @deprecated Dùng `socials[]` */
+  instagramUrl?: string;
+  /** @deprecated Dùng `socials[]` */
+  linkedinUrl?: string;
+}
+
+/** Một hương vị bia trong gallery Belgo More Flavors. */
+export interface BelgoFlavorItem {
+  key: string;
+  name: string;
+  color: string;
+  bgImageUrl?: string;
+  bottleImageUrl?: string;
+  glassImageUrl?: string;
+}
+
+/**
+ * Belgo more flavors — video + gallery pin/scrub ngang, hover reveal theo item giữa.
+ * Port apps/belgo MoreFlavors.tsx.
+ */
+/**
+ * Belgo scroll frame sequence — overlay canvas full-viewport phát chuỗi frame
+ * scrub theo scroll giữa 2 block (mặc định `#hero` → `#about-product`), kèm
+ * preloader curtain. Port apps/belgo ScrollFrameSequence.tsx.
+ */
+export interface BelgoScrollFramesContent {
+  /** Selector block mở đầu vùng scrub (`start: 'top top'`). */
+  startSelector?: string;
+  /** Selector block kết thúc vùng scrub (`end: 'bottom bottom'`). */
+  endSelector?: string;
+  frameCount?: number;
+  /** URL template, `{i}` = chỉ số frame 1-based đã zero-pad. */
+  frameSrc?: string;
+  /** Số chữ số zero-pad cho `{i}`. */
+  framePad?: number;
+  /** Bật preloader curtain + khoá scroll cho tới khi frame decode xong. */
+  showLoader?: boolean;
+  loaderLogoUrl?: string;
+  loaderLogoAlt?: string;
+  loaderLabel?: string;
+}
+
+export interface BelgoMoreFlavorsContent {
+  videoUrl?: string;
+  eyebrow?: string;
+  title?: string;
+  flavors?: BelgoFlavorItem[];
+}
+
+/** Một card sản phẩm trong section Our Products (bottle / glass). */
+export interface BelgoOurProductItem {
+  label: string;
+  imageUrl: string;
+  hoverImageUrl: string;
+  hoverTitle: string;
+  cta: string;
+  href: string;
+}
+
+/**
+ * Belgo our products — 2 card hover flip + copy giữa reveal GSAP.
+ * Port apps/belgo OurProducts.tsx.
+ */
+export interface BelgoOurProductsContent {
+  eyebrow?: string;
+  title?: string;
+  body?: string;
+  products?: BelgoOurProductItem[];
+}
+
 /**
  * Cool Hunter Section Progress — rail tiến độ + nhãn section bên phải.
  * Port từ apps/cool-hunter SectionProgress.tsx.
@@ -1037,6 +1200,27 @@ export interface PnjHeaderContent {
   logoAlt: string;
   /** URL ngoài hoặc `#` / path nội bộ. Để trống = không điều hướng. */
   logoHref: string;
+}
+
+/** Belgo header — fixed bar + GSAP off-canvas menu. Port từ apps/belgo Header. */
+export interface BelgoNavLink {
+  label: string;
+  href: string;
+}
+
+export interface BelgoHeaderContent {
+  logoUrl: string;
+  logoAlt: string;
+  logoHref: string;
+  menuLabel: string;
+  menuCloseLabel: string;
+  bookTableLabel: string;
+  bookTableHref: string;
+  orderBeerLabel: string;
+  orderBeerHref: string;
+  /** Hai dòng cách nhau bằng `\n`. */
+  menuTagline: string;
+  navLinks: BelgoNavLink[];
 }
 
 /**
@@ -3576,6 +3760,13 @@ export type BlockContent =
   | MintDiscoverContent
   | PnjHeroContent
   | CoolHunterHeroContent
+  | BelgoHeroContent
+  | BelgoAboutProductContent
+  | BelgoBrewingProcessContent
+  | BelgoFooterContent
+  | BelgoOurProductsContent
+  | BelgoMoreFlavorsContent
+  | BelgoScrollFramesContent
   | CoolHunterSectionProgressContent
   | CoolHunterStoryContent
   | CoolHunterGalleryContent
@@ -3586,6 +3777,7 @@ export type BlockContent =
   | PnjDetailsContent
   | PnjVariantContent
   | PnjHeaderContent
+  | BelgoHeaderContent
   | PnjStickyMenuContent
   | PnjCtaContent
   | TheGrandIntroContent
@@ -4719,6 +4911,132 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     aiLabelEn:
       'Cool Hunter hero: logo + serif title, image frame scrubs to full bleed over the copy (title flips black ↔ white)',
   },
+  belgo_hero: {
+    type: 'belgo_hero',
+    category: 'hero',
+    style: 'minimal',
+    tags: ['belgo', 'hero', 'video', 'beer'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-03',
+    label: 'Belgo · Hero',
+    accent: '#EDE6D6',
+    adminLabel: 'Belgo Hero',
+    gradient: 'from-amber-950 to-neutral-950',
+    defaultName: 'Belgo Hero',
+    aiLabelVi:
+      'hero Belgo: video nền full-bleed, scrim nhẹ, tiêu đề Bebas nhiều dòng canh giữa',
+    aiLabelEn:
+      'Belgo hero: full-bleed background video, subtle scrim, centered multi-line Bebas display title',
+  },
+  belgo_about_product: {
+    type: 'belgo_about_product',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['belgo', 'about', 'specs', 'beer'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-03',
+    label: 'Belgo · About Product',
+    accent: '#d72505',
+    adminLabel: 'Belgo About Product',
+    gradient: 'from-amber-100 to-stone-300',
+    defaultName: 'Belgo About Product',
+    aiLabelVi:
+      'giới thiệu sản phẩm bia: nền hoạ tiết multiply, crest, tiêu đề Bebas nhiều dòng, minh hoạ blend + khối BEVERAGE SPECS (ABV/IBU/VOL) trôi parallax',
+    aiLabelEn:
+      'beer product intro: patterned multiply background, crest, multi-line Bebas title, blended illustration + parallax BEVERAGE SPECS rows (ABV/IBU/VOL)',
+  },
+  belgo_brewing_process: {
+    type: 'belgo_brewing_process',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['belgo', 'beer', 'video', 'scroll'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-03',
+    label: 'Belgo · Brewing Process',
+    accent: '#EDE6D6',
+    adminLabel: 'Belgo Brewing Process',
+    gradient: 'from-amber-950 to-neutral-950',
+    defaultName: 'Belgo Brewing Process',
+    aiLabelVi:
+      'section brewing Belgo: video nền full-viewport, text reveal GSAP, cup overlay clip-path theo scroll',
+    aiLabelEn:
+      'Belgo brewing section: full-viewport background video, GSAP text reveal, scroll-linked cup overlay clip-path',
+  },
+  belgo_footer: {
+    type: 'belgo_footer',
+    category: 'footer',
+    style: 'luxury',
+    tags: ['belgo', 'beer', 'footer', 'scroll', 'pin'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-03',
+    label: 'Belgo · Footer',
+    accent: '#e4ddcf',
+    adminLabel: 'Belgo Footer',
+    gradient: 'from-neutral-950 to-amber-950',
+    defaultName: 'Belgo Footer',
+    aiLabelVi:
+      'footer Belgo pin/scrub: headline reveal, curtain beige wipe, địa chỉ chi nhánh + socials',
+    aiLabelEn:
+      'Belgo footer pin/scrub: headline word reveal, beige curtain wipe, branch addresses + socials',
+  },
+  belgo_our_products: {
+    type: 'belgo_our_products',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['belgo', 'products', 'beer', 'hover'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-03',
+    label: 'Belgo · Our Products',
+    accent: '#e4ddcf',
+    adminLabel: 'Belgo Our Products',
+    gradient: 'from-neutral-950 to-black',
+    defaultName: 'Belgo Our Products',
+    aiLabelVi:
+      'section sản phẩm Belgo: 2 card bottle/glass hover flip desktop, layout xếp dọc mobile, copy giữa reveal GSAP',
+    aiLabelEn:
+      'Belgo products section: two bottle/glass hover-flip cards on desktop, stacked mobile layout, center copy with GSAP reveal',
+  },
+  belgo_more_flavors: {
+    type: 'belgo_more_flavors',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['belgo', 'beer', 'gallery', 'scroll', 'video'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-03',
+    label: 'Belgo · More Flavors',
+    accent: '#e2dccb',
+    adminLabel: 'Belgo More Flavors',
+    gradient: 'from-amber-100 to-stone-300',
+    defaultName: 'Belgo More Flavors',
+    aiLabelVi:
+      'section Belgo more flavors: video + gallery pin/scrub ngang, hover reveal chai/ly theo item giữa viewport',
+    aiLabelEn:
+      'Belgo more flavors section: video column + pinned horizontal flavor gallery with center-item hover reveal',
+  },
+  belgo_scroll_frames: {
+    type: 'belgo_scroll_frames',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['belgo', 'beer', 'canvas', 'scroll', 'scrub', 'overlay'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-03',
+    label: 'Belgo · Scroll Frames',
+    accent: '#C9A24B',
+    adminLabel: 'Belgo Scroll Frames',
+    gradient: 'from-amber-950 to-neutral-950',
+    defaultName: 'Belgo Scroll Frames',
+    aiLabelVi:
+      'overlay canvas full-viewport: chuỗi frame chai bia scrub theo scroll giữa hero và about, kèm preloader curtain + progress',
+    aiLabelEn:
+      'full-viewport canvas overlay: bottle frame sequence scrubbed between the hero and about blocks, with a preloader curtain + progress bar',
+  },
   cool_hunter_story: {
     type: 'cool_hunter_story',
     category: 'intro',
@@ -4861,6 +5179,24 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     aiLabelVi: 'header PNJ: logo fixed top trong suốt, thu nhỏ khi scroll',
     aiLabelEn:
       'PNJ fixed-top logo header: transparent over hero, shrinks on scroll',
+  },
+  belgo_header: {
+    type: 'belgo_header',
+    category: 'header',
+    style: 'luxury',
+    tags: ['clone', 'belgo', 'beer'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-03',
+    label: 'Belgo · Header',
+    accent: '#C9A24B',
+    adminLabel: 'Belgo Header',
+    gradient: 'from-amber-950 to-neutral-950',
+    defaultName: 'Belgo Header',
+    aiLabelVi:
+      'header craft beer: logo giữa, menu off-canvas GSAP, CTA đặt bàn + order beer',
+    aiLabelEn:
+      'craft beer fixed header: centered logo, GSAP off-canvas menu, book table + order beer CTAs',
   },
   pnj_sticky_menu: {
     type: 'pnj_sticky_menu',

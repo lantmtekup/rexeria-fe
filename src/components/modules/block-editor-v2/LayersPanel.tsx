@@ -109,6 +109,11 @@ import { mintVaultInvitationImageElements } from '@/components/modules/block-edi
 import { mintVaultRevealImageElements } from '@/components/modules/block-editor/blocks/mintVaultRevealElements';
 import { pnjStickyMenuItemElements } from '@/components/modules/block-editor/blocks/_registry/defs/pnjStickyMenu';
 import { aesthaNavLinkElements } from '@/components/modules/block-editor/blocks/_registry/defs/aesthaNav';
+import { belgoNavLinkElements } from '@/components/modules/block-editor/blocks/_registry/defs/belgoHeader';
+import {
+  belgoFlavorItemElements,
+  resolveBelgoMoreFlavors,
+} from '@/components/modules/block-editor/blocks/_registry/defs/belgoMoreFlavors';
 import { aesthaExploreProjectElements } from '@/components/modules/block-editor/blocks/_registry/defs/aesthaExplore';
 import { aesthaStudioTeamElements } from '@/components/modules/block-editor/blocks/_registry/defs/aesthaStudio';
 import { aesthaContactSocialElements } from '@/components/modules/block-editor/blocks/_registry/defs/aesthaContact';
@@ -143,6 +148,7 @@ import {
   type MintVariantsContent,
   type CoolHunterGalleryContent,
   type LineaPortfolioItem,
+  type BelgoMoreFlavorsContent,
   type CoolHunterSectionProgressItem,
   type RealEstateVillaSlide,
   type RealEstateUtilityItem,
@@ -866,6 +872,48 @@ export function elementsForType(
         label: 'Ảnh hero',
         icon: ImageIcon,
         fieldType: 'image',
+      },
+    ];
+  }
+  if (type === 'belgo_hero') {
+    const lines = resolvePnjHeroTitleLines(
+      (content ?? {}) as unknown as PnjHeroContent
+    );
+    const titleSlots = lines.map((_, i) => ({
+      key: `titleLines[${i}]`,
+      label: `Tiêu đề dòng ${i + 1}`,
+      icon: Type,
+      fieldType: 'text' as const,
+    }));
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'videoUrl',
+        label: 'Video nền',
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      },
+      ...titleSlots,
+      {
+        key: 'titleLines',
+        label: 'Thêm / quản lý tiêu đề',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'belgo_more_flavors') {
+    const c = (content ?? {}) as unknown as BelgoMoreFlavorsContent;
+    const base = (def?.elements ?? []).filter(
+      el => el.key !== 'flavors' && !el.key.startsWith('flavors[')
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...base,
+      ...belgoFlavorItemElements(resolveBelgoMoreFlavors(c)),
+      {
+        key: 'flavors',
+        label: 'Thêm / quản lý hương vị',
+        icon: ListChecks,
       },
     ];
   }
@@ -1657,6 +1705,20 @@ export function elementsForType(
       BACKGROUND_LAYER,
       ...(def?.elements ?? []),
       ...aesthaNavLinkElements(links),
+      { key: 'navLinks', label: 'Thêm / quản lý nav', icon: ListChecks },
+    ];
+  }
+  if (type === 'belgo_header') {
+    const raw = content?.navLinks;
+    const links = Array.isArray(raw)
+      ? (raw as Array<{ label: string; href: string }>).filter(
+          l => l && typeof l === 'object' && typeof l.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []).filter(el => el.key !== 'navLinks'),
+      ...belgoNavLinkElements(links),
       { key: 'navLinks', label: 'Thêm / quản lý nav', icon: ListChecks },
     ];
   }

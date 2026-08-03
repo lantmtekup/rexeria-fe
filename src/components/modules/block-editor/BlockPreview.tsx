@@ -184,11 +184,14 @@ const STICKY_SCROLL_BLOCK_TYPES = new Set<Block['blockType']>([
   'cool_hunter_gallery',
   'cool_hunter_product',
   'cool_hunter_quote',
+  'belgo_footer',
+  'belgo_more_flavors',
 ]);
 
 /** Overlay chrome (header/nav) — canvas căn top, không center tạo khoảng hở. */
 const OVERLAY_TOP_BLOCK_TYPES = new Set<Block['blockType']>([
   'pnj_header',
+  'belgo_header',
   'delvaux_header',
   'springs_header',
   'cite_flow_header',
