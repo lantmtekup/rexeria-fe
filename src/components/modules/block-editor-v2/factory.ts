@@ -18,11 +18,22 @@ import { q80MenuDef } from '@/components/modules/block-editor/blocks/_registry/d
 import { housentHeroDef } from '@/components/modules/block-editor/blocks/_registry/defs/housentHero';
 import { alturaOlympusDef } from '@/components/modules/block-editor/blocks/_registry/defs/alturaOlympus';
 import { heroScrollDef } from '@/components/modules/block-editor/blocks/_registry/defs/heroScroll';
+import { citeFlowHeroDef } from '@/components/modules/block-editor/blocks/_registry/defs/citeFlowHero';
+import { citeFlowIntroDef } from '@/components/modules/block-editor/blocks/_registry/defs/citeFlowIntro';
+import { citeFlowStatsDef } from '@/components/modules/block-editor/blocks/_registry/defs/citeFlowStats';
+import { citeFlowFaqDef } from '@/components/modules/block-editor/blocks/_registry/defs/citeFlowFaq';
+import { citeFlowAmenityDef } from '@/components/modules/block-editor/blocks/_registry/defs/citeFlowAmenity';
+import { citeFlowGalleryDef } from '@/components/modules/block-editor/blocks/_registry/defs/citeFlowGallery';
+import { citeFlowHeaderDef } from '@/components/modules/block-editor/blocks/_registry/defs/citeFlowHeader';
+import { citeFlowFooterDef } from '@/components/modules/block-editor/blocks/_registry/defs/citeFlowFooter';
+import { citeFlowContactFormDef } from '@/components/modules/block-editor/blocks/_registry/defs/citeFlowContactForm';
+import { citeFlowSignatureDef } from '@/components/modules/block-editor/blocks/_registry/defs/citeFlowSignature';
 import { scrollMattisDef } from '@/components/modules/block-editor/blocks/_registry/defs/scrollMattis';
 import { coolHunterHeroDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterHero';
 import { coolHunterSectionProgressDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterSectionProgress';
 import { coolHunterStoryDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterStory';
 import { coolHunterGalleryDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterGallery';
+import { scrollImgScaleDef } from '@/components/modules/block-editor/blocks/_registry/defs/scrollImgScale';
 import { coolHunterProductDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterProduct';
 import { coolHunterQuoteDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterQuote';
 import { coolHunterFooterDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterFooter';
@@ -2166,6 +2177,16 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_VI,
   altura_olympus: alturaOlympusDef.defaultContent.vi,
   hero_scroll: heroScrollDef.defaultContent.vi,
+  cite_flow_hero: citeFlowHeroDef.defaultContent.vi,
+  cite_flow_intro: citeFlowIntroDef.defaultContent.vi,
+  cite_flow_stats: citeFlowStatsDef.defaultContent.vi,
+  cite_flow_faq: citeFlowFaqDef.defaultContent.vi,
+  cite_flow_amenity: citeFlowAmenityDef.defaultContent.vi,
+  cite_flow_gallery: citeFlowGalleryDef.defaultContent.vi,
+  cite_flow_header: citeFlowHeaderDef.defaultContent.vi,
+  cite_flow_footer: citeFlowFooterDef.defaultContent.vi,
+  cite_flow_contact_form: citeFlowContactFormDef.defaultContent.vi,
+  cite_flow_signature: citeFlowSignatureDef.defaultContent.vi,
   scroll_mattis: scrollMattisDef.defaultContent.vi,
   hero_overlay: HERO_OVERLAY_VI,
   feature_section: FEATURE_VI,
@@ -2180,6 +2201,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   cool_hunter_section_progress: coolHunterSectionProgressDef.defaultContent.vi,
   cool_hunter_story: coolHunterStoryDef.defaultContent.vi,
   cool_hunter_gallery: coolHunterGalleryDef.defaultContent.vi,
+  scroll_img_scale: scrollImgScaleDef.defaultContent.vi,
   cool_hunter_product: coolHunterProductDef.defaultContent.vi,
   cool_hunter_quote: coolHunterQuoteDef.defaultContent.vi,
   cool_hunter_footer: coolHunterFooterDef.defaultContent.vi,
@@ -2365,6 +2387,16 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   hero_split: HERO_SPLIT_EN,
   altura_olympus: alturaOlympusDef.defaultContent.en,
   hero_scroll: heroScrollDef.defaultContent.en,
+  cite_flow_hero: citeFlowHeroDef.defaultContent.en,
+  cite_flow_intro: citeFlowIntroDef.defaultContent.en,
+  cite_flow_stats: citeFlowStatsDef.defaultContent.en,
+  cite_flow_faq: citeFlowFaqDef.defaultContent.en,
+  cite_flow_amenity: citeFlowAmenityDef.defaultContent.en,
+  cite_flow_gallery: citeFlowGalleryDef.defaultContent.en,
+  cite_flow_header: citeFlowHeaderDef.defaultContent.en,
+  cite_flow_footer: citeFlowFooterDef.defaultContent.en,
+  cite_flow_contact_form: citeFlowContactFormDef.defaultContent.en,
+  cite_flow_signature: citeFlowSignatureDef.defaultContent.en,
   scroll_mattis: scrollMattisDef.defaultContent.en,
   hero_overlay: HERO_OVERLAY_EN,
   feature_section: FEATURE_EN,
@@ -2379,6 +2411,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   cool_hunter_section_progress: coolHunterSectionProgressDef.defaultContent.en,
   cool_hunter_story: coolHunterStoryDef.defaultContent.en,
   cool_hunter_gallery: coolHunterGalleryDef.defaultContent.en,
+  scroll_img_scale: scrollImgScaleDef.defaultContent.en,
   cool_hunter_product: coolHunterProductDef.defaultContent.en,
   cool_hunter_quote: coolHunterQuoteDef.defaultContent.en,
   cool_hunter_footer: coolHunterFooterDef.defaultContent.en,
