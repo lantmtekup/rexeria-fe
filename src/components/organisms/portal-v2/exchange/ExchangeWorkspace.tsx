@@ -1,0 +1,654 @@
+'use client';
+
+import { Loader2, Search, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/molecules/portal-v2/Button';
+import { Tabs } from '@/components/molecules/portal-v2/Tabs';
+import { BuyConfirmModal } from '@/components/organisms/portal-v2/exchange/BuyConfirmModal';
+import { ExchangeDetailModal } from '@/components/organisms/portal-v2/exchange/ExchangeDetailModal';
+import { ExchangePreviewShell } from '@/components/organisms/portal-v2/exchange/ExchangePreviewShell';
+import { FeaturedStrip } from '@/components/organisms/portal-v2/exchange/FeaturedStrip';
+import { FilterChips } from '@/components/organisms/portal-v2/exchange/FilterChips';
+import { ListingCard } from '@/components/organisms/portal-v2/exchange/ListingCard';
+import {
+  EXCHANGE_CAN_BUY,
+  EXCHANGE_DEFAULT_FILTERS,
+  EXCHANGE_KINDS,
+  EXCHANGE_OBJECTIVES,
+  EXCHANGE_PRICES,
+} from '@/lib/portal-v2/exchange/constants';
+import {
+  countByKind,
+  filterListings,
+  resolveActionState,
+} from '@/lib/portal-v2/exchange/helpers';
+import {
+  isExchangeBlockPreviewCached,
+  prefetchExchangeBlockPreview,
+} from '@/lib/portal-v2/exchange/blockPreview';
+import {
+  isExchangePagePreviewCached,
+  prefetchExchangePagePreview,
+} from '@/lib/portal-v2/exchange/pagePreview';
+import {
+  getCachedExchangePageLayers,
+  prefetchExchangePageLayers,
+} from '@/lib/portal-v2/exchange/pageLayers';
+import type {
+  ExchangeFilters,
+  ExchangeListingView,
+  ExchangeSessionState,
+} from '@/lib/portal-v2/exchange/types';
+import { cn } from '@/lib/cn';
+import { fetchExchangeCatalog } from '@/services/portal-v2/exchangeCatalog';
+import { RxApiError } from '@/services/rexer/client';
+import { rexerApi } from '@/services/rexer/endpoints';
+
+type ModalMode = 'detail' | 'buy' | 'preview' | null;
+
+type ExchangeWorkspaceProps = {
+  initialCatalog: ExchangeListingView[];
+  initialError?: string | null;
+  softError?: string | null;
+};
+
+const SEARCH_DEBOUNCE_MS = 350;
+
+export const ExchangeWorkspace = ({
+  initialCatalog,
+  initialError = null,
+  softError: initialSoftError = null,
+}: ExchangeWorkspaceProps) => {
+  const t = useTranslations('portalV2.exchange');
+
+  const [catalog, setCatalog] = useState(initialCatalog);
+  const [loadError, setLoadError] = useState(initialError);
+  const [softError, setSoftError] = useState(initialSoftError);
+  const [searching, setSearching] = useState(false);
+  const [filters, setFilters] = useState<ExchangeFilters>(
+    EXCHANGE_DEFAULT_FILTERS
+  );
+  const [debouncedQ, setDebouncedQ] = useState('');
+  const [session, setSession] = useState<ExchangeSessionState>({
+    owned: {},
+    added: {},
+  });
+  const [activeListing, setActiveListing] =
+    useState<ExchangeListingView | null>(null);
+  const [modalMode, setModalMode] = useState<ModalMode>(null);
+  const [previewReturnToDetail, setPreviewReturnToDetail] = useState(false);
+  const [previewBootingId, setPreviewBootingId] = useState<string | null>(null);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [installing, setInstalling] = useState(false);
+  const skipFirstSearch = useRef(true);
+  const modalModeRef = useRef(modalMode);
+  const previewBootingRef = useRef(false);
+
+  modalModeRef.current = modalMode;
+
+  /** Featured strip stays the first 3 landings from the initial (unfiltered) load. */
+  const featured = useMemo(
+    () =>
+      initialCatalog
+        .filter(item => item.source === 'page' && item.meta.kind === 'page')
+        .slice(0, 3),
+    [initialCatalog]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    rexerApi.auth
+      .me()
+      .then(res => {
+        if (!cancelled && res.user.active_workspace_id) {
+          setWorkspaceId(res.user.active_workspace_id);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedQ(filters.q.trim());
+    }, SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [filters.q]);
+
+  useEffect(() => {
+    if (skipFirstSearch.current) {
+      skipFirstSearch.current = false;
+      return;
+    }
+
+    let cancelled = false;
+    setSearching(true);
+
+    fetchExchangeCatalog({ q: debouncedQ || undefined })
+      .then(result => {
+        if (cancelled) return;
+        setCatalog(result.catalog);
+        setLoadError(result.error);
+        setSoftError(result.softError);
+      })
+      .catch(err => {
+        if (cancelled) return;
+        setLoadError(
+          err instanceof RxApiError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : 'Failed to load catalog'
+        );
+        setCatalog([]);
+        setSoftError(null);
+      })
+      .finally(() => {
+        if (!cancelled) setSearching(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedQ]);
+
+  const filtered = useMemo(
+    () => filterListings(catalog, { ...filters, q: '' }),
+    [catalog, filters]
+  );
+
+  const kindTabs = useMemo(
+    () =>
+      EXCHANGE_KINDS.map(k => ({
+        id: k.id,
+        label: t(k.labelKey),
+        count: countByKind(catalog, k.id),
+      })),
+    [catalog, t]
+  );
+
+  const objectiveOptions = useMemo(
+    () =>
+      EXCHANGE_OBJECTIVES.map(o => ({
+        id: o.id,
+        label: t(o.labelKey),
+      })),
+    [t]
+  );
+
+  const priceOptions = useMemo(
+    () =>
+      EXCHANGE_PRICES.map(p => ({
+        id: p.id,
+        label: t(p.labelKey),
+      })),
+    [t]
+  );
+
+  const handleOpen = useCallback((listing: ExchangeListingView) => {
+    setPreviewReturnToDetail(false);
+    setActiveListing(listing);
+    setModalMode('detail');
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setModalMode(null);
+    setActiveListing(null);
+    setPreviewReturnToDetail(false);
+  }, []);
+
+  const ensurePreviewReady = useCallback(
+    async (listing: ExchangeListingView): Promise<boolean> => {
+      const needsBlock =
+        listing.source === 'block' &&
+        listing.blockId &&
+        !isExchangeBlockPreviewCached(listing.blockId);
+      const needsPageIframe =
+        listing.source === 'page' &&
+        listing.slug &&
+        !isExchangePagePreviewCached(listing.slug);
+      const needsPageLayers =
+        listing.source === 'page' &&
+        listing.slug &&
+        !getCachedExchangePageLayers(listing.slug);
+
+      if (listing.source === 'page' && !listing.slug) {
+        toast.error(t('previewMissingSlug'));
+        return false;
+      }
+
+      if (listing.source === 'block' && !listing.blockId) {
+        toast.error(t('previewMissingBlockId'));
+        return false;
+      }
+
+      if (!needsBlock && !needsPageIframe && !needsPageLayers) return true;
+
+      previewBootingRef.current = true;
+      setPreviewBootingId(listing.id);
+      try {
+        if (needsBlock && listing.blockId) {
+          const block = await prefetchExchangeBlockPreview(listing.blockId);
+          if (!block) {
+            toast.error(t('previewBlockInvalid'));
+            return false;
+          }
+        }
+
+        if (listing.source === 'page' && listing.slug) {
+          const tasks: Promise<unknown>[] = [];
+          if (needsPageIframe) {
+            tasks.push(
+              prefetchExchangePagePreview(listing.slug).then(ok => {
+                if (!ok) throw new Error(t('previewPageLoadError'));
+              })
+            );
+          }
+          if (needsPageLayers) {
+            tasks.push(prefetchExchangePageLayers(listing.slug));
+          }
+          await Promise.all(tasks);
+        }
+
+        return true;
+      } catch (err) {
+        const msg =
+          err instanceof RxApiError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : listing.source === 'block'
+                ? t('previewBlockLoadError')
+                : t('previewPageLoadError');
+        toast.error(msg);
+        return false;
+      } finally {
+        previewBootingRef.current = false;
+        setPreviewBootingId(null);
+      }
+    },
+    [t]
+  );
+
+  const openPreview = useCallback((listing: ExchangeListingView) => {
+    setPreviewReturnToDetail(modalModeRef.current === 'detail');
+    setActiveListing(listing);
+    setModalMode('preview');
+  }, []);
+
+  const handlePreview = useCallback(
+    (listing: ExchangeListingView) => {
+      if (previewBootingRef.current) return;
+
+      void (async () => {
+        const ready = await ensurePreviewReady(listing);
+        if (!ready) return;
+        openPreview(listing);
+      })();
+    },
+    [ensurePreviewReady, openPreview]
+  );
+
+  const handleClosePreview = useCallback(() => {
+    if (previewReturnToDetail && activeListing) {
+      setPreviewReturnToDetail(false);
+      setModalMode('detail');
+      return;
+    }
+    handleCloseModal();
+  }, [previewReturnToDetail, activeListing, handleCloseModal]);
+
+  const handlePreviewNavigate = useCallback(
+    (listing: ExchangeListingView) => {
+      if (previewBootingRef.current) return;
+
+      void (async () => {
+        const ready = await ensurePreviewReady(listing);
+        if (!ready) return;
+        setActiveListing(listing);
+      })();
+    },
+    [ensurePreviewReady]
+  );
+
+  const previewNeighbors = useMemo(() => {
+    if (!activeListing) return filtered;
+    if (filtered.some(item => item.id === activeListing.id)) return filtered;
+    return [activeListing, ...filtered];
+  }, [activeListing, filtered]);
+
+  const handleSell = useCallback(() => {
+    toast.message(t('sellSoon'));
+  }, [t]);
+
+  const installListing = useCallback(
+    async (listing: ExchangeListingView) => {
+      const payload = {
+        action: 'add_to_workspace',
+        listingId: listing.id,
+        source: listing.source,
+        pageId: listing.pageId ?? null,
+        templateVersionId: listing.templateVersionId ?? null,
+        blockId: listing.blockId ?? null,
+        name: listing.name,
+        price: listing.meta.price,
+        workspaceId,
+      };
+
+      if (!workspaceId) {
+        window.alert(JSON.stringify(payload, null, 2));
+        setSession(prev => ({
+          ...prev,
+          added: {
+            ...prev.added,
+            [listing.id]: `copy-${listing.pageId ?? listing.blockId ?? listing.id}`,
+          },
+        }));
+        handleCloseModal();
+        return;
+      }
+
+      setInstalling(true);
+      try {
+        if (listing.source === 'block') {
+          if (!listing.blockId) {
+            throw new Error('Missing block id');
+          }
+          const block = await rexerApi.blocks.clone(listing.blockId, {
+            name: `${listing.name} (Exchange)`,
+          });
+          window.alert(
+            JSON.stringify({ ...payload, clonedBlockId: block.id }, null, 2)
+          );
+          setSession(prev => ({
+            ...prev,
+            added: { ...prev.added, [listing.id]: block.id },
+          }));
+        } else {
+          if (!listing.templateVersionId) {
+            throw new Error('Missing template version id');
+          }
+          const page = await rexerApi.pages.create(workspaceId, {
+            type: 'landing',
+            template_version_id: listing.templateVersionId,
+            name: `${listing.name} (Exchange)`,
+          });
+          window.alert(
+            JSON.stringify(
+              { ...payload, createdPageId: page.id, slug: page.slug },
+              null,
+              2
+            )
+          );
+          setSession(prev => ({
+            ...prev,
+            added: { ...prev.added, [listing.id]: page.id },
+          }));
+        }
+        toast.success(t('addedToast', { name: listing.name }));
+        handleCloseModal();
+      } catch (err) {
+        const msg =
+          err instanceof RxApiError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : 'Install failed';
+        toast.error(msg);
+      } finally {
+        setInstalling(false);
+      }
+    },
+    [workspaceId, handleCloseModal, t]
+  );
+
+  const handleAction = useCallback(
+    (listing: ExchangeListingView) => {
+      const state = resolveActionState(listing, session, EXCHANGE_CAN_BUY);
+
+      if (state === 'locked') {
+        toast.message(t('premiumLock'));
+        return;
+      }
+
+      if (state === 'added') return;
+
+      if (state === 'buy') {
+        setActiveListing(listing);
+        setModalMode('buy');
+        return;
+      }
+
+      void installListing(listing);
+    },
+    [session, t, installListing]
+  );
+
+  const handleConfirmBuy = useCallback(
+    (listing: ExchangeListingView) => {
+      const payload = {
+        action: 'buy',
+        listingId: listing.id,
+        source: listing.source,
+        pageId: listing.pageId ?? null,
+        templateVersionId: listing.templateVersionId ?? null,
+        blockId: listing.blockId ?? null,
+        name: listing.name,
+        price: listing.meta.price,
+      };
+      window.alert(JSON.stringify(payload, null, 2));
+      setSession(prev => ({
+        ...prev,
+        owned: { ...prev.owned, [listing.id]: true },
+      }));
+      setModalMode('detail');
+      toast.success(t('purchasedToast', { name: listing.name }));
+    },
+    [t]
+  );
+
+  const handleKindChange = (id: string) => {
+    setFilters(prev => ({ ...prev, kind: id as ExchangeFilters['kind'] }));
+  };
+
+  return (
+    <div className='flex min-h-0 flex-col'>
+      <div className='border-b border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
+        <div className='mx-auto flex w-full flex-wrap items-end justify-between gap-4 px-5 pt-6 pb-4 md:px-8'>
+          <div className='min-w-0'>
+            <h1 className='font-[family-name:var(--pv2-disp)] text-[1.625rem] font-bold tracking-[-0.03em] text-[var(--pv2-ink)] md:text-[1.75rem]'>
+              {t('title')}
+            </h1>
+            <p className='mt-1 text-[13.5px] leading-relaxed text-[var(--pv2-mut)]'>
+              {t('subtitle')}
+            </p>
+          </div>
+          <div className='flex shrink-0 items-center gap-2 pb-0.5'>
+            <Button variant='ghost' onClick={handleSell}>
+              <Sparkles className='size-[15px]' strokeWidth={2.2} aria-hidden />
+              {t('sellTemplate')}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className='mx-auto w-full max-w-[1440px] px-5 py-6 md:px-8'>
+        {loadError ? (
+          <div
+            className={cn(
+              'rounded-[var(--pv2-r-lg)] border border-dashed border-[var(--pv2-hair)]',
+              'bg-[var(--pv2-paper)] px-6 py-14 text-center'
+            )}
+          >
+            <p className='text-[15px] font-semibold text-[var(--pv2-ink)]'>
+              {t('loadError')}
+            </p>
+            <p className='mt-2 text-[13px] text-[var(--pv2-mut)]'>
+              {loadError}
+            </p>
+          </div>
+        ) : (
+          <>
+            {softError ? (
+              <div
+                className={cn(
+                  'mb-4 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)]',
+                  'bg-[var(--pv2-paper)] px-4 py-3 text-[12.5px] text-[var(--pv2-mut)]'
+                )}
+              >
+                {softError}
+              </div>
+            ) : null}
+
+            <FeaturedStrip
+              items={featured}
+              onOpen={handleOpen}
+              onPreview={handlePreview}
+              previewBootingId={previewBootingId}
+            />
+
+            <div className='sticky top-0 z-10 -mx-5 mb-3.5 bg-[var(--pv2-canvas)] px-5 md:-mx-8 md:px-8'>
+              <Tabs
+                items={kindTabs}
+                value={filters.kind}
+                onChange={handleKindChange}
+                aria-label={t('kindTabsAria')}
+              />
+            </div>
+
+            <div className='mb-3.5 flex flex-wrap items-center gap-2'>
+              <label
+                className={cn(
+                  'flex min-w-[250px] flex-1 items-center gap-2 rounded-[10px]',
+                  'border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-[11px] py-2 text-[var(--pv2-faint)]',
+                  'transition-colors focus-within:border-[var(--pv2-violet)]'
+                )}
+              >
+                <Search
+                  className='size-3.5 shrink-0'
+                  strokeWidth={2.2}
+                  aria-hidden
+                />
+                <input
+                  type='search'
+                  value={filters.q}
+                  onChange={e =>
+                    setFilters(prev => ({ ...prev, q: e.target.value }))
+                  }
+                  placeholder={t('searchPlaceholder')}
+                  aria-label={t('searchAria')}
+                  className='min-w-0 flex-1 border-0 bg-transparent text-[12.5px] text-[var(--pv2-ink)] outline-none placeholder:text-[var(--pv2-faint)]'
+                />
+              </label>
+
+              <span className='ml-1.5 self-center text-[11px] font-semibold tracking-[0.04em] text-[var(--pv2-faint)] uppercase'>
+                {t('filterObjective')}
+              </span>
+              <FilterChips
+                inline
+                options={objectiveOptions}
+                value={filters.obj}
+                onChange={id =>
+                  setFilters(prev => ({
+                    ...prev,
+                    obj: id as ExchangeFilters['obj'],
+                  }))
+                }
+              />
+
+              <span className='ml-1.5 self-center text-[11px] font-semibold tracking-[0.04em] text-[var(--pv2-faint)] uppercase'>
+                {t('filterPrice')}
+              </span>
+              <FilterChips
+                inline
+                options={priceOptions}
+                value={filters.price}
+                onChange={id =>
+                  setFilters(prev => ({
+                    ...prev,
+                    price: id as ExchangeFilters['price'],
+                  }))
+                }
+              />
+            </div>
+
+            {searching ? (
+              <div className='mt-4 flex items-center justify-center gap-2 py-10 text-[13px] text-[var(--pv2-mut)]'>
+                <Loader2 className='size-4 animate-spin text-[var(--pv2-electric)]' />
+                {t('loading')}
+              </div>
+            ) : filtered.length ? (
+              <div className='mt-4 grid grid-cols-[repeat(auto-fill,minmax(244px,1fr))] gap-4'>
+                {filtered.map(listing => (
+                  <ListingCard
+                    key={listing.id}
+                    listing={listing}
+                    session={session}
+                    onOpen={handleOpen}
+                    onAction={handleAction}
+                    onPreview={handlePreview}
+                    previewLoading={previewBootingId === listing.id}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  'mt-4 rounded-[var(--pv2-r)] border border-dashed border-[var(--pv2-hair)]',
+                  'px-10 py-10 text-center text-[13px] text-[var(--pv2-faint)]'
+                )}
+              >
+                {t('empty')}
+              </div>
+            )}
+          </>
+        )}
+
+        {installing ? (
+          <div className='pointer-events-none fixed inset-0 z-[calc(var(--pv2-z-top)+5)] grid place-items-center bg-black/10'>
+            <div className='flex items-center gap-2 rounded-[var(--pv2-r)] bg-[var(--pv2-paper)] px-4 py-3 shadow-[var(--pv2-sh-soft)]'>
+              <Loader2 className='size-4 animate-spin text-[var(--pv2-electric)]' />
+              <span className='text-[13px] font-semibold text-[var(--pv2-ink)]'>
+                {t('installing')}
+              </span>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {modalMode === 'detail' && activeListing ? (
+        <ExchangeDetailModal
+          listing={activeListing}
+          session={session}
+          onClose={handleCloseModal}
+          onAction={handleAction}
+          onPreview={handlePreview}
+          previewLoading={previewBootingId === activeListing.id}
+        />
+      ) : null}
+
+      {modalMode === 'buy' && activeListing ? (
+        <BuyConfirmModal
+          listing={activeListing}
+          onClose={() => setModalMode('detail')}
+          onConfirm={handleConfirmBuy}
+        />
+      ) : null}
+
+      <ExchangePreviewShell
+        open={modalMode === 'preview' && activeListing !== null}
+        listing={modalMode === 'preview' ? activeListing : null}
+        neighbors={previewNeighbors}
+        onClose={handleClosePreview}
+        onNavigate={handlePreviewNavigate}
+      />
+    </div>
+  );
+};
