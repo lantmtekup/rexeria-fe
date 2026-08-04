@@ -1,4 +1,7 @@
-import { enrichPagesWithThumbnailUrls } from '@/lib/pages/resolve-thumbnails';
+import {
+  enrichBlocksWithThumbnailUrls,
+  enrichPagesWithThumbnailUrls,
+} from '@/lib/pages/resolve-thumbnails';
 import { mapBlockToListing } from '@/lib/portal-v2/exchange/mapBlock';
 import { mapLandingPageToListing } from '@/lib/portal-v2/exchange/mapPage';
 import type { ExchangeListingView } from '@/lib/portal-v2/exchange/types';
@@ -70,7 +73,10 @@ export const fetchExchangeCatalog = async (
 
   const blocksResult = settled[1];
   if (blocksResult.status === 'fulfilled') {
-    catalog.push(...(blocksResult.value.items ?? []).map(mapBlockToListing));
+    const blocks = await enrichBlocksWithThumbnailUrls(
+      blocksResult.value.items ?? []
+    );
+    catalog.push(...blocks.map(mapBlockToListing));
   } else {
     const reason = blocksResult.reason;
     errors.push(

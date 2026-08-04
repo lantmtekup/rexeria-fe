@@ -76,6 +76,13 @@ export type ElementKind =
   | 'citeFlowAmenityList'
   | 'citeFlowHeaderSocialLinks'
   | 'delvauxSubnavLinks'
+  | 'gambitOverviewPanels'
+  | 'gambitDetailsGallery'
+  | 'gambitDetailsColors'
+  | 'gambitDetailsSizes'
+  | 'gambitDetailsAccordions'
+  | 'gambitDetailsActions'
+  | 'gambitRelatedProducts'
   // Nav họ Aestha — nay thuộc block riêng `aestha_nav` (trước ở
   // `framer_aestha_editorial`). Các kind `aestha*FooterLinks` đã bỏ cùng lúc.
   | 'aesthaNavLinks'
@@ -321,6 +328,53 @@ export function resolveKind(
     blockType === 'delvaux_variant'
   ) {
     return 'text';
+  }
+  // Gambit overview: `panels` (cả mảng) là list manager; các field con là
+  // ảnh / chữ. Chặn TRƯỚC fallback vì panel do user thêm không có trong
+  // BlockDef.elements nên `defFieldType` không biết kiểu.
+  if (blockType === 'gambit_product_overview') {
+    if (key === 'panels') return 'gambitOverviewPanels';
+    if (/^panels\[\d+\]\.imageUrl$/.test(key)) return 'image';
+    if (/^panels\[\d+\]\.(title|body|detailsLabel|detailsRef)$/.test(key)) {
+      return 'text';
+    }
+    if (/^panels\[\d+\]\.bullets\[\d+\]$/.test(key)) return 'text';
+  }
+  // Gambit details: 5 mảng (ảnh/màu/size/accordion/hành động) là list manager;
+  // field con là ảnh / chữ / link. Chặn TRƯỚC fallback vì item user thêm không
+  // nằm trong BlockDef.elements nên `defFieldType` không biết kiểu.
+  if (blockType === 'gambit_product_details') {
+    if (key === 'galleryImages') return 'gambitDetailsGallery';
+    if (key === 'colors') return 'gambitDetailsColors';
+    if (key === 'sizes') return 'gambitDetailsSizes';
+    if (key === 'accordions') return 'gambitDetailsAccordions';
+    if (key === 'actions') return 'gambitDetailsActions';
+    if (/^galleryImages\[\d+\]$/.test(key)) return 'image';
+    if (/^actions\[\d+\]\.href$/.test(key)) return 'link';
+    if (
+      /^(colors\[\d+\]\.label|sizes\[\d+\]|accordions\[\d+\]\.(title|body)|actions\[\d+\]\.label)$/.test(
+        key
+      )
+    ) {
+      return 'text';
+    }
+  }
+  // Gambit section nav: `navLinks` là list manager — dùng chung control với
+  // `aestha_nav` / `belgo_header` (cùng shape `{ label, href }`). Chặn TRƯỚC
+  // fallback để toolbar không ghi 1 string đè cả mảng.
+  if (blockType === 'gambit_section_nav') {
+    if (key === 'navLinks') return 'aesthaNavLinks';
+    if (/^navLinks\[\d+\]\.(label|href)$/.test(key)) {
+      return key.endsWith('.href') ? 'link' : 'text';
+    }
+  }
+  // Gambit related: `products` là list manager; `backHref` mở link picker.
+  if (blockType === 'gambit_related_products') {
+    if (key === 'products') return 'gambitRelatedProducts';
+    if (key === 'backHref') return 'link';
+    if (key === 'backLabel') return 'text';
+    if (/^products\[\d+\]\.imageUrl$/.test(key)) return 'image';
+    if (/^products\[\d+\]\.(name|material)$/.test(key)) return 'text';
   }
   if (
     /^items\[\d+\]\.(question|answer)$/.test(key) &&
@@ -752,6 +806,92 @@ export function resolveLabel(
       imageUrl: 'Ảnh',
     };
     return `Màu ${Number(delvauxVarLabel[1]) + 1} · ${labels[field] ?? field}`;
+  }
+  if (blockType === 'gambit_product_overview') {
+    if (key === 'panels') return 'Thêm / quản lý panel';
+    const panelField = key.match(
+      /^panels\[(\d+)\]\.(imageUrl|title|body|detailsLabel|detailsRef)$/
+    );
+    if (panelField) {
+      const labels: Record<string, string> = {
+        imageUrl: 'Ảnh',
+        title: 'Tiêu đề',
+        body: 'Mô tả',
+        detailsLabel: 'Nhãn Details',
+        detailsRef: 'Mã REF',
+      };
+      return `Panel ${Number(panelField[1]) + 1} · ${
+        labels[panelField[2]] ?? panelField[2]
+      }`;
+    }
+    const panelBullet = key.match(/^panels\[(\d+)\]\.bullets\[(\d+)\]$/);
+    if (panelBullet) {
+      return `Panel ${Number(panelBullet[1]) + 1} · Gạch đầu dòng ${
+        Number(panelBullet[2]) + 1
+      }`;
+    }
+  }
+  if (blockType === 'gambit_section_nav') {
+    if (key === 'navLinks') return 'Thêm / quản lý mục';
+    const navField = key.match(/^navLinks\[(\d+)\]\.(label|href)$/);
+    if (navField) {
+      return `Mục ${Number(navField[1]) + 1} · ${
+        navField[2] === 'label' ? 'Chữ' : 'Link'
+      }`;
+    }
+  }
+  if (blockType === 'gambit_related_products') {
+    if (key === 'products') return 'Thêm / quản lý sản phẩm';
+    if (key === 'backLabel') return 'Chữ nút quay lại';
+    if (key === 'backHref') return 'Link nút quay lại';
+    const relatedField = key.match(
+      /^products\[(\d+)\]\.(imageUrl|name|material)$/
+    );
+    if (relatedField) {
+      const labels: Record<string, string> = {
+        imageUrl: 'Ảnh',
+        name: 'Tên',
+        material: 'Chất liệu',
+      };
+      return `Sản phẩm ${Number(relatedField[1]) + 1} · ${
+        labels[relatedField[2]] ?? relatedField[2]
+      }`;
+    }
+  }
+  if (blockType === 'gambit_product_details') {
+    const managers: Record<string, string> = {
+      galleryImages: 'Thêm / quản lý ảnh',
+      colors: 'Thêm / quản lý màu',
+      sizes: 'Thêm / quản lý size',
+      accordions: 'Thêm / quản lý accordion',
+      actions: 'Thêm / quản lý hành động',
+    };
+    if (managers[key]) return managers[key];
+    const fixed: Record<string, string> = {
+      title: 'Tên sản phẩm',
+      subtitle: 'Chất liệu',
+      dimensions: 'Kích thước',
+      dimensionsNote: 'Chú thích kích thước',
+    };
+    if (fixed[key]) return fixed[key];
+    const image = key.match(/^galleryImages\[(\d+)\]$/);
+    if (image) return `Ảnh ${Number(image[1]) + 1}`;
+    const color = key.match(/^colors\[(\d+)\]\.label$/);
+    if (color) return `Màu ${Number(color[1]) + 1}`;
+    const size = key.match(/^sizes\[(\d+)\]$/);
+    if (size) return `Size ${Number(size[1]) + 1}`;
+    const acc = key.match(/^accordions\[(\d+)\]\.(title|body)$/);
+    if (acc) {
+      return `Accordion ${Number(acc[1]) + 1} · ${
+        acc[2] === 'title' ? 'Tiêu đề' : 'Nội dung'
+      }`;
+    }
+    const action = key.match(/^actions\[(\d+)\]\.(label|href)$/);
+    if (action) {
+      return `Hành động ${Number(action[1]) + 1} · ${
+        action[2] === 'label' ? 'Nhãn' : 'Link'
+      }`;
+    }
   }
   const delvauxFaqLabel = key.match(/^faqs\[(\d+)\]\.(question|answer)$/);
   if (delvauxFaqLabel && blockType === 'delvaux_variant') {
@@ -2602,6 +2742,17 @@ export function resolveSiblingLinkKey(
     const cta = key.match(/^products\[(\d+)\]\.cta$/);
     if (cta) return `products[${cta[1]}].href`;
   }
+  if (blockType === 'gambit_section_nav') {
+    const navLabel = key.match(/^navLinks\[(\d+)\]\.label$/);
+    if (navLabel) return `navLinks[${navLabel[1]}].href`;
+  }
+  if (blockType === 'gambit_related_products' && key === 'backLabel') {
+    return 'backHref';
+  }
+  if (blockType === 'gambit_product_details') {
+    const action = key.match(/^actions\[(\d+)\]\.label$/);
+    if (action) return `actions[${action[1]}].href`;
+  }
   return null;
 }
 
@@ -2629,6 +2780,17 @@ export function resolveLinkAnchorKey(
   if (blockType === 'belgo_our_products') {
     const href = key.match(/^products\[(\d+)\]\.href$/);
     if (href) return `products[${href[1]}].cta`;
+  }
+  if (blockType === 'gambit_section_nav') {
+    const navHref = key.match(/^navLinks\[(\d+)\]\.href$/);
+    if (navHref) return `navLinks[${navHref[1]}].label`;
+  }
+  if (blockType === 'gambit_related_products' && key === 'backHref') {
+    return 'backLabel';
+  }
+  if (blockType === 'gambit_product_details') {
+    const href = key.match(/^actions\[(\d+)\]\.href$/);
+    if (href) return `actions[${href[1]}].label`;
   }
   if (blockType === 'pnj_header' && key === 'logoHref') return 'logoUrl';
   return key;

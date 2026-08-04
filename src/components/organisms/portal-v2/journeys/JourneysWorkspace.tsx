@@ -2,7 +2,7 @@
 
 import { Plus, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
@@ -11,12 +11,14 @@ import { DeleteJourneyModal } from '@/components/organisms/portal-v2/journeys/De
 import { ForkJourneyModal } from '@/components/organisms/portal-v2/journeys/ForkJourneyModal';
 import { JourneyCard } from '@/components/organisms/portal-v2/journeys/JourneyCard';
 import { JourneyDetailModal } from '@/components/organisms/portal-v2/journeys/JourneyDetailModal';
+import { JourneyEditor } from '@/components/organisms/portal-v2/journeys/editor/JourneyEditor';
 import { NewJourneyModal } from '@/components/organisms/portal-v2/journeys/NewJourneyModal';
 import { cn } from '@/lib/cn';
 import {
   JOURNEY_DEFAULT_FILTERS,
   JOURNEY_STATE_TABS,
 } from '@/lib/portal-v2/journeys/constants';
+import { writeJourneyEditParam } from '@/lib/portal-v2/journeys/editParam';
 import {
   copiesOfJourney,
   countByState,
@@ -26,6 +28,7 @@ import {
   filterJourneys,
   findJourney,
   forkJourney,
+  journeyHome,
   journeyStats,
 } from '@/lib/portal-v2/journeys/helpers';
 import { MOCK_JOURNEYS, cloneJourneys } from '@/lib/portal-v2/journeys/mock';
@@ -39,12 +42,20 @@ import type {
 /** Which overlay owns the screen. Only one at a time, by construction. */
 type Overlay =
   | { kind: 'detail'; id: string }
+  | { kind: 'edit'; id: string }
   | { kind: 'fork'; id: string }
   | { kind: 'delete'; id: string }
   | { kind: 'new' }
   | null;
 
-export const JourneysWorkspace = () => {
+type JourneysWorkspaceProps = {
+  /** Journey id from `?edit=` — reopens the canvas editor on a pasted / reloaded link. */
+  initialEditId?: string | null;
+};
+
+export const JourneysWorkspace = ({
+  initialEditId = null,
+}: JourneysWorkspaceProps) => {
   const t = useTranslations('portalV2.journeys');
 
   const [journeys, setJourneys] = useState<Journey[]>(() =>
@@ -53,7 +64,22 @@ export const JourneysWorkspace = () => {
   const [filters, setFilters] = useState<JourneyFilters>(
     JOURNEY_DEFAULT_FILTERS
   );
-  const [overlay, setOverlay] = useState<Overlay>(null);
+
+  /**
+   * Resolved at mount only: a deep link opens the editor on the first paint
+   * instead of flashing the grid. Dead ids fall through to the list.
+   */
+  const [overlay, setOverlay] = useState<Overlay>(() => {
+    if (!initialEditId) return null;
+    return findJourney(MOCK_JOURNEYS, initialEditId)
+      ? { kind: 'edit', id: initialEditId }
+      : null;
+  });
+
+  /** `?edit=` pointed at a journey that is gone from the seed. */
+  const deadEditLinkRef = useRef(
+    Boolean(initialEditId) && !findJourney(MOCK_JOURNEYS, initialEditId)
+  );
 
   const visible = useMemo(
     () => filterJourneys(journeys, filters),
@@ -72,6 +98,17 @@ export const JourneysWorkspace = () => {
 
   const activeId = overlay && 'id' in overlay ? overlay.id : null;
   const active = findJourney(journeys, activeId);
+
+  /* Keep `?edit=` in the address bar while the canvas is open — reload restores it. */
+  useEffect(() => {
+    writeJourneyEditParam(overlay?.kind === 'edit' ? overlay.id : null);
+  }, [overlay]);
+
+  useEffect(() => {
+    if (!deadEditLinkRef.current) return;
+    deadEditLinkRef.current = false;
+    writeJourneyEditParam(null);
+  }, []);
 
   const handleStateChange = useCallback((id: string) => {
     setFilters(prev => ({ ...prev, state: id as JourneyStateFilter }));
@@ -120,6 +157,21 @@ export const JourneysWorkspace = () => {
     },
     [activeId, journeys]
   );
+
+  /**
+   * Save writes the edited graph back over the record it came from — and only
+   * that record. A copy's edit never reaches its blueprint, and a blueprint's
+   * never reaches the copies already forked from it; the toast says which.
+   */
+  const handleSaveEdit = useCallback((next: Journey) => {
+    setJourneys(prev => prev.map(j => (j.id === next.id ? next : j)));
+    setOverlay({ kind: 'detail', id: next.id });
+    toast.success(
+      next.template
+        ? 'Blueprint saved — existing campaign copies are untouched'
+        : `Saved to ${journeyHome(next)}'s copy — the blueprint is untouched`
+    );
+  }, []);
 
   const handleConfirmDelete = useCallback(() => {
     if (!activeId) return;
@@ -194,6 +246,7 @@ export const JourneysWorkspace = () => {
                   journey={journey}
                   stats={journeyStats(journeys, journey)}
                   onOpen={handleOpen}
+                  onEdit={j => setOverlay({ kind: 'edit', id: j.id })}
                   onDuplicate={handleDuplicate}
                   onDelete={j => setOverlay({ kind: 'delete', id: j.id })}
                 />
@@ -223,9 +276,20 @@ export const JourneysWorkspace = () => {
           journey={active}
           journeys={journeys}
           onClose={handleClose}
+          onEdit={j => setOverlay({ kind: 'edit', id: j.id })}
           onFork={j => setOverlay({ kind: 'fork', id: j.id })}
           onDuplicate={handleDuplicate}
           onOpenJourney={id => setOverlay({ kind: 'detail', id })}
+        />
+      ) : null}
+
+      {overlay?.kind === 'edit' && active ? (
+        <JourneyEditor
+          key={active.id}
+          journey={active}
+          journeys={journeys}
+          onCancel={() => setOverlay({ kind: 'detail', id: active.id })}
+          onSave={handleSaveEdit}
         />
       ) : null}
 

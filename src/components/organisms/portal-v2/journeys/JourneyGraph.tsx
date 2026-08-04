@@ -7,8 +7,9 @@ import {
   JOURNEY_KINDS,
   JOURNEY_KIND_STYLE,
 } from '@/lib/portal-v2/journeys/constants';
+import { NODE_H, NODE_W } from '@/lib/portal-v2/journeys/editor';
 import { orderNodes } from '@/lib/portal-v2/journeys/helpers';
-import type { Journey } from '@/lib/portal-v2/journeys/types';
+import type { Journey, JourneyNode } from '@/lib/portal-v2/journeys/types';
 
 type JourneyGraphProps = {
   journey: Journey;
@@ -16,16 +17,21 @@ type JourneyGraphProps = {
   onSelect: (nodeId: string) => void;
 };
 
-/* Node box + the gaps between them. The canvas is read-only in P0, so the
-   geometry is fixed rather than draggable — same layered picture every time. */
-const W = 96;
-const H = 46;
+/* Two geometries, one picture.
+   A journey nobody has arranged is drawn by the layered layout in a compact box.
+   A journey that HAS been arranged in the editor is drawn where its author put
+   it, at the editor's own box size — otherwise the read-only view would quietly
+   disagree with the thing they just saved. */
+const AUTO_W = 96;
+const AUTO_H = 46;
 const GX = 52;
 const GY = 20;
 const PAD = 14;
 
-const truncate = (s: string, n = 16) =>
+const truncate = (s: string, n: number) =>
   s.length > n ? `${s.slice(0, n - 1)}…` : s;
+
+type Placed = { node: JourneyNode; x: number; y: number };
 
 export const JourneyGraph = ({
   journey,
@@ -37,17 +43,45 @@ export const JourneyGraph = ({
 
   if (!layout.length) return null;
 
-  const cols = Math.max(...layout.map(o => o.col)) + 1;
-  const rows = Math.max(...layout.map(o => o.row)) + 1;
-  const width = PAD * 2 + cols * W + (cols - 1) * GX;
-  const height = PAD * 2 + rows * H + (rows - 1) * GY;
-
-  const x = (col: number) => PAD + col * (W + GX);
-  const y = (row: number) => PAD + row * (H + GY);
-
-  const pos = new Map(
-    layout.map(o => [o.node.id, { x: x(o.col), y: y(o.row) }])
+  /* All or nothing: one unplaced node would mix two coordinate systems and read
+     as a mistake, so a partial graph falls back to the layered layout. */
+  const handPlaced = journey.nodes.every(
+    node => node.px !== undefined && node.py !== undefined
   );
+
+  const W = handPlaced ? NODE_W : AUTO_W;
+  const H = handPlaced ? NODE_H : AUTO_H;
+
+  const raw: Placed[] = handPlaced
+    ? journey.nodes.map(node => ({
+        node,
+        x: node.px ?? 0,
+        y: node.py ?? 0,
+      }))
+    : layout.map(({ node, col, row }) => ({
+        node,
+        x: col * (AUTO_W + GX),
+        y: row * (AUTO_H + GY),
+      }));
+
+  /* Shift to the origin so a floor the author panned away from does not open
+     with a screenful of nothing. */
+  const minX = Math.min(...raw.map(p => p.x));
+  const minY = Math.min(...raw.map(p => p.y));
+  const placed: Placed[] = raw.map(p => ({
+    ...p,
+    x: PAD + p.x - minX,
+    y: PAD + p.y - minY,
+  }));
+
+  const width = Math.max(...placed.map(p => p.x)) + W + PAD;
+  const height = Math.max(...placed.map(p => p.y)) + H + PAD;
+
+  const pos = new Map(placed.map(p => [p.node.id, { x: p.x, y: p.y }]));
+
+  const kindSize = handPlaced ? 9.5 : 8;
+  const nameSize = handPlaced ? 12.5 : 10.5;
+  const nameChars = handPlaced ? 24 : 16;
 
   return (
     <div className='overflow-x-auto'>
@@ -83,7 +117,7 @@ export const JourneyGraph = ({
             const y1 = from.y + H / 2;
             const x2 = to.x;
             const y2 = to.y + H / 2;
-            const mx = x1 + (x2 - x1) / 2;
+            const mx = Math.max(x1 + 20, x1 + (x2 - x1) / 2);
             return [
               <path
                 key={`${node.id}-${targetId}`}
@@ -97,11 +131,9 @@ export const JourneyGraph = ({
           });
         })}
 
-        {layout.map(({ node, col, row }) => {
+        {placed.map(({ node, x: nx, y: ny }) => {
           const style = JOURNEY_KIND_STYLE[node.kind];
           const selected = node.id === selectedId;
-          const nx = x(col);
-          const ny = y(row);
 
           return (
             <g
@@ -137,7 +169,7 @@ export const JourneyGraph = ({
                 x={nx + 19}
                 y={ny + 17}
                 fill={style.fg}
-                fontSize={8}
+                fontSize={kindSize}
                 fontWeight={800}
                 letterSpacing={0.6}
               >
@@ -145,12 +177,12 @@ export const JourneyGraph = ({
               </text>
               <text
                 x={nx + 11}
-                y={ny + 33}
+                y={ny + (handPlaced ? 38 : 33)}
                 fill='var(--pv2-ink)'
-                fontSize={10.5}
+                fontSize={nameSize}
                 fontWeight={600}
               >
-                {truncate(node.name)}
+                {truncate(node.name, nameChars)}
               </text>
             </g>
           );

@@ -1,5 +1,3 @@
-import type { Block as EditorBlock } from '@/components/modules/block-editor/types';
-
 export type ExchangeKind = 'all' | 'page' | 'block';
 
 export type ExchangeObjective = 'all' | 'insight' | 'lead' | 'cta' | 'convert';
@@ -48,12 +46,8 @@ export type ExchangeListingView = {
   author: string;
   description: string;
   thumbnailUrl?: string;
-  /**
-   * Editor Block parsed from `Block.settings` (source === 'block') — lets the
-   * cover render a live mini preview like /admin/blocks when there's no
-   * thumbnail image. Null when settings isn't a valid editor Block.
-   */
-  editorBlock?: EditorBlock | null;
+  /** True when block settings can render a live mini preview on the client. */
+  canLivePreview?: boolean;
   category?: string;
   meta: ExchangeListingMeta;
   proven: boolean;

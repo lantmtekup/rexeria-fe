@@ -30,7 +30,13 @@ FROM unnest(ARRAY[
   'belgo_footer',
   'belgo_our_products',
   'belgo_more_flavors',
-  'belgo_scroll_frames'
+  'belgo_scroll_frames',
+  'gambit_delvaux_intro',
+  'gambit_product_overview',
+  'gambit_brand_heritage',
+  'gambit_related_products',
+  'gambit_product_details',
+  'gambit_section_nav'
 ]::text[]) AS code
 WHERE NOT EXISTS (SELECT 1 FROM public.blocks b WHERE b.type_code = code AND b.archived_at IS NULL);
 

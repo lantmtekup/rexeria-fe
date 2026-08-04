@@ -7,6 +7,12 @@ import { delvauxHeroDef } from './blocks/_registry/defs/delvauxHero';
 import { delvauxProductDef } from './blocks/_registry/defs/delvauxProduct';
 import { delvauxSubnavDef } from './blocks/_registry/defs/delvauxSubnav';
 import { delvauxVariantDef } from './blocks/_registry/defs/delvauxVariant';
+import { gambitProductOverviewDef } from './blocks/_registry/defs/gambitProductOverview';
+import { gambitDelvauxIntroDef } from './blocks/_registry/defs/gambitDelvauxIntro';
+import { gambitProductDetailsDef } from './blocks/_registry/defs/gambitProductDetails';
+import { gambitBrandHeritageDef } from './blocks/_registry/defs/gambitBrandHeritage';
+import { gambitRelatedProductsDef } from './blocks/_registry/defs/gambitRelatedProducts';
+import { gambitSectionNavDef } from './blocks/_registry/defs/gambitSectionNav';
 import { framerAesthaEditorialDef } from './blocks/_registry/defs/framerAesthaEditorial';
 import { aesthaExploreDef } from './blocks/_registry/defs/aesthaExplore';
 import { aesthaStudioDef } from './blocks/_registry/defs/aesthaStudio';
@@ -2261,6 +2267,12 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   delvaux_details: delvauxDetailsDef.defaultContent.vi,
   delvaux_product: delvauxProductDef.defaultContent.vi,
   delvaux_variant: delvauxVariantDef.defaultContent.vi,
+  gambit_product_overview: gambitProductOverviewDef.defaultContent.vi,
+  gambit_delvaux_intro: gambitDelvauxIntroDef.defaultContent.vi,
+  gambit_product_details: gambitProductDetailsDef.defaultContent.vi,
+  gambit_brand_heritage: gambitBrandHeritageDef.defaultContent.vi,
+  gambit_related_products: gambitRelatedProductsDef.defaultContent.vi,
+  gambit_section_nav: gambitSectionNavDef.defaultContent.vi,
   q80_experience: q80ExperienceDef.defaultContent.vi,
   q80_menu: q80MenuDef.defaultContent.vi,
   housent_hero: housentHeroDef.defaultContent.vi,
@@ -2479,6 +2491,12 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   delvaux_details: delvauxDetailsDef.defaultContent.en,
   delvaux_product: delvauxProductDef.defaultContent.en,
   delvaux_variant: delvauxVariantDef.defaultContent.en,
+  gambit_product_overview: gambitProductOverviewDef.defaultContent.en,
+  gambit_delvaux_intro: gambitDelvauxIntroDef.defaultContent.en,
+  gambit_product_details: gambitProductDetailsDef.defaultContent.en,
+  gambit_brand_heritage: gambitBrandHeritageDef.defaultContent.en,
+  gambit_related_products: gambitRelatedProductsDef.defaultContent.en,
+  gambit_section_nav: gambitSectionNavDef.defaultContent.en,
   q80_experience: q80ExperienceDef.defaultContent.en,
   q80_menu: q80MenuDef.defaultContent.en,
   housent_hero: housentHeroDef.defaultContent.en,

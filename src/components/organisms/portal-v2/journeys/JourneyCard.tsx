@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, Trash2, Waypoints } from 'lucide-react';
+import { Copy, PenLine, Trash2, Waypoints } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { KeyboardEvent, MouseEvent } from 'react';
 
@@ -20,6 +20,7 @@ type JourneyCardProps = {
   journey: Journey;
   stats: JourneyStats | null;
   onOpen: (journey: Journey) => void;
+  onEdit: (journey: Journey) => void;
   onDuplicate: (journey: Journey) => void;
   onDelete: (journey: Journey) => void;
 };
@@ -45,6 +46,7 @@ export const JourneyCard = ({
   journey,
   stats,
   onOpen,
+  onEdit,
   onDuplicate,
   onDelete,
 }: JourneyCardProps) => {
@@ -84,6 +86,19 @@ export const JourneyCard = ({
             '[@media(hover:none)]:opacity-100'
           )}
         >
+          <button
+            type='button'
+            data-journey-action='true'
+            title={t('editCanvas')}
+            aria-label={t('editCanvasAria', { name: journey.name })}
+            onClick={() => onEdit(journey)}
+            className={cn(
+              actionButton,
+              'text-[var(--pv2-mut)] hover:text-[var(--pv2-ink)]'
+            )}
+          >
+            <PenLine className='size-3.5' strokeWidth={2} aria-hidden />
+          </button>
           <button
             type='button'
             data-journey-action='true'

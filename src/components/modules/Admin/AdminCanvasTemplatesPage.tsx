@@ -22,6 +22,7 @@ import {
   Archive,
   ArrowDownUp,
   BarChart3,
+  Copy,
   ExternalLink,
   Eye,
   Flame,
@@ -46,6 +47,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/atoms/button';
 import { Chip } from '@/components/atoms/chip';
 import { DomainSettingsDialog } from '@/components/modules/Admin/DomainSettingsDialog';
+import { DuplicateLandingDialog } from '@/components/modules/Admin/DuplicateLandingDialog';
 import {
   CreateLandingDialog,
   EditLandingDialog,
@@ -122,7 +124,8 @@ type PageAction =
   | 'archive'
   | 'restore'
   | 'domain'
-  | 'edit';
+  | 'edit'
+  | 'duplicate';
 
 function pageThumbnailUrl(page: Page): string | undefined {
   if (page.thumbnail_url) return page.thumbnail_url;
@@ -149,6 +152,9 @@ export function AdminCanvasTemplatesPage() {
   const [domainPage, setDomainPage] = React.useState<Page | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
   const [editPage, setEditPage] = React.useState<Page | null>(null);
+  const [duplicateTarget, setDuplicateTarget] = React.useState<Page | null>(
+    null
+  );
   // Bulk selection — chỉ available ở table view. BE pages chỉ có
   // soft-delete (DELETE = archive); hard delete chưa expose. Bulk
   // action = bulk archive (status='archived'). Restore qua kebab.
@@ -423,6 +429,10 @@ export function AdminCanvasTemplatesPage() {
     }
     if (action === 'edit') {
       setEditPage(page);
+      return;
+    }
+    if (action === 'duplicate') {
+      setDuplicateTarget(page);
       return;
     }
     const label = {
@@ -746,6 +756,16 @@ export function AdminCanvasTemplatesPage() {
           });
         }}
       />
+      <DuplicateLandingDialog
+        open={!!duplicateTarget}
+        source={duplicateTarget}
+        onOpenChange={open => {
+          if (!open) setDuplicateTarget(null);
+        }}
+        onSuccess={() => {
+          void load();
+        }}
+      />
     </div>
   );
 }
@@ -952,6 +972,14 @@ function PageActionMenu({
           >
             <Pencil className='text-content-muted size-3.5' />
             Sửa thông tin
+          </button>
+          <button
+            type='button'
+            onClick={choose('duplicate')}
+            className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
+          >
+            <Copy className='size-3.5 text-sky-600' />
+            Duplicate
           </button>
           {/* Analytics — always available regardless of status. */}
           <Link

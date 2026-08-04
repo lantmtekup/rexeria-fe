@@ -39,6 +39,7 @@ import {
   Paintbrush,
   Palette,
   Pilcrow,
+  Ruler,
   SquareDashed,
   Type,
 } from 'lucide-react';
@@ -119,6 +120,19 @@ import {
   delvauxFaqElements,
   delvauxVariantItemElements,
 } from './blocks/_registry/defs/delvauxVariant';
+import {
+  gambitOverviewPanelElements,
+  resolveGambitOverviewPanels,
+} from './blocks/_registry/defs/gambitProductOverview';
+import { gambitDetailsElements } from './blocks/_registry/defs/gambitProductDetails';
+import {
+  gambitRelatedProductElements,
+  resolveGambitRelatedProducts,
+} from './blocks/_registry/defs/gambitRelatedProducts';
+import {
+  gambitSectionNavLinkElements,
+  resolveGambitSectionNavLinks,
+} from './blocks/_registry/defs/gambitSectionNav';
 import { citeFlowFaqElements } from './blocks/_registry/defs/citeFlowFaq';
 import { citeFlowAmenityListElements } from './blocks/_registry/defs/citeFlowAmenity';
 import { citeFlowHeaderSocialLinkElements } from './blocks/_registry/defs/citeFlowHeader';
@@ -193,6 +207,10 @@ import {
   type DelvauxSubnavLink,
   type DelvauxVariantFaq,
   type DelvauxVariantOption,
+  type GambitProductDetailsContent,
+  type GambitProductOverviewContent,
+  type GambitRelatedProductsContent,
+  type GambitSectionNavContent,
   type AesthaExploreProject,
   type PnjHeroContent,
   type PnjVariantContent,
@@ -1498,6 +1516,82 @@ export function elementsForType(
         fieldType: 'image',
         groupId: 'sku',
       },
+    ];
+  }
+  if (type === 'gambit_product_overview') {
+    return [
+      BACKGROUND_LAYER,
+      ...gambitOverviewPanelElements(
+        resolveGambitOverviewPanels(
+          content as unknown as GambitProductOverviewContent
+        )
+      ),
+      {
+        key: 'panels',
+        label: 'Thêm / quản lý panel',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'gambit_related_products') {
+    return [
+      BACKGROUND_LAYER,
+      ...gambitRelatedProductElements(
+        resolveGambitRelatedProducts(
+          content as unknown as GambitRelatedProductsContent
+        )
+      ),
+      {
+        key: 'products',
+        label: 'Thêm / quản lý sản phẩm',
+        icon: ListChecks,
+      },
+      {
+        key: 'backLabel',
+        label: 'Chữ nút quay lại',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'back',
+        groupLabel: 'Thanh quay lại',
+      },
+      {
+        key: 'backHref',
+        label: 'Link nút quay lại',
+        icon: Link2,
+        fieldType: 'link',
+        groupId: 'back',
+      },
+    ];
+  }
+  if (type === 'gambit_section_nav') {
+    return [
+      BACKGROUND_LAYER,
+      ...gambitSectionNavLinkElements(
+        resolveGambitSectionNavLinks(
+          content as unknown as GambitSectionNavContent
+        )
+      ),
+      {
+        key: 'navLinks',
+        label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'gambit_product_details') {
+    const details = content as unknown as GambitProductDetailsContent;
+    return [
+      BACKGROUND_LAYER,
+      ...gambitDetailsElements(details),
+      { key: 'galleryImages', label: 'Thêm / quản lý ảnh', icon: ImageIcon },
+      { key: 'colors', label: 'Thêm / quản lý màu', icon: Palette },
+      { key: 'sizes', label: 'Thêm / quản lý size', icon: Ruler },
+      {
+        key: 'accordions',
+        label: 'Thêm / quản lý accordion',
+        icon: ListChecks,
+      },
+      { key: 'actions', label: 'Thêm / quản lý hành động', icon: ListChecks },
     ];
   }
   if (type === 'cite_flow_faq') {

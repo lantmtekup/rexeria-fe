@@ -1,5 +1,5 @@
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { Page } from '@/services/rexer/types';
+import type { Block, Page } from '@/services/rexer/types';
 
 /**
  * BE thường lưu `thumbnail_asset_id` nhưng không resolve `thumbnail_url`
@@ -49,5 +49,49 @@ export async function enrichPagesWithThumbnailUrls(
     const url = assetId ? urlByAsset.get(assetId) : undefined;
     if (!url) return page;
     return { ...page, thumbnail_url: url };
+  });
+}
+
+export async function enrichBlocksWithThumbnailUrls(
+  blocks: Block[]
+): Promise<Block[]> {
+  if (blocks.length === 0) return blocks;
+
+  const assetIdByBlock = new Map<string, string>();
+  for (const block of blocks) {
+    if (block.thumbnail_url) continue;
+    if (block.thumbnail_asset_id) {
+      assetIdByBlock.set(block.id, block.thumbnail_asset_id);
+    }
+  }
+
+  const assetIds = Array.from(new Set(assetIdByBlock.values()));
+  if (assetIds.length === 0) return blocks;
+
+  const batches: string[][] = [];
+  for (let i = 0; i < assetIds.length; i += MEDIA_IDS_PER_REQUEST) {
+    batches.push(assetIds.slice(i, i + MEDIA_IDS_PER_REQUEST));
+  }
+
+  const media = await Promise.all(
+    batches.map(ids =>
+      rexerApi.media
+        .list({ ids })
+        .then(r => r.items ?? [])
+        .catch(() => [])
+    )
+  ).then(chunks => chunks.flat());
+
+  const urlByAsset = new Map<string, string>();
+  for (const asset of media) {
+    if (asset.public_url) urlByAsset.set(asset.id, asset.public_url);
+  }
+
+  return blocks.map(block => {
+    if (block.thumbnail_url) return block;
+    const assetId = assetIdByBlock.get(block.id);
+    const url = assetId ? urlByAsset.get(assetId) : undefined;
+    if (!url) return block;
+    return { ...block, thumbnail_url: url };
   });
 }

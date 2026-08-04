@@ -50,6 +50,28 @@ export type JourneyStats = {
   lift: number;
 };
 
+/**
+ * One phase column on the editor floor.
+ *
+ * A journey is not a free drawing: it runs left to right through the stages of
+ * a funnel, and a node's phase is WHERE IT SITS. Stored, not derived — the
+ * planner drags a card across a border and that is the edit. Graph depth still
+ * decides the drawing order inside `orderNodes`; phases give the picture a
+ * geography, they do not add a rule.
+ *
+ * `kind` is measurement semantics, not styling: the `convert` phase speaks in
+ * conversion rate, every other phase speaks in reach. Exactly one phase in a
+ * set is the convert one.
+ */
+export type JourneyStage = {
+  id: string;
+  /** The brand's own word for this phase. Renamed in place, never translated. */
+  name: string;
+  kind: 'flow' | 'convert';
+  /** One line, shown while the phase is still empty. */
+  hint: string;
+};
+
 export type JourneyNode = {
   id: string;
   kind: JourneyNodeKind;
@@ -77,6 +99,19 @@ export type JourneyNode = {
   xCoverage?: number;
   /** Measured in this journey's campaign. `null`/absent ⇒ never run. */
   stats?: JourneyNodeStats | null;
+  /**
+   * Which phase column this node lives in — an index into the journey's stage
+   * list. Absent ⇒ nobody has said yet, and `ensureStages` infers it once from
+   * what the graph already claims.
+   */
+  stage?: number;
+  /**
+   * Where the author put this node on the editor floor — prototype `n.px/n.py`.
+   * Absent ⇒ nobody has placed it, so the layered layout decides. Read-only
+   * surfaces fall back to `orderNodes` for exactly that reason.
+   */
+  px?: number;
+  py?: number;
 };
 
 export type Journey = {
@@ -95,6 +130,12 @@ export type Journey = {
   updated: string;
   tagline: string;
   summary: string;
+  /**
+   * This journey's own phase vocabulary. Absent ⇒ it reads the house set; the
+   * first rename, add or template materialises a private copy onto the draft.
+   * A brand that maps its customers' journey owns the words for it.
+   */
+  stages?: JourneyStage[];
   nodes: JourneyNode[];
 };
 
@@ -139,3 +180,32 @@ export type JourneyDraftInput = {
   obj: ExperienceObjective;
   seg: string;
 };
+
+/* ── editor ────────────────────────────────────────────────────────────── */
+
+/** The node fields the inspector can type into. Routing has its own verbs. */
+export type JourneyNodePatch = Partial<
+  Pick<JourneyNode, 'name' | 'd' | 'src' | 'via'>
+>;
+
+/** Journey-level fields the editor's meta panel owns. */
+export type JourneyMetaPatch = Partial<
+  Pick<Journey, 'name' | 'tagline' | 'summary' | 'obj' | 'seg'>
+>;
+
+/**
+ * What an experience node stores about its link. The picker resolves a real
+ * library row down to these three fields — the node never holds a page record.
+ */
+export type JourneyExperienceLink = {
+  id: string;
+  name: string;
+  /** Component coverage, 0–100. */
+  coverage: number;
+};
+
+/** What the editor has selected: one node, one edge, or nothing. */
+export type JourneyEditorSelection =
+  | { kind: 'node'; id: string }
+  | { kind: 'edge'; from: string; to: string }
+  | null;

@@ -143,6 +143,13 @@ export type BlockType =
   | 'delvaux_details'
   | 'delvaux_product'
   | 'delvaux_variant'
+  // ── Gambit Delvaux (port từ apps/gambit-delvaux) ──
+  | 'gambit_product_overview'
+  | 'gambit_delvaux_intro'
+  | 'gambit_brand_heritage'
+  | 'gambit_related_products'
+  | 'gambit_product_details'
+  | 'gambit_section_nav'
   | 'q80_experience'
   | 'q80_menu'
   // ── Cool Hunter (editorial, port từ apps/cool-hunter) ──
@@ -2887,6 +2894,202 @@ export interface DelvauxVariantContent {
 }
 
 /**
+ * Product - Overview Scroll (section `ProductOverview` của apps/gambit-delvaux):
+ * sân khấu dán (sticky) cao 1 khung hình, bên trong là "track" nhiều panel
+ * trượt dọc theo scroll.
+ *
+ *  - Panel ĐẦU (overview): ảnh sản phẩm khởi điểm ở giữa sân khấu → trượt về
+ *    cột trái (desktop) / nhấc lên trên khối chữ (mobile), đồng thời khối chữ
+ *    reveal theo TỪNG DÒNG (SplitText mask). Panel này có thêm cụm "Details"
+ *    (nhãn + mã REF + gạch đầu dòng).
+ *  - Các panel SAU: bố cục 2 cột ảnh/chữ; khi track trượt, ảnh chạy CHẬM hơn
+ *    chữ (parallax lag) rồi bắt kịp.
+ *  - Panel CUỐI: exit tách trái/phải + mờ dần (mobile: ảnh ↑ / chữ ↓).
+ *
+ * Số panel là động: quãng scrub = (số panel + 1) khung hình.
+ * Component: `blocks/GambitProductOverview.tsx`.
+ */
+export interface GambitProductOverviewPanel {
+  /** Ảnh sản phẩm (PNG nền trong suốt là đẹp nhất). */
+  imageUrl: string;
+  title: string;
+  /** Đoạn mô tả — panel đầu thường bỏ trống vì đã có cụm Details. */
+  body?: string;
+  /** Cụm "Details" (chỉ panel đầu dùng): nhãn + mã REF + gạch đầu dòng. */
+  detailsLabel?: string;
+  detailsRef?: string;
+  bullets?: string[];
+}
+export interface GambitProductOverviewContent {
+  panels: GambitProductOverviewPanel[];
+}
+
+/**
+ * Intro - Curtain Reveal (component `Intro` của apps/gambit-delvaux): màn
+ * intro phủ kín khung nhìn, chạy MỘT LẦN khi vào trang rồi tự trượt xuống
+ * biến mất (có nút "Skip Intro").
+ *
+ *  - Phase 1: hai màn (nửa trên / nửa dưới) tách ra, hé lộ logo căn giữa.
+ *  - Phase 2: giữ khung full 0.6s, logo dip nhẹ xuống + phóng to.
+ *  - Phase 3: cụm logo bay lên đỉnh + thu nhỏ (icon-text về ~132px), icon trên
+ *    nhỏ dần rồi fade; đồng thời ảnh sản phẩm trồi lên từ dưới.
+ *  - Phase 4: tên sản phẩm hiện dần theo clip trái→phải (từng ký tự), dòng chữ
+ *    được scale vừa ~98% bề ngang khung nhìn.
+ *
+ * Ba bề mặt (apps-port-host / BelgoScrollFrames):
+ *  - Editor canvas: lưới phẳng in-flow, mọi field hiện cùng lúc để sửa;
+ *  - PreviewMode: portal `absolute inset-0` → `[data-device-frame]`;
+ *  - /p: portal `fixed inset-0` → document.body.
+ *
+ * Component: `blocks/GambitDelvauxIntro.tsx`.
+ */
+export interface GambitDelvauxIntroContent {
+  /** Icon trên (biểu tượng) — fade khi cụm logo lên đỉnh. */
+  logoTopUrl: string;
+  /** Logo chữ — thu về ~132px khi lên đỉnh. */
+  logoTextUrl: string;
+  logoTextAlt: string;
+  productImageUrl: string;
+  productImageAlt: string;
+  /** Tên sản phẩm hiện theo clip từng ký tự ở đáy. */
+  title: string;
+  skipLabel: string;
+}
+
+/**
+ * Heritage - Knockout Video (section `BrandHeritage` của apps/gambit-delvaux):
+ * sân khấu DÁN cao 1 khung hình, quãng scrub 2.2 khung hình, một timeline
+ * scrub 2 chiều gồm 3 chặng:
+ *
+ *  - Intro: "Since" hiện theo từng ký tự (so le trên/dưới), cụm tiêu đề trượt
+ *    sang trái nhường chỗ, "1829" + dòng mô tả reveal theo dòng;
+ *  - Knockout: khối chữ đọc được mờ đi, đồng thời màn phủ SVG (chữ khoét thủng
+ *    bằng luminance mask) hiện lên và video fade vào → chữ "đục lỗ" qua video;
+ *  - Dissolve: cuộn tiếp, màn phủ dâng lên + tan dần → video full khung.
+ *
+ * Chữ trong mask SVG lấy CÙNG style token với khối chữ đọc được, nên editor
+ * đổi font/cỡ chữ thì cross-fade knockout vẫn khít.
+ * Component: `blocks/GambitBrandHeritage.tsx`.
+ */
+export interface GambitBrandHeritageContent {
+  /** Video di sản (mp4) — nhận cả URL ảnh tĩnh. */
+  videoUrl: string;
+  /** Dòng mô tả phía trên (reveal theo dòng). */
+  tagline: string;
+  /** Chữ trước năm — hiện theo từng ký tự trước tiên. */
+  since: string;
+  /** Năm — hiện sau khi cụm tiêu đề trượt sang trái. */
+  year: string;
+}
+
+/**
+ * Product - Related Grid (section `RelatedProducts` của apps/gambit-delvaux):
+ * lưới sản phẩm gợi ý trong một sân khấu dán cao 1 khung hình (bản gốc
+ * `pin: true` + `end: '+=40%'` → host dùng sticky, track cao 140svh).
+ *
+ *  - Vào khung nhìn: từng túi trồi lên so le (y 100 → 0, stagger 0.1), nhãn
+ *    tên + chất liệu theo sau, cuối cùng là thanh CTA đen ở đáy.
+ *  - Cuộn ra khỏi khung → reset để lần vào sau chạy lại.
+ *
+ * Bản app hard-code `scrollToSection('#buy')`; host tách thành cặp field
+ * `backLabel` (chữ) + `backHref` (link 4 dạng — gồm "cuộn tới block").
+ *
+ * Component: `blocks/GambitRelatedProducts.tsx`.
+ */
+export interface GambitRelatedProductItem {
+  /** Ảnh sản phẩm (PNG nền trong suốt là đẹp nhất). */
+  imageUrl: string;
+  name: string;
+  /** Chất liệu — chữ mờ, canh phải cùng dòng với tên. */
+  material: string;
+}
+export interface GambitRelatedProductsContent {
+  products: GambitRelatedProductItem[];
+  /** Chữ trên thanh CTA đen ở đáy. */
+  backLabel: string;
+  /** Link của thanh CTA (thường trỏ về block mua hàng). */
+  backHref: string;
+}
+
+/**
+ * Product - Details Gallery (section `ProductDetails` của apps/gambit-delvaux):
+ * sân khấu dán cao 1 khung hình gồm dải ảnh CUỘN NGANG theo scroll dọc + panel
+ * thông tin sản phẩm (chọn màu / size, accordion, danh sách hành động).
+ *
+ *  - Vào màn: dải ảnh trượt vào từ phải, panel vào SAU + chậm hơn (lag).
+ *  - Dán: dải ảnh scrub ngang hết quãng `scrollWidth - viewport` rồi nhả.
+ *  - Panel: ≥ `@2xl` là cột phải (drawer); < `@2xl` là bottom sheet kéo được
+ *    (tay cầm + drag threshold) — dùng `useContainerMobile`, không matchMedia.
+ *
+ * Editor canvas: fork lưới phẳng (ảnh xếp lưới, mọi accordion mở sẵn) để chọn
+ * được mọi field; PreviewMode + `/p` giữ nguyên sticky + scrub production.
+ *
+ * Component: `blocks/GambitProductDetails.tsx`.
+ */
+export interface GambitProductDetailsColor {
+  label: string;
+  /** Mã màu của swatch (hex/rgb bất kỳ giá trị CSS hợp lệ). */
+  hex: string;
+}
+export interface GambitProductDetailsAccordion {
+  title: string;
+  body: string;
+}
+/** Icon dựng sẵn của dòng hành động (SVG inline trong block). */
+export type GambitProductDetailsActionIcon =
+  | 'plane'
+  | 'chat'
+  | 'pin'
+  | 'search'
+  | 'arrow';
+export interface GambitProductDetailsAction {
+  label: string;
+  /** URL / token link (`#page:`, `#block:`) — rỗng = nút không điều hướng. */
+  href?: string;
+  icon: GambitProductDetailsActionIcon;
+  /** true = dòng nhấn (nền đen chữ trắng), như "Check Availability In Store". */
+  primary?: boolean;
+}
+export interface GambitProductDetailsContent {
+  title: string;
+  subtitle: string;
+  /** Dòng kích thước (gốc: "W 20 / H 16 / D 11.5 cm"). */
+  dimensions: string;
+  /** Chú thích dưới kích thước (gốc: "(in)"). */
+  dimensionsNote: string;
+  galleryImages: string[];
+  colors: GambitProductDetailsColor[];
+  sizes: string[];
+  accordions: GambitProductDetailsAccordion[];
+  actions: GambitProductDetailsAction[];
+}
+
+/**
+ * Nav - Bottom Section Bar (component `ProductSectionNav` của
+ * apps/gambit-delvaux): thanh điều hướng dán ĐÁY khung nhìn, cuộn ngang được
+ * trên máy nhỏ, mục đang xem có chấm tròn ở trước.
+ *
+ *  - Bản app hard-code 4 mục + `document.getElementById(id)` + `scrollToSection`
+ *    (GSAP ScrollToPlugin 0.85s). Host tách thành mảng `navLinks` với cặp
+ *    `label` (chữ) + `href` (link 4 dạng: không link / trang trong template /
+ *    cuộn tới block / URL ngoài) — cuộn mượt do `LinkNav` + Lenis của host lo.
+ *  - Trạng thái active: bản app tính ở `page.tsx` rồi truyền prop `activeId`.
+ *    Block tự chủ — scrollspy nội bộ theo đúng luật gốc: mục cuối cùng có mép
+ *    trên đã vượt qua vạch 50% khung nhìn (chạy đúng cả khi block khác đang
+ *    pin/sticky vì chỉ đọc `getBoundingClientRect`).
+ *
+ * Component: `blocks/GambitSectionNav.tsx`.
+ */
+export interface GambitSectionNavItem {
+  label: string;
+  /** URL / token link (`#page:`, `#block:`) — rỗng = mục không điều hướng. */
+  href: string;
+}
+export interface GambitSectionNavContent {
+  navLinks: GambitSectionNavItem[];
+}
+
+/**
  * Quadplex80 — journey engine (migrate từ quadplex80.com, Nuxt+WebGL L5):
  * block sticky nhiều viewport tái hiện virtual-scroll journey của bản gốc —
  * gate ENTER EXPERIENCE + loader, cảnh three.js (GLB tòa 111W57 + billboard
@@ -3878,6 +4081,12 @@ export type BlockContent =
   | DelvauxDetailsContent
   | DelvauxProductContent
   | DelvauxVariantContent
+  | GambitProductOverviewContent
+  | GambitDelvauxIntroContent
+  | GambitBrandHeritageContent
+  | GambitProductDetailsContent
+  | GambitRelatedProductsContent
+  | GambitSectionNavContent
   | Q80ExperienceContent
   | Q80MenuContent
   | SpringsHeaderContent
@@ -6877,6 +7086,114 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'chọn biến thể màu: swatch đổi ảnh sản phẩm + accordion FAQ, phong cách cao cấp',
     aiLabelEn:
       'color-variant selector: swatches swap product image + FAQ accordion, luxury tone',
+  },
+  gambit_product_overview: {
+    type: 'gambit_product_overview',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', 'delvaux', 'gambit', 'scroll', 'product'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-03',
+    label: 'Product - Overview Scroll',
+    accent: '#111111',
+    adminLabel: 'Product - Overview Scroll',
+    gradient: 'from-neutral-200 to-white',
+    defaultName: 'Product - Overview Scroll',
+    aiLabelVi:
+      'sân khấu dán nhiều panel sản phẩm trượt theo scroll: ảnh từ giữa về cột trái + chữ reveal từng dòng, panel sau parallax ảnh chậm hơn chữ',
+    aiLabelEn:
+      'sticky multi-panel product overview: image settles from center to left column while copy reveals line by line, later panels parallax image behind copy',
+  },
+  gambit_delvaux_intro: {
+    type: 'gambit_delvaux_intro',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['clone', 'delvaux', 'gambit', 'intro', 'overlay', 'preloader'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-03',
+    label: 'Intro - Curtain Reveal',
+    accent: '#111111',
+    adminLabel: 'Intro - Curtain Reveal',
+    gradient: 'from-neutral-100 to-white',
+    defaultName: 'Intro - Curtain Reveal',
+    aiLabelVi:
+      'màn intro phủ kín màn hình: hai màn tách ra hé lộ logo, logo bay lên đỉnh + thu nhỏ, ảnh sản phẩm trồi lên, tên sản phẩm hiện dần theo clip rồi cả màn trượt xuống biến mất',
+    aiLabelEn:
+      'full-screen intro overlay: curtains split to reveal the logo, logo flies to the top and shrinks, product image rises, product name wipes in, then the whole overlay slides away',
+  },
+  gambit_brand_heritage: {
+    type: 'gambit_brand_heritage',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', 'delvaux', 'gambit', 'scroll', 'video', 'knockout'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-03',
+    label: 'Heritage - Knockout Video',
+    accent: '#111111',
+    adminLabel: 'Heritage - Knockout Video',
+    gradient: 'from-neutral-100 to-neutral-300',
+    defaultName: 'Heritage - Knockout Video',
+    aiLabelVi:
+      'màn di sản thương hiệu: chữ "Since 1829" hiện theo từng ký tự, sau đó bị khoét thủng qua màn phủ để lộ video lịch sử, cuộn tiếp thì màn phủ dâng lên và tan dần',
+    aiLabelEn:
+      'brand heritage stage: "Since 1829" types in character by character, then knocks out of a veil to reveal a heritage video which dissolves to full frame on scroll',
+  },
+  gambit_product_details: {
+    type: 'gambit_product_details',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', 'delvaux', 'gambit', 'product', 'gallery', 'scroll'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-03',
+    label: 'Product - Details Gallery',
+    accent: '#111111',
+    adminLabel: 'Product - Details Gallery',
+    gradient: 'from-neutral-200 to-white',
+    defaultName: 'Product - Details Gallery',
+    aiLabelVi:
+      'trang chi tiết sản phẩm: dải ảnh cuộn ngang theo scroll + panel chọn màu/size, accordion và danh sách hành động (bottom sheet trên mobile)',
+    aiLabelEn:
+      'product detail stage: horizontally scrubbed image strip beside a spec panel with color/size swatches, accordions and action list (bottom sheet on mobile)',
+  },
+  gambit_related_products: {
+    type: 'gambit_related_products',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', 'delvaux', 'gambit', 'product', 'grid', 'cta'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-03',
+    label: 'Product - Related Grid',
+    accent: '#111111',
+    adminLabel: 'Product - Related Grid',
+    gradient: 'from-neutral-100 to-white',
+    defaultName: 'Product - Related Grid',
+    aiLabelVi:
+      'lưới sản phẩm gợi ý dán 1 khung hình: từng túi trồi lên so le, nhãn tên + chất liệu hiện sau, thanh CTA đen quay lại ở đáy',
+    aiLabelEn:
+      'sticky related-products grid: bags rise in with a stagger, name + material labels follow, black back-to-buy CTA bar pinned at the bottom',
+  },
+  gambit_section_nav: {
+    type: 'gambit_section_nav',
+    category: 'header',
+    style: 'luxury',
+    tags: ['clone', 'delvaux', 'gambit', 'nav', 'anchor', 'sticky'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-04',
+    label: 'Nav - Bottom Section Bar',
+    accent: '#111111',
+    adminLabel: 'Nav - Bottom Section Bar',
+    gradient: 'from-neutral-100 to-white',
+    defaultName: 'Nav - Bottom Section Bar',
+    aiLabelVi:
+      'thanh nav dán đáy khung nhìn: các mục cuộn tới từng phần của trang, mục đang xem có chấm tròn phía trước, cuộn ngang được trên máy nhỏ',
+    aiLabelEn:
+      'section nav bar pinned to the viewport bottom: anchor items scroll to page sections, the active item shows a leading dot, scrolls horizontally on small screens',
   },
   q80_experience: {
     type: 'q80_experience',

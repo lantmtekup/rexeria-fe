@@ -13,6 +13,7 @@ import { useTranslations } from 'next-intl';
 import {
   Archive,
   CheckCircle2,
+  Copy,
   Eye,
   LayoutGrid,
   LayoutTemplate,
@@ -47,6 +48,7 @@ import {
 } from '@/components/atoms/table';
 import { TablePagination } from '@/components/molecules/TablePagination';
 import { CreateTemplateDialog } from '@/components/modules/Template/CreateTemplateDialog';
+import { DuplicateTemplateDialog } from '@/components/modules/Template/DuplicateTemplateDialog';
 import { TemplatePreviewAction } from '@/components/modules/Template/TemplatePreviewAction';
 import { UseTemplateDialog } from '@/components/modules/Template/UseTemplateDialog';
 import { TemplateEffectsDialog } from '@/components/modules/CanvasTemplate/TemplateEffectsDialog';
@@ -158,6 +160,9 @@ export function AdminTemplatesPage() {
   // "Sử dụng template" dialog target; null when closed.
   const [useTarget, setUseTarget] = React.useState<Template | null>(null);
   const [effectsTarget, setEffectsTarget] = React.useState<Template | null>(
+    null
+  );
+  const [duplicateTarget, setDuplicateTarget] = React.useState<Template | null>(
     null
   );
   // "Tạo template mới" dialog open state.
@@ -558,6 +563,7 @@ export function AdminTemplatesPage() {
             items={items}
             onUse={setUseTarget}
             onEffects={setEffectsTarget}
+            onDuplicate={setDuplicateTarget}
             onStatusAction={runStatusAction}
           />
         ) : (
@@ -573,6 +579,7 @@ export function AdminTemplatesPage() {
             blocksByTemplate={blocksByTemplate}
             onUse={setUseTarget}
             onEffects={setEffectsTarget}
+            onDuplicate={setDuplicateTarget}
             onStatusAction={runStatusAction}
             selected={selected}
             onToggleSelected={toggleSelected}
@@ -642,6 +649,17 @@ export function AdminTemplatesPage() {
         template={effectsTarget}
       />
 
+      <DuplicateTemplateDialog
+        open={!!duplicateTarget}
+        source={duplicateTarget}
+        onOpenChange={open => {
+          if (!open) setDuplicateTarget(null);
+        }}
+        onSuccess={() => {
+          void load();
+        }}
+      />
+
       <CreateTemplateDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>
   );
@@ -653,11 +671,13 @@ function GridView({
   items,
   onUse,
   onEffects,
+  onDuplicate,
   onStatusAction,
 }: {
   items: Template[];
   onUse: (t: Template) => void;
   onEffects: (t: Template) => void;
+  onDuplicate: (t: Template) => void;
   onStatusAction: (t: Template, action: TemplateStatusAction) => void;
 }) {
   return (
@@ -668,6 +688,7 @@ function GridView({
           item={it}
           onUse={() => onUse(it)}
           onEffects={onEffects}
+          onDuplicate={onDuplicate}
           onStatusAction={onStatusAction}
         />
       ))}
@@ -679,11 +700,13 @@ function TemplateCard({
   item,
   onUse,
   onEffects,
+  onDuplicate,
   onStatusAction,
 }: {
   item: Template;
   onUse: () => void;
   onEffects: (t: Template) => void;
+  onDuplicate: (t: Template) => void;
   onStatusAction: (t: Template, action: TemplateStatusAction) => void;
 }) {
   const statusClass =
@@ -787,6 +810,7 @@ function TemplateCard({
           <TemplateActionMenu
             item={item}
             onEffects={() => onEffects(item)}
+            onDuplicate={() => onDuplicate(item)}
             onStatusAction={action => onStatusAction(item, action)}
           />
         </div>
@@ -802,10 +826,12 @@ type TemplateStatusAction = 'activate' | 'archive' | 'restore';
 function TemplateActionMenu({
   item,
   onEffects,
+  onDuplicate,
   onStatusAction,
 }: {
   item: Template;
   onEffects: () => void;
+  onDuplicate: () => void;
   onStatusAction: (action: TemplateStatusAction) => void;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -889,6 +915,17 @@ function TemplateActionMenu({
               type='button'
               onClick={() => {
                 setOpen(false);
+                onDuplicate();
+              }}
+              className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
+            >
+              <Copy className='size-3.5 text-sky-600' />
+              Duplicate
+            </button>
+            <button
+              type='button'
+              onClick={() => {
+                setOpen(false);
                 onEffects();
               }}
               className='text-content-muted hover:bg-muted flex w-full items-center gap-2 px-3 py-2 text-left text-xs'
@@ -955,6 +992,7 @@ function TableView({
   blocksByTemplate,
   onUse,
   onEffects,
+  onDuplicate,
   onStatusAction,
   selected,
   onToggleSelected,
@@ -971,6 +1009,7 @@ function TableView({
   blocksByTemplate: Record<string, Block[] | 'loading' | 'error'>;
   onUse: (t: Template) => void;
   onEffects: (t: Template) => void;
+  onDuplicate: (t: Template) => void;
   onStatusAction: (t: Template, action: TemplateStatusAction) => void;
   selected: Set<string>;
   onToggleSelected: (id: string) => void;
@@ -1091,6 +1130,7 @@ function TableView({
                     <TemplateActionMenu
                       item={item}
                       onEffects={() => onEffects(item)}
+                      onDuplicate={() => onDuplicate(item)}
                       onStatusAction={a => onStatusAction(item, a)}
                     />
                   </div>

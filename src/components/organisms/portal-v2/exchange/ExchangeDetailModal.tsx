@@ -105,6 +105,7 @@ export const ExchangeDetailModal = ({
         <ListingCover
           listing={listing}
           height={180}
+          eagerLivePreview
           className='rounded-[var(--pv2-r)] border border-[var(--pv2-hair)]'
         />
 
