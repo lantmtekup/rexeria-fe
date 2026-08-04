@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, GitFork } from 'lucide-react';
+import { Copy, GitFork, PenLine } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
@@ -27,6 +27,7 @@ type JourneyDetailModalProps = {
   journey: Journey;
   journeys: Journey[];
   onClose: () => void;
+  onEdit: (journey: Journey) => void;
   onFork: (journey: Journey) => void;
   onDuplicate: (journey: Journey) => void;
   onOpenJourney: (id: string) => void;
@@ -36,6 +37,7 @@ export const JourneyDetailModal = ({
   journey,
   journeys,
   onClose,
+  onEdit,
   onFork,
   onDuplicate,
   onOpenJourney,
@@ -95,6 +97,10 @@ export const JourneyDetailModal = ({
               <Copy className='size-3.5' strokeWidth={2.2} aria-hidden />
               {t('duplicate')}
             </Button>
+            <Button variant='ghost' size='sm' onClick={() => onEdit(journey)}>
+              <PenLine className='size-3.5' strokeWidth={2.2} aria-hidden />
+              {t('editCanvas')}
+            </Button>
             <Button size='sm' onClick={() => onFork(journey)}>
               <GitFork className='size-3.5' strokeWidth={2.2} aria-hidden />
               {t('useInCampaign')}
@@ -112,10 +118,18 @@ export const JourneyDetailModal = ({
               {t('close')}
             </Button>
             {origin ? (
-              <Button size='sm' onClick={() => onOpenJourney(origin.id)}>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => onOpenJourney(origin.id)}
+              >
                 {t('openBlueprint')}
               </Button>
             ) : null}
+            <Button size='sm' onClick={() => onEdit(journey)}>
+              <PenLine className='size-3.5' strokeWidth={2.2} aria-hidden />
+              {t('editCanvas')}
+            </Button>
           </>
         )
       }

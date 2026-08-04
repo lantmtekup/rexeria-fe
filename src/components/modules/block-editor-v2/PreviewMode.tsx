@@ -15,6 +15,7 @@ import { ChevronLeft, X } from 'lucide-react';
 import { brandKitToCssVars, DEFAULT_PREVIEW_KIT } from '@/lib/brand-kit';
 
 import { LinkNav } from '@/components/modules/block-editor/links/LinkNav';
+import { blockAnchorId } from '@/components/modules/block-editor/links/linkToken';
 import { resolveLinksDeep } from '@/components/modules/block-editor/links/resolveLinks';
 import type { EditorPage } from '@/components/modules/block-editor/serialize';
 
@@ -218,15 +219,24 @@ export function PreviewMode({
                             motion={motion}
                             scrollerEl={scrollerRef.current}
                           >
-                            <MotionBlockRoot>
-                              <RenderBlock
-                                block={block}
-                                content={content}
-                                styles={styles}
-                                background={background}
-                                order={order}
-                              />
-                            </MotionBlockRoot>
+                            {/* Neo `#blk-<id>` giống `/p` — link "Cuộn tới
+                                block" (`#block:` → `#blk-…`) chỉ cuộn được khi
+                                Play có phần tử mang đúng id này. */}
+                            <div
+                              id={blockAnchorId(block.id)}
+                              data-block-id={block.id}
+                              data-block-type={block.blockType}
+                            >
+                              <MotionBlockRoot>
+                                <RenderBlock
+                                  block={block}
+                                  content={content}
+                                  styles={styles}
+                                  background={background}
+                                  order={order}
+                                />
+                              </MotionBlockRoot>
+                            </div>
                           </MotionProvider>
                         );
                       })}

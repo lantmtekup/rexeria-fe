@@ -20,6 +20,12 @@ import { delvauxHeroDef } from './defs/delvauxHero';
 import { delvauxProductDef } from './defs/delvauxProduct';
 import { delvauxSubnavDef } from './defs/delvauxSubnav';
 import { delvauxVariantDef } from './defs/delvauxVariant';
+import { gambitProductOverviewDef } from './defs/gambitProductOverview';
+import { gambitDelvauxIntroDef } from './defs/gambitDelvauxIntro';
+import { gambitProductDetailsDef } from './defs/gambitProductDetails';
+import { gambitBrandHeritageDef } from './defs/gambitBrandHeritage';
+import { gambitRelatedProductsDef } from './defs/gambitRelatedProducts';
+import { gambitSectionNavDef } from './defs/gambitSectionNav';
 import { framerBungeeHeroV2Def } from './defs/framerBungeeHeroV2';
 import { framerFirmaTemplateStrategyDigitalDef } from './defs/framerFirmaTemplateStrategyDigital';
 import { framerFlatWhiteProcessDef } from './defs/framerFlatWhiteProcess';
@@ -224,6 +230,12 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   delvaux_details: delvauxDetailsDef as BlockDef,
   delvaux_product: delvauxProductDef as BlockDef,
   delvaux_variant: delvauxVariantDef as BlockDef,
+  gambit_product_overview: gambitProductOverviewDef as BlockDef,
+  gambit_delvaux_intro: gambitDelvauxIntroDef as BlockDef,
+  gambit_product_details: gambitProductDetailsDef as BlockDef,
+  gambit_brand_heritage: gambitBrandHeritageDef as BlockDef,
+  gambit_related_products: gambitRelatedProductsDef as BlockDef,
+  gambit_section_nav: gambitSectionNavDef as BlockDef,
   q80_experience: q80ExperienceDef as BlockDef,
   q80_menu: q80MenuDef as BlockDef,
   housent_hero: housentHeroDef as BlockDef,

@@ -11,8 +11,12 @@ import {
   ChevronDown,
   ImageIcon,
   Italic,
+  ListChecks,
   Loader2,
+  MousePointerClick,
+  Palette,
   Plus,
+  Ruler,
   RotateCcw,
   Sparkles,
   Strikethrough,
@@ -48,6 +52,27 @@ import {
 } from './blocks/PnjDetails';
 import { DELVAUX_HERO_FRAMES } from './blocks/_registry/defs/delvauxHeroFrames';
 import { LINEA_PORTFOLIO_DEFAULT_IMG } from './blocks/_registry/defs/lineaPortfolio';
+import {
+  GAMBIT_OVERVIEW_NEW_PANEL,
+  resolveGambitOverviewPanels,
+} from './blocks/_registry/defs/gambitProductOverview';
+import {
+  GAMBIT_RELATED_NEW_PRODUCT,
+  resolveGambitRelatedProducts,
+} from './blocks/_registry/defs/gambitRelatedProducts';
+import {
+  GAMBIT_DETAILS_ACTION_ICONS,
+  GAMBIT_DETAILS_NEW_ACCORDION,
+  GAMBIT_DETAILS_NEW_ACTION,
+  GAMBIT_DETAILS_NEW_COLOR,
+  GAMBIT_DETAILS_NEW_IMAGE,
+  GAMBIT_DETAILS_NEW_SIZE,
+  resolveGambitDetailsAccordions,
+  resolveGambitDetailsActions,
+  resolveGambitDetailsColors,
+  resolveGambitDetailsGallery,
+  resolveGambitDetailsSizes,
+} from './blocks/_registry/defs/gambitProductDetails';
 import {
   isPnjHeroFramesConfig,
   MINT_FRAMES_EXAMPLE,
@@ -225,6 +250,15 @@ import {
   type DelvauxSubnavLink,
   type DelvauxVariantContent,
   type DelvauxVariantFaq,
+  type GambitProductDetailsAccordion,
+  type GambitProductDetailsAction,
+  type GambitProductDetailsActionIcon,
+  type GambitProductDetailsColor,
+  type GambitProductDetailsContent,
+  type GambitProductOverviewContent,
+  type GambitProductOverviewPanel,
+  type GambitRelatedProductsContent,
+  type GambitRelatedProductItem,
   type DelvauxVariantOption,
   type CiteFlowFaqContent,
   type CiteFlowFaqItem,
@@ -634,6 +668,48 @@ export function ElementToolbar({
         {kind === 'delvauxFaqs' && (
           <DelvauxFaqsControls
             content={content as DelvauxVariantContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'gambitDetailsGallery' && (
+          <GambitDetailsGalleryControls
+            content={content as GambitProductDetailsContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'gambitDetailsColors' && (
+          <GambitDetailsColorsControls
+            content={content as GambitProductDetailsContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'gambitDetailsSizes' && (
+          <GambitDetailsSizesControls
+            content={content as GambitProductDetailsContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'gambitDetailsAccordions' && (
+          <GambitDetailsAccordionsControls
+            content={content as GambitProductDetailsContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'gambitDetailsActions' && (
+          <GambitDetailsActionsControls
+            content={content as GambitProductDetailsContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'gambitOverviewPanels' && (
+          <GambitOverviewPanelsControls
+            content={content as GambitProductOverviewContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'gambitRelatedProducts' && (
+          <GambitRelatedProductsControls
+            content={content as GambitRelatedProductsContent}
             onContentChange={onContentChange}
           />
         )}
@@ -8035,6 +8111,568 @@ function DelvauxFaqsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm FAQ' />
+    </PopoverTrigger>
+  );
+}
+
+/**
+ * Quản lý panel của `gambit_product_overview`: mỗi panel = ảnh + tiêu đề +
+ * mô tả; panel có cụm Details thêm ô nhập gạch đầu dòng (mỗi dòng 1 mục).
+ * Quãng scroll của block = (số panel + 1) khung hình nên thêm/bớt panel cũng
+ * đổi độ dài scrub.
+ */
+function GambitOverviewPanelsControls({
+  content,
+  onContentChange,
+}: {
+  content: GambitProductOverviewContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const panels = resolveGambitOverviewPanels(content);
+
+  const write = (next: GambitProductOverviewPanel[]) =>
+    onContentChange({ ...content, panels: next } as BlockContent);
+
+  const update = (i: number, patch: Partial<GambitProductOverviewPanel>) =>
+    write(panels.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
+
+  const remove = (i: number) => {
+    if (panels.length <= 1) {
+      toast.error('Cần ít nhất 1 panel');
+      return;
+    }
+    write(panels.filter((_, idx) => idx !== i));
+  };
+
+  const add = () => write([...panels, { ...GAMBIT_OVERVIEW_NEW_PANEL }]);
+
+  return (
+    <PopoverTrigger
+      label='Panel'
+      preview={`${panels.length} panel`}
+      icon={<ImageIcon className='size-3.5' />}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {panels.map((panel, i) => {
+          const bullets = Array.isArray(panel.bullets) ? panel.bullets : [];
+          const hasDetails =
+            panel.detailsLabel !== undefined ||
+            panel.detailsRef !== undefined ||
+            bullets.length > 0;
+          return (
+            <div
+              key={`gambit-panel-${i}`}
+              className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+            >
+              <div className='flex items-center gap-2'>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={panel.imageUrl}
+                  alt=''
+                  className='size-9 shrink-0 rounded object-contain ring-1 ring-neutral-200'
+                />
+                <Input
+                  value={panel.imageUrl}
+                  onChange={e => update(i, { imageUrl: e.target.value })}
+                  placeholder='URL ảnh'
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+                <button
+                  type='button'
+                  onClick={() => remove(i)}
+                  aria-label={`Xoá panel ${i + 1}`}
+                  className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                >
+                  <Trash2 className='size-3.5' />
+                </button>
+              </div>
+              <Textarea
+                value={panel.title}
+                onChange={e => update(i, { title: e.target.value })}
+                placeholder='Tiêu đề'
+                className='min-h-12 resize-none border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <Textarea
+                value={panel.body ?? ''}
+                onChange={e => update(i, { body: e.target.value })}
+                placeholder='Mô tả'
+                className='min-h-16 resize-none border-neutral-200 bg-white text-xs'
+              />
+              {hasDetails ? (
+                <Textarea
+                  value={bullets.join('\n')}
+                  onChange={e =>
+                    update(i, {
+                      bullets: e.target.value
+                        .split('\n')
+                        .map(line => line.trim())
+                        .filter(Boolean),
+                    })
+                  }
+                  placeholder='Gạch đầu dòng — mỗi dòng 1 mục'
+                  className='min-h-16 resize-none border-neutral-200 bg-white text-xs'
+                />
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+      <AddRow onAdd={add} label='Thêm panel' />
+    </PopoverTrigger>
+  );
+}
+
+/**
+ * Quản lý sản phẩm gợi ý của `gambit_related_products`: mỗi ô = ảnh + tên +
+ * chất liệu. Số sản phẩm đổi thì stagger vào của lưới cũng dài/ngắn theo.
+ */
+function GambitRelatedProductsControls({
+  content,
+  onContentChange,
+}: {
+  content: GambitRelatedProductsContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const products = resolveGambitRelatedProducts(content);
+
+  const write = (next: GambitRelatedProductItem[]) =>
+    onContentChange({ ...content, products: next } as BlockContent);
+
+  const update = (i: number, patch: Partial<GambitRelatedProductItem>) =>
+    write(products.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
+
+  const remove = (i: number) => {
+    if (products.length <= 1) {
+      toast.error('Cần ít nhất 1 sản phẩm');
+      return;
+    }
+    write(products.filter((_, idx) => idx !== i));
+  };
+
+  const add = () => write([...products, { ...GAMBIT_RELATED_NEW_PRODUCT }]);
+
+  return (
+    <PopoverTrigger
+      label='Sản phẩm'
+      preview={`${products.length} sản phẩm`}
+      icon={<ImageIcon className='size-3.5' />}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {products.map((product, i) => (
+          <div
+            key={`gambit-related-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={product.imageUrl}
+                alt=''
+                className='size-9 shrink-0 rounded object-contain ring-1 ring-neutral-200'
+              />
+              <Input
+                value={product.imageUrl}
+                onChange={e => update(i, { imageUrl: e.target.value })}
+                placeholder='URL ảnh'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label={`Xoá sản phẩm ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <div className='flex items-center gap-2'>
+              <Input
+                value={product.name}
+                onChange={e => update(i, { name: e.target.value })}
+                placeholder='Tên sản phẩm'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <Input
+                value={product.material}
+                onChange={e => update(i, { material: e.target.value })}
+                placeholder='Chất liệu'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm sản phẩm' />
+    </PopoverTrigger>
+  );
+}
+
+/**
+ * 5 manager mảng của `gambit_product_details` — ảnh / màu / size / accordion /
+ * hành động. Mỗi manager ghi thẳng vào content; block + Lớp đọc lại qua cùng
+ * hàm `resolveGambitDetails*` nên không lệch nhau.
+ *
+ * Số ảnh quyết định quãng cuộn ngang (travel) nên thêm/bớt ảnh cũng đổi độ
+ * dài scrub của block.
+ */
+function GambitDetailsGalleryControls({
+  content,
+  onContentChange,
+}: {
+  content: GambitProductDetailsContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const images = resolveGambitDetailsGallery(content);
+
+  const write = (next: string[]) =>
+    onContentChange({ ...content, galleryImages: next } as BlockContent);
+
+  const update = (i: number, value: string) =>
+    write(images.map((src, idx) => (idx === i ? value : src)));
+
+  const remove = (i: number) => {
+    if (images.length <= 1) {
+      toast.error('Cần ít nhất 1 ảnh');
+      return;
+    }
+    write(images.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger
+      label='Ảnh'
+      preview={`${images.length} ảnh`}
+      icon={<ImageIcon className='size-3.5' />}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {images.map((src, i) => (
+          <div
+            key={`gambit-detail-img-${i}`}
+            className='flex items-center gap-2'
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt=''
+              className='size-9 shrink-0 rounded object-contain ring-1 ring-neutral-200'
+            />
+            <Input
+              value={src}
+              onChange={e => update(i, e.target.value)}
+              placeholder='URL ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <button
+              type='button'
+              onClick={() => remove(i)}
+              aria-label={`Xoá ảnh ${i + 1}`}
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+            >
+              <Trash2 className='size-3.5' />
+            </button>
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() => write([...images, GAMBIT_DETAILS_NEW_IMAGE])}
+        label='Thêm ảnh'
+      />
+    </PopoverTrigger>
+  );
+}
+
+function GambitDetailsColorsControls({
+  content,
+  onContentChange,
+}: {
+  content: GambitProductDetailsContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const colors = resolveGambitDetailsColors(content);
+
+  const write = (next: GambitProductDetailsColor[]) =>
+    onContentChange({ ...content, colors: next } as BlockContent);
+
+  const update = (i: number, patch: Partial<GambitProductDetailsColor>) =>
+    write(colors.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
+
+  const remove = (i: number) => {
+    if (colors.length <= 1) {
+      toast.error('Cần ít nhất 1 màu');
+      return;
+    }
+    write(colors.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger
+      label='Màu'
+      preview={`${colors.length} màu`}
+      icon={<Palette className='size-3.5' />}
+      width={380}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {colors.map((color, i) => (
+          <div
+            key={`gambit-detail-color-${i}`}
+            className='flex items-center gap-2'
+          >
+            <input
+              type='color'
+              value={/^#[0-9a-f]{6}$/i.test(color.hex) ? color.hex : '#888888'}
+              onChange={e => update(i, { hex: e.target.value })}
+              aria-label={`Mã màu ${i + 1}`}
+              className='size-8 shrink-0 cursor-pointer rounded border border-neutral-200 bg-white p-0.5'
+            />
+            <Input
+              value={color.label}
+              onChange={e => update(i, { label: e.target.value })}
+              placeholder='Tên màu'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={color.hex}
+              onChange={e => update(i, { hex: e.target.value })}
+              placeholder='#000000'
+              className='h-8 w-24 shrink-0 border-neutral-200 bg-white text-xs'
+            />
+            <button
+              type='button'
+              onClick={() => remove(i)}
+              aria-label={`Xoá màu ${i + 1}`}
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+            >
+              <Trash2 className='size-3.5' />
+            </button>
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() => write([...colors, { ...GAMBIT_DETAILS_NEW_COLOR }])}
+        label='Thêm màu'
+      />
+    </PopoverTrigger>
+  );
+}
+
+function GambitDetailsSizesControls({
+  content,
+  onContentChange,
+}: {
+  content: GambitProductDetailsContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const sizes = resolveGambitDetailsSizes(content);
+
+  const write = (next: string[]) =>
+    onContentChange({ ...content, sizes: next } as BlockContent);
+
+  const remove = (i: number) => {
+    if (sizes.length <= 1) {
+      toast.error('Cần ít nhất 1 size');
+      return;
+    }
+    write(sizes.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger
+      label='Size'
+      preview={`${sizes.length} size`}
+      icon={<Ruler className='size-3.5' />}
+      width={320}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {sizes.map((size, i) => (
+          <div
+            key={`gambit-detail-size-${i}`}
+            className='flex items-center gap-2'
+          >
+            <Input
+              value={size}
+              onChange={e =>
+                write(sizes.map((s, idx) => (idx === i ? e.target.value : s)))
+              }
+              placeholder='Tên size'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <button
+              type='button'
+              onClick={() => remove(i)}
+              aria-label={`Xoá size ${i + 1}`}
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+            >
+              <Trash2 className='size-3.5' />
+            </button>
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() => write([...sizes, GAMBIT_DETAILS_NEW_SIZE])}
+        label='Thêm size'
+      />
+    </PopoverTrigger>
+  );
+}
+
+function GambitDetailsAccordionsControls({
+  content,
+  onContentChange,
+}: {
+  content: GambitProductDetailsContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const items = resolveGambitDetailsAccordions(content);
+
+  const write = (next: GambitProductDetailsAccordion[]) =>
+    onContentChange({ ...content, accordions: next } as BlockContent);
+
+  const update = (i: number, patch: Partial<GambitProductDetailsAccordion>) =>
+    write(items.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 mục');
+      return;
+    }
+    write(items.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger
+      label='Accordion'
+      preview={`${items.length} mục`}
+      icon={<ListChecks className='size-3.5' />}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={`gambit-detail-acc-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={item.title}
+                onChange={e => update(i, { title: e.target.value })}
+                placeholder='Tiêu đề'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label={`Xoá mục ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={item.body}
+              onChange={e => update(i, { body: e.target.value })}
+              placeholder='Nội dung'
+              className='min-h-16 resize-none border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() => write([...items, { ...GAMBIT_DETAILS_NEW_ACCORDION }])}
+        label='Thêm mục'
+      />
+    </PopoverTrigger>
+  );
+}
+
+/**
+ * Hành động: nhãn + icon dựng sẵn + cờ "nhấn" (nền đen). URL đặt qua link
+ * picker của từng layer `actions[i].href` — không nhập tay ở đây.
+ */
+function GambitDetailsActionsControls({
+  content,
+  onContentChange,
+}: {
+  content: GambitProductDetailsContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const actions = resolveGambitDetailsActions(content);
+
+  const write = (next: GambitProductDetailsAction[]) =>
+    onContentChange({ ...content, actions: next } as BlockContent);
+
+  const update = (i: number, patch: Partial<GambitProductDetailsAction>) =>
+    write(actions.map((a, idx) => (idx === i ? { ...a, ...patch } : a)));
+
+  const remove = (i: number) => {
+    if (actions.length <= 1) {
+      toast.error('Cần ít nhất 1 hành động');
+      return;
+    }
+    write(actions.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger
+      label='Hành động'
+      preview={`${actions.length} dòng`}
+      icon={<MousePointerClick className='size-3.5' />}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {actions.map((action, i) => (
+          <div
+            key={`gambit-detail-action-${i}`}
+            className='flex items-center gap-2'
+          >
+            <Input
+              value={action.label}
+              onChange={e => update(i, { label: e.target.value })}
+              placeholder='Nhãn'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <select
+              value={action.icon}
+              onChange={e =>
+                update(i, {
+                  icon: e.target.value as GambitProductDetailsActionIcon,
+                })
+              }
+              aria-label={`Icon hành động ${i + 1}`}
+              className='text-2xs h-8 shrink-0 rounded-md border border-neutral-200 bg-white px-1'
+            >
+              {GAMBIT_DETAILS_ACTION_ICONS.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <label className='text-2xs flex shrink-0 cursor-pointer items-center gap-1 text-neutral-600'>
+              <input
+                type='checkbox'
+                checked={Boolean(action.primary)}
+                onChange={e => update(i, { primary: e.target.checked })}
+                className='size-3.5 cursor-pointer'
+              />
+              Nhấn
+            </label>
+            <button
+              type='button'
+              onClick={() => remove(i)}
+              aria-label={`Xoá hành động ${i + 1}`}
+              className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+            >
+              <Trash2 className='size-3.5' />
+            </button>
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() => write([...actions, { ...GAMBIT_DETAILS_NEW_ACTION }])}
+        label='Thêm hành động'
+      />
     </PopoverTrigger>
   );
 }

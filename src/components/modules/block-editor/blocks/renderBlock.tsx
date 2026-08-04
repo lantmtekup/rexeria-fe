@@ -25,6 +25,8 @@ type BlockRendererProps = {
   order?: string[];
   positions?: ElementPositionsMap;
   activeKey?: string | null;
+  /** Xem `BlockRenderProps.blockId` — nguồn id ổn định SSR↔client cho DOM id. */
+  blockId?: string;
 };
 
 type BlockRenderer = React.ComponentType<BlockRendererProps>;
@@ -256,6 +258,7 @@ export function RenderBlock({
         order={order}
         positions={positions}
         activeKey={activeKey}
+        blockId={block.id}
       />
     );
   }
@@ -270,6 +273,7 @@ export function RenderBlock({
         order={order}
         positions={positions}
         activeKey={activeKey}
+        blockId={block.id}
       />
     );
   }

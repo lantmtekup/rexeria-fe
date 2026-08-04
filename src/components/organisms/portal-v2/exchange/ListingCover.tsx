@@ -4,7 +4,7 @@ import { Eye } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import type { ExchangeListingView } from '@/lib/portal-v2/exchange/types';
-import { BlockMiniPreview } from '@/components/modules/block-editor/BlockMiniPreview';
+import { LazyBlockCoverPreview } from '@/components/organisms/portal-v2/exchange/LazyBlockCoverPreview';
 import { cn } from '@/lib/cn';
 
 type ListingCoverProps = {
@@ -13,6 +13,8 @@ type ListingCoverProps = {
   height?: number;
   showPreview?: boolean;
   onPreview?: () => void;
+  /** Load live block preview immediately (modal). Default false for grid cards. */
+  eagerLivePreview?: boolean;
   className?: string;
 };
 
@@ -62,10 +64,13 @@ export const ListingCover = ({
   height,
   showPreview = false,
   onPreview,
+  eagerLivePreview = false,
   className,
 }: ListingCoverProps) => {
   const t = useTranslations('portalV2.exchange');
   const hasThumb = Boolean(listing.thumbnailUrl);
+  const showLivePreview =
+    !hasThumb && listing.canLivePreview && Boolean(listing.blockId);
 
   return (
     <div
@@ -84,25 +89,16 @@ export const ListingCover = ({
           alt=''
           className='absolute inset-0 size-full object-cover'
         />
-      ) : listing.editorBlock ? (
-        // Live mini preview rendered from block settings — same as
-        // /admin/blocks cards. Content is top-left cropped to the cover.
-        <div className='pointer-events-none absolute inset-0' aria-hidden>
-          <BlockMiniPreview
-            block={listing.editorBlock}
-            aspect='auto'
-            className='size-full'
-          />
-        </div>
+      ) : showLivePreview && listing.blockId ? (
+        <LazyBlockCoverPreview
+          blockId={listing.blockId}
+          eager={eagerLivePreview}
+          fallback={<GeneratedThumb listing={listing} />}
+          className='absolute inset-0'
+        />
       ) : (
         <GeneratedThumb listing={listing} />
       )}
-
-      {/* {listing.meta.badge ? (
-        <span className='absolute top-2 left-2 z-[1] rounded-full bg-[var(--pv2-paper)] px-2 py-[3px] text-[10px] font-bold tracking-[0.03em] text-[var(--pv2-ink)] shadow-[var(--pv2-sh-sm)]'>
-          {listing.meta.badge}
-        </span>
-      ) : null} */}
 
       {showPreview && onPreview ? (
         <button

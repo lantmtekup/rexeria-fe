@@ -19,6 +19,7 @@ import { brandKitToCssVars, DEFAULT_PREVIEW_KIT } from '@/lib/brand-kit';
 
 import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
 import { LinkNav } from '@/components/modules/block-editor/links/LinkNav';
+import { blockAnchorId } from '@/components/modules/block-editor/links/linkToken';
 import { resolveLinksDeep } from '@/components/modules/block-editor/links/resolveLinks';
 import {
   MotionBlockRoot,
@@ -162,15 +163,24 @@ export function LivePreviewCanvas({
                     motion={motion}
                     scrollerEl={scrollerEl}
                   >
-                    <MotionBlockRoot>
-                      <RenderBlock
-                        block={block}
-                        content={content}
-                        styles={styles}
-                        background={background}
-                        order={order}
-                      />
-                    </MotionBlockRoot>
+                    {/* Neo `#blk-<id>` giống `/p` — link "Cuộn tới block"
+                        (`#block:` → `#blk-…`) chỉ cuộn được khi có phần tử
+                        mang đúng id này. */}
+                    <div
+                      id={blockAnchorId(block.id)}
+                      data-block-id={block.id}
+                      data-block-type={block.blockType}
+                    >
+                      <MotionBlockRoot>
+                        <RenderBlock
+                          block={block}
+                          content={content}
+                          styles={styles}
+                          background={background}
+                          order={order}
+                        />
+                      </MotionBlockRoot>
+                    </div>
                   </MotionProvider>
                 );
               })}

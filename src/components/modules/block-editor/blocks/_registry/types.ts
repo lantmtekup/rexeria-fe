@@ -30,6 +30,14 @@ export interface BlockRenderProps<C extends BlockContent = BlockContent> {
   positions?: ElementPositionsMap;
   activeKey?: string | null;
   className?: string;
+  /**
+   * `block.id` — định danh ổn định, GIỐNG NHAU giữa SSR và client (cùng đọc từ
+   * blueprint). Block nào cần id duy nhất trong DOM (mask/gradient/clipPath
+   * SVG) phải lấy từ đây, KHÔNG dùng `React.useId()`: mọi block đều nằm sau
+   * `next/dynamic` (React.lazy + Suspense), boundary đó làm lệch tree-id của
+   * `useId` giữa server và hydrate ⇒ hydration mismatch.
+   */
+  blockId?: string;
 }
 
 /** Định nghĩa đầy đủ 1 block — nguồn sự thật duy nhất. */

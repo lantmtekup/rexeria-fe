@@ -7,6 +7,12 @@ import { delvauxHeroDef } from '@/components/modules/block-editor/blocks/_regist
 import { delvauxProductDef } from '@/components/modules/block-editor/blocks/_registry/defs/delvauxProduct';
 import { delvauxSubnavDef } from '@/components/modules/block-editor/blocks/_registry/defs/delvauxSubnav';
 import { delvauxVariantDef } from '@/components/modules/block-editor/blocks/_registry/defs/delvauxVariant';
+import { gambitProductOverviewDef } from '@/components/modules/block-editor/blocks/_registry/defs/gambitProductOverview';
+import { gambitDelvauxIntroDef } from '@/components/modules/block-editor/blocks/_registry/defs/gambitDelvauxIntro';
+import { gambitProductDetailsDef } from '@/components/modules/block-editor/blocks/_registry/defs/gambitProductDetails';
+import { gambitBrandHeritageDef } from '@/components/modules/block-editor/blocks/_registry/defs/gambitBrandHeritage';
+import { gambitRelatedProductsDef } from '@/components/modules/block-editor/blocks/_registry/defs/gambitRelatedProducts';
+import { gambitSectionNavDef } from '@/components/modules/block-editor/blocks/_registry/defs/gambitSectionNav';
 import { framerAesthaEditorialDef } from '@/components/modules/block-editor/blocks/_registry/defs/framerAesthaEditorial';
 import { aesthaExploreDef } from '@/components/modules/block-editor/blocks/_registry/defs/aesthaExplore';
 import { aesthaStudioDef } from '@/components/modules/block-editor/blocks/_registry/defs/aesthaStudio';
@@ -2312,6 +2318,12 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   delvaux_details: delvauxDetailsDef.defaultContent.vi,
   delvaux_product: delvauxProductDef.defaultContent.vi,
   delvaux_variant: delvauxVariantDef.defaultContent.vi,
+  gambit_product_overview: gambitProductOverviewDef.defaultContent.vi,
+  gambit_delvaux_intro: gambitDelvauxIntroDef.defaultContent.vi,
+  gambit_product_details: gambitProductDetailsDef.defaultContent.vi,
+  gambit_brand_heritage: gambitBrandHeritageDef.defaultContent.vi,
+  gambit_related_products: gambitRelatedProductsDef.defaultContent.vi,
+  gambit_section_nav: gambitSectionNavDef.defaultContent.vi,
   q80_experience: q80ExperienceDef.defaultContent.vi,
   q80_menu: q80MenuDef.defaultContent.vi,
   housent_hero: housentHeroDef.defaultContent.vi,
@@ -2530,6 +2542,12 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   delvaux_details: delvauxDetailsDef.defaultContent.en,
   delvaux_product: delvauxProductDef.defaultContent.en,
   delvaux_variant: delvauxVariantDef.defaultContent.en,
+  gambit_product_overview: gambitProductOverviewDef.defaultContent.en,
+  gambit_delvaux_intro: gambitDelvauxIntroDef.defaultContent.en,
+  gambit_product_details: gambitProductDetailsDef.defaultContent.en,
+  gambit_brand_heritage: gambitBrandHeritageDef.defaultContent.en,
+  gambit_related_products: gambitRelatedProductsDef.defaultContent.en,
+  gambit_section_nav: gambitSectionNavDef.defaultContent.en,
   q80_experience: q80ExperienceDef.defaultContent.en,
   q80_menu: q80MenuDef.defaultContent.en,
   housent_hero: housentHeroDef.defaultContent.en,
