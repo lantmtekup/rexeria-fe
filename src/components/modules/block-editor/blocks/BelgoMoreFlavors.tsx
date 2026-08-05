@@ -19,7 +19,7 @@ import gsap from 'gsap';
 
 import { cn } from '@/lib/cn';
 
-import { isVideoUrl } from '../mediaUrl';
+import { BlockMedia } from '../BlockMedia';
 import { useBlockMotion } from '../motion/LandingMotion';
 import type { BelgoFlavorItem, BelgoMoreFlavorsContent } from '../types';
 import type { BlockRenderProps } from './_registry/types';
@@ -422,25 +422,16 @@ export function BelgoMoreFlavors({
 
   const renderVideo = () =>
     videoUrl ? (
-      isVideoUrl(videoUrl) ? (
-        <video
-          key={videoUrl}
-          src={videoUrl}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload='auto'
-          className='absolute inset-0 h-full w-full object-cover'
-        />
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={videoUrl}
-          alt=''
-          className='absolute inset-0 h-full w-full object-cover'
-        />
-      )
+      <BlockMedia
+        key={videoUrl}
+        src={videoUrl}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload='auto'
+        className='absolute inset-0 h-full w-full object-cover'
+      />
     ) : null;
 
   const copyBlock = (

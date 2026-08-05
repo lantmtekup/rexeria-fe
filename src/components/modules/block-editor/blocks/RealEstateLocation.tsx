@@ -5,7 +5,7 @@ import gsap from 'gsap';
 
 import { cn } from '@/lib/cn';
 
-import { isVideoUrl } from '../mediaUrl';
+import { BlockMedia } from '../BlockMedia';
 import { useBlockMotion } from '../motion/LandingMotion';
 import type { RealEstateLocationContent } from '../types';
 import type { BlockRenderProps } from './_registry/types';
@@ -158,24 +158,15 @@ export function RealEstateLocation({
             {/* Field media: mặc định là mp4, nhưng user đổi sang ảnh tĩnh được
                 qua picker → render theo đuôi file, không ép <video>. */}
             {content.videoUrl ? (
-              isVideoUrl(content.videoUrl) ? (
-                <video
-                  key={content.videoUrl}
-                  src={content.videoUrl}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className='h-full w-full object-cover'
-                />
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={content.videoUrl}
-                  alt=''
-                  className='h-full w-full object-cover'
-                />
-              )
+              <BlockMedia
+                key={content.videoUrl}
+                src={content.videoUrl}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className='h-full w-full object-cover'
+              />
             ) : null}
           </div>
         </div>

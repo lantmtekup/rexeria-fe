@@ -45,7 +45,7 @@ import { SplitText } from 'gsap/SplitText';
 
 import { cn } from '@/lib/cn';
 
-import { isVideoUrl } from '../mediaUrl';
+import { BlockMedia } from '../BlockMedia';
 import { useLandingMotion } from '../motion/LandingMotion';
 import {
   DELVAUX_FONT_BODY,
@@ -436,8 +436,8 @@ export function GambitBrandHeritage({
     };
   }, [isCanvas, scroller, requestRefresh, contentKey]);
 
-  const media = isVideoUrl(videoUrl) ? (
-    <video
+  const media = (
+    <BlockMedia
       key={videoUrl}
       ref={videoRef}
       src={videoUrl}
@@ -448,13 +448,6 @@ export function GambitBrandHeritage({
       playsInline
       preload='auto'
       aria-hidden='true'
-    />
-  ) : (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={videoUrl}
-      alt=''
-      className='pointer-events-none h-full w-full object-cover'
     />
   );
 

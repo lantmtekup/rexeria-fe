@@ -22,6 +22,15 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
+    // Rewrite `/api/rexer/*` → BE đi qua proxy của Next, mà proxy này mặc định
+    // ngắt sau 30 GIÂY. Handoff của AI-Insights viết lại từng block bằng LLM
+    // (6 block ≈ 60–90s, có retry thì hơn) nên luôn vượt ngưỡng đó.
+    //
+    // Triệu chứng khi bị cắt rất dễ đọc nhầm thành lỗi model: proxy ngắt →
+    // context của request bị huỷ → BE log `context canceled` cho MỌI block còn
+    // lại cùng một giây, và trang sinh ra thiếu nội dung ở nửa sau. Đo được ở
+    // local 05/08/2026: filled=2 skipped=4, cả 4 block chết đúng mốc t+30s.
+    proxyTimeout: 300_000,
   },
 
   images: {

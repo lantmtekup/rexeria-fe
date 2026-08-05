@@ -16,7 +16,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { cn } from '@/lib/cn';
 
-import { isVideoUrl } from '../mediaUrl';
+import { BlockMedia } from '../BlockMedia';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
 import { isDeviceFrameHost, resolveDrawerPortalHost } from '../previewPortal';
 import type { BelgoBrewingProcessContent } from '../types';
@@ -223,21 +223,16 @@ export function BelgoBrewingProcess({
 
   const renderVideo = () =>
     videoUrl ? (
-      isVideoUrl(videoUrl) ? (
-        <video
-          key={videoUrl}
-          src={videoUrl}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload='auto'
-          className='h-full w-full object-cover'
-        />
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={videoUrl} alt='' className='h-full w-full object-cover' />
-      )
+      <BlockMedia
+        key={videoUrl}
+        src={videoUrl}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload='auto'
+        className='h-full w-full object-cover'
+      />
     ) : null;
 
   const cupImage = (
