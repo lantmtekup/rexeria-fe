@@ -36,6 +36,7 @@ import {
   selectableClass,
 } from './applyStyle';
 import { resolveScrollMattisSlides } from './_registry/defs/scrollMattis';
+import { isImageUrl, isVideoUrl as sharedIsVideoUrl } from '../mediaUrl';
 import { useBlockMotion, useLandingMotion } from '../motion/LandingMotion';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 import { useContainerMobile } from './useContainerMobile';
@@ -157,15 +158,16 @@ const slideKeysAt = (i: number, useArray: boolean): SlideKeys => {
   return LEGACY_SLIDE_KEYS[i] ?? LEGACY_SLIDE_KEYS[0];
 };
 
+/**
+ * Luật đuôi file nay nằm ở `../mediaUrl` (nguồn sự thật chung, BE cũng mirror).
+ * Ở đây chỉ giữ phần riêng của block: host framer không có đuôi file nên phải
+ * đoán theo đường dẫn — `/assets/` thường là video, `/images/` là ảnh.
+ */
 const isVideoUrl = (src: string): boolean => {
   const s = src.trim();
   if (!s) return false;
-  // Strip query/hash — CDN hay dán `….mp4?token=…`
-  const path = s.split(/[?#]/)[0] ?? s;
-  if (/\.(mp4|webm|ogg|ogv|mov|m4v|m3u8)$/i.test(path)) return true;
-  // Ảnh rõ ràng → không phải video (kể cả host framer)
-  if (/\.(png|jpe?g|webp|gif|svg|avif|bmp)$/i.test(path)) return false;
-  // Framer: /assets/ thường là video; /images/ là ảnh
+  if (sharedIsVideoUrl(s)) return true;
+  if (isImageUrl(s)) return false;
   if (/framerusercontent\.com\/images\//i.test(s)) return false;
   if (/framerusercontent\.com\/assets\//i.test(s)) return true;
   return false;
