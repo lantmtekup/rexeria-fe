@@ -36,6 +36,7 @@ import type {
   RxJourneyListResponse,
   RxUpdateJourneyRequest,
 } from './types/journey';
+import type { RxIntelSegmentsResponse } from './types/intel';
 import type {
   RxExperience,
   RxExperienceCoverage,
@@ -131,6 +132,19 @@ export const rexerV2Api = {
         method: 'PUT',
         body,
       }),
+  },
+
+  // ── Intel (spec §8) ──────────────────────────────────────────────────────
+  intel: {
+    /**
+     * `GET /v1/intel/segments` — phân khúc hành vi `s1..s8` kèm số ĐO ĐƯỢC.
+     * `brand_id` chỉ platform admin dùng được; thiếu nó admin đọc brand rỗng
+     * và mọi số về 0 bất kể màn hình đang xem brand nào.
+     */
+    segments: (brandId?: string) =>
+      rxV2<RxIntelSegmentsResponse>(
+        `/intel/segments${brandId ? `?brand_id=${encodeURIComponent(brandId)}` : ''}`
+      ),
   },
 
   // ── Journeys (spec §6) ───────────────────────────────────────────────────

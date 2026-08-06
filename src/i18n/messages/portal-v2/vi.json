@@ -547,7 +547,10 @@
       "toastForkFailed": "Không gắn được vào chiến dịch",
       "toastDeleteFailed": "Không xoá được",
       "toastSaveFailed": "Không lưu được",
-      "toastSaveStale": "Bản của bạn đã cũ — có người vừa lưu trước. Tải lại rồi sửa tiếp."
+      "toastSaveStale": "Bản của bạn đã cũ — có người vừa lưu trước. Tải lại rồi sửa tiếp.",
+      "segmentUnmeasured": "Chưa đo được lượt nào cho phân khúc này — con số bên dưới chưa phản ánh nó.",
+      "segmentShare": "{pct}% traffic đo được · {sessions} phiên",
+      "personaBehaves": "Hành xử theo phân khúc {seg}"
     },
     "experiences": {
       "benefitsHeading": "Vì sao hiệu quả",

@@ -4,6 +4,8 @@ import { Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
+import type { PersonaOption } from '@/services/portal-v2/journeyAudience';
+
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
 import {
@@ -14,25 +16,27 @@ import {
 } from '@/components/molecules/portal-v2/brand-form';
 import {
   JOURNEY_OBJECTIVES,
-  JOURNEY_SEGMENTS,
   OUTCOME_FOR_OBJECTIVE,
 } from '@/lib/portal-v2/journeys/constants';
 import type { JourneyDraftInput } from '@/lib/portal-v2/journeys/types';
 import type { ExperienceObjective } from '@/lib/portal-v2/experiences/types';
 
 type NewJourneyModalProps = {
+  /** Chân dung của brand — `brand_profiles.audience`. Rỗng ⇒ chỉ có "mọi khách". */
+  personas?: PersonaOption[];
   onClose: () => void;
   onCreate: (input: JourneyDraftInput) => void;
 };
 
 export const NewJourneyModal = ({
+  personas = [],
   onClose,
   onCreate,
 }: NewJourneyModalProps) => {
   const t = useTranslations('portalV2.journeys');
   const [name, setName] = useState('');
   const [obj, setObj] = useState<ExperienceObjective>('insight');
-  const [seg, setSeg] = useState('all');
+  const [personaId, setPersonaId] = useState('');
 
   const outcome = OUTCOME_FOR_OBJECTIVE[obj];
 
@@ -48,7 +52,12 @@ export const NewJourneyModal = ({
           <Button variant='ghost' size='sm' onClick={onClose}>
             {t('cancel')}
           </Button>
-          <Button size='sm' onClick={() => onCreate({ name, obj, seg })}>
+          <Button
+            size='sm'
+            onClick={() =>
+              onCreate({ name, obj, personaId: personaId || null })
+            }
+          >
             {t('create')}
           </Button>
         </>
@@ -86,11 +95,15 @@ export const NewJourneyModal = ({
       </Field>
 
       <Field label={t('fieldAudience')}>
-        <TextSelect value={seg} onChange={e => setSeg(e.target.value)}>
-          <option value='all'>{t('segmentAll')}</option>
-          {JOURNEY_SEGMENTS.map(s => (
-            <option key={s.id} value={s.id}>
-              {s.n}
+        {/* Chân dung của brand; rỗng = chưa nhắm ai cụ thể. */}
+        <TextSelect
+          value={personaId}
+          onChange={e => setPersonaId(e.target.value)}
+        >
+          <option value=''>{t('segmentAll')}</option>
+          {personas.map(p => (
+            <option key={p.id} value={p.id}>
+              {p.name}
             </option>
           ))}
         </TextSelect>

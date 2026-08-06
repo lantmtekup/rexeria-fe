@@ -5,6 +5,9 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import type { JourneySegment } from '@/lib/portal-v2/journeys/constants';
+import type { PersonaOption } from '@/services/portal-v2/journeyAudience';
+
 import {
   createJourney as createJourneyApi,
   deleteJourneys as deleteJourneysApi,
@@ -60,6 +63,10 @@ type JourneysWorkspaceProps = {
   initialVersions: Record<string, number>;
   /** Brand đang xem — cần khi TẠO, vì admin không thuộc brand nào. */
   brandId: string | null;
+  /** Chân dung khách của brand — `brand_profiles.audience`. */
+  personas: PersonaOption[];
+  /** Phân khúc hành vi ĐO ĐƯỢC — `GET /v1/intel/segments`. */
+  segments: JourneySegment[];
   initialError?: string | null;
   /** Journey id from `?edit=` — reopens the canvas editor on a pasted / reloaded link. */
   initialEditId?: string | null;
@@ -70,6 +77,8 @@ export const JourneysWorkspace = ({
   initialJourneys,
   initialVersions,
   brandId,
+  personas,
+  segments,
   initialError = null,
 }: JourneysWorkspaceProps) => {
   const t = useTranslations('portalV2.journeys');
@@ -350,6 +359,8 @@ export const JourneysWorkspace = ({
           key={active.id}
           journey={active}
           journeys={journeys}
+          personas={personas}
+          segments={segments}
           onClose={handleClose}
           onEdit={j => setOverlay({ kind: 'edit', id: j.id })}
           onFork={j => setOverlay({ kind: 'fork', id: j.id })}
@@ -363,6 +374,7 @@ export const JourneysWorkspace = ({
           key={active.id}
           journey={active}
           journeys={journeys}
+          personas={personas}
           onCancel={() => setOverlay({ kind: 'detail', id: active.id })}
           onPersist={handlePersistEdit}
           onSave={handleSaveEdit}
@@ -390,7 +402,11 @@ export const JourneysWorkspace = ({
       ) : null}
 
       {overlay?.kind === 'new' ? (
-        <NewJourneyModal onClose={handleClose} onCreate={handleCreate} />
+        <NewJourneyModal
+          personas={personas}
+          onClose={handleClose}
+          onCreate={handleCreate}
+        />
       ) : null}
     </div>
   );

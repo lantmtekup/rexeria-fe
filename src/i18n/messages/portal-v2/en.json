@@ -547,7 +547,10 @@
       "toastForkFailed": "Could not attach to the campaign",
       "toastDeleteFailed": "Could not delete",
       "toastSaveFailed": "Could not save",
-      "toastSaveStale": "Your copy is stale — someone saved first. Reload and try again."
+      "toastSaveStale": "Your copy is stale — someone saved first. Reload and try again.",
+      "segmentUnmeasured": "No sessions measured for this segment yet — the numbers below do not reflect it.",
+      "segmentShare": "{pct}% of measured traffic · {sessions} sessions",
+      "personaBehaves": "Behaves like segment {seg}"
     },
     "experiences": {
       "benefitsHeading": "Why it works",

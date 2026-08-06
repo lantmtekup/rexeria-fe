@@ -12,6 +12,7 @@
 import {
   OUTCOME_FOR_OBJECTIVE,
   segmentById,
+  type JourneySegment,
 } from '@/lib/portal-v2/journeys/constants';
 import type {
   Journey,
@@ -300,9 +301,13 @@ export const journeyStats = (
 export const walkJourney = (
   list: Journey[],
   j: Journey,
-  segId: string
+  segId: string,
+  segments: JourneySegment[]
 ): JourneyWalkStage[] => {
-  const share = segmentById(segId)?.share ?? 1;
+  // `all` = không thu hẹp ⇒ hệ số 1. Một phân khúc cụ thể thì dùng share ĐO
+  // ĐƯỢC; bản trước lấy hằng số viết tay rồi nhân vào số phiên có thật.
+  const share =
+    segId === 'all' ? 1 : (segmentById(segments, segId)?.share ?? 0);
   const layout = orderedLayout(j);
   const nodeStats = resolveNodeStats(list, j);
 
@@ -472,7 +477,7 @@ export const createJourney = (input: JourneyDraftInput): Journey => {
     campaignName: null,
     origin: null,
     obj: input.obj,
-    seg: input.seg,
+    personaId: input.personaId,
     updated: 'just now',
     tagline: 'A route from a front door to a result.',
     summary:

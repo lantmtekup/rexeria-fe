@@ -88,9 +88,7 @@ export const v2ToJourney = (
   campaignName: opts.campaignName ?? null,
   origin: x.origin_id,
   obj: pick(x.objective, OBJECTIVES) ?? 'lead',
-  // BE giữ `persona_id` (khoá ngoại), UI giữ `seg` (một id phân khúc). Không
-  // phải cùng thứ, nên đừng ép cái này thành cái kia — để 'all'.
-  seg: 'all',
+  personaId: x.persona_id,
   updated: x.updated_at,
   tagline: x.tagline ?? '',
   summary: x.summary ?? '',
@@ -108,6 +106,7 @@ export const journeyToV2 = (
   ...(opts.brandId ? { brand_id: opts.brandId } : {}),
   name: j.name,
   objective: j.obj,
+  persona_id: j.personaId,
   tagline: j.tagline,
   summary: j.summary,
   nodes: j.nodes.map(nodeToV2),

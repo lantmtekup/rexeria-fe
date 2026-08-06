@@ -22,11 +22,7 @@ import type { ExperienceObjective } from '@/lib/portal-v2/experiences/types';
 
 /** `DATA.journeyKinds` (~L6300) — the five node types the plan names. */
 export type JourneyNodeKind =
-  | 'entry'
-  | 'experience'
-  | 'decision'
-  | 'action'
-  | 'outcome';
+  'entry' | 'experience' | 'decision' | 'action' | 'outcome';
 
 /** The ownership axis — prototype `jState` (~L19197). */
 export type JourneyState = 'blueprint' | 'copy';
@@ -132,8 +128,16 @@ export type Journey = {
   /** Copies only — the blueprint this was forked from. */
   origin: string | null;
   obj: ExperienceObjective;
-  /** Primary audience — a `JOURNEY_SEGMENTS` id, or 'all'. */
-  seg: string;
+  /**
+   * Chân dung khách mà hành trình này NHẮM tới — `brand_profiles.audience[].id`,
+   * lưu ở `journeys.persona_id` và được BE kiểm bằng `PersonaExists`.
+   *
+   * Bản trước để ở đây một id PHÂN KHÚC (`s1`…) — thứ khác hẳn: phân khúc là
+   * cách khách hành xử, đo được từ `shopper_profiles`; chân dung là lựa chọn
+   * lúc thiết kế. Chúng nối nhau qua `ProfilePersona.behaves`, không thay thế
+   * được cho nhau, và id `s1` gửi vào một cột uuid thì chỉ bị vứt.
+   */
+  personaId: string | null;
   updated: string;
   tagline: string;
   summary: string;
@@ -185,7 +189,7 @@ export type JourneyFilters = {
 export type JourneyDraftInput = {
   name: string;
   obj: ExperienceObjective;
-  seg: string;
+  personaId: string | null;
 };
 
 /* ── editor ────────────────────────────────────────────────────────────── */
@@ -197,7 +201,7 @@ export type JourneyNodePatch = Partial<
 
 /** Journey-level fields the editor's meta panel owns. */
 export type JourneyMetaPatch = Partial<
-  Pick<Journey, 'name' | 'tagline' | 'summary' | 'obj' | 'seg'>
+  Pick<Journey, 'name' | 'tagline' | 'summary' | 'obj' | 'personaId'>
 >;
 
 /**

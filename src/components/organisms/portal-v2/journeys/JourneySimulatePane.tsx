@@ -9,19 +9,25 @@ import { formatCount, formatLift } from '@/lib/portal-v2/experiences/helpers';
 import {
   JOURNEY_KINDS,
   JOURNEY_KIND_STYLE,
-  JOURNEY_SEGMENTS,
   segmentById,
+  type JourneySegment,
 } from '@/lib/portal-v2/journeys/constants';
 import { walkJourney } from '@/lib/portal-v2/journeys/helpers';
 import type { Journey } from '@/lib/portal-v2/journeys/types';
 
 type JourneySimulatePaneProps = {
+  /**
+   * Phân khúc hành vi ĐO ĐƯỢC — `GET /v1/intel/segments`. Rỗng ⇒ chỉ còn góc
+   * nhìn "mọi khách", vì không có hệ số nào để thu hẹp.
+   */
+  segments?: JourneySegment[];
   journey: Journey;
   /** The whole list: a blueprint's numbers are its copies' numbers. */
   journeys: Journey[];
 };
 
 export const JourneySimulatePane = ({
+  segments = [],
   journey,
   journeys,
 }: JourneySimulatePaneProps) => {
@@ -29,17 +35,17 @@ export const JourneySimulatePane = ({
   const [segId, setSegId] = useState<string>('all');
 
   const stages = useMemo(
-    () => walkJourney(journeys, journey, segId),
-    [journeys, journey, segId]
+    () => walkJourney(journeys, journey, segId, segments),
+    [journeys, journey, segId, segments]
   );
 
   const peak = stages.reduce((max, s) => Math.max(max, s.reached ?? 0), 0);
   const hasNumbers = stages.some(s => s.reached !== null);
-  const segment = segmentById(segId);
+  const segment = segmentById(segments, segId);
 
   const options = [
     { id: 'all', label: t('segmentAll') },
-    ...JOURNEY_SEGMENTS.map(s => ({ id: s.id, label: s.n })),
+    ...segments.map(s => ({ id: s.id, label: s.n })),
   ];
 
   return (
@@ -47,9 +53,28 @@ export const JourneySimulatePane = ({
       <FilterChips inline options={options} value={segId} onChange={setSegId} />
 
       {segment ? (
-        <p className='mt-2.5 max-w-[68ch] text-[12.5px] leading-relaxed text-[var(--pv2-mut)]'>
-          {segment.want}
-        </p>
+        <>
+          <p className='mt-2.5 max-w-[68ch] text-[12.5px] leading-relaxed text-[var(--pv2-mut)]'>
+            {segment.want}
+          </p>
+          {/*
+            `share === 0` = chưa đo được lượt nào cho phân khúc này. Nhân 0 vào
+            số phiên rồi vẽ ra một cái phễu bằng không sẽ đọc như "phân khúc
+            này không ai đi tới đâu", trong khi sự thật là chưa đo.
+          */}
+          {segment.share === 0 ? (
+            <p className='mt-1.5 text-[12px] text-[var(--pv2-warning)]'>
+              {t('segmentUnmeasured')}
+            </p>
+          ) : (
+            <p className='mt-1.5 text-[12px] text-[var(--pv2-faint)]'>
+              {t('segmentShare', {
+                pct: Math.round(segment.share * 100),
+                sessions: segment.sessions,
+              })}
+            </p>
+          )}
+        </>
       ) : null}
 
       {!hasNumbers ? (

@@ -2,6 +2,9 @@
 
 import { Copy, GitFork, PenLine } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+
+import type { JourneySegment } from '@/lib/portal-v2/journeys/constants';
+import type { PersonaOption } from '@/services/portal-v2/journeyAudience';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
@@ -24,6 +27,8 @@ import type { Journey, JourneyDetailTab } from '@/lib/portal-v2/journeys/types';
 import { cn } from '@/lib/cn';
 
 type JourneyDetailModalProps = {
+  personas?: PersonaOption[];
+  segments?: JourneySegment[];
   journey: Journey;
   journeys: Journey[];
   onClose: () => void;
@@ -34,6 +39,8 @@ type JourneyDetailModalProps = {
 };
 
 export const JourneyDetailModal = ({
+  personas = [],
+  segments = [],
   journey,
   journeys,
   onClose,
@@ -182,10 +189,16 @@ export const JourneyDetailModal = ({
       />
 
       <div className='pt-4' role='tabpanel'>
-        {tab === 'over' ? <JourneyOverviewPane journey={journey} /> : null}
+        {tab === 'over' ? (
+          <JourneyOverviewPane journey={journey} personas={personas} />
+        ) : null}
         {tab === 'canvas' ? <JourneyCanvasPane journey={journey} /> : null}
         {tab === 'walk' ? (
-          <JourneySimulatePane journey={journey} journeys={journeys} />
+          <JourneySimulatePane
+            journey={journey}
+            journeys={journeys}
+            segments={segments}
+          />
         ) : null}
         {tab === 'ready' ? <JourneyReadinessPane journey={journey} /> : null}
       </div>

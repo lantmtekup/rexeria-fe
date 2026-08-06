@@ -10,6 +10,8 @@ import {
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+
+import type { PersonaOption } from '@/services/portal-v2/journeyAudience';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -87,6 +89,7 @@ import type {
  */
 
 type JourneyEditorProps = {
+  personas?: PersonaOption[];
   journey: Journey;
   /**
    * The whole library. A blueprint has never run, so the figures on its bands
@@ -133,6 +136,7 @@ const toolBtnClass = cn(
 );
 
 export const JourneyEditor = ({
+  personas = [],
   journey,
   journeys,
   onCancel,
@@ -583,7 +587,7 @@ export const JourneyEditor = ({
   );
 
   const handleMetaSelect = useCallback(
-    (patch: { obj?: ExperienceObjective; seg?: string }) => {
+    (patch: { obj?: ExperienceObjective; personaId?: string | null }) => {
       apply(updateMeta(draft, patch));
     },
     [apply, draft]
@@ -895,6 +899,7 @@ export const JourneyEditor = ({
 
         <aside className='flex h-full min-h-0 w-[276px] shrink-0 flex-col border-l border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
           <EditorInspector
+            personas={personas}
             draft={draft}
             node={selectedNode}
             onPatch={handlePatch}
