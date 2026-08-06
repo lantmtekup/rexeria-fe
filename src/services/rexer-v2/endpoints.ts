@@ -31,6 +31,12 @@ import type {
   RxUpdateCampaignRequest,
 } from './types/campaign';
 import type {
+  RxCreateJourneyRequest,
+  RxJourney,
+  RxJourneyListResponse,
+  RxUpdateJourneyRequest,
+} from './types/journey';
+import type {
   RxExperience,
   RxExperienceCoverage,
   RxExperienceListQuery,
@@ -125,6 +131,57 @@ export const rexerV2Api = {
         method: 'PUT',
         body,
       }),
+  },
+
+  // ── Journeys (spec §6) ───────────────────────────────────────────────────
+  journeys: {
+    list: (
+      query: {
+        brand_id?: string;
+        campaign_id?: string;
+        state?: string;
+        q?: string;
+        limit?: number;
+      } = {}
+    ) => {
+      const qs = new URLSearchParams();
+      Object.entries(query).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') qs.set(k, String(v));
+      });
+      const suffix = qs.toString();
+      return rxV2<RxJourneyListResponse>(
+        `/journeys${suffix ? `?${suffix}` : ''}`
+      );
+    },
+
+    get: (journeyId: string) => rxV2<RxJourney>(`/journeys/${journeyId}`),
+
+    create: (body: RxCreateJourneyRequest) =>
+      rxV2<RxJourney>('/journeys', { method: 'POST', body }),
+
+    /** Thay toàn bộ. `version` lệch ⇒ BE từ chối, đó là cách nó chặn ghi đè. */
+    update: (journeyId: string, body: RxUpdateJourneyRequest) =>
+      rxV2<RxJourney>(`/journeys/${journeyId}`, { method: 'PUT', body }),
+
+    /** Fork blueprint lên một chiến dịch — một chiến dịch, một hành trình. */
+    use: (journeyId: string, campaignId: string) =>
+      rxV2<RxJourney>(`/journeys/${journeyId}/use`, {
+        method: 'POST',
+        body: { campaign_id: campaignId },
+      }),
+
+    /** Đưa bản copy ngược thành blueprint dùng chung. */
+    promote: (journeyId: string, name: string) =>
+      rxV2<RxJourney>(`/journeys/${journeyId}/promote`, {
+        method: 'POST',
+        body: { name },
+      }),
+
+    duplicate: (journeyId: string) =>
+      rxV2<RxJourney>(`/journeys/${journeyId}/duplicate`, { method: 'POST' }),
+
+    remove: (journeyId: string) =>
+      rxV2<void>(`/journeys/${journeyId}`, { method: 'DELETE' }),
   },
 
   // ── Campaigns (spec §5) — shape v2, KHÁC client v1 ở services/rexer ───────

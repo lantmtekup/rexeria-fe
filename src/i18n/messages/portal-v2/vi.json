@@ -541,7 +541,13 @@
       "pickerLoading": "Đang đọc thư viện…",
       "pickerEmpty": "Không có trang publish nào khớp",
       "pickerEmptyHint": "Chỉ landing page đã publish mới liên kết được. Publish trang trước rồi quay lại.",
-      "pickerNote": "Node chỉ lưu tên và độ đo của trang, không lưu bản thân trang."
+      "pickerNote": "Node chỉ lưu tên và độ đo của trang, không lưu bản thân trang.",
+      "toastCreateFailed": "Không tạo được hành trình",
+      "toastDuplicateFailed": "Không nhân bản được",
+      "toastForkFailed": "Không gắn được vào chiến dịch",
+      "toastDeleteFailed": "Không xoá được",
+      "toastSaveFailed": "Không lưu được",
+      "toastSaveStale": "Bản của bạn đã cũ — có người vừa lưu trước. Tải lại rồi sửa tiếp."
     },
     "experiences": {
       "benefitsHeading": "Vì sao hiệu quả",

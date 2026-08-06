@@ -2,6 +2,7 @@ import { BrandScopeBar } from '@/components/molecules/portal-v2/BrandScopeBar';
 import { CampaignsWorkspace } from '@/components/organisms/portal-v2/campaigns/CampaignsWorkspace';
 import { readCampaignIdParam } from '@/lib/portal-v2/campaigns/idParam';
 import { fetchCampaignBoard } from '@/services/portal-v2/campaignBoardV2';
+import { fetchJourneyBoard } from '@/services/portal-v2/journeyBoard';
 import { resolvePortalScope } from '@/services/portal-v2/scope';
 
 type PortalV2CampaignsPageProps = {
@@ -14,7 +15,11 @@ export default async function PortalV2CampaignsPage({
   const params = await searchParams;
   const scope = await resolvePortalScope(params);
   const initialId = readCampaignIdParam(params);
-  const board = await fetchCampaignBoard({ brandId: scope.brandId });
+  // Hai nguồn độc lập ⇒ chạy song song; nối tiếp thì thời gian cộng dồn.
+  const [board, journeys] = await Promise.all([
+    fetchCampaignBoard({ brandId: scope.brandId }),
+    fetchJourneyBoard({ brandId: scope.brandId }),
+  ]);
 
   return (
     <div className='flex min-h-0 flex-col'>
@@ -27,6 +32,7 @@ export default async function PortalV2CampaignsPage({
         key={scope.brandId ?? 'none'}
         initialCampaignId={initialId}
         initialCampaigns={board.items}
+        initialJourneys={journeys.items}
         initialError={board.error ?? scope.error}
       />
     </div>

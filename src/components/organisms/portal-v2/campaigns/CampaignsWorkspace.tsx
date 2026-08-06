@@ -60,7 +60,6 @@ import type {
   CampaignWizard,
 } from '@/lib/portal-v2/campaigns/types';
 import { wizardDraft } from '@/lib/portal-v2/campaigns/wizard';
-import { cloneJourneys, MOCK_JOURNEYS } from '@/lib/portal-v2/journeys/mock';
 import type { Journey } from '@/lib/portal-v2/journeys/types';
 
 type CampaignsWorkspaceProps = {
@@ -68,6 +67,8 @@ type CampaignsWorkspaceProps = {
   initialCampaignId: string | null;
   /** Chiến dịch THẬT — `GET /v1/campaigns`, đã lọc theo brand. */
   initialCampaigns: CampaignView[];
+  /** Hành trình THẬT — `GET /v1/journeys`, cùng brand. */
+  initialJourneys: Journey[];
   /** Nạp hỏng ⇒ nói ra, đừng để đọc như "chưa có chiến dịch nào". */
   initialError?: string | null;
 };
@@ -85,6 +86,7 @@ type CampaignsWorkspaceProps = {
 export const CampaignsWorkspace = ({
   initialCampaignId,
   initialCampaigns,
+  initialJourneys,
   initialError = null,
 }: CampaignsWorkspaceProps) => {
   const t = useTranslations('portalV2.campaigns');
@@ -101,10 +103,13 @@ export const CampaignsWorkspace = ({
    * seed says `m4` runs `j-j1-m4` and its subject carries a copy of `e4`, and
    * these two calls make both true before anything renders.
    */
-  // Journeys và experiences CHƯA ráp API — vẫn là mock, gieo từ chính danh
-  // sách chiến dịch thật để liên kết không trỏ vào hư không.
+  /**
+   * Hành trình THẬT — `GET /v1/journeys`. `ensureCampaignJourneys` vẫn chạy để
+   * chiến dịch nào chưa có fork thì có một bản tại chỗ mà vẽ; bản đó chưa nằm
+   * trên server cho tới khi người dùng thật sự gắn hành trình vào.
+   */
   const [journeys, setJourneys] = useState<Journey[]>(() =>
-    ensureCampaignJourneys(cloneJourneys(MOCK_JOURNEYS), initialCampaigns)
+    ensureCampaignJourneys(initialJourneys, initialCampaigns)
   );
   const [experiences, setExperiences] = useState<CampaignExperience[]>(() =>
     ensureCampaignExperiences(

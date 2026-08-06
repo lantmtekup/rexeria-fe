@@ -541,7 +541,13 @@
       "pickerLoading": "Reading the library…",
       "pickerEmpty": "No published page matches",
       "pickerEmptyHint": "Only published landing pages can be linked. Publish the page first, then come back.",
-      "pickerNote": "The node stores the page's name and coverage, not the page itself."
+      "pickerNote": "The node stores the page's name and coverage, not the page itself.",
+      "toastCreateFailed": "Could not create the journey",
+      "toastDuplicateFailed": "Could not duplicate",
+      "toastForkFailed": "Could not attach to the campaign",
+      "toastDeleteFailed": "Could not delete",
+      "toastSaveFailed": "Could not save",
+      "toastSaveStale": "Your copy is stale — someone saved first. Reload and try again."
     },
     "experiences": {
       "benefitsHeading": "Why it works",
