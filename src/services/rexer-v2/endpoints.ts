@@ -24,6 +24,13 @@ import type {
   RxExchangeListing,
 } from './types/exchange';
 import type {
+  RxCampaign,
+  RxCampaignItemsResponse,
+  RxCampaignListResponse,
+  RxCreateCampaignRequest,
+  RxUpdateCampaignRequest,
+} from './types/campaign';
+import type {
   RxExperience,
   RxExperienceCoverage,
   RxExperienceListQuery,
@@ -118,6 +125,59 @@ export const rexerV2Api = {
         method: 'PUT',
         body,
       }),
+  },
+
+  // ── Campaigns (spec §5) — shape v2, KHÁC client v1 ở services/rexer ───────
+  campaigns: {
+    list: (
+      query: {
+        brand_id?: string;
+        q?: string;
+        page?: number;
+        limit?: number;
+      } = {}
+    ) => {
+      const qs = new URLSearchParams();
+      Object.entries(query).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') qs.set(k, String(v));
+      });
+      const suffix = qs.toString();
+      return rxV2<RxCampaignListResponse>(
+        `/campaigns${suffix ? `?${suffix}` : ''}`
+      );
+    },
+
+    /** Trả KÈM `items[]`; danh sách thì không, nên detail phải gọi riêng. */
+    get: (campaignId: string) => rxV2<RxCampaign>(`/campaigns/${campaignId}`),
+
+    create: (body: RxCreateCampaignRequest) =>
+      rxV2<RxCampaign>('/campaigns', { method: 'POST', body }),
+
+    /** PUT, không phải PATCH — server trả 404 cho PATCH. */
+    update: (campaignId: string, body: RxUpdateCampaignRequest) =>
+      rxV2<RxCampaign>(`/campaigns/${campaignId}`, { method: 'PUT', body }),
+
+    /**
+     * Chỉ nhận `'done'` (chốt tay) hoặc `null` (bỏ chốt, để BE suy lại). Mọi
+     * giá trị khác là 400 INVALID_TRANSITION — trạng thái do
+     * `core.DeriveCampaignStage` quyết, không phải do màn hình đặt.
+     */
+    setStatus: (campaignId: string, status: 'done' | null) =>
+      rxV2<RxCampaign>(`/campaigns/${campaignId}/status`, {
+        method: 'PATCH',
+        body: { status },
+      }),
+
+    duplicate: (campaignId: string) =>
+      rxV2<RxCampaign>(`/campaigns/${campaignId}/duplicate`, {
+        method: 'POST',
+      }),
+
+    remove: (campaignId: string) =>
+      rxV2<void>(`/campaigns/${campaignId}`, { method: 'DELETE' }),
+
+    items: (campaignId: string) =>
+      rxV2<RxCampaignItemsResponse>(`/campaigns/${campaignId}/items`),
   },
 
   // ── Experiences — thư viện trải nghiệm THẬT, thay cho việc suy từ /pages ──

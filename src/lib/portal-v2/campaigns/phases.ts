@@ -21,7 +21,7 @@ export const campPhase = (
 ): CampaignPhase => {
   const stage = deriveStage(campaign);
   if (stage === 'done') return 'learn';
-  if (stage === 'live' || stage === 'paused') return 'run';
+  if (stage === 'live') return 'run';
   if (stage === 'building') return 'build';
   return campReadiness(campaign, experiences, journeys).score === 100
     ? 'build'

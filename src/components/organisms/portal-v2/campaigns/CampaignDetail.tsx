@@ -19,7 +19,7 @@ import { LearnPhase } from '@/components/organisms/portal-v2/campaigns/detail/Le
 import { PhaseStrip } from '@/components/organisms/portal-v2/campaigns/detail/PhaseStrip';
 import { PlanPhase } from '@/components/organisms/portal-v2/campaigns/detail/PlanPhase';
 import { RunPhase } from '@/components/organisms/portal-v2/campaigns/detail/RunPhase';
-import { CAMPAIGN_TYPES } from '@/lib/portal-v2/campaigns/constants';
+import { campaignTypeStyle } from '@/lib/portal-v2/campaigns/constants';
 import {
   applyDraft,
   blankItem,
@@ -364,7 +364,7 @@ export const CampaignDetail = ({
                 {campaign.name}
               </h1>
               <p className='mt-1 text-[13.5px] leading-relaxed text-[var(--pv2-mut)]'>
-                {t(CAMPAIGN_TYPES[campaign.type].labelKey)} ·{' '}
+                {t(campaignTypeStyle(campaign.type).labelKey)} ·{' '}
                 {fmtRange(campaign, t('ongoing'))} ·{' '}
                 {campaign.owner || t('unassigned')}
               </p>

@@ -5,6 +5,14 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import {
+  createCampaign as createCampaignApi,
+  deleteCampaigns as deleteCampaignsApi,
+  duplicateCampaign as duplicateCampaignApi,
+  fetchCampaignDetail,
+  saveCampaign,
+} from '@/services/portal-v2/campaignBoardV2';
+
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
 import { EmptyState } from '@/components/molecules/portal-v2/product-form';
@@ -23,11 +31,8 @@ import {
 } from '@/lib/portal-v2/campaigns/constants';
 import {
   countByStage,
-  createCampaign,
   deleteCampaigns,
-  duplicateCampaign,
   findCampaign,
-  nextCampaignId,
   replaceCampaign,
   todayString,
   visibleCampaigns,
@@ -46,8 +51,6 @@ import {
 import {
   CAMPAIGN_PRODUCTS,
   CAMPAIGN_PRODUCT_NAMES,
-  MOCK_CAMPAIGNS,
-  cloneCampaigns,
 } from '@/lib/portal-v2/campaigns/mock';
 import type {
   CampaignExperience,
@@ -63,6 +66,10 @@ import type { Journey } from '@/lib/portal-v2/journeys/types';
 type CampaignsWorkspaceProps = {
   /** `?id=` — the campaign to open on arrival, so the screen is shareable. */
   initialCampaignId: string | null;
+  /** Chiến dịch THẬT — `GET /v1/campaigns`, đã lọc theo brand. */
+  initialCampaigns: CampaignView[];
+  /** Nạp hỏng ⇒ nói ra, đừng để đọc như "chưa có chiến dịch nào". */
+  initialError?: string | null;
 };
 
 /**
@@ -77,31 +84,38 @@ type CampaignsWorkspaceProps = {
  */
 export const CampaignsWorkspace = ({
   initialCampaignId,
+  initialCampaigns,
+  initialError = null,
 }: CampaignsWorkspaceProps) => {
   const t = useTranslations('portalV2.campaigns');
 
-  const [campaigns, setCampaigns] = useState<CampaignView[]>(() =>
-    cloneCampaigns(MOCK_CAMPAIGNS)
+  // Dữ liệu THẬT từ `GET /v1/campaigns`. Danh sách không kèm `items[]` — chỉ
+  // `items_count` — nên chi tiết nạp riêng khi mở.
+  const [campaigns, setCampaigns] = useState<CampaignView[]>(
+    () => initialCampaigns
   );
+  const [loadError] = useState<string | null>(initialError);
 
   /**
    * Journeys and experiences are seeded from the campaigns that claim them: the
    * seed says `m4` runs `j-j1-m4` and its subject carries a copy of `e4`, and
    * these two calls make both true before anything renders.
    */
+  // Journeys và experiences CHƯA ráp API — vẫn là mock, gieo từ chính danh
+  // sách chiến dịch thật để liên kết không trỏ vào hư không.
   const [journeys, setJourneys] = useState<Journey[]>(() =>
-    ensureCampaignJourneys(cloneJourneys(MOCK_JOURNEYS), MOCK_CAMPAIGNS)
+    ensureCampaignJourneys(cloneJourneys(MOCK_JOURNEYS), initialCampaigns)
   );
   const [experiences, setExperiences] = useState<CampaignExperience[]>(() =>
     ensureCampaignExperiences(
       seedExperiences(),
-      MOCK_CAMPAIGNS,
+      initialCampaigns,
       CAMPAIGN_PRODUCT_NAMES
     )
   );
 
   const [openId, setOpenId] = useState<string | null>(() =>
-    initialCampaignId && findCampaign(MOCK_CAMPAIGNS, initialCampaignId)
+    initialCampaignId && findCampaign(initialCampaigns, initialCampaignId)
       ? initialCampaignId
       : null
   );
@@ -156,13 +170,51 @@ export const CampaignsWorkspace = ({
     if (!('view' in partial)) setSelected([]);
   };
 
-  const handleChange = useCallback((next: CampaignView) => {
-    setCampaigns(prev => replaceCampaign(prev, next));
-  }, []);
+  /**
+   * Mở một chiến dịch ⇒ nạp chi tiết.
+   *
+   * `GET /campaigns` chỉ trả `items_count`, KHÔNG trả `items[]`. Vẽ thẳng bản
+   * ghi của danh sách sẽ hiện "0 hạng mục" cho một chiến dịch có 3 — nên phải
+   * gọi `GET /campaigns/{id}` rồi thay vào.
+   */
+  useEffect(() => {
+    if (!openId) return;
+    let alive = true;
+    void fetchCampaignDetail(openId).then(detail => {
+      if (alive && detail) setCampaigns(prev => replaceCampaign(prev, detail));
+    });
+    return () => {
+      alive = false;
+    };
+  }, [openId]);
 
-  const handleCreate = (wizard: CampaignWizard) => {
-    const id = nextCampaignId(campaigns);
-    const created = createCampaign(campaigns, id, wizardDraft(wizard));
+  /**
+   * Sửa brief/ngân sách/kênh — ghi lạc quan rồi PUT. Hỏng thì trả về bản cũ,
+   * vì để màn hình giữ giá trị chưa lưu là nói dối về thứ đang có trên server.
+   */
+  const handleChange = useCallback(
+    (next: CampaignView) => {
+      const before = campaigns.find(c => c.id === next.id);
+      setCampaigns(prev => replaceCampaign(prev, next));
+      void saveCampaign(next).catch(() => {
+        if (before) setCampaigns(prev => replaceCampaign(prev, before));
+        toast.error(t('toastSaveFailed'));
+      });
+    },
+    [campaigns, t]
+  );
+
+  const handleCreate = async (wizard: CampaignWizard) => {
+    const draft = wizardDraft(wizard);
+    const saved = await createCampaignApi(draft).catch(() => null);
+    if (!saved) {
+      toast.error(t('toastCreateFailed'));
+      return;
+    }
+    // Id do SERVER cấp, không phải `nextCampaignId` đếm trong mảng — id bịa ở
+    // FE sẽ trỏ vào hư không ngay lần tải lại trang đầu tiên.
+    const id = saved.id;
+    const created = saved;
 
     if (wizard.journeyId) {
       const routed = routeJourneyOntoCampaign(
@@ -186,9 +238,13 @@ export const CampaignsWorkspace = ({
     toast.success(t('toastCreated', { name: created.name }));
   };
 
-  const handleDuplicate = (id: string) => {
-    const result = duplicateCampaign(campaigns, id, t('copySuffix'));
-    if (!result) return;
+  const handleDuplicate = async (id: string) => {
+    const copy = await duplicateCampaignApi(id).catch(() => null);
+    if (!copy) {
+      toast.error(t('toastDuplicateFailed'));
+      return;
+    }
+    const result = { campaign: copy, list: [copy, ...campaigns] };
 
     setCampaigns(result.list);
     setJourneys(prev => ensureCampaignJourneys(prev, [result.campaign]));
@@ -199,21 +255,31 @@ export const CampaignsWorkspace = ({
     toast.success(t('toastDuplicated', { name: result.campaign.name }));
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteIds?.length) return;
+    const failed = await deleteCampaignsApi(deleteIds);
+    if (failed.length) {
+      toast.error(t('toastDeleteFailed', { count: failed.length }));
+      if (failed.length === deleteIds.length) {
+        setDeleteIds(null);
+        return;
+      }
+    }
+    // Chỉ bỏ khỏi màn hình những id server ĐÃ xoá.
+    const removed = deleteIds.filter(x => !failed.includes(x));
     /* The journey forks and experience copies go with them — the blueprints and
        library masters they came from are untouched. */
-    setJourneys(prev =>
-      prev.filter(j => !deleteIds.includes(j.campaign ?? ''))
-    );
+    setJourneys(prev => prev.filter(j => !removed.includes(j.campaign ?? '')));
     setExperiences(prev =>
-      prev.filter(e => !deleteIds.includes(e.campaign ?? ''))
+      prev.filter(e => !removed.includes(e.campaign ?? ''))
     );
-    setCampaigns(prev => deleteCampaigns(prev, deleteIds));
-    if (openId && deleteIds.includes(openId)) setOpenId(null);
+    setCampaigns(prev => deleteCampaigns(prev, removed));
+    if (openId && removed.includes(openId)) setOpenId(null);
     setDeleteIds(null);
     setSelected([]);
-    toast.success(t('toastDeleted', { count: deleteIds.length }));
+    if (removed.length) {
+      toast.success(t('toastDeleted', { count: removed.length }));
+    }
   };
 
   const handleRouteJourney = (blueprintId: string) => {
@@ -375,7 +441,15 @@ export const CampaignsWorkspace = ({
           />
         ) : null}
 
-        {!visible.length ? (
+        {/*
+          Nạp hỏng ⇒ nói ra. Rơi thẳng vào EmptyState sẽ đọc như "chưa có chiến
+          dịch nào", trong khi sự thật là chưa hỏi được server.
+        */}
+        {loadError ? (
+          <p className='rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-3.5 py-3 text-[12.5px] text-[var(--pv2-error)]'>
+            {loadError}
+          </p>
+        ) : !visible.length ? (
           <EmptyState
             title={t('emptyTitle')}
             action={

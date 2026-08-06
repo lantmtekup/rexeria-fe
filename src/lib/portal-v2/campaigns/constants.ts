@@ -54,6 +54,16 @@ export const CAMPAIGN_TYPES: Record<
 
 export const CAMPAIGN_TYPE_IDS = Object.keys(CAMPAIGN_TYPES) as CampaignType[];
 
+/** Kiểu chưa đặt ⇒ nhãn trung tính và màu xám, thay vì mượn màu của 'launch'. */
+export const CAMPAIGN_TYPE_UNSET = {
+  labelKey: 'typeUnset',
+  descKey: 'typeUnset',
+  color: 'var(--pv2-slate-300)',
+} as const;
+
+export const campaignTypeStyle = (type: CampaignType | null) =>
+  type ? CAMPAIGN_TYPES[type] : CAMPAIGN_TYPE_UNSET;
+
 export const CAMPAIGN_GOALS: Record<CampaignGoal, { labelKey: string }> = {
   awareness: { labelKey: 'goalAwareness' },
   traffic: { labelKey: 'goalTraffic' },
@@ -90,12 +100,6 @@ export const CAMPAIGN_STAGES: Record<
     bg: 'color-mix(in srgb, var(--pv2-success) 12%, transparent)',
     fg: 'color-mix(in srgb, var(--pv2-success) 78%, var(--pv2-ink))',
   },
-  paused: {
-    labelKey: 'stagePaused',
-    dot: 'var(--pv2-error)',
-    bg: 'color-mix(in srgb, var(--pv2-error) 10%, transparent)',
-    fg: 'color-mix(in srgb, var(--pv2-error) 78%, var(--pv2-ink))',
-  },
   done: {
     labelKey: 'stageDone',
     dot: 'var(--pv2-violet)',
@@ -109,7 +113,6 @@ export const CAMPAIGN_STAGE_ORDER: CampaignStage[] = [
   'planning',
   'building',
   'live',
-  'paused',
   'done',
 ];
 

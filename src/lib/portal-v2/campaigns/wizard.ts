@@ -118,7 +118,7 @@ export const wizardDraft = (wizard: CampaignWizard): CampaignDraft => ({
   type: wizard.type ?? 'launch',
   goal: wizard.goal,
   owner: wizard.owner,
-  status: 'draft',
+  status: 'planning',
   channels: [...wizard.channels],
   budgetAmount: budgetAmount(wizard.budget),
   budgetCurrency: CAMPAIGN_DEFAULT_CURRENCY,

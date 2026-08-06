@@ -1,5 +1,8 @@
+import { BrandScopeBar } from '@/components/molecules/portal-v2/BrandScopeBar';
 import { CampaignsWorkspace } from '@/components/organisms/portal-v2/campaigns/CampaignsWorkspace';
 import { readCampaignIdParam } from '@/lib/portal-v2/campaigns/idParam';
+import { fetchCampaignBoard } from '@/services/portal-v2/campaignBoardV2';
+import { resolvePortalScope } from '@/services/portal-v2/scope';
 
 type PortalV2CampaignsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -8,7 +11,24 @@ type PortalV2CampaignsPageProps = {
 export default async function PortalV2CampaignsPage({
   searchParams,
 }: PortalV2CampaignsPageProps) {
-  const initialId = readCampaignIdParam(await searchParams);
+  const params = await searchParams;
+  const scope = await resolvePortalScope(params);
+  const initialId = readCampaignIdParam(params);
+  const board = await fetchCampaignBoard({ brandId: scope.brandId });
 
-  return <CampaignsWorkspace initialCampaignId={initialId} />;
+  return (
+    <div className='flex min-h-0 flex-col'>
+      <BrandScopeBar scope={scope} />
+      {/*
+        Đổi brand ⇒ REMOUNT. Workspace gieo state bằng `useState(() => prop)`,
+        mà initializer chỉ chạy lúc mount.
+      */}
+      <CampaignsWorkspace
+        key={scope.brandId ?? 'none'}
+        initialCampaignId={initialId}
+        initialCampaigns={board.items}
+        initialError={board.error ?? scope.error}
+      />
+    </div>
+  );
 }

@@ -25,7 +25,7 @@ import { fmtBudget } from '@/lib/portal-v2/campaigns/helpers';
 import type {
   CampaignDraft,
   CampaignGoal,
-  CampaignStatus,
+  CampaignStage,
   CampaignType,
 } from '@/lib/portal-v2/campaigns/types';
 
@@ -35,7 +35,13 @@ type CampaignBriefAsideProps = {
   onChange: (patch: Partial<CampaignDraft>) => void;
 };
 
-const STATUSES: CampaignStatus[] = ['draft', 'active', 'paused', 'completed'];
+/**
+ * Trạng thái KHÔNG chọn tự do được: BE suy ra bằng `core.DeriveCampaignStage`
+ * và `PATCH /campaigns/{id}/status` chỉ nhận `'done'` hoặc `null` — mọi giá
+ * trị khác là 400 INVALID_TRANSITION. Nên đây là một công tắc đóng/mở, còn
+ * chặng hiện tại chỉ để đọc.
+ */
+const DONE: CampaignStage = 'done';
 
 const ReadRow = ({ label, value }: { label: string; value: string }) => (
   <div className='border-b border-[var(--pv2-hair)] px-4 py-3 last:border-b-0'>
@@ -94,7 +100,7 @@ export const CampaignBriefAside = ({
 
           <Field label={t('fieldType')}>
             <TextSelect
-              value={draft.type}
+              value={draft.type ?? ''}
               onChange={e => onChange({ type: e.target.value as CampaignType })}
             >
               {CAMPAIGN_TYPE_IDS.map(id => (
@@ -155,16 +161,17 @@ export const CampaignBriefAside = ({
 
           <Field label={t('fieldStatus')}>
             <TextSelect
-              value={draft.status}
+              value={draft.status === DONE ? DONE : 'auto'}
               onChange={e =>
-                onChange({ status: e.target.value as CampaignStatus })
+                onChange({
+                  status: e.target.value === DONE ? DONE : 'planning',
+                })
               }
             >
-              {STATUSES.map(id => (
-                <option key={id} value={id}>
-                  {t(`status_${id}`)}
-                </option>
-              ))}
+              <option value='auto'>
+                {t('statusAuto', { stage: t(`status_${draft.status}`) })}
+              </option>
+              <option value={DONE}>{t('status_done')}</option>
             </TextSelect>
           </Field>
 

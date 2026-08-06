@@ -246,7 +246,7 @@ export const MOCK_CAMPAIGNS: CampaignView[] = [
   {
     id: 'm3',
     name: CHRISTMAS,
-    status: 'draft',
+    status: 'planning',
     type: 'seasonal',
     goal: 'conversion',
     owner: 'Maya Okonjo',
@@ -312,7 +312,7 @@ export const MOCK_CAMPAIGNS: CampaignView[] = [
   {
     id: 'm2',
     name: SPRING,
-    status: 'draft',
+    status: 'planning',
     type: 'sale',
     goal: 'traffic',
     owner: 'Toan Nguyen',
@@ -377,7 +377,7 @@ export const MOCK_CAMPAIGNS: CampaignView[] = [
   {
     id: 'm1',
     name: LAUNCH,
-    status: 'active',
+    status: 'live',
     type: 'launch',
     goal: 'awareness',
     owner: 'Toan Nguyen',
@@ -411,7 +411,7 @@ export const MOCK_CAMPAIGNS: CampaignView[] = [
   {
     id: 'm4',
     name: CLEAN,
-    status: 'completed',
+    status: 'done',
     type: 'always',
     goal: 'retention',
     owner: 'Maya Okonjo',

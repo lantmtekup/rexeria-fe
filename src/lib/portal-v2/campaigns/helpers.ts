@@ -71,19 +71,17 @@ export const todayString = (): string => new Date().toISOString().slice(0, 10);
 /* ── derived state ──────────────────────────────────────────────────────── */
 
 /**
- * The display stage. Four statuses are stored; the screen shows five, because
- * "In build" is not a status at all — it is a `draft` campaign whose items have
- * started moving. Deriving it keeps the extra stage out of the data.
+ * Chặng hiển thị = đúng thứ server trả về.
+ *
+ * Bản trước tự suy ở đây, và luật đó trùng gần y hệt `core.DeriveCampaignStage`
+ * bên BE — hai bản sao của một luật là cách chúng lệch nhau. BE đã suy sẵn và
+ * đồng bộ lại mỗi khi hạng mục đổi trạng thái.
+ *
+ * Giữ lại hàm này thay vì đọc thẳng `campaign.status` ở mọi nơi gọi: nếu sau
+ * này cần một chặng chỉ tồn tại trên màn hình thì chỗ thêm đã có sẵn.
  */
-export const deriveStage = (campaign: CampaignView): CampaignStage => {
-  if (campaign.status === 'active') return 'live';
-  if (campaign.status === 'paused') return 'paused';
-  if (campaign.status === 'completed') return 'done';
-  const started = campaign.items.some(
-    item => ITEM_STATUS[item.status].step > 0
-  );
-  return started ? 'building' : 'planning';
-};
+export const deriveStage = (campaign: CampaignView): CampaignStage =>
+  campaign.status;
 
 export const campExpCount = (campaign: CampaignView): number =>
   campaign.items.reduce((n, item) => n + item.expIds.length, 0);
@@ -115,24 +113,23 @@ export const syncItemStage = (item: CampaignItem): CampaignItem => {
 };
 
 /**
- * Campaign status implied by its items, or null when nothing should change.
- * A completed campaign is left alone — closing one is a human decision.
+ * Chặng mà hạng mục ngụ ý — CHỈ để hiện ngay sau một thao tác cục bộ, trước
+ * khi server trả về giá trị của nó.
+ *
+ * Không phải nguồn sự thật: `core.SyncCampaignStage` bên BE mới là nơi quyết,
+ * và nó giữ nguyên `done` vì đóng một chiến dịch là quyết định của con người.
  */
-export const impliedStatus = (
-  campaign: CampaignView
-): CampaignView['status'] | null => {
-  if (campaign.status === 'completed' || campaign.status === 'paused') {
-    return null;
-  }
+export const impliedStatus = (campaign: CampaignView): CampaignStage | null => {
+  if (campaign.status === 'done') return null;
   const anyLive = campaign.items.some(item => item.status === 'live');
-  if (anyLive && campaign.status !== 'active') return 'active';
+  if (anyLive && campaign.status !== 'live') return 'live';
+  const started = campaign.items.some(
+    item => ITEM_STATUS[item.status].step > 0
+  );
+  if (started && campaign.status === 'planning') return 'building';
   return null;
 };
 
-/**
- * Promote the campaign its items have outgrown. A live subject makes the
- * campaign live; closing one is a human decision and is never undone here.
- */
 export const syncCampaignStage = (campaign: CampaignView): CampaignView => {
   const implied = impliedStatus(campaign);
   return implied ? { ...campaign, status: implied } : campaign;
@@ -177,7 +174,7 @@ export const blankDraft = (): CampaignDraft => ({
   type: 'launch',
   goal: null,
   owner: '',
-  status: 'draft',
+  status: 'planning',
   channels: [],
   budgetAmount: null,
   budgetCurrency: CAMPAIGN_DEFAULT_CURRENCY,
@@ -365,7 +362,7 @@ export const duplicateCampaign = (
     ...structuredClone(source),
     id: nextId,
     name: `${source.name} ${copySuffix}`,
-    status: 'draft',
+    status: 'planning',
     journeyId: origin ? campaignJourneyId(origin, nextId) : null,
     promoted: undefined,
     items: source.items.map(item => ({
