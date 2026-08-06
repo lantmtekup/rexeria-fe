@@ -37,6 +37,16 @@ const parseWeights = (raw: string): number[] =>
     .map(x => Number.parseInt(x, 10))
     .filter(n => Number.isFinite(n));
 
+/**
+ * Hồ sơ TRỐNG — dùng khi chưa nạp được, thay cho `MOCK_BRAND`.
+ *
+ * Vẽ mock ở đó là màn hình nói dối: người dùng đọc "Ilia Beauty" rồi tưởng đó
+ * là brand của mình. Mapper vốn đã chịu được mọi trường thiếu, nên một object
+ * rỗng là đủ để ra đúng khung trống.
+ */
+export const emptyBrandData = (): BrandData =>
+  profileToBrandData({ version: 0 } as RxBrandProfile);
+
 export const profileToBrandData = (p: RxBrandProfile): BrandData => ({
   identity: {
     name: p.identity?.name ?? '',

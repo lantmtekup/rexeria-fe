@@ -1,6 +1,6 @@
 import { BrandScopeBar } from '@/components/molecules/portal-v2/BrandScopeBar';
 import { BrandWorkspace } from '@/components/organisms/portal-v2/brand/BrandWorkspace';
-import { MOCK_BRAND } from '@/lib/portal-v2/brand/mock';
+import { emptyBrandData } from '@/lib/portal-v2/brand/mapProfile';
 import { fetchBrandProfile } from '@/services/portal-v2/brandProfile';
 import { resolvePortalScope } from '@/services/portal-v2/scope';
 
@@ -18,7 +18,9 @@ export default async function PortalV2BrandPage({ searchParams }: Props) {
     <div className='flex min-h-0 flex-col'>
       <BrandScopeBar scope={scope} />
       <BrandWorkspace
-        initialData={profile.data ?? MOCK_BRAND}
+        // Nạp hỏng ⇒ khung TRỐNG, không phải mock. Vẽ "Ilia Beauty" ở đây
+        // khiến người dùng tưởng đó là hồ sơ brand mình rồi bấm Edit lên nó.
+        initialData={profile.data ?? emptyBrandData()}
         initialVersion={profile.version}
         brandId={scope.brandId}
         initialError={profile.error ?? scope.error}
