@@ -20,7 +20,13 @@ export default async function PortalV2ProductsPage({ searchParams }: Props) {
     return (
       <div className='flex min-h-0 flex-col'>
         <BrandScopeBar scope={scope} />
+        {/*
+          Đổi brand ⇒ REMOUNT. Workspace gieo state bằng `useState(() => prop)`,
+          mà initializer chỉ chạy lúc mount — không có key thì server đã nạp
+          đúng brand mới nhưng màn hình vẫn giữ danh sách của brand cũ.
+        */}
         <ProductWorkspace
+          key={scope.brandId ?? 'none'}
           initialProducts={products}
           initialAssets={assets}
           brandId={scope.brandId}
@@ -43,6 +49,7 @@ export default async function PortalV2ProductsPage({ searchParams }: Props) {
       <div className='flex min-h-0 flex-col'>
         <BrandScopeBar scope={scope} />
         <ProductWorkspace
+          key={scope.brandId ?? 'none'}
           initialProducts={[]}
           brandId={scope.brandId}
           initialError={loadError}

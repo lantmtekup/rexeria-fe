@@ -20,7 +20,14 @@ export default async function PortalV2MediaPage({ searchParams }: Props) {
     return (
       <div className='flex min-h-0 flex-col'>
         <BrandScopeBar scope={scope} />
+        {/*
+        Đổi brand ⇒ REMOUNT. Workspace gieo state bằng `useState(() => prop)`,
+        mà initializer chỉ chạy lúc mount — không có key thì server đã nạp
+        đúng brand mới nhưng màn hình vẫn giữ dữ liệu brand cũ, và `version`
+        cũ đi kèm sẽ ghi đè nhầm khi bấm Save.
+      */}
         <MediaWorkspace
+          key={scope.brandId ?? 'none'}
           brandId={scope.brandId}
           initialAssets={assets}
           initialError={error ?? scope.error}
@@ -38,6 +45,7 @@ export default async function PortalV2MediaPage({ searchParams }: Props) {
       <div className='flex min-h-0 flex-col'>
         <BrandScopeBar scope={scope} />
         <MediaWorkspace
+          key={scope.brandId ?? 'none'}
           brandId={scope.brandId}
           initialAssets={[]}
           initialError={loadError}

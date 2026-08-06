@@ -21,7 +21,14 @@ export default async function PortalV2ExperiencesPage({
   return (
     <div className='flex min-h-0 flex-col'>
       <BrandScopeBar scope={scope} />
+      {/*
+        Đổi brand ⇒ REMOUNT. Workspace gieo state bằng `useState(() => prop)`,
+        mà initializer chỉ chạy lúc mount — không có key thì server đã nạp
+        đúng brand mới nhưng màn hình vẫn giữ dữ liệu brand cũ, và `version`
+        cũ đi kèm sẽ ghi đè nhầm khi bấm Save.
+      */}
       <ExperiencesWorkspace
+        key={scope.brandId ?? 'none'}
         brandId={scope.brandId}
         initialItems={items}
         initialError={error ?? scope.error}

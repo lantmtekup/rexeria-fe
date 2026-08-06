@@ -17,7 +17,14 @@ export default async function PortalV2BrandPage({ searchParams }: Props) {
   return (
     <div className='flex min-h-0 flex-col'>
       <BrandScopeBar scope={scope} />
+      {/*
+        Đổi brand ⇒ REMOUNT. Workspace gieo state bằng `useState(() => prop)`,
+        mà initializer chỉ chạy lúc mount — không có key thì server đã nạp
+        đúng brand mới nhưng màn hình vẫn giữ dữ liệu brand cũ, và `version`
+        cũ đi kèm sẽ ghi đè nhầm khi bấm Save.
+      */}
       <BrandWorkspace
+        key={scope.brandId ?? 'none'}
         // Nạp hỏng ⇒ khung TRỐNG, không phải mock. Vẽ "Ilia Beauty" ở đây
         // khiến người dùng tưởng đó là hồ sơ brand mình rồi bấm Edit lên nó.
         initialData={profile.data ?? emptyBrandData()}
