@@ -58,3 +58,9 @@ export interface RxExperienceListResponse {
   items: RxExperience[];
   total: number;
 }
+
+/** `POST /v1/experiences/{id}/promote` — `name` bắt buộc (BE validate min=1). */
+export type RxPromoteExperienceRequest = {
+  name: string;
+  template_code?: string;
+};

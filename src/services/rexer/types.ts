@@ -2606,6 +2606,11 @@ export interface Page {
   description?: string;
   type: PageType;
   type_metadata: PageTypeMetadata;
+  /**
+   * Dấu Proven — CỘT THẬT trên `pages` ở nhánh v2 (`models.Page.Proven`).
+   * Không có ở deployment v1 nên để optional; thiếu ⇒ chưa đánh dấu.
+   */
+  proven?: boolean;
   status: PageStatus;
   template_version_id: string;
   active_release_id?: string;

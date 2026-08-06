@@ -10,6 +10,7 @@ import { FilterChips } from '@/components/molecules/portal-v2/FilterChips';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
 import { ExperienceCard } from '@/components/organisms/portal-v2/experiences/ExperienceCard';
 import { ExperienceDetailModal } from '@/components/organisms/portal-v2/experiences/ExperienceDetailModal';
+import { promoteToLibrary } from '@/services/portal-v2/experiencePromote';
 import { setExperienceProven } from '@/services/portal-v2/experienceProven';
 import { ExchangePreviewShell } from '@/components/organisms/portal-v2/exchange/ExchangePreviewShell';
 import {
@@ -106,8 +107,7 @@ export const ExperiencesWorkspace = ({
 
   /**
    * Bật/tắt Proven. Cập nhật lạc quan trước để nút phản hồi tức thì, hỏng thì
-   * trả về giá trị cũ — ghi vào `type_metadata` nên một lần PATCH là xong,
-   * không cần nạp lại cả danh sách.
+   * trả về giá trị cũ — một lời gọi là xong, không cần nạp lại cả danh sách.
    */
   const handleToggleProven = async (experience: ExperienceView) => {
     const next = !experience.proven;
@@ -127,6 +127,38 @@ export const ExperiencesWorkspace = ({
       setProvenPendingId(null);
     }
   };
+  const [promotePendingId, setPromotePendingId] = useState<string | null>(null);
+  /** Kết quả lần promote gần nhất — hiện tên template mới để còn tìm lại được. */
+  const [promoteNote, setPromoteNote] = useState<{
+    name: string;
+    error: string | null;
+  } | null>(null);
+
+  /**
+   * Đưa trang vào thư viện Automation: promote thành template rồi đánh dấu
+   * Proven. KHÔNG cập nhật lạc quan gì ở đây — thứ được tạo là một bản ghi
+   * MỚI, không nằm trong danh sách page đang hiện.
+   */
+  const handlePromote = async (experience: ExperienceView) => {
+    if (promotePendingId) return;
+    setPromotePendingId(experience.id);
+    setPromoteNote(null);
+    try {
+      const res = await promoteToLibrary(experience.id, experience.name);
+      setPromoteNote({
+        name: res.template.name,
+        error: res.provenError,
+      });
+    } catch (err) {
+      setPromoteNote({
+        name: experience.name,
+        error: err instanceof Error ? err.message : 'Promote failed',
+      });
+    } finally {
+      setPromotePendingId(null);
+    }
+  };
+
   const [loadError, setLoadError] = useState<string | null>(initialError);
   const [searching, setSearching] = useState(false);
   const [filters, setFilters] = useState<ExperienceFilters>(
@@ -558,6 +590,26 @@ export const ExperiencesWorkspace = ({
         )}
       </div>
 
+      {promoteNote ? (
+        <div className='mx-auto w-full px-5 pb-4 md:px-8'>
+          <p
+            className={cn(
+              'rounded-[var(--pv2-r)] border px-3.5 py-3 text-[12.5px]',
+              promoteNote.error
+                ? 'border-[var(--pv2-hair)] text-[var(--pv2-warning)]'
+                : 'border-[var(--pv2-hair)] text-[var(--pv2-success)]'
+            )}
+          >
+            {promoteNote.error
+              ? t('promoteHalfDone', {
+                  name: promoteNote.name,
+                  error: promoteNote.error,
+                })
+              : t('promoteDone', { name: promoteNote.name })}
+          </p>
+        </div>
+      ) : null}
+
       {modalMode === 'detail' && active ? (
         <ExperienceDetailModal
           experience={active}
@@ -565,7 +617,9 @@ export const ExperiencesWorkspace = ({
           onPreview={handlePreview}
           onEdit={handleEdit}
           onToggleProven={handleToggleProven}
+          onPromote={handlePromote}
           provenPending={provenPendingId === active.id}
+          promotePending={promotePendingId === active.id}
         />
       ) : null}
 

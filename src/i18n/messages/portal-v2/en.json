@@ -658,7 +658,11 @@
       "whereItRuns": "Where it runs",
       "provenOn": "Proven",
       "provenOff": "Mark Proven",
-      "provenHint": "A curation mark you set by hand — it never touches the numbers. Proven designs collect in Automation, ready to roll across a product class."
+      "provenHint": "A curation mark you set by hand — it never touches the numbers. Proven designs collect in Automation, ready to roll across a product class.",
+      "promoteLabel": "Add to library",
+      "promoteHint": "Create a template from this page and mark it Proven so Automation can use it.",
+      "promoteDone": "Created template “{name}” and marked it Proven — open Automation to replicate. It is not in this list because this list shows pages.",
+      "promoteHalfDone": "Created template “{name}” but could NOT mark it Proven ({error}). Automation will not see it yet; do not retry — that would create a duplicate template."
     },
     "products": {
       "title": "Product",

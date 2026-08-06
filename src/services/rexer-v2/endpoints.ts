@@ -23,7 +23,10 @@ import type {
   RxExchangeListResponse,
   RxExchangeListing,
 } from './types/exchange';
-import type { RxExperience } from './types/experience';
+import type {
+  RxExperience,
+  RxPromoteExperienceRequest,
+} from './types/experience';
 import type {
   RxBrandProfile,
   RxPutBrandProfileRequest,
@@ -126,6 +129,22 @@ export const rexerV2Api = {
       rxV2<RxExperience>(`/experiences/${experienceId}/proven`, {
         method: 'POST',
         body: { proven },
+      }),
+
+    /**
+     * `POST /v1/experiences/{id}/promote` — biến một BẢN COPY (page) thành
+     * template của chính brand đó.
+     *
+     * Đây là đường DUY NHẤT để một trang đã chạy vào được hub Automation: hub
+     * đọc `ListProvenTemplates`, tức bảng `templates`, nên đánh dấu Proven cho
+     * một page không đưa nó vào hub — page không phải template.
+     *
+     * `template_code` bỏ trống thì BE tự sinh; trùng code là 409.
+     */
+    promote: (experienceId: string, body: RxPromoteExperienceRequest) =>
+      rxV2<RxExperience>(`/experiences/${experienceId}/promote`, {
+        method: 'POST',
+        body,
       }),
 
     /** `GET /v1/experiences/{id}/coverage` — độ phủ phễu ĐO ĐƯỢC, không seed. */

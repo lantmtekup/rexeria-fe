@@ -1,6 +1,6 @@
 'use client';
 
-import { BadgeCheck, Eye, PenLine } from 'lucide-react';
+import { BadgeCheck, Eye, Library, Loader2, PenLine } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
@@ -31,12 +31,17 @@ type ExperienceDetailModalProps = {
   onPreview: (experience: ExperienceView) => void;
   onEdit: (experience: ExperienceView) => void;
   /**
-   * Bật/tắt dấu Proven. Đây là cửa DUY NHẤT để một thiết kế vào được hub
-   * Automation — hub chỉ hiện thiết kế đã đánh dấu.
+   * Bật/tắt dấu Proven trên chính trang này.
+   *
+   * KHÔNG đưa trang vào hub Automation: hub đọc `ListProvenTemplates`, tức
+   * bảng `templates`, còn đây là một page. Muốn vào hub thì `onPromote`.
    */
   onToggleProven: (experience: ExperienceView) => void;
+  /** Nhân bản trang thành template của brand rồi đánh dấu Proven. */
+  onPromote: (experience: ExperienceView) => void;
   /** Đang ghi xuống server — khoá nút để không bấm kép. */
   provenPending?: boolean;
+  promotePending?: boolean;
 };
 
 const CATEGORY_LABEL_KEY = {
@@ -111,7 +116,9 @@ export const ExperienceDetailModal = ({
   onPreview,
   onEdit,
   onToggleProven,
+  onPromote,
   provenPending = false,
+  promotePending = false,
 }: ExperienceDetailModalProps) => {
   const t = useTranslations('portalV2.experiences');
   const [tab, setTab] = useState<ExperienceDetailTab>('details');
@@ -174,6 +181,20 @@ export const ExperienceDetailModal = ({
           >
             <BadgeCheck className='size-3.5' strokeWidth={2.2} aria-hidden />
             {experience.proven ? t('provenOn') : t('provenOff')}
+          </Button>
+          <Button
+            variant='ghost'
+            size='sm'
+            disabled={promotePending || !editable}
+            title={editable ? t('promoteHint') : t('editExternalHint')}
+            onClick={() => onPromote(experience)}
+          >
+            {promotePending ? (
+              <Loader2 className='size-3.5 animate-spin' aria-hidden />
+            ) : (
+              <Library className='size-3.5' strokeWidth={2.2} aria-hidden />
+            )}
+            {t('promoteLabel')}
           </Button>
           <span className='flex-1' />
           <Button

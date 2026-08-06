@@ -658,7 +658,11 @@
       "whereItRuns": "Chạy ở đâu",
       "provenOn": "Đã chứng minh",
       "provenOff": "Đánh dấu Proven",
-      "provenHint": "Dấu do bạn tự đánh, không đụng tới số liệu. Thiết kế được đánh dấu sẽ hiện ở Tự động hóa, sẵn sàng nhân sang cả lớp sản phẩm."
+      "provenHint": "Dấu do bạn tự đánh, không đụng tới số liệu. Thiết kế được đánh dấu sẽ hiện ở Tự động hóa, sẵn sàng nhân sang cả lớp sản phẩm.",
+      "promoteLabel": "Đưa vào thư viện",
+      "promoteHint": "Tạo template từ trang này và đánh dấu Proven để Automation dùng được.",
+      "promoteDone": "Đã tạo template “{name}” và đánh dấu Proven — mở Automation để nhân bản. Template không hiện ở danh sách này vì đây là danh sách trang.",
+      "promoteHalfDone": "Đã tạo template “{name}” nhưng CHƯA đánh dấu Proven được ({error}). Automation sẽ chưa thấy nó; đừng bấm lại — bấm nữa sẽ tạo template trùng."
     },
     "products": {
       "title": "Sản phẩm",
