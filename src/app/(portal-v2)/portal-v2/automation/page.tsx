@@ -1,7 +1,7 @@
 import { BrandScopeBar } from '@/components/molecules/portal-v2/BrandScopeBar';
 import { AutomationWorkspace } from '@/components/organisms/portal-v2/automation/AutomationWorkspace';
 import { fetchAutomationHub } from '@/services/portal-v2/automationV2';
-import { fetchCampaignBoard } from '@/services/portal-v2/campaignBoard';
+import { fetchCampaignOptions } from '@/services/portal-v2/campaignOptions';
 import { fetchProductCatalog } from '@/services/portal-v2/productCatalog';
 import { resolvePortalScope } from '@/services/portal-v2/scope';
 
@@ -23,7 +23,7 @@ export default async function PortalV2AutomationPage({ searchParams }: Props) {
   const [hub, catalog, campaigns] = await Promise.all([
     fetchAutomationHub(scope.brandId),
     fetchProductCatalog({ brandId: scope.brandId }),
-    fetchCampaignBoard({ brandId: scope.brandId }),
+    fetchCampaignOptions({ brandId: scope.brandId }),
   ]);
 
   return (

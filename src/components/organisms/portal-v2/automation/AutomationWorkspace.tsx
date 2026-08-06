@@ -19,7 +19,7 @@ import {
   v2ExperienceToAutomation,
 } from '@/lib/portal-v2/automation/fromV2';
 import { toAutomationProduct } from '@/lib/portal-v2/automation/fromProduct';
-import type { CampaignView } from '@/lib/portal-v2/campaigns/types';
+import type { CampaignOption } from '@/services/portal-v2/campaignOptions';
 import type { Product, ProductAsset } from '@/lib/portal-v2/product/types';
 import type {
   AutomationProduct,
@@ -53,8 +53,8 @@ type AutomationWorkspaceProps = {
   initialProducts: Product[];
   /** Asset của catalogue, dùng cho ô EXP (đếm ảnh của từng sản phẩm). */
   initialAssets: ProductAsset[];
-  /** Chiến dịch THẬT — `GET /campaigns`. */
-  initialCampaigns: CampaignView[];
+  /** Chiến dịch THẬT — `GET /campaigns`. Chỉ cần id + tên cho dropdown. */
+  initialCampaigns: CampaignOption[];
   /** 403 CAPABILITY_REQUIRED — gói chưa mở tính năng, KHÔNG phải hỏng. */
   initialLocked: boolean;
   initialError: string | null;
