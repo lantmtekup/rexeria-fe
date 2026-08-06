@@ -16,14 +16,12 @@ import type { CampaignView } from '@/lib/portal-v2/campaigns/types';
 
 type DeleteCampaignModalProps = {
   items: CampaignView[];
-  saving: boolean;
   onClose: () => void;
   onConfirm: () => void;
 };
 
 export const DeleteCampaignModal = ({
   items,
-  saving,
   onClose,
   onConfirm,
 }: DeleteCampaignModalProps) => {
@@ -45,13 +43,12 @@ export const DeleteCampaignModal = ({
       subtitle={t('deleteSub')}
       footer={
         <>
-          <Button variant='ghost' onClick={onClose} disabled={saving}>
+          <Button variant='ghost' onClick={onClose}>
             {t('cancel')}
           </Button>
           <span className='flex-1' />
           <Button
             variant='primary'
-            disabled={saving}
             className='bg-[var(--pv2-error)] shadow-none hover:bg-[color-mix(in_srgb,var(--pv2-error)_80%,#000)]'
             onClick={onConfirm}
           >

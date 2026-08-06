@@ -12,9 +12,12 @@ import {
   BriefLabel,
   ChannelTags,
 } from '@/components/molecules/portal-v2/campaigns-form';
+import { cn } from '@/lib/cn';
 import {
+  CAMPAIGN_CHANNELS,
   CAMPAIGN_GOALS,
   CAMPAIGN_GOAL_IDS,
+  CAMPAIGN_TEAM,
   CAMPAIGN_TYPES,
   CAMPAIGN_TYPE_IDS,
 } from '@/lib/portal-v2/campaigns/constants';
@@ -46,8 +49,8 @@ const ReadRow = ({ label, value }: { label: string; value: string }) => (
 /**
  * "The brief" — what everyone building this has to agree on before they start.
  *
- * `goal` is the real `objective` column on the wire; the four narrative fields
- * ride inside `notes.pv2.brief`. Read/edit fork mirrors the Brand panels.
+ * `goal` is the commercial intent; the four narrative fields are the argument.
+ * Read/edit fork mirrors the Brand panels.
  */
 export const CampaignBriefAside = ({
   draft,
@@ -58,6 +61,13 @@ export const CampaignBriefAside = ({
 
   const patchBrief = (partial: Partial<CampaignDraft['brief']>) =>
     onChange({ brief: { ...draft.brief, ...partial } });
+
+  const toggleChannel = (channel: string) =>
+    onChange({
+      channels: draft.channels.includes(channel)
+        ? draft.channels.filter(x => x !== channel)
+        : [...draft.channels, channel],
+    });
 
   const notSet = t('notSet');
   const budget = fmtBudget(draft.budgetAmount, draft.budgetCurrency);
@@ -170,10 +180,17 @@ export const CampaignBriefAside = ({
               />
             </Field>
             <Field label={t('fieldOwner')}>
-              <TextInput
+              <TextSelect
                 value={draft.owner}
                 onChange={e => onChange({ owner: e.target.value })}
-              />
+              >
+                <option value=''>{t('unassigned')}</option>
+                {CAMPAIGN_TEAM.map(member => (
+                  <option key={member} value={member}>
+                    {member}
+                  </option>
+                ))}
+              </TextSelect>
             </Field>
             <Field label={t('fieldStart')}>
               <TextInput
@@ -191,19 +208,33 @@ export const CampaignBriefAside = ({
             </Field>
           </div>
 
-          <Field label={t('fieldChannels')}>
-            <TextInput
-              value={draft.channels.join(', ')}
-              onChange={e =>
-                onChange({
-                  channels: e.target.value
-                    .split(',')
-                    .map(s => s.trim())
-                    .filter(Boolean),
-                })
-              }
-            />
-          </Field>
+          <fieldset>
+            <legend className='mb-2 block text-[9.5px] font-bold tracking-[0.09em] text-[var(--pv2-faint)] uppercase'>
+              {t('fieldChannels')}
+            </legend>
+            <div className='flex flex-wrap gap-1.5'>
+              {CAMPAIGN_CHANNELS.map(channel => {
+                const on = draft.channels.includes(channel);
+                return (
+                  <button
+                    key={channel}
+                    type='button'
+                    aria-pressed={on}
+                    onClick={() => toggleChannel(channel)}
+                    className={cn(
+                      'cursor-pointer rounded-full border px-2.5 py-1 text-[11.5px] font-semibold transition-colors',
+                      'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none',
+                      on
+                        ? 'border-[var(--pv2-ink)] bg-[var(--pv2-ink)] text-[var(--pv2-paper)]'
+                        : 'border-[var(--pv2-hair)] text-[var(--pv2-mut)] hover:border-[var(--pv2-slate-300)] hover:text-[var(--pv2-ink)]'
+                    )}
+                  >
+                    {channel}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
         </div>
       ) : (
         <div>

@@ -5,7 +5,8 @@ import { cn } from '@/lib/cn';
 import AdWrapper from './shared/AdWrapper';
 import spinTrackIcon from '@/assets/icons/ellipse.png';
 
-const CARD_STEP = 270;
+/* ≥ largest .c3d-card width (desktop 280) so neighbors never overlap */
+const CARD_STEP = 300;
 const SNAP_THRESHOLD = 60;
 
 export default function Carousel3DAd({

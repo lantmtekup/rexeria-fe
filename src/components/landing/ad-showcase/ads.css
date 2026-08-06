@@ -7,6 +7,8 @@
   height: 100%;
   overflow: hidden;
   font-family: var(--sans, 'Outfit', sans-serif);
+  container-type: inline-size;
+  container-name: ad-wrap;
 }
 .ad-wrap--dark {
   background: #0b0b09;
@@ -87,29 +89,72 @@
   z-index: 200;
   display: flex;
   justify-content: center;
-  padding: 0 24px 24px;
-  /* background: linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, transparent 100%); */
+  padding: 0 16px 18px;
+  box-sizing: border-box;
+  /* Scrim nhẹ — CTA trắng đọc rõ trên cả ảnh sáng lẫn tối */
+  background: linear-gradient(
+    0deg,
+    rgba(10, 28, 56, 0.55) 0%,
+    rgba(10, 28, 56, 0.12) 55%,
+    transparent 100%
+  );
 }
 .ad-wrap-cta {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  gap: 8px;
+  max-width: 100%;
+  box-sizing: border-box;
   background: var(--gold, #b8965a);
-  color: #0b0b09;
-  padding: 14px 36px;
-  font-size: 12px;
+  color: #ffffff;
+  padding: 11px 22px;
+  font-family: var(--sans, 'Outfit', system-ui, sans-serif) !important;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 2.5px;
+  letter-spacing: 1.4px;
+  line-height: 1.2;
+  white-space: nowrap;
   text-transform: uppercase;
   text-decoration: none;
-  transition: all 0.3s;
+  border: 1px solid var(--gold, #b8965a);
+  box-shadow: 0 8px 24px -10px rgba(10, 28, 56, 0.45);
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.25s ease;
 }
 .ad-wrap-cta:hover {
-  background: #fff;
+  background: #ffffff;
+  color: #0a1c38;
+  border-color: #ffffff;
   transform: translateY(-2px);
 }
+.ad-wrap-cta:active {
+  transform: translateY(0);
+}
+.ad-wrap--light .ad-wrap-cta-bar {
+  background: linear-gradient(
+    0deg,
+    rgba(250, 250, 247, 0.85) 0%,
+    rgba(250, 250, 247, 0.2) 55%,
+    transparent 100%
+  );
+}
+.ad-wrap--light .ad-wrap-cta {
+  background: var(--gold, #b8965a);
+  color: #ffffff;
+  border-color: var(--gold, #b8965a);
+}
+.ad-wrap--light .ad-wrap-cta:hover {
+  background: #0a1c38;
+  color: #ffffff;
+  border-color: #0a1c38;
+}
 .ad-wrap-cta-arrow {
-  width: 20px;
+  flex-shrink: 0;
+  width: 16px;
   height: 1px;
   background: currentColor;
   position: relative;
@@ -119,11 +164,27 @@
   position: absolute;
   right: 0;
   top: -3px;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-right: 1.5px solid currentColor;
   border-top: 1.5px solid currentColor;
   transform: rotate(45deg);
+}
+
+/* Gallery phone ~262–282px inner — thu CTA để không tràn bezel */
+@container ad-wrap (max-width: 300px) {
+  .ad-wrap-cta-bar {
+    padding: 0 12px 14px;
+  }
+  .ad-wrap-cta {
+    gap: 6px;
+    padding: 10px 16px;
+    font-size: 10px;
+    letter-spacing: 1.1px;
+  }
+  .ad-wrap-cta-arrow {
+    width: 12px;
+  }
 }
 
 /* ================================================================
@@ -686,19 +747,20 @@
 .pannable-ad-track {
   display: inline-flex;
   height: 100%;
+  align-items: center; /* center when JS scales img taller than frame */
   position: relative;
   will-change: transform;
 }
-.pannable-ad-track--desktop {
-  height: 100%;
-  width: 100%;
-}
 .pannable-ad-img {
   display: block;
-  pointer-events: none;
-}
-.pannable-ad-img--desktop {
+  /* Fallback before JS measure; inline width/height from measureAndApplyPan win */
   height: 100%;
+  width: auto;
+  max-width: none;
+  flex-shrink: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 .pannable-ad-overlay {
   position: absolute;
@@ -1333,8 +1395,9 @@
   width: 100%;
   height: 100%;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
+  overflow: hidden;
 }
 .cd-bg {
   position: absolute;
@@ -1345,37 +1408,48 @@
 .cd-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.35) 0%,
+    rgba(0, 0, 0, 0.45) 45%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
 }
 .cd-content {
   position: relative;
   z-index: 5;
   text-align: center;
-  padding: 24px;
+  box-sizing: border-box;
   width: 100%;
-  max-width: 420px;
+  height: 100%;
+  max-width: none;
+  /* Gallery phone: title gần đỉnh, clock giữa trên, CTA chừa đáy */
+  padding: 56px 12px 92px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 0;
 }
 .cd-title {
   font-family: var(--serif, serif);
-  font-size: clamp(32px, 7vw, 40px);
+  font-size: 24px;
   font-weight: 400;
   color: #fff;
-  margin-top: 10;
-  margin-bottom: 60px;
-  letter-spacing: 0.5px;
-  line-height: 1.2;
+  margin: 0 0 36px;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  text-align: center;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
 }
 .cd-subtitle {
-  font-size: 19px;
-  font-weight: 600;
-  color: #ffffff;
-  margin-top: 40px;
-  margin-bottom: 0px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0;
   line-height: 1.4;
+  max-width: 200px;
 }
 
 /* Nhóm bên phải: đồng hồ countdown + subtitle (mobile: xếp dọc, canh giữa) */
@@ -1384,83 +1458,46 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-}
-
-/* ----- Desktop: chia cd-content thành 2 phần flex ----------------
-   Trái = title, Phải = đồng hồ + subtitle (flex column) ----------- */
-.dv-mode-desktop .cd-content {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: clamp(32px, 6vw, 80px);
-  max-width: 1000px;
-  text-align: left;
-}
-.dv-mode-desktop .cd-title {
-  flex: 1;
-  margin-bottom: 0;
-  text-align: left;
-  font-size: clamp(40px, 4vw, 64px);
-}
-.dv-mode-desktop .cd-right {
-  width: auto;
-  flex-shrink: 0;
-  align-items: center;
-}
-.dv-mode-desktop .cd-subtitle {
-  margin-top: 28px;
-  font-size: clamp(19px, 1.8vw, 26px);
-  text-align: center;
-}
-.dv-mode-desktop .cd-units--flip .cd-flip {
-  width: clamp(40px, 3.4vw, 56px);
-  height: clamp(54px, 4.6vw, 74px);
-  border-radius: 10px;
-}
-.dv-mode-desktop .cd-units--flip .cd-flip span {
-  font-size: clamp(30px, 2.6vw, 44px);
-}
-.dv-mode-desktop .cd-separator {
-  height: auto;
-  font-size: clamp(28px, 2.4vw, 40px);
-}
-
-.dv-mode-desktop .cd-unit-value {
-  gap: 8px;
+  gap: 20px;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .cd-units {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 6px;
-  margin-left: auto;
-  margin-right: auto;
-  width: max-content;
+  gap: 8px; /* giữa các nhóm HH / MM / SS */
+  width: auto;
+  max-width: 100%;
+  flex-shrink: 0;
 }
 
 .cd-unit-group {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 6px; /* cặp số → dấu : */
+  flex-shrink: 0;
 }
 
 .cd-unit-value {
   display: flex;
-  gap: 4px;
+  gap: 3px; /* 2 digit trong 1 đơn vị — sát nhau */
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .cd-units--flip .cd-flip {
   background: #fff;
-  border-radius: 8px;
-  width: 36px;
-  height: 48px;
+  border-radius: 5px;
+  width: 26px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
 }
 
 .cd-units--flip .cd-flip::after {
@@ -1468,24 +1505,36 @@
 }
 
 .cd-units--flip .cd-flip span {
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 500;
   color: #000;
   line-height: 1;
   text-align: center;
 }
 
+/* Colon = 2 chấm (không phụ thuộc glyph font) */
 .cd-separator {
-  font-size: 26px;
-  font-weight: bold;
-  color: #fff;
-  margin: 0 2px;
-  line-height: 1;
+  font-size: 0;
+  color: transparent;
+  margin: 0;
+  width: 4px;
+  height: 36px;
+  padding: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0 4px;
-  height: 48px;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.cd-separator::before,
+.cd-separator::after {
+  content: '';
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #fff;
+  flex-shrink: 0;
 }
 
 .cd-unit-label {
@@ -1522,6 +1571,160 @@
   50% {
     transform: scale(1.05);
   }
+}
+
+/* Gallery phone hơi rộng hơn — nới digit */
+@container ad-wrap (min-width: 300px) {
+  .cd-title {
+    font-size: 28px;
+    margin-bottom: 40px;
+  }
+  .cd-units--flip .cd-flip {
+    width: 30px;
+    height: 42px;
+    border-radius: 7px;
+  }
+  .cd-units--flip .cd-flip span {
+    font-size: 22px;
+  }
+  .cd-separator {
+    height: 42px;
+    gap: 6px;
+  }
+  .cd-separator::before,
+  .cd-separator::after {
+    width: 3.5px;
+    height: 3.5px;
+  }
+  .cd-subtitle {
+    font-size: 14px;
+    max-width: 240px;
+  }
+  .cd-content {
+    padding: 60px 16px 100px;
+  }
+  .cd-units {
+    gap: 10px;
+  }
+  .cd-unit-group {
+    gap: 7px;
+  }
+  .cd-unit-value {
+    gap: 3px;
+  }
+}
+
+/*
+ * Detail mobile: gom title + clock + subtitle thành 1 khối giữa khung
+ * (tránh title dính đỉnh + clock float giữa → khoảng trống lệch).
+ */
+.ad-showcase-detail.dv-mode-mobile .cd-content {
+  padding: 56px 20px 64px;
+  justify-content: center;
+  gap: 28px;
+}
+.ad-showcase-detail.dv-mode-mobile .cd-title {
+  font-size: 34px;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.ad-showcase-detail.dv-mode-mobile .cd-right {
+  margin: 0;
+  gap: 22px;
+}
+.ad-showcase-detail.dv-mode-mobile .cd-units {
+  gap: 10px;
+}
+.ad-showcase-detail.dv-mode-mobile .cd-unit-group {
+  gap: 8px;
+}
+.ad-showcase-detail.dv-mode-mobile .cd-unit-value {
+  gap: 4px;
+}
+.ad-showcase-detail.dv-mode-mobile .cd-units--flip .cd-flip {
+  width: 36px;
+  height: 50px;
+  border-radius: 8px;
+}
+.ad-showcase-detail.dv-mode-mobile .cd-units--flip .cd-flip span {
+  font-size: 28px;
+}
+.ad-showcase-detail.dv-mode-mobile .cd-separator {
+  height: 50px;
+  gap: 7px;
+}
+.ad-showcase-detail.dv-mode-mobile .cd-separator::before,
+.ad-showcase-detail.dv-mode-mobile .cd-separator::after {
+  width: 4px;
+  height: 4px;
+}
+.ad-showcase-detail.dv-mode-mobile .cd-subtitle {
+  font-size: 16px;
+  font-weight: 500;
+  max-width: 260px;
+  line-height: 1.45;
+}
+
+/* Desktop: 2 cột — title trái, clock + subtitle phải */
+.dv-mode-desktop .cd-content {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(40px, 6vw, 80px);
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 48px 56px;
+  text-align: left;
+}
+.dv-mode-desktop .cd-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  text-align: left;
+  font-size: clamp(40px, 4.2vw, 58px);
+  letter-spacing: -0.01em;
+}
+.dv-mode-desktop .cd-right {
+  width: auto;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 28px;
+  margin: 0;
+}
+.dv-mode-desktop .cd-subtitle {
+  max-width: 280px;
+  font-size: clamp(16px, 1.6vw, 20px);
+  text-align: center;
+}
+.dv-mode-desktop .cd-units {
+  gap: 12px;
+}
+.dv-mode-desktop .cd-unit-group {
+  gap: 10px;
+}
+.dv-mode-desktop .cd-unit-value {
+  gap: 5px;
+}
+.dv-mode-desktop .cd-units--flip .cd-flip {
+  width: clamp(44px, 3.6vw, 56px);
+  height: clamp(58px, 4.8vw, 74px);
+  border-radius: 10px;
+}
+.dv-mode-desktop .cd-units--flip .cd-flip span {
+  font-size: clamp(32px, 2.8vw, 44px);
+}
+.dv-mode-desktop .cd-separator {
+  height: clamp(58px, 4.8vw, 74px);
+  gap: 9px;
+  width: 5px;
+}
+.dv-mode-desktop .cd-separator::before,
+.dv-mode-desktop .cd-separator::after {
+  width: 5px;
+  height: 5px;
+}
+.dv-mode-desktop .cd-bg {
+  background-position: center 42%;
 }
 
 /* ================================================================
@@ -2447,6 +2650,13 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+}
+.dg-ad:active {
+  cursor: grabbing;
 }
 .dg-ad::after {
   content: '';
@@ -2454,8 +2664,10 @@
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(0, 0, 0, 0) 79.81%,
-    rgba(0, 0, 0, 0.6) 97.38%
+    rgba(0, 0, 0, 0.28) 0%,
+    rgba(0, 0, 0, 0) 22%,
+    rgba(0, 0, 0, 0) 72%,
+    rgba(0, 0, 0, 0.55) 100%
   );
   pointer-events: none;
   z-index: 2;
@@ -2500,16 +2712,18 @@
   font-weight: 400;
   color: #fff;
   margin: 0;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
 }
 .dg-caption {
   position: absolute;
   bottom: 120px;
   left: 50%;
-  right: 0;
   text-align: center;
   z-index: 5;
   padding: 0 20px;
-  width: 100%;
+  width: max-content;
+  max-width: calc(100% - 40px);
+  pointer-events: none;
   animation: fadeInUp 0.3s ease both;
 }
 .dg-caption span {
@@ -2518,11 +2732,47 @@
   font-weight: 400;
   color: #fff;
   margin: 0;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
 }
 .dg-caption p {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
   margin: 4px 0 0;
+}
+
+/* Detail page ẩn CTA → kéo caption/dots sát đáy, tránh khoảng tối thừa */
+.ad-showcase-detail .dg-caption {
+  bottom: 56px;
+}
+.ad-showcase-detail .dg-ad .gallery-ad-dots {
+  bottom: 24px;
+}
+
+/* Desktop: slide 714×1280 trong khung ngang — nâng focal point, scale type */
+.dv-mode-desktop .dg-slide {
+  background-position: 50% 38%;
+}
+.dv-mode-desktop .dg-headline {
+  padding: 40px 32px 0;
+}
+.dv-mode-desktop .dg-headline h2 {
+  font-size: 44px;
+  letter-spacing: -0.01em;
+}
+.dv-mode-desktop .dg-caption {
+  bottom: 52px;
+}
+.dv-mode-desktop .dg-caption span {
+  font-size: 28px;
+}
+.dv-mode-desktop .dg-ad .gallery-ad-dots {
+  bottom: 22px;
+}
+.ad-showcase-detail.dv-mode-desktop .dg-caption {
+  bottom: 52px;
+}
+.ad-showcase-detail.dv-mode-desktop .dg-ad .gallery-ad-dots {
+  bottom: 22px;
 }
 
 /* ================================================================
@@ -3393,11 +3643,8 @@
 /* ================================================================
    FORMAT: Configurator Ad
    ================================================================ */
-/* Cả 3 phần (headline · preview · options) nằm trong cùng 1 section.
-   Mobile: flex column (headline trên → xe giữa → options dưới).
-   Desktop: flex row (headline trái · xe giữa · options phải).
-   Preview absolute inset:0 nên xe luôn "nổi" ở giữa section, headline &
-   options là 2 flex item thật, dễ canh theo breakpoint. */
+/* Configurator — mobile: cột (headline → xe → options).
+   Desktop: hàng (headline | xe absolute giữa | options). */
 .cfg-ad {
   position: relative;
   width: 100%;
@@ -3405,23 +3652,40 @@
   background: #000000;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  overflow: hidden;
   font-family:
+    'Outfit',
     system-ui,
     -apple-system,
     sans-serif;
 }
+.cfg-headline {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  text-align: center;
+  padding: 48px 12px 0;
+  font-family: var(--serif, 'Cormorant Garamond', serif);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.15;
+  color: #ffffff;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+  white-space: pre-line;
+}
 .cfg-preview {
-  position: absolute;
-  inset: 0;
+  position: relative;
   z-index: 0;
+  flex: 1 1 auto;
+  min-height: 120px;
+  width: 100%;
   pointer-events: none;
 }
 .cfg-preview-base {
   position: absolute;
   inset: 0;
-  background-size: 135%;
-  background-position: 10% 40%;
+  background-size: contain;
+  background-position: center center;
   background-repeat: no-repeat;
   transition: background-image 0.3s ease-in-out;
 }
@@ -3432,85 +3696,77 @@
   background-position: center;
   mix-blend-mode: overlay;
 }
-.cfg-headline {
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  padding: 44px 16px 0;
-  font-family: var(--serif, 'Cormorant Garamond', serif);
-  font-size: 34px;
-  font-weight: 400;
-  line-height: 1.15;
-  color: #ffffff;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
-  white-space: pre-line;
-}
 .cfg-options {
   position: relative;
   z-index: 2;
-  padding: 20px 20px 90px 20px;
-  background: #000000;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex: 0 0 auto;
+  padding: 8px 12px 86px;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.9) 28%,
+    #000 55%
+  );
+  border-top: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: 12px;
 }
 .cfg-option-group {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
 }
 .cfg-option-group:last-child {
   margin-bottom: 0;
 }
 .cfg-option-label {
   display: block;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 2px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #ffffff;
-  margin-bottom: 16px;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 8px;
 }
 .cfg-option-choices {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
 }
 .cfg-choice {
-  min-width: 32px;
-  height: 32px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  min-width: 62px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0 10px;
-  border-radius: 20px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  padding: 0 12px;
+  border-radius: 999px;
 }
-.cfg-choice--active {
-  border-color: var(--gold, #b8965a);
-  box-shadow: 0 0 0 1px var(--gold, #b8965a);
-}
-
-.cfg-choice--color {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  border-radius: 50%;
-  padding: 0;
-  border: 1px solid transparent;
-}
-
 .cfg-choice--active {
   border-color: #ffffff !important;
   background: #ffffff;
   color: #000000;
+}
+
+.cfg-choice--color {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .cfg-choice--color.cfg-choice--active {
@@ -3521,47 +3777,131 @@
 
 .cfg-selected-name {
   margin-top: 8px;
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 500;
   color: #000000;
   background: #ffffff;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: 999px;
+  line-height: 1.3;
 }
 
+/* Gallery phone ~262–280px */
+@container ad-wrap (max-width: 300px) {
+  .cfg-headline {
+    padding: 44px 10px 0;
+    font-size: 20px;
+  }
+  .cfg-options {
+    gap: 10px;
+    padding: 6px 10px 82px;
+  }
+  .cfg-option-label {
+    font-size: 8px;
+    margin-bottom: 6px;
+  }
+  .cfg-choice {
+    min-width: 58px;
+    height: 26px;
+    font-size: 9px;
+    padding: 0 10px;
+  }
+  .cfg-choice--color {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+  }
+  .cfg-selected-name {
+    margin-top: 6px;
+    font-size: 9px;
+  }
+}
+
+/* Detail phone */
+.ad-showcase-detail .cfg-headline {
+  padding: 56px 24px 8px;
+  font-size: 34px;
+}
+.ad-showcase-detail .cfg-options {
+  padding: 20px 24px 40px;
+  gap: 22px;
+}
+.ad-showcase-detail .cfg-option-label {
+  font-size: 11px;
+  margin-bottom: 12px;
+}
+.ad-showcase-detail .cfg-choice {
+  min-width: 84px;
+  height: 34px;
+  font-size: 12px;
+}
+.ad-showcase-detail .cfg-choice--color {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+}
+.ad-showcase-detail .cfg-preview-base {
+  background-position: center 50%;
+}
+
+/* Desktop: headline trái · xe giữa · options phải */
 .dv-mode-desktop .cfg-ad {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
 }
-
-.dv-mode-desktop .cfg-headline {
-  flex: 0 0 36%;
-  width: 36%;
-  text-align: left;
-  padding: 0 24px 0 clamp(40px, 5vw, 72px);
-  font-size: 28px;
-  line-height: 1.1;
+.dv-mode-desktop .cfg-preview {
+  position: absolute;
+  inset: 0;
+  flex: unset;
+  min-height: 0;
 }
-
 .dv-mode-desktop .cfg-preview-base {
-  background-size: auto 45%;
-  background-position: 55% center;
+  background-size: auto 52%;
+  background-position: 48% 46%;
 }
-
+.dv-mode-desktop .cfg-headline {
+  flex: 0 0 34%;
+  width: 34%;
+  text-align: left;
+  padding: 0 28px 0 clamp(40px, 5vw, 72px);
+  font-size: clamp(36px, 3.6vw, 48px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
 .dv-mode-desktop .cfg-options {
-  flex: 0 0 clamp(240px, 24vw, 320px);
-  width: clamp(240px, 24vw, 320px);
+  flex: 0 0 clamp(220px, 26vw, 300px);
+  width: clamp(220px, 26vw, 300px);
+  align-items: flex-start;
   justify-content: center;
-  gap: clamp(40px, 8vh, 96px);
-  padding: 48px clamp(24px, 3vw, 48px) 90px;
+  gap: 32px;
+  padding: 40px clamp(28px, 3vw, 48px);
   background: transparent;
-  border-top: none;
+}
+.dv-mode-desktop .cfg-option-group {
+  align-items: flex-start;
 }
 .dv-mode-desktop .cfg-option-label {
-  font-size: 15px;
-  letter-spacing: 0.5px;
-  text-transform: none;
-  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  margin-bottom: 14px;
+}
+.dv-mode-desktop .cfg-option-choices {
+  justify-content: flex-start;
+  gap: 12px;
+}
+.dv-mode-desktop .cfg-choice {
+  min-width: 88px;
+  height: 34px;
+  font-size: 12px;
+}
+.dv-mode-desktop .cfg-choice--color {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+}
+.dv-mode-desktop .cfg-selected-name {
+  margin-top: 12px;
 }
 
 /* ================================================================
@@ -3842,48 +4182,55 @@
 
 .c3d-headline {
   position: absolute;
-  top: 60px;
+  top: 44px;
   left: 0;
   right: 0;
   text-align: center;
   font-family: var(--serif, 'Cormorant Garamond', serif);
-  font-size: 34px;
+  font-size: 28px;
   font-weight: 400;
   color: #ffffff;
   line-height: 1.15;
-  z-index: 10;
+  z-index: 12;
   pointer-events: none;
   margin: 0;
 }
 
 .c3d-track {
   position: absolute;
-  top: 140px;
+  /* Clear headline above + CTA/hint below (gallery phone ~260×560) */
+  top: 96px;
   left: 0;
   right: 0;
-  bottom: 80px;
+  bottom: 100px;
 }
 
 .c3d-card {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 266px;
+  width: 210px;
 }
 
 .c3d-card-img {
   width: 100%;
-  height: 380px;
+  height: 260px;
   background-size: cover;
   background-position: center;
   border-radius: 8px;
 }
 
+/* Absolute under image so info height không đẩy card lên đè headline */
 .c3d-card-info {
-  padding: 16px 0 0px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  padding: 12px 0 0;
   text-align: center;
   opacity: 0;
   transition: opacity 0.4s ease;
+  pointer-events: none;
 }
 
 .c3d-card--active .c3d-card-info {
@@ -3892,16 +4239,16 @@
 
 .c3d-card-name {
   font-family: var(--serif, 'Cormorant Garamond', serif);
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 400;
   color: #ffffff;
-  margin: 0 0 11px;
+  margin: 0 0 6px;
   line-height: 1.2;
 }
 
 .c3d-card-price {
   font-family: 'Montserrat', sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   color: #ffffff;
   letter-spacing: 0.05em;
@@ -3910,22 +4257,51 @@
 
 .c3d-hint {
   position: absolute;
-  bottom: 24px;
+  bottom: 72px; /* above EXPLORE NOW CTA in gallery */
   left: 50%;
   transform: translateX(-50%);
-  z-index: 10;
+  z-index: 12;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   font-family: 'Montserrat', sans-serif;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   color: #ffffff;
   white-space: nowrap;
   pointer-events: none;
-  opacity: 40%;
+  opacity: 0.45;
+}
+
+/* Detail phone cao hơn — nới card + hạ hint (không có CTA bar) */
+.ad-showcase-detail .c3d-headline {
+  top: 56px;
+  font-size: 34px;
+}
+.ad-showcase-detail .c3d-track {
+  top: 120px;
+  bottom: 64px;
+}
+.ad-showcase-detail .c3d-card {
+  width: 250px;
+}
+.ad-showcase-detail .c3d-card-img {
+  height: 320px;
+}
+.ad-showcase-detail .c3d-card-name {
+  font-size: 22px;
+  margin: 0 0 10px;
+}
+.ad-showcase-detail .c3d-card-price {
+  font-size: 14px;
+}
+.ad-showcase-detail .c3d-hint {
+  bottom: 28px;
+  font-size: 14px;
+  letter-spacing: 2px;
+  gap: 12px;
 }
 
 .c3d-hint-icon {
@@ -4019,6 +4395,23 @@
   flex: 0 0 50%;
   width: 50%;
   height: 100%;
+}
+
+.dv-mode-desktop .c3d-card {
+  width: 280px;
+}
+
+.dv-mode-desktop .c3d-card-img {
+  height: 360px;
+}
+
+.dv-mode-desktop .c3d-card-name {
+  font-size: 22px;
+  margin: 0 0 10px;
+}
+
+.dv-mode-desktop .c3d-card-price {
+  font-size: 14px;
 }
 
 /* ================================================================
@@ -4115,25 +4508,6 @@
 
   max-width: 40%;
 }
-.stories-cta {
-  display: block;
-  text-align: center;
-  margin: 0 16px 16px;
-  padding: 12px;
-  background: #fff;
-  color: #0b0b09;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  text-decoration: none;
-  border-radius: 8px;
-  transition: opacity 0.2s;
-}
-.stories-cta:hover {
-  opacity: 0.9;
-}
-
 /* ================================================================
    FORMAT: Water Ripple Ad
    ================================================================ */
@@ -4292,14 +4666,17 @@
 .aerial-track {
   display: inline-flex;
   height: 100%;
+  align-items: center; /* center when JS scales img taller than frame */
   position: relative;
   will-change: transform;
 }
 .aerial-img {
   display: block;
+  /* Fallback before JS measure; inline width/height from measureAndApplyPan win */
   height: 100%;
   width: auto;
   max-width: none;
+  flex-shrink: 0;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;

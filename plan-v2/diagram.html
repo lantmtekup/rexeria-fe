@@ -1,0 +1,2117 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ReXeR Demo V3 — Workflow</title>
+    <style>
+      :root {
+        --ink: #14121c;
+        --ink-2: #2e2a3a;
+        --mut: #6b6578;
+        --hair: #e4e0ea;
+        --paper: #fbfaf8;
+        --canvas: #ebe7df;
+        --wash: #e4e0d6;
+        --journey: #5b4cdb;
+        --journey-soft: #ebe8ff;
+        --studio: #0f7a6c;
+        --studio-soft: #e3f5f1;
+        --pulse: #c45a1a;
+        --pulse-soft: #ffefe3;
+        --exchange: #8a3d6b;
+        --exchange-soft: #f8e8f0;
+        --entity: #1f4f7a;
+        --entity-soft: #e6f0f8;
+        --rule: #8a6a14;
+        --rule-soft: #f7efd6;
+        --seed: #3d5a40;
+        --seed-soft: #e6efe7;
+        --kind: #4a3f6b;
+        --kind-soft: #eeeaf6;
+        --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        --display: Georgia, 'Times New Roman', serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        font-family: var(--font);
+        color: var(--ink);
+        background: var(--canvas);
+        overflow: hidden;
+      }
+      .app {
+        display: grid;
+        grid-template-columns: 1fr minmax(280px, 320px);
+        grid-template-rows: auto 1fr;
+        height: 100%;
+      }
+      header {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 10px 16px;
+        background: var(--paper);
+        border-bottom: 1px solid var(--hair);
+      }
+      header h1 {
+        margin: 0;
+        font-family: var(--display);
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .views {
+        display: flex;
+        gap: 4px;
+        margin-left: 8px;
+      }
+      .views button {
+        border: 1px solid var(--hair);
+        background: #fff;
+        color: var(--ink-2);
+        font-size: 12px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .views button.on {
+        background: var(--ink);
+        color: #fff;
+        border-color: var(--ink);
+      }
+      .tools {
+        margin-left: auto;
+        display: flex;
+        gap: 6px;
+      }
+      .tools button {
+        border: 1px solid var(--hair);
+        background: #fff;
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .stage-wrap {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        background: linear-gradient(180deg, #f3efe6, var(--canvas));
+      }
+      #stage {
+        width: 100%;
+        height: 100%;
+        display: block;
+        cursor: grab;
+        touch-action: none;
+      }
+      #stage.panning {
+        cursor: grabbing;
+      }
+      .hint {
+        position: absolute;
+        left: 12px;
+        top: 12px;
+        font-size: 11px;
+        color: var(--mut);
+        background: color-mix(in srgb, var(--paper) 92%, transparent);
+        border: 1px solid var(--hair);
+        border-radius: 8px;
+        padding: 5px 9px;
+        pointer-events: none;
+      }
+      .view-note {
+        flex: 1;
+        min-width: 200px;
+        max-width: 520px;
+        font-size: 12px;
+        line-height: 1.45;
+        color: var(--mut);
+        padding: 0 4px;
+      }
+      aside {
+        border-left: 1px solid var(--hair);
+        background: var(--paper);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .panel-head {
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid var(--hair);
+      }
+      .panel-head .eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--mut);
+        margin-bottom: 4px;
+      }
+      .panel-head h2 {
+        margin: 0;
+        font-family: var(--display);
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .panel-body {
+        padding: 14px 16px 24px;
+        overflow: auto;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--ink-2);
+      }
+      .panel-body .def {
+        margin: 0 0 10px;
+      }
+      .panel-body .not {
+        margin: 0 0 12px;
+        padding: 8px 10px;
+        background: var(--wash);
+        border-radius: 8px;
+        color: var(--mut);
+        font-size: 12px;
+      }
+      .panel-body h3 {
+        margin: 14px 0 8px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--mut);
+      }
+      .panel-body ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .panel-body li {
+        margin: 0 0 6px;
+        padding: 7px 9px;
+        border: 1px solid var(--hair);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .panel-body li:hover {
+        background: #faf9f7;
+      }
+      .keys {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .keys button {
+        border: 1px solid var(--hair);
+        background: #fff;
+        border-radius: 999px;
+        padding: 4px 9px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+      .keys button:hover {
+        border-color: var(--journey);
+        color: var(--journey);
+      }
+      .tag {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-right: 6px;
+      }
+      .empty {
+        color: var(--mut);
+      }
+
+      .lane-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        fill: var(--mut);
+      }
+      .lane-bg {
+        stroke: rgba(20, 18, 28, 0.06);
+        stroke-width: 1;
+      }
+      .lane-journey {
+        fill: rgba(91, 76, 219, 0.07);
+      }
+      .lane-studio {
+        fill: rgba(15, 122, 108, 0.07);
+      }
+      .lane-pulse {
+        fill: rgba(196, 90, 26, 0.07);
+      }
+      .loop-caption {
+        font-size: 11px;
+        fill: var(--mut);
+        font-style: italic;
+      }
+      .edge {
+        fill: none;
+        stroke: #7a7388;
+        stroke-width: 1.7;
+        cursor: pointer;
+      }
+      .edge.muted {
+        stroke: #b5afbf;
+        stroke-dasharray: 5 4;
+      }
+      .edge.rule {
+        stroke: var(--rule);
+        stroke-dasharray: 6 4;
+      }
+      .edge.loop {
+        stroke: var(--pulse);
+        stroke-width: 2;
+      }
+      .edge.selected {
+        stroke: #111;
+        stroke-width: 2.4;
+        stroke-dasharray: none;
+      }
+      .edge-label {
+        font-size: 10px;
+        fill: var(--ink-2);
+        pointer-events: none;
+      }
+      .edge-label-bg {
+        fill: rgba(251, 250, 248, 0.97);
+        stroke: var(--hair);
+        stroke-width: 0.5;
+        pointer-events: none;
+      }
+      .node {
+        cursor: pointer;
+      }
+      .node .body {
+        stroke-width: 1.5;
+      }
+      .node.selected .body {
+        stroke: #111;
+        stroke-width: 2.2;
+      }
+      .node .title {
+        font-size: 12px;
+        font-weight: 700;
+        fill: var(--ink);
+        pointer-events: none;
+      }
+      .node .sub {
+        font-size: 10px;
+        fill: var(--mut);
+        pointer-events: none;
+      }
+      .node.journey .body {
+        fill: var(--journey-soft);
+        stroke: var(--journey);
+      }
+      .node.studio .body {
+        fill: var(--studio-soft);
+        stroke: var(--studio);
+      }
+      .node.pulse .body {
+        fill: var(--pulse-soft);
+        stroke: var(--pulse);
+      }
+      .node.exchange .body {
+        fill: var(--exchange-soft);
+        stroke: var(--exchange);
+      }
+      .node.entity .body {
+        fill: var(--entity-soft);
+        stroke: var(--entity);
+      }
+      .node.rule .body {
+        fill: var(--rule-soft);
+        stroke: var(--rule);
+      }
+      .node.seed .body {
+        fill: var(--seed-soft);
+        stroke: var(--seed);
+      }
+      .node.kind .body {
+        fill: var(--kind-soft);
+        stroke: var(--kind);
+      }
+      .node.meta .body {
+        fill: #f1efe9;
+        stroke: #9a93a6;
+      }
+
+      @media (max-width: 860px) {
+        .app {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto 1fr minmax(200px, 36%);
+        }
+        aside {
+          border-left: none;
+          border-top: 1px solid var(--hair);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>ReXeR Demo V3</h1>
+        <div class="views" id="views"></div>
+        <div class="view-note" id="viewNote"></div>
+        <div class="tools">
+          <button type="button" id="btnFit">Fit</button>
+          <button type="button" id="btnReset">Reset zoom</button>
+        </div>
+      </header>
+      <div class="stage-wrap">
+        <div class="hint">
+          Kéo nền = pan · Scroll = zoom · Click ô/mũi tên = giải thích
+        </div>
+        <svg id="stage" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker
+              id="arrow"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="#7a7388" />
+            </marker>
+            <marker
+              id="arrow-loop"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="#c45a1a" />
+            </marker>
+            <marker
+              id="arrow-rule"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="#8a6a14" />
+            </marker>
+            <marker
+              id="arrow-sel"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M0 0 L10 5 L0 10 z" fill="#111" />
+            </marker>
+          </defs>
+          <g id="world">
+            <g id="lanes"></g>
+            <g id="edges"></g>
+            <g id="nodes"></g>
+            <g id="edge-labels"></g>
+          </g>
+        </svg>
+      </div>
+      <aside>
+        <div class="panel-head">
+          <div class="eyebrow" id="panelEyebrow">Keyword & quan hệ</div>
+          <h2 id="panelTitle">Chọn một ô</h2>
+        </div>
+        <div class="panel-body" id="panelBody"></div>
+      </aside>
+    </div>
+
+    <script>
+      const VIEWS = [
+        {
+          id: 'overview',
+          label: '1. Overview',
+          note: 'Toàn bộ workflow: JOURNEY rail (Brand → Journey Builder → Campaigns), STUDIO rail (Experiences → Media → Product → Automation → Deploy), PULSE rail (Analytics → Intelligence). Loop plan → build → measure → re-plan. Exchange bên cạnh.',
+        },
+        {
+          id: 'ownership',
+          label: '2. Campaign ↔ Journey',
+          note: 'Template/blueprint thuộc thư viện. Dùng trong campaign = fork copy (R2). Journey copy chỉ reference experience; jExpFor resolve sang experience copy của cùng campaign.',
+        },
+        {
+          id: 'kinds',
+          label: '3. Node kinds',
+          note: 'Journey là graph typed nodes. Experience node không chứa HTML — chỉ giữ id trang (`x`).',
+        },
+        {
+          id: 'seed',
+          label: '4. Ví dụ path',
+          note: 'Hai blueprint seed trong demo. Copy gắn campaign riêng (Super Serum / Christmas 2026) — sửa copy không đụng blueprint.',
+        },
+      ];
+
+      let activeView = 'overview';
+      let selected = null;
+      let view = { x: 40, y: 30, k: 1 };
+      let pan = null;
+
+      const GLOSSARY = {
+        Template: {
+          d: 'Design thư viện, không gắn campaign. Flag `template:true`.',
+          not: 'Không phải category Blocks/Experiences — đó là loại artifact khác.',
+        },
+        Blueprint: {
+          d: 'Journey ở thư viện (template). Chưa thuộc campaign.',
+          not: 'Không còn là “Experience category”. Multi-page = Journey.',
+        },
+        Copy: {
+          d: 'Bản fork khi dùng template trong campaign. Journey copy: 1 campaign. Experience copy: 1 campaign + 1 subject. Có `origin`.',
+          not: 'Không mang số đo của template (R5). Chưa chạy → không hiện 0 giả.',
+        },
+        Fork: {
+          d: 'Use in campaign → tạo/mở copy. Cùng origin + campaign lần 2 → mở copy cũ.',
+          not: 'Khác Duplicate (chỉ clone, không gắn campaign).',
+        },
+        Subject: {
+          d: 'Campaign item: Product (SKU) hoặc Topic (không SKU).',
+          not: 'Không phải audience segment.',
+        },
+        Campaign: {
+          d: 'Brief, lịch, channels, subject items. Gắn tối đa 1 journey copy. Stage planning/building/live derive từ items.',
+          not: 'Không chứa HTML trang. Không giữ template — chỉ copy.',
+        },
+        Journey: {
+          d: 'Graph bước từ entry → outcome. Edges trên node (`to`).',
+          not: 'Không chỉnh block (Experiences). Không publish (Deploy).',
+        },
+        Experience: {
+          d: 'Thư viện trang post-click: pages, media, product, blocks. Node journey chỉ lưu id trang (`x`); copy resolve qua jExpFor.',
+          not: 'Không nhúng HTML/markup vào graph journey.',
+        },
+        jExpFor: {
+          d: 'Trường `x` trên node Experience = id trang trong thư viện Experiences. Trên journey copy, runtime map `x` → experience fork của campaign đó.',
+          not: 'Không phải URL trực tiếp. Không clone markup vào node.',
+        },
+        Deploy: {
+          d: 'Publish cửa vào đúng loại Entry đã khai (UTM, QR…).',
+          not: 'Journey không có nút deploy riêng.',
+        },
+        Analytics: {
+          d: 'Đọc `facts()` (sessions/lift). Journey lens xếp số theo path — assisted, không khẳng định journey “gây” lift.',
+          not: 'Không ghi số vào DATA.journeys.',
+        },
+        Exchange: {
+          d: 'Storefront template. Listing trỏ `src` design có sẵn. Evidence derived; chưa chạy = Unproven.',
+          not: 'Không invent số. Không phải module trong vòng plan→ship→measure.',
+        },
+        Entry: {
+          d: 'Cửa vào + source/signal/via (paid, QR, email…).',
+          not: 'Không phải trang experience.',
+        },
+        Decision: {
+          d: 'Tách ≥2 nhánh theo basis/signal/window.',
+          not: 'Không phải A/B ads config.',
+        },
+        Action: {
+          d: 'Hệ thống xử lý dữ liệu (CRM/CDP…) qua `via` — không phải trang.',
+          not: 'Không phải nút CTA trên page.',
+        },
+        Outcome: {
+          d: 'Kết quả business (purchase, lead…).',
+          not: 'Không phải Exit (drop-off).',
+        },
+        Exit: {
+          d: 'Path kết thúc không đạt target — drop-off có lý do.',
+          not: 'Không phải Outcome thành công.',
+        },
+        R2: {
+          d: 'Template không attach thẳng vào campaign — dùng là fork copy ngay (copy-on-use).',
+          not: '—',
+        },
+        R3: {
+          d: 'Copy = đúng 1 campaign (+ 1 subject với experience). Ghi origin.',
+          not: '—',
+        },
+        R5: {
+          d: 'Copy nhận design, không nhận số. Chưa chạy → không có fact rows.',
+          not: '—',
+        },
+        Proven: {
+          d: 'Dấu trên master: đủ bằng chứng để Automation nhân sang product class. Copy không mang Proven.',
+          not: 'Không phải rating Exchange.',
+        },
+      };
+
+      const NW = 168;
+      const NH = 56;
+      const COL_W = 300;
+      const OVERVIEW_COL_W = 272;
+      const ROW_H = 96;
+      const OVERVIEW_MODULE_ROW = 4;
+      const ORIGIN = { x: 48, y: 48 };
+
+      /** Grid slot per view — col/row, optional w/h */
+      const LAYOUT = {
+        overview: {
+          gJ: { col: 0, row: 0, w: 200 },
+          gS: { col: 1, row: 0, w: 200 },
+          gP: { col: 2, row: 0, w: 200 },
+          gE: { col: 3, row: 0, w: 176 },
+          mBrand: { col: 0, row: OVERVIEW_MODULE_ROW },
+          mExp: { col: 1, row: OVERVIEW_MODULE_ROW, w: 200, h: 68 },
+          mAn: { col: 2, row: OVERVIEW_MODULE_ROW },
+          mJr: { col: 0, row: OVERVIEW_MODULE_ROW + 1 },
+          mMedia: { col: 1, row: OVERVIEW_MODULE_ROW + 1 },
+          mIn: { col: 2, row: OVERVIEW_MODULE_ROW + 1 },
+          mCamp: { col: 0, row: OVERVIEW_MODULE_ROW + 2 },
+          mProd: { col: 1, row: OVERVIEW_MODULE_ROW + 2 },
+          mAuto: { col: 1, row: OVERVIEW_MODULE_ROW + 3 },
+          mDep: { col: 1, row: OVERVIEW_MODULE_ROW + 4 },
+        },
+        ownership: {
+          oBpJ: { col: 0, row: 0, w: 190 },
+          oCamp: { col: 1, row: 0, w: 190 },
+          oCpJ: { col: 2, row: 0, w: 190 },
+          oRules: { col: 3, row: 0, w: 170 },
+          oSub: { col: 1, row: 2, w: 190 },
+          oBpX: { col: 0, row: 4, w: 190 },
+          oCpX: { col: 2, row: 2, w: 190 },
+          oFacts: { col: 3, row: 2, w: 170 },
+        },
+        kinds: {
+          kEn: { col: 0, row: 1, w: 120 },
+          kEx: { col: 1, row: 1, w: 130 },
+          kDe: { col: 2, row: 1, w: 120 },
+          kWa: { col: 2, row: 0, w: 120 },
+          kMs: { col: 2, row: 2, w: 120 },
+          kAc: { col: 3, row: 1, w: 120 },
+          kOu: { col: 4, row: 0, w: 120 },
+          kEi: { col: 4, row: 2, w: 120 },
+        },
+        seed: {
+          s1t: { col: 0, row: 0, w: 260, h: 44 },
+          s1a: { col: 0, row: 2, w: 108 },
+          s1b: { col: 1, row: 2, w: 108 },
+          s1c: { col: 2, row: 2, w: 108 },
+          s1d: { col: 3, row: 2, w: 118 },
+          s1e: { col: 3, row: 1, w: 118 },
+          s1f: { col: 4, row: 2, w: 108 },
+          s1g: { col: 5, row: 2, w: 118 },
+          s2t: { col: 0, row: 4, w: 260, h: 44 },
+          s2a: { col: 0, row: 6, w: 108 },
+          s2b: { col: 1, row: 6, w: 108 },
+          s2c: { col: 2, row: 6, w: 118 },
+          s2d: { col: 3, row: 5, w: 118 },
+          s2e: { col: 3, row: 7, w: 118 },
+          s2f: { col: 4, row: 6, w: 108 },
+          s2g: { col: 5, row: 6, w: 118 },
+        },
+      };
+
+      const NODES = [
+        /* Overview */
+        {
+          id: 'gJ',
+          views: ['overview'],
+          group: 'journey',
+          label: 'JOURNEY',
+          sub: 'plan',
+          key: 'Journey',
+          def: 'Rail: Brand · Journey Builder · Campaigns. Lên lộ trình và gắn vào campaign.',
+        },
+        {
+          id: 'gS',
+          views: ['overview'],
+          group: 'studio',
+          label: 'STUDIO',
+          sub: 'build & ship',
+          key: 'Experience',
+          def: 'Rail: Experiences · Media · Product · Automation · Deploy. Dựng trang và publish cửa vào.',
+        },
+        {
+          id: 'gP',
+          views: ['overview'],
+          group: 'pulse',
+          label: 'PULSE',
+          sub: 'measure',
+          key: 'Analytics',
+          def: 'Rail: Analytics · Intelligence. Đọc facts sau khi chạy, trả insight để re-plan.',
+        },
+        {
+          id: 'gE',
+          views: ['overview'],
+          group: 'exchange',
+          label: 'Exchange',
+          sub: 'bên cạnh',
+          key: 'Exchange',
+          def: 'Storefront template. Buy → vào library (nhận design, không nhận số — R5).',
+        },
+        {
+          id: 'mBrand',
+          views: ['overview'],
+          group: 'journey',
+          label: 'Brand',
+          sub: 'persona',
+          def: 'Persona, claim, góc nhìn audience cho segment/journey.',
+        },
+        {
+          id: 'mJr',
+          views: ['overview'],
+          group: 'journey',
+          label: 'Journey Builder',
+          sub: 'graph · fork',
+          key: 'Journey',
+          def: 'Quản lý blueprint + fork vào campaign. Bước Experience chỉ trỏ id trang (`x`) — runtime resolve sang fork Experiences của campaign.',
+        },
+        {
+          id: 'mCamp',
+          views: ['overview'],
+          group: 'journey',
+          label: 'Campaigns',
+          sub: 'planner · subject',
+          key: 'Campaign',
+          def: 'Chiến dịch + subject items (Product/Topic). Gắn 1 journey copy. Publish qua Deploy.',
+        },
+        {
+          id: 'mExp',
+          views: ['overview'],
+          group: 'studio',
+          label: 'Experiences',
+          sub: 'pages, media, product, blocks',
+          key: 'Experience',
+          def: 'Thư viện trang post-click (template/copy): pages, media, product, blocks. Journey node chỉ giữ id trang, không nhúng HTML.',
+        },
+        {
+          id: 'mMedia',
+          views: ['overview'],
+          group: 'studio',
+          label: 'Media',
+          sub: 'assets',
+          def: 'Asset đã duyệt. Experience/entry có thể trỏ tới.',
+        },
+        {
+          id: 'mProd',
+          views: ['overview'],
+          group: 'studio',
+          label: 'Product',
+          sub: 'SKU · subject',
+          key: 'Subject',
+          def: 'Catalog SKU — một dạng subject của campaign item.',
+        },
+        {
+          id: 'mAuto',
+          views: ['overview'],
+          group: 'studio',
+          label: 'Automation',
+          sub: 'Proven → class',
+          key: 'Proven',
+          def: 'Nhân experience đã Proven sang product khác. Chỉ master mang Proven.',
+        },
+        {
+          id: 'mDep',
+          views: ['overview'],
+          group: 'studio',
+          label: 'Deploy',
+          sub: 'publish',
+          key: 'Deploy',
+          def: 'Mở đúng cửa Entry (UTM, QR, email…).',
+        },
+        {
+          id: 'mAn',
+          views: ['overview'],
+          group: 'pulse',
+          label: 'Analytics',
+          sub: 'facts()',
+          key: 'Analytics',
+          def: 'Sessions/lift theo campaign. Journey lens và subject lens cùng một bảng fact.',
+        },
+        {
+          id: 'mIn',
+          views: ['overview'],
+          group: 'pulse',
+          label: 'Intelligence',
+          sub: 're-plan',
+          def: 'Đọc tín hiệu sau chạy → gợi ý chỉnh journey/experience.',
+        },
+
+        /* Ownership */
+        {
+          id: 'oBpJ',
+          views: ['ownership'],
+          group: 'entity',
+          label: 'Journey blueprint',
+          sub: 'thư viện',
+          key: 'Blueprint',
+          def: 'Template journey. `campaign:null`. Không có số riêng.',
+        },
+        {
+          id: 'oCamp',
+          views: ['ownership'],
+          group: 'journey',
+          label: 'Campaign',
+          sub: 'owns copy',
+          key: 'Campaign',
+          def: 'Khi Use in campaign → fork journey copy (R2). Không được giữ template.',
+        },
+        {
+          id: 'oCpJ',
+          views: ['ownership'],
+          group: 'entity',
+          label: 'Journey copy',
+          sub: '1 campaign',
+          key: 'Copy',
+          def: 'Có `origin`. Sửa copy không đụng blueprint. Số từ facts của campaign này.',
+        },
+        {
+          id: 'oSub',
+          views: ['ownership'],
+          group: 'entity',
+          label: 'Subject',
+          sub: 'product | topic',
+          key: 'Subject',
+          def: 'Mỗi item trên campaign. Experience copy khóa vào subject này (R3).',
+        },
+        {
+          id: 'oBpX',
+          views: ['ownership'],
+          group: 'entity',
+          label: 'Experience template',
+          sub: 'library',
+          key: 'Template',
+          def: 'Design thư viện. Có thể Proven. Dùng → fork copy.',
+        },
+        {
+          id: 'oCpX',
+          views: ['ownership'],
+          group: 'entity',
+          label: 'Experience copy',
+          sub: '1 camp + 1 subject',
+          key: 'Copy',
+          def: 'Nhận design, không nhận số (R5). Adapt nội dung theo subject.',
+        },
+        {
+          id: 'oFacts',
+          views: ['ownership'],
+          group: 'pulse',
+          label: 'facts()',
+          sub: 'sessions · lift',
+          key: 'Analytics',
+          def: 'Chỉ copy đã chạy mới có hàng đo. Blueprint không mang số của copy.',
+        },
+        {
+          id: 'oRules',
+          views: ['ownership'],
+          group: 'rule',
+          label: 'R2 · R3 · R5',
+          sub: 'ownership',
+          key: 'R2',
+          def: 'R2 fork khi dùng · R3 copy thuộc 1 campaign (+ subject) · R5 copy không mang số.',
+        },
+
+        /* Kinds */
+        {
+          id: 'kEn',
+          views: ['kinds'],
+          group: 'kind',
+          label: 'Entry',
+          key: 'Entry',
+          def: 'Cửa vào: paid, social, QR, email… + signal + via.',
+        },
+        {
+          id: 'kEx',
+          views: ['kinds'],
+          group: 'kind',
+          label: 'Experience',
+          key: 'Experience',
+          def: 'Trỏ trang ReXeR (`x`). Không chứa HTML.',
+        },
+        {
+          id: 'kDe',
+          views: ['kinds'],
+          group: 'kind',
+          label: 'Decision',
+          key: 'Decision',
+          def: 'Tách ≥2 nhánh.',
+        },
+        {
+          id: 'kWa',
+          views: ['kinds'],
+          group: 'kind',
+          label: 'Wait',
+          def: 'Chờ thời gian hoặc event.',
+        },
+        {
+          id: 'kMs',
+          views: ['kinds'],
+          group: 'kind',
+          label: 'Message',
+          def: 'Outbound: email / SMS / push / retarget.',
+        },
+        {
+          id: 'kAc',
+          views: ['kinds'],
+          group: 'kind',
+          label: 'Action',
+          key: 'Action',
+          def: 'Hệ thống xử lý (CRM…) — phải có via.',
+        },
+        {
+          id: 'kOu',
+          views: ['kinds'],
+          group: 'kind',
+          label: 'Outcome',
+          key: 'Outcome',
+          def: 'Kết quả muốn đạt (purchase, lead…).',
+        },
+        {
+          id: 'kEi',
+          views: ['kinds'],
+          group: 'kind',
+          label: 'Exit',
+          key: 'Exit',
+          def: 'Drop-off có mô hình (budget, competitor…).',
+        },
+
+        /* Seed */
+        {
+          id: 's1t',
+          views: ['seed'],
+          group: 'meta',
+          label: 'Product Launch · j1',
+          sub: 'blueprint',
+          def: 'Blueprint. Copy `j-j1-m1` gắn Super Serum.',
+        },
+        {
+          id: 's1a',
+          views: ['seed'],
+          group: 'seed',
+          label: 'Paid',
+          key: 'Entry',
+          def: 'Entry paid social.',
+        },
+        {
+          id: 's1b',
+          views: ['seed'],
+          group: 'seed',
+          label: 'Reveal',
+          def: 'Experience e2.',
+        },
+        {
+          id: 's1c',
+          views: ['seed'],
+          group: 'seed',
+          label: 'Inspect',
+          def: 'Experience e6.',
+        },
+        {
+          id: 's1d',
+          views: ['seed'],
+          group: 'seed',
+          label: 'Ready?',
+          key: 'Decision',
+          def: 'Decision: sẵn mua?',
+        },
+        {
+          id: 's1e',
+          views: ['seed'],
+          group: 'seed',
+          label: 'Explain',
+          def: 'Chưa sẵn → education e8.',
+        },
+        {
+          id: 's1f',
+          views: ['seed'],
+          group: 'seed',
+          label: 'CRM',
+          key: 'Action',
+          def: 'Action save profile.',
+        },
+        {
+          id: 's1g',
+          views: ['seed'],
+          group: 'seed',
+          label: 'Purchase',
+          key: 'Outcome',
+          def: 'Outcome checkout.',
+        },
+        {
+          id: 's2t',
+          views: ['seed'],
+          group: 'meta',
+          label: 'Gift Season · j2',
+          sub: 'blueprint',
+          def: 'Blueprint. Copy `j-j2-m3` gắn Christmas 2026.',
+        },
+        {
+          id: 's2a',
+          views: ['seed'],
+          group: 'seed',
+          label: 'QR/Email',
+          key: 'Entry',
+          def: 'Entry QR + email.',
+        },
+        {
+          id: 's2b',
+          views: ['seed'],
+          group: 'seed',
+          label: 'For whom?',
+          def: 'Quiz e1.',
+        },
+        {
+          id: 's2c',
+          views: ['seed'],
+          group: 'seed',
+          label: 'Known?',
+          key: 'Decision',
+          def: 'Recipient known?',
+        },
+        {
+          id: 's2d',
+          views: ['seed'],
+          group: 'seed',
+          label: 'Edit them',
+          def: 'Cá nhân hóa e3.',
+        },
+        {
+          id: 's2e',
+          views: ['seed'],
+          group: 'seed',
+          label: 'Safe edit',
+          def: 'Bestsellers e4.',
+        },
+        {
+          id: 's2f',
+          views: ['seed'],
+          group: 'seed',
+          label: 'OMS',
+          key: 'Action',
+          def: 'Gift note / delivery.',
+        },
+        {
+          id: 's2g',
+          views: ['seed'],
+          group: 'seed',
+          label: 'Gift buy',
+          key: 'Outcome',
+          def: 'Outcome gift purchase.',
+        },
+      ];
+
+      const EDGES = [
+        /* Overview — 6 edge có ý nghĩa, không chéo loop-back */
+        {
+          id: 'e1',
+          views: ['overview'],
+          from: 'gJ',
+          to: 'gS',
+          label: 'plan → build',
+          style: 'loop',
+        },
+        {
+          id: 'e2',
+          views: ['overview'],
+          from: 'gS',
+          to: 'gP',
+          label: 'ship → measure',
+          style: 'loop',
+        },
+        {
+          id: 'e4',
+          views: ['overview'],
+          from: 'gE',
+          to: 'mExp',
+          label: 'buy → library',
+          style: 'rule',
+          key: 'R5',
+        },
+        {
+          id: 'e5',
+          views: ['overview'],
+          from: 'mBrand',
+          to: 'mJr',
+          style: 'solid',
+        },
+        {
+          id: 'e6',
+          views: ['overview'],
+          from: 'mJr',
+          to: 'mCamp',
+          style: 'solid',
+        },
+        {
+          id: 'e7',
+          views: ['overview'],
+          from: 'mJr',
+          to: 'mExp',
+          label: 'trỏ trang (x)',
+          style: 'solid',
+          key: 'jExpFor',
+        },
+        {
+          id: 'e8',
+          views: ['overview'],
+          from: 'mExp',
+          to: 'mMedia',
+          style: 'muted',
+        },
+        {
+          id: 'e9',
+          views: ['overview'],
+          from: 'mExp',
+          to: 'mProd',
+          label: 'subject',
+          style: 'muted',
+          key: 'Subject',
+        },
+        {
+          id: 'e10',
+          views: ['overview'],
+          from: 'mProd',
+          to: 'mAuto',
+          label: 'Proven',
+          style: 'rule',
+          key: 'Proven',
+        },
+        {
+          id: 'e11',
+          views: ['overview'],
+          from: 'mCamp',
+          to: 'mDep',
+          label: 'publish',
+          style: 'solid',
+          key: 'Deploy',
+        },
+        {
+          id: 'e12',
+          views: ['overview'],
+          from: 'mDep',
+          to: 'mAn',
+          label: 'traffic → facts',
+          style: 'solid',
+        },
+        {
+          id: 'e13',
+          views: ['overview'],
+          from: 'mAn',
+          to: 'mIn',
+          style: 'solid',
+        },
+        {
+          id: 'e14',
+          views: ['overview'],
+          from: 'mIn',
+          to: 'mBrand',
+          label: 're-plan',
+          style: 'loop',
+        },
+
+        /* Ownership — left to right story */
+        {
+          id: 'o1',
+          views: ['ownership'],
+          from: 'oBpJ',
+          to: 'oCamp',
+          label: 'Use in campaign',
+          style: 'rule',
+          key: 'Fork',
+        },
+        {
+          id: 'o2',
+          views: ['ownership'],
+          from: 'oCamp',
+          to: 'oCpJ',
+          label: 'R2 fork',
+          style: 'rule',
+          key: 'R2',
+        },
+        {
+          id: 'o3',
+          views: ['ownership'],
+          from: 'oCamp',
+          to: 'oSub',
+          label: 'items[]',
+          style: 'solid',
+          key: 'Subject',
+        },
+        {
+          id: 'o4',
+          views: ['ownership'],
+          from: 'oBpX',
+          to: 'oCpX',
+          label: 'R2 fork',
+          style: 'rule',
+          key: 'R2',
+        },
+        {
+          id: 'o5',
+          views: ['ownership'],
+          from: 'oSub',
+          to: 'oCpX',
+          label: 'R3 bind',
+          style: 'rule',
+          key: 'R3',
+        },
+        {
+          id: 'o6',
+          views: ['ownership'],
+          from: 'oCpJ',
+          to: 'oCpX',
+          label: 'trỏ trang (x)',
+          style: 'solid',
+          key: 'jExpFor',
+        },
+        {
+          id: 'o7',
+          views: ['ownership'],
+          from: 'oCpX',
+          to: 'oFacts',
+          label: 'when live',
+          style: 'solid',
+          key: 'R5',
+        },
+        {
+          id: 'o8',
+          views: ['ownership'],
+          from: 'oRules',
+          to: 'oCpJ',
+          style: 'muted',
+        },
+
+        /* Kinds */
+        { id: 'k1', views: ['kinds'], from: 'kEn', to: 'kEx', style: 'solid' },
+        { id: 'k2', views: ['kinds'], from: 'kEx', to: 'kDe', style: 'solid' },
+        {
+          id: 'k3',
+          views: ['kinds'],
+          from: 'kDe',
+          to: 'kWa',
+          style: 'muted',
+          label: 'optional',
+        },
+        {
+          id: 'k4',
+          views: ['kinds'],
+          from: 'kDe',
+          to: 'kMs',
+          style: 'muted',
+          label: 'optional',
+        },
+        { id: 'k5', views: ['kinds'], from: 'kDe', to: 'kAc', style: 'solid' },
+        { id: 'k6', views: ['kinds'], from: 'kAc', to: 'kOu', style: 'solid' },
+        {
+          id: 'k7',
+          views: ['kinds'],
+          from: 'kDe',
+          to: 'kEi',
+          style: 'muted',
+          label: 'drop-off',
+        },
+
+        /* Seed 1 */
+        { id: 'p1', views: ['seed'], from: 's1a', to: 's1b', style: 'solid' },
+        { id: 'p2', views: ['seed'], from: 's1b', to: 's1c', style: 'solid' },
+        { id: 'p3', views: ['seed'], from: 's1c', to: 's1d', style: 'solid' },
+        {
+          id: 'p4',
+          views: ['seed'],
+          from: 's1d',
+          to: 's1e',
+          style: 'muted',
+          label: 'chưa sẵn',
+        },
+        {
+          id: 'p5',
+          views: ['seed'],
+          from: 's1d',
+          to: 's1f',
+          style: 'solid',
+          label: 'sẵn',
+        },
+        { id: 'p6', views: ['seed'], from: 's1e', to: 's1f', style: 'solid' },
+        { id: 'p7', views: ['seed'], from: 's1f', to: 's1g', style: 'solid' },
+
+        /* Seed 2 */
+        { id: 'q1', views: ['seed'], from: 's2a', to: 's2b', style: 'solid' },
+        { id: 'q2', views: ['seed'], from: 's2b', to: 's2c', style: 'solid' },
+        {
+          id: 'q3',
+          views: ['seed'],
+          from: 's2c',
+          to: 's2d',
+          style: 'solid',
+          label: 'biết',
+        },
+        {
+          id: 'q4',
+          views: ['seed'],
+          from: 's2c',
+          to: 's2e',
+          style: 'muted',
+          label: 'chưa',
+        },
+        { id: 'q5', views: ['seed'], from: 's2d', to: 's2f', style: 'solid' },
+        { id: 'q6', views: ['seed'], from: 's2e', to: 's2f', style: 'solid' },
+        { id: 'q7', views: ['seed'], from: 's2f', to: 's2g', style: 'solid' },
+      ];
+
+      const applyLayout = viewId => {
+        const grid = LAYOUT[viewId];
+        if (!grid) return;
+        const colW =
+          viewId === 'seed'
+            ? 136
+            : viewId === 'kinds'
+              ? 148
+              : viewId === 'overview'
+                ? OVERVIEW_COL_W
+                : COL_W;
+        const rowH = viewId === 'seed' ? 80 : ROW_H;
+        NODES.forEach(n => {
+          if (!n.views.includes(viewId)) return;
+          const slot = grid[n.id];
+          if (!slot) return;
+          n.x = ORIGIN.x + slot.col * colW;
+          n.y = ORIGIN.y + slot.row * rowH;
+          n.w = slot.w || NW;
+          n.h = slot.h || NH;
+          n._col = slot.col;
+          n._row = slot.row;
+        });
+      };
+
+      const stage = document.getElementById('stage');
+      const world = document.getElementById('world');
+      const gLanes = document.getElementById('lanes');
+      const gEdges = document.getElementById('edges');
+      const gNodes = document.getElementById('nodes');
+      const gEdgeLabels = document.getElementById('edge-labels');
+
+      const nodeById = id => NODES.find(n => n.id === id);
+      const edgeById = id => EDGES.find(e => e.id === id);
+      const visibleNodes = () =>
+        NODES.filter(n => n.views.includes(activeView));
+      const visibleEdges = () =>
+        EDGES.filter(e => {
+          if (!e.views.includes(activeView)) return false;
+          return nodeById(e.from) && nodeById(e.to);
+        });
+
+      const sizeOf = n => ({ w: n.w || NW, h: n.h || NH });
+      const centerOf = n => {
+        const { w, h } = sizeOf(n);
+        return { x: n.x + w / 2, y: n.y + h / 2 };
+      };
+
+      const edgePoint = (n, toward) => {
+        const { w, h } = sizeOf(n);
+        const c = centerOf(n);
+        const dx = toward.x - c.x;
+        const dy = toward.y - c.y;
+        if (!dx && !dy) return c;
+        const ax = Math.abs(dx);
+        const ay = Math.abs(dy);
+        const hw = w / 2;
+        const hh = h / 2;
+        if (ax * hh > ay * hw) {
+          const sx = dx > 0 ? hw : -hw;
+          return { x: c.x + sx, y: c.y + (dy * hw) / ax };
+        }
+        const sy = dy > 0 ? hh : -hh;
+        return { x: c.x + (dx * hh) / ay, y: c.y + sy };
+      };
+
+      const pathFor = (a, b) => {
+        const c1 = centerOf(a);
+        const c2 = centerOf(b);
+        const p1 = edgePoint(a, c2);
+        const p2 = edgePoint(b, c1);
+        const mx = (p1.x + p2.x) / 2;
+        const my = (p1.y + p2.y) / 2;
+        return {
+          d: `M${p1.x},${p1.y} Q${mx},${my - 8} ${p2.x},${p2.y}`,
+          mx,
+          my: my - 14,
+        };
+      };
+
+      const port = (n, side, t = 0.5) => {
+        const { w, h } = sizeOf(n);
+        if (side === 'r') return { x: n.x + w, y: n.y + h * t };
+        if (side === 'l') return { x: n.x, y: n.y + h * t };
+        if (side === 't') return { x: n.x + w * t, y: n.y };
+        return { x: n.x + w * t, y: n.y + h };
+      };
+
+      const orthoPath = points => {
+        if (!points.length) return '';
+        let d = `M${points[0].x},${points[0].y}`;
+        for (let i = 1; i < points.length; i += 1) {
+          d += ` L${points[i].x},${points[i].y}`;
+        }
+        return d;
+      };
+
+      const colBounds = col => {
+        const ns = visibleNodes().filter(n => n._col === col);
+        if (!ns.length) {
+          return {
+            left: ORIGIN.x + col * OVERVIEW_COL_W,
+            right: ORIGIN.x + (col + 1) * OVERVIEW_COL_W,
+          };
+        }
+        return {
+          left: Math.min(...ns.map(n => n.x)),
+          right: Math.max(...ns.map(n => n.x + sizeOf(n).w)),
+        };
+      };
+
+      const gutterX = (colA, colB, lane = 0.5) => {
+        const lo = Math.min(colA, colB);
+        const hi = Math.max(colA, colB);
+        const left = colBounds(lo).right + 8;
+        const right = colBounds(hi).left - 8;
+        if (right <= left) return left + 12;
+        return left + (right - left) * lane;
+      };
+
+      const pathForOverview = (a, b, edgeId) => {
+        if (a._row === 0 && b._row === 0) {
+          const p1 = port(a, 'r', 0.5);
+          const p2 = port(b, 'l', 0.5);
+          const my = edgeId === 'e2' ? p1.y + 10 : p1.y - 16;
+          return {
+            d: orthoPath([p1, p2]),
+            mx: (p1.x + p2.x) / 2,
+            my,
+            labelAnchor: 'middle',
+          };
+        }
+
+        const corridorY = ORIGIN.y + ROW_H * 3 + 18;
+
+        if (edgeId === 'e4') {
+          const p1 = port(a, 'b', 0.5);
+          const p2 = port(b, 't', 0.4);
+          return {
+            d: orthoPath([
+              p1,
+              { x: p1.x, y: corridorY },
+              { x: p2.x, y: corridorY },
+              p2,
+            ]),
+            mx: (p1.x + p2.x) / 2,
+            my: corridorY - 12,
+            labelAnchor: 'middle',
+          };
+        }
+
+        if (edgeId === 'e5') {
+          const p1 = port(a, 'b', 0.5);
+          const p2 = port(b, 't', 0.5);
+          return {
+            d: orthoPath([p1, p2]),
+            mx: p1.x,
+            my: (p1.y + p2.y) / 2,
+            labelAnchor: 'middle',
+          };
+        }
+
+        if (edgeId === 'e6') {
+          const p1 = port(a, 'b', 0.5);
+          const p2 = port(b, 't', 0.5);
+          return {
+            d: orthoPath([p1, p2]),
+            mx: p1.x,
+            my: (p1.y + p2.y) / 2,
+            labelAnchor: 'middle',
+          };
+        }
+
+        if (edgeId === 'e7') {
+          const gx = gutterX(0, 1, 0.22);
+          const p1 = port(a, 'r', 0.62);
+          const p2 = port(b, 'l', 0.58);
+          return {
+            d: orthoPath([p1, { x: gx, y: p1.y }, { x: gx, y: p2.y }, p2]),
+            mx: gx + 6,
+            my: (p1.y + p2.y) / 2,
+            labelAnchor: 'start',
+          };
+        }
+
+        if (edgeId === 'e8') {
+          const p1 = port(a, 'b', 0.3);
+          const p2 = port(b, 't', 0.4);
+          return {
+            d: orthoPath([p1, p2]),
+            mx: p1.x,
+            my: (p1.y + p2.y) / 2,
+            labelAnchor: 'middle',
+          };
+        }
+
+        if (edgeId === 'e9') {
+          const p1 = port(a, 'b', 0.7);
+          const p2 = port(b, 't', 0.6);
+          return {
+            d: orthoPath([p1, p2]),
+            mx: (p1.x + p2.x) / 2,
+            my: (p1.y + p2.y) / 2,
+            labelAnchor: 'middle',
+          };
+        }
+
+        if (edgeId === 'e10') {
+          const p1 = port(a, 'b', 0.5);
+          const p2 = port(b, 't', 0.5);
+          return {
+            d: orthoPath([p1, p2]),
+            mx: p1.x + 8,
+            my: (p1.y + p2.y) / 2,
+            labelAnchor: 'start',
+          };
+        }
+
+        if (edgeId === 'e11') {
+          const gx = gutterX(0, 1, 0.78);
+          const p1 = port(a, 'r', 0.4);
+          const p2 = port(b, 'l', 0.88);
+          return {
+            d: orthoPath([p1, { x: gx, y: p1.y }, { x: gx, y: p2.y }, p2]),
+            mx: (p1.x + gx) / 2,
+            my: p1.y + 16,
+            labelAnchor: 'middle',
+          };
+        }
+
+        if (edgeId === 'e12') {
+          const gx = gutterX(1, 2, 0.45);
+          const p1 = port(a, 'r', 0.88);
+          const p2 = port(b, 'l', 0.55);
+          return {
+            d: orthoPath([p1, { x: gx, y: p1.y }, { x: gx, y: p2.y }, p2]),
+            mx: gx - 6,
+            my: (p1.y + p2.y) / 2,
+            labelAnchor: 'end',
+          };
+        }
+
+        if (edgeId === 'e13') {
+          const p1 = port(a, 'b', 0.5);
+          const p2 = port(b, 't', 0.5);
+          return {
+            d: orthoPath([p1, p2]),
+            mx: p1.x,
+            my: (p1.y + p2.y) / 2,
+            labelAnchor: 'middle',
+          };
+        }
+
+        if (edgeId === 'e14') {
+          const gx1 = gutterX(2, 0, 0.15);
+          const p1 = port(a, 'l', 0.4);
+          const p2 = port(b, 't', 0.2);
+          const topY = ORIGIN.y + ROW_H * (OVERVIEW_MODULE_ROW - 0.5);
+          return {
+            d: orthoPath([
+              p1,
+              { x: gx1, y: p1.y },
+              { x: gx1, y: topY },
+              { x: p2.x, y: topY },
+              p2,
+            ]),
+            mx: gx1 - 8,
+            my: (p1.y + topY) / 2,
+            labelAnchor: 'end',
+          };
+        }
+
+        const gx = gutterX(a._col ?? 0, b._col ?? 0, 0.5);
+        const p1 = port(a, 'r', 0.5);
+        const p2 = port(b, 'l', 0.5);
+        return {
+          d: orthoPath([p1, { x: gx, y: p1.y }, { x: gx, y: p2.y }, p2]),
+          mx: gx,
+          my: (p1.y + p2.y) / 2,
+          labelAnchor: 'middle',
+        };
+      };
+
+      const pathForEdge = (a, b, edgeId) =>
+        activeView === 'overview'
+          ? pathForOverview(a, b, edgeId)
+          : pathFor(a, b);
+
+      const labelBgSize = text => ({
+        w: Math.max(44, text.length * 6.2 + 14),
+        h: 16,
+      });
+
+      const labelBoxHitsNode = (x, y, w, h, pad = 6) =>
+        visibleNodes().some(n => {
+          const nx = n.x - pad;
+          const ny = n.y - pad;
+          const nw = sizeOf(n).w + pad * 2;
+          const nh = sizeOf(n).h + pad * 2;
+          return x < nx + nw && x + w > nx && y < ny + nh && y + h > ny;
+        });
+
+      const placeEdgeLabel = (mx, my, text, anchor = 'middle') => {
+        const { w: lw, h: lh } = labelBgSize(text);
+        const offsets =
+          anchor === 'start'
+            ? [
+                [8, 0],
+                [8, -18],
+                [8, 18],
+                [8, -34],
+                [8, 34],
+              ]
+            : anchor === 'end'
+              ? [
+                  [-8, 0],
+                  [-8, -18],
+                  [-8, 18],
+                  [-8, -34],
+                  [-8, 34],
+                ]
+              : [
+                  [0, 0],
+                  [0, -18],
+                  [0, 18],
+                  [14, 0],
+                  [-14, 0],
+                  [0, -34],
+                  [0, 34],
+                ];
+
+        for (const [dx, dy] of offsets) {
+          const tx =
+            anchor === 'start'
+              ? mx + dx
+              : anchor === 'end'
+                ? mx - lw + dx
+                : mx - lw / 2 + dx;
+          const ty = my - lh / 2 + dy;
+          if (!labelBoxHitsNode(tx, ty, lw, lh)) {
+            const textX =
+              anchor === 'start'
+                ? tx + 7
+                : anchor === 'end'
+                  ? tx + lw - 7
+                  : tx + lw / 2;
+            return { bgX: tx, bgY: ty, textX, textY: ty + lh - 4, anchor };
+          }
+        }
+
+        const tx =
+          anchor === 'start'
+            ? mx + 8
+            : anchor === 'end'
+              ? mx - lw - 8
+              : mx - lw / 2;
+        const ty = my - lh / 2;
+        const textX =
+          anchor === 'start'
+            ? tx + 7
+            : anchor === 'end'
+              ? tx + lw - 7
+              : tx + lw / 2;
+        return { bgX: tx, bgY: ty, textX, textY: ty + lh - 4, anchor };
+      };
+
+      const applyView = () => {
+        world.setAttribute(
+          'transform',
+          `translate(${view.x},${view.y}) scale(${view.k})`
+        );
+      };
+
+      const markerFor = (style, sel) => {
+        if (sel) return 'url(#arrow-sel)';
+        if (style === 'loop') return 'url(#arrow-loop)';
+        if (style === 'rule') return 'url(#arrow-rule)';
+        return 'url(#arrow)';
+      };
+
+      const renderLanes = () => {
+        gLanes.innerHTML = '';
+
+        if (activeView === 'overview') {
+          const moduleTop = ORIGIN.y + ROW_H * OVERVIEW_MODULE_ROW - 32;
+          const moduleBottom =
+            ORIGIN.y + ROW_H * (OVERVIEW_MODULE_ROW + 5) + NH + 32;
+          const lanes = [
+            { col: 0, label: 'JOURNEY', cls: 'lane-journey' },
+            { col: 1, label: 'STUDIO', cls: 'lane-studio' },
+            { col: 2, label: 'PULSE', cls: 'lane-pulse' },
+          ];
+          lanes.forEach(({ col, label, cls }) => {
+            const band = document.createElementNS(
+              'http://www.w3.org/2000/svg',
+              'text'
+            );
+            band.setAttribute('class', 'lane-label');
+            band.setAttribute('x', String(ORIGIN.x + col * OVERVIEW_COL_W + 6));
+            band.setAttribute('y', String(moduleTop - 8));
+            band.textContent = label;
+            gLanes.appendChild(band);
+
+            const rect = document.createElementNS(
+              'http://www.w3.org/2000/svg',
+              'rect'
+            );
+            rect.setAttribute('class', `lane-bg ${cls}`);
+            rect.setAttribute(
+              'x',
+              String(ORIGIN.x + col * OVERVIEW_COL_W - 10)
+            );
+            rect.setAttribute('y', String(moduleTop));
+            rect.setAttribute('width', String(OVERVIEW_COL_W - 12));
+            rect.setAttribute('height', String(moduleBottom - moduleTop));
+            rect.setAttribute('rx', '12');
+            gLanes.appendChild(rect);
+          });
+
+          const cap = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            'text'
+          );
+          cap.setAttribute('class', 'loop-caption');
+          cap.setAttribute('x', String(ORIGIN.x));
+          cap.setAttribute('y', String(ORIGIN.y + ROW_H + 54));
+          cap.textContent = 'Vòng: plan → build → measure → re-plan';
+          gLanes.appendChild(cap);
+          return;
+        }
+
+        const list = visibleNodes();
+        if (!list.length) return;
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+        list.forEach(n => {
+          const { w, h } = sizeOf(n);
+          minX = Math.min(minX, n.x);
+          minY = Math.min(minY, n.y);
+          maxX = Math.max(maxX, n.x + w);
+          maxY = Math.max(maxY, n.y + h);
+        });
+        const pad = 20;
+        const rect = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'rect'
+        );
+        rect.setAttribute('class', 'lane-bg lane-journey');
+        rect.setAttribute('x', String(minX - pad));
+        rect.setAttribute('y', String(minY - pad));
+        rect.setAttribute('width', String(maxX - minX + pad * 2));
+        rect.setAttribute('height', String(maxY - minY + pad * 2));
+        rect.setAttribute('rx', '16');
+        gLanes.appendChild(rect);
+      };
+
+      const renderEdges = () => {
+        gEdges.innerHTML = '';
+        visibleEdges().forEach(e => {
+          const a = nodeById(e.from);
+          const b = nodeById(e.to);
+          const { d } = pathForEdge(a, b, e.id);
+          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          const hit = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            'path'
+          );
+          hit.setAttribute('d', d);
+          hit.setAttribute('fill', 'none');
+          hit.setAttribute('stroke', 'transparent');
+          hit.setAttribute('stroke-width', '14');
+          hit.style.cursor = 'pointer';
+          const path = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            'path'
+          );
+          const sel = selected?.type === 'edge' && selected.id === e.id;
+          path.setAttribute('d', d);
+          path.setAttribute(
+            'class',
+            `edge ${e.style || 'solid'}${sel ? ' selected' : ''}`
+          );
+          path.setAttribute('marker-end', markerFor(e.style, sel));
+          const pick = ev => {
+            ev.stopPropagation();
+            select({ type: 'edge', id: e.id });
+          };
+          hit.addEventListener('pointerdown', pick);
+          path.addEventListener('pointerdown', pick);
+          g.appendChild(hit);
+          g.appendChild(path);
+          gEdges.appendChild(g);
+        });
+      };
+
+      const renderEdgeLabels = () => {
+        gEdgeLabels.innerHTML = '';
+        visibleEdges().forEach(e => {
+          if (!e.label) return;
+          const a = nodeById(e.from);
+          const b = nodeById(e.to);
+          const { mx, my, labelAnchor = 'middle' } = pathForEdge(a, b, e.id);
+          const { w: lw, h: lh } = labelBgSize(e.label);
+          const placed = placeEdgeLabel(mx, my, e.label, labelAnchor);
+          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          const bg = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            'rect'
+          );
+          bg.setAttribute('class', 'edge-label-bg');
+          bg.setAttribute('x', String(placed.bgX));
+          bg.setAttribute('y', String(placed.bgY));
+          bg.setAttribute('width', String(lw));
+          bg.setAttribute('height', String(lh));
+          bg.setAttribute('rx', '4');
+          const lab = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            'text'
+          );
+          lab.setAttribute('class', 'edge-label');
+          lab.setAttribute('x', String(placed.textX));
+          lab.setAttribute('y', String(placed.textY));
+          lab.setAttribute('text-anchor', placed.anchor);
+          lab.textContent = e.label;
+          g.appendChild(bg);
+          g.appendChild(lab);
+          gEdgeLabels.appendChild(g);
+        });
+      };
+
+      const renderNodes = () => {
+        gNodes.innerHTML = '';
+        visibleNodes().forEach(n => {
+          const { w, h } = sizeOf(n);
+          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          g.setAttribute('class', `node ${n.group}`);
+          g.setAttribute('transform', `translate(${n.x},${n.y})`);
+          if (selected?.type === 'node' && selected.id === n.id)
+            g.classList.add('selected');
+          const body = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            'rect'
+          );
+          body.setAttribute('class', 'body');
+          body.setAttribute('width', String(w));
+          body.setAttribute('height', String(h));
+          body.setAttribute('rx', '10');
+          const title = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            'text'
+          );
+          title.setAttribute('class', 'title');
+          title.setAttribute('x', '12');
+          title.setAttribute('y', n.sub ? '20' : String(h / 2 + 4));
+          title.textContent = n.label;
+          g.appendChild(body);
+          g.appendChild(title);
+          if (n.sub) {
+            const sub = document.createElementNS(
+              'http://www.w3.org/2000/svg',
+              'text'
+            );
+            sub.setAttribute('class', 'sub');
+            const chunks = n.sub.includes(', ')
+              ? n.sub.split(', ')
+              : n.sub.includes(' · ')
+                ? n.sub.split(' · ')
+                : [n.sub];
+            if (chunks.length >= 4) {
+              sub.setAttribute('x', '12');
+              sub.setAttribute('y', '36');
+              const line1 = document.createElementNS(
+                'http://www.w3.org/2000/svg',
+                'tspan'
+              );
+              line1.setAttribute('x', '12');
+              line1.textContent = chunks.slice(0, 2).join(', ');
+              const line2 = document.createElementNS(
+                'http://www.w3.org/2000/svg',
+                'tspan'
+              );
+              line2.setAttribute('x', '12');
+              line2.setAttribute('dy', '13');
+              line2.textContent = chunks.slice(2).join(', ');
+              sub.appendChild(line1);
+              sub.appendChild(line2);
+            } else {
+              sub.setAttribute('x', '12');
+              sub.setAttribute('y', '38');
+              sub.textContent = n.sub;
+            }
+            g.appendChild(sub);
+          }
+          g.addEventListener('pointerdown', ev => {
+            ev.stopPropagation();
+            select({ type: 'node', id: n.id });
+          });
+          gNodes.appendChild(g);
+        });
+      };
+
+      const render = () => {
+        applyLayout(activeView);
+        renderLanes();
+        renderEdges();
+        renderNodes();
+        renderEdgeLabels();
+        applyView();
+        const meta = VIEWS.find(v => v.id === activeView);
+        document.getElementById('viewNote').textContent = meta?.note || '';
+      };
+
+      const groupTag = group => {
+        const map = {
+          journey: ['JOURNEY', 'var(--journey-soft)', 'var(--journey)'],
+          studio: ['STUDIO', 'var(--studio-soft)', 'var(--studio)'],
+          pulse: ['PULSE', 'var(--pulse-soft)', 'var(--pulse)'],
+          exchange: ['EXCHANGE', 'var(--exchange-soft)', 'var(--exchange)'],
+          entity: ['ENTITY', 'var(--entity-soft)', 'var(--entity)'],
+          rule: ['RULE', 'var(--rule-soft)', 'var(--rule)'],
+          seed: ['SEED', 'var(--seed-soft)', 'var(--seed)'],
+          kind: ['KIND', 'var(--kind-soft)', 'var(--kind)'],
+          meta: ['META', '#f1efe9', '#6b6578'],
+        };
+        return map[group] || map.meta;
+      };
+
+      const bindPanel = () => {
+        const body = document.getElementById('panelBody');
+        body.querySelectorAll('[data-key]').forEach(el => {
+          el.addEventListener('click', () =>
+            showKey(el.getAttribute('data-key'))
+          );
+        });
+        body.querySelectorAll('[data-node]').forEach(el => {
+          el.addEventListener('click', () =>
+            select({ type: 'node', id: el.getAttribute('data-node') })
+          );
+        });
+      };
+
+      const showHome = () => {
+        document.getElementById('panelEyebrow').textContent = 'ReXeR workflow';
+        document.getElementById('panelTitle').textContent = 'Đọc theo 4 tab';
+        document.getElementById('panelBody').innerHTML = `
+          <p class="def">Mỗi tab một chuyện. Không chồng hết lên một canvas.</p>
+          <ol style="margin:0 0 12px;padding-left:18px;font-size:12px;color:var(--ink-2);line-height:1.55">
+            <li><b>Vòng lặp</b> — Journey / Studio / Pulse + Exchange</li>
+            <li><b>Campaign ↔ Journey</b> — fork copy, subject, jExpFor, facts</li>
+            <li><b>Node kinds</b> — từ vựng graph</li>
+            <li><b>Ví dụ path</b> — Product Launch & Gift Season</li>
+          </ol>
+          <h3>Keyword hay nhầm</h3>
+          <div class="keys">
+            ${[
+              'Campaign',
+              'Journey',
+              'Experience',
+              'Blueprint',
+              'Copy',
+              'Fork',
+              'jExpFor',
+              'R2',
+              'R5',
+              'Exchange',
+            ]
+              .map(k => `<button type="button" data-key="${k}">${k}</button>`)
+              .join('')}
+          </div>
+        `;
+        bindPanel();
+      };
+
+      const showKey = key => {
+        const g = GLOSSARY[key];
+        if (!g) return;
+        document.getElementById('panelEyebrow').textContent = 'Keyword';
+        document.getElementById('panelTitle').textContent = key;
+        const related = NODES.filter(
+          n => n.key === key || (n.def && n.def.includes(key))
+        ).slice(0, 6);
+        document.getElementById('panelBody').innerHTML = `
+          <p class="def">${g.d}</p>
+          ${g.not && g.not !== '—' ? `<p class="not"><b>Không phải:</b> ${g.not}</p>` : ''}
+          <h3>Liên quan</h3>
+          <ul>${
+            related
+              .map(n => `<li data-node="${n.id}">${n.label}</li>`)
+              .join('') ||
+            '<li class="empty" style="border:none;cursor:default">—</li>'
+          }</ul>
+        `;
+        bindPanel();
+      };
+
+      const showNode = n => {
+        const [lab, bg, fg] = groupTag(n.group);
+        document.getElementById('panelEyebrow').innerHTML =
+          `<span class="tag" style="background:${bg};color:${fg}">${lab}</span>`;
+        document.getElementById('panelTitle').textContent = n.label;
+        const g = n.key && GLOSSARY[n.key];
+        const ins = visibleEdges().filter(e => e.to === n.id);
+        const outs = visibleEdges().filter(e => e.from === n.id);
+        document.getElementById('panelBody').innerHTML = `
+          ${n.sub ? `<p class="empty" style="margin:0 0 8px">${n.sub}</p>` : ''}
+          <p class="def">${n.def}</p>
+          ${g ? `<p class="not"><b>${n.key}:</b> ${g.d}${g.not && g.not !== '—' ? `<br><b>Không phải:</b> ${g.not}` : ''}</p>` : ''}
+          ${n.key ? `<div class="keys"><button type="button" data-key="${n.key}">Keyword ${n.key}</button></div>` : ''}
+          <h3>Vào</h3>
+          <ul>${ins.map(e => `<li>${nodeById(e.from).label}${e.label ? ` · ${e.label}` : ''}</li>`).join('') || '<li class="empty" style="border:none;cursor:default">—</li>'}</ul>
+          <h3>Ra</h3>
+          <ul>${outs.map(e => `<li>${nodeById(e.to).label}${e.label ? ` · ${e.label}` : ''}</li>`).join('') || '<li class="empty" style="border:none;cursor:default">—</li>'}</ul>
+        `;
+        bindPanel();
+      };
+
+      const showEdge = e => {
+        const a = nodeById(e.from);
+        const b = nodeById(e.to);
+        document.getElementById('panelEyebrow').textContent = 'Quan hệ';
+        document.getElementById('panelTitle').textContent =
+          e.label || `${a.label} → ${b.label}`;
+        const g = e.key && GLOSSARY[e.key];
+        document.getElementById('panelBody').innerHTML = `
+          <p class="def">${a.label} → ${b.label}</p>
+          ${g ? `<p class="not"><b>${e.key}:</b> ${g.d}</p>` : ''}
+          ${e.key ? `<div class="keys"><button type="button" data-key="${e.key}">${e.key}</button></div>` : ''}
+          <h3>Endpoints</h3>
+          <ul>
+            <li data-node="${a.id}">← ${a.label}</li>
+            <li data-node="${b.id}">→ ${b.label}</li>
+          </ul>
+        `;
+        bindPanel();
+      };
+
+      const select = sel => {
+        selected = sel;
+        render();
+        if (!sel) return showHome();
+        if (sel.type === 'node') showNode(nodeById(sel.id));
+        else showEdge(edgeById(sel.id));
+      };
+
+      const fitView = () => {
+        applyLayout(activeView);
+        const list = visibleNodes();
+        if (!list.length) return;
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+        list.forEach(n => {
+          const { w, h } = sizeOf(n);
+          minX = Math.min(minX, n.x);
+          minY = Math.min(minY, n.y);
+          maxX = Math.max(maxX, n.x + w);
+          maxY = Math.max(maxY, n.y + h);
+        });
+        const pad = 64;
+        const rect = stage.getBoundingClientRect();
+        const bw = maxX - minX + pad * 2;
+        const bh = maxY - minY + pad * 2;
+        const k = Math.min(
+          1.15,
+          Math.max(0.55, Math.min(rect.width / bw, rect.height / bh) * 0.88)
+        );
+        view.k = k;
+        view.x = (rect.width - bw * k) / 2 - (minX - pad) * k;
+        view.y = (rect.height - bh * k) / 2 - (minY - pad) * k;
+        applyView();
+      };
+
+      const setView = id => {
+        activeView = id;
+        selected = null;
+        document.querySelectorAll('.views button').forEach(b => {
+          b.classList.toggle('on', b.dataset.view === id);
+        });
+        render();
+        showHome();
+        requestAnimationFrame(fitView);
+      };
+
+      /* Pan + zoom only — no node drag */
+      const onMove = ev => {
+        if (!pan) return;
+        view.x = pan.ox + (ev.clientX - pan.sx);
+        view.y = pan.oy + (ev.clientY - pan.sy);
+        applyView();
+      };
+      const endPan = () => {
+        if (!pan) return;
+        pan = null;
+        stage.classList.remove('panning');
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', endPan);
+      };
+
+      stage.addEventListener('pointerdown', ev => {
+        pan = { sx: ev.clientX, sy: ev.clientY, ox: view.x, oy: view.y };
+        stage.classList.add('panning');
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', endPan);
+        select(null);
+      });
+
+      stage.addEventListener(
+        'wheel',
+        ev => {
+          ev.preventDefault();
+          const rect = stage.getBoundingClientRect();
+          const mx = ev.clientX - rect.left;
+          const my = ev.clientY - rect.top;
+          const wx = (mx - view.x) / view.k;
+          const wy = (my - view.y) / view.k;
+          const next = Math.min(
+            2,
+            Math.max(0.4, view.k * (ev.deltaY < 0 ? 1.08 : 1 / 1.08))
+          );
+          view.k = next;
+          view.x = mx - wx * view.k;
+          view.y = my - wy * view.k;
+          applyView();
+        },
+        { passive: false }
+      );
+
+      document.getElementById('btnFit').addEventListener('click', fitView);
+      document.getElementById('btnReset').addEventListener('click', () => {
+        view = { x: 40, y: 30, k: 1 };
+        fitView();
+      });
+
+      const viewsEl = document.getElementById('views');
+      VIEWS.forEach(v => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.dataset.view = v.id;
+        b.textContent = v.label;
+        b.addEventListener('click', () => setView(v.id));
+        viewsEl.appendChild(b);
+      });
+
+      setView('overview');
+      window.addEventListener('resize', () => applyView());
+    </script>
+  </body>
+</html>

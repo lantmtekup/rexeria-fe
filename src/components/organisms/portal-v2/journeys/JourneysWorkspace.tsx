@@ -158,20 +158,28 @@ export const JourneysWorkspace = ({
     [activeId, journeys]
   );
 
-  /**
-   * Save writes the edited graph back over the record it came from — and only
-   * that record. A copy's edit never reaches its blueprint, and a blueprint's
-   * never reaches the copies already forked from it; the toast says which.
-   */
-  const handleSaveEdit = useCallback((next: Journey) => {
+  /** Quiet write-back used by autosave and discard-restore. No API yet. */
+  const handlePersistEdit = useCallback((next: Journey) => {
     setJourneys(prev => prev.map(j => (j.id === next.id ? next : j)));
-    setOverlay({ kind: 'detail', id: next.id });
-    toast.success(
-      next.template
-        ? 'Blueprint saved — existing campaign copies are untouched'
-        : `Saved to ${journeyHome(next)}'s copy — the blueprint is untouched`
-    );
   }, []);
+
+  /**
+   * Explicit Save — still no write API, so P0 dumps JSON (Brand/Product),
+   * then persists and closes. Copy never touches blueprint, vice versa.
+   */
+  const handleSaveEdit = useCallback(
+    (next: Journey) => {
+      window.alert(JSON.stringify(next, null, 2));
+      handlePersistEdit(next);
+      setOverlay({ kind: 'detail', id: next.id });
+      toast.success(
+        next.template
+          ? 'Blueprint saved — existing campaign copies are untouched'
+          : `Saved to ${journeyHome(next)}'s copy — the blueprint is untouched`
+      );
+    },
+    [handlePersistEdit]
+  );
 
   const handleConfirmDelete = useCallback(() => {
     if (!activeId) return;
@@ -289,6 +297,7 @@ export const JourneysWorkspace = ({
           journey={active}
           journeys={journeys}
           onCancel={() => setOverlay({ kind: 'detail', id: active.id })}
+          onPersist={handlePersistEdit}
           onSave={handleSaveEdit}
         />
       ) : null}

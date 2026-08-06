@@ -1,145 +1,158 @@
 'use client';
 
-import { ArrowLeft, Check, Pencil } from 'lucide-react';
+import { ArrowLeft, Check, Pencil, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
+import { cn } from '@/lib/cn';
 import {
-  ProgressBar,
+  HealthBadge,
   StagePill,
 } from '@/components/molecules/portal-v2/campaigns-form';
-import { EmptyState } from '@/components/molecules/portal-v2/product-form';
 import { AddItemModal } from '@/components/organisms/portal-v2/campaigns/AddItemModal';
-import { CampaignBriefAside } from '@/components/organisms/portal-v2/campaigns/CampaignBriefAside';
 import { CampaignItemModal } from '@/components/organisms/portal-v2/campaigns/CampaignItemModal';
-import { CampaignWorkTable } from '@/components/organisms/portal-v2/campaigns/CampaignWorkTable';
+import { RouteJourneyModal } from '@/components/organisms/portal-v2/campaigns/RouteJourneyModal';
+import { BuildPhase } from '@/components/organisms/portal-v2/campaigns/detail/BuildPhase';
+import { LearnPhase } from '@/components/organisms/portal-v2/campaigns/detail/LearnPhase';
+import { PhaseStrip } from '@/components/organisms/portal-v2/campaigns/detail/PhaseStrip';
+import { PlanPhase } from '@/components/organisms/portal-v2/campaigns/detail/PlanPhase';
+import { RunPhase } from '@/components/organisms/portal-v2/campaigns/detail/RunPhase';
 import { CAMPAIGN_TYPES } from '@/lib/portal-v2/campaigns/constants';
 import {
+  applyDraft,
   blankItem,
-  campExpCount,
-  campProgress,
   deriveStage,
   fmtRange,
-  impliedStatus,
+  journeyOriginOf,
   subjectName,
+  subjectRef,
   syncItemStage,
-  todayString,
+  toDraft,
 } from '@/lib/portal-v2/campaigns/helpers';
-import { applyDraft, toDraft } from '@/lib/portal-v2/campaigns/mapCampaign';
+import {
+  subjectLane,
+  subjectLensFromLane,
+  type CampaignSubjectLens,
+} from '@/lib/portal-v2/campaigns/subjectLane';
+import { JourneyEditor } from '@/components/organisms/portal-v2/journeys/editor/JourneyEditor';
+import {
+  blueprintJourneys,
+  journeyForCampaign,
+} from '@/lib/portal-v2/campaigns/journeyLink';
+import {
+  experienceCopyId,
+  forkExperience,
+} from '@/lib/portal-v2/campaigns/mock';
+import { campPhase } from '@/lib/portal-v2/campaigns/phases';
+import { campReadiness } from '@/lib/portal-v2/campaigns/readiness';
 import type {
   CampaignDraft,
+  CampaignExperience,
+  CampaignGap,
   CampaignItem,
+  CampaignPhase,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
-import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
-import { updateCampaign } from '@/services/portal-v2/campaignBoard';
-import { fetchCampaignProducts } from '@/services/portal-v2/campaignBoard';
-import { fetchExperienceLibrary } from '@/services/portal-v2/experienceLibrary';
+import { campHealth, campVerdict } from '@/lib/portal-v2/campaigns/verdict';
+import type { Journey } from '@/lib/portal-v2/journeys/types';
 
 type CampaignDetailProps = {
   campaign: CampaignView;
-  /** True when the board fell back to the brand-scoped ads endpoint. */
-  degraded: boolean;
+  journeys: Journey[];
+  experiences: CampaignExperience[];
+  products: { id: string; name: string }[];
+  productNames: Record<string, string>;
+  today: string;
+  onChange: (next: CampaignView) => void;
+  onBack: () => void;
+  onDelete: () => void;
+  onRouteJourney: (blueprintId: string) => void;
+  onCarryRoute: () => void;
+  onEnsureExperiences: (copies: CampaignExperience[]) => void;
+  onPatchExperience: (id: string, patch: Partial<CampaignExperience>) => void;
+  onPromoteJourney: () => void;
+  onJourneyChange: (next: Journey) => void;
 };
 
-const LIST_HREF = '/portal-v2/campaigns';
-
 /**
- * One campaign: its brief on the right, the work on the left.
+ * One campaign, across its whole life: Plan, Build, Run, Learn.
  *
- * Every mutation on this screen — brief edits, a subject's stage, attaching an
- * experience — goes through one PATCH so `notes` is always written as a whole
- * (and always merged over `notesRest`, which is how `/portal/marketing` keeps
- * its AI-Insights keys).
+ * The four phases are views on the same object, not four screens — the strip
+ * changes what is emphasised, never what is true. Which phase opens first is
+ * derived from where the work actually is, so a live campaign lands on its
+ * numbers and a draft lands on its gate.
  */
-export const CampaignDetail = ({ campaign, degraded }: CampaignDetailProps) => {
+export const CampaignDetail = ({
+  campaign,
+  journeys,
+  experiences,
+  products,
+  productNames,
+  today,
+  onChange,
+  onBack,
+  onDelete,
+  onRouteJourney,
+  onCarryRoute,
+  onEnsureExperiences,
+  onPatchExperience,
+  onPromoteJourney,
+  onJourneyChange,
+}: CampaignDetailProps) => {
   const t = useTranslations('portalV2.campaigns');
 
-  const [saved, setSaved] = useState<CampaignView>(campaign);
+  const derivedPhase = campPhase(campaign, experiences, journeys);
+  const [phase, setPhase] = useState<CampaignPhase>(derivedPhase);
+
   const [draft, setDraft] = useState<CampaignDraft>(() => toDraft(campaign));
   const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  const [productNames, setProductNames] = useState<Record<string, string>>({});
-  const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
-  const [experiences, setExperiences] = useState<ExperienceView[]>([]);
-  const [experiencesLoading, setExperiencesLoading] = useState(true);
-
   const [itemIndex, setItemIndex] = useState<number | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [routeOpen, setRouteOpen] = useState(false);
+  const [journeyLens, setJourneyLens] = useState<{
+    itemIndex: number;
+    focusNodeId: string | null;
+  } | null>(null);
+  /** Full route editor after leaving subject lens (demo `jedlens:edit`). */
+  const [editingRoute, setEditingRoute] = useState(false);
 
-  /* The catalogue names the subject rows, and the library names the chips. */
-  useEffect(() => {
-    let cancelled = false;
-    void fetchCampaignProducts().then(res => {
-      if (cancelled) return;
-      setProducts(res.products);
-      setProductNames(
-        Object.fromEntries(res.products.map(p => [p.id, p.name]))
-      );
-    });
-    void fetchExperienceLibrary()
-      .then(res => {
-        if (!cancelled) setExperiences(res.items);
-      })
-      .finally(() => {
-        if (!cancelled) setExperiencesLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const stage = deriveStage(campaign);
+  const readiness = useMemo(
+    () => campReadiness(campaign, experiences, journeys),
+    [campaign, experiences, journeys]
+  );
+  const verdict = useMemo(
+    () => campVerdict(campaign, experiences),
+    [campaign, experiences]
+  );
+  const health = useMemo(
+    () => campHealth(campaign, experiences, today, journeys),
+    [campaign, experiences, today, journeys]
+  );
 
-  const stage = deriveStage(saved);
-  const progress = campProgress(saved);
-  const today = useMemo(todayString, []);
+  const journey = journeyForCampaign(journeys, campaign);
+  const journeyOrigin = journeyOriginOf(campaign);
+  const blueprint = journeyOrigin
+    ? (journeys.find(j => j.id === journeyOrigin) ?? null)
+    : null;
 
   const attachedProductIds = new Set(
-    draft.items.filter(i => i.kind === 'product').map(i => i.productId)
+    campaign.items.filter(i => i.kind === 'product').map(i => i.productId)
   );
   const pickableProducts = products.filter(p => !attachedProductIds.has(p.id));
 
-  /**
-   * The single write path. Items are run through `syncItemStage` first, and a
-   * live subject promotes the campaign — the derived half of the state machine
-   * only ever materialises here, never on read.
-   */
-  const persist = async (next: CampaignDraft, successMessage: string) => {
-    const items = next.items.map(syncItemStage);
-    const implied = impliedStatus({ ...saved, items, status: next.status });
-    const payload: CampaignDraft = {
-      ...next,
-      items,
-      status: implied ?? next.status,
-    };
-
-    setSaving(true);
-    try {
-      const updated = await updateCampaign(
-        saved.source,
-        saved.id,
-        payload,
-        saved.notesRest
-      );
-      /* The ads endpoint echoes a thinner row than `/campaigns` — fold the
-         payload back in so the screen never regresses to fewer fields. */
-      const merged = applyDraft(updated, payload);
-      setSaved(merged);
-      setDraft(toDraft(merged));
-      toast.success(successMessage);
-      return true;
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('toastSaveFailed'));
-      return false;
-    } finally {
-      setSaving(false);
-    }
+  /** Fold the campaign forward — items resync, and a live subject promotes it. */
+  const commit = (next: CampaignDraft, message: string) => {
+    const updated = applyDraft(campaign, next);
+    onChange(updated);
+    setDraft(toDraft(updated));
+    toast.success(message);
+    return updated;
   };
 
-  const handleSaveBrief = async () => {
+  const handleSaveBrief = () => {
     if (!draft.name.trim()) {
       toast.error(t('errNameRequired'));
       return;
@@ -148,175 +161,331 @@ export const CampaignDetail = ({ campaign, degraded }: CampaignDetailProps) => {
       toast.error(t('errEndBeforeStart'));
       return;
     }
-    const ok = await persist(draft, t('toastSaved', { name: draft.name }));
-    if (ok) setEditing(false);
-  };
-
-  const handleCancel = () => {
-    setDraft(toDraft(saved));
+    commit(draft, t('toastSaved', { name: draft.name.trim() }));
     setEditing(false);
   };
 
-  const handleSaveItem = async (item: CampaignItem) => {
-    if (itemIndex === null) return;
-    const items = draft.items.map((current, i) =>
+  const handleCancelEdit = () => {
+    setDraft(toDraft(campaign));
+    setEditing(false);
+  };
+
+  const handleSaveItem = (item: CampaignItem) => {
+    const items = campaign.items.map((current, i) =>
       i === itemIndex ? item : current
     );
-    const ok = await persist({ ...draft, items }, t('toastItemSaved'));
-    if (ok) setItemIndex(null);
+    commit({ ...toDraft(campaign), items }, t('toastItemSaved'));
+    setItemIndex(null);
   };
 
-  const handleDeleteItem = async (index: number) => {
-    const items = draft.items.filter((_, i) => i !== index);
-    const ok = await persist({ ...draft, items }, t('toastItemRemoved'));
-    if (ok) setItemIndex(null);
+  const handleDeleteItem = (index: number) => {
+    const items = campaign.items.filter((_, i) => i !== index);
+    commit({ ...toDraft(campaign), items }, t('toastItemRemoved'));
+    setItemIndex(null);
   };
 
-  const handleAddProduct = async (productId: string) => {
-    const item = {
-      ...blankItem(draft.items, 'product', draft.endDate),
-      productId,
-      owner: draft.owner,
-    };
-    const ok = await persist(
-      { ...draft, items: [...draft.items, item] },
+  const handleAddItem = (kind: 'product' | 'topic', value: string): void => {
+    const base = blankItem(campaign.items, kind, campaign.endDate);
+    const item: CampaignItem =
+      kind === 'product'
+        ? { ...base, productId: value, owner: campaign.owner }
+        : { ...base, name: value, owner: campaign.owner };
+
+    commit(
+      { ...toDraft(campaign), items: [...campaign.items, item] },
       t('toastItemAdded')
     );
-    if (ok) setAddOpen(false);
+    setAddOpen(false);
   };
 
-  const handleAddTopic = async (name: string) => {
-    const item = {
-      ...blankItem(draft.items, 'topic', draft.endDate),
-      name,
-      owner: draft.owner,
-    };
-    const ok = await persist(
-      { ...draft, items: [...draft.items, item] },
-      t('toastItemAdded')
+  /**
+   * Forking a master onto a subject. The copy id is derived, so the modal can
+   * attach it immediately and the workspace only has to make the record exist.
+   */
+  const handleAttachMaster = (item: CampaignItem) => (masterId: string) => {
+    const ref = subjectRef(item);
+    const copyId = experienceCopyId(masterId, campaign.id, ref);
+    const master = experiences.find(e => e.id === masterId);
+
+    if (master && !experiences.some(e => e.id === copyId)) {
+      onEnsureExperiences([
+        forkExperience(
+          master,
+          campaign.id,
+          campaign.name,
+          ref,
+          subjectName(item, productNames) || ref
+        ),
+      ]);
+    }
+    return copyId;
+  };
+
+  const attachMasterToItem = (
+    item: CampaignItem,
+    masterId: string
+  ): CampaignItem => {
+    const copyId = handleAttachMaster(item)(masterId);
+    if (item.expIds.includes(copyId)) return item;
+    return syncItemStage({ ...item, expIds: [...item.expIds, copyId] });
+  };
+
+  const handleAdaptExperience = (experienceId: string) => {
+    onPatchExperience(experienceId, { adapted: true });
+    toast.success(t('journeyLensAdapted'));
+  };
+
+  const handleOpenSubjectJourney = (index: number, nodeId?: string) => {
+    if (!journey) {
+      toast.error(t('journeyLensNoRoute'));
+      setPhase('plan');
+      setRouteOpen(true);
+      return;
+    }
+    setEditingRoute(false);
+    setJourneyLens({ itemIndex: index, focusNodeId: nodeId ?? null });
+  };
+
+  const handleEditJourneyFromLens = () => {
+    setJourneyLens(null);
+    setEditingRoute(true);
+    toast.warning(t('journeyLensEditBlast', { count: campaign.items.length }));
+  };
+
+  const handleCloseJourneyEditor = () => {
+    setJourneyLens(null);
+    setEditingRoute(false);
+  };
+
+  const handleLensNodeActivate = (nodeId: string) => {
+    if (!journeyLens) return;
+    const item = campaign.items[journeyLens.itemIndex];
+    if (!item) return;
+
+    const lane = subjectLane(campaign, item, journeys, experiences);
+    const card = lane.cards.find(c => c.node.id === nodeId);
+    if (!card || card.node.kind !== 'experience' || !card.node.x) return;
+
+    if (card.fit === 'open') {
+      const next = attachMasterToItem(item, card.node.x);
+      const items = campaign.items.map((current, i) =>
+        i === journeyLens.itemIndex ? next : current
+      );
+      commit({ ...toDraft(campaign), items }, t('journeyLensBuilt'));
+      return;
+    }
+
+    if (card.fit === 'shared') {
+      const next = attachMasterToItem(item, card.node.x);
+      const items = campaign.items.map((current, i) =>
+        i === journeyLens.itemIndex ? next : current
+      );
+      commit({ ...toDraft(campaign), items }, t('journeyLensForked'));
+      return;
+    }
+
+    if (card.fit === 'edit' && card.mine) {
+      handleAdaptExperience(card.mine.id);
+      return;
+    }
+
+    if (card.mine) {
+      setItemIndex(journeyLens.itemIndex);
+    }
+  };
+
+  const lensItem =
+    journeyLens === null
+      ? null
+      : (campaign.items[journeyLens.itemIndex] ?? null);
+
+  const subjectLens: CampaignSubjectLens | null = useMemo(() => {
+    if (!lensItem) return null;
+    const lane = subjectLane(campaign, lensItem, journeys, experiences);
+    return subjectLensFromLane(
+      subjectName(lensItem, productNames) || t('untitledSubject'),
+      lane
     );
-    if (ok) setAddOpen(false);
+  }, [campaign, lensItem, journeys, experiences, productNames, t]);
+
+  /** A gap in the plan gate knows which screen closes it. */
+  const handleFixGap = (gap: CampaignGap) => {
+    if (gap.fix.kind === 'brief') {
+      setPhase('plan');
+      setEditing(true);
+      return;
+    }
+    if (gap.fix.kind === 'journey') {
+      setRouteOpen(true);
+      return;
+    }
+    if (gap.fix.kind === 'addItem') {
+      setPhase('build');
+      setAddOpen(true);
+      return;
+    }
+    setPhase('build');
+    setItemIndex(gap.fix.index);
   };
 
-  const activeItem = itemIndex === null ? null : draft.items[itemIndex];
+  const activeItem = itemIndex === null ? null : campaign.items[itemIndex];
 
   return (
     <div className='flex min-h-0 flex-col'>
-      <div className='border-b border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
-        <div className='mx-auto flex w-full flex-wrap items-end justify-between gap-4 px-5 pt-6 pb-4 md:px-8'>
-          <div className='min-w-0'>
-            <h1 className='truncate font-[family-name:var(--pv2-disp)] text-[1.625rem] font-bold tracking-[-0.03em] text-[var(--pv2-ink)] md:text-[1.75rem]'>
-              {saved.name}
-            </h1>
-            <p className='mt-1 text-[13.5px] leading-relaxed text-[var(--pv2-mut)]'>
-              {t(CAMPAIGN_TYPES[saved.type].labelKey)} ·{' '}
-              {fmtRange(saved, t('ongoing'))} · {saved.owner || t('unassigned')}
-            </p>
+      <div className='border-b border-[var(--pv2-hair)]'>
+        <div className='pv2-page-header'>
+          <div className='mx-auto w-full px-5 pt-5 md:px-8'>
+            <button
+              type='button'
+              onClick={onBack}
+              className={cn(
+                'inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--pv2-r)] px-1 py-1',
+                'text-[12.5px] font-semibold text-[var(--pv2-mut)] transition-colors',
+                'hover:text-[var(--pv2-ink)]',
+                'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
+              )}
+            >
+              <ArrowLeft
+                className='size-3.5 shrink-0'
+                strokeWidth={2.2}
+                aria-hidden
+              />
+              {t('allCampaigns')}
+            </button>
           </div>
 
-          <div className='flex shrink-0 flex-wrap items-center gap-2 pb-0.5'>
-            <StagePill stage={stage} />
-            <Button variant='ghost' asChild>
-              <Link href={LIST_HREF}>
-                <ArrowLeft
-                  className='size-[15px]'
-                  strokeWidth={2}
-                  aria-hidden
-                />
-                {t('allCampaigns')}
-              </Link>
-            </Button>
-            {editing ? (
-              <>
-                <Button
-                  variant='ghost'
-                  onClick={handleCancel}
-                  disabled={saving}
-                >
-                  {t('cancel')}
-                </Button>
-                <Button
-                  variant='primary'
-                  onClick={handleSaveBrief}
-                  disabled={saving}
-                >
-                  <Check
-                    className='size-[15px]'
-                    strokeWidth={2.4}
-                    aria-hidden
-                  />
-                  {saving ? t('saving') : t('save')}
-                </Button>
-              </>
-            ) : (
-              <Button variant='primary' onClick={() => setEditing(true)}>
-                <Pencil className='size-[15px]' strokeWidth={2} aria-hidden />
-                {t('editCampaign')}
-              </Button>
-            )}
+          <div className='mx-auto flex w-full flex-wrap items-start justify-between gap-x-6 gap-y-4 px-5 pt-3 pb-4 md:px-8'>
+            <div className='min-w-0 flex-1'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <StagePill stage={stage} />
+                <HealthBadge health={health} />
+              </div>
+              <h1 className='mt-2 truncate font-[family-name:var(--pv2-disp)] text-[1.625rem] font-bold tracking-[-0.03em] text-[var(--pv2-ink)] md:text-[1.75rem]'>
+                {campaign.name}
+              </h1>
+              <p className='mt-1 text-[13.5px] leading-relaxed text-[var(--pv2-mut)]'>
+                {t(CAMPAIGN_TYPES[campaign.type].labelKey)} ·{' '}
+                {fmtRange(campaign, t('ongoing'))} ·{' '}
+                {campaign.owner || t('unassigned')}
+              </p>
+              {campaign.brief.objective ? (
+                <p className='mt-2 max-w-[70ch] border-l-2 border-[var(--pv2-electric)] pl-3 text-[12.5px] leading-relaxed text-[var(--pv2-mut)]'>
+                  {campaign.brief.objective}
+                </p>
+              ) : null}
+            </div>
+
+            <div className='flex shrink-0 flex-wrap items-center gap-2 pt-1'>
+              {editing ? (
+                <>
+                  <Button variant='ghost' onClick={handleCancelEdit}>
+                    {t('cancel')}
+                  </Button>
+                  <Button variant='primary' onClick={handleSaveBrief}>
+                    <Check
+                      className='size-[15px]'
+                      strokeWidth={2.4}
+                      aria-hidden
+                    />
+                    {t('save')}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant='ghost'
+                    onClick={onDelete}
+                    aria-label={t('rowDeleteAria', { name: campaign.name })}
+                    className='text-[var(--pv2-error)] hover:border-[color-mix(in_srgb,var(--pv2-error)_35%,transparent)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_8%,transparent)] hover:text-[var(--pv2-error)]'
+                  >
+                    <Trash2
+                      className='size-[15px]'
+                      strokeWidth={2}
+                      aria-hidden
+                    />
+                    {t('rowDelete')}
+                  </Button>
+                  <Button
+                    variant='primary'
+                    onClick={() => {
+                      setPhase('plan');
+                      setEditing(true);
+                    }}
+                  >
+                    <Pencil
+                      className='size-[15px]'
+                      strokeWidth={2}
+                      aria-hidden
+                    />
+                    {t('editCampaign')}
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
+        </div>
+
+        <div className='mx-auto w-full overflow-x-auto border-t border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-5 py-3 md:px-8'>
+          <PhaseStrip
+            derived={derivedPhase}
+            active={phase}
+            onSelect={setPhase}
+          />
         </div>
       </div>
 
       <div className='mx-auto w-full px-5 py-6 md:px-8'>
-        {degraded ? (
-          <p className='mb-4 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-4 py-3 text-[12.5px] text-[var(--pv2-mut)]'>
-            {t('degradedNotice')}
-          </p>
-        ) : null}
-
-        <div className='grid gap-[22px] xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start'>
-          <div className='min-w-0'>
-            <h2 className='font-[family-name:var(--pv2-disp)] text-lg font-semibold tracking-[-0.02em] text-[var(--pv2-ink)]'>
-              {t('workHeading')}
-            </h2>
-            <p className='mt-1 mb-3.5 text-[13px] leading-relaxed text-[var(--pv2-mut)]'>
-              {t('workSub', {
-                subjects: saved.items.length,
-                experiences: campExpCount(saved),
-                ready: progress.done,
-              })}
-            </p>
-
-            <ProgressBar
-              className='mb-4'
-              thick
-              done={progress.done}
-              total={progress.total}
-              pct={progress.pct}
-            />
-
-            {draft.items.length ? (
-              <CampaignWorkTable
-                items={draft.items}
-                productNames={productNames}
-                experiences={experiences}
-                today={today}
-                editing={editing}
-                onOpenItem={setItemIndex}
-                onDeleteItem={handleDeleteItem}
-                onAddItem={() => setAddOpen(true)}
-              />
-            ) : (
-              <EmptyState
-                title={t('noSubjectsTitle')}
-                action={
-                  <Button variant='primary' onClick={() => setAddOpen(true)}>
-                    {t('addSubject')}
-                  </Button>
-                }
-              >
-                {t('noSubjectsBody')}
-              </EmptyState>
-            )}
-          </div>
-
-          <CampaignBriefAside
+        {phase === 'plan' ? (
+          <PlanPhase
+            campaign={campaign}
             draft={draft}
             editing={editing}
-            onChange={patch => setDraft(prev => ({ ...prev, ...patch }))}
+            readiness={readiness}
+            finished={stage === 'done'}
+            experiences={experiences}
+            journeys={journeys}
+            journey={journey}
+            blueprint={blueprint}
+            onDraftChange={patch => setDraft(prev => ({ ...prev, ...patch }))}
+            onFixGap={handleFixGap}
+            onRoute={() => setRouteOpen(true)}
+            onCarryRoute={onCarryRoute}
           />
-        </div>
+        ) : null}
+
+        {phase === 'build' ? (
+          <BuildPhase
+            campaign={campaign}
+            experiences={experiences}
+            journeys={journeys}
+            productNames={productNames}
+            journeyName={journey?.name ?? null}
+            today={today}
+            editing
+            onOpenItem={setItemIndex}
+            onOpenSubjectJourney={handleOpenSubjectJourney}
+            onDeleteItem={handleDeleteItem}
+            onAddItem={() => setAddOpen(true)}
+          />
+        ) : null}
+
+        {phase === 'run' ? (
+          <RunPhase
+            campaign={campaign}
+            verdict={verdict}
+            health={health}
+            productNames={productNames}
+          />
+        ) : null}
+
+        {phase === 'learn' ? (
+          <LearnPhase
+            campaign={campaign}
+            verdict={verdict}
+            journey={journey}
+            onPromoteJourney={onPromoteJourney}
+          />
+        ) : null}
       </div>
 
       {activeItem ? (
@@ -325,15 +494,13 @@ export const CampaignDetail = ({ campaign, degraded }: CampaignDetailProps) => {
           key={activeItem.id}
           item={activeItem}
           subjectLabel={subjectName(activeItem, productNames)}
-          campaignName={saved.name}
+          campaignName={campaign.name}
           experiences={experiences}
-          experiencesLoading={experiencesLoading}
-          saving={saving}
           onClose={() => setItemIndex(null)}
           onSave={handleSaveItem}
-          onDelete={() => {
-            if (itemIndex !== null) void handleDeleteItem(itemIndex);
-          }}
+          onDelete={() => handleDeleteItem(itemIndex ?? 0)}
+          onAttachMaster={handleAttachMaster(activeItem)}
+          onAdaptExperience={handleAdaptExperience}
         />
       ) : null}
 
@@ -341,8 +508,48 @@ export const CampaignDetail = ({ campaign, degraded }: CampaignDetailProps) => {
         <AddItemModal
           products={pickableProducts}
           onClose={() => setAddOpen(false)}
-          onAddProduct={id => void handleAddProduct(id)}
-          onAddTopic={name => void handleAddTopic(name)}
+          onAddProduct={id => handleAddItem('product', id)}
+          onAddTopic={name => handleAddItem('topic', name)}
+        />
+      ) : null}
+
+      {routeOpen ? (
+        <RouteJourneyModal
+          campaignName={campaign.name}
+          blueprints={blueprintJourneys(journeys)}
+          currentOrigin={journeyOrigin}
+          replacing={Boolean(journey)}
+          onClose={() => setRouteOpen(false)}
+          onPick={blueprintId => {
+            onRouteJourney(blueprintId);
+            setRouteOpen(false);
+          }}
+        />
+      ) : null}
+
+      {journey && (editingRoute || (journeyLens !== null && subjectLens)) ? (
+        <JourneyEditor
+          key={
+            editingRoute
+              ? `${journey.id}-structure`
+              : `${journey.id}-${journeyLens!.itemIndex}`
+          }
+          journey={journey}
+          journeys={journeys}
+          lens={editingRoute || !subjectLens ? undefined : subjectLens}
+          initialNodeId={
+            editingRoute ? null : (journeyLens?.focusNodeId ?? null)
+          }
+          returnLabel={t('journeyLensBack')}
+          onLensNodeActivate={editingRoute ? undefined : handleLensNodeActivate}
+          onEditJourney={editingRoute ? undefined : handleEditJourneyFromLens}
+          onCancel={handleCloseJourneyEditor}
+          onPersist={onJourneyChange}
+          onSave={next => {
+            onJourneyChange(next);
+            handleCloseJourneyEditor();
+            toast.success(t('toastSaved', { name: campaign.name }));
+          }}
         />
       ) : null}
     </div>

@@ -31,7 +31,8 @@ export default function ConfiguratorAd({
   return (
     <AdWrapper brandName={brandName} cta={cta} ctaFont={ctaFont}>
       <div className='cfg-ad'>
-        {/* Xe: absolute canh giữa section, nằm sau headline + options. */}
+        {headline && <div className='cfg-headline'>{headline}</div>}
+
         <div className='cfg-preview'>
           <div
             className='cfg-preview-base'
@@ -40,8 +41,6 @@ export default function ConfiguratorAd({
             }}
           />
         </div>
-
-        {headline && <div className='cfg-headline'>{headline}</div>}
 
         <div className='cfg-options'>
           {options.map(opt => (
@@ -54,6 +53,7 @@ export default function ConfiguratorAd({
                   return (
                     <button
                       key={i}
+                      type='button'
                       className={`cfg-choice ${isActive ? 'cfg-choice--active' : ''} ${choice.color ? 'cfg-choice--color' : ''}`}
                       onClick={() => select(opt.id, choice)}
                       style={

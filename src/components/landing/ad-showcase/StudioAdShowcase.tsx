@@ -11,15 +11,18 @@
 import * as React from 'react';
 import Link from 'next/link';
 
-import { useAppDispatch } from '@/hooks/useRedux';
-import { useAuthRole } from '@/hooks/useAuthRole';
-import { fetchMeThunk } from '@/store/slices/authSlice';
+// Tạm thời tắt gate teaser — bật lại khi cần ẩn catalog.
+// import { useAppDispatch } from '@/hooks/useRedux';
+// import { useAuthRole } from '@/hooks/useAuthRole';
+// import { fetchMeThunk } from '@/store/slices/authSlice';
 
 import './ads.css';
 import './ads-extra.css';
 import './showcase.css';
 // content.jsx: registry các block (loose JS — allowJs).
 import { GROUPS } from './content';
+import { AdGalleryLinkContext } from './ads/shared/AdGalleryLinkContext';
+import { ShowcaseHero } from './ShowcaseHero';
 
 /** Title → anchor id ổn định cho category nav (scroll-to-section). */
 const slugify = (s: string) =>
@@ -27,10 +30,6 @@ const slugify = (s: string) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
-
-/** Mã mở khoá full catalog cho sales — KHÔNG phải security, chỉ là cổng demo.
- *  Mở `?full=<mã>` để xem full. Đổi mã qua env NEXT_PUBLIC_ADS_FULL_CODE. */
-const FULL_CODE = process.env.NEXT_PUBLIC_ADS_FULL_CODE ?? 'rexer2026';
 
 type AdItem = {
   id: string;
@@ -42,6 +41,12 @@ type AdItem = {
 type AdGroup = { title: string; subtitle: string; items: AdItem[] };
 
 const GROUP_LIST = GROUPS as AdGroup[];
+
+/** Block feature trong hero — đổi id để swap demo khác. */
+const HERO_FEATURED_ID = 'swipe-stack';
+const HERO_ITEM =
+  GROUP_LIST.flatMap(g => g.items).find(i => i.id === HERO_FEATURED_ID) ??
+  GROUP_LIST[0].items[0];
 
 /** Khung phone + lazy-mount: chỉ dựng ad khi sắp vào viewport, giữ mount sau đó.
  *  `offset` đẩy item lệch dọc → bố cục so le (staggered) đẹp hơn hàng ngang. */
@@ -72,14 +77,16 @@ function PhoneCard({ item, offset }: { item: AdItem; offset?: string }) {
         ref={ref}
         className='adsc-phone transition-transform duration-300 group-hover:-translate-y-1'
       >
-        <div className='adsc-screen'>
+        <div className='adsc-screen adsc-screen--locked'>
           {live ? (
-            item.render()
+            <AdGalleryLinkContext.Provider value={href}>
+              {item.render()}
+            </AdGalleryLinkContext.Provider>
           ) : (
             <div className='adsc-skeleton'>{item.name}</div>
           )}
-          {/* Tap-catcher = Link (sibling của ad, KHÔNG lồng <a>): tap mở trang
-              chi tiết; ad bên dưới chỉ để xem (auto-anim vẫn chạy). */}
+          {/* Tap-catcher phủ full screen: gallery chỉ xem, bấm → trang chi tiết
+              mới tương tác được. */}
           <Link
             href={href}
             target='_blank'
@@ -110,30 +117,21 @@ function PhoneCard({ item, offset }: { item: AdItem; offset?: string }) {
  *  nhảy nhanh tới đúng nhóm block muốn show cho khách. */
 function CategoryNav({
   groups,
-  total,
   active,
   onJump,
 }: {
   groups: AdGroup[];
-  total: number;
   active: string;
   onJump: (id: string) => void;
 }) {
   const pill = (isOn: boolean) =>
-    `group inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-pill border px-4 py-1.5 text-sm font-medium no-underline ${isOn ? 'border-transparent bg-[#b8965a] text-white' : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-neutral-900'}`;
+    `group inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-sm no-underline transition-colors ${isOn ? 'bg-neutral-950 font-medium text-white' : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'}`;
   const count = (isOn: boolean) =>
-    `text-xs transition-colors duration-75 ${isOn ? 'text-white' : 'text-neutral-400 group-hover:text-neutral-900'}`;
+    `text-[11px] tabular-nums transition-colors ${isOn ? 'text-white/50' : 'text-neutral-400 group-hover:text-neutral-500'}`;
 
   return (
     <nav className='sticky top-16 z-40 border-b border-neutral-200/70 bg-white/85 backdrop-blur'>
-      <div className='adsc-nav-scroll mx-auto flex max-w-6xl gap-2 overflow-x-auto px-6 py-3'>
-        <button
-          type='button'
-          onClick={() => onJump('top')}
-          className={pill(active === 'top')}
-        >
-          All <span className={count(active === 'top')}>{total}</span>
-        </button>
+      <div className='adsc-nav-scroll mx-auto flex max-w-6xl justify-center-safe gap-1 overflow-x-auto px-6 py-2.5'>
         {groups.map(g => {
           const id = slugify(g.title);
           const isOn = active === id;
@@ -154,39 +152,12 @@ function CategoryNav({
 }
 
 export function StudioAdShowcase() {
-  const dispatch = useAppDispatch();
-  const { user } = useAuthRole();
-  const isLoggedIn = !!user;
-
-  // Landing không tự hydrate auth → hỏi /auth/me (gửi cookie). Đăng nhập
-  // same-origin sẽ tự mở; nhưng cookie không chia sẻ qua subdomain nên đây
-  // CHỈ là đường phụ — đường chính cho sales là mã mở khoá bên dưới.
-  React.useEffect(() => {
-    dispatch(fetchMeThunk());
-  }, [dispatch]);
-
-  // Mã mở khoá CHỈ qua query `?full=<mã>` (không lưu, không dính cookie). URL
-  // trơn luôn là teaser; sales bookmark link `?full=...` để demo full.
-  const [unlocked, setUnlocked] = React.useState(false);
-  React.useEffect(() => {
-    try {
-      const q = new URLSearchParams(window.location.search).get('full');
-      if (q && q === FULL_CODE) setUnlocked(true);
-    } catch {
-      // window không khả dụng (SSR) — giữ teaser.
-    }
-  }, []);
-
-  // Full khi: đăng nhập same-origin HOẶC có mã mở khoá.
-  const isFull = isLoggedIn || unlocked;
-
-  // Teaser (chưa login): gộp block thành MỘT lưới liên tiếp — KHÔNG tách theo
-  // category, KHÔNG filter nav. Đăng nhập mới mở full + nav category.
   const total = GROUP_LIST.reduce((n, g) => n + g.items.length, 0);
-  const TEASER_COUNT = 6;
-  const teaserItems = GROUP_LIST.flatMap(g => g.items).slice(0, TEASER_COUNT);
 
   const [active, setActive] = React.useState('top');
+  // Tab đang tạm ẩn — giữ tham chiếu cho khỏi báo unused, xoá 2 dòng này khi bật lại.
+  void active;
+  void CategoryNav;
 
   const jump = React.useCallback((id: string) => {
     setActive(id);
@@ -216,64 +187,43 @@ export function StudioAdShowcase() {
     );
     els.forEach(el => io.observe(el));
     return () => io.disconnect();
-  }, [isFull]);
+  }, []);
 
   return (
     <div className='ad-showcase-root bg-white'>
       <span id='adsc-top' className='block' />
 
-      {isFull ? (
-        <>
-          {/* Full (đăng nhập same-origin hoặc có mã) → catalog + nav category. */}
-          <CategoryNav
-            groups={GROUP_LIST}
-            total={total}
-            active={active}
-            onJump={jump}
-          />
-          {GROUP_LIST.map(group => (
-            <section
-              key={group.title}
-              id={slugify(group.title)}
-              className='mx-auto max-w-6xl scroll-mt-32 px-6 py-10 sm:py-14'
-            >
-              <div className='mb-10 text-center'>
-                <h2 className='text-2xl font-semibold tracking-tight text-neutral-900'>
-                  {group.title}
-                </h2>
-                <p className='mt-2 text-sm text-neutral-500'>
-                  {group.subtitle}
-                </p>
-              </div>
-              <div className='grid grid-cols-1 items-start gap-x-8 gap-y-10 sm:grid-cols-2 sm:gap-y-2 lg:grid-cols-3 lg:gap-y-[108px]'>
-                {group.items.map((item, idx) => (
-                  <PhoneCard
-                    key={item.id}
-                    item={item}
-                    // So le: cột lẻ đẩy xuống (từ sm trở lên; mobile 1 cột thẳng).
-                    offset={idx % 2 === 1 ? 'sm:mt-20 lg:mt-28' : ''}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
-        </>
-      ) : (
-        <>
-          {/* Chưa đăng nhập → 1 lưới liên tiếp (không filter, không tách nhóm). */}
-          <section className='mx-auto max-w-6xl px-6 py-10 sm:py-14'>
-            <div className='grid grid-cols-1 items-start gap-x-8 gap-y-10 sm:grid-cols-2 sm:gap-y-2 lg:grid-cols-3 lg:gap-y-[108px]'>
-              {teaserItems.map((item, idx) => (
-                <PhoneCard
-                  key={item.id}
-                  item={item}
-                  offset={idx % 2 === 1 ? 'sm:mt-20 lg:mt-28' : ''}
-                />
-              ))}
-            </div>
-          </section>
-        </>
-      )}
+      <ShowcaseHero
+        total={total}
+        item={HERO_ITEM}
+        onExplore={() => jump(slugify(GROUP_LIST[0].title))}
+      />
+
+      {/* Tạm ẩn thanh tab category — bỏ comment để bật lại. */}
+      {/* <CategoryNav groups={GROUP_LIST} active={active} onJump={jump} /> */}
+      {GROUP_LIST.map(group => (
+        <section
+          key={group.title}
+          id={slugify(group.title)}
+          className='mx-auto max-w-6xl scroll-mt-32 px-6 py-10 sm:py-14'
+        >
+          <div className='mb-10 text-center'>
+            <h2 className='text-2xl font-semibold tracking-tight text-neutral-900'>
+              {group.title}
+            </h2>
+            <p className='mt-2 text-sm text-neutral-500'>{group.subtitle}</p>
+          </div>
+          <div className='grid grid-cols-1 items-start gap-x-8 gap-y-10 sm:grid-cols-2 sm:gap-y-2 lg:grid-cols-3 lg:gap-y-16'>
+            {group.items.map((item, idx) => (
+              <PhoneCard
+                key={item.id}
+                item={item}
+                offset={idx % 2 === 1 ? 'sm:mt-10 lg:mt-12' : ''}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
 
       {/* CTA */}
       <section className='mt-12 bg-gradient-to-r from-[#0a1c38] via-[#1c3f74] to-[#c9a25b]'>

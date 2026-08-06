@@ -1,12 +1,16 @@
 'use client';
 
-import { X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 import type { ViewTransform } from '@/components/organisms/portal-v2/journeys/editor/EditorCanvas';
 import { cn } from '@/lib/cn';
-import { BAND_W, type StagePulse } from '@/lib/portal-v2/journeys/stages';
+import {
+  BAND_ADD_W,
+  BAND_W,
+  type StagePulse,
+} from '@/lib/portal-v2/journeys/stages';
 import type { JourneyStage } from '@/lib/portal-v2/journeys/types';
 
 /**
@@ -78,8 +82,12 @@ type StageHeadersProps = BandGeometry & {
   pulse: StagePulse[];
   /** False once removing another phase would stop the picture reading as one. */
   canRemove: boolean;
+  /** Subject lens — names are labels, not editors. */
+  readOnly?: boolean;
   onRename: (index: number, name: string) => void;
   onRemove: (index: number) => void;
+  /** Append a phase to the right of the last one. */
+  onAdd: () => void;
 };
 
 /** The names and their numbers. Chrome, so they are drawn over the floor. */
@@ -89,8 +97,10 @@ export const StageHeaders = ({
   pulse,
   view,
   canRemove,
+  readOnly = false,
   onRename,
   onRemove,
+  onAdd,
 }: StageHeadersProps) => {
   const t = useTranslations('portalV2.journeys');
 
@@ -120,11 +130,22 @@ export const StageHeaders = ({
             }}
           >
             <div className='flex items-center gap-1'>
-              <StageName
-                name={stage.name}
-                onCommit={name => onRename(index, name)}
-              />
-              {count === 0 && canRemove ? (
+              {readOnly ? (
+                <span
+                  className={cn(
+                    'h-[17px] min-w-0 flex-1 truncate px-1',
+                    'text-[11px] leading-[17px] font-bold tracking-[0.06em] text-[var(--pv2-ink)] uppercase'
+                  )}
+                >
+                  {stage.name}
+                </span>
+              ) : (
+                <StageName
+                  name={stage.name}
+                  onCommit={name => onRename(index, name)}
+                />
+              )}
+              {!readOnly && count === 0 && canRemove ? (
                 <button
                   type='button'
                   aria-label={t('stageRemoveAria', { name: stage.name })}
@@ -157,6 +178,36 @@ export const StageHeaders = ({
           </div>
         );
       })}
+
+      {/* The next column, where the next column would go.
+          Adding a phase used to live only inside the Phases dialog, which is
+          the right place to RE-ORDER the spine and the wrong place to discover
+          that it can grow at all. This is the end of the rail: dashed, so it
+          reads as a slot rather than a phase, and fixed-size like the rest of
+          the chrome so it stays legible at 40% zoom. */}
+      {!readOnly ? (
+        <button
+          type='button'
+          title={t('stageAddPhaseHint')}
+          onPointerDown={e => e.stopPropagation()}
+          onClick={onAdd}
+          className={cn(
+            'absolute top-0 z-10 flex cursor-pointer items-center gap-1.5 px-3',
+            'border-b border-l border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)]/85 backdrop-blur-[2px]',
+            'text-[11px] font-bold tracking-[0.06em] text-[var(--pv2-faint)] uppercase',
+            'transition-colors hover:bg-[var(--pv2-electric-soft)] hover:text-[var(--pv2-electric)]',
+            'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
+          )}
+          style={{
+            left: bandLeft(stages.length),
+            width: BAND_ADD_W,
+            height: HEADER_H,
+          }}
+        >
+          <Plus className='size-3.5 shrink-0' strokeWidth={2.6} aria-hidden />
+          {t('stageAddPhase')}
+        </button>
+      ) : null}
     </>
   );
 };

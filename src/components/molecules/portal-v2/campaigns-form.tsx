@@ -6,15 +6,18 @@ import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
 import {
+  CAMPAIGN_HEALTH,
   CAMPAIGN_STAGES,
   CAMPAIGN_TYPES,
   ITEM_FLOW,
   ITEM_STATUS,
 } from '@/lib/portal-v2/campaigns/constants';
 import type {
+  CampaignHealth,
   CampaignItemStatus,
   CampaignStage,
   CampaignType,
+  ShipGate,
 } from '@/lib/portal-v2/campaigns/types';
 
 /** `.stp` + `.sd` — the campaign stage pill, shared by card, table and detail. */
@@ -32,6 +35,61 @@ export const StagePill = ({ stage }: { stage: CampaignStage }) => {
       />
       {t(s.labelKey)}
     </span>
+  );
+};
+
+/**
+ * The operating state, said in one word. Sits next to the stage pill rather
+ * than replacing it: the stage is where the campaign is in its life, the health
+ * is whether that is going well.
+ */
+export const HealthBadge = ({
+  health,
+  withReason = false,
+}: {
+  health: CampaignHealth;
+  withReason?: boolean;
+}) => {
+  const t = useTranslations('portalV2.campaigns');
+  const tone = CAMPAIGN_HEALTH[health.state];
+  return (
+    <span className='inline-flex items-center gap-2'>
+      <span
+        className='inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold tracking-[0.02em] whitespace-nowrap'
+        style={{ background: tone.bg, color: tone.fg }}
+        title={t(health.whyKey, health.values)}
+      >
+        {t(tone.labelKey)}
+      </span>
+      {withReason ? (
+        <span className='text-[12px] text-[var(--pv2-mut)]'>
+          {t(health.whyKey, health.values)}
+        </span>
+      ) : null}
+    </span>
+  );
+};
+
+/** `.gdot` — green when this subject is allowed to ship, hollow when it is not. */
+export const GateDot = ({ gate }: { gate: ShipGate }) => {
+  const t = useTranslations('portalV2.campaigns');
+  const reason = gate.ok
+    ? t('gateItemOk')
+    : t('gateItemBlocked', {
+        checks: gate.missing.map(id => t(`ship_${id}`)).join(', '),
+      });
+
+  return (
+    <span
+      title={reason}
+      aria-label={reason}
+      className={cn(
+        'inline-block size-2 shrink-0 rounded-full',
+        gate.ok
+          ? 'bg-[var(--pv2-success)]'
+          : 'border-[1.5px] border-[var(--pv2-warning)] bg-transparent'
+      )}
+    />
   );
 };
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import AdWrapper from './shared/AdWrapper';
+import { useAdGalleryLink } from './shared/AdGalleryLinkContext';
 
 /**
  * Stories Ad — Instagram-style stories with auto-progress and tap navigation.
@@ -14,6 +15,7 @@ export default function StoriesAd({
   cta,
   ctaFont = "'Cormorant Garamond', Georgia, serif",
 }) {
+  const galleryHref = useAdGalleryLink();
   const [current, setCurrent] = useState(0);
   const [progress, setProgress] = useState(0);
   const timerRef = useRef(null);
@@ -66,6 +68,7 @@ export default function StoriesAd({
     <AdWrapper
       brandName={brandName}
       showBrandBar={false}
+      showCta={false}
       cta={cta}
       ctaFont={ctaFont}
     >
@@ -102,20 +105,25 @@ export default function StoriesAd({
               </div>
             </div>
           )}
+        </div>
 
-          {/* CTA at bottom */}
-          {(story?.cta || cta) && (
+        {/* Chỉ hiện CTA ở list (gallery). Detail vẫn ẩn.
+            Dùng markup CTA chung của AdWrapper — đặt ngoài stories-content
+            để không fade lại mỗi lần chuyển slide. */}
+        {galleryHref && (
+          <div className='ad-wrap-cta-bar'>
             <a
-              href={story?.cta?.href || cta?.href || '#'}
-              className='stories-cta'
+              href={galleryHref}
+              className='ad-wrap-cta'
               onClick={e => e.stopPropagation()}
               target='_blank'
               rel='noopener noreferrer'
             >
-              {story?.cta?.label || cta?.label || 'Learn More'}
+              {story?.cta?.label || cta?.label || 'Explore Now'}
+              <span className='ad-wrap-cta-arrow' />
             </a>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </AdWrapper>
   );
