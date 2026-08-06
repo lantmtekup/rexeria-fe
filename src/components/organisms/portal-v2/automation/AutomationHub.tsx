@@ -15,10 +15,16 @@ import type { AutomationExperience } from '@/lib/portal-v2/automation/types';
  */
 export const AutomationHub = ({
   experiences,
+  locked,
   error,
   onStart,
 }: {
   experiences: AutomationExperience[];
+  /**
+   * Gói tài khoản chưa mở Automation (403 CAPABILITY_REQUIRED). Tách khỏi
+   * `error` vì đây không phải hỏng hóc — hiện dòng đỏ ở đây là nói sai.
+   */
+  locked?: boolean;
   /** Lỗi nạp thư viện — nói thẳng, đừng để hiện "chưa có gì" cho một lần hỏng. */
   error?: string | null;
   onStart: (id: string) => void;
@@ -28,6 +34,14 @@ export const AutomationHub = ({
   // của nó thay vì nhân đôi khoá sang `automation`.
   const tExp = useTranslations('portalV2.experiences');
   const proven = experiences.filter(x => x.proven);
+
+  if (locked) {
+    return (
+      <div className='rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-5 py-10 text-center text-[13px] text-[var(--pv2-mut)]'>
+        {t('locked')}
+      </div>
+    );
+  }
 
   if (error) {
     return (

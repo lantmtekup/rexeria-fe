@@ -2,6 +2,8 @@ import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 import type {
   RxAutomationCandidate,
   RxAutomationHubResponse,
+  RxAutomationRunItem,
+  RxCreateAutomationResponse,
 } from '@/services/rexer-v2/types/automation';
 
 /**
@@ -63,28 +65,53 @@ export const fetchAutomationHub = async (
   }
 };
 
-export const createAutomation = async (body: {
+/**
+ * Bước 1 — BE tự fork master draft TRONG MỘT transaction và trả `master_page_id`,
+ * nên FE không phải tạo page rồi tự đóng canvas thành template như bản cũ.
+ */
+export const createAutomation = (body: {
   sourceExperienceId: string;
   setupProductId: string;
   campaignId: string;
-}) => {
-  const res = await rexerV2Api.automations.create({
+}): Promise<RxCreateAutomationResponse> =>
+  rexerV2Api.automations.create({
     source_experience_id: body.sourceExperienceId,
     setup_product_id: body.setupProductId,
     campaign_id: body.campaignId,
   });
-  return res.automation;
-};
 
+/**
+ * Ứng viên. `widen` nới lớp hàng lên nhóm cha — BE quyết bằng
+ * `core.CategoryMatches`, FE chỉ bật cờ.
+ *
+ * Danh sách CÓ CẢ sản phẩm gốc (BE không loại nó ra); người gọi tự tách vì chỉ
+ * ở đó mới biết id nào đang là master.
+ */
 export const fetchCandidates = async (
-  automationId: string
+  automationId: string,
+  widen = false
 ): Promise<RxAutomationCandidate[]> => {
-  const res = await rexerV2Api.automations.candidates(automationId);
+  const res = await rexerV2Api.automations.candidates(automationId, widen);
   return res.items ?? [];
 };
 
-export const runAutomationV2 = (automationId: string, productIds: string[]) =>
-  rexerV2Api.automations.run(automationId, { product_ids: productIds });
+/**
+ * Nhân bản. KHÔNG đồng bộ: BE đọc canvas mới nhất của master (bản đã chỉnh
+ * tay), fork một page cho mỗi sản phẩm, ENQUEUE việc điền nội dung cho worker
+ * nền rồi trả về ngay.
+ *
+ * Nghĩa là không có 1–3 phút giữ tab như bản ghép tay — nhưng cũng KHÔNG có
+ * nội dung tại thời điểm trả về. UI phải nói "đã xếp hàng", đừng nói "đã xong".
+ */
+export const runAutomationV2 = async (
+  automationId: string,
+  productIds: string[]
+): Promise<RxAutomationRunItem[]> => {
+  const res = await rexerV2Api.automations.run(automationId, {
+    product_ids: productIds,
+  });
+  return res.created ?? [];
+};
 
 /** Canvas mở master theo id page mà BE trả về khi tạo automation. */
 export const masterCanvasHrefById = (pageId: string): string =>

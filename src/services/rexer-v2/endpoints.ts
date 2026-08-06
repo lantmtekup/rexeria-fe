@@ -35,6 +35,7 @@ import type {
   RxCreateAutomationRequest,
   RxCreateAutomationResponse,
   RxRunAutomationRequest,
+  RxRunAutomationResponse,
 } from './types/automation';
 
 export const rexerV2Api = {
@@ -68,17 +69,28 @@ export const rexerV2Api = {
      * sẵn sàng từng ô phễu do BE chấm. Không tự chấm lại ở FE: luật nằm ở BE,
      * chép sang đây là mở đường cho hai bên lệch nhau.
      */
-    candidates: (automationId: string) =>
+    candidates: (automationId: string, widen = false) =>
       rxV2<RxAutomationCandidatesResponse>(
-        `/automations/${automationId}/candidates`
+        `/automations/${automationId}/candidates${widen ? '?widen=true' : ''}`
       ),
 
     /**
      * `POST /v1/automations/{id}/run` — nhân bản sang các sản phẩm đã chọn.
      * BE lo toàn bộ chuỗi report → handoff → page; FE không ghép tay nữa.
      */
+    /**
+     * `POST /v1/automations/{id}/run` — fork bản nháp cho từng sản phẩm rồi
+     * ENQUEUE việc điền nội dung cho worker nền.
+     *
+     * Trả về NGAY với danh sách page đã tạo; nội dung chưa có tại thời điểm
+     * này. Đừng dựng UI kiểu "chờ tới khi xong" — không có gì để chờ trong lời
+     * gọi này.
+     *
+     * Cần quyền brand manager: nhân một thiết kế ra cả lớp sản phẩm sinh hàng
+     * loạt bản nháp trong thư viện của tenant.
+     */
     run: (automationId: string, body: RxRunAutomationRequest) =>
-      rxV2<RxAutomation>(`/automations/${automationId}/run`, {
+      rxV2<RxRunAutomationResponse>(`/automations/${automationId}/run`, {
         method: 'POST',
         body,
       }),

@@ -6,59 +6,61 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { ReadinessSlots } from '@/components/organisms/portal-v2/automation/ReadinessSlots';
 import { cn } from '@/lib/cn';
-import {
-  categoryLeaf,
-  categoryParent,
-  readinessOf,
-} from '@/lib/portal-v2/automation/readiness';
-import type {
-  AutomationExperience,
-  AutomationProduct,
-} from '@/lib/portal-v2/automation/types';
-import type {
-  RunOutcome,
-  RunProgress,
-} from '@/services/portal-v2/automationRun';
+import type { Readiness } from '@/lib/portal-v2/automation/types';
+import type { AutomationProduct } from '@/lib/portal-v2/automation/types';
+import type { RxAutomationRunItem } from '@/services/rexer-v2/types/automation';
 
 /**
- * Bước 2 — chọn sản phẩm cùng lớp để nhân bản.
+ * Bước 2 — chọn sản phẩm để nhân bản.
+ *
+ * Danh sách ứng viên và điểm sẵn sàng đều do BE trả (`GET /automations/{id}/candidates`),
+ * nên ở đây không còn lọc theo lớp hàng hay nút "nới lớp": BE đã quyết ai là
+ * ứng viên. FE chấm lại chính là cách hai bên lệch nhau.
  *
  * Thẻ nào thiếu ô phễu vẫn CHỌN ĐƯỢC: bản copy vẫn là draft, và gap được ghi
  * lại kèm theo. Demo cũng vậy — nó chặn ở khâu deploy chứ không chặn khâu tạo.
  * Chặn ngay ở đây thì người dùng mất luôn đường tạo nháp rồi bổ sung sau.
  */
 export const ProductPickStep = ({
-  experience,
   masterProduct,
+  masterReadiness,
   eligible,
-  unclassified,
   selected,
   widen,
-  onToggle,
   onToggleWiden,
+  candidatesBusy,
+  onToggle,
   onBack,
   onRun,
   cap,
-  progress,
-  outcomes,
+  queued,
   runError,
   running,
 }: {
-  experience: AutomationExperience;
   masterProduct: AutomationProduct;
-  eligible: AutomationProduct[];
-  /** Sản phẩm gốc chưa phân loại ⇒ danh sách là "mọi sản phẩm khác". */
-  unclassified: boolean;
+  /** Điểm sẵn sàng của chính sản phẩm gốc, do BE chấm cùng lượt ứng viên. */
+  masterReadiness: Readiness | null;
+  /**
+   * Ứng viên KÈM điểm sẵn sàng do BE chấm (`core.AutoSlots`). Không chấm lại ở
+   * FE: chép luật sang đây là cách hai bên lệch nhau.
+   */
+  eligible: (AutomationProduct & { readiness: Readiness })[];
   selected: string[];
+  /** Nới lên lớp cha — BE quyết bằng `core.CategoryMatches`, đây chỉ là cờ. */
   widen: boolean;
-  onToggle: (id: string) => void;
   onToggleWiden: () => void;
+  candidatesBusy: boolean;
+  onToggle: (id: string) => void;
   onBack: () => void;
   onRun: () => void;
   /** Trần mỗi lượt — nói ra chứ không lặng lẽ cắt bớt danh sách. */
   cap: number;
-  progress: RunProgress | null;
-  outcomes: RunOutcome[] | null;
+  /**
+   * Nháp đã fork xong. Nội dung do worker nền điền SAU, nên đây là "đã xếp
+   * hàng" chứ không phải "đã xong" — nói đúng để người dùng không mở ngay rồi
+   * tưởng AI bỏ trống.
+   */
+  queued: RxAutomationRunItem[] | null;
   runError: string | null;
   running: boolean;
 }) => {
@@ -68,32 +70,27 @@ export const ProductPickStep = ({
     <div className='flex flex-col gap-4'>
       <div className='flex flex-wrap items-center gap-3'>
         <span className='text-[12.5px] text-[var(--pv2-mut)]'>
-          {unclassified
-            ? t('unclassified', {
-                master: masterProduct.title,
-                count: eligible.length,
-              })
-            : t('sameClass', {
-                klass: widen
-                  ? categoryParent(masterProduct.category)
-                  : categoryLeaf(masterProduct.category),
-                master: masterProduct.title,
-                count: eligible.length,
-              })}
+          {t('candidatesFrom', {
+            master: masterProduct.title,
+            count: eligible.length,
+          })}
         </span>
         <Button
           variant='toggle'
           size='sm'
-          disabled={unclassified}
-          title={unclassified ? t('widenDisabled') : undefined}
+          disabled={candidatesBusy}
           onClick={onToggleWiden}
           className={cn(
             widen &&
               'border-[var(--pv2-electric)] bg-[var(--pv2-electric-soft)] text-[var(--pv2-electric)]'
           )}
         >
-          <Sparkles aria-hidden />
-          {t('widenTo', { klass: categoryParent(masterProduct.category) })}
+          {candidatesBusy ? (
+            <Loader2 className='animate-spin' aria-hidden />
+          ) : (
+            <Sparkles aria-hidden />
+          )}
+          {t('widen')}
         </Button>
       </div>
 
@@ -117,11 +114,16 @@ export const ProductPickStep = ({
               </span>
             </span>
           </div>
+          {masterReadiness ? (
+            <div className='mt-2'>
+              <ReadinessSlots readiness={masterReadiness} />
+            </div>
+          ) : null}
         </div>
 
         {eligible.map(p => {
           const on = selected.includes(p.id);
-          const rd = readinessOf(experience, p);
+          const rd = p.readiness;
           return (
             <button
               key={p.id}
@@ -196,54 +198,32 @@ export const ProductPickStep = ({
 
       {eligible.length === 0 ? (
         <div className='rounded-[var(--pv2-r)] border border-dashed border-[var(--pv2-hair)] px-5 py-8 text-center text-[13px] text-[var(--pv2-mut)]'>
-          {t('noneInClass', {
-            klass: categoryParent(masterProduct.category),
-          })}
+          {t('noCandidates')}
         </div>
       ) : null}
 
-      {progress ? (
-        <div className='flex flex-col gap-1 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-3.5 py-3'>
-          <span className='flex items-center gap-2 text-[13px] font-semibold text-[var(--pv2-ink)]'>
-            <Loader2 className='size-4 animate-spin' aria-hidden />
-            {t('runProgress', {
-              index: progress.index,
-              total: progress.total,
-              product: progress.productTitle,
-            })}
-          </span>
-          <span className='text-[12px] text-[var(--pv2-mut)]'>
-            {t(`runStage.${progress.stage}`)}
-          </span>
-          <span className='text-[11.5px] text-[var(--pv2-faint)]'>
-            {t('dontClose')}
-          </span>
-        </div>
-      ) : null}
-
-      {outcomes ? (
+      {queued ? (
         <div className='flex flex-col gap-1.5 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-3.5 py-3'>
           <span className='text-[13px] font-semibold text-[var(--pv2-ink)]'>
-            {t('runDone', {
-              ok: outcomes.filter(o => !o.error).length,
-              total: outcomes.length,
-            })}
+            {t('runQueued', { total: queued.length })}
           </span>
-          {outcomes.map(o => (
-            <span
-              key={o.productId}
-              className={cn(
-                'text-[12px]',
-                o.error
-                  ? 'text-[var(--pv2-error)]'
-                  : 'text-[var(--pv2-success)]'
-              )}
-            >
-              {o.error
-                ? t('runItemFailed', { product: o.productTitle })
-                : t('runItemOk', { product: o.productTitle })}
-            </span>
-          ))}
+          <span className='text-[12px] text-[var(--pv2-mut)]'>
+            {t('runQueuedNote')}
+          </span>
+          {queued.map(item => {
+            const p = eligible.find(x => x.id === item.product_id);
+            return (
+              <span
+                key={item.page_id}
+                className='text-[12px] text-[var(--pv2-mut)]'
+              >
+                {p?.title ?? item.product_id}
+                {item.auto_gaps.length > 0
+                  ? ` · ${t('queuedGaps', { gaps: item.auto_gaps.join(', ') })}`
+                  : ''}
+              </span>
+            );
+          })}
         </div>
       ) : null}
 

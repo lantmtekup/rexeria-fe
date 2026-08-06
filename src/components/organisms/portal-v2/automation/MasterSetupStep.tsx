@@ -4,8 +4,6 @@ import { ArrowRight, Loader2, Pencil } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
-import { ReadinessSlots } from '@/components/organisms/portal-v2/automation/ReadinessSlots';
-import { readinessOf } from '@/lib/portal-v2/automation/readiness';
 import type {
   AutomationCampaign,
   AutomationExperience,
@@ -50,7 +48,12 @@ export const MasterSetupStep = ({
 }) => {
   const t = useTranslations('portalV2.automation');
   const setupProduct = products.find(p => p.id === setupProductId);
-  const readiness = readinessOf(experience, setupProduct);
+  /**
+   * BE bắt buộc CẢ HAI: `Create` tra campaign rồi 404 nếu không thấy, và cũng
+   * 404 nếu thiếu sản phẩm gốc. Khoá nút ở đây thay vì để người dùng bấm rồi
+   * nhận một lỗi không nói lên điều gì.
+   */
+  const ready = Boolean(setupProduct) && campaignId !== '';
 
   const selectClass =
     'h-[34px] w-full rounded-[var(--pv2-r-sm)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2.5 text-[13px] text-[var(--pv2-ink)]';
@@ -116,19 +119,19 @@ export const MasterSetupStep = ({
           <span className='truncate text-[14px] font-semibold text-[var(--pv2-ink)]'>
             {experience.name} — {setupProduct?.title ?? '—'}
           </span>
+          {/*
+            Điểm sẵn sàng KHÔNG chấm ở đây: `core.AutoSlots` bên BE là nguồn
+            duy nhất, mà nó chỉ trả về cùng danh sách ứng viên ở bước 2. Chấm
+            tạm ở FE cho kịp màn này chính là chỗ hai bên bắt đầu lệch nhau.
+          */}
           <span className='text-[12px] text-[var(--pv2-mut)]'>
-            {t('masterSlots', {
-              filled: readiness.filled,
-              total: readiness.total,
-              product: setupProduct?.title ?? '—',
-            })}
+            {t('masterHint')}
           </span>
-          <ReadinessSlots readiness={readiness} />
         </span>
         <Button
           variant='ghost'
           size='sm'
-          disabled={adjustBusy || !setupProduct}
+          disabled={adjustBusy || !ready}
           onClick={onAdjust}
         >
           {adjustBusy ? (
@@ -152,7 +155,12 @@ export const MasterSetupStep = ({
           {t('masterNote')}
         </span>
         <span className='flex-1' />
-        <Button variant='primary' disabled={!setupProduct} onClick={onNext}>
+        <Button
+          variant='primary'
+          disabled={adjustBusy || !ready}
+          onClick={onNext}
+        >
+          {adjustBusy ? <Loader2 className='animate-spin' aria-hidden /> : null}
           {t('readyToAutomate')}
           <ArrowRight aria-hidden />
         </Button>

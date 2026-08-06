@@ -61,8 +61,23 @@ export type RxCreateAutomationRequest = {
   campaign_id: string;
 };
 
+/** Phẳng, KHÔNG bọc trong `automation` — BE trả đúng ba trường này. */
 export type RxCreateAutomationResponse = {
-  automation: RxAutomation;
+  id: string;
+  master_page_id: string;
+  status: string;
+};
+
+/** Một bản nháp đã fork. Nội dung do worker nền điền sau, không có ngay. */
+export type RxAutomationRunItem = {
+  product_id: string;
+  page_id: string;
+  /** Ô phễu còn thiếu, do `core.AutoSlots` chấm lúc fork. */
+  auto_gaps: string[];
+};
+
+export type RxRunAutomationResponse = {
+  created: RxAutomationRunItem[];
 };
 
 export type RxAutomationCandidatesResponse = {

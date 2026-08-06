@@ -9,45 +9,54 @@ import { MasterSetupStep } from '@/components/organisms/portal-v2/automation/Mas
 import { ProductPickStep } from '@/components/organisms/portal-v2/automation/ProductPickStep';
 import { cn } from '@/lib/cn';
 import {
-  commitMasterTemplate,
-  createMasterDraft,
-  dropMasterDraft,
-  masterCanvasHref,
-  templateIdOfExperience,
-} from '@/services/portal-v2/automationMaster';
+  createAutomation,
+  fetchCandidates,
+  masterCanvasHrefById,
+  runAutomationV2,
+} from '@/services/portal-v2/automationV2';
 import {
-  AUTOMATION_BATCH_CAP,
-  runAutomation,
-  type RunOutcome,
-  type RunProgress,
-} from '@/services/portal-v2/automationRun';
-import { toAutomationExperience } from '@/lib/portal-v2/automation/fromExperience';
+  v2CandidateToProduct,
+  v2ExperienceToAutomation,
+} from '@/lib/portal-v2/automation/fromV2';
 import { toAutomationProduct } from '@/lib/portal-v2/automation/fromProduct';
-import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
 import type { CampaignView } from '@/lib/portal-v2/campaigns/types';
 import type { Product, ProductAsset } from '@/lib/portal-v2/product/types';
-import { eligibleProducts } from '@/lib/portal-v2/automation/readiness';
-import type { AutomationStage } from '@/lib/portal-v2/automation/types';
+import type {
+  AutomationProduct,
+  AutomationStage,
+  Readiness,
+} from '@/lib/portal-v2/automation/types';
+import type { RxExperience } from '@/services/rexer-v2/types/experience';
+import type { RxAutomationRunItem } from '@/services/rexer-v2/types/automation';
+
+/** Trần mỗi lượt — gương `automationMaxRun` bên BE (`usecase/automation.go`). */
+const AUTOMATION_BATCH_CAP = 200;
 
 /**
  * Automation workspace — hub khi rảnh, wizard 2 bước khi đang nhân bản.
  *
  * Khác Brand ở chỗ đây KHÔNG phải form có tab: nó là một luồng có chặng, nên
- * chrome dùng stepper thay cho `Tabs`, và không có cặp Edit/Save. Hành động
- * duy nhất tạo ra dữ liệu là Automate ở cuối bước 2.
+ * chrome dùng stepper thay cho `Tabs`, và không có cặp Edit/Save.
  *
- * P0: Automate in payload ra `alert` thay vì gọi API. Payload mang theo GAP của
- * từng sản phẩm — bản ghi phải phản ánh đúng thứ thiếu, không làm tròn cho đẹp.
+ * Bốn endpoint v2 làm hết phần nặng — FE không còn tự nối
+ * `insights.create → poll → handoff → pages.create` như bản trước, cũng không
+ * tự chấm điểm sẵn sàng nữa:
+ *
+ *   POST /automations                  bước 1, BE tự dựng master draft
+ *   GET  /automations/{id}/candidates  bước 2, ứng viên + readiness BE chấm
+ *   POST /automations/{id}/run         nhân bản (xếp hàng, worker nền điền)
  */
 type AutomationWorkspaceProps = {
-  /** Trải nghiệm THẬT — `GET /pages?type=landing&status=published`, lọc `proven`. */
-  initialExperiences: ExperienceView[];
+  /** Template đã Proven — `GET /automations` (hub). */
+  initialExperiences: RxExperience[];
   /** Catalogue THẬT — `GET /products?is_template=false`. */
   initialProducts: Product[];
   /** Asset của catalogue, dùng cho ô EXP (đếm ảnh của từng sản phẩm). */
   initialAssets: ProductAsset[];
   /** Chiến dịch THẬT — `GET /campaigns`. */
   initialCampaigns: CampaignView[];
+  /** 403 CAPABILITY_REQUIRED — gói chưa mở tính năng, KHÔNG phải hỏng. */
+  initialLocked: boolean;
   initialError: string | null;
 };
 
@@ -56,13 +65,14 @@ export const AutomationWorkspace = ({
   initialProducts,
   initialAssets,
   initialCampaigns,
+  initialLocked,
   initialError,
 }: AutomationWorkspaceProps) => {
   const t = useTranslations('portalV2.automation');
   const router = useRouter();
 
   const experiences = useMemo(
-    () => initialExperiences.map(toAutomationExperience),
+    () => initialExperiences.map(v2ExperienceToAutomation),
     [initialExperiences]
   );
   const products = useMemo(
@@ -83,25 +93,32 @@ export const AutomationWorkspace = ({
   const [campaignId, setCampaignId] = useState<string>(
     () => initialCampaigns[0]?.id ?? ''
   );
-  const [widen, setWiden] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [widen, setWiden] = useState(false);
   const [masterBusy, setMasterBusy] = useState(false);
   const [masterError, setMasterError] = useState<string | null>(null);
-  const [progress, setProgress] = useState<RunProgress | null>(null);
-  const [outcomes, setOutcomes] = useState<RunOutcome[] | null>(null);
+  const [candidates, setCandidates] = useState<
+    (AutomationProduct & { readiness: Readiness })[]
+  >([]);
+  const [masterReadiness, setMasterReadiness] = useState<Readiness | null>(
+    null
+  );
+  const [queued, setQueued] = useState<RxAutomationRunItem[] | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+  const [candidatesBusy, setCandidatesBusy] = useState(false);
   const runningRef = useRef(false);
 
   /**
-   * Master đã dựng, khoá theo cặp (thiết kế × sản phẩm gốc).
+   * Automation đã tạo, khoá theo bộ ba (thiết kế × sản phẩm gốc × chiến dịch).
    *
-   * Giữ lại để bấm "Chỉnh master" lần hai KHÔNG tạo thêm một nháp nữa — bấm
-   * nhiều lần mà lần nào cũng tạo page mới thì workspace ngập nháp mồ côi.
+   * Giữ lại để bấm "Chỉnh master" lần hai KHÔNG tạo thêm một automation nữa —
+   * lần nào cũng tạo thì workspace ngập nháp mồ côi.
    */
-  const masterRef = useRef<{
+  const autoRef = useRef<{
     key: string;
-    pageId: string;
-    href: string;
+    id: string;
+    masterPageId: string;
   } | null>(null);
 
   const experience = useMemo(
@@ -112,15 +129,11 @@ export const AutomationWorkspace = ({
     () => products.find(p => p.id === setupProductId),
     [products, setupProductId]
   );
-  const eligible = useMemo(
-    () => eligibleProducts(products, masterProduct, widen),
-    [products, masterProduct, widen]
-  );
-
   const handleStart = (id: string) => {
     setExperienceId(id);
     setSelected([]);
     setWiden(false);
+    setQueued(null);
     setStage('setup');
   };
 
@@ -136,88 +149,132 @@ export const AutomationWorkspace = ({
     );
   };
 
-  // Đổi sản phẩm gốc ⇒ lớp có thể đổi theo ⇒ danh sách đã chọn không còn hợp lệ.
+  // Đổi sản phẩm gốc ⇒ ứng viên BE trả sẽ khác ⇒ lựa chọn cũ không còn hợp lệ.
   const handleSetupProductChange = (id: string) => {
     setSetupProductId(id);
     setSelected([]);
+    setCandidates([]);
+  };
+
+  /**
+   * Tạo automation nếu bộ ba đã đổi, còn không thì dùng lại bản cũ.
+   *
+   * BE fork master draft ngay trong `POST /automations` và trả `master_page_id`
+   * — không cần bước dựng page riêng như bản ghép tay trước đây.
+   */
+  const ensureAutomation = async () => {
+    if (!experience || !masterProduct) return null;
+    const key = `${experience.id}:${masterProduct.id}:${campaignId}`;
+    if (autoRef.current?.key === key) return autoRef.current;
+
+    const res = await createAutomation({
+      sourceExperienceId: experience.id,
+      setupProductId: masterProduct.id,
+      campaignId,
+    });
+    autoRef.current = { key, id: res.id, masterPageId: res.master_page_id };
+    return autoRef.current;
   };
 
   const handleAdjust = async () => {
-    if (!experience || !masterProduct || masterBusy) return;
-
-    const key = `${experience.id}:${masterProduct.id}`;
-    const cached = masterRef.current;
-
-    // Cùng cặp thiết kế × sản phẩm ⇒ mở lại đúng bản nháp cũ.
-    if (cached?.key === key) {
-      router.push(cached.href);
-      return;
-    }
-
+    if (masterBusy) return;
     setMasterBusy(true);
     setMasterError(null);
     try {
-      // Đổi sản phẩm ⇒ master cũ không còn đúng ⇒ lưu trữ nó đi.
-      if (cached) void dropMasterDraft(cached.pageId);
-
-      const page = await createMasterDraft({
-        experienceId: experience.id,
-        experienceName: experience.name,
-        productTitle: masterProduct.title,
-      });
-      const href = masterCanvasHref(page);
-      masterRef.current = { key, pageId: page.id, href };
-      router.push(href);
-    } catch (err) {
-      setMasterError(
-        err instanceof Error && err.message === 'MASTER_NO_TEMPLATE'
-          ? t('masterNoTemplate')
-          : t('masterFailed')
-      );
+      const auto = await ensureAutomation();
+      if (auto) router.push(masterCanvasHrefById(auto.masterPageId));
+    } catch {
+      setMasterError(t('masterFailed'));
     } finally {
       setMasterBusy(false);
     }
   };
 
-  const handleRun = async () => {
-    if (!experience || !masterProduct || runningRef.current) return;
-    runningRef.current = true;
+  /**
+   * Nạp ứng viên. BE trả CẢ sản phẩm gốc trong danh sách — loại nó ở đây vì
+   * bước 2 đã vẽ nó riêng thành thẻ master.
+   */
+  const loadCandidates = async (automationId: string, wide: boolean) => {
+    const all = (await fetchCandidates(automationId, wide)).map(
+      v2CandidateToProduct
+    );
+    setMasterReadiness(
+      all.find(p => p.id === setupProductId)?.readiness ?? null
+    );
+    return all.filter(p => p.id !== setupProductId);
+  };
+
+  /**
+   * Sang bước 2 — tạo automation rồi hỏi BE ứng viên.
+   *
+   * Nạp ứng viên TRƯỚC khi đổi chặng: sang màn rồi mới báo lỗi thì người dùng
+   * đứng trước một danh sách rỗng không rõ vì sao.
+   */
+  const handleNext = async () => {
+    if (masterBusy) return;
+    setMasterBusy(true);
+    setMasterError(null);
+    try {
+      const auto = await ensureAutomation();
+      if (!auto) return;
+      setCandidates(await loadCandidates(auto.id, widen));
+      setQueued(null);
+      setStage('pick');
+    } catch {
+      setMasterError(t('masterFailed'));
+    } finally {
+      setMasterBusy(false);
+    }
+  };
+
+  /**
+   * Nới lớp — hỏi lại BE chứ không lọc rộng ra ở FE. `core.CategoryMatches` là
+   * nơi giữ luật; đoán lại ở đây là cách hai bên lệch nhau.
+   */
+  const handleToggleWiden = async () => {
+    const auto = autoRef.current;
+    if (!auto || candidatesBusy) return;
+    const next = !widen;
+    setCandidatesBusy(true);
     setRunError(null);
-    setOutcomes(null);
+    try {
+      const items = await loadCandidates(auto.id, next);
+      setCandidates(items);
+      setWiden(next);
+      // Thu lớp lại làm rơi bớt ứng viên ⇒ bỏ tick những id không còn trong
+      // danh sách, nếu không sẽ gửi lên BE id đã biến mất khỏi màn hình.
+      const live = new Set(items.map(p => p.id));
+      setSelected(prev => prev.filter(id => live.has(id)));
+    } catch (err) {
+      setRunError(err instanceof Error ? err.message : t('runFailed'));
+    } finally {
+      setCandidatesBusy(false);
+    }
+  };
+
+  /**
+   * Nhân bản — MỘT request, BE fork page rồi giao worker nền điền nội dung.
+   *
+   * Không có tiến trình từng sản phẩm để hiện, và cũng không có nội dung tại
+   * thời điểm trả về: kết quả là "đã xếp hàng", không phải "đã xong".
+   */
+  const handleRun = async () => {
+    const auto = autoRef.current;
+    if (!auto || runningRef.current) return;
+    runningRef.current = true;
+    setRunning(true);
+    setRunError(null);
+    setQueued(null);
 
     try {
-      const { templateId, workspaceId } = await templateIdOfExperience(
-        experience.id
+      setQueued(
+        await runAutomationV2(auto.id, selected.slice(0, AUTOMATION_BATCH_CAP))
       );
-
-      // Master đã chỉnh ⇒ đóng bản chỉnh thành template rồi nhân từ ĐÓ. Chưa
-      // chỉnh gì ⇒ dùng thẳng template gốc, khỏi dựng thêm bản ghi thừa.
-      const cached = masterRef.current;
-      const committed = cached
-        ? await commitMasterTemplate({
-            masterPageId: cached.pageId,
-            name: `${experience.name} — master`,
-          })
-        : null;
-
-      const queue = products.filter(p => selected.includes(p.id));
-      const results = await runAutomation({
-        workspaceId,
-        sourceTemplateId: committed ?? templateId,
-        experienceName: experience.name,
-        products: queue,
-        onProgress: setProgress,
-      });
-      setOutcomes(results);
     } catch (err) {
-      setRunError(
-        err instanceof Error && err.message === 'MASTER_NO_TEMPLATE'
-          ? t('masterNoTemplate')
-          : t('runFailed')
-      );
+      setRunError(err instanceof Error ? err.message : t('runFailed'));
     } finally {
-      setProgress(null);
       runningRef.current = false;
+      setRunning(false);
     }
   };
 
@@ -286,6 +343,7 @@ export const AutomationWorkspace = ({
         {stage === 'hub' ? (
           <AutomationHub
             experiences={experiences}
+            locked={initialLocked}
             error={initialError}
             onStart={handleStart}
           />
@@ -304,27 +362,26 @@ export const AutomationWorkspace = ({
             adjustBusy={masterBusy}
             adjustError={masterError}
             onCancel={handleCancel}
-            onNext={() => setStage('pick')}
+            onNext={handleNext}
           />
         ) : null}
 
         {stage === 'pick' && experience && masterProduct ? (
           <ProductPickStep
-            experience={experience}
             masterProduct={masterProduct}
-            eligible={eligible.items}
-            unclassified={eligible.unclassified}
+            masterReadiness={masterReadiness}
+            eligible={candidates}
             selected={selected}
             widen={widen}
+            onToggleWiden={handleToggleWiden}
+            candidatesBusy={candidatesBusy}
             onToggle={handleToggle}
-            onToggleWiden={() => setWiden(v => !v)}
             onBack={() => setStage('setup')}
             onRun={handleRun}
             cap={AUTOMATION_BATCH_CAP}
-            progress={progress}
-            outcomes={outcomes}
+            queued={queued}
             runError={runError}
-            running={runningRef.current}
+            running={running}
           />
         ) : null}
       </div>
