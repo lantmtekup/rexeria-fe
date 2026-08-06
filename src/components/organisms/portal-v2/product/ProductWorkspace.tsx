@@ -2,8 +2,26 @@
 
 import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+
+import { CoverPickerModal } from '@/components/organisms/portal-v2/product/CoverPickerModal';
+import { MediaPickerModal } from '@/components/organisms/portal-v2/product/MediaPickerModal';
+import { fetchProductCatalog } from '@/services/portal-v2/productCatalog';
+import {
+  attachExistingMedia,
+  fetchProductMedia,
+  uploadProductMedia,
+} from '@/services/portal-v2/productMediaUpload';
+import type { WriteFailure } from '@/services/portal-v2/productWrite';
+import {
+  addProductTags,
+  createProduct,
+  deleteProducts,
+  duplicateProduct as duplicateProductApi,
+  setProductsStatus,
+  updateProduct,
+} from '@/services/portal-v2/productWrite';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
@@ -21,7 +39,6 @@ import {
   PRODUCT_STATUS,
 } from '@/lib/portal-v2/product/constants';
 import {
-  duplicateProduct,
   normalizeProductDraft,
   readiness,
   slugifyHandle,
@@ -53,6 +70,12 @@ type ProductWorkspaceProps = {
   /** Catalogue as loaded on the server — see `services/portal-v2/productCatalog`. */
   initialProducts: Product[];
   initialAssets?: ProductAsset[];
+  /**
+   * Brand đang xem. Phải mang theo: mọi lần nạp lại phía client đều gọi
+   * `fetchProductCatalog` — quên truyền là bộ lọc rơi mất và lưới bỗng hiện
+   * sản phẩm của brand khác.
+   */
+  brandId?: string | null;
   initialBrands?: string[];
   initialTypes?: string[];
   /** Server-side total; larger than the list means the page was truncated. */
@@ -63,9 +86,30 @@ type ProductWorkspaceProps = {
   softError?: string | null;
 };
 
+/** Gom các lỗi cùng mã lại, để một nguyên nhân chỉ hiện một thông báo. */
+const groupByCode = (
+  failed: WriteFailure[]
+): [string | undefined, WriteFailure[]][] => {
+  const by = new Map<string | undefined, WriteFailure[]>();
+  for (const f of failed) {
+    const list = by.get(f.code) ?? [];
+    list.push(f);
+    by.set(f.code, list);
+  }
+  return [...by.entries()];
+};
+
+/**
+ * Mã lỗi BE → khoá i18n. Mã lạ thì rơi về câu chung — thà nói "không xoá được"
+ * còn hơn ném nguyên câu tiếng Anh của server ra màn hình.
+ */
+const reasonKey = (code?: string): string =>
+  code === 'ERR_PRODUCT_IN_USE' ? 'toastDeleteInUse' : 'toastDeleteFailed';
+
 export const ProductWorkspace = ({
   initialProducts,
   initialAssets = [],
+  brandId = null,
   initialBrands = [],
   initialTypes = [],
   initialTotal,
@@ -75,6 +119,21 @@ export const ProductWorkspace = ({
   const t = useTranslations('portalV2.products');
 
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  /** Đang gọi API — khoá nút để không gửi trùng. */
+  const [saving, setSaving] = useState(false);
+  /** Đang tải ảnh lên — khoá ô chọn file để không gửi trùng. */
+  const [uploading, setUploading] = useState(false);
+  /** Bảng chọn ảnh có sẵn trong thư viện. */
+  const [picking, setPicking] = useState(false);
+  /** Bộ chọn ảnh đại diện — chọn trong media CỦA SẢN PHẨM, không phải thư viện. */
+  const [pickingCover, setPickingCover] = useState(false);
+
+  /**
+   * Ngữ cảnh map giống hệt lúc nạp danh sách, để hàng vừa lưu hiển thị y như
+   * hàng đã có. `now` chốt một lần: mỗi hàng tự lấy giờ riêng thì nhãn "vừa
+   * xong" sẽ lệch nhau vài giây.
+   */
+  const mapCtx = useMemo(() => ({ now: Date.now() }), []);
   const [filters, setFilters] = useState<ProductFilters>(
     PRODUCT_DEFAULT_FILTERS
   );
@@ -83,7 +142,12 @@ export const ProductWorkspace = ({
   const [draft, setDraft] = useState<Product | null>(null);
   const [modalTab, setModalTab] = useState<ProductModalTab>('details');
 
-  const assets = initialAssets;
+  /**
+   * Asset của catalogue. Là STATE chứ không phải prop thuần: tải ảnh mới xong
+   * phải nạp lại thì lưới ảnh và điểm sẵn sàng (ATT/EXP chấm theo số binding)
+   * mới đổi theo, không bắt người dùng F5.
+   */
+  const [assets, setAssets] = useState<ProductAsset[]>(initialAssets);
   const list = useMemo(
     () => visibleProducts(products, filters),
     [products, filters]
@@ -140,59 +204,285 @@ export const ProductWorkspace = ({
     setModal({ kind: 'product', id: 'new', mode: 'new' });
   };
 
-  const handleDuplicate = (id: string) => {
-    const product = products.find(p => p.id === id);
-    if (!product) return;
-    const copy = duplicateProduct(product, products);
-    setProducts(prev => [copy, ...prev]);
-    setFilters(PRODUCT_DEFAULT_FILTERS);
-    setSelected([]);
-    toast.success(t('toastDuplicated', { name: copy.title }));
+  const handleDuplicate = async (id: string) => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      // BE clone cả media binding trong một transaction; sao chép ở client thì
+      // bản sao mất ảnh và mang id không tồn tại.
+      const copy = await duplicateProductApi(id, mapCtx);
+      setProducts(prev => [copy, ...prev]);
+      setFilters(PRODUCT_DEFAULT_FILTERS);
+      setSelected([]);
+      toast.success(t('toastDuplicated', { name: copy.title }));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('toastSaveFailed'));
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const confirmDelete = () => {
-    if (modal?.kind !== 'delete') return;
-    const ids = new Set(modal.ids);
-    const count = modal.ids.length;
-    setProducts(prev => prev.filter(p => !ids.has(p.id)));
-    setSelected(prev => prev.filter(id => !ids.has(id)));
+  /**
+   * Tải ảnh lên rồi gắn vào sản phẩm đang mở.
+   *
+   * Chỉ mở cho sản phẩm ĐÃ LƯU: chưa có id thì không có gì để gắn media vào.
+   * Xong thì nạp lại catalogue — asset mới phải xuất hiện ở lưới ảnh, và
+   * `readiness` (ATT/EXP) chấm theo số binding nên cũng đổi theo.
+   */
+  const handleUploadMedia = async (files: File[]) => {
+    if (modal?.kind !== 'product' || modal.mode === 'new' || uploading) return;
+    const productId = modal.id;
+
+    setUploading(true);
+    const results = await uploadProductMedia({
+      productId,
+      files,
+      startSortOrder: assets.filter(a => a.home.ref === productId).length,
+    });
+    setUploading(false);
+
+    const ok = results.filter(r => r.asset && !r.error);
+    const bad = results.filter(r => r.error);
+
+    if (ok.length) {
+      await refreshCatalog(productId);
+      toast.success(t('toastMediaUploaded', { count: ok.length }));
+    }
+    if (bad.length) {
+      toast.error(
+        t('toastMediaFailed', {
+          count: bad.length,
+          names: bad.map(b => b.file).join(', '),
+        }),
+        { duration: 8000 }
+      );
+    }
+  };
+
+  /**
+   * Media THẬT của sản phẩm đang mở.
+   *
+   * Danh sách dùng asset tổng hợp (một ảnh giả mỗi sản phẩm, dựng từ
+   * `thumbnail_url`) vì gọi chi tiết cho cả trang là 50 round-trip. Nhưng modal
+   * thì phải đọc binding thật — nếu không lưới ảnh luôn "0 files" và bộ chọn
+   * ảnh bìa luôn rỗng, kể cả khi ảnh đã gắn.
+   */
+  useEffect(() => {
+    if (modal?.kind !== 'product' || modal.mode === 'new') return;
+    const id = modal.id;
+    let cancelled = false;
+    void fetchProductMedia(id)
+      .then(real => {
+        if (cancelled) return;
+        setAssets(prev => [...prev.filter(a => a.home.ref !== id), ...real]);
+      })
+      .catch(() => {
+        /* đọc hụt media không đáng để chặn cả modal */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [modal]);
+
+  /** Nạp lại catalogue sau khi media đổi — readiness chấm theo số binding. */
+  const refreshCatalog = async (productId?: string) => {
+    const fresh = await fetchProductCatalog({ brandId });
+    if (!fresh.error) {
+      setProducts(fresh.products);
+      // Giữ media THẬT của sản phẩm đang mở: `fresh.assets` chỉ là bản tổng
+      // hợp, ghi đè thẳng vào là ảnh vừa gắn biến mất khỏi lưới.
+      const real = productId ? await fetchProductMedia(productId) : [];
+      setAssets([
+        ...fresh.assets.filter(a => a.home.ref !== productId),
+        ...real,
+      ]);
+    }
+  };
+
+  const handleAttachExisting = async (mediaIds: string[]) => {
+    if (modal?.kind !== 'product' || modal.mode === 'new' || uploading) return;
+    const productId = modal.id;
+    setUploading(true);
+    try {
+      await attachExistingMedia(
+        productId,
+        mediaIds,
+        assets.filter(a => a.home.ref === productId).length
+      );
+      await refreshCatalog(productId);
+      setPicking(false);
+      toast.success(t('toastMediaUploaded', { count: mediaIds.length }));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('toastSaveFailed'));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  /**
+   * Đặt ảnh đại diện. Ghi thẳng `cover_media_id` qua PATCH — không đi qua chế
+   * độ sửa cả sản phẩm, vì việc này chỉ đổi đúng một trường.
+   */
+  const handleSetCover = async (mediaId: string) => {
+    if (modal?.kind !== 'product' || saving) return;
+    const target = products.find(p => p.id === modal.id);
+    if (!target) return;
+
+    setSaving(true);
+    try {
+      const saved = await updateProduct(
+        { ...target, cover: mediaId },
+        { ctx: mapCtx, coverMediaId: mediaId }
+      );
+      setProducts(prev => prev.map(p => (p.id === saved.id ? saved : p)));
+      setPickingCover(false);
+      toast.success(t('toastCoverSet'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('toastSaveFailed'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /** Id → tên sản phẩm; không tra được thì lùi về 8 ký tự đầu của id. */
+  const nameOf = (id: string) =>
+    products.find(p => p.id === id)?.title ?? id.slice(0, 8);
+
+  /** Gộp kết quả hàng loạt vào lưới + báo phần hỏng đích danh. */
+  const applyBulk = (
+    updated: Product[],
+    failed: { id: string; error: string }[],
+    okKey: string
+  ) => {
+    if (updated.length) {
+      const byId = new Map(updated.map(p => [p.id, p]));
+      setProducts(prev => prev.map(p => byId.get(p.id) ?? p));
+      toast.success(t(okKey, { count: updated.length }));
+    }
+    for (const [code, group] of groupByCode(failed)) {
+      toast.error(
+        t(reasonKey(code), {
+          count: group.length,
+          names: group.map(f => nameOf(f.id)).join(', '),
+        }),
+        { duration: 8000 }
+      );
+    }
+    setSelected([]);
+  };
+
+  const handleArchive = async () => {
+    if (!selected.length || saving) return;
+    setSaving(true);
+    const { updated, failed } = await setProductsStatus(
+      selected,
+      'archived',
+      mapCtx
+    );
+    setSaving(false);
+    applyBulk(updated, failed, 'toastArchived');
+  };
+
+  const handleAddTags = async () => {
+    if (!selected.length || saving) return;
+    const raw = window.prompt(t('promptTags'));
+    const tags = (raw ?? '')
+      .split(',')
+      .map(x => x.trim())
+      .filter(Boolean);
+    if (!tags.length) return;
+
+    const items = products
+      .filter(p => selected.includes(p.id))
+      .map(p => ({ id: p.id, tags: p.tags ?? [] }));
+
+    setSaving(true);
+    const { updated, failed } = await addProductTags(items, tags, mapCtx);
+    setSaving(false);
+    applyBulk(updated, failed, 'toastTagsAdded');
+  };
+
+  const confirmDelete = async () => {
+    if (modal?.kind !== 'delete' || saving) return;
+    const targets = modal.ids;
+
+    setSaving(true);
+    const { deleted, failed } = await deleteProducts(targets);
+    setSaving(false);
+
+    // Chỉ bỏ khỏi lưới những cái BE xác nhận đã xoá — bỏ cả những cái hỏng thì
+    // màn hình nói dối, tải lại trang là chúng hiện về.
+    const gone = new Set(deleted);
+    setProducts(prev => prev.filter(p => !gone.has(p.id)));
+    setSelected(prev => prev.filter(id => !gone.has(id)));
     closeModal();
-    toast.success(t('toastDeleted', { count }));
+
+    if (deleted.length)
+      toast.success(t('toastDeleted', { count: deleted.length }));
+    if (failed.length) {
+      toast.error(
+        t('toastDeleteFailed', {
+          count: failed.length,
+          names: failed.map(f => f.id.slice(0, 8)).join(', '),
+        })
+      );
+    }
   };
 
   /* ── Modal actions ─────────────────────────────────────────────────── */
 
-  const handleSave = () => {
-    if (!draft || modal?.kind !== 'product') return;
+  const handleSave = async () => {
+    if (!draft || modal?.kind !== 'product' || saving) return;
     const cleaned = normalizeProductDraft(draft);
     if (!cleaned.title) {
       toast.error(t('toastNeedsTitle'));
       return;
     }
-    cleaned.updated = 'just now';
-    window.alert(JSON.stringify(cleaned, null, 2));
-    setProducts(prev => prev.map(p => (p.id === cleaned.id ? cleaned : p)));
-    closeModal();
-    toast.success(t('toastSaved', { name: cleaned.title }));
+
+    setSaving(true);
+    try {
+      // Nhận lại bản BE trả về, không dùng bản draft: BE chuẩn hoá slug và tự
+      // tính `claims[].ok`, hiển thị bản gửi đi sẽ lệch với bản trong CSDL.
+      const saved = await updateProduct(cleaned, { ctx: mapCtx });
+      setProducts(prev => prev.map(p => (p.id === saved.id ? saved : p)));
+      closeModal();
+      toast.success(t('toastSaved', { name: saved.title }));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('toastSaveFailed'));
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleCreate = (status: 'draft' | 'active') => {
-    if (!draft) return;
+  const handleCreate = async (status: 'draft' | 'active') => {
+    if (!draft || saving) return;
     const cleaned = normalizeProductDraft(draft);
     if (!cleaned.title) {
       toast.error(t('toastNeedsTitle'));
       return;
     }
-    /* Mint the id from the list length, not Date.now() — no hydration drift. */
-    cleaned.id = `p${products.length + 1}-${slugifyHandle(cleaned.title).slice(0, 12)}`;
-    cleaned.handle = uniqueHandle(
-      cleaned.handle || slugifyHandle(cleaned.title),
-      products
-    );
+    cleaned.handle =
+      cleaned.handle || uniqueHandle(slugifyHandle(cleaned.title), products);
     cleaned.status = status;
-    cleaned.updated = 'just now';
-    window.alert(JSON.stringify(cleaned, null, 2));
-    setProducts(prev => [cleaned, ...prev]);
+
+    setSaving(true);
+    let created: Product;
+    try {
+      // Id do BE cấp — bản cũ tự bịa từ độ dài danh sách, nên mọi thao tác sau
+      // đó (sửa, xoá, gắn media) đều trỏ vào một id không tồn tại.
+      // Gắn brand đang xem: tạo xong mà không có brand_id thì sản phẩm rơi
+      // ngay ra ngoài bộ lọc — vừa bấm Tạo đã thấy nó biến mất khỏi lưới.
+      created = await createProduct(cleaned, {
+        ctx: mapCtx,
+        ...(brandId ? { brandId } : {}),
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('toastSaveFailed'));
+      setSaving(false);
+      return;
+    }
+    setSaving(false);
+    setProducts(prev => [created, ...prev]);
     setFilters(PRODUCT_DEFAULT_FILTERS);
     setSelected([]);
     closeModal();
@@ -302,8 +592,8 @@ export const ProductWorkspace = ({
               <ProductBulkBar
                 count={selected.length}
                 onPublish={() => toast.success(t('toastPublished'))}
-                onAddTags={() => toast.success(t('toastTagsAdded'))}
-                onArchive={() => toast.success(t('toastArchived'))}
+                onAddTags={handleAddTags}
+                onArchive={handleArchive}
                 onDelete={() => setModal({ kind: 'delete', ids: selected })}
                 onClear={() => setSelected([])}
               />
@@ -363,10 +653,43 @@ export const ProductWorkspace = ({
           onChange={setDraft}
           onClose={closeModal}
           onRequestEdit={() => openEdit(activeProduct.id)}
+          onUploadMedia={modal?.mode === 'new' ? undefined : handleUploadMedia}
+          onPickFromLibrary={
+            modal?.mode === 'new' ? undefined : () => setPicking(true)
+          }
+          onPickCover={
+            modal?.mode === 'new' ? undefined : () => setPickingCover(true)
+          }
+          uploading={uploading}
           onSave={handleSave}
           onCreate={handleCreate}
           onDelete={() => setModal({ kind: 'delete', ids: [activeProduct.id] })}
           onBuildExperience={() => toast.message(t('toastBuildExperience'))}
+        />
+      ) : null}
+
+      {/* SAU ProductModal, có lý do: Modal của Portal V2 dùng CHUNG một
+          z-index (--pv2-z-top + 10), nên cái nào đứng sau trong DOM mới nằm
+          trên. Đặt trước thì bảng chọn vẫn mở nhưng bị modal sản phẩm che
+          kín — nhìn hệt như bấm không ăn. */}
+      {picking && modal?.kind === 'product' && modal.mode !== 'new' ? (
+        <MediaPickerModal
+          attachedIds={assets
+            .filter(a => a.home.ref === modal.id)
+            .map(a => a.id)}
+          busy={uploading}
+          onClose={() => setPicking(false)}
+          onConfirm={handleAttachExisting}
+        />
+      ) : null}
+
+      {pickingCover && modal?.kind === 'product' && modal.mode !== 'new' ? (
+        <CoverPickerModal
+          media={assets.filter(a => a.home.ref === modal.id)}
+          current={activeProduct?.cover ?? null}
+          busy={saving}
+          onClose={() => setPickingCover(false)}
+          onConfirm={handleSetCover}
         />
       ) : null}
 

@@ -41,11 +41,17 @@ import { MediaUseTabs } from '@/components/organisms/portal-v2/media/MediaUseTab
 type MediaWorkspaceProps = {
   initialAssets: MediaAsset[];
   initialError?: string | null;
+  /**
+   * Brand đang xem. Ô tìm kiếm nạp lại danh sách sau mỗi lần gõ — quên truyền
+   * là bộ lọc rơi mất và lưới bỗng hiện media của brand khác.
+   */
+  brandId?: string | null;
 };
 
 export const MediaWorkspace = ({
   initialAssets,
   initialError = null,
+  brandId = null,
 }: MediaWorkspaceProps) => {
   const t = useTranslations('portalV2.media');
   const [assets, setAssets] = useState<MediaAsset[]>(() =>
@@ -89,7 +95,7 @@ export const MediaWorkspace = ({
     let cancelled = false;
     setSearching(true);
 
-    fetchMediaCatalog({ q: debouncedQ || undefined })
+    fetchMediaCatalog({ q: debouncedQ || undefined, brandId })
       .then(result => {
         if (cancelled) return;
         setAssets(result.assets);

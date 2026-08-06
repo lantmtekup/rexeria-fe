@@ -6,6 +6,8 @@ import { rexerApi } from '@/services/rexer/endpoints';
 export type ExperienceLibraryQuery = {
   /** Free-text search — forwarded to the pages API as `q`. */
   q?: string;
+  /** Giới hạn theo thương hiệu; bỏ trống = mọi brand đọc được. */
+  brandId?: string | null;
 };
 
 export type ExperienceLibraryResult = {
@@ -43,6 +45,7 @@ export const fetchExperienceLibrary = async (
       limit: PAGE_LIMIT,
       sort: '-updated_at',
       ...(q ? { q } : {}),
+      ...(query.brandId ? { brand_id: query.brandId } : {}),
     });
 
     // BE list page trả `thumbnail_asset_id` chứ không resolve `thumbnail_url`

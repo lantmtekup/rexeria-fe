@@ -22,7 +22,10 @@
       "logoutSuccess": "Signed out",
       "logoutError": "Could not sign out",
       "expandGroup": "{group} - expand",
-      "collapseGroup": "{group} - collapse"
+      "collapseGroup": "{group} - collapse",
+      "scopeLabel": "Brand",
+      "scopePlaceholder": "Choose a brand…",
+      "scopeNeedsPick": "Pick a brand before editing — nothing is loaded yet."
     },
     "nav": {
       "command": "Command Center",
@@ -335,7 +338,10 @@
       "tabAudience": "Audience",
       "tabAudienceDesc": "Who buys, and what they need to believe",
       "tabVisual": "Visual",
-      "tabVisualDesc": "What it looks like — the system every generated page is drawn against"
+      "tabVisualDesc": "What it looks like — the system every generated page is drawn against",
+      "toastSaved": "Brand profile saved",
+      "toastSaveFailed": "Could not save — nothing was written.",
+      "noBrand": "No brand found for this account — the profile cannot be saved yet."
     },
     "journeys": {
       "title": "Journey Builder",
@@ -649,7 +655,10 @@
       "vehicleCurated": "Curated Content",
       "vehicleMicrosite": "Microsites",
       "vehicleShowcase": "Product Showcase",
-      "whereItRuns": "Where it runs"
+      "whereItRuns": "Where it runs",
+      "provenOn": "Proven",
+      "provenOff": "Mark Proven",
+      "provenHint": "A curation mark you set by hand — it never touches the numbers. Proven designs collect in Automation, ready to roll across a product class."
     },
     "products": {
       "title": "Product",
@@ -859,7 +868,26 @@
       "toastShopifyConnected": "Shopify connected — 6 products synced",
       "toastChooseCsv": "Choose a CSV file",
       "toastSampleCsv": "Sample CSV downloaded",
-      "toastImported": "Imported 6 products · 12 variants"
+      "toastImported": "Imported 6 products · 12 variants",
+      "toastSaveFailed": "Could not save — nothing was written.",
+      "toastDeleteFailed": "{count} could not be deleted: {names}",
+      "toastBulkFailed": "{count} could not be updated: {names}",
+      "promptTags": "Tags to add, separated by commas",
+      "toastDeleteInUse": "{count} still attached to a campaign — remove them from the campaign first: {names}",
+      "toastMediaUploaded": "{count} file(s) added to this product",
+      "toastMediaFailed": "{count} file(s) failed: {names}",
+      "addMediaNeedsSave": "Save the product first, then add media to it",
+      "removeRow": "Remove",
+      "pickFromLibrary": "Choose from Media",
+      "pickFromLibraryHint": "Images already in your library. Pick the ones this product should carry.",
+      "attachSelected": "Attach {count}",
+      "libraryEmpty": "No images in the library yet — upload some first.",
+      "loading": "Loading…",
+      "pickCover": "Choose the profile image",
+      "pickCoverHint": "Pick one of this product's images. It becomes how the product is recognised across the platform.",
+      "setAsCover": "Set as profile image",
+      "coverNeedsMedia": "This product has no images yet. Add media first, then one can become its face.",
+      "toastCoverSet": "Profile image updated"
     },
     "campaigns": {
       "title": "Campaigns",
@@ -1360,6 +1388,70 @@
       "kvFormat": "Format",
       "kvDimensions": "Dimensions",
       "kvSize": "Size"
+    },
+    "automation": {
+      "title": "Automation",
+      "titleRunning": "Automate · {name}",
+      "hubDesc": "Your proven experiences, ready to roll across a product class. Mark a design Proven from its detail, then automate it here.",
+      "setupDesc": "Set it up on one product and adjust it until it's right — that master is what rolls across the class.",
+      "pickDesc": "Master set up on {master}. Check the products in its class to roll it across — each lands as an honest draft.",
+      "hubEmpty": "No proven experiences yet. Open an experience, read its result, and mark it Proven to roll it across a product class here.",
+      "automate": "Automate",
+      "notMeasured": "not yet run",
+      "liftVsControl": "{pct}% vs control",
+      "evidence": {
+        "high": "High confidence",
+        "directional": "Directional",
+        "early": "Early read",
+        "unmeasured": "Unmeasured"
+      },
+      "step1": "Set up the master",
+      "step2": "Choose the products",
+      "setupWith": "Set up with a product",
+      "intoCampaign": "Into campaign",
+      "masterSlots": "The master · {filled}/{total} slots fill from {product}",
+      "adjustMaster": "Adjust the master",
+      "masterNote": "The master lands as a real draft you can open in the canvas. Adjust it, and every product inherits your changes.",
+      "readyToAutomate": "Ready to Automate",
+      "cancel": "Cancel",
+      "back": "Back",
+      "theMaster": "the master",
+      "sameClass": "Same class · {klass} · master on {master} · {count} others",
+      "widenTo": "Widen to {klass}",
+      "slotsReady": "{filled}/{total} ready",
+      "readyToDeploy": "Ready to generate and deploy",
+      "needsBeforeDeploy": "Needs {needs} before it can deploy",
+      "noneInClass": "Nothing else shares this class. Widen to {klass}, or set up on a different product.",
+      "toGenerate": "{n} to generate",
+      "slotFilled": "{role} fills from this product",
+      "slotGap": "Gap: needs {need}",
+      "needCover": "a cover image",
+      "needImagery": "product imagery",
+      "needCopy": "copy to educate",
+      "needClaim": "a proven claim",
+      "needSku": "a buyable SKU",
+      "unclassified": "{master} has no product class yet — showing every other product ({count}).",
+      "widenDisabled": "Nothing to widen: the master product has no category.",
+      "noProducts": "No products in this workspace yet. Add one in Products, then come back.",
+      "noCampaigns": "No campaigns yet — create one in Campaigns first.",
+      "adjustOpening": "Opening the master…",
+      "masterNoTemplate": "This experience has no template behind it — nothing to open in the canvas.",
+      "masterFailed": "Could not create the master draft. Try again.",
+      "runProgress": "Generating {index}/{total} — {product}",
+      "runStage": {
+        "report": "Reading the brief from the product record…",
+        "writing": "AI is rewriting every block…",
+        "page": "Building the draft page…",
+        "done": "Done",
+        "failed": "Failed"
+      },
+      "dontClose": "Keep this tab open — closing mid-run still spends tokens but leaves no page.",
+      "runDone": "{ok}/{total} drafts created",
+      "runItemOk": "{product} — draft ready",
+      "runItemFailed": "{product} — failed, nothing was created",
+      "runFailed": "Could not start the run. Try again.",
+      "running": "Generating…",
+      "capNote": "only the first {cap} run this time"
     }
   }
 }

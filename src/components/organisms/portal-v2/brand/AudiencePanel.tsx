@@ -22,6 +22,7 @@ const newPersona = (): BrandPersona => ({
   id: `a${Date.now()}`,
   n: 'New persona',
   tier: 'Primary',
+  behaves: '',
   stage: 'discovery',
   awareness: 'unaware',
   motivations: [],

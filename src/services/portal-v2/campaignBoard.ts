@@ -41,6 +41,8 @@ import type {
 export type CampaignBoardQuery = {
   /** Free-text search — forwarded as `q`. */
   q?: string;
+  /** Giới hạn theo thương hiệu; bỏ trống = mọi brand đọc được. */
+  brandId?: string | null;
 };
 
 export type CampaignBoardResult = {
@@ -71,6 +73,7 @@ export const fetchCampaignBoard = async (
     const res = await rexerApi.campaigns.list({
       ...common,
       ...(q ? { q } : {}),
+      ...(query.brandId ? { brand_id: query.brandId } : {}),
     });
     return {
       items: (res.items ?? []).map(toCampaignView),

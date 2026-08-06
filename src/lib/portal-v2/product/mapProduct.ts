@@ -18,6 +18,7 @@ import type {
   Product,
   ProductAsset,
   ProductClaim,
+  ProductValue,
   ProductVariant,
 } from '@/lib/portal-v2/product/types';
 import type { Product as BEProduct } from '@/services/rexer/types';
@@ -108,6 +109,50 @@ const variantsFromBe = (p: BEProduct): ProductVariant[] => {
  * substantiation attached — `ok` stays derived from the proof, per the contract
  * on `ProductClaim`.
  */
+/**
+ * Khối value — đọc từ `p.value` của BE v2, chỉ rơi về nguồn cũ khi thiếu.
+ *
+ * Trước đây bốn trường benefits/competitors/claims/disclaimers bị GHI CỨNG
+ * rỗng, nên dù người dùng nhập đủ thì modal vẫn hiện "Nothing on file" — và
+ * nhìn vào tưởng dữ liệu thiếu chứ không phải FE không đọc.
+ *
+ * `features` ưu tiên `p.features` (có label + description) hơn
+ * `p.value.features` (chỉ chuỗi): hai nguồn này BE không tự đồng bộ, và bản
+ * đầy đủ hơn mới là bản người dùng nhập vào.
+ */
+const valueFromBe = (p: BEProduct): ProductValue => {
+  const v = p.value ?? {};
+
+  /* The price feature stays in this list even though `priceText` also lifts
+   * it out: it IS a feature on file, and the Value panel is where the user
+   * edits it back. Dropping it here would lose the row. */
+  const labelled = (p.features ?? [])
+    .map(f =>
+      f.description ? `${f.label}: ${f.description}` : (f.label ?? '')
+    )
+    .filter(Boolean);
+
+  return {
+    features: labelled.length ? labelled : (v.features ?? []),
+    benefits: v.benefits ?? [],
+    competitors: (v.competitors ?? []).map(c => ({
+      n: c.name,
+      theirs: c.theirs,
+      ours: c.ours,
+    })),
+    // `certifications` là nguồn CŨ; chỉ dùng khi v2 chưa có claim nào, nếu
+    // không một chứng nhận lẻ sẽ che mất bộ claim thật.
+    claims: v.claims?.length
+      ? v.claims.map(c => ({
+          t: c.text,
+          proof: c.proof ?? '',
+          ok: Boolean(c.ok),
+        }))
+      : claimsFromBe(p),
+    disclaimers: v.disclaimers ?? [],
+  };
+};
+
 const claimsFromBe = (p: BEProduct): ProductClaim[] =>
   (p.certifications ?? [])
     .filter(c => !!c.name)
@@ -183,27 +228,17 @@ export const mapBeProductToPortal = (
   /* The BE tracks no provenance; everything it holds was entered through it. */
   source: 'manual',
   updated: relativeUpdated(p.updated_at ?? p.created_at, ctx.now),
-  cover: p.thumbnail_url ? coverAssetId(p.id) : null,
+  // Id THẬT trước: `cover_media_id` là thứ BE lưu và `core.AutoSlots` chấm.
+  // Chỉ khi không có mới lùi về id tổng hợp, để lưới còn thứ gì đó mà vẽ từ
+  // `thumbnail_url` — nhưng id đó KHÔNG được gửi ngược lên (xem toBeProduct).
+  cover: p.cover_media_id ?? (p.thumbnail_url ? coverAssetId(p.id) : null),
   grad: gradientForId(p.id),
   priceText: priceTextFromBe(p),
   /* No BE counterpart: sales channels, benefits, competitors, disclaimers, SEO. */
   channels: [],
   options: p.sizes?.length ? [{ name: 'Size', values: p.sizes }] : [],
   variants: variantsFromBe(p),
-  value: {
-    /* The price feature stays in this list even though `priceText` also lifts
-     * it out: it IS a feature on file, and the Value panel is where the user
-     * edits it back. Dropping it here would lose the row. */
-    features: (p.features ?? [])
-      .map(f =>
-        f.description ? `${f.label}: ${f.description}` : (f.label ?? '')
-      )
-      .filter(Boolean),
-    benefits: [],
-    competitors: [],
-    claims: claimsFromBe(p),
-    disclaimers: [],
-  },
+  value: valueFromBe(p),
   seo: { title: '', desc: '' },
 });
 

@@ -24,8 +24,103 @@ import type {
   RxExchangeListing,
 } from './types/exchange';
 import type { RxExperience } from './types/experience';
+import type {
+  RxBrandProfile,
+  RxPutBrandProfileRequest,
+} from './types/brandProfile';
+import type {
+  RxAutomation,
+  RxAutomationCandidatesResponse,
+  RxAutomationHubResponse,
+  RxCreateAutomationRequest,
+  RxCreateAutomationResponse,
+  RxRunAutomationRequest,
+} from './types/automation';
 
 export const rexerV2Api = {
+  // ── Automation — v2-only. BE tự chấm readiness và tự dựng master draft. ──
+  automations: {
+    /**
+     * `GET /v1/automations` — hub: template đã đánh dấu Proven + các automation
+     * đang có. 403 `CAPABILITY_REQUIRED` nếu gói tài khoản không có quyền
+     * `automate`; đây là cổng TRẢ PHÍ, phải phân biệt với lỗi thường.
+     */
+    hub: (brandId?: string) =>
+      rxV2<RxAutomationHubResponse>('/automations', {
+        ...(brandId ? { query: { brand_id: brandId } } : {}),
+      }),
+
+    /**
+     * `POST /v1/automations` — chốt bước 1. BE dựng luôn MASTER DRAFT và trả về
+     * `master_page_id`, nên FE không phải tự tạo page rồi tự đóng template.
+     */
+    create: (body: RxCreateAutomationRequest) =>
+      rxV2<RxCreateAutomationResponse>('/automations', {
+        method: 'POST',
+        body,
+      }),
+
+    get: (automationId: string) =>
+      rxV2<RxAutomation>(`/automations/${automationId}`),
+
+    /**
+     * `GET /v1/automations/{id}/candidates` — sản phẩm đủ điều kiện, KÈM điểm
+     * sẵn sàng từng ô phễu do BE chấm. Không tự chấm lại ở FE: luật nằm ở BE,
+     * chép sang đây là mở đường cho hai bên lệch nhau.
+     */
+    candidates: (automationId: string) =>
+      rxV2<RxAutomationCandidatesResponse>(
+        `/automations/${automationId}/candidates`
+      ),
+
+    /**
+     * `POST /v1/automations/{id}/run` — nhân bản sang các sản phẩm đã chọn.
+     * BE lo toàn bộ chuỗi report → handoff → page; FE không ghép tay nữa.
+     */
+    run: (automationId: string, body: RxRunAutomationRequest) =>
+      rxV2<RxAutomation>(`/automations/${automationId}/run`, {
+        method: 'POST',
+        body,
+      }),
+  },
+
+  // ── Brand profile (spec §13.1) — bốn mục khớp bốn tab của màn Brand ────
+  brandProfile: {
+    get: (brandId: string) =>
+      rxV2<RxBrandProfile>(`/brands/${brandId}/profile`),
+
+    /**
+     * PUT thay TOÀN BỘ mục nào được gửi; bỏ khoá = giữ nguyên mục đó.
+     * `version` phải là số vừa đọc về — lệch thì BE từ chối, đó là cách nó
+     * chặn hai tab ghi đè lẫn nhau.
+     */
+    put: (brandId: string, body: RxPutBrandProfileRequest) =>
+      rxV2<RxBrandProfile>(`/brands/${brandId}/profile`, {
+        method: 'PUT',
+        body,
+      }),
+  },
+
+  // ── Experiences — thư viện trải nghiệm THẬT, thay cho việc suy từ /pages ──
+  experiences: {
+    /**
+     * `POST /v1/experiences/{id}/proven` — bật/tắt dấu Proven.
+     *
+     * Đây là cột THẬT trên bảng `templates` (migration 000050/000052 của v2),
+     * không phải chỗ chứa tạm. Bản v1 phải nhét vào `pages.type_metadata` vì
+     * schema của main không có cột này.
+     */
+    setProven: (experienceId: string, proven: boolean) =>
+      rxV2<RxExperience>(`/experiences/${experienceId}/proven`, {
+        method: 'POST',
+        body: { proven },
+      }),
+
+    /** `GET /v1/experiences/{id}/coverage` — độ phủ phễu ĐO ĐƯỢC, không seed. */
+    coverage: (experienceId: string) =>
+      rxV2<unknown>(`/experiences/${experienceId}/coverage`),
+  },
+
   // ── Exchange (spec §15) — v2-only, absent from the v1 deployment ────────
   exchange: {
     /**

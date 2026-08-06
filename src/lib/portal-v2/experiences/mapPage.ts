@@ -12,6 +12,7 @@ import {
   seedStats,
   seedVehicle,
 } from '@/lib/portal-v2/experiences/seed';
+import { readProven } from '@/services/portal-v2/experienceProven';
 import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
 import type { Page } from '@/services/rexer/types';
 
@@ -79,6 +80,9 @@ export const mapPageToExperience = (page: Page): ExperienceView => {
     status: page.status,
     summary: description || tagline,
     updatedLabel: formatUpdated(page.updated_at),
+    // Dấu do người dùng bấm, đọc từ `type_metadata.proven` — KHÔNG seed. Đây là
+    // đầu vào của module Automation: hub chỉ hiện thiết kế đã được đánh dấu.
+    proven: readProven(page),
 
     // ── seeded ────────────────────────────────────────────────────────────
     state: seedState(id),
@@ -87,7 +91,6 @@ export const mapPageToExperience = (page: Page): ExperienceView => {
     objective,
     role: roleOf(objective),
     interactions: seedInteractions(id),
-    proven: false,
     tagline,
     layers,
     features: pickSome(id, FEATURES, 'feat'),

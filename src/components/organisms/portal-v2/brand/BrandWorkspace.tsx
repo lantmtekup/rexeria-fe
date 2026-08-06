@@ -1,7 +1,8 @@
 'use client';
 
-import { Check, Pencil } from 'lucide-react';
+import { Check, Loader2, Pencil } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
@@ -11,15 +12,33 @@ import { EssencePanel } from '@/components/organisms/portal-v2/brand/EssencePane
 import { IdentityPanel } from '@/components/organisms/portal-v2/brand/IdentityPanel';
 import { VisualPanel } from '@/components/organisms/portal-v2/brand/VisualPanel';
 import { BRAND_TABS } from '@/lib/portal-v2/brand/constants';
-import { MOCK_BRAND, cloneBrand } from '@/lib/portal-v2/brand/mock';
+import { cloneBrand } from '@/lib/portal-v2/brand/mock';
 import type { BrandData, BrandTabId } from '@/lib/portal-v2/brand/types';
+import { saveBrandProfile } from '@/services/portal-v2/brandProfile';
 
-export const BrandWorkspace = () => {
+type BrandWorkspaceProps = {
+  /** Hồ sơ THẬT nạp từ server; `null` = brand này chưa có hồ sơ nào. */
+  initialData: BrandData;
+  initialVersion: number;
+  brandId: string | null;
+  initialError: string | null;
+};
+
+export const BrandWorkspace = ({
+  initialData,
+  initialVersion,
+  brandId,
+  initialError,
+}: BrandWorkspaceProps) => {
   const t = useTranslations('portalV2.brand');
   const [tab, setTab] = useState<BrandTabId>('identity');
   const [editing, setEditing] = useState(false);
-  const [saved, setSaved] = useState<BrandData>(() => cloneBrand(MOCK_BRAND));
-  const [draft, setDraft] = useState<BrandData>(() => cloneBrand(MOCK_BRAND));
+  const [saved, setSaved] = useState<BrandData>(() => cloneBrand(initialData));
+  const [draft, setDraft] = useState<BrandData>(() => cloneBrand(initialData));
+  /** Khoá chống ghi đè của BE — gửi lại đúng số vừa đọc khi lưu. */
+  const [version, setVersion] = useState(initialVersion);
+  const [saving, setSaving] = useState(false);
+  const [loadError] = useState<string | null>(initialError);
 
   const data = editing ? draft : saved;
   const tabMeta = BRAND_TABS.find(x => x.id === tab) ?? BRAND_TABS[0]!;
@@ -44,7 +63,8 @@ export const BrandWorkspace = () => {
     setEditing(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!brandId || saving) return;
     const cleaned: BrandData = {
       ...draft,
       identity: {
@@ -64,10 +84,22 @@ export const BrandWorkspace = () => {
         layout: draft.visual.layout.map(s => s.trim()).filter(Boolean),
       },
     };
-    window.alert(JSON.stringify(cleaned, null, 2));
-    setSaved(cloneBrand(cleaned));
-    setDraft(cloneBrand(cleaned));
-    setEditing(false);
+    setSaving(true);
+    try {
+      // Nhận lại bản BE trả về: nó tăng `version` và có thể chuẩn hoá vài
+      // trường. Giữ bản client gửi đi thì lần lưu sau mang version cũ và bị
+      // từ chối.
+      const res = await saveBrandProfile(brandId, cleaned, version);
+      setSaved(cloneBrand(res.data));
+      setDraft(cloneBrand(res.data));
+      setVersion(res.version);
+      setEditing(false);
+      toast.success(t('toastSaved'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('toastSaveFailed'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleTabChange = (id: string) => {
@@ -96,7 +128,14 @@ export const BrandWorkspace = () => {
                 <Button variant='ghost' onClick={handleCancel}>
                   {t('cancel')}
                 </Button>
-                <Button variant='primary' onClick={handleSave}>
+                <Button
+                  variant='primary'
+                  disabled={saving || !brandId}
+                  onClick={handleSave}
+                >
+                  {saving ? (
+                    <Loader2 className='size-[15px] animate-spin' aria-hidden />
+                  ) : null}
                   <Check
                     className='size-[15px]'
                     strokeWidth={2.4}
@@ -114,6 +153,16 @@ export const BrandWorkspace = () => {
           </div>
         </div>
       </div>
+
+      {loadError ? (
+        <p className='mx-auto w-full px-5 pb-2 text-[12.5px] text-[var(--pv2-error)] md:px-8'>
+          {loadError}
+        </p>
+      ) : !brandId ? (
+        <p className='mx-auto w-full px-5 pb-2 text-[12.5px] text-[var(--pv2-warning)] md:px-8'>
+          {t('noBrand')}
+        </p>
+      ) : null}
 
       <div className='sticky top-0 z-10 bg-[var(--pv2-paper)]'>
         <div className='mx-auto w-full px-5 md:px-8'>

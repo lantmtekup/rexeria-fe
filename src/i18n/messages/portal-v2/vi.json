@@ -22,7 +22,10 @@
       "logoutSuccess": "Đã đăng xuất",
       "logoutError": "Không thể đăng xuất",
       "expandGroup": "{group} - mở rộng",
-      "collapseGroup": "{group} - thu gọn"
+      "collapseGroup": "{group} - thu gọn",
+      "scopeLabel": "Thương hiệu",
+      "scopePlaceholder": "Chọn thương hiệu…",
+      "scopeNeedsPick": "Chọn thương hiệu trước khi sửa — chưa nạp hồ sơ nào."
     },
     "nav": {
       "command": "Trung tâm điều khiển",
@@ -335,7 +338,10 @@
       "tabAudience": "Đối tượng",
       "tabAudienceDesc": "Ai mua, và họ cần tin điều gì",
       "tabVisual": "Hình ảnh",
-      "tabVisualDesc": "Trông như thế nào — hệ thống mọi trang được sinh ra phải bám theo"
+      "tabVisualDesc": "Trông như thế nào — hệ thống mọi trang được sinh ra phải bám theo",
+      "toastSaved": "Đã lưu hồ sơ thương hiệu",
+      "toastSaveFailed": "Không lưu được — chưa có gì được ghi.",
+      "noBrand": "Tài khoản này chưa thuộc thương hiệu nào — chưa lưu hồ sơ được."
     },
     "journeys": {
       "title": "Hành trình",
@@ -649,7 +655,10 @@
       "vehicleCurated": "Nội dung tuyển chọn",
       "vehicleMicrosite": "Microsite",
       "vehicleShowcase": "Trưng bày sản phẩm",
-      "whereItRuns": "Chạy ở đâu"
+      "whereItRuns": "Chạy ở đâu",
+      "provenOn": "Đã chứng minh",
+      "provenOff": "Đánh dấu Proven",
+      "provenHint": "Dấu do bạn tự đánh, không đụng tới số liệu. Thiết kế được đánh dấu sẽ hiện ở Tự động hóa, sẵn sàng nhân sang cả lớp sản phẩm."
     },
     "products": {
       "title": "Sản phẩm",
@@ -859,7 +868,26 @@
       "toastShopifyConnected": "Đã kết nối Shopify — đồng bộ 6 sản phẩm",
       "toastChooseCsv": "Chọn một file CSV",
       "toastSampleCsv": "Đã tải file CSV mẫu",
-      "toastImported": "Đã nhập 6 sản phẩm · 12 biến thể"
+      "toastImported": "Đã nhập 6 sản phẩm · 12 biến thể",
+      "toastSaveFailed": "Không lưu được — chưa có gì được ghi.",
+      "toastDeleteFailed": "{count} sản phẩm không xoá được: {names}",
+      "toastBulkFailed": "{count} sản phẩm không cập nhật được: {names}",
+      "promptTags": "Nhập tag cần thêm, cách nhau bằng dấu phẩy",
+      "toastDeleteInUse": "{count} sản phẩm đang gắn trong chiến dịch — gỡ khỏi chiến dịch trước đã: {names}",
+      "toastMediaUploaded": "Đã thêm {count} file vào sản phẩm",
+      "toastMediaFailed": "{count} file tải hỏng: {names}",
+      "addMediaNeedsSave": "Lưu sản phẩm trước rồi mới thêm được ảnh",
+      "removeRow": "Xoá",
+      "pickFromLibrary": "Chọn từ thư viện",
+      "pickFromLibraryHint": "Ảnh đã có trong thư viện. Chọn ảnh cho sản phẩm này.",
+      "attachSelected": "Gắn {count} ảnh",
+      "libraryEmpty": "Thư viện chưa có ảnh nào — tải lên trước đã.",
+      "loading": "Đang tải…",
+      "pickCover": "Chọn ảnh đại diện",
+      "pickCoverHint": "Chọn một ảnh của sản phẩm này. Đó là hình nhận diện sản phẩm trên toàn hệ thống.",
+      "setAsCover": "Đặt làm ảnh đại diện",
+      "coverNeedsMedia": "Sản phẩm chưa có ảnh nào. Thêm media trước đã, rồi mới chọn được ảnh đại diện.",
+      "toastCoverSet": "Đã đổi ảnh đại diện"
     },
     "campaigns": {
       "title": "Chiến dịch",
@@ -1360,6 +1388,70 @@
       "kvFormat": "Định dạng",
       "kvDimensions": "Kích thước",
       "kvSize": "Dung lượng"
+    },
+    "automation": {
+      "title": "Tự động hóa",
+      "titleRunning": "Nhân bản · {name}",
+      "hubDesc": "Những trải nghiệm đã chứng minh hiệu quả, sẵn sàng nhân sang cả một lớp sản phẩm. Đánh dấu Proven ở trang chi tiết rồi quay lại đây.",
+      "setupDesc": "Dựng trên một sản phẩm và chỉnh cho đúng — bản master đó mới là thứ được nhân ra cả lớp.",
+      "pickDesc": "Master đã dựng trên {master}. Chọn các sản phẩm cùng lớp để nhân sang — mỗi bản là một nháp trung thực.",
+      "hubEmpty": "Chưa có trải nghiệm nào được đánh dấu Proven. Mở một trải nghiệm, xem kết quả của nó, rồi đánh dấu Proven để nhân ra cả lớp sản phẩm ở đây.",
+      "automate": "Nhân bản",
+      "notMeasured": "chưa đo",
+      "liftVsControl": "{pct}% so với đối chứng",
+      "evidence": {
+        "high": "Độ tin cậy cao",
+        "directional": "Có xu hướng",
+        "early": "Số liệu sớm",
+        "unmeasured": "Chưa đo"
+      },
+      "step1": "Dựng master",
+      "step2": "Chọn sản phẩm",
+      "setupWith": "Dựng với sản phẩm",
+      "intoCampaign": "Vào chiến dịch",
+      "masterSlots": "Bản master · {filled}/{total} ô lấp được từ {product}",
+      "adjustMaster": "Chỉnh master",
+      "masterNote": "Master là một bản nháp thật, mở được trong canvas. Chỉnh nó thì mọi sản phẩm đều thừa hưởng thay đổi của bạn.",
+      "readyToAutomate": "Sẵn sàng nhân bản",
+      "cancel": "Hủy",
+      "back": "Quay lại",
+      "theMaster": "bản master",
+      "sameClass": "Cùng lớp · {klass} · master trên {master} · {count} sản phẩm khác",
+      "widenTo": "Nới lên {klass}",
+      "slotsReady": "{filled}/{total} sẵn sàng",
+      "readyToDeploy": "Đủ dữ liệu để sinh và xuất bản",
+      "needsBeforeDeploy": "Cần {needs} trước khi xuất bản được",
+      "noneInClass": "Không sản phẩm nào khác cùng lớp. Nới lên {klass}, hoặc dựng trên sản phẩm khác.",
+      "toGenerate": "{n} bản sẽ được sinh",
+      "slotFilled": "{role} lấp được từ sản phẩm này",
+      "slotGap": "Thiếu: cần {need}",
+      "needCover": "ảnh bìa",
+      "needImagery": "bộ ảnh sản phẩm",
+      "needCopy": "nội dung giới thiệu",
+      "needClaim": "một khẳng định có bằng chứng",
+      "needSku": "một SKU bán được",
+      "unclassified": "{master} chưa được phân lớp — đang hiện mọi sản phẩm khác ({count}).",
+      "widenDisabled": "Không có gì để nới: sản phẩm gốc chưa có phân loại.",
+      "noProducts": "Workspace chưa có sản phẩm nào. Thêm ở mục Sản phẩm rồi quay lại.",
+      "noCampaigns": "Chưa có chiến dịch nào — tạo ở mục Chiến dịch trước đã.",
+      "adjustOpening": "Đang mở master…",
+      "masterNoTemplate": "Trải nghiệm này không có template phía sau — không có gì để mở trong canvas.",
+      "masterFailed": "Không tạo được bản nháp master. Thử lại giúp tôi.",
+      "runProgress": "Đang sinh {index}/{total} — {product}",
+      "runStage": {
+        "report": "Đang đọc brief từ hồ sơ sản phẩm…",
+        "writing": "AI đang viết lại từng khối…",
+        "page": "Đang dựng trang nháp…",
+        "done": "Xong",
+        "failed": "Hỏng"
+      },
+      "dontClose": "Giữ tab này mở — đóng giữa chừng vẫn tốn token mà không ra trang.",
+      "runDone": "Đã tạo {ok}/{total} bản nháp",
+      "runItemOk": "{product} — nháp đã sẵn sàng",
+      "runItemFailed": "{product} — hỏng, không tạo được gì",
+      "runFailed": "Không khởi động được lượt chạy. Thử lại giúp tôi.",
+      "running": "Đang sinh…",
+      "capNote": "lượt này chỉ chạy {cap} cái đầu"
     }
   }
 }

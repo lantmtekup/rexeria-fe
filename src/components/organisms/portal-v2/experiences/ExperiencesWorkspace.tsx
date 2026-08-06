@@ -10,6 +10,7 @@ import { FilterChips } from '@/components/molecules/portal-v2/FilterChips';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
 import { ExperienceCard } from '@/components/organisms/portal-v2/experiences/ExperienceCard';
 import { ExperienceDetailModal } from '@/components/organisms/portal-v2/experiences/ExperienceDetailModal';
+import { setExperienceProven } from '@/services/portal-v2/experienceProven';
 import { ExchangePreviewShell } from '@/components/organisms/portal-v2/exchange/ExchangePreviewShell';
 import {
   EXPERIENCE_CATEGORIES,
@@ -40,6 +41,12 @@ import { cn } from '@/lib/cn';
 type ExperiencesWorkspaceProps = {
   initialItems: ExperienceView[];
   initialError: string | null;
+  /**
+   * Brand đang xem. Phải mang theo: ô tìm kiếm nạp lại danh sách sau mỗi lần
+   * gõ — quên truyền là bộ lọc rơi mất và lưới bỗng hiện trải nghiệm của brand
+   * khác ngay khi người dùng gõ chữ đầu tiên.
+   */
+  brandId?: string | null;
   /** Experience id from `?preview=` — reopens that preview on a pasted link. */
   initialPreviewId?: string | null;
 };
@@ -78,6 +85,7 @@ export const ExperiencesWorkspace = ({
   initialItems,
   initialError,
   initialPreviewId = null,
+  brandId = null,
 }: ExperiencesWorkspaceProps) => {
   const t = useTranslations('portalV2.experiences');
   const router = useRouter();
@@ -93,6 +101,32 @@ export const ExperiencesWorkspace = ({
   });
 
   const [items, setItems] = useState<ExperienceView[]>(initialItems);
+  /** id đang ghi dấu Proven xuống server — khoá nút để không bấm kép. */
+  const [provenPendingId, setProvenPendingId] = useState<string | null>(null);
+
+  /**
+   * Bật/tắt Proven. Cập nhật lạc quan trước để nút phản hồi tức thì, hỏng thì
+   * trả về giá trị cũ — ghi vào `type_metadata` nên một lần PATCH là xong,
+   * không cần nạp lại cả danh sách.
+   */
+  const handleToggleProven = async (experience: ExperienceView) => {
+    const next = !experience.proven;
+    const apply = (value: boolean) =>
+      setItems(prev =>
+        prev.map(x => (x.id === experience.id ? { ...x, proven: value } : x))
+      );
+
+    setProvenPendingId(experience.id);
+    apply(next);
+    try {
+      const confirmed = await setExperienceProven(experience.id, next);
+      if (confirmed !== next) apply(confirmed);
+    } catch {
+      apply(experience.proven);
+    } finally {
+      setProvenPendingId(null);
+    }
+  };
   const [loadError, setLoadError] = useState<string | null>(initialError);
   const [searching, setSearching] = useState(false);
   const [filters, setFilters] = useState<ExperienceFilters>(
@@ -130,7 +164,7 @@ export const ExperiencesWorkspace = ({
     let cancelled = false;
     const handle = setTimeout(() => {
       setSearching(true);
-      void fetchExperienceLibrary({ q: filters.q })
+      void fetchExperienceLibrary({ q: filters.q, brandId })
         .then(res => {
           if (cancelled) return;
           setItems(res.items);
@@ -145,7 +179,7 @@ export const ExperiencesWorkspace = ({
       cancelled = true;
       clearTimeout(handle);
     };
-  }, [filters.q]);
+  }, [filters.q, brandId]);
 
   const visible = useMemo(
     () => filterExperiences(items, filters),
@@ -530,6 +564,8 @@ export const ExperiencesWorkspace = ({
           onClose={handleCloseDetail}
           onPreview={handlePreview}
           onEdit={handleEdit}
+          onToggleProven={handleToggleProven}
+          provenPending={provenPendingId === active.id}
         />
       ) : null}
 

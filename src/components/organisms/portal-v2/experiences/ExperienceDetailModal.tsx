@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, PenLine } from 'lucide-react';
+import { BadgeCheck, Eye, PenLine } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
@@ -30,6 +30,13 @@ type ExperienceDetailModalProps = {
   onClose: () => void;
   onPreview: (experience: ExperienceView) => void;
   onEdit: (experience: ExperienceView) => void;
+  /**
+   * Bật/tắt dấu Proven. Đây là cửa DUY NHẤT để một thiết kế vào được hub
+   * Automation — hub chỉ hiện thiết kế đã đánh dấu.
+   */
+  onToggleProven: (experience: ExperienceView) => void;
+  /** Đang ghi xuống server — khoá nút để không bấm kép. */
+  provenPending?: boolean;
 };
 
 const CATEGORY_LABEL_KEY = {
@@ -103,6 +110,8 @@ export const ExperienceDetailModal = ({
   onClose,
   onPreview,
   onEdit,
+  onToggleProven,
+  provenPending = false,
 }: ExperienceDetailModalProps) => {
   const t = useTranslations('portalV2.experiences');
   const [tab, setTab] = useState<ExperienceDetailTab>('details');
@@ -150,6 +159,21 @@ export const ExperienceDetailModal = ({
         <>
           <Button variant='ghost' size='sm' onClick={onClose}>
             {t('close')}
+          </Button>
+          <Button
+            variant={experience.proven ? 'toggle' : 'ghost'}
+            size='sm'
+            disabled={provenPending}
+            aria-pressed={experience.proven}
+            title={t('provenHint')}
+            className={cn(
+              experience.proven &&
+                'border-[var(--pv2-electric)] bg-[var(--pv2-electric-soft)] text-[var(--pv2-electric)]'
+            )}
+            onClick={() => onToggleProven(experience)}
+          >
+            <BadgeCheck className='size-3.5' strokeWidth={2.2} aria-hidden />
+            {experience.proven ? t('provenOn') : t('provenOff')}
           </Button>
           <span className='flex-1' />
           <Button
