@@ -35,99 +35,27 @@ export const GROUPS = [
     subtitle: 'Drag, tap and explore the space',
     items: [
       {
-        id: 'hotspot',
-        name: 'Hotspot',
-        desc: 'Tap hotspots to explore details',
+        id: 'slider',
+        name: 'Slider Compare',
+        desc: 'Drag to compare day / night',
         by: 'Nguyên',
         render: () => (
-          <HotspotAd
-            backgroundImage='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/hostpot/background.webp'
-            headline={'Discover Every\nDetail'}
-            hintIcon='https://d10zufojjcedud.cloudfront.net/ad-showcase/icons/hostpot/click_dot.svg'
-            ctaFont="'Cormorant Garamond', serif"
-            hotspots={[
-              {
-                id: 'grand-apt',
-                x: 34,
-                y: 30,
-                xDesktop: 47,
-                yDesktop: 35,
-                label: 'Grand Apartment',
-                description:
-                  'A spacious apartment with good ventilation, fully furnished and equipped with modern amenities.',
-                openWidth: '165px',
-              },
-              {
-                id: 'pool-bar',
-                x: 4,
-                y: 53.5,
-                xDesktop: 54,
-                yDesktop: 61,
-                label: 'Pool Bar',
-                description:
-                  'Enjoy delicious drinks & soothing music for a romantic evening.',
-                openWidth: '169px',
-              },
-              {
-                id: 'infinity-pool',
-                x: 97,
-                y: 70,
-                xDesktop: 95,
-                yDesktop: 70,
-                label: 'Infinity Pool',
-                description: 'A stunning 40sqm swimming pool.',
-                direction: 'right',
-                openWidth: '165px',
-              },
-            ]}
+          <SliderCompareAd
+            beforeImage='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/slider/day-view.webp'
+            afterImage='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/slider/night-view.webp'
+            beforeLabel='Day View'
+            afterLabel='Night View'
+            headline='Day & Night'
             {...BRAND}
           />
         ),
       },
       {
-        id: 'pannable',
-        name: 'Pannable',
-        desc: 'Drag to explore the panorama',
+        id: 'interscroller-scroll',
+        name: 'Aerial Pan',
+        desc: 'Pan the aerial view with pinned details',
         by: 'Nguyên',
-        render: () => (
-          <PannableAd
-            imageUrl='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable/background.webp'
-            headline='Pan & Explore'
-            {...BRAND}
-            hotspots={[
-              {
-                id: 'sofa',
-                x: 35,
-                y: 55,
-                xDesktop: 33,
-                yDesktop: 59,
-                label: 'Luxury Comfort Sofa',
-                description:
-                  'Crafted for relaxation with refined details and exceptional comfort.',
-              },
-              {
-                id: 'table',
-                x: 46,
-                y: 73,
-                xDesktop: 50,
-                yDesktop: 83,
-                label: 'Contemporary Accent Table',
-                description:
-                  'Elegant proportions and sophisticated finishes create a timeless focal point.',
-              },
-              {
-                id: 'chair',
-                x: 66.2,
-                y: 53.5,
-                xDesktop: 66.2,
-                yDesktop: 55,
-                label: 'Modern Bar Chair',
-                description:
-                  'Upholstered comfort and sleek craftsmanship designed for contemporary living spaces.',
-              },
-            ]}
-          />
-        ),
+        render: () => <PannableAerialAd />,
       },
       {
         id: 'pannable-hotspot',
@@ -172,80 +100,152 @@ export const GROUPS = [
           />
         ),
       },
-      {
-        id: 'pannable-shop',
-        name: 'Pannable + Shoppable',
-        desc: 'Drag + tap to shop products',
-        by: 'Nguyên',
-        render: () => (
-          <PannableShoppableAd
-            imageUrl='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/background.webp'
-            ctas={[
-              {
-                id: 'amora',
-                x: 28,
-                y: 53,
-                xDesktop: 31,
-                yDesktop: 63,
-                imageUrl:
-                  'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/sofa.webp',
-                label: 'Amora Armchair',
-                price: '$1,500',
-                href: '#',
-              },
-              {
-                id: 'eichholtz',
-                x: 49,
-                y: 57,
-                xDesktop: 49,
-                yDesktop: 68,
-                imageUrl:
-                  'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/chair.webp',
-                label: 'Eichholtz Leiza Chair',
-                price: '$1,200',
-                href: '#',
-              },
-              {
-                id: 'ligne',
-                x: 50,
-                y: 84,
-                xDesktop: 50,
-                yDesktop: 92,
-                imageUrl:
-                  'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/carpet.webp',
-                label: 'Ligne Pure',
-                price: '$120',
-                href: '#',
-              },
-            ]}
-            headline='Drag & Shop'
-            {...BRAND}
-          />
-        ),
-      },
-      {
-        id: 'slider',
-        name: 'Slider Compare',
-        desc: 'Drag to compare day / night',
-        by: 'Nguyên',
-        render: () => (
-          <SliderCompareAd
-            beforeImage='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/slider/day-view.webp'
-            afterImage='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/slider/night-view.webp'
-            beforeLabel='Day View'
-            afterLabel='Night View'
-            headline='Day & Night'
-            {...BRAND}
-          />
-        ),
-      },
-      {
-        id: 'interscroller-scroll',
-        name: 'Aerial Pan',
-        desc: 'Pan the aerial view with pinned details',
-        by: 'Nguyên',
-        render: () => <PannableAerialAd />,
-      },
+      // {
+      //   id: 'pannable',
+      //   name: 'Pannable',
+      //   desc: 'Drag to explore the panorama',
+      //   by: 'Nguyên',
+      //   render: () => (
+      //     <PannableAd
+      //       imageUrl='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable/background.webp'
+      //       headline='Pan & Explore'
+      //       {...BRAND}
+      //       hotspots={[
+      //         {
+      //           id: 'sofa',
+      //           x: 35,
+      //           y: 55,
+      //           xDesktop: 33,
+      //           yDesktop: 59,
+      //           label: 'Luxury Comfort Sofa',
+      //           description:
+      //             'Crafted for relaxation with refined details and exceptional comfort.',
+      //         },
+      //         {
+      //           id: 'table',
+      //           x: 46,
+      //           y: 73,
+      //           xDesktop: 50,
+      //           yDesktop: 83,
+      //           label: 'Contemporary Accent Table',
+      //           description:
+      //             'Elegant proportions and sophisticated finishes create a timeless focal point.',
+      //         },
+      //         {
+      //           id: 'chair',
+      //           x: 66.2,
+      //           y: 53.5,
+      //           xDesktop: 66.2,
+      //           yDesktop: 55,
+      //           label: 'Modern Bar Chair',
+      //           description:
+      //             'Upholstered comfort and sleek craftsmanship designed for contemporary living spaces.',
+      //         },
+      //       ]}
+      //     />
+      //   ),
+      // },
+      // {
+      //   id: 'hotspot',
+      //   name: 'Hotspot',
+      //   desc: 'Tap hotspots to explore details',
+      //   by: 'Nguyên',
+      //   render: () => (
+      //     <HotspotAd
+      //       backgroundImage='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/hostpot/background.webp'
+      //       headline={'Discover Every\nDetail'}
+      //       hintIcon='https://d10zufojjcedud.cloudfront.net/ad-showcase/icons/hostpot/click_dot.svg'
+      //       ctaFont="'Cormorant Garamond', serif"
+      //       hotspots={[
+      //         {
+      //           id: 'grand-apt',
+      //           x: 34,
+      //           y: 30,
+      //           xDesktop: 47,
+      //           yDesktop: 35,
+      //           label: 'Grand Apartment',
+      //           description:
+      //             'A spacious apartment with good ventilation, fully furnished and equipped with modern amenities.',
+      //           openWidth: '165px',
+      //         },
+      //         {
+      //           id: 'pool-bar',
+      //           x: 4,
+      //           y: 53.5,
+      //           xDesktop: 54,
+      //           yDesktop: 61,
+      //           label: 'Pool Bar',
+      //           description:
+      //             'Enjoy delicious drinks & soothing music for a romantic evening.',
+      //           openWidth: '169px',
+      //         },
+      //         {
+      //           id: 'infinity-pool',
+      //           x: 97,
+      //           y: 70,
+      //           xDesktop: 95,
+      //           yDesktop: 70,
+      //           label: 'Infinity Pool',
+      //           description: 'A stunning 40sqm swimming pool.',
+      //           direction: 'right',
+      //           openWidth: '165px',
+      //         },
+      //       ]}
+      //       {...BRAND}
+      //     />
+      //   ),
+      // },
+      // {
+      //   id: 'pannable-shop',
+      //   name: 'Pannable + Shoppable',
+      //   desc: 'Drag + tap to shop products',
+      //   by: 'Nguyên',
+      //   render: () => (
+      //     <PannableShoppableAd
+      //       imageUrl='https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/background.webp'
+      //       ctas={[
+      //         {
+      //           id: 'amora',
+      //           x: 28,
+      //           y: 53,
+      //           xDesktop: 31,
+      //           yDesktop: 63,
+      //           imageUrl:
+      //             'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/sofa.webp',
+      //           label: 'Amora Armchair',
+      //           price: '$1,500',
+      //           href: '#',
+      //         },
+      //         {
+      //           id: 'eichholtz',
+      //           x: 49,
+      //           y: 57,
+      //           xDesktop: 49,
+      //           yDesktop: 68,
+      //           imageUrl:
+      //             'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/chair.webp',
+      //           label: 'Eichholtz Leiza Chair',
+      //           price: '$1,200',
+      //           href: '#',
+      //         },
+      //         {
+      //           id: 'ligne',
+      //           x: 50,
+      //           y: 84,
+      //           xDesktop: 50,
+      //           yDesktop: 92,
+      //           imageUrl:
+      //             'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/pannable-shop/carpet.webp',
+      //           label: 'Ligne Pure',
+      //           price: '$120',
+      //           href: '#',
+      //         },
+      //       ]}
+      //       headline='Drag & Shop'
+      //       {...BRAND}
+      //     />
+      //   ),
+      // },
     ],
   },
   {
@@ -458,6 +458,8 @@ export const GROUPS = [
               </>
             }
             style='flip'
+            cta={CTA}
+            {...BRAND}
           />
         ),
       },
@@ -501,6 +503,8 @@ export const GROUPS = [
               },
             ]}
             headline='Design Your Space'
+            cta={CTA}
+            {...BRAND}
           />
         ),
       },

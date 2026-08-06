@@ -5,6 +5,7 @@ import AdWrapper from './shared/AdWrapper';
 const SWIPE_THRESHOLD = 100;
 const FLY_OUT_MS = 380;
 const APPEAR_MS = 600;
+const AUTO_ADVANCE_MS = 2000;
 const MAX_VISIBLE = 3;
 const POSITION_CLASSES = [
   'swstack-card--front',
@@ -86,6 +87,23 @@ export default function SwipeStackAd({
       if (appearTimer.current) clearTimeout(appearTimer.current);
     };
   }, [frontIndex]);
+
+  // Auto-advance khi idle — gallery/hero khoá tương tác (adsc-screen--locked)
+  // nên stack cần tự swipe mới thấy được format. Pause khi user đang kéo.
+  useEffect(() => {
+    if (cards.length < 2 || isDragging) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const t = setInterval(advance, AUTO_ADVANCE_MS);
+    return () => clearInterval(t);
+  }, [advance, isDragging, cards.length]);
+
+  useEffect(
+    () => () => {
+      if (flyTimer.current) clearTimeout(flyTimer.current);
+      if (clickTimer.current) clearTimeout(clickTimer.current);
+    },
+    []
+  );
 
   const active = cardAt(0);
   const isPrice = active?.subtitle?.toString().trim().startsWith('$');

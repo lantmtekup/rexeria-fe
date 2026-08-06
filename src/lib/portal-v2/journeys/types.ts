@@ -95,6 +95,13 @@ export type JourneyNode = {
    * carries its own label. Absent ⇒ the link is dangling.
    */
   xName?: string;
+  /**
+   * Public slug of the linked experience — what `/p/{slug}` needs to render the
+   * shopper view. Carried on the link for the same reason `xName` is: the node
+   * has to stay previewable without a second trip to the library. Absent ⇒ the
+   * link predates the picker carrying one, or the page has no public slug.
+   */
+  xSlug?: string;
   /** Signal coverage of the linked experience, 0–100. 0 ⇒ untracked. */
   xCoverage?: number;
   /** Measured in this journey's campaign. `null`/absent ⇒ never run. */
@@ -195,13 +202,15 @@ export type JourneyMetaPatch = Partial<
 
 /**
  * What an experience node stores about its link. The picker resolves a real
- * library row down to these three fields — the node never holds a page record.
+ * library row down to these four fields — the node never holds a page record.
  */
 export type JourneyExperienceLink = {
   id: string;
   name: string;
   /** Component coverage, 0–100. */
   coverage: number;
+  /** Public slug, when the page has one — the node's preview reads it. */
+  slug?: string;
 };
 
 /** What the editor has selected: one node, one edge, or nothing. */

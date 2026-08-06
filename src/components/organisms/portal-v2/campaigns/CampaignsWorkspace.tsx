@@ -1,154 +1,154 @@
 'use client';
 
-import { Loader2, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
 import { EmptyState } from '@/components/molecules/portal-v2/product-form';
 import { CampaignBulkBar } from '@/components/organisms/portal-v2/campaigns/CampaignBulkBar';
+import { CampaignDetail } from '@/components/organisms/portal-v2/campaigns/CampaignDetail';
 import { CampaignGrid } from '@/components/organisms/portal-v2/campaigns/CampaignGrid';
 import { CampaignTable } from '@/components/organisms/portal-v2/campaigns/CampaignTable';
 import { CampaignToolbar } from '@/components/organisms/portal-v2/campaigns/CampaignToolbar';
 import { DeleteCampaignModal } from '@/components/organisms/portal-v2/campaigns/DeleteCampaignModal';
-import { NewCampaignModal } from '@/components/organisms/portal-v2/campaigns/NewCampaignModal';
-import { cn } from '@/lib/cn';
+import { NewCampaignWizard } from '@/components/organisms/portal-v2/campaigns/NewCampaignWizard';
 import {
   CAMPAIGN_DEFAULT_FILTERS,
   CAMPAIGN_STAGES,
   CAMPAIGN_STAGE_ORDER,
+  CAMPAIGN_TEAM,
 } from '@/lib/portal-v2/campaigns/constants';
 import {
   countByStage,
+  createCampaign,
+  deleteCampaigns,
+  duplicateCampaign,
+  findCampaign,
+  nextCampaignId,
+  replaceCampaign,
+  todayString,
   visibleCampaigns,
 } from '@/lib/portal-v2/campaigns/helpers';
+import {
+  readCampaignIdParam,
+  writeCampaignIdParam,
+} from '@/lib/portal-v2/campaigns/idParam';
+import {
+  bindRouteToItems,
+  ensureCampaignExperiences,
+  ensureCampaignJourneys,
+  routeJourneyOntoCampaign,
+  seedExperiences,
+} from '@/lib/portal-v2/campaigns/journeyLink';
+import {
+  CAMPAIGN_PRODUCTS,
+  CAMPAIGN_PRODUCT_NAMES,
+  MOCK_CAMPAIGNS,
+  cloneCampaigns,
+} from '@/lib/portal-v2/campaigns/mock';
 import type {
-  CampaignDraft,
+  CampaignExperience,
   CampaignFilters,
-  CampaignSource,
   CampaignStage,
   CampaignView,
+  CampaignWizard,
 } from '@/lib/portal-v2/campaigns/types';
-import {
-  createCampaign,
-  deleteCampaign,
-  fetchCampaignBoard,
-  fetchCampaignProducts,
-} from '@/services/portal-v2/campaignBoard';
+import { wizardDraft } from '@/lib/portal-v2/campaigns/wizard';
+import { cloneJourneys, MOCK_JOURNEYS } from '@/lib/portal-v2/journeys/mock';
+import type { Journey } from '@/lib/portal-v2/journeys/types';
 
 type CampaignsWorkspaceProps = {
-  initialItems: CampaignView[];
-  initialError: string | null;
-  initialSource: CampaignSource;
-  initialDegraded: boolean;
+  /** `?id=` — the campaign to open on arrival, so the screen is shareable. */
+  initialCampaignId: string | null;
 };
 
-const SEARCH_DEBOUNCE_MS = 350;
-
+/**
+ * The Campaigns workspace — the list and one open campaign, in one state tree.
+ *
+ * The detail is not a route. A campaign, its journey fork and its experience
+ * copies are one object graph: routing a blueprint mints a journey, carrying the
+ * route mints experiences, and shipping a subject promotes the campaign. Putting
+ * the detail behind its own server route would re-read the seed on every
+ * navigation and throw all of that away, which is why the prototype keeps both
+ * on one screen too.
+ */
 export const CampaignsWorkspace = ({
-  initialItems,
-  initialError,
-  initialSource,
-  initialDegraded,
+  initialCampaignId,
 }: CampaignsWorkspaceProps) => {
   const t = useTranslations('portalV2.campaigns');
-  const router = useRouter();
 
-  const [items, setItems] = useState<CampaignView[]>(initialItems);
-  const [source, setSource] = useState<CampaignSource>(initialSource);
-  const [degraded, setDegraded] = useState(initialDegraded);
-  const [loadError, setLoadError] = useState<string | null>(initialError);
-  const [searching, setSearching] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [campaigns, setCampaigns] = useState<CampaignView[]>(() =>
+    cloneCampaigns(MOCK_CAMPAIGNS)
+  );
 
+  /**
+   * Journeys and experiences are seeded from the campaigns that claim them: the
+   * seed says `m4` runs `j-j1-m4` and its subject carries a copy of `e4`, and
+   * these two calls make both true before anything renders.
+   */
+  const [journeys, setJourneys] = useState<Journey[]>(() =>
+    ensureCampaignJourneys(cloneJourneys(MOCK_JOURNEYS), MOCK_CAMPAIGNS)
+  );
+  const [experiences, setExperiences] = useState<CampaignExperience[]>(() =>
+    ensureCampaignExperiences(
+      seedExperiences(),
+      MOCK_CAMPAIGNS,
+      CAMPAIGN_PRODUCT_NAMES
+    )
+  );
+
+  const [openId, setOpenId] = useState<string | null>(() =>
+    initialCampaignId && findCampaign(MOCK_CAMPAIGNS, initialCampaignId)
+      ? initialCampaignId
+      : null
+  );
   const [filters, setFilters] = useState<CampaignFilters>(
     CAMPAIGN_DEFAULT_FILTERS
   );
   const [selected, setSelected] = useState<string[]>([]);
-  const [newOpen, setNewOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<string[] | null>(null);
-  const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
 
-  /** The first debounce tick would re-fetch what the server already sent. */
-  const skipFirstSearch = useRef(true);
+  const today = useMemo(todayString, []);
 
+  /* Keep the address bar in step without re-running the server page. */
   useEffect(() => {
-    let cancelled = false;
-    void fetchCampaignProducts().then(res => {
-      if (!cancelled) setProducts(res.products);
-    });
-    return () => {
-      cancelled = true;
+    writeCampaignIdParam(openId);
+  }, [openId]);
+
+  /** A campaign opened from elsewhere in the portal, after this mounted. */
+  useEffect(() => {
+    const handlePop = () => {
+      const params = Object.fromEntries(
+        new URL(window.location.href).searchParams.entries()
+      );
+      setOpenId(readCampaignIdParam(params));
     };
+    window.addEventListener('popstate', handlePop);
+    return () => window.removeEventListener('popstate', handlePop);
   }, []);
 
-  /**
-   * Only the search goes to the server. The stage axis narrows client-side even
-   * though `?status=` exists: pushing it to the server would leave `items`
-   * holding just that one stage, and the tab counts — which are read off
-   * `items` — would all collapse to zero. The whole workspace therefore has to
-   * fit in one page; see `CAMPAIGN_PAGE_LIMIT`.
-   */
-  useEffect(() => {
-    if (skipFirstSearch.current) {
-      skipFirstSearch.current = false;
-      return;
-    }
-
-    let cancelled = false;
-    const handle = setTimeout(() => {
-      setSearching(true);
-      void fetchCampaignBoard({ q: filters.q })
-        .then(res => {
-          if (cancelled) return;
-          setItems(res.items);
-          setSource(res.source);
-          setDegraded(res.degraded);
-          setLoadError(res.error);
-        })
-        .finally(() => {
-          if (!cancelled) setSearching(false);
-        });
-    }, SEARCH_DEBOUNCE_MS);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(handle);
-    };
-  }, [filters.q]);
-
-  const productNames = useMemo(
-    () => Object.fromEntries(products.map(p => [p.id, p.name])),
-    [products]
-  );
+  const open = openId ? findCampaign(campaigns, openId) : null;
 
   const visible = useMemo(
-    () => visibleCampaigns(items, filters),
-    [items, filters]
+    () => visibleCampaigns(campaigns, filters),
+    [campaigns, filters]
   );
 
   const stageTabs = useMemo(
     () => [
-      { id: 'all', label: t('tabAll'), count: items.length },
+      { id: 'all', label: t('tabAll'), count: campaigns.length },
       ...CAMPAIGN_STAGE_ORDER.map(stage => ({
         id: stage,
         label: t(CAMPAIGN_STAGES[stage].labelKey),
-        count: countByStage(items, stage),
+        count: countByStage(campaigns, stage),
       })),
     ],
-    [items, t]
+    [campaigns, t]
   );
-
-  const reload = async () => {
-    const res = await fetchCampaignBoard({ q: filters.q });
-    setItems(res.items);
-    setSource(res.source);
-    setDegraded(res.degraded);
-    setLoadError(res.error);
-  };
 
   const patchFilters = (partial: Partial<CampaignFilters>) => {
     setFilters(prev => ({ ...prev, ...partial }));
@@ -156,43 +156,178 @@ export const CampaignsWorkspace = ({
     if (!('view' in partial)) setSelected([]);
   };
 
-  const handleCreate = async (draft: CampaignDraft) => {
-    setSaving(true);
-    try {
-      const created = await createCampaign(source, draft);
-      toast.success(t('toastCreated', { name: created.name }));
-      setNewOpen(false);
-      setFilters(CAMPAIGN_DEFAULT_FILTERS);
-      setSelected([]);
-      router.push(`/portal-v2/campaigns/${created.id}`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('toastCreateFailed'));
-    } finally {
-      setSaving(false);
+  const handleChange = useCallback((next: CampaignView) => {
+    setCampaigns(prev => replaceCampaign(prev, next));
+  }, []);
+
+  const handleCreate = (wizard: CampaignWizard) => {
+    const id = nextCampaignId(campaigns);
+    const created = createCampaign(campaigns, id, wizardDraft(wizard));
+
+    if (wizard.journeyId) {
+      const routed = routeJourneyOntoCampaign(
+        created,
+        journeys,
+        experiences,
+        wizard.journeyId,
+        CAMPAIGN_PRODUCT_NAMES
+      );
+      setJourneys(routed.journeys);
+      setExperiences(routed.experiences);
+      setCampaigns(prev => [routed.campaign, ...prev]);
+    } else {
+      setCampaigns(prev => [created, ...prev]);
     }
+
+    setWizardOpen(false);
+    setFilters(CAMPAIGN_DEFAULT_FILTERS);
+    setSelected([]);
+    setOpenId(id);
+    toast.success(t('toastCreated', { name: created.name }));
   };
 
-  const handleDelete = async () => {
+  const handleDuplicate = (id: string) => {
+    const result = duplicateCampaign(campaigns, id, t('copySuffix'));
+    if (!result) return;
+
+    setCampaigns(result.list);
+    setJourneys(prev => ensureCampaignJourneys(prev, [result.campaign]));
+    setExperiences(prev =>
+      ensureCampaignExperiences(prev, [result.campaign], CAMPAIGN_PRODUCT_NAMES)
+    );
+    setSelected([]);
+    toast.success(t('toastDuplicated', { name: result.campaign.name }));
+  };
+
+  const handleDelete = () => {
     if (!deleteIds?.length) return;
-    setSaving(true);
-    try {
-      await Promise.all(deleteIds.map(id => deleteCampaign(source, id)));
-      toast.success(t('toastDeleted', { count: deleteIds.length }));
-      setDeleteIds(null);
-      setSelected([]);
-      await reload();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('toastDeleteFailed'));
-    } finally {
-      setSaving(false);
-    }
+    /* The journey forks and experience copies go with them — the blueprints and
+       library masters they came from are untouched. */
+    setJourneys(prev =>
+      prev.filter(j => !deleteIds.includes(j.campaign ?? ''))
+    );
+    setExperiences(prev =>
+      prev.filter(e => !deleteIds.includes(e.campaign ?? ''))
+    );
+    setCampaigns(prev => deleteCampaigns(prev, deleteIds));
+    if (openId && deleteIds.includes(openId)) setOpenId(null);
+    setDeleteIds(null);
+    setSelected([]);
+    toast.success(t('toastDeleted', { count: deleteIds.length }));
   };
 
-  const open = (id: string) => router.push(`/portal-v2/campaigns/${id}`);
+  const handleRouteJourney = (blueprintId: string) => {
+    if (!open) return;
+    const routed = routeJourneyOntoCampaign(
+      open,
+      journeys,
+      experiences,
+      blueprintId,
+      CAMPAIGN_PRODUCT_NAMES
+    );
+    setJourneys(routed.journeys);
+    setExperiences(routed.experiences);
+    handleChange(routed.campaign);
+    toast.success(t('toastRouted', { name: routed.campaign.name }));
+  };
+
+  const handleCarryRoute = () => {
+    if (!open) return;
+    const bound = bindRouteToItems(
+      open,
+      experiences,
+      CAMPAIGN_PRODUCT_NAMES,
+      journeys
+    );
+    setExperiences(bound.experiences);
+    handleChange(bound.campaign);
+    toast.success(t('toastCarried'));
+  };
+
+  /**
+   * Attaching a library master to a subject forks it: the copy id is derived
+   * from origin × campaign × subject, so the caller already knows it and only
+   * needs the record to exist.
+   */
+  const handleEnsureExperience = (copies: CampaignExperience[]) => {
+    setExperiences(prev => {
+      const known = new Set(prev.map(e => e.id));
+      const added = copies.filter(copy => !known.has(copy.id));
+      return added.length ? [...prev, ...added] : prev;
+    });
+  };
+
+  const handlePatchExperience = (
+    id: string,
+    patch: Partial<CampaignExperience>
+  ) => {
+    setExperiences(prev =>
+      prev.map(e => (e.id === id ? { ...e, ...patch } : e))
+    );
+  };
+
+  /**
+   * A finished campaign's route becomes the next one's starting point — the
+   * fork is promoted back to a blueprint, and the copy keeps its numbers.
+   */
+  const handlePromoteJourney = () => {
+    if (!open) return;
+    const fork = journeys.find(j => j.id === open.journeyId);
+    if (!fork) return;
+
+    const blueprint: Journey = {
+      ...structuredClone(fork),
+      id: `j-promoted-${open.id}`,
+      name: `${fork.name} — ${t('promotedSuffix')}`,
+      template: true,
+      campaign: null,
+      campaignName: null,
+      origin: null,
+      updated: 'just now',
+    };
+
+    setJourneys(prev => [blueprint, ...prev]);
+    handleChange({ ...open, promoted: true });
+    toast.success(t('toastPromoted', { name: blueprint.name }));
+  };
 
   const deleteItems = deleteIds
-    ? items.filter(campaign => deleteIds.includes(campaign.id))
+    ? campaigns.filter(campaign => deleteIds.includes(campaign.id))
     : [];
+
+  if (open) {
+    return (
+      <>
+        <CampaignDetail
+          key={open.id}
+          campaign={open}
+          journeys={journeys}
+          experiences={experiences}
+          products={CAMPAIGN_PRODUCTS}
+          productNames={CAMPAIGN_PRODUCT_NAMES}
+          today={today}
+          onChange={handleChange}
+          onBack={() => setOpenId(null)}
+          onDelete={() => setDeleteIds([open.id])}
+          onRouteJourney={handleRouteJourney}
+          onCarryRoute={handleCarryRoute}
+          onEnsureExperiences={handleEnsureExperience}
+          onPatchExperience={handlePatchExperience}
+          onPromoteJourney={handlePromoteJourney}
+          onJourneyChange={next =>
+            setJourneys(prev => prev.map(j => (j.id === next.id ? next : j)))
+          }
+        />
+        {deleteItems.length ? (
+          <DeleteCampaignModal
+            items={deleteItems}
+            onClose={() => setDeleteIds(null)}
+            onConfirm={handleDelete}
+          />
+        ) : null}
+      </>
+    );
+  }
 
   return (
     <div className='flex min-h-0 flex-col'>
@@ -208,7 +343,7 @@ export const CampaignsWorkspace = ({
           </div>
 
           <div className='flex shrink-0 items-center gap-2 pb-0.5'>
-            <Button variant='primary' onClick={() => setNewOpen(true)}>
+            <Button variant='primary' onClick={() => setWizardOpen(true)}>
               <Plus className='size-[15px]' strokeWidth={2.4} aria-hidden />
               {t('newCampaign')}
             </Button>
@@ -230,23 +365,6 @@ export const CampaignsWorkspace = ({
       </div>
 
       <div className='mx-auto w-full px-5 py-6 md:px-8'>
-        {degraded ? (
-          <p className='mb-4 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-4 py-3 text-[12.5px] text-[var(--pv2-mut)]'>
-            {t('degradedNotice')}
-          </p>
-        ) : null}
-
-        {loadError ? (
-          <p
-            className={cn(
-              'mb-4 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)]',
-              'bg-[var(--pv2-paper)] px-4 py-3 text-[12.5px] text-[var(--pv2-mut)]'
-            )}
-          >
-            {loadError}
-          </p>
-        ) : null}
-
         <CampaignToolbar filters={filters} onChange={patchFilters} />
 
         {selected.length ? (
@@ -257,19 +375,11 @@ export const CampaignsWorkspace = ({
           />
         ) : null}
 
-        {searching ? (
-          <div className='flex items-center justify-center gap-2 py-10 text-[13px] text-[var(--pv2-mut)]'>
-            <Loader2
-              className='size-4 animate-spin text-[var(--pv2-electric)]'
-              aria-hidden
-            />
-            {t('loading')}
-          </div>
-        ) : !visible.length ? (
+        {!visible.length ? (
           <EmptyState
             title={t('emptyTitle')}
             action={
-              <Button variant='primary' onClick={() => setNewOpen(true)}>
+              <Button variant='primary' onClick={() => setWizardOpen(true)}>
                 <Plus className='size-[15px]' strokeWidth={2.4} aria-hidden />
                 {t('newCampaign')}
               </Button>
@@ -280,20 +390,26 @@ export const CampaignsWorkspace = ({
         ) : filters.view === 'grid' ? (
           <CampaignGrid
             campaigns={visible}
-            productNames={productNames}
+            productNames={CAMPAIGN_PRODUCT_NAMES}
+            experiences={experiences}
+            journeys={journeys}
+            today={today}
             selected={selected}
             onToggleSelect={id =>
               setSelected(prev =>
                 prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
               )
             }
-            onOpen={open}
-            onEdit={open}
+            onOpen={setOpenId}
+            onDuplicate={handleDuplicate}
             onDelete={id => setDeleteIds([id])}
           />
         ) : (
           <CampaignTable
             campaigns={visible}
+            experiences={experiences}
+            journeys={journeys}
+            today={today}
             selected={selected}
             onToggleSelect={id =>
               setSelected(prev =>
@@ -305,29 +421,28 @@ export const CampaignsWorkspace = ({
                 prev.length === visible.length ? [] : visible.map(c => c.id)
               )
             }
-            onOpen={open}
-            onEdit={open}
+            onOpen={setOpenId}
+            onDuplicate={handleDuplicate}
             onDelete={id => setDeleteIds([id])}
           />
         )}
       </div>
 
-      {newOpen ? (
-        <NewCampaignModal
-          source={source}
-          products={products}
-          saving={saving}
-          onClose={() => setNewOpen(false)}
-          onCreate={draft => void handleCreate(draft)}
+      {wizardOpen ? (
+        <NewCampaignWizard
+          owner={CAMPAIGN_TEAM[0]}
+          products={CAMPAIGN_PRODUCTS}
+          blueprints={journeys.filter(j => j.template)}
+          onClose={() => setWizardOpen(false)}
+          onCreate={handleCreate}
         />
       ) : null}
 
       {deleteItems.length ? (
         <DeleteCampaignModal
           items={deleteItems}
-          saving={saving}
           onClose={() => setDeleteIds(null)}
-          onConfirm={() => void handleDelete()}
+          onConfirm={handleDelete}
         />
       ) : null}
     </div>

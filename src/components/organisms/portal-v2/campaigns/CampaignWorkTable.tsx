@@ -4,26 +4,37 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import {
+  GateDot,
   StageBar,
   SubjectBadge,
 } from '@/components/molecules/portal-v2/campaigns-form';
+import { JourneyCell } from '@/components/organisms/portal-v2/campaigns/JourneyCell';
 import { cn } from '@/lib/cn';
 import {
   fmtDate,
   isLate,
   subjectName,
 } from '@/lib/portal-v2/campaigns/helpers';
-import type { CampaignItem } from '@/lib/portal-v2/campaigns/types';
-import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
+import { itemShipGate } from '@/lib/portal-v2/campaigns/shipGate';
+import { subjectLane } from '@/lib/portal-v2/campaigns/subjectLane';
+import type {
+  CampaignExperience,
+  CampaignItem,
+  CampaignView,
+} from '@/lib/portal-v2/campaigns/types';
+import type { Journey } from '@/lib/portal-v2/journeys/types';
 
 type CampaignWorkTableProps = {
+  campaign: CampaignView;
   items: CampaignItem[];
   productNames: Record<string, string>;
-  experiences: ExperienceView[];
+  experiences: CampaignExperience[];
+  journeys: Journey[];
   /** `YYYY-MM-DD` — passed in so the overdue check stays deterministic. */
   today: string;
   editing: boolean;
   onOpenItem: (index: number) => void;
+  onOpenSubjectJourney: (index: number, nodeId?: string) => void;
   onDeleteItem: (index: number) => void;
   onAddItem: () => void;
 };
@@ -34,18 +45,28 @@ const headClass =
 const cellClass =
   'border-b border-[var(--pv2-hair)] px-3.5 py-3 text-[12.5px] align-middle';
 
-/** "The work" — one row per subject, the status axis the plan says is missing. */
+/**
+ * "The work" — one row per subject.
+ *
+ * Demo Build phase columns: Subject | Journey | Stage | Owner | Due.
+ * The ship-gate dot sits on the subject; the journey cell is the route in
+ * miniature — dot flow plus match/edit/off-journey subline.
+ */
 export const CampaignWorkTable = ({
+  campaign,
   items,
   productNames,
   experiences,
+  journeys,
   today,
   editing,
   onOpenItem,
+  onOpenSubjectJourney,
   onDeleteItem,
   onAddItem,
 }: CampaignWorkTableProps) => {
   const t = useTranslations('portalV2.campaigns');
+  const colSpan = editing ? 6 : 5;
 
   return (
     <div className='overflow-x-auto rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
@@ -53,7 +74,7 @@ export const CampaignWorkTable = ({
         <thead>
           <tr>
             <th className={headClass}>{t('colSubject')}</th>
-            <th className={headClass}>{t('colExperience')}</th>
+            <th className={headClass}>{t('colJourney')}</th>
             <th className={headClass}>{t('colStage')}</th>
             <th className={headClass}>{t('colOwner')}</th>
             <th className={headClass}>{t('colDue')}</th>
@@ -68,19 +89,21 @@ export const CampaignWorkTable = ({
           {items.map((item, index) => {
             const name = subjectName(item, productNames);
             const late = isLate(item, today);
-            const attached = item.expIds
-              .map(id => experiences.find(e => e.id === id))
-              .filter((e): e is ExperienceView => Boolean(e));
+            const gate = itemShipGate(item, experiences);
+            const lane = subjectLane(campaign, item, journeys, experiences);
 
             return (
               <tr
                 key={item.id}
-                onClick={() => onOpenItem(index)}
-                className='group cursor-pointer transition-colors hover:bg-[var(--pv2-canvas)]'
+                className='group transition-colors hover:bg-[var(--pv2-canvas)]'
               >
-                <td className={cellClass}>
+                <td
+                  className={cn(cellClass, 'cursor-pointer')}
+                  onClick={() => onOpenItem(index)}
+                >
                   <span className='flex min-w-[220px] flex-col gap-1'>
                     <span className='flex items-center gap-2'>
+                      <GateDot gate={gate} />
                       <span className='truncate text-[13px] font-semibold text-[var(--pv2-ink)]'>
                         {name || t('untitledSubject')}
                       </span>
@@ -97,26 +120,12 @@ export const CampaignWorkTable = ({
                 </td>
 
                 <td className={cellClass}>
-                  {attached.length ? (
-                    <span className='flex flex-wrap gap-1.5'>
-                      {attached.map(experience => (
-                        <span
-                          key={experience.id}
-                          className='inline-flex max-w-[190px] items-center rounded-[6px] border-l-[3px] border-[var(--pv2-electric)] bg-[var(--pv2-canvas)] px-2 py-1 text-[11px] font-medium text-[var(--pv2-ink)]'
-                        >
-                          <span className='truncate'>{experience.name}</span>
-                        </span>
-                      ))}
-                    </span>
-                  ) : item.expIds.length ? (
-                    <span className='text-[11.5px] text-[var(--pv2-faint)]'>
-                      {t('experienceCount', { count: item.expIds.length })}
-                    </span>
-                  ) : (
-                    <span className='text-[11.5px] text-[var(--pv2-faint)]'>
-                      {t('notBuilt')}
-                    </span>
-                  )}
+                  <JourneyCell
+                    lane={lane}
+                    subjectKind={item.kind === 'topic' ? 'topic' : 'product'}
+                    onOpen={() => onOpenSubjectJourney(index)}
+                    onNodeClick={nodeId => onOpenSubjectJourney(index, nodeId)}
+                  />
                 </td>
 
                 <td className={cellClass}>
@@ -183,7 +192,7 @@ export const CampaignWorkTable = ({
         {editing ? (
           <tfoot>
             <tr>
-              <td colSpan={6} className='px-3.5 py-2.5'>
+              <td colSpan={colSpan} className='px-3.5 py-2.5'>
                 <button
                   type='button'
                   onClick={onAddItem}

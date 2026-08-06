@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, Link2, Trash2, TriangleAlert } from 'lucide-react';
+import { Copy, Eye, Link2, Loader2, Trash2, TriangleAlert } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
@@ -11,6 +11,7 @@ import {
   TextTextarea,
 } from '@/components/molecules/portal-v2/brand-form';
 import { cn } from '@/lib/cn';
+import type { StageFit } from '@/lib/portal-v2/campaigns/subjectLane';
 import {
   ENTRY_SOURCES,
   JOURNEY_KINDS,
@@ -54,6 +55,10 @@ type EditorInspectorProps = {
   onSourceChange: (sourceId: string) => void;
   onPickExperience: () => void;
   onUnlinkExperience: () => void;
+  /** Open the linked page in the shopper-view preview. */
+  onPreviewExperience: () => void;
+  /** The library round-trip a slug-less link needs before it can be previewed. */
+  previewPending: boolean;
   onDuplicateNode: () => void;
   onDeleteNode: () => void;
   onMetaPatch: (patch: {
@@ -63,6 +68,11 @@ type EditorInspectorProps = {
     seg?: string;
   }) => void;
   onMetaSelect: (patch: { obj?: ExperienceObjective; seg?: string }) => void;
+  /** Subject lens — stage action (build / fork / edit), not tied to selection. */
+  lensFit?: StageFit | null;
+  onLensStageAction?: () => void;
+  /** Subject lens — structure is view-only; only lens actions + preview. */
+  lensReadOnly?: boolean;
 };
 
 const Note = ({
@@ -93,16 +103,43 @@ export const EditorInspector = ({
   onSourceChange,
   onPickExperience,
   onUnlinkExperience,
+  onPreviewExperience,
+  previewPending,
   onDuplicateNode,
   onDeleteNode,
   onMetaPatch,
   onMetaSelect,
+  lensFit = null,
+  onLensStageAction,
+  lensReadOnly = false,
 }: EditorInspectorProps) => {
   const t = useTranslations('portalV2.journeys');
 
   /* ── nothing selected: the journey's own fields ─────────────────────── */
   if (!node) {
     const segment = segmentById(draft.seg);
+
+    if (lensReadOnly) {
+      return (
+        <div className='min-h-0 flex-1 overflow-y-auto px-4 py-4'>
+          <span className='inline-flex rounded-full bg-[color-mix(in_srgb,var(--pv2-violet)_12%,transparent)] px-2.5 py-1 text-[9.5px] font-extrabold tracking-[0.05em] text-[var(--pv2-violet)] uppercase'>
+            {t('inspectorJourneyTab')}
+          </span>
+          <p className='mt-2.5 mb-4 text-[11.5px] leading-relaxed text-[var(--pv2-faint)]'>
+            {t('lensInspectorHint')}
+          </p>
+          <p className='truncate text-[13px] font-semibold text-[var(--pv2-ink)]'>
+            {draft.name}
+          </p>
+          {draft.tagline ? (
+            <p className='mt-1 text-[12px] leading-relaxed text-[var(--pv2-mut)]'>
+              {draft.tagline}
+            </p>
+          ) : null}
+          {segment ? <Note>{segment.want}</Note> : null}
+        </div>
+      );
+    }
 
     return (
       <div className='min-h-0 flex-1 overflow-y-auto px-4 py-4'>
@@ -175,6 +212,93 @@ export const EditorInspector = ({
     const target = draft.nodes.find(n => n.id === id);
     return target ? [target.name] : [];
   });
+
+  if (lensReadOnly) {
+    return (
+      <div className='flex min-h-0 flex-1 flex-col'>
+        <div className='flex shrink-0 items-center gap-1.5 border-b border-[var(--pv2-hair)] px-4 py-2.5'>
+          <span
+            className='inline-flex rounded-full px-2.5 py-1 text-[9.5px] font-extrabold tracking-[0.05em] uppercase'
+            style={{ background: style.bg, color: style.fg }}
+          >
+            {kind.name}
+          </span>
+        </div>
+        <div className='min-h-0 flex-1 overflow-y-auto px-4 py-4'>
+          <p className='truncate text-[14px] font-semibold text-[var(--pv2-ink)]'>
+            {node.name}
+          </p>
+          {node.d ? (
+            <p className='mt-1 text-[12px] leading-relaxed text-[var(--pv2-mut)]'>
+              {node.d}
+            </p>
+          ) : null}
+
+          {node.kind === 'experience' ? (
+            <div className='mt-4'>
+              <span className='mb-1.5 block text-[13px] font-medium text-[var(--pv2-mut)]'>
+                {t('nodeExperience')}
+              </span>
+              {node.xName ? (
+                <div className='rounded-[10px] border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-2.5'>
+                  <p className='truncate text-[13px] font-semibold text-[var(--pv2-ink)]'>
+                    {node.xName}
+                  </p>
+                  <p
+                    className={cn(
+                      'mt-0.5 text-[11px]',
+                      coverage > 0
+                        ? 'text-[var(--pv2-mut)]'
+                        : 'font-semibold text-[#9a2436]'
+                    )}
+                  >
+                    {coverage > 0
+                      ? t('inspectorCoverage', { pct: coverage })
+                      : t('inspectorUntracked')}
+                  </p>
+                  {lensFit && onLensStageAction ? (
+                    <Button
+                      size='sm'
+                      className='mt-2 w-full'
+                      onClick={onLensStageAction}
+                    >
+                      {lensFit === 'open'
+                        ? t('lensStageBuild')
+                        : lensFit === 'shared'
+                          ? t('lensStageFork')
+                          : lensFit === 'edit'
+                            ? t('lensStageAdapt')
+                            : t('lensStageEdit')}
+                    </Button>
+                  ) : null}
+                  <Button
+                    size='sm'
+                    className='mt-2 w-full'
+                    disabled={previewPending}
+                    onClick={onPreviewExperience}
+                    title={t('previewExperienceHint')}
+                  >
+                    {previewPending ? (
+                      <Loader2 className='animate-spin' aria-hidden />
+                    ) : (
+                      <Eye strokeWidth={2.2} aria-hidden />
+                    )}
+                    {t('previewExperience')}
+                  </Button>
+                </div>
+              ) : (
+                <Note tone='bad'>{t('inspectorNoLink')}</Note>
+              )}
+            </div>
+          ) : (
+            <p className='mt-4 text-[11.5px] leading-relaxed text-[var(--pv2-faint)]'>
+              {t('lensContextComing')}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='flex min-h-0 flex-1 flex-col'>
@@ -297,6 +421,39 @@ export const EditorInspector = ({
                     ? t('inspectorCoverage', { pct: coverage })
                     : t('inspectorUntracked')}
                 </p>
+                {lensFit && onLensStageAction ? (
+                  <Button
+                    size='sm'
+                    className='mt-2 w-full'
+                    onClick={onLensStageAction}
+                  >
+                    {lensFit === 'open'
+                      ? t('lensStageBuild')
+                      : lensFit === 'shared'
+                        ? t('lensStageFork')
+                        : lensFit === 'edit'
+                          ? t('lensStageAdapt')
+                          : t('lensStageEdit')}
+                  </Button>
+                ) : null}
+                {/* The page itself, one click away. Reading a node's name is
+                    not the same as seeing what the shopper sees, and until now
+                    the only way to that page was to leave the editor. */}
+                <Button
+                  size='sm'
+                  className='mt-2 w-full'
+                  disabled={previewPending}
+                  onClick={onPreviewExperience}
+                  title={t('previewExperienceHint')}
+                >
+                  {previewPending ? (
+                    <Loader2 className='animate-spin' aria-hidden />
+                  ) : (
+                    <Eye strokeWidth={2.2} aria-hidden />
+                  )}
+                  {t('previewExperience')}
+                </Button>
+
                 <div className='mt-2 flex items-center gap-1.5'>
                   <Button variant='ghost' size='sm' onClick={onPickExperience}>
                     {t('changeExperience')}

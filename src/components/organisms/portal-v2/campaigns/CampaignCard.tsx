@@ -1,9 +1,10 @@
 'use client';
 
-import { Pencil, Trash2, User } from 'lucide-react';
+import { Copy, Trash2, User } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import {
+  HealthBadge,
   ItemDot,
   ProgressBar,
   StagePill,
@@ -22,15 +23,24 @@ import {
   subjectName,
   unassignedCount,
 } from '@/lib/portal-v2/campaigns/helpers';
-import type { CampaignView } from '@/lib/portal-v2/campaigns/types';
+import type {
+  CampaignExperience,
+  CampaignView,
+} from '@/lib/portal-v2/campaigns/types';
+import { campHealth } from '@/lib/portal-v2/campaigns/verdict';
+
+import type { Journey } from '@/lib/portal-v2/journeys/types';
 
 type CampaignCardProps = {
   campaign: CampaignView;
   productNames: Record<string, string>;
+  experiences: CampaignExperience[];
+  journeys: Journey[];
+  today: string;
   selected: boolean;
   onToggleSelect: (id: string) => void;
   onOpen: (id: string) => void;
-  onEdit: (id: string) => void;
+  onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
 };
 
@@ -45,17 +55,21 @@ const actionButton = cn(
 export const CampaignCard = ({
   campaign,
   productNames,
+  experiences,
+  journeys,
+  today,
   selected,
   onToggleSelect,
   onOpen,
-  onEdit,
+  onDuplicate,
   onDelete,
 }: CampaignCardProps) => {
   const t = useTranslations('portalV2.campaigns');
 
   const stage = deriveStage(campaign);
+  const health = campHealth(campaign, experiences, today, journeys);
   const progress = campProgress(campaign);
-  const experiences = campExpCount(campaign);
+  const expCount = campExpCount(campaign);
   const unassigned = unassignedCount(campaign);
   const budget = fmtBudget(campaign.budgetAmount, campaign.budgetCurrency);
   const shown = campaign.items.slice(0, CHIP_LIMIT);
@@ -95,11 +109,11 @@ export const CampaignCard = ({
         <button
           type='button'
           className={actionButton}
-          title={t('rowEdit')}
-          aria-label={t('rowEditAria', { name: campaign.name })}
-          onClick={() => onEdit(campaign.id)}
+          title={t('rowDuplicate')}
+          aria-label={t('rowDuplicateAria', { name: campaign.name })}
+          onClick={() => onDuplicate(campaign.id)}
         >
-          <Pencil className='size-3.5' strokeWidth={2} aria-hidden />
+          <Copy className='size-3.5' strokeWidth={2} aria-hidden />
         </button>
         <button
           type='button'
@@ -133,7 +147,8 @@ export const CampaignCard = ({
         </div>
       </div>
 
-      <div className='mt-2.5 flex justify-end'>
+      <div className='mt-2.5 flex flex-wrap items-center justify-end gap-1.5'>
+        <HealthBadge health={health} />
         <StagePill stage={stage} />
       </div>
 
@@ -191,7 +206,7 @@ export const CampaignCard = ({
           {campaign.owner || t('unassigned')}
         </span>
         {budget ? <span>{budget}</span> : null}
-        <span>{t('experienceCount', { count: experiences })}</span>
+        <span>{t('experienceCount', { count: expCount })}</span>
         {unassigned ? (
           <span className='font-bold text-[var(--pv2-error)]'>
             {t('unassignedCount', { count: unassigned })}

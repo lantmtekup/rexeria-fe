@@ -1,14 +1,14 @@
 import { CampaignsWorkspace } from '@/components/organisms/portal-v2/campaigns/CampaignsWorkspace';
-import { fetchCampaignBoard } from '@/services/portal-v2/campaignBoard';
+import { readCampaignIdParam } from '@/lib/portal-v2/campaigns/idParam';
 
-export default async function PortalV2CampaignsPage() {
-  const { items, error, source, degraded } = await fetchCampaignBoard();
-  return (
-    <CampaignsWorkspace
-      initialItems={items}
-      initialError={error}
-      initialSource={source}
-      initialDegraded={degraded}
-    />
-  );
+type PortalV2CampaignsPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function PortalV2CampaignsPage({
+  searchParams,
+}: PortalV2CampaignsPageProps) {
+  const initialId = readCampaignIdParam(await searchParams);
+
+  return <CampaignsWorkspace initialCampaignId={initialId} />;
 }

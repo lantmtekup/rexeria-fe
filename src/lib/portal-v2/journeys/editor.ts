@@ -23,6 +23,7 @@ import {
 } from '@/lib/portal-v2/journeys/constants';
 import { nodeById } from '@/lib/portal-v2/journeys/helpers';
 import {
+  BAND_ADD_W,
   BAND_W,
   NODE_H,
   NODE_W,
@@ -69,9 +70,9 @@ export const withPositions = (journey: Journey): Journey =>
 /**
  * Re-flow every band into its slots.
  *
- * This is what `Tidy` means now. It no longer re-runs the layered layout,
- * because that would overrule the phases the author assigned — the one thing on
- * this floor that is a decision rather than a drawing. Tidy straightens the
+ * This is what Align means now. It no longer re-runs the layered layout,
+ * because that would overrule the phases the author assigned - the one thing on
+ * this floor that is a decision rather than a drawing. Align straightens the
  * columns; it does not re-plan the journey.
  */
 export const tidyLayout = (journey: Journey): Journey =>
@@ -107,6 +108,7 @@ const normalizeForKind = (node: JourneyNode): JourneyNode => {
   if (next.kind !== 'experience') {
     delete next.x;
     delete next.xName;
+    delete next.xSlug;
     delete next.xCoverage;
     delete next.stats;
   }
@@ -367,6 +369,11 @@ export const linkExperience = (
       xName: link.name,
       xCoverage: link.coverage,
     };
+    /* A page without a public slug has nothing to preview, and a stale slug from
+       the previous link would preview the wrong page — so it is written or it is
+       removed, never left behind. */
+    if (link.slug) next.xSlug = link.slug;
+    else delete next.xSlug;
     if (node.x !== link.id) delete next.stats;
     return next;
   });
@@ -376,6 +383,7 @@ export const unlinkExperience = (journey: Journey, nodeId: string): Journey =>
     const next = { ...node };
     delete next.x;
     delete next.xName;
+    delete next.xSlug;
     delete next.xCoverage;
     delete next.stats;
     return next;
@@ -516,16 +524,20 @@ export type FloorBounds = {
  * Reaches into negative space, because dragging is not clamped: the overview and
  * the fit-to-content view both have to be able to find a node the author parked
  * above or to the left of the first band.
+ *
+ * The rail's "+ Phase" slot counts too (`BAND_ADD_W`): the view is clamped to
+ * these bounds, so a slot past the last band that the bounds do not know about
+ * is a slot the author can never scroll into view.
  */
 export const floorBounds = (journey: Journey): FloorBounds => {
-  const bandsWide = stagesOf(journey).length * BAND_W;
+  const railWide = stagesOf(journey).length * BAND_W + BAND_ADD_W;
 
   const xs = journey.nodes.map(node => node.px ?? 0);
   const ys = journey.nodes.map(node => node.py ?? 0);
 
   const minX = Math.min(0, ...xs) - FLOOR_MARGIN;
   const minY = Math.min(0, ...ys) - FLOOR_MARGIN;
-  const maxX = Math.max(bandsWide, ...xs.map(x => x + NODE_W)) + FLOOR_MARGIN;
+  const maxX = Math.max(railWide, ...xs.map(x => x + NODE_W)) + FLOOR_MARGIN;
   const maxY = Math.max(slotY(3), ...ys.map(y => y + NODE_H)) + FLOOR_MARGIN;
 
   return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };

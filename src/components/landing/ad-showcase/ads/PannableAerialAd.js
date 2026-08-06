@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useSwipe } from './shared/SwipeHandler';
 import { useDeviceView } from './shared/useDeviceView';
+import { useAdGalleryLink } from './shared/AdGalleryLinkContext';
 
 const DEFAULT_IMAGE =
   'https://d10zufojjcedud.cloudfront.net/ad-showcase/images/interscroller-scroll/background.webp';
@@ -47,6 +48,36 @@ const DEFAULT_HOTSPOTS = [
 ];
 
 const DEFAULT_HINT = 'EXPLORE BY HOLDING AND DRAGGING THE CURSOR';
+
+/** Min displayedWidth / containerWidth so desktop frames always have pan room. */
+const TARGET_PAN_RATIO = 1.75;
+
+/**
+ * Size the panorama for the container: height-fill when already wide enough,
+ * otherwise scale up (overflow crops top/bottom) so drag isn't clamped to 0.
+ * @returns {number} maxPan in px
+ */
+function measureAndApplyPan(img, container) {
+  const containerW = container.clientWidth;
+  const containerH = container.clientHeight;
+  const natW = img.naturalWidth;
+  const natH = img.naturalHeight;
+  if (!containerW || !containerH || !natW || !natH) return 0;
+
+  const aspect = natW / natH;
+  let h = containerH;
+  let w = h * aspect;
+  const minW = containerW * TARGET_PAN_RATIO;
+  if (w < minW) {
+    w = minW;
+    h = w / aspect;
+  }
+
+  img.style.width = `${w}px`;
+  img.style.height = `${h}px`;
+
+  return Math.max(0, w - containerW);
+}
 
 function CursorIcon() {
   return (
@@ -115,6 +146,7 @@ export default function PannableAerialAd({
 }) {
   const { device } = useDeviceView();
   const isDesktop = device === 'desktop';
+  const galleryHref = useAdGalleryLink();
 
   const offsetRef = useRef(0);
   const detailRef = useRef(null);
@@ -161,9 +193,9 @@ export default function PannableAerialAd({
     e => {
       const img = e.target;
       const container = img.parentElement?.parentElement;
-      const containerWidth = container ? container.clientWidth : 0;
-      const displayedWidth = img.offsetWidth;
-      const maxPan = Math.max(0, displayedWidth - containerWidth);
+      if (!container) return;
+
+      const maxPan = measureAndApplyPan(img, container);
       maxOffsetRef.current = maxPan;
 
       const init = -(maxPan * (initialX / 100));
@@ -183,18 +215,16 @@ export default function PannableAerialAd({
     }
   }, [imageUrl, handleImageLoad]);
 
-  // FIX (port từ PannableAd.js): khi bọc trong InterscrollerPreview, khung
-  // `.isp-ad-fixed` (position:fixed) được JS set width/height SAU mount bằng
-  // resizeAd(). Lúc onLoad container.clientWidth có thể = 0 → maxPan=0 →
-  // clampOffset luôn trả 0 → kéo ngang bị khoá cứng. ResizeObserver theo dõi
-  // container, recompute maxPan + re-clamp offset khi size đổi (giữ vị trí
-  // tương đối, không reset về initialX).
+  // FIX: `.isp-ad-fixed` được JS set size SAU mount; onLoad có thể đo width=0.
+  // ResizeObserver recompute size + maxPan (giữ offset, không reset initialX).
+  // Cũng scale-up khi asset hẹp hơn desktop frame (1280×714) → tránh maxPan=0.
   useEffect(() => {
     const img = imgRef.current;
     const container = img?.parentElement?.parentElement;
     if (!img || !container || typeof ResizeObserver === 'undefined') return;
     const recompute = () => {
-      const maxPan = Math.max(0, img.offsetWidth - container.clientWidth);
+      if (!img.naturalWidth) return;
+      const maxPan = measureAndApplyPan(img, container);
       maxOffsetRef.current = maxPan;
       const clamped = Math.max(-maxPan, Math.min(0, offsetRef.current));
       if (clamped !== offsetRef.current) {
@@ -309,13 +339,14 @@ export default function PannableAerialAd({
           </div>
         </div>
       )}
-      {!detail && (
+      {/* Chỉ hiện CTA ở list (gallery). Detail vẫn ẩn. */}
+      {galleryHref && !detail && (
         <div
           className='ad-wrap-cta-bar'
           style={ctaFont ? { fontFamily: ctaFont } : undefined}
         >
           <a
-            href={(typeof cta === 'object' && cta?.href) || '#'}
+            href={galleryHref}
             target='_blank'
             rel='noopener noreferrer'
             className='ad-wrap-cta'
