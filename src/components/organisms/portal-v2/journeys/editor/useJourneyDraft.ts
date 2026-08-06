@@ -8,10 +8,9 @@ import type { Journey } from '@/lib/portal-v2/journeys/types';
 /**
  * The editor's draft and its timeline.
  *
- * IT EDITS A CLONE. The record in the workspace cannot change while the editor
- * is open — only Save writes back. That makes the prototype's criterion 8 (a
- * live journey is never changed unintentionally, ~L23527) structural rather
- * than a rule someone has to remember.
+ * IT EDITS A CLONE. Autosave / Save write the clone back; Discard restores the
+ * snapshot taken when the editor opened. That keeps criterion 8 structural:
+ * nothing outside this session mutates the graph unless the author said so.
  *
  * TWO KINDS OF STEP. Structural edits (add, delete, connect, cut, kind change)
  * snapshot immediately. Continuous ones — typing in a field, dragging a node —
@@ -26,13 +25,17 @@ type DraftState = {
   /** JSON snapshots, oldest first. `history[index]` is what is on screen. */
   history: string[];
   index: number;
-  /** The journey as the editor received it — the dirty check's baseline. */
+  /** Dirty-check baseline — open snapshot, then moved forward by autosave. */
   origin: string;
+  /** Positioned clone at open — Discard restores this; never moves. */
+  opened: string;
 };
 
 type DraftAction =
   | { type: 'set'; draft: Journey; snapshot: boolean }
   | { type: 'commit' }
+  | { type: 'markClean' }
+  | { type: 'autosaved'; draft: Journey }
   | { type: 'undo' }
   | { type: 'redo' };
 
@@ -60,6 +63,16 @@ const reducer = (state: DraftState, action: DraftAction): DraftState => {
     case 'commit':
       return push(state, state.draft);
 
+    case 'markClean':
+      return { ...state, origin: snapshotOf(state.draft) };
+
+    case 'autosaved':
+      return {
+        ...state,
+        draft: action.draft,
+        origin: snapshotOf(action.draft),
+      };
+
     case 'undo': {
       if (state.index <= 0) return state;
       const index = state.index - 1;
@@ -86,7 +99,7 @@ const init = (journey: Journey): DraftState => {
      and no re-render can reshuffle it. */
   const draft = withPositions(structuredClone(journey));
   const entry = snapshotOf(draft);
-  return { draft, history: [entry], index: 0, origin: entry };
+  return { draft, history: [entry], index: 0, origin: entry, opened: entry };
 };
 
 export type JourneyDraftController = {
@@ -97,16 +110,25 @@ export type JourneyDraftController = {
   applyLive: (next: Journey) => void;
   /** Turn whatever `applyLive` has accumulated into one undo step. */
   commit: () => void;
+  /** Persist-shaped draft becomes the live draft and the clean baseline. */
+  markAutosaved: (next: Journey) => void;
+  /** Positioned clone as the editor received it — Discard restores this. */
+  opened: Journey;
   undo: () => void;
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  /** The draft differs from what the editor opened with. */
+  /** The draft differs from the last clean baseline (open or last autosave). */
   isDirty: boolean;
 };
 
 export const useJourneyDraft = (journey: Journey): JourneyDraftController => {
   const [state, dispatch] = useReducer(reducer, journey, init);
+
+  const opened = useMemo(
+    () => JSON.parse(state.opened) as Journey,
+    [state.opened]
+  );
 
   const apply = useCallback((next: Journey) => {
     dispatch({ type: 'set', draft: next, snapshot: true });
@@ -117,6 +139,9 @@ export const useJourneyDraft = (journey: Journey): JourneyDraftController => {
   }, []);
 
   const commit = useCallback(() => dispatch({ type: 'commit' }), []);
+  const markAutosaved = useCallback((next: Journey) => {
+    dispatch({ type: 'autosaved', draft: next });
+  }, []);
   const undo = useCallback(() => dispatch({ type: 'undo' }), []);
   const redo = useCallback(() => dispatch({ type: 'redo' }), []);
 
@@ -130,6 +155,8 @@ export const useJourneyDraft = (journey: Journey): JourneyDraftController => {
     apply,
     applyLive,
     commit,
+    markAutosaved,
+    opened,
     undo,
     redo,
     canUndo: state.index > 0,

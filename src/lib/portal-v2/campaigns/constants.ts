@@ -1,7 +1,9 @@
 import type {
   CampaignFilters,
   CampaignGoal,
+  CampaignHealthState,
   CampaignItemStatus,
+  CampaignPhase,
   CampaignStage,
   CampaignType,
 } from '@/lib/portal-v2/campaigns/types';
@@ -18,7 +20,7 @@ import type {
  * products/experiences convention), unlike the older Brand panels.
  */
 
-/** Prototype `CAMP_TYPES` (rexer-platform-v2.html :9401). Stored in `notes.pv2`. */
+/** Prototype `CAMP_TYPES` (rexer-demo-v3.html :15610). */
 export const CAMPAIGN_TYPES: Record<
   CampaignType,
   { labelKey: string; descKey: string; color: string }
@@ -52,7 +54,6 @@ export const CAMPAIGN_TYPES: Record<
 
 export const CAMPAIGN_TYPE_IDS = Object.keys(CAMPAIGN_TYPES) as CampaignType[];
 
-/** `Campaign.objective` — a real v1 enum column. */
 export const CAMPAIGN_GOALS: Record<CampaignGoal, { labelKey: string }> = {
   awareness: { labelKey: 'goalAwareness' },
   traffic: { labelKey: 'goalTraffic' },
@@ -63,9 +64,9 @@ export const CAMPAIGN_GOALS: Record<CampaignGoal, { labelKey: string }> = {
 export const CAMPAIGN_GOAL_IDS = Object.keys(CAMPAIGN_GOALS) as CampaignGoal[];
 
 /**
- * Display stages. `planning|live|paused|done` are the four statuses v1 stores;
- * `building` is derived at read time and is the one stage that can never be
- * written back — see `deriveStage` in `./helpers.ts`.
+ * Display stages. `planning|live|paused|done` map onto the four stored
+ * statuses; `building` is derived at read time and is the one stage that can
+ * never be written back — see `deriveStage` in `./helpers.ts`.
  */
 export const CAMPAIGN_STAGES: Record<
   CampaignStage,
@@ -160,13 +161,84 @@ export const ITEM_FLOW: CampaignItemStatus[] = [
 /** An item at `ready` or beyond counts as done for the progress bar. */
 export const ITEM_DONE_STEP = 3;
 
-/** Seeded — the BE has no campaign-channel taxonomy of its own. */
+/**
+ * The lifecycle the campaign screen is organised around. Not a status: a phase
+ * is where the work *is*, and it is derived — see `campPhase` in `./phases.ts`.
+ */
+export const CAMP_PHASES: Record<
+  CampaignPhase,
+  { labelKey: string; hintKey: string }
+> = {
+  plan: { labelKey: 'phasePlan', hintKey: 'phasePlanHint' },
+  build: { labelKey: 'phaseBuild', hintKey: 'phaseBuildHint' },
+  run: { labelKey: 'phaseRun', hintKey: 'phaseRunHint' },
+  learn: { labelKey: 'phaseLearn', hintKey: 'phaseLearnHint' },
+};
+
+export const CAMP_PHASE_ORDER: CampaignPhase[] = [
+  'plan',
+  'build',
+  'run',
+  'learn',
+];
+
+/** The operating state a campaign reads as, once its numbers are in. */
+export const CAMPAIGN_HEALTH: Record<
+  CampaignHealthState,
+  { labelKey: string; bg: string; fg: string }
+> = {
+  healthy: {
+    labelKey: 'healthHealthy',
+    bg: 'color-mix(in srgb, var(--pv2-violet) 12%, transparent)',
+    fg: 'var(--pv2-violet)',
+  },
+  valuable: {
+    labelKey: 'healthValuable',
+    bg: 'color-mix(in srgb, var(--pv2-success) 14%, transparent)',
+    fg: 'color-mix(in srgb, var(--pv2-success) 78%, var(--pv2-ink))',
+  },
+  delayed: {
+    labelKey: 'healthDelayed',
+    bg: 'color-mix(in srgb, var(--pv2-warning) 16%, transparent)',
+    fg: 'color-mix(in srgb, var(--pv2-warning) 76%, var(--pv2-ink))',
+  },
+  risk: {
+    labelKey: 'healthRisk',
+    bg: 'var(--pv2-error)',
+    fg: 'var(--pv2-paper)',
+  },
+  complete: {
+    labelKey: 'healthComplete',
+    bg: 'var(--pv2-canvas)',
+    fg: 'var(--pv2-mut)',
+  },
+};
+
+/**
+ * Nothing ships with less than a fifth of it measured. The prototype's
+ * `GOV.shipTrackFloor` — a governance dial, not a magic number: shipping an
+ * untracked experience means the campaign cannot be told whether it worked.
+ */
+export const SHIP_TRACK_FLOOR = 0.2;
+
+/** Below this, a live campaign's numbers are not worth believing. */
+export const TRUST_FLOOR = 0.15;
+
+/** Who the work can be assigned to. */
+export const CAMPAIGN_TEAM = [
+  'Toan Nguyen',
+  'Maya Okonjo',
+  'Linh Tran',
+  'Diego Alvarez',
+] as const;
+
+/** The surfaces a campaign plans against — the same names Deploy publishes to. */
 export const CAMPAIGN_CHANNELS = [
-  'Meta',
-  'Google',
-  'TikTok',
+  'Web microsite',
+  'Instagram',
   'Email',
-  'SMS',
+  'Retail QR',
+  'Paid social',
 ] as const;
 
 export const CAMPAIGN_DEFAULT_CURRENCY = 'USD';
@@ -177,10 +249,10 @@ export const CAMPAIGN_DEFAULT_FILTERS: CampaignFilters = {
   view: 'grid',
 };
 
-/**
- * One page of results — there is no pager UI yet, and the stage tabs count off
- * whatever this call returns, so the bound has to cover the whole workspace or
- * the counts read low. Temporarily 500 (the sibling boards still sit at 50);
- * revisit together with a real pager.
- */
-export const CAMPAIGN_PAGE_LIMIT = 500;
+/** The wizard's four questions, in order. */
+export const CAMPAIGN_WIZARD_STEPS = [
+  { step: 1, titleKey: 'wizStep1', subKey: 'wizStep1Sub' },
+  { step: 2, titleKey: 'wizStep2', subKey: 'wizStep2Sub' },
+  { step: 3, titleKey: 'wizStep3', subKey: 'wizStep3Sub' },
+  { step: 4, titleKey: 'wizStep4', subKey: 'wizStep4Sub' },
+] as const;

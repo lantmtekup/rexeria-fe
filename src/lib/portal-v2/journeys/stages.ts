@@ -52,6 +52,14 @@ export const snap = (value: number): number => Math.round(value / GRID) * GRID;
 export const BAND_W = 280;
 /** Height of the header strip that names a phase. */
 export const BAND_HEAD = 44;
+/**
+ * Width of the "+ Phase" slot the header rail ends with.
+ *
+ * It sits past the last band, so `floorBounds` has to reserve it: panning is
+ * clamped to those bounds, and a control drawn outside them is a control the
+ * author can never scroll all the way to.
+ */
+export const BAND_ADD_W = 132;
 /** Where the first card sits, measured from the top of the floor. */
 export const SLOT_TOP = BAND_HEAD + 26;
 /** Vertical pitch between cards in one band. */

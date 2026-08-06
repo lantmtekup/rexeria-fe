@@ -80,6 +80,41 @@ function MouseIcon() {
   );
 }
 
+/** Min displayedWidth / containerWidth so desktop frames always have pan room. */
+const TARGET_PAN_RATIO = 1.75;
+
+/**
+ * Size the panorama for the container: height-fill when already wide enough,
+ * otherwise widen for pan room. Box height stays = container (object-fit cover
+ * crops top/bottom) so tall phones don't show a bright sky "gap" under the chrome.
+ * @returns {number} maxPan in px
+ */
+function measureAndApplyPan(img, container) {
+  const containerW = container.clientWidth;
+  const containerH = container.clientHeight;
+  const natW = img.naturalWidth;
+  const natH = img.naturalHeight;
+  if (!containerW || !containerH || !natW || !natH) return 0;
+
+  const aspect = natW / natH;
+  let w = containerH * aspect;
+  const minW = containerW * TARGET_PAN_RATIO;
+  if (w < minW) w = minW;
+
+  // Portrait phone: slight zoom so sky/ground bands don't read as letterboxing
+  if (containerH / containerW > 1.6) {
+    w = Math.max(w, containerH * aspect * 1.15);
+  }
+
+  img.style.width = `${w}px`;
+  img.style.height = `${containerH}px`;
+  img.style.objectFit = 'cover';
+  img.style.objectPosition = 'center 58%';
+  img.style.marginTop = '';
+
+  return Math.max(0, w - containerW);
+}
+
 /**
  * Pannable Ad — Panorama image wider than viewport, drag to explore.
  * Ref: Hermès https://mobkoi-uk.celtra.com/preview/9d308fb5
@@ -152,16 +187,15 @@ export default function PannableAd({
     axis: 'x',
   });
 
-  // Calculate initial offset and max pan range on image load
   const handleImageLoad = useCallback(
     e => {
       const img = e.target;
-      const containerWidth = img.parentElement.parentElement.clientWidth;
-      const displayedWidth = img.offsetWidth;
-      const maxPan = Math.max(0, displayedWidth - containerWidth);
+      const container = img.parentElement?.parentElement;
+      if (!container) return;
+
+      const maxPan = measureAndApplyPan(img, container);
       maxOffsetRef.current = maxPan;
 
-      // Set initial position
       const initOffset = -(maxPan * (initialX / 100));
       offsetRef.current = initOffset;
       setOffset(initOffset);
@@ -169,16 +203,22 @@ export default function PannableAd({
     [initialX]
   );
 
-  // FIX (port): maxOffset chỉ tính lúc onLoad. Khi bọc trong InterscrollerPreview,
-  // khung `.isp-ad-fixed` (position:fixed) được JS set width SAU mount → container
-  // đo lúc onLoad sai → maxPan=0 → kéo bị clamp về 0. Quan sát container resize để
-  // tính lại maxPan + re-clamp offset hiện tại (giữ vị trí, không reset về initial).
+  // Cache-hit: onLoad có thể fire trước khi React attach listener.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) {
+      handleImageLoad({ target: img });
+    }
+  }, [imageUrl, handleImageLoad]);
+
+  // `.isp-ad-fixed` size sau mount + scale-up khi asset hẹp hơn desktop frame.
   useEffect(() => {
     const img = imgRef.current;
     const container = img?.parentElement?.parentElement;
     if (!img || !container || typeof ResizeObserver === 'undefined') return;
     const recompute = () => {
-      const maxPan = Math.max(0, img.offsetWidth - container.clientWidth);
+      if (!img.naturalWidth) return;
+      const maxPan = measureAndApplyPan(img, container);
       maxOffsetRef.current = maxPan;
       const clamped = Math.max(-maxPan, Math.min(0, offsetRef.current));
       if (clamped !== offsetRef.current) {
@@ -201,38 +241,14 @@ export default function PannableAd({
       <div className='pannable-ad' ref={ref}>
         {headline && <div className='pannable-ad-title'>{headline}</div>}
         <div
-          className={
-            isDesktop
-              ? 'pannable-ad-track pannable-ad-track--desktop'
-              : 'pannable-ad-track'
-          }
+          className='pannable-ad-track'
           style={{ transform: `translateX(${offset}px)` }}
         >
-          {}
           <img
             ref={imgRef}
             src={imageUrl}
             alt='Panorama'
-            className={
-              isDesktop
-                ? 'pannable-ad-img pannable-ad-img--desktop'
-                : 'pannable-ad-img'
-            }
-            style={
-              isDesktop
-                ? {
-                    height: '100%',
-                    width: '100%',
-                    maxWidth: 'none',
-                    objectFit: 'cover',
-                    marginTop: '15px',
-                  }
-                : {
-                    height: '100%',
-                    width: 'auto',
-                    maxWidth: 'none',
-                  }
-            }
+            className='pannable-ad-img'
             onLoad={handleImageLoad}
             draggable={false}
           />

@@ -54,6 +54,10 @@ import {
   type FloorNumbers,
 } from '@/lib/portal-v2/journeys/stages';
 import type {
+  LensNodeOverlay,
+  StageFit,
+} from '@/lib/portal-v2/campaigns/subjectLane';
+import type {
   Journey,
   JourneyEditorSelection,
   JourneyNode,
@@ -142,6 +146,10 @@ type EditorCanvasProps = {
    */
   onViewChange: Dispatch<SetStateAction<ViewTransform>>;
   onSelect: (selection: JourneyEditorSelection) => void;
+  lensFitByNodeId?: Record<string, StageFit | null> | null;
+  lensOverlayByNodeId?: Record<string, LensNodeOverlay> | null;
+  /** Subject lens — view-only for structure (demo `ro = !!S.jed.lens`). */
+  readOnly?: boolean;
   /** Live during the drag; `onNodeDrop` is what turns it into one undo step. */
   onNodeDrag: (nodeId: string, x: number, y: number) => void;
   onNodeDrop: (nodeId: string) => void;
@@ -153,8 +161,13 @@ type EditorCanvasProps = {
   onRenameNode: (nodeId: string, name: string) => void;
   onDuplicateNode: (nodeId: string) => void;
   onDeleteNode: (nodeId: string) => void;
+  /** Open the shopper view for an experience node. Only offered to linked ones. */
+  onPreviewNode: (nodeId: string) => void;
+  /** Open the experience picker for a node (link or replace). */
+  onPickExperience: (nodeId: string) => void;
   onRenameStage: (index: number, name: string) => void;
   onRemoveStage: (index: number) => void;
+  onAddStage: () => void;
 };
 
 export const EditorCanvas = ({
@@ -164,6 +177,9 @@ export const EditorCanvas = ({
   view,
   onViewChange,
   onSelect,
+  lensFitByNodeId = null,
+  lensOverlayByNodeId = null,
+  readOnly = false,
   onNodeDrag,
   onNodeDrop,
   onConnect,
@@ -173,8 +189,11 @@ export const EditorCanvas = ({
   onRenameNode,
   onDuplicateNode,
   onDeleteNode,
+  onPreviewNode,
+  onPickExperience,
   onRenameStage,
   onRemoveStage,
+  onAddStage,
 }: EditorCanvasProps) => {
   const t = useTranslations('portalV2.journeys');
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -231,7 +250,7 @@ export const EditorCanvas = ({
     [bounds, onViewChange, size]
   );
 
-  /* The zoom buttons and Tidy live in the top bar and set the view directly,
+  /* The zoom buttons and Align live in the top bar and set the view directly,
      without knowing how big the viewport is. Correct them here rather than
      teaching every caller the geometry. */
   useEffect(() => {
@@ -296,6 +315,7 @@ export const EditorCanvas = ({
     onCutEdge,
     onRerouteEdge,
     onDismiss: closeMenu,
+    readOnly,
   });
   const { link, linkTarget, verdict, busy } = gestures;
 
@@ -509,19 +529,34 @@ export const EditorCanvas = ({
             onRename={name => onRenameNode(node.id, name)}
             onDuplicate={() => onDuplicateNode(node.id)}
             onDelete={() => onDeleteNode(node.id)}
+            onPreview={
+              node.kind === 'experience' && node.x
+                ? () => onPreviewNode(node.id)
+                : undefined
+            }
+            onPickExperience={
+              !readOnly && node.kind === 'experience'
+                ? () => onPickExperience(node.id)
+                : undefined
+            }
+            lensFit={lensFitByNodeId?.[node.id] ?? undefined}
+            lensOverlay={lensOverlayByNodeId?.[node.id] ?? undefined}
+            readOnly={readOnly}
           />
         ))}
 
-        {stages.map((stage, index) => (
-          <StageAdd
-            key={stage.id}
-            stage={index}
-            name={stage.name}
-            top={slotY(counts[index] ?? 0)}
-            open={addStage === index}
-            onToggle={setAddStage}
-          />
-        ))}
+        {!readOnly
+          ? stages.map((stage, index) => (
+              <StageAdd
+                key={stage.id}
+                stage={index}
+                name={stage.name}
+                top={slotY(counts[index] ?? 0)}
+                open={addStage === index}
+                onToggle={setAddStage}
+              />
+            ))
+          : null}
       </div>
 
       {/* Chrome, over the floor: a header the floor layer covers is a header
@@ -531,23 +566,27 @@ export const EditorCanvas = ({
         counts={counts}
         pulse={numbers.stages}
         view={view}
-        canRemove={stages.length > STAGE_MIN}
+        canRemove={!readOnly && stages.length > STAGE_MIN}
+        readOnly={readOnly}
         onRename={onRenameStage}
         onRemove={onRemoveStage}
+        onAdd={onAddStage}
       />
 
-      <EdgeControls
-        draft={draft}
-        active={busy ? null : activeEdge}
-        selected={busy ? null : selectedRoute}
-        toScreen={toScreen}
-        onHover={setHoverEdge}
-        onLeave={dropHover}
-        onCut={edge => onCutEdge(edge.from, edge.to)}
-        onGrab={gestures.onGrabEnd}
-      />
+      {!readOnly ? (
+        <EdgeControls
+          draft={draft}
+          active={busy ? null : activeEdge}
+          selected={busy ? null : selectedRoute}
+          toScreen={toScreen}
+          onHover={setHoverEdge}
+          onLeave={dropHover}
+          onCut={edge => onCutEdge(edge.from, edge.to)}
+          onGrab={gestures.onGrabEnd}
+        />
+      ) : null}
 
-      {addStage !== null && stages[addStage] ? (
+      {!readOnly && addStage !== null && stages[addStage] ? (
         <KindFlyout
           stage={addStage}
           name={stages[addStage].name}

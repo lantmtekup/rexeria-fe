@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { FilterChips } from '@/components/molecules/portal-v2/FilterChips';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
+import { ExperienceCover } from '@/components/organisms/portal-v2/experiences/ExperienceCover';
 import { cn } from '@/lib/cn';
 import { objectivePillStyle } from '@/lib/portal-v2/experiences/roleStyles';
 import { JOURNEY_OBJECTIVES } from '@/lib/portal-v2/journeys/constants';
@@ -191,65 +192,89 @@ export const ExperiencePickerModal = ({
             const pill = objectivePillStyle(experience.objective);
             const picked = experience.id === currentId;
 
+            const pick = () =>
+              onPick({
+                id: experience.id,
+                name: experience.name,
+                coverage: experience.coverage.pct,
+                slug: experience.slug ?? undefined,
+              });
+
+            /* `article role='button'` rather than a real one, exactly as the
+               Experiences grid does it: the cover is block content, and a
+               `<button>` may only hold phrasing content. */
             return (
-              <button
+              <article
                 key={experience.id}
-                type='button'
-                onClick={() =>
-                  onPick({
-                    id: experience.id,
-                    name: experience.name,
-                    coverage: experience.coverage.pct,
-                  })
-                }
+                role='button'
+                tabIndex={0}
+                aria-pressed={picked}
+                aria-label={experience.name}
+                onClick={pick}
+                onKeyDown={e => {
+                  if (e.key !== 'Enter' && e.key !== ' ') return;
+                  e.preventDefault();
+                  pick();
+                }}
                 className={cn(
-                  'flex cursor-pointer flex-col gap-1.5 rounded-[var(--pv2-r)] border px-3 py-2.5 text-left',
+                  'flex cursor-pointer flex-col overflow-hidden rounded-[var(--pv2-r)] border text-left',
                   'transition-[border-color,box-shadow] duration-[140ms]',
-                  'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none',
+                  'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2 focus-visible:outline-none',
                   picked
                     ? 'border-[var(--pv2-electric)] bg-[var(--pv2-electric-soft)]'
                     : 'border-[var(--pv2-hair)] bg-[var(--pv2-paper)] hover:border-[var(--pv2-electric)] hover:shadow-[var(--pv2-sh-soft)]'
                 )}
               >
-                <span className='flex items-start gap-1.5'>
-                  <span className='min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--pv2-ink)]'>
-                    {experience.name}
-                  </span>
-                  {picked ? (
-                    <Check
-                      className='mt-px size-3.5 shrink-0 text-[var(--pv2-electric)]'
-                      strokeWidth={3}
-                      aria-hidden
-                    />
-                  ) : null}
-                </span>
+                {/* The page's own cover, drawn by the same component the
+                    Experiences grid uses — a stage is picked by recognising the
+                    page, and four names in a column all look alike. */}
+                <ExperienceCover
+                  experience={experience}
+                  height={120}
+                  className='w-full border-b border-[var(--pv2-hair)]'
+                />
 
-                <span
-                  className='line-clamp-2 text-[11px] leading-snug text-[var(--pv2-faint)]'
-                  title={experience.tagline}
-                >
-                  {experience.tagline}
-                </span>
+                <span className='flex flex-1 flex-col gap-1.5 px-3 py-2.5'>
+                  <span className='flex items-start gap-1.5'>
+                    <span className='min-w-0 flex-1 truncate text-[13px] font-semibold text-[var(--pv2-ink)]'>
+                      {experience.name}
+                    </span>
+                    {picked ? (
+                      <Check
+                        className='mt-px size-3.5 shrink-0 text-[var(--pv2-electric)]'
+                        strokeWidth={3}
+                        aria-hidden
+                      />
+                    ) : null}
+                  </span>
 
-                <span className='mt-auto flex items-center gap-1.5 pt-1'>
                   <span
-                    className='inline-flex rounded-full px-2 py-[3px] text-[9px] font-bold tracking-[0.05em] uppercase'
-                    style={{ background: pill.bg, color: pill.fg }}
+                    className='line-clamp-2 text-[11px] leading-snug text-[var(--pv2-faint)]'
+                    title={experience.tagline}
                   >
-                    {objectiveLabel.get(experience.objective)}
+                    {experience.tagline}
                   </span>
-                  <span
-                    className={cn(
-                      'text-[10.5px] tabular-nums',
-                      experience.coverage.pct > 0
-                        ? 'text-[var(--pv2-faint)]'
-                        : 'font-semibold text-[#9a2436]'
-                    )}
-                  >
-                    {t('pickerTracked', { pct: experience.coverage.pct })}
+
+                  <span className='mt-auto flex items-center gap-1.5 pt-1'>
+                    <span
+                      className='inline-flex rounded-full px-2 py-[3px] text-[9px] font-bold tracking-[0.05em] uppercase'
+                      style={{ background: pill.bg, color: pill.fg }}
+                    >
+                      {objectiveLabel.get(experience.objective)}
+                    </span>
+                    <span
+                      className={cn(
+                        'text-[10.5px] tabular-nums',
+                        experience.coverage.pct > 0
+                          ? 'text-[var(--pv2-faint)]'
+                          : 'font-semibold text-[#9a2436]'
+                      )}
+                    >
+                      {t('pickerTracked', { pct: experience.coverage.pct })}
+                    </span>
                   </span>
                 </span>
-              </button>
+              </article>
             );
           })}
         </div>

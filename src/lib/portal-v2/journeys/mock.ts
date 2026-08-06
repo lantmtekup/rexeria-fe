@@ -7,6 +7,17 @@
  *
  * Numbers live only on the copies. A blueprint has never run — it has no
  * numbers, and that is not the same as zero.
+ *
+ * NO SEEDED EXPERIENCE LINKS. Experience nodes ship unlinked, on purpose: the
+ * library is real pages from `GET /pages`, and an invented `x: 'e2'` points at
+ * a page that does not exist — a link that renders a name, fails preview, and
+ * lies to the readiness score. The planner links a real page through the
+ * picker; until then the node says so, in the error colour, which is exactly
+ * what the "every experience node links an experience" check is for.
+ *
+ * A blueprint's figures roll up from its copies BY LINK ID (`resolveNodeStats`),
+ * so with nothing linked the blueprints carry no numbers either. The copies keep
+ * their own `stats` — what a campaign measured is not the link's to erase.
  */
 
 import type { Journey } from '@/lib/portal-v2/journeys/types';
@@ -41,8 +52,6 @@ export const MOCK_JOURNEYS: Journey[] = [
         name: 'Reveal',
         d: 'Full-bleed launch moment. One idea, no price.',
         x: 'e2',
-        xName: 'Super Serum 360°',
-        xCoverage: 82,
         to: ['n3'],
       },
       {
@@ -51,8 +60,6 @@ export const MOCK_JOURNEYS: Journey[] = [
         name: 'Inspect',
         d: 'Spin it, zoom it, compare finishes.',
         x: 'e6',
-        xName: 'Tint vs. Foundation',
-        xCoverage: 67,
         to: ['n4'],
       },
       {
@@ -68,8 +75,6 @@ export const MOCK_JOURNEYS: Journey[] = [
         name: 'Explain & prove',
         d: 'Ingredients and clinicals, for the undecided.',
         x: 'e8',
-        xName: 'Founder’s Note',
-        xCoverage: 54,
         to: ['n6'],
       },
       {
@@ -120,8 +125,6 @@ export const MOCK_JOURNEYS: Journey[] = [
         name: 'Who is it for?',
         d: 'The only question a gift buyer can actually answer.',
         x: 'e1',
-        xName: 'Shade Finder',
-        xCoverage: 91,
         to: ['n3'],
       },
       {
@@ -137,8 +140,6 @@ export const MOCK_JOURNEYS: Journey[] = [
         name: 'The edit, for them',
         d: 'Three picks, chosen from the answer.',
         x: 'e3',
-        xName: 'Holiday Gift Edit',
-        xCoverage: 74,
         to: ['n6'],
       },
       {
@@ -149,8 +150,6 @@ export const MOCK_JOURNEYS: Journey[] = [
         name: 'The safe edit',
         d: 'Bestsellers with easy returns, for the unsure.',
         x: 'e4',
-        xName: 'The Clean Edit',
-        xCoverage: 0,
         to: ['n6'],
       },
       {
@@ -204,8 +203,6 @@ export const MOCK_JOURNEYS: Journey[] = [
         name: 'Reveal',
         d: 'Full-bleed launch moment. One idea, no price.',
         x: 'e2',
-        xName: 'Super Serum 360°',
-        xCoverage: 82,
         stats: { sessions: 12400, lift: 0.31 },
         to: ['n3'],
       },
@@ -215,8 +212,6 @@ export const MOCK_JOURNEYS: Journey[] = [
         name: 'Inspect',
         d: 'Spin it, zoom it, compare finishes.',
         x: 'e6',
-        xName: 'Tint vs. Foundation',
-        xCoverage: 67,
         stats: { sessions: 7800, lift: 0.22 },
         to: ['n4'],
       },
@@ -233,8 +228,6 @@ export const MOCK_JOURNEYS: Journey[] = [
         name: 'Explain & prove',
         d: 'Ingredients and clinicals, for the undecided.',
         x: 'e8',
-        xName: 'Founder’s Note',
-        xCoverage: 54,
         stats: { sessions: 3100, lift: 0.14 },
         to: ['n6'],
       },
@@ -289,8 +282,6 @@ export const MOCK_JOURNEYS: Journey[] = [
         name: 'Who is it for?',
         d: 'The only question a gift buyer can actually answer.',
         x: 'e1',
-        xName: 'Shade Finder',
-        xCoverage: 91,
         stats: { sessions: 9600, lift: 0.11 },
         to: ['n3'],
       },
@@ -307,8 +298,6 @@ export const MOCK_JOURNEYS: Journey[] = [
         name: 'The edit, for them',
         d: 'Three picks, chosen from the answer.',
         x: 'e3',
-        xName: 'Holiday Gift Edit',
-        xCoverage: 74,
         stats: { sessions: 4100, lift: 0.19 },
         to: ['n6'],
       },
@@ -318,8 +307,6 @@ export const MOCK_JOURNEYS: Journey[] = [
         name: 'The safe edit',
         d: 'Bestsellers with easy returns, for the unsure.',
         x: 'e4',
-        xName: 'The Clean Edit',
-        xCoverage: 0,
         stats: { sessions: 2600, lift: -0.06 },
         to: ['n6'],
       },

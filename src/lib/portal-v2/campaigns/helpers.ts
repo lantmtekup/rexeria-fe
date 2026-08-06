@@ -3,14 +3,22 @@ import {
   ITEM_DONE_STEP,
   ITEM_STATUS,
 } from '@/lib/portal-v2/campaigns/constants';
-import { emptyBrief } from '@/lib/portal-v2/campaigns/notes';
+import { experienceCopyId } from '@/lib/portal-v2/campaigns/mock';
 import type {
+  CampaignBrief,
   CampaignDraft,
   CampaignFilters,
   CampaignItem,
   CampaignStage,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
+
+export const emptyBrief = (): CampaignBrief => ({
+  objective: '',
+  audience: '',
+  message: '',
+  offer: '',
+});
 
 /* ── dates ──────────────────────────────────────────────────────────────── */
 
@@ -63,9 +71,9 @@ export const todayString = (): string => new Date().toISOString().slice(0, 10);
 /* ── derived state ──────────────────────────────────────────────────────── */
 
 /**
- * The display stage. v1 stores four statuses; the prototype shows five because
+ * The display stage. Four statuses are stored; the screen shows five, because
  * "In build" is not a status at all — it is a `draft` campaign whose items have
- * started moving. Deriving it here keeps the extra stage out of the wire.
+ * started moving. Deriving it keeps the extra stage out of the data.
  */
 export const deriveStage = (campaign: CampaignView): CampaignStage => {
   if (campaign.status === 'active') return 'live';
@@ -121,12 +129,18 @@ export const impliedStatus = (
   return null;
 };
 
+/**
+ * Promote the campaign its items have outgrown. A live subject makes the
+ * campaign live; closing one is a human decision and is never undone here.
+ */
+export const syncCampaignStage = (campaign: CampaignView): CampaignView => {
+  const implied = impliedStatus(campaign);
+  return implied ? { ...campaign, status: implied } : campaign;
+};
+
 /* ── list narrowing ─────────────────────────────────────────────────────── */
 
-/**
- * Search already ran on the server (`?q=`); this only applies the stage axis
- * plus a local contains-match so typing feels instant between fetches.
- */
+/** The stage axis, plus a contains-match over the name, owner and brief. */
 export const visibleCampaigns = (
   campaigns: CampaignView[],
   filters: CampaignFilters
@@ -172,6 +186,24 @@ export const blankDraft = (): CampaignDraft => ({
   productId: null,
   brief: emptyBrief(),
   items: [],
+  journeyId: null,
+});
+
+export const toDraft = (campaign: CampaignView): CampaignDraft => ({
+  name: campaign.name,
+  type: campaign.type,
+  goal: campaign.goal,
+  owner: campaign.owner,
+  status: campaign.status,
+  channels: [...campaign.channels],
+  budgetAmount: campaign.budgetAmount,
+  budgetCurrency: campaign.budgetCurrency,
+  startDate: campaign.startDate,
+  endDate: campaign.endDate,
+  productId: campaign.productId,
+  brief: { ...campaign.brief },
+  items: campaign.items.map(item => ({ ...item, expIds: [...item.expIds] })),
+  journeyId: campaign.journeyId,
 });
 
 /**
@@ -225,3 +257,147 @@ export const subjectName = (
   item.kind === 'topic'
     ? (item.name ?? '').trim()
     : (productNames[item.productId ?? ''] ?? '').trim();
+
+/**
+ * What an experience copy is filed under. A product subject is identified by
+ * its SKU so two campaigns can fork the same master onto the same product and
+ * still get their own copy; a topic has only itself.
+ */
+export const subjectRef = (item: CampaignItem): string =>
+  item.kind === 'product' ? (item.productId ?? item.id) : item.id;
+
+/* ── mutators ───────────────────────────────────────────────────────────── */
+
+/*
+ * Every mutator takes the list and returns a NEW list — the prototype pushes
+ * into a global `DATA.campaigns`, which React state cannot do.
+ */
+
+export const findCampaign = (
+  list: CampaignView[],
+  id: string
+): CampaignView | null => list.find(c => c.id === id) ?? null;
+
+/**
+ * Ids come off the list rather than `Date.now()`: a timestamp minted during
+ * render drifts between the server pass and hydration.
+ */
+export const nextCampaignId = (list: CampaignView[]): string => {
+  const used = new Set(list.map(c => c.id));
+  let n = list.length + 1;
+  while (used.has(`m${n}`)) n += 1;
+  return `m${n}`;
+};
+
+export const createCampaign = (
+  list: CampaignView[],
+  id: string,
+  draft: CampaignDraft
+): CampaignView => ({
+  id,
+  name: draft.name.trim(),
+  status: draft.status,
+  type: draft.type,
+  goal: draft.goal,
+  owner: draft.owner.trim(),
+  channels: [...draft.channels],
+  budgetAmount: draft.budgetAmount,
+  budgetCurrency: draft.budgetCurrency,
+  startDate: draft.startDate,
+  endDate: draft.endDate,
+  productId: draft.productId,
+  brief: { ...draft.brief },
+  items: draft.items.map(item => ({ ...item, expIds: [...item.expIds] })),
+  journeyId: draft.journeyId,
+});
+
+/** Fold a draft back onto the campaign it came from, then let items promote it. */
+export const applyDraft = (
+  campaign: CampaignView,
+  draft: CampaignDraft
+): CampaignView =>
+  syncCampaignStage({
+    ...campaign,
+    name: draft.name.trim() || campaign.name,
+    status: draft.status,
+    type: draft.type,
+    goal: draft.goal,
+    owner: draft.owner.trim(),
+    channels: [...draft.channels],
+    budgetAmount: draft.budgetAmount,
+    budgetCurrency: draft.budgetCurrency,
+    startDate: draft.startDate,
+    endDate: draft.endDate,
+    productId: draft.productId,
+    brief: { ...draft.brief },
+    items: draft.items.map(syncItemStage),
+    journeyId: draft.journeyId,
+  });
+
+export const replaceCampaign = (
+  list: CampaignView[],
+  next: CampaignView
+): CampaignView[] => list.map(c => (c.id === next.id ? next : c));
+
+export const deleteCampaigns = (
+  list: CampaignView[],
+  ids: string[]
+): CampaignView[] => list.filter(c => !ids.includes(c.id));
+
+/**
+ * Clone a campaign back to the start line. The plan is worth copying; the work
+ * is not — the duplicate opens in Planning with every subject back at Not
+ * started, and its experience copies re-derived onto its own id so the two
+ * campaigns never share a page (prototype `cdup`, :20399).
+ */
+export const duplicateCampaign = (
+  list: CampaignView[],
+  id: string,
+  copySuffix: string
+): { list: CampaignView[]; campaign: CampaignView } | null => {
+  const source = findCampaign(list, id);
+  if (!source) return null;
+
+  const nextId = nextCampaignId(list);
+  const origin = journeyOriginOf(source);
+
+  const campaign: CampaignView = {
+    ...structuredClone(source),
+    id: nextId,
+    name: `${source.name} ${copySuffix}`,
+    status: 'draft',
+    journeyId: origin ? campaignJourneyId(origin, nextId) : null,
+    promoted: undefined,
+    items: source.items.map(item => ({
+      ...item,
+      status: 'todo',
+      expIds: item.expIds.map(expId => {
+        const expOrigin = experienceOriginOf(expId);
+        return expOrigin
+          ? experienceCopyId(expOrigin, nextId, subjectRef(item))
+          : expId;
+      }),
+    })),
+  };
+
+  return { list: [campaign, ...list], campaign };
+};
+
+/* ── deterministic fork ids ─────────────────────────────────────────────── */
+
+/** `j-{origin}-{campaignId}` — the same shape `forkJourney` mints. */
+export const campaignJourneyId = (origin: string, campaignId: string): string =>
+  `j-${origin}-${campaignId}`;
+
+/** The blueprint behind a campaign's journey, read back out of the fork id. */
+export const journeyOriginOf = (campaign: CampaignView): string | null => {
+  if (!campaign.journeyId) return null;
+  const parts = campaign.journeyId.split('-');
+  return parts.length >= 3 ? parts[1] : null;
+};
+
+/** The master behind a copy, read back out of `x-{origin}-{campaign}-{subject}`. */
+export const experienceOriginOf = (expId: string): string | null => {
+  const parts = expId.split('-');
+  return parts[0] === 'x' && parts.length >= 4 ? parts[1] : null;
+};

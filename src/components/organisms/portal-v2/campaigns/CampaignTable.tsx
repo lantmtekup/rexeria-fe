@@ -1,9 +1,10 @@
 'use client';
 
-import { Pencil, Trash2 } from 'lucide-react';
+import { Copy, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import {
+  HealthBadge,
   ProgressBar,
   StagePill,
   TypeSwatch,
@@ -18,15 +19,24 @@ import {
   fmtBudget,
   fmtRange,
 } from '@/lib/portal-v2/campaigns/helpers';
-import type { CampaignView } from '@/lib/portal-v2/campaigns/types';
+import type {
+  CampaignExperience,
+  CampaignView,
+} from '@/lib/portal-v2/campaigns/types';
+import { campHealth } from '@/lib/portal-v2/campaigns/verdict';
+
+import type { Journey } from '@/lib/portal-v2/journeys/types';
 
 type CampaignTableProps = {
   campaigns: CampaignView[];
+  experiences: CampaignExperience[];
+  journeys: Journey[];
+  today: string;
   selected: string[];
   onToggleSelect: (id: string) => void;
   onToggleAll: () => void;
   onOpen: (id: string) => void;
-  onEdit: (id: string) => void;
+  onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
 };
 
@@ -44,11 +54,14 @@ const actionButton = cn(
 
 export const CampaignTable = ({
   campaigns,
+  experiences,
+  journeys,
+  today,
   selected,
   onToggleSelect,
   onToggleAll,
   onOpen,
-  onEdit,
+  onDuplicate,
   onDelete,
 }: CampaignTableProps) => {
   const t = useTranslations('portalV2.campaigns');
@@ -75,6 +88,7 @@ export const CampaignTable = ({
             <th className={headClass}>{t('colProgress')}</th>
             <th className={headClass}>{t('colBudget')}</th>
             <th className={headClass}>{t('colStage')}</th>
+            <th className={headClass}>{t('colHealth')}</th>
             <th className={cn(headClass, 'w-[80px]')}>
               <span className='sr-only'>{t('colActions')}</span>
             </th>
@@ -183,6 +197,12 @@ export const CampaignTable = ({
                 </td>
 
                 <td className={cellClass}>
+                  <HealthBadge
+                    health={campHealth(campaign, experiences, today, journeys)}
+                  />
+                </td>
+
+                <td className={cellClass}>
                   <span
                     className={cn(
                       'flex items-center gap-0.5 transition-opacity',
@@ -194,18 +214,16 @@ export const CampaignTable = ({
                     <button
                       type='button'
                       className={actionButton}
-                      title={t('rowEdit')}
-                      aria-label={t('rowEditAria', { name: campaign.name })}
+                      title={t('rowDuplicate')}
+                      aria-label={t('rowDuplicateAria', {
+                        name: campaign.name,
+                      })}
                       onClick={e => {
                         e.stopPropagation();
-                        onEdit(campaign.id);
+                        onDuplicate(campaign.id);
                       }}
                     >
-                      <Pencil
-                        className='size-3.5'
-                        strokeWidth={2}
-                        aria-hidden
-                      />
+                      <Copy className='size-3.5' strokeWidth={2} aria-hidden />
                     </button>
                     <button
                       type='button'

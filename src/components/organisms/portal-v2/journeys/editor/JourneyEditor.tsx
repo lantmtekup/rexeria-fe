@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
+import { ExchangePreviewShell } from '@/components/organisms/portal-v2/exchange/ExchangePreviewShell';
 import {
   EditorCanvas,
   ZOOM_STEP,
@@ -50,6 +51,7 @@ import {
   updateMeta,
   updateNode,
 } from '@/lib/portal-v2/journeys/editor';
+import type { PreviewItem } from '@/lib/portal-v2/preview/types';
 import type { JourneyEdgeRef } from '@/lib/portal-v2/journeys/routing';
 import { floorNumbers, stagesOf } from '@/lib/portal-v2/journeys/stages';
 import {
@@ -61,11 +63,18 @@ import type {
   Journey,
   JourneyEditorSelection,
   JourneyExperienceLink,
+  JourneyNode,
   JourneyNodeKind,
   JourneyNodePatch,
   JourneyStage,
 } from '@/lib/portal-v2/journeys/types';
 import type { ExperienceObjective } from '@/lib/portal-v2/experiences/types';
+import { fetchExperienceLibrary } from '@/services/portal-v2/experienceLibrary';
+import type {
+  CampaignSubjectLens,
+  LensNodeOverlay,
+  StageFit,
+} from '@/lib/portal-v2/campaigns/subjectLane';
 
 /**
  * The Journey editor — full screen, one journey, one draft.
@@ -86,8 +95,26 @@ type JourneyEditorProps = {
    */
   journeys: Journey[];
   onCancel: () => void;
+  /** Quiet write-back (autosave / discard restore). No alert, no close. */
+  onPersist: (next: Journey) => void;
+  /** Explicit save: persist + alert JSON (no API yet) + close. */
   onSave: (next: Journey) => void;
+  /** Product lens — the route read for one campaign subject (demo `S.jed.lens`). */
+  lens?: CampaignSubjectLens;
+  /** Pre-select a node when the lens opens (from a jcell dot). */
+  initialNodeId?: string | null;
+  returnLabel?: string;
+  onLensNodeActivate?: (nodeId: string) => void;
+  /**
+   * Leave subject-lens view-only and edit the shared route (demo `jedlens:edit`).
+   * Structural changes affect every subject on the campaign.
+   */
+  onEditJourney?: () => void;
 };
+
+const AUTOSAVE_MS = 1500;
+
+type AutosaveStatus = 'idle' | 'dirty' | 'saving' | 'saved';
 
 const isTypingTarget = (target: EventTarget | null): boolean => {
   if (!(target instanceof HTMLElement)) return false;
@@ -97,18 +124,37 @@ const isTypingTarget = (target: EventTarget | null): boolean => {
   );
 };
 
+const toolBtnClass = cn(
+  'grid size-7 cursor-pointer place-items-center rounded-full',
+  'text-[var(--pv2-mut)] transition-colors',
+  'hover:bg-[var(--pv2-paper)] hover:text-[var(--pv2-ink)]',
+  'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none',
+  'disabled:pointer-events-none disabled:opacity-35'
+);
+
 export const JourneyEditor = ({
   journey,
   journeys,
   onCancel,
+  onPersist,
   onSave,
+  lens,
+  initialNodeId = null,
+  returnLabel,
+  onLensNodeActivate,
+  onEditJourney,
 }: JourneyEditorProps) => {
   const t = useTranslations('portalV2.journeys');
+  const tCamp = useTranslations('portalV2.campaigns');
+  /** Demo `ro = !!S.jed.lens` — structure is view-only under a subject lens. */
+  const lensReadOnly = Boolean(lens);
   const {
     draft,
     apply,
     applyLive,
     commit,
+    markAutosaved,
+    opened,
     undo,
     redo,
     canUndo,
@@ -116,7 +162,9 @@ export const JourneyEditor = ({
     isDirty,
   } = useJourneyDraft(journey);
 
-  const [selection, setSelection] = useState<JourneyEditorSelection>(null);
+  const [selection, setSelection] = useState<JourneyEditorSelection>(() =>
+    initialNodeId ? { kind: 'node', id: initialNodeId } : null
+  );
   const [view, setView] = useState<ViewTransform>({
     zoom: 1,
     panX: 0,
@@ -125,9 +173,32 @@ export const JourneyEditor = ({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
   const [framesOpen, setFramesOpen] = useState(false);
+  const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>('idle');
+
+  /* ── the shopper view ──────────────────────────────────────────────────
+     An experience node names a page; it never showed one. The same shell the
+     Experiences workspace opens now opens over the editor, so what a stage
+     actually looks like is one click from the card that plans it. */
+  const [previewNodeId, setPreviewNodeId] = useState<string | null>(null);
+  /**
+   * Slugs the library answered for links that carry none of their own — a page
+   * that had no public slug when it was picked and has one now. Keyed by
+   * experience id and kept for the session: one round-trip per page at most.
+   */
+  const [foundSlugs, setFoundSlugs] = useState<Record<string, string>>({});
+  const [slugPending, setSlugPending] = useState(false);
 
   const selectedNodeId = selection?.kind === 'node' ? selection.id : null;
   const selectedNode = selectedNodeId ? nodeById(draft, selectedNodeId) : null;
+
+  /** What `/p/{slug}` this node points at, or nothing — the one place that decides. */
+  const slugOf = useCallback(
+    (node: JourneyNode | null): string | null => {
+      if (!node || node.kind !== 'experience') return null;
+      return node.xSlug ?? (node.x ? (foundSlugs[node.x] ?? null) : null);
+    },
+    [foundSlugs]
+  );
 
   /* The editor owns the viewport while it is open. */
   useEffect(() => {
@@ -147,20 +218,54 @@ export const JourneyEditor = ({
     onCancel();
   }, [isDirty, onCancel]);
 
+  const handleDiscardLeave = useCallback(() => {
+    onPersist(opened);
+    setDiscardOpen(false);
+    onCancel();
+  }, [onPersist, opened, onCancel]);
+
   const handleSave = useCallback(() => {
     onSave({ ...draft, updated: 'just now' });
   }, [draft, onSave]);
+
+  /* Debounced quiet write-back. Manual Save still alerts JSON + closes. */
+  useEffect(() => {
+    if (!isDirty) return;
+
+    setAutosaveStatus('dirty');
+    const timer = window.setTimeout(() => {
+      setAutosaveStatus('saving');
+      const next = { ...draft, updated: 'just now' };
+      onPersist(next);
+      markAutosaved(next);
+      setAutosaveStatus('saved');
+    }, AUTOSAVE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [draft, isDirty, onPersist, markAutosaved]);
 
   /* ── shortcuts ─────────────────────────────────────────────────────────
      Skipped while a field has focus (Delete belongs to the text there, Cmd+Z to
      the input's own undo) and while a dialog owns the screen. */
   useEffect(() => {
-    if (pickerOpen || discardOpen || framesOpen) return;
+    if (pickerOpen || discardOpen || framesOpen || previewNodeId) return;
 
     const handleKey = (e: KeyboardEvent) => {
       if (isTypingTarget(e.target)) return;
 
       const meta = e.metaKey || e.ctrlKey;
+
+      if (e.key === 'Escape') {
+        if (selection) {
+          setSelection(null);
+          return;
+        }
+        handleClose();
+        return;
+      }
+
+      /* Subject lens: select and leave only — no structural shortcuts. */
+      if (lensReadOnly) return;
 
       if (meta && e.key.toLowerCase() === 'z') {
         e.preventDefault();
@@ -172,15 +277,6 @@ export const JourneyEditor = ({
       if (meta && e.key.toLowerCase() === 's') {
         e.preventDefault();
         handleSave();
-        return;
-      }
-
-      if (e.key === 'Escape') {
-        if (selection) {
-          setSelection(null);
-          return;
-        }
-        handleClose();
         return;
       }
 
@@ -217,6 +313,7 @@ export const JourneyEditor = ({
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      if (lensReadOnly) return;
       if (!e.key.startsWith('Arrow')) return;
       /* The nudge lands in a slot, exactly like a drag does — which makes the
          arrow keys a way to reorder a column and to move a card to the next
@@ -240,7 +337,9 @@ export const JourneyEditor = ({
     framesOpen,
     handleClose,
     handleSave,
+    lensReadOnly,
     pickerOpen,
+    previewNodeId,
     redo,
     selection,
     undo,
@@ -399,6 +498,83 @@ export const JourneyEditor = ({
     apply(unlinkExperience(draft, selectedNodeId));
   }, [apply, draft, selectedNodeId]);
 
+  const handlePickExperience = useCallback((nodeId: string) => {
+    setSelection({ kind: 'node', id: nodeId });
+    setPickerOpen(true);
+  }, []);
+
+  /* ── preview verbs ─────────────────────────────────────────────────────
+     The shell opens on a slug. A link made through the picker carries one, so
+     the common path is synchronous; an older link asks the library once, and
+     says so plainly when the page it names is no longer published. */
+  const handlePreviewNode = useCallback(
+    (nodeId: string) => {
+      const node = nodeById(draft, nodeId);
+      if (!node || node.kind !== 'experience' || !node.x) return;
+
+      if (slugOf(node)) {
+        setPreviewNodeId(nodeId);
+        return;
+      }
+
+      const experienceId = node.x;
+      setSlugPending(true);
+      void fetchExperienceLibrary()
+        .then(({ items }) => {
+          const match = items.find(item => item.id === experienceId);
+          if (!match?.slug || match.externalUrl) {
+            toast.error(t('previewExperienceUnavailable'));
+            return;
+          }
+          setFoundSlugs(prev => ({ ...prev, [experienceId]: match.slug! }));
+          setPreviewNodeId(nodeId);
+        })
+        .finally(() => setSlugPending(false));
+    },
+    [draft, slugOf, t]
+  );
+
+  const previewNode = previewNodeId ? nodeById(draft, previewNodeId) : null;
+
+  /** A node reads as a `PreviewItem` by its id, so stepping lands back on a card. */
+  const toPreviewItem = useCallback(
+    (node: JourneyNode): PreviewItem | null => {
+      const slug = slugOf(node);
+      if (!slug) return null;
+      return {
+        id: node.id,
+        name: node.xName ?? node.name,
+        source: 'page',
+        slug,
+        kindLabel: t('previewExperienceKind'),
+        evidence: node.stats
+          ? { sessions: node.stats.sessions, lift: node.stats.lift }
+          : null,
+      };
+    },
+    [slugOf, t]
+  );
+
+  /* Prev / Next walks this journey's own experiences — the stages either side of
+     the one on screen, not an unrelated library page. */
+  const previewNeighbors = useMemo(
+    () => draft.nodes.flatMap(node => toPreviewItem(node) ?? []),
+    [draft.nodes, toPreviewItem]
+  );
+
+  const previewItem = previewNode ? toPreviewItem(previewNode) : null;
+
+  /* If the node behind the open preview stops being previewable — unlinked,
+     retyped, deleted — the shell goes with it, rather than leaving the editor
+     holding a closed preview and the shortcuts it suppresses. */
+  useEffect(() => {
+    if (previewNodeId && !previewItem) setPreviewNodeId(null);
+  }, [previewNodeId, previewItem]);
+
+  const handlePreviewNavigate = useCallback((item: PreviewItem) => {
+    setPreviewNodeId(item.id);
+  }, []);
+
   const handleMetaPatch = useCallback(
     (patch: { tagline?: string; summary?: string }) => {
       applyLive(updateMeta(draft, patch));
@@ -436,49 +612,117 @@ export const JourneyEditor = ({
     [draft, journeys]
   );
 
+  const lensFitByNodeId = useMemo(() => {
+    if (!lens) return null;
+    const map: Record<string, StageFit | null> = {};
+    for (const node of draft.nodes) {
+      const overlay = lens.overlaysByNodeId[node.id];
+      map[node.id] = overlay?.state === 'experience' ? overlay.fit : null;
+    }
+    return map;
+  }, [draft.nodes, lens]);
+
+  const lensOverlayByNodeId = useMemo(() => {
+    if (!lens) return null;
+    const map: Record<string, LensNodeOverlay> = {};
+    for (const node of draft.nodes) {
+      const overlay = lens.overlaysByNodeId[node.id];
+      map[node.id] = overlay ?? {
+        state: 'context',
+        fit: null,
+        ok: false,
+        labelKey: null,
+      };
+    }
+    return map;
+  }, [draft.nodes, lens]);
+
+  const handleSelect = useCallback((next: JourneyEditorSelection) => {
+    setSelection(next);
+  }, []);
+
+  const handleLensStageAction = useCallback(() => {
+    if (!selectedNodeId || !onLensNodeActivate) return;
+    onLensNodeActivate(selectedNodeId);
+  }, [onLensNodeActivate, selectedNodeId]);
+
+  const selectedLensFit =
+    lens && selectedNodeId && lensFitByNodeId
+      ? (lensFitByNodeId[selectedNodeId] ?? null)
+      : null;
+
   return (
     <div className='fixed inset-0 z-[calc(var(--pv2-z-top)+20)] flex flex-col bg-[var(--pv2-canvas)]'>
-      {/* ── top bar ─────────────────────────────────────────────────── */}
-      <header className='flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-3 py-2.5'>
-        <button
-          type='button'
-          aria-label={t('cancel')}
-          title={t('cancel')}
-          onClick={handleClose}
-          className='grid size-8 shrink-0 cursor-pointer place-items-center rounded-[var(--pv2-r)] text-[var(--pv2-mut)] hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)] focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
-        >
-          <X className='size-4' strokeWidth={2} aria-hidden />
-        </button>
+      {/* ── top bar: identity · tools · commit ──────────────────────── */}
+      <header className='flex h-14 shrink-0 items-center gap-4 border-b border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-4'>
+        {/* Identity */}
+        <div className='flex min-w-0 flex-1 items-center gap-2.5'>
+          <button
+            type='button'
+            aria-label={t('cancel')}
+            title={t('cancel')}
+            onClick={handleClose}
+            className='grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-[var(--pv2-mut)] transition-colors hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)] focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
+          >
+            <X className='size-4' strokeWidth={2} aria-hidden />
+          </button>
 
-        <div className='min-w-0 flex-1'>
-          <input
-            value={draft.name}
-            onChange={e =>
-              applyLive(updateMeta(draft, { name: e.target.value }))
-            }
-            onBlur={commit}
-            aria-label={t('overName')}
-            className={cn(
-              'w-full max-w-[420px] min-w-0 truncate rounded-[8px] border border-transparent bg-transparent px-1.5 py-0.5',
-              'font-[family-name:var(--pv2-disp)] text-[15px] font-bold tracking-[-0.02em] text-[var(--pv2-ink)]',
-              'hover:border-[var(--pv2-hair)] focus:border-[var(--pv2-electric)] focus:outline-none'
+          <div className='h-6 w-px shrink-0 bg-[var(--pv2-hair)]' aria-hidden />
+
+          <div className='min-w-0'>
+            {lensReadOnly ? (
+              <p
+                className={cn(
+                  'w-full max-w-[320px] min-w-0 truncate px-1 py-0',
+                  'font-[family-name:var(--pv2-disp)] text-[14px] leading-tight font-bold tracking-[-0.02em] text-[var(--pv2-ink)]'
+                )}
+              >
+                {draft.name}
+              </p>
+            ) : (
+              <input
+                value={draft.name}
+                onChange={e =>
+                  applyLive(updateMeta(draft, { name: e.target.value }))
+                }
+                onBlur={commit}
+                aria-label={t('overName')}
+                className={cn(
+                  'w-full max-w-[320px] min-w-0 truncate rounded-[6px] border border-transparent bg-transparent px-1 py-0',
+                  'font-[family-name:var(--pv2-disp)] text-[14px] leading-tight font-bold tracking-[-0.02em] text-[var(--pv2-ink)]',
+                  'hover:bg-[var(--pv2-canvas)] focus:border-[var(--pv2-electric)] focus:bg-[var(--pv2-paper)] focus:outline-none'
+                )}
+              />
             )}
-          />
-          <p className='truncate px-1.5 text-[11px] text-[var(--pv2-faint)]'>
-            {draft.template
-              ? t('subBlueprint')
-              : t('subCopy', { home: journeyHome(draft) })}
-          </p>
+            <p className='truncate px-1 text-[10.5px] leading-tight text-[var(--pv2-faint)]'>
+              {lens
+                ? tCamp('journeyLensPill', { name: lens.subjectName })
+                : draft.template
+                  ? t('subBlueprint')
+                  : t('subCopy', { home: journeyHome(draft) })}
+            </p>
+          </div>
+
+          {lens ? (
+            <span className='hidden shrink-0 rounded-full bg-[var(--pv2-electric-soft)] px-2.5 py-1 text-[10.5px] font-semibold text-[var(--pv2-electric)] sm:inline'>
+              {tCamp('journeyLensMode')}
+            </span>
+          ) : null}
         </div>
 
-        <div className='flex shrink-0 items-center gap-0.5 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-0.5 py-0.5'>
+        {/* Tools: history · zoom · align */}
+        <div
+          role='toolbar'
+          aria-label={t('editCanvas')}
+          className='flex h-9 shrink-0 items-center gap-0.5 rounded-full border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)]/60 px-1'
+        >
           <button
             type='button'
             aria-label={t('editorUndo')}
             title={t('editorUndo')}
-            disabled={!canUndo}
+            disabled={lensReadOnly || !canUndo}
             onClick={undo}
-            className='grid size-7 cursor-pointer place-items-center rounded-[6px] text-[var(--pv2-mut)] hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)] focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40'
+            className={toolBtnClass}
           >
             <Undo2 className='size-3.5' strokeWidth={2.2} aria-hidden />
           </button>
@@ -486,21 +730,21 @@ export const JourneyEditor = ({
             type='button'
             aria-label={t('editorRedo')}
             title={t('editorRedo')}
-            disabled={!canRedo}
+            disabled={lensReadOnly || !canRedo}
             onClick={redo}
-            className='grid size-7 cursor-pointer place-items-center rounded-[6px] text-[var(--pv2-mut)] hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)] focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40'
+            className={toolBtnClass}
           >
             <Redo2 className='size-3.5' strokeWidth={2.2} aria-hidden />
           </button>
-        </div>
 
-        <div className='flex shrink-0 items-center gap-0.5 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-0.5 py-0.5'>
+          <span className='mx-0.5 h-4 w-px bg-[var(--pv2-hair)]' aria-hidden />
+
           <button
             type='button'
             aria-label={t('editorZoomOut')}
             title={t('editorZoomOut')}
             onClick={() => setZoom(view.zoom - ZOOM_STEP)}
-            className='grid size-7 cursor-pointer place-items-center rounded-[6px] text-[var(--pv2-mut)] hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)] focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
+            className={toolBtnClass}
           >
             <Minus className='size-3.5' strokeWidth={2.4} aria-hidden />
           </button>
@@ -508,7 +752,7 @@ export const JourneyEditor = ({
             type='button'
             onClick={resetView}
             title={t('editorZoomReset')}
-            className='min-w-[42px] cursor-pointer rounded-[6px] px-1 text-[11px] font-semibold text-[var(--pv2-mut)] tabular-nums hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)] focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
+            className='min-w-[40px] cursor-pointer rounded-full px-1.5 py-1 text-[11px] font-semibold text-[var(--pv2-mut)] tabular-nums transition-colors hover:bg-[var(--pv2-paper)] hover:text-[var(--pv2-ink)] focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
           >
             {Math.round(view.zoom * 100)}%
           </button>
@@ -517,61 +761,106 @@ export const JourneyEditor = ({
             aria-label={t('editorZoomIn')}
             title={t('editorZoomIn')}
             onClick={() => setZoom(view.zoom + ZOOM_STEP)}
-            className='grid size-7 cursor-pointer place-items-center rounded-[6px] text-[var(--pv2-mut)] hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)] focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
+            className={toolBtnClass}
           >
             <Plus className='size-3.5' strokeWidth={2.4} aria-hidden />
           </button>
+
+          <span className='mx-0.5 h-4 w-px bg-[var(--pv2-hair)]' aria-hidden />
+
+          <button
+            type='button'
+            aria-label={t('editorAlign')}
+            title={t('editorAlignHint')}
+            disabled={lensReadOnly}
+            onClick={() => {
+              const aligned = tidyLayout(draft);
+              apply(aligned);
+              const bounds = floorBounds(aligned);
+              setView({ zoom: 1, panX: -bounds.minX, panY: -bounds.minY });
+            }}
+            className={toolBtnClass}
+          >
+            <LayoutGrid className='size-3.5' strokeWidth={2.2} aria-hidden />
+          </button>
         </div>
 
-        <Button
-          variant='ghost'
-          size='sm'
-          onClick={() => setFramesOpen(true)}
-          title={t('frameworkSubtitle')}
-        >
-          <Columns3 className='size-3.5' strokeWidth={2.2} aria-hidden />
-          {t('frameworkOpen')}
-        </Button>
-
-        <Button
-          variant='ghost'
-          size='sm'
-          onClick={() => {
-            const tidy = tidyLayout(draft);
-            apply(tidy);
-            const bounds = floorBounds(tidy);
-            setView({ zoom: 1, panX: -bounds.minX, panY: -bounds.minY });
-          }}
-          title={t('editorTidyHint')}
-        >
-          <LayoutGrid className='size-3.5' strokeWidth={2.2} aria-hidden />
-          {t('editorTidy')}
-        </Button>
-
-        <span
-          className='shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums'
-          title={t('tabReady')}
-          style={{
-            background:
-              readiness.score >= 80
-                ? 'color-mix(in srgb, var(--pv2-success) 14%, transparent)'
-                : readiness.score >= 50
-                  ? 'color-mix(in srgb, var(--pv2-warning) 18%, transparent)'
-                  : 'color-mix(in srgb, var(--pv2-error) 12%, transparent)',
-            color:
-              readiness.score >= 80
-                ? '#0e9d6e'
-                : readiness.score >= 50
-                  ? '#b45309'
-                  : '#9a2436',
-          }}
-        >
-          {t('readyScore', { score: readiness.score })}
-        </span>
-
-        <Button size='sm' disabled={!isDirty} onClick={handleSave}>
-          {t('editorSave')}
-        </Button>
+        {/* Commit */}
+        <div className='flex shrink-0 items-center gap-2'>
+          {lensReadOnly && onEditJourney ? (
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={onEditJourney}
+              title={tCamp('journeyLensEdit')}
+              className='h-8 rounded-full border-transparent px-2.5'
+            >
+              {tCamp('journeyLensEdit')}
+            </Button>
+          ) : null}
+          {!lensReadOnly ? (
+            <>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => setFramesOpen(true)}
+                title={t('frameworkSubtitle')}
+                className='h-8 rounded-full border-transparent px-2.5 text-[var(--pv2-mut)] hover:border-[var(--pv2-hair)] hover:text-[var(--pv2-ink)]'
+              >
+                <Columns3 className='size-3.5' strokeWidth={2.2} aria-hidden />
+                {t('frameworkOpen')}
+              </Button>
+              <span
+                className='rounded-full px-2.5 py-1 text-[11px] font-bold tabular-nums'
+                title={t('tabReady')}
+                style={{
+                  background:
+                    readiness.score >= 80
+                      ? 'color-mix(in srgb, var(--pv2-success) 14%, transparent)'
+                      : readiness.score >= 50
+                        ? 'color-mix(in srgb, var(--pv2-warning) 18%, transparent)'
+                        : 'color-mix(in srgb, var(--pv2-error) 12%, transparent)',
+                  color:
+                    readiness.score >= 80
+                      ? '#0e9d6e'
+                      : readiness.score >= 50
+                        ? '#b45309'
+                        : '#9a2436',
+                }}
+              >
+                {t('readyScore', { score: readiness.score })}
+              </span>
+              {autosaveStatus !== 'idle' ? (
+                <span
+                  className={cn(
+                    'min-w-[4.5rem] text-right text-[11px] tabular-nums',
+                    autosaveStatus === 'saved'
+                      ? 'text-[var(--pv2-faint)]'
+                      : 'text-[var(--pv2-mut)]'
+                  )}
+                  aria-live='polite'
+                >
+                  {autosaveStatus === 'dirty'
+                    ? t('editorAutosavePending')
+                    : autosaveStatus === 'saving'
+                      ? t('editorAutosaveSaving')
+                      : t('editorAutosaveSaved')}
+                </span>
+              ) : null}
+              <Button
+                size='sm'
+                disabled={autosaveStatus === 'idle' && !isDirty}
+                onClick={handleSave}
+              >
+                {t('editorSave')}
+              </Button>
+            </>
+          ) : (
+            <Button size='sm' onClick={handleClose}>
+              {returnLabel ?? t('cancel')}
+            </Button>
+          )}
+        </div>
       </header>
 
       {/* ── body ────────────────────────────────────────────────────── */}
@@ -583,7 +872,10 @@ export const JourneyEditor = ({
             selection={selection}
             view={view}
             onViewChange={setView}
-            onSelect={setSelection}
+            onSelect={handleSelect}
+            lensFitByNodeId={lensFitByNodeId}
+            lensOverlayByNodeId={lensOverlayByNodeId}
+            readOnly={lensReadOnly}
             onNodeDrag={handleNodeDrag}
             onNodeDrop={handleNodeDrop}
             onConnect={handleConnect}
@@ -593,8 +885,11 @@ export const JourneyEditor = ({
             onRenameNode={handleRenameNode}
             onDuplicateNode={handleDuplicate}
             onDeleteNode={handleDelete}
+            onPreviewNode={handlePreviewNode}
+            onPickExperience={handlePickExperience}
             onRenameStage={handleRenameStage}
             onRemoveStage={handleRemoveStage}
+            onAddStage={handleAddStage}
           />
         </div>
 
@@ -608,16 +903,25 @@ export const JourneyEditor = ({
             onSourceChange={handleSourceChange}
             onPickExperience={() => setPickerOpen(true)}
             onUnlinkExperience={handleUnlink}
+            onPreviewExperience={() =>
+              selectedNodeId && handlePreviewNode(selectedNodeId)
+            }
+            previewPending={slugPending}
             onDuplicateNode={() =>
               selectedNodeId && handleDuplicate(selectedNodeId)
             }
             onDeleteNode={() => selectedNodeId && handleDelete(selectedNodeId)}
             onMetaPatch={handleMetaPatch}
             onMetaSelect={handleMetaSelect}
+            lensFit={selectedLensFit}
+            onLensStageAction={
+              lens && onLensNodeActivate ? handleLensStageAction : undefined
+            }
+            lensReadOnly={lensReadOnly}
           />
           <EditorChecks
             draft={draft}
-            onSelectNode={id => setSelection({ kind: 'node', id })}
+            onSelectNode={id => handleSelect({ kind: 'node', id })}
           />
         </aside>
       </div>
@@ -633,6 +937,16 @@ export const JourneyEditor = ({
           onRemove={handleRemoveStage}
         />
       ) : null}
+
+      {/* Over the editor, not instead of it: closing puts the planner back on
+          the same card, with the draft untouched. */}
+      <ExchangePreviewShell
+        open={previewItem !== null}
+        listing={previewItem}
+        neighbors={previewNeighbors}
+        onClose={() => setPreviewNodeId(null)}
+        onNavigate={handlePreviewNavigate}
+      />
 
       {pickerOpen && selectedNode ? (
         <ExperiencePickerModal
@@ -658,7 +972,7 @@ export const JourneyEditor = ({
               >
                 {t('editorDiscardKeep')}
               </Button>
-              <Button variant='danger' size='sm' onClick={onCancel}>
+              <Button variant='danger' size='sm' onClick={handleDiscardLeave}>
                 {t('editorDiscardLeave')}
               </Button>
             </>

@@ -78,6 +78,8 @@ type FloorGesturesInput = {
   onRerouteEdge: (prev: JourneyEdgeRef, next: JourneyEdgeRef) => void;
   /** Closes the kind menu — any gesture on the floor dismisses it. */
   onDismiss: () => void;
+  /** Subject lens — select and pan only; no drag / link / reroute. */
+  readOnly?: boolean;
 };
 
 export type FloorGestures = {
@@ -119,6 +121,7 @@ export const useFloorGestures = ({
   onCutEdge,
   onRerouteEdge,
   onDismiss,
+  readOnly = false,
 }: FloorGesturesInput): FloorGestures => {
   const [drag, setDrag] = useState<DragState | null>(null);
   const [link, setLink] = useState<LinkState | null>(null);
@@ -308,12 +311,14 @@ export const useFloorGestures = ({
 
       /* A pulled link lands here when the pointer is released over a card, and
          an armed one lands here on the completing click. */
-      if (link) {
+      if (!readOnly && link) {
         completeLink(link, node.id);
         return;
       }
 
       onSelect({ kind: 'node', id: node.id });
+      if (readOnly) return;
+
       const point = toFloor(e.clientX, e.clientY);
       setDrag({
         nodeId: node.id,
@@ -322,20 +327,20 @@ export const useFloorGestures = ({
         moved: false,
       });
     },
-    [completeLink, link, onDismiss, onSelect, toFloor]
+    [completeLink, link, onDismiss, onSelect, readOnly, toFloor]
   );
 
   const onCardActivate = useCallback(
     (node: JourneyNode) => {
-      if (link) completeLink(link, node.id);
+      if (!readOnly && link) completeLink(link, node.id);
       else onSelect({ kind: 'node', id: node.id });
     },
-    [completeLink, link, onSelect]
+    [completeLink, link, onSelect, readOnly]
   );
 
   const onPortDown = useCallback(
     (mode: 'in' | 'out', node: JourneyNode, e: React.PointerEvent) => {
-      if (e.button !== 0) return;
+      if (readOnly || e.button !== 0) return;
       e.stopPropagation();
       const point = toFloor(e.clientX, e.clientY);
       setLink({
@@ -349,26 +354,30 @@ export const useFloorGestures = ({
       setLinkTarget(null);
       onSelect({ kind: 'node', id: node.id });
     },
-    [onSelect, toFloor]
+    [onSelect, readOnly, toFloor]
   );
 
   /** The keyboard and touch path: arm the link, then click the other card. */
-  const onPortArm = useCallback((mode: 'in' | 'out', node: JourneyNode) => {
-    setLink({
-      mode,
-      anchorId: node.id,
-      replacing: null,
-      x: (node.px ?? 0) + (mode === 'out' ? NODE_W + 40 : -40),
-      y: (node.py ?? 0) + NODE_H / 2,
-      moved: false,
-    });
-    setLinkTarget(null);
-  }, []);
+  const onPortArm = useCallback(
+    (mode: 'in' | 'out', node: JourneyNode) => {
+      if (readOnly) return;
+      setLink({
+        mode,
+        anchorId: node.id,
+        replacing: null,
+        x: (node.px ?? 0) + (mode === 'out' ? NODE_W + 40 : -40),
+        y: (node.py ?? 0) + NODE_H / 2,
+        moved: false,
+      });
+      setLinkTarget(null);
+    },
+    [readOnly]
+  );
 
   /** Pick up one end of a route that already exists. */
   const onGrabEnd = useCallback(
     (edge: RoutedEdge, end: 'head' | 'tail', e: React.PointerEvent) => {
-      if (e.button !== 0) return;
+      if (readOnly || e.button !== 0) return;
       e.stopPropagation();
       const point = toFloor(e.clientX, e.clientY);
       setLink({
@@ -382,7 +391,7 @@ export const useFloorGestures = ({
       });
       setLinkTarget(null);
     },
-    [toFloor]
+    [readOnly, toFloor]
   );
 
   const onBackgroundPointerDown = useCallback(

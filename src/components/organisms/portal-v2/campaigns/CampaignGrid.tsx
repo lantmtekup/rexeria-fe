@@ -1,15 +1,23 @@
 'use client';
 
 import { CampaignCard } from '@/components/organisms/portal-v2/campaigns/CampaignCard';
-import type { CampaignView } from '@/lib/portal-v2/campaigns/types';
+import type {
+  CampaignExperience,
+  CampaignView,
+} from '@/lib/portal-v2/campaigns/types';
+
+import type { Journey } from '@/lib/portal-v2/journeys/types';
 
 type CampaignGridProps = {
   campaigns: CampaignView[];
   productNames: Record<string, string>;
+  experiences: CampaignExperience[];
+  journeys: Journey[];
+  today: string;
   selected: string[];
   onToggleSelect: (id: string) => void;
   onOpen: (id: string) => void;
-  onEdit: (id: string) => void;
+  onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
 };
 
@@ -17,10 +25,13 @@ type CampaignGridProps = {
 export const CampaignGrid = ({
   campaigns,
   productNames,
+  experiences,
+  journeys,
+  today,
   selected,
   onToggleSelect,
   onOpen,
-  onEdit,
+  onDuplicate,
   onDelete,
 }: CampaignGridProps) => (
   <div className='grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-3.5'>
@@ -29,10 +40,13 @@ export const CampaignGrid = ({
         key={campaign.id}
         campaign={campaign}
         productNames={productNames}
+        experiences={experiences}
+        journeys={journeys}
+        today={today}
         selected={selected.includes(campaign.id)}
         onToggleSelect={onToggleSelect}
         onOpen={onOpen}
-        onEdit={onEdit}
+        onDuplicate={onDuplicate}
         onDelete={onDelete}
       />
     ))}

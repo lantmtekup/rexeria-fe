@@ -28,11 +28,13 @@
   display: none;
 }
 
-/* ── Phone frame (mobile-first) ─────────────────────────────────── */
+/* ── Phone frame (mobile-first) ───────────────────────────────────
+   Giữ tỷ lệ 360/744; thu max-width theo breakpoint để gallery không
+   chiếm gần full chiều cao viewport trên desktop 3 cột. */
 .adsc-phone {
   position: relative;
   width: 100%;
-  max-width: 360px;
+  max-width: 360px; /* mobile 1 cột — dễ tap */
   margin: 0 auto;
   aspect-ratio: 360 / 744;
   border-radius: 38px;
@@ -41,6 +43,16 @@
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.4),
     0 22px 50px -18px rgba(10, 28, 56, 0.55);
+}
+@media (min-width: 640px) {
+  .adsc-phone {
+    max-width: 300px; /* tablet 2 cột */
+  }
+}
+@media (min-width: 1024px) {
+  .adsc-phone {
+    max-width: 280px; /* desktop 3 cột */
+  }
 }
 .adsc-screen {
   position: relative;
@@ -70,12 +82,34 @@
   height: 100%;
 }
 
-/* Lớp bắt click trong GALLERY: tap mở trang chi tiết, ad bên dưới chỉ để
-   xem (auto-animation vẫn chạy) — tương tác đầy đủ ở trang chi tiết. */
+/* Gallery locked: chặn tương tác ad; chỉ tap-catcher + CTA Explore Now
+   nhận click → mở trang chi tiết. */
+.adsc-screen--locked,
+.adsc-screen--locked *:not(.adsc-tap) {
+  pointer-events: none !important;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+/* Ad stack trên tap để CTA (pointer-events:auto) bắt được click. */
+.adsc-screen--locked > *:not(.adsc-tap):not(.adsc-skeleton) {
+  position: relative;
+  z-index: 110;
+}
+.adsc-screen--locked .ad-wrap-cta-bar,
+.adsc-screen--locked .ad-wrap-cta,
+.adsc-screen--locked .ad-wrap-cta * {
+  pointer-events: auto !important;
+}
+.adsc-screen--locked .adsc-tap {
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+/* Lớp bắt click trong GALLERY: phủ full screen (dưới CTA). */
 .adsc-tap {
   position: absolute;
   inset: 0;
-  z-index: 40;
+  z-index: 100;
   cursor: pointer;
 }
 
@@ -109,6 +143,41 @@
 }
 .adsc-isp-phone .isp {
   border-radius: 36px;
+}
+
+/* ── Hero phone ───────────────────────────────────────────────────
+   Nền hero gần đen nên bezel tối bị nhoà — thêm ring sáng mảnh + glow
+   gold (echo palette CTA) để khung tách khỏi background. */
+.adsc-phone--hero {
+  /* Screen width = phone max-width − 2×9px padding; dùng cho .adsc-scale. */
+  --adsc-scale: calc(202 / 360); /* max-w-55 = 220px */
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 0 90px -12px rgba(184, 150, 90, 0.38),
+    0 22px 50px -18px rgba(0, 0, 0, 0.65);
+}
+@media (min-width: 640px) {
+  .adsc-phone--hero {
+    --adsc-scale: calc(222 / 360); /* sm:max-w-60 = 240px */
+  }
+}
+
+/* Ad trong hero layout ở đúng design width 360px (px font của ads.css
+   được thiết kế cho khổ này) rồi scale cả khối xuống vừa screen —
+   tránh chữ/CTA phình to khi phone thu nhỏ. Selector 3 class để thắng
+   `position: relative` của rule `.adsc-screen--locked > *` phía trên. */
+.ad-showcase-root .adsc-phone--hero .adsc-scale {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 360px;
+  height: calc(100% / var(--adsc-scale));
+  transform: scale(var(--adsc-scale));
+  transform-origin: top left;
+}
+.adsc-scale > * {
+  width: 100%;
+  height: 100%;
 }
 
 /* Placeholder trước khi lazy-mount */
