@@ -686,7 +686,10 @@
       "promoteLabel": "Đưa vào thư viện",
       "promoteHint": "Tạo template từ trang này và đánh dấu Proven để Automation dùng được.",
       "promoteDone": "Đã tạo template “{name}” và đánh dấu Proven — mở Automation để nhân bản. Template không hiện ở danh sách này vì đây là danh sách trang.",
-      "promoteHalfDone": "Đã tạo template “{name}” nhưng CHƯA đánh dấu Proven được ({error}). Automation sẽ chưa thấy nó; đừng bấm lại — bấm nữa sẽ tạo template trùng."
+      "promoteHalfDone": "Đã tạo template “{name}” nhưng CHƯA đánh dấu Proven được ({error}). Automation sẽ chưa thấy nó; đừng bấm lại — bấm nữa sẽ tạo template trùng.",
+      "cardFooterUnmeasured": "{layers} vai phễu · chưa đo mức gắn thẻ",
+      "coverageUnmeasured": "Chưa đo mức gắn thẻ cho loại này.",
+      "stateBlock": "Khối"
     },
     "products": {
       "title": "Sản phẩm",

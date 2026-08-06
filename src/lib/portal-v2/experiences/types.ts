@@ -36,7 +36,7 @@ export type EvidenceTier = 'high' | 'directional' | 'early' | 'unmeasured';
  * Prototype `expState` / `XSTATES` (~L15927) — the ownership axis.
  * A template belongs to nobody; a copy is about a product or a topic.
  */
-export type ExperienceState = 'template' | 'product' | 'topic';
+export type ExperienceState = 'template' | 'product' | 'topic' | 'block';
 
 /** Every component a block can offer — prototype `compsOf(l)` (~L12493). */
 export type LayerComponentKey = 'n' | 'h' | 'b' | 'media' | 'product' | 'cta';
@@ -145,7 +145,12 @@ export type ExperienceView = {
   layers: ExperienceLayer[];
   features: string[];
   benefits: string[];
-  coverage: SignalCoverage;
+  /**
+   * null = CHƯA ĐO. BE cố ý bỏ qua `signal_coverage` với loại không đo được
+   * ("nil = not measurable for this kind, and is omitted rather than reported
+   * as 0%"), nên quy về 0% ở đây là dựng lại đúng lời nói dối vừa gỡ.
+   */
+  coverage: SignalCoverage | null;
   /** null when the seed says this has never run — never a zero. */
   stats: ExperienceStats | null;
   evidence: ExperienceEvidence;

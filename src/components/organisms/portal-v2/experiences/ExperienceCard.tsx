@@ -84,10 +84,16 @@ export const ExperienceCard = ({
       <div className='flex items-center gap-2 border-t border-[var(--pv2-hair)] px-3.5 py-2.5 text-[11px] text-[var(--pv2-faint)]'>
         <Layers className='size-3.5 shrink-0' strokeWidth={2.2} aria-hidden />
         <span className='truncate'>
-          {t('cardFooterMeta', {
-            layers: experience.layers.length,
-            pct: experience.coverage.pct,
-          })}
+          {/*
+            `coverage` null = BE nói loại này KHÔNG đo được. Bản cũ luôn có số
+            vì nó bốc từ hàm băm id; giờ thiếu thì nói thiếu.
+          */}
+          {experience.coverage
+            ? t('cardFooterMeta', {
+                layers: experience.layers.length,
+                pct: experience.coverage.pct,
+              })
+            : t('cardFooterUnmeasured', { layers: experience.layers.length })}
         </span>
         <span className='flex-1' />
         <span className='shrink-0 tabular-nums'>{experience.updatedLabel}</span>

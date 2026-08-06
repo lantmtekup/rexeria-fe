@@ -10,11 +10,16 @@ import {
   coverageTone,
   objectivePillStyle,
 } from '@/lib/portal-v2/experiences/roleStyles';
-import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
+import type {
+  ExperienceView,
+  SignalCoverage,
+} from '@/lib/portal-v2/experiences/types';
 import { cn } from '@/lib/cn';
 
 type ExperienceDetailsPaneProps = {
   experience: ExperienceView;
+  /** Nạp từ `GET /experiences/{id}/coverage`; null = chưa đo được. */
+  fetchedCoverage?: SignalCoverage | null;
 };
 
 const OBJECTIVE_LABEL_KEY = {
@@ -61,10 +66,14 @@ const STATUS_LABEL_KEY = {
 
 export const ExperienceDetailsPane = ({
   experience,
+  fetchedCoverage = null,
 }: ExperienceDetailsPaneProps) => {
   const t = useTranslations('portalV2.experiences');
-  const { coverage, layers } = experience;
-  const tone = coverageTone(coverage.pct);
+  const { layers } = experience;
+  // Ưu tiên số vừa nạp từ `GET /experiences/{id}/coverage`; danh sách không
+  // kèm độ phủ cho mọi loại nên đây thường là nguồn duy nhất.
+  const coverage = fetchedCoverage ?? experience.coverage;
+  const tone = coverageTone(coverage?.pct ?? 0);
   const toneStyle = COVERAGE_TONE_STYLE[tone];
   const pill = objectivePillStyle(experience.objective);
 
@@ -216,29 +225,39 @@ export const ExperienceDetailsPane = ({
           <h3 className='font-[family-name:var(--pv2-disp)] text-[13px] font-bold tracking-[-0.02em] text-[var(--pv2-ink)]'>
             {t('sectionCoverage')}
           </h3>
-          <p
-            className='mt-1 font-[family-name:var(--pv2-disp)] text-[1.75rem] leading-none font-bold tabular-nums'
-            style={{ color: toneStyle.fg }}
-          >
-            {coverage.pct}%
-          </p>
-          <div className='mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--pv2-canvas)]'>
-            <span
-              className='block h-full rounded-full'
-              style={{
-                width: `${coverage.pct}%`,
-                background: toneStyle.bg,
-              }}
-            />
-          </div>
-          <p className='mt-2.5 text-[12px] leading-relaxed text-[var(--pv2-mut)]'>
-            {t('coverageBody', {
-              tracked: coverage.trackedComponents,
-              total: coverage.components,
-              trackedBlocks: coverage.trackedBlocks,
-              blocks: coverage.blocks,
-            })}
-          </p>
+          {coverage ? (
+            <>
+              <p
+                className='mt-1 font-[family-name:var(--pv2-disp)] text-[1.75rem] leading-none font-bold tabular-nums'
+                style={{ color: toneStyle.fg }}
+              >
+                {coverage.pct}%
+              </p>
+              <div className='mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--pv2-canvas)]'>
+                <span
+                  className='block h-full rounded-full'
+                  style={{
+                    width: `${coverage.pct}%`,
+                    background: toneStyle.bg,
+                  }}
+                />
+              </div>
+              <p className='mt-2.5 text-[12px] leading-relaxed text-[var(--pv2-mut)]'>
+                {t('coverageBody', {
+                  tracked: coverage.trackedComponents,
+                  total: coverage.components,
+                  trackedBlocks: coverage.trackedBlocks,
+                  blocks: coverage.blocks,
+                })}
+              </p>
+            </>
+          ) : (
+            /* Chưa nạp xong, hoặc BE nói loại này không đo được. Vẽ 0% ở đây
+               là dựng lại đúng con số bịa vừa gỡ khỏi module. */
+            <p className='mt-1.5 text-[12px] text-[var(--pv2-faint)]'>
+              {t('coverageUnmeasured')}
+            </p>
+          )}
         </section>
       </aside>
     </div>

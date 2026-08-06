@@ -41,6 +41,10 @@ export const EXPERIENCE_STATES: {
   { id: 'template', labelKey: 'stateTemplate' },
   { id: 'product', labelKey: 'stateProduct' },
   { id: 'topic', labelKey: 'stateTopic' },
+  // `kind: 'block'` là loại THỨ TƯ mà `/v1/experiences` trả về. Bản cũ không
+  // có tab này vì nó suy từ `/pages`, nơi block không tồn tại; gộp block vào
+  // một trong ba tab kia là gán cho chúng một quyền sở hữu chúng không có.
+  { id: 'block', labelKey: 'stateBlock' },
 ];
 
 /** `DATA.expCategories` (~L5480) — what KIND of artifact this is. */

@@ -1,12 +1,11 @@
-import { enrichPagesWithThumbnailUrls } from '@/lib/pages/resolve-thumbnails';
-import { mapPageToExperience } from '@/lib/portal-v2/experiences/mapPage';
+import { v2ToExperienceView } from '@/lib/portal-v2/experiences/fromV2';
 import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
-import { rexerApi } from '@/services/rexer/endpoints';
+import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 
 export type ExperienceLibraryQuery = {
-  /** Free-text search — forwarded to the pages API as `q`. */
+  /** Tìm toàn văn — đẩy xuống server qua `q`. */
   q?: string;
-  /** Giới hạn theo thương hiệu; bỏ trống = mọi brand đọc được. */
+  /** Giới hạn theo thương hiệu; chỉ platform admin dùng được. */
   brandId?: string | null;
 };
 
@@ -15,49 +14,72 @@ export type ExperienceLibraryResult = {
   error: string | null;
 };
 
-const PAGE_LIMIT = 50;
+/** Trần CỨNG của BE: `normalizePage` cắt mọi `page_size` xuống 100. */
+const SERVER_PAGE_MAX = 100;
+/** Chặn vòng lặp — 10 trang là 1000 mục, quá xa mọi thư viện thật. */
+const MAX_PAGES = 10;
 
 /**
- * The Experiences library ← `GET /pages?type=landing&status=published`.
+ * Thư viện trải nghiệm ← `GET /v1/experiences`.
  *
- * Same source and same query the admin landing-pages list reads, filtered to
- * published only. Search goes to the server; the chip axes (category, type,
- * objective, evidence) are seeded values and narrow client-side.
+ * Bản trước suy từ `GET /pages?type=landing&status=published`, và đó là hai
+ * vấn đề gộp làm một:
  *
- * No `'use client'` — this is called from the route's server component for the
- * first paint and again from the workspace on a debounced search, exactly like
- * `fetchExchangeCatalog`.
+ * 1. Bộ lọc `published` cắt mất phần lớn thư viện — một brand có 33 landing
+ *    page mà chỉ 3 cái published thì màn hình hiện 3, trông như mất dữ liệu.
+ *    `/experiences` trả cả template lẫn bản copy, không lọc theo trạng thái.
+ * 2. Trục sở hữu (template / product copy / topic copy), bậc bằng chứng, số
+ *    phiên, độ phủ — `/pages` không có gì trong số đó, nên bản cũ BỊA bằng
+ *    hàm băm id. Các số đó ổn định theo id nên đọc như phép đo thật.
  *
- * One page of results. Pagination is deliberately deferred: the module has no
- * pager UI yet, and silently showing the first 50 of a larger set would read as
- * "this is everything". Revisit when a workspace actually exceeds it.
+ * Nay `kind`, `subject`, `ev`, `signal_coverage` đều là dữ liệu; thiếu thì để
+ * null và UI nói "chưa đo".
+ *
+ * Không có `'use client'`: hàm này chạy ở server component cho lần vẽ đầu, và
+ * chạy lại từ workspace khi người dùng gõ tìm kiếm.
  */
 export const fetchExperienceLibrary = async (
   query: ExperienceLibraryQuery = {}
 ): Promise<ExperienceLibraryResult> => {
-  const q = query.q?.trim() || undefined;
+  const common = {
+    state: 'all',
+    ...(query.q?.trim() ? { q: query.q.trim() } : {}),
+    ...(query.brandId ? { brand_id: query.brandId } : {}),
+  };
 
   try {
-    const res = await rexerApi.pages.listAll({
-      type: 'landing',
-      status: 'published',
+    // Phải lặp trang: xin `page_size: 200` thì BE trả 100 và KHÔNG báo gì —
+    // màn hình sẽ hiện 100/110 mà trông như đã đủ.
+    const first = await rexerV2Api.experiences.list({
+      ...common,
       page: 1,
-      limit: PAGE_LIMIT,
-      sort: '-updated_at',
-      ...(q ? { q } : {}),
-      ...(query.brandId ? { brand_id: query.brandId } : {}),
+      page_size: SERVER_PAGE_MAX,
     });
 
-    // BE list page trả `thumbnail_asset_id` chứ không resolve `thumbnail_url`
-    // → batch-resolve qua media trước khi map, giống admin landing list.
-    const pages = await enrichPagesWithThumbnailUrls(res.items ?? []);
+    const items = [...(first.items ?? [])];
+    const pages = Math.min(
+      Math.ceil((first.total ?? items.length) / SERVER_PAGE_MAX),
+      MAX_PAGES
+    );
 
-    return { items: pages.map(mapPageToExperience), error: null };
+    if (pages > 1) {
+      const rest = await Promise.all(
+        Array.from({ length: pages - 1 }, (_, i) =>
+          rexerV2Api.experiences.list({
+            ...common,
+            page: i + 2,
+            page_size: SERVER_PAGE_MAX,
+          })
+        )
+      );
+      rest.forEach(r => items.push(...(r.items ?? [])));
+    }
+
+    return { items: items.map(v2ToExperienceView), error: null };
   } catch (err) {
     return {
       items: [],
-      error:
-        err instanceof Error ? err.message : 'Failed to load landing pages',
+      error: err instanceof Error ? err.message : 'Failed to load experiences',
     };
   }
 };

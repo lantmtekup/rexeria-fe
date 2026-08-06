@@ -43,7 +43,14 @@ export interface RxExperience {
    * Omitted (not 0) for `kind: 'block'` — a block owns no canvas, so coverage
    * was never measurable. Absence is a claim about measurability, not a zero.
    */
+  /**
+   * 0..1, và BỊ BỎ QUA (nil) khi loại này không đo được — đó là chủ ý của BE:
+   * "nil = not measurable for this kind, and is omitted rather than reported
+   * as 0%". Nên `undefined` ở đây nghĩa là CHƯA ĐO, không phải 0%.
+   */
   signal_coverage?: number | null;
+  /** Slug công khai của bản copy (`/p/{slug}`); template không có. */
+  slug?: string | null;
   funnel_coverage?: string[];
   status: string;
   updated_at: string;
@@ -63,4 +70,47 @@ export interface RxExperienceListResponse {
 export type RxPromoteExperienceRequest = {
   name: string;
   template_code?: string;
+};
+
+export type RxExperienceListQuery = {
+  state?: string;
+  category?: string;
+  vehicle?: string;
+  objective?: string;
+  ev?: string;
+  q?: string;
+  campaign_id?: string;
+  item_id?: string;
+  sort?: string;
+  page?: number;
+  page_size?: number;
+  /** Chỉ platform admin dùng được — BE ép principal khác về brand của họ. */
+  brand_id?: string;
+};
+
+/** `measured:false` ⇒ CHƯA CHẠY. Đừng vẽ các số 0 kèm theo như thể là kết quả. */
+export type RxExperienceStats = {
+  measured: boolean;
+  sessions: number;
+  cvr: number;
+  lift: number | null;
+  revenue_cents: number;
+  leads: number;
+  dwell_ms_avg: number;
+};
+
+export type RxExperienceCoverage = {
+  funnel_coverage: {
+    roles_present: string[];
+    missing: string[];
+    complete: boolean;
+  };
+  signal_coverage: {
+    blocks_total: number;
+    blocks_reporting: number;
+    components_total: number;
+    components_tracked: number;
+    /** 0..1 */
+    pct: number;
+  };
 };

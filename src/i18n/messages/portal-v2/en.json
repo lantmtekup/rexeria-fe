@@ -686,7 +686,10 @@
       "promoteLabel": "Add to library",
       "promoteHint": "Create a template from this page and mark it Proven so Automation can use it.",
       "promoteDone": "Created template “{name}” and marked it Proven — open Automation to replicate. It is not in this list because this list shows pages.",
-      "promoteHalfDone": "Created template “{name}” but could NOT mark it Proven ({error}). Automation will not see it yet; do not retry — that would create a duplicate template."
+      "promoteHalfDone": "Created template “{name}” but could NOT mark it Proven ({error}). Automation will not see it yet; do not retry — that would create a duplicate template.",
+      "cardFooterUnmeasured": "{layers} funnel roles · instrumentation not measured",
+      "coverageUnmeasured": "Instrumentation is not measured for this kind.",
+      "stateBlock": "Blocks"
     },
     "products": {
       "title": "Product",

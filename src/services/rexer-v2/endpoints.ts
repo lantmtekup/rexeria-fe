@@ -25,6 +25,10 @@ import type {
 } from './types/exchange';
 import type {
   RxExperience,
+  RxExperienceCoverage,
+  RxExperienceListQuery,
+  RxExperienceListResponse,
+  RxExperienceStats,
   RxPromoteExperienceRequest,
 } from './types/experience';
 import type {
@@ -119,6 +123,31 @@ export const rexerV2Api = {
   // ── Experiences — thư viện trải nghiệm THẬT, thay cho việc suy từ /pages ──
   experiences: {
     /**
+     * `GET /v1/experiences` — template + copy + block, KHÔNG giới hạn
+     * `status=published` như bản v1 suy từ `/pages`.
+     *
+     * `signal_coverage`/`funnel_coverage` bị BỎ QUA với loại không đo được;
+     * thiếu nghĩa là chưa đo, không phải 0%.
+     */
+    list: (query: RxExperienceListQuery = {}) => {
+      const qs = new URLSearchParams();
+      Object.entries(query).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '') qs.set(k, String(v));
+      });
+      const suffix = qs.toString();
+      return rxV2<RxExperienceListResponse>(
+        `/experiences${suffix ? `?${suffix}` : ''}`
+      );
+    },
+
+    get: (experienceId: string) =>
+      rxV2<RxExperience>(`/experiences/${experienceId}`),
+
+    /** `measured:false` ⇒ chưa chạy lần nào; mọi số kèm theo là 0 mặc định. */
+    stats: (experienceId: string) =>
+      rxV2<RxExperienceStats>(`/experiences/${experienceId}/stats`),
+
+    /**
      * `POST /v1/experiences/{id}/proven` — bật/tắt dấu Proven.
      *
      * Đây là cột THẬT trên bảng `templates` (migration 000050/000052 của v2),
@@ -149,7 +178,7 @@ export const rexerV2Api = {
 
     /** `GET /v1/experiences/{id}/coverage` — độ phủ phễu ĐO ĐƯỢC, không seed. */
     coverage: (experienceId: string) =>
-      rxV2<unknown>(`/experiences/${experienceId}/coverage`),
+      rxV2<RxExperienceCoverage>(`/experiences/${experienceId}/coverage`),
   },
 
   // ── Exchange (spec §15) — v2-only, absent from the v1 deployment ────────

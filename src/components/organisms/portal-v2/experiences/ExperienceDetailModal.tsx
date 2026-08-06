@@ -2,8 +2,12 @@
 
 import { BadgeCheck, Eye, Library, Loader2, PenLine } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
+import {
+  fetchExperienceCoverage,
+  fetchExperienceStats,
+} from '@/services/portal-v2/experienceMeasured';
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
@@ -22,6 +26,7 @@ import type {
   ExperienceDetailTab,
   ExperienceStats,
   ExperienceView,
+  SignalCoverage,
 } from '@/lib/portal-v2/experiences/types';
 import { cn } from '@/lib/cn';
 
@@ -123,6 +128,38 @@ export const ExperienceDetailModal = ({
   const t = useTranslations('portalV2.experiences');
   const [tab, setTab] = useState<ExperienceDetailTab>('details');
 
+  /**
+   * Số đo nạp KHI MỞ, không nạp ở danh sách.
+   *
+   * `GET /experiences` cố ý không kèm coverage cho mọi loại, và stats thì có
+   * endpoint riêng — 110 thẻ mà mỗi thẻ hai lời gọi là 220 request cho một lần
+   * mở màn. Mở chi tiết mới hỏi là đúng chỗ.
+   */
+  const [measured, setMeasured] = useState<{
+    coverage: SignalCoverage | null;
+    stats: ExperienceStats | null;
+  }>({ coverage: experience.coverage, stats: experience.stats });
+
+  useEffect(() => {
+    let alive = true;
+    setMeasured({ coverage: experience.coverage, stats: experience.stats });
+
+    void Promise.allSettled([
+      fetchExperienceCoverage(experience.id),
+      fetchExperienceStats(experience.id),
+    ]).then(([cov, st]) => {
+      if (!alive) return;
+      setMeasured(prev => ({
+        coverage: cov.status === 'fulfilled' ? cov.value : prev.coverage,
+        stats: st.status === 'fulfilled' ? st.value : prev.stats,
+      }));
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [experience.id, experience.coverage, experience.stats]);
+
   const tabItems = useMemo(
     () =>
       EXPERIENCE_DETAIL_TABS.map(item => ({
@@ -130,13 +167,14 @@ export const ExperienceDetailModal = ({
         label: t(item.labelKey),
         count:
           item.id === 'signals'
-            ? experience.coverage.trackedComponents
+            ? (measured.coverage?.trackedComponents ?? undefined)
             : undefined,
       })),
-    [t, experience.coverage.trackedComponents]
+    [t, measured.coverage]
   );
 
-  const { stats, evidence } = experience;
+  const stats = measured.stats;
+  const { evidence } = experience;
   const tierStyle = EVIDENCE_TIER_STYLE[evidence.tier];
   const previewable = canPreview(experience);
   const editable = canEditCanvas(experience);
@@ -247,12 +285,20 @@ export const ExperienceDetailModal = ({
 
       <div className='pt-4' role='tabpanel'>
         {tab === 'details' ? (
-          <ExperienceDetailsPane experience={experience} />
+          <ExperienceDetailsPane
+            experience={experience}
+            fetchedCoverage={measured.coverage}
+          />
         ) : null}
         {tab === 'signals' ? (
-          <ExperienceSignalsPane experience={experience} />
+          <ExperienceSignalsPane
+            experience={experience}
+            coverage={measured.coverage}
+          />
         ) : null}
-        {tab === 'perf' ? <ExperiencePerfPane experience={experience} /> : null}
+        {tab === 'perf' ? (
+          <ExperiencePerfPane experience={experience} stats={stats} />
+        ) : null}
       </div>
     </Modal>
   );
