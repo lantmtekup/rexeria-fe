@@ -437,7 +437,7 @@
       "editorSave": "Lưu",
       "editorAutosavePending": "Chưa lưu",
       "editorAutosaveSaving": "Đang lưu…",
-      "editorAutosaveSaved": "Đã lưu",
+      "editorAutosaveSaved": "Nháp giữ tạm trên máy",
       "editorUndo": "Hoàn tác",
       "editorRedo": "Làm lại",
       "editorZoomIn": "Phóng to",
@@ -550,7 +550,8 @@
       "toastSaveStale": "Bản của bạn đã cũ — có người vừa lưu trước. Tải lại rồi sửa tiếp.",
       "segmentUnmeasured": "Chưa đo được lượt nào cho phân khúc này — con số bên dưới chưa phản ánh nó.",
       "segmentShare": "{pct}% traffic đo được · {sessions} phiên",
-      "personaBehaves": "Hành xử theo phân khúc {seg}"
+      "personaBehaves": "Hành xử theo phân khúc {seg}",
+      "toastSaveInvalid": "Chưa lưu được — {reasons}"
     },
     "experiences": {
       "benefitsHeading": "Vì sao hiệu quả",

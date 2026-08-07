@@ -437,7 +437,7 @@
       "editorSave": "Save",
       "editorAutosavePending": "Unsaved",
       "editorAutosaveSaving": "Saving…",
-      "editorAutosaveSaved": "Saved",
+      "editorAutosaveSaved": "Draft kept locally",
       "editorUndo": "Undo",
       "editorRedo": "Redo",
       "editorZoomIn": "Zoom in",
@@ -550,7 +550,8 @@
       "toastSaveStale": "Your copy is stale — someone saved first. Reload and try again.",
       "segmentUnmeasured": "No sessions measured for this segment yet — the numbers below do not reflect it.",
       "segmentShare": "{pct}% of measured traffic · {sessions} sessions",
-      "personaBehaves": "Behaves like segment {seg}"
+      "personaBehaves": "Behaves like segment {seg}",
+      "toastSaveInvalid": "Not saved — {reasons}"
     },
     "experiences": {
       "benefitsHeading": "Why it works",

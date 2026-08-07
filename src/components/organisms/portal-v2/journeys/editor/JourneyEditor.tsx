@@ -117,6 +117,14 @@ type JourneyEditorProps = {
 
 const AUTOSAVE_MS = 1500;
 
+/**
+ * Trạng thái autosave — CỤC BỘ, không phải trạng thái trên server.
+ *
+ * `onPersist` chỉ ghi vào state của workspace; thứ đi lên server là nút Save
+ * (`PUT /journeys/{id}`). Nhãn cũ ghi "Saved" nên màn hình báo đã lưu trong
+ * khi server vừa từ chối 422 — đúng loại nói dối tệ nhất, vì người dùng đóng
+ * tab và tin là xong.
+ */
 type AutosaveStatus = 'idle' | 'dirty' | 'saving' | 'saved';
 
 const isTypingTarget = (target: EventTarget | null): boolean => {

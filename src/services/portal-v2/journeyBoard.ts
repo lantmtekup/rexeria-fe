@@ -1,5 +1,6 @@
 import { journeyToV2, v2ToJourney } from '@/lib/portal-v2/journeys/fromV2';
 import type { Journey } from '@/lib/portal-v2/journeys/types';
+import { RxApiError } from '@/services/rexer/client';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 
 /**
@@ -53,6 +54,22 @@ export const createJourney = async (
     journeyToV2(draft, { brandId })
   );
   return { journey: v2ToJourney(saved), version: saved.version };
+};
+
+/**
+ * Lý do BE từ chối, đọc được cho người dùng.
+ *
+ * `PUT` là một lần commit nguyên khối: `validateGraph` chạy TOÀN BỘ hợp đồng đồ
+ * thị, nên một bản nháp đang dựng dở sẽ bị từ chối 422 kèm danh sách kiểm.
+ * Gộp chúng thành một câu "không lưu được" là vứt đi đúng phần người dùng cần.
+ */
+export const saveFailureReasons = (err: unknown): string[] => {
+  if (!(err instanceof RxApiError)) return [];
+  const details = err.details as
+    { errors?: { message?: string }[] } | undefined;
+  return (details?.errors ?? [])
+    .map(e => e.message ?? '')
+    .filter((m): m is string => m.length > 0);
 };
 
 /**

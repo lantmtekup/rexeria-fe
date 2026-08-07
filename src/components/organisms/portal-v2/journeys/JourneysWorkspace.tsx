@@ -9,6 +9,7 @@ import type { JourneySegment } from '@/lib/portal-v2/journeys/constants';
 import type { PersonaOption } from '@/services/portal-v2/journeyAudience';
 
 import {
+  saveFailureReasons,
   createJourney as createJourneyApi,
   deleteJourneys as deleteJourneysApi,
   duplicateJourney as duplicateJourneyApi,
@@ -224,11 +225,19 @@ export const JourneysWorkspace = ({
         toast.error(t('toastSaveFailed'));
         return;
       }
-      const res = await saveJourneyApi(next, version).catch(() => null);
-      if (!res) {
-        toast.error(t('toastSaveStale'));
-        return;
-      }
+      const res = await saveJourneyApi(next, version).catch((err: unknown) => {
+        // BE trả danh sách kiểm cụ thể (thiếu mô tả, thiếu via, node trải
+        // nghiệm chưa gắn…). Nói ra từng cái — "không lưu được" thì người dùng
+        // không biết phải sửa gì, dù chính panel Requirements đã liệt kê sẵn.
+        const reasons = saveFailureReasons(err);
+        toast.error(
+          reasons.length
+            ? t('toastSaveInvalid', { reasons: reasons.join(' · ') })
+            : t('toastSaveStale')
+        );
+        return null;
+      });
+      if (!res) return;
       versionsRef.current[res.journey.id] = res.version;
       handlePersistEdit(res.journey);
       setOverlay({ kind: 'detail', id: res.journey.id });
