@@ -1,8 +1,8 @@
 'use client';
 
-import { Check, Minus, UserPlus } from 'lucide-react';
+import { Check, Minus, Trash2, UserPlus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { toast } from 'sonner';
+import { useState } from 'react';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import {
@@ -26,6 +26,10 @@ import type {
 } from '@/lib/portal-v2/settings/types';
 
 type TeamPanelProps = {
+  /** Đổi vai — ghi ngay, không chờ Save. Ném lỗi để panel trả lại giá trị cũ. */
+  onRoleChange: (userId: string, role: MemberRole) => Promise<void>;
+  onInvite: (email: string, role: MemberRole) => Promise<void>;
+  onRemoveMember: (userId: string) => Promise<void>;
   data: SettingsData;
   editing: boolean;
   issues: SettingsIssue[];
@@ -37,12 +41,37 @@ export const TeamPanel = ({
   editing,
   issues,
   onChange,
+  onRoleChange,
+  onInvite,
+  onRemoveMember,
 }: TeamPanelProps) => {
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<MemberRole>('editor');
+  const [inviting, setInviting] = useState(false);
+  const ownerCount = data.members.filter(m => m.role === 'owner').length;
   const t = useTranslations('portalV2.settings');
   const type = data.general.accountType;
   const ownerIssue = issueFor(issues, 'members');
 
+  /**
+   * Đổi vai ghi NGAY xuống server, không chờ nút Save.
+   *
+   * Thành viên không nằm trong `PUT /org/governance` — chúng là bảng riêng, và
+   * gộp vào luồng Save sẽ im lặng đánh rơi thay đổi, đúng lỗi đã xảy ra với
+   * hạng mục chiến dịch.
+   */
   const setRole = (id: string, role: MemberRole) => {
+    const before = data.members.find(m => m.id === id)?.role;
+    void onRoleChange(id, role).catch(() => {
+      if (before) {
+        onChange({
+          ...data,
+          members: data.members.map(m =>
+            m.id === id ? { ...m, role: before } : m
+          ),
+        });
+      }
+    });
     onChange({
       ...data,
       members: data.members.map(m => (m.id === id ? { ...m, role } : m)),
@@ -102,6 +131,22 @@ export const TeamPanel = ({
                   {ROLES[member.role].name}
                 </Pill>
               )}
+
+              {/*
+                Chỉ hiện khi đang sửa, và KHÔNG hiện với owner cuối cùng —
+                gỡ người đó là khoá chính mình ra khỏi brand.
+              */}
+              {editing && !(member.role === 'owner' && ownerCount <= 1) ? (
+                <button
+                  type='button'
+                  aria-label={t('removeMember')}
+                  title={t('removeMember')}
+                  onClick={() => void onRemoveMember(member.id)}
+                  className='grid size-7 shrink-0 cursor-pointer place-items-center rounded-[7px] text-[var(--pv2-mut)] transition-colors hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)] hover:text-[var(--pv2-error)]'
+                >
+                  <Trash2 className='size-3.5' strokeWidth={2} aria-hidden />
+                </button>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -110,11 +155,37 @@ export const TeamPanel = ({
           <RefusalText>{t(ownerIssue.messageKey)}</RefusalText>
         ) : null}
 
-        <div className='mt-3'>
+        <div className='mt-3 flex flex-wrap items-center gap-2'>
+          <input
+            type='email'
+            value={inviteEmail}
+            onChange={e => setInviteEmail(e.target.value)}
+            placeholder={t('invitePlaceholder')}
+            aria-label={t('invite')}
+            className='h-10 min-w-[220px] flex-1 rounded-[10px] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-3 text-[13px] text-[var(--pv2-ink)] outline-none focus:border-[var(--pv2-electric)] focus:ring-2 focus:ring-[var(--pv2-electric)]/15'
+          />
+          <select
+            aria-label={t('fieldRole')}
+            value={inviteRole}
+            onChange={e => setInviteRole(e.target.value as MemberRole)}
+            className='h-10 rounded-[10px] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2.5 text-[12.5px] text-[var(--pv2-ink)] outline-none'
+          >
+            {MEMBER_ROLES.map(r => (
+              <option key={r} value={r}>
+                {ROLES[r].name}
+              </option>
+            ))}
+          </select>
           <Button
             variant='dashed'
             className='h-10'
-            onClick={() => toast.message(t('toastInviteSoon'))}
+            disabled={!inviteEmail.trim() || inviting}
+            onClick={() => {
+              setInviting(true);
+              void onInvite(inviteEmail.trim(), inviteRole)
+                .then(() => setInviteEmail(''))
+                .finally(() => setInviting(false));
+            }}
           >
             <UserPlus className='size-[15px]' strokeWidth={2} aria-hidden />
             {t('invite')}

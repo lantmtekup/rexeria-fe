@@ -6,6 +6,7 @@ import type {
   SettingsMember,
 } from '@/lib/portal-v2/settings/types';
 import type {
+  RxBrandMember,
   RxCapabilities,
   RxGovernance,
   RxMeProfile,
@@ -31,6 +32,29 @@ const pick = <T extends string>(v: string | undefined, all: T[], fb: T): T =>
  * capabilities hay profile. Để trống thay vì bịa một ngày.
  */
 const MISSING_SINCE = '';
+
+/** Tên → chữ cái đầu. API không trả `initials`, và suy ra thì luôn đúng. */
+const initialsOf = (name: string): string =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0]?.toUpperCase() ?? '')
+    .join('') || '?';
+
+/**
+ * `last_seen_at = null` nghĩa là người này CHƯA từng đăng nhập kể từ lúc được
+ * mời — đó chính là "pending", không cần một cột riêng.
+ */
+export const v2ToMember = (m: RxBrandMember): SettingsMember => ({
+  id: m.user_id,
+  name: m.display_name || m.email,
+  initials: initialsOf(m.display_name || m.email),
+  email: m.email,
+  role: m.role,
+  lastActive: m.last_seen_at ?? '',
+  ...(m.last_seen_at ? {} : { pending: true }),
+});
 
 export const v2ToSettings = (
   gov: RxGovernance,

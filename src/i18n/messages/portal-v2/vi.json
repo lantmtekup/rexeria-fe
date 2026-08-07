@@ -1464,7 +1464,13 @@
       "colTier": "Độ tin cậy",
       "previewMore": "và {count} dòng nữa trong bản xuất.",
       "toastSaveFailed": "Không lưu được cài đặt",
-      "toastNeedBrand": "Chọn thương hiệu trước — cài đặt thuộc về một thương hiệu."
+      "toastNeedBrand": "Chọn thương hiệu trước — cài đặt thuộc về một thương hiệu.",
+      "invitePlaceholder": "email người bạn muốn mời",
+      "toastInviteFailed": "Không mời được",
+      "toastInvited": "Đã mời {email}",
+      "toastRemoveFailed": "Không gỡ được thành viên",
+      "removeMember": "Gỡ khỏi thương hiệu",
+      "toastInvitedNoMail": "Đã tạo tài khoản cho {email} nhưng CHƯA gửi được thư. Mật khẩu tạm: {password} — hãy chuyển tay và bảo họ đổi ngay."
     },
     "media": {
       "title": "Media",

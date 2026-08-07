@@ -43,7 +43,10 @@ import type {
 } from './types/journey';
 import type { RxIntelSegmentsResponse } from './types/intel';
 import type {
+  RxBrandMembersResponse,
   RxCapabilities,
+  RxInviteMemberRequest,
+  RxMembershipEnvelope,
   RxGovernance,
   RxMeProfile,
   RxPutGovernanceRequest,
@@ -176,6 +179,25 @@ export const rexerV2Api = {
         `/org/account-type${brandId ? `?brand_id=${encodeURIComponent(brandId)}` : ''}`,
         { method: 'PATCH', body: { account_type: accountType } }
       ),
+
+    /** Thành viên của brand — nguồn của tab "Team & roles". */
+    members: (brandId: string) =>
+      rxV2<RxBrandMembersResponse>(`/brands/${brandId}/users`),
+
+    inviteMember: (brandId: string, body: RxInviteMemberRequest) =>
+      rxV2<RxMembershipEnvelope>(`/brands/${brandId}/users`, {
+        method: 'POST',
+        body,
+      }),
+
+    setMemberRole: (brandId: string, userId: string, role: string) =>
+      rxV2<RxMembershipEnvelope>(`/brands/${brandId}/users/${userId}`, {
+        method: 'PATCH',
+        body: { role },
+      }),
+
+    removeMember: (brandId: string, userId: string) =>
+      rxV2<void>(`/brands/${brandId}/users/${userId}`, { method: 'DELETE' }),
 
     /** Hồ sơ của CHÍNH người đăng nhập — không theo brand. */
     meProfile: () => rxV2<RxMeProfile>('/me/profile'),

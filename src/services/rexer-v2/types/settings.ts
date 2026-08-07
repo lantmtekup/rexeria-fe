@@ -50,3 +50,41 @@ export type RxMeProfile = {
   email: string;
   title: string;
 };
+
+/** Thành viên của brand — `GET /v1/brands/{id}/users`. */
+export type RxBrandMember = {
+  id: string;
+  brand_id: string;
+  user_id: string;
+  role: 'owner' | 'manager' | 'editor' | 'viewer';
+  joined_at: string;
+  /** null = chưa từng đăng nhập kể từ khi được mời. */
+  last_seen_at: string | null;
+  invited_by: string | null;
+  email: string;
+  display_name: string;
+};
+
+export type RxBrandMembersResponse = { items: RxBrandMember[]; total: number };
+
+/**
+ * `POST` và `PATCH` bọc kết quả trong `{membership: …}`, còn `GET` trả thẳng
+ * `items[]` — hai shape khác nhau trên cùng một tài nguyên. Và bản bọc KHÔNG
+ * mang `email`/`display_name`, nên phải nạp lại danh sách để có tên.
+ */
+export type RxMembershipEnvelope = {
+  membership: Omit<RxBrandMember, 'email' | 'display_name'> & {
+    /**
+     * Chỉ có khi lời mời vừa TẠO tài khoản mới VÀ thư không gửi được (Resend
+     * chưa cấu hình, hoặc domain chưa xác minh). Thư đã đi thì trường này
+     * rỗng — người mời phải chuyển tay đúng những lần còn lại.
+     */
+    generated_password?: string;
+  };
+};
+
+export type RxInviteMemberRequest = {
+  email: string;
+  display_name?: string;
+  role?: 'owner' | 'manager' | 'editor' | 'viewer';
+};

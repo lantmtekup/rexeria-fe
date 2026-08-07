@@ -1464,7 +1464,13 @@
       "colTier": "Confidence",
       "previewMore": "and {count} more rows in the export.",
       "toastSaveFailed": "Could not save settings",
-      "toastNeedBrand": "Pick a brand first — settings belong to one."
+      "toastNeedBrand": "Pick a brand first — settings belong to one.",
+      "invitePlaceholder": "email of the person to invite",
+      "toastInviteFailed": "Could not invite",
+      "toastInvited": "Invited {email}",
+      "toastRemoveFailed": "Could not remove the member",
+      "removeMember": "Remove from brand",
+      "toastInvitedNoMail": "Created an account for {email} but could NOT send the email. Temporary password: {password} — pass it on and have them change it."
     },
     "media": {
       "title": "Media",

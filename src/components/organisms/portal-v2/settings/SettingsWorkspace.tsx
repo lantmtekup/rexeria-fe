@@ -20,10 +20,17 @@ import {
   validateSettings,
 } from '@/lib/portal-v2/settings/helpers';
 import { cloneSettings } from '@/lib/portal-v2/settings/mock';
-import { saveSettings } from '@/services/portal-v2/settingsData';
+import {
+  inviteMember,
+  removeMember,
+  saveSettings,
+  setMemberRole,
+} from '@/services/portal-v2/settingsData';
 import type {
   SettingsData,
   SettingsTabId,
+  MemberRole,
+  SettingsMember,
 } from '@/lib/portal-v2/settings/types';
 
 type SettingsWorkspaceProps = {
@@ -118,6 +125,66 @@ export const SettingsWorkspace = ({
         toast.success(t('toastSaved'));
       })
       .catch(() => toast.error(t('toastSaveFailed')));
+  };
+
+  /**
+   * Thành viên KHÔNG đi qua nút Save: chúng là bảng riêng ở BE, còn Save chỉ
+   * gửi tài liệu governance. Ba thao tác dưới đây ghi ngay và cập nhật cả hai
+   * bản (`saved` lẫn `draft`) để rời chế độ sửa không nuốt mất thay đổi.
+   */
+  const applyMembers = (next: SettingsMember[]) => {
+    setSaved(prev => ({
+      ...prev,
+      members: next,
+      general: { ...prev.general, seats: next.length },
+    }));
+    setDraft(prev => ({
+      ...prev,
+      members: next,
+      general: { ...prev.general, seats: next.length },
+    }));
+  };
+
+  const handleRoleChange = async (userId: string, role: MemberRole) => {
+    if (!brandId) throw new Error('NO_BRAND');
+    const updated = await setMemberRole(brandId, userId, role);
+    applyMembers(saved.members.map(m => (m.id === updated.id ? updated : m)));
+  };
+
+  const handleInvite = async (email: string, role: MemberRole) => {
+    if (!brandId) {
+      toast.error(t('toastNeedBrand'));
+      return;
+    }
+    const res = await inviteMember(brandId, email, role).catch(() => null);
+    if (!res) {
+      toast.error(t('toastInviteFailed'));
+      return;
+    }
+    applyMembers([...saved.members, res.member]);
+
+    // Có mật khẩu nghĩa là thư KHÔNG gửi được — người mời phải chuyển tay, nên
+    // hiện nó lâu và nói rõ vì sao, thay vì một toast thoáng qua.
+    if (res.generatedPassword) {
+      toast.warning(
+        t('toastInvitedNoMail', { email, password: res.generatedPassword }),
+        { duration: 30_000 }
+      );
+    } else {
+      toast.success(t('toastInvited', { email }));
+    }
+  };
+
+  const handleRemoveMember = async (userId: string) => {
+    if (!brandId) return;
+    const ok = await removeMember(brandId, userId)
+      .then(() => true)
+      .catch(() => false);
+    if (!ok) {
+      toast.error(t('toastRemoveFailed'));
+      return;
+    }
+    applyMembers(saved.members.filter(m => m.id !== userId));
   };
 
   const noop = () => undefined;
@@ -227,6 +294,9 @@ export const SettingsWorkspace = ({
             editing={editing}
             issues={issues}
             onChange={onChange}
+            onRoleChange={handleRoleChange}
+            onInvite={handleInvite}
+            onRemoveMember={handleRemoveMember}
           />
         ) : null}
         {tab === 'data' ? <DataPanel data={data} /> : null}
