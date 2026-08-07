@@ -40,3 +40,30 @@ export const detachExperienceFromItem = (
   experienceId: string
 ): Promise<void> =>
   rexerV2Api.experiences.detachFromItem(campaignId, itemId, experienceId);
+
+/**
+ * Thư viện trải nghiệm để chọn gắn — `GET /v1/experiences`.
+ *
+ * Hộp chọn trước đây liệt kê `MOCK_CAMPAIGN_EXPERIENCES` (Holiday Gift Edit,
+ * The Clean Edit…), một dòng nội dung mỹ phẩm không tồn tại. Gắn một trong số
+ * đó là gửi lên BE một id không có thật.
+ *
+ * Lấy CẢ template lẫn copy: hộp chọn cần template để fork, còn các thẻ đã gắn
+ * cần bản copy để hiện tên.
+ */
+export const fetchCampaignExperienceLibrary = async (
+  brandId: string | null
+): Promise<CampaignExperience[]> => {
+  try {
+    const res = await rexerV2Api.experiences.list({
+      state: 'all',
+      page_size: 100,
+      ...(brandId ? { brand_id: brandId } : {}),
+    });
+    return (res.items ?? [])
+      .filter(x => x.kind !== 'block')
+      .map(toCampaignExperience);
+  } catch {
+    return [];
+  }
+};

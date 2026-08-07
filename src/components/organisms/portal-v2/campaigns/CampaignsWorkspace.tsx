@@ -49,7 +49,6 @@ import {
   bindRouteToItems,
   ensureCampaignExperiences,
   ensureCampaignJourneys,
-  seedExperiences,
   withJourneyLinks,
 } from '@/lib/portal-v2/campaigns/journeyLink';
 
@@ -74,6 +73,8 @@ type CampaignsWorkspaceProps = {
   brandId: string | null;
   /** SKU THẬT của brand — `GET /products`. */
   initialProducts: { id: string; name: string }[];
+  /** Thư viện trải nghiệm THẬT — `GET /experiences`. */
+  initialExperiences: CampaignExperience[];
   /** Nạp hỏng ⇒ nói ra, đừng để đọc như "chưa có chiến dịch nào". */
   initialError?: string | null;
 };
@@ -94,6 +95,7 @@ export const CampaignsWorkspace = ({
   initialJourneys,
   brandId,
   initialProducts,
+  initialExperiences,
   initialError = null,
 }: CampaignsWorkspaceProps) => {
   const t = useTranslations('portalV2.campaigns');
@@ -128,7 +130,13 @@ export const CampaignsWorkspace = ({
     ensureCampaignJourneys(initialJourneys, initialCampaigns)
   );
   const [experiences, setExperiences] = useState<CampaignExperience[]>(() =>
-    ensureCampaignExperiences(seedExperiences(), initialCampaigns, productNames)
+    // Thư viện THẬT. `ensureCampaignExperiences` vẫn chạy để bản copy mà chiến
+    // dịch khai là có nhưng chưa nạp về thì vẫn vẽ được thẻ.
+    ensureCampaignExperiences(
+      initialExperiences,
+      initialCampaigns,
+      productNames
+    )
   );
 
   const [openId, setOpenId] = useState<string | null>(() =>

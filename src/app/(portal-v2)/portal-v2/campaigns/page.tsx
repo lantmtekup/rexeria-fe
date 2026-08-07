@@ -4,6 +4,7 @@ import { readCampaignIdParam } from '@/lib/portal-v2/campaigns/idParam';
 import { withJourneyLinks } from '@/lib/portal-v2/campaigns/journeyLink';
 import { fetchCampaignBoard } from '@/services/portal-v2/campaignBoardV2';
 import { fetchJourneyBoard } from '@/services/portal-v2/journeyBoard';
+import { fetchCampaignExperienceLibrary } from '@/services/portal-v2/campaignExperiences';
 import { fetchProductCatalog } from '@/services/portal-v2/productCatalog';
 import { resolvePortalScope } from '@/services/portal-v2/scope';
 
@@ -18,12 +19,15 @@ export default async function PortalV2CampaignsPage({
   const scope = await resolvePortalScope(params);
   const initialId = readCampaignIdParam(params);
   // Hai nguồn độc lập ⇒ chạy song song; nối tiếp thì thời gian cộng dồn.
-  const [board, journeys, catalog] = await Promise.all([
+  const [board, journeys, catalog, experiences] = await Promise.all([
     fetchCampaignBoard({ brandId: scope.brandId }),
     fetchJourneyBoard({ brandId: scope.brandId }),
     // Hộp "Thêm vào chiến dịch này" phải liệt kê SKU thật của brand — bản
     // trước dùng `MOCK_PRODUCTS`, tức một dòng mỹ phẩm không tồn tại.
     fetchProductCatalog({ brandId: scope.brandId }),
+    // Hộp chọn trải nghiệm phải là thư viện THẬT — bản trước dùng
+    // `MOCK_CAMPAIGN_EXPERIENCES`, tức gắn lên một id không tồn tại.
+    fetchCampaignExperienceLibrary(scope.brandId),
   ]);
 
   return (
@@ -44,6 +48,7 @@ export default async function PortalV2CampaignsPage({
           id: p.id,
           name: p.title,
         }))}
+        initialExperiences={experiences}
         initialError={board.error ?? scope.error}
       />
     </div>
