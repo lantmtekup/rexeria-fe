@@ -1,6 +1,10 @@
-import { v2ToCampaignView } from '@/lib/portal-v2/campaigns/fromV2';
+import {
+  v2ToCampaignItem,
+  v2ToCampaignView,
+} from '@/lib/portal-v2/campaigns/fromV2';
 import type {
   CampaignDraft,
+  CampaignItem,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
@@ -126,3 +130,38 @@ export const deleteCampaigns = async (ids: string[]): Promise<string[]> => {
   );
   return ids.filter((_, i) => results[i]?.status === 'rejected');
 };
+
+/* ── hạng mục ─────────────────────────────────────────────────────────────── */
+
+/**
+ * Hạng mục KHÔNG nằm trong `PUT /campaigns`: `UpdateCampaignV2Request` không có
+ * trường `items`. Thêm một hạng mục rồi lưu chiến dịch sẽ im lặng đánh rơi nó —
+ * đó đúng là chuyện đang xảy ra trước khi ráp bộ này.
+ */
+export const addCampaignItem = async (
+  campaignId: string,
+  kind: 'product' | 'topic',
+  value: string,
+  opts: { due?: string | null } = {}
+): Promise<CampaignItem> => {
+  const created = await rexerV2Api.campaigns.addItem(campaignId, {
+    kind,
+    ...(kind === 'product' ? { product_id: value } : { topic_name: value }),
+    ...(opts.due ? { due_date: opts.due } : {}),
+  });
+  return v2ToCampaignItem(created);
+};
+
+export const setCampaignItemStatus = async (
+  campaignId: string,
+  itemId: string,
+  status: string
+): Promise<CampaignItem> =>
+  v2ToCampaignItem(
+    await rexerV2Api.campaigns.setItemStatus(campaignId, itemId, status)
+  );
+
+export const removeCampaignItem = (
+  campaignId: string,
+  itemId: string
+): Promise<void> => rexerV2Api.campaigns.removeItem(campaignId, itemId);

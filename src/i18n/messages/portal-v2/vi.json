@@ -1251,7 +1251,8 @@
       "toastRouteFailed": "Không gắn được hành trình vào chiến dịch",
       "toastPromoteFailed": "Không đưa được hành trình thành blueprint",
       "needBrandToCreate": "Chọn thương hiệu trước — chiến dịch phải thuộc về một thương hiệu.",
-      "toastCreateNoBrand": "Chưa chọn thương hiệu — chiến dịch phải thuộc về một thương hiệu."
+      "toastCreateNoBrand": "Chưa chọn thương hiệu — chiến dịch phải thuộc về một thương hiệu.",
+      "toastItemAddFailed": "Không thêm được hạng mục"
     },
     "deploy": {
       "title": "Xuất bản",

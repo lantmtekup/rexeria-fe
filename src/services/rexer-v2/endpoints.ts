@@ -25,7 +25,10 @@ import type {
 } from './types/exchange';
 import type {
   RxCampaign,
+  RxCampaignItem,
   RxCampaignItemsResponse,
+  RxCreateCampaignItemRequest,
+  RxUpdateCampaignItemRequest,
   RxCampaignListResponse,
   RxCreateCampaignRequest,
   RxUpdateCampaignRequest,
@@ -263,6 +266,37 @@ export const rexerV2Api = {
 
     items: (campaignId: string) =>
       rxV2<RxCampaignItemsResponse>(`/campaigns/${campaignId}/items`),
+
+    /**
+     * Hạng mục KHÔNG đi qua `PUT /campaigns` — `UpdateCampaignV2Request` không
+     * có trường `items`. Thêm/sửa/xoá đều phải qua bộ endpoint riêng này.
+     */
+    addItem: (campaignId: string, body: RxCreateCampaignItemRequest) =>
+      rxV2<RxCampaignItem>(`/campaigns/${campaignId}/items`, {
+        method: 'POST',
+        body,
+      }),
+
+    updateItem: (
+      campaignId: string,
+      itemId: string,
+      body: RxUpdateCampaignItemRequest
+    ) =>
+      rxV2<RxCampaignItem>(`/campaigns/${campaignId}/items/${itemId}`, {
+        method: 'PUT',
+        body,
+      }),
+
+    setItemStatus: (campaignId: string, itemId: string, status: string) =>
+      rxV2<RxCampaignItem>(`/campaigns/${campaignId}/items/${itemId}/status`, {
+        method: 'PATCH',
+        body: { status },
+      }),
+
+    removeItem: (campaignId: string, itemId: string) =>
+      rxV2<void>(`/campaigns/${campaignId}/items/${itemId}`, {
+        method: 'DELETE',
+      }),
   },
 
   // ── Experiences — thư viện trải nghiệm THẬT, thay cho việc suy từ /pages ──

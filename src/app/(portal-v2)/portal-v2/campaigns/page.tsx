@@ -4,6 +4,7 @@ import { readCampaignIdParam } from '@/lib/portal-v2/campaigns/idParam';
 import { withJourneyLinks } from '@/lib/portal-v2/campaigns/journeyLink';
 import { fetchCampaignBoard } from '@/services/portal-v2/campaignBoardV2';
 import { fetchJourneyBoard } from '@/services/portal-v2/journeyBoard';
+import { fetchProductCatalog } from '@/services/portal-v2/productCatalog';
 import { resolvePortalScope } from '@/services/portal-v2/scope';
 
 type PortalV2CampaignsPageProps = {
@@ -17,9 +18,12 @@ export default async function PortalV2CampaignsPage({
   const scope = await resolvePortalScope(params);
   const initialId = readCampaignIdParam(params);
   // Hai nguồn độc lập ⇒ chạy song song; nối tiếp thì thời gian cộng dồn.
-  const [board, journeys] = await Promise.all([
+  const [board, journeys, catalog] = await Promise.all([
     fetchCampaignBoard({ brandId: scope.brandId }),
     fetchJourneyBoard({ brandId: scope.brandId }),
+    // Hộp "Thêm vào chiến dịch này" phải liệt kê SKU thật của brand — bản
+    // trước dùng `MOCK_PRODUCTS`, tức một dòng mỹ phẩm không tồn tại.
+    fetchProductCatalog({ brandId: scope.brandId }),
   ]);
 
   return (
@@ -36,6 +40,10 @@ export default async function PortalV2CampaignsPage({
         initialCampaigns={withJourneyLinks(board.items, journeys.items)}
         initialJourneys={journeys.items}
         brandId={scope.brandId}
+        initialProducts={catalog.products.map(p => ({
+          id: p.id,
+          name: p.title,
+        }))}
         initialError={board.error ?? scope.error}
       />
     </div>

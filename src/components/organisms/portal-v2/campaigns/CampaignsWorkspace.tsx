@@ -52,10 +52,7 @@ import {
   seedExperiences,
   withJourneyLinks,
 } from '@/lib/portal-v2/campaigns/journeyLink';
-import {
-  CAMPAIGN_PRODUCTS,
-  CAMPAIGN_PRODUCT_NAMES,
-} from '@/lib/portal-v2/campaigns/mock';
+
 import type {
   CampaignExperience,
   CampaignFilters,
@@ -75,6 +72,8 @@ type CampaignsWorkspaceProps = {
   initialJourneys: Journey[];
   /** Brand đang xem. null = admin chưa chọn ⇒ chưa tạo được chiến dịch. */
   brandId: string | null;
+  /** SKU THẬT của brand — `GET /products`. */
+  initialProducts: { id: string; name: string }[];
   /** Nạp hỏng ⇒ nói ra, đừng để đọc như "chưa có chiến dịch nào". */
   initialError?: string | null;
 };
@@ -94,9 +93,19 @@ export const CampaignsWorkspace = ({
   initialCampaigns,
   initialJourneys,
   brandId,
+  initialProducts,
   initialError = null,
 }: CampaignsWorkspaceProps) => {
   const t = useTranslations('portalV2.campaigns');
+
+  /**
+   * `id → tên` của SKU thật. Bản trước dùng `CAMPAIGN_PRODUCT_NAMES` suy từ
+   * mock, nên một hạng mục trỏ tới sản phẩm thật sẽ hiện ra id thô.
+   */
+  const productNames = useMemo(
+    () => Object.fromEntries(initialProducts.map(p => [p.id, p.name])),
+    [initialProducts]
+  );
 
   // Dữ liệu THẬT từ `GET /v1/campaigns`. Danh sách không kèm `items[]` — chỉ
   // `items_count` — nên chi tiết nạp riêng khi mở.
@@ -119,11 +128,7 @@ export const CampaignsWorkspace = ({
     ensureCampaignJourneys(initialJourneys, initialCampaigns)
   );
   const [experiences, setExperiences] = useState<CampaignExperience[]>(() =>
-    ensureCampaignExperiences(
-      seedExperiences(),
-      initialCampaigns,
-      CAMPAIGN_PRODUCT_NAMES
-    )
+    ensureCampaignExperiences(seedExperiences(), initialCampaigns, productNames)
   );
 
   const [openId, setOpenId] = useState<string | null>(() =>
@@ -247,7 +252,7 @@ export const CampaignsWorkspace = ({
         const bound = bindRouteToItems(
           { ...created, journeyId: fork.id },
           experiences,
-          CAMPAIGN_PRODUCT_NAMES,
+          productNames,
           [fork]
         );
         setExperiences(bound.experiences);
@@ -278,7 +283,7 @@ export const CampaignsWorkspace = ({
     setCampaigns(result.list);
     setJourneys(prev => ensureCampaignJourneys(prev, [result.campaign]));
     setExperiences(prev =>
-      ensureCampaignExperiences(prev, [result.campaign], CAMPAIGN_PRODUCT_NAMES)
+      ensureCampaignExperiences(prev, [result.campaign], productNames)
     );
     setSelected([]);
     toast.success(t('toastDuplicated', { name: result.campaign.name }));
@@ -334,7 +339,7 @@ export const CampaignsWorkspace = ({
     const bound = bindRouteToItems(
       { ...open, journeyId: fork.id },
       experiences,
-      CAMPAIGN_PRODUCT_NAMES,
+      productNames,
       [fork]
     );
     setExperiences(bound.experiences);
@@ -344,12 +349,7 @@ export const CampaignsWorkspace = ({
 
   const handleCarryRoute = () => {
     if (!open) return;
-    const bound = bindRouteToItems(
-      open,
-      experiences,
-      CAMPAIGN_PRODUCT_NAMES,
-      journeys
-    );
+    const bound = bindRouteToItems(open, experiences, productNames, journeys);
     setExperiences(bound.experiences);
     handleChange(bound.campaign);
     toast.success(t('toastCarried'));
@@ -415,8 +415,8 @@ export const CampaignsWorkspace = ({
           campaign={open}
           journeys={journeys}
           experiences={experiences}
-          products={CAMPAIGN_PRODUCTS}
-          productNames={CAMPAIGN_PRODUCT_NAMES}
+          products={initialProducts}
+          productNames={productNames}
           today={today}
           onChange={handleChange}
           onBack={() => setOpenId(null)}
@@ -520,7 +520,7 @@ export const CampaignsWorkspace = ({
         ) : filters.view === 'grid' ? (
           <CampaignGrid
             campaigns={visible}
-            productNames={CAMPAIGN_PRODUCT_NAMES}
+            productNames={productNames}
             experiences={experiences}
             journeys={journeys}
             today={today}
@@ -561,7 +561,7 @@ export const CampaignsWorkspace = ({
       {wizardOpen ? (
         <NewCampaignWizard
           owner={CAMPAIGN_TEAM[0]}
-          products={CAMPAIGN_PRODUCTS}
+          products={initialProducts}
           blueprints={journeys.filter(j => j.template)}
           onClose={() => setWizardOpen(false)}
           onCreate={handleCreate}

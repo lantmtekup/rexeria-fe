@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { addCampaignItem } from '@/services/portal-v2/campaignBoardV2';
+
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { cn } from '@/lib/cn';
 import {
@@ -22,7 +24,6 @@ import { RunPhase } from '@/components/organisms/portal-v2/campaigns/detail/RunP
 import { campaignTypeStyle } from '@/lib/portal-v2/campaigns/constants';
 import {
   applyDraft,
-  blankItem,
   deriveStage,
   fmtRange,
   journeyOriginOf,
@@ -184,18 +185,26 @@ export const CampaignDetail = ({
     setItemIndex(null);
   };
 
-  const handleAddItem = (kind: 'product' | 'topic', value: string): void => {
-    const base = blankItem(campaign.items, kind, campaign.endDate);
-    const item: CampaignItem =
-      kind === 'product'
-        ? { ...base, productId: value, owner: campaign.owner }
-        : { ...base, name: value, owner: campaign.owner };
-
-    commit(
-      { ...toDraft(campaign), items: [...campaign.items, item] },
-      t('toastItemAdded')
-    );
+  /**
+   * Thêm hạng mục — gọi `POST /campaigns/{id}/items`.
+   *
+   * KHÔNG đi qua `commit`: `PUT /campaigns` không có trường `items`, nên gộp
+   * vào đó là im lặng đánh rơi hạng mục vừa thêm. Id cũng do server cấp.
+   */
+  const handleAddItem = async (
+    kind: 'product' | 'topic',
+    value: string
+  ): Promise<void> => {
     setAddOpen(false);
+    const item = await addCampaignItem(campaign.id, kind, value, {
+      due: campaign.endDate,
+    }).catch(() => null);
+    if (!item) {
+      toast.error(t('toastItemAddFailed'));
+      return;
+    }
+    onChange({ ...campaign, items: [...campaign.items, item] });
+    toast.success(t('toastItemAdded'));
   };
 
   /**

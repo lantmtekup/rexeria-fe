@@ -89,3 +89,19 @@ export type RxCampaignItemsResponse = {
   items: RxCampaignItem[];
   total: number;
 };
+
+export type RxCreateCampaignItemRequest = {
+  kind: 'product' | 'topic';
+  product_id?: string;
+  topic_name?: string;
+  owner_id?: string | null;
+  due_date?: string | null;
+  note?: string;
+};
+
+/** PUT chỉ nhận owner/due/note — kind và subject không đổi được sau khi tạo. */
+export type RxUpdateCampaignItemRequest = {
+  owner_id?: string | null;
+  due_date?: string | null;
+  note?: string;
+};
