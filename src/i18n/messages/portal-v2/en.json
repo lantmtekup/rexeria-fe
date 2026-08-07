@@ -551,7 +551,8 @@
       "segmentUnmeasured": "No sessions measured for this segment yet — the numbers below do not reflect it.",
       "segmentShare": "{pct}% of measured traffic · {sessions} sessions",
       "personaBehaves": "Behaves like segment {seg}",
-      "toastSaveInvalid": "Not saved — {reasons}"
+      "toastSaveInvalid": "Not saved — {reasons}",
+      "editorSaveBlocked": "Cannot save yet — {reasons}"
     },
     "experiences": {
       "benefitsHeading": "Why it works",

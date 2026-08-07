@@ -859,9 +859,25 @@ export const JourneyEditor = ({
                       : t('editorAutosaveSaved')}
                 </span>
               ) : null}
+              {/*
+                Chặn ngay khi chưa đủ điều kiện, thay vì để đi một vòng tới
+                server rồi nhận 422. `PUT` chạy TOÀN BỘ hợp đồng đồ thị nên một
+                bản nháp thiếu sót chắc chắn bị từ chối; panel Requirements bên
+                phải đã liệt kê sẵn từng mục, `title` chỉ nhắc lại chúng.
+              */}
               <Button
                 size='sm'
-                disabled={autosaveStatus === 'idle' && !isDirty}
+                disabled={
+                  (autosaveStatus === 'idle' && !isDirty) ||
+                  readiness.missing.length > 0
+                }
+                title={
+                  readiness.missing.length > 0
+                    ? t('editorSaveBlocked', {
+                        reasons: readiness.missing.join(' · '),
+                      })
+                    : undefined
+                }
                 onClick={handleSave}
               >
                 {t('editorSave')}

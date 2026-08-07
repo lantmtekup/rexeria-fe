@@ -165,6 +165,14 @@ export const ENTRY_SOURCES: EntrySource[] = [
 export const entrySourceById = (id: string | undefined): EntrySource | null =>
   id ? (ENTRY_SOURCES.find(s => s.id === id) ?? null) : null;
 
+/**
+ * Nguồn vào có hợp lệ không — gương `taxonomy.IsValidEntrySource` bên BE.
+ * Tám id ở đây khớp đúng danh sách đó; lệch một cái là `PUT` trả 422 mà màn
+ * hình không hề báo trước.
+ */
+export const isEntrySource = (id: string | undefined): boolean =>
+  Boolean(id) && ENTRY_SOURCES.some(s => s.id === id);
+
 export type JourneySegment = {
   id: string;
   n: string;

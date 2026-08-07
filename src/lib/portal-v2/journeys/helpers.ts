@@ -12,6 +12,7 @@
 import {
   OUTCOME_FOR_OBJECTIVE,
   segmentById,
+  isEntrySource,
   type JourneySegment,
 } from '@/lib/portal-v2/journeys/constants';
 import type {
@@ -172,7 +173,9 @@ export const validateJourney = (j: Journey): JourneyCheck[] => {
   checks.push({ ok: !cyclic, msg: 'No circular routing' });
 
   checks.push({
-    ok: j.nodes.every(n => n.kind !== 'experience' || Boolean(n.xName)),
+    // BE kiểm `experience_id` (`node.x`), KHÔNG kiểm nhãn: một node có tên
+    // hiển thị mà chưa có id vẫn trượt `experience_ref` ở server.
+    ok: j.nodes.every(n => n.kind !== 'experience' || Boolean(n.x)),
     msg: 'Every experience node links a real experience',
   });
   checks.push({
@@ -184,6 +187,26 @@ export const validateJourney = (j: Journey): JourneyCheck[] => {
       n => !['entry', 'action', 'outcome'].includes(n.kind) || Boolean(n.via)
     ),
     msg: 'Entries, actions and outcomes name their system',
+  });
+
+  /*
+   * Bốn luật dưới đây BE có mà bản này thiếu, nên panel Requirements từng báo
+   * "100% ready" trong khi `PUT` trả 422. Giữ đồng bộ với
+   * `internal/core/journey_validator.go` — đây là bản sao BẮT BUỘC (một bản
+   * nháp chưa lưu thì không hỏi server được), nên lệch một luật là màn hình
+   * nói dối về thứ server sẽ nhận.
+   */
+  checks.push({
+    ok: j.nodes.every(n => n.kind !== 'entry' || isEntrySource(n.src)),
+    msg: 'Every entry names a known source',
+  });
+  checks.push({
+    ok: j.nodes.every(n => n.kind !== 'decision' || n.to.length >= 2),
+    msg: 'Every decision has at least two branches',
+  });
+  checks.push({
+    ok: j.nodes.every(n => n.kind !== 'outcome' || n.to.length === 0),
+    msg: 'An outcome ends the journey — no routes out of it',
   });
 
   return checks;
