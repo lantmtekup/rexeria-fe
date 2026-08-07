@@ -34,6 +34,8 @@ import type {
   RxCreateJourneyRequest,
   RxJourney,
   RxJourneyListResponse,
+  RxJourneyReadiness,
+  RxJourneyStats,
   RxUpdateJourneyRequest,
 } from './types/journey';
 import type { RxIntelSegmentsResponse } from './types/intel';
@@ -193,6 +195,18 @@ export const rexerV2Api = {
 
     duplicate: (journeyId: string) =>
       rxV2<RxJourney>(`/journeys/${journeyId}/duplicate`, { method: 'POST' }),
+
+    /**
+     * `GET /v1/journeys/{id}/readiness` — ba mục ở tầng cao hơn bộ kiểm đồ thị
+     * mà FE tự chạy: hợp đồng có qua không, mọi node trải nghiệm đã resolve
+     * thành fork chưa, và đã có điểm đo chưa.
+     */
+    readiness: (journeyId: string) =>
+      rxV2<RxJourneyReadiness>(`/journeys/${journeyId}/readiness`),
+
+    /** `GET /v1/journeys/{id}/stats` — số ĐO ĐƯỢC của hành trình. */
+    stats: (journeyId: string) =>
+      rxV2<RxJourneyStats>(`/journeys/${journeyId}/stats`),
 
     remove: (journeyId: string) =>
       rxV2<void>(`/journeys/${journeyId}`, { method: 'DELETE' }),

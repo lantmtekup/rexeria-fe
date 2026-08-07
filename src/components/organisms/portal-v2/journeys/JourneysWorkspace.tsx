@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import type { JourneySegment } from '@/lib/portal-v2/journeys/constants';
 import type { PersonaOption } from '@/services/portal-v2/journeyAudience';
 
+import { fetchExperienceRefs } from '@/services/portal-v2/journeyMeasured';
 import {
   saveFailureReasons,
   createJourney as createJourneyApi,
@@ -66,6 +67,8 @@ type JourneysWorkspaceProps = {
   brandId: string | null;
   /** Chân dung khách của brand — `brand_profiles.audience`. */
   personas: PersonaOption[];
+  /** Chiến dịch THẬT — `GET /v1/campaigns`, cho hộp "Use in campaign". */
+  campaigns: { id: string; name: string; stage?: string }[];
   /** Phân khúc hành vi ĐO ĐƯỢC — `GET /v1/intel/segments`. */
   segments: JourneySegment[];
   initialError?: string | null;
@@ -79,6 +82,7 @@ export const JourneysWorkspace = ({
   initialVersions,
   brandId,
   personas,
+  campaigns,
   segments,
   initialError = null,
 }: JourneysWorkspaceProps) => {
@@ -92,6 +96,64 @@ export const JourneysWorkspace = ({
    */
   const versionsRef = useRef<Record<string, number>>(initialVersions);
   const [loadError] = useState<string | null>(initialError);
+
+  /**
+   * Tập id trải nghiệm đang được trỏ tới, ĐÃ dựng thành chuỗi.
+   *
+   * Phụ thuộc theo chuỗi này chứ không theo `journeys`: hiệu ứng bên dưới ghi
+   * nhãn NGƯỢC vào `journeys`, nên lấy cả mảng làm phụ thuộc sẽ tự kích hoạt
+   * lại chính nó mãi.
+   */
+  const linkedExperienceIds = useMemo(
+    () =>
+      [
+        ...new Set(
+          journeys.flatMap(j => j.nodes.flatMap(n => (n.x ? [n.x] : [])))
+        ),
+      ]
+        .sort()
+        .join('|'),
+    [journeys]
+  );
+
+  /**
+   * Nhãn + độ phủ của trải nghiệm mà các node đang trỏ tới.
+   *
+   * Node chỉ giữ `experience_id`; `xName`/`xCoverage` thuộc về THƯ VIỆN. Không
+   * nạp chúng thì luật "Every linked experience has tracking points" đọc một
+   * trường không ai điền, nên VĨNH VIỄN trượt — dấu ✗ đó không thao tác nào
+   * chuyển xanh được.
+   */
+  useEffect(() => {
+    const ids = journeys.flatMap(j => j.nodes.flatMap(n => (n.x ? [n.x] : [])));
+    if (ids.length === 0) return;
+    let alive = true;
+    void fetchExperienceRefs(ids, brandId).then(refs => {
+      if (!alive || Object.keys(refs).length === 0) return;
+      setJourneys(prev =>
+        prev.map(j => ({
+          ...j,
+          nodes: j.nodes.map(n => {
+            const ref = n.x ? refs[n.x] : undefined;
+            return ref
+              ? {
+                  ...n,
+                  xName: ref.name,
+                  ...(ref.coverage !== null ? { xCoverage: ref.coverage } : {}),
+                }
+              : n;
+          }),
+        }))
+      );
+    });
+    return () => {
+      alive = false;
+    };
+    // `journeys` CỐ Ý không nằm trong phụ thuộc: hiệu ứng này ghi nhãn ngược
+    // vào chính nó, nên thêm vào là một vòng lặp vô tận. Tập id đã đại diện đủ
+    // cho thứ cần nạp lại.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brandId, linkedExperienceIds]);
   const [filters, setFilters] = useState<JourneyFilters>(
     JOURNEY_DEFAULT_FILTERS
   );
@@ -189,12 +251,19 @@ export const JourneysWorkspace = ({
       if (!activeId) return;
       // BE tự chặn "một chiến dịch, một hành trình"; không đoán trước ở FE.
       const res = await forkJourneyOntoCampaign(activeId, campaignId).catch(
-        () => null
+        (err: unknown) => {
+          // `use` áp hợp đồng ĐẦY ĐỦ — một bản nháp dở dang bị từ chối kèm
+          // danh sách kiểm. Nói ra từng mục, giống nút Save.
+          const reasons = saveFailureReasons(err);
+          toast.error(
+            reasons.length
+              ? t('toastForkInvalid', { reasons: reasons.join(' · ') })
+              : t('toastForkFailed')
+          );
+          return null;
+        }
       );
-      if (!res) {
-        toast.error(t('toastForkFailed'));
-        return;
-      }
+      if (!res) return;
       versionsRef.current[res.journey.id] = res.version;
       setJourneys(prev => [
         { ...res.journey, campaignName },
@@ -393,6 +462,7 @@ export const JourneysWorkspace = ({
       {overlay?.kind === 'fork' && active ? (
         <ForkJourneyModal
           journey={active}
+          campaigns={campaigns}
           forkedInto={copiesOfJourney(journeys, active).flatMap(c =>
             c.campaign ? [c.campaign] : []
           )}

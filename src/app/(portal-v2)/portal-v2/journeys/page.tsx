@@ -5,6 +5,7 @@ import {
   fetchPersonas,
   fetchSegments,
 } from '@/services/portal-v2/journeyAudience';
+import { fetchCampaignBoard } from '@/services/portal-v2/campaignBoardV2';
 import { fetchJourneyBoard } from '@/services/portal-v2/journeyBoard';
 import { resolvePortalScope } from '@/services/portal-v2/scope';
 
@@ -19,10 +20,12 @@ export default async function PortalV2JourneysPage({
   const scope = await resolvePortalScope(params);
   const initialEditId = readJourneyEditParam(params);
   // Ba nguồn độc lập ⇒ song song.
-  const [board, personas, segments] = await Promise.all([
+  const [board, personas, segments, campaigns] = await Promise.all([
     fetchJourneyBoard({ brandId: scope.brandId }),
     fetchPersonas(scope.brandId),
     fetchSegments(scope.brandId),
+    // "Use in campaign" cần chiến dịch THẬT: fork vào một id bịa là 404.
+    fetchCampaignBoard({ brandId: scope.brandId }),
   ]);
 
   return (
@@ -36,6 +39,11 @@ export default async function PortalV2JourneysPage({
         initialVersions={board.versions}
         brandId={scope.brandId}
         personas={personas}
+        campaigns={campaigns.items.map(c => ({
+          id: c.id,
+          name: c.name,
+          stage: c.status,
+        }))}
         segments={segments}
         initialError={board.error ?? scope.error}
       />

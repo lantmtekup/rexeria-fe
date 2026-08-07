@@ -552,7 +552,8 @@
       "segmentShare": "{pct}% of measured traffic · {sessions} sessions",
       "personaBehaves": "Behaves like segment {seg}",
       "toastSaveInvalid": "Not saved — {reasons}",
-      "editorSaveDraftNote": "Saves fine, but not ready to use — {reasons}"
+      "editorSaveDraftNote": "Saves fine, but not ready to use — {reasons}",
+      "toastForkInvalid": "Not ready to use — {reasons}"
     },
     "experiences": {
       "benefitsHeading": "Why it works",

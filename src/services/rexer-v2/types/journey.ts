@@ -71,3 +71,28 @@ export type RxCreateJourneyRequest = {
 export type RxUpdateJourneyRequest = RxCreateJourneyRequest & {
   version: number;
 };
+
+/** `GET /v1/journeys/{id}/readiness` — BE chấm, KHÔNG phải FE tự tính. */
+export type RxJourneyReadiness = {
+  /** 0..1 */
+  score: number;
+  checks: { id: string; label: string; ok: boolean }[];
+  missing: string[];
+};
+
+/**
+ * `GET /v1/journeys/{id}/stats`.
+ *
+ * `measured: false` ⇒ CHƯA CHẠY, và `reason` nói vì sao
+ * (`insufficient_data`…). Mọi số kèm theo là 0 mặc định — vẽ chúng ra sẽ đọc
+ * như "đã chạy mà không ai đi tới đâu".
+ */
+export type RxJourneyStats = {
+  measured: boolean;
+  reason?: string;
+  sessions: number;
+  completed: number;
+  completion_rate: number;
+  leaks: { node_key?: string; lost?: number }[];
+  confidence_tier: string;
+};
