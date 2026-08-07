@@ -552,7 +552,7 @@
       "segmentShare": "{pct}% traffic đo được · {sessions} phiên",
       "personaBehaves": "Hành xử theo phân khúc {seg}",
       "toastSaveInvalid": "Chưa lưu được — {reasons}",
-      "editorSaveBlocked": "Chưa lưu được — {reasons}"
+      "editorSaveDraftNote": "Lưu được, nhưng chưa đem dùng được — {reasons}"
     },
     "experiences": {
       "benefitsHeading": "Vì sao hiệu quả",

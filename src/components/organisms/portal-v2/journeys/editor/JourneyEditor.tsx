@@ -860,20 +860,20 @@ export const JourneyEditor = ({
                 </span>
               ) : null}
               {/*
-                Chặn ngay khi chưa đủ điều kiện, thay vì để đi một vòng tới
-                server rồi nhận 422. `PUT` chạy TOÀN BỘ hợp đồng đồ thị nên một
-                bản nháp thiếu sót chắc chắn bị từ chối; panel Requirements bên
-                phải đã liệt kê sẵn từng mục, `title` chỉ nhắc lại chúng.
+                Lưu được bản nháp dở dang: `PUT` chỉ còn kiểm phần CẤU TRÚC
+                (`core.StructuralCheckIDs`), phần đủ-điều-kiện dời sang lúc
+                Use/Promote. Chặn nút ở đây sẽ dựng lại đúng cái rào vừa gỡ —
+                thêm một node là không lưu được nữa.
+
+                Panel Requirements vẫn liệt kê thứ còn thiếu; `title` nhắc rằng
+                chúng chặn lúc ĐEM DÙNG, không chặn lúc lưu.
               */}
               <Button
                 size='sm'
-                disabled={
-                  (autosaveStatus === 'idle' && !isDirty) ||
-                  readiness.missing.length > 0
-                }
+                disabled={autosaveStatus === 'idle' && !isDirty}
                 title={
                   readiness.missing.length > 0
-                    ? t('editorSaveBlocked', {
+                    ? t('editorSaveDraftNote', {
                         reasons: readiness.missing.join(' · '),
                       })
                     : undefined

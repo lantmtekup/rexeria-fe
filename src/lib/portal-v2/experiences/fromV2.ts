@@ -1,3 +1,4 @@
+import { formatUpdated } from '@/lib/portal-v2/experiences/helpers';
 import type {
   EvidenceTier,
   ExperienceCategory,
@@ -70,28 +71,6 @@ const stateOf = (x: RxExperience): ExperienceState => {
   return x.subject?.kind === 'topic' ? 'topic' : 'product';
 };
 
-/** `updated_at` → nhãn ngày tuyệt đối, không bao giờ là "3 ngày trước". */
-const updatedLabel = (iso: string): string => {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  return `${String(d.getUTCDate()).padStart(2, '0')} ${
-    [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ][d.getUTCMonth()]
-  } ${d.getUTCFullYear()}`;
-};
-
 const STATUS: PageStatusView[] = ['draft', 'published', 'archived'];
 
 export const v2ToExperienceView = (x: RxExperience): ExperienceView => {
@@ -115,7 +94,7 @@ export const v2ToExperienceView = (x: RxExperience): ExperienceView => {
       ? (x.status as PageStatusView)
       : 'draft',
     summary: x.summary ?? '',
-    updatedLabel: updatedLabel(x.updated_at),
+    updatedLabel: formatUpdated(x.updated_at),
 
     state: stateOf(x),
     category: (x.category === 'blocks'

@@ -4,6 +4,7 @@ import type {
   JourneyNodeKind,
   JourneyStage,
 } from '@/lib/portal-v2/journeys/types';
+import { formatUpdated } from '@/lib/portal-v2/experiences/helpers';
 import type { ExperienceObjective } from '@/lib/portal-v2/experiences/types';
 import type {
   RxCreateJourneyRequest,
@@ -89,7 +90,9 @@ export const v2ToJourney = (
   origin: x.origin_id,
   obj: pick(x.objective, OBJECTIVES) ?? 'lead',
   personaId: x.persona_id,
-  updated: x.updated_at,
+  // Nhãn đã định dạng — UI vẽ thẳng trường này, nên trả ISO thô sẽ hiện
+  // "2026-08-07T09:13:31.944122+07:00" trên thẻ.
+  updated: formatUpdated(x.updated_at),
   tagline: x.tagline ?? '',
   summary: x.summary ?? '',
   // Vắng ⇒ chưa ai đặt ⇒ đọc bộ mặc định. Đừng dựng mảng rỗng, nó mang nghĩa
