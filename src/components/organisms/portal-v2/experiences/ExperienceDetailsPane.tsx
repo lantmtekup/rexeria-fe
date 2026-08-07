@@ -31,9 +31,19 @@ const VEHICLE_LABEL_KEY = {
   microsite: 'vehicleMicrosite',
 } as const;
 
-const CATEGORY_LABEL_KEY = {
-  blocks: 'catBlocks',
-  collection: 'catCollection',
+/** `Block.scope` — who the block belongs to. BLOCK rows only. */
+const SCOPE_LABEL_KEY = {
+  system: 'scopeSystem',
+  brand_private: 'scopeBrandPrivate',
+  brand_team: 'scopeBrandTeam',
+  brand_public: 'scopeBrandPublic',
+} as const;
+
+/** `Block.supported_surfaces` — where the block is allowed to land. */
+const SURFACE_LABEL_KEY = {
+  landing: 'surfaceLanding',
+  ad: 'surfaceAd',
+  curate: 'surfaceCurate',
 } as const;
 
 const ReadRow = ({
@@ -67,6 +77,7 @@ export const ExperienceDetailsPane = ({
   const tone = coverageTone(coverage.pct);
   const toneStyle = COVERAGE_TONE_STYLE[tone];
   const pill = objectivePillStyle(experience.objective);
+  const isBlock = experience.kind === 'block';
 
   return (
     <div className='grid gap-6 md:grid-cols-[minmax(0,1fr)_270px]'>
@@ -147,13 +158,27 @@ export const ExperienceDetailsPane = ({
           <h3 className='mb-1 font-[family-name:var(--pv2-disp)] text-[13px] font-bold tracking-[-0.02em] text-[var(--pv2-ink)]'>
             {t('sectionOrganization')}
           </h3>
+          {/* Same section, different facts. A block knows what it is (type,
+              scope, surfaces, how often it has been used); a page knows where
+              it lives (slug, external URL, vehicle). Neither is shown the
+              other's empty rows. */}
           <div className='divide-y divide-[var(--pv2-hair)]'>
-            <ReadRow label={t('fieldCategory')}>
-              {t(CATEGORY_LABEL_KEY[experience.category])}
+            <ReadRow label={t('fieldKind')}>
+              {t(isBlock ? 'kindBlock' : 'kindPage')}
             </ReadRow>
-            <ReadRow label={t('fieldVehicle')}>
-              {t(VEHICLE_LABEL_KEY[experience.vehicle])}
-            </ReadRow>
+
+            {isBlock ? (
+              <ReadRow label={t('fieldTypeCode')}>
+                <span className='font-mono text-[11.5px]'>
+                  {experience.typeCode ?? '—'}
+                </span>
+              </ReadRow>
+            ) : (
+              <ReadRow label={t('fieldVehicle')}>
+                {t(VEHICLE_LABEL_KEY[experience.vehicle])}
+              </ReadRow>
+            )}
+
             <ReadRow label={t('fieldObjective')}>
               <span
                 className='inline-flex items-center rounded-full px-2 py-[3px] text-[9.5px] font-bold tracking-[0.05em] uppercase'
@@ -162,25 +187,60 @@ export const ExperienceDetailsPane = ({
                 {t(OBJECTIVE_LABEL_KEY[experience.objective])}
               </span>
             </ReadRow>
-            <ReadRow label={t('fieldSlug')}>
-              {experience.slug ? (
-                <span className='font-mono text-[11.5px]'>
-                  /{experience.slug}
-                </span>
-              ) : (
-                <span className='text-[var(--pv2-faint)]'>{t('noSlug')}</span>
-              )}
-            </ReadRow>
-            <ReadRow label={t('fieldStatus')}>
-              {t(STATUS_LABEL_KEY[experience.status])}
-            </ReadRow>
-            {experience.externalUrl ? (
-              <ReadRow label={t('fieldExternal')}>
-                <span className='font-mono text-[11.5px] break-all'>
-                  {experience.externalUrl}
-                </span>
-              </ReadRow>
-            ) : null}
+
+            {isBlock ? (
+              <>
+                {experience.scope ? (
+                  <ReadRow label={t('fieldScope')}>
+                    {t(SCOPE_LABEL_KEY[experience.scope])}
+                  </ReadRow>
+                ) : null}
+                <ReadRow label={t('fieldSurfaces')}>
+                  {experience.supportedSurfaces?.length ? (
+                    experience.supportedSurfaces
+                      .map(s => t(SURFACE_LABEL_KEY[s]))
+                      .join(' · ')
+                  ) : (
+                    <span className='text-[var(--pv2-faint)]'>
+                      {t('surfacesNone')}
+                    </span>
+                  )}
+                </ReadRow>
+                <ReadRow label={t('fieldUsage')}>
+                  {t('blockUsageCount', { count: experience.usageCount ?? 0 })}
+                </ReadRow>
+                {experience.tags?.length ? (
+                  <ReadRow label={t('fieldTags')}>
+                    {experience.tags.join(' · ')}
+                  </ReadRow>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <ReadRow label={t('fieldSlug')}>
+                  {experience.slug ? (
+                    <span className='font-mono text-[11.5px]'>
+                      /{experience.slug}
+                    </span>
+                  ) : (
+                    <span className='text-[var(--pv2-faint)]'>
+                      {t('noSlug')}
+                    </span>
+                  )}
+                </ReadRow>
+                <ReadRow label={t('fieldStatus')}>
+                  {t(STATUS_LABEL_KEY[experience.status])}
+                </ReadRow>
+                {experience.externalUrl ? (
+                  <ReadRow label={t('fieldExternal')}>
+                    <span className='font-mono text-[11.5px] break-all'>
+                      {experience.externalUrl}
+                    </span>
+                  </ReadRow>
+                ) : null}
+              </>
+            )}
+
             <ReadRow label={t('fieldUpdated')}>
               {experience.updatedLabel}
             </ReadRow>

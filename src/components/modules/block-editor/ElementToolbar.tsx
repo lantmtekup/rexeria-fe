@@ -134,6 +134,30 @@ import {
   resolveScrollImgScaleItems,
 } from './blocks/_registry/defs/scrollImgScale';
 import {
+  LETTER_SLIDER_DEFAULT_SLIDES,
+  resolveLetterSliderSlides,
+} from './blocks/_registry/defs/letterSlider';
+import {
+  CG_MODULAR_SLIDER_DEFAULT_SLIDES,
+  resolveCgModularSliderSlides,
+} from './blocks/_registry/defs/cgModularSlider';
+import {
+  CG_RESPONSIVE_TEAM_DEFAULT_MEMBERS,
+  resolveCgResponsiveTeamMembers,
+} from './blocks/_registry/defs/cgResponsiveTeam';
+import {
+  CG_3D_SLIDER_DEFAULT_SLIDES,
+  resolveCg3dSliderSlides,
+} from './blocks/_registry/defs/cg3dSlider';
+import {
+  CG_RADGA_HORIZONTAL_DEFAULT_SLIDES,
+  resolveCgRadgaHorizontalSlides,
+} from './blocks/_registry/defs/cgRadgaHorizontal';
+import {
+  CG_PAGE_TRANSITIONS_DEFAULT_PAGES,
+  resolveCgPageTransitionsPages,
+} from './blocks/_registry/defs/cgPageTransitions';
+import {
   FRAMER_IGNITEX_STEP_BLANK_CARD,
   resolveFramerIgnitexStepCards,
 } from './blocks/_registry/defs/framerIgnitexStep';
@@ -209,6 +233,18 @@ import {
   type SustainitExpertiseItem,
   type ScrollImgScaleContent,
   type ScrollImgScaleItem,
+  type LetterSliderContent,
+  type LetterSliderSlide,
+  type CgModularSliderContent,
+  type CgModularSliderSlide,
+  type CgResponsiveTeamContent,
+  type CgResponsiveTeamMember,
+  type Cg3dSliderContent,
+  type Cg3dSliderSlide,
+  type CgRadgaHorizontalContent,
+  type CgRadgaHorizontalSlide,
+  type CgPageTransitionsContent,
+  type CgPageTransitionsPage,
   type FramerIgnitexStepCard,
   type FramerIgnitexStepContent,
   type FramerClarityServiceItem,
@@ -867,6 +903,42 @@ export function ElementToolbar({
         {kind === 'scrollImgScaleItems' && (
           <ScrollImgScaleItemsControls
             content={content as ScrollImgScaleContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'letterSliderSlides' && (
+          <LetterSliderSlidesControls
+            content={content as LetterSliderContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'cgModularSliderSlides' && (
+          <CgModularSliderSlidesControls
+            content={content as CgModularSliderContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'cgResponsiveTeamMembers' && (
+          <CgResponsiveTeamMembersControls
+            content={content as CgResponsiveTeamContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'cg3dSliderSlides' && (
+          <Cg3dSliderSlidesControls
+            content={content as Cg3dSliderContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'cgRadgaHorizontalSlides' && (
+          <CgRadgaHorizontalSlidesControls
+            content={content as CgRadgaHorizontalContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'cgPageTransitionsPages' && (
+          <CgPageTransitionsPagesControls
+            content={content as CgPageTransitionsContent}
             onContentChange={onContentChange}
           />
         )}
@@ -5617,6 +5689,387 @@ function CoolHunterGalleryItemsControls({
   );
 }
 
+// ─────────────────────────────────────────── LETTER SLIDER SLIDES
+
+function LetterSliderSlidesControls({
+  content,
+  onContentChange,
+}: {
+  content: LetterSliderContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const slides = resolveLetterSliderSlides(content);
+
+  const write = (
+    updater: (list: LetterSliderSlide[]) => LetterSliderSlide[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as LetterSliderContent;
+      const current = resolveLetterSliderSlides(c);
+      return { ...c, slides: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<LetterSliderSlide>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (slides.length <= 1) {
+      toast.error('Cần ít nhất 1 slide');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        title: 'new product',
+        imageUrl: LETTER_SLIDER_DEFAULT_SLIDES[0]?.imageUrl ?? '',
+        imageAlt: '',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách slide'
+      preview={`${slides.length} slide`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {slides.map((slide, i) => (
+          <div
+            key={`ls-slide-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Slide {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={slides.length <= 1}
+                aria-label={`Xoá slide ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={slide.title ?? ''}
+              onChange={e => update(i, { title: e.target.value })}
+              placeholder='Tên sản phẩm'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={slide.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm slide' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── CG MODULAR SLIDER SLIDES
+
+function CgModularSliderSlidesControls({
+  content,
+  onContentChange,
+}: {
+  content: CgModularSliderContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const slides = resolveCgModularSliderSlides(content);
+
+  const write = (
+    updater: (list: CgModularSliderSlide[]) => CgModularSliderSlide[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as CgModularSliderContent;
+      const current = resolveCgModularSliderSlides(c);
+      return { ...c, slides: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<CgModularSliderSlide>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (slides.length <= 1) {
+      toast.error('Cần ít nhất 1 slide');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        title: 'New Slide',
+        imageUrl: CG_MODULAR_SLIDER_DEFAULT_SLIDES[0]?.imageUrl ?? '',
+        imageAlt: '',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách slide'
+      preview={`${slides.length} slide`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {slides.map((slide, i) => (
+          <div
+            key={`cms-slide-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Slide {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={slides.length <= 1}
+                aria-label={`Xoá slide ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={slide.title ?? ''}
+              onChange={e => update(i, { title: e.target.value })}
+              placeholder='Tiêu đề'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={slide.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm slide' />
+    </PopoverTrigger>
+  );
+}
+
+function CgResponsiveTeamMembersControls({
+  content,
+  onContentChange,
+}: {
+  content: CgResponsiveTeamContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const members = resolveCgResponsiveTeamMembers(content);
+
+  const write = (
+    updater: (list: CgResponsiveTeamMember[]) => CgResponsiveTeamMember[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as CgResponsiveTeamContent;
+      const current = resolveCgResponsiveTeamMembers(c);
+      return { ...c, members: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<CgResponsiveTeamMember>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (members.length <= 1) {
+      toast.error('Cần ít nhất 1 thành viên');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        name: 'New Member',
+        role: 'Role',
+        imageUrl: CG_RESPONSIVE_TEAM_DEFAULT_MEMBERS[0]?.imageUrl ?? '',
+        imageAlt: '',
+        bgColor:
+          CG_RESPONSIVE_TEAM_DEFAULT_MEMBERS[
+            list.length % CG_RESPONSIVE_TEAM_DEFAULT_MEMBERS.length
+          ]?.bgColor,
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách thành viên'
+      preview={`${members.length} thành viên`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {members.map((member, i) => (
+          <div
+            key={`crt-member-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                TV {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={members.length <= 1}
+                aria-label={`Xoá thành viên ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={member.name ?? ''}
+              onChange={e => update(i, { name: e.target.value })}
+              placeholder='Tên'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={member.role ?? ''}
+              onChange={e => update(i, { role: e.target.value })}
+              placeholder='Vai trò'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={member.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm thành viên' />
+    </PopoverTrigger>
+  );
+}
+
+function Cg3dSliderSlidesControls({
+  content,
+  onContentChange,
+}: {
+  content: Cg3dSliderContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const slides = resolveCg3dSliderSlides(content);
+
+  const write = (updater: (list: Cg3dSliderSlide[]) => Cg3dSliderSlide[]) => {
+    onContentChange(prev => {
+      const c = prev as Cg3dSliderContent;
+      const current = resolveCg3dSliderSlides(c);
+      return { ...c, slides: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<Cg3dSliderSlide>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (slides.length <= 1) {
+      toast.error('Cần ít nhất 1 slide');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        title: 'New Slide',
+        imageUrl: CG_3D_SLIDER_DEFAULT_SLIDES[0]?.imageUrl ?? '',
+        imageAlt: '',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách slide'
+      preview={`${slides.length} slide`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {slides.map((slide, i) => (
+          <div
+            key={`c3d-slide-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Slide {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={slides.length <= 1}
+                aria-label={`Xoá slide ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={slide.title ?? ''}
+              onChange={e => update(i, { title: e.target.value })}
+              placeholder='Tiêu đề'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={slide.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm slide' />
+    </PopoverTrigger>
+  );
+}
+
 // ─────────────────────────────────────────── SCROLL IMG SCALE ITEMS
 
 function ScrollImgScaleItemsControls({
@@ -5713,6 +6166,206 @@ function ScrollImgScaleItemsControls({
         ))}
       </div>
       <AddRow onAdd={add} label='Thêm mục' />
+    </PopoverTrigger>
+  );
+}
+
+function CgRadgaHorizontalSlidesControls({
+  content,
+  onContentChange,
+}: {
+  content: CgRadgaHorizontalContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const slides = resolveCgRadgaHorizontalSlides(content);
+
+  const write = (
+    updater: (list: CgRadgaHorizontalSlide[]) => CgRadgaHorizontalSlide[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as CgRadgaHorizontalContent;
+      const current = resolveCgRadgaHorizontalSlides(c);
+      return { ...c, slides: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<CgRadgaHorizontalSlide>) =>
+    write(list =>
+      list.map((slide, idx) => (idx === i ? { ...slide, ...patch } : slide))
+    );
+
+  const remove = (i: number) => {
+    if (slides.length <= 1) {
+      toast.error('Cần ít nhất 1 slide');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        titleLine1: 'New Title',
+        titleLine2: 'Subtitle',
+        imageUrl: CG_RADGA_HORIZONTAL_DEFAULT_SLIDES[0]?.imageUrl ?? '',
+        imageAlt: '',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách slide'
+      preview={`${slides.length} slide`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {slides.map((slide, i) => (
+          <div
+            key={`crh-slide-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Slide {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={slides.length <= 1}
+                aria-label={`Xoá slide ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={slide.titleLine1 ?? ''}
+              onChange={e => update(i, { titleLine1: e.target.value })}
+              placeholder='Dòng tiêu đề 1'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={slide.titleLine2 ?? ''}
+              onChange={e => update(i, { titleLine2: e.target.value })}
+              placeholder='Dòng tiêu đề 2'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={slide.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+            <Input
+              value={slide.imageAlt ?? ''}
+              onChange={e => update(i, { imageAlt: e.target.value })}
+              placeholder='Alt ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm slide' />
+    </PopoverTrigger>
+  );
+}
+
+// ───────────────────────────────────────── CG PAGE TRANSITIONS · PAGES
+
+function CgPageTransitionsPagesControls({
+  content,
+  onContentChange,
+}: {
+  content: CgPageTransitionsContent;
+  onContentChange: (
+    next: BlockContent | ((prev: BlockContent) => BlockContent)
+  ) => void;
+}) {
+  const pages = resolveCgPageTransitionsPages(content);
+
+  const write = (
+    updater: (list: CgPageTransitionsPage[]) => CgPageTransitionsPage[]
+  ) => {
+    onContentChange(prev => {
+      const c = prev as CgPageTransitionsContent;
+      const current = resolveCgPageTransitionsPages(c);
+      return { ...c, pages: updater(current) } as BlockContent;
+    });
+  };
+
+  const update = (i: number, patch: Partial<CgPageTransitionsPage>) =>
+    write(list =>
+      list.map((page, idx) => (idx === i ? { ...page, ...patch } : page))
+    );
+
+  const remove = (i: number) => {
+    if (pages.length <= 1) {
+      toast.error('Cần ít nhất 1 trang');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  const add = () =>
+    write(list => [
+      ...list,
+      {
+        navLabel: 'Page',
+        title: CG_PAGE_TRANSITIONS_DEFAULT_PAGES[0]?.title ?? 'Index',
+      },
+    ]);
+
+  return (
+    <PopoverTrigger
+      label='Danh sách trang'
+      preview={`${pages.length} trang`}
+      width={360}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {pages.map((page, i) => (
+          <div
+            key={`cpt-page-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center justify-between gap-2'>
+              <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+                Trang {i + 1}
+              </span>
+              <button
+                type='button'
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                disabled={pages.length <= 1}
+                aria-label={`Xoá trang ${i + 1}`}
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Input
+              value={page.navLabel ?? ''}
+              onChange={e => update(i, { navLabel: e.target.value })}
+              placeholder='Nav label'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <Input
+              value={page.title ?? ''}
+              onChange={e => update(i, { title: e.target.value })}
+              placeholder='Tiêu đề hero'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm trang' />
     </PopoverTrigger>
   );
 }

@@ -1,15 +1,20 @@
+import type { BlockCategory } from '@/components/modules/block-editor/types';
+import {
+  BLOCK_CATEGORY_LABEL,
+  BLOCK_CATEGORY_ORDER,
+} from '@/lib/block-type-catalog';
 import type {
   EvidenceTier,
-  ExperienceCategory,
   ExperienceDetailTab,
   ExperienceFilters,
   ExperienceInteraction,
   ExperienceObjective,
-  ExperienceState,
+  ExperienceTab,
   ExperienceVehicle,
   FunnelRole,
   LayerComponentKey,
 } from '@/lib/portal-v2/experiences/types';
+import type { BlockSurface } from '@/services/rexer/types';
 
 /**
  * THE SPINE — prototype `DATA.expObjs` (~L5511).
@@ -30,27 +35,56 @@ export const OBJECTIVE_ROLE: Record<ExperienceObjective, FunnelRole> = {
 };
 
 /**
- * Prototype `XSTATES` + All (~L16071) — the page's primary navigation.
- * Ownership (template vs copy) is orthogonal to Category / Type / Objective.
+ * THE NAVIGATION — prototype `XSTATES` + All (~L16071), plus Blocks.
+ *
+ * One row, read left to right as the library widens then turns a corner:
+ * everything → the three page ownership states → the block half. Blocks sit at
+ * the end rather than on a row of their own because the axes never overlap: a
+ * block has `scope`, not template-vs-copy, so no tab has to express both.
+ *
+ * `all` genuinely means all — pages AND blocks.
  */
-export const EXPERIENCE_STATES: {
-  id: ExperienceState | 'all';
+export const EXPERIENCE_TABS: {
+  id: ExperienceTab;
   labelKey: string;
 }[] = [
   { id: 'all', labelKey: 'stateAll' },
   { id: 'template', labelKey: 'stateTemplate' },
   { id: 'product', labelKey: 'stateProduct' },
   { id: 'topic', labelKey: 'stateTopic' },
+  { id: 'block', labelKey: 'tabBlocks' },
 ];
 
-/** `DATA.expCategories` (~L5480) — what KIND of artifact this is. */
-export const EXPERIENCE_CATEGORIES: {
-  id: ExperienceCategory | 'all';
+/**
+ * Block categories — BLOCK axis.
+ *
+ * Derived from the shared catalog so this list can never drift from the one
+ * `/admin/blocks` filters by. Labels come from `BLOCK_CATEGORY_LABEL` and are
+ * proper nouns ("Hero", "FAQ"), so they are passed through as `label` rather
+ * than routed through i18n like the seeded axes.
+ */
+export const EXPERIENCE_BLOCK_CATEGORIES: {
+  id: BlockCategory | 'all';
+  /** Pre-resolved label; `labelKey` is set only for the `all` entry. */
+  label?: string;
+  labelKey?: string;
+}[] = [
+  { id: 'all', labelKey: 'blockCatAny' },
+  ...BLOCK_CATEGORY_ORDER.map(id => ({
+    id,
+    label: BLOCK_CATEGORY_LABEL[id],
+  })),
+];
+
+/** Where a block is allowed to land — `Block.supported_surfaces`. BLOCK axis. */
+export const EXPERIENCE_SURFACES: {
+  id: BlockSurface | 'all';
   labelKey: string;
 }[] = [
-  { id: 'all', labelKey: 'catAny' },
-  { id: 'blocks', labelKey: 'catBlocks' },
-  { id: 'collection', labelKey: 'catCollection' },
+  { id: 'all', labelKey: 'surfaceAny' },
+  { id: 'landing', labelKey: 'surfaceLanding' },
+  { id: 'ad', labelKey: 'surfaceAd' },
+  { id: 'curate', labelKey: 'surfaceCurate' },
 ];
 
 /** `DATA.expCats` (~L5497) — the vehicle. */
@@ -163,9 +197,59 @@ export const FUNNEL_ORDER: FunnelRole[] = ['ATT', 'EDU', 'EXP', 'TRU', 'CON'];
 
 export const EXPERIENCE_DEFAULT_FILTERS: ExperienceFilters = {
   q: '',
-  state: 'all',
-  category: 'all',
+  tab: 'all',
   vehicle: 'all',
   objective: 'all',
   ev: 'all',
+  blockCat: 'all',
+  surface: 'all',
 };
+
+/** Which `ExperienceFilters` key a Refine chip row writes to. */
+export type RefineAxis =
+  | 'vehicle'
+  | 'objective'
+  | 'ev'
+  | 'blockCat'
+  | 'surface';
+
+export type RefineFacet = {
+  key: RefineAxis;
+  /** i18n key for the row's uppercase label. */
+  labelKey: string;
+  options: { id: string; label?: string; labelKey?: string }[];
+};
+
+/**
+ * The Refine drawer, per tab.
+ *
+ * The Blocks tab swaps the whole facet set for the two axes a block actually
+ * has on the wire — its catalog category and the surfaces it is allowed on —
+ * so it is never offered "Kiểu: Microsite", which for a block would be a chip
+ * with nothing behind it.
+ *
+ * Every other tab (including `all`) keeps the shared axes. Those are seeded,
+ * and blocks are seeded through the same helpers as pages, so narrowing by
+ * objective or evidence on the All tab is meaningful for both halves.
+ */
+export const REFINE_FACETS_SHARED: RefineFacet[] = [
+  { key: 'vehicle', labelKey: 'filterVehicle', options: EXPERIENCE_VEHICLES },
+  {
+    key: 'objective',
+    labelKey: 'filterObjective',
+    options: EXPERIENCE_OBJECTIVES,
+  },
+  { key: 'ev', labelKey: 'filterEvidence', options: EXPERIENCE_EVIDENCE },
+];
+
+export const REFINE_FACETS_BLOCK: RefineFacet[] = [
+  {
+    key: 'blockCat',
+    labelKey: 'filterBlockCategory',
+    options: EXPERIENCE_BLOCK_CATEGORIES,
+  },
+  { key: 'surface', labelKey: 'filterSurface', options: EXPERIENCE_SURFACES },
+];
+
+export const refineFacetsFor = (tab: ExperienceTab): RefineFacet[] =>
+  tab === 'block' ? REFINE_FACETS_BLOCK : REFINE_FACETS_SHARED;

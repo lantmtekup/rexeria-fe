@@ -71,6 +71,7 @@ export const mapPageToExperience = (page: Page): ExperienceView => {
   return {
     // ── real ──────────────────────────────────────────────────────────────
     id,
+    kind: 'page',
     name: page.name?.trim() || 'Untitled',
     slug: page.slug?.trim() || null,
     templateVersionId: page.template_version_id || null,
@@ -82,7 +83,6 @@ export const mapPageToExperience = (page: Page): ExperienceView => {
 
     // ── seeded ────────────────────────────────────────────────────────────
     state: seedState(id),
-    category: 'collection',
     vehicle: seedVehicle(id),
     objective,
     role: roleOf(objective),

@@ -32,11 +32,6 @@ type ExperienceDetailModalProps = {
   onEdit: (experience: ExperienceView) => void;
 };
 
-const CATEGORY_LABEL_KEY = {
-  blocks: 'catBlocks',
-  collection: 'catCollection',
-} as const;
-
 const VEHICLE_LABEL_KEY = {
   curated: 'vehicleCurated',
   ads: 'vehicleAds',
@@ -125,11 +120,16 @@ export const ExperienceDetailModal = ({
   const previewable = canPreview(experience);
   const editable = canEditCanvas(experience);
 
+  /* Kind first, then the axis that kind is actually classified on. */
   const subtitleParts = [
-    t(CATEGORY_LABEL_KEY[experience.category]),
-    t(VEHICLE_LABEL_KEY[experience.vehicle]),
+    t(experience.kind === 'block' ? 'kindBlock' : 'kindPage'),
+    experience.kind === 'block'
+      ? (experience.typeLabel ?? experience.typeCode)
+      : t(VEHICLE_LABEL_KEY[experience.vehicle]),
     t(OBJECTIVE_LABEL_KEY[experience.objective]),
-  ].join(' · ');
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   /* Never "0 post-click sessions" — a record with no rows has no number. */
   const subtitle = stats

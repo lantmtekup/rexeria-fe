@@ -20,11 +20,67 @@ import {
 import {
   BROWN,
   FONT_HEADING,
-  RE_CONTENT_W,
   RE_SECTION_GAP,
   SAND,
   FONT_CSS,
 } from './realEstateFonts';
+import { useContainerMobile } from './useContainerMobile';
+
+/**
+ * Hai tier layout. `mobile` (<672 = CONTAINER_MOBILE_BREAKPOINT) giữ nguyên số
+ * `cqi` transcribe từ canvas Framer 372px, chỉ khác là cột chạy full bề rộng
+ * khung thay vì kẹp ở `RE_CONTENT_W` — bản kẹp để lại 2 dải nền sand hai bên ở
+ * khung 390 (đồng bộ `RealEstateHero` / `RealEstateLocation`). Vì cột = khung
+ * nên `cqi` scale theo khung: ở 390 là ×1.048, giữ đúng mọi tỉ lệ gốc.
+ *
+ * `wide` (≥672) nới cột + rescale, đổi lưới sang 3×2 (6 hạng mục). Title bỏ
+ * ngắt dòng cứng (`\n` → space) để một dòng tự nhiên. `cqi` đo theo bề rộng
+ * BLOCK (834/1440) nên khai `clamp(min, N·cqi, max)` với
+ * `N = maxPx / 1440 * 100`.
+ *
+ * Phải nhánh bằng JS chứ không phải `@container (...) { ... !important }`:
+ * style ở đây đi qua `composeStyle(base, styleOf(key))` để override của user
+ * trên canvas thắng base — `!important` sẽ thắng luôn `styleOf()`.
+ */
+const TIER = {
+  mobile: {
+    section: {
+      paddingTop: RE_SECTION_GAP,
+      paddingBottom: RE_SECTION_GAP,
+    } as React.CSSProperties,
+    innerW: '83.3cqi',
+    contentMax: 'none' as const,
+    cols: 2,
+    title: '6.18cqi', // 23px @372
+    gridMt: '10.75cqi', // ~40px
+    gapX: '0px',
+    gapY: '11.8cqi', // ~44px
+    icon: '37.4cqi', // ~139px
+    text: '3.23cqi', // ~12px
+    textMt: '4.3cqi', // ~16px
+    // Giữ `\n` trong content — canvas gốc cắt title 2 dòng.
+    titlePreLine: true,
+  },
+  wide: {
+    section: {
+      paddingTop: 'clamp(40px, 3.5cqi, 56px)',
+      paddingBottom: 'clamp(88px, 8.3cqi, 120px)',
+      paddingInline: 'clamp(24px, 5.5cqi, 80px)',
+    } as React.CSSProperties,
+    innerW: '100%',
+    contentMax: 1120,
+    cols: 3,
+    title: 'clamp(28px, 2.9cqi, 42px)',
+    gridMt: 'clamp(40px, 3.5cqi, 56px)',
+    gapX: 'clamp(24px, 2.5cqi, 40px)',
+    gapY: 'clamp(40px, 3.5cqi, 64px)',
+    icon: 'clamp(88px, 7.5cqi, 128px)',
+    text: 'clamp(14px, 1.11cqi, 16px)',
+    textMt: 'clamp(14px, 1.25cqi, 20px)',
+    // Soft-wrap tự nhiên — không ép xuống dòng theo `\n` của bản mobile.
+    titlePreLine: false,
+  },
+} as const;
 
 export function RealEstateOverview({
   content,
@@ -36,6 +92,9 @@ export function RealEstateOverview({
   className,
 }: BlockRenderProps<RealEstateOverviewContent>) {
   const rootRef = React.useRef<HTMLDivElement>(null);
+  const isMobile = useContainerMobile(rootRef);
+  const tier = isMobile ? TIER.mobile : TIER.wide;
+  const cols = tier.cols;
 
   // Cùng resolver với panel Lớp + list manager → canvas không lệch với danh
   // sách hạng mục người dùng thấy khi thêm/xoá.
@@ -43,6 +102,12 @@ export function RealEstateOverview({
     () => resolveRealEstateOverviewStats(content),
     [content]
   );
+
+  // Wide: `\n` trong default content chỉ phục vụ mobile 2 dòng — đổi thành
+  // space để title một dòng tự nhiên. Mobile giữ nguyên để khớp canvas gốc.
+  const titleText = tier.titlePreLine
+    ? content.title
+    : (content.title ?? '').replace(/\s*\n\s*/g, ' ').trim();
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -82,11 +147,11 @@ export function RealEstateOverview({
       );
 
       // Mỗi card có ScrollTrigger riêng → xuất hiện lần lượt khi cuộn tới,
-      // không bung cả lưới một lượt. Grid 2 cột nên lệch nhẹ theo cột.
+      // không bung cả lưới một lượt. Lệch nhẹ theo cột trong hàng.
       cards.forEach((card, i) => {
         // Lệch cột phải bằng POSITION PARAMETER trong timeline, không dùng
         // `delay`: tween của ScrollTrigger bị tạo ở trạng thái paused nên delay
-        // đã trôi hết trước khi cuộn tới → 2 card cùng hàng bung đồng thời.
+        // đã trôi hết trước khi cuộn tới → card cùng hàng bung đồng thời.
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: card,
@@ -101,7 +166,7 @@ export function RealEstateOverview({
           card,
           { opacity: 0, y: 24 },
           { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' },
-          (i % 2) * 0.12
+          (i % cols) * 0.12
         );
       });
 
@@ -113,7 +178,7 @@ export function RealEstateOverview({
       // Dựng lại khi số hạng mục đổi (thêm/xoá trong list manager): card mới nằm
       // ngoài NodeList đã query nên không có ScrollTrigger, sẽ đứng im.
     },
-    [stats.length]
+    [stats.length, cols]
   );
 
   return (
@@ -127,22 +192,27 @@ export function RealEstateOverview({
     >
       <style>{FONT_CSS}</style>
 
-      <div className='@container mx-auto' style={{ width: RE_CONTENT_W }}>
+      <div className='@container mx-auto' style={{ width: '100%' }}>
         <div
-          className='mx-auto w-[83.3cqi]'
-          style={{ paddingTop: RE_SECTION_GAP, paddingBottom: RE_SECTION_GAP }}
+          className='mx-auto'
+          style={{
+            ...tier.section,
+            width: tier.innerW,
+            maxWidth: tier.contentMax,
+          }}
         >
           <h2
             data-appear='title'
             data-element-key='title'
             className={cn(
               selectableClass(activeKey === 'title'),
-              'text-center whitespace-pre-line'
+              'text-center',
+              tier.titlePreLine && 'whitespace-pre-line'
             )}
             style={composeStyle(
               {
                 fontFamily: FONT_HEADING,
-                fontSize: '6.18cqi',
+                fontSize: tier.title,
                 lineHeight: 1.372,
                 color: BROWN,
                 fontWeight: 400,
@@ -150,13 +220,15 @@ export function RealEstateOverview({
               styleOf('title')
             )}
           >
-            {content.title}
+            {titleText}
           </h2>
 
           <div
-            className='grid grid-cols-2 gap-x-0 gap-y-[11.8cqi]'
+            className={cn('grid', cols === 3 ? 'grid-cols-3' : 'grid-cols-2')}
             style={{
-              marginTop: '10.75cqi',
+              marginTop: tier.gridMt,
+              columnGap: tier.gapX,
+              rowGap: tier.gapY,
             }}
           >
             {stats.map((stat, i) => {
@@ -177,7 +249,7 @@ export function RealEstateOverview({
                     className={selectableClass(activeKey === iconKey)}
                     style={composeStyle(
                       {
-                        width: '37.4cqi',
+                        width: tier.icon,
                         height: 'auto',
                         objectFit: 'contain',
                       },
@@ -194,11 +266,11 @@ export function RealEstateOverview({
                     style={composeStyle(
                       {
                         fontFamily: FONT_HEADING,
-                        fontSize: '3.23cqi',
+                        fontSize: tier.text,
                         lineHeight: 1.479,
                         color: BROWN,
                         fontWeight: 400,
-                        marginTop: '4.3cqi',
+                        marginTop: tier.textMt,
                       },
                       styleOf(textKey)
                     )}

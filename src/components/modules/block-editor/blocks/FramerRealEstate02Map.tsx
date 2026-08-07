@@ -20,6 +20,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useContainerMobile } from './useContainerMobile';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface Props {
@@ -42,6 +43,32 @@ const MARKER_BOB_DISTANCE = 5;
 const MARKER_BOB_DURATION = 1.05;
 const MARKER_BOB_EASE = 'sine.inOut';
 
+/**
+ * Hai tier layout. `mobile` (<672) giữ nguyên card Framer gốc 375×359: ảnh bản đồ
+ * `contain` full-bleed cùng aspect, marker "R" overlay bập bênh ở % cố định.
+ *
+ * `wide` (≥672): card nở tới 1440 theo aspect 1440/720 (panorama thấp hơn — không
+ * scale thẳng 375/359 lên 1440 vì card cao ~1379px). Ảnh chuyển `cover` để lấp
+ * card; marker % giữ nguyên trên card.
+ *
+ * Clamp `N = maxPx / 1440 * 100`.
+ */
+const TIER = {
+  mobile: {
+    // 100% — fill frame mobile 390 (không khóa 375 → hở olive 2 mép).
+    cardMaxWidth: '100%',
+    cardAspect: '375 / 359',
+    cardMinHeight: '0px',
+    mapObjectFit: 'contain' as const,
+  },
+  wide: {
+    cardMaxWidth: '1440px',
+    cardAspect: '1440 / 720',
+    cardMinHeight: 'clamp(360px, 50cqi, 720px)',
+    mapObjectFit: 'cover' as const,
+  },
+} as const;
+
 const ROOT_STYLE: React.CSSProperties = {
   position: 'relative',
   width: '100%',
@@ -59,13 +86,12 @@ const CARD_STYLE: React.CSSProperties = {
   backgroundColor: COLORS.bg,
 };
 
-const MAP_IMAGE_STYLE: React.CSSProperties = {
+const MAP_IMAGE_BASE_STYLE: React.CSSProperties = {
   display: 'block',
   position: 'absolute',
   inset: 0,
   width: '100%',
   height: '100%',
-  objectFit: 'contain',
   objectPosition: 'center',
 };
 
@@ -97,6 +123,8 @@ export function FramerRealEstate02Map({
   const markerRef = React.useRef<SVGSVGElement>(null);
 
   const isCanvas = useIsCanvasEdit(rootRef);
+  const isMobile = useContainerMobile(rootRef);
+  const tier = isMobile ? TIER.mobile : TIER.wide;
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -131,13 +159,24 @@ export function FramerRealEstate02Map({
       style={{ ...ROOT_STYLE, ...blockBackgroundStyle(background) }}
       className={cn('frem-root', className)}
     >
-      <div style={CARD_STYLE} className='frem-card @container'>
+      <div
+        style={{
+          ...CARD_STYLE,
+          maxWidth: tier.cardMaxWidth,
+          aspectRatio: tier.cardAspect,
+          minHeight: tier.cardMinHeight,
+        }}
+        className='frem-card @container'
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={content.mapImageUrl}
           alt=''
           data-element-key='mapImageUrl'
-          style={composeStyle(MAP_IMAGE_STYLE, styleOf('mapImageUrl'))}
+          style={composeStyle(
+            { ...MAP_IMAGE_BASE_STYLE, objectFit: tier.mapObjectFit },
+            styleOf('mapImageUrl')
+          )}
           className={selectableClass(activeKey === 'mapImageUrl')}
         />
 

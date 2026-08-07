@@ -155,6 +155,28 @@ export const seedLayers = (
   );
 
 /**
+ * The single layer of a BLOCK.
+ *
+ * A block is one section, so it never gets a shape drawn from `LAYER_SHAPES` —
+ * that would invent a funnel a block cannot have. Its role is the one its
+ * objective serves, and it keeps its own name instead of the generic
+ * `ROLE_BLOCK_NAME` label, because here the record and the layer are the same
+ * thing and the user already knows what it is called.
+ */
+export const seedBlockLayer = (
+  id: string,
+  objective: ExperienceObjective,
+  name: string
+): ExperienceLayer => ({
+  ...buildLayer(
+    OBJECTIVE_ROLE[objective],
+    objective,
+    irnd(id + 'media0', 0, 1) > 0.45
+  ),
+  name,
+});
+
+/**
  * `signalCoverage` port. `pct` is COMPONENT coverage, not block coverage: a
  * tracked block emits dwell and scroll — mechanics — while a tracked component
  * emits a meaning, and the meanings are the product.

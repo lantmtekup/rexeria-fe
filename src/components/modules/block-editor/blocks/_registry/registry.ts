@@ -22,6 +22,7 @@ import { delvauxSubnavDef } from './defs/delvauxSubnav';
 import { delvauxVariantDef } from './defs/delvauxVariant';
 import { gambitProductOverviewDef } from './defs/gambitProductOverview';
 import { gambitDelvauxIntroDef } from './defs/gambitDelvauxIntro';
+import { lusionLpRevealDef } from './defs/lusionLpReveal';
 import { gambitProductDetailsDef } from './defs/gambitProductDetails';
 import { gambitBrandHeritageDef } from './defs/gambitBrandHeritage';
 import { gambitRelatedProductsDef } from './defs/gambitRelatedProducts';
@@ -160,6 +161,14 @@ import { coolHunterSectionProgressDef } from './defs/coolHunterSectionProgress';
 import { coolHunterStoryDef } from './defs/coolHunterStory';
 import { coolHunterGalleryDef } from './defs/coolHunterGallery';
 import { scrollImgScaleDef } from './defs/scrollImgScale';
+import { letterSliderDef } from './defs/letterSlider';
+import { cgModularSliderDef } from './defs/cgModularSlider';
+import { cgResponsiveTeamDef } from './defs/cgResponsiveTeam';
+import { cgRadgaHorizontalDef } from './defs/cgRadgaHorizontal';
+import { cgPageTransitionsDef } from './defs/cgPageTransitions';
+import { cgResponsiveLandingLoaderDef } from './defs/cgResponsiveLandingLoader';
+import { cgLandingPageRevealDef } from './defs/cgLandingPageReveal';
+import { cg3dSliderDef } from './defs/cg3dSlider';
 import { coolHunterProductDef } from './defs/coolHunterProduct';
 import { coolHunterQuoteDef } from './defs/coolHunterQuote';
 import { coolHunterFooterDef } from './defs/coolHunterFooter';
@@ -184,6 +193,14 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   cool_hunter_story: coolHunterStoryDef as BlockDef,
   cool_hunter_gallery: coolHunterGalleryDef as BlockDef,
   scroll_img_scale: scrollImgScaleDef as BlockDef,
+  letter_slider: letterSliderDef as BlockDef,
+  cg_modular_slider: cgModularSliderDef as BlockDef,
+  cg_responsive_team: cgResponsiveTeamDef as BlockDef,
+  cg_radga_horizontal: cgRadgaHorizontalDef as BlockDef,
+  cg_page_transitions: cgPageTransitionsDef as BlockDef,
+  cg_responsive_landing_loader: cgResponsiveLandingLoaderDef as BlockDef,
+  cg_landing_page_reveal: cgLandingPageRevealDef as BlockDef,
+  cg_3d_slider: cg3dSliderDef as BlockDef,
   cool_hunter_product: coolHunterProductDef as BlockDef,
   cool_hunter_quote: coolHunterQuoteDef as BlockDef,
   cool_hunter_footer: coolHunterFooterDef as BlockDef,
@@ -232,6 +249,7 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   delvaux_variant: delvauxVariantDef as BlockDef,
   gambit_product_overview: gambitProductOverviewDef as BlockDef,
   gambit_delvaux_intro: gambitDelvauxIntroDef as BlockDef,
+  lusion_lp_reveal: lusionLpRevealDef as BlockDef,
   gambit_product_details: gambitProductDetailsDef as BlockDef,
   gambit_brand_heritage: gambitBrandHeritageDef as BlockDef,
   gambit_related_products: gambitRelatedProductsDef as BlockDef,
