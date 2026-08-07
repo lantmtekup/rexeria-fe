@@ -169,35 +169,6 @@ export const bindRouteToItems = (
 };
 
 /**
- * Route a blueprint onto a campaign: fork the journey, point the campaign at
- * the fork, then carry the route's experiences down onto the work.
- */
-export const routeJourneyOntoCampaign = (
-  campaign: CampaignView,
-  journeys: Journey[],
-  experiences: CampaignExperience[],
-  blueprintId: string,
-  productNames: Record<string, string>
-): ForkOutcome => {
-  const forked = forkJourney(journeys, blueprintId, campaign.id, campaign.name);
-  if (!forked) return { campaign, journeys, experiences };
-
-  const routed: CampaignView = { ...campaign, journeyId: forked.journey.id };
-  const bound = bindRouteToItems(
-    routed,
-    experiences,
-    productNames,
-    forked.list
-  );
-
-  return {
-    campaign: bound.campaign,
-    journeys: forked.list,
-    experiences: bound.experiences,
-  };
-};
-
-/**
  * Bring a campaign's declared fork into existence.
  *
  * A campaign owns the statement "I run this route", and the fork is derived from

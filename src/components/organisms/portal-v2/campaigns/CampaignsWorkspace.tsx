@@ -6,6 +6,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
+  promoteJourney as promoteJourneyApi,
+  useJourney as forkJourneyOntoCampaign,
+} from '@/services/portal-v2/journeyBoard';
+import {
   createCampaign as createCampaignApi,
   deleteCampaigns as deleteCampaignsApi,
   duplicateCampaign as duplicateCampaignApi,
@@ -45,7 +49,6 @@ import {
   bindRouteToItems,
   ensureCampaignExperiences,
   ensureCampaignJourneys,
-  routeJourneyOntoCampaign,
   seedExperiences,
 } from '@/lib/portal-v2/campaigns/journeyLink';
 import {
@@ -222,16 +225,28 @@ export const CampaignsWorkspace = ({
     const created = saved;
 
     if (wizard.journeyId) {
-      const routed = routeJourneyOntoCampaign(
-        created,
-        journeys,
-        experiences,
+      // Chiến dịch đã có id thật ⇒ fork được ngay. Hỏng thì vẫn giữ chiến dịch
+      // vừa tạo: nó đã nằm trên server, giấu đi là nói dối về thứ đang có.
+      const res = await forkJourneyOntoCampaign(
         wizard.journeyId,
-        CAMPAIGN_PRODUCT_NAMES
-      );
-      setJourneys(routed.journeys);
-      setExperiences(routed.experiences);
-      setCampaigns(prev => [routed.campaign, ...prev]);
+        created.id
+      ).catch(() => null);
+
+      if (res) {
+        const fork = { ...res.journey, campaignName: created.name };
+        setJourneys(prev => [fork, ...prev.filter(j => j.id !== fork.id)]);
+        const bound = bindRouteToItems(
+          { ...created, journeyId: fork.id },
+          experiences,
+          CAMPAIGN_PRODUCT_NAMES,
+          [fork]
+        );
+        setExperiences(bound.experiences);
+        setCampaigns(prev => [bound.campaign, ...prev]);
+      } else {
+        toast.error(t('toastRouteFailed'));
+        setCampaigns(prev => [created, ...prev]);
+      }
     } else {
       setCampaigns(prev => [created, ...prev]);
     }
@@ -287,19 +302,35 @@ export const CampaignsWorkspace = ({
     }
   };
 
-  const handleRouteJourney = (blueprintId: string) => {
+  /**
+   * Gắn một blueprint lên chiến dịch đang mở.
+   *
+   * Fork do SERVER tạo (`POST /journeys/{id}/use`), không dựng ở FE nữa: bản
+   * cũ tự sinh id rồi giữ trong state, nên tải lại trang là mất sạch. Phần
+   * gắn trải nghiệm vào từng hạng mục vẫn cục bộ — experiences chưa ráp API.
+   */
+  const handleRouteJourney = async (blueprintId: string) => {
     if (!open) return;
-    const routed = routeJourneyOntoCampaign(
-      open,
-      journeys,
-      experiences,
-      blueprintId,
-      CAMPAIGN_PRODUCT_NAMES
+    const res = await forkJourneyOntoCampaign(blueprintId, open.id).catch(
+      () => null
     );
-    setJourneys(routed.journeys);
-    setExperiences(routed.experiences);
-    handleChange(routed.campaign);
-    toast.success(t('toastRouted', { name: routed.campaign.name }));
+    if (!res) {
+      toast.error(t('toastRouteFailed'));
+      return;
+    }
+
+    const fork = { ...res.journey, campaignName: open.name };
+    setJourneys(prev => [fork, ...prev.filter(j => j.id !== fork.id)]);
+
+    const bound = bindRouteToItems(
+      { ...open, journeyId: fork.id },
+      experiences,
+      CAMPAIGN_PRODUCT_NAMES,
+      [fork]
+    );
+    setExperiences(bound.experiences);
+    handleChange(bound.campaign);
+    toast.success(t('toastRouted', { name: bound.campaign.name }));
   };
 
   const handleCarryRoute = () => {
@@ -341,21 +372,22 @@ export const CampaignsWorkspace = ({
    * A finished campaign's route becomes the next one's starting point — the
    * fork is promoted back to a blueprint, and the copy keeps its numbers.
    */
-  const handlePromoteJourney = () => {
+  const handlePromoteJourney = async () => {
     if (!open) return;
     const fork = journeys.find(j => j.id === open.journeyId);
     if (!fork) return;
 
-    const blueprint: Journey = {
-      ...structuredClone(fork),
-      id: `j-promoted-${open.id}`,
-      name: `${fork.name} — ${t('promotedSuffix')}`,
-      template: true,
-      campaign: null,
-      campaignName: null,
-      origin: null,
-      updated: 'just now',
-    };
+    // Blueprint do SERVER dựng, kể cả id — bản cũ đặt `j-promoted-{campaignId}`,
+    // một chuỗi không tồn tại ở đâu ngoài tab đang mở.
+    const res = await promoteJourneyApi(
+      fork.id,
+      `${fork.name} — ${t('promotedSuffix')}`
+    ).catch(() => null);
+    if (!res) {
+      toast.error(t('toastPromoteFailed'));
+      return;
+    }
+    const blueprint = res.journey;
 
     setJourneys(prev => [blueprint, ...prev]);
     handleChange({ ...open, promoted: true });

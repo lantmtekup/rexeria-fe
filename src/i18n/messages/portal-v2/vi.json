@@ -1242,7 +1242,9 @@
       "toastSaveFailed": "Không lưu được thay đổi",
       "toastCreateFailed": "Không tạo được chiến dịch",
       "toastDuplicateFailed": "Không nhân bản được",
-      "toastDeleteFailed": "{count} chiến dịch không xoá được"
+      "toastDeleteFailed": "{count} chiến dịch không xoá được",
+      "toastRouteFailed": "Không gắn được hành trình vào chiến dịch",
+      "toastPromoteFailed": "Không đưa được hành trình thành blueprint"
     },
     "deploy": {
       "title": "Xuất bản",

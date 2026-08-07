@@ -1242,7 +1242,9 @@
       "toastSaveFailed": "Could not save changes",
       "toastCreateFailed": "Could not create the campaign",
       "toastDuplicateFailed": "Could not duplicate",
-      "toastDeleteFailed": "{count} campaigns could not be deleted"
+      "toastDeleteFailed": "{count} campaigns could not be deleted",
+      "toastRouteFailed": "Could not attach the journey to the campaign",
+      "toastPromoteFailed": "Could not promote the journey to a blueprint"
     },
     "deploy": {
       "title": "Deploy",
