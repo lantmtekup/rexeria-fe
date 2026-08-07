@@ -21,6 +21,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useContainerMobile } from './useContainerMobile';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface Props {
@@ -48,7 +49,103 @@ const EASE = 'power2.out';
 const BLUR_ENTER_START = 6;
 
 const BUILDING_PARALLAX_SLOPE = 0.05;
-const HEADSHOT_PARALLAX_SLOPE = 0.1;
+
+/**
+ * Hai tier layout. `mobile` (<672) giữ nguyên toạ độ Framer gốc 375×567: chân
+ * dung 94×129 dính góc dưới-trái, ảnh building chèn giữa khung. Không đổi một
+ * pixel nào ở nhánh này.
+ *
+ * `wide` (≥672): card nở tới 1440 theo aspect 1440/720, tách hai cột —
+ * TRÁI là cột chữ (tên/chức danh → pull quote lớn → chân dung neo góc dưới),
+ * PHẢI là panel ảnh building. Ảnh nguồn 940×1128 là PORTRAIT nên panel phải
+ * giữ khung đứng (`buildingWidth` + inset trên/dưới) thay vì trải full-bleed
+ * ngang, và `photoFit` đổi `fill` → `cover` để không kéo méo.
+ *
+ * `buildingBleed` mobile (-35/-29/-34 trên khung 234×282) chính là -12.4% đều
+ * bốn phía, nên tier wide dùng thẳng `-12.4%` để parallax giữ nguyên biên độ
+ * tương đối. Clamp `N = maxPx / 1440 * 100`.
+ */
+const TIER = {
+  mobile: {
+    // 100% — fill frame mobile 390 (không khóa 375 → hở olive 2 mép).
+    cardMaxWidth: '100%',
+    cardAspect: '375 / 567',
+    cardMinHeight: '0px',
+    headerLeft: '5.33%',
+    headerTop: '7.05%',
+    headerWidth: '62.23%',
+    headerRight: 'auto',
+    headerMinHeight: '0px',
+    headerJustify: 'flex-start',
+    metaSize: '10.83px',
+    quoteLeft: '5.33%',
+    quoteTop: '19.75%',
+    quoteWidth: '85.33%',
+    quoteSize: '15.9px',
+    headshotLeft: '20px',
+    headshotTop: 'auto',
+    headshotBottom: '69px',
+    headshotWidth: '94px',
+    headshotHeight: '129px',
+    headshotAspect: 'auto',
+    buildingLeft: '94px',
+    buildingRight: '47px',
+    buildingTop: '206px',
+    buildingBottom: 'auto',
+    buildingWidth: 'auto',
+    buildingHeight: '282px',
+    buildingBleed: '-35px -29px -34px',
+    photoFit: 'fill',
+    // Chân dung neo ĐÁY nên trôi lên là trôi vào trong khung — an toàn.
+    headshotSlope: -0.1,
+  },
+  wide: {
+    cardMaxWidth: '1440px',
+    // 720 để lại ~200px hụt giữa chân dung và quote — đọc như lỗi layout.
+    // 640 dồn phần dư xuống đáy, đọc như lề.
+    cardAspect: '1440 / 640',
+    cardMinHeight: 'clamp(440px, 44.4cqi, 640px)',
+    // Cụm credit = chân dung + tên/chức danh NẰM NGANG nhau (byline canh đáy
+    // ảnh), pull quote ngay dưới. Ba khối là sibling absolute nên toạ độ phải
+    // cộng tay: chân dung cao 17.84cqi (= 13cqi × 129/94), `headerMinHeight`
+    // khoá chiều cao byline để canh đáy và để `quoteTop` tính được mà không
+    // cần đo DOM. Mọi số hạng đều clamp vì `metaSize` chạm sàn 12px ở dải
+    // 672→1000; để cqi thuần thì quote sẽ đè lên chức danh ở tablet.
+    headerLeft: 'calc(4% + 13cqi + clamp(16px, 2cqi, 28px))',
+    headerTop: 'calc(8% + 17.84cqi - clamp(44px, 3.6cqi, 52px))',
+    // Biên phải bám đúng mép panel building (cùng công thức `buildingWidth`)
+    // thay vì width cố định — width cố định làm chức danh xuống dòng ở 834.
+    headerWidth: 'auto',
+    headerRight: 'calc(clamp(300px, 42cqi, 605px) + clamp(16px, 2cqi, 28px))',
+    headerMinHeight: 'clamp(44px, 3.6cqi, 52px)',
+    headerJustify: 'flex-end',
+    metaSize: 'clamp(12px, 0.9cqi, 14px)',
+    quoteLeft: '4%',
+    quoteTop: 'calc(8% + 17.84cqi + clamp(28px, 3.2cqi, 46px))',
+    quoteWidth: '46%',
+    quoteSize: 'clamp(20px, 2.4cqi, 34px)',
+    headshotLeft: '4%',
+    headshotTop: '8%',
+    headshotBottom: 'auto',
+    headshotWidth: '13%',
+    headshotHeight: 'auto',
+    headshotAspect: '94 / 129',
+    // Panel ảnh ăn sát mép phải + full chiều cao card: 42cqi/100% ≈ 0.84,
+    // gần đúng tỉ lệ ảnh nguồn 940/1128 = 0.833 nên `cover` gần như không cắt.
+    buildingLeft: 'auto',
+    buildingRight: '0px',
+    buildingTop: '0px',
+    buildingBottom: '0px',
+    buildingWidth: 'clamp(300px, 42cqi, 605px)',
+    buildingHeight: 'auto',
+    buildingBleed: '-12.4%',
+    photoFit: 'cover',
+    // Ở đây chân dung neo ĐỈNH: giữ slope âm 0.1 là nó trôi thẳng ra khỏi
+    // card. Đảo chiều + hạ biên độ để drift xuống nhẹ, không bao giờ chạm đáy.
+    // Giữ nhỏ để byline canh đáy ảnh không bị lệch quá rõ khi cuộn.
+    headshotSlope: 0.015,
+  },
+} as const;
 
 const ROOT_STYLE: React.CSSProperties = {
   position: 'relative',
@@ -194,6 +291,8 @@ export function FramerRealEstate02Quote({
   const headshotInnerRef = React.useRef<HTMLDivElement>(null);
 
   const isCanvas = useIsCanvasEdit(rootRef);
+  const isMobile = useContainerMobile(rootRef);
+  const tier = isMobile ? TIER.mobile : TIER.wide;
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -256,7 +355,7 @@ export function FramerRealEstate02Quote({
             const scrollValue = self.scroll();
             if (headshotInner) {
               gsap.set(headshotInner, {
-                y: -HEADSHOT_PARALLAX_SLOPE * scrollValue,
+                y: tier.headshotSlope * scrollValue,
                 force3D: false,
               });
             }
@@ -270,7 +369,7 @@ export function FramerRealEstate02Quote({
         });
       }
     },
-    [isCanvas]
+    [isCanvas, tier]
   );
 
   return (
@@ -280,9 +379,30 @@ export function FramerRealEstate02Quote({
       style={{ ...ROOT_STYLE, ...blockBackgroundStyle(background) }}
       className={cn('freq-root', className)}
     >
-      <div style={CARD_STYLE} className='freq-card @container'>
-        <div style={BUILDING_WRAP_STYLE}>
-          <div style={BUILDING_INNER_WRAP_STYLE} ref={buildingParallaxRef}>
+      <div
+        style={{
+          ...CARD_STYLE,
+          maxWidth: tier.cardMaxWidth,
+          aspectRatio: tier.cardAspect,
+          minHeight: tier.cardMinHeight,
+        }}
+        className='freq-card @container'
+      >
+        <div
+          style={{
+            ...BUILDING_WRAP_STYLE,
+            left: tier.buildingLeft,
+            right: tier.buildingRight,
+            top: tier.buildingTop,
+            bottom: tier.buildingBottom,
+            width: tier.buildingWidth,
+            height: tier.buildingHeight,
+          }}
+        >
+          <div
+            style={{ ...BUILDING_INNER_WRAP_STYLE, inset: tier.buildingBleed }}
+            ref={buildingParallaxRef}
+          >
             <div style={ABSOLUTE_FILL_STYLE}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -291,6 +411,7 @@ export function FramerRealEstate02Quote({
                 data-element-key='buildingImageUrl'
                 style={composeStyle(
                   PHOTO_IMAGE_STYLE,
+                  { objectFit: tier.photoFit },
                   styleOf('buildingImageUrl')
                 )}
                 className={selectableClass(activeKey === 'buildingImageUrl')}
@@ -299,7 +420,18 @@ export function FramerRealEstate02Quote({
           </div>
         </div>
 
-        <div style={HEADSHOT_WRAP_STYLE} ref={headshotInnerRef}>
+        <div
+          style={{
+            ...HEADSHOT_WRAP_STYLE,
+            left: tier.headshotLeft,
+            top: tier.headshotTop,
+            bottom: tier.headshotBottom,
+            width: tier.headshotWidth,
+            height: tier.headshotHeight,
+            aspectRatio: tier.headshotAspect,
+          }}
+          ref={headshotInnerRef}
+        >
           <div style={HEADSHOT_INNER_STYLE}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -308,6 +440,7 @@ export function FramerRealEstate02Quote({
               data-element-key='headshotImageUrl'
               style={composeStyle(
                 PHOTO_IMAGE_STYLE,
+                { objectFit: tier.photoFit },
                 styleOf('headshotImageUrl')
               )}
               className={selectableClass(activeKey === 'headshotImageUrl')}
@@ -315,28 +448,58 @@ export function FramerRealEstate02Quote({
           </div>
         </div>
 
-        <div ref={headerRef} style={HEADER_WRAP_STYLE}>
+        <div
+          ref={headerRef}
+          style={{
+            ...HEADER_WRAP_STYLE,
+            left: tier.headerLeft,
+            top: tier.headerTop,
+            width: tier.headerWidth,
+            right: tier.headerRight,
+            minHeight: tier.headerMinHeight,
+            justifyContent: tier.headerJustify,
+          }}
+        >
           <p
             data-element-key='name'
-            style={composeStyle(NAME_STYLE, styleOf('name'))}
+            style={composeStyle(
+              NAME_STYLE,
+              { fontSize: tier.metaSize },
+              styleOf('name')
+            )}
             className={selectableClass(activeKey === 'name')}
           >
             {content.name}
           </p>
           <p
             data-element-key='role'
-            style={composeStyle(ROLE_STYLE, styleOf('role'))}
+            style={composeStyle(
+              ROLE_STYLE,
+              { fontSize: tier.metaSize },
+              styleOf('role')
+            )}
             className={selectableClass(activeKey === 'role')}
           >
             {content.role}
           </p>
         </div>
 
-        <div style={QUOTE_WRAP_STYLE}>
+        <div
+          style={{
+            ...QUOTE_WRAP_STYLE,
+            left: tier.quoteLeft,
+            top: tier.quoteTop,
+            width: tier.quoteWidth,
+          }}
+        >
           <p
             ref={quoteRef}
             data-element-key='quote'
-            style={composeStyle(QUOTE_STYLE, styleOf('quote'))}
+            style={composeStyle(
+              QUOTE_STYLE,
+              { fontSize: tier.quoteSize },
+              styleOf('quote')
+            )}
             className={selectableClass(activeKey === 'quote', 'freq-quote')}
           >
             {content.quote}

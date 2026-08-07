@@ -1,38 +1,40 @@
 'use client';
 
-import { ListFilter, Loader2, Search } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { FilterChips } from '@/components/molecules/portal-v2/FilterChips';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
 import { ExperienceCard } from '@/components/organisms/portal-v2/experiences/ExperienceCard';
 import { ExperienceDetailModal } from '@/components/organisms/portal-v2/experiences/ExperienceDetailModal';
+import { ExperienceToolbar } from '@/components/organisms/portal-v2/experiences/ExperienceToolbar';
 import { ExchangePreviewShell } from '@/components/organisms/portal-v2/exchange/ExchangePreviewShell';
 import {
-  EXPERIENCE_CATEGORIES,
   EXPERIENCE_DEFAULT_FILTERS,
-  EXPERIENCE_EVIDENCE,
-  EXPERIENCE_OBJECTIVES,
-  EXPERIENCE_STATES,
-  EXPERIENCE_VEHICLES,
+  EXPERIENCE_TABS,
+  refineFacetsFor,
+  type RefineAxis,
 } from '@/lib/portal-v2/experiences/constants';
 import {
   canEditCanvas,
   canPreview,
   canvasEditorHref,
-  countByState,
+  countByTab,
   filterExperiences,
   findById,
 } from '@/lib/portal-v2/experiences/helpers';
-import { writeExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
+import {
+  EXPERIENCE_DEFAULT_TAB,
+  writeExperienceTabParam,
+} from '@/lib/portal-v2/experiences/tabParam';
 import type {
   ExperienceFilters,
-  ExperienceState,
+  ExperienceTab,
   ExperienceView,
 } from '@/lib/portal-v2/experiences/types';
+import { writeExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
 import type { PreviewItem } from '@/lib/portal-v2/preview/types';
 import { fetchExperienceLibrary } from '@/services/portal-v2/experienceLibrary';
 import { cn } from '@/lib/cn';
@@ -40,43 +42,35 @@ import { cn } from '@/lib/cn';
 type ExperiencesWorkspaceProps = {
   initialItems: ExperienceView[];
   initialError: string | null;
+  /** One source failed while the other returned rows — shown as a strip. */
+  initialSoftError?: string | null;
+  /** Tab from `?tab=` — reopens e.g. the Blocks tab on a pasted link. */
+  initialTab?: ExperienceTab | null;
   /** Experience id from `?preview=` — reopens that preview on a pasted link. */
   initialPreviewId?: string | null;
 };
 
 type ModalMode = 'detail' | 'preview' | null;
 
-/** Facet axes that live behind the Refine toggle (prototype `RKEYS`). */
-type RefineAxis = 'category' | 'vehicle' | 'objective' | 'ev';
-
 const SEARCH_DEBOUNCE_MS = 350;
 
-const REFINE_FACETS: {
-  key: RefineAxis;
-  labelKey: string;
-  options:
-    | typeof EXPERIENCE_CATEGORIES
-    | typeof EXPERIENCE_VEHICLES
-    | typeof EXPERIENCE_OBJECTIVES
-    | typeof EXPERIENCE_EVIDENCE;
-}[] = [
-  {
-    key: 'category',
-    labelKey: 'filterCategory',
-    options: EXPERIENCE_CATEGORIES,
-  },
-  { key: 'vehicle', labelKey: 'filterVehicle', options: EXPERIENCE_VEHICLES },
-  {
-    key: 'objective',
-    labelKey: 'filterObjective',
-    options: EXPERIENCE_OBJECTIVES,
-  },
-  { key: 'ev', labelKey: 'filterEvidence', options: EXPERIENCE_EVIDENCE },
-];
-
+/**
+ * The library of everything after the click — landing pages AND blocks.
+ *
+ * ONE tab row carries the whole navigation: All, the three page ownership
+ * states, then Blocks. All means all; the ownership tabs are page lineage so
+ * they exclude blocks by construction; Blocks is the block half and swaps the
+ * Refine drawer for the two axes a block actually has on the wire.
+ *
+ * Everything BELOW the tabs is shared on purpose: one card, one detail modal,
+ * one preview shell. A block behaves exactly like a page; only the record it
+ * loads and the route it edits at differ.
+ */
 export const ExperiencesWorkspace = ({
   initialItems,
   initialError,
+  initialSoftError = null,
+  initialTab = null,
   initialPreviewId = null,
 }: ExperiencesWorkspaceProps) => {
   const t = useTranslations('portalV2.experiences');
@@ -94,12 +88,12 @@ export const ExperiencesWorkspace = ({
 
   const [items, setItems] = useState<ExperienceView[]>(initialItems);
   const [loadError, setLoadError] = useState<string | null>(initialError);
+  const [softError, setSoftError] = useState<string | null>(initialSoftError);
   const [searching, setSearching] = useState(false);
-  const [filters, setFilters] = useState<ExperienceFilters>(
-    EXPERIENCE_DEFAULT_FILTERS
-  );
-  /** Category / Type / Objective / Evidence — collapsed until asked for. */
-  const [refineOpen, setRefineOpen] = useState(false);
+  const [filters, setFilters] = useState<ExperienceFilters>(() => ({
+    ...EXPERIENCE_DEFAULT_FILTERS,
+    tab: initialTab ?? EXPERIENCE_DEFAULT_TAB,
+  }));
 
   const [activeId, setActiveId] = useState<string | null>(
     deepLinkedExperience?.id ?? null
@@ -119,7 +113,7 @@ export const ExperiencesWorkspace = ({
 
   modalModeRef.current = modalMode;
 
-  /* Search hits the server (`?q=`); the chip axes are seeded values and narrow
+  /* Search hits BOTH servers (`?q=`); the chip axes and the tab rows narrow
      client-side, so they never trigger a fetch. */
   useEffect(() => {
     if (skipFirstSearch.current) {
@@ -135,6 +129,7 @@ export const ExperiencesWorkspace = ({
           if (cancelled) return;
           setItems(res.items);
           setLoadError(res.error);
+          setSoftError(res.softError);
         })
         .finally(() => {
           if (!cancelled) setSearching(false);
@@ -154,45 +149,66 @@ export const ExperiencesWorkspace = ({
 
   const active = findById(items, activeId);
 
-  const stateTabs = useMemo(
+  const isBlockTab = filters.tab === 'block';
+
+  /* ── tabs ────────────────────────────────────────────────────────────── */
+
+  const tabItems = useMemo(
     () =>
-      EXPERIENCE_STATES.map(s => ({
-        id: s.id,
-        label: t(s.labelKey),
-        count: countByState(items, s.id),
+      EXPERIENCE_TABS.map(tab => ({
+        id: tab.id,
+        label: t(tab.labelKey),
+        count: countByTab(items, tab.id),
       })),
     [items, t]
   );
 
-  const handleStateChange = useCallback((id: string) => {
-    setFilters(prev => ({
-      ...prev,
-      state: id as ExperienceState | 'all',
-    }));
+  /**
+   * Moving on or off the Blocks tab clears the axes the drawer stops showing.
+   *
+   * Leave them set and the next tab silently hides rows the user has no visible
+   * control to release — the token that would explain it lives in a drawer they
+   * are no longer looking at.
+   */
+  const handleTabChange = useCallback((id: string) => {
+    const tab = id as ExperienceTab;
+    setFilters(prev => {
+      if (prev.tab === tab) return prev;
+      const swapsDrawer = (prev.tab === 'block') !== (tab === 'block');
+      if (!swapsDrawer) return { ...prev, tab };
+      return {
+        ...prev,
+        tab,
+        vehicle: 'all',
+        objective: 'all',
+        ev: 'all',
+        blockCat: 'all',
+        surface: 'all',
+      };
+    });
+    writeExperienceTabParam(tab);
   }, []);
 
-  const chipOptions = <T extends string>(defs: { id: T; labelKey: string }[]) =>
-    defs.map(d => ({ id: d.id, label: t(d.labelKey) }));
+  const handleQChange = useCallback((q: string) => {
+    setFilters(prev => ({ ...prev, q }));
+  }, []);
 
-  const activeRefines = useMemo(
-    () =>
-      REFINE_FACETS.flatMap(facet => {
-        const value = filters[facet.key];
-        if (value === 'all') return [];
-        const opt = facet.options.find(o => o.id === value);
-        if (!opt) return [];
-        return [{ key: facet.key, label: t(opt.labelKey) }];
-      }),
-    [filters, t]
+  const handleFacetChange = useCallback((key: RefineAxis, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const facets = refineFacetsFor(filters.tab);
+
+  const facetValues = useMemo(
+    (): Record<RefineAxis, string> => ({
+      vehicle: filters.vehicle,
+      objective: filters.objective,
+      ev: filters.ev,
+      blockCat: filters.blockCat,
+      surface: filters.surface,
+    }),
+    [filters]
   );
-
-  const handleClearRefine = useCallback((key: RefineAxis) => {
-    setFilters(prev => ({ ...prev, [key]: 'all' }));
-  }, []);
-
-  const handleToggleRefine = useCallback(() => {
-    setRefineOpen(prev => !prev);
-  }, []);
 
   /* ── preview ─────────────────────────────────────────────────────────── */
 
@@ -202,9 +218,12 @@ export const ExperiencesWorkspace = ({
     (experience: ExperienceView): PreviewItem => ({
       id: experience.id,
       name: experience.name,
-      source: 'page',
+      // A page renders from `/p/{slug}`; a block from `/embed/block/{id}`.
+      // `ExchangePreviewShell` already branches on this.
+      source: experience.kind === 'block' ? 'block' : 'page',
       slug: experience.slug ?? undefined,
-      kindLabel: t('catCollection'),
+      blockId: experience.kind === 'block' ? experience.id : undefined,
+      kindLabel: t(experience.kind === 'block' ? 'kindBlock' : 'kindPage'),
       evidence: experience.stats
         ? { sessions: experience.stats.sessions, lift: experience.stats.lift }
         : null,
@@ -324,165 +343,34 @@ export const ExperiencesWorkspace = ({
           </div>
         ) : (
           <>
-            {loadError ? (
+            {softError ? (
               <div
                 className={cn(
                   'mb-4 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)]',
                   'bg-[var(--pv2-paper)] px-4 py-3 text-[12.5px] text-[var(--pv2-mut)]'
                 )}
               >
-                {loadError}
+                {t('loadErrorPartial')} — {softError}
               </div>
             ) : null}
 
+            {/* The whole navigation: All · the three ownership states · Blocks. */}
             <div className='sticky top-0 z-10 -mx-5 mb-3.5 bg-[var(--pv2-canvas)] px-5 md:-mx-8 md:px-8'>
               <Tabs
-                items={stateTabs}
-                value={filters.state}
-                onChange={handleStateChange}
+                items={tabItems}
+                value={filters.tab}
+                onChange={handleTabChange}
                 aria-label={t('stateTabsAria')}
               />
             </div>
 
-            <div className='mb-3.5 flex flex-col gap-2.5'>
-              <div className='flex flex-wrap items-center justify-between gap-2'>
-                <label
-                  className={cn(
-                    'flex w-full max-w-[320px] shrink-0 items-center gap-2 rounded-[10px]',
-                    'border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-[11px] py-2 text-[var(--pv2-faint)]',
-                    'transition-colors focus-within:border-[var(--pv2-violet)]',
-                    'sm:w-[320px]'
-                  )}
-                >
-                  <Search
-                    className='size-3.5 shrink-0'
-                    strokeWidth={2.2}
-                    aria-hidden
-                  />
-                  <input
-                    type='search'
-                    value={filters.q}
-                    onChange={e =>
-                      setFilters(prev => ({ ...prev, q: e.target.value }))
-                    }
-                    placeholder={t('searchPlaceholder')}
-                    aria-label={t('searchAria')}
-                    className='min-w-0 flex-1 border-0 bg-transparent text-[12.5px] text-[var(--pv2-ink)] outline-none placeholder:text-[var(--pv2-faint)]'
-                  />
-                </label>
-
-                <button
-                  type='button'
-                  aria-expanded={refineOpen}
-                  aria-controls='experiences-refine-panel'
-                  aria-label={t('filterRefineAria')}
-                  tabIndex={0}
-                  onClick={handleToggleRefine}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleToggleRefine();
-                    }
-                  }}
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5',
-                    'text-[12px] font-semibold transition-colors duration-150',
-                    'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2 focus-visible:outline-none',
-                    'active:scale-[0.98]',
-                    refineOpen
-                      ? 'border-[var(--pv2-ink)] bg-[var(--pv2-ink)] text-[var(--pv2-paper)]'
-                      : 'border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-[var(--pv2-mut)] hover:border-[color-mix(in_srgb,var(--pv2-violet)_35%,var(--pv2-hair))] hover:text-[var(--pv2-ink)]'
-                  )}
-                >
-                  <ListFilter
-                    className='size-3.5 shrink-0'
-                    strokeWidth={2}
-                    aria-hidden
-                  />
-                  {t('filterRefine')}
-                  {activeRefines.length > 0 ? (
-                    <span
-                      className={cn(
-                        'ml-0.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums',
-                        refineOpen
-                          ? 'bg-[var(--pv2-paper)]/20 text-[var(--pv2-paper)]'
-                          : 'bg-[var(--pv2-canvas)] text-[var(--pv2-ink)]'
-                      )}
-                    >
-                      {activeRefines.length}
-                    </span>
-                  ) : null}
-                </button>
-
-                {activeRefines.map(token => (
-                  <button
-                    key={token.key}
-                    type='button'
-                    tabIndex={0}
-                    title={t('clearRefineAria', { label: token.label })}
-                    aria-label={t('clearRefineAria', { label: token.label })}
-                    onClick={() => handleClearRefine(token.key)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleClearRefine(token.key);
-                      }
-                    }}
-                    className={cn(
-                      'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5',
-                      'text-[12px] font-semibold transition-colors duration-150',
-                      'border-[color-mix(in_srgb,var(--pv2-violet)_28%,var(--pv2-hair))]',
-                      'bg-[color-mix(in_srgb,var(--pv2-violet)_12%,var(--pv2-paper))] text-[var(--pv2-violet)]',
-                      'hover:border-[var(--pv2-violet)] hover:bg-[var(--pv2-violet)] hover:text-[var(--pv2-paper)]',
-                      'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2 focus-visible:outline-none',
-                      'active:scale-[0.98]'
-                    )}
-                  >
-                    {token.label}
-                    <span
-                      className='text-[13px] leading-none opacity-75'
-                      aria-hidden
-                    >
-                      ×
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {refineOpen ? (
-                <div
-                  id='experiences-refine-panel'
-                  className={cn(
-                    'flex flex-col gap-2.5 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)]',
-                    'bg-[var(--pv2-paper)] px-4 py-3.5'
-                  )}
-                >
-                  {REFINE_FACETS.map(facet => (
-                    <div
-                      key={facet.key}
-                      className='flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2.5'
-                    >
-                      <span
-                        className={cn(
-                          'w-[74px] shrink-0 text-[9.5px] font-bold tracking-[0.09em]',
-                          'text-[var(--pv2-faint)] uppercase'
-                        )}
-                      >
-                        {t(facet.labelKey)}
-                      </span>
-                      <FilterChips
-                        inline
-                        options={chipOptions(facet.options)}
-                        value={filters[facet.key]}
-                        onChange={id =>
-                          setFilters(prev => ({ ...prev, [facet.key]: id }))
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+            <ExperienceToolbar
+              q={filters.q}
+              onQChange={handleQChange}
+              facets={facets}
+              values={facetValues}
+              onFacetChange={handleFacetChange}
+            />
 
             {searching ? (
               <div className='mt-4 flex items-center justify-center gap-2 py-10 text-[13px] text-[var(--pv2-mut)]'>
@@ -492,7 +380,9 @@ export const ExperiencesWorkspace = ({
             ) : visible.length ? (
               <>
                 <p className='mb-3 text-[12px] text-[var(--pv2-faint)]'>
-                  {t('resultsCount', { count: visible.length })}
+                  {t(isBlockTab ? 'resultsCountBlocks' : 'resultsCount', {
+                    count: visible.length,
+                  })}
                 </p>
                 <div className='grid grid-cols-[repeat(auto-fill,minmax(244px,1fr))] gap-4'>
                   {visible.map(experience => (
@@ -513,7 +403,7 @@ export const ExperiencesWorkspace = ({
                 )}
               >
                 <p className='text-[14px] font-semibold text-[var(--pv2-ink)]'>
-                  {t('empty')}
+                  {t(isBlockTab ? 'emptyBlocks' : 'empty')}
                 </p>
                 <p className='mt-1.5 text-[13px] text-[var(--pv2-faint)]'>
                   {t('emptyHint')}

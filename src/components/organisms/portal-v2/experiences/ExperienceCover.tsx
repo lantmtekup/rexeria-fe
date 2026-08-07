@@ -4,6 +4,7 @@ import { Eye } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { GeneratedPageThumb } from '@/components/molecules/portal-v2/GeneratedPageThumb';
+import { LazyBlockCoverPreview } from '@/components/organisms/portal-v2/exchange/LazyBlockCoverPreview';
 import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
 import { cn } from '@/lib/cn';
 
@@ -13,26 +14,36 @@ type ExperienceCoverProps = {
   height?: number;
   showPreview?: boolean;
   onPreview?: () => void;
+  /** Load the live block preview immediately (modal). Grid cards stay lazy. */
+  eagerLivePreview?: boolean;
   className?: string;
 };
 
 /**
- * The card cover — the page's real thumbnail when it has one, otherwise a
- * generated frame whose artwork is the funnel stack itself: a one-block page
- * draws one bar, a five-block page draws five.
+ * The card cover, in three tiers — same ladder Exchange's `ListingCover` climbs:
  *
- * `thumbnail_url` is empty on most pages in practice, so the generated path is
- * the common one, not the fallback.
+ * 1. the record's real thumbnail, when it has one;
+ * 2. for a BLOCK whose `settings` parse, the block rendered live — a block is
+ *    one section, so it fits a cover honestly and shows the actual thing rather
+ *    than a wireframe standing in for it;
+ * 3. otherwise generated artwork, in the shape of whichever kind this is.
+ *
+ * `thumbnail_url` is empty on most rows in practice, so tiers 2 and 3 are the
+ * common paths, not fallbacks.
  */
 export const ExperienceCover = ({
   experience,
   height,
   showPreview = false,
   onPreview,
+  eagerLivePreview = false,
   className,
 }: ExperienceCoverProps) => {
   const t = useTranslations('portalV2.experiences');
   const thumb = experience.thumbnailUrl;
+  const isBlock = experience.kind === 'block';
+  const showLivePreview = !thumb && isBlock && experience.canLivePreview;
+  const generated = <GeneratedPageThumb variant={isBlock ? 'block' : 'page'} />;
 
   return (
     <div
@@ -52,8 +63,15 @@ export const ExperienceCover = ({
           alt=''
           className='absolute inset-0 size-full object-cover'
         />
+      ) : showLivePreview ? (
+        <LazyBlockCoverPreview
+          blockId={experience.id}
+          eager={eagerLivePreview}
+          fallback={generated}
+          className='absolute inset-0'
+        />
       ) : (
-        <GeneratedPageThumb />
+        generated
       )}
 
       {showPreview && onPreview ? (

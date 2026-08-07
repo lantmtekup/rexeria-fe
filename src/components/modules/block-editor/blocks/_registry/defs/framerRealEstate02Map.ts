@@ -35,9 +35,9 @@ export const framerRealEstate02MapDef: BlockDef<FramerRealEstate02MapContent> =
       gradient: 'from-amber-100 to-orange-200',
       defaultName: 'Location Map',
       aiLabelVi:
-        'block "location map" card cố định 375×359 nền #e9e4dc: 1 ảnh minh hoạ bản đồ tĩnh full-bleed (đường + công viên + 4 pin phụ vẽ sẵn trong ảnh) cùng 1 marker "R" lớn overlay màu #565440 bập bênh liên tục lên xuống ~5px (không phải hiệu ứng xuất hiện 1 lần)',
+        'block "location map" nền #e9e4dc: mobile card 375×359 — 1 ảnh minh hoạ bản đồ tĩnh full-bleed (đường + công viên + 4 pin phụ vẽ sẵn trong ảnh) cùng 1 marker "R" lớn overlay màu #565440 bập bênh liên tục lên xuống ~5px; wide (≥672) card 1440×720, ảnh cover full card, marker % giữ nguyên',
       aiLabelEn:
-        '"location map" block: fixed 375×359 card on #e9e4dc background — one full-bleed static map illustration (roads + parks + 4 secondary pins baked into the image) with one large overlay "R" marker in #565440 continuously bobbing ~5px up and down (not a one-time entrance effect)',
+        '"location map" block on #e9e4dc: mobile 375×359 card — one full-bleed static map illustration (roads + parks + 4 secondary pins baked into the image) with one large overlay "R" marker in #565440 continuously bobbing ~5px; wide (≥672) expands to 1440×720, map cover-fills card, marker % unchanged',
     },
     component: FramerRealEstate02Map,
     defaultContent: { vi: CONTENT, en: CONTENT },

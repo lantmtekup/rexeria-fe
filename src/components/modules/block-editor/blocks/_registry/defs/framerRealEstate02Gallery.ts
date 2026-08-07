@@ -62,9 +62,9 @@ export const framerRealEstate02GalleryDef: BlockDef<FramerRealEstate02GalleryCon
       gradient: 'from-amber-100 to-orange-200',
       defaultName: 'Infrastructure Gallery',
       aiLabelVi:
-        'block "gallery tiện ích" card cố định 375×704, nền trong suốt: tiêu đề lớn 2 dòng "INFRAS/TRUCTURE" màu #c49f8a, slider 4 ảnh tiện ích 307×307 (gap 12px, hé lộ ảnh kế tiếp), 2 nút tròn 35×35 viền #c49f8a điều hướng trước/sau, bộ đếm "N/4" màu #e9e4dc',
+        'block "gallery tiện ích" 2 tier: mobile card 375×704 giữ pixel Framer; desktop (≥672) card 1440×900 — tiêu đề 2 dòng "INFRAS/TRUCTURE" #c49f8a neo trên-trái (không đè ảnh), slider 4 ảnh vuông (hé lộ ảnh kế, nút prev/next dùng được), bộ đếm "N/4" #e9e4dc',
       aiLabelEn:
-        '"infrastructure gallery" block: fixed 375×704 card, transparent background — large 2-line "INFRAS/TRUCTURE" heading in #c49f8a, 4-image amenity slider (307×307, 12px gap, peeking next image), two 35×35 circular #c49f8a-bordered prev/next buttons, "N/4" counter in #e9e4dc',
+        '"infrastructure gallery" 2-tier block: mobile 375×704 Framer-exact; desktop (≥672) 1440×900 card — 2-line "INFRAS/TRUCTURE" #c49f8a top-left (clear of images), 4-image square slider with working prev/next, "N/4" counter #e9e4dc',
     },
     component: FramerRealEstate02Gallery,
     defaultContent: { vi: CONTENT, en: CONTENT },

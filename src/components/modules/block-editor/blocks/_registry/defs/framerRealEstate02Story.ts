@@ -59,9 +59,9 @@ export const framerRealEstate02StoryDef: BlockDef<FramerRealEstate02StoryContent
       gradient: 'from-amber-100 to-orange-200',
       defaultName: 'Story Carousel',
       aiLabelVi:
-        'block "story carousel" 3 slide (AESTHETICS/DIVERSITY/SECURITY): card cố định 375×781, ảnh nền full-bleed, tiêu đề lớn 52px màu #c49f8a chồng lên ảnh, panel caption vuông #c49f8a góc dưới-phải chứa nhãn + mô tả + 2 nút điều hướng + bộ đếm N/3',
+        'block "story carousel" 3 slide (AESTHETICS/DIVERSITY/SECURITY): mobile card cố định 375×781 ảnh 70%, wide card 1440×960 (~3:2) ảnh full-bleed cover, tiêu đề lớn màu #c49f8a chồng lên ảnh, panel caption vuông #c49f8a góc dưới-phải chứa nhãn + mô tả + 2 nút điều hướng + bộ đếm N/3',
       aiLabelEn:
-        '3-slide "story carousel" block (AESTHETICS/DIVERSITY/SECURITY): fixed 375×781 card, full-bleed background image, large 52px #c49f8a title overlapping the image, bottom-right #c49f8a square caption panel with label + description + prev/next buttons + N/3 counter',
+        '3-slide "story carousel" block (AESTHETICS/DIVERSITY/SECURITY): fixed mobile 375×781 card with 70% image, wide 1440×960 (~3:2) full-bleed cover image, large #c49f8a title overlapping the image, bottom-right #c49f8a square caption panel with label + description + prev/next buttons + N/3 counter',
     },
     component: FramerRealEstate02Story,
     defaultContent: { vi: CONTENT, en: CONTENT },

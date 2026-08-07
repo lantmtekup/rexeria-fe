@@ -172,6 +172,8 @@ const STICKY_SCROLL_BLOCK_TYPES = new Set<Block['blockType']>([
   'the_grand_location',
   'the_grand_discover',
   'the_grand_service',
+  'cg_radga_horizontal',
+  'cg_3d_slider',
   'pnj_variant',
   'pnj_details',
   'mint_discover',

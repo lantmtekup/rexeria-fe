@@ -76,6 +76,11 @@ function chipIcon(kind: ElementKind) {
     kind === 'coolHunterGalleryItems' ||
     kind === 'coolHunterSectionProgressItems' ||
     kind === 'scrollImgScaleItems' ||
+    kind === 'letterSliderSlides' ||
+    kind === 'cgModularSliderSlides' ||
+    kind === 'cgResponsiveTeamMembers' ||
+    kind === 'cg3dSliderSlides' ||
+    kind === 'cgPageTransitionsPages' ||
     kind === 'framerIgnitexStepCards' ||
     kind === 'framerClarityServicesItems' ||
     kind === 'alturaOlympusFeatures' ||
