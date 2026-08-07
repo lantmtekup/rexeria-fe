@@ -553,7 +553,9 @@
       "personaBehaves": "Behaves like segment {seg}",
       "toastSaveInvalid": "Not saved — {reasons}",
       "editorSaveDraftNote": "Saves fine, but not ready to use — {reasons}",
-      "toastForkInvalid": "Not ready to use — {reasons}"
+      "toastForkInvalid": "Not ready to use — {reasons}",
+      "useBlocked": "Not ready to use — {reasons}. Open “Edit canvas” to fill them in.",
+      "useBlockedNote": "{count} things still missing before this can be used — see the Requirements tab, or open Edit canvas."
     },
     "experiences": {
       "benefitsHeading": "Why it works",

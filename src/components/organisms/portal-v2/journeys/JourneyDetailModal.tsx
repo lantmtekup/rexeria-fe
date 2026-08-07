@@ -146,10 +146,26 @@ export const JourneyDetailModal = ({
       footer={
         journey.template ? (
           <>
-            <span className='text-[11.5px] text-[var(--pv2-faint)]'>
-              {copies.length
-                ? t('footBlueprintCopies', { count: copies.length })
-                : t('footBlueprintNoCopies')}
+            {/*
+              Lý do phải HIỆN THÀNH CHỮ. Một nút xám không kèm giải thích đọc
+              như hỏng hóc — người dùng còn tưởng hành trình đã bị gắn vào
+              chiến dịch nào đó rồi. `title` chỉ hiện khi rê chuột, và trên
+              cảm ứng thì không bao giờ.
+            */}
+            <span
+              className={
+                readiness.missing.length > 0
+                  ? 'max-w-[46ch] text-[11.5px] leading-relaxed text-[var(--pv2-warning)]'
+                  : 'text-[11.5px] text-[var(--pv2-faint)]'
+              }
+            >
+              {readiness.missing.length > 0
+                ? t('useBlockedNote', {
+                    count: readiness.missing.length,
+                  })
+                : copies.length
+                  ? t('footBlueprintCopies', { count: copies.length })
+                  : t('footBlueprintNoCopies')}
             </span>
             <span className='flex-1' />
             <Button
@@ -164,7 +180,22 @@ export const JourneyDetailModal = ({
               <PenLine className='size-3.5' strokeWidth={2.2} aria-hidden />
               {t('editCanvas')}
             </Button>
-            <Button size='sm' onClick={() => onFork(journey)}>
+            {/*
+              Chặn NGAY ở đây, không để người dùng chọn chiến dịch rồi mới báo:
+              `POST /journeys/{id}/use` áp hợp đồng đầy đủ, nên một hành trình
+              còn thiếu chắc chắn bị từ chối — và lúc đó họ đang ở hộp chọn
+              chiến dịch, cách xa chỗ sửa được.
+            */}
+            <Button
+              size='sm'
+              disabled={readiness.missing.length > 0}
+              title={
+                readiness.missing.length > 0
+                  ? t('useBlocked', { reasons: readiness.missing.join(' · ') })
+                  : undefined
+              }
+              onClick={() => onFork(journey)}
+            >
               <GitFork className='size-3.5' strokeWidth={2.2} aria-hidden />
               {t('useInCampaign')}
             </Button>

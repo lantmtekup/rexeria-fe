@@ -41,6 +41,7 @@ import {
   findJourney,
   journeyHome,
   journeyStats,
+  nodeNamesOf,
 } from '@/lib/portal-v2/journeys/helpers';
 import type {
   Journey,
@@ -254,7 +255,7 @@ export const JourneysWorkspace = ({
         (err: unknown) => {
           // `use` áp hợp đồng ĐẦY ĐỦ — một bản nháp dở dang bị từ chối kèm
           // danh sách kiểm. Nói ra từng mục, giống nút Save.
-          const reasons = saveFailureReasons(err);
+          const reasons = saveFailureReasons(err, nodeNamesOf(active));
           toast.error(
             reasons.length
               ? t('toastForkInvalid', { reasons: reasons.join(' · ') })
@@ -273,7 +274,7 @@ export const JourneysWorkspace = ({
       setFilters(prev => ({ ...prev, state: 'copy', q: '' }));
       setOverlay({ kind: 'detail', id: res.journey.id });
     },
-    [activeId, t]
+    [activeId, active, t]
   );
 
   /** Ghi lại cục bộ cho autosave và khôi-phục-khi-huỷ. Không gọi server. */
@@ -298,7 +299,7 @@ export const JourneysWorkspace = ({
         // BE trả danh sách kiểm cụ thể (thiếu mô tả, thiếu via, node trải
         // nghiệm chưa gắn…). Nói ra từng cái — "không lưu được" thì người dùng
         // không biết phải sửa gì, dù chính panel Requirements đã liệt kê sẵn.
-        const reasons = saveFailureReasons(err);
+        const reasons = saveFailureReasons(err, nodeNamesOf(next));
         toast.error(
           reasons.length
             ? t('toastSaveInvalid', { reasons: reasons.join(' · ') })

@@ -63,13 +63,24 @@ export const createJourney = async (
  * thị, nên một bản nháp đang dựng dở sẽ bị từ chối 422 kèm danh sách kiểm.
  * Gộp chúng thành một câu "không lưu được" là vứt đi đúng phần người dùng cần.
  */
-export const saveFailureReasons = (err: unknown): string[] => {
+export const saveFailureReasons = (
+  err: unknown,
+  /**
+   * `key → tên hiển thị`. BE gọi node bằng KHOÁ (`n3`), thứ không xuất hiện ở
+   * đâu trên canvas — đọc "node n3" thì không biết phải sửa cái nào.
+   */
+  nodeNames: Record<string, string> = {}
+): string[] => {
   if (!(err instanceof RxApiError)) return [];
   const details = err.details as
-    { errors?: { message?: string }[] } | undefined;
+    { errors?: { message?: string; node_key?: string }[] } | undefined;
   return (details?.errors ?? [])
-    .map(e => e.message ?? '')
-    .filter((m): m is string => m.length > 0);
+    .map(e => {
+      const msg = e.message ?? '';
+      const name = e.node_key ? nodeNames[e.node_key] : undefined;
+      return name && e.node_key ? msg.split(e.node_key).join(`“${name}”`) : msg;
+    })
+    .filter(m => m.length > 0);
 };
 
 /**

@@ -217,6 +217,15 @@ export const validateJourney = (j: Journey): JourneyCheck[] => {
  * every linked experience. A score that cannot go stale, and a missing list
  * that is always the truth.
  */
+/**
+ * `key → tên hiển thị`, để dịch lỗi của BE sang chữ người dùng thấy trên canvas.
+ * BE nói "node n3"; trên màn hình nó tên là "New experience".
+ */
+export const nodeNamesOf = (
+  j: Journey | null | undefined
+): Record<string, string> =>
+  Object.fromEntries((j?.nodes ?? []).map(n => [n.id, n.name]));
+
 export const journeyReadiness = (j: Journey): JourneyReadiness => {
   const checks: JourneyCheck[] = [
     ...validateJourney(j),

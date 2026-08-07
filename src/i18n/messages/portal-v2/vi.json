@@ -553,7 +553,9 @@
       "personaBehaves": "Hành xử theo phân khúc {seg}",
       "toastSaveInvalid": "Chưa lưu được — {reasons}",
       "editorSaveDraftNote": "Lưu được, nhưng chưa đem dùng được — {reasons}",
-      "toastForkInvalid": "Chưa đem dùng được — {reasons}"
+      "toastForkInvalid": "Chưa đem dùng được — {reasons}",
+      "useBlocked": "Chưa đem dùng được — {reasons}. Mở “Edit canvas” để bổ sung.",
+      "useBlockedNote": "Còn {count} mục chưa đủ để đem dùng — xem tab Requirements, hoặc mở Edit canvas để bổ sung."
     },
     "experiences": {
       "benefitsHeading": "Vì sao hiệu quả",
