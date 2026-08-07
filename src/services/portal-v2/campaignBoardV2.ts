@@ -165,3 +165,17 @@ export const removeCampaignItem = (
   campaignId: string,
   itemId: string
 ): Promise<void> => rexerV2Api.campaigns.removeItem(campaignId, itemId);
+
+/** PUT chỉ nhận owner/due/note — trạng thái đi đường riêng, xem `setCampaignItemStatus`. */
+export const updateCampaignItem = async (
+  campaignId: string,
+  itemId: string,
+  patch: { due?: string | null; note?: string; ownerId?: string | null }
+): Promise<CampaignItem> =>
+  v2ToCampaignItem(
+    await rexerV2Api.campaigns.updateItem(campaignId, itemId, {
+      due_date: patch.due ?? null,
+      ...(patch.note !== undefined ? { note: patch.note } : {}),
+      ...(patch.ownerId !== undefined ? { owner_id: patch.ownerId } : {}),
+    })
+  );

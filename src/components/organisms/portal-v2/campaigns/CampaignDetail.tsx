@@ -5,7 +5,12 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { addCampaignItem } from '@/services/portal-v2/campaignBoardV2';
+import {
+  addCampaignItem,
+  removeCampaignItem,
+  setCampaignItemStatus,
+  updateCampaignItem,
+} from '@/services/portal-v2/campaignBoardV2';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { cn } from '@/lib/cn';
@@ -171,18 +176,63 @@ export const CampaignDetail = ({
     setEditing(false);
   };
 
-  const handleSaveItem = (item: CampaignItem) => {
-    const items = campaign.items.map((current, i) =>
-      i === itemIndex ? item : current
-    );
-    commit({ ...toDraft(campaign), items }, t('toastItemSaved'));
+  /**
+   * Lưu hạng mục — hai lời gọi RIÊNG.
+   *
+   * BE tách chúng có chủ ý: `PUT .../items/{id}` chỉ nhận owner/due/note, còn
+   * trạng thái đi qua `PATCH .../status` vì nó là bước trong quy trình chứ
+   * không phải một trường tự do. Gộp lại là gửi một trường server không nhận.
+   */
+  const handleSaveItem = async (item: CampaignItem) => {
+    const before = itemIndex !== null ? campaign.items[itemIndex] : undefined;
     setItemIndex(null);
+
+    const saved = await updateCampaignItem(campaign.id, item.id, {
+      due: item.due,
+      note: item.note,
+    }).catch(() => null);
+    if (!saved) {
+      toast.error(t('toastItemSaveFailed'));
+      return;
+    }
+
+    let next = { ...saved, expIds: item.expIds };
+    if (before && before.status !== item.status) {
+      const moved = await setCampaignItemStatus(
+        campaign.id,
+        item.id,
+        item.status
+      ).catch(() => null);
+      if (!moved) {
+        toast.error(t('toastItemStatusFailed'));
+      } else {
+        next = { ...moved, expIds: item.expIds };
+      }
+    }
+
+    onChange({
+      ...campaign,
+      items: campaign.items.map(c => (c.id === item.id ? next : c)),
+    });
+    toast.success(t('toastItemSaved'));
   };
 
-  const handleDeleteItem = (index: number) => {
-    const items = campaign.items.filter((_, i) => i !== index);
-    commit({ ...toDraft(campaign), items }, t('toastItemRemoved'));
+  const handleDeleteItem = async (index: number) => {
+    const item = campaign.items[index];
+    if (!item) return;
     setItemIndex(null);
+    const ok = await removeCampaignItem(campaign.id, item.id)
+      .then(() => true)
+      .catch(() => false);
+    if (!ok) {
+      toast.error(t('toastItemRemoveFailed'));
+      return;
+    }
+    onChange({
+      ...campaign,
+      items: campaign.items.filter(c => c.id !== item.id),
+    });
+    toast.success(t('toastItemRemoved'));
   };
 
   /**

@@ -1252,7 +1252,10 @@
       "toastPromoteFailed": "Không đưa được hành trình thành blueprint",
       "needBrandToCreate": "Chọn thương hiệu trước — chiến dịch phải thuộc về một thương hiệu.",
       "toastCreateNoBrand": "Chưa chọn thương hiệu — chiến dịch phải thuộc về một thương hiệu.",
-      "toastItemAddFailed": "Không thêm được hạng mục"
+      "toastItemAddFailed": "Không thêm được hạng mục",
+      "toastItemSaveFailed": "Không lưu được hạng mục",
+      "toastItemStatusFailed": "Lưu được nhưng chưa đổi được trạng thái",
+      "toastItemRemoveFailed": "Không xoá được hạng mục"
     },
     "deploy": {
       "title": "Xuất bản",

@@ -1252,7 +1252,10 @@
       "toastPromoteFailed": "Could not promote the journey to a blueprint",
       "needBrandToCreate": "Pick a brand first — a campaign has to belong to one.",
       "toastCreateNoBrand": "No brand selected — a campaign has to belong to one.",
-      "toastItemAddFailed": "Could not add the item"
+      "toastItemAddFailed": "Could not add the item",
+      "toastItemSaveFailed": "Could not save the item",
+      "toastItemStatusFailed": "Saved, but the status did not change",
+      "toastItemRemoveFailed": "Could not remove the item"
     },
     "deploy": {
       "title": "Deploy",
