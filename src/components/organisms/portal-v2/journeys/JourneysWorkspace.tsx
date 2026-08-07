@@ -443,9 +443,6 @@ export const JourneysWorkspace = ({
           onClose={handleClose}
           onEdit={j => setOverlay({ kind: 'edit', id: j.id })}
           onFork={j => setOverlay({ kind: 'fork', id: j.id })}
-          onNotReady={missing =>
-            toast.error(t('toastForkInvalid', { reasons: missing.join(' · ') }))
-          }
           onDuplicate={handleDuplicate}
           onOpenJourney={id => setOverlay({ kind: 'detail', id })}
         />

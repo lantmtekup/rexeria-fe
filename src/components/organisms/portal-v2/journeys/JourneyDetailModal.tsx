@@ -44,8 +44,6 @@ type JourneyDetailModalProps = {
   onClose: () => void;
   onEdit: (journey: Journey) => void;
   onFork: (journey: Journey) => void;
-  /** Bấm "Dùng cho chiến dịch" khi hành trình còn thiếu điều kiện. */
-  onNotReady: (missing: string[]) => void;
   onDuplicate: (journey: Journey) => void;
   onOpenJourney: (id: string) => void;
 };
@@ -58,7 +56,6 @@ export const JourneyDetailModal = ({
   onClose,
   onEdit,
   onFork,
-  onNotReady,
   onDuplicate,
   onOpenJourney,
 }: JourneyDetailModalProps) => {
@@ -184,20 +181,11 @@ export const JourneyDetailModal = ({
               {t('editCanvas')}
             </Button>
             {/*
-              LUÔN bấm được. Một nút xám không giải thích được vì sao nó xám,
-              và người dùng đọc nó thành "hỏng" hoặc "đã gắn rồi".
-              Bấm khi chưa đủ điều kiện thì nói ngay thứ còn thiếu, thay vì mở
-              hộp chọn chiến dịch rồi để `POST /journeys/{id}/use` từ chối —
-              lúc đó họ đang ở màn chọn chiến dịch, cách xa chỗ sửa được.
+              KHÔNG chặn: gắn một lộ trình đang dựng dở vào chiến dịch để làm
+              tiếp ở đó là việc hợp lệ. Dòng chữ bên trái vẫn nêu thứ còn
+              thiếu, nên trạng thái đọc được mà không cản đường.
             */}
-            <Button
-              size='sm'
-              onClick={() =>
-                readiness.missing.length > 0
-                  ? onNotReady(readiness.missing)
-                  : onFork(journey)
-              }
-            >
+            <Button size='sm' onClick={() => onFork(journey)}>
               <GitFork className='size-3.5' strokeWidth={2.2} aria-hidden />
               {t('useInCampaign')}
             </Button>
