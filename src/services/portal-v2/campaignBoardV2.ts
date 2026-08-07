@@ -73,10 +73,15 @@ const toBudget = (c: BudgetSource) => ({
  * vì để server trả 400 với thông báo khó đọc.
  */
 export const createCampaign = async (
-  draft: CampaignDraft
+  draft: CampaignDraft,
+  brandId: string | null
 ): Promise<CampaignView> => {
   if (!draft.type) throw new Error('CAMPAIGN_TYPE_REQUIRED');
+  // Admin không thuộc brand nào, nên phải gửi kèm brand đang xem — không có
+  // thì BE tạo ra một chiến dịch không màn hình nào nhìn thấy.
+  if (!brandId) throw new Error('CAMPAIGN_BRAND_REQUIRED');
   const created = await rexerV2Api.campaigns.create({
+    brand_id: brandId,
     name: draft.name,
     type: draft.type,
     brief: draft.brief,

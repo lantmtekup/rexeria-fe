@@ -67,6 +67,8 @@ export type RxCampaign = {
 export type RxCampaignListResponse = { items: RxCampaign[]; total: number };
 
 export type RxCreateCampaignRequest = {
+  /** Chỉ platform admin dùng được; thiếu nó BE trả 400 "requires a brand scope". */
+  brand_id?: string;
   name: string;
   /** BẮT BUỘC ở BE (`validate:"required,oneof=..."`). */
   type: RxCampaignType;

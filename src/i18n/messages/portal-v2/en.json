@@ -1249,7 +1249,9 @@
       "toastDuplicateFailed": "Could not duplicate",
       "toastDeleteFailed": "{count} campaigns could not be deleted",
       "toastRouteFailed": "Could not attach the journey to the campaign",
-      "toastPromoteFailed": "Could not promote the journey to a blueprint"
+      "toastPromoteFailed": "Could not promote the journey to a blueprint",
+      "needBrandToCreate": "Pick a brand first — a campaign has to belong to one.",
+      "toastCreateNoBrand": "No brand selected — a campaign has to belong to one."
     },
     "deploy": {
       "title": "Deploy",

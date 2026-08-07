@@ -35,6 +35,7 @@ export default async function PortalV2CampaignsPage({
         // Nối bằng `journeys.campaign_id` — `CampaignV2` không có `journey_id`.
         initialCampaigns={withJourneyLinks(board.items, journeys.items)}
         initialJourneys={journeys.items}
+        brandId={scope.brandId}
         initialError={board.error ?? scope.error}
       />
     </div>

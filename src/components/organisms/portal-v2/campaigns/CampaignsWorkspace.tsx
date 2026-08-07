@@ -73,6 +73,8 @@ type CampaignsWorkspaceProps = {
   initialCampaigns: CampaignView[];
   /** Hành trình THẬT — `GET /v1/journeys`, cùng brand. */
   initialJourneys: Journey[];
+  /** Brand đang xem. null = admin chưa chọn ⇒ chưa tạo được chiến dịch. */
+  brandId: string | null;
   /** Nạp hỏng ⇒ nói ra, đừng để đọc như "chưa có chiến dịch nào". */
   initialError?: string | null;
 };
@@ -91,6 +93,7 @@ export const CampaignsWorkspace = ({
   initialCampaignId,
   initialCampaigns,
   initialJourneys,
+  brandId,
   initialError = null,
 }: CampaignsWorkspaceProps) => {
   const t = useTranslations('portalV2.campaigns');
@@ -219,9 +222,10 @@ export const CampaignsWorkspace = ({
 
   const handleCreate = async (wizard: CampaignWizard) => {
     const draft = wizardDraft(wizard);
-    const saved = await createCampaignApi(draft).catch(() => null);
+    const saved = await createCampaignApi(draft, brandId).catch(() => null);
     if (!saved) {
-      toast.error(t('toastCreateFailed'));
+      // Thiếu brand là lỗi khác hẳn "server hỏng" — nói đúng cái nào.
+      toast.error(brandId ? t('toastCreateFailed') : t('toastCreateNoBrand'));
       return;
     }
     // Id do SERVER cấp, không phải `nextCampaignId` đếm trong mảng — id bịa ở
@@ -451,7 +455,12 @@ export const CampaignsWorkspace = ({
           </div>
 
           <div className='flex shrink-0 items-center gap-2 pb-0.5'>
-            <Button variant='primary' onClick={() => setWizardOpen(true)}>
+            <Button
+              variant='primary'
+              disabled={!brandId}
+              title={!brandId ? t('needBrandToCreate') : undefined}
+              onClick={() => setWizardOpen(true)}
+            >
               <Plus className='size-[15px]' strokeWidth={2.4} aria-hidden />
               {t('newCampaign')}
             </Button>
@@ -495,7 +504,12 @@ export const CampaignsWorkspace = ({
           <EmptyState
             title={t('emptyTitle')}
             action={
-              <Button variant='primary' onClick={() => setWizardOpen(true)}>
+              <Button
+                variant='primary'
+                disabled={!brandId}
+                title={!brandId ? t('needBrandToCreate') : undefined}
+                onClick={() => setWizardOpen(true)}
+              >
                 <Plus className='size-[15px]' strokeWidth={2.4} aria-hidden />
                 {t('newCampaign')}
               </Button>

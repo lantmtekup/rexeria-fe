@@ -1249,7 +1249,9 @@
       "toastDuplicateFailed": "Không nhân bản được",
       "toastDeleteFailed": "{count} chiến dịch không xoá được",
       "toastRouteFailed": "Không gắn được hành trình vào chiến dịch",
-      "toastPromoteFailed": "Không đưa được hành trình thành blueprint"
+      "toastPromoteFailed": "Không đưa được hành trình thành blueprint",
+      "needBrandToCreate": "Chọn thương hiệu trước — chiến dịch phải thuộc về một thương hiệu.",
+      "toastCreateNoBrand": "Chưa chọn thương hiệu — chiến dịch phải thuộc về một thương hiệu."
     },
     "deploy": {
       "title": "Xuất bản",
