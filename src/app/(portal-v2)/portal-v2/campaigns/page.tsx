@@ -1,6 +1,7 @@
 import { BrandScopeBar } from '@/components/molecules/portal-v2/BrandScopeBar';
 import { CampaignsWorkspace } from '@/components/organisms/portal-v2/campaigns/CampaignsWorkspace';
 import { readCampaignIdParam } from '@/lib/portal-v2/campaigns/idParam';
+import { withJourneyLinks } from '@/lib/portal-v2/campaigns/journeyLink';
 import { fetchCampaignBoard } from '@/services/portal-v2/campaignBoardV2';
 import { fetchJourneyBoard } from '@/services/portal-v2/journeyBoard';
 import { resolvePortalScope } from '@/services/portal-v2/scope';
@@ -31,7 +32,8 @@ export default async function PortalV2CampaignsPage({
       <CampaignsWorkspace
         key={scope.brandId ?? 'none'}
         initialCampaignId={initialId}
-        initialCampaigns={board.items}
+        // Nối bằng `journeys.campaign_id` — `CampaignV2` không có `journey_id`.
+        initialCampaigns={withJourneyLinks(board.items, journeys.items)}
         initialJourneys={journeys.items}
         initialError={board.error ?? scope.error}
       />

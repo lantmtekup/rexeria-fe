@@ -50,6 +50,7 @@ import {
   ensureCampaignExperiences,
   ensureCampaignJourneys,
   seedExperiences,
+  withJourneyLinks,
 } from '@/lib/portal-v2/campaigns/journeyLink';
 import {
   CAMPAIGN_PRODUCTS,
@@ -189,12 +190,16 @@ export const CampaignsWorkspace = ({
     if (!openId) return;
     let alive = true;
     void fetchCampaignDetail(openId).then(detail => {
-      if (alive && detail) setCampaigns(prev => replaceCampaign(prev, detail));
+      if (!alive || !detail) return;
+      // `GET /campaigns/{id}` cũng không trả `journey_id`, nên gán thẳng vào
+      // state sẽ xoá mất liên kết vừa ghép ở route.
+      const [linked] = withJourneyLinks([detail], journeys);
+      setCampaigns(prev => replaceCampaign(prev, linked ?? detail));
     });
     return () => {
       alive = false;
     };
-  }, [openId]);
+  }, [openId, journeys]);
 
   /**
    * Sửa brief/ngân sách/kênh — ghi lạc quan rồi PUT. Hỏng thì trả về bản cũ,
