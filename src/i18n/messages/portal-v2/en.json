@@ -1255,7 +1255,9 @@
       "toastItemAddFailed": "Could not add the item",
       "toastItemSaveFailed": "Could not save the item",
       "toastItemStatusFailed": "Saved, but the status did not change",
-      "toastItemRemoveFailed": "Could not remove the item"
+      "toastItemRemoveFailed": "Could not remove the item",
+      "toastAttachFailed": "Could not attach the experience",
+      "toastDetachFailed": "Could not detach the experience"
     },
     "deploy": {
       "title": "Deploy",

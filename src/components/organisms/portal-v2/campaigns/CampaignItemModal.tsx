@@ -42,10 +42,15 @@ type CampaignItemModalProps = {
   onSave: (item: CampaignItem) => void;
   onDelete: () => void;
   /**
-   * Fork a library master onto this subject. Returns the copy's id, which is
-   * derived from origin × campaign × subject and therefore already known.
+   * Gắn một trải nghiệm thư viện vào hạng mục này.
+   *
+   * BẤT ĐỒNG BỘ vì id bản copy do SERVER cấp — bản trước suy id từ
+   * `origin × campaign × subject` và dựng bản ghi ngay trong state, thứ đó trỏ
+   * vào hư không sau lần tải lại đầu tiên. Trả null khi gắn hỏng.
    */
-  onAttachMaster: (masterId: string) => string;
+  onAttachMaster: (masterId: string) => Promise<string | null>;
+  /** Gỡ một trải nghiệm khỏi hạng mục — trả false khi server từ chối. */
+  onDetachExperience: (experienceId: string) => Promise<boolean>;
   /** Mock Studio Adapt — marks the copy as rewritten for this subject. */
   onAdaptExperience?: (experienceId: string) => void;
 };
@@ -67,6 +72,7 @@ export const CampaignItemModal = ({
   onSave,
   onDelete,
   onAttachMaster,
+  onDetachExperience,
   onAdaptExperience,
 }: CampaignItemModalProps) => {
   const t = useTranslations('portalV2.campaigns');
@@ -109,13 +115,25 @@ export const CampaignItemModal = ({
       );
   }, [experiences, draft.expIds, pickerQuery]);
 
-  const handleAttach = (masterId: string) => {
-    const copyId = onAttachMaster(masterId);
-    if (!draft.expIds.includes(copyId)) {
-      patch({ expIds: [...draft.expIds, copyId] });
-    }
+  /**
+   * Gỡ = XOÁ bản copy ở server (spec §5.4: một copy rời khỏi hạng mục thì
+   * không còn nghĩa gì). Bỏ khỏi danh sách trước để nút phản hồi ngay, hỏng
+   * thì trả lại — giữ nó biến mất trong khi server vẫn còn là nói dối.
+   */
+  const handleDetach = async (experienceId: string) => {
+    const before = draft.expIds;
+    patch({ expIds: before.filter(x => x !== experienceId) });
+    const ok = await onDetachExperience(experienceId);
+    if (!ok) patch({ expIds: before });
+  };
+
+  const handleAttach = async (masterId: string) => {
     setPickerOpen(false);
     setPickerQuery('');
+    const copyId = await onAttachMaster(masterId);
+    if (copyId && !draft.expIds.includes(copyId)) {
+      patch({ expIds: [...draft.expIds, copyId] });
+    }
   };
 
   return (
@@ -336,9 +354,7 @@ export const CampaignItemModal = ({
                   type='button'
                   aria-label={t('detachExperience')}
                   title={t('detachExperience')}
-                  onClick={() =>
-                    patch({ expIds: draft.expIds.filter(x => x !== id) })
-                  }
+                  onClick={() => void handleDetach(id)}
                   className={cn(
                     'grid size-7 shrink-0 cursor-pointer place-items-center rounded-[7px] text-[var(--pv2-mut)] transition-colors',
                     'hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)] hover:text-[var(--pv2-error)]',

@@ -1255,7 +1255,9 @@
       "toastItemAddFailed": "Không thêm được hạng mục",
       "toastItemSaveFailed": "Không lưu được hạng mục",
       "toastItemStatusFailed": "Lưu được nhưng chưa đổi được trạng thái",
-      "toastItemRemoveFailed": "Không xoá được hạng mục"
+      "toastItemRemoveFailed": "Không xoá được hạng mục",
+      "toastAttachFailed": "Không gắn được trải nghiệm",
+      "toastDetachFailed": "Không gỡ được trải nghiệm"
     },
     "deploy": {
       "title": "Xuất bản",

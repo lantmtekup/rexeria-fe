@@ -355,6 +355,30 @@ export const rexerV2Api = {
         body,
       }),
 
+    /**
+     * `POST /v1/campaigns/{cid}/items/{iid}/experiences` — gắn một trải nghiệm
+     * vào hạng mục.
+     *
+     * Gắn một TEMPLATE thì BE tự fork ra bản copy (R1: chiến dịch không bao giờ
+     * giữ template) và tự cấp id — nên đừng suy id ở FE.
+     */
+    attachToItem: (campaignId: string, itemId: string, experienceId: string) =>
+      rxV2<RxExperience>(
+        `/campaigns/${campaignId}/items/${itemId}/experiences`,
+        { method: 'POST', body: { experience_id: experienceId } }
+      ),
+
+    /** Gỡ = XOÁ bản copy: một copy rời khỏi hạng mục thì không còn nghĩa gì. */
+    detachFromItem: (
+      campaignId: string,
+      itemId: string,
+      experienceId: string
+    ) =>
+      rxV2<void>(
+        `/campaigns/${campaignId}/items/${itemId}/experiences/${experienceId}`,
+        { method: 'DELETE' }
+      ),
+
     /** `GET /v1/experiences/{id}/coverage` — độ phủ phễu ĐO ĐƯỢC, không seed. */
     coverage: (experienceId: string) =>
       rxV2<RxExperienceCoverage>(`/experiences/${experienceId}/coverage`),

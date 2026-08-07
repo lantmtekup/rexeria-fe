@@ -6,6 +6,10 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
+  attachExperienceToItem,
+  detachExperienceFromItem,
+} from '@/services/portal-v2/campaignExperiences';
+import {
   addCampaignItem,
   removeCampaignItem,
   setCampaignItemStatus,
@@ -33,7 +37,6 @@ import {
   fmtRange,
   journeyOriginOf,
   subjectName,
-  subjectRef,
   syncItemStage,
   toDraft,
 } from '@/lib/portal-v2/campaigns/helpers';
@@ -47,10 +50,7 @@ import {
   blueprintJourneys,
   journeyForCampaign,
 } from '@/lib/portal-v2/campaigns/journeyLink';
-import {
-  experienceCopyId,
-  forkExperience,
-} from '@/lib/portal-v2/campaigns/mock';
+import {} from '@/lib/portal-v2/campaigns/mock';
 import { campPhase } from '@/lib/portal-v2/campaigns/phases';
 import { campReadiness } from '@/lib/portal-v2/campaigns/readiness';
 import type {
@@ -261,33 +261,57 @@ export const CampaignDetail = ({
    * Forking a master onto a subject. The copy id is derived, so the modal can
    * attach it immediately and the workspace only has to make the record exist.
    */
-  const handleAttachMaster = (item: CampaignItem) => (masterId: string) => {
-    const ref = subjectRef(item);
-    const copyId = experienceCopyId(masterId, campaign.id, ref);
-    const master = experiences.find(e => e.id === masterId);
+  const handleAttachMaster =
+    (item: CampaignItem) =>
+    async (masterId: string): Promise<string | null> => {
+      const copy = await attachExperienceToItem(
+        campaign.id,
+        item.id,
+        masterId
+      ).catch(() => null);
+      if (!copy) {
+        toast.error(t('toastAttachFailed'));
+        return null;
+      }
+      // Bản copy do server dựng — đưa nó vào danh sách để thẻ vẽ được tên.
+      onEnsureExperiences([copy]);
+      return copy.id;
+    };
 
-    if (master && !experiences.some(e => e.id === copyId)) {
-      onEnsureExperiences([
-        forkExperience(
-          master,
-          campaign.id,
-          campaign.name,
-          ref,
-          subjectName(item, productNames) || ref
-        ),
-      ]);
-    }
-    return copyId;
-  };
-
-  const attachMasterToItem = (
+  const attachMasterToItem = async (
     item: CampaignItem,
     masterId: string
-  ): CampaignItem => {
-    const copyId = handleAttachMaster(item)(masterId);
+  ): Promise<CampaignItem | null> => {
+    const copyId = await handleAttachMaster(item)(masterId);
+    if (!copyId) return null;
     if (item.expIds.includes(copyId)) return item;
     return syncItemStage({ ...item, expIds: [...item.expIds, copyId] });
   };
+
+  const handleDetachExperience =
+    (item: CampaignItem) =>
+    async (experienceId: string): Promise<boolean> => {
+      const ok = await detachExperienceFromItem(
+        campaign.id,
+        item.id,
+        experienceId
+      )
+        .then(() => true)
+        .catch(() => false);
+      if (!ok) {
+        toast.error(t('toastDetachFailed'));
+        return false;
+      }
+      onChange({
+        ...campaign,
+        items: campaign.items.map(c =>
+          c.id === item.id
+            ? { ...c, expIds: c.expIds.filter(x => x !== experienceId) }
+            : c
+        ),
+      });
+      return true;
+    };
 
   const handleAdaptExperience = (experienceId: string) => {
     onPatchExperience(experienceId, { adapted: true });
@@ -316,7 +340,7 @@ export const CampaignDetail = ({
     setEditingRoute(false);
   };
 
-  const handleLensNodeActivate = (nodeId: string) => {
+  const handleLensNodeActivate = async (nodeId: string) => {
     if (!journeyLens) return;
     const item = campaign.items[journeyLens.itemIndex];
     if (!item) return;
@@ -325,21 +349,18 @@ export const CampaignDetail = ({
     const card = lane.cards.find(c => c.node.id === nodeId);
     if (!card || card.node.kind !== 'experience' || !card.node.x) return;
 
-    if (card.fit === 'open') {
-      const next = attachMasterToItem(item, card.node.x);
-      const items = campaign.items.map((current, i) =>
-        i === journeyLens.itemIndex ? next : current
+    if (card.fit === 'open' || card.fit === 'shared') {
+      const next = await attachMasterToItem(item, card.node.x);
+      if (!next) return;
+      // `expIds` là quan hệ do server giữ, KHÔNG đi qua `PUT /campaigns` —
+      // cập nhật tại chỗ thay vì gộp vào `commit`.
+      onChange({
+        ...campaign,
+        items: campaign.items.map(c => (c.id === item.id ? next : c)),
+      });
+      toast.success(
+        card.fit === 'open' ? t('journeyLensBuilt') : t('journeyLensForked')
       );
-      commit({ ...toDraft(campaign), items }, t('journeyLensBuilt'));
-      return;
-    }
-
-    if (card.fit === 'shared') {
-      const next = attachMasterToItem(item, card.node.x);
-      const items = campaign.items.map((current, i) =>
-        i === journeyLens.itemIndex ? next : current
-      );
-      commit({ ...toDraft(campaign), items }, t('journeyLensForked'));
       return;
     }
 
@@ -559,6 +580,7 @@ export const CampaignDetail = ({
           onSave={handleSaveItem}
           onDelete={() => handleDeleteItem(itemIndex ?? 0)}
           onAttachMaster={handleAttachMaster(activeItem)}
+          onDetachExperience={handleDetachExperience(activeItem)}
           onAdaptExperience={handleAdaptExperience}
         />
       ) : null}
