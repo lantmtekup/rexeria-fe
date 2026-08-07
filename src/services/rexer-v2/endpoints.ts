@@ -43,6 +43,12 @@ import type {
 } from './types/journey';
 import type { RxIntelSegmentsResponse } from './types/intel';
 import type {
+  RxCapabilities,
+  RxGovernance,
+  RxMeProfile,
+  RxPutGovernanceRequest,
+} from './types/settings';
+import type {
   RxExperience,
   RxExperienceCoverage,
   RxExperienceListQuery,
@@ -137,6 +143,45 @@ export const rexerV2Api = {
         method: 'PUT',
         body,
       }),
+  },
+
+  // ── Settings (spec §14) ──────────────────────────────────────────────────
+  settings: {
+    /** `brand_id` bắt buộc với platform admin — thiếu là 400. */
+    governance: (brandId?: string) =>
+      rxV2<RxGovernance>(
+        `/org/governance${brandId ? `?brand_id=${encodeURIComponent(brandId)}` : ''}`
+      ),
+
+    /** PUT gửi TOÀN BỘ tài liệu; `version` lệch ⇒ 409 STALE_VERSION. */
+    putGovernance: (body: RxPutGovernanceRequest, brandId?: string) =>
+      rxV2<RxGovernance>(
+        `/org/governance${brandId ? `?brand_id=${encodeURIComponent(brandId)}` : ''}`,
+        { method: 'PUT', body }
+      ),
+
+    resetGovernance: (brandId?: string) =>
+      rxV2<RxGovernance>(
+        `/org/governance/reset${brandId ? `?brand_id=${encodeURIComponent(brandId)}` : ''}`,
+        { method: 'POST' }
+      ),
+
+    capabilities: (brandId?: string) =>
+      rxV2<RxCapabilities>(
+        `/org/capabilities${brandId ? `?brand_id=${encodeURIComponent(brandId)}` : ''}`
+      ),
+
+    setAccountType: (accountType: string, brandId?: string) =>
+      rxV2<RxCapabilities>(
+        `/org/account-type${brandId ? `?brand_id=${encodeURIComponent(brandId)}` : ''}`,
+        { method: 'PATCH', body: { account_type: accountType } }
+      ),
+
+    /** Hồ sơ của CHÍNH người đăng nhập — không theo brand. */
+    meProfile: () => rxV2<RxMeProfile>('/me/profile'),
+
+    putMeProfile: (body: RxMeProfile) =>
+      rxV2<RxMeProfile>('/me/profile', { method: 'PUT', body }),
   },
 
   // ── Intel (spec §8) ──────────────────────────────────────────────────────

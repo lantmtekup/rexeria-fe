@@ -1462,7 +1462,9 @@
       "colExperience": "Experience",
       "colSessions": "Sessions",
       "colTier": "Confidence",
-      "previewMore": "and {count} more rows in the export."
+      "previewMore": "and {count} more rows in the export.",
+      "toastSaveFailed": "Could not save settings",
+      "toastNeedBrand": "Pick a brand first — settings belong to one."
     },
     "media": {
       "title": "Media",

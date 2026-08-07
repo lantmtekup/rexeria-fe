@@ -1462,7 +1462,9 @@
       "colExperience": "Trải nghiệm",
       "colSessions": "Phiên",
       "colTier": "Độ tin cậy",
-      "previewMore": "và {count} dòng nữa trong bản xuất."
+      "previewMore": "và {count} dòng nữa trong bản xuất.",
+      "toastSaveFailed": "Không lưu được cài đặt",
+      "toastNeedBrand": "Chọn thương hiệu trước — cài đặt thuộc về một thương hiệu."
     },
     "media": {
       "title": "Media",
