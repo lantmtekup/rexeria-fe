@@ -2,51 +2,52 @@
 
 import { useTranslations } from 'next-intl';
 
-import { LAYER_COMPONENT_LABEL_KEY } from '@/lib/portal-v2/experiences/constants';
+import {
+  COMPONENT_EVENT_LABEL_KEY,
+  COMPONENT_KIND_LABEL_KEY,
+} from '@/lib/portal-v2/experiences/constants';
 import {
   COVERAGE_TONE_STYLE,
   ROLE_STYLE,
   coverageTone,
 } from '@/lib/portal-v2/experiences/roleStyles';
 import type {
-  ExperienceView,
+  ExperienceLayer,
   SignalCoverage,
 } from '@/lib/portal-v2/experiences/types';
 
 type ExperienceSignalsPaneProps = {
-  experience: ExperienceView;
   /**
    * Độ phủ nạp từ `GET /experiences/{id}/coverage`. null = chưa nạp xong hoặc
    * BE nói loại này không đo được — cả hai đều KHÔNG phải 0%.
    */
   coverage: SignalCoverage | null;
+  /** Block thật từ `GET /experiences/{id}`; null = chưa nạp xong hoặc hỏng. */
+  layers: ExperienceLayer[] | null;
 };
 
 /**
- * What this experience can report, before any traffic arrives.
+ * Trải nghiệm này BÁO VỀ ĐƯỢC GÌ, trước khi có lượt truy cập nào.
  *
- * Reduced from the prototype on purpose: the `SIGNAL_TYPES` taxonomy and the
- * `meaningOf()` sentence machinery ("Customer compared two products") are the
- * editor's job. This is a read-only surface, so it shows which components carry
- * a tracking point and which do not, and stops there.
+ * Đọc `layers[].components[]` của `GET /experiences/{id}` — cùng một nguồn với
+ * badge trên tab. Bản trước đọc một mảng luôn rỗng do `fromV2` dựng ra, nên tab
+ * ghi "Tín hiệu 9" (lấy từ `/coverage`) còn pane vẽ 0 dòng.
  */
 export const ExperienceSignalsPane = ({
-  experience,
   coverage,
+  layers,
 }: ExperienceSignalsPaneProps) => {
   const t = useTranslations('portalV2.experiences');
-  const { layers } = experience;
   const toneStyle = COVERAGE_TONE_STYLE[coverageTone(coverage?.pct ?? 0)];
 
-  const tracked = layers.flatMap((layer, i) =>
-    layer.trackedComponents.map(component => ({ layer, i, component }))
+  const rows = (layers ?? []).flatMap((layer, i) =>
+    layer.components.map(component => ({ layer, i, component }))
   );
+  const tracked = rows.filter(r => r.component.tracked);
+  const blind = rows.filter(r => !r.component.tracked);
 
-  const blind = layers.flatMap((layer, i) =>
-    layer.components
-      .filter(c => !layer.trackedComponents.includes(c))
-      .map(component => ({ layer, i, component }))
-  );
+  const kindLabel = (kind: string) =>
+    COMPONENT_KIND_LABEL_KEY[kind] ? t(COMPONENT_KIND_LABEL_KEY[kind]) : kind;
 
   return (
     <div className='flex flex-col gap-5'>
@@ -91,13 +92,17 @@ export const ExperienceSignalsPane = ({
           {t('signalsCount', { count: tracked.length })}
         </h3>
 
-        {tracked.length ? (
+        {layers === null ? (
+          <p className='mt-2 text-[12.5px] text-[var(--pv2-faint)]'>
+            {t('layersLoading')}
+          </p>
+        ) : tracked.length ? (
           <ul className='mt-3 flex flex-col gap-1.5'>
             {tracked.map(({ layer, i, component }) => {
-              const role = ROLE_STYLE[layer.role];
+              const role = layer.role ? ROLE_STYLE[layer.role] : null;
               return (
                 <li
-                  key={`${i}-${component}`}
+                  key={`${i}-${component.key}`}
                   className='flex flex-wrap items-center gap-2 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-3 py-2'
                 >
                   <span className='grid size-5 shrink-0 place-items-center rounded-md bg-[var(--pv2-canvas)] text-[10px] font-bold text-[var(--pv2-mut)] tabular-nums'>
@@ -106,14 +111,28 @@ export const ExperienceSignalsPane = ({
                   <span className='text-[12.5px] font-semibold text-[var(--pv2-ink)]'>
                     {layer.name}
                   </span>
-                  <span
-                    className='inline-flex rounded-full px-1.5 py-px text-[9px] font-bold tracking-[0.05em] uppercase'
-                    style={{ background: role.bg, color: role.fg }}
-                  >
-                    {t(role.labelKey)}
-                  </span>
-                  <span className='ml-auto text-[11.5px] text-[var(--pv2-mut)]'>
-                    {t(LAYER_COMPONENT_LABEL_KEY[component])}
+                  {role ? (
+                    <span
+                      className='inline-flex rounded-full px-1.5 py-px text-[9px] font-bold tracking-[0.05em] uppercase'
+                      style={{ background: role.bg, color: role.fg }}
+                    >
+                      {t(role.labelKey)}
+                    </span>
+                  ) : null}
+                  <code className='font-mono text-[11px] text-[var(--pv2-faint)]'>
+                    {component.key}
+                  </code>
+                  <span className='ml-auto flex shrink-0 items-center gap-2 text-[11.5px] text-[var(--pv2-mut)]'>
+                    {/* Ý NGHĨA đứng trước cơ học: "xoay" nói được điều mà
+                        "media" không nói. */}
+                    {component.event ? (
+                      <span className='font-semibold text-[var(--pv2-ink)]'>
+                        {COMPONENT_EVENT_LABEL_KEY[component.event]
+                          ? t(COMPONENT_EVENT_LABEL_KEY[component.event])
+                          : component.event}
+                      </span>
+                    ) : null}
+                    {kindLabel(component.kind)}
                   </span>
                 </li>
               );
@@ -134,11 +153,11 @@ export const ExperienceSignalsPane = ({
           <div className='mt-2.5 flex flex-wrap gap-1.5'>
             {blind.map(({ layer, i, component }) => (
               <span
-                key={`${i}-${component}`}
+                key={`${i}-${component.key}`}
                 className='rounded-full border border-dashed border-[var(--pv2-hair)] px-2.5 py-1 text-[11.5px] text-[var(--pv2-faint)]'
               >
                 {t('coverageBlind', {
-                  name: `${layer.name} · ${t(LAYER_COMPONENT_LABEL_KEY[component])}`,
+                  name: `${layer.name} · ${kindLabel(component.kind)}`,
                 })}
               </span>
             ))}

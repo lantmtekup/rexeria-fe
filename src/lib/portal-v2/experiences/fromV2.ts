@@ -3,6 +3,7 @@ import type {
   EvidenceTier,
   ExperienceCategory,
   ExperienceInteraction,
+  ExperienceLayer,
   ExperienceObjective,
   ExperienceState,
   ExperienceVehicle,
@@ -14,6 +15,8 @@ import type {
 import type {
   RxExperience,
   RxExperienceCoverage,
+  RxExperienceDetail,
+  RxExperienceLayer,
 } from '@/services/rexer-v2/types/experience';
 
 /**
@@ -68,6 +71,10 @@ const pick = <T extends string>(
 const stateOf = (x: RxExperience): ExperienceState => {
   if (x.kind === 'block') return 'block';
   if (x.kind === 'template' || x.is_template) return 'template';
+  // Chưa nộp vào hạng mục nào ⇒ bản của brand, chưa dùng ở đâu. Bản trước không
+  // có nhánh này nên mọi bản copy không chiến dịch rơi vào 'product' — tức là
+  // tab "Bản copy sản phẩm" nhận hết những thứ nó không nói về sản phẩm nào.
+  if (!x.item_id) return 'unassigned';
   return x.subject?.kind === 'topic' ? 'topic' : 'product';
 };
 
@@ -109,33 +116,21 @@ export const v2ToExperienceView = (x: RxExperience): ExperienceView => {
     proven: x.proven,
     tagline: x.tagline ?? '',
 
-    // `funnel_coverage` chỉ cho biết CÓ những vai nào, không có mô tả từng
-    // block. Đủ để vẽ dải phễu; phần mô tả thì bản cũ cũng bịa nốt.
-    layers: roles.map(role => ({
-      role,
-      name: role,
-      description: '',
-      mediaRef: null,
-      cta: null,
-      tracked: false,
-      components: [],
-      trackedComponents: [],
-    })),
+    // `funnel_coverage` chỉ cho biết CÓ những vai nào — không phải các block.
+    funnelRoles: roles,
+    // Block thật chỉ có ở `GET /experiences/{id}`; modal nạp khi mở. Bản cũ
+    // dựng mỗi vai thành một "layer" tên `ATT`, và vì 99/100 bản ghi trả
+    // `funnel_coverage: null` nên màn Chi tiết vẽ ra rỗng.
+    layers: [],
     // Template model có Features/Benefits nhưng `Experience` không trả ra.
     features: [],
     benefits: [],
 
     // BỎ QUA ⇒ chưa đo. Đây là chủ ý của BE, không phải thiếu sót, nên đừng
     // quy về 0%.
-    coverage:
+    coveragePct:
       typeof x.signal_coverage === 'number'
-        ? {
-            blocks: 0,
-            trackedBlocks: 0,
-            components: 0,
-            trackedComponents: 0,
-            pct: Math.round(x.signal_coverage * 100),
-          }
+        ? Math.round(x.signal_coverage * 100)
         : null,
 
     // Số đo nằm ở `GET /experiences/{id}/stats`, nạp khi mở chi tiết. Danh
@@ -152,13 +147,62 @@ export const v2ToExperienceView = (x: RxExperience): ExperienceView => {
   };
 };
 
-/** `GET /experiences/{id}/coverage` → khối độ phủ đầy đủ cho màn chi tiết. */
+/**
+ * `GET /experiences/{id}/coverage` → khối độ phủ đầy đủ cho màn chi tiết.
+ *
+ * `components_total === 0` trả **null**, không trả 0%. Không có component nào
+ * thì không có phép chia — "0%" ở đó đọc như "đã đo và trượt hết", trong khi
+ * sự thật là chưa có gì để đo. Đúng quy ước BE dùng cho `signal_coverage` ở
+ * danh sách: bỏ qua chứ không báo 0.
+ */
 export const v2ToSignalCoverage = (
   c: RxExperienceCoverage
-): SignalCoverage => ({
-  blocks: c.signal_coverage.blocks_total,
-  trackedBlocks: c.signal_coverage.blocks_reporting,
-  components: c.signal_coverage.components_total,
-  trackedComponents: c.signal_coverage.components_tracked,
-  pct: Math.round(c.signal_coverage.pct * 100),
-});
+): SignalCoverage | null => {
+  const s = c.signal_coverage;
+  if (!s || s.components_total <= 0) return null;
+  return {
+    blocks: s.blocks_total,
+    trackedBlocks: s.blocks_reporting,
+    components: s.components_total,
+    trackedComponents: s.components_tracked,
+    pct: Math.round(s.pct * 100),
+  };
+};
+
+const layerName = (l: RxExperienceLayer): string => {
+  if (l.name) return l.name;
+  // Hình A không có `name`; tiêu đề đã soạn là thứ người dùng nhận ra nhất.
+  const title = (l.content ?? l.contentVi ?? {}) as Record<string, unknown>;
+  const desktop = (title.desktop ?? title) as Record<string, unknown>;
+  const t = desktop.title ?? desktop.heading ?? desktop.label;
+  if (typeof t === 'string' && t.trim()) return t.trim();
+  return l.key ?? l.block_type ?? l.blockType ?? '—';
+};
+
+/**
+ * `GET /experiences/{id}` → các block để vẽ.
+ *
+ * Đọc CẢ HAI hình dạng canvas (xem `RxExperienceLayer`): `block_type ??
+ * blockType`, và coi `role` vắng là chưa gán vai chứ không đoán ra một vai.
+ */
+export const v2DetailToLayers = (d: RxExperienceDetail): ExperienceLayer[] =>
+  (d.layers ?? []).map(l => {
+    const comps = l.components ?? [];
+    return {
+      role: pick(l.role, ROLES),
+      name: layerName(l),
+      blockType: l.block_type ?? l.blockType ?? null,
+      // Hình A không mang `isVisible`; vắng ⇒ đang hiện.
+      visible: l.isVisible !== false,
+      tracked: l.block_signal?.track === true,
+      blockSignals: Object.entries(l.block_signal?.signals ?? {})
+        .filter(([, on]) => on)
+        .map(([name]) => name),
+      components: comps.map(c => ({
+        key: c.key,
+        kind: c.component_kind,
+        tracked: c.signal?.track === true,
+        event: c.signal?.event ?? null,
+      })),
+    };
+  });

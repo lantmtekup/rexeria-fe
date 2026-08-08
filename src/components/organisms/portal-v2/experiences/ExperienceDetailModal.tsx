@@ -1,9 +1,17 @@
 'use client';
 
-import { BadgeCheck, Eye, Library, Loader2, PenLine } from 'lucide-react';
+import {
+  BadgeCheck,
+  Eye,
+  Library,
+  Loader2,
+  PenLine,
+  PlusCircle,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
+import { fetchExperienceLayers } from '@/services/portal-v2/experienceDetail';
 import {
   fetchExperienceCoverage,
   fetchExperienceStats,
@@ -18,12 +26,14 @@ import { EXPERIENCE_DETAIL_TABS } from '@/lib/portal-v2/experiences/constants';
 import {
   canEditCanvas,
   canPreview,
+  canUseExperience,
   formatCount,
   formatLift,
 } from '@/lib/portal-v2/experiences/helpers';
 import { EVIDENCE_TIER_STYLE } from '@/lib/portal-v2/experiences/roleStyles';
 import type {
   ExperienceDetailTab,
+  ExperienceLayer,
   ExperienceStats,
   ExperienceView,
   SignalCoverage,
@@ -35,6 +45,8 @@ type ExperienceDetailModalProps = {
   onClose: () => void;
   onPreview: (experience: ExperienceView) => void;
   onEdit: (experience: ExperienceView) => void;
+  /** Mở hộp chọn chiến dịch + hạng mục để fork — xem `UseExperienceModal`. */
+  onUse: (experience: ExperienceView) => void;
   /**
    * Bật/tắt dấu Proven trên chính trang này.
    *
@@ -46,6 +58,13 @@ type ExperienceDetailModalProps = {
   onPromote: (experience: ExperienceView) => void;
   /** Đang ghi xuống server — khoá nút để không bấm kép. */
   provenPending?: boolean;
+  /**
+   * Lý do lần bấm Proven vừa rồi trượt.
+   *
+   * Phải hiện TRONG modal: nút nằm ở đây, mà thông báo của workspace lại vẽ
+   * dưới lưới thẻ — tức là sau lưng lớp phủ, không ai thấy.
+   */
+  provenError?: string | null;
   promotePending?: boolean;
 };
 
@@ -120,64 +139,92 @@ export const ExperienceDetailModal = ({
   onClose,
   onPreview,
   onEdit,
+  onUse,
   onToggleProven,
   onPromote,
   provenPending = false,
+  provenError = null,
   promotePending = false,
 }: ExperienceDetailModalProps) => {
   const t = useTranslations('portalV2.experiences');
   const [tab, setTab] = useState<ExperienceDetailTab>('details');
 
   /**
-   * Số đo nạp KHI MỞ, không nạp ở danh sách.
+   * Block + số đo, nạp KHI MỞ chứ không ở danh sách.
    *
-   * `GET /experiences` cố ý không kèm coverage cho mọi loại, và stats thì có
-   * endpoint riêng — 110 thẻ mà mỗi thẻ hai lời gọi là 220 request cho một lần
-   * mở màn. Mở chi tiết mới hỏi là đúng chỗ.
+   * `GET /experiences` không kèm block (chỉ `funnel_coverage`, và 99/100 bản
+   * ghi trả null), coverage cố ý bỏ qua với loại không đo được, stats thì có
+   * endpoint riêng — 109 thẻ mà mỗi thẻ ba lời gọi là hơn 300 request cho một
+   * lần mở màn. Mở chi tiết mới hỏi là đúng chỗ.
+   *
+   * `layers: null` = CHƯA CÓ (đang nạp hoặc hỏng), khác `[]` = trang không có
+   * block nào. Hai pane nói hai câu khác nhau cho hai trường hợp này.
    */
-  const [measured, setMeasured] = useState<{
+  const [loaded, setLoaded] = useState<{
     coverage: SignalCoverage | null;
     stats: ExperienceStats | null;
-  }>({ coverage: experience.coverage, stats: experience.stats });
+    layers: ExperienceLayer[] | null;
+  }>({ coverage: null, stats: experience.stats, layers: null });
 
   useEffect(() => {
     let alive = true;
-    setMeasured({ coverage: experience.coverage, stats: experience.stats });
+    setLoaded({ coverage: null, stats: experience.stats, layers: null });
 
     void Promise.allSettled([
       fetchExperienceCoverage(experience.id),
       fetchExperienceStats(experience.id),
-    ]).then(([cov, st]) => {
+      fetchExperienceLayers(experience.id),
+    ]).then(([cov, st, ly]) => {
       if (!alive) return;
-      setMeasured(prev => ({
+      setLoaded(prev => ({
         coverage: cov.status === 'fulfilled' ? cov.value : prev.coverage,
         stats: st.status === 'fulfilled' ? st.value : prev.stats,
+        layers: ly.status === 'fulfilled' ? ly.value : prev.layers,
       }));
     });
 
     return () => {
       alive = false;
     };
-  }, [experience.id, experience.coverage, experience.stats]);
+  }, [experience.id, experience.stats]);
+
+  /**
+   * Badge lấy từ CHÍNH mảng mà pane vẽ.
+   *
+   * Bản trước lấy từ `/coverage` còn pane đọc `layer.trackedComponents` (luôn
+   * rỗng), nên tab ghi "Tín hiệu 9" rồi mở ra không có dòng nào. Prototype
+   * dùng đúng một nguồn (`trackedOf(e).length`) nên không thể vênh.
+   */
+  const trackedCount = useMemo(
+    () =>
+      loaded.layers?.reduce(
+        (n, l) => n + l.components.filter(c => c.tracked).length,
+        0
+      ) ?? null,
+    [loaded.layers]
+  );
 
   const tabItems = useMemo(
     () =>
       EXPERIENCE_DETAIL_TABS.map(item => ({
         id: item.id,
         label: t(item.labelKey),
+        // Chưa nạp xong ⇒ không có badge. Số 0 lúc đang tải đọc như một kết
+        // luận đã có.
         count:
-          item.id === 'signals'
-            ? (measured.coverage?.trackedComponents ?? undefined)
+          item.id === 'signals' && trackedCount !== null
+            ? trackedCount
             : undefined,
       })),
-    [t, measured.coverage]
+    [t, trackedCount]
   );
 
-  const stats = measured.stats;
+  const stats = loaded.stats;
   const { evidence } = experience;
   const tierStyle = EVIDENCE_TIER_STYLE[evidence.tier];
   const previewable = canPreview(experience);
   const editable = canEditCanvas(experience);
+  const usable = canUseExperience(experience);
 
   const subtitleParts = [
     t(CATEGORY_LABEL_KEY[experience.category]),
@@ -246,6 +293,7 @@ export const ExperienceDetailModal = ({
             {t('previewLabel')}
           </Button>
           <Button
+            variant='ghost'
             size='sm'
             disabled={!editable}
             title={editable ? undefined : t('editExternalHint')}
@@ -254,9 +302,36 @@ export const ExperienceDetailModal = ({
             <PenLine className='size-3.5' strokeWidth={2.2} aria-hidden />
             {t('editExperience')}
           </Button>
+          {/* Nút CHÍNH, theo prototype (`xuse` là `btn-primary`): thứ người ta
+              mở thư viện ra để làm là mang một trải nghiệm vào chiến dịch. */}
+          <Button
+            size='sm'
+            disabled={!usable}
+            onClick={() => onUse(experience)}
+          >
+            <PlusCircle className='size-3.5' strokeWidth={2.2} aria-hidden />
+            {t('useLabel')}
+          </Button>
         </>
       }
     >
+      {/* Nút xám phải TỰ NÓI vì sao nó xám. Giấu lý do trong `title` nghĩa là
+          người dùng đọc nó thành "hỏng" — chuyện đã xảy ra một lần ở màn này. */}
+      {!usable ? (
+        <p className='mb-3 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-[var(--pv2-mut)]'>
+          {t('useIsCopyHint')}
+        </p>
+      ) : null}
+
+      {provenError ? (
+        <p
+          role='alert'
+          className='mb-3 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-[var(--pv2-warning)]'
+        >
+          {provenError}
+        </p>
+      ) : null}
+
       {/* THE IDENTITY STRIP — the verdict at the door, above every tab. */}
       <div className='mb-4 flex flex-wrap items-center gap-x-6 gap-y-3 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-4 py-3'>
         {stats ? (
@@ -283,17 +358,27 @@ export const ExperienceDetailModal = ({
         aria-label={t('detailTabsAria')}
       />
 
-      <div className='pt-4' role='tabpanel'>
+      {/* Mỗi pane mở đầu bằng CÂU HỎI nó trả lời — prototype `.ptab-q`. Phân
+          công giữa ba tab nằm trên màn hình, không nằm trong buổi hướng dẫn. */}
+      <p className='mt-2.5 text-[11.5px] leading-relaxed text-[var(--pv2-faint)] italic'>
+        {t(
+          EXPERIENCE_DETAIL_TABS.find(item => item.id === tab)?.questionKey ??
+            'tabDetailsQ'
+        )}
+      </p>
+
+      <div className='pt-3.5' role='tabpanel'>
         {tab === 'details' ? (
           <ExperienceDetailsPane
             experience={experience}
-            fetchedCoverage={measured.coverage}
+            coverage={loaded.coverage}
+            layers={loaded.layers}
           />
         ) : null}
         {tab === 'signals' ? (
           <ExperienceSignalsPane
-            experience={experience}
-            coverage={measured.coverage}
+            coverage={loaded.coverage}
+            layers={loaded.layers}
           />
         ) : null}
         {tab === 'perf' ? (

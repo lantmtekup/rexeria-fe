@@ -60,11 +60,106 @@ export interface RxExperience {
   edit_url?: string;
 }
 
+/**
+ * Một component bên trong block — chỉ block đã GẮN THẺ mới có.
+ *
+ * `signal` là chỗ ý nghĩa nằm: `event: 'spin'` trên một `component_kind:
+ * 'media'` nghĩa là "người mua xoay ảnh 360", không phải `button_click_47`.
+ */
+export interface RxExperienceLayerComponent {
+  key: string;
+  component_kind: string;
+  signal?: {
+    track?: boolean;
+    /** `EXPOSURE` | … */
+    type?: string;
+    /** `view` | `play` | `spin` | `tap` | `complete` … */
+    event?: string;
+    object?: string;
+    privacy?: string;
+    strength?: number;
+    crm_action?: string;
+  } | null;
+}
+
+/**
+ * Một block trong canvas, **nguyên xi như lúc được soạn**.
+ *
+ * BE trả thẳng canvas nên có HAI hình dạng, không phải một:
+ *
+ *   A · đã gắn thẻ  `{ key, role, block_type, block_signal, components[] }`
+ *   B · canvas thường `{ id, name, blockType, isVisible }`  ← camelCase
+ *
+ * Kiểm trên dữ liệu thật 2026-08-07: 24 bản ghi lấy mẫu ra **1 hình A, 14 hình
+ * B, 9 rỗng**. Nên mọi trường ở đây đều optional — đọc `block_type ?? blockType`
+ * và coi `role` vắng là "chưa gán vai", đừng bịa một vai vào.
+ */
+export interface RxExperienceLayer {
+  /** Hình A. */
+  key?: string;
+  role?: string | null;
+  block_type?: string;
+  block_signal?: { track?: boolean; signals?: Record<string, boolean> } | null;
+  components?: RxExperienceLayerComponent[];
+  /** Hình B. */
+  id?: string;
+  name?: string;
+  blockType?: string;
+  isVisible?: boolean;
+  /** Nội dung đã soạn — cả hai hình đều có, shape tuỳ block. */
+  content?: Record<string, unknown> | null;
+  contentVi?: Record<string, unknown> | null;
+  contentEn?: Record<string, unknown> | null;
+}
+
+/**
+ * `GET /v1/experiences/{id}` (spec §4.4) — object §4.2 **cộng** layers thật,
+ * features/benefits và lineage.
+ *
+ * Đây là nguồn DUY NHẤT có block thật: `GET /v1/experiences` chỉ trả
+ * `funnel_coverage` (mảng vai), và 99/100 bản ghi trả `null` cho nó.
+ */
+export interface RxExperienceDetail extends RxExperience {
+  layers: RxExperienceLayer[] | null;
+  features: string[] | null;
+  benefits: string[] | null;
+  lineage?: {
+    origin?: RxExperience;
+    copies_count?: number;
+  };
+}
+
 /** `{ items, total }` list envelope (spec §2/§4.2). */
 export interface RxExperienceListResponse {
   items: RxExperience[];
   total: number;
 }
+
+/**
+ * `POST /v1/experiences/{id}/use` — hai trường **đi cùng nhau**, và đều tuỳ
+ * chọn:
+ *
+ * - không gửi gì ⇒ lấy một **bản của mình**: page thuộc brand người gọi,
+ *   `campaign_item_id` NULL. Đây là đường thường: xem thư viện, thấy ưng, lấy
+ *   một bản về sửa, xong xuôi mới quyết dùng cho chiến dịch nào.
+ * - gửi cả hai ⇒ nộp thẳng vào hạng mục đó. Đường tắt cho người đang đứng sẵn
+ *   trong một chiến dịch.
+ *
+ * Gửi một trong hai thì BE trả 400.
+ */
+export type RxUseExperienceRequest = {
+  campaign_id?: string;
+  item_id?: string;
+  /**
+   * Chủ của bản copy khi fork KHÔNG kèm chiến dịch. Chỉ platform admin cần gửi
+   * — họ không thuộc brand nào, nên thiếu trường này BE trả 400 `taking a copy
+   * of an experience requires a brand scope`. Người dùng thuộc brand thì BE lấy
+   * brand từ phiên; gửi brand khác của mình sẽ bị từ chối.
+   *
+   * Bỏ qua ở đường có `campaign_id`/`item_id`: ở đó chiến dịch đã nói brand.
+   */
+  brand_id?: string;
+};
 
 /** `POST /v1/experiences/{id}/promote` — `name` bắt buộc (BE validate min=1). */
 export type RxPromoteExperienceRequest = {

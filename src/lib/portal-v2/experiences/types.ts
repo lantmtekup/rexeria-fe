@@ -33,32 +33,58 @@ export type ExperienceInteraction = 'hotspot' | 'swipe' | 'pan' | '360' | 'vr';
 export type EvidenceTier = 'high' | 'directional' | 'early' | 'unmeasured';
 
 /**
- * Prototype `expState` / `XSTATES` (~L15927) — the ownership axis.
- * A template belongs to nobody; a copy is about a product or a topic.
+ * Trục SỞ HỮU — prototype `expState` / `XSTATES` (~L15927), mở rộng cho v2.
+ *
+ * Template thuộc về thư viện dùng chung; bản copy thuộc về brand đã lấy nó.
+ *
+ * `unassigned` không có trong prototype và là mắt xích thiếu: prototype giả
+ * định mọi bản copy đều sinh ra bên trong một chiến dịch, còn thực tế người
+ * dùng lấy một bản về sửa TRƯỚC, rồi mới quyết dùng cho chiến dịch nào — và
+ * trang do trình dựng / AI sinh ra thì không bao giờ đi qua chiến dịch cả.
+ * Thiếu trạng thái này thì 55/56 trang của brand không có tab nào chứa.
  */
-export type ExperienceState = 'template' | 'product' | 'topic' | 'block';
-
-/** Every component a block can offer — prototype `compsOf(l)` (~L12493). */
-export type LayerComponentKey = 'n' | 'h' | 'b' | 'media' | 'product' | 'cta';
+export type ExperienceState =
+  'template' | 'unassigned' | 'product' | 'topic' | 'block';
 
 /**
- * One block in the stack.
+ * Một component bên trong block — `GET /v1/experiences/{id}` → `layers[].
+ * components[]`.
  *
- * `tracked` / `components` / `trackedComponents` are DERIVED at build time by
- * the `normalizeLayers` port (~L11868) — they are absent from the authored
- * literal, exactly as in the prototype.
+ * `kind` là chuỗi TỰ DO từ canvas (`media`, `product`, `button`, …), không phải
+ * enum: bảng nhãn chỉ dịch những giá trị đã biết và in nguyên phần còn lại.
+ * Đóng khung nó thành union sẽ khiến một loại block mới ở BE lặng lẽ rơi khỏi
+ * màn hình.
+ */
+export type LayerComponent = {
+  key: string;
+  kind: string;
+  tracked: boolean;
+  /** `view` | `play` | `spin` | `tap` | `complete` … — cái nó BÁO VỀ. */
+  event: string | null;
+};
+
+/**
+ * Một block trong canvas.
+ *
+ * Nạp từ `GET /v1/experiences/{id}`, KHÔNG suy từ `funnel_coverage` của danh
+ * sách: bản cũ làm thế nên mỗi "layer" chỉ là một chữ vai (`ATT`), và vì
+ * 99/100 bản ghi trả `funnel_coverage: null` nên màn Chi tiết vẽ ra **rỗng**.
+ *
+ * `role` null là chuyện thường, không phải lỗi: canvas soạn ở trình dựng trang
+ * không gán vai phễu. Đừng lấp bằng một vai đoán được.
  */
 export type ExperienceLayer = {
-  role: FunnelRole;
+  role: FunnelRole | null;
   name: string;
-  description: string;
-  /** Media asset id from the prototype ('a5'). Not resolved in P0. */
-  mediaRef: string | null;
-  /** Synthesized for `CON` layers by normalizeLayers, else null. */
-  cta: string | null;
+  /** `framer_realestate02_menu` — mã block, hiện dạng mono. */
+  blockType: string | null;
+  /** false ⇒ block bị ẩn trên trang thật. */
+  visible: boolean;
+  /** `block_signal.track` — block có báo dwell/scroll không. */
   tracked: boolean;
-  components: LayerComponentKey[];
-  trackedComponents: LayerComponentKey[];
+  /** `['dwell','scroll']` — tên tín hiệu mức block. */
+  blockSignals: string[];
+  components: LayerComponent[];
 };
 
 /** Prototype `signalCoverage(e)` (~L12566). `pct` is COMPONENT coverage. */
@@ -142,15 +168,35 @@ export type ExperienceView = {
   interactions: ExperienceInteraction[];
   proven: boolean;
   tagline: string;
+  /**
+   * Các vai phễu mà bản ghi này phủ — `funnel_coverage` của danh sách.
+   *
+   * TÁCH khỏi `layers` vì hai thứ khác hẳn nhau: đây là tối đa 5 chữ suy từ
+   * block, còn `layers` là chính các block. Gộp chúng làm một là lý do thẻ ghi
+   * "5 layer" cho một trang 7 block.
+   */
+  funnelRoles: FunnelRole[];
+  /**
+   * RỖNG ở danh sách — chỉ `GET /v1/experiences/{id}` mới có block thật, và
+   * modal nạp nó khi mở.
+   */
   layers: ExperienceLayer[];
   features: string[];
   benefits: string[];
   /**
-   * null = CHƯA ĐO. BE cố ý bỏ qua `signal_coverage` với loại không đo được
-   * ("nil = not measurable for this kind, and is omitted rather than reported
-   * as 0%"), nên quy về 0% ở đây là dựng lại đúng lời nói dối vừa gỡ.
+   * Độ phủ cho THẺ, tính theo phần trăm — `signal_coverage` của danh sách.
+   *
+   * null = CHƯA ĐO. BE cố ý bỏ qua trường này với loại không đo được ("nil =
+   * not measurable for this kind, and is omitted rather than reported as 0%"),
+   * nên quy về 0% ở đây là dựng lại đúng lời nói dối vừa gỡ. Đo thật
+   * 2026-08-07: 99/100 bản ghi trả null.
+   *
+   * Chỉ là con số, KHÔNG phải `SignalCoverage`: danh sách không kèm số block
+   * hay số component, nên dựng một object với các đếm bằng 0 sẽ khiến câu
+   * "0/0 component có điểm đo" hiện ra như một phép đo. Khối đầy đủ nằm ở
+   * `GET /experiences/{id}/coverage`, modal nạp riêng.
    */
-  coverage: SignalCoverage | null;
+  coveragePct: number | null;
   /** null when the seed says this has never run — never a zero. */
   stats: ExperienceStats | null;
   evidence: ExperienceEvidence;

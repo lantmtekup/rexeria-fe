@@ -85,15 +85,20 @@ export const ExperienceCard = ({
         <Layers className='size-3.5 shrink-0' strokeWidth={2.2} aria-hidden />
         <span className='truncate'>
           {/*
-            `coverage` null = BE nói loại này KHÔNG đo được. Bản cũ luôn có số
-            vì nó bốc từ hàm băm id; giờ thiếu thì nói thiếu.
+            `coveragePct` null = BE nói loại này KHÔNG đo được. Bản cũ luôn có
+            số vì nó bốc từ hàm băm id; giờ thiếu thì nói thiếu.
+
+            Đếm VAI PHỄU, không đếm block: danh sách không trả số block, và
+            `funnel_coverage` là tối đa 5 chữ vai. Ghi "5 layer" ở đây rồi mở
+            ra thấy 7 block là đúng kiểu vênh thẻ-với-chi-tiết mà journey đang
+            mắc (62% ngoài thẻ / 33% khi mở).
           */}
-          {experience.coverage
+          {experience.coveragePct !== null
             ? t('cardFooterMeta', {
-                layers: experience.layers.length,
-                pct: experience.coverage.pct,
+                roles: experience.funnelRoles.length,
+                pct: experience.coveragePct,
               })
-            : t('cardFooterUnmeasured', { layers: experience.layers.length })}
+            : t('cardFooterUnmeasured')}
         </span>
         <span className='flex-1' />
         <span className='shrink-0 tabular-nums'>{experience.updatedLabel}</span>

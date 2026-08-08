@@ -98,3 +98,14 @@ export const canEditCanvas = (experience: ExperienceView): boolean =>
 /** `/p/{slug}` is the only preview surface, so no slug means no preview. */
 export const canPreview = (experience: ExperienceView): boolean =>
   Boolean(experience.slug) && !experience.externalUrl;
+
+/**
+ * Chỉ TEMPLATE và BLOCK fork được.
+ *
+ * Gương của `experienceUsecase.Use`: gặp `kind: 'copy'` nó trả
+ * `cannot fork a copy; only a template can be used`. Chặn ở đây để nút không
+ * gửi đi một lời gọi chắc chắn hỏng — nhưng nơi gọi PHẢI hiện lý do thành chữ,
+ * một nút xám không tự giải thích được vì sao nó xám.
+ */
+export const canUseExperience = (experience: ExperienceView): boolean =>
+  experience.state === 'template' || experience.state === 'block';

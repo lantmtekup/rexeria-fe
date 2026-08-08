@@ -10,8 +10,15 @@ import { FilterChips } from '@/components/molecules/portal-v2/FilterChips';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
 import { ExperienceCard } from '@/components/organisms/portal-v2/experiences/ExperienceCard';
 import { ExperienceDetailModal } from '@/components/organisms/portal-v2/experiences/ExperienceDetailModal';
+import { UseExperienceModal } from '@/components/organisms/portal-v2/experiences/UseExperienceModal';
+import { errorMessage } from '@/services/portal-v2/_error';
+import {
+  forkExperience,
+  type ForkTarget,
+} from '@/services/portal-v2/experienceUse';
 import { promoteToLibrary } from '@/services/portal-v2/experiencePromote';
 import { setExperienceProven } from '@/services/portal-v2/experienceProven';
+import { RxApiError } from '@/services/rexer/client';
 import { ExchangePreviewShell } from '@/components/organisms/portal-v2/exchange/ExchangePreviewShell';
 import {
   EXPERIENCE_CATEGORIES,
@@ -105,9 +112,18 @@ export const ExperiencesWorkspace = ({
   /** id đang ghi dấu Proven xuống server — khoá nút để không bấm kép. */
   const [provenPendingId, setProvenPendingId] = useState<string | null>(null);
 
+  /** Lý do lần bấm Proven gần nhất thất bại — null khi chưa bấm hoặc đã xong. */
+  const [provenError, setProvenError] = useState<string | null>(null);
+
   /**
    * Bật/tắt Proven. Cập nhật lạc quan trước để nút phản hồi tức thì, hỏng thì
    * trả về giá trị cũ — một lời gọi là xong, không cần nạp lại cả danh sách.
+   *
+   * Nhánh `catch` TRƯỚC ĐÂY nuốt trọn lỗi: nút bật rồi tắt lại, không một chữ
+   * nào. Đo thật thì đó chính là chuyện đang xảy ra — BE trả **403
+   * `client-portal users cannot modify library templates`**, nên với tài khoản
+   * brand thì nút này không bao giờ chạy được, mà màn hình lại đọc như "bấm
+   * không ăn". Hỏng thì phải NÓI hỏng, và nói vì sao.
    */
   const handleToggleProven = async (experience: ExperienceView) => {
     const next = !experience.proven;
@@ -117,16 +133,50 @@ export const ExperiencesWorkspace = ({
       );
 
     setProvenPendingId(experience.id);
+    setProvenError(null);
     apply(next);
     try {
       const confirmed = await setExperienceProven(experience.id, next);
       if (confirmed !== next) apply(confirmed);
-    } catch {
+    } catch (err) {
       apply(experience.proven);
+      // 403 là LUẬT, không phải trục trặc: `assertTemplateMutable` chặn
+      // client-portal user, và chặn cả template hệ thống (`brand_id` NULL) với
+      // mọi người trừ platform admin. Dịch thành câu người dùng làm được gì
+      // tiếp; các lỗi khác thì đưa nguyên văn của BE.
+      setProvenError(
+        err instanceof RxApiError && err.status === 403
+          ? t('provenForbidden')
+          : errorMessage(err, t('provenFailed'))
+      );
     } finally {
       setProvenPendingId(null);
     }
   };
+  /** Trải nghiệm đang chờ chọn đích để fork; null = hộp đóng. */
+  const [useTarget, setUseTarget] = useState<ExperienceView | null>(null);
+
+  /**
+   * Fork xong thì NẠP LẠI danh sách, không nhét bản mới vào state.
+   *
+   * Bản copy vừa tạo làm đổi số đếm của cả hai tab và làm hạng mục đổi trạng
+   * thái (`SyncItemAfterCopyChange` chạy ở BE). Ghép tay ở FE là dựng lại một
+   * bản sao của luật server — đúng thứ đã khiến id suy ở FE trỏ vào hư không.
+   */
+  const handleUseConfirm = async (target: ForkTarget) => {
+    if (!useTarget) return;
+    const copy = await forkExperience(useTarget.id, target, brandId);
+    const res = await fetchExperienceLibrary({ q: filters.q, brandId });
+    setItems(res.items);
+    setLoadError(res.error);
+    setUseTarget(null);
+    // Mở thẳng bản copy vừa có: nó là thứ người dùng vừa tạo ra, và nó nằm ở
+    // tab khác tab đang đứng nên rất dễ "bấm xong không thấy gì".
+    setActiveId(copy.id);
+    setFilters(prev => ({ ...prev, state: copy.state }));
+    toast.success(t('useDone', { name: copy.name }));
+  };
+
   const [promotePendingId, setPromotePendingId] = useState<string | null>(null);
   /** Kết quả lần promote gần nhất — hiện tên template mới để còn tìm lại được. */
   const [promoteNote, setPromoteNote] = useState<{
@@ -616,10 +666,21 @@ export const ExperiencesWorkspace = ({
           onClose={handleCloseDetail}
           onPreview={handlePreview}
           onEdit={handleEdit}
+          onUse={setUseTarget}
           onToggleProven={handleToggleProven}
           onPromote={handlePromote}
           provenPending={provenPendingId === active.id}
+          provenError={provenError}
           promotePending={promotePendingId === active.id}
+        />
+      ) : null}
+
+      {useTarget ? (
+        <UseExperienceModal
+          experience={useTarget}
+          brandId={brandId}
+          onClose={() => setUseTarget(null)}
+          onConfirm={handleUseConfirm}
         />
       ) : null}
 

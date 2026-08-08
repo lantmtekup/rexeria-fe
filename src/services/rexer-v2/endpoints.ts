@@ -54,9 +54,11 @@ import type {
 import type {
   RxExperience,
   RxExperienceCoverage,
+  RxExperienceDetail,
   RxExperienceListQuery,
   RxExperienceListResponse,
   RxExperienceStats,
+  RxUseExperienceRequest,
   RxPromoteExperienceRequest,
 } from './types/experience';
 import type {
@@ -386,12 +388,45 @@ export const rexerV2Api = {
       );
     },
 
+    /**
+     * `GET /v1/experiences/{id}` — chi tiết, **kèm `layers[]` thật**.
+     *
+     * Không thay được bằng bản ghi trong danh sách: danh sách chỉ có
+     * `funnel_coverage`, và đo trên dữ liệu thật thì 99/100 bản ghi trả `null`.
+     */
     get: (experienceId: string) =>
-      rxV2<RxExperience>(`/experiences/${experienceId}`),
+      rxV2<RxExperienceDetail>(`/experiences/${experienceId}`),
 
     /** `measured:false` ⇒ chưa chạy lần nào; mọi số kèm theo là 0 mặc định. */
     stats: (experienceId: string) =>
       rxV2<RxExperienceStats>(`/experiences/${experienceId}/stats`),
+
+    /**
+     * `POST /v1/experiences/{id}/use` — fork một TEMPLATE (hoặc block) thành
+     * bản copy nằm trong một hạng mục chiến dịch.
+     *
+     * `campaign_id` và `item_id` đều **bắt buộc** (`validate:"required,uuid"`):
+     * không có hạng mục thì không fork được, vì bản copy được định nghĩa bằng
+     * chính chỗ nó thuộc về. Đây cũng là cột `ListCopies` lọc, nên đây là
+     * đường DUY NHẤT làm một mục hiện ra ở tab "Bản copy".
+     *
+     * Fork idempotent theo `(origin, item)`: bấm hai lần trả về đúng bản cũ
+     * (201 lần đầu, 200 lần sau) — không tạo bản thứ hai. Đã kiểm bằng dữ liệu
+     * thật 2026-08-07.
+     *
+     * KHÔNG đọc mã trạng thái ở đây: `raw: true` sẽ bỏ qua luôn tầng bắt lỗi
+     * của client, nghĩa là 403/400 không còn throw. Muốn biết "đã có sẵn" thì
+     * xem `item.experiences[]` — `GET /campaigns/{id}/items` trả sẵn, và biết
+     * TRƯỚC khi bấm còn hữu ích hơn biết sau.
+     *
+     * Fork một BẢN COPY thì BE từ chối: `cannot fork a copy; only a template
+     * can be used`.
+     */
+    use: (experienceId: string, body: RxUseExperienceRequest) =>
+      rxV2<RxExperience>(`/experiences/${experienceId}/use`, {
+        method: 'POST',
+        body,
+      }),
 
     /**
      * `POST /v1/experiences/{id}/proven` — bật/tắt dấu Proven.

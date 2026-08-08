@@ -96,6 +96,45 @@ kê chúng**. Cân nhắc một bộ lọc "chưa đủ điều kiện" ở danh
 
 ---
 
+## 7b. Settings — tab "Data & export" chưa ráp
+
+`GET /v1/org/ground-truth/export` đã có và trả `{rows, governance}`, nhưng
+`DataPanel` vẫn xuất `MOCK_FACT_ROWS`. Bốn tab còn lại (General, Measurement,
+Signals & privacy, Team & roles) đã đọc ghi api thật.
+
+Kèm hai trường General không nguồn nào trả: `since` (ngày mở tài khoản) — hiện
+để trống, và `orgPlan` đang lấy tạm `account_type` vì BE không có khái niệm
+"gói" tách riêng.
+
+Và: Resend chỉ gửi được tới email chủ tài khoản cho tới khi xác minh một domain
+tại `resend.com/domains` rồi đổi `REXER_MAIL_FROM_EMAIL` sang địa chỉ thuộc
+domain đó. Trước lúc ấy, mời người khác luôn rơi vào nhánh "trả mật khẩu để
+chuyển tay".
+
+## 7c. Modal trải nghiệm — phần chưa theo kịp prototype
+
+Đã ráp `GET /v1/experiences/{id}` nên block, tín hiệu và độ phủ nay cùng một
+nguồn. Còn lệch `plan-v2/rexer-platform-v2.html` (bản `rexer-demo-v3.html`
+giống hệt từng byte ở phần này, đã diff):
+
+| Thiếu | Vì sao chưa làm |
+|---|---|
+| ~~Nút chính `Use this experience`~~ | ✅ đã ráp 2026-08-07 — xem mục 10 |
+| Khối **Media** (`computed from Media`) | cần nối asset ↔ experience, chưa có đường đọc |
+| Strip dạng chip (`wins … / loses …`, `order proven best`) | ăn Dossier + Order Bench; `/dossier` trả `measured:false`, mọi mảng rỗng |
+| Băng Proven trong thân + nút `Approve as Proven` | hiện là nút nhỏ dưới footer |
+| Tab **Orchestration** / **Dossier** | `lineage` trả `copies_count: 0`, dossier chưa có số |
+
+Và một thiếu sót của API: **danh sách không trả số block**, nên thẻ chỉ đếm
+được `funnel_coverage` (tối đa 5 vai, và 99/100 bản ghi trả `null`). Muốn thẻ
+ghi đúng "9 block" thì BE phải thêm một cột đếm vào `GET /v1/experiences`.
+
+Ghi kèm một sự thật về dữ liệu: lấy mẫu 24 bản ghi ngày 2026-08-07 ra **1 bản
+đã gắn thẻ, 14 bản canvas thường (0 component), 9 bản rỗng**. Nên `layers[]` có
+HAI hình dạng — `{key,role,block_type,block_signal,components}` và
+`{id,name,blockType,isVisible}` (camelCase). `v2DetailToLayers` đọc cả hai; đổi
+BE thì phải xem lại chỗ đó.
+
 ## 8. Ngoài phạm vi Portal V2
 
 - 🔴 `admin@rexer.ai` / `Admin1234` đăng nhập được vào **production** với quyền
@@ -107,6 +146,36 @@ kê chúng**. Cân nhắc một bộ lọc "chưa đủ điều kiện" ở danh
   đợt này (đã kiểm bằng cách stash thay đổi).
 
 ---
+
+## 10. Trải nghiệm thuộc về BRAND, không thuộc về chiến dịch (2026-08-07)
+
+Đổi mô hình miền, **có sửa BE**. Trước đây một bản copy chỉ tồn tại được bên
+trong một hạng mục chiến dịch; nay nó thuộc về brand đã lấy nó, còn chiến dịch
+là nơi nó *được dùng* — một quyết định sau và tuỳ chọn.
+
+| | Trước | Sau |
+|---|---|---|
+| `POST /experiences/{id}/use` | `campaign_id` + `item_id` **bắt buộc** | cả hai tuỳ chọn, **đi cùng nhau**; rỗng ⇒ bản của brand |
+| `ListCopies` | `WHERE campaign_item_id IS NOT NULL` | mọi page chưa lưu trữ của brand, thêm `state=unassigned` |
+| `AttachToItem` với bản chưa gán | `SubjectMismatchError` | nộp bản đó vào hạng mục (kiểm brand trước) |
+| Fork trùng | idempotent theo `(origin, item)` | chỉ khi CÓ hạng mục — lấy nhiều bản về sửa là hợp lệ |
+
+Chỗ đó là lý do màn Trải nghiệm từng giấu **55/56 trang**: page sinh từ trình
+dựng / luồng AI không bao giờ ghi `campaign_item_id`, nên màn hình liệt kê "cái
+bạn đã làm" lại không liệt kê cái nào bạn đã làm.
+
+Đo lại sau khi sửa (brand RexerStudio): **131 mục** = 82 template · 21 của tôi ·
+1 copy sản phẩm · 1 copy chủ đề · 26 khối.
+
+Còn nợ:
+
+- `state=unassigned` chưa có test nào; ba bộ lọc `unassigned` /
+  `product_copies` / `topic_copies` dựa vào việc INNER JOIN `campaign_items`
+  tự loại bản chưa gán — đúng nhưng ngầm.
+- FE chưa có nút "gán vào chiến dịch" cho một bản đã có ở tab **Của tôi**; hiện
+  chỉ gán được lúc fork. Đường BE đã thông (`AttachToItem`).
+- `docs/docs.go` (swagger sinh ra) chưa chạy lại sau khi đổi `state` và
+  `UseExperienceRequest`.
 
 ## 9. Chưa push
 

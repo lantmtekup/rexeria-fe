@@ -8,7 +8,6 @@ import type {
   ExperienceState,
   ExperienceVehicle,
   FunnelRole,
-  LayerComponentKey,
 } from '@/lib/portal-v2/experiences/types';
 
 /**
@@ -39,6 +38,9 @@ export const EXPERIENCE_STATES: {
 }[] = [
   { id: 'all', labelKey: 'stateAll' },
   { id: 'template', labelKey: 'stateTemplate' },
+  // Bản của brand chưa dùng cho chiến dịch nào — đứng ngay sau Template vì đó
+  // là chặng kế tiếp của luồng: xem thư viện → lấy một bản → sửa → mới gán.
+  { id: 'unassigned', labelKey: 'stateUnassigned' },
   { id: 'product', labelKey: 'stateProduct' },
   { id: 'topic', labelKey: 'stateTopic' },
   // `kind: 'block'` là loại THỨ TƯ mà `/v1/experiences` trả về. Bản cũ không
@@ -149,14 +151,43 @@ export const EXPERIENCE_DETAIL_TABS: {
   { id: 'perf', labelKey: 'tabPerf', questionKey: 'tabPerfQ' },
 ];
 
-/** `COMP_NAME` (~L12401). */
-export const LAYER_COMPONENT_LABEL_KEY: Record<LayerComponentKey, string> = {
+/**
+ * `COMP_NAME` (~L12401), mở rộng cho `component_kind` thật của canvas.
+ *
+ * Bảng TRA, không phải enum: `kind` từ BE là chuỗi tự do. Không khớp thì in
+ * nguyên chuỗi — một loại block mới phải hiện ra khó đọc, chứ không được biến
+ * mất khỏi danh sách.
+ */
+export const COMPONENT_KIND_LABEL_KEY: Record<string, string> = {
   n: 'componentTitle',
+  title: 'componentTitle',
   h: 'componentHeadline',
+  headline: 'componentHeadline',
   b: 'componentBody',
+  body: 'componentBody',
+  text: 'componentBody',
   media: 'componentMedia',
   product: 'componentProduct',
   cta: 'componentCta',
+  button: 'componentCta',
+};
+
+/** `block_signal.signals` — tín hiệu mức block. Cùng luật tra như trên. */
+export const BLOCK_SIGNAL_LABEL_KEY: Record<string, string> = {
+  dwell: 'sigDwell',
+  scroll: 'sigScroll',
+  tap: 'sigTap',
+  complete: 'sigComplete',
+  exit: 'sigExit',
+};
+
+/** `component.signal.event` — cái component ấy BÁO VỀ. */
+export const COMPONENT_EVENT_LABEL_KEY: Record<string, string> = {
+  view: 'evtView',
+  play: 'evtPlay',
+  spin: 'evtSpin',
+  tap: 'evtTap',
+  complete: 'evtComplete',
 };
 
 /** Prototype `xCoverCell` (~L15726) — mint ≥80, amber ≥50, else rose. */
