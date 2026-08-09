@@ -170,7 +170,8 @@
       "buyBullet1": "Toàn bộ thiết kế, thêm vào thư viện dưới dạng mẫu mới.",
       "buyBullet2": "Giữ lineage — luôn biết concept gốc.",
       "buyBullet3": "Fork, chỉnh sửa và deploy trên mọi chiến dịch.",
-      "buyNote": "Mua là cam kết, không phải nháp — Undo không hoàn tác. Thêm bản copy vào trang sau vẫn có thể."
+      "buyNote": "Mua là cam kết, không phải nháp — Undo không hoàn tác. Thêm bản copy vào trang sau vẫn có thể.",
+      "addNeedsWorkspace": "Chưa có workspace nào để thêm vào — chọn hoặc tạo workspace trước."
     },
     "preview": {
       "preview": "Xem trước {name}",

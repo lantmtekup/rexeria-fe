@@ -170,7 +170,8 @@
       "buyBullet1": "The full design, added to your library as a fresh template.",
       "buyBullet2": "Lineage kept — you always know the concept it came from.",
       "buyBullet3": "Yours to fork, edit, and deploy across every campaign.",
-      "buyNote": "A purchase is a commit, not a draft — Undo won't reverse it. Adding the copy to a page afterwards still can be."
+      "buyNote": "A purchase is a commit, not a draft — Undo won't reverse it. Adding the copy to a page afterwards still can be.",
+      "addNeedsWorkspace": "No workspace to add into — pick or create one first."
     },
     "preview": {
       "preview": "Preview {name}",

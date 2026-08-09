@@ -305,28 +305,11 @@ export const ExchangeWorkspace = ({
 
   const installListing = useCallback(
     async (listing: ExchangeListingView) => {
-      const payload = {
-        action: 'add_to_workspace',
-        listingId: listing.id,
-        source: listing.source,
-        pageId: listing.pageId ?? null,
-        templateVersionId: listing.templateVersionId ?? null,
-        blockId: listing.blockId ?? null,
-        name: listing.name,
-        price: listing.meta.price,
-        workspaceId,
-      };
-
+      // Không có workspace thì KHÔNG có chỗ để thêm vào. Trước đây nhánh này
+      // bung JSON ra alert rồi vẫn đánh dấu "đã thêm" — người dùng đóng hộp
+      // thoại và tin là xong, trong khi chẳng có gì được tạo.
       if (!workspaceId) {
-        window.alert(JSON.stringify(payload, null, 2));
-        setSession(prev => ({
-          ...prev,
-          added: {
-            ...prev.added,
-            [listing.id]: `copy-${listing.pageId ?? listing.blockId ?? listing.id}`,
-          },
-        }));
-        handleCloseModal();
+        toast.error(t('addNeedsWorkspace'));
         return;
       }
 
@@ -339,9 +322,6 @@ export const ExchangeWorkspace = ({
           const block = await rexerApi.blocks.clone(listing.blockId, {
             name: `${listing.name} (Exchange)`,
           });
-          window.alert(
-            JSON.stringify({ ...payload, clonedBlockId: block.id }, null, 2)
-          );
           setSession(prev => ({
             ...prev,
             added: { ...prev.added, [listing.id]: block.id },
@@ -355,13 +335,6 @@ export const ExchangeWorkspace = ({
             template_version_id: listing.templateVersionId,
             name: `${listing.name} (Exchange)`,
           });
-          window.alert(
-            JSON.stringify(
-              { ...payload, createdPageId: page.id, slug: page.slug },
-              null,
-              2
-            )
-          );
           setSession(prev => ({
             ...prev,
             added: { ...prev.added, [listing.id]: page.id },
@@ -408,17 +381,6 @@ export const ExchangeWorkspace = ({
 
   const handleConfirmBuy = useCallback(
     (listing: ExchangeListingView) => {
-      const payload = {
-        action: 'buy',
-        listingId: listing.id,
-        source: listing.source,
-        pageId: listing.pageId ?? null,
-        templateVersionId: listing.templateVersionId ?? null,
-        blockId: listing.blockId ?? null,
-        name: listing.name,
-        price: listing.meta.price,
-      };
-      window.alert(JSON.stringify(payload, null, 2));
       setSession(prev => ({
         ...prev,
         owned: { ...prev.owned, [listing.id]: true },

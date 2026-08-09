@@ -521,16 +521,19 @@ export const rexerV2Api = {
       rxV2<RxExperience>(`/exchange/items/${itemId}/add`, { method: 'POST' }),
 
     /**
-     * `POST /v1/exchange/items/{itemId}/purchase`.
+     * `POST /v1/exchange/items/{itemId}/purchase` — 201 kèm Experience mới,
+     * cùng shape với `add`.
      *
-     * NEVER succeeds today, on purpose — the capability gate runs first
-     * (403 `CAPABILITY_REQUIRED` without `exchange_buy`, e.g. the `freelance`
-     * archetype), and once it passes the BE returns **501** because the payment
-     * flow is a later phase. Callers must handle 403 and 501 distinctly:
-     * 403 = "not allowed", 501 = "not shipped yet".
+     * **CHƯA THU TIỀN.** Thanh toán là pha sau; tới lúc đó hàng trả phí được
+     * giao ngay khi bấm, và cổng capability `exchange_buy` cố ý KHÔNG chạy —
+     * nó nói ai được TIÊU, mà hiện chẳng ai tiêu gì. Đừng dựng UI hứa hoá đơn.
+     *
+     * (Trước đây endpoint này luôn hỏng: gate 403, qua được thì 501.)
      */
     purchase: (itemId: string) =>
-      rxV2<void>(`/exchange/items/${itemId}/purchase`, { method: 'POST' }),
+      rxV2<RxExperience>(`/exchange/items/${itemId}/purchase`, {
+        method: 'POST',
+      }),
 
     /**
      * `DELETE /v1/exchange/items/{itemId}` — author or platform admin only
